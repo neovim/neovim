@@ -3438,43 +3438,47 @@ dis_msg (
   os_breakcheck();
 }
 
-/*
- * If "process" is TRUE and the line begins with a comment leader (possibly
- * after some white space), return a pointer to the text after it. Put a boolean
- * value indicating whether the line ends with an unclosed comment in
- * "is_comment".
- * line - line to be processed,
- * process - if FALSE, will only check whether the line ends with an unclosed
- *	     comment,
- * include_space - whether to also skip space following the comment leader,
- * is_comment - will indicate whether the current line ends with an unclosed
- *		comment.
- */
-static char_u *skip_comment(char_u *line, int process, int include_space, int *is_comment)
+/// If \p "process" is true and the line begins with a comment leader (possibly
+/// after some white space), return a pointer to the text after it.
+/// Put a boolean value indicating whether the line ends with an unclosed
+/// comment in "is_comment".
+///
+/// @param line - line to be processed
+/// @param process - if false, will only check whether the line ends
+///         with an unclosed comment,
+/// @param include_space - whether to skip space following the comment leader
+/// @param[out] is_comment - whether the current line ends with an unclosed
+///  comment.
+char_u *skip_comment(
+    char_u *line, bool process, bool include_space, bool *is_comment
+)
 {
   char_u *comment_flags = NULL;
   int lead_len;
   int leader_offset = get_last_leader_offset(line, &comment_flags);
 
-  *is_comment = FALSE;
+  *is_comment = false;
   if (leader_offset != -1) {
     /* Let's check whether the line ends with an unclosed comment.
      * If the last comment leader has COM_END in flags, there's no comment.
      */
     while (*comment_flags) {
       if (*comment_flags == COM_END
-          || *comment_flags == ':')
+          || *comment_flags == ':') {
         break;
-      ++comment_flags;
+      }
+      comment_flags++;
     }
-    if (*comment_flags != COM_END)
-      *is_comment = TRUE;
+    if (*comment_flags != COM_END) {
+      *is_comment = true;
+    }
   }
 
-  if (process == FALSE)
+  if (process == false) {
     return line;
+  }
 
-  lead_len = get_leader_len(line, &comment_flags, FALSE, include_space);
+  lead_len = get_leader_len(line, &comment_flags, false, include_space);
 
   if (lead_len == 0)
     return line;
@@ -3496,8 +3500,9 @@ static char_u *skip_comment(char_u *line, int process, int include_space, int *i
    * starting with a closing part of a three-part comment. That's good,
    * because we don't want to remove those as this would be annoying.
    */
-  if (*comment_flags == ':' || *comment_flags == NUL)
+  if (*comment_flags == ':' || *comment_flags == NUL) {
     line += lead_len;
+  }
 
   return line;
 }
@@ -3531,7 +3536,7 @@ int do_join(size_t count,
   int         *comments = NULL;
   int remove_comments = (use_formatoptions == TRUE)
                         && has_format_option(FO_REMOVE_COMS);
-  int prev_was_comment;
+  bool prev_was_comment;
 
   if (save_undo && u_save(curwin->w_cursor.lnum - 1,
                           curwin->w_cursor.lnum + (linenr_T)count) == FAIL) {

@@ -29,6 +29,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/undo.h"
+#include "nvim/ops.h"
 
 /* local declarations. {{{1 */
 /* typedef fold_T {{{2 */
@@ -1593,29 +1594,32 @@ static void foldCreateMarkers(linenr_T start, linenr_T end)
 /*
  * Add "marker[markerlen]" in 'commentstring' to line "lnum".
  */
-static void foldAddMarker(linenr_T lnum, char_u *marker, size_t markerlen)
+static void foldAddMarker(linenr_T lnum, const char_u *marker, size_t markerlen)
 {
   char_u      *cms = curbuf->b_p_cms;
   char_u      *line;
   char_u      *newline;
   char_u      *p = (char_u *)strstr((char *)curbuf->b_p_cms, "%s");
+  bool line_is_comment = false;
 
-  /* Allocate a new line: old-line + 'cms'-start + marker + 'cms'-end */
+  // Allocate a new line: old-line + 'cms'-start + marker + 'cms'-end
   line = ml_get(lnum);
   size_t line_len = STRLEN(line);
 
   if (u_save(lnum - 1, lnum + 1) == OK) {
+    // Check if the line ends with an unclosed comment
+    skip_comment(line, false, false, &line_is_comment);
     newline = xmalloc(line_len + markerlen + STRLEN(cms) + 1);
     STRCPY(newline, line);
-    if (p == NULL)
+    // Append the marker to the end of the line
+    if (p == NULL || line_is_comment) {
       STRLCPY(newline + line_len, marker, markerlen + 1);
-    else {
+    } else {
       STRCPY(newline + line_len, cms);
       memcpy(newline + line_len + (p - cms), marker, markerlen);
       STRCPY(newline + line_len + (p - cms) + markerlen, p + 2);
     }
-
-    ml_replace(lnum, newline, FALSE);
+    ml_replace(lnum, newline, false);
   }
 }
 
@@ -2535,10 +2539,10 @@ static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
  *      1  2  3
  *      1  2  3
  * top     2  3  4  5
- *	   2  3  4  5
- * bot	   2  3  4  5
- *	      3     5  6
- *	      3     5  6
+ *     2  3  4  5
+ * bot     2  3  4  5
+ *        3     5  6
+ *        3     5  6
  *
  * 1: not changed
  * 2: truncate to stop above "top"
