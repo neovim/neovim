@@ -10,7 +10,7 @@
 
 void _api_set_error(Error *err, ErrorType errType, const char *format, ...);
 #define api_set_error(err, errtype, ...) \
-	_api_set_error(err, kErrorType##errtype, __VA_ARGS__)
+    _api_set_error(err, kErrorType##errtype, __VA_ARGS__)
 
 #define OBJECT_OBJ(o) o
 
