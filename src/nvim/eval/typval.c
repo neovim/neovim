@@ -228,6 +228,7 @@ void tv_list_unref(list_T *const l)
 /// @param[in]  item2  Last item to remove.
 void tv_list_remove_items(list_T *const l, listitem_T *const item,
                           listitem_T *const item2)
+  FUNC_ATTR_NONNULL_ALL
 {
   // notify watchers
   for (listitem_T *ip = item; ip != NULL; ip = ip->li_next) {
