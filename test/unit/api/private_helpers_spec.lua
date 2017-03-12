@@ -1,4 +1,5 @@
-local helpers = require('test.unit.helpers')
+local helpers = require('test.unit.helpers')(after_each)
+local itp = helpers.gen_itp(it)
 local eval_helpers = require('test.unit.eval.helpers')
 local api_helpers = require('test.unit.api.helpers')
 
@@ -25,7 +26,7 @@ describe('vim_to_object', function()
   end
 
   local different_output_test = function(name, input, output)
-    it(name, function()
+    itp(name, function()
       eq(output, vim_to_object(input))
     end)
   end
@@ -76,19 +77,19 @@ describe('vim_to_object', function()
   different_output_test('outputs nil for nested lists (2 level, in dict)',
                         lst3, {{lst=nil_value}, true, false, 'ttest'})
 
-  it('outputs empty list for NULL list', function()
+  itp('outputs empty list for NULL list', function()
     local tt = typvalt('VAR_LIST', {v_list=NULL})
     eq(nil, tt.vval.v_list)
     eq({[type_key]=list_type}, obj2lua(api.vim_to_object(tt)))
   end)
 
-  it('outputs empty dict for NULL dict', function()
+  itp('outputs empty dict for NULL dict', function()
     local tt = typvalt('VAR_DICT', {v_dict=NULL})
     eq(nil, tt.vval.v_dict)
     eq({}, obj2lua(api.vim_to_object(tt)))
   end)
 
-  it('regression: partials in a list', function()
+  itp('regression: partials in a list', function()
     local llist = {
       {
         [type_key]=func_type,

@@ -1,4 +1,5 @@
-local helpers = require("test.unit.helpers")
+local helpers = require("test.unit.helpers")(after_each)
+local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
 local cstr = helpers.cstr
@@ -26,7 +27,7 @@ describe('xstrlcat()', function()
     return ffi.string(dst_cstr)
   end
 
-  it('concatenates strings', function()
+  itp('concatenates strings', function()
     eq('ab', test_xstrlcat('a', 'b', 3))
     eq('ab', test_xstrlcat('a', 'b', 4096))
     eq('ABCיהZdefgiיהZ',  test_xstrlcat('ABCיהZ', 'defgiיהZ',  4096))
@@ -34,7 +35,7 @@ describe('xstrlcat()', function()
     eq('a',  test_xstrlcat('a', '',  4096))
   end)
 
-  it('concatenates overlapping strings', function()
+  itp('concatenates overlapping strings', function()
     eq('abcabc',  test_xstrlcat_overlap('abc', 0, 7))
     eq('abca',    test_xstrlcat_overlap('abc', 0, 5))
     eq('abcb',    test_xstrlcat_overlap('abc', 1, 5))
@@ -42,7 +43,7 @@ describe('xstrlcat()', function()
     eq('abcabc',  test_xstrlcat_overlap('abc', 0, 2343))
   end)
 
-  it('truncates if `dsize` is too small', function()
+  itp('truncates if `dsize` is too small', function()
     eq('a', test_xstrlcat('a', 'b', 2))
     eq('', test_xstrlcat('', 'b', 1))
     eq('ABCיהZd',  test_xstrlcat('ABCיהZ', 'defgiיהZ',  10))
