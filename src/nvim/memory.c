@@ -475,6 +475,13 @@ void *xmemdup(const void *data, size_t len)
   return memcpy(xmalloc(len), data, len);
 }
 
+/// Returns true if strings `a` and `b` are equal. Arguments may be NULL.
+bool strequal(const char *a, const char *b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a == NULL && b == NULL) || (a && b && strcmp(a, b) == 0);
+}
+
 /*
  * Avoid repeating the error message many times (they take 1 second each).
  * Did_outofmem_msg is reset when a character is read.

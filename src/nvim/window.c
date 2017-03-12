@@ -2998,8 +2998,7 @@ void free_tabpage(tabpage_T *tp)
   hash_init(&tp->tp_vars->dv_hashtab);
   unref_var_dict(tp->tp_vars);
 
-
-  xfree(tp->localdir);  // Free tab-local working directory
+  xfree(tp->tp_localdir);
   xfree(tp);
 }
 
@@ -3025,7 +3024,7 @@ int win_new_tabpage(int after, char_u *filename)
     return FAIL;
   }
 
-  newtp->localdir = tp->localdir ? vim_strsave(tp->localdir) : NULL;
+  newtp->tp_localdir = tp->tp_localdir ? vim_strsave(tp->tp_localdir) : NULL;
 
   curtab = newtp;
 
@@ -3617,28 +3616,38 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     curwin->w_cursor.coladd = 0;
   changed_line_abv_curs();      /* assume cursor position needs updating */
 
-  // The new directory is either the local directory of the window, of the tab
-  // or NULL.
-  char_u *new_dir = curwin->w_localdir ? curwin->w_localdir : curtab->localdir;
+  // New directory is either the local directory of the window, tab or NULL.
+  char *new_dir = (char *)(curwin->w_localdir
+                           ? curwin->w_localdir : curtab->tp_localdir);
+
+  char cwd[MAXPATHL];
+  if (os_dirname((char_u *)cwd, MAXPATHL) != OK) {
+    cwd[0] = NUL;
+  }
 
   if (new_dir) {
     // Window/tab has a local directory: Save current directory as global
-    // directory (unless that was done already) and change to the local
-    // directory.
+    // (unless that was done already) and change to the local directory.
     if (globaldir == NULL) {
-      char_u cwd[MAXPATHL];
-
-      if (os_dirname(cwd, MAXPATHL) == OK) {
-        globaldir = vim_strsave(cwd);
+      if (cwd[0] != NUL) {
+        globaldir = (char_u *)xstrdup(cwd);
       }
     }
-    if (os_chdir((char *)new_dir) == 0) {
+    if (os_chdir(new_dir) == 0) {
+      if (!p_acd && !strequal(new_dir, cwd)) {
+        do_autocmd_dirchanged(new_dir, curwin->w_localdir
+                              ? kCdScopeWindow : kCdScopeTab);
+      }
       shorten_fnames(true);
     }
   } else if (globaldir != NULL) {
-    /* Window doesn't have a local directory and we are not in the global
-     * directory: Change to the global directory. */
-    ignored = os_chdir((char *)globaldir);
+    // Window doesn't have a local directory and we are not in the global
+    // directory: Change to the global directory.
+    if (os_chdir((char *)globaldir) == 0) {
+      if (!p_acd && !strequal((char *)globaldir, cwd)) {
+        do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal);
+      }
+    }
     xfree(globaldir);
     globaldir = NULL;
     shorten_fnames(TRUE);

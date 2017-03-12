@@ -1519,7 +1519,7 @@ theend:
   return file_name;
 }
 
-static void do_autocmd_dirchanged(char_u *new_dir, CdScope scope)
+void do_autocmd_dirchanged(char *new_dir, CdScope scope)
 {
   static bool recursive = false;
 
@@ -1550,10 +1550,11 @@ static void do_autocmd_dirchanged(char_u *new_dir, CdScope scope)
   }
 
   dict_add_nr_str(dict, "scope", 0L, (char_u *)buf);
-  dict_add_nr_str(dict, "cwd",   0L, new_dir);
+  dict_add_nr_str(dict, "cwd",   0L, (char_u *)new_dir);
   dict_set_keys_readonly(dict);
 
-  apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, new_dir, false, NULL);
+  apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
+                 NULL);
 
   dict_clear(dict);
 
@@ -1565,14 +1566,25 @@ static void do_autocmd_dirchanged(char_u *new_dir, CdScope scope)
 /// @return OK or FAIL
 int vim_chdirfile(char_u *fname)
 {
-  char_u dir[MAXPATHL];
+  char dir[MAXPATHL];
 
   STRLCPY(dir, fname, MAXPATHL);
-  *path_tail_with_sep(dir) = NUL;
-  if (os_chdir((char *)dir) != 0) {
+  *path_tail_with_sep((char_u *)dir) = NUL;
+
+  if (os_dirname(NameBuff, sizeof(NameBuff)) != OK) {
+    NameBuff[0] = NUL;
+  }
+
+  if (os_chdir(dir) != 0) {
     return FAIL;
   }
-  do_autocmd_dirchanged(dir, kCdScopeWindow);
+
+#ifdef BACKSLASH_IN_FILENAME
+  slash_adjust(dir);
+#endif
+  if (!strequal(dir, (char *)NameBuff)) {
+    do_autocmd_dirchanged(dir, kCdScopeWindow);
+  }
 
   return OK;
 }
@@ -1587,10 +1599,6 @@ int vim_chdir(char_u *new_dir, CdScope scope)
   }
 
   int r = os_chdir((char *)dir_name);
-  if (r == 0) {
-    do_autocmd_dirchanged(dir_name, scope);
-  }
-
   xfree(dir_name);
   return r;
 }
