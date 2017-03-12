@@ -314,6 +314,29 @@ local function alloc_log_new()
     eq(exp, self.log)
     self:clear()
   end
+  function log:clear_tmp_allocs()
+    local toremove = {}
+    local allocs = {}
+    for i, v in ipairs(self.log) do
+      if v.func == 'malloc' or v.func == 'calloc' then
+        allocs[tostring(v.ret)] = i
+      elseif v.func == 'realloc' or v.func == 'free' then
+        if allocs[tostring(v.args[1])] then
+          toremove[#toremove + 1] = allocs[tostring(v.args[1])]
+          if v.func == 'free' then
+            toremove[#toremove + 1] = i
+          end
+        end
+        if v.func == 'realloc' then
+          allocs[tostring(v.ret)] = i
+        end
+      end
+    end
+    table.sort(toremove)
+    for i = #toremove,1,-1 do
+      table.remove(self.log, toremove[i])
+    end
+  end
   function log:restore_original_functions()
     -- Do nothing: set mocks live in a separate process
     return

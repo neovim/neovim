@@ -538,6 +538,7 @@ return {
 
   dict_watchers=dict_watchers,
   tbl2callback=tbl2callback,
+  callback2tbl=callback2tbl,
 
   empty_list = {[type_key]=list_type},
 }

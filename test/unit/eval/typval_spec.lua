@@ -20,26 +20,26 @@ local dict = eval_helpers.dict
 local lst2tbl = eval_helpers.lst2tbl
 local dct2tbl = eval_helpers.dct2tbl
 local typvalt = eval_helpers.typvalt
-local type_key  = eval_helpers.type_key
-local li_alloc  = eval_helpers.li_alloc
-local int_type  = eval_helpers.int_type
-local first_di  = eval_helpers.first_di
-local func_type  = eval_helpers.func_type
-local null_list  = eval_helpers.null_list
-local null_dict  = eval_helpers.null_dict
-local empty_list  = eval_helpers.empty_list
-local lua2typvalt  = eval_helpers.lua2typvalt
-local typvalt2lua  = eval_helpers.typvalt2lua
-local null_string  = eval_helpers.null_string
+local type_key = eval_helpers.type_key
+local li_alloc = eval_helpers.li_alloc
+local first_di = eval_helpers.first_di
+local func_type = eval_helpers.func_type
+local null_list = eval_helpers.null_list
+local null_dict = eval_helpers.null_dict
+local dict_items = eval_helpers.dict_items
+local empty_list = eval_helpers.empty_list
+local lua2typvalt = eval_helpers.lua2typvalt
+local typvalt2lua = eval_helpers.typvalt2lua
+local null_string = eval_helpers.null_string
+local callback2tbl = eval_helpers.callback2tbl
 local tbl2callback = eval_helpers.tbl2callback
 local dict_watchers = eval_helpers.dict_watchers
 
-local uname = global_helpers.uname
 local concat_tables = global_helpers.concat_tables
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/mbyte.h', './src/nvim/garray.h',
-                    './src/nvim/eval.h')
+                    './src/nvim/eval.h', './src/nvim/vim.h')
 
 local function list_items(l)
   local lis = {}
@@ -79,30 +79,6 @@ before_each(function()
   alloc_log:before_each()
 end)
 
-local function clear_tmp_allocs()
-  local toremove = {}
-  local allocs = {}
-  for i, v in ipairs(alloc_log.log) do
-    if v.func == 'malloc' or v.func == 'calloc' then
-      allocs[tostring(v.ret)] = i
-    elseif v.func == 'realloc' or v.func == 'free' then
-      if allocs[tostring(v.args[1])] then
-        toremove[#toremove + 1] = allocs[tostring(v.args[1])]
-        if v.func == 'free' then
-          toremove[#toremove + 1] = i
-        end
-      end
-      if v.func == 'realloc' then
-        allocs[tostring(v.ret)] = i
-      end
-    end
-  end
-  table.sort(toremove)
-  for i = #toremove,1,-1 do
-    table.remove(alloc_log.log, toremove[i])
-  end
-end
-
 after_each(function()
   alloc_log:after_each()
 end)
@@ -116,12 +92,19 @@ end
 
 local function check_emsg(f, msg)
   local saved_last_msg_hist = lib.last_msg_hist
+  if saved_last_msg_hist == nil then
+    saved_last_msg_hist = nil
+  end
   local ret = {f()}
   if msg ~= nil then
-    neq(saved_last_msg_hist, lib.last_msg_hist)
     eq(msg, ffi.string(lib.last_msg_hist.msg))
+    neq(saved_last_msg_hist, lib.last_msg_hist)
   else
-    eq(saved_last_msg_hist, lib.last_msg_hist)
+    if saved_last_msg_hist ~= lib.last_msg_hist then
+      eq(nil, ffi.string(lib.last_msg_hist.msg))
+    else
+      eq(saved_last_msg_hist, lib.last_msg_hist)
+    end
   end
   return unpack(ret)
 end
@@ -667,8 +650,7 @@ describe('typval.c', function()
             a.li(l.lv_last),
           })
 
-          eq({{[type_key]=int_type, value=-100500},
-              {[type_key]=int_type, value=100500}}, typvalt2lua(l_tv))
+          eq({int(-100500), int(100500)}, typvalt2lua(l_tv))
         end)
       end)
     end)
@@ -769,7 +751,7 @@ describe('typval.c', function()
         eq({{['\171']='\187'}, {'\191'}, 1, '\191', null_string, null_list, null_dict},
            lst2tbl(l_deepcopy1))
         local di_deepcopy1 = first_di(lis_deepcopy1[1].li_tv.vval.v_dict)
-        clear_tmp_allocs()
+        alloc_log:clear_tmp_allocs()
         alloc_log:check({
           a.list(l_deepcopy1),
           a.li(lis_deepcopy1[1]),
@@ -1570,9 +1552,222 @@ describe('typval.c', function()
       end)
     end)
     describe('indexing', function()
-      describe('find', function()
+      describe('find()', function()
+        local function tv_dict_find(d, key, key_len)
+          local di = lib.tv_dict_find(d, key, key_len or #key)
+          if di == nil then
+            return nil, nil, nil
+          end
+          return typvalt2lua(di.di_tv), ffi.string(di.di_key), di
+        end
         itp('works with NULL dict', function()
           eq(nil, lib.tv_dict_find(nil, '', 0))
+          eq(nil, lib.tv_dict_find(nil, 'test', -1))
+          eq(nil, lib.tv_dict_find(nil, nil, 0))
+        end)
+        itp('works with NULL key', function()
+          local lua_d = {
+            ['']=0,
+            t=1,
+            te=2,
+            tes=3,
+            test=4,
+            testt=5,
+          }
+          local d = dict(lua_d)
+          alloc_log:clear()
+          eq(lua_d, dct2tbl(d))
+          alloc_log:check({})
+          local dis = dict_items(d)
+          eq({0, '', dis['']}, {tv_dict_find(d, '', 0)})
+          eq({0, '', dis['']}, {tv_dict_find(d, nil, 0)})
+        end)
+        itp('works with len properly', function()
+          local lua_d = {
+            ['']=0,
+            t=1,
+            te=2,
+            tes=3,
+            test=4,
+            testt=5,
+          }
+          local d = dict(lua_d)
+          alloc_log:clear()
+          eq(lua_d, dct2tbl(d))
+          alloc_log:check({})
+          for i = 0, 5 do
+            local v, k = tv_dict_find(d, 'testt', i)
+            eq({i, ('testt'):sub(1, i)}, {v, k})
+          end
+          eq(nil, tv_dict_find(d, 'testt', 6))  -- Should take NUL byte
+          eq(5, tv_dict_find(d, 'testt', -1))
+          alloc_log:check({})
+        end)
+      end)
+      describe('get_number()', function()
+        itp('works with NULL dict', function()
+          eq(0, check_emsg(function() return lib.tv_dict_get_number(nil, 'test') end,
+                           nil))
+        end)
+        itp('works', function()
+          local d = ffi.gc(dict({test={}}), nil)
+          eq(0, check_emsg(function() return lib.tv_dict_get_number(d, 'test') end,
+                           'E728: Using a Dictionary as a Number'))
+          d = ffi.gc(dict({tes=int(42), t=44, te='43'}), nil)
+          alloc_log:clear()
+          eq(0, check_emsg(function() return lib.tv_dict_get_number(d, 'test') end,
+                           nil))
+          eq(42, check_emsg(function() return lib.tv_dict_get_number(d, 'tes') end,
+                            nil))
+          eq(43, check_emsg(function() return lib.tv_dict_get_number(d, 'te') end,
+                            nil))
+          alloc_log:check({})
+          eq(0, check_emsg(function() return lib.tv_dict_get_number(d, 't') end,
+                           'E805: Using a Float as a Number'))
+        end)
+      end)
+      describe('get_string()', function()
+        itp('works with NULL dict', function()
+          eq(nil, check_emsg(function() return lib.tv_dict_get_string(nil, 'test', false) end,
+                             nil))
+        end)
+        itp('works', function()
+          local d = ffi.gc(dict({test={}}), nil)
+          eq('', ffi.string(check_emsg(function() return lib.tv_dict_get_string(d, 'test', false) end,
+                                       'E731: using Dictionary as a String')))
+          d = ffi.gc(dict({tes=int(42), t=44, te='43', xx=int(45)}), nil)
+          alloc_log:clear()
+          local dis = dict_items(d)
+          eq(nil, check_emsg(function() return lib.tv_dict_get_string(d, 'test', false) end,
+                             nil))
+          local s42 = check_emsg(function() return lib.tv_dict_get_string(d, 'tes', false) end,
+                                 nil)
+          eq('42', ffi.string(s42))
+          local s45 = check_emsg(function() return lib.tv_dict_get_string(d, 'xx', false) end,
+                                 nil)
+          eq(s42, s45)
+          eq('45', ffi.string(s45))
+          eq('45', ffi.string(s42))
+          local s43 = check_emsg(function() return lib.tv_dict_get_string(d, 'te', false) end,
+                                 nil)
+          eq('43', ffi.string(s43))
+          neq(s42, s43)
+          eq(s43, dis.te.di_tv.vval.v_string)
+          alloc_log:check({})
+          eq('', ffi.string(check_emsg(function() return lib.tv_dict_get_string(d, 't', false) end,
+                                       'E806: using Float as a String')))
+        end)
+        itp('allocates a string copy when requested', function()
+          local function tv_dict_get_string_alloc(d, key, emsg)
+            alloc_log:clear()
+            local ret = check_emsg(function() return lib.tv_dict_get_string(d, key, true) end,
+                                   emsg)
+            local s_ret = (ret ~= nil) and ffi.string(ret) or nil
+            if not emsg then
+              if s_ret then
+                alloc_log:check({a.str(ret, s_ret)})
+              else
+                alloc_log:check({})
+              end
+            end
+            lib.xfree(ret)
+            return s_ret
+          end
+          local d = ffi.gc(dict({test={}}), nil)
+          eq('', tv_dict_get_string_alloc(d, 'test', 'E731: using Dictionary as a String'))
+          d = ffi.gc(dict({tes=int(42), t=44, te='43', xx=int(45)}), nil)
+          alloc_log:clear()
+          eq(nil, tv_dict_get_string_alloc(d, 'test'))
+          eq('42', tv_dict_get_string_alloc(d, 'tes'))
+          eq('45', tv_dict_get_string_alloc(d, 'xx'))
+          eq('43', tv_dict_get_string_alloc(d, 'te'))
+          eq('', tv_dict_get_string_alloc(d, 't', 'E806: using Float as a String'))
+        end)
+      end)
+      describe('get_string_buf()', function()
+        local function tv_dict_get_string_buf(d, key, buf, emsg)
+          buf = buf or ffi.gc(lib.xmalloc(lib.NUMBUFLEN), lib.xfree)
+          alloc_log:clear()
+          local ret = check_emsg(function() return lib.tv_dict_get_string_buf(d, key, buf) end,
+                                 emsg)
+          local s_ret = (ret ~= nil) and ffi.string(ret) or nil
+          if not emsg then
+            alloc_log:check({})
+          end
+          return s_ret, ret, buf
+        end
+        itp('works with NULL dict', function()
+          eq(nil, tv_dict_get_string_buf(nil, 'test'))
+        end)
+        itp('works', function()
+          local lua_d = {
+            ['']={},
+            t=1,
+            te=int(2),
+            tes=empty_list,
+            test='tset',
+            testt=5,
+          }
+          local d = dict(lua_d)
+          alloc_log:clear()
+          eq(lua_d, dct2tbl(d))
+          alloc_log:check({})
+          local s, r, b
+          s, r, b = tv_dict_get_string_buf(d, 'test')
+          neq(r, b)
+          eq('tset', s)
+          s, r, b = tv_dict_get_string_buf(d, 't', nil, 'E806: using Float as a String')
+          neq(r, b)
+          eq('', s)
+          s, r, b = tv_dict_get_string_buf(d, 'te')
+          eq(r, b)
+          eq('2', s)
+        end)
+      end)
+      describe('get_callback()', function()
+        local function tv_dict_get_callback(d, key, key_len, emsg)
+          key_len = key_len or #key
+          local cb = ffi.gc(ffi.cast('Callback*', lib.xmalloc(ffi.sizeof('Callback'))), lib.callback_free)
+          alloc_log:clear()
+          local ret = check_emsg(function()
+            return lib.tv_dict_get_callback(d, key, key_len, cb)
+          end, emsg)
+          local cb_lua = callback2tbl(cb[0])
+          return cb_lua, ret
+        end
+        itp('works with NULL dict', function()
+          eq({{type='none'}, true},
+             {tv_dict_get_callback(nil, nil, 0)})
+        end)
+        itp('works', function()
+          local lua_d = {
+            ['']='tr',
+            t=int(1),
+            te={[type_key]=func_type, value='tr'},
+            tes={[type_key]=func_type, value='tr', args={'a', 'b'}},
+            test={[type_key]=func_type, value='Test', dict={test=1}, args={}},
+            testt={[type_key]=func_type, value='Test', dict={test=1}, args={1}},
+          }
+          local d = dict(lua_d)
+          eq(lua_d, dct2tbl(d))
+          eq({{type='fref', fref='tr'}, true},
+             {tv_dict_get_callback(d, nil, 0)})
+          eq({{type='fref', fref='tr'}, true},
+             {tv_dict_get_callback(d, '', -1)})
+          eq({{type='none'}, true},
+             {tv_dict_get_callback(d, 'x', -1)})
+          eq({{type='fref', fref='tr'}, true},
+             {tv_dict_get_callback(d, 'testt', 0)})
+          eq({{type='none'}, false},
+             {tv_dict_get_callback(d, 'test', 1, 'E6000: Argument is not a function or function name')})
+          eq({{type='fref', fref='tr'}, true},
+             {tv_dict_get_callback(d, 'testt', 2)})
+          eq({{ type='pt', fref='tr', pt={ [type_key]=func_type, value='tr', args={ 'a', 'b' } } }, true},
+             {tv_dict_get_callback(d, 'testt', 3)})
+          eq({{ type='pt', fref='Test', pt={ [type_key]=func_type, value='Test', dict={ test=1 }, args={} } }, true},
+             {tv_dict_get_callback(d, 'testt', 4)})
+          eq({{ type='pt', fref='Test', pt={ [type_key]=func_type, value='Test', dict={ test=1 }, args={1} } }, true},
+             {tv_dict_get_callback(d, 'testt', 5)})
         end)
       end)
     end)

@@ -30,7 +30,7 @@ Error: configure did not run properly.Check auto/config.log.
 #include "nvim/os/os_defs.h"       /* bring lots of system header files */
 
 /// length of a buffer to store a number in ASCII (64 bits binary + NUL)
-#define NUMBUFLEN 65
+enum { NUMBUFLEN = 65 };
 
 // flags for vim_str2nr()
 #define STR2NR_BIN 1
