@@ -1133,7 +1133,7 @@ describe('typval.c', function()
         local recursive_li = recursive_l.lv_first
         lib.tv_list_item_remove(recursive_l, recursive_li)
         lib.tv_list_free(l)
-      end, uname() == 'Darwin')
+      end)
     end)
     describe('equal()', function()
       itp('compares empty and NULL lists correctly', function()
