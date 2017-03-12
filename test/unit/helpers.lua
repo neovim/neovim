@@ -165,7 +165,7 @@ end
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
 cimport = function(...)
-  local previous_defines, preprocess_cache
+  local previous_defines, preprocess_cache, cdefs
   if is_child_cdefs() and preprocess_cache_mod then
     preprocess_cache = preprocess_cache_mod
     previous_defines = previous_defines_mod
