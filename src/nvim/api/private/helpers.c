@@ -982,7 +982,7 @@ void _api_set_error(Error *err, ErrorType errType, const char *format, ...)
     err->msg = xmalloc(len+1);
     vsprintf(err->msg, format, args2);
     va_end(args2);
-	
+
     err->set = true;
     err->type = errType;
 }
