@@ -158,11 +158,15 @@ local preprocess_cache_init = {}
 local previous_defines_mod = ''
 local preprocess_cache_mod = nil
 
+local function is_child_cdefs()
+  return (os.getenv('NVIM_TEST_MAIN_CDEFS') ~= '1')
+end
+
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
 cimport = function(...)
   local previous_defines, preprocess_cache
-  if preprocess_cache_mod then
+  if is_child_cdefs() and preprocess_cache_mod then
     preprocess_cache = preprocess_cache_mod
     previous_defines = previous_defines_mod
     cdefs = cdefs_mod
@@ -240,7 +244,7 @@ local cimport_immediate = function(...)
   end
 end
 
-cimportstr = child_call(function(preprocess_cache, path)
+local function _cimportstr(preprocess_cache, path)
   if imported:contains(path) then
     return lib
   end
@@ -252,7 +256,13 @@ cimportstr = child_call(function(preprocess_cache, path)
   imported:add(path)
 
   return lib
-end, lib)
+end
+
+if is_child_cdefs() then
+  cimportstr = child_call(_cimportstr, lib)
+else
+  cimportstr = _cimportstr
+end
 
 local function alloc_log_new()
   local log = {
