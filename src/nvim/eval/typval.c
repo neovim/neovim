@@ -1009,18 +1009,6 @@ void tv_dict_item_free(dictitem_T *const item)
   }
 }
 
-/// Add item to dictionary
-///
-/// @param[out]  d  Dictionary to add to.
-/// @param[in]  item  Item to add.
-///
-/// @return FAIL if key already exists.
-int tv_dict_add(dict_T *const d, dictitem_T *const item)
-  FUNC_ATTR_NONNULL_ALL
-{
-  return hash_add(&d->dv_hashtab, item->di_key);
-}
-
 /// Make a copy of a dictionary item
 ///
 /// @param[in]  di  Item to copy.
@@ -1278,6 +1266,18 @@ bool tv_dict_get_callback(dict_T *const d,
 
 //{{{2 dict_add*
 
+/// Add item to dictionary
+///
+/// @param[out]  d  Dictionary to add to.
+/// @param[in]  item  Item to add.
+///
+/// @return FAIL if key already exists.
+int tv_dict_add(dict_T *const d, dictitem_T *const item)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return hash_add(&d->dv_hashtab, item->di_key);
+}
+
 /// Add a list entry to dictionary
 ///
 /// @param[out]  d  Dictionary to add entry to.
@@ -1295,11 +1295,11 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
   item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_LIST;
   item->di_tv.vval.v_list = list;
+  list->lv_refcount++;
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
   }
-  list->lv_refcount++;
   return OK;
 }
 
@@ -1313,18 +1313,18 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
 /// @return OK in case of success, FAIL when key already exists.
 int tv_dict_add_dict(dict_T *const d, const char *const key,
                      const size_t key_len, dict_T *const dict)
-    FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
-  dictitem_T *const item = tv_dict_item_alloc(key);
+  dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
   item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_DICT;
   item->di_tv.vval.v_dict = dict;
+  dict->dv_refcount++;
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;
   }
-  dict->dv_refcount++;
   return OK;
 }
 
