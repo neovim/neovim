@@ -1913,59 +1913,30 @@ static int vgetorpeek(int advance)
 
           if ((mp == NULL || max_mlen >= mp_match_len)
               && keylen != KEYLEN_PART_MAP) {
-            // When no matching mapping found or found a non-matching mapping
-            // that matches at least what the matching mapping matched:
-            // Check if we have a terminal code, when:
-            //  mapping is allowed,
-            //  keys have not been mapped,
-            //  and not an ESC sequence, not in insert mode,
-            //  and when not timed out.
-            if ((no_mapping == 0 || allow_keys != 0)
-                && (typebuf.tb_maplen == 0
-                    || (p_remap && typebuf.tb_noremap[
-                          typebuf.tb_off] == RM_YES))
-                && !timedout) {
-              keylen = 0;
-            } else
-              keylen = 0;
-            if (keylen == 0) {                  /* no matching terminal code */
-              /* When there was a matching mapping and no
-               * termcode could be replaced after another one,
-               * use that mapping (loop around). If there was
-               * no mapping use the character from the
-               * typeahead buffer right here. */
-              if (mp == NULL) {
-                /*
-                 * get a character: 2. from the typeahead buffer
-                 */
-                c = typebuf.tb_buf[typebuf.tb_off] & 255;
-                if (advance) {                  /* remove chars from tb_buf */
-                  cmd_silent = (typebuf.tb_silent > 0);
-                  if (typebuf.tb_maplen > 0)
-                    KeyTyped = FALSE;
-                  else {
-                    KeyTyped = TRUE;
-                    /* write char to script file(s) */
-                    gotchars(typebuf.tb_buf
-                        + typebuf.tb_off, 1);
-                  }
-                  KeyNoremap = typebuf.tb_noremap[
-                    typebuf.tb_off];
-                  del_typebuf(1, 0);
+            // No matching mapping found or found a non-matching mapping that
+            // matches at least what the matching mapping matched
+            keylen = 0;
+            // If there was no mapping, use the character from the typeahead
+            // buffer right here. Otherwise, use the mapping (loop around).
+            if (mp == NULL) {
+              // get a character: 2. from the typeahead buffer
+              c = typebuf.tb_buf[typebuf.tb_off] & 255;
+              if (advance) {                  // remove chars from tb_buf
+                cmd_silent = (typebuf.tb_silent > 0);
+                if (typebuf.tb_maplen > 0) {
+                  KeyTyped = false;
+                } else {
+                  KeyTyped = true;
+                  // write char to script file(s)
+                  gotchars(typebuf.tb_buf + typebuf.tb_off, 1);
                 }
-                break;                      /* got character, break for loop */
+                KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
+                del_typebuf(1, 0);
               }
-            }
-            if (keylen > 0) {               /* full matching terminal code */
-              continue;                 /* try mapping again */
-            }
-
-            /* Partial match: get some more characters.  When a
-             * matching mapping was found use that one. */
-            if (mp == NULL || keylen < 0)
-              keylen = KEYLEN_PART_KEY;
-            else
+              break;  // got character, break for loop
+            } else {
               keylen = mp_match_len;
+            }
           }
 
           /* complete match */
