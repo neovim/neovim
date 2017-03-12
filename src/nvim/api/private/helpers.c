@@ -979,7 +979,7 @@ void _api_set_error(Error *err, ErrorType errType, const char *format, ...)
     va_copy(args2, args1);
     int len = vsnprintf(NULL, 0, format, args1);
     va_end(args1);
-    err->msg = xmalloc(len+1);
+    err->msg = xmalloc((size_t)len + 1);
     vsprintf(err->msg, format, args2);
     va_end(args2);
 
