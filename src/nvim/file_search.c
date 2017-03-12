@@ -1566,14 +1566,25 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
 /// @return OK or FAIL
 int vim_chdirfile(char_u *fname)
 {
-  char_u dir[MAXPATHL];
+  char dir[MAXPATHL];
 
   STRLCPY(dir, fname, MAXPATHL);
-  *path_tail_with_sep(dir) = NUL;
-  if (os_chdir((char *)dir) != 0) {
+  *path_tail_with_sep((char_u *)dir) = NUL;
+
+  if (os_dirname(NameBuff, sizeof(NameBuff)) != OK) {
+    NameBuff[0] = NUL;
+  }
+
+  if (os_chdir(dir) != 0) {
     return FAIL;
   }
-  do_autocmd_dirchanged((char *)dir, kCdScopeWindow);
+
+#ifdef BACKSLASH_IN_FILENAME
+  slash_adjust(dir);
+#endif
+  if (!strequal(dir, (char *)NameBuff)) {
+    do_autocmd_dirchanged(dir, kCdScopeWindow);
+  }
 
   return OK;
 }

@@ -6960,8 +6960,8 @@ void post_chdir(CdScope scope)
     }
   }
 
-  char curdir[MAXPATHL];
-  if (os_dirname((char_u *)curdir, MAXPATHL) != OK) {
+  char cwd[MAXPATHL];
+  if (os_dirname((char_u *)cwd, MAXPATHL) != OK) {
     return;
   }
   switch (scope) {
@@ -6971,17 +6971,17 @@ void post_chdir(CdScope scope)
     globaldir = NULL;
     break;
   case kCdScopeTab:
-    curtab->tp_localdir = (char_u *)xstrdup(curdir);
+    curtab->tp_localdir = (char_u *)xstrdup(cwd);
     break;
   case kCdScopeWindow:
-    curwin->w_localdir = (char_u *)xstrdup(curdir);
+    curwin->w_localdir = (char_u *)xstrdup(cwd);
     break;
   case kCdScopeInvalid:
     assert(false);
   }
 
   shorten_fnames(true);
-  do_autocmd_dirchanged(curdir, scope);
+  do_autocmd_dirchanged(cwd, scope);
 }
 
 /// `:cd`, `:tcd`, `:lcd`, `:chdir`, `:tchdir` and `:lchdir`.
