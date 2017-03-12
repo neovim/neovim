@@ -1,4 +1,5 @@
-local helpers = require("test.unit.helpers")
+local helpers = require("test.unit.helpers")(after_each)
+local itp = helpers.gen_itp(it)
 
 local ffi = helpers.ffi
 local eq = helpers.eq
@@ -35,23 +36,23 @@ describe('trunc_string', function()
 
   for _,t in ipairs(permutations) do
     describe('populates buf '..t.desc, function()
-      it('with a small string', function()
+      itp('with a small string', function()
         t.func('text', 'text')
       end)
 
-      it('with a medium string', function()
+      itp('with a medium string', function()
         t.func('a short text', 'a short text')
       end)
 
-      it('with a string of length == 1/2 room', function()
+      itp('with a string of length == 1/2 room', function()
         t.func('a text that fits', 'a text that fits', 34)
       end)
 
-      it('with a string exactly the truncate size', function()
+      itp('with a string exactly the truncate size', function()
         t.func('a text tha just fits', 'a text tha just fits')
       end)
 
-      it('with a string that must be truncated', function()
+      itp('with a string that must be truncated', function()
         t.func('a text that nott fits', 'a text t...nott fits')
       end)
     end)
