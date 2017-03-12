@@ -16,11 +16,15 @@ func Test_valid()
   call assert_equal('^\(foo\|bar\)$', glob2regpat('{foo,bar}'))
   call assert_equal('.*', glob2regpat('**'))
 
-  if has('unix')
+  if exists('+shellslash')
+    call assert_equal('^foo[\/].$', glob2regpat('foo\?'))
+    call assert_equal('^\(foo[\/]\|bar\|foobar\)$', glob2regpat('{foo\,bar,foobar}'))
+    call assert_equal('^[\/]\(foo\|bar[\/]\)$', glob2regpat('\{foo,bar\}'))
+    call assert_equal('^[\/][\/]\(foo\|bar[\/][\/]\)$', glob2regpat('\\{foo,bar\\}'))
+  else
     call assert_equal('^foo?$', glob2regpat('foo\?'))
     call assert_equal('^\(foo,bar\|foobar\)$', glob2regpat('{foo\,bar,foobar}'))
     call assert_equal('^{foo,bar}$', glob2regpat('\{foo,bar\}'))
     call assert_equal('^\\\(foo\|bar\\\)$', glob2regpat('\\{foo,bar\\}'))
-  " todo: Windows
   endif
 endfunc
