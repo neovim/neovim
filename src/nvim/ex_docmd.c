@@ -6962,7 +6962,6 @@ void post_chdir(CdScope scope)
 
   char curdir[MAXPATHL];
   if (os_dirname((char_u *)curdir, MAXPATHL) != OK) {
-    EMSG2(_(e_intern2), "post_chdir()");
     return;
   }
   switch (scope) {
@@ -6981,7 +6980,7 @@ void post_chdir(CdScope scope)
     assert(false);
   }
 
-  shorten_fnames(TRUE);
+  shorten_fnames(true);
   do_autocmd_dirchanged(curdir, scope);
 }
 

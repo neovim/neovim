@@ -1550,10 +1550,11 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
   }
 
   dict_add_nr_str(dict, "scope", 0L, (char_u *)buf);
-  dict_add_nr_str(dict, "cwd",   0L, new_dir);
+  dict_add_nr_str(dict, "cwd",   0L, (char_u *)new_dir);
   dict_set_keys_readonly(dict);
 
-  apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, new_dir, false, NULL);
+  apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
+                 NULL);
 
   dict_clear(dict);
 
@@ -1572,7 +1573,7 @@ int vim_chdirfile(char_u *fname)
   if (os_chdir((char *)dir) != 0) {
     return FAIL;
   }
-  do_autocmd_dirchanged(dir, kCdScopeWindow);
+  do_autocmd_dirchanged((char *)dir, kCdScopeWindow);
 
   return OK;
 }

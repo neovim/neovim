@@ -109,6 +109,34 @@ describe('autocmd DirChanged', function()
     eq({cwd=dirs[2], scope='window'}, eval('g:event'))
   end)
 
+  it("is triggered by switching to win/tab with different CWD #6054", function()
+    command('lcd '..dirs[3])            -- window 3
+    command('split '..dirs[2]..'/foo')  -- window 2
+    command('lcd '..dirs[2])
+    command('split '..dirs[1]..'/bar')  -- window 1
+    command('lcd '..dirs[1])
+
+    command('2wincmd w')                -- window 2
+    eq({cwd=dirs[2], scope='window'}, eval('g:event'))
+
+    eq(4, eval('g:cdcount'))
+    command('tabnew')                   -- tab 2 (tab-local CWD)
+    eq(4, eval('g:cdcount'))            -- same CWD, no DirChanged event
+    command('tcd '..dirs[3])
+    command('tabnext')                  -- tab 1 (no tab-local CWD)
+    eq({cwd=dirs[2], scope='window'}, eval('g:event'))
+    command('tabnext')                  -- tab 2
+    eq({cwd=dirs[3], scope='tab'}, eval('g:event'))
+    eq(7, eval('g:cdcount'))
+
+    command('tabnext')                  -- tab 1
+    command('3wincmd w')                -- window 3
+    eq(9, eval('g:cdcount'))
+    command('tabnext')                  -- tab 2 (has the *same* CWD)
+    eq(9, eval('g:cdcount'))            -- same CWD, no DirChanged event
+
+  end)
+
   it('is triggered by nvim_set_current_dir()', function()
     request('nvim_set_current_dir', dirs[1])
     eq({cwd=dirs[1], scope='global'}, eval('g:event'))
