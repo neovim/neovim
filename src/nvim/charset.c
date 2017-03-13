@@ -787,10 +787,9 @@ bool vim_iswordc(int c)
 bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  if (c >= 0x100) {
-    return utf_class(c) >= 2;
-  }
-  return c > 0 && c < 0x100 && GET_CHARTAB_TAB(chartab, c) != 0;
+  return (c >= 0x100
+          ? (utf_class(c) >= 2)
+          : (c > 0 && GET_CHARTAB_TAB(chartab, c) != 0));
 }
 
 /// Check that "c" is a keyword character:
