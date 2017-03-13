@@ -498,6 +498,16 @@ local function dict_watchers(d)
   return ret, qs, key_patterns
 end
 
+local function eval0(expr)
+  local tv = ffi.gc(ffi.new('typval_T', {v_type=eval.VAR_UNKNOWN}),
+                    eval.tv_clear)
+  if eval.eval0(to_cstr(expr), tv, nil, true) == 0 then
+    return nil
+  else
+    return tv
+  end
+end
+
 return {
   int=int,
 
@@ -539,6 +549,8 @@ return {
   dict_watchers=dict_watchers,
   tbl2callback=tbl2callback,
   callback2tbl=callback2tbl,
+
+  eval0=eval0,
 
   empty_list = {[type_key]=list_type},
 }

@@ -1,4 +1,6 @@
 local helpers = require('test.unit.helpers')(after_each)
+local eval_helpers = require('test.unit.eval.helpers')
+
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
@@ -6,18 +8,10 @@ local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
 local eq = helpers.eq
 
+local eval0 = eval_helpers.eval0
+
 local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h',
                      './src/nvim/memory.h')
-
-local eval0 = function(expr)
-  local tv = ffi.gc(ffi.new('typval_T', {v_type=eval.VAR_UNKNOWN}),
-                    eval.tv_clear)
-  if eval.eval0(to_cstr(expr), tv, nil, true) == 0 then
-    return nil
-  else
-    return tv
-  end
-end
 
 describe('NULL typval_T', function()
   itp('is produced by $XXX_UNEXISTENT_VAR_XXX', function()

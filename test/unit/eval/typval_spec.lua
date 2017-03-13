@@ -1,6 +1,7 @@
+local bit = require('bit')
 local helpers = require('test.unit.helpers')(after_each)
-local global_helpers = require('test.helpers')
 local eval_helpers = require('test.unit.eval.helpers')
+local global_helpers = require('test.helpers')
 
 local itp = helpers.gen_itp(it)
 
@@ -17,6 +18,7 @@ local a = eval_helpers.alloc_logging_helpers
 local int = eval_helpers.int
 local list = eval_helpers.list
 local dict = eval_helpers.dict
+local eval0 = eval_helpers.eval0
 local lst2tbl = eval_helpers.lst2tbl
 local dct2tbl = eval_helpers.dct2tbl
 local typvalt = eval_helpers.typvalt
@@ -1903,6 +1905,131 @@ describe('typval.c', function()
         lib.tv_dict_clear(d)
         alloc_log:check({a.freed(di_s), a.freed(di)})
         eq({}, dct2tbl(d))
+      end)
+    end)
+    describe('extend()', function()
+      local function tv_dict_extend(d1, d2, action, emsg)
+        action = action or "force"
+        check_emsg(function() return lib.tv_dict_extend(d1, d2, action) end, emsg)
+      end
+      itp('works', function()
+        local d1 = dict()
+        alloc_log:check({a.dict(d1)})
+        eq({}, dct2tbl(d1))
+        local d2 = dict()
+        alloc_log:check({a.dict(d2)})
+        eq({}, dct2tbl(d2))
+        tv_dict_extend(d1, d2, 'error')
+        tv_dict_extend(d1, d2, 'keep')
+        tv_dict_extend(d1, d2, 'force')
+        alloc_log:check({})
+
+        d1 = dict({a='TEST'})
+        eq({a='TEST'}, dct2tbl(d1))
+        local dis1 = dict_items(d1)
+        local a1_s = dis1.a.di_tv.vval.v_string
+        alloc_log:clear_tmp_allocs()
+        alloc_log:check({
+          a.dict(d1),
+          a.di(dis1.a),
+          a.str(a1_s),
+        })
+        d2 = dict({a='TSET'})
+        eq({a='TSET'}, dct2tbl(d2))
+        local dis2 = dict_items(d2)
+        local a2_s = dis2.a.di_tv.vval.v_string
+        alloc_log:clear_tmp_allocs()
+        alloc_log:check({
+          a.dict(d2),
+          a.di(dis2.a),
+          a.str(a2_s),
+        })
+
+        tv_dict_extend(d1, d2, 'error', 'E737: Key already exists: a')
+        eq({a='TEST'}, dct2tbl(d1))
+        eq({a='TSET'}, dct2tbl(d2))
+        alloc_log:clear()
+
+        tv_dict_extend(d1, d2, 'keep')
+        alloc_log:check({})
+        eq({a='TEST'}, dct2tbl(d1))
+        eq({a='TSET'}, dct2tbl(d2))
+
+        tv_dict_extend(d1, d2, 'force')
+        alloc_log:check({
+          a.freed(a1_s),
+          a.str(dis1.a.di_tv.vval.v_string),
+        })
+        eq({a='TSET'}, dct2tbl(d1))
+        eq({a='TSET'}, dct2tbl(d2))
+      end)
+      itp('disallows overriding builtin or user functions', function()
+        local d = dict()
+        d.dv_scope = lib.VAR_DEF_SCOPE
+        local f_lua = {
+          [type_key]=func_type,
+          value='tr',
+        }
+        local f_tv = lua2typvalt(f_lua)
+        local p_lua = {
+          [type_key]=func_type,
+          value='tr',
+          args={1},
+        }
+        local p_tv = lua2typvalt(p_lua)
+        eq(lib.VAR_PARTIAL, p_tv.v_type)
+        local d2 = dict({tr=f_tv})
+        local d3 = dict({tr=p_tv})
+        local d4 = dict({['TEST:THIS']=p_tv})
+        local d5 = dict({Test=f_tv})
+        local d6 = dict({Test=p_tv})
+        eval0([[execute("function Test()\nendfunction")]])
+        tv_dict_extend(d, d2, 'force',
+                       'E704: Funcref variable name must start with a capital: tr')
+        tv_dict_extend(d, d3, 'force',
+                       'E704: Funcref variable name must start with a capital: tr')
+        tv_dict_extend(d, d4, 'force',
+                       'E461: Illegal variable name: TEST:THIS')
+        tv_dict_extend(d, d5, 'force',
+                       'E705: Variable name conflicts with existing function: Test')
+        tv_dict_extend(d, d6, 'force',
+                       'E705: Variable name conflicts with existing function: Test')
+        eq({}, dct2tbl(d))
+        d.dv_scope = lib.VAR_SCOPE
+        tv_dict_extend(d, d4, 'force',
+                       'E461: Illegal variable name: TEST:THIS')
+        eq({}, dct2tbl(d))
+        tv_dict_extend(d, d2, 'force')
+        eq({tr=f_lua}, dct2tbl(d))
+        tv_dict_extend(d, d3, 'force')
+        eq({tr=p_lua}, dct2tbl(d))
+        tv_dict_extend(d, d5, 'force')
+        eq({tr=p_lua, Test=f_lua}, dct2tbl(d))
+        tv_dict_extend(d, d6, 'force')
+        eq({tr=p_lua, Test=p_lua}, dct2tbl(d))
+      end)
+      itp('cares about locks and read-only items', function()
+        local d_lua = {tv_locked=1, tv_fixed=2, di_ro=3, di_ro_sbx=4}
+        local d = dict(d_lua)
+        local dis = dict_items(d)
+        dis.tv_locked.di_tv.v_lock = lib.VAR_LOCKED
+        dis.tv_fixed.di_tv.v_lock = lib.VAR_FIXED
+        dis.di_ro.di_flags = bit.bor(dis.di_ro.di_flags, lib.DI_FLAGS_RO)
+        dis.di_ro_sbx.di_flags = bit.bor(dis.di_ro_sbx.di_flags, lib.DI_FLAGS_RO_SBX)
+        lib.sandbox = true
+        local d1 = dict({tv_locked=41})
+        local d2 = dict({tv_fixed=42})
+        local d3 = dict({di_ro=43})
+        local d4 = dict({di_ro_sbx=44})
+        tv_dict_extend(d, d1, 'force', 'E741: Value is locked: extend() argument')
+        tv_dict_extend(d, d2, 'force', 'E742: Cannot change value of extend() argument')
+        tv_dict_extend(d, d3, 'force', 'E46: Cannot change read-only variable "extend() argument"')
+        tv_dict_extend(d, d4, 'force', 'E794: Cannot set variable in the sandbox: "extend() argument"')
+        eq(d_lua, dct2tbl(d))
+        lib.sandbox = false
+        tv_dict_extend(d, d4, 'force')
+        d_lua.di_ro_sbx = 44
+        eq(d_lua, dct2tbl(d))
       end)
     end)
   end)
