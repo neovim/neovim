@@ -42,8 +42,7 @@ describe('foldchars', function()
     -- TODO check
 	-- :highlight Folded guibg=grey guifg=blue
 	-- :highlight FoldColumn guibg=darkgrey guifg=white
-    -- set foldminlines
-    -- test with fillchars
+    -- set foldminlines just tells about which folds to close, unrelated to their size :s
     -- test with minimum size of folds 
     command("call nvim_fold_create(nvim_get_current_win(), 1, 4)")
     command("call nvim_fold_create(nvim_get_current_win(), 1, 3)")
@@ -53,7 +52,7 @@ describe('foldchars', function()
     command("call nvim_fold_create(nvim_get_current_win(), 7, line('$'))")
     feed("gg")
 
-    expected = [[
+    local expected = [[
       {1:--}^1                 |
       {1:|^}2                 |
       {1:|^}3                 |
@@ -110,16 +109,25 @@ describe('foldchars', function()
       ]])
       local limit = 4
       local i = 0
-      --   command("set foldminlines="..limit)
+      command("set foldminlines="..limit)
       -- TODO echo that one nvim_get_current_win(),
-        while i < limit + 2 do
-          command("call nvim_fold_create(nvim_get_current_win(), 1, 4)")
-        end
-    screen:try_resize(20, 10)
 
+      command("call nvim_fold_create(nvim_get_current_win(), 1, 4)")
+      while i < limit + 2 do
+        command("")
+        local ret = command("echo foldclosed(1)")
+        if i < limit then
+          assert.is_true()
+        else
+          assert.is_false()
+        end
+      end
+    screen:try_resize(20, 10)
   end)
 
-  -- it("foldmethod=indent", function()
+  -- TODO test fdc=-1
+  --
+  -- it("fdc=-1 (adaptive width)", function()
   --   screen:try_resize(20, 8)
   --   execute('set fdm=indent sw=2')
   --   insert([[
