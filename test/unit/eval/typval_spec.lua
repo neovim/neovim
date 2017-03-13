@@ -25,6 +25,7 @@ local typvalt = eval_helpers.typvalt
 local type_key = eval_helpers.type_key
 local li_alloc = eval_helpers.li_alloc
 local first_di = eval_helpers.first_di
+local nil_value = eval_helpers.nil_value
 local func_type = eval_helpers.func_type
 local null_list = eval_helpers.null_list
 local null_dict = eval_helpers.null_dict
@@ -2223,6 +2224,9 @@ describe('typval.c', function()
         end)
       end)
     end)
+    local function defalloc()
+      return {}
+    end
     describe('clear()', function()
       itp('works', function()
         local function deffrees(alloc_rets)
@@ -2231,9 +2235,6 @@ describe('typval.c', function()
             ret[#alloc_rets - i + 1] = alloc_rets:freed(i)
           end
           return ret
-        end
-        local function defalloc()
-          return {}
         end
         alloc_log:check({})
         lib.tv_clear(nil)
@@ -2244,12 +2245,13 @@ describe('typval.c', function()
         local dd = {}
         dd.dd = dd
         for _, v in ipairs({
-          {nil},
+          {nil_value},
           {null_string, nil, function() return {a.freed(alloc_log.null)} end},
           {0},
           {int(0)},
           {true},
           {false},
+          {'true', function(tv) return {a.str(tv.vval.v_string)} end},
           {{}, function(tv) return {a.dict(tv.vval.v_dict)} end},
           {empty_list, function(tv) return {a.list(tv.vval.v_list)} end},
           {ll, function(tv)
@@ -2269,6 +2271,43 @@ describe('typval.c', function()
         end
         eq(1, ll_l.lv_refcount)
         eq(1, dd_d.dv_refcount)
+      end)
+    end)
+    describe('copy()', function()
+      itp('works', function()
+        local function strallocs(tv)
+          return {a.str(tv.vval.v_string)}
+        end
+        for _, v in ipairs({
+          {nil_value},
+          {null_string},
+          {0},
+          {int(0)},
+          {true},
+          {false},
+          {{}, function(tv) return {a.dict(tv.vval.v_dict)} end, nil, function(from, to)
+            eq(2, to.vval.v_dict.dv_refcount)
+            eq(to.vval.v_dict, from.vval.v_dict)
+          end},
+          {empty_list, function(tv) return {a.list(tv.vval.v_list)} end, nil, function(from, to)
+            eq(2, to.vval.v_list.lv_refcount)
+            eq(to.vval.v_list, from.vval.v_list)
+          end},
+          {'test', strallocs, strallocs, function(from, to)
+            neq(to.vval.v_string, from.vval.v_string)
+          end},
+        }) do
+          local from = lua2typvalt(v[1])
+          alloc_log:check((v[2] or defalloc)(from))
+          local to = typvalt(lib.VAR_UNKNOWN)
+          lib.tv_copy(from, to)
+          local res = v[1]
+          eq(res, typvalt2lua(to))
+          alloc_log:check((v[3] or defalloc)(to))
+          if v[4] then
+            v[4](from, to)
+          end
+        end
       end)
     end)
   end)

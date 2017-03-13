@@ -132,10 +132,10 @@ local function typvalt2lua_tab_init()
   typvalt2lua_tab = {
     [tonumber(eval.VAR_SPECIAL)] = function(t)
       return ({
-        [eval.kSpecialVarFalse] = false,
-        [eval.kSpecialVarNull] = nil_value,
-        [eval.kSpecialVarTrue] = true,
-      })[t.vval.v_special]
+        [tonumber(eval.kSpecialVarFalse)] = false,
+        [tonumber(eval.kSpecialVarNull)] = nil_value,
+        [tonumber(eval.kSpecialVarTrue)] = true,
+      })[tonumber(t.vval.v_special)]
     end,
     [tonumber(eval.VAR_NUMBER)] = function(t)
       return {[type_key]=int_type, value=tonumber(t.vval.v_number)}
