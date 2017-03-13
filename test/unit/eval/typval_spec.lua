@@ -55,12 +55,16 @@ local function list_watch(l, li)
 end
 
 local function get_alloc_rets(exp_log, res)
+  setmetatable(res, {
+    __index={
+      freed=function(r, n) return {func='free', args={r[n]}} end
+    }
+  })
   for i = 1,#exp_log do
     if ({malloc=true, calloc=true})[exp_log[i].func] then
       res[#res + 1] = exp_log[i].ret
     end
   end
-  res.freed = function(r, n) return {func='free', args={r[n]}} end
   return exp_log
 end
 
@@ -2198,6 +2202,73 @@ describe('typval.c', function()
         alloc_log:check({})
         eq(lib.DI_FLAGS_RO, bit.band(dis.a.di_flags, lib.DI_FLAGS_RO))
         eq(lib.DI_FLAGS_FIX, bit.band(dis.a.di_flags, lib.DI_FLAGS_FIX))
+      end)
+    end)
+  end)
+  describe('tv', function()
+    describe('alloc', function()
+      describe('list ret()', function()
+        itp('works', function()
+          local rettv = typvalt(lib.VAR_UNKNOWN)
+          local l = lib.tv_list_alloc_ret(rettv)
+          eq(empty_list, typvalt2lua(rettv))
+          eq(rettv.vval.v_list, l)
+        end)
+      end)
+      describe('dict ret()', function()
+        itp('works', function()
+          local rettv = typvalt(lib.VAR_UNKNOWN)
+          lib.tv_dict_alloc_ret(rettv)
+          eq({}, typvalt2lua(rettv))
+        end)
+      end)
+    end)
+    describe('clear()', function()
+      itp('works', function()
+        local function deffrees(alloc_rets)
+          local ret = {}
+          for i = #alloc_rets, 1, -1 do
+            ret[#alloc_rets - i + 1] = alloc_rets:freed(i)
+          end
+          return ret
+        end
+        local function defalloc()
+          return {}
+        end
+        alloc_log:check({})
+        lib.tv_clear(nil)
+        alloc_log:check({})
+        local ll = {}
+        local ll_l = nil
+        ll[1] = ll
+        local dd = {}
+        dd.dd = dd
+        for _, v in ipairs({
+          {nil},
+          {null_string, nil, function() return {a.freed(alloc_log.null)} end},
+          {0},
+          {int(0)},
+          {true},
+          {false},
+          {{}, function(tv) return {a.dict(tv.vval.v_dict)} end},
+          {empty_list, function(tv) return {a.list(tv.vval.v_list)} end},
+          {ll, function(tv)
+            ll_l = tv.vval.v_list
+            return {a.list(tv.vval.v_list), a.li(tv.vval.v_list.lv_first)}
+          end, defalloc},
+          {dd, function(tv)
+            dd_d = tv.vval.v_dict
+            return {a.dict(tv.vval.v_dict), a.di(first_di(tv.vval.v_dict))}
+          end, defalloc},
+        }) do
+          local tv = lua2typvalt(v[1])
+          local alloc_rets = {}
+          alloc_log:check(get_alloc_rets((v[2] or defalloc)(tv), alloc_rets))
+          lib.tv_clear(tv)
+          alloc_log:check((v[3] or deffrees)(alloc_rets))
+        end
+        eq(1, ll_l.lv_refcount)
+        eq(1, dd_d.dv_refcount)
       end)
     end)
   end)

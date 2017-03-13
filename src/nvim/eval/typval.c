@@ -1840,10 +1840,11 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 /// Free memory for a variable value and set the value to NULL or 0
 ///
 /// @param[in,out]  tv  Value to free.
-void tv_clear(typval_T *tv)
+void tv_clear(typval_T *const tv)
 {
   if (tv != NULL && tv->v_type != VAR_UNKNOWN) {
-    const int evn_ret = encode_vim_to_nothing(NULL, tv, "tv_clear argument");
+    const int evn_ret = encode_vim_to_nothing(NULL, tv,
+                                              _("tv_clear() argument"));
     (void)evn_ret;
     assert(evn_ret == OK);
   }
