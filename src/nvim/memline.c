@@ -2318,7 +2318,7 @@ ml_append_int (
  *
  * return FAIL for failure, OK otherwise
  */
-int ml_replace(linenr_T lnum, char_u *line, int copy)
+int ml_replace(linenr_T lnum, char_u *line, bool copy)
 {
   if (line == NULL)             /* just checking... */
     return FAIL;
