@@ -408,6 +408,21 @@ static inline DictWatcher *tv_dict_watcher_node_data(QUEUE *q)
   return QUEUE_DATA(q, DictWatcher, node);
 }
 
+static inline bool tv_is_func(const typval_T tv)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST;
+
+/// Check whether given typval_T contains a function
+///
+/// That is, whether it contains VAR_FUNC or VAR_PARTIAL.
+///
+/// @param[in]  tv  Typval to check.
+///
+/// @return True if it is a function or a partial, false otherwise.
+static inline bool tv_is_func(const typval_T tv)
+{
+  return tv.v_type == VAR_FUNC || tv.v_type == VAR_PARTIAL;
+}
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.h.generated.h"
 #endif

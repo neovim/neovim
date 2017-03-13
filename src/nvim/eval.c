@@ -2225,7 +2225,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
           prevval = 0;  // Avoid compiler warning.
         }
         wrong = ((lp->ll_dict->dv_scope == VAR_DEF_SCOPE
-                  && rettv->v_type == VAR_FUNC
+                  && tv_is_func(*rettv)
                   && !var_check_func_name((const char *)key, lp->ll_di == NULL))
                  || !valid_varname((const char *)key));
         if (len != -1) {
@@ -3643,9 +3643,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
             n1 = !n1;
           }
         }
-      } else if (rettv->v_type == VAR_FUNC || var2.v_type == VAR_FUNC
-                 || rettv->v_type == VAR_PARTIAL
-                 || var2.v_type == VAR_PARTIAL) {
+      } else if (tv_is_func(*rettv) || tv_is_func(var2)) {
         if (type != TYPE_EQUAL && type != TYPE_NEQUAL) {
           EMSG(_("E694: Invalid operation for Funcrefs"));
           tv_clear(rettv);
@@ -8957,8 +8955,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         tv = &di->di_tv;
       }
     }
-  } else if (argvars[0].v_type == VAR_PARTIAL
-             || argvars[0].v_type == VAR_FUNC) {
+  } else if (tv_is_func(argvars[0])) {
     partial_T *pt;
     partial_T fref_pt;
 
@@ -15994,7 +15991,7 @@ static void f_substitute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *const flg = tv_get_string_buf_chk(&argvars[3], flagsbuf);
 
   typval_T *expr = NULL;
-  if (argvars[2].v_type == VAR_FUNC || argvars[2].v_type == VAR_PARTIAL) {
+  if (tv_is_func(argvars[2])) {
     expr = &argvars[2];
   } else {
     sub = tv_get_string_buf_chk(&argvars[2], subbuf);
@@ -18229,8 +18226,7 @@ handle_subscript(
   while (ret == OK
          && (**arg == '['
              || (**arg == '.' && rettv->v_type == VAR_DICT)
-             || (**arg == '(' && (!evaluate || rettv->v_type == VAR_FUNC
-                                  || rettv->v_type == VAR_PARTIAL)))
+             || (**arg == '(' && (!evaluate || tv_is_func(*rettv))))
          && !ascii_iswhite(*(*arg - 1))) {
     if (**arg == '(') {
       partial_T *pt = NULL;
@@ -18286,9 +18282,7 @@ handle_subscript(
   }
 
   // Turn "dict.Func" into a partial for "Func" bound to "dict".
-  if (selfdict != NULL
-      && (rettv->v_type == VAR_FUNC
-          || rettv->v_type == VAR_PARTIAL)) {
+  if (selfdict != NULL && tv_is_func(*rettv)) {
     set_selfdict(rettv, selfdict);
   }
 
@@ -18794,8 +18788,7 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
     v = find_var_in_scoped_ht((const char *)name, name_len, true);
   }
 
-  if ((tv->v_type == VAR_FUNC || tv->v_type == VAR_PARTIAL)
-      && !var_check_func_name(name, v == NULL)) {
+  if (tv_is_func(*tv) && !var_check_func_name(name, v == NULL)) {
     return;
   }
 
@@ -19463,9 +19456,7 @@ void ex_function(exarg_T *eap)
       arg = name;
     else
       arg = fudi.fd_newkey;
-    if (arg != NULL && (fudi.fd_di == NULL
-                        || (fudi.fd_di->di_tv.v_type != VAR_FUNC
-                            && fudi.fd_di->di_tv.v_type != VAR_PARTIAL))) {
+    if (arg != NULL && (fudi.fd_di == NULL || !tv_is_func(fudi.fd_di->di_tv))) {
       int j = (*arg == K_SPECIAL) ? 3 : 0;
       while (arg[j] != NUL && (j == 0 ? eval_isnamec1(arg[j])
                                : eval_isnamec(arg[j])))

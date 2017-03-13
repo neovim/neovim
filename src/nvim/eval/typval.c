@@ -1250,8 +1250,7 @@ bool tv_dict_get_callback(dict_T *const d,
     return true;
   }
 
-  if (di->di_tv.v_type != VAR_FUNC && di->di_tv.v_type != VAR_STRING
-      && di->di_tv.v_type != VAR_PARTIAL) {
+  if (!tv_is_func(di->di_tv) && di->di_tv.v_type != VAR_STRING) {
     emsgf(_("E6000: Argument is not a function or function name"));
     return false;
   }
@@ -1418,7 +1417,7 @@ void tv_dict_extend(dict_T *const d1, dict_T *const d2,
       // Disallow replacing a builtin function in l: and g:.
       // Check the key to be valid when adding to any scope.
       if (d1->dv_scope == VAR_DEF_SCOPE
-          && di2->di_tv.v_type == VAR_FUNC
+          && tv_is_func(di2->di_tv)
           && !var_check_func_name((const char *)di2->di_key, di1 == NULL)) {
         break;
       }
@@ -2101,9 +2100,7 @@ bool tv_equal(typval_T *const tv1, typval_T *const tv2, const bool ic,
   // TODO(ZyX-I): Make this not recursive
   static int recursive_cnt = 0;  // Catch recursive loops.
 
-  if (!((tv1->v_type == VAR_FUNC || tv1->v_type == VAR_PARTIAL)
-        && (tv2->v_type == VAR_FUNC || tv2->v_type == VAR_PARTIAL))
-      && tv1->v_type != tv2->v_type) {
+  if (!(tv_is_func(*tv1) && tv_is_func(*tv2)) && tv1->v_type != tv2->v_type) {
     return false;
   }
 
