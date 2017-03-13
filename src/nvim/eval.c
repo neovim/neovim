@@ -8155,15 +8155,20 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const size_t arg_errmsg_len = strlen(arg_errmsg);
 
   if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_LIST) {
-    list_T          *l1, *l2;
-    listitem_T      *item;
     long before;
     bool error = false;
 
-    l1 = argvars[0].vval.v_list;
-    l2 = argvars[1].vval.v_list;
-    if (l1 != NULL && !tv_check_lock(l1->lv_lock, arg_errmsg, arg_errmsg_len)
-        && l2 != NULL) {
+    list_T *const l1 = argvars[0].vval.v_list;
+    list_T *const l2 = argvars[1].vval.v_list;
+    if (l1 == NULL) {
+      const bool locked = tv_check_lock(VAR_FIXED, arg_errmsg, arg_errmsg_len);
+      (void)locked;
+      assert(locked == true);
+    } else if (l2 == NULL) {
+      // Do nothing
+      tv_copy(&argvars[0], rettv);
+    } else if (!tv_check_lock(l1->lv_lock, arg_errmsg, arg_errmsg_len)) {
+      listitem_T *item;
       if (argvars[2].v_type != VAR_UNKNOWN) {
         before = tv_get_number_chk(&argvars[2], &error);
         if (error) {
@@ -8187,13 +8192,16 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else if (argvars[0].v_type == VAR_DICT && argvars[1].v_type ==
              VAR_DICT) {
-    dict_T *d1;
-    dict_T *d2;
-
-    d1 = argvars[0].vval.v_dict;
-    d2 = argvars[1].vval.v_dict;
-    if (d1 != NULL && !tv_check_lock(d1->dv_lock, arg_errmsg, arg_errmsg_len)
-        && d2 != NULL) {
+    dict_T *const d1 = argvars[0].vval.v_dict;
+    dict_T *const d2 = argvars[1].vval.v_dict;
+    if (d1 == NULL) {
+      const bool locked = tv_check_lock(VAR_FIXED, arg_errmsg, arg_errmsg_len);
+      (void)locked;
+      assert(locked == true);
+    } else if (d2 == NULL) {
+      // Do nothing
+      tv_copy(&argvars[0], rettv);
+    } else if (!tv_check_lock(d1->dv_lock, arg_errmsg, arg_errmsg_len)) {
       const char *action = "force";
       // Check the third argument.
       if (argvars[2].v_type != VAR_UNKNOWN) {
