@@ -29,6 +29,7 @@ local func_type = eval_helpers.func_type
 local null_list = eval_helpers.null_list
 local null_dict = eval_helpers.null_dict
 local dict_items = eval_helpers.dict_items
+local list_items = eval_helpers.list_items
 local empty_list = eval_helpers.empty_list
 local lua2typvalt = eval_helpers.lua2typvalt
 local typvalt2lua = eval_helpers.typvalt2lua
@@ -42,16 +43,6 @@ local concat_tables = global_helpers.concat_tables
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/mbyte.h', './src/nvim/garray.h',
                     './src/nvim/eval.h', './src/nvim/vim.h')
-
-local function list_items(l)
-  local lis = {}
-  local li = l.lv_first
-  for i = 1, l.lv_len do
-    lis[i] = ffi.gc(li, nil)
-    li = li.li_next
-  end
-  return lis
-end
 
 local function list_watch_alloc(li)
   return ffi.cast('listwatch_T*', ffi.new('listwatch_T[1]', {{lw_item=li}}))
@@ -2030,6 +2021,170 @@ describe('typval.c', function()
         tv_dict_extend(d, d4, 'force')
         d_lua.di_ro_sbx = 44
         eq(d_lua, dct2tbl(d))
+      end)
+    end)
+    describe('equal()', function()
+      local function tv_dict_equal(d1, d2, ic, recursive)
+        return lib.tv_dict_equal(d1, d2, ic or false, recursive or false)
+      end
+      itp('works', function()
+        eq(true, tv_dict_equal(nil, nil))
+        local d1 = dict()
+        alloc_log:check({a.dict(d1)})
+        eq(1, d1.dv_refcount)
+        eq(false, tv_dict_equal(nil, d1))
+        eq(false, tv_dict_equal(d1, nil))
+        eq(true, tv_dict_equal(d1, d1))
+        eq(1, d1.dv_refcount)
+        alloc_log:check({})
+        local d_upper = dict({a='TEST'})
+        local dis_upper = dict_items(d_upper)
+        local d_lower = dict({a='test'})
+        local dis_lower = dict_items(d_lower)
+        local d_kupper_upper = dict({A='TEST'})
+        local dis_kupper_upper = dict_items(d_kupper_upper)
+        local d_kupper_lower = dict({A='test'})
+        local dis_kupper_lower = dict_items(d_kupper_lower)
+        alloc_log:clear_tmp_allocs()
+        alloc_log:check({
+          a.dict(d_upper),
+          a.di(dis_upper.a),
+          a.str(dis_upper.a.di_tv.vval.v_string),
+
+          a.dict(d_lower),
+          a.di(dis_lower.a),
+          a.str(dis_lower.a.di_tv.vval.v_string),
+
+          a.dict(d_kupper_upper),
+          a.di(dis_kupper_upper.A),
+          a.str(dis_kupper_upper.A.di_tv.vval.v_string),
+
+          a.dict(d_kupper_lower),
+          a.di(dis_kupper_lower.A),
+          a.str(dis_kupper_lower.A.di_tv.vval.v_string),
+        })
+        eq(true, tv_dict_equal(d_upper, d_upper))
+        eq(true, tv_dict_equal(d_upper, d_upper, true))
+        eq(false, tv_dict_equal(d_upper, d_lower, false))
+        eq(true, tv_dict_equal(d_upper, d_lower, true))
+        eq(true, tv_dict_equal(d_kupper_upper, d_kupper_lower, true))
+        eq(false, tv_dict_equal(d_kupper_upper, d_lower, true))
+        eq(false, tv_dict_equal(d_kupper_upper, d_upper, true))
+        eq(true, tv_dict_equal(d_upper, d_upper, true, true))
+        alloc_log:check({})
+      end)
+    end)
+    describe('copy()', function()
+      local function tv_dict_copy(...)
+        return ffi.gc(lib.tv_dict_copy(...), lib.tv_dict_unref)
+      end
+      itp('copies NULL correctly', function()
+        eq(nil, lib.tv_dict_copy(nil, nil, true, 0))
+        eq(nil, lib.tv_dict_copy(nil, nil, false, 0))
+        eq(nil, lib.tv_dict_copy(nil, nil, true, 1))
+        eq(nil, lib.tv_dict_copy(nil, nil, false, 1))
+      end)
+      itp('copies dict correctly without converting items', function()
+        do
+          local v = {a={['«']='»'}, b={'„'}, ['1']=1, ['«»']='“', ns=null_string, nl=null_list, nd=null_dict}
+          local d_tv = lua2typvalt(v)
+          local d = d_tv.vval.v_dict
+          local dis = dict_items(d)
+          alloc_log:clear()
+
+          eq(1, dis.a.di_tv.vval.v_dict.dv_refcount)
+          eq(1, dis.b.di_tv.vval.v_list.lv_refcount)
+          local d_copy1 = tv_dict_copy(nil, d, false, 0)
+          eq(2, dis.a.di_tv.vval.v_dict.dv_refcount)
+          eq(2, dis.b.di_tv.vval.v_list.lv_refcount)
+          local dis_copy1 = dict_items(d_copy1)
+          eq(dis.a.di_tv.vval.v_dict, dis_copy1.a.di_tv.vval.v_dict)
+          eq(dis.b.di_tv.vval.v_list, dis_copy1.b.di_tv.vval.v_list)
+          eq(v, dct2tbl(d_copy1))
+          alloc_log:clear()
+          lib.tv_dict_free(ffi.gc(d_copy1, nil))
+          alloc_log:clear()
+
+          eq(1, dis.a.di_tv.vval.v_dict.dv_refcount)
+          eq(1, dis.b.di_tv.vval.v_list.lv_refcount)
+          local d_deepcopy1 = tv_dict_copy(nil, d, true, 0)
+          neq(nil, d_deepcopy1)
+          eq(1, dis.a.di_tv.vval.v_dict.dv_refcount)
+          eq(1, dis.b.di_tv.vval.v_list.lv_refcount)
+          local dis_deepcopy1 = dict_items(d_deepcopy1)
+          neq(dis.a.di_tv.vval.v_dict, dis_deepcopy1.a.di_tv.vval.v_dict)
+          neq(dis.b.di_tv.vval.v_list, dis_deepcopy1.b.di_tv.vval.v_list)
+          eq(v, dct2tbl(d_deepcopy1))
+          local di_deepcopy1 = first_di(dis_deepcopy1.a.di_tv.vval.v_dict)
+          alloc_log:clear()
+        end
+        collectgarbage()
+      end)
+      itp('copies dict correctly and converts items', function()
+        local vc = ffi.gc(ffi.new('vimconv_T[1]'), function(vc)
+          lib.convert_setup(vc, nil, nil)
+        end)
+        -- UTF-8 ↔ latin1 conversions need no iconv
+        eq(OK, lib.convert_setup(vc, to_cstr('utf-8'), to_cstr('latin1')))
+
+        local v = {a={['«']='»'}, b={'„'}, ['1']=1, ['«»']='“', ns=null_string, nl=null_list, nd=null_dict}
+        local d_tv = lua2typvalt(v)
+        local d = d_tv.vval.v_dict
+        local dis = dict_items(d)
+        alloc_log:clear()
+
+        eq(1, dis.a.di_tv.vval.v_dict.dv_refcount)
+        eq(1, dis.b.di_tv.vval.v_list.lv_refcount)
+        local d_deepcopy1 = tv_dict_copy(vc, d, true, 0)
+        neq(nil, d_deepcopy1)
+        eq(1, dis.a.di_tv.vval.v_dict.dv_refcount)
+        eq(1, dis.b.di_tv.vval.v_list.lv_refcount)
+        local dis_deepcopy1 = dict_items(d_deepcopy1)
+        neq(dis.a.di_tv.vval.v_dict, dis_deepcopy1.a.di_tv.vval.v_dict)
+        neq(dis.b.di_tv.vval.v_list, dis_deepcopy1.b.di_tv.vval.v_list)
+        eq({a={['\171']='\187'}, b={'\191'}, ['1']=1, ['\171\187']='\191', ns=null_string, nl=null_list, nd=null_dict},
+           dct2tbl(d_deepcopy1))
+        alloc_log:clear_tmp_allocs()
+        alloc_log:clear()
+      end)
+      itp('returns different/same containers with(out) copyID', function()
+        local d_inner_tv = lua2typvalt({})
+        local d_tv = lua2typvalt({a=d_inner_tv, b=d_inner_tv})
+        eq(3, d_inner_tv.vval.v_dict.dv_refcount)
+        local d = d_tv.vval.v_dict
+        local dis = dict_items(d)
+        eq(dis.a.di_tv.vval.v_dict, dis.b.di_tv.vval.v_dict)
+
+        local d_copy1 = tv_dict_copy(nil, d, true, 0)
+        local dis_copy1 = dict_items(d_copy1)
+        neq(dis_copy1.a.di_tv.vval.v_dict, dis_copy1.b.di_tv.vval.v_dict)
+        eq({a={}, b={}}, dct2tbl(d_copy1))
+
+        local d_copy2 = tv_dict_copy(nil, d, true, 2)
+        local dis_copy2 = dict_items(d_copy2)
+        eq(dis_copy2.a.di_tv.vval.v_dict, dis_copy2.b.di_tv.vval.v_dict)
+        eq({a={}, b={}}, dct2tbl(d_copy2))
+
+        eq(3, d_inner_tv.vval.v_dict.dv_refcount)
+      end)
+      itp('works with self-referencing dict with copyID', function()
+        local d_tv = lua2typvalt({})
+        local d = d_tv.vval.v_dict
+        eq(1, d.dv_refcount)
+        lib.tv_dict_add_dict(d, 'test', 4, d)
+        eq(2, d.dv_refcount)
+
+        local d_copy1 = tv_dict_copy(nil, d, true, 2)
+        eq(2, d_copy1.dv_refcount)
+        local v = {}
+        v.test = v
+        eq(v, dct2tbl(d_copy1))
+
+        lib.tv_dict_clear(d)
+        eq(1, d.dv_refcount)
+
+        lib.tv_dict_clear(d_copy1)
+        eq(1, d_copy1.dv_refcount)
       end)
     end)
   end)
