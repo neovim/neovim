@@ -6613,6 +6613,21 @@ static int rep_compare(const void *s1, const void *s2)
   return STRCMP(p1->ft_from, p2->ft_from);
 }
 
+/// Serialize `str` prefixed by its length into `file`.
+///
+/// @return 0 in case of an error, 1 if successful
+static size_t write_len_and_string(const char_u *str, FILE *file)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int len = (int)STRLEN(str);
+  assert(len < INT_MAX);
+  putc(len, file);
+  if (len <= 0) {
+    return 1;
+  }
+  return fwrite(str, (size_t)len, (size_t)1, file);
+}
+
 // Write the Vim .spl file "fname".
 // Return OK/FAIL.
 static int write_vim_spell(spellinfo_T *spin, char_u *fname)
@@ -6783,14 +6798,8 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
       // <rep> : <repfromlen> <repfrom> <reptolen> <repto>
       // <sal> : <salfromlen> <salfrom> <saltolen> <salto>
       fromto_T *ftp = &((fromto_T *)gap->ga_data)[i];
-      for (unsigned int rr = 1; rr <= 2; ++rr) {
-        char_u *p = rr == 1 ? ftp->ft_from : ftp->ft_to;
-        l = STRLEN(p);
-        assert(l < INT_MAX);
-        putc((int)l, fd);
-        if (l > 0)
-          fwv &= fwrite(p, l, 1, fd);
-      }
+      fwv &= write_len_and_string(ftp->ft_from, fd);
+      fwv &= write_len_and_string(ftp->ft_to, fd);
     }
 
   }
