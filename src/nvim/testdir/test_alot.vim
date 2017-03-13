@@ -16,6 +16,7 @@ source test_lambda.vim
 source test_match.vim
 source test_matchadd_conceal_utf8.vim
 source test_menu.vim
+source test_mapping.vim
 source test_messages.vim
 source test_options.vim
 source test_partial.vim

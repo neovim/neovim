@@ -24,7 +24,6 @@ SCRIPTS ?= \
            test64.out             \
            test73.out             \
            test79.out             \
-           test_marks.out         \
 
 # Tests using runtest.vim.
 # Keep test_alot*.res as the last one, sort the others.
@@ -44,8 +43,10 @@ NEW_TESTS ?= \
 	    test_increment_dbcs.res \
 	    test_lambda.res \
 	    test_langmap.res \
+	    test_marks.res \
 	    test_match.res \
 	    test_matchadd_conceal.res \
+	    test_nested_function.res \
 	    test_quickfix.res \
 	    test_signs.res \
 	    test_syntax.res \
@@ -55,6 +56,7 @@ NEW_TESTS ?= \
 	    test_viml.res \
 	    test_visual.res \
 	    test_window_id.res \
+	    test_writefile.res \
 	    test_alot.res
 
 SCRIPTS_GUI := test16.out
