@@ -435,24 +435,26 @@ static void handle_request(Channel *channel, msgpack_object *request)
     handler.async = true;
   }
 
-  if (handler.async) {
-    char buf[256] = { 0 };
-    memcpy(buf, method->via.bin.ptr, MIN(255, method->via.bin.size));
-    if (strcmp("nvim_get_mode", buf) == 0) {
-      handler.async = input_blocking();
-    }
-  }
-
-  RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
-  event_data->channel = channel;
-  event_data->handler = handler;
-  event_data->args = args;
-  event_data->request_id = request_id;
+  RequestEvent *evdata = xmalloc(sizeof(RequestEvent));
+  evdata->channel = channel;
+  evdata->handler = handler;
+  evdata->args = args;
+  evdata->request_id = request_id;
   incref(channel);
   if (handler.async) {
-    on_request_event((void **)&event_data);
+    bool is_get_mode = sizeof("nvim_get_mode") - 1 == method->via.bin.size
+      && !strncmp("nvim_get_mode", method->via.bin.ptr, method->via.bin.size);
+
+    if (is_get_mode && !input_blocking()) {
+      // Schedule on the main loop with special priority. #6247
+      Event ev = event_create(kEvPriorityAsync, on_request_event, 1, evdata);
+      multiqueue_put_event(channel->events, ev);
+    } else {
+      // Invoke immediately.
+      on_request_event((void **)&evdata);
+    }
   } else {
-    multiqueue_put(channel->events, on_request_event, 1, event_data);
+    multiqueue_put(channel->events, on_request_event, 1, evdata);
   }
 }
 

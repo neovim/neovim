@@ -9,7 +9,6 @@ local funcs = helpers.funcs
 local request = helpers.request
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
-local wait = helpers.wait
 
 describe('api', function()
   before_each(clear)
@@ -221,13 +220,6 @@ describe('api', function()
       eq(nvim('list_wins')[2], nvim('get_current_win'))
     end)
   end)
-
-  local function appendfile(fname, text)
-    local file = io.open(fname, 'a')
-    file:write(text)
-    file:flush()
-    file:close()
-  end
 
   describe('nvim_get_mode', function()
     it("during normal-mode `g` returns blocking=true", function()

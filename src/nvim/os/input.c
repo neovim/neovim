@@ -341,12 +341,12 @@ static bool input_poll(int ms)
     prof_inchar_enter();
   }
 
-  if ((ms == - 1 || ms > 0)
-      && !(events_enabled || input_ready() || input_eof)
-      ) {
+  if ((ms == - 1 || ms > 0) && !events_enabled && !input_eof) {
+    // We have discovered that the pending input will provoke a blocking wait.
+    // Process any events marked with priority `kEvPriorityAsync`: these events
+    // must be handled after flushing input. See channel.c:handle_request #6247
     blocking = true;
-    multiqueue_process_debug(main_loop.events);
-    multiqueue_process_events(main_loop.events);
+    multiqueue_process_priority(main_loop.events, kEvPriorityAsync);
   }
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, input_ready() || input_eof);
   blocking = false;

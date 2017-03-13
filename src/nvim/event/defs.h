@@ -6,6 +6,11 @@
 
 #define EVENT_HANDLER_MAX_ARGC 6
 
+typedef enum {
+  kEvPriorityNormal = 1,
+  kEvPriorityAsync  = 2,   // safe to run in any state
+} EventPriority;
+
 typedef void (*argv_callback)(void **argv);
 typedef struct message {
   int priority;
