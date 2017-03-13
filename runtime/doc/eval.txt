@@ -832,7 +832,7 @@ and the comparison is done on Numbers. This means that: >
 	echo 0 == 'x'
 	1
 because 'x' converted to a Number is zero. However: >
-	echo 0 == 'x'
+	echo [0] == ['x']
 	0
 Inside a List or Dictionary this conversion is not used.
 
@@ -1503,7 +1503,7 @@ v:dying		Normally zero.	When a deadly signal is caught it's set to
 		VimLeave autocommands will not be executed.
 
 					*v:exiting* *exiting-variable*
-v:exiting	The exit value Nvim will use. Before exiting, it is |v:null|.
+v:exiting	Exit code, or |v:null| if not exiting. |VimLeave|
 
 					*v:errmsg* *errmsg-variable*
 v:errmsg	Last given error message.  It's allowed to set this variable.
@@ -1756,7 +1756,7 @@ v:profiling	Normally zero.	Set to one after using ":profile start".
 					*v:progname* *progname-variable*
 v:progname	Contains the name (with path removed) with which Nvim was
 		invoked.  Allows you to do special initialisations for any
-		other name you might symlink to Nvim.
+		name you might symlink to Nvim.
 		Read-only.
 
 					*v:progpath* *progpath-variable*
@@ -1916,7 +1916,7 @@ v:vim_did_enter	Zero until most of startup is done.  It is set to one just
 					*v:warningmsg* *warningmsg-variable*
 v:warningmsg	Last given warning message.  It's allowed to set this variable.
 
-					*v:windowid* *windowid-variable* {Nvim}
+					*v:windowid* *windowid-variable*
 v:windowid	Application-specific window ID ("window handle" in MS-Windows)
 		which may be set by any attached UI. Defaults to zero.
 		Note: for windows inside Vim use |winnr()| or |win_getid()|.
@@ -2056,13 +2056,13 @@ getcmdwintype()			String	return current command-line window type
 getcompletion({pat}, {type} [, {filtered}])
 				List	list of cmdline completion matches
 getcurpos()			List	position of the cursor
-getcwd([{winnr} [, {tabnr}]])	String	the current working directory
+getcwd([{winnr} [, {tabnr}]])	String	get the current working directory
 getfontname([{name}])		String	name of font being used
 getfperm({fname})		String	file permissions of file {fname}
 getfsize({fname})		Number	size in bytes of file {fname}
 getftime({fname})		Number	last modification time of file
 getftype({fname})		String	description of type of file {fname}
-getline({lnum})		String	line {lnum} of current buffer
+getline({lnum})			String	line {lnum} of current buffer
 getline({lnum}, {end})		List	lines {lnum} to {end} of current buffer
 getloclist({nr}[, {what}])	List	list of location list items
 getmatches()			List	list of current matches
@@ -2071,20 +2071,20 @@ getpos({expr})			List	position of cursor, mark, etc.
 getqflist([{what}])		List	list of quickfix items
 getreg([{regname} [, 1 [, {list}]]])
 				String or List   contents of register
-getregtype([{regname}])	String	type of register
-gettabinfo( [{expr}])		List  	list of tab pages
+getregtype([{regname}])		String	type of register
+gettabinfo([{expr}])		List	list of tab pages
 gettabvar({nr}, {varname} [, {def}])
 				any	variable {varname} in tab {nr} or {def}
 gettabwinvar({tabnr}, {winnr}, {name} [, {def}])
 				any	{name} in {winnr} in tab page {tabnr}
-getwininfo( [{winid}])		List  	list of windows
+getwininfo([{winid}])		List	list of windows
 getwinposx()			Number	X coord in pixels of GUI Vim window
 getwinposy()			Number	Y coord in pixels of GUI Vim window
 getwinvar({nr}, {varname} [, {def}])
 				any	variable {varname} in window {nr}
 glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])
 				any	expand file wildcards in {expr}
-glob2regpat({expr})		String  convert a glob pat into a search pat
+glob2regpat({expr})		String	convert a glob pat into a search pat
 globpath({path}, {expr} [, {nosuf} [, {list} [, {alllinks}]]])
 				String	do glob({expr}) for all dirs in {path}
 has({feature})			Number	|TRUE| if feature {feature} supported
@@ -2160,7 +2160,7 @@ matchlist({expr}, {pat}[, {start}[, {count}]])
 				List	match and submatches of {pat} in {expr}
 matchstr({expr}, {pat}[, {start}[, {count}]])
 				String	{count}'th match of {pat} in {expr}
-matchstrpos( {expr}, {pat}[, {start}[, {count}]])
+matchstrpos({expr}, {pat}[, {start}[, {count}]])
 				List	{count}'th match of {pat} in {expr}
 max({list})			Number	maximum value of items in {list}
 min({list})			Number	minimum value of items in {list}
@@ -2179,7 +2179,7 @@ prevnonblank({lnum})		Number	line nr of non-blank line <= {lnum}
 printf({fmt}, {expr1}...)	String	format text
 pumvisible()			Number	whether popup menu is visible
 pyeval({expr})			any	evaluate |Python| expression
-py3eval({expr})		any	evaluate |python3| expression
+py3eval({expr})			any	evaluate |python3| expression
 range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
 readfile({fname} [, {binary} [, {max}]])
@@ -2192,15 +2192,15 @@ remote_expr({server}, {string} [, {idvar}])
 remote_foreground({server})	Number	bring Vim server to the foreground
 remote_peek({serverid} [, {retvar}])
 				Number	check for reply string
-remote_read({serverid})	String	read reply string
+remote_read({serverid})		String	read reply string
 remote_send({server}, {string} [, {idvar}])
 				String	send key sequence
 remove({list}, {idx} [, {end}])	any	remove items {idx}-{end} from {list}
 remove({dict}, {key})		any	remove entry {key} from {dict}
 rename({from}, {to})		Number	rename (move) file from {from} to {to}
-repeat({expr}, {count})	String	repeat {expr} {count} times
+repeat({expr}, {count})		String	repeat {expr} {count} times
 resolve({filename})		String	get filename a shortcut points to
-reverse({list})		List	reverse {list} in-place
+reverse({list})			List	reverse {list} in-place
 round({expr})			Float	round off {expr}
 rpcnotify({channel}, {event}[, {args}...])
 				Sends an |RPC| notification to {channel}
@@ -2228,7 +2228,7 @@ setbufvar({expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
 setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
 setfperm({fname}, {mode}	Number	set {fname} file permissions to {mode}
-setline({lnum}, {line})	Number	set line {lnum} to {line}
+setline({lnum}, {line})		Number	set line {lnum} to {line}
 setloclist({nr}, {list}[, {action}[, {what}]])
 				Number	modify location list using {list}
 setmatches({list})		Number	restore a list of matches
@@ -2300,8 +2300,8 @@ test_garbagecollect_now()	none	free memory right now for testing
 timer_start({time}, {callback} [, {options}])
 				Number	create a timer
 timer_stop({timer})		none	stop a timer
-tolower({expr})		String	the String {expr} switched to lowercase
-toupper({expr})		String	the String {expr} switched to uppercase
+tolower({expr})			String	the String {expr} switched to lowercase
+toupper({expr})			String	the String {expr} switched to uppercase
 tr({src}, {fromstr}, {tostr})	String	translate chars of {src} in {fromstr}
 					to chars in {tostr}
 trunc({expr})			Float	truncate Float {expr}
@@ -2311,19 +2311,19 @@ undotree()			List	undo file tree
 uniq({list} [, {func} [, {dict}]])
 				List	remove adjacent duplicates from a list
 values({dict})			List	values in {dict}
-virtcol({expr})		Number	screen column of cursor or mark
+virtcol({expr})			Number	screen column of cursor or mark
 visualmode([expr])		String	last visual mode used
 wildmenumode()			Number	whether 'wildmenu' mode is active
-win_findbuf( {bufnr}) 		List	find windows containing {bufnr}
-win_getid( [{win} [, {tab}]])   Number  get window ID for {win} in {tab}
-win_gotoid( {expr})             Number  go to window with ID {expr}
-win_id2tabwin( {expr})          List    get tab window nr from window ID
-win_id2win( {expr})             Number  get window nr from window ID
+win_findbuf({bufnr})		List	find windows containing {bufnr}
+win_getid([{win} [, {tab}]])	Number	get window ID for {win} in {tab}
+win_gotoid({expr})		Number	go to window with ID {expr}
+win_id2tabwin({expr})		List	get tab and window nr from window ID
+win_id2win({expr})		Number	get window nr from window ID
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
-winheight({nr})		Number	height of window {nr}
+winheight({nr})			Number	height of window {nr}
 winline()			Number	window line of the cursor
-winnr([{expr}])		Number	number of current window
+winnr([{expr}])			Number	number of current window
 winrestcmd()			String	returns command to restore window sizes
 winrestview({dict})		none	restore view of current window
 winsaveview()			Dict	save view of current window
@@ -2331,7 +2331,7 @@ winwidth({nr})			Number	width of window {nr}
 wordcount()			Dict	get byte/char/word statistics
 writefile({list}, {fname} [, {flags}])
 				Number	write list of lines to file {fname}
-xor({expr}, {expr})		Number  bitwise XOR
+xor({expr}, {expr})		Number	bitwise XOR
 
 
 abs({expr})							*abs()*

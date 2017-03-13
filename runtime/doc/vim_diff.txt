@@ -115,6 +115,7 @@ Options:
 
 Variables:
   |v:event|
+  |v:exiting|
   |v:progpath| is always absolute ("full")
   |v:windowid| is always available (for use by external UIs)
 
