@@ -1,0 +1,16 @@
+
+function! Test_WriteFile()
+  let f = tempname()
+  call writefile(["over","written"], f, "b")
+  call writefile(["hello","world"], f, "b")
+  call writefile(["!", "good"], f, "a")
+  call writefile(["morning"], f, "ab")
+  call writefile(["", "vimmers"], f, "ab")
+  let l = readfile(f)
+  call assert_equal("hello", l[0])
+  call assert_equal("world!", l[1])
+  call assert_equal("good", l[2])
+  call assert_equal("morning", l[3])
+  call assert_equal("vimmers", l[4])
+  call delete(f)
+endfunction
