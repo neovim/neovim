@@ -345,10 +345,6 @@ char *xstpcpy(char *restrict dst, const char *restrict src)
 /// WARNING: xstpncpy will ALWAYS write maxlen bytes. If src is shorter than
 /// maxlen, zeroes will be written to the remaining bytes.
 ///
-/// TODO(aktau): I don't see a good reason to have this last behaviour, and
-/// it is potentially wasteful. Could we perhaps deviate from the standard
-/// and not zero the rest of the buffer?
-///
 /// @param dst
 /// @param src
 /// @param maxlen

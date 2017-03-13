@@ -14,6 +14,7 @@
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/log.h"
 #include "nvim/ascii.h"
 #include "nvim/normal.h"
 #include "nvim/buffer.h"
@@ -541,7 +542,7 @@ static bool normal_handle_special_visual_command(NormalState *s)
   return false;
 }
 
-static bool normal_need_aditional_char(NormalState *s)
+static bool normal_need_additional_char(NormalState *s)
 {
   int flags = nv_cmds[s->idx].cmd_flags;
   bool pending_op = s->oa.op_type != OP_NOP;
@@ -1083,7 +1084,7 @@ static int normal_execute(VimState *state, int key)
   }
 
   // Get an additional character if we need one.
-  if (normal_need_aditional_char(s)) {
+  if (normal_need_additional_char(s)) {
     normal_get_additional_char(s);
   }
 

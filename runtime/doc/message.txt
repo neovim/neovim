@@ -40,10 +40,6 @@ Note: If the output has been stopped with "q" at the more prompt, it will only
 be displayed up to this point.
 The previous command output is cleared when another command produces output.
 
-If you are using translated messages, the first printed line tells who
-maintains the messages or the translations.  You can use this to contact the
-maintainer when you spot a mistake.
-
 If you want to find help on a specific (error) message, use the ID at the
 start of the message.  For example, to get help on the message: >
 

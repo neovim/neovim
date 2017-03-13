@@ -11,6 +11,7 @@
 
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/log.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/buffer.h"
@@ -27,6 +28,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/option.h"
+#include "nvim/state.h"
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
@@ -700,6 +702,25 @@ Dictionary nvim_get_color_map(void)
   return colors;
 }
 
+
+/// Gets the current mode.
+/// mode:     Mode string. |mode()|
+/// blocking: true if Nvim is waiting for input.
+///
+/// @returns Dictionary { "mode": String, "blocking": Boolean }
+Dictionary nvim_get_mode(void)
+  FUNC_API_SINCE(2) FUNC_API_ASYNC
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+  char *modestr = get_mode();
+  bool blocked = input_blocking();
+  ILOG("blocked=%d", blocked);
+
+  PUT(rv, "mode", STRING_OBJ(cstr_as_string(modestr)));
+  PUT(rv, "blocking", BOOLEAN_OBJ(blocked));
+
+  return rv;
+}
 
 Array nvim_get_api_info(uint64_t channel_id)
     FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_NOEVAL

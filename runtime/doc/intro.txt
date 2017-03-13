@@ -34,11 +34,6 @@ It can be accessed from within Vim with the <Help> or <F1> key and with the
 is not located in the default place.  You can jump to subjects like with tags:
 Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
 
-This manual refers to Vim on various machines.  There may be small differences
-between different computers and terminals.  Besides the remarks given in this
-document, there is a separate document for each supported system, see
-|sys-file-list|.
-
 							*pronounce*
 Vim is pronounced as one word, like Jim, not vi-ai-em.  It's written with a
 capital, since it's a name, again like Jim.

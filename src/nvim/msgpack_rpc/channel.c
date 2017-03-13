@@ -28,7 +28,9 @@
 #include "nvim/map.h"
 #include "nvim/log.h"
 #include "nvim/misc1.h"
+#include "nvim/state.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/os/input.h"
 
 #define CHANNEL_BUFFER_SIZE 0xffff
 
@@ -431,6 +433,14 @@ static void handle_request(Channel *channel, msgpack_object *request)
   if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
     handler.fn = msgpack_rpc_handle_invalid_arguments;
     handler.async = true;
+  }
+
+  if (handler.async) {
+    char buf[256] = { 0 };
+    memcpy(buf, method->via.bin.ptr, MIN(255, method->via.bin.size));
+    if (strcmp("nvim_get_mode", buf) == 0) {
+      handler.async = input_blocking();
+    }
   }
 
   RequestEvent *event_data = xmalloc(sizeof(RequestEvent));

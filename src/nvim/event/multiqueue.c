@@ -55,6 +55,7 @@
 
 #include "nvim/event/multiqueue.h"
 #include "nvim/memory.h"
+#include "nvim/log.h"
 #include "nvim/os/time.h"
 
 typedef struct multiqueue_item MultiQueueItem;
@@ -149,6 +150,40 @@ void multiqueue_process_events(MultiQueue *this)
       event.handler(event.argv);
     }
   }
+}
+
+void multiqueue_process_debug(MultiQueue *this)
+{
+  assert(this);
+  QUEUE *start = QUEUE_HEAD(&this->headtail);
+  QUEUE *cur   = start;
+  // MultiQueue *start = this;
+  // MultiQueue *cur   = start;
+  do {
+    MultiQueueItem *item = multiqueue_node_data(cur);
+    Event ev;
+    if (item->link) {
+      assert(!this->parent);
+      // get the next node in the linked queue
+      MultiQueue *linked = item->data.queue;
+      assert(!multiqueue_empty(linked));
+      MultiQueueItem *child =
+        multiqueue_node_data(QUEUE_HEAD(&linked->headtail));
+      ev = child->data.item.event;
+    } else {
+      ev = item->data.item.event;
+    }
+
+    // Event event = multiqueue_get(this);
+    // if (event.handler) {
+    //   event.handler(event.argv);
+    // }
+
+    ILOG("ev: priority=%d, handler=%p arg1=%s", ev.priority, ev.handler,
+         ev.argv ? ev.argv[0] : "(null)");
+
+    cur = cur->next;
+  } while (cur && cur != start);
 }
 
 /// Removes all events without processing them.
