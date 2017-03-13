@@ -1508,6 +1508,16 @@ function Xproperty_tests(cchar)
     call assert_equal('Sample', w:quickfix_title)
     Xclose
 
+    " Tests for action argument
+    silent! Xolder 999
+    let qfnr = g:Xgetlist({'all':1}).nr
+    call g:Xsetlist([], 'r', {'title' : 'N1'})
+    call assert_equal('N1', g:Xgetlist({'all':1}).title)
+    call g:Xsetlist([], ' ', {'title' : 'N2'})
+    call assert_equal(qfnr + 1, g:Xgetlist({'all':1}).nr)
+    call g:Xsetlist([], ' ', {'title' : 'N3'})
+    call assert_equal('N2', g:Xgetlist({'nr':2, 'title':1}).title)
+
     " Invalid arguments
     call assert_fails('call g:Xgetlist([])', 'E715')
     call assert_fails('call g:Xsetlist([], "a", [])', 'E715')
