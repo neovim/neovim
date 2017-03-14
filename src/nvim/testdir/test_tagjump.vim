@@ -6,4 +6,5 @@ func Test_ptag_with_notagstack()
   call assert_fails('ptag does_not_exist_tag_name', 'E426')
   set tagstack&vim
 endfunc
-" vim: sw=2 et
+
+" vim: shiftwidth=2 sts=2 expandtab

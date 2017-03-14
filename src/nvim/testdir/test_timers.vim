@@ -52,4 +52,5 @@ func Test_retain_partial()
   call garbagecollect()
   sleep 200m
 endfunc
-" vim: ts=2 sw=0 et
+
+" vim: shiftwidth=2 sts=2 expandtab

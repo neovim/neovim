@@ -26,4 +26,4 @@ func Test_increment_dbcs_1()
   call assert_equal([0, 1, 13, 0], getpos('.'))
 endfunc
 
-" vim: shiftwidth=2 expandtab
+" vim: shiftwidth=2 sts=2 expandtab

@@ -458,4 +458,4 @@ func! Test_digraph_cmndline()
   call assert_equal("€", s)
 endfunc
 
-" vim: tabstop=2 shiftwidth=0 sts=-1 expandtab
+" vim: shiftwidth=2 sts=2 expandtab
