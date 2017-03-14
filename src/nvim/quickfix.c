@@ -4214,11 +4214,15 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
   return retval;
 }
 
-static int qf_set_properties(qf_info_T *qi, dict_T *what)
+static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
 {
   dictitem_T *di;
   int retval = FAIL;
+  int newlist = false;
 
+  if (action == ' ' || qi->qf_curlist == qi->qf_listcount) {
+    newlist = true;
+  }
   int qf_idx = qi->qf_curlist;  // default is the current list
   if ((di = dict_find(what, (char_u *)"nr", -1)) != NULL) {
     // Use the specified quickfix/location list
@@ -4230,6 +4234,12 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what)
     } else {
       return FAIL;
     }
+    newlist = false;  // use the specified list
+  }
+
+  if (newlist) {
+    qf_new_list(qi, NULL);
+    qf_idx = qi->qf_curlist;
   }
 
   if ((di = dict_find(what, (char_u *)"title", -1)) != NULL) {
@@ -4260,7 +4270,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
   }
 
   if (what != NULL) {
-    retval = qf_set_properties(qi, what);
+    retval = qf_set_properties(qi, what, action);
   } else {
     retval = qf_add_entries(qi, list, title, action);
   }
