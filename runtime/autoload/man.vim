@@ -152,23 +152,28 @@ function! s:put_page(page) abort
 endfunction
 
 function! man#show_toc() abort
-  if !exists('b:qf_toc')
-    let b:qf_toc = []
-    let lnum = 2
-    let last_line = line('$') - 1
-    while lnum && lnum < last_line
-      let text = getline(lnum)
-      if text =~# '^\%( \{3\}\)\=\S.*$'
-        call add(b:qf_toc, {'bufnr': bufnr('%'), 'lnum': lnum, 'text': text})
-      endif
-      let lnum = nextnonblank(lnum + 1)
-    endwhile
+  let bufname = bufname('%')
+  let info = getloclist(0, {'winid': 1})
+  if !empty(info) && getwinvar(info.winid, 'qf_toc') ==# bufname
+    lopen
+    return
   endif
 
-  if map(copy(b:qf_toc), 'v:val.text') != map(getloclist(0), 'v:val.text')
-    call setloclist(0, b:qf_toc, ' ', 'Man TOC')
-  endif
+  let toc = []
+  let lnum = 2
+  let last_line = line('$') - 1
+  while lnum && lnum < last_line
+    let text = getline(lnum)
+    if text =~# '^\%( \{3\}\)\=\S.*$'
+      call add(toc, {'bufnr': bufnr('%'), 'lnum': lnum, 'text': text})
+    endif
+    let lnum = nextnonblank(lnum + 1)
+  endwhile
+
+  call setloclist(0, toc, ' ')
+  call setloclist(0, [], ' ', {'title': 'Man TOC'})
   lopen
+  let w:qf_toc = bufname
 endfunction
 
 " attempt to extract the name and sect out of 'name(sect)'
