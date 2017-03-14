@@ -19,236 +19,211 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO_8859-1\n"
 "Content-Transfer-Encoding: 8-bit\n"
 
-#, fuzzy
-#~ msgid "Index out of bounds"
-#~ msgstr "nicht gefunden "
+msgid "Index out of bounds"
+msgstr "Index out of bounds"
 
-#, fuzzy
-#~ msgid "Line index is too high"
-#~ msgstr "Fensterindex außerhalb des zulässigen Bereichs"
+msgid "Line index is too high"
+msgstr "Zeilenindex ist zu groß"
 
-#~ msgid "Argument \"start\" is higher than \"end\""
-#~ msgstr ""
+msgid "Argument \"start\" is higher than \"end\""
+msgstr "Argument \"start\" is größer als \"end\""
 
-#~ msgid "All items in the replacement array must be strings"
-#~ msgstr ""
+msgid "All items in the replacement array must be strings"
+msgstr "Alle Einträge in Ersatzarray müssen Zeichenfolgen sein"
 
 msgid "string cannot contain newlines"
-msgstr "Zeichenfolge kann keine Zeilenwechsel enthalten"
+msgstr "Zeichenfolge kann keine Zeilenumbrüche enthalten"
 
-#, fuzzy
-#~ msgid "Failed to save undo information"
-#~ msgstr "kann Information für die Wiederherstellung nicht speichern"
+msgid "Failed to save undo information"
+msgstr "Speichern der Wiederherstellunginfo gescheitert"
 
-#, fuzzy
-#~ msgid "Failed to delete line"
-#~ msgstr "Zeile kann nicht gelöscht werden"
+msgid "Failed to delete line"
+msgstr "Löschen der Zeile gescheitert"
 
-#~ msgid "Index value is too high"
-#~ msgstr ""
+msgid "Index value is too high"
+msgstr "Indexwert ist zu groß"
 
-#, fuzzy
-#~ msgid "Failed to replace line"
-#~ msgstr "Zeile kann nicht ersetzt werden"
+msgid "Failed to replace line"
+msgstr "Ersetzen der Zeile gescheitert"
 
-#, fuzzy
-#~ msgid "Failed to insert line"
-#~ msgstr "Zeile kann nicht eingefügt werden"
+msgid "Failed to insert line"
+msgstr "Einfügung der Zeile gescheitert"
 
-#, fuzzy
-#~ msgid "Failed to rename buffer"
-#~ msgstr "E222: Zum Lesepuffer hinzufügen"
+msgid "Failed to rename buffer"
+msgstr "Umbenennung der Lesepuffer gescheitert"
 
-#~ msgid "Mark name must be a single character"
-#~ msgstr ""
+msgid "Mark name must be a single character"
+msgstr "Markierungsname muss ein Einzelzeichen sein"
 
-#, fuzzy
-#~ msgid "Invalid mark name"
-#~ msgstr "ungültiger Name einer Markierung"
+msgid "Invalid mark name"
+msgstr "Ungültiger Markierungsname"
 
-#, fuzzy
-#~ msgid "Line number outside range"
-#~ msgstr "Zeilennummer außerhalb des zulässigen Bereichs"
+msgid "Line number outside range"
+msgstr "Zeilennummer außerhalb des zulässigen Bereichs"
 
-#, fuzzy
-#~ msgid "Column value outside range"
-#~ msgstr "Zeilennummer außerhalb des zulässigen Bereichs"
+msgid "Column value outside range"
+msgstr "Spaltennummer außerhalb des zulässigen Bereichs"
 
-#, fuzzy
-#~ msgid "Keyboard interrupt"
-#~ msgstr "Tastatur-Unterbrechung"
+msgid "Keyboard interrupt"
+msgstr "Tastatur-Unterbrechung"
 
-#, fuzzy
-#~ msgid "Key not found"
-#~ msgstr "nicht gefunden "
+msgid "Key not found"
+msgstr "Pfad nicht gefunden "
 
-#, fuzzy
-#~ msgid "Dictionary is locked"
-#~ msgstr "E715: Dictionary benötigt"
+msgid "Dictionary is locked"
+msgstr "Dictionary gesperrt"
 
-#~ msgid "Empty variable names aren't allowed"
-#~ msgstr ""
+msgid "Empty variable names aren't allowed"
+msgstr "Variablennamen können nicht leer sein"
 
-#, fuzzy
-#~ msgid "Key length is too high"
-#~ msgstr "Die Länge des Pfads ist zu groß!"
+msgid "Key length is too high"
+msgstr "Die Länge des Pfads ist zu groß!"
 
 #, c-format
-#~ msgid "Key is read-only: %s"
-#~ msgstr ""
+msgid "Key is read-only: %s"
+msgstr "Schlüssel ist schreibgeschützt: %s"
 
 #, c-format
-#~ msgid "Key is fixed: %s"
-#~ msgstr ""
+msgid "Key is fixed: %s"
+msgstr "Schlüssel ist fest: %s"
 
-#, fuzzy, c-format
-#~ msgid "Key is locked: %s"
-#~ msgstr "E741: Wert ist gesperrt: %s"
+#, c-format
+msgid "Key is locked: %s"
+msgstr "Schlüssel ist gesperrt: %s"
 
 #. Doesn't exist, fail
-#, fuzzy, c-format
-#~ msgid "Key \"%s\" doesn't exist"
-#~ msgstr "Die Datei \"%s\" existiert nicht"
+#, c-format
+msgid "Key \"%s\" doesn't exist"
+msgstr "Schlüssel \"%s\" existiert nicht"
 
-#, fuzzy
-#~ msgid "Empty option name"
-#~ msgstr "E792: Leerer Menüname"
-
-#, fuzzy, c-format
-#~ msgid "Invalid option name \"%s\""
-#~ msgstr "E755: Ungültige Region in %s"
-
-#, fuzzy, c-format
-#~ msgid "Unable to get value for option \"%s\""
-#~ msgstr "Kann Optionswert nicht ermitteln"
-
-#, fuzzy, c-format
-#~ msgid "Unknown type for option \"%s\""
-#~ msgstr "E355: Unbekannte Option: %s"
-
-#, fuzzy, c-format
-#~ msgid "Unable to unset option \"%s\""
-#~ msgstr "Kann Optionswert nicht ermitteln"
+msgid "Empty option name"
+msgstr "Leerer Optionname"
 
 #, c-format
-#~ msgid "Cannot unset option \"%s\" because it doesn't have a global value"
-#~ msgstr ""
+msgid "Invalid option name \"%s\""
+msgstr "Ungültige Optionname \"%s\""
 
 #, c-format
-#~ msgid "Option \"%s\" requires a boolean value"
-#~ msgstr ""
-
-#, fuzzy, c-format
-#~ msgid "Option \"%s\" requires an integer value"
-#~ msgstr "E709: [:] benötigt List"
+msgid "Unable to get value for option \"%s\""
+msgstr "Kann Optionswert nicht ermitteln"
 
 #, c-format
-#~ msgid "Value for option \"%s\" is outside range"
-#~ msgstr ""
-
-#, fuzzy, c-format
-#~ msgid "Option \"%s\" requires a string value"
-#~ msgstr "E709: [:] benötigt List"
-
-#, fuzzy
-#~ msgid "Invalid buffer id"
-#~ msgstr "ungültige Puffernummer"
-
-#, fuzzy
-#~ msgid "Invalid window id"
-#~ msgstr "E900: Ungültige Job-ID"
-
-#, fuzzy
-#~ msgid "Invalid tabpage id"
-#~ msgstr "E900: Ungültige Job-ID"
-
-#~ msgid "Integer value outside range"
-#~ msgstr ""
-
-#~ msgid "Empty dictionary keys aren't allowed"
-#~ msgstr ""
-
-#~ msgid "Problem while switching windows"
-#~ msgstr ""
-
-#, fuzzy
-#~ msgid "UI already attached for channel"
-#~ msgstr "Bereits bei der ältesten Änderung"
-
-#~ msgid "Expected width > 0 and height > 0"
-#~ msgstr ""
-
-#~ msgid "UI is not attached for channel"
-#~ msgstr ""
-
-#~ msgid "rgb must be a Boolean"
-#~ msgstr ""
-
-#~ msgid "popupmenu_external must be a Boolean"
-#~ msgstr ""
-
-#, fuzzy
-#~ msgid "No such ui option"
-#~ msgstr "E24: Keine Abkürzung gefunden"
-
-#, fuzzy
-#~ msgid "Failed to evaluate expression"
-#~ msgstr "ungültiger Ausdruck"
-
-#~ msgid "Function called with too many arguments."
-#~ msgstr ""
-
-#~ msgid "Error calling function."
-#~ msgstr ""
-
-#, fuzzy
-#~ msgid "String length is too high"
-#~ msgstr "Die Länge des Pfads ist zu groß!"
-
-#~ msgid "Directory string is too long"
-#~ msgstr ""
-
-#, fuzzy
-#~ msgid "Failed to change directory"
-#~ msgstr "ist ein Verzeichnis"
+msgid "Unknown type for option \"%s\""
+msgstr "Unbekannte Typ für Option: \"%s\""
 
 #, c-format
-#~ msgid "Failed to switch to buffer %d"
-#~ msgstr ""
+msgid "Unable to unset option \"%s\""
+msgstr "Kann Optionswert nicht abstellen"
 
 #, c-format
-#~ msgid "Failed to switch to window %d"
-#~ msgstr ""
+msgid "Cannot unset option \"%s\" because it doesn't have a global value"
+msgstr "Option \"%s\" kann nicht abgestellt werden weil er nicht global ist"
 
 #, c-format
-#~ msgid "Failed to switch to tabpage %d"
-#~ msgstr ""
+msgid "Option \"%s\" requires a boolean value"
+msgstr "Option \"%s\" benötigt ein Wert"
 
-#~ msgid "All items in calls array must be arrays"
-#~ msgstr ""
+#, c-format
+msgid "Option \"%s\" requires an integer value"
+msgstr "Option \"%s\" benötigt ein Integer"
 
-#~ msgid "All items in calls array must be arrays of size 2"
-#~ msgstr ""
+#, c-format
+msgid "Value for option \"%s\" is outside range"
+msgstr "Option \"%s\" ist außerhalb des zulässigen Bereichs"
 
-#~ msgid "name must be String"
-#~ msgstr ""
+#, c-format
+msgid "Option \"%s\" requires a string value"
+msgstr "Option \"%s\" benötigt ein Zeichenfolge"
 
-#~ msgid "args must be Array"
-#~ msgstr ""
+msgid "Invalid buffer id"
+msgstr "Ungültige Puffernummer"
 
-#, fuzzy
-#~ msgid "Argument \"pos\" must be a [row, col] array"
-#~ msgstr "E712: Argument von %s muss vom Typ List oder Dictionary sein"
+msgid "Invalid window id"
+msgstr "Ungültige Fenster-ID"
 
-#, fuzzy
-#~ msgid "Cursor position outside buffer"
-#~ msgstr "Cursor Position außerhalb des Puffers"
+msgid "Invalid tabpage id"
+msgstr "Ungültige Seitenreiter-ID"
 
-#~ msgid "Height value outside range"
-#~ msgstr ""
+msgid "Integer value outside range"
+msgstr "Integer außerhalb des zulässigen Bereichs"
 
-#~ msgid "Width value outside range"
-#~ msgstr ""
+msgid "Empty dictionary keys aren't allowed"
+msgstr "Dictionary-Schlüssel können nicht leer sein"
+
+msgid "Problem while switching windows"
+msgstr "Problem beim Fensterwechsel "
+
+msgid "UI already attached for channel"
+msgstr "Benutzeroberfläche beriets verbunden mit einem Kanal"
+
+msgid "Expected width > 0 and height > 0"
+msgstr "Breite > 0 und Höhe > 0 erwartet"
+
+msgid "UI is not attached for channel"
+msgstr "Benutzeroberfläche ist mit einem Kanal nicht verbunden"
+
+msgid "rgb must be a Boolean"
+msgstr "RGB muss boolesch sein"
+
+msgid "popupmenu_external must be a Boolean"
+msgstr "popupmenu_external muss boolesch sein"
+
+msgid "No such ui option"
+msgstr "Keine Benutzeroberflächeoption gefunden"
+
+msgid "Failed to evaluate expression"
+msgstr "Bewerten des Ausdrucks gescheitert"
+
+msgid "Function called with too many arguments."
+msgstr "Funktion aufgerufen mit zu vielen Argumenten"
+
+msgid "Error calling function."
+msgstr "Fehler bei aufrufen der Funktion"
+
+msgid "String length is too high"
+msgstr "Zeichenkette zu lang"
+
+msgid "Directory string is too long"
+msgstr "Verzeichniszeichenkette zu lang"
+
+msgid "Failed to change directory"
+msgstr "Verzeichniswechsel gescheitert"
+
+#, c-format
+msgid "Failed to switch to buffer %d"
+msgstr "Wechsel zu %d des Puffers gescheitert"
+
+#, c-format
+msgid "Failed to switch to window %d"
+msgstr "Wechsel zu %d der Fenster gescheitert"
+
+#, c-format
+msgid "Failed to switch to tabpage %d"
+msgstr "Wechsel zu %d des Seitenreiters gescheitert"
+
+msgid "All items in calls array must be arrays"
+msgstr "Alle Einträge in Aufrufearray müssen Arrays sein"
+
+msgid "All items in calls array must be arrays of size 2"
+msgstr "Alle Einträge in Aufrufearray müssen Arrays mit Größe 2 sein"
+
+msgid "name must be String"
+msgstr "Name muss ein Zeichenkette sein"
+
+msgid "args must be Array"
+msgstr "args muss ein Array sein"
+
+msgid "Argument \"pos\" must be a [row, col] array"
+msgstr "Argument \"pos\" muss ein Array [Zeile, Spalte] sein"
+
+msgid "Cursor position outside buffer"
+msgstr "Cursor Position außerhalb des Puffers"
+
+msgid "Height value outside range"
+msgstr "Höhe außerhalb des zulässigen Bereichs"
+
+msgid "Width value outside range"
+msgstr "Breite außerhalb des zulässigen Bereichs"
 
 msgid "[Location List]"
 msgstr "[Positionsliste]"
@@ -265,8 +240,8 @@ msgstr "E82: Kann keinen Puffer zuweisen; beenden..."
 msgid "E83: Cannot allocate buffer, using other one..."
 msgstr "E83: Kann den Puffer nicht zuweisen; benutze einen anderen..."
 
-#~ msgid "E931: Buffer cannot be registered"
-#~ msgstr ""
+msgid "E931: Buffer cannot be registered"
+msgstr "E931: Kann den Puffer nicht registrieren"
 
 msgid "E515: No buffers were unloaded"
 msgstr "E515: Keine Puffer wurden entladen"
@@ -609,14 +584,13 @@ msgid "E713: Cannot use empty key for Dictionary"
 msgstr "E713: Schlüssel für Dictionary darf nicht leer sein"
 
 msgid "E714: List required"
-msgstr "E714: List benötigt"
+msgstr "E714: Liste benötigt"
 
 msgid "E715: Dictionary required"
 msgstr "E715: Dictionary benötigt"
 
-#, fuzzy
-#~ msgid "E928: String required"
-#~ msgstr "E397: Dateiname wird benötigt"
+msgid "E928: String required"
+msgstr "E928: String benötigt"
 
 #, c-format
 msgid "E118: Too many arguments for function: %s"
@@ -649,14 +623,15 @@ msgstr "E130: Unbekannte Funktion: %s"
 
 #, c-format
 msgid "E461: Illegal variable name: %s"
-msgstr "E461: Unzulässiger Name der Variable: %s"
+msgstr "E461: Unzulässiger Variablenname: %s"
 
 msgid "E806: using Float as a String"
 msgstr "E806: Float als String verwendet"
 
-#, fuzzy, c-format
-#~ msgid "E46: Cannot change read-only variable \"%.*s\""
-#~ msgstr "E46: Variable \"%s\" kann nur gelesen werden"
+#, c-format
+msgid "E46: Cannot change read-only variable \"%.*s\""
+msgstr "E46: Schreibgeschützte Variable kann nich geändert werden \"%.*s\""
+"geändert"
 
 msgid "E687: Less targets than List items"
 msgstr "E687: Weniger Ziele als List-Einträge"
@@ -761,11 +736,11 @@ msgstr "E696: Fehlendes Komma in List: %s"
 msgid "E697: Missing end of List ']': %s"
 msgstr "E697: Fehlendes List-Ende ']': %s"
 
-#~ msgid "Not enough memory to set references, garbage collection aborted!"
-#~ msgstr ""
+msgid "Not enough memory to set references, garbage collection aborted!"
+msgstr "nicht genügend Arbeitsspeicher um Referenzen zu setzen, Garbage Collection abgebrochen"
 
-#~ msgid "Argument is not a function or function name"
-#~ msgstr ""
+msgid "Argument is not a function or function name"
+msgstr "Argument ist keine Funktion oder Funktionname"
 
 #, c-format
 msgid "E720: Missing colon in Dictionary: %s"
@@ -859,24 +834,20 @@ msgstr "+-%s%3ld Zeilen: "
 msgid "E700: Unknown function: %s"
 msgstr "E700: Unbekannte Funktion: %s"
 
-#, fuzzy
-#~ msgid "E922: expected a dict"
-#~ msgstr "E268: Unerwartetes 'next'"
+msgid "E922: expected a dict"
+msgstr "E922: Dict erwartet"
 
-#, fuzzy
-#~ msgid "E923: Second argument of function() must be a list or a dict"
-#~ msgstr "E712: Argument von %s muss vom Typ List oder Dictionary sein"
+msgid "E923: Second argument of function() must be a list or a dict"
+msgstr "E923: Zweiteargument der Funktion muss eine Liste oder Dict sein"
 
-#, fuzzy
-#~ msgid "E5000: Cannot find tab number."
-#~ msgstr "E695: Kann Funcref nicht indizieren"
+msgid "E5000: Cannot find tab number."
+msgstr "E5000: Kann Reternummer nicht finden."
 
-#~ msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
-#~ msgstr ""
+msgid "E5001: Higher scope cannot be -1 if lower scope is >= 0."
+msgstr "E5001: Higher scope kann nicht -1  sein wenn lower scope >= 0 ist."
 
-#, fuzzy
-#~ msgid "E5002: Cannot find window number."
-#~ msgstr "E671: Kann Fenstertitel \"%s\" nicht finden"
+msgid "E5002: Cannot find window number."
+msgstr "E5002: Kann Fensternummer nicht finden."
 
 msgid "called inputrestore() more often than inputsave()"
 msgstr "inputrestore() wurde öfter als inputsave() aufgerufen"
@@ -887,35 +858,35 @@ msgstr "insert()-Argument"
 msgid "E786: Range not allowed"
 msgstr "E786: Bereich nicht erlaubt"
 
-#~ msgid "Invalid stream on rpc job, use jobclose(id, 'rpc')"
-#~ msgstr ""
+msgid "Invalid stream on rpc job, use jobclose(id, 'rpc')"
+msgstr "Ungültig Datenstrom auf RPC job, verwend jobclose(id, 'rpc')"
 
-#~ msgid "Invalid job stream: Not an rpc job"
-#~ msgstr ""
+msgid "Invalid job stream: Not an rpc job"
+msgstr "Ungültig Jobdatenstrom: Nicht en RPC job"
 
 #, c-format
-#~ msgid "Invalid job stream \"%s\""
-#~ msgstr ""
+msgid "Invalid job stream \"%s\""
+msgstr "Ungültig Jobdatenstrom \"%s\""
 
-#~ msgid "Can't send data to the job: stdin is closed"
-#~ msgstr ""
+msgid "Can't send data to the job: stdin is closed"
+msgstr "Könnte keine Datei schicken: StdIn ist geschlossen"
 
-#~ msgid "Can't send raw data to rpc channel"
-#~ msgstr ""
+msgid "Can't send raw data to rpc channel"
+msgstr "Könnte keine Rohdaten an RPC Kanal schicken"
 
-#~ msgid "E474: Failed to convert list to string"
-#~ msgstr ""
+msgid "E474: Failed to convert list to string"
+msgstr "E474: Konnte nicht Liste zu Zeichenkette konvertieren"
 
-#, fuzzy, c-format
-#~ msgid "E474: Failed to parse %.*s"
-#~ msgstr "E241: Kann nicht zu %s senden"
+#, c-format
+msgid "E474: Failed to parse %.*s"
+msgstr "E474: Konnte nicht %.*s parsen"
 
 msgid "E701: Invalid type for len()"
 msgstr "E701: Unzulässiger Typ für len()"
 
-#, fuzzy, c-format
-#~ msgid "msgpackdump() argument, index %i"
-#~ msgstr "map()-Argument"
+#, c-format
+msgid "msgpackdump() argument, index %i"
+msgstr "msgpackdump() argument, index %i"
 
 msgid "E726: Stride is zero"
 msgstr "E726: Stride ist Null"
@@ -935,9 +906,9 @@ msgstr "E655: Zu viele symbolische Links (zirkulär?)"
 msgid "reverse() argument"
 msgstr "reverse()-Argument"
 
-#, fuzzy, c-format
-#~ msgid "E927: Invalid action: '%s'"
-#~ msgstr "E383: Unzulässiges Suchmuster: %s"
+#, c-format
+msgid "E927: Invalid action: '%s'"
+msgstr "E927: Ungültige Aktion: '%s'"
 
 msgid "sort() argument"
 msgstr "sort()-Argument"
@@ -954,54 +925,49 @@ msgstr "E882: Fehler in uniq()-Vergleichsfunktion"
 msgid "(Invalid)"
 msgstr "(Ungültig)"
 
-#, fuzzy, c-format
-#~ msgid "E935: invalid submatch number: %d"
-#~ msgstr "E354: Ungültiger Registername: '%s'"
+#, c-format
+msgid "E935: invalid submatch number: %d"
+msgstr "E935: Ungültig submatch nummer: %d"
 
-#~ msgid "Can only call this function in an unmodified buffer"
-#~ msgstr ""
+msgid "Can only call this function in an unmodified buffer"
+msgstr "Funktion kann nur in eine unveränderten Puffern aufgerufen werden"
 
-#, fuzzy
-#~ msgid "E921: Invalid callback argument"
-#~ msgstr "E474: Ungültiges Argument"
+msgid "E921: Invalid callback argument"
+msgstr "E921: Ungültiges Rückrufargument"
 
-#, fuzzy, c-format
-#~ msgid "E80: Error while writing: %s"
-#~ msgstr "E80: Fehler während des Schreibens"
+#, c-format
+msgid "E80: Error while writing: %s"
+msgstr "E80: Fehler während des Schreibens: %s"
 
-#, fuzzy
-#~ msgid "E482: Can't open file with an empty name"
-#~ msgstr "E212: Datei kann nicht zum Schreiben geöffnet werden"
+msgid "E482: Can't open file with an empty name"
+msgstr "E482: Könnte Datei nicht öffnen: Name ist leer"
 
-#, fuzzy, c-format
-#~ msgid "E482: Can't open file %s for writing: %s"
-#~ msgstr "E212: Datei kann nicht zum Schreiben geöffnet werden"
+#, c-format
+msgid "E482: Can't open file %s for writing: %s"
+msgstr "E482: Könnte Datei %s zum Schreiben nicht öffnen %s"
 
-#, fuzzy, c-format
-#~ msgid "E80: Error when closing file %s: %s"
-#~ msgstr "E209: Fehler beim Schließen von \"%s\""
+#, c-format
+msgid "E80: Error when closing file %s: %s"
+msgstr "E80: Fehler beim Schließen der Datei %s: %s"
 
-#, fuzzy, c-format
-#~ msgid "E121: Undefined variable: %.*s"
-#~ msgstr "E121: Nicht definierte Variable: %s"
+#, c-format
+msgid "E121: Undefined variable: %.*s"
+msgstr "E121: Variable nicht definiert: %.*s"
 
-#, fuzzy
-#~ msgid "E805: Expected a Number or a String, Float found"
-#~ msgstr "E807: Float-Argument für printf() erwartet"
+msgid "E805: Expected a Number or a String, Float found"
+msgstr "E805: Number oder String erwartet, Float gefunden."
 
-#~ msgid "E703: Expected a Number or a String, Funcref found"
-#~ msgstr ""
+msgid "E703: Expected a Number or a String, Funcref found"
+msgstr "E703: Number oder String erwartet, Funcref gefunden."
 
-#, fuzzy
-#~ msgid "E745: Expected a Number or a String, List found"
-#~ msgstr "E807: Float-Argument für printf() erwartet"
+msgid "E745: Expected a Number or a String, List found"
+msgstr "E745: Number oder String erwartet, List gefunden"
 
-#~ msgid "E728: Expected a Number or a String, Dictionary found"
-#~ msgstr ""
+msgid "E728: Expected a Number or a String, Dictionary found"
+msgstr "E728: Number oder String erwartet, Dictionary gefunden"
 
-#, fuzzy
-#~ msgid "E5300: Expected a Number or a String"
-#~ msgstr "E807: Float-Argument für printf() erwartet"
+msgid "E5300: Expected a Number or a String"
+msgstr "E807: Number oder Float erwartet"
 
 msgid "E805: Using a Float as a Number"
 msgstr "E805: Float als Number verwendet"
@@ -1015,21 +981,17 @@ msgstr "E745: List als Number verwendet"
 msgid "E728: Using a Dictionary as a Number"
 msgstr "E728: Dictionary als Number verwendet"
 
-#, fuzzy
-#~ msgid "E891: Using a Funcref as a Float"
-#~ msgstr "E703: Funcref als Number verwendet"
+msgid "E891: Using a Funcref as a Float"
+msgstr "E891: Funcref als Float verwendet"
 
-#, fuzzy
-#~ msgid "E892: Using a String as a Float"
-#~ msgstr "E728: Dictionary als Number verwendet"
+msgid "E892: Using a String as a Float"
+msgstr "E892: String als Float verwendet"
 
-#, fuzzy
-#~ msgid "E893: Using a List as a Float"
-#~ msgstr "E745: List als Number verwendet"
+msgid "E893: Using a List as a Float"
+msgstr "E893: List als Float verwendet"
 
-#, fuzzy
-#~ msgid "E894: Using a Dictionary as a Float"
-#~ msgstr "E728: Dictionary als Number verwendet"
+msgid "E894: Using a Dictionary as a Float"
+msgstr "E894: Dictionary als Float verwendet"
 
 msgid "E729: using Funcref as a String"
 msgstr "E729: Funcref als String verwendet"
@@ -1040,17 +1002,16 @@ msgstr "E730: List als String verwendet"
 msgid "E731: using Dictionary as a String"
 msgstr "E731: Dictionary als String verwendet"
 
-#, fuzzy
-#~ msgid "E908: using an invalid value as a String"
-#~ msgstr "E806: Float als String verwendet"
+msgid "E908: using an invalid value as a String"
+msgstr "E806: Ungültiger Wert als String verwendet"
 
-#, fuzzy, c-format
-#~ msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
-#~ msgstr "E794: Variable \"%s\" kann in der Sandbox nicht gesetzt werden"
+#, c-format
+msgid "E794: Cannot set variable in the sandbox: \"%.*s\""
+msgstr "E794: Variable \"%.*s\" kann in der Sandbox nicht gesetzt werden"
 
-#, fuzzy, c-format
-#~ msgid "E795: Cannot delete variable %.*s"
-#~ msgstr "E795: Kann Variable %s nicht löschen"
+#, c-format
+msgid "E795: Cannot delete variable %.*s"
+msgstr "E795: Kann Variable %.*s nicht löschen"
 
 #, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
@@ -1163,20 +1124,20 @@ msgid "No old files"
 msgstr "Keine alten Dateien"
 
 #, c-format
-#~ msgid "E474: Expected comma before list item: %s"
-#~ msgstr ""
+msgid "E474: Expected comma before list item: %s"
+msgstr "E474: Komma vor List-Eintrag erwartet: %s"
 
 #, c-format
-#~ msgid "E474: Expected colon before dictionary value: %s"
-#~ msgstr ""
+msgid "E474: Expected colon before dictionary value: %s"
+msgstr "E474: Doppelpunkt vor Dictionary-Wert erwartet: %s"
 
-#, fuzzy, c-format
-#~ msgid "E474: Expected string key: %s"
-#~ msgstr "E415: Unerwartetes Gleichheitszeichen: %s"
+#, c-format
+msgid "E474: Expected string key: %s"
+msgstr "E474: Schlüssel mit Typ String erwartet: %s"
 
-#, fuzzy, c-format
-#~ msgid "E474: Expected comma before dictionary key: %s"
-#~ msgstr "E722: Fehlendes Komma in Dictionary: %s"
+#, c-format
+msgid "E474: Expected comma before dictionary key: %s"
+msgstr "E474: Komma vor Dictionary-Schlüssel erwartet: %s"
 
 #, fuzzy, c-format
 #~ msgid "E474: Unfinished escape sequence: %.*s"
@@ -2874,16 +2835,15 @@ msgstr "E764: Option '%s' ist nicht gesetzt"
 msgid "E850: Invalid register name"
 msgstr "E850: Ungültiger Registername"
 
-#, fuzzy, c-format
-#~ msgid "E919: Directory not found in '%s': \"%s\""
-#~ msgstr "E161: Haltepunkt nicht gefunden: %s"
+#, c-format
+msgid "E919: Directory not found in '%s': \"%s\""
+msgstr "E919: Verzeichnis in '%s' nicht gefunden: \"%s\""
 
 msgid "E519: Option not supported"
 msgstr "E519: Option nicht unterstützt"
 
-#, fuzzy
-#~ msgid "E856: Filename too long"
-#~ msgstr "E75: Name zu lang"
+msgid "E856: Filename too long"
+msgstr "E856: Dateiname zu lang"
 
 msgid "search hit TOP, continuing at BOTTOM"
 msgstr "Suche erreichte den ANFANG und wurde am ENDE fortgesetzt"
@@ -2907,9 +2867,9 @@ msgstr "Seite %d"
 msgid "No text to be printed"
 msgstr "Kein Text zum Drucken"
 
-#, fuzzy, c-format
-#~ msgid "Printing page %d (%zu%%)"
-#~ msgstr "Drucke Seite %d (%d%%)"
+#, c-format
+msgid "Printing page %d (%zu%%)"
+msgstr "Seite wird gedruckt %d (%zu%%)"
 
 #, c-format
 msgid " Copy %d of %d"
@@ -3027,9 +2987,9 @@ msgstr "E564: %s ist weder ein Verzeichnis noch eine gültige cscope-Datenbank"
 msgid "Added cscope database %s"
 msgstr "csope-Datenbank %s hinzugefügt"
 
-#, fuzzy, c-format
-#~ msgid "E262: error reading cscope connection %<PRIu64>"
-#~ msgstr "E262: Fehler beim Lesen der cscope-Verbindung %<PRId64>"
+#, c-format
+msgid "E262: error reading cscope connection %<PRIu64>"
+msgstr "E262: Fehler beim Lesen der cscope-Verbindung %<PRIu64>"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: Unbekannter cscope Suchtyp"
@@ -3178,44 +3138,33 @@ msgstr "pre-vimrc Befehls-Zeile"
 msgid "E282: Cannot read from \"%s\""
 msgstr "E282: Kann nicht von \"%s\" lesen"
 
-#, fuzzy
 msgid ""
 "\n"
 "More info with \""
 msgstr ""
 "\n"
-"Weitere Informationen mit: \"vim -h\"\n"
+"Weitere Informationen mit: \""
 
 #. kill us with CTRL-C here, if you like
-#, fuzzy
-#~ msgid "Usage:\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Verwendung:"
+msgid "Usage:\n"
+msgstr "Verwendung:\n"
 
-#, fuzzy
-#~ msgid "  nvim [arguments] [file ...]      Edit specified file(s)\n"
-#~ msgstr "[Datei ..]      bearbeite die angegebenen Datei(en)"
+msgid "  nvim [arguments] [file ...]      Edit specified file(s)\n"
+msgstr "  nvim [arguments] [Datei ...]     bearbeite die angegebenen Datei(en)\n"
 
-#, fuzzy
-#~ msgid "  nvim [arguments] -               Read text from stdin\n"
-#~ msgstr "-               lese Text von stdin"
+msgid "  nvim [arguments] -               Read text from stdin\n"
+msgstr "  nvim [arguments] -               lese Text von stdin\n"
 
-#, fuzzy
-#~ msgid "  nvim [arguments] -t <tag>        Edit file where tag is defined\n"
-#~ msgstr "-t tag          öffne Datei in der der Tag definiert wurde"
+msgid "  nvim [arguments] -t <tag>        Edit file where tag is defined\n"
+msgstr "  nvim [arguments] -t <tag>        öffne Datei in der der Tag definiert wurde\n"
 
-#, fuzzy
-#~ msgid "  nvim [arguments] -q [errorfile]  Edit file with first error\n"
-#~ msgstr "-q [Fehler-Datei]  öffne Datei mit erstem Fehler"
+msgid "  nvim [arguments] -q [errorfile]  Edit file with first error\n"
+msgstr "  nvim [args] -q [Fehler-Datei]    öffne Datei mit erstem Fehler\n"
 
-#, fuzzy
 msgid ""
 "\n"
 "Arguments:\n"
 msgstr ""
-"\n"
 "\n"
 "Argumente:\n"
 
@@ -5665,27 +5614,23 @@ msgstr "         und für $VIMRUNTIME: \""
 msgid "by Bram Moolenaar et al."
 msgstr "von Bram Moolenaar und Anderen"
 
-#, fuzzy
-#~ msgid "Nvim is open source and freely distributable"
-#~ msgstr "Vim ist Open Source und kann frei weitergegeben werden"
+msgid "Nvim is open source and freely distributable"
+msgstr "NVim ist Open Source und kann frei weitergegeben werden"
 
-#~ msgid "https://neovim.io/community"
-#~ msgstr ""
+msgid "https://neovim.io/community"
+msgstr "https://neovim.io/community"
 
-#, fuzzy
-#~ msgid "type  :help nvim<Enter>       if you are new! "
-#~ msgstr "Tippe  :help iccf<Enter>        für Informationen darüber "
+msgid "type  :help nvim<Enter>       if you are new! "
+msgstr "Tippe  :help nvim<Enter>        wenn Sie neu sind"
 
-#, fuzzy
-#~ msgid "type  :CheckHealth<Enter>     to optimize Nvim"
-#~ msgstr "Bitte  :quit<Enter>  eingeben um Vim zu verlassen"
+msgid "type  :CheckHealth<Enter>     to optimize Nvim"
+msgstr "Tippe  :CheckHealth<Enter>      um Nvim zu optimieren"
 
 msgid "type  :q<Enter>               to exit         "
 msgstr "Tippe  :q<Enter>                zum Beenden               "
 
-#, fuzzy
-#~ msgid "type  :help<Enter>            for help        "
-#~ msgstr "Tippe  :q<Enter>                zum Beenden               "
+msgid "type  :help<Enter>            for help        "
+msgstr "Tippe  :help<Enter>             für Hilfe                 "
 
 msgid "Help poor children in Uganda!"
 msgstr "Helfen Sie armen Kindern in Uganda!"
@@ -5739,9 +5684,8 @@ msgstr "E445: Anderes Fenster enthält Änderungen"
 msgid "E446: No file name under cursor"
 msgstr "E446: Kein Dateiname unter dem Cursor"
 
-#, fuzzy
-#~ msgid "List or number required"
-#~ msgstr "E714: List benötigt"
+msgid "List or number required"
+msgstr "Liste oder Nummer benötigt"
 
 #~ msgid "internal error: unknown option type"
 #~ msgstr "interner Fehler: unbekannter Optionstyp"
