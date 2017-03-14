@@ -4898,11 +4898,13 @@ void win_redr_status(win_T *wp)
     p = NameBuff;
     len = (int)STRLEN(p);
 
+    bool modified = bufIsChanged(wp->w_buffer) && !wp->w_buffer->terminal;
     if (wp->w_buffer->b_help
         || wp->w_p_pvw
-        || bufIsChanged(wp->w_buffer)
-        || wp->w_buffer->b_p_ro)
+        || modified
+        || wp->w_buffer->b_p_ro) {
       *(p + len++) = ' ';
+    }
     if (wp->w_buffer->b_help) {
       STRCPY(p + len, _("[Help]"));
       len += (int)STRLEN(p + len);
@@ -4911,7 +4913,7 @@ void win_redr_status(win_T *wp)
       STRCPY(p + len, _("[Preview]"));
       len += (int)STRLEN(p + len);
     }
-    if (bufIsChanged(wp->w_buffer)) {
+    if (modified) {
       STRCPY(p + len, "[+]");
       len += 3;
     }
@@ -7038,7 +7040,6 @@ static void draw_tabline(void)
           modified = true;
         }
       }
-
 
       if (modified || wincount > 1) {
         if (wincount > 1) {

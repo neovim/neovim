@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
+local command = helpers.command
 local wait = helpers.wait
 local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local eq, neq = helpers.eq, helpers.neq
@@ -18,31 +19,15 @@ describe('terminal buffer', function()
     screen = thelpers.screen_setup()
   end)
 
-  describe('when a new file is edited', function()
+  describe("respects 'bufhidden'", function()
     before_each(function()
-      feed('<c-\\><c-n>:set bufhidden=wipe<cr>:enew!<cr>')
-      screen:expect([[
-        ^                                                  |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        :enew!                                            |
-      ]])
-    end)
-
-    it('will hide the buffer, ignoring the bufhidden option', function()
-      feed(':bnext:l<esc>')
-      screen:expect([[
-        ^                                                  |
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-        {4:~                                                 }|
-                                                          |
-      ]])
+      command('enew')
+      eq(1, eval("bufnr('#')"))
+      command('buffer #')
+      eq(2, eval("bufnr('#')"))
+      command('set bufhidden=wipe')
+      command('buffer! #')
+      eq(-1, eval("bufnr('#')"))
     end)
   end)
 

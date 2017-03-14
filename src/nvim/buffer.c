@@ -2788,20 +2788,17 @@ fileinfo (
   }
 
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
-      curbufIsChanged() ? (shortmess(SHM_MOD)
-                           ?  " [+]" : _(" [Modified]")) : " ",
-      (curbuf->b_flags & BF_NOTEDITED)
-      && !bt_dontwrite(curbuf)
-      ? _("[Not edited]") : "",
-      (curbuf->b_flags & BF_NEW)
-      && !bt_dontwrite(curbuf)
-      ? _("[New file]") : "",
+      (curbufIsChanged() && !curbuf->terminal)
+        ? (shortmess(SHM_MOD) ?  " [+]" : _(" [Modified]")) : " ",
+      (curbuf->b_flags & BF_NOTEDITED) && !bt_dontwrite(curbuf)
+        ? _("[Not edited]") : "",
+      (curbuf->b_flags & BF_NEW) && !bt_dontwrite(curbuf)
+        ? _("[New file]") : "",
       (curbuf->b_flags & BF_READERR) ? _("[Read errors]") : "",
-      curbuf->b_p_ro ? (shortmess(SHM_RO) ? _("[RO]")
-                        : _("[readonly]")) : "",
-      (curbufIsChanged() || (curbuf->b_flags & BF_WRITE_MASK)
-       || curbuf->b_p_ro) ?
-      " " : "");
+      curbuf->b_p_ro
+        ? (shortmess(SHM_RO) ? _("[RO]") : _("[readonly]")) : "",
+      (curbufIsChanged() || (curbuf->b_flags & BF_WRITE_MASK) || curbuf->b_p_ro)
+        ? " " : "");
   /* With 32 bit longs and more than 21,474,836 lines multiplying by 100
    * causes an overflow, thus for large numbers divide instead. */
   if (curwin->w_cursor.lnum > 1000000L)
