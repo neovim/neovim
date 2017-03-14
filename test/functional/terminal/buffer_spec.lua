@@ -20,7 +20,7 @@ describe('terminal buffer', function()
 
   describe('when a new file is edited', function()
     before_each(function()
-      feed('<c-\\><c-n>:set bufhidden=wipe<cr>:enew<cr>')
+      feed('<c-\\><c-n>:set bufhidden=wipe<cr>:enew!<cr>')
       screen:expect([[
         ^                                                  |
         {4:~                                                 }|
@@ -28,7 +28,7 @@ describe('terminal buffer', function()
         {4:~                                                 }|
         {4:~                                                 }|
         {4:~                                                 }|
-        :enew                                             |
+        :enew!                                            |
       ]])
     end)
 

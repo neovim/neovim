@@ -236,6 +236,7 @@ Terminal *terminal_open(TerminalOptions opts)
   curbuf->b_p_ul = -1;        // 'undolevels'
   curbuf->b_p_scbk = p_scbk;  // 'scrollback'
   curbuf->b_p_tw = 0;         // 'textwidth'
+  curbuf->b_p_bh = (char_u *)xstrdup("hide");   // 'bufhidden'
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
