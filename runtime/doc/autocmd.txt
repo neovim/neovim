@@ -920,7 +920,7 @@ TermClose			When a terminal buffer ends.
 						 {Nvim} *TermOpen*
 TermOpen			When a terminal buffer is starting.  This can
 				be used to configure the terminal emulator by
-				setting buffer variables. |terminal-emulator|
+				setting buffer variables. |terminal|
 							*TermResponse*
 TermResponse			After the response to |t_RV| is received from
 				the terminal.  The value of |v:termresponse|
@@ -967,9 +967,9 @@ VimEnter			After doing all the startup stuff, including
 VimLeave			Before exiting Vim, just after writing the
 				.shada file.  Executed only once, like
 				VimLeavePre.
-				To detect an abnormal exit use |v:dying|.
-				When v:dying is 2 or more this event is not
-				triggered.
+<				Use |v:dying| to detect an abnormal exit.
+				Use |v:exiting| to get the exit code.
+				Not triggered if |v:dying| is 2 or more.
 							*VimLeavePre*
 VimLeavePre			Before exiting Vim, just before writing the
 				.shada file.  This is executed only once,
@@ -977,9 +977,9 @@ VimLeavePre			Before exiting Vim, just before writing the
 				happens to be the current buffer when exiting.
 				Mostly useful with a "*" pattern. >
 	:autocmd VimLeavePre * call CleanupStuff()
-<				To detect an abnormal exit use |v:dying|.
-				When v:dying is 2 or more this event is not
-				triggered.
+<				Use |v:dying| to detect an abnormal exit.
+				Use |v:exiting| to get the exit code.
+				Not triggered if |v:dying| is 2 or more.
 							*VimResized*
 VimResized			After the Vim window was resized, thus 'lines'
 				and/or 'columns' changed.  Not when starting

@@ -63,12 +63,6 @@ NVIM IS... WELL DOCUMENTED				*design-documented*
 - Documentation should be comprehensive and understandable.  Use examples.
 - Don't make the text unnecessarily long.  Less documentation means that an
   item is easier to find.
-- Do not prefix doc-tags with "nvim-". Use |vim_diff.txt| to document
-  differences from Vim. The {Nvim} annotation is also available
-  to mark a specific feature. No other distinction is necessary.
-- If a feature is removed, delete its doc entry and move its tag to
-  |vim_diff.txt|.
-- Move deprecated features to |deprecated.txt|.
 
 
 NVIM IS... HIGH SPEED AND SMALL IN SIZE			*design-speed-size*
@@ -113,7 +107,7 @@ include the kitchen sink... but it's good for plumbing."
 
 
 ==============================================================================
-Developer guidelines				        *dev-help*
+Developer guidelines				        *dev*
 
 
 JARGON	 						*dev-jargon*
@@ -192,6 +186,18 @@ defined if a valid external Python host is found. That works well with the
 Python host isn't installed then the plugin will "think" it is running in
 a Vim compiled without the |+python| feature.
 
+DOCUMENTATION						*dev-doc*
+
+- Do not prefix help tags with "nvim-". Use |vim_diff.txt| to document
+  differences from Vim; no other distinction is necessary.
+- If a Vim feature is removed, delete its help section and move its tag to
+  |vim_diff.txt|.
+- Move deprecated features to |deprecated.txt|.
+- Use consistent language.
+    - "terminal" in a help tag always means "the embedded terminal emulator", not
+      "the user host terminal".
+    - Use "tui-" to prefix help tags related to the host terminal, and "TUI"
+      in prose if possible.
 
 API							*dev-api*
 
