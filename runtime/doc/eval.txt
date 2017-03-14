@@ -2286,6 +2286,7 @@ split({expr} [, {pat} [, {keepempty}]])
 				List	make |List| from {pat} separated {expr}
 sqrt({expr})			Float	square root of {expr}
 stdioopen({dict})		Number	open stdio in a headless instance.
+stdpath({what})                 String/List  returns the standard path(s) for {what}
 str2float({expr})		Float	convert String to Float
 str2nr({expr} [, {base}])	Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
@@ -7269,6 +7270,23 @@ stdioopen({opts})			 *stdioopen()*
 		Returns:
 		  - The channel ID on success (this is always 1)
 		  - 0 on invalid arguments
+
+
+stdpath({what})					*stdpath()* *E6100*
+		Returns the standard path(s) for {what}.
+
+		These directories are the default locations for various files
+		used by Neovim.
+
+		{what}       Type    Description ~
+		cache        String  Cache directory. Useful for plugins
+		                     that need temporary files to work.
+		config       String  User configuration directory. The
+		                     |init.vim| is stored here.
+		config_dirs  List    Additional configuration directories.
+		data         String  User data directory. The |shada-file|
+		                     is stored here.
+		data_dirs    List    Additional data directories.
 
 
 str2float({expr})					*str2float()*
