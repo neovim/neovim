@@ -4840,17 +4840,15 @@ buf_check_timestamp (
   bufref_T bufref;
   set_bufref(&bufref, buf);
 
-  // If its a terminal, there is no file name, the buffer is not loaded,
-  // 'buftype' is set, we are in the middle of a save or being called
-  // recursively: ignore this buffer.
-  if (buf->terminal
-      || buf->b_ffname == NULL
+  // If there is no filename, the buffer is not loaded, 'buftype' is set, we are
+  // in the middle of a save or being called recursively: ignore this buffer.
+  if (buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
       || *buf->b_p_bt != NUL
       || buf->b_saving
-      || busy
-      )
+      || busy) {
     return 0;
+  }
 
   FileInfo file_info;
   bool file_info_ok;

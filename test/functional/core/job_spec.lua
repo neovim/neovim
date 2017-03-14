@@ -671,7 +671,7 @@ describe("pty process teardown", function()
     feed_command(":terminal '"..helpers.nvim_prog
       -- Use :term again in the _nested_ nvim to get a PTY process.
       -- Use `sleep` to simulate a long-running child of the PTY.
-      .."' +terminal +'!(sleep 300 &)' +qa")
+      .."' +terminal +'!(sleep 300 &)' +qa!")
 
     -- Exiting should terminate all descendants (PTY, its children, ...).
     screen:expect([[
