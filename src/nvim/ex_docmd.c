@@ -50,6 +50,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
+#include "nvim/spellfile.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
@@ -5850,18 +5851,20 @@ static void ex_quit_all(exarg_T *eap)
  */
 static void ex_close(exarg_T *eap)
 {
-  win_T *win;
+  win_T *win = NULL;
   int winnr = 0;
-  if (cmdwin_type != 0)
+  if (cmdwin_type != 0) {
     cmdwin_result = Ctrl_C;
-  else if (!text_locked() && !curbuf_locked()) {
-    if (eap->addr_count == 0)
+  } else if (!text_locked() && !curbuf_locked()) {
+    if (eap->addr_count == 0) {
       ex_win_close(eap->forceit, curwin, NULL);
-    else {
-      for (win = firstwin; win != NULL; win = win->w_next) {
+    } else {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         winnr++;
-        if (winnr == eap->line2)
+        if (winnr == eap->line2) {
+          win = wp;
           break;
+        }
       }
       if (win == NULL)
         win = lastwin;
@@ -6073,12 +6076,14 @@ static void ex_hide(exarg_T *eap)
         win_close(curwin, FALSE); /* don't free buffer */
       else {
         int winnr = 0;
-        win_T *win;
+        win_T *win = NULL;
 
-        for (win = firstwin; win != NULL; win = win->w_next) {
+        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
           winnr++;
-          if (winnr == eap->line2)
+          if (winnr == eap->line2) {
+            win = wp;
             break;
+          }
         }
         if (win == NULL)
           win = lastwin;
@@ -6845,7 +6850,8 @@ static void ex_syncbind(exarg_T *eap)
   /*
    * Set all scrollbind windows to the same topline.
    */
-  for (curwin = firstwin; curwin; curwin = curwin->w_next) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    curwin = wp;
     if (curwin->w_p_scb) {
       curbuf = curwin->w_buffer;
       y = topline - curwin->w_topline;

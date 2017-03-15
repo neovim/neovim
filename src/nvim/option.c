@@ -59,6 +59,7 @@
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/spell.h"
+#include "nvim/spellfile.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
@@ -3622,11 +3623,12 @@ set_bool_option (
       char_u hash[UNDO_HASH_SIZE];
       buf_T       *save_curbuf = curbuf;
 
-      for (curbuf = firstbuf; curbuf != NULL; curbuf = curbuf->b_next) {
-        /* When 'undofile' is set globally: for every buffer, otherwise
-         * only for the current buffer: Try to read in the undofile,
-         * if one exists, the buffer wasn't changed and the buffer was
-         * loaded */
+      FOR_ALL_BUFFERS(bp) {
+        curbuf = bp;
+        // When 'undofile' is set globally: for every buffer, otherwise
+        // only for the current buffer: Try to read in the undofile,
+        // if one exists, the buffer wasn't changed and the buffer was
+        // loaded
         if ((curbuf == save_curbuf
              || (opt_flags & OPT_GLOBAL) || opt_flags == 0)
             && !curbufIsChanged() && curbuf->b_ml.ml_mfp != NULL) {

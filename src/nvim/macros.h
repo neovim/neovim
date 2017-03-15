@@ -138,7 +138,7 @@
 // Backup multi-byte pointer. Only use with "p" > "s" !
 # define mb_ptr_back(s, p)  (p -= mb_head_off((char_u *)s, (char_u *)p - 1) + 1)
 // get length of multi-byte char, not including composing chars
-# define mb_cptr2len(p)     utf_ptr2len(p)
+# define MB_CPTR2LEN(p)     utf_ptr2len(p)
 
 # define MB_COPY_CHAR(f, t) mb_copy_char((const char_u **)(&f), &t);
 

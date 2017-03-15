@@ -161,13 +161,18 @@ newwindow:
 
   /* cursor to preview window */
   case 'P':
-    for (wp = firstwin; wp != NULL; wp = wp->w_next)
-      if (wp->w_p_pvw)
+    wp = NULL;
+    FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
+      if (wp2->w_p_pvw) {
+        wp = wp2;
         break;
-    if (wp == NULL)
+      }
+    }
+    if (wp == NULL) {
       EMSG(_("E441: There is no preview window"));
-    else
+    } else {
       win_goto(wp);
+    }
     break;
 
   /* close all but current window */
@@ -3361,15 +3366,20 @@ void tabpage_move(int nr)
 
   tp_dst = tp;
 
-  /* Remove the current tab page from the list of tab pages. */
-  if (curtab == first_tabpage)
+  // Remove the current tab page from the list of tab pages.
+  if (curtab == first_tabpage) {
     first_tabpage = curtab->tp_next;
-  else {
-    for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
-      if (tp->tp_next == curtab)
+  } else {
+    tp = NULL;
+    FOR_ALL_TABS(tp2) {
+      if (tp2->tp_next == curtab) {
+        tp = tp2;
         break;
-    if (tp == NULL)     /* "cannot happen" */
+      }
+    }
+    if (tp == NULL) {   // "cannot happen"
       return;
+    }
     tp->tp_next = curtab->tp_next;
   }
 
@@ -5762,10 +5772,11 @@ int win_getid(typval_T *argvars)
     if (argvars[1].v_type == VAR_UNKNOWN) {
       wp = firstwin;
     } else {
-      tabpage_T *tp;
+      tabpage_T *tp = NULL;
       int tabnr = get_tv_number(&argvars[1]);
-      for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+      FOR_ALL_TABS(tp2) {
         if (--tabnr == 0) {
+          tp = tp2;
           break;
         }
       }
@@ -5842,11 +5853,10 @@ win_T * win_id2wp(typval_T *argvars)
 
 int win_id2win(typval_T *argvars)
 {
-  win_T   *wp;
   int nr = 1;
   int id = get_tv_number(&argvars[0]);
 
-  for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->handle == id) {
       return nr;
     }
@@ -5859,12 +5869,9 @@ void win_findbuf(typval_T *argvars, list_T *list)
 {
   int bufnr = get_tv_number(&argvars[0]);
 
-  for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
-    for (win_T *wp = tp == curtab ? firstwin : tp->tp_firstwin;
-         wp != NULL; wp = wp->w_next) {
-      if (wp->w_buffer->b_fnum == bufnr) {
-        list_append_number(list, wp->handle);
-      }
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer->b_fnum == bufnr) {
+      list_append_number(list, wp->handle);
     }
   }
 }

@@ -104,6 +104,7 @@ set(CONV_SOURCES
   screen.c
   search.c
   spell.c
+  spellfile.c
   syntax.c
   tag.c
   window.c)

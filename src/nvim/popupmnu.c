@@ -73,7 +73,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   int above_row;
   int below_row;
   int redo_count = 0;
-  win_T *pvwin;
 
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
@@ -126,8 +125,10 @@ redo:
   kind_width = 0;
   extra_width = 0;
 
-  FOR_ALL_WINDOWS(pvwin) {
-    if (pvwin->w_p_pvw) {
+  win_T *pvwin = NULL;
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_p_pvw) {
+      pvwin = wp;
       break;
     }
   }

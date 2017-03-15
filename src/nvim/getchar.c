@@ -2431,7 +2431,7 @@ inchar (
   if (typebuf_changed(tb_change_cnt))
     return 0;
 
-  return fix_input_buffer(buf, len, script_char >= 0);
+  return fix_input_buffer(buf, len);
 }
 
 /*
@@ -2439,12 +2439,7 @@ inchar (
  * buf[] must have room to triple the number of bytes!
  * Returns the new length.
  */
-int 
-fix_input_buffer (
-    char_u *buf,
-    int len,
-    int script                     /* TRUE when reading from a script */
-)
+int fix_input_buffer(char_u *buf, int len)
 {
   if (!using_script()) {
     // Should not escape K_SPECIAL/CSI reading input from the user because vim
@@ -2461,12 +2456,10 @@ fix_input_buffer (
   // Replace	     NUL by K_SPECIAL KS_ZERO	 KE_FILLER
   // Replace K_SPECIAL by K_SPECIAL KS_SPECIAL KE_FILLER
   // Replace       CSI by K_SPECIAL KS_EXTRA   KE_CSI
-  // Don't replace K_SPECIAL when reading a script file.
   for (i = len; --i >= 0; ++p) {
     if (p[0] == NUL
         || (p[0] == K_SPECIAL
-          && !script
-          && (i < 2 || p[1] != KS_EXTRA))) {
+            && (i < 2 || p[1] != KS_EXTRA))) {
       memmove(p + 3, p + 1, (size_t)i);
       p[2] = (char_u)K_THIRD(p[0]);
       p[1] = (char_u)K_SECOND(p[0]);
@@ -3724,8 +3717,10 @@ eval_map_expr (
  */
 char_u *vim_strsave_escape_csi(char_u *p)
 {
-  /* Need a buffer to hold up to three times as much. */
-  char_u *res = xmalloc(STRLEN(p) * 3 + 1);
+  // Need a buffer to hold up to three times as much.  Four in case of an
+  // illegal utf-8 byte:
+  // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
+  char_u *res = xmalloc(STRLEN(p) * 4 + 1);
   char_u *d = res;
   for (char_u *s = p; *s != NUL; ) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
@@ -3734,17 +3729,10 @@ char_u *vim_strsave_escape_csi(char_u *p)
       *d++ = *s++;
       *d++ = *s++;
     } else {
-      int len  = mb_char2len(PTR2CHAR(s));
-      int len2 = mb_ptr2len(s);
-      /* Add character, possibly multi-byte to destination, escaping
-       * CSI and K_SPECIAL. */
+      // Add character, possibly multi-byte to destination, escaping
+      // CSI and K_SPECIAL. Be careful, it can be an illegal byte!
       d = add_char2buf(PTR2CHAR(s), d);
-      while (len < len2) {
-        /* add following combining char */
-        d = add_char2buf(PTR2CHAR(s + len), d);
-        len += mb_char2len(PTR2CHAR(s + len));
-      }
-      mb_ptr_adv(s);
+      s += MB_CPTR2LEN(s);
     }
   }
   *d = NUL;
