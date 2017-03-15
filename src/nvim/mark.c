@@ -160,6 +160,7 @@ int setmark_pos(int c, pos_T *pos, int fnum)
 void setpcmark(void)
 {
   xfmark_T    *fm;
+  int i;
 
   /* for :global the mark is set only once */
   if (global_busy || listcmd_busy || cmdmod.keepjumps)
@@ -167,6 +168,13 @@ void setpcmark(void)
 
   curwin->w_prev_pcmark = curwin->w_pcmark;
   curwin->w_pcmark = curwin->w_cursor;
+
+  if (1){
+    for (i = curwin->w_jumplistidx; i < curwin->w_jumplistlen; i++){
+      free_xfmark(curwin->w_jumplist[i]);
+    }
+    curwin->w_jumplistlen = curwin->w_jumplistidx;
+  }
 
   /* If jumplist is full: remove oldest entry */
   if (++curwin->w_jumplistlen > JUMPLISTSIZE) {
