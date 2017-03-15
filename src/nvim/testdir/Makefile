@@ -51,6 +51,7 @@ NEW_TESTS ?= \
 	    test_signs.res \
 	    test_syntax.res \
 	    test_textobjects.res \
+	    test_undo.res \
 	    test_timers.res \
 	    test_usercommands.res \
 	    test_viml.res \
