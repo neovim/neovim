@@ -31,6 +31,8 @@ __VERSION_MINOR=$(grep 'set(NVIM_VERSION_MINOR' CMakeLists.txt\
 __VERSION_PATCH=$(grep 'set(NVIM_VERSION_PATCH' CMakeLists.txt\
   |$__sed 's/.*NVIM_VERSION_PATCH ([[:digit:]]).*/\1/')
 __VERSION="${__VERSION_MAJOR}.${__VERSION_MINOR}.${__VERSION_PATCH}"
+__API_LEVEL=$(grep 'set(NVIM_API_LEVEL ' CMakeLists.txt\
+  |$__sed 's/.*NVIM_API_LEVEL ([[:digit:]]).*/\1/')
 { [ -z "$__VERSION_MAJOR" ] || [ -z "$__VERSION_MINOR" ] || [ -z "$__VERSION_PATCH" ]; } \
   &&  { echo "ERROR: version parse failed: '${__VERSION}'"; exit 1; }
 __RELEASE_MSG="NVIM v${__VERSION}
@@ -47,7 +49,12 @@ __BUMP_MSG="version bump"
 echo "Most recent tag: ${__LAST_TAG}"
 echo "Release version: ${__VERSION}"
 $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) "-dev"/\1 ""/' CMakeLists.txt
-$__sed -i.bk 's/(NVIM_API_PRERELEASE) true/\1 false/' CMakeLists.txt
+if grep '(NVIM_API_PRERELEASE true)' CMakeLists.txt > /dev/null; then
+  $__sed -i.bk 's/(NVIM_API_PRERELEASE) true/\1 false/' CMakeLists.txt
+  cp build/funcs_data.mpack test/functional/fixtures/api_level_$__API_LEVEL.mpack
+  git add test/functional/fixtures/api_level_$__API_LEVEL.mpack
+fi
+
 echo "Building changelog since ${__LAST_TAG}..."
 __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:\S')"
 

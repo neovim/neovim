@@ -9,7 +9,8 @@ C, Ct, Cc, Cg = lpeg.C, lpeg.Ct, lpeg.Cc, lpeg.Cg
 
 any = P(1) -- (consume one character)
 letter = R('az', 'AZ') + S('_$')
-alpha = letter + R('09')
+num = R('09')
+alpha = letter + num
 nl = P('\r\n') + P('\n')
 not_nl = any - nl
 ws = S(' \t') + nl
@@ -35,6 +36,7 @@ c_proto = Ct(
   Cg(c_type, 'return_type') * Cg(c_id, 'name') *
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
   Cg(Cc(false), 'async') *
+  (fill * Cg((P('FUNC_API_SINCE(') * C(num ^ 1)) * P(')'), 'since') ^ -1) *
   (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEVAL') * Cc(true)), 'noeval') ^ -1) *
@@ -52,6 +54,7 @@ package.path = nvimsrcdir .. '/?.lua;' .. package.path
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 headers = {}
+
 -- output h file with generated dispatch functions
 dispatch_outputf = arg[#arg-2]
 -- output h file with packed metadata
@@ -114,9 +117,11 @@ local deprecated_aliases = require("api.dispatch_deprecated")
 for i,f in ipairs(shallowcopy(functions)) do
   local ismethod = false
   if startswith(f.name, "nvim_") then
-    -- TODO(bfredl) after 0.1.6 allow method definitions
-    -- to specify the since and deprecated_since field
-    f.since = 1
+    if f.since == nil then
+      print("Function "..f.name.." lacks since field.\n")
+      os.exit(1)
+    end
+    f.since = tonumber(f.since)
     if startswith(f.name, "nvim_buf_") then
       ismethod = true
     elseif startswith(f.name, "nvim_win_") then
