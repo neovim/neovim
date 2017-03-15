@@ -6967,30 +6967,18 @@ BYPASS_AU:
   return retval;
 }
 
-static char_u   *old_termresponse = NULL;
-
 /*
  * Block triggering autocommands until unblock_autocmd() is called.
  * Can be used recursively, so long as it's symmetric.
  */
 void block_autocmds(void)
 {
-  /* Remember the value of v:termresponse. */
-  if (autocmd_blocked == 0)
-    old_termresponse = get_vim_var_str(VV_TERMRESPONSE);
   ++autocmd_blocked;
 }
 
 void unblock_autocmds(void)
 {
   --autocmd_blocked;
-
-  /* When v:termresponse was set while autocommands were blocked, trigger
-   * the autocommands now.  Esp. useful when executing a shell command
-   * during startup (nvim -d). */
-  if (autocmd_blocked == 0
-      && get_vim_var_str(VV_TERMRESPONSE) != old_termresponse)
-    apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, FALSE, curbuf);
 }
 
 /*

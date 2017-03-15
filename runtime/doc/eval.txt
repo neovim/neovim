@@ -1851,21 +1851,6 @@ v:t_number	Value of Number type.  Read-only.  See: |type()|
 					*v:t_string* *t_string-variable*
 v:t_string	Value of String type.  Read-only.  See: |type()|
 
-				*v:termresponse* *termresponse-variable*
-v:termresponse	The escape sequence returned by the terminal for the DA
-		(request primary device attributes) control sequence.  It is
-		set when Vim receives an escape sequence that starts with ESC
-		[ or CSI and ends in a 'c', with only digits, ';' and '.' in
-		between.
-		When this option is set, the TermResponse autocommand event is
-		fired, so that you can react to the response from the
-		terminal.
-		The response from a new xterm is: "<Esc>[ Pp ; Pv ; Pc c".  Pp
-		is the terminal type: 0 for vt100 and 1 for vt220.  Pv is the
-		patch level (since this was introduced in patch 95, it's
-		always 95 or bigger).  Pc is always zero.
-		{only when compiled with |+termresponse| feature}
-
 					*v:testing* *testing-variable*
 v:testing	Must be set before using `test_garbagecollect_now()`.
 
@@ -8257,7 +8242,6 @@ tag_old_static		Compiled with support for old static tags
 			|tag-old-static|.
 tag_any_white		Compiled with support for any white characters in tags
 			files |tag-any-white|.
-termresponse		Compiled with support for |t_RV| and |v:termresponse|.
 textobjects		Compiled with support for |text-objects|.
 timers			Compiled with |timer_start()| support.
 title			Compiled with window title support |'title'|.
