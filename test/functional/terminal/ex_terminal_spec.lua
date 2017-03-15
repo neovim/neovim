@@ -24,8 +24,13 @@ describe(':terminal', function()
     ]])
     -- Invoke a command that emits frequent terminal activity.
     execute([[terminal while true; do echo X; done]])
-    helpers.feed([[<C-\><C-N>]])
     wait()
+    screen:expect([[
+      ^X                                                 |
+      X                                                 |
+      X                                                 |
+      :terminal while true; do echo X; done             |
+    ]])
     helpers.sleep(10)  -- Let some terminal activity happen.
     execute("messages")
     screen:expect([[
@@ -66,6 +71,7 @@ describe(':terminal (with fake shell)', function()
   -- the {cmd} and exits immediately .
   local function terminal_with_fake_shell(cmd)
     execute("terminal "..(cmd and cmd or ""))
+    execute('startinsert')
   end
 
   it('with no argument, acts like termopen()', function()

@@ -20,7 +20,6 @@ describe('TermClose event', function()
   it('works as expected', function()
     execute('autocmd TermClose * echomsg "TermClose works!"')
     execute('terminal')
-    feed('<c-\\><c-n>')
     screen:expect([[
       ^ready $             |
       [Process exited 0]  |

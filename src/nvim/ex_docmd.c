@@ -9640,8 +9640,8 @@ static void ex_terminal(exarg_T *eap)
 
   char ex_cmd[512];
   snprintf(ex_cmd, sizeof(ex_cmd),
-           ":enew%s | call termopen(%s%s%s) | startinsert",
-           eap->forceit==TRUE ? "!" : "", lquote, name, rquote);
+           ":enew%s | call termopen(%s%s%s)",
+           eap->forceit == true ? "!" : "", lquote, name, rquote);
   do_cmdline_cmd(ex_cmd);
 
   if (mustfree) {
