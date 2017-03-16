@@ -1056,7 +1056,9 @@ scripterror:
               mch_errmsg("\"\n");
               mch_exit(2);
             }
-            if ((scriptin[0] = mch_fopen(argv[0], READBIN)) == NULL) {
+            if (STRCMP(argv[0], "-") == 0) {
+              scriptin[0] = stdin;
+            } else if ((scriptin[0] = mch_fopen(argv[0], READBIN)) == NULL) {
               mch_errmsg(_("Cannot open for reading: \""));
               mch_errmsg(argv[0]);
               mch_errmsg("\"\n");
