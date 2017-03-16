@@ -1,6 +1,38 @@
 local assert = require('luassert')
 local lfs = require('lfs')
 
+local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
+local function shell_quote(str)
+  if string.find(str, quote_me) or str == '' then
+    return '"' .. str:gsub('[$%%"\\]', '\\%0') .. '"'
+  else
+    return str
+  end
+end
+
+local function argss_to_cmd(...)
+  local cmd = ''
+  for i = 1, select('#', ...) do
+    local arg = select(i, ...)
+    if type(arg) == 'string' then
+      cmd = cmd .. ' ' ..shell_quote(arg)
+    else
+      for _, arg in ipairs(arg) do
+        cmd = cmd .. ' ' .. shell_quote(arg)
+      end
+    end
+  end
+  return cmd
+end
+
+local function popen_r(...)
+  return io.popen(argss_to_cmd(...), 'r')
+end
+
+local function popen_w(...)
+  return io.popen(argss_to_cmd(...), 'w')
+end
+
 local check_logs_useless_lines = {
   ['Warning: noted but unhandled ioctl']=1,
   ['could cause spurious value errors to appear']=2,
@@ -95,7 +127,7 @@ local uname = (function()
       return platform
     end
 
-    local status, f = pcall(io.popen, "uname -s")
+    local status, f = pcall(popen_r, 'uname', '-s')
     if status then
       platform = f:read("*l")
       f:close()
@@ -215,7 +247,7 @@ local function check_cores(app)
 end
 
 local function which(exe)
-  local pipe = io.popen('which ' .. exe, 'r')
+  local pipe = popen_r('which', exe)
   local ret = pipe:read('*a')
   pipe:close()
   if ret == '' then
@@ -238,4 +270,7 @@ return {
   check_cores = check_cores,
   hasenv = hasenv,
   which = which,
+  argss_to_cmd = argss_to_cmd,
+  popen_r = popen_r,
+  popen_w = popen_w,
 }

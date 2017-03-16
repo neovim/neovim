@@ -2,6 +2,10 @@
 -- windows, will probably need quite a bit of adjustment to run there.
 
 local ffi = require("ffi")
+local global_helpers = require('test.helpers')
+
+local popen_r = global_helpers.popen_r
+local argss_to_cmd = global_helpers.argss_to_cmd
 
 local ccs = {}
 
@@ -21,15 +25,6 @@ table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
 table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
-
-local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
-local function shell_quote(str)
-  if string.find(str, quote_me) or str == '' then
-    return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
-  else
-    return str
-  end
-end
 
 -- parse Makefile format dependencies into a Lua table
 local function parse_make_deps(deps)
@@ -149,16 +144,6 @@ function Gcc:add_to_include_path(...)
   end
 end
 
-local function argss_to_cmd(...)
-  local cmd = ''
-  for i = 1, select('#', ...) do
-    for _, arg in ipairs(select(i, ...)) do
-      cmd = cmd .. ' ' .. shell_quote(arg)
-    end
-  end
-  return cmd
-end
-
 -- returns a list of the headers files upon which this file relies
 function Gcc:dependencies(hdr)
   local cmd = argss_to_cmd(self.path, {'-M', hdr}) .. ' 2>&1'
@@ -173,9 +158,8 @@ function Gcc:dependencies(hdr)
 end
 
 local function repeated_call(...)
-  local cmd = argss_to_cmd(...)
   for _ = 1, 10 do
-    local stream = io.popen(cmd)
+    local stream = popen_r(...)
     local ret = stream:read('*a')
     stream:close()
     if ret then
