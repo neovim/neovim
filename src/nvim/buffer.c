@@ -313,27 +313,6 @@ bool buf_valid(buf_T *buf)
   return false;
 }
 
-// Map used to quickly lookup a buffer by its number.
-static PMap(handle_T) *buf_map = NULL;
-
-static void buf_hashtab_add(buf_T *buf)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (pmap_has(handle_T)(buf_map, buf->handle)) {
-    EMSG(_("E931: Buffer cannot be registered"));
-  } else {
-    pmap_put(handle_T)(buf_map, buf->handle, buf);
-  }
-}
-
-static void buf_hashtab_remove(buf_T *buf)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (pmap_has(handle_T)(buf_map, buf->handle)) {
-    pmap_del(handle_T)(buf_map, buf->handle);
-  }
-}
-
 /// Close the link to a buffer.
 ///
 /// @param win    If not NULL, set b_last_cursor.
@@ -649,7 +628,6 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, true);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
-  buf_hashtab_remove(buf);
   dict_unref(buf->additional_data);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
@@ -1490,9 +1468,6 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
 {
   buf_T       *buf;
 
-  if (top_file_num == 1) {
-    buf_map = pmap_new(handle_T)();
-  }
   fname_expand(curbuf, &ffname, &sfname);       // will allocate ffname
 
   /*
@@ -1622,7 +1597,6 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       }
       top_file_num = 1;
     }
-    buf_hashtab_add(buf);
 
     /*
      * Always copy the options from the current buffer.
@@ -2143,10 +2117,7 @@ buf_T *buflist_findnr(int nr)
     nr = curwin->w_alt_fnum;
   }
 
-  if (pmap_has(handle_T)(buf_map, (handle_T)nr)) {
-    return pmap_get(handle_T)(buf_map, (handle_T)nr);
-  }
-  return NULL;
+  return handle_get_buffer((handle_T)nr);
 }
 
 /*
