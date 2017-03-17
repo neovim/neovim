@@ -12,7 +12,7 @@ describe('api', function()
     helpers.clear()
     os.remove(socket_name)
     screen = child_session.screen_setup(0, '["'..helpers.nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "'..helpers.nvim_set..'"]')
   end)
   after_each(function()
     os.remove(socket_name)
@@ -28,7 +28,7 @@ describe('api', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
-      {5:[No Name]                                         }|
+      {4:~                                                 }|
       ]]..socket_name..[[                         |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -43,7 +43,7 @@ describe('api', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
-      {5:[No Name] [+]                                     }|
+      {4:~                                                 }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
@@ -59,7 +59,7 @@ describe('api', function()
       [socket 1] this is more t{4:                         }|
       han 25 columns           {4:                         }|
       [socket 2] input{1: }        {4:                         }|
-      {5:[No Name] [+]                                     }|
+      {4:~                                                 }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])

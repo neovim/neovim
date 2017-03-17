@@ -7,14 +7,10 @@ local ok, set_session, spawn = helpers.ok, helpers.set_session, helpers.spawn
 
 local shada_file = 'test.shada'
 
---
--- helpers.clear() uses "-i NONE", which is not useful for this test.
---
 local function _clear()
-  set_session(spawn({nvim_prog,
-                     '-u', 'NONE',
-                     '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=.',
-                     '--embed'}))
+  set_session(spawn({nvim_prog, '--embed', '-u', 'NONE', '--cmd',
+                     -- Need shada for these tests.
+                     'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'}))
 end
 
 describe(':oldfiles', function()
@@ -63,7 +59,7 @@ describe(':browse oldfiles', function()
     _clear()
     execute('rshada! ' .. shada_file)
 
-    -- Ensure nvim is out of "Press ENTER..." screen
+    -- Ensure nvim is out of "Press ENTER..." prompt.
     feed('<cr>')
 
     -- Ensure v:oldfiles isn't busted.  Since things happen so fast,

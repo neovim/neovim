@@ -20,9 +20,12 @@ local filter = global_helpers.filter
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
 local nvim_prog = os.getenv('NVIM_PROG') or os.getenv('NVIM_PRG') or 'build/bin/nvim'
+-- Default settings for the test session.
+local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
+                  ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
+                  ..' belloff= noshowcmd noruler'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
-                   '--cmd', 'set shortmess+=I background=light noswapfile noautoindent laststatus=1 undodir=. directory=. viewdir=. backupdir=.',
-                   '--embed'}
+                   '--cmd', nvim_set, '--embed'}
 
 local mpack = require('mpack')
 
@@ -597,6 +600,7 @@ local M = {
   nvim = nvim,
   nvim_async = nvim_async,
   nvim_prog = nvim_prog,
+  nvim_set = nvim_set,
   nvim_dir = nvim_dir,
   buffer = buffer,
   window = window,

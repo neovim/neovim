@@ -13,7 +13,8 @@ describe('tui', function()
 
   before_each(function()
     helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
     -- right now pasting can be really slow in the TUI, especially in ASAN.
     -- this will be fixed later but for now we require a high timeout.
     screen.timeout = 60000
@@ -177,7 +178,8 @@ describe('tui with non-tty file descriptors', function()
   end)
 
   it('can handle pipes as stdout and stderr', function()
-    local screen = thelpers.screen_setup(0, '"'..helpers.nvim_prog..' -u NONE -i NONE --cmd \'set noswapfile\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
+    local screen = thelpers.screen_setup(0, '"'..helpers.nvim_prog
+      ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
     feed(':w testF\n:q\n')
     screen:expect([[
       :w testF                                          |
@@ -196,7 +198,8 @@ describe('tui focus event handling', function()
 
   before_each(function()
     helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
     execute('autocmd FocusGained * echo "gained"')
     execute('autocmd FocusLost * echo "lost"')
   end)
@@ -313,7 +316,7 @@ describe("tui 't_Co' (terminal colors)", function()
     -- This is ugly because :term/termopen() forces TERM=xterm-256color.
     -- TODO: Revisit this after jobstart/termopen accept `env` dict.
     screen = thelpers.screen_setup(0, string.format(
-      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "silent set noswapfile"']]=],
+      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "silent set noswapfile noshowcmd noruler"']]=],
       term,
       (colorterm ~= nil and "COLORTERM="..colorterm or ""),
       helpers.nvim_prog))
