@@ -700,16 +700,9 @@ readfile (
   wasempty = (curbuf->b_ml.ml_flags & ML_EMPTY);
 
   if (!recoverymode && !filtering && !(flags & READ_DUMMY)) {
-    /*
-     * Show the user that we are busy reading the input.  Sometimes this
-     * may take a while.  When reading from stdin another program may
-     * still be running, don't move the cursor to the last line, unless
-     * always using the GUI.
-     */
-    if (read_stdin) {
-      mch_msg(_("Nvim: Reading from stdin...\n"));
-    } else if (!read_buffer)
+    if (!read_stdin && !read_buffer) {
       filemess(curbuf, sfname, (char_u *)"", 0);
+    }
   }
 
   msg_scroll = FALSE;                   /* overwrite the file message */
