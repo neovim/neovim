@@ -79,11 +79,47 @@ describe(':terminal (with fake shell)', function()
     ]])
   end)
 
+  it("with no argument, and 'shell' is set to empty string", function()
+    nvim('set_option', 'shell', '')
+    terminal_with_fake_shell()
+    wait()
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |
+      ~                                                 |
+      E91: 'shell' option is empty                      |
+    ]])
+  end)
+
+  it("with no argument, but 'shell' has arguments, acts like termopen()", function()
+    nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
+    terminal_with_fake_shell()
+    wait()
+    screen:expect([[
+      jeff $                                            |
+      [Process exited 0]                                |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
   it('executes a given command through the shell', function()
     terminal_with_fake_shell('echo hi')
     wait()
     screen:expect([[
       ready $ echo hi                                   |
+                                                        |
+      [Process exited 0]                                |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it("executes a given command through the shell, when 'shell' has arguments", function()
+    nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
+    terminal_with_fake_shell('echo hi')
+    wait()
+    screen:expect([[
+      jeff $ echo hi                                    |
                                                         |
       [Process exited 0]                                |
       -- TERMINAL --                                    |

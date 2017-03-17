@@ -41,6 +41,9 @@ typedef struct {
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
 /// with an optional command prefixed by 'shellcmdflag' (p_shcf).
 ///
+/// Creates ["shell", "-extra_args", "-shellcmdflag",
+/// "command that has spaces"] from a command string
+///
 /// @param cmd Command string, or NULL to run an interactive shell.
 /// @param extra_args Extra arguments to the shell, or NULL.
 /// @return A newly allocated argument vector. It must be freed with
