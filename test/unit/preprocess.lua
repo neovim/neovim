@@ -5,7 +5,7 @@ local ffi = require("ffi")
 local global_helpers = require('test.helpers')
 
 local argss_to_cmd = global_helpers.argss_to_cmd
-local repeated_popen_r = global_helpers.repeated_popen_r
+local repeated_read_cmd = global_helpers.repeated_read_cmd
 
 local ccs = {}
 
@@ -162,10 +162,10 @@ function Gcc:filter_standard_defines(defines)
     local pseudoheader_fname = 'tmp_empty_pseudoheader.h'
     local pseudoheader_file = io.open(pseudoheader_fname, 'w')
     pseudoheader_file:close()
-    local standard_defines = repeated_popen_r(self.path,
-                                              self.preprocessor_extra_flags,
-                                              self.get_defines_extra_flags,
-                                              {pseudoheader_fname})
+    local standard_defines = repeated_read_cmd(self.path,
+                                               self.preprocessor_extra_flags,
+                                               self.get_defines_extra_flags,
+                                               {pseudoheader_fname})
     os.remove(pseudoheader_fname)
     self.standard_defines = {}
     for line in standard_defines:gmatch('[^\n]+') do
@@ -194,9 +194,9 @@ function Gcc:preprocess(previous_defines, ...)
   pseudoheader_file:flush()
   pseudoheader_file:close()
 
-  local defines = repeated_popen_r(self.path, self.preprocessor_extra_flags,
-                                   self.get_defines_extra_flags,
-                                   {pseudoheader_fname})
+  local defines = repeated_read_cmd(self.path, self.preprocessor_extra_flags,
+                                    self.get_defines_extra_flags,
+                                    {pseudoheader_fname})
   defines = self:filter_standard_defines(defines)
 
   -- lfs = require("lfs")
@@ -205,10 +205,10 @@ function Gcc:preprocess(previous_defines, ...)
   -- io.stderr\write("CWD: #{lfs.currentdir!}\n")
   -- io.stderr\write("CMD: #{cmd}\n")
 
-  local declarations = repeated_popen_r(self.path,
-                                        self.preprocessor_extra_flags,
-                                        self.get_declarations_extra_flags,
-                                        {pseudoheader_fname})
+  local declarations = repeated_read_cmd(self.path,
+                                         self.preprocessor_extra_flags,
+                                         self.get_declarations_extra_flags,
+                                         {pseudoheader_fname})
 
   os.remove(pseudoheader_fname)
 

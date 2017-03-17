@@ -257,7 +257,7 @@ local function which(exe)
   end
 end
 
-local function repeated_popen_r(...)
+local function repeated_read_cmd(...)
   for _ = 1, 10 do
     local stream = popen_r(...)
     local ret = stream:read('*a')
@@ -286,5 +286,5 @@ return {
   argss_to_cmd = argss_to_cmd,
   popen_r = popen_r,
   popen_w = popen_w,
-  repeated_popen_r = repeated_popen_r,
+  repeated_read_cmd = repeated_read_cmd,
 }
