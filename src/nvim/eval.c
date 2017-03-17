@@ -4860,7 +4860,10 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   }
   *name = NUL;
-  *arg = p + 1;
+  if (*p != NUL) {  // just in case
+    p++;
+  }
+  *arg = p;
 
   return OK;
 }
