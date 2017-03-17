@@ -17,8 +17,8 @@ local function argss_to_cmd(...)
     if type(arg) == 'string' then
       cmd = cmd .. ' ' ..shell_quote(arg)
     else
-      for _, arg in ipairs(arg) do
-        cmd = cmd .. ' ' .. shell_quote(arg)
+      for _, subarg in ipairs(arg) do
+        cmd = cmd .. ' ' .. shell_quote(subarg)
       end
     end
   end
@@ -257,6 +257,19 @@ local function which(exe)
   end
 end
 
+local function repeated_popen_r(...)
+  for _ = 1, 10 do
+    local stream = popen_r(...)
+    local ret = stream:read('*a')
+    stream:close()
+    if ret then
+      return ret
+    end
+  end
+  print('ERROR: Failed to execute ' .. argss_to_cmd(...) .. ': nil return after 10 attempts')
+  return nil
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -273,4 +286,5 @@ return {
   argss_to_cmd = argss_to_cmd,
   popen_r = popen_r,
   popen_w = popen_w,
+  repeated_popen_r = repeated_popen_r,
 }

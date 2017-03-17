@@ -9,7 +9,7 @@ local nvim_prog = helpers.nvim_prog
 local write_file = helpers.write_file
 
 local popen_w = global_helpers.popen_w
-local popen_r = global_helpers.popen_r
+local repeated_popen_r = global_helpers.repeated_popen_r
 
 describe('Command-line option', function()
   describe('-s', function()
@@ -48,13 +48,13 @@ describe('Command-line option', function()
       eq(nil, lfs.attributes(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
       write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
-      local pipe = popen_r(
+      local pipe = repeated_popen_r(
         nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '-s', dollar_fname,
         fname)
-        local stdout = pipe:read('*a')
-        eq('', stdout)
-        local attrs = lfs.attributes(fname)
-        eq(#('100500\n'), attrs.size)
+      local stdout = pipe:read('*a')
+      eq('', stdout)
+      local attrs = lfs.attributes(fname)
+      eq(#('100500\n'), attrs.size)
     end)
   end)
 end)
