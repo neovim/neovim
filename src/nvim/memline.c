@@ -439,14 +439,7 @@ void ml_setname(buf_T *buf)
       EMSG(_("E301: Oops, lost the swap file!!!"));
       return;
     }
-#ifdef HAVE_FD_CLOEXEC
-    {
-      int fdflags = fcntl(mfp->mf_fd, F_GETFD);
-      if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0) {
-        (void)fcntl(mfp->mf_fd, F_SETFD, fdflags | FD_CLOEXEC);
-      }
-    }
-#endif
+    (void)os_set_cloexec(mfp->mf_fd);
   }
   if (!success)
     EMSG(_("E302: Could not rename swap file"));
