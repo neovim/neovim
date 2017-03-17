@@ -406,7 +406,7 @@ int os_set_cloexec(const int fd)
     return -1;
   }
   if ((fdflags & FD_CLOEXEC) == 0
-      && fcntl(fd, F_SETFD, fdflags | FD_CLOEXEC) < 0) {
+      && fcntl(fd, F_SETFD, fdflags | FD_CLOEXEC) == -1) {
     e = errno;
     ELOG("Failed to set CLOEXEC on descriptor %d: %s", fd, strerror(e));
     errno = e;

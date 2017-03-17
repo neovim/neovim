@@ -74,9 +74,8 @@ func BackOne(expected)
   call assert_equal(a:expected, getline(1))
 endfunc
 
-" Test is disabled: Nvim does not support test_settime().
-func Test_undo_del_chars_skipped()
-  return
+func Test_undo_del_chars()
+  throw 'skipped: Nvim does not support test_settime()'
 
   " Setup a buffer without creating undo entries
   new
