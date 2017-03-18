@@ -457,9 +457,10 @@ void setmouse(void)
   int checkfor;
 
 
-  /* be quick when mouse is off */
-  if (*p_mouse == NUL)
+  // be quick when mouse is off
+  if (exiting || *p_mouse == NUL) {
     return;
+  }
 
   if (VIsual_active)
     checkfor = MOUSE_VISUAL;

@@ -1596,6 +1596,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       oap->start = curwin->w_cursor;
     }
 
+    // Just in case lines were deleted that make the position invalid.
+    check_pos(curwin->w_buffer, &oap->end);
     oap->line_count = oap->end.lnum - oap->start.lnum + 1;
 
     /* Set "virtual_op" before resetting VIsual_active. */
@@ -1912,7 +1914,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       break;
 
     case OP_FUNCTION:
-      op_function(oap);                 /* call 'operatorfunc' */
+      // Restore linebreak, so that when the user edits it looks as
+      // before.
+      curwin->w_p_lbr = lbr_saved;
+      op_function(oap);                 // call 'operatorfunc'
       break;
 
     case OP_INSERT:
@@ -2939,11 +2944,14 @@ void end_visual_mode(void)
   /* Save the current VIsual area for '< and '> marks, and "gv" */
   curbuf->b_visual.vi_mode = VIsual_mode;
   curbuf->b_visual.vi_start = VIsual;
-  curbuf->b_visual.vi_end = curwin->w_cursor;
-  curbuf->b_visual.vi_curswant = curwin->w_curswant;
+  if (curwin != NULL) {
+    curbuf->b_visual.vi_end = curwin->w_cursor;
+    curbuf->b_visual.vi_curswant = curwin->w_curswant;
+  }
   curbuf->b_visual_mode_eval = VIsual_mode;
-  if (!virtual_active())
+  if (!virtual_active() && curwin != NULL) {
     curwin->w_cursor.coladd = 0;
+  }
 
   may_clear_cmdline();
 
@@ -4761,9 +4769,14 @@ static void nv_ident(cmdarg_T *cap)
    * Now grab the chars in the identifier
    */
   if (cmdchar == 'K' && !kp_ex) {
-    /* Escape the argument properly for a shell command */
     ptr = vim_strnsave(ptr, n);
-    p = vim_strsave_shellescape(ptr, true, true);
+    if (kp_ex) {
+      // Escape the argument properly for an Ex command
+      p = vim_strsave_fnameescape(ptr, false);
+    } else {
+      // Escape the argument properly for a shell command
+      p = vim_strsave_shellescape(ptr, true, true);
+    }
     xfree(ptr);
     char *newbuf = xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
     buf = newbuf;
@@ -7831,6 +7844,7 @@ static void get_op_vcol(
 
   // prevent from moving onto a trail byte
   if (has_mbyte) {
+    check_pos(curwin->w_buffer, &oap->end);
     mb_adjustpos(curwin->w_buffer, &oap->end);
   }
 

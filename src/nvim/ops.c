@@ -3242,7 +3242,7 @@ end:
  */
 void adjust_cursor_eol(void)
 {
-  if (curwin->w_cursor.col > 0
+  if (curwin != NULL && curwin->w_cursor.col > 0
       && gchar_cursor() == NUL
       && (ve_flags & VE_ONEMORE) == 0
       && !(restart_edit || (State & INSERT))) {
@@ -3847,6 +3847,7 @@ fex_format (
   int use_sandbox = was_set_insecurely((char_u *)"formatexpr",
       OPT_LOCAL);
   int r;
+  char_u *fex;
 
   /*
    * Set v:lnum to the first line number and v:count to the number of lines.
@@ -3856,16 +3857,22 @@ fex_format (
   set_vim_var_nr(VV_COUNT, (varnumber_T)count);
   set_vim_var_char(c);
 
-  /*
-   * Evaluate the function.
-   */
-  if (use_sandbox)
-    ++sandbox;
-  r = eval_to_number(curbuf->b_p_fex);
-  if (use_sandbox)
-    --sandbox;
+  // Make a copy, the option could be changed while calling it.
+  fex = vim_strsave(curbuf->b_p_fex);
+  if (fex == NULL) {
+    return 0;
+  }
+  // Evaluate the function.
+  if (use_sandbox) {
+    sandbox++;
+  }
+  r = (int)eval_to_number(fex);
+  if (use_sandbox) {
+    sandbox--;
+  }
 
   set_vim_var_string(VV_CHAR, NULL, -1);
+  xfree(fex);
 
   return r;
 }
