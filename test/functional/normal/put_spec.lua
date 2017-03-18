@@ -15,7 +15,7 @@ local dedent = helpers.dedent
 local getreg = funcs.getreg
 
 local function reset()
-  clear()
+  execute('enew!')
   insert([[
   Line of words 1
   Line of words 2]])
@@ -24,6 +24,7 @@ local function reset()
   funcs.setreg('a', 'test_stringa', 'V')
   funcs.setreg('b', 'test_stringb\ntest_stringb\ntest_stringb', 'b')
   funcs.setreg('"', 'test_string"', 'v')
+  execute('set virtualedit=')
 end
 
 -- We check the last inserted register ". in each of these tests because it is
@@ -31,9 +32,6 @@ end
 -- It is implemented differently so that control characters and imap'ped
 -- characters work in the same manner when pasted as when inserted.
 describe('put command', function()
-  -- Put a call to clear() here to force the connection to the server.
-  -- This means we can use the funcs.*() functions while mangling text before
-  -- the actual tests are run.
   clear()
   before_each(reset)
 
