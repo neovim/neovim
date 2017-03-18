@@ -51,9 +51,9 @@ describe('Command-line option', function()
       local stdout = repeated_read_cmd(
         nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '-s', dollar_fname,
         fname)
-      eq('', stdout)
       local attrs = lfs.attributes(fname)
       eq(#('100500\n'), attrs.size)
+      eq('', stdout)
     end)
   end)
 end)
