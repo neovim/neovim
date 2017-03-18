@@ -4,18 +4,30 @@ local global_helpers = require('test.helpers')
 
 local eq = helpers.eq
 local neq = helpers.neq
-local sleep = helpers.sleep
+local clear = helpers.clear
+local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
 local write_file = helpers.write_file
 
 local popen_w = global_helpers.popen_w
 local repeated_read_cmd = global_helpers.repeated_read_cmd
 
+local function nvim_prog_abs()
+  -- system(['build/bin/nvim']) does not work for whatever reason. It needs to
+  -- either be executable searched in $PATH or something starting with / or ./.
+  if nvim_prog:match('[/\\]') then
+    return funcs.fnamemodify(nvim_prog, ':p')
+  else
+    return nvim_prog
+  end
+end
+
 describe('Command-line option', function()
   describe('-s', function()
     local fname = 'Xtest-functional-core-main-s'
     local dollar_fname = '$' .. fname
     before_each(function()
+      clear()
       os.remove(fname)
       os.remove(dollar_fname)
     end)
@@ -25,36 +37,30 @@ describe('Command-line option', function()
     end)
     it('treats - as stdin', function()
       eq(nil, lfs.attributes(fname))
-      local pipe = popen_w(
-        nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '-s', '-',
-        fname)
-      pipe:write(':set fileformat=unix\n')
-      pipe:write(':call setline(1, "42")\n')
-      pipe:write(':wqall!\n')
-      pipe:close()
-      local max_sec = 10
-      while max_sec > 0 do
-        local attrs = lfs.attributes(fname)
-        if attrs then
-          eq(#('42\n'), attrs.size)
-          break
-        else
-          max_sec = max_sec - 1
-          sleep(1000)
-        end
-      end
-      neq(0, max_sec)
+      eq(
+        ':call setline(1, "42"):wqall!"'..fname..'" "'..fname..'" [New] 1L, 3C',
+        funcs.system(
+          {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
+           '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
+           '-s', '-', fname},
+          {':call setline(1, "42")', ':wqall!', ''}))
+      eq(0, funcs.eval('v:shell_error'))
+      local attrs = lfs.attributes(fname)
+      eq(#('42\n'), attrs.size)
     end)
     it('does not expand $VAR', function()
       eq(nil, lfs.attributes(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
-      write_file(dollar_fname, ':set fileformat=unix\n:call setline(1, "100500")\n:wqall!\n')
-      local stdout = repeated_read_cmd(
-        nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '-s', dollar_fname,
-        fname)
+      write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
+      eq(
+        ':call setline(1, "100500"):wqall!"'..fname..'" "'..fname..'" [New] 1L, 7C',
+        funcs.system(
+          {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
+           '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
+           '-s', dollar_fname, fname}))
+      eq(0, funcs.eval('v:shell_error'))
       local attrs = lfs.attributes(fname)
       eq(#('100500\n'), attrs.size)
-      eq('', stdout)
     end)
   end)
 end)
