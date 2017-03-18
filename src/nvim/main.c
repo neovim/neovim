@@ -513,6 +513,12 @@ int main(int argc, char **argv)
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
 
+  // Adjust default register name for "unnamed" in 'clipboard'. Can only be
+  // done after the clipboard is available and all initial commands that may
+  // modify the 'clipboard' setting have run; i.e. just before entering the
+  // main loop.
+  set_reg_var(get_default_register_name());
+
   /* When a startup script or session file setup for diff'ing and
    * scrollbind, sync the scrollbind now. */
   if (curwin->w_p_diff && curwin->w_p_scb) {
