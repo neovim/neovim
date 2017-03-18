@@ -324,11 +324,7 @@ if(MSGPACK_HAS_FLOAT32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_MSGPACK_HAS_FLOAT32")
 endif()
 
-if(UNIX)
-  option(FEAT_TUI "Enable the Terminal UI" ON)
-else()
-  option(FEAT_TUI "Enable the Terminal UI" OFF)
-endif()
+option(FEAT_TUI "Enable the Terminal UI" ON)
 
 if(FEAT_TUI)
   find_package(Unibilium REQUIRED)
