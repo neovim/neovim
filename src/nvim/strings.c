@@ -1228,7 +1228,7 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                 l += snprintf(format + 1, sizeof(format) - 1, ".%d",
                               (int)precision);
               }
-              format[l] = fmt_spec == 'F' ? 'f' : fmt_spec;
+              format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
               format[l + 1] = NUL;
               assert(l + 1 < (int)sizeof(format));
               str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
