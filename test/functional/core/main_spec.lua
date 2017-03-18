@@ -28,6 +28,7 @@ describe('Command-line option', function()
       local pipe = popen_w(
         nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '-s', '-',
         fname)
+      pipe:write(':set fileformat=unix\n')
       pipe:write(':call setline(1, "42")\n')
       pipe:write(':wqall!\n')
       pipe:close()
@@ -47,7 +48,7 @@ describe('Command-line option', function()
     it('does not expand $VAR', function()
       eq(nil, lfs.attributes(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
-      write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
+      write_file(dollar_fname, ':set fileformat=unix\n:call setline(1, "100500")\n:wqall!\n')
       local stdout = repeated_read_cmd(
         nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '-s', dollar_fname,
         fname)
