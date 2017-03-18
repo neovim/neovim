@@ -251,7 +251,9 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   kv_init(data->invalid_regions);
   signal_watcher_init(data->loop, &data->winch_handle, ui);
   signal_watcher_init(data->loop, &data->cont_handle, data);
+#ifdef UNIX
   signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
+#endif
   tui_terminal_start(ui);
   data->stop = false;
   // allow the main thread to continue, we are ready to start handling UI
@@ -280,10 +282,12 @@ static void tui_scheduler(Event event, void *d)
   loop_schedule(data->loop, event);
 }
 
+#ifdef UNIX
 static void sigcont_cb(SignalWatcher *watcher, int signum, void *data)
 {
   ((TUIData *)data)->cont_received = true;
 }
+#endif
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
@@ -744,6 +748,7 @@ static void tui_flush(UI *ui)
   flush_buf(ui, true);
 }
 
+#ifdef UNIX
 static void suspend_event(void **argv)
 {
   UI *ui = argv[0];
@@ -765,15 +770,18 @@ static void suspend_event(void **argv)
   // resume the main thread
   CONTINUE(data->bridge);
 }
+#endif
 
 static void tui_suspend(UI *ui)
 {
+#ifdef UNIX
   TUIData *data = ui->data;
   // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
   // before continuing. This is done in another callback to avoid
   // loop_poll_events recursion
   multiqueue_put_event(data->loop->fast_events,
                        event_create(suspend_event, 1, ui));
+#endif
 }
 
 static void tui_set_title(UI *ui, char *title)

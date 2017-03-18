@@ -17,7 +17,7 @@ set PATH=C:\Program Files (x86)\CMake\bin\cpack.exe;%PATH%
 
 :: Build third-party dependencies
 C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" || goto :error
-C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-%ARCH%-cmake mingw-w64-%ARCH%-perl mingw-w64-%ARCH%-diffutils gperf" || goto :error
+C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-%ARCH%-cmake mingw-w64-%ARCH%-perl mingw-w64-%ARCH%-diffutils mingw-w64-%ARCH%-unibilium gperf" || goto :error
 
 :: Setup python (use AppVeyor system python)
 C:\Python27\python.exe -m pip install neovim || goto :error
