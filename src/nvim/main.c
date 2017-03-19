@@ -1049,11 +1049,10 @@ static void command_line_scan(mparm_T *parmp)
           case 's':               /* "-s {scriptin}" read from script file */
             if (scriptin[0] != NULL) {
 scripterror:
-              mch_errmsg(_("Attempt to open script file again: \""));
-              mch_errmsg(argv[-1]);
-              mch_errmsg(" ");
-              mch_errmsg(argv[0]);
-              mch_errmsg("\"\n");
+              vim_snprintf((char *)IObuff, IOSIZE,
+                           _("Attempt to open script file again: \"%s %s\"\n"),
+                           argv[-1], argv[0]);
+              mch_errmsg((const char *)IObuff);
               mch_exit(2);
             }
             int error;
@@ -1065,11 +1064,10 @@ scripterror:
               scriptin[0] = stdin_dup;
             } else if ((scriptin[0] = file_open_new(
                 &error, argv[0], kFileReadOnly|kFileNonBlocking, 0)) == NULL) {
-              mch_errmsg(_("Cannot open for reading: \""));
-              mch_errmsg(argv[0]);
-              mch_errmsg("\": ");
-              mch_errmsg(os_strerror(error));
-              mch_errmsg("\n");
+              vim_snprintf((char *)IObuff, IOSIZE,
+                           _("Cannot open for reading: \"%s\": %s\n"),
+                           argv[0], os_strerror(error));
+              mch_errmsg((const char *)IObuff);
               mch_exit(2);
             }
             save_typebuf();
