@@ -29,6 +29,8 @@
 #include <wchar.h>
 #include <wctype.h>
 
+#include <utf8proc.h>
+
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #ifdef HAVE_LOCALE_H

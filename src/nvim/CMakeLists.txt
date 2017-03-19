@@ -10,6 +10,7 @@ if(USE_GCOV)
 endif()
 endif()
 
+find_library(UTF8PROC_LIBRARY NAMES "utf8proc" PATHS "../../../utf8proc")
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendispatch.lua)
 file(GLOB API_HEADERS api/*.h)
@@ -43,6 +44,7 @@ set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
+include_directories("../../../utf8proc")
 
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
@@ -270,6 +272,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
+  ${UTF8PROC_LIBRARY}
 )
 
 if(UNIX)
