@@ -665,38 +665,9 @@ int utf_off2cells(unsigned off, unsigned max_off)
  */
 int utf_ptr2char(const char_u *p)
 {
-  uint8_t len;
-
-  if (p[0] < 0x80)      /* be quick for ASCII */
-    return p[0];
-
-  len = utf8proc_utf8class[p[0]];
-  if (len > 1 && (p[1] & 0xc0) == 0x80) {
-    if (len == 2)
-      return ((p[0] & 0x1f) << 6) + (p[1] & 0x3f);
-    if ((p[2] & 0xc0) == 0x80) {
-      if (len == 3)
-        return ((p[0] & 0x0f) << 12) + ((p[1] & 0x3f) << 6)
-          + (p[2] & 0x3f);
-      if ((p[3] & 0xc0) == 0x80) {
-        if (len == 4)
-          return ((p[0] & 0x07) << 18) + ((p[1] & 0x3f) << 12)
-            + ((p[2] & 0x3f) << 6) + (p[3] & 0x3f);
-        if ((p[4] & 0xc0) == 0x80) {
-          if (len == 5)
-            return ((p[0] & 0x03) << 24) + ((p[1] & 0x3f) << 18)
-              + ((p[2] & 0x3f) << 12) + ((p[3] & 0x3f) << 6)
-              + (p[4] & 0x3f);
-          if ((p[5] & 0xc0) == 0x80 && len == 6)
-            return ((p[0] & 0x01) << 30) + ((p[1] & 0x3f) << 24)
-              + ((p[2] & 0x3f) << 18) + ((p[3] & 0x3f) << 12)
-              + ((p[4] & 0x3f) << 6) + (p[5] & 0x3f);
-        }
-      }
-    }
-  }
-  /* Illegal value, just return the first byte */
-  return p[0];
+  utf8proc_int32_t ret = 0;
+  utf8proc_iterate(p, -1, &ret);
+  return ret;
 }
 
 /*
