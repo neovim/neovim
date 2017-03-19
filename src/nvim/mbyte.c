@@ -1069,23 +1069,7 @@ bool utf_iscomposing(int c)
  */
 bool utf_printable(int c)
 {
-#ifdef USE_WCHAR_FUNCTIONS
-  /*
-   * Assume the iswprint() library function works better than our own stuff.
-   */
-  return iswprint(c);
-#else
-  /* Sorted list of non-overlapping intervals.
-   * 0xd800-0xdfff is reserved for UTF-16, actually illegal. */
-  static struct interval nonprint[] =
-  {
-    {0x070f, 0x070f}, {0x180b, 0x180e}, {0x200b, 0x200f}, {0x202a, 0x202e},
-    {0x206a, 0x206f}, {0xd800, 0xdfff}, {0xfeff, 0xfeff}, {0xfff9, 0xfffb},
-    {0xfffe, 0xffff}
-  };
-
-  return !intable(nonprint, ARRAY_SIZE(nonprint), c);
-#endif
+  return utf8proc_charwidth(c);
 }
 
 /*
