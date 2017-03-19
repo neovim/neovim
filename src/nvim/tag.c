@@ -1057,6 +1057,7 @@ static void prepare_pats(pat_T *pats, int has_re)
  * TAG_REGEXP	  use "pat" as a regexp
  * TAG_NOIC	  don't always ignore case
  * TAG_KEEP_LANG  keep language
+ * TAG_CSCOPE	  use cscope results for tags
  */
 int 
 find_tags (
@@ -1189,6 +1190,11 @@ find_tags (
    */
   if (help_only)                                /* want tags from help file */
     curbuf->b_help = true;                      /* will be restored later */
+  else if (use_cscope) {
+    // Make sure we don't mix help and cscope, confuses Coverity.
+    help_only = false;
+    curbuf->b_help = false;
+  }
 
   orgpat.len = (int)STRLEN(pat);
   if (curbuf->b_help) {
