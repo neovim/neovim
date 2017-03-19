@@ -1022,17 +1022,25 @@ int utfc_ptr2len_len(const char_u *p, int size)
  */
 int utf_char2len(int c)
 {
-  if (c < 0x80)
-    return 1;
-  if (c < 0x800)
-    return 2;
-  if (c < 0x10000)
-    return 3;
-  if (c < 0x200000)
-    return 4;
-  if (c < 0x4000000)
-    return 5;
-  return 6;
+  int buf[4] = {0, 0, 0, 0};
+  switch (utf8proc_category(c)) {
+    case UTF8PROC_CATEGORY_LU:
+    case UTF8PROC_CATEGORY_LL:
+    case UTF8PROC_CATEGORY_PO:
+    case UTF8PROC_CATEGORY_ND:
+    case UTF8PROC_CATEGORY_PC:
+    case UTF8PROC_CATEGORY_PD:
+    case UTF8PROC_CATEGORY_SM:
+    case UTF8PROC_CATEGORY_ZS:
+    case UTF8PROC_CATEGORY_PS:
+    case UTF8PROC_CATEGORY_PE:
+    case UTF8PROC_CATEGORY_SC:
+    case UTF8PROC_CATEGORY_CC:
+    case UTF8PROC_CATEGORY_SK:
+      return 1;
+    default:
+      return utf8proc_encode_char(c, buf);
+  }
 }
 
 /*
