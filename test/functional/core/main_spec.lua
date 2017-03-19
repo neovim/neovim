@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
 local feed = helpers.feed
+local eval = helpers.eval
 local clear = helpers.clear
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
@@ -22,6 +23,8 @@ end
 describe('Command-line option', function()
   describe('-s', function()
     local fname = 'Xtest-functional-core-main-s'
+    local fname_2 = fname .. '.2'
+    local nonexistent_fname = fname .. '.nonexistent'
     local dollar_fname = '$' .. fname
     before_each(function()
       clear()
@@ -39,7 +42,7 @@ describe('Command-line option', function()
          '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
          '-s', '-', fname},
         {':call setline(1, "42")', ':wqall!', ''})
-      eq(0, funcs.eval('v:shell_error'))
+      eq(0, eval('v:shell_error'))
       local attrs = lfs.attributes(fname)
       eq(#('42\n'), attrs.size)
     end)
@@ -51,14 +54,13 @@ describe('Command-line option', function()
         {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
          '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
          '-s', dollar_fname, fname})
-      eq(0, funcs.eval('v:shell_error'))
+      eq(0, eval('v:shell_error'))
       local attrs = lfs.attributes(fname)
       eq(#('100500\n'), attrs.size)
     end)
     it('does not crash after reading from stdin in non-headless mode', function()
       local screen = Screen.new(40, 8)
       screen:attach()
-      eq(nil, lfs.attributes(fname))
       funcs.termopen({
         nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE',
          '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
@@ -100,6 +102,29 @@ describe('Command-line option', function()
                                                 |
       ]])
       ]=]
+    end)
+    it('errors out when trying to use nonexistent file with -s', function()
+      eq(
+        'Cannot open for reading: "'..nonexistent_fname..'": no such file or directory\n',
+        funcs.system(
+          {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
+           '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
+           '--cmd', 'language C',
+           '-s', nonexistent_fname}))
+      eq(2, eval('v:shell_error'))
+    end)
+    it('errors out when trying to use -s twice', function()
+      write_file(fname, ':call setline(1, "1")\n:wqall!\n')
+      write_file(dollar_fname, ':call setline(1, "2")\n:wqall!\n')
+      eq(
+        'Attempt to open script file again: "-s '..dollar_fname..'"\n',
+        funcs.system(
+          {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
+           '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
+           '--cmd', 'language C',
+           '-s', fname, '-s', dollar_fname, fname_2}))
+      eq(2, eval('v:shell_error'))
+      eq(nil, lfs.attributes(fname_2))
     end)
   end)
 end)
