@@ -19,16 +19,56 @@ describe('terminal buffer', function()
     screen = thelpers.screen_setup()
   end)
 
-  describe("respects 'bufhidden'", function()
-    before_each(function()
-      command('enew')
-      eq(1, eval("bufnr('#')"))
-      command('buffer #')
-      eq(2, eval("bufnr('#')"))
-      command('set bufhidden=wipe')
-      command('buffer! #')
-      eq(-1, eval("bufnr('#')"))
-    end)
+  it("defaults to bufhidden=hide", function()
+    eq({'terminal', 'hide'}, eval("[&buftype, &bufhidden]"))
+  end)
+
+  it("bufhidden=hide", function()
+    eq({'terminal', 1}, eval("[&buftype, bufnr('%')]"))
+    command('edit buf2')    -- create a normal buffer
+    eq({'', 2}, eval("[&buftype, bufnr('%')]"))
+    command('buffer #')     -- switch to terminal buffer
+    command('set bufhidden=hide')
+    command('buffer! #')
+    eq({'', 'buf2'}, eval("[&buftype, bufname('%')]"))
+    eq({'terminal', 1, 1},
+       eval("[getbufvar(1, '&buftype'), bufloaded(1), bufexists(1)]"))
+  end)
+
+  it("bufhidden=unload", function()
+    eq({'terminal', 1}, eval("[&buftype, bufnr('%')]"))
+    command('edit buf2')    -- create a normal buffer
+    eq({'', 2}, eval("[&buftype, bufnr('%')]"))
+    command('buffer #')     -- switch to terminal buffer
+    command('set bufhidden=unload')
+    command('buffer! #')
+    eq({'', 'buf2'}, eval("[&buftype, bufname('%')]"))
+    eq({'terminal', 0, 1},
+       eval("[getbufvar(1, '&buftype'), bufloaded(1), bufexists(1)]"))
+  end)
+
+  it("bufhidden=delete", function()
+    eq({'terminal', 1}, eval("[&buftype, bufnr('%')]"))
+    command('edit buf2')    -- create a normal buffer
+    eq({'', 2}, eval("[&buftype, bufnr('%')]"))
+    command('buffer #')     -- switch to terminal buffer
+    command('set bufhidden=delete')
+    command('buffer! #')
+    eq({'', 'buf2'}, eval("[&buftype, bufname('%')]"))
+    eq({'', 0, 1},
+       eval("[getbufvar(1, '&buftype'), bufloaded(1), bufexists(1)]"))
+  end)
+
+  it("bufhidden=wipe", function()
+    eq({'terminal', 1}, eval("[&buftype, bufnr('%')]"))
+    command('edit buf2')    -- create a normal buffer
+    eq({'', 2}, eval("[&buftype, bufnr('%')]"))
+    command('buffer #')     -- switch to terminal buffer
+    command('set bufhidden=wipe')
+    command('buffer! #')
+    eq({'', 'buf2'}, eval("[&buftype, bufname('%')]"))
+    eq({'', 0, 0},
+       eval("[getbufvar(1, '&buftype'), bufloaded(1), bufexists(1)]"))
   end)
 
   describe('swap and undo', function()
