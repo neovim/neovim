@@ -2731,7 +2731,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'formatprg'* *'fp'*
 'formatprg' 'fp'	string (default "")
-			global
+			global or local to buffer |global-local|
 	The name of an external program that will be used to format the lines
 	selected with the |gq| operator.  The program must take the input on
 	stdin and produce the output on stdout.  The Unix program "fmt" is

@@ -438,6 +438,17 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   /* Remember if we are closing the current buffer.  Restore the number of
    * windows, so that autocommands in buf_freeall() don't get confused. */
   bool is_curbuf = (buf == curbuf);
+
+  // When closing the current buffer stop Visual mode before freeing
+  // anything.
+  if (is_curbuf && VIsual_active
+#if defined(EXITFREE)
+      && !entered_free_all_mem
+#endif
+      ) {
+    end_visual_mode();
+  }
+
   buf->b_nwindows = nwindows;
 
   buf_freeall(buf, (del_buf ? BFA_DEL : 0) + (wipe_buf ? BFA_WIPE : 0));
@@ -1075,6 +1086,11 @@ do_buffer (
       }
     }
 
+    // When closing the current buffer stop Visual mode.
+    if (buf == curbuf && VIsual_active) {
+      end_visual_mode();
+    }
+
     /*
      * If deleting the last (listed) buffer, make it empty.
      * The last (listed) buffer cannot be unloaded.
@@ -1667,6 +1683,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_inex);
   clear_string_option(&buf->b_p_inde);
   clear_string_option(&buf->b_p_indk);
+  clear_string_option(&buf->b_p_fp);
   clear_string_option(&buf->b_p_fex);
   clear_string_option(&buf->b_p_kp);
   clear_string_option(&buf->b_p_mps);
