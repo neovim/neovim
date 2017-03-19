@@ -1,16 +1,11 @@
 local lfs = require('lfs')
 local helpers = require('test.functional.helpers')(after_each)
-local global_helpers = require('test.helpers')
 
 local eq = helpers.eq
-local neq = helpers.neq
 local clear = helpers.clear
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
 local write_file = helpers.write_file
-
-local popen_w = global_helpers.popen_w
-local repeated_read_cmd = global_helpers.repeated_read_cmd
 
 local function nvim_prog_abs()
   -- system(['build/bin/nvim']) does not work for whatever reason. It needs to
