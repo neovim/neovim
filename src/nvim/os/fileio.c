@@ -68,6 +68,10 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   FLAG(flags, kFileNoSymlink, O_NOFOLLOW, kNone, true);
 #endif
 #undef FLAG
+  // wr is used for kFileReadOnly flag, but on
+  // QB:neovim-qb-slave-ubuntu-12-04-64bit it still errors out with
+  // `error: variable ‘wr’ set but not used [-Werror=unused-but-set-variable]`
+  (void)wr;
 
   const int fd = os_open(fname, os_open_flags, mode);
 
