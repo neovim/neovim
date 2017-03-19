@@ -73,9 +73,10 @@ typedef struct {
 } pat_T;
 
 /*
- * The matching tags are first stored in one of the ht_match[] hash tables.  In
+ * The matching tags are first stored in one of the hash tables.  In
  * which one depends on the priority of the match.
- * At the end, the matches from ht_match[] are concatenated, to make a list
+ * ht_match[] is used to find duplicates, ga_match[] to keep them in sequence.
+ * At the end, the matches from ga_match[] are concatenated, to make a list
  * sorted on priority.
  */
 #define MT_ST_CUR       0               /* static match in current file */
@@ -1120,7 +1121,8 @@ find_tags (
 
 
   char_u *mfp;
-  hashtab_T ht_match[MT_COUNT];
+  garray_T ga_match[MT_COUNT];   // stores matches in sequence
+  hashtab_T ht_match[MT_COUNT];  // stores matches by key
   hash_T hash = 0;
   int match_count = 0;                          /* number of matches found */
   char_u      **matches;
@@ -1180,8 +1182,10 @@ find_tags (
    */
   lbuf = xmalloc(lbuf_size);
   tag_fname = xmalloc(MAXPATHL + 1);
-  for (mtt = 0; mtt < MT_COUNT; ++mtt)
+  for (mtt = 0; mtt < MT_COUNT; ++mtt) {
+    ga_init(&ga_match[mtt], sizeof(char_u *), 100);
     hash_init(&ht_match[mtt]);
+  }
 
   STRCPY(tag_fname, "from cscope");             /* for error messages */
 
@@ -1752,7 +1756,7 @@ parse_line:
         }
 
         /*
-         * If a match is found, add it to ht_match[].
+         * If a match is found, add it to ht_match[] and ga_match[].
          */
         if (match) {
           int len = 0;
@@ -1792,7 +1796,7 @@ parse_line:
           }
 
           /*
-           * Add the found match in ht_match[mtt].
+           * Add the found match in ht_match[mtt] and ga_match[mtt].
            * Store the info we need later, which depends on the kind of
            * tags we are dealing with.
            */
@@ -1885,6 +1889,9 @@ parse_line:
                              STRLEN(mfp), hash);
             if (HASHITEM_EMPTY(hi)) {
               hash_add_item(&ht_match[mtt], hi, mfp, hash);
+              ga_grow(&ga_match[mtt], 1);
+              ((char_u **)(ga_match[mtt].ga_data))
+                [ga_match[mtt].ga_len++] = mfp;
               ++match_count;
             } else
               // duplicate tag, drop it
@@ -1951,7 +1958,7 @@ findtag_end:
   xfree(tag_fname);
 
   /*
-   * Move the matches from the ht_match[] arrays into one list of
+   * Move the matches from the ga_match[] arrays into one list of
    * matches.  When retval == FAIL, free the matches.
    */
   if (retval == FAIL)
@@ -1963,31 +1970,27 @@ findtag_end:
     matches = NULL;
   match_count = 0;
   for (mtt = 0; mtt < MT_COUNT; ++mtt) {
-    hashitem_T *hi;
-    long todo = (long)ht_match[mtt].ht_used;
+    for (i = 0; i < ga_match[mtt].ga_len; i++) {
+      mfp = ((char_u **)(ga_match[mtt].ga_data))[i];
+      if (matches == NULL) {
+        xfree(mfp);
+      } else {
+        if (!name_only) {
+          // Change mtt back to zero-based.
+          *mfp = *mfp - 1;
 
-    for (hi = ht_match[mtt].ht_array; todo > 0; hi++) {
-      if (!HASHITEM_EMPTY(hi)) {
-        mfp = hi->hi_key;
-        if (matches == NULL) {
-          xfree(mfp);
-        } else {
-          if (!name_only) {
-            // Change mtt back to zero-based.
-            *mfp = *mfp - 1;
-
-            // change the TAG_SEP back to NUL
-            for (p = mfp + 1; *p != NUL; p++) {
-              if (*p == TAG_SEP) {
-                *p = NUL;
-              }
+          // change the TAG_SEP back to NUL
+          for (p = mfp + 1; *p != NUL; p++) {
+            if (*p == TAG_SEP) {
+              *p = NUL;
             }
           }
-          matches[match_count++] = (char_u *)mfp;
         }
-        todo--;
+        matches[match_count++] = (char_u *)mfp;
       }
     }
+
+    ga_clear(&ga_match[mtt]);
     hash_clear(&ht_match[mtt]);
   }
 
