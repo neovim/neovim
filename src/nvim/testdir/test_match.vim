@@ -231,4 +231,4 @@ func Test_matchaddpos_using_negative_priority()
   set hlsearch&
 endfunc
 
-" vim: et ts=2 sw=2
+" vim: shiftwidth=2 sts=2 expandtab

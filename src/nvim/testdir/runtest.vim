@@ -95,8 +95,17 @@ function RunTheTest(test)
   endif
 
   " Close any extra windows and make the current one not modified.
-  while winnr('$') > 1
+  while 1
+    let wincount = winnr('$')
+    if wincount == 1
+      break
+    endif
     bwipe!
+    if wincount == winnr('$')
+      " Did not manage to close a window.
+      only!
+      break
+    endif
   endwhile
   set nomodified
 endfunc

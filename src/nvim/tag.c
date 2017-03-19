@@ -919,7 +919,8 @@ end_do_tag:
   /* Only store the new index when using the tagstack and it's valid. */
   if (use_tagstack && tagstackidx <= curwin->w_tagstacklen)
     curwin->w_tagstackidx = tagstackidx;
-  postponed_split = 0;          /* don't split next time */
+  postponed_split = 0;          // don't split next time
+  g_do_tagpreview = 0;          // don't do tag preview next time
 
   return jumped_to_tag;
 }

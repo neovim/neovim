@@ -757,4 +757,4 @@ func Test_normal_increment_03()
 endfunc
 
 
-" vim: tabstop=2 shiftwidth=2 expandtab
+" vim: shiftwidth=2 sts=2 expandtab

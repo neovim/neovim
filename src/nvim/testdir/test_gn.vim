@@ -90,4 +90,4 @@ func Test_gn_command()
   sil! %d _
 endfu
 
-" vim: tabstop=2 shiftwidth=0 expandtab
+" vim: shiftwidth=2 sts=2 expandtab

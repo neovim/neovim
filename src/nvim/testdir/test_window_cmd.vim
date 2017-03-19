@@ -67,4 +67,4 @@ function Test_window_cmd_wincmd_gf()
   augroup! test_window_cmd_wincmd_gf
 endfunc
 
-" vim: sw=2 et
+" vim: shiftwidth=2 sts=2 expandtab
