@@ -1239,28 +1239,12 @@ int utf_fold(int a)
  */
 int utf_toupper(int a)
 {
-  /* If 'casemap' contains "keepascii" use ASCII style toupper(). */
-  if (a < 128 && (cmp_flags & CMP_KEEPASCII))
-    return TOUPPER_ASC(a);
-
-#if defined(__STDC_ISO_10646__)
-  /* If towupper() is available and handles Unicode, use it. */
-  if (!(cmp_flags & CMP_INTERNAL))
-    return towupper(a);
-#endif
-
-  /* For characters below 128 use locale sensitive toupper(). */
-  if (a < 128)
-    return TOUPPER_LOC(a);
-
-  /* For any other characters use the above mapping table. */
-  return utf_convert(a, toUpper, ARRAY_SIZE(toUpper));
+  return utf8proc_toupper(a);
 }
 
 bool utf_islower(int a)
 {
-  /* German sharp s is lower case but has no upper case equivalent. */
-  return (utf_toupper(a) != a) || a == 0xdf;
+  return utf8proc_category(a) == UTF8PROC_CATEGORY_LL;
 }
 
 /*
@@ -1269,27 +1253,12 @@ bool utf_islower(int a)
  */
 int utf_tolower(int a)
 {
-  /* If 'casemap' contains "keepascii" use ASCII style tolower(). */
-  if (a < 128 && (cmp_flags & CMP_KEEPASCII))
-    return TOLOWER_ASC(a);
-
-#if defined(__STDC_ISO_10646__)
-  /* If towlower() is available and handles Unicode, use it. */
-  if (!(cmp_flags & CMP_INTERNAL))
-    return towlower(a);
-#endif
-
-  /* For characters below 128 use locale sensitive tolower(). */
-  if (a < 128)
-    return TOLOWER_LOC(a);
-
-  /* For any other characters use the above mapping table. */
-  return utf_convert(a, toLower, ARRAY_SIZE(toLower));
+  return utf8proc_tolower(a);
 }
 
 bool utf_isupper(int a)
 {
-  return utf_tolower(a) != a;
+  return utf8proc_category(a) == UTF8PROC_CATEGORY_LU;
 }
 
 static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2)
