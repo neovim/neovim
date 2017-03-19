@@ -71,21 +71,6 @@ struct interval {
 #endif
 
 /*
- * Like utf8len_tab above, but using a zero for illegal lead bytes.
- */
-static uint8_t utf8len_tab_zero[256] =
-{
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-  2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,6,6,0,0,
-};
-
-/*
  * Canonical encoding names and their properties.
  * "iso-8859-n" is handled by enc_canonize() directly.
  */
@@ -685,7 +670,7 @@ int utf_ptr2char(const char_u *p)
   if (p[0] < 0x80)      /* be quick for ASCII */
     return p[0];
 
-  len = utf8len_tab_zero[p[0]];
+  len = utf8proc_utf8class[p[0]];
   if (len > 1 && (p[1] & 0xc0) == 0x80) {
     if (len == 2)
       return ((p[0] & 0x1f) << 6) + (p[1] & 0x3f);
@@ -737,7 +722,7 @@ static int utf_safe_read_char_adv(char_u **s, size_t *n)
   if (*n == 0)   /* end of buffer */
     return 0;
 
-  uint8_t k = utf8len_tab_zero[**s];
+  uint8_t k = utf8proc_utf8class[**s];
 
   if (k == 1) {
     /* ASCII character or NUL */
@@ -2556,7 +2541,7 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr,
         if (l == 0)
           *d++ = NUL;
         else if (l == 1) {
-          uint8_t l_w = utf8len_tab_zero[ptr[i]];
+          uint8_t l_w = utf8proc_utf8class[ptr[i]];
 
           if (l_w == 0) {
             /* Illegal utf-8 byte cannot be converted */
