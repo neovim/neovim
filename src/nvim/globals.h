@@ -913,7 +913,7 @@ EXTERN int do_redraw INIT(= FALSE);         /* extra redraw once */
 EXTERN int need_highlight_changed INIT(= true);
 EXTERN char *used_shada_file INIT(= NULL);  // name of the ShaDa file to use
 
-EXTERN FILE     *scriptout INIT(= NULL);    /* stream to write script to */
+EXTERN FILE *scriptout INIT(= NULL);  ///< Stream to write script to.
 
 // volatile because it is used in a signal handler.
 EXTERN volatile int got_int INIT(= false);  // set to true when interrupt

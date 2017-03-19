@@ -2353,8 +2353,8 @@ inchar (
     int tb_change_cnt
 )
 {
-  int len = 0;                      /* init for GCC */
-  int retesc = FALSE;               /* return ESC with gotint */
+  int len = 0;  // Init for GCC.
+  int retesc = false;  // Return ESC with gotint.
 
   if (wait_time == -1L || wait_time > 100L) {
     // flush output before waiting
