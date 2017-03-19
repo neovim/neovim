@@ -82,10 +82,6 @@ typedef struct {
 #define MT_GL_CUR       1               /* global match in current file */
 #define MT_GL_OTH       2               /* global match in other file */
 #define MT_ST_OTH       3               /* static match in other file */
-#define MT_IC_ST_CUR    4               /* icase static match in current file */
-#define MT_IC_GL_CUR    5               /* icase global match in current file */
-#define MT_IC_GL_OTH    6               /* icase global match in other file */
-#define MT_IC_ST_OTH    7               /* icase static match in other file */
 #define MT_IC_OFF       4               /* add for icase match */
 #define MT_RE_OFF       8               /* add for regexp match */
 #define MT_MASK         7               /* mask for printing priority */
@@ -1826,7 +1822,7 @@ parse_line:
 
               if (tagp.command + 2 < temp_end) {
                 len = (int)(temp_end - tagp.command - 2);
-                mfp = xmalloc(sizeof(char_u) + len + 1);
+                mfp = xmalloc(len + 2);
                 STRLCPY(mfp, tagp.command + 2, len + 1);
               } else
                 mfp = NULL;
@@ -1849,11 +1845,12 @@ parse_line:
              * Emacs tag: <mtt><tag_fname><NUL><ebuf><NUL><lbuf>
              * other tag: <mtt><tag_fname><NUL><NUL><lbuf>
              * without Emacs tags: <mtt><tag_fname><NUL><lbuf>
+             * Here <mtt> is the "mtt" value plus 1 to avoid NUL.
              */
             len = (int)tag_fname_len + (int)STRLEN(lbuf) + 3;
             mfp = xmalloc(sizeof(char_u) + len + 1);
             p = mfp;
-            p[0] = mtt;
+            p[0] = mtt + 1;
             STRCPY(p + 1, tag_fname);
 #ifdef BACKSLASH_IN_FILENAME
             /* Ignore differences in slashes, avoid adding
@@ -1969,10 +1966,15 @@ findtag_end:
         if (matches == NULL) {
           xfree(mfp);
         } else {
-          // now change the TAG_SEP back to NUL
-          for (p = mfp; *p != NUL; p++) {
-            if (*p == TAG_SEP) {
-              *p = NUL;
+          if (!name_only) {
+            // Change mtt back to zero-based.
+            *mfp = *mfp - 1;
+
+            // change the TAG_SEP back to NUL
+            for (p = mfp + 1; *p != NUL; p++) {
+              if (*p == TAG_SEP) {
+                *p = NUL;
+              }
             }
           }
           matches[match_count++] = (char_u *)mfp;

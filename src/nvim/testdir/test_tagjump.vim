@@ -23,4 +23,22 @@ func Test_cancel_ptjump()
   quit
 endfunc
 
+func Test_static_tagjump()
+  set tags=Xtags
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "one\tXfile1\t/^one/;\"\tf\tfile:\tsignature:(void)",
+        \ "word\tXfile2\tcmd2"],
+        \ 'Xtags')
+  new Xfile1
+  call setline(1, ['empty', 'one()', 'empty'])
+  write
+  tag one
+  call assert_equal(2, line('.'))
+
+  set tags&
+  call delete('Xtags')
+  call delete('Xfile1')
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
