@@ -879,15 +879,12 @@ int utfc_char2bytes(int off, char_u *buf)
 int utf_ptr2len(const char_u *p)
 {
   int len;
-  int i;
 
   if (*p == NUL)
     return 0;
-  len = utf8len_tab[*p];
-  for (i = 1; i < len; ++i)
-    if ((p[i] & 0xc0) != 0x80)
-      return 1;
-  return len;
+
+  len = utf8proc_utf8class[*p];
+  return len ? len : 1;
 }
 
 /*
