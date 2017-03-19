@@ -483,6 +483,22 @@ describe('fs function', function()
       end)
     end)
 
+    describe('os_dup', function()
+      itp('returns new file descriptor', function()
+        local dup0 = fs.os_dup(0)
+        local dup1 = fs.os_dup(1)
+        local dup2 = fs.os_dup(2)
+        local tbl = {[0]=true, [1]=true, [2]=true,
+                     [tonumber(dup0)]=true, [tonumber(dup1)]=true,
+                     [tonumber(dup2)]=true}
+        local i = 0
+        for _, _ in pairs(tbl) do
+          i = i + 1
+        end
+        eq(i, 6)  -- All fds must be unique
+      end)
+    end)
+
     describe('os_open', function()
       local new_file = 'test_new_file'
       local existing_file = 'unit-test-directory/test_existing.file'

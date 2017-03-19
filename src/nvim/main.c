@@ -1057,7 +1057,9 @@ scripterror:
               mch_exit(2);
             }
             if (STRCMP(argv[0], "-") == 0) {
-              scriptin[0] = stdin;
+              const int stdin_dup_fd = os_dup(STDIN_FILENO);
+              FILE *const stdin_dup = fdopen(stdin_dup_fd, "r");
+              scriptin[0] = stdin_dup;
             } else if ((scriptin[0] = mch_fopen(argv[0], READBIN)) == NULL) {
               mch_errmsg(_("Cannot open for reading: \""));
               mch_errmsg(argv[0]);

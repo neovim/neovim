@@ -430,6 +430,29 @@ int os_close(const int fd)
   return r;
 }
 
+/// Duplicate file descriptor
+///
+/// @param[in]  fd  File descriptor to duplicate.
+///
+/// @return New file descriptor or libuv error code (< 0).
+int os_dup(const int fd)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int ret;
+os_dup_dup:
+  ret = dup(fd);
+  if (ret < 0) {
+    const int error = os_translate_sys_error(errno);
+    errno = 0;
+    if (error == UV_EINTR) {
+      goto os_dup_dup;
+    } else {
+      return error;
+    }
+  }
+  return ret;
+}
+
 /// Read from a file
 ///
 /// Handles EINTR and ENOMEM, but not other errors.
