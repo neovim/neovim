@@ -32,13 +32,11 @@ describe('Command-line option', function()
     end)
     it('treats - as stdin', function()
       eq(nil, lfs.attributes(fname))
-      eq(
-        ':call setline(1, "42"):wqall!"'..fname..'" "'..fname..'" [New] 1L, 3C',
-        funcs.system(
-          {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
-           '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
-           '-s', '-', fname},
-          {':call setline(1, "42")', ':wqall!', ''}))
+      funcs.system(
+        {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
+         '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
+         '-s', '-', fname},
+        {':call setline(1, "42")', ':wqall!', ''})
       eq(0, funcs.eval('v:shell_error'))
       local attrs = lfs.attributes(fname)
       eq(#('42\n'), attrs.size)
@@ -47,12 +45,10 @@ describe('Command-line option', function()
       eq(nil, lfs.attributes(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
       write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
-      eq(
-        ':call setline(1, "100500"):wqall!"'..fname..'" "'..fname..'" [New] 1L, 7C',
-        funcs.system(
-          {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
-           '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
-           '-s', dollar_fname, fname}))
+      funcs.system(
+        {nvim_prog_abs(), '-u', 'NONE', '-i', 'NONE', '--headless',
+         '--cmd', 'set noswapfile shortmess+=IFW fileformats=unix',
+         '-s', dollar_fname, fname})
       eq(0, funcs.eval('v:shell_error'))
       local attrs = lfs.attributes(fname)
       eq(#('100500\n'), attrs.size)
