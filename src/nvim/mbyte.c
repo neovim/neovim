@@ -894,7 +894,8 @@ int utf_ptr2len(const char_u *p)
  */
 int utf_byte2len(int b)
 {
-  return utf8len_tab[b];
+  int len = utf8proc_utf8class[b];
+  return len ? len : 1;
 }
 
 /*
