@@ -1648,6 +1648,13 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='orderjumps',
+      type='bool', scope={'global'},
+      vi_def=true,
+      varname='p_ordjumps',
+      defaults={if_true={vi=false}}
+    },
+    {
       full_name='packpath', abbreviation='pp',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
