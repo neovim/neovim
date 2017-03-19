@@ -1135,6 +1135,7 @@ find_tags (
   char_u      *help_lang_find = NULL;           /* lang to be found */
   char_u help_lang[3];                          /* lang of current tags file */
   char_u      *saved_pat = NULL;                /* copy of pat[] */
+  bool is_txt = false;
 
   pat_T orgpat;                         /* holds unconverted pattern info */
   vimconv_T vimconv;
@@ -1232,6 +1233,14 @@ find_tags (
    * When the tag file is case-fold sorted, it is either one or the other.
    * Only ignore case when TAG_NOIC not used or 'ignorecase' set.
    */
+  // Set a flag if the file extension is .txt
+  if ((flags & TAG_KEEP_LANG)
+      && help_lang_find == NULL
+      && curbuf->b_fname != NULL
+      && (i = (int)STRLEN(curbuf->b_fname)) > 4
+      && STRICMP(curbuf->b_fname + i - 4, ".txt") == 0) {
+    is_txt = true;
+  }
   orgpat.regmatch.rm_ic = ((p_ic || !noic)
                            && (findall || orgpat.headlen == 0 || !p_tbs));
   for (round = 1; round <= 2; ++round) {
@@ -1247,13 +1256,18 @@ find_tags (
         fp = NULL;  // avoid GCC warning
       } else {
         if (curbuf->b_help) {
-          /* Prefer help tags according to 'helplang'.  Put the
-           * two-letter language name in help_lang[]. */
-          i = (int)STRLEN(tag_fname);
-          if (i > 3 && tag_fname[i - 3] == '-')
-            STRCPY(help_lang, tag_fname + i - 2);
-          else
+          // Keep en if the file extension is .txt
+          if (is_txt) {
             STRCPY(help_lang, "en");
+          } else {
+            /* Prefer help tags according to 'helplang'.  Put the
+             * two-letter language name in help_lang[]. */
+            i = (int)STRLEN(tag_fname);
+            if (i > 3 && tag_fname[i - 3] == '-')
+              STRCPY(help_lang, tag_fname + i - 2);
+            else
+              STRCPY(help_lang, "en");
+          }
 
           /* When searching for a specific language skip tags files
            * for other languages. */
