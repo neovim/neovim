@@ -45,7 +45,6 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int os_open_flags = 0;
-  int fd;
   TriState wr = kNone;
 #define FLAG(flags, flag, fcntl_flags, wrval, cond) \
   do { \
@@ -70,13 +69,33 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
 #endif
 #undef FLAG
 
-  fd = os_open(fname, os_open_flags, mode);
+  const int fd = os_open(fname, os_open_flags, mode);
 
   if (fd < 0) {
     return fd;
   }
+  return file_open_fd(ret_fp, fd, (wr == kTrue), mode);
+}
 
-  ret_fp->wr = (wr == kTrue);
+/// Wrap file descriptor with FileDescriptor structure
+///
+/// @warning File descriptor wrapped like this must not be accessed by other
+///          means.
+///
+/// @param[out]  ret_fp  Address where information needed for reading from or
+///                      writing to a file is saved
+/// @param[in]  fd  File descriptor to wrap.
+/// @param[in]  wr  True if fd is opened for writing only, false if it is read
+///                 only.
+/// @param[in]  mode  Permissions for the newly created file (ignored if flags
+///                   does not have FILE_CREATE\*).
+///
+/// @return Error code (@see os_strerror()) or 0. Currently always returns 0.
+int file_open_fd(FileDescriptor *const ret_fp, const int fd,
+                 const bool wr, const int mode)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  ret_fp->wr = wr;
   ret_fp->fd = fd;
   ret_fp->eof = false;
   ret_fp->rv = rbuffer_new(kRWBufferSize);
@@ -104,6 +123,29 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
   if ((*error = file_open(fp, fname, flags, mode)) != 0) {
+    xfree(fp);
+    return NULL;
+  }
+  return fp;
+}
+
+/// Like file_open_fd(), but allocate and return ret_fp
+///
+/// @param[out]  error  Error code, @see os_strerror(). Is set to zero on
+///                     success.
+/// @param[in]  fd  File descriptor to wrap.
+/// @param[in]  wr  True if fd is opened for writing only, false if it is read
+///                 only.
+/// @param[in]  mode  Permissions for the newly created file (ignored if flags
+///                   does not have FILE_CREATE\*).
+///
+/// @return [allocated] Opened file or NULL in case of error.
+FileDescriptor *file_open_fd_new(int *const error, const int fd,
+                                 const bool wr, const int mode)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  FileDescriptor *const fp = xmalloc(sizeof(*fp));
+  if ((*error = file_open_fd(fp, fd, wr, mode)) != 0) {
     xfree(fp);
     return NULL;
   }

@@ -13,6 +13,9 @@
 # include "nvim/os/unix_defs.h"
 #endif
 
+/// File descriptor number used for STDIN
+enum { OS_STDIN_FILENO = STDIN_FILENO };
+
 #define BASENAMELEN (NAME_MAX - 5)
 
 // Use the system path length if it makes sense.

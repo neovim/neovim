@@ -1,6 +1,8 @@
 #ifndef NVIM_GETCHAR_H
 #define NVIM_GETCHAR_H
 
+#include "nvim/os/fileio.h"
+
 /* Values for "noremap" argument of ins_typebuf().  Also used for
  * map->m_noremap and menu->noremap[]. */
 #define REMAP_YES       0       /* allow remapping */
@@ -11,6 +13,12 @@
 #define KEYLEN_PART_KEY -1      /* keylen value for incomplete key-code */
 #define KEYLEN_PART_MAP -2      /* keylen value for incomplete mapping */
 #define KEYLEN_REMOVED  9999    /* keylen value for removed sequence */
+
+/// Maximum number of streams to read script from
+enum { NSCRIPT = 15 };
+
+/// Streams to read script from
+extern FileDescriptor *scriptin[NSCRIPT];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "getchar.h.generated.h"

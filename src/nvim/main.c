@@ -1056,14 +1056,20 @@ scripterror:
               mch_errmsg("\"\n");
               mch_exit(2);
             }
+            int error;
             if (STRCMP(argv[0], "-") == 0) {
-              const int stdin_dup_fd = os_dup(STDIN_FILENO);
-              FILE *const stdin_dup = fdopen(stdin_dup_fd, "r");
+              const int stdin_dup_fd = os_dup(OS_STDIN_FILENO);
+              FileDescriptor *const stdin_dup = file_open_fd_new(
+                  &error, stdin_dup_fd, false, 0);
+              assert(stdin_dup != NULL);
               scriptin[0] = stdin_dup;
-            } else if ((scriptin[0] = mch_fopen(argv[0], READBIN)) == NULL) {
+            } else if ((scriptin[0] = file_open_new(
+                &error, argv[0], kFileReadOnly, 0)) == NULL) {
               mch_errmsg(_("Cannot open for reading: \""));
               mch_errmsg(argv[0]);
-              mch_errmsg("\"\n");
+              mch_errmsg("\": ");
+              mch_errmsg(os_strerror(error));
+              mch_errmsg("\n");
               mch_exit(2);
             }
             save_typebuf();
