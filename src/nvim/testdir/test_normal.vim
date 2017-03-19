@@ -69,9 +69,10 @@ fun! Test_normal00_optrans()
   1
   norm! 2D
   call assert_equal(['3 this is the third line', '4 This is a simple test: abcd', '5 This is the second line', '6 this is the third line', ''], getline(1,'$'))
-  set cpo+=#
-  norm! 4D
-  call assert_equal(['', '4 This is a simple test: abcd', '5 This is the second line', '6 this is the third line', ''], getline(1,'$'))
+  " Nvim: no "#" flag in 'cpoptions'.
+  " set cpo+=#
+  " norm! 4D
+  " call assert_equal(['', '4 This is a simple test: abcd', '5 This is the second line', '6 this is the third line', ''], getline(1,'$'))
 
   " clean up
   set cpo-=#
@@ -79,6 +80,7 @@ fun! Test_normal00_optrans()
 endfunc
 
 func! Test_normal01_keymodel()
+  throw "skipped: Nvim regression: 'keymodel'"
   call Setup_NewWindow()
   " Test 1: depending on 'keymodel' <s-down> does something different
   50
@@ -431,6 +433,7 @@ func! Test_normal13_help()
 endfunc
 
 func! Test_normal14_page()
+  throw "skipped: Nvim regression: CTRL-F with 'scrolloff'"
   " basic test for Ctrl-F and Ctrl-B
   call Setup_NewWindow()
   exe "norm! \<c-f>"
@@ -1067,6 +1070,7 @@ func! Test_normal18_z_fold()
 endfunc
 
 func! Test_normal19_z_spell()
+  throw "skipped: Nvim 'spell' requires download"
   if !has("spell") || !has('syntax')
     return
   endif
@@ -1253,7 +1257,7 @@ func! Test_normal22_zet()
   " let shell = &shell
   " let &shell = 'sh'
   call writefile(['1', '2'], 'Xfile')
-  let args = ' -u NONE -N -U NONE -i NONE --noplugins -X --not-a-term'
+  let args = ' --headless -u NONE -N -U NONE -i NONE --noplugins'
   call system(v:progpath . args . ' -c "%d" -c ":norm! ZZ" Xfile')
   let a = readfile('Xfile')
   call assert_equal([], a)
@@ -1273,19 +1277,19 @@ endfunc
 func! Test_normal23_K()
   " Test for K command
   new
-  call append(0, ['version8.txt', 'man', 'aa%bb', 'cc|dd'])
+  call append(0, ['helphelp.txt', 'man', 'aa%bb', 'cc|dd'])
   let k = &keywordprg
   set keywordprg=:help
   1
   norm! VK
-  call assert_equal('version8.txt', fnamemodify(bufname('%'), ':t'))
+  call assert_equal('helphelp.txt', fnamemodify(bufname('%'), ':t'))
   call assert_equal('help', &ft)
-  call assert_match('\*version8.txt\*', getline('.'))
+  call assert_match('\*helphelp.txt\*', getline('.'))
   helpclose
   norm! 0K
-  call assert_equal('version8.txt', fnamemodify(bufname('%'), ':t'))
+  call assert_equal('helphelp.txt', fnamemodify(bufname('%'), ':t'))
   call assert_equal('help', &ft)
-  call assert_match('\*version8\.0\*', getline('.'))
+  call assert_match('Help on help files', getline('.'))
   helpclose
 
   set keywordprg=:new
@@ -1554,24 +1558,25 @@ fun! Test_normal29_brace()
   " Test with { in cpooptions
   %d
   call append(0, text)
-  set cpo+={
-  1
-  norm! 0d2}
-  call assert_equal(['{', 'This is no paragaraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}',
-    \ '.IP', 'The nroff macros IP seperates a paragraph', 'That means, it must be a ''.''',
-    \ 'followed by IP', '.LPIt does not matter, if afterwards some', 'more characters follow.',
-    \ '.SHAlso section boundaries from the nroff', 'macros terminate a paragraph. That means',
-    \ 'a character like this:', '.NH', 'End of text here', ''], getline(1,'$'))
-  $
-  norm! d}
-  call assert_equal(['{', 'This is no paragaraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}',
-    \ '.IP', 'The nroff macros IP seperates a paragraph', 'That means, it must be a ''.''',
-    \ 'followed by IP', '.LPIt does not matter, if afterwards some', 'more characters follow.',
-    \ '.SHAlso section boundaries from the nroff', 'macros terminate a paragraph. That means',
-    \ 'a character like this:', '.NH', 'End of text here', ''], getline(1,'$'))
-  norm! gg}
-  norm! d5}
-  call assert_equal(['{', 'This is no paragaraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}', ''], getline(1,'$'))
+  " Nvim: no "{" flag in 'cpoptions'.
+  " set cpo+={
+  " 1
+  " norm! 0d2}
+  " call assert_equal(['{', 'This is no paragaraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}',
+  "   \ '.IP', 'The nroff macros IP seperates a paragraph', 'That means, it must be a ''.''',
+  "   \ 'followed by IP', '.LPIt does not matter, if afterwards some', 'more characters follow.',
+  "   \ '.SHAlso section boundaries from the nroff', 'macros terminate a paragraph. That means',
+  "   \ 'a character like this:', '.NH', 'End of text here', ''], getline(1,'$'))
+  " $
+  " norm! d}
+  " call assert_equal(['{', 'This is no paragaraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}',
+  "   \ '.IP', 'The nroff macros IP seperates a paragraph', 'That means, it must be a ''.''',
+  "   \ 'followed by IP', '.LPIt does not matter, if afterwards some', 'more characters follow.',
+  "   \ '.SHAlso section boundaries from the nroff', 'macros terminate a paragraph. That means',
+  "   \ 'a character like this:', '.NH', 'End of text here', ''], getline(1,'$'))
+  " norm! gg}
+  " norm! d5}
+  " call assert_equal(['{', 'This is no paragaraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}', ''], getline(1,'$'))
 
   " clean up
   set cpo-={
@@ -1889,12 +1894,13 @@ fun! Test_normal39_cw()
   call assert_equal('hereZZZare   some words', getline('.'))
   norm! 1gg0elcWYYY
   call assert_equal('hereZZZareYYYsome words', getline('.'))
-  set cpo+=w
-  call setline(1, 'here      are   some words')
-  norm! 1gg0elcwZZZ
-  call assert_equal('hereZZZ     are   some words', getline('.'))
-  norm! 1gg2elcWYYY
-  call assert_equal('hereZZZ     areYYY  some words', getline('.'))
+  " Nvim: no "w" flag in 'cpoptions'.
+  " set cpo+=w
+  " call setline(1, 'here      are   some words')
+  " norm! 1gg0elcwZZZ
+  " call assert_equal('hereZZZ     are   some words', getline('.'))
+  " norm! 1gg2elcWYYY
+  " call assert_equal('hereZZZ     areYYY  some words', getline('.'))
   set cpo-=w
   norm! 2gg0cwfoo
   call assert_equal('foo', getline('.'))

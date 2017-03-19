@@ -68,10 +68,10 @@ let $HOME = '/does/not/exist'
 " Prepare for calling garbagecollect_for_testing().
 let v:testing = 1
 
-" Align with vim defaults.
+" Align Nvim defaults to Vim.
 set directory^=.
-set nohidden
 set backspace=
+set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
 
 function RunTheTest(test)
   echo 'Executing ' . a:test
