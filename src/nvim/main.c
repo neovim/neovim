@@ -1060,11 +1060,11 @@ scripterror:
             if (STRCMP(argv[0], "-") == 0) {
               const int stdin_dup_fd = os_dup(OS_STDIN_FILENO);
               FileDescriptor *const stdin_dup = file_open_fd_new(
-                  &error, stdin_dup_fd, false, 0);
+                  &error, stdin_dup_fd, kFileReadOnly|kFileNonBlocking, 0);
               assert(stdin_dup != NULL);
               scriptin[0] = stdin_dup;
             } else if ((scriptin[0] = file_open_new(
-                &error, argv[0], kFileReadOnly, 0)) == NULL) {
+                &error, argv[0], kFileReadOnly|kFileNonBlocking, 0)) == NULL) {
               mch_errmsg(_("Cannot open for reading: \""));
               mch_errmsg(argv[0]);
               mch_errmsg("\": ");

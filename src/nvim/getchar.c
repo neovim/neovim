@@ -2375,7 +2375,7 @@ inchar (
   // Get a character from a script file if there is one.
   // If interrupted: Stop reading script files, close them all.
   ptrdiff_t read_size = -1;
-  while (scriptin[curscript] != NULL && read_size < 0 && !ignore_script) {
+  while (scriptin[curscript] != NULL && read_size <= 0 && !ignore_script) {
     char script_char;
     if (got_int
         || (read_size = file_read(scriptin[curscript], &script_char, 1)) != 1) {
@@ -2397,7 +2397,7 @@ inchar (
     }
   }
 
-  if (read_size < 0) {  // Did not get a character from script.
+  if (read_size <= 0) {  // Did not get a character from script.
     // If we got an interrupt, skip all previously typed characters and
     // return TRUE if quit reading script file.
     // Stop reading typeahead when a single CTRL-C was read,

@@ -382,7 +382,7 @@ describe('fs function', function()
         buf = ffi.new('char[?]', size + 1, ('\0'):rep(size))
       end
       local eof = ffi.new('bool[?]', 1, {true})
-      local ret2 = fs.os_read(fd, eof, buf, size)
+      local ret2 = fs.os_read(fd, eof, buf, size, false)
       local ret1 = eof[0]
       local ret3 = ''
       if buf ~= nil then
@@ -400,7 +400,7 @@ describe('fs function', function()
       end
       local iov = ffi.new('struct iovec[?]', #sizes, bufs)
       local eof = ffi.new('bool[?]', 1, {true})
-      local ret2 = fs.os_readv(fd, eof, iov, #sizes)
+      local ret2 = fs.os_readv(fd, eof, iov, #sizes, false)
       local ret1 = eof[0]
       local ret3 = {}
       for i = 1,#sizes do
@@ -410,7 +410,7 @@ describe('fs function', function()
       return ret1, ret2, ret3
     end
     local function os_write(fd, data)
-      return fs.os_write(fd, data, data and #data or 0)
+      return fs.os_write(fd, data, data and #data or 0, false)
     end
 
     describe('os_path_exists', function()

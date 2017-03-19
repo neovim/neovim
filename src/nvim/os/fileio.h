@@ -14,6 +14,7 @@ typedef struct {
   RBuffer *rv;  ///< Read or write buffer.
   bool wr;  ///< True if file is in write mode.
   bool eof;  ///< True if end of file was encountered.
+  bool non_blocking;  ///< True if EAGAIN should not restart syscalls.
 } FileDescriptor;
 
 /// file_open() flags
@@ -32,6 +33,8 @@ typedef enum {
                        ///< kFileCreateOnly.
   kFileAppend = 64,  ///< Append to the file. Implies kFileWriteOnly. Cannot
                      ///< be used with kFileCreateOnly.
+  kFileNonBlocking = 128,  ///< Do not restart read() or write() syscall if
+                           ///< EAGAIN was encountered.
 } FileOpenFlags;
 
 static inline bool file_eof(const FileDescriptor *const fp)
