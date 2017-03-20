@@ -42,29 +42,29 @@
 
 static bool did_syntax_onoff = false;
 
-// Structure that stores information about a highlight group.
-// The ID of a highlight group is also called group ID.  It is the index in
-// the highlight_ga array PLUS ONE.
+/// Structure that stores information about a highlight group.
+/// The ID of a highlight group is also called group ID.  It is the index in
+/// the highlight_ga array PLUS ONE.
 struct hl_group {
-  char_u      *sg_name;         // highlight group name
-  char_u      *sg_name_u;       // uppercase of sg_name
-  int sg_attr;                  // Screen attr
-  int sg_link;                  // link to this highlight group ID
-  int sg_set;                   // combination of SG_* flags
-  scid_T sg_scriptID;           // script in which the group was last set
+  char_u      *sg_name;         ///< highlight group name
+  char_u      *sg_name_u;       ///< uppercase of sg_name
+  int sg_attr;                  ///< Screen attr
+  int sg_link;                  ///< link to this highlight group ID
+  int sg_set;                   ///< combination of SG_* flags
+  scid_T sg_scriptID;           ///< script in which the group was last set
   // for terminal UIs
-  int sg_cterm;                 // "cterm=" highlighting attr
-  int sg_cterm_fg;              // terminal fg color number + 1
-  int sg_cterm_bg;              // terminal bg color number + 1
-  int sg_cterm_bold;            // bold attr was set for light color
+  int sg_cterm;                 ///< "cterm=" highlighting attr
+  int sg_cterm_fg;              ///< terminal fg color number + 1
+  int sg_cterm_bg;              ///< terminal bg color number + 1
+  int sg_cterm_bold;            ///< bold attr was set for light color
   // for RGB UIs
-  int sg_gui;                   // "gui=" highlighting attributes
-  RgbValue sg_rgb_fg;           // RGB foreground color
-  RgbValue sg_rgb_bg;           // RGB background color
-  RgbValue sg_rgb_sp;           // RGB special color
-  uint8_t *sg_rgb_fg_name;      // RGB foreground color name
-  uint8_t *sg_rgb_bg_name;      // RGB background color name
-  uint8_t *sg_rgb_sp_name;      // RGB special color name
+  int sg_gui;                   ///< "gui=" highlighting attributes
+  RgbValue sg_rgb_fg;           ///< RGB foreground color
+  RgbValue sg_rgb_bg;           ///< RGB background color
+  RgbValue sg_rgb_sp;           ///< RGB special color
+  uint8_t *sg_rgb_fg_name;      ///< RGB foreground color name
+  uint8_t *sg_rgb_bg_name;      ///< RGB background color name
+  uint8_t *sg_rgb_sp_name;      ///< RGB special color name
 };
 
 #define SG_CTERM        2       // cterm has been set
@@ -7165,12 +7165,13 @@ int syn_namen2id(char_u *linep, int len)
   return id;
 }
 
-/*
- * Find highlight group name in the table and return it's ID.
- * The argument is a pointer to the name and the length of the name.
- * If it doesn't exist yet, a new entry is created.
- * Return 0 for failure.
- */
+/// Find highlight group name in the table and return it's ID.
+/// If it doesn't exist yet, a new entry is created.
+///
+/// @param pp Highlight group name
+/// @param len length of \p pp
+///
+/// @return 0 for failure else the id of the group
 int syn_check_group(char_u *pp, int len)
 {
   char_u  *name = vim_strnsave(pp, len);
