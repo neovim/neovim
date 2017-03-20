@@ -32,7 +32,7 @@ func Test_repeat_three()
   let slept = WaitFor('g:val == 3')
   call assert_equal(3, g:val)
   if has('reltime')
-    call assert_inrange(150, 200, slept)
+    call assert_inrange(150, 250, slept)
   else
     call assert_inrange(80, 200, slept)
   endif
