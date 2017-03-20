@@ -2284,8 +2284,11 @@ int do_ecmd(
       } else {
         win_T *the_curwin = curwin;
 
-        // Set the w_closing flag to avoid that autocommands close the window.
+        // Set w_closing to avoid that autocommands close the window.
+        // Set b_locked for the same reason.
         the_curwin->w_closing = true;
+        buf->b_locked++;
+
         if (curbuf == old_curbuf.br_buf) {
           buf_copy_options(buf, BCO_ENTER);
         }
@@ -2298,6 +2301,7 @@ int do_ecmd(
                      false);
 
         the_curwin->w_closing = false;
+        buf->b_locked--;
 
         // autocmds may abort script processing
         if (aborting() && curwin->w_buffer != NULL) {
@@ -2443,11 +2447,6 @@ int do_ecmd(
 
   /* Assume success now */
   retval = OK;
-
-  /*
-   * Reset cursor position, could be used by autocommands.
-   */
-  check_cursor();
 
   /*
    * Check if we are editing the w_arg_idx file in the argument list.

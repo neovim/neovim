@@ -360,6 +360,13 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     wipe_buf = true;
   }
 
+  // Disallow deleting the buffer when it is locked (already being closed or
+  // halfway a command that relies on it). Unloading is allowed.
+  if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
+    EMSG(_("E937: Attempt to delete a buffer that is in use"));
+    return;
+  }
+
   if (win_valid_any_tab(win)) {
     // Set b_last_cursor when closing the last window for the buffer.
     // Remember the last cursor position and window options of the buffer.
@@ -378,14 +385,14 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
-    buf->b_closing = true;
+    buf->b_locked++;
     if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
                        buf) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
       EMSG(_(e_auabort));
       return;
     }
-    buf->b_closing = false;
+    buf->b_locked--;
     if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */
       EMSG(_(e_auabort));
@@ -395,14 +402,14 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
     if (!unload_buf) {
-      buf->b_closing = true;
+      buf->b_locked++;
       if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
                          buf) && !bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
         EMSG(_(e_auabort));
         return;
       }
-      buf->b_closing = false;
+      buf->b_locked--;
       if (abort_if_last && one_window()) {
         /* Autocommands made this the only window. */
         EMSG(_(e_auabort));
@@ -559,7 +566,7 @@ void buf_freeall(buf_T *buf, int flags)
   tabpage_T *the_curtab = curtab;
 
   // Make sure the buffer isn't closed by autocommands.
-  buf->b_closing = true;
+  buf->b_locked++;
 
   bufref_T bufref;
   set_bufref(&bufref, buf);
@@ -584,7 +591,7 @@ void buf_freeall(buf_T *buf, int flags)
     // Autocommands may delete the buffer.
     return;
   }
-  buf->b_closing = false;
+  buf->b_locked--;
 
   // If the buffer was in curwin and the window has changed, go back to that
   // window, if it still exists.  This avoids that ":edit x" triggering a
@@ -1111,7 +1118,7 @@ do_buffer (
      * a window with this buffer.
      */
     while (buf == curbuf
-           && !(curwin->w_closing || curwin->w_buffer->b_closing)
+           && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
            && (firstwin != lastwin || first_tabpage->tp_next != NULL)) {
       if (win_close(curwin, FALSE) == FAIL)
         break;
@@ -4499,7 +4506,7 @@ void ex_buffer_all(exarg_T *eap)
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin)
            ) && firstwin != lastwin
-          && !(wp->w_closing || wp->w_buffer->b_closing)
+          && !(wp->w_closing || wp->w_buffer->b_locked > 0)
           ) {
         win_close(wp, FALSE);
         wpnext = firstwin;              /* just in case an autocommand does

@@ -1727,7 +1727,7 @@ void close_windows(buf_T *buf, int keep_curwin)
 
   for (win_T *wp = firstwin; wp != NULL && lastwin != firstwin; ) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
-        && !(wp->w_closing || wp->w_buffer->b_closing)) {
+        && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
       if (win_close(wp, false) == FAIL) {
         // If closing the window fails give up, to avoid looping forever.
         break;
@@ -1745,8 +1745,7 @@ void close_windows(buf_T *buf, int keep_curwin)
     if (tp != curtab) {
       FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
         if (wp->w_buffer == buf
-            && !(wp->w_closing || wp->w_buffer->b_closing)
-            ) {
+            && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
           win_close_othertab(wp, FALSE, tp);
 
           /* Start all over, the tab page may be closed and
@@ -1882,8 +1881,9 @@ int win_close(win_T *win, int free_buf)
     return FAIL;
   }
 
-  if (win->w_closing || (win->w_buffer != NULL && win->w_buffer->b_closing))
-    return FAIL;     /* window is already being closed */
+  if (win->w_closing || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
+    return FAIL;     // window is already being closed
+  }
   if (win == aucmd_win) {
     EMSG(_("E813: Cannot close autocmd window"));
     return FAIL;
@@ -2064,7 +2064,8 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
-  if (win->w_closing || (win->w_buffer != NULL && win->w_buffer->b_closing)) {
+  if (win->w_closing
+      || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return;  // window is already being closed
   }
 
