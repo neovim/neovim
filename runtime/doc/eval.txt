@@ -7538,7 +7538,6 @@ timer_start({time}, {callback} [, {options}])
 				\ {'repeat': 3})
 <		This will invoke MyHandler() three times at 500 msec
 		intervals.
-		{only available when compiled with the |+timers| feature}
 
 timer_stop({timer})					*timer_stop()*
 		Stop a timer.  The timer callback will no longer be invoked.
