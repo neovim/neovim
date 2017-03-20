@@ -106,7 +106,6 @@ set(CONV_SOURCES
   spell.c
   spellfile.c
   syntax.c
-  tag.c
   window.c)
 
 foreach(sfile ${CONV_SOURCES})
