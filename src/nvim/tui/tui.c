@@ -78,6 +78,7 @@ typedef struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
     int set_rgb_foreground, set_rgb_background;
+    int set_cursor_color;
     int enable_focus_reporting, disable_focus_reporting;
   } unibi_ext;
 } TUIData;
@@ -132,6 +133,7 @@ static void terminfo_start(UI *ui)
   data->showing_mode = 0;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
+  data->unibi_ext.set_cursor_color = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
   data->unibi_ext.disable_bracketed_paste = -1;
   data->unibi_ext.enable_focus_reporting = -1;
@@ -548,8 +550,12 @@ static void tui_set_cursor(UI *ui, MouseMode mode)
       case SHAPE_HOR:   shape = 3; break;
       default: WLOG("Unknown shape value %d", shape); break;
     }
-    printf(TMUX_WRAP("\x1b]50;CursorShape=%d;BlinkingCursorEnabled=%d\x07"),
-           shape, (c.blinkon !=0));
+    data->params[0].i = shape;
+    data->params[1].i = (c.blinkon ==0);
+
+    unibi_format(vars, vars + 26,
+      TMUX_WRAP("\x1b]50;CursorShape=%p1%d;BlinkingCursorEnabled=%p2%d\x07"),
+      data->params, out, ui, NULL, NULL);
   } else if (!vte_version || atoi(vte_version) >= 3900) {
     // Assume that the terminal supports DECSCUSR unless it is an
     // old VTE based terminal.  This should not get wrapped for tmux,
@@ -565,6 +571,13 @@ static void tui_set_cursor(UI *ui, MouseMode mode)
     data->params[0].i = shape + (c.blinkon ==0);
     unibi_format(vars, vars + 26, "\x1b[%p1%d q",
                  data->params, out, ui, NULL, NULL);
+  }
+
+  if (c.id != 0 && ui->rgb) {
+    int attr = syn_id2attr(c.id);
+    attrentry_T *aep = syn_cterm_attr2entry(attr);
+    data->params[0].i = aep->rgb_bg_color;
+    unibi_out(ui, data->unibi_ext.set_cursor_color);
   }
 }
 
@@ -1004,6 +1017,8 @@ static void fix_terminfo(TUIData *data)
 
 end:
   // Fill some empty slots with common terminal strings
+  data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
+      ut, NULL, "\033]12;#%p1%06x\007");
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
