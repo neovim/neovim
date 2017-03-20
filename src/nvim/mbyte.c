@@ -580,17 +580,18 @@ int utf_ptr2char(const char_u *const p)
     if (len == 2) {
       return ((p[0] & 0x1f) << 6) + (p[1] & 0x3f);
     }
+    // overlong already masked in utf8len_tab_zero
     if ((p[2] & 0xc0) == 0x80) {
       if (len == 3) {
-        c = ((p[0] & 0x0f) << 12) + ((p[1] & 0x3f) << 6)
-          + (p[2] & 0x3f);
-        return c >= 0x800 ? c : p[0];
-      }
-      if ((p[3] & 0xc0) == 0x80) {
-        if (len == 4) {
-          c =  ((p[0] & 0x07) << 18) + ((p[1] & 0x3f) << 12)
-            + ((p[2] & 0x3f) << 6) + (p[3] & 0x3f);
-        return (c >= 0x10000 && c < 0x110000) ? c : p[0];
+        c = ((p[0] & 0x0f) << 12) + ((p[1] & 0x3f) << 6) + (p[2] & 0x3f);
+        if (c >= 0x800) {
+          return c;
+        }
+      } else if (len == 4 && (p[3] & 0xc0) == 0x80) {
+        c = ((p[0] & 0x07) << 18) + ((p[1] & 0x3f) << 12)
+             + ((p[2] & 0x3f) << 6) + (p[3] & 0x3f);
+        if (c >= 0x10000 && c < 0x110000) {
+          return c;
         }
       }
     }
