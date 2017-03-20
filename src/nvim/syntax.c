@@ -48,9 +48,9 @@ static bool did_syntax_onoff = false;
 struct hl_group {
   char_u      *sg_name;         ///< highlight group name
   char_u      *sg_name_u;       ///< uppercase of sg_name
-  int sg_attr;                  ///< Screen attr
+  int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
   int sg_link;                  ///< link to this highlight group ID
-  int sg_set;                   ///< combination of SG_* flags
+  int sg_set;                   ///< combination of flags in \ref SG_SET
   scid_T sg_scriptID;           ///< script in which the group was last set
   // for terminal UIs
   int sg_cterm;                 ///< "cterm=" highlighting attr
@@ -59,6 +59,7 @@ struct hl_group {
   int sg_cterm_bold;            ///< bold attr was set for light color
   // for RGB UIs
   int sg_gui;                   ///< "gui=" highlighting attributes
+                                ///< (combination of \ref HL_ATTRIBUTES)
   RgbValue sg_rgb_fg;           ///< RGB foreground color
   RgbValue sg_rgb_bg;           ///< RGB background color
   RgbValue sg_rgb_sp;           ///< RGB special color
@@ -67,9 +68,12 @@ struct hl_group {
   uint8_t *sg_rgb_sp_name;      ///< RGB special color name
 };
 
+/// \addtogroup SG_SET
+/// @{
 #define SG_CTERM        2       // cterm has been set
 #define SG_GUI          4       // gui has been set
 #define SG_LINK         8       // link has been set
+/// @}
 
 // highlight groups for 'highlight' option
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
@@ -6093,16 +6097,16 @@ int load_colors(char_u *name)
   return retval;
 }
 
-/*
- * Handle the ":highlight .." command.
- * When using ":hi clear" this is called recursively for each group with
- * "forceit" and "init" both TRUE.
- */
-void 
-do_highlight (
+
+/// Handle the ":highlight .." command.
+/// When using ":hi clear" this is called recursively for each group with
+/// "forceit" and "init" both TRUE.
+/// @param init TRUE when called for initializing
+void
+do_highlight(
     char_u *line,
     int forceit,
-    int init                   /* TRUE when called for initializing */
+    int init
 )
 {
   char_u      *name_end;
@@ -6704,12 +6708,10 @@ static garray_T attr_table = GA_EMPTY_INIT_VALUE;
 #define ATTR_ENTRY(idx) ((attrentry_T *)attr_table.ga_data)[idx]
 
 
-/*
- * Return the attr number for a set of colors and font.
- * Add a new entry to the term_attr_table, attr_table or gui_attr_table
- * if the combination is new.
- * Return 0 for error.
- */
+/// Return the attr number for a set of colors and font.
+/// Add a new entry to the term_attr_table, attr_table or gui_attr_table
+/// if the combination is new.
+/// @return 0 for error.
 int get_attr_entry(attrentry_T *aep)
 {
   garray_T *table = &attr_table;
@@ -6932,7 +6934,7 @@ static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg
 
 /// Check whether highlight group has attribute
 ///
-/// @param[in]  id  Highilght group to check.
+/// @param[in]  id  Highlight group to check.
 /// @param[in]  flag  Attribute to check.
 /// @param[in]  modec  'g' for GUI, 'c' for term.
 ///
@@ -8245,7 +8247,14 @@ color_name_table_T color_name_table[] = {
   { NULL, 0 },
 };
 
-RgbValue name_to_color(uint8_t *name)
+
+/// Translate to RgbValue if \p name is an hex value (e.g. #XXXXXX),
+/// else look into color_name_table to translate a color name to  its
+/// hex value
+///
+/// @param[in] name string value to convert to RGB
+/// return the hex value or -1 if could not find a correct value
+RgbValue name_to_color(const uint8_t *name)
 {
 
   if (name[0] == '#' && isxdigit(name[1]) && isxdigit(name[2])
