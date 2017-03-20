@@ -57,7 +57,7 @@ func Test_with_partial_callback()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(50, 100, slept)
+    call assert_inrange(50, 130, slept)
   else
     call assert_inrange(20, 100, slept)
   endif
