@@ -196,6 +196,25 @@ func Test_augroup_deleted()
   au! VimEnter
 endfunc
 
+func Test_BufEnter()
+  au! BufEnter
+  au Bufenter * let val = val . '+'
+  let g:val = ''
+  split NewFile
+  call assert_equal('+', g:val)
+  bwipe!
+  call assert_equal('++', g:val)
+
+  " Also get BufEnter when editing a directory
+  call mkdir('Xdir')
+  split Xdir
+  call assert_equal('+++', g:val)
+  bwipe!
+
+  call delete('Xdir', 'd')
+  au! BufEnter
+endfunc
+
 " Closing a window might cause an endless loop
 " E814 for older Vims
 function Test_autocmd_bufwipe_in_SessLoadPost()
