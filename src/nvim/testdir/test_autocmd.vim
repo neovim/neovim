@@ -196,3 +196,71 @@ func Test_augroup_deleted()
   au! VimEnter
 endfunc
 
+" Closing a window might cause an endless loop
+" E814 for older Vims
+function Test_autocmd_bufwipe_in_SessLoadPost()
+  if has('win32')
+    throw 'Skipped: test hangs on MS-Windows'
+  endif
+  tabnew
+  set noswapfile
+  let g:bufnr=bufnr('%')
+  mksession!
+
+  let content=['set nocp noswapfile',
+        \ 'let v:swapchoice="e"',
+        \ 'augroup test_autocmd_sessionload',
+        \ 'autocmd!',
+        \ 'autocmd SessionLoadPost * 4bw!',
+        \ 'augroup END'
+        \ ]
+  call writefile(content, 'Xvimrc')
+  let a=system(v:progpath. ' --headless -u Xvimrc --noplugins -S Session.vim')
+  call assert_match('E814', a)
+
+  unlet! g:bufnr
+  set swapfile
+  for file in ['Session.vim', 'Xvimrc']
+    call delete(file)
+  endfor
+endfunc
+
+" SEGV occurs in older versions.
+function Test_autocmd_bufwipe_in_SessLoadPost2()
+  if has('win32')
+    throw 'Skipped: test hangs on MS-Windows'
+  endif
+  tabnew
+  set noswapfile
+  let g:bufnr=bufnr('%')
+  mksession!
+
+  let content = ['set nocp noswapfile',
+      \ 'function! DeleteInactiveBufs()',
+      \ '  tabfirst',
+      \ '  let tabblist = []',
+      \ '  for i in range(1, tabpagenr(''$''))',
+      \ '    call extend(tabblist, tabpagebuflist(i))',
+      \ '  endfor',
+      \ '  for b in range(1, bufnr(''$''))',
+      \ '    if bufexists(b) && buflisted(b) && (index(tabblist, b) == -1 || bufname(b) =~# ''^$'')',
+      \ '      exec ''bwipeout '' . b',
+      \ '    endif',
+      \ '  endfor',
+      \ 'call append("1", "SessionLoadPost DONE")',
+      \ 'endfunction',
+      \ 'au SessionLoadPost * call DeleteInactiveBufs()']
+  call writefile(content, 'Xvimrc')
+  let a=system(v:progpath. ' --headless -u Xvimrc --noplugins -S Session.vim')
+  " this probably only matches on unix
+  if has("unix")
+    call assert_notmatch('Caught deadly signal SEGV', a)
+  endif
+  call assert_match('SessionLoadPost DONE', a)
+
+  unlet! g:bufnr
+  set swapfile
+  for file in ['Session.vim', 'Xvimrc']
+    call delete(file)
+  endfor
+endfunc

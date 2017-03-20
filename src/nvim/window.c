@@ -1714,14 +1714,10 @@ static void win_equal_rec(
   }
 }
 
-/*
- * close all windows for buffer 'buf'
- */
-void 
-close_windows (
-    buf_T *buf,
-    int keep_curwin                    /* don't close "curwin" */
-)
+/// Closes all windows for buffer `buf`.
+///
+/// @param keep_curwin don't close `curwin`
+void close_windows(buf_T *buf, int keep_curwin)
 {
   tabpage_T   *tp, *nexttp;
   int h = tabline_height();
@@ -1731,9 +1727,11 @@ close_windows (
 
   for (win_T *wp = firstwin; wp != NULL && lastwin != firstwin; ) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
-        && !(wp->w_closing || wp->w_buffer->b_closing)
-        ) {
-      win_close(wp, FALSE);
+        && !(wp->w_closing || wp->w_buffer->b_closing)) {
+      if (win_close(wp, false) == FAIL) {
+        // If closing the window fails give up, to avoid looping forever.
+        break;
+      }
 
       /* Start all over, autocommands may change the window layout. */
       wp = firstwin;
@@ -3132,6 +3130,44 @@ bool valid_tabpage(tabpage_T *tpc) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
     }
   }
   return false;
+}
+
+/// Returns true when `tpc` is valid and at least one window is valid.
+int valid_tabpage_win(tabpage_T *tpc)
+{
+  FOR_ALL_TABS(tp) {
+    if (tp == tpc) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+        if (win_valid_any_tab(wp)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  // shouldn't happen
+  return false;
+}
+
+/// Close tabpage `tab`, assuming it has no windows in it.
+/// There must be another tabpage or this will crash.
+void close_tabpage(tabpage_T *tab)
+{
+  tabpage_T *ptp;
+
+  if (tab == first_tabpage) {
+    first_tabpage = tab->tp_next;
+    ptp = first_tabpage;
+  } else {
+    for (ptp = first_tabpage; ptp != NULL && ptp->tp_next != tab;
+         ptp = ptp->tp_next) {
+      // do nothing
+    }
+    ptp->tp_next = tab->tp_next;
+  }
+
+  goto_tabpage_tp(ptp, false, false);
+  free_tabpage(tab);
 }
 
 /*
