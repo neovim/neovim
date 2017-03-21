@@ -1184,10 +1184,11 @@ name!
 				different from existing {event} names, as this
 				most likely will not do what you intended.
 
-						*:augroup-delete* *E367*
+						*:augroup-delete* *E367* *W19*
 :aug[roup]! {name}		Delete the autocmd group {name}.  Don't use
 				this if there is still an autocommand using
-				this group!  This is not checked.
+				this group!  You will get a warning if doing
+				it anyway.
 
 To enter autocommands for a specific group, use this method:
 1. Select the group with ":augroup {name}".

@@ -331,6 +331,7 @@ N  *+gettext*		message translations |multi-lang|
 N  *+insert_expand*	|insert_expand| Insert mode completion
 N  *+jumplist*		|jumplist|
 B  *+keymap*		|'keymap'|
+N  *+lambda*		|lambda| and |closure|
 B  *+langmap*		|'langmap'|
 N  *+libcall*		|libcall()|
 N  *+linebreak*		|'linebreak'|, |'breakat'| and |'showbreak'|
