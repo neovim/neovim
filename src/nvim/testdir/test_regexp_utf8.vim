@@ -97,3 +97,12 @@ func Test_recursive_substitute()
   call setwinvar(1, 'myvar', 1)
   bwipe!
 endfunc
+
+func Test_eow_with_optional()
+  let expected = ['abc def', 'abc', 'def', '', '', '', '', '', '', '']
+  for re in range(0, 2)
+    exe 'set re=' . re
+    let actual = matchlist('abc def', '\(abc\>\)\?\s*\(def\)')
+    call assert_equal(expected, actual)
+  endfor
+endfunc
