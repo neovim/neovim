@@ -4196,7 +4196,7 @@ static int eval7(
   // string and free a string that isn't there.
   rettv->v_type = VAR_UNKNOWN;
 
-  // Skip '!' and '-' characters.  They are handled later.
+  // Skip '!', '-' and '+' characters.  They are handled later.
   start_leader = *arg;
   while (**arg == '!' || **arg == '-' || **arg == '+') {
     *arg = skipwhite(*arg + 1);
