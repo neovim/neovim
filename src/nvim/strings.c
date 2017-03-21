@@ -1224,49 +1224,44 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
               remove_trailing_zeroes = true;
             }
 
-            if ((fmt_spec == 'f' || fmt_spec == 'F') && abs_f > 1.0e307) {
-              STRCPY(tmp, infinity_str(f > 0.0, fmt_spec,
-                                       force_sign, space_for_positive));
-              str_arg_l = STRLEN(tmp);
+            if (isinf(f)
+                || (strchr("fF", fmt_spec) != NULL && abs_f > 1.0e307)) {
+              xstrlcpy(tmp, infinity_str(f > 0.0, fmt_spec,
+                                         force_sign, space_for_positive),
+                       sizeof(tmp));
+              str_arg_l = strlen(tmp);
+              zero_padding = 0;
+            } else if (isnan(f)) {
+              // Not a number: nan or NAN
+              memmove(tmp, ASCII_ISUPPER(fmt_spec) ? "NAN" : "nan", 4);
+              str_arg_l = 3;
               zero_padding = 0;
             } else {
-              if (isnan(f)) {
-                // Not a number: nan or NAN
-                STRCPY(tmp, ASCII_ISUPPER(fmt_spec) ? "NAN" : "nan");
-                str_arg_l = 3;
-                zero_padding = 0;
-              } else if (isinf(f)) {
-                STRCPY(tmp, infinity_str(f > 0.0, fmt_spec,
-                                         force_sign, space_for_positive));
-                str_arg_l = STRLEN(tmp);
-                zero_padding = 0;
-              } else {
-                format[0] = '%';
-                int l = 1;
-                if (force_sign) {
-                  format[l++] = space_for_positive ? ' ' : '+';
-                }
-                if (precision_specified) {
-                  size_t max_prec = TMP_LEN - 10;
-
-                  // make sure we don't get more digits than we have room for
-                  if ((fmt_spec == 'f' || fmt_spec == 'F') && abs_f > 1.0) {
-                    max_prec -= (size_t)log10(abs_f);
-                  }
-                  if (precision > max_prec) {
-                    precision = max_prec;
-                  }
-                  l += snprintf(format + l, sizeof(format) - 1, ".%d",
-                                (int)precision);
-                }
-                format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
-                format[l + 1] = NUL;
-
-                // Regular float number
-                assert(l + 1 < (int)sizeof(format));
-                str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
-                assert(str_arg_l < sizeof(tmp));
+              format[0] = '%';
+              size_t l = 1;
+              if (force_sign) {
+                format[l++] = space_for_positive ? ' ' : '+';
               }
+              if (precision_specified) {
+                size_t max_prec = TMP_LEN - 10;
+
+                // make sure we don't get more digits than we have room for
+                if ((fmt_spec == 'f' || fmt_spec == 'F') && abs_f > 1.0) {
+                  max_prec -= (size_t)log10(abs_f);
+                }
+                if (precision > max_prec) {
+                  precision = max_prec;
+                }
+                l += (size_t)snprintf(format + l, sizeof(format) - l, ".%d",
+                                      (int)precision);
+              }
+              format[l] = fmt_spec == 'F' ? 'f' : fmt_spec;
+              format[l + 1] = NUL;
+
+              // Regular float number
+              assert(l + 1 < sizeof(format));
+              str_arg_l = (size_t)snprintf(tmp, sizeof(tmp), format, f);
+              assert(str_arg_l < sizeof(tmp));
 
               if (remove_trailing_zeroes) {
                 int i;
