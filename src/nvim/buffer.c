@@ -4518,8 +4518,8 @@ void ex_buffer_all(exarg_T *eap)
                ? wp->w_height + wp->w_status_height < Rows - p_ch
                - tabline_height()
                : wp->w_width != Columns)
-           || (had_tab > 0 && wp != firstwin)
-           ) && firstwin != lastwin
+           || (had_tab > 0 && wp != firstwin))
+          && firstwin != lastwin
           && !(wp->w_closing || wp->w_buffer->b_locked > 0)
           ) {
         win_close(wp, FALSE);

@@ -5833,11 +5833,12 @@ static void ex_quit_all(exarg_T *eap)
     text_locked_msg();
     return;
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, FALSE, curbuf);
-  /* Refuse to quit when locked or when the buffer in the last window is
-   * being closed (can only happen in autocommands). */
-  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0))
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
+  // Refuse to quit when locked or when the buffer in the last window is
+  // being closed (can only happen in autocommands).
+  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0)) {
     return;
+  }
 
   exiting = true;
   if (eap->forceit || !check_changed_any(false, false)) {
@@ -6128,11 +6129,12 @@ static void ex_exit(exarg_T *eap)
     text_locked_msg();
     return;
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, FALSE, curbuf);
-  /* Refuse to quit when locked or when the buffer in the last window is
-   * being closed (can only happen in autocommands). */
-  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0))
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
+  // Refuse to quit when locked or when the buffer in the last window is
+  // being closed (can only happen in autocommands).
+  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0)) {
     return;
+  }
 
   // if more files or windows we won't exit
   if (check_more(false, eap->forceit) == OK && only_one_window()) {

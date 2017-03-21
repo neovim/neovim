@@ -1746,7 +1746,7 @@ void close_windows(buf_T *buf, int keep_curwin)
       FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
         if (wp->w_buffer == buf
             && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
-          win_close_othertab(wp, FALSE, tp);
+          win_close_othertab(wp, false, tp);
 
           /* Start all over, the tab page may be closed and
            * autocommands may change the window layout. */
@@ -1881,7 +1881,8 @@ int win_close(win_T *win, int free_buf)
     return FAIL;
   }
 
-  if (win->w_closing || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
+  if (win->w_closing
+      || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return FAIL;     // window is already being closed
   }
   if (win == aucmd_win) {
