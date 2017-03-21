@@ -698,7 +698,9 @@ static int command_line_execute(VimState *state, int key)
   if (s->c == cedit_key || s->c == K_CMDWIN) {
     if (ex_normal_busy == 0 && got_int == false) {
       // Open a window to edit the command line (and history).
+      save_cmdline(&s->save_ccline);
       s->c = ex_window();
+      restore_cmdline(&s->save_ccline);
       s->some_key_typed = true;
     }
   } else {
