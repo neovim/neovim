@@ -23,6 +23,9 @@ if has('timers')
   endfunc
 
   func Test_cursorhold_insert()
+    " Need to move the cursor.
+    call feedkeys("ggG", "xt")
+
     let g:triggered = 0
     au CursorHoldI * let g:triggered += 1
     set updatetime=20
