@@ -4319,7 +4319,7 @@ static int getargopt(exarg_T *eap)
 /// When an error is encountered then eap->errmsg is set.
 static int get_tabpage_arg(exarg_T *eap)
 {
-  int tab_number;
+  int tab_number = 0;
   int unaccept_arg0 = (eap->cmdidx == CMD_tabmove) ? 0 : 1;
 
   if (eap->arg && *eap->arg != NUL) {
@@ -4368,6 +4368,7 @@ static int get_tabpage_arg(exarg_T *eap)
   } else if (eap->addr_count > 0) {
     if (unaccept_arg0 && eap->line2 == 0) {
       eap->errmsg = e_invrange;
+      tab_number = 0;
     } else {
       tab_number = eap->line2;
       if (!unaccept_arg0 && **eap->cmdlinep == '-') {
