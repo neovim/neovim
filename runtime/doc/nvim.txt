@@ -1,4 +1,4 @@
-*nvim.txt*								{Nvim}
+*nvim.txt*	Nvim
 
 
 			    NVIM REFERENCE MANUAL

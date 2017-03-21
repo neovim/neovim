@@ -1,4 +1,4 @@
-*msgpack_rpc.txt*							{Nvim}
+*msgpack_rpc.txt*	Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
