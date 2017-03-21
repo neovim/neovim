@@ -4,7 +4,6 @@
 /.deps/
 /tmp/
 
-*.rej
 *.orig
 *.mo
 .*.sw?

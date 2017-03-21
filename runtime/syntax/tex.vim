@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Jun 17, 2016
-" Version:	97
+" Last Change:	Jul 05, 2016
+" Version:	98
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -132,14 +132,20 @@ endif
 " One may override this iskeyword setting by providing
 " g:tex_isk
 if exists("g:tex_isk")
- exe "setlocal isk=".g:tex_isk
-elseif !has("patch-7.4.1142")
- setl isk=48-57,a-z,A-Z,192-255
+ if b:tex_stylish && g:tex_isk !~ '@'
+  let b:tex_isk= '@,'.g:tex_isk
+ else
+  let b:tex_isk= g:tex_isk
+ endif
+elseif b:tex_stylish
+ let b:tex_isk="@,48-57,a-z,A-Z,192-255"
 else
- syn iskeyword 48-57,a-z,A-Z,192-255
+ let b:tex_isk="48-57,a-z,A-Z,192-255"
 endif
-if b:tex_stylish
-  setlocal isk+=@-@
+if v:version > 704 || (v:version == 704 && has("patch-7.4.1142"))
+ exe "syn iskeyword ".b:tex_isk
+else
+ exe "setl isk=".b:tex_isk
 endif
 if exists("g:tex_no_error") && g:tex_no_error
  let s:tex_no_error= 1
@@ -159,7 +165,7 @@ endif
 
 " Clusters: {{{1
 " --------
-syn cluster texCmdGroup			contains=texCmdBody,texComment,texDefParm,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathOper,texNewCmd,texNewEnv,texRefZone,texSection,texBeginEnd,texBeginEndName,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle
+syn cluster texCmdGroup			contains=texCmdBody,texComment,texDefParm,texDelimiter,texDocType,texInput,texLength,texLigature,texMathDelim,texMathOper,texNewCmd,texNewEnv,texRefZone,texSection,texBeginEnd,texBeginEndName,texSpecialChar,texStatement,texString,texTypeSize,texTypeStyle,@texMathZones
 if !s:tex_no_error
  syn cluster texCmdGroup		add=texMathError
 endif
@@ -447,9 +453,8 @@ if !exists("g:tex_no_math")
  call TexNewMathZone("G","gather",1)
  call TexNewMathZone("H","math",1)
  call TexNewMathZone("I","multline",1)
- call TexNewMathZone("J","subequations",0)
- call TexNewMathZone("K","xalignat",1)
- call TexNewMathZone("L","xxalignat",0)
+ call TexNewMathZone("J","xalignat",1)
+ call TexNewMathZone("K","xxalignat",0)
 
  " Inline Math Zones: {{{2
  if s:tex_fast =~# 'M'
@@ -481,8 +486,9 @@ if !exists("g:tex_no_math")
  " \left..something.. and \right..something.. support: {{{2
  syn match   texMathDelimBad	contained		"\S"
  if has("conceal") && &enc == 'utf-8' && s:tex_conceal =~# 'm'
-  syn match   texMathDelim	contained		"\\left\\{\>"	skipwhite nextgroup=texMathDelimSet1,texMathDelimSet2,texMathDelimBad contains=texMathSymbol cchar={
-  syn match   texMathDelim	contained		"\\right\\}\>"	skipwhite nextgroup=texMathDelimSet1,texMathDelimSet2,texMathDelimBad contains=texMathSymbol cchar=}
+  syn match   texMathDelim	contained		"\\left\["
+  syn match   texMathDelim	contained		"\\left\\{"	skipwhite nextgroup=texMathDelimSet1,texMathDelimSet2,texMathDelimBad contains=texMathSymbol cchar={
+  syn match   texMathDelim	contained		"\\right\\}"	skipwhite nextgroup=texMathDelimSet1,texMathDelimSet2,texMathDelimBad contains=texMathSymbol cchar=}
   let s:texMathDelimList=[
      \ ['<'            , '<'] ,
      \ ['>'            , '>'] ,

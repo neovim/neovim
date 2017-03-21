@@ -249,7 +249,7 @@ window will appear.
 		far left and occupies the full height of the Vim window.
 		Doesn't work for |:execute| and |:normal|.
 
-						*:botright*
+						*:bo* *:botright*
 :bo[tright] {cmd}
 		Execute {cmd}.  If it contains a command that splits a window,
 		it will appear at the bottom and occupy the full width of the
