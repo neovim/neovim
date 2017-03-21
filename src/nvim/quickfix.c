@@ -1975,7 +1975,7 @@ win_found:
 
       ok = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
                            GETF_SETMARK | GETF_SWITCH, forceit);
-      if (qi != &ql_info && !win_valid(oldwin)) {
+      if (qi != &ql_info && !win_valid_any_tab(oldwin)) {
         EMSG(_("E924: Current window was closed"));
         is_abort = true;
         opened_window = false;
