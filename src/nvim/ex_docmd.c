@@ -6602,7 +6602,8 @@ static void ex_tabnext(exarg_T *eap)
       char_u *p_save = p;
 
       tab_number = getdigits(&p);
-      if (p == p_save || *p_save == '-' || *p != NUL || tab_number == 0) {
+      if (p == p_save || *p_save == '-' || *p_save == '+' || *p != NUL
+          || tab_number == 0) {
         // No numbers as argument.
         eap->errmsg = e_invarg;
         return;
