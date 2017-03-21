@@ -337,6 +337,10 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
   bool wipe_buf = (action == DOBUF_WIPE);
 
+  bool is_curwin = (curwin != NULL && curwin->w_buffer == buf);
+  win_T *the_curwin = curwin;
+  tabpage_T *the_curtab = curtab;
+
   // Force unloading or deleting when 'bufhidden' says so, but not for terminal
   // buffers.
   // The caller must take care of NOT deleting/freeing when 'bufhidden' is
@@ -419,6 +423,16 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     if (aborting())         /* autocmds may abort script processing */
       return;
   }
+
+  // If the buffer was in curwin and the window has changed, go back to that
+  // window, if it still exists.  This avoids that ":edit x" triggering a
+  // "tabnext" BufUnload autocmd leaves a window behind without a buffer.
+  if (is_curwin && curwin != the_curwin &&  win_valid_any_tab(the_curwin)) {
+    block_autocmds();
+    goto_tabpage_win(the_curtab, the_curwin);
+    unblock_autocmds();
+  }
+
   int nwindows = buf->b_nwindows;
 
   /* decrease the link count from windows (unless not in any window) */

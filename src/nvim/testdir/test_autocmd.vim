@@ -98,6 +98,17 @@ function Test_autocmd_bufunload_with_tabnext()
   quit
 endfunc
 
+function Test_autocmd_bufwinleave_with_tabfirst()
+  tabedit
+  augroup sample
+    autocmd!
+    autocmd BufWinLeave <buffer> tabfirst
+  augroup END
+  call setline(1, ['a', 'b', 'c'])
+  edit! a.txt
+  tabclose
+endfunc
+
 " SEGV occurs in older versions.  (At least 7.4.2321 or older)
 function Test_autocmd_bufunload_avoiding_SEGV_01()
   split aa.txt
