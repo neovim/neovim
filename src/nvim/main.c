@@ -326,6 +326,12 @@ int main(int argc, char **argv)
   do_cmdline_cmd("augroup END");
 #undef PROTO
 
+  // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
+  // Allows for setting 'loadplugins' there.
+  if (params.use_vimrc != NULL && strcmp(params.use_vimrc, "NONE") == 0) {
+    p_lpl = false;
+  }
+
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
 
@@ -1268,11 +1274,14 @@ static void set_window_layout(mparm_T *paramp)
 static void load_plugins(void)
 {
   if (p_lpl) {
-    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL);  // NOLINT
+    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL | DIP_NOAFTER);  // NOLINT
     TIME_MSG("loading plugins");
 
     ex_packloadall(NULL);
     TIME_MSG("loading packages");
+
+    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL | DIP_AFTER);
+    TIME_MSG("loading after plugins");
   }
 }
 
@@ -1708,8 +1717,6 @@ static void source_startup_scripts(const mparm_T *const parmp)
   if (parmp->use_vimrc != NULL) {
     if (strcmp(parmp->use_vimrc, "NONE") == 0
         || strcmp(parmp->use_vimrc, "NORC") == 0) {
-      if (parmp->use_vimrc[2] == 'N')
-        p_lpl = false;  // don't load plugins either
     } else {
       if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);

@@ -457,6 +457,8 @@ accordingly.  Vim proceeds in this order:
 	searched for the "plugin" sub-directory and all files ending in ".vim"
 	will be sourced (in alphabetical order per directory), also in
 	subdirectories.
+	However, directories in 'runtimepath' ending in "after" are skipped
+	here and only loaded after packages, see below.
 	Loading plugins won't be done when:
 	- The 'loadplugins' option was reset in a vimrc file.
 	- The |--noplugin| command line argument is used.
@@ -464,12 +466,17 @@ accordingly.  Vim proceeds in this order:
 	- When Vim was compiled without the |+eval| feature.
 	Note that using "-c 'set noloadplugins'" doesn't work, because the
 	commands from the command line have not been executed yet.  You can
-	use "--cmd 'set noloadplugins'" |--cmd|.
+	use "--cmd 'set noloadplugins'" or "--cmd 'set loadplugins'" |--cmd|.
 
 	Packages are loaded.  These are plugins, as above, but found in the
 	"start" directory of each entry in 'packpath'.  Every plugin directory
 	found is added in 'runtimepath' and then the plugins are sourced.  See
 	|packages|.
+
+	The plugins scripts are loaded, as above, but now only the directories
+	ending in "after" are used.  Note that 'runtimepath' will have changed
+	if packages have been found, but that should not add a directory
+	ending in "after".
 
 7. Set 'shellpipe' and 'shellredir'
 	The 'shellpipe' and 'shellredir' options are set according to the

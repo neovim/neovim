@@ -325,6 +325,8 @@ enum {
 #define DIP_START 0x08  // also use "start" directory in 'packpath'
 #define DIP_OPT 0x10    // also use "opt" directory in 'packpath'
 #define DIP_NORTP 0x20  // do not use 'runtimepath'
+#define DIP_NOAFTER 0x40  // skip "after" directories
+#define DIP_AFTER   0x80  // only use "after" directories
 
 // Lowest number used for window ID. Cannot have this many windows per tab.
 #define LOWEST_WIN_ID 1000
