@@ -5508,6 +5508,46 @@ max({expr})	Return the maximum value of all items in {expr}.
 		items in {expr} cannot be used as a Number this results in
                 an error.  An empty |List| or |Dictionary| results in zero.
 
+menu_get({path}, {modes})				*menu_get()*
+		Returns a |Dictionary| with all the submenu of {path} (set to 
+		an empty string to match all menus). Only the commands matching {modes} are 
+		returned ('a' for all, 'i' for insert see |creating-menus|).
+
+    For instance, executing:
+>
+			nnoremenu &Test.Test inormal
+			inoremenu Test.Test insert
+			vnoremenu Test.Test x
+			echo menu_get("")
+<
+should produce an output with a similar structure:
+>
+	[ {
+		"hidden": 0,
+		"name": "Test",
+		"priority": 500,
+		"shortcut": 84,
+		"submenus": [ {
+			"hidden": 0,
+			"mappings": {
+				i": {
+					"enabled": 1,
+					"noremap": 1,
+					"rhs": "insert",
+					"sid": 1,
+					"silent": 0
+				},
+				n": { ... },
+				s": { ... },
+				v": { ... }
+			},
+			"name": "Test",
+			"priority": 500,
+			"shortcut": 0
+		} ]
+	} ]
+<
+
 							*min()*
 min({expr})	Return the minimum value of all items in {expr}.
 		{expr} can be a list or a dictionary.  For a dictionary,

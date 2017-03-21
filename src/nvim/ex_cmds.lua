@@ -1,4 +1,4 @@
-bit = require 'bit'
+local bit = require 'bit'
 
 -- Description of the values below is contained in ex_cmds_defs.h file.
 local RANGE      =    0x001

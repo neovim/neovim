@@ -47,6 +47,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/menu.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/keymap.h"
@@ -8171,6 +8172,19 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       rettv->vval.v_string = NULL;
     }
   }
+}
+
+
+/// "menu_get(path [, modes])" function
+static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv);
+  int modes = MENU_ALL_MODES;
+  if (argvars[1].v_type == VAR_STRING) {
+    const char_u *const strmodes = (char_u *)tv_get_string(&argvars[1]);
+    modes = get_menu_cmd_modes(strmodes, false, NULL, NULL);
+  }
+  menu_get((char_u *)tv_get_string(&argvars[0]), modes, rettv->vval.v_list);
 }
 
 /*
