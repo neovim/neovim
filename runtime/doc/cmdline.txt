@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Dec 17
+*cmdline.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

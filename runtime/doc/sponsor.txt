@@ -1,4 +1,4 @@
-*sponsor.txt*   For Vim version 7.4.  Last change: 2008 Jun 21
+*sponsor.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

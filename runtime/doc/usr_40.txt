@@ -1,4 +1,4 @@
-*usr_40.txt*	For Vim version 7.4.  Last change: 2013 Aug 05
+*usr_40.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 

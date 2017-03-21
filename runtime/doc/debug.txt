@@ -1,4 +1,4 @@
-*debug.txt*     For Vim version 7.4.  Last change: 2012 Feb 11
+*debug.txt*     Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

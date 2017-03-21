@@ -1,4 +1,4 @@
-*scroll.txt*    For Vim version 7.4.  Last change: 2006 Aug 27
+*scroll.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

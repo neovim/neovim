@@ -1,4 +1,4 @@
-*api.txt*								{Nvim}
+*api.txt*		Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda

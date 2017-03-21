@@ -1,4 +1,4 @@
-*syntax.txt*	For Vim version 7.4.  Last change: 2016 Aug 10
+*syntax.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar

@@ -1,4 +1,4 @@
-*recover.txt*   For Vim version 7.4.  Last change: 2014 Mar 27
+*recover.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
