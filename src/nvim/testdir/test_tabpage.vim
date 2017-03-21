@@ -205,7 +205,7 @@ function Test_tabpage_with_tab_modifier()
     exec 'tabnext ' . a:pre_nr
     exec a:cmd
     call assert_equal(a:post_nr, tabpagenr())
-    call assert_equal('help', &filetype)
+    call assert_equal('help', &buftype)
     helpclose
   endfunc
 
