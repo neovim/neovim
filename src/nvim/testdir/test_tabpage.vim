@@ -11,6 +11,7 @@ function Test_tabpage()
   0tabnew
   1tabnew
   $tabnew
+  %del
   tabdo call append(line('$'), tabpagenr())
   tabclose! 2
   tabrewind
