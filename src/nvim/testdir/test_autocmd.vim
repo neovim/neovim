@@ -359,11 +359,11 @@ function Test_autocmd_bufwipe_in_SessLoadPost()
         \ 'let v:swapchoice="e"',
         \ 'augroup test_autocmd_sessionload',
         \ 'autocmd!',
-        \ 'autocmd SessionLoadPost * 4bw!',
-        \ 'augroup END'
+        \ 'autocmd SessionLoadPost * 4bw!|qall!',
+        \ 'augroup END',
         \ ]
   call writefile(content, 'Xvimrc')
-  let a=system(v:progpath. ' --headless -u Xvimrc --noplugins -S Session.vim')
+  let a=system(v:progpath. ' --headless -i NONE -u Xvimrc --noplugins -S Session.vim')
   call assert_match('E814', a)
 
   unlet! g:bufnr
@@ -395,11 +395,13 @@ function Test_autocmd_bufwipe_in_SessLoadPost2()
       \ '      exec ''bwipeout '' . b',
       \ '    endif',
       \ '  endfor',
-      \ 'call append("1", "SessionLoadPost DONE")',
+      \ 'redraw!',
+      \ 'echon "SessionLoadPost DONE"',
+      \ 'qall!',
       \ 'endfunction',
       \ 'au SessionLoadPost * call DeleteInactiveBufs()']
   call writefile(content, 'Xvimrc')
-  let a=system(v:progpath. ' --headless -u Xvimrc --noplugins -S Session.vim')
+  let a=system(v:progpath. ' --headless -i NONE -u Xvimrc --noplugins -S Session.vim')
   " this probably only matches on unix
   if has("unix")
     call assert_notmatch('Caught deadly signal SEGV', a)
