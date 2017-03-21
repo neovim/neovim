@@ -433,7 +433,6 @@ func! Test_normal13_help()
 endfunc
 
 func! Test_normal14_page()
-  throw "skipped: Nvim regression: CTRL-F with 'scrolloff'"
   " basic test for Ctrl-F and Ctrl-B
   call Setup_NewWindow()
   exe "norm! \<c-f>"
