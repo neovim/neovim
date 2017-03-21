@@ -13,8 +13,6 @@ source test_filter_map.vim
 source test_goto.vim
 source test_jumps.vim
 source test_lambda.vim
-source test_match.vim
-source test_matchadd_conceal_utf8.vim
 source test_menu.vim
 source test_mapping.vim
 source test_messages.vim
@@ -26,7 +24,7 @@ source test_source_utf8.vim
 source test_statusline.vim
 source test_syn_attr.vim
 source test_tabline.vim
-source test_tabpage.vim
+" source test_tabpage.vim
 source test_tagcase.vim
 source test_tagjump.vim
 source test_true_false.vim
