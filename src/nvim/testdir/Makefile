@@ -28,6 +28,7 @@ SCRIPTS ?= \
 # Tests using runtest.vim.
 # Keep test_alot*.res as the last one, sort the others.
 NEW_TESTS ?= \
+	    test_autocmd.res \
 	    test_bufwintabinfo.res \
 	    test_cmdline.res \
 	    test_command_count.res \

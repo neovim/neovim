@@ -320,6 +320,8 @@ func Test_three_windows()
   call assert_equal('Xanother', expand('%'))
 
   au!
+  enew
+  bwipe! Xtestje1
   call delete('Xtestje1')
   call delete('Xtestje2')
   call delete('Xtestje3')
