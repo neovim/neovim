@@ -1,4 +1,4 @@
-*visual.txt*    For Vim version 7.4.  Last change: 2014 Mar 23
+*visual.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

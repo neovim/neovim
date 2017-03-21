@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2016 Apr 12
+*change.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

@@ -1,4 +1,4 @@
-*provider.txt*								{Nvim}
+*provider.txt*		Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda

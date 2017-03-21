@@ -1,4 +1,4 @@
-*gui.txt*       For Vim version 7.4.  Last change: 2014 Mar 08
+*gui.txt*       Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

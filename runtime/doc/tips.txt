@@ -1,4 +1,4 @@
-*tips.txt*      For Vim version 7.4.  Last change: 2009 Nov 07
+*tips.txt*      Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

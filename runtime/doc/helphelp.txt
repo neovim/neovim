@@ -1,4 +1,4 @@
-*helphelp.txt*	For Vim version 7.4.  Last change: 2016 Apr 01
+*helphelp.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

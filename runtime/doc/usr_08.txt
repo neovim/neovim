@@ -1,4 +1,4 @@
-*usr_08.txt*	For Vim version 7.4.  Last change: 2014 Jul 06
+*usr_08.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 

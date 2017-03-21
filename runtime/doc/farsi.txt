@@ -1,4 +1,4 @@
-*farsi.txt*     For Vim version 7.4.  Last change: 2010 Aug 07
+*farsi.txt*     Nvim
 
 
 		  VIM REFERENCE MANUAL    by Mortaza Ghassab Shiran

@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.4.  Last change: 2016 Jun 09
+*autocmd.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

@@ -1,4 +1,4 @@
-*os_win32.txt*  For Vim version 7.4.  Last change: 2016 Mar 05
+*os_win32.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by George Reilly

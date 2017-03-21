@@ -1,4 +1,4 @@
-*arabic.txt*	For Vim version 7.4.  Last change: 2010 Nov 13
+*arabic.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Nadim Shaikli

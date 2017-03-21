@@ -1,4 +1,4 @@
-*deprecated.txt*                                                        {Nvim}
+*deprecated.txt*       Nvim
 
 
                              NVIM REFERENCE MANUAL
