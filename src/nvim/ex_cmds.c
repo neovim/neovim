@@ -2294,7 +2294,7 @@ int do_ecmd(
         }
 
         // Close the link to the current buffer. This will set
-        // curwin->w_buffer to NULL.
+        // oldwin->w_buffer to NULL.
         u_sync(false);
         close_buffer(oldwin, curbuf,
                      (flags & ECMD_HIDE) || curbuf->terminal ? 0 : DOBUF_UNLOAD,

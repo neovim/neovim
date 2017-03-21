@@ -33,6 +33,7 @@ if has('timers')
     call feedkeys('a', 'x!')
     call assert_equal(1, g:triggered)
     au! CursorHoldI
+    set updatetime&
   endfunc
 
   func Test_cursorhold_insert_ctrl_x()
@@ -44,6 +45,7 @@ if has('timers')
     call feedkeys("a\<C-X>", 'x!')
     call assert_equal(0, g:triggered)
     au! CursorHoldI
+    set updatetime&
   endfunc
 endif
 
@@ -223,6 +225,7 @@ func Test_augroup_warning()
   augroup Another
   augroup END
   call assert_true(match(execute('au VimEnter'), "-Deleted-.*VimEnter") >= 0)
+  augroup! Another
 
   " no warning for postpone aucmd delete
   augroup StartOK
