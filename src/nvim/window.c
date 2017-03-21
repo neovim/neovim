@@ -5821,7 +5821,11 @@ int win_getid(typval_T *argvars)
       if (tp == NULL) {
         return -1;
       }
-      wp = tp->tp_firstwin;
+      if (tp == curtab) {
+        wp = firstwin;
+      } else {
+        wp = tp->tp_firstwin;
+      }
     }
     for ( ; wp != NULL; wp = wp->w_next) {
       if (--winnr == 0) {

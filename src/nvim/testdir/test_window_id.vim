@@ -92,3 +92,12 @@ func Test_win_getid()
 
   only!
 endfunc
+
+func Test_win_getid_curtab()
+  tabedit X
+  tabfirst
+  copen
+  only
+  call assert_equal(win_getid(1), win_getid(1, 1))
+  tabclose!
+endfunc
