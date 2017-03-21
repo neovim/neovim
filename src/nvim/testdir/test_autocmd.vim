@@ -1,5 +1,15 @@
 " Tests for autocommands
 
+set belloff=all
+
+function! s:cleanup_buffers() abort
+  for bnr in range(1, bufnr('$'))
+    if bufloaded(bnr) && bufnr('%') != bnr
+      execute 'bd! ' . bnr
+    endif
+  endfor
+endfunction
+
 func Test_vim_did_enter()
   call assert_false(v:vim_did_enter)
 
@@ -237,6 +247,9 @@ endfunc
 " Tests for autocommands on :close command.
 " This used to be in test13.
 func Test_three_windows()
+  " Clean up buffers, because in some cases this function fails.
+  call s:cleanup_buffers()
+
   " Write three files and open them, each in a window.
   " Then go to next window, with autocommand that deletes the previous one.
   " Do this twice, writing the file.

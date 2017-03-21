@@ -1,4 +1,4 @@
-#
+# vim: noet ts=8
 # Makefile to run all tests for Vim
 #
 
@@ -30,6 +30,7 @@ SCRIPTS ?= \
 NEW_TESTS ?= \
 	    test_bufwintabinfo.res \
 	    test_cmdline.res \
+	    test_command_count.res \
 	    test_cscope.res \
 	    test_digraph.res \
 	    test_diffmode.res \
