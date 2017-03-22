@@ -3028,7 +3028,8 @@ extend:
       ++curwin->w_cursor.col;
     VIsual = start_pos;
     VIsual_mode = 'v';
-    redraw_curbuf_later(INVERTED);      /* update the inversion */
+    redraw_cmdline = true;    // show mode later
+    redraw_curbuf_later(INVERTED);      // update the inversion
   } else {
     /* include a newline after the sentence, if there is one */
     if (incl(&curwin->w_cursor) == -1)
