@@ -5377,7 +5377,8 @@ static int check_snapshot_rec(frame_T *sn, frame_T *fr)
       || (sn->fr_next != NULL
           && check_snapshot_rec(sn->fr_next, fr->fr_next) == FAIL)
       || (sn->fr_child != NULL
-          && check_snapshot_rec(sn->fr_child, fr->fr_child) == FAIL))
+          && check_snapshot_rec(sn->fr_child, fr->fr_child) == FAIL)
+      || (sn->fr_win != NULL && !win_valid(sn->fr_win)))
     return FAIL;
   return OK;
 }
