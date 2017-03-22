@@ -67,6 +67,18 @@ function Test_window_cmd_wincmd_gf()
   augroup! test_window_cmd_wincmd_gf
 endfunc
 
+func Test_next_split_all()
+  " This was causing an illegal memory access.
+  n x
+  norm axxx
+  split
+  split
+  s/x
+  s/x
+  all
+  bwipe!
+endfunc
+
 func Test_window_quit()
   e Xa
   split Xb

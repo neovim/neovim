@@ -2018,10 +2018,12 @@ int win_close(win_T *win, int free_buf)
     }
     curbuf = curwin->w_buffer;
     close_curwin = TRUE;
+
+    // The cursor position may be invalid if the buffer changed after last
+    // using the window.
+    check_cursor();
   }
-  if (p_ea
-      && (*p_ead == 'b' || *p_ead == dir)
-      ) {
+  if (p_ea && (*p_ead == 'b' || *p_ead == dir)) {
     win_equal(curwin, true, dir);
   } else {
     win_comp_pos();
