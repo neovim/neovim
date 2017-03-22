@@ -2507,6 +2507,8 @@ static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
 
   fp = (fold_T *)gap->ga_data + i;
   fp[1].fd_top = bot + 1;
+  // check for wrap around (MAXLNUM, and 32bit)
+  assert(fp[1].fd_top > bot);
   fp[1].fd_len = fp->fd_len - (fp[1].fd_top - fp->fd_top);
   fp[1].fd_flags = fp->fd_flags;
   fp[1].fd_small = MAYBE;
@@ -2555,34 +2557,35 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
 {
   fold_T      *fp = NULL;
 
-  if (bot < top)
-    return;             /* nothing to do */
+  if (bot < top) {
+    return;             // nothing to do
+  }
 
   for (;; ) {
-    /* Find fold that includes top or a following one. */
+    // Find fold that includes top or a following one.
     if (foldFind(gap, top, &fp) && fp->fd_top < top) {
-      /* 2: or 3: need to delete nested folds */
+      // 2: or 3: need to delete nested folds
       foldRemove(&fp->fd_nested, top - fp->fd_top, bot - fp->fd_top);
-      if (fp->fd_top + fp->fd_len > bot + 1) {
-        /* 3: need to split it. */
+      if (fp->fd_top + fp->fd_len - 1 > bot) {
+        // 3: need to split it.
         foldSplit(gap, (int)(fp - (fold_T *)gap->ga_data), top, bot);
       } else {
-        /* 2: truncate fold at "top". */
+        // 2: truncate fold at "top".
         fp->fd_len = top - fp->fd_top;
       }
-      fold_changed = TRUE;
+      fold_changed = true;
       continue;
     }
     if (fp >= (fold_T *)(gap->ga_data) + gap->ga_len
         || fp->fd_top > bot) {
-      /* 6: Found a fold below bot, can stop looking. */
+      // 6: Found a fold below bot, can stop looking.
       break;
     }
     if (fp->fd_top >= top) {
-      /* Found an entry below top. */
-      fold_changed = TRUE;
+      // Found an entry below top.
+      fold_changed = true;
       if (fp->fd_top + fp->fd_len - 1 > bot) {
-        /* 5: Make fold that includes bot start below bot. */
+        // 5: Make fold that includes bot start below bot.
         foldMarkAdjustRecurse(&fp->fd_nested,
             (linenr_T)0, (long)(bot - fp->fd_top),
             (linenr_T)MAXLNUM, (long)(fp->fd_top - bot - 1));
@@ -2591,8 +2594,8 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
         break;
       }
 
-      /* 4: Delete completely contained fold. */
-      deleteFoldEntry(gap, (int)(fp - (fold_T *)gap->ga_data), TRUE);
+      // 4: Delete completely contained fold.
+      deleteFoldEntry(gap, (int)(fp - (fold_T *)gap->ga_data), true);
     }
   }
 }
