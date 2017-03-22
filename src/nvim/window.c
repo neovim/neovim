@@ -3167,6 +3167,7 @@ void close_tabpage(tabpage_T *tab)
          ptp = ptp->tp_next) {
       // do nothing
     }
+    assert(ptp != NULL);
     ptp->tp_next = tab->tp_next;
   }
 
