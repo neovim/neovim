@@ -314,6 +314,8 @@ func Test_three_windows()
   call assert_equal('Xanother', expand('%'))
 
   only
+
+  helptags ALL
   help
   wincmd w
   1quit
