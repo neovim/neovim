@@ -5365,10 +5365,8 @@ restore_snapshot (
   clear_snapshot(curtab, idx);
 }
 
-/*
- * Check if frames "sn" and "fr" have the same layout, same following frames
- * and same children.
- */
+/// Check if frames "sn" and "fr" have the same layout, same following frames
+/// and same children.  And the window pointer is valid.
 static int check_snapshot_rec(frame_T *sn, frame_T *fr)
 {
   if (sn->fr_layout != fr->fr_layout
