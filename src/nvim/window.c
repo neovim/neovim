@@ -4803,7 +4803,11 @@ void win_new_height(win_T *wp, int height)
   wp->w_height = height;
   wp->w_skipcol = 0;
 
-  scroll_to_fraction(wp, prev_height);
+  // There is no point in adjusting the scroll position when exiting.  Some
+  // values might be invalid.
+  if (!exiting) {
+    scroll_to_fraction(wp, prev_height);
+  }
 }
 
 void scroll_to_fraction(win_T *wp, int prev_height)
