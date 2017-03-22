@@ -1347,6 +1347,12 @@ return {
       defaults={if_true={vi=false, vim=true}}
     },
     {
+      full_name='langremap', abbreviation='lrm',
+      type='bool', scope={'global'},
+      varname='p_lrm',
+      defaults={if_true={vi=true, vim=false}}
+    },
+    {
       full_name='laststatus', abbreviation='ls',
       type='number', scope={'global'},
       vim=true,

@@ -94,7 +94,7 @@
   do { \
     if (*p_langmap \
         && (condition) \
-        && (!p_lnr || (p_lnr && typebuf_maplen() == 0)) \
+        && (p_lrm || (!p_lrm && KeyTyped)) \
         && !KeyStuffed \
         && (c) >= 0) \
     { \

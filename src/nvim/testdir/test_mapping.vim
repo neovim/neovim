@@ -35,29 +35,73 @@ func Test_map_ctrl_c_visual()
 endfunc
 
 func Test_map_langmap()
-  " langmap should not get remapped in insert mode
-  inoremap { FAIL_ilangmap
-  set langmap=+{ langnoremap
+  if !has('langmap')
+    return
+  endif
+
+  " check langmap applies in normal mode
+  set langmap=+- nolangremap
+  new
+  call setline(1, ['a', 'b', 'c'])
+  2
+  call assert_equal('b', getline('.'))
+  call feedkeys("+", "xt")
+  call assert_equal('a', getline('.'))
+
+  " check no remapping
+  map x +
+  2
+  call feedkeys("x", "xt")
+  call assert_equal('c', getline('.'))
+
+  " check with remapping
+  set langremap
+  2
+  call feedkeys("x", "xt")
+  call assert_equal('a', getline('.'))
+
+  unmap x
+  bwipe!
+
+  " 'langnoremap' follows 'langremap' and vise versa
+  set langremap
+  set langnoremap
+  call assert_equal(0, &langremap)
+  set langremap
+  call assert_equal(0, &langnoremap)
+  set nolangremap
+  call assert_equal(1, &langnoremap)
+
+  " langmap should not apply in insert mode, 'langremap' doesn't matter
+  set langmap=+{ nolangremap
+  call feedkeys("Go+\<Esc>", "xt")
+  call assert_equal('+', getline('$'))
+  set langmap=+{ langremap
   call feedkeys("Go+\<Esc>", "xt")
   call assert_equal('+', getline('$'))
 
-  " Insert-mode expr mapping with langmap
-  inoremap <expr> { "FAIL_iexplangmap"
-  call feedkeys("Go+\<Esc>", "xt")
-  call assert_equal('+', getline('$'))
-  iunmap <expr> {
-
-  " langmap should not get remapped in Command-line mode
-  cnoremap { FAIL_clangmap
+  " langmap used for register name in insert mode.
+  call setreg('a', 'aaaa')
+  call setreg('b', 'bbbb')
+  call setreg('c', 'cccc')
+  set langmap=ab langremap
+  call feedkeys("Go\<C-R>a\<Esc>", "xt")
+  call assert_equal('bbbb', getline('$'))
+  call feedkeys("Go\<C-R>\<C-R>a\<Esc>", "xt")
+  call assert_equal('bbbb', getline('$'))
+  " mapping does not apply
+  imap c a
+  call feedkeys("Go\<C-R>c\<Esc>", "xt")
+  call assert_equal('cccc', getline('$'))
+  imap a c
+  call feedkeys("Go\<C-R>a\<Esc>", "xt")
+  call assert_equal('bbbb', getline('$'))
+ 
+  " langmap should not apply in Command-line mode
+  set langmap=+{ nolangremap
   call feedkeys(":call append(line('$'), '+')\<CR>", "xt")
   call assert_equal('+', getline('$'))
-  cunmap {
 
-  " Command-line mode expr mapping with langmap
-  cnoremap <expr> { "FAIL_cexplangmap"
-  call feedkeys(":call append(line('$'), '+')\<CR>", "xt")
-  call assert_equal('+', getline('$'))
-  cunmap {
   set nomodified
 endfunc
 
