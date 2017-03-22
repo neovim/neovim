@@ -22589,13 +22589,7 @@ void func_unref(char_u *name)
       abort();
 #endif
   }
-  if (fp != NULL && --fp->uf_refcount <= 0) {
-    // Only delete it when it's not being used. Otherwise it's done
-    // when "uf_calls" becomes zero.
-    if (fp->uf_calls == 0) {
-      func_clear_free(fp, false);
-    }
-  }
+  func_ptr_unref(fp);
 }
 
 /// Unreference a Function: decrement the reference count and free it when it
