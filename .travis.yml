@@ -10,7 +10,7 @@ env:
     # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
     # Update PATH for pip.
-    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:/usr/lib/llvm-symbolizer-3.8/bin:$PATH"
+    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:/usr/lib/llvm-symbolizer-3.9/bin:$PATH"
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -68,10 +68,10 @@ matrix:
       compiler: gcc-5 -m32
       env: BUILD_32BIT=ON
     - os: linux
-      compiler: clang-3.8
+      compiler: clang-3.9
       env: CLANG_SANITIZER=ASAN_UBSAN
     - os: linux
-      compiler: clang-3.8
+      compiler: clang-3.9
       env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
@@ -94,13 +94,13 @@ addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
-      - llvm-toolchain-trusty-3.8
+      - llvm-toolchain-trusty-3.9
     packages:
       - autoconf
       - automake
       - apport
       - build-essential
-      - clang-3.8
+      - clang-3.9
       - cmake
       - cscope
       - g++-5-multilib
@@ -110,7 +110,7 @@ addons:
       - gdb
       - libc6-dev-i386
       - libtool
-      - llvm-3.8-dev
+      - llvm-3.9-dev
       - pkg-config
       - unzip
       - valgrind
