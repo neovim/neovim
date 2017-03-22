@@ -72,6 +72,14 @@ func Test_map_langmap()
   set nolangremap
   call assert_equal(1, &langnoremap)
 
+  " check default values
+  set langnoremap&
+  call assert_equal(1, &langnoremap)
+  call assert_equal(0, &langremap)
+  set langremap&
+  call assert_equal(1, &langnoremap)
+  call assert_equal(0, &langremap)
+
   " langmap should not apply in insert mode, 'langremap' doesn't matter
   set langmap=+{ nolangremap
   call feedkeys("Go+\<Esc>", "xt")
