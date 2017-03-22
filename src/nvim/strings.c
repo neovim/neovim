@@ -1255,7 +1255,11 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
                 l += (size_t)snprintf(format + l, sizeof(format) - l, ".%d",
                                       (int)precision);
               }
-              format[l] = fmt_spec == 'F' ? 'f' : fmt_spec;
+
+              // Cast as a char below to avoid a conversion error warning
+              // on Ubuntu 12.04.  fmt_spec is already a char, and 'f'
+              // easily held in a char, so there is no real issue.
+              format[l] = (char)(fmt_spec == 'F' ? 'f' : fmt_spec);
               format[l + 1] = NUL;
 
               // Regular float number
