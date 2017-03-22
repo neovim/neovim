@@ -338,9 +338,8 @@ void check_cursor_col(void)
   check_cursor_col_win(curwin);
 }
 
-/*
- * Make sure win->w_cursor.col is valid.
- */
+/// Make sure win->w_cursor.col is valid. Special handling of insert-mode.
+/// @see mb_check_adjust_col
 void check_cursor_col_win(win_T *win)
 {
   colnr_T len;

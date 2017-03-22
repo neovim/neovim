@@ -1848,6 +1848,41 @@ void mb_adjustpos(buf_T *buf, pos_T *lp)
   }
 }
 
+/// Checks and adjusts cursor column. Not mode-dependent.
+/// @see check_cursor_col_win
+///
+/// @param win Places cursor on a valid column for this window.
+void mb_check_adjust_col(win_T *win)
+{
+  colnr_T oldcol = win->w_cursor.col;
+
+  // Column 0 is always valid.
+  if (oldcol != 0) {
+    char_u *p = ml_get_buf(win->w_buffer, win->w_cursor.lnum, false);
+    colnr_T len = (colnr_T)STRLEN(p);
+
+    // Empty line or invalid column?
+    if (len == 0 || oldcol < 0) {
+      win->w_cursor.col = 0;
+    } else {
+      // Cursor column too big for line?
+      if (oldcol > len) {
+        win->w_cursor.col = len - 1;
+      }
+      // Move the cursor to the head byte.
+      win->w_cursor.col -= (*mb_head_off)(p, p + win->w_cursor.col);
+    }
+
+    // Reset `coladd` when the cursor would be on the right half of a
+    // double-wide character.
+    if (win->w_cursor.coladd == 1 && p[win->w_cursor.col] != TAB
+        && vim_isprintc((*mb_ptr2char)(p + win->w_cursor.col))
+        && ptr2cells(p + win->w_cursor.col) > 1) {
+      win->w_cursor.coladd = 0;
+    }
+  }
+}
+
 /*
  * Return a pointer to the character before "*p", if there is one.
  */

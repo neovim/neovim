@@ -925,9 +925,7 @@ normal_end:
   checkpcmark();                // check if we moved since setting pcmark
   xfree(s->ca.searchbuf);
 
-  if (has_mbyte) {
-    mb_adjust_cursor();
-  }
+  mb_check_adjust_col(curwin);  // #6203
 
   if (curwin->w_p_scb && s->toplevel) {
     validate_cursor();          // may need to update w_leftcol

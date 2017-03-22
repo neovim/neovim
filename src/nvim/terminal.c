@@ -1197,6 +1197,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, long added)
         // Ensure valid cursor for each window displaying this terminal.
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
       }
+      mb_check_adjust_col(wp);
     }
   }
 }
