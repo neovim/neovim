@@ -23628,6 +23628,7 @@ void ex_oldfiles(exarg_T *eap)
       msg_outnum(++nr);
       MSG_PUTS(": ");
       msg_outtrans(get_tv_string(&li->li_tv));
+      msg_clr_eos();
       msg_putchar('\n');
       ui_flush();                  /* output one line at a time */
       os_breakcheck();
