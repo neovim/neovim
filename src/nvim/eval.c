@@ -13804,8 +13804,9 @@ static void max_min(typval_T *argvars, typval_T *rettv, int domax)
         }
       }
     }
-  } else
-    EMSG(_(e_listdictarg));
+  } else {
+    EMSG2(_(e_listdictarg), domax ? "max()" : "min()");
+  }
   rettv->vval.v_number = error ? 0 : n;
 }
 

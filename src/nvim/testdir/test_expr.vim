@@ -335,6 +335,13 @@ function Test_printf_errors()
   call assert_fails('echo printf("%d", 1.2)', 'E805:')
 endfunc
 
+function Test_max_min_errors()
+  call assert_fails('call max(v:true)', 'E712:')
+  call assert_fails('call max(v:true)', 'max()')
+  call assert_fails('call min(v:true)', 'E712:')
+  call assert_fails('call min(v:true)', 'min()')
+endfunc
+
 func Test_substitute_expr()
   let g:val = 'XXX'
   call assert_equal('XXX', substitute('yyy', 'y*', '\=g:val', ''))
