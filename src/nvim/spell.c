@@ -2623,7 +2623,7 @@ bool spell_iswordp_nmw(char_u *p, win_T *wp)
 // Returns true if word class indicates a word character.
 // Only for characters above 255.
 // Unicode subscript and superscript are not considered word characters.
-// See also dbcs_class() and utf_class() in mbyte.c.
+// See also utf_class() in mbyte.c.
 static bool spell_mb_isword_class(int cl, win_T *wp)
 {
   if (wp->w_s->b_cjk)
@@ -2646,12 +2646,7 @@ static bool spell_iswordp_w(int *p, win_T *wp)
     s = p;
 
   if (*s > 255) {
-    if (enc_utf8)
-      return spell_mb_isword_class(utf_class(*s), wp);
-    if (enc_dbcs)
-      return spell_mb_isword_class(
-          dbcs_class((unsigned)*s >> 8, *s & 0xff), wp);
-    return false;
+    return spell_mb_isword_class(utf_class(*s), wp);
   }
   return spelltab.st_isw[*s];
 }

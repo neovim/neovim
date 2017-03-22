@@ -355,14 +355,13 @@ int bomb_size(void)
  */
 void remove_bom(char_u *s)
 {
-  if (enc_utf8) {
-    char_u *p = s;
+  char_u *p = s;
 
-    while ((p = vim_strbyte(p, 0xef)) != NULL) {
-      if (p[1] == 0xbb && p[2] == 0xbf)
-        STRMOVE(p, p + 3);
-      else
-        ++p;
+  while ((p = vim_strbyte(p, 0xef)) != NULL) {
+    if (p[1] == 0xbb && p[2] == 0xbf) {
+      STRMOVE(p, p + 3);
+    } else {
+      p++;
     }
   }
 }
@@ -388,154 +387,7 @@ int mb_get_class_buf(const char_u *p, buf_T *buf)
       return 2;
     return 1;
   }
-  if (enc_dbcs != 0 && p[0] != NUL && p[1] != NUL)
-    return dbcs_class(p[0], p[1]);
-  if (enc_utf8)
-    return utf_class(utf_ptr2char(p));
-  return 0;
-}
-
-/*
- * Get class of a double-byte character.  This always returns 3 or bigger.
- * TODO: Should return 1 for punctuation.
- */
-int dbcs_class(unsigned lead, unsigned trail)
-{
-  switch (enc_dbcs) {
-    /* please add classify routine for your language in here */
-
-    case DBCS_JPNU:       /* ? */
-    case DBCS_JPN:
-      {
-        /* JIS code classification */
-        unsigned char lb = lead;
-        unsigned char tb = trail;
-
-        /* convert process code to JIS */
-        /*
-         * XXX: Code page identification can not use with all
-         *	    system! So, some other encoding information
-         *	    will be needed.
-         *	    In japanese: SJIS,EUC,UNICODE,(JIS)
-         *	    Note that JIS-code system don't use as
-         *	    process code in most system because it uses
-         *	    escape sequences(JIS is context depend encoding).
-         */
-        /* assume process code is JAPANESE-EUC */
-        lb &= 0x7f;
-        tb &= 0x7f;
-        /* exceptions */
-        switch (lb << 8 | tb) {
-          case 0x2121:                 /* ZENKAKU space */
-            return 0;
-          case 0x2122:                 /* TOU-TEN (Japanese comma) */
-          case 0x2123:                 /* KU-TEN (Japanese period) */
-          case 0x2124:                 /* ZENKAKU comma */
-          case 0x2125:                 /* ZENKAKU period */
-            return 1;
-          case 0x213c:                 /* prolongedsound handled as KATAKANA */
-            return 13;
-        }
-        /* sieved by KU code */
-        switch (lb) {
-          case 0x21:
-          case 0x22:
-            /* special symbols */
-            return 10;
-          case 0x23:
-            /* alpha-numeric */
-            return 11;
-          case 0x24:
-            /* hiragana */
-            return 12;
-          case 0x25:
-            /* katakana */
-            return 13;
-          case 0x26:
-            /* greek */
-            return 14;
-          case 0x27:
-            /* russian */
-            return 15;
-          case 0x28:
-            /* lines */
-            return 16;
-          default:
-            /* kanji */
-            return 17;
-        }
-      }
-
-    case DBCS_KORU:       /* ? */
-    case DBCS_KOR:
-      {
-        /* KS code classification */
-        unsigned char c1 = lead;
-        unsigned char c2 = trail;
-
-        /*
-         * 20 : Hangul
-         * 21 : Hanja
-         * 22 : Symbols
-         * 23 : Alpha-numeric/Roman Letter (Full width)
-         * 24 : Hangul Letter(Alphabet)
-         * 25 : Roman Numeral/Greek Letter
-         * 26 : Box Drawings
-         * 27 : Unit Symbols
-         * 28 : Circled/Parenthesized Letter
-         * 29 : Hiragana/Katakana
-         * 30 : Cyrillic Letter
-         */
-
-        if (c1 >= 0xB0 && c1 <= 0xC8)
-          /* Hangul */
-          return 20;
-
-        else if (c1 >= 0xCA && c1 <= 0xFD)
-          /* Hanja */
-          return 21;
-        else switch (c1) {
-          case 0xA1:
-          case 0xA2:
-            /* Symbols */
-            return 22;
-          case 0xA3:
-            /* Alpha-numeric */
-            return 23;
-          case 0xA4:
-            /* Hangul Letter(Alphabet) */
-            return 24;
-          case 0xA5:
-            /* Roman Numeral/Greek Letter */
-            return 25;
-          case 0xA6:
-            /* Box Drawings */
-            return 26;
-          case 0xA7:
-            /* Unit Symbols */
-            return 27;
-          case 0xA8:
-          case 0xA9:
-            if (c2 <= 0xAF)
-              return 25;                    /* Roman Letter */
-            else if (c2 >= 0xF6)
-              return 22;                    /* Symbols */
-            else
-              /* Circled/Parenthesized Letter */
-              return 28;
-          case 0xAA:
-          case 0xAB:
-            /* Hiragana/Katakana */
-            return 29;
-          case 0xAC:
-            /* Cyrillic Letter */
-            return 30;
-        }
-      }
-    default:
-      break;
-  }
-  return 3;
+  return utf_class(utf_ptr2char(p));
 }
 
 /*
@@ -788,10 +640,7 @@ int mb_cptr2char_adv(char_u **pp)
   int c;
 
   c = (*mb_ptr2char)(*pp);
-  if (enc_utf8)
-    *pp += utf_ptr2len(*pp);
-  else
-    *pp += (*mb_ptr2len)(*pp);
+  *pp += utf_ptr2len(*pp);
   return c;
 }
 
@@ -1542,36 +1391,7 @@ int utf16_to_utf8(const WCHAR *strw, char **str)
  */
 int mb_strnicmp(char_u *s1, char_u *s2, size_t nn)
 {
-  int i, l;
-  int cdiff;
-  int n = (int)nn;
-
-  if (enc_utf8) {
-    return utf_strnicmp(s1, s2, nn, nn);
-  } else {
-    for (i = 0; i < n; i += l) {
-      if (s1[i] == NUL && s2[i] == NUL)         /* both strings end */
-        return 0;
-
-      l = (*mb_ptr2len)(s1 + i);
-      if (l <= 1) {
-        /* Single byte: first check normally, then with ignore case. */
-        if (s1[i] != s2[i]) {
-          cdiff = vim_tolower(s1[i]) - vim_tolower(s2[i]);
-          if (cdiff != 0)
-            return cdiff;
-        }
-      } else {
-        /* For non-Unicode multi-byte don't ignore case. */
-        if (l > n - i)
-          l = n - i;
-        cdiff = STRNCMP(s1 + i, s2 + i, l);
-        if (cdiff != 0)
-          return cdiff;
-      }
-    }
-  }
-  return 0;
+  return utf_strnicmp(s1, s2, nn, nn);
 }
 
 /* We need to call mb_stricmp() even when we aren't dealing with a multi-byte
@@ -1699,27 +1519,24 @@ int mb_off_next(char_u *base, char_u *p)
   int i;
   int j;
 
-  if (enc_utf8) {
-    if (*p < 0x80)              /* be quick for ASCII */
-      return 0;
-
-    /* Find the next character that isn't 10xx.xxxx */
-    for (i = 0; (p[i] & 0xc0) == 0x80; ++i)
-      ;
-    if (i > 0) {
-      /* Check for illegal sequence. */
-      for (j = 0; p - j > base; ++j)
-        if ((p[-j] & 0xc0) != 0x80)
-          break;
-      if (utf8len_tab[p[-j]] != i + j)
-        return 0;
-    }
-    return i;
+  if (*p < 0x80) {              // be quick for ASCII
+    return 0;
   }
 
-  /* Only need to check if we're on a trail byte, it doesn't matter if we
-   * want the offset to the next or current character. */
-  return (*mb_head_off)(base, p);
+  // Find the next character that isn't 10xx.xxxx
+  for (i = 0; (p[i] & 0xc0) == 0x80; i++) {}
+  if (i > 0) {
+    // Check for illegal sequence.
+    for (j = 0; p - j > base; j++) {
+      if ((p[-j] & 0xc0) != 0x80) {
+        break;
+      }
+    }
+    if (utf8len_tab[p[-j]] != i + j) {
+      return 0;
+    }
+  }
+  return i;
 }
 
 /*
@@ -1762,10 +1579,10 @@ void utf_find_illegal(void)
   char_u      *tofree = NULL;
 
   vimconv.vc_type = CONV_NONE;
-  if (enc_utf8 && (enc_canon_props(curbuf->b_p_fenc) & ENC_8BIT)) {
-    /* 'encoding' is "utf-8" but we are editing a 8-bit encoded file,
-     * possibly a utf-8 file with illegal bytes.  Setup for conversion
-     * from utf-8 to 'fileencoding'. */
+  if (enc_canon_props(curbuf->b_p_fenc) & ENC_8BIT) {
+    // 'encoding' is "utf-8" but we are editing a 8-bit encoded file,
+    // possibly a utf-8 file with illegal bytes.  Setup for conversion
+    // from utf-8 to 'fileencoding'.
     convert_setup(&vimconv, p_enc, curbuf->b_p_fenc);
   }
 
@@ -2279,13 +2096,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, size_t slen,
       *to++ = '?';
       if ((*mb_ptr2cells)((char_u *)from) > 1)
         *to++ = '?';
-      if (enc_utf8)
-        l = utfc_ptr2len_len((const char_u *)from, (int)fromlen);
-      else {
-        l = (*mb_ptr2len)((char_u *)from);
-        if (l > (int)fromlen)
-          l = (int)fromlen;
-      }
+      l = utfc_ptr2len_len((const char_u *)from, (int)fromlen);
       from += l;
       fromlen -= l;
     } else if (ICONV_ERRNO != ICONV_E2BIG) {
