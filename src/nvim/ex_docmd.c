@@ -6081,6 +6081,9 @@ static void ex_tabonly(exarg_T *eap)
       // Repeat this up to a 1000 times, because autocommands may
       // mess up the lists.
       for (int done = 0; done < 1000; done++) {
+        FOR_ALL_TAB_WINDOWS(tp, wp) {
+          assert(wp != aucmd_win);
+        }
         FOR_ALL_TABS(tp) {
           if (tp->tp_topframe != topframe) {
             tabpage_close_other(tp, eap->forceit);
