@@ -48,7 +48,5 @@ if get(g:, 'ft_man_folding_enable', 0)
   setlocal foldnestmax=1
 endif
 
-autocmd BufWinEnter <buffer> call man#create_toc()
-
 let b:undo_ftplugin = ''
 " vim: set sw=2:
