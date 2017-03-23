@@ -621,9 +621,9 @@ static int command_line_execute(VimState *state, int key)
   // CTRL-\ CTRL-N goes to Normal mode, CTRL-\ CTRL-G goes to Insert
   // mode when 'insertmode' is set, CTRL-\ e prompts for an expression.
   if (s->c == Ctrl_BSL) {
-    ++no_mapping;
+    no_mapping++;
     s->c = plain_vgetc();
-    --no_mapping;
+    no_mapping--;
     // CTRL-\ e doesn't work when obtaining an expression, unless it
     // is in a mapping.
     if (s->c != Ctrl_N && s->c != Ctrl_G && (s->c != 'e'
@@ -1885,7 +1885,7 @@ getexmodeline (
       msg_putchar(' ');
     }
   }
-  ++no_mapping;
+  no_mapping++;
 
   /*
    * Get the line, one character at a time.
@@ -2075,7 +2075,7 @@ redraw:
     }
   }
 
-  --no_mapping;
+  no_mapping--;
 
   /* make following messages go to the next line */
   msg_didout = FALSE;
