@@ -544,15 +544,14 @@ CTRL-T                    Jump back to the location that the manpage was
                           opened from.
 q                         :quit if invoked as $MANPAGER, otherwise :close.
 
+To see the table of contents, type <M-]>.
+
 Variables:
 *g:no_man_maps*             Do not create mappings in manpage buffers.
 *g:ft_man_folding_enable*   Fold manpages with foldmethod=indent foldnestmax=1.
 *b:man_default_sects*       Comma-separated, ordered list of preferred sections.
                           For example in C one usually wants section 3 or 2: >
                                :let b:man_default_sections = '3,2'
-
-Man sections are added to the |location-list| and can be viewed with
-|:lwindow|.
 
 PDF							*ft-pdf-plugin*
 
