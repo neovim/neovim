@@ -120,17 +120,22 @@ func Test_manual_fold_with_filter()
   if !executable('cat')
     return
   endif
-  new
-  call setline(1, range(1, 20))
-  4,$fold
-  %foldopen
-  10,$fold
-  %foldopen
-  " This filter command should not have an effect
-  1,8! cat
-  call feedkeys('5ggzdzMGdd', 'xt')
-  call assert_equal(['1', '2', '3', '4', '5', '6', '7', '8', '9'], getline(1, '$'))
-  bwipe!
+  for type in ['manual', 'marker']
+    exe 'set foldmethod=' . type
+    new
+    call setline(1, range(1, 20))
+    4,$fold
+    %foldopen
+    10,$fold
+    %foldopen
+    " This filter command should not have an effect
+    1,8! cat
+    call feedkeys('5ggzdzMGdd', 'xt')
+    call assert_equal(['1', '2', '3', '4', '5', '6', '7', '8', '9'], getline(1, '$'))
+
+    bwipe!
+    set foldmethod&
+  endfor
 endfunc
 
 func! Test_move_folds_around_manual()
