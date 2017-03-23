@@ -30,6 +30,7 @@ SCRIPTS ?= \
 NEW_TESTS ?= \
 	    test_autocmd.res \
 	    test_bufwintabinfo.res \
+	    test_charsearch.res \
 	    test_cmdline.res \
 	    test_command_count.res \
 	    test_cscope.res \
@@ -37,6 +38,7 @@ NEW_TESTS ?= \
 	    test_diffmode.res \
 	    test_farsi.res \
 	    test_filter_map.res \
+	    test_fnameescape.res \
 	    test_fold.res \
 	    test_glob2regpat.res \
 	    test_gn.res \
@@ -55,6 +57,7 @@ NEW_TESTS ?= \
 	    test_normal.res \
 	    test_quickfix.res \
 	    test_signs.res \
+	    test_substitute.res \
 	    test_syntax.res \
 	    test_tabpage.res \
 	    test_textobjects.res \
