@@ -15,7 +15,6 @@ let b:undo_ftplugin = "set stl<"
 " Display the command that produced the list in the quickfix window:
 setlocal stl=%t%{exists('w:quickfix_title')?\ '\ '.w:quickfix_title\ :\ ''}\ %=%-15(%l,%c%V%)\ %P
 
-
 function! s:setup_toc() abort
   if get(w:, 'quickfix_title') !~# '\<TOC$' || &syntax != 'qf'
     return
@@ -33,7 +32,6 @@ function! s:setup_toc() abort
   setlocal nomodifiable nomodified
   let &syntax = getbufvar(bufnr, '&syntax')
 endfunction
-
 
 augroup qf_toc
   autocmd!
