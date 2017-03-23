@@ -690,10 +690,8 @@ static int insert_execute(VimState *state, int key)
     // may need to redraw when no more chars available now
     ins_redraw(false);
     ++no_mapping;
-    ++allow_keys;
     s->c = plain_vgetc();
     --no_mapping;
-    --allow_keys;
     if (s->c != Ctrl_N && s->c != Ctrl_G && s->c != Ctrl_O) {
       // it's something else
       vungetc(s->c);
@@ -8306,10 +8304,8 @@ static int ins_digraph(void)
   /* don't map the digraph chars. This also prevents the
    * mode message to be deleted when ESC is hit */
   ++no_mapping;
-  ++allow_keys;
   c = plain_vgetc();
   --no_mapping;
-  --allow_keys;
   if (did_putchar)
     /* when the line fits in 'columns' the '?' is at the start of the next
      * line and will not be removed by the redraw */
@@ -8334,10 +8330,8 @@ static int ins_digraph(void)
       add_to_showcmd_c(c);
     }
     ++no_mapping;
-    ++allow_keys;
     cc = plain_vgetc();
     --no_mapping;
-    --allow_keys;
     if (did_putchar)
       /* when the line fits in 'columns' the '?' is at the start of the
        * next line and will not be removed by a redraw */

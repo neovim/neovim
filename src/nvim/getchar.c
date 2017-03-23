@@ -1390,26 +1390,21 @@ int vgetc(void)
       bool did_inc = false;
       if (mod_mask) {           // no mapping after modifier has been read
         ++no_mapping;
-        ++allow_keys;
         did_inc = true;         // mod_mask may change value
       }
       c = vgetorpeek(true);
       if (did_inc) {
         --no_mapping;
-        --allow_keys;
       }
 
       /* Get two extra bytes for special keys */
       if (c == K_SPECIAL
           ) {
-        int save_allow_keys = allow_keys;
 
         ++no_mapping;
-        allow_keys = 0;                 /* make sure BS is not found */
         c2 = vgetorpeek(TRUE);          /* no mapping for these chars */
         c = vgetorpeek(TRUE);
         --no_mapping;
-        allow_keys = save_allow_keys;
         if (c2 == KS_MODIFIER) {
           mod_mask = c;
           continue;

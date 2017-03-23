@@ -448,12 +448,10 @@ wingotofile:
   case Ctrl_G:
     CHECK_CMDWIN
     ++ no_mapping;
-    ++allow_keys;               /* no mapping for xchar, but allow key codes */
     if (xchar == NUL)
       xchar = plain_vgetc();
     LANGMAP_ADJUST(xchar, TRUE);
     --no_mapping;
-    --allow_keys;
     (void)add_to_showcmd(xchar);
     switch (xchar) {
     case '}':

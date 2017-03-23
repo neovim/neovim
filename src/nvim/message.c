@@ -850,7 +850,6 @@ void wait_return(int redraw)
       /* Don't do mappings here, we put the character back in the
        * typeahead buffer. */
       ++no_mapping;
-      ++allow_keys;
 
       /* Temporarily disable Recording. If Recording is active, the
        * character will be recorded later, since it will be added to the
@@ -863,7 +862,6 @@ void wait_return(int redraw)
       if (had_got_int && !global_busy)
         got_int = FALSE;
       --no_mapping;
-      --allow_keys;
       Recording = save_Recording;
       scriptout = save_scriptout;
 

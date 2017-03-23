@@ -834,8 +834,6 @@ EXTERN int Exec_reg INIT(= FALSE);      /* TRUE when executing a register */
 
 EXTERN int no_mapping INIT(= FALSE);    /* currently no mapping allowed */
 EXTERN int no_zero_mapping INIT(= 0);   /* mapping zero not allowed */
-EXTERN int allow_keys INIT(= FALSE);    /* allow key codes when no_mapping
-                                         * is set */
 EXTERN int no_u_sync INIT(= 0);         /* Don't call u_sync() */
 EXTERN int u_sync_once INIT(= 0);       /* Call u_sync() once when evaluating
                                            an expression. */

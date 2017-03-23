@@ -3578,9 +3578,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
               RedrawingDisabled = temp;
 
               ++no_mapping;                     /* don't map this key */
-              ++allow_keys;                     /* allow special keys */
               typed = plain_vgetc();
-              --allow_keys;
               --no_mapping;
 
               /* clear the question */
