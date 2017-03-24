@@ -85,8 +85,6 @@ typedef struct terminal_state {
 # include "terminal.c.generated.h"
 #endif
 
-#define SB_MAX 100000  // Maximum 'scrollback' value.
-
 // Delay for refreshing the terminal buffer after receiving updates from
 // libvterm. Improves performance when receiving large bursts of data.
 #define REFRESH_DELAY 10
@@ -231,10 +229,10 @@ Terminal *terminal_open(TerminalOptions opts)
   set_option_value((uint8_t *)"buftype", 0, (uint8_t *)"terminal", OPT_LOCAL);
 
   // Default settings for terminal buffers
-  curbuf->b_p_ma = false;   // 'nomodifiable'
-  curbuf->b_p_ul = -1;      // 'undolevels'
-  curbuf->b_p_scbk = 1000;  // 'scrollback'
-  curbuf->b_p_tw = 0;       // 'textwidth'
+  curbuf->b_p_ma = false;     // 'nomodifiable'
+  curbuf->b_p_ul = -1;        // 'undolevels'
+  curbuf->b_p_scbk = p_scbk;  // 'scrollback'
+  curbuf->b_p_tw = 0;         // 'textwidth'
   set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
   set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
@@ -248,7 +246,8 @@ Terminal *terminal_open(TerminalOptions opts)
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
   // Configure the scrollback buffer.
-  rv->sb_size = curbuf->b_p_scbk < 0 ? SB_MAX : (size_t)curbuf->b_p_scbk;;
+  rv->sb_size = curbuf->b_p_scbk < 0
+                ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {

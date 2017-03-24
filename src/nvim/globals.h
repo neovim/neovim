@@ -1255,7 +1255,7 @@ typedef enum {
   kCdScopeInvalid = -1,
   kCdScopeWindow,  ///< Affects one window.
   kCdScopeTab,     ///< Affects one tab page.
-  kCdScopeGlobal,  ///< Affects the entire instance of Neovim.
+  kCdScopeGlobal,  ///< Affects the entire Nvim instance.
 } CdScope;
 
 #define MIN_CD_SCOPE  kCdScopeWindow

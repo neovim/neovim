@@ -524,6 +524,7 @@ EXTERN int p_ru;                // 'ruler'
 EXTERN char_u   *p_ruf;         // 'rulerformat'
 EXTERN char_u   *p_pp;          // 'packpath'
 EXTERN char_u   *p_rtp;         // 'runtimepath'
+EXTERN long p_scbk;             // 'scrollback'
 EXTERN long p_sj;               // 'scrolljump'
 EXTERN long p_so;               // 'scrolloff'
 EXTERN char_u   *p_sbo;         // 'scrollopt'
@@ -810,5 +811,7 @@ enum {
 
 /* Value for b_p_ul indicating the global value must be used. */
 #define NO_LOCAL_UNDOLEVEL -123456
+
+#define SB_MAX 100000  // Maximum 'scrollback' value.
 
 #endif // NVIM_OPTION_DEFS_H

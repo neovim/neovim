@@ -156,7 +156,6 @@ static long p_ts;
 static long p_tw;
 static int p_udf;
 static long p_wm;
-static long p_scbk;
 static char_u   *p_keymap;
 
 /* Saved values for when 'bin' is set. */
@@ -4199,16 +4198,13 @@ set_num_option (
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
     }
-  } else if (pp == &curbuf->b_p_scbk) {
+  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
     // 'scrollback'
-    if (!curbuf->terminal) {
+    if (*pp < -1 || *pp > SB_MAX
+        || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
       errmsg = e_invarg;
-      curbuf->b_p_scbk = -1;
-    } else {
-      if (curbuf->b_p_scbk < -1 || curbuf->b_p_scbk > 100000) {
-        errmsg = e_invarg;
-        curbuf->b_p_scbk = 1000;
-      }
+      *pp = old_value;
+    } else if (curbuf->terminal) {
       // Force the scrollback to take effect.
       terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
     }
@@ -4330,6 +4326,11 @@ set_num_option (
   /* May set global value for local option. */
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
     *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+
+  if (pp == &curbuf->b_p_scbk && !curbuf->terminal) {
+    // Normal buffer: reset local 'scrollback' after updating the global value.
+    curbuf->b_p_scbk = -1;
+  }
 
   options[opt_idx].flags |= P_WAS_SET;
 
@@ -4586,7 +4587,7 @@ get_option_value (
 //
 // Pretends that option is absent if it is not present in the requested scope
 // (i.e. has no global, window-local or buffer-local value depending on
-// opt_type). Uses
+// opt_type).
 //
 // Returned flags:
 //       0 hidden or unknown option, also option that does not have requested 

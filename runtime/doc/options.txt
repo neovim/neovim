@@ -398,20 +398,6 @@ command, not when assigning a value to an option with ":let".
 Note the maximum length of an expanded option is limited.  How much depends on
 the system, mostly it is something like 256 or 1024 characters.
 
-							*Linux-backspace*
-			Note about Linux: By default the backspace key
-			produces CTRL-?, which is wrong.  You can fix it by
-			putting this line in your rc.local: >
-				echo "keycode 14 = BackSpace" | loadkeys
-<
-							*NetBSD-backspace*
-			Note about NetBSD: If your backspace doesn't produce
-			the right code, try this: >
-				xmodmap -e "keycode 22 = BackSpace"
-<			If this works, add this in your .Xmodmap file: >
-				keysym 22 = BackSpace
-<			You need to restart for this to take effect.
-
 ==============================================================================
 2. Automatically setting options			*auto-setting*
 
