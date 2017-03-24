@@ -93,6 +93,7 @@ UI *tui_start(void)
   ui->stop = tui_stop;
   ui->rgb = p_tgc;
   ui->pum_external = false;
+  ui->tabline_external = false;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;

@@ -54,6 +54,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->ui = ui;
   rv->bridge.rgb = ui->rgb;
   rv->bridge.pum_external = ui->pum_external;
+  rv->bridge.tabline_external = ui->tabline_external;
   rv->bridge.stop = ui_bridge_stop;
   rv->bridge.resize = ui_bridge_resize;
   rv->bridge.clear = ui_bridge_clear;

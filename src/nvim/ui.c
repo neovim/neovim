@@ -53,6 +53,10 @@ static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
 
+static bool tabline_external = false;
+static bool cmdline_external = false;
+static bool wildmenu_external = false;
+
 // UI_CALL invokes a function on all registered UI instances. The functions can
 // have 0-5 arguments (configurable by SELECT_NTH).
 //
@@ -168,17 +172,20 @@ void ui_refresh(void)
 
   int width = INT_MAX, height = INT_MAX;
   bool pum_external = true;
+  bool tabline_external = true;
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
     pum_external &= ui->pum_external;
+    tabline_external &= ui->tabline_external;
   }
 
   row = col = 0;
   screen_resize(width, height);
   pum_set_external(pum_external);
+  ui_set_widget_external(kUITabline, tabline_external);
 }
 
 static void ui_refresh_event(void **argv)
@@ -553,3 +560,30 @@ static void ui_mode_change(void)
   conceal_check_cursur_line();
 }
 
+bool ui_is_widget_external(UIWidget widget)
+{
+  switch (widget) {
+    case kUITabline:
+      return tabline_external;
+    case kUICmdline:
+      return cmdline_external;
+    case kUIWildmenu:
+      return wildmenu_external;
+  }
+  return false;
+}
+
+void ui_set_widget_external(UIWidget widget, bool external)
+{
+  switch (widget) {
+    case kUITabline:
+      tabline_external = external;
+      break;
+    case kUICmdline:
+      cmdline_external = external;
+      break;
+    case kUIWildmenu:
+      wildmenu_external = external;
+      break;
+  }
+}

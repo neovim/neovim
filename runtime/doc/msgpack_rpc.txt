@@ -270,6 +270,10 @@ optional) keys:
 				the grid, Nvim will send higher-level events to
 				the ui and let it draw the popupmenu.
 				Defaults to false.
+	`tabline_external`:	Instead of drawing the tabline on the grid,
+			        Nvim will send higher-level events to
+				the ui and let it draw the tabline.
+				Defaults to false.
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
 and a single argument, an array of screen updates (described below).
@@ -412,6 +416,11 @@ of update.
 
 ["popupmenu_hide"]
 	The popupmenu is hidden.
+
+["tabline_update", curtab, tabs]
+	Nvim will send this event when drawing tabline. curtab is the tab id
+	of the current tab. tabs is an arrays of the form:
+	[tabid, { "name": name }]
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
