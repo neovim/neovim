@@ -1166,6 +1166,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
       pos->col = 0;
     }
     posptr = ptr + pos->col;
+    posptr -= utf_head_off(line, posptr);
   }
 
   // This function is used very often, do some speed optimizations.
