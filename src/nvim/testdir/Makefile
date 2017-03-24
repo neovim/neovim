@@ -1,4 +1,4 @@
-#
+# vim: noet ts=8
 # Makefile to run all tests for Vim
 #
 
@@ -28,13 +28,17 @@ SCRIPTS ?= \
 # Tests using runtest.vim.
 # Keep test_alot*.res as the last one, sort the others.
 NEW_TESTS ?= \
+	    test_autocmd.res \
 	    test_bufwintabinfo.res \
 	    test_cmdline.res \
+	    test_command_count.res \
 	    test_cscope.res \
 	    test_digraph.res \
 	    test_diffmode.res \
 	    test_farsi.res \
 	    test_filter_map.res \
+	    test_fold.res \
+	    test_glob2regpat.res \
 	    test_gn.res \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \
@@ -46,13 +50,16 @@ NEW_TESTS ?= \
 	    test_marks.res \
 	    test_match.res \
 	    test_matchadd_conceal.res \
+	    test_matchadd_conceal_utf8.res \
 	    test_nested_function.res \
 	    test_normal.res \
 	    test_quickfix.res \
 	    test_signs.res \
 	    test_syntax.res \
+	    test_tabpage.res \
 	    test_textobjects.res \
 	    test_timers.res \
+	    test_undo.res \
 	    test_usercommands.res \
 	    test_viml.res \
 	    test_visual.res \

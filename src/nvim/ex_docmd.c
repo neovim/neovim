@@ -1522,8 +1522,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         ea.line2 = curwin->w_cursor.lnum;
         break;
       case ADDR_WINDOWS:
-        lnum = CURRENT_WIN_NR;
-        ea.line2 = lnum;
+        ea.line2 = CURRENT_WIN_NR;
         break;
       case ADDR_ARGUMENTS:
         ea.line2 = curwin->w_arg_idx + 1;
@@ -1536,8 +1535,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
         ea.line2 = curbuf->b_fnum;
         break;
       case ADDR_TABS:
-        lnum = CURRENT_TAB_NR;
-        ea.line2 = lnum;
+        ea.line2 = CURRENT_TAB_NR;
+        break;
+      case ADDR_TABS_RELATIVE:
+        ea.line2 = 1;
         break;
       case ADDR_QUICKFIX:
         ea.line2 = qf_get_cur_valid_idx(&ea);
@@ -1586,6 +1587,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
               errormsg = (char_u *)_(e_invrange);
               goto doend;
             }
+            break;
+          case ADDR_TABS_RELATIVE:
+            errormsg = (char_u *)_(e_invrange);
+            goto doend;
             break;
           case ADDR_ARGUMENTS:
             if (ARGCOUNT == 0) {
@@ -1973,6 +1978,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       case ADDR_TABS:
         ea.line2 = LAST_TAB_NR;
         break;
+      case ADDR_TABS_RELATIVE:
+        ea.line2 = 1;
+        break;
       case ADDR_ARGUMENTS:
         if (ARGCOUNT == 0) {
           ea.line1 = ea.line2 = 0;
@@ -2028,11 +2036,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       ea.line1 = ea.line2;
       ea.line2 += n - 1;
       ++ea.addr_count;
-      /*
-       * Be vi compatible: no error message for out of range.
-       */
-      if (ea.line2 > curbuf->b_ml.ml_line_count)
+      // Be vi compatible: no error message for out of range.
+      if (ea.addr_type == ADDR_LINES
+          && ea.line2 > curbuf->b_ml.ml_line_count) {
         ea.line2 = curbuf->b_ml.ml_line_count;
+      }
     }
   }
 
@@ -3459,6 +3467,11 @@ static linenr_T get_address(exarg_T *eap,
         case ADDR_TABS:
           lnum = CURRENT_TAB_NR;
           break;
+        case ADDR_TABS_RELATIVE:
+          EMSG(_(e_invrange));
+          cmd = NULL;
+          goto error;
+          break;
         case ADDR_QUICKFIX:
           lnum = qf_get_cur_valid_idx(eap);
           break;
@@ -3492,6 +3505,11 @@ static linenr_T get_address(exarg_T *eap,
           break;
         case ADDR_TABS:
           lnum = LAST_TAB_NR;
+          break;
+        case ADDR_TABS_RELATIVE:
+          EMSG(_(e_invrange));
+          cmd = NULL;
+          goto error;
           break;
         case ADDR_QUICKFIX:
           lnum = qf_get_size(eap);
@@ -3641,6 +3659,9 @@ static linenr_T get_address(exarg_T *eap,
           case ADDR_TABS:
             lnum = CURRENT_TAB_NR;
             break;
+          case ADDR_TABS_RELATIVE:
+            lnum = 1;
+            break;
           case ADDR_QUICKFIX:
             lnum = qf_get_cur_valid_idx(eap);
             break;
@@ -3655,7 +3676,12 @@ static linenr_T get_address(exarg_T *eap,
         n = 1;
       else
         n = getdigits(&cmd);
-      if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS) {
+
+      if (addr_type == ADDR_TABS_RELATIVE) {
+        EMSG(_(e_invrange));
+        cmd = NULL;
+        goto error;
+      } else if (addr_type == ADDR_LOADED_BUFFERS || addr_type == ADDR_BUFFERS) {
         lnum = compute_buffer_local_count(
             addr_type, lnum, (i == '-') ? -1 * n : n);
       } else {
@@ -3776,6 +3802,9 @@ static char_u *invalid_range(exarg_T *eap)
         if (eap->line2 > LAST_TAB_NR) {
           return (char_u *)_(e_invrange);
         }
+        break;
+      case ADDR_TABS_RELATIVE:
+        // Do nothing
         break;
       case ADDR_QUICKFIX:
         assert(eap->line2 >= 0);
@@ -4283,6 +4312,89 @@ static int getargopt(exarg_T *eap)
   }
 
   return OK;
+}
+
+/// Handle the argument for a tabpage related ex command.
+/// Returns a tabpage number.
+/// When an error is encountered then eap->errmsg is set.
+static int get_tabpage_arg(exarg_T *eap)
+{
+  int tab_number = 0;
+  int unaccept_arg0 = (eap->cmdidx == CMD_tabmove) ? 0 : 1;
+
+  if (eap->arg && *eap->arg != NUL) {
+    char_u *p = eap->arg;
+    char_u *p_save;
+    int relative = 0; // argument +N/-N means: go to N places to the
+                      // right/left relative to the current position.
+
+    if (*p == '-') {
+      relative = -1;
+      p++;
+    } else if (*p == '+') {
+      relative = 1;
+      p++;
+    }
+
+    p_save = p;
+    tab_number = getdigits(&p);
+
+    if (relative == 0) {
+      if (STRCMP(p, "$") == 0) {
+        tab_number = LAST_TAB_NR;
+      } else if (p == p_save || *p_save == '-' || *p != NUL
+                 || tab_number > LAST_TAB_NR) {
+        // No numbers as argument.
+        eap->errmsg = e_invarg;
+        goto theend;
+      }
+    } else {
+      if (*p_save == NUL) {
+        tab_number = 1;
+      }
+      else if (p == p_save || *p_save == '-' || *p != NUL || tab_number == 0) {
+        // No numbers as argument.
+        eap->errmsg = e_invarg;
+        goto theend;
+      }
+      tab_number = tab_number * relative + tabpage_index(curtab);
+      if (!unaccept_arg0 && relative == -1) {
+        --tab_number;
+      }
+    }
+    if (tab_number < unaccept_arg0 || tab_number > LAST_TAB_NR) {
+      eap->errmsg = e_invarg;
+    }
+  } else if (eap->addr_count > 0) {
+    if (unaccept_arg0 && eap->line2 == 0) {
+      eap->errmsg = e_invrange;
+      tab_number = 0;
+    } else {
+      tab_number = eap->line2;
+      if (!unaccept_arg0 && **eap->cmdlinep == '-') {
+        --tab_number;
+        if (tab_number < unaccept_arg0) {
+          eap->errmsg = e_invarg;
+        }
+      }
+    }
+  } else {
+    switch (eap->cmdidx) {
+    case CMD_tabnext:
+      tab_number = tabpage_index(curtab) + 1;
+      if (tab_number > LAST_TAB_NR)
+        tab_number = 1;
+      break;
+    case CMD_tabmove:
+      tab_number = LAST_TAB_NR;
+      break;
+    default:
+      tab_number = tabpage_index(curtab);
+    }
+  }
+
+theend:
+  return tab_number;
 }
 
 /*
@@ -5775,7 +5887,7 @@ static void ex_quit(exarg_T *eap)
   // Refuse to quit when locked or when the buffer in the last window is
   // being closed (can only happen in autocommands).
   if (curbuf_locked()
-      || (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_closing)) {
+      || (wp->w_buffer->b_nwindows == 1 && wp->w_buffer->b_locked > 0)) {
     return;
   }
 
@@ -5833,11 +5945,12 @@ static void ex_quit_all(exarg_T *eap)
     text_locked_msg();
     return;
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, FALSE, curbuf);
-  /* Refuse to quit when locked or when the buffer in the last window is
-   * being closed (can only happen in autocommands). */
-  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_closing))
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
+  // Refuse to quit when locked or when the buffer in the last window is
+  // being closed (can only happen in autocommands).
+  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0)) {
     return;
+  }
 
   exiting = true;
   if (eap->forceit || !check_changed_any(false, false)) {
@@ -5937,8 +6050,9 @@ static void ex_tabclose(exarg_T *eap)
   else if (first_tabpage->tp_next == NULL)
     EMSG(_("E784: Cannot close last tab page"));
   else {
-    if (eap->addr_count > 0) {
-      tp = find_tabpage((int)eap->line2);
+    int tab_number = get_tabpage_arg(eap);
+    if (eap->errmsg == NULL) {
+      tp = find_tabpage(tab_number);
       if (tp == NULL) {
         beep_flush();
         return;
@@ -5946,43 +6060,45 @@ static void ex_tabclose(exarg_T *eap)
       if (tp != curtab) {
         tabpage_close_other(tp, eap->forceit);
         return;
+      } else if (!text_locked() && !curbuf_locked()) {
+        tabpage_close(eap->forceit);
       }
     }
-    if (!text_locked()
-        && !curbuf_locked()
-        )
-      tabpage_close(eap->forceit);
   }
 }
 
-/*
- * ":tabonly": close all tab pages except the current one
- */
+/// ":tabonly": close all tab pages except the current one
 static void ex_tabonly(exarg_T *eap)
 {
-  if (cmdwin_type != 0)
+  if (cmdwin_type != 0) {
     cmdwin_result = K_IGNORE;
-  else if (first_tabpage->tp_next == NULL)
-    MSG(_("Already only one tab page"));
-  else {
-    if (eap->addr_count > 0)
-      goto_tabpage(eap->line2);
-    /* Repeat this up to a 1000 times, because autocommands may mess
-     * up the lists. */
-    for (int done = 0; done < 1000; ++done) {
-      FOR_ALL_TABS(tp) {
-        if (tp->tp_topframe != topframe) {
-          tabpage_close_other(tp, eap->forceit);
-          /* if we failed to close it quit */
-          if (valid_tabpage(tp))
-            done = 1000;
-          /* start over, "tp" is now invalid */
+  } else if (first_tabpage->tp_next == NULL) {
+      MSG(_("Already only one tab page"));
+  } else {
+    int tab_number = get_tabpage_arg(eap);
+    if (eap->errmsg == NULL) {
+      goto_tabpage(tab_number);
+      // Repeat this up to a 1000 times, because autocommands may
+      // mess up the lists.
+      for (int done = 0; done < 1000; done++) {
+        FOR_ALL_TAB_WINDOWS(tp, wp) {
+          assert(wp != aucmd_win);
+        }
+        FOR_ALL_TABS(tp) {
+          if (tp->tp_topframe != topframe) {
+            tabpage_close_other(tp, eap->forceit);
+            // if we failed to close it quit
+            if (valid_tabpage(tp)) {
+              done = 1000;
+            }
+            // start over, "tp" is now invalid
+            break;
+          }
+        }
+        assert(first_tabpage);
+        if (first_tabpage->tp_next == NULL) {
           break;
         }
-      }
-      assert(first_tabpage);
-      if (first_tabpage->tp_next == NULL) {
-        break;
       }
     }
   }
@@ -6128,11 +6244,12 @@ static void ex_exit(exarg_T *eap)
     text_locked_msg();
     return;
   }
-  apply_autocmds(EVENT_QUITPRE, NULL, NULL, FALSE, curbuf);
-  /* Refuse to quit when locked or when the buffer in the last window is
-   * being closed (can only happen in autocommands). */
-  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_closing))
+  apply_autocmds(EVENT_QUITPRE, NULL, NULL, false, curbuf);
+  // Refuse to quit when locked or when the buffer in the last window is
+  // being closed (can only happen in autocommands).
+  if (curbuf_locked() || (curbuf->b_nwindows == 1 && curbuf->b_locked > 0)) {
     return;
+  }
 
   // if more files or windows we won't exit
   if (check_more(false, eap->forceit) == OK && only_one_window()) {
@@ -6471,6 +6588,8 @@ void tabpage_new(void)
  */
 static void ex_tabnext(exarg_T *eap)
 {
+  int tab_number;
+
   switch (eap->cmdidx) {
   case CMD_tabfirst:
   case CMD_tabrewind:
@@ -6481,10 +6600,35 @@ static void ex_tabnext(exarg_T *eap)
     break;
   case CMD_tabprevious:
   case CMD_tabNext:
-    goto_tabpage(eap->addr_count == 0 ? -1 : -(int)eap->line2);
+    if (eap->arg && *eap->arg != NUL) {
+      char_u *p = eap->arg;
+      char_u *p_save = p;
+
+      tab_number = getdigits(&p);
+      if (p == p_save || *p_save == '-' || *p_save == '+' || *p != NUL
+          || tab_number == 0) {
+        // No numbers as argument.
+        eap->errmsg = e_invarg;
+        return;
+      }
+    } else {
+      if (eap->addr_count == 0) {
+        tab_number = 1;
+      } else {
+        tab_number = eap->line2;
+        if (tab_number < 1) {
+          eap->errmsg = e_invrange;
+          return;
+        }
+      }
+    }
+    goto_tabpage(-tab_number);
     break;
-  default:       /* CMD_tabnext */
-    goto_tabpage(eap->addr_count == 0 ? 0 : (int)eap->line2);
+  default:       // CMD_tabnext
+    tab_number = get_tabpage_arg(eap);
+    if (eap->errmsg == NULL) {
+      goto_tabpage(tab_number);
+    }
     break;
   }
 }
@@ -6494,53 +6638,10 @@ static void ex_tabnext(exarg_T *eap)
  */
 static void ex_tabmove(exarg_T *eap)
 {
-  int tab_number;
-
-  if (eap->arg && *eap->arg != NUL) {
-    char_u *p = eap->arg;
-    int relative = 0;        /* argument +N/-N means: move N places to the
-                              * right/left relative to the current position. */
-
-    if (*eap->arg == '-') {
-      relative = -1;
-      p = eap->arg + 1;
-    } else if (*eap->arg == '+') {
-      relative = 1;
-      p = eap->arg + 1;
-    } else
-      p = eap->arg;
-
-    if (relative == 0) {
-      if (STRCMP(p, "$") == 0) {
-        tab_number = LAST_TAB_NR;
-      } else if (p == skipdigits(p)) {
-        // No numbers as argument.
-        eap->errmsg = e_invarg;
-        return;
-      } else {
-        tab_number = getdigits(&p);
-      }
-    } else {
-      if (*p != NUL) {
-        tab_number = getdigits(&p);
-      } else {
-        tab_number = 1;
-      }
-      tab_number = tab_number * relative + tabpage_index(curtab);
-      if (relative == -1) {
-        --tab_number;
-      }
-    }
-  } else if (eap->addr_count != 0) {
-    tab_number = eap->line2;
-    if (**eap->cmdlinep == '-') {
-      --tab_number;
-    }
-  } else {
-    tab_number = LAST_TAB_NR;
+  int tab_number = get_tabpage_arg(eap);
+  if (eap->errmsg == NULL) {
+    tabpage_move(tab_number);
   }
-
-  tabpage_move(tab_number);
 }
 
 /*

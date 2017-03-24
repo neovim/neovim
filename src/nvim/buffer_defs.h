@@ -470,9 +470,9 @@ struct file_buffer {
 
   int b_nwindows;               /* nr of windows open on this buffer */
 
-  int b_flags;                  /* various BF_ flags */
-  bool b_closing;               /* buffer is being closed, don't let
-                                   autocommands close it too. */
+  int b_flags;                  // various BF_ flags
+  int b_locked;                 // Buffer is being closed or referenced, don't
+                                // let autocommands wipe it out.
 
   /*
    * b_ffname has the full path of the file (NULL for no name).

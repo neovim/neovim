@@ -2922,7 +2922,6 @@ win_line (
               }
             } else if (v == (long)shl->endcol) {
               shl->attr_cur = 0;
-              prev_syntax_id = 0;
 
               next_search_hl(wp, shl, lnum, (colnr_T)v,
                              shl == &search_hl ? NULL : cur);
@@ -6885,7 +6884,10 @@ static void draw_tabline(void)
   int use_sep_chars = (t_colors < 8
                        );
 
-  redraw_tabline = FALSE;
+  if (ScreenLines == NULL) {
+    return;
+  }
+  redraw_tabline = false;
 
 
   if (tabline_height() < 1)

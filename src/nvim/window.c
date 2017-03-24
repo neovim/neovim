@@ -1714,14 +1714,10 @@ static void win_equal_rec(
   }
 }
 
-/*
- * close all windows for buffer 'buf'
- */
-void 
-close_windows (
-    buf_T *buf,
-    int keep_curwin                    /* don't close "curwin" */
-)
+/// Closes all windows for buffer `buf`.
+///
+/// @param keep_curwin don't close `curwin`
+void close_windows(buf_T *buf, int keep_curwin)
 {
   tabpage_T   *tp, *nexttp;
   int h = tabline_height();
@@ -1731,9 +1727,11 @@ close_windows (
 
   for (win_T *wp = firstwin; wp != NULL && lastwin != firstwin; ) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
-        && !(wp->w_closing || wp->w_buffer->b_closing)
-        ) {
-      win_close(wp, FALSE);
+        && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
+      if (win_close(wp, false) == FAIL) {
+        // If closing the window fails give up, to avoid looping forever.
+        break;
+      }
 
       /* Start all over, autocommands may change the window layout. */
       wp = firstwin;
@@ -1747,9 +1745,8 @@ close_windows (
     if (tp != curtab) {
       FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
         if (wp->w_buffer == buf
-            && !(wp->w_closing || wp->w_buffer->b_closing)
-            ) {
-          win_close_othertab(wp, FALSE, tp);
+            && !(wp->w_closing || wp->w_buffer->b_locked > 0)) {
+          win_close_othertab(wp, false, tp);
 
           /* Start all over, the tab page may be closed and
            * autocommands may change the window layout. */
@@ -1884,8 +1881,10 @@ int win_close(win_T *win, int free_buf)
     return FAIL;
   }
 
-  if (win->w_closing || (win->w_buffer != NULL && win->w_buffer->b_closing))
-    return FAIL;     /* window is already being closed */
+  if (win->w_closing
+      || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
+    return FAIL;     // window is already being closed
+  }
   if (win == aucmd_win) {
     EMSG(_("E813: Cannot close autocmd window"));
     return FAIL;
@@ -2019,10 +2018,12 @@ int win_close(win_T *win, int free_buf)
     }
     curbuf = curwin->w_buffer;
     close_curwin = TRUE;
+
+    // The cursor position may be invalid if the buffer changed after last
+    // using the window.
+    check_cursor();
   }
-  if (p_ea
-      && (*p_ead == 'b' || *p_ead == dir)
-      ) {
+  if (p_ea && (*p_ead == 'b' || *p_ead == dir)) {
     win_equal(curwin, true, dir);
   } else {
     win_comp_pos();
@@ -2066,7 +2067,8 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   // Get here with win->w_buffer == NULL when win_close() detects the tab page
   // changed.
-  if (win->w_closing || (win->w_buffer != NULL && win->w_buffer->b_closing)) {
+  if (win->w_closing
+      || (win->w_buffer != NULL && win->w_buffer->b_locked > 0)) {
     return;  // window is already being closed
   }
 
@@ -3132,6 +3134,45 @@ bool valid_tabpage(tabpage_T *tpc) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
     }
   }
   return false;
+}
+
+/// Returns true when `tpc` is valid and at least one window is valid.
+int valid_tabpage_win(tabpage_T *tpc)
+{
+  FOR_ALL_TABS(tp) {
+    if (tp == tpc) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+        if (win_valid_any_tab(wp)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  // shouldn't happen
+  return false;
+}
+
+/// Close tabpage `tab`, assuming it has no windows in it.
+/// There must be another tabpage or this will crash.
+void close_tabpage(tabpage_T *tab)
+{
+  tabpage_T *ptp;
+
+  if (tab == first_tabpage) {
+    first_tabpage = tab->tp_next;
+    ptp = first_tabpage;
+  } else {
+    for (ptp = first_tabpage; ptp != NULL && ptp->tp_next != tab;
+         ptp = ptp->tp_next) {
+      // do nothing
+    }
+    assert(ptp != NULL);
+    ptp->tp_next = tab->tp_next;
+  }
+
+  goto_tabpage_tp(ptp, false, false);
+  free_tabpage(tab);
 }
 
 /*
@@ -4762,7 +4803,11 @@ void win_new_height(win_T *wp, int height)
   wp->w_height = height;
   wp->w_skipcol = 0;
 
-  scroll_to_fraction(wp, prev_height);
+  // There is no point in adjusting the scroll position when exiting.  Some
+  // values might be invalid.
+  if (!exiting) {
+    scroll_to_fraction(wp, prev_height);
+  }
 }
 
 void scroll_to_fraction(win_T *wp, int prev_height)
@@ -5325,10 +5370,8 @@ restore_snapshot (
   clear_snapshot(curtab, idx);
 }
 
-/*
- * Check if frames "sn" and "fr" have the same layout, same following frames
- * and same children.
- */
+/// Check if frames "sn" and "fr" have the same layout, same following frames
+/// and same children.  And the window pointer is valid.
 static int check_snapshot_rec(frame_T *sn, frame_T *fr)
 {
   if (sn->fr_layout != fr->fr_layout
@@ -5337,7 +5380,8 @@ static int check_snapshot_rec(frame_T *sn, frame_T *fr)
       || (sn->fr_next != NULL
           && check_snapshot_rec(sn->fr_next, fr->fr_next) == FAIL)
       || (sn->fr_child != NULL
-          && check_snapshot_rec(sn->fr_child, fr->fr_child) == FAIL))
+          && check_snapshot_rec(sn->fr_child, fr->fr_child) == FAIL)
+      || (sn->fr_win != NULL && !win_valid(sn->fr_win)))
     return FAIL;
   return OK;
 }
@@ -5783,7 +5827,11 @@ int win_getid(typval_T *argvars)
       if (tp == NULL) {
         return -1;
       }
-      wp = tp->tp_firstwin;
+      if (tp == curtab) {
+        wp = firstwin;
+      } else {
+        wp = tp->tp_firstwin;
+      }
     }
     for ( ; wp != NULL; wp = wp->w_next) {
       if (--winnr == 0) {

@@ -5227,10 +5227,8 @@ static int ex_window(void)
   invalidate_botline();
   redraw_later(SOME_VALID);
 
-  /* Save the command line info, can be used recursively. */
-  save_ccline = ccline;
-  ccline.cmdbuff = NULL;
-  ccline.cmdprompt = NULL;
+  // Save the command line info, can be used recursively.
+  save_cmdline(&save_ccline);
 
   /* No Ex mode here! */
   exmode_active = 0;
@@ -5264,8 +5262,8 @@ static int ex_window(void)
   /* Restore KeyTyped in case it is modified by autocommands */
   KeyTyped = save_KeyTyped;
 
-  /* Restore the command line info. */
-  ccline = save_ccline;
+  // Restore the command line info.
+  restore_cmdline(&save_ccline);
   cmdwin_type = 0;
 
   exmode_active = save_exmode;
