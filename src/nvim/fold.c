@@ -2507,6 +2507,8 @@ static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
 
   fp = (fold_T *)gap->ga_data + i;
   fp[1].fd_top = bot + 1;
+  // check for wrap around (MAXLNUM, and 32bit)
+  assert(fp[1].fd_top > bot);
   fp[1].fd_len = fp->fd_len - (fp[1].fd_top - fp->fd_top);
   fp[1].fd_flags = fp->fd_flags;
   fp[1].fd_small = MAYBE;
@@ -2555,34 +2557,35 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
 {
   fold_T      *fp = NULL;
 
-  if (bot < top)
-    return;             /* nothing to do */
+  if (bot < top) {
+    return;             // nothing to do
+  }
 
   for (;; ) {
-    /* Find fold that includes top or a following one. */
+    // Find fold that includes top or a following one.
     if (foldFind(gap, top, &fp) && fp->fd_top < top) {
-      /* 2: or 3: need to delete nested folds */
+      // 2: or 3: need to delete nested folds
       foldRemove(&fp->fd_nested, top - fp->fd_top, bot - fp->fd_top);
-      if (fp->fd_top + fp->fd_len > bot + 1) {
-        /* 3: need to split it. */
+      if (fp->fd_top + fp->fd_len - 1 > bot) {
+        // 3: need to split it.
         foldSplit(gap, (int)(fp - (fold_T *)gap->ga_data), top, bot);
       } else {
-        /* 2: truncate fold at "top". */
+        // 2: truncate fold at "top".
         fp->fd_len = top - fp->fd_top;
       }
-      fold_changed = TRUE;
+      fold_changed = true;
       continue;
     }
     if (fp >= (fold_T *)(gap->ga_data) + gap->ga_len
         || fp->fd_top > bot) {
-      /* 6: Found a fold below bot, can stop looking. */
+      // 6: Found a fold below bot, can stop looking.
       break;
     }
     if (fp->fd_top >= top) {
-      /* Found an entry below top. */
-      fold_changed = TRUE;
+      // Found an entry below top.
+      fold_changed = true;
       if (fp->fd_top + fp->fd_len - 1 > bot) {
-        /* 5: Make fold that includes bot start below bot. */
+        // 5: Make fold that includes bot start below bot.
         foldMarkAdjustRecurse(&fp->fd_nested,
             (linenr_T)0, (long)(bot - fp->fd_top),
             (linenr_T)MAXLNUM, (long)(fp->fd_top - bot - 1));
@@ -2591,11 +2594,159 @@ static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot)
         break;
       }
 
-      /* 4: Delete completely contained fold. */
-      deleteFoldEntry(gap, (int)(fp - (fold_T *)gap->ga_data), TRUE);
+      // 4: Delete completely contained fold.
+      deleteFoldEntry(gap, (int)(fp - (fold_T *)gap->ga_data), true);
     }
   }
 }
+
+// foldMoveRange() {{{2
+static void reverse_fold_order(garray_T *gap, size_t start, size_t end)
+{
+  for (; start < end; start++, end--) {
+    fold_T *left = (fold_T *)gap->ga_data + start;
+    fold_T *right = (fold_T *)gap->ga_data + end;
+    fold_T tmp = *left;
+    *left = *right;
+    *right = tmp;
+  }
+}
+
+// Move folds within the inclusive range "line1" to "line2" to after "dest"
+// require "line1" <= "line2" <= "dest"
+//
+// There are the following situations for the first fold at or below line1 - 1.
+//       1  2  3  4
+//       1  2  3  4
+// line1    2  3  4
+//          2  3  4  5  6  7
+// line2       3  4  5  6  7
+//             3  4     6  7  8  9
+// dest           4        7  8  9
+//                4        7  8    10
+//                4        7  8    10
+//
+// In the following descriptions, "moved" means moving in the buffer, *and* in
+// the fold array.
+// Meanwhile, "shifted" just means moving in the buffer.
+// 1. not changed
+// 2. truncated above line1
+// 3. length reduced by  line2 - line1, folds starting between the end of 3 and
+//    dest are truncated and shifted up
+// 4. internal folds moved (from [line1, line2] to dest)
+// 5. moved to dest.
+// 6. truncated below line2 and moved.
+// 7. length reduced by line2 - dest, folds starting between line2 and dest are
+//    removed, top is moved down by move_len.
+// 8. truncated below dest and shifted up.
+// 9. shifted up
+// 10. not changed
+static void truncate_fold(fold_T *fp, linenr_T end)
+{
+  // I want to stop *at here*, foldRemove() stops *above* top
+  end += 1;
+  foldRemove(&fp->fd_nested, end - fp->fd_top, MAXLNUM);
+  fp->fd_len = end - fp->fd_top;
+}
+
+#define FOLD_END(fp) ((fp)->fd_top + (fp)->fd_len - 1)
+#define VALID_FOLD(fp, gap) ((fp) < ((fold_T *)(gap)->ga_data + (gap)->ga_len))
+#define FOLD_INDEX(fp, gap) ((size_t)(fp - ((fold_T *)(gap)->ga_data)))
+void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
+                   const linenr_T dest)
+{
+  fold_T *fp;
+  const linenr_T range_len = line2 - line1 + 1;
+  const linenr_T move_len = dest - line2;
+  const bool at_start = foldFind(gap, line1 - 1, &fp);
+
+  if (at_start) {
+    if (FOLD_END(fp) > dest) {
+      // Case 4 -- don't have to change this fold, but have to move nested
+      // folds.
+      foldMoveRange(&fp->fd_nested, line1 - fp->fd_top, line2 -
+                    fp->fd_top, dest - fp->fd_top);
+      return;
+    } else if (FOLD_END(fp) > line2) {
+      // Case 3 -- Remove nested folds between line1 and line2 & reduce the
+      // length of fold by "range_len".
+      // Folds after this one must be dealt with.
+      foldMarkAdjustRecurse(&fp->fd_nested, line1 - fp->fd_top,
+                            line2 - fp->fd_top, MAXLNUM, -range_len);
+      fp->fd_len -= range_len;
+    } else {
+      // Case 2 -- truncate fold *above* line1.
+      // Folds after this one must be dealt with.
+      truncate_fold(fp, line1 - 1);
+    }
+    // Look at the next fold, and treat that one as if it were the first after
+    // "line1" (because now it is).
+    fp = fp + 1;
+  }
+
+  if (!VALID_FOLD(fp, gap) || fp->fd_top > dest) {
+    // No folds after "line1" and before "dest"
+    // Case 10.
+    return;
+  } else if (fp->fd_top > line2) {
+    for (; VALID_FOLD(fp, gap) && FOLD_END(fp) <= dest; fp++) {
+      // Case 9. (for all case 9's) -- shift up.
+      fp->fd_top -= range_len;
+    }
+    if (VALID_FOLD(fp, gap) && fp->fd_top <= dest) {
+      // Case 8. -- ensure truncated at dest, shift up
+      truncate_fold(fp, dest);
+      fp->fd_top -= range_len;
+    }
+    return;
+  } else if (FOLD_END(fp) > dest) {
+    // Case 7 -- remove nested folds and shrink
+    foldMarkAdjustRecurse(&fp->fd_nested, line2 + 1 - fp->fd_top,
+                          dest - fp->fd_top, MAXLNUM, -move_len);
+    fp->fd_len -= move_len;
+    fp->fd_top += move_len;
+    return;
+  }
+
+  // Case 5 or 6: changes rely on whether there are folds between the end of
+  // this fold and "dest".
+  size_t move_start = FOLD_INDEX(fp, gap);
+  size_t move_end = 0, dest_index = 0;
+  for (; VALID_FOLD(fp, gap) && fp->fd_top <= dest; fp++) {
+    if (fp->fd_top <= line2) {
+      // 5, or 6
+      if (FOLD_END(fp) > line2) {
+        // 6, truncate before moving
+        truncate_fold(fp, line2);
+      }
+      fp->fd_top += move_len;
+      continue;
+    }
+
+    // Record index of the first fold after the moved range.
+    if (move_end == 0) {
+      move_end = FOLD_INDEX(fp, gap);
+    }
+
+    if (FOLD_END(fp) > dest) {
+      truncate_fold(fp, dest);
+    }
+
+    fp->fd_top -= range_len;
+  }
+  dest_index = FOLD_INDEX(fp, gap);
+
+  // All folds are now correct, but they are not necessarily in the correct
+  // order.
+  // We have to swap folds in the range [move_end, dest_index) with those in
+  // the range [move_start, move_end).
+  reverse_fold_order(gap, move_start, dest_index - 1);
+  reverse_fold_order(gap, move_start, move_start + dest_index - move_end - 1);
+  reverse_fold_order(gap, move_start + dest_index - move_end, dest_index - 1);
+}
+#undef FOLD_END
+#undef VALID_FOLD
+#undef FOLD_INDEX
 
 /* foldMerge() {{{2 */
 /*
