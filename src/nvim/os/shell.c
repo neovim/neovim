@@ -57,11 +57,13 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
 
   if (extra_args) {
     rv[i++] = xstrdup(extra_args);        // Push a copy of `extra_args`
+    verbose_smsg(4, "shell_build_argv: extra_args: \"%s\"", rv[i-1]);
   }
 
   if (cmd) {
     i += tokenize(p_shcf, rv + i);        // Split 'shellcmdflag'
     rv[i++] = shell_xescape_xquote(cmd);  // Copy (and escape) `cmd`.
+    verbose_smsg(4, "shell_build_argv: escaped cmd: \"%s\"", rv[i-1]);
   }
 
   rv[i] = NULL;
