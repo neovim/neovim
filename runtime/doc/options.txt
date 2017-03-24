@@ -2776,8 +2776,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'grepprg'* *'gp'*
 'grepprg' 'gp'		string	(default "grep -n ",
-					Unix: "grep -n $* /dev/null",
-					Win32: "findstr /n" or "grep -n")
+				 Unix: "grep -n $* /dev/null")
 			global or local to buffer |global-local|
 	Program to use for the |:grep| command.  This option may contain '%'
 	and '#' characters, which are expanded like when used in a command-
@@ -2792,8 +2791,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|:vimgrepadd| and |:lgrepadd| like |:lvimgrepadd|.
 	See also the section |:make_makeprg|, since most of the comments there
 	apply equally to 'grepprg'.
-	For Win32, the default is "findstr /n" if "findstr.exe" can be found,
-	otherwise it's "grep -n".
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -5285,9 +5282,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shellcmdflag'* *'shcf'*
-'shellcmdflag' 'shcf'	string	(default: "-c";
-				 Windows, when 'shell' does not
-				 contain "sh" somewhere: "/c")
+'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
 	"bash.exe -c ls" or "cmd.exe /c dir".  For Windows
@@ -5298,15 +5293,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |option-backslash| about including spaces and backslashes.
 	See |shell-unquoting| which talks about separating this option into 
 	multiple arguments.
-	Also see |dos-shell| for Windows.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
 						*'shellpipe'* *'sp'*
 'shellpipe' 'sp'	string	(default ">", "| tee", "|& tee" or "2>&1| tee")
 			global
-			{not available when compiled without the |+quickfix|
-			feature}
 	String to be used to put the output of the ":make" command in the
 	error file.  See also |:make_makeprg|.  See |option-backslash| about
 	including spaces and backslashes.
@@ -5348,7 +5340,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	third-party shells on Windows systems, such as the MKS Korn Shell
 	or bash, where it should be "\"".  The default is adjusted according
 	the value of 'shell', to reduce the need to set this option by the
-	user.  See |dos-shell|.
+	user.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -5380,7 +5372,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'shellslash'* *'ssl'* *'noshellslash'* *'nossl'*
 'shellslash' 'ssl'	boolean	(default off)
 			global
-			{only for MSDOS and MS-Windows}
+			{only for Windows}
 	When set, a forward slash is used when expanding file names.  This is
 	useful when a Unix-like shell is used instead of command.com or
 	cmd.exe.  Backward slashes can still be typed, but they are changed to
@@ -5397,10 +5389,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When on, use temp files for shell commands.  When off use a pipe.
 	When using a pipe is not possible temp files are used anyway.
-	Currently a pipe is only supported on Unix and MS-Windows 2K and
-	later.  You can check it with: >
-		:if has("filterpipe")
-<	The advantage of using a pipe is that nobody can read the temp file
+	The advantage of using a pipe is that nobody can read the temp file
 	and the 'shell' command does not need to support redirection.
 	The advantage of using a temp file is that the file type and encoding
 	can be detected.
@@ -5410,8 +5399,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|system()| does not respect this option, it always uses pipes.
 
 						*'shellxescape'* *'sxe'*
-'shellxescape' 'sxe'	string	(default: "";
-				 for Windows: "\"&|<>()@^")
+'shellxescape' 'sxe'	string	(default: ""; Windows: "\"&|<>()@^")
 			global
 	When 'shellxquote' is set to "(" then the characters listed in this
 	option will be escaped with a '^' character.  This makes it possible
@@ -5436,7 +5424,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	strips off the first and last quote on a command, or 3rd-party shells
 	such as the MKS Korn Shell or bash, where it should be "\"".  The
 	default is adjusted according the value of 'shell', to reduce the need
-	to set this option by the user.  See |dos-shell|.
+	to set this option by the user.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -6447,8 +6435,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'title'* *'notitle'*
 'title'			boolean	(default off, on when title can be restored)
 			global
-			{not available when compiled without the |+title|
-			feature}
 	When on, the title of the window will be set to the value of
 	'titlestring' (if it is not empty), or to:
 		filename [+=-] (path) - VIM
@@ -6460,16 +6446,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 		=+		indicates the file is read-only and modified
 		(path)		is the path of the file being edited
 		- VIM		the server name |v:servername| or "VIM"
-	Only works if the terminal supports setting window titles
-	(currently Win32 console, all GUI versions and terminals with a non-
-	empty 't_ts' option - this is Unix xterm by default, where 't_ts' is
-	taken from the builtin termcap).
 
 								*'titlelen'*
 'titlelen'		number	(default 85)
 			global
-			{not available when compiled without the |+title|
-			feature}
 	Gives the percentage of 'columns' to use for the length of the window
 	title.  When the title is longer, only the end of the path name is
 	shown.  A '<' character before the path name is used to indicate this.
@@ -6483,8 +6463,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'titleold'*
 'titleold'		string	(default "Thanks for flying Vim")
 			global
-			{only available when compiled with the |+title|
-			feature}
 	This option will be used for the window title when exiting Vim if the
 	original title cannot be restored.  Only happens if 'title' is on or
 	'titlestring' is not empty.
@@ -6493,13 +6471,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'titlestring'*
 'titlestring'		string	(default "")
 			global
-			{not available when compiled without the |+title|
-			feature}
 	When this option is not empty, it will be used for the title of the
 	window.  This happens only when the 'title' option is on.
-	Only works if the terminal supports setting window titles (currently
-	Win32 console, all GUI versions and terminals with a non-empty 't_ts'
-	option).
 	When this option contains printf-style '%' items, they will be
 	expanded according to the rules used for 'statusline'.
 	Example: >
