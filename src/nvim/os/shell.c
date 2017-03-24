@@ -38,6 +38,23 @@ typedef struct {
 # include "os/shell.c.generated.h"
 #endif
 
+#ifdef WIN32
+static void unescape_shellxquote(char *p, char_u *escaped)
+{
+  size_t l = STRLEN(p);
+  int n;
+
+  while (*p != NUL) {
+    if (*p == '^' && vim_strchr(escaped, p[1]) != NULL) {
+      memmove(p, p + 1, l--);
+    }
+    n = (*mb_ptr2len)((char_u *)p);
+    p += n;
+    l -= n;
+  }
+}
+#endif
+
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
 /// with an optional command prefixed by 'shellcmdflag' (p_shcf). E.g.:
 ///
@@ -49,6 +66,14 @@ typedef struct {
 char **shell_build_argv(const char *cmd, const char *extra_args)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
+// #ifdef WIN32
+//   if (cmd != NULL) {
+//     char *p = (char *)vim_strsave((char_u *)cmd);
+//     unescape_shellxquote(p, p_sxe);
+//     cmd = p;
+//   }
+// #endif
+
   size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
 
