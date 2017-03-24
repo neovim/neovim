@@ -8,6 +8,7 @@ local command = helpers.command
 local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
+local iswin = helpers.iswin
 
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)
@@ -46,7 +47,7 @@ describe(':edit term://*', function()
     local winheight = curwinmeths.get_height()
     local buf_cont_start = rep_size - sb - winheight + 2
     local function bufline (i)
-      return ('%d: foobar'):format(i)
+      return (iswin() and '%d: (foobar)' or '%d: foobar'):format(i)
     end
     for i = buf_cont_start,(rep_size - 1) do
       bufcontents[#bufcontents + 1] = bufline(i)

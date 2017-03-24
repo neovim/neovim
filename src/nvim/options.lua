@@ -2051,7 +2051,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_srr',
-      defaults={if_true={vi=">"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi=">%s 2>&1"},
+        if_false={vi=">"}
+      }
     },
     {
       full_name='shellslash', abbreviation='ssl',
@@ -2073,7 +2077,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_sxq',
-      defaults={if_true={vi=""}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="("},
+        if_false={vi=""}
+      }
     },
     {
       full_name='shellxescape', abbreviation='sxe',
@@ -2081,7 +2089,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_sxe',
-      defaults={if_true={vi=""}}
+      defaults={
+        condition='WIN32',
+        if_true={vi='"&|<>()@^'},
+        if_false={vi=""}
+      }
     },
     {
       full_name='shiftround', abbreviation='sr',
