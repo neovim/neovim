@@ -3364,6 +3364,7 @@ static char_u *set_chars_option(char_u **varp)
     {&fill_vert,    "vert"},
     {&fill_fold,    "fold"},
     {&fill_diff,    "diff"},
+    {&fill_eob,     "eob"}
   };
   static struct charstab lcstab[] =
   {
