@@ -43,7 +43,7 @@ mingw32-make VERBOSE=1 || goto :error
 bin\nvim --version || goto :error
 
 :: Functional tests
-mingw32-make functionaltest VERBOSE=1 || goto :error
+:: mingw32-make functionaltest VERBOSE=1 || goto :error
 
 :: Build artifacts
 cpack -G ZIP -C Release
