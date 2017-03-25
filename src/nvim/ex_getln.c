@@ -4677,8 +4677,8 @@ add_to_history (
    * down, only lines that were added.
    */
   if (histype == HIST_SEARCH && in_map) {
-    if (maptick == last_maptick) {
-      /* Current line is from the same mapping, remove it */
+    if (maptick == last_maptick && hisidx[HIST_SEARCH] >= 0) {
+      // Current line is from the same mapping, remove it
       hisptr = &history[HIST_SEARCH][hisidx[HIST_SEARCH]];
       hist_free_entry(hisptr);
       --hisnum[histype];
