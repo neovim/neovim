@@ -2182,6 +2182,22 @@ static void draw_cmdline(int start, int len)
       }
     }
   } else if (p_arshape && !p_tbidi && enc_utf8 && len > 0) {
+    bool do_arabicshape = false;
+    int mb_l;
+    for (int i = start; i < start + len; i += mb_l) {
+      char_u *p = ccline.cmdbuff + i;
+      int u8cc[MAX_MCO];
+      int u8c = utfc_ptr2char_len(p, u8cc, start + len - i);
+      mb_l = utfc_ptr2len_len(p, start + len - i);
+      if (arabic_char(u8c)) {
+        do_arabicshape = true;
+        break;
+      }
+    }
+    if (!do_arabicshape) {
+      goto draw_cmdline_no_arabicshape;
+    }
+
     static int buflen = 0;
 
     // Do arabic shaping into a temporary buffer.  This is very
@@ -2201,7 +2217,6 @@ static void draw_cmdline(int start, int len)
       newlen = 1;
     }
 
-    int mb_l;
     int prev_c = 0;
     int prev_c1 = 0;
     for (int i = start; i < start + len; i += mb_l) {
@@ -2256,6 +2271,7 @@ static void draw_cmdline(int start, int len)
 
     msg_outtrans_len(arshape_buf, newlen);
   } else {
+draw_cmdline_no_arabicshape:
     msg_outtrans_len(ccline.cmdbuff + start, len);
   }
 }
