@@ -2107,7 +2107,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
     }
 
     int len = -1;
-    char_u *key;
+    char_u *key = NULL;
     if (*p == '.') {
       key = p + 1;
       for (len = 0; ASCII_ISALNUM(key[len]) || key[len] == '_'; len++) {
