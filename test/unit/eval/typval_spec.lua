@@ -1381,7 +1381,7 @@ describe('typval.c', function()
   end)
   describe('dict', function()
     describe('watcher', function()
-      describe('add/remove', function()
+      describe('add()/remove()', function()
         itp('works with an empty key', function()
           local d = dict({})
           eq({}, dict_watchers(d))
@@ -1491,7 +1491,7 @@ describe('typval.c', function()
       end)
     end)
     describe('item', function()
-      describe('alloc/free', function()
+      describe('alloc()/free()', function()
         local function check_tv_dict_item_alloc_len(s, len, tv, more_frees)
           local di
           if len == nil then
@@ -1527,7 +1527,7 @@ describe('typval.c', function()
           check_tv_dict_item_alloc_len('', 0, tv, {a.freed(tv.vval.v_string)})
         end)
       end)
-      describe('add/remove', function()
+      describe('add()/remove()', function()
         itp('works', function()
           local d = dict()
           eq({}, dct2tbl(d))
@@ -2543,6 +2543,98 @@ describe('typval.c', function()
         eq(false, tv_equal(d_kupper_upper, d_upper, true))
         eq(true, tv_equal(d_upper, d_upper, true, true))
         alloc_log:check({})
+      end)
+    end)
+    describe('check', function()
+      describe('str_or_nr()', function()
+        itp('works', function()
+          local tv = typvalt()
+          local mem = lib.xmalloc(1)
+          tv.vval.v_list = mem  -- Should crash when actually accessed
+          alloc_log:clear()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, nil},
+            {lib.VAR_FLOAT, 'E805: Expected a Number or a String, Float found'},
+            {lib.VAR_PARTIAL, 'E703: Expected a Number or a String, Funcref found'},
+            {lib.VAR_FUNC, 'E703: Expected a Number or a String, Funcref found'},
+            {lib.VAR_LIST, 'E745: Expected a Number or a String, List found'},
+            {lib.VAR_DICT, 'E728: Expected a Number or a String, Dictionary found'},
+            {lib.VAR_SPECIAL, 'E5300: Expected a Number or a String'},
+            {lib.VAR_UNKNOWN, 'E685: Internal error: tv_check_str_or_nr(UNKNOWN)'},
+          }) do
+            local typ = v[1]
+            local emsg = v[2]
+            local ret = true
+            if emsg then ret = false end
+            tv.v_type = typ
+            eq(ret, check_emsg(function() return lib.tv_check_str_or_nr(tv) end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+      describe('num()', function()
+        itp('works', function()
+          local tv = typvalt()
+          local mem = lib.xmalloc(1)
+          tv.vval.v_list = mem  -- Should crash when actually accessed
+          alloc_log:clear()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, nil},
+            {lib.VAR_FLOAT, 'E805: Using a Float as a Number'},
+            {lib.VAR_PARTIAL, 'E703: Using a Funcref as a Number'},
+            {lib.VAR_FUNC, 'E703: Using a Funcref as a Number'},
+            {lib.VAR_LIST, 'E745: Using a List as a Number'},
+            {lib.VAR_DICT, 'E728: Using a Dictionary as a Number'},
+            {lib.VAR_SPECIAL, nil},
+            {lib.VAR_UNKNOWN, 'E685: using an invalid value as a Number'},
+          }) do
+            local typ = v[1]
+            local emsg = v[2]
+            local ret = true
+            if emsg then ret = false end
+            tv.v_type = typ
+            eq(ret, check_emsg(function() return lib.tv_check_num(tv) end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+      describe('str()', function()
+        itp('works', function()
+          local tv = typvalt()
+          local mem = lib.xmalloc(1)
+          tv.vval.v_list = mem  -- Should crash when actually accessed
+          alloc_log:clear()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, nil},
+            {lib.VAR_FLOAT, 'E806: using Float as a String'},
+            {lib.VAR_PARTIAL, 'E729: using Funcref as a String'},
+            {lib.VAR_FUNC, 'E729: using Funcref as a String'},
+            {lib.VAR_LIST, 'E730: using List as a String'},
+            {lib.VAR_DICT, 'E731: using Dictionary as a String'},
+            {lib.VAR_SPECIAL, nil},
+            {lib.VAR_UNKNOWN, 'E908: using an invalid value as a String'},
+          }) do
+            local typ = v[1]
+            local emsg = v[2]
+            local ret = true
+            if emsg then ret = false end
+            tv.v_type = typ
+            eq(ret, check_emsg(function() return lib.tv_check_str(tv) end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
       end)
     end)
   end)
