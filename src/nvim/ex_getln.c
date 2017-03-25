@@ -2174,69 +2174,64 @@ void free_cmdline_buf(void)
  */
 static void draw_cmdline(int start, int len)
 {
-  int i;
-
-  if (cmdline_star > 0)
-    for (i = 0; i < len; ++i) {
+  if (cmdline_star > 0) {
+    for (int i = 0; i < len; i++) {
       msg_putchar('*');
-      if (has_mbyte)
+      if (has_mbyte) {
         i += (*mb_ptr2len)(ccline.cmdbuff + start + i) - 1;
+      }
     }
-  else if (p_arshape && !p_tbidi && enc_utf8 && len > 0) {
+  } else if (p_arshape && !p_tbidi && enc_utf8 && len > 0) {
     static int buflen = 0;
-    char_u          *p;
-    int j;
-    int newlen = 0;
-    int mb_l;
-    int pc, pc1 = 0;
-    int prev_c = 0;
-    int prev_c1 = 0;
-    int u8c;
-    int u8cc[MAX_MCO];
-    int nc = 0;
 
-    /*
-     * Do arabic shaping into a temporary buffer.  This is very
-     * inefficient!
-     */
+    // Do arabic shaping into a temporary buffer.  This is very
+    // inefficient!
     if (len * 2 + 2 > buflen) {
-      /* Re-allocate the buffer.  We keep it around to avoid a lot of
-       * alloc()/free() calls. */
+      // Re-allocate the buffer.  We keep it around to avoid a lot of
+      // alloc()/free() calls.
       xfree(arshape_buf);
       buflen = len * 2 + 2;
       arshape_buf = xmalloc(buflen);
     }
 
+    int newlen = 0;
     if (utf_iscomposing(utf_ptr2char(ccline.cmdbuff + start))) {
-      /* Prepend a space to draw the leading composing char on. */
+      // Prepend a space to draw the leading composing char on.
       arshape_buf[0] = ' ';
       newlen = 1;
     }
 
-    for (j = start; j < start + len; j += mb_l) {
-      p = ccline.cmdbuff + j;
-      u8c = utfc_ptr2char_len(p, u8cc, start + len - j);
-      mb_l = utfc_ptr2len_len(p, start + len - j);
+    int mb_l;
+    int prev_c = 0;
+    int prev_c1 = 0;
+    for (int i = start; i < start + len; i += mb_l) {
+      char_u *p = ccline.cmdbuff + i;
+      int u8cc[MAX_MCO];
+      int u8c = utfc_ptr2char_len(p, u8cc, start + len - i);
+      mb_l = utfc_ptr2len_len(p, start + len - i);
       if (arabic_char(u8c)) {
-        /* Do Arabic shaping. */
+        int pc;
+        int pc1 = 0;
+        int nc = 0;
+        // Do Arabic shaping.
         if (cmdmsg_rl) {
-          /* displaying from right to left */
+          // Displaying from right to left.
           pc = prev_c;
           pc1 = prev_c1;
           prev_c1 = u8cc[0];
-          if (j + mb_l >= start + len)
+          if (i + mb_l >= start + len) {
             nc = NUL;
-          else
+          } else {
             nc = utf_ptr2char(p + mb_l);
+          }
         } else {
-          /* displaying from left to right */
-          if (j + mb_l >= start + len)
+          // Displaying from left to right.
+          if (i + mb_l >= start + len) {
             pc = NUL;
-          else {
+          } else {
             int pcc[MAX_MCO];
 
-            pc = utfc_ptr2char_len(p + mb_l, pcc,
-                start + len - j - mb_l);
+            pc = utfc_ptr2char_len(p + mb_l, pcc, start + len - i - mb_l);
             pc1 = pcc[0];
           }
           nc = prev_c;
@@ -2260,8 +2255,9 @@ static void draw_cmdline(int start, int len)
     }
 
     msg_outtrans_len(arshape_buf, newlen);
-  } else
+  } else {
     msg_outtrans_len(ccline.cmdbuff + start, len);
+  }
 }
 
 /*
