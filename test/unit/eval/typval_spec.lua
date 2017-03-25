@@ -2760,6 +2760,172 @@ describe('typval.c', function()
           end
         end)
       end)
+      describe('string()', function()
+        itp('works', function()
+          local buf = lib.tv_get_string(lua2typvalt(int(1)))
+          local buf_chk = lib.tv_get_string_chk(lua2typvalt(int(1)))
+          neq(buf, buf_chk)
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
+            {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
+            {lib.VAR_FLOAT, {v_float=42.53}, 'E806: using Float as a String', ''},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: using Funcref as a String', ''},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', ''},
+            {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
+          }) do
+            local tv = typvalt(v[1], v[2])
+            alloc_log:check({})
+            local emsg = v[3]
+            local ret = v[4]
+            eq(ret, check_emsg(function()
+              local res = lib.tv_get_string(tv)
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+                eq(buf, res)
+              else
+                neq(buf, res)
+              end
+              if res ~= nil then
+                return ffi.string(res)
+              else
+                return nil
+              end
+            end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+      describe('string_chk()', function()
+        itp('works', function()
+          local buf = lib.tv_get_string_chk(lua2typvalt(int(1)))
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
+            {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
+            {lib.VAR_FLOAT, {v_float=42.53}, 'E806: using Float as a String', nil},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: using Funcref as a String', nil},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', nil},
+            {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
+          }) do
+            local tv = typvalt(v[1], v[2])
+            alloc_log:check({})
+            local emsg = v[3]
+            local ret = v[4]
+            eq(ret, check_emsg(function()
+              local res = lib.tv_get_string_chk(tv)
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+                eq(buf, res)
+              else
+                neq(buf, res)
+              end
+              if res ~= nil then
+                return ffi.string(res)
+              else
+                return nil
+              end
+            end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+      describe('string_buf()', function()
+        itp('works', function()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
+            {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
+            {lib.VAR_FLOAT, {v_float=42.53}, 'E806: using Float as a String', ''},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: using Funcref as a String', ''},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', ''},
+            {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', ''},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', ''},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
+          }) do
+            local tv = typvalt(v[1], v[2])
+            alloc_log:check({})
+            local emsg = v[3]
+            local ret = v[4]
+            eq(ret, check_emsg(function()
+              local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
+              local res = lib.tv_get_string_buf(tv, buf)
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+                eq(buf, res)
+              else
+                neq(buf, res)
+              end
+              if res ~= nil then
+                return ffi.string(res)
+              else
+                return nil
+              end
+            end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+      describe('string_buf_chk()', function()
+        itp('works', function()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, {v_number=42}, nil, '42'},
+            {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, '100500'},
+            {lib.VAR_FLOAT, {v_float=42.53}, 'E806: using Float as a String', nil},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E729: using Funcref as a String', nil},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E729: using Funcref as a String', nil},
+            {lib.VAR_LIST, {v_list=NULL}, 'E730: using List as a String', nil},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E731: using Dictionary as a String', nil},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 'null'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 'true'},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
+            {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
+          }) do
+            local tv = typvalt(v[1], v[2])
+            alloc_log:check({})
+            local emsg = v[3]
+            local ret = v[4]
+            eq(ret, check_emsg(function()
+              local buf = ffi.new('char[?]', lib.NUMBUFLEN, {0})
+              local res = lib.tv_get_string_buf_chk(tv, buf)
+              if tv.v_type == lib.VAR_NUMBER or tv.v_type == lib.VAR_SPECIAL then
+                eq(buf, res)
+              else
+                neq(buf, res)
+              end
+              if res ~= nil then
+                return ffi.string(res)
+              else
+                return nil
+              end
+            end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
     end)
   end)
 end)
