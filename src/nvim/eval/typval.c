@@ -2447,7 +2447,7 @@ float_T tv_get_float(const typval_T *const tv)
       break;
     }
     case VAR_UNKNOWN: {
-      emsgf(_(e_intern2), "get_tv_float(UNKNOWN)");
+      emsgf(_(e_intern2), "tv_get_float(UNKNOWN)");
       break;
     }
   }

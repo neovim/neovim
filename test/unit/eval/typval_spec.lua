@@ -10,6 +10,7 @@ local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
 local FAIL = helpers.FAIL
+local NULL = helpers.NULL
 local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local alloc_log_new = helpers.alloc_log_new
@@ -43,7 +44,8 @@ local concat_tables = global_helpers.concat_tables
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/mbyte.h', './src/nvim/garray.h',
-                    './src/nvim/eval.h', './src/nvim/vim.h')
+                    './src/nvim/eval.h', './src/nvim/vim.h',
+                    './src/nvim/globals.h')
 
 local function list_watch_alloc(li)
   return ffi.cast('listwatch_T*', ffi.new('listwatch_T[1]', {{lw_item=li}}))
@@ -2630,6 +2632,126 @@ describe('typval.c', function()
             if emsg then ret = false end
             tv.v_type = typ
             eq(ret, check_emsg(function() return lib.tv_check_str(tv) end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+    end)
+    describe('get', function()
+      describe('number()', function()
+        itp('works', function()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, {v_number=42}, nil, 42},
+            {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, 100500},
+            {lib.VAR_FLOAT, {v_float=42.53}, 'E805: Using a Float as a Number', 0},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E703: Using a Funcref as a Number', 0},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E703: Using a Funcref as a Number', 0},
+            {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', 0},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', 0},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
+          }) do
+            local tv = typvalt(v[1], v[2])
+            alloc_log:check({})
+            local emsg = v[3]
+            local ret = v[4]
+            eq(ret, check_emsg(function() return lib.tv_get_number(tv) end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+      describe('number_chk()', function()
+        itp('works', function()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, {v_number=42}, nil, 42},
+            {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, 100500},
+            {lib.VAR_FLOAT, {v_float=42.53}, 'E805: Using a Float as a Number', 0},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E703: Using a Funcref as a Number', 0},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E703: Using a Funcref as a Number', 0},
+            {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', 0},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', 0},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
+          }) do
+            local tv = typvalt(v[1], v[2])
+            alloc_log:check({})
+            local emsg = v[3]
+            local ret = {v[4], not not emsg}
+            eq(ret, check_emsg(function()
+              local err = ffi.new('bool[1]', {false})
+              local res = lib.tv_get_number_chk(tv, err)
+              return {res, err[0]}
+            end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+      describe('lnum()', function()
+        itp('works', function()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, {v_number=42}, nil, 42},
+            {lib.VAR_STRING, {v_string=to_cstr('100500')}, nil, 100500},
+            {lib.VAR_STRING, {v_string=to_cstr('.')}, nil, 46},
+            {lib.VAR_FLOAT, {v_float=42.53}, 'E805: Using a Float as a Number', -1},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E703: Using a Funcref as a Number', -1},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E703: Using a Funcref as a Number', -1},
+            {lib.VAR_LIST, {v_list=NULL}, 'E745: Using a List as a Number', -1},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E728: Using a Dictionary as a Number', -1},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, nil, 0},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, nil, 1},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
+            {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', -1},
+          }) do
+            lib.curwin.w_cursor.lnum = 46
+            local tv = typvalt(v[1], v[2])
+            alloc_log:check({})
+            local emsg = v[3]
+            local ret = v[4]
+            eq(ret, check_emsg(function() return lib.tv_get_lnum(tv) end, emsg))
+            if emsg then
+              alloc_log:clear()
+            else
+              alloc_log:check({})
+            end
+          end
+        end)
+      end)
+      describe('float()', function()
+        itp('works', function()
+          for _, v in ipairs({
+            {lib.VAR_NUMBER, {v_number=42}, nil, 42},
+            {lib.VAR_STRING, {v_string=to_cstr('100500')}, 'E892: Using a String as a Float', 0},
+            {lib.VAR_FLOAT, {v_float=42.53}, nil, 42.53},
+            {lib.VAR_PARTIAL, {v_partial=NULL}, 'E891: Using a Funcref as a Float', 0},
+            {lib.VAR_FUNC, {v_string=NULL}, 'E891: Using a Funcref as a Float', 0},
+            {lib.VAR_LIST, {v_list=NULL}, 'E893: Using a List as a Float', 0},
+            {lib.VAR_DICT, {v_dict=NULL}, 'E894: Using a Dictionary as a Float', 0},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarNull}, 'E907: Using a special value as a Float', 0},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarTrue}, 'E907: Using a special value as a Float', 0},
+            {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, 'E907: Using a special value as a Float', 0},
+            {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_float(UNKNOWN)', 0},
+          }) do
+            local tv = typvalt(v[1], v[2])
+            alloc_log:check({})
+            local emsg = v[3]
+            local ret = v[4]
+            eq(ret, check_emsg(function() return lib.tv_get_float(tv) end, emsg))
             if emsg then
               alloc_log:clear()
             else
