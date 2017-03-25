@@ -79,7 +79,7 @@ function! man#read_page(ref) abort
     let [sect, name, path] = s:verify_exists(sect, name)
     let page = s:get_page(path)
   catch
-    " call to s:error() is unnecessary
+    call s:error(v:exception)
     return
   endtry
   let b:man_sect = sect
