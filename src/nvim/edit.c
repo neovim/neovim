@@ -689,11 +689,9 @@ static int insert_execute(VimState *state, int key)
   if (s->c == Ctrl_BSL) {
     // may need to redraw when no more chars available now
     ins_redraw(false);
-    ++no_mapping;
-    ++allow_keys;
+    no_mapping++;
     s->c = plain_vgetc();
-    --no_mapping;
-    --allow_keys;
+    no_mapping--;
     if (s->c != Ctrl_N && s->c != Ctrl_G && s->c != Ctrl_O) {
       // it's something else
       vungetc(s->c);
@@ -8303,17 +8301,16 @@ static int ins_digraph(void)
   }
 
 
-  /* don't map the digraph chars. This also prevents the
-   * mode message to be deleted when ESC is hit */
-  ++no_mapping;
-  ++allow_keys;
+  // don't map the digraph chars. This also prevents the
+  // mode message to be deleted when ESC is hit
+  no_mapping++;
   c = plain_vgetc();
-  --no_mapping;
-  --allow_keys;
-  if (did_putchar)
-    /* when the line fits in 'columns' the '?' is at the start of the next
-     * line and will not be removed by the redraw */
+  no_mapping--;
+  if (did_putchar) {
+    // when the line fits in 'columns' the '?' is at the start of the next
+    // line and will not be removed by the redraw
     edit_unputchar();
+  }
 
   if (IS_SPECIAL(c) || mod_mask) {          /* special key */
     clear_showcmd();
@@ -8333,15 +8330,14 @@ static int ins_digraph(void)
       }
       add_to_showcmd_c(c);
     }
-    ++no_mapping;
-    ++allow_keys;
+    no_mapping++;
     cc = plain_vgetc();
-    --no_mapping;
-    --allow_keys;
-    if (did_putchar)
-      /* when the line fits in 'columns' the '?' is at the start of the
-       * next line and will not be removed by a redraw */
+    no_mapping--;
+    if (did_putchar) {
+      // when the line fits in 'columns' the '?' is at the start of the
+      // next line and will not be removed by a redraw
       edit_unputchar();
+    }
     if (cc != ESC) {
       AppendToRedobuff((char_u *)CTRL_V_STR);
       c = getdigraph(c, cc, TRUE);

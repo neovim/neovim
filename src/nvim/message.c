@@ -847,23 +847,22 @@ void wait_return(int redraw)
        * CTRL-C, but we need to loop then. */
       had_got_int = got_int;
 
-      /* Don't do mappings here, we put the character back in the
-       * typeahead buffer. */
-      ++no_mapping;
-      ++allow_keys;
+      // Don't do mappings here, we put the character back in the
+      // typeahead buffer.
+      no_mapping++;
 
-      /* Temporarily disable Recording. If Recording is active, the
-       * character will be recorded later, since it will be added to the
-       * typebuf after the loop */
+      // Temporarily disable Recording. If Recording is active, the
+      // character will be recorded later, since it will be added to the
+      // typebuf after the loop
       save_Recording = Recording;
       save_scriptout = scriptout;
       Recording = FALSE;
       scriptout = NULL;
       c = safe_vgetc();
-      if (had_got_int && !global_busy)
-        got_int = FALSE;
-      --no_mapping;
-      --allow_keys;
+      if (had_got_int && !global_busy) {
+        got_int = false;
+      }
+      no_mapping--;
       Recording = save_Recording;
       scriptout = save_scriptout;
 

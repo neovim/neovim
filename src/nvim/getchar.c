@@ -1389,27 +1389,20 @@ int vgetc(void)
     for (;; ) {                 // this is done twice if there are modifiers
       bool did_inc = false;
       if (mod_mask) {           // no mapping after modifier has been read
-        ++no_mapping;
-        ++allow_keys;
+        no_mapping++;
         did_inc = true;         // mod_mask may change value
       }
       c = vgetorpeek(true);
       if (did_inc) {
-        --no_mapping;
-        --allow_keys;
+        no_mapping--;
       }
 
-      /* Get two extra bytes for special keys */
-      if (c == K_SPECIAL
-          ) {
-        int save_allow_keys = allow_keys;
-
-        ++no_mapping;
-        allow_keys = 0;                 /* make sure BS is not found */
-        c2 = vgetorpeek(TRUE);          /* no mapping for these chars */
-        c = vgetorpeek(TRUE);
-        --no_mapping;
-        allow_keys = save_allow_keys;
+      // Get two extra bytes for special keys
+      if (c == K_SPECIAL) {
+        no_mapping++;
+        c2 = vgetorpeek(true);          // no mapping for these chars
+        c = vgetorpeek(true);
+        no_mapping--;
         if (c2 == KS_MODIFIER) {
           mod_mask = c;
           continue;
@@ -1487,7 +1480,7 @@ int vgetc(void)
               buf[i] = CSI;
           }
         }
-        --no_mapping;
+        no_mapping--;
         c = (*mb_ptr2char)(buf);
       }
 
@@ -1570,7 +1563,7 @@ int char_avail(void)
 
   no_mapping++;
   retval = vpeekc();
-  --no_mapping;
+  no_mapping--;
   return retval != NUL;
 }
 

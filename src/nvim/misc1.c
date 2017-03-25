@@ -2225,11 +2225,10 @@ int ask_yesno(const char *str, bool direct)
   int r = ' ';
   int save_State = State;
 
-  ++no_wait_return;
-  State = CONFIRM;              /* mouse behaves like with :confirm */
-  setmouse();                   /* disables mouse for xterm */
-  ++no_mapping;
-  ++allow_keys;                 /* no mapping here, but recognize keys */
+  no_wait_return++;
+  State = CONFIRM;              // mouse behaves like with :confirm
+  setmouse();                   // disables mouse for xterm
+  no_mapping++;
 
   while (r != 'y' && r != 'n') {
     /* same highlighting as for wait_return */
@@ -2247,8 +2246,7 @@ int ask_yesno(const char *str, bool direct)
   --no_wait_return;
   State = save_State;
   setmouse();
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
 
   return r;
 }
@@ -2398,8 +2396,7 @@ get_number (
   if (msg_silent != 0)
     return 0;
 
-  ++no_mapping;
-  ++allow_keys;                 /* no mapping here, but recognize keys */
+  no_mapping++;
   for (;; ) {
     ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
@@ -2427,8 +2424,7 @@ get_number (
     } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC)
       break;
   }
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
   return n;
 }
 

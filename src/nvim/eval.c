@@ -10596,8 +10596,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   varnumber_T n;
   int error = FALSE;
 
-  ++no_mapping;
-  ++allow_keys;
+  no_mapping++;
   for (;; ) {
     // Position the cursor.  Needed after a message that ends in a space,
     // or if event processing caused a redraw.
@@ -10630,8 +10629,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       continue;
     break;
   }
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
 
   vimvars[VV_MOUSE_WIN].vv_nr = 0;
   vimvars[VV_MOUSE_WINID].vv_nr = 0;
