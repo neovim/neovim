@@ -8,7 +8,7 @@
 # Set the LIBUV_USE_STATIC variable to specify if static libraries should
 # be preferred to shared ones.
 
-if(NOT LIBUV_USE_BUNDLED)
+if(NOT USE_BUNDLED_LIBUV)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
     pkg_check_modules(PC_LIBUV QUIET libuv)
