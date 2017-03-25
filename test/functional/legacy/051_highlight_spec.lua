@@ -16,7 +16,7 @@ describe(':highlight', function()
     local screen = Screen.new(35, 10)
     screen:attach()
     -- Basic test if ":highlight" doesn't crash
-    execute('highlight')
+    execute('set more', 'highlight')
     -- FIXME(tarruda): We need to be sure the prompt is displayed before
     -- continuing, or risk a race condition where some of the following input
     -- is discarded resulting in test failure
