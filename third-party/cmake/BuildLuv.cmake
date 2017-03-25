@@ -87,5 +87,9 @@ BuildLuv(PATCH_COMMAND ${LUV_PATCH_COMMAND}
   INSTALL_COMMAND ${LUV_INSTALL_COMMAND})
 
 list(APPEND THIRD_PARTY_DEPS luv-static)
-add_dependencies(luv-static luajit)
-add_dependencies(luv-static libuv)
+if(USE_BUNDLED_LUAJIT)
+  add_dependencies(luv-static luajit)
+endif()
+if(USE_BUNDLED_LIBUV)
+  add_dependencies(luv-static libuv)
+endif()
