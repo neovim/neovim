@@ -1956,6 +1956,7 @@ void tv_copy(typval_T *const from, typval_T *const to)
 /// @param[in]  deep  Levels to (un)lock, -1 to (un)lock everything.
 /// @param[in]  lock  True if it is needed to lock an item, false to unlock.
 void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
+  FUNC_ATTR_NONNULL_ALL
 {
   // TODO(ZyX-I): Make this not recursive
   static int recurse = 0;
@@ -2031,13 +2032,13 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
 bool tv_islocked(const typval_T *const tv)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  return ((tv->v_lock & VAR_LOCKED)
+  return ((tv->v_lock == VAR_LOCKED)
           || (tv->v_type == VAR_LIST
               && tv->vval.v_list != NULL
-              && (tv->vval.v_list->lv_lock & VAR_LOCKED))
+              && (tv->vval.v_list->lv_lock == VAR_LOCKED))
           || (tv->v_type == VAR_DICT
               && tv->vval.v_dict != NULL
-              && (tv->vval.v_dict->dv_lock & VAR_LOCKED)));
+              && (tv->vval.v_dict->dv_lock == VAR_LOCKED)));
 }
 
 /// Return true if typval is locked

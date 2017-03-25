@@ -2310,5 +2310,119 @@ describe('typval.c', function()
         end
       end)
     end)
+    describe('item_lock()', function()
+      itp('does not alter VAR_PARTIAL', function()
+        local p_tv = lua2typvalt({
+          [type_key]=func_type,
+          value='tr',
+          dict={},
+        })
+        lib.tv_item_lock(p_tv, -1, true)
+        eq(lib.VAR_UNLOCKED, p_tv.vval.v_partial.pt_dict.dv_lock)
+      end)
+      itp('does not change VAR_FIXED values', function()
+        local d_tv = lua2typvalt({})
+        local l_tv = lua2typvalt(empty_list)
+        alloc_log:clear()
+        d_tv.v_lock = lib.VAR_FIXED
+        d_tv.vval.v_dict.dv_lock = lib.VAR_FIXED
+        l_tv.v_lock = lib.VAR_FIXED
+        l_tv.vval.v_list.lv_lock = lib.VAR_FIXED
+        lib.tv_item_lock(d_tv, 1, true)
+        lib.tv_item_lock(l_tv, 1, true)
+        eq(lib.VAR_FIXED, d_tv.v_lock)
+        eq(lib.VAR_FIXED, l_tv.v_lock)
+        eq(lib.VAR_FIXED, d_tv.vval.v_dict.dv_lock)
+        eq(lib.VAR_FIXED, l_tv.vval.v_list.lv_lock)
+        lib.tv_item_lock(d_tv, 1, false)
+        lib.tv_item_lock(l_tv, 1, false)
+        eq(lib.VAR_FIXED, d_tv.v_lock)
+        eq(lib.VAR_FIXED, l_tv.v_lock)
+        eq(lib.VAR_FIXED, d_tv.vval.v_dict.dv_lock)
+        eq(lib.VAR_FIXED, l_tv.vval.v_list.lv_lock)
+        alloc_log:check({})
+      end)
+      itp('works with NULL values', function()
+        local l_tv = lua2typvalt(null_list)
+        local d_tv = lua2typvalt(null_dict)
+        local s_tv = lua2typvalt(null_string)
+        alloc_log:clear()
+        lib.tv_item_lock(l_tv, 1, true)
+        lib.tv_item_lock(d_tv, 1, true)
+        lib.tv_item_lock(s_tv, 1, true)
+        eq(null_list, typvalt2lua(l_tv))
+        eq(null_dict, typvalt2lua(d_tv))
+        eq(null_string, typvalt2lua(s_tv))
+        eq(lib.VAR_LOCKED, d_tv.v_lock)
+        eq(lib.VAR_LOCKED, l_tv.v_lock)
+        eq(lib.VAR_LOCKED, s_tv.v_lock)
+        alloc_log:check({})
+      end)
+    end)
+    describe('islocked()', function()
+      itp('works with NULL values', function()
+        local l_tv = lua2typvalt(null_list)
+        local d_tv = lua2typvalt(null_dict)
+        eq(false, lib.tv_islocked(l_tv))
+        eq(false, lib.tv_islocked(d_tv))
+      end)
+      itp('works', function()
+        local tv = lua2typvalt()
+        local d_tv = lua2typvalt({})
+        local l_tv = lua2typvalt(empty_list)
+        alloc_log:clear()
+        eq(false, lib.tv_islocked(tv))
+        eq(false, lib.tv_islocked(l_tv))
+        eq(false, lib.tv_islocked(d_tv))
+        d_tv.vval.v_dict.dv_lock = lib.VAR_LOCKED
+        l_tv.vval.v_list.lv_lock = lib.VAR_LOCKED
+        eq(true, lib.tv_islocked(l_tv))
+        eq(true, lib.tv_islocked(d_tv))
+        tv.v_lock = lib.VAR_LOCKED
+        d_tv.v_lock = lib.VAR_LOCKED
+        l_tv.v_lock = lib.VAR_LOCKED
+        eq(true, lib.tv_islocked(tv))
+        eq(true, lib.tv_islocked(l_tv))
+        eq(true, lib.tv_islocked(d_tv))
+        d_tv.vval.v_dict.dv_lock = lib.VAR_UNLOCKED
+        l_tv.vval.v_list.lv_lock = lib.VAR_UNLOCKED
+        eq(true, lib.tv_islocked(tv))
+        eq(true, lib.tv_islocked(l_tv))
+        eq(true, lib.tv_islocked(d_tv))
+        tv.v_lock = lib.VAR_FIXED
+        d_tv.v_lock = lib.VAR_FIXED
+        l_tv.v_lock = lib.VAR_FIXED
+        eq(false, lib.tv_islocked(tv))
+        eq(false, lib.tv_islocked(l_tv))
+        eq(false, lib.tv_islocked(d_tv))
+        d_tv.vval.v_dict.dv_lock = lib.VAR_LOCKED
+        l_tv.vval.v_list.lv_lock = lib.VAR_LOCKED
+        eq(true, lib.tv_islocked(l_tv))
+        eq(true, lib.tv_islocked(d_tv))
+        d_tv.vval.v_dict.dv_lock = lib.VAR_FIXED
+        l_tv.vval.v_list.lv_lock = lib.VAR_FIXED
+        eq(false, lib.tv_islocked(l_tv))
+        eq(false, lib.tv_islocked(d_tv))
+        alloc_log:check({})
+      end)
+    end)
+    describe('check_lock()', function()
+      local function tv_check_lock(lock, name, name_len, emsg)
+        return check_emsg(function()
+          return lib.tv_check_lock(lock, name, name_len)
+        end, emsg)
+      end
+      itp('works', function()
+        eq(false, tv_check_lock(lib.VAR_UNLOCKED, 'test', 3))
+        eq(true, tv_check_lock(lib.VAR_LOCKED, 'test', 3,
+                               'E741: Value is locked: tes'))
+        eq(true, tv_check_lock(lib.VAR_FIXED, 'test', 3,
+                               'E742: Cannot change value of tes'))
+        eq(true, tv_check_lock(lib.VAR_LOCKED, nil, 0,
+                               'E741: Value is locked: Unknown'))
+        eq(true, tv_check_lock(lib.VAR_FIXED, nil, 0,
+                               'E742: Cannot change value of Unknown'))
+      end)
+    end)
   end)
 end)
