@@ -23,6 +23,8 @@ struct process {
   uint64_t stopped_time;
   char *cwd;
   char **argv;
+  /// In Win32 enable argument quoting
+  bool quote_argv;
   Stream *in, *out, *err;
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
@@ -43,6 +45,7 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
     .stopped_time = 0,
     .cwd = NULL,
     .argv = NULL,
+    .quote_argv = true,
     .in = NULL,
     .out = NULL,
     .err = NULL,

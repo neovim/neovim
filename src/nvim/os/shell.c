@@ -126,7 +126,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   size_t nread;
 
   int exitcode = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
-                              input.data, input.len, output_ptr, &nread,
+                              input.data, input.len, false, output_ptr, &nread,
                               emsg_silent, forward_output);
 
   xfree(input.data);
@@ -161,6 +161,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 /// @param input The input to the shell (NULL for no input), passed to the
 ///              stdin of the resulting process.
 /// @param len The length of the input buffer (not used if `input` == NULL)
+/// @param quote_argv If true the argv arguments will be quoted (Win32)
 /// @param[out] output Pointer to a location where the output will be
 ///                    allocated and stored. Will point to NULL if the shell
 ///                    command did not output anything. If NULL is passed,
@@ -172,15 +173,17 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
 int os_system(char **argv,
               const char *input,
               size_t len,
+              bool quote_argv,
               char **output,
               size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
-  return do_os_system(argv, input, len, output, nread, true, false);
+  return do_os_system(argv, input, len, quote_argv, output, nread, true, false);
 }
 
 static int do_os_system(char **argv,
                         const char *input,
                         size_t len,
+                        bool quote_argv,
                         char **output,
                         size_t *nread,
                         bool silent,
@@ -212,6 +215,7 @@ static int do_os_system(char **argv,
   MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
+  proc->quote_argv = quote_argv;
   proc->in = input != NULL ? &in : NULL;
   proc->out = &out;
   proc->err = &err;

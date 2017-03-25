@@ -12917,7 +12917,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          pty, rpc, detach, cwd);
+                                          pty, rpc, detach, cwd, !shellcmd);
   Process *proc = (Process *)&data->proc;
 
   if (pty) {
@@ -15142,7 +15142,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   TerminalJobData *data = common_job_init(argv, CALLBACK_NONE, CALLBACK_NONE,
                                           CALLBACK_NONE, false, true, false,
-                                          NULL);
+                                          NULL, true);
   common_job_start(data, rettv);
 }
 
@@ -17520,7 +17520,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   // execute the command
   size_t nread = 0;
   char *res = NULL;
-  int status = os_system(argv, input, input_len, &res, &nread);
+  int status = os_system(argv, input, input_len, !shellcmd, &res, &nread);
 
   xfree(input);
 
@@ -17784,7 +17784,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
-                                          true, false, false, cwd);
+                                          true, false, false, cwd, !shellcmd);
   data->proc.pty.width = curwin->w_width;
   data->proc.pty.height = curwin->w_height;
   data->proc.pty.term_name = xstrdup("xterm-256color");
@@ -24033,7 +24033,8 @@ static inline TerminalJobData *common_job_init(char **argv,
                                                bool pty,
                                                bool rpc,
                                                bool detach,
-                                               char *cwd)
+                                               char *cwd,
+                                               bool quote_argv)
 {
   TerminalJobData *data = xcalloc(1, sizeof(TerminalJobData));
   data->stopped = false;
@@ -24049,6 +24050,7 @@ static inline TerminalJobData *common_job_init(char **argv,
   }
   Process *proc = (Process *)&data->proc;
   proc->argv = argv;
+  proc->quote_argv = quote_argv;
   proc->in = &data->in;
   proc->out = &data->out;
   if (!pty) {
