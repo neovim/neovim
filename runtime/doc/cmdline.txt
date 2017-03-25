@@ -376,10 +376,18 @@ CTRL-D		List names that match the pattern in front of the cursor.
 							*c_CTRL-N*
 CTRL-N		After using 'wildchar' which got multiple matches, go to next
 		match.  Otherwise recall more recent command-line from history.
+							*/_CTRL-N*
+		When 'incsearch' is set, entering a search pattern for "/" or
+		"?" and the current match is displayed then CTRL-N will move
+		to the next match (does not take |search-offset| into account)
 <S-Tab>							*c_CTRL-P* *c_<S-Tab>*
 CTRL-P		After using 'wildchar' which got multiple matches, go to
 		previous match.  Otherwise recall older command-line from
 		history.  <S-Tab> only works with the GUI.
+							*/_CTRL-P*
+		When 'incsearch' is set, entering a search pattern for "/" or
+		"?" and the current match is displayed then CTRL-P will move
+		to the previous match (does not take |search-offset| into account).
 							*c_CTRL-A*
 CTRL-A		All names that match the pattern in front of the cursor are
 		inserted.
@@ -389,6 +397,7 @@ CTRL-L		A match is done on the pattern in front of the cursor.  If
 		If there are multiple matches the longest common part is
 		inserted in place of the pattern.  If the result is shorter
 		than the pattern, no completion is done.
+							*/_CTRL-L*
 		When 'incsearch' is set, entering a search pattern for "/" or
 		"?" and the current match is displayed then CTRL-L will add
 		one character from the end of the current match.  If
