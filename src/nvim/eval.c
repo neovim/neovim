@@ -12791,12 +12791,25 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 1;
 }
 
-static char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable)
+/// Build process arguments array from vimscript command value, if cmd is a
+/// list it it treated as the process argument list, if it is a string it is
+/// used as a shell command passed to &shell.
+///
+/// @param[out] executable is set to false if the first element in the list
+///                        is not executable
+/// @param[out] shellcmd is true if the command is a string, false otherwise
+static char **tv_to_argv(typval_T *cmd_tv, char **cmd, bool *executable, bool *shellcmd)
 {
+  if (shellcmd) {
+    *shellcmd = false;
+  }
   if (cmd_tv->v_type == VAR_STRING) {
     char *cmd_str = (char *)get_tv_string(cmd_tv);
     if (cmd) {
       *cmd = cmd_str;
+    }
+    if (shellcmd) {
+      *shellcmd = true;
     }
     return shell_build_argv(cmd_str, NULL);
   }
@@ -12854,7 +12867,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   bool executable = true;
-  char **argv = tv_to_argv(&argvars[0], NULL, &executable);
+  bool shellcmd = false;
+  char **argv = tv_to_argv(&argvars[0], NULL, &executable, &shellcmd);
   if (!argv) {
     rettv->vval.v_number = executable ? 0 : -1;
     return;  // Did error message in tv_to_argv.
@@ -17493,7 +17507,8 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
 
   // get shell command to execute
   bool executable = true;
-  char **argv = tv_to_argv(&argvars[0], NULL, &executable);
+  bool shellcmd = false;
+  char **argv = tv_to_argv(&argvars[0], NULL, &executable, &shellcmd);
   if (!argv) {
     if (!executable) {
       set_vim_var_nr(VV_SHELL_ERROR, (long)-1);
@@ -17730,7 +17745,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   char *cmd;
   bool executable = true;
-  char **argv = tv_to_argv(&argvars[0], &cmd, &executable);
+  bool shellcmd = false;
+  char **argv = tv_to_argv(&argvars[0], &cmd, &executable, &shellcmd);
   if (!argv) {
     rettv->vval.v_number = executable ? 0 : -1;
     return;  // Did error message in tv_to_argv.
