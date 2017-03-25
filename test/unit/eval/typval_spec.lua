@@ -2424,5 +2424,126 @@ describe('typval.c', function()
                                'E742: Cannot change value of Unknown'))
       end)
     end)
+    describe('equal()', function()
+      itp('compares empty and NULL lists correctly', function()
+        local l = lua2typvalt(empty_list)
+        local l2 = lua2typvalt(empty_list)
+        local nl = lua2typvalt(null_list)
+
+        -- NULL lists are not equal to empty lists
+        eq(false, lib.tv_equal(l, nl, true, false))
+        eq(false, lib.tv_equal(nl, l, false, false))
+        eq(false, lib.tv_equal(nl, l, false, true))
+        eq(false, lib.tv_equal(l, nl, true, true))
+
+        -- Yet NULL lists are equal themselves
+        eq(true, lib.tv_equal(nl, nl, true, false))
+        eq(true, lib.tv_equal(nl, nl, false, false))
+        eq(true, lib.tv_equal(nl, nl, false, true))
+        eq(true, lib.tv_equal(nl, nl, true, true))
+
+        -- As well as empty lists
+        eq(true, lib.tv_equal(l, l, true, false))
+        eq(true, lib.tv_equal(l, l2, false, false))
+        eq(true, lib.tv_equal(l2, l, false, true))
+        eq(true, lib.tv_equal(l2, l2, true, true))
+      end)
+      -- Must not use recursive=true argument in the following tests because it
+      -- indicates that tv_equal_recurse_limit and recursive_cnt were set which
+      -- is essential. This argument will be set when comparing inner lists.
+      itp('compares lists correctly when case is not ignored', function()
+        local l1 = lua2typvalt({'abc', {1, 2, 'Abc'}, 'def'})
+        local l2 = lua2typvalt({'abc', {1, 2, 'Abc'}})
+        local l3 = lua2typvalt({'abc', {1, 2, 'Abc'}, 'Def'})
+        local l4 = lua2typvalt({'abc', {1, 2, 'Abc', 4}, 'def'})
+        local l5 = lua2typvalt({'Abc', {1, 2, 'Abc'}, 'def'})
+        local l6 = lua2typvalt({'abc', {1, 2, 'Abc'}, 'def'})
+        local l7 = lua2typvalt({'abc', {1, 2, 'abc'}, 'def'})
+        local l8 = lua2typvalt({'abc', nil, 'def'})
+        local l9 = lua2typvalt({'abc', {1, 2, nil}, 'def'})
+
+        eq(true, lib.tv_equal(l1, l1, false, false))
+        eq(false, lib.tv_equal(l1, l2, false, false))
+        eq(false, lib.tv_equal(l1, l3, false, false))
+        eq(false, lib.tv_equal(l1, l4, false, false))
+        eq(false, lib.tv_equal(l1, l5, false, false))
+        eq(true, lib.tv_equal(l1, l6, false, false))
+        eq(false, lib.tv_equal(l1, l7, false, false))
+        eq(false, lib.tv_equal(l1, l8, false, false))
+        eq(false, lib.tv_equal(l1, l9, false, false))
+      end)
+      itp('compares lists correctly when case is ignored', function()
+        local l1 = lua2typvalt({'abc', {1, 2, 'Abc'}, 'def'})
+        local l2 = lua2typvalt({'abc', {1, 2, 'Abc'}})
+        local l3 = lua2typvalt({'abc', {1, 2, 'Abc'}, 'Def'})
+        local l4 = lua2typvalt({'abc', {1, 2, 'Abc', 4}, 'def'})
+        local l5 = lua2typvalt({'Abc', {1, 2, 'Abc'}, 'def'})
+        local l6 = lua2typvalt({'abc', {1, 2, 'Abc'}, 'def'})
+        local l7 = lua2typvalt({'abc', {1, 2, 'abc'}, 'def'})
+        local l8 = lua2typvalt({'abc', nil, 'def'})
+        local l9 = lua2typvalt({'abc', {1, 2, nil}, 'def'})
+
+        eq(true, lib.tv_equal(l1, l1, true, false))
+        eq(false, lib.tv_equal(l1, l2, true, false))
+        eq(true, lib.tv_equal(l1, l3, true, false))
+        eq(false, lib.tv_equal(l1, l4, true, false))
+        eq(true, lib.tv_equal(l1, l5, true, false))
+        eq(true, lib.tv_equal(l1, l6, true, false))
+        eq(true, lib.tv_equal(l1, l7, true, false))
+        eq(false, lib.tv_equal(l1, l8, true, false))
+        eq(false, lib.tv_equal(l1, l9, true, false))
+      end)
+      local function tv_equal(d1, d2, ic, recursive)
+        return lib.tv_equal(d1, d2, ic or false, recursive or false)
+      end
+      itp('works with dictionaries', function()
+        local nd = lua2typvalt(null_dict)
+        eq(true, tv_equal(nd, nd))
+        alloc_log:check({})
+        local d1 = lua2typvalt({})
+        alloc_log:check({a.dict(d1.vval.v_dict)})
+        eq(1, d1.vval.v_dict.dv_refcount)
+        eq(false, tv_equal(nd, d1))
+        eq(false, tv_equal(d1, nd))
+        eq(true, tv_equal(d1, d1))
+        eq(1, d1.vval.v_dict.dv_refcount)
+        alloc_log:check({})
+        local d_upper = lua2typvalt({a='TEST'})
+        local dis_upper = dict_items(d_upper.vval.v_dict)
+        local d_lower = lua2typvalt({a='test'})
+        local dis_lower = dict_items(d_lower.vval.v_dict)
+        local d_kupper_upper = lua2typvalt({A='TEST'})
+        local dis_kupper_upper = dict_items(d_kupper_upper.vval.v_dict)
+        local d_kupper_lower = lua2typvalt({A='test'})
+        local dis_kupper_lower = dict_items(d_kupper_lower.vval.v_dict)
+        alloc_log:clear_tmp_allocs()
+        alloc_log:check({
+          a.dict(d_upper.vval.v_dict),
+          a.di(dis_upper.a),
+          a.str(dis_upper.a.di_tv.vval.v_string),
+
+          a.dict(d_lower.vval.v_dict),
+          a.di(dis_lower.a),
+          a.str(dis_lower.a.di_tv.vval.v_string),
+
+          a.dict(d_kupper_upper.vval.v_dict),
+          a.di(dis_kupper_upper.A),
+          a.str(dis_kupper_upper.A.di_tv.vval.v_string),
+
+          a.dict(d_kupper_lower.vval.v_dict),
+          a.di(dis_kupper_lower.A),
+          a.str(dis_kupper_lower.A.di_tv.vval.v_string),
+        })
+        eq(true, tv_equal(d_upper, d_upper))
+        eq(true, tv_equal(d_upper, d_upper, true))
+        eq(false, tv_equal(d_upper, d_lower, false))
+        eq(true, tv_equal(d_upper, d_lower, true))
+        eq(true, tv_equal(d_kupper_upper, d_kupper_lower, true))
+        eq(false, tv_equal(d_kupper_upper, d_lower, true))
+        eq(false, tv_equal(d_kupper_upper, d_upper, true))
+        eq(true, tv_equal(d_upper, d_upper, true, true))
+        alloc_log:check({})
+      end)
+    end)
   end)
 end)
