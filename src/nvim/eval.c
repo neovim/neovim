@@ -7967,7 +7967,7 @@ static void f_execute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (s == NULL) {
       return;
     }
-    if (strncmp(s, S_LEN("silent")) == 0) {
+    if (strncmp(s, "silent", 6) == 0) {
       msg_silent++;
     }
     if (strcmp(s, "silent!") == 0) {
