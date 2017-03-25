@@ -72,6 +72,8 @@ NEW_TESTS ?= \
 	    test_window_id.res \
 	    test_writefile.res \
 	    test_alot.res
+#	    needs porting to Lua
+#	    test_search.res
 
 SCRIPTS_GUI := test16.out
 
