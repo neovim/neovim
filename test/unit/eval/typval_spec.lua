@@ -2124,7 +2124,6 @@ describe('typval.c', function()
           neq(dis.a.di_tv.vval.v_dict, dis_deepcopy1.a.di_tv.vval.v_dict)
           neq(dis.b.di_tv.vval.v_list, dis_deepcopy1.b.di_tv.vval.v_list)
           eq(v, dct2tbl(d_deepcopy1))
-          local di_deepcopy1 = first_di(dis_deepcopy1.a.di_tv.vval.v_dict)
           alloc_log:clear()
         end
         collectgarbage()
@@ -2247,6 +2246,7 @@ describe('typval.c', function()
         local ll_l = nil
         ll[1] = ll
         local dd = {}
+        local dd_d = nil
         dd.dd = dd
         for _, v in ipairs({
           {nil_value},

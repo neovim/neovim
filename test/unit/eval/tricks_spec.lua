@@ -4,8 +4,6 @@ local eval_helpers = require('test.unit.eval.helpers')
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
-local ffi = helpers.ffi
 local eq = helpers.eq
 
 local eval0 = eval_helpers.eval0
