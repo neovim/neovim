@@ -386,7 +386,11 @@ describe('jobs', function()
     endfunction
     let Callback = function('PrintArgs', ["foo", "bar"])
     let g:job_opts = {'on_stdout': Callback}
-    call jobstart('echo "some text"', g:job_opts)
+    if has('win32')
+      call jobstart(shellescape('echo "some text"'), g:job_opts)
+	else
+      call jobstart('echo some text', g:job_opts)
+    endif
     ]])
     eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
   end)
@@ -399,7 +403,11 @@ describe('jobs', function()
           return {id, data, event -> rpcnotify(g:channel, '1', a1, a2, Normalize(data), event)}
       endfun
       let g:job_opts = {'on_stdout': MkFun()}
-      call jobstart('echo "some text"', g:job_opts)
+      if has('win32')
+        call jobstart(shellescape('echo "some text"'), g:job_opts)
+	  else
+        call jobstart('echo some text', g:job_opts)
+      endif
     ]])
     eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
   end)
@@ -407,7 +415,11 @@ describe('jobs', function()
   it('jobstart() works when closure passed directly to `jobstart`', function()
     source([[
       let g:job_opts = {'on_stdout': {id, data, event -> rpcnotify(g:channel, '1', 'foo', 'bar', Normalize(data), event)}}
-      call jobstart('echo "some text"', g:job_opts)
+      if has('win32')
+        call jobstart(shellescape('echo "some text"'), g:job_opts)
+	  else
+        call jobstart('echo some text', g:job_opts)
+      endif
     ]])
     eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
   end)
