@@ -4120,7 +4120,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_invarg;
       curbuf->b_p_iminsert = B_IMODE_NONE;
     }
-    p_iminsert = curbuf->b_p_iminsert;
     showmode();
     /* Show/unshow value of 'keymap' in status lines. */
     status_redraw_curbuf();
@@ -4134,7 +4133,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_invarg;
       curbuf->b_p_imsearch = B_IMODE_NONE;
     }
-    p_imsearch = curbuf->b_p_imsearch;
   }
   /* if 'titlelen' has changed, redraw the title */
   else if (pp == &p_titlelen) {
