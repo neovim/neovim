@@ -401,7 +401,7 @@ describe('guisp (special/undercurl)', function()
   end)
 end)
 
-describe("'cursorline' with 'listchars'", function()
+describe("'listchars' highlight", function()
   local screen
 
   before_each(function()
@@ -641,6 +641,43 @@ describe("'cursorline' with 'listchars'", function()
       {4:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
       {4:<}                   |
       {4:~                   }|
+                          |
+    ]])
+  end)
+
+  it("'cursorline' with :match", function()
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {background=Screen.colors.Grey90},
+      [2] = {foreground=Screen.colors.Red},
+      [3] = {foreground=Screen.colors.Green1},
+    })
+    execute('highlight clear ModeMsg')
+    execute('highlight SpecialKey guifg=#FF0000')
+    execute('highlight Error guifg=#00FF00')
+    execute('set nowrap')
+    feed('ia \t bc \t  <esc>')
+    screen:expect([[
+      a        bc      ^   |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+    execute('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    screen:expect([[
+      a{2:.>-----.}bc{2:*>---*^*}{0:¬} |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+    execute('match Error /\\s\\+$/')
+    screen:expect([[
+      a{2:.>-----.}bc{3:*>---*^*}{0:¬} |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
                           |
     ]])
   end)
