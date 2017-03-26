@@ -3171,29 +3171,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Think twice when using ":q!" or ":qa!".
 
 						*'highlight'* *'hl'*
-'highlight' 'hl'	string	(default (as a single string):
-				     "8:SpecialKey,~:EndOfBuffer,z:TermCursor,
-				     Z:TermCursorNC,@:NonText,d:Directory,
-				     e:ErrorMsg,i:IncSearch,l:Search,
-				     m:MoreMsg,M:ModeMsg,n:LineNr,
-				     N:CursorLineNr,r:Question,s:StatusLine,
-				     S:StatusLineNC,c:VertSplit,t:Title,
-				     v:Visual,w:WarningMsg,W:WildMenu,
-				     f:Folded,F:FoldColumn,A:DiffAdd,
-				     C:DiffChange,D:DiffDelete,T:DiffText,
-				     >:SignColumn,B:SpellBad,P:SpellCap,
-				     R:SpellRare,L:SpellLocal,-:Conceal,
-				     +:Pmenu,=:PmenuSel,x:PmenuSbar,
-				     X:PmenuThumb")
+'highlight' 'hl'	string	(default: string of "c:group,..." pairs)
 			global
 	This option can be used to set highlighting mode for various
 	occasions.  It is a comma separated list of character pairs.  The
 	first character in a pair gives the occasion, the second the mode to
 	use for that occasion.  The occasions are:
 	|hl-SpecialKey|	 8  Meta and special keys listed with ":map"
-	|hl-EndOfBuffer|      ~ lines after the last line in the buffer
+	|hl-Whitespace|	 0
+	|hl-EndOfBuffer|   ~ lines after the last line in the buffer
 	|hl-TermCursor|	 z  Cursor in a focused terminal
-	|hl-TermCursorNC| Z Cursor in an unfocused terminal
+	|hl-TermCursorNC|  Z Cursor in an unfocused terminal
 	|hl-NonText|	 @  '@' at the end of the window and
 			    characters from 'showbreak'
 	|hl-Directory|	 d  directories in CTRL-D listing and other special
@@ -3205,11 +3193,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-ModeMsg|	 M  Mode (e.g., "-- INSERT --")
 	|hl-LineNr|	 n  line number for ":number" and ":#" commands, and
 			    when 'number' or 'relativenumber' option is set.
-	|hl-CursorLineNr| N like n for when 'cursorline' or 'relativenumber' is
+	|hl-CursorLineNr|  N like n for when 'cursorline' or 'relativenumber' is
 			    set.
 	|hl-Question|	 r  |hit-enter| prompt and yes/no questions
 	|hl-StatusLine|	 s  status line of current window |status-line|
-	|hl-StatusLineNC| S  status lines of not-current windows
+	|hl-StatusLineNC|  S  status lines of not-current windows
 	|hl-Title|	 t  Titles for output from ":set all", ":autocmd" etc.
 	|hl-VertSplit|	 c  column used to separate vertically split windows
 	|hl-Visual|	 v  Visual mode
@@ -3232,6 +3220,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-PmenuSel|    =  popup menu normal line
 	|hl-PmenuSbar|   x  popup menu scrollbar
 	|hl-PmenuThumb|  X  popup menu scrollbar thumb
+
+	|hl-TabLine|	 *
+	|hl-TabLineFill|   _
+	|hl-TabLineSel|    #
+
+	|hl-ColorColumn|   o
+	|hl-CursorColumn|  !
+	|hl-CursorLine|    .
+	|hl-QuickFixLine|  q
 
 	The display modes are:
 		r	reverse		(termcap entry "mr" and "me")
@@ -3917,9 +3914,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set lcs=tab:>-,trail:-
 	    :set lcs=tab:>-,eol:<,nbsp:%
 	    :set lcs=extends:>,precedes:<
-<	The "NonText" highlighting will be used for "eol", "extends" and
-	"precedes".  "SpecialKey" for "nbsp", "space", "tab" and "trail".
-	|hl-NonText| |hl-SpecialKey|
+<	|hl-NonText| highlighting will be used for "eol", "extends" and
+	"precedes". |hl-Whitespace| for "nbsp", "space", "tab" and "trail".
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
 'loadplugins' 'lpl'	boolean	(default on)

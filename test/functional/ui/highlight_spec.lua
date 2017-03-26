@@ -200,18 +200,9 @@ describe('Default highlight groups', function()
 
   it('insert mode text', function()
     feed('i')
+    screen:try_resize(53, 4)
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
       {1:-- INSERT --}                                         |
@@ -220,18 +211,9 @@ describe('Default highlight groups', function()
   end)
 
   it('end of file markers', function()
+    screen:try_resize(53, 4)
     screen:expect([[
       ^                                                     |
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
-      {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
                                                            |
@@ -239,18 +221,9 @@ describe('Default highlight groups', function()
   end)
 
   it('"wait return" text', function()
+    screen:try_resize(53, 4)
     feed(':ls<cr>')
     screen:expect([[
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
       {0:~                                                    }|
       :ls                                                  |
         1 %a   "[No Name]"                    line 1       |
@@ -259,21 +232,13 @@ describe('Default highlight groups', function()
     [1] = {bold = true, foreground = Screen.colors.SeaGreen}})
     feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
   end)
+
   it('can be cleared and linked to other highlight groups', function()
+    screen:try_resize(53, 4)
     execute('highlight clear ModeMsg')
     feed('i')
     screen:expect([[
       ^                                                     |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
       -- INSERT --                                         |
@@ -287,36 +252,18 @@ describe('Default highlight groups', function()
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
       {1:-- INSERT --}                                         |
     ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
     [1] = {foreground = Screen.colors.Red, background = Screen.colors.Green}})
   end)
+
   it('can be cleared by assigning NONE', function()
+    screen:try_resize(53, 4)
     execute('syn keyword TmpKeyword neovim')
     execute('hi link TmpKeyword ErrorMsg')
     insert('neovim')
     screen:expect([[
       {1:neovi^m}                                               |
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
@@ -330,18 +277,34 @@ describe('Default highlight groups', function()
       neovi^m                                               |
       {0:~                                                    }|
       {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
-      {0:~                                                    }|
+                                                           |
+    ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
+  end)
+
+  it('Whitespace highlight', function()
+    screen:try_resize(53, 4)
+    execute('highlight NonText gui=NONE guifg=#FF0000')
+    execute('set listchars=space:.,tab:>-,trail:*,eol:¬ list')
+    insert('   ne \t o\tv  im  ')
+    screen:expect([[
+      ne{0:.>----.}o{0:>-----}v{0:..}im{0:*^*¬}                             |
       {0:~                                                    }|
       {0:~                                                    }|
                                                            |
-    ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
+    ]], {
+      [0] = {foreground=Screen.colors.Red},
+      [1] = {foreground=Screen.colors.Blue},
+    })
+    execute('highlight Whitespace gui=NONE guifg=#0000FF')
+    screen:expect([[
+      ne{1:.>----.}o{1:>-----}v{1:..}im{1:*^*}{0:¬}                             |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      :highlight Whitespace gui=NONE guifg=#0000FF         |
+    ]], {
+      [0] = {foreground=Screen.colors.Red},
+      [1] = {foreground=Screen.colors.Blue},
+    })
   end)
 end)
 
@@ -510,7 +473,7 @@ describe("'listchars' highlight", function()
       },
     })
     execute('highlight clear ModeMsg')
-    execute('highlight SpecialKey guifg=#FF0000')
+    execute('highlight Whitespace guifg=#FF0000')
     execute('set cursorline')
     execute('set tabstop=8')
     execute('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
@@ -606,7 +569,7 @@ describe("'listchars' highlight", function()
       },
     })
     execute('highlight clear ModeMsg')
-    execute('highlight SpecialKey guifg=#FF0000')
+    execute('highlight Whitespace guifg=#FF0000')
     execute('set cursorline')
     execute('set tabstop=8')
     execute('set nowrap')
@@ -653,7 +616,7 @@ describe("'listchars' highlight", function()
       [3] = {foreground=Screen.colors.Green1},
     })
     execute('highlight clear ModeMsg')
-    execute('highlight SpecialKey guifg=#FF0000')
+    execute('highlight Whitespace guifg=#FF0000')
     execute('highlight Error guifg=#00FF00')
     execute('set nowrap')
     feed('ia \t bc \t  <esc>')

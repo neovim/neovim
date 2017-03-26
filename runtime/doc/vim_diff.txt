@@ -147,6 +147,7 @@ Highlight groups:
   |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
+  |hl-Whitespace| highlights 'listchars' whitespace
 
 ==============================================================================
 4. Changed features					 *nvim-features-changed*
