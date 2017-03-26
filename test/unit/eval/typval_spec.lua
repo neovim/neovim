@@ -1736,8 +1736,7 @@ describe('typval.c', function()
           return cb_lua, ret
         end
         itp('works with NULL dict', function()
-          eq({{type='none'}, true},
-             {tv_dict_get_callback(nil, nil, 0)})
+          eq({{type='none'}, true}, {tv_dict_get_callback(nil, '')})
         end)
         itp('works', function()
           local lua_d = {

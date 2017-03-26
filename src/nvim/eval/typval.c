@@ -825,8 +825,7 @@ void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
 /// @param[in]  cb2  Second callback to check.
 ///
 /// @return True if they are equal, false otherwise.
-static bool tv_callback_equal(const Callback *const cb1,
-                              const Callback *const cb2)
+bool tv_callback_equal(const Callback *const cb1, const Callback *const cb2)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (cb1->type != cb2->type) {
@@ -1240,7 +1239,7 @@ const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key,
 bool tv_dict_get_callback(dict_T *const d,
                           const char *const key, const ptrdiff_t key_len,
                           Callback *const result)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ARG(2, 4) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   result->type = kCallbackNone;
 
