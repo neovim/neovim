@@ -2011,7 +2011,7 @@ static int vgetorpeek(const int advance)
                 setcursor();
               flush_buffers(FALSE);
               mapdepth = 0;                     /* for next one */
-              break;
+              continue;
             }
 
             /*
@@ -2084,7 +2084,7 @@ static int vgetorpeek(const int advance)
             xfree(save_m_keys);
             xfree(save_m_str);
             if (i == FAIL) {
-              break;
+              continue;
             }
             continue;
           }
