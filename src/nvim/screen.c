@@ -2193,7 +2193,7 @@ win_line (
   int prev_c1 = 0;                      /* first composing char for prev_c */
   int did_line_attr = 0;
 
-  bool override_by_match = false;       // if current highlight is from :match
+  bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_bufhl = false;               // this buffer has highlight matches
   int bufhl_attr = 0;                   // attributes desired by bufhl
   bufhl_lineinfo_T bufhl_info;          // bufhl data for this line
@@ -2626,7 +2626,7 @@ win_line (
       if ((long)shl->startcol < v) {   // match at leftcol
         shl->attr_cur = shl->attr;
         search_attr = shl->attr;
-        override_by_match = shl != &search_hl;
+        search_attr_from_match = shl != &search_hl;
       }
       area_highlighting = true;
     }
@@ -2964,7 +2964,7 @@ win_line (
 
         /* Use attributes from match with highest priority among
          * 'search_hl' and the match list. */
-        override_by_match = false;
+        search_attr_from_match = false;
         search_attr = search_hl.attr_cur;
         cur = wp->w_match_head;
         shl_flag = FALSE;
@@ -2979,7 +2979,7 @@ win_line (
             shl = &cur->hl;
           if (shl->attr_cur != 0) {
             search_attr = shl->attr_cur;
-            override_by_match = shl != &search_hl;
+            search_attr_from_match = shl != &search_hl;
           }
           if (shl != &search_hl && cur != NULL)
             cur = cur->next;
@@ -3716,7 +3716,7 @@ win_line (
     }
 
     // Don't override visual selection highlighting.
-    if (n_attr > 0 && draw_state == WL_LINE && !override_by_match) {
+    if (n_attr > 0 && draw_state == WL_LINE && !search_attr_from_match) {
       char_attr = hl_combine_attr(char_attr, extra_attr);
     }
 
