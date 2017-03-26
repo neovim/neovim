@@ -75,7 +75,7 @@ struct interval {
 /*
  * Like utf8len_tab above, but using a zero for illegal lead bytes.
  */
-static uint8_t utf8len_tab_zero[256] =
+const uint8_t utf8len_tab_zero[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,

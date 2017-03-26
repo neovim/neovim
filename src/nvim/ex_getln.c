@@ -2178,6 +2178,8 @@ void free_cmdline_buf(void)
 
 # endif
 
+enum { MAX_CB_ERRORS = 5 };
+
 /// Color command-line
 ///
 /// Should use built-in command parser or user-specified one. Currently only the 
@@ -2186,49 +2188,76 @@ void free_cmdline_buf(void)
 /// Operates on ccline, saving results to ccline_colors.
 ///
 /// Always colors the whole cmdline.
-static void color_cmdline(void)
+///
+/// @return true if draw_cmdline may proceed, false if it does not need anything
+///         to do.
+static bool color_cmdline(void)
 {
+  bool ret = true;
   kv_size(ccline_colors) = 0;
   if (ccline.cmdfirstc != ':') {
-    return;
+    return ret;
   }
+
+  const int saved_force_abort = force_abort;
+  force_abort = true;
+  bool arg_allocated = false;
+  typval_T arg = {
+    .v_type = VAR_STRING,
+    .vval.v_string = ccline.cmdbuff,
+  };
+  typval_T tv = { .v_type = VAR_UNKNOWN };
+
   static Callback prev_cb = { .type = kCallbackNone };
   static int prev_cb_errors = 0;
   Callback color_cb;
   if (!tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
                             &color_cb)) {
-    return;
+    goto color_cmdline_error;
   }
   if (color_cb.type == kCallbackNone) {
-    return;
+    goto color_cmdline_end;
   }
-  if (prev_cb_errors == 5 && tv_callback_equal(&prev_cb, &color_cb)) {
-    return;
+  if (!tv_callback_equal(&prev_cb, &color_cb)) {
+    prev_cb_errors = 0;
+  } else if (prev_cb_errors >= MAX_CB_ERRORS) {
+    callback_free(&color_cb);
+    goto color_cmdline_end;
   }
   callback_free(&prev_cb);
   prev_cb = color_cb;
-  bool arg_allocated;
-  typval_T arg = {
-    .v_type = VAR_STRING,
-  };
-  if (ccline.cmdbuff[ccline.cmdlen] == NUL) {
-    arg_allocated = false;
-    arg.vval.v_string = ccline.cmdbuff;
-  } else {
+  if (ccline.cmdbuff[ccline.cmdlen] != NUL) {
     arg_allocated = true;
     arg.vval.v_string = xmemdupz((const char *)ccline.cmdbuff,
                                  (size_t)ccline.cmdlen);
   }
-  typval_T tv;
+  // msg_start() called by e.g. :echo may shift command-line to the first column
+  // even though msg_silent is here. Two ways to workaround this problem without
+  // altering message.c: use full_screen or save and restore msg_col.
+  //
+  // Saving and restoring full_screen does not work well with :redraw!. Saving
+  // and restoring msg_col is neither ideal, but while with full_screen it
+  // appears shifted one character to the right and cursor position is no longer
+  // correct, with msg_col it just misses leading `:`. Since `redraw!` in
+  // callback lags this is least of the user problems.
+  const int saved_msg_col = msg_col;
   msg_silent++;
   if (!callback_call(&color_cb, 1, &arg, &tv)) {
     msg_silent--;
-    goto color_cmdline_end;
+    msg_col = saved_msg_col;
+    goto color_cmdline_error;
   }
   msg_silent--;
-  if (tv.v_type != VAR_LIST || tv.vval.v_list == NULL) {
+  msg_col = saved_msg_col;
+  if (got_int || did_emsg) {
+    goto color_cmdline_error;
+  }
+  if (tv.v_type != VAR_LIST) {
     emsgf(_("E5400: Callback should return list"));
     goto color_cmdline_error;
+  }
+  if (tv.vval.v_list == NULL) {
+    goto color_cmdline_end;
   }
   varnumber_T prev_end = 0;
   int i = 0;
@@ -2248,10 +2277,14 @@ static void color_cmdline(void)
     const varnumber_T start = tv_get_number_chk(&l->lv_first->li_tv, &error);
     if (error) {
       goto color_cmdline_error;
-    } else if (!(prev_end <= start && start <= ccline.cmdlen)) {
+    } else if (!(prev_end <= start && start < ccline.cmdlen)) {
       emsgf(_("E5403: Chunk %i start %" PRIdVARNUMBER " not in range "
-              "[%" PRIdVARNUMBER ", %i]"),
+              "[%" PRIdVARNUMBER ", %i)"),
             i, start, prev_end, ccline.cmdlen);
+      goto color_cmdline_error;
+    } else if (utf8len_tab_zero[(uint8_t)ccline.cmdbuff[start]] == 0) {
+      emsgf(_("E5405: Chunk %i start %" PRIdVARNUMBER " splits multibyte "
+              "character"), i, start);
       goto color_cmdline_error;
     }
     if (start != prev_end) {
@@ -2269,6 +2302,11 @@ static void color_cmdline(void)
       emsgf(_("E5404: Chunk %i end %" PRIdVARNUMBER " not in range "
               "(%" PRIdVARNUMBER ", %i]"),
             i, end, start, ccline.cmdlen);
+      goto color_cmdline_error;
+    } else if (end < ccline.cmdlen
+               && utf8len_tab_zero[(uint8_t)ccline.cmdbuff[end]] == 0) {
+      emsgf(_("E5406: Chunk %i end %" PRIdVARNUMBER " splits multibyte "
+              "character"), i, end);
       goto color_cmdline_error;
     }
     prev_end = end;
@@ -2293,13 +2331,16 @@ static void color_cmdline(void)
   }
   prev_cb_errors = 0;
 color_cmdline_end:
+  force_abort = saved_force_abort;
   if (arg_allocated) {
     tv_clear(&arg);
   }
   tv_clear(&tv);
-  return;
+  return ret;
 color_cmdline_error:
   prev_cb_errors++;
+  const bool do_redraw = (did_emsg || got_int);
+  got_int = false;
   did_emsg = false;
   if (did_throw) {
     discard_current_exception();
@@ -2308,6 +2349,12 @@ color_cmdline_error:
     free_global_msglist();
   }
   kv_size(ccline_colors) = 0;
+  if (do_redraw) {
+    prev_cb_errors += MAX_CB_ERRORS;
+    redrawcmdline();
+    prev_cb_errors -= MAX_CB_ERRORS;
+    ret = false;
+  }
   goto color_cmdline_end;
 }
 
@@ -2317,6 +2364,10 @@ color_cmdline_error:
  */
 static void draw_cmdline(int start, int len)
 {
+  if (!color_cmdline()) {
+    return;
+  }
+
   if (cmdline_star > 0) {
     for (int i = 0; i < len; i++) {
       msg_putchar('*');
@@ -2415,7 +2466,6 @@ static void draw_cmdline(int start, int len)
     msg_outtrans_len(arshape_buf, newlen);
   } else {
 draw_cmdline_no_arabicshape:
-    color_cmdline();
     if (kv_size(ccline_colors)) {
       for (size_t i = 0; i < kv_size(ccline_colors); i++) {
         ColoredCmdlineChunk chunk = kv_A(ccline_colors, i);
