@@ -1672,7 +1672,7 @@ static int vgetorpeek(const int advance)
 {
   bool exiting = true;
   int c;
-  int keylen;
+  int keylen = 0;
   int mp_match_len = 0;
   int timedout = FALSE;                     /* waited for more than 1 second
                                                 for mapping to complete */
@@ -1724,7 +1724,11 @@ static int vgetorpeek(const int advance)
     } else {
       c = read_readbuffers(advance);
     }
-    if (c != NUL && !got_int) {
+
+    if (got_int) {
+      c = handle_int(advance);
+      exiting = true;
+    } else if (c != NUL) {
       if (advance) {
         /* KeyTyped = FALSE;  When the command that stuffed something
          * was typed, behave like the stuffed command was typed.
@@ -1733,6 +1737,7 @@ static int vgetorpeek(const int advance)
       }
       if (typebuf.tb_no_abbr_cnt == 0)
         typebuf.tb_no_abbr_cnt = 1;             /* no abbreviations now */
+      exiting = true;
     } else {
       exiting = false;
       /*
