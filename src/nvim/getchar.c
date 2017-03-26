@@ -1974,7 +1974,7 @@ static int vgetorpeek(const int advance)
                 KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
                 del_typebuf(1, 0);
               }
-              exiting = !(c < 0 || (advance && c == NUL));
+              exiting = true;
               break;  // got character, break for loop
             } else {
               keylen = mp_match_len;
