@@ -243,7 +243,8 @@ typedef struct vimoption {
   "A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal," \
   "B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel," \
   "x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill," \
-  "!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine"
+  "!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine," \
+  "H:WhiteSpace"
 
 /*
  * options[] is initialized here.

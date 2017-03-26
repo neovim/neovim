@@ -4908,7 +4908,7 @@ Search		Last search pattern highlighting (see 'hlsearch').
 		window and similar items that need to stand out.
 							*hl-SpecialKey*
 SpecialKey	Meta and special keys listed with ":map", also for text used
-		to show unprintable characters in the text, 'listchars'.
+		to show unprintable characters in the text.
 		Generally: text that is displayed differently from what it
 		really is.
 							*hl-SpellBad*
@@ -4945,6 +4945,8 @@ Visual		Visual mode selection
 WarningMsg	warning messages
 							*hl-WildMenu*
 WildMenu	current match in 'wildmenu' completion
+							*hl-WhiteSpace*
+WhiteSpace	"nbsp", "space", "tab" and "trail" in 'listchars'
 
 					*hl-User1* *hl-User1..9* *hl-User9*
 The 'statusline' syntax allows the use of 9 different highlights in the
