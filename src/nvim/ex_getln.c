@@ -62,6 +62,7 @@
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
+#include "nvim/lib/kvec.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -126,6 +127,15 @@ typedef struct command_line_state {
   // custom status line may invoke ":normal".
   struct cmdline_info save_ccline;
 } CommandLineState;
+
+/// Command-line colors
+typedef struct {
+  int start;  ///< Colored chunk start.
+  int end;  ///< Colored chunk end (exclusive, > start).
+  int attr;  ///< Highlight attr.
+} ColoredCmdlineChunk;
+
+kvec_t(ColoredCmdlineChunk) ccline_colors;
 
 /* The current cmdline_info.  It is initialized in getcmdline() and after that
  * used by other functions.  When invoking getcmdline() recursively it needs
@@ -2168,6 +2178,139 @@ void free_cmdline_buf(void)
 
 # endif
 
+/// Color command-line
+///
+/// Should use built-in command parser or user-specified one. Currently only the 
+/// latter is supported.
+///
+/// Operates on ccline, saving results to ccline_colors.
+///
+/// Always colors the whole cmdline.
+static void color_cmdline(void)
+{
+  kv_size(ccline_colors) = 0;
+  if (ccline.cmdfirstc != ':') {
+    return;
+  }
+  static Callback prev_cb = { .type = kCallbackNone };
+  static int prev_cb_errors = 0;
+  Callback color_cb;
+  if (!tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
+                            &color_cb)) {
+    return;
+  }
+  if (color_cb.type == kCallbackNone) {
+    return;
+  }
+  if (prev_cb_errors == 5 && tv_callback_equal(&prev_cb, &color_cb)) {
+    return;
+  }
+  callback_free(&prev_cb);
+  prev_cb = color_cb;
+  bool arg_allocated;
+  typval_T arg = {
+    .v_type = VAR_STRING,
+  };
+  if (ccline.cmdbuff[ccline.cmdlen] == NUL) {
+    arg_allocated = false;
+    arg.vval.v_string = ccline.cmdbuff;
+  } else {
+    arg_allocated = true;
+    arg.vval.v_string = xmemdupz((const char *)ccline.cmdbuff,
+                                 (size_t)ccline.cmdlen);
+  }
+  typval_T tv;
+  msg_silent++;
+  if (!callback_call(&color_cb, 1, &arg, &tv)) {
+    msg_silent--;
+    goto color_cmdline_end;
+  }
+  msg_silent--;
+  if (tv.v_type != VAR_LIST || tv.vval.v_list == NULL) {
+    emsgf(_("E5400: Callback should return list"));
+    goto color_cmdline_error;
+  }
+  varnumber_T prev_end = 0;
+  int i = 0;
+  for (const listitem_T *li = tv.vval.v_list->lv_first;
+       li != NULL; li = li->li_next, i++) {
+    if (li->li_tv.v_type != VAR_LIST) {
+      emsgf(_("E5401: List item %i is not a List"), i);
+      goto color_cmdline_error;
+    }
+    const list_T *const l = li->li_tv.vval.v_list;
+    if (tv_list_len(l) != 3) {
+      emsgf(_("E5402: List item %i has incorrect length: %li /= 3"),
+            i, tv_list_len(l));
+      goto color_cmdline_error;
+    }
+    bool error = false;
+    const varnumber_T start = tv_get_number_chk(&l->lv_first->li_tv, &error);
+    if (error) {
+      goto color_cmdline_error;
+    } else if (!(prev_end <= start && start <= ccline.cmdlen)) {
+      emsgf(_("E5403: Chunk %i start %" PRIdVARNUMBER " not in range "
+              "[%" PRIdVARNUMBER ", %i]"),
+            i, start, prev_end, ccline.cmdlen);
+      goto color_cmdline_error;
+    }
+    if (start != prev_end) {
+      kv_push(ccline_colors, ((ColoredCmdlineChunk) {
+        .start = prev_end,
+        .end = start,
+        .attr = 0,
+      }));
+    }
+    const varnumber_T end = tv_get_number_chk(&l->lv_first->li_next->li_tv,
+                                              &error);
+    if (error) {
+      goto color_cmdline_error;
+    } else if (!(start < end && end <= ccline.cmdlen)) {
+      emsgf(_("E5404: Chunk %i end %" PRIdVARNUMBER " not in range "
+              "(%" PRIdVARNUMBER ", %i]"),
+            i, end, start, ccline.cmdlen);
+      goto color_cmdline_error;
+    }
+    prev_end = end;
+    const char *const group = tv_get_string_chk(&l->lv_last->li_tv);
+    if (group == NULL) {
+      goto color_cmdline_error;
+    }
+    const int id = syn_name2id((char_u *)group);
+    const int attr = (id == 0 ? 0 : syn_id2attr(id));
+    kv_push(ccline_colors, ((ColoredCmdlineChunk) {
+      .start = start,
+      .end = end,
+      .attr = attr,
+    }));
+  }
+  if (prev_end < ccline.cmdlen) {
+    kv_push(ccline_colors, ((ColoredCmdlineChunk) {
+      .start = prev_end,
+      .end = ccline.cmdlen,
+      .attr = 0,
+    }));
+  }
+  prev_cb_errors = 0;
+color_cmdline_end:
+  if (arg_allocated) {
+    tv_clear(&arg);
+  }
+  tv_clear(&tv);
+  return;
+color_cmdline_error:
+  prev_cb_errors++;
+  did_emsg = false;
+  if (did_throw) {
+    discard_current_exception();
+  }
+  if (msg_list != NULL && *msg_list != NULL) {
+    free_global_msglist();
+  }
+  kv_size(ccline_colors) = 0;
+  goto color_cmdline_end;
+}
+
 /*
  * Draw part of the cmdline at the current cursor position.  But draw stars
  * when cmdline_star is TRUE.
@@ -2272,7 +2415,21 @@ static void draw_cmdline(int start, int len)
     msg_outtrans_len(arshape_buf, newlen);
   } else {
 draw_cmdline_no_arabicshape:
-    msg_outtrans_len(ccline.cmdbuff + start, len);
+    color_cmdline();
+    if (kv_size(ccline_colors)) {
+      for (size_t i = 0; i < kv_size(ccline_colors); i++) {
+        ColoredCmdlineChunk chunk = kv_A(ccline_colors, i);
+        if (chunk.end <= start) {
+          continue;
+        }
+        const int chunk_start = MAX(chunk.start, start);
+        msg_outtrans_len_attr(ccline.cmdbuff + chunk_start,
+                              chunk.end - chunk_start,
+                              chunk.attr);
+      }
+    } else {
+      msg_outtrans_len(ccline.cmdbuff + start, len);
+    }
   }
 }
 
