@@ -1986,7 +1986,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
   char buf[4];
   char *p;
 
-  while (*s != NUL && (maxlen < 0 || s - str < maxlen)) {
+  while ((maxlen < 0 || s - str < maxlen) && *s != NUL) {
     if (!(silent_mode && p_verbose == 0)) {
       // NL --> CR NL translation (for Unix, not for "--version")
       p = &buf[0];
