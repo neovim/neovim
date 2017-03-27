@@ -4095,6 +4095,14 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (p_ch < 1) {
       errmsg = e_positive;
     }
+  } else if (pp == &curbuf->b_p_ts) {
+    if (curbuf->b_p_ts <= 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_tm) {
+    if (p_tm < 0) {
+      errmsg = e_positive;
+    }
   }
 
   // If validation failed, reset to old value and return.
@@ -4246,14 +4254,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   }
 
-  if (curbuf->b_p_ts <= 0) {
-    errmsg = e_positive;
-    curbuf->b_p_ts = 8;
-  }
-  if (p_tm < 0) {
-    errmsg = e_positive;
-    p_tm = 0;
-  }
   if ((curwin->w_p_scr <= 0
        || (curwin->w_p_scr > curwin->w_height
            && curwin->w_height > 0))
