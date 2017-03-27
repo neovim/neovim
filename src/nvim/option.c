@@ -4032,29 +4032,11 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (p_wmw > p_wiw) {
       errmsg = e_winwidth;
     }
-  } else if (pp == &curwin->w_p_fdl) {
-    if (curwin->w_p_fdl < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &curwin->w_p_fdc) {
-    if (curwin->w_p_fdc < 0) {
-      errmsg = e_positive;
-    } else if (curwin->w_p_fdc > 12) {
-      errmsg = e_invarg;
-    }
   } else if (pp == &p_mco) {
     if (p_mco > MAX_MCO) {
       errmsg = e_invarg;
     } else if (p_mco < 0) {
       errmsg = e_positive;
-    }
-  } else if (pp == &curbuf->b_p_iminsert) {
-    if (curbuf->b_p_iminsert < 0 || curbuf->b_p_iminsert > B_IMODE_LAST) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curbuf->b_p_imsearch) {
-    if (curbuf->b_p_imsearch < -1 || curbuf->b_p_imsearch > B_IMODE_LAST) {
-      errmsg = e_invarg;
     }
   } else if (pp == &p_titlelen) {
     if (p_titlelen < 0) {
@@ -4064,39 +4046,8 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (p_uc < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &curwin->w_p_cole) {
-    if (curwin->w_p_cole < 0) {
-      errmsg = e_positive;
-    } else if (curwin->w_p_cole > 3) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curwin->w_p_nuw) {
-    if (curwin->w_p_nuw < 1) {
-      errmsg = e_positive;
-    }
-    if (curwin->w_p_nuw > 10) {
-      errmsg = e_invarg;
-    }
-    curwin->w_nrwidth_line_count = 0;
-  } else if (pp == &curbuf->b_p_tw) {
-    if (curbuf->b_p_tw < 0) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    if (*pp < -1 || *pp > SB_MAX
-        || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
-      errmsg = e_invarg;
-    }
-  } else if (pp == &curbuf->b_p_sw) {
-    if (curbuf->b_p_sw < 0) {
-      errmsg = e_positive;
-    }
   } else if (pp == &p_ch) {
     if (p_ch < 1) {
-      errmsg = e_positive;
-    }
-  } else if (pp == &curbuf->b_p_ts) {
-    if (curbuf->b_p_ts <= 0) {
       errmsg = e_positive;
     }
   } else if (pp == &p_tm) {
@@ -4135,6 +4086,53 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   } else if (pp == &p_ss) {
     if (p_ss < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curwin->w_p_fdl) {
+    if (curwin->w_p_fdl < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curwin->w_p_fdc) {
+    if (curwin->w_p_fdc < 0) {
+      errmsg = e_positive;
+    } else if (curwin->w_p_fdc > 12) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curwin->w_p_cole) {
+    if (curwin->w_p_cole < 0) {
+      errmsg = e_positive;
+    } else if (curwin->w_p_cole > 3) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curwin->w_p_nuw) {
+    if (curwin->w_p_nuw < 1) {
+      errmsg = e_positive;
+    } else if (curwin->w_p_nuw > 10) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_iminsert) {
+    if (curbuf->b_p_iminsert < 0 || curbuf->b_p_iminsert > B_IMODE_LAST) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_imsearch) {
+    if (curbuf->b_p_imsearch < -1 || curbuf->b_p_imsearch > B_IMODE_LAST) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_tw) {
+    if (curbuf->b_p_tw < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
+    if (*pp < -1 || *pp > SB_MAX
+        || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &curbuf->b_p_sw) {
+    if (curbuf->b_p_sw < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curbuf->b_p_ts) {
+    if (curbuf->b_p_ts <= 0) {
       errmsg = e_positive;
     }
   }
