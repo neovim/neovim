@@ -627,10 +627,11 @@ void buf_freeall(buf_T *buf, int flags)
    */
   if (buf == curbuf && !is_curbuf)
     return;
-  diff_buf_delete(buf);             /* Can't use 'diff' for unloaded buffer. */
-  /* Remove any ownsyntax, unless exiting. */
-  if (firstwin != NULL && curwin->w_buffer == buf)
+  diff_buf_delete(buf);             // Can't use 'diff' for unloaded buffer.
+  // Remove any ownsyntax, unless exiting.
+  if (curwin != NULL && curwin->w_buffer == buf) {
     reset_synblock(curwin);
+  }
 
   /* No folds in an empty buffer. */
   FOR_ALL_TAB_WINDOWS(tp, win) {
