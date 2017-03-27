@@ -2,6 +2,7 @@
 #define NVIM_EX_DOCMD_H
 
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/globals.h"
 
 // flags for do_cmdline()
 #define DOCMD_VERBOSE   0x01      // included command in error message
