@@ -1826,6 +1826,22 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   }
 
   /*
+   * Add the margin between the text and either the number column
+   * or the edge of the window.
+   */
+  if (wp->w_p_mrg) {
+    len = wp->w_width - col;
+    if (len > wp->w_p_mrg) {
+      len = wp->w_p_mrg;
+    }
+
+    sprintf((char *) buf, "%*s", len, "");
+    copy_text_attr(off + wp->w_width - len - col, buf, len, hl_attr(HLF_FL));
+    col += len;
+  }
+
+
+  /*
    * 4. Compose the folded-line string with 'foldtext', if set.
    */
   text = get_foldtext(wp, lnum, lnume, foldinfo, buf);
@@ -2160,14 +2176,15 @@ win_line (
   bool do_virttext = false;             // draw virtual text for this line
 
   /* draw_state: items that are drawn in sequence: */
-#define WL_START        0               /* nothing done yet */
+# define WL_START       0               /* nothing done yet */
 # define WL_CMDLINE     WL_START + 1    /* cmdline window column */
 # define WL_FOLD        WL_CMDLINE + 1  /* 'foldcolumn' */
 # define WL_SIGN        WL_FOLD + 1     /* column for signs */
-#define WL_NR           WL_SIGN + 1     /* line number */
-# define WL_BRI         WL_NR + 1       /* 'breakindent' */
-# define WL_SBR         WL_BRI + 1       /* 'showbreak' or 'diff' */
-#define WL_LINE         WL_SBR + 1      /* text in the line */
+# define WL_NR          WL_SIGN + 1     /* line number */
+# define WL_MRG         WL_NR + 1       /* 'margin' */
+# define WL_BRI         WL_MRG + 1      /* 'breakindent' */
+# define WL_SBR         WL_BRI + 1      /* 'showbreak' or 'diff' */
+# define WL_LINE        WL_SBR + 1      /* text in the line */
   int draw_state = WL_START;            /* what to draw next */
 
   int syntax_flags    = 0;
@@ -2777,6 +2794,21 @@ win_line (
             // TODO(vim): Can we use CursorLine instead of CursorLineNr
             // when CursorLineNr isn't set?
             char_attr = win_hl_attr(wp, HLF_CLN);
+          }
+        }
+      }
+
+      // Add margin between text and either number column or window edge.
+      if (draw_state == WL_MRG - 1 && n_extra == 0) {
+        draw_state = WL_MRG;
+        if (wp->w_p_mrg) {
+          c_extra = ' ';
+          n_extra = wp->w_p_mrg;
+
+          if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+            char_attr = hl_attr(HLF_CUL);
+          } else {
+            char_attr = 0;
           }
         }
       }

@@ -4953,6 +4953,7 @@ static void prepare_help_buffer(void)
   curbuf->b_p_bin = FALSE;    // Reset 'bin' before reading file.
   curwin->w_p_nu = 0;         // No line numbers.
   curwin->w_p_rnu = 0;        // No relative line numbers.
+  curwin->w_p_mrg = 0;        // No margin.
   RESET_BINDING(curwin);      // No scroll or cursor binding.
   curwin->w_p_arab = FALSE;   // No arabic mode.
   curwin->w_p_rl  = FALSE;    // Help window is left-to-right.

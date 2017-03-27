@@ -204,6 +204,8 @@ typedef struct {
 #define w_p_rnu w_onebuf_opt.wo_rnu     /* 'relativenumber' */
   long wo_nuw;
 # define w_p_nuw w_onebuf_opt.wo_nuw    /* 'numberwidth' */
+  long wo_mrg;
+# define w_p_mrg w_onebuf_opt.wo_mrg    /* 'margin' */
   int wo_wfh;
 # define w_p_wfh w_onebuf_opt.wo_wfh    /* 'winfixheight' */
   int wo_wfw;

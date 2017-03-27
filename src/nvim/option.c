@@ -4313,6 +4313,15 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     *pp = old_value;
     u_sync(true);
     *pp = value;
+    curwin->w_nrwidth_line_count = 0;
+  } else if (pp == &curwin->w_p_mrg) {
+    if (curwin->w_p_mrg < 0) {
+      errmsg = e_positive;
+      curwin->w_p_mrg=0;
+    } else if (curwin->w_p_mrg > 4) {
+      errmsg = e_invarg;
+      curwin->w_p_mrg = 4;
+    }
   } else if (pp == &curbuf->b_p_tw) {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
@@ -5514,6 +5523,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_NU:     return (char_u *)&(curwin->w_p_nu);
   case PV_RNU:    return (char_u *)&(curwin->w_p_rnu);
   case PV_NUW:    return (char_u *)&(curwin->w_p_nuw);
+  case PV_MRG:    return (char_u *)&(curwin->w_p_mrg);
   case PV_WFH:    return (char_u *)&(curwin->w_p_wfh);
   case PV_WFW:    return (char_u *)&(curwin->w_p_wfw);
   case PV_PVW:    return (char_u *)&(curwin->w_p_pvw);
@@ -5630,6 +5640,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_nu = from->wo_nu;
   to->wo_rnu = from->wo_rnu;
   to->wo_nuw = from->wo_nuw;
+  to->wo_mrg = from->wo_mrg;
   to->wo_rl  = from->wo_rl;
   to->wo_rlc = vim_strsave(from->wo_rlc);
   to->wo_stl = vim_strsave(from->wo_stl);
