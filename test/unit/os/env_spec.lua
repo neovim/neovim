@@ -35,17 +35,17 @@ describe('env function', function()
     local OK = 0
 
     itp('sets an env variable and returns OK', function()
-      local name = 'NEOVIM_UNIT_TEST_SETENV_1N'
-      local value = 'NEOVIM_UNIT_TEST_SETENV_1V'
+      local name = 'NVIM_UNIT_TEST_SETENV_1N'
+      local value = 'NVIM_UNIT_TEST_SETENV_1V'
       eq(nil, os.getenv(name))
       eq(OK, (os_setenv(name, value, 1)))
       eq(value, os.getenv(name))
     end)
 
     itp("dosn't overwrite an env variable if overwrite is 0", function()
-      local name = 'NEOVIM_UNIT_TEST_SETENV_2N'
-      local value = 'NEOVIM_UNIT_TEST_SETENV_2V'
-      local value_updated = 'NEOVIM_UNIT_TEST_SETENV_2V_UPDATED'
+      local name = 'NVIM_UNIT_TEST_SETENV_2N'
+      local value = 'NVIM_UNIT_TEST_SETENV_2V'
+      local value_updated = 'NVIM_UNIT_TEST_SETENV_2V_UPDATED'
       eq(OK, (os_setenv(name, value, 0)))
       eq(value, os.getenv(name))
       eq(OK, (os_setenv(name, value_updated, 0)))
@@ -69,8 +69,8 @@ describe('env function', function()
 
   describe('os_getenv', function()
     itp('reads an env variable', function()
-      local name = 'NEOVIM_UNIT_TEST_GETENV_1N'
-      local value = 'NEOVIM_UNIT_TEST_GETENV_1V'
+      local name = 'NVIM_UNIT_TEST_GETENV_1N'
+      local value = 'NVIM_UNIT_TEST_GETENV_1V'
       eq(NULL, os_getenv(name))
       -- need to use os_setenv, because lua dosn't have a setenv function
       os_setenv(name, value, 1)
@@ -78,7 +78,7 @@ describe('env function', function()
     end)
 
     itp('returns NULL if the env variable is not found', function()
-      local name = 'NEOVIM_UNIT_TEST_GETENV_NOTFOUND'
+      local name = 'NVIM_UNIT_TEST_GETENV_NOTFOUND'
       return eq(NULL, os_getenv(name))
     end)
   end)
@@ -97,8 +97,8 @@ describe('env function', function()
 
   describe('os_getenvname_at_index', function()
     itp('returns names of environment variables', function()
-      local test_name = 'NEOVIM_UNIT_TEST_GETENVNAME_AT_INDEX_1N'
-      local test_value = 'NEOVIM_UNIT_TEST_GETENVNAME_AT_INDEX_1V'
+      local test_name = 'NVIM_UNIT_TEST_GETENVNAME_AT_INDEX_1N'
+      local test_value = 'NVIM_UNIT_TEST_GETENVNAME_AT_INDEX_1V'
       os_setenv(test_name, test_value, 1)
       local i = 0
       local names = { }
@@ -160,16 +160,16 @@ describe('env function', function()
 
   describe('expand_env_esc', function()
     itp('expands environment variables', function()
-      local name = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN'
-      local value = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCV'
+      local name = 'NVIM_UNIT_TEST_EXPAND_ENV_ESCN'
+      local value = 'NVIM_UNIT_TEST_EXPAND_ENV_ESCV'
       os_setenv(name, value, 1)
       -- TODO(bobtwinkles) This only tests Unix expansions. There should be a
       -- test for Windows as well
-      local input1 = to_cstr('$NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN/test')
-      local input2 = to_cstr('${NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN}/test')
+      local input1 = to_cstr('$NVIM_UNIT_TEST_EXPAND_ENV_ESCN/test')
+      local input2 = to_cstr('${NVIM_UNIT_TEST_EXPAND_ENV_ESCN}/test')
       local output_buff1 = cstr(255, '')
       local output_buff2 = cstr(255, '')
-      local output_expected = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCV/test'
+      local output_expected = 'NVIM_UNIT_TEST_EXPAND_ENV_ESCV/test'
       cimp.expand_env_esc(input1, output_buff1, 255, false, true, NULL)
       cimp.expand_env_esc(input2, output_buff2, 255, false, true, NULL)
       eq(output_expected, ffi.string(output_buff1))
