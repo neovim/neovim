@@ -1818,7 +1818,7 @@ static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
 // choose one])
 // mp_match_len is changed.
 static mapblock_T *find_typed_map(const int timedout, const int local_State,
-    int *keylenp, int *mp_match_lenp, int *max_mlenp)
+    int *keylenp, int *max_mlenp)
 {
   mapblock_T *mp = NULL;
   int temp_c = typebuf.tb_buf[typebuf.tb_off];
@@ -1862,7 +1862,7 @@ static mapblock_T *find_typed_map(const int timedout, const int local_State,
      * match, so "aa" and "aaa" can both be mapped.
      */
     mapblock_T *mp_match = NULL;
-    *mp_match_lenp = 0;
+    int mp_match_len = 0;
     for (; mp != NULL;
         mp->m_next == NULL ? (mp = mp2, mp2 = NULL) :
         (mp = mp->m_next)) {
@@ -1940,10 +1940,10 @@ static mapblock_T *find_typed_map(const int timedout, const int local_State,
             keylen = KEYLEN_PART_MAP;
             break;
           }
-        } else if (keylen > *mp_match_lenp) {
+        } else if (keylen > mp_match_len) {
           /* found a longer match */
           mp_match = mp;
-          *mp_match_lenp = keylen;
+          mp_match_len = keylen;
         }
       } else {
         // No match; may have to check for termcode at next character.
@@ -1957,7 +1957,7 @@ static mapblock_T *find_typed_map(const int timedout, const int local_State,
      * match. */
     if (keylen != KEYLEN_PART_MAP) {
       mp = mp_match;
-      keylen = *mp_match_lenp;
+      keylen = mp_match_len;
     }
     *keylenp = keylen;
   }
@@ -1967,7 +1967,7 @@ static mapblock_T *find_typed_map(const int timedout, const int local_State,
 // Returns 0 to continue, -1 to carry on in the loop, otherwise, returns the
 // character that should be used.
 // Keeps track of the mapdepth in the variable pointed to by "mapdepthp".
-static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
+static int look_in_typebuf(int *mapdepthp, int *keylenp,
     const int timedout, const int advance, const int local_State)
 {
   if (typebuf.tb_len <= 0) {
@@ -1989,8 +1989,7 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
    * - in Ctrl-X mode, and we get a valid char for that mode
    */
   int max_mlen = 0;
-  mapblock_T *mp = find_typed_map(timedout, local_State,
-      keylenp, mp_match_lenp, &max_mlen);
+  mapblock_T *mp = find_typed_map(timedout, local_State, keylenp, &max_mlen);
 
   if (check_togglepaste(mp, &max_mlen, keylenp)) {
     // Have toggled 'paste', now have to start searching for characters again
@@ -2289,7 +2288,6 @@ static int vgetorpeek(const int advance)
 {
   int c;
   int mode_deleted = FALSE;             /* set when mode has been deleted */
-  int mp_match_len = 0;
 
   /*
    * This function doesn't work very well when called recursively.  This may
@@ -2375,7 +2373,7 @@ static int vgetorpeek(const int advance)
         // 'c' is only changed when we have found a key and are leaving this
         // loop.
         int control_id = look_in_typebuf(
-            &mapdepth, &keylen, &mp_match_len,
+            &mapdepth, &keylen,
             timedout, advance, local_State);
         if (control_id == 0) {
           continue;
