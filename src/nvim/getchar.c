@@ -1984,6 +1984,243 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp,
   return -1;
 }
 
+// Returns 0 to continue, 1 to break, -1 to carry on in the loop.
+// If it's found a key, leaves the new value of "c" in "*cp"
+static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
+    const int advance, const int keylen)
+{
+  /*
+   * special case: if we get an <ESC> in insert mode and there
+   * are no more characters at once, we pretend to go out of
+   * insert mode.  This prevents the one second delay after
+   * typing an <ESC>.  If we get something after all, we may
+   * have to redisplay the mode. That the cursor is in the wrong
+   * place does not matter.
+   */
+  int new_wcol = curwin->w_wcol;
+  int new_wrow = curwin->w_wrow;
+  if (       advance
+      && typebuf.tb_len == 1
+      && typebuf.tb_buf[typebuf.tb_off] == ESC
+      && !no_mapping
+      && ex_normal_busy == 0
+      && typebuf.tb_maplen == 0
+      && (State & INSERT)
+      && (p_timeout
+        || (keylen == KEYLEN_PART_KEY && p_ttimeout))
+      && (*cp = inchar(typebuf.tb_buf + typebuf.tb_off
+          + typebuf.tb_len, 3, 25L,
+          typebuf.tb_change_cnt)) == 0) {
+    colnr_T col = 0, vcol;
+    char_u      *ptr;
+
+    if (mode_displayed) {
+      unshowmode(TRUE);
+      *mode_deletedp = TRUE;
+    }
+    validate_cursor();
+    int old_wcol = curwin->w_wcol;
+    int old_wrow = curwin->w_wrow;
+
+    /* move cursor left, if possible */
+    if (curwin->w_cursor.col != 0) {
+      if (curwin->w_wcol > 0) {
+        if (did_ai) {
+          /*
+           * We are expecting to truncate the trailing
+           * white-space, so find the last non-white
+           * character -- webb
+           */
+          col = vcol = curwin->w_wcol = 0;
+          ptr = get_cursor_line_ptr();
+          while (col < curwin->w_cursor.col) {
+            if (!ascii_iswhite(ptr[col]))
+              curwin->w_wcol = vcol;
+            vcol += lbr_chartabsize(ptr, ptr + col,
+                (colnr_T)vcol);
+            if (has_mbyte)
+              col += (*mb_ptr2len)(ptr + col);
+            else
+              ++col;
+          }
+          curwin->w_wrow = curwin->w_cline_row
+            + curwin->w_wcol / curwin->w_width;
+          curwin->w_wcol %= curwin->w_width;
+          curwin->w_wcol += curwin_col_off();
+          col = 0;                        /* no correction needed */
+        } else {
+          --curwin->w_wcol;
+          col = curwin->w_cursor.col - 1;
+        }
+      } else if (curwin->w_p_wrap && curwin->w_wrow) {
+        --curwin->w_wrow;
+        curwin->w_wcol = curwin->w_width - 1;
+        col = curwin->w_cursor.col - 1;
+      }
+      if (has_mbyte && col > 0 && curwin->w_wcol > 0) {
+        /* Correct when the cursor is on the right halve
+         * of a double-wide character. */
+        ptr = get_cursor_line_ptr();
+        col -= (*mb_head_off)(ptr, ptr + col);
+        if ((*mb_ptr2cells)(ptr + col) > 1)
+          --curwin->w_wcol;
+      }
+    }
+    setcursor();
+    ui_flush();
+    new_wcol = curwin->w_wcol;
+    new_wrow = curwin->w_wrow;
+    curwin->w_wcol = old_wcol;
+    curwin->w_wrow = old_wrow;
+  }
+  if (*cp < 0)
+    return 0;             /* end of input script reached */
+
+  // Allow mapping for just typed characters. When we get here *cp
+  // is the number of extra bytes and typebuf.tb_len is 1.
+  for (int n = 1; n <= *cp; n++) {
+    typebuf.tb_noremap[typebuf.tb_off + n] = RM_YES;
+  }
+  typebuf.tb_len += *cp;
+
+  /* buffer full, don't map */
+  if (typebuf.tb_len >= typebuf.tb_maplen + MAXMAPLEN) {
+    *timedoutp = TRUE;
+    return 0;
+  }
+
+  if (ex_normal_busy > 0) {
+    static int tc = 0;
+
+    /* No typeahead left and inside ":normal".  Must return
+     * something to avoid getting stuck.  When an incomplete
+     * mapping is present, behave like it timed out. */
+    if (typebuf.tb_len > 0) {
+      *timedoutp = TRUE;
+      return 0;
+    }
+    /* When 'insertmode' is set, ESC just beeps in Insert
+     * mode.  Use CTRL-L to make edit() return.
+     * For the command line only CTRL-C always breaks it.
+     * For the cmdline window: Alternate between ESC and
+     * CTRL-C: ESC for most situations and CTRL-C to close the
+     * cmdline window. */
+    if (p_im && (State & INSERT))
+      *cp = Ctrl_L;
+    else if ((State & CMDLINE)
+        || (cmdwin_type > 0 && tc == ESC)
+        )
+      *cp = Ctrl_C;
+    else
+      *cp = ESC;
+    tc = *cp;
+    return 1;
+  }
+
+  /*
+   * get a character: 3. from the user - update display
+   */
+  /* In insert mode a screen update is skipped when characters
+   * are still available.  But when those available characters
+   * are part of a mapping, and we are going to do a blocking
+   * wait here.  Need to update the screen to display the
+   * changed text so far. Also for when 'lazyredraw' is set and
+   * redrawing was postponed because there was something in the
+   * input buffer (e.g., termresponse). */
+  if (((State & INSERT) != 0 || p_lz) && (State & CMDLINE) == 0
+      && advance && must_redraw != 0 && !need_wait_return) {
+    update_screen(0);
+    setcursor();           /* put cursor back where it belongs */
+  }
+
+  /*
+   * If we have a partial match (and are going to wait for more
+   * input from the user), show the partially matched characters
+   * to the user with showcmd.
+   */
+  { // Using the showcmd_len, wait_tb_len, and c1 variables
+    int showcmd_len = 0;
+    int c1 = 0;
+    if (typebuf.tb_len > 0 && advance && !exmode_active) {
+      if (((State & (NORMAL | INSERT)) || State == LANGMAP)
+          && State != HITRETURN) {
+        /* this looks nice when typing a dead character map */
+        if (State & INSERT
+            && ptr2cells(typebuf.tb_buf + typebuf.tb_off
+              + typebuf.tb_len - 1) == 1) {
+          edit_putchar(typebuf.tb_buf[typebuf.tb_off
+              + typebuf.tb_len - 1], FALSE);
+          setcursor();               /* put cursor back where it belongs */
+          c1 = 1;
+        }
+        /* need to use the col and row from above here */
+        int old_wcol = curwin->w_wcol;
+        int old_wrow = curwin->w_wrow;
+        curwin->w_wcol = new_wcol;
+        curwin->w_wrow = new_wrow;
+        push_showcmd();
+        if (typebuf.tb_len > SHOWCMD_COLS)
+          showcmd_len = typebuf.tb_len - SHOWCMD_COLS;
+        while (showcmd_len < typebuf.tb_len)
+          (void)add_to_showcmd(typebuf.tb_buf[typebuf.tb_off
+              + showcmd_len++]);
+        curwin->w_wcol = old_wcol;
+        curwin->w_wrow = old_wrow;
+      }
+
+      /* this looks nice when typing a dead character map */
+      if ((State & CMDLINE)
+          && cmdline_star == 0
+          && ptr2cells(typebuf.tb_buf + typebuf.tb_off
+            + typebuf.tb_len - 1) == 1) {
+        putcmdline(typebuf.tb_buf[typebuf.tb_off
+            + typebuf.tb_len - 1], FALSE);
+        c1 = 1;
+      }
+    }
+
+    /*
+     * get a character: 3. from the user - get it
+     */
+    int wait_tb_len = typebuf.tb_len;
+    *cp = inchar(
+        typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
+        typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
+        advance ? calc_waittime(keylen) : 0,
+        typebuf.tb_change_cnt);
+
+    if (showcmd_len != 0)
+      pop_showcmd();
+    if (c1 == 1) {
+      if (State & INSERT)
+        edit_unputchar();
+      if (State & CMDLINE)
+        unputcmdline();
+      else
+        setcursor();                /* put cursor back where it belongs */
+    }
+
+    if (*cp < 0)
+      return 0;                     /* end of input script reached */
+    if (*cp == NUL) {                 /* no character available */
+      if (!advance) {
+        return 1;
+      }
+      if (wait_tb_len > 0) {                /* timed out */
+        *timedoutp = TRUE;
+        return 0;
+      }
+    } else {          /* allow mapping for just typed characters */
+      while (typebuf.tb_buf[typebuf.tb_off
+          + typebuf.tb_len] != NUL)
+        typebuf.tb_noremap[typebuf.tb_off
+          + typebuf.tb_len++] = RM_YES;
+    }
+  }
+
+  return -1;
+}
+
 /// get a character:
 /// 1. from the stuffbuffer
 ///    This is used for abbreviated commands like "D" -> "d$".
@@ -2105,235 +2342,15 @@ static int vgetorpeek(const int advance)
         }
       }
 
-      { // get a character: 3. from the user - handle <Esc> in Insert mode
-        /*
-         * special case: if we get an <ESC> in insert mode and there
-         * are no more characters at once, we pretend to go out of
-         * insert mode.  This prevents the one second delay after
-         * typing an <ESC>.  If we get something after all, we may
-         * have to redisplay the mode. That the cursor is in the wrong
-         * place does not matter.
-         */
-        c = 0;
-        int new_wcol = curwin->w_wcol;
-        int new_wrow = curwin->w_wrow;
-        if (       advance
-            && typebuf.tb_len == 1
-            && typebuf.tb_buf[typebuf.tb_off] == ESC
-            && !no_mapping
-            && ex_normal_busy == 0
-            && typebuf.tb_maplen == 0
-            && (State & INSERT)
-            && (p_timeout
-              || (keylen == KEYLEN_PART_KEY && p_ttimeout))
-            && (c = inchar(typebuf.tb_buf + typebuf.tb_off
-                + typebuf.tb_len, 3, 25L,
-                typebuf.tb_change_cnt)) == 0) {
-          colnr_T col = 0, vcol;
-          char_u      *ptr;
-
-          if (mode_displayed) {
-            unshowmode(TRUE);
-            mode_deleted = TRUE;
-          }
-          validate_cursor();
-          int old_wcol = curwin->w_wcol;
-          int old_wrow = curwin->w_wrow;
-
-          /* move cursor left, if possible */
-          if (curwin->w_cursor.col != 0) {
-            if (curwin->w_wcol > 0) {
-              if (did_ai) {
-                /*
-                 * We are expecting to truncate the trailing
-                 * white-space, so find the last non-white
-                 * character -- webb
-                 */
-                col = vcol = curwin->w_wcol = 0;
-                ptr = get_cursor_line_ptr();
-                while (col < curwin->w_cursor.col) {
-                  if (!ascii_iswhite(ptr[col]))
-                    curwin->w_wcol = vcol;
-                  vcol += lbr_chartabsize(ptr, ptr + col,
-                      (colnr_T)vcol);
-                  if (has_mbyte)
-                    col += (*mb_ptr2len)(ptr + col);
-                  else
-                    ++col;
-                }
-                curwin->w_wrow = curwin->w_cline_row
-                  + curwin->w_wcol / curwin->w_width;
-                curwin->w_wcol %= curwin->w_width;
-                curwin->w_wcol += curwin_col_off();
-                col = 0;                        /* no correction needed */
-              } else {
-                --curwin->w_wcol;
-                col = curwin->w_cursor.col - 1;
-              }
-            } else if (curwin->w_p_wrap && curwin->w_wrow) {
-              --curwin->w_wrow;
-              curwin->w_wcol = curwin->w_width - 1;
-              col = curwin->w_cursor.col - 1;
-            }
-            if (has_mbyte && col > 0 && curwin->w_wcol > 0) {
-              /* Correct when the cursor is on the right halve
-               * of a double-wide character. */
-              ptr = get_cursor_line_ptr();
-              col -= (*mb_head_off)(ptr, ptr + col);
-              if ((*mb_ptr2cells)(ptr + col) > 1)
-                --curwin->w_wcol;
-            }
-          }
-          setcursor();
-          ui_flush();
-          new_wcol = curwin->w_wcol;
-          new_wrow = curwin->w_wrow;
-          curwin->w_wcol = old_wcol;
-          curwin->w_wrow = old_wrow;
-        }
-        if (c < 0)
-          continue;             /* end of input script reached */
-
-        // Allow mapping for just typed characters. When we get here c
-        // is the number of extra bytes and typebuf.tb_len is 1.
-        for (int n = 1; n <= c; n++) {
-          typebuf.tb_noremap[typebuf.tb_off + n] = RM_YES;
-        }
-        typebuf.tb_len += c;
-
-        /* buffer full, don't map */
-        if (typebuf.tb_len >= typebuf.tb_maplen + MAXMAPLEN) {
-          timedout = TRUE;
+      c = 0;
+      { // Try to get a key directly from the user.
+        int8_t control_id = get_key_from_user(
+            &c, &timedout, &mode_deleted,
+            advance, keylen);
+        if (control_id == 0) {
           continue;
-        }
-
-        if (ex_normal_busy > 0) {
-          static int tc = 0;
-
-          /* No typeahead left and inside ":normal".  Must return
-           * something to avoid getting stuck.  When an incomplete
-           * mapping is present, behave like it timed out. */
-          if (typebuf.tb_len > 0) {
-            timedout = TRUE;
-            continue;
-          }
-          /* When 'insertmode' is set, ESC just beeps in Insert
-           * mode.  Use CTRL-L to make edit() return.
-           * For the command line only CTRL-C always breaks it.
-           * For the cmdline window: Alternate between ESC and
-           * CTRL-C: ESC for most situations and CTRL-C to close the
-           * cmdline window. */
-          if (p_im && (State & INSERT))
-            c = Ctrl_L;
-          else if ((State & CMDLINE)
-              || (cmdwin_type > 0 && tc == ESC)
-              )
-            c = Ctrl_C;
-          else
-            c = ESC;
-          tc = c;
+        } else if (control_id == 1) {
           break;
-        }
-
-        /*
-         * get a character: 3. from the user - update display
-         */
-        /* In insert mode a screen update is skipped when characters
-         * are still available.  But when those available characters
-         * are part of a mapping, and we are going to do a blocking
-         * wait here.  Need to update the screen to display the
-         * changed text so far. Also for when 'lazyredraw' is set and
-         * redrawing was postponed because there was something in the
-         * input buffer (e.g., termresponse). */
-        if (((State & INSERT) != 0 || p_lz) && (State & CMDLINE) == 0
-            && advance && must_redraw != 0 && !need_wait_return) {
-          update_screen(0);
-          setcursor();           /* put cursor back where it belongs */
-        }
-
-        /*
-         * If we have a partial match (and are going to wait for more
-         * input from the user), show the partially matched characters
-         * to the user with showcmd.
-         */
-        { // Using the showcmd_len, wait_tb_len, and c1 variables
-          int showcmd_len = 0;
-          int c1 = 0;
-          if (typebuf.tb_len > 0 && advance && !exmode_active) {
-            if (((State & (NORMAL | INSERT)) || State == LANGMAP)
-                && State != HITRETURN) {
-              /* this looks nice when typing a dead character map */
-              if (State & INSERT
-                  && ptr2cells(typebuf.tb_buf + typebuf.tb_off
-                    + typebuf.tb_len - 1) == 1) {
-                edit_putchar(typebuf.tb_buf[typebuf.tb_off
-                    + typebuf.tb_len - 1], FALSE);
-                setcursor();               /* put cursor back where it belongs */
-                c1 = 1;
-              }
-              /* need to use the col and row from above here */
-              int old_wcol = curwin->w_wcol;
-              int old_wrow = curwin->w_wrow;
-              curwin->w_wcol = new_wcol;
-              curwin->w_wrow = new_wrow;
-              push_showcmd();
-              if (typebuf.tb_len > SHOWCMD_COLS)
-                showcmd_len = typebuf.tb_len - SHOWCMD_COLS;
-              while (showcmd_len < typebuf.tb_len)
-                (void)add_to_showcmd(typebuf.tb_buf[typebuf.tb_off
-                    + showcmd_len++]);
-              curwin->w_wcol = old_wcol;
-              curwin->w_wrow = old_wrow;
-            }
-
-            /* this looks nice when typing a dead character map */
-            if ((State & CMDLINE)
-                && cmdline_star == 0
-                && ptr2cells(typebuf.tb_buf + typebuf.tb_off
-                  + typebuf.tb_len - 1) == 1) {
-              putcmdline(typebuf.tb_buf[typebuf.tb_off
-                  + typebuf.tb_len - 1], FALSE);
-              c1 = 1;
-            }
-          }
-
-          /*
-           * get a character: 3. from the user - get it
-           */
-          int wait_tb_len = typebuf.tb_len;
-          c = inchar(
-              typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
-              typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
-              advance ? calc_waittime(keylen) : 0,
-              typebuf.tb_change_cnt);
-
-          if (showcmd_len != 0)
-            pop_showcmd();
-          if (c1 == 1) {
-            if (State & INSERT)
-              edit_unputchar();
-            if (State & CMDLINE)
-              unputcmdline();
-            else
-              setcursor();                /* put cursor back where it belongs */
-          }
-
-          if (c < 0)
-            continue;                     /* end of input script reached */
-          if (c == NUL) {                 /* no character available */
-            if (!advance) {
-              break;
-            }
-            if (wait_tb_len > 0) {                /* timed out */
-              timedout = TRUE;
-              continue;
-            }
-          } else {          /* allow mapping for just typed characters */
-            while (typebuf.tb_buf[typebuf.tb_off
-                + typebuf.tb_len] != NUL)
-              typebuf.tb_noremap[typebuf.tb_off
-                + typebuf.tb_len++] = RM_YES;
-          }
         }
       }
     }             /* for (;;) */
