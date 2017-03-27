@@ -4103,6 +4103,40 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (p_tm < 0) {
       errmsg = e_positive;
     }
+  } else if (pp == &p_hi) {
+    if (p_hi < 0) {
+      errmsg = e_positive;
+    } else if (p_hi > 10000) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &p_re) {
+    if (p_re < 0 || p_re > 2) {
+      errmsg = e_invarg;
+    }
+  } else if (pp == &p_report) {
+    if (p_report < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_so) {
+    if (p_so < 0 && full_screen) {
+      errmsg = e_scroll;
+    }
+  } else if (pp == &p_siso) {
+    if (p_siso < 0 && full_screen) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_cwh) {
+    if (p_cwh < 1) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_ut) {
+    if (p_ut < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &p_ss) {
+    if (p_ss < 0) {
+      errmsg = e_positive;
+    }
   }
 
   // If validation failed, reset to old value and return.
@@ -4270,21 +4304,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     else     /* curwin->w_p_scr > curwin->w_height */
       curwin->w_p_scr = curwin->w_height;
   }
-  if (p_hi < 0) {
-    errmsg = e_positive;
-    p_hi = 0;
-  } else if (p_hi > 10000) {
-    errmsg = e_invarg;
-    p_hi = 10000;
-  }
-  if (p_re < 0 || p_re > 2) {
-    errmsg = e_invarg;
-    p_re = 0;
-  }
-  if (p_report < 0) {
-    errmsg = e_positive;
-    p_report = 1;
-  }
   if ((p_sj < -100 || p_sj >= Rows) && full_screen) {
     if (Rows != old_Rows)       /* Rows changed, just adjust p_sj */
       p_sj = Rows / 2;
@@ -4292,26 +4311,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_scroll;
       p_sj = 1;
     }
-  }
-  if (p_so < 0 && full_screen) {
-    errmsg = e_scroll;
-    p_so = 0;
-  }
-  if (p_siso < 0 && full_screen) {
-    errmsg = e_positive;
-    p_siso = 0;
-  }
-  if (p_cwh < 1) {
-    errmsg = e_positive;
-    p_cwh = 1;
-  }
-  if (p_ut < 0) {
-    errmsg = e_positive;
-    p_ut = 2000;
-  }
-  if (p_ss < 0) {
-    errmsg = e_positive;
-    p_ss = 0;
   }
 
   /* May set global value for local option. */
