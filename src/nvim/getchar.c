@@ -1998,29 +1998,26 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
     return 0;
   }
 
-  if ((mp == NULL || max_mlen >= *mp_match_lenp)
-      && *keylenp != KEYLEN_PART_MAP && *keylenp != KEYLEN_PART_KEY) {
+  if (mp == NULL && *keylenp != KEYLEN_PART_MAP && *keylenp != KEYLEN_PART_KEY) {
     // No matching mapping found or found a non-matching mapping that
     // matches at least what the matching mapping matched
     // If there was no mapping, use the character from the typeahead
     // buffer right here. Otherwise, use the mapping (loop around).
-    if (mp == NULL) {
-      // get a character: 2. from the typeahead buffer
-      int c = typebuf.tb_buf[typebuf.tb_off] & 255;
-      if (advance) {                  // remove chars from tb_buf
-        cmd_silent = (typebuf.tb_silent > 0);
-        if (typebuf.tb_maplen > 0) {
-          KeyTyped = false;
-        } else {
-          KeyTyped = true;
-          // write char to script file(s)
-          gotchars(typebuf.tb_buf + typebuf.tb_off, 1);
-        }
-        KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
-        del_typebuf(1, 0);
+    // get a character: 2. from the typeahead buffer
+    int c = typebuf.tb_buf[typebuf.tb_off] & 255;
+    if (advance) {                  // remove chars from tb_buf
+      cmd_silent = (typebuf.tb_silent > 0);
+      if (typebuf.tb_maplen > 0) {
+        KeyTyped = false;
+      } else {
+        KeyTyped = true;
+        // write char to script file(s)
+        gotchars(typebuf.tb_buf + typebuf.tb_off, 1);
       }
-      return c;
+      KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
+      del_typebuf(1, 0);
     }
+    return c;
   }
 
   if (expand_matched_map(mp, *keylenp, mapdepthp)) {
