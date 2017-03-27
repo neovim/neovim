@@ -2018,8 +2018,6 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
         del_typebuf(1, 0);
       }
       return c;
-    } else {
-      *keylenp = *mp_match_lenp;
     }
   }
 
