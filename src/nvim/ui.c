@@ -393,7 +393,13 @@ int ui_current_col(void)
 
 void ui_flush(void)
 {
+  int save_row = row;
+  int save_col = col;
+  if (!(State & CMDLINE)) {
+    setcursor();
+  }
   UI_CALL(flush);
+  ui_cursor_goto(save_row, save_col);
 }
 
 static void send_output(uint8_t **ptr)
