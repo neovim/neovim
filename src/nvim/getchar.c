@@ -1648,11 +1648,172 @@ static int handle_int(const int advance)
   return c;
 }
 
+// Returns `true` if have toggled the 'paste' option, and hence should continue
+// on to find the next character.
+// Only changes *keylenp if it finds the start of the bytes required to toggle
+// 'paste'. In that case *keylenp is set to KEYLEN_PART_KEY.
+// If it finds no match in the typebuffer, because the typebuffer has
+// characters that are different than required for toggling paste (i.e. not
+// because the typebuffer finishes before a match has been completed), then it
+// sets *max_mlenp to the length where they do match, plus 2.
+static bool check_togglepaste(mapblock_T *mp, int *max_mlenp, int *keylenp)
+{
+  // Check for a key that can toggle the 'paste' option
+  if (mp == NULL && (State & (INSERT|NORMAL))) {
+    int mlen;
+    bool match = typebuf_match_len(ui_toggle, &mlen);
+    if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
+      // didn't match ui_toggle_key and didn't try the whole typebuf,
+      // check the 'pastetoggle'
+      match = typebuf_match_len(p_pt, &mlen);
+    }
+    if (match) {
+      // write chars to script file(s)
+      if (mlen > typebuf.tb_maplen) {
+        gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+            (size_t)(mlen - typebuf.tb_maplen));
+      }
+
+      del_typebuf(mlen, 0);  // Remove the chars.
+      set_option_value("paste", !p_paste, NULL, 0);
+      if (!(State & INSERT)) {
+        msg_col = 0;
+        msg_row = (int)Rows - 1;
+        msg_clr_eos();                          // clear ruler
+      }
+      status_redraw_all();
+      redraw_statuslines();
+      showmode();
+      setcursor();
+      return true;
+    }
+    /* Need more chars for partly match. */
+    if (mlen == typebuf.tb_len)
+      *keylenp = KEYLEN_PART_KEY;
+    else if (*max_mlenp < mlen)
+      /* no match, may have to check for termcode at
+       * next character */
+      *max_mlenp = mlen + 1;
+  }
+
+  return false;
+}
+
+// Checks "keylen" to see if we've found a valid map in the typebuffer.
+// If so, expand it in the typebuffer, increment *mapdepthp (and check we
+// haven't exceeded the map recursion limit) and return `true`.
+// If not, return false.
+static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
+{
+  if (keylen < 0 || keylen > typebuf.tb_len) {
+    return false;
+  }
+
+  /* complete match */
+  int save_m_expr;
+  int save_m_noremap;
+  int save_m_silent;
+  char_u *save_m_keys;
+  char_u *save_m_str;
+
+  // write chars to script file(s)
+  if (keylen > typebuf.tb_maplen) {
+    gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+        (size_t)(keylen - typebuf.tb_maplen));
+  }
+
+  cmd_silent = (typebuf.tb_silent > 0);
+  del_typebuf(keylen, 0);             /* remove the mapped keys */
+
+  /*
+   * Put the replacement string in front of mapstr.
+   * The depth check catches ":map x y" and ":map y x".
+   */
+  if (++(*mapdepthp) >= p_mmd) {
+    EMSG(_("E223: recursive mapping"));
+    if (State & CMDLINE)
+      redrawcmdline();
+    else
+      setcursor();
+    flush_buffers(FALSE);
+    *mapdepthp = 0;                     /* for next one */
+    return true;
+  }
+
+  /*
+   * In Select mode and a Visual mode mapping is used:
+   * Switch to Visual mode temporarily.  Append K_SELECT
+   * to switch back to Select mode.
+   */
+  if (VIsual_active && VIsual_select
+      && (mp->m_mode & VISUAL)) {
+    VIsual_select = FALSE;
+    (void)ins_typebuf(K_SELECT_STRING, REMAP_NONE,
+        0, TRUE, FALSE);
+  }
+
+  /* Copy the values from *mp that are used, because
+   * evaluating the expression may invoke a function
+   * that redefines the mapping, thereby making *mp
+   * invalid. */
+  save_m_expr = mp->m_expr;
+  save_m_noremap = mp->m_noremap;
+  save_m_silent = mp->m_silent;
+  save_m_keys = NULL;              /* only saved when needed */
+  save_m_str = NULL;              /* only saved when needed */
+
+  /*
+   * Handle ":map <expr>": evaluate the {rhs} as an
+   * expression.  Also save and restore the command line
+   * for "normal :".
+   */
+  char_u *s;
+  if (mp->m_expr) {
+    int save_vgetc_busy = vgetc_busy;
+
+    vgetc_busy = 0;
+    save_m_keys = vim_strsave(mp->m_keys);
+    save_m_str = vim_strsave(mp->m_str);
+    s = eval_map_expr(save_m_str, NUL);
+    vgetc_busy = save_vgetc_busy;
+  } else
+    s = mp->m_str;
+
+  /*
+   * Insert the 'to' part in the typebuf.tb_buf.
+   * If 'from' field is the same as the start of the
+   * 'to' field, don't remap the first character (but do
+   * allow abbreviations).
+   * If m_noremap is set, don't remap the whole 'to'
+   * part.
+   */
+  if (s != NULL) {
+    int noremap;
+
+    if (save_m_noremap != REMAP_YES)
+      noremap = save_m_noremap;
+    else if (
+        STRNCMP(s, save_m_keys != NULL
+          ? save_m_keys : mp->m_keys,
+          (size_t)keylen)
+        != 0)
+      noremap = REMAP_YES;
+    else
+      noremap = REMAP_SKIP;
+    ins_typebuf(s, noremap,
+        0, TRUE, cmd_silent || save_m_silent);
+    if (save_m_expr)
+      xfree(s);
+  }
+  xfree(save_m_keys);
+  xfree(save_m_str);
+  return true;
+}
+
 // Returns 0 to continue, -1 to carry on in the loop, otherwise, returns the
 // character that should be used.
 // Keeps track of the mapdepth in the variable pointed to by "mapdepthp".
-static int look_in_typebuf(int *mapdepthp, int *keylenp,
-    int *mp_match_lenp,
+static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
     const int timedout, const int advance, const int local_State)
 {
   if (typebuf.tb_len <= 0) {
@@ -1813,42 +1974,10 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp,
     }
   }
 
-  // Check for a key that can toggle the 'paste' option
-  if (mp == NULL && (State & (INSERT|NORMAL))) {
-    int mlen;
-    bool match = typebuf_match_len(ui_toggle, &mlen);
-    if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
-      // didn't match ui_toggle_key and didn't try the whole typebuf,
-      // check the 'pastetoggle'
-      match = typebuf_match_len(p_pt, &mlen);
-    }
-    if (match) {
-      // write chars to script file(s)
-      if (mlen > typebuf.tb_maplen) {
-        gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
-            (size_t)(mlen - typebuf.tb_maplen));
-      }
-
-      del_typebuf(mlen, 0);  // Remove the chars.
-      set_option_value("paste", !p_paste, NULL, 0);
-      if (!(State & INSERT)) {
-        msg_col = 0;
-        msg_row = (int)Rows - 1;
-        msg_clr_eos();                          // clear ruler
-      }
-      status_redraw_all();
-      redraw_statuslines();
-      showmode();
-      setcursor();
-      return 0;
-    }
-    /* Need more chars for partly match. */
-    if (mlen == typebuf.tb_len)
-      *keylenp = KEYLEN_PART_KEY;
-    else if (max_mlen < mlen)
-      /* no match, may have to check for termcode at
-       * next character */
-      max_mlen = mlen + 1;
+  if (check_togglepaste(mp, &max_mlen, keylenp)) {
+    // Have toggled 'paste', now have to start searching for characters again
+    // in order to find the character that nvim proper needs to deal with.
+    return 0;
   }
 
   if ((mp == NULL || max_mlen >= *mp_match_lenp)
@@ -1879,105 +2008,7 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp,
     }
   }
 
-  /* complete match */
-  if (*keylenp >= 0 && *keylenp <= typebuf.tb_len) {
-    int save_m_expr;
-    int save_m_noremap;
-    int save_m_silent;
-    char_u *save_m_keys;
-    char_u *save_m_str;
-
-    // write chars to script file(s)
-    if (*keylenp > typebuf.tb_maplen) {
-      gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
-          (size_t)(*keylenp - typebuf.tb_maplen));
-    }
-
-    cmd_silent = (typebuf.tb_silent > 0);
-    del_typebuf(*keylenp, 0);             /* remove the mapped keys */
-
-    /*
-     * Put the replacement string in front of mapstr.
-     * The depth check catches ":map x y" and ":map y x".
-     */
-    if (++(*mapdepthp) >= p_mmd) {
-      EMSG(_("E223: recursive mapping"));
-      if (State & CMDLINE)
-        redrawcmdline();
-      else
-        setcursor();
-      flush_buffers(FALSE);
-      *mapdepthp = 0;                     /* for next one */
-      return 0;
-    }
-
-    /*
-     * In Select mode and a Visual mode mapping is used:
-     * Switch to Visual mode temporarily.  Append K_SELECT
-     * to switch back to Select mode.
-     */
-    if (VIsual_active && VIsual_select
-        && (mp->m_mode & VISUAL)) {
-      VIsual_select = FALSE;
-      (void)ins_typebuf(K_SELECT_STRING, REMAP_NONE,
-          0, TRUE, FALSE);
-    }
-
-    /* Copy the values from *mp that are used, because
-     * evaluating the expression may invoke a function
-     * that redefines the mapping, thereby making *mp
-     * invalid. */
-    save_m_expr = mp->m_expr;
-    save_m_noremap = mp->m_noremap;
-    save_m_silent = mp->m_silent;
-    save_m_keys = NULL;              /* only saved when needed */
-    save_m_str = NULL;              /* only saved when needed */
-
-    /*
-     * Handle ":map <expr>": evaluate the {rhs} as an
-     * expression.  Also save and restore the command line
-     * for "normal :".
-     */
-    char_u *s;
-    if (mp->m_expr) {
-      int save_vgetc_busy = vgetc_busy;
-
-      vgetc_busy = 0;
-      save_m_keys = vim_strsave(mp->m_keys);
-      save_m_str = vim_strsave(mp->m_str);
-      s = eval_map_expr(save_m_str, NUL);
-      vgetc_busy = save_vgetc_busy;
-    } else
-      s = mp->m_str;
-
-    /*
-     * Insert the 'to' part in the typebuf.tb_buf.
-     * If 'from' field is the same as the start of the
-     * 'to' field, don't remap the first character (but do
-     * allow abbreviations).
-     * If m_noremap is set, don't remap the whole 'to'
-     * part.
-     */
-    if (s != NULL) {
-      int noremap;
-
-      if (save_m_noremap != REMAP_YES)
-        noremap = save_m_noremap;
-      else if (
-          STRNCMP(s, save_m_keys != NULL
-            ? save_m_keys : mp->m_keys,
-            (size_t)*keylenp)
-          != 0)
-        noremap = REMAP_YES;
-      else
-        noremap = REMAP_SKIP;
-      ins_typebuf(s, noremap,
-          0, TRUE, cmd_silent || save_m_silent);
-      if (save_m_expr)
-        xfree(s);
-    }
-    xfree(save_m_keys);
-    xfree(save_m_str);
+  if (expand_matched_map(mp, *keylenp, mapdepthp)) {
     return 0;
   }
 
@@ -2245,8 +2276,8 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
 static int vgetorpeek(const int advance)
 {
   int c;
-  int mp_match_len = 0;
   int mode_deleted = FALSE;             /* set when mode has been deleted */
+  int mp_match_len = 0;
 
   /*
    * This function doesn't work very well when called recursively.  This may
