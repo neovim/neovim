@@ -10765,16 +10765,23 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     options |= WILD_KEEP_ALL;
   }
 
+  if (argvars[0].v_type != VAR_STRING || argvars[1].v_type != VAR_STRING) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  if (STRCMP(get_tv_string(&argvars[1]), "cmdline") == 0) {
+    set_one_cmd_context(&xpc, get_tv_string(&argvars[0]));
+    xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
+    goto theend;
+  }
+
   ExpandInit(&xpc);
   xpc.xp_pattern = get_tv_string(&argvars[0]);
   xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
   xpc.xp_context = cmdcomplete_str_to_type(get_tv_string(&argvars[1]));
   if (xpc.xp_context == EXPAND_NOTHING) {
-    if (argvars[1].v_type == VAR_STRING) {
-      EMSG2(_(e_invarg2), argvars[1].vval.v_string);
-    } else {
-      EMSG(_(e_invarg));
-    }
+    EMSG2(_(e_invarg2), argvars[1].vval.v_string);
     return;
   }
 
@@ -10793,6 +10800,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
   }
 
+theend:
   pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
   rettv_list_alloc(rettv);
   if (pat != NULL) {
