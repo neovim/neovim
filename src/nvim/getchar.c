@@ -2000,7 +2000,6 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
       && *keylenp != KEYLEN_PART_MAP && *keylenp != KEYLEN_PART_KEY) {
     // No matching mapping found or found a non-matching mapping that
     // matches at least what the matching mapping matched
-    *keylenp = 0;
     // If there was no mapping, use the character from the typeahead
     // buffer right here. Otherwise, use the mapping (loop around).
     if (mp == NULL) {
