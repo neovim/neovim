@@ -4004,9 +4004,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     curbuf->b_p_sw = curbuf->b_p_ts;
   }
 
-  /*
-   * Number options that need some action when changed
-   */
+  // Number options that need some validation when changed.
   if (pp == &p_wh || pp == &p_hh) {
     if (p_wh < 1) {
       errmsg = e_positive;
@@ -4020,14 +4018,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_positive;
       p_hh = 0;
     }
-
-    /* Change window height NOW */
-    if (lastwin != firstwin) {
-      if (pp == &p_wh && curwin->w_height < p_wh)
-        win_setheight((int)p_wh);
-      if (pp == &p_hh && curbuf->b_help && curwin->w_height < p_hh)
-        win_setheight((int)p_hh);
-    }
   }
   /* 'winminheight' */
   else if (pp == &p_wmh) {
@@ -4039,7 +4029,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_winheight;
       p_wmh = p_wh;
     }
-    win_setminheight();
   } else if (pp == &p_wiw) {
     if (p_wiw < 1) {
       errmsg = e_positive;
@@ -4049,10 +4038,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_winwidth;
       p_wiw = p_wmw;
     }
-
-    /* Change window width NOW */
-    if (lastwin != firstwin && curwin->w_width < p_wiw)
-      win_setwidth((int)p_wiw);
   }
   /* 'winminwidth' */
   else if (pp == &p_wmw) {
@@ -4064,29 +4049,11 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_winwidth;
       p_wmw = p_wiw;
     }
-    win_setminheight();
-  } else if (pp == &p_ls) {
-    /* (re)set last window status line */
-    last_status(false);
-  }
-  /* (re)set tab page line */
-  else if (pp == &p_stal) {
-    shell_new_rows();           /* recompute window positions and heights */
   }
   /* 'foldlevel' */
   else if (pp == &curwin->w_p_fdl) {
     if (curwin->w_p_fdl < 0)
       curwin->w_p_fdl = 0;
-    newFoldLevel();
-  }
-  /* 'foldminlines' */
-  else if (pp == &curwin->w_p_fml) {
-    foldUpdateAll(curwin);
-  }
-  /* 'foldnestmax' */
-  else if (pp == &curwin->w_p_fdn) {
-    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin))
-      foldUpdateAll(curwin);
   }
   /* 'foldcolumn' */
   else if (pp == &curwin->w_p_fdc) {
@@ -4097,16 +4064,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_invarg;
       curwin->w_p_fdc = 12;
     }
-  // 'shiftwidth' or 'tabstop'
-  } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
-    if (foldmethodIsIndent(curwin)) {
-      foldUpdateAll(curwin);
-    }
-    // When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
-    // parse 'cinoptions'.
-    if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
-      parse_cino(curbuf);
-    }
   }
   /* 'maxcombine' */
   else if (pp == &p_mco) {
@@ -4114,15 +4071,11 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       p_mco = MAX_MCO;
     else if (p_mco < 0)
       p_mco = 0;
-    screenclear();          /* will re-allocate the screen */
   } else if (pp == &curbuf->b_p_iminsert) {
     if (curbuf->b_p_iminsert < 0 || curbuf->b_p_iminsert > B_IMODE_LAST) {
       errmsg = e_invarg;
       curbuf->b_p_iminsert = B_IMODE_NONE;
     }
-    showmode();
-    /* Show/unshow value of 'keymap' in status lines. */
-    status_redraw_curbuf();
   } else if (pp == &p_window) {
     if (p_window < 1)
       p_window = 1;
@@ -4140,8 +4093,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_positive;
       p_titlelen = 85;
     }
-    if (starting != NO_SCREEN && old_value != p_titlelen)
-      need_maketitle = TRUE;
   }
   /* if p_ch changed value, change the command line height */
   else if (pp == &p_ch) {
@@ -4151,12 +4102,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
     if (p_ch > Rows - min_rows() + 1)
       p_ch = Rows - min_rows() + 1;
-
-    /* Only compute the new window layout when startup has been
-     * completed. Otherwise the frame sizes may be wrong. */
-    if (p_ch != old_value && full_screen
-        )
-      command_height();
   }
   /* when 'updatecount' changes from zero to non-zero, open swap files */
   else if (pp == &p_uc) {
@@ -4164,8 +4109,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_positive;
       p_uc = 100;
     }
-    if (p_uc && !old_value)
-      ml_open_files();
   } else if (pp == &curwin->w_p_cole) {
     if (curwin->w_p_cole < 0) {
       errmsg = e_positive;
@@ -4174,18 +4117,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_invarg;
       curwin->w_p_cole = 3;
     }
-  }
-  /* sync undo before 'undolevels' changes */
-  else if (pp == &p_ul) {
-    /* use the old value, otherwise u_sync() may not work properly */
-    p_ul = old_value;
-    u_sync(TRUE);
-    p_ul = value;
-  } else if (pp == &curbuf->b_p_ul) {
-    /* use the old value, otherwise u_sync() may not work properly */
-    curbuf->b_p_ul = old_value;
-    u_sync(TRUE);
-    curbuf->b_p_ul = value;
   }
   /* 'numberwidth' must be positive */
   else if (pp == &curwin->w_p_nuw) {
@@ -4203,10 +4134,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_positive;
       curbuf->b_p_tw = 0;
     }
-
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      check_colorcolumn(wp);
-    }
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
     // 'scrollback'
     if (*pp < -1 || *pp > SB_MAX
@@ -4218,6 +4145,106 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
     }
   }
+
+  // Number options that need some action when changed
+  if (pp == &p_wh || pp == &p_hh) {
+    /* Change window height NOW */
+    if (lastwin != firstwin) {
+      if (pp == &p_wh && curwin->w_height < p_wh)
+        win_setheight((int)p_wh);
+      if (pp == &p_hh && curbuf->b_help && curwin->w_height < p_hh)
+        win_setheight((int)p_hh);
+    }
+  }
+  else if (pp == &p_wmh) {
+    win_setminheight();
+  } else if (pp == &p_wiw) {
+    /* Change window width NOW */
+    if (lastwin != firstwin && curwin->w_width < p_wiw)
+      win_setwidth((int)p_wiw);
+  }
+  else if (pp == &p_wmw) {
+    win_setminheight();
+  } else if (pp == &p_ls) {
+    /* (re)set last window status line */
+    last_status(false);
+  }
+  /* (re)set tab page line */
+  else if (pp == &p_stal) {
+    shell_new_rows();           /* recompute window positions and heights */
+  }
+  else if (pp == &curwin->w_p_fdl) {
+    newFoldLevel();
+  }
+  /* 'foldminlines' */
+  else if (pp == &curwin->w_p_fml) {
+    foldUpdateAll(curwin);
+  }
+  /* 'foldnestmax' */
+  else if (pp == &curwin->w_p_fdn) {
+    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin))
+      foldUpdateAll(curwin);
+  // 'shiftwidth' or 'tabstop'
+  } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
+    if (foldmethodIsIndent(curwin)) {
+      foldUpdateAll(curwin);
+    }
+    // When 'shiftwidth' changes, or it's zero and 'tabstop' changes:
+    // parse 'cinoptions'.
+    if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
+      parse_cino(curbuf);
+    }
+  }
+  /* 'maxcombine' */
+  else if (pp == &p_mco) {
+    screenclear();          /* will re-allocate the screen */
+  } else if (pp == &curbuf->b_p_iminsert) {
+    showmode();
+    /* Show/unshow value of 'keymap' in status lines. */
+    status_redraw_curbuf();
+  }
+  /* if 'titlelen' has changed, redraw the title */
+  else if (pp == &p_titlelen) {
+    if (starting != NO_SCREEN && old_value != p_titlelen)
+      need_maketitle = TRUE;
+  }
+  /* if p_ch changed value, change the command line height */
+  else if (pp == &p_ch) {
+
+    /* Only compute the new window layout when startup has been
+     * completed. Otherwise the frame sizes may be wrong. */
+    if (p_ch != old_value && full_screen
+        )
+      command_height();
+  }
+  /* when 'updatecount' changes from zero to non-zero, open swap files */
+  else if (pp == &p_uc) {
+    if (p_uc && !old_value)
+      ml_open_files();
+  }
+  /* sync undo before 'undolevels' changes */
+  else if (pp == &p_ul) {
+    /* use the old value, otherwise u_sync() may not work properly */
+    p_ul = old_value;
+    u_sync(TRUE);
+    p_ul = value;
+  } else if (pp == &curbuf->b_p_ul) {
+    /* use the old value, otherwise u_sync() may not work properly */
+    curbuf->b_p_ul = old_value;
+    u_sync(TRUE);
+    curbuf->b_p_ul = value;
+  } else if (pp == &curbuf->b_p_tw) {
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      check_colorcolumn(wp);
+    }
+  }
+   else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
+    if (curbuf->terminal) {
+      // Force the scrollback to take effect.
+      terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
+    }
+  }
+
 
   /*
    * Check the bounds for numeric options here
