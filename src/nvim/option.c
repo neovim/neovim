@@ -3999,11 +3999,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   /* Remember where the option was set. */
   set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 
-  if (curbuf->b_p_sw < 0) {
-    errmsg = e_positive;
-    curbuf->b_p_sw = curbuf->b_p_ts;
-  }
-
   // Number options that need some validation when changed.
   if (pp == &p_wh) {
     if (p_wh < 1) {
@@ -4091,13 +4086,18 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (*pp < -1 || *pp > SB_MAX
         || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
       errmsg = e_invarg;
-  }
+    }
+  } else if (pp == &curbuf->b_p_sw) {
+    if (curbuf->b_p_sw < 0) {
+      errmsg = e_positive;
+    }
   } else if (pp == &p_ch) {
     if (p_ch < 1) {
       errmsg = e_positive;
     }
   }
 
+  // If validation failed, reset to old value and return.
   if (errmsg != NULL) {
     *pp = old_value;
     return errmsg;
@@ -4117,45 +4117,38 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   }
 
   // Number options that need some action when changed
-  if (pp == &p_wh || pp == &p_hh) {
-    /* Change window height NOW */
-    if (lastwin != firstwin) {
-      if (pp == &p_wh && curwin->w_height < p_wh)
-        win_setheight((int)p_wh);
-      if (pp == &p_hh && curbuf->b_help && curwin->w_height < p_hh)
-        win_setheight((int)p_hh);
+  if (pp == &p_wh) {
+    if (lastwin != firstwin && curwin->w_height < p_wh) {
+      win_setheight((int)p_wh);
     }
-  }
-  else if (pp == &p_wmh) {
+  } else if (pp == &p_hh) {
+    if (lastwin != firstwin && curbuf->b_help && curwin->w_height < p_hh) {
+      win_setheight((int)p_hh);
+    }
+  } else if (pp == &p_wmh) {
     win_setminheight();
   } else if (pp == &p_wiw) {
-    /* Change window width NOW */
-    if (lastwin != firstwin && curwin->w_width < p_wiw)
+    if (lastwin != firstwin && curwin->w_width < p_wiw) {
       win_setwidth((int)p_wiw);
-  }
-  else if (pp == &p_wmw) {
+    }
+  } else if (pp == &p_wmw) {
     win_setminheight();
   } else if (pp == &p_ls) {
-    /* (re)set last window status line */
+    // (re)set last window status line.
     last_status(false);
-  }
-  /* (re)set tab page line */
-  else if (pp == &p_stal) {
-    shell_new_rows();           /* recompute window positions and heights */
-  }
-  else if (pp == &curwin->w_p_fdl) {
+  } else if (pp == &p_stal) {
+    // (re)set tab page line
+    shell_new_rows();   // recompute window positions and heights
+  } else if (pp == &curwin->w_p_fdl) {
     newFoldLevel();
-  }
-  /* 'foldminlines' */
-  else if (pp == &curwin->w_p_fml) {
+  } else if (pp == &curwin->w_p_fml) {
     foldUpdateAll(curwin);
-  }
-  /* 'foldnestmax' */
-  else if (pp == &curwin->w_p_fdn) {
-    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin))
+  } else if (pp == &curwin->w_p_fdn) {
+    if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
-  // 'shiftwidth' or 'tabstop'
+    }
   } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
+    // 'shiftwidth' or 'tabstop'
     if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
     }
@@ -4164,51 +4157,40 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
     }
-  }
-  /* 'maxcombine' */
-  else if (pp == &p_mco) {
-    screenclear();          /* will re-allocate the screen */
+  } else if (pp == &p_mco) {
+    screenclear();          // will re-allocate the screen
   } else if (pp == &curbuf->b_p_iminsert) {
     showmode();
-    /* Show/unshow value of 'keymap' in status lines. */
+    // Show/unshow value of 'keymap' in status lines.
     status_redraw_curbuf();
-  }
-  /* if 'titlelen' has changed, redraw the title */
-  else if (pp == &p_titlelen) {
-    if (starting != NO_SCREEN && old_value != p_titlelen)
+  } else if (pp == &p_titlelen) {
+    // if 'titlelen' has changed, redraw the title
+    if (starting != NO_SCREEN && old_value != p_titlelen) {
       need_maketitle = TRUE;
-  }
-  /* if p_ch changed value, change the command line height */
-  else if (pp == &p_ch) {
-
-    /* Only compute the new window layout when startup has been
-     * completed. Otherwise the frame sizes may be wrong. */
-    if (p_ch != old_value && full_screen
-        )
+    }
+  } else if (pp == &p_ch) {
+    // if p_ch changed value, change the command line height
+    // Only compute the new window layout when startup has been
+    // completed. Otherwise the frame sizes may be wrong.
+    if (p_ch != old_value && full_screen) {
       command_height();
-  }
-  /* when 'updatecount' changes from zero to non-zero, open swap files */
-  else if (pp == &p_uc) {
-    if (p_uc && !old_value)
+    }
+  } else if (pp == &p_uc) {
+    // when 'updatecount' changes from zero to non-zero, open swap files
+    if (p_uc && !old_value) {
       ml_open_files();
-  }
-  /* sync undo before 'undolevels' changes */
-  else if (pp == &p_ul) {
-    /* use the old value, otherwise u_sync() may not work properly */
-    p_ul = old_value;
+    }
+  } else if (pp == &p_ul || pp == &curbuf->b_p_ul) {
+    // sync undo before 'undolevels' changes
+    // use the old value, otherwise u_sync() may not work properly
+    *pp = old_value;
     u_sync(TRUE);
-    p_ul = value;
-  } else if (pp == &curbuf->b_p_ul) {
-    /* use the old value, otherwise u_sync() may not work properly */
-    curbuf->b_p_ul = old_value;
-    u_sync(TRUE);
-    curbuf->b_p_ul = value;
+    *pp = value;
   } else if (pp == &curbuf->b_p_tw) {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
     }
-  }
-   else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
+  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
     if (curbuf->terminal) {
       // Force the scrollback to take effect.
       terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
