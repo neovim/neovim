@@ -65,4 +65,34 @@ func Test_duplicate_tagjump()
   call delete('Xfile1')
 endfunc
 
+" Tests for [ CTRL-I and CTRL-W CTRL-I commands
+function Test_keyword_jump()
+  call writefile(["#include Xinclude", "",
+	      \ "",
+	      \ "/* test text test tex start here",
+	      \ "		some text",
+	      \ "		test text",
+	      \ "		start OK if found this line",
+	      \ "	start found wrong line",
+	      \ "test text"], 'Xtestfile')
+  call writefile(["/* test text test tex start here",
+	      \ "		some text",
+	      \ "		test text",
+	      \ "		start OK if found this line",
+	      \ "	start found wrong line",
+	      \ "test text"], 'Xinclude')
+  new Xtestfile
+  call cursor(1,1)
+  call search("start")
+  exe "normal! 5[\<C-I>"
+  call assert_equal("		start OK if found this line", getline('.'))
+  call cursor(1,1)
+  call search("start")
+  exe "normal! 5\<C-W>\<C-I>"
+  call assert_equal("		start OK if found this line", getline('.'))
+  enew! | only
+  call delete('Xtestfile')
+  call delete('Xinclude')
+endfunction
+
 " vim: shiftwidth=2 sts=2 expandtab

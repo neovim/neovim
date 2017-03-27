@@ -269,4 +269,33 @@ describe('argument list commands', function()
     eq(0, eval('argidx()'))
     execute('%argd')
   end)
+
+
+  it('test for autocommand that redefines the argument list, when doing ":all"', function()
+    execute('autocmd BufReadPost Xxx2 next Xxx2 Xxx1')
+    execute("call writefile(['test file Xxx1'], 'Xxx1')")
+    execute("call writefile(['test file Xxx2'], 'Xxx2')")
+    execute("call writefile(['test file Xxx3'], 'Xxx3')")
+    
+    execute('new')
+    -- redefine arglist; go to Xxx1
+    execute('next! Xxx1 Xxx2 Xxx3')
+    -- open window for all args
+    execute('all')
+    eq('test file Xxx1', eval('getline(1)'))
+    execute('wincmd w')
+    execute('wincmd w')
+    eq('test file Xxx1', eval('getline(1)'))
+    -- should now be in Xxx2
+    execute('rewind')
+    eq('test file Xxx2', eval('getline(1)'))
+    
+    execute('autocmd! BufReadPost Xxx2')
+    execute('enew! | only')
+    execute("call delete('Xxx1')")
+    execute("call delete('Xxx2')")
+    execute("call delete('Xxx3')")
+    execute('argdelete Xxx*')
+    execute('bwipe! Xxx1 Xxx2 Xxx3')
+  end)
 end)

@@ -2,8 +2,8 @@
 function! Test_charsearch()
   enew!
   call append(0, ['Xabcdefghijkemnopqretuvwxyz',
-      	\ 'Yabcdefghijkemnopqretuvwxyz',
-      	\ 'Zabcdefghijkemnokqretkvwxyz'])
+	      \ 'Yabcdefghijkemnopqretuvwxyz',
+	      \ 'Zabcdefghijkemnokqretkvwxyz'])
   " check that "fe" and ";" work
   1
   normal! ylfep;;p,,p
