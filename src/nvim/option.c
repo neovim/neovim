@@ -4014,22 +4014,19 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   } else if (pp == &p_wmh) {
     if (p_wmh < 0) {
       errmsg = e_positive;
-    }
-    if (p_wmh > p_wh) {
+    } else if (p_wmh > p_wh) {
       errmsg = e_winheight;
     }
   } else if (pp == &p_wiw) {
     if (p_wiw < 1) {
       errmsg = e_positive;
-    }
-    if (p_wmw > p_wiw) {
+    } else if (p_wmw > p_wiw) {
       errmsg = e_winwidth;
     }
   } else if (pp == &p_wmw) {
     if (p_wmw < 0) {
       errmsg = e_positive;
-    }
-    if (p_wmw > p_wiw) {
+    } else if (p_wmw > p_wiw) {
       errmsg = e_winwidth;
     }
   } else if (pp == &p_mco) {
@@ -4110,16 +4107,16 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     } else if (curwin->w_p_nuw > 10) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curbuf->b_p_iminsert) {
-    if (curbuf->b_p_iminsert < 0 || curbuf->b_p_iminsert > B_IMODE_LAST) {
+  } else if (pp == &curbuf->b_p_iminsert || pp == &p_iminsert) {
+    if (*pp < 0 || *pp > B_IMODE_LAST) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curbuf->b_p_imsearch) {
-    if (curbuf->b_p_imsearch < -1 || curbuf->b_p_imsearch > B_IMODE_LAST) {
+  } else if (pp == &curbuf->b_p_imsearch || pp == &p_imsearch) {
+    if (*pp < -1 || *pp > B_IMODE_LAST) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curbuf->b_p_tw) {
-    if (curbuf->b_p_tw < 0) {
+  } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
+    if (*pp < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
@@ -4127,12 +4124,12 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
         || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curbuf->b_p_sw) {
-    if (curbuf->b_p_sw < 0) {
+  } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
+    if (*pp < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &curbuf->b_p_ts) {
-    if (curbuf->b_p_ts <= 0) {
+  } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
+    if (*pp <= 0) {
       errmsg = e_positive;
     }
   }
@@ -4206,7 +4203,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   } else if (pp == &p_titlelen) {
     // if 'titlelen' has changed, redraw the title
     if (starting != NO_SCREEN && old_value != p_titlelen) {
-      need_maketitle = TRUE;
+      need_maketitle = true;
     }
   } else if (pp == &p_ch) {
     // if p_ch changed value, change the command line height
@@ -4224,7 +4221,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     // sync undo before 'undolevels' changes
     // use the old value, otherwise u_sync() may not work properly
     *pp = old_value;
-    u_sync(TRUE);
+    u_sync(true);
     *pp = value;
   } else if (pp == &curbuf->b_p_tw) {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
