@@ -296,7 +296,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   tabpage_T *save_curtab = NULL;
   size_t new_len = replacement.size;
   size_t old_len = (size_t)(end - start);
-  ssize_t extra = 0;  // lines added to text, can be negative
+  ptrdiff_t extra = 0;  // lines added to text, can be negative
   char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
 
   for (size_t i = 0; i < new_len; i++) {
@@ -342,8 +342,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
     }
   }
 
-  if ((ssize_t)to_delete > 0) {
-    extra -= (ssize_t)to_delete;
+  if (to_delete > 0) {
+    extra -= (ptrdiff_t)to_delete;
   }
 
   // For as long as possible, replace the existing old_len with the

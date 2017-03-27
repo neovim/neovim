@@ -255,6 +255,9 @@ describe('typval.c', function()
           eq({lis[3], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
           alloc_log:clear()
+          lib.tv_list_watch_remove(l, lws[2])
+          lib.tv_list_watch_remove(l, lws[3])
+          lib.tv_list_watch_remove(l, lws[1])
           lib.tv_list_free(l)
           alloc_log:check({
             a.freed(lis[3]),

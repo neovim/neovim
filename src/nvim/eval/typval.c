@@ -164,9 +164,8 @@ void tv_list_free_contents(list_T *const l)
   }
   l->lv_len = 0;
   l->lv_idx_item = NULL;
-  for (listwatch_T *lw = l->lv_watch; lw != NULL; lw = lw->lw_next) {
-    lw->lw_item = NULL;
-  }
+  l->lv_last = NULL;
+  assert(l->lv_watch == NULL);
 }
 
 /// Free a list itself, ignoring items it contains
@@ -230,13 +229,10 @@ void tv_list_remove_items(list_T *const l, listitem_T *const item,
                           listitem_T *const item2)
   FUNC_ATTR_NONNULL_ALL
 {
-  // notify watchers
-  for (listitem_T *ip = item; ip != NULL; ip = ip->li_next) {
+  // Notify watchers.
+  for (listitem_T *ip = item; ip != item2->li_next; ip = ip->li_next) {
     l->lv_len--;
     tv_list_watch_fix(l, ip);
-    if (ip == item2) {
-      break;
-    }
   }
 
   if (item2->li_next == NULL) {
