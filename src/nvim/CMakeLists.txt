@@ -435,6 +435,7 @@ set(NO_SINGLE_CHECK_HEADERS
   sha256
   sign_defs
   spell
+  spellfile
   syntax
   syntax_defs
   tag
@@ -462,7 +463,7 @@ foreach(hfile ${NVIM_HEADERS})
   if(NOT ${hfile} MATCHES "[.]c[.]h$")
     set(tsource "${GENERATED_DIR}/${r}.test-include.c")
     set(tresult "${GENERATED_DIR}/${r}.test-include.i")
-    string(REPLACE "/" "-" texe "${r}-test")
+    string(REPLACE "/" "-" texe "test-incl-${r}")
     write_file("${tsource}" "#include \"${hfile}\"\nint main(int argc, char **argv) { return 0; }")
     get_preproc_output(PREPROC_OUTPUT ${tresult})
     add_executable(
