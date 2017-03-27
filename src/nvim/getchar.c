@@ -1647,6 +1647,343 @@ static int handle_int(const int advance)
 
   return c;
 }
+
+// Returns 0 to continue, -1 to carry on in the loop, otherwise, returns the
+// character that should be used.
+// Keeps track of the mapdepth in the variable pointed to by "mapdepthp".
+static int look_in_typebuf(int *mapdepthp, int *keylenp,
+    int *mp_match_lenp,
+    const int timedout, const int advance, const int local_State)
+{
+  if (typebuf.tb_len <= 0) {
+    return -1;
+  }
+  /*
+   * Check for a mappable key sequence.
+   * Walk through one maphash[] list until we find an
+   * entry that matches.
+   *
+   * Don't look for mappings if:
+   * - no_mapping set: mapping disabled (e.g. for CTRL-V)
+   * - maphash_valid not set: no mappings present.
+   * - typebuf.tb_buf[typebuf.tb_off] should not be remapped
+   * - in insert or cmdline mode and 'paste' option set
+   * - waiting for "hit return to continue" and CR or SPACE
+   *	 typed
+   * - waiting for a char with --more--
+   * - in Ctrl-X mode, and we get a valid char for that mode
+   */
+  mapblock_T *mp = NULL;
+  int max_mlen = 0;
+  int temp_c = typebuf.tb_buf[typebuf.tb_off];
+  if (no_mapping == 0 && maphash_valid
+      && (no_zero_mapping == 0 || temp_c != '0')
+      && (typebuf.tb_maplen == 0
+        || (p_remap
+          && (typebuf.tb_noremap[typebuf.tb_off]
+            & (RM_NONE|RM_ABBR)) == 0))
+      && !(p_paste && (State & (INSERT + CMDLINE)))
+      && !(State == HITRETURN && (temp_c == CAR || temp_c == ' '))
+      && State != ASKMORE
+      && State != CONFIRM
+      && !((ctrl_x_mode != 0 && vim_is_ctrl_x_key(temp_c))
+        || ((compl_cont_status & CONT_LOCAL)
+          && (temp_c == Ctrl_N || temp_c == Ctrl_P)))
+     ) {
+    mapblock_T *mp2 = NULL;
+    int nolmaplen;
+    if (temp_c == K_SPECIAL) {
+      nolmaplen = 2;
+    } else {
+      LANGMAP_ADJUST(temp_c, (State & (CMDLINE | INSERT)) == 0
+          && get_real_state() != SELECTMODE);
+      nolmaplen = 0;
+    }
+    /* First try buffer-local mappings. */
+    mp = curbuf->b_maphash[MAP_HASH(local_State, temp_c)];
+    mp2 = maphash[MAP_HASH(local_State, temp_c)];
+    if (mp == NULL) {
+      /* There are no buffer-local mappings. */
+      mp = mp2;
+      mp2 = NULL;
+    }
+    /*
+     * Loop until a partly matching mapping is found or
+     * all (local) mappings have been checked.
+     * The longest full match is remembered in "mp_match".
+     * A full match is only accepted if there is no partly
+     * match, so "aa" and "aaa" can both be mapped.
+     */
+    mapblock_T *mp_match = NULL;
+    *mp_match_lenp = 0;
+    for (; mp != NULL;
+        mp->m_next == NULL ? (mp = mp2, mp2 = NULL) :
+        (mp = mp->m_next)) {
+      /*
+       * Only consider an entry if the first character
+       * matches and it is for the current state.
+       * Skip ":lmap" mappings if keys were mapped.
+       */
+      if (mp->m_keys[0] == temp_c
+          && (mp->m_mode & local_State)
+          && ((mp->m_mode & LANGMAP) == 0
+            || typebuf.tb_maplen == 0)) {
+        int nomap = nolmaplen;
+        int c2;
+        /* find the match length of this mapping */
+        int mlen = 1;
+        for (mlen = 1; mlen < typebuf.tb_len; ++mlen) {
+          c2 = typebuf.tb_buf[typebuf.tb_off + mlen];
+          if (nomap > 0)
+            --nomap;
+          else if (c2 == K_SPECIAL)
+            nomap = 2;
+          else
+            LANGMAP_ADJUST(c2, TRUE);
+          if (mp->m_keys[mlen] != c2)
+            break;
+        }
+
+        /* Don't allow mapping the first byte(s) of a
+         * multi-byte char.  Happens when mapping
+         * <M-a> and then changing 'encoding'. Beware
+         * that 0x80 is escaped. */
+        char_u *p1 = mp->m_keys;
+        char_u *p2 = mb_unescape(&p1);
+
+        if (has_mbyte && p2 != NULL && MB_BYTE2LEN(temp_c) > MB_PTR2LEN(p2))
+          mlen = 0;
+        /*
+         * Check an entry whether it matches.
+         * - Full match: mlen == keylen
+         * - Partly match: mlen == typebuf.tb_len
+         */
+        *keylenp = mp->m_keylen;
+        if (mlen == *keylenp
+            || (mlen == typebuf.tb_len
+              && typebuf.tb_len < *keylenp)) {
+          /*
+           * If only script-local mappings are
+           * allowed, check if the mapping starts
+           * with K_SNR.
+           */
+          char_u *s = typebuf.tb_noremap + typebuf.tb_off;
+          if (*s == RM_SCRIPT
+              && (mp->m_keys[0] != K_SPECIAL
+                || mp->m_keys[1] != KS_EXTRA
+                || mp->m_keys[2] != (int)KE_SNR))
+            continue;
+          /*
+           * If one of the typed keys cannot be
+           * remapped, skip the entry.
+           */
+          int n;
+          for (n = mlen; --n >= 0; )
+            if (*s++ & (RM_NONE|RM_ABBR))
+              break;
+          if (n >= 0)
+            continue;
+
+          if (*keylenp > typebuf.tb_len) {
+            if (!timedout && !(mp_match != NULL
+                  && mp_match->m_nowait)) {
+              /* break at a partly match */
+              *keylenp = KEYLEN_PART_MAP;
+              break;
+            }
+          } else if (*keylenp > *mp_match_lenp) {
+            /* found a longer match */
+            mp_match = mp;
+            *mp_match_lenp = *keylenp;
+          }
+        } else {
+          // No match; may have to check for termcode at next character.
+          if (max_mlen < mlen) {
+            max_mlen = mlen;
+          }
+        }
+      }
+    }
+
+    /* If no partly match found, use the longest full
+     * match. */
+    if (*keylenp != KEYLEN_PART_MAP) {
+      mp = mp_match;
+      *keylenp = *mp_match_lenp;
+    }
+  }
+
+  // Check for a key that can toggle the 'paste' option
+  if (mp == NULL && (State & (INSERT|NORMAL))) {
+    int mlen;
+    bool match = typebuf_match_len(ui_toggle, &mlen);
+    if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
+      // didn't match ui_toggle_key and didn't try the whole typebuf,
+      // check the 'pastetoggle'
+      match = typebuf_match_len(p_pt, &mlen);
+    }
+    if (match) {
+      // write chars to script file(s)
+      if (mlen > typebuf.tb_maplen) {
+        gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+            (size_t)(mlen - typebuf.tb_maplen));
+      }
+
+      del_typebuf(mlen, 0);  // Remove the chars.
+      set_option_value("paste", !p_paste, NULL, 0);
+      if (!(State & INSERT)) {
+        msg_col = 0;
+        msg_row = (int)Rows - 1;
+        msg_clr_eos();                          // clear ruler
+      }
+      status_redraw_all();
+      redraw_statuslines();
+      showmode();
+      setcursor();
+      return 0;
+    }
+    /* Need more chars for partly match. */
+    if (mlen == typebuf.tb_len)
+      *keylenp = KEYLEN_PART_KEY;
+    else if (max_mlen < mlen)
+      /* no match, may have to check for termcode at
+       * next character */
+      max_mlen = mlen + 1;
+  }
+
+  if ((mp == NULL || max_mlen >= *mp_match_lenp)
+      && *keylenp != KEYLEN_PART_MAP && *keylenp != KEYLEN_PART_KEY) {
+    // No matching mapping found or found a non-matching mapping that
+    // matches at least what the matching mapping matched
+    *keylenp = 0;
+    // If there was no mapping, use the character from the typeahead
+    // buffer right here. Otherwise, use the mapping (loop around).
+    if (mp == NULL) {
+      // get a character: 2. from the typeahead buffer
+      int c = typebuf.tb_buf[typebuf.tb_off] & 255;
+      if (advance) {                  // remove chars from tb_buf
+        cmd_silent = (typebuf.tb_silent > 0);
+        if (typebuf.tb_maplen > 0) {
+          KeyTyped = false;
+        } else {
+          KeyTyped = true;
+          // write char to script file(s)
+          gotchars(typebuf.tb_buf + typebuf.tb_off, 1);
+        }
+        KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
+        del_typebuf(1, 0);
+      }
+      return c;
+    } else {
+      *keylenp = *mp_match_lenp;
+    }
+  }
+
+  /* complete match */
+  if (*keylenp >= 0 && *keylenp <= typebuf.tb_len) {
+    int save_m_expr;
+    int save_m_noremap;
+    int save_m_silent;
+    char_u *save_m_keys;
+    char_u *save_m_str;
+
+    // write chars to script file(s)
+    if (*keylenp > typebuf.tb_maplen) {
+      gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+          (size_t)(*keylenp - typebuf.tb_maplen));
+    }
+
+    cmd_silent = (typebuf.tb_silent > 0);
+    del_typebuf(*keylenp, 0);             /* remove the mapped keys */
+
+    /*
+     * Put the replacement string in front of mapstr.
+     * The depth check catches ":map x y" and ":map y x".
+     */
+    if (++(*mapdepthp) >= p_mmd) {
+      EMSG(_("E223: recursive mapping"));
+      if (State & CMDLINE)
+        redrawcmdline();
+      else
+        setcursor();
+      flush_buffers(FALSE);
+      *mapdepthp = 0;                     /* for next one */
+      return 0;
+    }
+
+    /*
+     * In Select mode and a Visual mode mapping is used:
+     * Switch to Visual mode temporarily.  Append K_SELECT
+     * to switch back to Select mode.
+     */
+    if (VIsual_active && VIsual_select
+        && (mp->m_mode & VISUAL)) {
+      VIsual_select = FALSE;
+      (void)ins_typebuf(K_SELECT_STRING, REMAP_NONE,
+          0, TRUE, FALSE);
+    }
+
+    /* Copy the values from *mp that are used, because
+     * evaluating the expression may invoke a function
+     * that redefines the mapping, thereby making *mp
+     * invalid. */
+    save_m_expr = mp->m_expr;
+    save_m_noremap = mp->m_noremap;
+    save_m_silent = mp->m_silent;
+    save_m_keys = NULL;              /* only saved when needed */
+    save_m_str = NULL;              /* only saved when needed */
+
+    /*
+     * Handle ":map <expr>": evaluate the {rhs} as an
+     * expression.  Also save and restore the command line
+     * for "normal :".
+     */
+    char_u *s;
+    if (mp->m_expr) {
+      int save_vgetc_busy = vgetc_busy;
+
+      vgetc_busy = 0;
+      save_m_keys = vim_strsave(mp->m_keys);
+      save_m_str = vim_strsave(mp->m_str);
+      s = eval_map_expr(save_m_str, NUL);
+      vgetc_busy = save_vgetc_busy;
+    } else
+      s = mp->m_str;
+
+    /*
+     * Insert the 'to' part in the typebuf.tb_buf.
+     * If 'from' field is the same as the start of the
+     * 'to' field, don't remap the first character (but do
+     * allow abbreviations).
+     * If m_noremap is set, don't remap the whole 'to'
+     * part.
+     */
+    if (s != NULL) {
+      int noremap;
+
+      if (save_m_noremap != REMAP_YES)
+        noremap = save_m_noremap;
+      else if (
+          STRNCMP(s, save_m_keys != NULL
+            ? save_m_keys : mp->m_keys,
+            (size_t)*keylenp)
+          != 0)
+        noremap = REMAP_YES;
+      else
+        noremap = REMAP_SKIP;
+      ins_typebuf(s, noremap,
+          0, TRUE, cmd_silent || save_m_silent);
+      if (save_m_expr)
+        xfree(s);
+    }
+    xfree(save_m_keys);
+    xfree(save_m_str);
+    return 0;
+  }
+
+  return -1;
+}
+
 /// get a character:
 /// 1. from the stuffbuffer
 ///    This is used for abbreviated commands like "D" -> "d$".
@@ -1754,328 +2091,17 @@ static int vgetorpeek(const int advance)
         }
       }
 
-      if (typebuf.tb_len > 0) {
-        /*
-         * Check for a mappable key sequence.
-         * Walk through one maphash[] list until we find an
-         * entry that matches.
-         *
-         * Don't look for mappings if:
-         * - no_mapping set: mapping disabled (e.g. for CTRL-V)
-         * - maphash_valid not set: no mappings present.
-         * - typebuf.tb_buf[typebuf.tb_off] should not be remapped
-         * - in insert or cmdline mode and 'paste' option set
-         * - waiting for "hit return to continue" and CR or SPACE
-         *	 typed
-         * - waiting for a char with --more--
-         * - in Ctrl-X mode, and we get a valid char for that mode
-         */
-        mapblock_T *mp = NULL;
-        int max_mlen = 0;
-        int temp_c = typebuf.tb_buf[typebuf.tb_off];
-        if (no_mapping == 0 && maphash_valid
-            && (no_zero_mapping == 0 || temp_c != '0')
-            && (typebuf.tb_maplen == 0
-              || (p_remap
-                && (typebuf.tb_noremap[typebuf.tb_off]
-                  & (RM_NONE|RM_ABBR)) == 0))
-            && !(p_paste && (State & (INSERT + CMDLINE)))
-            && !(State == HITRETURN && (temp_c == CAR || temp_c == ' '))
-            && State != ASKMORE
-            && State != CONFIRM
-            && !((ctrl_x_mode != 0 && vim_is_ctrl_x_key(temp_c))
-              || ((compl_cont_status & CONT_LOCAL)
-                && (temp_c == Ctrl_N || temp_c == Ctrl_P)))
-           ) {
-          mapblock_T *mp2 = NULL;
-          int nolmaplen;
-          if (temp_c == K_SPECIAL) {
-            nolmaplen = 2;
-          } else {
-            LANGMAP_ADJUST(temp_c, (State & (CMDLINE | INSERT)) == 0
-                && get_real_state() != SELECTMODE);
-            nolmaplen = 0;
-          }
-          /* First try buffer-local mappings. */
-          mp = curbuf->b_maphash[MAP_HASH(local_State, temp_c)];
-          mp2 = maphash[MAP_HASH(local_State, temp_c)];
-          if (mp == NULL) {
-            /* There are no buffer-local mappings. */
-            mp = mp2;
-            mp2 = NULL;
-          }
-          /*
-           * Loop until a partly matching mapping is found or
-           * all (local) mappings have been checked.
-           * The longest full match is remembered in "mp_match".
-           * A full match is only accepted if there is no partly
-           * match, so "aa" and "aaa" can both be mapped.
-           */
-          mapblock_T *mp_match = NULL;
-          mp_match_len = 0;
-          for (; mp != NULL;
-              mp->m_next == NULL ? (mp = mp2, mp2 = NULL) :
-              (mp = mp->m_next)) {
-            /*
-             * Only consider an entry if the first character
-             * matches and it is for the current state.
-             * Skip ":lmap" mappings if keys were mapped.
-             */
-            if (mp->m_keys[0] == temp_c
-                && (mp->m_mode & local_State)
-                && ((mp->m_mode & LANGMAP) == 0
-                  || typebuf.tb_maplen == 0)) {
-              int nomap = nolmaplen;
-              int c2;
-              /* find the match length of this mapping */
-              int mlen = 1;
-              for (mlen = 1; mlen < typebuf.tb_len; ++mlen) {
-                c2 = typebuf.tb_buf[typebuf.tb_off + mlen];
-                if (nomap > 0)
-                  --nomap;
-                else if (c2 == K_SPECIAL)
-                  nomap = 2;
-                else
-                  LANGMAP_ADJUST(c2, TRUE);
-                if (mp->m_keys[mlen] != c2)
-                  break;
-              }
-
-              /* Don't allow mapping the first byte(s) of a
-               * multi-byte char.  Happens when mapping
-               * <M-a> and then changing 'encoding'. Beware
-               * that 0x80 is escaped. */
-              char_u *p1 = mp->m_keys;
-              char_u *p2 = mb_unescape(&p1);
-
-              if (has_mbyte && p2 != NULL && MB_BYTE2LEN(temp_c) > MB_PTR2LEN(p2))
-                mlen = 0;
-              /*
-               * Check an entry whether it matches.
-               * - Full match: mlen == keylen
-               * - Partly match: mlen == typebuf.tb_len
-               */
-              keylen = mp->m_keylen;
-              if (mlen == keylen
-                  || (mlen == typebuf.tb_len
-                    && typebuf.tb_len < keylen)) {
-                /*
-                 * If only script-local mappings are
-                 * allowed, check if the mapping starts
-                 * with K_SNR.
-                 */
-                char_u *s = typebuf.tb_noremap + typebuf.tb_off;
-                if (*s == RM_SCRIPT
-                    && (mp->m_keys[0] != K_SPECIAL
-                      || mp->m_keys[1] != KS_EXTRA
-                      || mp->m_keys[2] != (int)KE_SNR))
-                  continue;
-                /*
-                 * If one of the typed keys cannot be
-                 * remapped, skip the entry.
-                 */
-                int n;
-                for (n = mlen; --n >= 0; )
-                  if (*s++ & (RM_NONE|RM_ABBR))
-                    break;
-                if (n >= 0)
-                  continue;
-
-                if (keylen > typebuf.tb_len) {
-                  if (!timedout && !(mp_match != NULL
-                        && mp_match->m_nowait)) {
-                    /* break at a partly match */
-                    keylen = KEYLEN_PART_MAP;
-                    break;
-                  }
-                } else if (keylen > mp_match_len) {
-                  /* found a longer match */
-                  mp_match = mp;
-                  mp_match_len = keylen;
-                }
-              } else {
-                // No match; may have to check for termcode at next character.
-                if (max_mlen < mlen) {
-                  max_mlen = mlen;
-                }
-              }
-            }
-          }
-
-          /* If no partly match found, use the longest full
-           * match. */
-          if (keylen != KEYLEN_PART_MAP) {
-            mp = mp_match;
-            keylen = mp_match_len;
-          }
-        }
-
-        // Check for a key that can toggle the 'paste' option
-        if (mp == NULL && (State & (INSERT|NORMAL))) {
-          int mlen;
-          bool match = typebuf_match_len(ui_toggle, &mlen);
-          if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
-            // didn't match ui_toggle_key and didn't try the whole typebuf,
-            // check the 'pastetoggle'
-            match = typebuf_match_len(p_pt, &mlen);
-          }
-          if (match) {
-            // write chars to script file(s)
-            if (mlen > typebuf.tb_maplen) {
-              gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
-                  (size_t)(mlen - typebuf.tb_maplen));
-            }
-
-            del_typebuf(mlen, 0);  // Remove the chars.
-            set_option_value("paste", !p_paste, NULL, 0);
-            if (!(State & INSERT)) {
-              msg_col = 0;
-              msg_row = (int)Rows - 1;
-              msg_clr_eos();                          // clear ruler
-            }
-            status_redraw_all();
-            redraw_statuslines();
-            showmode();
-            setcursor();
-            continue;
-          }
-          /* Need more chars for partly match. */
-          if (mlen == typebuf.tb_len)
-            keylen = KEYLEN_PART_KEY;
-          else if (max_mlen < mlen)
-            /* no match, may have to check for termcode at
-             * next character */
-            max_mlen = mlen + 1;
-        }
-
-        if ((mp == NULL || max_mlen >= mp_match_len)
-            && keylen != KEYLEN_PART_MAP && keylen != KEYLEN_PART_KEY) {
-          // No matching mapping found or found a non-matching mapping that
-          // matches at least what the matching mapping matched
-          keylen = 0;
-          // If there was no mapping, use the character from the typeahead
-          // buffer right here. Otherwise, use the mapping (loop around).
-          if (mp == NULL) {
-            // get a character: 2. from the typeahead buffer
-            c = typebuf.tb_buf[typebuf.tb_off] & 255;
-            if (advance) {                  // remove chars from tb_buf
-              cmd_silent = (typebuf.tb_silent > 0);
-              if (typebuf.tb_maplen > 0) {
-                KeyTyped = false;
-              } else {
-                KeyTyped = true;
-                // write char to script file(s)
-                gotchars(typebuf.tb_buf + typebuf.tb_off, 1);
-              }
-              KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
-              del_typebuf(1, 0);
-            }
-            break;
-          } else {
-            keylen = mp_match_len;
-          }
-        }
-
-        /* complete match */
-        if (keylen >= 0 && keylen <= typebuf.tb_len) {
-          int save_m_expr;
-          int save_m_noremap;
-          int save_m_silent;
-          char_u *save_m_keys;
-          char_u *save_m_str;
-
-          // write chars to script file(s)
-          if (keylen > typebuf.tb_maplen) {
-            gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
-                (size_t)(keylen - typebuf.tb_maplen));
-          }
-
-          cmd_silent = (typebuf.tb_silent > 0);
-          del_typebuf(keylen, 0);             /* remove the mapped keys */
-
-          /*
-           * Put the replacement string in front of mapstr.
-           * The depth check catches ":map x y" and ":map y x".
-           */
-          if (++mapdepth >= p_mmd) {
-            EMSG(_("E223: recursive mapping"));
-            if (State & CMDLINE)
-              redrawcmdline();
-            else
-              setcursor();
-            flush_buffers(FALSE);
-            mapdepth = 0;                     /* for next one */
-            continue;
-          }
-
-          /*
-           * In Select mode and a Visual mode mapping is used:
-           * Switch to Visual mode temporarily.  Append K_SELECT
-           * to switch back to Select mode.
-           */
-          if (VIsual_active && VIsual_select
-              && (mp->m_mode & VISUAL)) {
-            VIsual_select = FALSE;
-            (void)ins_typebuf(K_SELECT_STRING, REMAP_NONE,
-                0, TRUE, FALSE);
-          }
-
-          /* Copy the values from *mp that are used, because
-           * evaluating the expression may invoke a function
-           * that redefines the mapping, thereby making *mp
-           * invalid. */
-          save_m_expr = mp->m_expr;
-          save_m_noremap = mp->m_noremap;
-          save_m_silent = mp->m_silent;
-          save_m_keys = NULL;              /* only saved when needed */
-          save_m_str = NULL;              /* only saved when needed */
-
-          /*
-           * Handle ":map <expr>": evaluate the {rhs} as an
-           * expression.  Also save and restore the command line
-           * for "normal :".
-           */
-          char_u *s;
-          if (mp->m_expr) {
-            int save_vgetc_busy = vgetc_busy;
-
-            vgetc_busy = 0;
-            save_m_keys = vim_strsave(mp->m_keys);
-            save_m_str = vim_strsave(mp->m_str);
-            s = eval_map_expr(save_m_str, NUL);
-            vgetc_busy = save_vgetc_busy;
-          } else
-            s = mp->m_str;
-
-          /*
-           * Insert the 'to' part in the typebuf.tb_buf.
-           * If 'from' field is the same as the start of the
-           * 'to' field, don't remap the first character (but do
-           * allow abbreviations).
-           * If m_noremap is set, don't remap the whole 'to'
-           * part.
-           */
-          if (s != NULL) {
-            int noremap;
-
-            if (save_m_noremap != REMAP_YES)
-              noremap = save_m_noremap;
-            else if (
-                STRNCMP(s, save_m_keys != NULL
-                  ? save_m_keys : mp->m_keys,
-                  (size_t)keylen)
-                != 0)
-              noremap = REMAP_YES;
-            else
-              noremap = REMAP_SKIP;
-            ins_typebuf(s, noremap,
-                0, TRUE, cmd_silent || save_m_silent);
-            if (save_m_expr)
-              xfree(s);
-          }
-          xfree(save_m_keys);
-          xfree(save_m_str);
+      { // Look for a key in the typebuffer
+        // 'c' is only changed when we have found a key and are leaving this
+        // loop.
+        int control_id = look_in_typebuf(
+            &mapdepth, &keylen, &mp_match_len,
+            timedout, advance, local_State);
+        if (control_id == 0) {
           continue;
+        } else if (control_id > 0) {
+          c = control_id;
+          break;
         }
       }
 
