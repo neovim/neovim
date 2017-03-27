@@ -1397,7 +1397,8 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
 ///
 /// @return Pointer to character after the skipped whitespace.
 char_u *skipwhite(const char_u *q)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
   const char_u *p = q;
   while (ascii_iswhite(*p)) {
@@ -1406,19 +1407,21 @@ char_u *skipwhite(const char_u *q)
   return (char_u *)p;
 }
 
-/// skip over digits
+/// Skip over digits
 ///
-/// @param q
+/// @param[in]  q  String to skip digits in.
 ///
 /// @return Pointer to the character after the skipped digits.
-char_u* skipdigits(char_u *q)
+char_u *skipdigits(const char_u *q)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
-  char_u *p = q;
+  const char_u *p = q;
   while (ascii_isdigit(*p)) {
     // skip to next non-digit
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// skip over binary digits
@@ -1564,17 +1567,17 @@ int vim_tolower(int c)
   return TOLOWER_LOC(c);
 }
 
-/// skiptowhite: skip over text until ' ' or '\t' or NUL.
+/// Skip over text until ' ' or '\t' or NUL
 ///
-/// @param p
+/// @param[in]  p  Text to skip over.
 ///
 /// @return Pointer to the next whitespace or NUL character.
-char_u* skiptowhite(char_u *p)
+char_u *skiptowhite(const char_u *p)
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// skiptowhite_esc: Like skiptowhite(), but also skip escaped chars

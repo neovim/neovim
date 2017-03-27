@@ -957,23 +957,21 @@ char_u *get_profile_name(expand_T *xp, int idx)
 }
 
 /// Handle command line completion for :profile command.
-void set_context_in_profile_cmd(expand_T *xp, char_u *arg)
+void set_context_in_profile_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *end_subcmd;
-
   // Default: expand subcommands.
   xp->xp_context = EXPAND_PROFILE;
   pexpand_what = PEXP_SUBCMD;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
 
-  end_subcmd = skiptowhite(arg);
+  char_u *const end_subcmd = skiptowhite((const char_u *)arg);
   if (*end_subcmd == NUL) {
     return;
   }
 
-  if (end_subcmd - arg == 5 && STRNCMP(arg, "start", 5) == 0) {
+  if ((const char *)end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0) {
     xp->xp_context = EXPAND_FILES;
-    xp->xp_pattern = skipwhite(end_subcmd);
+    xp->xp_pattern = skipwhite((const char_u *)end_subcmd);
     return;
   }
 

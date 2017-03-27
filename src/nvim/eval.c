@@ -9462,8 +9462,8 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  if (STRCMP(get_tv_string(&argvars[1]), "cmdline") == 0) {
-    set_one_cmd_context(&xpc, get_tv_string(&argvars[0]));
+  if (strcmp(tv_get_string(&argvars[1]), "cmdline") == 0) {
+    set_one_cmd_context(&xpc, tv_get_string(&argvars[0]));
     xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
     goto theend;
   }
@@ -9484,7 +9484,7 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (xpc.xp_context == EXPAND_CSCOPE) {
-    set_context_in_cscope_cmd(&xpc, xpc.xp_pattern, CMD_cscope);
+    set_context_in_cscope_cmd(&xpc, (const char *)xpc.xp_pattern, CMD_cscope);
     xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
   }
 
@@ -14562,7 +14562,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
   } else if (title_arg->v_type == VAR_STRING) {
     title = tv_get_string_chk(title_arg);
     if (!title) {
-      // Type error. Error already printed by get_tv_string_chk().
+      // Type error. Error already printed by tv_get_string_chk().
       return;
     }
   } else if (title_arg->v_type == VAR_DICT) {

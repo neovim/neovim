@@ -5574,43 +5574,42 @@ void reset_expand_highlight(void)
  * Handle command line completion for :match and :echohl command: Add "None"
  * as highlight group.
  */
-void set_context_in_echohl_cmd(expand_T *xp, char_u *arg)
+void set_context_in_echohl_cmd(expand_T *xp, const char *arg)
 {
   xp->xp_context = EXPAND_HIGHLIGHT;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_none = 1;
 }
 
 /*
  * Handle command line completion for :syntax command.
  */
-void set_context_in_syntax_cmd(expand_T *xp, char_u *arg)
+void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *p;
-
-  /* Default: expand subcommands */
+  // Default: expand subcommands.
   xp->xp_context = EXPAND_SYNTAX;
   expand_what = EXP_SUBCMD;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_link = 0;
   include_default = 0;
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                /* past first word */
-      xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != NUL)
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past first word.
+      xp->xp_pattern = skipwhite((const char_u *)p);
+      if (*skiptowhite(xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-      else if (STRNICMP(arg, "case", p - arg) == 0)
+      } else if (STRNICMP(arg, "case", p - arg) == 0) {
         expand_what = EXP_CASE;
-      else if (  STRNICMP(arg, "keyword", p - arg) == 0
+      } else if (STRNICMP(arg, "keyword", p - arg) == 0
                  || STRNICMP(arg, "region", p - arg) == 0
                  || STRNICMP(arg, "match", p - arg) == 0
-                 || STRNICMP(arg, "list", p - arg) == 0)
+                 || STRNICMP(arg, "list", p - arg) == 0) {
         xp->xp_context = EXPAND_HIGHLIGHT;
-      else
+      } else {
         xp->xp_context = EXPAND_NOTHING;
+      }
     }
   }
 }
@@ -7474,41 +7473,41 @@ int highlight_changed(void)
 /*
  * Handle command line completion for :highlight command.
  */
-void set_context_in_highlight_cmd(expand_T *xp, char_u *arg)
+void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *p;
-
-  /* Default: expand group names */
+  // Default: expand group names.
   xp->xp_context = EXPAND_HIGHLIGHT;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_link = 2;
   include_default = 1;
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                    /* past "default" or group name */
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past "default" or group name.
       include_default = 0;
-      if (STRNCMP("default", arg, p - arg) == 0) {
-        arg = skipwhite(p);
-        xp->xp_pattern = arg;
-        p = skiptowhite(arg);
+      if (strncmp("default", arg, p - arg) == 0) {
+        arg = (const char *)skipwhite((const char_u *)p);
+        xp->xp_pattern = (char_u *)arg;
+        p = (const char *)skiptowhite((const char_u *)arg);
       }
       if (*p != NUL) {                          /* past group name */
         include_link = 0;
-        if (arg[1] == 'i' && arg[0] == 'N')
+        if (arg[1] == 'i' && arg[0] == 'N') {
           highlight_list();
-        if (STRNCMP("link", arg, p - arg) == 0
-            || STRNCMP("clear", arg, p - arg) == 0) {
-          xp->xp_pattern = skipwhite(p);
-          p = skiptowhite(xp->xp_pattern);
-          if (*p != NUL) {                      /* past first group name */
-            xp->xp_pattern = skipwhite(p);
-            p = skiptowhite(xp->xp_pattern);
+        }
+        if (strncmp("link", arg, p - arg) == 0
+            || strncmp("clear", arg, p - arg) == 0) {
+          xp->xp_pattern = skipwhite((const char_u *)p);
+          p = (const char *)skiptowhite(xp->xp_pattern);
+          if (*p != NUL) {  // Past first group name.
+            xp->xp_pattern = skipwhite((const char_u *)p);
+            p = (const char *)skiptowhite(xp->xp_pattern);
           }
         }
-        if (*p != NUL)                          /* past group name(s) */
+        if (*p != NUL) {  // Past group name(s).
           xp->xp_context = EXPAND_NOTHING;
+        }
       }
     }
   }

@@ -3636,7 +3636,6 @@ set_cmd_context (
 )
 {
   int old_char = NUL;
-  char_u      *nextcomm;
 
   /*
    * Avoid a UMR warning from Purify, only save the character if it has been
@@ -3645,7 +3644,7 @@ set_cmd_context (
   if (col < len)
     old_char = str[col];
   str[col] = NUL;
-  nextcomm = str;
+  const char *nextcomm = (const char *)str;
 
   if (use_ccline && ccline.cmdfirstc == '=') {
     // pass CMD_SIZE because there is no real command
@@ -3654,9 +3653,11 @@ set_cmd_context (
     xp->xp_context = ccline.xp_context;
     xp->xp_pattern = ccline.cmdbuff;
     xp->xp_arg = ccline.xp_arg;
-  } else
-    while (nextcomm != NULL)
+  } else {
+    while (nextcomm != NULL) {
       nextcomm = set_one_cmd_context(xp, nextcomm);
+    }
+  }
 
   /* Store the string here so that call_user_expand_func() can get to them
    * easily. */
