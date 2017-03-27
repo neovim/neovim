@@ -156,7 +156,6 @@ static long p_ts;
 static long p_tw;
 static int p_udf;
 static long p_wm;
-static long p_scbk;
 static char_u   *p_keymap;
 
 /* Saved values for when 'bin' is set. */
@@ -4199,18 +4198,18 @@ set_num_option (
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
     }
-  } else if (pp == &curbuf->b_p_scbk) {
+  } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
     // 'scrollback'
-    if (!curbuf->terminal) {
+    if (*pp < -1 || *pp > 100000) {
       errmsg = e_invarg;
-      curbuf->b_p_scbk = -1;
-    } else {
-      if (curbuf->b_p_scbk < -1 || curbuf->b_p_scbk > 100000) {
-        errmsg = e_invarg;
-        curbuf->b_p_scbk = 1000;
-      }
+      *pp = 1000;
+    }
+    if (curbuf->terminal) {
       // Force the scrollback to take effect.
       terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
+    } else if (opt_flags == OPT_LOCAL) {
+      // Throw error on `:setlocal` in non-terminal buffers.
+      errmsg = e_invarg;
     }
   }
 
@@ -4330,6 +4329,10 @@ set_num_option (
   /* May set global value for local option. */
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
     *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+
+  if (!curbuf->terminal) {
+    curbuf->b_p_scbk = -1;
+  }
 
   options[opt_idx].flags |= P_WAS_SET;
 
