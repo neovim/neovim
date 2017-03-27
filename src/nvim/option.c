@@ -4005,144 +4005,114 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   }
 
   // Number options that need some validation when changed.
-  if (pp == &p_wh || pp == &p_hh) {
+  if (pp == &p_wh) {
     if (p_wh < 1) {
       errmsg = e_positive;
-      p_wh = 1;
     }
     if (p_wmh > p_wh) {
       errmsg = e_winheight;
-      p_wh = p_wmh;
     }
+  } else if (pp == &p_hh) {
     if (p_hh < 0) {
       errmsg = e_positive;
-      p_hh = 0;
     }
-  }
-  /* 'winminheight' */
-  else if (pp == &p_wmh) {
+  } else if (pp == &p_wmh) {
     if (p_wmh < 0) {
       errmsg = e_positive;
-      p_wmh = 0;
     }
     if (p_wmh > p_wh) {
       errmsg = e_winheight;
-      p_wmh = p_wh;
     }
   } else if (pp == &p_wiw) {
     if (p_wiw < 1) {
       errmsg = e_positive;
-      p_wiw = 1;
     }
     if (p_wmw > p_wiw) {
       errmsg = e_winwidth;
-      p_wiw = p_wmw;
     }
-  }
-  /* 'winminwidth' */
-  else if (pp == &p_wmw) {
+  } else if (pp == &p_wmw) {
     if (p_wmw < 0) {
       errmsg = e_positive;
-      p_wmw = 0;
     }
     if (p_wmw > p_wiw) {
       errmsg = e_winwidth;
-      p_wmw = p_wiw;
     }
-  }
-  /* 'foldlevel' */
-  else if (pp == &curwin->w_p_fdl) {
-    if (curwin->w_p_fdl < 0)
-      curwin->w_p_fdl = 0;
-  }
-  /* 'foldcolumn' */
-  else if (pp == &curwin->w_p_fdc) {
+  } else if (pp == &curwin->w_p_fdl) {
+    if (curwin->w_p_fdl < 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curwin->w_p_fdc) {
     if (curwin->w_p_fdc < 0) {
       errmsg = e_positive;
-      curwin->w_p_fdc = 0;
     } else if (curwin->w_p_fdc > 12) {
       errmsg = e_invarg;
-      curwin->w_p_fdc = 12;
     }
-  }
-  /* 'maxcombine' */
-  else if (pp == &p_mco) {
-    if (p_mco > MAX_MCO)
-      p_mco = MAX_MCO;
-    else if (p_mco < 0)
-      p_mco = 0;
+  } else if (pp == &p_mco) {
+    if (p_mco > MAX_MCO) {
+      errmsg = e_invarg;
+    } else if (p_mco < 0) {
+      errmsg = e_positive;
+    }
   } else if (pp == &curbuf->b_p_iminsert) {
     if (curbuf->b_p_iminsert < 0 || curbuf->b_p_iminsert > B_IMODE_LAST) {
       errmsg = e_invarg;
-      curbuf->b_p_iminsert = B_IMODE_NONE;
     }
-  } else if (pp == &p_window) {
-    if (p_window < 1)
-      p_window = 1;
-    else if (p_window >= Rows)
-      p_window = Rows - 1;
   } else if (pp == &curbuf->b_p_imsearch) {
     if (curbuf->b_p_imsearch < -1 || curbuf->b_p_imsearch > B_IMODE_LAST) {
       errmsg = e_invarg;
-      curbuf->b_p_imsearch = B_IMODE_NONE;
     }
-  }
-  /* if 'titlelen' has changed, redraw the title */
-  else if (pp == &p_titlelen) {
+  } else if (pp == &p_titlelen) {
     if (p_titlelen < 0) {
       errmsg = e_positive;
-      p_titlelen = 85;
     }
-  }
-  /* if p_ch changed value, change the command line height */
-  else if (pp == &p_ch) {
-    if (p_ch < 1) {
-      errmsg = e_positive;
-      p_ch = 1;
-    }
-    if (p_ch > Rows - min_rows() + 1)
-      p_ch = Rows - min_rows() + 1;
-  }
-  /* when 'updatecount' changes from zero to non-zero, open swap files */
-  else if (pp == &p_uc) {
+  } else if (pp == &p_uc) {
     if (p_uc < 0) {
       errmsg = e_positive;
-      p_uc = 100;
     }
   } else if (pp == &curwin->w_p_cole) {
     if (curwin->w_p_cole < 0) {
       errmsg = e_positive;
-      curwin->w_p_cole = 0;
     } else if (curwin->w_p_cole > 3) {
       errmsg = e_invarg;
-      curwin->w_p_cole = 3;
     }
-  }
-  /* 'numberwidth' must be positive */
-  else if (pp == &curwin->w_p_nuw) {
+  } else if (pp == &curwin->w_p_nuw) {
     if (curwin->w_p_nuw < 1) {
       errmsg = e_positive;
-      curwin->w_p_nuw = 1;
     }
     if (curwin->w_p_nuw > 10) {
       errmsg = e_invarg;
-      curwin->w_p_nuw = 10;
     }
     curwin->w_nrwidth_line_count = 0;
   } else if (pp == &curbuf->b_p_tw) {
     if (curbuf->b_p_tw < 0) {
       errmsg = e_positive;
-      curbuf->b_p_tw = 0;
     }
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    // 'scrollback'
     if (*pp < -1 || *pp > SB_MAX
         || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
       errmsg = e_invarg;
-      *pp = old_value;
-    } else if (curbuf->terminal) {
-      // Force the scrollback to take effect.
-      terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
+  }
+  } else if (pp == &p_ch) {
+    if (p_ch < 1) {
+      errmsg = e_positive;
+    }
+  }
+
+  if (errmsg != NULL) {
+    *pp = old_value;
+    return errmsg;
+  }
+
+  // For these options we want to fix some invalid values.
+  if (pp == &p_window) {
+    if (p_window < 1) {
+      p_window = 1;
+    } else if (p_window >= Rows) {
+      p_window = Rows - 1;
+    }
+  } else if (pp == &p_ch) {
+    if (p_ch > Rows - min_rows() + 1) {
+      p_ch = Rows - min_rows() + 1;
     }
   }
 
@@ -4243,6 +4213,8 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       // Force the scrollback to take effect.
       terminal_resize(curbuf->terminal, UINT16_MAX, UINT16_MAX);
     }
+  } else if (pp == &curwin->w_p_nuw) {
+    curwin->w_nrwidth_line_count = 0;
   }
 
 
