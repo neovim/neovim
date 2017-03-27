@@ -4860,7 +4860,12 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		   :call jobstart(['ping', 'neovim.io'])
 <		If it is a path (not a name), it must include the extension: >
 		   :call jobstart(['System32\ping.exe', 'neovim.io'])
-<
+
+<		NOTE: On Windows the List {cmd} is converted according to the
+		standard command line argument format (used in CommandLineToArgvW).
+		Some programs such as cmd.exe do not, and may behave
+		unexpectedly by interpreting arguments differently.
+
 		{opts} is a dictionary with these keys:
 		  on_stdout: stdout event handler (function name or |Funcref|)
 		  on_stderr: stderr event handler (function name or |Funcref|)
