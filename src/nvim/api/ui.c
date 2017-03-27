@@ -383,8 +383,10 @@ static void remote_ui_update_sp(UI *ui, int sp)
 static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
-  channel_send_event(data->channel_id, "redraw", data->buffer);
-  data->buffer = (Array)ARRAY_DICT_INIT;
+  if (data->buffer.size) {
+    channel_send_event(data->channel_id, "redraw", data->buffer);
+    data->buffer = (Array)ARRAY_DICT_INIT;
+  }
 }
 
 static void remote_ui_suspend(UI *ui)
