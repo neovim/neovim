@@ -1658,43 +1658,45 @@ static int handle_int(const int advance)
 // sets *max_mlenp to the length where they do match, plus 2.
 static bool check_togglepaste(mapblock_T *mp, int *max_mlenp, int *keylenp)
 {
-  // Check for a key that can toggle the 'paste' option
-  if (mp == NULL && (State & (INSERT|NORMAL))) {
-    int mlen;
-    bool match = typebuf_match_len(ui_toggle, &mlen);
-    if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
-      // didn't match ui_toggle_key and didn't try the whole typebuf,
-      // check the 'pastetoggle'
-      match = typebuf_match_len(p_pt, &mlen);
-    }
-    if (match) {
-      // write chars to script file(s)
-      if (mlen > typebuf.tb_maplen) {
-        gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
-            (size_t)(mlen - typebuf.tb_maplen));
-      }
-
-      del_typebuf(mlen, 0);  // Remove the chars.
-      set_option_value("paste", !p_paste, NULL, 0);
-      if (!(State & INSERT)) {
-        msg_col = 0;
-        msg_row = (int)Rows - 1;
-        msg_clr_eos();                          // clear ruler
-      }
-      status_redraw_all();
-      redraw_statuslines();
-      showmode();
-      setcursor();
-      return true;
-    }
-    /* Need more chars for partly match. */
-    if (mlen == typebuf.tb_len)
-      *keylenp = KEYLEN_PART_KEY;
-    else if (*max_mlenp < mlen)
-      /* no match, may have to check for termcode at
-       * next character */
-      *max_mlenp = mlen + 1;
+  if (mp != NULL || (State & (INSERT|NORMAL)) == 0) {
+    return false;
   }
+
+  // Check for a key that can toggle the 'paste' option
+  int mlen;
+  bool match = typebuf_match_len(ui_toggle, &mlen);
+  if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
+    // didn't match ui_toggle_key and didn't try the whole typebuf,
+    // check the 'pastetoggle'
+    match = typebuf_match_len(p_pt, &mlen);
+  }
+  if (match) {
+    // write chars to script file(s)
+    if (mlen > typebuf.tb_maplen) {
+      gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+          (size_t)(mlen - typebuf.tb_maplen));
+    }
+
+    del_typebuf(mlen, 0);  // Remove the chars.
+    set_option_value("paste", !p_paste, NULL, 0);
+    if (!(State & INSERT)) {
+      msg_col = 0;
+      msg_row = (int)Rows - 1;
+      msg_clr_eos();                          // clear ruler
+    }
+    status_redraw_all();
+    redraw_statuslines();
+    showmode();
+    setcursor();
+    return true;
+  }
+  /* Need more chars for partly match. */
+  if (mlen == typebuf.tb_len)
+    *keylenp = KEYLEN_PART_KEY;
+  else if (*max_mlenp < mlen)
+    /* no match, may have to check for termcode at
+     * next character */
+    *max_mlenp = mlen + 1;
 
   return false;
 }
