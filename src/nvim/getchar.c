@@ -1810,32 +1810,15 @@ static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
   return true;
 }
 
-// Returns 0 to continue, -1 to carry on in the loop, otherwise, returns the
-// character that should be used.
-// Keeps track of the mapdepth in the variable pointed to by "mapdepthp".
-static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
-    const int timedout, const int advance, const int local_State)
+// keylen is changed (but I think this could be the return value)
+// max_mlen is changed
+// mp is set from NULL (this may also be the return value [I know I have to
+// choose one])
+// mp_match_len is changed.
+static mapblock_T *find_typed_map(const int timedout, const int local_State,
+    int *keylenp, int *mp_match_lenp, int *max_mlenp)
 {
-  if (typebuf.tb_len <= 0) {
-    return -1;
-  }
-  /*
-   * Check for a mappable key sequence.
-   * Walk through one maphash[] list until we find an
-   * entry that matches.
-   *
-   * Don't look for mappings if:
-   * - no_mapping set: mapping disabled (e.g. for CTRL-V)
-   * - maphash_valid not set: no mappings present.
-   * - typebuf.tb_buf[typebuf.tb_off] should not be remapped
-   * - in insert or cmdline mode and 'paste' option set
-   * - waiting for "hit return to continue" and CR or SPACE
-   *	 typed
-   * - waiting for a char with --more--
-   * - in Ctrl-X mode, and we get a valid char for that mode
-   */
   mapblock_T *mp = NULL;
-  int max_mlen = 0;
   int temp_c = typebuf.tb_buf[typebuf.tb_off];
   if (no_mapping == 0 && maphash_valid
       && (no_zero_mapping == 0 || temp_c != '0')
@@ -1851,6 +1834,7 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
         || ((compl_cont_status & CONT_LOCAL)
           && (temp_c == Ctrl_N || temp_c == Ctrl_P)))
      ) {
+    int keylen = *keylenp;
     mapblock_T *mp2 = NULL;
     int nolmaplen;
     if (temp_c == K_SPECIAL) {
@@ -1885,94 +1869,126 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
        * matches and it is for the current state.
        * Skip ":lmap" mappings if keys were mapped.
        */
-      if (mp->m_keys[0] == temp_c
-          && (mp->m_mode & local_State)
-          && ((mp->m_mode & LANGMAP) == 0
-            || typebuf.tb_maplen == 0)) {
-        int nomap = nolmaplen;
-        int c2;
-        /* find the match length of this mapping */
-        int mlen = 1;
-        for (mlen = 1; mlen < typebuf.tb_len; ++mlen) {
-          c2 = typebuf.tb_buf[typebuf.tb_off + mlen];
-          if (nomap > 0)
-            --nomap;
-          else if (c2 == K_SPECIAL)
-            nomap = 2;
-          else
-            LANGMAP_ADJUST(c2, TRUE);
-          if (mp->m_keys[mlen] != c2)
-            break;
-        }
+      if (mp->m_keys[0] != temp_c
+          || ((mp->m_mode & local_State) == 0)
+          || (((mp->m_mode & LANGMAP) != 0)
+            && typebuf.tb_maplen != 0)) {
+        continue;
+      }
+      int nomap = nolmaplen;
+      int c2;
+      /* find the match length of this mapping */
+      int mlen = 1;
+      for (mlen = 1; mlen < typebuf.tb_len; ++mlen) {
+        c2 = typebuf.tb_buf[typebuf.tb_off + mlen];
+        if (nomap > 0)
+          --nomap;
+        else if (c2 == K_SPECIAL)
+          nomap = 2;
+        else
+          LANGMAP_ADJUST(c2, TRUE);
+        if (mp->m_keys[mlen] != c2)
+          break;
+      }
 
-        /* Don't allow mapping the first byte(s) of a
-         * multi-byte char.  Happens when mapping
-         * <M-a> and then changing 'encoding'. Beware
-         * that 0x80 is escaped. */
-        char_u *p1 = mp->m_keys;
-        char_u *p2 = mb_unescape(&p1);
+      /* Don't allow mapping the first byte(s) of a
+       * multi-byte char.  Happens when mapping
+       * <M-a> and then changing 'encoding'. Beware
+       * that 0x80 is escaped. */
+      char_u *p1 = mp->m_keys;
+      char_u *p2 = mb_unescape(&p1);
 
-        if (has_mbyte && p2 != NULL && MB_BYTE2LEN(temp_c) > MB_PTR2LEN(p2))
-          mlen = 0;
+      if (has_mbyte && p2 != NULL && MB_BYTE2LEN(temp_c) > MB_PTR2LEN(p2))
+        mlen = 0;
+      /*
+       * Check an entry whether it matches.
+       * - Full match: mlen == keylen
+       * - Partly match: mlen == typebuf.tb_len
+       */
+      keylen = mp->m_keylen;
+      if (mlen == keylen
+          || (mlen == typebuf.tb_len
+            && typebuf.tb_len < keylen)) {
         /*
-         * Check an entry whether it matches.
-         * - Full match: mlen == keylen
-         * - Partly match: mlen == typebuf.tb_len
+         * If only script-local mappings are
+         * allowed, check if the mapping starts
+         * with K_SNR.
          */
-        *keylenp = mp->m_keylen;
-        if (mlen == *keylenp
-            || (mlen == typebuf.tb_len
-              && typebuf.tb_len < *keylenp)) {
-          /*
-           * If only script-local mappings are
-           * allowed, check if the mapping starts
-           * with K_SNR.
-           */
-          char_u *s = typebuf.tb_noremap + typebuf.tb_off;
-          if (*s == RM_SCRIPT
-              && (mp->m_keys[0] != K_SPECIAL
-                || mp->m_keys[1] != KS_EXTRA
-                || mp->m_keys[2] != (int)KE_SNR))
-            continue;
-          /*
-           * If one of the typed keys cannot be
-           * remapped, skip the entry.
-           */
-          int n;
-          for (n = mlen; --n >= 0; )
-            if (*s++ & (RM_NONE|RM_ABBR))
-              break;
-          if (n >= 0)
-            continue;
+        char_u *s = typebuf.tb_noremap + typebuf.tb_off;
+        if (*s == RM_SCRIPT
+            && (mp->m_keys[0] != K_SPECIAL
+              || mp->m_keys[1] != KS_EXTRA
+              || mp->m_keys[2] != (int)KE_SNR))
+          continue;
+        /*
+         * If one of the typed keys cannot be
+         * remapped, skip the entry.
+         */
+        int n;
+        for (n = mlen; --n >= 0; )
+          if (*s++ & (RM_NONE|RM_ABBR))
+            break;
+        if (n >= 0)
+          continue;
 
-          if (*keylenp > typebuf.tb_len) {
-            if (!timedout && !(mp_match != NULL
-                  && mp_match->m_nowait)) {
-              /* break at a partly match */
-              *keylenp = KEYLEN_PART_MAP;
-              break;
-            }
-          } else if (*keylenp > *mp_match_lenp) {
-            /* found a longer match */
-            mp_match = mp;
-            *mp_match_lenp = *keylenp;
+        if (keylen > typebuf.tb_len) {
+          if (!timedout && !(mp_match != NULL
+                && mp_match->m_nowait)) {
+            /* break at a partly match */
+            keylen = KEYLEN_PART_MAP;
+            break;
           }
-        } else {
-          // No match; may have to check for termcode at next character.
-          if (max_mlen < mlen) {
-            max_mlen = mlen;
-          }
+        } else if (keylen > *mp_match_lenp) {
+          /* found a longer match */
+          mp_match = mp;
+          *mp_match_lenp = keylen;
+        }
+      } else {
+        // No match; may have to check for termcode at next character.
+        if (*max_mlenp < mlen) {
+          *max_mlenp = mlen;
         }
       }
     }
 
     /* If no partly match found, use the longest full
      * match. */
-    if (*keylenp != KEYLEN_PART_MAP) {
+    if (keylen != KEYLEN_PART_MAP) {
       mp = mp_match;
-      *keylenp = *mp_match_lenp;
+      keylen = *mp_match_lenp;
     }
+    *keylenp = keylen;
   }
+  return mp;
+}
+
+// Returns 0 to continue, -1 to carry on in the loop, otherwise, returns the
+// character that should be used.
+// Keeps track of the mapdepth in the variable pointed to by "mapdepthp".
+static int look_in_typebuf(int *mapdepthp, int *keylenp, int *mp_match_lenp,
+    const int timedout, const int advance, const int local_State)
+{
+  if (typebuf.tb_len <= 0) {
+    return -1;
+  }
+  /*
+   * Check for a mappable key sequence.
+   * Walk through one maphash[] list until we find an
+   * entry that matches.
+   *
+   * Don't look for mappings if:
+   * - no_mapping set: mapping disabled (e.g. for CTRL-V)
+   * - maphash_valid not set: no mappings present.
+   * - typebuf.tb_buf[typebuf.tb_off] should not be remapped
+   * - in insert or cmdline mode and 'paste' option set
+   * - waiting for "hit return to continue" and CR or SPACE
+   *	 typed
+   * - waiting for a char with --more--
+   * - in Ctrl-X mode, and we get a valid char for that mode
+   */
+  int max_mlen = 0;
+  mapblock_T *mp = find_typed_map(timedout, local_State,
+      keylenp, mp_match_lenp, &max_mlen);
 
   if (check_togglepaste(mp, &max_mlen, keylenp)) {
     // Have toggled 'paste', now have to start searching for characters again
