@@ -2027,6 +2027,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
    * have to redisplay the mode. That the cursor is in the wrong
    * place does not matter.
    */
+  int bytes_read = 0;
   int new_wcol = curwin->w_wcol;
   int new_wrow = curwin->w_wrow;
   if (       advance
@@ -2038,7 +2039,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
       && (State & INSERT)
       && (p_timeout
         || (keylen == KEYLEN_PART_KEY && p_ttimeout))
-      && (*cp = inchar(typebuf.tb_buf + typebuf.tb_off
+      && (bytes_read = inchar(typebuf.tb_buf + typebuf.tb_off
           + typebuf.tb_len, 3, 25L,
           typebuf.tb_change_cnt)) == 0) {
     colnr_T col = 0, vcol;
@@ -2103,15 +2104,18 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
     curwin->w_wcol = old_wcol;
     curwin->w_wrow = old_wrow;
   }
-  if (*cp < 0)
+  if (bytes_read < 0)
     return 0;             /* end of input script reached */
 
-  // Allow mapping for just typed characters. When we get here *cp
-  // is the number of extra bytes and typebuf.tb_len is 1.
-  for (int n = 1; n <= *cp; n++) {
+  // Allow mapping for just typed characters.
+  // When we get here either bytes_read is the number of extra bytes and
+  // typebuf.tb_len is 1, or we haven"t called inchar() [e.g. because the next
+  // character in the typebuf is not ESC], and bytes_read is 0 so this doesn't
+  // do anything.
+  for (int n = 1; n <= bytes_read; n++) {
     typebuf.tb_noremap[typebuf.tb_off + n] = RM_YES;
   }
-  typebuf.tb_len += *cp;
+  typebuf.tb_len += bytes_read;
 
   /* buffer full, don't map */
   if (typebuf.tb_len >= typebuf.tb_maplen + MAXMAPLEN) {
@@ -2213,7 +2217,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
      * get a character: 3. from the user - get it
      */
     int wait_tb_len = typebuf.tb_len;
-    *cp = inchar(
+    bytes_read = inchar(
         typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
         typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
         advance ? calc_waittime(keylen) : 0,
@@ -2230,10 +2234,11 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
         setcursor();                /* put cursor back where it belongs */
     }
 
-    if (*cp < 0)
+    if (bytes_read < 0)
       return 0;                     /* end of input script reached */
-    if (*cp == NUL) {                 /* no character available */
+    if (bytes_read == NUL) {                 /* no character available */
       if (!advance) {
+        *cp = NUL;
         return 1;
       }
       if (wait_tb_len > 0) {                /* timed out */
