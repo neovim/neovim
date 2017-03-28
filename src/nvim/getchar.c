@@ -2104,9 +2104,20 @@ static int ins_esc_special_case(int *new_wcolp, int *new_wrowp, int *mode_delete
   return bytes_read;
 }
 
-// Returns 0 to continue, 1 to break, -1 to carry on in the loop.
-// If it's found a key, leaves the new value of "c" in "*cp"
-static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
+// Returns -1 to carry on in the loop, otherwise returns the character to use
+// (this character may be NUL).
+// In the general case this function doesn't return a character, it usually
+// puts characters into the typebuffer so that look_in_typebuf() can parse
+// them.
+// The special cases are:
+//    Using the :normal command
+//      As this inserts the entire :normal argument into the typebuffer at
+//      once, when we get here the :normal command has gone through all of its
+//      arguments. Hence, we return a character that ensures we"re out of any
+//      new calls to edit().
+//    Have no more characters, and "advance" is false.
+//      We return NUL here to signify that.
+static int get_key_from_user(int *timedoutp, int *mode_deletedp,
     const int advance, const int keylen)
 {
   int new_wcol = curwin->w_wcol;
@@ -2114,7 +2125,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
   int bytes_read = ins_esc_special_case(&new_wcol, &new_wrow, mode_deletedp,
       advance, keylen);
   if (bytes_read < 0)
-    return 0;             /* end of input script reached */
+    return -1;             /* end of input script reached */
 
   // Allow mapping for just typed characters.
   // When we get here either bytes_read is the number of extra bytes and
@@ -2129,7 +2140,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
   /* buffer full, don't map */
   if (typebuf.tb_len >= typebuf.tb_maplen + MAXMAPLEN) {
     *timedoutp = TRUE;
-    return 0;
+    return -1;
   }
 
   if (ex_normal_busy > 0) {
@@ -2140,7 +2151,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
      * mapping is present, behave like it timed out. */
     if (typebuf.tb_len > 0) {
       *timedoutp = TRUE;
-      return 0;
+      return -1;
     }
     /* When 'insertmode' is set, ESC just beeps in Insert
      * mode.  Use CTRL-L to make edit() return.
@@ -2149,15 +2160,14 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
      * CTRL-C: ESC for most situations and CTRL-C to close the
      * cmdline window. */
     if (p_im && (State & INSERT))
-      *cp = Ctrl_L;
+      tc = Ctrl_L;
     else if ((State & CMDLINE)
         || (cmdwin_type > 0 && tc == ESC)
         )
-      *cp = Ctrl_C;
+      tc = Ctrl_C;
     else
-      *cp = ESC;
-    tc = *cp;
-    return 1;
+      tc = ESC;
+    return tc;
   }
 
   /*
@@ -2244,15 +2254,14 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
   }
 
   if (bytes_read < 0)
-    return 0;                     /* end of input script reached */
+    return -1;                     /* end of input script reached */
   if (bytes_read == NUL) {                 /* no character available */
     if (!advance) {
-      *cp = NUL;
-      return 1;
+      return NUL;
     }
     if (wait_tb_len > 0) {                /* timed out */
       *timedoutp = TRUE;
-      return 0;
+      return -1;
     }
   } else {          /* allow mapping for just typed characters */
     while (typebuf.tb_buf[typebuf.tb_off
@@ -2385,14 +2394,11 @@ static int vgetorpeek(const int advance)
       }
 
       { // Try to get a key directly from the user.
-        // Can't have "c" as a return value as we allow 'c' of NUL (i.e. zero)
-        // here to represent no keys available.
-        int8_t control_id = get_key_from_user(
-            &c, &timedout, &mode_deleted,
+        int control_id = get_key_from_user(
+            &timedout, &mode_deleted,
             advance, keylen);
-        if (control_id == 0) {
-          continue;
-        } else if (control_id == 1) {
+        if (control_id >= 0) {
+          c = control_id;
           break;
         }
       }
