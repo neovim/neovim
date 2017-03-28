@@ -129,14 +129,38 @@ describe('system()', function()
         screen:detach()
     end)
 
-    it('escapes inner double quotes #6329', function()
-      if helpers.os_name() == 'windows' then
-        -- In Windows cmd.exe's echo prints the quotes
+    if helpers.os_name() == 'windows' then
+      it('with the default cmd.exe shell', function()
         eq('""\n', eval([[system('echo ""')]]))
-      else
-        eq('\n', eval([[system('echo ""')]]))
-      end
-    end)
+        eq('"a b"\n', eval([[system('echo "a b"')]]))
+        -- TODO: consistent with Vim, but it should be fixed
+        eq('a & echo b\n', eval([[system('echo a & echo b')]]))
+        eval([[system('cd "C:\Program Files"')]])
+        eq(0, eval('v:shell_error'))
+      end)
+
+      it('with set shell="cmd"', function()
+        helpers.source('let &shell="cmd"')
+        eq('"a b"\n', eval([[system('echo "a b"')]]))
+      end)
+
+      it('works with cmd.exe from $COMSPEC', function()
+        local comspecshell = eval("fnamemodify($COMSPEC, ':t')")
+        if comspecshell == 'cmd.exe' then
+          helpers.source('let &shell=$COMSPEC')
+          eq('"a b"\n', eval([[system('echo "a b"')]]))
+        else
+          pending('$COMSPEC is not cmd.exe ' .. comspecshell)
+        end
+      end)
+
+      it('works with powershell', function()
+        helpers.set_shell_powershell()
+        eq('a\nb\n', eval([[system('echo a b')]]))
+        eq('C:\\\n', eval([[system('cd c:\; (Get-Location).Path')]]))
+        eq('a b\n', eval([[system('echo "a b"')]]))
+      end)
+    end
 
     it('`echo` and waits for its return', function()
       feed(':call system("echo")<cr>')
