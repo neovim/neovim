@@ -136,6 +136,13 @@ describe('system()', function()
       end
     end)
 
+    if helpers.os_name() == 'windows' then
+        it('works with cmd.exe', function()
+          eq('a\nb\n', eval([[system('echo a & echo b')]]))
+          eq('c:\\\n', eval([[system('cd c:\ a & echo %cd%')]]))
+        end)
+    end
+
     it('`echo` and waits for its return', function()
       feed(':call system("echo")<cr>')
       screen:expect([[
