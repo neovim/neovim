@@ -124,9 +124,11 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   }
 
   size_t nread;
+
   int exitcode = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
                               input.data, input.len, output_ptr, &nread,
                               emsg_silent, forward_output);
+
   xfree(input.data);
 
   if (output) {
