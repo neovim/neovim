@@ -2110,8 +2110,8 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
   // Allow mapping for just typed characters.
   // When we get here either bytes_read is the number of extra bytes and
   // typebuf.tb_len is 1, or we haven"t called inchar() [e.g. because the next
-  // character in the typebuf is not ESC], and bytes_read is 0 so this doesn't
-  // do anything.
+  // character in the typebuf is not ESC or because there is no character in
+  // the typebuf], and bytes_read is 0 so this doesn't do anything.
   for (int n = 1; n <= bytes_read; n++) {
     typebuf.tb_noremap[typebuf.tb_off + n] = RM_YES;
   }
@@ -2172,85 +2172,84 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
    * input from the user), show the partially matched characters
    * to the user with showcmd.
    */
-  { // Using the showcmd_len, wait_tb_len, and c1 variables
-    int showcmd_len = 0;
-    int c1 = 0;
-    if (typebuf.tb_len > 0 && advance && !exmode_active) {
-      if (((State & (NORMAL | INSERT)) || State == LANGMAP)
-          && State != HITRETURN) {
-        /* this looks nice when typing a dead character map */
-        if (State & INSERT
-            && ptr2cells(typebuf.tb_buf + typebuf.tb_off
-              + typebuf.tb_len - 1) == 1) {
-          edit_putchar(typebuf.tb_buf[typebuf.tb_off
-              + typebuf.tb_len - 1], FALSE);
-          setcursor();               /* put cursor back where it belongs */
-          c1 = 1;
-        }
-        /* need to use the col and row from above here */
-        int old_wcol = curwin->w_wcol;
-        int old_wrow = curwin->w_wrow;
-        curwin->w_wcol = new_wcol;
-        curwin->w_wrow = new_wrow;
-        push_showcmd();
-        if (typebuf.tb_len > SHOWCMD_COLS)
-          showcmd_len = typebuf.tb_len - SHOWCMD_COLS;
-        while (showcmd_len < typebuf.tb_len)
-          (void)add_to_showcmd(typebuf.tb_buf[typebuf.tb_off
-              + showcmd_len++]);
-        curwin->w_wcol = old_wcol;
-        curwin->w_wrow = old_wrow;
-      }
 
+  int showcmd_len = 0;
+  int c1 = 0;
+  if (typebuf.tb_len > 0 && advance && !exmode_active) {
+    if (((State & (NORMAL | INSERT)) || State == LANGMAP)
+        && State != HITRETURN) {
       /* this looks nice when typing a dead character map */
-      if ((State & CMDLINE)
-          && cmdline_star == 0
+      if (State & INSERT
           && ptr2cells(typebuf.tb_buf + typebuf.tb_off
             + typebuf.tb_len - 1) == 1) {
-        putcmdline(typebuf.tb_buf[typebuf.tb_off
+        edit_putchar(typebuf.tb_buf[typebuf.tb_off
             + typebuf.tb_len - 1], FALSE);
+        setcursor();               /* put cursor back where it belongs */
         c1 = 1;
       }
+      /* need to use the col and row from above here */
+      int old_wcol = curwin->w_wcol;
+      int old_wrow = curwin->w_wrow;
+      curwin->w_wcol = new_wcol;
+      curwin->w_wrow = new_wrow;
+      push_showcmd();
+      if (typebuf.tb_len > SHOWCMD_COLS)
+        showcmd_len = typebuf.tb_len - SHOWCMD_COLS;
+      while (showcmd_len < typebuf.tb_len)
+        (void)add_to_showcmd(typebuf.tb_buf[typebuf.tb_off
+            + showcmd_len++]);
+      curwin->w_wcol = old_wcol;
+      curwin->w_wrow = old_wrow;
     }
 
-    /*
-     * get a character: 3. from the user - get it
-     */
-    int wait_tb_len = typebuf.tb_len;
-    bytes_read = inchar(
-        typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
-        typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
-        advance ? calc_waittime(keylen) : 0,
-        typebuf.tb_change_cnt);
-
-    if (showcmd_len != 0)
-      pop_showcmd();
-    if (c1 == 1) {
-      if (State & INSERT)
-        edit_unputchar();
-      if (State & CMDLINE)
-        unputcmdline();
-      else
-        setcursor();                /* put cursor back where it belongs */
+    /* this looks nice when typing a dead character map */
+    if ((State & CMDLINE)
+        && cmdline_star == 0
+        && ptr2cells(typebuf.tb_buf + typebuf.tb_off
+          + typebuf.tb_len - 1) == 1) {
+      putcmdline(typebuf.tb_buf[typebuf.tb_off
+          + typebuf.tb_len - 1], FALSE);
+      c1 = 1;
     }
+  }
 
-    if (bytes_read < 0)
-      return 0;                     /* end of input script reached */
-    if (bytes_read == NUL) {                 /* no character available */
-      if (!advance) {
-        *cp = NUL;
-        return 1;
-      }
-      if (wait_tb_len > 0) {                /* timed out */
-        *timedoutp = TRUE;
-        return 0;
-      }
-    } else {          /* allow mapping for just typed characters */
-      while (typebuf.tb_buf[typebuf.tb_off
-          + typebuf.tb_len] != NUL)
-        typebuf.tb_noremap[typebuf.tb_off
-          + typebuf.tb_len++] = RM_YES;
+  /*
+   * get a character: 3. from the user - get it
+   */
+  int wait_tb_len = typebuf.tb_len;
+  bytes_read = inchar(
+      typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
+      typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
+      advance ? calc_waittime(keylen) : 0,
+      typebuf.tb_change_cnt);
+
+  if (showcmd_len != 0)
+    pop_showcmd();
+  if (c1 == 1) {
+    if (State & INSERT)
+      edit_unputchar();
+    if (State & CMDLINE)
+      unputcmdline();
+    else
+      setcursor();                /* put cursor back where it belongs */
+  }
+
+  if (bytes_read < 0)
+    return 0;                     /* end of input script reached */
+  if (bytes_read == NUL) {                 /* no character available */
+    if (!advance) {
+      *cp = NUL;
+      return 1;
     }
+    if (wait_tb_len > 0) {                /* timed out */
+      *timedoutp = TRUE;
+      return 0;
+    }
+  } else {          /* allow mapping for just typed characters */
+    while (typebuf.tb_buf[typebuf.tb_off
+        + typebuf.tb_len] != NUL)
+      typebuf.tb_noremap[typebuf.tb_off
+        + typebuf.tb_len++] = RM_YES;
   }
 
   return -1;
