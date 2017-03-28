@@ -1654,9 +1654,8 @@ static int handle_int(const int advance)
 // 'paste'. In that case *keylenp is set to KEYLEN_PART_KEY.
 // If it finds no match in the typebuffer, because the typebuffer has
 // characters that are different than required for toggling paste (i.e. not
-// because the typebuffer finishes before a match has been completed), then it
-// sets *max_mlenp to the length where they do match, plus 2.
-static bool check_togglepaste(mapblock_T *mp, int *max_mlenp, int *keylenp)
+// because the typebuffer finishes before a match has been completed).
+static bool check_togglepaste(mapblock_T *mp, int *keylenp)
 {
   if (mp != NULL || (State & (INSERT|NORMAL)) == 0) {
     return false;
@@ -1693,10 +1692,6 @@ static bool check_togglepaste(mapblock_T *mp, int *max_mlenp, int *keylenp)
   /* Need more chars for partly match. */
   if (mlen == typebuf.tb_len)
     *keylenp = KEYLEN_PART_KEY;
-  else if (*max_mlenp < mlen)
-    /* no match, may have to check for termcode at
-     * next character */
-    *max_mlenp = mlen + 1;
 
   return false;
 }
@@ -1813,12 +1808,11 @@ static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
 }
 
 // keylen is changed (but I think this could be the return value)
-// max_mlen is changed
 // mp is set from NULL (this may also be the return value [I know I have to
 // choose one])
 // mp_match_len is changed.
 static mapblock_T *find_typed_map(const int timedout, const int local_State,
-    int *keylenp, int *max_mlenp)
+    int *keylenp)
 {
   mapblock_T *mp = NULL;
   int temp_c = typebuf.tb_buf[typebuf.tb_off];
@@ -1945,11 +1939,6 @@ static mapblock_T *find_typed_map(const int timedout, const int local_State,
           mp_match = mp;
           mp_match_len = keylen;
         }
-      } else {
-        // No match; may have to check for termcode at next character.
-        if (*max_mlenp < mlen) {
-          *max_mlenp = mlen;
-        }
       }
     }
 
@@ -1988,10 +1977,9 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp,
    * - waiting for a char with --more--
    * - in Ctrl-X mode, and we get a valid char for that mode
    */
-  int max_mlen = 0;
-  mapblock_T *mp = find_typed_map(timedout, local_State, keylenp, &max_mlen);
+  mapblock_T *mp = find_typed_map(timedout, local_State, keylenp);
 
-  if (check_togglepaste(mp, &max_mlen, keylenp)) {
+  if (check_togglepaste(mp, keylenp)) {
     // Have toggled 'paste', now have to start searching for characters again
     // in order to find the character that nvim proper needs to deal with.
     return 0;
