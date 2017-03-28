@@ -2799,7 +2799,7 @@ add_tag_field (
  * Add the tags matching the specified pattern to the list "list"
  * as a dictionary
  */
-int get_tags(list_T *list, char_u *pat)
+int get_tags(list_T *list, char_u *pat, char_u *buf_ffname)
 {
   int num_matches, i, ret;
   char_u      **matches, *p;
@@ -2809,7 +2809,8 @@ int get_tags(list_T *list, char_u *pat)
   long is_static;
 
   ret = find_tags(pat, &num_matches, &matches,
-      TAG_REGEXP | TAG_NOIC, (int)MAXCOL, NULL);
+                  TAG_REGEXP | TAG_NOIC, (int)MAXCOL,
+                  buf_ffname);
   if (ret == OK && num_matches > 0) {
     for (i = 0; i < num_matches; ++i) {
       int parse_result = parse_match(matches[i], &tp);
