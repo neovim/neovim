@@ -7,7 +7,8 @@
 //   - For a window option, add some code to copy_winopt().
 //   - For a buffer option, add some code to buf_copy_options().
 //   - For a buffer string option, add code to check_buf_options().
-// - If it's a numeric option, add any necessary bounds checks to do_set().
+// - If it's a numeric option, add any necessary bounds checks to
+//   set_num_option().
 // - If it's a list of flags, add some code in do_set(), search for WW_ALL.
 // - When adding an option with expansion (P_EXPAND), but with a different
 //   default for Vi and Vim (no P_VI_DEF), add some code at VIMEXP.
@@ -1445,8 +1446,7 @@ do_set (
                 goto skip;
               }
             } else if (*arg == '-' || ascii_isdigit(*arg)) {
-              // Allow negative (for 'undolevels'), octal and
-              // hex numbers.
+              // Allow negative, octal and hex numbers.
               vim_str2nr(arg, NULL, &i, STR2NR_ALL, &value, NULL, 0);
               if (arg[i] != NUL && !ascii_iswhite(arg[i])) {
                 errmsg = e_invarg;
@@ -3995,150 +3995,157 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     return (char *)e_secure;
   }
 
-  *pp = value;
-  /* Remember where the option was set. */
-  set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
+  // Many number options assume their value is in the signed int range.
+  if (value < INT_MIN || value > INT_MAX) {
+      return e_invarg;
+  }
 
-  // Number options that need some validation when changed.
+  // Options that need some validation.
   if (pp == &p_wh) {
-    if (p_wh < 1) {
+    if (value < 1) {
       errmsg = e_positive;
-    }
-    if (p_wmh > p_wh) {
+    } else if (p_wmh > value) {
       errmsg = e_winheight;
     }
   } else if (pp == &p_hh) {
-    if (p_hh < 0) {
+    if (value < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &p_wmh) {
-    if (p_wmh < 0) {
+    if (value < 0) {
       errmsg = e_positive;
-    } else if (p_wmh > p_wh) {
+    } else if (value > p_wh) {
       errmsg = e_winheight;
     }
   } else if (pp == &p_wiw) {
-    if (p_wiw < 1) {
+    if (value < 1) {
       errmsg = e_positive;
-    } else if (p_wmw > p_wiw) {
+    } else if (p_wmw > value) {
       errmsg = e_winwidth;
     }
   } else if (pp == &p_wmw) {
-    if (p_wmw < 0) {
+    if (value < 0) {
       errmsg = e_positive;
-    } else if (p_wmw > p_wiw) {
+    } else if (value > p_wiw) {
       errmsg = e_winwidth;
     }
   } else if (pp == &p_mco) {
-    if (p_mco > MAX_MCO) {
+    if (value > MAX_MCO) {
       errmsg = e_invarg;
-    } else if (p_mco < 0) {
+    } else if (value < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &p_titlelen) {
-    if (p_titlelen < 0) {
+    if (value < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &p_uc) {
-    if (p_uc < 0) {
+    if (value < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &p_ch) {
-    if (p_ch < 1) {
+    if (value < 1) {
       errmsg = e_positive;
     }
   } else if (pp == &p_tm) {
-    if (p_tm < 0) {
+    if (value < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &p_hi) {
-    if (p_hi < 0) {
+    if (value < 0) {
       errmsg = e_positive;
-    } else if (p_hi > 10000) {
+    } else if (value > 10000) {
       errmsg = e_invarg;
     }
   } else if (pp == &p_re) {
-    if (p_re < 0 || p_re > 2) {
+    if (value < 0 || value > 2) {
       errmsg = e_invarg;
     }
   } else if (pp == &p_report) {
-    if (p_report < 0) {
+    if (value < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &p_so) {
-    if (p_so < 0 && full_screen) {
+    if (value < 0 && full_screen) {
       errmsg = e_scroll;
     }
   } else if (pp == &p_siso) {
-    if (p_siso < 0 && full_screen) {
+    if (value < 0 && full_screen) {
       errmsg = e_positive;
     }
   } else if (pp == &p_cwh) {
-    if (p_cwh < 1) {
+    if (value < 1) {
       errmsg = e_positive;
     }
   } else if (pp == &p_ut) {
-    if (p_ut < 0) {
+    if (value < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &p_ss) {
-    if (p_ss < 0) {
+    if (value < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &curwin->w_p_fdl) {
-    if (curwin->w_p_fdl < 0) {
+  } else if (pp == &curwin->w_p_fdl
+             || pp == (long *)GLOBAL_WO(&curwin->w_p_fdl)) {
+    if (value < 0) {
       errmsg = e_positive;
     }
-  } else if (pp == &curwin->w_p_fdc) {
-    if (curwin->w_p_fdc < 0) {
+  } else if (pp == &curwin->w_p_fdc
+             || pp == (long *)GLOBAL_WO(&curwin->w_p_fdc)) {
+    if (value < 0) {
       errmsg = e_positive;
-    } else if (curwin->w_p_fdc > 12) {
+    } else if (value > 12) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curwin->w_p_cole) {
-    if (curwin->w_p_cole < 0) {
+  } else if (pp == &curwin->w_p_cole
+             || pp == (long *)GLOBAL_WO(&curwin->w_p_cole)) {
+    if (value < 0) {
       errmsg = e_positive;
-    } else if (curwin->w_p_cole > 3) {
+    } else if (value > 3) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curwin->w_p_nuw) {
-    if (curwin->w_p_nuw < 1) {
+  } else if (pp == &curwin->w_p_nuw
+             || pp == (long *)GLOBAL_WO(&curwin->w_p_nuw)) {
+    if (value < 1) {
       errmsg = e_positive;
-    } else if (curwin->w_p_nuw > 10) {
+    } else if (value > 10) {
       errmsg = e_invarg;
     }
   } else if (pp == &curbuf->b_p_iminsert || pp == &p_iminsert) {
-    if (*pp < 0 || *pp > B_IMODE_LAST) {
+    if (value < 0 || value > B_IMODE_LAST) {
       errmsg = e_invarg;
     }
   } else if (pp == &curbuf->b_p_imsearch || pp == &p_imsearch) {
-    if (*pp < -1 || *pp > B_IMODE_LAST) {
+    if (value < -1 || value > B_IMODE_LAST) {
       errmsg = e_invarg;
     }
-  } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
-    if (*pp < 0) {
-      errmsg = e_positive;
-    }
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
-    if (*pp < -1 || *pp > SB_MAX
+    if (value < -1 || value > SB_MAX
         || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
       errmsg = e_invarg;
     }
   } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
-    if (*pp < 0) {
+    if (value < 0) {
       errmsg = e_positive;
     }
   } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
-    if (*pp <= 0) {
+    if (value <= 0) {
+      errmsg = e_positive;
+    }
+  } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
+    if (value < 0) {
       errmsg = e_positive;
     }
   }
 
-  // If validation failed, reset to old value and return.
+  // Don't change the value and return early if validation failed.
   if (errmsg != NULL) {
-    *pp = old_value;
     return errmsg;
   }
+
+  *pp = value;
+  // Remember where the option was set.
+  set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
 
   // For these options we want to fix some invalid values.
   if (pp == &p_window) {
@@ -4168,11 +4175,8 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (lastwin != firstwin && curwin->w_width < p_wiw) {
       win_setwidth((int)p_wiw);
     }
-  } else if (pp == &p_wmw) {
-    win_setminheight();
   } else if (pp == &p_ls) {
-    // (re)set last window status line.
-    last_status(false);
+    last_status(false);  // (re)set last window status line.
   } else if (pp == &p_stal) {
     // (re)set tab page line
     shell_new_rows();   // recompute window positions and heights
@@ -4237,9 +4241,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   }
 
 
-  /*
-   * Check the bounds for numeric options here
-   */
+  // Check the (new) bounds for Rows and Columns here.
   if (Rows < min_rows() && full_screen) {
     if (errbuf != NULL) {
       vim_snprintf((char *)errbuf, errbuflen,
@@ -4259,19 +4261,17 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   limit_screen_size();
 
 
-  /*
-   * If the screen (shell) height has been changed, assume it is the
-   * physical screenheight.
-   */
+  // If the screen (shell) height has been changed, assume it is the
+  // physical screenheight.
   if (old_Rows != Rows || old_Columns != Columns) {
-    /* Changing the screen size is not allowed while updating the screen. */
+    // Changing the screen size is not allowed while updating the screen.
     if (updating_screen) {
       *pp = old_value;
     } else if (full_screen) {
       screen_resize((int)Columns, (int)Rows);
     } else {
-      /* Postpone the resizing; check the size and cmdline position for
-       * messages. */
+      // Postpone the resizing; check the size and cmdline position for
+      // messages.
       check_shellsize();
       if (cmdline_row > Rows - p_ch && Rows > p_ch) {
         assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
@@ -4308,9 +4308,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   }
 
-  /* May set global value for local option. */
-  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
+  // May set global value for local option.
+  if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0) {
     *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+  }
 
   if (pp == &curbuf->b_p_scbk && !curbuf->terminal) {
     // Normal buffer: reset local 'scrollback' after updating the global value.
