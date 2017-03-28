@@ -400,7 +400,6 @@ set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTIN
 
 set(NO_SINGLE_CHECK_HEADERS
   buffer
-  charset
   cursor_shape
   diff
   digraph
