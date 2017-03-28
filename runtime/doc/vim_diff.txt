@@ -306,6 +306,7 @@ other arguments if used).
 Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
+  |hl-CursorLine| is low-priority unless foreground color is set
 
 Macro/|recording| behavior
   Replay of a macro recorded during :lmap produces the same actions as when it

@@ -4841,15 +4841,13 @@ ColorColumn	used for the columns set with 'colorcolumn'
 Conceal		placeholder characters substituted for concealed
 		text (see 'conceallevel')
 							*hl-Cursor*
-Cursor		the character under the cursor
+Cursor		character under the cursor
 							*hl-CursorIM*
 CursorIM	like Cursor, but used when in IME mode |CursorIM|
 							*hl-CursorColumn*
-CursorColumn	the screen column that the cursor is in when 'cursorcolumn' is
-		set
+CursorColumn	screen column at the cursor, when 'cursorcolumn' is set
 							*hl-CursorLine*
-CursorLine	the screen line that the cursor is in when 'cursorline' is
-		set
+CursorLine	screen line at the cursor, when 'cursorline' is set
 							*hl-Directory*
 Directory	directory names (and other special names in listings)
 							*hl-DiffAdd*
