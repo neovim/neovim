@@ -2104,6 +2104,53 @@ static int ins_esc_special_case(int *new_wcolp, int *new_wrowp, int *mode_delete
   return bytes_read;
 }
 
+static int vgetc_doshowcmd(bool *pretty_partialp,
+    const int advance, const int new_wcol, const int new_wrow)
+{
+
+  if (typebuf.tb_len <= 0 || !advance || exmode_active) {
+    return 0;
+  }
+  int showcmd_len = 0;
+  if (((State & (NORMAL | INSERT)) || State == LANGMAP)
+      && State != HITRETURN) {
+    /* this looks nice when typing a dead character map */
+    if (State & INSERT
+        && ptr2cells(typebuf.tb_buf + typebuf.tb_off
+          + typebuf.tb_len - 1) == 1) {
+      edit_putchar(typebuf.tb_buf[typebuf.tb_off
+          + typebuf.tb_len - 1], FALSE);
+      setcursor();               /* put cursor back where it belongs */
+      *pretty_partialp = true;
+    }
+    /* need to use the col and row from above here */
+    int old_wcol = curwin->w_wcol;
+    int old_wrow = curwin->w_wrow;
+    curwin->w_wcol = new_wcol;
+    curwin->w_wrow = new_wrow;
+    push_showcmd();
+    if (typebuf.tb_len > SHOWCMD_COLS)
+      showcmd_len = typebuf.tb_len - SHOWCMD_COLS;
+    while (showcmd_len < typebuf.tb_len)
+      (void)add_to_showcmd(typebuf.tb_buf[typebuf.tb_off
+          + showcmd_len++]);
+    curwin->w_wcol = old_wcol;
+    curwin->w_wrow = old_wrow;
+  }
+
+  /* this looks nice when typing a dead character map */
+  if ((State & CMDLINE)
+      && cmdline_star == 0
+      && ptr2cells(typebuf.tb_buf + typebuf.tb_off
+        + typebuf.tb_len - 1) == 1) {
+    putcmdline(typebuf.tb_buf[typebuf.tb_off
+        + typebuf.tb_len - 1], FALSE);
+    *pretty_partialp = true;
+  }
+
+  return showcmd_len;
+}
+
 // Returns -1 to carry on in the loop, otherwise returns the character to use
 // (this character may be NUL).
 // In the general case this function doesn't return a character, it usually
@@ -2193,45 +2240,9 @@ static int get_key_from_user(int *timedoutp, int *mode_deletedp,
    */
 
   bool pretty_partial_match = false;
-  int showcmd_len = 0;
-  if (typebuf.tb_len > 0 && advance && !exmode_active) {
-    bool *pretty_partialp = &pretty_partial_match;
-    if (((State & (NORMAL | INSERT)) || State == LANGMAP)
-        && State != HITRETURN) {
-      /* this looks nice when typing a dead character map */
-      if (State & INSERT
-          && ptr2cells(typebuf.tb_buf + typebuf.tb_off
-            + typebuf.tb_len - 1) == 1) {
-        edit_putchar(typebuf.tb_buf[typebuf.tb_off
-            + typebuf.tb_len - 1], FALSE);
-        setcursor();               /* put cursor back where it belongs */
-        *pretty_partialp = true;
-      }
-      /* need to use the col and row from above here */
-      int old_wcol = curwin->w_wcol;
-      int old_wrow = curwin->w_wrow;
-      curwin->w_wcol = new_wcol;
-      curwin->w_wrow = new_wrow;
-      push_showcmd();
-      if (typebuf.tb_len > SHOWCMD_COLS)
-        showcmd_len = typebuf.tb_len - SHOWCMD_COLS;
-      while (showcmd_len < typebuf.tb_len)
-        (void)add_to_showcmd(typebuf.tb_buf[typebuf.tb_off
-            + showcmd_len++]);
-      curwin->w_wcol = old_wcol;
-      curwin->w_wrow = old_wrow;
-    }
-
-    /* this looks nice when typing a dead character map */
-    if ((State & CMDLINE)
-        && cmdline_star == 0
-        && ptr2cells(typebuf.tb_buf + typebuf.tb_off
-          + typebuf.tb_len - 1) == 1) {
-      putcmdline(typebuf.tb_buf[typebuf.tb_off
-          + typebuf.tb_len - 1], FALSE);
-      *pretty_partialp = true;
-    }
-  }
+  int showcmd_len = vgetc_doshowcmd(
+      &pretty_partial_match,
+      advance, new_wcol, new_wrow);
 
   /*
    * get a character: 3. from the user - get it
