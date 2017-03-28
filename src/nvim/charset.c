@@ -8,7 +8,7 @@
 #include <wchar.h>  // for towupper() and towlower()
 #include <inttypes.h>
 
-#include "vim.h"
+#include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/farsi.h"
