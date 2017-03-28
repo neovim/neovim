@@ -52,6 +52,7 @@ static int current_attr_code = 0;
 static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
+static int pending_redraw = false;
 
 // UI_CALL invokes a function on all registered UI instances. The functions can
 // have 0-5 arguments (configurable by SELECT_NTH).
@@ -393,7 +394,25 @@ int ui_current_col(void)
 
 void ui_flush(void)
 {
-  UI_CALL(flush);
+  if (!p_lz) {
+    DLOG("ui_flush");
+    // DLOG_CALL_STACK();
+    UI_CALL(flush);
+  }
+  pending_redraw = true;
+}
+
+// ui_flush_urgent is only called by os_inchar for now.  When 'lazydraw' is
+// enabled, we use only this function in os_inchar to redraw before waiting for
+// input while disable all other ui_flush calls.
+void ui_flush_urgent(void)
+{
+  if (p_lz && pending_redraw) {
+    DLOG("ui_flush_urgent");
+    // DLOG_CALL_STACK("   ");
+    UI_CALL(flush);
+    pending_redraw = false;
+  }
 }
 
 static void send_output(uint8_t **ptr)

@@ -69,6 +69,32 @@
 
 #endif
 
+#if __linux__ && MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+#  include <execinfo.h>
+#  define DLOG_CALL_STACK(prefix) \
+  do { \
+    void *trace[100]; \
+    int trace_size = backtrace(trace, 100); \
+    \
+    char exe[1024]; \
+    ssize_t elen = readlink("/proc/self/exe", exe, sizeof(exe) - 1); \
+    exe[elen] = 0; \
+    \
+    for (int i = 1; i < trace_size; i++) { \
+      char buf[256]; \
+      snprintf(buf, sizeof(buf), "addr2line -e %s -f -p %p", exe, trace[i]); \
+      FILE *fp = popen(buf, "r"); \
+      while (fgets(buf, sizeof(buf) - 1, fp) != NULL) { \
+        buf[strlen(buf)-1] = 0; \
+        DLOG(prefix "%s", buf); \
+      } \
+      fclose(fp); \
+    } \
+  } while (0)
+#else
+#  define DLOG_CALL_STACK(prefix) (void)(0)
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.h.generated.h"
 #endif

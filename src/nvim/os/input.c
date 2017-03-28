@@ -96,6 +96,11 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
   }
 
+  // If getchar timeout is longer than 30ms, call ui_flush_urgent for lazyredraw
+  if (ms < 0 || ms > 30) {
+    ui_flush_urgent();
+  }
+
   InbufPollResult result;
   if (ms >= 0) {
     if ((result = inbuf_poll(ms)) == kInputNone) {
