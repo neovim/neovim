@@ -6,7 +6,7 @@ function! Test_fnameescape()
   try
     exe "w! " . fnameescape(fname)
     let status = v:true
-  endtry 
+  endtry
   call assert_true(status, "Space")
   call delete(fname)
 
