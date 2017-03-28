@@ -2253,15 +2253,19 @@ static int get_key_from_user(int *timedoutp, int *mode_deletedp,
       setcursor();                /* put cursor back where it belongs */
   }
 
-  if (bytes_read < 0)
-    return -1;                     /* end of input script reached */
-  if (bytes_read == NUL) {                 /* no character available */
+  if (bytes_read < 0) {
+    /* end of input script reached will return -1 below */
+  } else if (bytes_read == NUL) {
+    // No characters available (none in the typebuf, none gotten from user).
+    // If not asked to advance this is acceptable, return NUL (i.e. 0) which
+    // will return NUL from vgetorpeek().
+    // Otherwise, we mark if timedout and tell vgetorpeek() to continue on in the
+    // for loop.
     if (!advance) {
       return NUL;
     }
     if (wait_tb_len > 0) {                /* timed out */
       *timedoutp = TRUE;
-      return -1;
     }
   } else {          /* allow mapping for just typed characters */
     while (typebuf.tb_buf[typebuf.tb_off
@@ -2269,7 +2273,6 @@ static int get_key_from_user(int *timedoutp, int *mode_deletedp,
       typebuf.tb_noremap[typebuf.tb_off
         + typebuf.tb_len++] = RM_YES;
   }
-
   return -1;
 }
 
