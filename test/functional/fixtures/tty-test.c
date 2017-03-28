@@ -15,10 +15,12 @@ uv_tty_t tty;
 #include <windows.h>
 bool owns_tty(void)
 {
-  HWND consoleWnd = GetConsoleWindow();
-  DWORD dwProcessId;
-  GetWindowThreadProcessId(consoleWnd, &dwProcessId);
-  return GetCurrentProcessId() == dwProcessId;
+  /* XXX: We need to make proper detect owns tty */
+  /* HWND consoleWnd = GetConsoleWindow(); */
+  /* DWORD dwProcessId; */
+  /* GetWindowThreadProcessId(consoleWnd, &dwProcessId); */
+  /* return GetCurrentProcessId() == dwProcessId; */
+  return true;
 }
 #else
 #include <unistd.h>
@@ -54,15 +56,17 @@ static void sig_handler(int signum)
     return;
   }
 }
+#else
+static void sigwinch_cb(uv_signal_t *handle, int signum)
+{
+  int width, height;
+  uv_tty_t out;
+  uv_tty_init(uv_default_loop(), &out, fileno(stdout), 0);
+  uv_tty_get_winsize(&out, &width, &height);
+  fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+  uv_close((uv_handle_t *)&out, NULL);
+}
 #endif
-
-// static void sigwinch_cb(uv_signal_t *handle, int signum)
-// {
-//   int width, height;
-//   uv_tty_t *tty = handle->data;
-//   uv_tty_get_winsize(tty, &width, &height);
-//   fprintf(stderr, "rows: %d, cols: %d\n", height, width);
-// }
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
@@ -88,7 +92,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   uv_loop_t write_loop;
   uv_loop_init(&write_loop);
   uv_tty_t out;
-  uv_tty_init(&write_loop, &out, 1, 0);
+  uv_tty_init(&write_loop, &out, fileno(stdout), 0);
   uv_write_t req;
   uv_buf_t b = {.base = buf->base, .len = (size_t)cnt};
   uv_write(&req, STRUCT_CAST(uv_stream_t, &out), &b, 1, NULL);
@@ -149,7 +153,11 @@ int main(int argc, char **argv)
   uv_prepare_init(uv_default_loop(), &prepare);
   uv_prepare_start(&prepare, prepare_cb);
   // uv_tty_t tty;
+#ifndef WIN32
   uv_tty_init(uv_default_loop(), &tty, fileno(stderr), 1);
+#else
+  uv_tty_init(uv_default_loop(), &tty, fileno(stdin), 1);
+#endif
   uv_tty_set_mode(&tty, UV_TTY_MODE_RAW);
   tty.data = &interrupted;
   uv_read_start(STRUCT_CAST(uv_stream_t, &tty), alloc_cb, read_cb);
@@ -160,15 +168,17 @@ int main(int argc, char **argv)
   sa.sa_handler = sig_handler;
   sigaction(SIGHUP, &sa, NULL);
   sigaction(SIGWINCH, &sa, NULL);
-  // uv_signal_t sigwinch_watcher;
-  // uv_signal_init(uv_default_loop(), &sigwinch_watcher);
-  // sigwinch_watcher.data = &tty;
-  // uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
+#else
+  uv_signal_t sigwinch_watcher;
+  uv_signal_init(uv_default_loop(), &sigwinch_watcher);
+  uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
 #endif
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
+#ifndef WIN32
   // XXX: Without this the SIGHUP handler is skipped on some systems.
   sleep(100);
+#endif
 
   return 0;
 }

@@ -30,9 +30,13 @@ local function clear_attrs() feed_termcode('[0;10m') end
 -- mouse
 local function enable_mouse() feed_termcode('[?1002h') end
 local function disable_mouse() feed_termcode('[?1002l') end
+local function wait_sigwinch()
+  helpers.sleep(1000)
+  hide_cursor()
+  show_cursor()
+end
 
 local default_command = '["'..nvim_dir..'/tty-test'..'"]'
-
 
 local function screen_setup(extra_rows, command, cols)
   extra_rows = extra_rows and extra_rows or 0
@@ -112,5 +116,6 @@ return {
   clear_attrs = clear_attrs,
   enable_mouse = enable_mouse,
   disable_mouse = disable_mouse,
+  wait_sigwinch = wait_sigwinch,
   screen_setup = screen_setup
 }
