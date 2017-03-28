@@ -2184,6 +2184,8 @@ win_line (
   int prev_c1 = 0;                      // first composing char for prev_c
   int did_line_attr = 0;
 
+  int line_attr_low_priority = 0;       // attribute for current line with
+                                        // low priority, e.g., cursorline
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_bufhl = false;               // this buffer has highlight matches
   int bufhl_attr = 0;                   // attributes desired by bufhl
@@ -2398,6 +2400,30 @@ win_line (
     filler_lines = wp->w_topfill;
   filler_todo = filler_lines;
 
+  // Cursor line highlighting for 'cursorline' in the current window.  Not
+  // when Visual mode is active, because it's not clear what is selected
+  // then.
+  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
+      && !(wp == curwin && VIsual_active)) {
+    int cul_attr = win_hl_attr(wp, HLF_CUL);
+    HlAttrs *aep = syn_cterm_attr2entry(cul_attr);
+
+    // According to #7383, we make a compromise here:
+    //  * low-priority CursorLine if foreground is not set
+    //  * high-priority ("same as Vim" priority) CursorLine if foreground is
+    //    set
+    if (aep->rgb_fg_color == -1 && aep->cterm_fg_color == 0) {
+      line_attr_low_priority = cul_attr;
+    } else {
+      if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
+          && qf_current_entry(wp) == lnum) {
+        line_attr = hl_combine_attr(cul_attr, line_attr);
+      } else {
+        line_attr = cul_attr;
+      }
+    }
+  }
+
   // If this line has a sign with line highlighting set line_attr.
   v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
   if (v != 0) {
@@ -2409,7 +2435,7 @@ win_line (
     line_attr = win_hl_attr(wp, HLF_QFL);
   }
 
-  if (line_attr != 0) {
+  if (line_attr_low_priority || line_attr) {
     area_highlighting = true;
   }
 
@@ -2629,20 +2655,6 @@ win_line (
     }
     if (shl != &search_hl && cur != NULL)
       cur = cur->next;
-  }
-
-  // Cursor line highlighting for 'cursorline' in the current window.  Not
-  // when Visual mode is active, because it's not clear what is selected
-  // then.
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-      && !(wp == curwin && VIsual_active)) {
-    if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
-        && qf_current_entry(wp) == lnum) {
-      line_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), line_attr);
-    } else {
-      line_attr = win_hl_attr(wp, HLF_CUL);
-    }
-    area_highlighting = true;
   }
 
   off = (unsigned)(current_ScreenLine - ScreenLines);
@@ -3566,9 +3578,12 @@ win_line (
                    && lcs_eol_one > 0) {
           // Display a '$' after the line or highlight an extra
           // character if the line break is included.
-          // For a diff line the highlighting continues after the "$".
-          if (diff_hlf == (hlf_T)0 && line_attr == 0) {
-            // In virtualedit, visual selections may extend beyond end of line.
+          // For a diff line the highlighting continues after the
+          // "$".
+          if (diff_hlf == (hlf_T)0
+              && line_attr == 0
+              && line_attr_low_priority == 0) {
+            // In virtualedit, visual selections may extend beyond end of line
             if (area_highlighting && virtual_active()
                 && tocol != MAXCOL && vcol < tocol) {
               n_extra = 0;
@@ -3631,7 +3646,7 @@ win_line (
                      (col < wp->w_width))) {
           c = ' ';
           ptr--;  // put it back at the NUL
-        } else if ((diff_hlf != (hlf_T)0 || line_attr != 0)
+        } else if ((diff_hlf != (hlf_T)0 || line_attr_low_priority || line_attr)
                    && (wp->w_p_rl
                        ? (col >= 0)
                        : (col - boguscols < wp->w_width))) {
@@ -3643,7 +3658,8 @@ win_line (
           did_line_attr++;
 
           // don't do search HL for the rest of the line
-          if (line_attr != 0 && char_attr == search_attr && col > 0) {
+          if ((line_attr_low_priority || line_attr)
+              && char_attr == search_attr && col > 0) {
             char_attr = line_attr;
           }
           if (diff_hlf == HLF_TXD) {
@@ -4005,6 +4021,11 @@ win_line (
         vcol_save_attr = char_attr;
         char_attr = hl_combine_attr(win_hl_attr(wp, HLF_MC), char_attr);
       }
+    }
+
+    // apply line attr with lowest priority so that everthing can override it
+    if (draw_state == WL_LINE) {
+      char_attr = hl_combine_attr(line_attr_low_priority, char_attr);
     }
 
     /*
