@@ -2376,7 +2376,6 @@ static int vgetorpeek(const int advance)
         }
       }
 
-      c = 0;
       { // Try to get a key directly from the user.
         int8_t control_id = get_key_from_user(
             &c, &timedout, &mode_deleted,
