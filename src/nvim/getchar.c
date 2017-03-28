@@ -1580,6 +1580,73 @@ vungetc ( /* unget one character (can only be done once!) */
   old_mouse_col = mouse_col;
 }
 
+static void do_insert_message(const int mode_deleted, const int c,
+                              const int advance)
+{
+  /*
+   * The "INSERT" message is taken care of here:
+   *	 if we return an ESC to exit insert mode, the message is deleted
+   *	 if we don't return an ESC but deleted the message before, redisplay it
+   */
+  if (advance && p_smd && msg_silent == 0 && (State & INSERT)) {
+    if (c == ESC && !mode_deleted && !no_mapping && mode_displayed) {
+      if (typebuf.tb_len && !KeyTyped)
+        redraw_cmdline = TRUE;              /* delete mode later */
+      else
+        unshowmode(FALSE);
+    } else if (c != ESC && mode_deleted) {
+      if (typebuf.tb_len && !KeyTyped)
+        redraw_cmdline = TRUE;              /* show mode later */
+      else
+        showmode();
+    }
+  }
+}
+
+static long calc_waittime(const int keylen)
+{
+  if (typebuf.tb_len == 0) {
+    return -1L;
+  } else if (!p_timeout) {
+    return -1L;
+  } else if (!p_ttimeout && keylen == KEYLEN_PART_KEY) {
+    return -1L;
+  } else if (keylen == KEYLEN_PART_KEY && p_ttm >= 0) {
+    return p_ttm;
+  }
+
+  return p_tm;
+}
+
+static int handle_int(const int advance)
+{
+  /* flush all input */
+  int c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L,
+      typebuf.tb_change_cnt);
+  /*
+   * If inchar() returns TRUE (script file was active) or we
+   * are inside a mapping, get out of insert mode.
+   * Otherwise we behave like having gotten a CTRL-C.
+   * As a result typing CTRL-C in insert mode will
+   * really insert a CTRL-C.
+   */
+  if ((c || typebuf.tb_maplen)
+      && (State & (INSERT + CMDLINE)))
+    c = ESC;
+  else
+    c = Ctrl_C;
+  flush_buffers(TRUE);                  /* flush all typeahead */
+
+  if (advance) {
+    /* Also record this character, it might be needed to
+     * get out of Insert mode. */
+    *typebuf.tb_buf = (char_u)c;
+    gotchars(typebuf.tb_buf, 1);
+  }
+  cmd_silent = FALSE;
+
+  return c;
+}
 /// get a character:
 /// 1. from the stuffbuffer
 ///    This is used for abbreviated commands like "D" -> "d$".
@@ -1690,31 +1757,7 @@ static int vgetorpeek(int advance)
           os_breakcheck();                      /* check for CTRL-C */
         keylen = 0;
         if (got_int) {
-          /* flush all input */
-          c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L,
-              typebuf.tb_change_cnt);
-          /*
-           * If inchar() returns TRUE (script file was active) or we
-           * are inside a mapping, get out of insert mode.
-           * Otherwise we behave like having gotten a CTRL-C.
-           * As a result typing CTRL-C in insert mode will
-           * really insert a CTRL-C.
-           */
-          if ((c || typebuf.tb_maplen)
-              && (State & (INSERT + CMDLINE)))
-            c = ESC;
-          else
-            c = Ctrl_C;
-          flush_buffers(TRUE);                  /* flush all typeahead */
-
-          if (advance) {
-            /* Also record this character, it might be needed to
-             * get out of Insert mode. */
-            *typebuf.tb_buf = (char_u)c;
-            gotchars(typebuf.tb_buf, 1);
-          }
-          cmd_silent = FALSE;
-
+          c = handle_int(advance);
           break;
         } else if (typebuf.tb_len > 0) {
           /*
@@ -2240,17 +2283,11 @@ static int vgetorpeek(int advance)
          * get a character: 3. from the user - get it
          */
         wait_tb_len = typebuf.tb_len;
-        c = inchar(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
-            typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
-            !advance
-            ? 0
-            : ((typebuf.tb_len == 0
-                || !(p_timeout || (p_ttimeout
-                                   && keylen == KEYLEN_PART_KEY)))
-               ? -1L
-               : ((keylen == KEYLEN_PART_KEY && p_ttm >= 0)
-                  ? p_ttm
-                  : p_tm)), typebuf.tb_change_cnt);
+        c = inchar(
+              typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len,
+              typebuf.tb_buflen - typebuf.tb_off - typebuf.tb_len - 1,
+              advance ? calc_waittime(keylen) : 0,
+              typebuf.tb_change_cnt);
 
         if (i != 0)
           pop_showcmd();
@@ -2284,24 +2321,7 @@ static int vgetorpeek(int advance)
     /* if advance is FALSE don't loop on NULs */
   } while (c < 0 || (advance && c == NUL));
 
-  /*
-   * The "INSERT" message is taken care of here:
-   *	 if we return an ESC to exit insert mode, the message is deleted
-   *	 if we don't return an ESC but deleted the message before, redisplay it
-   */
-  if (advance && p_smd && msg_silent == 0 && (State & INSERT)) {
-    if (c == ESC && !mode_deleted && !no_mapping && mode_displayed) {
-      if (typebuf.tb_len && !KeyTyped)
-        redraw_cmdline = TRUE;              /* delete mode later */
-      else
-        unshowmode(FALSE);
-    } else if (c != ESC && mode_deleted) {
-      if (typebuf.tb_len && !KeyTyped)
-        redraw_cmdline = TRUE;              /* show mode later */
-      else
-        showmode();
-    }
-  }
+  do_insert_message(mode_deleted, c, advance);
 
   --vgetc_busy;
 
