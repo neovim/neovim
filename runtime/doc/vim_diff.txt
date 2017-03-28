@@ -246,8 +246,8 @@ coerced to strings. See |id()| for more details, currently it uses
 |c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.
 
 "nbsp", "space", "tab" and "trail" in 'listchars' are now highlighted in a new
-group |hl-WhiteSpace| rather than ||hl-SpecialKey|.  By default,
-|hl-WhiteSpace| is linked to |hl-NonText|.
+group |hl-Whitespace| rather than |hl-SpecialKey|.  By default,
+|hl-Whitespace| is linked to |hl-NonText|.
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*

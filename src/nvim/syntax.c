@@ -5912,7 +5912,7 @@ static char *highlight_init_both[] =
   "default link EndOfBuffer NonText",
   "default link QuickFixLine Search",
   "default link Substitute Search",
-  "default link WhiteSpace NonText",
+  "default link Whitespace NonText",
   NULL
 };
 

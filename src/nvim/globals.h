@@ -473,7 +473,7 @@ typedef enum {
   , HLF_CUL         // 'cursurline'
   , HLF_MC          // 'colorcolumn'
   , HLF_QFL         // selected quickfix line
-  , HLF_0           // WhiteSpace
+  , HLF_0           // Whitespace
   , HLF_COUNT       // MUST be the last one
 } hlf_T;
 
