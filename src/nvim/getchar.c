@@ -2183,7 +2183,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
    */
 
   int showcmd_len = 0;
-  int c1 = 0;
+  bool pretty_partial_match = false;
   if (typebuf.tb_len > 0 && advance && !exmode_active) {
     if (((State & (NORMAL | INSERT)) || State == LANGMAP)
         && State != HITRETURN) {
@@ -2194,7 +2194,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
         edit_putchar(typebuf.tb_buf[typebuf.tb_off
             + typebuf.tb_len - 1], FALSE);
         setcursor();               /* put cursor back where it belongs */
-        c1 = 1;
+        pretty_partial_match = true;
       }
       /* need to use the col and row from above here */
       int old_wcol = curwin->w_wcol;
@@ -2218,7 +2218,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
           + typebuf.tb_len - 1) == 1) {
       putcmdline(typebuf.tb_buf[typebuf.tb_off
           + typebuf.tb_len - 1], FALSE);
-      c1 = 1;
+      pretty_partial_match = true;
     }
   }
 
@@ -2234,7 +2234,7 @@ static int8_t get_key_from_user(int *cp, int *timedoutp, int *mode_deletedp,
 
   if (showcmd_len != 0)
     pop_showcmd();
-  if (c1 == 1) {
+  if (pretty_partial_match) {
     if (State & INSERT)
       edit_unputchar();
     if (State & CMDLINE)
