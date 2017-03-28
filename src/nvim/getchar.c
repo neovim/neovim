@@ -1979,7 +1979,7 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp,
    */
   mapblock_T *mp = find_typed_map(timedout, local_State, keylenp);
 
-  if (check_togglepaste(mp, keylenp)) {
+  if (mp == NULL && check_togglepaste(mp, keylenp)) {
     // Have toggled 'paste', now have to start searching for characters again
     // in order to find the character that nvim proper needs to deal with.
     return 0;
