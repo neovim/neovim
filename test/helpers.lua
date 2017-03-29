@@ -106,20 +106,33 @@ local uname = (function()
   end)
 end)()
 
-local function tmpname()
-  local fname = os.tmpname()
-  if uname() == 'Windows' and fname:sub(1, 2) == '\\s' then
-    -- In Windows tmpname() returns a filename starting with
-    -- special sequence \s, prepend $TEMP path
-    local tmpdir = os.getenv('TEMP')
-    return tmpdir..fname
-  elseif fname:match('^/tmp') and uname() == 'Darwin' then
-    -- In OS X /tmp links to /private/tmp
-    return '/private'..fname
-  else
-    return fname
-  end
-end
+local tmpname = (function()
+  local seq = 0
+  local tmpdir = os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
+  -- Is $TMPDIR defined local to the project workspace?
+  local in_workspace = not not (tmpdir and string.find(tmpdir, 'Xtest'))
+  return (function()
+    if in_workspace then
+      -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
+      seq = seq + 1
+      local fname = tmpdir..'/nvim-test-lua-'..seq
+      io.open(fname, 'w'):close()
+      return fname
+    else
+      local fname = os.tmpname()
+      if uname() == 'Windows' and fname:sub(1, 2) == '\\s' then
+        -- In Windows tmpname() returns a filename starting with
+        -- special sequence \s, prepend $TEMP path
+        return tmpdir..fname
+      elseif fname:match('^/tmp') and uname() == 'Darwin' then
+        -- In OS X /tmp links to /private/tmp
+        return '/private'..fname
+      else
+        return fname
+      end
+    end
+  end)
+end)()
 
 local function map(func, tab)
   local rettab = {}
