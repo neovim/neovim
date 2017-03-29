@@ -430,6 +430,19 @@ char *xstrdup(const char *str)
   return xmemdupz(str, strlen(str));
 }
 
+/// strdup() wrapper
+///
+/// Unlike xstrdup() allocates a new empty string if it receives NULL.
+char *xstrdupnul(const char *const str)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+{
+  if (str == NULL) {
+    return xmallocz(0);
+  } else {
+    return xstrdup(str);
+  }
+}
+
 /// A version of memchr that starts the search at `src + len`.
 ///
 /// Based on glibc's memrchr.

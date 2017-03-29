@@ -62,7 +62,7 @@ int setmark(int c)
 /// Free fmark_T item
 void free_fmark(fmark_T fm)
 {
-  dict_unref(fm.additional_data);
+  tv_dict_unref(fm.additional_data);
 }
 
 /// Free xfmark_T item
@@ -1431,3 +1431,26 @@ void free_all_marks(void)
   memset(&namedfm[0], 0, sizeof(namedfm));
 }
 #endif
+
+/// Adjust position to point to the first byte of a multi-byte character
+///
+/// If it points to a tail byte it is move backwards to the head byte.
+///
+/// @param[in]  buf  Buffer to adjust position in.
+/// @param[out]  lp  Position to adjust.
+void mark_mb_adjustpos(buf_T *buf, pos_T *lp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (lp->col > 0 || lp->coladd > 1) {
+    const char_u *const p = ml_get_buf(buf, lp->lnum, false);
+    lp->col -= (*mb_head_off)(p, p + lp->col);
+    // Reset "coladd" when the cursor would be on the right half of a
+    // double-wide character.
+    if (lp->coladd == 1
+        && p[lp->col] != TAB
+        && vim_isprintc((*mb_ptr2char)(p + lp->col))
+        && ptr2cells(p + lp->col) > 1) {
+      lp->coladd = 0;
+    }
+  }
+}

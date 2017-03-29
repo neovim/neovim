@@ -322,7 +322,7 @@ void msgpack_rpc_from_float(Float result, msgpack_packer *res)
   msgpack_pack_double(res, result);
 }
 
-void msgpack_rpc_from_string(String result, msgpack_packer *res)
+void msgpack_rpc_from_string(const String result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_str(res, result.size);
@@ -478,7 +478,7 @@ Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
 
 /// Serializes a msgpack-rpc request or notification(id == 0)
 void msgpack_rpc_serialize_request(uint64_t request_id,
-                                   String method,
+                                   const String method,
                                    Array args,
                                    msgpack_packer *pac)
   FUNC_ATTR_NONNULL_ARG(4)

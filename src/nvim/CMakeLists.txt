@@ -22,7 +22,6 @@ set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.genera
 set(GENERATED_FUNCS_METADATA ${GENERATED_DIR}/api/private/funcs_metadata.generated.h)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
-set(GENERATED_FUNCS_HASH_INPUT ${GENERATED_DIR}/funcs.generated.h.gperf)
 set(GENERATED_FUNCS ${GENERATED_DIR}/funcs.generated.h)
 set(GENERATED_EVENTS_ENUM ${GENERATED_INCLUDES_DIR}/auevents_enum.generated.h)
 set(GENERATED_EVENTS_NAMES_MAP ${GENERATED_DIR}/auevents_name_map.generated.h)
@@ -31,10 +30,6 @@ set(EX_CMDS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genex_cmds.lua)
 set(FUNCS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/geneval.lua)
 set(EVENTS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gen_events.lua)
 set(OPTIONS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genoptions.lua)
-set(EVENTS_LIST_FILE ${PROJECT_SOURCE_DIR}/src/nvim/auevents.lua)
-set(EX_CMDS_DEFS_FILE ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua)
-set(EVAL_DEFS_FILE ${PROJECT_SOURCE_DIR}/src/nvim/eval.lua)
-set(OPTIONS_LIST_FILE ${PROJECT_SOURCE_DIR}/src/nvim/options.lua)
 set(UNICODE_TABLES_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genunicodetables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
@@ -112,7 +107,7 @@ set(CONV_SOURCES
   window.c)
 
 foreach(sfile ${CONV_SOURCES})
-  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/src/nvim/${sfile}")
+  if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
   endif()
 endforeach()
@@ -167,11 +162,11 @@ endfunction()
 # NVIM_GENERATED_SOURCES: generated source files
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
-              "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
+              "${CMAKE_CURRENT_LIST_DIR}/regexp_nfa.c"
               ${GENERATED_API_DISPATCH})
   get_filename_component(full_d ${sfile} PATH)
-  file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
-  if(${d} MATCHES "^([.][.]|auto/)")
+  file(RELATIVE_PATH d "${CMAKE_CURRENT_LIST_DIR}" "${full_d}")
+  if(${d} MATCHES "^[.][.]|auto/")
     file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
   endif()
   get_filename_component(f ${sfile} NAME)
@@ -239,8 +234,8 @@ list(APPEND NVIM_GENERATED_SOURCES
 
 add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
   COMMAND ${LUA_PRG} ${EX_CMDS_GENERATOR}
-      ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_INCLUDES_DIR} ${GENERATED_DIR}
-  DEPENDS ${EX_CMDS_GENERATOR} ${EX_CMDS_DEFS_FILE}
+      ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_INCLUDES_DIR} ${GENERATED_DIR}
+  DEPENDS ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
 )
 
 if(NOT GPERF_PRG)
@@ -248,24 +243,24 @@ if(NOT GPERF_PRG)
 endif()
 add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
   COMMAND ${LUA_PRG} ${FUNCS_GENERATOR}
-  ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
+      ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
   COMMAND ${GPERF_PRG}
-    ${GENERATED_FUNCS_HASH_INPUT} --output-file=${GENERATED_FUNCS}
-    DEPENDS ${FUNCS_GENERATOR} ${EVAL_DEFS_FILE} ${API_METADATA}
+      ${GENERATED_DIR}/funcs.generated.h.gperf --output-file=${GENERATED_FUNCS}
+  DEPENDS ${FUNCS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${API_METADATA}
 )
 list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_FUNCS}")
 
 add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
   COMMAND ${LUA_PRG} ${EVENTS_GENERATOR}
-      ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
-  DEPENDS ${EVENTS_GENERATOR} ${EVENTS_LIST_FILE}
+      ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
+  DEPENDS ${EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/auevents.lua
 )
 
 add_custom_command(OUTPUT ${GENERATED_OPTIONS}
   COMMAND ${LUA_PRG} ${OPTIONS_GENERATOR}
-                     ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_OPTIONS}
-  DEPENDS ${OPTIONS_GENERATOR} ${OPTIONS_LIST_FILE}
+                     ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_OPTIONS}
+  DEPENDS ${OPTIONS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/options.lua
 )
 
 # NVIM_GENERATED_FOR_SOURCES and NVIM_GENERATED_FOR_HEADERS must be mutually exclusive.

@@ -391,9 +391,10 @@ int main(int argc, char **argv)
     shada_read_everything(NULL, false, true);
     TIME_MSG("reading ShaDa");
   }
-  /* It's better to make v:oldfiles an empty list than NULL. */
-  if (get_vim_var_list(VV_OLDFILES) == NULL)
-    set_vim_var_list(VV_OLDFILES, list_alloc());
+  // It's better to make v:oldfiles an empty list than NULL.
+  if (get_vim_var_list(VV_OLDFILES) == NULL) {
+    set_vim_var_list(VV_OLDFILES, tv_list_alloc());
+  }
 
   /*
    * "-q errorfile": Load the error file now.
@@ -802,17 +803,18 @@ static void command_line_scan(mparm_T *parmp)
             argv_idx = -1;                /* skip to next argument */
           break;
 
-        case 'A':                 /* "-A" start in Arabic mode */
-          set_option_value((char_u *)"arabic", 1L, NULL, 0);
+        case 'A': {  // "-A" start in Arabic mode.
+          set_option_value("arabic", 1L, NULL, 0);
           break;
-
-        case 'b':                 /* "-b" binary mode */
-          /* Needs to be effective before expanding file names, because
-           * for Win32 this makes us edit a shortcut file itself,
-           * instead of the file it links to. */
+        }
+        case 'b': {  // "-b" binary mode.
+          // Needs to be effective before expanding file names, because
+          // for Win32 this makes us edit a shortcut file itself,
+          // instead of the file it links to.
           set_options_bin(curbuf->b_p_bin, 1, 0);
-          curbuf->b_p_bin = 1;                /* binary file I/O */
+          curbuf->b_p_bin = 1;  // Binary file I/O.
           break;
+        }
 
         case 'e':                 /* "-e" Ex mode */
           exmode_active = EXMODE_NORMAL;
@@ -829,24 +831,27 @@ static void command_line_scan(mparm_T *parmp)
           main_start_gui();
           break;
 
-        case 'F':                 /* "-F" start in Farsi mode: rl + fkmap set */
-          p_fkmap = TRUE;
-          set_option_value((char_u *)"rl", 1L, NULL, 0);
+        case 'F': {  // "-F" start in Farsi mode: rl + fkmap set.
+          p_fkmap = true;
+          set_option_value("rl", 1L, NULL, 0);
           break;
+        }
 
         case 'h':                 /* "-h" give help message */
           usage();
           mch_exit(0);
 
-        case 'H':                 /* "-H" start in Hebrew mode: rl + hkmap set */
-          p_hkmap = TRUE;
-          set_option_value((char_u *)"rl", 1L, NULL, 0);
+        case 'H': {  // "-H" start in Hebrew mode: rl + hkmap set.
+          p_hkmap = true;
+          set_option_value("rl", 1L, NULL, 0);
           break;
+        }
 
-        case 'l':                 /* "-l" lisp mode, 'lisp' and 'showmatch' on */
-          set_option_value((char_u *)"lisp", 1L, NULL, 0);
-          p_sm = TRUE;
+        case 'l': {  // "-l" lisp mode, 'lisp' and 'showmatch' on.
+          set_option_value("lisp", 1L, NULL, 0);
+          p_sm = true;
           break;
+        }
 
         case 'M':                 /* "-M"  no changes or writing of files */
           reset_modifiable();
@@ -945,8 +950,7 @@ static void command_line_scan(mparm_T *parmp)
           /* default is 10: a little bit verbose */
           p_verbose = get_number_arg(argv[0], &argv_idx, 10);
           if (argv[0][argv_idx] != NUL) {
-            set_option_value((char_u *)"verbosefile", 0L,
-                (char_u *)argv[0] + argv_idx, 0);
+            set_option_value("verbosefile", 0L, argv[0] + argv_idx, 0);
             argv_idx = (int)STRLEN(argv[0]);
           }
           break;
@@ -955,7 +959,7 @@ static void command_line_scan(mparm_T *parmp)
           /* "-w {scriptout}"	write to script */
           if (ascii_isdigit(((char_u *)argv[0])[argv_idx])) {
             n = get_number_arg(argv[0], &argv_idx, 10);
-            set_option_value((char_u *)"window", n, NULL, 0);
+            set_option_value("window", n, NULL, 0);
             break;
           }
           want_argument = TRUE;
@@ -1087,7 +1091,7 @@ scripterror:
             if (ascii_isdigit(*((char_u *)argv[0]))) {
               argv_idx = 0;
               n = get_number_arg(argv[0], &argv_idx, 10);
-              set_option_value((char_u *)"window", n, NULL, 0);
+              set_option_value("window", n, NULL, 0);
               argv_idx = -1;
               break;
             }

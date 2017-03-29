@@ -97,11 +97,10 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
 
     -- Check that "setmatches()" will not add two matches with the same ID. The
     -- expected behaviour (for now) is to add the first match but not the
-    -- second and to return 0 (even though it is a matter of debate whether
-    -- this can be considered successful behaviour).
+    -- second and to return -1.
     execute("let r1 = setmatches([{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}, {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 10, 'id': 1}])")
     feed("<cr>")
-    eq(0, eval("r1"))
+    eq(-1, eval("r1"))
     eq({{group = 'MyGroup1', pattern = 'TODO', priority = 10, id = 1}}, eval('getmatches()'))
 
     -- Check that "setmatches()" returns 0 if successful and otherwise -1.

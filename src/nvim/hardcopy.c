@@ -369,7 +369,6 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
 {
   int colorindex;
   uint32_t fg_color;
-  char    *color;
 
   pattr->bold = (highlight_has_attr(hl_id, HL_BOLD, modec) != NULL);
   pattr->italic = (highlight_has_attr(hl_id, HL_ITALIC, modec) != NULL);
@@ -377,11 +376,12 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
   pattr->undercurl = (highlight_has_attr(hl_id, HL_UNDERCURL, modec) != NULL);
 
   {
-    color = (char *)highlight_color(hl_id, (char_u *)"fg", modec);
-    if (color == NULL)
+    const char *color = highlight_color(hl_id, "fg", modec);
+    if (color == NULL) {
       colorindex = 0;
-    else
+    } else {
       colorindex = atoi(color);
+    }
 
     if (colorindex >= 0 && colorindex < t_colors)
       fg_color = prt_get_term_color(colorindex);
