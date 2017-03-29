@@ -3526,7 +3526,7 @@ win_line (
             }
             n_attr = tab_len + 1;
             extra_attr = hl_attr(HLF_0);
-            saved_attr2 = char_attr;             /* save current attr */
+            saved_attr2 = char_attr;  // save current attr
             mb_c = c;
             if (enc_utf8 && (*mb_char2len)(c) > 1) {
               mb_utf8 = TRUE;

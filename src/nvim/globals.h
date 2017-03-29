@@ -482,7 +482,7 @@ typedef enum {
 #define HL_FLAGS { '8', '~', 'z', 'Z', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', \
                    'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', \
                    'A', 'C', 'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', \
-                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q', '0'}
+                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q', '0' }
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */
