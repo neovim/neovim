@@ -201,5 +201,6 @@ func Test_expand_star_star()
   call writefile(['asdfasdf'], 'a/b/fileXname')
   call feedkeys(":find **/fileXname\<Tab>\<CR>", 'xt')
   call assert_equal('find a/b/fileXname', getreg(':'))
+  bwipe!
   call delete('a', 'rf')
 endfunc
