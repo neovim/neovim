@@ -1155,7 +1155,6 @@ static void redraw(bool restore_cursor)
     save_col = ui_current_col();
   }
   block_autocmds();
-  validate_cursor();
 
   if (must_redraw) {
     update_screen(0);
@@ -1172,7 +1171,7 @@ static void redraw(bool restore_cursor)
     int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
     curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
     curwin->w_cursor.coladd = 0;
-    setcursor();
+    mb_check_adjust_col(curwin);
   }
 
   unblock_autocmds();
