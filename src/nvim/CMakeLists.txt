@@ -399,7 +399,6 @@ target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
 
 set(NO_SINGLE_CHECK_HEADERS
-  buffer
   cursor_shape
   diff
   digraph

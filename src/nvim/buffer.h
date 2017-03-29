@@ -1,6 +1,7 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
 
+#include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/pos.h"  // for linenr_T
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
