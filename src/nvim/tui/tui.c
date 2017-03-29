@@ -822,6 +822,20 @@ static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
   }
 }
 
+static bool iscolor(const char *s)
+{
+  if (strlen(s) != 7) {
+    return false;
+  }
+  return s[0] == '#'
+    && ascii_isxdigit(s[1])
+    && ascii_isxdigit(s[2])
+    && ascii_isxdigit(s[3])
+    && ascii_isxdigit(s[4])
+    && ascii_isxdigit(s[5])
+    && ascii_isxdigit(s[6]);
+}
+
 static void fix_terminfo(TUIData *data)
 {
   unibi_term *ut = data->ut;
@@ -935,20 +949,19 @@ static void fix_terminfo(TUIData *data)
   data->unibi_ext.set_cursor_color_ul = reset_color;
   data->unibi_ext.set_cursor_color_block = reset_color;
 
-  // FIXME sequence should be allocated on heap for supporting multiple UIs
-  if (env_cusr_color_bar && strlen(env_cusr_color_bar) == 7) {
+  if (env_cusr_color_bar && iscolor(env_cusr_color_bar)) {
     static char color_bar_seq[] = "\x1b]12;#FFFFFF\x07";
     memcpy(color_bar_seq + 5, env_cusr_color_bar, 7);
     data->unibi_ext.set_cursor_color_bar =
       (int)unibi_add_ext_str(ut, NULL, color_bar_seq);
   }
-  if (env_cusr_color_ul && strlen(env_cusr_color_ul) == 7) {
+  if (env_cusr_color_ul && iscolor(env_cusr_color_ul)) {
     static char color_ul_seq[] = "\x1b]12;#FFFFFF\x07";
     memcpy(color_ul_seq + 5, env_cusr_color_ul, 7);
     data->unibi_ext.set_cursor_color_ul =
       (int)unibi_add_ext_str(ut, NULL, color_ul_seq);
   }
-  if (env_cusr_color_block && strlen(env_cusr_color_block) == 7) {
+  if (env_cusr_color_block && iscolor(env_cusr_color_block)) {
     static char color_block_seq[] = "\x1b]12;#FFFFFF\x07";
     memcpy(color_block_seq + 5, env_cusr_color_block, 7);
     data->unibi_ext.set_cursor_color_block =
