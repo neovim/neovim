@@ -24,6 +24,9 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   if (proc->detach) {
       uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
   }
+  if (!proc->quote_argv) {
+      uvproc->uvopts.flags |= UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
+  }
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;
   uvproc->uvopts.env = NULL;
