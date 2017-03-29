@@ -153,6 +153,17 @@ describe('api', function()
       nvim('set_option', 'equalalways', false)
       ok(not nvim('get_option', 'equalalways'))
     end)
+
+    it('works to get global value of local options', function()
+      eq(false, nvim('get_option', 'lisp'))
+      eq(8, nvim('get_option', 'shiftwidth'))
+    end)
+
+    it('most window-local options have no global value', function()
+      local status, err = pcall(nvim, 'get_option', 'foldcolumn')
+      eq(false, status)
+      ok(err:match('Invalid option name') ~= nil)
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()

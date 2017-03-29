@@ -440,7 +440,7 @@ Object nvim_get_vvar(String name, Error *err)
 ///
 /// @param name     Option name
 /// @param[out] err Error details, if any
-/// @return         Option value
+/// @return         Option value (global)
 Object nvim_get_option(String name, Error *err)
     FUNC_API_SINCE(1)
 {

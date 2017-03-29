@@ -4619,14 +4619,13 @@ int get_option_value_strict(char *name,
   }
 
   char_u *varp = NULL;
-  vimoption_T *p;
   int rv = 0;
   int opt_idx = findoption(name);
   if (opt_idx < 0) {
     return 0;
   }
 
-  p = &(options[opt_idx]);
+  vimoption_T *p = &options[opt_idx];
 
   // Hidden option
   if (p->var == NULL) {
@@ -4642,26 +4641,25 @@ int get_option_value_strict(char *name,
   }
 
   if (p->indir == PV_NONE) {
-    if (opt_type == SREQ_GLOBAL)
+    if (opt_type == SREQ_GLOBAL) {
       rv |= SOPT_GLOBAL;
-    else
-      return 0; // Did not request global-only option
+    } else {
+      return 0;  // Did not request global-only option
+    }
   } else {
     if (p->indir & PV_BOTH) {
       rv |= SOPT_GLOBAL;
-    } else if (opt_type == SREQ_GLOBAL) {
-      return 0; // Requested global option
     }
 
     if (p->indir & PV_WIN) {
       if (opt_type == SREQ_BUF) {
-        return 0; // Did not request window-local option
+        return 0;  // Requested buffer-local, not window-local option
       } else {
         rv |= SOPT_WIN;
       }
     } else if (p->indir & PV_BUF) {
       if (opt_type == SREQ_WIN) {
-        return 0; // Did not request buffer-local option
+        return 0;  // Requested window-local, not buffer-local option
       } else {
         rv |= SOPT_BUF;
       }
@@ -4673,7 +4671,11 @@ int get_option_value_strict(char *name,
   }
 
   if (opt_type == SREQ_GLOBAL) {
-    varp = p->var;
+    if (p->var == VAR_WIN) {
+      return 0;
+    } else {
+      varp = p->var;
+    }
   } else {
     if (opt_type == SREQ_BUF) {
       // Special case: 'modified' is b_changed, but we also want to
