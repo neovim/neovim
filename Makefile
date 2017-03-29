@@ -132,9 +132,9 @@ clint:
 		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
 		-P cmake/RunLint.cmake
 
-lint: clint testlint
-
 check-single-includes: build/.ran-cmake
 	+$(BUILD_CMD) -C build check-single-includes
+
+lint: check-single-includes clint testlint
 
 .PHONY: test testlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install
