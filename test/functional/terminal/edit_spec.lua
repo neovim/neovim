@@ -9,6 +9,8 @@ local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
 
+if helpers.pending_win32(pending) then return end
+
 describe(':edit term://*', function()
   local get_screen = function(columns, lines)
     local scr = screen.new(columns, lines)
