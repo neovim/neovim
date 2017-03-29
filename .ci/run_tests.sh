@@ -10,7 +10,6 @@ source "${CI_DIR}/common/test.sh"
 check_core_dumps --delete quiet
 
 prepare_build
-run_single_includes_tests
 build_nvim
 
 if [ "$CLANG_SANITIZER" != "TSAN" ]; then
