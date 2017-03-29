@@ -19,7 +19,7 @@ static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
     (PtyProcess *)((uv_handle_t *)wait_eof_timer->data);
   Process *proc = (Process *)ptyproc;
 
-  if (!uv_is_readable(proc->out->uvstream)) {
+  if (!proc->out || !uv_is_readable(proc->out->uvstream)) {
     uv_timer_stop(&ptyproc->wait_eof_timer);
     pty_process_finish2(ptyproc);
   }
@@ -50,7 +50,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   uv_connect_t *in_req = NULL, *out_req = NULL;
   wchar_t *cmdline = NULL, *cwd = NULL;
 
-  assert(proc->in && proc->out && !proc->err);
+  assert(!proc->err);
 
   if (!(cfg = winpty_config_new(
       WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION, &err))) {
@@ -71,18 +71,22 @@ int pty_process_spawn(PtyProcess *ptyproc)
   if ((status = utf16_to_utf8(winpty_conout_name(wp), &out_name))) {
     goto cleanup;
   }
-  in_req = xmalloc(sizeof(uv_connect_t));
-  out_req = xmalloc(sizeof(uv_connect_t));
-  uv_pipe_connect(
-      in_req,
-      &proc->in->uv.pipe,
-      in_name,
-      pty_process_connect_cb);
-  uv_pipe_connect(
-      out_req,
-      &proc->out->uv.pipe,
-      out_name,
-      pty_process_connect_cb);
+  if (proc->in) {
+    in_req = xmalloc(sizeof(uv_connect_t));
+    uv_pipe_connect(
+        in_req,
+        &proc->in->uv.pipe,
+        in_name,
+        pty_process_connect_cb);
+  }
+  if (proc->out) {
+    out_req = xmalloc(sizeof(uv_connect_t));
+    uv_pipe_connect(
+        out_req,
+        &proc->out->uv.pipe,
+        out_name,
+        pty_process_connect_cb);
+  }
 
   if (proc->cwd != NULL && (status = utf8_to_utf16(proc->cwd, &cwd))) {
     goto cleanup;
@@ -107,7 +111,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
     abort();
   }
 
-  while (in_req->handle || out_req->handle) {
+  while ((in_req && in_req->handle) || (out_req && out_req->handle)) {
     uv_run(&proc->loop->uv, UV_RUN_ONCE);
   }
 
