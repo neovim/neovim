@@ -51,6 +51,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/shada.h"
+#include "nvim/x11clip.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
@@ -148,6 +149,8 @@ void event_init(void)
   channel_init();
   server_init();
   terminal_init();
+
+  x11clip_init(&loop);
 }
 
 void event_teardown(void)
