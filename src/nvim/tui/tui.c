@@ -546,8 +546,12 @@ static void tui_set_cursor(UI *ui, MouseMode mode)
       case SHAPE_HOR:   shape = 3; break;
       default: WLOG("Unknown shape value %d", shape); break;
     }
-    printf(TMUX_WRAP("\x1b]50;CursorShape=%d;BlinkingCursorEnabled=%d\x07"),
-           shape, (c.blinkon !=0));
+    data->params[0].i = shape;
+    data->params[1].i = (c.blinkon ==0);
+
+    unibi_format(vars, vars + 26,
+      TMUX_WRAP("\x1b]50;CursorShape=%p1%d;BlinkingCursorEnabled=%p2%d\x07"),
+      data->params, out, ui, NULL, NULL);
   } else if (!vte_version || atoi(vte_version) >= 3900) {
     // Assume that the terminal supports DECSCUSR unless it is an
     // old VTE based terminal.  This should not get wrapped for tmux,

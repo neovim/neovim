@@ -2802,7 +2802,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the height of the cursor can be changed.  This can be done by
 	specifying a block cursor, or a percentage for a vertical or
 	horizontal cursor.
-	For a console the 't_SI' and 't_EI' escape sequences are used.
+	For a console, shape is taken into account and color as well if
+	'termguicolors' is set. 't_SI' and 't_EI' are deprecated in neovim.
 
 	The option is a comma separated list of parts.  Each part consist of a
 	mode-list and an argument-list:
