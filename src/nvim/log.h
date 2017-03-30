@@ -69,9 +69,9 @@
 
 #endif
 
-#if __linux__ && MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+#if __linux__ && MIN_LOG_LEVEL <= INFO_LOG_LEVEL
 #  include <execinfo.h>
-#  define DLOG_CALL_STACK(prefix) \
+#  define LOG_CALLSTACK(prefix) \
   do { \
     void *trace[100]; \
     int trace_size = backtrace(trace, 100); \
@@ -86,13 +86,13 @@
       FILE *fp = popen(buf, "r"); \
       while (fgets(buf, sizeof(buf) - 1, fp) != NULL) { \
         buf[strlen(buf)-1] = 0; \
-        DLOG(prefix "%s", buf); \
+        ILOG(prefix "%s", buf); \
       } \
       fclose(fp); \
     } \
   } while (0)
 #else
-#  define DLOG_CALL_STACK(prefix) (void)(0)
+#  define LOG_CALLSTACK(prefix) (void)(0)
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

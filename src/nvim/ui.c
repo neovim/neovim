@@ -395,8 +395,8 @@ int ui_current_col(void)
 void ui_flush(void)
 {
   if (!p_lz) {
-    DLOG("ui_flush");
-    // DLOG_CALL_STACK();
+    ILOG("ui_flush");
+    // LOG_CALLSTACK("   ");
     UI_CALL(flush);
   }
   pending_redraw = true;
@@ -408,8 +408,8 @@ void ui_flush(void)
 void ui_flush_urgent(void)
 {
   if (p_lz && pending_redraw) {
-    DLOG("ui_flush_urgent");
-    // DLOG_CALL_STACK("   ");
+    ILOG("ui_flush_urgent");
+    // LOG_CALLSTACK("   ");
     UI_CALL(flush);
     pending_redraw = false;
   }
