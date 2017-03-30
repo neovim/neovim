@@ -6,12 +6,15 @@ local feed = helpers.feed
 local expect = helpers.expect
 local execute = helpers.execute
 local funcs = helpers.funcs
-local foldlevel, foldclosedend = funcs.foldlevel, funcs.foldclosedend
+local foldlevel = funcs.foldlevel
+local foldclosedend = funcs.foldclosedend
 local eq = helpers.eq
 
 describe('Folds', function()
+  local tempfname = 'Xtest-fold.txt'
   clear()
   before_each(function() execute('enew!') end)
+  after_each(function() os.remove(tempfname) end)
   it('manual folding adjusts with filter', function()
     insert([[
     1
@@ -229,5 +232,112 @@ a
 a]], '2,3m0')
       eq({1, 2, 0, 0, 0}, get_folds())
     end)
+  end)
+  it('updates correctly on :read', function()
+    -- luacheck: ignore 621
+    helpers.write_file(tempfname, [[
+    a
+
+
+    	a]])
+    insert([[
+    	a
+    	a
+    	a
+    	a
+    ]])
+    execute('set foldmethod=indent', '2', '%foldopen')
+    execute('read ' .. tempfname)
+    -- Just to check we have the correct file text.
+    expect([[
+    	a
+    	a
+    a
+
+
+    	a
+    	a
+    	a
+    ]])
+    for i = 1,2 do
+      eq(1, funcs.foldlevel(i))
+    end
+    for i = 3,5 do
+      eq(0, funcs.foldlevel(i))
+    end
+    for i = 6,8 do
+      eq(1, funcs.foldlevel(i))
+    end
+  end)
+  it('combines folds when removing separating space', function()
+    -- luacheck: ignore 621
+    insert([[
+    	a
+    	a
+    a
+    a
+    a
+    	a
+    	a
+    	a
+    ]])
+    execute('set foldmethod=indent', '3,5d')
+    eq(5, funcs.foldclosedend(1))
+  end)
+  it("doesn't combine folds that have a specified end", function()
+    insert([[
+    {{{
+    }}}
+
+
+
+    {{{
+
+    }}}
+    ]])
+    execute('set foldmethod=marker', '3,5d', '%foldclose')
+    eq(2, funcs.foldclosedend(1))
+  end)
+  it('splits folds according to >N and <N with foldexpr', function()
+    helpers.source([[
+    function TestFoldExpr(lnum)
+      let thisline = getline(a:lnum)
+      if thisline == 'a'
+        return 1
+      elseif thisline == 'b'
+        return 0
+      elseif thisline == 'c'
+        return '<1'
+      elseif thisline == 'd'
+        return '>1'
+      endif
+      return 0
+    endfunction
+    ]])
+    helpers.write_file(tempfname, [[
+    b
+    b
+    a
+    a
+    d
+    a
+    a
+    c]])
+    insert([[
+    a
+    a
+    a
+    a
+    a
+    a
+    ]])
+    execute('set foldmethod=expr', 'set foldexpr=TestFoldExpr(v:lnum)', '2', 'foldopen')
+    execute('read ' .. tempfname, '%foldclose')
+    eq(2, funcs.foldclosedend(1))
+    eq(0, funcs.foldlevel(3))
+    eq(0, funcs.foldlevel(4))
+    eq(6, funcs.foldclosedend(5))
+    eq(10, funcs.foldclosedend(7))
+    eq(14, funcs.foldclosedend(11))
   end)
 end)
