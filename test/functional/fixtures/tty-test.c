@@ -15,11 +15,11 @@ uv_tty_t tty;
 #include <windows.h>
 bool owns_tty(void)
 {
-  /* XXX: We need to make proper detect owns tty */
-  /* HWND consoleWnd = GetConsoleWindow(); */
-  /* DWORD dwProcessId; */
-  /* GetWindowThreadProcessId(consoleWnd, &dwProcessId); */
-  /* return GetCurrentProcessId() == dwProcessId; */
+  // XXX: We need to make proper detect owns tty
+  // HWND consoleWnd = GetConsoleWindow();
+  // DWORD dwProcessId;
+  // GetWindowThreadProcessId(consoleWnd, &dwProcessId);
+  // return GetCurrentProcessId() == dwProcessId;
   return true;
 }
 #else
@@ -57,15 +57,15 @@ static void sig_handler(int signum)
   }
 }
 #else
-static void sigwinch_cb(uv_signal_t *handle, int signum)
-{
-  int width, height;
-  uv_tty_t out;
-  uv_tty_init(uv_default_loop(), &out, fileno(stdout), 0);
-  uv_tty_get_winsize(&out, &width, &height);
-  fprintf(stderr, "rows: %d, cols: %d\n", height, width);
-  uv_close((uv_handle_t *)&out, NULL);
-}
+// static void sigwinch_cb(uv_signal_t *handle, int signum)
+// {
+//   int width, height;
+//   uv_tty_t out;
+//   uv_tty_init(uv_default_loop(), &out, fileno(stdout), 0);
+//   uv_tty_get_winsize(&out, &width, &height);
+//   fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+//   uv_close((uv_handle_t *)&out, NULL);
+// }
 #endif
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
@@ -82,10 +82,14 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   }
 
   int *interrupted = stream->data;
+  bool prsz = false;
+  int width, height;
 
   for (int i = 0; i < cnt; i++) {
     if (buf->base[i] == 3) {
       (*interrupted)++;
+    } else if (buf->base[i] == 17) {
+      prsz = true;
     }
   }
 
@@ -93,10 +97,17 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   uv_loop_init(&write_loop);
   uv_tty_t out;
   uv_tty_init(&write_loop, &out, fileno(stdout), 0);
-  uv_write_t req;
-  uv_buf_t b = {.base = buf->base, .len = (size_t)cnt};
-  uv_write(&req, STRUCT_CAST(uv_stream_t, &out), &b, 1, NULL);
-  uv_run(&write_loop, UV_RUN_DEFAULT);
+
+  if (prsz) {
+    uv_tty_get_winsize(&out, &width, &height);
+    fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+  } else {
+    uv_write_t req;
+    uv_buf_t b = {.base = buf->base, .len = (size_t)cnt};
+    uv_write(&req, STRUCT_CAST(uv_stream_t, &out), &b, 1, NULL);
+    uv_run(&write_loop, UV_RUN_DEFAULT);
+  }
+
   uv_close(STRUCT_CAST(uv_handle_t, &out), NULL);
   uv_run(&write_loop, UV_RUN_DEFAULT);
   if (uv_loop_close(&write_loop)) {
@@ -169,9 +180,9 @@ int main(int argc, char **argv)
   sigaction(SIGHUP, &sa, NULL);
   sigaction(SIGWINCH, &sa, NULL);
 #else
-  uv_signal_t sigwinch_watcher;
-  uv_signal_init(uv_default_loop(), &sigwinch_watcher);
-  uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
+  // uv_signal_t sigwinch_watcher;
+  // uv_signal_init(uv_default_loop(), &sigwinch_watcher);
+  // uv_signal_start(&sigwinch_watcher, sigwinch_cb, SIGWINCH);
 #endif
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
