@@ -1,3 +1,6 @@
+COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${COMMON_DIR}/commands.sh"
+
 build_deps() {
   if [[ "${BUILD_32BIT}" == ON ]]; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
@@ -11,15 +14,10 @@ build_deps() {
   # If there is a valid cache and we're not forced to recompile,
   # use cached third-party dependencies.
   if [[ -f "${CACHE_MARKER}" ]] && [[ "${BUILD_NVIM_DEPS}" != true ]]; then
-    if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-      local statcmd="stat -f '%Sm'"
-    else
-      local statcmd="stat -c '%y'"
-    fi
-    echo "Using third-party dependencies from Travis's cache (last updated: $(${statcmd} "${CACHE_MARKER}"))."
+    echo "Using third-party dependencies from Travis's cache (last updated: $(statcmd "${CACHE_MARKER}"))."
 
      mkdir -p "$(dirname "${DEPS_BUILD_DIR}")"
-     mv "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
+     cp -r "${HOME}/.cache/nvim-deps" "${DEPS_BUILD_DIR}"
   else
     mkdir -p "${DEPS_BUILD_DIR}"
   fi
