@@ -23,7 +23,7 @@ local nvim_prog = os.getenv('NVIM_PROG') or os.getenv('NVIM_PRG') or 'build/bin/
 -- Default settings for the test session.
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-                  ..' belloff= noshowcmd noruler'
+                  ..' belloff= noshowcmd noruler nomore'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                    '--cmd', nvim_set, '--embed'}
 
