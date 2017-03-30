@@ -12,7 +12,7 @@
 # include "os/pty_process_win.c.generated.h"
 #endif
 
-static void wait_eof_timer_cb(uv_timer_t* wait_eof_timer)
+static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc =
@@ -105,9 +105,9 @@ int pty_process_spawn(PtyProcess *ptyproc)
   proc->pid = GetProcessId(process_handle);
 
   if (!RegisterWaitForSingleObject(
-        &ptyproc->finish_wait,
-        process_handle, pty_process_finish1, ptyproc,
-        INFINITE, WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE)) {
+      &ptyproc->finish_wait,
+      process_handle, pty_process_finish1, ptyproc,
+      INFINITE, WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE)) {
     abort();
   }
 
@@ -217,22 +217,23 @@ static int build_cmdline(char **argv, wchar_t **cmdline)
     args_len += strlen(arg->arg);
     QUEUE_INIT(&arg->node);
     QUEUE_INSERT_TAIL(&q, &arg->node);
-    ++argc;
-    ++argv;
+    argc++;
+    argv++;
   }
-  args = xmalloc(args_len + argc);
+  args_len += argc;
+  args = xmalloc(args_len);
   *args = NUL;
   while (1) {
     QUEUE *head = QUEUE_HEAD(&q);
     QUEUE_REMOVE(head);
     arg_T *arg = QUEUE_DATA(head, arg_T, node);
-    strcat(args, arg->arg);
+    xstrlcat(args, arg->arg, args_len);
     xfree(arg->arg);
     xfree(arg);
     if (QUEUE_EMPTY(&q)) {
       break;
     } else {
-      strcat(args, " ");
+      xstrlcat(args, " ", args_len);
     }
   }
   ret = utf8_to_utf16(args, cmdline);
@@ -240,9 +241,7 @@ static int build_cmdline(char **argv, wchar_t **cmdline)
   return ret;
 }
 
-/*
- * Emulate quote_cmd_arg of libuv and quotes command line arguments
- */
+//  Emulate quote_cmd_arg of libuv and quotes command line arguments
 static void quote_cmd_arg(char *target, size_t remain, const char *source)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -288,12 +287,12 @@ static void quote_cmd_arg(char *target, size_t remain, const char *source)
   }
   assert(remain);
   *target = '"';
-  while(start < target) {
+  while (start < target) {
     tmp = *start;
     *start = *target;
     *target = tmp;
-    ++start;
-    --target;
+    start++;
+    target--;
   }
   return;
 }
