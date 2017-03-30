@@ -852,7 +852,7 @@ au BufNewFile,BufRead *.ht			setf haste
 au BufNewFile,BufRead *.htpp			setf hastepreproc
 
 " Hercules
-au BufNewFile,BufRead *.vc,*.ev,*.rs,*.sum,*.errsum	setf hercules
+au BufNewFile,BufRead *.vc,*.ev,*.sum,*.errsum	setf hercules
 
 " HEX (Intel)
 au BufNewFile,BufRead *.hex,*.h32		setf hex
@@ -1749,6 +1749,9 @@ au BufNewFile,BufRead *.rb,*.rbw		setf ruby
 
 " RubyGems
 au BufNewFile,BufRead *.gemspec			setf ruby
+
+" Rust
+au BufNewFile,BufRead *.rs			setf rust
 
 " Rackup
 au BufNewFile,BufRead *.ru			setf ruby
