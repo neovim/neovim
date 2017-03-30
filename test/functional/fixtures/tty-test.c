@@ -154,7 +154,7 @@ int main(int argc, char **argv)
   uv_prepare_start(&prepare, prepare_cb);
   // uv_tty_t tty;
 #ifndef WIN32
-  uv_tty_init(uv_default_loop, &tty, fileno(stderr), 1);
+  uv_tty_init(uv_default_loop(), &tty, fileno(stderr), 1);
 #else
   uv_tty_init(uv_default_loop(), &tty, fileno(stdin), 1);
 #endif

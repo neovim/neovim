@@ -437,7 +437,7 @@ describe("'scrollback' option", function()
       screen = thelpers.screen_setup(nil,
       "['powershell.exe', '-NoLogo', '-NoProfile', '-NoExit', '-Command', 'function global:prompt {return "..'"$"'.."}']", 30)
     else
-      screen = thelpers.screen_setup(nil, "['"..shell.."']", 30)
+      screen = thelpers.screen_setup(nil, "['sh']", 30)
     end
 
     curbufmeths.set_option('scrollback', 200)
