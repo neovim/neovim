@@ -310,6 +310,21 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
+list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
+check_c_source_compiles("
+#include <msgpack.h>
+
+int
+main(void)
+{
+  return MSGPACK_OBJECT_FLOAT32;
+}
+" MSGPACK_HAS_FLOAT32)
+
+if(MSGPACK_HAS_FLOAT32)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_MSGPACK_HAS_FLOAT32")
+endif()
+
 if(UNIX)
   option(FEAT_TUI "Enable the Terminal UI" ON)
 else()
