@@ -1054,13 +1054,15 @@ void set_init_3(void)
  */
 void set_helplang_default(const char *lang)
 {
-  int idx;
-
-  const size_t lang_len = strlen(lang);
-  if (lang == NULL || lang_len < 2) {  // safety check
+  if (lang == NULL) {
     return;
   }
-  idx = findoption("hlg");
+
+  const size_t lang_len = strlen(lang);
+  if (lang_len < 2) {  // safety check
+    return;
+  }
+  int idx = findoption("hlg");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     if (options[idx].flags & P_ALLOCED)
       free_string_option(p_hlg);
