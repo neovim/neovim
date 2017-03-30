@@ -395,7 +395,7 @@ void ui_flush(void)
 {
   int save_row = row;
   int save_col = col;
-  if (!(State & CMDLINE) && need_wait_return == 0 && no_mapping == 0) {
+  if (!(State & CMDLINE) && need_wait_return == 0 && no_mapping < 2) {
     setcursor();
   }
   UI_CALL(flush);
