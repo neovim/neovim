@@ -210,9 +210,10 @@ static int build_cmdline(char **argv, wchar_t **cmdline)
   QUEUE_INIT(&q);
 
   while (*argv) {
+    size_t buf_len = strlen(*argv) * 2 + 3;
     arg_T *arg = xmalloc(sizeof(arg_T));
-    arg->arg = (char *)xmalloc(strlen(*argv) * 2 + 3);
-    quote_cmd_arg(arg->arg, *argv);
+    arg->arg = (char *)xmalloc(buf_len);
+    quote_cmd_arg(arg->arg, buf_len, *argv);
     args_len += strlen(arg->arg);
     QUEUE_INIT(&arg->node);
     QUEUE_INSERT_TAIL(&q, &arg->node);
@@ -242,50 +243,50 @@ static int build_cmdline(char **argv, wchar_t **cmdline)
 /*
  * Emulate quote_cmd_arg of libuv and quotes command line arguments
  */
-static void quote_cmd_arg(char *target, const char *source)
+static void quote_cmd_arg(char *target, size_t remain, const char *source)
   FUNC_ATTR_NONNULL_ALL
 {
-  size_t len = strlen(source);
+  size_t src_len = strlen(source);
   size_t i;
   bool quote_hit = true;
   char *start = target;
   char tmp;
 
-  if (len == 0) {
-    *(target++) = '"';
-    *(target++) = '"';
-    *target = NUL;
+  if (src_len == 0) {
+    snprintf(target, remain, "\"\"");
     return;
   }
 
   if (NULL == strpbrk(source, " \t\"")) {
-    strcpy(target, source);
+    xstrlcpy(target, source, remain);
     return;
   }
 
   if (NULL == strpbrk(source, "\"\\")) {
-    *(target++) = '"';
-    strncpy(target, source, len);
-    target += len;
-    *(target++) = '"';
-    *target = NUL;
+    snprintf(target, remain, "\"%s\"", source);
     return;
   }
 
+  assert(remain--);
   *(target++) = NUL;
+  assert(remain--);
   *(target++) = '"';
-  for (i = len; i > 0; --i) {
+  for (i = src_len; i > 0; i--) {
+    assert(remain--);
     *(target++) = source[i - 1];
 
     if (quote_hit && source[i - 1] == '\\') {
+      assert(remain--);
       *(target++) = '\\';
     } else if (source[i - 1] == '"') {
       quote_hit = true;
+      assert(remain--);
       *(target++) = '\\';
     } else {
       quote_hit = false;
     }
   }
+  assert(remain);
   *target = '"';
   while(start < target) {
     tmp = *start;
