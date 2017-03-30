@@ -4722,7 +4722,7 @@ int get_option_value_strict(char *name,
 /// @param[in]  name  Option name.
 /// @param[in]  number  New value for the number or boolean option.
 /// @param[in]  string  New value for string option.
-/// @param[in]  opt_flags  Flags: OPT_LOCAL or 0 (both).
+/// @param[in]  opt_flags  Flags: OPT_LOCAL, OPT_GLOBAL, or 0 (both).
 ///
 /// @return NULL on success, error message on error.
 char *set_option_value(const char *const name, const long number,

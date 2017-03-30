@@ -289,7 +289,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     }
   }
 
-  int opt_flags = (type ? OPT_LOCAL : OPT_GLOBAL);
+  int opt_flags = (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
 
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBoolean) {
