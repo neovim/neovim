@@ -7637,6 +7637,7 @@ static void ex_redraw(exarg_T *eap)
   need_wait_return = FALSE;
 
   ui_flush();
+  ui_flush_urgent();
 }
 
 /*
