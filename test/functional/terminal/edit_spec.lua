@@ -46,11 +46,8 @@ describe(':edit term://*', function()
     local bufcontents = {}
     local winheight = curwinmeths.get_height()
     local buf_cont_start = rep_size - sb - winheight + 2
-    local function bufline (i)
-      return (iswin() and '%d: (foobar)' or '%d: foobar'):format(i)
-    end
     for i = buf_cont_start,(rep_size - 1) do
-      bufcontents[#bufcontents + 1] = bufline(i)
+      bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
     end
     bufcontents[#bufcontents + 1] = ''
     bufcontents[#bufcontents + 1] = '[Process exited 0]'
