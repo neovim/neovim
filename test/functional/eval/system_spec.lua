@@ -4,6 +4,8 @@ local nvim_dir = helpers.nvim_dir
 local eq, call, clear, eval, feed_command, feed, nvim =
   helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.feed_command,
   helpers.feed, helpers.nvim
+local command = helpers.command
+local iswin = helpers.iswin
 
 local Screen = require('test.functional.ui.screen')
 
@@ -33,8 +35,7 @@ describe('system()', function()
 
   describe('command passed as a List', function()
     local function printargs_path()
-      return nvim_dir..'/printargs-test'
-        .. (helpers.os_name() == 'windows' and '.exe' or '')
+      return nvim_dir..'/printargs-test' .. (iswin() and '.exe' or '')
     end
 
     it('sets v:shell_error if cmd[0] is not executable', function()
@@ -88,14 +89,14 @@ describe('system()', function()
     end)
 
     it('does NOT run in shell', function()
-      if helpers.os_name() ~= 'windows' then
+      if not iswin() then
         eq("* $PATH %PATH%\n", eval("system(['echo', '*', '$PATH', '%PATH%'])"))
       end
     end)
   end)
 
   it('sets v:shell_error', function()
-    if helpers.os_name() == 'windows' then
+    if iswin() then
       eval([[system("cmd.exe /c exit")]])
       eq(0, eval('v:shell_error'))
       eval([[system("cmd.exe /c exit 1")]])
@@ -129,28 +130,29 @@ describe('system()', function()
         screen:detach()
     end)
 
-    if helpers.os_name() == 'windows' then
-      it('with the default cmd.exe shell', function()
+    if iswin() then
+      it('with shell=cmd.exe', function()
+        command('set shell=cmd.exe')
         eq('""\n', eval([[system('echo ""')]]))
         eq('"a b"\n', eval([[system('echo "a b"')]]))
-        -- TODO: consistent with Vim, but it should be fixed
-        eq('a & echo b\n', eval([[system('echo a & echo b')]]))
+        eq('a \nb\n', eval([[system('echo a & echo b')]]))
+        eq('a \n', eval([[system('echo a 2>&1')]]))
         eval([[system('cd "C:\Program Files"')]])
         eq(0, eval('v:shell_error'))
       end)
 
-      it('with set shell="cmd"', function()
-        helpers.source('let &shell="cmd"')
+      it('with shell=cmd', function()
+        command('set shell=cmd')
         eq('"a b"\n', eval([[system('echo "a b"')]]))
       end)
 
-      it('works with cmd.exe from $COMSPEC', function()
+      it('with shell=$COMSPEC', function()
         local comspecshell = eval("fnamemodify($COMSPEC, ':t')")
         if comspecshell == 'cmd.exe' then
-          helpers.source('let &shell=$COMSPEC')
+          command('set shell=$COMSPEC')
           eq('"a b"\n', eval([[system('echo "a b"')]]))
         else
-          pending('$COMSPEC is not cmd.exe ' .. comspecshell)
+          pending('$COMSPEC is not cmd.exe: ' .. comspecshell)
         end
       end)
 
@@ -222,7 +224,7 @@ describe('system()', function()
 
   describe('passing no input', function()
     it('returns the program output', function()
-      if helpers.os_name() == 'windows' then
+      if iswin() then
         eq("echoed\n", eval('system("echo echoed")'))
       else
         eq("echoed", eval('system("echo -n echoed")'))
@@ -327,8 +329,8 @@ describe('systemlist()', function()
   -- Similar to `system()`, but returns List instead of String.
   before_each(clear)
 
-  it('sets the v:shell_error variable', function()
-    if helpers.os_name() == 'windows' then
+  it('sets v:shell_error', function()
+    if iswin() then
       eval([[systemlist("cmd.exe /c exit")]])
       eq(0, eval('v:shell_error'))
       eval([[systemlist("cmd.exe /c exit 1")]])

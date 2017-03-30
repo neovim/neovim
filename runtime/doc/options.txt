@@ -5365,18 +5365,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|system()| does not respect this option, it always uses pipes.
 
 						*'shellxescape'* *'sxe'*
-'shellxescape' 'sxe'	string	(default: ""; Windows: "\"&|<>()@^")
+'shellxescape' 'sxe'	string	(default: "")
 			global
 	When 'shellxquote' is set to "(" then the characters listed in this
 	option will be escaped with a '^' character.  This makes it possible
 	to execute most external commands with cmd.exe.
 
 						*'shellxquote'* *'sxq'*
-'shellxquote' 'sxq'	string	(default: "";
-					for Win32, when 'shell' is cmd.exe: "("
-					for Win32, when 'shell' contains "sh"
-					somewhere: "\""
-					for Unix, when using system(): "\"")
+'shellxquote' 'sxq'	string	(default: "")
 			global
 	Quoting character(s), put around the command passed to the shell, for
 	the "!" and ":!" commands.  Includes the redirection.  See
@@ -5385,12 +5381,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the value is '(' then ')' is appended. When the value is '"('
 	then ')"' is appended.
 	When the value is '(' then also see 'shellxescape'.
-	This is an empty string by default on most systems, but is known to be
-	useful for on Win32 version, either for cmd.exe which automatically
-	strips off the first and last quote on a command, or 3rd-party shells
-	such as the MKS Korn Shell or bash, where it should be "\"".  The
-	default is adjusted according the value of 'shell', to reduce the need
-	to set this option by the user.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
