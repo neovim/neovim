@@ -1,3 +1,7 @@
+# HACK: get newline for use in strings given that "\n" and $'' do not work.
+NL="$(printf '\nE')"
+NL="${NL%E}"
+
 FAILED=0
 
 FAIL_SUMMARY=""
