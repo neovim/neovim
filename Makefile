@@ -135,6 +135,6 @@ clint-full: build/.ran-cmake
 check-single-includes: build/.ran-cmake
 	+$(BUILD_CMD) -C build check-single-includes
 
-lint: check-single-includes clint-full testlint
+lint: check-single-includes clint testlint
 
 .PHONY: test testlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install
