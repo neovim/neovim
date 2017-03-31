@@ -259,6 +259,7 @@ describe('Default highlight groups', function()
     [1] = {bold = true, foreground = Screen.colors.SeaGreen}})
     feed('<cr>') --  skip the "Press ENTER..." state or tests will hang
   end)
+
   it('can be cleared and linked to other highlight groups', function()
     execute('highlight clear ModeMsg')
     feed('i')
@@ -301,6 +302,7 @@ describe('Default highlight groups', function()
     ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
     [1] = {foreground = Screen.colors.Red, background = Screen.colors.Green}})
   end)
+
   it('can be cleared by assigning NONE', function()
     execute('syn keyword TmpKeyword neovim')
     execute('hi link TmpKeyword ErrorMsg')
@@ -342,6 +344,51 @@ describe('Default highlight groups', function()
       {0:~                                                    }|
                                                            |
     ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
+  end)
+
+  it('Whitespace highlight', function()
+    execute('highlight NonText gui=NONE guifg=#FF0000')
+    execute('set listchars=space:.,tab:>-,trail:*,eol:¬ list')
+    insert('   ne \t o\tv  im  ')
+    screen:expect([[
+      ne{0:.>----.}o{0:>-----}v{0:..}im{0:*^*¬}                             |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]], {
+      [0] = {foreground=Screen.colors.Red},
+      [1] = {foreground=Screen.colors.Blue},
+    })
+    execute('highlight Whitespace gui=NONE guifg=#0000FF')
+    screen:expect([[
+      ne{1:.>----.}o{1:>-----}v{1:..}im{1:*^*}{0:¬}                             |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      :highlight Whitespace gui=NONE guifg=#0000FF         |
+    ]], {
+      [0] = {foreground=Screen.colors.Red},
+      [1] = {foreground=Screen.colors.Blue},
+    })
   end)
 end)
 
