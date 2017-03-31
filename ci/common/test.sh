@@ -1,3 +1,5 @@
+source "${CI_DIR}/common/build.sh"
+
 print_core() {
   local app="$1"
   local core="$2"
@@ -75,7 +77,7 @@ asan_check() {
 
 run_unittests() {
   ulimit -c unlimited
-  if ! ${MAKE_CMD} -C "${BUILD_DIR}" unittest ; then
+  if ! build_make unittest ; then
     check_core_dumps "$(which luajit)"
     exit 1
   fi
@@ -84,7 +86,7 @@ run_unittests() {
 
 run_functionaltests() {
   ulimit -c unlimited
-  if ! ${MAKE_CMD} -C "${BUILD_DIR}" ${FUNCTIONALTEST}; then
+  if ! build_make ${FUNCTIONALTEST}; then
     asan_check "${LOG_DIR}"
     valgrind_check "${LOG_DIR}"
     check_core_dumps
@@ -110,7 +112,7 @@ run_oldtests() {
 }
 
 install_nvim() {
-  ${MAKE_CMD} -C "${BUILD_DIR}" install
+  build_make install
 
   "${INSTALL_PREFIX}/bin/nvim" --version
   "${INSTALL_PREFIX}/bin/nvim" -u NONE -e -c ':help' -c ':qall' || {

@@ -1,3 +1,11 @@
+top_make() {
+  "${MAKE_CMD}" "$@"
+}
+
+build_make() {
+  top_make -C "${BUILD_DIR}" "$@"
+}
+
 build_deps() {
   if [[ "${BUILD_32BIT}" == ON ]]; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
@@ -30,7 +38,7 @@ build_deps() {
   echo "Configuring with '${DEPS_CMAKE_FLAGS}'."
   CC= cmake ${DEPS_CMAKE_FLAGS} "${TRAVIS_BUILD_DIR}/third-party/"
 
-  if ! ${MAKE_CMD}; then
+  if ! top_make; then
     exit 1
   fi
 
@@ -53,18 +61,18 @@ prepare_build() {
 
 build_nvim() {
   echo "Building nvim."
-  if ! ${MAKE_CMD} nvim; then
+  if ! top_make nvim; then
     exit 1
   fi
 
   if [ "$CLANG_SANITIZER" != "TSAN" ]; then
     echo "Building libnvim."
-    if ! ${MAKE_CMD} libnvim; then
+    if ! top_make libnvim; then
       exit 1
     fi
 
     echo "Building nvim-test."
-    if ! ${MAKE_CMD} nvim-test; then
+    if ! top_make nvim-test; then
       exit 1
     fi
   fi
