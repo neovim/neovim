@@ -518,7 +518,7 @@ foreach(sfile ${LINT_NVIM_SOURCES})
     COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} ${rsfile}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
-    DEPENDS ${sfile} ${suppress_file}
+    DEPENDS ${LINT_PRG} ${sfile} ${suppress_file}
   )
   list(APPEND LINT_TARGETS ${touch_file})
   list(APPEND LINT_NVIM_REL_SOURCES ${rsfile})
@@ -530,7 +530,7 @@ add_custom_target(
   COMMAND
     ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} ${LINT_NVIM_REL_SOURCES}
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  DEPENDS ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE}
+  DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE}
 )
 
 add_subdirectory(po)
