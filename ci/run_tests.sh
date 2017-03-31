@@ -8,6 +8,8 @@ source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/test.sh"
 source "${CI_DIR}/common/suite.sh"
 
+set -x
+
 enter_suite tests
 
 check_core_dumps --delete quiet
