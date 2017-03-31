@@ -491,21 +491,25 @@ foreach(hfile ${NVIM_HEADERS})
 endforeach()
 add_custom_target(check-single-includes DEPENDS ${HEADER_CHECK_TARGETS})
 
-function(add_download output url)
+function(add_download output url allow_failure)
   add_custom_command(
     OUTPUT "${output}"
-    COMMAND ${CMAKE_COMMAND} -DURL=${url} -DFILE=${output} -P ${DOWNLOAD_SCRIPT}
+    COMMAND
+      ${CMAKE_COMMAND}
+        -DURL=${url} -DFILE=${output}
+        -DALLOW_FAILURE=${allow_failure}
+        -P ${DOWNLOAD_SCRIPT}
     DEPENDS ${DOWNLOAD_SCRIPT}
   )
 endfunction()
 
-add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL})
+add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
 
 foreach(sfile ${LINT_NVIM_SOURCES})
   get_test_target("" "${sfile}" r suffix)
   set(suppress_file ${LINT_SUPPRESSES_ROOT}/${suffix}.json)
   set(suppress_url "${LINT_SUPPRESS_URL_BASE}/${suffix}.json")
-  add_download(${suppress_file} ${suppress_url})
+  add_download(${suppress_file} ${suppress_url} on)
   set(touch_file "${TOUCHES_DIR}/ran-clint-${suffix}")
   add_custom_command(
     OUTPUT ${touch_file}
