@@ -505,21 +505,32 @@ endfunction()
 
 add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
 
+set(LINT_NVIM_REL_SOURCES)
 foreach(sfile ${LINT_NVIM_SOURCES})
   get_test_target("" "${sfile}" r suffix)
   set(suppress_file ${LINT_SUPPRESSES_ROOT}/${suffix}.json)
   set(suppress_url "${LINT_SUPPRESS_URL_BASE}/${suffix}.json")
+  set(rsfile src/nvim/${r})
   add_download(${suppress_file} ${suppress_url} on)
   set(touch_file "${TOUCHES_DIR}/ran-clint-${suffix}")
   add_custom_command(
     OUTPUT ${touch_file}
-    COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} src/nvim/${r}
+    COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} ${rsfile}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
     DEPENDS ${sfile} ${suppress_file}
   )
   list(APPEND LINT_TARGETS ${touch_file})
+  list(APPEND LINT_NVIM_REL_SOURCES ${rsfile})
 endforeach()
 add_custom_target(clint DEPENDS ${LINT_TARGETS})
+
+add_custom_target(
+  clint-full
+  COMMAND
+    ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} ${LINT_NVIM_REL_SOURCES}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  DEPENDS ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE}
+)
 
 add_subdirectory(po)

@@ -126,15 +126,15 @@ distclean: clean
 install: | nvim
 	+$(BUILD_CMD) -C build install
 
-clint:
-	$(CMAKE_PRG) -DLINT_PRG=./src/clint.py \
-		-DLINT_DIR=src \
-		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
-		-P cmake/RunLint.cmake
+clint: build/.ran-cmake
+	+$(BUILD_CMD) -C build clint
+
+clint-full: build/.ran-cmake
+	+$(BUILD_CMD) -C build clint-full
 
 check-single-includes: build/.ran-cmake
 	+$(BUILD_CMD) -C build check-single-includes
 
-lint: check-single-includes clint testlint
+lint: check-single-includes clint-full testlint
 
 .PHONY: test testlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install
