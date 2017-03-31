@@ -754,7 +754,7 @@ Short explanation of each option:		*option-list*
 'langmenu'	  'lm'	    language to be used for the menus
 'langnoremap'	  'lnr'	    do not apply 'langmap' to mapped characters
 'laststatus'	  'ls'	    tells when last window has status lines
-'lazyredraw'	  'lz'	    don't redraw while executing macros
+'lazyredraw'	  'lz'	    only redraw before blocking or |:redraw|
 'linebreak'	  'lbr'     wrap long lines at a blank
 'lines'			    number of lines in the display
 'linespace'	  'lsp'     number of pixel lines to use between characters
