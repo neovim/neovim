@@ -1,5 +1,5 @@
 top_make() {
-  "${MAKE_CMD}" "$@"
+  ${MAKE_CMD} "$@"
 }
 
 build_make() {
