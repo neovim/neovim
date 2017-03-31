@@ -1,12 +1,8 @@
 -- Tests for :setlocal and :setglobal
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, eval, eq, nvim =
-  helpers.clear, helpers.execute, helpers.eval, helpers.eq, helpers.nvim
-
-local function get_num_option_global(opt)
-  return nvim('command_output', 'setglobal ' .. opt .. '?'):match('%d+')
-end
+local clear, execute, eval, eq, meths =
+  helpers.clear, helpers.execute, helpers.eval, helpers.eq, helpers.meths
 
 local function should_fail(opt, value, errmsg)
   execute('let v:errmsg = ""')
@@ -18,16 +14,23 @@ local function should_fail(opt, value, errmsg)
   execute('let v:errmsg = ""')
 end
 
+local function should_succeed(opt, value)
+  execute('setglobal ' .. opt .. '=' .. value)
+  eq('', eval("v:errmsg"))
+  execute('setlocal ' .. opt .. '=' .. value)
+  eq('', eval("v:errmsg"))
+end
+
 describe(':setlocal', function()
   before_each(clear)
 
   it('setlocal sets only local value', function()
-    eq('0', get_num_option_global('iminsert'))
+    eq(0, meths.get_option('iminsert'))
     execute('setlocal iminsert=1')
-    eq('0', get_num_option_global('iminsert'))
-    eq('0', get_num_option_global('imsearch'))
+    eq(0, meths.get_option('iminsert'))
+    eq(0, meths.get_option('imsearch'))
     execute('setlocal imsearch=1')
-    eq('0', get_num_option_global('imsearch'))
+    eq(0, meths.get_option('imsearch'))
   end)
 end)
 
@@ -36,17 +39,43 @@ describe(':set validation', function()
 
   it('setlocal and setglobal validate values', function()
     should_fail('shiftwidth', -10, 'E487')
+    should_succeed('shiftwidth', 0)
     should_fail('tabstop', -10, 'E487')
     should_fail('winheight', -10, 'E487')
-    should_fail('helpheight', -10, 'E487')
-    should_fail('maxcombine', 10, 'E474')
+    should_fail('winheight', 0, 'E487')
+    should_fail('winminheight', -1, 'E487')
+    should_succeed('winminheight', 0)
+    should_fail('winwidth', 0, 'E487')
+    should_fail('helpheight', -1, 'E487')
+    should_fail('maxcombine', 7, 'E474')
+    should_fail('iminsert', 3, 'E474')
+    should_fail('imsearch', 3, 'E474')
+    should_fail('titlelen', -1, 'E487')
+    should_fail('cmdheight', 0, 'E487')
+    should_fail('updatecount', -1, 'E487')
+    should_fail('textwidth', -1, 'E487')
+    should_fail('tabstop', 0, 'E487')
+    should_fail('timeoutlen', -1, 'E487')
     should_fail('history', 1000000, 'E474')
+    should_fail('regexpengine', -1, 'E474')
     should_fail('regexpengine', 3, 'E474')
+    should_succeed('regexpengine', 2)
+    should_fail('report', -1, 'E487')
+    should_succeed('report', 0)
+    should_fail('scrolloff', -1, 'E49')
+    should_fail('sidescrolloff', -1, 'E487')
+    should_fail('sidescroll', -1, 'E487')
+    should_fail('cmdwinheight', 0, 'E487')
+    should_fail('updatetime', -1, 'E487')
 
     should_fail('foldlevel', -5, 'E487')
-    should_fail('foldcolumn', 100, 'E474')
+    should_fail('foldcolumn', 13, 'E474')
     should_fail('conceallevel', 4, 'E474')
-    should_fail('numberwidth', 20, 'E474')
+    should_fail('numberwidth', 11, 'E474')
+    should_fail('numberwidth', 0, 'E487')
+
+    -- If smaller than one this one is set to 'lines'-1
+    should_succeed('window', -10)
   end)
 
   it('set wmh/wh wmw/wiw checks', function()

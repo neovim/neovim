@@ -3997,7 +3997,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
 
   // Many number options assume their value is in the signed int range.
   if (value < INT_MIN || value > INT_MAX) {
-      return e_invarg;
+      return (char *)e_invarg;
   }
 
   // Options that need some validation.
@@ -4129,7 +4129,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       errmsg = e_positive;
     }
   } else if (pp == &curbuf->b_p_ts || pp == &p_ts) {
-    if (value <= 0) {
+    if (value < 1) {
       errmsg = e_positive;
     }
   } else if (pp == &curbuf->b_p_tw || pp == &p_tw) {
@@ -4140,7 +4140,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
 
   // Don't change the value and return early if validation failed.
   if (errmsg != NULL) {
-    return errmsg;
+    return (char *)errmsg;
   }
 
   *pp = value;
@@ -4150,7 +4150,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   // For these options we want to fix some invalid values.
   if (pp == &p_window) {
     if (p_window < 1) {
-      p_window = 1;
+      p_window = Rows - 1;
     } else if (p_window >= Rows) {
       p_window = Rows - 1;
     }
@@ -4188,7 +4188,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (foldmethodIsSyntax(curwin) || foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
     }
-  } else if (pp == &curbuf->b_p_sw || pp == (long *)&curbuf->b_p_ts) {
+  } else if (pp == &curbuf->b_p_sw || pp == &curbuf->b_p_ts) {
     // 'shiftwidth' or 'tabstop'
     if (foldmethodIsIndent(curwin)) {
       foldUpdateAll(curwin);
