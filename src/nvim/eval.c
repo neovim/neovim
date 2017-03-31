@@ -16229,6 +16229,20 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   // get shell command to execute
   bool executable = true;
   char **argv = tv_to_argv(&argvars[0], NULL, &executable);
+
+  if (p_verbose >= 4) {
+    char **p = argv;
+    char tmpstr[512];
+    char argstr[IOSIZE - 32] = { 0 };
+
+    while (*p != NULL) {
+      snprintf(tmpstr, sizeof(tmpstr), ",'%s'", *p);
+      xstrlcat(argstr, tmpstr, sizeof(argstr));
+      p++;
+    }
+    verbose_smsg(4, "get_system_output_as_rettv: [%s]", argstr + 1);
+  }
+
   if (!argv) {
     if (!executable) {
       set_vim_var_nr(VV_SHELL_ERROR, (long)-1);

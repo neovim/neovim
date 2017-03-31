@@ -2604,6 +2604,24 @@ int verbose_open(void)
   return OK;
 }
 
+/// Performs a 'verbose' message if `p_verbose` level is >= `min_verbose`.
+/// Calls verbose_enter() and verbose_leave().
+int verbose_smsg(int min_verbose, const char *const fmt, ...)
+{
+  if (p_verbose < min_verbose) {
+    return true;
+  }
+  verbose_enter();
+  va_list ap;
+  va_start(ap, fmt);
+  vim_vsnprintf((char *)IObuff, sizeof(IObuff), fmt, ap, NULL);
+  va_end(ap);
+  int rv = msg(IObuff);
+  ui_putc('\n');
+  verbose_leave();
+  return rv;
+}
+
 /*
  * Give a warning message (for searching).
  * Use 'w' highlighting and may repeat the message after redrawing
