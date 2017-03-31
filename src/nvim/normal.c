@@ -4670,6 +4670,7 @@ static void nv_ident(cmdarg_T *cap)
   char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp;  // 'keywordprg'
   assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
+  bool kp_help = (STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
   size_t buf_size = n * 2 + 30 + STRLEN(kp);
   char *buf = xmalloc(buf_size);
   buf[0] = NUL;
@@ -4692,7 +4693,9 @@ static void nv_ident(cmdarg_T *cap)
     break;
 
   case 'K':
-    if (kp_ex) {
+    if (kp_help) {
+      STRCPY(buf, "he! ");
+    } else if (kp_ex) {
       if (cap->count0 != 0) {  // Send the count to the ex command.
         snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
       }
@@ -4755,7 +4758,7 @@ static void nv_ident(cmdarg_T *cap)
   }
 
   // Now grab the chars in the identifier
-  if (cmdchar == 'K') {
+  if (cmdchar == 'K' && !kp_help) {
     ptr = vim_strnsave(ptr, n);
     if (kp_ex) {
       // Escape the argument properly for an Ex command

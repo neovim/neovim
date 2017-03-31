@@ -11008,18 +11008,19 @@ static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
     cmdline_row = msg_row;
 
     const char *defstr = "";
+    char buf[NUMBUFLEN];
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      char buf[NUMBUFLEN];
       defstr = tv_get_string_buf_chk(&argvars[1], buf);
       if (defstr != NULL) {
         stuffReadbuffSpec(defstr);
       }
 
       if (!inputdialog && argvars[2].v_type != VAR_UNKNOWN) {
+        char buf2[NUMBUFLEN];
         // input() with a third argument: completion
         rettv->vval.v_string = NULL;
 
-        const char *const xp_name = tv_get_string_buf_chk(&argvars[2], buf);
+        const char *const xp_name = tv_get_string_buf_chk(&argvars[2], buf2);
         if (xp_name == NULL) {
           return;
         }

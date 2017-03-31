@@ -615,9 +615,9 @@ char *vim_getenv(const char *name)
       vim_path = (char *)p_hf;
     }
 
+    char exe_name[MAXPATHL];
     // Find runtime path relative to the nvim binary: ../share/nvim/runtime
     if (vim_path == NULL) {
-      char exe_name[MAXPATHL];
       size_t exe_name_len = MAXPATHL;
       if (os_exepath(exe_name, &exe_name_len) == 0) {
         char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
