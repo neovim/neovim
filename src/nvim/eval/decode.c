@@ -973,7 +973,13 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       }
       break;
     }
-    case MSGPACK_OBJECT_FLOAT: {
+#ifdef NVIM_MSGPACK_HAS_FLOAT32
+    case MSGPACK_OBJECT_FLOAT32:
+    case MSGPACK_OBJECT_FLOAT64:
+#else
+    case MSGPACK_OBJECT_FLOAT:
+#endif
+    {
       *rettv = (typval_T) {
         .v_type = VAR_FLOAT,
         .v_lock = VAR_UNLOCKED,

@@ -114,7 +114,13 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         }
         break;
       }
-      case MSGPACK_OBJECT_FLOAT: {
+#ifdef NVIM_MSGPACK_HAS_FLOAT32
+      case MSGPACK_OBJECT_FLOAT32:
+      case MSGPACK_OBJECT_FLOAT64:
+#else
+      case MSGPACK_OBJECT_FLOAT:
+#endif
+      {
         STATIC_ASSERT(sizeof(Float) == sizeof(cur.mobj->via.f64),
                       "Msgpack floating-point size does not match API integer");
         *cur.aobj = FLOATING_OBJ(cur.mobj->via.f64);
@@ -181,7 +187,12 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
               case MSGPACK_OBJECT_BOOLEAN:
               case MSGPACK_OBJECT_POSITIVE_INTEGER:
               case MSGPACK_OBJECT_NEGATIVE_INTEGER:
+#ifdef NVIM_MSGPACK_HAS_FLOAT32
+              case MSGPACK_OBJECT_FLOAT32:
+              case MSGPACK_OBJECT_FLOAT64:
+#else
               case MSGPACK_OBJECT_FLOAT:
+#endif
               case MSGPACK_OBJECT_EXT:
               case MSGPACK_OBJECT_MAP:
               case MSGPACK_OBJECT_ARRAY: {
