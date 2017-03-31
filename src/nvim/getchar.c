@@ -2056,6 +2056,7 @@ static int vgetorpeek(int advance)
          * place does not matter.
          */
         c = 0;
+        timedout = false;
         new_wcol = curwin->w_wcol;
         new_wrow = curwin->w_wrow;
         if (       advance
