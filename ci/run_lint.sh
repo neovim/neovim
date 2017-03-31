@@ -10,8 +10,10 @@ source "${CI_DIR}/common/suite.sh"
 
 enter_suite 'lint'
 
+set -x
+
 run_test 'top_make clint-full' clint
 run_test 'top_make testlint' testlint
-run_test 'top_make check-single-includes' single-includes
+run_test_wd 5s 'top_make check-single-includes' single-includes
 
 exit_suite

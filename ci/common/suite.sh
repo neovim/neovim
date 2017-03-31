@@ -54,6 +54,54 @@ run_test() {
   fi
 }
 
+run_test_wd() {
+  local timeout="$1"
+  shift
+  local cmd="$1"
+  shift
+  local test_name="$1"
+  : ${test_name:=$cmd}
+  shift
+  local output_file="$(mktemp)"
+  local status_file="$(mktemp)"
+  local restarts=5
+  local prev_tmpsize=-1
+  while test $restarts -gt 0 ; do
+    : > "${status_file}"
+    (
+      if ! (
+        set -o pipefail
+        eval "$cmd" 2>&1 | tee -a "$output_file"
+      ) ; then
+        fail "${test_name}" "$@"
+      fi
+      echo "$FAILED" > "$status_file"
+    ) &
+    local pid=$!
+    while test "$(stat -c "%s" "$status_file")" -eq 0 ; do
+      prev_tmpsize=$tmpsize
+      sleep $timeout
+      tmpsize="$(stat -c "%s" "$output_file")"
+      if test $tempsize -eq $prev_temsize ; then
+        # no output, assuming either hang or exit
+        break
+      fi
+    done
+    if test "$(stat -c "%s" "$status_file")" -eq 0 ; then
+      # status file not updated, assuming hang
+      kill -KILL $pid
+      echo "Test ${test_name} hang up, restarting"
+    else
+      local new_failed="$(cat "$status_file")"
+      if test "x$new_failed" != "x0" ; then
+        fail "${test_name}" F "Test failed in run_test_wd"
+      fi
+      return 0
+    fi
+    restarts=$[ restarts - 1 ]
+  done
+}
+
 succeeded() {
   return $FAILED
 }
