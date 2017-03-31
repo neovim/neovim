@@ -36,9 +36,12 @@ set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
-set(LINT_SUPPRESS_URL "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json")
+set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
+set(LINT_SUPPRESS_URL "${LINT_SUPPRESS_URL_BASE}/errors.json")
 set(LINT_PRG ${PROJECT_SOURCE_DIR}/src/clint.py)
 set(DOWNLOAD_SCRIPT ${PROJECT_SOURCE_DIR}/cmake/Download.cmake)
+set(LINT_SUPPRESSES_ROOT ${PROJECT_BINARY_DIR}/errors)
+set(LINT_SUPPRESSES_URL "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.tar.gz")
 
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
@@ -404,16 +407,20 @@ set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTIN
 function(get_test_target prefix sfile relative_path_var target_var)
   get_filename_component(full_d "${sfile}" PATH)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
-  if(${d} MATCHES "^[.][.]")
+  if(d MATCHES "^[.][.]")
     file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
   endif()
   get_filename_component(r "${sfile}" NAME)
-  if(NOT ${d} EQUAL ".")
+  if(NOT d MATCHES "^[.]?$")
     set(r "${d}/${r}")
   endif()
   string(REGEX REPLACE "[/.]" "-" suffix "${r}")
   set(${relative_path_var} ${r} PARENT_SCOPE)
-  set(${target_var} "${prefix}-${suffix}" PARENT_SCOPE)
+  if(prefix STREQUAL "")
+    set(${target_var} "${suffix}" PARENT_SCOPE)
+  else()
+    set(${target_var} "${prefix}-${suffix}" PARENT_SCOPE)
+  endif()
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
@@ -495,13 +502,17 @@ endfunction()
 add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL})
 
 foreach(sfile ${LINT_NVIM_SOURCES})
-  get_test_target("${TOUCHES_DIR}/ran-clint" "${sfile}" r touch_file)
+  get_test_target("" "${sfile}" r suffix)
+  set(suppress_file ${LINT_SUPPRESSES_ROOT}/${suffix}.json)
+  set(suppress_url "${LINT_SUPPRESS_URL_BASE}/${suffix}.json")
+  add_download(${suppress_file} ${suppress_url})
+  set(touch_file "${TOUCHES_DIR}/ran-clint-${suffix}")
   add_custom_command(
     OUTPUT ${touch_file}
-    COMMAND ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} src/nvim/${r}
+    COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} src/nvim/${r}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
-    DEPENDS ${sfile} ${LINT_SUPPRESS_FILE}
+    DEPENDS ${sfile} ${suppress_file}
   )
   list(APPEND LINT_TARGETS ${touch_file})
 endforeach()
