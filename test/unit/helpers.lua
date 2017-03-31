@@ -574,7 +574,7 @@ local function gen_itp(it)
         if not err then
           if allow_failure then
             io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
-            os.execute([[sh -c "source .ci/common/test.sh ; check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
+            os.execute([[sh -c "source ci/common/test.sh ; check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
           else
             error(emsg)
           end

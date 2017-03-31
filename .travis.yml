@@ -83,12 +83,12 @@ matrix:
     - env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
   fast_finish: true
 
-before_install: .ci/before_install.sh
-install:        .ci/install.sh
-before_script:  .ci/before_script.sh
-script:         .ci/script.sh
-before_cache:   .ci/before_cache.sh
-after_success:  .ci/after_success.sh
+before_install: ci/before_install.sh
+install:        ci/install.sh
+before_script:  ci/before_script.sh
+script:         ci/script.sh
+before_cache:   ci/before_cache.sh
+after_success:  ci/after_success.sh
 
 addons:
   apt:

@@ -12,7 +12,7 @@ fi
 # as $USER, while retaining the environment variables defined and belonging
 # to secondary groups given above in usermod.
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  sudo -E su "${USER}" -c ".ci/run_tests.sh"
+  sudo -E su "${USER}" -c "ci/run_tests.sh"
 else
-  .ci/run_tests.sh
+  ci/run_tests.sh
 fi
