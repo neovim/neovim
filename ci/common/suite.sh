@@ -45,10 +45,10 @@ fail() {
 
 run_test() {
   local cmd="$1"
-  shift
+  test $# -gt 0 && shift
   local test_name="$1"
   : ${test_name:=$cmd}
-  shift
+  test $# -gt 0 && shift
   if ! eval "$cmd" ; then
     fail "${test_name}" "$@"
   fi
@@ -56,12 +56,12 @@ run_test() {
 
 run_test_wd() {
   local timeout="$1"
-  shift
+  test $# -gt 0 && shift
   local cmd="$1"
-  shift
+  test $# -gt 0 && shift
   local test_name="$1"
   : ${test_name:=$cmd}
-  shift
+  test $# -gt 0 && shift
   local output_file="$(mktemp)"
   local status_file="$(mktemp)"
   local restarts=5
