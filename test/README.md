@@ -99,3 +99,6 @@ get backtrace from).
 approximately 90% of the tests. Should be used when finding cores is too hard 
 for some reason. Normally (on OS X or when `NVIM_TEST_CORE_GLOB_DIRECTORY` is 
 defined and this variable is not) cores are checked for after each test.
+
+`NVIM_TEST_RUN_TESTTEST` (U) (1): allows running `test/unit/testtest_spec.lua` 
+used to check how testing infrastructure works.

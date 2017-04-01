@@ -554,8 +554,6 @@ local function gen_itp(it)
         end
       else
         sc.close(wr)
-        sc.wait(child_pid)
-        child_pid = nil
         local function check()
           local res = sc.read(rd, 2)
           eq(2, #res)
@@ -570,6 +568,8 @@ local function gen_itp(it)
           assert.just_fail(err)
         end
         local err, emsg = pcall(check)
+        sc.wait(child_pid)
+        child_pid = nil
         sc.close(rd)
         if not err then
           if allow_failure then
