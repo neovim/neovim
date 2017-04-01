@@ -107,3 +107,7 @@ used to check how testing infrastructure works.
 if tests crashed without core dump you will have no clues regarding where, but 
 this makes tests run a lot faster. Combine with `NVIM_TEST_MAIN_CDEFS` for 
 maximal speed.
+
+`NVIM_TEST_TRACE_EVERYTHING` (U) (1): by default unit test only record C calls 
+which is faster then recording everything. Set this variable to 1 if you want to 
+see all traces.

@@ -542,19 +542,27 @@ local function child_sethook(wr)
   if os.getenv('NVIM_TEST_NO_TRACE') == '1' then
     return
   end
+  local trace_only_c = (os.getenv('NVIM_TEST_TRACE_EVERYTHING') ~= '1')
   local function hook(reason, lnum)
-    local msgchar = reason:sub(1, 1)
-    if reason == 'count' then
-      msgchar = 'C'
-    end
     local info = nil
     if reason ~= 'tail return' then  -- tail return
       info = debug.getinfo(2, 'nSl')
     end
+
+    if trace_only_c and (not info or info.what ~= 'C') then
+      return
+    end
+
     local whatchar = ' '
     local namewhatchar = ' '
     local funcname = ''
     local source = ''
+    local msgchar = reason:sub(1, 1)
+
+    if reason == 'count' then
+      msgchar = 'C'
+    end
+
     if info then
       funcname = (info.name or ''):sub(1, hook_fnamelen)
       whatchar = info.what:sub(1, 1)
@@ -595,8 +603,10 @@ local function child_sethook(wr)
     -- eq(hook_msglen, #msg)
     sc.write(wr, msg)
   end
-  debug.sethook(hook, 'crl')
+  debug.sethook(hook, trace_only_c and 'cr' or 'crl')
 end
+
+local trace_end_msg = ('E%s\n'):format((' '):rep(hook_msglen - 2))
 
 local function itp_child(wr, func)
   init()
@@ -606,7 +616,7 @@ local function itp_child(wr, func)
   debug.sethook()
   collectgarbage('restart')
   emsg = tostring(emsg)
-  sc.write(wr, ('E%s\n'):format((' '):rep(hook_msglen - 2)))
+  sc.write(wr, trace_end_msg)
   if not err then
     if #emsg > 99999 then
       emsg = emsg:sub(1, 99999)
@@ -634,7 +644,7 @@ local function check_child_err(rd)
         trace[#trace + 1] = 'Partial read: <' .. trace .. '>\n'
       end
     end
-    if traceline:sub(1, 1) == 'E' then
+    if traceline == trace_end_msg then
       break
     end
     trace[#trace + 1] = traceline
