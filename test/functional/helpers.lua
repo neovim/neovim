@@ -16,6 +16,7 @@ local eq = global_helpers.eq
 local ok = global_helpers.ok
 local map = global_helpers.map
 local filter = global_helpers.filter
+local dedent = global_helpers.dedent
 
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
@@ -189,28 +190,6 @@ local function nvim_feed(input)
     local written = request('nvim_input', input)
     input = input:sub(written + 1)
   end
-end
-
-local function dedent(str)
-  -- find minimum common indent across lines
-  local indent = nil
-  for line in str:gmatch('[^\n]+') do
-    local line_indent = line:match('^%s+') or ''
-    if indent == nil or #line_indent < #indent then
-      indent = line_indent
-    end
-  end
-  if indent == nil or #indent == 0 then
-    -- no minimum common indent
-    return str
-  end
-  -- create a pattern for the indent
-  indent = indent:gsub('%s', '[ \t]')
-  -- strip it from the first line
-  str = str:gsub('^'..indent, '')
-  -- strip it from the remaining lines
-  str = str:gsub('[\n]'..indent, '\n')
-  return str
 end
 
 local function feed(...)
