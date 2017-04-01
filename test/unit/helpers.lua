@@ -520,13 +520,92 @@ assert:register('assertion', 'just_fail', just_fail,
                 'assertion.just_fail.positive',
                 'assertion.just_fail.negative')
 
+local hook_fnamelen = 30
+local hook_sfnamelen = 30
+local hook_numlen = 5
+local hook_msglen = 1 + 1 + 1 + (1 + hook_fnamelen) + (1 + hook_sfnamelen) + (1 + hook_numlen) + 1
+
+local function child_sethook(wr)
+  if os.getenv('NVIM_TEST_NO_TRACE') == '1' then
+    return
+  end
+  -- Message:
+  -- |> msg char (1)
+  -- ||> what char (1)
+  -- |||> namewhat char (1)
+  -- ||| |> source file name (30)
+  -- ||| |                              |> function name (30)
+  -- ||| |                              |                              |> line number (5)
+  -- CWN SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:LLLLL\n
+  local function hook(reason, lnum)
+    local msgchar = reason:sub(1, 1)
+    if reason == 'count' then
+      msgchar = 'C'
+    end
+    local info = nil
+    if reason ~= 'tail return' then  -- tail return
+      info = debug.getinfo(2, 'nSl')
+    end
+    local whatchar = ' '
+    local namewhatchar = ' '
+    local funcname = ''
+    local source = ''
+    if info then
+      funcname = (info.name or ''):sub(1, hook_fnamelen)
+      whatchar = info.what:sub(1, 1)
+      namewhatchar = info.namewhat:sub(1, 1)
+      if namewhatchar == '' then
+        namewhatchar = ' '
+      end
+      source = info.source
+      if source:sub(1, 1) == '@' then
+        if source:sub(-4, -1) == '.lua' then
+          source = source:sub(1, -5)
+        end
+        source = source:sub(-hook_sfnamelen, -1)
+      end
+      lnum = lnum or info.currentline
+    end
+
+    -- assert(-1 <= lnum and lnum <= 99999)
+    local lnum_s
+    if lnum == -1 then
+      lnum_s = 'nknwn'
+    else
+      lnum_s = ('%u'):format(lnum)
+    end
+    local msg = (  -- lua does not support %*
+      ''
+      .. msgchar
+      .. whatchar
+      .. namewhatchar
+      .. ' '
+      .. source .. (' '):rep(hook_sfnamelen - #source)
+      .. ':'
+      .. funcname .. (' '):rep(hook_fnamelen - #funcname)
+      .. ':'
+      .. ('0'):rep(hook_numlen - #lnum_s) .. lnum_s
+      .. '\n'
+    )
+    -- eq(hook_msglen, #msg)
+    sc.write(wr, msg)
+  end
+  debug.sethook(hook, 'crl')
+end
+
 local function itp_child(wr, func)
   init()
   collectgarbage('stop')
+  child_sethook(wr)
   local err, emsg = pcall(func)
+  debug.sethook()
   collectgarbage('restart')
   emsg = tostring(emsg)
+  sc.write(wr, ('E%s\n'):format((' '):rep(hook_msglen - 2)))
   if not err then
+    if #emsg > 99999 then
+      emsg = emsg:sub(1, 99999)
+    end
     sc.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
     deinit()
     sc.close(wr)
@@ -540,8 +619,29 @@ local function itp_child(wr, func)
 end
 
 local function check_child_err(rd)
+  local trace = {}
+  while true do
+    local traceline = sc.read(rd, hook_msglen)
+    if #traceline ~= hook_msglen then
+      if #traceline == 0 then
+        break
+      else
+        trace[#trace + 1] = 'Partial read: <' .. trace .. '>\n'
+      end
+    end
+    if traceline:sub(1, 1) == 'E' then
+      break
+    end
+    trace[#trace + 1] = traceline
+  end
   local res = sc.read(rd, 2)
-  eq(2, #res)
+  if #res ~= 2 then
+    local error = 'Test crashed, trace:\n'
+    for i = 1, #trace do
+      error = error .. trace[i]
+    end
+    assert.just_fail(error)
+  end
   if res == '+\n' then
     return
   end

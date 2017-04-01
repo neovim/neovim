@@ -102,3 +102,8 @@ defined and this variable is not) cores are checked for after each test.
 
 `NVIM_TEST_RUN_TESTTEST` (U) (1): allows running `test/unit/testtest_spec.lua` 
 used to check how testing infrastructure works.
+
+`NVIM_TEST_NO_TRACE` (U) (1): omits getting traces from tests. This means that 
+if tests crashed without core dump you will have no clues regarding where, but 
+this makes tests run a lot faster. Combine with `NVIM_TEST_MAIN_CDEFS` for 
+maximal speed.
