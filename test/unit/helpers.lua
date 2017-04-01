@@ -704,7 +704,7 @@ local function gen_itp(it)
         itp_child(wr, func)
       else
         sc.close(wr)
-        saved_child_pid = child_pid
+        local saved_child_pid = child_pid
         child_pid = nil
         itp_parent(rd, saved_child_pid, allow_failure)
       end
