@@ -27,8 +27,8 @@ groups by the semantic component they are testing.
 
 Test behaviour is affected by environment variables. Currently supported 
 (Functional, Unit, Benchmarks) (when Defined; when set to _1_; when defined, 
-treated as Integer; when defined, treated as String; !must be defined to 
-function properly):
+treated as Integer; when defined, treated as String; when defined, treated as 
+Number; !must be defined to function properly):
 
 `GDB` (F) (D): makes nvim instances to be run under `gdbserver`. It will be 
 accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote 
@@ -103,11 +103,8 @@ defined and this variable is not) cores are checked for after each test.
 `NVIM_TEST_RUN_TESTTEST` (U) (1): allows running `test/unit/testtest_spec.lua` 
 used to check how testing infrastructure works.
 
-`NVIM_TEST_NO_TRACE` (U) (1): omits getting traces from tests. This means that 
-if tests crashed without core dump you will have no clues regarding where, but 
-this makes tests run a lot faster. Combine with `NVIM_TEST_MAIN_CDEFS` for 
-maximal speed.
-
-`NVIM_TEST_TRACE_EVERYTHING` (U) (1): by default unit test only record C calls 
-which is faster then recording everything. Set this variable to 1 if you want to 
-see all traces.
+`NVIM_TEST_TRACE_LEVEL` (U) (N): specifies unit tests tracing level: `0` 
+disables tracing (the fastest, but you get no data if tests crash and there was 
+no core dump generated), `1` or empty/undefined leaves only C function cals and 
+returns in the trace (faster then recording everything), `2` records all 
+function calls, returns and lua source lines exuecuted.

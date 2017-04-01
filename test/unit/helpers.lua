@@ -539,10 +539,16 @@ local tracehelp = dedent([[
 ]])
 
 local function child_sethook(wr)
-  if os.getenv('NVIM_TEST_NO_TRACE') == '1' then
+  local trace_level = os.getenv('NVIM_TEST_TRACE_LEVEL')
+  if not trace_level or trace_level == '' then
+    trace_level = 1
+  else
+    trace_level = tonumber(trace_level)
+  end
+  if trace_level <= 0 then
     return
   end
-  local trace_only_c = (os.getenv('NVIM_TEST_TRACE_EVERYTHING') ~= '1')
+  local trace_only_c = trace_level <= 1
   local function hook(reason, lnum)
     local info = nil
     if reason ~= 'tail return' then  -- tail return
@@ -651,9 +657,14 @@ local function check_child_err(rd)
   end
   local res = sc.read(rd, 2)
   if #res ~= 2 then
-    local error = '\nTest crashed, trace:\n' .. tracehelp
-    for i = 1, #trace do
-      error = error .. trace[i]
+    local error
+    if #trace == 0 then
+      error = '\nTest crashed, no trace available\n'
+    else
+      error = '\nTest crashed, trace:\n' .. tracehelp
+      for i = 1, #trace do
+        error = error .. trace[i]
+      end
     end
     assert.just_fail(error)
   end
