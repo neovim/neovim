@@ -1903,7 +1903,7 @@ static int vgetorpeek(int advance)
           }
 
           if ((mp == NULL || max_mlen >= mp_match_len)
-              && keylen != KEYLEN_PART_MAP) {
+              && keylen != KEYLEN_PART_MAP && keylen != KEYLEN_PART_KEY) {
             // No matching mapping found or found a non-matching mapping that
             // matches at least what the matching mapping matched
             keylen = 0;
