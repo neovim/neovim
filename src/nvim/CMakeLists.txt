@@ -10,6 +10,7 @@ if(USE_GCOV)
 endif()
 endif()
 
+set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendispatch.lua)
 file(GLOB API_HEADERS api/*.h)
@@ -34,11 +35,19 @@ set(UNICODE_TABLES_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genunicodetables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
+set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
+set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
+set(LINT_SUPPRESS_URL "${LINT_SUPPRESS_URL_BASE}/errors.json")
+set(LINT_PRG ${PROJECT_SOURCE_DIR}/src/clint.py)
+set(DOWNLOAD_SCRIPT ${PROJECT_SOURCE_DIR}/cmake/Download.cmake)
+set(LINT_SUPPRESSES_ROOT ${PROJECT_BINARY_DIR}/errors)
+set(LINT_SUPPRESSES_URL "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.tar.gz")
 
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
+file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 
@@ -72,6 +81,8 @@ file(GLOB UNIT_TEST_FIXTURES ${PROJECT_SOURCE_DIR}/test/unit/fixtures/*.c)
 # build to build.
 list(SORT NVIM_SOURCES)
 list(SORT NVIM_HEADERS)
+
+list(APPEND LINT_NVIM_SOURCES ${NVIM_SOURCES} ${NVIM_HEADERS})
 
 foreach(sfile ${NVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
@@ -393,81 +404,133 @@ add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NVIM_GENERATED_FOR_SOURCES} ${NV
 target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
 
-set(NO_SINGLE_CHECK_HEADERS
-  cursor_shape
-  diff
-  digraph
-  ex_cmds
-  ex_getln
-  file_search
-  fold
-  getchar
-  hardcopy
-  if_cscope
-  if_cscope_defs
-  mark
-  mbyte
-  memfile_defs
-  memline
-  memline_defs
-  menu
-  misc2
-  move
-  msgpack_rpc/server
-  ops
-  option
-  os/shell
-  os_unix
-  os/win_defs
-  popupmnu
-  quickfix
-  regexp
-  regexp_defs
-  screen
-  search
-  sha256
-  sign_defs
-  spell
-  spellfile
-  syntax
-  syntax_defs
-  tag
-  terminal
-  tui/tui
-  ugrid
-  ui
-  ui_bridge
-  undo
-  undo_defs
-  version
-  window
-)
-foreach(hfile ${NVIM_HEADERS})
-  get_filename_component(full_d ${hfile} PATH)
+function(get_test_target prefix sfile relative_path_var target_var)
+  get_filename_component(full_d "${sfile}" PATH)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
-  if(${d} MATCHES "^[.][.]")
+  if(d MATCHES "^[.][.]")
     file(RELATIVE_PATH d "${GENERATED_DIR}" "${full_d}")
   endif()
-  get_filename_component(r ${hfile} NAME_WE)
-  if(NOT ${d} EQUAL ".")
+  get_filename_component(r "${sfile}" NAME)
+  if(NOT d MATCHES "^[.]?$")
     set(r "${d}/${r}")
   endif()
+  string(REGEX REPLACE "[/.]" "-" suffix "${r}")
+  set(${relative_path_var} ${r} PARENT_SCOPE)
+  if(prefix STREQUAL "")
+    set(${target_var} "${suffix}" PARENT_SCOPE)
+  else()
+    set(${target_var} "${prefix}-${suffix}" PARENT_SCOPE)
+  endif()
+endfunction()
+
+set(NO_SINGLE_CHECK_HEADERS
+  cursor_shape.h
+  diff.h
+  digraph.h
+  ex_cmds.h
+  ex_getln.h
+  file_search.h
+  fold.h
+  getchar.h
+  hardcopy.h
+  if_cscope.h
+  if_cscope_defs.h
+  mark.h
+  mbyte.h
+  memfile_defs.h
+  memline.h
+  memline_defs.h
+  menu.h
+  misc2.h
+  move.h
+  msgpack_rpc/server.h
+  ops.h
+  option.h
+  os/shell.h
+  os_unix.h
+  os/win_defs.h
+  popupmnu.h
+  quickfix.h
+  regexp.h
+  regexp_defs.h
+  screen.h
+  search.h
+  sha256.h
+  sign_defs.h
+  spell.h
+  spellfile.h
+  syntax.h
+  syntax_defs.h
+  tag.h
+  terminal.h
+  tui/tui.h
+  ugrid.h
+  ui.h
+  ui_bridge.h
+  undo.h
+  undo_defs.h
+  version.h
+  window.h
+)
+foreach(hfile ${NVIM_HEADERS})
+  get_test_target(test-includes "${hfile}" relative_path texe)
 
   if(NOT ${hfile} MATCHES "[.]c[.]h$")
-    set(tsource "${GENERATED_DIR}/${r}.test-include.c")
-    string(REPLACE "/" "-" texe "test-incl-${r}")
+    set(tsource "${GENERATED_DIR}/${relative_path}.test-include.c")
     write_file("${tsource}" "#include \"${hfile}\"\nint main(int argc, char **argv) { return 0; }")
     add_executable(
       ${texe}
       EXCLUDE_FROM_ALL
       ${tsource} ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_HEADERS})
 
-    list(FIND NO_SINGLE_CHECK_HEADERS "${r}" hfile_exclude_idx)
+    list(FIND NO_SINGLE_CHECK_HEADERS "${relative_path}" hfile_exclude_idx)
     if(${hfile_exclude_idx} EQUAL -1)
       list(APPEND HEADER_CHECK_TARGETS ${texe})
     endif()
   endif()
 endforeach()
 add_custom_target(check-single-includes DEPENDS ${HEADER_CHECK_TARGETS})
+
+function(add_download output url allow_failure)
+  add_custom_command(
+    OUTPUT "${output}"
+    COMMAND
+      ${CMAKE_COMMAND}
+        -DURL=${url} -DFILE=${output}
+        -DALLOW_FAILURE=${allow_failure}
+        -P ${DOWNLOAD_SCRIPT}
+    DEPENDS ${DOWNLOAD_SCRIPT}
+  )
+endfunction()
+
+add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
+
+set(LINT_NVIM_REL_SOURCES)
+foreach(sfile ${LINT_NVIM_SOURCES})
+  get_test_target("" "${sfile}" r suffix)
+  set(suppress_file ${LINT_SUPPRESSES_ROOT}/${suffix}.json)
+  set(suppress_url "${LINT_SUPPRESS_URL_BASE}/${suffix}.json")
+  set(rsfile src/nvim/${r})
+  add_download(${suppress_file} ${suppress_url} on)
+  set(touch_file "${TOUCHES_DIR}/ran-clint-${suffix}")
+  add_custom_command(
+    OUTPUT ${touch_file}
+    COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} ${rsfile}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
+    DEPENDS ${LINT_PRG} ${sfile} ${suppress_file}
+  )
+  list(APPEND LINT_TARGETS ${touch_file})
+  list(APPEND LINT_NVIM_REL_SOURCES ${rsfile})
+endforeach()
+add_custom_target(clint DEPENDS ${LINT_TARGETS})
+
+add_custom_target(
+  clint-full
+  COMMAND
+    ${LINT_PRG} --suppress-errors=${LINT_SUPPRESS_FILE} ${LINT_NVIM_REL_SOURCES}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  DEPENDS ${LINT_PRG} ${LINT_NVIM_SOURCES} ${LINT_SUPPRESS_FILE}
+)
 
 add_subdirectory(po)

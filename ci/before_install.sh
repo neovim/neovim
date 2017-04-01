@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-if [[ -n "${CI_TARGET}" ]]; then
+if [[ "${CI_TARGET}" == lint ]]; then
   exit
 fi
 

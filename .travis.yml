@@ -50,6 +50,7 @@ env:
     - SUCCESS_MARKER="$BUILD_DIR/.tests_successful"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
+    - CI_TARGET=tests
 
 matrix:
   include:
