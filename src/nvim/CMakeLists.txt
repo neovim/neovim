@@ -308,6 +308,8 @@ endif()
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
+set_target_properties(nvim PROPERTIES LINK_FLAGS "-static -pie" OUTPUT_NAME nvim)
+set_property(TARGET nvim APPEND_STRING PROPERTY COMPILE_FLAGS "-fPIC")
 install_helper(TARGETS nvim)
 
 if(WIN32)
