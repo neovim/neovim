@@ -70,23 +70,26 @@
  * structure.
  */
 struct cmdline_info {
-  char_u      *cmdbuff;         /* pointer to command line buffer */
-  int cmdbufflen;               /* length of cmdbuff */
-  int cmdlen;                   /* number of chars in command line */
-  int cmdpos;                   /* current cursor position */
-  int cmdspos;                  /* cursor column on screen */
-  int cmdfirstc;                /* ':', '/', '?', '=', '>' or NUL */
-  int cmdindent;                /* number of spaces before cmdline */
-  char_u      *cmdprompt;       /* message in front of cmdline */
-  int cmdattr;                  /* attributes for prompt */
-  int overstrike;               /* Typing mode on the command line.  Shared by
-                                   getcmdline() and put_on_cmdline(). */
-  expand_T    *xpc;             /* struct being used for expansion, xp_pattern
-                                   may point into cmdbuff */
-  int xp_context;               /* type of expansion */
-  char_u      *xp_arg;          /* user-defined expansion arg */
-  int input_fn;                 /* when TRUE Invoked for input() function */
+  char_u      *cmdbuff;         // pointer to command line buffer
+  int cmdbufflen;               // length of cmdbuff
+  int cmdlen;                   // number of chars in command line
+  int cmdpos;                   // current cursor position
+  int cmdspos;                  // cursor column on screen
+  int cmdfirstc;                // ':', '/', '?', '=', '>' or NUL
+  int cmdindent;                // number of spaces before cmdline
+  char_u      *cmdprompt;       // message in front of cmdline
+  int cmdattr;                  // attributes for prompt
+  int overstrike;               // Typing mode on the command line.  Shared by
+                                // getcmdline() and put_on_cmdline().
+  expand_T    *xpc;             // struct being used for expansion, xp_pattern
+                                // may point into cmdbuff
+  int xp_context;               // type of expansion
+  char_u      *xp_arg;          // user-defined expansion arg
+  int input_fn;                 // when TRUE Invoked for input() function
+  unsigned prompt_id;  ///< Prompt number, used to disable coloring on errors.
 };
+/// Last value of prompt_id, incremented when doing new prompt
+static unsigned last_prompt_id = 0;
 
 typedef struct command_line_state {
   VimState state;
@@ -134,6 +137,9 @@ typedef struct {
   int end;  ///< Colored chunk end (exclusive, > start).
   int attr;  ///< Highlight attr.
 } ColoredCmdlineChunk;
+
+/// Callback used for coloring input() prompts
+Callback getln_input_callback = { .type = kCallbackNone };
 
 kvec_t(ColoredCmdlineChunk) ccline_colors;
 
@@ -188,6 +194,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     cmd_hkmap = 0;
   }
 
+  ccline.prompt_id = last_prompt_id++;
   ccline.overstrike = false;                // always start in insert mode
   s->old_cursor = curwin->w_cursor;         // needs to be restored later
   s->old_curswant = curwin->w_curswant;
@@ -1703,6 +1710,7 @@ getcmdline_prompt (
   int msg_col_save = msg_col;
 
   save_cmdline(&save_ccline);
+  ccline.prompt_id = last_prompt_id++;
   ccline.cmdprompt = prompt;
   ccline.cmdattr = attr;
   ccline.xp_context = xp_context;
@@ -2178,7 +2186,7 @@ void free_cmdline_buf(void)
 
 # endif
 
-enum { MAX_CB_ERRORS = 5 };
+enum { MAX_CB_ERRORS = 1 };
 
 /// Color command-line
 ///
@@ -2195,9 +2203,6 @@ static bool color_cmdline(void)
 {
   bool ret = true;
   kv_size(ccline_colors) = 0;
-  if (ccline.cmdfirstc != ':') {
-    return ret;
-  }
 
   const int saved_force_abort = force_abort;
   force_abort = true;
@@ -2208,24 +2213,32 @@ static bool color_cmdline(void)
   };
   typval_T tv = { .v_type = VAR_UNKNOWN };
 
-  static Callback prev_cb = { .type = kCallbackNone };
-  static int prev_cb_errors = 0;
-  Callback color_cb;
-  if (!tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
-                            &color_cb)) {
-    goto color_cmdline_error;
+  static unsigned prev_prompt_id = UINT_MAX;
+  static int prev_prompt_errors = 0;
+  Callback color_cb = { .type = kCallbackNone };
+  bool can_free_cb = false;
+
+  if (ccline.input_fn) {
+      color_cb = getln_input_callback;
+  } else if (ccline.cmdfirstc == ':') {
+    if (!tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
+                              &color_cb)) {
+      goto color_cmdline_error;
+    }
+    can_free_cb = true;
+  } else {
+    goto color_cmdline_end;
   }
+
   if (color_cb.type == kCallbackNone) {
     goto color_cmdline_end;
   }
-  if (!tv_callback_equal(&prev_cb, &color_cb)) {
-    prev_cb_errors = 0;
-  } else if (prev_cb_errors >= MAX_CB_ERRORS) {
-    callback_free(&color_cb);
+  if (ccline.prompt_id != prev_prompt_id) {
+    prev_prompt_errors = 0;
+    prev_prompt_id = ccline.prompt_id;
+  } else if (prev_prompt_errors >= MAX_CB_ERRORS) {
     goto color_cmdline_end;
   }
-  callback_free(&prev_cb);
-  prev_cb = color_cb;
   if (ccline.cmdbuff[ccline.cmdlen] != NUL) {
     arg_allocated = true;
     arg.vval.v_string = xmemdupz((const char *)ccline.cmdbuff,
@@ -2329,8 +2342,11 @@ static bool color_cmdline(void)
       .attr = 0,
     }));
   }
-  prev_cb_errors = 0;
+  prev_prompt_errors = 0;
 color_cmdline_end:
+  if (can_free_cb) {
+    callback_free(&color_cb);
+  }
   force_abort = saved_force_abort;
   if (arg_allocated) {
     tv_clear(&arg);
@@ -2338,7 +2354,7 @@ color_cmdline_end:
   tv_clear(&tv);
   return ret;
 color_cmdline_error:
-  prev_cb_errors++;
+  prev_prompt_errors++;
   const bool do_redraw = (did_emsg || got_int);
   got_int = false;
   did_emsg = false;
@@ -2350,9 +2366,9 @@ color_cmdline_error:
   }
   kv_size(ccline_colors) = 0;
   if (do_redraw) {
-    prev_cb_errors += MAX_CB_ERRORS;
+    prev_prompt_errors += MAX_CB_ERRORS;
     redrawcmdline();
-    prev_cb_errors -= MAX_CB_ERRORS;
+    prev_prompt_errors -= MAX_CB_ERRORS;
     ret = false;
   }
   goto color_cmdline_end;

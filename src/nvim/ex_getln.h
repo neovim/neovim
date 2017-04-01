@@ -52,6 +52,8 @@ typedef struct hist_entry {
   list_T *additional_elements;  ///< Additional entries from ShaDa file.
 } histentry_T;
 
+extern Callback getln_input_callback;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.h.generated.h"
 #endif

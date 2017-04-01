@@ -15,10 +15,10 @@ before_each(function()
   screen = Screen.new(40, 8)
   screen:attach()
   source([[
-    highlight RBP1 guifg=Red
-    highlight RBP2 guifg=Yellow
-    highlight RBP3 guifg=Green
-    highlight RBP4 guifg=Blue
+    highlight RBP1 guibg=Red
+    highlight RBP2 guibg=Yellow
+    highlight RBP3 guibg=Green
+    highlight RBP4 guibg=Blue
     let g:NUM_LVLS = 4
     function Redraw()
       redraw!
@@ -103,12 +103,13 @@ before_each(function()
     endfunction
   ]])
   screen:set_default_attr_ids({
-    RBP1={foreground = Screen.colors.Red},
-    RBP2={foreground = Screen.colors.Yellow},
-    RBP3={foreground = Screen.colors.Green},
-    RBP4={foreground = Screen.colors.Blue},
+    RBP1={background = Screen.colors.Red},
+    RBP2={background = Screen.colors.Yellow},
+    RBP3={background = Screen.colors.Green},
+    RBP4={background = Screen.colors.Blue},
     EOB={bold = true, foreground = Screen.colors.Blue1},
     ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+    SK={foreground = Screen.colors.Blue},
   })
 end)
 
@@ -238,17 +239,25 @@ describe('Command-line coloring', function()
     feed(':echo "«')
     screen:expect([[
       {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
       :echo "                                 |
-      {ERR:E5405: Chunk 0 start 7 splits multibyte }|
-      {ERR:character}                               |
-      :echo "«                                |
       {ERR:E5405: Chunk 0 start 7 splits multibyte }|
       {ERR:character}                               |
       :echo "«^                                |
     ]])
     feed('»')
-    -- FIXME Does not work well with too much error messages: they overwrite
-    --       cmdline.
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :echo "                                 |
+      {ERR:E5405: Chunk 0 start 7 splits multibyte }|
+      {ERR:character}                               |
+      :echo "«»^                               |
+    ]])
   end)
   it('does the right thing when hl end appears to split multibyte char',
   function()
@@ -256,21 +265,23 @@ describe('Command-line coloring', function()
     feed(':echo "«')
     screen:expect([[
       {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
       :echo "                                 |
-      {ERR:E5406: Chunk 0 end 7 splits multibyte ch}|
-      {ERR:aracter}                                 |
-      :echo "«                                |
       {ERR:E5406: Chunk 0 end 7 splits multibyte ch}|
       {ERR:aracter}                                 |
       :echo "«^                                |
     ]])
   end)
   it('does the right thing when errorring', function()
+    if true then return pending('echoerr does not work well now') end
     meths.set_var('Nvim_color_cmdline', 'Echoerring')
     feed(':e')
     -- FIXME Does not work well with :echoerr: error message overwrites cmdline.
   end)
   it('does the right thing when throwing', function()
+    if true then return pending('Throwing does not work well now') end
     meths.set_var('Nvim_color_cmdline', 'Throwing')
     feed(':e')
     -- FIXME Does not work well with :throw: error message overwrites cmdline.
@@ -280,16 +291,17 @@ describe('Command-line coloring', function()
     feed(':let x = "«"\n')
     eq('«', meths.get_var('x'))
     local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
-    eq('\n'..msg..'\n'..msg, funcs.execute('messages'))
+    eq('\n'..msg, funcs.execute('messages'))
   end)
   it('stops executing callback after a number of errors', function()
     meths.set_var('Nvim_color_cmdline', 'SplittedMultibyteStart')
     feed(':let x = "«»«»«»«»«»"\n')
     eq('«»«»«»«»«»', meths.get_var('x'))
     local msg = '\nE5405: Chunk 0 start 10 splits multibyte character'
-    eq(msg:rep(5), funcs.execute('messages'))
+    eq(msg:rep(1), funcs.execute('messages'))
   end)
   it('allows interrupting callback with <C-c>', function()
+    if true then return pending('<C-c> does not work well enough now') end
     meths.set_var('Nvim_color_cmdline', 'Halting')
     feed(':echo 42')
     for i = 1, 6 do
@@ -338,7 +350,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      :echo {RBP1:(}"{RBP4:^M^@^@}"{RBP1:)}^                        |
+      :echo {RBP1:(}"{SK:^M^@^@}"{RBP1:)}^                        |
     ]])
   end)
   -- TODO Check for all other errors
