@@ -452,15 +452,19 @@ static void tui_busy_stop(UI *ui)
 static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, data->unibi_ext.enable_mouse);
-  data->mouse_enabled = true;
+  if (!data->mouse_enabled) {
+    unibi_out(ui, data->unibi_ext.enable_mouse);
+    data->mouse_enabled = true;
+  }
 }
 
 static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, data->unibi_ext.disable_mouse);
-  data->mouse_enabled = false;
+  if (data->mouse_enabled) {
+    unibi_out(ui, data->unibi_ext.disable_mouse);
+    data->mouse_enabled = false;
+  }
 }
 
 static void tui_mode_change(UI *ui, int mode)
