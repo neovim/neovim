@@ -17289,7 +17289,7 @@ static bool write_list(FileDescriptor *const fp, const list_T *const list,
       }
     }
   }
-  if ((error = file_fsync(fp)) != 0) {
+  if ((error = file_flush(fp)) != 0) {
     goto write_list_error;
   }
   return true;
@@ -17439,21 +17439,21 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (fname == NULL) {
     return;
   }
-  FileDescriptor *fp;
+  FileDescriptor fp;
   int error;
   rettv->vval.v_number = -1;
   if (*fname == NUL) {
     EMSG(_("E482: Can't open file with an empty name"));
-  } else if ((fp = file_open_new(&error, fname,
-                                 ((append ? kFileAppend : kFileTruncate)
-                                  | kFileCreate), 0666)) == NULL) {
+  } else if ((error = file_open(&fp, fname,
+                                ((append ? kFileAppend : kFileTruncate)
+                                 | kFileCreate), 0666)) != 0) {
     emsgf(_("E482: Can't open file %s for writing: %s"),
           fname, os_strerror(error));
   } else {
-    if (write_list(fp, argvars[0].vval.v_list, binary)) {
+    if (write_list(&fp, argvars[0].vval.v_list, binary)) {
       rettv->vval.v_number = 0;
     }
-    if ((error = file_free(fp)) != 0) {
+    if ((error = file_close(&fp)) != 0) {
       emsgf(_("E80: Error when closing file %s: %s"),
             fname, os_strerror(error));
     }

@@ -143,21 +143,36 @@ int file_free(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
 /// @param[in,out]  fp  File to work with.
 ///
 /// @return 0 or error code.
-int file_fsync(FileDescriptor *const fp)
+int file_flush(FileDescriptor *const fp)
   FUNC_ATTR_NONNULL_ALL
 {
   if (!fp->wr) {
     return 0;
   }
   file_rb_write_full_cb(fp->rv, fp);
-  if (fp->_error != 0) {
-    const int error = fp->_error;
-    fp->_error = 0;
-    return error;
+  const int error = fp->_error;
+  fp->_error = 0;
+  return error;
+}
+
+/// Flush file modifications to disk and run fsync()
+///
+/// @param[in,out]  fp  File to work with.
+///
+/// @return 0 or error code.
+int file_fsync(FileDescriptor *const fp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!fp->wr) {
+    return 0;
   }
-  const int error = os_fsync(fp->fd);
-  if (error != UV_EINVAL && error != UV_EROFS) {
-    return error;
+  const int flush_error = file_flush(fp);
+  if (flush_error != 0) {
+    return flush_error;
+  }
+  const int fsync_error = os_fsync(fp->fd);
+  if (fsync_error != UV_EINVAL && fsync_error != UV_EROFS) {
+    return fsync_error;
   }
   return 0;
 }
