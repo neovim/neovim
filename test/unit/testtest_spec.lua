@@ -1,5 +1,6 @@
 local helpers = require('test.unit.helpers')(after_each)
 local assert = require('luassert')
+
 local itp = helpers.gen_itp(it)
 
 -- All of the below tests must fail. Check how exactly they fail.

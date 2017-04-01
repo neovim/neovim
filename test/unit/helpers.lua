@@ -511,6 +511,64 @@ if os.getenv('NVIM_TEST_PRINT_SYSCALLS') == '1' then
   end
 end
 
+local function just_fail(_)
+  return false
+end
+say:set('assertion.just_fail.positive', '%s')
+say:set('assertion.just_fail.negative', '%s')
+assert:register('assertion', 'just_fail', just_fail,
+                'assertion.just_fail.positive',
+                'assertion.just_fail.negative')
+
+local function itp_child(wr, func)
+  init()
+  collectgarbage('stop')
+  local err, emsg = pcall(func)
+  collectgarbage('restart')
+  emsg = tostring(emsg)
+  if not err then
+    sc.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
+    deinit()
+    sc.close(wr)
+    sc.exit(1)
+  else
+    sc.write(wr, '+\n')
+    deinit()
+    sc.close(wr)
+    sc.exit(0)
+  end
+end
+
+local function check_child_err(rd)
+  local res = sc.read(rd, 2)
+  eq(2, #res)
+  if res == '+\n' then
+    return
+  end
+  eq('-\n', res)
+  local len_s = sc.read(rd, 5)
+  local len = tonumber(len_s)
+  neq(0, len)
+  local err = sc.read(rd, len + 1)
+  assert.just_fail(err)
+end
+
+local function itp_parent(rd, pid, allow_failure)
+  local err, emsg = pcall(check_child_err, rd)
+  sc.wait(pid)
+  sc.close(rd)
+  if not err then
+    if allow_failure then
+      io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
+      os.execute([[
+        sh -c "source ci/common/test.sh
+        check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
+    else
+      error(emsg)
+    end
+  end
+end
+
 local function gen_itp(it)
   child_calls_mod = {}
   child_calls_mod_once = {}
@@ -518,14 +576,6 @@ local function gen_itp(it)
   preprocess_cache_mod = map(function(v) return v end, preprocess_cache_init)
   previous_defines_mod = previous_defines_init
   cdefs_mod = cdefs_init:copy()
-  local function just_fail(_)
-    return false
-  end
-  say:set('assertion.just_fail.positive', '%s')
-  say:set('assertion.just_fail.negative', '%s')
-  assert:register('assertion', 'just_fail', just_fail,
-                  'assertion.just_fail.positive',
-                  'assertion.just_fail.negative')
   local function itp(name, func, allow_failure)
     if allow_failure and os.getenv('NVIM_TEST_RUN_FAILING_TESTS') ~= '1' then
       -- FIXME Fix tests with this true
@@ -535,50 +585,13 @@ local function gen_itp(it)
       local rd, wr = sc.pipe()
       child_pid = sc.fork()
       if child_pid == 0 then
-        init()
         sc.close(rd)
-        collectgarbage('stop')
-        local err, emsg = pcall(func)
-        collectgarbage('restart')
-        emsg = tostring(emsg)
-        if not err then
-          sc.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
-          deinit()
-          sc.close(wr)
-          sc.exit(1)
-        else
-          sc.write(wr, '+\n')
-          deinit()
-          sc.close(wr)
-          sc.exit(0)
-        end
+        itp_child(wr, func)
       else
         sc.close(wr)
-        local function check()
-          local res = sc.read(rd, 2)
-          eq(2, #res)
-          if res == '+\n' then
-            return
-          end
-          eq('-\n', res)
-          local len_s = sc.read(rd, 5)
-          local len = tonumber(len_s)
-          neq(0, len)
-          local err = sc.read(rd, len + 1)
-          assert.just_fail(err)
-        end
-        local err, emsg = pcall(check)
-        sc.wait(child_pid)
+        saved_child_pid = child_pid
         child_pid = nil
-        sc.close(rd)
-        if not err then
-          if allow_failure then
-            io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
-            os.execute([[sh -c "source ci/common/test.sh ; check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
-          else
-            error(emsg)
-          end
-        end
+        itp_parent(rd, saved_child_pid, allow_failure)
       end
     end)
   end
@@ -610,6 +623,7 @@ local module = {
   only_separate = only_separate,
   child_call_once = child_call_once,
   child_cleanup_once = child_cleanup_once,
+  sc = sc,
 }
 return function(after_each)
   if after_each then
