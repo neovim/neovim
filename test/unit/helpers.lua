@@ -11,6 +11,7 @@ local posix = nil
 local syscall = nil
 
 local check_cores = global_helpers.check_cores
+local dedent = global_helpers.dedent
 local neq = global_helpers.neq
 local map = global_helpers.map
 local eq = global_helpers.eq
@@ -525,18 +526,22 @@ local hook_sfnamelen = 30
 local hook_numlen = 5
 local hook_msglen = 1 + 1 + 1 + (1 + hook_fnamelen) + (1 + hook_sfnamelen) + (1 + hook_numlen) + 1
 
+local tracehelp = dedent([[
+  ┌ Trace type: _r_eturn from function , function _c_all, _l_ine executed,
+  │             _t_ail return, _C_ount (should not actually appear).
+  │┏ Function type: _L_ua function, _C_ function, _m_ain part of chunk,
+  │┃                function that did _t_ail call.
+  │┃┌ Function name type: _g_lobal, _l_ocal, _m_ethod, _f_ield, _u_pvalue,
+  │┃│                     space for unknown.
+  │┃│ ┏ Source file name             ┌ Function name                ┏ Line
+  │┃│ ┃ (trunc to 30 bytes, no .lua) │ (truncated to last 30 bytes) ┃ number
+  CWN SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:LLLLL\n
+]])
+
 local function child_sethook(wr)
   if os.getenv('NVIM_TEST_NO_TRACE') == '1' then
     return
   end
-  -- Message:
-  -- |> msg char (1)
-  -- ||> what char (1)
-  -- |||> namewhat char (1)
-  -- ||| |> source file name (30)
-  -- ||| |                              |> function name (30)
-  -- ||| |                              |                              |> line number (5)
-  -- CWN SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:LLLLL\n
   local function hook(reason, lnum)
     local msgchar = reason:sub(1, 1)
     if reason == 'count' then
@@ -636,7 +641,7 @@ local function check_child_err(rd)
   end
   local res = sc.read(rd, 2)
   if #res ~= 2 then
-    local error = 'Test crashed, trace:\n'
+    local error = '\nTest crashed, trace:\n' .. tracehelp
     for i = 1, #trace do
       error = error .. trace[i]
     end
