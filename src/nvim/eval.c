@@ -17289,7 +17289,7 @@ static bool write_list(FileDescriptor *const fp, const list_T *const list,
       }
     }
   }
-  if ((error = file_fsync(fp)) != 0) {
+  if ((error = file_flush(fp)) != 0) {
     goto write_list_error;
   }
   return true;

@@ -80,6 +80,10 @@ local function file_read(fp, size)
   return ret1, ret2
 end
 
+local function file_flush(fp)
+  return m.file_flush(fp)
+end
+
 local function file_fsync(fp)
   return m.file_fsync(fp)
 end
@@ -239,6 +243,21 @@ describe('file_fsync', function()
     eq(4, wsize)
     eq(0, lfs.attributes(filec).size)
     eq(0, file_fsync(fp))
+    eq(wsize, lfs.attributes(filec).size)
+    eq(0, m.file_close(fp))
+  end)
+end)
+
+describe('file_flush', function()
+  itp('can flush writes to disk', function()
+    local err, fp = file_open(filec, m.kFileCreateOnly, 384)
+    eq(0, file_flush(fp))
+    eq(0, err)
+    eq(0, lfs.attributes(filec).size)
+    local wsize = file_write(fp, 'test')
+    eq(4, wsize)
+    eq(0, lfs.attributes(filec).size)
+    eq(0, file_flush(fp))
     eq(wsize, lfs.attributes(filec).size)
     eq(0, m.file_close(fp))
   end)
