@@ -313,8 +313,8 @@ function Screen:_redraw(updates)
       if handler ~= nil then
         handler(self, unpack(update[i]))
       else
-        assert(self._on_event, "Either add an Screen:_handle_XXX method "..
-               " or call Screen:set_on_event_handler")
+        assert(self._on_event,
+          "Add Screen:_handle_XXX method or call Screen:set_on_event_handler")
         self._on_event(method, update[i])
       end
     end

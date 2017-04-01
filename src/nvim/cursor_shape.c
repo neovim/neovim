@@ -13,35 +13,25 @@
 /// Handling of cursor and mouse pointer shapes in various modes.
 static cursorentry_T shape_table[SHAPE_IDX_COUNT] =
 {
-  // The values will be filled in from the 'guicursor' and 'mouseshape'
-  // defaults when Vim starts.
-  // Adjust the SHAPE_IDX_ defines when making changes!
-  { "normal",
-    0, 0, 0, 700L, 400L, 250L, 0, 0, "n", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "visual",
-    0, 0, 0, 700L, 400L, 250L, 0, 0, "v", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "insert",
-    0, 0, 0, 700L, 400L, 250L, 0, 0, "i", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "replace",
-    0, 0, 0, 700L, 400L, 250L, 0, 0, "r", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "cmd_normal",
-    0, 0, 0, 700L, 400L, 250L, 0, 0, "c", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "cmd_insert", 0,
-    0, 0, 700L, 400L, 250L, 0, 0, "ci", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "cmd_replace",
-    0, 0, 0, 700L, 400L, 250L, 0, 0, "cr", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "pending",
-    0, 0, 0, 700L, 400L, 250L, 0, 0, "o", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "visual_select",
-    0, 0, 0, 700L, 400L, 250L, 0, 0, "ve", SHAPE_CURSOR+SHAPE_MOUSE },
-  { "cmd_line", 0, 0, 0,   0L,   0L,   0L, 0, 0, "e", SHAPE_MOUSE },
-  { "statusline", 0, 0, 0,   0L,   0L,   0L, 0, 0, "s", SHAPE_MOUSE },
-  { "drag_statusline", 0, 0, 0,   0L,   0L,   0L, 0, 0, "sd", SHAPE_MOUSE },
-  { "vsep", 0, 0, 0,   0L,   0L,   0L, 0, 0, "vs", SHAPE_MOUSE },
-  { "vdrag", 0, 0, 0,   0L,   0L,   0L, 0, 0, "vd", SHAPE_MOUSE },
+  // Values are set by 'guicursor' and 'mouseshape'.
+  // Adjust the SHAPE_IDX_ defines when changing this!
+  { "normal", 0, 0, 0, 700L, 400L, 250L, 0, 0, "n", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "visual", 0, 0, 0, 700L, 400L, 250L, 0, 0, "v", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "insert", 0, 0, 0, 700L, 400L, 250L, 0, 0, "i", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "replace", 0, 0, 0, 700L, 400L, 250L, 0, 0, "r", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "cmdline_normal", 0, 0, 0, 700L, 400L, 250L, 0, 0, "c", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "cmdline_insert", 0, 0, 0, 700L, 400L, 250L, 0, 0, "ci", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "cmdline_replace", 0, 0, 0, 700L, 400L, 250L, 0, 0, "cr", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "operator", 0, 0, 0, 700L, 400L, 250L, 0, 0, "o", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "visual_select", 0, 0, 0, 700L, 400L, 250L, 0, 0, "ve", SHAPE_CURSOR+SHAPE_MOUSE },
+  { "cmdline_hover", 0, 0, 0,   0L,   0L,   0L, 0, 0, "e", SHAPE_MOUSE },
+  { "statusline_hover", 0, 0, 0,   0L,   0L,   0L, 0, 0, "s", SHAPE_MOUSE },
+  { "statusline_drag", 0, 0, 0,   0L,   0L,   0L, 0, 0, "sd", SHAPE_MOUSE },
+  { "vsep_hover", 0, 0, 0,   0L,   0L,   0L, 0, 0, "vs", SHAPE_MOUSE },
+  { "vsep_drag", 0, 0, 0,   0L,   0L,   0L, 0, 0, "vd", SHAPE_MOUSE },
   { "more", 0, 0, 0,   0L,   0L,   0L, 0, 0, "m", SHAPE_MOUSE },
   { "more_lastline", 0, 0, 0,   0L,   0L,   0L, 0, 0, "ml", SHAPE_MOUSE },
-  { "match_paren", 0, 0, 0, 100L, 100L, 100L, 0, 0, "sm", SHAPE_CURSOR },
+  { "showmatch", 0, 0, 0, 100L, 100L, 100L, 0, 0, "sm", SHAPE_CURSOR },
 };
 
 /// Converts cursor_shapes into a Dictionary of dictionaries

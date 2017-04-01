@@ -5,8 +5,6 @@ local insert, execute = helpers.insert, helpers.execute
 local eq, funcs = helpers.eq, helpers.funcs
 local command = helpers.command
 
-if helpers.pending_win32(pending) then return end
-
 describe('ui/cursor', function()
   local screen
 
@@ -24,7 +22,10 @@ describe('ui/cursor', function()
     command('redraw')
     screen:expect('', nil, nil, nil, true)  -- Tickle the event-loop.
     local expected_cursor_style = {
-      cmd_insert = {
+      cmdline_hover = {
+        mouse_shape = 0,
+        short_name = 'e' },
+      cmdline_insert = {
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -34,10 +35,7 @@ describe('ui/cursor', function()
         id_lm = 46,
         mouse_shape = 0,
         short_name = 'ci' },
-      cmd_line = {
-        mouse_shape = 0,
-        short_name = 'e' },
-      cmd_normal = {
+      cmdline_normal = {
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -47,7 +45,7 @@ describe('ui/cursor', function()
         id_lm = 46,
         mouse_shape = 0,
         short_name = 'c' },
-      cmd_replace = {
+      cmdline_replace = {
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -57,9 +55,6 @@ describe('ui/cursor', function()
         id_lm = 46,
         mouse_shape = 0,
         short_name = 'cr' },
-      drag_statusline = {
-        mouse_shape = 0,
-        short_name = 'sd' },
       insert = {
         blinkoff = 250,
         blinkon = 400,
@@ -70,15 +65,6 @@ describe('ui/cursor', function()
         id_lm = 46,
         mouse_shape = 0,
         short_name = 'i' },
-      match_paren = {
-        blinkoff = 150,
-        blinkon = 175,
-        blinkwait = 175,
-        cell_percentage = 0,
-        cursor_shape = 'block',
-        hl_id = 45,
-        id_lm = 45,
-        short_name = 'sm' },
       more = {
         mouse_shape = 0,
         short_name = 'm' },
@@ -95,7 +81,7 @@ describe('ui/cursor', function()
         id_lm = 46,
         mouse_shape = 0,
         short_name = 'n' },
-      pending = {
+      operator = {
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -115,12 +101,21 @@ describe('ui/cursor', function()
         id_lm = 46,
         mouse_shape = 0,
         short_name = 'r' },
-      statusline = {
+      showmatch = {
+        blinkoff = 150,
+        blinkon = 175,
+        blinkwait = 175,
+        cell_percentage = 0,
+        cursor_shape = 'block',
+        hl_id = 45,
+        id_lm = 45,
+        short_name = 'sm' },
+      statusline_drag = {
+        mouse_shape = 0,
+        short_name = 'sd' },
+      statusline_hover = {
         mouse_shape = 0,
         short_name = 's' },
-      vdrag = {
-        mouse_shape = 0,
-        short_name = 'vd' },
       visual = {
         blinkoff = 250,
         blinkon = 400,
@@ -141,7 +136,10 @@ describe('ui/cursor', function()
         id_lm = 45,
         mouse_shape = 0,
         short_name = 've' },
-      vsep = {
+      vsep_drag = {
+        mouse_shape = 0,
+        short_name = 'vd' },
+      vsep_hover = {
         mouse_shape = 0,
         short_name = 'vs' }
       }
@@ -161,19 +159,23 @@ describe('ui/cursor', function()
     screen:expect('', nil, nil, nil, true)  -- Tickle the event-loop.
     eq('vertical', screen._cursor_style.normal.cursor_shape)
     eq('horizontal', screen._cursor_style.visual_select.cursor_shape)
-    eq('vertical', screen._cursor_style.pending.cursor_shape)
+    eq('vertical', screen._cursor_style.operator.cursor_shape)
     eq('block', screen._cursor_style.insert.cursor_shape)
-    eq('vertical', screen._cursor_style.match_paren.cursor_shape)
+    eq('vertical', screen._cursor_style.showmatch.cursor_shape)
+    eq(171, screen._cursor_style.normal.blinkwait)
+    eq(172, screen._cursor_style.normal.blinkoff)
+    eq(173, screen._cursor_style.normal.blinkon)
   end)
 
   it("empty 'guicursor' sets cursor_shape=block in all modes", function()
     meths.set_option('guicursor', '')
     command('redraw')
     screen:expect('', nil, nil, nil, true)  -- Tickle the event-loop.
-    for _, m in ipairs({ 'cmd_insert', 'cmd_normal', 'cmd_replace', 'insert',
-                         'match_paren', 'normal', 'replace', 'visual',
+    for _, m in ipairs({ 'cmdline_insert', 'cmdline_normal', 'cmdline_replace', 'insert',
+                         'showmatch', 'normal', 'replace', 'visual',
                          'visual_select', }) do
       eq('block', screen._cursor_style[m].cursor_shape)
+      eq(0, screen._cursor_style[m].blinkon)
     end
   end)
 
