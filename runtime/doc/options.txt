@@ -3762,12 +3762,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:source $VIMRUNTIME/menu.vim
 <	Warning: This deletes all menus that you defined yourself!
 
-					*'langnoremap'* *'lnr'*
-'langnoremap' 'lnr'	boolean (default on)
+			*'langremap'* *'lrm'* *'nolangremap'* *'nolrm'*
+'langremap' 'lrm'	boolean (default off)
 			global
-	When on, setting 'langmap' does not apply to characters resulting from
+	When off, setting 'langmap' does not apply to characters resulting from
 	a mapping.  If setting 'langmap' disables some of your mappings, make
-	sure this option is set.
+	sure this option is off.
 
 					*'laststatus'* *'ls'*
 'laststatus' 'ls'	number	(default 2)

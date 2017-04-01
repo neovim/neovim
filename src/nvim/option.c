@@ -3630,6 +3630,12 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
   } else if ((int *)varp == &p_force_off && p_force_off == true) {
     p_force_off = false;
     return (char *)e_unsupportedoption;
+  } else if ((int *)varp == &p_lrm) {
+    // 'langremap' -> !'langnoremap'
+    p_lnr = !p_lrm;
+  } else if ((int *)varp == &p_lnr) {
+    // 'langnoremap' -> !'langremap'
+    p_lrm = !p_lnr;
   // 'undofile'
   } else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
     // Only take action when the option was set. When reset we do not

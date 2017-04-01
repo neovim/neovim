@@ -45,7 +45,8 @@ these differences.
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
-- 'langnoremap' is set by default
+- 'langnoremap' is enabled by default
+- 'langremap' is disabled by default
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'nocompatible' is always set
