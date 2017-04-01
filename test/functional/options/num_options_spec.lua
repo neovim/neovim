@@ -5,19 +5,23 @@ local clear, execute, eval, eq, meths =
   helpers.clear, helpers.execute, helpers.eval, helpers.eq, helpers.meths
 
 local function should_fail(opt, value, errmsg)
-  execute('let v:errmsg = ""')
   execute('setglobal ' .. opt .. '=' .. value)
   eq(errmsg, eval("v:errmsg"):match("E%d*"))
   execute('let v:errmsg = ""')
   execute('setlocal ' .. opt .. '=' .. value)
   eq(errmsg, eval("v:errmsg"):match("E%d*"))
   execute('let v:errmsg = ""')
+  local status, err = pcall(meths.set_option, opt, value)
+  eq(status, false)
+  eq(errmsg, err:match("E%d*"))
+  eq('', eval("v:errmsg"))
 end
 
 local function should_succeed(opt, value)
   execute('setglobal ' .. opt .. '=' .. value)
-  eq('', eval("v:errmsg"))
   execute('setlocal ' .. opt .. '=' .. value)
+  meths.set_option(opt, value)
+  eq(value, meths.get_option(opt))
   eq('', eval("v:errmsg"))
 end
 
@@ -74,8 +78,11 @@ describe(':set validation', function()
     should_fail('numberwidth', 11, 'E474')
     should_fail('numberwidth', 0, 'E487')
 
-    -- If smaller than one this one is set to 'lines'-1
-    should_succeed('window', -10)
+    -- If smaller than 1 this one is set to 'lines'-1
+    execute('setglobal window=-10')
+    meths.set_option('window', -10)
+    eq(23, meths.get_option('window'))
+    eq('', eval("v:errmsg"))
   end)
 
   it('set wmh/wh wmw/wiw checks', function()
