@@ -10978,81 +10978,123 @@ void get_user_input(const typval_T *const argvars,
                     typval_T *const rettv, const bool inputdialog)
   FUNC_ATTR_NONNULL_ALL
 {
-  const char *prompt = tv_get_string_chk(&argvars[0]);
-  int cmd_silent_save = cmd_silent;
-  int xp_type = EXPAND_NOTHING;
-  char_u      *xp_arg = NULL;
-
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
 
-  cmd_silent = FALSE;           /* Want to see the prompt. */
-  if (prompt != NULL) {
-    // Only the part of the message after the last NL is considered as
-    // prompt for the command line.
-    const char *p = strrchr(prompt, '\n');
-    if (p == NULL) {
-      p = prompt;
-    } else {
-      p++;
-      msg_start();
-      msg_clr_eos();
-      msg_puts_attr_len(prompt, p - prompt, echo_attr);
-      msg_didout = false;
-      msg_starthere();
-    }
-    cmdline_row = msg_row;
-
-    const char *defstr = "";
-    char buf[NUMBUFLEN];
+  const char *prompt = "";
+  const char *defstr = "";
+  const char *cancelreturn = NULL;
+  const char *xp_name = NULL;
+  char prompt_buf[NUMBUFLEN];
+  char defstr_buf[NUMBUFLEN];
+  char cancelreturn_buf[NUMBUFLEN];
+  char xp_name_buf[NUMBUFLEN];
+  if (argvars[0].v_type == VAR_DICT) {
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      defstr = tv_get_string_buf_chk(&argvars[1], buf);
-      if (defstr != NULL) {
-        stuffReadbuffSpec(defstr);
+      emsgf(
+          _("E5050: When providing {opts} argument no more arguments follow"));
+      return;
+    }
+    const dict_T *const dict = argvars[0].vval.v_dict;
+    prompt = tv_dict_get_string_buf_chk(dict, S_LEN("prompt"), prompt_buf, "");
+    if (prompt == NULL) {
+      return;
+    }
+    defstr = tv_dict_get_string_buf_chk(dict, S_LEN("default"), defstr_buf, "");
+    if (defstr == NULL) {
+      return;
+    }
+    char def[1] = { 0 };
+    cancelreturn = tv_dict_get_string_buf_chk(dict, S_LEN("cancelreturn"),
+                                              cancelreturn_buf, def);
+    if (cancelreturn == NULL) {  // error
+      return;
+    }
+    if (*cancelreturn == NUL) {
+      cancelreturn = NULL;
+    }
+    xp_name = tv_dict_get_string_buf_chk(dict, S_LEN("completion"),
+                                         xp_name_buf, def);
+    if (xp_name == NULL) {  // error
+      return;
+    }
+    if (xp_name == def) {  // default to NULL
+      xp_name = NULL;
+    }
+  } else {
+    prompt = tv_get_string_buf_chk(&argvars[0], prompt_buf);
+    if (prompt == NULL) {
+      return;
+    }
+    if (argvars[1].v_type != VAR_UNKNOWN) {
+      defstr = tv_get_string_buf_chk(&argvars[1], defstr_buf);
+      if (defstr == NULL) {
+        return;
       }
-
-      if (!inputdialog && argvars[2].v_type != VAR_UNKNOWN) {
-        char buf2[NUMBUFLEN];
-        // input() with a third argument: completion
-        rettv->vval.v_string = NULL;
-
-        const char *const xp_name = tv_get_string_buf_chk(&argvars[2], buf2);
-        if (xp_name == NULL) {
+      if (argvars[2].v_type != VAR_UNKNOWN) {
+        const char *const arg2 = tv_get_string_buf_chk(&argvars[2],
+                                                       cancelreturn_buf);
+        if (arg2 == NULL) {
           return;
         }
-
-        const int xp_namelen = (int)strlen(xp_name);
-
-        uint32_t argt;
-        if (parse_compl_arg((char_u *)xp_name, xp_namelen, &xp_type, &argt,
-                            &xp_arg) == FAIL) {
-          return;
+        if (inputdialog) {
+          cancelreturn = arg2;
+        } else {
+          xp_name = arg2;
         }
       }
     }
-
-    if (defstr != NULL) {
-      int save_ex_normal_busy = ex_normal_busy;
-      ex_normal_busy = 0;
-      rettv->vval.v_string =
-        getcmdline_prompt(inputsecret_flag ? NUL : '@', (char_u *)p, echo_attr,
-                          xp_type, xp_arg);
-      ex_normal_busy = save_ex_normal_busy;
-    }
-    if (inputdialog && rettv->vval.v_string == NULL
-        && argvars[1].v_type != VAR_UNKNOWN
-        && argvars[2].v_type != VAR_UNKNOWN) {
-      char buf[NUMBUFLEN];
-      rettv->vval.v_string = (char_u *)xstrdup(tv_get_string_buf(
-          &argvars[2], buf));
-    }
-
-    xfree(xp_arg);
-
-    /* since the user typed this, no need to wait for return */
-    need_wait_return = FALSE;
-    msg_didout = FALSE;
   }
+
+  int xp_type = EXPAND_NOTHING;
+  char *xp_arg = NULL;
+  if (xp_name != NULL) {
+    // input() with a third argument: completion
+    const int xp_namelen = (int)strlen(xp_name);
+
+    uint32_t argt;
+    if (parse_compl_arg((char_u *)xp_name, xp_namelen, &xp_type,
+                        &argt, (char_u **)&xp_arg) == FAIL) {
+      return;
+    }
+  }
+
+  int cmd_silent_save = cmd_silent;
+
+  cmd_silent = false;  // Want to see the prompt.
+  // Only the part of the message after the last NL is considered as
+  // prompt for the command line.
+  const char *p = strrchr(prompt, '\n');
+  if (p == NULL) {
+    p = prompt;
+  } else {
+    p++;
+    msg_start();
+    msg_clr_eos();
+    msg_puts_attr_len(prompt, p - prompt, echo_attr);
+    msg_didout = false;
+    msg_starthere();
+  }
+  cmdline_row = msg_row;
+
+  stuffReadbuffSpec(defstr);
+
+  int save_ex_normal_busy = ex_normal_busy;
+  ex_normal_busy = 0;
+  rettv->vval.v_string =
+    getcmdline_prompt(inputsecret_flag ? NUL : '@', (char_u *)p, echo_attr,
+                      xp_type, (char_u *)xp_arg);
+  ex_normal_busy = save_ex_normal_busy;
+
+  if (rettv->vval.v_string == NULL && cancelreturn != NULL) {
+    rettv->vval.v_string = (char_u *)xstrdup(cancelreturn);
+  }
+
+  xfree(xp_arg);
+
+  // Since the user typed this, no need to wait for return.
+  need_wait_return = false;
+  msg_didout = false;
   cmd_silent = cmd_silent_save;
 }
 

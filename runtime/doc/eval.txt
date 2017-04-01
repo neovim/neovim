@@ -4665,10 +4665,23 @@ index({list}, {expr} [, {start} [, {ic}]])			*index()*
 
 
 input({prompt} [, {text} [, {completion}]])		*input()*
+input({opts})
 		The result is a String, which is whatever the user typed on
 		the command-line.  The {prompt} argument is either a prompt
 		string, or a blank string (for no prompt).  A '\n' can be used
 		in the prompt to start a new line.
+
+		In the second form it accepts a single dictionary with the 
+		following keys, any of which may be omitted:
+
+		Key           Default  Description ~
+		prompt        ""       Same as {prompt} in the first form.
+		default       ""       Same as {text} in the first form.
+		completion    nothing  Same as {completion} in the first form.
+		cancelreturn  ""       Same as {cancelreturn} from
+		                       |inputdialog()|. Also works with 
+		                       input().
+
 		The highlighting set with |:echohl| is used for the prompt.
 		The input is entered just like a command-line, with the same
 		editing commands and mappings.	There is a separate history
@@ -4710,6 +4723,7 @@ input({prompt} [, {text} [, {completion}]])		*input()*
 			:endfunction
 
 inputdialog({prompt} [, {text} [, {cancelreturn}]])		*inputdialog()*
+inputdialog({opts})
 		Like |input()|, but when the GUI is running and text dialogs
 		are supported, a dialog window pops up to input the text.
 		Example: >
@@ -4721,7 +4735,7 @@ inputdialog({prompt} [, {text} [, {cancelreturn}]])		*inputdialog()*
 		omitted an empty string is returned.
 		Hitting <Enter> works like pressing the OK button.  Hitting
 		<Esc> works like pressing the Cancel button.
-		NOTE: Command-line completion is not supported.
+		NOTE: Command-line completion is not supported in the GUI.
 
 inputlist({textlist})					*inputlist()*
 		{textlist} must be a |List| of strings.  This |List| is

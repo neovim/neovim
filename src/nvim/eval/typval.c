@@ -1225,6 +1225,31 @@ const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key,
   return tv_get_string_buf(&di->di_tv, numbuf);
 }
 
+/// Get a string item from a dictionary
+///
+/// @param[in]  d  Dictionary to get item from.
+/// @param[in]  key  Dictionary key.
+/// @param[in]  key_len  Key length.
+/// @param[in]  numbuf  Numbuf for.
+/// @param[in]  def  Default return when key does not exist.
+///
+/// @return `def` when key does not exist,
+///         NULL in case of type error,
+///         string item value in case of success.
+const char *tv_dict_get_string_buf_chk(const dict_T *const d,
+                                       const char *const key,
+                                       const ptrdiff_t key_len,
+                                       char *const numbuf,
+                                       const char *const def)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const dictitem_T *const di = tv_dict_find(d, key, key_len);
+  if (di == NULL) {
+    return def;
+  }
+  return tv_get_string_buf_chk(&di->di_tv, numbuf);
+}
+
 /// Get a function from a dictionary
 ///
 /// @param[in]  d  Dictionary to get callback from.
