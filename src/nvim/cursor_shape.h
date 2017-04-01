@@ -14,7 +14,7 @@ SHAPE_IDX_CR     = 6,       ///< Command line Replace mode
 SHAPE_IDX_O      = 7,       ///< Operator-pending mode
 SHAPE_IDX_VE     = 8,       ///< Visual mode with 'selection' exclusive
 SHAPE_IDX_CLINE  = 9,       ///< On command line
-SHAPE_IDX_STATUS = 10,      ///<  status line
+SHAPE_IDX_STATUS = 10,      ///< status line
 SHAPE_IDX_SDRAG  = 11,      ///< dragging a status line
 SHAPE_IDX_VSEP   = 12,      ///< A vertical separator line
 SHAPE_IDX_VDRAG  = 13,      ///< dragging a vertical separator line
@@ -37,7 +37,7 @@ SHAPE_VER       = 2        ///< vertical bar cursor
 #define SHAPE_CURSOR    2       /* used for text cursor shape */
 
 typedef struct cursor_entry {
-  char *full_name;        ///< mode full name
+  char *full_name;        ///< mode description
   CursorShape shape;      ///< cursor shape: one of the SHAPE_ defines
   int mshape;             ///< mouse shape: one of the MSHAPE defines
   int percentage;         ///< percentage of cell for bar

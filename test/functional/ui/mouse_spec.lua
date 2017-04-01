@@ -6,7 +6,7 @@ local eq, funcs = helpers.eq, helpers.funcs
 
 if helpers.pending_win32(pending) then return end
 
-describe('Mouse input', function()
+describe('ui/mouse/input', function()
   local screen
 
   before_each(function()

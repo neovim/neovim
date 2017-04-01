@@ -250,23 +250,21 @@ connect to another with different type codes.
 ==============================================================================
 6. Remote UIs					           *rpc-remote-ui*
 
-Nvim allows Graphical user interfaces to be implemented by separate processes
-communicating with Nvim over the RPC API. Currently the ui model conists of a
-terminal-like grid with one single, monospace font size, with a few elements
-that could be drawn separately from the grid (for the momemnt only the popup
-menu)
+GUIs can be implemented as external processes communicating with Nvim over the
+RPC API. Currently the UI model consists of a terminal-like grid with one
+single, monospace font size. Some elements (UI "widgets") can be drawn
+separately from the grid.
 
-After connecting to a nvim instance (typically a spawned, embedded instance)
-use the |nvim_ui_attach|(width, height, options) API method to tell nvim that your
-program wants to draw the nvim screen on a grid with "width" times
-"height" cells. "options" should be a dictionary with the following (all
-optional) keys:
-	`rgb`:			Controls what color format to use.
+After connecting to Nvim (usually a spawned, embedded instance) use the
+|nvim_ui_attach| API method to tell Nvim that your program wants to draw the
+Nvim screen on a grid of width × height cells. `options` must be
+a dictionary with these (optional) keys:
+	`rgb`			Controls what color format to use.
 				Set to true (default) to use 24-bit rgb
 				colors.
 				Set to false to use terminal color codes (at
 				most 256 different colors).
-	`popupmenu_external`:	Instead of drawing the completion popupmenu on
+	`popupmenu_external`	Instead of drawing the completion popupmenu on
 				the grid, Nvim will send higher-level events to
 				the ui and let it draw the popupmenu.
 				Defaults to false.

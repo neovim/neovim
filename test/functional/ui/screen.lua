@@ -345,8 +345,8 @@ function Screen:_handle_resize(width, height)
   }
 end
 
-function Screen:_handle_cursor_style_set(styles)
-  self._cursor_styles = styles
+function Screen:_handle_cursor_style_set(style)
+  self._cursor_style = style
 end
 
 function Screen:_handle_clear()

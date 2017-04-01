@@ -2790,22 +2790,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 					i-ci:ver25-Cursor/lCursor,
 					r-cr:hor20-Cursor/lCursor,
 					sm:block-Cursor
-					-blinkwait175-blinkoff150-blinkon175",
-				for Windows console:
-					"n-v-c:block,o:hor50,i-ci:hor15,
-					r-cr:hor30,sm:block")
+					-blinkwait175-blinkoff150-blinkon175")
 			global
-			{only available when compiled with GUI enabled, and
-			for Windows console}
-	This option tells Vim what the cursor should look like in different
-	modes.  It fully works in the GUI.  In a Windows console, only
-	the height of the cursor can be changed.  This can be done by
-	specifying a block cursor, or a percentage for a vertical or
-	horizontal cursor.
-	For a console, shape is taken into account and color as well if
-	'termguicolors' is set. 't_SI' and 't_EI' are deprecated in neovim.
-
-	The option is a comma separated list of parts.  Each part consist of a
+	Configures the cursor style for each mode. Works in the GUI and some
+	terminals. Empty means "non-blinking block cursor in all modes": >
+		:set guicursor=
+<
+	With tmux you might need this in ~/.tmux.conf (see terminal-overrides
+	in the tmux(1) manual page): >
+		set -ga terminal-overrides ',*:Ss=\E[%p1%d q:Se=\E[2 q'
+<
+	The option is a comma separated list of parts.  Each part consists of a
 	mode-list and an argument-list:
 		mode-list:argument-list,mode-list:argument-list,..
 	The mode-list is a dash separated list of these modes:

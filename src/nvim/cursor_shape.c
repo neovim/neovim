@@ -45,7 +45,7 @@ static cursorentry_T shape_table[SHAPE_IDX_COUNT] =
 };
 
 /// Converts cursor_shapes into a Dictionary of dictionaries
-/// @return a dictionary of the form {"normal" : { "cursor_shape": ... }, ...}
+/// @return dictionary of the form {"normal" : { "cursor_shape": ... }, ...}
 Dictionary cursor_shape_dict(void)
 {
   Dictionary all = ARRAY_DICT_INIT;
@@ -82,7 +82,7 @@ Dictionary cursor_shape_dict(void)
 
 /// Parse the 'guicursor' option
 ///
-/// @param what either SHAPE_CURSOR or SHAPE_MOUSE ('mouseshape')
+/// @param what SHAPE_CURSOR or SHAPE_MOUSE ('mouseshape')
 ///
 /// @returns error message for an illegal option, NULL otherwise.
 char_u *parse_shape_opt(int what)
@@ -103,10 +103,11 @@ char_u *parse_shape_opt(int what)
    * First round: check for errors; second round: do it for real.
    */
   for (round = 1; round <= 2; ++round) {
-    /*
-     * Repeat for all comma separated parts.
-     */
+    // Repeat for all comma separated parts.
     modep = p_guicursor;
+    if (*p_guicursor == NUL) {
+      modep = (char_u *)"a:block-blinkon0";
+    }
     while (*modep != NUL) {
       colonp = vim_strchr(modep, ':');
       if (colonp == NULL)
@@ -115,7 +116,7 @@ char_u *parse_shape_opt(int what)
         return (char_u *)N_("E546: Illegal mode");
       commap = vim_strchr(modep, ',');
 
-      // Repeat for all mode's before the colon.
+      // Repeat for all modes before the colon.
       // For the 'a' mode, we loop to handle all the modes.
       all_idx = -1;
       assert(modep < colonp);

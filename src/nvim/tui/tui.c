@@ -148,7 +148,6 @@ static void terminfo_start(UI *ui)
     data->ut = unibi_dummy();
   }
   fix_terminfo(data);
-  // Initialize the cursor shape.
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
