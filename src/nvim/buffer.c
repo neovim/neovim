@@ -2724,7 +2724,7 @@ fileinfo (
     else
       name = curbuf->b_ffname;
     home_replace(shorthelp ? curbuf : NULL, name, p,
-        (int)(IOSIZE - (p - buffer)), TRUE);
+                 (size_t)(IOSIZE - (p - buffer)), true);
   }
 
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
@@ -2889,7 +2889,7 @@ void maketitle(void)
         buf[off++] = ' ';
         buf[off++] = '(';
         home_replace(curbuf, curbuf->b_ffname,
-            buf + off, SPACE_FOR_DIR - off, TRUE);
+                     buf + off, (size_t)(SPACE_FOR_DIR - off), true);
 #ifdef BACKSLASH_IN_FILENAME
         /* avoid "c:/name" to be reduced to "c" */
         if (isalpha(buf[off]) && buf[off + 1] == ':')

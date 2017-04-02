@@ -84,15 +84,15 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
 ///
 /// @return pointer just past the last path separator (empty string, if fname
 ///         ends in a slash), or empty string if fname is NULL.
-char_u *path_tail(char_u *fname)
+char_u *path_tail(const char_u *fname)
   FUNC_ATTR_NONNULL_RET
 {
   if (fname == NULL) {
     return (char_u *)"";
   }
 
-  char_u *tail = get_past_head(fname);
-  char_u *p = tail;
+  const char_u *tail = get_past_head(fname);
+  const char_u *p = tail;
   // Find last part of path.
   while (*p != NUL) {
     if (vim_ispathsep_nocolon(*p)) {
@@ -100,7 +100,7 @@ char_u *path_tail(char_u *fname)
     }
     mb_ptr_adv(p);
   }
-  return tail;
+  return (char_u *)tail;
 }
 
 /// Get pointer to tail of "fname", including path separators.
@@ -174,9 +174,9 @@ const char *path_next_component(const char *fname)
 /// Get a pointer to one character past the head of a path name.
 /// Unix: after "/"; Win: after "c:\"
 /// If there is no head, path is returned.
-char_u *get_past_head(char_u *path)
+char_u *get_past_head(const char_u *path)
 {
-  char_u *retval = path;
+  const char_u *retval = path;
 
 #ifdef WIN32
   // May skip "c:"
@@ -189,7 +189,7 @@ char_u *get_past_head(char_u *path)
     ++retval;
   }
 
-  return retval;
+  return (char_u *)retval;
 }
 
 /*

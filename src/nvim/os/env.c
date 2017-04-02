@@ -703,7 +703,8 @@ char *vim_getenv(const char *name)
 /// @param dstlen Maximum length of the result
 /// @param one If true, only replace one file name, including spaces and commas
 ///            in the file name
-void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
+void home_replace(const buf_T *const buf, const char_u *src,
+                  char_u *dst, size_t dstlen, bool one)
 {
   size_t dirlen = 0, envlen = 0;
   size_t len;
@@ -717,7 +718,7 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
    * If the file is a help file, remove the path completely.
    */
   if (buf != NULL && buf->b_help) {
-    STRCPY(dst, path_tail(src));
+    xstrlcpy((char *)dst, (char *)path_tail(src), dstlen);
     return;
   }
 
@@ -809,7 +810,7 @@ char_u * home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
     len += STRLEN(src);
   }
   char_u *dst = xmalloc(len);
-  home_replace(buf, src, dst, (int)len, true);
+  home_replace(buf, src, dst, len, true);
   return dst;
 }
 

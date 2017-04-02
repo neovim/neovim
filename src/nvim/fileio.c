@@ -200,18 +200,14 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
 {
   int msg_scroll_save;
 
-  if (msg_silent != 0)
+  if (msg_silent != 0) {
     return;
-  msg_add_fname(buf, name);         /* put file name in IObuff with quotes */
-  /* If it's extremely long, truncate it. */
-  if (STRLEN(IObuff) > IOSIZE - 80)
-    IObuff[IOSIZE - 80] = NUL;
-  STRCAT(IObuff, s);
-  /*
-   * For the first message may have to start a new line.
-   * For further ones overwrite the previous one, reset msg_scroll before
-   * calling filemess().
-   */
+  }
+  add_quoted_fname((char *)IObuff, IOSIZE - 80, buf,(const char *)name);
+  xstrlcat((char *)IObuff, (const char *)s, IOSIZE);
+  // For the first message may have to start a new line.
+  // For further ones overwrite the previous one, reset msg_scroll before
+  // calling filemess().
   msg_scroll_save = msg_scroll;
   if (shortmess(SHM_OVERALL) && !exiting && p_verbose == 0)
     msg_scroll = FALSE;
@@ -1800,8 +1796,8 @@ failed:
     }
 
     if (!filtering && !(flags & READ_DUMMY)) {
-      msg_add_fname(curbuf, sfname);         /* fname in IObuff with quotes */
-      c = FALSE;
+      add_quoted_fname((char *)IObuff, IOSIZE, curbuf,(const char *)sfname);
+      c = false;
 
 #ifdef UNIX
 # ifdef S_ISFIFO
@@ -3531,8 +3527,8 @@ restore_backup:
   fname = sfname;           /* use shortname now, for the messages */
 #endif
   if (!filtering) {
-    msg_add_fname(buf, fname);          /* put fname in IObuff with quotes */
-    c = FALSE;
+    add_quoted_fname((char *)IObuff, IOSIZE, buf,(const char *)fname);
+    c = false;
     if (write_info.bw_conv_error) {
       STRCAT(IObuff, _(" CONVERSION ERROR"));
       c = TRUE;
@@ -3681,10 +3677,11 @@ nofail:
 #endif
 
   if (errmsg != NULL) {
+    // - 100 to save some space for further error message
 #ifndef UNIX
-    msg_add_fname(buf, sfname);
+    add_quoted_fname((char *)IObuff, IOSIZE - 100, buf, (const char *)sfname);
 #else
-    msg_add_fname(buf, fname);
+    add_quoted_fname((char *)IObuff, IOSIZE - 100, buf, (const char *)fname);
 #endif
     if (errnum != NULL) {
       if (errmsgarg != 0) {
@@ -3811,16 +3808,25 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
   return OK;
 }
 
-/*
- * Put file name into IObuff with quotes.
- */
-static void msg_add_fname(buf_T *buf, char_u *fname)
+/// Put file name into the specified buffer with quotes
+///
+/// Replaces home directory at the start with `~`.
+///
+/// @param[out]  ret_buf  Buffer to save results to.
+/// @param[in]  buf_len  ret_buf length.
+/// @param[in]  buf  buf_T file name is coming from.
+/// @param[in]  fname  File name to write.
+static void add_quoted_fname(char *const ret_buf, const size_t buf_len,
+                             const buf_T *const buf, const char *fname)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (fname == NULL)
-    fname = (char_u *)"-stdin-";
-  home_replace(buf, fname, IObuff + 1, IOSIZE - 4, TRUE);
-  IObuff[0] = '"';
-  STRCAT(IObuff, "\" ");
+  if (fname == NULL) {
+    fname = "-stdin-";
+  }
+  ret_buf[0] = '"';
+  home_replace(buf, (const char_u *)fname, (char_u *)ret_buf + 1,
+               (int)buf_len - 4, true);
+  xstrlcat(ret_buf, "\" ", buf_len);
 }
 
 /// Append message for text mode to IObuff.
