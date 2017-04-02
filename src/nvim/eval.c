@@ -17421,6 +17421,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   bool binary = false;
   bool append = false;
+  bool do_fsync = true;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     const char *const flags = tv_get_string_chk(&argvars[2]);
     if (flags == NULL) {
@@ -17431,6 +17432,9 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     if (strchr(flags, 'a')) {
       append = true;
+    }
+    if (strchr(flags, 'S')) {
+      do_fsync = false;
     }
   }
 
@@ -17453,7 +17457,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (write_list(&fp, argvars[0].vval.v_list, binary)) {
       rettv->vval.v_number = 0;
     }
-    if ((error = file_close(&fp)) != 0) {
+    if ((error = file_close(&fp, do_fsync)) != 0) {
       emsgf(_("E80: Error when closing file %s: %s"),
             fname, os_strerror(error));
     }
