@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.feed_command
-local iswin, print_screen_size = helpers.iswin, thelpers.print_screen_size
+local iswin = helpers.iswin
 local eval = helpers.eval
 local command = helpers.command
 local wait = helpers.wait
@@ -141,10 +141,7 @@ describe('terminal scrollback', function()
     describe('and the height is decreased by 1', function()
       local function will_hide_top_line()
         screen:try_resize(screen._width, screen._height - 1)
-        if iswin() then
-          print_screen_size()
-        end
-        screen:expect([[
+        screen:expect_after_resize([[
           line2                         |
           line3                         |
           line4                         |
@@ -160,13 +157,10 @@ describe('terminal scrollback', function()
         before_each(function()
           will_hide_top_line()
           screen:try_resize(screen._width, screen._height - 2)
-          if iswin() then
-            print_screen_size()
-          end
         end)
 
         it('will hide the top 3 lines', function()
-          screen:expect([[
+          screen:expect_after_resize([[
             rows: 5, cols: 30             |
             rows: 3, cols: 30             |
             {1: }                             |
@@ -189,9 +183,6 @@ describe('terminal scrollback', function()
     describe('and the height is decreased by 2', function()
       before_each(function()
         screen:try_resize(screen._width, screen._height - 2)
-        if iswin() then
-          print_screen_size()
-        end
       end)
 
       local function will_delete_last_two_lines()
@@ -213,9 +204,6 @@ describe('terminal scrollback', function()
         before_each(function()
           will_delete_last_two_lines()
           screen:try_resize(screen._width, screen._height - 1)
-          if iswin() then
-            print_screen_size()
-          end
         end)
 
         it('will delete the last line and hide the first', function()
@@ -258,10 +246,7 @@ describe('terminal scrollback', function()
         {3:-- TERMINAL --}                |
       ]])
       screen:try_resize(screen._width, screen._height - 3)
-      if iswin() then
-        print_screen_size()
-      end
-      screen:expect([[
+      screen:expect_after_resize([[
         line4                         |
         rows: 3, cols: 30             |
         {1: }                             |
@@ -273,10 +258,7 @@ describe('terminal scrollback', function()
     describe('and the height is increased by 1', function()
       local function pop_then_push()
         screen:try_resize(screen._width, screen._height + 1)
-        if iswin() then
-          print_screen_size()
-        end
-        screen:expect([[
+        screen:expect_after_resize([[
           line4                         |
           rows: 3, cols: 30             |
           rows: 4, cols: 30             |
@@ -292,13 +274,10 @@ describe('terminal scrollback', function()
           pop_then_push()
           eq(8, curbuf('line_count'))
           screen:try_resize(screen._width, screen._height + 3)
-          if iswin() then
-            print_screen_size()
-          end
         end)
 
         local function pop3_then_push1()
-          screen:expect([[
+          screen:expect_after_resize([[
             line2                         |
             line3                         |
             line4                         |
@@ -330,9 +309,6 @@ describe('terminal scrollback', function()
             pop3_then_push1()
             feed('Gi')
             screen:try_resize(screen._width, screen._height + 4)
-            if iswin() then
-              print_screen_size()
-            end
           end)
 
           it('will show all lines and leave a blank one at the end', function()

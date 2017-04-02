@@ -73,6 +73,8 @@
 
 local helpers = require('test.functional.helpers')(nil)
 local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
+local iswin, nvim, retry = helpers.iswin, helpers.nvim, helpers.retry
+
 local dedent = helpers.dedent
 
 local Screen = {}
@@ -257,6 +259,17 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
       end
     end
   end)
+end
+
+function Screen:expect_after_resize(expected)
+  if iswin() then
+    retry(nil, nil, function()
+      nvim('command', 'call jobsend(b:terminal_job_id, "\\<C-q>")')
+      self:expect(expected)
+    end)
+  else
+    self:expect(expected)
+  end
 end
 
 function Screen:wait(check, timeout)

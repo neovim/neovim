@@ -4,15 +4,34 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <uv.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 // -V:STRUCT_CAST:641
 #define STRUCT_CAST(Type, obj) ((Type *)(obj))
-
-uv_tty_t tty;
+#define is_terminal(stream) (uv_guess_handle(fileno(stream)) == UV_TTY)
+#define BUF_SIZE 0xfff
+#define CTRL_C 0x03
+#ifdef _WIN32
+#define CTRL_Q 0x11
+#endif
 
 #ifdef _WIN32
-#include <windows.h>
+typedef struct screen_size {
+  int width;
+  int height;
+} ScreenSize;
+#endif
+
+uv_tty_t tty;
+#ifdef _WIN32
+ScreenSize screen_rect;
+#endif
+
+#ifdef _WIN32
 bool owns_tty(void)
 {
   // XXX: We need to make proper detect owns tty
@@ -30,10 +49,8 @@ bool owns_tty(void)
 }
 #endif
 
-#define is_terminal(stream) (uv_guess_handle(fileno(stream)) == UV_TTY)
-#define BUF_SIZE 0xfff
-
-static void walk_cb(uv_handle_t *handle, void *arg) {
+static void walk_cb(uv_handle_t *handle, void *arg)
+{
   if (!uv_is_closing(handle)) {
     uv_close(handle, NULL);
   }
@@ -42,7 +59,7 @@ static void walk_cb(uv_handle_t *handle, void *arg) {
 #ifndef WIN32
 static void sig_handler(int signum)
 {
-  switch(signum) {
+  switch (signum) {
   case SIGWINCH: {
     int width, height;
     uv_tty_get_winsize(&tty, &width, &height);
@@ -82,14 +99,19 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   }
 
   int *interrupted = stream->data;
+#ifdef _WIN32
   bool prsz = false;
-  int width, height;
+  int width;
+  int height;
+#endif
 
   for (int i = 0; i < cnt; i++) {
-    if (buf->base[i] == 3) {
+    if (buf->base[i] == CTRL_C) {
       (*interrupted)++;
-    } else if (buf->base[i] == 17) {
+#ifdef _WIN32
+    } else if (buf->base[i] == CTRL_Q) {
       prsz = true;
+#endif
     }
   }
 
@@ -98,15 +120,23 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   uv_tty_t out;
   uv_tty_init(&write_loop, &out, fileno(stdout), 0);
 
+#ifdef _WIN32
   if (prsz) {
     uv_tty_get_winsize(&out, &width, &height);
-    fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+    if (screen_rect.width != width || screen_rect.height != height) {
+      screen_rect.width = width;
+      screen_rect.height = height;
+      fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+    }
   } else {
+#endif
     uv_write_t req;
     uv_buf_t b = {.base = buf->base, .len = (size_t)cnt};
     uv_write(&req, STRUCT_CAST(uv_stream_t, &out), &b, 1, NULL);
     uv_run(&write_loop, UV_RUN_DEFAULT);
+#ifdef _WIN32
   }
+#endif
 
   uv_close(STRUCT_CAST(uv_handle_t, &out), NULL);
   uv_run(&write_loop, UV_RUN_DEFAULT);
@@ -152,7 +182,7 @@ int main(int argc, char **argv)
 
   if (argc > 1) {
     int count = atoi(argv[1]);
-    for (int i = 0; i < count; ++i) {
+    for (int i = 0; i < count; i++) {
       printf("line%d\n", i);
     }
     fflush(stdout);
@@ -168,6 +198,14 @@ int main(int argc, char **argv)
   uv_tty_init(uv_default_loop(), &tty, fileno(stderr), 1);
 #else
   uv_tty_init(uv_default_loop(), &tty, fileno(stdin), 1);
+  uv_tty_t out;
+  uv_tty_init(uv_default_loop(), &out, fileno(stdout), 0);
+  int width;
+  int height;
+  uv_tty_get_winsize(&out, &width, &height);
+  screen_rect.width = width;
+  screen_rect.height = height;
+  uv_close((uv_handle_t *)&out, NULL);
 #endif
   uv_tty_set_mode(&tty, UV_TTY_MODE_RAW);
   tty.data = &interrupted;

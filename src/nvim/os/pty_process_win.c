@@ -2,7 +2,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "nvim/vim.h"
+#include <winpty_constants.h>
+
+#include "nvim/os/os.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
@@ -23,7 +25,7 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
   uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
 }
 
-/// @returns zero on sucess, or error code of winpty or MultiByteToWideChar.
+/// @returns zero on success, or negative error code.
 int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -40,27 +42,32 @@ int pty_process_spawn(PtyProcess *ptyproc)
   uv_connect_t *out_req = NULL;
   wchar_t *cmd_line = NULL;
   wchar_t *cwd = NULL;
+  const char *emsg = NULL;
 
   assert(!proc->err);
 
   cfg = winpty_config_new(WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION, &err);
   if (cfg == NULL) {
+    emsg = "Failed, winpty_config_new.";
     goto cleanup;
   }
 
   winpty_config_set_initial_size(cfg, ptyproc->width, ptyproc->height);
   winpty_object = winpty_open(cfg, &err);
   if (winpty_object == NULL) {
+    emsg = "Failed, winpty_open.";
     goto cleanup;
   }
 
   status = utf16_to_utf8(winpty_conin_name(winpty_object), &in_name);
   if (status != 0) {
+    emsg = "Failed to convert in_name from utf16 to utf8.";
     goto cleanup;
   }
 
   status = utf16_to_utf8(winpty_conout_name(winpty_object), &out_name);
   if (status != 0) {
+    emsg = "Failed to convert out_name from utf16 to utf8.";
     goto cleanup;
   }
 
@@ -85,12 +92,14 @@ int pty_process_spawn(PtyProcess *ptyproc)
   if (proc->cwd != NULL) {
     status = utf8_to_utf16(proc->cwd, &cwd);
     if (status != 0) {
+      emsg = "Failed to convert pwd form utf8 to utf16.";
       goto cleanup;
     }
   }
 
   status = build_cmd_line(proc->argv, &cmd_line);
   if (status != 0) {
+    emsg = "Failed to convert cmd line form utf8 to utf16.";
     goto cleanup;
   }
 
@@ -102,15 +111,23 @@ int pty_process_spawn(PtyProcess *ptyproc)
       NULL,  // Optional environment variables
       &err);
   if (spawncfg == NULL) {
+    emsg = "Failed winpty_spawn_config_new.";
     goto cleanup;
   }
 
+  DWORD win_err = 0;
   if (!winpty_spawn(winpty_object,
                     spawncfg,
                     &process_handle,
                     NULL,  // Optional thread handle
-                    NULL,  // Optional create process error
+                    &win_err,
                     &err)) {
+    if (win_err) {
+      status = (int)win_err;
+      emsg = "Failed spawn process.";
+    } else {
+      emsg = "Failed winpty_spawn.";
+    }
     goto cleanup;
   }
   proc->pid = GetProcessId(process_handle);
@@ -137,6 +154,15 @@ int pty_process_spawn(PtyProcess *ptyproc)
   process_handle = NULL;
 
 cleanup:
+  if (status) {
+    // In the case of an error of MultiByteToWideChar or CreateProcessW.
+    ELOG("%s error code: %d", emsg, status);
+    status = os_translate_sys_error(status);
+  } else if (err != NULL) {
+    status = (int)winpty_error_code(err);
+    ELOG("%s error code: %d", emsg, status);
+    status = translate_winpty_error(status);
+  }
   winpty_error_free(err);
   winpty_config_free(cfg);
   winpty_spawn_config_free(spawncfg);
@@ -198,8 +224,7 @@ static void pty_process_connect_cb(uv_connect_t *req, int status)
 static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc =
-    (PtyProcess *)((uv_handle_t *)wait_eof_timer->data);
+  PtyProcess *ptyproc = wait_eof_timer->data;
   Process *proc = (Process *)ptyproc;
 
   if (!proc->out || !uv_is_readable(proc->out->uvstream)) {
@@ -229,9 +254,9 @@ static void pty_process_finish2(PtyProcess *ptyproc)
 /// Build the command line to pass to CreateProcessW.
 ///
 /// @param[in]  argv  Array with string arguments.
-/// @param[out]  cmd_line  Location where saved bulded cmd line.
+/// @param[out]  cmd_line  Location where saved builded cmd line.
 ///
-/// @returns zero on sucess, or error code of MultiByteToWideChar function.
+/// @returns zero on success, or error code of MultiByteToWideChar function.
 ///
 static int build_cmd_line(char **argv, wchar_t **cmd_line)
   FUNC_ATTR_NONNULL_ALL
@@ -271,8 +296,6 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line)
   }
 
   int result = utf8_to_utf16(utf8_cmd_line, cmd_line);
-  if (result != 0) {
-  }
   xfree(utf8_cmd_line);
   return result;
 }
@@ -280,33 +303,33 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line)
 /// Emulate quote_cmd_arg of libuv and quotes command line argument.
 /// Most of the code came from libuv.
 ///
-/// @param[out]  dist  Location where saved quotes argument.
-/// @param  dist_remaining  Deistnation buffer size.
+/// @param[out]  dest  Location where saved quotes argument.
+/// @param  dest_remaining  Destination buffer size.
 /// @param[in]  src Pointer to argument.
 ///
-static void quote_cmd_arg(char *dist, size_t dist_remaining, const char *src)
+static void quote_cmd_arg(char *dest, size_t dest_remaining, const char *src)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t src_len = strlen(src);
   bool quote_hit = true;
-  char *start = dist;
+  char *start = dest;
 
   if (src_len == 0) {
     // Need double quotation for empty argument.
-    snprintf(dist, dist_remaining, "\"\"");
+    snprintf(dest, dest_remaining, "\"\"");
     return;
   }
 
   if (NULL == strpbrk(src, " \t\"")) {
     // No quotation needed.
-    xstrlcpy(dist, src, dist_remaining);
+    xstrlcpy(dest, src, dest_remaining);
     return;
   }
 
   if (NULL == strpbrk(src, "\"\\")) {
     // No embedded double quotes or backlashes, so I can just wrap quote marks.
     // around the whole thing.
-    snprintf(dist, dist_remaining, "\"%s\"", src);
+    snprintf(dest, dest_remaining, "\"%s\"", src);
     return;
   }
 
@@ -326,32 +349,57 @@ static void quote_cmd_arg(char *dist, size_t dist_remaining, const char *src)
   //   input : hello world\
   //   output: "hello world\\"
 
-  assert(dist_remaining--);
-  *(dist++) = NUL;
-  assert(dist_remaining--);
-  *(dist++) = '"';
+  assert(dest_remaining--);
+  *(dest++) = NUL;
+  assert(dest_remaining--);
+  *(dest++) = '"';
   for (size_t i = src_len; i > 0; i--) {
-    assert(dist_remaining--);
-    *(dist++) = src[i - 1];
+    assert(dest_remaining--);
+    *(dest++) = src[i - 1];
     if (quote_hit && src[i - 1] == '\\') {
-      assert(dist_remaining--);
-      *(dist++) = '\\';
+      assert(dest_remaining--);
+      *(dest++) = '\\';
     } else if (src[i - 1] == '"') {
       quote_hit = true;
-      assert(dist_remaining--);
-      *(dist++) = '\\';
+      assert(dest_remaining--);
+      *(dest++) = '\\';
     } else {
       quote_hit = false;
     }
   }
-  assert(dist_remaining);
-  *dist = '"';
+  assert(dest_remaining);
+  *dest = '"';
 
-  while (start < dist) {
+  while (start < dest) {
     char tmp = *start;
-    *start = *dist;
-    *dist = tmp;
+    *start = *dest;
+    *dest = tmp;
     start++;
-    dist--;
+    dest--;
+  }
+}
+
+/// Translate winpty error code to libuv error.
+///
+/// @param[in]  winpty_errno  Winpty error code returned by winpty_error_code
+///                           function.
+///
+/// @returns  Error code of libuv error.
+int translate_winpty_error(int winpty_errno)
+{
+  if (winpty_errno <= 0) {
+    return winpty_errno;  // If < 0 then it's already a libuv error.
+  }
+
+  switch (winpty_errno) {
+    case WINPTY_ERROR_OUT_OF_MEMORY:                return UV_ENOMEM;
+    case WINPTY_ERROR_SPAWN_CREATE_PROCESS_FAILED:  return UV_EAI_FAIL;
+    case WINPTY_ERROR_LOST_CONNECTION:              return UV_ENOTCONN;
+    case WINPTY_ERROR_AGENT_EXE_MISSING:            return UV_ENOENT;
+    case WINPTY_ERROR_UNSPECIFIED:                   return UV_UNKNOWN;
+    case WINPTY_ERROR_AGENT_DIED:                   return UV_ESRCH;
+    case WINPTY_ERROR_AGENT_TIMEOUT:                return UV_ETIMEDOUT;
+    case WINPTY_ERROR_AGENT_CREATION_FAILED:        return UV_EAI_FAIL;
+    default:                                        return UV_UNKNOWN;
   }
 }

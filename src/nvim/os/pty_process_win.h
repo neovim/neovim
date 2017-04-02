@@ -2,7 +2,6 @@
 #define NVIM_OS_PTY_PROCESS_WIN_H
 
 #include <uv.h>
-
 #include <winpty.h>
 
 #include "nvim/event/process.h"
