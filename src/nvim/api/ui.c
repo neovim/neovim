@@ -12,6 +12,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/popupmnu.h"
+#include "nvim/cursor_shape.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -69,6 +70,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
   ui->cursor_goto = remote_ui_cursor_goto;
+  ui->cursor_style_set = remote_ui_cursor_style_set;
   ui->update_menu = remote_ui_update_menu;
   ui->busy_start = remote_ui_busy_start;
   ui->busy_stop = remote_ui_busy_stop;
@@ -296,6 +298,14 @@ static void remote_ui_scroll(UI *ui, int count)
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(count));
   push_call(ui, "scroll", args);
+}
+
+static void remote_ui_cursor_style_set(UI *ui, Dictionary styles)
+{
+  Array args = ARRAY_DICT_INIT;
+  Object copy = copy_object(DICTIONARY_OBJ(styles));
+  ADD(args, copy);
+  push_call(ui, "cursor_style_set", args);
 }
 
 static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)

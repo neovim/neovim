@@ -113,6 +113,7 @@ Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
 
 Options:
   'cpoptions' flags: |cpo-_|
+  'guicursor' works in the terminal
   'inccommand' shows interactive results for |:substitute|-like commands
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
