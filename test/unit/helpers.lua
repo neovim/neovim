@@ -528,7 +528,8 @@ local hook_msglen = 1 + 1 + 1 + (1 + hook_fnamelen) + (1 + hook_sfnamelen) + (1 
 
 local tracehelp = dedent([[
   ┌ Trace type: _r_eturn from function , function _c_all, _l_ine executed,
-  │             _t_ail return, _C_ount (should not actually appear).
+  │             _t_ail return, _C_ount (should not actually appear),
+  │             _s_aved from previous run for reference.
   │┏ Function type: _L_ua function, _C_ function, _m_ain part of chunk,
   │┃                function that did _t_ail call.
   │┃┌ Function name type: _g_lobal, _l_ocal, _m_ethod, _f_ield, _u_pvalue,
@@ -549,14 +550,26 @@ local function child_sethook(wr)
     return
   end
   local trace_only_c = trace_level <= 1
-  local function hook(reason, lnum)
+  local prev_info, prev_reason, prev_lnum
+  local function hook(reason, lnum, use_prev)
     local info = nil
-    if reason ~= 'tail return' then  -- tail return
+    if use_prev then
+      info = prev_info
+    elseif reason ~= 'tail return' then  -- tail return
       info = debug.getinfo(2, 'nSl')
     end
 
-    if trace_only_c and (not info or info.what ~= 'C') then
+    if trace_only_c and (not info or info.what ~= 'C') and not use_prev then
+      if info.source:sub(-9) == '_spec.lua' then
+        prev_info = info
+        prev_reason = 'saved'
+        prev_lnum = lnum
+      end
       return
+    end
+    if trace_only_c and not use_prev and prev_reason then
+      hook(prev_reason, prev_lnum, true)
+      prev_reason = nil
     end
 
     local whatchar = ' '
@@ -609,7 +622,7 @@ local function child_sethook(wr)
     -- eq(hook_msglen, #msg)
     sc.write(wr, msg)
   end
-  debug.sethook(hook, trace_only_c and 'cr' or 'crl')
+  debug.sethook(hook, 'crl')
 end
 
 local trace_end_msg = ('E%s\n'):format((' '):rep(hook_msglen - 2))
