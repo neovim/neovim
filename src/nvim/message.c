@@ -583,7 +583,7 @@ bool emsgf(const char *const fmt, ...)
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
   va_end(ap);
 
-  return emsg(errbuf);
+  return emsg((const char_u *)errbuf);
 }
 
 static void msg_emsgf_event(void **argv)
