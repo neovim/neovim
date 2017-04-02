@@ -573,16 +573,17 @@ void emsg_invreg(int name)
 /// Print an error message with unknown number of arguments
 bool emsgf(const char *const fmt, ...)
 {
+  static char errbuf[IOSIZE];
   if (emsg_not_now()) {
     return true;
   }
 
   va_list ap;
   va_start(ap, fmt);
-  vim_vsnprintf((char *) IObuff, IOSIZE, fmt, ap, NULL);
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
   va_end(ap);
 
-  return emsg(IObuff);
+  return emsg(errbuf);
 }
 
 static void msg_emsgf_event(void **argv)
