@@ -2259,7 +2259,7 @@ buf_write (
   linenr_T lnum;
   long nchars;
 #define SET_ERRMSG_NUM(num, msg) \
-  errnum = num ": ", errmsg = msg, errmsgarg = 0
+  errnum = num, errmsg = msg, errmsgarg = 0
 #define SET_ERRMSG_ARG(msg, error) \
   errnum = NULL, errmsg = msg, errmsgarg = error
 #define SET_ERRMSG(msg) \
@@ -3681,29 +3681,21 @@ nofail:
 #endif
 
   if (errmsg != NULL) {
-    const size_t numlen = (errnum != NULL ? strlen(errnum) : 0);
-
-    // Put file name in IObuff with quotes.
 #ifndef UNIX
     msg_add_fname(buf, sfname);
 #else
     msg_add_fname(buf, fname);
 #endif
-    const size_t errmsglen = strlen(errmsg);
-    if (STRLEN(IObuff) + errmsglen + numlen >= IOSIZE) {
-      IObuff[IOSIZE - errmsglen - numlen - 1] = NUL;
-    }
-    // If the error message has the form "is ...", put the error number in
-    // front of the file name.
     if (errnum != NULL) {
-      STRMOVE(IObuff + numlen, IObuff);
-      memmove(IObuff, errnum, numlen);
-    }
-    xstrlcat((char *)IObuff, errmsg, IOSIZE);
-    if (errmsgarg != 0) {
-      emsgf((const char *)IObuff, os_strerror(errmsgarg));
+      if (errmsgarg != 0) {
+        emsgf("%s: %s%s: %s", errnum, IObuff, errmsg, os_strerror(errmsgarg));
+      } else {
+        emsgf("%s: %s%s", errnum, IObuff, errmsg);
+      }
+    } else if (errmsgarg != 0) {
+      emsgf(errmsg, os_strerror(errmsgarg));
     } else {
-      emsgf((const char *)IObuff);
+      emsgf(errmsg);
     }
     if (errmsg_allocated) {
       xfree(errmsg);
@@ -3822,7 +3814,7 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
 /*
  * Put file name into IObuff with quotes.
  */
-void msg_add_fname(buf_T *buf, char_u *fname)
+static void msg_add_fname(buf_T *buf, char_u *fname)
 {
   if (fname == NULL)
     fname = (char_u *)"-stdin-";
