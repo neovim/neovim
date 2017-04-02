@@ -75,6 +75,7 @@ typedef struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
     int set_cursor_shape_bar, set_cursor_shape_ul, set_cursor_shape_block;
+    int set_cursor_color_bar, set_cursor_color_ul, set_cursor_color_block;
     int set_rgb_foreground, set_rgb_background;
     int enable_focus_reporting, disable_focus_reporting;
   } unibi_ext;
@@ -474,19 +475,23 @@ static void tui_mode_change(UI *ui, int mode)
   if (mode == INSERT) {
     if (data->showing_mode != INSERT) {
       unibi_out(ui, data->unibi_ext.set_cursor_shape_bar);
+      unibi_out(ui, data->unibi_ext.set_cursor_color_bar);
     }
   } else if (mode == CMDLINE) {
     if (data->showing_mode != CMDLINE) {
       unibi_out(ui, data->unibi_ext.set_cursor_shape_bar);
+      unibi_out(ui, data->unibi_ext.set_cursor_color_bar);
     }
   } else if (mode == REPLACE) {
     if (data->showing_mode != REPLACE) {
       unibi_out(ui, data->unibi_ext.set_cursor_shape_ul);
+      unibi_out(ui, data->unibi_ext.set_cursor_color_ul);
     }
   } else {
     assert(mode == NORMAL);
     if (data->showing_mode != NORMAL) {
       unibi_out(ui, data->unibi_ext.set_cursor_shape_block);
+      unibi_out(ui, data->unibi_ext.set_cursor_color_block);
     }
   }
   data->showing_mode = mode;
@@ -821,6 +826,20 @@ static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
   }
 }
 
+static bool iscolor(const char *s)
+{
+  if (strlen(s) != 7) {
+    return false;
+  }
+  return s[0] == '#'
+    && ascii_isxdigit(s[1])
+    && ascii_isxdigit(s[2])
+    && ascii_isxdigit(s[3])
+    && ascii_isxdigit(s[4])
+    && ascii_isxdigit(s[5])
+    && ascii_isxdigit(s[6]);
+}
+
 static void fix_terminfo(TUIData *data)
 {
   unibi_term *ut = data->ut;
@@ -891,6 +910,11 @@ static void fix_terminfo(TUIData *data)
   }
 
   const char * env_cusr_shape = os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE");
+
+  const char *env_cusr_color_bar = os_getenv("NVIM_TUI_CURSOR_COLOR_BAR");
+  const char *env_cusr_color_ul = os_getenv("NVIM_TUI_CURSOR_COLOR_UL");
+  const char *env_cusr_color_block = os_getenv("NVIM_TUI_CURSOR_COLOR_BLOCK");
+
   if (env_cusr_shape && strncmp(env_cusr_shape, "0", 1) == 0) {
     goto end;
   }
@@ -922,6 +946,30 @@ static void fix_terminfo(TUIData *data)
       (int)unibi_add_ext_str(ut, NULL, cusr_blink ? "\x1b[3 q" : "\x1b[4 q");
     data->unibi_ext.set_cursor_shape_block =
       (int)unibi_add_ext_str(ut, NULL, cusr_blink ? "\x1b[1 q" : "\x1b[2 q");
+  }
+
+  int reset_color = (int)unibi_add_ext_str(ut, NULL, "\x1b]112\x07");
+  data->unibi_ext.set_cursor_color_bar = reset_color;
+  data->unibi_ext.set_cursor_color_ul = reset_color;
+  data->unibi_ext.set_cursor_color_block = reset_color;
+
+  if (env_cusr_color_bar && iscolor(env_cusr_color_bar)) {
+    static char color_bar_seq[] = "\x1b]12;#FFFFFF\x07";
+    memcpy(color_bar_seq + 5, env_cusr_color_bar, 7);
+    data->unibi_ext.set_cursor_color_bar =
+      (int)unibi_add_ext_str(ut, NULL, color_bar_seq);
+  }
+  if (env_cusr_color_ul && iscolor(env_cusr_color_ul)) {
+    static char color_ul_seq[] = "\x1b]12;#FFFFFF\x07";
+    memcpy(color_ul_seq + 5, env_cusr_color_ul, 7);
+    data->unibi_ext.set_cursor_color_ul =
+      (int)unibi_add_ext_str(ut, NULL, color_ul_seq);
+  }
+  if (env_cusr_color_block && iscolor(env_cusr_color_block)) {
+    static char color_block_seq[] = "\x1b]12;#FFFFFF\x07";
+    memcpy(color_block_seq + 5, env_cusr_color_block, 7);
+    data->unibi_ext.set_cursor_color_block =
+      (int)unibi_add_ext_str(ut, NULL, color_block_seq);
   }
 
 end:
