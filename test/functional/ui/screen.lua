@@ -313,6 +313,8 @@ function Screen:_redraw(updates)
       if handler ~= nil then
         handler(self, unpack(update[i]))
       else
+        assert(self._on_event, "Either add an Screen:_handle_XXX method "..
+               " or call Screen:set_on_event_handler")
         self._on_event(method, update[i])
       end
     end
@@ -341,6 +343,10 @@ function Screen:_handle_resize(width, height)
   self._scroll_region = {
     top = 1, bot = height, left = 1, right = width
   }
+end
+
+function Screen:_handle_cursor_style_set(styles)
+  self._cursor_styles = styles
 end
 
 function Screen:_handle_clear()
