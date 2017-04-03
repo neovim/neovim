@@ -300,11 +300,11 @@ static void remote_ui_scroll(UI *ui, int count)
   push_call(ui, "scroll", args);
 }
 
-static void remote_ui_cursor_style_set(UI *ui, Dictionary styles)
+static void remote_ui_cursor_style_set(UI *ui, bool enabled, Dictionary data)
 {
   Array args = ARRAY_DICT_INIT;
-  Object copy = copy_object(DICTIONARY_OBJ(styles));
-  ADD(args, copy);
+  ADD(args, BOOLEAN_OBJ(enabled));
+  ADD(args, copy_object(DICTIONARY_OBJ(data)));
   push_call(ui, "cursor_style_set", args);
 }
 

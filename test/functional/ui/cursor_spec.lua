@@ -144,6 +144,7 @@ describe('ui/cursor', function()
       }
     -- Default 'guicursor' published on startup.
     eq(expected_cursor_style, screen._cursor_style)
+    eq(true, screen._cursor_style_enabled)
     eq('normal', screen.mode)
 
     -- Event is published ONLY if the cursor style changed.

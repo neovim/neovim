@@ -60,7 +60,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.clear = ui_bridge_clear;
   rv->bridge.eol_clear = ui_bridge_eol_clear;
   rv->bridge.cursor_goto = ui_bridge_cursor_goto;
-  rv->bridge.cursor_style_set = ui_bridge_cursor_styleset;
+  rv->bridge.cursor_style_set = ui_bridge_cursor_style_set;
   rv->bridge.update_menu = ui_bridge_update_menu;
   rv->bridge.busy_start = ui_bridge_busy_start;
   rv->bridge.busy_stop = ui_bridge_busy_stop;
@@ -180,19 +180,21 @@ static void ui_bridge_cursor_goto_event(void **argv)
   ui->cursor_goto(ui, PTR2INT(argv[1]), PTR2INT(argv[2]));
 }
 
-static void ui_bridge_cursor_styleset(UI *b, Dictionary style)
+static void ui_bridge_cursor_style_set(UI *b, bool enabled, Dictionary styles)
 {
-  Object copy = copy_object(DICTIONARY_OBJ(style));
-  Object *pobj = xmalloc(sizeof(copy));
-  *pobj = copy;
-  UI_CALL(b, cursor_styleset, 2, b, pobj);
+  bool *enabledp = xmalloc(sizeof(*enabledp));
+  Object *stylesp = xmalloc(sizeof(*stylesp));
+  *enabledp = enabled;
+  *stylesp = copy_object(DICTIONARY_OBJ(styles));
+  UI_CALL(b, cursor_style_set, 3, b, enabledp, stylesp);
 }
-static void ui_bridge_cursor_styleset_event(void **argv)
+static void ui_bridge_cursor_style_set_event(void **argv)
 {
   UI *ui = UI(argv[0]);
-  Object *styles = (Object *)argv[1];
-
-  ui->cursor_style_set(ui, styles->data.dictionary);
+  bool *enabled = argv[1];
+  Object *styles = argv[2];
+  ui->cursor_style_set(ui, *enabled, styles->data.dictionary);
+  xfree(enabled);
   api_free_object(*styles);
   xfree(styles);
 }
