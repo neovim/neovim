@@ -69,6 +69,7 @@ run_test_wd() {
   while test $restarts -gt 0 ; do
     : > "${status_file}"
     (
+      FAILED=0
       if ! (
         set -o pipefail
         eval "$cmd" 2>&1 | tee -a "$output_file"
