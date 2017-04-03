@@ -1953,7 +1953,11 @@ static int vgetorpeek(int advance)
             // Write chars to script file(s)
             // Note: :lmap mappings are written *after* being applied. #5658
             if (keylen > typebuf.tb_maplen && (mp->m_mode & LANGMAP) == 0) {
-              gotchars(typebuf.tb_buf + typebuf.tb_off + typebuf.tb_maplen,
+              // Instead of taking the characters from the typebuffer, we take
+              // them from the mapping. This means that if the mapping was
+              // triggered from keys that have been LANGMAP_ADJUST()'ed, we
+              // record those instead of the original ones.
+              gotchars(mp->m_keys + typebuf.tb_maplen,
                        (size_t)(keylen - typebuf.tb_maplen));
             }
 
