@@ -23,7 +23,7 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
   uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
 }
 
-/// @returns zero on sucess, or error code of winpty or MultiByteToWideChar.
+/// @returns zero on success, or UV_EAI_FAIL on failure.
 int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -157,7 +157,7 @@ cleanup:
   xfree(out_req);
   xfree(cmd_line);
   xfree(cwd);
-  return status;
+  return status ? UV_EAI_FAIL : 0;
 }
 
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
