@@ -6272,7 +6272,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	for any key that can follow <c-f> in a mapping.
 
 						*'ttimeout'* *'nottimeout'*
-'ttimeout'		boolean (default off)
+'ttimeout'		boolean (default on)
 			global
 	This option and 'ttimeoutlen' determine the behavior when part of a
 	key code sequence has been received by the terminal UI. For example,
@@ -6287,7 +6287,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	complete.
 
 						*'ttimeoutlen'* *'ttm'*
-'ttimeoutlen' 'ttm'	number	(default -1)
+'ttimeoutlen' 'ttm'	number	(default 50)
 			global
 	The time in milliseconds that is waited for a key code
 	sequence to complete. Also used for CTRL-\ CTRL-N and CTRL-\ CTRL-G
