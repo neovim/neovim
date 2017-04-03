@@ -3192,7 +3192,7 @@ nobackup:
         SET_ERRMSG(_("E166: Can't open linked file for writing"));
       } else {
 #endif
-        SET_ERRMSG(_("E212: Can't open file for writing"));
+        SET_ERRMSG_ARG(_("E212: Can't open file for writing: %s"), fd);
         if (forceit && vim_strchr(p_cpo, CPO_FWRITE) == NULL
             && perm >= 0) {
 #ifdef UNIX
