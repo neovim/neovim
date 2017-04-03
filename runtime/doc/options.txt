@@ -3918,8 +3918,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set lcs=tab:>-,eol:<,nbsp:%
 	    :set lcs=extends:>,precedes:<
 <	The "NonText" highlighting will be used for "eol", "extends" and
-	"precedes".  "SpecialKey" for "nbsp", "space", "tab" and "trail".
-	|hl-NonText| |hl-SpecialKey|
+	"precedes".  "Whitespace" for "nbsp", "space", "tab" and "trail".
+	|hl-NonText| |hl-Whitespace|
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
 'loadplugins' 'lpl'	boolean	(default on)
