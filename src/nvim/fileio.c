@@ -203,7 +203,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   if (msg_silent != 0) {
     return;
   }
-  add_quoted_fname((char *)IObuff, IOSIZE - 80, buf,(const char *)name);
+  add_quoted_fname((char *)IObuff, IOSIZE - 80, buf, (const char *)name);
   xstrlcat((char *)IObuff, (const char *)s, IOSIZE);
   // For the first message may have to start a new line.
   // For further ones overwrite the previous one, reset msg_scroll before
@@ -1796,7 +1796,7 @@ failed:
     }
 
     if (!filtering && !(flags & READ_DUMMY)) {
-      add_quoted_fname((char *)IObuff, IOSIZE, curbuf,(const char *)sfname);
+      add_quoted_fname((char *)IObuff, IOSIZE, curbuf, (const char *)sfname);
       c = false;
 
 #ifdef UNIX
@@ -2913,9 +2913,9 @@ buf_write (
 
             int error;
             if ((error = os_close(bfd)) != 0 && errmsg == NULL) {
-              SET_ERRMSG_ARG(_(
-                  "E507: Close error for backup file (add ! to override): %s"),
-                  error);
+              SET_ERRMSG_ARG(_("E507: Close error for backup file "
+                               "(add ! to override): %s"),
+                             error);
             }
             if (write_info.bw_len < 0) {
               SET_ERRMSG(_(
@@ -2937,7 +2937,7 @@ buf_write (
         }
       }
 nobackup:
-      os_close(fd);                /* ignore errors for closing read file */
+      os_close(fd);  // Ignore errors for closing read file.
       xfree(copybuf);
 
       if (backup == NULL && errmsg == NULL) {
@@ -3458,8 +3458,7 @@ restore_backup:
           SET_ERRMSG(_(
               "E513: write error, conversion failed "
               "(make 'fenc' empty to override)"));
-        }
-        else {
+        } else {
           errmsg_allocated = true;
           SET_ERRMSG(xmalloc(300));
           vim_snprintf(
@@ -3527,7 +3526,7 @@ restore_backup:
   fname = sfname;           /* use shortname now, for the messages */
 #endif
   if (!filtering) {
-    add_quoted_fname((char *)IObuff, IOSIZE, buf,(const char *)fname);
+    add_quoted_fname((char *)IObuff, IOSIZE, buf, (const char *)fname);
     c = false;
     if (write_info.bw_conv_error) {
       STRCAT(IObuff, _(" CONVERSION ERROR"));
