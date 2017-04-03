@@ -7915,6 +7915,12 @@ writefile({list}, {fname} [, {flags}])
 		appended to the file: >
 			:call writefile(["foo"], "event.log", "a")
 			:call writefile(["bar"], "event.log", "a")
+<
+		When {flags} contains "S" fsync() call is not used, with "s" 
+		it is used, 'fsync' option applies by default. No fsync() 
+		means that writefile() will finish faster, but writes may be 
+		left in OS buffers and not yet written to disk. Such changes 
+		will disappear if system crashes before OS does writing.
 
 		All NL characters are replaced with a NUL character.
 		Inserting CR characters needs to be done before passing {list}

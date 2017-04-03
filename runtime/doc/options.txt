@@ -2740,6 +2740,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	mode, so it may be undesirable in some situations.  Be warned that
 	turning this off increases the chances of data loss after a crash.
 
+	Currently applies only to writing the buffer with e.g. |:w| and 
+	|writefile()|.
+
 				   *'gdefault'* *'gd'* *'nogdefault'* *'nogd'*
 'gdefault' 'gd'		boolean	(default off)
 			global

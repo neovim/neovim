@@ -17421,16 +17421,24 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   bool binary = false;
   bool append = false;
+  bool do_fsync = !!p_fs;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     const char *const flags = tv_get_string_chk(&argvars[2]);
     if (flags == NULL) {
       return;
     }
-    if (strchr(flags, 'b')) {
-      binary = true;
-    }
-    if (strchr(flags, 'a')) {
-      append = true;
+    for (const char *p = flags; *p; p++) {
+      switch (*p) {
+        case 'b': { binary = true; break; }
+        case 'a': { append = true; break; }
+        case 's': { do_fsync = true; break; }
+        case 'S': { do_fsync = false; break; }
+        default: {
+          // Using %s, p and not %c, *p to preserve multibyte characters
+          emsgf(_("E5060: Unknown flag: %s"), p);
+          return;
+        }
+      }
     }
   }
 
@@ -17453,7 +17461,7 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (write_list(&fp, argvars[0].vval.v_list, binary)) {
       rettv->vval.v_number = 0;
     }
-    if ((error = file_close(&fp)) != 0) {
+    if ((error = file_close(&fp, do_fsync)) != 0) {
       emsgf(_("E80: Error when closing file %s: %s"),
             fname, os_strerror(error));
     }

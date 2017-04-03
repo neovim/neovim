@@ -1,15 +1,28 @@
 local helpers = require('test.functional.helpers')(after_each)
+local lfs = require('lfs')
 local eq, eval, clear, write_file, execute, source, insert =
   helpers.eq, helpers.eval, helpers.clear, helpers.write_file,
   helpers.execute, helpers.source, helpers.insert
+local redir_exec = helpers.redir_exec
+local exc_exec = helpers.exc_exec
+local command = helpers.command
+local funcs = helpers.funcs
+local meths = helpers.meths
 
 if helpers.pending_win32(pending) then return end
+
+local fname = 'Xtest-functional-ex_cmds-write'
+local fname_bak = fname .. '~'
+local fname_broken = fname_bak .. 'broken'
 
 describe(':write', function()
   local function cleanup()
     os.remove('test_bkc_file.txt')
     os.remove('test_bkc_link.txt')
     os.remove('test_fifo')
+    os.remove(fname)
+    os.remove(fname_bak)
+    os.remove(fname_broken)
   end
   before_each(function()
     clear()
@@ -62,5 +75,35 @@ describe(':write', function()
     local fifo = assert(io.open("test_fifo"))
     eq(text.."\n", fifo:read("*all"))
     fifo:close()
+  end)
+
+  it('errors out correctly', function()
+    command('let $HOME=""')
+    eq(funcs.fnamemodify('.', ':p:h'), funcs.fnamemodify('.', ':p:h:~'))
+    -- Message from check_overwrite
+    eq(('\nE17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+       redir_exec('write .'))
+    meths.set_option('writeany', true)
+    -- Message from buf_write
+    eq(('\nE502: "." is a directory'),
+       redir_exec('write .'))
+    funcs.mkdir(fname_bak)
+    meths.set_option('backupdir', '.')
+    meths.set_option('backup', true)
+    write_file(fname, 'content0')
+    eq(0, exc_exec('edit ' .. fname))
+    funcs.setline(1, 'TTY')
+    eq('Vim(write):E510: Can\'t make backup file (add ! to override)',
+       exc_exec('write'))
+    meths.set_option('backup', false)
+    funcs.setfperm(fname, 'r--------')
+    eq('Vim(write):E505: "Xtest-functional-ex_cmds-write" is read-only (add ! to override)',
+       exc_exec('write'))
+    os.remove(fname)
+    os.remove(fname_bak)
+    write_file(fname_bak, 'TTYX')
+    lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)
+    eq('Vim(write):E166: Can\'t open linked file for writing',
+       exc_exec('write!'))
   end)
 end)
