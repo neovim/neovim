@@ -1026,13 +1026,6 @@ return {
       enable_if=false,
     },
     {
-      full_name='guiheadroom', abbreviation='ghr',
-      type='number', scope={'global'},
-      vi_def=true,
-      enable_if=false,
-      defaults={if_true={vi=50}}
-    },
-    {
       full_name='guioptions', abbreviation='go',
       type='string', list='flags', scope={'global'},
       vi_def=true,

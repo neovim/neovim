@@ -2976,18 +2976,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	If set and valid, 'guifontwide' is used for IME instead of 'guifont'.
 
-						*'guiheadroom'* *'ghr'*
-'guiheadroom' 'ghr'	number	(default 50)
-			global
-			{only for X11 GUI}
-	The number of pixels subtracted from the screen height when fitting
-	the GUI window on the screen.  Set this before the GUI is started,
-	e.g., in your |gvimrc| file.  When zero, the whole screen height will
-	be used by the window.  When positive, the specified number of pixel
-	lines will be left for window decorations and other items on the
-	screen.  Set it to a negative value to allow windows taller than the
-	screen.
-
 						*'guioptions'* *'go'*
 'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows))
 			global
@@ -3812,9 +3800,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	use this command to get the tallest window possible: >
 		:set lines=999
 <	Minimum value is 2, maximum value is 1000.
-	If you get less lines than expected, check the 'guiheadroom' option.
-	When you set this option and Vim is unable to change the physical
-	number of lines of the display, the display may be messed up.
 
 						*'linespace'* *'lsp'*
 'linespace' 'lsp'	number	(default 0, 1 for Win32 GUI)
