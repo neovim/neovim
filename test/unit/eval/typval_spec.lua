@@ -460,6 +460,10 @@ describe('typval.c', function()
         eq(empty_list, typvalt2lua(l_tv))
         eq({true, true, true}, {lws[1].lw_item == nil, lws[2].lw_item == nil, lws[3].lw_item == nil})
 
+        lib.tv_list_watch_remove(l, lws[1])
+        lib.tv_list_watch_remove(l, lws[2])
+        lib.tv_list_watch_remove(l, lws[3])
+
         alloc_log:check({})
       end)
     end)
@@ -1090,9 +1094,13 @@ describe('typval.c', function()
       local function list_join(l, sep, ret)
         local ga = ga_alloc()
         eq(ret or OK, lib.tv_list_join(ga, l, sep))
-        if ga.ga_data == nil then return ''
-        else return ffi.string(ga.ga_data)
+        local ret = ''
+        if ga.ga_data ~= nil then
+          ret = ffi.string(ga.ga_data)
         end
+        -- For some reason this is not working well in GC
+        lib.ga_clear(ffi.gc(ga, nil))
+        return ret
       end
       itp('works', function()
         local l
@@ -2659,7 +2667,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2687,7 +2696,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = {v[4], not not emsg}
@@ -2721,7 +2731,8 @@ describe('typval.c', function()
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', -1},
           }) do
             lib.curwin.w_cursor.lnum = 46
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2749,7 +2760,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, 'E907: Using a special value as a Float', 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_float(UNKNOWN)', 0},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2780,7 +2792,9 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr in place of Neovim allocated string, cannot
+            -- tv_clear() that.
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2821,7 +2835,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2861,7 +2876,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2902,7 +2918,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
