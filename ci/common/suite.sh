@@ -57,13 +57,21 @@ run_test() {
 run_test_wd() {
   local timeout="$1"
   test $# -gt 0 && shift
+
   local cmd="$1"
   test $# -gt 0 && shift
+
+  local restart_cmd="$1"
+  : ${restart_cmd:=true}
+  test $# -gt 0 && shift
+
   local test_name="$1"
   : ${test_name:=$cmd}
   test $# -gt 0 && shift
+
   local output_file="$(mktemp)"
   local status_file="$(mktemp)"
+
   local restarts=5
   local prev_tmpsize=-1
   while test $restarts -gt 0 ; do
@@ -88,10 +96,16 @@ run_test_wd() {
         break
       fi
     done
+    restarts=$[ restarts - 1 ]
     if test "$(stat -c "%s" "$status_file")" -eq 0 ; then
       # status file not updated, assuming hang
       kill -KILL $pid
-      echo "Test ${test_name} hang up, restarting"
+      if test $restarts -eq 0 ; then
+        fail "${test_name}" E "Test hang up"
+      else
+        echo "Test ${test_name} hang up, restarting"
+        eval "$restart_cmd"
+      fi
     else
       local new_failed="$(cat "$status_file")"
       if test "x$new_failed" != "x0" ; then
@@ -99,7 +113,6 @@ run_test_wd() {
       fi
       return 0
     fi
-    restarts=$[ restarts - 1 ]
   done
 }
 
