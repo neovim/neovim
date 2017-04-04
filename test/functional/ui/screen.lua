@@ -187,22 +187,30 @@ end
 --              "{K:S}", where K is a key in `attr_ids`. Any unexpected
 --              attributes in the final state are an error.
 -- attr_ignore: Ignored text attributes, or `true` to ignore all.
--- condition:   Function asserting some arbitrary condition.
+-- condition:   Function asserting some arbitrary condition. Can also be
+--              supplied as only argument.
 -- any:         true: Succeed if `expected` matches ANY screen line(s).
 --              false (default): `expected` must match screen exactly.
 function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
-  -- remove the last line and dedent
-  expected = dedent(expected:gsub('\n[ ]+$', ''))
   local expected_rows = {}
-  for row in expected:gmatch('[^\n]+') do
-    -- the last character should be the screen delimiter
-    row = row:sub(1, #row - 1)
-    table.insert(expected_rows, row)
-  end
-  if not any then
-    assert(self._height == #expected_rows,
-      "Expected screen state's row count(" .. #expected_rows
-      .. ') differs from configured height(' .. self._height .. ') of Screen.')
+  if type(expected) ~= "string" then
+    assert(attr_ids == nil and attr_ignore == nil
+           and condition == nil and any == nil)
+    condition = expected
+    expected = nil
+  else
+  -- remove the last line and dedent
+    expected = dedent(expected:gsub('\n[ ]+$', ''))
+    for row in expected:gmatch('[^\n]+') do
+      -- the last character should be the screen delimiter
+      row = row:sub(1, #row - 1)
+      table.insert(expected_rows, row)
+    end
+    if not any then
+      assert(self._height == #expected_rows,
+        "Expected screen state's row count(" .. #expected_rows
+        .. ') differs from configured height(' .. self._height .. ') of Screen.')
+    end
   end
   local ids = attr_ids or self._default_attr_ids
   local ignore = attr_ignore or self._default_attr_ignore
@@ -218,7 +226,9 @@ function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
       actual_rows[i] = self:_row_repr(self._rows[i], ids, ignore)
     end
 
-    if any then
+    if expected == nil then
+      return
+    elseif any then
       -- Search for `expected` anywhere in the screen lines.
       local actual_screen_str = table.concat(actual_rows, '\n')
       if nil == string.find(actual_screen_str, expected) then
