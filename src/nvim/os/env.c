@@ -889,3 +889,17 @@ bool os_setenv_append_path(const char *fname)
   }
   return false;
 }
+
+/// Returns true if the terminal can be assumed to silently ignore unknown
+/// control codes.
+bool os_term_is_nice(void)
+{
+#if defined(__APPLE__) || defined(WIN32)
+  return true;
+#else
+  const char *vte_version = os_getenv("VTE_VERSION");
+  return (vte_version && atoi(vte_version) >= 3900)
+    || NULL != os_getenv("KONSOLE_PROFILE_NAME")
+    || NULL != os_getenv("KONSOLE_DBUS_SESSION");
+#endif
+}

@@ -283,7 +283,7 @@ int main(int argc, char **argv)
   cmdline_row = (int)(Rows - p_ch);
   msg_row = cmdline_row;
   screenalloc(false);           /* allocate screen buffers */
-  set_init_2();
+  set_init_2(params.headless);
   TIME_MSG("inits 2");
 
   msg_scroll = TRUE;

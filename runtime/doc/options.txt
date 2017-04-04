@@ -2796,7 +2796,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					-blinkwait175-blinkoff150-blinkon175")
 			global
 	Configures the cursor style for each mode. Works in the GUI and some
-	terminals. Empty means "non-blinking block cursor in all modes": >
+	terminals. Unset to disable: >
 		:set guicursor=
 <
 	With tmux you might need this in ~/.tmux.conf (see terminal-overrides

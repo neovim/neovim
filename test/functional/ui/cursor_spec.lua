@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, meths = helpers.clear, helpers.meths
 local eq = helpers.eq
 local command = helpers.command
+local wait = helpers.wait
 
 describe('ui/cursor', function()
   local screen
@@ -18,7 +19,7 @@ describe('ui/cursor', function()
   end)
 
   it("'guicursor' is published as a UI event", function()
-    command('redraw')
+    wait()
     screen:expect('', nil, nil, nil, true)  -- Tickle the event-loop.
     local expected_cursor_style = {
       cmdline_hover = {
@@ -149,13 +150,13 @@ describe('ui/cursor', function()
 
     -- Event is published ONLY if the cursor style changed.
     screen._cursor_style = nil
-    command('redraw')
+    wait()
     screen:expect('', nil, nil, nil, true)  -- Tickle the event-loop.
     eq(nil, screen._cursor_style)
 
     -- Change the cursor style.
     meths.set_option('guicursor', 'n-v-c:ver35-blinkwait171-blinkoff172-blinkon173,ve:hor35,o:ver50,i-ci:block,r-cr:hor90,sm:ver42')
-    command('redraw')
+    wait()
     screen:expect('', nil, nil, nil, true)  -- Tickle the event-loop.
     eq('vertical', screen._cursor_style.normal.cursor_shape)
     eq('horizontal', screen._cursor_style.visual_select.cursor_shape)
@@ -171,6 +172,8 @@ describe('ui/cursor', function()
     meths.set_option('guicursor', '')
     command('redraw')
     screen:expect('', nil, nil, nil, true)  -- Tickle the event-loop.
+    -- Empty 'guicursor' sets enabled=false.
+    eq(false, screen._cursor_style_enabled)
     for _, m in ipairs({ 'cmdline_insert', 'cmdline_normal', 'cmdline_replace', 'insert',
                          'showmatch', 'normal', 'replace', 'visual',
                          'visual_select', }) do
