@@ -96,11 +96,16 @@ run_test_wd() {
         break
       fi
     done
+    restarts=$[ restarts - 1 ]
     if test "$(stat -c "%s" "$status_file")" -eq 0 ; then
       # status file not updated, assuming hang
       kill -KILL $pid
-      echo "Test ${test_name} hang up, restarting"
-      eval "$restart_cmd"
+      if test $restarts -eq 0 ; then
+        fail "${test_name}" E "Test hang up"
+      else
+        echo "Test ${test_name} hang up, restarting"
+        eval "$restart_cmd"
+      fi
     else
       local new_failed="$(cat "$status_file")"
       if test "x$new_failed" != "x0" ; then
@@ -108,7 +113,6 @@ run_test_wd() {
       fi
       return 0
     fi
-    restarts=$[ restarts - 1 ]
   done
 }
 
