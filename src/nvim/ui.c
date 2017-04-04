@@ -381,7 +381,8 @@ void ui_cursor_goto(int new_row, int new_col)
 void ui_cursor_style_set(void)
 {
   Dictionary style = cursor_shape_dict();
-  UI_CALL(cursor_style_set, style);
+  bool enabled = (*p_guicursor != NUL);
+  UI_CALL(cursor_style_set, enabled, style);
   api_free_dictionary(style);
 }
 

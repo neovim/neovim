@@ -589,8 +589,6 @@ if has("gui")
       call append("$", "toolbariconsize\tsize of toolbar icons")
       call <SID>OptionG("tbis", &tbis)
     endif
-    call append("$", "guiheadroom\troom (in pixels) left above/below the window")
-    call append("$", " \tset ghr=" . &ghr)
   endif
   if has("browse")
     call append("$", "browsedir\t\"last\", \"buffer\" or \"current\": which directory used for the file browser")

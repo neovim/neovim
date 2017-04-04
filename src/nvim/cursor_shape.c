@@ -89,10 +89,8 @@ char_u *parse_shape_opt(int what)
   int found_ve = false;                 /* found "ve" flag */
   int round;
 
-  /*
-   * First round: check for errors; second round: do it for real.
-   */
-  for (round = 1; round <= 2; ++round) {
+  // First round: check for errors; second round: do it for real.
+  for (round = 1; round <= 2; round++) {
     // Repeat for all comma separated parts.
     modep = p_guicursor;
     if (*p_guicursor == NUL) {

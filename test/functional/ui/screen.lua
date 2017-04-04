@@ -345,7 +345,8 @@ function Screen:_handle_resize(width, height)
   }
 end
 
-function Screen:_handle_cursor_style_set(style)
+function Screen:_handle_cursor_style_set(enabled, style)
+  self._cursor_style_enabled = enabled
   self._cursor_style = style
 end
 
