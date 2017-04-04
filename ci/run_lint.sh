@@ -13,7 +13,7 @@ enter_suite 'lint'
 set -x
 
 csi_clean() {
-  rm "${BUILD_DIR}"/bin/test-includes-*
+  find "${BUILD_DIR}/bin" -name 'test-includes-*' -delete
   find "${BUILD_DIR}" -name '*test-include*.o' -delete
 }
 
