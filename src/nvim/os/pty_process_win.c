@@ -45,6 +45,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
 
   cfg = winpty_config_new(WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION, &err);
   if (cfg == NULL) {
+    write_winpty_elog("Failed, winpty_config_new.", &status, &err);
     goto cleanup;
   }
 
@@ -107,7 +108,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
       NULL,  // Optional environment variables
       &err);
   if (spawncfg == NULL) {
-    write_winpty_elog("Faied winpty_spawn_config_new.", &status, &err);
+    write_winpty_elog("Failed winpty_spawn_config_new.", &status, &err);
     goto cleanup;
   }
 
@@ -205,8 +206,7 @@ static void pty_process_connect_cb(uv_connect_t *req, int status)
 static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   FUNC_ATTR_NONNULL_ALL
 {
-  PtyProcess *ptyproc =
-    (PtyProcess *)((uv_handle_t *)wait_eof_timer->data);
+  PtyProcess *ptyproc = wait_eof_timer->data;
   Process *proc = (Process *)ptyproc;
 
   if (!proc->out || !uv_is_readable(proc->out->uvstream)) {
@@ -236,9 +236,9 @@ static void pty_process_finish2(PtyProcess *ptyproc)
 /// Build the command line to pass to CreateProcessW.
 ///
 /// @param[in]  argv  Array with string arguments.
-/// @param[out]  cmd_line  Location where saved bulded cmd line.
+/// @param[out]  cmd_line  Location where saved builded cmd line.
 ///
-/// @returns zero on sucess, or error code of MultiByteToWideChar function.
+/// @returns zero on success, or error code of MultiByteToWideChar function.
 ///
 static int build_cmd_line(char **argv, wchar_t **cmd_line)
   FUNC_ATTR_NONNULL_ALL
@@ -285,33 +285,33 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line)
 /// Emulate quote_cmd_arg of libuv and quotes command line argument.
 /// Most of the code came from libuv.
 ///
-/// @param[out]  dist  Location where saved quotes argument.
-/// @param  dist_remaining  Deistnation buffer size.
+/// @param[out]  dest  Location where saved quotes argument.
+/// @param  dest_remaining  Destination buffer size.
 /// @param[in]  src Pointer to argument.
 ///
-static void quote_cmd_arg(char *dist, size_t dist_remaining, const char *src)
+static void quote_cmd_arg(char *dest, size_t dest_remaining, const char *src)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t src_len = strlen(src);
   bool quote_hit = true;
-  char *start = dist;
+  char *start = dest;
 
   if (src_len == 0) {
     // Need double quotation for empty argument.
-    snprintf(dist, dist_remaining, "\"\"");
+    snprintf(dest, dest_remaining, "\"\"");
     return;
   }
 
   if (NULL == strpbrk(src, " \t\"")) {
     // No quotation needed.
-    xstrlcpy(dist, src, dist_remaining);
+    xstrlcpy(dest, src, dest_remaining);
     return;
   }
 
   if (NULL == strpbrk(src, "\"\\")) {
     // No embedded double quotes or backlashes, so I can just wrap quote marks.
     // around the whole thing.
-    snprintf(dist, dist_remaining, "\"%s\"", src);
+    snprintf(dest, dest_remaining, "\"%s\"", src);
     return;
   }
 
@@ -331,32 +331,32 @@ static void quote_cmd_arg(char *dist, size_t dist_remaining, const char *src)
   //   input : hello world\
   //   output: "hello world\\"
 
-  assert(dist_remaining--);
-  *(dist++) = NUL;
-  assert(dist_remaining--);
-  *(dist++) = '"';
+  assert(dest_remaining--);
+  *(dest++) = NUL;
+  assert(dest_remaining--);
+  *(dest++) = '"';
   for (size_t i = src_len; i > 0; i--) {
-    assert(dist_remaining--);
-    *(dist++) = src[i - 1];
+    assert(dest_remaining--);
+    *(dest++) = src[i - 1];
     if (quote_hit && src[i - 1] == '\\') {
-      assert(dist_remaining--);
-      *(dist++) = '\\';
+      assert(dest_remaining--);
+      *(dest++) = '\\';
     } else if (src[i - 1] == '"') {
       quote_hit = true;
-      assert(dist_remaining--);
-      *(dist++) = '\\';
+      assert(dest_remaining--);
+      *(dest++) = '\\';
     } else {
       quote_hit = false;
     }
   }
-  assert(dist_remaining);
-  *dist = '"';
+  assert(dest_remaining);
+  *dest = '"';
 
-  while (start < dist) {
+  while (start < dest) {
     char tmp = *start;
-    *start = *dist;
-    *dist = tmp;
+    *start = *dest;
+    *dest = tmp;
     start++;
-    dist--;
+    dest--;
   }
 }
