@@ -25,4 +25,4 @@ CLICOLOR_FORCE=1 run_test_wd \
   'csi_clean' \
   single-includes
 
-exit_suite
+end_tests
