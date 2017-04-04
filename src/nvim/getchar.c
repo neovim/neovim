@@ -1844,8 +1844,11 @@ static int vgetorpeek(int advance)
                       keylen = KEYLEN_PART_MAP;
                       break;
                     }
-                  } else if (keylen > mp_match_len) {
-                    /* found a longer match */
+                  } else if (keylen > mp_match_len
+                             || (keylen == mp_match_len
+                                 && (mp_match->m_mode & LANGMAP) == 0
+                                 && (mp->m_mode & LANGMAP) != 0)) {
+                    // found a longer match
                     mp_match = mp;
                     mp_match_len = keylen;
                   }
