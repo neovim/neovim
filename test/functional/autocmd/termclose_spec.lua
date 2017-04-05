@@ -14,17 +14,11 @@ describe('TermClose event', function()
     nvim('set_option', 'shellcmdflag', 'EXE')
   end)
 
-  local function eq_err(expected, actual)
-    if expected ~= actual then
-      error('expected: '..tostring(expected)..', actual: '..tostring(actual))
-    end
-  end
-
   it('triggers when terminal job ends', function()
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
     command('call jobstop(b:terminal_job_id)')
-    retry(nil, nil, function() eq_err(23, eval('g:test_termclose')) end)
+    retry(nil, nil, function() eq(23, eval('g:test_termclose')) end)
   end)
 
   it('reports the correct <abuf>', function()
@@ -35,12 +29,12 @@ describe('TermClose event', function()
     eq(2, eval('bufnr("%")'))
 
     command('terminal')
-    retry(nil, nil, function() eq_err(3, eval('bufnr("%")')) end)
+    retry(nil, nil, function() eq(3, eval('bufnr("%")')) end)
 
     command('buffer 1')
-    retry(nil, nil, function() eq_err(1, eval('bufnr("%")')) end)
+    retry(nil, nil, function() eq(1, eval('bufnr("%")')) end)
 
     command('3bdelete!')
-    retry(nil, nil, function() eq_err('3', eval('g:abuf')) end)
+    retry(nil, nil, function() eq('3', eval('g:abuf')) end)
   end)
 end)
