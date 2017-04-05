@@ -4,15 +4,25 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <uv.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 // -V:STRUCT_CAST:641
 #define STRUCT_CAST(Type, obj) ((Type *)(obj))
 
 uv_tty_t tty;
 
+#define is_terminal(stream) (uv_guess_handle(fileno(stream)) == UV_TTY)
+#define BUF_SIZE 0xfff
+#define CTRL_C 0x03
 #ifdef _WIN32
-#include <windows.h>
+#define CTRL_Q 0x11
+#endif
+
+#ifdef _WIN32
 bool owns_tty(void)
 {
   // XXX: We need to make proper detect owns tty
@@ -30,10 +40,8 @@ bool owns_tty(void)
 }
 #endif
 
-#define is_terminal(stream) (uv_guess_handle(fileno(stream)) == UV_TTY)
-#define BUF_SIZE 0xfff
-
-static void walk_cb(uv_handle_t *handle, void *arg) {
+static void walk_cb(uv_handle_t *handle, void *arg)
+{
   if (!uv_is_closing(handle)) {
     uv_close(handle, NULL);
   }
@@ -42,7 +50,7 @@ static void walk_cb(uv_handle_t *handle, void *arg) {
 #ifndef WIN32
 static void sig_handler(int signum)
 {
-  switch(signum) {
+  switch (signum) {
   case SIGWINCH: {
     int width, height;
     uv_tty_get_winsize(&tty, &width, &height);
@@ -86,9 +94,9 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   int width, height;
 
   for (int i = 0; i < cnt; i++) {
-    if (buf->base[i] == 3) {
+    if (buf->base[i] == CTRL_C) {
       (*interrupted)++;
-    } else if (buf->base[i] == 17) {
+    } else if (buf->base[i] == CTRL_Q) {
       prsz = true;
     }
   }
@@ -152,7 +160,7 @@ int main(int argc, char **argv)
 
   if (argc > 1) {
     int count = atoi(argv[1]);
-    for (int i = 0; i < count; ++i) {
+    for (int i = 0; i < count; i++) {
       printf("line%d\n", i);
     }
     fflush(stdout);
