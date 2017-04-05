@@ -424,7 +424,6 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  cursor_shape.h
   diff.h
   digraph.h
   ex_cmds.h
