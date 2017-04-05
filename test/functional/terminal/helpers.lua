@@ -30,10 +30,6 @@ local function clear_attrs() feed_termcode('[0;10m') end
 -- mouse
 local function enable_mouse() feed_termcode('[?1002h') end
 local function disable_mouse() feed_termcode('[?1002l') end
-local function print_screen_size()
-  helpers.sleep(1000)
-  nvim('command', 'call jobsend(b:terminal_job_id, "\\<C-q>")')
-end
 
 local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 
@@ -115,6 +111,5 @@ return {
   clear_attrs = clear_attrs,
   enable_mouse = enable_mouse,
   disable_mouse = disable_mouse,
-  print_screen_size = print_screen_size,
   screen_setup = screen_setup
 }
