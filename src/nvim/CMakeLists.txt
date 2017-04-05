@@ -425,7 +425,6 @@ endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
   cursor_shape.h
-  diff.h
   digraph.h
   ex_cmds.h
   ex_getln.h
