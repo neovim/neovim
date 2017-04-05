@@ -1903,7 +1903,7 @@ static mapblock_T *find_typed_map(const bool timedout, const int local_State,
     char_u *p1 = mp->m_keys;
     char_u *p2 = mb_unescape(&p1);
 
-    if (has_mbyte && p2 != NULL && MB_BYTE2LEN(temp_c) > MB_PTR2LEN(p2)) {
+    if (p2 != NULL && MB_BYTE2LEN(temp_c) > MB_PTR2LEN(p2)) {
       mlen = 0;
     }
     // Check an entry whether it matches.
@@ -2066,11 +2066,7 @@ static int ins_esc_special_case(
               curwin->w_wcol = vcol;
             }
             vcol += lbr_chartabsize(ptr, ptr + col, (colnr_T)vcol);
-            if (has_mbyte) {
-              col += (*mb_ptr2len)(ptr + col);
-            } else {
-              col++;
-            }
+            col += mb_ptr2len(ptr + col);
           }
           curwin->w_wrow = curwin->w_cline_row
             + curwin->w_wcol / curwin->w_width;
@@ -2086,12 +2082,12 @@ static int ins_esc_special_case(
         curwin->w_wcol = curwin->w_width - 1;
         col = curwin->w_cursor.col - 1;
       }
-      if (has_mbyte && col > 0 && curwin->w_wcol > 0) {
+      if (col > 0 && curwin->w_wcol > 0) {
         // Correct when the cursor is on the right halve
         // of a double-wide character.
         ptr = get_cursor_line_ptr();
-        col -= (*mb_head_off)(ptr, ptr + col);
-        if ((*mb_ptr2cells)(ptr + col) > 1) {
+        col -= mb_head_off(ptr, ptr + col);
+        if (mb_ptr2cells(ptr + col) > 1) {
           curwin->w_wcol--;
         }
       }
