@@ -426,7 +426,6 @@ endfunction()
 set(NO_SINGLE_CHECK_HEADERS
   cursor_shape.h
   digraph.h
-  ex_cmds.h
   ex_getln.h
   file_search.h
   fold.h
