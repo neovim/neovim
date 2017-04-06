@@ -162,7 +162,7 @@ end
 
 local tests_skipped = 0
 
-local function check_cores(app)
+local function check_cores(app, force)
   app = app or 'build/bin/nvim'
   local initial_path, re, exc_re
   local gdb_db_cmd = 'gdb -n -batch -ex "thread apply all bt full" "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
@@ -188,7 +188,7 @@ local function check_cores(app)
     random_skip = true
   end
   -- Finding cores takes too much time on linux
-  if random_skip and math.random() < 0.9 then
+  if not force and random_skip and math.random() < 0.9 then
     tests_skipped = tests_skipped + 1
     return
   end
