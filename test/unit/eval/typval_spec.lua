@@ -1091,9 +1091,9 @@ describe('typval.c', function()
       end)
     end)
     describe('join()', function()
-      local function list_join(l, sep, ret)
+      local function list_join(l, sep, join_ret)
         local ga = ga_alloc()
-        eq(ret or OK, lib.tv_list_join(ga, l, sep))
+        eq(join_ret or OK, lib.tv_list_join(ga, l, sep))
         local ret = ''
         if ga.ga_data ~= nil then
           ret = ffi.string(ga.ga_data)
