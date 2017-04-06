@@ -424,7 +424,6 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  ex_getln.h
   file_search.h
   fold.h
   getchar.h
