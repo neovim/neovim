@@ -13416,14 +13416,12 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           q = (char *)path_tail((char_u *)p);
         }
         if (q > p && !path_is_absolute_path((const char_u *)buf)) {
-          // Symlink is relative to directory of argument.
+          // Symlink is relative to directory of argument. Replace the
+          // symlink with the resolved name in the same directory.
           const size_t p_len = strlen(p);
           const size_t buf_len = strlen(buf);
-          cpy = xmalloc(p_len + buf_len + 1);
-          memcpy(cpy, p, p_len);
-          memcpy(path_tail((char_u *)cpy), buf, buf_len + 1);
-          xfree(p);
-          p = cpy;
+          p = xrealloc(p, p_len + buf_len + 1);
+          memcpy(path_tail((char_u *)p), buf, buf_len + 1);
         } else {
           xfree(p);
           p = xstrdup(buf);
