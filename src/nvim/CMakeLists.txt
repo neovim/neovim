@@ -424,19 +424,10 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  file_search.h
   getchar.h
-  hardcopy.h
-  if_cscope.h
   if_cscope_defs.h
-  mark.h
-  mbyte.h
-  memfile_defs.h
-  memline.h
-  menu.h
   misc2.h
   msgpack_rpc/server.h
-  ops.h
   option.h
   os/shell.h
   os_unix.h
