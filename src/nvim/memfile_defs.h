@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
+#include <stdlib.h> // for size_t
 #include "nvim/types.h"
 
 /// A block number.
