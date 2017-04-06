@@ -31,12 +31,22 @@ Pull requests ("PRs")
 - Avoid cosmetic changes to unrelated files in the same commit: extra noise
   makes reviews more difficult.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
-- [Rebase your feature branch][git-rebasing] onto (upstream) master before
-  opening the PR.
-- After addressing the review comments, it's fine to rebase and force-push to
-  your review.
-- Try to [tidy your history][git-history-rewriting]: combine related commits
-  with interactive rebasing, separate monolithic commits, etc.
+- Edit history with `ri` alias: add
+
+        [alias]
+        	ri = "!sh -c 't=\"${1:-master}\" ; s=\"${2:-HEAD}\" ; if ! git merge-base --is-ancestor \"$t\" \"$s\" ; then o=\"$t\" ; else mb=\"$(git merge-base \"$t\" \"$s\")\" ; if test \"x$mb\" = x ; then o=\"$t\" ; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\" ; if test \"xu$lm\" = x ; then o=\"$mb\" ; else o=\"$lm\" ; fi ; fi ; fi ; [ $# -gt 0 ] && shift ; [ $# -gt 0 ] && shift ; git rebase --interactive \"$o\" \"$@\"' -"
+
+    to your `~/.gitconfig`.
+
+    This avoids unnecessary rebases yet still allows you to combine related
+    commits, separate monolithic commits, etc.
+- Rebase relatively small PRs, using `exec make -C build unittest` after
+  each pick/edit/reword, after all following squash/fixup.
+- Merge in `master` of bigger PRs. Do not do excessive merging: merge
+  in case of merge conflicts or when master introduces changes which break
+  your PR.
+
+  Do not edit commits which come before the merge commit.
 
 ### Stages: WIP, RFC, RDY
 
