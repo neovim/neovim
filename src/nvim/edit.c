@@ -2109,7 +2109,7 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
 
     xfree(wca);
 
-    return ins_compl_add(IObuff, len, icase, fname, NULL, true, dir, flags,
+    return ins_compl_add(IObuff, len, icase, fname, NULL, false, dir, flags,
                          false);
   }
   return ins_compl_add(str, len, icase, fname, NULL, false, dir, flags, false);
@@ -2146,7 +2146,7 @@ static int ins_compl_add(char_u *const str, int len,
   os_breakcheck();
 #define FREE_CPTEXT(cptext, cptext_allocated) \
   do { \
-    if (cptext_allocated) { \
+    if (cptext != NULL && cptext_allocated) { \
       for (size_t i = 0; i < CPT_COUNT; i++) { \
         xfree(cptext[i]); \
       } \
