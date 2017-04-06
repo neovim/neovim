@@ -432,7 +432,6 @@ set(NO_SINGLE_CHECK_HEADERS
   fold.h
   getchar.h
   hardcopy.h
-  if_cscope.h
   if_cscope_defs.h
   mark.h
   mbyte.h
