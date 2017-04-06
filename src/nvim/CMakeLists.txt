@@ -434,7 +434,6 @@ set(NO_SINGLE_CHECK_HEADERS
   hardcopy.h
   if_cscope.h
   if_cscope_defs.h
-  mark.h
   mbyte.h
   memfile_defs.h
   memline.h
