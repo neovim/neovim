@@ -125,4 +125,19 @@ func Test_paused()
   endif
 endfunc
 
+func StopMyself(timer)
+  let g:called += 1
+  if g:called == 2
+    call timer_stop(a:timer)
+  endif
+endfunc
+
+func Test_delete_myself()
+  let g:called = 0
+  let t = timer_start(10, 'StopMyself', {'repeat': -1})
+  call WaitFor('g:called == 2')
+  call assert_equal(2, g:called)
+  call assert_equal([], timer_info(t))
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
