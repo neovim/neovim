@@ -2,7 +2,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "nvim/vim.h"
+#include <winpty_constants.h>
+
+#include "nvim/os/os.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
@@ -23,7 +25,7 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
   uv_timer_start(&ptyproc->wait_eof_timer, wait_eof_timer_cb, 200, 200);
 }
 
-/// @returns zero on success, or UV_EAI_FAIL on failure.
+/// @returns zero on success, or negative error code.
 int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -112,13 +114,19 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto cleanup;
   }
 
+  DWORD win_err = 0;
   if (!winpty_spawn(winpty_object,
                     spawncfg,
                     &process_handle,
                     NULL,  // Optional thread handle
-                    NULL,  // Optional create process error
+                    &win_err,
                     &err)) {
-    write_winpty_elog("Failed winpty_spawn.", &status, &err);
+    if (win_err) {
+      status = (int)win_err;
+      write_elog("Failed spawn process.", status);
+    } else {
+      write_winpty_elog("Failed winpty_spawn.", &status, &err);
+    }
     goto cleanup;
   }
   proc->pid = GetProcessId(process_handle);
@@ -158,7 +166,7 @@ cleanup:
   xfree(out_req);
   xfree(cmd_line);
   xfree(cwd);
-  return status ? UV_EAI_FAIL : 0;
+  return status <= 0 ? status : os_translate_sys_error(status);
 }
 
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
@@ -358,5 +366,30 @@ static void quote_cmd_arg(char *dest, size_t dest_remaining, const char *src)
     *dest = tmp;
     start++;
     dest--;
+  }
+}
+
+/// Translate winpty error code to libuv error.
+///
+/// @param[in]  winpty_errno  Winpty error code returned by winpty_error_code
+///                           function.
+///
+/// @returns  Error code of libuv error.
+int translate_winpty_error(int winpty_errno)
+{
+  if (winpty_errno <= 0) {
+    return winpty_errno;  // If < 0 then it's already a libuv error.
+  }
+
+  switch (winpty_errno) {
+    case WINPTY_ERROR_OUT_OF_MEMORY:                return UV_ENOMEM;
+    case WINPTY_ERROR_SPAWN_CREATE_PROCESS_FAILED:  return UV_EAI_FAIL;
+    case WINPTY_ERROR_LOST_CONNECTION:              return UV_ENOTCONN;
+    case WINPTY_ERROR_AGENT_EXE_MISSING:            return UV_ENOENT;
+    case WINPTY_ERROR_UNSPECIFIED:                   return UV_UNKNOWN;
+    case WINPTY_ERROR_AGENT_DIED:                   return UV_ESRCH;
+    case WINPTY_ERROR_AGENT_TIMEOUT:                return UV_ETIMEDOUT;
+    case WINPTY_ERROR_AGENT_CREATION_FAILED:        return UV_EAI_FAIL;
+    default:                                        return UV_UNKNOWN;
   }
 }

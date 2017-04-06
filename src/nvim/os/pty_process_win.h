@@ -2,7 +2,6 @@
 #define NVIM_OS_PTY_PROCESS_WIN_H
 
 #include <uv.h>
-
 #include <winpty.h>
 
 #include "nvim/event/process.h"
@@ -50,7 +49,8 @@ static inline void write_elog(const char *emsg, int status)
 /// Get error code from winpty error object and output error log.
 ///
 /// @param  emsg  error message.
-/// @param[out]  status  Location where saved error code.
+/// @param[out]  status  Location where saved error code that converted into
+///                      libuv error.
 /// @param  err  winpty error object.
 ///
 static inline void write_winpty_elog(const char *emsg, int *status,
@@ -60,6 +60,7 @@ static inline void write_winpty_elog(const char *emsg, int *status,
 
   *status = (int)winpty_error_code(*err);
   write_elog(emsg, *status);
+  *status = translate_winpty_error(*status);
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
