@@ -438,7 +438,6 @@ set(NO_SINGLE_CHECK_HEADERS
   mbyte.h
   memfile_defs.h
   memline.h
-  memline_defs.h
   menu.h
   misc2.h
   move.h
