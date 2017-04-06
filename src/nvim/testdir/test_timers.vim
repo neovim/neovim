@@ -48,12 +48,12 @@ endfunc
 
 func Test_with_partial_callback()
   let g:val = 0
-  let s:meow = {}
-  function s:meow.bite(...)
-    let g:val += 1
+  let meow = {'one': 1}
+  function meow.bite(...)
+    let g:val += self.one
   endfunction
 
-  call timer_start(50, s:meow.bite)
+  call timer_start(50, meow.bite)
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
