@@ -6287,43 +6287,38 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
 /*
  * cstrchr: This function is used a lot for simple searches, keep it fast!
  */
-static char_u *cstrchr(char_u *s, int c)
+static inline char_u *cstrchr(const char_u *const s, const int c)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_ALWAYS_INLINE
 {
-  char_u      *p;
-  int cc;
-
-  if (!ireg_ic
-      || (!enc_utf8 && mb_char2len(c) > 1)
-      )
+  if (!ireg_ic) {
     return vim_strchr(s, c);
+  }
 
-  /* tolower() and toupper() can be slow, comparing twice should be a lot
-   * faster (esp. when using MS Visual C++!).
-   * For UTF-8 need to use folded case. */
-  if (enc_utf8 && c > 0x80)
-    cc = utf_fold(c);
-  else if (vim_isupper(c))
-    cc = vim_tolower(c);
-  else if (vim_islower(c))
-    cc = vim_toupper(c);
-  else
-    return vim_strchr(s, c);
-
-  if (has_mbyte) {
-    for (p = s; *p != NUL; p += (*mb_ptr2len)(p)) {
-      if (enc_utf8 && c > 0x80) {
-        if (utf_fold(utf_ptr2char(p)) == cc)
-          return p;
-      } else if (*p == c || *p == cc)
-        return p;
+  // tolower() and toupper() can be slow, comparing twice should be a lot
+  // faster (esp. when using MS Visual C++!).
+  // For UTF-8 need to use folded case.
+  if (c > 0x80) {
+    const int folded_c = utf_fold(c);
+    for (const char_u *p = s; *p != NUL; p += utfc_ptr2len(p)) {
+      if (utf_fold(utf_ptr2char(p)) == folded_c) {
+        return (char_u *)p;
+      }
     }
-  } else
-    /* Faster version for when there are no multi-byte characters. */
-    for (p = s; *p != NUL; ++p)
-      if (*p == c || *p == cc)
-        return p;
+    return NULL;
+  }
 
-  return NULL;
+  int cc;
+  if (vim_isupper(c)) {
+    cc = vim_tolower(c);
+  } else if (vim_islower(c)) {
+    cc = vim_toupper(c);
+  } else {
+    return vim_strchr(s, c);
+  }
+
+  char tofind[] = { (char)c, (char)cc, NUL };
+  return (char_u *)strpbrk((const char *)s, tofind);
 }
 
 /***************************************************************
