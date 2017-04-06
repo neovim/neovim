@@ -3429,32 +3429,26 @@ static long bt_regexec_both(char_u *line,
       c = *prog->regmust;
     s = line + col;
 
-    /*
-     * This is used very often, esp. for ":global".  Use three versions of
-     * the loop to avoid overhead of conditions.
-     */
-    if (!ireg_ic
-        && !has_mbyte
-        )
-      while ((s = vim_strbyte(s, c)) != NULL) {
-        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0)
-          break;                        /* Found it. */
-        ++s;
-      }
-    else if (!ireg_ic || (!enc_utf8 && mb_char2len(c) > 1))
+    // This is used very often, esp. for ":global".  Use two versions of
+    // the loop to avoid overhead of conditions.
+    if (!ireg_ic) {
       while ((s = vim_strchr(s, c)) != NULL) {
-        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0)
-          break;                        /* Found it. */
+        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
+          break;  // Found it.
+        }
         mb_ptr_adv(s);
       }
-    else
+    } else {
       while ((s = cstrchr(s, c)) != NULL) {
-        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0)
-          break;                        /* Found it. */
+        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
+          break;  // Found it.
+        }
         mb_ptr_adv(s);
       }
-    if (s == NULL)              /* Not present. */
+    }
+    if (s == NULL) {  // Not present.
       goto theend;
+    }
   }
 
   regline = line;
@@ -3484,14 +3478,8 @@ static long bt_regexec_both(char_u *line,
     /* Messy cases:  unanchored match. */
     while (!got_int) {
       if (prog->regstart != NUL) {
-        /* Skip until the char we know it must start with.
-         * Used often, do some work to avoid call overhead. */
-        if (!ireg_ic
-            && !has_mbyte
-            )
-          s = vim_strbyte(regline + col, prog->regstart);
-        else
-          s = cstrchr(regline + col, prog->regstart);
+        // Skip until the char we know it must start with.
+        s = cstrchr(regline + col, prog->regstart);
         if (s == NULL) {
           retval = 0;
           break;

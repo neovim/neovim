@@ -426,24 +426,6 @@ char_u *vim_strchr(const char_u *const string, const int c)
 }
 
 /*
- * Version of strchr() that only works for bytes and handles unsigned char
- * strings with characters above 128 correctly. It also doesn't return a
- * pointer to the NUL at the end of the string.
- */
-char_u *vim_strbyte(const char_u *string, int c)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  const char_u *p = string;
-
-  while (*p != NUL) {
-    if (*p == c)
-      return (char_u *) p;
-    ++p;
-  }
-  return NULL;
-}
-
-/*
  * Search for last occurrence of "c" in "string".
  * Return NULL if not found.
  * Does not handle multi-byte char for "c"!
