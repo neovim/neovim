@@ -14,6 +14,7 @@
 #include "nvim/window.h"
 #include "nvim/memory.h"
 #include "nvim/eval.h"
+#include "nvim/eval/typval.h"
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
 #include "nvim/option.h"
@@ -87,14 +88,13 @@ bool try_end(Error *err)
 /// @param[out] err Details of an error that may have occurred
 Object dict_get_value(dict_T *dict, String key, Error *err)
 {
-  hashitem_T *hi = hash_find(&dict->dv_hashtab, (uint8_t *) key.data);
+  dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
-  if (HASHITEM_EMPTY(hi)) {
+  if (di == NULL) {
     api_set_error(err, Validation, _("Key not found"));
     return (Object) OBJECT_INIT;
   }
 
-  dictitem_T *di = dict_lookup(hi);
   return vim_to_object(&di->di_tv);
 }
 
@@ -129,7 +129,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
     return rv;
   }
 
-  dictitem_T *di = dict_find(dict, (char_u *)key.data, (int)key.size);
+  dictitem_T *di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (di != NULL) {
     if (di->di_flags & DI_FLAGS_RO) {
@@ -155,9 +155,7 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
         rv = vim_to_object(&di->di_tv);
       }
       // Delete the entry
-      hashitem_T *hi = hash_find(&dict->dv_hashtab, di->di_key);
-      hash_remove(&dict->dv_hashtab, hi);
-      dictitem_free(di);
+      tv_dict_item_remove(dict, di);
     }
   } else {
     // Update the key
@@ -170,20 +168,20 @@ Object dict_set_var(dict_T *dict, String key, Object value, bool del,
 
     if (di == NULL) {
       // Need to create an entry
-      di = dictitem_alloc((uint8_t *) key.data);
-      dict_add(dict, di);
+      di = tv_dict_item_alloc_len(key.data, key.size);
+      tv_dict_add(dict, di);
     } else {
       // Return the old value
       if (retval) {
         rv = vim_to_object(&di->di_tv);
       }
-      clear_tv(&di->di_tv);
+      tv_clear(&di->di_tv);
     }
 
     // Update the value
-    copy_tv(&tv, &di->di_tv);
+    tv_copy(&tv, &di->di_tv);
     // Clear the temporary variable
-    clear_tv(&tv);
+    tv_clear(&tv);
   }
 
   return rv;
@@ -291,7 +289,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     }
   }
 
-  int opt_flags = (type ? OPT_LOCAL : OPT_GLOBAL);
+  int opt_flags = (type == SREQ_GLOBAL) ? OPT_GLOBAL : OPT_LOCAL;
 
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBoolean) {
@@ -627,7 +625,7 @@ String cstr_as_string(char *str) FUNC_ATTR_PURE
   if (str == NULL) {
     return (String) STRING_INIT;
   }
-  return (String) {.data = str, .size = strlen(str)};
+  return (String) { .data = str, .size = strlen(str) };
 }
 
 /// Converts from type Object to a VimL value.
@@ -682,20 +680,20 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeArray: {
-      list_T *list = list_alloc();
+      list_T *const list = tv_list_alloc();
 
       for (uint32_t i = 0; i < obj.data.array.size; i++) {
         Object item = obj.data.array.items[i];
-        listitem_T *li = listitem_alloc();
+        listitem_T *li = tv_list_item_alloc();
 
         if (!object_to_vim(item, &li->li_tv, err)) {
           // cleanup
-          listitem_free(li);
-          list_free(list);
+          tv_list_item_free(li);
+          tv_list_free(list);
           return false;
         }
 
-        list_append(list, li);
+        tv_list_append(list, li);
       }
       list->lv_refcount++;
 
@@ -705,7 +703,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     }
 
     case kObjectTypeDictionary: {
-      dict_T *dict = dict_alloc();
+      dict_T *const dict = tv_dict_alloc();
 
       for (uint32_t i = 0; i < obj.data.dictionary.size; i++) {
         KeyValuePair item = obj.data.dictionary.items[i];
@@ -715,20 +713,20 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
           api_set_error(err, Validation,
                         _("Empty dictionary keys aren't allowed"));
           // cleanup
-          dict_free(dict);
+          tv_dict_free(dict);
           return false;
         }
 
-        dictitem_T *di = dictitem_alloc((uint8_t *)key.data);
+        dictitem_T *const di = tv_dict_item_alloc(key.data);
 
         if (!object_to_vim(item.value, &di->di_tv, err)) {
           // cleanup
-          dictitem_free(di);
-          dict_free(dict);
+          tv_dict_item_free(di);
+          tv_dict_free(dict);
           return false;
         }
 
-        dict_add(dict, di);
+        tv_dict_add(dict, di);
       }
       dict->dv_refcount++;
 
@@ -959,11 +957,7 @@ static void set_option_value_err(char *key,
 {
   char *errmsg;
 
-  if ((errmsg = (char *)set_option_value((uint8_t *)key,
-                                         numval,
-                                         (uint8_t *)stringval,
-                                         opt_flags)))
-  {
+  if ((errmsg = set_option_value(key, numval, stringval, opt_flags))) {
     if (try_end(err)) {
       return;
     }

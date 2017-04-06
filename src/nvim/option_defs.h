@@ -16,9 +16,9 @@
 #define SOPT_UNSET 0x40    // Option does not have local value set
 
 // Option types for various functions in option.c
-#define SREQ_GLOBAL 0 // Request global option
-#define SREQ_WIN 1    // Request window-local option
-#define SREQ_BUF 2    // Request buffer-local option
+#define SREQ_GLOBAL 0  // Request global option value
+#define SREQ_WIN 1     // Request window-local option value
+#define SREQ_BUF 2     // Request buffer-local option value
 
 /*
  * Default values for 'errorformat'.
@@ -476,8 +476,9 @@ EXTERN char_u   *p_isp;         // 'isprint'
 EXTERN int p_js;                // 'joinspaces'
 EXTERN char_u   *p_kp;          // 'keywordprg'
 EXTERN char_u   *p_km;          // 'keymodel'
-EXTERN char_u   *p_langmap;     // 'langmap'*/
-EXTERN int p_lnr;               // 'langnoremap'*/
+EXTERN char_u   *p_langmap;     // 'langmap'
+EXTERN int p_lnr;               // 'langnoremap'
+EXTERN int p_lrm;               // 'langremap'
 EXTERN char_u   *p_lm;          // 'langmenu'
 EXTERN char_u   *p_lispwords;   // 'lispwords'
 EXTERN long p_ls;               // 'laststatus'
@@ -524,6 +525,7 @@ EXTERN int p_ru;                // 'ruler'
 EXTERN char_u   *p_ruf;         // 'rulerformat'
 EXTERN char_u   *p_pp;          // 'packpath'
 EXTERN char_u   *p_rtp;         // 'runtimepath'
+EXTERN long p_scbk;             // 'scrollback'
 EXTERN long p_sj;               // 'scrolljump'
 EXTERN long p_so;               // 'scrolloff'
 EXTERN char_u   *p_sbo;         // 'scrollopt'
@@ -810,5 +812,7 @@ enum {
 
 /* Value for b_p_ul indicating the global value must be used. */
 #define NO_LOCAL_UNDOLEVEL -123456
+
+#define SB_MAX 100000  // Maximum 'scrollback' value.
 
 #endif // NVIM_OPTION_DEFS_H

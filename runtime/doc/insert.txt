@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.4.  Last change: 2016 Jan 31
+*insert.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

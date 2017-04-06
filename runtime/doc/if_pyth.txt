@@ -1,4 +1,4 @@
-*if_pyth.txt*   For Vim version 7.4.  Last change: 2014 Jul 23
+*if_pyth.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Paul Moore
@@ -180,11 +180,6 @@ vim.eval(str)						*python-eval*
 	    :py str = vim.eval("12+12")		# NB result is a string! Use
 						# string.atoi() to convert to
 						# a number.
-
-	    :py tagList = vim.eval('taglist("eval_expr")')
-<	The latter will return a python list of python dicts, for instance:
-	[{'cmd': '/^eval_expr(arg, nextcmd)$/', 'static': 0, 'name':
-	'eval_expr', 'kind': 'f', 'filename': './src/eval.c'}]
 
 vim.bindeval(str)					*python-bindeval*
 	Like |python-eval|, but returns special objects described in 

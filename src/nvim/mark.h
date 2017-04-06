@@ -29,7 +29,7 @@
 
 /// Clear given fmark
 #define CLEAR_FMARK(fmarkp_) \
-    RESET_FMARK(fmarkp_, ((pos_T) {0, 0, 0}), 0)
+    RESET_FMARK(fmarkp_, ((pos_T) { 0, 0, 0 }), 0)
 
 /// Set given extended mark (regular mark + file name)
 #define SET_XFMARK(xfmarkp_, mark_, fnum_, fname_) \

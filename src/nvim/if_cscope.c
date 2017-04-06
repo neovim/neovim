@@ -140,31 +140,30 @@ char_u *get_cscope_name(expand_T *xp, int idx)
 /*
  * Handle command line completion for :cscope command.
  */
-void set_context_in_cscope_cmd(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
+void set_context_in_cscope_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
 {
-  char_u      *p;
-
-  /* Default: expand subcommands */
+  // Default: expand subcommands.
   xp->xp_context = EXPAND_CSCOPE;
-  xp->xp_pattern = arg;
-  expand_what = (cmdidx == CMD_scscope)
-                ? EXP_SCSCOPE_SUBCMD : EXP_CSCOPE_SUBCMD;
+  xp->xp_pattern = (char_u *)arg;
+  expand_what = ((cmdidx == CMD_scscope)
+                 ? EXP_SCSCOPE_SUBCMD : EXP_CSCOPE_SUBCMD);
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                /* past first word */
-      xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != NUL)
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past first word.
+      xp->xp_pattern = skipwhite((const char_u *)p);
+      if (*skiptowhite(xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-      else if (STRNICMP(arg, "add", p - arg) == 0)
+      } else if (STRNICMP(arg, "add", p - arg) == 0) {
         xp->xp_context = EXPAND_FILES;
-      else if (STRNICMP(arg, "kill", p - arg) == 0)
+      } else if (STRNICMP(arg, "kill", p - arg) == 0) {
         expand_what = EXP_CSCOPE_KILL;
-      else if (STRNICMP(arg, "find", p - arg) == 0)
+      } else if (STRNICMP(arg, "find", p - arg) == 0) {
         expand_what = EXP_CSCOPE_FIND;
-      else
+      } else {
         xp->xp_context = EXPAND_NOTHING;
+      }
     }
   }
 }

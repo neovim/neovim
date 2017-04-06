@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.4.  Last change: 2016 Aug 27
+*eval.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -247,7 +247,7 @@ it.  To change a list in-place see |list-modification| below.
 
 
 Sublist ~
-
+							*sublist*
 A part of the List can be obtained by specifying the first and last index,
 separated by a colon in square brackets: >
 	:let shortlist = mylist[2:-1]	" get List [3, "four"]
@@ -975,10 +975,10 @@ Examples: >
 	:let s = line(".")[4:]		" from the fifth byte to the end
 	:let s = s[:-3]			" remove last two bytes
 <
-							*sublist* *slice*
+							*slice*
 If expr8 is a |List| this results in a new |List| with the items indicated by
 the indexes expr1a and expr1b.	This works like with a String, as explained
-just above, except that indexes out of range cause an error.  Examples: >
+just above. Also see |sublist| below.  Examples: >
 	:let l = mylist[:3]		" first four items
 	:let l = mylist[4:4]		" List with one item
 	:let l = mylist[:]		" shallow copy of a List
@@ -4004,6 +4004,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		augroup		autocmd groups
 		buffer		buffer names
 		behave		:behave suboptions
+		cmdline		|cmdline-completion|
 		color		color schemes
 		command		Ex command (and arguments)
 		compiler	compilers
@@ -4032,7 +4033,7 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		user		user names
 		var		user variables
 
-		If {pat} is an empty string, then all the matches are returned.
+		If {pat} is an empty string then all matches are returned.
 		Otherwise only items matching {pat} are returned. See
 		|wildcards| for the use of special characters in {pat}.
 
@@ -5690,9 +5691,10 @@ printf({fmt}, {expr1} ...)				*printf()*
 		  %04x	hex number padded with zeros to at least 4 characters
 		  %X	hex number using upper case letters
 		  %o	octal number
-		  %f	floating point number in the form 123.456
-		  %e	floating point number in the form 1.234e3
-		  %E	floating point number in the form 1.234E3
+		  %f	floating point number as 12.23, inf, -inf or nan
+		  %F	floating point number as 12.23, INF, -INF or NAN
+		  %e	floating point number as 1.23e3, inf, -inf or nan
+		  %E	floating point number as 1.23E3, INF, -INF or NAN
 		  %g	floating point number, as %f or %e depending on value
 		  %G	floating point number, as %f or %E depending on value
 		  %%	the % character itself
@@ -5817,8 +5819,9 @@ printf({fmt}, {expr1} ...)				*printf()*
 			digits after the decimal point.  When the precision is
 			zero the decimal point is omitted.  When the precision
 			is not specified 6 is used.  A really big number
-			(out of range or dividing by zero) results in "inf".
-			"0.0 / 0.0" results in "nan".
+			(out of range or dividing by zero) results in "inf"
+			 or "-inf" with %f (INF or -INF with %F).
+			 "0.0 / 0.0" results in "nan" with %f (NAN with %F).
 			Example: >
 				echo printf("%.2f", 12.115)
 <				12.12
@@ -7953,6 +7956,12 @@ writefile({list}, {fname} [, {flags}])
 		appended to the file: >
 			:call writefile(["foo"], "event.log", "a")
 			:call writefile(["bar"], "event.log", "a")
+<
+		When {flags} contains "S" fsync() call is not used, with "s" 
+		it is used, 'fsync' option applies by default. No fsync() 
+		means that writefile() will finish faster, but writes may be 
+		left in OS buffers and not yet written to disk. Such changes 
+		will disappear if system crashes before OS does writing.
 
 		All NL characters are replaced with a NUL character.
 		Inserting CR characters needs to be done before passing {list}
@@ -8260,7 +8269,7 @@ See |:verbose-cmd| for more information.
 				:    let x += 1
 				:    return x
 				:  endfunction
-				:  return function('Bar')
+				:  return funcref('Bar')
 				:endfunction
 
 				:let F = Foo()

@@ -1,4 +1,4 @@
-*pi_gzip.txt*   For Vim version 7.4.  Last change: 2012 Jul 19
+*pi_gzip.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

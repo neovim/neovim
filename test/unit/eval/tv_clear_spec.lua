@@ -14,7 +14,7 @@ local list_items = eval_helpers.list_items
 local dict_items = eval_helpers.dict_items
 local lua2typvalt = eval_helpers.lua2typvalt
 
-local lib = cimport('./src/nvim/eval_defs.h', './src/nvim/eval.h')
+local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/eval.h')
 
 local alloc_log = alloc_log_new()
 
@@ -26,7 +26,7 @@ after_each(function()
   alloc_log:after_each()
 end)
 
-describe('clear_tv()', function()
+describe('tv_clear()', function()
   itp('successfully frees all lists in [&l [1], *l, *l]', function()
     local l_inner = {1}
     local list = {l_inner, l_inner, l_inner}
@@ -44,7 +44,7 @@ describe('clear_tv()', function()
       a.li(lis[3]),
     })
     eq(3, list_inner_p.lv_refcount)
-    lib.clear_tv(list_tv)
+    lib.tv_clear(list_tv)
     alloc_log:check({
       a.freed(lis_inner[1]),
       a.freed(list_inner_p),
@@ -69,7 +69,7 @@ describe('clear_tv()', function()
       a.li(lis[3]),
     })
     eq(3, list_inner_p.lv_refcount)
-    lib.clear_tv(list_tv)
+    lib.tv_clear(list_tv)
     alloc_log:check({
       a.freed(list_inner_p),
       a.freed(lis[1]),
@@ -92,7 +92,7 @@ describe('clear_tv()', function()
       a.li(lis[2]),
     })
     eq(2, dict_inner_p.dv_refcount)
-    lib.clear_tv(list_tv)
+    lib.tv_clear(list_tv)
     alloc_log:check({
       a.freed(dict_inner_p),
       a.freed(lis[1]),
@@ -116,7 +116,7 @@ describe('clear_tv()', function()
       a.li(lis[2]),
     })
     eq(2, dict_inner_p.dv_refcount)
-    lib.clear_tv(list_tv)
+    lib.tv_clear(list_tv)
     alloc_log:check({
       a.freed(dis.a),
       a.freed(dict_inner_p),

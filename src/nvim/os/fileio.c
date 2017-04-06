@@ -113,32 +113,53 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 /// Close file and free its buffer
 ///
 /// @param[in,out]  fp  File to close.
+/// @param[in]  do_fsync  If true, use fsync() to write changes to disk.
 ///
 /// @return 0 or error code.
-int file_close(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
+int file_close(FileDescriptor *const fp, const bool do_fsync)
+  FUNC_ATTR_NONNULL_ALL
 {
-  const int error = file_fsync(fp);
-  const int error2 = os_close(fp->fd);
+  const int flush_error = (do_fsync ? file_fsync(fp) : file_flush(fp));
+  const int close_error = os_close(fp->fd);
   rbuffer_free(fp->rv);
-  if (error2 != 0) {
-    return error2;
+  if (close_error != 0) {
+    return close_error;
   }
-  return error;
+  return flush_error;
 }
 
 /// Close and free file obtained using file_open_new()
 ///
 /// @param[in,out]  fp  File to close.
+/// @param[in]  do_fsync  If true, use fsync() to write changes to disk.
 ///
 /// @return 0 or error code.
-int file_free(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
+int file_free(FileDescriptor *const fp, const bool do_fsync)
+  FUNC_ATTR_NONNULL_ALL
 {
-  const int ret = file_close(fp);
+  const int ret = file_close(fp, do_fsync);
   xfree(fp);
   return ret;
 }
 
 /// Flush file modifications to disk
+///
+/// @param[in,out]  fp  File to work with.
+///
+/// @return 0 or error code.
+int file_flush(FileDescriptor *const fp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!fp->wr) {
+    return 0;
+  }
+  file_rb_write_full_cb(fp->rv, fp);
+  const int error = fp->_error;
+  fp->_error = 0;
+  return error;
+}
+
+/// Flush file modifications to disk and run fsync()
 ///
 /// @param[in,out]  fp  File to work with.
 ///
@@ -149,15 +170,13 @@ int file_fsync(FileDescriptor *const fp)
   if (!fp->wr) {
     return 0;
   }
-  file_rb_write_full_cb(fp->rv, fp);
-  if (fp->_error != 0) {
-    const int error = fp->_error;
-    fp->_error = 0;
-    return error;
+  const int flush_error = file_flush(fp);
+  if (flush_error != 0) {
+    return flush_error;
   }
-  const int error = os_fsync(fp->fd);
-  if (error != UV_EINVAL && error != UV_EROFS) {
-    return error;
+  const int fsync_error = os_fsync(fp->fd);
+  if (fsync_error != UV_EINVAL && fsync_error != UV_EROFS) {
+    return fsync_error;
   }
   return 0;
 }

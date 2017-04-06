@@ -29,6 +29,7 @@
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/window.h"
+#include "nvim/cursor_shape.h"
 #ifdef FEAT_TUI
 # include "nvim/tui/tui.h"
 #else
@@ -179,6 +180,7 @@ void ui_refresh(void)
   row = col = 0;
   screen_resize(width, height);
   pum_set_external(pum_external);
+  ui_cursor_style_set();
 }
 
 static void ui_refresh_event(void **argv)
@@ -374,6 +376,14 @@ void ui_cursor_goto(int new_row, int new_col)
   row = new_row;
   col = new_col;
   pending_cursor_update = true;
+}
+
+void ui_cursor_style_set(void)
+{
+  Dictionary style = cursor_shape_dict();
+  bool enabled = (*p_guicursor != NUL);
+  UI_CALL(cursor_style_set, enabled, style);
+  api_free_dictionary(style);
 }
 
 void ui_update_menu(void)

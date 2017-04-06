@@ -118,6 +118,12 @@ function! s:check_tmux() abort
   let cmd = 'tmux show-option -qvg default-terminal'
   let out = system(cmd)
   let tmux_default_term = substitute(out, '\v(\s|\r|\n)', '', 'g')
+  if empty(tmux_default_term)
+    let cmd = 'tmux show-option -qvgs default-terminal'
+    let out = system(cmd)
+    let tmux_default_term = substitute(out, '\v(\s|\r|\n)', '', 'g')
+  endif
+
   if v:shell_error
     call health#report_error('command failed: '.cmd."\n".out)
   elseif tmux_default_term !=# $TERM

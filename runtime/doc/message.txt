@@ -1,4 +1,4 @@
-*message.txt*   For Vim version 7.4.  Last change: 2016 Jul 16
+*message.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

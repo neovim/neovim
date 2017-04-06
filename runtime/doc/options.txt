@@ -1,4 +1,4 @@
-*options.txt*	For Vim version 7.4.  Last change: 2016 Jul 12
+*options.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -397,20 +397,6 @@ command, not when assigning a value to an option with ":let".
 
 Note the maximum length of an expanded option is limited.  How much depends on
 the system, mostly it is something like 256 or 1024 characters.
-
-							*Linux-backspace*
-			Note about Linux: By default the backspace key
-			produces CTRL-?, which is wrong.  You can fix it by
-			putting this line in your rc.local: >
-				echo "keycode 14 = BackSpace" | loadkeys
-<
-							*NetBSD-backspace*
-			Note about NetBSD: If your backspace doesn't produce
-			the right code, try this: >
-				xmodmap -e "keycode 22 = BackSpace"
-<			If this works, add this in your .Xmodmap file: >
-				keysym 22 = BackSpace
-<			You need to restart for this to take effect.
 
 ==============================================================================
 2. Automatically setting options			*auto-setting*
@@ -2754,6 +2740,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	mode, so it may be undesirable in some situations.  Be warned that
 	turning this off increases the chances of data loss after a crash.
 
+	Currently applies only to writing the buffer with e.g. |:w| and 
+	|writefile()|.
+
 				   *'gdefault'* *'gd'* *'nogdefault'* *'nogd'*
 'gdefault' 'gd'		boolean	(default off)
 			global
@@ -2804,21 +2793,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 					i-ci:ver25-Cursor/lCursor,
 					r-cr:hor20-Cursor/lCursor,
 					sm:block-Cursor
-					-blinkwait175-blinkoff150-blinkon175",
-				for Windows console:
-					"n-v-c:block,o:hor50,i-ci:hor15,
-					r-cr:hor30,sm:block")
+					-blinkwait175-blinkoff150-blinkon175")
 			global
-			{only available when compiled with GUI enabled, and
-			for Windows console}
-	This option tells Vim what the cursor should look like in different
-	modes.  It fully works in the GUI.  In a Windows console, only
-	the height of the cursor can be changed.  This can be done by
-	specifying a block cursor, or a percentage for a vertical or
-	horizontal cursor.
-	For a console the 't_SI' and 't_EI' escape sequences are used.
-
-	The option is a comma separated list of parts.  Each part consist of a
+	Configures the cursor style for each mode. Works in the GUI and some
+	terminals. Unset to disable: >
+		:set guicursor=
+<
+	With tmux you might need this in ~/.tmux.conf (see terminal-overrides
+	in the tmux(1) manual page): >
+		set -ga terminal-overrides ',*:Ss=\E[%p1%d q:Se=\E[2 q'
+<
+	The option is a comma separated list of parts.  Each part consists of a
 	mode-list and an argument-list:
 		mode-list:argument-list,mode-list:argument-list,..
 	The mode-list is a dash separated list of these modes:
@@ -2990,18 +2975,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Windows +multibyte only:		*guifontwide_win_mbyte*
 
 	If set and valid, 'guifontwide' is used for IME instead of 'guifont'.
-
-						*'guiheadroom'* *'ghr'*
-'guiheadroom' 'ghr'	number	(default 50)
-			global
-			{only for X11 GUI}
-	The number of pixels subtracted from the screen height when fitting
-	the GUI window on the screen.  Set this before the GUI is started,
-	e.g., in your |gvimrc| file.  When zero, the whole screen height will
-	be used by the window.  When positive, the specified number of pixel
-	lines will be left for window decorations and other items on the
-	screen.  Set it to a negative value to allow windows taller than the
-	screen.
 
 						*'guioptions'* *'go'*
 'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows))
@@ -3186,29 +3159,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Think twice when using ":q!" or ":qa!".
 
 						*'highlight'* *'hl'*
-'highlight' 'hl'	string	(default (as a single string):
-				     "8:SpecialKey,~:EndOfBuffer,z:TermCursor,
-				     Z:TermCursorNC,@:NonText,d:Directory,
-				     e:ErrorMsg,i:IncSearch,l:Search,
-				     m:MoreMsg,M:ModeMsg,n:LineNr,
-				     N:CursorLineNr,r:Question,s:StatusLine,
-				     S:StatusLineNC,c:VertSplit,t:Title,
-				     v:Visual,w:WarningMsg,W:WildMenu,
-				     f:Folded,F:FoldColumn,A:DiffAdd,
-				     C:DiffChange,D:DiffDelete,T:DiffText,
-				     >:SignColumn,B:SpellBad,P:SpellCap,
-				     R:SpellRare,L:SpellLocal,-:Conceal,
-				     +:Pmenu,=:PmenuSel,x:PmenuSbar,
-				     X:PmenuThumb")
+'highlight' 'hl'	string	(default: string of "c:group,..." pairs)
 			global
 	This option can be used to set highlighting mode for various
 	occasions.  It is a comma separated list of character pairs.  The
 	first character in a pair gives the occasion, the second the mode to
 	use for that occasion.  The occasions are:
 	|hl-SpecialKey|	 8  Meta and special keys listed with ":map"
-	|hl-EndOfBuffer|      ~ lines after the last line in the buffer
+	|hl-Whitespace|	 0
+	|hl-EndOfBuffer|   ~ lines after the last line in the buffer
 	|hl-TermCursor|	 z  Cursor in a focused terminal
-	|hl-TermCursorNC| Z Cursor in an unfocused terminal
+	|hl-TermCursorNC|  Z Cursor in an unfocused terminal
 	|hl-NonText|	 @  '@' at the end of the window and
 			    characters from 'showbreak'
 	|hl-Directory|	 d  directories in CTRL-D listing and other special
@@ -3220,11 +3181,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-ModeMsg|	 M  Mode (e.g., "-- INSERT --")
 	|hl-LineNr|	 n  line number for ":number" and ":#" commands, and
 			    when 'number' or 'relativenumber' option is set.
-	|hl-CursorLineNr| N like n for when 'cursorline' or 'relativenumber' is
+	|hl-CursorLineNr|  N like n for when 'cursorline' or 'relativenumber' is
 			    set.
 	|hl-Question|	 r  |hit-enter| prompt and yes/no questions
 	|hl-StatusLine|	 s  status line of current window |status-line|
-	|hl-StatusLineNC| S  status lines of not-current windows
+	|hl-StatusLineNC|  S  status lines of not-current windows
 	|hl-Title|	 t  Titles for output from ":set all", ":autocmd" etc.
 	|hl-VertSplit|	 c  column used to separate vertically split windows
 	|hl-Visual|	 v  Visual mode
@@ -3247,6 +3208,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-PmenuSel|    =  popup menu normal line
 	|hl-PmenuSbar|   x  popup menu scrollbar
 	|hl-PmenuThumb|  X  popup menu scrollbar thumb
+
+	|hl-TabLine|	 *
+	|hl-TabLineFill|   _
+	|hl-TabLineSel|    #
+
+	|hl-ColorColumn|   o
+	|hl-CursorColumn|  !
+	|hl-CursorLine|    .
+	|hl-QuickFixLine|  q
 
 	The display modes are:
 		r	reverse		(termcap entry "mr" and "me")
@@ -3776,12 +3746,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:source $VIMRUNTIME/menu.vim
 <	Warning: This deletes all menus that you defined yourself!
 
-					*'langnoremap'* *'lnr'*
-'langnoremap' 'lnr'	boolean (default on)
+			*'langremap'* *'lrm'* *'nolangremap'* *'nolrm'*
+'langremap' 'lrm'	boolean (default off)
 			global
-	When on, setting 'langmap' does not apply to characters resulting from
+	When off, setting 'langmap' does not apply to characters resulting from
 	a mapping.  If setting 'langmap' disables some of your mappings, make
-	sure this option is set.
+	sure this option is off.
 
 					*'laststatus'* *'ls'*
 'laststatus' 'ls'	number	(default 2)
@@ -3830,9 +3800,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	use this command to get the tallest window possible: >
 		:set lines=999
 <	Minimum value is 2, maximum value is 1000.
-	If you get less lines than expected, check the 'guiheadroom' option.
-	When you set this option and Vim is unable to change the physical
-	number of lines of the display, the display may be messed up.
 
 						*'linespace'* *'lsp'*
 'linespace' 'lsp'	number	(default 0, 1 for Win32 GUI)
@@ -3932,9 +3899,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set lcs=tab:>-,trail:-
 	    :set lcs=tab:>-,eol:<,nbsp:%
 	    :set lcs=extends:>,precedes:<
-<	The "NonText" highlighting will be used for "eol", "extends" and
-	"precedes".  "SpecialKey" for "nbsp", "space", "tab" and "trail".
-	|hl-NonText| |hl-SpecialKey|
+<	|hl-NonText| highlighting will be used for "eol", "extends" and
+	"precedes". |hl-Whitespace| for "nbsp", "space", "tab" and "trail".
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
 'loadplugins' 'lpl'	boolean	(default on)

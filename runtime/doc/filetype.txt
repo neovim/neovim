@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.4.  Last change: 2016 Jun 20
+*filetype.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

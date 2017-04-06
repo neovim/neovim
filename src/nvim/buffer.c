@@ -337,6 +337,10 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
   bool wipe_buf = (action == DOBUF_WIPE);
 
+  bool is_curwin = (curwin != NULL && curwin->w_buffer == buf);
+  win_T *the_curwin = curwin;
+  tabpage_T *the_curtab = curtab;
+
   // Force unloading or deleting when 'bufhidden' says so, but not for terminal
   // buffers.
   // The caller must take care of NOT deleting/freeing when 'bufhidden' is
@@ -360,6 +364,13 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     wipe_buf = true;
   }
 
+  // Disallow deleting the buffer when it is locked (already being closed or
+  // halfway a command that relies on it). Unloading is allowed.
+  if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
+    EMSG(_("E937: Attempt to delete a buffer that is in use"));
+    return;
+  }
+
   if (win_valid_any_tab(win)) {
     // Set b_last_cursor when closing the last window for the buffer.
     // Remember the last cursor position and window options of the buffer.
@@ -378,14 +389,14 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
-    buf->b_closing = true;
+    buf->b_locked++;
     if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
                        buf) && !bufref_valid(&bufref)) {
       // Autocommands deleted the buffer.
       EMSG(_(e_auabort));
       return;
     }
-    buf->b_closing = false;
+    buf->b_locked--;
     if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */
       EMSG(_(e_auabort));
@@ -395,14 +406,14 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
     if (!unload_buf) {
-      buf->b_closing = true;
+      buf->b_locked++;
       if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
                          buf) && !bufref_valid(&bufref)) {
         // Autocommands deleted the buffer.
         EMSG(_(e_auabort));
         return;
       }
-      buf->b_closing = false;
+      buf->b_locked--;
       if (abort_if_last && one_window()) {
         /* Autocommands made this the only window. */
         EMSG(_(e_auabort));
@@ -412,6 +423,16 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     if (aborting())         /* autocmds may abort script processing */
       return;
   }
+
+  // If the buffer was in curwin and the window has changed, go back to that
+  // window, if it still exists.  This avoids that ":edit x" triggering a
+  // "tabnext" BufUnload autocmd leaves a window behind without a buffer.
+  if (is_curwin && curwin != the_curwin &&  win_valid_any_tab(the_curwin)) {
+    block_autocmds();
+    goto_tabpage_win(the_curtab, the_curwin);
+    unblock_autocmds();
+  }
+
   int nwindows = buf->b_nwindows;
 
   /* decrease the link count from windows (unless not in any window) */
@@ -559,7 +580,7 @@ void buf_freeall(buf_T *buf, int flags)
   tabpage_T *the_curtab = curtab;
 
   // Make sure the buffer isn't closed by autocommands.
-  buf->b_closing = true;
+  buf->b_locked++;
 
   bufref_T bufref;
   set_bufref(&bufref, buf);
@@ -584,7 +605,7 @@ void buf_freeall(buf_T *buf, int flags)
     // Autocommands may delete the buffer.
     return;
   }
-  buf->b_closing = false;
+  buf->b_locked--;
 
   // If the buffer was in curwin and the window has changed, go back to that
   // window, if it still exists.  This avoids that ":edit x" triggering a
@@ -606,10 +627,11 @@ void buf_freeall(buf_T *buf, int flags)
    */
   if (buf == curbuf && !is_curbuf)
     return;
-  diff_buf_delete(buf);             /* Can't use 'diff' for unloaded buffer. */
-  /* Remove any ownsyntax, unless exiting. */
-  if (firstwin != NULL && curwin->w_buffer == buf)
+  diff_buf_delete(buf);             // Can't use 'diff' for unloaded buffer.
+  // Remove any ownsyntax, unless exiting.
+  if (curwin != NULL && curwin->w_buffer == buf) {
     reset_synblock(curwin);
+  }
 
   /* No folds in an empty buffer. */
   FOR_ALL_TAB_WINDOWS(tp, win) {
@@ -639,7 +661,7 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, true);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
-  dict_unref(buf->additional_data);
+  tv_dict_unref(buf->additional_data);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
   clear_fmark(&buf->b_last_change);
@@ -1111,7 +1133,7 @@ do_buffer (
      * a window with this buffer.
      */
     while (buf == curbuf
-           && !(curwin->w_closing || curwin->w_buffer->b_closing)
+           && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
            && (firstwin != lastwin || first_tabpage->tp_next != NULL)) {
       if (win_close(curwin, FALSE) == FAIL)
         break;
@@ -1450,7 +1472,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
 {
   STATIC_ASSERT(sizeof("changedtick") <= sizeof(buf->changedtick_di.di_key),
                 "buf->changedtick_di cannot hold large enough keys");
-  buf->changedtick_di = (dictitem16_T) {
+  buf->changedtick_di = (ChangedtickDictItem) {
     .di_flags = DI_FLAGS_RO|DI_FLAGS_FIX,  // Must not include DI_FLAGS_ALLOC.
     .di_tv = (typval_T) {
       .v_type = VAR_NUMBER,
@@ -1459,7 +1481,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
     },
     .di_key = "changedtick",
   };
-  dict_add(buf->b_vars, (dictitem_T *)&buf->changedtick_di);
+  tv_dict_add(buf->b_vars, (dictitem_T *)&buf->changedtick_di);
 }
 
 /// Add a file name to the buffer list.
@@ -1551,7 +1573,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   if (buf != curbuf || curbuf == NULL) {
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
-    buf->b_vars = dict_alloc();
+    buf->b_vars = tv_dict_alloc();
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
     buf_init_changedtick(buf);
   }
@@ -2702,7 +2724,7 @@ fileinfo (
     else
       name = curbuf->b_ffname;
     home_replace(shorthelp ? curbuf : NULL, name, p,
-        (int)(IOSIZE - (p - buffer)), TRUE);
+                 (size_t)(IOSIZE - (p - buffer)), true);
   }
 
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
@@ -2867,7 +2889,7 @@ void maketitle(void)
         buf[off++] = ' ';
         buf[off++] = '(';
         home_replace(curbuf, curbuf->b_ffname,
-            buf + off, SPACE_FOR_DIR - off, TRUE);
+                     buf + off, (size_t)(SPACE_FOR_DIR - off), true);
 #ifdef BACKSLASH_IN_FILENAME
         /* avoid "c:/name" to be reduced to "c" */
         if (isalpha(buf[off]) && buf[off + 1] == ':')
@@ -3482,7 +3504,7 @@ int build_stl_str_hl(
       curbuf = o_curbuf;
 
       // Remove the variable we just stored
-      do_unlet((char_u *)"g:actual_curbuf", true);
+      do_unlet(S_LEN("g:actual_curbuf"), true);
 
       // }
 
@@ -4185,11 +4207,11 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
 #ifdef WIN32
   if (!buf->b_p_bin) {
     // If the file name is a shortcut file, use the file it links to.
-    char_u *rfname = (char_u *)os_resolve_shortcut(*ffname);
+    char *rfname = os_resolve_shortcut((const char *)(*ffname));
     if (rfname != NULL) {
       xfree(*ffname);
-      *ffname = rfname;
-      *sfname = rfname;
+      *ffname = (char_u *)rfname;
+      *sfname = (char_u *)rfname;
     }
   }
 #endif
@@ -4497,9 +4519,9 @@ void ex_buffer_all(exarg_T *eap)
                ? wp->w_height + wp->w_status_height < Rows - p_ch
                - tabline_height()
                : wp->w_width != Columns)
-           || (had_tab > 0 && wp != firstwin)
-           ) && firstwin != lastwin
-          && !(wp->w_closing || wp->w_buffer->b_closing)
+           || (had_tab > 0 && wp != firstwin))
+          && firstwin != lastwin
+          && !(wp->w_closing || wp->w_buffer->b_locked > 0)
           ) {
         win_close(wp, FALSE);
         wpnext = firstwin;              /* just in case an autocommand does
@@ -5421,8 +5443,8 @@ void buf_open_scratch(handle_T bufnr, char *bufname)
 {
   (void)do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
   (void)setfname(curbuf, (char_u *)bufname, NULL, true);
-  set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
-  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
-  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+  set_option_value("bh", 0L, "hide", OPT_LOCAL);
+  set_option_value("bt", 0L, "nofile", OPT_LOCAL);
+  set_option_value("swf", 0L, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
 }

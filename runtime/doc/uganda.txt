@@ -1,4 +1,4 @@
-*uganda.txt*    For Vim version 7.4.  Last change: 2013 Jul 06
+*uganda.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

@@ -573,16 +573,17 @@ void emsg_invreg(int name)
 /// Print an error message with unknown number of arguments
 bool emsgf(const char *const fmt, ...)
 {
+  static char errbuf[IOSIZE];
   if (emsg_not_now()) {
     return true;
   }
 
   va_list ap;
   va_start(ap, fmt);
-  vim_vsnprintf((char *) IObuff, IOSIZE, fmt, ap, NULL);
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
   va_end(ap);
 
-  return emsg(IObuff);
+  return emsg((const char_u *)errbuf);
 }
 
 static void msg_emsgf_event(void **argv)
@@ -718,7 +719,7 @@ int delete_first_msg(void)
 void ex_messages(void *const eap_p)
   FUNC_ATTR_NONNULL_ALL
 {
-  exarg_T *eap = (exarg_T *)eap_p;
+  const exarg_T *const eap = (const exarg_T *)eap_p;
   struct msg_hist *p;
   int c = 0;
 
@@ -847,23 +848,22 @@ void wait_return(int redraw)
        * CTRL-C, but we need to loop then. */
       had_got_int = got_int;
 
-      /* Don't do mappings here, we put the character back in the
-       * typeahead buffer. */
-      ++no_mapping;
-      ++allow_keys;
+      // Don't do mappings here, we put the character back in the
+      // typeahead buffer.
+      no_mapping++;
 
-      /* Temporarily disable Recording. If Recording is active, the
-       * character will be recorded later, since it will be added to the
-       * typebuf after the loop */
+      // Temporarily disable Recording. If Recording is active, the
+      // character will be recorded later, since it will be added to the
+      // typebuf after the loop
       save_Recording = Recording;
       save_scriptout = scriptout;
       Recording = FALSE;
       scriptout = NULL;
       c = safe_vgetc();
-      if (had_got_int && !global_busy)
-        got_int = FALSE;
-      --no_mapping;
-      --allow_keys;
+      if (had_got_int && !global_busy) {
+        got_int = false;
+      }
+      no_mapping--;
       Recording = save_Recording;
       scriptout = save_scriptout;
 
@@ -1563,13 +1563,17 @@ void msg_puts_attr(const char *const s, const int attr)
   msg_puts_attr_len(s, -1, attr);
 }
 
-/// Like msg_puts_attr(), but with a maximum length "maxlen" (in bytes).
-/// When "maxlen" is -1 there is no maximum length.
-/// When "maxlen" is >= 0 the message is not put in the history.
-void msg_puts_attr_len(const char *str, const ptrdiff_t maxlen, int attr)
+/// Write a message with highlight attributes
+///
+/// @param[in]  str  NUL-terminated message string.
+/// @param[in]  len  Length of the string or -1.
+/// @param[in]  attr  Highlight attribute.
+void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
+  FUNC_ATTR_NONNULL_ALL
 {
+  assert(len < 0 || memchr(str, 0, len) == NULL);
   // If redirection is on, also write to the redirection file.
-  redir_write(str, maxlen);
+  redir_write(str, len);
 
   // Don't print anything when using ":silent cmd".
   if (msg_silent != 0) {
@@ -1577,8 +1581,8 @@ void msg_puts_attr_len(const char *str, const ptrdiff_t maxlen, int attr)
   }
 
   // if MSG_HIST flag set, add message to history
-  if ((attr & MSG_HIST) && maxlen < 0) {
-    add_msg_hist(str, -1, attr);
+  if (attr & MSG_HIST) {
+    add_msg_hist(str, (int)len, attr);
     attr &= ~MSG_HIST;
   }
 
@@ -1597,9 +1601,9 @@ void msg_puts_attr_len(const char *str, const ptrdiff_t maxlen, int attr)
   // different, e.g. for Win32 console) or we just don't know where the
   // cursor is.
   if (msg_use_printf()) {
-    msg_puts_printf(str, maxlen);
+    msg_puts_printf(str, len);
   } else {
-    msg_puts_display((const char_u *)str, maxlen, attr, false);
+    msg_puts_display((const char_u *)str, len, attr, false);
   }
 }
 
@@ -1987,7 +1991,7 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
   char buf[4];
   char *p;
 
-  while (*s != NUL && (maxlen < 0 || s - str < maxlen)) {
+  while ((maxlen < 0 || s - str < maxlen) && *s != NUL) {
     if (!(silent_mode && p_verbose == 0)) {
       // NL --> CR NL translation (for Unix, not for "--version")
       p = &buf[0];

@@ -1,4 +1,4 @@
-*usr_01.txt*	For Vim version 7.4.  Last change: 2010 Nov 03
+*usr_01.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 

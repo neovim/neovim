@@ -1877,6 +1877,7 @@ int onepage(int dir, long count)
     }
   }
   foldAdjustCursor();
+  cursor_correct();
   check_cursor_col();
   if (retval == OK) {
     beginline(BL_SOL | BL_FIX);

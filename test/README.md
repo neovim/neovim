@@ -27,8 +27,8 @@ groups by the semantic component they are testing.
 
 Test behaviour is affected by environment variables. Currently supported 
 (Functional, Unit, Benchmarks) (when Defined; when set to _1_; when defined, 
-treated as Integer; when defined, treated as String; !must be defined to 
-function properly):
+treated as Integer; when defined, treated as String; when defined, treated as 
+Number; !must be defined to function properly):
 
 `GDB` (F) (D): makes nvim instances to be run under `gdbserver`. It will be 
 accessible on `localhost:7777`: use `gdb build/bin/nvim`, type `target remote 
@@ -99,3 +99,12 @@ get backtrace from).
 approximately 90% of the tests. Should be used when finding cores is too hard 
 for some reason. Normally (on OS X or when `NVIM_TEST_CORE_GLOB_DIRECTORY` is 
 defined and this variable is not) cores are checked for after each test.
+
+`NVIM_TEST_RUN_TESTTEST` (U) (1): allows running `test/unit/testtest_spec.lua` 
+used to check how testing infrastructure works.
+
+`NVIM_TEST_TRACE_LEVEL` (U) (N): specifies unit tests tracing level: `0` 
+disables tracing (the fastest, but you get no data if tests crash and there was 
+no core dump generated), `1` or empty/undefined leaves only C function cals and 
+returns in the trace (faster then recording everything), `2` records all 
+function calls, returns and lua source lines exuecuted.

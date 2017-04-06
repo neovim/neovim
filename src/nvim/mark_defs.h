@@ -3,7 +3,7 @@
 
 #include "nvim/pos.h"
 #include "nvim/os/time.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 
 /*
  * marks: positions in a file

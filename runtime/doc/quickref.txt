@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2016 Aug 12
+*quickref.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -715,7 +715,6 @@ Short explanation of each option:		*option-list*
 'guifont'	  'gfn'     GUI: Name(s) of font(s) to be used
 'guifontset'	  'gfs'     GUI: Names of multi-byte fonts to be used
 'guifontwide'	  'gfw'     list of font names for double-wide characters
-'guiheadroom'	  'ghr'     GUI: pixels room for window decorations
 'guioptions'	  'go'	    GUI: Which components and options are used
 'guitablabel'	  'gtl'     GUI: custom label for a tab page
 'guitabtooltip'   'gtt'     GUI: custom tooltip for a tab page

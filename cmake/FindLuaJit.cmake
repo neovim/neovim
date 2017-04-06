@@ -4,7 +4,7 @@
 #  LUAJIT_INCLUDE_DIRS - The luajit include directories
 #  LUAJIT_LIBRARIES - The libraries needed to use luajit
 
-if(NOT LUAJIT_USE_BUNDLED)
+if(NOT USE_BUNDLED_LUAJIT)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
     pkg_check_modules(PC_LUAJIT QUIET luajit)

@@ -30,7 +30,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/search.h"
 #include "nvim/regexp.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/version.h"
 #include "nvim/path.h"
 #include "nvim/fileio.h"
@@ -82,8 +82,6 @@ KHASH_SET_INIT_STR(strset)
     (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
 #define convert_setup(vcp, from, to) \
     (convert_setup(vcp, (char_u *)from, (char_u *)to))
-#define os_getperm(f) \
-    (os_getperm((char_u *) f))
 #define os_isdir(f) (os_isdir((char_u *) f))
 #define regtilde(s, m) ((char *) regtilde((char_u *) s, m))
 #define path_tail_with_sep(f) ((char *) path_tail_with_sep((char_u *)f))
@@ -813,7 +811,7 @@ static int open_shada_file_for_reading(const char *const fname,
 /// Wrapper for closing file descriptors
 static void close_file(void *cookie)
 {
-  const int error = file_free(cookie);
+  const int error = file_free(cookie, true);
   if (error != 0) {
     emsgf(_(SERR "System error while closing ShaDa file: %s"),
           os_strerror(error));
@@ -1223,7 +1221,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   khash_t(fnamebufs) fname_bufs = KHASH_EMPTY_TABLE(fnamebufs);
   khash_t(strset) oldfiles_set = KHASH_EMPTY_TABLE(strset);
   if (get_old_files && (oldfiles_list == NULL || force)) {
-    oldfiles_list = list_alloc();
+    oldfiles_list = tv_list_alloc();
     set_vim_var_list(VV_OLDFILES, oldfiles_list);
   }
   ShaDaReadResult srni_ret;
@@ -1435,8 +1433,8 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
             fname = xstrdup(fname);
           }
           int kh_ret;
-          (void) kh_put(strset, &oldfiles_set, fname, &kh_ret);
-          list_append_allocated_string(oldfiles_list, fname);
+          (void)kh_put(strset, &oldfiles_set, fname, &kh_ret);
+          tv_list_append_allocated_string(oldfiles_list, fname);
           if (!want_marks) {
             // Avoid free because this string was already used.
             cur_entry.data.filemark.fname = NULL;
@@ -1573,7 +1571,9 @@ static char *shada_filename(const char *file)
     do { \
       const String s_ = (s); \
       msgpack_pack_str(spacker, s_.size); \
-      msgpack_pack_str_body(spacker, s_.data, s_.size); \
+      if (s_.size) { \
+        msgpack_pack_str_body(spacker, s_.data, s_.size); \
+      } \
     } while (0)
 #define PACK_BIN(s) \
     do { \
@@ -1621,10 +1621,10 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       for (const hashitem_T *hi= d->dv_hashtab.ht_array; todo; hi++) { \
         if (!HASHITEM_EMPTY(hi)) { \
           todo--; \
-          dictitem_T *const di = HI2DI(hi); \
-          const size_t key_len = strlen((const char *) hi->hi_key); \
+          dictitem_T *const di = TV_DICT_HI2DI(hi); \
+          const size_t key_len = strlen((const char *)hi->hi_key); \
           msgpack_pack_str(spacker, key_len); \
-          msgpack_pack_str_body(spacker, (const char *) hi->hi_key, key_len); \
+          msgpack_pack_str_body(spacker, (const char *)hi->hi_key, key_len); \
           if (encode_vim_to_msgpack(spacker, &di->di_tv, \
                                     _("additional data of ShaDa " what)) \
               == FAIL) { \
@@ -1965,7 +1965,7 @@ static ShaDaWriteResult shada_pack_encoded_entry(msgpack_packer *const packer,
         typval_T tgttv;
         var_item_copy(sd_conv, &entry.data.data.global_var.value, &tgttv,
                       true, 0);
-        clear_tv(&entry.data.data.global_var.value);
+        tv_clear(&entry.data.data.global_var.value);
         entry.data.data.global_var.value = tgttv;
       }
       ret = shada_pack_entry(packer, entry.data, max_kbyte);
@@ -2559,7 +2559,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (sd_writer->sd_conv.vc_type != CONV_NONE) {
         var_item_copy(&sd_writer->sd_conv, &vartv, &tgttv, true, 0);
       } else {
-        copy_tv(&vartv, &tgttv);
+        tv_copy(&vartv, &tgttv);
       }
       ShaDaWriteResult spe_ret;
       if ((spe_ret = shada_pack_entry(packer, (ShadaEntry) {
@@ -2573,13 +2573,13 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
           }
         }
       }, max_kbyte)) == kSDWriteFailed) {
-        clear_tv(&vartv);
-        clear_tv(&tgttv);
+        tv_clear(&vartv);
+        tv_clear(&tgttv);
         ret = kSDWriteFailed;
         goto shada_write_exit;
       }
-      clear_tv(&vartv);
-      clear_tv(&tgttv);
+      tv_clear(&vartv);
+      tv_clear(&tgttv);
       if (spe_ret == kSDWriteSuccessfull) {
         int kh_ret;
         (void) kh_put(strset, &wms->dumped_variables, name, &kh_ret);
@@ -3154,17 +3154,17 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
     case kSDItemJump:
     case kSDItemGlobalMark:
     case kSDItemLocalMark: {
-      dict_unref(entry->data.filemark.additional_data);
+      tv_dict_unref(entry->data.filemark.additional_data);
       xfree(entry->data.filemark.fname);
       break;
     }
     case kSDItemSearchPattern: {
-      dict_unref(entry->data.search_pattern.additional_data);
+      tv_dict_unref(entry->data.search_pattern.additional_data);
       xfree(entry->data.search_pattern.pat);
       break;
     }
     case kSDItemRegister: {
-      dict_unref(entry->data.reg.additional_data);
+      tv_dict_unref(entry->data.reg.additional_data);
       for (size_t i = 0; i < entry->data.reg.contents_size; i++) {
         xfree(entry->data.reg.contents[i]);
       }
@@ -3172,25 +3172,25 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
       break;
     }
     case kSDItemHistoryEntry: {
-      list_unref(entry->data.history_item.additional_elements);
+      tv_list_unref(entry->data.history_item.additional_elements);
       xfree(entry->data.history_item.string);
       break;
     }
     case kSDItemVariable: {
-      list_unref(entry->data.global_var.additional_elements);
+      tv_list_unref(entry->data.global_var.additional_elements);
       xfree(entry->data.global_var.name);
-      clear_tv(&entry->data.global_var.value);
+      tv_clear(&entry->data.global_var.value);
       break;
     }
     case kSDItemSubString: {
-      list_unref(entry->data.sub_string.additional_elements);
+      tv_list_unref(entry->data.sub_string.additional_elements);
       xfree(entry->data.sub_string.sub);
       break;
     }
     case kSDItemBufferList: {
       for (size_t i = 0; i < entry->data.buffer_list.size; i++) {
         xfree(entry->data.buffer_list.buffers[i].fname);
-        dict_unref(entry->data.buffer_list.buffers[i].additional_data);
+        tv_dict_unref(entry->data.buffer_list.buffers[i].additional_data);
       }
       xfree(entry->data.buffer_list.buffers);
       break;
@@ -3451,7 +3451,7 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
                             "cannot be converted to a VimL dictionary")), \
                   initial_fpos); \
             ga_clear(&ad_ga); \
-            clear_tv(&adtv); \
+            tv_clear(&adtv); \
             goto shada_read_next_item_error; \
           } \
           tgt = adtv.vval.v_dict; \
@@ -3474,7 +3474,7 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
           if (msgpack_to_vim(obj, &aetv) == FAIL) { \
             emsgf(_(READERR(name, "cannot be converted to a VimL list")), \
                   initial_fpos); \
-            clear_tv(&aetv); \
+            tv_clear(&aetv); \
             goto shada_read_next_item_error; \
           } \
           assert(aetv.v_type == VAR_LIST); \
@@ -3866,7 +3866,7 @@ shada_read_next_item_hist_no_conv:
                       &tgttv,
                       true,
                       0);
-        clear_tv(&entry->data.global_var.value);
+        tv_clear(&entry->data.global_var.value);
         entry->data.global_var.value = tgttv;
       }
       SET_ADDITIONAL_ELEMENTS(unpacked.data.via.array, 2,

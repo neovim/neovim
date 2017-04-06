@@ -1,4 +1,4 @@
-*mlang.txt*     For Vim version 7.4.  Last change: 2016 Jan 16
+*mlang.txt*     Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar

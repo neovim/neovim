@@ -99,10 +99,6 @@ describe('tab pages', function()
     eq(7, eval('tabpagenr()'))
     execute('tabmove')
     eq(10, eval('tabpagenr()'))
-    execute('tabmove -20')
-    eq(1, eval('tabpagenr()'))
-    execute('tabmove +20')
-    eq(10, eval('tabpagenr()'))
     execute('0tabmove')
     eq(1, eval('tabpagenr()'))
     execute('$tabmove')
@@ -172,7 +168,7 @@ describe('tab pages', function()
 	  C tabnext 1
 	  autocmd TabDestructive TabEnter * nested
 	    \ :C tabnext 2 | C tabclose 3
-	  C tabnext 3
+	  C tabnext 2
 	  let g:r+=[tabpagenr().'/'.tabpagenr('$')]
       endfunction
       call Test()
@@ -233,22 +229,14 @@ describe('tab pages', function()
       WinEnter
       TabEnter
       BufEnter
-      === tabnext 3 ===
-      BufLeave
+      === tabnext 2 ===
       WinLeave
       TabLeave
       WinEnter
       TabEnter
       === tabnext 2 ===
-      BufLeave
-      WinLeave
-      TabLeave
-      WinEnter
-      TabEnter
-      === tabnext 2 ===
-      === tabclose 3 ===
-      BufEnter
       === tabclose 3 ===
       2/2]])
+      eq(2, eval("tabpagenr('$')"))
   end)
 end)

@@ -282,7 +282,7 @@ void restore_search_patterns(void)
 static inline void free_spat(struct spat *const spat)
 {
   xfree(spat->pat);
-  dict_unref(spat->additional_data);
+  tv_dict_unref(spat->additional_data);
 }
 
 #if defined(EXITFREE)
@@ -356,9 +356,10 @@ int pat_has_uppercase(char_u *pat)
   return FALSE;
 }
 
-char_u *last_csearch(void)
+const char *last_csearch(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return lastc_bytes;
+  return (const char *)lastc_bytes;
 }
 
 int last_csearch_forward(void)
@@ -1290,10 +1291,11 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
      * ignored because we are interested in the next line -- Acevedo */
     if ((compl_cont_status & CONT_ADDING)
         && !(compl_cont_status & CONT_SOL)) {
-      if ((p_ic ? mb_stricmp(p, pat) : STRCMP(p, pat)) == 0)
+      if (mb_strcmp_ic((bool)p_ic, (const char *)p, (const char *)pat) == 0) {
         return OK;
-    } else if (*p != NUL) {   /* ignore empty lines */
-      /* expanding lines or words */
+      }
+    } else if (*p != NUL) {  // Ignore empty lines.
+      // Expanding lines or words.
       assert(compl_length >= 0);
       if ((p_ic ? mb_strnicmp(p, pat, (size_t)compl_length)
            : STRNCMP(p, pat, compl_length)) == 0)
@@ -2417,32 +2419,20 @@ static int cls(void)
   int c;
 
   c = gchar_cursor();
-  if (p_altkeymap && c == F_BLANK)
+  if (p_altkeymap && c == F_BLANK) {
     return 0;
-  if (c == ' ' || c == '\t' || c == NUL)
-    return 0;
-  if (enc_dbcs != 0 && c > 0xFF) {
-    /* If cls_bigword, report multi-byte chars as class 1. */
-    if (enc_dbcs == DBCS_KOR && cls_bigword)
-      return 1;
-
-    /* process code leading/trailing bytes */
-    return dbcs_class(((unsigned)c >> 8), (c & 0xFF));
   }
-  if (enc_utf8) {
-    c = utf_class(c);
-    if (c != 0 && cls_bigword)
-      return 1;
-    return c;
+  if (c == ' ' || c == '\t' || c == NUL) {
+    return 0;
   }
 
-  /* If cls_bigword is TRUE, report all non-blanks as class 1. */
-  if (cls_bigword)
+  c = utf_class(c);
+
+  // If cls_bigword is TRUE, report all non-blanks as class 1.
+  if (c != 0 && cls_bigword) {
     return 1;
-
-  if (vim_iswordc(c))
-    return 2;
-  return 1;
+  }
+  return c;
 }
 
 /*
@@ -3028,7 +3018,8 @@ extend:
       ++curwin->w_cursor.col;
     VIsual = start_pos;
     VIsual_mode = 'v';
-    redraw_curbuf_later(INVERTED);      /* update the inversion */
+    redraw_cmdline = true;    // show mode later
+    redraw_curbuf_later(INVERTED);      // update the inversion
   } else {
     /* include a newline after the sentence, if there is one */
     if (incl(&curwin->w_cursor) == -1)

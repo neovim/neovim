@@ -41,8 +41,10 @@ static bool chartab_initialized = false;
     (buf)->b_chartab[(unsigned)(c) >> 6] |= (1ull << ((c) & 0x3f))
 #define RESET_CHARTAB(buf, c) \
     (buf)->b_chartab[(unsigned)(c) >> 6] &= ~(1ull << ((c) & 0x3f))
+#define GET_CHARTAB_TAB(chartab, c) \
+    ((chartab)[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
 #define GET_CHARTAB(buf, c) \
-    ((buf)->b_chartab[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
+    GET_CHARTAB_TAB((buf)->b_chartab, c)
 
 // Table used below, see init_chartab() for an explanation
 static char_u g_chartab[256];
@@ -88,7 +90,6 @@ int buf_init_chartab(buf_T *buf, int global)
 {
   int c;
   int c2;
-  char_u *p;
   int i;
   bool tilde;
   bool do_isalpha;
@@ -142,7 +143,8 @@ int buf_init_chartab(buf_T *buf, int global)
   // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint'
   // options Each option is a list of characters, character numbers or
   // ranges, separated by commas, e.g.: "200-210,x,#-178,-"
-  for (i = global ? 0 : 3; i <= 3; ++i) {
+  for (i = global ? 0 : 3; i <= 3; i++) {
+    const char_u *p;
     if (i == 0) {
       // first round: 'isident'
       p = p_isi;
@@ -167,7 +169,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (ascii_isdigit(*p)) {
-        c = getdigits_int(&p);
+        c = getdigits_int((char_u **)&p);
       } else {
         c = mb_ptr2char_adv(&p);
       }
@@ -177,7 +179,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (ascii_isdigit(*p)) {
-          c2 = getdigits_int(&p);
+          c2 = getdigits_int((char_u **)&p);
         } else {
           c2 = mb_ptr2char_adv(&p);
         }
@@ -634,7 +636,7 @@ int char2cells(int c)
 /// @param p
 ///
 /// @return number of display cells.
-int ptr2cells(char_u *p)
+int ptr2cells(const char_u *p)
 {
   // For UTF-8 we need to look at more bytes if the first byte is >= 0x80.
   if (*p >= 0x80) {
@@ -776,6 +778,20 @@ bool vim_iswordc(int c)
   return vim_iswordc_buf(c, curbuf);
 }
 
+/// Check that "c" is a keyword character
+/// Letters and characters from 'iskeyword' option for given buffer.
+/// For multi-byte characters mb_get_class() is used (builtin rules).
+///
+/// @param[in]  c  Character to check.
+/// @param[in]  chartab  Buffer chartab.
+bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  return (c >= 0x100
+          ? (utf_class(c) >= 2)
+          : (c > 0 && GET_CHARTAB_TAB(chartab, c) != 0));
+}
+
 /// Check that "c" is a keyword character:
 /// Letters and characters from 'iskeyword' option for given buffer.
 /// For multi-byte characters mb_get_class() is used (builtin rules).
@@ -785,10 +801,7 @@ bool vim_iswordc(int c)
 bool vim_iswordc_buf(int c, buf_T *buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
 {
-  if (c >= 0x100) {
-    return utf_class(c) >= 2;
-  }
-  return c > 0 && c < 0x100 && GET_CHARTAB(buf, c) != 0;
+  return vim_iswordc_tab(c, buf->b_chartab);
 }
 
 /// Just like vim_iswordc() but uses a pointer to the (multi-byte) character.
@@ -1160,7 +1173,13 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
     // continue until the NUL
     posptr = NULL;
   } else {
+    // Special check for an empty line, which can happen on exit, when
+    // ml_get_buf() always returns an empty string.
+    if (*ptr == NUL) {
+      pos->col = 0;
+    }
     posptr = ptr + pos->col;
+    posptr -= utf_head_off(line, posptr);
   }
 
   // This function is used very often, do some speed optimizations.
@@ -1378,7 +1397,8 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
 ///
 /// @return Pointer to character after the skipped whitespace.
 char_u *skipwhite(const char_u *q)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
   const char_u *p = q;
   while (ascii_iswhite(*p)) {
@@ -1387,19 +1407,21 @@ char_u *skipwhite(const char_u *q)
   return (char_u *)p;
 }
 
-/// skip over digits
+/// Skip over digits
 ///
-/// @param q
+/// @param[in]  q  String to skip digits in.
 ///
 /// @return Pointer to the character after the skipped digits.
-char_u* skipdigits(char_u *q)
+char_u *skipdigits(const char_u *q)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
-  char_u *p = q;
+  const char_u *p = q;
   while (ascii_isdigit(*p)) {
     // skip to next non-digit
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// skip over binary digits
@@ -1545,17 +1567,17 @@ int vim_tolower(int c)
   return TOLOWER_LOC(c);
 }
 
-/// skiptowhite: skip over text until ' ' or '\t' or NUL.
+/// Skip over text until ' ' or '\t' or NUL
 ///
-/// @param p
+/// @param[in]  p  Text to skip over.
 ///
 /// @return Pointer to the next whitespace or NUL character.
-char_u* skiptowhite(char_u *p)
+char_u *skiptowhite(const char_u *p)
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// skiptowhite_esc: Like skiptowhite(), but also skip escaped chars

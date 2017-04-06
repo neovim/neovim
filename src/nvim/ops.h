@@ -6,7 +6,7 @@
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
 #include "nvim/types.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/os/time.h"
 
 typedef int (*Indenter)(void);

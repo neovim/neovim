@@ -674,7 +674,7 @@ do_tag (
 
         fname = xmalloc(MAXPATHL + 1);
         cmd = xmalloc(CMDBUFFSIZE + 1);
-        list = list_alloc();
+        list = tv_list_alloc();
 
         for (i = 0; i < num_matches; ++i) {
           int len, cmd_len;
@@ -773,20 +773,21 @@ do_tag (
             cmd[len] = NUL;
           }
 
-          dict = dict_alloc();
-          list_append_dict(list, dict);
+          dict = tv_dict_alloc();
+          tv_list_append_dict(list, dict);
 
-          dict_add_nr_str(dict, "text", 0L, tag_name);
-          dict_add_nr_str(dict, "filename", 0L, fname);
-          dict_add_nr_str(dict, "lnum", lnum, NULL);
-          if (lnum == 0)
-            dict_add_nr_str(dict, "pattern", 0L, cmd);
+          tv_dict_add_str(dict, S_LEN("text"), (const char *)tag_name);
+          tv_dict_add_str(dict, S_LEN("filename"), (const char *)fname);
+          tv_dict_add_nr(dict, S_LEN("lnum"), lnum);
+          if (lnum == 0) {
+            tv_dict_add_str(dict, S_LEN("pattern"), (const char *)cmd);
+          }
         }
 
         vim_snprintf((char *)IObuff, IOSIZE, "ltag %s", tag);
         set_errorlist(curwin, list, ' ', IObuff, NULL);
 
-        list_free(list);
+        tv_list_free(list);
         xfree(fname);
         xfree(cmd);
 
@@ -2203,7 +2204,7 @@ parse_tag_line (
  * Return TRUE if it is a static tag and adjust *tagname to the real tag.
  * Return FALSE if it is not a static tag.
  */
-static int test_for_static(tagptrs_T *tagp)
+static bool test_for_static(tagptrs_T *tagp)
 {
   char_u      *p;
 
@@ -2768,8 +2769,8 @@ add_tag_field (
   int len = 0;
   int retval;
 
-  /* check that the field name doesn't exist yet */
-  if (dict_find(dict, (char_u *)field_name, -1) != NULL) {
+  // Check that the field name doesn't exist yet.
+  if (tv_dict_find(dict, field_name, -1) != NULL) {
     if (p_verbose > 0) {
       verbose_enter();
       smsg(_("Duplicate field name: %s"), field_name);
@@ -2790,7 +2791,8 @@ add_tag_field (
     STRLCPY(buf, start, len + 1);
   }
   buf[len] = NUL;
-  retval = dict_add_nr_str(dict, field_name, 0L, buf);
+  retval = tv_dict_add_str(dict, field_name, STRLEN(field_name),
+                           (const char *)buf);
   xfree(buf);
   return retval;
 }
@@ -2806,7 +2808,7 @@ int get_tags(list_T *list, char_u *pat)
   char_u      *full_fname;
   dict_T      *dict;
   tagptrs_T tp;
-  long is_static;
+  bool is_static;
 
   ret = find_tags(pat, &num_matches, &matches,
       TAG_REGEXP | TAG_NOIC, (int)MAXCOL, NULL);
@@ -2824,19 +2826,18 @@ int get_tags(list_T *list, char_u *pat)
       if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0)
         continue;
 
-      dict = dict_alloc();
-      list_append_dict(list, dict);
+      dict = tv_dict_alloc();
+      tv_list_append_dict(list, dict);
 
       full_fname = tag_full_fname(&tp);
       if (add_tag_field(dict, "name", tp.tagname, tp.tagname_end) == FAIL
-          || add_tag_field(dict, "filename", full_fname,
-              NULL) == FAIL
-          || add_tag_field(dict, "cmd", tp.command,
-              tp.command_end) == FAIL
+          || add_tag_field(dict, "filename", full_fname, NULL) == FAIL
+          || add_tag_field(dict, "cmd", tp.command, tp.command_end) == FAIL
           || add_tag_field(dict, "kind", tp.tagkind,
-              tp.tagkind ? tp.tagkind_end : NULL) == FAIL
-          || dict_add_nr_str(dict, "static", is_static, NULL) == FAIL)
+                           tp.tagkind ? tp.tagkind_end : NULL) == FAIL
+          || tv_dict_add_nr(dict, S_LEN("static"), is_static) == FAIL) {
         ret = FAIL;
+      }
 
       xfree(full_fname);
 

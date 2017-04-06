@@ -73,33 +73,29 @@ describe('Screen', function()
   describe(':suspend', function()
     it('is forwarded to the UI', function()
       local function check()
-        if not screen.suspended then
-          return 'Screen was not suspended'
-        end
+        eq(true, screen.suspended)
       end
       execute('suspend')
-      screen:wait(check)
+      screen:expect(check)
       screen.suspended = false
       feed('<c-z>')
-      screen:wait(check)
+      screen:expect(check)
     end)
   end)
 
   describe('bell/visual bell', function()
     it('is forwarded to the UI', function()
       feed('<left>')
-      screen:wait(function()
-        if not screen.bell or screen.visual_bell then
-          return 'Bell was not sent'
-        end
+      screen:expect(function()
+        eq(true, screen.bell)
+        eq(false, screen.visual_bell)
       end)
       screen.bell = false
       execute('set visualbell')
       feed('<left>')
-      screen:wait(function()
-        if not screen.visual_bell or screen.bell then
-          return 'Visual bell was not sent'
-        end
+      screen:expect(function()
+        eq(true, screen.visual_bell)
+        eq(false, screen.bell)
       end)
     end)
   end)
@@ -109,22 +105,16 @@ describe('Screen', function()
       local expected = 'test-title'
       execute('set titlestring='..expected)
       execute('set title')
-      screen:wait(function()
-        local actual = screen.title
-        if actual ~= expected then
-          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
-        end
+      screen:expect(function()
+        eq(expected, screen.title)
       end)
     end)
 
     it('has correct default title with unnamed file', function()
       local expected = '[No Name] - NVIM'
       execute('set title')
-      screen:wait(function()
-        local actual = screen.title
-        if actual ~= expected then
-          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
-        end
+      screen:expect(function()
+        eq(expected, screen.title)
       end)
     end)
 
@@ -132,11 +122,8 @@ describe('Screen', function()
       local expected = 'myfile (/mydir) - NVIM'
       execute('set title')
       execute('file /mydir/myfile')
-      screen:wait(function()
-        local actual = screen.title
-        if actual ~= expected then
-          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
-        end
+      screen:expect(function()
+        eq(expected, screen.title)
       end)
     end)
   end)
@@ -146,11 +133,8 @@ describe('Screen', function()
       local expected = 'test-icon'
       execute('set iconstring='..expected)
       execute('set icon')
-      screen:wait(function()
-        local actual = screen.icon
-        if actual ~= expected then
-          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
-        end
+      screen:expect(function()
+        eq(expected, screen.icon)
       end)
     end)
   end)

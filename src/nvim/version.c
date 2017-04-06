@@ -73,51 +73,51 @@ static char *features[] = {
 };
 
 // clang-format off
-static int included_patches[] = {
-  // 2367,
+static const int included_patches[] = {
+  // 2367,NA
   // 2366 NA
   // 2365 NA
-  // 2364,
+  // 2364,NA
   // 2363 NA
   2362,
   // 2361 NA
   // 2360,
   // 2359 NA
   // 2358 NA
-  // 2357,
+  2357,
   // 2356,
-  // 2355,
+  2355,
   // 2354,
   2353,
   // 2352 NA
   // 2351 NA
   // 2350,
-  // 2349,
+  2349,
   2348,
   2347,
-  // 2346,
+  2346,
   // 2345 NA
   // 2344 NA
-  // 2343,
+  2343,
   // 2342 NA
-  // 2341,
+  2341,
   // 2340 NA
-  // 2339,
+  2339,
   // 2338 NA
   2337,
   2336,
   2335,
-  // 2334,
+  2334,
   2333,
   // 2332 NA
   2331,
-  // 2330,
-  // 2329,
-  // 2328,
+  2330,
+  2329,
+  2328,
   // 2327 NA
   2326,
   // 2325 NA
-  // 2324,
+  2324,
   2323,
   2322,
   2321,
@@ -134,23 +134,23 @@ static int included_patches[] = {
   // 2310 NA
   2309,
   // 2308 NA
-  // 2307,
-  // 2306,
+  2307,
+  2306,
   2305,
   // 2304 NA
-  // 2303,
+  2303,
   // 2302 NA
   // 2301 NA
   2300,
   2299,
   // 2298 NA
   // 2297 NA
-  // 2296,
+  2296,
   2295,
   2294,
-  // 2293,
+  2293,
   2292,
-  // 2291,
+  2291,
   // 2290 NA
   // 2289 NA
   // 2288 NA
@@ -158,24 +158,24 @@ static int included_patches[] = {
   // 2286 NA
   // 2285 NA
   2284,
-  // 2283,
+  2283,
   // 2282 NA
   // 2281 NA
-  // 2280,
+  2280,
   2279,
   // 2278 NA
   2277,
-  // 2276,
+  2276,
   2275,
   2274,
   2273,
   2272,
   // 2271 NA
   // 2270 NA
-  // 2269,
+  2269,
   // 2268,
   // 2267 NA
-  // 2266,
+  2266,
   2265,
   2264,
   // 2263,
@@ -185,8 +185,8 @@ static int included_patches[] = {
   // 2259,
   // 2258 NA
   // 2257 NA
-  // 2256,
-  // 2255,
+  2256,
+  2255,
   // 2254 NA
   // 2253 NA
   // 2252 NA
@@ -205,7 +205,7 @@ static int included_patches[] = {
   // 2239,
   // 2238 NA
   2237,
-  // 2236,
+  2236,
   2235,
   // 2234 NA
   2233,
@@ -220,7 +220,7 @@ static int included_patches[] = {
   // 2224,
   2223,
   2222,
-  // 2221,
+  2221,
   2220,
   2219,
   // 2218 NA
@@ -257,30 +257,30 @@ static int included_patches[] = {
   2187,
   // 2186 NA
   2185,
-  // 2184,
+  2184,
   2183,
   // 2182 NA
   // 2181 NA
   2180,
   // 2179,
-  // 2178,
-  // 2177,
+  2178,
+  2177,
   // 2176 NA
   2175,
   2174,
   // 2173,
-  // 2172,
+  2172,
   // 2171 NA
   2170,
-  // 2169,
+  2169,
   // 2168 NA
   // 2167 NA
   // 2166 NA
   // 2165,
-  // 2164,
+  2164,
   2163,
   2162,
-  // 2161,
+  2161,
   2160,
   2159,
   2158,
@@ -337,7 +337,7 @@ static int included_patches[] = {
   2107,
   2106,
   // 2105 NA
-  // 2104,
+  2104,
   2103,
   // 2102 NA
   2101,
@@ -2461,10 +2461,10 @@ static char *(extra_patches[]) = {
 /// @param version Version string like "1.3.42"
 ///
 /// @return true if Nvim is at or above the version.
-bool has_nvim_version(char *version_str)
-  FUNC_ATTR_NONNULL_ALL
+bool has_nvim_version(const char *const version_str)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  char *p   = version_str;
+  const char *p = version_str;
   int major = 0;
   int minor = 0;
   int patch = 0;
@@ -2473,7 +2473,7 @@ bool has_nvim_version(char *version_str)
     return false;
   }
   major = atoi(p);
-  p     = strchr(p, '.');  // Find the next dot.
+  p = strchr(p, '.');  // Find the next dot.
 
   if (p) {
     p++;  // Advance past the dot.
@@ -2481,7 +2481,7 @@ bool has_nvim_version(char *version_str)
       return false;
     }
     minor = atoi(p);
-    p     = strchr(p, '.');
+    p = strchr(p, '.');
     if (p) {
       p++;
       if (!ascii_isdigit(*p)) {

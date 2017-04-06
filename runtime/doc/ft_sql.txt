@@ -1,4 +1,4 @@
-*ft_sql.txt*	For Vim version 7.4.  Last change: 2013 May 15
+*ft_sql.txt*	Nvim
 
 by David Fishburn
 

@@ -12,6 +12,7 @@
 #include "nvim/state.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/mark.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cursor.c.generated.h"
@@ -227,9 +228,10 @@ static int coladvance2(
     }
   }
 
-  /* prevent from moving onto a trail byte */
-  if (has_mbyte)
-    mb_adjustpos(curbuf, pos);
+  // Prevent from moving onto a trail byte.
+  if (has_mbyte) {
+    mark_mb_adjustpos(curbuf, pos);
+  }
 
   if (col < wcol)
     return FAIL;
@@ -338,9 +340,8 @@ void check_cursor_col(void)
   check_cursor_col_win(curwin);
 }
 
-/*
- * Make sure win->w_cursor.col is valid.
- */
+/// Make sure win->w_cursor.col is valid. Special handling of insert-mode.
+/// @see mb_check_adjust_col
 void check_cursor_col_win(win_T *win)
 {
   colnr_T len;
@@ -362,9 +363,10 @@ void check_cursor_col_win(win_T *win)
       win->w_cursor.col = len;
     } else {
       win->w_cursor.col = len - 1;
-      /* Move the cursor to the head byte. */
-      if (has_mbyte)
-        mb_adjustpos(win->w_buffer, &win->w_cursor);
+      // Move the cursor to the head byte.
+      if (has_mbyte) {
+        mark_mb_adjustpos(win->w_buffer, &win->w_cursor);
+      }
     }
   } else if (win->w_cursor.col < 0) {
     win->w_cursor.col = 0;

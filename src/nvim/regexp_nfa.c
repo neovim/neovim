@@ -3893,21 +3893,25 @@ state_in_list (
   return FALSE;
 }
 
-/*
- * Add "state" and possibly what follows to state list ".".
- * Returns "subs_arg", possibly copied into temp_subs.
- */
+// Offset used for "off" by addstate_here().
+#define ADDSTATE_HERE_OFFSET 10
 
+// Add "state" and possibly what follows to state list ".".
+// Returns "subs_arg", possibly copied into temp_subs.
 static regsubs_T *
 addstate (
     nfa_list_T *l,             /* runtime state list */
     nfa_state_T *state,         /* state to update */
     regsubs_T *subs_arg,      /* pointers to subexpressions */
     nfa_pim_T *pim,           /* postponed look-behind match */
-    int off                            /* byte offset, when -1 go to next line */
-)
+    int off_arg)    /* byte offset, when -1 go to next line */
 {
   int subidx;
+  int off = off_arg;
+  int add_here = FALSE;
+  int listindex = 0;
+  int k;
+  int found = FALSE;
   nfa_thread_T        *thread;
   lpos_T save_lpos;
   int save_in_use;
@@ -3919,6 +3923,12 @@ addstate (
 #ifdef REGEXP_DEBUG
   int did_print = FALSE;
 #endif
+
+  if (off_arg <= -ADDSTATE_HERE_OFFSET) {
+    add_here = true;
+    off = 0;
+    listindex = -(off_arg + ADDSTATE_HERE_OFFSET);
+  }
 
   switch (state->c) {
   case NFA_NCLOSE:
@@ -3996,13 +4006,28 @@ addstate (
        * lower position is preferred. */
       if (!nfa_has_backref && pim == NULL && !l->has_pim
           && state->c != NFA_MATCH) {
+
+        /* When called from addstate_here() do insert before
+         * existing states. */
+        if (add_here) {
+          for (k = 0; k < l->n && k < listindex; ++k) {
+            if (l->t[k].state->id == state->id) {
+              found = TRUE;
+              break;
+            }
+          }
+        }
+
+        if (!add_here || found) {
 skip_add:
 #ifdef REGEXP_DEBUG
-        nfa_set_code(state->c);
-        fprintf(log_fd, "> Not adding state %d to list %d. char %d: %s\n",
-            abs(state->id), l->id, state->c, code);
+          nfa_set_code(state->c);
+          fprintf(log_fd, "> Not adding state %d to list %d. char %d: %s pim: %s has_pim: %d found: %d\n",
+                  abs(state->id), l->id, state->c, code,
+                  pim == NULL ? "NULL" : "yes", l->has_pim, found);
 #endif
         return subs;
+        }
       }
 
       /* Do not add the state again when it exists with the same
@@ -4058,14 +4083,14 @@ skip_add:
 
   case NFA_SPLIT:
     /* order matters here */
-    subs = addstate(l, state->out, subs, pim, off);
-    subs = addstate(l, state->out1, subs, pim, off);
+    subs = addstate(l, state->out, subs, pim, off_arg);
+    subs = addstate(l, state->out1, subs, pim, off_arg);
     break;
 
   case NFA_EMPTY:
   case NFA_NOPEN:
   case NFA_NCLOSE:
-    subs = addstate(l, state->out, subs, pim, off);
+    subs = addstate(l, state->out, subs, pim, off_arg);
     break;
 
   case NFA_MOPEN:
@@ -4145,7 +4170,7 @@ skip_add:
       sub->list.line[subidx].start = reginput + off;
     }
 
-    subs = addstate(l, state->out, subs, pim, off);
+    subs = addstate(l, state->out, subs, pim, off_arg);
     /* "subs" may have changed, need to set "sub" again */
     if (state->c >= NFA_ZOPEN && state->c <= NFA_ZOPEN9)
       sub = &subs->synt;
@@ -4168,7 +4193,7 @@ skip_add:
                          ? subs->norm.list.multi[0].end_lnum >= 0
                          : subs->norm.list.line[0].end != NULL)) {
       /* Do not overwrite the position set by \ze. */
-      subs = addstate(l, state->out, subs, pim, off);
+      subs = addstate(l, state->out, subs, pim, off_arg);
       break;
     }
   case NFA_MCLOSE1:
@@ -4228,7 +4253,7 @@ skip_add:
       save_lpos.col = 0;
     }
 
-    subs = addstate(l, state->out, subs, pim, off);
+    subs = addstate(l, state->out, subs, pim, off_arg);
     /* "subs" may have changed, need to set "sub" again */
     if (state->c >= NFA_ZCLOSE && state->c <= NFA_ZCLOSE9)
       sub = &subs->synt;
@@ -4266,8 +4291,10 @@ addstate_here (
   int count;
   int listidx = *ip;
 
-  /* first add the state(s) at the end, so that we know how many there are */
-  addstate(l, state, subs, pim, 0);
+  /* First add the state(s) at the end, so that we know how many there are.
+   * Pass the listidx as offset (avoids adding another argument to
+   * addstate(). */
+  addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
 
   /* when "*ip" was at the end of the list, nothing to do */
   if (listidx + 1 == tlen)
@@ -5383,7 +5410,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           int this_class;
 
           // Get class of current and previous char (if it exists).
-          this_class = mb_get_class_buf(reginput, reg_buf);
+          this_class = mb_get_class_tab(reginput, reg_buf->b_chartab);
           if (this_class <= 1) {
             result = false;
           } else if (reg_prev_class() == this_class) {
@@ -5408,7 +5435,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           int this_class, prev_class;
 
           // Get class of current and previous char (if it exists).
-          this_class = mb_get_class_buf(reginput, reg_buf);
+          this_class = mb_get_class_tab(reginput, reg_buf->b_chartab);
           prev_class = reg_prev_class();
           if (this_class == prev_class
               || prev_class == 0 || prev_class == 1) {

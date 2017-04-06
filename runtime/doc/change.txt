@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2016 Apr 12
+*change.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -601,8 +601,8 @@ all files in it are deleted.  When Vim has the setuid bit set this may cause
 problems, the temp file is owned by the setuid user but the filter command
 probably runs as the original user.
 Directory for temporary files is created in the first suitable directory of:
-For Unix: $TMPDIR, /tmp, current-dir, $HOME.
-For MS-Windows: $TMP, $TEMP, $USERPROFILE, current-dir.
+	Unix:    $TMPDIR, /tmp, current-dir, $HOME.
+	Windows: $TMPDIR, $TMP, $TEMP, $USERPROFILE, current-dir.
 
 
 

@@ -1,4 +1,4 @@
-*gui.txt*       For Vim version 7.4.  Last change: 2014 Mar 08
+*gui.txt*       Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -83,28 +83,6 @@ Recommended place for your personal GUI initializations:
 The personal initialization files are searched in the order specified above
 and only the first one that is found is read.
 
-There are a number of options which only have meaning in the GUI version of
-Vim.  These are 'guicursor', 'guifont', and 'guioptions'.  They are
-documented in |options.txt| with all the other options.
-
-Another way to set the colors for different occasions is with highlight
-groups.  The "Normal" group is used to set the background and foreground
-colors.  Example (which looks nice): >
-
-	:highlight Normal guibg=grey90
-
-The "guibg" and "guifg" settings override the normal background and
-foreground settings.  The other settings for the Normal highlight group are
-not used.  Use the 'guifont' option to set the font.
-
-Also check out the 'guicursor' option, to set the colors for the cursor in
-various modes.
-
-Vim tries to make the window fit on the screen when it starts up.  This avoids
-that you can't see part of it.  On the X Window System this requires a bit of
-guesswork.  You can change the height that is used for the window title and a
-task bar with the 'guiheadroom' option.
-
 						*:winp* *:winpos* *E188*
 :winp[os]
 		Display current position of the top left corner of the GUI vim
@@ -124,21 +102,6 @@ task bar with the 'guiheadroom' option.
 :win[size] {width} {height}
 		Set the window height to {width} by {height} characters.
 		Obsolete, use ":set lines=11 columns=22".
-		If you get less lines than expected, check the 'guiheadroom'
-		option.
-
-If you are running the X Window System, you can get information about the
-window Vim is running in with these commands: >
-	:!xwininfo -id $WINDOWID
-	:!xprop -id $WINDOWID
-	:execute '!xwininfo -id ' . v:windowid
-	:execute '!xprop -id ' . v:windowid
-<
-							*gui-IME* *iBus*
-Input methods for international characters in X that rely on the XIM
-framework, most notably iBus, have been known to produce undesirable results
-in gVim. These may include an inability to enter spaces, or long delays
-between typing a character and it being recognized by the application.
 
 ==============================================================================
 2. Scrollbars						*gui-scrollbars*

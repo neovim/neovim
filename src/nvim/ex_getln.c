@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"
@@ -578,7 +579,7 @@ static int command_line_execute(VimState *state, int key)
         }
         if (vim_ispathsep(ccline.cmdbuff[s->j])
 #ifdef BACKSLASH_IN_FILENAME
-            && vim_strchr(" *?[{`$%#", ccline.cmdbuff[s->j + 1])
+            && strchr(" *?[{`$%#", ccline.cmdbuff[s->j + 1])
             == NULL
 #endif
             ) {
@@ -621,11 +622,9 @@ static int command_line_execute(VimState *state, int key)
   // CTRL-\ CTRL-N goes to Normal mode, CTRL-\ CTRL-G goes to Insert
   // mode when 'insertmode' is set, CTRL-\ e prompts for an expression.
   if (s->c == Ctrl_BSL) {
-    ++no_mapping;
-    ++allow_keys;
+    no_mapping++;
     s->c = plain_vgetc();
-    --no_mapping;
-    --allow_keys;
+    no_mapping--;
     // CTRL-\ e doesn't work when obtaining an expression, unless it
     // is in a mapping.
     if (s->c != Ctrl_N && s->c != Ctrl_G && (s->c != 'e'
@@ -962,7 +961,7 @@ static int command_line_handle_key(CommandLineState *s)
     return command_line_not_changed(s);
 
   case Ctrl_HAT:
-    if (map_to_exists_mode((char_u *)"", LANGMAP, false)) {
+    if (map_to_exists_mode("", LANGMAP, false)) {
       // ":lmap" mappings exists, toggle use of mappings.
       State ^= LANGMAP;
       if (s->b_im_ptr != NULL) {
@@ -1887,8 +1886,7 @@ getexmodeline (
       msg_putchar(' ');
     }
   }
-  ++no_mapping;
-  ++allow_keys;
+  no_mapping++;
 
   /*
    * Get the line, one character at a time.
@@ -2078,8 +2076,7 @@ redraw:
     }
   }
 
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
 
   /* make following messages go to the next line */
   msg_didout = FALSE;
@@ -2557,19 +2554,22 @@ void cmdline_paste_str(char_u *s, int literally)
   else
     while (*s != NUL) {
       cv = *s;
-      if (cv == Ctrl_V && s[1])
-        ++s;
-      if (has_mbyte)
-        c = mb_cptr2char_adv(&s);
-      else
+      if (cv == Ctrl_V && s[1]) {
+        s++;
+      }
+      if (has_mbyte) {
+        c = mb_cptr2char_adv((const char_u **)&s);
+      } else {
         c = *s++;
+      }
       if (cv == Ctrl_V || c == ESC || c == Ctrl_C
           || c == CAR || c == NL || c == Ctrl_L
 #ifdef UNIX
           || c == intr_char
 #endif
-          || (c == Ctrl_BSL && *s == Ctrl_N))
+          || (c == Ctrl_BSL && *s == Ctrl_N)) {
         stuffcharReadbuff(Ctrl_V);
+      }
       stuffcharReadbuff(c);
     }
 }
@@ -3124,9 +3124,10 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
 #endif
         }
 #ifdef BACKSLASH_IN_FILENAME
-        p = vim_strsave_fnameescape(files[i], FALSE);
+        p = (char_u *)vim_strsave_fnameescape((const char *)files[i], false);
 #else
-        p = vim_strsave_fnameescape(files[i], xp->xp_shell);
+        p = (char_u *)vim_strsave_fnameescape((const char *)files[i],
+                                              xp->xp_shell);
 #endif
         xfree(files[i]);
         files[i] = p;
@@ -3156,42 +3157,49 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
   }
 }
 
-/*
- * Escape special characters in "fname" for when used as a file name argument
- * after a Vim command, or, when "shell" is non-zero, a shell command.
- * Returns the result in allocated memory.
- */
-char_u *vim_strsave_fnameescape(char_u *fname, int shell) FUNC_ATTR_NONNULL_RET
+/// Escape special characters in a file name for use as a command argument
+///
+/// @param[in]  fname  File name to escape.
+/// @param[in]  shell  What to escape for: if false, escapes for VimL command,
+///                    if true then it escapes for a shell command.
+///
+/// @return [allocated] escaped file name.
+char *vim_strsave_fnameescape(const char *const fname, const bool shell)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *p;
 #ifdef BACKSLASH_IN_FILENAME
-#define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`%#'\"|!<")
-  char_u buf[20];
+#define PATH_ESC_CHARS " \t\n*?[{`%#'\"|!<"
+  char_u buf[sizeof(PATH_ESC_CHARS)];
   int j = 0;
 
-  /* Don't escape '[', '{' and '!' if they are in 'isfname'. */
-  for (p = PATH_ESC_CHARS; *p != NUL; ++p)
-    if ((*p != '[' && *p != '{' && *p != '!') || !vim_isfilec(*p))
-      buf[j++] = *p;
+  // Don't escape '[', '{' and '!' if they are in 'isfname'.
+  for (const char *s = PATH_ESC_CHARS; *s != NUL; s++) {
+    if ((*s != '[' && *s != '{' && *s != '!') || !vim_isfilec(*s)) {
+      buf[j++] = *s;
+    }
+  }
   buf[j] = NUL;
-  p = vim_strsave_escaped(fname, buf);
+  char *p = (char *)vim_strsave_escaped((const char_u *)fname,
+                                        (const char_u *)buf);
 #else
 #define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<")
 #define SHELL_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<>();&")
-  p = vim_strsave_escaped(fname, shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS);
+  char *p = (char *)vim_strsave_escaped(
+      (const char_u *)fname, (shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS));
   if (shell && csh_like_shell()) {
-    /* For csh and similar shells need to put two backslashes before '!'.
-     * One is taken by Vim, one by the shell. */
-    char_u *s = vim_strsave_escaped(p, (char_u *)"!");
+    // For csh and similar shells need to put two backslashes before '!'.
+    // One is taken by Vim, one by the shell.
+    char *s = (char *)vim_strsave_escaped((const char_u *)p,
+                                          (const char_u *)"!");
     xfree(p);
     p = s;
   }
 #endif
 
-  /* '>' and '+' are special at the start of some commands, e.g. ":edit" and
-   * ":write".  "cd -" has a special meaning. */
+  // '>' and '+' are special at the start of some commands, e.g. ":edit" and
+  // ":write".  "cd -" has a special meaning.
   if (*p == '>' || *p == '+' || (*p == '-' && p[1] == NUL)) {
-    escape_fname(&p);
+    escape_fname((char_u **)&p);
   }
 
   return p;
@@ -3628,7 +3636,6 @@ set_cmd_context (
 )
 {
   int old_char = NUL;
-  char_u      *nextcomm;
 
   /*
    * Avoid a UMR warning from Purify, only save the character if it has been
@@ -3637,7 +3644,7 @@ set_cmd_context (
   if (col < len)
     old_char = str[col];
   str[col] = NUL;
-  nextcomm = str;
+  const char *nextcomm = (const char *)str;
 
   if (use_ccline && ccline.cmdfirstc == '=') {
     // pass CMD_SIZE because there is no real command
@@ -3646,9 +3653,11 @@ set_cmd_context (
     xp->xp_context = ccline.xp_context;
     xp->xp_pattern = ccline.cmdbuff;
     xp->xp_arg = ccline.xp_arg;
-  } else
-    while (nextcomm != NULL)
+  } else {
+    while (nextcomm != NULL) {
       nextcomm = set_one_cmd_context(xp, nextcomm);
+    }
+  }
 
   /* Store the string here so that call_user_expand_func() can get to them
    * easily. */
@@ -4201,9 +4210,11 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
   char_u keep;
   garray_T ga;
 
-  retstr = call_user_expand_func(call_func_retstr, xp, num_file, file);
-  if (retstr == NULL)
+  retstr = call_user_expand_func((user_expand_func_T)call_func_retstr, xp,
+                                 num_file, file);
+  if (retstr == NULL) {
     return FAIL;
+  }
 
   ga_init(&ga, (int)sizeof(char *), 3);
   for (s = retstr; *s != NUL; s = e) {
@@ -4241,9 +4252,11 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
   listitem_T  *li;
   garray_T ga;
 
-  retlist = call_user_expand_func(call_func_retlist, xp, num_file, file);
-  if (retlist == NULL)
+  retlist = call_user_expand_func((user_expand_func_T)call_func_retlist, xp,
+                                  num_file, file);
+  if (retlist == NULL) {
     return FAIL;
+  }
 
   ga_init(&ga, (int)sizeof(char *), 3);
   /* Loop over the items in the list. */
@@ -4253,7 +4266,7 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 
     GA_APPEND(char_u *, &ga, vim_strsave(li->li_tv.vval.v_string));
   }
-  list_unref(retlist);
+  tv_list_unref(retlist);
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;
@@ -4549,7 +4562,7 @@ static inline void hist_free_entry(histentry_T *hisptr)
   FUNC_ATTR_NONNULL_ALL
 {
   xfree(hisptr->hisstr);
-  list_unref(hisptr->additional_elements);
+  tv_list_unref(hisptr->additional_elements);
   clear_hist_entry(hisptr);
 }
 
@@ -4605,7 +4618,7 @@ in_history (
       history[type][last_i] = history[type][i];
       last_i = i;
     }
-    list_unref(list);
+    tv_list_unref(list);
     history[type][i].hisnum = ++hisnum[type];
     history[type][i].hisstr = str;
     history[type][i].timestamp = os_time();
@@ -4627,7 +4640,7 @@ in_history (
 ///
 /// @return Any value from HistoryType enum, including HIST_INVALID. May not
 ///         return HIST_DEFAULT unless return_default is true.
-HistoryType get_histtype(const char_u *const name, const size_t len,
+HistoryType get_histtype(const char *const name, const size_t len,
                          const bool return_default)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -4681,8 +4694,8 @@ add_to_history (
    * down, only lines that were added.
    */
   if (histype == HIST_SEARCH && in_map) {
-    if (maptick == last_maptick) {
-      /* Current line is from the same mapping, remove it */
+    if (maptick == last_maptick && hisidx[HIST_SEARCH] >= 0) {
+      // Current line is from the same mapping, remove it
       hisptr = &history[HIST_SEARCH][hisidx[HIST_SEARCH]];
       hist_free_entry(hisptr);
       --hisnum[histype];
@@ -5020,7 +5033,7 @@ void ex_history(exarg_T *eap)
     while (ASCII_ISALPHA(*end)
            || vim_strchr((char_u *)":=@>/?", *end) != NULL)
       end++;
-    histype1 = get_histtype(arg, end - arg, false);
+    histype1 = get_histtype((const char *)arg, end - arg, false);
     if (histype1 == HIST_INVALID) {
       if (STRNICMP(arg, "all", end - arg) == 0) {
         histype1 = 0;
@@ -5177,7 +5190,7 @@ static int ex_window(void)
   // Create empty command-line buffer.
   buf_open_scratch(0, "[Command Line]");
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
-  set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
+  set_option_value("bh", 0L, "wipe", OPT_LOCAL);
   curwin->w_p_rl = cmdmsg_rl;
   cmdmsg_rl = false;
   curbuf->b_p_ma = true;
@@ -5195,7 +5208,7 @@ static int ex_window(void)
       add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", INSERT);
       add_map((char_u *)"<buffer> <Tab> a<C-X><C-V>", NORMAL);
     }
-    set_option_value((char_u *)"ft", 0L, (char_u *)"vim", OPT_LOCAL);
+    set_option_value("ft", 0L, "vim", OPT_LOCAL);
   }
 
   /* Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin
@@ -5227,10 +5240,8 @@ static int ex_window(void)
   invalidate_botline();
   redraw_later(SOME_VALID);
 
-  /* Save the command line info, can be used recursively. */
-  save_ccline = ccline;
-  ccline.cmdbuff = NULL;
-  ccline.cmdprompt = NULL;
+  // Save the command line info, can be used recursively.
+  save_cmdline(&save_ccline);
 
   /* No Ex mode here! */
   exmode_active = 0;
@@ -5264,8 +5275,8 @@ static int ex_window(void)
   /* Restore KeyTyped in case it is modified by autocommands */
   KeyTyped = save_KeyTyped;
 
-  /* Restore the command line info. */
-  ccline = save_ccline;
+  // Restore the command line info.
+  restore_cmdline(&save_ccline);
   cmdwin_type = 0;
 
   exmode_active = save_exmode;
@@ -5281,18 +5292,18 @@ static int ex_window(void)
       cmdwin_result = Ctrl_C;
     /* Set the new command line from the cmdline buffer. */
     xfree(ccline.cmdbuff);
-    if (cmdwin_result == K_XF1 || cmdwin_result == K_XF2) {   /* :qa[!] typed */
-      char *p = (cmdwin_result == K_XF2) ? "qa" : "qa!";
+    if (cmdwin_result == K_XF1 || cmdwin_result == K_XF2) {  // :qa[!] typed
+      const char *p = (cmdwin_result == K_XF2) ? "qa" : "qa!";
 
       if (histtype == HIST_CMD) {
-        /* Execute the command directly. */
-        ccline.cmdbuff = vim_strsave((char_u *)p);
+        // Execute the command directly.
+        ccline.cmdbuff = (char_u *)xstrdup(p);
         cmdwin_result = CAR;
       } else {
-        /* First need to cancel what we were doing. */
+        // First need to cancel what we were doing.
         ccline.cmdbuff = NULL;
         stuffcharReadbuff(':');
-        stuffReadbuff((char_u *)p);
+        stuffReadbuff(p);
         stuffcharReadbuff(CAR);
       }
     } else if (cmdwin_result == K_XF2) {      /* :qa typed */

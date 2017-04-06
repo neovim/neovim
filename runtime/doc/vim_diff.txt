@@ -1,4 +1,4 @@
-*vim_diff.txt*    For Nvim.						{Nvim}
+*vim_diff.txt*    Nvim
 
 
 			    NVIM REFERENCE MANUAL
@@ -45,7 +45,8 @@ these differences.
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
-- 'langnoremap' is set by default
+- 'langnoremap' is enabled by default
+- 'langremap' is disabled by default
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'nocompatible' is always set
@@ -112,6 +113,7 @@ Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
 
 Options:
   'cpoptions' flags: |cpo-_|
+  'guicursor' works in the terminal
   'inccommand' shows interactive results for |:substitute|-like commands
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
@@ -145,6 +147,7 @@ Highlight groups:
   |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
+  |hl-Whitespace| highlights 'listchars' whitespace
 
 ==============================================================================
 4. Changed features					 *nvim-features-changed*

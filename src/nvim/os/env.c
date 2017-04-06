@@ -615,9 +615,9 @@ char *vim_getenv(const char *name)
       vim_path = (char *)p_hf;
     }
 
+    char exe_name[MAXPATHL];
     // Find runtime path relative to the nvim binary: ../share/nvim/runtime
     if (vim_path == NULL) {
-      char exe_name[MAXPATHL];
       size_t exe_name_len = MAXPATHL;
       if (os_exepath(exe_name, &exe_name_len) == 0) {
         char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
@@ -703,7 +703,8 @@ char *vim_getenv(const char *name)
 /// @param dstlen Maximum length of the result
 /// @param one If true, only replace one file name, including spaces and commas
 ///            in the file name
-void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
+void home_replace(const buf_T *const buf, const char_u *src,
+                  char_u *dst, size_t dstlen, bool one)
 {
   size_t dirlen = 0, envlen = 0;
   size_t len;
@@ -717,7 +718,7 @@ void home_replace(buf_T *buf, char_u *src, char_u *dst, int dstlen, bool one)
    * If the file is a help file, remove the path completely.
    */
   if (buf != NULL && buf->b_help) {
-    STRCPY(dst, path_tail(src));
+    xstrlcpy((char *)dst, (char *)path_tail(src), dstlen);
     return;
   }
 
@@ -809,7 +810,7 @@ char_u * home_replace_save(buf_T *buf, char_u *src) FUNC_ATTR_NONNULL_RET
     len += STRLEN(src);
   }
   char_u *dst = xmalloc(len);
-  home_replace(buf, src, dst, (int)len, true);
+  home_replace(buf, src, dst, len, true);
   return dst;
 }
 
@@ -887,4 +888,18 @@ bool os_setenv_append_path(const char *fname)
     return true;
   }
   return false;
+}
+
+/// Returns true if the terminal can be assumed to silently ignore unknown
+/// control codes.
+bool os_term_is_nice(void)
+{
+#if defined(__APPLE__) || defined(WIN32)
+  return true;
+#else
+  const char *vte_version = os_getenv("VTE_VERSION");
+  return (vte_version && atoi(vte_version) >= 3900)
+    || NULL != os_getenv("KONSOLE_PROFILE_NAME")
+    || NULL != os_getenv("KONSOLE_DBUS_SESSION");
+#endif
 }

@@ -1435,7 +1435,7 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     // First count the number of items for each list.  Temporarily use
     // sl_sal_first[] for this.
     for (p = from, s = to; *p != NUL && *s != NUL; ) {
-      c = mb_cptr2char_adv(&p);
+      c = mb_cptr2char_adv((const char_u **)&p);
       mb_cptr_adv(s);
       if (c >= 256)
         ++lp->sl_sal_first[c & 0xff];
@@ -1455,8 +1455,8 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     // list.
     memset(lp->sl_sal_first, 0, sizeof(salfirst_T) * 256);
     for (p = from, s = to; *p != NUL && *s != NUL; ) {
-      c = mb_cptr2char_adv(&p);
-      i = mb_cptr2char_adv(&s);
+      c = mb_cptr2char_adv((const char_u **)&p);
+      i = mb_cptr2char_adv((const char_u **)&s);
       if (c >= 256) {
         // Append the from-to chars at the end of the list with
         // the low byte.
@@ -1542,8 +1542,9 @@ static int *mb_str2wide(char_u *s)
   int i = 0;
 
   int *res = xmalloc((mb_charlen(s) + 1) * sizeof(int));
-  for (char_u *p = s; *p != NUL; )
-    res[i++] = mb_ptr2char_adv(&p);
+  for (char_u *p = s; *p != NUL; ) {
+    res[i++] = mb_ptr2char_adv((const char_u **)&p);
+  }
   res[i] = NUL;
 
   return res;
@@ -2486,13 +2487,14 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
 
           // Check that every character appears only once.
           for (p = items[1]; *p != NUL; ) {
-            c = mb_ptr2char_adv(&p);
+            c = mb_ptr2char_adv((const char_u **)&p);
             if ((!GA_EMPTY(&spin->si_map)
                  && vim_strchr(spin->si_map.ga_data, c)
                  != NULL)
-                || vim_strchr(p, c) != NULL)
+                || vim_strchr(p, c) != NULL) {
               smsg(_("Duplicate character in MAP in %s line %d"),
                    fname, lnum);
+            }
           }
 
           // We simply concatenate all the MAP strings, separated by
@@ -2717,12 +2719,12 @@ static unsigned get_affitem(int flagtype, char_u **pp)
     }
     res = getdigits_int(pp);
   } else {
-    res = mb_ptr2char_adv(pp);
+    res = mb_ptr2char_adv((const char_u **)pp);
     if (flagtype == AFT_LONG || (flagtype == AFT_CAPLONG
                                  && res >= 'A' && res <= 'Z')) {
       if (**pp == NUL)
         return 0;
-      res = mb_ptr2char_adv(pp) + (res << 16);
+      res = mb_ptr2char_adv((const char_u **)pp) + (res << 16);
     }
   }
   return res;
@@ -2823,12 +2825,14 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
   case AFT_CAPLONG:
   case AFT_LONG:
     for (p = afflist; *p != NUL; ) {
-      n = mb_ptr2char_adv(&p);
+      n = mb_ptr2char_adv((const char_u **)&p);
       if ((flagtype == AFT_LONG || (n >= 'A' && n <= 'Z'))
-          && *p != NUL)
-        n = mb_ptr2char_adv(&p) + (n << 16);
-      if (n == flag)
+          && *p != NUL) {
+        n = mb_ptr2char_adv((const char_u **)&p) + (n << 16);
+      }
+      if (n == flag) {
         return true;
+      }
     }
     break;
 
@@ -5436,10 +5440,11 @@ static void init_spellfile(void)
         fname = LANGP_ENTRY(curwin->w_s->b_langp, 0)
                 ->lp_slang->sl_fname;
         vim_snprintf((char *)buf + l, MAXPATHL - l, ".%s.add",
-            fname != NULL
-            && strstr((char *)path_tail(fname), ".ascii.") != NULL
-            ? (char_u *)"ascii" : spell_enc());
-        set_option_value((char_u *)"spellfile", 0L, buf, OPT_LOCAL);
+                     ((fname != NULL
+                       && strstr((char *)path_tail(fname), ".ascii.") != NULL)
+                      ? "ascii"
+                      : (const char *)spell_enc()));
+        set_option_value("spellfile", 0L, (const char *)buf, OPT_LOCAL);
         break;
       }
       aspath = false;
@@ -5465,9 +5470,9 @@ static int set_spell_chartab(char_u *fol, char_u *low, char_u *upp)
       EMSG(_(e_affform));
       return FAIL;
     }
-    f = mb_ptr2char_adv(&pf);
-    l = mb_ptr2char_adv(&pl);
-    u = mb_ptr2char_adv(&pu);
+    f = mb_ptr2char_adv((const char_u **)&pf);
+    l = mb_ptr2char_adv((const char_u **)&pl);
+    u = mb_ptr2char_adv((const char_u **)&pu);
     // Every character that appears is a word character.
     if (f < 256)
       new_st.st_isw[f] = true;
@@ -5532,7 +5537,7 @@ set_spell_charflags (
     }
 
     if (*p != NUL) {
-      c = mb_ptr2char_adv(&p);
+      c = mb_ptr2char_adv((const char_u **)&p);
       new_st.st_fold[i + 128] = c;
       if (i + 128 != c && new_st.st_isu[i + 128] && c < 256)
         new_st.st_upper[c] = i + 128;
@@ -5619,12 +5624,13 @@ static void set_map_str(slang_T *lp, char_u *map)
   // "aaa/bbb/ccc/".  Fill sl_map_array[c] with the character before c and
   // before the same slash.  For characters above 255 sl_map_hash is used.
   for (p = map; *p != NUL; ) {
-    c = mb_cptr2char_adv(&p);
-    if (c == '/')
+    c = mb_cptr2char_adv((const char_u **)&p);
+    if (c == '/') {
       headc = 0;
-    else {
-      if (headc == 0)
+    } else {
+      if (headc == 0) {
         headc = c;
+      }
 
       // Characters above 255 don't fit in sl_map_array[], put them in
       // the hash table.  Each entry is the char, a NUL the headchar and

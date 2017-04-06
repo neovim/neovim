@@ -322,8 +322,11 @@ vim_findfile_init (
       drive[0] = path[0];
       drive[1] = ':';
       drive[2] = NUL;
-      if (vim_FullName(drive, ff_expand_buffer, MAXPATHL, TRUE) == FAIL)
+      if (vim_FullName((const char *)drive, (char *)ff_expand_buffer, MAXPATHL,
+                       true)
+          == FAIL) {
         goto error_return;
+      }
       path += 2;
     } else
 #endif
@@ -1549,14 +1552,14 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
     assert(false);
   }
 
-  dict_add_nr_str(dict, "scope", 0L, (char_u *)buf);
-  dict_add_nr_str(dict, "cwd",   0L, (char_u *)new_dir);
-  dict_set_keys_readonly(dict);
+  tv_dict_add_str(dict, S_LEN("scope"), buf);
+  tv_dict_add_str(dict, S_LEN("cwd"),   new_dir);
+  tv_dict_set_keys_readonly(dict);
 
   apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
                  NULL);
 
-  dict_clear(dict);
+  tv_dict_clear(dict);
 
   recursive = false;
 }

@@ -25,6 +25,8 @@ if(DEFINED ENV{TEST_FILTER})
   set(TEST_TAG "--filter=$ENV{TEST_FILTER}")
 endif()
 
+execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${WORKING_DIR}/Xtest-tmpdir)
+set(ENV{TMPDIR} ${WORKING_DIR}/Xtest-tmpdir)
 set(ENV{SYSTEM_NAME} ${SYSTEM_NAME})
 execute_process(
   COMMAND ${BUSTED_PRG} ${TEST_TAG} ${TEST_FILTER} -v -o ${BUSTED_OUTPUT_TYPE}
@@ -37,6 +39,7 @@ execute_process(
 
 file(REMOVE ${WORKING_DIR}/Xtest_rplugin_manifest)
 file(REMOVE_RECURSE ${WORKING_DIR}/Xtest_xdg)
+file(REMOVE_RECURSE ${WORKING_DIR}/Xtest-tmpdir)
 
 if(NOT res EQUAL 0)
   message(STATUS "Output to stderr:\n${err}")

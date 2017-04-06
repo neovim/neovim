@@ -1,4 +1,4 @@
-*tagsrch.txt*   For Vim version 7.4.  Last change: 2013 Oct 01
+*tagsrch.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
