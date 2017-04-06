@@ -140,4 +140,34 @@ func Test_delete_myself()
   call assert_equal([], timer_info(t))
 endfunc
 
+func StopTimer1(timer)
+  let g:timer2 = timer_start(10, 'StopTimer2')
+  " avoid maxfuncdepth error
+  call timer_pause(g:timer1, 1)
+  sleep 40m
+endfunc
+
+func StopTimer2(timer)
+  call timer_stop(g:timer1)
+endfunc
+
+func Test_stop_in_callback()
+  let g:timer1 = timer_start(10, 'StopTimer1')
+  sleep 40m
+endfunc
+
+func StopTimerAll(timer)
+  call timer_stopall()
+endfunc
+
+func Test_stop_all_in_callback()
+  let g:timer1 = timer_start(10, 'StopTimerAll')
+  let info = timer_info()
+  call assert_equal(1, len(info))
+  sleep 40m
+  let info = timer_info()
+  call assert_equal(0, len(info))
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
