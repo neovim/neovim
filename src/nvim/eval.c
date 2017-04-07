@@ -8729,8 +8729,9 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   fold_count = foldedCount(curwin, lnum, &foldinfo);
   if (fold_count > 0) {
     text = get_foldtext(curwin, lnum, lnum + fold_count - 1, &foldinfo, buf);
-    if (text == buf)
+    if (text == buf) {
       text = vim_strsave(text);
+    }
     rettv->vval.v_string = text;
   }
 }
