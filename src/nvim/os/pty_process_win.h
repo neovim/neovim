@@ -36,33 +36,6 @@ static inline PtyProcess pty_process_init(Loop *loop, void *data)
   return rv;
 }
 
-/// Output error log with error code.
-///
-/// @param  emsg  error message.
-/// @param  status  error code.
-///
-static inline void write_elog(const char *emsg, int status)
-{
-  ELOG("%s error code: %d", emsg, status);
-}
-
-/// Get error code from winpty error object and output error log.
-///
-/// @param  emsg  error message.
-/// @param[out]  status  Location where saved error code that converted into
-///                      libuv error.
-/// @param  err  winpty error object.
-///
-static inline void write_winpty_elog(const char *emsg, int *status,
-                                     winpty_error_ptr_t *err)
-{
-  assert(err != NULL && *err != NULL);
-
-  *status = (int)winpty_error_code(*err);
-  write_elog(emsg, *status);
-  *status = translate_winpty_error(*status);
-}
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_process_win.h.generated.h"
 #endif

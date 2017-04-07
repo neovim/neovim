@@ -42,31 +42,32 @@ int pty_process_spawn(PtyProcess *ptyproc)
   uv_connect_t *out_req = NULL;
   wchar_t *cmd_line = NULL;
   wchar_t *cwd = NULL;
+  const char *emsg = NULL;
 
   assert(!proc->err);
 
   cfg = winpty_config_new(WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION, &err);
   if (cfg == NULL) {
-    write_winpty_elog("Failed, winpty_config_new.", &status, &err);
+    emsg = "Failed, winpty_config_new.";
     goto cleanup;
   }
 
   winpty_config_set_initial_size(cfg, ptyproc->width, ptyproc->height);
   winpty_object = winpty_open(cfg, &err);
   if (winpty_object == NULL) {
-    write_winpty_elog("Failed, winpty_open.", &status, &err);
+    emsg = "Failed, winpty_open.";
     goto cleanup;
   }
 
   status = utf16_to_utf8(winpty_conin_name(winpty_object), &in_name);
   if (status != 0) {
-    write_elog("Failed to convert in_name from utf16 to utf8.", status);
+    emsg = "Failed to convert in_name from utf16 to utf8.";
     goto cleanup;
   }
 
   status = utf16_to_utf8(winpty_conout_name(winpty_object), &out_name);
   if (status != 0) {
-    write_elog("Failed to convert out_name from utf16 to utf8.", status);
+    emsg = "Failed to convert out_name from utf16 to utf8.";
     goto cleanup;
   }
 
@@ -91,14 +92,14 @@ int pty_process_spawn(PtyProcess *ptyproc)
   if (proc->cwd != NULL) {
     status = utf8_to_utf16(proc->cwd, &cwd);
     if (status != 0) {
-      write_elog("Failed to convert pwd form utf8 to utf16.", status);
+      emsg = "Failed to convert pwd form utf8 to utf16.";
       goto cleanup;
     }
   }
 
   status = build_cmd_line(proc->argv, &cmd_line);
   if (status != 0) {
-    write_elog("Failed to convert cmd line form utf8 to utf16.", status);
+    emsg = "Failed to convert cmd line form utf8 to utf16.";
     goto cleanup;
   }
 
@@ -110,7 +111,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
       NULL,  // Optional environment variables
       &err);
   if (spawncfg == NULL) {
-    write_winpty_elog("Failed winpty_spawn_config_new.", &status, &err);
+    emsg = "Failed winpty_spawn_config_new.";
     goto cleanup;
   }
 
@@ -123,9 +124,9 @@ int pty_process_spawn(PtyProcess *ptyproc)
                     &err)) {
     if (win_err) {
       status = (int)win_err;
-      write_elog("Failed spawn process.", status);
+      emsg = "Failed spawn process.";
     } else {
-      write_winpty_elog("Failed winpty_spawn.", &status, &err);
+      emsg = "Failed winpty_spawn.";
     }
     goto cleanup;
   }
@@ -153,6 +154,15 @@ int pty_process_spawn(PtyProcess *ptyproc)
   process_handle = NULL;
 
 cleanup:
+  if (status) {
+    // In the case of an error of MultiByteToWideChar or CreateProcessW.
+    ELOG("%s error code: %d", emsg, status);
+    status = os_translate_sys_error(status);
+  } else if (err != NULL) {
+    status = (int)winpty_error_code(err);
+    ELOG("%s error code: %d", emsg, status);
+    status = translate_winpty_error(status);
+  }
   winpty_error_free(err);
   winpty_config_free(cfg);
   winpty_spawn_config_free(spawncfg);
@@ -166,7 +176,7 @@ cleanup:
   xfree(out_req);
   xfree(cmd_line);
   xfree(cwd);
-  return status <= 0 ? status : os_translate_sys_error(status);
+  return status;
 }
 
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
