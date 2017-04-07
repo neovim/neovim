@@ -6309,10 +6309,10 @@ static inline char_u *cstrchr(const char_u *const s, const int c)
   }
 
   int cc;
-  if (vim_isupper(c)) {
-    cc = vim_tolower(c);
-  } else if (vim_islower(c)) {
-    cc = vim_toupper(c);
+  if (ASCII_ISUPPER(c)) {
+    cc = TOLOWER_ASC(c);
+  } else if (ASCII_ISLOWER(c)) {
+    cc = TOUPPER_ASC(c);
   } else {
     return vim_strchr(s, c);
   }
