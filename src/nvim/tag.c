@@ -2797,11 +2797,9 @@ add_tag_field (
   return retval;
 }
 
-/*
- * Add the tags matching the specified pattern to the list "list"
- * as a dictionary
- */
-int get_tags(list_T *list, char_u *pat)
+/// Add the tags matching the specified pattern "pat" to the list "list"
+/// as a dictionary. Use "buf_fname" for priority, unless NULL.
+int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
 {
   int num_matches, i, ret;
   char_u      **matches, *p;
@@ -2811,7 +2809,7 @@ int get_tags(list_T *list, char_u *pat)
   bool is_static;
 
   ret = find_tags(pat, &num_matches, &matches,
-      TAG_REGEXP | TAG_NOIC, (int)MAXCOL, NULL);
+                  TAG_REGEXP | TAG_NOIC, (int)MAXCOL, buf_fname);
   if (ret == OK && num_matches > 0) {
     for (i = 0; i < num_matches; ++i) {
       int parse_result = parse_match(matches[i], &tp);

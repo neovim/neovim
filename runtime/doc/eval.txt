@@ -2291,7 +2291,7 @@ tabpagebuflist([{arg}])		List	list of buffer numbers in tab page
 tabpagenr([{arg}])		Number	number of current or last tab page
 tabpagewinnr({tabarg}[, {arg}])
 				Number	number of current window in tab page
-taglist({expr})		List	list of tags matching {expr}
+taglist({expr}[, {filename}])	List	list of tags matching {expr}
 tagfiles()			List	tags files used
 tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
@@ -7427,8 +7427,13 @@ tagfiles()	Returns a |List| with the file names used to search for tags
 		for the current buffer.  This is the 'tags' option expanded.
 
 
-taglist({expr})							*taglist()*
+taglist({expr}[, {filename}])				*taglist()*
 		Returns a list of tags matching the regular expression {expr}.
+
+		If {filename} is passed it is used to prioritize the results
+		in the same way that |:tselect| does. See |tag-priority|.
+		{filename} should be the full path of the file.
+
 		Each list item is a dictionary with at least the following
 		entries:
 			name		Name of the tag.
