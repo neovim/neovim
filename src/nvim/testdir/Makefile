@@ -63,6 +63,7 @@ NEW_TESTS ?= \
 	    test_substitute.res \
 	    test_syntax.res \
 	    test_tabpage.res \
+            test_taglist.res \
 	    test_textobjects.res \
 	    test_timers.res \
 	    test_undo.res \

@@ -16436,7 +16436,11 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  (void)get_tags(tv_list_alloc_ret(rettv), (char_u *)tag_pattern);
+  char_u *fname = NULL;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    fname = tv_get_string(&argvars[1]);
+  }
+  (void)get_tags(tv_list_alloc_ret(rettv), (char_u *)tag_pattern, fname);
 }
 
 /*
