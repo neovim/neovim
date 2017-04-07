@@ -118,7 +118,6 @@ char *os_getenvname_at_index(size_t index)
   return name;
 }
 
-
 /// Get the process ID of the Neovim process.
 ///
 /// @return the process ID.
@@ -145,10 +144,27 @@ void os_get_hostname(char *hostname, size_t size)
   } else {
     xstrlcpy(hostname, vutsname.nodename, size);
   }
+#elif defined(WIN32)
+  WCHAR host_utf16[MAX_COMPUTERNAME_LENGTH + 1];
+  DWORD host_wsize = sizeof(host_utf16) / sizeof(host_utf16[0]);
+  if (GetComputerNameW(host_utf16, &host_wsize) == 0) {
+    *hostname = '\0';
+    DWORD err = GetLastError();
+    EMSG2("GetComputerNameW failed: %d", err);
+    return;
+  }
+  host_utf16[host_wsize] = '\0';
+
+  char *host_utf8;
+  int conversion_result = utf16_to_utf8(host_utf16, &host_utf8);
+  if (conversion_result != 0) {
+    EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+    return;
+  }
+  xstrlcpy(hostname, host_utf8, size);
+  xfree(host_utf8);
 #else
-  // TODO(unknown): Implement this for windows.
-  // See the implementation used in vim:
-  // https://code.google.com/p/vim/source/browse/src/os_win32.c?r=6b69d8dde19e32909f4ee3a6337e6a2ecfbb6f72#2899
+  EMSG("os_get_hostname failed: missing uname()");
   *hostname = '\0';
 #endif
 }
