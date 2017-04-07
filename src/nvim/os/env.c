@@ -31,6 +31,11 @@
 #include <sys/utsname.h>
 #endif
 
+#ifdef WIN32
+#include "nvim/os/win_defs.h"
+#include "nvim/mbyte.h"  // for utf16_to_utf8
+#endif
+
 /// Like getenv(), but returns NULL if the variable is empty.
 const char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
@@ -118,7 +123,6 @@ char *os_getenvname_at_index(size_t index)
   return name;
 }
 
-
 /// Get the process ID of the Neovim process.
 ///
 /// @return the process ID.
@@ -145,11 +149,19 @@ void os_get_hostname(char *hostname, size_t size)
   } else {
     xstrlcpy(hostname, vutsname.nodename, size);
   }
-#else
-  // TODO(unknown): Implement this for windows.
-  // See the implementation used in vim:
-  // https://code.google.com/p/vim/source/browse/src/os_win32.c?r=6b69d8dde19e32909f4ee3a6337e6a2ecfbb6f72#2899
-  *hostname = '\0';
+#endif
+#ifdef WIN32
+  WCHAR hostname_unicode[MAX_COMPUTERNAME_LENGTH + 1];
+  WCHAR hostname_length = (WCHAR)len;
+  if (GetComputerName(hostname_unicode, &hostname_length) == 0) {
+    *hostname = '\0';
+  } else {
+    int conversion_result = utf16_to_utf8(hostname_unicode,
+                                          &hostname);
+    if (conversion_result != 0) {
+      EMSG2("utf16_to_utf8 failed: %s", uv_strerror(conversion_result));
+    }
+  }
 #endif
 }
 
