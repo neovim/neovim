@@ -60,6 +60,12 @@ run_test() {
 }
 
 run_test_wd() {
+  local hang_ok=
+  if test "x$1" = "x--allow-hang" ; then
+    hang_ok=1
+    shift
+  fi
+
   local timeout="$1"
   test $# -gt 0 && shift
 
@@ -105,7 +111,9 @@ run_test_wd() {
       # status file not updated, assuming hang
       kill -KILL $pid
       if test $restarts -eq 0 ; then
-        fail "${test_name}" E "Test hang up"
+        if test "x$hang_ok" = "x" ; then
+          fail "${test_name}" E "Test hang up"
+        fi
       else
         echo "Test ${test_name} hang up, restarting"
         eval "$restart_cmd"

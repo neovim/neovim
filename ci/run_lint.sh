@@ -20,6 +20,7 @@ csi_clean() {
 run_test 'top_make clint-full' clint
 run_test 'top_make testlint' testlint
 CLICOLOR_FORCE=1 run_test_wd \
+  --allow-hang \
   5s \
   'top_make check-single-includes' \
   'csi_clean' \
