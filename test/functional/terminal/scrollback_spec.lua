@@ -8,6 +8,7 @@ local command = helpers.command
 local wait = helpers.wait
 local retry = helpers.retry
 local curbufmeths = helpers.curbufmeths
+local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
 
 if helpers.pending_win32(pending) then return end
@@ -368,6 +369,12 @@ describe("'scrollback' option", function()
     clear()
   end)
 
+  local function set_fake_shell()
+    -- shell-test.c is a fake shell that prints its arguments and exits.
+    nvim('set_option', 'shell', nvim_dir..'/shell-test')
+    nvim('set_option', 'shellcmdflag', 'EXE')
+  end
+
   local function expect_lines(expected, epsilon)
     local ep = epsilon and epsilon or 0
     local actual = eval("line('$')")
@@ -421,12 +428,13 @@ describe("'scrollback' option", function()
     screen:detach()
   end)
 
-  it('defaults to 1000', function()
-    execute('terminal')
+  it('defaults to 1000 in terminal buffers', function()
+    set_fake_shell()
+    command('terminal')
     eq(1000, curbufmeths.get_option('scrollback'))
   end)
 
-  it('error if set to invalid values', function()
+  it('error if set to invalid value', function()
     local status, rv = pcall(command, 'set scrollback=-2')
     eq(false, status)  -- assert failure
     eq('E474:', string.match(rv, "E%d*:"))
@@ -437,15 +445,32 @@ describe("'scrollback' option", function()
   end)
 
   it('defaults to -1 on normal buffers', function()
-    execute('new')
+    command('new')
     eq(-1, curbufmeths.get_option('scrollback'))
   end)
 
-  it('error if set on a normal buffer', function()
+  it(':setlocal in a normal buffer is an error', function()
     command('new')
-    execute('set scrollback=42')
+    execute('setlocal scrollback=42')
     feed('<CR>')
     eq('E474:', string.match(eval("v:errmsg"), "E%d*:"))
+    eq(-1, curbufmeths.get_option('scrollback'))
+  end)
+
+  it(':set updates local value and global default', function()
+    set_fake_shell()
+    command('set scrollback=42')                  -- set global and (attempt) local
+    eq(-1, curbufmeths.get_option('scrollback'))  -- normal buffer: -1
+    command('terminal')
+    eq(42, curbufmeths.get_option('scrollback'))  -- inherits global default
+    command('setlocal scrollback=99')
+    eq(99, curbufmeths.get_option('scrollback'))
+    command('set scrollback<')                    -- reset to global default
+    eq(42, curbufmeths.get_option('scrollback'))
+    command('setglobal scrollback=734')           -- new global default
+    eq(42, curbufmeths.get_option('scrollback'))  -- local value did not change
+    command('terminal')
+    eq(734, curbufmeths.get_option('scrollback'))
   end)
 
 end)

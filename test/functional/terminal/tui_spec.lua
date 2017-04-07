@@ -322,6 +322,7 @@ describe("tui 't_Co' (terminal colors)", function()
       helpers.nvim_prog))
 
     thelpers.feed_data(":echo &t_Co\n")
+    helpers.wait()
     local tline
     if maxcolors == 8 then
       tline = "~                                                 "

@@ -2,10 +2,11 @@
 
 #include <msgpack.h>
 
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/ascii.h"
+#include "nvim/macros.h"
 #include "nvim/message.h"
 #include "nvim/globals.h"
 #include "nvim/charset.h"  // vim_str2nr
@@ -52,16 +53,16 @@ static inline void create_special_dict(typval_T *const rettv,
                                        typval_T val)
   FUNC_ATTR_NONNULL_ALL
 {
-  dict_T *const dict = dict_alloc();
-  dictitem_T *const type_di = dictitem_alloc((char_u *) "_TYPE");
+  dict_T *const dict = tv_dict_alloc();
+  dictitem_T *const type_di = tv_dict_item_alloc_len(S_LEN("_TYPE"));
   type_di->di_tv.v_type = VAR_LIST;
   type_di->di_tv.v_lock = VAR_UNLOCKED;
   type_di->di_tv.vval.v_list = (list_T *) eval_msgpack_type_lists[type];
   type_di->di_tv.vval.v_list->lv_refcount++;
-  dict_add(dict, type_di);
-  dictitem_T *const val_di = dictitem_alloc((char_u *) "_VAL");
+  tv_dict_add(dict, type_di);
+  dictitem_T *const val_di = tv_dict_item_alloc_len(S_LEN("_VAL"));
   val_di->di_tv = val;
-  dict_add(dict, val_di);
+  tv_dict_add(dict, val_di);
   dict->dv_refcount++;
   *rettv = (typval_T) {
     .v_type = VAR_DICT,
@@ -119,18 +120,18 @@ static inline int json_decoder_pop(ValuesStackItem obj,
     if (last_container.container.vval.v_list->lv_len != 0
         && !obj.didcomma) {
       EMSG2(_("E474: Expected comma before list item: %s"), val_location);
-      clear_tv(&obj.val);
+      tv_clear(&obj.val);
       return FAIL;
     }
     assert(last_container.special_val == NULL);
-    listitem_T *obj_li = listitem_alloc();
+    listitem_T *obj_li = tv_list_item_alloc();
     obj_li->li_tv = obj.val;
-    list_append(last_container.container.vval.v_list, obj_li);
+    tv_list_append(last_container.container.vval.v_list, obj_li);
   } else if (last_container.stack_index == kv_size(*stack) - 2) {
     if (!obj.didcolon) {
       EMSG2(_("E474: Expected colon before dictionary value: %s"),
             val_location);
-      clear_tv(&obj.val);
+      tv_clear(&obj.val);
       return FAIL;
     }
     ValuesStackItem key = kv_pop(*stack);
@@ -139,34 +140,35 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       assert(!(key.is_special_string
                || key.val.vval.v_string == NULL
                || *key.val.vval.v_string == NUL));
-      dictitem_T *obj_di = dictitem_alloc(key.val.vval.v_string);
-      clear_tv(&key.val);
-      if (dict_add(last_container.container.vval.v_dict, obj_di)
+      dictitem_T *const obj_di = tv_dict_item_alloc(
+          (const char *)key.val.vval.v_string);
+      tv_clear(&key.val);
+      if (tv_dict_add(last_container.container.vval.v_dict, obj_di)
           == FAIL) {
         assert(false);
       }
       obj_di->di_tv = obj.val;
     } else {
-      list_T *const kv_pair = list_alloc();
-      list_append_list(last_container.special_val, kv_pair);
-      listitem_T *const key_li = listitem_alloc();
+      list_T *const kv_pair = tv_list_alloc();
+      tv_list_append_list(last_container.special_val, kv_pair);
+      listitem_T *const key_li = tv_list_item_alloc();
       key_li->li_tv = key.val;
-      list_append(kv_pair, key_li);
-      listitem_T *const val_li = listitem_alloc();
+      tv_list_append(kv_pair, key_li);
+      listitem_T *const val_li = tv_list_item_alloc();
       val_li->li_tv = obj.val;
-      list_append(kv_pair, val_li);
+      tv_list_append(kv_pair, val_li);
     }
   } else {
     // Object with key only
     if (!obj.is_special_string && obj.val.v_type != VAR_STRING) {
       EMSG2(_("E474: Expected string key: %s"), *pp);
-      clear_tv(&obj.val);
+      tv_clear(&obj.val);
       return FAIL;
     } else if (!obj.didcomma
                && (last_container.special_val == NULL
                    && (DICT_LEN(last_container.container.vval.v_dict) != 0))) {
       EMSG2(_("E474: Expected comma before dictionary key: %s"), val_location);
-      clear_tv(&obj.val);
+      tv_clear(&obj.val);
       return FAIL;
     }
     // Handle empty key and key represented as special dictionary
@@ -174,16 +176,16 @@ static inline int json_decoder_pop(ValuesStackItem obj,
         && (obj.is_special_string
             || obj.val.vval.v_string == NULL
             || *obj.val.vval.v_string == NUL
-            || dict_find(last_container.container.vval.v_dict,
-                         obj.val.vval.v_string, -1))) {
-      clear_tv(&obj.val);
+            || tv_dict_find(last_container.container.vval.v_dict,
+                            (const char *)obj.val.vval.v_string, -1))) {
+      tv_clear(&obj.val);
 
       // Restart
       (void) kv_pop(*container_stack);
       ValuesStackItem last_container_val =
           kv_A(*stack, last_container.stack_index);
       while (kv_size(*stack) > last_container.stack_index) {
-        clear_tv(&(kv_pop(*stack).val));
+        tv_clear(&(kv_pop(*stack).val));
       }
       *pp = last_container.s;
       *didcomma = last_container_val.didcomma;
@@ -228,7 +230,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
 list_T *decode_create_map_special_dict(typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
-  list_T *const list = list_alloc();
+  list_T *const list = tv_list_alloc();
   list->lv_refcount++;
   create_special_dict(ret_tv, kMPMap, ((typval_T) {
     .v_type = VAR_LIST,
@@ -264,7 +266,7 @@ typval_T decode_string(const char *const s, const size_t len,
                               ? memchr(s, NUL, len) != NULL
                               : (bool)hasnul);
   if (really_hasnul) {
-    list_T *const list = list_alloc();
+    list_T *const list = tv_list_alloc();
     list->lv_refcount++;
     typval_T tv;
     create_special_dict(&tv, binary ? kMPBinary : kMPString, ((typval_T) {
@@ -277,7 +279,7 @@ typval_T decode_string(const char *const s, const size_t len,
       xfree((void *)s);
     }
     if (elw_ret == -1) {
-      clear_tv(&tv);
+      tv_clear(&tv);
       return (typval_T) { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
     }
     return tv;
@@ -502,9 +504,8 @@ static inline int parse_json_string(vimconv_T *const conv,
     str_end = new_str + str_len;
   }
   *str_end = NUL;
-  typval_T obj;
-  obj = decode_string(str, (size_t)(str_end - str), hasnul ? kTrue : kFalse,
-                      false, true);
+  typval_T obj = decode_string(
+      str, (size_t)(str_end - str), hasnul ? kTrue : kFalse, false, true);
   if (obj.v_type == VAR_UNKNOWN) {
     goto parse_json_string_fail;
   }
@@ -864,7 +865,7 @@ json_decode_string_cycle_start:
         break;
       }
       case '[': {
-        list_T *list = list_alloc();
+        list_T *list = tv_list_alloc();
         list->lv_refcount++;
         typval_T tv = {
           .v_type = VAR_LIST,
@@ -887,7 +888,7 @@ json_decode_string_cycle_start:
           next_map_special = false;
           val_list = decode_create_map_special_dict(&tv);
         } else {
-          dict_T *dict = dict_alloc();
+          dict_T *dict = tv_dict_alloc();
           dict->dv_refcount++;
           tv = (typval_T) {
             .v_type = VAR_DICT,
@@ -939,7 +940,7 @@ json_decode_string_after_cycle:
 json_decode_string_fail:
   ret = FAIL;
   while (kv_size(stack)) {
-    clear_tv(&(kv_pop(stack).val));
+    tv_clear(&(kv_pop(stack).val));
   }
 json_decode_string_ret:
   kv_destroy(stack);
@@ -985,7 +986,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
           .vval = { .v_number = (varnumber_T) mobj.via.u64 },
         };
       } else {
-        list_T *const list = list_alloc();
+        list_T *const list = tv_list_alloc();
         list->lv_refcount++;
         create_special_dict(rettv, kMPInteger, ((typval_T) {
           .v_type = VAR_LIST,
@@ -993,10 +994,10 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
           .vval = { .v_list = list },
         }));
         uint64_t n = mobj.via.u64;
-        list_append_number(list, 1);
-        list_append_number(list, (varnumber_T) ((n >> 62) & 0x3));
-        list_append_number(list, (varnumber_T) ((n >> 31) & 0x7FFFFFFF));
-        list_append_number(list, (varnumber_T) (n & 0x7FFFFFFF));
+        tv_list_append_number(list, 1);
+        tv_list_append_number(list, (varnumber_T)((n >> 62) & 0x3));
+        tv_list_append_number(list, (varnumber_T)((n >> 31) & 0x7FFFFFFF));
+        tv_list_append_number(list, (varnumber_T)(n & 0x7FFFFFFF));
       }
       break;
     }
@@ -1008,22 +1009,28 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
           .vval = { .v_number = (varnumber_T) mobj.via.i64 },
         };
       } else {
-        list_T *const list = list_alloc();
+        list_T *const list = tv_list_alloc();
         list->lv_refcount++;
         create_special_dict(rettv, kMPInteger, ((typval_T) {
           .v_type = VAR_LIST,
           .v_lock = VAR_UNLOCKED,
           .vval = { .v_list = list },
         }));
-        uint64_t n = -((uint64_t) mobj.via.i64);
-        list_append_number(list, -1);
-        list_append_number(list, (varnumber_T) ((n >> 62) & 0x3));
-        list_append_number(list, (varnumber_T) ((n >> 31) & 0x7FFFFFFF));
-        list_append_number(list, (varnumber_T) (n & 0x7FFFFFFF));
+        uint64_t n = -((uint64_t)mobj.via.i64);
+        tv_list_append_number(list, -1);
+        tv_list_append_number(list, (varnumber_T)((n >> 62) & 0x3));
+        tv_list_append_number(list, (varnumber_T)((n >> 31) & 0x7FFFFFFF));
+        tv_list_append_number(list, (varnumber_T)(n & 0x7FFFFFFF));
       }
       break;
     }
-    case MSGPACK_OBJECT_FLOAT: {
+#ifdef NVIM_MSGPACK_HAS_FLOAT32
+    case MSGPACK_OBJECT_FLOAT32:
+    case MSGPACK_OBJECT_FLOAT64:
+#else
+    case MSGPACK_OBJECT_FLOAT:
+#endif
+    {
       *rettv = (typval_T) {
         .v_type = VAR_FLOAT,
         .v_lock = VAR_UNLOCKED,
@@ -1048,7 +1055,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       break;
     }
     case MSGPACK_OBJECT_ARRAY: {
-      list_T *const list = list_alloc();
+      list_T *const list = tv_list_alloc();
       list->lv_refcount++;
       *rettv = (typval_T) {
         .v_type = VAR_LIST,
@@ -1056,9 +1063,9 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
         .vval = { .v_list = list },
       };
       for (size_t i = 0; i < mobj.via.array.size; i++) {
-        listitem_T *const li = listitem_alloc();
+        listitem_T *const li = tv_list_item_alloc();
         li->li_tv.v_type = VAR_UNKNOWN;
-        list_append(list, li);
+        tv_list_append(list, li);
         if (msgpack_to_vim(mobj.via.array.ptr[i], &li->li_tv) == FAIL) {
           return FAIL;
         }
@@ -1074,7 +1081,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
           goto msgpack_to_vim_generic_map;
         }
       }
-      dict_T *const dict = dict_alloc();
+      dict_T *const dict = tv_dict_alloc();
       dict->dv_refcount++;
       *rettv = (typval_T) {
         .v_type = VAR_DICT,
@@ -1087,9 +1094,9 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
         memcpy(&di->di_key[0], mobj.via.map.ptr[i].key.via.str.ptr,
                mobj.via.map.ptr[i].key.via.str.size);
         di->di_tv.v_type = VAR_UNKNOWN;
-        if (dict_add(dict, di) == FAIL) {
+        if (tv_dict_add(dict, di) == FAIL) {
           // Duplicate key: fallback to generic map
-          clear_tv(rettv);
+          tv_clear(rettv);
           xfree(di);
           goto msgpack_to_vim_generic_map;
         }
@@ -1101,14 +1108,14 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
 msgpack_to_vim_generic_map: {}
       list_T *const list = decode_create_map_special_dict(rettv);
       for (size_t i = 0; i < mobj.via.map.size; i++) {
-        list_T *const kv_pair = list_alloc();
-        list_append_list(list, kv_pair);
-        listitem_T *const key_li = listitem_alloc();
+        list_T *const kv_pair = tv_list_alloc();
+        tv_list_append_list(list, kv_pair);
+        listitem_T *const key_li = tv_list_item_alloc();
         key_li->li_tv.v_type = VAR_UNKNOWN;
-        list_append(kv_pair, key_li);
-        listitem_T *const val_li = listitem_alloc();
+        tv_list_append(kv_pair, key_li);
+        listitem_T *const val_li = tv_list_item_alloc();
         val_li->li_tv.v_type = VAR_UNKNOWN;
-        list_append(kv_pair, val_li);
+        tv_list_append(kv_pair, val_li);
         if (msgpack_to_vim(mobj.via.map.ptr[i].key, &key_li->li_tv) == FAIL) {
           return FAIL;
         }
@@ -1119,11 +1126,11 @@ msgpack_to_vim_generic_map: {}
       break;
     }
     case MSGPACK_OBJECT_EXT: {
-      list_T *const list = list_alloc();
+      list_T *const list = tv_list_alloc();
       list->lv_refcount++;
-      list_append_number(list, mobj.via.ext.type);
-      list_T *const ext_val_list = list_alloc();
-      list_append_list(list, ext_val_list);
+      tv_list_append_number(list, mobj.via.ext.type);
+      list_T *const ext_val_list = tv_list_alloc();
+      tv_list_append_list(list, ext_val_list);
       create_special_dict(rettv, kMPExt, ((typval_T) {
         .v_type = VAR_LIST,
         .v_lock = VAR_UNLOCKED,

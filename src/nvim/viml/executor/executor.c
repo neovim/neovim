@@ -461,18 +461,33 @@ nlua_print_error:
 int nlua_debug(lua_State *lstate)
   FUNC_ATTR_NONNULL_ALL
 {
+  const typval_T input_args[] = {
+    {
+      .v_lock = VAR_FIXED,
+      .v_type = VAR_STRING,
+      .vval.v_string = (char_u *)"lua_debug> ",
+    },
+    {
+      .v_type = VAR_UNKNOWN,
+    },
+  };
   for (;;) {
     lua_settop(lstate, 0);
-    char *const input = get_user_input("lua_debug> ", "", NULL, NULL);
+    typval_T input;
+    get_user_input(input_args, &input, false);
     msg_putchar('\n');  // Avoid outputting on input line.
-    if (input == NULL || *input == NUL || strcmp(input, "cont") == 0) {
-      xfree(input);
+    if (input.v_type != VAR_STRING
+        || input.vval.v_string == NULL
+        || *input.vval.v_string == NUL
+        || STRCMP(input.vval.v_string, "cont") == 0) {
+      tv_clear(&input);
       return 0;
     }
-    if (luaL_loadbuffer(lstate, input, strlen(input), "=(debug command)")) {
+    if (luaL_loadbuffer(lstate, (const char *)input.vval.v_string,
+                        STRLEN(input.vval.v_string), "=(debug command)")) {
       nlua_error(lstate, _("E5115: Error while loading debug string: %.*s"));
     }
-    xfree(input);
+    tv_clear(&input);
     if (lua_pcall(lstate, 0, 0, 0)) {
       nlua_error(lstate, _("E5116: Error while calling debug string: %.*s"));
     }
@@ -517,7 +532,7 @@ void ex_lua(exarg_T *const eap)
   }
   typval_T tv = { .v_type = VAR_UNKNOWN };
   executor_exec_lua((String) { .data = code, .size = len }, &tv);
-  clear_tv(&tv);
+  tv_clear(&tv);
   xfree(code);
 }
 

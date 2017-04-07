@@ -60,16 +60,17 @@ describe('terminal cursor', function()
       ]])
     end)
 
-    pending('is positioned correctly when focused', function()
+    it('is positioned correctly when focused', function()
       feed('i')
+      helpers.wait()
       screen:expect([[
-          1 tty ready                                     |
-          2 {1: }                                             |
-          3                                               |
-          4                                               |
-          5                                               |
-          6                                               |
-        -- TERMINAL --                                    |
+        {7:  1 }tty ready                                     |
+        {7:  2 }{1: }                                             |
+        {7:  3 }                                              |
+        {7:  4 }                                              |
+        {7:  5 }                                              |
+        {7:  6 }                                              |
+        {3:-- TERMINAL --}                                    |
       ]])
     end)
   end)

@@ -15,8 +15,9 @@
 #include "nvim/vim.h"
 #include "nvim/globals.h"
 #include "nvim/message.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ascii.h"
+#include "nvim/macros.h"
 
 #include "nvim/lib/kvec.h"
 #include "nvim/eval/decode.h"
@@ -207,23 +208,23 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           size_t len;
           const char *s = lua_tolstring(lstate, -2, &len);
           if (cur.special) {
-            list_T *const kv_pair = list_alloc();
-            list_append_list(cur.tv->vval.v_list, kv_pair);
-            listitem_T *const key = listitem_alloc();
+            list_T *const kv_pair = tv_list_alloc();
+            tv_list_append_list(cur.tv->vval.v_list, kv_pair);
+            listitem_T *const key = tv_list_item_alloc();
             key->li_tv = decode_string(s, len, kTrue, false, false);
-            list_append(kv_pair, key);
+            tv_list_append(kv_pair, key);
             if (key->li_tv.v_type == VAR_UNKNOWN) {
               ret = false;
-              list_unref(kv_pair);
+              tv_list_unref(kv_pair);
               continue;
             }
-            listitem_T *const val = listitem_alloc();
-            list_append(kv_pair, val);
+            listitem_T *const val = tv_list_item_alloc();
+            tv_list_append(kv_pair, val);
             kv_push(stack, cur);
             cur = (TVPopStackItem) { &val->li_tv, false, false, 0 };
           } else {
-            dictitem_T *const di = dictitem_alloc_len(s, len);
-            if (dict_add(cur.tv->vval.v_dict, di) == FAIL) {
+            dictitem_T *const di = tv_dict_item_alloc_len(s, len);
+            if (tv_dict_add(cur.tv->vval.v_dict, di) == FAIL) {
               assert(false);
             }
             kv_push(stack, cur);
@@ -240,8 +241,8 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           lua_pop(lstate, 2);
           continue;
         }
-        listitem_T *const li = listitem_alloc();
-        list_append(cur.tv->vval.v_list, li);
+        listitem_T *const li = tv_list_item_alloc();
+        tv_list_append(cur.tv->vval.v_list, li);
         kv_push(stack, cur);
         cur = (TVPopStackItem) { &li->li_tv, false, false, 0 };
       }
@@ -292,7 +293,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         for (size_t i = 0; i < kv_size(stack); i++) {
           const TVPopStackItem item = kv_A(stack, i);
           if (item.container && lua_rawequal(lstate, -1, item.idx)) {
-            copy_tv(item.tv, cur.tv);
+            tv_copy(item.tv, cur.tv);
             cur.container = false;
             goto nlua_pop_typval_table_processing_end;
           }
@@ -301,7 +302,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         switch (table_props.type) {
           case kObjectTypeArray: {
             cur.tv->v_type = VAR_LIST;
-            cur.tv->vval.v_list = list_alloc();
+            cur.tv->vval.v_list = tv_list_alloc();
             cur.tv->vval.v_list->lv_refcount++;
             if (table_props.maxidx != 0) {
               cur.container = true;
@@ -313,21 +314,21 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           case kObjectTypeDictionary: {
             if (table_props.string_keys_num == 0) {
               cur.tv->v_type = VAR_DICT;
-              cur.tv->vval.v_dict = dict_alloc();
+              cur.tv->vval.v_dict = tv_dict_alloc();
               cur.tv->vval.v_dict->dv_refcount++;
             } else {
               cur.special = table_props.has_string_with_nul;
               if (table_props.has_string_with_nul) {
                 decode_create_map_special_dict(cur.tv);
                 assert(cur.tv->v_type = VAR_DICT);
-                dictitem_T *const val_di = dict_find(cur.tv->vval.v_dict,
-                                                     (char_u *)"_VAL", 4);
+                dictitem_T *const val_di = tv_dict_find(cur.tv->vval.v_dict,
+                                                        S_LEN("_VAL"));
                 assert(val_di != NULL);
                 cur.tv = &val_di->di_tv;
                 assert(cur.tv->v_type == VAR_LIST);
               } else {
                 cur.tv->v_type = VAR_DICT;
-                cur.tv->vval.v_dict = dict_alloc();
+                cur.tv->vval.v_dict = tv_dict_alloc();
                 cur.tv->vval.v_dict->dv_refcount++;
               }
               cur.container = true;
@@ -368,7 +369,7 @@ nlua_pop_typval_table_processing_end:
   }
   kv_destroy(stack);
   if (!ret) {
-    clear_tv(ret_tv);
+    tv_clear(ret_tv);
     *ret_tv = (typval_T) {
       .v_type = VAR_NUMBER,
       .v_lock = VAR_UNLOCKED,

@@ -12,6 +12,7 @@
 #include "nvim/syntax_defs.h"
 #include "nvim/types.h"
 #include "nvim/event/loop.h"
+#include "nvim/os/os_defs.h"
 
 #define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
 
@@ -20,16 +21,6 @@
 # define MSG_BUF_LEN 480                 // length of buffer for small messages
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
-
-// Maximum length of a file path.  Make it a bit long, to stay
-// on the safe side.  But not too long to put on the stack.
-#ifndef MAXPATHL
-# ifdef MAXPATHLEN
-#  define MAXPATHL  MAXPATHLEN
-# else
-#  define MAXPATHL  256
-# endif
-#endif
 
 #ifdef WIN32
 # define _PATHSEPSTR "\\"
@@ -473,6 +464,7 @@ typedef enum {
   , HLF_CUL         // 'cursurline'
   , HLF_MC          // 'colorcolumn'
   , HLF_QFL         // selected quickfix line
+  , HLF_0           // Whitespace
   , HLF_COUNT       // MUST be the last one
 } hlf_T;
 
@@ -481,7 +473,7 @@ typedef enum {
 #define HL_FLAGS { '8', '~', 'z', 'Z', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', \
                    'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', \
                    'A', 'C', 'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', \
-                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q' }
+                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q', '0' }
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */
@@ -1208,6 +1200,7 @@ EXTERN char_u e_dirnotf[] INIT(= N_(
     "E919: Directory not found in '%s': \"%s\""));
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
+EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
@@ -1225,11 +1218,6 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
  */
 EXTERN int ignored;
 EXTERN char *ignoredp;
-
-EXTERN bool in_free_unref_items INIT(= false);
-
-// Used for checking if local variables or arguments used in a lambda.
-EXTERN int *eval_lavars_used INIT(= NULL);
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
@@ -1255,7 +1243,7 @@ typedef enum {
   kCdScopeInvalid = -1,
   kCdScopeWindow,  ///< Affects one window.
   kCdScopeTab,     ///< Affects one tab page.
-  kCdScopeGlobal,  ///< Affects the entire instance of Neovim.
+  kCdScopeGlobal,  ///< Affects the entire Nvim instance.
 } CdScope;
 
 #define MIN_CD_SCOPE  kCdScopeWindow

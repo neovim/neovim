@@ -85,8 +85,6 @@ typedef struct terminal_state {
 # include "terminal.c.generated.h"
 #endif
 
-#define SB_MAX 100000  // Maximum 'scrollback' value.
-
 // Delay for refreshing the terminal buffer after receiving updates from
 // libvterm. Improves performance when receiving large bursts of data.
 #define REFRESH_DELAY 10
@@ -228,17 +226,17 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->invalid_start = 0;
   rv->invalid_end = opts.height;
   refresh_screen(rv, curbuf);
-  set_option_value((uint8_t *)"buftype", 0, (uint8_t *)"terminal", OPT_LOCAL);
+  set_option_value("buftype", 0, "terminal", OPT_LOCAL);
 
   // Default settings for terminal buffers
-  curbuf->b_p_ma = false;   // 'nomodifiable'
-  curbuf->b_p_ul = -1;      // 'undolevels'
-  curbuf->b_p_scbk = 1000;  // 'scrollback'
-  curbuf->b_p_tw = 0;       // 'textwidth'
-  set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
-  set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
-  set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
-  set_option_value((uint8_t *)"list", false, NULL, OPT_LOCAL);
+  curbuf->b_p_ma = false;     // 'nomodifiable'
+  curbuf->b_p_ul = -1;        // 'undolevels'
+  curbuf->b_p_scbk = p_scbk;  // 'scrollback'
+  curbuf->b_p_tw = 0;         // 'textwidth'
+  set_option_value("wrap", false, NULL, OPT_LOCAL);
+  set_option_value("number", false, NULL, OPT_LOCAL);
+  set_option_value("relativenumber", false, NULL, OPT_LOCAL);
+  set_option_value("list", false, NULL, OPT_LOCAL);
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
   RESET_BINDING(curwin);
   // Reset cursor in current window.
@@ -248,7 +246,8 @@ Terminal *terminal_open(TerminalOptions opts)
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
   // Configure the scrollback buffer.
-  rv->sb_size = curbuf->b_p_scbk < 0 ? SB_MAX : (size_t)curbuf->b_p_scbk;;
+  rv->sb_size = curbuf->b_p_scbk < 0
+                ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
@@ -1156,7 +1155,6 @@ static void redraw(bool restore_cursor)
     save_col = ui_current_col();
   }
   block_autocmds();
-  validate_cursor();
 
   if (must_redraw) {
     update_screen(0);
@@ -1173,7 +1171,7 @@ static void redraw(bool restore_cursor)
     int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
     curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
     curwin->w_cursor.coladd = 0;
-    setcursor();
+    mb_check_adjust_col(curwin);
   }
 
   unblock_autocmds();

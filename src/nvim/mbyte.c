@@ -50,6 +50,7 @@
 #include "nvim/strings.h"
 #include "nvim/os/os.h"
 #include "nvim/arabic.h"
+#include "nvim/mark.h"
 
 typedef struct {
   int rangeStart;
@@ -375,16 +376,18 @@ void remove_bom(char_u *s)
  */
 int mb_get_class(const char_u *p)
 {
-  return mb_get_class_buf(p, curbuf);
+  return mb_get_class_tab(p, curbuf->b_chartab);
 }
 
-int mb_get_class_buf(const char_u *p, buf_T *buf)
+int mb_get_class_tab(const char_u *p, const uint64_t *const chartab)
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
-    if (p[0] == NUL || ascii_iswhite(p[0]))
+    if (p[0] == NUL || ascii_iswhite(p[0])) {
       return 0;
-    if (vim_iswordc_buf(p[0], buf))
+    }
+    if (vim_iswordc_tab(p[0], chartab)) {
       return 2;
+    }
     return 1;
   }
   return utf_class(utf_ptr2char(p));
@@ -580,7 +583,7 @@ int utf_ptr2char(const char_u *p)
  * If byte sequence is illegal or incomplete, returns -1 and does not advance
  * "s".
  */
-static int utf_safe_read_char_adv(char_u **s, size_t *n)
+static int utf_safe_read_char_adv(const char_u **s, size_t *n)
 {
   int c;
 
@@ -622,7 +625,7 @@ static int utf_safe_read_char_adv(char_u **s, size_t *n)
  * Get character at **pp and advance *pp to the next character.
  * Note: composing characters are skipped!
  */
-int mb_ptr2char_adv(char_u **pp)
+int mb_ptr2char_adv(const char_u **const pp)
 {
   int c;
 
@@ -635,7 +638,7 @@ int mb_ptr2char_adv(char_u **pp)
  * Get character at **pp and advance *pp to the next character.
  * Note: composing characters are returned as separate characters.
  */
-int mb_cptr2char_adv(char_u **pp)
+int mb_cptr2char_adv(const char_u **pp)
 {
   int c;
 
@@ -1230,7 +1233,8 @@ bool utf_isupper(int a)
   return utf_tolower(a) != a;
 }
 
-static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2)
+static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1,
+                        size_t n2)
 {
   int c1, c2, cdiff;
   char_u buffer[6];
@@ -1300,6 +1304,7 @@ static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2)
 # define CP_UTF8 65001  /* magic number from winnls.h */
 #endif
 
+/// Reassigns `strw` to a new, allocated pointer to a UTF16 string.
 int utf8_to_utf16(const char *str, WCHAR **strw)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1341,40 +1346,40 @@ int utf8_to_utf16(const char *str, WCHAR **strw)
   return 0;
 }
 
+/// Reassigns `str` to a new, allocated pointer to a UTF8 string.
 int utf16_to_utf8(const WCHAR *strw, char **str)
   FUNC_ATTR_NONNULL_ALL
 {
   // Compute the space required to store the string as UTF-8.
-  ssize_t utf8_len = WideCharToMultiByte(CP_UTF8,
-                                         0,
-                                         strw,
-                                         -1,
-                                         NULL,
-                                         0,
-                                         NULL,
-                                         NULL);
+  DWORD utf8_len = WideCharToMultiByte(CP_UTF8,
+                                       0,
+                                       strw,
+                                       -1,
+                                       NULL,
+                                       0,
+                                       NULL,
+                                       NULL);
   if (utf8_len == 0) {
     return GetLastError();
   }
 
-  ssize_t buf_sz = utf8_len * sizeof(char);
-  char *buf = xmalloc(buf_sz);
-  char *pos = buf;
+  *str = xmalloc(utf8_len);
 
-  // Convert string to UTF-8.
-  int r = WideCharToMultiByte(CP_UTF8,
-                              0,
-                              strw,
-                              -1,
-                              pos,
-                              utf8_len,
-                              NULL,
-                              NULL);
-  assert(r == utf8_len);
-  if (r != utf8_len) {
-    EMSG2("WideCharToMultiByte failed: %d", r);
+  // Convert to UTF-8.
+  utf8_len = WideCharToMultiByte(CP_UTF8,
+                                 0,
+                                 strw,
+                                 -1,
+                                 *str,
+                                 utf8_len,
+                                 NULL,
+                                 NULL);
+  if (utf8_len == 0) {
+    free(*str);
+    *str = NULL;
+    return GetLastError();
   }
-  *str = pos;
+  (*str)[utf8_len] = '\0';
 
   return 0;
 }
@@ -1389,19 +1394,26 @@ int utf16_to_utf8(const WCHAR *strw, char **str)
  * Returns zero if s1 and s2 are equal (ignoring case), the difference between
  * two characters otherwise.
  */
-int mb_strnicmp(char_u *s1, char_u *s2, size_t nn)
+int mb_strnicmp(const char_u *s1, const char_u *s2, const size_t nn)
 {
   return utf_strnicmp(s1, s2, nn, nn);
 }
 
-/* We need to call mb_stricmp() even when we aren't dealing with a multi-byte
- * encoding because mb_stricmp() takes care of all ascii and non-ascii
- * encodings, including characters with umlauts in latin1, etc., while
- * STRICMP() only handles the system locale version, which often does not
- * handle non-ascii properly. */
-int mb_stricmp(char_u *s1, char_u *s2)
+/// Compare strings case-insensitively
+///
+/// @note We need to call mb_stricmp() even when we aren't dealing with
+///       a multi-byte encoding because mb_stricmp() takes care of all ASCII and
+///       non-ascii encodings, including characters with umlauts in latin1,
+///       etc., while STRICMP() only handles the system locale version, which
+///       often does not handle non-ascii properly.
+///
+/// @param[in]  s1  First string to compare, not more then #MAXCOL characters.
+/// @param[in]  s2  Second string to compare, not more then #MAXCOL characters.
+///
+/// @return 0 if strings are equal, <0 if s1 < s2, >0 if s1 > s2.
+int mb_stricmp(const char *s1, const char *s2)
 {
-  return mb_strnicmp(s1, s2, MAXCOL);
+  return mb_strnicmp((const char_u *)s1, (const char_u *)s2, MAXCOL);
 }
 
 /*
@@ -1639,38 +1651,16 @@ theend:
  */
 void mb_adjust_cursor(void)
 {
-  mb_adjustpos(curbuf, &curwin->w_cursor);
-}
-
-/*
- * Adjust position "*lp" to point to the first byte of a multi-byte character.
- * If it points to a tail byte it's moved backwards to the head byte.
- */
-void mb_adjustpos(buf_T *buf, pos_T *lp)
-{
-  char_u      *p;
-
-  if (lp->col > 0
-      || lp->coladd > 1
-     ) {
-    p = ml_get_buf(buf, lp->lnum, FALSE);
-    lp->col -= (*mb_head_off)(p, p + lp->col);
-    /* Reset "coladd" when the cursor would be on the right half of a
-     * double-wide character. */
-    if (lp->coladd == 1
-        && p[lp->col] != TAB
-        && vim_isprintc((*mb_ptr2char)(p + lp->col))
-        && ptr2cells(p + lp->col) > 1)
-      lp->coladd = 0;
-  }
+  mark_mb_adjustpos(curbuf, &curwin->w_cursor);
 }
 
 /// Checks and adjusts cursor column. Not mode-dependent.
 /// @see check_cursor_col_win
 ///
-/// @param win Places cursor on a valid column for this window.
-void mb_check_adjust_col(win_T *win)
+/// @param  win_  Places cursor on a valid column for this window.
+void mb_check_adjust_col(void *win_)
 {
+  win_T *win = (win_T *)win_;
   colnr_T oldcol = win->w_cursor.col;
 
   // Column 0 is always valid.
@@ -2039,8 +2029,8 @@ void * my_iconv_open(char_u *to, char_u *from)
  * Returns the converted string in allocated memory.  NULL for an error.
  * If resultlenp is not NULL, sets it to the result length in bytes.
  */
-static char_u * iconv_string(vimconv_T *vcp, char_u *str, size_t slen,
-                             size_t *unconvlenp, size_t *resultlenp)
+static char_u *iconv_string(const vimconv_T *const vcp, char_u *str,
+                            size_t slen, size_t *unconvlenp, size_t *resultlenp)
 {
   const char  *from;
   size_t fromlen;
@@ -2325,7 +2315,7 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8,
  * Illegal chars are often changed to "?", unless vcp->vc_fail is set.
  * When something goes wrong, NULL is returned and "*lenp" is unchanged.
  */
-char_u * string_convert(vimconv_T *vcp, char_u *ptr, size_t *lenp)
+char_u *string_convert(const vimconv_T *const vcp, char_u *ptr, size_t *lenp)
 {
   return string_convert_ext(vcp, ptr, lenp, NULL);
 }
@@ -2335,7 +2325,7 @@ char_u * string_convert(vimconv_T *vcp, char_u *ptr, size_t *lenp)
  * an incomplete sequence at the end it is not converted and "*unconvlenp" is
  * set to the number of remaining bytes.
  */
-char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr,
+char_u * string_convert_ext(const vimconv_T *const vcp, char_u *ptr,
                             size_t *lenp, size_t *unconvlenp)
 {
   char_u      *retval = NULL;

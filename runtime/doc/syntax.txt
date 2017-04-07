@@ -4899,32 +4899,28 @@ PmenuThumb	Popup menu: Thumb of the scrollbar.
 							*hl-Question*
 Question	|hit-enter| prompt and yes/no questions
 							*hl-QuickFixLine*
-QuickFixLine	The selected |quickfix| item in the quickfix window.
-		|hl-CursorLine| is combined with this when the cursor is on
-		the currently selected quickfix item.
+QuickFixLine	Current |quickfix| item in the quickfix window. Combined with
+                |hl-CursorLine| when the cursor is there.
 							*hl-Search*
 Search		Last search pattern highlighting (see 'hlsearch').
-		Also used for highlighting the current line in the quickfix
-		window and similar items that need to stand out.
+		Also used for similar items that need to stand out.
 							*hl-SpecialKey*
-SpecialKey	Meta and special keys listed with ":map", also for text used
-		to show unprintable characters in the text, 'listchars'.
-		Generally: text that is displayed differently from what it
-		really is.
+SpecialKey	Unprintable characters: text displayed differently from what
+		it really is. But not 'listchars' whitespace. |hl-Whitespace|
 							*hl-SpellBad*
 SpellBad	Word that is not recognized by the spellchecker. |spell|
-		This will be combined with the highlighting used otherwise.
+		Combined with the highlighting used otherwise.
 							*hl-SpellCap*
 SpellCap	Word that should start with a capital. |spell|
-		This will be combined with the highlighting used otherwise.
+		Combined with the highlighting used otherwise.
 							*hl-SpellLocal*
 SpellLocal	Word that is recognized by the spellchecker as one that is
 		used in another region. |spell|
-		This will be combined with the highlighting used otherwise.
+		Combined with the highlighting used otherwise.
 							*hl-SpellRare*
 SpellRare	Word that is recognized by the spellchecker as one that is
 		hardly ever used. |spell|
-		This will be combined with the highlighting used otherwise.
+		Combined with the highlighting used otherwise.
 							*hl-StatusLine*
 StatusLine	status line of current window
 							*hl-StatusLineNC*
@@ -4943,6 +4939,8 @@ Title		titles for output from ":set all", ":autocmd" etc.
 Visual		Visual mode selection
 							*hl-WarningMsg*
 WarningMsg	warning messages
+							*hl-Whitespace*
+Whitespace	"nbsp", "space", "tab" and "trail" in 'listchars'
 							*hl-WildMenu*
 WildMenu	current match in 'wildmenu' completion
 

@@ -8,6 +8,7 @@ local clear, eq, eval, exc_exec, execute, feed, insert, neq, next_msg, nvim,
 local command = helpers.command
 local wait = helpers.wait
 local iswin = helpers.iswin
+local get_pathsep = helpers.get_pathsep
 local Screen = require('test.functional.ui.screen')
 
 describe('jobs', function()
@@ -65,7 +66,7 @@ describe('jobs', function()
   end)
 
   it('changes to given `cwd` directory', function()
-    local dir = eval('resolve(tempname())')
+    local dir = eval("resolve(tempname())"):gsub("/", get_pathsep())
     mkdir(dir)
     nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
     if iswin() then

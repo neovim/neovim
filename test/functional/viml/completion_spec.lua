@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed = helpers.clear, helpers.feed
 local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local execute, source, expect = helpers.execute, helpers.source, helpers.expect
+local meths = helpers.meths
 
 if helpers.pending_win32(pending) then return end
 
@@ -814,6 +815,57 @@ describe('completion', function()
     end)
   end)
 
+  describe('with numeric items', function()
+    before_each(function()
+      source([[
+        function! TestComplete() abort
+          call complete(1, g:_complist)
+          return ''
+        endfunction
+      ]])
+      meths.set_option('completeopt', 'menuone,noselect')
+      meths.set_var('_complist', {{
+        word=0,
+        abbr=1,
+        menu=2,
+        kind=3,
+        info=4,
+        icase=5,
+        dup=6,
+        empty=7,
+      }})
+    end)
+
+    it('shows correct variant as word', function()
+      feed('i<C-r>=TestComplete()<CR>')
+      screen:expect([[
+        ^                                                            |
+        {1:1 3 2          }{0:                                             }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {3:-- INSERT --}                                                |
+      ]])
+    end)
+  end)
+
+  it("'ignorecase' 'infercase' CTRL-X CTRL-N #6451", function()
+    execute('set ignorecase infercase')
+    execute('edit BACKERS.md')
+    feed('oX<C-X><C-N>')
+    screen:expect([[
+      # Bountysource Backers                                      |
+      Xnull^                                                       |
+      {2:Xnull          }{6: }                                            |
+      {1:Xoxomoon       }{6: }ryone who backed our [Bountysource fundraise|
+      {1:Xu             }{6: }ountysource.com/teams/neovim/fundraiser)!   |
+      {1:Xpayn          }{2: }                                            |
+      {1:Xinity         }{2: }d URL in BACKERS.md.                        |
+      {3:-- Keyword Local completion (^N^P) }{4:match 1 of 7}             |
+    ]])
+  end)
 end)
 
 describe('External completion popupmenu', function()

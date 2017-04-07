@@ -8,6 +8,11 @@ function! s:trim(s) abort
   return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
 endfunction
 
+" Convert '\' to '/'. Collapse '//' and '/./'.
+function! s:normalize_path(s) abort
+  return substitute(substitute(a:s, '\', '/', 'g'), '/\./\|/\+', '/', 'g')
+endfunction
+
 " Simple version comparison.
 function! s:version_cmp(a, b) abort
   let a = split(a:a, '\.', 0)
@@ -208,7 +213,7 @@ endfunction
 
 " Check the Python interpreter's usability.
 function! s:check_bin(bin) abort
-  if !filereadable(a:bin)
+  if !filereadable(a:bin) && (!has('win32') || !filereadable(a:bin.'.exe'))
     call health#report_error(printf('"%s" was not found.', a:bin))
     return 0
   elseif executable(a:bin) != 1
@@ -287,8 +292,9 @@ function! s:check_python(version) abort
 
       if exists('$PATH')
         for path in split($PATH, has('win32') ? ';' : ':')
-          let path_bin = path.'/'.pyname
-          if path_bin != python_bin && index(python_multiple, path_bin) == -1
+          let path_bin = s:normalize_path(path.'/'.pyname)
+          if path_bin != s:normalize_path(python_bin)
+                \ && index(python_multiple, path_bin) == -1
                 \ && executable(path_bin)
             call add(python_multiple, path_bin)
           endif

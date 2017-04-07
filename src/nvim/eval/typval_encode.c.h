@@ -238,7 +238,7 @@
 #include <assert.h>
 
 #include "nvim/lib/kvec.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/func_attr.h"
 #include "nvim/eval/typval_encode.h"
@@ -402,11 +402,11 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
       const dictitem_T *val_di;
       if (TYPVAL_ENCODE_ALLOW_SPECIALS
           && tv->vval.v_dict->dv_hashtab.ht_used == 2
-          && (type_di = dict_find((dict_T *)tv->vval.v_dict,
-                                  (char_u *)"_TYPE", -1)) != NULL
+          && (type_di = tv_dict_find((dict_T *)tv->vval.v_dict,
+                                     S_LEN("_TYPE"))) != NULL
           && type_di->di_tv.v_type == VAR_LIST
-          && (val_di = dict_find((dict_T *)tv->vval.v_dict,
-                                 (char_u *)"_VAL", -1)) != NULL) {
+          && (val_di = tv_dict_find((dict_T *)tv->vval.v_dict,
+                                    S_LEN("_VAL"))) != NULL) {
         size_t i;
         for (i = 0; i < ARRAY_SIZE(eval_msgpack_type_lists); i++) {
           if (type_di->di_tv.vval.v_list == eval_msgpack_type_lists[i]) {
@@ -658,7 +658,7 @@ typval_encode_stop_converting_one_item:
         while (HASHITEM_EMPTY(cur_mpsv->data.d.hi)) {
           cur_mpsv->data.d.hi++;
         }
-        dictitem_T *const di = HI2DI(cur_mpsv->data.d.hi);
+        dictitem_T *const di = TV_DICT_HI2DI(cur_mpsv->data.d.hi);
         cur_mpsv->data.d.todo--;
         cur_mpsv->data.d.hi++;
         TYPVAL_ENCODE_CONV_STR_STRING(NULL, &di->di_key[0],

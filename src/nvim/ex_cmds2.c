@@ -957,23 +957,21 @@ char_u *get_profile_name(expand_T *xp, int idx)
 }
 
 /// Handle command line completion for :profile command.
-void set_context_in_profile_cmd(expand_T *xp, char_u *arg)
+void set_context_in_profile_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *end_subcmd;
-
   // Default: expand subcommands.
   xp->xp_context = EXPAND_PROFILE;
   pexpand_what = PEXP_SUBCMD;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
 
-  end_subcmd = skiptowhite(arg);
+  char_u *const end_subcmd = skiptowhite((const char_u *)arg);
   if (*end_subcmd == NUL) {
     return;
   }
 
-  if (end_subcmd - arg == 5 && STRNCMP(arg, "start", 5) == 0) {
+  if ((const char *)end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0) {
     xp->xp_context = EXPAND_FILES;
-    xp->xp_pattern = skipwhite(end_subcmd);
+    xp->xp_pattern = skipwhite((const char_u *)end_subcmd);
     return;
   }
 
@@ -2073,9 +2071,9 @@ void ex_listdo(exarg_T *eap)
           // Clear 'shm' to avoid that the file message overwrites
           // any output from the command.
           p_shm_save = vim_strsave(p_shm);
-          set_option_value((char_u *)"shm", 0L, (char_u *)"", 0);
+          set_option_value("shm", 0L, "", 0);
           do_argfile(eap, i);
-          set_option_value((char_u *)"shm", 0L, p_shm_save, 0);
+          set_option_value("shm", 0L, (char *)p_shm_save, 0);
           xfree(p_shm_save);
         }
         if (curwin->w_arg_idx != i) {
@@ -2138,9 +2136,9 @@ void ex_listdo(exarg_T *eap)
         // Go to the next buffer.  Clear 'shm' to avoid that the file
         // message overwrites any output from the command.
         p_shm_save = vim_strsave(p_shm);
-        set_option_value((char_u *)"shm", 0L, (char_u *)"", 0);
+        set_option_value("shm", 0L, "", 0);
         goto_buffer(eap, DOBUF_FIRST, FORWARD, next_fnum);
-        set_option_value((char_u *)"shm", 0L, p_shm_save, 0);
+        set_option_value("shm", 0L, (char *)p_shm_save, 0);
         xfree(p_shm_save);
 
         // If autocommands took us elsewhere, quit here.
@@ -2256,8 +2254,8 @@ void ex_compiler(exarg_T *eap)
       }
       do_cmdline_cmd("command -nargs=* CompilerSet setlocal <args>");
     }
-    do_unlet((char_u *)"g:current_compiler", true);
-    do_unlet((char_u *)"b:current_compiler", true);
+    do_unlet(S_LEN("g:current_compiler"), true);
+    do_unlet(S_LEN("b:current_compiler"), true);
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
     if (source_runtime(buf, DIP_ALL) == FAIL) {
@@ -2280,7 +2278,7 @@ void ex_compiler(exarg_T *eap)
                                 old_cur_comp);
         xfree(old_cur_comp);
       } else {
-        do_unlet((char_u *)"g:current_compiler", true);
+        do_unlet(S_LEN("g:current_compiler"), true);
       }
     }
   }
@@ -2496,16 +2494,16 @@ static int APP_BOTH;
 static void add_pack_plugin(char_u *fname, void *cookie)
 {
   char_u *p4, *p3, *p2, *p1, *p;
-  char_u *new_rtp;
-  char_u *ffname = (char_u *)fix_fname((char *)fname);
+
+  char *const ffname = fix_fname((char *)fname);
 
   if (ffname == NULL) {
     return;
   }
 
-  if (cookie != &APP_LOAD && strstr((char *)p_rtp, (char *)ffname) == NULL) {
+  if (cookie != &APP_LOAD && strstr((char *)p_rtp, ffname) == NULL) {
     // directory is not yet in 'runtimepath', add it
-    p4 = p3 = p2 = p1 = get_past_head(ffname);
+    p4 = p3 = p2 = p1 = get_past_head((char_u *)ffname);
     for (p = p1; *p; mb_ptr_adv(p)) {
       if (vim_ispathsep_nocolon(*p)) {
         p4 = p3; p3 = p2; p2 = p1; p1 = p;
@@ -2521,13 +2519,13 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     *p4 = NUL;
 
     // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
-    size_t fname_len = STRLEN(ffname);
-    char_u *insp = p_rtp;
+    size_t fname_len = strlen(ffname);
+    const char *insp = (const char *)p_rtp;
     for (;;) {
-      if (vim_fnamencmp(insp, ffname, fname_len) == 0) {
+      if (path_fnamencmp(insp, ffname, fname_len) == 0) {
         break;
       }
-      insp = vim_strchr(insp, ',');
+      insp = strchr(insp, ',');
       if (insp == NULL) {
         break;
       }
@@ -2536,10 +2534,10 @@ static void add_pack_plugin(char_u *fname, void *cookie)
 
     if (insp == NULL) {
       // not found, append at the end
-      insp = p_rtp + STRLEN(p_rtp);
+      insp = (const char *)p_rtp + STRLEN(p_rtp);
     } else {
       // append after the matching directory.
-      insp += STRLEN(ffname);
+      insp += strlen(ffname);
       while (*insp != NUL && *insp != ',') {
         insp++;
       }
@@ -2547,31 +2545,40 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     *p4 = c;
 
     // check if rtp/pack/name/start/name/after exists
-    char *afterdir = concat_fnames((char *)ffname, "after", true);
+    char *afterdir = concat_fnames(ffname, "after", true);
     size_t afterlen = 0;
     if (os_isdir((char_u *)afterdir)) {
-      afterlen = STRLEN(afterdir) + 1;  // add one for comma
+      afterlen = strlen(afterdir) + 1;  // add one for comma
     }
 
-    size_t oldlen = STRLEN(p_rtp);
-    size_t addlen = STRLEN(ffname) + 1;  // add one for comma
-    new_rtp = try_malloc(oldlen + addlen + afterlen + 1);  // add one for NUL
+    const size_t oldlen = STRLEN(p_rtp);
+    const size_t addlen = strlen(ffname) + 1;  // add one for comma
+    const size_t new_rtp_len = oldlen + addlen + afterlen + 1;
+    // add one for NUL -------------------------------------^
+    char *const new_rtp = try_malloc(new_rtp_len);
     if (new_rtp == NULL) {
       goto theend;
     }
-    uintptr_t keep = (uintptr_t)(insp - p_rtp);
+    const size_t keep = (size_t)(insp - (const char *)p_rtp);
+    size_t new_rtp_fill = 0;
     memmove(new_rtp, p_rtp, keep);
-    new_rtp[keep] = ',';
-    memmove(new_rtp + keep + 1, ffname, addlen);
+    new_rtp_fill += keep;
+    new_rtp[new_rtp_fill++] = ',';
+    memmove(new_rtp + new_rtp_fill, ffname, addlen);
+    new_rtp_fill += addlen - 1;
+    assert(new_rtp[new_rtp_fill] == NUL || new_rtp[new_rtp_fill] == ',');
     if (p_rtp[keep] != NUL) {
-      memmove(new_rtp + keep + addlen, p_rtp + keep,
-              oldlen - keep + 1);
+      memmove(new_rtp + new_rtp_fill, p_rtp + keep, oldlen - keep + 1);
+      new_rtp_fill += oldlen - keep;
     }
     if (afterlen > 0) {
-      STRCAT(new_rtp, ",");
-      STRCAT(new_rtp, afterdir);
+      assert(new_rtp[new_rtp_fill] == NUL);
+      new_rtp[new_rtp_fill++] = ',';
+      memmove(new_rtp + new_rtp_fill, afterdir, afterlen - 1);
+      new_rtp_fill += afterlen - 1;
     }
-    set_option_value((char_u *)"rtp", 0L, new_rtp, 0);
+    new_rtp[new_rtp_fill] = NUL;
+    set_option_value("rtp", 0L, new_rtp, 0);
     xfree(new_rtp);
     xfree(afterdir);
   }
@@ -2580,7 +2587,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
     static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
 
-    size_t len = STRLEN(ffname) + STRLEN(ftpat);
+    size_t len = strlen(ffname) + STRLEN(ftpat);
     char_u *pat = try_malloc(len + 1);
     if (pat == NULL) {
       goto theend;
@@ -3699,12 +3706,12 @@ static void script_host_execute(char *name, exarg_T *eap)
   char *const script = script_get(eap, &len);
 
   if (script != NULL) {
-    list_T *const args = list_alloc();
+    list_T *const args = tv_list_alloc();
     // script
-    list_append_allocated_string(args, script);
+    tv_list_append_allocated_string(args, script);
     // current range
-    list_append_number(args, (int)eap->line1);
-    list_append_number(args, (int)eap->line2);
+    tv_list_append_number(args, (int)eap->line1);
+    tv_list_append_number(args, (int)eap->line2);
     (void)eval_call_provider(name, "execute", args);
   }
 }
@@ -3714,21 +3721,21 @@ static void script_host_execute_file(char *name, exarg_T *eap)
   uint8_t buffer[MAXPATHL];
   vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
 
-  list_T *args = list_alloc();
+  list_T *args = tv_list_alloc();
   // filename
-  list_append_string(args, buffer, -1);
+  tv_list_append_string(args, (const char *)buffer, -1);
   // current range
-  list_append_number(args, (int)eap->line1);
-  list_append_number(args, (int)eap->line2);
+  tv_list_append_number(args, (int)eap->line1);
+  tv_list_append_number(args, (int)eap->line2);
   (void)eval_call_provider(name, "execute_file", args);
 }
 
 static void script_host_do_range(char *name, exarg_T *eap)
 {
-  list_T *args = list_alloc();
-  list_append_number(args, (int)eap->line1);
-  list_append_number(args, (int)eap->line2);
-  list_append_string(args, eap->arg, -1);
+  list_T *args = tv_list_alloc();
+  tv_list_append_number(args, (int)eap->line1);
+  tv_list_append_number(args, (int)eap->line2);
+  tv_list_append_string(args, (const char *)eap->arg, -1);
   (void)eval_call_provider(name, "do_range", args);
 }
 

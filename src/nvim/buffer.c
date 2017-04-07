@@ -627,10 +627,11 @@ void buf_freeall(buf_T *buf, int flags)
    */
   if (buf == curbuf && !is_curbuf)
     return;
-  diff_buf_delete(buf);             /* Can't use 'diff' for unloaded buffer. */
-  /* Remove any ownsyntax, unless exiting. */
-  if (firstwin != NULL && curwin->w_buffer == buf)
+  diff_buf_delete(buf);             // Can't use 'diff' for unloaded buffer.
+  // Remove any ownsyntax, unless exiting.
+  if (curwin != NULL && curwin->w_buffer == buf) {
     reset_synblock(curwin);
+  }
 
   /* No folds in an empty buffer. */
   FOR_ALL_TAB_WINDOWS(tp, win) {
@@ -660,7 +661,7 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, true);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
-  dict_unref(buf->additional_data);
+  tv_dict_unref(buf->additional_data);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
   clear_fmark(&buf->b_last_change);
@@ -1471,7 +1472,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
 {
   STATIC_ASSERT(sizeof("changedtick") <= sizeof(buf->changedtick_di.di_key),
                 "buf->changedtick_di cannot hold large enough keys");
-  buf->changedtick_di = (dictitem16_T) {
+  buf->changedtick_di = (ChangedtickDictItem) {
     .di_flags = DI_FLAGS_RO|DI_FLAGS_FIX,  // Must not include DI_FLAGS_ALLOC.
     .di_tv = (typval_T) {
       .v_type = VAR_NUMBER,
@@ -1480,7 +1481,7 @@ static inline void buf_init_changedtick(buf_T *const buf)
     },
     .di_key = "changedtick",
   };
-  dict_add(buf->b_vars, (dictitem_T *)&buf->changedtick_di);
+  tv_dict_add(buf->b_vars, (dictitem_T *)&buf->changedtick_di);
 }
 
 /// Add a file name to the buffer list.
@@ -1572,7 +1573,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   if (buf != curbuf || curbuf == NULL) {
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
-    buf->b_vars = dict_alloc();
+    buf->b_vars = tv_dict_alloc();
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
     buf_init_changedtick(buf);
   }
@@ -2723,7 +2724,7 @@ fileinfo (
     else
       name = curbuf->b_ffname;
     home_replace(shorthelp ? curbuf : NULL, name, p,
-        (int)(IOSIZE - (p - buffer)), TRUE);
+                 (size_t)(IOSIZE - (p - buffer)), true);
   }
 
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
@@ -2888,7 +2889,7 @@ void maketitle(void)
         buf[off++] = ' ';
         buf[off++] = '(';
         home_replace(curbuf, curbuf->b_ffname,
-            buf + off, SPACE_FOR_DIR - off, TRUE);
+                     buf + off, (size_t)(SPACE_FOR_DIR - off), true);
 #ifdef BACKSLASH_IN_FILENAME
         /* avoid "c:/name" to be reduced to "c" */
         if (isalpha(buf[off]) && buf[off + 1] == ':')
@@ -3503,7 +3504,7 @@ int build_stl_str_hl(
       curbuf = o_curbuf;
 
       // Remove the variable we just stored
-      do_unlet((char_u *)"g:actual_curbuf", true);
+      do_unlet(S_LEN("g:actual_curbuf"), true);
 
       // }
 
@@ -4206,11 +4207,11 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
 #ifdef WIN32
   if (!buf->b_p_bin) {
     // If the file name is a shortcut file, use the file it links to.
-    char_u *rfname = (char_u *)os_resolve_shortcut(*ffname);
+    char *rfname = os_resolve_shortcut((const char *)(*ffname));
     if (rfname != NULL) {
       xfree(*ffname);
-      *ffname = rfname;
-      *sfname = rfname;
+      *ffname = (char_u *)rfname;
+      *sfname = (char_u *)rfname;
     }
   }
 #endif
@@ -5442,8 +5443,8 @@ void buf_open_scratch(handle_T bufnr, char *bufname)
 {
   (void)do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
   (void)setfname(curbuf, (char_u *)bufname, NULL, true);
-  set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
-  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
-  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+  set_option_value("bh", 0L, "hide", OPT_LOCAL);
+  set_option_value("bt", 0L, "nofile", OPT_LOCAL);
+  set_option_value("swf", 0L, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
 }

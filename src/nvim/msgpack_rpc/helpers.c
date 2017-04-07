@@ -115,7 +115,13 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         }
         break;
       }
-      case MSGPACK_OBJECT_FLOAT: {
+#ifdef NVIM_MSGPACK_HAS_FLOAT32
+      case MSGPACK_OBJECT_FLOAT32:
+      case MSGPACK_OBJECT_FLOAT64:
+#else
+      case MSGPACK_OBJECT_FLOAT:
+#endif
+      {
         STATIC_ASSERT(sizeof(Float) == sizeof(cur.mobj->via.f64),
                       "Msgpack floating-point size does not match API integer");
         *cur.aobj = FLOAT_OBJ(cur.mobj->via.f64);
@@ -182,7 +188,12 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
               case MSGPACK_OBJECT_BOOLEAN:
               case MSGPACK_OBJECT_POSITIVE_INTEGER:
               case MSGPACK_OBJECT_NEGATIVE_INTEGER:
+#ifdef NVIM_MSGPACK_HAS_FLOAT32
+              case MSGPACK_OBJECT_FLOAT32:
+              case MSGPACK_OBJECT_FLOAT64:
+#else
               case MSGPACK_OBJECT_FLOAT:
+#endif
               case MSGPACK_OBJECT_EXT:
               case MSGPACK_OBJECT_MAP:
               case MSGPACK_OBJECT_ARRAY: {
@@ -332,7 +343,7 @@ void msgpack_rpc_from_float(Float result, msgpack_packer *res)
   msgpack_pack_double(res, result);
 }
 
-void msgpack_rpc_from_string(String result, msgpack_packer *res)
+void msgpack_rpc_from_string(const String result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_str(res, result.size);
@@ -491,7 +502,7 @@ Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
 
 /// Serializes a msgpack-rpc request or notification(id == 0)
 void msgpack_rpc_serialize_request(uint64_t request_id,
-                                   String method,
+                                   const String method,
                                    Array args,
                                    msgpack_packer *pac)
   FUNC_ATTR_NONNULL_ARG(4)

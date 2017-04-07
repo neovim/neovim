@@ -100,22 +100,6 @@ func! Test_indent_fold2()
     bw!
 endfunc
 
-func Test_folds_marker_in_comment()
-  new
-  call setline(1, ['" foo', 'bar', 'baz'])
-  setl fen fdm=marker
-  setl com=sO:\"\ -,mO:\"\ \ ,eO:\"\",:\" cms=\"%s
-  norm! zf2j
-  setl nofen
-  :1y
-  call assert_equal(['" foo{{{'], getreg(0,1,1))
-  :+2y
-  call assert_equal(['baz"}}}'], getreg(0,1,1))
-
-  set foldmethod&
-  bwipe!
-endfunc
-
 func Test_manual_fold_with_filter()
   if !executable('cat')
     return
@@ -136,6 +120,108 @@ func Test_manual_fold_with_filter()
     bwipe!
     set foldmethod&
   endfor
+endfunc
+
+func! Test_indent_fold_with_read()
+  new
+  set foldmethod=indent
+  call setline(1, repeat(["\<Tab>a"], 4))
+  for n in range(1, 4)
+    call assert_equal(1, foldlevel(n))
+  endfor
+
+  call writefile(["a", "", "\<Tab>a"], 'Xfile')
+  foldopen
+  2read Xfile
+  %foldclose
+  call assert_equal(1, foldlevel(1))
+  call assert_equal(2, foldclosedend(1))
+  call assert_equal(0, foldlevel(3))
+  call assert_equal(0, foldlevel(4))
+  call assert_equal(1, foldlevel(5))
+  call assert_equal(7, foldclosedend(5))
+
+  bwipe!
+  set foldmethod&
+  call delete('Xfile')
+endfunc
+
+func Test_combining_folds_indent()
+  new
+  let one = "\<Tab>a"
+  let zero = 'a'
+  call setline(1, [one, one, zero, zero, zero, one, one, one])
+  set foldmethod=indent
+  3,5d
+  %foldclose
+  call assert_equal(5, foldclosedend(1))
+
+  set foldmethod&
+  bwipe!
+endfunc
+
+func Test_combining_folds_marker()
+  new
+  call setline(1, ['{{{', '}}}', '', '', '', '{{{', '', '}}}'])
+  set foldmethod=marker
+  3,5d
+  %foldclose
+  call assert_equal(2, foldclosedend(1))
+
+  set foldmethod&
+  bwipe!
+endfunc
+
+func Test_folds_marker_in_comment()
+  new
+  call setline(1, ['" foo', 'bar', 'baz'])
+  setl fen fdm=marker
+  setl com=sO:\"\ -,mO:\"\ \ ,eO:\"\",:\" cms=\"%s
+  norm! zf2j
+  setl nofen
+  :1y
+  call assert_equal(['" foo{{{'], getreg(0,1,1))
+  :+2y
+  call assert_equal(['baz"}}}'], getreg(0,1,1))
+
+  set foldmethod&
+  bwipe!
+endfunc
+
+func s:TestFoldExpr(lnum)
+  let thisline = getline(a:lnum)
+  if thisline == 'a'
+    return 1
+  elseif thisline == 'b'
+    return 0
+  elseif thisline == 'c'
+    return '<1'
+  elseif thisline == 'd'
+    return '>1'
+  endif
+  return 0
+endfunction
+
+func Test_update_folds_expr_read()
+  new
+  call setline(1, ['a', 'a', 'a', 'a', 'a', 'a'])
+  set foldmethod=expr
+  set foldexpr=s:TestFoldExpr(v:lnum)
+  2
+  foldopen
+  call writefile(['b', 'b', 'a', 'a', 'd', 'a', 'a', 'c'], 'Xfile')
+  read Xfile
+  %foldclose
+  call assert_equal(2, foldclosedend(1))
+  call assert_equal(0, foldlevel(3))
+  call assert_equal(0, foldlevel(4))
+  call assert_equal(6, foldclosedend(5))
+  call assert_equal(10, foldclosedend(7))
+  call assert_equal(14, foldclosedend(11))
+
+  call delete('Xfile')
+  bwipe!
+  set foldmethod& foldexpr&
 endfunc
 
 func! Test_move_folds_around_manual()
