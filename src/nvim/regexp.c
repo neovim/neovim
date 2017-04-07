@@ -6295,9 +6295,8 @@ static inline char_u *cstrchr(const char_u *const s, const int c)
     return vim_strchr(s, c);
   }
 
-  // tolower() and toupper() can be slow, comparing twice should be a lot
-  // faster (esp. when using MS Visual C++!).
-  // For UTF-8 need to use folded case.
+  // Use folded case for UTF-8, slow! For ASCII use libc strpbrk which is
+  // expected to be highly optimized.
   if (c > 0x80) {
     const int folded_c = utf_fold(c);
     for (const char_u *p = s; *p != NUL; p += utfc_ptr2len(p)) {
