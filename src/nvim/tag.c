@@ -1847,14 +1847,14 @@ parse_line:
               }
             }
           } else {
-#define TAG_SEP 0x01
+#define TAG_SEP 0x02
             size_t tag_fname_len = STRLEN(tag_fname);
             // Save the tag in a buffer.
-            // Use 0x01 to separate fields (Can't use NUL, because the
+            // Use 0x02 to separate fields (Can't use NUL, because the
             // hash key is terminated by NUL).
-            // Emacs tag: <mtt><tag_fname><NUL><ebuf><NUL><lbuf>
-            // other tag: <mtt><tag_fname><NUL><NUL><lbuf>
-            // without Emacs tags: <mtt><tag_fname><NUL><lbuf>
+            // Emacs tag: <mtt><tag_fname><0x02><ebuf><0x02><lbuf><NUL>
+            // other tag: <mtt><tag_fname><0x02><0x02><lbuf><NUL>
+            // without Emacs tags: <mtt><tag_fname><0x02><lbuf><NUL>
             // Here <mtt> is the "mtt" value plus 1 to avoid NUL.
             len = (int)tag_fname_len + (int)STRLEN(lbuf) + 3;
             mfp = xmalloc(sizeof(char_u) + len + 1);
