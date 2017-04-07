@@ -246,12 +246,13 @@ local function retry(max, max_ms, fn)
       return result
     end
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
-      break
+      if type(result) == "string" then
+        result = "\nretry() attempts: "..tostring(tries).."\n"..result
+      end
+      error(result)
     end
     tries = tries + 1
   end
-  -- Do not use pcall() for the final attempt, let the failure bubble up.
-  return fn()
 end
 
 local function clear(...)
