@@ -443,7 +443,6 @@ set(NO_SINGLE_CHECK_HEADERS
   misc2.h
   move.h
   msgpack_rpc/server.h
-  ops.h
   option.h
   os/shell.h
   os_unix.h
