@@ -175,6 +175,10 @@ describe('input()', function()
        exc_exec('call input({"default": []})'))
     eq('Vim(call):E730: using List as a String',
        exc_exec('call input({"completion": []})'))
+    eq('Vim(call):E5050: {opts} must be the only argument',
+       exc_exec('call input({}, "default")'))
+    eq('Vim(call):E118: Too many arguments for function: input',
+       exc_exec('call input("prompt> ", "default", "file", "extra")'))
   end)
 end)
 describe('inputdialog()', function()
@@ -322,5 +326,9 @@ describe('inputdialog()', function()
        exc_exec('call inputdialog({"default": []})'))
     eq('Vim(call):E730: using List as a String',
        exc_exec('call inputdialog({"completion": []})'))
+    eq('Vim(call):E5050: {opts} must be the only argument',
+       exc_exec('call inputdialog({}, "default")'))
+    eq('Vim(call):E118: Too many arguments for function: inputdialog',
+       exc_exec('call inputdialog("prompt> ", "default", "file", "extra")'))
   end)
 end)

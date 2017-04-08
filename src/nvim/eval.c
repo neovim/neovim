@@ -10991,8 +10991,7 @@ void get_user_input(const typval_T *const argvars,
   char xp_name_buf[NUMBUFLEN];
   if (argvars[0].v_type == VAR_DICT) {
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      emsgf(
-          _("E5050: When providing {opts} argument no more arguments follow"));
+      emsgf(_("E5050: {opts} must be the only argument"));
       return;
     }
     const dict_T *const dict = argvars[0].vval.v_dict;
