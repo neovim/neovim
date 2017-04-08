@@ -892,6 +892,7 @@ json_decode_string_fail:
     tv_clear(&(kv_pop(stack).val));
   }
 json_decode_string_ret:
+  convert_setup(&conv, NULL, NULL);
   kv_destroy(stack);
   kv_destroy(container_stack);
   return ret;

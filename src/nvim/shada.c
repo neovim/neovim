@@ -709,6 +709,7 @@ static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer,
 static void close_sd_reader(ShaDaReadDef *const sd_reader)
   FUNC_ATTR_NONNULL_ALL
 {
+  convert_setup(&sd_reader->sd_conv, NULL, NULL);
   close_file(sd_reader->cookie);
 }
 
@@ -716,6 +717,7 @@ static void close_sd_reader(ShaDaReadDef *const sd_reader)
 static void close_sd_writer(ShaDaWriteDef *const sd_writer)
   FUNC_ATTR_NONNULL_ALL
 {
+  convert_setup(&sd_writer->sd_conv, NULL, NULL);
   close_file(sd_writer->cookie);
 }
 
