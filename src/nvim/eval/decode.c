@@ -609,7 +609,6 @@ int json_decode_string(const char *const buf, const size_t buf_len,
     EMSG(_("E474: Attempt to decode a blank string"));
     return FAIL;
   }
-  assert(STRCMP(p_enc, "utf-8") == 0);
   int ret = OK;
   ValuesStack stack = KV_INITIAL_VALUE;
   ContainerStack container_stack = KV_INITIAL_VALUE;

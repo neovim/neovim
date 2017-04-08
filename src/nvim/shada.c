@@ -2920,8 +2920,6 @@ shada_write_file_nomerge: {}
     verbose_leave();
   }
 
-  assert(STRCMP(p_enc, "utf-8") == 0);
-
   const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge
                                                            ? NULL
                                                            : &sd_reader));

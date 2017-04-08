@@ -564,7 +564,6 @@ static inline int convert_to_json_string(garray_T *const gap,
   } else {
     size_t utf_len = len;
     char *tofree = NULL;
-    assert(STRCMP(p_enc, "utf-8") == 0);
     size_t str_len = 0;
     // Encode character as \uNNNN if
     // 1. It is an ASCII control character (0x0 .. 0x1F; 0x7F not
