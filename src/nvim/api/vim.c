@@ -844,6 +844,7 @@ static void write_msg(String message, bool to_err)
 ///
 /// @return its argument.
 Object _vim_id(Object obj)
+    FUNC_API_SINCE(1)
 {
   return copy_object(obj);
 }
@@ -857,6 +858,7 @@ Object _vim_id(Object obj)
 ///
 /// @return its argument.
 Array _vim_id_array(Array arr)
+    FUNC_API_SINCE(1)
 {
   return copy_object(ARRAY_OBJ(arr)).data.array;
 }
@@ -870,6 +872,7 @@ Array _vim_id_array(Array arr)
 ///
 /// @return its argument.
 Dictionary _vim_id_dictionary(Dictionary dct)
+    FUNC_API_SINCE(1)
 {
   return copy_object(DICTIONARY_OBJ(dct)).data.dictionary;
 }
@@ -883,6 +886,7 @@ Dictionary _vim_id_dictionary(Dictionary dct)
 ///
 /// @return its argument.
 Float _vim_id_float(Float flt)
+    FUNC_API_SINCE(1)
 {
   return flt;
 }
