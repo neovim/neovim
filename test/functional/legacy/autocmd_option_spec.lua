@@ -194,7 +194,7 @@ describe('au OptionSet', function()
 
     describe('being set by setbufvar()', function()
       it('should not trigger because option name is invalid', function()
-        command('call setbufvar(1, "&l:bk", 1)')
+        command('silent! call setbufvar(1, "&l:bk", 1)')
         expected_empty()
       end)
 
@@ -241,7 +241,7 @@ describe('au OptionSet', function()
       it('should not trigger because option name does not match with backup', function()
         set_hook('backup')
 
-        command('call setbufvar(1, "&l:bk", 1)')
+        command('silent! call setbufvar(1, "&l:bk", 1)')
         expected_empty()
       end)
 
@@ -267,7 +267,7 @@ describe('au OptionSet', function()
       it('should not trigger because option name does not match with backup', function()
         set_hook('backup')
 
-        command('call setwinvar(1, "&l:bk", 1)')
+        command('silent! call setwinvar(1, "&l:bk", 1)')
         expected_empty()
       end)
 
