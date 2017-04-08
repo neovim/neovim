@@ -427,7 +427,6 @@ set(NO_SINGLE_CHECK_HEADERS
   file_search.h
   getchar.h
   hardcopy.h
-  if_cscope.h
   if_cscope_defs.h
   mark.h
   mbyte.h
