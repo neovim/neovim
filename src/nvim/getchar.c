@@ -1580,12 +1580,16 @@ vungetc ( /* unget one character (can only be done once!) */
   old_mouse_col = mouse_col;
 }
 
+// The "INSERT" message is taken care of here:
+//     If vgetorpeek() is about to return an ESC to exit insert mode, the
+//     message is deleted
+//     If it's not going to return an ESC but has already deleted the message,
+//     redisplay it. This can be the case if we waited on an insert-mode
+//     mapping that began with ESC, and cleared the mode to give the appearance
+//     of an instant reaction to the ESC.
 static void do_insert_message(const bool mode_deleted, const int c,
                               const int advance)
 {
-  // The "INSERT" message is taken care of here:
-  //     if we return an ESC to exit insert mode, the message is deleted
-  //     if we don't return an ESC but deleted the message before, redisplay it
   if (advance && p_smd && msg_silent == 0 && (State & INSERT)) {
     if (c == ESC && !mode_deleted && !no_mapping && mode_displayed) {
       if (typebuf.tb_len && !KeyTyped) {
@@ -1618,16 +1622,17 @@ static long calc_waittime(const int keylen)
   return p_tm;
 }
 
-static int handle_int(const int advance)
+// Flush all input, ensure out of insert mode by returning ESC or Ctrl_C,
+// possibly record character in macro/scriptfile if `advance` is set.
+static int handle_interrupt(const int advance)
 {
   // flush all input
   int c = inchar(typebuf.tb_buf, typebuf.tb_buflen - 1, 0L,
                  typebuf.tb_change_cnt);
-  // If inchar() returns true (script file was active) or we
-  // are inside a mapping, get out of insert mode.
+  // If inchar() returns true (script file was active) or we are inside a
+  // mapping, get out of insert mode.
   // Otherwise we behave like having gotten a CTRL-C.
-  // As a result typing CTRL-C in insert mode will
-  // really insert a CTRL-C.
+  // As a result typing CTRL-C in insert mode will really insert a CTRL-C.
   if ((c || typebuf.tb_maplen)
       && (State & (INSERT + CMDLINE))) {
     c = ESC;
@@ -1637,8 +1642,8 @@ static int handle_int(const int advance)
   flush_buffers(true);                  // flush all typeahead
 
   if (advance) {
-    // Also record this character, it might be needed to
-    // get out of Insert mode.
+    // Also record this character, it might be needed to get out of Insert
+    // mode.
     *typebuf.tb_buf = (char_u)c;
     gotchars(typebuf.tb_buf, 1);
   }
@@ -1651,9 +1656,7 @@ static int handle_int(const int advance)
 // on to find the next character.
 // Only changes *keylenp if it finds the start of the bytes required to toggle
 // 'paste'. In that case *keylenp is set to KEYLEN_PART_KEY.
-// If it finds no match in the typebuffer, because the typebuffer has
-// characters that are different than required for toggling paste (i.e. not
-// because the typebuffer finishes before a match has been completed).
+// Return `true` if found a match, otherwise return `false`.
 static bool check_togglepaste(mapblock_T *mp, int *keylenp)
 {
   if (mp != NULL || (State & (INSERT|NORMAL)) == 0) {
@@ -1664,8 +1667,8 @@ static bool check_togglepaste(mapblock_T *mp, int *keylenp)
   int mlen;
   bool match = typebuf_match_len(ui_toggle, &mlen);
   if (!match && mlen != typebuf.tb_len && *p_pt != NUL) {
-    // didn't match ui_toggle_key and didn't try the whole typebuf,
-    // check the 'pastetoggle'
+    // didn't match ui_toggle_key and didn't try the whole typebuf, check the
+    // 'pastetoggle'
     match = typebuf_match_len(p_pt, &mlen);
   }
   if (match) {
@@ -1705,6 +1708,7 @@ static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
   if (keylen < 0 || keylen > typebuf.tb_len) {
     return false;
   }
+  assert(mp != NULL);
 
   // complete match
   int save_m_expr;
@@ -1737,17 +1741,16 @@ static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
   }
 
   // In Select mode and a Visual mode mapping is used:
-  // Switch to Visual mode temporarily.  Append K_SELECT
-  // to switch back to Select mode.
+  // Switch to Visual mode temporarily.
+  // Append K_SELECT to switch back to Select mode.
   if (VIsual_active && VIsual_select
       && (mp->m_mode & VISUAL)) {
     VIsual_select = false;
     (void)ins_typebuf(K_SELECT_STRING, REMAP_NONE, 0, true, false);
   }
 
-  // Copy the values from *mp that are used, because
-  // evaluating the expression may invoke a function
-  // that redefines the mapping, thereby making *mp
+  // Copy the values from *mp that are used, because evaluating the expression
+  // may invoke a function that redefines the mapping, thereby making *mp
   // invalid.
   save_m_expr = mp->m_expr;
   save_m_noremap = mp->m_noremap;
@@ -1755,9 +1758,8 @@ static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
   save_m_keys = NULL;              // only saved when needed
   save_m_str = NULL;              // only saved when needed
 
-  // Handle ":map <expr>": evaluate the {rhs} as an
-  // expression.  Also save and restore the command line
-  // for "normal :".
+  // Handle ":map <expr>": evaluate the {rhs} as an expression.
+  // Also save and restore the command line for "normal :".
   char_u *s;
   if (mp->m_expr) {
     int save_vgetc_busy = vgetc_busy;
@@ -1772,11 +1774,9 @@ static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
   }
 
   // Insert the 'to' part in the typebuf.tb_buf.
-  // If 'from' field is the same as the start of the
-  // 'to' field, don't remap the first character (but do
-  // allow abbreviations).
-  // If m_noremap is set, don't remap the whole 'to'
-  // part.
+  // If 'from' field is the same as the start of the 'to' field, don't remap
+  // the first character (but do allow abbreviations).
+  // If m_noremap is set, don't remap the whole 'to' part.
   if (s != NULL) {
     int noremap;
 
@@ -1799,14 +1799,19 @@ static bool expand_matched_map(mapblock_T *mp, const int keylen, int *mapdepthp)
   return true;
 }
 
-// keylen is changed (but I think this could be the return value)
-// mp is set from NULL (this may also be the return value [I know I have to
-// choose one])
-// mp_match_len is changed.
+// Look in the typebuffer for any mappings.
+// If a mapping is found, then return that mapblock_T *, and leave the length
+// of the mapblock_T m_keylen member in *keylenp.
+// If no mapping is found return NULL.
+//    If this is because the typebuffer contains characters that don't match
+//    any mapping, then set *keylenp as 0.
+//    If it is because the typebuffer contains the start of a mapping, but not
+//    an entire one, set *keylenp to KEYLEN_PART_MAP.
 static mapblock_T *find_typed_map(const bool timedout, const int local_State,
                                   int *keylenp)
 {
   int temp_c = typebuf.tb_buf[typebuf.tb_off];
+  *keylenp = 0;
 
   if (no_mapping != 0 || !maphash_valid
       || (no_zero_mapping != 0 && temp_c == '0')) {
@@ -1841,7 +1846,6 @@ static mapblock_T *find_typed_map(const bool timedout, const int local_State,
     return NULL;
   }
 
-  int keylen = *keylenp;
   mapblock_T *mp = NULL;
   mapblock_T *mp2 = NULL;
   int nolmaplen;
@@ -1860,17 +1864,18 @@ static mapblock_T *find_typed_map(const bool timedout, const int local_State,
     mp = mp2;
     mp2 = NULL;
   }
-  // Loop until a partly matching mapping is found or
-  // all (local) mappings have been checked.
+  // Loop until a partly matching mapping is found or all (local) mappings have
+  // been checked.
   // The longest full match is remembered in "mp_match".
-  // A full match is only accepted if there is no partly
-  // match, so "aa" and "aaa" can both be mapped.
+  // A full match is only accepted if there is no partly match, so "aa" and
+  // "aaa" can both be mapped.
   mapblock_T *mp_match = NULL;
   int mp_match_len = 0;
+  int keylen = 0;
   for (; mp != NULL;
        mp->m_next == NULL ? (mp = mp2, mp2 = NULL) : (mp = mp->m_next)) {
-    // Only consider an entry if the first character
-    // matches and it is for the current state.
+    // Only consider an entry if the first character matches and it is for the
+    // current state.
     // Skip ":lmap" mappings if keys were mapped.
     if (mp->m_keys[0] != temp_c
         || ((mp->m_mode & local_State) == 0)
@@ -1896,10 +1901,9 @@ static mapblock_T *find_typed_map(const bool timedout, const int local_State,
       }
     }
 
-    // Don't allow mapping the first byte(s) of a
-    // multi-byte char.  Happens when mapping
-    // <M-a> and then changing 'encoding'. Beware
-    // that 0x80 is escaped.
+    // Don't allow mapping the first byte(s) of a multi-byte char.
+    // Happens when mapping <M-a> and then changing 'encoding'.
+    // Beware that 0x80 is escaped.
     char_u *p1 = mp->m_keys;
     char_u *p2 = mb_unescape(&p1);
 
@@ -1912,8 +1916,7 @@ static mapblock_T *find_typed_map(const bool timedout, const int local_State,
     keylen = mp->m_keylen;
     if (mlen == keylen
         || (mlen == typebuf.tb_len && typebuf.tb_len < keylen)) {
-      // If only script-local mappings are
-      // allowed, check if the mapping starts
+      // If only script-local mappings are allowed, check if the mapping starts
       // with K_SNR.
       char_u *s = typebuf.tb_noremap + typebuf.tb_off;
       if (*s == RM_SCRIPT
@@ -1922,8 +1925,7 @@ static mapblock_T *find_typed_map(const bool timedout, const int local_State,
               || mp->m_keys[2] != (int)KE_SNR)) {
         continue;
       }
-      // If one of the typed keys cannot be
-      // remapped, skip the entry.
+      // If one of the typed keys cannot be remapped, skip the entry.
       int n;
       for (n = mlen; n > 0; n--) {
         if (*s++ & (RM_NONE|RM_ABBR)) {
@@ -1948,18 +1950,22 @@ static mapblock_T *find_typed_map(const bool timedout, const int local_State,
     }
   }
 
-  // If no partly match found, use the longest full
-  // match.
+  // If no partly match found, use the longest full match.
   if (keylen != KEYLEN_PART_MAP) {
-    mp = mp_match;
-    keylen = mp_match_len;
+    *keylenp = mp_match_len;
+    return mp_match;
   }
   *keylenp = keylen;
   return mp;
 }
 
-// Returns 0 to continue, -1 to carry on in the loop, otherwise, returns the
-// character that should be used.
+// Returns 0 to continue (i.e. check in the typebuffer again),
+// -1 to carry on in the loop (i.e. to get input from the user),
+// otherwise, returns the character that should be returned.
+//
+// *keylenp is either set to the length of the mapping that was expanded,
+// KEYLEN_PART_MAP or KEYLEN_PART_KEY.
+//
 // Keeps track of the mapdepth in the variable pointed to by "mapdepthp".
 static int look_in_typebuf(int *mapdepthp, int *keylenp,
                            const bool timedout, const int advance,
@@ -1968,9 +1974,9 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp,
   if (typebuf.tb_len <= 0) {
     return -1;
   }
+
   // Check for a mappable key sequence.
-  // Walk through one maphash[] list until we find an
-  // entry that matches.
+  // Walk through one maphash[] list until we find an entry that matches.
   // Don't look for mappings if:
   // - no_mapping set: mapping disabled (e.g. for CTRL-V)
   // - maphash_valid not set: no mappings present.
@@ -1991,10 +1997,11 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp,
   if (mp == NULL
       && *keylenp != KEYLEN_PART_MAP
       && *keylenp != KEYLEN_PART_KEY) {
-    // No matching mapping found or found a non-matching mapping that
-    // matches at least what the matching mapping matched
-    // If there was no mapping, use the character from the typeahead
-    // buffer right here. Otherwise, use the mapping (loop around).
+    // No matching mapping found or found a non-matching mapping that matches
+    // at least what the matching mapping matched
+    // If there was no mapping, use the character from the typeahead buffer
+    // right here.
+    // Otherwise, use the mapping (loop around).
     // get a character: 2. from the typeahead buffer
     int c = typebuf.tb_buf[typebuf.tb_off] & 255;
     if (advance) {                  // remove chars from tb_buf
@@ -2019,16 +2026,26 @@ static int look_in_typebuf(int *mapdepthp, int *keylenp,
   return -1;
 }
 
+
+// special case: if we get an <ESC> in insert mode, we're waiting to finish a
+// map or multi-byte pastetoggle and there are no more characters at once, we
+// pretend to go out of insert mode.
+// This prevents the one second delay after typing an <ESC>.
+// If we get something after all, we may have to redisplay the mode.
+// That the cursor is in the wrong place does not matter.
+// If this special case does happen and mode_displayed is true, we set
+// *mode_deletedp to true (this is so we know what to do with the INSERT
+// message when returning from vgetorpeek()).
+// Temporarily changes the current curwin->w_w{col,row} in order to display the
+// cursor as if the ESC moved it backwards.
+// This alternate position is stored in *new_w{col,row}p for vgetc_doshowcmd()
+// so that the setcursor() call in display_showcmd() doesn't undo what we've
+// done here, and undoes the possible call to setcursor() in between this call
+// and vgetc_doshowcmd() in get_key_from_user().
 static int ins_esc_special_case(
     int *new_wcolp, int *new_wrowp, bool *mode_deletedp,
     const int advance, const int keylen)
 {
-  // special case: if we get an <ESC> in insert mode and there
-  // are no more characters at once, we pretend to go out of
-  // insert mode.  This prevents the one second delay after
-  // typing an <ESC>.  If we get something after all, we may
-  // have to redisplay the mode. That the cursor is in the wrong
-  // place does not matter.
   int bytes_read = 0;
   if (       advance
       && typebuf.tb_len == 1
@@ -2103,6 +2120,10 @@ static int ins_esc_special_case(
   return bytes_read;
 }
 
+// Handles showcmd, and showing the last-pressed part of an insert/command mode
+// map.
+// If have put the last pressed part of a map into the buffer or cmdline, set
+// *pretty_partialp to true.
 static int vgetc_doshowcmd(bool *pretty_partialp,
                            const int advance, const int new_wcol,
                            const int new_wrow)
@@ -2121,7 +2142,7 @@ static int vgetc_doshowcmd(bool *pretty_partialp,
       setcursor();               // put cursor back where it belongs
       *pretty_partialp = true;
     }
-    // need to use the col and row from above here
+    // need to use the col and row from ins_esc_special_case() here
     int old_wcol = curwin->w_wcol;
     int old_wrow = curwin->w_wrow;
     curwin->w_wcol = new_wcol;
@@ -2157,7 +2178,7 @@ static int vgetc_doshowcmd(bool *pretty_partialp,
 //    Using the :normal command
 //      As this inserts the entire :normal argument into the typebuffer at
 //      once, when we get here the :normal command has gone through all of its
-//      arguments. Hence, we return a character that ensures we"re out of any
+//      arguments. Hence, we return a character that ensures we're out of any
 //      new calls to edit().
 //    Have no more characters, and "advance" is false.
 //      We return NUL here to signify that.
@@ -2174,7 +2195,7 @@ static int get_key_from_user(bool *timedoutp, bool *mode_deletedp,
 
   // Allow mapping for just typed characters.
   // When we get here either bytes_read is the number of extra bytes and
-  // typebuf.tb_len is 1, or we haven"t called inchar() [e.g. because the next
+  // typebuf.tb_len is 1, or we haven't called inchar() [e.g. because the next
   // character in the typebuf is not ESC or because there is no character in
   // the typebuf], and bytes_read is 0 so this doesn't do anything.
   for (int n = 1; n <= bytes_read; n++) {
@@ -2191,19 +2212,19 @@ static int get_key_from_user(bool *timedoutp, bool *mode_deletedp,
   if (ex_normal_busy > 0) {
     static int tc = 0;
 
-    // No typeahead left and inside ":normal".  Must return
-    // something to avoid getting stuck.  When an incomplete
-    // mapping is present, behave like it timed out.
+    // No typeahead left and inside ":normal".
+    // Must return something to avoid getting stuck.
+    // When an incomplete mapping is present, behave like it timed out.
     if (typebuf.tb_len > 0) {
       *timedoutp = true;
       return -1;
     }
     // When 'insertmode' is set, ESC just beeps in Insert
-    // mode.  Use CTRL-L to make edit() return.
+    // mode.
+    // Use CTRL-L to make edit() return.
     // For the command line only CTRL-C always breaks it.
-    // For the cmdline window: Alternate between ESC and
-    // CTRL-C: ESC for most situations and CTRL-C to close the
-    // cmdline window.
+    // For the cmdline window: Alternate between ESC and CTRL-C: ESC for most
+    // situations and CTRL-C to close the cmdline window.
     if (p_im && (State & INSERT)) {
       tc = Ctrl_L;
     } else if ((State & CMDLINE) || (cmdwin_type > 0 && tc == ESC)) {
@@ -2215,22 +2236,21 @@ static int get_key_from_user(bool *timedoutp, bool *mode_deletedp,
   }
 
   // get a character: 3. from the user - update display
-  // In insert mode a screen update is skipped when characters
-  // are still available.  But when those available characters
-  // are part of a mapping, and we are going to do a blocking
-  // wait here.  Need to update the screen to display the
-  // changed text so far. Also for when 'lazyredraw' is set and
-  // redrawing was postponed because there was something in the
-  // input buffer (e.g., termresponse).
+  // In insert mode a screen update is skipped when characters are still
+  // available.
+  // When those available characters are part of a mapping, and we are going to
+  // do a blocking wait here.
+  // Need to update the screen to display the changed text so far.
+  // Also for when 'lazyredraw' is set and redrawing was postponed because
+  // there was something in the input buffer (e.g., termresponse).
   if (((State & INSERT) != 0 || p_lz) && (State & CMDLINE) == 0
       && advance && must_redraw != 0 && !need_wait_return) {
     update_screen(0);
     setcursor();           // put cursor back where it belongs
   }
 
-  // If we have a partial match (and are going to wait for more
-  // input from the user), show the partially matched characters
-  // to the user with showcmd.
+  // If we have a partial match (and are going to wait for more input from the
+  // user), show the partially matched characters to the user with showcmd.
 
   bool pretty_partial_match = false;
   int showcmd_len = vgetc_doshowcmd(
@@ -2261,10 +2281,10 @@ static int get_key_from_user(bool *timedoutp, bool *mode_deletedp,
 
   if (bytes_read < 0) {
     // end of input script reached will return -1 below
-  } else if (bytes_read == NUL) {
+  } else if (bytes_read == 0) {
     // No characters available (none in the typebuf, none gotten from user).
-    // If not asked to advance this is acceptable, return NUL (i.e. 0) which
-    // will return NUL from vgetorpeek().
+    // If not asked to advance this is acceptable, return NUL which will return
+    // NUL from vgetorpeek().
     // Otherwise, we mark if timedout and tell vgetorpeek() to continue on in
     // the for loop.
     if (!advance) {
@@ -2347,12 +2367,12 @@ static int vgetorpeek(const int advance)
   }
 
   if (got_int) {
-    c = handle_int(advance);
+    c = handle_interrupt(advance);
   } else if (c != NUL) {
     if (advance) {
-      // KeyTyped = false;  When the command that stuffed something
-      // was typed, behave like the stuffed command was typed.
-      // needed for CTRL-W CTRl-] to open a fold, for example.
+      // KeyTyped = false;  When the command that stuffed something was typed,
+      // behave like the stuffed command was typed. needed for CTRL-W CTRl-] to
+      // open a fold, for example.
       KeyStuffed = true;
     }
     if (typebuf.tb_no_abbr_cnt == 0) {
@@ -2362,17 +2382,17 @@ static int vgetorpeek(const int advance)
     bool timedout = false;                     // waited for more than 1 second
                                                // for mapping to complete
     int mapdepth = 0;                 // check for recursive mapping
-    // Loop until we either find a matching mapped key, or we
-    // are sure that it is not a mapped key.
-    // If a mapped key sequence is found we go back to the start to
-    // try re-mapping.
+    // Loop until we either find a matching mapped key, or we are sure that it
+    // is not a mapped key.
+    // If a mapped key sequence is found we go back to the start to try
+    // re-mapping.
     for (;; ) {
       int keylen = 0;
 
       { // Check for CTRL-C
-        // os_breakcheck() is slow, don't use it too often when
-        // inside a mapping.  But call it each time for typed
-        // characters.
+        // os_breakcheck() is slow, don't use it too often when inside a
+        // mapping.
+        // Call it each time for typed characters.
         if (typebuf.tb_maplen) {
           line_breakcheck();
         } else {
@@ -2380,7 +2400,7 @@ static int vgetorpeek(const int advance)
         }
 
         if (got_int) {
-          c = handle_int(advance);
+          c = handle_interrupt(advance);
           break;
         }
       }
