@@ -800,6 +800,7 @@ static int open_shada_file_for_reading(const char *const fname,
     .eof = false,
     .fpos = 0,
     .cookie = file_open_new(&error, fname, kFileReadOnly, 0),
+    .sd_conv.vc_type = CONV_NONE,
   };
   if (sd_reader->cookie == NULL) {
     return error;
@@ -2939,6 +2940,7 @@ int shada_write_file(const char *const file, bool nomerge)
     .write = &write_file,
     .close = &close_sd_writer,
     .error = NULL,
+    .sd_conv.vc_type = CONV_NONE,
   };
   ShaDaReadDef sd_reader = { .close = NULL };
 
