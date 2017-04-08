@@ -11,8 +11,6 @@
 #define RUNTIME_DIRNAME "runtime"
 /* end */
 
-/* ============ the header file puzzle (ca. 50-100 pieces) ========= */
-
 #include "auto/config.h"
 #define HAVE_PATHDEF
 
@@ -43,11 +41,6 @@ enum { NUMBUFLEN = 65 };
 
 #include "nvim/keymap.h"
 #include "nvim/macros.h"
-
-
-
-
-/* ================ end of the header file puzzle =============== */
 
 #include "nvim/gettext.h"
 
