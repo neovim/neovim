@@ -44,14 +44,7 @@ describe('floating point and logical operators', function()
       $put ='abs'
       $put =printf('%d', abs(1456))
       $put =printf('%d', abs(-4))
-    ]])
-
-    -- The test will throw an error if this line is included in a source()
-    -- call.  The vim expression throws a exception "E745: Using a List as a
-    -- Number" which is fatal in a source() call but not in a execute() call.
-    command([[$put =printf('%d', abs([1, 2, 3]))]])
-
-    source([[
+      silent! $put =printf('%d', abs([1, 2, 3]))
       $put =printf('%g', abs(14.56))
       $put =printf('%g', abs(-54.32))
       $put ='ceil'
@@ -100,11 +93,8 @@ describe('floating point and logical operators', function()
       $put =and(invert(127), 65535)
       $put =and(invert(16), 65535)
       $put =and(invert(128), 65535)
+      silent! $put =invert(1.0)
     ]])
-
-    -- This line can not be included in a source() call.  It throws a "E805:
-    -- Using a Float as a Number".  Also compare comment above.
-    command('$put =invert(1.0)')
 
     -- Assert buffer contents.
     expect([=[
