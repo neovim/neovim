@@ -8,6 +8,7 @@
 #include "nvim/memory.h"
 #include "nvim/pos.h"
 #include "nvim/os/time.h"
+#include "nvim/ex_cmds_defs.h" // for exarg_T
 
 /// Set fmark using given value
 #define SET_FMARK(fmarkp_, mark_, fnum_) \
