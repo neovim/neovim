@@ -606,6 +606,17 @@ parse_json_number_ret:
     } \
   } while (0)
 
+/// Last used p_enc value
+///
+/// Generic pointer: it is not used as a string, only pointer comparisons are
+/// performed. Must not be freed.
+static const void *last_p_enc = NULL;
+
+/// Conversion setup for converting from UTF-8 to last_p_enc
+static vimconv_T p_enc_conv = {
+  .vc_type = CONV_NONE,
+};
+
 /// Convert JSON string into VimL object
 ///
 /// @param[in]  buf  String to convert. UTF-8 encoding is assumed.
@@ -626,9 +637,12 @@ int json_decode_string(const char *const buf, const size_t buf_len,
     EMSG(_("E474: Attempt to decode a blank string"));
     return FAIL;
   }
-  vimconv_T conv = { .vc_type = CONV_NONE };
-  convert_setup(&conv, (char_u *) "utf-8", p_enc);
-  conv.vc_fail = true;
+  if (last_p_enc != (const void *)p_enc) {
+    p_enc_conv.vc_type = CONV_NONE;
+    convert_setup(&p_enc_conv, (char_u *)"utf-8", p_enc);
+    p_enc_conv.vc_fail = true;
+    last_p_enc = p_enc;
+  }
   int ret = OK;
   ValuesStack stack = KV_INITIAL_VALUE;
   ContainerStack container_stack = KV_INITIAL_VALUE;
@@ -774,9 +788,9 @@ json_decode_string_cycle_start:
         break;
       }
       case '"': {
-        if (parse_json_string(&conv, buf, buf_len, &p, &stack, &container_stack,
-                              &next_map_special, &didcomma, &didcolon)
-            == FAIL) {
+        if (parse_json_string(
+                &p_enc_conv, buf, buf_len, &p, &stack, &container_stack,
+                &next_map_special, &didcomma, &didcolon) == FAIL) {
           // Error message was already given
           goto json_decode_string_fail;
         }
@@ -892,7 +906,6 @@ json_decode_string_fail:
     tv_clear(&(kv_pop(stack).val));
   }
 json_decode_string_ret:
-  convert_setup(&conv, NULL, NULL);
   kv_destroy(stack);
   kv_destroy(container_stack);
   return ret;
