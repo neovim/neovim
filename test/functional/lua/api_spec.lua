@@ -73,84 +73,84 @@ describe('luaeval(vim.api.…)', function()
   end)
 
   it('correctly converts to API objects', function()
-    eq(1, funcs.luaeval('vim.api._vim_id(1)'))
-    eq('1', funcs.luaeval('vim.api._vim_id("1")'))
-    eq({1}, funcs.luaeval('vim.api._vim_id({1})'))
-    eq({foo=1}, funcs.luaeval('vim.api._vim_id({foo=1})'))
-    eq(1.5, funcs.luaeval('vim.api._vim_id(1.5)'))
-    eq(true, funcs.luaeval('vim.api._vim_id(true)'))
-    eq(false, funcs.luaeval('vim.api._vim_id(false)'))
-    eq(NIL, funcs.luaeval('vim.api._vim_id(nil)'))
+    eq(1, funcs.luaeval('vim.api.nvim__id(1)'))
+    eq('1', funcs.luaeval('vim.api.nvim__id("1")'))
+    eq({1}, funcs.luaeval('vim.api.nvim__id({1})'))
+    eq({foo=1}, funcs.luaeval('vim.api.nvim__id({foo=1})'))
+    eq(1.5, funcs.luaeval('vim.api.nvim__id(1.5)'))
+    eq(true, funcs.luaeval('vim.api.nvim__id(true)'))
+    eq(false, funcs.luaeval('vim.api.nvim__id(false)'))
+    eq(NIL, funcs.luaeval('vim.api.nvim__id(nil)'))
 
-    eq(0, eval([[type(luaeval('vim.api._vim_id(1)'))]]))
-    eq(1, eval([[type(luaeval('vim.api._vim_id("1")'))]]))
-    eq(3, eval([[type(luaeval('vim.api._vim_id({1})'))]]))
-    eq(4, eval([[type(luaeval('vim.api._vim_id({foo=1})'))]]))
-    eq(5, eval([[type(luaeval('vim.api._vim_id(1.5)'))]]))
-    eq(6, eval([[type(luaeval('vim.api._vim_id(true)'))]]))
-    eq(6, eval([[type(luaeval('vim.api._vim_id(false)'))]]))
-    eq(7, eval([[type(luaeval('vim.api._vim_id(nil)'))]]))
+    eq(0, eval([[type(luaeval('vim.api.nvim__id(1)'))]]))
+    eq(1, eval([[type(luaeval('vim.api.nvim__id("1")'))]]))
+    eq(3, eval([[type(luaeval('vim.api.nvim__id({1})'))]]))
+    eq(4, eval([[type(luaeval('vim.api.nvim__id({foo=1})'))]]))
+    eq(5, eval([[type(luaeval('vim.api.nvim__id(1.5)'))]]))
+    eq(6, eval([[type(luaeval('vim.api.nvim__id(true)'))]]))
+    eq(6, eval([[type(luaeval('vim.api.nvim__id(false)'))]]))
+    eq(7, eval([[type(luaeval('vim.api.nvim__id(nil)'))]]))
 
-    eq({foo=1, bar={42, {{baz=true}, 5}}}, funcs.luaeval('vim.api._vim_id({foo=1, bar={42, {{baz=true}, 5}}})'))
+    eq({foo=1, bar={42, {{baz=true}, 5}}}, funcs.luaeval('vim.api.nvim__id({foo=1, bar={42, {{baz=true}, 5}}})'))
   end)
 
   it('correctly converts container objects with type_idx to API objects', function()
-    eq(5, eval('type(luaeval("vim.api._vim_id({[vim.type_idx]=vim.types.float, [vim.val_idx]=0})"))'))
-    eq(4, eval([[type(luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.dictionary})'))]]))
-    eq(3, eval([[type(luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array})'))]]))
+    eq(5, eval('type(luaeval("vim.api.nvim__id({[vim.type_idx]=vim.types.float, [vim.val_idx]=0})"))'))
+    eq(4, eval([[type(luaeval('vim.api.nvim__id({[vim.type_idx]=vim.types.dictionary})'))]]))
+    eq(3, eval([[type(luaeval('vim.api.nvim__id({[vim.type_idx]=vim.types.array})'))]]))
 
-    eq({}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array})'))
+    eq({}, funcs.luaeval('vim.api.nvim__id({[vim.type_idx]=vim.types.array})'))
 
     -- Presence of type_idx makes Vim ignore some keys
-    eq({42}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
-    eq({foo=2}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
-    eq(10, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
-    eq({}, funcs.luaeval('vim.api._vim_id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2})'))
+    eq({42}, funcs.luaeval('vim.api.nvim__id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({foo=2}, funcs.luaeval('vim.api.nvim__id({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq(10, funcs.luaeval('vim.api.nvim__id({[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({}, funcs.luaeval('vim.api.nvim__id({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2})'))
   end)
 
   it('correctly converts arrays with type_idx to API objects', function()
-    eq(3, eval([[type(luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array})'))]]))
+    eq(3, eval([[type(luaeval('vim.api.nvim__id_array({[vim.type_idx]=vim.types.array})'))]]))
 
-    eq({}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array})'))
+    eq({}, funcs.luaeval('vim.api.nvim__id_array({[vim.type_idx]=vim.types.array})'))
 
-    eq({42}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
-    eq({{foo=2}}, funcs.luaeval('vim.api._vim_id_array({{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
-    eq({10}, funcs.luaeval('vim.api._vim_id_array({{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
-    eq({}, funcs.luaeval('vim.api._vim_id_array({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2})'))
+    eq({42}, funcs.luaeval('vim.api.nvim__id_array({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({{foo=2}}, funcs.luaeval('vim.api.nvim__id_array({{[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
+    eq({10}, funcs.luaeval('vim.api.nvim__id_array({{[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
+    eq({}, funcs.luaeval('vim.api.nvim__id_array({[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2})'))
 
-    eq({}, funcs.luaeval('vim.api._vim_id_array({})'))
-    eq(3, eval([[type(luaeval('vim.api._vim_id_array({})'))]]))
+    eq({}, funcs.luaeval('vim.api.nvim__id_array({})'))
+    eq(3, eval([[type(luaeval('vim.api.nvim__id_array({})'))]]))
   end)
 
   it('correctly converts dictionaries with type_idx to API objects', function()
-    eq(4, eval([[type(luaeval('vim.api._vim_id_dictionary({[vim.type_idx]=vim.types.dictionary})'))]]))
+    eq(4, eval([[type(luaeval('vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.dictionary})'))]]))
 
-    eq({}, funcs.luaeval('vim.api._vim_id_dictionary({[vim.type_idx]=vim.types.dictionary})'))
+    eq({}, funcs.luaeval('vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.dictionary})'))
 
-    eq({v={42}}, funcs.luaeval('vim.api._vim_id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
-    eq({foo=2}, funcs.luaeval('vim.api._vim_id_dictionary({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
-    eq({v=10}, funcs.luaeval('vim.api._vim_id_dictionary({v={[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
-    eq({v={}}, funcs.luaeval('vim.api._vim_id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2}})'))
+    eq({v={42}}, funcs.luaeval('vim.api.nvim__id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
+    eq({foo=2}, funcs.luaeval('vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.dictionary, [vim.val_idx]=10, [5]=1, foo=2, [1]=42})'))
+    eq({v=10}, funcs.luaeval('vim.api.nvim__id_dictionary({v={[vim.type_idx]=vim.types.float, [vim.val_idx]=10, [5]=1, foo=2, [1]=42}})'))
+    eq({v={}}, funcs.luaeval('vim.api.nvim__id_dictionary({v={[vim.type_idx]=vim.types.array, [vim.val_idx]=10, [5]=1, foo=2}})'))
 
     -- If API requests dictionary, then empty table will be the one. This is not
     -- the case normally because empty table is an empty arrray.
-    eq({}, funcs.luaeval('vim.api._vim_id_dictionary({})'))
-    eq(4, eval([[type(luaeval('vim.api._vim_id_dictionary({})'))]]))
+    eq({}, funcs.luaeval('vim.api.nvim__id_dictionary({})'))
+    eq(4, eval([[type(luaeval('vim.api.nvim__id_dictionary({})'))]]))
   end)
 
   it('errors out correctly when working with API', function()
     -- Conversion errors
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Cannot convert given lua type',
-       exc_exec([[call luaeval("vim.api._vim_id(vim.api._vim_id)")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id(vim.api.nvim__id)")]]))
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Cannot convert given lua table',
-       exc_exec([[call luaeval("vim.api._vim_id({1, foo=42})")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id({1, foo=42})")]]))
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Cannot convert given lua type',
-       exc_exec([[call luaeval("vim.api._vim_id({42, vim.api._vim_id})")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id({42, vim.api.nvim__id})")]]))
     -- Errors in number of arguments
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected 1 argument',
-       exc_exec([[call luaeval("vim.api._vim_id()")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id()")]]))
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected 1 argument',
-       exc_exec([[call luaeval("vim.api._vim_id(1, 2)")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id(1, 2)")]]))
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected 2 arguments',
        exc_exec([[call luaeval("vim.api.nvim_set_var(1, 2, 3)")]]))
     -- Error in argument types
@@ -163,19 +163,19 @@ describe('luaeval(vim.api.…)', function()
        exc_exec([[call luaeval("vim.api.nvim_buf_get_lines(0, 1.5, 1, false)")]]))
 
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected lua table',
-       exc_exec([[call luaeval("vim.api._vim_id_float('test')")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id_float('test')")]]))
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Unexpected type',
-       exc_exec([[call luaeval("vim.api._vim_id_float({[vim.type_idx]=vim.types.dictionary})")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id_float({[vim.type_idx]=vim.types.dictionary})")]]))
 
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected lua table',
-       exc_exec([[call luaeval("vim.api._vim_id_array(1)")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id_array(1)")]]))
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Unexpected type',
-       exc_exec([[call luaeval("vim.api._vim_id_array({[vim.type_idx]=vim.types.dictionary})")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id_array({[vim.type_idx]=vim.types.dictionary})")]]))
 
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected lua table',
-       exc_exec([[call luaeval("vim.api._vim_id_dictionary(1)")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id_dictionary(1)")]]))
     eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Unexpected type',
-       exc_exec([[call luaeval("vim.api._vim_id_dictionary({[vim.type_idx]=vim.types.array})")]]))
+       exc_exec([[call luaeval("vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.array})")]]))
     -- TODO: check for errors with Tabpage argument
     -- TODO: check for errors with Window argument
     -- TODO: check for errors with Buffer argument
