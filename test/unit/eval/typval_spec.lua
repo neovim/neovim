@@ -47,6 +47,15 @@ local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/eval.h', './src/nvim/vim.h',
                     './src/nvim/globals.h')
 
+local function vimconv_alloc()
+  return ffi.gc(
+    ffi.cast('vimconv_T*', lib.xcalloc(1, ffi.sizeof('vimconv_T'))),
+    function(vc)
+      lib.convert_setup(vc, nil, nil)
+      lib.xfree(vc)
+    end)
+end
+
 local function list_watch_alloc(li)
   return ffi.cast('listwatch_T*', ffi.new('listwatch_T[1]', {{lw_item=li}}))
 end
@@ -743,12 +752,7 @@ describe('typval.c', function()
         collectgarbage()
       end)
       itp('copies list correctly and converts items', function()
-        local vc = ffi.gc(
-          ffi.cast('vimconv_T*', lib.xcalloc(1, ffi.sizeof('vimconv_T'))),
-          function(vc)
-            lib.convert_setup(vc, nil, nil)
-            lib.xfree(vc)
-          end)
+        local vc = vimconv_alloc()
         -- UTF-8 ↔ latin1 conversions needs no iconv
         eq(OK, lib.convert_setup(vc, to_cstr('utf-8'), to_cstr('latin1')))
 
@@ -2151,9 +2155,7 @@ describe('typval.c', function()
         collectgarbage()
       end)
       itp('copies dict correctly and converts items', function()
-        local vc = ffi.gc(ffi.new('vimconv_T[1]'), function(vc)
-          lib.convert_setup(vc, nil, nil)
-        end)
+        local vc = vimconv_alloc()
         -- UTF-8 ↔ latin1 conversions need no iconv
         eq(OK, lib.convert_setup(vc, to_cstr('utf-8'), to_cstr('latin1')))
 
