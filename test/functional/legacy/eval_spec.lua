@@ -6,6 +6,7 @@ local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
 local wait = helpers.wait
 local exc_exec = helpers.exc_exec
+local dedent = helpers.dedent
 
 describe('eval', function()
   setup(function()
@@ -617,42 +618,32 @@ describe('eval', function()
   end)
 
   it('function name not starting with a capital', function()
-    command('try')
-    command('  func! g:test()')
-    command('    echo "test"')
-    command('  endfunc')
-    command('catch')
-    command('  let tmp = v:exception')
-    command('endtry')
-    eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()', eval('tmp'))
+    eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()\\nendfunction',
+       exc_exec(dedent([[
+        function! g:test()
+        endfunction]])))
   end)
 
   it('Function name followed by #', function()
-    command('try')
-    command('  func! test2() "#')
-    command('    echo "test2"')
-    command('  endfunc')
-    command('catch')
-    command('  let tmp = v:exception')
-    command('endtry')
-    eq('Vim(function):E128: Function name must start with a capital or "s:": test2() "#', eval('tmp'))
+    eq('Vim(function):E128: Function name must start with a capital or "s:": test2() "#\\nendfunction',
+       exc_exec(dedent([[
+        function! test2() "#
+        endfunction]])))
   end)
 
   it('function name includes a colon', function()
-    command('try')
-    command('  func! b:test()')
-    command('    echo "test"')
-    command('  endfunc')
-    command('catch')
-    command('  let tmp = v:exception')
-    command('endtry')
-    eq('Vim(function):E128: Function name must start with a capital or "s:": b:test()', eval('tmp'))
+    eq('Vim(function):E128: Function name must start with a capital or "s:": b:test()\\nendfunction',
+       exc_exec(dedent([[
+        function! b:test()
+        endfunction]])))
   end)
 
   it('function name starting with/without "g:", buffer-local funcref', function()
-    command('function! g:Foo(n)')
-    command("  $put ='called Foo(' . a:n . ')'")
-    command('endfunction')
+    command([[
+      function! g:Foo(n)
+        $put ='called Foo(' . a:n . ')'
+      endfunction
+    ]])
     command("let b:my_func = function('Foo')")
     command('call b:my_func(1)')
     command('echo g:Foo(2)')
