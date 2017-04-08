@@ -13,18 +13,16 @@
 
 /* ============ the header file puzzle (ca. 50-100 pieces) ========= */
 
-#ifdef HAVE_CONFIG_H    /* GNU autoconf (or something else) was here */
-# include "auto/config.h"
-# define HAVE_PATHDEF
+#include "auto/config.h"
+#define HAVE_PATHDEF
 
 /*
  * Check if configure correctly managed to find sizeof(int).  If this failed,
  * it becomes zero.  This is likely a problem of not being able to run the
  * test program.  Other items from configure may also be wrong then!
  */
-# if (SIZEOF_INT == 0)
-Error: configure did not run properly.Check auto/config.log.
-# endif
+#if (SIZEOF_INT == 0)
+# error Configure did not run properly.
 #endif
 
 #include "nvim/os/os_defs.h"       /* bring lots of system header files */
