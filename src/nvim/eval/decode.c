@@ -755,9 +755,9 @@ json_decode_string_cycle_start:
         break;
       }
       case '"': {
-        if (parse_json_string(
-                buf, buf_len, &p, &stack, &container_stack,
-                &next_map_special, &didcomma, &didcolon) == FAIL) {
+        if (parse_json_string(buf, buf_len, &p, &stack, &container_stack,
+                              &next_map_special, &didcomma, &didcolon)
+            == FAIL) {
           // Error message was already given
           goto json_decode_string_fail;
         }
