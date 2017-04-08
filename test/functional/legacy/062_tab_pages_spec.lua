@@ -4,6 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source, clear, command, expect, eval, eq =
   helpers.feed, helpers.insert, helpers.source, helpers.clear,
   helpers.command, helpers.expect, helpers.eval, helpers.eq
+local exc_exec = helpers.exc_exec
 
 describe('tab pages', function()
   before_each(clear)
@@ -112,12 +113,8 @@ describe('tab pages', function()
     command('7tabmove 5')
     eq(5, eval('tabpagenr()'))
     command('let a="No error caught."')
-    command('try')
-    command('tabmove foo')
-    command('catch E474')
-    command('let a="E474 caught."')
-    command('endtry')
-    eq('E474 caught.', eval('a'))
+    eq('Vim(tabmove):E474: Invalid argument: tabmove foo',
+       exc_exec('tabmove foo'))
   end)
 
   it('can trigger certain autocommands', function()
