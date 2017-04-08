@@ -1,4 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
+
+local nvim_dir = helpers.nvim_dir
 local eq, call, clear, eval, feed_command, feed, nvim =
   helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.feed_command,
   helpers.feed, helpers.nvim
@@ -31,7 +33,7 @@ describe('system()', function()
 
   describe('command passed as a List', function()
     local function printargs_path()
-      return helpers.nvim_dir..'/printargs-test'
+      return nvim_dir..'/printargs-test'
         .. (helpers.os_name() == 'windows' and '.exe' or '')
     end
 

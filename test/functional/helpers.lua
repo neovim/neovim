@@ -8,6 +8,7 @@ local Session = require('nvim.session')
 local TcpStream = require('nvim.tcp_stream')
 local SocketStream = require('nvim.socket_stream')
 local ChildProcessStream = require('nvim.child_process_stream')
+local Paths = require('test.config.paths')
 
 local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
@@ -20,7 +21,11 @@ local dedent = global_helpers.dedent
 
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
-local nvim_prog = os.getenv('NVIM_PROG') or os.getenv('NVIM_PRG') or 'build/bin/nvim'
+local nvim_prog = (
+  os.getenv('NVIM_PROG')
+  or os.getenv('NVIM_PRG')
+  or Paths.test_build_dir .. '/bin/nvim'
+)
 -- Default settings for the test session.
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
