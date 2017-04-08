@@ -1528,7 +1528,7 @@ describe('typval.c', function()
           eq(s:sub(1, len), ffi.string(di.di_key))
           alloc_log:check({a.di(di, len)})
           if tv then
-            di.di_tv = tv
+            di.di_tv = ffi.gc(tv, nil)
           else
             di.di_tv.v_type = lib.VAR_UNKNOWN
           end
@@ -1559,7 +1559,7 @@ describe('typval.c', function()
           alloc_log:check({a.dict(d)})
           local di = ffi.gc(lib.tv_dict_item_alloc(''), nil)
           local tv = lua2typvalt('test')
-          di.di_tv = tv
+          di.di_tv = ffi.gc(tv, nil)
           alloc_log:check({a.di(di, ''), a.str(tv.vval.v_string, 'test')})
           eq(OK, lib.tv_dict_add(d, di))
           alloc_log:check({})
