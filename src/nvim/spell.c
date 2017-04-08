@@ -2545,10 +2545,10 @@ void init_spell_chartab(void)
   } else if (enc_utf8)   {
     for (i = 128; i < 256; ++i) {
       int f = utf_fold(i);
-      int u = utf_toupper(i);
+      int u = mb_toupper(i);
 
-      spelltab.st_isu[i] = utf_isupper(i);
-      spelltab.st_isw[i] = spelltab.st_isu[i] || utf_islower(i);
+      spelltab.st_isu[i] = mb_isupper(i);
+      spelltab.st_isw[i] = spelltab.st_isu[i] || mb_islower(i);
       // The folded/upper-cased value is different between latin1 and
       // utf8 for 0xb5, causing E763 for no good reason.  Use the latin1
       // value for utf-8 to avoid this.
@@ -2558,13 +2558,13 @@ void init_spell_chartab(void)
   } else {
     // Rough guess: use locale-dependent library functions.
     for (i = 128; i < 256; ++i) {
-      if (vim_isupper(i)) {
+      if (mb_isupper(i)) {
         spelltab.st_isw[i] = true;
         spelltab.st_isu[i] = true;
-        spelltab.st_fold[i] = vim_tolower(i);
-      } else if (vim_islower(i))   {
+        spelltab.st_fold[i] = mb_tolower(i);
+      } else if (mb_islower(i))   {
         spelltab.st_isw[i] = true;
-        spelltab.st_upper[i] = vim_toupper(i);
+        spelltab.st_upper[i] = mb_toupper(i);
       }
     }
   }

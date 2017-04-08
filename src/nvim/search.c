@@ -336,7 +336,7 @@ int pat_has_uppercase(char_u *pat)
     int l;
 
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
-      if (enc_utf8 && utf_isupper(utf_ptr2char(p)))
+      if (enc_utf8 && mb_isupper(utf_ptr2char(p)))
         return TRUE;
       p += l;
     } else if (*p == '\\') {
@@ -348,7 +348,7 @@ int pat_has_uppercase(char_u *pat)
         p += 2;
       else
         p += 1;
-    } else if (vim_isupper(*p))
+    } else if (mb_isupper(*p))
       return TRUE;
     else
       ++p;

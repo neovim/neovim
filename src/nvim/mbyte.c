@@ -1174,11 +1174,16 @@ int utf_fold(int a)
   return utf_convert(a, foldCase, ARRAY_SIZE(foldCase));
 }
 
+// Vim's own character class functions.  These exist because many library
+// islower()/toupper() etc. do not work properly: they crash when used with
+// invalid values or can't handle latin1 when the locale is C.
+// Speed is most important here.
+
 /*
  * Return the upper-case equivalent of "a", which is a UCS-4 character.  Use
  * simple case folding.
  */
-int utf_toupper(int a)
+int mb_toupper(int a)
 {
   /* If 'casemap' contains "keepascii" use ASCII style toupper(). */
   if (a < 128 && (cmp_flags & CMP_KEEPASCII))
@@ -1198,17 +1203,17 @@ int utf_toupper(int a)
   return utf_convert(a, toUpper, ARRAY_SIZE(toUpper));
 }
 
-bool utf_islower(int a)
+bool mb_islower(int a)
 {
   /* German sharp s is lower case but has no upper case equivalent. */
-  return (utf_toupper(a) != a) || a == 0xdf;
+  return (mb_toupper(a) != a) || a == 0xdf;
 }
 
 /*
  * Return the lower-case equivalent of "a", which is a UCS-4 character.  Use
  * simple case folding.
  */
-int utf_tolower(int a)
+int mb_tolower(int a)
 {
   /* If 'casemap' contains "keepascii" use ASCII style tolower(). */
   if (a < 128 && (cmp_flags & CMP_KEEPASCII))
@@ -1228,9 +1233,9 @@ int utf_tolower(int a)
   return utf_convert(a, toLower, ARRAY_SIZE(toLower));
 }
 
-bool utf_isupper(int a)
+bool mb_isupper(int a)
 {
-  return utf_tolower(a) != a;
+  return mb_tolower(a) != a;
 }
 
 static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1,

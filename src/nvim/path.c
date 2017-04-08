@@ -1853,7 +1853,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
       break;
     }
 
-    if ((p_fic ? vim_toupper(c1) != vim_toupper(c2) : c1 != c2)
+    if ((p_fic ? mb_toupper(c1) != mb_toupper(c2) : c1 != c2)
 #ifdef BACKSLASH_IN_FILENAME
         /* consider '/' and '\\' to be equal */
         && !((c1 == '/' && c2 == '\\')
@@ -1864,7 +1864,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
         return -1;
       if (vim_ispathsep(c2))
         return 1;
-      return p_fic ? vim_toupper(c1) - vim_toupper(c2)
+      return p_fic ? mb_toupper(c1) - mb_toupper(c2)
              : c1 - c2;         /* no match */
     }
 

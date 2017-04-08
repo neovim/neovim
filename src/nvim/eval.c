@@ -16802,7 +16802,7 @@ static void f_tolower(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       int c, lc;
 
       c = utf_ptr2char(p);
-      lc = utf_tolower(c);
+      lc = mb_tolower(c);
       l = utf_ptr2len(p);
       /* TODO: reallocate string when byte count changes. */
       if (utf_char2len(lc) == l)

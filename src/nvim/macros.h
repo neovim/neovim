@@ -62,7 +62,7 @@
  * toupper() and tolower() that use the current locale.
  * Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
  * range 0 - 255.  toupper()/tolower() on some systems can't handle others.
- * Note: It is often better to use vim_tolower() and vim_toupper(), because many
+ * Note: It is often better to use mb_tolower() and mb_toupper(), because many
  * toupper() and tolower() implementations only work for ASCII.
  */
 #define TOUPPER_LOC toupper

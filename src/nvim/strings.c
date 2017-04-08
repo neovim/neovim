@@ -309,7 +309,7 @@ char *strup_save(const char *const orig)
 
     if (enc_utf8) {
       int c = utf_ptr2char((const char_u *)p);
-      int uc = utf_toupper(c);
+      int uc = mb_toupper(c);
 
       // Reallocate string when byte count changes.  This is rare,
       // thus it's OK to do another malloc()/free().
