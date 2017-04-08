@@ -304,7 +304,7 @@ end
 
 -- Executes an ex-command by user input. Because nvim_input() is used, VimL
 -- errors will not manifest as client (lua) errors. Use command() for that.
-local function execute(...)
+local function feed_command(...)
   for _, v in ipairs({...}) do
     if v:sub(1, 1) ~= '/' then
       -- not a search command, prefix with colon
@@ -565,7 +565,8 @@ local M = {
   insert = insert,
   iswin = iswin,
   feed = feed,
-  execute = execute,
+  feed_command = feed_command,
+  execute = feed_command,  -- FIXME Remove
   eval = nvim_eval,
   call = nvim_call,
   command = nvim_command,
