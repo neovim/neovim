@@ -27,7 +27,7 @@ describe('glob() and globpath()', function()
     command([[$put =glob('Xxx\{')]])
     command([[$put =glob('Xxx\$')]])
 
-    command('w! Xxx{')
+    command('silent w! Xxx{')
     command([[w! Xxx\$]])
     command([[$put =glob('Xxx\{')]])
     command([[$put =glob('Xxx\$')]])
