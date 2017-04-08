@@ -4735,7 +4735,6 @@ inputdialog({opts})
 		omitted an empty string is returned.
 		Hitting <Enter> works like pressing the OK button.  Hitting
 		<Esc> works like pressing the Cancel button.
-		NOTE: Command-line completion is not supported in the GUI.
 
 inputlist({textlist})					*inputlist()*
 		{textlist} must be a |List| of strings.  This |List| is
