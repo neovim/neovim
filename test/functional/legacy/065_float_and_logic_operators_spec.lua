@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local insert, source = helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 
 describe('floating point and logical operators', function()
   setup(clear)
@@ -49,7 +49,7 @@ describe('floating point and logical operators', function()
     -- The test will throw an error if this line is included in a source()
     -- call.  The vim expression throws a exception "E745: Using a List as a
     -- Number" which is fatal in a source() call but not in a execute() call.
-    execute([[$put =printf('%d', abs([1, 2, 3]))]])
+    command([[$put =printf('%d', abs([1, 2, 3]))]])
 
     source([[
       $put =printf('%g', abs(14.56))
@@ -104,7 +104,7 @@ describe('floating point and logical operators', function()
 
     -- This line can not be included in a source() call.  It throws a "E805:
     -- Using a Float as a Number".  Also compare comment above.
-    execute('$put =invert(1.0)')
+    command('$put =invert(1.0)')
 
     -- Assert buffer contents.
     expect([=[

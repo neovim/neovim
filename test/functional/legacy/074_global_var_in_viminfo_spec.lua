@@ -2,8 +2,8 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local clear, execute, eq, neq, eval, wait, spawn =
-  helpers.clear, helpers.execute, helpers.eq, helpers.neq, helpers.eval,
+local clear, command, eq, neq, eval, wait, spawn =
+  helpers.clear, helpers.command, helpers.eq, helpers.neq, helpers.eval,
   helpers.wait, helpers.spawn
 
 describe('storing global variables in ShaDa files', function()
@@ -26,7 +26,7 @@ describe('storing global variables in ShaDa files', function()
       71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88,
       89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100}
 
-    execute(
+    command(
       -- This will cause a few errors, do it silently.
       'set visualbell',
       'set shada+=!',
@@ -39,18 +39,18 @@ describe('storing global variables in ShaDa files', function()
     eq(test_dict, eval('MY_GLOBAL_DICT'))
     eq(test_list, eval('MY_GLOBAL_LIST'))
 
-    execute('wsh! ' .. tempname)
+    command('wsh! ' .. tempname)
     wait()
 
     -- Assert that the shada file exists.
     neq(nil, lfs.attributes(tempname))
-    execute('unlet MY_GLOBAL_DICT',
+    command('unlet MY_GLOBAL_DICT',
             'unlet MY_GLOBAL_LIST')
     -- Assert that the variables where deleted.
     eq(0, eval('exists("MY_GLOBAL_DICT")'))
     eq(0, eval('exists("MY_GLOBAL_LIST")'))
 
-    execute('rsh! ' .. tempname)
+    command('rsh! ' .. tempname)
 
     eq(test_list, eval('MY_GLOBAL_LIST'))
     eq(test_dict, eval('MY_GLOBAL_DICT'))

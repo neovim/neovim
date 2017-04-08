@@ -1,11 +1,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local eq, eval, clear, write_file, execute, source, insert =
+local eq, eval, clear, write_file, command, source, insert =
   helpers.eq, helpers.eval, helpers.clear, helpers.write_file,
-  helpers.execute, helpers.source, helpers.insert
+  helpers.command, helpers.source, helpers.insert
 local redir_exec = helpers.redir_exec
 local exc_exec = helpers.exc_exec
 local command = helpers.command
+local feed_command = helpers.feed_command
 local funcs = helpers.funcs
 local meths = helpers.meths
 
@@ -33,9 +34,9 @@ describe(':write', function()
   end)
 
   it('&backupcopy=auto preserves symlinks', function()
-    execute('set backupcopy=auto')
+    command('set backupcopy=auto')
     write_file('test_bkc_file.txt', 'content0')
-    execute("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
+    command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     source([[
       edit test_bkc_link.txt
       call setline(1, ['content1'])
@@ -46,9 +47,9 @@ describe(':write', function()
   end)
 
   it('&backupcopy=no replaces symlink with new file', function()
-    execute('set backupcopy=no')
+    command('set backupcopy=no')
     write_file('test_bkc_file.txt', 'content0')
-    execute("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
+    command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
     source([[
       edit test_bkc_link.txt
       call setline(1, ['content1'])
@@ -69,7 +70,7 @@ describe(':write', function()
     insert(text)
 
     -- Blocks until a consumer reads the FIFO.
-    execute("write >> test_fifo")
+    feed_command("write >> test_fifo")
 
     -- Read the FIFO, this will unblock the :write above.
     local fifo = assert(io.open("test_fifo"))

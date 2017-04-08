@@ -566,7 +566,6 @@ local M = {
   iswin = iswin,
   feed = feed,
   feed_command = feed_command,
-  execute = feed_command,  -- FIXME Remove
   eval = nvim_eval,
   call = nvim_call,
   command = nvim_command,

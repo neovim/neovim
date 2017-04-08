@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed = thelpers.feed_data
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 local nvim_dir = helpers.nvim_dir
 
 if helpers.pending_win32(pending) then return end
@@ -59,7 +59,7 @@ describe('tui', function()
   it('interprets leading <Esc> byte as ALT modifier in normal-mode', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
-      execute('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
+      feed_command('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
       feed('\027'..c)
     end
     screen:expect([[
@@ -152,7 +152,7 @@ describe('tui', function()
   end)
 
   it('can handle arbitrarily long bursts of input', function()
-    execute('set ruler')
+    feed_command('set ruler')
     local t = {}
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
@@ -200,8 +200,8 @@ describe('tui focus event handling', function()
     helpers.clear()
     screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
-    execute('autocmd FocusGained * echo "gained"')
-    execute('autocmd FocusLost * echo "lost"')
+    feed_command('autocmd FocusGained * echo "gained"')
+    feed_command('autocmd FocusLost * echo "lost"')
   end)
 
   it('can handle focus events in normal mode', function()
@@ -229,7 +229,7 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in insert mode', function()
-    execute('set noshowmode')
+    feed_command('set noshowmode')
     feed('i')
     feed('\027[I')
     screen:expect([[
@@ -278,10 +278,10 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in terminal mode', function()
-    execute('set shell='..nvim_dir..'/shell-test')
-    execute('set laststatus=0')
-    execute('set noshowmode')
-    execute('terminal')
+    feed_command('set shell='..nvim_dir..'/shell-test')
+    feed_command('set laststatus=0')
+    feed_command('set noshowmode')
+    feed_command('terminal')
     feed('\027[I')
     screen:expect([[
       ready $                                           |

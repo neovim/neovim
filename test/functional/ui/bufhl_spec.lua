@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, request, neq = helpers.execute, helpers.request, helpers.neq
+local command, request, neq = helpers.command, helpers.request, helpers.neq
 
 if helpers.pending_win32(pending) then return end
 
@@ -11,7 +11,7 @@ describe('Buffer highlighting', function()
 
   before_each(function()
     clear()
-    execute("syntax on")
+    command("syntax on")
     screen = Screen.new(40, 8)
     screen:attach()
     screen:set_default_attr_ids({
@@ -106,7 +106,7 @@ describe('Buffer highlighting', function()
         combining highlights
         from different sources]])
 
-      execute("hi ImportantWord gui=bold cterm=bold")
+      command("hi ImportantWord gui=bold cterm=bold")
       id1 = add_hl(0, "ImportantWord", 0, 2, 8)
       add_hl(id1, "ImportantWord", 1, 12, -1)
       add_hl(id1, "ImportantWord", 2, 0, 9)
@@ -192,7 +192,7 @@ describe('Buffer highlighting', function()
                                                 |
       ]])
 
-      execute(':3move 4')
+      command(':3move 4')
       screen:expect([[
         a {5:longer} example                        |
                                                 |

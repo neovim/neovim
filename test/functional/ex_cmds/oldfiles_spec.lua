@@ -1,7 +1,7 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 
-local buf, eq, execute = helpers.curbufmeths, helpers.eq, helpers.execute
+local buf, eq, feed_command = helpers.curbufmeths, helpers.eq, helpers.feed_command
 local feed, nvim_prog, wait = helpers.feed, helpers.nvim_prog, helpers.wait
 local ok, set_session, spawn = helpers.ok, helpers.set_session, helpers.spawn
 
@@ -27,12 +27,12 @@ describe(':oldfiles', function()
   it('shows most recently used files', function()
     local screen = Screen.new(100, 5)
     screen:attach()
-    execute('edit testfile1')
-    execute('edit testfile2')
-    execute('wshada ' .. shada_file)
-    execute('rshada! ' .. shada_file)
+    feed_command('edit testfile1')
+    feed_command('edit testfile2')
+    feed_command('wshada ' .. shada_file)
+    feed_command('rshada! ' .. shada_file)
     local oldfiles = helpers.meths.get_vvar('oldfiles')
-    execute('oldfiles')
+    feed_command('oldfiles')
     screen:expect([[
       testfile2                                                                                           |
       1: ]].. add_padding(oldfiles[1]) ..[[ |
@@ -50,14 +50,14 @@ describe(':browse oldfiles', function()
 
   before_each(function()
     _clear()
-    execute('edit testfile1')
+    feed_command('edit testfile1')
     filename = buf.get_name()
-    execute('edit testfile2')
+    feed_command('edit testfile2')
     filename2 = buf.get_name()
-    execute('wshada ' .. shada_file)
+    feed_command('wshada ' .. shada_file)
     wait()
     _clear()
-    execute('rshada! ' .. shada_file)
+    feed_command('rshada! ' .. shada_file)
 
     -- Ensure nvim is out of "Press ENTER..." prompt.
     feed('<cr>')
@@ -70,7 +70,7 @@ describe(':browse oldfiles', function()
     ok(filename == oldfiles[1] or filename == oldfiles[2])
     ok(filename2 == oldfiles[1] or filename2 == oldfiles[2])
 
-    execute('browse oldfiles')
+    feed_command('browse oldfiles')
   end)
 
   after_each(function()

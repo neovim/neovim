@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('charsearch', function()
   setup(clear)
@@ -14,23 +14,23 @@ describe('charsearch', function()
       Zabcdefghijkemnokqretkvwxyz]])
 
     -- Check that "fe" and ";" work.
-    execute('/^X')
+    feed_command('/^X')
     feed('ylfep;;p,,p')
     -- Check that save/restore works.
-    execute('/^Y')
+    feed_command('/^Y')
     feed('ylfep')
-    execute('let csave = getcharsearch()')
+    feed_command('let csave = getcharsearch()')
     feed('fip')
-    execute('call setcharsearch(csave)')
+    feed_command('call setcharsearch(csave)')
     feed(';p;p')
     -- Check that setcharsearch() changes the settings.
-    execute('/^Z')
+    feed_command('/^Z')
     feed('ylfep')
-    execute("call setcharsearch({'char': 'k'})")
+    feed_command("call setcharsearch({'char': 'k'})")
     feed(';p')
-    execute("call setcharsearch({'forward': 0})")
+    feed_command("call setcharsearch({'forward': 0})")
     feed('$;p')
-    execute("call setcharsearch({'until': 1})")
+    feed_command("call setcharsearch({'until': 1})")
     feed(';;p')
 
     -- Assert buffer contents.

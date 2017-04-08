@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 
 if helpers.pending_win32(pending) then return end
 
@@ -22,7 +22,7 @@ describe('search highlighting', function()
   end)
 
   it('is disabled by ":set nohlsearch"', function()
-    execute('set nohlsearch')
+    feed_command('set nohlsearch')
     insert("some text\nmore text")
     feed("gg/text<cr>")
     screen:expect([[
@@ -79,7 +79,7 @@ describe('search highlighting', function()
       /\<text\>                               |
     ]])
 
-    execute("nohlsearch")
+    feed_command("nohlsearch")
     screen:expect([[
         some text                             |
         more textstuff                        |
@@ -92,8 +92,8 @@ describe('search highlighting', function()
   end)
 
   it('works with incsearch', function()
-    execute('set hlsearch')
-    execute('set incsearch')
+    feed_command('set hlsearch')
+    feed_command('set incsearch')
     insert([[
       the first line
       in a little file
@@ -156,8 +156,8 @@ describe('search highlighting', function()
   end)
 
   it('works with incsearch and offset', function()
-    execute('set hlsearch')
-    execute('set incsearch')
+    feed_command('set hlsearch')
+    feed_command('set incsearch')
     insert([[
       not the match you're looking for
       the match is here]])
@@ -198,7 +198,7 @@ describe('search highlighting', function()
   end)
 
   it('works with multiline regexps', function()
-    execute('set hlsearch')
+    feed_command('set hlsearch')
     feed('4oa  repeated line<esc>')
     feed('/line\\na<cr>')
     screen:expect([[
@@ -234,19 +234,19 @@ describe('search highlighting', function()
         [6] = {italic = true, background = colors.Magenta},
         [7] = {bold = true, background = colors.Yellow},
     } )
-    execute('set hlsearch')
+    feed_command('set hlsearch')
     insert([[
       very special text
     ]])
-    execute("syntax on")
-    execute("highlight MyGroup guibg=Green gui=bold")
-    execute("highlight MyGroup2 guibg=Magenta gui=italic")
-    execute("call matchadd('MyGroup', 'special')")
-    execute("call matchadd('MyGroup2', 'text', 0)")
+    feed_command("syntax on")
+    feed_command("highlight MyGroup guibg=Green gui=bold")
+    feed_command("highlight MyGroup2 guibg=Magenta gui=italic")
+    feed_command("call matchadd('MyGroup', 'special')")
+    feed_command("call matchadd('MyGroup2', 'text', 0)")
 
     -- searchhl and matchadd matches are exclusive, only the higest priority
     -- is used (and matches with lower priorities are not combined)
-    execute("/ial te")
+    feed_command("/ial te")
     screen:expect([[
         very {5:spec^ial}{2: te}{6:xt}                     |
                                               |
@@ -257,7 +257,7 @@ describe('search highlighting', function()
       {4:search hit BOTTOM, continuing at TOP}    |
     ]])
 
-    execute("call clearmatches()")
+    feed_command("call clearmatches()")
     screen:expect([[
         very spec{2:^ial te}xt                     |
                                               |
@@ -270,7 +270,7 @@ describe('search highlighting', function()
 
     -- searchhl has priority over syntax, but in this case
     -- nonconflicting attributes are combined
-    execute("syntax keyword MyGroup special")
+    feed_command("syntax keyword MyGroup special")
     screen:expect([[
         very {5:spec}{7:^ial}{2: te}xt                     |
                                               |

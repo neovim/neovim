@@ -4,16 +4,17 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local eq = helpers.eq
 local eval = helpers.eval
-local execute = helpers.execute
+local command = helpers.command
 local exc_exec = helpers.exc_exec
 local redir_exec = helpers.redir_exec
 local NIL = helpers.NIL
+local source = helpers.source
 
 describe('json_decode() function', function()
   local restart = function(...)
     clear(...)
-    execute('language C')
-    execute([[
+    source([[
+      language C
       function Eq(exp, act)
         let act = a:act
         let exp = a:exp
@@ -45,8 +46,6 @@ describe('json_decode() function', function()
         endif
         return 1
       endfunction
-    ]])
-    execute([[
       function EvalEq(exp, act_expr)
         let act = eval(a:act_expr)
         if Eq(a:exp, act)
@@ -441,7 +440,7 @@ describe('json_decode() function', function()
   local sp_decode_eq = function(expected, json)
     meths.set_var('__json', json)
     speq(expected, 'json_decode(g:__json)')
-    execute('unlet! g:__json')
+    command('unlet! g:__json')
   end
 
   it('parses strings with NUL properly', function()
@@ -527,7 +526,7 @@ end)
 describe('json_encode() function', function()
   before_each(function()
     clear()
-    execute('language C')
+    command('language C')
   end)
 
   it('dumps strings', function()
@@ -576,94 +575,94 @@ describe('json_encode() function', function()
 
   it('cannot dump generic mapping with generic mapping keys and values',
   function()
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
-    execute('let todumpv1 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
-    execute('let todumpv2 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
-    execute('call add(todump._VAL, [todumpv1, todumpv2])')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
+    command('let todumpv1 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
+    command('let todumpv2 = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
+    command('call add(todump._VAL, [todumpv1, todumpv2])')
     eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
   end)
 
   it('cannot dump generic mapping with ext key', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
     eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
   end)
 
   it('cannot dump generic mapping with array key', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": [5, [""]]}')
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": [5, [""]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
     eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
   end)
 
   it('cannot dump generic mapping with UINT64_MAX key', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.integer}')
-    execute('let todump._VAL = [1, 3, 0x7FFFFFFF, 0x7FFFFFFF]')
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.integer}')
+    command('let todump._VAL = [1, 3, 0x7FFFFFFF, 0x7FFFFFFF]')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
     eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
   end)
 
   it('cannot dump generic mapping with floating-point key', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.float, "_VAL": 0.125}')
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.float, "_VAL": 0.125}')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
     eq('Vim(call):E474: Invalid key in special dictionary', exc_exec('call json_encode(todump)'))
   end)
 
   it('can dump generic mapping with STR special key and NUL', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.string, "_VAL": ["\\n"]}')
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.string, "_VAL": ["\\n"]}')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
     eq('{"\\u0000": 1}', eval('json_encode(todump)'))
   end)
 
   it('can dump generic mapping with BIN special key and NUL', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.binary, "_VAL": ["\\n"]}')
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.binary, "_VAL": ["\\n"]}')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [[todump, 1]]}')
     eq('{"\\u0000": 1}', eval('json_encode(todump)'))
   end)
 
   it('can dump STR special mapping with NUL and NL', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.string, "_VAL": ["\\n", ""]}')
+    command('let todump = {"_TYPE": v:msgpack_types.string, "_VAL": ["\\n", ""]}')
     eq('"\\u0000\\n"', eval('json_encode(todump)'))
   end)
 
   it('can dump BIN special mapping with NUL and NL', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.binary, "_VAL": ["\\n", ""]}')
+    command('let todump = {"_TYPE": v:msgpack_types.binary, "_VAL": ["\\n", ""]}')
     eq('"\\u0000\\n"', eval('json_encode(todump)'))
   end)
 
   it('cannot dump special ext mapping', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.ext, "_VAL": [5, ["",""]]}')
     eq('Vim(call):E474: Unable to convert EXT string to JSON', exc_exec('call json_encode(todump)'))
   end)
 
   it('can dump special array mapping', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": [5, [""]]}')
+    command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": [5, [""]]}')
     eq('[5, [""]]', eval('json_encode(todump)'))
   end)
 
   it('can dump special UINT64_MAX mapping', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.integer}')
-    execute('let todump._VAL = [1, 3, 0x7FFFFFFF, 0x7FFFFFFF]')
+    command('let todump = {"_TYPE": v:msgpack_types.integer}')
+    command('let todump._VAL = [1, 3, 0x7FFFFFFF, 0x7FFFFFFF]')
     eq('18446744073709551615', eval('json_encode(todump)'))
   end)
 
   it('can dump special INT64_MIN mapping', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.integer}')
-    execute('let todump._VAL = [-1, 2, 0, 0]')
+    command('let todump = {"_TYPE": v:msgpack_types.integer}')
+    command('let todump._VAL = [-1, 2, 0, 0]')
     eq('-9223372036854775808', eval('json_encode(todump)'))
   end)
 
   it('can dump special BOOLEAN true mapping', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 1}')
+    command('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 1}')
     eq('true', eval('json_encode(todump)'))
   end)
 
   it('can dump special BOOLEAN false mapping', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 0}')
+    command('let todump = {"_TYPE": v:msgpack_types.boolean, "_VAL": 0}')
     eq('false', eval('json_encode(todump)'))
   end)
 
   it('can dump special NIL mapping', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.nil, "_VAL": 0}')
+    command('let todump = {"_TYPE": v:msgpack_types.nil, "_VAL": 0}')
     eq('null', eval('json_encode(todump)'))
   end)
 
@@ -673,7 +672,7 @@ describe('json_encode() function', function()
   end)
 
   it('fails to dump a partial', function()
-    execute('function T() dict\nendfunction')
+    command('function T() dict\nendfunction')
     eq('Vim(call):E474: Error while dumping encode_tv2json() argument, itself: attempt to dump function reference',
        exc_exec('call json_encode(function("T", [1, 2], {}))'))
   end)
@@ -684,56 +683,56 @@ describe('json_encode() function', function()
   end)
 
   it('fails to dump a recursive list', function()
-    execute('let todump = [[[]]]')
-    execute('call add(todump[0][0], todump)')
+    command('let todump = [[[]]]')
+    command('call add(todump[0][0], todump)')
     eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
        exc_exec('call json_encode(todump)'))
   end)
 
   it('fails to dump a recursive dict', function()
-    execute('let todump = {"d": {"d": {}}}')
-    execute('call extend(todump.d.d, {"d": todump})')
+    command('let todump = {"d": {"d": {}}}')
+    command('call extend(todump.d.d, {"d": todump})')
     eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
        exc_exec('call json_encode([todump])'))
   end)
 
   it('can dump dict with two same dicts inside', function()
-    execute('let inter = {}')
-    execute('let todump = {"a": inter, "b": inter}')
+    command('let inter = {}')
+    command('let todump = {"a": inter, "b": inter}')
     eq('{"a": {}, "b": {}}', eval('json_encode(todump)'))
   end)
 
   it('can dump list with two same lists inside', function()
-    execute('let inter = []')
-    execute('let todump = [inter, inter]')
+    command('let inter = []')
+    command('let todump = [inter, inter]')
     eq('[[], []]', eval('json_encode(todump)'))
   end)
 
   it('fails to dump a recursive list in a special dict', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
-    execute('call add(todump._VAL, todump)')
+    command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
+    command('call add(todump._VAL, todump)')
     eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
        exc_exec('call json_encode(todump)'))
   end)
 
   it('fails to dump a recursive (val) map in a special dict', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
-    execute('call add(todump._VAL, ["", todump])')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": []}')
+    command('call add(todump._VAL, ["", todump])')
     eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
        exc_exec('call json_encode([todump])'))
   end)
 
   it('fails to dump a recursive (val) map in a special dict, _VAL reference', function()
-    execute('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [["", []]]}')
-    execute('call add(todump._VAL[0][1], todump._VAL)')
+    command('let todump = {"_TYPE": v:msgpack_types.map, "_VAL": [["", []]]}')
+    command('call add(todump._VAL[0][1], todump._VAL)')
     eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
        exc_exec('call json_encode(todump)'))
   end)
 
   it('fails to dump a recursive (val) special list in a special dict',
   function()
-    execute('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
-    execute('call add(todump._VAL, ["", todump._VAL])')
+    command('let todump = {"_TYPE": v:msgpack_types.array, "_VAL": []}')
+    command('call add(todump._VAL, ["", todump._VAL])')
     eq('Vim(call):E724: unable to correctly dump variable with self-referencing container',
        exc_exec('call json_encode(todump)'))
   end)

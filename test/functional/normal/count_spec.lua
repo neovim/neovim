@@ -4,13 +4,13 @@ local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
-local execute = helpers.execute
+local command = helpers.command
 
 describe('v:count/v:count1', function()
   before_each(function()
     clear()
 
-    execute('map <silent> _x :<C-u>let g:count = "v:count=". v:count .", v:count1=". v:count1<CR>')
+    command('map <silent> _x :<C-u>let g:count = "v:count=". v:count .", v:count1=". v:count1<CR>')
   end)
 
   describe('in cmdwin', function()

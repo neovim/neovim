@@ -3,7 +3,7 @@ local setpos = helpers.funcs.setpos
 local getpos = helpers.funcs.getpos
 local insert = helpers.insert
 local clear = helpers.clear
-local execute = helpers.execute
+local command = helpers.command
 local eval = helpers.eval
 local eq = helpers.eq
 local exc_exec = helpers.exc_exec
@@ -16,7 +16,7 @@ describe('setpos() function', function()
     First line of text
     Second line of text
     Third line of text]])
-    execute('new')
+    command('new')
     insert([[
     Line of text 1
     Line of text 2
@@ -34,7 +34,8 @@ describe('setpos() function', function()
   it('can set lowercase marks in the current buffer', function()
     setpos("'d", {0, 2, 1, 0})
     eq(getpos("'d"), {0, 2, 1, 0})
-    execute('undo', 'call setpos("\'d", [2, 3, 1, 0])')
+    command('undo')
+    command('call setpos("\'d", [2, 3, 1, 0])')
     eq(getpos("'d"), {0, 3, 1, 0})
   end)
   it('can set lowercase marks in other buffers', function()
@@ -42,7 +43,7 @@ describe('setpos() function', function()
     eq(0, retval)
     setpos("'d", {1, 2, 1, 0})
     eq(getpos("'d"), {0, 0, 0, 0})
-    execute('wincmd w')
+    command('wincmd w')
     eq(eval('bufnr("%")'), 1)
     eq(getpos("'d"), {0, 2, 1, 0})
   end)

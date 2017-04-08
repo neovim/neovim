@@ -6,7 +6,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eq = helpers.eq
 local call = helpers.call
 local clear = helpers.clear
-local execute = helpers.execute
+local command = helpers.command
 local exc_exec = helpers.exc_exec
 
 if helpers.pending_win32(pending) then return end
@@ -58,7 +58,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(0, lwd(globalwin))
         eq(0, lwd(globalwin, tabnr))
 
-        execute('bot split')
+        command('bot split')
         local localwin = call('winnr')
         -- Initial window is still using globalDir
         eq(globalDir, cwd(localwin))
@@ -66,7 +66,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(0, lwd(globalwin))
         eq(0, lwd(globalwin, tabnr))
 
-        execute('silent l' .. cmd .. ' ' .. directories.window)
+        command('silent l' .. cmd .. ' ' .. directories.window)
         -- From window with local dir, the original window
         -- is still reporting the global dir
         eq(globalDir, cwd(globalwin))
@@ -80,7 +80,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(1, lwd(localwin))
         eq(1, lwd(localwin, tabnr))
 
-        execute('tabnew')
+        command('tabnew')
         -- From new tab page, original window reports global dir
         eq(globalDir, cwd(globalwin, tabnr))
         eq(0, lwd(globalwin, tabnr))
@@ -100,8 +100,8 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(0, lwd(-1, 0))
         eq(0, lwd(-1, globaltab))
 
-        execute('tabnew')
-        execute('silent t' .. cmd .. ' ' .. directories.tab)
+        command('tabnew')
+        command('silent t' .. cmd .. ' ' .. directories.tab)
         local localtab = call('tabpagenr')
 
         -- From local tab page, original tab reports globalDir
@@ -114,7 +114,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         eq(1, lwd(-1, 0))
         eq(1, lwd(-1, localtab))
 
-        execute('tabnext')
+        command('tabnext')
         -- From original tab page, local reports as such
         eq(globalDir .. '/' .. directories.tab, cwd(-1, localtab))
         eq(1, lwd(-1, localtab))
@@ -128,13 +128,13 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       end)
 
       it('works with tab-local pwd', function()
-        execute('silent t' .. cmd .. ' ' .. directories.tab)
+        command('silent t' .. cmd .. ' ' .. directories.tab)
         eq(directories.start, cwd(-1, -1))
         eq(0, lwd(-1, -1))
       end)
 
       it('works with window-local pwd', function()
-        execute('silent l' .. cmd .. ' ' .. directories.window)
+        command('silent l' .. cmd .. ' ' .. directories.window)
         eq(directories.start, cwd(-1, -1))
         eq(0, lwd(-1, -1))
       end)
@@ -145,18 +145,18 @@ for _, cmd in ipairs {'cd', 'chdir'} do
         local globalDir = directories.start
 
         -- Create a new tab and change directory
-        execute('tabnew')
-        execute('silent t' .. cmd .. ' ' .. directories.tab)
+        command('tabnew')
+        command('silent t' .. cmd .. ' ' .. directories.tab)
         eq(globalDir .. '/' .. directories.tab, tcwd())
 
         -- Create a new tab and verify it has inherited the directory
-        execute('tabnew')
+        command('tabnew')
         eq(globalDir .. '/' .. directories.tab, tcwd())
 
         -- Change tab and change back, verify that directories are correct
-        execute('tabnext')
+        command('tabnext')
         eq(globalDir, tcwd())
-        execute('tabprevious')
+        command('tabprevious')
         eq(globalDir .. '/' .. directories.tab, tcwd())
       end)
     end)
@@ -164,7 +164,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
     it('works', function()
       local globalDir = directories.start
       -- Create a new tab first and verify that is has the same working dir
-      execute('tabnew')
+      command('tabnew')
       eq(globalDir, cwd())
       eq(globalDir, tcwd())  -- has no tab-local directory
       eq(0, tlwd())
@@ -172,7 +172,7 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(0, wlwd())
 
       -- Change tab-local working directory and verify it is different
-      execute('silent t' .. cmd .. ' ' .. directories.tab)
+      command('silent t' .. cmd .. ' ' .. directories.tab)
       eq(globalDir .. '/' .. directories.tab, cwd())
       eq(cwd(), tcwd())  -- working directory maches tab directory
       eq(1, tlwd())
@@ -180,46 +180,46 @@ for _, cmd in ipairs {'cd', 'chdir'} do
       eq(0, wlwd())
 
       -- Create a new window in this tab to test `:lcd`
-      execute('new')
+      command('new')
       eq(1, tlwd())  -- Still tab-local working directory
       eq(0, wlwd())  -- Still no window-local working directory
       eq(globalDir .. '/' .. directories.tab, cwd())
-      execute('silent l' .. cmd .. ' ../' .. directories.window)
+      command('silent l' .. cmd .. ' ../' .. directories.window)
       eq(globalDir .. '/' .. directories.window, cwd())
       eq(globalDir .. '/' .. directories.tab, tcwd())
       eq(1, wlwd())
 
       -- Verify the first window still has the tab local directory
-      execute('wincmd w')
+      command('wincmd w')
       eq(globalDir .. '/' .. directories.tab,  cwd())
       eq(globalDir .. '/' .. directories.tab, tcwd())
       eq(0, wlwd())  -- No window-local directory
 
       -- Change back to initial tab and verify working directory has stayed
-      execute('tabnext')
+      command('tabnext')
       eq(globalDir, cwd() )
       eq(0, tlwd())
       eq(0, wlwd())
 
       -- Verify global changes don't affect local ones
-      execute('silent ' .. cmd .. ' ' .. directories.global)
+      command('silent ' .. cmd .. ' ' .. directories.global)
       eq(globalDir .. '/' .. directories.global, cwd())
-      execute('tabnext')
+      command('tabnext')
       eq(globalDir .. '/' .. directories.tab,  cwd())
       eq(globalDir .. '/' .. directories.tab, tcwd())
       eq(0, wlwd())  -- Still no window-local directory in this window
 
       -- Unless the global change happened in a tab with local directory
-      execute('silent ' .. cmd .. ' ..')
+      command('silent ' .. cmd .. ' ..')
       eq(globalDir, cwd() )
       eq(0 , tlwd())
       eq(0 , wlwd())
       -- Which also affects the first tab
-      execute('tabnext')
+      command('tabnext')
       eq(globalDir, cwd())
 
       -- But not in a window with its own local directory
-      execute('tabnext | wincmd w')
+      command('tabnext | wincmd w')
       eq(globalDir .. '/' .. directories.window, cwd() )
       eq(0 , tlwd())
       eq(globalDir .. '/' .. directories.window, wcwd())
@@ -280,8 +280,8 @@ describe("getcwd()", function ()
   end)
 
   it("returns empty string if working directory does not exist", function()
-    execute("cd "..directories.global)
-    execute("call delete('../"..directories.global.."', 'd')")
+    command("cd "..directories.global)
+    command("call delete('../"..directories.global.."', 'd')")
     eq("", helpers.eval("getcwd()"))
   end)
 end)

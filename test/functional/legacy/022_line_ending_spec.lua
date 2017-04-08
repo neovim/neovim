@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('line ending', function()
   setup(clear)
@@ -14,8 +14,8 @@ describe('line ending', function()
       this one does<C-V><C-M>
       and the last one doesn't]], '<ESC>')
 
-    execute('set ta tx')
-    execute('e!')
+    feed_command('set ta tx')
+    feed_command('e!')
 
     expect("this lines ends in a\r\n"..
            "this one doesn't\n"..

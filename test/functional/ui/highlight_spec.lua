@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, request, eq = helpers.execute, helpers.request, helpers.eq
+local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
 
 if helpers.pending_win32(pending) then return end
 
@@ -41,18 +41,18 @@ describe('manual syntax highlight', function()
   end)
 
   it("works with buffer switch and 'hidden'", function()
-    execute('e tmp1.vim')
-    execute('e Xtest-functional-ui-highlight.tmp.vim')
-    execute('filetype on')
-    execute('syntax manual')
-    execute('set ft=vim')
-    execute('set syntax=ON')
+    feed_command('e tmp1.vim')
+    feed_command('e Xtest-functional-ui-highlight.tmp.vim')
+    feed_command('filetype on')
+    feed_command('syntax manual')
+    feed_command('set ft=vim')
+    feed_command('set syntax=ON')
     feed('iecho 1<esc>0')
 
-    execute('set hidden')
-    execute('w')
-    execute('bn')
-    execute('bp')
+    feed_command('set hidden')
+    feed_command('w')
+    feed_command('bn')
+    feed_command('bp')
     screen:expect([[
       {1:^echo} 1              |
       {0:~                   }|
@@ -63,18 +63,18 @@ describe('manual syntax highlight', function()
   end)
 
   it("works with buffer switch and 'nohidden'", function()
-    execute('e tmp1.vim')
-    execute('e Xtest-functional-ui-highlight.tmp.vim')
-    execute('filetype on')
-    execute('syntax manual')
-    execute('set ft=vim')
-    execute('set syntax=ON')
+    feed_command('e tmp1.vim')
+    feed_command('e Xtest-functional-ui-highlight.tmp.vim')
+    feed_command('filetype on')
+    feed_command('syntax manual')
+    feed_command('set ft=vim')
+    feed_command('set syntax=ON')
     feed('iecho 1<esc>0')
 
-    execute('set nohidden')
-    execute('w')
-    execute('bn')
-    execute('bp')
+    feed_command('set nohidden')
+    feed_command('w')
+    feed_command('bn')
+    feed_command('bp')
     screen:expect([[
       {1:^echo} 1              |
       {0:~                   }|
@@ -107,7 +107,7 @@ describe('Default highlight groups', function()
       [1] = {reverse = true, bold = true},  -- StatusLine
       [2] = {reverse = true}                -- StatusLineNC
     })
-    execute('sp', 'vsp', 'vsp')
+    feed_command('sp', 'vsp', 'vsp')
     screen:expect([[
       ^                    {2:|}                {2:|}               |
       {0:~                   }{2:|}{0:~               }{2:|}{0:~              }|
@@ -235,7 +235,7 @@ describe('Default highlight groups', function()
 
   it('can be cleared and linked to other highlight groups', function()
     screen:try_resize(53, 4)
-    execute('highlight clear ModeMsg')
+    feed_command('highlight clear ModeMsg')
     feed('i')
     screen:expect([[
       ^                                                     |
@@ -245,8 +245,8 @@ describe('Default highlight groups', function()
     ]], {[0] = {bold=true, foreground=Screen.colors.Blue},
     [1] = {bold=true}})
     feed('<esc>')
-    execute('highlight CustomHLGroup guifg=red guibg=green')
-    execute('highlight link ModeMsg CustomHLGroup')
+    feed_command('highlight CustomHLGroup guifg=red guibg=green')
+    feed_command('highlight link ModeMsg CustomHLGroup')
     feed('i')
     screen:expect([[
       ^                                                     |
@@ -259,8 +259,8 @@ describe('Default highlight groups', function()
 
   it('can be cleared by assigning NONE', function()
     screen:try_resize(53, 4)
-    execute('syn keyword TmpKeyword neovim')
-    execute('hi link TmpKeyword ErrorMsg')
+    feed_command('syn keyword TmpKeyword neovim')
+    feed_command('hi link TmpKeyword ErrorMsg')
     insert('neovim')
     screen:expect([[
       {1:neovi^m}                                               |
@@ -271,7 +271,7 @@ describe('Default highlight groups', function()
       [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {foreground = Screen.colors.White, background = Screen.colors.Red}
     })
-    execute("hi ErrorMsg term=NONE cterm=NONE ctermfg=NONE ctermbg=NONE"
+    feed_command("hi ErrorMsg term=NONE cterm=NONE ctermfg=NONE ctermbg=NONE"
             .. " gui=NONE guifg=NONE guibg=NONE guisp=NONE")
     screen:expect([[
       neovi^m                                               |
@@ -283,8 +283,8 @@ describe('Default highlight groups', function()
 
   it('Whitespace highlight', function()
     screen:try_resize(53, 4)
-    execute('highlight NonText gui=NONE guifg=#FF0000')
-    execute('set listchars=space:.,tab:>-,trail:*,eol:¬ list')
+    feed_command('highlight NonText gui=NONE guifg=#FF0000')
+    feed_command('set listchars=space:.,tab:>-,trail:*,eol:¬ list')
     insert('   ne \t o\tv  im  ')
     screen:expect([[
       ne{0:.>----.}o{0:>-----}v{0:..}im{0:*^*¬}                             |
@@ -295,7 +295,7 @@ describe('Default highlight groups', function()
       [0] = {foreground=Screen.colors.Red},
       [1] = {foreground=Screen.colors.Blue},
     })
-    execute('highlight Whitespace gui=NONE guifg=#0000FF')
+    feed_command('highlight Whitespace gui=NONE guifg=#0000FF')
     screen:expect([[
       ne{1:.>----.}o{1:>-----}v{1:..}im{1:*^*}{0:¬}                             |
       {0:~                                                    }|
@@ -318,19 +318,19 @@ describe('guisp (special/undercurl)', function()
   end)
 
   it('can be set and is applied like foreground or background', function()
-    execute('syntax on')
-    execute('syn keyword TmpKeyword neovim')
-    execute('syn keyword TmpKeyword1 special')
-    execute('syn keyword TmpKeyword2 specialwithbg')
-    execute('syn keyword TmpKeyword3 specialwithfg')
-    execute('hi! Awesome guifg=red guibg=yellow guisp=red')
-    execute('hi! Awesome1 guisp=red')
-    execute('hi! Awesome2 guibg=yellow guisp=red')
-    execute('hi! Awesome3 guifg=red guisp=red')
-    execute('hi link TmpKeyword Awesome')
-    execute('hi link TmpKeyword1 Awesome1')
-    execute('hi link TmpKeyword2 Awesome2')
-    execute('hi link TmpKeyword3 Awesome3')
+    feed_command('syntax on')
+    feed_command('syn keyword TmpKeyword neovim')
+    feed_command('syn keyword TmpKeyword1 special')
+    feed_command('syn keyword TmpKeyword2 specialwithbg')
+    feed_command('syn keyword TmpKeyword3 specialwithfg')
+    feed_command('hi! Awesome guifg=red guibg=yellow guisp=red')
+    feed_command('hi! Awesome1 guisp=red')
+    feed_command('hi! Awesome2 guibg=yellow guisp=red')
+    feed_command('hi! Awesome3 guifg=red guisp=red')
+    feed_command('hi link TmpKeyword Awesome')
+    feed_command('hi link TmpKeyword1 Awesome1')
+    feed_command('hi link TmpKeyword2 Awesome2')
+    feed_command('hi link TmpKeyword3 Awesome3')
     insert([[
       neovim
       awesome neovim
@@ -382,8 +382,8 @@ describe("'listchars' highlight", function()
       [0] = {bold=true, foreground=Screen.colors.Blue},
       [1] = {background=Screen.colors.Grey90}
     })
-    execute('highlight clear ModeMsg')
-    execute('set cursorline')
+    feed_command('highlight clear ModeMsg')
+    feed_command('set cursorline')
     feed('i')
     screen:expect([[
       {1:^                    }|
@@ -408,7 +408,7 @@ describe("'listchars' highlight", function()
       {0:~                   }|
                           |
     ]])
-    execute('set nocursorline')
+    feed_command('set nocursorline')
     screen:expect([[
       abcdefg             |
       kkasd^f              |
@@ -432,8 +432,8 @@ describe("'listchars' highlight", function()
       ^f                   |
                           |
     ]])
-    execute('set cursorline')
-    execute('set cursorcolumn')
+    feed_command('set cursorline')
+    feed_command('set cursorcolumn')
     feed('kkiabcdefghijk<esc>hh')
     screen:expect([[
       kkasd   {1: }           |
@@ -472,11 +472,11 @@ describe("'listchars' highlight", function()
         foreground=Screen.colors.Red,
       },
     })
-    execute('highlight clear ModeMsg')
-    execute('highlight Whitespace guifg=#FF0000')
-    execute('set cursorline')
-    execute('set tabstop=8')
-    execute('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    feed_command('highlight clear ModeMsg')
+    feed_command('highlight Whitespace guifg=#FF0000')
+    feed_command('set cursorline')
+    feed_command('set tabstop=8')
+    feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
     feed('i\t abcd <cr>\t abcd <cr><esc>k')
     screen:expect([[
       {5:>-------.}abcd{5:*}{4:¬}     |
@@ -493,7 +493,7 @@ describe("'listchars' highlight", function()
       {4:~                   }|
                           |
     ]])
-    execute('set nocursorline')
+    feed_command('set nocursorline')
     screen:expect([[
       {5:^>-------.}abcd{5:*}{4:¬}     |
       {5:>-------.}abcd{5:*}{4:¬}     |
@@ -501,7 +501,7 @@ describe("'listchars' highlight", function()
       {4:~                   }|
       :set nocursorline   |
     ]])
-    execute('set nowrap')
+    feed_command('set nowrap')
     feed('ALorem ipsum dolor sit amet<ESC>0')
     screen:expect([[
       {5:^>-------.}abcd{5:.}Lorem{4:>}|
@@ -510,7 +510,7 @@ describe("'listchars' highlight", function()
       {4:~                   }|
                           |
     ]])
-    execute('set cursorline')
+    feed_command('set cursorline')
     screen:expect([[
       {2:^>-------.}{1:abcd}{2:.}{1:Lorem}{4:>}|
       {5:>-------.}abcd{5:*}{4:¬}     |
@@ -568,12 +568,12 @@ describe("'listchars' highlight", function()
         bold=true,
       },
     })
-    execute('highlight clear ModeMsg')
-    execute('highlight Whitespace guifg=#FF0000')
-    execute('set cursorline')
-    execute('set tabstop=8')
-    execute('set nowrap')
-    execute('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    feed_command('highlight clear ModeMsg')
+    feed_command('highlight Whitespace guifg=#FF0000')
+    feed_command('set cursorline')
+    feed_command('set tabstop=8')
+    feed_command('set nowrap')
+    feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
     feed('i\t abcd <cr>\t abcd Lorem ipsum dolor sit amet<cr><esc>kkk0')
     screen:expect([[
       {2:^>-------.}{1:abcd}{2:*}{3:¬}{1:     }|
@@ -615,10 +615,10 @@ describe("'listchars' highlight", function()
       [2] = {foreground=Screen.colors.Red},
       [3] = {foreground=Screen.colors.Green1},
     })
-    execute('highlight clear ModeMsg')
-    execute('highlight Whitespace guifg=#FF0000')
-    execute('highlight Error guifg=#00FF00')
-    execute('set nowrap')
+    feed_command('highlight clear ModeMsg')
+    feed_command('highlight Whitespace guifg=#FF0000')
+    feed_command('highlight Error guifg=#00FF00')
+    feed_command('set nowrap')
     feed('ia \t bc \t  <esc>')
     screen:expect([[
       a        bc      ^   |
@@ -627,7 +627,7 @@ describe("'listchars' highlight", function()
       {0:~                   }|
                           |
     ]])
-    execute('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
+    feed_command('set listchars=space:.,eol:¬,tab:>-,extends:>,precedes:<,trail:* list')
     screen:expect([[
       a{2:.>-----.}bc{2:*>---*^*}{0:¬} |
       {0:~                   }|
@@ -635,7 +635,7 @@ describe("'listchars' highlight", function()
       {0:~                   }|
                           |
     ]])
-    execute('match Error /\\s\\+$/')
+    feed_command('match Error /\\s\\+$/')
     screen:expect([[
       a{2:.>-----.}bc{3:*>---*^*}{0:¬} |
       {0:~                   }|

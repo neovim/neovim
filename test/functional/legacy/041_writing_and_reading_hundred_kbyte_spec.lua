@@ -1,8 +1,10 @@
 -- Test for writing and reading a file of over 100 Kbyte
 
 local helpers = require('test.functional.helpers')(after_each)
+
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local command, expect = helpers.command, helpers.expect
+local wait = helpers.wait
 
 describe('writing and reading a file of over 100 Kbyte', function()
   setup(clear)
@@ -16,17 +18,18 @@ describe('writing and reading a file of over 100 Kbyte', function()
       This is the end]])
 
     feed('kY3000p2GY3000p')
+    wait()
 
-    execute('w! test.out')
-    execute('%d')
-    execute('e! test.out')
-    execute('yank A')
-    execute('3003yank A')
-    execute('6005yank A')
-    execute('%d')
-    execute('0put a')
-    execute('$d')
-    execute('w!')
+    command('w! test.out')
+    command('%d')
+    command('e! test.out')
+    command('yank A')
+    command('3003yank A')
+    command('6005yank A')
+    command('%d')
+    command('0put a')
+    command('$d')
+    command('w!')
 
     expect([[
       This is the start

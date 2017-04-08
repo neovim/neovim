@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, call, clear, eval, execute, feed, nvim =
-  helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.execute,
+local eq, call, clear, eval, feed_command, feed, nvim =
+  helpers.eq, helpers.call, helpers.clear, helpers.eval, helpers.feed_command,
   helpers.feed, helpers.nvim
 
 local Screen = require('test.functional.ui.screen')
@@ -43,10 +43,10 @@ describe('system()', function()
     it('parameter validation does NOT modify v:shell_error', function()
       -- 1. Call system() with invalid parameters.
       -- 2. Assert that v:shell_error was NOT set.
-      execute('call system({})')
+      feed_command('call system({})')
       eq('E475: Invalid argument: expected String or List', eval('v:errmsg'))
       eq(0, eval('v:shell_error'))
-      execute('call system([])')
+      feed_command('call system([])')
       eq('E474: Invalid argument', eval('v:errmsg'))
       eq(0, eval('v:shell_error'))
 
@@ -57,9 +57,9 @@ describe('system()', function()
 
       -- 1. Call system() with invalid parameters.
       -- 2. Assert that v:shell_error was NOT modified.
-      execute('call system({})')
+      feed_command('call system({})')
       eq(old_val, eval('v:shell_error'))
-      execute('call system([])')
+      feed_command('call system([])')
       eq(old_val, eval('v:shell_error'))
     end)
 
@@ -182,7 +182,7 @@ describe('system()', function()
     end)
     it('to backgrounded command does not crash', function()
       -- This is indeterminate, just exercise the codepath. May get E5677.
-      execute('call system("echo -n echoed &")')
+      feed_command('call system("echo -n echoed &")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
       if v_errnum then
         eq("E5677:", v_errnum)
@@ -197,7 +197,7 @@ describe('system()', function()
     end)
     it('to backgrounded command does not crash', function()
       -- This is indeterminate, just exercise the codepath. May get E5677.
-      execute('call system("cat - &")')
+      feed_command('call system("cat - &")')
       local v_errnum = string.match(eval("v:errmsg"), "^E%d*:")
       if v_errnum then
         eq("E5677:", v_errnum)

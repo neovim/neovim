@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local nvim_dir, execute = helpers.nvim_dir, helpers.execute
+local nvim_dir, command = helpers.nvim_dir, helpers.command
 local hide_cursor = thelpers.hide_cursor
 local show_cursor = thelpers.show_cursor
 
@@ -138,7 +138,7 @@ describe('cursor with customized highlighting', function()
       [3] = {bold = true},
     })
     screen:attach({rgb=false})
-    execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
+    command('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
   end)
 
   it('overrides the default highlighting', function()

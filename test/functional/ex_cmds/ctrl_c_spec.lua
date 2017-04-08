@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, source = helpers.clear, helpers.feed, helpers.source
-local execute = helpers.execute
+local command = helpers.command
 
 describe("CTRL-C (mapped)", function()
   before_each(function()
@@ -20,7 +20,7 @@ describe("CTRL-C (mapped)", function()
       nnoremap <C-C> <NOP>
     ]])
 
-    execute("silent edit! test/functional/fixtures/bigfile.txt")
+    command("silent edit! test/functional/fixtures/bigfile.txt")
     local screen = Screen.new(52, 6)
     screen:attach()
     screen:set_default_attr_ids({
