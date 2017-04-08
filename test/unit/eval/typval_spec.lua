@@ -743,10 +743,13 @@ describe('typval.c', function()
         collectgarbage()
       end)
       itp('copies list correctly and converts items', function()
-        local vc = ffi.gc(ffi.new('vimconv_T[1]'), function(vc)
-          lib.convert_setup(vc, nil, nil)
-        end)
-        -- UTF-8 ↔ latin1 conversions need no iconv
+        local vc = ffi.gc(
+          ffi.cast('vimconv_T*', lib.xcalloc(1, ffi.sizeof('vimconv_T'))),
+          function(vc)
+            lib.convert_setup(vc, nil, nil)
+            lib.xfree(vc)
+          end)
+        -- UTF-8 ↔ latin1 conversions needs no iconv
         eq(OK, lib.convert_setup(vc, to_cstr('utf-8'), to_cstr('latin1')))
 
         local v = {{['«']='»'}, {'„'}, 1, '“', null_string, null_list, null_dict}
