@@ -82,7 +82,7 @@ describe('location list', function()
     command('lrewind')
     command('enew')
     command('lopen')
-    command('lnext', 'lnext', 'lnext', 'lnext')
+    command(('lnext|'):rep(4))
 
     -- Split the window, copying the location list, then open the copied
     -- location list and again navigate forward.
@@ -119,11 +119,14 @@ describe('location list', function()
     -- ":{number}" followed by Enter repeatedly in the location list window.
     command('lrewind')
     command('lopen')
-    command('2', [[exe "normal \\<CR>"]])
+    command('2')
+    command([[exe "normal \\<CR>"]])
     command('wincmd p')
-    command('3', [[exe "normal \<CR>"]])
+    command('3')
+    command([[exe "normal \<CR>"]])
     command('wincmd p')
-    command('4', [[exe "normal \<CR>"]])
+    command('4')
+    command([[exe "normal \<CR>"]])
 
     -- Record the number of windows open, then go back to the result buffer.
     command('let numberOfWindowsOpen = winnr("$")')
@@ -149,11 +152,14 @@ describe('location list', function()
     command('lrewind')
     command('lopen')
     command('wincmd K')
-    command('2', [[exe "normal \<CR>"]])
+    command('2')
+    command([[exe "normal \<CR>"]])
     command('wincmd p')
-    command('3', [[exe "normal \<CR>"]])
+    command('3')
+    command([[exe "normal \<CR>"]])
     command('wincmd p')
-    command('4', [[exe "normal \<CR>"]])
+    command('4')
+    command([[exe "normal \<CR>"]])
 
     -- Record the 'buftype' of window 1 (the location list) and the buffer name
     -- of window 2 (the current "test protocol" buffer), then go back to the
