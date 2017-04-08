@@ -283,7 +283,7 @@ function Screen:wait(check, timeout)
   end
 
   if failure_after_success then
-    print([[
+    io.stderr:write([[
 Warning: Screen changes have been received after the expected state was seen.
 This is probably due to an indeterminism in the test. Try adding
 `wait()` (or even a separate `screen:expect(...)`) at a point of possible
@@ -299,7 +299,7 @@ If everything else fails, use Screen:redraw_debug to help investigate what is
       ]])
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
-    print(string.sub(tb,1,index))
+    io.stderr:write(string.sub(tb,1,index))
   end
 
   if err then
