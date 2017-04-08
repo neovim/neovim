@@ -4,7 +4,9 @@ local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed = helpers.clear, helpers.feed
 local command, expect = helpers.command, helpers.expect
+local eq = helpers.eq
 local wait = helpers.wait
+local exc_exec = helpers.exc_exec
 
 if helpers.pending_win32(pending) then return end
 
@@ -15,7 +17,8 @@ describe(':highlight', function()
     local screen = Screen.new(35, 10)
     screen:attach()
     -- Basic test if ":highlight" doesn't crash
-    command('set more', 'highlight')
+    command('set more')
+    feed(':highlight<CR>')
     -- FIXME(tarruda): We need to be sure the prompt is displayed before
     -- continuing, or risk a race condition where some of the following input
     -- is discarded resulting in test failure
@@ -51,16 +54,14 @@ describe(':highlight', function()
     command('hi Group2')
     command('hi clear')
     command('hi Group3')
-    command([[hi Crash cterm='asdf]])
+    eq('Vim(highlight):E475: Invalid argument: cterm=\'asdf',
+       exc_exec([[hi Crash cterm='asdf]]))
     command('redir END')
 
     -- Filter ctermfg and ctermbg, the numbers depend on the terminal
     command('0put a')
     command([[%s/ctermfg=\d*/ctermfg=2/]])
     command([[%s/ctermbg=\d*/ctermbg=3/]])
-
-    -- Filter out possibly translated error message
-    command('%s/E475: [^:]*:/E475:/')
 
     -- Fix the fileformat
     command('set ff&')
@@ -69,29 +70,17 @@ describe(':highlight', function()
     -- Assert buffer contents.
     expect([[
 
-
       NewGroup       xxx cterm=italic
                          ctermfg=2
                          ctermbg=3
                          guifg=#00ff00
                          guibg=Cyan
-
       Group2         xxx cleared
-
       Group3         xxx cterm=bold
-
-
       NewGroup       xxx cleared
-
       Group2         xxx cleared
-
-
       Group2         xxx cleared
-
-
-      Group3         xxx cleared
-
-      E475: cterm='asdf]])
+      Group3         xxx cleared]])
     screen:detach()
   end)
 end)
