@@ -237,24 +237,33 @@ describe('typval.c', function()
             list_watch(l, lis[4]),
             list_watch(l, lis[7]),
           }
+          alloc_log:check({
+            a.list(l),
+            a.li(lis[1]),
+            a.li(lis[2]),
+            a.li(lis[3]),
+            a.li(lis[4]),
+            a.li(lis[5]),
+            a.li(lis[6]),
+            a.li(lis[7]),
+          })
 
           lib.tv_list_item_remove(l, lis[4])
-          ffi.gc(lis[4], lib.tv_list_item_free)
+          alloc_log:check({a.freed(lis[4])})
           eq({lis[1], lis[5], lis[7]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
           lib.tv_list_item_remove(l, lis[2])
-          ffi.gc(lis[2], lib.tv_list_item_free)
+          alloc_log:check({a.freed(lis[2])})
           eq({lis[1], lis[5], lis[7]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
           lib.tv_list_item_remove(l, lis[7])
-          ffi.gc(lis[7], lib.tv_list_item_free)
+          alloc_log:check({a.freed(lis[7])})
           eq({lis[1], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
           lib.tv_list_item_remove(l, lis[1])
-          ffi.gc(lis[1], lib.tv_list_item_free)
+          alloc_log:check({a.freed(lis[1])})
           eq({lis[3], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
-          alloc_log:clear()
           lib.tv_list_watch_remove(l, lws[2])
           lib.tv_list_watch_remove(l, lws[3])
           lib.tv_list_watch_remove(l, lws[1])
