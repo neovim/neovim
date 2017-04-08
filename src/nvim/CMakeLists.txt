@@ -425,7 +425,6 @@ endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
   ex_cmds.h
-  ex_getln.h
   file_search.h
   fold.h
   getchar.h
