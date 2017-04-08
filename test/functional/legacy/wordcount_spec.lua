@@ -12,9 +12,7 @@ describe('wordcount', function()
   before_each(clear)
 
   it('is working', function()
-    command('set selection=inclusive')
-    command('fileformat=unix')
-    command('fileformats=unix')
+    command('set selection=inclusive fileformat=unix fileformats=unix')
 
     insert([=[
       RESULT test:]=])
