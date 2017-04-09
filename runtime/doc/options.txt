@@ -5151,8 +5151,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		saved.  When not included, the value of 'history' is used.
 							*shada-c*
 	c	Dummy option, kept for compatibility reasons.  Has no actual 
-		effect.  Current encoding state is described in 
-		|shada-encoding|.
+		effect: ShaDa always uses UTF-8 and 'encoding' value is fixed 
+		to UTF-8 as well.
 							*shada-f*
 	f	Whether file marks need to be stored.  If zero, file marks ('0
 		to '9, 'A to 'Z) are not stored.  When not present or when

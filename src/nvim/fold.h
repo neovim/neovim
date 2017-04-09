@@ -1,12 +1,12 @@
 #ifndef NVIM_FOLD_H
 #define NVIM_FOLD_H
 
-#include <stdio.h> // for FILE
+#include <stdio.h>
 
 #include "nvim/pos.h"
-#include "nvim/garray.h" // for garray_T
-#include "nvim/types.h" // for char_u
-#include "nvim/buffer_defs.h" // for win_T
+#include "nvim/garray.h"
+#include "nvim/types.h"
+#include "nvim/buffer_defs.h"
 
 /*
  * Info used to pass info about a fold from the fold-detection code to the
