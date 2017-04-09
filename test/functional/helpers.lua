@@ -32,20 +32,15 @@ local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' belloff= noshowcmd noruler nomore'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                    '--cmd', nvim_set, '--embed'}
-
-local mpack = require('mpack')
-
-local tmpname = global_helpers.tmpname
-local uname = global_helpers.uname
-
--- Formulate a path to the directory containing nvim.  We use this to
--- help run test executables.  It helps to keep the tests working, even
--- when the build is not in the default location.
+-- Directory containing nvim.
 local nvim_dir = nvim_prog:gsub("[/\\][^/\\]+$", "")
 if nvim_dir == nvim_prog then
   nvim_dir = "."
 end
 
+local mpack = require('mpack')
+local tmpname = global_helpers.tmpname
+local uname = global_helpers.uname
 local prepend_argv
 
 if os.getenv('VALGRIND') then
