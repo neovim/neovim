@@ -52,7 +52,7 @@ describe('quickfix selection highlight', function()
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
-      :cad                     |
+                               |
     ]])
   end)
 
@@ -69,7 +69,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
 
     command('cnext')
@@ -84,7 +84,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :cnext                   |
+                               |
     ]])
   end)
 
@@ -103,7 +103,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
 
     command('cnext')
@@ -118,7 +118,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :cnext                   |
+                               |
     ]])
   end)
 
@@ -139,7 +139,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
 
     feed('j')
@@ -154,7 +154,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
   end)
 
@@ -175,7 +175,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
 
     feed('j')
@@ -190,7 +190,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
   end)
 end)

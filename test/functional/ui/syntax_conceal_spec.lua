@@ -52,7 +52,7 @@ describe('Screen', function()
             ^                                                     |
             {0:~                                                    }|
             {0:~                                                    }|
-            :syn match dAmpersand '[&][&]' conceal cchar=∧       |
+                                                                 |
           ]])
       end)
 
@@ -68,7 +68,7 @@ describe('Screen', function()
                                                                |
           {0:~                                                    }|
           {0:~                                                    }|
-          :syn match dAmpersand '[&][&]' conceal cchar=∧       |
+                                                               |
         ]])
       end)
 
@@ -84,7 +84,7 @@ describe('Screen', function()
                                                                |
           {0:~                                                    }|
           {0:~                                                    }|
-          :syn match dAmpersand '[&][&]' conceal cchar=∧       |
+                                                               |
         ]])
       end)
 
@@ -100,7 +100,7 @@ describe('Screen', function()
                                                                |
           {0:~                                                    }|
           {0:~                                                    }|
-          :syn match dAmpersand '[&][&]' conceal cchar=∧       |
+                                                               |
         ]])
       end)
 
@@ -116,7 +116,7 @@ describe('Screen', function()
           ^                                                     |
           {0:~                                                    }|
           {0:~                                                    }|
-          :syn match dAmpersand '[&][&]' conceal cchar=∧       |
+                                                               |
         ]])
       end)
     end) -- multiple
@@ -135,7 +135,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        :syn keyword kLambda lambda conceal cchar=λ          |
+                                                             |
       ]])
     end) -- Keyword
 
@@ -218,7 +218,7 @@ describe('Screen', function()
           {0:~                                                    }|
           {0:~                                                    }|
           {0:~                                                    }|
-          :syn region rText start='<r>' end='</r>' cchar=-     |
+                                                               |
         ]])
       end)
 
@@ -237,7 +237,7 @@ describe('Screen', function()
           {0:~                                                    }|
           {0:~                                                    }|
           {0:~                                                    }|
-          :syn region iText start='<i>' end='</i>' cchar=*     |
+                                                               |
         ]])
         command("syntax conceal on")
         command("syn region iText start='<i>' end='</i>' cchar=*")
@@ -251,7 +251,7 @@ describe('Screen', function()
           {0:~                                                    }|
           {0:~                                                    }|
           {0:~                                                    }|
-          :syn region iText start='<i>' end='</i>' cchar=*     |
+                                                               |
         ]])
       end)
     end) -- a region of text (implicit concealing)
@@ -279,7 +279,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        :let &conceallevel=0                                 |
+                                                             |
       ]])
     end)
 
@@ -295,7 +295,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        :let &conceallevel=1                                 |
+                                                             |
       ]])
     end)
 
@@ -311,7 +311,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        :let &conceallevel=2                                 |
+                                                             |
       ]])
     end)
 
@@ -327,7 +327,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        :let &conceallevel=3                                 |
+                                                             |
       ]])
     end)
   end) -- conceallevel

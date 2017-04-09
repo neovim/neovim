@@ -44,7 +44,7 @@ describe('Signs', function()
         {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
-        :sign place 3 line=1 name=pietx buffer=1             |
+                                                             |
       ]])
     end)
   end)
