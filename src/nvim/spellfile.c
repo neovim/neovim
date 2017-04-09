@@ -494,6 +494,41 @@ typedef struct spellinfo_S {
 # include "spellfile.c.generated.h"
 #endif
 
+/// Read n bytes from fd to buf, returning on errors
+///
+/// @param[out]  buf  Buffer to read to, must be at least n bytes long.
+/// @param[in]  n  Amount of bytes to read.
+/// @param  fd  FILE* to read from.
+///
+/// @return Allows to proceed if everything is OK, returns SP_TRUNCERROR if
+///         there are not enough bytes, returns SP_OTHERERROR if reading failed.
+#define SPELL_READ_BYTES(buf, n, fd) \
+    do { \
+      const size_t n__SPRB = (n); \
+      FILE *const fd__SPRB = (fd); \
+      char *const buf__SPRB = (buf); \
+      const size_t read_bytes__SPRB = fread(buf__SPRB, 1, n__SPRB, fd__SPRB); \
+      if (read_bytes__SPRB != n__SPRB) { \
+        return feof(fd__SPRB) ? SP_TRUNCERROR : SP_OTHERERROR; \
+      } \
+    } while (0)
+
+/// Like #SPELL_READ_BYTES, but also error out if NUL byte was read
+///
+/// @return Allows to proceed if everything is OK, returns SP_TRUNCERROR if
+///         there are not enough bytes, returns SP_OTHERERROR if reading failed,
+///         returns SP_FORMERROR if read out a NUL byte.
+#define SPELL_READ_NONNUL_BYTES(buf, n, fd) \
+    do { \
+      const size_t n__SPRNB = (n); \
+      FILE *const fd__SPRNB = (fd); \
+      char *const buf__SPRNB = (buf); \
+      SPELL_READ_BYTES(buf__SPRNB, n__SPRNB, fd__SPRNB); \
+      if (memchr(buf__SPRNB, NUL, (size_t)n__SPRNB)) { \
+        return SP_FORMERROR; \
+      } \
+    } while (0)
+
 // Load one spell file and store the info into a slang_T.
 //
 // This is invoked in three ways:
@@ -935,12 +970,10 @@ static char_u *read_cnt_string(FILE *fd, int cnt_bytes, int *cntp)
 // Return SP_*ERROR flags.
 static int read_region_section(FILE *fd, slang_T *lp, int len)
 {
-  int i;
-
-  if (len > 16)
+  if (len > 16) {
     return SP_FORMERROR;
-  for (i = 0; i < len; ++i)
-    lp->sl_regions[i] = getc(fd);                       // <regionname>
+  }
+  SPELL_READ_NONNUL_BYTES((char *)lp->sl_regions, (size_t)len, fd);
   lp->sl_regions[len] = NUL;
   return 0;
 }
@@ -1004,13 +1037,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
     if (n > 0) {
       char buf[MAXWLEN + 1];
       buf[0] = '^';  // always match at one position only
-      const size_t read_byte = fread(buf + 1, 1, (size_t)n, fd);
-      if (read_byte != (size_t)n) {
-        return feof(fd) ? SP_TRUNCERROR : SP_OTHERERROR;
-      }
-      if (memchr(buf + 1, NUL, (size_t)n)) {
-        return SP_FORMERROR;
-      }
+      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd);
       buf[n + 1] = NUL;
       lp->sl_prefprog[i] = vim_regcomp((char_u *)buf, RE_MAGIC | RE_STRING);
     }

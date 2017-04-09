@@ -58,4 +58,22 @@ describe('spellfile', function()
     eq('Vim(set):E759: Format error in spell file',
        exc_exec('set spell'))
   end)
+  it('errors out when region contains NUL byte', function()
+    meths.set_option('runtimepath', testdir)
+    write_file(testdir .. '/spell/en.ascii.spl',
+    --                         ┌ Section identifier (#SN_REGION)
+    --                         │   ┌ Section flags (#SNF_REQUIRED or zero)
+    --                         │   │   ┌ Section length (4 bytes, MSB first)
+    --                         │   │   │
+               spellheader .. '\000\001\000\000\000\008'
+    --             ┌ Regions  ┌ End of sections marker
+               .. '01234\00067\255'
+    --             ┌ LWORDTREE tree length (4 bytes)
+    --             │               ┌ KWORDTREE tree length (4 bytes)
+    --             │               │               ┌ PREFIXTREE tree length
+               .. '\000\000\000\000\000\000\000\000\000\000\000\000')
+    meths.set_option('spelllang', 'en')
+    eq('Vim(set):E759: Format error in spell file',
+       exc_exec('set spell'))
+  end)
 end)
