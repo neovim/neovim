@@ -49,5 +49,28 @@ describe('jump', function()
     feed_check('<C-o>', 8)
     feed_check('<C-o>', 2)
   end)
+
+  it('keepjumps with jumporder', function()
+    execute('set jumporder')
+    feed('gg')
+    feed_check('j^*n', 10)
+    feed_check('<C-o>', 6)
+    -- in the middle of jumplist
+    feed_check(':keepjumps normal j^*<CR>', 11)
+    feed_check('<C-i>', 10)
+    feed_check('<C-o>', 6)
+    feed_check('<C-i>', 10)
+    -- in the end of jumplist
+    feed_check(':keepjumps normal j^*<CR>', 15)
+    feed_check('<C-o>', 6)
+    feed_check('<C-i>', 10)
+    feed_check('<C-i>', 10)
+    feed_check('<C-o>', 6)
+    feed_check('j^*', 11)
+    -- in the empty end of jumplist
+    feed_check(':keepjumps normal j^*<CR>', 16)
+    feed_check('<C-i>', 16)
+    feed_check('<C-o>', 7)
+  end)
   
 end)
