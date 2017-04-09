@@ -127,9 +127,7 @@ return function(options)
         for _, t in ipairs(list) do
           local fullname = getFileLine(t.element) .. colors.bright(t.name)
           string = string .. testString:format(fullname)
-          if options.deferPrint then
-            string = string .. getDescription(t)
-          end
+          string = string .. getDescription(t)
         end
       end
     end
@@ -255,10 +253,8 @@ return function(options)
     io.write(failureString)
     io.flush()
 
-    if not options.deferPrint then
-      io.write(failureDescription(handler.failures[#handler.failures]))
-      io.flush()
-    end
+    io.write(failureDescription(handler.failures[#handler.failures]))
+    io.flush()
     return nil, true
   end
 
@@ -266,19 +262,15 @@ return function(options)
     io.write(errorString)
     io.flush()
 
-    if not options.deferPrint then
-      io.write(failureDescription(handler.errors[#handler.errors]))
-      io.flush()
-    end
+    io.write(failureDescription(handler.errors[#handler.errors]))
+    io.flush()
     return nil, true
   end
 
   handler.error = function(element, parent, message, debug)
     if element.descriptor ~= 'it' then
-      if not options.deferPrint then
-        io.write(failureDescription(handler.errors[#handler.errors]))
-        io.flush()
-      end
+      io.write(failureDescription(handler.errors[#handler.errors]))
+      io.flush()
       errorCount = errorCount + 1
     end
 
