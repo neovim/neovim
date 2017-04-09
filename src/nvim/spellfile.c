@@ -1123,7 +1123,6 @@ static int read_rep_section(FILE *fd, garray_T *gap, int16_t *first)
 // Return SP_*ERROR flags.
 static int read_sal_section(FILE *fd, slang_T *slang)
 {
-  int i;
   int cnt;
   garray_T    *gap;
   salitem_T   *smp;
@@ -1133,13 +1132,16 @@ static int read_sal_section(FILE *fd, slang_T *slang)
 
   slang->sl_sofo = false;
 
-  i = getc(fd);                                 // <salflags>
-  if (i & SAL_F0LLOWUP)
+  const int flags = getc(fd);                   // <salflags>
+  if (flags & SAL_F0LLOWUP) {
     slang->sl_followup = true;
-  if (i & SAL_COLLAPSE)
+  }
+  if (flags & SAL_COLLAPSE) {
     slang->sl_collapse = true;
-  if (i & SAL_REM_ACCENTS)
+  }
+  if (flags & SAL_REM_ACCENTS) {
     slang->sl_rem_accents = true;
+  }
 
   cnt = get2c(fd);                              // <salcount>
   if (cnt < 0)
@@ -1159,7 +1161,8 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     smp->sm_lead = p;
 
     // Read up to the first special char into sm_lead.
-    for (i = 0; i < ccnt; ++i) {
+    int i = 0;
+    for (; i < ccnt; ++i) {
       c = getc(fd);                             // <salfrom>
       if (vim_strchr((char_u *)"0123456789(-<^$", c) != NULL)
         break;
@@ -1185,12 +1188,17 @@ static int read_sal_section(FILE *fd, slang_T *slang)
 
     // Any following chars go in sm_rules.
     smp->sm_rules = p;
-    if (i < ccnt)
+    if (i < ccnt) {
       // store the char we got while checking for end of sm_lead
       *p++ = c;
-    SPELL_READ_NONNUL_BYTES(                    // <salfrom>
-        (char *)p, (size_t)ccnt, fd, xfree(smp->sm_lead));
-    p += ccnt;
+    }
+    i++;
+    if (i < ccnt) {
+      SPELL_READ_NONNUL_BYTES(                  // <salfrom>
+          (char *)p, (size_t)(ccnt - i), fd, xfree(smp->sm_lead));
+      p += (ccnt - i);
+      i = ccnt;
+    }
     *p++ = NUL;
 
     // <saltolen> <salto>
