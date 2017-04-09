@@ -267,7 +267,7 @@
 #define SAL_REM_ACCENTS         4
 
 #define VIMSPELLMAGIC "VIMspell"  // string at start of Vim spell file
-#define VIMSPELLMAGICL 8
+#define VIMSPELLMAGICL (sizeof(VIMSPELLMAGIC) - 1)
 #define VIMSPELLVERSION 50
 
 // Section IDs.  Only renumber them when VIMSPELLVERSION changes!
@@ -516,7 +516,6 @@ spell_load_file (
   FILE        *fd;
   char_u buf[VIMSPELLMAGICL];
   char_u      *p;
-  int i;
   int n;
   int len;
   char_u      *save_sourcing_name = sourcing_name;
@@ -558,8 +557,9 @@ spell_load_file (
   sourcing_lnum = 0;
 
   // <HEADER>: <fileID>
-  for (i = 0; i < VIMSPELLMAGICL; ++i)
+  for (size_t i = 0; i < VIMSPELLMAGICL; i++) {
     buf[i] = getc(fd);                                  // <fileID>
+  }
   if (STRNCMP(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
     EMSG(_("E757: This does not look like a spell file"));
     goto endFAIL;
@@ -983,35 +983,36 @@ static int read_charflags_section(FILE *fd)
 // Return SP_*ERROR flags.
 static int read_prefcond_section(FILE *fd, slang_T *lp)
 {
-  int cnt;
-  int i;
-  int n;
-  char_u      *p;
-  char_u buf[MAXWLEN + 1];
-
   // <prefcondcnt> <prefcond> ...
-  cnt = get2c(fd);                                      // <prefcondcnt>
-  if (cnt <= 0)
+  const int cnt = get2c(fd);  // <prefcondcnt>
+  if (cnt <= 0) {
     return SP_FORMERROR;
+  }
 
   lp->sl_prefprog = xcalloc(cnt, sizeof(regprog_T *));
   lp->sl_prefixcnt = cnt;
 
-  for (i = 0; i < cnt; ++i) {
+  for (int i = 0; i < cnt; ++i) {
     // <prefcond> : <condlen> <condstr>
-    n = getc(fd);                                       // <condlen>
-    if (n < 0 || n >= MAXWLEN)
+    const int n = getc(fd);  // <condlen>
+    if (n < 0 || n >= MAXWLEN) {
       return SP_FORMERROR;
+    }
 
     // When <condlen> is zero we have an empty condition.  Otherwise
     // compile the regexp program used to check for the condition.
     if (n > 0) {
-      buf[0] = '^';                 // always match at one position only
-      p = buf + 1;
-      while (n-- > 0)
-        *p++ = getc(fd);                                // <condstr>
-      *p = NUL;
-      lp->sl_prefprog[i] = vim_regcomp(buf, RE_MAGIC + RE_STRING);
+      char buf[MAXWLEN + 1];
+      buf[0] = '^';  // always match at one position only
+      const size_t read_byte = fread(buf + 1, 1, (size_t)n, fd);
+      if (read_byte != (size_t)n) {
+        return feof(fd) ? SP_FORMERROR : SP_OTHERERROR;
+      }
+      if (memchr(buf + 1, NUL, (size_t)n)) {
+        return SP_FORMERROR;
+      }
+      buf[n + 1] = NUL;
+      lp->sl_prefprog[i] = vim_regcomp((char_u *)buf, RE_MAGIC | RE_STRING);
     }
   }
   return 0;
