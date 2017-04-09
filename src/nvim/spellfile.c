@@ -223,6 +223,7 @@
 //                          few bytes as possible, see offset2bytes())
 
 #include <stdio.h>
+#include <stdint.h>
 #include <wctype.h>
 
 #include "nvim/vim.h"
@@ -1569,9 +1570,14 @@ spell_read_tree (
 
   // The tree size was computed when writing the file, so that we can
   // allocate it as one long block. <nodecount>
-  int len = get4c(fd);
-  if (len < 0)
+  long len = get4c(fd);
+  if (len < 0) {
     return SP_TRUNCERROR;
+  }
+  if ((size_t)len >= SIZE_MAX / sizeof(int)) {
+    // Invalid length, multiply with sizeof(int) would overflow.
+    return SP_FORMERROR;
+  }
   if (len > 0) {
     // Allocate the byte array.
     bp = xmalloc(len);
