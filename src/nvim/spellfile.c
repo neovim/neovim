@@ -500,16 +500,18 @@ typedef struct spellinfo_S {
 /// @param[out]  buf  Buffer to read to, must be at least n bytes long.
 /// @param[in]  n  Amount of bytes to read.
 /// @param  fd  FILE* to read from.
+/// @param  exit_code  Code to run before returning.
 ///
 /// @return Allows to proceed if everything is OK, returns SP_TRUNCERROR if
 ///         there are not enough bytes, returns SP_OTHERERROR if reading failed.
-#define SPELL_READ_BYTES(buf, n, fd) \
+#define SPELL_READ_BYTES(buf, n, fd, exit_code) \
     do { \
       const size_t n__SPRB = (n); \
       FILE *const fd__SPRB = (fd); \
       char *const buf__SPRB = (buf); \
       const size_t read_bytes__SPRB = fread(buf__SPRB, 1, n__SPRB, fd__SPRB); \
       if (read_bytes__SPRB != n__SPRB) { \
+        exit_code; \
         return feof(fd__SPRB) ? SP_TRUNCERROR : SP_OTHERERROR; \
       } \
     } while (0)
@@ -519,13 +521,14 @@ typedef struct spellinfo_S {
 /// @return Allows to proceed if everything is OK, returns SP_TRUNCERROR if
 ///         there are not enough bytes, returns SP_OTHERERROR if reading failed,
 ///         returns SP_FORMERROR if read out a NUL byte.
-#define SPELL_READ_NONNUL_BYTES(buf, n, fd) \
+#define SPELL_READ_NONNUL_BYTES(buf, n, fd, exit_code) \
     do { \
       const size_t n__SPRNB = (n); \
       FILE *const fd__SPRNB = (fd); \
       char *const buf__SPRNB = (buf); \
-      SPELL_READ_BYTES(buf__SPRNB, n__SPRNB, fd__SPRNB); \
+      SPELL_READ_BYTES(buf__SPRNB, n__SPRNB, fd__SPRNB, exit_code); \
       if (memchr(buf__SPRNB, NUL, (size_t)n__SPRNB)) { \
+        exit_code; \
         return SP_FORMERROR; \
       } \
     } while (0)
@@ -543,7 +546,7 @@ static inline int spell_check_magic_string(FILE *const fd)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   char buf[VIMSPELLMAGICL];
-  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd);
+  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd, );
   if (memcmp(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
     return SP_FORMERROR;
   }
@@ -1001,7 +1004,7 @@ static int read_region_section(FILE *fd, slang_T *lp, int len)
   if (len > 16) {
     return SP_FORMERROR;
   }
-  SPELL_READ_NONNUL_BYTES((char *)lp->sl_regions, (size_t)len, fd);
+  SPELL_READ_NONNUL_BYTES((char *)lp->sl_regions, (size_t)len, fd, );
   lp->sl_regions[len] = NUL;
   return 0;
 }
@@ -1065,7 +1068,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
     if (n > 0) {
       char buf[MAXWLEN + 1];
       buf[0] = '^';  // always match at one position only
-      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd);
+      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd, );
       buf[n + 1] = NUL;
       lp->sl_prefprog[i] = vim_regcomp((char_u *)buf, RE_MAGIC | RE_STRING);
     }
@@ -1185,7 +1188,8 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     if (i < ccnt)
       // store the char we got while checking for end of sm_lead
       *p++ = c;
-    SPELL_READ_NONNUL_BYTES((char *)p, (size_t)ccnt, fd);  // <salfrom>
+    SPELL_READ_NONNUL_BYTES(                    // <salfrom>
+        (char *)p, (size_t)ccnt, fd, xfree(smp->sm_lead));
     p += ccnt;
     *p++ = NUL;
 
