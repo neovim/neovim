@@ -1571,8 +1571,9 @@ spell_read_tree (
   // The tree size was computed when writing the file, so that we can
   // allocate it as one long block. <nodecount>
   long len = get4c(fd);
-  if (len < 0)
+  if (len < 0) {
     return SP_TRUNCERROR;
+  }
   if ((size_t)len >= SIZE_MAX / sizeof(int)) {
     // Invalid length, multiply with sizeof(int) would overflow.
     return SP_FORMERROR;
