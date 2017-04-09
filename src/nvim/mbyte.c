@@ -1179,10 +1179,8 @@ int utf_fold(int a)
 // invalid values or can't handle latin1 when the locale is C.
 // Speed is most important here.
 
-/*
- * Return the upper-case equivalent of "a", which is a UCS-4 character.  Use
- * simple case folding.
- */
+/// Return the upper-case equivalent of "a", which is a UCS-4 character.  Use
+/// simple case folding.
 int mb_toupper(int a)
 {
   /* If 'casemap' contains "keepascii" use ASCII style toupper(). */
@@ -1205,14 +1203,12 @@ int mb_toupper(int a)
 
 bool mb_islower(int a)
 {
-  /* German sharp s is lower case but has no upper case equivalent. */
+  // German sharp s is lower case but has no upper case equivalent.
   return (mb_toupper(a) != a) || a == 0xdf;
 }
 
-/*
- * Return the lower-case equivalent of "a", which is a UCS-4 character.  Use
- * simple case folding.
- */
+/// Return the lower-case equivalent of "a", which is a UCS-4 character.  Use
+/// simple case folding.
 int mb_tolower(int a)
 {
   /* If 'casemap' contains "keepascii" use ASCII style tolower(). */

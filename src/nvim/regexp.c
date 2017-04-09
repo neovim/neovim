@@ -4573,12 +4573,14 @@ regmatch (
           if (OP(next) == EXACTLY) {
             rst.nextb = *OPERAND(next);
             if (ireg_ic) {
-              if (mb_isupper(rst.nextb))
+              if (mb_isupper(rst.nextb)) {
                 rst.nextb_ic = mb_tolower(rst.nextb);
-              else
+              } else {
                 rst.nextb_ic = mb_toupper(rst.nextb);
-            } else
+              }
+            } else {
               rst.nextb_ic = rst.nextb;
+            }
           } else {
             rst.nextb = NUL;
             rst.nextb_ic = NUL;
@@ -6312,14 +6314,15 @@ static char_u *cstrchr(char_u *s, int c)
   /* tolower() and toupper() can be slow, comparing twice should be a lot
    * faster (esp. when using MS Visual C++!).
    * For UTF-8 need to use folded case. */
-  if (enc_utf8 && c > 0x80)
+  if (c > 0x80) {
     cc = utf_fold(c);
-  else if (mb_isupper(c))
+  } else if (mb_isupper(c)) {
     cc = mb_tolower(c);
-  else if (mb_islower(c))
+  } else if (mb_islower(c)) {
     cc = mb_toupper(c);
-  else
+  } else {
     return vim_strchr(s, c);
+  }
 
   if (has_mbyte) {
     for (p = s; *p != NUL; p += (*mb_ptr2len)(p)) {

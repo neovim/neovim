@@ -4391,8 +4391,9 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_UPPER:
-    if (mb_isupper(c))
+    if (mb_isupper(c)) {
       return OK;
+    }
     break;
   case NFA_CLASS_XDIGIT:
     if (ascii_isxdigit(c))
@@ -5586,16 +5587,18 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
             }
             if (ireg_ic) {
               int curc_low = mb_tolower(curc);
-              int done = FALSE;
+              int done = false;
 
-              for (; c1 <= c2; ++c1)
+              for (; c1 <= c2; c1++) {
                 if (mb_tolower(c1) == curc_low) {
                   result = result_if_matched;
                   done = TRUE;
                   break;
                 }
-              if (done)
+              }
+              if (done) {
                 break;
+              }
             }
           } else if (state->c < 0 ? check_char_class(state->c, curc)
                      : (curc == state->c
@@ -6003,8 +6006,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 #endif
         result = (c == curc);
 
-        if (!result && ireg_ic)
+        if (!result && ireg_ic) {
           result = mb_tolower(c) == mb_tolower(curc);
+        }
 
         // If ireg_icombine is not set only skip over the character
         // itself.  When it is set skip over composing characters.

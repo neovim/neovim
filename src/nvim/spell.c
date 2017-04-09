@@ -2526,8 +2526,7 @@ void clear_spell_chartab(spelltab_T *sp)
   }
 }
 
-// Init the chartab used for spelling.  Only depends on 'encoding'.
-// Called once while starting up and when 'encoding' changes.
+// Init the chartab used for spelling. Called once while starting up.
 // The default is to use isalpha(), but the spell file should define the word
 // characters to make it possible that 'encoding' differs from the current
 // locale.  For utf-8 we don't use isalpha() but our own functions.
@@ -2537,36 +2536,17 @@ void init_spell_chartab(void)
 
   did_set_spelltab = false;
   clear_spell_chartab(&spelltab);
-  if (enc_dbcs) {
-    // DBCS: assume double-wide characters are word characters.
-    for (i = 128; i <= 255; ++i)
-      if (MB_BYTE2LEN(i) == 2)
-        spelltab.st_isw[i] = true;
-  } else if (enc_utf8)   {
-    for (i = 128; i < 256; ++i) {
-      int f = utf_fold(i);
-      int u = mb_toupper(i);
+  for (i = 128; i < 256; i++) {
+    int f = utf_fold(i);
+    int u = mb_toupper(i);
 
-      spelltab.st_isu[i] = mb_isupper(i);
-      spelltab.st_isw[i] = spelltab.st_isu[i] || mb_islower(i);
-      // The folded/upper-cased value is different between latin1 and
-      // utf8 for 0xb5, causing E763 for no good reason.  Use the latin1
-      // value for utf-8 to avoid this.
-      spelltab.st_fold[i] = (f < 256) ? f : i;
-      spelltab.st_upper[i] = (u < 256) ? u : i;
-    }
-  } else {
-    // Rough guess: use locale-dependent library functions.
-    for (i = 128; i < 256; ++i) {
-      if (mb_isupper(i)) {
-        spelltab.st_isw[i] = true;
-        spelltab.st_isu[i] = true;
-        spelltab.st_fold[i] = mb_tolower(i);
-      } else if (mb_islower(i))   {
-        spelltab.st_isw[i] = true;
-        spelltab.st_upper[i] = mb_toupper(i);
-      }
-    }
+    spelltab.st_isu[i] = mb_isupper(i);
+    spelltab.st_isw[i] = spelltab.st_isu[i] || mb_islower(i);
+    // The folded/upper-cased value is different between latin1 and
+    // utf8 for 0xb5, causing E763 for no good reason.  Use the latin1
+    // value for utf-8 to avoid this.
+    spelltab.st_fold[i] = (f < 256) ? f : i;
+    spelltab.st_upper[i] = (u < 256) ? u : i;
   }
 }
 

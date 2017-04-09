@@ -16792,7 +16792,8 @@ void timer_teardown(void)
 static void f_tolower(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *)strcase_save(tv_get_string(&argvars[0]), false);
+  rettv->vval.v_string = (char_u *)strcase_save(tv_get_string(&argvars[0]),
+                                                false);
 }
 
 /*
@@ -16801,7 +16802,8 @@ static void f_tolower(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_toupper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *)strcase_save(tv_get_string(&argvars[0]), true);
+  rettv->vval.v_string = (char_u *)strcase_save(tv_get_string(&argvars[0]),
+                                                true);
 }
 
 /*

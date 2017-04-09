@@ -1957,15 +1957,17 @@ int swapchar(int op_type, pos_T *pos)
     return FALSE;
   nc = c;
   if (mb_islower(c)) {
-    if (op_type == OP_ROT13)
+    if (op_type == OP_ROT13) {
       nc = ROT13(c, 'a');
-    else if (op_type != OP_LOWER)
+    } else if (op_type != OP_LOWER) {
       nc = mb_toupper(c);
+    }
   } else if (mb_isupper(c)) {
-    if (op_type == OP_ROT13)
+    if (op_type == OP_ROT13) {
       nc = ROT13(c, 'A');
-    else if (op_type != OP_UPPER)
+    } else if (op_type != OP_UPPER) {
       nc = mb_tolower(c);
+    }
   }
   if (nc != c) {
     if (enc_utf8 && (c >= 0x80 || nc >= 0x80)) {
@@ -3328,9 +3330,10 @@ void ex_display(exarg_T *eap)
     get_clipboard(name, &yb, true);
 
     if (name == mb_tolower(redir_reg)
-        || (redir_reg == '"' && yb == y_previous))
-      continue;             /* do not list register being written to, the
-                             * pointer can be freed */
+        || (redir_reg == '"' && yb == y_previous)) {
+      continue;  // do not list register being written to, the
+                 // pointer can be freed
+    }
 
     if (yb->y_array != NULL) {
       msg_putchar('\n');

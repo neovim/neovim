@@ -2730,7 +2730,7 @@ do_dialog (
         break;
       }
 
-      /* Make the character lowercase, as chars in "hotkeys" are. */
+      // Make the character lowercase, as chars in "hotkeys" are.
       c = mb_tolower(c);
       retval = 1;
       for (i = 0; hotkeys[i]; ++i) {

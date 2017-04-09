@@ -2303,8 +2303,9 @@ static void ins_compl_longest_match(compl_T *match)
         c2 = *s;
       }
       if (match->cp_icase ? (mb_tolower(c1) != mb_tolower(c2))
-          : (c1 != c2))
+          : (c1 != c2)) {
         break;
+      }
       if (has_mbyte) {
         mb_ptr_adv(p);
         mb_ptr_adv(s);

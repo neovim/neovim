@@ -1865,7 +1865,7 @@ int pathcmp(const char *p, const char *q, int maxlen)
       if (vim_ispathsep(c2))
         return 1;
       return p_fic ? mb_toupper(c1) - mb_toupper(c2)
-             : c1 - c2;         /* no match */
+                   : c1 - c2;  // no match
     }
 
     i += MB_PTR2LEN((char_u *)p + i);
