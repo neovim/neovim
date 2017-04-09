@@ -16791,30 +16791,8 @@ void timer_teardown(void)
  */
 static void f_tolower(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char_u *p = (char_u *)xstrdup(tv_get_string(&argvars[0]));
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = p;
-
-  while (*p != NUL) {
-    int l;
-
-    if (enc_utf8) {
-      int c, lc;
-
-      c = utf_ptr2char(p);
-      lc = mb_tolower(c);
-      l = utf_ptr2len(p);
-      /* TODO: reallocate string when byte count changes. */
-      if (utf_char2len(lc) == l)
-        utf_char2bytes(lc, p);
-      p += l;
-    } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
-      p += l;                 /* skip multi-byte character */
-    else {
-      *p = TOLOWER_LOC(*p);         /* note that tolower() can be a macro */
-      ++p;
-    }
-  }
+  rettv->vval.v_string = (char_u *)strcase_save(tv_get_string(&argvars[0]), false);
 }
 
 /*
@@ -16823,7 +16801,7 @@ static void f_tolower(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_toupper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *)strup_save(tv_get_string(&argvars[0]));
+  rettv->vval.v_string = (char_u *)strcase_save(tv_get_string(&argvars[0]), true);
 }
 
 /*
