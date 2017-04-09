@@ -1572,6 +1572,10 @@ spell_read_tree (
   int len = get4c(fd);
   if (len < 0)
     return SP_TRUNCERROR;
+  if (len >= 0x3ffffff) {
+    // Invalid length, multiply with sizeof(int) would overflow.
+    return SP_FORMERROR;
+  }
   if (len > 0) {
     // Allocate the byte array.
     bp = xmalloc(len);
