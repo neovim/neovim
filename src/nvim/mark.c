@@ -169,8 +169,8 @@ void setpcmark(void)
   curwin->w_prev_pcmark = curwin->w_pcmark;
   curwin->w_pcmark = curwin->w_cursor;
 
-  if (p_ordjumps){
-    for (i = curwin->w_jumplistidx; i < curwin->w_jumplistlen; i++){
+  if (p_jumpord) {
+    for (i = curwin->w_jumplistidx; i < curwin->w_jumplistlen; i++) {
       free_xfmark(curwin->w_jumplist[i]);
     }
     curwin->w_jumplistlen = curwin->w_jumplistidx;

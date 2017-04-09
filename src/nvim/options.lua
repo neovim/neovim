@@ -1648,10 +1648,10 @@ return {
       defaults={if_true={vi=""}}
     },
     {
-      full_name='orderjumps',
+      full_name='jumporder',
       type='bool', scope={'global'},
       vi_def=true,
-      varname='p_ordjumps',
+      varname='p_jumpord',
       defaults={if_true={vi=false}}
     },
     {
