@@ -1580,33 +1580,6 @@ vungetc ( /* unget one character (can only be done once!) */
   old_mouse_col = mouse_col;
 }
 
-// The "INSERT" message is taken care of here:
-//     If vgetorpeek() is about to return an ESC to exit insert mode, the
-//     message is deleted
-//     If it's not going to return an ESC but has already deleted the message,
-//     redisplay it. This can be the case if we waited on an insert-mode
-//     mapping that began with ESC, and cleared the mode to give the appearance
-//     of an instant reaction to the ESC.
-static void do_insert_message(const bool mode_deleted, const int c,
-                              const int advance)
-{
-  if (advance && p_smd && msg_silent == 0 && (State & INSERT)) {
-    if (c == ESC && !mode_deleted && !no_mapping && mode_displayed) {
-      if (typebuf.tb_len && !KeyTyped) {
-        redraw_cmdline = true;              // delete mode later
-      } else {
-        unshowmode(false);
-      }
-    } else if (c != ESC && mode_deleted) {
-      if (typebuf.tb_len && !KeyTyped) {
-        redraw_cmdline = true;              // show mode later
-      } else {
-        showmode();
-      }
-    }
-  }
-}
-
 static long calc_waittime(const int keylen)
 {
   if (typebuf.tb_len == 0) {
@@ -2431,7 +2404,29 @@ static int vgetorpeek(const int advance)
     }             // for (;;)
   }           // if (!character from stuffbuf)
 
-  do_insert_message(mode_deleted, c, advance);
+  // The "INSERT" message is taken care of here:
+  //     If vgetorpeek() is about to return an ESC to exit insert mode, the
+  //     message is deleted
+  //     If it's not going to return an ESC but has already deleted the message,
+  //     redisplay it. This can be the case if we waited on an insert-mode
+  //     mapping that began with ESC, and cleared the mode to give the appearance
+  //     of an instant reaction to the ESC.
+  // We only use variables "advance", "c", and "mode_deleted" here.
+  if (advance && p_smd && msg_silent == 0 && (State & INSERT)) {
+    if (c == ESC && !mode_deleted && !no_mapping && mode_displayed) {
+      if (typebuf.tb_len && !KeyTyped) {
+        redraw_cmdline = true;              // delete mode later
+      } else {
+        unshowmode(false);
+      }
+    } else if (c != ESC && mode_deleted) {
+      if (typebuf.tb_len && !KeyTyped) {
+        redraw_cmdline = true;              // show mode later
+      } else {
+        showmode();
+      }
+    }
+  }
 
   vgetc_busy--;
 
