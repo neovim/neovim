@@ -967,12 +967,12 @@ static u_entry_T *unserialize_uep(bufinfo_T * bi, bool *error,
   uep->ue_lcount = undo_read_4c(bi);
   uep->ue_size = undo_read_4c(bi);
 
-  char_u **array;
+  char_u **array = NULL;
   if (uep->ue_size > 0) {
-    array = xmalloc(sizeof(char_u *) * (size_t)uep->ue_size);
-    memset(array, 0, sizeof(char_u *) * (size_t)uep->ue_size);
-  } else {
-    array = NULL;
+    if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char_u *)) {
+      array = xmalloc(sizeof(char_u *) * (size_t)uep->ue_size);
+      memset(array, 0, sizeof(char_u *) * (size_t)uep->ue_size);
+    }
   }
   uep->ue_array = array;
 
