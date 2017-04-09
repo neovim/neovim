@@ -76,6 +76,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <fcntl.h>
 
@@ -1400,7 +1401,9 @@ void u_read_undo(char *name, char_u *hash, char_u *orig_name)
   // sequence numbers of the headers.
   // When there are no headers uhp_table is NULL.
   if (num_head > 0) {
-    uhp_table = xmalloc((size_t)num_head * sizeof(u_header_T *));
+    if ((size_t)num_head < SIZE_MAX / sizeof(*uhp_table)) {
+      uhp_table = xmalloc((size_t)num_head * sizeof(*uhp_table));
+    }
   }
 
   long num_read_uhps = 0;
