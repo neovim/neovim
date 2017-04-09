@@ -41,7 +41,7 @@ set(LINT_SUPPRESS_URL "${LINT_SUPPRESS_URL_BASE}/errors.json")
 set(LINT_PRG ${PROJECT_SOURCE_DIR}/src/clint.py)
 set(DOWNLOAD_SCRIPT ${PROJECT_SOURCE_DIR}/cmake/Download.cmake)
 set(LINT_SUPPRESSES_ROOT ${PROJECT_BINARY_DIR}/errors)
-set(LINT_SUPPRESSES_URL "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.tar.gz")
+set(LINT_SUPPRESSES_URL "${LINT_SUPPRESS_URL_BASE}/errors.tar.gz")
 
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
@@ -486,6 +486,20 @@ function(add_download output url allow_failure)
   )
 endfunction()
 
+include(ExternalProject)
+ExternalProject_Add(
+  clint-error-files
+  PREFIX "${LINT_SUPPRESSES_ROOT}"
+  URL "${LINT_SUPPRESSES_URL}"
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  BUILD_IN_SOURCE 1
+  INSTALL_COMMAND
+    "${CMAKE_COMMAND}"
+      -DTARGET=${LINT_SUPPRESSES_ROOT}
+      -P "${PROJECT_SOURCE_DIR}/cmake/InstallClintErrors.cmake"
+)
+
 add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
 
 set(LINT_NVIM_REL_SOURCES)
@@ -494,14 +508,13 @@ foreach(sfile ${LINT_NVIM_SOURCES})
   set(suppress_file ${LINT_SUPPRESSES_ROOT}/${suffix}.json)
   set(suppress_url "${LINT_SUPPRESS_URL_BASE}/${suffix}.json")
   set(rsfile src/nvim/${r})
-  add_download(${suppress_file} ${suppress_url} on)
   set(touch_file "${TOUCHES_DIR}/ran-clint-${suffix}")
   add_custom_command(
     OUTPUT ${touch_file}
     COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} ${rsfile}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
-    DEPENDS ${LINT_PRG} ${sfile} ${suppress_file}
+    DEPENDS ${LINT_PRG} ${sfile} clint-error-files
   )
   list(APPEND LINT_TARGETS ${touch_file})
   list(APPEND LINT_NVIM_REL_SOURCES ${rsfile})
