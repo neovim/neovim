@@ -42,6 +42,9 @@ set(LINT_PRG ${PROJECT_SOURCE_DIR}/src/clint.py)
 set(DOWNLOAD_SCRIPT ${PROJECT_SOURCE_DIR}/cmake/Download.cmake)
 set(LINT_SUPPRESSES_ROOT ${PROJECT_BINARY_DIR}/errors)
 set(LINT_SUPPRESSES_URL "${LINT_SUPPRESS_URL_BASE}/errors.tar.gz")
+set(LINT_SUPPRESSES_ARCHIVE ${LINT_SUPPRESSES_ROOT}/errors.tar.gz)
+set(LINT_SUPPRESSES_TOUCH_FILE "${TOUCHES_DIR}/unpacked-clint-errors-archive")
+set(LINT_SUPPRESSES_INSTALL_SCRIPT "${PROJECT_SOURCE_DIR}/cmake/InstallClintErrors.cmake")
 
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
@@ -50,6 +53,8 @@ include_directories(${GENERATED_INCLUDES_DIR})
 file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
+file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT})
+file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
@@ -486,19 +491,18 @@ function(add_download output url allow_failure)
   )
 endfunction()
 
-include(ExternalProject)
-ExternalProject_Add(
-  clint-error-files
-  PREFIX "${LINT_SUPPRESSES_ROOT}"
-  URL "${LINT_SUPPRESSES_URL}"
-  EXCLUDE_FROM_ALL 1
-  CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
-  BUILD_IN_SOURCE 1
-  INSTALL_COMMAND
-    "${CMAKE_COMMAND}"
+add_download(${LINT_SUPPRESSES_ARCHIVE} ${LINT_SUPPRESSES_URL} off)
+
+add_custom_command(
+  OUTPUT ${LINT_SUPPRESSES_TOUCH_FILE}
+  WORKING_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src
+  COMMAND ${CMAKE_COMMAND} -E tar xfz ${LINT_SUPPRESSES_ARCHIVE}
+  COMMAND
+    ${CMAKE_COMMAND}
       -DTARGET=${LINT_SUPPRESSES_ROOT}
-      -P "${PROJECT_SOURCE_DIR}/cmake/InstallClintErrors.cmake"
+      -P ${LINT_SUPPRESSES_INSTALL_SCRIPT}
+  DEPENDS
+    ${LINT_SUPPRESSES_ARCHIVE} ${LINT_SUPPRESSES_INSTALL_SCRIPT}
 )
 
 add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
@@ -515,7 +519,7 @@ foreach(sfile ${LINT_NVIM_SOURCES})
     COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} ${rsfile}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
-    DEPENDS ${LINT_PRG} ${sfile} clint-error-files
+    DEPENDS ${LINT_PRG} ${sfile} ${LINT_SUPPRESSES_TOUCH_FILE}
   )
   list(APPEND LINT_TARGETS ${touch_file})
   list(APPEND LINT_NVIM_REL_SOURCES ${rsfile})
