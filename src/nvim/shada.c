@@ -73,15 +73,10 @@ KHASH_SET_INIT_STR(strset)
     (vim_rename((char_u *)a, (char_u *)b))
 #define mb_strnicmp(a, b, c) \
     (mb_strnicmp((char_u *)a, (char_u *)b, c))
-#define has_non_ascii(a) (has_non_ascii((char_u *)a))
-#define string_convert(a, b, c) \
-      ((char *)string_convert((vimconv_T *)a, (char_u *)b, c))
 #define path_shorten_fname_if_possible(b) \
     ((char *)path_shorten_fname_if_possible((char_u *)b))
 #define buflist_new(ffname, sfname, ...) \
     (buflist_new((char_u *)ffname, (char_u *)sfname, __VA_ARGS__))
-#define convert_setup(vcp, from, to) \
-    (convert_setup(vcp, (char_u *)from, (char_u *)to))
 #define os_isdir(f) (os_isdir((char_u *) f))
 #define regtilde(s, m) ((char *) regtilde((char_u *) s, m))
 #define path_tail_with_sep(f) ((char *) path_tail_with_sep((char_u *)f))
@@ -413,8 +408,6 @@ typedef struct sd_read_def {
   const char *error;      ///< Error message in case of error.
   uintmax_t fpos;         ///< Current position (amount of bytes read since
                           ///< reader structure initialization). May overflow.
-  vimconv_T sd_conv;      ///< Structure used for converting encodings of some
-                          ///< items.
 } ShaDaReadDef;
 
 struct sd_write_def;
@@ -435,8 +428,6 @@ typedef struct sd_write_def {
   ShaDaWriteCloser close;  ///< Close function.
   void *cookie;            ///< Data describing object written to.
   const char *error;       ///< Error message in case of error.
-  vimconv_T sd_conv;       ///< Structure used for converting encodings of some
-                           ///< items.
 } ShaDaWriteDef;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -803,7 +794,7 @@ static int open_shada_file_for_reading(const char *const fname,
     return error;
   }
 
-  convert_setup(&sd_reader->sd_conv, "utf-8", p_enc);
+  assert(STRCMP(p_enc, "utf-8") == 0);
 
   return 0;
 }
@@ -1899,127 +1890,24 @@ shada_pack_entry_error:
 }
 #undef PACK_STRING
 
-/// Write single ShaDa entry, converting it if needed
+/// Write single ShaDa entry and free it afterwards
 ///
-/// @warning Frees entry after packing.
+/// Will not free if entry could not be freed.
 ///
 /// @param[in]  packer     Packer used to write entry.
-/// @param[in]  sd_conv    Conversion definitions.
-/// @param[in]  entry      Entry written. If entry.can_free_entry is false then
-///                        it assumes that entry was not converted, otherwise it
-///                        is assumed that entry was already converted.
+/// @param[in]  entry      Entry written.
 /// @param[in]  max_kbyte  Maximum size of an item in KiB. Zero means no
 ///                        restrictions.
-static ShaDaWriteResult shada_pack_encoded_entry(msgpack_packer *const packer,
-                                                 const vimconv_T *const sd_conv,
-                                                 PossiblyFreedShadaEntry entry,
-                                                 const size_t max_kbyte)
-  FUNC_ATTR_NONNULL_ALL
+static inline ShaDaWriteResult shada_pack_pfreed_entry(
+    msgpack_packer *const packer, PossiblyFreedShadaEntry entry,
+    const size_t max_kbyte)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   ShaDaWriteResult ret = kSDWriteSuccessfull;
+  ret = shada_pack_entry(packer, entry.data, max_kbyte);
   if (entry.can_free_entry) {
-    ret = shada_pack_entry(packer, entry.data, max_kbyte);
     shada_free_shada_entry(&entry.data);
-    return ret;
   }
-#define RUN_WITH_CONVERTED_STRING(cstr, code) \
-  do { \
-    bool did_convert = false; \
-    if (sd_conv->vc_type != CONV_NONE && has_non_ascii((cstr))) { \
-      char *const converted_string = string_convert(sd_conv, (cstr), NULL); \
-      if (converted_string != NULL) { \
-        (cstr) = converted_string; \
-        did_convert = true; \
-      } \
-    } \
-    code \
-    if (did_convert) { \
-      xfree((cstr)); \
-    } \
-  } while (0)
-  switch (entry.data.type) {
-    case kSDItemUnknown:
-    case kSDItemMissing: {
-      assert(false);
-    }
-    case kSDItemSearchPattern: {
-      RUN_WITH_CONVERTED_STRING(entry.data.data.search_pattern.pat, {
-        ret = shada_pack_entry(packer, entry.data, max_kbyte);
-      });
-      break;
-    }
-    case kSDItemHistoryEntry: {
-      RUN_WITH_CONVERTED_STRING(entry.data.data.history_item.string, {
-        ret = shada_pack_entry(packer, entry.data, max_kbyte);
-      });
-      break;
-    }
-    case kSDItemSubString: {
-      RUN_WITH_CONVERTED_STRING(entry.data.data.sub_string.sub, {
-        ret = shada_pack_entry(packer, entry.data, max_kbyte);
-      });
-      break;
-    }
-    case kSDItemVariable: {
-      if (sd_conv->vc_type != CONV_NONE) {
-        typval_T tgttv;
-        var_item_copy(sd_conv, &entry.data.data.global_var.value, &tgttv,
-                      true, 0);
-        tv_clear(&entry.data.data.global_var.value);
-        entry.data.data.global_var.value = tgttv;
-      }
-      ret = shada_pack_entry(packer, entry.data, max_kbyte);
-      break;
-    }
-    case kSDItemRegister: {
-      bool did_convert = false;
-      if (sd_conv->vc_type != CONV_NONE) {
-        size_t first_non_ascii = 0;
-        for (size_t i = 0; i < entry.data.data.reg.contents_size; i++) {
-          if (has_non_ascii(entry.data.data.reg.contents[i])) {
-            first_non_ascii = i;
-            did_convert = true;
-            break;
-          }
-        }
-        if (did_convert) {
-          entry.data.data.reg.contents =
-              xmemdup(entry.data.data.reg.contents,
-                      (entry.data.data.reg.contents_size
-                       * sizeof(entry.data.data.reg.contents[0])));
-          for (size_t i = 0; i < entry.data.data.reg.contents_size; i++) {
-            if (i >= first_non_ascii) {
-              entry.data.data.reg.contents[i] = get_converted_string(
-                  sd_conv,
-                  entry.data.data.reg.contents[i],
-                  strlen(entry.data.data.reg.contents[i]));
-            } else {
-              entry.data.data.reg.contents[i] =
-                  xstrdup(entry.data.data.reg.contents[i]);
-            }
-          }
-        }
-      }
-      ret = shada_pack_entry(packer, entry.data, max_kbyte);
-      if (did_convert) {
-        for (size_t i = 0; i < entry.data.data.reg.contents_size; i++) {
-          xfree(entry.data.data.reg.contents[i]);
-        }
-        xfree(entry.data.data.reg.contents);
-      }
-      break;
-    }
-    case kSDItemHeader:
-    case kSDItemGlobalMark:
-    case kSDItemJump:
-    case kSDItemBufferList:
-    case kSDItemLocalMark:
-    case kSDItemChange: {
-      ret = shada_pack_entry(packer, entry.data, max_kbyte);
-      break;
-    }
-  }
-#undef RUN_WITH_CONVERTED_STRING
   return ret;
 }
 
@@ -2556,11 +2444,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
         break;
       }
       typval_T tgttv;
-      if (sd_writer->sd_conv.vc_type != CONV_NONE) {
-        var_item_copy(&sd_writer->sd_conv, &vartv, &tgttv, true, 0);
-      } else {
-        tv_copy(&vartv, &tgttv);
-      }
+      tv_copy(&vartv, &tgttv);
       ShaDaWriteResult spe_ret;
       if ((spe_ret = shada_pack_entry(packer, (ShadaEntry) {
         .type = kSDItemVariable,
@@ -2811,9 +2695,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   do { \
     for (size_t i_ = 0; i_ < ARRAY_SIZE(wms_array); i_++) { \
       if (wms_array[i_].data.type != kSDItemMissing) { \
-        if (shada_pack_encoded_entry(packer, &sd_writer->sd_conv, \
-                                     wms_array[i_], \
-                                     max_kbyte) == kSDWriteFailed) { \
+        if (shada_pack_pfreed_entry(packer, wms_array[i_], max_kbyte) \
+            == kSDWriteFailed) { \
           ret = kSDWriteFailed; \
           goto shada_write_exit; \
         } \
@@ -2823,8 +2706,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   PACK_WMS_ARRAY(wms->global_marks);
   PACK_WMS_ARRAY(wms->registers);
   for (size_t i = 0; i < wms->jumps_size; i++) {
-    if (shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms->jumps[i],
-                                 max_kbyte) == kSDWriteFailed) {
+    if (shada_pack_pfreed_entry(packer, wms->jumps[i], max_kbyte)
+        == kSDWriteFailed) {
       ret = kSDWriteFailed;
       goto shada_write_exit;
     }
@@ -2832,8 +2715,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 #define PACK_WMS_ENTRY(wms_entry) \
   do { \
     if (wms_entry.data.type != kSDItemMissing) { \
-      if (shada_pack_encoded_entry(packer, &sd_writer->sd_conv, wms_entry, \
-                                   max_kbyte) == kSDWriteFailed) { \
+      if (shada_pack_pfreed_entry(packer, wms_entry, max_kbyte) \
+          == kSDWriteFailed) { \
         ret = kSDWriteFailed; \
         goto shada_write_exit; \
       } \
@@ -2860,9 +2743,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   for (size_t i = 0; i < file_markss_to_dump; i++) {
     PACK_WMS_ARRAY(all_file_markss[i]->marks);
     for (size_t j = 0; j < all_file_markss[i]->changes_size; j++) {
-      if (shada_pack_encoded_entry(packer, &sd_writer->sd_conv,
-                                   all_file_markss[i]->changes[j],
-                                   max_kbyte) == kSDWriteFailed) {
+      if (shada_pack_pfreed_entry(packer, all_file_markss[i]->changes[j],
+                                  max_kbyte) == kSDWriteFailed) {
         ret = kSDWriteFailed;
         goto shada_write_exit;
       }
@@ -2886,8 +2768,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       if (dump_one_history[i]) {
         hms_insert_whole_neovim_history(&wms->hms[i]);
         HMS_ITER(&wms->hms[i], cur_entry, {
-          if (shada_pack_encoded_entry(
-              packer, &sd_writer->sd_conv, (PossiblyFreedShadaEntry) {
+          if (shada_pack_pfreed_entry(
+              packer, (PossiblyFreedShadaEntry) {
                 .data = cur_entry->data,
                 .can_free_entry = cur_entry->can_free_entry,
               }, max_kbyte) == kSDWriteFailed) {
@@ -3037,8 +2919,6 @@ shada_write_file_nomerge: {}
     smsg(_("Writing ShaDa file \"%s\""), fname);
     verbose_leave();
   }
-
-  convert_setup(&sd_writer.sd_conv, p_enc, "utf-8");
 
   const ShaDaWriteResult sw_ret = shada_write(&sd_writer, (nomerge
                                                            ? NULL
@@ -3327,29 +3207,6 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader,
   return kSDReadStatusSuccess;
 }
 
-/// Convert or copy and return a string
-///
-/// @param[in]  sd_conv  Conversion definition.
-/// @param[in]  str      String to convert.
-/// @param[in]  len      String length.
-///
-/// @return [allocated] converted string or copy of the original string.
-static inline char *get_converted_string(const vimconv_T *const sd_conv,
-                                         const char *const str,
-                                         const size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (!has_non_ascii_len(str, len)) {
-    return xmemdupz(str, len);
-  }
-  size_t new_len = len;
-  char *const new_str = string_convert(sd_conv, str, &new_len);
-  if (new_str == NULL) {
-    return xmemdupz(str, len);
-  }
-  return new_str;
-}
-
 #define READERR(entry_name, error_desc) \
     RERR "Error while reading ShaDa file: " \
     entry_name " entry at position %" PRIu64 " " \
@@ -3427,10 +3284,7 @@ static inline char *get_converted_string(const vimconv_T *const sd_conv,
            sizeof(*unpacked.data.via.map.ptr)); \
     ad_ga.ga_len++; \
   }
-#define CONVERTED(str, len) ( \
-    sd_reader->sd_conv.vc_type != CONV_NONE \
-    ? get_converted_string(&sd_reader->sd_conv, (str), (len)) \
-    : xmemdupz((str), (len)))
+#define CONVERTED(str, len) (xmemdupz((str), (len)))
 #define BIN_CONVERTED(b) CONVERTED(b.ptr, b.size)
 #define SET_ADDITIONAL_DATA(tgt, name) \
       do { \
@@ -3803,30 +3657,14 @@ shada_read_next_item_start:
             (char) unpacked.data.via.array.ptr[2].via.u64;
       }
       size_t strsize;
-      if (sd_reader->sd_conv.vc_type == CONV_NONE
-          || !has_non_ascii_len(unpacked.data.via.array.ptr[1].via.bin.ptr,
-                                unpacked.data.via.array.ptr[1].via.bin.size)) {
-shada_read_next_item_hist_no_conv:
-        strsize = (
-            unpacked.data.via.array.ptr[1].via.bin.size
-            + 1  // Zero byte
-            + 1);  // Separator character
-        entry->data.history_item.string = xmalloc(strsize);
-        memcpy(entry->data.history_item.string,
-               unpacked.data.via.array.ptr[1].via.bin.ptr,
-               unpacked.data.via.array.ptr[1].via.bin.size);
-      } else {
-        size_t len = unpacked.data.via.array.ptr[1].via.bin.size;
-        char *const converted = string_convert(
-            &sd_reader->sd_conv, unpacked.data.via.array.ptr[1].via.bin.ptr,
-            &len);
-        if (converted != NULL) {
-          strsize = len + 2;
-          entry->data.history_item.string = xrealloc(converted, strsize);
-        } else {
-          goto shada_read_next_item_hist_no_conv;
-        }
-      }
+      strsize = (
+          unpacked.data.via.array.ptr[1].via.bin.size
+          + 1  // Zero byte
+          + 1);  // Separator character
+      entry->data.history_item.string = xmalloc(strsize);
+      memcpy(entry->data.history_item.string,
+             unpacked.data.via.array.ptr[1].via.bin.ptr,
+             unpacked.data.via.array.ptr[1].via.bin.size);
       entry->data.history_item.string[strsize - 2] = 0;
       entry->data.history_item.string[strsize - 1] =
           entry->data.history_item.sep;
@@ -3858,16 +3696,6 @@ shada_read_next_item_hist_no_conv:
         emsgf(_(READERR("variable", "has value that cannot "
                         "be converted to the VimL value")), initial_fpos);
         goto shada_read_next_item_error;
-      }
-      if (sd_reader->sd_conv.vc_type != CONV_NONE) {
-        typval_T tgttv;
-        var_item_copy(&sd_reader->sd_conv,
-                      &entry->data.global_var.value,
-                      &tgttv,
-                      true,
-                      0);
-        tv_clear(&entry->data.global_var.value);
-        entry->data.global_var.value = tgttv;
       }
       SET_ADDITIONAL_ELEMENTS(unpacked.data.via.array, 2,
                               entry->data.global_var.additional_elements,

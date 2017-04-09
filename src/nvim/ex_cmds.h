@@ -6,8 +6,8 @@
 #include "nvim/os/time.h"
 #include "nvim/pos.h"
 #include "nvim/eval/typval.h"
-#include "nvim/buffer_defs.h" // for buf_T and win_T
-#include "nvim/ex_cmds_defs.h" // for exarg_T
+#include "nvim/buffer_defs.h"
+#include "nvim/ex_cmds_defs.h"
 
 // flags for do_ecmd()
 #define ECMD_HIDE            0x01    // don't free the current buffer

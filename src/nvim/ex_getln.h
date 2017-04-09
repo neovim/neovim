@@ -3,9 +3,9 @@
 
 #include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
-#include "nvim/ex_cmds_defs.h" // for exarg_T
-#include "nvim/os/time.h" // for Timestamp
-#include "nvim/regexp_defs.h" // for regmatch_T
+#include "nvim/ex_cmds_defs.h"
+#include "nvim/os/time.h"
+#include "nvim/regexp_defs.h"
 
 /* Values for nextwild() and ExpandOne().  See ExpandOne() for meaning. */
 #define WILD_FREE               1

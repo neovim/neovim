@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdlib.h> // for size_t
+#include <stdlib.h>
 
 #include "nvim/types.h"
-#include "nvim/pos.h" // for linenr_T
+#include "nvim/pos.h"
 
 /// A block number.
 ///
