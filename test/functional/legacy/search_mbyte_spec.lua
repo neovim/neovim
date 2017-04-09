@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 
-local feed = helpers.feed
 local wait = helpers.wait
 local clear = helpers.clear
 local insert = helpers.insert

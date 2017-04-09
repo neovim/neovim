@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local insert, source = helpers.insert, helpers.source
-local clear, command, expect = helpers.clear, helpers.command, helpers.expect
+local clear, expect = helpers.clear, helpers.expect
 
 describe('floating point and logical operators', function()
   setup(clear)

@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, exc_exec = helpers.clear, helpers.exc_exec
-local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
+local eq, eval = helpers.eq, helpers.eval
 
 describe('glob2regpat()', function()
   before_each(clear)

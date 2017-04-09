@@ -2,9 +2,10 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local feed, insert = helpers.feed, helpers.insert
+
 local eval, clear, command = helpers.eval, helpers.clear, helpers.command
 local eq, neq = helpers.eq, helpers.neq
+local insert = helpers.insert
 local redir_exec = helpers.redir_exec
 
 describe('063: Test for ":match", "matchadd()" and related functions', function()

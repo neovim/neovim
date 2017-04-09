@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eval, eq = helpers.clear, helpers.eval, helpers.eq
-local feed, command, expect, command = helpers.feed, helpers.command, helpers.expect, helpers.command
+local feed, command, expect = helpers.feed, helpers.command, helpers.expect
 local curbufmeths, funcs, neq = helpers.curbufmeths, helpers.funcs, helpers.neq
 
 describe('TextYankPost', function()

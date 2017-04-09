@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local eq, eval, clear, write_file, command, source, insert =
+local eq, eval, clear, write_file, source, insert =
   helpers.eq, helpers.eval, helpers.clear, helpers.write_file,
-  helpers.command, helpers.source, helpers.insert
+  helpers.source, helpers.insert
 local redir_exec = helpers.redir_exec
 local exc_exec = helpers.exc_exec
 local command = helpers.command

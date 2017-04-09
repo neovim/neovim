@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, command, nvim = helpers.clear, helpers.command, helpers.nvim
-local expect, feed, command = helpers.expect, helpers.feed, helpers.command
+local expect, feed = helpers.expect, helpers.feed
 local eq, eval = helpers.eq, helpers.eval
 
 describe(':emenu', function()

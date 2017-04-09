@@ -2,9 +2,8 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 
-local insert, command, clear, expect, eq, eval, wait = helpers.insert,
-  helpers.command, helpers.clear, helpers.expect, helpers.eq, helpers.eval,
-  helpers.wait
+local insert, command, clear, expect, eq, wait = helpers.insert,
+  helpers.command, helpers.clear, helpers.expect, helpers.eq, helpers.wait
 local exc_exec = helpers.exc_exec
 
 describe(':sort', function()
