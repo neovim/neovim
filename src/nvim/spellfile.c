@@ -1157,8 +1157,8 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     if (i < ccnt)
       // store the char we got while checking for end of sm_lead
       *p++ = c;
-    for (++i; i < ccnt; ++i)
-      *p++ = getc(fd);                          // <salfrom>
+    SPELL_READ_NONNUL_BYTES((char *)p, (size_t)ccnt, fd);  // <salfrom>
+    p += ccnt;
     *p++ = NUL;
 
     // <saltolen> <salto>

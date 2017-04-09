@@ -27,7 +27,6 @@ describe('spellfile', function()
     --                         ┌ Section identifier (#SN_PREFCOND)
     --                         │   ┌ Section flags (#SNF_REQUIRED or zero)
     --                         │   │   ┌ Section length (4 bytes, MSB first)
-    --                         │   │   │
                spellheader .. '\003\001\000\000\000\003'
     --             ┌ Number of regexes in section (2 bytes, MSB first)
     --             │       ┌ Condition length (1 byte)
@@ -43,7 +42,6 @@ describe('spellfile', function()
     --                         ┌ Section identifier (#SN_PREFCOND)
     --                         │   ┌ Section flags (#SNF_REQUIRED or zero)
     --                         │   │   ┌ Section length (4 bytes, MSB first)
-    --                         │   │   │
                spellheader .. '\003\001\000\000\000\008'
     --             ┌ Number of regexes in section (2 bytes, MSB first)
     --             │       ┌ Condition length (1 byte)
@@ -64,10 +62,33 @@ describe('spellfile', function()
     --                         ┌ Section identifier (#SN_REGION)
     --                         │   ┌ Section flags (#SNF_REQUIRED or zero)
     --                         │   │   ┌ Section length (4 bytes, MSB first)
-    --                         │   │   │
                spellheader .. '\000\001\000\000\000\008'
     --             ┌ Regions  ┌ End of sections marker
                .. '01234\00067\255'
+    --             ┌ LWORDTREE tree length (4 bytes)
+    --             │               ┌ KWORDTREE tree length (4 bytes)
+    --             │               │               ┌ PREFIXTREE tree length
+               .. '\000\000\000\000\000\000\000\000\000\000\000\000')
+    meths.set_option('spelllang', 'en')
+    eq('Vim(set):E759: Format error in spell file',
+       exc_exec('set spell'))
+  end)
+  it('errors out when SAL section contains NUL byte', function()
+    meths.set_option('runtimepath', testdir)
+    write_file(testdir .. '/spell/en.ascii.spl',
+    --                         ┌ Section identifier (#SN_SAL)
+    --                         │   ┌ Section flags (#SNF_REQUIRED or zero)
+    --                         │   │   ┌ Section length (4 bytes, MSB first)
+               spellheader .. '\005\001\000\000\000\008'
+    --             ┌ salflags
+    --             │   ┌ salcount (2 bytes, MSB first)
+    --             │   │       ┌ salfromlen (1 byte)
+    --             │   │       │   ┌ Special character
+    --             │   │       │   │┌ salfrom (should not contain NUL)
+    --             │   │       │   ││   ┌ saltolen
+    --             │   │       │   ││   │   ┌ salto
+    --             │   │       │   ││   │   │┌ End of sections marker
+               .. '\000\000\001\0024\000\0017\255'
     --             ┌ LWORDTREE tree length (4 bytes)
     --             │               ┌ KWORDTREE tree length (4 bytes)
     --             │               │               ┌ PREFIXTREE tree length
