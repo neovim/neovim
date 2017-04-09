@@ -1,4 +1,5 @@
 source "${CI_DIR}/common/build.sh"
+source "${CI_DIR}/common/suite.sh"
 
 print_core() {
   local app="$1"
@@ -40,10 +41,9 @@ check_core_dumps() {
       print_core "$app" "$core"
     fi
   done
-  if test "$app" = quiet ; then
-    return 0
+  if test "$app" != quiet ; then
+    fail 'cores' E 'Core dumps found'
   fi
-  exit 1
 }
 
 check_logs() {
@@ -62,8 +62,7 @@ check_logs() {
     err=1
   done
   if [[ -n "${err}" ]]; then
-    echo "Runtime errors detected."
-    exit 1
+    fail 'logs' E 'Runtime errors detected.'
   fi
 }
 
@@ -75,50 +74,53 @@ asan_check() {
   check_logs "${1}" "*san.*"
 }
 
-run_unittests() {
+run_unittests() {(
+  enter_suite unittests
   ulimit -c unlimited
   if ! build_make unittest ; then
-    check_core_dumps "$(which luajit)"
-    exit 1
+    fail 'unittests' F 'Unit tests failed'
   fi
   check_core_dumps "$(which luajit)"
-}
+  exit_suite
+)}
 
-run_functionaltests() {
+run_functionaltests() {(
+  enter_suite functionaltests
   ulimit -c unlimited
   if ! build_make ${FUNCTIONALTEST}; then
-    asan_check "${LOG_DIR}"
-    valgrind_check "${LOG_DIR}"
-    check_core_dumps
-    exit 1
+    fail 'functionaltests' F 'Functional tests failed'
   fi
   asan_check "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
   check_core_dumps
-}
+  exit_suite
+)}
 
-run_oldtests() {
+run_oldtests() {(
+  enter_suite oldtests
   ulimit -c unlimited
   if ! make -C "${TRAVIS_BUILD_DIR}/src/nvim/testdir"; then
     reset
-    asan_check "${LOG_DIR}"
-    valgrind_check "${LOG_DIR}"
-    check_core_dumps
-    exit 1
+    fail 'oldtests' F 'Legacy tests failed'
   fi
   asan_check "${LOG_DIR}"
   valgrind_check "${LOG_DIR}"
   check_core_dumps
-}
+  exit_suite
+)}
 
-install_nvim() {
-  build_make install
+install_nvim() {(
+  enter_suite 'install_nvim'
+  if ! build_make install ; then
+    fail 'install' E 'make install failed'
+    exit_suite
+  fi
 
   "${INSTALL_PREFIX}/bin/nvim" --version
   "${INSTALL_PREFIX}/bin/nvim" -u NONE -e -c ':help' -c ':qall' || {
     echo "Running ':help' in the installed nvim failed."
     echo "Maybe the helptags have not been generated properly."
-    exit 1
+    fail 'help' F 'Failed running :help'
   }
 
   local genvimsynf=syntax/vim/generated.vim
@@ -127,24 +129,22 @@ install_nvim() {
     cd runtime ; git ls-files | grep -e '.vim$' -e '.ps$' -e '.dict$' -e '.py$' -e '.tutor$'
   ) ; do
     if ! test -e "${INSTALL_PREFIX}/share/nvim/runtime/$file" ; then
-      echo "It appears that $file is not installed."
-      exit 1
+      fail 'runtime-install' F "It appears that $file is not installed."
     fi
   done
 
   # Check that generated syntax file has function names, #5060.
   local gpat='syn keyword vimFuncName .*eval'
   if ! grep -q "$gpat" "${INSTALL_PREFIX}/share/nvim/runtime/$genvimsynf"; then
-    echo "It appears that $genvimsynf does not contain $gpat."
-    exit 1
+    fail 'funcnames' F "It appears that $genvimsynf does not contain $gpat."
   fi
 
   for file in $(
     cd runtime ; git ls-files | grep -e '.awk$' -e '.sh$' -e '.bat$'
   ) ; do
     if ! test -x "${INSTALL_PREFIX}/share/nvim/runtime/$file" ; then
-      echo "It appears that $file is not installed or is not executable."
-      exit 1
+      fail 'not-exe' F "It appears that $file is not installed or is not executable."
     fi
   done
-}
+  exit_suite
+)}

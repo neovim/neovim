@@ -2,11 +2,18 @@
 NL="$(printf '\nE')"
 NL="${NL%E}"
 
-FAILED=0
-
 FAIL_SUMMARY=""
 
+# Test success marker. If END_MARKER file exists, we know that all tests 
+# finished. If FAIL_SUMMARY_FILE exists we know that some tests failed, this 
+# file will contain information about failed tests. Build is considered 
+# successful if tests ended without any of them failing.
+END_MARKER="$BUILD_DIR/.tests_finished"
+FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
+
 enter_suite() {
+  FAILED=0
+  rm -f "${END_MARKER}"
   local suite_name="$1"
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE}/$suite_name"
 }
@@ -19,17 +26,16 @@ exit_suite() {
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
   if test "x$1" != "x--continue" ; then
     exit $FAILED
+  else
+    local saved_failed=$FAILED
+    FAILED=0
+    return $saved_failed
   fi
 }
 
 fail() {
-  local allow_failure=
-  if test "x$1" = "x--allow-failure" ; then
-    shift
-    allow_failure=A
-  fi
   local test_name="$1"
-  local fail_char="$allow_failure$2"
+  local fail_char="$2"
   local message="$3"
 
   : ${fail_char:=F}
@@ -37,10 +43,9 @@ fail() {
 
   local full_msg="$fail_char $NVIM_TEST_CURRENT_SUITE|$test_name :: $message"
   FAIL_SUMMARY="${FAIL_SUMMARY}${NL}${full_msg}"
+  echo "${full_msg}" >> "${FAIL_SUMMARY_FILE}"
   echo "Failed: $full_msg"
-  if test "x$allow_failure" = "x" ; then
-    FAILED=1
-  fi
+  FAILED=1
 }
 
 run_test() {
@@ -55,6 +60,12 @@ run_test() {
 }
 
 run_test_wd() {
+  local hang_ok=
+  if test "x$1" = "x--allow-hang" ; then
+    hang_ok=1
+    shift
+  fi
+
   local timeout="$1"
   test $# -gt 0 && shift
 
@@ -77,14 +88,13 @@ run_test_wd() {
   while test $restarts -gt 0 ; do
     : > "${status_file}"
     (
-      FAILED=0
-      if ! (
-        set -o pipefail
-        eval "$cmd" 2>&1 | tee -a "$output_file"
-      ) ; then
-        fail "${test_name}" "$@"
+      set -o pipefail
+      ret=0
+      if ! eval "$cmd" 2>&1 | tee -a "$output_file" ; then
+        ret=1
       fi
-      echo "$FAILED" > "$status_file"
+      echo "$ret" > "$status_file"
+      exit $ret
     ) &
     local pid=$!
     while test "$(stat -c "%s" "$status_file")" -eq 0 ; do
@@ -101,7 +111,9 @@ run_test_wd() {
       # status file not updated, assuming hang
       kill -KILL $pid
       if test $restarts -eq 0 ; then
-        fail "${test_name}" E "Test hang up"
+        if test "x$hang_ok" = "x" ; then
+          fail "${test_name}" E "Test hang up"
+        fi
       else
         echo "Test ${test_name} hang up, restarting"
         eval "$restart_cmd"
@@ -116,6 +128,20 @@ run_test_wd() {
   done
 }
 
-succeeded() {
-  return $FAILED
+ended_successfully() {
+  if [[ -f "${FAIL_SUMMARY_FILE}" ]]; then
+    echo 'Test failed, complete summary:'
+    cat "${FAIL_SUMMARY_FILE}"
+    return 1
+  fi
+  if ! [[ -f "${END_MARKER}" ]] ; then
+    echo 'ended_successfully called before end marker was touched'
+    return 1
+  fi
+  return 0
+}
+
+end_tests() {
+  touch "${END_MARKER}"
+  ended_successfully
 }
