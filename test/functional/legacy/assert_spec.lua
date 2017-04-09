@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local nvim, call = helpers.meths, helpers.call
 local clear, eq = helpers.clear, helpers.eq
-local source, execute = helpers.source, helpers.execute
+local source, command = helpers.source, helpers.command
 local exc_exec = helpers.exc_exec
 
 local function expected_errors(errors)
@@ -55,7 +55,7 @@ describe('assert function:', function()
 
     it('should change v:errors when expected is not equal to actual', function()
       -- Lua does not tell integer from float.
-      execute('call assert_equal(1, 1.0)')
+      command('call assert_equal(1, 1.0)')
       expected_errors({'Expected 1 but got 1.0'})
     end)
 
@@ -219,8 +219,8 @@ describe('assert function:', function()
   -- assert_fails({cmd}, [, {error}])
   describe('assert_fails', function()
     it('should change v:errors when error does not match v:errmsg', function()
-      execute([[call assert_fails('xxx', {})]])
-      execute([[call assert_match("Expected {} but got 'E731:", v:errors[0])]])
+      command([[call assert_fails('xxx', {})]])
+      command([[call assert_match("Expected {} but got 'E731:", v:errors[0])]])
       expected_errors({"Expected {} but got 'E731: using Dictionary as a String'"})
     end)
 

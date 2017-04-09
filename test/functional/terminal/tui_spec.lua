@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed_data = thelpers.feed_data
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
 
@@ -60,7 +60,7 @@ describe('tui', function()
   it('interprets leading <Esc> byte as ALT modifier in normal-mode', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
-      execute('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
+      feed_command('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
       feed_data('\027'..c)
     end
     screen:expect([[
@@ -153,7 +153,7 @@ describe('tui', function()
   end)
 
   it('can handle arbitrarily long bursts of input', function()
-    execute('set ruler')
+    feed_command('set ruler')
     local t = {}
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
@@ -231,7 +231,7 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in insert mode', function()
-    execute('set noshowmode')
+    feed_command('set noshowmode')
     feed_data('i')
     feed_data('\027[I')
     screen:expect([[

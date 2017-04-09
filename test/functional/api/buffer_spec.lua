@@ -5,7 +5,7 @@ local curbufmeths, ok = helpers.curbufmeths, helpers.ok
 local funcs = helpers.funcs
 local request = helpers.request
 local exc_exec = helpers.exc_exec
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 local insert = helpers.insert
 local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
@@ -246,7 +246,7 @@ describe('api/buf', function()
     end)
 
     it("set_line on alternate buffer does not access invalid line (E315)", function()
-      execute('set hidden')
+      feed_command('set hidden')
       insert('Initial file')
       command('enew')
       insert([[
@@ -257,7 +257,7 @@ describe('api/buf', function()
       The
       Other
       Buffer]])
-      execute('$')
+      feed_command('$')
       local retval = exc_exec("call nvim_buf_set_lines(1, 0, 1, v:false, ['test'])")
       eq(0, retval)
     end)
