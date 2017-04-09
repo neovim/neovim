@@ -2,7 +2,6 @@ local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
