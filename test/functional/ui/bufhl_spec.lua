@@ -1,7 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local Paths = require('test.config.paths')
+
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command, request, neq = helpers.command, helpers.request, helpers.neq
+local meths = helpers.meths
 
 if helpers.pending_win32(pending) then return end
 
@@ -11,6 +14,9 @@ describe('Buffer highlighting', function()
 
   before_each(function()
     clear()
+    meths.set_var('source_path', Paths.test_source_path)
+    command('let $VIMRUNTIME=source_path . "/runtime"')
+    command('set runtimepath=$VIMRUNTIME')
     command("syntax on")
     screen = Screen.new(40, 8)
     screen:attach()
@@ -131,7 +137,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        :hi ImportantWord gui=bold cterm=bold   |
+                                                |
       ]])
     end)
 
@@ -145,7 +151,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        :hi ImportantWord gui=bold cterm=bold   |
+                                                |
       ]])
     end)
 
@@ -159,7 +165,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        :hi ImportantWord gui=bold cterm=bold   |
+                                                |
       ]])
     end)
 
@@ -175,7 +181,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        :hi ImportantWord gui=bold cterm=bold   |
+                                                |
       ]])
     end)
 
@@ -201,7 +207,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        ::3move 4                               |
+                                                |
       ]])
     end)
   end)
