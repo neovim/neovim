@@ -1006,7 +1006,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
       buf[0] = '^';  // always match at one position only
       const size_t read_byte = fread(buf + 1, 1, (size_t)n, fd);
       if (read_byte != (size_t)n) {
-        return feof(fd) ? SP_FORMERROR : SP_OTHERERROR;
+        return feof(fd) ? SP_TRUNCERROR : SP_OTHERERROR;
       }
       if (memchr(buf + 1, NUL, (size_t)n)) {
         return SP_FORMERROR;

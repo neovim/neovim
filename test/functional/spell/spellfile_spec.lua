@@ -34,7 +34,7 @@ describe('spellfile', function()
     --             │       │   ┌ Condition regex (missing!)
                .. '\000\001\001')
     meths.set_option('spelllang', 'en')
-    eq('Vim(set):E759: Format error in spell file',
+    eq('Vim(set):E758: Truncated spell file',
        exc_exec('set spell'))
   end)
   it('errors out when prefcond regexp contains NUL byte', function()
