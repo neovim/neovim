@@ -121,7 +121,12 @@
 #if defined(UNIX)  /* open in rw------- mode */
 # define mch_open_rw(n, f)      os_open((n), (f), (mode_t)0600)
 #else
+# ifdef WIN32
+// libuv emulates S_IWRITE using read only attribute on Windows.
+#  define mch_open_rw(n, f)     os_open((n), (f), S_IWRITE)
+# else
 #  define mch_open_rw(n, f)     os_open((n), (f), 0)
+# endif
 #endif
 
 # define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
