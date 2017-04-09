@@ -225,6 +225,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <wctype.h>
+#include <strings.h>
 
 #include "nvim/vim.h"
 #include "nvim/spell_defs.h"
@@ -529,6 +530,26 @@ typedef struct spellinfo_S {
       } \
     } while (0)
 
+/// Check that spell file starts with a magic string
+///
+/// Does not check for version of the file.
+///
+/// @param  fd  File to check.
+///
+/// @return 0 in case of success, SP_TRUNCERROR if file contains not enough
+///         bytes, SP_FORMERROR if it does not match magic string and
+///         SP_OTHERERROR if reading file failed.
+static inline int spell_check_magic_string(FILE *const fd)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+{
+  char buf[VIMSPELLMAGICL];
+  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd);
+  if (memcmp(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
+    return SP_FORMERROR;
+  }
+  return 0;
+}
+
 // Load one spell file and store the info into a slang_T.
 //
 // This is invoked in three ways:
@@ -549,7 +570,6 @@ spell_load_file (
 )
 {
   FILE        *fd;
-  char_u buf[VIMSPELLMAGICL];
   char_u      *p;
   int n;
   int len;
@@ -592,12 +612,20 @@ spell_load_file (
   sourcing_lnum = 0;
 
   // <HEADER>: <fileID>
-  for (size_t i = 0; i < VIMSPELLMAGICL; i++) {
-    buf[i] = getc(fd);                                  // <fileID>
-  }
-  if (STRNCMP(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
-    EMSG(_("E757: This does not look like a spell file"));
-    goto endFAIL;
+  const int scms_ret = spell_check_magic_string(fd);
+  switch (scms_ret) {
+    case SP_FORMERROR:
+    case SP_TRUNCERROR: {
+      emsgf(_("E757: This does not look like a spell file"));
+      goto endFAIL;
+    }
+    case SP_OTHERERROR: {
+      emsgf(_("E5042: Failed to read spell file %s: %s"),
+            fname, strerror(ferror(fd)));
+    }
+    case 0: {
+      break;
+    }
   }
   c = getc(fd);                                         // <versionnr>
   if (c < VIMSPELLVERSION) {

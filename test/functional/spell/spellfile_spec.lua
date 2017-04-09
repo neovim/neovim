@@ -97,4 +97,12 @@ describe('spellfile', function()
     eq('Vim(set):E759: Format error in spell file',
        exc_exec('set spell'))
   end)
+  it('errors out when spell header contains NUL bytes', function()
+    meths.set_option('runtimepath', testdir)
+    write_file(testdir .. '/spell/en.ascii.spl',
+               spellheader:sub(1, -3) .. '\000\000')
+    meths.set_option('spelllang', 'en')
+    eq('Vim(set):E757: This does not look like a spell file',
+       exc_exec('set spell'))
+  end)
 end)
