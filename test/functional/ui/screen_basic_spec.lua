@@ -157,7 +157,7 @@ describe('Screen', function()
           {0:~                                                    }|
           {0:~                                                    }|
           {3:[No Name]                                            }|
-          :sp                                                  |
+                                                               |
         ]])
       end)
 
@@ -178,7 +178,7 @@ describe('Screen', function()
           {0:~                                                    }|
           {0:~                                                    }|
           {3:[No Name]                                            }|
-          :resize 8                                            |
+                                                               |
         ]])
       end)
 
@@ -327,7 +327,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        :set ruler                         1,5           All |
+                                           1,5           All |
       ]])
     end)
   end)
