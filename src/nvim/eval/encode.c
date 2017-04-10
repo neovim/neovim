@@ -11,7 +11,7 @@
 #include <math.h>
 
 #include "nvim/eval/encode.h"
-#include "nvim/buffer_defs.h"  // vimconv_T
+#include "nvim/buffer_defs.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/garray.h"
@@ -29,10 +29,6 @@
 #define utf_ptr2char(b) utf_ptr2char((char_u *)b)
 #define utf_ptr2len(b) ((size_t)utf_ptr2len((char_u *)b))
 #define utf_char2len(b) ((size_t)utf_char2len(b))
-#define string_convert(a, b, c) \
-      ((char *)string_convert((vimconv_T *)a, (char_u *)b, c))
-#define convert_setup(vcp, from, to) \
-    (convert_setup(vcp, (char_u *)from, (char_u *)to))
 
 const char *const encode_special_var_names[] = {
   [kSpecialVarNull] = "null",
@@ -537,17 +533,6 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       } \
     } while (0)
 
-/// Last used p_enc value
-///
-/// Generic pointer: it is not used as a string, only pointer comparisons are
-/// performed. Must not be freed.
-static const void *last_p_enc = NULL;
-
-/// Conversion setup for converting from last_p_enc to UTF-8
-static vimconv_T p_enc_conv = {
-  .vc_type = CONV_NONE,
-};
-
 /// Escape sequences used in JSON
 static const char escapes[][3] = {
   [BS] = "\\b",
@@ -579,33 +564,15 @@ static inline int convert_to_json_string(garray_T *const gap,
   } else {
     size_t utf_len = len;
     char *tofree = NULL;
-    if (last_p_enc != (const void *) p_enc) {
-      p_enc_conv.vc_type = CONV_NONE;
-      convert_setup(&p_enc_conv, p_enc, "utf-8");
-      p_enc_conv.vc_fail = true;
-      last_p_enc = p_enc;
-    }
-    if (p_enc_conv.vc_type != CONV_NONE) {
-      tofree = string_convert(&p_enc_conv, buf, &utf_len);
-      if (tofree == NULL) {
-        emsgf(_("E474: Failed to convert string \"%.*s\" to UTF-8"),
-              utf_len, utf_buf);
-        return FAIL;
-      }
-      utf_buf = tofree;
-    }
     size_t str_len = 0;
-    // Encode character as \u0000 if
-    // 1. It is an ASCII control character (0x0 .. 0x1F, 0x7F).
-    // 2. &encoding is not UTF-8 and code point is above 0x7F.
-    // 3. &encoding is UTF-8 and code point is not printable according to
-    //    utf_printable().
-    // This is done to make it possible to :echo values when &encoding is not
-    // UTF-8.
-#define ENCODE_RAW(p_enc_conv, ch) \
-    (ch >= 0x20 && (p_enc_conv.vc_type == CONV_NONE \
-                    ? utf_printable(ch) \
-                    : ch < 0x7F))
+    // Encode character as \uNNNN if
+    // 1. It is an ASCII control character (0x0 .. 0x1F; 0x7F not
+    //    utf_printable and thus not checked specially).
+    // 2. Code point is not printable according to utf_printable().
+    // This is done to make resulting values displayable on screen also not from
+    // Neovim.
+#define ENCODE_RAW(ch) \
+    (ch >= 0x20 && utf_printable(ch))
     for (size_t i = 0; i < utf_len;) {
       const int ch = utf_ptr2char(utf_buf + i);
       const size_t shift = (ch == 0? 1: utf_ptr2len(utf_buf + i));
@@ -636,7 +603,7 @@ static inline int convert_to_json_string(garray_T *const gap,
                   utf_len - (i - shift), utf_buf + i - shift);
             xfree(tofree);
             return FAIL;
-          } else if (ENCODE_RAW(p_enc_conv, ch)) {
+          } else if (ENCODE_RAW(ch)) {
             str_len += shift;
           } else {
             str_len += ((sizeof("\\u1234") - 1)
@@ -666,7 +633,7 @@ static inline int convert_to_json_string(garray_T *const gap,
           break;
         }
         default: {
-          if (ENCODE_RAW(p_enc_conv, ch)) {
+          if (ENCODE_RAW(ch)) {
             ga_concat_len(gap, utf_buf + i, shift);
           } else if (ch < SURROGATE_FIRST_CHAR) {
             ga_concat_len(gap, ((const char[]) {

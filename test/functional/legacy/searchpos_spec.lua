@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local call = helpers.call
 local clear = helpers.clear
-local execute = helpers.execute
+local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local insert = helpers.insert
@@ -19,7 +19,7 @@ describe('searchpos', function()
     call('cursor', 1, 2)
     eq({2, 1, 1}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
 
-    execute('set cpo-=c')
+    command('set cpo-=c')
     call('cursor', 1, 2)
     eq({1, 2, 2}, eval([[searchpos('\%(\([a-z]\)\|\_.\)\{-}xyz', 'pcW')]]))
     call('cursor', 1, 3)

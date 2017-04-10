@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 
 if helpers.pending_win32(pending) then return end
 
@@ -26,7 +26,7 @@ describe('terminal', function()
 
   it('resets its size when entering terminal window', function()
     feed('<c-\\><c-n>')
-    execute('2split')
+    feed_command('2split')
     screen:expect([[
       rows: 2, cols: 50                                 |
       {2:^ }                                                 |
@@ -39,7 +39,7 @@ describe('terminal', function()
       ==========                                        |
       :2split                                           |
     ]])
-    execute('wincmd p')
+    feed_command('wincmd p')
     screen:expect([[
       tty ready                                         |
       rows: 2, cols: 50                                 |
@@ -52,7 +52,7 @@ describe('terminal', function()
       ==========                                        |
       :wincmd p                                         |
     ]])
-    execute('wincmd p')
+    feed_command('wincmd p')
     screen:expect([[
       rows: 2, cols: 50                                 |
       {2:^ }                                                 |

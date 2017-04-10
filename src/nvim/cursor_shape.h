@@ -1,6 +1,9 @@
 #ifndef NVIM_CURSOR_SHAPE_H
 #define NVIM_CURSOR_SHAPE_H
 
+#include "nvim/types.h"
+#include "nvim/api/private/defs.h"
+
 /// struct to store values from 'guicursor' and 'mouseshape'
 /// Indexes in shape_table[]
 typedef enum {

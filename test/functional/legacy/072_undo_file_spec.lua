@@ -4,7 +4,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('72', function()
   setup(clear)
@@ -13,34 +13,34 @@ describe('72', function()
     insert([[
       1111 -----
       2222 -----
-      
+
       123456789]])
 
     -- Test 'undofile': first a simple one-line change.
-    execute('set visualbell')
-    execute('set ul=100 undofile undodir=. nomore')
-    execute('e! Xtestfile')
+    feed_command('set visualbell')
+    feed_command('set ul=100 undofile undodir=. nomore')
+    feed_command('e! Xtestfile')
     feed('ggdGithis is one line<esc>:set ul=100<cr>')
-    execute('s/one/ONE/')
-    execute('set ul=100')
-    execute('w')
-    execute('bwipe!')
-    execute('e Xtestfile')
+    feed_command('s/one/ONE/')
+    feed_command('set ul=100')
+    feed_command('w')
+    feed_command('bwipe!')
+    feed_command('e Xtestfile')
     feed('u:.w! test.out<cr>')
 
     -- Test 'undofile', change in original file fails check.
-    execute('set noundofile')
-    execute('e! Xtestfile')
-    execute('s/line/Line/')
-    execute('w')
-    execute('set undofile')
-    execute('bwipe!')
-    execute('e Xtestfile')
+    feed_command('set noundofile')
+    feed_command('e! Xtestfile')
+    feed_command('s/line/Line/')
+    feed_command('w')
+    feed_command('set undofile')
+    feed_command('bwipe!')
+    feed_command('e Xtestfile')
     ---- TODO: this beeps.
     feed('u:.w >>test.out<cr>')
 
     -- Test 'undofile', add 10 lines, delete 6 lines, undo 3.
-    execute('set undofile')
+    feed_command('set undofile')
     feed('ggdGione<cr>')
     feed('two<cr>')
     feed('three<cr>')
@@ -57,20 +57,20 @@ describe('72', function()
     feed('dd:set ul=100<cr>')
     feed('dd:set ul=100<cr>')
     feed('dd:set ul=100<cr>')
-    execute('w')
-    execute('bwipe!')
-    execute('e Xtestfile')
+    feed_command('w')
+    feed_command('bwipe!')
+    feed_command('e Xtestfile')
     feed('uuu:w >>test.out<cr>')
 
     -- Test that reading the undofiles when setting undofile works.
-    execute('set noundofile ul=0')
+    feed_command('set noundofile ul=0')
     feed('i<cr>')
     feed('<esc>u:e! Xtestfile<cr>')
-    execute('set undofile ul=100')
+    feed_command('set undofile ul=100')
     feed('uuuuuu:w >>test.out<cr>')
 
     ---- Open the output to see if it meets the expections
-    execute('e! test.out')
+    feed_command('e! test.out')
 
     -- Assert buffer contents.
     expect([[

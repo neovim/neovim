@@ -2,8 +2,8 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local execute, eq, clear, eval, feed, expect, source =
-  helpers.execute, helpers.eq, helpers.clear, helpers.eval, helpers.feed,
+local feed_command, eq, clear, eval, feed, expect, source =
+  helpers.feed_command, helpers.eq, helpers.clear, helpers.eval, helpers.feed,
   helpers.expect, helpers.source
 
 if helpers.pending_win32(pending) then return end
@@ -13,7 +13,7 @@ describe(':recover', function()
 
   it('fails if given a non-existent swapfile', function()
     local swapname = 'bogus-swapfile'
-    execute('recover '..swapname) -- This should not segfault. #2117
+    feed_command('recover '..swapname) -- This should not segfault. #2117
     eq('E305: No swap file found for '..swapname, eval('v:errmsg'))
   end)
 
@@ -40,12 +40,12 @@ describe(':preserve', function()
     ]]
 
     source(init)
-    execute('set swapfile fileformat=unix undolevels=-1')
+    feed_command('set swapfile fileformat=unix undolevels=-1')
     -- Put swapdir at the start of the 'directory' list. #1836
-    execute('set directory^='..swapdir..'//')
-    execute('edit '..testfile)
+    feed_command('set directory^='..swapdir..'//')
+    feed_command('edit '..testfile)
     feed('isometext<esc>')
-    execute('preserve')
+    feed_command('preserve')
     source('redir => g:swapname | swapname | redir END')
 
     local swappath1 = eval('g:swapname')
@@ -59,8 +59,8 @@ describe(':preserve', function()
     source(init)
 
     -- Use the "SwapExists" event to choose the (R)ecover choice at the dialog.
-    execute('autocmd SwapExists * let v:swapchoice = "r"')
-    execute('silent edit '..testfile)
+    feed_command('autocmd SwapExists * let v:swapchoice = "r"')
+    feed_command('silent edit '..testfile)
     source('redir => g:swapname | swapname | redir END')
 
     local swappath2 = eval('g:swapname')

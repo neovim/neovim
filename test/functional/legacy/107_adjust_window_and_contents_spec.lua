@@ -2,8 +2,11 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+
+local wait = helpers.wait
+local clear = helpers.clear
 local insert = helpers.insert
-local clear, execute = helpers.clear, helpers.execute
+local command = helpers.command
 
 if helpers.pending_win32(pending) then return end
 
@@ -15,31 +18,34 @@ describe('107', function()
     screen:attach()
 
     insert('start:')
-    execute('new')
-    execute('call setline(1, range(1,256))')
-    execute('let r=[]')
-    execute('func! GetScreenStr(row)')
-    execute('   let str = ""')
-    execute('   for c in range(1,3)')
-    execute('       let str .= nr2char(screenchar(a:row, c))')
-    execute('   endfor')
-    execute('   return str')
-    execute('endfunc')
-    execute([[exe ":norm! \<C-W>t\<C-W>=1Gzt\<C-W>w\<C-W>+"]])
-    execute('let s3=GetScreenStr(1)')
-    execute('wincmd p')
-    execute('call add(r, [line("w0"), s3])')
-    execute([[exe ":norm! \<C-W>t\<C-W>=50Gzt\<C-W>w\<C-W>+"]])
-    execute('let s3=GetScreenStr(1)')
-    execute('wincmd p')
-    execute('call add(r, [line("w0"), s3])')
-    execute([[exe ":norm! \<C-W>t\<C-W>=59Gzt\<C-W>w\<C-W>+"]])
-    execute('let s3=GetScreenStr(1)')
-    execute(':wincmd p')
-    execute('call add(r, [line("w0"), s3])')
-    execute('bwipeout!')
-    execute('$put=r')
-    execute('call garbagecollect(1)')
+    wait()
+    command('new')
+    command('call setline(1, range(1,256))')
+    command('let r=[]')
+    command([[
+      func! GetScreenStr(row)
+         let str = ""
+         for c in range(1,3)
+             let str .= nr2char(screenchar(a:row, c))
+         endfor
+         return str
+      endfunc
+    ]])
+    command([[exe ":norm! \<C-W>t\<C-W>=1Gzt\<C-W>w\<C-W>+"]])
+    command('let s3=GetScreenStr(1)')
+    command('wincmd p')
+    command('call add(r, [line("w0"), s3])')
+    command([[exe ":norm! \<C-W>t\<C-W>=50Gzt\<C-W>w\<C-W>+"]])
+    command('let s3=GetScreenStr(1)')
+    command('wincmd p')
+    command('call add(r, [line("w0"), s3])')
+    command([[exe ":norm! \<C-W>t\<C-W>=59Gzt\<C-W>w\<C-W>+"]])
+    command('let s3=GetScreenStr(1)')
+    command(':wincmd p')
+    command('call add(r, [line("w0"), s3])')
+    command('bwipeout!')
+    command('$put=r')
+    command('call garbagecollect(1)')
 
     screen:expect([[
       start:                                               |
@@ -55,7 +61,7 @@ describe('107', function()
       ~                                                    |
       ~                                                    |
       ~                                                    |
-      :call garbagecollect(1)                              |
+      3 more lines                                         |
     ]])
   end)
 end)

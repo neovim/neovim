@@ -41,7 +41,10 @@ set(LINT_SUPPRESS_URL "${LINT_SUPPRESS_URL_BASE}/errors.json")
 set(LINT_PRG ${PROJECT_SOURCE_DIR}/src/clint.py)
 set(DOWNLOAD_SCRIPT ${PROJECT_SOURCE_DIR}/cmake/Download.cmake)
 set(LINT_SUPPRESSES_ROOT ${PROJECT_BINARY_DIR}/errors)
-set(LINT_SUPPRESSES_URL "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.tar.gz")
+set(LINT_SUPPRESSES_URL "${LINT_SUPPRESS_URL_BASE}/errors.tar.gz")
+set(LINT_SUPPRESSES_ARCHIVE ${LINT_SUPPRESSES_ROOT}/errors.tar.gz)
+set(LINT_SUPPRESSES_TOUCH_FILE "${TOUCHES_DIR}/unpacked-clint-errors-archive")
+set(LINT_SUPPRESSES_INSTALL_SCRIPT "${PROJECT_SOURCE_DIR}/cmake/InstallClintErrors.cmake")
 
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
@@ -50,6 +53,8 @@ include_directories(${GENERATED_INCLUDES_DIR})
 file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
+file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT})
+file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
@@ -424,26 +429,10 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  cursor_shape.h
-  digraph.h
-  ex_cmds.h
-  ex_getln.h
-  file_search.h
-  fold.h
   getchar.h
-  hardcopy.h
-  if_cscope.h
   if_cscope_defs.h
-  mark.h
-  mbyte.h
-  memfile_defs.h
-  memline.h
-  memline_defs.h
-  menu.h
   misc2.h
-  move.h
   msgpack_rpc/server.h
-  ops.h
   option.h
   os/shell.h
   os_unix.h
@@ -502,6 +491,21 @@ function(add_download output url allow_failure)
   )
 endfunction()
 
+add_download(${LINT_SUPPRESSES_ARCHIVE} ${LINT_SUPPRESSES_URL} off)
+
+add_custom_command(
+  OUTPUT ${LINT_SUPPRESSES_TOUCH_FILE}
+  WORKING_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src
+  COMMAND ${CMAKE_COMMAND} -E tar xfz ${LINT_SUPPRESSES_ARCHIVE}
+  COMMAND
+    ${CMAKE_COMMAND}
+      -DTARGET=${LINT_SUPPRESSES_ROOT}
+      -P ${LINT_SUPPRESSES_INSTALL_SCRIPT}
+  COMMAND ${CMAKE_COMMAND} -E touch ${LINT_SUPPRESSES_TOUCH_FILE}
+  DEPENDS
+    ${LINT_SUPPRESSES_ARCHIVE} ${LINT_SUPPRESSES_INSTALL_SCRIPT}
+)
+
 add_download(${LINT_SUPPRESS_FILE} ${LINT_SUPPRESS_URL} off)
 
 set(LINT_NVIM_REL_SOURCES)
@@ -510,14 +514,13 @@ foreach(sfile ${LINT_NVIM_SOURCES})
   set(suppress_file ${LINT_SUPPRESSES_ROOT}/${suffix}.json)
   set(suppress_url "${LINT_SUPPRESS_URL_BASE}/${suffix}.json")
   set(rsfile src/nvim/${r})
-  add_download(${suppress_file} ${suppress_url} on)
   set(touch_file "${TOUCHES_DIR}/ran-clint-${suffix}")
   add_custom_command(
     OUTPUT ${touch_file}
     COMMAND ${LINT_PRG} --suppress-errors=${suppress_file} ${rsfile}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMAND ${CMAKE_COMMAND} -E touch ${touch_file}
-    DEPENDS ${LINT_PRG} ${sfile} ${suppress_file}
+    DEPENDS ${LINT_PRG} ${sfile} ${LINT_SUPPRESSES_TOUCH_FILE}
   )
   list(APPEND LINT_TARGETS ${touch_file})
   list(APPEND LINT_NVIM_REL_SOURCES ${rsfile})

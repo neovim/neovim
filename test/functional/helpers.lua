@@ -8,6 +8,7 @@ local Session = require('nvim.session')
 local TcpStream = require('nvim.tcp_stream')
 local SocketStream = require('nvim.socket_stream')
 local ChildProcessStream = require('nvim.child_process_stream')
+local Paths = require('test.config.paths')
 
 local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
@@ -20,7 +21,11 @@ local dedent = global_helpers.dedent
 
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
-local nvim_prog = os.getenv('NVIM_PROG') or os.getenv('NVIM_PRG') or 'build/bin/nvim'
+local nvim_prog = (
+  os.getenv('NVIM_PROG')
+  or os.getenv('NVIM_PRG')
+  or Paths.test_build_dir .. '/bin/nvim'
+)
 -- Default settings for the test session.
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
@@ -246,12 +251,13 @@ local function retry(max, max_ms, fn)
       return result
     end
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
-      break
+      if type(result) == "string" then
+        result = "\nretry() attempts: "..tostring(tries).."\n"..result
+      end
+      error(result)
     end
     tries = tries + 1
   end
-  -- Do not use pcall() for the final attempt, let the failure bubble up.
-  return fn()
 end
 
 local function clear(...)
@@ -304,7 +310,7 @@ end
 
 -- Executes an ex-command by user input. Because nvim_input() is used, VimL
 -- errors will not manifest as client (lua) errors. Use command() for that.
-local function execute(...)
+local function feed_command(...)
   for _, v in ipairs({...}) do
     if v:sub(1, 1) ~= '/' then
       -- not a search command, prefix with colon
@@ -565,7 +571,7 @@ local M = {
   insert = insert,
   iswin = iswin,
   feed = feed,
-  execute = execute,
+  feed_command = feed_command,
   eval = nvim_eval,
   call = nvim_call,
   command = nvim_command,

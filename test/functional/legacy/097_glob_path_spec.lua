@@ -4,7 +4,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local execute, expect = helpers.execute, helpers.expect
+local command, expect = helpers.command, helpers.expect
 
 if helpers.pending_win32(pending) then return end
 
@@ -19,26 +19,26 @@ describe('glob() and globpath()', function()
 
   it('is working', function()
     -- Make sure glob() doesn't use the shell
-    execute('set shell=doesnotexist')
+    command('set shell=doesnotexist')
 
     -- Consistent sorting of file names
-    execute('set nofileignorecase')
+    command('set nofileignorecase')
 
-    execute([[$put =glob('Xxx\{')]])
-    execute([[$put =glob('Xxx\$')]])
+    command([[$put =glob('Xxx\{')]])
+    command([[$put =glob('Xxx\$')]])
 
-    execute('w! Xxx{')
-    execute([[w! Xxx\$]])
-    execute([[$put =glob('Xxx\{')]])
-    execute([[$put =glob('Xxx\$')]])
+    command('silent w! Xxx{')
+    command([[w! Xxx\$]])
+    command([[$put =glob('Xxx\{')]])
+    command([[$put =glob('Xxx\$')]])
 
-    execute("$put =string(globpath('sautest/autoload', '*.vim'))")
-    execute("$put =string(globpath('sautest/autoload', '*.vim', 0, 1))")
+    command("$put =string(globpath('sautest/autoload', '*.vim'))")
+    command("$put =string(globpath('sautest/autoload', '*.vim', 0, 1))")
 
     expect([=[
-      
-      
-      
+
+
+
       Xxx{
       Xxx$
       'sautest/autoload/Test104.vim

@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
-local execute = helpers.execute
+local command = helpers.command
 local source = helpers.source
 
 describe('lispwords', function()
@@ -17,7 +17,7 @@ describe('lispwords', function()
     eq('bar,baz,quux', eval('&l:lispwords'))
     eq('bar,baz,quux', eval('&lispwords'))
 
-    execute('setlocal lispwords<')
+    command('setlocal lispwords<')
     eq('foo,bar,baz', eval('&g:lispwords'))
     eq('foo,bar,baz', eval('&l:lispwords'))
     eq('foo,bar,baz', eval('&lispwords'))
