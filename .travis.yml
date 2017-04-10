@@ -25,7 +25,7 @@ env:
     - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
-                   -DBUSTED_OUTPUT_TYPE=neovim
+                   -DBUSTED_OUTPUT_TYPE=nvim
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
                    -DMIN_LOG_LEVEL=2"
     - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
