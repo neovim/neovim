@@ -64,8 +64,24 @@ patch_sources() {
     -exec /bin/sh -c "$sh_script" - '{}' \;
 }
 
+help() {
+  echo 'Usage: pvscheck.sh [target-directory [branch]]'
+  echo
+  echo '  target-directory: Directory where build should occur'
+  echo '                    Default: ../neovim-pvs'
+  echo
+  echo '  branch: Branch to check'
+  echo '          Must not be already checked out: uses git worktree.'
+  echo '          Default: master'
+}
+
 main() {
   local PVS_URL="http://files.viva64.com/pvs-studio-6.14.21446.1-x86_64.tgz"
+
+  if test "x$1" = "x--help" ; then
+    help
+    return 0
+  fi
 
   local tgt="${1:-$PWD/../neovim-pvs}"
   local branch="${2:-master}"
