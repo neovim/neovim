@@ -137,7 +137,7 @@ if(USE_BUNDLED_BUSTED)
   endif()
   add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc11-0/busted-2.0.rc11-0.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build https://raw.githubusercontent.com/Olivine-Labs/busted/v2.0.rc12-1/busted-2.0.rc12-1.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
   add_custom_target(busted
     DEPENDS ${BUSTED_EXE})
