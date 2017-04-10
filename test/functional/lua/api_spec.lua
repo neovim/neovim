@@ -37,13 +37,14 @@ describe('luaeval(vim.api.…)', function()
   end)
 
   it('correctly evaluates API code which calls luaeval', function()
-    eq(1, funcs.luaeval(([===[vim.api.nvim_eval([==[
+    local str = (([===[vim.api.nvim_eval([==[
       luaeval('vim.api.nvim_eval([=[
         luaeval("vim.api.nvim_eval([[
           luaeval(1)
         ]])")
       ]=])')
-    ]==])]===]):gsub('\n', ' ')))
+    ]==])]===]):gsub('\n', ' '))
+    eq(1, funcs.luaeval(str))
   end)
 
   it('correctly converts from API objects', function()
