@@ -8,6 +8,20 @@ get_jobs_num() {
   echo $num
 }
 
+help() {
+  echo 'Usage:'
+  echo '  pvscheck.sh [target-directory [branch]]'
+  echo '  pvscheck.sh [--recheck] [target-directory]'
+  echo
+  echo '    --recheck: run analysis on a prepared target directory'
+  echo
+  echo '    target-directory: Directory where build should occur'
+  echo '                      Default: ../neovim-pvs'
+  echo
+  echo '    branch: Branch to check'
+  echo '            Default: master'
+}
+
 get_pvs_comment() {
   cat > pvs-comment << EOF
 // This is an open source non-commercial project. Dear PVS-Studio, please check it.
@@ -63,39 +77,7 @@ patch_sources() {
     -exec /bin/sh -c "$sh_script" - '{}' \;
 }
 
-help() {
-  echo 'Usage: pvscheck.sh [target-directory [branch]]'
-  echo
-  echo '  target-directory: Directory where build should occur'
-  echo '                    Default: ../neovim-pvs'
-  echo
-  echo '  branch: Branch to check'
-  echo '          Must not be already checked out: uses git worktree.'
-  echo '          Default: master'
-}
-
-main() {
-  local PVS_URL="http://files.viva64.com/pvs-studio-6.14.21446.1-x86_64.tgz"
-
-  if test "x$1" = "x--help" ; then
-    help
-    return
-  fi
-  set -x
-
-  local tgt="${1:-$PWD/../neovim-pvs}"
-  local branch="${2:-master}"
-
-  git clone --branch="$branch" . "$tgt"
-
-  cd "$tgt"
-
-  install_pvs
-
-  create_compile_commands
-
-  patch_sources
-
+run_analysis() {
   pvs-studio-analyzer \
     analyze \
       --threads "$(get_jobs_num)" \
@@ -107,6 +89,59 @@ main() {
   plog-converter -t xml -o PVS-studio.xml PVS-studio.log
   plog-converter -t errorfile -o PVS-studio.err PVS-studio.log
   plog-converter -t tasklist -o PVS-studio.tsk PVS-studio.log
+}
+
+do_check() {
+  local tgt="${1}"
+  local branch="${2}"
+
+  git clone --branch="$branch" . "$tgt"
+
+  cd "$tgt"
+
+  install_pvs
+
+  create_compile_commands
+
+  patch_sources
+
+  run_analysis
+}
+
+do_recheck() {
+  local tgt="${1}"
+
+  cd "$tgt"
+
+  export PATH="$PWD/pvs-studio/bin${PATH+:}${PATH}"
+
+  run_analysis
+}
+
+main() {
+  local PVS_URL="http://files.viva64.com/pvs-studio-6.14.21446.1-x86_64.tgz"
+
+  if test "x$1" = "x--help" ; then
+    help
+    return
+  fi
+
+  set -x
+
+  local recheck=
+  if test "x$1" = "x--recheck" ; then
+    recheck=1
+    shift
+  fi
+
+  local tgt="${1:-$PWD/../neovim-pvs}"
+  local branch="${2:-master}"
+
+  if test "x$recheck" = "x" ; then
+    do_check "$tgt" "$branch"
+  else
+    do_recheck "$tgt"
+  fi
 }
 
 main "$@"
