@@ -284,18 +284,13 @@ function Screen:wait(check, timeout)
 
   if failure_after_success then
     print([[
-Warning: Screen changes have been received after the expected state was seen.
-This is probably due to an indeterminism in the test. Try adding
-`wait()` (or even a separate `screen:expect(...)`) at a point of possible
-indeterminism, typically in between a `feed()` or `execute()` which is non-
-synchronous, and a synchronous api call.
 
-Note that sometimes a `wait` can trigger redraws and consequently generate more
-indeterminism. If adding `wait` calls seems to increase the frequency of these
-messages, try removing every `wait` call in the test.
-
-If everything else fails, use Screen:redraw_debug to help investigate what is
-  causing the problem.
+Warning: Screen changes were received after the expected state. This indicates
+indeterminism in the test. Try adding wait() (or screen:expect(...)) between
+asynchronous (feed(), nvim_input()) and synchronous API calls.
+  - Use Screen:redraw_debug() to investigate the problem.
+  - wait() can trigger redraws and consequently generate more indeterminism.
+    In that case try removing every wait().
       ]])
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
