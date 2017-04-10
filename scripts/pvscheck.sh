@@ -80,13 +80,13 @@ main() {
 
   if test "x$1" = "x--help" ; then
     help
-    return 0
+    return
   fi
 
   local tgt="${1:-$PWD/../neovim-pvs}"
   local branch="${2:-master}"
 
-  git worktree add "$tgt" "$branch"
+  git clone --depth=1 --branch="$branch" . "$tgt"
 
   cd "$tgt"
 
