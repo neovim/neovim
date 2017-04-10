@@ -428,45 +428,28 @@ local function expect_any(contents)
   return ok(nil ~= string.find(curbuf_contents(), contents, 1, true))
 end
 
-local function win_remove_readonly_attr(abspath)
-  assert(os_name() == "windows")
-  local cmd = 'attrib -h -r "'..abspath..'"'
-  -- TODO: Lua 5.2 io.popen():close() returns better info:
-  -- http://stackoverflow.com/a/14031974
-  -- https://www.lua.org/manual/5.2/manual.html#pdf-file:close
-  local exitcode = os.execute(cmd)
-  return (exitcode == 0), exitcode
-end
-
 local function do_rmdir(path)
   if lfs.attributes(path, 'mode') ~= 'directory' then
-    return nil
+    return  -- Don't complain.
   end
   for file in lfs.dir(path) do
     if file ~= '.' and file ~= '..' then
       local abspath = path..'/'..file
       if lfs.attributes(abspath, 'mode') == 'directory' then
-        local ret = do_rmdir(abspath)  -- recurse
-        if not ret then
-          return nil
-        end
+        do_rmdir(abspath)  -- recurse
       else
         local ret, err = os.remove(abspath)
         if not ret then
-          if os_name() == "windows" then
-            -- Remove `readonly` attribute (if any)...
-            local attr_status, attr_rv = win_remove_readonly_attr(abspath)
-            if not attr_status then
-              error('win_remove_readonly_attr: '..attr_rv)
-              return nil
-            end
-            -- ...then try again.
-            ret, err = os.remove(abspath)
-          end
-
-          if not ret then
+          if not session then
             error('os.remove: '..err)
-            return nil
+          else
+            -- Try Nvim delete(): it handles `readonly` attribute on Windows,
+            -- and avoids Lua cross-version/platform incompatibilities.
+            if -1 == nvim_call('delete', abspath) then
+              local hint = (os_name() == 'windows'
+                and ' (hint: try :%bwipeout! before rmdir())' or '')
+              error('delete() failed'..hint..': '..abspath)
+            end
           end
         end
       end
@@ -476,7 +459,6 @@ local function do_rmdir(path)
   if not ret then
     error('lfs.rmdir('..path..'): '..err)
   end
-  return ret
 end
 
 local function rmdir(path)
