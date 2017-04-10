@@ -67,7 +67,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/shada.h"
-#include "nvim/viml/executor/executor.h"
+#include "nvim/lua/executor.h"
 #include "nvim/globals.h"
 
 static int quitmore = 0;

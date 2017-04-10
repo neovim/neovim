@@ -94,7 +94,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/lib/khash.h"
 #include "nvim/lib/queue.h"
-#include "nvim/viml/executor/executor.h"
+#include "nvim/lua/executor.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/gc.h"

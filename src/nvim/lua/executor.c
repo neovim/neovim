@@ -20,8 +20,8 @@
 #include "nvim/undo.h"
 #include "nvim/ascii.h"
 
-#include "nvim/viml/executor/executor.h"
-#include "nvim/viml/executor/converter.h"
+#include "nvim/lua/executor.h"
+#include "nvim/lua/converter.h"
 
 typedef struct {
   Error err;
@@ -29,8 +29,8 @@ typedef struct {
 } LuaError;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/executor/vim_module.generated.h"
-# include "viml/executor/executor.c.generated.h"
+# include "lua/vim_module.generated.h"
+# include "lua/executor.c.generated.h"
 #endif
 
 /// Name of the run code for use in messages

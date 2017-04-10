@@ -33,8 +33,8 @@ set(OPTIONS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genoptions.lua)
 set(UNICODE_TABLES_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genunicodetables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
-set(VIM_MODULE_FILE ${GENERATED_DIR}/viml/executor/vim_module.generated.h)
-set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/viml/executor/vim.lua)
+set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
+set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
 set(CHAR_BLOB_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gencharblob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
@@ -72,8 +72,7 @@ foreach(subdir
         tui
         event
         eval
-        viml
-        viml/executor
+        lua
        )
   if(${subdir} MATCHES "tui" AND NOT FEAT_TUI)
     continue()

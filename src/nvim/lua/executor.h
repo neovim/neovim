@@ -20,6 +20,6 @@ void nlua_add_api_functions(lua_State *lstate) REAL_FATTR_NONNULL_ALL;
     } while (0)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/executor/executor.h.generated.h"
+# include "lua/executor.h.generated.h"
 #endif
 #endif  // NVIM_VIML_EXECUTOR_EXECUTOR_H

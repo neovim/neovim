@@ -10,6 +10,6 @@
 #include "nvim/eval.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/executor/converter.h.generated.h"
+# include "lua/converter.h.generated.h"
 #endif
 #endif  // NVIM_VIML_EXECUTOR_CONVERTER_H

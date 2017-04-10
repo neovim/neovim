@@ -22,8 +22,8 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/eval/decode.h"
 
-#include "nvim/viml/executor/converter.h"
-#include "nvim/viml/executor/executor.h"
+#include "nvim/lua/converter.h"
+#include "nvim/lua/executor.h"
 
 /// Determine, which keys lua table contains
 typedef struct {
@@ -38,7 +38,7 @@ typedef struct {
 } LuaTableProps;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/executor/converter.c.generated.h"
+# include "lua/converter.c.generated.h"
 #endif
 
 #define TYPE_IDX_VALUE true
