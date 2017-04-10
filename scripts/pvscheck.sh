@@ -1,5 +1,4 @@
 #!/bin/sh
-set -x
 set -e
 
 get_jobs_num() {
@@ -82,6 +81,7 @@ main() {
     help
     return
   fi
+  set -x
 
   local tgt="${1:-$PWD/../neovim-pvs}"
   local branch="${2:-master}"
