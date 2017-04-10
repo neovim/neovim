@@ -86,7 +86,7 @@ main() {
   local tgt="${1:-$PWD/../neovim-pvs}"
   local branch="${2:-master}"
 
-  git clone --depth=1 --branch="$branch" . "$tgt"
+  git clone --branch="$branch" . "$tgt"
 
   cd "$tgt"
 
