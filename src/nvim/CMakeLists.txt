@@ -358,12 +358,12 @@ target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
 if(PREFER_LUAJIT)
-  set_property(TARGET nvim APPEND PROPERTY
-               INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS})
+  set(LUA_PREFERRED_INCLUDE_DIRS ${LUAJIT_INCLUDE_DIRS})
 else()
-  set_property(TARGET nvim APPEND PROPERTY
-               INCLUDE_DIRECTORIES ${LUA_INCLUDE_DIRS})
+  set(LUA_PREFERRED_INCLUDE_DIRS ${LUA_INCLUDE_DIRS})
 endif()
+set_property(TARGET nvim APPEND PROPERTY
+             INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
 
 if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim
@@ -540,6 +540,10 @@ foreach(hfile ${NVIM_HEADERS})
       ${texe}
       EXCLUDE_FROM_ALL
       ${tsource} ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_HEADERS})
+    set_property(
+      TARGET ${texe}
+      APPEND PROPERTY INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS}
+    )
 
     list(FIND NO_SINGLE_CHECK_HEADERS "${relative_path}" hfile_exclude_idx)
     if(${hfile_exclude_idx} EQUAL -1)
