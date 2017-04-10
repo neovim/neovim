@@ -34,14 +34,15 @@ return function(options)
   local globalSetup      = c.sect('[----------]') .. ' Global test environment setup.\n'
   local fileStartString  = c.sect('[----------]') .. ' Running tests from ' .. c.file('%s') .. '\n'
   local runString        = c.sect('[ RUN      ]') .. ' ' .. c.test('%s') .. ': '
-  local successString    = c.time('%.2f ms') .. ' ' .. c.succ('OK')   .. '\n'
-  local skippedString    = c.time('%.2f ms') .. ' ' .. c.skip('SKIP') .. '\n'
-  local failureString    =                             c.fail('FAIL') .. '\n'
-  local errorString      =                             c.errr('ERR')  .. '\n'
+  local successString    = c.succ('OK')   .. '\n'
+  local skippedString    = c.skip('SKIP') .. '\n'
+  local failureString    = c.fail('FAIL') .. '\n'
+  local errorString      = c.errr('ERR')  .. '\n'
   local fileEndString    = c.sect('[----------]') .. ' '.. c.nmbr('%d') .. ' %s from ' .. c.file('%s') .. ' ' .. c.time('(%.2f ms total)') .. '\n\n'
   local globalTeardown   = c.sect('[----------]') .. ' Global test environment teardown.\n'
   local suiteEndString   = c.sect('[==========]') .. ' ' .. c.nmbr('%d') .. ' %s from ' .. c.nmbr('%d') .. ' test %s ran. ' .. c.time('(%.2f ms total)') .. '\n'
   local successStatus    = c.succ('[  PASSED  ]') .. ' ' .. c.nmbr('%d') .. ' %s.\n'
+  local timeString       = c.time('%.2f ms')
 
   local summaryStrings = {
     skipped = {
@@ -186,8 +187,16 @@ return function(options)
     return nil, true
   end
 
+  local function getElapsedTime(tbl)
+    if tbl.duration then
+      return tbl.duration * 1000
+    else
+      return tonumber('nan')
+    end
+  end
+
   handler.suiteEnd = function(suite, count, total)
-    local elapsedTime_ms = suite.duration * 1000
+    local elapsedTime_ms = getElapsedTime(suite)
     local tests = (testCount == 1 and 'test' or 'tests')
     local files = (fileCount == 1 and 'file' or 'files')
     io.write(globalTeardown)
@@ -206,7 +215,7 @@ return function(options)
   end
 
   handler.fileEnd = function(file)
-    local elapsedTime_ms = file.duration * 1000
+    local elapsedTime_ms = getElapsedTime(file)
     local tests = (fileTestCount == 1 and 'test' or 'tests')
     fileCount = fileCount + 1
     io.write(fileEndString:format(fileTestCount, tests, file.name, elapsedTime_ms))
@@ -222,7 +231,7 @@ return function(options)
   end
 
   handler.testEnd = function(element, parent, status, debug)
-    local elapsedTime_ms = element.duration * 1000
+    local elapsedTime_ms = getElapsedTime(element)
     local string
 
     fileTestCount = fileTestCount + 1
@@ -242,7 +251,10 @@ return function(options)
     end
 
     if string ~= nil then
-      io.write(string:format(elapsedTime_ms))
+      if elapsedTime_ms == elapsedTime_ms then
+        string = timeString:format(elapsedTime_ms) .. ' ' .. string
+      end
+      io.write(string)
       io.flush()
     end
 
