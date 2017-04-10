@@ -632,8 +632,9 @@ local function itp_child(wr, func)
   collectgarbage('stop')
   child_sethook(wr)
   local err, emsg = pcall(func)
-  debug.sethook()
   collectgarbage('restart')
+  collectgarbage()
+  debug.sethook()
   emsg = tostring(emsg)
   sc.write(wr, trace_end_msg)
   if not err then
@@ -654,6 +655,7 @@ end
 
 local function check_child_err(rd)
   local trace = {}
+  local did_traceline = false
   while true do
     local traceline = sc.read(rd, hook_msglen)
     if #traceline ~= hook_msglen then
@@ -664,6 +666,7 @@ local function check_child_err(rd)
       end
     end
     if traceline == trace_end_msg then
+      did_traceline = true
       break
     end
     trace[#trace + 1] = traceline
@@ -678,6 +681,13 @@ local function check_child_err(rd)
       for i = 1, #trace do
         error = error .. trace[i]
       end
+    end
+    if not did_traceline then
+      error = error .. '\nNo end of trace occurred'
+    end
+    local cc_err, cc_emsg = pcall(check_cores, Paths.test_luajit_prg, true)
+    if not cc_err then
+      error = error .. '\ncheck_cores failed: ' .. cc_emsg
     end
     assert.just_fail(error)
   end
@@ -764,11 +774,6 @@ local module = {
   child_cleanup_once = child_cleanup_once,
   sc = sc,
 }
-return function(after_each)
-  if after_each then
-    after_each(function()
-      check_cores(Paths.test_luajit_prg)
-    end)
-  end
+return function()
   return module
 end

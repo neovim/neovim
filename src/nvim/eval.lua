@@ -301,7 +301,7 @@ return {
     tabpagenr={args={0, 1}},
     tabpagewinnr={args={1, 2}},
     tagfiles={},
-    taglist={args=1},
+    taglist={args={1, 2}},
     tan={args=1, func="float_op_wrapper", data="&tan"},
     tanh={args=1, func="float_op_wrapper", data="&tanh"},
     tempname={},

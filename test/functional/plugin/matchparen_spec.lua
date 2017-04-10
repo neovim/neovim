@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local plugin_helpers = require('test.functional.plugin.helpers')
 local Screen = require('test.functional.ui.screen')
 
-local execute = helpers.execute
+local command = helpers.command
 local meths = helpers.meths
 local feed = helpers.feed
 local eq = helpers.eq
@@ -23,7 +23,7 @@ describe('matchparen', function()
   end)
 
   it('uses correct column after i_<Up>. Vim patch 7.4.1296', function()
-    execute('set noautoindent nosmartindent nocindent laststatus=0')
+    command('set noautoindent nosmartindent nocindent laststatus=0')
     eq(1, meths.get_var('loaded_matchparen'))
     feed('ivoid f_test()<cr>')
     feed('{<cr>')

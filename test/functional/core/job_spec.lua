@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, eval, exc_exec, execute, feed, insert, neq, next_msg, nvim,
+local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
   nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
-  helpers.eq, helpers.eval, helpers.exc_exec, helpers.execute, helpers.feed,
+  helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
@@ -94,7 +94,7 @@ describe('jobs', function()
 
   it('returns 0 when it fails to start', function()
     eq("", eval("v:errmsg"))
-    execute("let g:test_jobid = jobstart([])")
+    feed_command("let g:test_jobid = jobstart([])")
     eq(0, eval("g:test_jobid"))
     eq("E474:", string.match(eval("v:errmsg"), "E%d*:"))
   end)
@@ -470,7 +470,7 @@ describe('jobs', function()
     end)
 
     it('will return -2 when interrupted', function()
-      execute('call rpcnotify(g:channel, "ready") | '..
+      feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
               'jobwait([jobstart("sleep 10; exit 55")]))')
       eq({'notification', 'ready', {}}, next_msg())
@@ -514,7 +514,7 @@ describe('jobs', function()
         \ ])
       endfunction
       ]])
-      execute('call Run()')
+      feed_command('call Run()')
       local r
       for i = 10, 1, -1 do
         r = next_msg()
@@ -668,7 +668,7 @@ describe("pty process teardown", function()
   it("does not prevent/delay exit. #4798 #4900", function()
     if helpers.pending_win32(pending) then return end
     -- Use a nested nvim (in :term) to test without --headless.
-    execute(":terminal '"..helpers.nvim_prog
+    feed_command(":terminal '"..helpers.nvim_prog
       -- Use :term again in the _nested_ nvim to get a PTY process.
       -- Use `sleep` to simulate a long-running child of the PTY.
       .."' +terminal +'!(sleep 300 &)' +qa")

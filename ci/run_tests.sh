@@ -27,8 +27,4 @@ run_test run_oldtests
 
 run_test install_nvim
 
-if succeeded ; then
-  touch "${SUCCESS_MARKER}"
-fi
-
-exit_suite
+end_tests

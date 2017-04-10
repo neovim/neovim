@@ -295,8 +295,6 @@ typval_T decode_string(const char *const s, const size_t len,
 
 /// Parse JSON double-quoted string
 ///
-/// @param[in]  conv  Defines conversion necessary to convert UTF-8 string to
-///                   &encoding.
 /// @param[in]  buf  Buffer being converted.
 /// @param[in]  buf_len  Length of the buffer.
 /// @param[in,out]  pp  Pointer to the start of the string. Must point to '"'.
@@ -313,8 +311,7 @@ typval_T decode_string(const char *const s, const size_t len,
 ///                        value when decoder is restarted, otherwise unused.
 ///
 /// @return OK in case of success, FAIL in case of error.
-static inline int parse_json_string(vimconv_T *const conv,
-                                    const char *const buf, const size_t buf_len,
+static inline int parse_json_string(const char *const buf, const size_t buf_len,
                                     const char **const pp,
                                     ValuesStack *const stack,
                                     ContainerStack *const container_stack,
@@ -489,20 +486,6 @@ static inline int parse_json_string(vimconv_T *const conv,
   }
   PUT_FST_IN_PAIR(fst_in_pair, str_end);
 #undef PUT_FST_IN_PAIR
-  if (conv->vc_type != CONV_NONE) {
-    size_t str_len = (size_t) (str_end - str);
-    char *const new_str = (char *) string_convert(conv, (char_u *) str,
-                                                  &str_len);
-    if (new_str == NULL) {
-      emsgf(_("E474: Failed to convert string \"%.*s\" from UTF-8"),
-            (int) str_len, str);
-      xfree(str);
-      goto parse_json_string_fail;
-    }
-    xfree(str);
-    str = new_str;
-    str_end = new_str + str_len;
-  }
   *str_end = NUL;
   typval_T obj = decode_string(
       str, (size_t)(str_end - str), hasnul ? kTrue : kFalse, false, true);
@@ -683,9 +666,6 @@ int json_decode_string(const char *const buf, const size_t buf_len,
     EMSG(_("E474: Attempt to decode a blank string"));
     return FAIL;
   }
-  vimconv_T conv = { .vc_type = CONV_NONE };
-  convert_setup(&conv, (char_u *) "utf-8", p_enc);
-  conv.vc_fail = true;
   int ret = OK;
   ValuesStack stack = KV_INITIAL_VALUE;
   ContainerStack container_stack = KV_INITIAL_VALUE;
@@ -831,7 +811,7 @@ json_decode_string_cycle_start:
         break;
       }
       case '"': {
-        if (parse_json_string(&conv, buf, buf_len, &p, &stack, &container_stack,
+        if (parse_json_string(buf, buf_len, &p, &stack, &container_stack,
                               &next_map_special, &didcomma, &didcolon)
             == FAIL) {
           // Error message was already given

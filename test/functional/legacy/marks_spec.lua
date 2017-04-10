@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('marks', function()
   before_each(function()
@@ -9,14 +9,14 @@ describe('marks', function()
 
   it('restores a deleted mark after delete-undo-redo-undo', function()
     insert([[
-      
+
       	textline A
       	textline B
       	textline C
-      
+
       Results:]])
 
-    execute([[:/^\t/+1]])
+    feed_command([[:/^\t/+1]])
     feed([[maddu<C-R>u]])
     source([[
       let g:a = string(getpos("'a"))
@@ -24,11 +24,11 @@ describe('marks', function()
     ]])
 
     expect([=[
-      
+
       	textline A
       	textline B
       	textline C
-      
+
       Results:
       Mark after delete-undo-redo-undo: [0, 3, 2, 0]]=])
   end)

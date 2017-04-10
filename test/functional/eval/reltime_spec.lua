@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eq, ok = helpers.clear,  helpers.eq, helpers.ok
-local neq, execute, funcs  = helpers.neq, helpers.execute, helpers.funcs
+local neq, command, funcs  = helpers.neq, helpers.command, helpers.funcs
 local reltime, reltimestr, reltimefloat = funcs.reltime, funcs.reltimestr, funcs.reltimefloat
 
 describe('reltimestr(), reltimefloat()', function()
@@ -8,7 +8,7 @@ describe('reltimestr(), reltimefloat()', function()
 
   it('Checks', function()
     local now = reltime()
-    execute('sleep 10m')
+    command('sleep 10m')
     local later = reltime()
     local elapsed = reltime(now)
 

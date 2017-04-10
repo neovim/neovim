@@ -275,7 +275,6 @@ else()
 endif()
 
 add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
-add_definitions(-DHAVE_CONFIG_H)
 
 if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")

@@ -1,7 +1,7 @@
 -- Tests for 'packpath' and :packadd
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, source, execute = helpers.clear, helpers.source, helpers.execute
+local clear, source, command = helpers.clear, helpers.source, helpers.command
 local call, eq, nvim = helpers.call, helpers.eq, helpers.meths
 local feed = helpers.feed
 
@@ -263,12 +263,12 @@ describe('packadd', function()
         [2] = {bold = true, reverse = true}
       })
 
-      execute([[let optdir1 = &packpath . '/pack/mine/opt']])
-      execute([[let optdir2 = &packpath . '/pack/candidate/opt']])
-      execute([[call mkdir(optdir1 . '/pluginA', 'p')]])
-      execute([[call mkdir(optdir1 . '/pluginC', 'p')]])
-      execute([[call mkdir(optdir2 . '/pluginB', 'p')]])
-      execute([[call mkdir(optdir2 . '/pluginC', 'p')]])
+      command([[let optdir1 = &packpath . '/pack/mine/opt']])
+      command([[let optdir2 = &packpath . '/pack/candidate/opt']])
+      command([[call mkdir(optdir1 . '/pluginA', 'p')]])
+      command([[call mkdir(optdir1 . '/pluginC', 'p')]])
+      command([[call mkdir(optdir2 . '/pluginB', 'p')]])
+      command([[call mkdir(optdir2 . '/pluginC', 'p')]])
     end)
 
     it('works', function()

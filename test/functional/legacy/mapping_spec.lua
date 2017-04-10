@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect, wait = helpers.execute, helpers.expect, helpers.wait
+local feed_command, expect, wait = helpers.feed_command, helpers.expect, helpers.wait
 
 describe('mapping', function()
   before_each(clear)
@@ -13,7 +13,7 @@ describe('mapping', function()
       ]])
 
     -- Abbreviations with р (0x80) should work.
-    execute('inoreab чкпр   vim')
+    feed_command('inoreab чкпр   vim')
     feed('GAчкпр <esc>')
 
     expect([[
@@ -23,61 +23,61 @@ describe('mapping', function()
 
   it('Ctrl-c works in Insert mode', function()
     -- Mapping of ctrl-c in insert mode
-    execute('set cpo-=< cpo-=k')
-    execute('inoremap <c-c> <ctrl-c>')
-    execute('cnoremap <c-c> dummy')
-    execute('cunmap <c-c>')
+    feed_command('set cpo-=< cpo-=k')
+    feed_command('inoremap <c-c> <ctrl-c>')
+    feed_command('cnoremap <c-c> dummy')
+    feed_command('cunmap <c-c>')
     feed('GA<cr>')
     feed('TEST2: CTRL-C |')
     wait()
     feed('<c-c>A|<cr><esc>')
     wait()
-    execute('unmap <c-c>')
-    execute('unmap! <c-c>')
+    feed_command('unmap <c-c>')
+    feed_command('unmap! <c-c>')
 
     expect([[
-      
+
       TEST2: CTRL-C |<ctrl-c>A|
       ]])
   end)
 
   it('Ctrl-c works in Visual mode', function()
-    execute([[vnoremap <c-c> :<C-u>$put ='vmap works'<cr>]])
+    feed_command([[vnoremap <c-c> :<C-u>$put ='vmap works'<cr>]])
     feed('GV')
     -- XXX: For some reason the mapping is only triggered
     -- when <C-c> is in a separate feed command.
     wait()
     feed('<c-c>')
-    execute('vunmap <c-c>')
+    feed_command('vunmap <c-c>')
 
     expect([[
-      
+
       vmap works]])
   end)
 
   it('langmap', function()
     -- langmap should not get remapped in insert mode.
-    execute('inoremap { FAIL_ilangmap')
-    execute('set langmap=+{ langnoremap')
+    feed_command('inoremap { FAIL_ilangmap')
+    feed_command('set langmap=+{ langnoremap')
     feed('o+<esc>')
 
     -- Insert mode expr mapping with langmap.
-    execute('inoremap <expr> { "FAIL_iexplangmap"')
+    feed_command('inoremap <expr> { "FAIL_iexplangmap"')
     feed('o+<esc>')
 
     -- langmap should not get remapped in cmdline mode.
-    execute('cnoremap { FAIL_clangmap')
+    feed_command('cnoremap { FAIL_clangmap')
     feed('o+<esc>')
-    execute('cunmap {')
+    feed_command('cunmap {')
 
     -- cmdline mode expr mapping with langmap.
-    execute('cnoremap <expr> { "FAIL_cexplangmap"')
+    feed_command('cnoremap <expr> { "FAIL_cexplangmap"')
     feed('o+<esc>')
-    execute('cunmap {')
+    feed_command('cunmap {')
 
     -- Assert buffer contents.
     expect([[
-      
+
       +
       +
       +
@@ -91,10 +91,10 @@ describe('mapping', function()
       ]])
 
     -- Vim's issue #212 (feedkeys insert mapping at current position)
-    execute('nnoremap . :call feedkeys(".", "in")<cr>')
+    feed_command('nnoremap . :call feedkeys(".", "in")<cr>')
     feed('/^a b<cr>')
     feed('0qqdw.ifoo<esc>qj0@q<esc>')
-    execute('unmap .')
+    feed_command('unmap .')
     expect([[
       fooc d
       fooc d
@@ -103,23 +103,23 @@ describe('mapping', function()
 
   it('i_CTRL-G_U', function()
     -- <c-g>U<cursor> works only within a single line
-    execute('imapclear')
-    execute('imap ( ()<c-g>U<left>')
+    feed_command('imapclear')
+    feed_command('imap ( ()<c-g>U<left>')
     feed('G2o<esc>ki<cr>Test1: text with a (here some more text<esc>k.')
     -- test undo
     feed('G2o<esc>ki<cr>Test2: text wit a (here some more text [und undo]<c-g>u<esc>k.u')
-    execute('imapclear')
-    execute('set whichwrap=<,>,[,]')
+    feed_command('imapclear')
+    feed_command('set whichwrap=<,>,[,]')
     feed('G3o<esc>2k')
-    execute([[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]])
+    feed_command([[:exe ":norm! iTest3: text with a (parenthesis here\<C-G>U\<Right>new line here\<esc>\<up>\<up>."]])
 
     expect([[
-      
-      
+
+
       Test1: text with a (here some more text)
       Test1: text with a (here some more text)
-      
-      
+
+
       Test2: text wit a (here some more text [und undo])
       new line here
       Test3: text with a (parenthesis here

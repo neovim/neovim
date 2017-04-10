@@ -8729,10 +8729,10 @@ static void f_foldtextresult(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   fold_count = foldedCount(curwin, lnum, &foldinfo);
   if (fold_count > 0) {
-    text = get_foldtext(curwin, lnum, lnum + fold_count - 1,
-        &foldinfo, buf);
-    if (text == buf)
+    text = get_foldtext(curwin, lnum, lnum + fold_count - 1, &foldinfo, buf);
+    if (text == buf) {
       text = vim_strsave(text);
+    }
     rettv->vval.v_string = text;
   }
 }
@@ -16451,7 +16451,12 @@ static void f_taglist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  (void)get_tags(tv_list_alloc_ret(rettv), (char_u *)tag_pattern);
+  const char *fname = NULL;
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    fname = tv_get_string(&argvars[1]);
+  }
+  (void)get_tags(tv_list_alloc_ret(rettv), (char_u *)tag_pattern,
+                 (char_u *)fname);
 }
 
 /*
@@ -16801,30 +16806,9 @@ void timer_teardown(void)
  */
 static void f_tolower(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char_u *p = (char_u *)xstrdup(tv_get_string(&argvars[0]));
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = p;
-
-  while (*p != NUL) {
-    int l;
-
-    if (enc_utf8) {
-      int c, lc;
-
-      c = utf_ptr2char(p);
-      lc = utf_tolower(c);
-      l = utf_ptr2len(p);
-      /* TODO: reallocate string when byte count changes. */
-      if (utf_char2len(lc) == l)
-        utf_char2bytes(lc, p);
-      p += l;
-    } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
-      p += l;                 /* skip multi-byte character */
-    else {
-      *p = TOLOWER_LOC(*p);         /* note that tolower() can be a macro */
-      ++p;
-    }
-  }
+  rettv->vval.v_string = (char_u *)strcase_save(tv_get_string(&argvars[0]),
+                                                false);
 }
 
 /*
@@ -16833,7 +16817,8 @@ static void f_tolower(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_toupper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = (char_u *)strup_save(tv_get_string(&argvars[0]));
+  rettv->vval.v_string = (char_u *)strcase_save(tv_get_string(&argvars[0]),
+                                                true);
 }
 
 /*

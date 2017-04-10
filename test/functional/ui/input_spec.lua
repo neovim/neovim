@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, nvim = helpers.clear, helpers.execute, helpers.nvim
+local clear, feed_command, nvim = helpers.clear, helpers.feed_command, helpers.nvim
 local feed, next_message, eq = helpers.feed, helpers.next_message, helpers.eq
 local expect = helpers.expect
 local Screen = require('test.functional.ui.screen')
@@ -12,7 +12,7 @@ describe('mappings', function()
   local add_mapping = function(mapping, send)
     local cmd = "nnoremap "..mapping.." :call rpcnotify("..cid..", 'mapped', '"
                 ..send:gsub('<', '<lt>').."')<cr>"
-    execute(cmd)
+    feed_command(cmd)
   end
 
   local check_mapping = function(mapping, expected)
@@ -57,7 +57,7 @@ describe('feeding large chunks of input with <Paste>', function()
     clear()
     screen = Screen.new()
     screen:attach()
-    execute('set ruler')
+    feed_command('set ruler')
   end)
 
   it('ok', function()

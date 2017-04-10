@@ -8,23 +8,23 @@ local expect = helpers.expect
 local eq = helpers.eq
 local map = helpers.map
 local filter = helpers.filter
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 local curbuf_contents = helpers.curbuf_contents
 local funcs = helpers.funcs
 local dedent = helpers.dedent
 local getreg = funcs.getreg
 
 local function reset()
-  execute('enew!')
+  feed_command('enew!')
   insert([[
   Line of words 1
   Line of words 2]])
-  execute('goto 1')
+  feed_command('goto 1')
   feed('itest_string.<esc>u')
   funcs.setreg('a', 'test_stringa', 'V')
   funcs.setreg('b', 'test_stringb\ntest_stringb\ntest_stringb', 'b')
   funcs.setreg('"', 'test_string"', 'v')
-  execute('set virtualedit=')
+  feed_command('set virtualedit=')
 end
 
 -- We check the last inserted register ". in each of these tests because it is
@@ -164,7 +164,7 @@ describe('put command', function()
   local function create_put_action(command_base, substitution)
     local temp_val = command_base:gsub('put', substitution)
     return function()
-      execute(temp_val)
+      feed_command(temp_val)
       return true
     end
   end
@@ -642,7 +642,7 @@ describe('put command', function()
         -- Set curswant to '8' to be at the end of the tab character
         -- This is where the cursor is put back after the 'u' command.
         funcs.setpos('.', {0, 2, 1, 0, 8})
-        execute('set autoindent')
+        feed_command('set autoindent')
       end
     )
   end)
@@ -653,7 +653,7 @@ describe('put command', function()
        test_stringx"     Line of words 2]]
     run_normal_mode_tests(test_string, 'p', function()
       funcs.setline('$', '	Line of words 2')
-      execute('set virtualedit=all')
+      feed_command('set virtualedit=all')
       funcs.setpos('.', {0, 2, 1, 2, 3})
     end)
   end)
@@ -664,7 +664,7 @@ describe('put command', function()
     	Line of words 2]]
     run_normal_mode_tests(test_string, 'p', function()
       funcs.setline('$', '	Line of words 2')
-      execute('set virtualedit=all')
+      feed_command('set virtualedit=all')
       funcs.setpos('.', {0, 1, 16, 1, 17})
     end, true)
   end)
@@ -829,7 +829,7 @@ describe('put command', function()
           'vp',
           function()
             funcs.setline('$', '	Line of words 2')
-            execute('set virtualedit=all')
+            feed_command('set virtualedit=all')
             funcs.setpos('.', {0, 2, 1, 2, 3})
           end,
           nil,
@@ -844,7 +844,7 @@ describe('put command', function()
           base_expect_string,
           'vp',
           function()
-            execute('set virtualedit=all')
+            feed_command('set virtualedit=all')
             funcs.setpos('.', {0, 1, 16, 2, 18})
           end,
           true,
@@ -906,7 +906,7 @@ describe('put command', function()
     end)
 
     it('should ring the bell when deleting if not appropriate', function()
-        execute('goto 2')
+        feed_command('goto 2')
         feed('i<bs><esc>')
         expect([[
         ine of words 1
@@ -921,7 +921,7 @@ describe('put command', function()
     end)
 
     it("should be unaffected by 'autoindent' with V\".2p", function()
-      execute('set autoindent')
+      feed_command('set autoindent')
       feed('i test_string.<esc>u')
       feed('V".2p')
       expect([[

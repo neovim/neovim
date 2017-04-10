@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
-local eq, eval, execute = helpers.eq, helpers.eval, helpers.execute
+local eq, eval, command = helpers.eq, helpers.eval, helpers.command
 
 if helpers.pending_win32(pending) then return end
 
@@ -8,30 +8,30 @@ describe('Test for delete()', function()
   before_each(clear)
 
   it('file delete', function()
-    execute('split Xfile')
-    execute("call setline(1, ['a', 'b'])")
-    execute('wq')
+    command('split Xfile')
+    command("call setline(1, ['a', 'b'])")
+    command('wq')
     eq(eval("['a', 'b']"), eval("readfile('Xfile')"))
     eq(0, eval("delete('Xfile')"))
     eq(-1, eval("delete('Xfile')"))
   end)
 
   it('directory delete', function()
-    execute("call mkdir('Xdir1')")
+    command("call mkdir('Xdir1')")
     eq(1, eval("isdirectory('Xdir1')"))
     eq(0, eval("delete('Xdir1', 'd')"))
     eq(0, eval("isdirectory('Xdir1')"))
     eq(-1, eval("delete('Xdir1', 'd')"))
   end)
   it('recursive delete', function()
-    execute("call mkdir('Xdir1')")
-    execute("call mkdir('Xdir1/subdir')")
-    execute("call mkdir('Xdir1/empty')")
-    execute('split Xdir1/Xfile')
-    execute("call setline(1, ['a', 'b'])")
-    execute('w')
-    execute('w Xdir1/subdir/Xfile')
-    execute('close')
+    command("call mkdir('Xdir1')")
+    command("call mkdir('Xdir1/subdir')")
+    command("call mkdir('Xdir1/empty')")
+    command('split Xdir1/Xfile')
+    command("call setline(1, ['a', 'b'])")
+    command('w')
+    command('w Xdir1/subdir/Xfile')
+    command('close')
 
     eq(1, eval("isdirectory('Xdir1')"))
     eq(eval("['a', 'b']"), eval("readfile('Xdir1/Xfile')"))
@@ -57,8 +57,8 @@ describe('Test for delete()', function()
   end)
 
   it('symlink directory delete', function()
-    execute("call mkdir('Xdir1')")
-    execute("silent !ln -s Xdir1 Xlink")
+    command("call mkdir('Xdir1')")
+    command("silent !ln -s Xdir1 Xlink")
     eq(1, eval("isdirectory('Xdir1')"))
     eq(1, eval("isdirectory('Xlink')"))
     -- Delete the link, not the directory

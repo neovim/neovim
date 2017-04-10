@@ -1,7 +1,7 @@
 -- Test character classes in regexp using regexpengine 0, 1, 2.
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 local source, write_file = helpers.source, helpers.write_file
 
 local function sixlines(text)
@@ -14,7 +14,7 @@ end
 
 local function diff(text, nodedent)
   local fname = helpers.tmpname()
-  execute('w! '..fname)
+  command('w! '..fname)
   helpers.wait()
   local data = io.open(fname):read('*all')
   if nodedent then
@@ -45,7 +45,7 @@ describe('character classes in regexp', function()
   end)
   before_each(function()
     clear()
-    execute('e test36.in')
+    command('e test36.in')
   end)
   teardown(function()
     os.remove('test36.in')
