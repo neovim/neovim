@@ -428,6 +428,16 @@ local function expect_any(contents)
   return ok(nil ~= string.find(curbuf_contents(), contents, 1, true))
 end
 
+local function win_remove_readonly_attr(abspath)
+  assert(os_name() == "windows")
+  local cmd = 'attrib -h -r "'..abspath..'"'
+  -- TODO: Lua 5.2 io.popen():close() returns better info:
+  -- http://stackoverflow.com/a/14031974
+  -- https://www.lua.org/manual/5.2/manual.html#pdf-file:close
+  local exitcode = os.execute(cmd)
+  return (exitcode == 0), exitcode
+end
+
 local function do_rmdir(path)
   if lfs.attributes(path, 'mode') ~= 'directory' then
     return nil
@@ -443,8 +453,21 @@ local function do_rmdir(path)
       else
         local ret, err = os.remove(abspath)
         if not ret then
-          error('os.remove: '..err)
-          return nil
+          if os_name() == "windows" then
+            -- Remove `readonly` attribute (if any)...
+            local attr_status, attr_rv = win_remove_readonly_attr(abspath)
+            if not attr_status then
+              error('win_remove_readonly_attr: '..attr_rv)
+              return nil
+            end
+            -- ...then try again.
+            ret, err = os.remove(abspath)
+          end
+
+          if not ret then
+            error('os.remove: '..err)
+            return nil
+          end
         end
       end
     end
