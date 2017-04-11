@@ -1524,13 +1524,18 @@ v:errors	Errors found by assert functions, such as |assert_true()|.
 		list by the assert function.
 
 					*v:event* *event-variable*
-v:event		Dictionary of event data for the current |autocommand|.  The
-		available keys differ per event type and are specified at the
-		documentation for each |event|.  The possible keys are:
-			operator	The operation performed.  Unlike
-					|v:operator|, it is set also for an Ex
-					mode command.  For instance, |:yank| is
-					translated to "|y|".
+v:event		Dictionary of event data for the current |autocommand|.  Valid
+		only during the autocommand lifetime: storing or passing
+		`v:event` is invalid.  Copy it instead: >
+			au TextYankPost * let g:foo = deepcopy(v:event)
+<		Keys vary by event; see the documentation for the specific
+		event, e.g. |TextYankPost|.
+			KEY		DESCRIPTION ~
+			operator	The current |operator|.  Also set for
+					Ex commands (unlike |v:operator|). For
+					example if |TextYankPost| is triggered
+					by the |:yank| Ex command then
+					`v:event['operator']` is "y".
 			regcontents	Text stored in the register as a
 					|readfile()|-style list of lines.
 			regname 	Requested register (e.g "x" for "xyy)
@@ -4856,7 +4861,14 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		   :call jobstart(['ping', 'neovim.io'])
 <		If it is a path (not a name), it must include the extension: >
 		   :call jobstart(['System32\ping.exe', 'neovim.io'])
-<
+
+<		NOTE: On Windows the List {cmd} is converted according to the
+		standard command line argument format (CommandLineToArgvW).
+		One program that does not follow this convention is the
+		cmd.exe shell. For this reason this format is not followed
+		when argv[0] is `cmd.exe`, `cmd` or it matches `$COMSPEC` with a
+		cmd.exe filename.
+
 		{opts} is a dictionary with these keys:
 		  on_stdout: stdout event handler (function name or |Funcref|)
 		  on_stderr: stderr event handler (function name or |Funcref|)

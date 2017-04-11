@@ -94,17 +94,26 @@ describe('system()', function()
     end)
   end)
 
-  if helpers.pending_win32(pending) then return end
-
   it('sets v:shell_error', function()
-    eval([[system("sh -c 'exit'")]])
-    eq(0, eval('v:shell_error'))
-    eval([[system("sh -c 'exit 1'")]])
-    eq(1, eval('v:shell_error'))
-    eval([[system("sh -c 'exit 5'")]])
-    eq(5, eval('v:shell_error'))
-    eval([[system('this-should-not-exist')]])
-    eq(127, eval('v:shell_error'))
+    if helpers.os_name() == 'windows' then
+      eval([[system("cmd.exe /c exit")]])
+      eq(0, eval('v:shell_error'))
+      eval([[system("cmd.exe /c exit 1")]])
+      eq(1, eval('v:shell_error'))
+      eval([[system("cmd.exe /c exit 5")]])
+      eq(5, eval('v:shell_error'))
+      eval([[system('this-should-not-exist')]])
+      eq(1, eval('v:shell_error'))
+    else
+      eval([[system("sh -c 'exit'")]])
+      eq(0, eval('v:shell_error'))
+      eval([[system("sh -c 'exit 1'")]])
+      eq(1, eval('v:shell_error'))
+      eval([[system("sh -c 'exit 5'")]])
+      eq(5, eval('v:shell_error'))
+      eval([[system('this-should-not-exist')]])
+      eq(127, eval('v:shell_error'))
+    end
   end)
 
   describe('executes shell function if passed a string', function()
@@ -119,6 +128,39 @@ describe('system()', function()
     after_each(function()
         screen:detach()
     end)
+
+    if helpers.os_name() == 'windows' then
+      it('with the default cmd.exe shell', function()
+        eq('""\n', eval([[system('echo ""')]]))
+        eq('"a b"\n', eval([[system('echo "a b"')]]))
+        eq('a \nb\n', eval([[system('echo a & echo b')]]))
+        eq('a \n', eval([[system('echo a 2>&1')]]))
+        eval([[system('cd "C:\Program Files"')]])
+        eq(0, eval('v:shell_error'))
+      end)
+
+      it('with set shell="cmd"', function()
+        helpers.source('let &shell="cmd"')
+        eq('"a b"\n', eval([[system('echo "a b"')]]))
+      end)
+
+      it('works with cmd.exe from $COMSPEC', function()
+        local comspecshell = eval("fnamemodify($COMSPEC, ':t')")
+        if comspecshell == 'cmd.exe' then
+          helpers.source('let &shell=$COMSPEC')
+          eq('"a b"\n', eval([[system('echo "a b"')]]))
+        else
+          pending('$COMSPEC is not cmd.exe ' .. comspecshell)
+        end
+      end)
+
+      it('works with powershell', function()
+        helpers.set_shell_powershell()
+        eq('a\nb\n', eval([[system('echo a b')]]))
+        eq('C:\\\n', eval([[system('cd c:\; (Get-Location).Path')]]))
+        eq('a b\n', eval([[system('echo "a b"')]]))
+      end)
+    end
 
     it('`echo` and waits for its return', function()
       feed(':call system("echo")<cr>')
@@ -180,7 +222,11 @@ describe('system()', function()
 
   describe('passing no input', function()
     it('returns the program output', function()
-      eq("echoed", eval('system("echo -n echoed")'))
+      if helpers.os_name() == 'windows' then
+        eq("echoed\n", eval('system("echo echoed")'))
+      else
+        eq("echoed", eval('system("echo -n echoed")'))
+      end
     end)
     it('to backgrounded command does not crash', function()
       -- This is indeterminate, just exercise the codepath. May get E5677.
@@ -277,21 +323,30 @@ describe('system()', function()
   end)
 end)
 
-if helpers.pending_win32(pending) then return end
-
 describe('systemlist()', function()
   -- Similar to `system()`, but returns List instead of String.
   before_each(clear)
 
   it('sets the v:shell_error variable', function()
-    eval([[systemlist("sh -c 'exit'")]])
-    eq(0, eval('v:shell_error'))
-    eval([[systemlist("sh -c 'exit 1'")]])
-    eq(1, eval('v:shell_error'))
-    eval([[systemlist("sh -c 'exit 5'")]])
-    eq(5, eval('v:shell_error'))
-    eval([[systemlist('this-should-not-exist')]])
-    eq(127, eval('v:shell_error'))
+    if helpers.os_name() == 'windows' then
+      eval([[systemlist("cmd.exe /c exit")]])
+      eq(0, eval('v:shell_error'))
+      eval([[systemlist("cmd.exe /c exit 1")]])
+      eq(1, eval('v:shell_error'))
+      eval([[systemlist("cmd.exe /c exit 5")]])
+      eq(5, eval('v:shell_error'))
+      eval([[systemlist('this-should-not-exist')]])
+      eq(1, eval('v:shell_error'))
+    else
+      eval([[systemlist("sh -c 'exit'")]])
+      eq(0, eval('v:shell_error'))
+      eval([[systemlist("sh -c 'exit 1'")]])
+      eq(1, eval('v:shell_error'))
+      eval([[systemlist("sh -c 'exit 5'")]])
+      eq(5, eval('v:shell_error'))
+      eval([[systemlist('this-should-not-exist')]])
+      eq(127, eval('v:shell_error'))
+    end
   end)
 
   describe('exectues shell function', function()
@@ -389,6 +444,7 @@ describe('systemlist()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
+      if helpers.pending_win32(pending) then return end
       eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
     end)
   end)
