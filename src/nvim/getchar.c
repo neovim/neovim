@@ -1505,9 +1505,10 @@ int vgetc(void)
       // For a multi-byte character get all the bytes and return the
       // converted character.
       // Note: This will loop until enough bytes are received!
+      buf[0] = (char_u)c;
+      i = 1;
       if ((n = MB_BYTE2LEN_CHECK(c)) > 1) {
         no_mapping++;
-        buf[0] = (char_u)c;
         for (i = 1; i < n; i++) {
           buf[i] = (char_u)vgetorpeek(true);
           if (buf[i] == K_SPECIAL
@@ -1539,6 +1540,15 @@ int vgetc(void)
       }
 
       break;
+    }
+    // Always adjust new characters based on State
+    LANGMAP_ADJUST(c,
+        (State & (CMDLINE | INSERT)) == 0
+        && get_real_state() != SELECTMODE);
+    // write char to script file(s)
+    if (KeyTyped && !KeyStuffed) {
+      int numbytes = mb_char2bytes(c, buf);
+      gotchars(buf, (size_t)numbytes);
     }
   }
 
@@ -1979,8 +1989,6 @@ static int vgetorpeek(bool advance)
                   KeyTyped = false;
                 } else {
                   KeyTyped = true;
-                  // write char to script file(s)
-                  gotchars(typebuf.tb_buf + typebuf.tb_off, 1);
                 }
                 KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
                 del_typebuf(1, 0);
