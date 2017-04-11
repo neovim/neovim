@@ -455,7 +455,6 @@ wingotofile:
     if (xchar == NUL) {
       xchar = plain_vgetc();
     }
-    LANGMAP_ADJUST(xchar, true);
     no_mapping--;
     (void)add_to_showcmd(xchar);
     switch (xchar) {
