@@ -34,7 +34,7 @@ Pull requests ("PRs")
 - Edit history with `ri` alias: add
 
         [alias]
-        	ri = "!sh -c 't=\"${1:-master}\"; s=\"${2:-HEAD}\" ; [ $# -gt 0 ] && shift ; [ $# -gt 0 ] && shift ; git rebase --interactive \"$(git merge-base --is-ancestor \"$t\" \"$s\" && git rev-parse \"$t\" || git merge-base \"$t\" \"$s\")\" \"$@\"' -"
+        	ri = "!sh -c 't=\"${1:-master}\" ; s=\"${2:-HEAD}\" ; if ! git merge-base --is-ancestor \"$t\" \"$s\" ; then o=\"$t\" ; else mb=\"$(git merge-base \"$t\" \"$s\")\" ; if test \"x$mb\" = x ; then o=\"$t\" ; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\" ; if test \"xu$lm\" = x ; then o=\"$mb\" ; else o=\"$lm\" ; fi ; fi ; fi ; [ $# -gt 0 ] && shift ; [ $# -gt 0 ] && shift ; git rebase --interactive --onto \"$o\" \"$o\" \"$s\" \"$@\"' -"
 
     to your `~/.gitconfig`.
 
