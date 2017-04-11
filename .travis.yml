@@ -104,9 +104,11 @@ addons:
       - gcc-5-multilib
       - gcc-multilib
       - gdb
+      - language-pack-tr
       - libc6-dev-i386
       - libtool
       - llvm-3.9-dev
+      - locales
       - pkg-config
       - unzip
       - valgrind
