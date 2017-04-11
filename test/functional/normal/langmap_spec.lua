@@ -278,7 +278,7 @@ describe("'langmap'", function()
     command('set langmap=xï')
     testrecording('x', 'hello', 'ï', local_setup)
   end)
-  it('handles multibyte mappings', function()
+  pending('handles multibyte mappings', function()
     -- See this vim issue for the problem, may as well add a test.
     -- https://github.com/vim/vim/issues/297
     command('set langmap=ïx')

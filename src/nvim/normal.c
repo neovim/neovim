@@ -830,9 +830,9 @@ static bool normal_get_command_count(NormalState *s)
       no_mapping++;
     }
 
-    ++no_zero_mapping;                // don't map zero here
+    no_zero_mapping++;                // don't map zero here
     s->c = plain_vgetc();
-    --no_zero_mapping;
+    no_zero_mapping--;
     if (s->ctrl_w) {
       no_mapping--;
     }
