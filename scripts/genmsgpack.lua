@@ -127,7 +127,9 @@ local deprecated_aliases = require("api.dispatch_deprecated")
 for i,f in ipairs(shallowcopy(functions)) do
   local ismethod = false
   if startswith(f.name, "nvim_") then
-    if f.since == nil then
+    if startswith(f.name, "nvim__") then
+      f.since = -1
+    elseif f.since == nil then
       print("Function "..f.name.." lacks since field.\n")
       os.exit(1)
     end
@@ -174,11 +176,13 @@ exported_attributes = {'name', 'parameters', 'return_type', 'method',
                        'since', 'deprecated_since'}
 exported_functions = {}
 for _,f in ipairs(functions) do
-  local f_exported = {}
-  for _,attr in ipairs(exported_attributes) do
-    f_exported[attr] = f[attr]
+  if not startswith(f.name, "nvim__") then
+    local f_exported = {}
+    for _,attr in ipairs(exported_attributes) do
+      f_exported[attr] = f[attr]
+    end
+    exported_functions[#exported_functions+1] = f_exported
   end
-  exported_functions[#exported_functions+1] = f_exported
 end
 
 
