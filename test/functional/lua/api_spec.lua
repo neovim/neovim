@@ -29,16 +29,21 @@ describe('luaeval(vim.api.…)', function()
     end)
   end)
   describe('with errors', function()
-    it('transforms API errors from nvim_buf_set_lines into lua errors', function()
+    it('transforms API error from nvim_buf_set_lines into lua error', function()
       funcs.setline(1, {"abc", "def", "a\nb", "ttt"})
       eq({false, 'string cannot contain newlines'},
          funcs.luaeval('{pcall(vim.api.nvim_buf_set_lines, 1, 1, 2, false, {"b\\na"})}'))
     end)
 
-    it('transforms API errors from nvim_win_set_cursor into lua errors', function()
-      funcs.setline(1, {"abc", "def", "a\nb", "ttt"})
+    it('transforms API error from nvim_win_set_cursor into lua error', function()
       eq({false, 'Argument "pos" must be a [row, col] array'},
          funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, 1, {1, 2, 3})}'))
+    end)
+
+    it('transforms API error from nvim_win_set_cursor + same array as in first test into lua error',
+    function()
+      eq({false, 'Argument "pos" must be a [row, col] array'},
+         funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, 1, {"b\\na"})}'))
     end)
   end)
 
