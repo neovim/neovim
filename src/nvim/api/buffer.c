@@ -292,6 +292,23 @@ void nvim_buf_set_lines(uint64_t channel_id,
     return;
   }
 
+  for (size_t i = 0; i < replacement.size; i++) {
+    if (replacement.items[i].type != kObjectTypeString) {
+      api_set_error(err,
+                    Validation,
+                    _("All items in the replacement array must be strings"));
+      return;
+    }
+    // Disallow newlines in the middle of the line.
+    if (channel_id != VIML_INTERNAL_CALL) {
+      const String l = replacement.items[i].data.string;
+      if (memchr(l.data, NL, l.size)) {
+        api_set_error(err, Validation, _("string cannot contain newlines"));
+        return;
+      }
+    }
+  }
+
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
   size_t new_len = replacement.size;
@@ -300,26 +317,12 @@ void nvim_buf_set_lines(uint64_t channel_id,
   char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
 
   for (size_t i = 0; i < new_len; i++) {
-    if (replacement.items[i].type != kObjectTypeString) {
-      api_set_error(err,
-                    Validation,
-                    _("All items in the replacement array must be strings"));
-      goto end;
-    }
+    const String l = replacement.items[i].data.string;
 
-    String l = replacement.items[i].data.string;
-
-    // Fill lines[i] with l's contents. Disallow newlines in the middle of a
-    // line and convert NULs to newlines to avoid truncation.
-    lines[i] = xmallocz(l.size);
-    for (size_t j = 0; j < l.size; j++) {
-      if (l.data[j] == '\n' && channel_id != VIML_INTERNAL_CALL) {
-        api_set_error(err, Exception, _("string cannot contain newlines"));
-        new_len = i + 1;
-        goto end;
-      }
-      lines[i][j] = (char) (l.data[j] == '\0' ? '\n' : l.data[j]);
-    }
+    // Fill lines[i] with l's contents. Convert NULs to newlines as required by
+    // NL-used-for-NUL.
+    lines[i] = xmemdupz(l.data, l.size);
+    memchrsub(lines[i], NUL, NL, l.size);
   }
 
   try_start();
