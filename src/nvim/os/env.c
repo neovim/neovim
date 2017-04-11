@@ -1,11 +1,8 @@
-// env.c -- environment variable access
+// Environment inspection
 
 #include <assert.h>
-
 #include <uv.h>
 
-// vim.h must be included before charset.h (and possibly others) or things
-// blow up
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
@@ -918,4 +915,21 @@ bool os_term_is_nice(void)
     || NULL != os_getenv("KONSOLE_PROFILE_NAME")
     || NULL != os_getenv("KONSOLE_DBUS_SESSION");
 #endif
+}
+
+/// Returns true if `sh` looks like it resolves to "cmd.exe".
+bool os_shell_is_cmdexe(const char *sh)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (*sh == NUL) {
+    return false;
+  }
+  if (striequal(sh, "$COMSPEC")) {
+    const char *comspec = os_getenv("COMSPEC");
+    return striequal("cmd.exe", (char *)path_tail((char_u *)comspec));
+  }
+  if (striequal(sh, "cmd.exe") || striequal(sh, "cmd")) {
+    return true;
+  }
+  return striequal("cmd.exe", (char *)path_tail((char_u *)sh));
 }

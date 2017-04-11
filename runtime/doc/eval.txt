@@ -4855,14 +4855,14 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 <		(Only shows the idea; see |shell-unquoting| for full details.)
 
 		NOTE: on Windows if {cmd} is a List:
-		  - cmd[0] must be executable. If it is in $PATH it can be
-		    called by name, with or without an extension: >
+		  - cmd[0] must be an executable (not a "built-in"). If it is
+		    in $PATH it can be called by name, without an extension: >
 		      :call jobstart(['ping', 'neovim.io'])
-<		    If it is a path (not a name), extension is required: >
+<		    If it is a full or partial path, extension is required: >
 		      :call jobstart(['System32\ping.exe', 'neovim.io'])
-<		  - {cmd} is quoted per the convention expected by
-		    CommandLineToArgvW https://msdn.microsoft.com/bb776391
-		    unless the first argument is some form of "cmd.exe".
+<		  - {cmd} is collapsed to a string of quoted args as expected
+		    by CommandLineToArgvW https://msdn.microsoft.com/bb776391
+		    unless cmd[0] is some form of "cmd.exe".
 
 		{opts} is a dictionary with these keys:
 		  on_stdout: stdout event handler (function name or |Funcref|)

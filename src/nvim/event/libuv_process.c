@@ -8,7 +8,6 @@
 #include "nvim/event/process.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/log.h"
-#include "nvim/path.h"
 #include "nvim/os/os.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -27,22 +26,9 @@ int libuv_process_spawn(LibuvProcess *uvproc)
       uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
   }
 #ifdef WIN32
-  // libuv assumes spawned processes follow the convention from
-  // CommandLineToArgvW(), cmd.exe does not. Disable quoting since it will
-  // result in unexpected behaviour, the caller is left with the responsibility
-  // to quote arguments accordingly. system('') has shell* options for this.
-  //
-  // Disable quoting for cmd, cmd.exe and $COMSPEC with a cmd.exe filename
-  bool is_cmd = STRICMP(proc->argv[0], "cmd.exe") == 0
-                || STRICMP(proc->argv[0], "cmd") == 0;
-  if (!is_cmd) {
-    const char_u *comspec = (char_u *)os_getenv("COMSPEC");
-    const char_u *comspecshell = path_tail((char_u *)proc->argv[0]);
-    is_cmd = comspec != NULL && STRICMP(proc->argv[0], comspec) == 0
-             && STRICMP("cmd.exe", (char *)comspecshell) == 0;
-  }
-
-  if (is_cmd) {
+  // libuv collapses the argv to a CommandLineToArgvW()-style string. cmd.exe
+  // expects a different syntax (must be prepared by the caller before now).
+  if (os_shell_is_cmdexe(proc->argv[0])) {
     uvproc->uvopts.flags |= UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
   }
 #endif
