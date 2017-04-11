@@ -844,7 +844,6 @@ static void write_msg(String message, bool to_err)
 ///
 /// @return its argument.
 Object nvim__id(Object obj)
-    FUNC_API_SINCE(2)
 {
   return copy_object(obj);
 }
@@ -858,7 +857,6 @@ Object nvim__id(Object obj)
 ///
 /// @return its argument.
 Array nvim__id_array(Array arr)
-    FUNC_API_SINCE(2)
 {
   return copy_object(ARRAY_OBJ(arr)).data.array;
 }
@@ -872,7 +870,6 @@ Array nvim__id_array(Array arr)
 ///
 /// @return its argument.
 Dictionary nvim__id_dictionary(Dictionary dct)
-    FUNC_API_SINCE(2)
 {
   return copy_object(DICTIONARY_OBJ(dct)).data.dictionary;
 }
@@ -886,7 +883,6 @@ Dictionary nvim__id_dictionary(Dictionary dct)
 ///
 /// @return its argument.
 Float nvim__id_float(Float flt)
-    FUNC_API_SINCE(2)
 {
   return flt;
 }
