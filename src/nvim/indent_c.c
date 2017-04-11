@@ -10,6 +10,7 @@
 #include "nvim/edit.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
+#include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/option.h"
