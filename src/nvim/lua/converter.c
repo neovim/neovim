@@ -542,16 +542,6 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv)
   return true;
 }
 
-#define NLUA_PUSH_HANDLE(lstate, type, idx) \
-  do { \
-    lua_pushnumber(lstate, (lua_Number)(idx)); \
-  } while (0)
-
-#define NLUA_POP_HANDLE(lstate, type, stack_idx, idx) \
-  do { \
-    idx = (type)lua_tonumber(lstate, stack_idx); \
-  } while (0)
-
 /// Push value which is a type index
 ///
 /// Used for all “typed” tables: i.e. for all tables which represent VimL
@@ -676,7 +666,7 @@ void nlua_push_Array(lua_State *lstate, const Array array)
 void nlua_push_##type(lua_State *lstate, const type item) \
   FUNC_ATTR_NONNULL_ALL \
 { \
-  NLUA_PUSH_HANDLE(lstate, type, item); \
+  lua_pushnumber(lstate, (lua_Number)(item)); \
 }
 
 GENERATE_INDEX_FUNCTION(Buffer)
@@ -1135,7 +1125,7 @@ type nlua_pop_##type(lua_State *lstate, Error *err) \
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
 { \
   type ret; \
-  NLUA_POP_HANDLE(lstate, type, -1, ret); \
+  ret = (type)lua_tonumber(lstate, -1); \
   lua_pop(lstate, 1); \
   return ret; \
 }
