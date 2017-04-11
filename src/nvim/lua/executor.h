@@ -1,5 +1,5 @@
-#ifndef NVIM_VIML_EXECUTOR_EXECUTOR_H
-#define NVIM_VIML_EXECUTOR_EXECUTOR_H
+#ifndef NVIM_LUA_EXECUTOR_H
+#define NVIM_LUA_EXECUTOR_H
 
 #include <lua.h>
 
@@ -22,4 +22,4 @@ void nlua_add_api_functions(lua_State *lstate) REAL_FATTR_NONNULL_ALL;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/executor.h.generated.h"
 #endif
-#endif  // NVIM_VIML_EXECUTOR_EXECUTOR_H
+#endif  // NVIM_LUA_EXECUTOR_H

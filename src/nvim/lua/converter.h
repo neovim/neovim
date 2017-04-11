@@ -1,5 +1,5 @@
-#ifndef NVIM_VIML_EXECUTOR_CONVERTER_H
-#define NVIM_VIML_EXECUTOR_CONVERTER_H
+#ifndef NVIM_LUA_CONVERTER_H
+#define NVIM_LUA_CONVERTER_H
 
 #include <lua.h>
 #include <stdbool.h>
@@ -12,4 +12,4 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/converter.h.generated.h"
 #endif
-#endif  // NVIM_VIML_EXECUTOR_CONVERTER_H
+#endif  // NVIM_LUA_CONVERTER_H
