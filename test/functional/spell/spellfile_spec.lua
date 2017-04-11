@@ -5,6 +5,7 @@ local eq = helpers.eq
 local clear = helpers.clear
 local meths = helpers.meths
 local exc_exec = helpers.exc_exec
+local rmdir = helpers.rmdir
 local write_file = helpers.write_file
 
 local testdir = 'Xtest-functional-spell-spellfile.d'
@@ -12,11 +13,12 @@ local testdir = 'Xtest-functional-spell-spellfile.d'
 describe('spellfile', function()
   before_each(function()
     clear()
+    rmdir(testdir)
     lfs.mkdir(testdir)
     lfs.mkdir(testdir .. '/spell')
   end)
   after_each(function()
-    lfs.rmdir(testdir)
+    rmdir(testdir)
   end)
   --                   ┌ Magic string (#VIMSPELLMAGIC)
   --                   │       ┌ Spell file version (#VIMSPELLVERSION)

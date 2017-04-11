@@ -1,12 +1,11 @@
--- Tests for :recover
-
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
 local feed_command, eq, clear, eval, feed, expect, source =
   helpers.feed_command, helpers.eq, helpers.clear, helpers.eval, helpers.feed,
   helpers.expect, helpers.source
-
-if helpers.pending_win32(pending) then return end
+local command = helpers.command
+local ok = helpers.ok
+local rmdir = helpers.rmdir
 
 describe(':recover', function()
   before_each(clear)
@@ -23,30 +22,29 @@ describe(':preserve', function()
   local swapdir = lfs.currentdir()..'/testdir_recover_spec'
   before_each(function()
     clear()
-    helpers.rmdir(swapdir)
+    rmdir(swapdir)
     lfs.mkdir(swapdir)
   end)
   after_each(function()
-    helpers.rmdir(swapdir)
+    command('%bwipeout!')
+    rmdir(swapdir)
   end)
 
   it("saves to custom 'directory' and (R)ecovers (issue #1836)", function()
     local testfile = 'testfile_recover_spec'
+    -- Put swapdir at the start of the 'directory' list. #1836
     -- Note: `set swapfile` *must* go after `set directory`: otherwise it may
     -- attempt to create a swapfile in different directory.
     local init = [[
-      set directory^=]]..swapdir..[[//
+      set directory^=]]..swapdir:gsub([[\]], [[\\]])..[[//
       set swapfile fileformat=unix undolevels=-1
     ]]
 
     source(init)
-    feed_command('set swapfile fileformat=unix undolevels=-1')
-    -- Put swapdir at the start of the 'directory' list. #1836
-    feed_command('set directory^='..swapdir..'//')
-    feed_command('edit '..testfile)
+    command('edit! '..testfile)
     feed('isometext<esc>')
-    feed_command('preserve')
-    source('redir => g:swapname | swapname | redir END')
+    command('preserve')
+    source('redir => g:swapname | silent swapname | redir END')
 
     local swappath1 = eval('g:swapname')
 
@@ -59,19 +57,20 @@ describe(':preserve', function()
     source(init)
 
     -- Use the "SwapExists" event to choose the (R)ecover choice at the dialog.
-    feed_command('autocmd SwapExists * let v:swapchoice = "r"')
-    feed_command('silent edit '..testfile)
-    source('redir => g:swapname | swapname | redir END')
+    command('autocmd SwapExists * let v:swapchoice = "r"')
+    command('silent edit! '..testfile)
+    source('redir => g:swapname | silent swapname | redir END')
 
     local swappath2 = eval('g:swapname')
 
-    -- swapfile from session 1 should end in .swp
-    assert(testfile..'.swp' == string.match(swappath1, '[^%%]+$'))
-
-    -- swapfile from session 2 should end in .swo
-    assert(testfile..'.swo' == string.match(swappath2, '[^%%]+$'))
-
     expect('sometext')
+    -- swapfile from session 1 should end in .swp
+    eq(testfile..'.swp', string.match(swappath1, '[^%%]+$'))
+    -- swapfile from session 2 should end in .swo
+    eq(testfile..'.swo', string.match(swappath2, '[^%%]+$'))
+    -- Verify that :swapname was not truncated (:help 'shortmess').
+    ok(nil == string.find(swappath1, '%.%.%.'))
+    ok(nil == string.find(swappath2, '%.%.%.'))
   end)
 
 end)
