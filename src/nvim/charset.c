@@ -15,6 +15,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -1366,7 +1367,7 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
   colnr_T to1;
   colnr_T to2;
 
-  if (ltp(pos1, pos2)) {
+  if (lt(*pos1, *pos2)) {
     getvvcol(wp, pos1, &from1, NULL, &to1);
     getvvcol(wp, pos2, &from2, NULL, &to2);
   } else {

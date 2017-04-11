@@ -29,25 +29,6 @@
 #define S_LEN(s) (s), (sizeof(s) - 1)
 
 /*
- * Position comparisons
- */
-# define lt(a, b) (((a).lnum != (b).lnum) \
-                   ? (a).lnum < (b).lnum \
-                   : (a).col != (b).col \
-                   ? (a).col < (b).col \
-                   : (a).coladd < (b).coladd)
-# define ltp(a, b) (((a)->lnum != (b)->lnum) \
-                    ? (a)->lnum < (b)->lnum \
-                    : (a)->col != (b)->col \
-                    ? (a)->col < (b)->col \
-                    : (a)->coladd < (b)->coladd)
-# define equalpos(a, b) (((a).lnum == (b).lnum) && ((a).col == (b).col) && \
-                         ((a).coladd == (b).coladd))
-# define clearpos(a) {(a)->lnum = 0; (a)->col = 0; (a)->coladd = 0; }
-
-#define ltoreq(a, b) (lt(a, b) || equalpos(a, b))
-
-/*
  * lineempty() - return TRUE if the line is empty
  */
 #define lineempty(p) (*ml_get(p) == NUL)
