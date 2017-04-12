@@ -2338,9 +2338,7 @@ linenr_T buflist_findlnum(buf_T *buf)
   return buflist_findfpos(buf)->lnum;
 }
 
-/*
- * List all known file names (for :files and :buffers command).
- */
+// List all known file names (for :files and :buffers command).
 void buflist_list(exarg_T *eap)
 {
   buf_T       *buf;
