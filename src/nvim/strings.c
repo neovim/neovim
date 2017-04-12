@@ -198,8 +198,16 @@ char_u *vim_strsave_shellescape(const char_u *string,
   /* First count the number of extra bytes required. */
   size_t length = STRLEN(string) + 3;       // two quotes and a trailing NUL
   for (const char_u *p = string; *p != NUL; mb_ptr_adv(p)) {
-    if (*p == '\'')
-      length += 3;                      /* ' => '\'' */
+#ifdef WIN32
+    if (!p_ssl) {
+      if (*p == '"') {
+        length++;                       // " -> ""
+      }
+    } else
+#endif
+    if (*p == '\'') {
+      length += 3;                      // ' => '\''
+    }
     if ((*p == '\n' && (csh_like || do_newline))
         || (*p == '!' && (csh_like || do_special))) {
       ++length;                         /* insert backslash */
@@ -216,10 +224,25 @@ char_u *vim_strsave_shellescape(const char_u *string,
   escaped_string = xmalloc(length);
   d = escaped_string;
 
-  /* add opening quote */
+  // add opening quote
+#ifdef WIN32
+  if (!p_ssl) {
+    *d++ = '"';
+  } else
+#endif
   *d++ = '\'';
 
   for (const char_u *p = string; *p != NUL; ) {
+#ifdef WIN32
+    if (!p_ssl) {
+      if (*p == '"') {
+        *d++ = '"';
+        *d++ = '"';
+        p++;
+        continue;
+      }
+    } else
+#endif
     if (*p == '\'') {
       *d++ = '\'';
       *d++ = '\\';
@@ -246,7 +269,12 @@ char_u *vim_strsave_shellescape(const char_u *string,
     MB_COPY_CHAR(p, d);
   }
 
-  /* add terminating quote and finish with a NUL */
+  // add terminating quote and finish with a NUL
+# ifdef WIN32
+  if (!p_ssl) {
+    *d++ = '"';
+  } else
+# endif
   *d++ = '\'';
   *d = NUL;
 
