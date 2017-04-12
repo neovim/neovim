@@ -2339,7 +2339,7 @@ linenr_T buflist_findlnum(buf_T *buf)
 }
 
 /*
- * List all know file names (for :files and :buffers command).
+ * List all known file names (for :files and :buffers command).
  */
 void buflist_list(exarg_T *eap)
 {
