@@ -159,10 +159,28 @@ function! s:check_terminal() abort
   endif
 endfunction
 
+function! s:check_guicursor() abort
+  let environment_variable = $NVIM_TUI_ENABLE_CURSOR_SHAPE
+
+  if environment_variable != ""
+    call health#report_start('guicursor')
+    call health#report_info('If you are experiencing issues with cursor shape, check the following information:')
+    call health#report_info('Current $NVIM_TUI_ENABLE_CURSOR_SHAPE value is: ' . environment_variable)
+    call health#report_info('Current term,shell is: ' . $TERM . ', ' . &shell)
+    call health#report_warn('"$NVIM_TUI_ENABLE_CURSOR_SHAPE" is no longer used.',
+          \ [
+          \ 'Check: https://github.com/neovim/neovim/wiki/Following-HEAD#20170402',
+          \ "Use `:help 'guicursor'` to configure your cursor shape",
+          \ s:suggest_faq,
+          \ ])
+  endif
+endfunction
+
 function! health#nvim#check() abort
   call s:check_config()
   call s:check_performance()
   call s:check_rplugin_manifest()
   call s:check_terminal()
   call s:check_tmux()
+  call s:check_guicursor()
 endfunction
