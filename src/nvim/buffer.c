@@ -1838,9 +1838,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   return FAIL;
 }
 
-/*
- * go to the last know line number for the current buffer
- */
+// Go to the last known line number for the current buffer.
 void buflist_getfpos(void)
 {
   pos_T       *fpos;
