@@ -111,7 +111,7 @@ endfunction
 
 " Check for clipboard tools.
 function! s:check_clipboard() abort
-  call health#report_start('Clipboard')
+  call health#report_start('Clipboard (optional)')
 
   let clipboard_tool = provider#clipboard#Executable()
   if empty(clipboard_tool)
@@ -224,7 +224,7 @@ function! s:check_bin(bin) abort
 endfunction
 
 function! s:check_python(version) abort
-  call health#report_start('Python ' . a:version . ' provider')
+  call health#report_start('Python ' . a:version . ' provider (optional)')
 
   let pyname = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
@@ -419,7 +419,7 @@ function! s:check_python(version) abort
 endfunction
 
 function! s:check_ruby() abort
-  call health#report_start('Ruby provider')
+  call health#report_start('Ruby provider (optional)')
 
   let loaded_var = 'g:loaded_ruby_provider'
   if exists(loaded_var) && !exists('*provider#ruby#Call')
