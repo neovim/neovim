@@ -2045,11 +2045,14 @@ bool tv_islocked(const typval_T *const tv)
 ///
 /// @param[in]  lock  Lock status.
 /// @param[in]  name  Variable name, used in the error message.
-/// @param[in]  name_len  Variable name length.
+/// @param[in]  name_len  Variable name length. Use #TV_TRANSLATE to translate
+///                       variable name and compute the length. Use #TV_CSTRING
+///                       to compute the length with strlen() without
+///                       translating.
 ///
 /// @return true if variable is locked, false otherwise.
-bool tv_check_lock(const VarLockStatus lock, const char *const name,
-                   const size_t name_len)
+bool tv_check_lock(const VarLockStatus lock, const char *name,
+                   size_t name_len)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *error_message = NULL;
@@ -2068,10 +2071,17 @@ bool tv_check_lock(const VarLockStatus lock, const char *const name,
   }
   assert(error_message != NULL);
 
-  const char *const unknown_name = _("Unknown");
+  if (name == NULL) {
+    name = _("Unknown");
+    name_len = strlen(name);
+  } else if (name_len == TV_TRANSLATE) {
+    name = _(name);
+    name_len = strlen(name);
+  } else if (name_len == TV_CSTRING) {
+    name_len = strlen(name);
+  }
 
-  emsgf(_(error_message), (name != NULL ? name_len : strlen(unknown_name)),
-        (name != NULL ? name : unknown_name));
+  emsgf(_(error_message), (int)name_len, name);
 
   return true;
 }

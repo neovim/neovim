@@ -423,6 +423,17 @@ static inline bool tv_is_func(const typval_T tv)
   return tv.v_type == VAR_FUNC || tv.v_type == VAR_PARTIAL;
 }
 
+/// Specify that argument needs to be translated
+///
+/// Used for size_t length arguments to avoid calling gettext() and strlen()
+/// unless needed.
+#define TV_TRANSLATE (SIZE_MAX)
+
+/// Specify that argument is a NUL-terminated C string
+///
+/// Used for size_t length arguments to avoid calling strlen() unless needed.
+#define TV_CSTRING (SIZE_MAX - 1)
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.h.generated.h"
 #endif
