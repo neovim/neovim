@@ -2050,6 +2050,12 @@ bool tv_islocked(const typval_T *const tv)
 ///                       to compute the length with strlen() without
 ///                       translating.
 ///
+///                       Both #TV_… values are used for optimization purposes:
+///                       variable name with its length is needed only in case
+///                       of error, when no error occurs computing them is
+///                       a waste of CPU resources. This especially applies to
+///                       gettext.
+///
 /// @return true if variable is locked, false otherwise.
 bool tv_check_lock(const VarLockStatus lock, const char *name,
                    size_t name_len)

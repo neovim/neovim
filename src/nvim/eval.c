@@ -18871,6 +18871,12 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
 ///                       to compute the length with strlen() without
 ///                       translating.
 ///
+///                       Both #TV_… values are used for optimization purposes:
+///                       variable name with its length is needed only in case
+///                       of error, when no error occurs computing them is
+///                       a waste of CPU resources. This especially applies to
+///                       gettext.
+///
 /// @return True if variable is read-only: either always or in sandbox when
 ///         sandbox is enabled, false otherwise.
 bool var_check_ro(const int flags, const char *name,
@@ -18909,6 +18915,12 @@ bool var_check_ro(const int flags, const char *name,
 ///                       variable name and compute the length. Use #TV_CSTRING
 ///                       to compute the length with strlen() without
 ///                       translating.
+///
+///                       Both #TV_… values are used for optimization purposes:
+///                       variable name with its length is needed only in case
+///                       of error, when no error occurs computing them is
+///                       a waste of CPU resources. This especially applies to
+///                       gettext.
 ///
 /// @return True if variable is fixed, false otherwise.
 static bool var_check_fixed(const int flags, const char *name,
