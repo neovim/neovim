@@ -1837,9 +1837,12 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 /// @param[in,out]  tv  Value to free.
 void tv_clear(typval_T *const tv)
 {
+  static char *objname = NULL;  // cached because gettext() is slow. #6437
+  if (objname == NULL) {
+    objname = xstrdup(_("tv_clear() argument"));
+  }
   if (tv != NULL && tv->v_type != VAR_UNKNOWN) {
-    const int evn_ret = encode_vim_to_nothing(NULL, tv,
-                                              _("tv_clear() argument"));
+    const int evn_ret = encode_vim_to_nothing(NULL, tv, objname);
     (void)evn_ret;
     assert(evn_ret == OK);
   }
