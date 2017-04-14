@@ -97,7 +97,8 @@ int pty_process_spawn(PtyProcess *ptyproc)
     }
   }
 
-  status = build_cmd_line(proc->argv, &cmd_line);
+  status = build_cmd_line(proc->argv, &cmd_line,
+                          os_shell_is_cmdexe(proc->argv[0]));
   if (status != 0) {
     emsg = "Failed to convert cmd line form utf8 to utf16.";
     goto cleanup;
@@ -258,7 +259,7 @@ static void pty_process_finish2(PtyProcess *ptyproc)
 ///
 /// @returns zero on success, or error code of MultiByteToWideChar function.
 ///
-static int build_cmd_line(char **argv, wchar_t **cmd_line)
+static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t utf8_cmd_line_len = 0;
@@ -267,10 +268,14 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line)
 
   QUEUE_INIT(&args_q);
   while (*argv) {
-    size_t buf_len = strlen(*argv) * 2 + 3;
+    size_t buf_len = is_cmdexe ? (strlen(*argv) + 1) : (strlen(*argv) * 2 + 3);
     ArgNode *arg_node = xmalloc(sizeof(*arg_node));
     arg_node->arg = xmalloc(buf_len);
-    quote_cmd_arg(arg_node->arg, buf_len, *argv);
+    if (is_cmdexe) {
+      xstrlcpy(arg_node->arg, *argv, buf_len);
+    } else {
+      quote_cmd_arg(arg_node->arg, buf_len, *argv);
+    }
     utf8_cmd_line_len += strlen(arg_node->arg);
     QUEUE_INIT(&arg_node->node);
     QUEUE_INSERT_TAIL(&args_q, &arg_node->node);
