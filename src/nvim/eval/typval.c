@@ -1799,11 +1799,13 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 #define TYPVAL_ENCODE_NAME nothing
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE const void *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME ignored
+#define TYPVAL_ENCODE_TRANSLATE_OBJECT_NAME
 #include "nvim/eval/typval_encode.c.h"
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE
 #undef TYPVAL_ENCODE_FIRST_ARG_NAME
+#undef TYPVAL_ENCODE_TRANSLATE_OBJECT_NAME
 
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
 #undef TYPVAL_ENCODE_CONV_NIL
@@ -1837,12 +1839,14 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 /// @param[in,out]  tv  Value to free.
 void tv_clear(typval_T *const tv)
 {
-  static char *objname = NULL;  // cached because gettext() is slow. #6437
-  if (objname == NULL) {
-    objname = xstrdup(_("tv_clear() argument"));
-  }
   if (tv != NULL && tv->v_type != VAR_UNKNOWN) {
-    const int evn_ret = encode_vim_to_nothing(NULL, tv, objname);
+    // WARNING: do not translate the string here, gettext is slow and function
+    // is used *very* often. At the current state encode_vim_to_nothing() does
+    // not error out and does not use the argument anywhere.
+    //
+    // If situation changes and this argument will be used, translate it in the
+    // place where it is used.
+    const int evn_ret = encode_vim_to_nothing(NULL, tv, "tv_clear() argument");
     (void)evn_ret;
     assert(evn_ret == OK);
   }
