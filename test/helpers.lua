@@ -32,6 +32,9 @@ local function glob(initial_path, re, exc_re)
     return false
   end
 
+  if is_excluded(initial_path) then
+    return ret
+  end
   while #paths_to_check > 0 do
     local cur_path = paths_to_check[#paths_to_check]
     paths_to_check[#paths_to_check] = nil
@@ -185,7 +188,11 @@ local function check_cores(app, force)
   local gdb_db_cmd = 'gdb -n -batch -ex "thread apply all bt full" "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
   local lldb_db_cmd = 'lldb -Q -o "bt all" -f "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
   local random_skip = false
-  local local_tmpdir = tmpdir_is_local(tmpdir_get()) and tmpdir_get() or nil
+  -- Workspace-local $TMPDIR, scrubbed and pattern-escaped.
+  -- "./Xtest-tmpdir/" => "Xtest%-tmpdir"
+  local local_tmpdir = (tmpdir_is_local(tmpdir_get())
+    and tmpdir_get():gsub('^[ ./]+',''):gsub('%/+$',''):gsub('([^%w])', '%%%1')
+    or nil)
   local db_cmd
   if hasenv('NVIM_TEST_CORE_GLOB_DIRECTORY') then
     initial_path = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
