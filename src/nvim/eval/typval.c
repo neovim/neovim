@@ -136,7 +136,7 @@ void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
 ///
 /// @return [allocated] new list.
 list_T *tv_list_alloc(void)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   list_T *const list = xcalloc(1, sizeof(list_T));
 
