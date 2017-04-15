@@ -1576,7 +1576,7 @@ void tv_dict_set_keys_readonly(dict_T *const dict)
 ///
 /// @return [allocated] pointer to the created list.
 list_T *tv_list_alloc_ret(typval_T *const ret_tv)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_ALL
 {
   list_T *const l = tv_list_alloc();
   ret_tv->vval.v_list = l;
