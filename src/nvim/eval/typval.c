@@ -1011,7 +1011,6 @@ void tv_dict_item_free(dictitem_T *const item)
 /// @return [allocated] new dictionary item.
 static dictitem_T *tv_dict_item_copy(dictitem_T *const di)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-  FUNC_ATTR_MALLOC
 {
   dictitem_T *const new_di = tv_dict_item_alloc((const char *)di->di_key);
   tv_copy(&di->di_tv, &new_di->di_tv);
