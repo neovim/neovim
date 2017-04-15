@@ -16696,11 +16696,11 @@ static void f_timer_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type != VAR_UNKNOWN) {
     if (argvars[0].v_type != VAR_NUMBER) {
       EMSG(_(e_number_exp));
-    } else {
-      timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
-      if (timer != NULL && !timer->stopped) {
-        add_timer_info(rettv, timer);
-      }
+      return;
+    }
+    timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
+    if (timer != NULL && !timer->stopped) {
+      add_timer_info(rettv, timer);
     }
   } else {
     add_timer_info_all(rettv);
@@ -16712,12 +16712,12 @@ static void f_timer_pause(typval_T *argvars, typval_T *unused, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_NUMBER) {
     EMSG(_(e_number_exp));
-  } else {
-    int paused = (bool)tv_get_number(&argvars[1]);
-    timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
-    if (timer != NULL) {
-      timer->paused = paused;
-    }
+    return;
+  }
+  int paused = (bool)tv_get_number(&argvars[1]);
+  timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
+  if (timer != NULL) {
+    timer->paused = paused;
   }
 }
 
@@ -16790,7 +16790,7 @@ static void f_timer_stop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void f_timer_stopall(typval_T *argvars, typval_T *unused, FunPtr fptr)
 {
-  timer_teardown();
+  timer_stop_all();
 }
 
 // invoked on the main loop
@@ -16853,12 +16853,17 @@ static void timer_decref(timer_T *timer)
   }
 }
 
-void timer_teardown(void)
+static void timer_stop_all(void)
 {
   timer_T *timer;
   map_foreach_value(timers, timer, {
     timer_stop(timer);
   })
+}
+
+void timer_teardown(void)
+{
+  timer_stop_all();
 }
 
 /*
