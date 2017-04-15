@@ -4818,7 +4818,7 @@ int find_key_option_len(const char_u *arg, size_t len)
   } else {
     arg--;  // put arg at the '<'
     modifiers = 0;
-    key = find_special_key(&arg, len + 1, &modifiers, true, true);
+    key = find_special_key(&arg, len + 1, &modifiers, true, true, false);
     if (modifiers) {  // can't handle modifiers here
       key = 0;
     }
