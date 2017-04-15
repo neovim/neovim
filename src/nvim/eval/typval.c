@@ -1039,7 +1039,7 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
 ///
 /// @return [allocated] new dictionary.
 dict_T *tv_dict_alloc(void)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dict_T *const d = xmalloc(sizeof(dict_T));
 
