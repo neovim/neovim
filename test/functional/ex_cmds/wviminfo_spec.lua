@@ -1,8 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local execute, eq, neq, spawn, nvim_prog, set_session, wait, write_file
-  = helpers.execute, helpers.eq, helpers.neq, helpers.spawn,
-  helpers.nvim_prog, helpers.set_session, helpers.wait, helpers.write_file
+local command, eq, neq, spawn, nvim_prog, set_session, write_file =
+  helpers.command, helpers.eq, helpers.neq, helpers.spawn,
+  helpers.nvim_prog, helpers.set_session, helpers.write_file
 
 describe(':wshada', function()
   local shada_file = 'wshada_test'
@@ -24,8 +24,7 @@ describe(':wshada', function()
   it('creates a shada file', function()
     -- file should _not_ exist
     eq(nil, lfs.attributes(shada_file))
-    execute('wsh! '..shada_file)
-    wait()
+    command('wsh! '..shada_file)
     -- file _should_ exist
     neq(nil, lfs.attributes(shada_file))
   end)
@@ -40,8 +39,7 @@ describe(':wshada', function()
     eq(text, io.open(shada_file):read())
     neq(nil, lfs.attributes(shada_file))
 
-    execute('wsh! '..shada_file)
-    wait()
+    command('wsh! '..shada_file)
 
     -- File should have been overwritten with a shada file.
     local fp = io.open(shada_file, 'r')

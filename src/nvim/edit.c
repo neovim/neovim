@@ -2037,12 +2037,12 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
         } else {
           c = *(p++);
         }
-        if (vim_islower(c)) {
+        if (mb_islower(c)) {
           has_lower = true;
-          if (vim_isupper(wca[i])) {
+          if (mb_isupper(wca[i])) {
             // Rule 1 is satisfied.
             for (i = actual_compl_length; i < actual_len; i++) {
-              wca[i] = vim_tolower(wca[i]);
+              wca[i] = mb_tolower(wca[i]);
             }
             break;
           }
@@ -2062,14 +2062,14 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
         } else {
           c = *(p++);
         }
-        if (was_letter && vim_isupper(c) && vim_islower(wca[i])) {
+        if (was_letter && mb_isupper(c) && mb_islower(wca[i])) {
           // Rule 2 is satisfied.
           for (i = actual_compl_length; i < actual_len; i++) {
-            wca[i] = vim_toupper(wca[i]);
+            wca[i] = mb_toupper(wca[i]);
           }
           break;
         }
-        was_letter = vim_islower(c) || vim_isupper(c);
+        was_letter = mb_islower(c) || mb_isupper(c);
       }
     }
 
@@ -2082,10 +2082,10 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
         } else {
           c = *(p++);
         }
-        if (vim_islower(c)) {
-          wca[i] = vim_tolower(wca[i]);
-        } else if (vim_isupper(c)) {
-          wca[i] = vim_toupper(wca[i]);
+        if (mb_islower(c)) {
+          wca[i] = mb_tolower(wca[i]);
+        } else if (mb_isupper(c)) {
+          wca[i] = mb_toupper(wca[i]);
         }
       }
     }
@@ -2109,7 +2109,7 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
 
     xfree(wca);
 
-    return ins_compl_add(IObuff, len, icase, fname, NULL, true, dir, flags,
+    return ins_compl_add(IObuff, len, icase, fname, NULL, false, dir, flags,
                          false);
   }
   return ins_compl_add(str, len, icase, fname, NULL, false, dir, flags, false);
@@ -2146,7 +2146,7 @@ static int ins_compl_add(char_u *const str, int len,
   os_breakcheck();
 #define FREE_CPTEXT(cptext, cptext_allocated) \
   do { \
-    if (cptext_allocated) { \
+    if (cptext != NULL && cptext_allocated) { \
       for (size_t i = 0; i < CPT_COUNT; i++) { \
         xfree(cptext[i]); \
       } \
@@ -2302,9 +2302,10 @@ static void ins_compl_longest_match(compl_T *match)
         c1 = *p;
         c2 = *s;
       }
-      if (match->cp_icase ? (vim_tolower(c1) != vim_tolower(c2))
-          : (c1 != c2))
+      if (match->cp_icase ? (mb_tolower(c1) != mb_tolower(c2))
+          : (c1 != c2)) {
         break;
+      }
       if (has_mbyte) {
         mb_ptr_adv(p);
         mb_ptr_adv(s);

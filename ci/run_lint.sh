@@ -12,8 +12,18 @@ enter_suite 'lint'
 
 set -x
 
+csi_clean() {
+  find "${BUILD_DIR}/bin" -name 'test-includes-*' -delete
+  find "${BUILD_DIR}" -name '*test-include*.o' -delete
+}
+
 run_test 'top_make clint-full' clint
 run_test 'top_make testlint' testlint
-run_test_wd 5s 'top_make check-single-includes' single-includes
+CLICOLOR_FORCE=1 run_test_wd \
+  --allow-hang \
+  10s \
+  'top_make check-single-includes' \
+  'csi_clean' \
+  single-includes
 
-exit_suite
+end_tests

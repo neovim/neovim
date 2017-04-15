@@ -1,5 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, feed = helpers.clear, helpers.execute, helpers.feed
+local clear, feed_command, feed = helpers.clear, helpers.feed_command, helpers.feed
 local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
 
 describe('&encoding', function()
@@ -12,7 +12,7 @@ describe('&encoding', function()
   end)
 
   it('cannot be changed after setup', function()
-    execute('set encoding=latin1')
+    feed_command('set encoding=latin1')
     -- error message expected
     feed('<cr>')
     neq(nil, string.find(eval('v:errmsg'), '^E474:'))
@@ -31,7 +31,7 @@ describe('&encoding', function()
   end)
 
   it('can be set to utf-8 without error', function()
-    execute('set encoding=utf-8')
+    feed_command('set encoding=utf-8')
     eq("", eval('v:errmsg'))
 
     clear('--cmd', 'set enc=utf-8')

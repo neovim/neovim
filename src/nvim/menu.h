@@ -1,6 +1,11 @@
 #ifndef NVIM_MENU_H
 #define NVIM_MENU_H
 
+#include <stdbool.h> // for bool
+
+#include "nvim/types.h" // for char_u and expand_T
+#include "nvim/ex_cmds_defs.h" // for exarg_T
+
 /* Indices into vimmenu_T->strings[] and vimmenu_T->noremap[] for each mode */
 #define MENU_INDEX_INVALID      -1
 #define MENU_INDEX_NORMAL       0

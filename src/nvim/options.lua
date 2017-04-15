@@ -1026,13 +1026,6 @@ return {
       enable_if=false,
     },
     {
-      full_name='guiheadroom', abbreviation='ghr',
-      type='number', scope={'global'},
-      vi_def=true,
-      enable_if=false,
-      defaults={if_true={vi=50}}
-    },
-    {
       full_name='guioptions', abbreviation='go',
       type='string', list='flags', scope={'global'},
       vi_def=true,
@@ -2058,7 +2051,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_srr',
-      defaults={if_true={vi=">"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi=">%s 2>&1"},
+        if_false={vi=">"}
+      }
     },
     {
       full_name='shellslash', abbreviation='ssl',

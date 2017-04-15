@@ -468,7 +468,7 @@ local function tbl2callback(tbl)
                                    data={funcref=eval.xstrdup(tbl.fref)}}})
   elseif tbl.type == 'pt' then
     local pt = ffi.gc(ffi.cast('partial_T*',
-        eval.xcalloc(1, ffi.sizeof('partial_T'))), eval.partial_unref)
+        eval.xcalloc(1, ffi.sizeof('partial_T'))), nil)
     ret = ffi.new('Callback[1]', {{type=eval.kCallbackPartial,
                                    data={partial=populate_partial(pt, tbl.pt, {})}}})
   else

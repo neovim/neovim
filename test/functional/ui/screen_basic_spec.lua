@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local spawn, set_session, clear = helpers.spawn, helpers.set_session, helpers.clear
-local feed, execute = helpers.feed, helpers.execute
+local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
 local eval = helpers.eval
@@ -73,33 +73,29 @@ describe('Screen', function()
   describe(':suspend', function()
     it('is forwarded to the UI', function()
       local function check()
-        if not screen.suspended then
-          return 'Screen was not suspended'
-        end
+        eq(true, screen.suspended)
       end
-      execute('suspend')
-      screen:wait(check)
+      command('suspend')
+      screen:expect(check)
       screen.suspended = false
       feed('<c-z>')
-      screen:wait(check)
+      screen:expect(check)
     end)
   end)
 
   describe('bell/visual bell', function()
     it('is forwarded to the UI', function()
       feed('<left>')
-      screen:wait(function()
-        if not screen.bell or screen.visual_bell then
-          return 'Bell was not sent'
-        end
+      screen:expect(function()
+        eq(true, screen.bell)
+        eq(false, screen.visual_bell)
       end)
       screen.bell = false
-      execute('set visualbell')
+      command('set visualbell')
       feed('<left>')
-      screen:wait(function()
-        if not screen.visual_bell or screen.bell then
-          return 'Visual bell was not sent'
-        end
+      screen:expect(function()
+        eq(true, screen.visual_bell)
+        eq(false, screen.bell)
       end)
     end)
   end)
@@ -107,36 +103,27 @@ describe('Screen', function()
   describe(':set title', function()
     it('is forwarded to the UI', function()
       local expected = 'test-title'
-      execute('set titlestring='..expected)
-      execute('set title')
-      screen:wait(function()
-        local actual = screen.title
-        if actual ~= expected then
-          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
-        end
+      command('set titlestring='..expected)
+      command('set title')
+      screen:expect(function()
+        eq(expected, screen.title)
       end)
     end)
 
     it('has correct default title with unnamed file', function()
       local expected = '[No Name] - NVIM'
-      execute('set title')
-      screen:wait(function()
-        local actual = screen.title
-        if actual ~= expected then
-          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
-        end
+      command('set title')
+      screen:expect(function()
+        eq(expected, screen.title)
       end)
     end)
 
     it('has correct default title with named file', function()
       local expected = 'myfile (/mydir) - NVIM'
-      execute('set title')
-      execute('file /mydir/myfile')
-      screen:wait(function()
-        local actual = screen.title
-        if actual ~= expected then
-          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
-        end
+      command('set title')
+      command('file /mydir/myfile')
+      screen:expect(function()
+        eq(expected, screen.title)
       end)
     end)
   end)
@@ -144,13 +131,10 @@ describe('Screen', function()
   describe(':set icon', function()
     it('is forwarded to the UI', function()
       local expected = 'test-icon'
-      execute('set iconstring='..expected)
-      execute('set icon')
-      screen:wait(function()
-        local actual = screen.icon
-        if actual ~= expected then
-          return 'Expected title to be "'..expected..'" but was "'..actual..'"'
-        end
+      command('set iconstring='..expected)
+      command('set icon')
+      screen:expect(function()
+        eq(expected, screen.icon)
       end)
     end)
   end)
@@ -158,7 +142,7 @@ describe('Screen', function()
   describe('window', function()
     describe('split', function()
       it('horizontal', function()
-        execute('sp')
+        command('sp')
         screen:expect([[
           ^                                                     |
           {0:~                                                    }|
@@ -173,13 +157,13 @@ describe('Screen', function()
           {0:~                                                    }|
           {0:~                                                    }|
           {3:[No Name]                                            }|
-          :sp                                                  |
+                                                               |
         ]])
       end)
 
       it('horizontal and resize', function()
-        execute('sp')
-        execute('resize 8')
+        command('sp')
+        command('resize 8')
         screen:expect([[
           ^                                                     |
           {0:~                                                    }|
@@ -194,12 +178,14 @@ describe('Screen', function()
           {0:~                                                    }|
           {0:~                                                    }|
           {3:[No Name]                                            }|
-          :resize 8                                            |
+                                                               |
         ]])
       end)
 
       it('horizontal and vertical', function()
-        execute('sp', 'vsp', 'vsp')
+        command('sp')
+        command('vsp')
+        command('vsp')
         screen:expect([[
           ^                    {3:|}                {3:|}               |
           {0:~                   }{3:|}{0:~               }{3:|}{0:~              }|
@@ -239,7 +225,9 @@ describe('Screen', function()
 
   describe('tabnew', function()
     it('creates a new buffer', function()
-      execute('sp', 'vsp', 'vsp')
+      command('sp')
+      command('vsp')
+      command('vsp')
       insert('hello')
       screen:expect([[
         hell^o               {3:|}hello           {3:|}hello          |
@@ -257,7 +245,7 @@ describe('Screen', function()
         {3:[No Name] [+]                                        }|
                                                              |
       ]])
-      execute('tabnew')
+      command('tabnew')
       insert('hello2')
       feed('h')
       screen:expect([[
@@ -276,7 +264,7 @@ describe('Screen', function()
         {0:~                                                    }|
                                                              |
       ]])
-      execute('tabprevious')
+      command('tabprevious')
       screen:expect([[
         {2: }{6:4}{2:+ [No Name] }{4: + [No Name] }{3:                         }{4:X}|
         hell^o               {3:|}hello           {3:|}hello          |
@@ -321,9 +309,9 @@ describe('Screen', function()
   describe('normal mode', function()
     -- https://code.google.com/p/vim/issues/detail?id=339
     it("setting 'ruler' doesn't reset the preferred column", function()
-      execute('set virtualedit=')
+      command('set virtualedit=')
       feed('i0123456<cr>789<esc>kllj')
-      execute('set ruler')
+      command('set ruler')
       feed('k')
       screen:expect([[
         0123^456                                              |
@@ -339,7 +327,7 @@ describe('Screen', function()
         {0:~                                                    }|
         {0:~                                                    }|
         {0:~                                                    }|
-        :set ruler                         1,5           All |
+                                           1,5           All |
       ]])
     end)
   end)
@@ -404,7 +392,9 @@ describe('Screen', function()
       split
       windows
       ]])
-      execute('sp', 'vsp', 'vsp')
+      command('sp')
+      command('vsp')
+      command('vsp')
       screen:expect([[
         and                 {3:|}and             {3:|}and            |
         clearing            {3:|}clearing        {3:|}clearing       |

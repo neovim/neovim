@@ -1,9 +1,9 @@
--- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Tests for setting the '[,'] marks when joining lines.
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local command, expect = helpers.command, helpers.expect
+local wait = helpers.wait
 
 describe('autoformat join', function()
   setup(clear)
@@ -21,12 +21,13 @@ Results:]])
 
     feed('gg')
     feed('0gqj<cr>')
+    wait()
 
-    execute([[let a=string(getpos("'[")).'/'.string(getpos("']"))]])
-    execute("g/^This line/;'}-join")
-    execute([[let b=string(getpos("'[")).'/'.string(getpos("']"))]])
-    execute("$put ='First test: Start/End '.string(a)")
-    execute("$put ='Second test: Start/End '.string(b)")
+    command([[let a=string(getpos("'[")).'/'.string(getpos("']"))]])
+    command("g/^This line/;'}-join")
+    command([[let b=string(getpos("'[")).'/'.string(getpos("']"))]])
+    command("$put ='First test: Start/End '.string(a)")
+    command("$put ='Second test: Start/End '.string(b)")
 
     expect([[
 		O sodales, ludite, vos qui attamen consulite per voster honur.

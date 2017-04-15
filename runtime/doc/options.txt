@@ -2765,8 +2765,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'grepprg'* *'gp'*
 'grepprg' 'gp'		string	(default "grep -n ",
-					Unix: "grep -n $* /dev/null",
-					Win32: "findstr /n" or "grep -n")
+				 Unix: "grep -n $* /dev/null")
 			global or local to buffer |global-local|
 	Program to use for the |:grep| command.  This option may contain '%'
 	and '#' characters, which are expanded like when used in a command-
@@ -2781,8 +2780,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|:vimgrepadd| and |:lgrepadd| like |:lvimgrepadd|.
 	See also the section |:make_makeprg|, since most of the comments there
 	apply equally to 'grepprg'.
-	For Win32, the default is "findstr /n" if "findstr.exe" can be found,
-	otherwise it's "grep -n".
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -2796,7 +2793,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					-blinkwait175-blinkoff150-blinkon175")
 			global
 	Configures the cursor style for each mode. Works in the GUI and some
-	terminals. Empty means "non-blinking block cursor in all modes": >
+	terminals. Unset to disable: >
 		:set guicursor=
 <
 	With tmux you might need this in ~/.tmux.conf (see terminal-overrides
@@ -2975,18 +2972,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Windows +multibyte only:		*guifontwide_win_mbyte*
 
 	If set and valid, 'guifontwide' is used for IME instead of 'guifont'.
-
-						*'guiheadroom'* *'ghr'*
-'guiheadroom' 'ghr'	number	(default 50)
-			global
-			{only for X11 GUI}
-	The number of pixels subtracted from the screen height when fitting
-	the GUI window on the screen.  Set this before the GUI is started,
-	e.g., in your |gvimrc| file.  When zero, the whole screen height will
-	be used by the window.  When positive, the specified number of pixel
-	lines will be left for window decorations and other items on the
-	screen.  Set it to a negative value to allow windows taller than the
-	screen.
 
 						*'guioptions'* *'go'*
 'guioptions' 'go'	string	(default "egmrLT"   (MS-Windows))
@@ -3171,29 +3156,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Think twice when using ":q!" or ":qa!".
 
 						*'highlight'* *'hl'*
-'highlight' 'hl'	string	(default (as a single string):
-				     "8:SpecialKey,~:EndOfBuffer,z:TermCursor,
-				     Z:TermCursorNC,@:NonText,d:Directory,
-				     e:ErrorMsg,i:IncSearch,l:Search,
-				     m:MoreMsg,M:ModeMsg,n:LineNr,
-				     N:CursorLineNr,r:Question,s:StatusLine,
-				     S:StatusLineNC,c:VertSplit,t:Title,
-				     v:Visual,w:WarningMsg,W:WildMenu,
-				     f:Folded,F:FoldColumn,A:DiffAdd,
-				     C:DiffChange,D:DiffDelete,T:DiffText,
-				     >:SignColumn,B:SpellBad,P:SpellCap,
-				     R:SpellRare,L:SpellLocal,-:Conceal,
-				     +:Pmenu,=:PmenuSel,x:PmenuSbar,
-				     X:PmenuThumb")
+'highlight' 'hl'	string	(default: string of "c:group,..." pairs)
 			global
 	This option can be used to set highlighting mode for various
 	occasions.  It is a comma separated list of character pairs.  The
 	first character in a pair gives the occasion, the second the mode to
 	use for that occasion.  The occasions are:
 	|hl-SpecialKey|	 8  Meta and special keys listed with ":map"
-	|hl-EndOfBuffer|      ~ lines after the last line in the buffer
+	|hl-Whitespace|	 0
+	|hl-EndOfBuffer|   ~ lines after the last line in the buffer
 	|hl-TermCursor|	 z  Cursor in a focused terminal
-	|hl-TermCursorNC| Z Cursor in an unfocused terminal
+	|hl-TermCursorNC|  Z Cursor in an unfocused terminal
 	|hl-NonText|	 @  '@' at the end of the window and
 			    characters from 'showbreak'
 	|hl-Directory|	 d  directories in CTRL-D listing and other special
@@ -3205,11 +3178,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-ModeMsg|	 M  Mode (e.g., "-- INSERT --")
 	|hl-LineNr|	 n  line number for ":number" and ":#" commands, and
 			    when 'number' or 'relativenumber' option is set.
-	|hl-CursorLineNr| N like n for when 'cursorline' or 'relativenumber' is
+	|hl-CursorLineNr|  N like n for when 'cursorline' or 'relativenumber' is
 			    set.
 	|hl-Question|	 r  |hit-enter| prompt and yes/no questions
 	|hl-StatusLine|	 s  status line of current window |status-line|
-	|hl-StatusLineNC| S  status lines of not-current windows
+	|hl-StatusLineNC|  S  status lines of not-current windows
 	|hl-Title|	 t  Titles for output from ":set all", ":autocmd" etc.
 	|hl-VertSplit|	 c  column used to separate vertically split windows
 	|hl-Visual|	 v  Visual mode
@@ -3232,6 +3205,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|hl-PmenuSel|    =  popup menu normal line
 	|hl-PmenuSbar|   x  popup menu scrollbar
 	|hl-PmenuThumb|  X  popup menu scrollbar thumb
+
+	|hl-TabLine|	 *
+	|hl-TabLineFill|   _
+	|hl-TabLineSel|    #
+
+	|hl-ColorColumn|   o
+	|hl-CursorColumn|  !
+	|hl-CursorLine|    .
+	|hl-QuickFixLine|  q
 
 	The display modes are:
 		r	reverse		(termcap entry "mr" and "me")
@@ -3815,9 +3797,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	use this command to get the tallest window possible: >
 		:set lines=999
 <	Minimum value is 2, maximum value is 1000.
-	If you get less lines than expected, check the 'guiheadroom' option.
-	When you set this option and Vim is unable to change the physical
-	number of lines of the display, the display may be messed up.
 
 						*'linespace'* *'lsp'*
 'linespace' 'lsp'	number	(default 0, 1 for Win32 GUI)
@@ -3917,9 +3896,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :set lcs=tab:>-,trail:-
 	    :set lcs=tab:>-,eol:<,nbsp:%
 	    :set lcs=extends:>,precedes:<
-<	The "NonText" highlighting will be used for "eol", "extends" and
-	"precedes".  "SpecialKey" for "nbsp", "space", "tab" and "trail".
-	|hl-NonText| |hl-SpecialKey|
+<	|hl-NonText| highlighting will be used for "eol", "extends" and
+	"precedes". |hl-Whitespace| for "nbsp", "space", "tab" and "trail".
 
 			*'lpl'* *'nolpl'* *'loadplugins'* *'noloadplugins'*
 'loadplugins' 'lpl'	boolean	(default on)
@@ -5170,8 +5148,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		saved.  When not included, the value of 'history' is used.
 							*shada-c*
 	c	Dummy option, kept for compatibility reasons.  Has no actual 
-		effect.  Current encoding state is described in 
-		|shada-encoding|.
+		effect: ShaDa always uses UTF-8 and 'encoding' value is fixed 
+		to UTF-8 as well.
 							*shada-f*
 	f	Whether file marks need to be stored.  If zero, file marks ('0
 		to '9, 'A to 'Z) are not stored.  When not present or when
@@ -5270,9 +5248,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shellcmdflag'* *'shcf'*
-'shellcmdflag' 'shcf'	string	(default: "-c";
-				 Windows, when 'shell' does not
-				 contain "sh" somewhere: "/c")
+'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
 	"bash.exe -c ls" or "cmd.exe /c dir".  For Windows
@@ -5283,15 +5259,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |option-backslash| about including spaces and backslashes.
 	See |shell-unquoting| which talks about separating this option into 
 	multiple arguments.
-	Also see |dos-shell| for Windows.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
 						*'shellpipe'* *'sp'*
 'shellpipe' 'sp'	string	(default ">", "| tee", "|& tee" or "2>&1| tee")
 			global
-			{not available when compiled without the |+quickfix|
-			feature}
 	String to be used to put the output of the ":make" command in the
 	error file.  See also |:make_makeprg|.  See |option-backslash| about
 	including spaces and backslashes.
@@ -5333,7 +5306,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	third-party shells on Windows systems, such as the MKS Korn Shell
 	or bash, where it should be "\"".  The default is adjusted according
 	the value of 'shell', to reduce the need to set this option by the
-	user.  See |dos-shell|.
+	user.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -5365,7 +5338,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'shellslash'* *'ssl'* *'noshellslash'* *'nossl'*
 'shellslash' 'ssl'	boolean	(default off)
 			global
-			{only for MSDOS and MS-Windows}
+			{only for Windows}
 	When set, a forward slash is used when expanding file names.  This is
 	useful when a Unix-like shell is used instead of command.com or
 	cmd.exe.  Backward slashes can still be typed, but they are changed to
@@ -5382,10 +5355,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When on, use temp files for shell commands.  When off use a pipe.
 	When using a pipe is not possible temp files are used anyway.
-	Currently a pipe is only supported on Unix and MS-Windows 2K and
-	later.  You can check it with: >
-		:if has("filterpipe")
-<	The advantage of using a pipe is that nobody can read the temp file
+	The advantage of using a pipe is that nobody can read the temp file
 	and the 'shell' command does not need to support redirection.
 	The advantage of using a temp file is that the file type and encoding
 	can be detected.
@@ -5395,19 +5365,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|system()| does not respect this option, it always uses pipes.
 
 						*'shellxescape'* *'sxe'*
-'shellxescape' 'sxe'	string	(default: "";
-				 for Windows: "\"&|<>()@^")
+'shellxescape' 'sxe'	string	(default: "")
 			global
 	When 'shellxquote' is set to "(" then the characters listed in this
 	option will be escaped with a '^' character.  This makes it possible
 	to execute most external commands with cmd.exe.
 
 						*'shellxquote'* *'sxq'*
-'shellxquote' 'sxq'	string	(default: "";
-					for Win32, when 'shell' is cmd.exe: "("
-					for Win32, when 'shell' contains "sh"
-					somewhere: "\""
-					for Unix, when using system(): "\"")
+'shellxquote' 'sxq'	string	(default: "")
 			global
 	Quoting character(s), put around the command passed to the shell, for
 	the "!" and ":!" commands.  Includes the redirection.  See
@@ -5416,12 +5381,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When the value is '(' then ')' is appended. When the value is '"('
 	then ')"' is appended.
 	When the value is '(' then also see 'shellxescape'.
-	This is an empty string by default on most systems, but is known to be
-	useful for on Win32 version, either for cmd.exe which automatically
-	strips off the first and last quote on a command, or 3rd-party shells
-	such as the MKS Korn Shell or bash, where it should be "\"".  The
-	default is adjusted according the value of 'shell', to reduce the need
-	to set this option by the user.  See |dos-shell|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
@@ -6432,8 +6391,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'title'* *'notitle'*
 'title'			boolean	(default off, on when title can be restored)
 			global
-			{not available when compiled without the |+title|
-			feature}
 	When on, the title of the window will be set to the value of
 	'titlestring' (if it is not empty), or to:
 		filename [+=-] (path) - VIM
@@ -6445,16 +6402,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 		=+		indicates the file is read-only and modified
 		(path)		is the path of the file being edited
 		- VIM		the server name |v:servername| or "VIM"
-	Only works if the terminal supports setting window titles
-	(currently Win32 console, all GUI versions and terminals with a non-
-	empty 't_ts' option - this is Unix xterm by default, where 't_ts' is
-	taken from the builtin termcap).
 
 								*'titlelen'*
 'titlelen'		number	(default 85)
 			global
-			{not available when compiled without the |+title|
-			feature}
 	Gives the percentage of 'columns' to use for the length of the window
 	title.  When the title is longer, only the end of the path name is
 	shown.  A '<' character before the path name is used to indicate this.
@@ -6468,8 +6419,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'titleold'*
 'titleold'		string	(default "Thanks for flying Vim")
 			global
-			{only available when compiled with the |+title|
-			feature}
 	This option will be used for the window title when exiting Vim if the
 	original title cannot be restored.  Only happens if 'title' is on or
 	'titlestring' is not empty.
@@ -6478,13 +6427,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'titlestring'*
 'titlestring'		string	(default "")
 			global
-			{not available when compiled without the |+title|
-			feature}
 	When this option is not empty, it will be used for the title of the
 	window.  This happens only when the 'title' option is on.
-	Only works if the terminal supports setting window titles (currently
-	Win32 console, all GUI versions and terminals with a non-empty 't_ts'
-	option).
 	When this option contains printf-style '%' items, they will be
 	expanded according to the rules used for 'statusline'.
 	Example: >

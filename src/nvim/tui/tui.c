@@ -84,6 +84,7 @@ typedef struct {
 } TUIData;
 
 static bool volatile got_winch = false;
+static bool cursor_style_enabled = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -151,6 +152,7 @@ static void terminfo_start(UI *ui)
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
+  // NOTE: Do this *before* changing terminal settings. #6433
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
@@ -437,11 +439,11 @@ static void tui_cursor_goto(UI *ui, int row, int col)
 CursorShape tui_cursor_decode_shape(const char *shape_str)
 {
   CursorShape shape = 0;
-  if (strcmp(shape_str, "block") == 0) {
+  if (strequal(shape_str, "block")) {
     shape = SHAPE_BLOCK;
-  } else if (strcmp(shape_str, "vertical") == 0) {
+  } else if (strequal(shape_str, "vertical")) {
     shape = SHAPE_VER;
-  } else if (strcmp(shape_str, "horizontal") == 0) {
+  } else if (strequal(shape_str, "horizontal")) {
     shape = SHAPE_HOR;
   } else {
     EMSG2(_(e_invarg2), shape_str);
@@ -454,40 +456,41 @@ static cursorentry_T decode_cursor_entry(Dictionary args)
   cursorentry_T r;
 
   for (size_t i = 0; i < args.size; i++) {
-    char *keyStr = args.items[i].key.data;
+    char *key = args.items[i].key.data;
     Object value = args.items[i].value;
 
-    if (strcmp(keyStr, "cursor_shape") == 0) {
+    if (strequal(key, "cursor_shape")) {
       r.shape = tui_cursor_decode_shape(args.items[i].value.data.string.data);
-    } else if (strcmp(keyStr, "blinkon") == 0) {
+    } else if (strequal(key, "blinkon")) {
       r.blinkon = (int)value.data.integer;
-    } else if (strcmp(keyStr, "blinkoff") == 0) {
+    } else if (strequal(key, "blinkoff")) {
       r.blinkoff = (int)value.data.integer;
-    } else if (strcmp(keyStr, "hl_id") == 0) {
+    } else if (strequal(key, "hl_id")) {
       r.id = (int)value.data.integer;
     }
   }
   return r;
 }
 
-static void tui_cursor_style_set(UI *ui, Dictionary args)
+static void tui_cursor_style_set(UI *ui, bool enabled, Dictionary args)
 {
+  cursor_style_enabled = enabled;
+  if (!enabled) {
+    return;  // Do not send cursor style control codes.
+  }
   TUIData *data = ui->data;
 
+  assert(args.size);
+  // Keys: as defined by `shape_table`.
   for (size_t i = 0; i < args.size; i++) {
     char *mode_name = args.items[i].key.data;
     const int mode_id = cursor_mode_str2int(mode_name);
-
-    if (mode_id < 0) {
-      WLOG("Unknown mode '%s'", mode_name);
-      continue;
-    }
+    assert(mode_id >= 0);
     cursorentry_T r = decode_cursor_entry(args.items[i].value.data.dictionary);
     r.full_name = mode_name;
     data->cursor_shapes[mode_id] = r;
   }
 
-  // force redraw
   MouseMode cursor_mode = tui_mode2cursor(data->showing_mode);
   tui_set_cursor(ui, cursor_mode);
 }
@@ -528,6 +531,9 @@ static void tui_mouse_off(UI *ui)
 /// @param mode one of SHAPE_XXX
 static void tui_set_cursor(UI *ui, MouseMode mode)
 {
+  if (!cursor_style_enabled) {
+    return;
+  }
   TUIData *data = ui->data;
   cursorentry_T c = data->cursor_shapes[mode];
   int shape = c.shape;
@@ -536,17 +542,15 @@ static void tui_set_cursor(UI *ui, MouseMode mode)
 
 # define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
   // Support changing cursor shape on some popular terminals.
-  const char *term_prog = os_getenv("TERM_PROGRAM");
   const char *vte_version = os_getenv("VTE_VERSION");
 
-  if ((term_prog && !strcmp(term_prog, "Konsole"))
-      || os_getenv("KONSOLE_DBUS_SESSION") != NULL) {
+  if (os_getenv("KONSOLE_PROFILE_NAME") || os_getenv("KONSOLE_DBUS_SESSION")) {
     // Konsole uses a proprietary escape code to set the cursor shape
     // and does not support DECSCUSR.
     switch (shape) {
       case SHAPE_BLOCK: shape = 0; break;
       case SHAPE_VER:   shape = 1; break;
-      case SHAPE_HOR:   shape = 3; break;
+      case SHAPE_HOR:   shape = 2; break;
       default: WLOG("Unknown shape value %d", shape); break;
     }
     data->params[0].i = shape;
@@ -1102,15 +1106,15 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
     stty_erase = tui_get_stty_erase();
   }
 
-  if (strcmp(name, "key_backspace") == 0) {
+  if (strequal(name, "key_backspace")) {
     ILOG("libtermkey:kbs=%s", value);
     if (stty_erase != NULL && stty_erase[0] != 0) {
       return stty_erase;
     }
-  } else if (strcmp(name, "key_dc") == 0) {
+  } else if (strequal(name, "key_dc")) {
     ILOG("libtermkey:kdch1=%s", value);
     // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
-    if (stty_erase != NULL && value != NULL && strcmp(stty_erase, value) == 0) {
+    if (stty_erase != NULL && value != NULL && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;
     }
   }

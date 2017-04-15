@@ -25,7 +25,7 @@ env:
     - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
-                   -DBUSTED_OUTPUT_TYPE=gtest
+                   -DBUSTED_OUTPUT_TYPE=nvim
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
                    -DMIN_LOG_LEVEL=2"
     - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
@@ -43,11 +43,6 @@ env:
     # If this file exists, we know that the cache contains compiled
     # dependencies and we can use it.
     - CACHE_MARKER="$HOME/.cache/nvim-deps/.travis_cache_marker"
-    # Test success marker. If this file exists, we know that all tests
-    # were successful. Required because we only want to update the cache
-    # if the tests were successful, but don't have this information
-    # available in before_cache (which is run before after_success).
-    - SUCCESS_MARKER="$BUILD_DIR/.tests_successful"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
     - CI_TARGET=tests
@@ -109,9 +104,11 @@ addons:
       - gcc-5-multilib
       - gcc-multilib
       - gdb
+      - language-pack-tr
       - libc6-dev-i386
       - libtool
       - llvm-3.9-dev
+      - locales
       - pkg-config
       - unzip
       - valgrind

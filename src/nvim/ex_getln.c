@@ -30,6 +30,7 @@
 #include "nvim/if_cscope.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/menu.h"
@@ -1231,7 +1232,7 @@ static int command_line_handle_key(CommandLineState *s)
         // command line has no uppercase characters, convert
         // the character to lowercase
         if (p_ic && p_scs && !pat_has_uppercase(ccline.cmdbuff)) {
-          s->c = vim_tolower(s->c);
+          s->c = mb_tolower(s->c);
         }
 
         if (s->c != NUL) {
@@ -3018,7 +3019,7 @@ ExpandOne (
                       || xp->xp_context == EXPAND_FILES
                       || xp->xp_context == EXPAND_SHELLCMD
                       || xp->xp_context == EXPAND_BUFFERS)) {
-          if (vim_tolower(c0) != vim_tolower(ci)) {
+          if (mb_tolower(c0) != mb_tolower(ci)) {
             break;
           }
         } else if (c0 != ci) {

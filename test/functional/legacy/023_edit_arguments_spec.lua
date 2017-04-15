@@ -2,7 +2,8 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, insert = helpers.clear, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local command, expect = helpers.command, helpers.expect
+local wait = helpers.wait
 
 describe(':edit', function()
   setup(clear)
@@ -12,31 +13,32 @@ describe(':edit', function()
       The result should be in Xfile1: "fooPIPEbar", in Xfile2: "fooSLASHbar"
       foo|bar
       foo/bar]])
+    wait()
 
     -- Prepare some test files
-    execute('$-1w! Xfile1')
-    execute('$w! Xfile2')
-    execute('w! Xfile0')
+    command('$-1w! Xfile1')
+    command('$w! Xfile2')
+    command('w! Xfile0')
 
     -- Open Xfile using '+' range
-    execute('edit +1 Xfile1')
-    execute('s/|/PIPE/')
-    execute('yank A')
-    execute('w! Xfile1')
+    command('edit +1 Xfile1')
+    command('s/|/PIPE/')
+    command('yank A')
+    command('w! Xfile1')
 
     -- Open Xfile2 using '|' range
-    execute('edit Xfile2|1')
-    execute("s/\\//SLASH/")
-    execute('yank A')
-    execute('w! Xfile2')
+    command('edit Xfile2|1')
+    command("s/\\//SLASH/")
+    command('yank A')
+    command('w! Xfile2')
 
     -- Clean first buffer and put @a
-    execute('bf')
-    execute('%d')
-    execute('0put a')
+    command('bf')
+    command('%d')
+    command('0put a')
 
     -- Remove empty line
-    execute('$d')
+    command('$d')
 
     -- The buffer should now contain
     expect([[

@@ -1,23 +1,23 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, nvim = helpers.clear, helpers.execute, helpers.nvim
-local expect, feed, command = helpers.expect, helpers.feed, helpers.command
+local clear, command, nvim = helpers.clear, helpers.command, helpers.nvim
+local expect, feed = helpers.expect, helpers.feed
 local eq, eval = helpers.eq, helpers.eval
 
 describe(':emenu', function()
 
   before_each(function()
     clear()
-    execute('nnoremenu Test.Test inormal<ESC>')
-    execute('inoremenu Test.Test insert')
-    execute('vnoremenu Test.Test x')
-    execute('cnoremenu Test.Test cmdmode')
+    command('nnoremenu Test.Test inormal<ESC>')
+    command('inoremenu Test.Test insert')
+    command('vnoremenu Test.Test x')
+    command('cnoremenu Test.Test cmdmode')
 
-    execute('nnoremenu Edit.Paste p')
-    execute('cnoremenu Edit.Paste <C-R>"')
+    command('nnoremenu Edit.Paste p')
+    command('cnoremenu Edit.Paste <C-R>"')
   end)
 
   it('executes correct bindings in normal mode without using API', function()
-    execute('emenu Test.Test')
+    command('emenu Test.Test')
     expect('normal')
   end)
 

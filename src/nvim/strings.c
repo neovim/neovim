@@ -198,8 +198,16 @@ char_u *vim_strsave_shellescape(const char_u *string,
   /* First count the number of extra bytes required. */
   size_t length = STRLEN(string) + 3;       // two quotes and a trailing NUL
   for (const char_u *p = string; *p != NUL; mb_ptr_adv(p)) {
-    if (*p == '\'')
-      length += 3;                      /* ' => '\'' */
+#ifdef WIN32
+    if (!p_ssl) {
+      if (*p == '"') {
+        length++;                       // " -> ""
+      }
+    } else
+#endif
+    if (*p == '\'') {
+      length += 3;                      // ' => '\''
+    }
     if ((*p == '\n' && (csh_like || do_newline))
         || (*p == '!' && (csh_like || do_special))) {
       ++length;                         /* insert backslash */
@@ -216,10 +224,25 @@ char_u *vim_strsave_shellescape(const char_u *string,
   escaped_string = xmalloc(length);
   d = escaped_string;
 
-  /* add opening quote */
+  // add opening quote
+#ifdef WIN32
+  if (!p_ssl) {
+    *d++ = '"';
+  } else
+#endif
   *d++ = '\'';
 
   for (const char_u *p = string; *p != NUL; ) {
+#ifdef WIN32
+    if (!p_ssl) {
+      if (*p == '"') {
+        *d++ = '"';
+        *d++ = '"';
+        p++;
+        continue;
+      }
+    } else
+#endif
     if (*p == '\'') {
       *d++ = '\'';
       *d++ = '\\';
@@ -246,7 +269,12 @@ char_u *vim_strsave_shellescape(const char_u *string,
     MB_COPY_CHAR(p, d);
   }
 
-  /* add terminating quote and finish with a NUL */
+  // add terminating quote and finish with a NUL
+# ifdef WIN32
+  if (!p_ssl) {
+    *d++ = '"';
+  } else
+# endif
   *d++ = '\'';
   *d = NUL;
 
@@ -291,14 +319,15 @@ void vim_strup(char_u *p)
   }
 }
 
-/// Make given string all upper-case
+/// Make given string all upper-case or all lower-case
 ///
-/// Handels multi-byte characters as good as possible.
+/// Handles multi-byte characters as good as possible.
 ///
 /// @param[in]  orig  Input string.
+/// @param[in]  upper If true make uppercase, otherwise lowercase
 ///
 /// @return [allocated] upper-cased string.
-char *strup_save(const char *const orig)
+char *strcase_save(const char *const orig, bool upper)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   char *res = xstrdup(orig);
@@ -307,33 +336,25 @@ char *strup_save(const char *const orig)
   while (*p != NUL) {
     int l;
 
-    if (enc_utf8) {
-      int c = utf_ptr2char((const char_u *)p);
-      int uc = utf_toupper(c);
+    int c = utf_ptr2char((const char_u *)p);
+    int uc = upper ? mb_toupper(c) : mb_tolower(c);
 
-      // Reallocate string when byte count changes.  This is rare,
-      // thus it's OK to do another malloc()/free().
-      l = utf_ptr2len((const char_u *)p);
-      int newl = utf_char2len(uc);
-      if (newl != l) {
-        // TODO(philix): use xrealloc() in strup_save()
-        char *s = xmalloc(STRLEN(res) + (size_t)(1 + newl - l));
-        memcpy(s, res, (size_t)(p - res));
-        STRCPY(s + (p - res) + newl, p + l);
-        p = s + (p - res);
-        xfree(res);
-        res = s;
-      }
-
-      utf_char2bytes(uc, (char_u *)p);
-      p += newl;
-    } else if (has_mbyte && (l = (*mb_ptr2len)((const char_u *)p)) > 1) {
-      p += l;  // Skip multi-byte character.
-    } else {
-      // note that toupper() can be a macro
-      *p = (char)(uint8_t)TOUPPER_LOC(*p);
-      p++;
+    // Reallocate string when byte count changes.  This is rare,
+    // thus it's OK to do another malloc()/free().
+    l = utf_ptr2len((const char_u *)p);
+    int newl = utf_char2len(uc);
+    if (newl != l) {
+      // TODO(philix): use xrealloc() in strup_save()
+      char *s = xmalloc(STRLEN(res) + (size_t)(1 + newl - l));
+      memcpy(s, res, (size_t)(p - res));
+      STRCPY(s + (p - res) + newl, p + l);
+      p = s + (p - res);
+      xfree(res);
+      res = s;
     }
+
+    utf_char2bytes(uc, (char_u *)p);
+    p += newl;
   }
 
   return res;

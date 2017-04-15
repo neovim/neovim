@@ -38,7 +38,7 @@ cd ..
 :: Build Neovim
 mkdir build
 cd build
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUSTED_OUTPUT_TYPE=gtest -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUSTED_OUTPUT_TYPE=nvim -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
 mingw32-make VERBOSE=1 || goto :error
 bin\nvim --version || goto :error
 

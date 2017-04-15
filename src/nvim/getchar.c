@@ -302,13 +302,13 @@ static void add_num_buff(buffheader_T *buf, long n)
  */
 static void add_char_buff(buffheader_T *buf, int c)
 {
-  char bytes[MB_MAXBYTES + 1];
+  uint8_t bytes[MB_MAXBYTES + 1];
 
   int len;
   if (IS_SPECIAL(c)) {
     len = 1;
   } else {
-    len = (*mb_char2bytes)(c, (char_u *)bytes);
+    len = mb_char2bytes(c, bytes);
   }
 
   for (int i = 0; i < len; i++) {

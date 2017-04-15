@@ -102,6 +102,7 @@
 #include "nvim/indent.h"
 #include "nvim/getchar.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -3409,7 +3410,7 @@ win_line (
                 || (c == ' ' && lcs_space && ptr - line <= trailcol))) {
           c = (c == ' ') ? lcs_space : lcs_nbsp;
           n_attr = 1;
-          extra_attr = hl_attr(HLF_8);
+          extra_attr = hl_attr(HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
@@ -3424,7 +3425,7 @@ win_line (
         if (trailcol != MAXCOL && ptr > line + trailcol && c == ' ') {
           c = lcs_trail;
           n_attr = 1;
-          extra_attr = hl_attr(HLF_8);
+          extra_attr = hl_attr(HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
@@ -3525,8 +3526,8 @@ win_line (
               c_extra = lcs_tab2;
             }
             n_attr = tab_len + 1;
-            extra_attr = hl_attr(HLF_8);
-            saved_attr2 = char_attr;             /* save current attr */
+            extra_attr = hl_attr(HLF_0);
+            saved_attr2 = char_attr;  // save current attr
             mb_c = c;
             if (enc_utf8 && (*mb_char2len)(c) > 1) {
               mb_utf8 = TRUE;

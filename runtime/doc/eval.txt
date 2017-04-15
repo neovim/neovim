@@ -1524,13 +1524,18 @@ v:errors	Errors found by assert functions, such as |assert_true()|.
 		list by the assert function.
 
 					*v:event* *event-variable*
-v:event		Dictionary of event data for the current |autocommand|.  The
-		available keys differ per event type and are specified at the
-		documentation for each |event|.  The possible keys are:
-			operator	The operation performed.  Unlike
-					|v:operator|, it is set also for an Ex
-					mode command.  For instance, |:yank| is
-					translated to "|y|".
+v:event		Dictionary of event data for the current |autocommand|.  Valid
+		only during the autocommand lifetime: storing or passing
+		`v:event` is invalid.  Copy it instead: >
+			au TextYankPost * let g:foo = deepcopy(v:event)
+<		Keys vary by event; see the documentation for the specific
+		event, e.g. |TextYankPost|.
+			KEY		DESCRIPTION ~
+			operator	The current |operator|.  Also set for
+					Ex commands (unlike |v:operator|). For
+					example if |TextYankPost| is triggered
+					by the |:yank| Ex command then
+					`v:event['operator']` is "y".
 			regcontents	Text stored in the register as a
 					|readfile()|-style list of lines.
 			regname 	Requested register (e.g "x" for "xyy)
@@ -2291,7 +2296,7 @@ tabpagebuflist([{arg}])		List	list of buffer numbers in tab page
 tabpagenr([{arg}])		Number	number of current or last tab page
 tabpagewinnr({tabarg}[, {arg}])
 				Number	number of current window in tab page
-taglist({expr})		List	list of tags matching {expr}
+taglist({expr}[, {filename}])	List	list of tags matching {expr}
 tagfiles()			List	tags files used
 tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
@@ -4847,16 +4852,18 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		Spawns {cmd} as a job.  If {cmd} is a |List| it is run
 		directly.  If {cmd} is a |String| it is processed like this: >
 		  :call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
-<		NOTE: This only shows the idea; see |shell-unquoting| before
-		constructing lists with 'shell' or 'shellcmdflag'.
+<		(Only shows the idea; see |shell-unquoting| for full details.)
 
-		NOTE: On Windows if {cmd} is a List, cmd[0] must be a valid
-		executable (.exe, .com).  If the executable is in $PATH it can
-		be called by name, with or without an extension: >
-		   :call jobstart(['ping', 'neovim.io'])
-<		If it is a path (not a name), it must include the extension: >
-		   :call jobstart(['System32\ping.exe', 'neovim.io'])
-<
+		NOTE: on Windows if {cmd} is a List:
+		  - cmd[0] must be an executable (not a "built-in"). If it is
+		    in $PATH it can be called by name, without an extension: >
+		      :call jobstart(['ping', 'neovim.io'])
+<		    If it is a full or partial path, extension is required: >
+		      :call jobstart(['System32\ping.exe', 'neovim.io'])
+<		  - {cmd} is collapsed to a string of quoted args as expected
+		    by CommandLineToArgvW https://msdn.microsoft.com/bb776391
+		    unless cmd[0] is some form of "cmd.exe".
+
 		{opts} is a dictionary with these keys:
 		  on_stdout: stdout event handler (function name or |Funcref|)
 		  on_stderr: stderr event handler (function name or |Funcref|)
@@ -4944,8 +4951,8 @@ json_decode({expr})					*json_decode()*
 
 json_encode({expr})					*json_encode()*
 		Convert {expr} into a JSON string.  Accepts 
-		|msgpack-special-dict| as the input.  Will not convert |Funcref|s, 
-		mappings with non-string keys (can be created as 
+		|msgpack-special-dict| as the input.  Will not convert 
+		|Funcref|s, mappings with non-string keys (can be created as 
 		|msgpack-special-dict|), values with self-referencing 
 		containers, strings which contain non-UTF-8 characters, 
 		pseudo-UTF-8 strings which contain codepoints reserved for 
@@ -7427,8 +7434,13 @@ tagfiles()	Returns a |List| with the file names used to search for tags
 		for the current buffer.  This is the 'tags' option expanded.
 
 
-taglist({expr})							*taglist()*
+taglist({expr}[, {filename}])				*taglist()*
 		Returns a list of tags matching the regular expression {expr}.
+
+		If {filename} is passed it is used to prioritize the results
+		in the same way that |:tselect| does. See |tag-priority|.
+		{filename} should be the full path of the file.
+
 		Each list item is a dictionary with at least the following
 		entries:
 			name		Name of the tag.

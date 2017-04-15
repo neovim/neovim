@@ -1174,11 +1174,14 @@ int utf_fold(int a)
   return utf_convert(a, foldCase, ARRAY_SIZE(foldCase));
 }
 
-/*
- * Return the upper-case equivalent of "a", which is a UCS-4 character.  Use
- * simple case folding.
- */
-int utf_toupper(int a)
+// Vim's own character class functions.  These exist because many library
+// islower()/toupper() etc. do not work properly: they crash when used with
+// invalid values or can't handle latin1 when the locale is C.
+// Speed is most important here.
+
+/// Return the upper-case equivalent of "a", which is a UCS-4 character.  Use
+/// simple case folding.
+int mb_toupper(int a)
 {
   /* If 'casemap' contains "keepascii" use ASCII style toupper(). */
   if (a < 128 && (cmp_flags & CMP_KEEPASCII))
@@ -1198,17 +1201,15 @@ int utf_toupper(int a)
   return utf_convert(a, toUpper, ARRAY_SIZE(toUpper));
 }
 
-bool utf_islower(int a)
+bool mb_islower(int a)
 {
-  /* German sharp s is lower case but has no upper case equivalent. */
-  return (utf_toupper(a) != a) || a == 0xdf;
+  // German sharp s is lower case but has no upper case equivalent.
+  return (mb_toupper(a) != a) || a == 0xdf;
 }
 
-/*
- * Return the lower-case equivalent of "a", which is a UCS-4 character.  Use
- * simple case folding.
- */
-int utf_tolower(int a)
+/// Return the lower-case equivalent of "a", which is a UCS-4 character.  Use
+/// simple case folding.
+int mb_tolower(int a)
 {
   /* If 'casemap' contains "keepascii" use ASCII style tolower(). */
   if (a < 128 && (cmp_flags & CMP_KEEPASCII))
@@ -1228,9 +1229,9 @@ int utf_tolower(int a)
   return utf_convert(a, toLower, ARRAY_SIZE(toLower));
 }
 
-bool utf_isupper(int a)
+bool mb_isupper(int a)
 {
-  return utf_tolower(a) != a;
+  return mb_tolower(a) != a;
 }
 
 static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1,
@@ -1304,6 +1305,7 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1,
 # define CP_UTF8 65001  /* magic number from winnls.h */
 #endif
 
+/// Reassigns `strw` to a new, allocated pointer to a UTF16 string.
 int utf8_to_utf16(const char *str, WCHAR **strw)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1345,40 +1347,40 @@ int utf8_to_utf16(const char *str, WCHAR **strw)
   return 0;
 }
 
+/// Reassigns `str` to a new, allocated pointer to a UTF8 string.
 int utf16_to_utf8(const WCHAR *strw, char **str)
   FUNC_ATTR_NONNULL_ALL
 {
   // Compute the space required to store the string as UTF-8.
-  ssize_t utf8_len = WideCharToMultiByte(CP_UTF8,
-                                         0,
-                                         strw,
-                                         -1,
-                                         NULL,
-                                         0,
-                                         NULL,
-                                         NULL);
+  DWORD utf8_len = WideCharToMultiByte(CP_UTF8,
+                                       0,
+                                       strw,
+                                       -1,
+                                       NULL,
+                                       0,
+                                       NULL,
+                                       NULL);
   if (utf8_len == 0) {
     return GetLastError();
   }
 
-  ssize_t buf_sz = utf8_len * sizeof(char);
-  char *buf = xmalloc(buf_sz);
-  char *pos = buf;
+  *str = xmalloc(utf8_len);
 
-  // Convert string to UTF-8.
-  int r = WideCharToMultiByte(CP_UTF8,
-                              0,
-                              strw,
-                              -1,
-                              pos,
-                              utf8_len,
-                              NULL,
-                              NULL);
-  assert(r == utf8_len);
-  if (r != utf8_len) {
-    EMSG2("WideCharToMultiByte failed: %d", r);
+  // Convert to UTF-8.
+  utf8_len = WideCharToMultiByte(CP_UTF8,
+                                 0,
+                                 strw,
+                                 -1,
+                                 *str,
+                                 utf8_len,
+                                 NULL,
+                                 NULL);
+  if (utf8_len == 0) {
+    free(*str);
+    *str = NULL;
+    return GetLastError();
   }
-  *str = pos;
+  (*str)[utf8_len] = '\0';
 
   return 0;
 }

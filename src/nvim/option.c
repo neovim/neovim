@@ -245,7 +245,8 @@ typedef struct vimoption {
   "A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal," \
   "B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel," \
   "x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill," \
-  "!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine"
+  "!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine," \
+  "0:Whitespace"
 
 /*
  * options[] is initialized here.
@@ -938,11 +939,8 @@ void free_all_options(void)
 #endif
 
 
-/*
- * Initialize the options, part two: After getting Rows and Columns and
- * setting 'term'.
- */
-void set_init_2(void)
+/// Initialize the options, part two: After getting Rows and Columns.
+void set_init_2(bool headless)
 {
   int idx;
 
@@ -965,8 +963,12 @@ void set_init_2(void)
     p_window = Rows - 1;
   }
   set_number_default("window", Rows - 1);
-  parse_shape_opt(SHAPE_CURSOR);   /* set cursor shapes from 'guicursor' */
-  (void)parse_printoptions();       /* parse 'printoptions' default value */
+  if (!headless && !os_term_is_nice()) {
+    set_string_option_direct((char_u *)"guicursor", -1, (char_u *)"",
+                             OPT_GLOBAL, SID_NONE);
+  }
+  parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
+  (void)parse_printoptions();      // parse 'printoptions' default value
 }
 
 /*
@@ -2841,9 +2843,10 @@ did_set_string_option (
     }
   }
 
-  /* 'guicursor' */
-  else if (varp == &p_guicursor)
+  // 'guicursor'
+  else if (varp == &p_guicursor) {
     errmsg = parse_shape_opt(SHAPE_CURSOR);
+  }
 
   else if (varp == &p_popt)
     errmsg = parse_printoptions();
