@@ -136,7 +136,7 @@ void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
 ///
 /// @return [allocated] new list.
 list_T *tv_list_alloc(void)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   list_T *const list = xcalloc(1, sizeof(list_T));
 
@@ -1011,7 +1011,6 @@ void tv_dict_item_free(dictitem_T *const item)
 /// @return [allocated] new dictionary item.
 static dictitem_T *tv_dict_item_copy(dictitem_T *const di)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-  FUNC_ATTR_MALLOC
 {
   dictitem_T *const new_di = tv_dict_item_alloc((const char *)di->di_key);
   tv_copy(&di->di_tv, &new_di->di_tv);
@@ -1040,7 +1039,7 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
 ///
 /// @return [allocated] new dictionary.
 dict_T *tv_dict_alloc(void)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dict_T *const d = xmalloc(sizeof(dict_T));
 
@@ -1577,7 +1576,7 @@ void tv_dict_set_keys_readonly(dict_T *const dict)
 ///
 /// @return [allocated] pointer to the created list.
 list_T *tv_list_alloc_ret(typval_T *const ret_tv)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_ALL
 {
   list_T *const l = tv_list_alloc();
   ret_tv->vval.v_list = l;
