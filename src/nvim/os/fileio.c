@@ -100,7 +100,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
 /// @return [allocated] Opened file or NULL in case of error.
 FileDescriptor *file_open_new(int *const error, const char *const fname,
                               const int flags, const int mode)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
   if ((*error = file_open(fp, fname, flags, mode)) != 0) {
