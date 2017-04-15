@@ -3482,18 +3482,19 @@ int build_stl_str_hl(
       // Attempt to copy the expression to evaluate into
       // the output buffer as a null-terminated string.
       char_u *t = out_p;
-      while (*fmt_p != '}' && *fmt_p != NUL && out_p < out_end_p)
+      while (*fmt_p != '}' && *fmt_p != NUL && out_p < out_end_p) {
         *out_p++ = *fmt_p++;
-      if (*fmt_p != '}')            /* missing '}' or out of space */
+      }
+      if (*fmt_p != '}') {
+        // missing '}' or out of space
         break;
+      }
       fmt_p++;
       *out_p = 0;
 
       // Move our position in the output buffer
       // to the beginning of the expression
       out_p = t;
-
-      // { Evaluate the expression
 
       // Store the current buffer number as a string variable
       vim_snprintf((char *)tmp, sizeof(tmp), "%d", curbuf->b_fnum);
@@ -3504,8 +3505,35 @@ int build_stl_str_hl(
       curwin = wp;
       curbuf = wp->w_buffer;
 
-      // Note: The result stored in `t` is unused.
-      str = eval_to_string_safe(out_p, &t, use_sandbox);
+
+      // Evaluate the expression
+      if ((out_p[0]) == '#') {
+        out_p[0] = '\0';
+        out_p++;
+
+        // Note: The result stored in `t` is unused.
+        str = NULL;
+        t = eval_to_string_safe(out_p, &t, use_sandbox);
+
+        item[curitem].type = Highlight;
+        item[curitem].start = out_p;
+        item[curitem].minwid = -syn_namen2id(t, sizeof(t));
+        curitem++;
+      } else {
+        // Note: The result stored in `t` is unused.
+        str = eval_to_string_safe(out_p, &t, use_sandbox);
+
+        // Check if the evaluated result is a number.
+        // If so, convert the number to an int and free the string.
+        if (str != NULL && *str != 0) {
+          if (*skipdigits(str) == NUL) {
+            num = atoi((char *)str);
+            xfree(str);
+            str = NULL;
+            itemisflag = false;
+          }
+        }
+      }
 
       curwin = o_curwin;
       curbuf = o_curbuf;
@@ -3513,18 +3541,6 @@ int build_stl_str_hl(
       // Remove the variable we just stored
       do_unlet(S_LEN("g:actual_curbuf"), true);
 
-      // }
-
-      // Check if the evaluated result is a number.
-      // If so, convert the number to an int and free the string.
-      if (str != NULL && *str != 0) {
-        if (*skipdigits(str) == NUL) {
-          num = atoi((char *)str);
-          xfree(str);
-          str = NULL;
-          itemisflag = false;
-        }
-      }
       break;
     }
 
