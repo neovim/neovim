@@ -6974,7 +6974,7 @@ bool signcolumn_on(win_T *wp)
 
 /// Get window or buffer local options
 dict_T *get_winbuf_options(const int bufopt)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dict_T *const d = tv_dict_alloc();
 
