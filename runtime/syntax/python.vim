@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2016 Jul 21
+" Last Change:	2016 Aug 14
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
@@ -84,14 +84,30 @@ syn keyword pythonInclude	from import
 syn keyword pythonAsync		async await
 
 " Decorators (new in Python 2.4)
-syn match   pythonDecorator	"@" display nextgroup=pythonFunction skipwhite
-" The zero-length non-grouping match before the function name is
-" extremely important in pythonFunction.  Without it, everything is
-" interpreted as a function inside the contained environment of
-" doctests.
+" Python 3.5 introduced the use of the same symbol for matrix
+" multiplication.  We now have to exclude the symbol from being
+" highlighted when used in that context. Hence, the check that it's
+" preceded by empty space only (possibly in a docstring/doctest) and
+" followed by decorator name, optional parenthesized list of arguments,
+" and the next line with either def, class, or another decorator.
+syn match   pythonDecorator
+  \ "\%(\%(^\s*\)\%(\%(>>>\|\.\.\.\)\s\+\)\=\)\zs@\%(\s*\h\%(\w\|\.\)*\%(([^)]*)\)\=\s*\n\s*\%(\.\.\.\s\+\)\=\%(@\s*\h\|\%(def\|class\)\s\+\)\)\@="
+  \ display nextgroup=pythonDecoratorName skipwhite
+
 " A dot must be allowed because of @MyClass.myfunc decorators.
+" It must be preceded by a decorator symbol and on a separate line from
+" a function/class it decorates.
+syn match   pythonDecoratorName
+  \ "\%(@\s*\)\@<=\h\%(\w\|\.\)*\%(\%(([^)]*)\)\=\s*\n\)\@="
+  \ contained display nextgroup=pythonFunction skipnl
+
+" The zero-length non-grouping match of def or class before the function
+" name is extremely important in pythonFunction.  Without it, everything
+" is interpreted as a function inside the contained environment of
+" doctests.
 syn match   pythonFunction
-      \ "\%(\%(def\s\|class\s\|@\)\s*\)\@<=\h\%(\w\|\.\)*" contained
+  \ "\%(\%(^\s*\)\%(\%(>>>\|\.\.\.\)\s\+\)\=\%(def\|class\)\s\+\)\@<=\h\w*"
+  \ contained
 
 syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
 syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
@@ -293,6 +309,7 @@ if version >= 508 || !exists("did_python_syn_inits")
   HiLink pythonInclude		Include
   HiLink pythonAsync		Statement
   HiLink pythonDecorator	Define
+  HiLink pythonDecoratorName	Function
   HiLink pythonFunction		Function
   HiLink pythonComment		Comment
   HiLink pythonTodo		Todo
