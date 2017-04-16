@@ -2447,7 +2447,7 @@ win_line (
       } else {
         /* Long line, use only the last SPWORDLEN bytes. */
         nextlinecol = v - SPWORDLEN;
-        memmove(nextline, line + nextlinecol, SPWORDLEN);
+        memmove(nextline, line + nextlinecol, SPWORDLEN);  // -V512
         nextline_idx = SPWORDLEN + 1;
       }
     }
