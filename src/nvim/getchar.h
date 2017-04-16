@@ -16,7 +16,25 @@
 #define KEYLEN_PART_MAP -2      /* keylen value for incomplete mapping */
 #define KEYLEN_REMOVED  9999    /* keylen value for removed sequence */
 
+typedef enum { PART_KEY, PART_MAP, NO_MAP } map_type;
+typedef enum { FOUND_CHAR, NEED_MORE_BYTES, EXPANDED_MAPPING } typebuf_action;
+typedef struct {
+  typebuf_action action;
+  map_type mapt;
+  int c;
+} typebuf_ret;
 
+typedef struct {
+  int8_t control_id;
+  int c;
+  bool timedout;
+  bool mode_deleted;
+} user_ret;
+
+typedef struct {
+  mapblock_T *mp;
+  bool part_map;
+} find_map_ret;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "getchar.h.generated.h"
 #endif
