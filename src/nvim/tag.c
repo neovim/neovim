@@ -1222,9 +1222,9 @@ find_tags (
   if (has_re && orgpat.regmatch.regprog == NULL)
     goto findtag_end;
 
-  /* This is only to avoid a compiler warning for using search_info
-   * uninitialised. */
-  memset(&search_info, 0, (size_t)1);
+  // This is only to avoid a compiler warning for using search_info
+  // uninitialised.
+  memset(&search_info, 0, 1);  // -V512
 
   /*
    * When finding a specified number of matches, first try with matching
