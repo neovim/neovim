@@ -611,7 +611,7 @@ _convert_one_value_regular_dict: {}
 typval_encode_stop_converting_one_item:
   return OK;
   // Prevent “unused label” warnings.
-  goto typval_encode_stop_converting_one_item;
+  goto typval_encode_stop_converting_one_item;  // -V779
 }
 
 TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
@@ -814,6 +814,6 @@ encode_vim_to__error_ret:
   _mp_destroy(mpstack);
   return FAIL;
   // Prevent “unused label” warnings.
-  goto typval_encode_stop_converting_one_item;
+  goto typval_encode_stop_converting_one_item;  // -V779
 }
 #endif  // NVIM_EVAL_TYPVAL_ENCODE_C_H
