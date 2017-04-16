@@ -2923,13 +2923,8 @@ static void skipchr(void)
   else
     prevchr_len = 0;
   if (regparse[prevchr_len] != NUL) {
-    if (enc_utf8)
-      /* exclude composing chars that mb_ptr2len does include */
-      prevchr_len += utf_ptr2len(regparse + prevchr_len);
-    else if (has_mbyte)
-      prevchr_len += (*mb_ptr2len)(regparse + prevchr_len);
-    else
-      ++prevchr_len;
+    // Exclude composing chars that utfc_ptr2len does include.
+    prevchr_len += utf_ptr2len(regparse + prevchr_len);
   }
   regparse += prevchr_len;
   prev_at_start = at_start;
