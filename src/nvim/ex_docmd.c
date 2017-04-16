@@ -4097,12 +4097,11 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         options += WILD_ICASE;
       p = ExpandOne(&xpc, eap->arg, NULL,
           options, WILD_EXPAND_FREE);
-      if (p == NULL)
+      if (p == NULL) {
         return FAIL;
-      if (p != NULL) {
-        (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, cmdlinep);
-        xfree(p);
       }
+      (void)repl_cmdline(eap, eap->arg, STRLEN(eap->arg), p, cmdlinep);
+      xfree(p);
     }
   }
   return OK;
