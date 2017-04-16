@@ -7305,18 +7305,14 @@ static void f_changenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_char2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (has_mbyte) {
-    int utf8 = 0;
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      utf8 = tv_get_number_chk(&argvars[1], NULL);
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    if (!tv_check_num(&argvars[1])) {
+      return;
     }
-
-    rettv->vval.v_number = (utf8 ? *utf_ptr2char : *mb_ptr2char)(
-        (const char_u *)tv_get_string(&argvars[0]));
-  } else {
-    rettv->vval.v_number = (uint8_t)(tv_get_string(&argvars[0])[0]);
   }
+
+  rettv->vval.v_number = utf_ptr2char(
+      (const char_u *)tv_get_string(&argvars[0]));
 }
 
 /*
