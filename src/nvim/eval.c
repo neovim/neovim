@@ -12538,7 +12538,7 @@ static void f_min(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_mkdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int prot = 0755;
+  int prot = 0755;  // -V536
 
   rettv->vval.v_number = FAIL;
   if (check_restricted() || check_secure())
