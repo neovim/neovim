@@ -2336,7 +2336,8 @@ do_mouse (
         if ((State & REPLACE_FLAG) && !yank_register_mline(regname))
           insert_reg(regname, true);
         else {
-          do_put(regname, NULL, BACKWARD, 1L, fixindent | PUT_CURSEND);
+          do_put(regname, NULL, BACKWARD, 1L,
+                 (fixindent ? PUT_FIXINDENT : 0) | PUT_CURSEND);
 
           /* Repeat it with CTRL-R CTRL-O r or CTRL-R CTRL-P r */
           AppendCharToRedobuff(Ctrl_R);
@@ -2688,7 +2689,8 @@ do_mouse (
      */
     if (restart_edit != 0)
       where_paste_started = curwin->w_cursor;
-    do_put(regname, NULL, dir, count, fixindent | PUT_CURSEND);
+    do_put(regname, NULL, dir, count,
+           (fixindent ? PUT_FIXINDENT : 0)| PUT_CURSEND);
   }
   /*
    * Ctrl-Mouse click or double click in a quickfix window jumps to the
