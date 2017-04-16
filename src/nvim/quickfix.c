@@ -856,7 +856,7 @@ restofline:
     if (fmt_ptr == NULL) {
       qi->qf_multiline = qi->qf_multiignore = false;
     }
-  } else if (fmt_ptr != NULL) {
+  } else {
     // honor %> item
     if (fmt_ptr->conthere) {
       fmt_start = fmt_ptr;
