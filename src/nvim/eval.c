@@ -2747,7 +2747,7 @@ void ex_call(exarg_T *eap)
   } else
     lnum = eap->line1;
   for (; lnum <= eap->line2; ++lnum) {
-    if (!eap->skip && eap->addr_count > 0) {
+    if (!eap->skip && eap->addr_count > 0) {  // -V560
       curwin->w_cursor.lnum = lnum;
       curwin->w_cursor.col = 0;
       curwin->w_cursor.coladd = 0;
@@ -2768,7 +2768,7 @@ void ex_call(exarg_T *eap)
     }
 
     tv_clear(&rettv);
-    if (doesrange || eap->skip) {
+    if (doesrange || eap->skip) {  // -V560
       break;
     }
 
