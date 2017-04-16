@@ -14306,7 +14306,7 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  if (argvars[0].v_type == VAR_UNKNOWN || argvars[0].v_type != VAR_STRING) {
+  if (argvars[0].v_type != VAR_STRING) {
     EMSG(_(e_invarg));
     return;
   }
