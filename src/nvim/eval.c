@@ -21048,8 +21048,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
             char *s = tofree;
             emsg_off--;
             if (s != NULL) {
+              char buf[MSG_BUF_LEN];
               if (vim_strsize((char_u *)s) > MSG_BUF_CLEN) {
-                char buf[MSG_BUF_LEN];
                 trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN,
                              sizeof(buf));
                 s = buf;
