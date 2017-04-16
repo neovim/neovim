@@ -12763,25 +12763,32 @@ static void f_nextnonblank(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_nr2char(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char_u buf[NUMBUFLEN];
-
-  if (has_mbyte) {
-    int utf8 = 0;
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      utf8 = tv_get_number_chk(&argvars[1], NULL);
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    if (!tv_check_num(&argvars[1])) {
+      return;
     }
-    if (utf8) {
-      buf[(*utf_char2bytes)((int)tv_get_number(&argvars[0]), buf)] = NUL;
-    } else {
-      buf[(*mb_char2bytes)((int)tv_get_number(&argvars[0]), buf)] = NUL;
-    }
-  } else {
-    buf[0] = (char_u)tv_get_number(&argvars[0]);
-    buf[1] = NUL;
   }
+
+  bool error = false;
+  const varnumber_T num = tv_get_number_chk(&argvars[0], &error);
+  if (error) {
+    return;
+  }
+  if (num < 0) {
+    emsgf(_("E5070: Character number could not be less then zero"));
+    return;
+  }
+  if (num > INT_MAX) {
+    emsgf(_("E5071: Character number could not be greater then INT_MAX (%i)"),
+          INT_MAX);
+    return;
+  }
+
+  char buf[MB_MAXBYTES];
+  const int len = utf_char2bytes((int)num, (char_u *)buf);
+
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave(buf);
+  rettv->vval.v_string = xmemdupz(buf, (size_t)len);
 }
 
 /*
