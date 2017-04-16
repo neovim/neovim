@@ -2576,13 +2576,12 @@ int mch_print_begin(prt_settings_T *psettings)
 
   prt_conv.vc_type = CONV_NONE;
   if (!(enc_canon_props(p_enc) & enc_canon_props(p_encoding) & ENC_8BIT)) {
-    /* Set up encoding conversion if required */
-    if (FAIL == convert_setup(&prt_conv, p_enc, p_encoding)) {
-      EMSG2(_("E620: Unable to convert to print encoding \"%s\""),
-          p_encoding);
-      return FALSE;
+    // Set up encoding conversion if required
+    if (convert_setup(&prt_conv, p_enc, p_encoding) == FAIL) {
+      emsgf(_("E620: Unable to convert to print encoding \"%s\""),
+            p_encoding);
+      return false;
     }
-    prt_do_conv = TRUE;
   }
   prt_do_conv = prt_conv.vc_type != CONV_NONE;
 
