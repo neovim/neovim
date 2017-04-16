@@ -2534,7 +2534,7 @@ jumpto_tag (
         }
       }
       p_ws = save_p_ws;
-      p_ic = save_p_ic;
+      p_ic = save_p_ic;  // -V519
       p_scs = save_p_scs;
 
       /* A search command may have positioned the cursor beyond the end
