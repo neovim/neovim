@@ -69,7 +69,7 @@ places where a Normal mode command can't be used or is inconvenient.
 
 The main Vim window can hold several split windows.  There are also tab pages
 |tab-page|, each of which can hold multiple windows.
-
+							*window-ID*
 Each window has a unique identifier called the window ID.  This identifier
 will not change within a Vim session. The |win_getid()| and |win_id2tabwin()|
 functions can be used to convert between the window/tab number and the
