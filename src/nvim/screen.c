@@ -2784,8 +2784,8 @@ win_line (
       // draw 'breakindent': indent wrapped text accodringly
       if (draw_state == WL_BRI - 1 && n_extra == 0) {
         draw_state = WL_BRI;
-        if (wp->w_p_bri && n_extra == 0 && row != startrow && filler_lines == 0) {
-          char_attr = 0; // was: hl_attr(HLF_AT);
+        if (wp->w_p_bri && row != startrow && filler_lines == 0) {
+          char_attr = 0;  // was: hl_attr(HLF_AT);
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = hl_attr(diff_hlf);
