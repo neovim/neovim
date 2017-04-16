@@ -5330,43 +5330,39 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     c = *ptr;
     /* check if this is the first byte of a multibyte */
     if (l_has_mbyte) {
-      if (l_enc_utf8 && len > 0)
+      if (len > 0) {
         mbyte_blen = utfc_ptr2len_len(ptr, (int)((text + len) - ptr));
-      else
-        mbyte_blen = (*mb_ptr2len)(ptr);
-      if (l_enc_dbcs == DBCS_JPNU && c == 0x8e)
-        mbyte_cells = 1;
-      else if (l_enc_dbcs != 0)
-        mbyte_cells = mbyte_blen;
-      else {            /* enc_utf8 */
-        if (len >= 0)
-          u8c = utfc_ptr2char_len(ptr, u8cc,
-              (int)((text + len) - ptr));
-        else
-          u8c = utfc_ptr2char(ptr, u8cc);
-        mbyte_cells = utf_char2cells(u8c);
-        if (p_arshape && !p_tbidi && arabic_char(u8c)) {
-          /* Do Arabic shaping. */
-          if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
-            /* Past end of string to be displayed. */
-            nc = NUL;
-            nc1 = NUL;
-          } else {
-            nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
-                (int)((text + len) - ptr - mbyte_blen));
-            nc1 = pcc[0];
-          }
-          pc = prev_c;
-          prev_c = u8c;
-          u8c = arabic_shape(u8c, &c, &u8cc[0], nc, nc1, pc);
-        } else
-          prev_c = u8c;
-        if (col + mbyte_cells > screen_Columns) {
-          /* Only 1 cell left, but character requires 2 cells:
-           * display a '>' in the last column to avoid wrapping. */
-          c = '>';
-          mbyte_cells = 1;
+      } else {
+        mbyte_blen = utfc_ptr2len(ptr);
+      }
+      if (len >= 0) {
+        u8c = utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr));
+      } else {
+        u8c = utfc_ptr2char(ptr, u8cc);
+      }
+      mbyte_cells = utf_char2cells(u8c);
+      if (p_arshape && !p_tbidi && arabic_char(u8c)) {
+        // Do Arabic shaping.
+        if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
+          // Past end of string to be displayed.
+          nc = NUL;
+          nc1 = NUL;
+        } else {
+          nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
+              (int)((text + len) - ptr - mbyte_blen));
+          nc1 = pcc[0];
         }
+        pc = prev_c;
+        prev_c = u8c;
+        u8c = arabic_shape(u8c, &c, &u8cc[0], nc, nc1, pc);
+      } else {
+        prev_c = u8c;
+      }
+      if (col + mbyte_cells > screen_Columns) {
+        // Only 1 cell left, but character requires 2 cells:
+        // display a '>' in the last column to avoid wrapping. */
+        c = '>';
+        mbyte_cells = 1;
       }
     }
 
@@ -5374,16 +5370,11 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     force_redraw_next = FALSE;
 
     need_redraw = ScreenLines[off] != c
-                  || (mbyte_cells == 2
-                      && ScreenLines[off + 1] != (l_enc_dbcs ? ptr[1] : 0))
-                  || (l_enc_dbcs == DBCS_JPNU
-                      && c == 0x8e
-                      && ScreenLines2[off] != ptr[1])
-                  || (l_enc_utf8
-                      && (ScreenLinesUC[off] !=
-                          (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
-                          || (ScreenLinesUC[off] != 0
-                              && screen_comp_differs(off, u8cc))))
+                  || (mbyte_cells == 2 && ScreenLines[off + 1] != 0)
+                  || (ScreenLinesUC[off] !=
+                      (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
+                      || (ScreenLinesUC[off] != 0
+                          && screen_comp_differs(off, u8cc)))
                   || ScreenAttrs[off] != attr
                   || exmode_active;
 
@@ -6103,8 +6094,7 @@ retry:
     if (new_ScreenLinesC[i] == NULL)
       break;
   if (new_ScreenLines == NULL
-      || (l_enc_utf8 && (new_ScreenLinesUC == NULL || i != p_mco))
-      || (l_enc_dbcs == DBCS_JPNU && new_ScreenLines2 == NULL)
+      || (new_ScreenLinesUC == NULL || i != p_mco)
       || new_ScreenAttrs == NULL
       || new_LineOffset == NULL
       || new_LineWraps == NULL
@@ -6189,13 +6179,14 @@ retry:
                   ScreenLinesC[i] + LineOffset[old_row],
                   (size_t)len * sizeof(u8char_T));
           }
-          if (l_enc_dbcs == DBCS_JPNU && ScreenLines2 != NULL)
+          if (ScreenLines2 != NULL) {
             memmove(new_ScreenLines2 + new_LineOffset[new_row],
-                ScreenLines2 + LineOffset[old_row],
-                (size_t)len * sizeof(schar_T));
+                    ScreenLines2 + LineOffset[old_row],
+                    (size_t)len * sizeof(schar_T));
+          }
           memmove(new_ScreenAttrs + new_LineOffset[new_row],
-              ScreenAttrs + LineOffset[old_row],
-              (size_t)len * sizeof(sattr_T));
+                  ScreenAttrs + LineOffset[old_row],
+                  (size_t)len * sizeof(sattr_T));
         }
       }
     }
