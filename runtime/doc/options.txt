@@ -3499,7 +3499,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	if you want to use Vim as a modeless editor.
 	These Insert mode commands will be useful:
 	- Use the cursor keys to move around.
-	- Use CTRL-O to execute one Normal mode command |i_CTRL-O|).  When
+	- Use CTRL-O to execute one Normal mode command |i_CTRL-O|.  When
 	  this is a mapping, it is executed as if 'insertmode' was off.
 	  Normal mode remains active until the mapping is finished.
 	- Use CTRL-L to execute a number of Normal mode commands, then use

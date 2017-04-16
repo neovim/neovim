@@ -1214,7 +1214,7 @@ The arguments are optional.  Example: >
 							*closure*
 Lambda expressions can access outer scope variables and arguments.  This is
 often called a closure.  Example where "i" a and "a:arg" are used in a lambda
-while they exists in the function scope.  They remain valid even after the
+while they exist in the function scope.  They remain valid even after the
 function returns: >
 	:function Foo(arg)
 	:  let i = 3
@@ -1991,7 +1991,7 @@ cos({expr})			Float	cosine of {expr}
 cosh({expr})			Float	hyperbolic cosine of {expr}
 count({list}, {expr} [, {ic} [, {start}]])
 				Number	 count how many {expr} are in {list}
-cscope_connection([{num} , {dbpath} [, {prepend}]])
+cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
@@ -4278,7 +4278,7 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		The result is a String, which is the contents of register
 		{regname}.  Example: >
 			:let cliptext = getreg('*')
-<		When {regname} was not set the result is a empty string.
+<		When {regname} was not set the result is an empty string.
 
 		getreg('=') returns the last evaluated value of the expression
 		register.  (For use in maps.)
@@ -4317,7 +4317,7 @@ gettabinfo([{arg}])					*gettabinfo()*
 			nr		tab page number.
 			variables	a reference to the dictionary with
 					tabpage-local variables
-			windows		List of window IDs in the tag page.
+			windows		List of window IDs in the tab page.
 
 gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
@@ -7404,7 +7404,7 @@ systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 tabpagebuflist([{arg}])					*tabpagebuflist()*
 		The result is a |List|, where each item is the number of the
 		buffer associated with each window in the current tab page.
-		{arg} specifies the number of tab page to be used.  When
+		{arg} specifies the number of the tab page to be used. When
 		omitted the current tab page is used.
 		When {arg} is invalid the number zero is returned.
 		To get a list of all buffers in all tabs use this: >
@@ -7553,9 +7553,9 @@ timer_info([{id}])
 
 timer_pause({timer}, {paused})				*timer_pause()*
 		Pause or unpause a timer.  A paused timer does not invoke its
-		callback, while the time it would is not changed.  Unpausing a
-		timer may cause the callback to be invoked almost immediately
-		if enough time has passed.
+		callback when its time expires.  Unpausing a timer may cause
+		the callback to be invoked almost immediately if enough time
+		has passed.
 
 		Pausing a timer is useful to avoid the callback to be called
 		for a short time.
@@ -7564,7 +7564,7 @@ timer_pause({timer}, {paused})				*timer_pause()*
 		String, then the timer is paused, otherwise it is unpaused.
 		See |non-zero-arg|.
 
-							*timer_start()*
+						*timer_start()* *timer* *timers*
 timer_start({time}, {callback} [, {options}])
 		Create a timer and return the timer ID.
 

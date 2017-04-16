@@ -3739,7 +3739,7 @@ Whether or not it is actually concealed depends on the value of the
 'conceallevel' option.  The 'concealcursor' option is used to decide whether
 concealable items in the current line are displayed unconcealed to be able to
 edit the line.
-Another way to conceal text with with |matchadd()|.
+Another way to conceal text is with |matchadd()|.
 
 concealends						*:syn-concealends*
 

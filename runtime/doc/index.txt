@@ -1202,7 +1202,7 @@ tag	      command	      action ~
 |:display|	:di[splay]	display registers
 |:djump|	:dj[ump]	jump to #define
 |:dl|		:dl		short for |:delete| with the 'l' flag
-|:dl|		:del[ete]l	short for |:delete| with the 'l' flag
+|:del|		:del[ete]l	short for |:delete| with the 'l' flag
 |:dlist|	:dli[st]	list #defines
 |:doautocmd|	:do[autocmd]	apply autocommands to current buffer
 |:doautoall|	:doautoa[ll]	apply autocommands for all loaded buffers
