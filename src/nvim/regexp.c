@@ -2398,7 +2398,7 @@ collection:
               regc('\b');
               break;
             case CLASS_ESCAPE:
-              regc('\033');
+              regc(ESC);
               break;
             }
           } else {
