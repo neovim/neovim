@@ -3047,7 +3047,7 @@ static int getoctchrs(void)
   int c;
   int i;
 
-  for (i = 0; i < 3 && nr < 040; ++i) {
+  for (i = 0; i < 3 && nr < 040; i++) {  // -V536
     c = regparse[0];
     if (c < '0' || c > '7')
       break;
