@@ -47,6 +47,7 @@ MAP_DECLS(linenr_T, bufhl_vec_T)
 #define pmap_get(T) map_get(T, ptr_t)
 #define pmap_has(T) map_has(T, ptr_t)
 #define pmap_put(T) map_put(T, ptr_t)
+#define pmap_ref(T) map_ref(T, ptr_t)
 #define pmap_del(T) map_del(T, ptr_t)
 #define pmap_clear(T) map_clear(T, ptr_t)
 

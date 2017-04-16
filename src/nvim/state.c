@@ -6,6 +6,7 @@
 #include "nvim/state.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
+#include "nvim/msgpack_rpc/status_event.h"
 #include "nvim/getchar.h"
 #include "nvim/option_defs.h"
 #include "nvim/ui.h"
@@ -41,6 +42,7 @@ getkey:
     } else {
       input_enable_events();
       // Flush screen updates before blocking
+      status_event_update_all();
       ui_flush();
       // Call `os_inchar` directly to block for events or user input without
       // consuming anything from `input_buffer`(os/input.c) or calling the

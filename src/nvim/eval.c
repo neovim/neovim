@@ -13707,7 +13707,7 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
                           tv_get_string(&argvars[1]),
-                          args)) {
+                          args, false)) {
     EMSG2(_(e_invarg2), "Channel doesn't exist");
     return;
   }

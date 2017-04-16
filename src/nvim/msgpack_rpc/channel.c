@@ -9,6 +9,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/api/ui.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/status_event.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/rstream.h"
@@ -66,6 +67,7 @@ typedef struct {
   kvec_t(ChannelCallFrame *) call_stack;
   kvec_t(WBuffer *) delayed_notifications;
   MultiQueue *events;
+  bool status_event;
 } Channel;
 
 typedef struct {
@@ -90,6 +92,7 @@ void channel_init(void)
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
   remote_ui_init();
+  status_event_init();
 }
 
 /// Teardown the module
@@ -147,7 +150,7 @@ void channel_from_connection(SocketWatcher *watcher)
 /// @param name The event name, an arbitrary string
 /// @param args Array with event arguments
 /// @return True if the event was sent successfully, false otherwise.
-bool channel_send_event(uint64_t id, const char *name, Array args)
+bool channel_send_event(uint64_t id, const char *name, Array args, bool urgent)
 {
   Channel *channel = NULL;
 
@@ -158,12 +161,15 @@ bool channel_send_event(uint64_t id, const char *name, Array args)
   }
 
   if (channel) {
-    if (channel->pending_requests) {
+    if (channel->pending_requests && !urgent) {
       // Pending request, queue the notification for later sending.
       const String method = cstr_as_string((char *)name);
       WBuffer *buffer = serialize_request(id, 0, method, args, &out_buffer, 1);
       kv_push(channel->delayed_notifications, buffer);
     } else {
+      if (!urgent) {
+        status_event_update(channel->id);
+      }
       send_event(channel, name, args);
     }
   }  else {
@@ -195,6 +201,7 @@ Object channel_send_call(uint64_t id,
   }
 
   incref(channel);
+  status_event_update(id);
   uint64_t request_id = channel->next_request_id++;
   // Send the msgpack-rpc request
   send_request(channel, request_id, method_name, args);
@@ -452,6 +459,7 @@ static void on_request_event(void **argv)
   uint64_t request_id = e->request_id;
   Error error = ERROR_INIT;
   Object result = handler.fn(channel->id, args, &error);
+  status_event_update(channel->id);
   if (request_id != NO_RESPONSE) {
     // send the response
     msgpack_packer response;
@@ -573,6 +581,7 @@ static void broadcast_event(const char *name, Array args)
     if (channel->pending_requests) {
       kv_push(channel->delayed_notifications, buffer);
     } else {
+      status_event_update(channel->id);
       channel_write(channel, buffer);
     }
   }
