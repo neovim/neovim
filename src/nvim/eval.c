@@ -2999,8 +2999,7 @@ int do_unlet(const char *const name, const size_t name_len, const int forceit)
         return FAIL;
       }
 
-      if (d == NULL
-          || tv_check_lock(d->dv_lock, (const char *)name, STRLEN(name))) {
+      if (tv_check_lock(d->dv_lock, (const char *)name, STRLEN(name))) {
         return FAIL;
       }
 
