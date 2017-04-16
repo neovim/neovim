@@ -1304,7 +1304,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     /*
      * 2. Handle command modifiers.
      */
-    p = ea.cmd;
     p = skip_range(ea.cmd, NULL);
     switch (*p) {
     /* When adding an entry, also modify cmd_exists(). */
