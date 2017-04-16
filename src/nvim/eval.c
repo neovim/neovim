@@ -14330,7 +14330,7 @@ static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   buf_T *const buf = get_buf_tv(&argvars[0], false);
   typval_T *varp = &argvars[2];
 
-  if (buf != NULL && varname != NULL && varp != NULL) {
+  if (buf != NULL && varname != NULL) {
     if (*varname == '&') {
       long numval;
       bool error = false;
