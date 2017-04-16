@@ -75,7 +75,7 @@
   do { \
     if (*p_langmap \
         && (condition) \
-        && (p_lrm || (!p_lrm && KeyTyped)) \
+        && (p_lrm || KeyTyped) \
         && !KeyStuffed \
         && (c) >= 0) \
     { \
