@@ -1165,15 +1165,9 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
    * Normal characters are printed several at a time.
    */
   while (--len >= 0) {
-    if (enc_utf8) {
-      // Don't include composing chars after the end.
-      mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
-    } else if (has_mbyte) {
-      mb_l = (*mb_ptr2len)((char_u *)str);
-    } else {
-      mb_l = 1;
-    }
-    if (has_mbyte && mb_l > 1) {
+    // Don't include composing chars after the end.
+    mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
+    if (mb_l > 1) {
       c = (*mb_ptr2char)((char_u *)str);
       if (vim_isprintc(c)) {
         // Printable multi-byte char: count the cells.
