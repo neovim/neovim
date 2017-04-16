@@ -1952,7 +1952,7 @@ assert_exception( {error} [, {msg}]) none  assert {error} is in v:exception
 assert_fails( {cmd} [, {error}])     none  assert {cmd} fails
 assert_false({actual} [, {msg}])     none  assert {actual} is false
 assert_inrange({lower}, {upper}, {actual} [, {msg}])
-				none  	assert {actual} is inside the range
+				none	assert {actual} is inside the range
 assert_match( {pat}, {text} [, {msg}]) none  assert {pat} matches {text}
 assert_notequal( {exp}, {act} [, {msg}]) none  assert {exp} is not equal {act}
 assert_notmatch( {pat}, {text} [, {msg}]) none  assert {pat} not matches {text}
@@ -2302,9 +2302,12 @@ tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
 tempname()			String	name for a temporary file
 test_garbagecollect_now()	none	free memory right now for testing
+timer_info([{id}])		List	information about timers
+timer_pause({id}, {pause})	none	pause or unpause a timer
 timer_start({time}, {callback} [, {options}])
 				Number	create a timer
 timer_stop({timer})		none	stop a timer
+timer_stopall()			none	stop all timers
 tolower({expr})			String	the String {expr} switched to lowercase
 toupper({expr})			String	the String {expr} switched to uppercase
 tr({src}, {fromstr}, {tostr})	String	translate chars of {src} in {fromstr}
@@ -3203,8 +3206,12 @@ exepath({expr})						*exepath()*
 
 							*exists()*
 exists({expr})	The result is a Number, which is |TRUE| if {expr} is
-		defined, zero otherwise.  The {expr} argument is a string,
-		which contains one of these:
+		defined, zero otherwise.
+
+		For checking for a supported feature use |has()|.
+		For checking if a file exists use |filereadable()|.
+
+		The {expr} argument is a string, which contains one of these:
 			&option-name	Vim option (only checks if it exists,
 					not if it really works)
 			+option-name	Vim option that works.
@@ -3252,7 +3259,6 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 					event and pattern.
 			##event		autocommand for this event is
 					supported.
-		For checking for a supported feature use |has()|.
 
 		Examples: >
 			exists("&mouse")
@@ -5337,7 +5343,8 @@ matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		available from |getmatches()|.	All matches can be deleted in
 		one operation by |clearmatches()|.
 
-matchaddpos({group}, {pos}[, {priority}[, {id}[, {dict}]]])		*matchaddpos()*
+							*matchaddpos()*
+matchaddpos({group}, {pos}[, {priority}[, {id}[, {dict}]]])
 		Same as |matchadd()|, but requires a list of positions {pos}
 		instead of a pattern. This command is faster than |matchadd()|
 		because it does not require to handle regular expressions and
@@ -7528,6 +7535,35 @@ tanh({expr})						*tanh()*
 <			-0.761594
 
 
+							*timer_info()*
+timer_info([{id}])
+		Return a list with information about timers.
+		When {id} is given only information about this timer is
+		returned.  When timer {id} does not exist an empty list is
+		returned.
+		When {id} is omitted information about all timers is returned.
+
+		For each timer the information is stored in a Dictionary with
+		these items:
+		    "id"	    the timer ID
+		    "time"	    time the timer was started with
+		    "repeat"	    number of times the timer will still fire;
+				    -1 means forever
+		    "callback"	    the callback
+
+timer_pause({timer}, {paused})				*timer_pause()*
+		Pause or unpause a timer.  A paused timer does not invoke its
+		callback, while the time it would is not changed.  Unpausing a
+		timer may cause the callback to be invoked almost immediately
+		if enough time has passed.
+
+		Pausing a timer is useful to avoid the callback to be called
+		for a short time.
+
+		If {paused} evaluates to a non-zero Number or a non-empty
+		String, then the timer is paused, otherwise it is unpaused.
+		See |non-zero-arg|.
+
 							*timer_start()*
 timer_start({time}, {callback} [, {options}])
 		Create a timer and return the timer ID.
@@ -7557,7 +7593,12 @@ timer_start({time}, {callback} [, {options}])
 timer_stop({timer})					*timer_stop()*
 		Stop a timer.  The timer callback will no longer be invoked.
 		{timer} is an ID returned by timer_start(), thus it must be a
-		Number.
+		Number.  If {timer} does not exist there is no error.
+
+timer_stopall()						*timer_stopall()*
+		Stop all timers.  The timer callbacks will no longer be
+		invoked.  Useful if some timers is misbehaving.  If there are
+		no timers there is no error.
 
 tolower({expr})						*tolower()*
 		The result is a copy of the String given, with all uppercase

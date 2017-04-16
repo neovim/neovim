@@ -462,6 +462,7 @@ typedef struct {
   int refcount;
   long timeout;
   bool stopped;
+  bool paused;
   Callback callback;
 } timer_T;
 
@@ -16651,6 +16652,77 @@ static bool set_ref_in_callback(Callback *callback, int copyID,
   return false;
 }
 
+static void add_timer_info(typval_T *rettv, timer_T *timer)
+{
+  list_T *list = rettv->vval.v_list;
+  dict_T *dict = tv_dict_alloc();
+
+  tv_list_append_dict(list, dict);
+  tv_dict_add_nr(dict, S_LEN("id"), timer->timer_id);
+  tv_dict_add_nr(dict, S_LEN("time"), timer->timeout);
+  tv_dict_add_nr(dict, S_LEN("paused"), timer->paused);
+
+  tv_dict_add_nr(dict, S_LEN("repeat"),
+                 (timer->repeat_count < 0 ? -1 : timer->repeat_count));
+
+  dictitem_T *di = tv_dict_item_alloc("callback");
+  if (tv_dict_add(dict, di) == FAIL) {
+    xfree(di);
+    return;
+  }
+
+  if (timer->callback.type == kCallbackPartial) {
+    di->di_tv.v_type = VAR_PARTIAL;
+    di->di_tv.vval.v_partial = timer->callback.data.partial;
+    timer->callback.data.partial->pt_refcount++;
+  } else if (timer->callback.type == kCallbackFuncref) {
+    di->di_tv.v_type = VAR_FUNC;
+    di->di_tv.vval.v_string = vim_strsave(timer->callback.data.funcref);
+  }
+  di->di_tv.v_lock = 0;
+}
+
+static void add_timer_info_all(typval_T *rettv)
+{
+  timer_T *timer;
+  map_foreach_value(timers, timer, {
+    if (!timer->stopped) {
+      add_timer_info(rettv, timer);
+    }
+  })
+}
+
+/// "timer_info([timer])" function
+static void f_timer_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv);
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    if (argvars[0].v_type != VAR_NUMBER) {
+      EMSG(_(e_number_exp));
+      return;
+    }
+    timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
+    if (timer != NULL && !timer->stopped) {
+      add_timer_info(rettv, timer);
+    }
+  } else {
+    add_timer_info_all(rettv);
+  }
+}
+
+/// "timer_pause(timer, paused)" function
+static void f_timer_pause(typval_T *argvars, typval_T *unused, FunPtr fptr)
+{
+  if (argvars[0].v_type != VAR_NUMBER) {
+    EMSG(_(e_number_exp));
+    return;
+  }
+  int paused = (bool)tv_get_number(&argvars[1]);
+  timer_T *timer = pmap_get(uint64_t)(timers, tv_get_number(&argvars[0]));
+  if (timer != NULL) {
+    timer->paused = paused;
+  }
+}
 
 /// "timer_start(timeout, callback, opts)" function
 static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
@@ -16685,6 +16757,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   timer = xmalloc(sizeof *timer);
   timer->refcount = 1;
   timer->stopped = false;
+  timer->paused = false;
   timer->repeat_count = repeat;
   timer->timeout = timeout;
   timer->timer_id = last_timer_id++;
@@ -16694,8 +16767,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   timer->tw.events = multiqueue_new_child(main_loop.events);
   // if main loop is blocked, don't queue up multiple events
   timer->tw.blockable = true;
-  time_watcher_start(&timer->tw, timer_due_cb, timeout,
-                     timeout * (repeat != 1));
+  time_watcher_start(&timer->tw, timer_due_cb, timeout, timeout);
 
   pmap_put(uint64_t)(timers, timer->timer_id, timer);
   rettv->vval.v_number = timer->timer_id;
@@ -16719,13 +16791,19 @@ static void f_timer_stop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     timer_stop(timer);
 }
 
+static void f_timer_stopall(typval_T *argvars, typval_T *unused, FunPtr fptr)
+{
+  timer_stop_all();
+}
+
 // invoked on the main loop
 static void timer_due_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
-  if (timer->stopped) {
+  if (timer->stopped || timer->paused) {
     return;
   }
+
   timer->refcount++;
   // if repeat was negative repeat forever
   if (timer->repeat_count >= 0 && --timer->repeat_count == 0) {
@@ -16778,12 +16856,17 @@ static void timer_decref(timer_T *timer)
   }
 }
 
-void timer_teardown(void)
+static void timer_stop_all(void)
 {
   timer_T *timer;
   map_foreach_value(timers, timer, {
     timer_stop(timer);
   })
+}
+
+void timer_teardown(void)
+{
+  timer_stop_all();
 }
 
 /*
