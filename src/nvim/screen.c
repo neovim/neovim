@@ -2579,13 +2579,14 @@ win_line (
    * Do this for both search_hl and the match list.
    */
   cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
+  shl_flag = false;
+  while (cur != NULL || !shl_flag) {
+    if (!shl_flag) {
       shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
+      shl_flag = true;
+    } else {
+      shl = &cur->hl;  // -V595
+    }
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
@@ -5536,13 +5537,14 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
    * Do this both for search_hl and the match list.
    */
   cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
+  shl_flag = false;
+  while (cur != NULL || shl_flag == false) {
+    if (shl_flag == false) {
       shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
+      shl_flag = true;
+    } else {
+      shl = &cur->hl;  // -V595
+    }
     if (shl->rm.regprog != NULL
         && shl->lnum == 0
         && re_multiline(shl->rm.regprog)) {
