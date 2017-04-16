@@ -1726,11 +1726,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       errormsg = (char_u *)_("E464: Ambiguous use of user-defined command");
     goto doend;
   }
-  /* Check for wrong commands. */
-  if (*p == '!' && ea.cmd[1] == 0151 && ea.cmd[0] == 78) {
-    errormsg = uc_fun_cmd();
-    goto doend;
-  }
+  // Check for wrong commands.
   if (ea.cmdidx == CMD_SIZE) {
     if (!ea.skip) {
       STRCPY(IObuff, _("E492: Not an editor command"));
@@ -4959,20 +4955,6 @@ static void uc_list(char_u *name, size_t name_len)
 
   if (!found)
     MSG(_("No user-defined commands found"));
-}
-
-static char_u *uc_fun_cmd(void)
-{
-  static char_u fcmd[] = {0x84, 0xaf, 0x60, 0xb9, 0xaf, 0xb5, 0x60, 0xa4,
-                          0xa5, 0xad, 0xa1, 0xae, 0xa4, 0x60, 0xa1, 0x60,
-                          0xb3, 0xa8, 0xb2, 0xb5, 0xa2, 0xa2, 0xa5, 0xb2,
-                          0xb9, 0x7f, 0};
-  int i;
-
-  for (i = 0; fcmd[i]; ++i)
-    IObuff[i] = fcmd[i] - 0x40;
-  IObuff[i] = 0;
-  return IObuff;
 }
 
 static int uc_scan_attr(char_u *attr, size_t len, uint32_t *argt, long *def,
