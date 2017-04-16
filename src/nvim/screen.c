@@ -1017,11 +1017,9 @@ static void win_update(win_T *wp)
 
     if (VIsual_active) {
       if (VIsual_mode != wp->w_old_visual_mode || type == INVERTED_ALL) {
-        /*
-         * If the type of Visual selection changed, redraw the whole
-         * selection.  Also when the ownership of the X selection is
-         * gained or lost.
-         */
+        // If the type of Visual selection changed, redraw the whole
+        // selection.  Also when the ownership of the X selection is
+        // gained or lost.
         if (curwin->w_cursor.lnum < VIsual.lnum) {
           from = curwin->w_cursor.lnum;
           to = VIsual.lnum;
@@ -5349,7 +5347,7 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
           nc1 = NUL;
         } else {
           nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
-              (int)((text + len) - ptr - mbyte_blen));
+                                 (int)((text + len) - ptr - mbyte_blen));
           nc1 = pcc[0];
         }
         pc = prev_c;

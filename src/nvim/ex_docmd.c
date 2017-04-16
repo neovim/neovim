@@ -4095,8 +4095,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       xpc.xp_context = EXPAND_FILES;
       if (p_wic)
         options += WILD_ICASE;
-      p = ExpandOne(&xpc, eap->arg, NULL,
-          options, WILD_EXPAND_FREE);
+      p = ExpandOne(&xpc, eap->arg, NULL, options, WILD_EXPAND_FREE);
       if (p == NULL) {
         return FAIL;
       }

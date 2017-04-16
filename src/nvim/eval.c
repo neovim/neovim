@@ -2742,11 +2742,12 @@ void ex_call(exarg_T *eap)
    * call, and the loop is broken.
    */
   if (eap->skip) {
-    ++emsg_skip;
-    lnum = eap->line2;          /* do it once, also with an invalid range */
-  } else
+    emsg_skip++;
+    lnum = eap->line2;  // Do it once, also with an invalid range.
+  } else {
     lnum = eap->line1;
-  for (; lnum <= eap->line2; ++lnum) {
+  }
+  for (; lnum <= eap->line2; lnum++) {
     if (!eap->skip && eap->addr_count > 0) {  // -V560
       curwin->w_cursor.lnum = lnum;
       curwin->w_cursor.col = 0;

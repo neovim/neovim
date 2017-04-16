@@ -2333,9 +2333,9 @@ do_mouse (
         if (regname == 0 && eval_has_provider("clipboard")) {
           regname = '*';
         }
-        if ((State & REPLACE_FLAG) && !yank_register_mline(regname))
+        if ((State & REPLACE_FLAG) && !yank_register_mline(regname)) {
           insert_reg(regname, true);
-        else {
+        } else {
           do_put(regname, NULL, BACKWARD, 1L,
                  (fixindent ? PUT_FIXINDENT : 0) | PUT_CURSEND);
 
@@ -7616,7 +7616,7 @@ static void nv_record(cmdarg_T *cap)
     } else {
       // (stop) recording into a named register, unless executing a
       // register.
-      if (!Exec_reg && do_record(cap->nchar) == false) {
+      if (!Exec_reg && do_record(cap->nchar) == FAIL) {
         clearopbeep(cap->oap);
       }
     }
