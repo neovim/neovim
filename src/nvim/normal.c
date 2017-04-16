@@ -694,7 +694,6 @@ static void normal_get_additional_char(NormalState *s)
     if (langmap_active) {
       // Undo the decrement done above
       no_mapping++;
-      State = NORMAL_BUSY;
     }
     State = NORMAL_BUSY;
     s->need_flushbuf |= add_to_showcmd(*cp);
