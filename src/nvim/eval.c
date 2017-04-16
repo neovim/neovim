@@ -8977,13 +8977,10 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (strcmp(what, "func") == 0 || strcmp(what, "name") == 0) {
         rettv->v_type = (*what == 'f' ? VAR_FUNC : VAR_STRING);
         const char *const n = (const char *)partial_name(pt);
-        if (n == NULL) {
-          rettv->vval.v_string = NULL;
-        } else {
-          rettv->vval.v_string = (char_u *)xstrdup(n);
-          if (rettv->v_type == VAR_FUNC) {
-            func_ref(rettv->vval.v_string);
-          }
+        assert(n != NULL);
+        rettv->vval.v_string = (char_u *)xstrdup(n);
+        if (rettv->v_type == VAR_FUNC) {
+          func_ref(rettv->vval.v_string);
         }
       } else if (strcmp(what, "dict") == 0) {
         rettv->v_type = VAR_DICT;
