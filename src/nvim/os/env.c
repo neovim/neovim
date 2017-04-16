@@ -641,7 +641,7 @@ char *vim_getenv(const char *name)
             exe_name,
             "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
             MAXPATHL) == OK) {
-          vim_path = exe_name;
+          vim_path = exe_name;  // -V507
         }
       }
     }
@@ -675,6 +675,7 @@ char *vim_getenv(const char *name)
         vim_path = NULL;
       }
     }
+    assert(vim_path != exe_name);
   }
 
 #ifdef HAVE_PATHDEF
