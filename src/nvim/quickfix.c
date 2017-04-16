@@ -984,7 +984,7 @@ qf_init_ext(
   }
 
   // Use the local value of 'errorformat' if it's set.
-  if (errorformat == p_efm && tv == NULL && *buf->b_p_efm != NUL) {
+  if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
     efm = buf->b_p_efm;
   } else {
     efm = errorformat;
