@@ -489,7 +489,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             }
             if (is_string) {
               TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len);
-            } else {
+            } else {  // -V523
               TYPVAL_ENCODE_CONV_STRING(tv, buf, len);
             }
             xfree(buf);
