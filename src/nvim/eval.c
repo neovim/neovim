@@ -19462,8 +19462,9 @@ void ex_function(exarg_T *eap)
      * interrupt, or an exception.
      */
     if (!aborting()) {
-      if (!eap->skip && fudi.fd_newkey != NULL)
+      if (fudi.fd_newkey != NULL) {
         EMSG2(_(e_dictkey), fudi.fd_newkey);
+      }
       xfree(fudi.fd_newkey);
       return;
     } else
