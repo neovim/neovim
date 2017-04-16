@@ -14874,7 +14874,7 @@ static void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *const varname = tv_get_string_chk(&argvars[1]);
   typval_T *const varp = &argvars[2];
 
-  if (varname != NULL && varp != NULL && tp != NULL) {
+  if (varname != NULL && tp != NULL) {
     tabpage_T *const save_curtab = curtab;
     goto_tabpage_tp(tp, false, false);
 
