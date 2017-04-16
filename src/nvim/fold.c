@@ -2769,6 +2769,11 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
   // order.
   // We have to swap folds in the range [move_end, dest_index) with those in
   // the range [move_start, move_end).
+  if (move_end == 0) {
+    // There are no folds after those moved, hence no folds have been moved out
+    // of order.
+    return;
+  }
   reverse_fold_order(gap, move_start, dest_index - 1);
   reverse_fold_order(gap, move_start, move_start + dest_index - move_end - 1);
   reverse_fold_order(gap, move_start + dest_index - move_end, dest_index - 1);
