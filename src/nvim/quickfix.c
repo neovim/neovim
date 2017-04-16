@@ -3284,7 +3284,6 @@ void ex_cc(exarg_T *eap)
       || eap->cmdidx == CMD_lrewind
       || eap->cmdidx == CMD_lfirst
       || eap->cmdidx == CMD_llast
-      || eap->cmdidx == CMD_llast
       || eap->cmdidx == CMD_ldo
       || eap->cmdidx == CMD_lfdo) {
     qi = GET_LOC_LIST(curwin);
@@ -3340,7 +3339,6 @@ void ex_cnext(exarg_T *eap)
       || eap->cmdidx == CMD_lprevious
       || eap->cmdidx == CMD_lnfile
       || eap->cmdidx == CMD_lNfile
-      || eap->cmdidx == CMD_lpfile
       || eap->cmdidx == CMD_lpfile
       || eap->cmdidx == CMD_ldo
       || eap->cmdidx == CMD_lfdo) {
