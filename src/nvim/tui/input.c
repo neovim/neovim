@@ -225,7 +225,7 @@ static int get_key_code_timeout(void)
   if (nvim_get_option(cstr_as_string("ttimeout"), &err).data.boolean) {
     ms = nvim_get_option(cstr_as_string("ttimeoutlen"), &err).data.integer;
   }
-
+  xfree(err.msg);
   return (int)ms;
 }
 

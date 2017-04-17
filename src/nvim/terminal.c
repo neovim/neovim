@@ -630,13 +630,14 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
 static void buf_set_term_title(buf_T *buf, char *title)
     FUNC_ATTR_NONNULL_ALL
 {
-  Error err;
+  Error err = ERROR_INIT;
   dict_set_var(buf->b_vars,
                STATIC_CSTR_AS_STRING("term_title"),
                STRING_OBJ(cstr_as_string(title)),
                false,
                false,
                &err);
+  xfree(err.msg);
 }
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
@@ -1217,13 +1218,14 @@ static bool is_focused(Terminal *term)
 
 #define GET_CONFIG_VALUE(k, o) \
   do { \
-    Error err; \
+    Error err = ERROR_INIT; \
     /* Only called from terminal_open where curbuf->terminal is the */ \
     /* context  */ \
     o = dict_get_value(curbuf->b_vars, cstr_as_string(k), &err); \
     if (o.type == kObjectTypeNil) { \
       o = dict_get_value(&globvardict, cstr_as_string(k), &err); \
     } \
+    xfree(err.msg); \
   } while (0)
 
 static char *get_config_string(char *key)
