@@ -270,10 +270,14 @@ a dictionary with these (optional) keys:
 				Defaults to false.
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
-and a single argument, an array of screen updates (described below).
-These should be processed in order. Preferably the user should only be able to
-see the screen state after all updates are processed (not any intermediate
-state after processing only a part of the array).
+and a single argument, an array of screen updates (described below).  These
+should be processed in order. Preferably the user should only be able to see
+the screen state after all updates in the same "redraw" event are processed
+(not any intermediate state after processing only a part of the array).
+
+Future versions of Nvim may add new update kinds and may append new parameters
+to existing update kinds. Clients must be prepared to ignore such extensions
+to be forward-compatible. |api-contract|
 
 Screen updates are arrays. The first element a string describing the kind
 of update.
@@ -387,10 +391,31 @@ of update.
 ["update_menu"]
 	The menu mappings changed.
 
-["mode_change", mode]
-	The mode changed. Currently sent when "insert", "replace", "cmdline" and
-	"normal" modes are entered. A client could for instance change the cursor
-	shape.
+["mode_info_set", cursor_style_enabled, mode_info]
+`mode_info` is an array containing information about various modes, as later
+will be indicated with the `mode_change` update. Currently this primarily
+concerns cursor styles to be set in the different modes. The keys are
+
+	`cursor_shape`:	One of "block", "horizontal" or "vertical"
+	`cell_percentage`:Percentage of the cell taken by the cursor.
+	`blinkwait`, `blinkon`, `blinkoff`: see |cursor-blinking|.
+	`hl_id`:	Highlight group for the cursor.
+	`hl_lm`:	Highlight group for the cursor when langmap is active.
+	`short_name`:	Short name for the mode, as used in 'guicursor'
+			option.
+	`name`:		Full name for the mode.
+	`mouse_shape`:	(To be implemented.)
+
+Not all keys need to be present for all modes. `cursor_style_enabled` is a
+boolean indicating if the ui should change the cursor style.
+
+["mode_change", mode, mode_idx]
+The mode changed.  The first parameter `mode` is a string representing the
+current mode. `mode_idx` is an index into the array received in the
+`mode_info_set` event. UIs should change the cursor style according to the
+properties specified in the corresponding item. The set of modes reported will
+change in new versions of Nvim, for instance more submodes and temporary
+states might be represented as separate modes.
 
 ["popupmenu_show", items, selected, row, col]
 	When `popupmenu_external` is set to true, nvim will not draw the
