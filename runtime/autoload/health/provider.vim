@@ -117,7 +117,7 @@ function! s:check_clipboard() abort
   if empty(clipboard_tool)
     call health#report_warn(
           \ "No clipboard tool found. Clipboard registers will not work.",
-          \ ['See ":help clipboard".'])
+          \ [':help clipboard'])
   else
     call health#report_ok('Clipboard tool found: '. clipboard_tool)
   endif

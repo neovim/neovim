@@ -112,15 +112,14 @@ function! s:check_interpreter(prog, major_ver) abort
   endif
 
   if v:shell_error == 2
-    return [0, prog_path . ' does not have the neovim module installed. '
-          \ . 'See ":help provider-python".']
+    return [0, prog_path.' does not have the "neovim" module. :help provider-python']
   elseif v:shell_error == 127
     " This can happen with pyenv's shims.
     return [0, prog_path . ' does not exist: ' . prog_ver]
   elseif v:shell_error
     return [0, 'Checking ' . prog_path . ' caused an unknown error. '
           \ . '(' . v:shell_error . ', output: ' . prog_ver . ')'
-          \ . ' Please report this at github.com/neovim/neovim.']
+          \ . ' Report this at https://github.com/neovim/neovim']
   endif
 
   return [1, '']
