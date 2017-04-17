@@ -11,7 +11,7 @@
 #include "nvim/ui.h"
 
 /// Handling of cursor and mouse pointer shapes in various modes.
-static cursorentry_T shape_table[SHAPE_IDX_COUNT] =
+cursorentry_T shape_table[SHAPE_IDX_COUNT] =
 {
   // Values are set by 'guicursor' and 'mouseshape'.
   // Adjust the SHAPE_IDX_ defines when changing this!
@@ -63,6 +63,7 @@ Dictionary cursor_shape_dict(void)
       PUT(dic, "id_lm", INTEGER_OBJ(cur->id_lm));
     }
     PUT(dic, "short_name", STRING_OBJ(cstr_to_string(cur->name)));
+    PUT(dic, "mode_idx", INTEGER_OBJ(i));
 
     PUT(all, cur->full_name, DICTIONARY_OBJ(dic));
   }
@@ -260,3 +261,35 @@ int cursor_mode_str2int(const char *mode)
   return -1;
 }
 
+
+/// Return the index into shape_table[] for the current mode.
+int cursor_get_mode_idx(void)
+{
+  if (State == SHOWMATCH) {
+    return SHAPE_IDX_SM;
+  } else if (State & VREPLACE_FLAG) {
+    return SHAPE_IDX_R;
+  } else if (State & REPLACE_FLAG) {
+    return SHAPE_IDX_R;
+  } else if (State & INSERT) {
+    return SHAPE_IDX_I;
+  } else if (State & CMDLINE) {
+    if (cmdline_at_end()) {
+      return SHAPE_IDX_C;
+    } else if (cmdline_overstrike()) {
+      return SHAPE_IDX_CR;
+    } else {
+      return SHAPE_IDX_CI;
+    }
+  } else if (finish_op) {
+    return SHAPE_IDX_O;
+  } else if (VIsual_active) {
+    if (*p_sel == 'e') {
+      return SHAPE_IDX_VE;
+    } else {
+      return SHAPE_IDX_V;
+    }
+  } else {
+    return SHAPE_IDX_N;
+  }
+}

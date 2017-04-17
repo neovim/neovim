@@ -266,19 +266,14 @@ static void remote_ui_mouse_off(UI *ui)
   push_call(ui, "mouse_off", args);
 }
 
-static void remote_ui_mode_change(UI *ui, int mode)
+static void remote_ui_mode_change(UI *ui, int mode_idx)
 {
   Array args = ARRAY_DICT_INIT;
-  if (mode == INSERT) {
-    ADD(args, STRING_OBJ(cstr_to_string("insert")));
-  } else if (mode == REPLACE) {
-    ADD(args, STRING_OBJ(cstr_to_string("replace")));
-  } else if (mode == CMDLINE) {
-    ADD(args, STRING_OBJ(cstr_to_string("cmdline")));
-  } else {
-    assert(mode == NORMAL);
-    ADD(args, STRING_OBJ(cstr_to_string("normal")));
-  }
+
+  char *full_name = shape_table[mode_idx].full_name;
+  ADD(args, STRING_OBJ(cstr_to_string(full_name)));
+
+  ADD(args, INTEGER_OBJ(mode_idx));
   push_call(ui, "mode_change", args);
 }
 
@@ -393,8 +388,10 @@ static void remote_ui_update_sp(UI *ui, int sp)
 static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
-  channel_send_event(data->channel_id, "redraw", data->buffer);
-  data->buffer = (Array)ARRAY_DICT_INIT;
+  if (data->buffer.size > 0) {
+    channel_send_event(data->channel_id, "redraw", data->buffer);
+    data->buffer = (Array)ARRAY_DICT_INIT;
+  }
 }
 
 static void remote_ui_suspend(UI *ui)

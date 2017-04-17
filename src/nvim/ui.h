@@ -28,7 +28,7 @@ struct ui_t {
   void (*busy_stop)(UI *ui);
   void (*mouse_on)(UI *ui);
   void (*mouse_off)(UI *ui);
-  void (*mode_change)(UI *ui, int mode);
+  void (*mode_change)(UI *ui, int mode_idx);
   void (*set_scroll_region)(UI *ui, int top, int bot, int left, int right);
   void (*scroll)(UI *ui, int count);
   void (*highlight_set)(UI *ui, HlAttrs attrs);

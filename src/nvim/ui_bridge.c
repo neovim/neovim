@@ -249,9 +249,9 @@ static void ui_bridge_mouse_off_event(void **argv)
   ui->mouse_off(ui);
 }
 
-static void ui_bridge_mode_change(UI *b, int mode)
+static void ui_bridge_mode_change(UI *b, int mode_idx)
 {
-  UI_CALL(b, mode_change, 2, b, INT2PTR(mode));
+  UI_CALL(b, mode_change, 2, b, INT2PTR(mode_idx));
 }
 static void ui_bridge_mode_change_event(void **argv)
 {

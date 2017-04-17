@@ -25,7 +25,7 @@ SHAPE_IDX_MORE   = 14,      ///< Hit-return or More
 SHAPE_IDX_MOREL  = 15,      ///< Hit-return or More in last line
 SHAPE_IDX_SM     = 16,      ///< showing matching paren
 SHAPE_IDX_COUNT  = 17
-} MouseMode;
+} ModeShape;
 
 typedef enum {
 SHAPE_BLOCK     = 0,       ///< block cursor
@@ -53,6 +53,7 @@ typedef struct cursor_entry {
   char used_for;          ///< SHAPE_MOUSE and/or SHAPE_CURSOR
 } cursorentry_T;
 
+extern cursorentry_T shape_table[SHAPE_IDX_COUNT];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cursor_shape.h.generated.h"

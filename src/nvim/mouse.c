@@ -456,6 +456,7 @@ void setmouse(void)
 {
   int checkfor;
 
+  ui_cursor_shape();
 
   /* be quick when mouse is off */
   if (*p_mouse == NUL)

@@ -351,6 +351,7 @@ static int command_line_check(VimState *state)
   quit_more = false;       // reset after CTRL-D which had a more-prompt
 
   cursorcmd();             // set the cursor on the right spot
+  ui_cursor_shape();
   return 1;
 }
 
@@ -2092,6 +2093,18 @@ redraw:
   return (char_u *)line_ga.ga_data;
 }
 
+bool cmdline_overstrike(void)
+{
+  return ccline.overstrike;
+}
+
+
+/// Return true if the cursor is at the end of the cmdline.
+bool cmdline_at_end(void)
+{
+  return (ccline.cmdpos >= ccline.cmdlen);
+}
+
 /*
  * Allocate a new command line buffer.
  * Assigns the new buffer to ccline.cmdbuff and ccline.cmdbufflen.
@@ -2262,6 +2275,7 @@ void putcmdline(int c, int shift)
     draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
   msg_no_more = FALSE;
   cursorcmd();
+  ui_cursor_shape();
 }
 
 /*
@@ -2281,6 +2295,7 @@ void unputcmdline(void)
     draw_cmdline(ccline.cmdpos, 1);
   msg_no_more = FALSE;
   cursorcmd();
+  ui_cursor_shape();
 }
 
 /*
@@ -2598,6 +2613,7 @@ void redrawcmdline(void)
   compute_cmdrow();
   redrawcmd();
   cursorcmd();
+  ui_cursor_shape();
 }
 
 static void redrawcmdprompt(void)
