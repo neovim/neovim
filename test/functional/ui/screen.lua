@@ -384,9 +384,8 @@ function Screen:_handle_mouse_off()
   self._mouse_enabled = false
 end
 
-function Screen:_handle_mode_change(mode)
-  assert(mode == 'insert' or mode == 'replace'
-        or mode == 'normal' or mode == 'cmdline')
+function Screen:_handle_mode_change(mode, idx)
+  assert(idx == self._cursor_style[mode].mode_idx)
   self.mode = mode
 end
 

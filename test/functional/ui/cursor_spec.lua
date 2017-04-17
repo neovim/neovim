@@ -20,9 +20,11 @@ describe('ui/cursor', function()
   it("'guicursor' is published as a UI event", function()
     local expected_cursor_style = {
       cmdline_hover = {
+        mode_idx = 9,
         mouse_shape = 0,
         short_name = 'e' },
       cmdline_insert = {
+        mode_idx = 5,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -33,6 +35,7 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'ci' },
       cmdline_normal = {
+        mode_idx = 4,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -43,6 +46,7 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'c' },
       cmdline_replace = {
+        mode_idx = 6,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -53,6 +57,7 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'cr' },
       insert = {
+        mode_idx = 2,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -63,12 +68,15 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'i' },
       more = {
+        mode_idx = 14,
         mouse_shape = 0,
         short_name = 'm' },
       more_lastline = {
+        mode_idx = 15,
         mouse_shape = 0,
         short_name = 'ml' },
       normal = {
+        mode_idx = 0,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -79,6 +87,7 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'n' },
       operator = {
+        mode_idx = 7,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -89,6 +98,7 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'o' },
       replace = {
+        mode_idx = 3,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -99,6 +109,7 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'r' },
       showmatch = {
+        mode_idx = 16,
         blinkoff = 150,
         blinkon = 175,
         blinkwait = 175,
@@ -108,12 +119,15 @@ describe('ui/cursor', function()
         id_lm = 46,
         short_name = 'sm' },
       statusline_drag = {
+        mode_idx = 11,
         mouse_shape = 0,
         short_name = 'sd' },
       statusline_hover = {
+        mode_idx = 10,
         mouse_shape = 0,
         short_name = 's' },
       visual = {
+        mode_idx = 1,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -124,6 +138,7 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'v' },
       visual_select = {
+        mode_idx = 8,
         blinkoff = 250,
         blinkon = 400,
         blinkwait = 700,
@@ -134,9 +149,11 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 've' },
       vsep_drag = {
+        mode_idx = 13,
         mouse_shape = 0,
         short_name = 'vd' },
       vsep_hover = {
+        mode_idx = 12,
         mouse_shape = 0,
         short_name = 'vs' }
     }
