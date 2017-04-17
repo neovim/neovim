@@ -620,6 +620,7 @@ static void tui_mode_change(UI *ui, int mode)
     }
   }
   data->showing_mode = mode;
+  ui_refresh();
 }
 
 static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
