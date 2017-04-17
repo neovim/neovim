@@ -2772,15 +2772,10 @@ static int nfa_max_width(nfa_state_T *startstate, int depth)
     case NFA_ANY:
     case NFA_START_COLL:
     case NFA_START_NEG_COLL:
-      /* matches some character, including composing chars */
-      if (enc_utf8)
-        len += MB_MAXBYTES;
-      else if (has_mbyte)
-        len += 2;
-      else
-        ++len;
+      // Matches some character, including composing chars.
+      len += MB_MAXBYTES;
       if (state->c != NFA_ANY) {
-        /* skip over the characters */
+        // Skip over the characters.
         state = state->out1->out;
         continue;
       }
@@ -4412,8 +4407,9 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_ESCAPE:
-    if (c == '\033')
+    if (c == ESC) {
       return OK;
+    }
     break;
 
   default:

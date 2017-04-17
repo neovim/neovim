@@ -1849,11 +1849,12 @@ static int vgetorpeek(int advance)
                     mp_match = mp;
                     mp_match_len = keylen;
                   }
-                } else
-                /* No match; may have to check for
-                 * termcode at next character. */
-                if (max_mlen < mlen)
-                  max_mlen = mlen;
+                } else {
+                  // No match; may have to check for termcode at next character.
+                  if (max_mlen < mlen) {
+                    max_mlen = mlen;
+                  }
+                }
               }
             }
 

@@ -2742,12 +2742,13 @@ void ex_call(exarg_T *eap)
    * call, and the loop is broken.
    */
   if (eap->skip) {
-    ++emsg_skip;
-    lnum = eap->line2;          /* do it once, also with an invalid range */
-  } else
+    emsg_skip++;
+    lnum = eap->line2;  // Do it once, also with an invalid range.
+  } else {
     lnum = eap->line1;
-  for (; lnum <= eap->line2; ++lnum) {
-    if (!eap->skip && eap->addr_count > 0) {
+  }
+  for (; lnum <= eap->line2; lnum++) {
+    if (!eap->skip && eap->addr_count > 0) {  // -V560
       curwin->w_cursor.lnum = lnum;
       curwin->w_cursor.col = 0;
       curwin->w_cursor.coladd = 0;
@@ -2768,7 +2769,7 @@ void ex_call(exarg_T *eap)
     }
 
     tv_clear(&rettv);
-    if (doesrange || eap->skip) {
+    if (doesrange || eap->skip) {  // -V560
       break;
     }
 
@@ -2999,8 +3000,7 @@ int do_unlet(const char *const name, const size_t name_len, const int forceit)
         return FAIL;
       }
 
-      if (d == NULL
-          || tv_check_lock(d->dv_lock, (const char *)name, STRLEN(name))) {
+      if (tv_check_lock(d->dv_lock, (const char *)name, STRLEN(name))) {
         return FAIL;
       }
 
@@ -7306,18 +7306,14 @@ static void f_changenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_char2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (has_mbyte) {
-    int utf8 = 0;
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      utf8 = tv_get_number_chk(&argvars[1], NULL);
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    if (!tv_check_num(&argvars[1])) {
+      return;
     }
-
-    rettv->vval.v_number = (utf8 ? *utf_ptr2char : *mb_ptr2char)(
-        (const char_u *)tv_get_string(&argvars[0]));
-  } else {
-    rettv->vval.v_number = (uint8_t)(tv_get_string(&argvars[0])[0]);
   }
+
+  rettv->vval.v_number = utf_ptr2char(
+      (const char_u *)tv_get_string(&argvars[0]));
 }
 
 /*
@@ -8982,13 +8978,10 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (strcmp(what, "func") == 0 || strcmp(what, "name") == 0) {
         rettv->v_type = (*what == 'f' ? VAR_FUNC : VAR_STRING);
         const char *const n = (const char *)partial_name(pt);
-        if (n == NULL) {
-          rettv->vval.v_string = NULL;
-        } else {
-          rettv->vval.v_string = (char_u *)xstrdup(n);
-          if (rettv->v_type == VAR_FUNC) {
-            func_ref(rettv->vval.v_string);
-          }
+        assert(n != NULL);
+        rettv->vval.v_string = (char_u *)xstrdup(n);
+        if (rettv->v_type == VAR_FUNC) {
+          func_ref(rettv->vval.v_string);
         }
       } else if (strcmp(what, "dict") == 0) {
         rettv->v_type = VAR_DICT;
@@ -12546,7 +12539,7 @@ static void f_min(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_mkdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int prot = 0755;
+  int prot = 0755;  // -V536
 
   rettv->vval.v_number = FAIL;
   if (check_restricted() || check_secure())
@@ -12771,25 +12764,32 @@ static void f_nextnonblank(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_nr2char(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char_u buf[NUMBUFLEN];
-
-  if (has_mbyte) {
-    int utf8 = 0;
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      utf8 = tv_get_number_chk(&argvars[1], NULL);
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    if (!tv_check_num(&argvars[1])) {
+      return;
     }
-    if (utf8) {
-      buf[(*utf_char2bytes)((int)tv_get_number(&argvars[0]), buf)] = NUL;
-    } else {
-      buf[(*mb_char2bytes)((int)tv_get_number(&argvars[0]), buf)] = NUL;
-    }
-  } else {
-    buf[0] = (char_u)tv_get_number(&argvars[0]);
-    buf[1] = NUL;
   }
+
+  bool error = false;
+  const varnumber_T num = tv_get_number_chk(&argvars[0], &error);
+  if (error) {
+    return;
+  }
+  if (num < 0) {
+    emsgf(_("E5070: Character number must not be less than zero"));
+    return;
+  }
+  if (num > INT_MAX) {
+    emsgf(_("E5071: Character number must not be greater than INT_MAX (%i)"),
+          INT_MAX);
+    return;
+  }
+
+  char buf[MB_MAXBYTES];
+  const int len = utf_char2bytes((int)num, (char_u *)buf);
+
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave(buf);
+  rettv->vval.v_string = xmemdupz(buf, (size_t)len);
 }
 
 /*
@@ -14307,7 +14307,7 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  if (argvars[0].v_type == VAR_UNKNOWN || argvars[0].v_type != VAR_STRING) {
+  if (argvars[0].v_type != VAR_STRING) {
     EMSG(_(e_invarg));
     return;
   }
@@ -14331,7 +14331,7 @@ static void f_setbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   buf_T *const buf = get_buf_tv(&argvars[0], false);
   typval_T *varp = &argvars[2];
 
-  if (buf != NULL && varname != NULL && varp != NULL) {
+  if (buf != NULL && varname != NULL) {
     if (*varname == '&') {
       long numval;
       bool error = false;
@@ -14875,7 +14875,7 @@ static void f_settabvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *const varname = tv_get_string_chk(&argvars[1]);
   typval_T *const varp = &argvars[2];
 
-  if (varname != NULL && varp != NULL && tp != NULL) {
+  if (varname != NULL && tp != NULL) {
     tabpage_T *const save_curtab = curtab;
     goto_tabpage_tp(tp, false, false);
 
@@ -19463,8 +19463,9 @@ void ex_function(exarg_T *eap)
      * interrupt, or an exception.
      */
     if (!aborting()) {
-      if (!eap->skip && fudi.fd_newkey != NULL)
+      if (fudi.fd_newkey != NULL) {
         EMSG2(_(e_dictkey), fudi.fd_newkey);
+      }
       xfree(fudi.fd_newkey);
       return;
     } else
@@ -21048,8 +21049,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
             char *s = tofree;
             emsg_off--;
             if (s != NULL) {
+              char buf[MSG_BUF_LEN];
               if (vim_strsize((char_u *)s) > MSG_BUF_CLEN) {
-                char buf[MSG_BUF_LEN];
                 trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN,
                              sizeof(buf));
                 s = buf;

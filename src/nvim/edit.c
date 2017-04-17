@@ -3419,6 +3419,7 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
     else
       return;        /* nothing to do */
   }
+  assert(ptr != NULL);
   if (compl_orig_text != NULL) {
     p = compl_orig_text;
     for (len = 0; p[len] != NUL && p[len] == ptr[len]; ++len)
@@ -3427,10 +3428,11 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
       len -= (*mb_head_off)(p, p + len);
     for (p += len; *p != NUL; mb_ptr_adv(p))
       AppendCharToRedobuff(K_BS);
-  } else
+  } else {
     len = 0;
-  if (ptr != NULL)
-    AppendToRedobuffLit(ptr + len, -1);
+  }
+  assert(ptr != NULL);
+  AppendToRedobuffLit(ptr + len, -1);
 }
 
 /*

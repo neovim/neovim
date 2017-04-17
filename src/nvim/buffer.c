@@ -741,11 +741,12 @@ static void clear_wininfo(buf_T *buf)
  */
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
-  (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
-                  start, dir, count, eap->forceit);
   bufref_T old_curbuf;
   set_bufref(&old_curbuf, curbuf);
   swap_exists_action = SEA_DIALOG;
+
+  (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
+                  start, dir, count, eap->forceit);
 
   if (swap_exists_action == SEA_QUIT && *eap->cmd == 's') {
     cleanup_T cs;

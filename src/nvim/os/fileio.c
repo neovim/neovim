@@ -47,6 +47,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   int os_open_flags = 0;
   int fd;
   TriState wr = kNone;
+  // -V:FLAG:501
 #define FLAG(flags, flag, fcntl_flags, wrval, cond) \
   do { \
     if (flags & flag) { \

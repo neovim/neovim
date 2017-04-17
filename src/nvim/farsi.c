@@ -321,7 +321,7 @@ static void put_curr_and_l_to_X(char_u c)
   }
 
   if ((curwin->w_cursor.col < (colnr_T)STRLEN(get_cursor_line_ptr()))) {
-    if ((p_ri && curwin->w_cursor.col) || !p_ri) {
+    if (!p_ri || curwin->w_cursor.col) {
       if (p_ri) {
         dec_cursor();
       } else {

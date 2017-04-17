@@ -8,6 +8,7 @@
 #include "nvim/memory.h"
 #include "nvim/lib/kvec.h"
 
+// -V:api_set_error:618
 #define api_set_error(err, errtype, ...) \
   do { \
     snprintf((err)->msg, \

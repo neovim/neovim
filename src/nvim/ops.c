@@ -2785,7 +2785,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (curbuf->terminal) {
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {  // -V756
       // feed the lines to the terminal
       for (size_t j = 0; j < y_size; j++) {
         if (j) {
