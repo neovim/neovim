@@ -47,47 +47,60 @@ function! provider#clipboard#Error() abort
 endfunction
 
 function! provider#clipboard#Executable() abort
+  let l:provider_prog = ''
   if has('mac') && executable('pbcopy')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     let s:cache_enabled = 0
-    return 'pbcopy'
+    let l:provider_prog = 'pbcopy'
   elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
     let s:copy['+'] = 'xsel --nodetach -i -b'
     let s:paste['+'] = 'xsel -o -b'
     let s:copy['*'] = 'xsel --nodetach -i -p'
     let s:paste['*'] = 'xsel -o -p'
-    return 'xsel'
+    let l:provider_prog = 'xsel'
   elseif exists('$DISPLAY') && executable('xclip')
     let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
     let s:paste['+'] = 'xclip -o -selection clipboard'
     let s:copy['*'] = 'xclip -quiet -i -selection primary'
     let s:paste['*'] = 'xclip -o -selection primary'
-    return 'xclip'
+    let l:provider_prog = 'xclip'
   elseif executable('lemonade')
     let s:copy['+'] = 'lemonade copy'
     let s:paste['+'] = 'lemonade paste'
     let s:copy['*'] = 'lemonade copy'
     let s:paste['*'] = 'lemonade paste'
-    return 'lemonade'
+    let l:provider_prog = 'lemonade'
   elseif executable('doitclient')
     let s:copy['+'] = 'doitclient wclip'
     let s:paste['+'] = 'doitclient wclip -r'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
-    return 'doitclient'
+    let l:provider_prog = 'doitclient'
   elseif executable('win32yank')
     let s:copy['+'] = 'win32yank -i --crlf'
     let s:paste['+'] = 'win32yank -o --lf'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
-    return 'win32yank'
+    let l:provider_prog = 'win32yank'
+  endif
+
+  if exists('g:custom_copy_command')
+    let s:copy['+'] = g:custom_copy_command
+    let s:copy['*'] = s:copy['+']
+    let s:cache_enabled = 0
+  endif
+
+  if exists('g:custom_paste_command')
+    let s:paste['+'] = g:custom_paste_command
+    let s:paste['*'] = s:paste['+']
+    let s:cache_enabled = 0
   endif
 
   let s:err = 'clipboard: No clipboard tool available. See :help clipboard'
-  return ''
+  return l:provider_prog
 endfunction
 
 if empty(provider#clipboard#Executable())
