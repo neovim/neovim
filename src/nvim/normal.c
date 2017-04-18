@@ -2337,6 +2337,9 @@ do_mouse (
         if ((State & REPLACE_FLAG) && !yank_register_mline(regname))
           insert_reg(regname, true);
         else {
+          if (regname == 0) {
+            regname = '*';
+          }
           do_put(regname, NULL, BACKWARD, 1L, fixindent | PUT_CURSEND);
 
           /* Repeat it with CTRL-R CTRL-O r or CTRL-R CTRL-P r */
