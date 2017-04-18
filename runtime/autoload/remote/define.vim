@@ -169,14 +169,40 @@ function! remote#define#FunctionOnChannel(channel, method, sync, name, opts)
   exe function_def
 endfunction
 
+let s:busy = {}
+let s:pending_notifications = {}
 
 function! s:GetRpcFunction(sync)
-  if a:sync
-    return 'rpcrequest'
+  if a:sync ==# 'urgent'
+    return 'rpcnotify'
+  elseif a:sync
+    return 'remote#define#request'
   endif
-  return 'rpcnotify'
+  return 'remote#define#notify'
 endfunction
 
+function! remote#define#notify(chan, ...)
+  if get(s:busy, a:chan, 0) > 0
+    let pending = get(s:pending_notifications, a:chan, [])
+    call add(pending, deepcopy(a:000))
+    let s:pending_notifications[a:chan] = pending
+  else
+    call call('rpcnotify', [a:chan] + a:000)
+  endif
+endfunction
+
+function! remote#define#request(chan, ...)
+  let s:busy[a:chan] = get(s:busy, a:chan, 0)+1
+  let val = call('rpcrequest', [a:chan]+a:000)
+  let s:busy[a:chan] -= 1
+  if s:busy[a:chan] == 0
+    for msg in get(s:pending_notifications, a:chan, [])
+      call call('rpcnotify', [a:chan] + msg)
+    endfor
+    let s:pending_notifications[a:chan] = []
+  endif
+  return val
+endfunction
 
 function! s:GetCommandPrefix(name, opts)
   return 'command!'.s:StringifyOpts(a:opts, ['nargs', 'complete', 'range',
