@@ -101,7 +101,7 @@ UI *tui_start(void)
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
   ui->cursor_goto = tui_cursor_goto;
-  ui->cursor_style_set = tui_cursor_style_set;
+  ui->mode_info_set = tui_mode_info_set;
   ui->update_menu = tui_update_menu;
   ui->busy_start = tui_busy_start;
   ui->busy_stop = tui_busy_stop;
@@ -451,7 +451,7 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
   return shape;
 }
 
-static cursorentry_T decode_cursor_entry(Dictionary args, int *mode_idx)
+static cursorentry_T decode_cursor_entry(Dictionary args)
 {
   cursorentry_T r;
 
@@ -467,31 +467,26 @@ static cursorentry_T decode_cursor_entry(Dictionary args, int *mode_idx)
       r.blinkoff = (int)value.data.integer;
     } else if (strequal(key, "hl_id")) {
       r.id = (int)value.data.integer;
-    } else if (strequal(key, "mode_idx")) {
-      *mode_idx = (int)value.data.integer;
     }
   }
   return r;
 }
 
-static void tui_cursor_style_set(UI *ui, bool enabled, Dictionary args)
+static void tui_mode_info_set(UI *ui, bool guicursor_enabled, Array args)
 {
-  cursor_style_enabled = enabled;
-  if (!enabled) {
+  cursor_style_enabled = guicursor_enabled;
+  if (!guicursor_enabled) {
     return;  // Do not send cursor style control codes.
   }
   TUIData *data = ui->data;
 
   assert(args.size);
-  // Keys: as defined by `shape_table`.
+
+  // cursor style entries as defined by `shape_table`.
   for (size_t i = 0; i < args.size; i++) {
-    char *mode_name = args.items[i].key.data;
-    int mode_idx;
-    cursorentry_T r = decode_cursor_entry(args.items[i].value.data.dictionary,
-                                          &mode_idx);
-    assert(mode_idx >= 0);
-    r.full_name = mode_name;
-    data->cursor_shapes[mode_idx] = r;
+    assert(args.items[i].type == kObjectTypeDictionary);
+    cursorentry_T r = decode_cursor_entry(args.items[i].data.dictionary);
+    data->cursor_shapes[i] = r;
   }
 
   tui_set_mode(ui, data->showing_mode);

@@ -348,9 +348,9 @@ function Screen:_handle_resize(width, height)
   }
 end
 
-function Screen:_handle_cursor_style_set(enabled, style)
-  self._cursor_style_enabled = enabled
-  self._cursor_style = style
+function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
+  self._cursor_style_enabled = cursor_style_enabled
+  self._mode_info = mode_info
 end
 
 function Screen:_handle_clear()
@@ -385,7 +385,7 @@ function Screen:_handle_mouse_off()
 end
 
 function Screen:_handle_mode_change(mode, idx)
-  assert(idx == self._cursor_style[mode].mode_idx)
+  assert(mode == self._mode_info[idx+1].name)
   self.mode = mode
 end
 

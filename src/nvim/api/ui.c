@@ -70,7 +70,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
   ui->cursor_goto = remote_ui_cursor_goto;
-  ui->cursor_style_set = remote_ui_cursor_style_set;
+  ui->mode_info_set = remote_ui_mode_info_set;
   ui->update_menu = remote_ui_update_menu;
   ui->busy_start = remote_ui_busy_start;
   ui->busy_stop = remote_ui_busy_stop;
@@ -295,12 +295,12 @@ static void remote_ui_scroll(UI *ui, int count)
   push_call(ui, "scroll", args);
 }
 
-static void remote_ui_cursor_style_set(UI *ui, bool enabled, Dictionary data)
+static void remote_ui_mode_info_set(UI *ui, bool guicursor_enabled, Array data)
 {
   Array args = ARRAY_DICT_INIT;
-  ADD(args, BOOLEAN_OBJ(enabled));
-  ADD(args, copy_object(DICTIONARY_OBJ(data)));
-  push_call(ui, "cursor_style_set", args);
+  ADD(args, BOOLEAN_OBJ(guicursor_enabled));
+  ADD(args, copy_object(ARRAY_OBJ(data)));
+  push_call(ui, "mode_info_set", args);
 }
 
 static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)

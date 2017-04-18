@@ -34,11 +34,11 @@ cursorentry_T shape_table[SHAPE_IDX_COUNT] =
   { "showmatch", 0, 0, 0, 100L, 100L, 100L, 0, 0, "sm", SHAPE_CURSOR },
 };
 
-/// Converts cursor_shapes into a Dictionary of dictionaries
-/// @return dictionary of the form {"normal" : { "cursor_shape": ... }, ...}
-Dictionary cursor_shape_dict(void)
+/// Converts cursor_shapes into an Array of Dictionaries
+/// @return Array of the form {[ "cursor_shape": ... ], ...}
+Array mode_style_array(void)
 {
-  Dictionary all = ARRAY_DICT_INIT;
+  Array all = ARRAY_DICT_INIT;
 
   for (int i = 0; i < SHAPE_IDX_COUNT; i++) {
     Dictionary dic = ARRAY_DICT_INIT;
@@ -62,10 +62,10 @@ Dictionary cursor_shape_dict(void)
       PUT(dic, "hl_id", INTEGER_OBJ(cur->id));
       PUT(dic, "id_lm", INTEGER_OBJ(cur->id_lm));
     }
+    PUT(dic, "name", STRING_OBJ(cstr_to_string(cur->full_name)));
     PUT(dic, "short_name", STRING_OBJ(cstr_to_string(cur->name)));
-    PUT(dic, "mode_idx", INTEGER_OBJ(i));
 
-    PUT(all, cur->full_name, DICTIONARY_OBJ(dic));
+    ADD(all, DICTIONARY_OBJ(dic));
   }
 
   return all;
@@ -241,7 +241,7 @@ char_u *parse_shape_opt(int what)
       shape_table[SHAPE_IDX_VE].id_lm = shape_table[SHAPE_IDX_V].id_lm;
     }
   }
-  ui_cursor_style_set();
+  ui_mode_info_set();
   return NULL;
 }
 

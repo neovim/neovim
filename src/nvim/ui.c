@@ -175,7 +175,7 @@ void ui_refresh(void)
   row = col = 0;
   screen_resize(width, height);
   pum_set_external(pum_external);
-  ui_cursor_style_set();
+  ui_mode_info_set();
   old_mode_idx = -1;
   ui_cursor_shape();
 }
@@ -375,12 +375,12 @@ void ui_cursor_goto(int new_row, int new_col)
   pending_cursor_update = true;
 }
 
-void ui_cursor_style_set(void)
+void ui_mode_info_set(void)
 {
-  Dictionary style = cursor_shape_dict();
+  Array style = mode_style_array();
   bool enabled = (*p_guicursor != NUL);
-  UI_CALL(cursor_style_set, enabled, style);
-  api_free_dictionary(style);
+  UI_CALL(mode_info_set, enabled, style);
+  api_free_array(style);
 }
 
 void ui_update_menu(void)
