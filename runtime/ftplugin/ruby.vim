@@ -1,3 +1,4 @@
+
 " Vim filetype plugin
 " Language:		Ruby
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.org>
@@ -66,29 +67,17 @@ if !exists('g:ruby_version_paths')
   let g:ruby_version_paths = {}
 endif
 
-function! s:query_path(root)
-  let code = "print $:.join %q{,}"
-  if &shell =~# 'sh' && $PATH !~# '\s'
-    let prefix = 'env PATH='.$PATH.' '
-  else
-    let prefix = ''
-  endif
-  if &shellxquote == "'"
-    let path_check = prefix.'ruby -e "' . code . '"'
-  else
-    let path_check = prefix."ruby -e '" . code . "'"
-  endif
+function! s:get_default_load_path(root)
+  let l:cwd = fnameescape(getcwd())
+  let l:cd = haslocaldir() ? 'cd' : 'lcd'
+  let l:command = "ruby --disable-gem -e 'puts $:'"
 
-  let cd = haslocaldir() ? 'lcd' : 'cd'
-  let cwd = getcwd()
   try
-    exe cd fnameescape(a:root)
-    let path = split(system(path_check),',')
-    exe cd fnameescape(cwd)
-    return path
+    exe l:cd fnameescape(fnamemodify(a:root, ':p:h'))
+    let l:path = systemlist(l:command)
+    return l:path
   finally
-    exe cd fnameescape(cwd)
-  endtry
+    exe l:cd l:cwd
 endfunction
 
 function! s:build_path(path)
@@ -104,7 +93,7 @@ if !exists('b:ruby_version') && !exists('g:ruby_path') && isdirectory(expand('%:
   if !empty(s:version_file)
     let b:ruby_version = get(readfile(s:version_file, '', 1), '')
     if !has_key(g:ruby_version_paths, b:ruby_version)
-      let g:ruby_version_paths[b:ruby_version] = s:query_path(fnamemodify(s:version_file, ':p:h'))
+      let g:ruby_version_paths[b:ruby_version] = s:get_default_load_path(fnamemodify(s:version_file, ':p:h'))
     endif
   endif
 endif
@@ -119,7 +108,7 @@ else
     if has("ruby") && has("win32")
       ruby ::VIM::command( 'let g:ruby_default_path = split("%s",",")' % $:.join(%q{,}) )
     elseif executable('ruby')
-      let g:ruby_default_path = s:query_path($HOME)
+      let g:ruby_default_path = s:get_default_load_path($HOME)
     else
       let g:ruby_default_path = map(split($RUBYLIB,':'), 'v:val ==# "." ? "" : v:val')
     endif
