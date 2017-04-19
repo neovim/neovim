@@ -15,6 +15,7 @@ help() {
   echo '  pvscheck.sh --patch'
   echo
   echo '    --patch: patch sources in the current directory.'
+  echo '             Does not patch already patched files.'
   echo '             Does not run analysis.'
   echo
   echo '    --recheck: run analysis on a prepared target directory.'
@@ -66,18 +67,22 @@ patch_sources() {
   get_pvs_comment
 
   local sh_script='
-    cat pvs-comment "$1" > "$1.tmp"
-    mv "$1.tmp" "$1"
+    pvs_comment="$(cat pvs-comment ; echo -n EOS)"
+    filehead="$(head -c $(( ${#pvs_comment} - 3 )) "$1" ; echo -n EOS)"
+    if test "x$filehead" != "x$pvs_comment" ; then
+      cat pvs-comment "$1" > "$1.tmp"
+      mv "$1.tmp" "$1"
+    fi
   '
 
   find \
     src/nvim test/functional/fixtures test/unit/fixtures \
-    -name '*.[ch]' \
+    -name '*.c' \
     -exec /bin/sh -c "$sh_script" - '{}' \;
 
   find \
     build/src/nvim/auto build/config \
-    -name '*.[ch]' -not -name '*.test-include.c' \
+    -name '*.c' -not -name '*.test-include.c' \
     -exec /bin/sh -c "$sh_script" - '{}' \;
 
   rm pvs-comment
