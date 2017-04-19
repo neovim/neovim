@@ -12,20 +12,24 @@ help() {
   echo 'Usage:'
   echo '  pvscheck.sh [target-directory [branch]]'
   echo '  pvscheck.sh [--recheck] [target-directory]'
+  echo '  pvscheck.sh --patch'
   echo
-  echo '    --recheck: run analysis on a prepared target directory'
+  echo '    --patch: patch sources in the current directory.'
+  echo '             Does not run analysis.'
   echo
-  echo '    target-directory: Directory where build should occur'
+  echo '    --recheck: run analysis on a prepared target directory.'
+  echo
+  echo '    target-directory: Directory where build should occur.'
   echo '                      Default: ../neovim-pvs'
   echo
-  echo '    branch: Branch to check'
-  echo '            Default: master'
+  echo '    branch: Branch to check.'
+  echo '            Default: master.'
 }
 
 get_pvs_comment() {
   cat > pvs-comment << EOF
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 EOF
 }
 
@@ -75,6 +79,8 @@ patch_sources() {
     build/src/nvim/auto build/config \
     -name '*.[ch]' -not -name '*.test-include.c' \
     -exec /bin/sh -c "$sh_script" - '{}' \;
+
+  rm pvs-comment
 }
 
 run_analysis() {
@@ -103,8 +109,6 @@ do_check() {
 
   create_compile_commands
 
-  patch_sources
-
   run_analysis
 }
 
@@ -127,6 +131,11 @@ main() {
   fi
 
   set -x
+
+  if test "x$1" = "x--patch" ; then
+    patch_sources
+    exit $?
+  fi
 
   local recheck=
   if test "x$1" = "x--recheck" ; then
