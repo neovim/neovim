@@ -12,11 +12,13 @@ help() {
   echo 'Usage:'
   echo '  pvscheck.sh [target-directory [branch]]'
   echo '  pvscheck.sh [--recheck] [target-directory]'
-  echo '  pvscheck.sh --patch'
+  echo '  pvscheck.sh --patch [--only-build]'
   echo
   echo '    --patch: patch sources in the current directory.'
   echo '             Does not patch already patched files.'
   echo '             Does not run analysis.'
+  echo
+  echo '    --only-build: Only patch files in ./build directory.'
   echo
   echo '    --recheck: run analysis on a prepared target directory.'
   echo
@@ -75,10 +77,12 @@ patch_sources() {
     fi
   '
 
-  find \
-    src/nvim test/functional/fixtures test/unit/fixtures \
-    -name '*.c' \
-    -exec /bin/sh -c "$sh_script" - '{}' \;
+  if test "x$1" != "x--only-build" ; then
+    find \
+      src/nvim test/functional/fixtures test/unit/fixtures \
+      -name '*.c' \
+      -exec /bin/sh -c "$sh_script" - '{}' \;
+  fi
 
   find \
     build/src/nvim/auto build/config \
@@ -138,7 +142,13 @@ main() {
   set -x
 
   if test "x$1" = "x--patch" ; then
-    patch_sources
+    shift
+    if test "x$1" = "x--only-build" ; then
+      shift
+      patch_sources --only-build
+    else
+      patch_sources
+    fi
     exit $?
   fi
 
