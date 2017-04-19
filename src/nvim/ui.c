@@ -352,10 +352,15 @@ void ui_cursor_goto(int new_row, int new_col)
 
 void ui_mode_info_set(void)
 {
-  Array style = mode_style_array();
   bool enabled = (*p_guicursor != NUL);
-  ui_call_mode_info_set(enabled, style);
-  api_free_array(style);
+  UI_CALL(mode_info_set, enabled, mode_style_array(ui->rgb));
+  // todo
+  // api_free_array(style);
+}
+
+void ui_update_menu(void)
+{
+    UI_CALL(update_menu);
 }
 
 int ui_current_row(void)
@@ -375,56 +380,13 @@ void ui_flush(void)
 
 static void set_highlight_args(int attr_code)
 {
-  HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1, -1 };
-  HlAttrs cterm_attrs = rgb_attrs;
-
-  if (attr_code == HL_NORMAL) {
-    goto end;
-  }
-
-  int rgb_mask = 0;
-  int cterm_mask = 0;
-  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
-
-  if (!aep) {
-    goto end;
-  }
-
-  rgb_mask = aep->rgb_ae_attr;
-  cterm_mask = aep->cterm_ae_attr;
-
-  rgb_attrs.bold = rgb_mask & HL_BOLD;
-  rgb_attrs.underline = rgb_mask & HL_UNDERLINE;
-  rgb_attrs.undercurl = rgb_mask & HL_UNDERCURL;
-  rgb_attrs.italic = rgb_mask & HL_ITALIC;
-  rgb_attrs.reverse = rgb_mask & (HL_INVERSE | HL_STANDOUT);
-  cterm_attrs.bold = cterm_mask & HL_BOLD;
-  cterm_attrs.underline = cterm_mask & HL_UNDERLINE;
-  cterm_attrs.undercurl = cterm_mask & HL_UNDERCURL;
-  cterm_attrs.italic = cterm_mask & HL_ITALIC;
-  cterm_attrs.reverse = cterm_mask & (HL_INVERSE | HL_STANDOUT);
-
-  if (aep->rgb_fg_color != normal_fg) {
-    rgb_attrs.foreground = aep->rgb_fg_color;
-  }
-
-  if (aep->rgb_bg_color != normal_bg) {
-    rgb_attrs.background = aep->rgb_bg_color;
-  }
-
-  if (aep->rgb_sp_color != normal_sp) {
-    rgb_attrs.special = aep->rgb_sp_color;
-  }
-
-  if (cterm_normal_fg_color != aep->cterm_fg_color) {
-    cterm_attrs.foreground = aep->cterm_fg_color - 1;
-  }
-
-  if (cterm_normal_bg_color != aep->cterm_bg_color) {
-    cterm_attrs.background = aep->cterm_bg_color - 1;
-  }
-
-end:
+  HlAttrs rgb_attrs;
+  HlAttrs cterm_attrs;
+  bool result = attr2hlattr (attr_code, true, &rgb_attrs);
+  assert (result);
+  result = attr2hlattr (attr_code, false, &cterm_attrs);
+  assert (result);
+  // UI_CALL(highlight_set, attrs);
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 

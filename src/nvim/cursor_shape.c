@@ -39,7 +39,7 @@ cursorentry_T shape_table[SHAPE_IDX_COUNT] =
 
 /// Converts cursor_shapes into an Array of Dictionaries
 /// @return Array of the form {[ "cursor_shape": ... ], ...}
-Array mode_style_array(void)
+Array mode_style_array(bool use_rgb)
 {
   Array all = ARRAY_DICT_INIT;
 
@@ -51,6 +51,8 @@ Array mode_style_array(void)
     }
     if (cur->used_for & SHAPE_CURSOR) {
       String shape_str;
+      HlAttrs attrs;
+      int attr;
       switch (cur->shape) {
         case SHAPE_BLOCK: shape_str = cstr_to_string("block"); break;
         case SHAPE_VER: shape_str = cstr_to_string("vertical"); break;
@@ -63,6 +65,12 @@ Array mode_style_array(void)
       PUT(dic, "blinkon", INTEGER_OBJ(cur->blinkon));
       PUT(dic, "blinkoff", INTEGER_OBJ(cur->blinkoff));
       PUT(dic, "hl_id", INTEGER_OBJ(cur->id));
+
+      attr = syn_id2attr(cur->id);
+      bool res = attr2hlattr (attr, use_rgb, &attrs);
+      if (res) {
+        PUT(dic, "hl_dict", DICTIONARY_OBJ(attr2dic (attrs)));
+      }
       PUT(dic, "id_lm", INTEGER_OBJ(cur->id_lm));
     }
     PUT(dic, "name", STRING_OBJ(cstr_to_string(cur->full_name)));

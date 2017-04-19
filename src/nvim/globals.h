@@ -525,8 +525,8 @@ EXTERN int highlight_stlnc[9];                  /* On top of user */
 EXTERN int cterm_normal_fg_color INIT(= 0);
 EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);
-EXTERN RgbValue normal_fg INIT(= -1);
-EXTERN RgbValue normal_bg INIT(= -1);
+EXTERN RgbValue normal_fg INIT(= -1);   ///< 'Normal' highlight guifg value
+EXTERN RgbValue normal_bg INIT(= -1);   ///< 'Normal' highlight guibg value
 EXTERN RgbValue normal_sp INIT(= -1);
 
 EXTERN int autocmd_busy INIT(= FALSE);          /* Is apply_autocmds() busy? */

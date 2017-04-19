@@ -67,9 +67,9 @@ struct syn_state {
                                  * may have made the state invalid */
 };
 
-// Structure shared between syntax.c, screen.c
+/// Structure shared between syntax.c, screen.c
 typedef struct attr_entry {
-  int16_t rgb_ae_attr, cterm_ae_attr;  // HL_BOLD, etc.
+  int16_t rgb_ae_attr, cterm_ae_attr;  ///< \ref HL_ATTRIBUTES
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int cterm_fg_color, cterm_bg_color;
 } attrentry_T;

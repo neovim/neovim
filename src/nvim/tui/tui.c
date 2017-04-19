@@ -90,14 +90,19 @@ typedef struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
     int set_rgb_foreground, set_rgb_background;
-    int set_cursor_color;
+    int set_cursor_bg_color;
     int enable_focus_reporting, disable_focus_reporting;
   } unibi_ext;
 } TUIData;
 
 static bool volatile got_winch = false;
 static bool cursor_style_enabled = false;
+<<<<<<< 13ec521414afe71423114144260c1787f0a7e79a
 static bool is_tmux = false;
+||||||| merged common ancestors
+=======
+static int cursor_bg = 0;
+>>>>>>> tui: support gui=inverse and transparent colors
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -149,7 +154,7 @@ static void terminfo_start(UI *ui)
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
-  data->unibi_ext.set_cursor_color = -1;
+  data->unibi_ext.set_cursor_bg_color = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
   data->unibi_ext.disable_bracketed_paste = -1;
   data->unibi_ext.enable_focus_reporting = -1;
@@ -470,6 +475,23 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
   return shape;
 }
 
+static HlAttrs decode_hl_entry(Dictionary args)
+{
+  HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
+  for (size_t i = 0; i < args.size; i++) {
+    char *key = args.items[i].key.data;
+    Object value = args.items[i].value;
+    if (strequal(key, "reverse")) {
+      attrs.reverse = value.data.boolean;
+    } else if (strequal(key, "foreground")) {
+      attrs.foreground = (int)value.data.integer;
+    } else if (strequal(key, "background")) {
+      attrs.background = (int)value.data.integer;
+    }
+  }
+  return attrs;
+}
+
 static cursorentry_T decode_cursor_entry(Dictionary args)
 {
   cursorentry_T r;
@@ -486,6 +508,9 @@ static cursorentry_T decode_cursor_entry(Dictionary args)
       r.blinkoff = (int)value.data.integer;
     } else if (strequal(key, "hl_id")) {
       r.id = (int)value.data.integer;
+    } else if (strequal(key, "hl_dict")) {
+      r.attrs = decode_hl_entry(value.data.dictionary);
+      ILOG("decoded hl_dict with bg=%d", r.attrs.background);
     }
   }
   return r;
@@ -597,6 +622,37 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     unibi_format(vars, vars + 26, "\x1b[%p1%d q",
                  data->params, out, ui, NULL, NULL);
   }
+<<<<<<< 13ec521414afe71423114144260c1787f0a7e79a
+||||||| merged common ancestors
+
+  if (c.id != 0 && ui->rgb) {
+    int attr = syn_id2attr(c.id);
+    if (attr > 0) {
+      attrentry_T *aep = syn_cterm_attr2entry(attr);
+      data->params[0].i = aep->rgb_bg_color;
+      unibi_out(ui, data->unibi_ext.set_cursor_color);
+    }
+  }
+=======
+
+  // update cursor colors
+  if (c.id != 0) {
+    // int attr = syn_id2attr(c.id);
+    // attrentry_T *aep = syn_cterm_attr2entry(attr);
+    // cterm_bg_color
+    cursor_bg = c.attrs.background;
+
+
+    if (cursor_bg == -1) {
+      unibi_out(ui, unibi_cursor_invisible);
+    } else {
+      unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
+      data->params[0].i = cursor_bg;
+      ILOG("setting cursor color ");
+      unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
+    }
+  }
+>>>>>>> tui: support gui=inverse and transparent colors
 }
 
 /// @param mode editor mode
@@ -933,12 +989,14 @@ static void out(void *ctx, const char *str, size_t len)
   data->bufpos += len;
 }
 
-static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
-    const char *val)
+static bool unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
+                               const char *val)
 {
   if (!unibi_get_str(ut, str)) {
     unibi_set_str(ut, str, val);
+    return true;
   }
+  return false;
 }
 
 static TermType detect_term(const char *term, const char *colorterm)
@@ -990,7 +1048,7 @@ static void fix_terminfo(TUIData *data)
     } else if (STARTS_WITH(normal, "\x1b[?12l")) {
       // terminfo typically includes DECRST 12 as part of setting up the normal
       // cursor, which interferes with the user's control via
-      // NVIM_TUI_ENABLE_CURSOR_SHAPE.  When DECRST 12 is present, skip over
+      // guicursor. When DECRST 12 is present, skip over
       // it, but honor the rest of the TI setting.
       unibi_set_str(ut, unibi_cursor_normal, normal + strlen("\x1b[?12l"));
     }
@@ -1031,10 +1089,10 @@ static void fix_terminfo(TUIData *data)
 end:
   // Fill some empty slots with common terminal strings
   if (data->term == kTermiTerm) {
-    data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
+    data->unibi_ext.set_cursor_bg_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP("\033]Pl%p1%06x\033\\"));
   } else {
-    data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
+    data->unibi_ext.set_cursor_bg_color = (int)unibi_add_ext_str(
         ut, NULL, "\033]12;#%p1%06x\007");
   }
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
@@ -1070,7 +1128,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
   uv_buf_t buf;
   TUIData *data = ui->data;
 
-  if (toggle_cursor && !data->busy) {
+  if (toggle_cursor && !data->busy && cursor_bg != -1) {
     // not busy and the cursor is invisible(see below). Append a "cursor
     // normal" command to the end of the buffer.
     data->bufsize += CNORM_COMMAND_MAX_SIZE;
@@ -1084,7 +1142,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 
-  if (toggle_cursor && !data->busy) {
+  if (toggle_cursor && !data->busy && cursor_bg != -1) {
     // not busy and cursor is visible(see above), append a "cursor invisible"
     // command to the beginning of the buffer for the next flush
     unibi_out(ui, unibi_cursor_invisible);

@@ -129,5 +129,9 @@ struct key_value_pair {
   Object value;
 };
 
+typedef struct {
+  bool bold, underline, undercurl, italic, reverse;
+  int foreground, background, special;
+} HlAttrs;
 
 #endif  // NVIM_API_PRIVATE_DEFS_H

@@ -23,6 +23,7 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
+#include "nvim/syntax.h"
 #include "nvim/lib/kvec.h"
 
 /// Helper structure for vim_to_object
@@ -82,6 +83,105 @@ bool try_end(Error *err)
   }
 
   return ERROR_SET(err);
+}
+
+///
+/// @param[out]
+bool attr2hlattr (int attr_code, bool use_rgb, HlAttrs *out)
+{
+  assert (out);
+
+  HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
+
+  if (attr_code == HL_NORMAL) {
+    *out = attrs;
+    return true;
+  }
+
+  int mask = 0;
+  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
+
+  if (!aep) {
+    return false;
+  }
+
+  mask = use_rgb ? aep->rgb_ae_attr : aep->cterm_ae_attr;
+
+  attrs.bold = mask & HL_BOLD;
+  attrs.underline = mask & HL_UNDERLINE;
+  attrs.undercurl = mask & HL_UNDERCURL;
+  attrs.italic = mask & HL_ITALIC;
+  attrs.reverse = mask & (HL_INVERSE | HL_STANDOUT);
+
+  if (use_rgb) {
+    if (aep->rgb_fg_color != normal_fg) {
+      attrs.foreground = aep->rgb_fg_color;
+    }
+
+    if (aep->rgb_bg_color != normal_bg) {
+      attrs.background = aep->rgb_bg_color;
+    }
+
+    if (aep->rgb_sp_color != normal_sp) {
+      attrs.special = aep->rgb_sp_color;
+    }
+  } else {
+    if (cterm_normal_fg_color != aep->cterm_fg_color) {
+      attrs.foreground = aep->cterm_fg_color - 1;
+    }
+
+    if (cterm_normal_bg_color != aep->cterm_bg_color) {
+      const char *name = cterm_int2name (aep->cterm_bg_color - 1);
+      if (name) {
+        attrs.background = (int)name_to_color (name);
+      } else {
+        attrs.background = aep->cterm_bg_color - 1;
+      }
+      ILOG("attr=%d  color to %d", attr_code, attrs.background);
+    }
+  }
+
+  *out = attrs;
+  return true;
+}
+
+Dictionary attr2dic (HlAttrs attrs)
+{
+  Dictionary hl = ARRAY_DICT_INIT;
+
+  if (attrs.bold) {
+    PUT(hl, "bold", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.underline) {
+    PUT(hl, "underline", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.undercurl) {
+    PUT(hl, "undercurl", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.italic) {
+    PUT(hl, "italic", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.reverse) {
+    PUT(hl, "reverse", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.foreground != -1) {
+    PUT(hl, "foreground", INTEGER_OBJ(attrs.foreground));
+  }
+
+  if (attrs.background != -1) {
+    PUT(hl, "background", INTEGER_OBJ(attrs.background));
+  }
+
+  if (attrs.special != -1) {
+    PUT(hl, "special", INTEGER_OBJ(attrs.special));
+  }
+
+  return hl;
 }
 
 /// Recursively expands a vimscript value in a dict

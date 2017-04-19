@@ -100,10 +100,8 @@ static int include_none = 0;    /* when 1 include "nvim/None" */
 static int include_default = 0; /* when 1 include "nvim/default" */
 static int include_link = 0;    /* when 2 include "nvim/link" and "clear" */
 
-/*
- * The "term", "cterm" and "gui" arguments can be any combination of the
- * following names, separated by commas (but no spaces!).
- */
+/// The "term", "cterm" and "gui" arguments can be any combination of the
+/// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
 {"bold", "standout", "underline", "undercurl",
  "italic", "reverse", "inverse", "NONE"};
@@ -257,6 +255,48 @@ static int current_flags = 0;
 static int current_seqnr = 0;
 static int current_sub_char = 0;
 
+static char *(cterm_color_names[28]) = {
+  "Black", "DarkBlue", "DarkGreen", "DarkCyan",
+  "DarkRed", "DarkMagenta", "Brown", "DarkYellow",
+  "Gray", "Grey",
+  "LightGray", "LightGrey", "DarkGray", "DarkGrey",
+  "Blue", "LightBlue", "Green", "LightGreen",
+  "Cyan", "LightCyan", "Red", "LightRed", "Magenta",
+  "LightMagenta", "Yellow", "LightYellow", "White", "NONE"
+};
+// terminals with less than 16 colors...
+static int color_numbers_8[28] = {0, 4, 2, 6,
+                                  1, 5, 3, 3,
+                                  7, 7,
+                                  7, 7, 0+8, 0+8,
+                                  4+8, 4+8, 2+8, 2+8,
+                                  6+8, 6+8, 1+8, 1+8, 5+8,
+                                  5+8, 3+8, 3+8, 7+8, -1};
+
+
+static int color_numbers_16[28] = {0, 1, 2, 3,
+                                    4, 5, 6, 6,
+                                    7, 7,
+                                    7, 7, 8, 8,
+                                    9, 9, 10, 10,
+                                    11, 11, 12, 12, 13,
+                                    13, 14, 14, 15, -1};
+// for xterm with 88 colors...
+static int color_numbers_88[28] = {0, 4, 2, 6,
+                                    1, 5, 32, 72,
+                                    84, 84,
+                                    7, 7, 82, 82,
+                                    12, 43, 10, 61,
+                                    14, 63, 9, 74, 13,
+                                    75, 11, 78, 15, -1};
+// for xterm with 256 colors...
+static int color_numbers_256[28] = {0, 4, 2, 6,
+                                    1, 5, 130, 130,
+                                    248, 248,
+                                    7, 7, 242, 242,
+                                    12, 81, 10, 121,
+                                    14, 159, 9, 224, 13,
+                                    225, 11, 229, 15, -1};
 /*
  * Methods of combining two clusters
  */
@@ -1774,8 +1814,9 @@ syn_current_attr (
                   cur_si->si_trans_id = CUR_STATE(
                       current_state.ga_len - 2).si_trans_id;
                 }
-              } else
+              } else {
                 cur_si->si_attr = syn_id2attr(syn_id);
+              }
               cur_si->si_cont_list = NULL;
               cur_si->si_next_list = next_list;
               check_keepend();
@@ -6206,10 +6247,11 @@ do_highlight(
     }
 
     from_id = syn_check_group(from_start, (int)(from_end - from_start));
-    if (STRNCMP(to_start, "NONE", 4) == 0)
+    if (STRNCMP(to_start, "NONE", 4) == 0) {
       to_id = 0;
-    else
+    } else {
       to_id = syn_check_group(to_start, (int)(to_end - to_start));
+    }
 
     if (from_id > 0 && (!init || HL_TABLE()[from_id - 1].sg_set == 0)) {
       /*
@@ -6388,11 +6430,11 @@ do_highlight(
         }
       } else if (STRCMP(key, "FONT") == 0)   {
         /* in non-GUI fonts are simply ignored */
-      } else if (STRCMP(key,
-                     "CTERMFG") == 0 || STRCMP(key, "CTERMBG") == 0)   {
+      } else if (STRCMP(key, "CTERMFG") == 0 || STRCMP(key, "CTERMBG") == 0) {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_CTERM)) {
-          if (!init)
+          if (!init) {
             HL_TABLE()[idx].sg_set |= SG_CTERM;
+          }
 
           /* When setting the foreground color, and previously the "bold"
            * flag was set for a light color, reset it now */
@@ -6401,72 +6443,33 @@ do_highlight(
             HL_TABLE()[idx].sg_cterm_bold = FALSE;
           }
 
-          if (ascii_isdigit(*arg))
+          if (ascii_isdigit(*arg)) {
             color = atoi((char *)arg);
-          else if (STRICMP(arg, "fg") == 0) {
-            if (cterm_normal_fg_color)
+          } else if (STRICMP(arg, "fg") == 0) {
+            if (cterm_normal_fg_color) {
               color = cterm_normal_fg_color - 1;
-            else {
+            } else {
               EMSG(_("E419: FG color unknown"));
               error = TRUE;
               break;
             }
           } else if (STRICMP(arg, "bg") == 0)   {
-            if (cterm_normal_bg_color > 0)
+            if (cterm_normal_bg_color > 0) {
               color = cterm_normal_bg_color - 1;
-            else {
+            } else {
               EMSG(_("E420: BG color unknown"));
               error = TRUE;
               break;
             }
           } else {
-            static char *(color_names[28]) = {
-              "Black", "DarkBlue", "DarkGreen", "DarkCyan",
-              "DarkRed", "DarkMagenta", "Brown", "DarkYellow",
-              "Gray", "Grey",
-              "LightGray", "LightGrey", "DarkGray", "DarkGrey",
-              "Blue", "LightBlue", "Green", "LightGreen",
-              "Cyan", "LightCyan", "Red", "LightRed", "Magenta",
-              "LightMagenta", "Yellow", "LightYellow", "White", "NONE"
-            };
-            static int color_numbers_16[28] = {0, 1, 2, 3,
-                                               4, 5, 6, 6,
-                                               7, 7,
-                                               7, 7, 8, 8,
-                                               9, 9, 10, 10,
-                                               11, 11, 12, 12, 13,
-                                               13, 14, 14, 15, -1};
-            /* for xterm with 88 colors... */
-            static int color_numbers_88[28] = {0, 4, 2, 6,
-                                               1, 5, 32, 72,
-                                               84, 84,
-                                               7, 7, 82, 82,
-                                               12, 43, 10, 61,
-                                               14, 63, 9, 74, 13,
-                                               75, 11, 78, 15, -1};
-            /* for xterm with 256 colors... */
-            static int color_numbers_256[28] = {0, 4, 2, 6,
-                                                1, 5, 130, 130,
-                                                248, 248,
-                                                7, 7, 242, 242,
-                                                12, 81, 10, 121,
-                                                14, 159, 9, 224, 13,
-                                                225, 11, 229, 15, -1};
-            /* for terminals with less than 16 colors... */
-            static int color_numbers_8[28] = {0, 4, 2, 6,
-                                              1, 5, 3, 3,
-                                              7, 7,
-                                              7, 7, 0+8, 0+8,
-                                              4+8, 4+8, 2+8, 2+8,
-                                              6+8, 6+8, 1+8, 1+8, 5+8,
-                                              5+8, 3+8, 3+8, 7+8, -1};
-
             /* reduce calls to STRICMP a bit, it can be slow */
             off = TOUPPER_ASC(*arg);
-            for (i = ARRAY_SIZE(color_names); --i >= 0; )
-              if (off == color_names[i][0]
-                  && STRICMP(arg + 1, color_names[i] + 1) == 0)
+            for (i = ARRAY_SIZE(cterm_color_names); i-- >= 0; ) {
+              if (off == cterm_color_names[i][0]
+                  && STRICMP(arg + 1, cterm_color_names[i] + 1) == 0) {
                 break;
+              }
+            }
             if (i < 0) {
               EMSG2(_(
                       "E421: Color name or number not recognized: %s"),
@@ -6487,8 +6490,9 @@ do_highlight(
                   if (color & 8) {
                     HL_TABLE()[idx].sg_cterm |= HL_BOLD;
                     HL_TABLE()[idx].sg_cterm_bold = TRUE;
-                  } else
+                  } else {
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
+                  }
                 }
                 color &= 7;             // truncate to 8 colors
               } else if (t_colors == 16 || t_colors == 88 || t_colors >= 256) {
@@ -6502,6 +6506,8 @@ do_highlight(
               }
             }
           }
+
+          // color is now set
           /* Add one to the argument, to avoid zero.  Zero is used for
            * "NONE", then "color" is -1. */
           if (key[5] == 'F') {
@@ -7250,9 +7256,9 @@ static void syn_unadd_group(void)
   xfree(HL_TABLE()[highlight_ga.ga_len].sg_name_u);
 }
 
-/*
- * Translate a group ID to highlight attributes.
- */
+
+/// Translate a group ID to highlight attributes.
+/// @see syn_cterm_attr2entry
 int syn_id2attr(int hl_id)
 {
   struct hl_group     *sgp;
@@ -7263,9 +7269,8 @@ int syn_id2attr(int hl_id)
 }
 
 
-/*
- * Translate a group ID to the final group ID (following links).
- */
+/// Translate a group ID to the final group ID (following links).
+/// @return 0 if not found, final highlight id otherwise
 int syn_get_final_id(int hl_id)
 {
   int count;
@@ -7398,6 +7403,8 @@ void highlight_changed(void)
     }
   }
   highlight_ga.ga_len = hlcnt;
+
+//  ui_mode_info_set();
 }
 
 
@@ -8175,9 +8182,37 @@ color_name_table_T color_name_table[] = {
   { NULL, 0 },
 };
 
+/// Tranlate terminal color to one of cterm_color_names.
+/// color_to_name can then be used to retrieve RgbValue
+///
+/// @return NULL if could not find
+/// @see color_to_name
+const char *cterm_int2name(int color)
+{
+  int *color_idx = NULL;
+  if (color >= 27 || color < 0) {
+    return NULL;
+  }
+
+  switch (t_colors) {
+    case 8: color_idx = color_numbers_8;break;
+    case 16: color_idx = color_numbers_16;break;
+    case 88: color_idx = color_numbers_88;break;
+    case 256: color_idx = color_numbers_256;break;
+    default: return NULL;
+  };
+
+  for (int i = ARRAY_SIZE(cterm_color_names); i-- >= 0; ) {
+    if (color == color_idx[i]) {
+      return cterm_color_names[i];
+    }
+  }
+
+  return NULL;
+}
 
 /// Translate to RgbValue if \p name is an hex value (e.g. #XXXXXX),
-/// else look into color_name_table to translate a color name to  its
+/// else look into \p color_name_table to translate a color name to  its
 /// hex value
 ///
 /// @param[in] name string value to convert to RGB

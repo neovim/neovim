@@ -51,6 +51,7 @@ typedef struct cursor_entry {
   int id_lm;              ///< highlight group ID for :lmap mode
   char *name;             ///< mode short name
   char used_for;          ///< SHAPE_MOUSE and/or SHAPE_CURSOR
+  HlAttrs attrs;      // temporary just for test
 } cursorentry_T;
 
 extern cursorentry_T shape_table[SHAPE_IDX_COUNT];
