@@ -3,13 +3,24 @@ let s:suggest_faq = 'See https://github.com/neovim/neovim/wiki/FAQ'
 function! s:check_config() abort
   call health#report_start('Configuration')
   if !get(g:, 'loaded_sensible', 0)
-    call health#report_ok('no issues found')
+    call health#report_ok('no issues with `sensible.vim` found')
   else
     let sensible_pi = globpath(&runtimepath, '**/sensible.vim', 1, 1)
     call health#report_info("found sensible.vim plugin:\n".join(sensible_pi, "\n"))
     call health#report_error("sensible.vim plugin is not needed; Nvim has the same defaults built-in."
       \ ." Also, sensible.vim sets 'ttimeoutlen' to a sub-optimal value.",
       \ ["Remove sensible.vim plugin, or wrap it in a `if !has('nvim')` check."])
+  endif
+
+  if $NVIM_TUI_ENABLE_CURSOR_SHAPE != ""
+    call health#report_info('If you are experiencing issues with cursor shape, check the following information:')
+    call health#report_info('Current $NVIM_TUI_ENABLE_CURSOR_SHAPE value is: ' . $NVIM_TUI_ENABLE_CURSOR_SHAPE)
+    call health#report_warn('"$NVIM_TUI_ENABLE_CURSOR_SHAPE" is no longer used.',
+          \ [
+          \ 'Check: https://github.com/neovim/neovim/wiki/Following-HEAD#20170402',
+          \ "Use `:help 'guicursor'` to configure your cursor shape",
+          \ s:suggest_faq,
+          \ ])
   endif
 endfunction
 
