@@ -4223,7 +4223,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
     // 'scrollback'
     if (*pp < -1 || *pp > SB_MAX
-        || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
+        || (*pp != -1 && opt_flags == OPT_LOCAL && !curbuf->terminal)) {
       errmsg = e_invarg;
       *pp = old_value;
     } else if (curbuf->terminal) {

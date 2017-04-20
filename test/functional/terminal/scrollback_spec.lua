@@ -451,6 +451,13 @@ describe("'scrollback' option", function()
 
   it(':setlocal in a normal buffer is an error', function()
     command('new')
+
+    -- :setlocal to -1 is NOT an error.
+    feed_command('setlocal scrollback=-1')
+    eq(nil, string.match(eval("v:errmsg"), "E%d*:"))
+    feed('<CR>')
+
+    -- :setlocal to anything except -1 is an error.
     feed_command('setlocal scrollback=42')
     feed('<CR>')
     eq('E474:', string.match(eval("v:errmsg"), "E%d*:"))
