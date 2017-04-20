@@ -922,7 +922,7 @@ You might want to clean up your 'viewdir' directory now and then.
 
 To automatically save and restore views for *.c files: >
 	au BufWinLeave *.c mkview
-	au BufWinEnter *.c silent loadview
+	au BufWinEnter *.c silent! loadview
 
 ==============================================================================
 8. The ShaDa file				*shada* *shada-file*
