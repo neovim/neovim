@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * ops.c: implementation of various operators: op_shift, op_delete, op_tilde,
  *        op_change, op_yank, do_put, do_join

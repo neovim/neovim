@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // VT220/xterm-like terminal emulator.
 // Powered by libvterm http://www.leonerd.org.uk/code/libvterm
 //

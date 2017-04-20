@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // Multi-level queue for selective async event processing.
 // Not threadsafe; access must be synchronized externally.
 //

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // UI wrapper that sends requests to the UI thread.
 // Used by the built-in TUI and libnvim-based UIs.
 
