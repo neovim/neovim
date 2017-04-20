@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	0.44
-" Last Change:	2016 Jan. 26
+" Version:	0.45
+" Last Change:	2016 Aug. 18
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-indent from Vim
 " Credits:
@@ -121,7 +121,7 @@ function FortranGetIndent(lnum)
     let prefix='\(\(pure\|impure\|elemental\|recursive\)\s\+\)\{,2}'
     let type='\(\(integer\|real\|double\s\+precision\|complex\|logical'
           \.'\|character\|type\|class\)\s*\S*\s\+\)\='
-    if prevstat =~? '^\s*\(module\|contains\|program\)\>'
+    if prevstat =~? '^\s*\(module\|contains\/submodule\|program\)\>'
             \ ||prevstat =~? '^\s*'.prefix.'subroutine\>'
             \ ||prevstat =~? '^\s*'.prefix.type.'function\>'
             \ ||prevstat =~? '^\s*'.type.prefix.'function\>'
@@ -129,14 +129,14 @@ function FortranGetIndent(lnum)
     endif
     if getline(v:lnum) =~? '^\s*contains\>'
           \ ||getline(v:lnum)=~? '^\s*end\s*'
-          \ .'\(function\|subroutine\|module\|program\)\>'
+          \ .'\(function\|subroutine\|module\/submodule\|program\)\>'
       let ind = ind - shiftwidth()
     endif
   endif
 
   "Subtract a shiftwidth from else, else if, elsewhere, case, end if,
   " end where, end select, end forall, end interface, end associate,
-  " end enum, and end type statements
+  " end enum, end type, end block and end type statements
   if getline(v:lnum) =~? '^\s*\(\d\+\s\)\=\s*'
         \. '\(else\|else\s*if\|else\s*where\|case\|'
         \. 'end\s*\(if\|where\|select\|interface\|'

@@ -1202,7 +1202,7 @@ tag	      command	      action ~
 |:display|	:di[splay]	display registers
 |:djump|	:dj[ump]	jump to #define
 |:dl|		:dl		short for |:delete| with the 'l' flag
-|:dl|		:del[ete]l	short for |:delete| with the 'l' flag
+|:del|		:del[ete]l	short for |:delete| with the 'l' flag
 |:dlist|	:dli[st]	list #defines
 |:doautocmd|	:do[autocmd]	apply autocommands to current buffer
 |:doautoall|	:doautoa[ll]	apply autocommands for all loaded buffers
@@ -1234,6 +1234,7 @@ tag	      command	      action ~
 |:file|		:f[ile]		show or set the current file name
 |:files|	:files		list all files in the buffer list
 |:filetype|	:filet[ype]	switch file type detection on/off
+|:filter|	:filt[er]	filter output of following command
 |:find|		:fin[d]		find file in 'path' and edit it
 |:finally|	:fina[lly]	part of a :try command
 |:finish|	:fini[sh]	quit sourcing a Vim script

@@ -38,7 +38,7 @@ done, the features in this document are not available.	See |+eval| and
 There are six types of variables:
 
 Number		A 32 or 64 bit signed number.  |expr-number| *Number*
-		Examples:  -123  0x10  0177
+		Examples:  -123  0x10  0177  0b1011
 
 Float		A floating point number. |floating-point-format| *Float*
 		Examples: 123.456  1.15e-6  -1.1e3
@@ -1022,9 +1022,10 @@ When expr8 is a |Funcref| type variable, invoke the function it refers to.
 number
 ------
 number			number constant			*expr-number* 
-						*hex-number* *octal-number*
+				*hex-number* *octal-number* *binary-number*
 
-Decimal, Hexadecimal (starting with 0x or 0X), or Octal (starting with 0).
+Decimal, Hexadecimal (starting with 0x or 0X), Binary (starting with 0b or 0B)
+and Octal (starting with 0).
 
 						*floating-point-format*
 Floating point numbers can be written in two forms:
@@ -1214,7 +1215,7 @@ The arguments are optional.  Example: >
 							*closure*
 Lambda expressions can access outer scope variables and arguments.  This is
 often called a closure.  Example where "i" a and "a:arg" are used in a lambda
-while they exists in the function scope.  They remain valid even after the
+while they exist in the function scope.  They remain valid even after the
 function returns: >
 	:function Foo(arg)
 	:  let i = 3
@@ -1425,8 +1426,8 @@ v:beval_winnr	The number of the window, over which the mouse pointer is. Only
 		window gets a number).
 
 					*v:beval_winid* *beval_winid-variable*
-v:beval_winid	The window ID of the window, over which the mouse pointer is.
-		Otherwise like v:beval_winnr.
+v:beval_winid	The |window-ID| of the window, over which the mouse pointer
+		is.  Otherwise like v:beval_winnr.
 
 					*v:char* *char-variable*
 v:char		Argument for evaluating 'formatexpr' and used for the typed
@@ -1686,7 +1687,7 @@ v:mouse_win	Window number for a mouse click obtained with |getchar()|.
 		zero when there was no mouse button click.
 
 					*v:mouse_winid* *mouse_winid-variable*
-v:mouse_winid	Window ID for a mouse click obtained with |getchar()|.
+v:mouse_winid	|window-ID| for a mouse click obtained with |getchar()|.
 		The value is zero when there was no mouse button click.
 
 					*v:mouse_lnum* *mouse_lnum-variable*
@@ -1922,9 +1923,10 @@ v:vim_did_enter	Zero until most of startup is done.  It is set to one just
 v:warningmsg	Last given warning message.  It's allowed to set this variable.
 
 					*v:windowid* *windowid-variable*
-v:windowid	Application-specific window ID ("window handle" in MS-Windows)
-		which may be set by any attached UI. Defaults to zero.
-		Note: for windows inside Vim use |winnr()| or |win_getid()|.
+v:windowid	Application-specific window "handle" which may be set by any
+		attached UI. Defaults to zero.
+		Note: For Nvim |windows| use |winnr()| or |win_getid()|, see
+		|window-ID|.
 
 ==============================================================================
 4. Builtin Functions					*functions*
@@ -1968,7 +1970,7 @@ buflisted({expr})		Number	|TRUE| if buffer {expr} is listed
 bufloaded({expr})		Number	|TRUE| if buffer {expr} is loaded
 bufname({expr})		String	Name of the buffer {expr}
 bufnr({expr} [, {create}])	Number	Number of the buffer {expr}
-bufwinid({expr})		Number	window ID of buffer {expr}
+bufwinid({expr})		Number	|window-ID| of buffer {expr}
 bufwinnr({expr})		Number	window number of buffer {expr}
 byte2line({byte})		Number	line number at byte count {byte}
 byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
@@ -1991,7 +1993,7 @@ cos({expr})			Float	cosine of {expr}
 cosh({expr})			Float	hyperbolic cosine of {expr}
 count({list}, {expr} [, {ic} [, {start}]])
 				Number	 count how many {expr} are in {list}
-cscope_connection([{num} , {dbpath} [, {prepend}]])
+cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
@@ -2323,10 +2325,10 @@ virtcol({expr})			Number	screen column of cursor or mark
 visualmode([expr])		String	last visual mode used
 wildmenumode()			Number	whether 'wildmenu' mode is active
 win_findbuf({bufnr})		List	find windows containing {bufnr}
-win_getid([{win} [, {tab}]])	Number	get window ID for {win} in {tab}
-win_gotoid({expr})		Number	go to window with ID {expr}
-win_id2tabwin({expr})		List	get tab and window nr from window ID
-win_id2win({expr})		Number	get window nr from window ID
+win_getid([{win} [, {tab}]])	Number	get |window-ID| for {win} in {tab}
+win_gotoid({expr})		Number	go to |window-ID| {expr}
+win_id2tabwin({expr})		List	get tab and window nr from |window-ID|
+win_id2win({expr})		Number	get window nr from |window-ID|
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
 winheight({nr})			Number	height of window {nr}
@@ -2417,7 +2419,7 @@ arglistid([{winnr} [, {tabnr}]])
 		With {winnr} only use this window in the current tab page.
 		With {winnr} and {tabnr} use the window in the specified tab
 		page.
-		{winnr} can be the window number or the window ID.
+		{winnr} can be the window number or the |window-ID|.
 
 							*argv()*
 argv([{nr}])	The result is the {nr}th file in the argument list of the
@@ -2652,7 +2654,7 @@ bufnr({expr} [, {create}])
 		them.  Use bufexists() to test for the existence of a buffer.
 
 bufwinid({expr})					*bufwinid()*
-		The result is a Number, which is the window ID of the first
+		The result is a Number, which is the |window-ID| of the first
 		window associated with buffer {expr}.  For the use of {expr},
 		see |bufname()| above.  If buffer {expr} doesn't exist or
 		there is no such window, -1 is returned.  Example: >
@@ -4071,7 +4073,7 @@ getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 			getcwd(0)
 			getcwd(0, 0)
 <		If {winnr} is -1 it is ignored, only the tab is resolved.
-		{winnr} can be the window number or the window ID.
+		{winnr} can be the window number or the |window-ID|.
 
 
 getfsize({fname})					*getfsize()*
@@ -4166,7 +4168,7 @@ getline({lnum} [, {end}])
 
 getloclist({nr},[, {what}])				*getloclist()*
 		Returns a list with all the entries in the location list for
-		window {nr}. {nr} can be the window number or the window ID.
+		window {nr}.  {nr} can be the window number or the |window-ID|.
 		When {nr} is zero the current window is used.
 
 		For a location list window, the displayed location list is
@@ -4241,7 +4243,7 @@ getqflist([{what}])					*getqflist()*
 			type	type of the error, 'E', '1', etc.
 			valid	|TRUE|: recognized error message
 
-		When there is no error list or it's empty an empty list is
+		When there is no error list or it's empty, an empty list is
 		returned. Quickfix list entries with non-existing buffer
 		number are returned with "bufnr" set to zero.
 
@@ -4256,8 +4258,8 @@ getqflist([{what}])					*getqflist()*
 		returns only the items listed in {what} as a dictionary. The
 		following string items are supported in {what}:
 			nr	get information for this quickfix list
-			title	get list title
-			winid	get window id (if opened)
+			title	get the list title
+			winid	get the |window-ID| (if opened)
 			all	all of the above quickfix properties
 		Non-string items in {what} are ignored.
 		If "nr" is not present then the current quickfix list is used.
@@ -4267,7 +4269,7 @@ getqflist([{what}])					*getqflist()*
 		The returned dictionary contains the following entries:
 			nr	quickfix list number
 			title	quickfix list title text
-			winid	quickfix window id (if opened)
+			winid	quickfix |window-ID| (if opened)
 
 		Examples: >
 			:echo getqflist({'all': 1})
@@ -4278,7 +4280,7 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		The result is a String, which is the contents of register
 		{regname}.  Example: >
 			:let cliptext = getreg('*')
-<		When {regname} was not set the result is a empty string.
+<		When {regname} was not set the result is an empty string.
 
 		getreg('=') returns the last evaluated value of the expression
 		register.  (For use in maps.)
@@ -4314,10 +4316,10 @@ gettabinfo([{arg}])					*gettabinfo()*
 		empty List is returned.
 
 		Each List item is a Dictionary with the following entries:
-			nr		tab page number.
+			tabnr		tab page number.
 			variables	a reference to the dictionary with
 					tabpage-local variables
-			windows		List of window IDs in the tag page.
+			windows		List of |window-ID|s in the tag page.
 
 gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
@@ -4341,7 +4343,7 @@ gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 		Note that {varname} must be the name without "w:".
 		Tabs are numbered starting with one.  For the current tabpage
 		use |getwinvar()|.
-		{winnr} can be the window number or the window ID.
+		{winnr} can be the window number or the |window-ID|.
 		When {winnr} is zero the current window is used.
 		This also works for a global option, buffer-local option and
 		window-local option, but it doesn't work for a global variable
@@ -4369,20 +4371,20 @@ getwininfo([{winid}])					*getwininfo()*
 		is returned.  If the window does not exist the result is an
 		empty list.
 
-		Without an information about all the windows in all the tab
-		pages is returned.
+		Without {winid} information about all the windows in all the
+		tab pages is returned.
 
 		Each List item is a Dictionary with the following entries:
-			bufnum		number of buffer in the window
+			bufnr		number of buffer in the window
 			height		window height
 			loclist		1 if showing a location list
-			nr		window number
 			quickfix	1 if quickfix or location list window
-			tpnr		tab page number
+			tabnr		tab page number
 			variables	a reference to the dictionary with
 					window-local variables
 			width		window width
-			winid		window ID
+			winid		|window-ID|
+			winnr		window number
 
 		To obtain all window-local variables use: >
 			gettabwinvar({tabnr}, {winnr}, '&')
@@ -4486,9 +4488,8 @@ has_key({dict}, {key})					*has_key()*
 		an entry with key {key}.  Zero otherwise.
 
 haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
-		The result is a Number, which is 1 when the specified tabpage
-		or window has a local path set via |:lcd| or |:tcd|, and
-		0 otherwise.
+		The result is a Number, which is 1 when the tabpage or window
+		has set a local path via |:tcd| or |:lcd|, otherwise 0.
 
 		Tabs and windows are identified by their respective numbers,
 		0 means current tab or window. Missing argument implies 0.
@@ -4496,7 +4497,9 @@ haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 			haslocaldir()
 			haslocaldir(0)
 			haslocaldir(0, 0)
-<		{winnr} can be the window number or the window ID.
+<		With {winnr} use that window in the current tabpage.
+		With {winnr} and {tabnr} use the window in that tabpage.
+		{winnr} can be the window number or the |window-ID|.
 		If {winnr} is -1 it is ignored, only the tab is resolved.
 
 hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
@@ -5814,6 +5817,9 @@ printf({fmt}, {expr1} ...)				*printf()*
 		s	The text of the String argument is used.  If a
 			precision is specified, no more bytes than the number
 			specified are used.
+			If the argument is not a String type, it is
+			automatically converted to text with the same format
+			as ":echo".
 							*printf-S*
 		S	The text of the String argument is used.  If a
 			precision is specified, no more display cells than the
@@ -6537,7 +6543,7 @@ setline({lnum}, {text})					*setline()*
 
 setloclist({nr}, {list} [, {action}[, {what}]])		*setloclist()*
 		Create or replace or add to the location list for window {nr}.
-		{nr} can be the window number or the window ID.
+		{nr} can be the window number or the |window-ID|.
 		When {nr} is zero the current window is used.
 
 		For a location list window, the displayed location list is
@@ -6729,7 +6735,7 @@ settabwinvar({tabnr}, {winnr}, {varname}, {val})	*settabwinvar()*
 		{val}.
 		Tabs are numbered starting with one.  For the current tabpage
 		use |setwinvar()|.
-		{winnr} can be the window number or the window ID.
+		{winnr} can be the window number or the |window-ID|.
 		When {winnr} is zero the current window is used.
 		This also works for a global or local buffer option, but it
 		doesn't work for a global or local buffer variable.
@@ -7180,7 +7186,7 @@ strwidth({expr})					*strwidth()*
 		Ambiguous, this function's return value depends on 'ambiwidth'.
 		Also see |strlen()|, |strdisplaywidth()| and |strchars()|.
 
-submatch({nr}[, {list}])				*submatch()*
+submatch({nr}[, {list}])			*submatch()* *E935*
 		Only for an expression in a |:substitute| command or
 		substitute() function.
 		Returns the {nr}'th submatch of the matched text.  When {nr}
@@ -7404,7 +7410,7 @@ systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 tabpagebuflist([{arg}])					*tabpagebuflist()*
 		The result is a |List|, where each item is the number of the
 		buffer associated with each window in the current tab page.
-		{arg} specifies the number of tab page to be used.  When
+		{arg} specifies the number of the tab page to be used. When
 		omitted the current tab page is used.
 		When {arg} is invalid the number zero is returned.
 		To get a list of all buffers in all tabs use this: >
@@ -7553,9 +7559,9 @@ timer_info([{id}])
 
 timer_pause({timer}, {paused})				*timer_pause()*
 		Pause or unpause a timer.  A paused timer does not invoke its
-		callback, while the time it would is not changed.  Unpausing a
-		timer may cause the callback to be invoked almost immediately
-		if enough time has passed.
+		callback when its time expires.  Unpausing a timer may cause
+		the callback to be invoked almost immediately if enough time
+		has passed.
 
 		Pausing a timer is useful to avoid the callback to be called
 		for a short time.
@@ -7564,7 +7570,7 @@ timer_pause({timer}, {paused})				*timer_pause()*
 		String, then the timer is paused, otherwise it is unpaused.
 		See |non-zero-arg|.
 
-							*timer_start()*
+						*timer_start()* *timer* *timers*
 timer_start({time}, {callback} [, {options}])
 		Create a timer and return the timer ID.
 
@@ -7800,11 +7806,11 @@ wildmenumode()					*wildmenumode()*
 
 
 win_findbuf({bufnr})					*win_findbuf()*
-		Returns a list with window IDs for windows that contain buffer
-		{bufnr}.  When there is none the list is empty.
+		Returns a list with |window-ID|s for windows that contain
+		buffer {bufnr}.  When there is none the list is empty.
 
 win_getid([{win} [, {tab}]])				*win_getid()*
-		Get the window ID for the specified window.
+		Get the |window-ID| for the specified window.
 		When {win} is missing use the current window.
 		With {win} this is the window number.  The top window has
 		number 1.
@@ -7829,7 +7835,7 @@ win_id2win({expr})					*win_id2win()*
 							*winbufnr()*
 winbufnr({nr})	The result is a Number, which is the number of the buffer
 		associated with window {nr}.  {nr} can be the window number or
-		the window ID.
+		the |window-ID|.
 		When {nr} is zero, the number of the buffer in the current
 		window is returned.
 		When window {nr} doesn't exist, -1 is returned.
@@ -7843,7 +7849,7 @@ wincol()	The result is a Number, which is the virtual column of the
 
 winheight({nr})						*winheight()*
 		The result is a Number, which is the height of window {nr}.
-		{nr} can be the window number or the window ID.
+		{nr} can be the window number or the |window-ID|.
 		When {nr} is zero, the height of the current window is
 		returned.  When window {nr} doesn't exist, -1 is returned.
 		An existing window always has a height of zero or more.
@@ -7923,7 +7929,7 @@ winsaveview()	Returns a |Dictionary| that contains information to restore
 
 winwidth({nr})						*winwidth()*
 		The result is a Number, which is the width of window {nr}.
-		{nr} can be the window number or the window ID.
+		{nr} can be the window number or the |window-ID|.
 		When {nr} is zero, the width of the current window is
 		returned.  When window {nr} doesn't exist, -1 is returned.
 		An existing window always has a width of zero or more.
