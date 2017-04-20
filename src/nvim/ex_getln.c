@@ -1268,6 +1268,7 @@ static int command_line_handle_key(CommandLineState *s)
       }
       return command_line_changed(s);
     }
+    // fallthrough
 
   case K_UP:
   case K_DOWN:

@@ -4194,6 +4194,7 @@ skip_add:
       subs = addstate(l, state->out, subs, pim, off_arg);
       break;
     }
+    // fallthrough
   case NFA_MCLOSE1:
   case NFA_MCLOSE2:
   case NFA_MCLOSE3:

@@ -1861,6 +1861,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         bangredo = true;  // do_bang() will put cmd in redo buffer.
       }
+      // fallthrough
 
     case OP_INDENT:
     case OP_COLON:
