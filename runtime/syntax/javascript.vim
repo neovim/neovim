@@ -42,6 +42,7 @@ syn region  javaScriptComment	       start="/\*"  end="\*/" contains=@Spell,java
 syn match   javaScriptSpecial	       "\\\d\d\d\|\\."
 syn region  javaScriptStringD	       start=+"+  skip=+\\\\\|\\"+  end=+"\|$+	contains=javaScriptSpecial,@htmlPreproc
 syn region  javaScriptStringS	       start=+'+  skip=+\\\\\|\\'+  end=+'\|$+	contains=javaScriptSpecial,@htmlPreproc
+syn region  javaScriptStringT	       start=+`+  skip=+\\\\\|\\`+  end=+`+	contains=javaScriptSpecial,@htmlPreproc
 
 syn match   javaScriptSpecialCharacter "'\\.'"
 syn match   javaScriptNumber	       "-\=\<\d\+L\=\>\|0[xX][0-9a-fA-F]\+\>"
@@ -102,6 +103,7 @@ if version >= 508 || !exists("did_javascript_syn_inits")
   HiLink javaScriptSpecial		Special
   HiLink javaScriptStringS		String
   HiLink javaScriptStringD		String
+  HiLink javaScriptStringT		String
   HiLink javaScriptCharacter		Character
   HiLink javaScriptSpecialCharacter	javaScriptSpecial
   HiLink javaScriptNumber		javaScriptValue
