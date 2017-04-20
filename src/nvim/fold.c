@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // vim: set fdm=marker fdl=1 fdc=3
 
 /*
@@ -1689,12 +1692,10 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
   }
 }
 
-/* get_foldtext() {{{2 */
-/*
- * Return the text for a closed fold at line "lnum", with last line "lnume".
- * When 'foldtext' isn't set puts the result in "buf[51]".  Otherwise the
- * result is in allocated memory.
- */
+// get_foldtext() {{{2
+/// Return the text for a closed fold at line "lnum", with last line "lnume".
+/// When 'foldtext' isn't set puts the result in "buf[FOLD_TEXT_LEN]".
+/// Otherwise the result is in allocated memory.
 char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
                      foldinfo_T *foldinfo, char_u *buf)
   FUNC_ATTR_NONNULL_ARG(1)
@@ -1781,8 +1782,12 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
     }
   }
   if (text == NULL) {
-    sprintf((char *)buf, _("+--%3ld lines folded "),
-        (long)(lnume - lnum + 1));
+    unsigned long count = (unsigned long)(lnume - lnum + 1);
+
+    vim_snprintf((char *)buf, FOLD_TEXT_LEN,
+                 ngettext("+--%3ld line folded",
+                          "+--%3ld lines folded ", count),
+                 count);
     text = buf;
   }
   return text;
@@ -2765,10 +2770,13 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
   }
   dest_index = FOLD_INDEX(fp, gap);
 
-  // All folds are now correct, but they are not necessarily in the correct
-  // order.
-  // We have to swap folds in the range [move_end, dest_index) with those in
-  // the range [move_start, move_end).
+  // All folds are now correct, but not necessarily in the correct order.
+  // We must swap folds in the range [move_end, dest_index) with those in the
+  // range [move_start, move_end).
+  if (move_end == 0) {
+    // There are no folds after those moved, so none were moved out of order.
+    return;
+  }
   reverse_fold_order(gap, move_start, dest_index - 1);
   reverse_fold_order(gap, move_start, move_start + dest_index - move_end - 1);
   reverse_fold_order(gap, move_start + dest_index - move_end, dest_index - 1);

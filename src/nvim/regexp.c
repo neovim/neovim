@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * Handling of regular expressions: vim_regcomp(), vim_regexec(), vim_regsub()
  *
@@ -2398,7 +2401,7 @@ collection:
               regc('\b');
               break;
             case CLASS_ESCAPE:
-              regc('\033');
+              regc(ESC);
               break;
             }
           } else {
@@ -2923,13 +2926,8 @@ static void skipchr(void)
   else
     prevchr_len = 0;
   if (regparse[prevchr_len] != NUL) {
-    if (enc_utf8)
-      /* exclude composing chars that mb_ptr2len does include */
-      prevchr_len += utf_ptr2len(regparse + prevchr_len);
-    else if (has_mbyte)
-      prevchr_len += (*mb_ptr2len)(regparse + prevchr_len);
-    else
-      ++prevchr_len;
+    // Exclude composing chars that utfc_ptr2len does include.
+    prevchr_len += utf_ptr2len(regparse + prevchr_len);
   }
   regparse += prevchr_len;
   prev_at_start = at_start;
@@ -3052,7 +3050,7 @@ static int getoctchrs(void)
   int c;
   int i;
 
-  for (i = 0; i < 3 && nr < 040; ++i) {
+  for (i = 0; i < 3 && nr < 040; i++) {  // -V536
     c = regparse[0];
     if (c < '0' || c > '7')
       break;

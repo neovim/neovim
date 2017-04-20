@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file fileio.c
 ///
 /// Buffered reading/writing to a file. Unlike fileio.c this is not dealing with
@@ -47,6 +50,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   int os_open_flags = 0;
   int fd;
   TriState wr = kNone;
+  // -V:FLAG:501
 #define FLAG(flags, flag, fcntl_flags, wrval, cond) \
   do { \
     if (flags & flag) { \
@@ -100,7 +104,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
 /// @return [allocated] Opened file or NULL in case of error.
 FileDescriptor *file_open_new(int *const error, const char *const fname,
                               const int flags, const int mode)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
   if ((*error = file_open(fp, fname, flags, mode)) != 0) {

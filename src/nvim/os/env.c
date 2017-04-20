@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // Environment inspection
 
 #include <assert.h>
@@ -641,7 +644,7 @@ char *vim_getenv(const char *name)
             exe_name,
             "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
             MAXPATHL) == OK) {
-          vim_path = exe_name;
+          vim_path = exe_name;  // -V507
         }
       }
     }
@@ -675,6 +678,7 @@ char *vim_getenv(const char *name)
         vim_path = NULL;
       }
     }
+    assert(vim_path != exe_name);
   }
 
 #ifdef HAVE_PATHDEF

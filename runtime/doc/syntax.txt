@@ -3739,7 +3739,7 @@ Whether or not it is actually concealed depends on the value of the
 'conceallevel' option.  The 'concealcursor' option is used to decide whether
 concealable items in the current line are displayed unconcealed to be able to
 edit the line.
-Another way to conceal text with with |matchadd()|.
+Another way to conceal text is with |matchadd()|.
 
 concealends						*:syn-concealends*
 
@@ -4803,10 +4803,7 @@ guisp={color-name}					*highlight-guisp*
 	    Black	White
 	    Orange	Purple		Violet
 
-	In the Win32 GUI version, additional system colors are available.  See
-	|win32-colors|.
-
-	You can also specify a color by its Red, Green and Blue values.
+	You can also specify a color by its RGB (red, green, blue) values.
 	The format is "#rrggbb", where
 		"rr"	is the Red value
 		"gg"	is the Green value

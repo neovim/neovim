@@ -1,7 +1,7 @@
 " markdown Text with R statements
 " Language: markdown with R code chunks
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change: Sat Feb 06, 2016  06:45AM
+" Last Change: Tue Jun 28, 2016  10:09AM
 "
 " CONFIGURATION:
 "   To highlight chunk headers as R code, put in your vimrc:
@@ -71,8 +71,6 @@ if rmdIsPandoc == 0
   hi def link rmdLaTeXInlDelim Special
   hi def link rmdLaTeXRegDelim Special
 endif
-
-setlocal iskeyword=@,48-57,_,.
 
 syn sync match rmdSyncChunk grouphere rmdChunk "^[ \t]*``` *{r"
 

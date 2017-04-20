@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * Code to handle tags and the tag stack
  */
@@ -1222,9 +1225,9 @@ find_tags (
   if (has_re && orgpat.regmatch.regprog == NULL)
     goto findtag_end;
 
-  /* This is only to avoid a compiler warning for using search_info
-   * uninitialised. */
-  memset(&search_info, 0, (size_t)1);
+  // This is only to avoid a compiler warning for using search_info
+  // uninitialised.
+  memset(&search_info, 0, 1);  // -V512
 
   /*
    * When finding a specified number of matches, first try with matching
@@ -2534,7 +2537,7 @@ jumpto_tag (
         }
       }
       p_ws = save_p_ws;
-      p_ic = save_p_ic;
+      p_ic = save_p_ic;  // -V519
       p_scs = save_p_scs;
 
       /* A search command may have positioned the cursor beyond the end

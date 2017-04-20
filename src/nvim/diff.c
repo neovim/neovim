@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file diff.c
 ///
 /// Code for diff'ing two, three or four buffers.
@@ -1076,8 +1079,8 @@ void diff_win_options(win_T *wp, int addbuf)
   if (!wp->w_p_diff) {
     wp->w_p_wrap_save = wp->w_p_wrap;
   }
-  wp->w_p_wrap = FALSE;
-  curwin = wp;
+  wp->w_p_wrap = false;
+  curwin = wp;  // -V519
   curbuf = curwin->w_buffer;
 
   if (!wp->w_p_diff) {

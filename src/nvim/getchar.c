@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * getchar.c
  *
@@ -302,13 +305,13 @@ static void add_num_buff(buffheader_T *buf, long n)
  */
 static void add_char_buff(buffheader_T *buf, int c)
 {
-  char bytes[MB_MAXBYTES + 1];
+  uint8_t bytes[MB_MAXBYTES + 1];
 
   int len;
   if (IS_SPECIAL(c)) {
     len = 1;
   } else {
-    len = (*mb_char2bytes)(c, (char_u *)bytes);
+    len = mb_char2bytes(c, bytes);
   }
 
   for (int i = 0; i < len; i++) {
@@ -1849,11 +1852,12 @@ static int vgetorpeek(int advance)
                     mp_match = mp;
                     mp_match_len = keylen;
                   }
-                } else
-                /* No match; may have to check for
-                 * termcode at next character. */
-                if (max_mlen < mlen)
-                  max_mlen = mlen;
+                } else {
+                  // No match; may have to check for termcode at next character.
+                  if (max_mlen < mlen) {
+                    max_mlen = mlen;
+                  }
+                }
               }
             }
 
