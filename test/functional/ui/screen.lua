@@ -312,12 +312,13 @@ function Screen:_redraw(updates)
     -- print(require('inspect')(update))
     local method = update[1]
     for i = 2, #update do
-      local handler = self['_handle_'..method]
+      local handler_name = '_handle_'..method
+      local handler = self[handler_name]
       if handler ~= nil then
         handler(self, unpack(update[i]))
       else
         assert(self._on_event,
-          "Add Screen:_handle_XXX method or call Screen:set_on_event_handler")
+          "Add Screen:"..handler_name.." or call Screen:set_on_event_handler")
         self._on_event(method, update[i])
       end
     end
