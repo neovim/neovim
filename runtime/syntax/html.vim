@@ -2,8 +2,8 @@
 " Language:	HTML
 " Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:		http://www.fleiner.com/vim/syntax/html.vim
-" Last Change:	2015 Jan 07
-"		included patch from David Felix
+" Last Change:	2016 Nov 20
+"		included patch from Jorge Maldonado Ventura
 
 " Please check :help html.vim for some comments and a description of the options
 
@@ -62,6 +62,13 @@ syn match htmlTagName contained "\<\(b\|i\|u\|h[1-6]\|em\|strong\|head\|body\|ti
 syn keyword htmlTagName contained abbr acronym bdo button col label
 syn keyword htmlTagName contained colgroup del fieldset iframe ins legend
 syn keyword htmlTagName contained object optgroup q s tbody tfoot thead
+
+" new html5 tags
+syn keyword htmlTagName contained article aside audio bb canvas command
+syn keyword htmlTagName contained datagrid datalist details dialog embed
+syn keyword htmlTagName contained figure footer header mark meter nav
+syn keyword htmlTagName contained output progress rp rt ruby section source
+syn keyword htmlTagName contained time video
 
 " legal arg names
 syn keyword htmlArg contained action
@@ -232,7 +239,7 @@ if version >= 508 || !exists("did_html_syn_inits")
   HtmlHiLink htmlSpecialTagName          Exception
   HtmlHiLink htmlValue                     String
   HtmlHiLink htmlSpecialChar             Special
-  
+
   if !exists("html_no_rendering")
     HtmlHiLink htmlH1                      Title
     HtmlHiLink htmlH2                      htmlH1
@@ -262,7 +269,7 @@ if version >= 508 || !exists("did_html_syn_inits")
       hi def htmlItalic              term=italic cterm=italic gui=italic
     endif
   endif
-  
+
   HtmlHiLink htmlPreStmt            PreProc
   HtmlHiLink htmlPreError           Error
   HtmlHiLink htmlPreProc            PreProc
@@ -280,7 +287,7 @@ if version >= 508 || !exists("did_html_syn_inits")
   HtmlHiLink htmlTagError           htmlError
   HtmlHiLink htmlEvent              javaScript
   HtmlHiLink htmlError              Error
-  
+
   HtmlHiLink javaScript             Special
   HtmlHiLink javaScriptExpression   javaScript
   HtmlHiLink htmlCssStyleComment    Comment
