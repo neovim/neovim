@@ -440,7 +440,6 @@ set(NO_SINGLE_CHECK_HEADERS
   quickfix.h
   regexp.h
   regexp_defs.h
-  screen.h
   sha256.h
   sign_defs.h
   spell.h
