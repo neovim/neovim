@@ -2,9 +2,9 @@
 #define NVIM_SYNTAX_H
 
 #include <stdbool.h>
-#include "nvim/buffer_defs.h"
-#include "nvim/ex_cmds_defs.h" // for exarg_T
 
+#include "nvim/buffer_defs.h"
+#include "nvim/ex_cmds_defs.h"
 
 /// Terminal highlighting attribute bits.
 /// Attributes above HL_ALL are used for syntax highlighting.

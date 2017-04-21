@@ -2,10 +2,10 @@
 #define NVIM_SCREEN_H
 
 #include <stdbool.h>
-#include "nvim/types.h" // for char_u, expand_T
-#include "nvim/buffer_defs.h" // for buf_T, win_T, frame_T
-#include "nvim/pos.h" // for linenr_T
 
+#include "nvim/types.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/pos.h"
 
 /*
  * flags for update_screen()

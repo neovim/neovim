@@ -3,12 +3,12 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "nvim/types.h" // for char_u
-#include "nvim/buffer_defs.h" // for buf_T, win_T
-#include "nvim/eval/typval.h" // for dict_T
-#include "nvim/normal.h" // for oparg_T
-#include "nvim/normal.h" // for cmdarg_T
-#include "nvim/os/time.h" // for Timestamp
+
+#include "nvim/types.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/eval/typval.h"
+#include "nvim/normal.h"
+#include "nvim/os/time.h"
 
 /* Values for the find_pattern_in_path() function args 'type' and 'action': */
 #define FIND_ANY        1
