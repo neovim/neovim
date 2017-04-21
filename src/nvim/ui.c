@@ -56,6 +56,7 @@ static int current_attr_code = 0;
 static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
+static int old_mode_idx = -1;
 
 // UI_CALL invokes a function on all registered UI instances. The functions can
 // have 0-5 arguments (configurable by SELECT_NTH).
@@ -153,12 +154,6 @@ void ui_event(char *name, Array args)
   }
 }
 
-// May update the shape of the cursor.
-void ui_cursor_shape(void)
-{
-  ui_mode_change();
-}
-
 void ui_refresh(void)
 {
   if (!ui_active()) {
@@ -183,7 +178,9 @@ void ui_refresh(void)
   row = col = 0;
   screen_resize(width, height);
   pum_set_external(pum_external);
-  ui_cursor_style_set();
+  ui_mode_info_set();
+  old_mode_idx = -1;
+  ui_cursor_shape();
 }
 
 static void ui_refresh_event(void **argv)
@@ -381,12 +378,12 @@ void ui_cursor_goto(int new_row, int new_col)
   pending_cursor_update = true;
 }
 
-void ui_cursor_style_set(void)
+void ui_mode_info_set(void)
 {
-  Dictionary style = cursor_shape_dict();
+  Array style = mode_style_array();
   bool enabled = (*p_guicursor != NUL);
-  UI_CALL(cursor_style_set, enabled, style);
-  api_free_dictionary(style);
+  UI_CALL(mode_info_set, enabled, style);
+  api_free_array(style);
 }
 
 void ui_update_menu(void)
@@ -544,25 +541,19 @@ static void flush_cursor_update(void)
   }
 }
 
-// Notify that the current mode has changed. Can be used to change cursor
-// shape, for example.
-static void ui_mode_change(void)
+/// Check if current mode has changed.
+/// May update the shape of the cursor.
+void ui_cursor_shape(void)
 {
-  int mode;
   if (!full_screen) {
     return;
   }
-  // Get a simple UI mode out of State.
-  if ((State & REPLACE) == REPLACE) {
-    mode = REPLACE;
-  } else if (State & INSERT) {
-    mode = INSERT;
-  } else if (State & CMDLINE) {
-    mode = CMDLINE;
-  } else {
-    mode = NORMAL;
+  int mode_idx = cursor_get_mode_idx();
+
+  if (old_mode_idx != mode_idx) {
+    old_mode_idx = mode_idx;
+    UI_CALL(mode_change, mode_idx);
   }
-  UI_CALL(mode_change, mode);
   conceal_check_cursur_line();
 }
 

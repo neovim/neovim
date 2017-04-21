@@ -26,7 +26,7 @@ describe(':terminal', function()
     feed_command([[terminal while true; do echo X; done]])
     helpers.feed([[<C-\><C-N>]])
     wait()
-    helpers.sleep(10)  -- Let some terminal activity happen.
+    screen:sleep(10)  -- Let some terminal activity happen.
     feed_command("messages")
     screen:expect([[
       msg1                                              |

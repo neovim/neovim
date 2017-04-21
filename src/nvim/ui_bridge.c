@@ -63,7 +63,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.clear = ui_bridge_clear;
   rv->bridge.eol_clear = ui_bridge_eol_clear;
   rv->bridge.cursor_goto = ui_bridge_cursor_goto;
-  rv->bridge.cursor_style_set = ui_bridge_cursor_style_set;
+  rv->bridge.mode_info_set = ui_bridge_mode_info_set;
   rv->bridge.update_menu = ui_bridge_update_menu;
   rv->bridge.busy_start = ui_bridge_busy_start;
   rv->bridge.busy_stop = ui_bridge_busy_stop;
@@ -183,23 +183,23 @@ static void ui_bridge_cursor_goto_event(void **argv)
   ui->cursor_goto(ui, PTR2INT(argv[1]), PTR2INT(argv[2]));
 }
 
-static void ui_bridge_cursor_style_set(UI *b, bool enabled, Dictionary styles)
+static void ui_bridge_mode_info_set(UI *b, bool enabled, Array modes)
 {
   bool *enabledp = xmalloc(sizeof(*enabledp));
-  Object *stylesp = xmalloc(sizeof(*stylesp));
+  Object *modesp = xmalloc(sizeof(*modesp));
   *enabledp = enabled;
-  *stylesp = copy_object(DICTIONARY_OBJ(styles));
-  UI_CALL(b, cursor_style_set, 3, b, enabledp, stylesp);
+  *modesp = copy_object(ARRAY_OBJ(modes));
+  UI_CALL(b, mode_info_set, 3, b, enabledp, modesp);
 }
-static void ui_bridge_cursor_style_set_event(void **argv)
+static void ui_bridge_mode_info_set_event(void **argv)
 {
   UI *ui = UI(argv[0]);
   bool *enabled = argv[1];
-  Object *styles = argv[2];
-  ui->cursor_style_set(ui, *enabled, styles->data.dictionary);
+  Object *modes = argv[2];
+  ui->mode_info_set(ui, *enabled, modes->data.array);
   xfree(enabled);
-  api_free_object(*styles);
-  xfree(styles);
+  api_free_object(*modes);
+  xfree(modes);
 }
 
 static void ui_bridge_update_menu(UI *b)
@@ -252,9 +252,9 @@ static void ui_bridge_mouse_off_event(void **argv)
   ui->mouse_off(ui);
 }
 
-static void ui_bridge_mode_change(UI *b, int mode)
+static void ui_bridge_mode_change(UI *b, int mode_idx)
 {
-  UI_CALL(b, mode_change, 2, b, INT2PTR(mode));
+  UI_CALL(b, mode_change, 2, b, INT2PTR(mode_idx));
 }
 static void ui_bridge_mode_change_event(void **argv)
 {

@@ -73,7 +73,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
   ui->cursor_goto = remote_ui_cursor_goto;
-  ui->cursor_style_set = remote_ui_cursor_style_set;
+  ui->mode_info_set = remote_ui_mode_info_set;
   ui->update_menu = remote_ui_update_menu;
   ui->busy_start = remote_ui_busy_start;
   ui->busy_stop = remote_ui_busy_stop;
@@ -269,19 +269,14 @@ static void remote_ui_mouse_off(UI *ui)
   push_call(ui, "mouse_off", args);
 }
 
-static void remote_ui_mode_change(UI *ui, int mode)
+static void remote_ui_mode_change(UI *ui, int mode_idx)
 {
   Array args = ARRAY_DICT_INIT;
-  if (mode == INSERT) {
-    ADD(args, STRING_OBJ(cstr_to_string("insert")));
-  } else if (mode == REPLACE) {
-    ADD(args, STRING_OBJ(cstr_to_string("replace")));
-  } else if (mode == CMDLINE) {
-    ADD(args, STRING_OBJ(cstr_to_string("cmdline")));
-  } else {
-    assert(mode == NORMAL);
-    ADD(args, STRING_OBJ(cstr_to_string("normal")));
-  }
+
+  char *full_name = shape_table[mode_idx].full_name;
+  ADD(args, STRING_OBJ(cstr_to_string(full_name)));
+
+  ADD(args, INTEGER_OBJ(mode_idx));
   push_call(ui, "mode_change", args);
 }
 
@@ -303,12 +298,12 @@ static void remote_ui_scroll(UI *ui, int count)
   push_call(ui, "scroll", args);
 }
 
-static void remote_ui_cursor_style_set(UI *ui, bool enabled, Dictionary data)
+static void remote_ui_mode_info_set(UI *ui, bool guicursor_enabled, Array data)
 {
   Array args = ARRAY_DICT_INIT;
-  ADD(args, BOOLEAN_OBJ(enabled));
-  ADD(args, copy_object(DICTIONARY_OBJ(data)));
-  push_call(ui, "cursor_style_set", args);
+  ADD(args, BOOLEAN_OBJ(guicursor_enabled));
+  ADD(args, copy_object(ARRAY_OBJ(data)));
+  push_call(ui, "mode_info_set", args);
 }
 
 static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
@@ -396,8 +391,10 @@ static void remote_ui_update_sp(UI *ui, int sp)
 static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
-  channel_send_event(data->channel_id, "redraw", data->buffer);
-  data->buffer = (Array)ARRAY_DICT_INIT;
+  if (data->buffer.size > 0) {
+    channel_send_event(data->channel_id, "redraw", data->buffer);
+    data->buffer = (Array)ARRAY_DICT_INIT;
+  }
 }
 
 static void remote_ui_suspend(UI *ui)

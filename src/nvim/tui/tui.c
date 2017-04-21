@@ -76,7 +76,7 @@ typedef struct {
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
-  int showing_mode;
+  ModeShape showing_mode;
   struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
@@ -104,7 +104,7 @@ UI *tui_start(void)
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
   ui->cursor_goto = tui_cursor_goto;
-  ui->cursor_style_set = tui_cursor_style_set;
+  ui->mode_info_set = tui_mode_info_set;
   ui->update_menu = tui_update_menu;
   ui->busy_start = tui_busy_start;
   ui->busy_stop = tui_busy_stop;
@@ -134,7 +134,7 @@ static void terminfo_start(UI *ui)
   data->can_use_terminal_scroll = true;
   data->bufpos = 0;
   data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
-  data->showing_mode = 0;
+  data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.set_cursor_color = -1;
@@ -176,7 +176,7 @@ static void terminfo_stop(UI *ui)
 {
   TUIData *data = ui->data;
   // Destroy output stuff
-  tui_mode_change(ui, NORMAL);
+  tui_mode_change(ui, SHAPE_IDX_N);
   tui_mouse_off(ui);
   unibi_out(ui, unibi_exit_attribute_mode);
   // cursor should be set to normal before exiting alternate screen
@@ -475,27 +475,24 @@ static cursorentry_T decode_cursor_entry(Dictionary args)
   return r;
 }
 
-static void tui_cursor_style_set(UI *ui, bool enabled, Dictionary args)
+static void tui_mode_info_set(UI *ui, bool guicursor_enabled, Array args)
 {
-  cursor_style_enabled = enabled;
-  if (!enabled) {
+  cursor_style_enabled = guicursor_enabled;
+  if (!guicursor_enabled) {
     return;  // Do not send cursor style control codes.
   }
   TUIData *data = ui->data;
 
   assert(args.size);
-  // Keys: as defined by `shape_table`.
+
+  // cursor style entries as defined by `shape_table`.
   for (size_t i = 0; i < args.size; i++) {
-    char *mode_name = args.items[i].key.data;
-    const int mode_id = cursor_mode_str2int(mode_name);
-    assert(mode_id >= 0);
-    cursorentry_T r = decode_cursor_entry(args.items[i].value.data.dictionary);
-    r.full_name = mode_name;
-    data->cursor_shapes[mode_id] = r;
+    assert(args.items[i].type == kObjectTypeDictionary);
+    cursorentry_T r = decode_cursor_entry(args.items[i].data.dictionary);
+    data->cursor_shapes[i] = r;
   }
 
-  MouseMode cursor_mode = tui_mode2cursor(data->showing_mode);
-  tui_set_cursor(ui, cursor_mode);
+  tui_set_mode(ui, data->showing_mode);
 }
 
 static void tui_update_menu(UI *ui)
@@ -532,7 +529,7 @@ static void tui_mouse_off(UI *ui)
 }
 
 /// @param mode one of SHAPE_XXX
-static void tui_set_cursor(UI *ui, MouseMode mode)
+static void tui_set_mode(UI *ui, ModeShape mode)
 {
   if (!cursor_style_enabled) {
     return;
@@ -587,42 +584,12 @@ static void tui_set_cursor(UI *ui, MouseMode mode)
   }
 }
 
-/// Returns cursor mode from edit mode
-static MouseMode tui_mode2cursor(int mode)
-{
-  switch (mode) {
-    case INSERT:  return SHAPE_IDX_I;
-    case CMDLINE: return SHAPE_IDX_C;
-    case REPLACE: return SHAPE_IDX_R;
-    case NORMAL:
-    default:      return SHAPE_IDX_N;
-  }
-}
-
 /// @param mode editor mode
-static void tui_mode_change(UI *ui, int mode)
+static void tui_mode_change(UI *ui, int mode_idx)
 {
   TUIData *data = ui->data;
-
-  if (mode == INSERT) {
-    if (data->showing_mode != INSERT) {
-      tui_set_cursor(ui, SHAPE_IDX_I);
-    }
-  } else if (mode == CMDLINE) {
-    if (data->showing_mode != CMDLINE) {
-      tui_set_cursor(ui, SHAPE_IDX_C);
-    }
-  } else if (mode == REPLACE) {
-    if (data->showing_mode != REPLACE) {
-      tui_set_cursor(ui, SHAPE_IDX_R);
-    }
-  } else {
-    assert(mode == NORMAL);
-    if (data->showing_mode != NORMAL) {
-      tui_set_cursor(ui, SHAPE_IDX_N);
-    }
-  }
-  data->showing_mode = mode;
+  tui_set_mode(ui, (ModeShape)mode_idx);
+  data->showing_mode = (ModeShape)mode_idx;
 }
 
 static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
