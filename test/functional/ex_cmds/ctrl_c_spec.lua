@@ -41,7 +41,7 @@ describe("CTRL-C (mapped)", function()
 
     local function test_ctrl_c(ms)
       feed(":global/^/p<CR>")
-      helpers.sleep(ms)
+      screen:sleep(ms)
       feed("<C-C>")
       screen:expect([[Interrupt]], nil, nil, nil, true)
     end

@@ -392,7 +392,16 @@ end
 
 -- sleeps the test runner (_not_ the nvim instance)
 local function sleep(ms)
-  run(nil, nil, nil, ms)
+  local function notification_cb(method, args)
+    local _ = args
+    if method == "redraw" then
+      error("helpers.sleep() called while screen is attached. "..
+            "Use screen:sleep(...) instead")
+    end
+    return true
+  end
+
+  run(nil, notification_cb, nil, ms)
 end
 
 local function curbuf_contents()
