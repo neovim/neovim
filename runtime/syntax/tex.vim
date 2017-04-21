@@ -503,13 +503,13 @@ if !exists("g:tex_no_math")
      \ ['\\backslash'  , '\'] ,
      \ ['\\downarrow'  , '↓'] ,
      \ ['\\Downarrow'  , '⇓'] ,
-     \ ['\\langle'     , '<'] ,
+     \ ['\\langle'     , '〈'] ,
      \ ['\\lbrace'     , '['] ,
      \ ['\\lceil'      , '⌈'] ,
      \ ['\\lfloor'     , '⌊'] ,
      \ ['\\lgroup'     , '⌊'] ,
      \ ['\\lmoustache' , '⎛'] ,
-     \ ['\\rangle'     , '>'] ,
+     \ ['\\rangle'     , '〉'] ,
      \ ['\\rbrace'     , ']'] ,
      \ ['\\rceil'      , '⌉'] ,
      \ ['\\rfloor'     , '⌋'] ,
@@ -699,6 +699,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['backslash'	, '∖'],
     \ ['barwedge'	, '⊼'],
     \ ['because'	, '∵'],
+    \ ['beth'           , 'ܒ'],
     \ ['between'	, '≬'],
     \ ['bigcap'		, '∩'],
     \ ['bigcirc'	, '○'],
@@ -718,6 +719,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['boxminus'	, '⊟'],
     \ ['boxplus'	, '⊞'],
     \ ['boxtimes'	, '⊠'],
+    \ ['Box'            , '☐'],
     \ ['bullet'	        , '•'],
     \ ['bumpeq'		, '≏'],
     \ ['Bumpeq'		, '≎'],
@@ -767,6 +769,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['eqslantgtr'	, '⪖'],
     \ ['eqslantless'	, '⪕'],
     \ ['equiv'		, '≡'],
+    \ ['eth'            , 'ð'],
     \ ['exists'		, '∃'],
     \ ['fallingdotseq'	, '≒'],
     \ ['flat'		, '♭'],
@@ -776,6 +779,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['geq'		, '≥'],
     \ ['geqq'		, '≧'],
     \ ['gets'		, '←'],
+    \ ['gimel'          , 'ℷ'],
     \ ['gg'		, '⟫'],
     \ ['gneqq'		, '≩'],
     \ ['gtrdot'		, '⋗'],
@@ -786,13 +790,17 @@ if has("conceal") && &enc == 'utf-8'
     \ ['heartsuit'	, '♡'],
     \ ['hookleftarrow'	, '↩'],
     \ ['hookrightarrow'	, '↪'],
+    \ ['iff'            , '⇔'],
     \ ['iiint'		, '∭'],
     \ ['iint'		, '∬'],
     \ ['Im'		, 'ℑ'],
     \ ['imath'		, 'ɩ'],
+    \ ['implies'	, '⇒'],
     \ ['in'		, '∈'],
     \ ['infty'		, '∞'],
     \ ['int'		, '∫'],
+    \ ['jmath'		, '𝚥'],
+    \ ['land'		, '∧'],
     \ ['lceil'		, '⌈'],
     \ ['ldots'		, '…'],
     \ ['le'		, '≤'],
@@ -800,6 +808,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['left('		, '('],
     \ ['left\['		, '['],
     \ ['left\\{'	, '{'],
+    \ ['left\\langle'	, '〈'],
     \ ['leftarrow'	, '←'],
     \ ['Leftarrow'	, '⇐'],
     \ ['leftarrowtail'	, '↢'],
@@ -819,6 +828,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['ll'		, '≪'],
     \ ['lmoustache'     , '╭'],
     \ ['lneqq'		, '≨'],
+    \ ['lor'		, '∨'],
     \ ['ltimes'		, '⋉'],
     \ ['mapsto'		, '↦'],
     \ ['measuredangle'	, '∡'],
@@ -845,6 +855,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['nless'		, '≮'],
     \ ['nmid'		, '∤'],
     \ ['notin'		, '∉'],
+    \ ['nparallel'      , '∦'],
     \ ['nprec'		, '⊀'],
     \ ['nrightarrow'	, '↛'],
     \ ['nRightarrow'	, '⇏'],
@@ -887,6 +898,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['right)'		, ')'],
     \ ['right]'		, ']'],
     \ ['right\\}'	, '}'],
+    \ ['right\\rangle'	, '〉'],
     \ ['rightarrow'	, '→'],
     \ ['Rightarrow'	, '⇒'],
     \ ['rightarrowtail'	, '↣'],
@@ -946,10 +958,12 @@ if has("conceal") && &enc == 'utf-8'
     \ ['trianglerighteq', '⊵'],
     \ ['twoheadleftarrow', '↞'],
     \ ['twoheadrightarrow', '↠'],
+    \ ['ulcorner'       , '⌜'],
     \ ['uparrow'	, '↑'],
     \ ['Uparrow'	, '⇑'],
     \ ['updownarrow'	, '↕'],
     \ ['Updownarrow'	, '⇕'],
+    \ ['urcorner'       , '⌝'],
     \ ['varnothing'	, '∅'],
     \ ['vartriangle'	, '∆'],
     \ ['vdash'		, '⊢'],
@@ -962,7 +976,6 @@ if has("conceal") && &enc == 'utf-8'
     \ ['wedge'		, '∧'],
     \ ['wp'		, '℘'],
     \ ['wr'		, '≀']]
-"    \ ['jmath'		, 'X']
 "    \ ['uminus'	, 'X']
 "    \ ['uplus'		, 'X']
   for texmath in s:texMathList
@@ -1048,6 +1061,7 @@ if has("conceal") && &enc == 'utf-8'
   call s:Greek('texGreek','\\Phi\>'		,'Φ')
   call s:Greek('texGreek','\\Psi\>'		,'Ψ')
   call s:Greek('texGreek','\\Omega\>'		,'Ω')
+  call s:Greek('texGreek','\\iota\>'		,'ι')
   delfun s:Greek
  endif
 
