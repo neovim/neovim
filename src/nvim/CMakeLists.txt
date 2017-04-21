@@ -441,7 +441,6 @@ set(NO_SINGLE_CHECK_HEADERS
   regexp.h
   regexp_defs.h
   screen.h
-  search.h
   sha256.h
   sign_defs.h
   spell.h
