@@ -192,7 +192,8 @@ Object channel_send_call(uint64_t id,
   Channel *channel = NULL;
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
-    api_set_error(err, Exception, _("Invalid channel \"%" PRIu64 "\""), id);
+    api_set_error(err, kErrorTypeException,
+                  _("Invalid channel \"%" PRIu64 "\""), id);
     api_free_array(args);
     return NIL;
   }
@@ -212,7 +213,8 @@ Object channel_send_call(uint64_t id,
 
   if (frame.errored) {
     if (frame.result.type == kObjectTypeString) {
-      api_set_error(err, Exception, "%s", frame.result.data.string.data);
+      api_set_error(err, kErrorTypeException, "%s",
+                    frame.result.data.string.data);
     } else if (frame.result.type == kObjectTypeArray) {
       // Should be an error in the form [type, message]
       Array array = frame.result.data.array;
@@ -220,13 +222,13 @@ Object channel_send_call(uint64_t id,
           && (array.items[0].data.integer == kErrorTypeException
               || array.items[0].data.integer == kErrorTypeValidation)
           && array.items[1].type == kObjectTypeString) {
-        _api_set_error(err, (ErrorType)array.items[0].data.integer, "%s",
+        api_set_error(err, (ErrorType)array.items[0].data.integer, "%s",
                        array.items[1].data.string.data);
       } else {
-        api_set_error(err, Exception, "%s", "unknown error");
+        api_set_error(err, kErrorTypeException, "%s", "unknown error");
       }
     } else {
-      api_set_error(err, Exception, "%s", "unknown error");
+      api_set_error(err, kErrorTypeException, "%s", "unknown error");
     }
 
     api_free_object(frame.result);
@@ -514,7 +516,7 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
 static void send_error(Channel *channel, uint64_t id, char *err)
 {
   Error e = ERROR_INIT;
-  api_set_error(&e, Exception, "%s", err);
+  api_set_error(&e, kErrorTypeException, "%s", err);
   channel_write(channel, serialize_response(channel->id,
                                             id,
                                             &e,

@@ -65,7 +65,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
       || pos.items[1].type != kObjectTypeInteger) {
     api_set_error(err,
-                  Validation,
+                  kErrorTypeValidation,
                   _("Argument \"pos\" must be a [row, col] array"));
     return;
   }
@@ -78,12 +78,12 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   int64_t col = pos.items[1].data.integer;
 
   if (row <= 0 || row > win->w_buffer->b_ml.ml_line_count) {
-    api_set_error(err, Validation, _("Cursor position outside buffer"));
+    api_set_error(err, kErrorTypeValidation, "Cursor position outside buffer");
     return;
   }
 
   if (col > MAXCOL || col < 0) {
-    api_set_error(err, Validation, _("Column value outside range"));
+    api_set_error(err, kErrorTypeValidation, _("Column value outside range"));
     return;
   }
 
@@ -132,7 +132,7 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
   }
 
   if (height > INT_MAX || height < INT_MIN) {
-    api_set_error(err, Validation, _("Height value outside range"));
+    api_set_error(err, kErrorTypeValidation, _("Height value outside range"));
     return;
   }
 
@@ -177,7 +177,7 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
   }
 
   if (width > INT_MAX || width < INT_MIN) {
-    api_set_error(err, Validation, _("Width value outside range"));
+    api_set_error(err, kErrorTypeValidation, _("Width value outside range"));
     return;
   }
 

@@ -225,7 +225,7 @@ for i = 1, #functions do
     end
     output:write('\n')
     output:write('\n  if (args.size != '..#fn.parameters..') {')
-    output:write('\n    _api_set_error(error, error->type, "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
+    output:write('\n    api_set_error(error, error->type, "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
     output:write('\n    goto cleanup;')
     output:write('\n  }\n')
 
@@ -250,7 +250,7 @@ for i = 1, #functions do
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
         end
         output:write('\n  } else {')
-        output:write('\n    _api_set_error(error, error->type, "Wrong type for argument '..j..', expecting '..param[1]..'");')
+        output:write('\n    api_set_error(error, error->type, "Wrong type for argument '..j..', expecting '..param[1]..'");')
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
       else
