@@ -2,8 +2,8 @@
 #define NVIM_SYNTAX_H
 
 #include <stdbool.h>
-
 #include "nvim/buffer_defs.h"
+#include "nvim/ex_cmds_defs.h" // for exarg_T
 
 
 /// Terminal highlighting attribute bits.

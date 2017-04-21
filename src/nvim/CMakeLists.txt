@@ -444,7 +444,6 @@ set(NO_SINGLE_CHECK_HEADERS
   sign_defs.h
   spell.h
   spellfile.h
-  syntax.h
   syntax_defs.h
   tag.h
   terminal.h
