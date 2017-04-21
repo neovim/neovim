@@ -66,7 +66,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
       || pos.items[1].type != kObjectTypeInteger) {
     api_set_error(err,
                   kErrorTypeValidation,
-                  _("Argument \"pos\" must be a [row, col] array"));
+                  "Argument \"pos\" must be a [row, col] array");
     return;
   }
 
@@ -83,7 +83,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   }
 
   if (col > MAXCOL || col < 0) {
-    api_set_error(err, kErrorTypeValidation, _("Column value outside range"));
+    api_set_error(err, kErrorTypeValidation, "Column value outside range");
     return;
   }
 
@@ -132,7 +132,7 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
   }
 
   if (height > INT_MAX || height < INT_MIN) {
-    api_set_error(err, kErrorTypeValidation, _("Height value outside range"));
+    api_set_error(err, kErrorTypeValidation, "Height value outside range");
     return;
   }
 
@@ -177,7 +177,7 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
   }
 
   if (width > INT_MAX || width < INT_MIN) {
-    api_set_error(err, kErrorTypeValidation, _("Width value outside range"));
+    api_set_error(err, kErrorTypeValidation, "Width value outside range");
     return;
   }
 

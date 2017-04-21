@@ -570,12 +570,12 @@ void msgpack_rpc_validate(uint64_t *response_id,
   *response_id = NO_RESPONSE;
   // Validate the basic structure of the msgpack-rpc payload
   if (req->type != MSGPACK_OBJECT_ARRAY) {
-    api_set_error(err, kErrorTypeValidation, _("Message is not an array"));
+    api_set_error(err, kErrorTypeValidation, "Message is not an array");
     return;
   }
 
   if (req->via.array.size == 0) {
-    api_set_error(err, kErrorTypeValidation, _("Message is empty"));
+    api_set_error(err, kErrorTypeValidation, "Message is empty");
     return;
   }
 
@@ -586,7 +586,7 @@ void msgpack_rpc_validate(uint64_t *response_id,
 
   uint64_t type = req->via.array.ptr[0].via.u64;
   if (type != kMessageTypeRequest && type != kMessageTypeNotification) {
-    api_set_error(err, kErrorTypeValidation, _("Unknown message type"));
+    api_set_error(err, kErrorTypeValidation, "Unknown message type");
     return;
   }
 
@@ -607,12 +607,12 @@ void msgpack_rpc_validate(uint64_t *response_id,
   }
 
   if (!msgpack_rpc_method(req)) {
-    api_set_error(err, kErrorTypeValidation, _("Method must be a string"));
+    api_set_error(err, kErrorTypeValidation, "Method must be a string");
     return;
   }
 
   if (!msgpack_rpc_args(req)) {
-    api_set_error(err, kErrorTypeValidation, _("Parameters must be an array"));
+    api_set_error(err, kErrorTypeValidation, "Parameters must be an array");
     return;
   }
 }

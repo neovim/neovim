@@ -193,7 +193,7 @@ Object channel_send_call(uint64_t id,
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
     api_set_error(err, kErrorTypeException,
-                  _("Invalid channel \"%" PRIu64 "\""), id);
+                  "Invalid channel \"%" PRIu64 "\"", id);
     api_free_array(args);
     return NIL;
   }
