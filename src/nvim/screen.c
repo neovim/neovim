@@ -2097,117 +2097,126 @@ win_line (
     bool nochange                    /* not updating for changed text */
 )
 {
-  int col;                              /* visual column on screen */
-  unsigned off;                         /* offset in ScreenLines/ScreenAttrs */
-  int c = 0;                            /* init for GCC */
-  long vcol = 0;                        /* virtual column (for tabs) */
-  long vcol_sbr = -1;                   // virtual column after showbreak
-  long vcol_prev = -1;                  /* "vcol" of previous character */
-  char_u      *line;                    /* current line */
-  char_u      *ptr;                     /* current position in "line" */
-  int row;                              /* row in the window, excl w_winrow */
-  int screen_row;                       /* row on the screen, incl w_winrow */
+  int col;                                  // visual column on screen
+  unsigned off;                             // offset in ScreenLines/ScreenAttrs
+  int c = 0;                                // init for GCC
+  long vcol = 0;                            // virtual column (for tabs)
+  long vcol_sbr = -1;                       // virtual column after showbreak
+  long vcol_prev = -1;                      // "vcol" of previous character
+  char_u *line;                             // current line
+  char_u *ptr;                              // current position in "line"
+  int row;                                  // row in the window, excl w_winrow
+  int screen_row;                           // row on the screen, incl w_winrow
 
-  char_u extra[18];                     /* line number and 'fdc' must fit in here */
-  int n_extra = 0;                      /* number of extra chars */
-  char_u      *p_extra = NULL;          /* string of extra chars, plus NUL */
-  char_u      *p_extra_free = NULL;     /* p_extra needs to be freed */
-  int c_extra = NUL;                    /* extra chars, all the same */
-  int extra_attr = 0;                   /* attributes when n_extra != 0 */
-  static char_u *at_end_str = (char_u *)"";   /* used for p_extra when
-                                                 displaying lcs_eol at end-of-line */
-  int lcs_eol_one = lcs_eol;            /* lcs_eol until it's been used */
-  int lcs_prec_todo = lcs_prec;             /* lcs_prec until it's been used */
+  char_u extra[18];                         // line number and 'fdc' must fit in here
+  int n_extra = 0;                          // number of extra chars
+  char_u *p_extra      = NULL;              // string of extra chars, plus NUL
+  char_u *p_extra_free = NULL;              // p_extra needs to be freed
+  int c_extra = NUL;                        // extra chars, all the same
+  int extra_attr = 0;                       // attributes when n_extra != 0
+  static char_u *at_end_str = (char_u *)""; // used for p_extra when
+                                            // displaying lcs_eol at end-of-line
+  int lcs_eol_one = lcs_eol;                // lcs_eol until it's been used
+  int lcs_prec_todo = lcs_prec;             // lcs_prec until it's been used
 
-  /* saved "extra" items for when draw_state becomes WL_LINE (again) */
-  int saved_n_extra = 0;
-  char_u      *saved_p_extra = NULL;
-  int saved_c_extra = 0;
+  // saved "extra" items for when draw_state becomes WL_LINE (again)
+  char_u *saved_p_extra = NULL;
+  int saved_n_extra   = 0;
+  int saved_c_extra   = 0;
   int saved_char_attr = 0;
 
-  int n_attr = 0;                       /* chars with special attr */
-  int saved_attr2 = 0;                  /* char_attr saved for n_attr */
-  int n_attr3 = 0;                      /* chars with overruling special attr */
-  int saved_attr3 = 0;                  /* char_attr saved for n_attr3 */
+  int n_attr      = 0;                  // chars with special attr
+  int saved_attr2 = 0;                  // char_attr saved for n_attr
+  int n_attr3     = 0;                  // chars with overruling special attr
+  int saved_attr3 = 0;                  // char_attr saved for n_attr3
 
-  int n_skip = 0;                       /* nr of chars to skip for 'nowrap' */
+  int n_skip = 0;                       // nr of chars to skip for 'nowrap'
 
-  int fromcol, tocol;                   /* start/end of inverting */
-  int fromcol_prev = -2;                /* start of inverting after cursor */
-  bool noinvcur = false;                /* don't invert the cursor */
-  pos_T       *top, *bot;
+  int fromcol, tocol;                   // start/end of inverting
+  int fromcol_prev = -2;                // start of inverting after cursor
+  bool noinvcur = false;                // don't invert the cursor
+  pos_T *top, *bot;
   bool lnum_in_visual_area = false;
   pos_T pos;
-  long v;
 
-  int char_attr = 0;                    /* attributes for next character */
-  bool attr_pri = false;                /* char_attr has priority */
-  bool area_highlighting = false;       /* Visual or incsearch highlighting
-                                              in this line */
-  int attr = 0;                         /* attributes for area highlighting */
-  int area_attr = 0;                    /* attributes desired by highlighting */
-  int search_attr = 0;                  /* attributes desired by 'hlsearch' */
-  int vcol_save_attr = 0;               /* saved attr for 'cursorcolumn' */
-  int syntax_attr = 0;                  /* attributes desired by syntax */
-  bool has_syntax = false;              /* this buffer has syntax highl. */
+  int char_attr = 0;                    // attributes for next character
+  bool attr_has_priority = false;       // char_attr has priority
+  bool area_highlighting = false;       // Visual or incsearch highlighting
+                                        // in this line
+  int attr = 0;                         // attributes for area highlighting
+  int area_attr = 0;                    // attributes desired by highlighting
+  int search_attr = 0;                  // attributes desired by 'hlsearch'
+  int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
+  int syntax_attr = 0;                  // attributes desired by syntax
+  bool has_syntax = false;              // this buffer has syntax highl.
   int save_did_emsg;
-  int eol_hl_off = 0;                   /* 1 if highlighted char after EOL */
-  bool draw_color_col = false;           /* highlight colorcolumn */
-  int         *color_cols = NULL;       /* pointer to according columns array */
-  bool has_spell = false;               /* this buffer has spell checking */
+  int eol_hl_off = 0;                   // 1 if highlighted char after EOL
+  bool draw_color_col = false;          // highlight colorcolumn
+  int *color_cols = NULL;               // pointer to according columns array
+  bool has_spell = false;               // this buffer has spell checking
 # define SPWORDLEN 150
-  char_u nextline[SPWORDLEN * 2];       /* text with start of the next line */
-  int nextlinecol = 0;                  /* column where nextline[] starts */
-  int nextline_idx = 0;                 /* index in nextline[] where next line
-                                           starts */
-  int spell_attr = 0;                   /* attributes desired by spelling */
-  int word_end = 0;                     /* last byte with same spell_attr */
-  static linenr_T checked_lnum = 0;     /* line number for "checked_col" */
-  static int checked_col = 0;           /* column in "checked_lnum" up to which
-                                         * there are no spell errors */
-  static int cap_col = -1;              /* column to check for Cap word */
-  static linenr_T capcol_lnum = 0;      /* line number where "cap_col" used */
-  int cur_checked_col = 0;              /* checked column for current line */
-  int extra_check;                      /* has syntax or linebreak */
-  int multi_attr = 0;                   /* attributes desired by multibyte */
-  int mb_l = 1;                         /* multi-byte byte length */
-  int mb_c = 0;                         /* decoded multi-byte character */
-  bool mb_utf8 = false;                 /* screen char is UTF-8 char */
-  int u8cc[MAX_MCO];                    /* composing UTF-8 chars */
-  int filler_lines;                     /* nr of filler lines to be drawn */
-  int filler_todo;                      /* nr of filler lines still to do + 1 */
-  hlf_T diff_hlf = (hlf_T)0;            /* type of diff highlighting */
-  int change_start = MAXCOL;            /* first col of changed area */
-  int change_end = -1;                  /* last col of changed area */
-  colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
+  char_u nextline[SPWORDLEN * 2];       // text with start of the next line
+  int nextlinecol = 0;                  // column where nextline[] starts
+  int nextline_idx = 0;                 // index in nextline[] where next line
+                                        // starts
+  int spell_attr = 0;                   // attributes desired by spelling
+  int word_end = 0;                     // last byte with same spell_attr
+  static linenr_T checked_lnum = 0;     // line number for "checked_col"
+  static int checked_col = 0;           // column in "checked_lnum" up to which
+                                        // there are no spell errors
+  static int cap_col = -1;              // column to check for Cap word
+  static linenr_T capcol_lnum = 0;      // line number where "cap_col" used
+  int cur_checked_col = 0;              // checked column for current line
+  int extra_check;                      // has syntax or linebreak
+  int multi_attr = 0;                   // attributes desired by multibyte
+  int mb_l = 1;                         // multi-byte byte length
+  int mb_c = 0;                         // decoded multi-byte character
+  bool mb_utf8 = false;                 // screen char is UTF-8 char
+  int u8cc[MAX_MCO];                    // composing UTF-8 chars
+
+  int filler_lines;                     // nr of filler lines to be drawn
+  int filler_todo;                      // nr of filler lines still to do + 1
+  hlf_T diff_hlf = (hlf_T)0;            // type of diff highlighting
+  int change_start = MAXCOL;            // first col of changed area
+  int change_end = -1;                  // last col of changed area
+  colnr_T trailcol = MAXCOL;            // start of trailing spaces
   bool need_showbreak = false;
-  int line_attr = 0;                    /* attribute for the whole line */
-  matchitem_T *cur;                     /* points to the match list */
-  match_T     *shl;                     /* points to search_hl or a match */
-  int shl_flag;                         /* flag to indicate whether search_hl
-                                           has been processed or not */
-  int prevcol_hl_flag;                  /* flag to indicate whether prevcol
-                                           equals startcol of search_hl or one
-                                           of the matches */
-  int prev_c = 0;                       /* previous Arabic character */
-  int prev_c1 = 0;                      /* first composing char for prev_c */
+  int line_attr = 0;                    // attribute for the whole line
+  matchitem_T *cur;                     // points to the match list
+  match_T     *shl;                     // points to search_hl or a match
+  int shl_flag;                         // flag to indicate whether search_hl
+                                        // has been processed or not
+  int prevcol_hl_flag;                  // flag to indicate whether prevcol
+                                        // equals startcol of search_hl or one
+                                        // of the matches
+  int prev_c  = 0;                      // previous Arabic character
+  int prev_c1 = 0;                      // first composing char for prev_c
   int did_line_attr = 0;
+
+  bool has_numcol = vim_strchr(p_cpo, CPO_NUMCOL) != NULL;
+
+  bool is_cursor_line         = lnum == wp->w_cursor.lnum;
+  bool is_current_cursor_line = lnum == curwin->w_cursor.lnum;
+  bool is_current_window      = curwin == wp;
+  bool is_current_buffer      = wp->w_buffer == curwin->w_buffer;
+
+  int tabstop = (int) wp->w_buffer->b_p_ts;
 
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_bufhl = false;               // this buffer has highlight matches
   int bufhl_attr = 0;                   // attributes desired by bufhl
   bufhl_lineinfo_T bufhl_info;          // bufhl data for this line
 
-  /* draw_state: items that are drawn in sequence: */
-#define WL_START        0               /* nothing done yet */
-#define WL_CMDLINE      1              /* cmdline window column */
-#define WL_FOLD         2              /* 'foldcolumn' */
-#define WL_SIGN         3              /* column for signs */
-#define WL_NR           4               /* line number */
-#define WL_BRI          5              /* 'breakindent' */
-#define WL_SBR          6               /* 'showbreak' or 'diff' */
-#define WL_LINE         7               /* text in the line */
-  int draw_state = WL_START;            /* what to draw next */
+  // draw_state: items that are drawn in sequence:
+#define WL_START        0               // nothing done yet
+#define WL_CMDLINE      1               // cmdline window column
+#define WL_FOLD         2               // 'foldcolumn'
+#define WL_SIGN         3               // column for signs
+#define WL_NR           4               // line number
+#define WL_BRI          5               // 'breakindent'
+#define WL_SBR          6               // 'showbreak' or 'diff'
+#define WL_LINE         7               // text in the line
+  int draw_state = WL_START;            // what to draw next
 
   int syntax_flags    = 0;
   int syntax_seqnr    = 0;
@@ -2324,7 +2333,7 @@ win_line (
    */
   fromcol = -10;
   tocol = MAXCOL;
-  if (VIsual_active && wp->w_buffer == curwin->w_buffer) {
+  if (VIsual_active && is_current_buffer) {
     /* Visual is after curwin->w_cursor */
     if (ltoreq(curwin->w_cursor, VIsual)) {
       top = &curwin->w_cursor;
@@ -2372,8 +2381,7 @@ win_line (
     }
 
     /* Check if the character under the cursor should not be inverted */
-    if (!highlight_match && lnum == curwin->w_cursor.lnum && wp == curwin
-        )
+    if (!highlight_match && is_current_cursor_line && is_current_window)
       noinvcur = true;
 
     /* if inverting in this line set area_highlighting */
@@ -2386,15 +2394,15 @@ win_line (
    * handle 'incsearch' and ":s///c" highlighting
    */
   else if (highlight_match
-           && wp == curwin
+           && is_current_window
            && lnum >= curwin->w_cursor.lnum
            && lnum <= curwin->w_cursor.lnum + search_match_lines) {
-    if (lnum == curwin->w_cursor.lnum)
+    if (is_current_cursor_line)
       getvcol(curwin, &(curwin->w_cursor),
           (colnr_T *)&fromcol, NULL, NULL);
     else
       fromcol = 0;
-    if (lnum == curwin->w_cursor.lnum + search_match_lines) {
+    if (is_current_cursor_line + search_match_lines) {
       pos.lnum = lnum;
       pos.col = search_match_endcol;
       getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
@@ -2426,9 +2434,9 @@ win_line (
   filler_todo = filler_lines;
 
   /* If this line has a sign with line highlighting set line_attr. */
-  v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
-  if (v != 0)
-      line_attr = sign_get_attr((int)v, TRUE);
+  int sygn_type = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
+  if (sygn_type != 0)
+      line_attr = sign_get_attr(sygn_type, TRUE);
 
   // Highlight the current line in the quickfix window.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
@@ -2455,17 +2463,17 @@ win_line (
       nextlinecol = MAXCOL;
       nextline_idx = 0;
     } else {
-      v = (long)STRLEN(line);
-      if (v < SPWORDLEN) {
+      long str_len = (long)STRLEN(line);
+      if (str_len < SPWORDLEN) {
         /* Short line, use it completely and append the start of the
          * next line. */
         nextlinecol = 0;
-        memmove(nextline, line, (size_t)v);
-        STRMOVE(nextline + v, nextline + SPWORDLEN);
-        nextline_idx = v + 1;
+        memmove(nextline, line, (size_t)str_len);
+        STRMOVE(nextline + str_len, nextline + SPWORDLEN);
+        nextline_idx = str_len + 1;
       } else {
         /* Long line, use only the last SPWORDLEN bytes. */
-        nextlinecol = v - SPWORDLEN;
+        nextlinecol = str_len - SPWORDLEN;
         memmove(nextline, line + nextlinecol, SPWORDLEN);  // -V512
         nextline_idx = SPWORDLEN + 1;
       }
@@ -2508,7 +2516,7 @@ win_line (
     if (vcol < LEFT_COL() && (wp->w_p_cuc
                      || draw_color_col
                      || virtual_active()
-                     || (VIsual_active && wp->w_buffer == curwin->w_buffer))) {
+                     || (VIsual_active && is_current_buffer))) {
       vcol = LEFT_COL();
     }
 
@@ -2606,17 +2614,17 @@ win_line (
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
     shl->is_addpos = false;
-    v = (long)(ptr - line);
+    long diff = (long)(ptr - line);
     if (cur != NULL) {
       cur->pos.cur = 0;
     }
-    next_search_hl(wp, shl, lnum, (colnr_T)v,
+    next_search_hl(wp, shl, lnum, (colnr_T)diff,
                    shl == &search_hl ? NULL : cur);
 
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.
     line = ml_get_buf(wp->w_buffer, lnum, false);
-    ptr = line + v;
+    ptr = line + diff;
 
     if (shl->lnum != 0 && shl->lnum <= lnum) {
       if (shl->lnum == lnum) {
@@ -2638,7 +2646,7 @@ win_line (
               ++shl->endcol;
           }
       }
-      if ((long)shl->startcol < v) {   // match at leftcol
+      if ((long)shl->startcol < diff) {   // match at leftcol
         shl->attr_cur = shl->attr;
         search_attr = shl->attr;
         search_attr_from_match = shl != &search_hl;
@@ -2652,8 +2660,8 @@ win_line (
   /* Cursor line highlighting for 'cursorline' in the current window.  Not
    * when Visual mode is active, because it's not clear what is selected
    * then. */
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-      && !(wp == curwin && VIsual_active)) {
+  if (wp->w_p_cul && is_cursor_line
+      && !(is_current_window && VIsual_active)) {
     if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
         && qf_current_entry(wp) == lnum) {
       line_attr = hl_combine_attr(hl_attr(HLF_CUL), line_attr);
@@ -2687,7 +2695,7 @@ win_line (
     if (draw_state != WL_LINE) {
       if (draw_state == WL_CMDLINE - 1 && n_extra == 0) {
         draw_state = WL_CMDLINE;
-        if (cmdwin_type != 0 && wp == curwin) {
+        if (cmdwin_type != 0 && is_current_window) {
           /* Draw the cmdline character. */
           n_extra = 1;
           c_extra = cmdwin_type;
@@ -2743,7 +2751,7 @@ win_line (
         if ((wp->w_p_nu || wp->w_p_rnu)
             && (row == startrow
                 + filler_lines
-                || vim_strchr(p_cpo, CPO_NUMCOL) == NULL)) {
+                || !has_numcol)) {
           /* Draw the line number (empty space after wrapping). */
           if (row == startrow
               + filler_lines
@@ -2782,7 +2790,7 @@ win_line (
            * TODO: Can we use CursorLine instead of CursorLineNr
            * when CursorLineNr isn't set? */
           if ((wp->w_p_cul || wp->w_p_rnu)
-              && lnum == wp->w_cursor.lnum)
+              && is_cursor_line)
             char_attr = hl_attr(HLF_CLN);
         }
       }
@@ -2804,7 +2812,7 @@ win_line (
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = hl_attr(diff_hlf);
-            if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+            if (wp->w_p_cul && is_cursor_line) {
               char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
             }
           }
@@ -2845,7 +2853,7 @@ win_line (
           if (tocol == vcol)
             tocol += n_extra;
           /* combine 'showbreak' with 'cursorline' */
-          if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+          if (wp->w_p_cul && is_cursor_line) {
             char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
           }
         }
@@ -2865,8 +2873,8 @@ win_line (
     }
 
     /* When still displaying '$' of change command, stop at cursor */
-    if (dollar_vcol >= 0 && wp == curwin
-        && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
+    if (dollar_vcol >= 0 && is_current_window
+        && is_cursor_line && vcol >= (long)wp->w_virtcol
         && filler_todo <= 0
         ) {
       SCREEN_LINE(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl);
@@ -2902,7 +2910,7 @@ win_line (
          * Do this for 'search_hl' and the match list (ordered by
          * priority).
          */
-        v = (long)(ptr - line);
+        long diff = (long)(ptr - line);
         cur = wp->w_match_head;
         shl_flag = FALSE;
         while (cur != NULL || shl_flag == FALSE) {
@@ -2922,9 +2930,9 @@ win_line (
           while (shl->rm.regprog != NULL
                                  || (cur != NULL && pos_inprogress)) {
             if (shl->startcol != MAXCOL
-                && v >= (long)shl->startcol
-                && v < (long)shl->endcol) {
-              int tmp_col = v + MB_PTR2LEN(ptr);
+                && diff >= (long)shl->startcol
+                && diff < (long)shl->endcol) {
+              int tmp_col = diff + MB_PTR2LEN(ptr);
 
               if (shl->endcol < tmp_col) {
                 shl->endcol = tmp_col;
@@ -2932,22 +2940,22 @@ win_line (
               shl->attr_cur = shl->attr;
               if (cur != NULL && syn_name2id((char_u *)"Conceal")
                   == cur->hlg_id) {
-                has_match_conc = v == (long)shl->startcol ? 2 : 1;
+                has_match_conc = diff == (long)shl->startcol ? 2 : 1;
                 match_conc = cur->conceal_char;
               } else {
                 has_match_conc = match_conc = 0;
               }
-            } else if (v == (long)shl->endcol) {
+            } else if (diff == (long)shl->endcol) {
               shl->attr_cur = 0;
 
-              next_search_hl(wp, shl, lnum, (colnr_T)v,
+              next_search_hl(wp, shl, lnum, (colnr_T)diff,
                              shl == &search_hl ? NULL : cur);
               pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
 
               /* Need to get the line again, a multi-line regexp
                * may have made it invalid. */
               line = ml_get_buf(wp->w_buffer, lnum, FALSE);
-              ptr = line + v;
+              ptr = line + diff;
 
               if (shl->lnum == lnum) {
                 shl->startcol = shl->rm.startpos[0].col;
@@ -3009,13 +3017,13 @@ win_line (
             && n_extra == 0)
           diff_hlf = HLF_CHD;                   /* changed line */
         line_attr = hl_attr(diff_hlf);
-        if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+        if (wp->w_p_cul && is_cursor_line) {
           line_attr = hl_combine_attr(line_attr, hl_attr(HLF_CUL));
         }
       }
 
       // Decide which of the highlight attributes to use.
-      attr_pri = true;
+      attr_has_priority = true;
 
       if (area_attr != 0) {
         char_attr = hl_combine_attr(line_attr, area_attr);
@@ -3029,7 +3037,7 @@ win_line (
                                   || vcol >= tocol))
         char_attr = line_attr;
       else {
-        attr_pri = false;
+        attr_has_priority = false;
         if (has_syntax)
           char_attr = syntax_attr;
         else
@@ -3225,15 +3233,12 @@ win_line (
         if (n_skip > 0 && mb_l > 1 && n_extra == 0) {
           n_extra = 1;
           c_extra = MB_FILLER_CHAR;
-          c = ' ';
+          SET_CHAR(' ')
           if (area_attr == 0 && search_attr == 0) {
             n_attr = n_extra + 1;
             extra_attr = hl_attr(HLF_AT);
             saved_attr2 = char_attr;             /* save current attr */
           }
-          mb_c = c;
-          mb_utf8 = false;
-          mb_l = 1;
         }
 
       }
@@ -3244,14 +3249,14 @@ win_line (
 
         /* Get syntax attribute, unless still at the start of the line
          * (double-wide char that doesn't fit). */
-        v = (long)(ptr - line);
-        if (has_syntax && v > 0) {
+        long diff = (long)(ptr - line);
+        if (has_syntax && diff > 0) {
           /* Get the syntax attribute for the character.  If there
            * is an error, disable syntax highlighting. */
           save_did_emsg = did_emsg;
           did_emsg = FALSE;
 
-          syntax_attr = get_syntax_attr((colnr_T)v - 1,
+          syntax_attr = get_syntax_attr((colnr_T)diff - 1,
               has_spell ? &can_spell :
               NULL, FALSE);
 
@@ -3264,9 +3269,9 @@ win_line (
           /* Need to get the line again, a multi-line regexp may
            * have made it invalid. */
           line = ml_get_buf(wp->w_buffer, lnum, FALSE);
-          ptr = line + v;
+          ptr = line + diff;
 
-          if (!attr_pri)
+          if (!attr_has_priority)
             char_attr = syntax_attr;
           else
             char_attr = hl_combine_attr(syntax_attr, char_attr);
@@ -3276,7 +3281,7 @@ win_line (
             syntax_flags = 0;
           else
             syntax_flags = get_syntax_info(&syntax_seqnr);
-        } else if (!attr_pri) {
+        } else if (!attr_has_priority) {
           char_attr = 0;
         }
 
@@ -3284,9 +3289,9 @@ win_line (
          * Only do this when there is no syntax highlighting, the
          * @Spell cluster is not used or the current syntax item
          * contains the @Spell cluster. */
-        if (has_spell && v >= word_end && v > cur_checked_col) {
+        if (has_spell && diff >= word_end && diff > cur_checked_col) {
           spell_attr = 0;
-          if (!attr_pri) {
+          if (!attr_has_priority) {
             char_attr = syntax_attr;
           }
           if (c != 0 && (!has_syntax || can_spell)) {
@@ -3296,7 +3301,7 @@ win_line (
             hlf_T spell_hlf = HLF_COUNT;
             if (has_mbyte) {
               prev_ptr = ptr - mb_l;
-              v -= mb_l - 1;
+              diff -= mb_l - 1;
             } else
               prev_ptr = ptr - 1;
 
@@ -3310,7 +3315,7 @@ win_line (
             size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, nochange);
             assert(tmplen <= INT_MAX);
             len = (int)tmplen;
-            word_end = v + len;
+            word_end = diff + len;
 
             /* In Insert mode only highlight a word that
              * doesn't touch the cursor. */
@@ -3351,16 +3356,16 @@ win_line (
           }
         }
         if (spell_attr != 0) {
-          if (!attr_pri)
+          if (!attr_has_priority)
             char_attr = hl_combine_attr(char_attr, spell_attr);
           else
             char_attr = hl_combine_attr(spell_attr, char_attr);
         }
 
-        if (has_bufhl && v > 0) {
-          bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)v);
+        if (has_bufhl && diff > 0) {
+          bufhl_attr = bufhl_get_attr(&bufhl_info, (colnr_T)diff);
           if (bufhl_attr != 0) {
-            if (!attr_pri) {
+            if (!attr_has_priority) {
               char_attr = hl_combine_attr(char_attr, bufhl_attr);
             } else {
               char_attr = hl_combine_attr(bufhl_attr, char_attr);
@@ -3381,8 +3386,8 @@ win_line (
           // TODO: is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
           if (c == TAB && n_extra + col > wp->w_width) {
-            n_extra = (int)wp->w_buffer->b_p_ts
-                      - vcol % (int)wp->w_buffer->b_p_ts - 1;
+            n_extra = tabstop
+                      - vcol % tabstop - 1;
           }
           c_extra = mb_off > 0 ? MB_FILLER_CHAR : ' ';
           if (ascii_iswhite(c)) {
@@ -3431,8 +3436,8 @@ win_line (
             vcol_adjusted = vcol - MB_CHARLEN(p_sbr);
           }
           // tab amount depends on current column
-          tab_len = (int)wp->w_buffer->b_p_ts
-                    - vcol_adjusted % (int)wp->w_buffer->b_p_ts - 1;
+          tab_len = tabstop
+                    - vcol_adjusted % tabstop - 1;
 
           if (!wp->w_p_lbr || !wp->w_p_list) {
             n_extra = tab_len;
@@ -3520,7 +3525,7 @@ win_line (
                              wp->w_p_rl ? (col >= 0) :
                              (col < wp->w_width))
                            && !(noinvcur
-                                && lnum == wp->w_cursor.lnum
+                                && is_cursor_line
                                 && (colnr_T)vcol == wp->w_virtcol)))
                    && lcs_eol_one > 0) {
           // Display a '$' after the line or highlight an extra
@@ -3601,7 +3606,7 @@ win_line (
             diff_hlf = HLF_CHD;
             if (attr == 0 || char_attr != attr) {
               char_attr = hl_attr(diff_hlf);
-              if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+              if (wp->w_p_cul && is_cursor_line) {
                 char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
               }
             }
@@ -3610,7 +3615,7 @@ win_line (
       }
 
       if (wp->w_p_cole > 0
-          && (wp != curwin || lnum != wp->w_cursor.lnum
+          && (!is_current_window || !is_cursor_line
               || conceal_cursor_line(wp))
           && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)
           && !(lnum_in_visual_area
@@ -3648,7 +3653,7 @@ win_line (
           n_skip = 1;
         }
 
-        SET_CHAR(C)
+        SET_CHAR(c)
       } else {
         prev_syntax_id = 0;
         is_concealing = false;
@@ -3658,7 +3663,7 @@ win_line (
     /* In the cursor line and we may be concealing characters: correct
      * the cursor column when we reach its position. */
     if (!did_wcol && draw_state == WL_LINE
-        && wp == curwin && lnum == wp->w_cursor.lnum
+        && is_current_window && is_cursor_line
         && conceal_cursor_line(wp)
         && (int)wp->w_virtcol <= vcol + n_skip) {
       if (wp->w_p_rl) {
@@ -3732,7 +3737,7 @@ win_line (
           && ((area_attr != 0 && vcol == fromcol
                && (VIsual_mode != Ctrl_V
                    || lnum == VIsual.lnum
-                   || lnum == curwin->w_cursor.lnum)
+                   || is_current_cursor_line)
                && c == NUL)
               /* highlight 'hlsearch' match at end of line */
               || (prevcol_hl_flag == TRUE && did_line_attr <= 1)
@@ -3794,7 +3799,7 @@ win_line (
      */
     if (c == NUL) {
       if (eol_hl_off > 0 && vcol - eol_hl_off == (long)wp->w_virtcol
-          && lnum == wp->w_cursor.lnum) {
+          && is_cursor_line) {
         /* highlight last char after line */
         --col;
         --off;
@@ -3803,7 +3808,7 @@ win_line (
 
       /* Highlight 'cursorcolumn' & 'colorcolumn' past end of the line. */
 
-      long left_margin = LEFT_COL() + col - win_col_off(wp)
+      long left_margin = LEFT_COL() + col - win_col_off(wp);
 
       /* check if line ends before left margin */
       if (vcol < left_margin)
@@ -3821,7 +3826,7 @@ win_line (
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
             wp->w_width * (row - startrow + 1) + LEFT_COL()
-            && lnum != wp->w_cursor.lnum)
+            && !is_cursor_line)
            || draw_color_col)
           && !wp->w_p_rl
           ) {
@@ -3878,7 +3883,7 @@ win_line (
        * Update w_cline_height and w_cline_folded if the cursor line was
        * updated (saves a call to plines() later).
        */
-      if (wp == curwin && lnum == curwin->w_cursor.lnum) {
+      if (is_current_window && is_current_cursor_line) {
         curwin->w_cline_row = startrow;
         curwin->w_cline_height = row - startrow;
         curwin->w_cline_folded = false;
@@ -3913,7 +3918,7 @@ win_line (
     vcol_save_attr = -1;
     if (draw_state == WL_LINE && !lnum_in_visual_area) {
       if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
-          && lnum != wp->w_cursor.lnum) {
+          && !is_cursor_line) {
         vcol_save_attr = char_attr;
         char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUC));
       } else if (draw_color_col && VCOL_HLC == *color_cols) {
@@ -4018,7 +4023,7 @@ win_line (
 
 
         /* Need to fill two screen columns? */
-        int n = MB_IS_WIDE() ? 2 : 1
+        int n = MB_IS_WIDE() ? 2 : 1;
 
         COL_ADD(boguscols, n);
         COL_ADD(col, n);
