@@ -2232,6 +2232,24 @@ win_line (
     boguscols = 0; \
   }
 
+  #define MB_IS_WIDE() ((*mb_char2cells)(mb_c) > 1)
+
+  #define SET_CHAR(ch) \
+    c = ch; \
+    mb_c = c; \
+    mb_l = (*mb_char2len)(c); \
+    if (mb_l > 1) { \
+      c = 0xc0; \
+      u8cc[0] = 0; \
+      mb_utf8 = true; \
+    } else { \
+      mb_utf8 = false; \
+    }
+
+  #define COL_ADD(var, val) var = (wp->w_p_rl) ? var - val : var + val;
+
+  #define LEFT_COL() (wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol)
+
   if (startrow > endrow)                /* past the end already! */
     return startrow;
 
@@ -2472,13 +2490,9 @@ win_line (
    * 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
    * first character to be displayed.
    */
-  if (wp->w_p_wrap)
-    v = wp->w_skipcol;
-  else
-    v = wp->w_leftcol;
-  if (v > 0) {
+  if (LEFT_COL() > 0) {
     char_u  *prev_ptr = ptr;
-    while (vcol < v && *ptr != NUL) {
+    while (vcol < LEFT_COL() && *ptr != NUL) {
       c = win_lbr_chartabsize(wp, line, ptr, (colnr_T)vcol, NULL);
       vcol += c;
       prev_ptr = ptr;
@@ -2491,19 +2505,19 @@ win_line (
     // - 'virtualedit' is set, or
     // - the visual mode is active,
     // the end of the line may be before the start of the displayed part.
-    if (vcol < v && (wp->w_p_cuc
+    if (vcol < LEFT_COL() && (wp->w_p_cuc
                      || draw_color_col
                      || virtual_active()
                      || (VIsual_active && wp->w_buffer == curwin->w_buffer))) {
-      vcol = v;
+      vcol = LEFT_COL();
     }
 
     /* Handle a character that's not completely on the screen: Put ptr at
      * that character but skip the first few screen characters. */
-    if (vcol > v) {
+    if (vcol > LEFT_COL()) {
       vcol -= c;
       ptr = prev_ptr;
-      n_skip = v - vcol;
+      n_skip = LEFT_COL() - vcol;
     }
 
     /*
@@ -3036,38 +3050,23 @@ win_line (
      */
     if (n_extra > 0) {
       if (c_extra != NUL) {
-        c = c_extra;
-        mb_c = c;               /* doesn't handle non-utf-8 multi-byte! */
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = true;
-          u8cc[0] = 0;
-          c = 0xc0;
-        } else
-          mb_utf8 = false;
+        SET_CHAR(c_extra)
       } else {
         c = *p_extra;
         if (has_mbyte) {
           mb_c = c;
-          if (enc_utf8) {
-            /* If the UTF-8 character is more than one byte:
-             * Decode it into "mb_c". */
-            mb_l = (*mb_ptr2len)(p_extra);
-            mb_utf8 = false;
-            if (mb_l > n_extra)
-              mb_l = 1;
-            else if (mb_l > 1) {
-              mb_c = utfc_ptr2char(p_extra, u8cc);
-              mb_utf8 = true;
-              c = 0xc0;
-            }
-          } else {
-            /* if this is a DBCS character, put it in "mb_c" */
-            mb_l = MB_BYTE2LEN(c);
-            if (mb_l >= n_extra)
-              mb_l = 1;
-            else if (mb_l > 1)
-              mb_c = (c << 8) + p_extra[1];
+          /* If the UTF-8 character is more than one byte:
+            * Decode it into "mb_c". */
+          mb_l = (*mb_ptr2len)(p_extra);
+          mb_utf8 = false;
+          if (mb_l > n_extra)
+            mb_l = 1;
+          else if (mb_l > 1) {
+            mb_c = utfc_ptr2char(p_extra, u8cc);
+            mb_utf8 = true;
+            c = 0xc0;
           }
+
           if (mb_l == 0)            /* at the NUL at end-of-line */
             mb_l = 1;
 
@@ -3077,10 +3076,7 @@ win_line (
                 wp->w_p_rl ? (col <= 0) :
                 (col >= wp->w_width - 1))
               && (*mb_char2cells)(mb_c) == 2) {
-            c = '>';
-            mb_c = c;
-            mb_l = 1;
-            mb_utf8 = false;
+            SET_CHAR('>')
             multi_attr = hl_attr(HLF_AT);
             /* put the pointer back to output the double-width
              * character at the start of the next line. */
@@ -3215,10 +3211,7 @@ win_line (
               wp->w_p_rl ? (col <= 0) :
               (col >= wp->w_width - 1))
             && (*mb_char2cells)(mb_c) == 2) {
-          c = '>';
-          mb_c = c;
-          mb_utf8 = false;
-          mb_l = 1;
+          SET_CHAR('>')
           multi_attr = hl_attr(HLF_AT);
           /* Put pointer back so that the character will be
            * displayed at the start of the next line. */
@@ -3408,32 +3401,17 @@ win_line (
                   || (mb_utf8 && (mb_c == 160 || mb_c == 0x202f)))
                  && lcs_nbsp)
                 || (c == ' ' && lcs_space && ptr - line <= trailcol))) {
-          c = (c == ' ') ? lcs_space : lcs_nbsp;
           n_attr = 1;
           extra_attr = hl_attr(HLF_0);
           saved_attr2 = char_attr;  // save current attr
-          mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = true;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else {
-            mb_utf8 = false;
-          }
+          SET_CHAR((c == ' ') ? lcs_space : lcs_nbsp)
         }
 
         if (trailcol != MAXCOL && ptr > line + trailcol && c == ' ') {
-          c = lcs_trail;
           n_attr = 1;
           extra_attr = hl_attr(HLF_0);
           saved_attr2 = char_attr;  // save current attr
-          mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = true;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else
-            mb_utf8 = false;
+          SET_CHAR(lcs_trail)
         }
       }
 
@@ -3517,9 +3495,7 @@ win_line (
             }
           }
 
-          mb_utf8 = false;  // don't draw as UTF-8
           if (wp->w_p_list) {
-            c = lcs_tab1;
             if (wp->w_p_lbr) {
               c_extra = NUL; /* using p_extra from above */
             } else {
@@ -3528,15 +3504,12 @@ win_line (
             n_attr = tab_len + 1;
             extra_attr = hl_attr(HLF_0);
             saved_attr2 = char_attr;  // save current attr
-            mb_c = c;
-            if (enc_utf8 && (*mb_char2len)(c) > 1) {
-              mb_utf8 = true;
-              u8cc[0] = 0;
-              c = 0xc0;
-            }
+
+            SET_CHAR(lcs_tab1)
           } else {
             c_extra = ' ';
             c = ' ';
+            mb_utf8 = false;  // don't draw as UTF-8
           }
         } else if (c == NUL
                    && (wp->w_p_list
@@ -3566,22 +3539,13 @@ win_line (
               c_extra = NUL;
             }
           }
-          if (wp->w_p_list && lcs_eol > 0) {
-            c = lcs_eol;
-          } else {
-            c = ' ';
-          }
           lcs_eol_one = -1;
           ptr--;  // put it back at the NUL
           extra_attr = hl_attr(HLF_AT);
           n_attr = 1;
-          mb_c = c;
-          if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = true;
-            u8cc[0] = 0;
-            c = 0xc0;
-          } else
-            mb_utf8 = false;                    /* don't draw as UTF-8 */
+
+          SET_CHAR((wp->w_p_list && lcs_eol > 0) ? lcs_eol : ' ')
+
         } else if (c != NUL) {
           p_extra = transchar(c);
           if (n_extra == 0) {
@@ -3674,13 +3638,8 @@ win_line (
             vcol_off += n_extra;
           vcol += n_extra;
           if (wp->w_p_wrap && n_extra > 0) {
-            if (wp->w_p_rl) {
-              col -= n_extra;
-              boguscols -= n_extra;
-            } else {
-              boguscols += n_extra;
-              col += n_extra;
-            }
+            COL_ADD(col, n_extra)
+            COL_ADD(boguscols, n_extra)
           }
           n_extra = 0;
           n_attr = 0;
@@ -3688,13 +3647,8 @@ win_line (
           is_concealing = true;
           n_skip = 1;
         }
-        mb_c = c;
-        if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = true;
-          u8cc[0] = 0;
-          c = 0xc0;
-        } else
-          mb_utf8 = false;              /* don't draw as UTF-8 */
+
+        SET_CHAR(C)
       } else {
         prev_syntax_id = 0;
         is_concealing = false;
@@ -3728,13 +3682,12 @@ win_line (
      */
     if (lcs_prec_todo != NUL
         && wp->w_p_list
-        && (wp->w_p_wrap ? wp->w_skipcol > 0 : wp->w_leftcol > 0)
+        && LEFT_COL() > 0
         && filler_todo <= 0
         && draw_state > WL_NR
         && c != NUL) {
-      c = lcs_prec;
       lcs_prec_todo = NUL;
-      if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
+      if (MB_IS_WIDE()) {
         /* Double-width character being overwritten by the "precedes"
          * character, need to fill up half the character. */
         c_extra = MB_FILLER_CHAR;
@@ -3742,14 +3695,7 @@ win_line (
         n_attr = 2;
         extra_attr = hl_attr(HLF_AT);
       }
-      mb_c = c;
-      if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = true;
-        u8cc[0] = 0;
-        c = 0xc0;
-      } else {
-        mb_utf8 = false;  // don't draw as UTF-8
-      }
+      SET_CHAR(lcs_prec)
       saved_attr3 = char_attr;  // save current attr
       char_attr = hl_attr(HLF_AT);  // later copied to char_attr
       n_attr3 = 1;
@@ -3762,7 +3708,7 @@ win_line (
       long prevcol = (long)(ptr - line) - (c == NUL);
 
       /* we're not really at that column when skipping some text */
-      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
+      if ((long)LEFT_COL() > prevcol)
         ++prevcol;
 
       // Invert at least one char, used for Visual and empty line or
@@ -3836,13 +3782,8 @@ win_line (
           }
         }
         ScreenAttrs[off] = char_attr;
-        if (wp->w_p_rl) {
-          --col;
-          --off;
-        } else {
-          ++col;
-          ++off;
-        }
+        COL_ADD(col, 1)
+        COL_ADD(off, 1)
         ++vcol;
         eol_hl_off = 1;
       }
@@ -3861,14 +3802,13 @@ win_line (
       }
 
       /* Highlight 'cursorcolumn' & 'colorcolumn' past end of the line. */
-      if (wp->w_p_wrap)
-        v = wp->w_skipcol;
-      else
-        v = wp->w_leftcol;
+
+      long left_margin = LEFT_COL() + col - win_col_off(wp)
 
       /* check if line ends before left margin */
-      if (vcol < v + col - win_col_off(wp))
-        vcol = v + col - win_col_off(wp);
+      if (vcol < left_margin)
+        vcol = left_margin;
+
       /* Get rid of the boguscols now, we want to draw until the right
        * edge for 'cursorcolumn'. */
       col -= boguscols;
@@ -3880,7 +3820,7 @@ win_line (
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
-            wp->w_width * (row - startrow + 1) + v
+            wp->w_width * (row - startrow + 1) + LEFT_COL()
             && lnum != wp->w_cursor.lnum)
            || draw_color_col)
           && !wp->w_p_rl
@@ -3958,15 +3898,8 @@ win_line (
         && (*ptr != NUL
             || (wp->w_p_list && lcs_eol_one > 0)
             || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
-      c = lcs_ext;
       char_attr = hl_attr(HLF_AT);
-      mb_c = c;
-      if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = true;
-        u8cc[0] = 0;
-        c = 0xc0;
-      } else
-        mb_utf8 = false;
+      SET_CHAR(lcs_ext)
     }
 
     /* advance to the next 'colorcolumn' */
@@ -3998,7 +3931,7 @@ win_line (
       /*
        * Store the character.
        */
-      if (has_mbyte && wp->w_p_rl && (*mb_char2cells)(mb_c) > 1) {
+      if (wp->w_p_rl && MB_IS_WIDE()) {
         /* A double-wide character is: put first halve in left cell. */
         --off;
         --col;
@@ -4029,7 +3962,7 @@ win_line (
       } else
         ScreenAttrs[off] = char_attr;
 
-      if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
+      if (MB_IS_WIDE()) {
         // Need to fill two screen columns.
         off++;
         col++;
@@ -4054,13 +3987,8 @@ win_line (
           --col;
         }
       }
-      if (wp->w_p_rl) {
-        --off;
-        --col;
-      } else {
-        ++off;
-        ++col;
-      }
+      COL_ADD(off, 1)
+      COL_ADD(col, 1)
     } else if (wp->w_p_cole > 0 && is_concealing) {
       --n_skip;
       ++vcol_off;
@@ -4082,36 +4010,19 @@ win_line (
          */
         if (n_extra > 0) {
           vcol += n_extra;
-          if (wp->w_p_rl) {
-            col -= n_extra;
-            boguscols -= n_extra;
-          } else {
-            col += n_extra;
-            boguscols += n_extra;
-          }
+          COL_ADD(col, n_extra);
+          COL_ADD(boguscols, n_extra);
           n_extra = 0;
           n_attr = 0;
         }
 
 
-        if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
-          /* Need to fill two screen columns. */
-          if (wp->w_p_rl) {
-            --boguscols;
-            --col;
-          } else {
-            ++boguscols;
-            ++col;
-          }
-        }
+        /* Need to fill two screen columns? */
+        int n = MB_IS_WIDE() ? 2 : 1
 
-        if (wp->w_p_rl) {
-          --boguscols;
-          --col;
-        } else {
-          ++boguscols;
-          ++col;
-        }
+        COL_ADD(boguscols, n);
+        COL_ADD(col, n);
+
       } else {
         if (n_extra > 0) {
           vcol += n_extra;
