@@ -915,9 +915,20 @@ bool os_term_is_nice(void)
   return true;
 #else
   const char *vte_version = os_getenv("VTE_VERSION");
-  return (vte_version && atoi(vte_version) >= 3900)
-    || NULL != os_getenv("KONSOLE_PROFILE_NAME")
-    || NULL != os_getenv("KONSOLE_DBUS_SESSION");
+  if ((vte_version && atoi(vte_version) >= 3900)
+      || os_getenv("KONSOLE_PROFILE_NAME")
+      || os_getenv("KONSOLE_DBUS_SESSION")) {
+    return true;
+  }
+  const char *termprg = os_getenv("TERM_PROGRAM");
+  if (termprg && striequal(termprg, "iTerm.app")) {
+    return true;
+  }
+  const char *term = os_getenv("TERM");
+  if (term && strncmp(term, "rxvt", 4) == 0) {
+    return true;
+  }
+  return false;
 #endif
 }
 
