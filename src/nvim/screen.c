@@ -2134,25 +2134,25 @@ win_line (
 
   int fromcol, tocol;                   /* start/end of inverting */
   int fromcol_prev = -2;                /* start of inverting after cursor */
-  int noinvcur = FALSE;                 /* don't invert the cursor */
+  bool noinvcur = false;                /* don't invert the cursor */
   pos_T       *top, *bot;
-  int lnum_in_visual_area = FALSE;
+  bool lnum_in_visual_area = false;
   pos_T pos;
   long v;
 
   int char_attr = 0;                    /* attributes for next character */
-  int attr_pri = FALSE;                 /* char_attr has priority */
-  int area_highlighting = FALSE;           /* Visual or incsearch highlighting
+  bool attr_pri = false;                /* char_attr has priority */
+  bool area_highlighting = false;       /* Visual or incsearch highlighting
                                               in this line */
   int attr = 0;                         /* attributes for area highlighting */
   int area_attr = 0;                    /* attributes desired by highlighting */
   int search_attr = 0;                  /* attributes desired by 'hlsearch' */
   int vcol_save_attr = 0;               /* saved attr for 'cursorcolumn' */
   int syntax_attr = 0;                  /* attributes desired by syntax */
-  int has_syntax = FALSE;               /* this buffer has syntax highl. */
+  bool has_syntax = false;              /* this buffer has syntax highl. */
   int save_did_emsg;
   int eol_hl_off = 0;                   /* 1 if highlighted char after EOL */
-  int draw_color_col = FALSE;           /* highlight colorcolumn */
+  bool draw_color_col = false;           /* highlight colorcolumn */
   int         *color_cols = NULL;       /* pointer to according columns array */
   bool has_spell = false;               /* this buffer has spell checking */
 # define SPWORDLEN 150
@@ -2172,7 +2172,7 @@ win_line (
   int multi_attr = 0;                   /* attributes desired by multibyte */
   int mb_l = 1;                         /* multi-byte byte length */
   int mb_c = 0;                         /* decoded multi-byte character */
-  int mb_utf8 = FALSE;                  /* screen char is UTF-8 char */
+  bool mb_utf8 = false;                 /* screen char is UTF-8 char */
   int u8cc[MAX_MCO];                    /* composing UTF-8 chars */
   int filler_lines;                     /* nr of filler lines to be drawn */
   int filler_todo;                      /* nr of filler lines still to do + 1 */
@@ -2180,7 +2180,7 @@ win_line (
   int change_start = MAXCOL;            /* first col of changed area */
   int change_end = -1;                  /* last col of changed area */
   colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
-  int need_showbreak = FALSE;
+  bool need_showbreak = false;
   int line_attr = 0;                    /* attribute for the whole line */
   matchitem_T *cur;                     /* points to the match list */
   match_T     *shl;                     /* points to search_hl or a match */
@@ -2200,20 +2200,20 @@ win_line (
 
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
-# define WL_CMDLINE     WL_START + 1    /* cmdline window column */
-# define WL_FOLD        WL_CMDLINE + 1  /* 'foldcolumn' */
-# define WL_SIGN        WL_FOLD + 1     /* column for signs */
-#define WL_NR           WL_SIGN + 1     /* line number */
-# define WL_BRI         WL_NR + 1       /* 'breakindent' */
-# define WL_SBR         WL_BRI + 1       /* 'showbreak' or 'diff' */
-#define WL_LINE         WL_SBR + 1      /* text in the line */
+#define WL_CMDLINE      1              /* cmdline window column */
+#define WL_FOLD         2              /* 'foldcolumn' */
+#define WL_SIGN         3              /* column for signs */
+#define WL_NR           4               /* line number */
+#define WL_BRI          5              /* 'breakindent' */
+#define WL_SBR          6               /* 'showbreak' or 'diff' */
+#define WL_LINE         7               /* text in the line */
   int draw_state = WL_START;            /* what to draw next */
 
   int syntax_flags    = 0;
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
   int conceal_attr    = hl_attr(HLF_CONCEAL);
-  int is_concealing   = false;
+  bool is_concealing  = false;
   int boguscols       = 0;              ///< nonexistent columns added to
                                         ///< force wrapping
   int vcol_off        = 0;              ///< offset for concealed characters
@@ -2253,8 +2253,8 @@ win_line (
       wp->w_s->b_syn_error = TRUE;
     else {
       did_emsg = save_did_emsg;
-      has_syntax = TRUE;
-      extra_check = TRUE;
+      has_syntax = true;
+      extra_check = true;
     }
   }
 
@@ -2274,7 +2274,7 @@ win_line (
       && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
     /* Prepare for spell checking. */
     has_spell = true;
-    extra_check = TRUE;
+    extra_check = true;
 
     /* Get the start of the next line, so that words that wrap to the next
      * line are found too: "et<line-break>al.".
@@ -2356,11 +2356,11 @@ win_line (
     /* Check if the character under the cursor should not be inverted */
     if (!highlight_match && lnum == curwin->w_cursor.lnum && wp == curwin
         )
-      noinvcur = TRUE;
+      noinvcur = true;
 
     /* if inverting in this line set area_highlighting */
     if (fromcol >= 0) {
-      area_highlighting = TRUE;
+      area_highlighting = true;
       attr = hl_attr(HLF_V);
     }
   }
@@ -2385,7 +2385,7 @@ win_line (
     /* do at least one character; happens when past end of line */
     if (fromcol == tocol)
       tocol = fromcol + 1;
-    area_highlighting = TRUE;
+    area_highlighting = true;
     attr = hl_attr(HLF_I);
   }
 
@@ -2401,7 +2401,7 @@ win_line (
     } else
       diff_hlf = HLF_ADD;               /* added line */
     filler_lines = 0;
-    area_highlighting = TRUE;
+    area_highlighting = true;
   }
   if (lnum == wp->w_topline)
     filler_lines = wp->w_topfill;
@@ -2517,7 +2517,7 @@ win_line (
 
     /* When w_skipcol is non-zero, first line needs 'showbreak' */
     if (wp->w_p_wrap)
-      need_showbreak = TRUE;
+      need_showbreak = true;
     /* When spell checking a word we need to figure out the start of the
      * word and if it's badly spelled or not. */
     if (has_spell) {
@@ -2824,7 +2824,7 @@ win_line (
           c_extra = NUL;
           n_extra = (int)STRLEN(p_sbr);
           char_attr = hl_attr(HLF_AT);
-          need_showbreak = FALSE;
+          need_showbreak = false;
           vcol_sbr = vcol + MB_CHARLEN(p_sbr);
           /* Correct end of highlighted area for 'showbreak',
            * required when 'linebreak' is also set. */
@@ -3015,7 +3015,7 @@ win_line (
                                   || vcol >= tocol))
         char_attr = line_attr;
       else {
-        attr_pri = FALSE;
+        attr_pri = false;
         if (has_syntax)
           char_attr = syntax_attr;
         else
@@ -3039,11 +3039,11 @@ win_line (
         c = c_extra;
         mb_c = c;               /* doesn't handle non-utf-8 multi-byte! */
         if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
+          mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
         } else
-          mb_utf8 = FALSE;
+          mb_utf8 = false;
       } else {
         c = *p_extra;
         if (has_mbyte) {
@@ -3052,12 +3052,12 @@ win_line (
             /* If the UTF-8 character is more than one byte:
              * Decode it into "mb_c". */
             mb_l = (*mb_ptr2len)(p_extra);
-            mb_utf8 = FALSE;
+            mb_utf8 = false;
             if (mb_l > n_extra)
               mb_l = 1;
             else if (mb_l > 1) {
               mb_c = utfc_ptr2char(p_extra, u8cc);
-              mb_utf8 = TRUE;
+              mb_utf8 = true;
               c = 0xc0;
             }
           } else {
@@ -3080,7 +3080,7 @@ win_line (
             c = '>';
             mb_c = c;
             mb_l = 1;
-            mb_utf8 = FALSE;
+            mb_utf8 = false;
             multi_attr = hl_attr(HLF_AT);
             /* put the pointer back to output the double-width
              * character at the start of the next line. */
@@ -3109,14 +3109,14 @@ win_line (
           /* If the UTF-8 character is more than one byte: Decode it
            * into "mb_c". */
           mb_l = (*mb_ptr2len)(ptr);
-          mb_utf8 = FALSE;
+          mb_utf8 = false;
           if (mb_l > 1) {
             mb_c = utfc_ptr2char(ptr, u8cc);
             /* Overlong encoded ASCII or ASCII with composing char
              * is displayed normally, except a NUL. */
             if (mb_c < 0x80)
               c = mb_c;
-            mb_utf8 = TRUE;
+            mb_utf8 = true;
 
             /* At start of the line we can have a composing char.
              * Draw it as a space with a composing char. */
@@ -3217,7 +3217,7 @@ win_line (
             && (*mb_char2cells)(mb_c) == 2) {
           c = '>';
           mb_c = c;
-          mb_utf8 = FALSE;
+          mb_utf8 = false;
           mb_l = 1;
           multi_attr = hl_attr(HLF_AT);
           /* Put pointer back so that the character will be
@@ -3239,7 +3239,7 @@ win_line (
             saved_attr2 = char_attr;             /* save current attr */
           }
           mb_c = c;
-          mb_utf8 = FALSE;
+          mb_utf8 = false;
           mb_l = 1;
         }
 
@@ -3264,7 +3264,7 @@ win_line (
 
           if (did_emsg) {
             wp->w_s->b_syn_error = TRUE;
-            has_syntax = FALSE;
+            has_syntax = false;
           } else
             did_emsg = save_did_emsg;
 
@@ -3429,11 +3429,11 @@ win_line (
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = TRUE;
+            mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
           } else
-            mb_utf8 = FALSE;
+            mb_utf8 = false;
         }
       }
 
@@ -3517,7 +3517,7 @@ win_line (
             }
           }
 
-          mb_utf8 = (int)false;  // don't draw as UTF-8
+          mb_utf8 = false;  // don't draw as UTF-8
           if (wp->w_p_list) {
             c = lcs_tab1;
             if (wp->w_p_lbr) {
@@ -3530,7 +3530,7 @@ win_line (
             saved_attr2 = char_attr;  // save current attr
             mb_c = c;
             if (enc_utf8 && (*mb_char2len)(c) > 1) {
-              mb_utf8 = TRUE;
+              mb_utf8 = true;
               u8cc[0] = 0;
               c = 0xc0;
             }
@@ -3577,11 +3577,11 @@ win_line (
           n_attr = 1;
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
-            mb_utf8 = TRUE;
+            mb_utf8 = true;
             u8cc[0] = 0;
             c = 0xc0;
           } else
-            mb_utf8 = FALSE;                    /* don't draw as UTF-8 */
+            mb_utf8 = false;                    /* don't draw as UTF-8 */
         } else if (c != NUL) {
           p_extra = transchar(c);
           if (n_extra == 0) {
@@ -3685,19 +3685,19 @@ win_line (
           n_extra = 0;
           n_attr = 0;
         } else if (n_skip == 0) {
-          is_concealing = TRUE;
+          is_concealing = true;
           n_skip = 1;
         }
         mb_c = c;
         if (enc_utf8 && (*mb_char2len)(c) > 1) {
-          mb_utf8 = TRUE;
+          mb_utf8 = true;
           u8cc[0] = 0;
           c = 0xc0;
         } else
-          mb_utf8 = FALSE;              /* don't draw as UTF-8 */
+          mb_utf8 = false;              /* don't draw as UTF-8 */
       } else {
         prev_syntax_id = 0;
-        is_concealing = FALSE;
+        is_concealing = false;
       }
     }
 
@@ -3744,7 +3744,7 @@ win_line (
       }
       mb_c = c;
       if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = TRUE;
+        mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
       } else {
@@ -3962,11 +3962,11 @@ win_line (
       char_attr = hl_attr(HLF_AT);
       mb_c = c;
       if (enc_utf8 && (*mb_char2len)(c) > 1) {
-        mb_utf8 = TRUE;
+        mb_utf8 = true;
         u8cc[0] = 0;
         c = 0xc0;
       } else
-        mb_utf8 = FALSE;
+        mb_utf8 = false;
     }
 
     /* advance to the next 'colorcolumn' */
@@ -4246,7 +4246,7 @@ win_line (
       n_extra = 0;
       lcs_prec_todo = lcs_prec;
       if (filler_todo <= 0)
-        need_showbreak = TRUE;
+        need_showbreak = true;
       --filler_todo;
       /* When the filler lines are actually below the last line of the
        * file, don't draw the line itself, break here. */
