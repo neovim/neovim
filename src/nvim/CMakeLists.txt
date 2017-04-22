@@ -457,7 +457,6 @@ set(NO_SINGLE_CHECK_HEADERS
   undo.h
   undo_defs.h
   version.h
-  window.h
 )
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)
