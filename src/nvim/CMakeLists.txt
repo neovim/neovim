@@ -449,7 +449,6 @@ set(NO_SINGLE_CHECK_HEADERS
   terminal.h
   tui/tui.h
   ugrid.h
-  ui_bridge.h
   undo.h
   undo_defs.h
 )
