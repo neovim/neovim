@@ -3832,7 +3832,8 @@ win_line (
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
-            wp->w_width * (row - startrow + 1) + LEFT_COL()
+                  wp->w_width * (row - startrow + 1)
+                  + ((wp->w_p_wrap) ? wp->w_skipcol : wp->w_leftcol)
             && !is_cursor_line)
            || draw_color_col)
           && !wp->w_p_rl
