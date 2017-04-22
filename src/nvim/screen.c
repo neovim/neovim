@@ -2071,6 +2071,147 @@ fill_foldcolumn (
   }
 }
 
+
+static int get_column_diff_until_eol(win_T* wp, int col) {
+  return (wp->w_p_rl ? col : wp->w_width - 1 - col);
+}
+
+static bool character_fits_at_col(int mb_c, int col, win_T* wp) {
+  return !((wp->w_p_rl ? (col <= 0) : (col >= wp->w_width - 1))
+           && (*mb_char2cells)(mb_c) == 2);
+}
+
+static bool should_conceal_line(win_T* wp, linenr_T lnum, bool lnum_in_visual_area) {
+  return (wp->w_p_cole > 0
+          && (wp != curwin || lnum != wp->w_cursor.lnum || conceal_cursor_line(wp))
+          && !(lnum_in_visual_area && vim_strchr(wp->w_p_cocu, 'v') == NULL));
+}
+
+static bool should_correct_column(win_T* wp, linenr_T lnum, int col) {
+  return (curwin == wp
+          && lnum == wp->w_cursor.lnum
+          && conceal_cursor_line(wp)
+          && (int)wp->w_virtcol <= col);
+}
+
+static bool init_syntax(int lnum, win_T* wp) {
+  int save_did_emsg;
+  if (syntax_present(wp) && !wp->w_s->b_syn_error) {
+    save_did_emsg = did_emsg;
+    did_emsg = FALSE;
+    syntax_start(wp, lnum); // Prepare for syntax highlighting in this line.
+    if (did_emsg) {         // On error, stop syntax highlighting.
+      wp->w_s->b_syn_error = TRUE;
+    } else {
+      did_emsg = save_did_emsg;
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool can_spell(win_T* wp) {
+  return (wp->w_p_spell
+          && *wp->w_s->b_p_spl != NUL
+          && !GA_EMPTY(&wp->w_s->b_langp)
+          && *(char **)(wp->w_s->b_langp.ga_data) != NULL);
+}
+
+struct VisualPos {
+  int from;
+  int to;
+  bool in_visual;
+  pos_T pos;
+};
+
+static struct VisualPos init_visual(int lnum, win_T* wp) {
+  struct VisualPos res = {
+    .from = -10,
+    .to = MAXCOL,
+    .in_visual = false,
+    .pos = { 0 }
+  };
+
+  pos_T *top, *bot;
+
+  // Visual is after curwin->w_cursor
+  if (ltoreq(curwin->w_cursor, VIsual)) {
+    top = &curwin->w_cursor;
+    bot = &VIsual;
+  }
+  // Visual is before curwin->w_cursor */
+  else {
+    top = &VIsual;
+    bot = &curwin->w_cursor;
+  }
+
+  res.in_visual = (lnum >= top->lnum && lnum <= bot->lnum);
+
+  // block mode
+  if (VIsual_mode == Ctrl_V) {
+    if (res.in_visual) {
+      res.from = wp->w_old_cursor_fcol;
+      res.to   = wp->w_old_cursor_lcol;
+    }
+  } // non-block mode
+  else {
+    if (lnum > top->lnum && lnum <= bot->lnum) {
+      res.from = 0;
+    } else if (lnum == top->lnum) {
+      if (VIsual_mode == 'V') { // linewise
+        res.from = 0;
+      } else {
+        getvvcol(wp, top, (colnr_T *)&res.from, NULL, NULL);
+        if (gchar_pos(top) == NUL)
+          res.to = res.from + 1;
+      }
+    }
+    if (VIsual_mode != 'V' && lnum == bot->lnum) {
+      if (*p_sel == 'e' && bot->col == 0 && bot->coladd == 0) {
+        res.from = -10;
+        res.to = MAXCOL;
+      } else if (bot->col == MAXCOL) {
+        res.to = MAXCOL;
+      } else {
+        res.pos = *bot;
+        if (*p_sel == 'e') {
+          getvvcol(wp, &res.pos, (colnr_T *)&res.to, NULL, NULL);
+        } else {
+          getvvcol(wp, &res.pos, NULL, NULL, (colnr_T *)&res.to);
+          res.to++;
+        }
+      }
+    }
+  }
+
+  return res;
+}
+
+static void write_char(int c, int mb_c, int mb_utf8, int attr, unsigned off, int *u8cc) {
+  ScreenLines[off] = c;
+
+  if (mb_utf8) {
+    ScreenLinesUC[off] = mb_c;
+    if ((c & 0xff) == 0)
+      ScreenLines[off] = 0x80;               // avoid storing zero
+
+    for (int i = 0; i < Screen_mco; ++i) {
+      ScreenLinesC[i][off] = u8cc[i];
+      if (u8cc[i] == 0)
+        break;
+    }
+  } else {
+    ScreenLinesUC[off] = 0;
+  }
+
+  if ((*mb_char2cells)(mb_c) > 1) {
+    ScreenLines[off + 1] = 0;
+  }
+
+  ScreenAttrs[off] = attr;
+}
+
+
 /*
  * Display line "lnum" of window 'wp' on the screen.
  * Start at row "startrow", stop when "endrow" is reached.
@@ -2125,7 +2266,6 @@ win_line (
   int fromcol, tocol;                   // start/end of inverting
   int fromcol_prev = -2;                // start of inverting after cursor
   bool noinvcur = false;                // don't invert the cursor
-  pos_T *top, *bot;
   bool lnum_in_visual_area = false;
   pos_T pos;
 
@@ -2260,19 +2400,9 @@ win_line (
    * trailing white space and/or syntax processing to be done.
    */
   extra_check = wp->w_p_lbr;
-  if (syntax_present(wp) && !wp->w_s->b_syn_error) {
-    /* Prepare for syntax highlighting in this line.  When there is an
-     * error, stop syntax highlighting. */
-    save_did_emsg = did_emsg;
-    did_emsg = FALSE;
-    syntax_start(wp, lnum);
-    if (did_emsg)
-      wp->w_s->b_syn_error = TRUE;
-    else {
-      did_emsg = save_did_emsg;
-      has_syntax = true;
-      extra_check = true;
-    }
+  if (init_syntax(lnum, wp)) {
+    has_syntax = true;
+    extra_check = true;
   }
 
   if (bufhl_start_line(wp->w_buffer, lnum, &bufhl_info)) {
@@ -2285,10 +2415,7 @@ win_line (
   if (color_cols != NULL)
     draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
 
-  if (wp->w_p_spell
-      && *wp->w_s->b_p_spl != NUL
-      && !GA_EMPTY(&wp->w_s->b_langp)
-      && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
+  if (can_spell(wp)) {
     /* Prepare for spell checking. */
     has_spell = true;
     extra_check = true;
@@ -2324,51 +2451,11 @@ win_line (
   fromcol = -10;
   tocol = MAXCOL;
   if (VIsual_active && is_current_buffer) {
-    /* Visual is after curwin->w_cursor */
-    if (ltoreq(curwin->w_cursor, VIsual)) {
-      top = &curwin->w_cursor;
-      bot = &VIsual;
-    } else {                          /* Visual is before curwin->w_cursor */
-      top = &VIsual;
-      bot = &curwin->w_cursor;
-    }
-    lnum_in_visual_area = (lnum >= top->lnum && lnum <= bot->lnum);
-    if (VIsual_mode == Ctrl_V) {        /* block mode */
-      if (lnum_in_visual_area) {
-        fromcol = wp->w_old_cursor_fcol;
-        tocol = wp->w_old_cursor_lcol;
-      }
-    } else {                          /* non-block mode */
-      if (lnum > top->lnum && lnum <= bot->lnum)
-        fromcol = 0;
-      else if (lnum == top->lnum) {
-        if (VIsual_mode == 'V')         /* linewise */
-          fromcol = 0;
-        else {
-          getvvcol(wp, top, (colnr_T *)&fromcol, NULL, NULL);
-          if (gchar_pos(top) == NUL)
-            tocol = fromcol + 1;
-        }
-      }
-      if (VIsual_mode != 'V' && lnum == bot->lnum) {
-        if (*p_sel == 'e' && bot->col == 0
-            && bot->coladd == 0
-            ) {
-          fromcol = -10;
-          tocol = MAXCOL;
-        } else if (bot->col == MAXCOL)
-          tocol = MAXCOL;
-        else {
-          pos = *bot;
-          if (*p_sel == 'e')
-            getvvcol(wp, &pos, (colnr_T *)&tocol, NULL, NULL);
-          else {
-            getvvcol(wp, &pos, NULL, NULL, (colnr_T *)&tocol);
-            ++tocol;
-          }
-        }
-      }
-    }
+
+    struct VisualPos v = init_visual(lnum, wp);
+    tocol = v.to;
+    fromcol = v.from;
+    lnum_in_visual_area = v.in_visual;
 
     /* Check if the character under the cursor should not be inverted */
     if (!highlight_match && is_current_cursor_line && is_current_window)
@@ -2392,7 +2479,7 @@ win_line (
           (colnr_T *)&fromcol, NULL, NULL);
     else
       fromcol = 0;
-    if (is_current_cursor_line + search_match_lines) {
+    if (lnum == curwin->w_cursor.lnum + search_match_lines) {
       pos.lnum = lnum;
       pos.col = search_match_endcol;
       getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
@@ -3070,10 +3157,7 @@ win_line (
 
           /* If a double-width char doesn't fit display a '>' in the
            * last column. */
-          if ((
-                wp->w_p_rl ? (col <= 0) :
-                (col >= wp->w_width - 1))
-              && (*mb_char2cells)(mb_c) == 2) {
+          if (!character_fits_at_col(mb_c, col, wp)) {
             SET_CHAR('>')
             multi_attr = hl_attr(HLF_AT);
             /* put the pointer back to output the double-width
@@ -3174,10 +3258,7 @@ win_line (
         /* If a double-width char doesn't fit display a '>' in the
          * last column; the character is displayed at the start of the
          * next line. */
-        if ((
-              wp->w_p_rl ? (col <= 0) :
-              (col >= wp->w_width - 1))
-            && (*mb_char2cells)(mb_c) == 2) {
+        if (!character_fits_at_col(mb_c, col, wp)) {
           SET_CHAR('>')
           multi_attr = hl_attr(HLF_AT);
           /* Put pointer back so that the character will be
@@ -3480,9 +3561,7 @@ win_line (
                        || ((fromcol >= 0 || fromcol_prev >= 0)
                            && tocol > vcol
                            && VIsual_mode != Ctrl_V
-                           && (
-                             wp->w_p_rl ? (col >= 0) :
-                             (col < wp->w_width))
+                           && (get_column_diff_until_eol(wp, 0) >= 0)
                            && !(noinvcur
                                 && is_cursor_line
                                 && (colnr_T)vcol == wp->w_virtcol)))
@@ -3573,12 +3652,9 @@ win_line (
         }
       }
 
-      if (wp->w_p_cole > 0
-          && (!is_current_window || !is_cursor_line
-              || conceal_cursor_line(wp))
-          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)
-          && !(lnum_in_visual_area
-               && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
+      if (should_conceal_line(wp, lnum, lnum_in_visual_area)
+          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)) {
+
         char_attr = conceal_attr;
         if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1)
             && (syn_get_sub_char() != NUL || match_conc
@@ -3622,9 +3698,7 @@ win_line (
     /* In the cursor line and we may be concealing characters: correct
      * the cursor column when we reach its position. */
     if (!did_wcol && draw_state == WL_LINE
-        && is_current_window && is_cursor_line
-        && conceal_cursor_line(wp)
-        && (int)wp->w_virtcol <= vcol + n_skip) {
+        && should_correct_column(wp, lnum, vcol + n_skip)) {
       if (wp->w_p_rl) {
         wp->w_wcol = wp->w_width - col + boguscols - 1;
       } else {
@@ -3852,9 +3926,7 @@ win_line (
     if (lcs_ext
         && !wp->w_p_wrap
         && filler_todo <= 0
-        && (
-          wp->w_p_rl ? col == 0 :
-          col == wp->w_width - 1)
+        && (get_column_diff_until_eol(wp, col) == 0)
         && (*ptr != NUL
             || (wp->w_p_list && lcs_eol_one > 0)
             || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
@@ -3896,33 +3968,20 @@ win_line (
         --off;
         --col;
       }
-      ScreenLines[off] = c;
-      if (mb_utf8) {
-        int i;
 
-        ScreenLinesUC[off] = mb_c;
-        if ((c & 0xff) == 0)
-          ScreenLines[off] = 0x80;               // avoid storing zero
-        for (i = 0; i < Screen_mco; ++i) {
-          ScreenLinesC[i][off] = u8cc[i];
-          if (u8cc[i] == 0)
-            break;
-        }
-      } else {
-        ScreenLinesUC[off] = 0;
-      }
+      int current_attr = char_attr;
 
       if (multi_attr) {
-        ScreenAttrs[off] = multi_attr;
+        current_attr = multi_attr;
         multi_attr = 0;
-      } else
-        ScreenAttrs[off] = char_attr;
+      }
+
+      write_char(c, mb_c, mb_utf8, current_attr, off, u8cc);
 
       if (MB_IS_WIDE()) {
         // Need to fill two screen columns.
         off++;
         col++;
-        ScreenLines[off] = 0;
         if (draw_state > WL_NR && filler_todo <= 0) {
           vcol++;
         }
@@ -4006,9 +4065,7 @@ win_line (
      * At end of screen line and there is more to come: Display the line
      * so far.  If there is no more to display it is caught above.
      */
-    if ((
-          wp->w_p_rl ? (col < 0) :
-          (col >= wp->w_width))
+    if ((get_column_diff_until_eol(wp, col) < 0)
         && (*ptr != NUL
             || filler_todo > 0
             || (wp->w_p_list && lcs_eol != NUL && p_extra != at_end_str)
