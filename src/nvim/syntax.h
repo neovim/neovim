@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "nvim/buffer_defs.h"
-
+#include "nvim/ex_cmds_defs.h"
 
 /// Terminal highlighting attribute bits.
 /// Attributes above HL_ALL are used for syntax highlighting.

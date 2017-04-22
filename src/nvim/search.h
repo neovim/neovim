@@ -4,6 +4,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "nvim/types.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/eval/typval.h"
+#include "nvim/normal.h"
+#include "nvim/os/time.h"
+
 /* Values for the find_pattern_in_path() function args 'type' and 'action': */
 #define FIND_ANY        1
 #define FIND_DEFINE     2

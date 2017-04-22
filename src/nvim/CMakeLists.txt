@@ -440,13 +440,10 @@ set(NO_SINGLE_CHECK_HEADERS
   quickfix.h
   regexp.h
   regexp_defs.h
-  screen.h
-  search.h
   sha256.h
   sign_defs.h
   spell.h
   spellfile.h
-  syntax.h
   syntax_defs.h
   tag.h
   terminal.h
