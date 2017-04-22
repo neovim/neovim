@@ -1,6 +1,8 @@
 #ifndef NVIM_VERSION_H
 #define NVIM_VERSION_H
 
+#include "nvim/ex_cmds_defs.h"
+
 // defined in version.c
 extern char* Version;
 extern char* longVersion;
