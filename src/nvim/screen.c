@@ -2116,7 +2116,11 @@ static struct VisualPos init_visual(int lnum, win_T* wp) {
     .from = -10,
     .to = MAXCOL,
     .in_visual = false,
-    .pos = { 0 }
+    .pos = {
+      .lnum = 0,
+      .col = 0,
+      .coladd = 0
+    }
   };
 
   pos_T *top, *bot;
