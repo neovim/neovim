@@ -1816,15 +1816,16 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   int idx;
   int c_len;
   char_u  *p;
-  int prev_c = 0;                     /* previous Arabic character */
-  int prev_c1 = 0;                    /* first composing char for prev_c */
+  int prev_c = 0;                     // previous Arabic character
+  int prev_c1 = 0;                    // first composing char for prev_c
 
-  if (wp->w_p_rl)
+  if (wp->w_p_rl) {
     idx = off;
-  else
+  } else {
     idx = off + col;
+  }
 
-  /* Store multibyte characters in ScreenLines[] et al. correctly. */
+  // Store multibyte characters in ScreenLines[] et al. correctly.
   for (p = text; *p != NUL; ) {
     cells = (*mb_ptr2cells)(p);
     c_len = (*mb_ptr2len)(p);
@@ -1839,13 +1840,13 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       prev_c = u8c;
     } else {
       if (p_arshape && !p_tbidi && arabic_char(u8c)) {
-        /* Do Arabic shaping. */
+        // Do Arabic shaping.
         int pc, pc1, nc;
         int pcc[MAX_MCO];
         int firstbyte = *p;
 
-        /* The idea of what is the previous and next
-         * character depends on 'rightleft'. */
+        // The idea of what is the previous and next
+        // character depends on 'rightleft'.
         if (wp->w_p_rl) {
           pc = prev_c;
           pc1 = prev_c1;
@@ -1861,29 +1862,30 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
         u8c = arabic_shape(u8c, &firstbyte, &u8cc[0],
                            pc, pc1, nc);
         ScreenLines[idx] = firstbyte;
-      } else
+      } else {
         prev_c = u8c;
-      /* Non-BMP character: display as ? or fullwidth ?. */
+      }
+      // Non-BMP character: display as ? or fullwidth ?.
       ScreenLinesUC[idx] = u8c;
-      for (i = 0; i < Screen_mco; ++i) {
+      for (i = 0; i < Screen_mco; i++) {
         ScreenLinesC[i][idx] = u8cc[i];
-        if (u8cc[i] == 0)
+        if (u8cc[i] == 0) {
           break;
+        }
       }
     }
-    if (cells > 1)
+    if (cells > 1) {
       ScreenLines[idx + 1] = 0;
+    }
     col += cells;
     idx += cells;
     p += c_len;
   }
 
-  /* Fill the rest of the line with the fold filler */
+  // Fill the rest of the line with the fold filler
   if (wp->w_p_rl)
     col -= txtcol;
-  while (col < wp->w_width
-         - (wp->w_p_rl ? txtcol : 0)
-         ) {
+  while (col < wp->w_width - (wp->w_p_rl ? txtcol : 0)) {
     if (fill_fold >= 0x80) {
       ScreenLinesUC[off + col] = fill_fold;
       ScreenLinesC[0][off + col] = 0;
@@ -2178,7 +2180,7 @@ static struct VisualPos init_visual(int lnum, win_T* wp) {
   return res;
 }
 
-static void write_char(int c, int mb_c, int mb_utf8, int attr, unsigned off, int *u8cc) {
+static void write_char(int c, int mb_c, bool mb_utf8, int attr, unsigned off, int *u8cc) {
   ScreenLines[off] = c;
 
   if (mb_utf8) {
@@ -2321,7 +2323,7 @@ win_line (
   bool is_current_window      = curwin == wp;
   bool is_current_buffer      = wp->w_buffer == curwin->w_buffer;
 
-  int tabstop = (int) wp->w_buffer->b_p_ts;
+  int tabstop = (int)wp->w_buffer->b_p_ts;
 
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_bufhl = false;               // this buffer has highlight matches
@@ -2376,7 +2378,7 @@ win_line (
       mb_utf8 = false; \
     }
 
-  #define COL_ADD(var, val) var = (wp->w_p_rl) ? var - val : var + val;
+  #define COL_ADD(var, val) var = (wp->w_p_rl) ? (var) - (val) : (var) + (val);
 
   #define LEFT_COL() (wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol)
 
@@ -2474,11 +2476,13 @@ win_line (
       pos.lnum = lnum;
       pos.col = search_match_endcol;
       getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
-    } else
+    } else {
       tocol = MAXCOL;
-    /* do at least one character; happens when past end of line */
-    if (fromcol == tocol)
+    }
+    // do at least one character; happens when past end of line
+    if (fromcol == tocol) {
       tocol = fromcol + 1;
+    }
     area_highlighting = true;
     attr = hl_attr(HLF_I);
   }
@@ -2501,10 +2505,10 @@ win_line (
     filler_lines = wp->w_topfill;
   filler_todo = filler_lines;
 
-  /* If this line has a sign with line highlighting set line_attr. */
-  int sygn_type = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
-  if (sygn_type != 0)
-      line_attr = sign_get_attr(sygn_type, TRUE);
+  // If this line has a sign with line highlighting set line_attr.
+  int sign_type = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
+  if (sign_type != 0)
+      line_attr = sign_get_attr(sign_type, TRUE);
 
   // Highlight the current line in the quickfix window.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
@@ -3405,8 +3409,7 @@ win_line (
           // TODO: is passing p for start of the line OK?
           n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
           if (c == TAB && n_extra + col > wp->w_width) {
-            n_extra = tabstop
-                      - vcol % tabstop - 1;
+            n_extra = tabstop - vcol % tabstop - 1;
           }
           c_extra = mb_off > 0 ? MB_FILLER_CHAR : ' ';
           if (ascii_iswhite(c)) {
@@ -3455,8 +3458,7 @@ win_line (
             vcol_adjusted = vcol - MB_CHARLEN(p_sbr);
           }
           // tab amount depends on current column
-          tab_len = tabstop
-                    - vcol_adjusted % tabstop - 1;
+          tab_len = tabstop - vcol_adjusted % tabstop - 1;
 
           if (!wp->w_p_lbr || !wp->w_p_list) {
             n_extra = tab_len;
@@ -3836,8 +3838,7 @@ win_line (
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
-                  wp->w_width * (row - startrow + 1)
-                  + ((wp->w_p_wrap) ? wp->w_skipcol : wp->w_leftcol)
+                  wp->w_width * (row - startrow + 1) + LEFT_COL()
             && !is_cursor_line)
            || draw_color_col)
           && !wp->w_p_rl
