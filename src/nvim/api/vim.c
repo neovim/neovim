@@ -799,7 +799,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
 validation_error:
   api_free_array(results);
 theend:
-  api_free_error(&nested_error);
+  api_clear_error(&nested_error);
   return rv;
 }
 

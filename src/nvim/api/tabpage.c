@@ -194,7 +194,7 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
 {
   Error stub = ERROR_INIT;
   Boolean ret = find_tab_by_handle(tabpage, &stub) != NULL;
-  xfree(stub.msg);
+  api_clear_error(&stub);
   return ret;
 }
 

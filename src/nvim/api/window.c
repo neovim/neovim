@@ -388,7 +388,7 @@ Boolean nvim_win_is_valid(Window window)
 {
   Error stub = ERROR_INIT;
   Boolean ret = find_window_by_handle(window, &stub) != NULL;
-  xfree(stub.msg);
+  api_clear_error(&stub);
   return ret;
 }
 

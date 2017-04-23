@@ -6524,7 +6524,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 end:
   api_free_array(args);
   api_free_object(result);
-  xfree(err.msg);
+  api_clear_error(&err);
 }
 
 /*
@@ -13795,7 +13795,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 end:
   api_free_object(result);
-  xfree(err.msg);
+  api_clear_error(&err);
 }
 
 // "rpcstart()" function (DEPRECATED)
@@ -16528,13 +16528,14 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Error err = ERROR_INIT;
   dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
                INTEGER_OBJ(rettv->vval.v_number), false, false, &err);
+  api_clear_error(&err);
   dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_pid"),
                INTEGER_OBJ(pid), false, false, &err);
+  api_clear_error(&err);
 
   Terminal *term = terminal_open(topts);
   data->term = term;
   data->refcount++;
-  xfree(err.msg);
 
   return;
 }

@@ -800,7 +800,8 @@ void api_free_dictionary(Dictionary value)
   xfree(value.items);
 }
 
-void api_free_error(Error *value)
+void api_clear_error(Error *value)
+  FUNC_ATTR_NONNULL_ALL
 {
   xfree(value->msg);
   value->msg = NULL;

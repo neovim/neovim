@@ -640,7 +640,7 @@ Boolean nvim_buf_is_valid(Buffer buffer)
 {
   Error stub = ERROR_INIT;
   Boolean ret = find_buffer_by_handle(buffer, &stub) != NULL;
-  xfree(stub.msg);
+  api_clear_error(&stub);
   return ret;
 }
 

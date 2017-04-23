@@ -640,7 +640,7 @@ static void buf_set_term_title(buf_T *buf, char *title)
                false,
                false,
                &err);
-  xfree(err.msg);
+  api_clear_error(&err);
 }
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
@@ -1225,11 +1225,10 @@ static bool is_focused(Terminal *term)
     /* Only called from terminal_open where curbuf->terminal is the */ \
     /* context  */ \
     o = dict_get_value(curbuf->b_vars, cstr_as_string(k), &err); \
-    xfree(err.msg); \
+    api_clear_error(&err); \
     if (o.type == kObjectTypeNil) { \
-      Error err2 = ERROR_INIT; \
-      o = dict_get_value(&globvardict, cstr_as_string(k), &err2); \
-      xfree(err2.msg); \
+      o = dict_get_value(&globvardict, cstr_as_string(k), &err); \
+      api_clear_error(&err); \
     } \
   } while (0)
 
