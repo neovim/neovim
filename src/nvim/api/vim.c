@@ -188,7 +188,7 @@ Object nvim_eval(String expr, Error *err)
 
   typval_T rettv;
   if (eval0((char_u *)expr.data, &rettv, NULL, true) == FAIL) {
-    _api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
+    api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
   }
 
   if (!try_end(err)) {
@@ -214,7 +214,7 @@ Object nvim_call_function(String fname, Array args, Error *err)
 {
   Object rv = OBJECT_INIT;
   if (args.size > MAX_FUNC_ARGS) {
-    _api_set_error(err, kErrorTypeValidation,
+    api_set_error(err, kErrorTypeValidation,
       _("Function called with too many arguments."));
     return rv;
   }
@@ -237,7 +237,7 @@ Object nvim_call_function(String fname, Array args, Error *err)
                     curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
                     true, NULL, NULL);
   if (r == FAIL) {
-    _api_set_error(err, kErrorTypeException, _("Error calling function."));
+    api_set_error(err, kErrorTypeException, _("Error calling function."));
   }
   if (!try_end(err)) {
     rv = vim_to_object(&rettv);
@@ -262,7 +262,7 @@ Integer nvim_strwidth(String str, Error *err)
     FUNC_API_SINCE(1)
 {
   if (str.size > INT_MAX) {
-    _api_set_error(err, kErrorTypeValidation, _("String length is too high"));
+    api_set_error(err, kErrorTypeValidation, _("String length is too high"));
     return 0;
   }
 
@@ -318,7 +318,7 @@ void nvim_set_current_dir(String dir, Error *err)
     FUNC_API_SINCE(1)
 {
   if (dir.size >= MAXPATHL) {
-    _api_set_error(err, kErrorTypeValidation, _("Directory string is too long"));
+    api_set_error(err, kErrorTypeValidation, _("Directory string is too long"));
     return;
   }
 
@@ -330,7 +330,7 @@ void nvim_set_current_dir(String dir, Error *err)
 
   if (vim_chdir((char_u *)string, kCdScopeGlobal)) {
     if (!try_end(err)) {
-      _api_set_error(err, kErrorTypeException, _("Failed to change directory"));
+      api_set_error(err, kErrorTypeException, _("Failed to change directory"));
     }
     return;
   }
@@ -538,7 +538,7 @@ void nvim_set_current_buf(Buffer buffer, Error *err)
   try_start();
   int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
   if (!try_end(err) && result == FAIL) {
-    _api_set_error(err,
+    api_set_error(err,
                   kErrorTypeException,
                   _("Failed to switch to buffer %d"),
                   buffer);
@@ -591,7 +591,7 @@ void nvim_set_current_win(Window window, Error *err)
   try_start();
   goto_tabpage_win(win_find_tabpage(win), win);
   if (!try_end(err) && win != curwin) {
-    _api_set_error(err,
+    api_set_error(err,
                   kErrorTypeException,
                   _("Failed to switch to window %d"),
                   window);
@@ -645,7 +645,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   try_start();
   goto_tabpage_tp(tp, true, true);
   if (!try_end(err) && tp != curtab) {
-    _api_set_error(err,
+    api_set_error(err,
                   kErrorTypeException,
                   _("Failed to switch to tabpage %d"),
                   tabpage);
@@ -744,21 +744,21 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
   size_t i;  // also used for freeing the variables
   for (i = 0; i < calls.size; i++) {
     if (calls.items[i].type != kObjectTypeArray) {
-      _api_set_error(err,
+      api_set_error(err,
                     kErrorTypeValidation,
                     _("All items in calls array must be arrays"));
       goto validation_error;
     }
     Array call = calls.items[i].data.array;
     if (call.size != 2) {
-      _api_set_error(err,
+      api_set_error(err,
                     kErrorTypeValidation,
                     _("All items in calls array must be arrays of size 2"));
       goto validation_error;
     }
 
     if (call.items[0].type != kObjectTypeString) {
-      _api_set_error(err,
+      api_set_error(err,
                     kErrorTypeValidation,
                     _("name must be String"));
       goto validation_error;
@@ -766,7 +766,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
     String name = call.items[0].data.string;
 
     if (call.items[1].type != kObjectTypeArray) {
-      _api_set_error(err,
+      api_set_error(err,
                     kErrorTypeValidation,
                     _("args must be Array"));
       goto validation_error;
