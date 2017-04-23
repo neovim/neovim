@@ -142,7 +142,6 @@ static inline bool String_eq(String a, String b)
 
 
 MAP_IMPL(int, int, DEFAULT_INITIALIZER)
-MAP_IMPL(cstr_t, uint64_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
