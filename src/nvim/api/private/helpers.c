@@ -803,6 +803,9 @@ void api_free_dictionary(Dictionary value)
 void api_clear_error(Error *value)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (!value->set) {
+    return;
+  }
   xfree(value->msg);
   value->msg = NULL;
 }
