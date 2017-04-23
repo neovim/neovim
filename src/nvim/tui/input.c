@@ -223,10 +223,12 @@ static int get_key_code_timeout(void)
 {
   Integer ms = -1;
   // Check 'ttimeout' to determine if we should send ESC after 'ttimeoutlen'.
-  // See :help 'ttimeout' for more information
   Error err = ERROR_INIT;
   if (nvim_get_option(cstr_as_string("ttimeout"), &err).data.boolean) {
-    ms = nvim_get_option(cstr_as_string("ttimeoutlen"), &err).data.integer;
+    Object rv = nvim_get_option(cstr_as_string("ttimeoutlen"), &err);
+    if (!ERROR_SET(&err)) {
+      ms = rv.data.integer;
+    }
   }
   api_clear_error(&err);
   return (int)ms;
