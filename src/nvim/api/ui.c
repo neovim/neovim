@@ -55,13 +55,13 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
     FUNC_API_SINCE(1) FUNC_API_NOEVAL
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException, _("UI already attached for channel"));
+    api_set_error(err, kErrorTypeException, "UI already attached for channel");
     return;
   }
 
   if (width <= 0 || height <= 0) {
     api_set_error(err, kErrorTypeValidation,
-                  _("Expected width > 0 and height > 0"));
+                  "Expected width > 0 and height > 0");
     return;
   }
   UI *ui = xcalloc(1, sizeof(UI));
@@ -126,7 +126,7 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
     FUNC_API_SINCE(1) FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException, _("UI is not attached for channel"));
+    api_set_error(err, kErrorTypeException, "UI is not attached for channel");
     return;
   }
   remote_ui_disconnect(channel_id);
@@ -138,13 +138,13 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width,
     FUNC_API_SINCE(1) FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, kErrorTypeException, _("UI is not attached for channel"));
+    api_set_error(err, kErrorTypeException, "UI is not attached for channel");
     return;
   }
 
   if (width <= 0 || height <= 0) {
     api_set_error(err, kErrorTypeValidation,
-                  _("Expected width > 0 and height > 0"));
+                  "Expected width > 0 and height > 0");
     return;
   }
 
@@ -159,7 +159,7 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
     FUNC_API_SINCE(1) FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(error, kErrorTypeException, _("UI is not attached for channel"));
+    api_set_error(error, kErrorTypeException, "UI is not attached for channel");
     return;
   }
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
@@ -173,19 +173,19 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
 static void ui_set_option(UI *ui, String name, Object value, Error *error) {
   if (strcmp(name.data, "rgb") == 0) {
     if (value.type != kObjectTypeBoolean) {
-      api_set_error(error, kErrorTypeValidation, _("rgb must be a Boolean"));
+      api_set_error(error, kErrorTypeValidation, "rgb must be a Boolean");
       return;
     }
     ui->rgb = value.data.boolean;
   } else if (strcmp(name.data, "popupmenu_external") == 0) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation,
-                    _("popupmenu_external must be a Boolean"));
+                    "popupmenu_external must be a Boolean");
       return;
     }
     ui->pum_external = value.data.boolean;
   } else {
-    api_set_error(error, kErrorTypeValidation, _("No such ui option"));
+    api_set_error(error, kErrorTypeValidation, "No such ui option");
   }
 }
 
