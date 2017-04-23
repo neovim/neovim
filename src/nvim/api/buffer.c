@@ -171,7 +171,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   end = normalize_index(buf, end, &oob);
 
   if (strict_indexing && oob) {
-    api_set_error(err, Validation, _("Index out of bounds"));
+    api_set_error(err, kErrorTypeValidation, "Index out of bounds");
     return rv;
   }
 
@@ -187,7 +187,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
     int64_t lnum = start + (int64_t)i;
 
     if (lnum > LONG_MAX) {
-      api_set_error(err, Validation, _("Line index is too high"));
+      api_set_error(err, kErrorTypeValidation, "Line index is too high");
       goto end;
     }
 
@@ -283,15 +283,14 @@ void nvim_buf_set_lines(uint64_t channel_id,
   end = normalize_index(buf, end, &oob);
 
   if (strict_indexing && oob) {
-    api_set_error(err, Validation, _("Index out of bounds"));
+    api_set_error(err, kErrorTypeValidation, "Index out of bounds");
     return;
   }
 
 
   if (start > end) {
-    api_set_error(err,
-                  Validation,
-                  _("Argument \"start\" is higher than \"end\""));
+    api_set_error(err, kErrorTypeValidation,
+                  "Argument \"start\" is higher than \"end\"");
     return;
   }
 
@@ -305,8 +304,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
   for (size_t i = 0; i < new_len; i++) {
     if (replacement.items[i].type != kObjectTypeString) {
       api_set_error(err,
-                    Validation,
-                    _("All items in the replacement array must be strings"));
+                    kErrorTypeValidation,
+                    "All items in the replacement array must be strings");
       goto end;
     }
 
@@ -317,7 +316,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
     lines[i] = xmallocz(l.size);
     for (size_t j = 0; j < l.size; j++) {
       if (l.data[j] == '\n' && channel_id != INTERNAL_CALL) {
-        api_set_error(err, Exception, _("string cannot contain newlines"));
+        api_set_error(err, kErrorTypeException, "string cannot contain newlines");
         new_len = i + 1;
         goto end;
       }
@@ -330,7 +329,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   switch_to_win_for_buf(buf, &save_curwin, &save_curtab, &save_curbuf);
 
   if (u_save((linenr_T)(start - 1), (linenr_T)end) == FAIL) {
-    api_set_error(err, Exception, _("Failed to save undo information"));
+    api_set_error(err, kErrorTypeException, "Failed to save undo information");
     goto end;
   }
 
@@ -340,7 +339,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
   for (size_t i = 0; i < to_delete; i++) {
     if (ml_delete((linenr_T)start, false) == FAIL) {
-      api_set_error(err, Exception, _("Failed to delete line"));
+      api_set_error(err, kErrorTypeException, "Failed to delete line");
       goto end;
     }
   }
@@ -357,12 +356,12 @@ void nvim_buf_set_lines(uint64_t channel_id,
     int64_t lnum = start + (int64_t)i;
 
     if (lnum > LONG_MAX) {
-      api_set_error(err, Validation, _("Index value is too high"));
+      api_set_error(err, kErrorTypeValidation, "Index value is too high");
       goto end;
     }
 
     if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
-      api_set_error(err, Exception, _("Failed to replace line"));
+      api_set_error(err, kErrorTypeException, "Failed to replace line");
       goto end;
     }
     // Mark lines that haven't been passed to the buffer as they need
@@ -375,12 +374,12 @@ void nvim_buf_set_lines(uint64_t channel_id,
     int64_t lnum = start + (int64_t)i - 1;
 
     if (lnum > LONG_MAX) {
-      api_set_error(err, Validation, _("Index value is too high"));
+      api_set_error(err, kErrorTypeValidation, "Index value is too high");
       goto end;
     }
 
     if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
-      api_set_error(err, Exception, _("Failed to insert line"));
+      api_set_error(err, kErrorTypeException, "Failed to insert line");
       goto end;
     }
 
@@ -627,7 +626,7 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
   }
 
   if (ren_ret == FAIL) {
-    api_set_error(err, Exception, _("Failed to rename buffer"));
+    api_set_error(err, kErrorTypeException, "Failed to rename buffer");
   }
 }
 
@@ -639,7 +638,9 @@ Boolean nvim_buf_is_valid(Buffer buffer)
     FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
-  return find_buffer_by_handle(buffer, &stub) != NULL;
+  Boolean ret = find_buffer_by_handle(buffer, &stub) != NULL;
+  api_free_error(stub);
+  return ret;
 }
 
 /// Inserts a sequence of lines to a buffer at a certain index
@@ -678,7 +679,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   }
 
   if (name.size != 1) {
-    api_set_error(err, Validation, _("Mark name must be a single character"));
+    api_set_error(err, kErrorTypeValidation, "Mark name must be a single character");
     return rv;
   }
 
@@ -696,7 +697,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
   }
 
   if (posp == NULL) {
-    api_set_error(err, Validation, _("Invalid mark name"));
+    api_set_error(err, kErrorTypeValidation, "Invalid mark name");
     return rv;
   }
 
@@ -751,11 +752,11 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   }
 
   if (line < 0 || line >= MAXLNUM) {
-    api_set_error(err, Validation, _("Line number outside range"));
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
     return 0;
   }
   if (col_start < 0 || col_start > MAXCOL) {
-    api_set_error(err, Validation, _("Column value outside range"));
+    api_set_error(err, kErrorTypeValidation, "Column value outside range");
     return 0;
   }
   if (col_end < 0 || col_end > MAXCOL) {
@@ -792,7 +793,7 @@ void nvim_buf_clear_highlight(Buffer buffer,
   }
 
   if (line_start < 0 || line_start >= MAXLNUM) {
-    api_set_error(err, Validation, _("Line number outside range"));
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
     return;
   }
   if (line_end < 0 || line_end > MAXLNUM) {

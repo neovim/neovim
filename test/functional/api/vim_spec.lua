@@ -412,7 +412,7 @@ describe('api', function()
       eq(5, meths.get_var('avar'))
     end)
 
-    it('throws error on malformated arguments', function()
+    it('throws error on malformed arguments', function()
       local req = {
         {'nvim_set_var', {'avar', 1}},
         {'nvim_set_var'},
@@ -450,6 +450,13 @@ describe('api', function()
     local status, err = pcall(nvim, 'get_option', 'invalid-option')
     eq(false, status)
     ok(err:match('Invalid option name') ~= nil)
+  end)
+
+  it('does not truncate error message <1 MB #5984', function()
+    local very_long_name = 'A'..('x'):rep(10000)..'Z'
+    local status, err = pcall(nvim, 'get_option', very_long_name)
+    eq(false, status)
+    eq(very_long_name, err:match('Ax+Z?'))
   end)
 
   it("doesn't leak memory on incorrect argument types", function()
