@@ -397,7 +397,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   Error error = ERROR_INIT;
   msgpack_rpc_validate(&request_id, request, &error);
 
-  if (error.set) {
+  if (ERROR_SET(&error)) {
     // Validation failed, send response with error
     if (channel_write(channel,
                       serialize_response(channel->id,

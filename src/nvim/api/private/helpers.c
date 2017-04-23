@@ -69,7 +69,7 @@ bool try_end(Error *err)
                                              ET_ERROR,
                                              NULL,
                                              &should_free);
-    _api_set_error(err, err->type, "%s", msg);
+    _api_set_error(err, kErrorTypeException, "%s", msg);
     free_global_msglist();
 
     if (should_free) {
@@ -80,7 +80,7 @@ bool try_end(Error *err)
     discard_current_exception();
   }
 
-  return err->set;
+  return ERROR_SET(err);
 }
 
 /// Recursively expands a vimscript value in a dict
@@ -803,11 +803,12 @@ void api_free_dictionary(Dictionary value)
 void api_clear_error(Error *value)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!value->set) {
+  if (!ERROR_SET(value)) {
     return;
   }
   xfree(value->msg);
   value->msg = NULL;
+  value->type = kErrorTypeNone;
 }
 
 Dictionary api_metadata(void)
@@ -953,7 +954,7 @@ static void set_option_value_for(char *key,
       break;
   }
 
-  if (err->set) {
+  if (ERROR_SET(err)) {
     return;
   }
 
@@ -981,6 +982,7 @@ static void set_option_value_err(char *key,
 void _api_set_error(Error *err, ErrorType errType, const char *format, ...)
   FUNC_ATTR_NONNULL_ALL
 {
+  assert(kErrorTypeNone != errType);
   va_list args1;
   va_list args2;
   va_start(args1, format);
@@ -994,6 +996,5 @@ void _api_set_error(Error *err, ErrorType errType, const char *format, ...)
   vsnprintf(err->msg, bufsize, format, args2);
   va_end(args2);
 
-  err->set = true;
   err->type = errType;
 }

@@ -475,7 +475,7 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
                                          Array args,
                                          Error *error)
 {
-  _api_set_error(error, error->type, "Invalid method name");
+  _api_set_error(error, kErrorTypeException, "Invalid method name");
   return NIL;
 }
 
@@ -484,7 +484,7 @@ Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
                                             Array args,
                                             Error *error)
 {
-  _api_set_error(error, error->type, "Invalid method arguments");
+  _api_set_error(error, kErrorTypeException, "Invalid method arguments");
   return NIL;
 }
 
@@ -517,7 +517,7 @@ void msgpack_rpc_serialize_response(uint64_t response_id,
   msgpack_pack_int(pac, 1);
   msgpack_pack_uint64(pac, response_id);
 
-  if (err->set) {
+  if (ERROR_SET(err)) {
     // error represented by a [type, message] array
     msgpack_pack_array(pac, 2);
     msgpack_rpc_from_integer(err->type, pac);

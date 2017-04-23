@@ -165,7 +165,7 @@ String nvim_command_output(String str, Error *err)
   nvim_command(str, err);
   do_cmdline_cmd("redir END");
 
-  if (err->set) {
+  if (ERROR_SET(err)) {
     return (String) STRING_INIT;
   }
 
@@ -776,7 +776,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
     MsgpackRpcRequestHandler handler = msgpack_rpc_get_handler_for(name.data,
                                                                    name.size);
     Object result = handler.fn(channel_id, args, &nested_error);
-    if (nested_error.set) {
+    if (ERROR_SET(&nested_error)) {
       // error handled after loop
       break;
     }
@@ -785,7 +785,7 @@ Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
   }
 
   ADD(rv, ARRAY_OBJ(results));
-  if (nested_error.set) {
+  if (ERROR_SET(&nested_error)) {
     Array errval = ARRAY_DICT_INIT;
     ADD(errval, INTEGER_OBJ((Integer)i));
     ADD(errval, INTEGER_OBJ(nested_error.type));

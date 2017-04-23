@@ -97,7 +97,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
 
   for (size_t i = 0; i < options.size; i++) {
     ui_set_option(ui, options.items[i].key, options.items[i].value, err);
-    if (err->set) {
+    if (ERROR_SET(err)) {
       xfree(ui);
       return;
     }
@@ -165,7 +165,7 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
 
   ui_set_option(ui, name, value, error);
-  if (!error->set) {
+  if (!ERROR_SET(error)) {
     ui_refresh();
   }
 }

@@ -65,7 +65,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   index = convert_index(index);
   Array slice = nvim_buf_get_lines(0, buffer, index, index+1, true, err);
 
-  if (!err->set && slice.size) {
+  if (!ERROR_SET(err) && slice.size) {
     rv = slice.items[0].data.string;
   }
 
@@ -203,7 +203,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   }
 
 end:
-  if (err->set) {
+  if (ERROR_SET(err)) {
     for (size_t i = 0; i < rv.size; i++) {
       xfree(rv.items[i].data.string.data);
     }
