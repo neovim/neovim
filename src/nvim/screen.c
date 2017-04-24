@@ -2070,6 +2070,13 @@ static bool character_fits_at_col(int mb_c, int col, win_T* wp) {
            && (*mb_char2cells)(mb_c) == 2);
 }
 
+static bool should_handle_incsearch_highlight(win_T* wp, linenr_T lnum) {
+  return (highlight_match
+          && wp == curwin
+          && lnum >= curwin->w_cursor.lnum
+          && lnum <= curwin->w_cursor.lnum + search_match_lines);
+}
+
 static bool should_conceal_line(win_T* wp, linenr_T lnum, bool lnum_in_visual_area) {
   return (wp->w_p_cole > 0
           && (wp != curwin || lnum != wp->w_cursor.lnum || conceal_cursor_line(wp))
@@ -2463,15 +2470,12 @@ win_line (
   /*
    * handle 'incsearch' and ":s///c" highlighting
    */
-  else if (highlight_match
-           && is_current_window
-           && lnum >= curwin->w_cursor.lnum
-           && lnum <= curwin->w_cursor.lnum + search_match_lines) {
-    if (is_current_cursor_line)
-      getvcol(curwin, &(curwin->w_cursor),
-          (colnr_T *)&fromcol, NULL, NULL);
-    else
+  else if (should_handle_incsearch_highlight(wp, lnum)) {
+    if (is_current_cursor_line) {
+      getvcol(curwin, &(curwin->w_cursor), (colnr_T *)&fromcol, NULL, NULL);
+    } else {
       fromcol = 0;
+    }
     if (lnum == curwin->w_cursor.lnum + search_match_lines) {
       pos.lnum = lnum;
       pos.col = search_match_endcol;
