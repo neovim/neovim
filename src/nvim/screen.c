@@ -2333,6 +2333,8 @@ win_line (
   int tabstop = (int)wp->w_buffer->b_p_ts;
 
   bool search_attr_from_match = false;  // if search_attr is from :match
+  bool has_visualhl = false;            // this buffer has visual
+  bool has_incsearchhl = false;         // this buffer has incsearch matches
   bool has_bufhl = false;               // this buffer has highlight matches
   int bufhl_attr = 0;                   // attributes desired by bufhl
   bufhl_lineinfo_T bufhl_info;          // bufhl data for this line
@@ -2451,6 +2453,7 @@ win_line (
   invert_from = -10;
   invert_to = MAXCOL;
   if (VIsual_active && is_current_buffer) {
+    has_visualhl = true;
 
     struct VisualPos v = init_visual(lnum, wp);
     invert_to = v.to;
@@ -2471,6 +2474,8 @@ win_line (
    * handle 'incsearch' and ":s///c" highlighting
    */
   else if (should_handle_incsearch_highlight(wp, lnum)) {
+    has_incsearchhl = true;
+
     if (is_current_cursor_line) {
       getvcol(curwin, &(curwin->w_cursor), (colnr_T *)&invert_from, NULL, NULL);
     } else {
@@ -3107,7 +3112,7 @@ win_line (
       // Use line_attr when not in the Visual or 'incsearch' area
       // (area_attr may be 0 when "should_invert" is unset).
       else if (line_attr != 0
-               && ((invert_from == -10 && invert_to == MAXCOL)
+               && ((!has_visualhl && !has_incsearchhl)
                   || vcol < invert_from
                   || vcol_prev < invert_from_prev
                   || vcol >= invert_to)) {
