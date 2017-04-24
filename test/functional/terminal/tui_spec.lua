@@ -284,6 +284,10 @@ describe('tui focus event handling', function()
     feed_data(':set noshowmode laststatus=0\n')
 
     retry(2, 3 * screen.timeout, function()
+      -- -- If retry is needed...
+      feed_data("\034\016")  -- CTRL-\ CTRL-N
+      feed_data(':bwipeout!\n')
+
       feed_data(':terminal\n')
       feed_data('\027[I')
       screen:expect([[
@@ -306,9 +310,6 @@ describe('tui focus event handling', function()
         {3:-- TERMINAL --}                                    |
       ]])
 
-      -- If retry is needed...
-      feed_data("\034\016")  -- CTRL-\ CTRL-N
-      feed_data(':bwipeout!\n')
     end)
   end)
 end)
