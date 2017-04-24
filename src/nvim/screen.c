@@ -2313,7 +2313,7 @@ win_line (
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
   bool need_showbreak = false;
   int line_attr = 0;                    // attribute for the whole line
-  matchitem_T *cur;                     // points to the match list
+  matchitem_T *current_match;           // points to the match list
   match_T     *shl;                     // points to search_hl or a match
   int shl_flag;                         // flag to indicate whether search_hl
                                         // has been processed or not
@@ -2683,25 +2683,25 @@ win_line (
    * Handle highlighting the last used search pattern and matches.
    * Do this for both search_hl and the match list.
    */
-  cur = wp->w_match_head;
+  current_match = wp->w_match_head;
   shl_flag = false;
-  while (cur != NULL || !shl_flag) {
+  while (current_match != NULL || !shl_flag) {
     if (!shl_flag) {
       shl = &search_hl;
       shl_flag = true;
     } else {
-      shl = &cur->hl;  // -V595
+      shl = &current_match->hl;  // -V595
     }
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
     shl->is_addpos = false;
     long diff = (long)(ptr - line);
-    if (cur != NULL) {
-      cur->pos.cur = 0;
+    if (current_match != NULL) {
+      current_match->pos.current_match = 0;
     }
     next_search_hl(wp, shl, lnum, (colnr_T)diff,
-                   shl == &search_hl ? NULL : cur);
+                   shl == &search_hl ? NULL : current_match);
 
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.
@@ -2735,8 +2735,8 @@ win_line (
       }
       area_highlighting = true;
     }
-    if (shl != &search_hl && cur != NULL)
-      cur = cur->next;
+    if (shl != &search_hl && current_match != NULL)
+      current_match = current_match->next;
   }
 
   /* Cursor line highlighting for 'cursorline' in the current window.  Not
@@ -2994,24 +2994,24 @@ win_line (
          * priority).
          */
         long diff = (long)(ptr - line);
-        cur = wp->w_match_head;
+        current_match = wp->w_match_head;
         shl_flag = FALSE;
-        while (cur != NULL || shl_flag == FALSE) {
+        while (current_match != NULL || shl_flag == FALSE) {
           if (shl_flag == FALSE
-              && ((cur != NULL
-                   && cur->priority > SEARCH_HL_PRIORITY)
-                  || cur == NULL)) {
+              && ((current_match != NULL
+                   && current_match->priority > SEARCH_HL_PRIORITY)
+                  || current_match == NULL)) {
             shl = &search_hl;
             shl_flag = TRUE;
           } else
-            shl = &cur->hl;
-          if (cur != NULL) {
-            cur->pos.cur = 0;
+            shl = &current_match->hl;
+          if (current_match != NULL) {
+            current_match->pos.current_match = 0;
           }
           bool pos_inprogress = true; // mark that a position match search is
                                       // in progress
           while (shl->rm.regprog != NULL
-                                 || (cur != NULL && pos_inprogress)) {
+                                 || (current_match != NULL && pos_inprogress)) {
             if (shl->startcol != MAXCOL
                 && diff >= (long)shl->startcol
                 && diff < (long)shl->endcol) {
@@ -3021,10 +3021,10 @@ win_line (
                 shl->endcol = tmp_col;
               }
               shl->attr_cur = shl->attr;
-              if (cur != NULL && syn_name2id((char_u *)"Conceal")
-                  == cur->hlg_id) {
+              if (current_match != NULL && syn_name2id((char_u *)"Conceal")
+                  == current_match->hlg_id) {
                 has_match_conc = diff == (long)shl->startcol ? 2 : 1;
-                match_conc = cur->conceal_char;
+                match_conc = current_match->conceal_char;
               } else {
                 has_match_conc = match_conc = 0;
               }
@@ -3032,8 +3032,8 @@ win_line (
               shl->attr_cur = 0;
 
               next_search_hl(wp, shl, lnum, (colnr_T)diff,
-                             shl == &search_hl ? NULL : cur);
-              pos_inprogress = !(cur == NULL || cur->pos.cur == 0);
+                             shl == &search_hl ? NULL : current_match);
+              pos_inprogress = !(current_match == NULL || current_match->pos.current_match == 0);
 
               /* Need to get the line again, a multi-line regexp
                * may have made it invalid. */
@@ -3059,31 +3059,31 @@ win_line (
             }
             break;
           }
-          if (shl != &search_hl && cur != NULL)
-            cur = cur->next;
+          if (shl != &search_hl && current_match != NULL)
+            current_match = current_match->next;
         }
 
         /* Use attributes from match with highest priority among
          * 'search_hl' and the match list. */
         search_attr_from_match = false;
         search_attr = search_hl.attr_cur;
-        cur = wp->w_match_head;
+        current_match = wp->w_match_head;
         shl_flag = FALSE;
-        while (cur != NULL || shl_flag == FALSE) {
+        while (current_match != NULL || shl_flag == FALSE) {
           if (shl_flag == FALSE
-              && ((cur != NULL
-                   && cur->priority > SEARCH_HL_PRIORITY)
-                  || cur == NULL)) {
+              && ((current_match != NULL
+                   && current_match->priority > SEARCH_HL_PRIORITY)
+                  || current_match == NULL)) {
             shl = &search_hl;
             shl_flag = TRUE;
           } else
-            shl = &cur->hl;
+            shl = &current_match->hl;
           if (shl->attr_cur != 0) {
             search_attr = shl->attr_cur;
             search_attr_from_match = shl != &search_hl;
           }
-          if (shl != &search_hl && cur != NULL)
-            cur = cur->next;
+          if (shl != &search_hl && current_match != NULL)
+            current_match = current_match->next;
         }
       }
 
@@ -3751,13 +3751,13 @@ win_line (
       if (!search_hl.is_addpos && prevcol == (long)search_hl.startcol) {
         prevcol_hl_flag = true;
       } else {
-        cur = wp->w_match_head;
-        while (cur != NULL) {
-          if (!cur->hl.is_addpos && prevcol == (long)cur->hl.startcol) {
+        current_match = wp->w_match_head;
+        while (current_match != NULL) {
+          if (!current_match->hl.is_addpos && prevcol == (long)current_match->hl.startcol) {
             prevcol_hl_flag = true;
             break;
           }
-          cur = cur->next;
+          current_match = current_match->next;
         }
       }
       if (lcs_eol == lcs_eol_one
@@ -3792,23 +3792,23 @@ win_line (
           /* Use attributes from match with highest priority among
            * 'search_hl' and the match list. */
           char_attr = search_hl.attr;
-          cur = wp->w_match_head;
+          current_match = wp->w_match_head;
           shl_flag = FALSE;
-          while (cur != NULL || shl_flag == FALSE) {
+          while (current_match != NULL || shl_flag == FALSE) {
             if (shl_flag == FALSE
-                && ((cur != NULL
-                     && cur->priority > SEARCH_HL_PRIORITY)
-                    || cur == NULL)) {
+                && ((current_match != NULL
+                     && current_match->priority > SEARCH_HL_PRIORITY)
+                    || current_match == NULL)) {
               shl = &search_hl;
               shl_flag = TRUE;
             } else
-              shl = &cur->hl;
+              shl = &current_match->hl;
             if ((ptr - line) - 1 == (long)shl->startcol
                 && (shl == &search_hl || !shl->is_addpos)) {
               char_attr = shl->attr;
             }
-            if (shl != &search_hl && cur != NULL) {
-              cur = cur->next;
+            if (shl != &search_hl && current_match != NULL) {
+              current_match = current_match->next;
             }
           }
         }
