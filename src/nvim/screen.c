@@ -2263,7 +2263,8 @@ win_line (
 
   int n_skip = 0;                       // nr of chars to skip for 'nowrap'
 
-  int invert_from, invert_to;           // start/end of inverting
+  int invert_to        = MAXCOL;        // start/end of inverting
+  int invert_from      = -10;
   int invert_from_prev = -2;            // start of inverting after cursor
   bool should_invert = true;            // don't invert the cursor
   bool lnum_in_visual_area = false;
@@ -2450,8 +2451,6 @@ win_line (
   /*
    * handle visual active in this window
    */
-  invert_from = -10;
-  invert_to = MAXCOL;
   if (VIsual_active && is_current_buffer) {
     has_visualhl = true;
 
