@@ -95,7 +95,9 @@ run_test_wd() {
         status_file="$status_file" \
         sid_file="$sid_file" \
         cmd="$cmd" \
+        CI_DIR="$CI_DIR" \
         sh -c '
+          . "${CI_DIR}/common/test.sh"
           ps -o sid= > "$sid_file"
           (
             ret=0
