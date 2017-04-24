@@ -2333,6 +2333,8 @@ win_line (
 
   int tabstop = (int)wp->w_buffer->b_p_ts;
 
+  int conceal_id = syn_name2id((char_u *)"Conceal");
+
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_visualhl = false;            // this buffer has visual
   bool has_incsearchhl = false;         // this buffer has incsearch matches
@@ -3021,8 +3023,7 @@ win_line (
                 shl->endcol = tmp_col;
               }
               shl->attr_cur = shl->attr;
-              if (current_match != NULL && syn_name2id((char_u *)"Conceal")
-                  == current_match->hlg_id) {
+              if (current_match != NULL && conceal_id == current_match->hlg_id) {
                 has_match_conc = diff == (long)shl->startcol ? 2 : 1;
                 match_conc = current_match->conceal_char;
               } else {
