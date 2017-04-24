@@ -7,10 +7,10 @@ build_make() {
 }
 
 build_deps() {
-  if test "x${BUILD_32BIT}" = xON ; then
+  if test "${BUILD_32BIT}" = ON ; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
   fi
-  if test "x${FUNCTIONALTEST}" = "xfunctionaltest-lua" ; then
+  if test "${FUNCTIONALTEST}" = "functionaltest-lua" ; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
   fi
 
@@ -18,9 +18,9 @@ build_deps() {
 
   # If there is a valid cache and we're not forced to recompile,
   # use cached third-party dependencies.
-  if test -f "${CACHE_MARKER}" && test "x${BUILD_NVIM_DEPS}" != xtrue ; then
+  if test -f "${CACHE_MARKER}" && test "${BUILD_NVIM_DEPS}" != "true" ; then
     local statcmd="stat -c '%y'"
-    if test "x${TRAVIS_OS_NAME}" = xosx ; then
+    if test "${TRAVIS_OS_NAME}" = osx ; then
       statcmd="stat -f '%Sm'"
     fi
     echo "Using third-party dependencies from Travis's cache (last updated: $(${statcmd} "${CACHE_MARKER}"))."
@@ -48,7 +48,7 @@ prepare_build() {
   if test -n "${CLANG_SANITIZER}" ; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DCLANG_${CLANG_SANITIZER}=ON"
   fi
-  if test "x${BUILD_32BIT}" = xON ; then
+  if test "${BUILD_32BIT}" = ON ; then
     CMAKE_FLAGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
   fi
 
@@ -64,7 +64,7 @@ build_nvim() {
     exit 1
   fi
 
-  if test "x$CLANG_SANITIZER" != xTSAN ; then
+  if test "$CLANG_SANITIZER" != "TSAN" ; then
     echo "Building libnvim."
     if ! top_make libnvim ; then
       exit 1

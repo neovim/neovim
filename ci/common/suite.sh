@@ -24,7 +24,7 @@ exit_suite() {
     echo "${FAIL_SUMMARY}"
   fi
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
-  if test "x$1" != "x--continue" ; then
+  if test "$1" != "--continue" ; then
     exit $FAILED
   else
     local saved_failed=$FAILED
@@ -61,7 +61,7 @@ run_test() {
 
 run_test_wd() {
   local hang_ok=
-  if test "x$1" = "x--allow-hang" ; then
+  if test "$1" = "--allow-hang" ; then
     hang_ok=1
     shift
   fi
@@ -131,7 +131,7 @@ run_test_wd() {
       pkill -KILL -s$(cat "$sid_file")
 
       if test $restarts -eq 0 ; then
-        if test "x$hang_ok" = "x" ; then
+        if test -z "$hang_ok" ; then
           fail "$test_name" E "Test hang up"
         fi
       else
@@ -140,7 +140,7 @@ run_test_wd() {
       fi
     else
       local new_failed="$(cat "$status_file")"
-      if test "x$new_failed" != "x0" ; then
+      if test "$new_failed" != "0" ; then
         fail "$test_name" F "Test failed in run_test_wd"
       fi
       break
