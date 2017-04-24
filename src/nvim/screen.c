@@ -2698,7 +2698,7 @@ win_line (
     shl->is_addpos = false;
     long diff = (long)(ptr - line);
     if (current_match != NULL) {
-      current_match->pos.current_match = 0;
+      current_match->pos.cur= 0;
     }
     next_search_hl(wp, shl, lnum, (colnr_T)diff,
                    shl == &search_hl ? NULL : current_match);
@@ -3006,7 +3006,7 @@ win_line (
           } else
             shl = &current_match->hl;
           if (current_match != NULL) {
-            current_match->pos.current_match = 0;
+            current_match->pos.cur= 0;
           }
           bool pos_inprogress = true; // mark that a position match search is
                                       // in progress
@@ -3033,7 +3033,7 @@ win_line (
 
               next_search_hl(wp, shl, lnum, (colnr_T)diff,
                              shl == &search_hl ? NULL : current_match);
-              pos_inprogress = !(current_match == NULL || current_match->pos.current_match == 0);
+              pos_inprogress = !(current_match == NULL || current_match->pos.cur== 0);
 
               /* Need to get the line again, a multi-line regexp
                * may have made it invalid. */
