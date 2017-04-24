@@ -2263,9 +2263,9 @@ win_line (
 
   int n_skip = 0;                       // nr of chars to skip for 'nowrap'
 
-  int fromcol, tocol;                   // start/end of inverting
-  int fromcol_prev = -2;                // start of inverting after cursor
-  bool noinvcur = false;                // don't invert the cursor
+  int invert_from, invert_to;           // start/end of inverting
+  int invert_from_prev = -2;            // start of inverting after cursor
+  bool should_invert = true;            // don't invert the cursor
   bool lnum_in_visual_area = false;
   pos_T pos;
 
@@ -2448,21 +2448,21 @@ win_line (
   /*
    * handle visual active in this window
    */
-  fromcol = -10;
-  tocol = MAXCOL;
+  invert_from = -10;
+  invert_to = MAXCOL;
   if (VIsual_active && is_current_buffer) {
 
     struct VisualPos v = init_visual(lnum, wp);
-    tocol = v.to;
-    fromcol = v.from;
+    invert_to = v.to;
+    invert_from = v.from;
     lnum_in_visual_area = v.in_visual;
 
     /* Check if the character under the cursor should not be inverted */
     if (!highlight_match && is_current_cursor_line && is_current_window)
-      noinvcur = true;
+      should_invert = false;
 
     /* if inverting in this line set area_highlighting */
-    if (fromcol >= 0) {
+    if (invert_from >= 0) {
       area_highlighting = true;
       attr = hl_attr(HLF_V);
     }
@@ -2472,20 +2472,20 @@ win_line (
    */
   else if (should_handle_incsearch_highlight(wp, lnum)) {
     if (is_current_cursor_line) {
-      getvcol(curwin, &(curwin->w_cursor), (colnr_T *)&fromcol, NULL, NULL);
+      getvcol(curwin, &(curwin->w_cursor), (colnr_T *)&invert_from, NULL, NULL);
     } else {
-      fromcol = 0;
+      invert_from = 0;
     }
     if (lnum == curwin->w_cursor.lnum + search_match_lines) {
       pos.lnum = lnum;
       pos.col = search_match_endcol;
-      getvcol(curwin, &pos, (colnr_T *)&tocol, NULL, NULL);
+      getvcol(curwin, &pos, (colnr_T *)&invert_to, NULL, NULL);
     } else {
-      tocol = MAXCOL;
+      invert_to = MAXCOL;
     }
     // do at least one character; happens when past end of line
-    if (fromcol == tocol) {
-      tocol = fromcol + 1;
+    if (invert_from == invert_to) {
+      invert_to = invert_from + 1;
     }
     area_highlighting = true;
     attr = hl_attr(HLF_I);
@@ -2608,10 +2608,11 @@ win_line (
      * Adjust for when the inverted text is before the screen,
      * and when the start of the inverted text is before the screen.
      */
-    if (tocol <= vcol)
-      fromcol = 0;
-    else if (fromcol >= 0 && fromcol < vcol)
-      fromcol = vcol;
+    if (invert_to <= vcol) {
+      invert_from = 0;
+    } else if (invert_from >= 0 && invert_from < vcol) {
+      invert_from = vcol;
+    }
 
     /* When w_skipcol is non-zero, first line needs 'showbreak' */
     if (wp->w_p_wrap)
@@ -2658,19 +2659,20 @@ win_line (
    * Correct highlighting for cursor that can't be disabled.
    * Avoids having to check this for each character.
    */
-  if (fromcol >= 0) {
-    if (noinvcur) {
-      if ((colnr_T)fromcol == wp->w_virtcol) {
-        /* highlighting starts at cursor, let it start just after the
-         * cursor */
-        fromcol_prev = fromcol;
-        fromcol = -1;
-      } else if ((colnr_T)fromcol < wp->w_virtcol)
-        /* restart highlighting after the cursor */
-        fromcol_prev = wp->w_virtcol;
+  if (invert_from >= 0) {
+    if (!(should_invert)) {
+      if ((colnr_T)invert_from == wp->w_virtcol) {
+        // highlighting starts at cursor, let it start just after the cursor
+        invert_from_prev = invert_from;
+        invert_from = -1;
+      } else if ((colnr_T)invert_from < wp->w_virtcol) {
+        // restart highlighting after the cursor
+        invert_from_prev = wp->w_virtcol;
+      }
     }
-    if (fromcol >= tocol)
-      fromcol = -1;
+    if (invert_from >= invert_to) {
+      invert_from = -1;
+    }
   }
 
   /*
@@ -2895,10 +2897,11 @@ win_line (
           p_extra = NULL;
           c_extra = ' ';
           n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, FALSE));
-          /* Correct end of highlighted area for 'breakindent',
-             required wen 'linebreak' is also set. */
-          if (tocol == vcol)
-            tocol += n_extra;
+          // Correct end of highlighted area for 'breakindent', required
+          // when 'linebreak' is also set.
+          if (invert_to == vcol) {
+            invert_to += n_extra;
+          }
         }
       }
 
@@ -2926,8 +2929,8 @@ win_line (
           vcol_sbr = vcol + MB_CHARLEN(p_sbr);
           /* Correct end of highlighted area for 'showbreak',
            * required when 'linebreak' is also set. */
-          if (tocol == vcol)
-            tocol += n_extra;
+          if (invert_to == vcol)
+            invert_to += n_extra;
           /* combine 'showbreak' with 'cursorline' */
           if (wp->w_p_cul && is_cursor_line) {
             char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
@@ -2965,16 +2968,16 @@ win_line (
 
     if (draw_state == WL_LINE && area_highlighting) {
       /* handle Visual or match highlighting in this line */
-      if (vcol == fromcol
-          || (vcol + 1 == fromcol && n_extra == 0
+      if (vcol == invert_from
+          || (vcol + 1 == invert_from && n_extra == 0
               && (*mb_ptr2cells)(ptr) > 1)
-          || ((int)vcol_prev == fromcol_prev
+          || ((int)vcol_prev == invert_from_prev
               && vcol_prev < vcol               /* not at margin */
-              && vcol < tocol))
+              && vcol < invert_to))
         area_attr = attr;                       /* start highlighting */
       else if (area_attr != 0
-               && (vcol == tocol
-                   || (noinvcur && (colnr_T)vcol == wp->w_virtcol)))
+               && (vcol == invert_to
+                   || (!(should_invert) && (colnr_T)vcol == wp->w_virtcol)))
         area_attr = 0;                          /* stop highlighting */
 
       if (!n_extra) {
@@ -3102,12 +3105,14 @@ win_line (
         char_attr = hl_combine_attr(line_attr, search_attr);
       }
       // Use line_attr when not in the Visual or 'incsearch' area
-      // (area_attr may be 0 when "noinvcur" is set).
-      else if (line_attr != 0 && ((fromcol == -10 && tocol == MAXCOL)
-                                  || vcol < fromcol || vcol_prev < fromcol_prev
-                                  || vcol >= tocol))
+      // (area_attr may be 0 when "should_invert" is unset).
+      else if (line_attr != 0
+               && ((invert_from == -10 && invert_to == MAXCOL)
+                  || vcol < invert_from
+                  || vcol_prev < invert_from_prev
+                  || vcol >= invert_to)) {
         char_attr = line_attr;
-      else {
+      } else {
         attr_has_priority = false;
         if (has_syntax)
           char_attr = syntax_attr;
@@ -3543,11 +3548,11 @@ win_line (
           }
         } else if (c == NUL
                    && (wp->w_p_list
-                       || ((fromcol >= 0 || fromcol_prev >= 0)
-                           && tocol > vcol
+                       || ((invert_from >= 0 || invert_from_prev >= 0)
+                           && invert_to > vcol
                            && VIsual_mode != Ctrl_V
                            && (get_column_diff_until_eol(wp, 0) >= 0)
-                           && !(noinvcur
+                           && !(!(should_invert)
                                 && is_cursor_line
                                 && (colnr_T)vcol == wp->w_virtcol)))
                    && lcs_eol_one > 0) {
@@ -3559,7 +3564,7 @@ win_line (
             /* In virtualedit, visual selections may extend
              * beyond end of line. */
             if (area_highlighting && virtual_active()
-                && tocol != MAXCOL && vcol < tocol)
+                && invert_to != MAXCOL && vcol < invert_to)
               n_extra = 0;
             else {
               p_extra = at_end_str;
@@ -3603,8 +3608,8 @@ win_line (
                    && (VIsual_mode == Ctrl_V
                        || VIsual_mode == 'v')
                    && virtual_active()
-                   && tocol != MAXCOL
-                   && vcol < tocol
+                   && invert_to != MAXCOL
+                   && vcol < invert_to
                    && (
                      wp->w_p_rl ? (col >= 0) :
                      (col < wp->w_width))) {
@@ -3752,7 +3757,7 @@ win_line (
         }
       }
       if (lcs_eol == lcs_eol_one
-          && ((area_attr != 0 && vcol == fromcol
+          && ((area_attr != 0 && vcol == invert_from
                && (VIsual_mode != Ctrl_V
                    || lnum == VIsual.lnum
                    || is_current_cursor_line)
@@ -3970,10 +3975,10 @@ win_line (
         if (draw_state > WL_NR && filler_todo <= 0) {
           vcol++;
         }
-        // When "tocol" is halfway through a character, set it to the end of
+        // When "invert_to" is halfway through a character, set it to the end of
         // the character, otherwise highlighting won't stop.
-        if (tocol == vcol) {
-          tocol++;
+        if (invert_to == vcol) {
+          invert_to++;
         }
         if (wp->w_p_rl) {
           /* now it's time to backup one cell */
