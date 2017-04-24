@@ -87,7 +87,8 @@ run_test_wd() {
   local restarts=5
   local prev_tmpsize=-1
   while test $restarts -gt 0 ; do
-    : > "${status_file}"
+    : > "$status_file"
+    : > "$sid_file"
     setsid \
       env \
         output_file="$output_file" \
@@ -114,8 +115,18 @@ run_test_wd() {
     done
     restarts=$(( restarts - 1 ))
     if test "$(stat -c "%s" "$status_file")" -eq 0 ; then
-      # status file not updated, assuming hang
+      # Status file not updated, assuming hang
+
+      # SID not known, this should not ever happen
+      if test "$(stat -c "%s" "$sid_file")" -eq 0 ; then
+        fail "$test_name" E "Shell did not run"
+        break
+      fi
+
+      # Kill all processes which belong to one session: should get rid of test
+      # processes as well as sh itself.
       pkill -KILL -s$(cat "$sid_file")
+
       if test $restarts -eq 0 ; then
         if test "x$hang_ok" = "x" ; then
           fail "$test_name" E "Test hang up"
