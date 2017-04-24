@@ -96,7 +96,6 @@ run_test_wd() {
         sid_file="$sid_file" \
         cmd="$cmd" \
         sh -c '
-          set -o pipefail
           ps -o sid= > "$sid_file"
           ret=0
           if ! eval "$cmd" 2>&1 | tee -a "$output_file" ; then
