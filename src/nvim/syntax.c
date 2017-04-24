@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * syntax.c: code for syntax highlighting
  */
@@ -42,34 +45,38 @@
 
 static bool did_syntax_onoff = false;
 
-// Structure that stores information about a highlight group.
-// The ID of a highlight group is also called group ID.  It is the index in
-// the highlight_ga array PLUS ONE.
+/// Structure that stores information about a highlight group.
+/// The ID of a highlight group is also called group ID.  It is the index in
+/// the highlight_ga array PLUS ONE.
 struct hl_group {
-  char_u      *sg_name;         // highlight group name
-  char_u      *sg_name_u;       // uppercase of sg_name
-  int sg_attr;                  // Screen attr
-  int sg_link;                  // link to this highlight group ID
-  int sg_set;                   // combination of SG_* flags
-  scid_T sg_scriptID;           // script in which the group was last set
+  char_u      *sg_name;         ///< highlight group name
+  char_u      *sg_name_u;       ///< uppercase of sg_name
+  int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
+  int sg_link;                  ///< link to this highlight group ID
+  int sg_set;                   ///< combination of flags in \ref SG_SET
+  scid_T sg_scriptID;           ///< script in which the group was last set
   // for terminal UIs
-  int sg_cterm;                 // "cterm=" highlighting attr
-  int sg_cterm_fg;              // terminal fg color number + 1
-  int sg_cterm_bg;              // terminal bg color number + 1
-  int sg_cterm_bold;            // bold attr was set for light color
+  int sg_cterm;                 ///< "cterm=" highlighting attr
+  int sg_cterm_fg;              ///< terminal fg color number + 1
+  int sg_cterm_bg;              ///< terminal bg color number + 1
+  int sg_cterm_bold;            ///< bold attr was set for light color
   // for RGB UIs
-  int sg_gui;                   // "gui=" highlighting attributes
-  RgbValue sg_rgb_fg;           // RGB foreground color
-  RgbValue sg_rgb_bg;           // RGB background color
-  RgbValue sg_rgb_sp;           // RGB special color
-  uint8_t *sg_rgb_fg_name;      // RGB foreground color name
-  uint8_t *sg_rgb_bg_name;      // RGB background color name
-  uint8_t *sg_rgb_sp_name;      // RGB special color name
+  int sg_gui;                   ///< "gui=" highlighting attributes
+                                ///< (combination of \ref HL_ATTRIBUTES)
+  RgbValue sg_rgb_fg;           ///< RGB foreground color
+  RgbValue sg_rgb_bg;           ///< RGB background color
+  RgbValue sg_rgb_sp;           ///< RGB special color
+  uint8_t *sg_rgb_fg_name;      ///< RGB foreground color name
+  uint8_t *sg_rgb_bg_name;      ///< RGB background color name
+  uint8_t *sg_rgb_sp_name;      ///< RGB special color name
 };
 
+/// \addtogroup SG_SET
+/// @{
 #define SG_CTERM        2       // cterm has been set
 #define SG_GUI          4       // gui has been set
 #define SG_LINK         8       // link has been set
+/// @}
 
 // highlight groups for 'highlight' option
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
@@ -4242,83 +4249,81 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
 
   if (rest != NULL) {
     syn_id = syn_check_group(arg, (int)(group_name_end - arg));
-    if (syn_id != 0)
-      /* allocate a buffer, for removing backslashes in the keyword */
+    if (syn_id != 0) {
+      // Allocate a buffer, for removing backslashes in the keyword.
       keyword_copy = xmalloc(STRLEN(rest) + 1);
-    syn_opt_arg.flags = 0;
-    syn_opt_arg.keyword = TRUE;
-    syn_opt_arg.sync_idx = NULL;
-    syn_opt_arg.has_cont_list = FALSE;
-    syn_opt_arg.cont_in_list = NULL;
-    syn_opt_arg.next_list = NULL;
-
-    /*
-     * The options given apply to ALL keywords, so all options must be
-     * found before keywords can be created.
-     * 1: collect the options and copy the keywords to keyword_copy.
-     */
-    cnt = 0;
-    p = keyword_copy;
-    for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
-      rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
-      if (rest == NULL || ends_excmd(*rest))
-        break;
-      /* Copy the keyword, removing backslashes, and add a NUL. */
-      while (*rest != NUL && !ascii_iswhite(*rest)) {
-        if (*rest == '\\' && rest[1] != NUL)
-          ++rest;
-        *p++ = *rest++;
-      }
-      *p++ = NUL;
-      ++cnt;
     }
+    if (keyword_copy != NULL) {
+      syn_opt_arg.flags = 0;
+      syn_opt_arg.keyword = true;
+      syn_opt_arg.sync_idx = NULL;
+      syn_opt_arg.has_cont_list = false;
+      syn_opt_arg.cont_in_list = NULL;
+      syn_opt_arg.next_list = NULL;
 
-    if (!eap->skip) {
-      /* Adjust flags for use of ":syn include". */
-      syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
-
-      /*
-       * 2: Add an entry for each keyword.
-       */
-      for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
-        for (p = vim_strchr(kw, '[');; ) {
-          if (p != NULL)
-            *p = NUL;
-          add_keyword(kw, syn_id, syn_opt_arg.flags,
-              syn_opt_arg.cont_in_list,
-              syn_opt_arg.next_list, conceal_char);
-          if (p == NULL)
-            break;
-          if (p[1] == NUL) {
-            EMSG2(_("E789: Missing ']': %s"), kw);
-            goto error;
+      // The options given apply to ALL keywords, so all options must be
+      // found before keywords can be created.
+      // 1: collect the options and copy the keywords to keyword_copy.
+      cnt = 0;
+      p = keyword_copy;
+      for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
+        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+        if (rest == NULL || ends_excmd(*rest)) {
+          break;
+        }
+        // Copy the keyword, removing backslashes, and add a NUL.
+        while (*rest != NUL && !ascii_iswhite(*rest)) {
+          if (*rest == '\\' && rest[1] != NUL) {
+            rest++;
           }
-          if (p[1] == ']') {
-            if (p[2] != NUL) {
-              EMSG3(_("E890: trailing char after ']': %s]%s"),
-                    kw, &p[2]);
+          *p++ = *rest++;
+        }
+        *p++ = NUL;
+        cnt++;
+      }
+
+      if (!eap->skip) {
+        // Adjust flags for use of ":syn include".
+        syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
+
+        // 2: Add an entry for each keyword.
+        for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
+          for (p = vim_strchr(kw, '[');; ) {
+            if (p != NULL) {
+              *p = NUL;
+            }
+            add_keyword(kw, syn_id, syn_opt_arg.flags,
+                        syn_opt_arg.cont_in_list,
+                        syn_opt_arg.next_list, conceal_char);
+            if (p == NULL) {
+              break;
+            }
+            if (p[1] == NUL) {
+              emsgf(_("E789: Missing ']': %s"), kw);
               goto error;
             }
-            kw = p + 1;
-            break;   // skip over the "]"
-          }
-          if (has_mbyte) {
-            int l = (*mb_ptr2len)(p + 1);
+            if (p[1] == ']') {
+              if (p[2] != NUL) {
+                emsgf(_("E890: trailing char after ']': %s]%s"),
+                      kw, &p[2]);
+                goto error;
+              }
+              kw = p + 1;
+              break;   // skip over the "]"
+            }
+            const int l = (*mb_ptr2len)(p + 1);
 
             memmove(p, p + 1, l);
             p += l;
-          } else {
-            p[0] = p[1];
-            ++p;
           }
         }
       }
-    }
 
 error:
-    xfree(keyword_copy);
-    xfree(syn_opt_arg.cont_in_list);
-    xfree(syn_opt_arg.next_list);
+      xfree(keyword_copy);
+      xfree(syn_opt_arg.cont_in_list);
+      xfree(syn_opt_arg.next_list);
+    }
   }
 
   if (rest != NULL)
@@ -5896,6 +5901,8 @@ static void syntime_report(void)
 static char *highlight_init_both[] =
 {
   "Conceal      ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
+  "Cursor       guibg=fg guifg=bg",
+  "lCursor      guibg=fg guifg=bg",
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
   "ErrorMsg     ctermbg=DarkRed ctermfg=White guibg=Red guifg=White",
   "IncSearch    cterm=reverse gui=reverse",
@@ -5912,6 +5919,7 @@ static char *highlight_init_both[] =
   "default link EndOfBuffer NonText",
   "default link QuickFixLine Search",
   "default link Substitute Search",
+  "default link Whitespace NonText",
   NULL
 };
 
@@ -6093,16 +6101,16 @@ int load_colors(char_u *name)
   return retval;
 }
 
-/*
- * Handle the ":highlight .." command.
- * When using ":hi clear" this is called recursively for each group with
- * "forceit" and "init" both TRUE.
- */
-void 
-do_highlight (
+
+/// Handle the ":highlight .." command.
+/// When using ":hi clear" this is called recursively for each group with
+/// "forceit" and "init" both TRUE.
+/// @param init TRUE when called for initializing
+void
+do_highlight(
     char_u *line,
     int forceit,
-    int init                   /* TRUE when called for initializing */
+    int init
 )
 {
   char_u      *name_end;
@@ -6704,12 +6712,10 @@ static garray_T attr_table = GA_EMPTY_INIT_VALUE;
 #define ATTR_ENTRY(idx) ((attrentry_T *)attr_table.ga_data)[idx]
 
 
-/*
- * Return the attr number for a set of colors and font.
- * Add a new entry to the term_attr_table, attr_table or gui_attr_table
- * if the combination is new.
- * Return 0 for error.
- */
+/// Return the attr number for a set of colors and font.
+/// Add a new entry to the term_attr_table, attr_table or gui_attr_table
+/// if the combination is new.
+/// @return 0 for error.
 int get_attr_entry(attrentry_T *aep)
 {
   garray_T *table = &attr_table;
@@ -6932,7 +6938,7 @@ static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg
 
 /// Check whether highlight group has attribute
 ///
-/// @param[in]  id  Highilght group to check.
+/// @param[in]  id  Highlight group to check.
 /// @param[in]  flag  Attribute to check.
 /// @param[in]  modec  'g' for GUI, 'c' for term.
 ///
@@ -7165,12 +7171,13 @@ int syn_namen2id(char_u *linep, int len)
   return id;
 }
 
-/*
- * Find highlight group name in the table and return it's ID.
- * The argument is a pointer to the name and the length of the name.
- * If it doesn't exist yet, a new entry is created.
- * Return 0 for failure.
- */
+/// Find highlight group name in the table and return it's ID.
+/// If it doesn't exist yet, a new entry is created.
+///
+/// @param pp Highlight group name
+/// @param len length of \p pp
+///
+/// @return 0 for failure else the id of the group
 int syn_check_group(char_u *pp, int len)
 {
   char_u  *name = vim_strnsave(pp, len);
@@ -8244,7 +8251,14 @@ color_name_table_T color_name_table[] = {
   { NULL, 0 },
 };
 
-RgbValue name_to_color(uint8_t *name)
+
+/// Translate to RgbValue if \p name is an hex value (e.g. #XXXXXX),
+/// else look into color_name_table to translate a color name to  its
+/// hex value
+///
+/// @param[in] name string value to convert to RGB
+/// return the hex value or -1 if could not find a correct value
+RgbValue name_to_color(const uint8_t *name)
 {
 
   if (name[0] == '#' && isxdigit(name[1]) && isxdigit(name[2])

@@ -69,7 +69,7 @@ places where a Normal mode command can't be used or is inconvenient.
 
 The main Vim window can hold several split windows.  There are also tab pages
 |tab-page|, each of which can hold multiple windows.
-
+					*window-ID* *winid* *windowid*
 Each window has a unique identifier called the window ID.  This identifier
 will not change within a Vim session. The |win_getid()| and |win_id2tabwin()|
 functions can be used to convert between the window/tab number and the
@@ -1026,6 +1026,10 @@ list of buffers. |unlisted-buffer|
 			h+	hidden buffers which are modified
 			a+	active buffers which are modified
 
+		When using |:filter| the pattern is matched against the
+		displayed buffer name, e.g.: >
+			filter /\.vim/ ls
+<
 						*:bad* *:badd*
 :bad[d]	[+lnum] {fname}
 		Add file name {fname} to the buffer list, without loading it.

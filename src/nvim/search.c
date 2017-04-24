@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * search.c: code for normal mode searching commands
  */
@@ -335,23 +338,26 @@ int pat_has_uppercase(char_u *pat)
   while (*p != NUL) {
     int l;
 
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
-      if (enc_utf8 && utf_isupper(utf_ptr2char(p)))
-        return TRUE;
+    if ((l = mb_ptr2len(p)) > 1) {
+      if (mb_isupper(utf_ptr2char(p))) {
+        return true;
+      }
       p += l;
     } else if (*p == '\\') {
-      if (p[1] == '_' && p[2] != NUL)        /* skip "\_X" */
+      if (p[1] == '_' && p[2] != NUL) {  // skip "\_X"
         p += 3;
-      else if (p[1] == '%' && p[2] != NUL)        /* skip "\%X" */
+      } else if (p[1] == '%' && p[2] != NUL) {  // skip "\%X"
         p += 3;
-      else if (p[1] != NUL)        /* skip "\X" */
+      } else if (p[1] != NUL) {  // skip "\X"
         p += 2;
-      else
+      } else {
         p += 1;
-    } else if (vim_isupper(*p))
-      return TRUE;
-    else
-      ++p;
+      }
+    } else if (mb_isupper(*p)) {
+      return true;
+    } else {
+      p++;
+    }
   }
   return FALSE;
 }

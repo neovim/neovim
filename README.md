@@ -43,7 +43,7 @@ Packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], and
 Project layout
 --------------
 
-- `.ci/`: Build server scripts
+- `ci/`: Build server scripts
 - `cmake/`: Build scripts
 - `runtime/`: Application files
 - [`src/`](src/nvim/README.md): Application source code

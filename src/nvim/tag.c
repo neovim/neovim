@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * Code to handle tags and the tag stack
  */
@@ -1222,9 +1225,9 @@ find_tags (
   if (has_re && orgpat.regmatch.regprog == NULL)
     goto findtag_end;
 
-  /* This is only to avoid a compiler warning for using search_info
-   * uninitialised. */
-  memset(&search_info, 0, (size_t)1);
+  // This is only to avoid a compiler warning for using search_info
+  // uninitialised.
+  memset(&search_info, 0, 1);  // -V512
 
   /*
    * When finding a specified number of matches, first try with matching
@@ -1847,14 +1850,14 @@ parse_line:
               }
             }
           } else {
-#define TAG_SEP 0x01
+#define TAG_SEP 0x02
             size_t tag_fname_len = STRLEN(tag_fname);
             // Save the tag in a buffer.
-            // Use 0x01 to separate fields (Can't use NUL, because the
+            // Use 0x02 to separate fields (Can't use NUL, because the
             // hash key is terminated by NUL).
-            // Emacs tag: <mtt><tag_fname><NUL><ebuf><NUL><lbuf>
-            // other tag: <mtt><tag_fname><NUL><NUL><lbuf>
-            // without Emacs tags: <mtt><tag_fname><NUL><lbuf>
+            // Emacs tag: <mtt><tag_fname><0x02><ebuf><0x02><lbuf><NUL>
+            // other tag: <mtt><tag_fname><0x02><0x02><lbuf><NUL>
+            // without Emacs tags: <mtt><tag_fname><0x02><lbuf><NUL>
             // Here <mtt> is the "mtt" value plus 1 to avoid NUL.
             len = (int)tag_fname_len + (int)STRLEN(lbuf) + 3;
             mfp = xmalloc(sizeof(char_u) + len + 1);
@@ -2534,7 +2537,7 @@ jumpto_tag (
         }
       }
       p_ws = save_p_ws;
-      p_ic = save_p_ic;
+      p_ic = save_p_ic;  // -V519
       p_scs = save_p_scs;
 
       /* A search command may have positioned the cursor beyond the end
@@ -2797,11 +2800,9 @@ add_tag_field (
   return retval;
 }
 
-/*
- * Add the tags matching the specified pattern to the list "list"
- * as a dictionary
- */
-int get_tags(list_T *list, char_u *pat)
+/// Add the tags matching the specified pattern "pat" to the list "list"
+/// as a dictionary. Use "buf_fname" for priority, unless NULL.
+int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
 {
   int num_matches, i, ret;
   char_u      **matches, *p;
@@ -2811,7 +2812,7 @@ int get_tags(list_T *list, char_u *pat)
   bool is_static;
 
   ret = find_tags(pat, &num_matches, &matches,
-      TAG_REGEXP | TAG_NOIC, (int)MAXCOL, NULL);
+                  TAG_REGEXP | TAG_NOIC, (int)MAXCOL, buf_fname);
   if (ret == OK && num_matches > 0) {
     for (i = 0; i < num_matches; ++i) {
       int parse_result = parse_match(matches[i], &tp);

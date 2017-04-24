@@ -1000,7 +1000,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_guicursor',
-      defaults={if_true={vi="n-v-c:block,o:hor50,i-ci:hor15,r-cr:hor30,sm:block"}}
+      defaults={if_true={vi="n-v-c:block-Cursor/lCursor,ve:ver35-Cursor,o:hor50-Cursor,i-ci:ver25-Cursor/lCursor,r-cr:hor20-Cursor/lCursor,sm:block-Cursor-blinkwait175-blinkoff150-blinkon175"}}
     },
     {
       full_name='guifont', abbreviation='gfn',
@@ -1024,13 +1024,6 @@ return {
       vi_def=true,
       redraw={'everything'},
       enable_if=false,
-    },
-    {
-      full_name='guiheadroom', abbreviation='ghr',
-      type='number', scope={'global'},
-      vi_def=true,
-      enable_if=false,
-      defaults={if_true={vi=50}}
     },
     {
       full_name='guioptions', abbreviation='go',
@@ -1345,6 +1338,12 @@ return {
       type='bool', scope={'global'},
       varname='p_lnr',
       defaults={if_true={vi=false, vim=true}}
+    },
+    {
+      full_name='langremap', abbreviation='lrm',
+      type='bool', scope={'global'},
+      varname='p_lrm',
+      defaults={if_true={vi=true, vim=false}}
     },
     {
       full_name='laststatus', abbreviation='ls',
@@ -2052,7 +2051,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_srr',
-      defaults={if_true={vi=">"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi=">%s 2>&1"},
+        if_false={vi=">"}
+      }
     },
     {
       full_name='shellslash', abbreviation='ssl',

@@ -8,15 +8,6 @@
 #include "nvim/memory.h"
 #include "nvim/lib/kvec.h"
 
-#define api_set_error(err, errtype, ...) \
-  do { \
-    snprintf((err)->msg, \
-             sizeof((err)->msg), \
-             __VA_ARGS__); \
-    (err)->set = true; \
-    (err)->type = kErrorType##errtype; \
-  } while (0)
-
 #define OBJECT_OBJ(o) o
 
 #define BOOLEAN_OBJ(b) ((Object) { \

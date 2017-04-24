@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // User-settable options. Checklist for adding a new option:
 // - Put it in options.lua
 // - For a global option: Add a variable for it in option_defs.h.
@@ -246,7 +249,8 @@ typedef struct vimoption {
   "A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal," \
   "B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel," \
   "x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill," \
-  "!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine"
+  "!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine," \
+  "0:Whitespace"
 
 /*
  * options[] is initialized here.
@@ -939,11 +943,8 @@ void free_all_options(void)
 #endif
 
 
-/*
- * Initialize the options, part two: After getting Rows and Columns and
- * setting 'term'.
- */
-void set_init_2(void)
+/// Initialize the options, part two: After getting Rows and Columns.
+void set_init_2(bool headless)
 {
   int idx;
 
@@ -966,8 +967,12 @@ void set_init_2(void)
     p_window = Rows - 1;
   }
   set_number_default("window", Rows - 1);
-  parse_shape_opt(SHAPE_CURSOR);   /* set cursor shapes from 'guicursor' */
-  (void)parse_printoptions();       /* parse 'printoptions' default value */
+  if (!headless && !os_term_is_nice()) {
+    set_string_option_direct((char_u *)"guicursor", -1, (char_u *)"",
+                             OPT_GLOBAL, SID_NONE);
+  }
+  parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
+  (void)parse_printoptions();      // parse 'printoptions' default value
 }
 
 /*
@@ -1055,13 +1060,15 @@ void set_init_3(void)
  */
 void set_helplang_default(const char *lang)
 {
-  int idx;
-
-  const size_t lang_len = strlen(lang);
-  if (lang == NULL || lang_len < 2) {  // safety check
+  if (lang == NULL) {
     return;
   }
-  idx = findoption("hlg");
+
+  const size_t lang_len = strlen(lang);
+  if (lang_len < 2) {  // safety check
+    return;
+  }
+  int idx = findoption("hlg");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET)) {
     if (options[idx].flags & P_ALLOCED)
       free_string_option(p_hlg);
@@ -2839,9 +2846,10 @@ did_set_string_option (
     }
   }
 
-  /* 'guicursor' */
-  else if (varp == &p_guicursor)
+  // 'guicursor'
+  else if (varp == &p_guicursor) {
     errmsg = parse_shape_opt(SHAPE_CURSOR);
+  }
 
   else if (varp == &p_popt)
     errmsg = parse_printoptions();
@@ -3628,6 +3636,12 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
   } else if ((int *)varp == &p_force_off && p_force_off == true) {
     p_force_off = false;
     return (char *)e_unsupportedoption;
+  } else if ((int *)varp == &p_lrm) {
+    // 'langremap' -> !'langnoremap'
+    p_lnr = !p_lrm;
+  } else if ((int *)varp == &p_lnr) {
+    // 'langnoremap' -> !'langremap'
+    p_lrm = !p_lnr;
   // 'undofile'
   } else if ((int *)varp == &curbuf->b_p_udf || (int *)varp == &p_udf) {
     // Only take action when the option was set. When reset we do not
@@ -4121,7 +4135,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
     if (value < -1 || value > SB_MAX
-        || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
+        || (value != -1 && opt_flags == OPT_LOCAL && !curbuf->terminal)) {
       errmsg = e_invarg;
     }
   } else if (pp == &curbuf->b_p_sw || pp == &p_sw) {
@@ -4781,7 +4795,7 @@ int find_key_option_len(const char_u *arg, size_t len)
   } else {
     arg--;  // put arg at the '<'
     modifiers = 0;
-    key = find_special_key(&arg, len + 1, &modifiers, true, true);
+    key = find_special_key(&arg, len + 1, &modifiers, true, true, false);
     if (modifiers) {  // can't handle modifiers here
       key = 0;
     }
@@ -6937,7 +6951,7 @@ bool signcolumn_on(win_T *wp)
 
 /// Get window or buffer local options
 dict_T *get_winbuf_options(const int bufopt)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dict_T *const d = tv_dict_alloc();
 

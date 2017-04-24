@@ -571,7 +571,8 @@ class _CppLintState(object):
         for category, count in self.errors_by_category.items():
             sys.stderr.write('Category \'%s\' errors found: %d\n' %
                              (category, count))
-        sys.stderr.write('Total errors found: %d\n' % self.error_count)
+        if self.error_count:
+            sys.stderr.write('Total errors found: %d\n' % self.error_count)
 
     def SuppressErrorsFrom(self, fname):
         """Open file and read a list of suppressed errors from it"""

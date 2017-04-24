@@ -464,6 +464,7 @@ typedef enum {
   , HLF_CUL         // 'cursurline'
   , HLF_MC          // 'colorcolumn'
   , HLF_QFL         // selected quickfix line
+  , HLF_0           // Whitespace
   , HLF_COUNT       // MUST be the last one
 } hlf_T;
 
@@ -472,7 +473,7 @@ typedef enum {
 #define HL_FLAGS { '8', '~', 'z', 'Z', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', \
                    'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', \
                    'A', 'C', 'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', \
-                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q' }
+                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q', '0' }
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */
@@ -547,6 +548,7 @@ EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
   FOR_ALL_TABS(tp) \
     FOR_ALL_WINDOWS_IN_TAB(wp, tp)
 
+// -V:FOR_ALL_WINDOWS_IN_TAB:501
 # define FOR_ALL_WINDOWS_IN_TAB(wp, tp) \
   for (win_T *wp = ((tp) == curtab) \
               ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)

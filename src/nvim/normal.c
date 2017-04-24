@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * normal.c:	Contains the main routine for processing characters in command
  *		mode.  Communicates closely with the code in ops.c to handle
@@ -694,7 +697,6 @@ static void normal_get_additional_char(NormalState *s)
     if (langmap_active) {
       // Undo the decrement done above
       no_mapping++;
-      State = NORMAL_BUSY;
     }
     State = NORMAL_BUSY;
     s->need_flushbuf |= add_to_showcmd(*cp);
@@ -2334,10 +2336,11 @@ do_mouse (
         if (regname == 0 && eval_has_provider("clipboard")) {
           regname = '*';
         }
-        if ((State & REPLACE_FLAG) && !yank_register_mline(regname))
+        if ((State & REPLACE_FLAG) && !yank_register_mline(regname)) {
           insert_reg(regname, true);
-        else {
-          do_put(regname, NULL, BACKWARD, 1L, fixindent | PUT_CURSEND);
+        } else {
+          do_put(regname, NULL, BACKWARD, 1L,
+                 (fixindent ? PUT_FIXINDENT : 0) | PUT_CURSEND);
 
           /* Repeat it with CTRL-R CTRL-O r or CTRL-R CTRL-P r */
           AppendCharToRedobuff(Ctrl_R);
@@ -2689,7 +2692,8 @@ do_mouse (
      */
     if (restart_edit != 0)
       where_paste_started = curwin->w_cursor;
-    do_put(regname, NULL, dir, count, fixindent | PUT_CURSEND);
+    do_put(regname, NULL, dir, count,
+           (fixindent ? PUT_FIXINDENT : 0)| PUT_CURSEND);
   }
   /*
    * Ctrl-Mouse click or double click in a quickfix window jumps to the
@@ -4670,6 +4674,7 @@ static void nv_ident(cmdarg_T *cap)
   char_u *kp = *curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp;  // 'keywordprg'
   assert(*kp != NUL);  // option.c:do_set() should default to ":help" if empty.
   bool kp_ex = (*kp == ':');  // 'keywordprg' is an ex command
+  bool kp_help = (STRCMP(kp, ":he") == 0 || STRCMP(kp, ":help") == 0);
   size_t buf_size = n * 2 + 30 + STRLEN(kp);
   char *buf = xmalloc(buf_size);
   buf[0] = NUL;
@@ -4692,7 +4697,9 @@ static void nv_ident(cmdarg_T *cap)
     break;
 
   case 'K':
-    if (kp_ex) {
+    if (kp_help) {
+      STRCPY(buf, "he! ");
+    } else if (kp_ex) {
       if (cap->count0 != 0) {  // Send the count to the ex command.
         snprintf(buf, buf_size, "%" PRId64, (int64_t)(cap->count0));
       }
@@ -4755,7 +4762,7 @@ static void nv_ident(cmdarg_T *cap)
   }
 
   // Now grab the chars in the identifier
-  if (cmdchar == 'K') {
+  if (cmdchar == 'K' && !kp_help) {
     ptr = vim_strnsave(ptr, n);
     if (kp_ex) {
       // Escape the argument properly for an Ex command
@@ -7609,11 +7616,13 @@ static void nv_record(cmdarg_T *cap)
     if (cap->nchar == ':' || cap->nchar == '/' || cap->nchar == '?') {
       stuffcharReadbuff(cap->nchar);
       stuffcharReadbuff(K_CMDWIN);
-    } else
-    /* (stop) recording into a named register, unless executing a
-     * register */
-    if (!Exec_reg && do_record(cap->nchar) == false)
-      clearopbeep(cap->oap);
+    } else {
+      // (stop) recording into a named register, unless executing a
+      // register.
+      if (!Exec_reg && do_record(cap->nchar) == FAIL) {
+        clearopbeep(cap->oap);
+      }
+    }
   }
 }
 

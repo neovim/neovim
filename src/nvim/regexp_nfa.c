@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * NFA regular expression implementation.
  *
@@ -2772,15 +2775,10 @@ static int nfa_max_width(nfa_state_T *startstate, int depth)
     case NFA_ANY:
     case NFA_START_COLL:
     case NFA_START_NEG_COLL:
-      /* matches some character, including composing chars */
-      if (enc_utf8)
-        len += MB_MAXBYTES;
-      else if (has_mbyte)
-        len += 2;
-      else
-        ++len;
+      // Matches some character, including composing chars.
+      len += MB_MAXBYTES;
       if (state->c != NFA_ANY) {
-        /* skip over the characters */
+        // Skip over the characters.
         state = state->out1->out;
         continue;
       }
@@ -4373,7 +4371,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_LOWER:
-    if (vim_islower(c) && c != 170 && c != 186) {
+    if (mb_islower(c) && c != 170 && c != 186) {
       return OK;
     }
     break;
@@ -4391,8 +4389,9 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_UPPER:
-    if (vim_isupper(c))
+    if (mb_isupper(c)) {
       return OK;
+    }
     break;
   case NFA_CLASS_XDIGIT:
     if (ascii_isxdigit(c))
@@ -4411,8 +4410,9 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_ESCAPE:
-    if (c == '\033')
+    if (c == ESC) {
       return OK;
+    }
     break;
 
   default:
@@ -4892,7 +4892,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
       int c2_len = PTR2LEN(s2);
       int c2 = PTR2CHAR(s2);
 
-      if ((c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2)))
+      if ((c1 != c2 && (!ireg_ic || mb_tolower(c1) != mb_tolower(c2)))
           || c1_len != c2_len) {
         match = false;
         break;
@@ -5585,22 +5585,24 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
               break;
             }
             if (ireg_ic) {
-              int curc_low = vim_tolower(curc);
-              int done = FALSE;
+              int curc_low = mb_tolower(curc);
+              int done = false;
 
-              for (; c1 <= c2; ++c1)
-                if (vim_tolower(c1) == curc_low) {
+              for (; c1 <= c2; c1++) {
+                if (mb_tolower(c1) == curc_low) {
                   result = result_if_matched;
                   done = TRUE;
                   break;
                 }
-              if (done)
+              }
+              if (done) {
                 break;
+              }
             }
           } else if (state->c < 0 ? check_char_class(state->c, curc)
                      : (curc == state->c
-                        || (ireg_ic && vim_tolower(curc)
-                            == vim_tolower(state->c)))) {
+                        || (ireg_ic && mb_tolower(curc)
+                            == mb_tolower(state->c)))) {
             result = result_if_matched;
             break;
           }
@@ -6003,8 +6005,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 #endif
         result = (c == curc);
 
-        if (!result && ireg_ic)
-          result = vim_tolower(c) == vim_tolower(curc);
+        if (!result && ireg_ic) {
+          result = mb_tolower(c) == mb_tolower(curc);
+        }
 
         // If ireg_icombine is not set only skip over the character
         // itself.  When it is set skip over composing characters.
@@ -6152,8 +6155,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
             // Checking if the required start character matches is
             // cheaper than adding a state that won't match.
             c = PTR2CHAR(reginput + clen);
-            if (c != prog->regstart && (!ireg_ic || vim_tolower(c)
-                                        != vim_tolower(prog->regstart))) {
+            if (c != prog->regstart && (!ireg_ic || mb_tolower(c)
+                                        != mb_tolower(prog->regstart))) {
 #ifdef REGEXP_DEBUG
               fprintf(log_fd,
                   "  Skipping start state, regstart does not match\n");

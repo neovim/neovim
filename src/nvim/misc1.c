@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * misc1.c: functions that didn't seem to fit elsewhere
  */
@@ -2678,7 +2681,8 @@ void fast_breakcheck(void)
   }
 }
 
-// Call shell. Calls os_call_shell, with 'shellxquote' added.
+// os_call_shell wrapper. Handles 'verbose', :profile, and v:shell_error.
+// Invalidates cached tags.
 int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   int retval;
@@ -2686,8 +2690,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 
   if (p_verbose > 3) {
     verbose_enter();
-    smsg(_("Calling shell to execute: \"%s\""),
-         cmd == NULL ? p_sh : cmd);
+    smsg(_("Calling shell to execute: \"%s\""), cmd == NULL ? p_sh : cmd);
     ui_putc('\n');
     verbose_leave();
   }

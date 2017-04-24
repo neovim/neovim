@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * buffer.c: functions for dealing with the buffer structure
  */
@@ -741,11 +744,12 @@ static void clear_wininfo(buf_T *buf)
  */
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
-  (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
-                  start, dir, count, eap->forceit);
   bufref_T old_curbuf;
   set_bufref(&old_curbuf, curbuf);
   swap_exists_action = SEA_DIALOG;
+
+  (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
+                  start, dir, count, eap->forceit);
 
   if (swap_exists_action == SEA_QUIT && *eap->cmd == 's') {
     cleanup_T cs;
@@ -1838,9 +1842,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   return FAIL;
 }
 
-/*
- * go to the last know line number for the current buffer
- */
+// Go to the last known line number for the current buffer.
 void buflist_getfpos(void)
 {
   pos_T       *fpos;
@@ -2338,9 +2340,7 @@ linenr_T buflist_findlnum(buf_T *buf)
   return buflist_findfpos(buf)->lnum;
 }
 
-/*
- * List all know file names (for :files and :buffers command).
- */
+// List all known file names (for :files and :buffers command).
 void buflist_list(exarg_T *eap)
 {
   buf_T       *buf;
@@ -2724,7 +2724,7 @@ fileinfo (
     else
       name = curbuf->b_ffname;
     home_replace(shorthelp ? curbuf : NULL, name, p,
-        (int)(IOSIZE - (p - buffer)), TRUE);
+                 (size_t)(IOSIZE - (p - buffer)), true);
   }
 
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
@@ -2889,7 +2889,7 @@ void maketitle(void)
         buf[off++] = ' ';
         buf[off++] = '(';
         home_replace(curbuf, curbuf->b_ffname,
-            buf + off, SPACE_FOR_DIR - off, TRUE);
+                     buf + off, (size_t)(SPACE_FOR_DIR - off), true);
 #ifdef BACKSLASH_IN_FILENAME
         /* avoid "c:/name" to be reduced to "c" */
         if (isalpha(buf[off]) && buf[off + 1] == ':')

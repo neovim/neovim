@@ -1,5 +1,5 @@
 " The Python3 provider uses a Python3 host to emulate an environment for running
-" python3 plugins. See ":help provider".
+" python3 plugins. :help provider
 "
 " Associating the plugin with the Python3 host is the first step because
 " plugins will be passed as command-line arguments

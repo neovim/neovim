@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Aug 12
+" Last Change:	2016 Aug 21
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -589,8 +589,6 @@ if has("gui")
       call append("$", "toolbariconsize\tsize of toolbar icons")
       call <SID>OptionG("tbis", &tbis)
     endif
-    call append("$", "guiheadroom\troom (in pixels) left above/below the window")
-    call append("$", " \tset ghr=" . &ghr)
   endif
   if has("browse")
     call append("$", "browsedir\t\"last\", \"buffer\" or \"current\": which directory used for the file browser")
@@ -1148,8 +1146,8 @@ endif
 if has("langmap")
   call append("$", "langmap\tlist of characters that are translated in Normal mode")
   call <SID>OptionG("lmap", &lmap)
-  call append("$", "langnoremap\tdon't apply 'langmap' to mapped characters")
-  call <SID>BinOptionG("lnr", &lnr)
+  call append("$", "langremap\tapply 'langmap' to mapped characters")
+  call <SID>BinOptionG("lrm", &lrm)
 endif
 if has("xim")
   call append("$", "imdisable\twhen set never use IM; overrules following IM options")

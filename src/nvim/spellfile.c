@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // spellfile.c: code for reading and writing spell files.
 //
 // See spell.c for information about spell checking.
@@ -223,7 +226,9 @@
 //                          few bytes as possible, see offset2bytes())
 
 #include <stdio.h>
+#include <stdint.h>
 #include <wctype.h>
+#include <strings.h>
 
 #include "nvim/vim.h"
 #include "nvim/spell_defs.h"
@@ -266,7 +271,7 @@
 #define SAL_REM_ACCENTS         4
 
 #define VIMSPELLMAGIC "VIMspell"  // string at start of Vim spell file
-#define VIMSPELLMAGICL 8
+#define VIMSPELLMAGICL (sizeof(VIMSPELLMAGIC) - 1)
 #define VIMSPELLVERSION 50
 
 // Section IDs.  Only renumber them when VIMSPELLVERSION changes!
@@ -493,6 +498,64 @@ typedef struct spellinfo_S {
 # include "spellfile.c.generated.h"
 #endif
 
+/// Read n bytes from fd to buf, returning on errors
+///
+/// @param[out]  buf  Buffer to read to, must be at least n bytes long.
+/// @param[in]  n  Amount of bytes to read.
+/// @param  fd  FILE* to read from.
+/// @param  exit_code  Code to run before returning.
+///
+/// @return Allows to proceed if everything is OK, returns SP_TRUNCERROR if
+///         there are not enough bytes, returns SP_OTHERERROR if reading failed.
+#define SPELL_READ_BYTES(buf, n, fd, exit_code) \
+    do { \
+      const size_t n__SPRB = (n); \
+      FILE *const fd__SPRB = (fd); \
+      char *const buf__SPRB = (buf); \
+      const size_t read_bytes__SPRB = fread(buf__SPRB, 1, n__SPRB, fd__SPRB); \
+      if (read_bytes__SPRB != n__SPRB) { \
+        exit_code; \
+        return feof(fd__SPRB) ? SP_TRUNCERROR : SP_OTHERERROR; \
+      } \
+    } while (0)
+
+/// Like #SPELL_READ_BYTES, but also error out if NUL byte was read
+///
+/// @return Allows to proceed if everything is OK, returns SP_TRUNCERROR if
+///         there are not enough bytes, returns SP_OTHERERROR if reading failed,
+///         returns SP_FORMERROR if read out a NUL byte.
+#define SPELL_READ_NONNUL_BYTES(buf, n, fd, exit_code) \
+    do { \
+      const size_t n__SPRNB = (n); \
+      FILE *const fd__SPRNB = (fd); \
+      char *const buf__SPRNB = (buf); \
+      SPELL_READ_BYTES(buf__SPRNB, n__SPRNB, fd__SPRNB, exit_code); \
+      if (memchr(buf__SPRNB, NUL, (size_t)n__SPRNB)) { \
+        exit_code; \
+        return SP_FORMERROR; \
+      } \
+    } while (0)
+
+/// Check that spell file starts with a magic string
+///
+/// Does not check for version of the file.
+///
+/// @param  fd  File to check.
+///
+/// @return 0 in case of success, SP_TRUNCERROR if file contains not enough
+///         bytes, SP_FORMERROR if it does not match magic string and
+///         SP_OTHERERROR if reading file failed.
+static inline int spell_check_magic_string(FILE *const fd)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+{
+  char buf[VIMSPELLMAGICL];
+  SPELL_READ_BYTES(buf, VIMSPELLMAGICL, fd, ;);
+  if (memcmp(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
+    return SP_FORMERROR;
+  }
+  return 0;
+}
+
 // Load one spell file and store the info into a slang_T.
 //
 // This is invoked in three ways:
@@ -513,9 +576,7 @@ spell_load_file (
 )
 {
   FILE        *fd;
-  char_u buf[VIMSPELLMAGICL];
   char_u      *p;
-  int i;
   int n;
   int len;
   char_u      *save_sourcing_name = sourcing_name;
@@ -557,11 +618,20 @@ spell_load_file (
   sourcing_lnum = 0;
 
   // <HEADER>: <fileID>
-  for (i = 0; i < VIMSPELLMAGICL; ++i)
-    buf[i] = getc(fd);                                  // <fileID>
-  if (STRNCMP(buf, VIMSPELLMAGIC, VIMSPELLMAGICL) != 0) {
-    EMSG(_("E757: This does not look like a spell file"));
-    goto endFAIL;
+  const int scms_ret = spell_check_magic_string(fd);
+  switch (scms_ret) {
+    case SP_FORMERROR:
+    case SP_TRUNCERROR: {
+      emsgf(_("E757: This does not look like a spell file"));
+      goto endFAIL;
+    }
+    case SP_OTHERERROR: {
+      emsgf(_("E5042: Failed to read spell file %s: %s"),
+            fname, strerror(ferror(fd)));
+    }
+    case 0: {
+      break;
+    }
   }
   c = getc(fd);                                         // <versionnr>
   if (c < VIMSPELLVERSION) {
@@ -934,12 +1004,10 @@ static char_u *read_cnt_string(FILE *fd, int cnt_bytes, int *cntp)
 // Return SP_*ERROR flags.
 static int read_region_section(FILE *fd, slang_T *lp, int len)
 {
-  int i;
-
-  if (len > 16)
+  if (len > 16) {
     return SP_FORMERROR;
-  for (i = 0; i < len; ++i)
-    lp->sl_regions[i] = getc(fd);                       // <regionname>
+  }
+  SPELL_READ_NONNUL_BYTES((char *)lp->sl_regions, (size_t)len, fd, ;);
   lp->sl_regions[len] = NUL;
   return 0;
 }
@@ -982,35 +1050,30 @@ static int read_charflags_section(FILE *fd)
 // Return SP_*ERROR flags.
 static int read_prefcond_section(FILE *fd, slang_T *lp)
 {
-  int cnt;
-  int i;
-  int n;
-  char_u      *p;
-  char_u buf[MAXWLEN + 1];
-
   // <prefcondcnt> <prefcond> ...
-  cnt = get2c(fd);                                      // <prefcondcnt>
-  if (cnt <= 0)
+  const int cnt = get2c(fd);  // <prefcondcnt>
+  if (cnt <= 0) {
     return SP_FORMERROR;
+  }
 
   lp->sl_prefprog = xcalloc(cnt, sizeof(regprog_T *));
   lp->sl_prefixcnt = cnt;
 
-  for (i = 0; i < cnt; ++i) {
+  for (int i = 0; i < cnt; i++) {
     // <prefcond> : <condlen> <condstr>
-    n = getc(fd);                                       // <condlen>
-    if (n < 0 || n >= MAXWLEN)
+    const int n = getc(fd);  // <condlen>
+    if (n < 0 || n >= MAXWLEN) {
       return SP_FORMERROR;
+    }
 
     // When <condlen> is zero we have an empty condition.  Otherwise
     // compile the regexp program used to check for the condition.
     if (n > 0) {
-      buf[0] = '^';                 // always match at one position only
-      p = buf + 1;
-      while (n-- > 0)
-        *p++ = getc(fd);                                // <condstr>
-      *p = NUL;
-      lp->sl_prefprog[i] = vim_regcomp(buf, RE_MAGIC + RE_STRING);
+      char buf[MAXWLEN + 1];
+      buf[0] = '^';  // always match at one position only
+      SPELL_READ_NONNUL_BYTES(buf + 1, (size_t)n, fd, ;);
+      buf[n + 1] = NUL;
+      lp->sl_prefprog[i] = vim_regcomp((char_u *)buf, RE_MAGIC | RE_STRING);
     }
   }
   return 0;
@@ -1063,7 +1126,6 @@ static int read_rep_section(FILE *fd, garray_T *gap, int16_t *first)
 // Return SP_*ERROR flags.
 static int read_sal_section(FILE *fd, slang_T *slang)
 {
-  int i;
   int cnt;
   garray_T    *gap;
   salitem_T   *smp;
@@ -1073,13 +1135,16 @@ static int read_sal_section(FILE *fd, slang_T *slang)
 
   slang->sl_sofo = false;
 
-  i = getc(fd);                                 // <salflags>
-  if (i & SAL_F0LLOWUP)
+  const int flags = getc(fd);                   // <salflags>
+  if (flags & SAL_F0LLOWUP) {
     slang->sl_followup = true;
-  if (i & SAL_COLLAPSE)
+  }
+  if (flags & SAL_COLLAPSE) {
     slang->sl_collapse = true;
-  if (i & SAL_REM_ACCENTS)
+  }
+  if (flags & SAL_REM_ACCENTS) {
     slang->sl_rem_accents = true;
+  }
 
   cnt = get2c(fd);                              // <salcount>
   if (cnt < 0)
@@ -1099,7 +1164,8 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     smp->sm_lead = p;
 
     // Read up to the first special char into sm_lead.
-    for (i = 0; i < ccnt; ++i) {
+    int i = 0;
+    for (; i < ccnt; ++i) {
       c = getc(fd);                             // <salfrom>
       if (vim_strchr((char_u *)"0123456789(-<^$", c) != NULL)
         break;
@@ -1125,11 +1191,17 @@ static int read_sal_section(FILE *fd, slang_T *slang)
 
     // Any following chars go in sm_rules.
     smp->sm_rules = p;
-    if (i < ccnt)
+    if (i < ccnt) {
       // store the char we got while checking for end of sm_lead
       *p++ = c;
-    for (++i; i < ccnt; ++i)
-      *p++ = getc(fd);                          // <salfrom>
+    }
+    i++;
+    if (i < ccnt) {
+      SPELL_READ_NONNUL_BYTES(                  // <salfrom>
+          (char *)p, (size_t)(ccnt - i), fd, xfree(smp->sm_lead));
+      p += (ccnt - i);
+      i = ccnt;
+    }
     *p++ = NUL;
 
     // <saltolen> <salto>
@@ -1569,9 +1641,14 @@ spell_read_tree (
 
   // The tree size was computed when writing the file, so that we can
   // allocate it as one long block. <nodecount>
-  int len = get4c(fd);
-  if (len < 0)
+  long len = get4c(fd);
+  if (len < 0) {
     return SP_TRUNCERROR;
+  }
+  if ((size_t)len >= SIZE_MAX / sizeof(int)) {
+    // Invalid length, multiply with sizeof(int) would overflow.
+    return SP_FORMERROR;
+  }
   if (len > 0) {
     // Allocate the byte array.
     bp = xmalloc(len);

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
  // Various routines dealing with allocation and deallocation of memory.
 
 #include <assert.h>
@@ -493,6 +496,13 @@ bool strequal(const char *a, const char *b)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (a == NULL && b == NULL) || (a && b && strcmp(a, b) == 0);
+}
+
+/// Case-insensitive `strequal`.
+bool striequal(const char *a, const char *b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a == NULL && b == NULL) || (a && b && STRICMP(a, b) == 0);
 }
 
 /*

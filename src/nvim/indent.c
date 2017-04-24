@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -7,6 +10,7 @@
 #include "nvim/eval.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -598,7 +602,7 @@ int get_lisp_indent(void)
     paren = *pos;
     pos = findmatch(NULL, '[');
 
-    if ((pos == NULL) || ltp(pos, &paren)) {
+    if ((pos == NULL) || lt(*pos, paren)) {
       pos = &paren;
     }
   }

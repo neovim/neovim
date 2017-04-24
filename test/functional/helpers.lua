@@ -8,6 +8,7 @@ local Session = require('nvim.session')
 local TcpStream = require('nvim.tcp_stream')
 local SocketStream = require('nvim.socket_stream')
 local ChildProcessStream = require('nvim.child_process_stream')
+local Paths = require('test.config.paths')
 
 local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
@@ -16,30 +17,30 @@ local eq = global_helpers.eq
 local ok = global_helpers.ok
 local map = global_helpers.map
 local filter = global_helpers.filter
+local dedent = global_helpers.dedent
 
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
-local nvim_prog = os.getenv('NVIM_PROG') or os.getenv('NVIM_PRG') or 'build/bin/nvim'
+local nvim_prog = (
+  os.getenv('NVIM_PROG')
+  or os.getenv('NVIM_PRG')
+  or Paths.test_build_dir .. '/bin/nvim'
+)
 -- Default settings for the test session.
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
                   ..' belloff= noshowcmd noruler nomore'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                    '--cmd', nvim_set, '--embed'}
-
-local mpack = require('mpack')
-
-local tmpname = global_helpers.tmpname
-local uname = global_helpers.uname
-
--- Formulate a path to the directory containing nvim.  We use this to
--- help run test executables.  It helps to keep the tests working, even
--- when the build is not in the default location.
+-- Directory containing nvim.
 local nvim_dir = nvim_prog:gsub("[/\\][^/\\]+$", "")
 if nvim_dir == nvim_prog then
   nvim_dir = "."
 end
 
+local mpack = require('mpack')
+local tmpname = global_helpers.tmpname
+local uname = global_helpers.uname
 local prepend_argv
 
 if os.getenv('VALGRIND') then
@@ -191,28 +192,6 @@ local function nvim_feed(input)
   end
 end
 
-local function dedent(str)
-  -- find minimum common indent across lines
-  local indent = nil
-  for line in str:gmatch('[^\n]+') do
-    local line_indent = line:match('^%s+') or ''
-    if indent == nil or #line_indent < #indent then
-      indent = line_indent
-    end
-  end
-  if indent == nil or #indent == 0 then
-    -- no minimum common indent
-    return str
-  end
-  -- create a pattern for the indent
-  indent = indent:gsub('%s', '[ \t]')
-  -- strip it from the first line
-  str = str:gsub('^'..indent, '')
-  -- strip it from the remaining lines
-  str = str:gsub('[\n]'..indent, '\n')
-  return str
-end
-
 local function feed(...)
   for _, v in ipairs({...}) do
     nvim_feed(dedent(v))
@@ -267,12 +246,13 @@ local function retry(max, max_ms, fn)
       return result
     end
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
-      break
+      if type(result) == "string" then
+        result = "\nretry() attempts: "..tostring(tries).."\n"..result
+      end
+      error(result)
     end
     tries = tries + 1
   end
-  -- Do not use pcall() for the final attempt, let the failure bubble up.
-  return fn()
 end
 
 local function clear(...)
@@ -325,7 +305,7 @@ end
 
 -- Executes an ex-command by user input. Because nvim_input() is used, VimL
 -- errors will not manifest as client (lua) errors. Use command() for that.
-local function execute(...)
+local function feed_command(...)
   for _, v in ipairs({...}) do
     if v:sub(1, 1) ~= '/' then
       -- not a search command, prefix with colon
@@ -368,7 +348,7 @@ end
 local function set_shell_powershell()
   source([[
     set shell=powershell shellquote=\" shellpipe=\| shellredir=>
-    set shellcmdflag=\ -ExecutionPolicy\ RemoteSigned\ -Command
+    set shellcmdflag=\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
     let &shellxquote=' '
   ]])
 end
@@ -412,7 +392,14 @@ end
 
 -- sleeps the test runner (_not_ the nvim instance)
 local function sleep(ms)
-  run(nil, nil, nil, ms)
+  local function notification_cb(method, _)
+    if method == "redraw" then
+      error("Screen is attached; use screen:sleep() instead.")
+    end
+    return true
+  end
+
+  run(nil, notification_cb, nil, ms)
 end
 
 local function curbuf_contents()
@@ -445,21 +432,27 @@ end
 
 local function do_rmdir(path)
   if lfs.attributes(path, 'mode') ~= 'directory' then
-    return nil
+    return  -- Don't complain.
   end
   for file in lfs.dir(path) do
     if file ~= '.' and file ~= '..' then
       local abspath = path..'/'..file
       if lfs.attributes(abspath, 'mode') == 'directory' then
-        local ret = do_rmdir(abspath)  -- recurse
-        if not ret then
-          return nil
-        end
+        do_rmdir(abspath)  -- recurse
       else
         local ret, err = os.remove(abspath)
         if not ret then
-          error('os.remove: '..err)
-          return nil
+          if not session then
+            error('os.remove: '..err)
+          else
+            -- Try Nvim delete(): it handles `readonly` attribute on Windows,
+            -- and avoids Lua cross-version/platform incompatibilities.
+            if -1 == nvim_call('delete', abspath) then
+              local hint = (os_name() == 'windows'
+                and ' (hint: try :%bwipeout! before rmdir())' or '')
+              error('delete() failed'..hint..': '..abspath)
+            end
+          end
         end
       end
     end
@@ -468,7 +461,6 @@ local function do_rmdir(path)
   if not ret then
     error('lfs.rmdir('..path..'): '..err)
   end
-  return ret
 end
 
 local function rmdir(path)
@@ -586,7 +578,7 @@ local M = {
   insert = insert,
   iswin = iswin,
   feed = feed,
-  execute = execute,
+  feed_command = feed_command,
   eval = nvim_eval,
   call = nvim_call,
   command = nvim_command,

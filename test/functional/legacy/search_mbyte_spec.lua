@@ -1,6 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
+
+local wait = helpers.wait
+local clear = helpers.clear
 local insert = helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local expect = helpers.expect
+local command = helpers.command
 
 describe('search_mbyte', function()
   before_each(clear)
@@ -8,17 +12,18 @@ describe('search_mbyte', function()
   it("search('multi-byte char', 'bce')", function()
     insert([=[
       Results:
-      
+
       Test bce:
       Ａ]=])
+    wait()
 
-    execute('/^Test bce:/+1')
-    execute([[$put =search('Ａ', 'bce', line('.'))]])
+    command('/^Test bce:/+1')
+    command([[$put =search('Ａ', 'bce', line('.'))]])
 
     -- Assert buffer contents.
     expect([=[
       Results:
-      
+
       Test bce:
       Ａ
       4]=])

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // vim: set fdm=marker fdl=1 fdc=3
 
 /*
@@ -1689,12 +1692,10 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
   }
 }
 
-/* get_foldtext() {{{2 */
-/*
- * Return the text for a closed fold at line "lnum", with last line "lnume".
- * When 'foldtext' isn't set puts the result in "buf[51]".  Otherwise the
- * result is in allocated memory.
- */
+// get_foldtext() {{{2
+/// Return the text for a closed fold at line "lnum", with last line "lnume".
+/// When 'foldtext' isn't set puts the result in "buf[FOLD_TEXT_LEN]".
+/// Otherwise the result is in allocated memory.
 char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
                      foldinfo_T *foldinfo, char_u *buf)
   FUNC_ATTR_NONNULL_ARG(1)
@@ -1781,8 +1782,12 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
     }
   }
   if (text == NULL) {
-    sprintf((char *)buf, _("+--%3ld lines folded "),
-        (long)(lnume - lnum + 1));
+    unsigned long count = (unsigned long)(lnume - lnum + 1);
+
+    vim_snprintf((char *)buf, FOLD_TEXT_LEN,
+                 ngettext("+--%3ld line folded",
+                          "+--%3ld lines folded ", count),
+                 count);
     text = buf;
   }
   return text;
@@ -2232,32 +2237,51 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
              * before where we started looking, extend it.  If it
              * starts at another line, update nested folds to keep
              * their position, compensating for the new fd_top. */
-            if (fp->fd_top >= startlnum && fp->fd_top != firstlnum) {
-              if (fp->fd_top > firstlnum)
-                /* like lines are inserted */
+            if (fp->fd_top == firstlnum) {
+              // We have found a fold beginning exactly where we want one.
+            } else if (fp->fd_top >= startlnum) {
+              if (fp->fd_top > firstlnum) {
+                // We will move the start of this fold up, hence we move all
+                // nested folds (with relative line numbers) down.
                 foldMarkAdjustRecurse(&fp->fd_nested,
-                    (linenr_T)0, (linenr_T)MAXLNUM,
-                    (long)(fp->fd_top - firstlnum), 0L);
-              else
-                /* like lines are deleted */
+                                      (linenr_T)0, (linenr_T)MAXLNUM,
+                                      (long)(fp->fd_top - firstlnum), 0L);
+              } else {
+                // Will move fold down, move nested folds relatively up.
                 foldMarkAdjustRecurse(&fp->fd_nested,
-                    (linenr_T)0,
-                    (long)(firstlnum - fp->fd_top - 1),
-                    (linenr_T)MAXLNUM,
-                    (long)(fp->fd_top - firstlnum));
+                                      (linenr_T)0,
+                                      (long)(firstlnum - fp->fd_top - 1),
+                                      (linenr_T)MAXLNUM,
+                                      (long)(fp->fd_top - firstlnum));
+              }
               fp->fd_len += fp->fd_top - firstlnum;
               fp->fd_top = firstlnum;
-              fold_changed = TRUE;
-            } else if (flp->start != 0 && lvl == level
-                       && fp->fd_top != firstlnum) {
-              /* Existing fold that includes startlnum must stop
-               * if we find the start of a new fold at the same
-               * level.  Split it.  Delete contained folds at
-               * this point to split them too. */
-              foldRemove(&fp->fd_nested, flp->lnum - fp->fd_top,
-                  flp->lnum - fp->fd_top);
+              fold_changed = true;
+            } else if ((flp->start != 0 && lvl == level)
+                       || (firstlnum != startlnum)) {
+              // Before there was a fold spanning from above startlnum to below
+              // firstlnum. This fold is valid above startlnum (because we are
+              // not updating that range), but there is now a break in it.
+              // If the break is because we are now forced to start a new fold
+              // at the level "level" at line fline->lnum, then we need to
+              // split the fold at fline->lnum.
+              // If the break is because the range [startlnum, firstlnum) is
+              // now at a lower indent than "level", we need to split the fold
+              // in this range.
+              // Any splits have to be done recursively.
+              linenr_T breakstart;
+              linenr_T breakend;
+              if (firstlnum != startlnum) {
+                breakstart = startlnum;
+                breakend = firstlnum;
+              } else {
+                breakstart = flp->lnum;
+                breakend = flp->lnum;
+              }
+              foldRemove(&fp->fd_nested, breakstart - fp->fd_top,
+                         breakend - fp->fd_top);
               i = (int)(fp - (fold_T *)gap->ga_data);
-              foldSplit(gap, i, flp->lnum, flp->lnum - 1);
+              foldSplit(gap, i, breakstart, breakend - 1);
               fp = (fold_T *)gap->ga_data + i + 1;
               /* If using the "marker" or "syntax" method, we
                * need to continue until the end of the fold is
@@ -2266,6 +2290,16 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
                   || getlevel == foldlevelExpr
                   || getlevel == foldlevelSyntax)
                 finish = TRUE;
+            }
+            if (fp->fd_top == startlnum && concat) {
+              i = (int)(fp - (fold_T *)gap->ga_data);
+              if (i != 0) {
+                fp2 = fp - 1;
+                if (fp2->fd_top + fp2->fd_len == fp->fd_top) {
+                  foldMerge(fp2, gap, fp);
+                  fp = fp2;
+                }
+              }
             }
             break;
           }
@@ -2736,10 +2770,13 @@ void foldMoveRange(garray_T *gap, const linenr_T line1, const linenr_T line2,
   }
   dest_index = FOLD_INDEX(fp, gap);
 
-  // All folds are now correct, but they are not necessarily in the correct
-  // order.
-  // We have to swap folds in the range [move_end, dest_index) with those in
-  // the range [move_start, move_end).
+  // All folds are now correct, but not necessarily in the correct order.
+  // We must swap folds in the range [move_end, dest_index) with those in the
+  // range [move_start, move_end).
+  if (move_end == 0) {
+    // There are no folds after those moved, so none were moved out of order.
+    return;
+  }
   reverse_fold_order(gap, move_start, dest_index - 1);
   reverse_fold_order(gap, move_start, move_start + dest_index - move_end - 1);
   reverse_fold_order(gap, move_start + dest_index - move_end, dest_index - 1);

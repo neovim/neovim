@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // Terminal UI functions. Invoked (by ui_bridge.c) on the TUI thread.
 
 #include <assert.h>
@@ -31,6 +34,8 @@
 #include "nvim/ugrid.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/tui.h"
+#include "nvim/cursor_shape.h"
+#include "nvim/syntax.h"
 
 // Space reserved in the output buffer to restore the cursor to normal when
 // flushing. No existing terminal will require 32 bytes to do that.
@@ -38,6 +43,15 @@
 #define OUTBUF_SIZE 0xffff
 
 #define TOO_MANY_EVENTS 1000000
+#define STARTS_WITH(str, prefix) (!memcmp(str, prefix, sizeof(prefix) - 1))
+
+typedef enum TermType {
+  kTermUnknown,
+  kTermGnome,
+  kTermiTerm,
+  kTermKonsole,
+  kTermRxvt,
+} TermType;
 
 typedef struct {
   int top, bot, left, right;
@@ -69,18 +83,21 @@ typedef struct {
   bool can_use_terminal_scroll;
   bool mouse_enabled;
   bool busy;
+  cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
-  int showing_mode;
+  ModeShape showing_mode;
+  TermType term;
   struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
-    int set_cursor_shape_bar, set_cursor_shape_ul, set_cursor_shape_block;
     int set_rgb_foreground, set_rgb_background;
+    int set_cursor_color;
     int enable_focus_reporting, disable_focus_reporting;
   } unibi_ext;
 } TUIData;
 
 static bool volatile got_winch = false;
+static bool cursor_style_enabled = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -97,6 +114,7 @@ UI *tui_start(void)
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
   ui->cursor_goto = tui_cursor_goto;
+  ui->mode_info_set = tui_mode_info_set;
   ui->update_menu = tui_update_menu;
   ui->busy_start = tui_busy_start;
   ui->busy_stop = tui_busy_stop;
@@ -126,14 +144,12 @@ static void terminfo_start(UI *ui)
   data->can_use_terminal_scroll = true;
   data->bufpos = 0;
   data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
-  data->showing_mode = 0;
+  data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
+  data->unibi_ext.set_cursor_color = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
   data->unibi_ext.disable_bracketed_paste = -1;
-  data->unibi_ext.set_cursor_shape_bar = -1;
-  data->unibi_ext.set_cursor_shape_ul = -1;
-  data->unibi_ext.set_cursor_shape_block = -1;
   data->unibi_ext.enable_focus_reporting = -1;
   data->unibi_ext.disable_focus_reporting = -1;
   data->out_fd = 1;
@@ -146,11 +162,10 @@ static void terminfo_start(UI *ui)
     data->ut = unibi_dummy();
   }
   fix_terminfo(data);
-  // Initialize the cursor shape.
-  unibi_out(ui, data->unibi_ext.set_cursor_shape_block);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
+  // NOTE: Do this *before* changing terminal settings. #6433
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
@@ -171,7 +186,7 @@ static void terminfo_stop(UI *ui)
 {
   TUIData *data = ui->data;
   // Destroy output stuff
-  tui_mode_change(ui, NORMAL);
+  tui_mode_change(ui, SHAPE_IDX_N);
   tui_mouse_off(ui);
   unibi_out(ui, unibi_exit_attribute_mode);
   // cursor should be set to normal before exiting alternate screen
@@ -434,6 +449,62 @@ static void tui_cursor_goto(UI *ui, int row, int col)
   unibi_goto(ui, row, col);
 }
 
+CursorShape tui_cursor_decode_shape(const char *shape_str)
+{
+  CursorShape shape = 0;
+  if (strequal(shape_str, "block")) {
+    shape = SHAPE_BLOCK;
+  } else if (strequal(shape_str, "vertical")) {
+    shape = SHAPE_VER;
+  } else if (strequal(shape_str, "horizontal")) {
+    shape = SHAPE_HOR;
+  } else {
+    EMSG2(_(e_invarg2), shape_str);
+  }
+  return shape;
+}
+
+static cursorentry_T decode_cursor_entry(Dictionary args)
+{
+  cursorentry_T r;
+
+  for (size_t i = 0; i < args.size; i++) {
+    char *key = args.items[i].key.data;
+    Object value = args.items[i].value;
+
+    if (strequal(key, "cursor_shape")) {
+      r.shape = tui_cursor_decode_shape(args.items[i].value.data.string.data);
+    } else if (strequal(key, "blinkon")) {
+      r.blinkon = (int)value.data.integer;
+    } else if (strequal(key, "blinkoff")) {
+      r.blinkoff = (int)value.data.integer;
+    } else if (strequal(key, "hl_id")) {
+      r.id = (int)value.data.integer;
+    }
+  }
+  return r;
+}
+
+static void tui_mode_info_set(UI *ui, bool guicursor_enabled, Array args)
+{
+  cursor_style_enabled = guicursor_enabled;
+  if (!guicursor_enabled) {
+    return;  // Do not send cursor style control codes.
+  }
+  TUIData *data = ui->data;
+
+  assert(args.size);
+
+  // cursor style entries as defined by `shape_table`.
+  for (size_t i = 0; i < args.size; i++) {
+    assert(args.items[i].type == kObjectTypeDictionary);
+    cursorentry_T r = decode_cursor_entry(args.items[i].data.dictionary);
+    data->cursor_shapes[i] = r;
+  }
+
+  tui_set_mode(ui, data->showing_mode);
+}
+
 static void tui_update_menu(UI *ui)
 {
     // Do nothing; menus are for GUI only
@@ -452,44 +523,86 @@ static void tui_busy_stop(UI *ui)
 static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, data->unibi_ext.enable_mouse);
-  data->mouse_enabled = true;
+  if (!data->mouse_enabled) {
+    unibi_out(ui, data->unibi_ext.enable_mouse);
+    data->mouse_enabled = true;
+  }
 }
 
 static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
-  unibi_out(ui, data->unibi_ext.disable_mouse);
-  data->mouse_enabled = false;
+  if (data->mouse_enabled) {
+    unibi_out(ui, data->unibi_ext.disable_mouse);
+    data->mouse_enabled = false;
+  }
 }
 
-static void tui_mode_change(UI *ui, int mode)
+static void tui_set_mode(UI *ui, ModeShape mode)
+{
+  if (!cursor_style_enabled) {
+    return;
+  }
+  TUIData *data = ui->data;
+  cursorentry_T c = data->cursor_shapes[mode];
+  int shape = c.shape;
+  bool is_tmux = os_getenv("TMUX") != NULL;
+  unibi_var_t vars[26 + 26] = { { 0 } };
+
+# define TMUX_WRAP(seq) (is_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
+  // Support changing cursor shape on some popular terminals.
+  const char *vte_version = os_getenv("VTE_VERSION");
+
+  if (data->term == kTermKonsole) {
+    // Konsole uses a proprietary escape code to set the cursor shape
+    // and does not support DECSCUSR.
+    switch (shape) {
+      case SHAPE_BLOCK: shape = 0; break;
+      case SHAPE_VER:   shape = 1; break;
+      case SHAPE_HOR:   shape = 2; break;
+      default: WLOG("Unknown shape value %d", shape); break;
+    }
+    data->params[0].i = shape;
+    data->params[1].i = (c.blinkon == 0);
+
+    unibi_format(vars, vars + 26,
+      TMUX_WRAP("\x1b]50;CursorShape=%p1%d;BlinkingCursorEnabled=%p2%d\x07"),
+      data->params, out, ui, NULL, NULL);
+  } else if (!vte_version || atoi(vte_version) >= 3900) {
+    // Assume that the terminal supports DECSCUSR unless it is an
+    // old VTE based terminal.  This should not get wrapped for tmux,
+    // which will handle it via its Ss/Se terminfo extension - usually
+    // according to its terminal-overrides.
+
+    switch (shape) {
+      case SHAPE_BLOCK: shape = 1; break;
+      case SHAPE_VER:   shape = 5; break;
+      case SHAPE_HOR:   shape = 3; break;
+      default: WLOG("Unknown shape value %d", shape); break;
+    }
+    data->params[0].i = shape + (c.blinkon ==0);
+    unibi_format(vars, vars + 26, "\x1b[%p1%d q",
+                 data->params, out, ui, NULL, NULL);
+  }
+
+  if (c.id != 0 && ui->rgb) {
+    int attr = syn_id2attr(c.id);
+    attrentry_T *aep = syn_cterm_attr2entry(attr);
+    data->params[0].i = aep->rgb_bg_color;
+    unibi_out(ui, data->unibi_ext.set_cursor_color);
+  }
+}
+
+/// @param mode editor mode
+static void tui_mode_change(UI *ui, int mode_idx)
 {
   TUIData *data = ui->data;
-
-  if (mode == INSERT) {
-    if (data->showing_mode != INSERT) {
-      unibi_out(ui, data->unibi_ext.set_cursor_shape_bar);
-    }
-  } else if (mode == CMDLINE) {
-    if (data->showing_mode != CMDLINE) {
-      unibi_out(ui, data->unibi_ext.set_cursor_shape_bar);
-    }
-  } else if (mode == REPLACE) {
-    if (data->showing_mode != REPLACE) {
-      unibi_out(ui, data->unibi_ext.set_cursor_shape_ul);
-    }
-  } else {
-    assert(mode == NORMAL);
-    if (data->showing_mode != NORMAL) {
-      unibi_out(ui, data->unibi_ext.set_cursor_shape_block);
-    }
-  }
-  data->showing_mode = mode;
+  tui_set_mode(ui, (ModeShape)mode_idx);
+  data->showing_mode = (ModeShape)mode_idx;
 }
 
 static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
-    int right)
+                                  int right)
 {
   TUIData *data = ui->data;
   ugrid_set_scroll_region(&data->grid, top, bot, left, right);
@@ -817,6 +930,24 @@ static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
   }
 }
 
+static TermType detect_term(const char *term, const char *colorterm)
+{
+  if (STARTS_WITH(term, "rxvt")) {
+    return kTermRxvt;
+  }
+  if (os_getenv("KONSOLE_PROFILE_NAME") || os_getenv("KONSOLE_DBUS_SESSION")) {
+    return kTermKonsole;
+  }
+  const char *termprg = os_getenv("TERM_PROGRAM");
+  if (termprg && strstr(termprg, "iTerm.app")) {
+    return kTermiTerm;
+  }
+  if (colorterm && strstr(colorterm, "gnome-terminal")) {
+    return kTermGnome;
+  }
+  return kTermUnknown;
+}
+
 static void fix_terminfo(TUIData *data)
 {
   unibi_term *ut = data->ut;
@@ -826,12 +957,9 @@ static void fix_terminfo(TUIData *data)
   if (!term) {
     goto end;
   }
+  data->term = detect_term(term, colorterm);
 
-  bool inside_tmux = os_getenv("TMUX") != NULL;
-
-#define STARTS_WITH(str, prefix) (!memcmp(str, prefix, sizeof(prefix) - 1))
-
-  if (STARTS_WITH(term, "rxvt")) {
+  if (data->term == kTermRxvt) {
     unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[m\x1b(B");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<20/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
@@ -843,7 +971,7 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   }
 
-  if (STARTS_WITH(term, "xterm") || STARTS_WITH(term, "rxvt")) {
+  if (STARTS_WITH(term, "xterm") || data->term == kTermRxvt) {
     const char *normal = unibi_get_str(ut, unibi_cursor_normal);
     if (!normal) {
       unibi_set_str(ut, unibi_cursor_normal, "\x1b[?25h");
@@ -880,48 +1008,21 @@ static void fix_terminfo(TUIData *data)
   if ((colorterm && strstr(colorterm, "256"))
       || strstr(term, "256")
       || strstr(term, "xterm")) {
-    // Assume TERM~=xterm or COLORTERM~=256 supports 256 colors.
+    // Assume TERM=~xterm or COLORTERM=~256 supports 256 colors.
     unibi_set_num(ut, unibi_max_colors, 256);
     unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
     unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
   }
 
-  const char * env_cusr_shape = os_getenv("NVIM_TUI_ENABLE_CURSOR_SHAPE");
-  if (env_cusr_shape && strncmp(env_cusr_shape, "0", 1) == 0) {
-    goto end;
-  }
-  bool cusr_blink = env_cusr_shape && strncmp(env_cusr_shape, "2", 1) == 0;
-
-#define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
-  // Support changing cursor shape on some popular terminals.
-  const char *term_prog = os_getenv("TERM_PROGRAM");
-  const char *vte_version = os_getenv("VTE_VERSION");
-
-  if ((term_prog && !strcmp(term_prog, "Konsole"))
-      || os_getenv("KONSOLE_DBUS_SESSION") != NULL) {
-    // Konsole uses a proprietary escape code to set the cursor shape
-    // and does not support DECSCUSR.
-    data->unibi_ext.set_cursor_shape_bar = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=1\x07"));
-    data->unibi_ext.set_cursor_shape_ul = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=2\x07"));
-    data->unibi_ext.set_cursor_shape_block = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP("\x1b]50;CursorShape=0\x07"));
-  } else if (!vte_version || atoi(vte_version) >= 3900) {
-    // Assume that the terminal supports DECSCUSR unless it is an
-    // old VTE based terminal.  This should not get wrapped for tmux,
-    // which will handle it via its Ss/Se terminfo extension - usually
-    // according to its terminal-overrides.
-    data->unibi_ext.set_cursor_shape_bar =
-      (int)unibi_add_ext_str(ut, NULL, cusr_blink ? "\x1b[5 q" : "\x1b[6 q");
-    data->unibi_ext.set_cursor_shape_ul =
-      (int)unibi_add_ext_str(ut, NULL, cusr_blink ? "\x1b[3 q" : "\x1b[4 q");
-    data->unibi_ext.set_cursor_shape_block =
-      (int)unibi_add_ext_str(ut, NULL, cusr_blink ? "\x1b[1 q" : "\x1b[2 q");
-  }
-
 end:
   // Fill some empty slots with common terminal strings
+  if (data->term == kTermiTerm) {
+    data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
+        ut, NULL, "\033]Pl%p1%06x\033\\");
+  } else {
+    data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
+        ut, NULL, "\033]12;#%p1%06x\007");
+  }
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
@@ -1006,15 +1107,15 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
     stty_erase = tui_get_stty_erase();
   }
 
-  if (strcmp(name, "key_backspace") == 0) {
+  if (strequal(name, "key_backspace")) {
     ILOG("libtermkey:kbs=%s", value);
     if (stty_erase != NULL && stty_erase[0] != 0) {
       return stty_erase;
     }
-  } else if (strcmp(name, "key_dc") == 0) {
+  } else if (strequal(name, "key_dc")) {
     ILOG("libtermkey:kdch1=%s", value);
     // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
-    if (stty_erase != NULL && value != NULL && strcmp(stty_erase, value) == 0) {
+    if (stty_erase != NULL && value != NULL && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;
     }
   }

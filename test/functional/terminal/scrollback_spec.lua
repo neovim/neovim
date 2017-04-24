@@ -2,7 +2,7 @@ local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
-local feed, nvim_dir, execute = helpers.feed, helpers.nvim_dir, helpers.execute
+local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.feed_command
 local eval = helpers.eval
 local command = helpers.command
 local wait = helpers.wait
@@ -339,7 +339,7 @@ describe('terminal prints more lines than the screen height and exits', function
     clear()
     local screen = Screen.new(30, 7)
     screen:attach({rgb=false})
-    execute('call termopen(["'..nvim_dir..'/tty-test", "10"]) | startinsert')
+    feed_command('call termopen(["'..nvim_dir..'/tty-test", "10"]) | startinsert')
     wait()
     screen:expect([[
       line6                         |
@@ -451,7 +451,14 @@ describe("'scrollback' option", function()
 
   it(':setlocal in a normal buffer is an error', function()
     command('new')
-    execute('setlocal scrollback=42')
+
+    -- :setlocal to -1 is NOT an error.
+    feed_command('setlocal scrollback=-1')
+    eq(nil, string.match(eval("v:errmsg"), "E%d*:"))
+    feed('<CR>')
+
+    -- :setlocal to anything except -1 is an error.
+    feed_command('setlocal scrollback=42')
     feed('<CR>')
     eq('E474:', string.match(eval("v:errmsg"), "E%d*:"))
     eq(-1, curbufmeths.get_option('scrollback'))

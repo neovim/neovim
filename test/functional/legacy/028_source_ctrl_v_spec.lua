@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('CTRL-V at the end of the line', function()
   setup(clear)
@@ -24,8 +24,8 @@ describe('CTRL-V at the end of the line', function()
 
     feed(':%s/X/<C-v><C-v>/g<cr>')
     feed(':/firstline/+1,/lastline/-1w! Xtestfile<cr>')
-    execute('so Xtestfile')
-    execute('%d')
+    feed_command('so Xtestfile')
+    feed_command('%d')
     feed('Gmm__1<Esc><Esc>__2<Esc>__3<Esc><Esc>__4<Esc>__5<Esc>')
     feed(":'m,$s/<C-v><C-@>/0/g<cr>")
 

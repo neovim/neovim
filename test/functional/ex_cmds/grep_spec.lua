@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, feed, ok, eval =
-  helpers.clear, helpers.execute, helpers.feed, helpers.ok, helpers.eval
+local clear, feed_command, feed, ok, eval =
+  helpers.clear, helpers.feed_command, helpers.feed, helpers.ok, helpers.eval
 
 describe(':grep', function()
   before_each(clear)
@@ -11,10 +11,10 @@ describe(':grep', function()
       return
     end
 
-    execute([[set grepprg=grep\ -r]])
+    feed_command([[set grepprg=grep\ -r]])
     -- Change to test directory so that the test does not run too long.
-    execute('cd test')
-    execute('grep a **/*')
+    feed_command('cd test')
+    feed_command('grep a **/*')
     feed('<cr>')  -- Press ENTER
     ok(eval('len(getqflist())') > 9000)  -- IT'S OVER 9000!!1
   end)

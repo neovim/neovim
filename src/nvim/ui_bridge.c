@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // UI wrapper that sends requests to the UI thread.
 // Used by the built-in TUI and libnvim-based UIs.
 
@@ -13,6 +16,7 @@
 #include "nvim/memory.h"
 #include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
+#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.c.generated.h"
@@ -59,6 +63,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.clear = ui_bridge_clear;
   rv->bridge.eol_clear = ui_bridge_eol_clear;
   rv->bridge.cursor_goto = ui_bridge_cursor_goto;
+  rv->bridge.mode_info_set = ui_bridge_mode_info_set;
   rv->bridge.update_menu = ui_bridge_update_menu;
   rv->bridge.busy_start = ui_bridge_busy_start;
   rv->bridge.busy_stop = ui_bridge_busy_stop;
@@ -178,6 +183,25 @@ static void ui_bridge_cursor_goto_event(void **argv)
   ui->cursor_goto(ui, PTR2INT(argv[1]), PTR2INT(argv[2]));
 }
 
+static void ui_bridge_mode_info_set(UI *b, bool enabled, Array modes)
+{
+  bool *enabledp = xmalloc(sizeof(*enabledp));
+  Object *modesp = xmalloc(sizeof(*modesp));
+  *enabledp = enabled;
+  *modesp = copy_object(ARRAY_OBJ(modes));
+  UI_CALL(b, mode_info_set, 3, b, enabledp, modesp);
+}
+static void ui_bridge_mode_info_set_event(void **argv)
+{
+  UI *ui = UI(argv[0]);
+  bool *enabled = argv[1];
+  Object *modes = argv[2];
+  ui->mode_info_set(ui, *enabled, modes->data.array);
+  xfree(enabled);
+  api_free_object(*modes);
+  xfree(modes);
+}
+
 static void ui_bridge_update_menu(UI *b)
 {
   UI_CALL(b, update_menu, 1, b);
@@ -228,9 +252,9 @@ static void ui_bridge_mouse_off_event(void **argv)
   ui->mouse_off(ui);
 }
 
-static void ui_bridge_mode_change(UI *b, int mode)
+static void ui_bridge_mode_change(UI *b, int mode_idx)
 {
-  UI_CALL(b, mode_change, 2, b, INT2PTR(mode));
+  UI_CALL(b, mode_change, 2, b, INT2PTR(mode_idx));
 }
 static void ui_bridge_mode_change_event(void **argv)
 {

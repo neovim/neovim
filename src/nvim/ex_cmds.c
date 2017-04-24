@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * ex_cmds.c: some functions for command line commands
  */
@@ -2874,8 +2877,11 @@ void ex_z(exarg_T *eap)
   if (end > curbuf->b_ml.ml_line_count)
     end = curbuf->b_ml.ml_line_count;
 
-  if (curs > curbuf->b_ml.ml_line_count)
+  if (curs > curbuf->b_ml.ml_line_count) {
     curs = curbuf->b_ml.ml_line_count;
+  } else if (curs < 1) {
+    curs = 1;
+  }
 
   for (i = start; i <= end; i++) {
     if (minus && i == lnum) {
@@ -2895,8 +2901,11 @@ void ex_z(exarg_T *eap)
     }
   }
 
-  curwin->w_cursor.lnum = curs;
-  ex_no_reprint = TRUE;
+  if (curwin->w_cursor.lnum != curs) {
+    curwin->w_cursor.lnum = curs;
+    curwin->w_cursor.col = 0;
+  }
+  ex_no_reprint = true;
 }
 
 /*

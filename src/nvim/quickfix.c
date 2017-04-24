@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * quickfix.c: functions for quickfix mode, using a file with error messages
  */
@@ -856,7 +859,7 @@ restofline:
     if (fmt_ptr == NULL) {
       qi->qf_multiline = qi->qf_multiignore = false;
     }
-  } else if (fmt_ptr != NULL) {
+  } else {
     // honor %> item
     if (fmt_ptr->conthere) {
       fmt_start = fmt_ptr;
@@ -984,7 +987,7 @@ qf_init_ext(
   }
 
   // Use the local value of 'errorformat' if it's set.
-  if (errorformat == p_efm && tv == NULL && *buf->b_p_efm != NUL) {
+  if (errorformat == p_efm && tv == NULL && buf && *buf->b_p_efm != NUL) {
     efm = buf->b_p_efm;
   } else {
     efm = errorformat;
@@ -3284,7 +3287,6 @@ void ex_cc(exarg_T *eap)
       || eap->cmdidx == CMD_lrewind
       || eap->cmdidx == CMD_lfirst
       || eap->cmdidx == CMD_llast
-      || eap->cmdidx == CMD_llast
       || eap->cmdidx == CMD_ldo
       || eap->cmdidx == CMD_lfdo) {
     qi = GET_LOC_LIST(curwin);
@@ -3340,7 +3342,6 @@ void ex_cnext(exarg_T *eap)
       || eap->cmdidx == CMD_lprevious
       || eap->cmdidx == CMD_lnfile
       || eap->cmdidx == CMD_lNfile
-      || eap->cmdidx == CMD_lpfile
       || eap->cmdidx == CMD_lpfile
       || eap->cmdidx == CMD_ldo
       || eap->cmdidx == CMD_lfdo) {

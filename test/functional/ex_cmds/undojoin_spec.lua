@@ -5,7 +5,7 @@ local clear = helpers.clear
 local insert = helpers.insert
 local feed = helpers.feed
 local expect = helpers.expect
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 local exc_exec = helpers.exc_exec
 
 describe(':undojoin command', function()
@@ -14,10 +14,10 @@ describe(':undojoin command', function()
     insert([[
     Line of text 1
     Line of text 2]])
-    execute('goto 1')
+    feed_command('goto 1')
   end)
   it('joins changes in a buffer', function()
-    execute('undojoin | delete')
+    feed_command('undojoin | delete')
     expect([[
     Line of text 2]])
     feed('u')
@@ -26,7 +26,7 @@ describe(':undojoin command', function()
   end)
   it('does not corrupt undolist when connected with redo', function()
     feed('ixx<esc>')
-    execute('undojoin | redo')
+    feed_command('undojoin | redo')
     expect([[
     xxLine of text 1
     Line of text 2]])

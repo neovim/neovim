@@ -3,7 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local meths = helpers.meths
-local execute = helpers.execute
+local command = helpers.command
 local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
@@ -25,7 +25,7 @@ describe('startup defaults', function()
     local function expect_filetype(expected)
       local screen = Screen.new(48, 4)
       screen:attach()
-      execute('filetype')
+      command('filetype')
       screen:expect([[
         ^                                                |
         ~                                               |

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -190,6 +193,8 @@ Boolean nvim_tabpage_is_valid(Tabpage tabpage)
     FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
-  return find_tab_by_handle(tabpage, &stub) != NULL;
+  Boolean ret = find_tab_by_handle(tabpage, &stub) != NULL;
+  api_clear_error(&stub);
+  return ret;
 }
 

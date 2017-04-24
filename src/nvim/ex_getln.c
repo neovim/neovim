@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
@@ -30,6 +33,7 @@
 #include "nvim/if_cscope.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/menu.h"
@@ -350,6 +354,7 @@ static int command_line_check(VimState *state)
   quit_more = false;       // reset after CTRL-D which had a more-prompt
 
   cursorcmd();             // set the cursor on the right spot
+  ui_cursor_shape();
   return 1;
 }
 
@@ -1231,7 +1236,7 @@ static int command_line_handle_key(CommandLineState *s)
         // command line has no uppercase characters, convert
         // the character to lowercase
         if (p_ic && p_scs && !pat_has_uppercase(ccline.cmdbuff)) {
-          s->c = vim_tolower(s->c);
+          s->c = mb_tolower(s->c);
         }
 
         if (s->c != NUL) {
@@ -2091,6 +2096,18 @@ redraw:
   return (char_u *)line_ga.ga_data;
 }
 
+bool cmdline_overstrike(void)
+{
+  return ccline.overstrike;
+}
+
+
+/// Return true if the cursor is at the end of the cmdline.
+bool cmdline_at_end(void)
+{
+  return (ccline.cmdpos >= ccline.cmdlen);
+}
+
 /*
  * Allocate a new command line buffer.
  * Assigns the new buffer to ccline.cmdbuff and ccline.cmdbufflen.
@@ -2261,6 +2278,7 @@ void putcmdline(int c, int shift)
     draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
   msg_no_more = FALSE;
   cursorcmd();
+  ui_cursor_shape();
 }
 
 /*
@@ -2280,6 +2298,7 @@ void unputcmdline(void)
     draw_cmdline(ccline.cmdpos, 1);
   msg_no_more = FALSE;
   cursorcmd();
+  ui_cursor_shape();
 }
 
 /*
@@ -2597,6 +2616,7 @@ void redrawcmdline(void)
   compute_cmdrow();
   redrawcmd();
   cursorcmd();
+  ui_cursor_shape();
 }
 
 static void redrawcmdprompt(void)
@@ -3018,7 +3038,7 @@ ExpandOne (
                       || xp->xp_context == EXPAND_FILES
                       || xp->xp_context == EXPAND_SHELLCMD
                       || xp->xp_context == EXPAND_BUFFERS)) {
-          if (vim_tolower(c0) != vim_tolower(ci)) {
+          if (mb_tolower(c0) != mb_tolower(ci)) {
             break;
           }
         } else if (c0 != ci) {

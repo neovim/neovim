@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// An abstraction to handle blocks of memory which can be stored in a file.
 /// This is the implementation of a sort of virtual memory.
 ///

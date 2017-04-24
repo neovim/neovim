@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * message.c: functions for displaying messages on the command line
  */
@@ -573,16 +576,17 @@ void emsg_invreg(int name)
 /// Print an error message with unknown number of arguments
 bool emsgf(const char *const fmt, ...)
 {
+  static char errbuf[IOSIZE];
   if (emsg_not_now()) {
     return true;
   }
 
   va_list ap;
   va_start(ap, fmt);
-  vim_vsnprintf((char *) IObuff, IOSIZE, fmt, ap, NULL);
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
   va_end(ap);
 
-  return emsg(IObuff);
+  return emsg((const char_u *)errbuf);
 }
 
 static void msg_emsgf_event(void **argv)
@@ -1164,15 +1168,9 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
    * Normal characters are printed several at a time.
    */
   while (--len >= 0) {
-    if (enc_utf8) {
-      // Don't include composing chars after the end.
-      mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
-    } else if (has_mbyte) {
-      mb_l = (*mb_ptr2len)((char_u *)str);
-    } else {
-      mb_l = 1;
-    }
-    if (has_mbyte && mb_l > 1) {
+    // Don't include composing chars after the end.
+    mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
+    if (mb_l > 1) {
       c = (*mb_ptr2char)((char_u *)str);
       if (vim_isprintc(c)) {
         // Printable multi-byte char: count the cells.
@@ -1662,16 +1660,13 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
 
       // Display char in last column before showing more-prompt.
       if (*s >= ' ' && !cmdmsg_rl) {
-        if (has_mbyte) {
-          if (enc_utf8 && maxlen >= 0)
-            /* avoid including composing chars after the end */
-            l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
-          else
-            l = (*mb_ptr2len)(s);
-          s = screen_puts_mbyte((char_u *)s, l, attr);
+        if (maxlen >= 0) {
+          // Avoid including composing chars after the end.
+          l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
         } else {
-          msg_screen_putchar(*s++, attr);
+          l = utfc_ptr2len(s);
         }
+        s = screen_puts_mbyte((char_u *)s, l, attr);
         did_last_char = true;
       } else {
         did_last_char = false;
@@ -2729,8 +2724,8 @@ do_dialog (
         break;
       }
 
-      /* Make the character lowercase, as chars in "hotkeys" are. */
-      c = vim_tolower(c);
+      // Make the character lowercase, as chars in "hotkeys" are.
+      c = mb_tolower(c);
       retval = 1;
       for (i = 0; hotkeys[i]; ++i) {
         if (has_mbyte) {
@@ -2776,7 +2771,7 @@ copy_char (
 
   if (has_mbyte) {
     if (lowercase) {
-      c = vim_tolower((*mb_ptr2char)(from));
+      c = mb_tolower((*mb_ptr2char)(from));
       return (*mb_char2bytes)(c, to);
     } else {
       len = (*mb_ptr2len)(from);

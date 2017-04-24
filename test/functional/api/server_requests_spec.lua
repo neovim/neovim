@@ -1,6 +1,8 @@
 -- Test server -> client RPC scenarios. Note: unlike `rpcnotify`, to evaluate
 -- `rpcrequest` calls we need the client event loop to be running.
 local helpers = require('test.functional.helpers')(after_each)
+local Paths = require('test.config.paths')
+
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
 local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.funcs
@@ -200,7 +202,7 @@ describe('server -> client', function()
         \ 'rpc': v:true
         \ }
       ]])
-      local lua_prog = arg[-1]
+      local lua_prog = Paths.test_lua_prg
       meths.set_var("args", {lua_prog, 'test/functional/api/rpc_fixture.lua'})
       jobid = eval("jobstart(g:args, g:job_opts)")
       neq(0, 'jobid')

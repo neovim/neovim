@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // File searching functions for 'path', 'tags' and 'cdpath' options.
 //
 // External visible functions:
@@ -1057,7 +1060,7 @@ static bool ff_wc_equal(char_u *s1, char_u *s2)
     c1 = PTR2CHAR(s1 + i);
     c2 = PTR2CHAR(s2 + j);
 
-    if ((p_fic ? vim_tolower(c1) != vim_tolower(c2) : c1 != c2)
+    if ((p_fic ? mb_tolower(c1) != mb_tolower(c2) : c1 != c2)
         && (prev1 != '*' || prev2 != '*')) {
       return false;
     }

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -12,6 +15,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/popupmnu.h"
+#include "nvim/cursor_shape.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -51,13 +55,13 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
     FUNC_API_SINCE(1) FUNC_API_NOEVAL
 {
   if (pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, Exception, _("UI already attached for channel"));
+    api_set_error(err, kErrorTypeException, "UI already attached for channel");
     return;
   }
 
   if (width <= 0 || height <= 0) {
-    api_set_error(err, Validation,
-                  _("Expected width > 0 and height > 0"));
+    api_set_error(err, kErrorTypeValidation,
+                  "Expected width > 0 and height > 0");
     return;
   }
   UI *ui = xcalloc(1, sizeof(UI));
@@ -69,6 +73,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->clear = remote_ui_clear;
   ui->eol_clear = remote_ui_eol_clear;
   ui->cursor_goto = remote_ui_cursor_goto;
+  ui->mode_info_set = remote_ui_mode_info_set;
   ui->update_menu = remote_ui_update_menu;
   ui->busy_start = remote_ui_busy_start;
   ui->busy_stop = remote_ui_busy_stop;
@@ -92,7 +97,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
 
   for (size_t i = 0; i < options.size; i++) {
     ui_set_option(ui, options.items[i].key, options.items[i].value, err);
-    if (err->set) {
+    if (ERROR_SET(err)) {
       xfree(ui);
       return;
     }
@@ -121,7 +126,7 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
     FUNC_API_SINCE(1) FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, Exception, _("UI is not attached for channel"));
+    api_set_error(err, kErrorTypeException, "UI is not attached for channel");
     return;
   }
   remote_ui_disconnect(channel_id);
@@ -133,13 +138,13 @@ void nvim_ui_try_resize(uint64_t channel_id, Integer width,
     FUNC_API_SINCE(1) FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(err, Exception, _("UI is not attached for channel"));
+    api_set_error(err, kErrorTypeException, "UI is not attached for channel");
     return;
   }
 
   if (width <= 0 || height <= 0) {
-    api_set_error(err, Validation,
-                  _("Expected width > 0 and height > 0"));
+    api_set_error(err, kErrorTypeValidation,
+                  "Expected width > 0 and height > 0");
     return;
   }
 
@@ -154,13 +159,13 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
     FUNC_API_SINCE(1) FUNC_API_NOEVAL
 {
   if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(error, Exception, _("UI is not attached for channel"));
+    api_set_error(error, kErrorTypeException, "UI is not attached for channel");
     return;
   }
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
 
   ui_set_option(ui, name, value, error);
-  if (!error->set) {
+  if (!ERROR_SET(error)) {
     ui_refresh();
   }
 }
@@ -168,19 +173,19 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
 static void ui_set_option(UI *ui, String name, Object value, Error *error) {
   if (strcmp(name.data, "rgb") == 0) {
     if (value.type != kObjectTypeBoolean) {
-      api_set_error(error, Validation, _("rgb must be a Boolean"));
+      api_set_error(error, kErrorTypeValidation, "rgb must be a Boolean");
       return;
     }
     ui->rgb = value.data.boolean;
   } else if (strcmp(name.data, "popupmenu_external") == 0) {
     if (value.type != kObjectTypeBoolean) {
-      api_set_error(error, Validation,
-                    _("popupmenu_external must be a Boolean"));
+      api_set_error(error, kErrorTypeValidation,
+                    "popupmenu_external must be a Boolean");
       return;
     }
     ui->pum_external = value.data.boolean;
   } else {
-    api_set_error(error, Validation, _("No such ui option"));
+    api_set_error(error, kErrorTypeValidation, "No such ui option");
   }
 }
 
@@ -264,19 +269,14 @@ static void remote_ui_mouse_off(UI *ui)
   push_call(ui, "mouse_off", args);
 }
 
-static void remote_ui_mode_change(UI *ui, int mode)
+static void remote_ui_mode_change(UI *ui, int mode_idx)
 {
   Array args = ARRAY_DICT_INIT;
-  if (mode == INSERT) {
-    ADD(args, STRING_OBJ(cstr_to_string("insert")));
-  } else if (mode == REPLACE) {
-    ADD(args, STRING_OBJ(cstr_to_string("replace")));
-  } else if (mode == CMDLINE) {
-    ADD(args, STRING_OBJ(cstr_to_string("cmdline")));
-  } else {
-    assert(mode == NORMAL);
-    ADD(args, STRING_OBJ(cstr_to_string("normal")));
-  }
+
+  char *full_name = shape_table[mode_idx].full_name;
+  ADD(args, STRING_OBJ(cstr_to_string(full_name)));
+
+  ADD(args, INTEGER_OBJ(mode_idx));
   push_call(ui, "mode_change", args);
 }
 
@@ -296,6 +296,14 @@ static void remote_ui_scroll(UI *ui, int count)
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(count));
   push_call(ui, "scroll", args);
+}
+
+static void remote_ui_mode_info_set(UI *ui, bool guicursor_enabled, Array data)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, BOOLEAN_OBJ(guicursor_enabled));
+  ADD(args, copy_object(ARRAY_OBJ(data)));
+  push_call(ui, "mode_info_set", args);
 }
 
 static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
@@ -383,8 +391,10 @@ static void remote_ui_update_sp(UI *ui, int sp)
 static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
-  channel_send_event(data->channel_id, "redraw", data->buffer);
-  data->buffer = (Array)ARRAY_DICT_INIT;
+  if (data->buffer.size > 0) {
+    channel_send_event(data->channel_id, "redraw", data->buffer);
+    data->buffer = (Array)ARRAY_DICT_INIT;
+  }
 }
 
 static void remote_ui_suspend(UI *ui)

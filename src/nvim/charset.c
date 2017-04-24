@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file charset.c
 ///
 /// Code related to character sets.
@@ -15,6 +18,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -212,8 +216,8 @@ int buf_init_chartab(buf_T *buf, int global)
         // work properly when 'encoding' is "latin1" and the locale is
         // "C".
         if (!do_isalpha
-            || vim_islower(c)
-            || vim_isupper(c)
+            || mb_islower(c)
+            || mb_isupper(c)
             || (p_altkeymap && (F_isalpha(c) || F_isdigit(c)))) {
           if (i == 0) {
             // (re)set ID flag
@@ -417,11 +421,11 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   while (STR_CHAR(i) != NUL) {
     int c = utf_ptr2char(STR_PTR(i));
     int olen = utf_ptr2len(STR_PTR(i));
-    int lc = utf_tolower(c);
+    int lc = mb_tolower(c);
 
     // Only replace the character when it is not an invalid
     // sequence (ASCII character or more than one byte) and
-    // utf_tolower() doesn't return the original character.
+    // mb_tolower() doesn't return the original character.
     if (((c < 0x80) || (olen > 1)) && (c != lc)) {
       int nlen = utf_char2len(lc);
 
@@ -1366,7 +1370,7 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
   colnr_T to1;
   colnr_T to2;
 
-  if (ltp(pos1, pos2)) {
+  if (lt(*pos1, *pos2)) {
     getvvcol(wp, pos1, &from1, NULL, &to1);
     getvvcol(wp, pos2, &from2, NULL, &to2);
   } else {
@@ -1504,67 +1508,6 @@ char_u* skiptohex(char_u *q)
     p++;
   }
   return p;
-}
-
-// Vim's own character class functions.  These exist because many library
-// islower()/toupper() etc. do not work properly: they crash when used with
-// invalid values or can't handle latin1 when the locale is C.
-// Speed is most important here.
-
-/// Check that the character is lower-case
-///
-/// @param  c  character to check
-bool vim_islower(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (c <= '@') {
-    return false;
-  }
-
-  if (c >= 0x80) {
-    return utf_islower(c);
-  }
-  return islower(c);
-}
-
-/// Check that the character is upper-case
-///
-/// @param  c  character to check
-bool vim_isupper(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (c <= '@') {
-    return false;
-  }
-
-  if (c >= 0x80) {
-      return utf_isupper(c);
-  }
-  return isupper(c);
-}
-
-int vim_toupper(int c)
-{
-  if (c <= '@') {
-    return c;
-  }
-
-  if (c >= 0x80) {
-    return utf_toupper(c);
-  }
-  return TOUPPER_LOC(c);
-}
-
-int vim_tolower(int c)
-{
-  if (c <= '@') {
-    return c;
-  }
-
-  if (c >= 0x80) {
-    return utf_tolower(c);
-  }
-  return TOLOWER_LOC(c);
 }
 
 /// Skip over text until ' ' or '\t' or NUL

@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "api/private/defs.h"
+#include "nvim/buffer_defs.h"
 
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;
@@ -22,12 +23,13 @@ struct ui_t {
   void (*clear)(UI *ui);
   void (*eol_clear)(UI *ui);
   void (*cursor_goto)(UI *ui, int row, int col);
+  void (*mode_info_set)(UI *ui, bool enabled, Array cursor_styles);
   void (*update_menu)(UI *ui);
   void (*busy_start)(UI *ui);
   void (*busy_stop)(UI *ui);
   void (*mouse_on)(UI *ui);
   void (*mouse_off)(UI *ui);
-  void (*mode_change)(UI *ui, int mode);
+  void (*mode_change)(UI *ui, int mode_idx);
   void (*set_scroll_region)(UI *ui, int top, int bot, int left, int right);
   void (*scroll)(UI *ui, int count);
   void (*highlight_set)(UI *ui, HlAttrs attrs);

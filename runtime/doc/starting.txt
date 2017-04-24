@@ -922,7 +922,7 @@ You might want to clean up your 'viewdir' directory now and then.
 
 To automatically save and restore views for *.c files: >
 	au BufWinLeave *.c mkview
-	au BufWinEnter *.c silent loadview
+	au BufWinEnter *.c silent! loadview
 
 ==============================================================================
 8. The ShaDa file				*shada* *shada-file*
@@ -1097,23 +1097,6 @@ SHADA FILE NAME						*shada-file-name*
   default and the name given with 'shada' or "-i" (unless it's NONE).
 
 
-CHARACTER ENCODING					*shada-encoding*
-
-The text in the ShaDa file is UTF-8-encoded.  Normally you will always work 
-with the same 'encoding' value, and this works just fine.  However, if you 
-read the ShaDa file with value for 'encoding' different from utf-8 and 
-'encoding' used when writing ShaDa file, some of the text (non-ASCII 
-characters) may be invalid as Neovim always attempts to convert the text in 
-the ShaDa file from the UTF-8 to the current 'encoding' value.  Filenames are 
-never converted, affected elements are:
-
-- history strings;
-- variable values;
-- register values;
-- last used search and substitute patterns;
-- last used substitute replacement string.
-
-
 MANUALLY READING AND WRITING				*shada-read-write*
 
 Two commands can be used to read and write the ShaDa file manually.  This
@@ -1221,8 +1204,11 @@ exactly four MessagePack objects:
 3. Third goes the length of the fourth entry.  Unsigned integer as well, used 
    for fast skipping without parsing.
 4. Fourth is actual entry data.  All currently used ShaDa entries use 
-   containers to hold data: either map or array.  Exact format depends on the 
-   entry type:
+   containers to hold data: either map or array.  All string values in those 
+   containers are either binary (applies to filenames) or UTF-8, yet parser 
+   needs to expect that invalid bytes may be present in a UTF-8 string.
+
+   Exact format depends on the entry type:
 
    Entry type (name)   Entry data ~
    1 (Header)          Map containing data that describes the generator 

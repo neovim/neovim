@@ -1,7 +1,7 @@
 -- Specs for bang/filter commands
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, execute, clear = helpers.feed, helpers.execute, helpers.clear
+local feed, command, clear = helpers.feed, helpers.command, helpers.clear
 local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdir
 
 if helpers.pending_win32(pending) then return end
@@ -28,7 +28,7 @@ describe('issues', function()
   end)
 
   it('#3269 Last line of shell output is not truncated', function()
-    execute([[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
+    command([[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
     feed([[\l]])
     screen:expect([[
       ~                                                    |

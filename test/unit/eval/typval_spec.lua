@@ -47,6 +47,15 @@ local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/eval.h', './src/nvim/vim.h',
                     './src/nvim/globals.h')
 
+local function vimconv_alloc()
+  return ffi.gc(
+    ffi.cast('vimconv_T*', lib.xcalloc(1, ffi.sizeof('vimconv_T'))),
+    function(vc)
+      lib.convert_setup(vc, nil, nil)
+      lib.xfree(vc)
+    end)
+end
+
 local function list_watch_alloc(li)
   return ffi.cast('listwatch_T*', ffi.new('listwatch_T[1]', {{lw_item=li}}))
 end
@@ -237,24 +246,33 @@ describe('typval.c', function()
             list_watch(l, lis[4]),
             list_watch(l, lis[7]),
           }
+          alloc_log:check({
+            a.list(l),
+            a.li(lis[1]),
+            a.li(lis[2]),
+            a.li(lis[3]),
+            a.li(lis[4]),
+            a.li(lis[5]),
+            a.li(lis[6]),
+            a.li(lis[7]),
+          })
 
           lib.tv_list_item_remove(l, lis[4])
-          ffi.gc(lis[4], lib.tv_list_item_free)
+          alloc_log:check({a.freed(lis[4])})
           eq({lis[1], lis[5], lis[7]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
           lib.tv_list_item_remove(l, lis[2])
-          ffi.gc(lis[2], lib.tv_list_item_free)
+          alloc_log:check({a.freed(lis[2])})
           eq({lis[1], lis[5], lis[7]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
           lib.tv_list_item_remove(l, lis[7])
-          ffi.gc(lis[7], lib.tv_list_item_free)
+          alloc_log:check({a.freed(lis[7])})
           eq({lis[1], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
           lib.tv_list_item_remove(l, lis[1])
-          ffi.gc(lis[1], lib.tv_list_item_free)
+          alloc_log:check({a.freed(lis[1])})
           eq({lis[3], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
-          alloc_log:clear()
           lib.tv_list_watch_remove(l, lws[2])
           lib.tv_list_watch_remove(l, lws[3])
           lib.tv_list_watch_remove(l, lws[1])
@@ -459,6 +477,10 @@ describe('typval.c', function()
         lib.tv_list_remove_items(l, lis[4], lis[10])
         eq(empty_list, typvalt2lua(l_tv))
         eq({true, true, true}, {lws[1].lw_item == nil, lws[2].lw_item == nil, lws[3].lw_item == nil})
+
+        lib.tv_list_watch_remove(l, lws[1])
+        lib.tv_list_watch_remove(l, lws[2])
+        lib.tv_list_watch_remove(l, lws[3])
 
         alloc_log:check({})
       end)
@@ -730,10 +752,8 @@ describe('typval.c', function()
         collectgarbage()
       end)
       itp('copies list correctly and converts items', function()
-        local vc = ffi.gc(ffi.new('vimconv_T[1]'), function(vc)
-          lib.convert_setup(vc, nil, nil)
-        end)
-        -- UTF-8 ↔ latin1 conversions need no iconv
+        local vc = vimconv_alloc()
+        -- UTF-8 ↔ latin1 conversions needs no iconv
         eq(OK, lib.convert_setup(vc, to_cstr('utf-8'), to_cstr('latin1')))
 
         local v = {{['«']='»'}, {'„'}, 1, '“', null_string, null_list, null_dict}
@@ -1087,12 +1107,16 @@ describe('typval.c', function()
       end)
     end)
     describe('join()', function()
-      local function list_join(l, sep, ret)
+      local function list_join(l, sep, join_ret)
         local ga = ga_alloc()
-        eq(ret or OK, lib.tv_list_join(ga, l, sep))
-        if ga.ga_data == nil then return ''
-        else return ffi.string(ga.ga_data)
+        eq(join_ret or OK, lib.tv_list_join(ga, l, sep))
+        local ret = ''
+        if ga.ga_data ~= nil then
+          ret = ffi.string(ga.ga_data)
         end
+        -- For some reason this is not working well in GC
+        lib.ga_clear(ffi.gc(ga, nil))
+        return ret
       end
       itp('works', function()
         local l
@@ -1508,7 +1532,7 @@ describe('typval.c', function()
           eq(s:sub(1, len), ffi.string(di.di_key))
           alloc_log:check({a.di(di, len)})
           if tv then
-            di.di_tv = tv
+            di.di_tv = ffi.gc(tv, nil)
           else
             di.di_tv.v_type = lib.VAR_UNKNOWN
           end
@@ -1539,7 +1563,7 @@ describe('typval.c', function()
           alloc_log:check({a.dict(d)})
           local di = ffi.gc(lib.tv_dict_item_alloc(''), nil)
           local tv = lua2typvalt('test')
-          di.di_tv = tv
+          di.di_tv = ffi.gc(tv, nil)
           alloc_log:check({a.di(di, ''), a.str(tv.vval.v_string, 'test')})
           eq(OK, lib.tv_dict_add(d, di))
           alloc_log:check({})
@@ -2131,9 +2155,7 @@ describe('typval.c', function()
         collectgarbage()
       end)
       itp('copies dict correctly and converts items', function()
-        local vc = ffi.gc(ffi.new('vimconv_T[1]'), function(vc)
-          lib.convert_setup(vc, nil, nil)
-        end)
+        local vc = vimconv_alloc()
         -- UTF-8 ↔ latin1 conversions need no iconv
         eq(OK, lib.convert_setup(vc, to_cstr('utf-8'), to_cstr('latin1')))
 
@@ -2428,6 +2450,10 @@ describe('typval.c', function()
                                'E741: Value is locked: Unknown'))
         eq(true, tv_check_lock(lib.VAR_FIXED, nil, 0,
                                'E742: Cannot change value of Unknown'))
+        eq(true, tv_check_lock(lib.VAR_LOCKED, nil, lib.kTVCstring,
+                               'E741: Value is locked: Unknown'))
+        eq(true, tv_check_lock(lib.VAR_FIXED, 'test', lib.kTVCstring,
+                               'E742: Cannot change value of test'))
       end)
     end)
     describe('equal()', function()
@@ -2659,7 +2685,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2687,7 +2714,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', 0},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = {v[4], not not emsg}
@@ -2721,7 +2749,8 @@ describe('typval.c', function()
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_number(UNKNOWN)', -1},
           }) do
             lib.curwin.w_cursor.lnum = 46
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2749,7 +2778,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, 'E907: Using a special value as a Float', 0},
             {lib.VAR_UNKNOWN, nil, 'E685: Internal error: tv_get_float(UNKNOWN)', 0},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2780,7 +2810,9 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr in place of Neovim allocated string, cannot
+            -- tv_clear() that.
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2821,7 +2853,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2861,7 +2894,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', ''},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]
@@ -2902,7 +2936,8 @@ describe('typval.c', function()
             {lib.VAR_SPECIAL, {v_special=lib.kSpecialVarFalse}, nil, 'false'},
             {lib.VAR_UNKNOWN, nil, 'E908: using an invalid value as a String', nil},
           }) do
-            local tv = typvalt(v[1], v[2])
+            -- Using to_cstr, cannot free with tv_clear
+            local tv = ffi.gc(typvalt(v[1], v[2]), nil)
             alloc_log:check({})
             local emsg = v[3]
             local ret = v[4]

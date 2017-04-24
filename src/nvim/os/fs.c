@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // fs.c -- filesystem access
 #include <stdbool.h>
 #include <stddef.h>
@@ -1009,7 +1012,7 @@ char *os_resolve_shortcut(const char *fname)
     WCHAR *p;
     const int conversion_result = utf8_to_utf16(fname, &p);
     if (conversion_result != 0) {
-      EMSG2("utf8_to_utf16 failed: %s", uv_strerror(conversion_result));
+      EMSG2("utf8_to_utf16 failed: %d", conversion_result);
     }
 
     if (p != NULL) {

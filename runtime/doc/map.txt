@@ -720,9 +720,6 @@ special key: >
 Don't type a real <Esc>, Vim will recognize the key code and replace it with
 <F1> anyway.
 
-Another problem may be that when keeping ALT or Meta pressed the terminal
-prepends ESC instead of setting the 8th bit.  See |:map-alt-keys|.
-
 						*recursive_mapping*
 If you include the {lhs} in the {rhs} you have a recursive mapping.  When
 {lhs} is typed, it will be replaced with {rhs}.  When the {lhs} which is
@@ -762,46 +759,14 @@ in the original Vi, you would get back the text before the first undo).
 
 1.10 MAPPING ALT-KEYS					*:map-alt-keys*
 
-In the GUI Vim handles the Alt key itself, thus mapping keys with ALT should
-always work.  But in a terminal Vim gets a sequence of bytes and has to figure
-out whether ALT was pressed or not.
-
-By default Vim assumes that pressing the ALT key sets the 8th bit of a typed
-character.  Most decent terminals can work that way, such as xterm, aterm and
-rxvt.  If your <A-k> mappings don't work it might be that the terminal is
-prefixing the character with an ESC character.  But you can just as well type
-ESC before a character, thus Vim doesn't know what happened (except for
-checking the delay between characters, which is not reliable).
-
-As of this writing, some mainstream terminals like gnome-terminal and konsole
-use the ESC prefix.  There doesn't appear a way to have them use the 8th bit
-instead.  Xterm should work well by default.  Aterm and rxvt should work well
-when started with the "--meta8" argument.  You can also tweak resources like
-"metaSendsEscape", "eightBitInput" and "eightBitOutput".
-
-On the Linux console, this behavior can be toggled with the "setmetamode"
-command.  Bear in mind that not using an ESC prefix could get you in trouble
-with other programs.  You should make sure that bash has the "convert-meta"
-option set to "on" in order for your Meta keybindings to still work on it
-(it's the default readline behavior, unless changed by specific system
-configuration).  For that, you can add the line: >
-
-	set convert-meta on
-
-to your ~/.inputrc file. If you're creating the file, you might want to use: >
-
-	$include /etc/inputrc
-
-as the first line, if that file exists on your system, to keep global options.
-This may cause a problem for entering special characters, such as the umlaut.
-Then you should use CTRL-V before that character.
-
-Bear in mind that convert-meta has been reported to have troubles when used in
-UTF-8 locales.  On terminals like xterm, the "metaSendsEscape" resource can be
-toggled on the fly through the "Main Options" menu, by pressing Ctrl-LeftClick
-on the terminal; that's a good last resource in case you want to send ESC when
-using other applications but not when inside VIM.
-
+In the GUI Nvim handles the |ALT| key itself, thus mapping keys with ALT
+should always work.  But in a terminal Nvim gets a sequence of bytes and has
+to figure out whether ALT was pressed.  Terminals may use ESC to indicate that
+ALT was pressed.  If ESC is followed by a {key} within 'ttimeoutlen'
+milliseconds, the ESC is interpreted as:
+        <ALT-{key}>
+otherwise it is interpreted as two key presses:
+        <ESC> {key}
 
 1.11 MAPPING AN OPERATOR				*:map-operator*
 

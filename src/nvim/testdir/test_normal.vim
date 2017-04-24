@@ -1606,6 +1606,52 @@ fun! Test_normal30_changecase()
   norm! V~
   call assert_equal('THIS IS A simple test: äüöss', getline('.'))
 
+  " Turkish ASCII turns to multi-byte.  On some systems Turkish locale
+  " is available but toupper()/tolower() don't do the right thing.
+  try
+    lang tr_TR.UTF-8
+    set casemap=
+    let iupper = toupper('i')
+    if iupper == "\u0130"
+      call setline(1, 'iI')
+      1normal gUU
+      call assert_equal("\u0130I", getline(1))
+      call assert_equal("\u0130I", toupper("iI"))
+
+      call setline(1, 'iI')
+      1normal guu
+      call assert_equal("i\u0131", getline(1))
+      call assert_equal("i\u0131", tolower("iI"))
+    elseif iupper == "I"
+      call setline(1, 'iI')
+      1normal gUU
+      call assert_equal("II", getline(1))
+      call assert_equal("II", toupper("iI"))
+
+      call setline(1, 'iI')
+      1normal guu
+      call assert_equal("ii", getline(1))
+      call assert_equal("ii", tolower("iI"))
+    else
+      call assert_true(false, "expected toupper('i') to be either 'I' or '\u0131'")
+    endif
+    set casemap&
+    call setline(1, 'iI')
+    1normal gUU
+    call assert_equal("II", getline(1))
+    call assert_equal("II", toupper("iI"))
+
+    call setline(1, 'iI')
+    1normal guu
+    call assert_equal("ii", getline(1))
+    call assert_equal("ii", tolower("iI"))
+
+    lang en_US.UTF-8
+  catch /E197:/
+    " can't use Turkish locale
+    throw 'Skipped: Turkish locale not available'
+  endtry
+
   " clean up
   bw!
 endfunc

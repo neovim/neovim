@@ -4,11 +4,12 @@
 #include <stdbool.h>
 
 #include "nvim/buffer_defs.h"
+#include "nvim/ex_cmds_defs.h"
 
-/*
- * Terminal highlighting attribute bits.
- * Attributes above HL_ALL are used for syntax highlighting.
- */
+/// Terminal highlighting attribute bits.
+/// Attributes above HL_ALL are used for syntax highlighting.
+/// \addtogroup HL_ATTRIBUTES
+/// @{
 #define HL_NORMAL      0x00
 #define HL_INVERSE     0x01
 #define HL_BOLD        0x02
@@ -16,6 +17,7 @@
 #define HL_UNDERLINE   0x08
 #define HL_UNDERCURL   0x10
 #define HL_STANDOUT    0x20
+/// @}
 
 #define HL_CONTAINED   0x01    /* not used on toplevel */
 #define HL_TRANSP      0x02    /* has no highlighting	*/
