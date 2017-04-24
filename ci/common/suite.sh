@@ -82,21 +82,27 @@ run_test_wd() {
 
   local output_file="$(mktemp)"
   local status_file="$(mktemp)"
+  local sid_file="$(mktemp)"
 
   local restarts=5
   local prev_tmpsize=-1
   while test $restarts -gt 0 ; do
     : > "${status_file}"
-    (
-      set -o pipefail
-      ret=0
-      if ! eval "$cmd" 2>&1 | tee -a "$output_file" ; then
-        ret=1
-      fi
-      echo "$ret" > "$status_file"
-      exit $ret
-    ) &
-    local pid=$!
+    setsid \
+      env \
+        output_file="$output_file" \
+        status_file="$status_file" \
+        sid_file="$sid_file" \
+        cmd="$cmd" \
+        sh -c '
+          set -o pipefail
+          ps -o sid= > "$sid_file"
+          ret=0
+          if ! eval "$cmd" 2>&1 | tee -a "$output_file" ; then
+            ret=1
+          fi
+          echo "$ret" > "$status_file"
+        '
     while test "$(stat -c "%s" "$status_file")" -eq 0 ; do
       prev_tmpsize=$tmpsize
       sleep $timeout
@@ -106,13 +112,13 @@ run_test_wd() {
         break
       fi
     done
-    restarts=$[ restarts - 1 ]
+    restarts=$(( restarts - 1 ))
     if test "$(stat -c "%s" "$status_file")" -eq 0 ; then
       # status file not updated, assuming hang
-      kill -KILL $pid
+      pkill -KILL -s$(cat "$sid_file")
       if test $restarts -eq 0 ; then
         if test "x$hang_ok" = "x" ; then
-          fail "${test_name}" E "Test hang up"
+          fail "$test_name" E "Test hang up"
         fi
       else
         echo "Test ${test_name} hang up, restarting"
@@ -121,11 +127,15 @@ run_test_wd() {
     else
       local new_failed="$(cat "$status_file")"
       if test "x$new_failed" != "x0" ; then
-        fail "${test_name}" F "Test failed in run_test_wd"
+        fail "$test_name" F "Test failed in run_test_wd"
       fi
-      return 0
+      break
     fi
   done
+
+  rm -f "$output_file"
+  rm -f "$status_file"
+  rm -f "$sid_file"
 }
 
 ended_successfully() {
