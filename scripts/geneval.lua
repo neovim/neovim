@@ -41,6 +41,7 @@ funcsdata:close()
 gperfpipe:write([[
 %language=ANSI-C
 %global-table
+%readonly-tables
 %define initializer-suffix ,0,0,NULL,NULL
 %define word-array-name functions
 %define hash-function-name hash_internal_func_gperf

@@ -6009,7 +6009,7 @@ char_u *get_expr_name(expand_T *xp, int idx)
 /// @param[in]  name  Name of the function.
 ///
 /// Returns pointer to the function definition or NULL if not found.
-static VimLFuncDef *find_internal_func(const char *const name)
+static const VimLFuncDef *find_internal_func(const char *const name)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
   size_t len = strlen(name);
@@ -6378,7 +6378,7 @@ call_func(
       }
     } else {
       // Find the function name in the table, call its implementation.
-      VimLFuncDef *const fdef = find_internal_func((const char *)fname);
+      const VimLFuncDef *const fdef = find_internal_func((const char *)fname);
       if (fdef != NULL) {
         if (argcount < fdef->min_argc) {
           error = ERROR_TOOFEW;
