@@ -151,12 +151,12 @@ run_test_wd() {
 }
 
 ended_successfully() {
-  if [[ -f "${FAIL_SUMMARY_FILE}" ]]; then
+  if test -f "${FAIL_SUMMARY_FILE}" ; then
     echo 'Test failed, complete summary:'
     cat "${FAIL_SUMMARY_FILE}"
     return 1
   fi
-  if ! [[ -f "${END_MARKER}" ]] ; then
+  if ! test -f "${END_MARKER}" ; then
     echo 'ended_successfully called before end marker was touched'
     return 1
   fi
