@@ -61,9 +61,9 @@ void fs_init(void)
 }
 
 
-/// Change to the given directory.
+/// Changes the current directory to `path`.
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or negative error code.
 int os_chdir(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
