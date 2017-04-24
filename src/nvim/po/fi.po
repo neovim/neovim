@@ -116,7 +116,7 @@ msgstr "merkkijono ei saa sisältää rivinvaihtoja"
 
 #. Doesn't exist, fail
 #, fuzzy, c-format
-#~ msgid "Key \"%s\" doesn't exist"
+#~ msgid "Key does not exist: %s"
 #~ msgstr "Tiedostoa %s ei ole"
 
 #, fuzzy
@@ -3986,7 +3986,7 @@ msgid "Calling shell to execute: \"%s\""
 msgstr "Kutsutaan kuorta suorittamaan: %s"
 
 #, c-format
-#~ msgid "Invalid channel \"%<PRIu64>\""
+#~ msgid "Invalid channel: %<PRIu64>"
 #~ msgstr ""
 
 #~ msgid "Message is not an array"
@@ -4003,7 +4003,7 @@ msgstr "Kutsutaan kuorta suorittamaan: %s"
 #~ msgid "Unknown message type"
 #~ msgstr "E574: Tuntematon rekisterityyppi %d"
 
-#~ msgid "Request array size should be 4 (request) or 3 (notification)"
+#~ msgid "Request array size must be 4 (request) or 3 (notification)"
 #~ msgstr ""
 
 #~ msgid "ID must be a positive integer"
