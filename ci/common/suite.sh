@@ -97,11 +97,13 @@ run_test_wd() {
         cmd="$cmd" \
         sh -c '
           ps -o sid= > "$sid_file"
-          ret=0
-          if ! eval "$cmd" 2>&1 | tee -a "$output_file" ; then
-            ret=1
-          fi
-          echo "$ret" > "$status_file"
+          (
+            ret=0
+            if ! eval "$cmd" 2>&1 ; then
+              ret=1
+            fi
+            echo "$ret" > "$status_file"
+          ) | tee -a "$output_file"
         '
     while test "$(stat -c "%s" "$status_file")" -eq 0 ; do
       prev_tmpsize=$tmpsize
