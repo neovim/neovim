@@ -2315,7 +2315,7 @@ win_line (
   int line_attr = 0;                    // attribute for the whole line
   matchitem_T *current_match;           // points to the match list
   match_T     *shl;                     // points to search_hl or a match
-  int shl_flag;                         // flag to indicate whether search_hl
+  bool shl_flag;                        // flag to indicate whether search_hl
                                         // has been processed or not
   int prevcol_hl_flag;                  // flag to indicate whether prevcol
                                         // equals startcol of search_hl or one
@@ -2995,14 +2995,14 @@ win_line (
          */
         long diff = (long)(ptr - line);
         current_match = wp->w_match_head;
-        shl_flag = FALSE;
-        while (current_match != NULL || shl_flag == FALSE) {
-          if (shl_flag == FALSE
+        shl_flag = false;
+        while (current_match != NULL || shl_flag == false) {
+          if (shl_flag == false
               && ((current_match != NULL
                    && current_match->priority > SEARCH_HL_PRIORITY)
                   || current_match == NULL)) {
             shl = &search_hl;
-            shl_flag = TRUE;
+            shl_flag = true;
           } else
             shl = &current_match->hl;
           if (current_match != NULL) {
@@ -3068,14 +3068,14 @@ win_line (
         search_attr_from_match = false;
         search_attr = search_hl.attr_cur;
         current_match = wp->w_match_head;
-        shl_flag = FALSE;
-        while (current_match != NULL || shl_flag == FALSE) {
-          if (shl_flag == FALSE
+        shl_flag = false;
+        while (current_match != NULL || shl_flag == false) {
+          if (shl_flag == false
               && ((current_match != NULL
                    && current_match->priority > SEARCH_HL_PRIORITY)
                   || current_match == NULL)) {
             shl = &search_hl;
-            shl_flag = TRUE;
+            shl_flag = true;
           } else
             shl = &current_match->hl;
           if (shl->attr_cur != 0) {
@@ -3793,14 +3793,14 @@ win_line (
            * 'search_hl' and the match list. */
           char_attr = search_hl.attr;
           current_match = wp->w_match_head;
-          shl_flag = FALSE;
-          while (current_match != NULL || shl_flag == FALSE) {
-            if (shl_flag == FALSE
+          shl_flag = false;
+          while (current_match != NULL || shl_flag == false) {
+            if (shl_flag == false
                 && ((current_match != NULL
                      && current_match->priority > SEARCH_HL_PRIORITY)
                     || current_match == NULL)) {
               shl = &search_hl;
-              shl_flag = TRUE;
+              shl_flag = true;
             } else
               shl = &current_match->hl;
             if ((ptr - line) - 1 == (long)shl->startcol
