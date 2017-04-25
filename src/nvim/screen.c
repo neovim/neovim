@@ -2090,6 +2090,23 @@ static bool should_correct_column(win_T* wp, linenr_T lnum, int col) {
           && (int)wp->w_virtcol <= col);
 }
 
+static bool has_match_at_column(win_T* wp, long column) {
+  if (!search_hl.is_addpos && column == (long)search_hl.startcol) {
+    return true;
+  }
+
+  matchitem_T *current_match = wp->w_match_head;
+
+  while (current_match != NULL) {
+    if (!current_match->hl.is_addpos && column == (long)current_match->hl.startcol) {
+      return true;
+    }
+    current_match = current_match->next;
+  }
+
+  return false;
+}
+
 static bool init_syntax(int lnum, win_T* wp) {
   int save_did_emsg;
   if (syntax_present(wp) && !wp->w_s->b_syn_error) {
@@ -2318,9 +2335,6 @@ win_line (
   match_T     *shl;                     // points to search_hl or a match
   bool shl_flag;                        // flag to indicate whether search_hl
                                         // has been processed or not
-  int prevcol_hl_flag;                  // flag to indicate whether prevcol
-                                        // equals startcol of search_hl or one
-                                        // of the matches
   int prev_c  = 0;                      // previous Arabic character
   int prev_c1 = 0;                      // first composing char for prev_c
   int did_line_attr = 0;
@@ -3747,27 +3761,14 @@ win_line (
       // highlight match at end of line. If it's beyond the last
       // char on the screen, just overwrite that one (tricky!)  Not
       // needed when a '$' was displayed for 'list'.
-      prevcol_hl_flag = false;
-      if (!search_hl.is_addpos && prevcol == (long)search_hl.startcol) {
-        prevcol_hl_flag = true;
-      } else {
-        current_match = wp->w_match_head;
-        while (current_match != NULL) {
-          if (!current_match->hl.is_addpos && prevcol == (long)current_match->hl.startcol) {
-            prevcol_hl_flag = true;
-            break;
-          }
-          current_match = current_match->next;
-        }
-      }
       if (!did_print_lcs_eol
           && ((area_attr != 0 && vcol == invert_from
                && (VIsual_mode != Ctrl_V
                    || lnum == VIsual.lnum
                    || is_current_cursor_line)
                && c == NUL)
-              /* highlight 'hlsearch' match at end of line */
-              || (prevcol_hl_flag == TRUE && did_line_attr <= 1)
+              // highlight 'hlsearch' match at end of line
+              || (has_match_at_column(wp, prevcol) && did_line_attr <= 1)
               )) {
         int n = 0;
 
