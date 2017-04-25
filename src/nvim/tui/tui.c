@@ -575,11 +575,11 @@ static void tui_set_mode(UI *ui, ModeShape mode)
 
     switch (shape) {
       case SHAPE_BLOCK: shape = 1; break;
-      case SHAPE_VER:   shape = 5; break;
       case SHAPE_HOR:   shape = 3; break;
+      case SHAPE_VER:   shape = 5; break;
       default: WLOG("Unknown shape value %d", shape); break;
     }
-    data->params[0].i = shape + (c.blinkon ==0);
+    data->params[0].i = shape + (int)(c.blinkon == 0);
     unibi_format(vars, vars + 26, "\x1b[%p1%d q",
                  data->params, out, ui, NULL, NULL);
   }

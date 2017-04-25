@@ -142,9 +142,9 @@ char_u *parse_shape_opt(int what)
           {
             // Set the defaults, for the missing parts
             shape_table[idx].shape = SHAPE_BLOCK;
-            shape_table[idx].blinkwait = 700L;
-            shape_table[idx].blinkon = 400L;
-            shape_table[idx].blinkoff = 250L;
+            shape_table[idx].blinkwait = 0L;
+            shape_table[idx].blinkon = 0L;
+            shape_table[idx].blinkoff = 0L;
           }
         }
 
