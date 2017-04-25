@@ -4003,50 +4003,51 @@ win_line (
       }
       COL_ADD(off, 1)
       COL_ADD(col, 1)
-    } else if (wp->w_p_cole > 0 && is_concealing) {
-      --n_skip;
-      ++vcol_off;
-      if (n_extra > 0)
-        vcol_off += n_extra;
-      if (wp->w_p_wrap) {
-        /*
-         * Special voodoo required if 'wrap' is on.
-         *
-         * Advance the column indicator to force the line
-         * drawing to wrap early. This will make the line
-         * take up the same screen space when parts are concealed,
-         * so that cursor line computations aren't messed up.
-         *
-         * To avoid the fictitious advance of 'col' causing
-         * trailing junk to be written out of the screen line
-         * we are building, 'boguscols' keeps track of the number
-         * of bad columns we have advanced.
-         */
+    } else {
+      n_skip--;
+
+      if (wp->w_p_cole > 0 && is_concealing) {
+        vcol_off++;
+
         if (n_extra > 0) {
-          vcol += n_extra;
-          COL_ADD(col, n_extra);
-          COL_ADD(boguscols, n_extra);
-          n_extra = 0;
-          n_attr = 0;
+          vcol_off += n_extra;
         }
 
+        if (wp->w_p_wrap) {
+          /*
+          * Special voodoo required if 'wrap' is on.
+          *
+          * Advance the column indicator to force the line
+          * drawing to wrap early. This will make the line
+          * take up the same screen space when parts are concealed,
+          * so that cursor line computations aren't messed up.
+          *
+          * To avoid the fictitious advance of 'col' causing
+          * trailing junk to be written out of the screen line
+          * we are building, 'boguscols' keeps track of the number
+          * of bad columns we have advanced.
+          */
+          if (n_extra > 0) {
+            vcol += n_extra;
+            COL_ADD(col, n_extra);
+            COL_ADD(boguscols, n_extra);
+            n_extra = 0;
+            n_attr = 0;
+          }
 
-        /* Need to fill two screen columns? */
-        int n = MB_IS_WIDE() ? 2 : 1;
+          // Need to fill two screen columns?
+          int n = MB_IS_WIDE() ? 2 : 1;
 
-        COL_ADD(boguscols, n);
-        COL_ADD(col, n);
+          COL_ADD(boguscols, n);
+          COL_ADD(col, n);
 
-      } else {
-        if (n_extra > 0) {
+        } else if (n_extra > 0) {
           vcol += n_extra;
           n_extra = 0;
           n_attr = 0;
         }
       }
-
-    } else
-      --n_skip;
+    }
 
     /* Only advance the "vcol" when after the 'number' or 'relativenumber'
      * column. */
