@@ -438,7 +438,6 @@ set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
   popupmnu.h
   quickfix.h
-  regexp.h
   regexp_defs.h
   sha256.h
   sign_defs.h
