@@ -2247,8 +2247,9 @@ win_line (
   int extra_attr = 0;                       // attributes when n_extra != 0
   static char_u *at_end_str = (char_u *)""; // used for p_extra when
                                             // displaying lcs_eol at end-of-line
-  int lcs_eol_one = lcs_eol;                // lcs_eol until it's been used
-  int lcs_prec_todo = lcs_prec;             // lcs_prec until it's been used
+
+  bool did_print_lcs_eol  = false;
+  bool did_print_lcs_prec = false;
 
   // saved "extra" items for when draw_state becomes WL_LINE (again)
   char_u *saved_p_extra = NULL;
@@ -3556,7 +3557,9 @@ win_line (
                            && !(!(should_invert)
                                 && is_cursor_line
                                 && (colnr_T)vcol == wp->w_virtcol)))
-                   && lcs_eol_one > 0) {
+                   && !did_print_lcs_eol
+                   && lcs_eol > 0) {
+          did_print_lcs_eol = true;
           // Display a '$' after the line or highlight an extra
           // character if the line break is included.
           // For a diff line the highlighting continues after the
@@ -3573,7 +3576,6 @@ win_line (
               c_extra = NUL;
             }
           }
-          lcs_eol_one = -1;
           ptr--;  // put it back at the NUL
           extra_attr = hl_attr(HLF_AT);
           n_attr = 1;
@@ -3709,13 +3711,14 @@ win_line (
      * character of the line and the user wants us to show us a
      * special character (via 'listchars' option "precedes:<char>".
      */
-    if (lcs_prec_todo != NUL
+    if (!did_print_lcs_prec
+        && lcs_prec != NUL
         && wp->w_p_list
         && LEFT_COL() > 0
         && filler_todo <= 0
         && draw_state > WL_NR
         && c != NUL) {
-      lcs_prec_todo = NUL;
+      did_print_lcs_prec = true;
       if (MB_IS_WIDE()) {
         /* Double-width character being overwritten by the "precedes"
          * character, need to fill up half the character. */
@@ -3757,7 +3760,7 @@ win_line (
           current_match = current_match->next;
         }
       }
-      if (lcs_eol == lcs_eol_one
+      if (!did_print_lcs_eol
           && ((area_attr != 0 && vcol == invert_from
                && (VIsual_mode != Ctrl_V
                    || lnum == VIsual.lnum
@@ -3919,7 +3922,7 @@ win_line (
         && filler_todo <= 0
         && (get_column_diff_until_eol(wp, col) == 0)
         && (*ptr != NUL
-            || (wp->w_p_list && lcs_eol_one > 0)
+            || (wp->w_p_list && !did_print_lcs_eol && lcs_eol != NUL)
             || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
       char_attr = hl_attr(HLF_AT);
       SET_CHAR(lcs_ext)
@@ -4072,7 +4075,7 @@ win_line (
        * '$' and highlighting until last column, break here. */
       if ((!wp->w_p_wrap
            && filler_todo <= 0
-           ) || lcs_eol_one == -1)
+           ) || did_print_lcs_eol)
         break;
 
       /* When the window is too narrow draw all "@" lines. */
@@ -4146,7 +4149,7 @@ win_line (
       saved_c_extra = c_extra;
       saved_char_attr = char_attr;
       n_extra = 0;
-      lcs_prec_todo = lcs_prec;
+      did_print_lcs_prec = false;
       if (filler_todo <= 0)
         need_showbreak = true;
       --filler_todo;
