@@ -41,9 +41,7 @@ static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
 
 static bool pum_is_visible = false;
-
 static bool pum_external = false;
-static bool pum_wants_external = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmnu.c.generated.h"
@@ -80,7 +78,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
     // draw mode when the popup menu is not being displayed
-    pum_external = pum_wants_external;
+    pum_external = ui_is_external(kUIPopupmenu);
   }
 
 redo:
@@ -750,9 +748,4 @@ bool pum_drawn(void)
 int pum_get_height(void)
 {
   return pum_height;
-}
-
-void pum_set_external(bool external)
-{
-  pum_wants_external = external;
 }

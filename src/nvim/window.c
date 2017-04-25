@@ -5224,8 +5224,8 @@ static void last_status_rec(frame_T *fr, int statusline)
  */
 int tabline_height(void)
 {
-  if (ui_is_widget_external(kUITabline)) {
-      return 0;
+  if (ui_is_external(kUITabline)) {
+    return 0;
   }
   assert(first_tabpage);
   switch (p_stal) {

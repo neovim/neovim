@@ -2,16 +2,14 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
 
-if helpers.pending_win32(pending) then return end
-
-describe('External tab line', function()
+describe('ui/tabline', function()
   local screen
   local tabs, curtab
 
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, tabline_external=true})
+    screen:attach({rgb=true, ui_ext={'tabline'}})
     screen:set_on_event_handler(function(name, data)
       if name == "tabline_update" then
         curtab, tabs = unpack(data)
@@ -23,8 +21,8 @@ describe('External tab line', function()
     screen:detach()
   end)
 
-  describe("'tabline'", function()
-    it('tabline', function()
+  describe('externalized', function()
+    it('publishes UI events', function()
       local expected = {
         {1, {['name'] = '[No Name]'}},
         {2, {['name'] = '[No Name]'}},

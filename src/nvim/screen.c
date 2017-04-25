@@ -6886,13 +6886,12 @@ static void draw_tabline(void)
   if (ScreenLines == NULL) {
     return;
   }
+  redraw_tabline = false;
 
-  if (ui_is_widget_external(kUITabline)) {
-    draw_tabline_ext();
+  if (ui_is_external(kUITabline)) {
+    ui_ext_tabline_update();
     return;
   }
-
-  redraw_tabline = false;
 
   if (tabline_height() < 1)
     return;
@@ -7033,20 +7032,13 @@ static void draw_tabline(void)
   redraw_tabline = FALSE;
 }
 
-// send tabline update to external ui
-void draw_tabline_ext(void)
+void ui_ext_tabline_update(void)
 {
-  win_T       *cwp;
-
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ(curtab->handle));
   Array tabs = ARRAY_DICT_INIT;
   FOR_ALL_TABS(tp) {
-    if (tp == curtab) {
-      cwp = curwin;
-    } else {
-      cwp = tp->tp_curwin;
-    }
+    win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
     get_trans_bufname(cwp->w_buffer);
     Array tab = ARRAY_DICT_INIT;
     ADD(tab, INTEGER_OBJ(tp->handle));

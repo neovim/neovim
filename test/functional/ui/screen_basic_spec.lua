@@ -6,7 +6,7 @@ local insert = helpers.insert
 local eq = helpers.eq
 local eval = helpers.eval
 
-describe('Initial screen', function()
+describe('screen', function()
   local screen
   local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                      '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
@@ -27,7 +27,7 @@ describe('Initial screen', function()
     screen:detach()
   end)
 
-  it('is the default initial screen', function()
+  it('default initial screen', function()
       screen:expect([[
       ^                                                     |
       {0:~                                                    }|
@@ -565,12 +565,40 @@ describe('Screen', function()
       ]])
     end)
   end)
+end)
 
-  it('nvim_ui_attach() handles very large width/height #2180', function()
-    screen:detach()
-    screen = Screen.new(999, 999)
+describe('nvim_ui_attach()', function()
+  before_each(function()
+    clear()
+  end)
+  it('handles very large width/height #2180', function()
+    local screen = Screen.new(999, 999)
     screen:attach()
     eq(999, eval('&lines'))
     eq(999, eval('&columns'))
+  end)
+  it('"ui_ext" widgets', function()
+    local screen = Screen.new()
+    screen:attach({ui_ext={
+      'cmdline',
+      'popupmenu',
+      'tabline',
+      'wildmenu',
+    }})
+  end)
+  it('invalid "ui_ext" returns error', function()
+    local screen = Screen.new()
+
+    local status, rv = pcall(function() screen:attach({ui_ext={'foo'}}) end)
+    eq(false, status)
+    eq('ui_ext: unknown widget: foo', rv:match("ui_ext:.*"))
+
+    status, rv = pcall(function() screen:attach({ui_ext={'cmdline','foo'}}) end)
+    eq(false, status)
+    eq('ui_ext: unknown widget: foo', rv:match("ui_ext:.*"))
+
+    status, rv = pcall(function() screen:attach({ui_ext={'cmdline',1}}) end)
+    eq(false, status)
+    eq('ui_ext: item must be a String', rv:match("ui_ext:.*"))
   end)
 end)

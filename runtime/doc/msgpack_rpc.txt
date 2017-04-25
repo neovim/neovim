@@ -251,9 +251,9 @@ connect to another with different type codes.
 6. Remote UIs					           *rpc-remote-ui*
 
 GUIs can be implemented as external processes communicating with Nvim over the
-RPC API. Currently the UI model consists of a terminal-like grid with one
-single, monospace font size. Some elements (UI "widgets") can be drawn
-separately from the grid.
+RPC API. The UI model consists of a terminal-like grid with a single,
+monospace font size. Some elements (UI "widgets") can be drawn separately from
+the grid ("externalized").
 
 After connecting to Nvim (usually a spawned, embedded instance) use the
 |nvim_ui_attach| API method to tell Nvim that your program wants to draw the
@@ -264,14 +264,13 @@ a dictionary with these (optional) keys:
 				colors.
 				Set to false to use terminal color codes (at
 				most 256 different colors).
-	`popupmenu_external`	Instead of drawing the completion popupmenu on
-				the grid, Nvim will send higher-level events to
-				the UI and let it draw the popupmenu.
-				Defaults to false.
-	`tabline_external`	Instead of drawing the tabline on the grid,
-			        Nvim will send higher-level events to
-				the UI and let it draw the tabline.
-				Defaults to false.
+	`ui_ext`		String array of "externalized" widgets.
+				Widgets in this list will not be drawn by
+				Nvim; only high-level data will be published
+				in new UI event kinds. Valid names:
+					popupmenu	|ui-ext-popupmenu|
+					tabline         |ui-ext-tabline|
+				Defaults to empty.
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
 and a single argument, an array of screen updates (described below).  These
@@ -421,6 +420,7 @@ properties specified in the corresponding item. The set of modes reported will
 change in new versions of Nvim, for instance more submodes and temporary
 states might be represented as separate modes.
 
+							*ui-ext-popupmenu*
 ["popupmenu_show", items, selected, row, col]
 	When `popupmenu_external` is set to true, nvim will not draw the
 	popupmenu on the grid, instead when the popupmenu is to be displayed
@@ -440,9 +440,10 @@ states might be represented as separate modes.
 ["popupmenu_hide"]
 	The popupmenu is hidden.
 
+							*ui-ext-tabline*
 ["tabline_update", curtab, tabs]
 	Nvim will send this event when drawing tabline. curtab is the tab id
-	of the current tab. tabs is an arrays of the form:
+	of the current tab. tabs is an array of the form:
 	[tabid, { "name": name }]
 
 ==============================================================================

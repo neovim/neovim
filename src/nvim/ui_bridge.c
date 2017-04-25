@@ -57,8 +57,6 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   UIBridgeData *rv = xcalloc(1, sizeof(UIBridgeData));
   rv->ui = ui;
   rv->bridge.rgb = ui->rgb;
-  rv->bridge.pum_external = ui->pum_external;
-  rv->bridge.tabline_external = ui->tabline_external;
   rv->bridge.stop = ui_bridge_stop;
   rv->bridge.resize = ui_bridge_resize;
   rv->bridge.clear = ui_bridge_clear;
@@ -85,6 +83,10 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.set_title = ui_bridge_set_title;
   rv->bridge.set_icon = ui_bridge_set_icon;
   rv->scheduler = scheduler;
+
+  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+    rv->bridge.ui_ext[i] = ui->ui_ext[i];
+  }
 
   rv->ui_main = ui_main;
   uv_mutex_init(&rv->mutex);
