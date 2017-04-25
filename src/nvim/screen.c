@@ -2107,6 +2107,35 @@ static bool has_match_at_column(win_T* wp, long column) {
   return false;
 }
 
+static int get_match_attr_at_column(win_T* wp, long column) {
+  int attr = search_hl.attr;
+  bool did_search_hl = false;
+  matchitem_T *current_match = wp->w_match_head;
+  match_T *shl;
+
+  while (current_match != NULL || did_search_hl == false) {
+    if (did_search_hl == false
+        && ((current_match != NULL
+            && current_match->priority > SEARCH_HL_PRIORITY)
+          || current_match == NULL)) {
+      shl = &search_hl;
+      did_search_hl = true;
+    } else {
+      shl = &current_match->hl;
+    }
+
+    if (column == (long)shl->startcol
+        && (shl == &search_hl || !shl->is_addpos)) {
+      attr = shl->attr;
+    }
+    if (shl != &search_hl && current_match != NULL) {
+      current_match = current_match->next;
+    }
+  }
+
+  return attr;
+}
+
 static bool init_syntax(int lnum, win_T* wp) {
   int save_did_emsg;
   if (syntax_present(wp) && !wp->w_s->b_syn_error) {
@@ -3790,28 +3819,9 @@ win_line (
           ScreenLinesUC[off] = 0;
         }
         if (area_attr == 0) {
-          /* Use attributes from match with highest priority among
-           * 'search_hl' and the match list. */
-          char_attr = search_hl.attr;
-          current_match = wp->w_match_head;
-          shl_flag = false;
-          while (current_match != NULL || shl_flag == false) {
-            if (shl_flag == false
-                && ((current_match != NULL
-                     && current_match->priority > SEARCH_HL_PRIORITY)
-                    || current_match == NULL)) {
-              shl = &search_hl;
-              shl_flag = true;
-            } else
-              shl = &current_match->hl;
-            if ((ptr - line) - 1 == (long)shl->startcol
-                && (shl == &search_hl || !shl->is_addpos)) {
-              char_attr = shl->attr;
-            }
-            if (shl != &search_hl && current_match != NULL) {
-              current_match = current_match->next;
-            }
-          }
+          // Use attributes from match with highest priority among
+          // 'search_hl' and the match list.
+          char_attr = get_match_attr_at_column(wp, (long)(ptr - line) - 1);
         }
         ScreenAttrs[off] = char_attr;
         COL_ADD(col, 1)
