@@ -2755,15 +2755,11 @@ win_line (
     area_highlighting = true;
   }
 
-  off = (unsigned)(current_ScreenLine - ScreenLines);
-  col = 0;
-  if (wp->w_p_rl) {
-    /* Rightleft window: process the text in the normal direction, but put
-     * it in current_ScreenLine[] from right to left.  Start at the
-     * rightmost column of the window. */
-    col = wp->w_width - 1;
-    off += col;
-  }
+  // Rightleft window: process the text in the normal direction, but put it in
+  // current_ScreenLine[] from right to left. Start at the rightmost column of
+  // the window.
+  col = (wp->w_p_rl) ? wp->w_width - 1 : 0;
+  off = (unsigned)(current_ScreenLine - ScreenLines) + col;
 
   // wont highlight after 1024 columns
   int term_attrs[1024] = {0};
@@ -4140,12 +4136,8 @@ win_line (
         }
       }
 
-      col = 0;
-      off = (unsigned)(current_ScreenLine - ScreenLines);
-      if (wp->w_p_rl) {
-        col = wp->w_width - 1;          /* col is not used if breaking! */
-        off += col;
-      }
+      col = (wp->w_p_rl) ? wp->w_width - 1 : 0;
+      off = (unsigned)(current_ScreenLine - ScreenLines) + col;
 
       /* reset the drawing state for the start of a wrapped line */
       draw_state = WL_START;
