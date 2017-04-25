@@ -1,6 +1,8 @@
 #ifndef NVIM_POPUPMNU_H
 #define NVIM_POPUPMNU_H
 
+#include "nvim/types.h"
+
 /// Used for popup menu items.
 typedef struct {
   char_u *pum_text;        // main menu text

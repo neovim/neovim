@@ -432,13 +432,9 @@ set(NO_SINGLE_CHECK_HEADERS
   if_cscope_defs.h
   misc2.h
   msgpack_rpc/server.h
-  option.h
   os/shell.h
   os_unix.h
   os/win_defs.h
-  popupmnu.h
-  quickfix.h
-  regexp.h
   regexp_defs.h
   sha256.h
   sign_defs.h
