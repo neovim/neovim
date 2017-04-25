@@ -7038,15 +7038,14 @@ void ui_ext_tabline_update(void)
   ADD(args, INTEGER_OBJ(curtab->handle));
   Array tabs = ARRAY_DICT_INIT;
   FOR_ALL_TABS(tp) {
+    Dictionary tab_info = ARRAY_DICT_INIT;
+    PUT(tab_info, "tab", TABPAGE_OBJ(tp->handle));
+
     win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
     get_trans_bufname(cwp->w_buffer);
-    Array tab = ARRAY_DICT_INIT;
-    ADD(tab, INTEGER_OBJ(tp->handle));
-
-    Dictionary tab_info = ARRAY_DICT_INIT;
     PUT(tab_info, "name", STRING_OBJ(cstr_to_string((char *)NameBuff)));
-    ADD(tab, DICTIONARY_OBJ(tab_info));
-    ADD(tabs, ARRAY_OBJ(tab));
+
+    ADD(tabs, DICTIONARY_OBJ(tab_info));
   }
   ADD(args, ARRAY_OBJ(tabs));
 

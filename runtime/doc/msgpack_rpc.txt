@@ -440,9 +440,10 @@ states might be represented as separate modes.
 
 							*ui-ext-tabline*
 ["tabline_update", curtab, tabs]
-	Nvim will send this event when drawing tabline. curtab is the tab id
-	of the current tab. tabs is an array of the form:
-	[tabid, { "name": name }]
+	Tabline was updated. UIs should present this data in a custom tabline
+	widget.
+	curtab:	  Current Tabpage
+	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

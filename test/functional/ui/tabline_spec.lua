@@ -1,10 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
+local clear, command, eq = helpers.clear, helpers.command, helpers.eq
 
 describe('ui/tabline', function()
   local screen
-  local tabs, curtab
+  local event_tabs, event_curtab
 
   before_each(function()
     clear()
@@ -12,7 +12,7 @@ describe('ui/tabline', function()
     screen:attach({rgb=true, ext_tabline=true})
     screen:set_on_event_handler(function(name, data)
       if name == "tabline_update" then
-        curtab, tabs = unpack(data)
+        event_curtab, event_tabs = unpack(data)
       end
     end)
   end)
@@ -23,11 +23,12 @@ describe('ui/tabline', function()
 
   describe('externalized', function()
     it('publishes UI events', function()
-      local expected = {
-        {1, {['name'] = '[No Name]'}},
-        {2, {['name'] = '[No Name]'}},
+      command("tabedit another-tab")
+
+      local expected_tabs = {
+        {tab = { id = 1 }, name = '[No Name]'},
+        {tab = { id = 2 }, name = 'another-tab'},
       }
-      feed(":tabnew<CR>")
       screen:expect([[
         ^                         |
         ~                        |
@@ -35,11 +36,11 @@ describe('ui/tabline', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq(2, curtab)
-        eq(expected, tabs)
+        eq(2, event_curtab)
+        eq(expected_tabs, event_tabs)
       end)
 
-      feed(":tabNext<CR>")
+      command("tabNext")
       screen:expect([[
         ^                         |
         ~                        |
@@ -47,8 +48,8 @@ describe('ui/tabline', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq(1, curtab)
-        eq(expected, tabs)
+        eq(1, event_curtab)
+        eq(expected_tabs, event_tabs)
       end)
 
     end)
