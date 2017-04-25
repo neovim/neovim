@@ -16,11 +16,11 @@ differences from Vim.
 ==============================================================================
 Transitioning from Vim				*nvim-from-vim*
 
-To start the transition, link your previous configuration so Nvim can use it:
+To start the transition, create `~/.config/nvim/init.vim` with these contents:
 >
-    mkdir ~/.config
-    ln -s ~/.vim ~/.config/nvim
-    ln -s ~/.vimrc ~/.config/nvim/init.vim
+    set runtimepath+=~/.vim,~/.vim/after
+    set packpath+=~/.vim
+    source ~/.vimrc
 <
 Note: If your system sets `$XDG_CONFIG_HOME`, use that instead of `~/.config`
 in the code above. Nvim follows the XDG |base-directories| convention.
