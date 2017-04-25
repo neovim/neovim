@@ -432,7 +432,6 @@ set(NO_SINGLE_CHECK_HEADERS
   if_cscope_defs.h
   misc2.h
   msgpack_rpc/server.h
-  option.h
   os/shell.h
   os_unix.h
   os/win_defs.h
