@@ -9,7 +9,7 @@ describe('ui/tabline', function()
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, ui_ext={'tabline'}})
+    screen:attach({rgb=true, ext_tabline=true})
     screen:set_on_event_handler(function(name, data)
       if name == "tabline_update" then
         curtab, tabs = unpack(data)

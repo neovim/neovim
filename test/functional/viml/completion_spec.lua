@@ -874,7 +874,7 @@ describe('ui/externalized/popupmenu', function()
   before_each(function()
     clear()
     screen = Screen.new(60, 8)
-    screen:attach({rgb=true, ui_ext={'popupmenu'}})
+    screen:attach({rgb=true, ext_popupmenu=true})
     screen:set_default_attr_ids({
       [1] = {bold=true, foreground=Screen.colors.Blue},
       [2] = {bold = true},

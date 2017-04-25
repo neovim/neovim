@@ -173,13 +173,33 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
 
 static void ui_set_option(UI *ui, String name, Object value, Error *error)
 {
+#define UI_EXT_OPTION(o, e) \
+  do { \
+    if (strequal(name.data, #o)) { \
+      if (value.type != kObjectTypeBoolean) { \
+        api_set_error(error, kErrorTypeValidation, #o " must be a Boolean"); \
+        return; \
+      } \
+      ui->ui_ext[(e)] = value.data.boolean; \
+      return; \
+    } \
+  } while (0)
+
   if (strequal(name.data, "rgb")) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation, "rgb must be a Boolean");
       return;
     }
     ui->rgb = value.data.boolean;
-  } else if (strequal(name.data, "popupmenu_external")) {
+    return;
+  }
+
+  UI_EXT_OPTION(ext_cmdline, kUICmdline);
+  UI_EXT_OPTION(ext_popupmenu, kUIPopupmenu);
+  UI_EXT_OPTION(ext_tabline, kUITabline);
+  UI_EXT_OPTION(ext_wildmenu, kUIWildmenu);
+
+  if (strequal(name.data, "popupmenu_external")) {
     // LEGACY: Deprecated option, use `ui_ext` instead.
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation,
@@ -187,38 +207,11 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
       return;
     }
     ui->ui_ext[kUIPopupmenu] = value.data.boolean;
-  } else if (strequal(name.data, "ui_ext")) {
-    if (value.type != kObjectTypeArray) {
-      api_set_error(error, kErrorTypeValidation,
-                    "ui_ext must be an Array");
-      return;
-    }
-
-    for (size_t i = 0; i < value.data.array.size; i++) {
-      Object item = value.data.array.items[i];
-      if (item.type != kObjectTypeString) {
-        api_set_error(error, kErrorTypeValidation,
-                      "ui_ext: item must be a String");
-        return;
-      }
-      char *name = item.data.string.data;
-      if (strequal(name, "cmdline")) {
-        ui->ui_ext[kUICmdline] = true;
-      } else if (strequal(name, "popupmenu")) {
-        ui->ui_ext[kUIPopupmenu] = true;
-      } else if (strequal(name, "tabline")) {
-        ui->ui_ext[kUITabline] = true;
-      } else if (strequal(name, "wildmenu")) {
-        ui->ui_ext[kUIWildmenu] = true;
-      } else {
-        api_set_error(error, kErrorTypeValidation,
-                      "ui_ext: unknown widget: %s", name);
-        return;
-      }
-    }
-  } else {
-    api_set_error(error, kErrorTypeValidation, "No such ui option");
+    return;
   }
+
+  api_set_error(error, kErrorTypeValidation, "No such ui option");
+#undef UI_EXT_OPTION
 }
 
 static void push_call(UI *ui, char *name, Array args)

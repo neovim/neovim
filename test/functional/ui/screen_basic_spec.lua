@@ -577,28 +577,10 @@ describe('nvim_ui_attach()', function()
     eq(999, eval('&lines'))
     eq(999, eval('&columns'))
   end)
-  it('"ui_ext" widgets', function()
+  it('invalid option returns error', function()
     local screen = Screen.new()
-    screen:attach({ui_ext={
-      'cmdline',
-      'popupmenu',
-      'tabline',
-      'wildmenu',
-    }})
-  end)
-  it('invalid "ui_ext" returns error', function()
-    local screen = Screen.new()
-
-    local status, rv = pcall(function() screen:attach({ui_ext={'foo'}}) end)
+    local status, rv = pcall(function() screen:attach({foo={'foo'}}) end)
     eq(false, status)
-    eq('ui_ext: unknown widget: foo', rv:match("ui_ext:.*"))
-
-    status, rv = pcall(function() screen:attach({ui_ext={'cmdline','foo'}}) end)
-    eq(false, status)
-    eq('ui_ext: unknown widget: foo', rv:match("ui_ext:.*"))
-
-    status, rv = pcall(function() screen:attach({ui_ext={'cmdline',1}}) end)
-    eq(false, status)
-    eq('ui_ext: item must be a String', rv:match("ui_ext:.*"))
+    eq('No such ui option', rv:match("No such .*"))
   end)
 end)

@@ -264,13 +264,11 @@ a dictionary with these (optional) keys:
 				colors.
 				Set to false to use terminal color codes (at
 				most 256 different colors).
-	`ui_ext`		String array of "externalized" widgets.
-				Widgets in this list will not be drawn by
+	`ext_popupmenu`		Externalize the popupmenu. |ui-ext-popupmenu|
+	`ext_tabline`		Externalize the tabline. |ui-ext-tabline|
+				Externalized widgets will not be drawn by
 				Nvim; only high-level data will be published
-				in new UI event kinds. Valid names:
-					popupmenu	|ui-ext-popupmenu|
-					tabline         |ui-ext-tabline|
-				Defaults to empty.
+				in new UI event kinds.
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
 and a single argument, an array of screen updates (described below).  These
