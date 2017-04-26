@@ -572,8 +572,13 @@ void free_all_mem(void)
   p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
-  if (!ONE_WINDOW)
+
+  if (!ONE_WINDOW) {
+    // to keep things simple, don't perform this
+    // ritual inside a float
+    curwin = firstwin;
     do_cmdline_cmd("only!");
+  }
 
   /* Free all spell info. */
   spell_free_all();

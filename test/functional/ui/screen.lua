@@ -158,6 +158,7 @@ function Screen.new(width, height)
     wildmenu_items = nil,
     wildmenu_selected = nil,
     win_position = {},
+    float_pos = {},
     _session = nil,
     messages = {},
     msg_history = {},
@@ -227,10 +228,9 @@ function Screen:attach(options, session)
     -- simplify test code by doing the same.
     self._options.rgb = true
   end
-  if self._options.ext_multigrid then
+  if self._options.ext_multigrid or self._options.ext_float then
     self._options.ext_linegrid = true
   end
-  self._session = session
 end
 
 function Screen:detach()
@@ -256,7 +256,7 @@ end
 -- canonical order of ext keys, used  to generate asserts
 local ext_keys = {
   'popupmenu', 'cmdline', 'cmdline_block', 'wildmenu_items', 'wildmenu_pos',
-  'messages', 'showmode', 'showcmd', 'ruler',
+  'messages', 'showmode', 'showcmd', 'ruler', 'float_pos',
 }
 
 -- Asserts that the screen state eventually matches an expected state
@@ -642,7 +642,7 @@ function Screen:_handle_grid_resize(grid, width, height)
   end
 
   if self._cursor.grid == grid then
-    self._cursor.row = 1
+    self._cursor.row = 1 -- -1 ?
     self._cursor.col = 1
   end
   self._grids[grid] = {
@@ -675,7 +675,6 @@ function Screen:_reset()
   self.wildmenu_items = nil
   self.wildmenu_pos = nil
 end
-
 
 function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
   self._cursor_style_enabled = cursor_style_enabled
@@ -713,7 +712,6 @@ end
 function Screen:_handle_grid_destroy(grid)
   self._grids[grid] = nil
   if self._options.ext_multigrid then
-    assert(self.win_position[grid])
     self.win_position[grid] = nil
   end
 end
@@ -732,6 +730,36 @@ function Screen:_handle_grid_cursor_goto(grid, row, col)
   self._cursor.grid = grid
   self._cursor.row = row + 1
   self._cursor.col = col + 1
+end
+
+function Screen:_handle_win_pos(grid, win, startrow, startcol, width, height)
+    self.win_position[grid] = {
+        win = win,
+        startrow = startrow,
+        startcol = startcol,
+        width = width,
+        height = height
+    }
+    self.float_pos[grid] = nil
+end
+
+function Screen:_handle_win_float_pos(grid, ...)
+  self.win_position[grid] = nil
+  self.float_pos[grid] = {...}
+end
+
+function Screen:_handle_win_external_pos(grid)
+  self.win_position[grid] = nil
+  self.float_pos[grid] = {external=true}
+end
+
+function Screen:_handle_win_hide(grid)
+  self.win_position[grid] = nil
+  self.float_pos[grid] = nil
+end
+
+function Screen:_handle_win_close(grid)
+  self.float_pos[grid] = nil
 end
 
 function Screen:_handle_busy_start()
@@ -813,20 +841,6 @@ function Screen:_handle_hl_attr_define(id, rgb_attrs, cterm_attrs, info)
   self._attr_table[id] = {rgb_attrs, cterm_attrs}
   self._hl_info[id] = info
   self._new_attrs = true
-end
-
-function Screen:_handle_win_pos(grid, win, startrow, startcol, width, height)
-    self.win_position[grid] = {
-        win = win,
-        startrow = startrow,
-        startcol = startcol,
-        width = width,
-        height = height
-    }
-end
-
-function Screen:_handle_win_hide(grid)
-  self.win_position[grid] = nil
 end
 
 function Screen:get_hl(val)
@@ -922,8 +936,11 @@ function Screen:_handle_option_set(name, value)
   self.options[name] = value
 end
 
-function Screen:_handle_popupmenu_show(items, selected, row, col)
-  self.popupmenu = {items=items, pos=selected, anchor={row, col}}
+function Screen:_handle_popupmenu_show(items, selected, row, col, grid)
+  if (not self._options.ext_multigrid) and grid == 1 then
+    grid = nil
+  end
+  self.popupmenu = {items=items, pos=selected, anchor={row, col, grid}}
 end
 
 function Screen:_handle_popupmenu_select(selected)
@@ -1112,6 +1129,7 @@ function Screen:_extstate_repr(attr_state)
     showcmd=self:_chunks_repr(self.showcmd, attr_state),
     ruler=self:_chunks_repr(self.ruler, attr_state),
     msg_history=msg_history,
+    float_pos=self.float_pos
   }
 end
 
@@ -1146,7 +1164,10 @@ function Screen:redraw_debug(attrs, ignore, timeout)
   local function notification_cb(method, args)
     assert(method == 'redraw')
     for _, update in ipairs(args) do
-      print(require('inspect')(update))
+      -- mode_info_set is quite verbose, comment out the condition to debug it.
+      if update[1] ~= "mode_info_set" then
+        print(inspect(update))
+      end
     end
     self:_redraw(args)
     self:print_snapshot(attrs, ignore)
@@ -1159,7 +1180,7 @@ function Screen:redraw_debug(attrs, ignore, timeout)
 end
 
 function Screen:render(headers, attr_state, preview)
-  headers = headers and self._options.ext_multigrid
+  headers = headers and (self._options.ext_multigrid or self._options._debug_float)
   local rv = {}
   for igrid,grid in pairs(self._grids) do
     if headers then
@@ -1227,6 +1248,7 @@ function Screen:print_snapshot(attrs, ignore)
   io.stdout:write( "]]"..attrstr)
   for _, k in ipairs(ext_keys) do
     if ext_state[k] ~= nil then
+      -- TODO(bfredl): improve formating, remove ext metatables
       io.stdout:write(", "..k.."="..inspect(ext_state[k]))
     end
   end

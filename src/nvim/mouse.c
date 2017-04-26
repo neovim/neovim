@@ -12,6 +12,7 @@
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/os_unix.h"
 #include "nvim/fold.h"
 #include "nvim/diff.h"
@@ -441,12 +442,6 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
     return wp_grid;
   }
 
-  // TODO(bfredl): grid zero will have floats displayed on it, and will
-  // be adjusted to float grids.
-  if (*gridp == 0) {
-    *gridp = DEFAULT_GRID_HANDLE;
-  }
-
   frame_T     *fp;
 
   fp = topframe;
@@ -478,15 +473,31 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   return NULL;
 }
 
-static win_T *mouse_find_grid_win(int *grid, int *rowp, int *colp)
+static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 {
-  if (*grid > 1) {
-    win_T *wp = get_win_by_grid_handle(*grid);
-    if (wp && wp->w_grid.chars) {
+  if (*gridp > 1) {
+    win_T *wp = get_win_by_grid_handle(*gridp);
+    if (wp && wp->w_grid.chars
+        && !(wp->w_floating && !wp->w_float_config.focusable)) {
       *rowp = MIN(*rowp, wp->w_grid.Rows-1);
       *colp = MIN(*colp, wp->w_grid.Columns-1);
       return wp;
     }
+  } else if (*gridp == 0) {
+    ScreenGrid *grid = ui_comp_mouse_focus(*rowp, *colp);
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (&wp->w_grid != grid || !wp->w_float_config.focusable) {
+        continue;
+      }
+      *gridp = grid->handle;
+      *rowp -= grid->comp_row;
+      *colp -= grid->comp_col;
+      return wp;
+    }
+
+    // no float found, click on the default grid
+    // TODO(bfredl): grid can be &pum_grid, allow select pum items by mouse?
+    *gridp = DEFAULT_GRID_HANDLE;
   }
   return NULL;
 }

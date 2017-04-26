@@ -219,11 +219,6 @@ void ui_schedule_refresh(void)
   loop_schedule(&main_loop, event_create(ui_refresh_event, 0));
 }
 
-void ui_resize(int width, int height)
-{
-  ui_call_grid_resize(1, width, height);
-}
-
 void ui_default_colors_set(void)
 {
   ui_call_default_colors_set(normal_fg, normal_bg, normal_sp,
@@ -249,7 +244,7 @@ void ui_attach_impl(UI *ui)
   if (ui_count == MAX_UI_COUNT) {
     abort();
   }
-  if (!ui->ui_ext[kUIMultigrid]) {
+  if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]) {
     ui_comp_attach(ui);
   }
 
@@ -299,7 +294,7 @@ void ui_detach_impl(UI *ui)
     ui_schedule_refresh();
   }
 
-  if (!ui->ui_ext[kUIMultigrid]) {
+  if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]) {
     ui_comp_detach(ui);
   }
 }
@@ -310,7 +305,7 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
     ui_refresh();
     return;
   }
-  if (ui->option_set) {
+  if (ui->option_set && (ui_ext_names[ext][0] != '_' || active)) {
     ui->option_set(ui, cstr_as_string((char *)ui_ext_names[ext]),
                    BOOLEAN_OBJ(active));
   }
@@ -383,7 +378,7 @@ int ui_current_col(void)
 void ui_flush(void)
 {
   cmdline_ui_flush();
-  win_ui_flush();
+  win_ui_flush_positions();
   msg_ext_ui_flush();
 
   if (pending_cursor_update) {
@@ -404,7 +399,6 @@ void ui_flush(void)
   }
   ui_call_flush();
 }
-
 
 /// Check if current mode has changed.
 /// May update the shape of the cursor.
@@ -438,7 +432,9 @@ Array ui_array(void)
     PUT(info, "height", INTEGER_OBJ(ui->height));
     PUT(info, "rgb", BOOLEAN_OBJ(ui->rgb));
     for (UIExtension j = 0; j < kUIExtCount; j++) {
-      PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
+      if (ui_ext_names[j][0] != '_' || ui->ui_ext[j]) {
+        PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
+      }
     }
     if (ui->inspect) {
       ui->inspect(ui, &info);
@@ -462,8 +458,14 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
     return;
   }
 
-  // non-positive indicates no request
-  wp->w_height_request = (int)MAX(height, 0);
-  wp->w_width_request = (int)MAX(width, 0);
-  win_set_inner_size(wp);
+  if (wp->w_floating) {
+    if (width != wp->w_width && height != wp->w_height) {
+      win_config_float(wp, (int)width, (int)height, wp->w_float_config);
+    }
+  } else {
+    // non-positive indicates no request
+    wp->w_height_request = (int)MAX(height, 0);
+    wp->w_width_request = (int)MAX(width, 0);
+    win_set_inner_size(wp);
+  }
 }

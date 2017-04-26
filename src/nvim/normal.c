@@ -2200,6 +2200,7 @@ do_mouse (
        * one. Speeds up dragging the status line. */
       if (vpeekc() != NUL) {
         int nc;
+        int save_mouse_grid = mouse_grid;
         int save_mouse_row = mouse_row;
         int save_mouse_col = mouse_col;
 
@@ -2209,6 +2210,7 @@ do_mouse (
         if (c == nc)
           continue;
         vungetc(nc);
+        mouse_grid = save_mouse_grid;
         mouse_row = save_mouse_row;
         mouse_col = save_mouse_col;
       }

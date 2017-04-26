@@ -197,6 +197,10 @@ CTRL-W ^	Does ":split #", split window in two and edit alternate file.
 		When a count is given, it becomes ":split #N", split window
 		and edit buffer N.
 
+CTRL-W ge						*CTRL-W_ge*
+		Detach the current window as an external window.
+		Only available when using an UI with |ui-multigrid| support.
+
 Note that the 'splitbelow' and 'splitright' options influence where a new
 window will appear.
 

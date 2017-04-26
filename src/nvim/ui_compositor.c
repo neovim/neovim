@@ -17,6 +17,7 @@
 #include "nvim/ui.h"
 #include "nvim/highlight.h"
 #include "nvim/memory.h"
+#include "nvim/popupmnu.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/ugrid.h"
 #include "nvim/screen.h"
@@ -55,7 +56,6 @@ void ui_comp_init(void)
 
   compositor->rgb = true;
   compositor->grid_resize = ui_comp_grid_resize;
-  compositor->grid_clear = ui_comp_grid_clear;
   compositor->grid_scroll = ui_comp_grid_scroll;
   compositor->grid_cursor_goto = ui_comp_grid_cursor_goto;
   compositor->raw_line = ui_comp_raw_line;
@@ -107,10 +107,12 @@ bool ui_comp_should_draw(void)
 /// TODO(bfredl): later on the compositor should just use win_float_pos events,
 /// though that will require slight event order adjustment: emit the win_pos
 /// events in the beginning of  update_screen(0), rather than in ui_flush()
-bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width)
+bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
+                      bool valid, bool on_top)
 {
+  bool moved;
   if (grid->comp_index != 0) {
-    bool moved = (row != grid->comp_row) || (col != grid->comp_col);
+    moved = (row != grid->comp_row) || (col != grid->comp_col);
     if (ui_comp_should_draw()) {
       // Redraw the area covered by the old position, and is not covered
       // by the new position. Disable the grid so that compose_area() will not
@@ -134,21 +136,41 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width)
     }
     grid->comp_row = row;
     grid->comp_col = col;
-    return moved;
-  }
+  } else {
+    moved = true;
 #ifndef NDEBUG
-  for (size_t i = 0; i < kv_size(layers); i++) {
-    if (kv_A(layers, i) == grid) {
-      assert(false);
+    for (size_t i = 0; i < kv_size(layers); i++) {
+      if (kv_A(layers, i) == grid) {
+        assert(false);
+      }
     }
-  }
 #endif
-  // not found: new grid
-  kv_push(layers, grid);
-  grid->comp_row = row;
-  grid->comp_col = col;
-  grid->comp_index = kv_size(layers)-1;
-  return true;
+
+    size_t insert_at = kv_size(layers);
+    if (kv_A(layers, insert_at-1) == &pum_grid) {
+      insert_at--;
+    }
+    if (insert_at > 1 && !on_top) {
+      insert_at--;
+    }
+    // not found: new grid
+    kv_push(layers, grid);
+    if (insert_at < kv_size(layers)-1) {
+      for (size_t i = kv_size(layers)-1; i > insert_at; i--) {
+        kv_A(layers, i) = kv_A(layers, i-i);
+      }
+      kv_A(layers, insert_at) = grid;
+    }
+
+    grid->comp_row = row;
+    grid->comp_col = col;
+    grid->comp_index = insert_at;
+  }
+  if (moved && valid && ui_comp_should_draw()) {
+    compose_area(grid->comp_row, grid->comp_row+grid->Rows,
+                 grid->comp_col, grid->comp_col+grid->Columns);
+  }
+  return moved;
 }
 
 void ui_comp_remove_grid(ScreenGrid *grid)
@@ -194,6 +216,26 @@ bool ui_comp_set_grid(handle_T handle)
   return false;
 }
 
+static void ui_comp_raise_grid(ScreenGrid *grid, size_t new_index)
+{
+  size_t old_index = grid->comp_index;
+  for (size_t i = old_index; i < new_index; i++) {
+    kv_A(layers, i) = kv_A(layers, i+1);
+    kv_A(layers, i)->comp_index = i;
+  }
+  kv_A(layers, new_index) = grid;
+  grid->comp_index = new_index;
+  for (size_t i = old_index; i < new_index; i++) {
+    ScreenGrid *grid2 = kv_A(layers, i);
+    int startcol = MAX(grid->comp_col, grid2->comp_col);
+    int endcol = MIN(grid->comp_col+grid->Columns,
+                     grid2->comp_col+grid2->Columns);
+    compose_area(MAX(grid->comp_row, grid2->comp_row),
+                 MIN(grid->comp_row+grid->Rows, grid2->comp_row+grid2->Rows),
+                 startcol, endcol);
+  }
+}
+
 static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle,
                                      Integer r, Integer c)
 {
@@ -203,6 +245,18 @@ static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle,
   int cursor_row = curgrid->comp_row+(int)r;
   int cursor_col = curgrid->comp_col+(int)c;
 
+  // TODO(bfredl): maybe not the best time to do this, for efficiency we
+  // should configure all grids before entering win_update()
+  if (curgrid != &default_grid) {
+    size_t new_index = kv_size(layers)-1;
+    if (kv_A(layers, new_index) == &pum_grid) {
+      new_index--;
+    }
+    if (curgrid->comp_index < new_index) {
+      ui_comp_raise_grid(curgrid, new_index);
+    }
+  }
+
   if (cursor_col >= default_grid.Columns || cursor_row >= default_grid.Rows) {
     // TODO(bfredl): this happens with 'writedelay', refactor?
     // abort();
@@ -211,6 +265,18 @@ static void ui_comp_grid_cursor_goto(UI *ui, Integer grid_handle,
   ui_composed_call_grid_cursor_goto(1, cursor_row, cursor_col);
 }
 
+ScreenGrid *ui_comp_mouse_focus(int row, int col)
+{
+  // TODO(bfredl): click "through" unfocusable grids?
+  for (ssize_t i = (ssize_t)kv_size(layers)-1; i > 0; i--) {
+    ScreenGrid *grid = kv_A(layers, i);
+    if (row >= grid->comp_row && row < grid->comp_row+grid->Rows
+        && col >= grid->comp_col && col < grid->comp_col+grid->Columns) {
+      return grid;
+    }
+  }
+  return NULL;
+}
 
 /// Baseline implementation. This is always correct, but we can sometimes
 /// do something more efficient (where efficiency means smaller deltas to
@@ -260,7 +326,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
     memcpy(attrbuf+(col-startcol), grid->attrs+off, n * sizeof(*attrbuf));
 
     // 'pumblend'
-    if (grid != &default_grid && p_pb) {
+    if (grid == &pum_grid && p_pb) {
       for (int i = col-(int)startcol; i < until-startcol; i++) {
         bool thru = strequal((char *)linebuf[i], " ");  // negative space
         attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], thru);
@@ -348,7 +414,8 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
   assert(row < default_grid.Rows);
   assert(clearcol <= default_grid.Columns);
   if (flags & kLineFlagInvalid
-      || kv_size(layers) > (p_pb ? 1 : curgrid->comp_index+1)) {
+      || kv_size(layers) > curgrid->comp_index+1
+      || (p_pb && curgrid == &pum_grid)) {
     compose_line(row, startcol, clearcol, flags);
   } else {
     ui_composed_call_raw_line(1, row, startcol, endcol, clearcol, clearattr,
@@ -359,17 +426,9 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
 /// The screen is invalid and will soon be cleared
 ///
 /// Don't redraw floats until screen is cleared
-void ui_comp_invalidate_screen(void)
+void ui_comp_set_screen_valid(bool valid)
 {
-  valid_screen = false;
-}
-
-static void ui_comp_grid_clear(UI *ui, Integer grid)
-{
-  // By design, only first grid uses clearing.
-  assert(grid == 1);
-  ui_composed_call_grid_clear(1);
-  valid_screen = true;
+  valid_screen = valid;
 }
 
 // TODO(bfredl): These events are somewhat of a hack. multiline messages

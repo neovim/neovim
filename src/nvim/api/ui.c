@@ -17,6 +17,8 @@
 #include "nvim/popupmnu.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/highlight.h"
+#include "nvim/screen.h"
+#include "nvim/window.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"

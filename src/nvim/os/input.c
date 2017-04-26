@@ -331,7 +331,6 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   uint8_t modifiers = check_multiclick(mouse_code, mouse_grid,
                                        mouse_row, mouse_col);
 
-
   if (modifiers) {
     if (buf[1] != KS_MODIFIER) {
       // no modifiers in the buffer yet, shift the bytes 3 positions

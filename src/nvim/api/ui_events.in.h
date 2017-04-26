@@ -76,7 +76,7 @@ void hl_attr_define(Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs,
 void grid_resize(Integer grid, Integer width, Integer height)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_clear(Integer grid)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
 void grid_cursor_goto(Integer grid, Integer row, Integer col)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_line(Integer grid, Integer row, Integer col_start, Array data)
@@ -101,7 +101,14 @@ void event(char *name, Array args, bool *args_consumed)
 void win_pos(Integer grid, Integer win, Integer startrow,
              Integer startcol, Integer width, Integer height)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void win_float_pos(Integer grid, Window win, String anchor, Integer anchor_grid,
+                   Float anchor_row, Float anchor_col, Boolean focusable)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void win_external_pos(Integer grid, Window win)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_hide(Integer grid)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void win_close(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_scroll_over_start(void)
   FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;

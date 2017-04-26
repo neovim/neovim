@@ -47,8 +47,8 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
-local function eq(expected, actual, ctx)
-  return assert.are.same(expected, actual, ctx)
+local function eq(expected, actual, context)
+  return assert.are.same(expected, actual, context)
 end
 local function neq(expected, actual, context)
   return assert.are_not.same(expected, actual, context)

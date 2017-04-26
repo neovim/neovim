@@ -958,6 +958,35 @@ struct matchitem {
   int conceal_char;         ///< cchar for Conceal highlighting
 };
 
+typedef enum {
+    kFloatAnchorEast = 1,
+    kFloatAnchorSouth = 2,
+
+    kFloatAnchorNW = 0,
+    kFloatAnchorNE = 1,
+    kFloatAnchorSW = 2,
+    kFloatAnchorSE = 3,
+} FloatAnchor;
+
+typedef enum {
+    kFloatRelativeEditor = 0,
+    kFloatRelativeWindow = 1,
+    kFloatRelativeCursor = 2,
+} FloatRelative;
+
+typedef struct {
+  Window window;
+  double row, col;
+  FloatAnchor anchor;
+  FloatRelative relative;
+  bool external;
+  bool focusable;
+} FloatConfig;
+
+#define FLOAT_CONFIG_INIT ((FloatConfig){ .row = 0, .col = 0, .anchor = 0, \
+                                          .relative = 0, .external = false, \
+                                          .focusable = true })
+
 /*
  * Structure which contains all information that belongs to a window
  *
@@ -1221,6 +1250,8 @@ struct window_S {
 
   ScreenGrid w_grid;                    // the grid specific to the window
   bool w_pos_changed;                   // true if window position changed
+  bool w_floating;                       ///< whether the window is floating
+  FloatConfig w_float_config;
 
   /*
    * w_fraction is the fractional row of the cursor within the window, from
