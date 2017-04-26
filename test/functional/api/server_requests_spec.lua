@@ -9,6 +9,8 @@ local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.fu
 local source, next_message = helpers.source, helpers.next_message
 local ok = helpers.ok
 local meths = helpers.meths
+local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
+local set_session = helpers.set_session
 
 describe('server -> client', function()
   local cid
@@ -222,6 +224,61 @@ describe('server -> client', function()
       eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_message())
       funcs.rpcrequest(jobid, "exit")
       eq({'notification', 'exit', {0, 0}}, next_message())
+    end)
+  end)
+
+  describe('when connecting to another nvim instance', function()
+    local function connect_test(server, mode, address)
+      local serverpid = funcs.getpid()
+      local client = spawn(nvim_argv)
+      set_session(client, true)
+      local clientpid = funcs.getpid()
+      neq(serverpid, clientpid)
+      local id = funcs.sockconnect(mode, address, {rpc=true})
+      ok(id > 0)
+
+      funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
+      local client_id = funcs.rpcrequest(id, 'nvim_get_api_info')[1]
+
+      set_session(server, true)
+      eq(serverpid, funcs.getpid())
+      eq('hello', meths.get_current_line())
+
+      -- method calls work both ways
+      funcs.rpcrequest(client_id, 'nvim_set_current_line', 'howdy!')
+      eq(id, funcs.rpcrequest(client_id, 'nvim_get_api_info')[1])
+
+      set_session(client, true)
+      eq(clientpid, funcs.getpid())
+      eq('howdy!', meths.get_current_line())
+
+      server:close()
+      client:close()
+    end
+
+    it('over a named pipe', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverlist()[1]
+      local first = string.sub(address,1,1)
+      ok(first == '/' or first == '\\')
+      connect_test(server, 'pipe', address)
+    end)
+
+    it('to an ip adress', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverstart("127.0.0.1:")
+      eq('127.0.0.1:', string.sub(address,1,10))
+      connect_test(server, 'tcp', address)
+    end)
+
+    it('to a hostname', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverstart("localhost:")
+      eq('localhost:', string.sub(address,1,10))
+      connect_test(server, 'tcp', address)
     end)
   end)
 

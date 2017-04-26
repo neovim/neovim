@@ -145,6 +145,25 @@ void channel_from_connection(SocketWatcher *watcher)
   rstream_start(&channel->data.stream, parse_msgpack, channel);
 }
 
+uint64_t channel_connect(bool tcp, const char *address,
+                         int timeout, const char **error)
+{
+  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL);
+  if (!socket_connect(&main_loop, &channel->data.stream,
+                      tcp, address, timeout, error)) {
+    decref(channel);
+    return 0;
+  }
+
+  incref(channel);  // close channel only after the stream is closed
+  channel->data.stream.internal_close_cb = close_cb;
+  channel->data.stream.internal_data = channel;
+  wstream_init(&channel->data.stream, 0);
+  rstream_init(&channel->data.stream, CHANNEL_BUFFER_SIZE);
+  rstream_start(&channel->data.stream, parse_msgpack, channel);
+  return channel->id;
+}
+
 /// Sends event/arguments to channel
 ///
 /// @param id The channel id. If 0, the event will be sent to all
