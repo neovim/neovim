@@ -805,6 +805,7 @@ describe(":substitute, inccommand=split", function()
   it('does not show split window for :s/', function()
     feed("2gg")
     feed(":s/tw")
+    screen:sleep(1)
     screen:expect([[
       Inc substitution on           |
       two lines                     |
