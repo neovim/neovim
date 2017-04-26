@@ -3128,7 +3128,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	use for that occasion.  The occasions are:
 	|hl-SpecialKey|	 8  Meta and special keys listed with ":map"
 	|hl-Whitespace|	 0
-	|hl-EndOfBuffer|   ~ lines after the last line in the buffer
+	|hl-EndOfBuffer|   ~  lines after the last line in the buffer
+	|hl-NormalNC|	 I  inactive (not the current) window
 	|hl-TermCursor|	 z  Cursor in a focused terminal
 	|hl-TermCursorNC|  Z Cursor in an unfocused terminal
 	|hl-NonText|	 @  '@' at the end of the window and
