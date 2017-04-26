@@ -47,6 +47,7 @@
 #define MAX_UI_COUNT 16
 
 static UI *uis[MAX_UI_COUNT];
+static bool ui_ext[UI_WIDGETS] = { 0 };
 static size_t ui_count = 0;
 static int row = 0, col = 0;
 static struct {
@@ -166,18 +167,25 @@ void ui_refresh(void)
   }
 
   int width = INT_MAX, height = INT_MAX;
-  bool pum_external = true;
+  bool ext_widgets[UI_WIDGETS];
+  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+    ext_widgets[i] = true;
+  }
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
-    pum_external &= ui->pum_external;
+    for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+      ext_widgets[i] &= ui->ui_ext[i];
+    }
   }
 
   row = col = 0;
   screen_resize(width, height);
-  pum_set_external(pum_external);
+  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+    ui_set_external(i, ext_widgets[i]);
+  }
   ui_mode_info_set();
   old_mode_idx = -1;
   ui_cursor_shape();
@@ -557,3 +565,16 @@ void ui_cursor_shape(void)
   conceal_check_cursur_line();
 }
 
+/// Returns true if `widget` is externalized.
+bool ui_is_external(UIWidget widget)
+{
+  return ui_ext[widget];
+}
+
+/// Sets `widget` as "external".
+/// Such widgets are not drawn by Nvim; external UIs are expected to handle
+/// higher-level UI events and present the data.
+void ui_set_external(UIWidget widget, bool external)
+{
+  ui_ext[widget] = external;
+}

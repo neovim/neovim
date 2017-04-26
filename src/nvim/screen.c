@@ -132,6 +132,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -6887,6 +6888,10 @@ static void draw_tabline(void)
   }
   redraw_tabline = false;
 
+  if (ui_is_external(kUITabline)) {
+    ui_ext_tabline_update();
+    return;
+  }
 
   if (tabline_height() < 1)
     return;
@@ -7025,6 +7030,26 @@ static void draw_tabline(void)
   /* Reset the flag here again, in case evaluating 'tabline' causes it to be
    * set. */
   redraw_tabline = FALSE;
+}
+
+void ui_ext_tabline_update(void)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(curtab->handle));
+  Array tabs = ARRAY_DICT_INIT;
+  FOR_ALL_TABS(tp) {
+    Dictionary tab_info = ARRAY_DICT_INIT;
+    PUT(tab_info, "tab", TABPAGE_OBJ(tp->handle));
+
+    win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
+    get_trans_bufname(cwp->w_buffer);
+    PUT(tab_info, "name", STRING_OBJ(cstr_to_string((char *)NameBuff)));
+
+    ADD(tabs, DICTIONARY_OBJ(tab_info));
+  }
+  ADD(args, ARRAY_OBJ(tabs));
+
+  ui_event("tabline_update", args);
 }
 
 /*

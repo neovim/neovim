@@ -109,7 +109,6 @@ UI *tui_start(void)
   UI *ui = xcalloc(1, sizeof(UI));
   ui->stop = tui_stop;
   ui->rgb = p_tgc;
-  ui->pum_external = false;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
@@ -135,6 +134,9 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->event = tui_event;
+
+  memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
+
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
 
