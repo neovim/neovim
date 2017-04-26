@@ -94,7 +94,6 @@
 # define STATIC_ASSERT_PRAGMA_END \
     _Pragma("clang diagnostic pop") \
 
-// TODO(aktau): verify that this works, don't have MSVC on hand.
 #elif _MSC_VER >= 1600
 
 # define STATIC_ASSERT_STATEMENT(cond, msg) static_assert(cond, msg)
