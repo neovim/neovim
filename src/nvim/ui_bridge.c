@@ -40,13 +40,13 @@ static argv_callback uilog_event = NULL;
       uilog_event = ui_bridge_##name##_event; \
     } \
     ((UIBridgeData *)ui)->scheduler( \
-        event_create(1, ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui)); \
+        event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui)); \
   } while (0)
 #else
 // Schedule a function call on the UI bridge thread.
 #define UI_CALL(ui, name, argc, ...) \
   ((UIBridgeData *)ui)->scheduler( \
-      event_create(1, ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
+      event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
 #endif
 
 #define INT2PTR(i) ((void *)(uintptr_t)i)

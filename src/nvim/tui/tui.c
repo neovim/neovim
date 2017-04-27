@@ -773,7 +773,7 @@ static void tui_suspend(UI *ui)
   // before continuing. This is done in another callback to avoid
   // loop_poll_events recursion
   multiqueue_put_event(data->loop->fast_events,
-                       event_create(1, suspend_event, 1, ui));
+                       event_create(suspend_event, 1, ui));
 }
 
 static void tui_set_title(UI *ui, char *title)

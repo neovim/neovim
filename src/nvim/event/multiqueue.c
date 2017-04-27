@@ -152,33 +152,6 @@ void multiqueue_process_events(MultiQueue *this)
   }
 }
 
-void multiqueue_process_priority(MultiQueue *this, int priority)
-{
-  assert(this);
-  QUEUE *start = QUEUE_HEAD(&this->headtail);
-  QUEUE *cur = start;
-  while (!multiqueue_empty(this)) {
-    MultiQueueItem *item = multiqueue_node_data(cur);
-    assert(!item->link || !this->parent);  // Only a parent queue has link-nodes
-    Event ev = multiqueueitem_get_event(item, false);
-
-    if (ev.priority >= priority) {
-      if (ev.handler) {
-        ev.handler(ev.argv);
-      }
-      // Processed. Remove this item and get the new head.
-      (void)multiqueue_remove(this);
-      cur = QUEUE_HEAD(&this->headtail);
-    } else {
-      // Not processed. Skip this item and get the next one.
-      cur = cur->next->next;
-      if (!cur || cur == start) {
-        break;
-      }
-    }
-  }
-}
-
 /// Removes all events without processing them.
 void multiqueue_purge_events(MultiQueue *this)
 {

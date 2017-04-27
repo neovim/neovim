@@ -604,7 +604,7 @@ void msg_schedule_emsgf(const char *const fmt, ...)
   va_end(ap);
 
   char *s = xstrdup((char *)IObuff);
-  loop_schedule(&main_loop, event_create(1, msg_emsgf_event, 1, s));
+  loop_schedule(&main_loop, event_create(msg_emsgf_event, 1, s));
 }
 
 /*

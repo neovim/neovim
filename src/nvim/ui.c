@@ -198,7 +198,7 @@ static void ui_refresh_event(void **argv)
 
 void ui_schedule_refresh(void)
 {
-  loop_schedule(&main_loop, event_create(1, ui_refresh_event, 0));
+  loop_schedule(&main_loop, event_create(ui_refresh_event, 0));
 }
 
 void ui_resize(int new_width, int new_height)
