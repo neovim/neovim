@@ -55,7 +55,6 @@
 
 #include "nvim/event/multiqueue.h"
 #include "nvim/memory.h"
-#include "nvim/log.h"
 #include "nvim/os/time.h"
 
 typedef struct multiqueue_item MultiQueueItem;

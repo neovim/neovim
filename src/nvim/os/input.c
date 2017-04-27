@@ -23,7 +23,7 @@
 #include "nvim/main.h"
 #include "nvim/misc1.h"
 #include "nvim/state.h"
-#include "nvim/log.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
@@ -342,11 +342,9 @@ static bool input_poll(int ms)
   }
 
   if ((ms == - 1 || ms > 0) && !events_enabled && !input_eof) {
-    // We have discovered that the pending input will provoke a blocking wait.
-    // Process any events marked with priority `kEvPriorityAsync`: these events
-    // must be handled after flushing input. See channel.c:handle_request #6247
+    // The pending input provoked a blocking wait. Do special events now. #6247
     blocking = true;
-    multiqueue_process_priority(main_loop.events, kEvPriorityAsync);
+    multiqueue_process_events(ch_before_blocking_events);
   }
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, input_ready() || input_eof);
   blocking = false;

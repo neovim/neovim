@@ -28,7 +28,6 @@
 #include "nvim/map.h"
 #include "nvim/log.h"
 #include "nvim/misc1.h"
-#include "nvim/state.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/os/input.h"
 
@@ -91,6 +90,7 @@ static msgpack_sbuffer out_buffer;
 /// Initializes the module
 void channel_init(void)
 {
+  ch_before_blocking_events = multiqueue_new_child(main_loop.events);
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
@@ -446,9 +446,8 @@ static void handle_request(Channel *channel, msgpack_object *request)
       && !strncmp("nvim_get_mode", method->via.bin.ptr, method->via.bin.size);
 
     if (is_get_mode && !input_blocking()) {
-      // Schedule on the main loop with special priority. #6247
-      Event ev = event_create(kEvPriorityAsync, on_request_event, 1, evdata);
-      multiqueue_put_event(channel->events, ev);
+      // Defer the event to a special queue used by os/input.c. #6247
+      multiqueue_put(ch_before_blocking_events, on_request_event, 1, evdata);
     } else {
       // Invoke immediately.
       on_request_event((void **)&evdata);
