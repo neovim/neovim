@@ -1,6 +1,9 @@
 #ifndef NVIM_TAG_H
 #define NVIM_TAG_H
 
+#include "nvim/types.h"
+#include "nvim/ex_cmds_defs.h"
+
 /*
  * Values for do_tag().
  */

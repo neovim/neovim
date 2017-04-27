@@ -437,7 +437,6 @@ set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
   regexp_defs.h
   syntax_defs.h
-  tag.h
   terminal.h
   tui/tui.h
   undo.h
