@@ -1,6 +1,8 @@
 #ifndef NVIM_SIGN_DEFS_H
 #define NVIM_SIGN_DEFS_H
 
+#include "nvim/pos.h"
+
 // signs: line annotations
 
 typedef struct signlist signlist_T;
