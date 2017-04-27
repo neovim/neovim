@@ -436,7 +436,6 @@ set(NO_SINGLE_CHECK_HEADERS
   os_unix.h
   os/win_defs.h
   regexp_defs.h
-  sha256.h
   sign_defs.h
   spell.h
   spellfile.h
