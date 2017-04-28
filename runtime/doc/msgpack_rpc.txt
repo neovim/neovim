@@ -262,6 +262,7 @@ a dictionary with these (optional) keys:
 				most 256 different colors).
 	`ext_popupmenu`		Externalize the popupmenu. |ui-ext-popupmenu|
 	`ext_tabline`		Externalize the tabline. |ui-ext-tabline|
+	`ext_wildmenu`		Externalize the tabline. |ui-ext-wildmenu|
 				Externalized widgets will not be drawn by
 				Nvim; only high-level data will be published
 				in new UI event kinds.
@@ -441,8 +442,9 @@ states might be represented as separate modes.
 	curtab:	  Current Tabpage
 	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
 
-["wildmenu", items]
-	When `wildmenu_external` is set to true, nvim will not draw the
+							*ui-ext-wildmenu*
+["wildmenu_show", items]
+	When `ext_wildmenu` is set to true, nvim will not draw the
 	wildmenu on the grid, instead when the wildmenu is to be displayed
 	this update is sent. `items` is an array of the completion items.
 

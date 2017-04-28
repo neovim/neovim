@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local eq = helpers.eq
-local clear, feed, execute, command = helpers.clear, helpers.feed, helpers.execute, helpers.command
+local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local funcs = helpers.funcs
 
 if helpers.pending_win32(pending) then return end
@@ -94,9 +94,9 @@ describe('External command line completion', function()
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, wildmenu_external=true})
+    screen:attach({rgb=true, ext_wildmenu=true})
     screen:set_on_event_handler(function(name, data)
-      if name == "wildmenu" then
+      if name == "wildmenu_show" then
         items = data
       elseif name == "wildmenu_select" then
         selected = data[1]
@@ -121,8 +121,8 @@ describe('External command line completion', function()
 
   describe("'wildmenu'", function()
     it(':sign <tab> shows wildmenu completions', function()
-      execute('set wildmode=full')
-      execute('set wildmenu')
+      command('set wildmode=full')
+      command('set wildmenu')
       feed(':sign <tab>')
       screen:expect([[
                                  |

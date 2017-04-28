@@ -149,8 +149,6 @@ static int hisnum[HIST_COUNT] = {0, 0, 0, 0, 0};
 /* identifying (unique) number of newest history entry */
 static int hislen = 0;                  /* actual length of history tables */
 
-static bool wildmenu_external = false;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
 #endif
@@ -453,7 +451,7 @@ static int command_line_execute(VimState *state, int key)
       && !(s->c == p_wc && KeyTyped) && s->c != p_wcm
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
-    if (wildmenu_external) {
+    if (ui_is_external(kUIWildmenu)) {
       Array args = ARRAY_DICT_INIT;
       ui_event("wildmenu_hide", args);
     }
@@ -2935,7 +2933,7 @@ ExpandOne (
           findex = -1;
       }
       if (p_wmnu) {
-        if (wildmenu_external) {
+        if (ui_is_external(kUIWildmenu)) {
           Array args = ARRAY_DICT_INIT;
           ADD(args, INTEGER_OBJ(findex));
           ui_event("wildmenu_select", args);
@@ -3303,12 +3301,12 @@ static int showmatches(expand_T *xp, int wildmenu)
     showtail = cmd_showtail;
   }
 
-  if (wildmenu_external) {
+  if (ui_is_external(kUIWildmenu)) {
     Array args = ARRAY_DICT_INIT;
     for (i = 0; i < num_files; i++) {
       ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
     }
-    ui_event("wildmenu", args);
+    ui_event("wildmenu_show", args);
     return EXPAND_OK;
   }
 
@@ -5541,9 +5539,4 @@ histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
   *new_hisidx = &(hisidx[history_type]);
   *new_hisnum = &(hisnum[history_type]);
   return history[history_type];
-}
-
-void wildmenu_set_external(bool external)
-{
-  wildmenu_external = external;
 }
