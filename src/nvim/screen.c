@@ -7035,7 +7035,7 @@ static void draw_tabline(void)
 void ui_ext_tabline_update(void)
 {
   Array args = ARRAY_DICT_INIT;
-  ADD(args, INTEGER_OBJ(curtab->handle));
+  ADD(args, TABPAGE_OBJ(curtab->handle));
   Array tabs = ARRAY_DICT_INIT;
   FOR_ALL_TABS(tp) {
     Dictionary tab_info = ARRAY_DICT_INIT;

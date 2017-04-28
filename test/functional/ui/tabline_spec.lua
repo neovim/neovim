@@ -36,7 +36,7 @@ describe('ui/tabline', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq(2, event_curtab)
+        eq({ id = 2 }, event_curtab)
         eq(expected_tabs, event_tabs)
       end)
 
@@ -48,7 +48,7 @@ describe('ui/tabline', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq(1, event_curtab)
+        eq({ id = 1 }, event_curtab)
         eq(expected_tabs, event_tabs)
       end)
 
