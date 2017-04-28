@@ -2425,6 +2425,7 @@ win_line (
   int eol_hl_off = 0;                   // 1 if highlighted char after EOL
   bool draw_color_col = false;          // highlight colorcolumn
   int *color_cols = NULL;               // pointer to according columns array
+
   bool has_spell = false;               // this buffer has spell checking
 # define SPWORDLEN 150
   char_u nextline[SPWORDLEN * 2];       // text with start of the next line
@@ -2433,12 +2434,14 @@ win_line (
                                         // starts
   int spell_attr = 0;                   // attributes desired by spelling
   int word_end = 0;                     // last byte with same spell_attr
-  static linenr_T checked_lnum = 0;     // line number for "checked_col"
-  static int checked_col = 0;           // column in "checked_lnum" up to which
-                                        // there are no spell errors
-  static int cap_col = -1;              // column to check for Cap word
-  static linenr_T capcol_lnum = 0;      // line number where "cap_col" used
   int cur_checked_col = 0;              // checked column for current line
+
+  static linenr_T checked_lnum = 0;     // line number for "checked_col"
+  static int      checked_col  = 0;     // column in "checked_lnum" up to which
+                                        // there are no spell errors
+  static linenr_T capital_lnum = 0;     // line number where "capital_col" used
+  static int      capital_col  = -1;    // column to check for Cap word
+
   int extra_check;                      // has syntax or linebreak
   int multi_attr = 0;                   // attributes desired by multibyte
   int mb_l = 1;                         // multi-byte byte length
@@ -2584,11 +2587,13 @@ win_line (
     /* When there was a sentence end in the previous line may require a
      * word starting with capital in this line.  In line 1 always check
      * the first word. */
-    if (lnum != capcol_lnum)
-      cap_col = -1;
-    if (lnum == 1)
-      cap_col = 0;
-    capcol_lnum = 0;
+    if (lnum != capital_lnum) {
+      capital_col = -1;
+    }
+    if (lnum == 1) {
+      capital_col = 0;
+    }
+    capital_lnum = 0;
   }
 
   /*
@@ -2674,9 +2679,10 @@ win_line (
   ptr = line;
 
   if (has_spell) {
-    /* For checking first word with a capital skip white space. */
-    if (cap_col == 0)
-      cap_col = (int)(skipwhite(line) - line);
+    // For checking first word with a capital skip white space.
+    if (capital_col == 0) {
+      capital_col = (int)(skipwhite(line) - line);
+    }
 
     /* To be able to spell-check over line boundaries copy the end of the
      * current line into nextline[].  Above the start of the next line was
@@ -3427,8 +3433,8 @@ win_line (
               p = nextline + (prev_ptr - line) - nextlinecol;
             else
               p = prev_ptr;
-            cap_col -= (int)(prev_ptr - line);
-            size_t tmplen = spell_check(wp, p, &spell_hlf, &cap_col, nochange);
+            capital_col -= (int)(prev_ptr - line);
+            size_t tmplen = spell_check(wp, p, &spell_hlf, &capital_col, nochange);
             assert(tmplen <= INT_MAX);
             len = (int)tmplen;
             word_end = diff + len;
@@ -3457,17 +3463,18 @@ win_line (
             if (spell_hlf != HLF_COUNT)
               spell_attr = highlight_attr[spell_hlf];
 
-            if (cap_col > 0) {
+            if (capital_col > 0) {
               if (p != prev_ptr
-                  && (p - nextline) + cap_col >= nextline_idx) {
-                /* Remember that the word in the next line
-                 * must start with a capital. */
-                capcol_lnum = lnum + 1;
-                cap_col = (int)((p - nextline) + cap_col
+                  && (p - nextline) + capital_col >= nextline_idx) {
+                // Remember that the word in the next line
+                // must start with a capital.
+                capital_lnum = lnum + 1;
+                capital_col  = (int)((p - nextline) + capital_col
                                 - nextline_idx);
-              } else
-                /* Compute the actual column. */
-                cap_col += (int)(prev_ptr - line);
+              } else {
+                // Compute the actual column.
+                capital_col += (int)(prev_ptr - line);
+              }
             }
           }
         }
@@ -4215,8 +4222,8 @@ win_line (
 
   /* After an empty line check first word for capital. */
   if (*skipwhite(line) == NUL) {
-    capcol_lnum = lnum + 1;
-    cap_col = 0;
+    capital_lnum = lnum + 1;
+    capital_col  = 0;
   }
 
   return row;
