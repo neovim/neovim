@@ -55,7 +55,7 @@ function! s:system(cmd, ...) abort
 
   if jobid < 1
     call health#report_error(printf('Command error %d: %s', jobid,
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)))
+          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd))
     let s:shell_error = 1
     return opts.output
   endif
@@ -445,7 +445,7 @@ function! s:check_ruby() abort
   endif
   call health#report_info('Host: '. host)
 
-  let latest_gem_cmd = 'gem list -ra ^neovim$'
+  let latest_gem_cmd = has('win32') ? 'cmd /c gem list -ra ^^neovim$' : 'gem list -ra ^neovim$'
   let latest_gem = s:system(split(latest_gem_cmd))
   if s:shell_error || empty(latest_gem)
     call health#report_error('Failed to run: '. latest_gem_cmd,
