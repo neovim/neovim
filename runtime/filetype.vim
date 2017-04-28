@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Sep 15
+" Last Change:	2016 Sep 22
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -805,6 +805,10 @@ au BufNewFile,BufRead *.gp,.gprc		setf gp
 au BufNewFile,BufRead */.gnupg/options		setf gpg
 au BufNewFile,BufRead */.gnupg/gpg.conf		setf gpg
 au BufNewFile,BufRead */usr/*/gnupg/options.skel setf gpg
+if !empty($GNUPGHOME)
+  au BufNewFile,BufRead $GNUPGHOME/options	setf gpg
+  au BufNewFile,BufRead $GNUPGHOME/gpg.conf	setf gpg
+endif
 
 " gnash(1) configuration files
 au BufNewFile,BufRead gnashrc,.gnashrc,gnashpluginrc,.gnashpluginrc setf gnash

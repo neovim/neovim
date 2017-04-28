@@ -1004,7 +1004,7 @@ WinLeave			Before leaving a window.  If the window to be
 
 							*WinNew*
 WinNew				When a new window was created.  Not done for
-				the fist window, when Vim has just started.
+				the first window, when Vim has just started.
 				Before a WinEnter event.
 
 ==============================================================================

@@ -696,11 +696,11 @@ functions to evaluate Python expressions and pass their values to VimL.
 The `:py3` and `:python3` commands work similar to `:python`.  A simple check
 if the `:py3` command is working: >
 	:py3 print("Hello")
-<							*:py3file*
+
 To see what version of Python you have: >
 	:py3 import sys
 	:py3 print(sys.version)
-
+<							*:py3file*
 The `:py3file` command works similar to `:pyfile`.
 							*:py3do*
 The `:py3do` command works similar to `:pydo`.
