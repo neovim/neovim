@@ -3,7 +3,7 @@
 " Maintainer:           Derek Wyatt
 " URL:                  https://github.com/derekwyatt/vim-scala
 " License:              Same as Vim
-" Last Change:          02 August 2016
+" Last Change:          28 April 2017
 " ----------------------------------------------------------------------------
 
 if exists('b:did_ftplugin') || &cp
@@ -32,6 +32,3 @@ setlocal includeexpr='substitute(v:fname,"\\.","/","g")'
 setlocal path+=src/main/scala,src/test/scala
 setlocal suffixesadd=.scala
 
-compiler sbt
-
-" vim:set sw=2 sts=2 ts=8 et:
