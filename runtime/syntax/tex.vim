@@ -40,11 +40,8 @@
 "      using conceal mode       :help tex-conceal
 
 " Version Clears: {{{1
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 let s:keepcpo= &cpo
@@ -54,14 +51,8 @@ scriptencoding utf-8
 " Define the default highlighting. {{{1
 " For version 5.7 and earlier: only when not done already
 " For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_tex_syntax_inits")
- let did_tex_syntax_inits = 1
- if version < 508
-  command -nargs=+ HiLink hi link <args>
- else
-  command -nargs=+ HiLink hi def link <args>
- endif
-endif
+let did_tex_syntax_inits = 1
+command -nargs=+ HiLink hi def link <args>
 
 " by default, enable all region-based highlighting
 let s:tex_fast= "bcmMprsSvV"
@@ -598,27 +589,17 @@ if s:tex_fast =~# 'v'
    syn region texZone		start="\\begin{[vV]erbatim}"		end="\\end{[vV]erbatim}\|%stopzone\>"	contains=@Spell
    " listings package:
    syn region texZone		start="\\begin{lstlisting}"		end="\\end{lstlisting}\|%stopzone\>"	contains=@Spell
-   if version < 600
-    syn region texZone		start="\\verb\*\=`"			end="`\|%stopzone\>"			contains=@Spell
-    syn region texZone		start="\\verb\*\=#"			end="#\|%stopzone\>"			contains=@Spell
+   if b:tex_stylish
+    syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z@]\)"	end="\z1\|%stopzone\>"			contains=@Spell
    else
-     if b:tex_stylish
-      syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z@]\)"	end="\z1\|%stopzone\>"			contains=@Spell
-     else
-      syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z]\)"	end="\z1\|%stopzone\>"			contains=@Spell
-     endif
+    syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z]\)"	end="\z1\|%stopzone\>"			contains=@Spell
    endif
   else
    syn region texZone		start="\\begin{[vV]erbatim}"		end="\\end{[vV]erbatim}\|%stopzone\>"
-   if version < 600
-    syn region texZone		start="\\verb\*\=`"			end="`\|%stopzone\>"
-    syn region texZone		start="\\verb\*\=#"			end="#\|%stopzone\>"
+   if b:tex_stylish
+     syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z@]\)"	end="\z1\|%stopzone\>"
    else
-     if b:tex_stylish
-       syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z@]\)"	end="\z1\|%stopzone\>"
-     else
-       syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z]\)"	end="\z1\|%stopzone\>"
-     endif
+     syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z]\)"	end="\z1\|%stopzone\>"
    endif
   endif
 endif

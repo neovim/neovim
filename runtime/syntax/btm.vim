@@ -11,11 +11,8 @@
 "//- After unary operators like "defined" can assume token type.
 "//  Should there be more of these?
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -184,45 +181,37 @@ syn keyword btmCommand	unlock unset ver verify vol
 syn keyword btmCommand	vscrput y
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_btm_syntax_inits")
-  if version < 508
-    let did_btm_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink btmLabel		Special
-  HiLink btmLabelMark		Special
-  HiLink btmCmdDivider		Special
-  HiLink btmConditional		btmStatement
-  HiLink btmDotBoolOp		btmStatement
-  HiLink btmRepeat		btmStatement
-  HiLink btmEchoCommand	btmStatement
-  HiLink btmEchoParam		btmStatement
-  HiLink btmStatement		Statement
-  HiLink btmTodo		Todo
-  HiLink btmString		String
-  HiLink btmNumber		Number
-  HiLink btmComment		Comment
-  HiLink btmArgument		Identifier
-  HiLink btmVariable		Identifier
-  HiLink btmEcho		String
-  HiLink btmBIFMatch		btmStatement
-  HiLink btmBuiltInFunc		btmStatement
-  HiLink btmBuiltInVar		btmStatement
-  HiLink btmSpecialVar		btmStatement
-  HiLink btmCommand		btmStatement
+HiLink btmLabel		Special
+HiLink btmLabelMark		Special
+HiLink btmCmdDivider		Special
+HiLink btmConditional		btmStatement
+HiLink btmDotBoolOp		btmStatement
+HiLink btmRepeat		btmStatement
+HiLink btmEchoCommand	btmStatement
+HiLink btmEchoParam		btmStatement
+HiLink btmStatement		Statement
+HiLink btmTodo		Todo
+HiLink btmString		String
+HiLink btmNumber		Number
+HiLink btmComment		Comment
+HiLink btmArgument		Identifier
+HiLink btmVariable		Identifier
+HiLink btmEcho		String
+HiLink btmBIFMatch		btmStatement
+HiLink btmBuiltInFunc		btmStatement
+HiLink btmBuiltInVar		btmStatement
+HiLink btmSpecialVar		btmStatement
+HiLink btmCommand		btmStatement
 
-  "optional highlighting
-  "HiLink btmShowTab		Error
-  "HiLink btmShowTabc		Error
-  "hiLink btmIdentifier		Identifier
+"optional highlighting
+"HiLink btmShowTab		Error
+"HiLink btmShowTabc		Error
+"hiLink btmIdentifier		Identifier
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "btm"
 

@@ -8,11 +8,8 @@
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
 
-" For version 5.x: Clear all syntax items {{{1
-" For version 6.x: Quit when a syntax file was already loaded
-if v:version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 

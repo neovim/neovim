@@ -6,11 +6,9 @@
 
 " Please check :help java.vim for comments on some of the options available.
 
-" Quit when a syntax file was already loaded
+" quit when a syntax file was already loaded
 if !exists("main_syntax")
-  if version < 600
-    syntax clear
-  elseif exists("b:current_syntax")
+  if exists("b:current_syntax")
     finish
   endif
   " we define it here so that included files can test for it
@@ -22,11 +20,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " don't use standard HiLink, it will not work with included syntax files
-if version < 508
-  command! -nargs=+ JavaHiLink hi link <args>
-else
-  command! -nargs=+ JavaHiLink hi def link <args>
-endif
+command! -nargs=+ JavaHiLink hi def link <args>
 
 " some characters that cannot be in a java program (outside a string)
 syn match javaError "[\\@`]"
@@ -242,23 +236,21 @@ if exists("java_highlight_debug")
 
   syn cluster javaTop add=javaDebug
 
-  if version >= 508 || !exists("did_c_syn_inits")
-    JavaHiLink javaDebug		 Debug
-    JavaHiLink javaDebugString		 DebugString
-    JavaHiLink javaDebugStringError	 javaError
-    JavaHiLink javaDebugType		 DebugType
-    JavaHiLink javaDebugBoolean		 DebugBoolean
-    JavaHiLink javaDebugNumber		 Debug
-    JavaHiLink javaDebugSpecial		 DebugSpecial
-    JavaHiLink javaDebugSpecialCharacter DebugSpecial
-    JavaHiLink javaDebugCharacter	 DebugString
-    JavaHiLink javaDebugParen		 Debug
+  JavaHiLink javaDebug		 Debug
+  JavaHiLink javaDebugString		 DebugString
+  JavaHiLink javaDebugStringError	 javaError
+  JavaHiLink javaDebugType		 DebugType
+  JavaHiLink javaDebugBoolean		 DebugBoolean
+  JavaHiLink javaDebugNumber		 Debug
+  JavaHiLink javaDebugSpecial		 DebugSpecial
+  JavaHiLink javaDebugSpecialCharacter DebugSpecial
+  JavaHiLink javaDebugCharacter	 DebugString
+  JavaHiLink javaDebugParen		 Debug
 
-    JavaHiLink DebugString		 String
-    JavaHiLink DebugSpecial		 Special
-    JavaHiLink DebugBoolean		 Boolean
-    JavaHiLink DebugType		 Type
-  endif
+  JavaHiLink DebugString		 String
+  JavaHiLink DebugSpecial		 Special
+  JavaHiLink DebugBoolean		 Boolean
+  JavaHiLink DebugType		 Type
 endif
 
 if exists("java_mark_braces_in_parens_as_errors")
@@ -291,59 +283,54 @@ endif
 exec "syn sync ccomment javaComment minlines=" . java_minlines
 
 " The default highlighting.
-if version >= 508 || !exists("did_java_syn_inits")
-  if version < 508
-    let did_java_syn_inits = 1
-  endif
-  JavaHiLink javaLambdaDef		Function
-  JavaHiLink javaFuncDef		Function
-  JavaHiLink javaVarArg			Function
-  JavaHiLink javaBraces			Function
-  JavaHiLink javaBranch			Conditional
-  JavaHiLink javaUserLabelRef		javaUserLabel
-  JavaHiLink javaLabel			Label
-  JavaHiLink javaUserLabel		Label
-  JavaHiLink javaConditional		Conditional
-  JavaHiLink javaRepeat			Repeat
-  JavaHiLink javaExceptions		Exception
-  JavaHiLink javaAssert			Statement
-  JavaHiLink javaStorageClass		StorageClass
-  JavaHiLink javaMethodDecl		javaStorageClass
-  JavaHiLink javaClassDecl		javaStorageClass
-  JavaHiLink javaScopeDecl		javaStorageClass
-  JavaHiLink javaBoolean		Boolean
-  JavaHiLink javaSpecial		Special
-  JavaHiLink javaSpecialError		Error
-  JavaHiLink javaSpecialCharError	Error
-  JavaHiLink javaString			String
-  JavaHiLink javaCharacter		Character
-  JavaHiLink javaSpecialChar		SpecialChar
-  JavaHiLink javaNumber			Number
-  JavaHiLink javaError			Error
-  JavaHiLink javaStringError		Error
-  JavaHiLink javaStatement		Statement
-  JavaHiLink javaOperator		Operator
-  JavaHiLink javaComment		Comment
-  JavaHiLink javaDocComment		Comment
-  JavaHiLink javaLineComment		Comment
-  JavaHiLink javaConstant		Constant
-  JavaHiLink javaTypedef		Typedef
-  JavaHiLink javaTodo			Todo
-  JavaHiLink javaAnnotation		PreProc
+JavaHiLink javaLambdaDef		Function
+JavaHiLink javaFuncDef		Function
+JavaHiLink javaVarArg			Function
+JavaHiLink javaBraces			Function
+JavaHiLink javaBranch			Conditional
+JavaHiLink javaUserLabelRef		javaUserLabel
+JavaHiLink javaLabel			Label
+JavaHiLink javaUserLabel		Label
+JavaHiLink javaConditional		Conditional
+JavaHiLink javaRepeat			Repeat
+JavaHiLink javaExceptions		Exception
+JavaHiLink javaAssert			Statement
+JavaHiLink javaStorageClass		StorageClass
+JavaHiLink javaMethodDecl		javaStorageClass
+JavaHiLink javaClassDecl		javaStorageClass
+JavaHiLink javaScopeDecl		javaStorageClass
+JavaHiLink javaBoolean		Boolean
+JavaHiLink javaSpecial		Special
+JavaHiLink javaSpecialError		Error
+JavaHiLink javaSpecialCharError	Error
+JavaHiLink javaString			String
+JavaHiLink javaCharacter		Character
+JavaHiLink javaSpecialChar		SpecialChar
+JavaHiLink javaNumber			Number
+JavaHiLink javaError			Error
+JavaHiLink javaStringError		Error
+JavaHiLink javaStatement		Statement
+JavaHiLink javaOperator		Operator
+JavaHiLink javaComment		Comment
+JavaHiLink javaDocComment		Comment
+JavaHiLink javaLineComment		Comment
+JavaHiLink javaConstant		Constant
+JavaHiLink javaTypedef		Typedef
+JavaHiLink javaTodo			Todo
+JavaHiLink javaAnnotation		PreProc
 
-  JavaHiLink javaCommentTitle		SpecialComment
-  JavaHiLink javaDocTags		Special
-  JavaHiLink javaDocParam		Function
-  JavaHiLink javaDocSeeTagParam		Function
-  JavaHiLink javaCommentStar		javaComment
+JavaHiLink javaCommentTitle		SpecialComment
+JavaHiLink javaDocTags		Special
+JavaHiLink javaDocParam		Function
+JavaHiLink javaDocSeeTagParam		Function
+JavaHiLink javaCommentStar		javaComment
 
-  JavaHiLink javaType			Type
-  JavaHiLink javaExternal		Include
+JavaHiLink javaType			Type
+JavaHiLink javaExternal		Include
 
-  JavaHiLink htmlComment		Special
-  JavaHiLink htmlCommentPart		Special
-  JavaHiLink javaSpaceError		Error
-endif
+JavaHiLink htmlComment		Special
+JavaHiLink htmlCommentPart		Special
+JavaHiLink javaSpaceError		Error
 
 delcommand JavaHiLink
 

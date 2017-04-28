@@ -7,21 +7,14 @@
 "
 " TODO Find a new maintainer who knows SQL*Forms.
 
-    " For version 5.x, clear all syntax items.
-    " For version 6.x, quit when a syntax file was already loaded.
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
 syntax case ignore
 
-if version >= 600
-  setlocal iskeyword=a-z,A-Z,48-57,_,.,-,>
-else
-  set iskeyword=a-z,A-Z,48-57,_,.,-,>
-endif
+setlocal iskeyword=a-z,A-Z,48-57,_,.,-,>
 
 
     " The SQL reserved words, defined as keywords.
@@ -138,30 +131,23 @@ syntax match sqlNumber  "-\=\<[0-9]*\.\=[0-9_]\>"
 
 syntax sync ccomment sqlComment
 
-if version >= 508 || !exists("did_sqlforms_syn_inits")
-    if version < 508
-	let did_sqlforms_syn_inits = 1
-	command -nargs=+ HiLink hi link <args>
-    else
-	command -nargs=+ HiLink hi def link <args>
-    endif
+command -nargs=+ HiLink hi def link <args>
 
-    HiLink sqlComment Comment
-    HiLink sqlKeyword Statement
-    HiLink sqlNumber Number
-    HiLink sqlOperator Statement
-    HiLink sqlProcedure Statement
-    HiLink sqlFunction Statement
-    HiLink sqlSystem Identifier
-    HiLink sqlSpecial Special
-    HiLink sqlStatement Statement
-    HiLink sqlString String
-    HiLink sqlType Type
-    HiLink sqlCodes Identifier
-    HiLink sqlTriggers PreProc
+HiLink sqlComment Comment
+HiLink sqlKeyword Statement
+HiLink sqlNumber Number
+HiLink sqlOperator Statement
+HiLink sqlProcedure Statement
+HiLink sqlFunction Statement
+HiLink sqlSystem Identifier
+HiLink sqlSpecial Special
+HiLink sqlStatement Statement
+HiLink sqlString String
+HiLink sqlType Type
+HiLink sqlCodes Identifier
+HiLink sqlTriggers PreProc
 
-    delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "sqlforms"
 

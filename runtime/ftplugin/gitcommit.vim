@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	git commit file
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2013 May 30
+" Last Change:	2016 Aug 29
 
 " Only do this when not done yet for this buffer
 if (exists("b:did_ftplugin"))
@@ -11,15 +11,10 @@ endif
 runtime! ftplugin/git.vim
 let b:did_ftplugin = 1
 
-setlocal nomodeline tabstop=8 formatoptions-=croq formatoptions+=tl
-
-let b:undo_ftplugin = 'setl modeline< tabstop< formatoptions<'
-
-if &textwidth == 0
-  " make sure that log messages play nice with git-log on standard terminals
-  setlocal textwidth=72
-  let b:undo_ftplugin .= "|setl tw<"
-endif
+setlocal comments=:# commentstring=#\ %s
+setlocal nomodeline tabstop=8 formatoptions+=tl textwidth=72
+setlocal formatoptions-=c formatoptions-=r formatoptions-=o formatoptions-=q
+let b:undo_ftplugin = 'setl modeline< tabstop< formatoptions< tw< com< cms<'
 
 if exists("g:no_gitcommit_commands") || v:version < 700
   finish
@@ -30,6 +25,8 @@ if !exists("b:git_dir")
 endif
 
 command! -bang -bar -buffer -complete=custom,s:diffcomplete -nargs=* DiffGitCached :call s:gitdiffcached(<bang>0,b:git_dir,<f-args>)
+
+let b:undo_ftplugin = b:undo_ftplugin . "|delc DiffGitCached"
 
 function! s:diffcomplete(A,L,P)
   let args = ""

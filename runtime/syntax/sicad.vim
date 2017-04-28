@@ -4,28 +4,17 @@
 " Last Change:  2003 May 11
 " URL:		http://lmark.mgx.hu:81/download/vim/sicad.vim
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " use SQL highlighting after 'sql' command
-if version >= 600
-  syn include @SQL syntax/sql.vim
-else
-  syn include @SQL <sfile>:p:h/sql.vim
-endif
+syn include @SQL syntax/sql.vim
 unlet b:current_syntax
 
 " spaces are used in (auto)indents since sicad hates tabulator characters
-if version >= 600
-  setlocal expandtab
-else
-  set expandtab
-endif
+setlocal expandtab
 
 " ignore case
 syn case ignore
@@ -369,44 +358,34 @@ syn keyword sicadStatement zparbn zparf zparfn zparfw zparfwn
 syn keyword sicadStatement zparp zparpn zwinkp zwinkpn
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sicad_syntax_inits")
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  if version < 508
-    let did_sicad_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-
-  HiLink sicadLabel PreProc
-  HiLink sicadLabel1 sicadLabel
-  HiLink sicadLabel2 sicadLabel
-  HiLink sicadConditional Conditional
-  HiLink sicadBoolean Boolean
-  HiLink sicadNumber Number
-  HiLink sicadFloat Float
-  HiLink sicadOperator Operator
-  HiLink sicadStatement Statement
-  HiLink sicadParameter sicadStatement
-  HiLink sicadGoto sicadStatement
-  HiLink sicadLineCont sicadStatement
-  HiLink sicadString String
-  HiLink sicadComment Comment
-  HiLink sicadSpecial Special
-  HiLink sicadIdentifier Type
+HiLink sicadLabel PreProc
+HiLink sicadLabel1 sicadLabel
+HiLink sicadLabel2 sicadLabel
+HiLink sicadConditional Conditional
+HiLink sicadBoolean Boolean
+HiLink sicadNumber Number
+HiLink sicadFloat Float
+HiLink sicadOperator Operator
+HiLink sicadStatement Statement
+HiLink sicadParameter sicadStatement
+HiLink sicadGoto sicadStatement
+HiLink sicadLineCont sicadStatement
+HiLink sicadString String
+HiLink sicadComment Comment
+HiLink sicadSpecial Special
+HiLink sicadIdentifier Type
 "  HiLink sicadIdentifier Identifier
-  HiLink sicadError Error
-  HiLink sicadParenError sicadError
-  HiLink sicadApostropheError sicadError
-  HiLink sicadStringError sicadError
-  HiLink sicadCommentError sicadError
+HiLink sicadError Error
+HiLink sicadParenError sicadError
+HiLink sicadApostropheError sicadError
+HiLink sicadStringError sicadError
+HiLink sicadCommentError sicadError
 "  HiLink sqlStatement Special  " modified highlight group in sql.vim
 
-  delcommand HiLink
-
-endif
+delcommand HiLink
 
 let b:current_syntax = "sicad"
 

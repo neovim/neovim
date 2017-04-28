@@ -5,11 +5,8 @@
 " Former Maintainer:  Donovan Rebbechi elflord@panix.com (until March 2014)
 " Last Change: Sat Apr 9 15:30 2016 Filip Szymański
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -159,77 +156,69 @@ syn sync match shCaseEsacSync grouphere  shCaseEsac "\<case\>"
 syn sync match shCaseEsacSync groupthere shCaseEsac "\<esac\>"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_spec_syntax_inits")
-  if version < 508
-    let did_spec_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  "main types color definitions
-  HiLink specSection			Structure
-  HiLink specSectionMacro		Macro
-  HiLink specWWWlink			PreProc
-  HiLink specOpts			Operator
+"main types color definitions
+HiLink specSection			Structure
+HiLink specSectionMacro		Macro
+HiLink specWWWlink			PreProc
+HiLink specOpts			Operator
 
-  "yes, it's ugly, but white is sooo cool
-  if &background == "dark"
-    hi def specGlobalMacro		ctermfg=white
-  else
-    HiLink specGlobalMacro		Identifier
-  endif
-
-  "sh colors
-  HiLink shComment			Comment
-  HiLink shIf				Statement
-  HiLink shOperator			Special
-  HiLink shQuote1			String
-  HiLink shQuote2			String
-  HiLink shQuoteDelim			Statement
-
-  "spec colors
-  HiLink specBlock			Function
-  HiLink specColon			Special
-  HiLink specCommand			Statement
-  HiLink specCommandOpts		specOpts
-  HiLink specCommandSpecial		Special
-  HiLink specComment			Comment
-  HiLink specConfigure			specCommand
-  HiLink specDate			String
-  HiLink specDescriptionOpts		specOpts
-  HiLink specEmail			specWWWlink
-  HiLink specError			Error
-  HiLink specFilesDirective		specSectionMacro
-  HiLink specFilesOpts			specOpts
-  HiLink specLicense			String
-  HiLink specMacroNameLocal		specGlobalMacro
-  HiLink specMacroNameOther		specGlobalMacro
-  HiLink specManpageFile		NONE
-  HiLink specMonth			specDate
-  HiLink specNoNumberHilite		NONE
-  HiLink specNumber			Number
-  HiLink specPackageOpts		specOpts
-  HiLink specPercent			Special
-  HiLink specSpecialChar		Special
-  HiLink specSpecialVariables		specGlobalMacro
-  HiLink specSpecialVariablesNames	specGlobalMacro
-  HiLink specTarCommand			specCommand
-  HiLink specURL			specWWWlink
-  HiLink specURLMacro			specWWWlink
-  HiLink specVariables			Identifier
-  HiLink specWeekday			specDate
-  HiLink specListedFilesBin		Statement
-  HiLink specListedFilesDoc		Statement
-  HiLink specListedFilesEtc		Statement
-  HiLink specListedFilesLib		Statement
-  HiLink specListedFilesPrefix		Statement
-  HiLink specListedFilesShare		Statement
-
-  delcommand HiLink
+"yes, it's ugly, but white is sooo cool
+if &background == "dark"
+hi def specGlobalMacro		ctermfg=white
+else
+HiLink specGlobalMacro		Identifier
 endif
+
+"sh colors
+HiLink shComment			Comment
+HiLink shIf				Statement
+HiLink shOperator			Special
+HiLink shQuote1			String
+HiLink shQuote2			String
+HiLink shQuoteDelim			Statement
+
+"spec colors
+HiLink specBlock			Function
+HiLink specColon			Special
+HiLink specCommand			Statement
+HiLink specCommandOpts		specOpts
+HiLink specCommandSpecial		Special
+HiLink specComment			Comment
+HiLink specConfigure			specCommand
+HiLink specDate			String
+HiLink specDescriptionOpts		specOpts
+HiLink specEmail			specWWWlink
+HiLink specError			Error
+HiLink specFilesDirective		specSectionMacro
+HiLink specFilesOpts			specOpts
+HiLink specLicense			String
+HiLink specMacroNameLocal		specGlobalMacro
+HiLink specMacroNameOther		specGlobalMacro
+HiLink specManpageFile		NONE
+HiLink specMonth			specDate
+HiLink specNoNumberHilite		NONE
+HiLink specNumber			Number
+HiLink specPackageOpts		specOpts
+HiLink specPercent			Special
+HiLink specSpecialChar		Special
+HiLink specSpecialVariables		specGlobalMacro
+HiLink specSpecialVariablesNames	specGlobalMacro
+HiLink specTarCommand			specCommand
+HiLink specURL			specWWWlink
+HiLink specURLMacro			specWWWlink
+HiLink specVariables			Identifier
+HiLink specWeekday			specDate
+HiLink specListedFilesBin		Statement
+HiLink specListedFilesDoc		Statement
+HiLink specListedFilesEtc		Statement
+HiLink specListedFilesLib		Statement
+HiLink specListedFilesPrefix		Statement
+HiLink specListedFilesShare		Statement
+
+delcommand HiLink
 
 let b:current_syntax = "spec"
 

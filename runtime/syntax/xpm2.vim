@@ -7,11 +7,8 @@
 "
 " Made from xpm.vim by Ronald Schild <rs@scutum.de>
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -23,13 +20,8 @@ syn keyword xpm2Todo		TODO FIXME XXX  contained
 syn match   xpm2Comment		"\!.*$"  contains=@Spell,xpm2Todo
 
 
-if version < 508
-  command -nargs=+ HiLink hi link <args>
-  command -nargs=+ Hi hi <args>
-else
-  command -nargs=+ HiLink hi def link <args>
-  command -nargs=+ Hi hi def <args>
-endif
+command -nargs=+ HiLink hi def link <args>
+command -nargs=+ Hi hi def <args>
 
 if has("gui_running")
 
@@ -144,20 +136,14 @@ if has("gui_running")
 endif		" has("gui_running")
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_xpm2_syntax_inits")
-  if version < 508
-    let did_xpm2_syntax_inits = 1
-  endif
+" Only when an item doesn't have highlighting yet
+" The default highlighting.
+HiLink xpm2Type		Type
+HiLink xpm2StorageClass	StorageClass
+HiLink xpm2Todo		Todo
+HiLink xpm2Comment		Comment
+HiLink xpm2PixelString	String
 
-  " The default highlighting.
-  HiLink xpm2Type		Type
-  HiLink xpm2StorageClass	StorageClass
-  HiLink xpm2Todo		Todo
-  HiLink xpm2Comment		Comment
-  HiLink xpm2PixelString	String
-endif
 delcommand HiLink
 delcommand Hi
 

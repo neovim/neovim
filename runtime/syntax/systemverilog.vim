@@ -3,21 +3,14 @@
 " Maintainer:  kocha <kocha.lsifrontend@gmail.com>
 " Last Change: 12-Aug-2013. 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
 " Read in Verilog syntax files
-if version < 600
-    so <sfile>:p:h/verilog.vim
-else
-    runtime! syntax/verilog.vim
-    unlet b:current_syntax
-endif
+runtime! syntax/verilog.vim
+unlet b:current_syntax
 
 " IEEE1800-2005
 syn keyword systemverilogStatement   always_comb always_ff always_latch
@@ -76,25 +69,18 @@ syn keyword systemverilogStatement   implements
 syn keyword systemverilogStatement   interconnect soft nettype
 
 " Define the default highlighting.
-if version >= 508 || !exists("did_systemverilog_syn_inits")
-   if version < 508
-      let did_systemverilog_syn_inits = 1
-      command -nargs=+ HiLink hi link <args>
-   else
-      command -nargs=+ HiLink hi def link <args>
-   endif
+command -nargs=+ HiLink hi def link <args>
 
-   " The default highlighting.
-   HiLink systemverilogStatement       Statement
-   HiLink systemverilogTypeDef         TypeDef
-   HiLink systemverilogConditional     Conditional
-   HiLink systemverilogRepeat          Repeat
-   HiLink systemverilogLabel           Label
-   HiLink systemverilogGlobal          Define
-   HiLink systemverilogNumber          Number
+" The default highlighting.
+HiLink systemverilogStatement       Statement
+HiLink systemverilogTypeDef         TypeDef
+HiLink systemverilogConditional     Conditional
+HiLink systemverilogRepeat          Repeat
+HiLink systemverilogLabel           Label
+HiLink systemverilogGlobal          Define
+HiLink systemverilogNumber          Number
 
-   delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "systemverilog"
 

@@ -9,10 +9,8 @@
 
 
 " Setup Syntax:
-"  Clear old syntax settings
-if version < 600
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 "  Assembler syntax is case insensetive
@@ -21,18 +19,10 @@ syn case ignore
 
 
 " Vim search and movement commands on identifers
-if version < 600
-  "  Comments at start of a line inside which to skip search for indentifiers
-  set comments=:;
-  "  Identifier Keyword characters (defines \k)
-  set iskeyword=@,48-57,#,$,.,?,@-@,_,~
-else
-  "  Comments at start of a line inside which to skip search for indentifiers
-  setlocal comments=:;
-  "  Identifier Keyword characters (defines \k)
-  setlocal iskeyword=@,48-57,#,$,.,?,@-@,_,~
-endif
-
+"  Comments at start of a line inside which to skip search for indentifiers
+setlocal comments=:;
+"  Identifier Keyword characters (defines \k)
+setlocal iskeyword=@,48-57,#,$,.,?,@-@,_,~
 
 
 " Comments:
@@ -431,96 +421,88 @@ syn sync match	nasmSync	grouphere NONE	       "^\s*%endmacro\>"
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later  : only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_nasm_syntax_inits")
-  if version < 508
-    let did_nasm_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  " Sub Links:
-  HiLink nasmInMacDirective	nasmDirective
-  HiLink nasmInMacLabel		nasmLocalLabel
-  HiLink nasmInMacLblWarn	nasmLabelWarn
-  HiLink nasmInMacMacro		nasmMacro
-  HiLink nasmInMacParam		nasmMacro
-  HiLink nasmInMacParamNum	nasmDecNumber
-  HiLink nasmInMacPreCondit	nasmPreCondit
-  HiLink nasmInMacPreProc	nasmPreProc
-  HiLink nasmInPreCondit	nasmPreCondit
-  HiLink nasmInStructure	nasmStructure
-  HiLink nasmStructureLabel	nasmStructure
+" Sub Links:
+HiLink nasmInMacDirective	nasmDirective
+HiLink nasmInMacLabel		nasmLocalLabel
+HiLink nasmInMacLblWarn	nasmLabelWarn
+HiLink nasmInMacMacro		nasmMacro
+HiLink nasmInMacParam		nasmMacro
+HiLink nasmInMacParamNum	nasmDecNumber
+HiLink nasmInMacPreCondit	nasmPreCondit
+HiLink nasmInMacPreProc	nasmPreProc
+HiLink nasmInPreCondit	nasmPreCondit
+HiLink nasmInStructure	nasmStructure
+HiLink nasmStructureLabel	nasmStructure
 
-  " Comment Group:
-  HiLink nasmComment		Comment
-  HiLink nasmSpecialComment	SpecialComment
-  HiLink nasmInCommentTodo	Todo
+" Comment Group:
+HiLink nasmComment		Comment
+HiLink nasmSpecialComment	SpecialComment
+HiLink nasmInCommentTodo	Todo
 
-  " Constant Group:
-  HiLink nasmString		String
-  HiLink nasmStringError	Error
-  HiLink nasmBinNumber		Number
-  HiLink nasmOctNumber		Number
-  HiLink nasmDecNumber		Number
-  HiLink nasmHexNumber		Number
-  HiLink nasmFltNumber		Float
-  HiLink nasmNumberError	Error
+" Constant Group:
+HiLink nasmString		String
+HiLink nasmStringError	Error
+HiLink nasmBinNumber		Number
+HiLink nasmOctNumber		Number
+HiLink nasmDecNumber		Number
+HiLink nasmHexNumber		Number
+HiLink nasmFltNumber		Float
+HiLink nasmNumberError	Error
 
-  " Identifier Group:
-  HiLink nasmLabel		Identifier
-  HiLink nasmLocalLabel		Identifier
-  HiLink nasmSpecialLabel	Special
-  HiLink nasmLabelError		Error
-  HiLink nasmLabelWarn		Todo
+" Identifier Group:
+HiLink nasmLabel		Identifier
+HiLink nasmLocalLabel		Identifier
+HiLink nasmSpecialLabel	Special
+HiLink nasmLabelError		Error
+HiLink nasmLabelWarn		Todo
 
-  " PreProc Group:
-  HiLink nasmPreProc		PreProc
-  HiLink nasmDefine		Define
-  HiLink nasmInclude		Include
-  HiLink nasmMacro		Macro
-  HiLink nasmPreCondit		PreCondit
-  HiLink nasmPreProcError	Error
-  HiLink nasmPreProcWarn	Todo
+" PreProc Group:
+HiLink nasmPreProc		PreProc
+HiLink nasmDefine		Define
+HiLink nasmInclude		Include
+HiLink nasmMacro		Macro
+HiLink nasmPreCondit		PreCondit
+HiLink nasmPreProcError	Error
+HiLink nasmPreProcWarn	Todo
 
-  " Type Group:
-  HiLink nasmType		Type
-  HiLink nasmStorage		StorageClass
-  HiLink nasmStructure		Structure
-  HiLink nasmTypeError		Error
+" Type Group:
+HiLink nasmType		Type
+HiLink nasmStorage		StorageClass
+HiLink nasmStructure		Structure
+HiLink nasmTypeError		Error
 
-  " Directive Group:
-  HiLink nasmConstant		Constant
-  HiLink nasmInstrModifier	Operator
-  HiLink nasmRepeat		Repeat
-  HiLink nasmDirective		Keyword
-  HiLink nasmStdDirective	Operator
-  HiLink nasmFmtDirective	Keyword
+" Directive Group:
+HiLink nasmConstant		Constant
+HiLink nasmInstrModifier	Operator
+HiLink nasmRepeat		Repeat
+HiLink nasmDirective		Keyword
+HiLink nasmStdDirective	Operator
+HiLink nasmFmtDirective	Keyword
 
-  " Register Group:
-  HiLink nasmCtrlRegister	Special
-  HiLink nasmDebugRegister	Debug
-  HiLink nasmTestRegister	Special
-  HiLink nasmRegisterError	Error
-  HiLink nasmMemRefError	Error
+" Register Group:
+HiLink nasmCtrlRegister	Special
+HiLink nasmDebugRegister	Debug
+HiLink nasmTestRegister	Special
+HiLink nasmRegisterError	Error
+HiLink nasmMemRefError	Error
 
-  " Instruction Group:
-  HiLink nasmStdInstruction	Statement
-  HiLink nasmSysInstruction	Statement
-  HiLink nasmDbgInstruction	Debug
-  HiLink nasmFpuInstruction	Statement
-  HiLink nasmMmxInstruction	Statement
-  HiLink nasmSseInstruction	Statement
-  HiLink nasmNowInstruction	Statement
-  HiLink nasmAmdInstruction	Special
-  HiLink nasmCrxInstruction	Special
-  HiLink nasmUndInstruction	Todo
-  HiLink nasmInstructnError	Error
+" Instruction Group:
+HiLink nasmStdInstruction	Statement
+HiLink nasmSysInstruction	Statement
+HiLink nasmDbgInstruction	Debug
+HiLink nasmFpuInstruction	Statement
+HiLink nasmMmxInstruction	Statement
+HiLink nasmSseInstruction	Statement
+HiLink nasmNowInstruction	Statement
+HiLink nasmAmdInstruction	Special
+HiLink nasmCrxInstruction	Special
+HiLink nasmUndInstruction	Todo
+HiLink nasmInstructnError	Error
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "nasm"
 

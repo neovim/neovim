@@ -11,11 +11,7 @@
 " Don't remove any old syntax stuff hanging around! We need stuff
 " from skill.vim.
 if !exists("did_skill_syntax_inits")
-  if version < 600
-	so <sfile>:p:h/skill.vim
-  else
-    runtime! syntax/skill.vim
-  endif
+  runtime! syntax/skill.vim
 endif
 
 syn keyword divaDRCKeywords		area enc notch ovlp sep width
@@ -81,29 +77,21 @@ syn match divaGeomFunctions		"(geom\u\a\+\(45\|90\)\=\>"hs=s+1
 syn match divaGeomFunctions		"\<geom\u\a\+\(45\|90\)\=("he=e-1
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_diva_syntax_inits")
-	if version < 508
-		let did_diva_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-	HiLink divaDRCKeywords		Statement
-	HiLink divaMeasKeywords		Statement
-	HiLink divaCtrlFunctions	Conditional
-	HiLink divaExtFunctions		Function
-	HiLink divaDRCFunctions		Function
-	HiLink divaFunctions		Function
-	HiLink divaLayerFunctions	Function
-	HiLink divaChkFunctions		Function
-	HiLink divaLVSFunctions		Function
-	HiLink divaGeomFunctions	Function
+HiLink divaDRCKeywords		Statement
+HiLink divaMeasKeywords		Statement
+HiLink divaCtrlFunctions	Conditional
+HiLink divaExtFunctions		Function
+HiLink divaDRCFunctions		Function
+HiLink divaFunctions		Function
+HiLink divaLayerFunctions	Function
+HiLink divaChkFunctions		Function
+HiLink divaLVSFunctions		Function
+HiLink divaGeomFunctions	Function
 
-	delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "diva"
 

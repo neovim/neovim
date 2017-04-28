@@ -7,12 +7,9 @@
 
 " Please check :help html.vim for some comments and a description of the options
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
+" quit when a syntax file was already loaded
 if !exists("main_syntax")
-  if version < 600
-    syntax clear
-  elseif exists("b:current_syntax")
+  if exists("b:current_syntax")
     finish
   endif
   let main_syntax = 'html'
@@ -22,11 +19,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " don't use standard HiLink, it will not work with included syntax files
-if version < 508
-  command! -nargs=+ HtmlHiLink hi link <args>
-else
-  command! -nargs=+ HtmlHiLink hi def link <args>
-endif
+command! -nargs=+ HtmlHiLink hi def link <args>
 
 syntax spell toplevel
 
@@ -221,71 +214,66 @@ if main_syntax == "html"
 endif
 
 " The default highlighting.
-if version >= 508 || !exists("did_html_syn_inits")
-  if version < 508
-    let did_html_syn_inits = 1
+HtmlHiLink htmlTag                     Function
+HtmlHiLink htmlEndTag                  Identifier
+HtmlHiLink htmlArg                     Type
+HtmlHiLink htmlTagName                 htmlStatement
+HtmlHiLink htmlSpecialTagName          Exception
+HtmlHiLink htmlValue                     String
+HtmlHiLink htmlSpecialChar             Special
+
+if !exists("html_no_rendering")
+  HtmlHiLink htmlH1                      Title
+  HtmlHiLink htmlH2                      htmlH1
+  HtmlHiLink htmlH3                      htmlH2
+  HtmlHiLink htmlH4                      htmlH3
+  HtmlHiLink htmlH5                      htmlH4
+  HtmlHiLink htmlH6                      htmlH5
+  HtmlHiLink htmlHead                    PreProc
+  HtmlHiLink htmlTitle                   Title
+  HtmlHiLink htmlBoldItalicUnderline     htmlBoldUnderlineItalic
+  HtmlHiLink htmlUnderlineBold           htmlBoldUnderline
+  HtmlHiLink htmlUnderlineItalicBold     htmlBoldUnderlineItalic
+  HtmlHiLink htmlUnderlineBoldItalic     htmlBoldUnderlineItalic
+  HtmlHiLink htmlItalicUnderline         htmlUnderlineItalic
+  HtmlHiLink htmlItalicBold              htmlBoldItalic
+  HtmlHiLink htmlItalicBoldUnderline     htmlBoldUnderlineItalic
+  HtmlHiLink htmlItalicUnderlineBold     htmlBoldUnderlineItalic
+  HtmlHiLink htmlLink                    Underlined
+  HtmlHiLink htmlLeadingSpace            None
+  if !exists("html_my_rendering")
+    hi def htmlBold                term=bold cterm=bold gui=bold
+    hi def htmlBoldUnderline       term=bold,underline cterm=bold,underline gui=bold,underline
+    hi def htmlBoldItalic          term=bold,italic cterm=bold,italic gui=bold,italic
+    hi def htmlBoldUnderlineItalic term=bold,italic,underline cterm=bold,italic,underline gui=bold,italic,underline
+    hi def htmlUnderline           term=underline cterm=underline gui=underline
+    hi def htmlUnderlineItalic     term=italic,underline cterm=italic,underline gui=italic,underline
+    hi def htmlItalic              term=italic cterm=italic gui=italic
   endif
-  HtmlHiLink htmlTag                     Function
-  HtmlHiLink htmlEndTag                  Identifier
-  HtmlHiLink htmlArg                     Type
-  HtmlHiLink htmlTagName                 htmlStatement
-  HtmlHiLink htmlSpecialTagName          Exception
-  HtmlHiLink htmlValue                     String
-  HtmlHiLink htmlSpecialChar             Special
-  
-  if !exists("html_no_rendering")
-    HtmlHiLink htmlH1                      Title
-    HtmlHiLink htmlH2                      htmlH1
-    HtmlHiLink htmlH3                      htmlH2
-    HtmlHiLink htmlH4                      htmlH3
-    HtmlHiLink htmlH5                      htmlH4
-    HtmlHiLink htmlH6                      htmlH5
-    HtmlHiLink htmlHead                    PreProc
-    HtmlHiLink htmlTitle                   Title
-    HtmlHiLink htmlBoldItalicUnderline     htmlBoldUnderlineItalic
-    HtmlHiLink htmlUnderlineBold           htmlBoldUnderline
-    HtmlHiLink htmlUnderlineItalicBold     htmlBoldUnderlineItalic
-    HtmlHiLink htmlUnderlineBoldItalic     htmlBoldUnderlineItalic
-    HtmlHiLink htmlItalicUnderline         htmlUnderlineItalic
-    HtmlHiLink htmlItalicBold              htmlBoldItalic
-    HtmlHiLink htmlItalicBoldUnderline     htmlBoldUnderlineItalic
-    HtmlHiLink htmlItalicUnderlineBold     htmlBoldUnderlineItalic
-    HtmlHiLink htmlLink                    Underlined
-    HtmlHiLink htmlLeadingSpace            None
-    if !exists("html_my_rendering")
-      hi def htmlBold                term=bold cterm=bold gui=bold
-      hi def htmlBoldUnderline       term=bold,underline cterm=bold,underline gui=bold,underline
-      hi def htmlBoldItalic          term=bold,italic cterm=bold,italic gui=bold,italic
-      hi def htmlBoldUnderlineItalic term=bold,italic,underline cterm=bold,italic,underline gui=bold,italic,underline
-      hi def htmlUnderline           term=underline cterm=underline gui=underline
-      hi def htmlUnderlineItalic     term=italic,underline cterm=italic,underline gui=italic,underline
-      hi def htmlItalic              term=italic cterm=italic gui=italic
-    endif
-  endif
-  
-  HtmlHiLink htmlPreStmt            PreProc
-  HtmlHiLink htmlPreError           Error
-  HtmlHiLink htmlPreProc            PreProc
-  HtmlHiLink htmlPreAttr            String
-  HtmlHiLink htmlPreProcAttrName    PreProc
-  HtmlHiLink htmlPreProcAttrError   Error
-  HtmlHiLink htmlSpecial            Special
-  HtmlHiLink htmlSpecialChar        Special
-  HtmlHiLink htmlString             String
-  HtmlHiLink htmlStatement          Statement
-  HtmlHiLink htmlComment            Comment
-  HtmlHiLink htmlCommentPart        Comment
-  HtmlHiLink htmlValue              String
-  HtmlHiLink htmlCommentError       htmlError
-  HtmlHiLink htmlTagError           htmlError
-  HtmlHiLink htmlEvent              javaScript
-  HtmlHiLink htmlError              Error
-  
-  HtmlHiLink javaScript             Special
-  HtmlHiLink javaScriptExpression   javaScript
-  HtmlHiLink htmlCssStyleComment    Comment
-  HtmlHiLink htmlCssDefinition      Special
 endif
+
+HtmlHiLink htmlPreStmt            PreProc
+HtmlHiLink htmlPreError           Error
+HtmlHiLink htmlPreProc            PreProc
+HtmlHiLink htmlPreAttr            String
+HtmlHiLink htmlPreProcAttrName    PreProc
+HtmlHiLink htmlPreProcAttrError   Error
+HtmlHiLink htmlSpecial            Special
+HtmlHiLink htmlSpecialChar        Special
+HtmlHiLink htmlString             String
+HtmlHiLink htmlStatement          Statement
+HtmlHiLink htmlComment            Comment
+HtmlHiLink htmlCommentPart        Comment
+HtmlHiLink htmlValue              String
+HtmlHiLink htmlCommentError       htmlError
+HtmlHiLink htmlTagError           htmlError
+HtmlHiLink htmlEvent              javaScript
+HtmlHiLink htmlError              Error
+
+HtmlHiLink javaScript             Special
+HtmlHiLink javaScriptExpression   javaScript
+HtmlHiLink htmlCssStyleComment    Comment
+HtmlHiLink htmlCssDefinition      Special
 
 delcommand HtmlHiLink
 

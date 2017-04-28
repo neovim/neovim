@@ -6,11 +6,8 @@
 " Adapted mostly from xmath.vim
 " Number formats adapted from r.vim
 "
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -234,41 +231,33 @@ syn sync match maximaSyncComment	grouphere maximaCommentBlock "/*"
 syn sync match maximaSyncComment	groupthere NONE "*/"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_maxima_syntax_inits")
-  if version < 508
-    let did_maxima_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink maximaBraceError	maximaError
-  HiLink maximaCmd	maximaStatement
-  HiLink maximaCurlyError	maximaError
-  HiLink maximaFuncCmd	maximaStatement
-  HiLink maximaParenError	maximaError
+HiLink maximaBraceError	maximaError
+HiLink maximaCmd	maximaStatement
+HiLink maximaCurlyError	maximaError
+HiLink maximaFuncCmd	maximaStatement
+HiLink maximaParenError	maximaError
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink maximaCharacter	Character
-  HiLink maximaComma	Function
-  HiLink maximaCommentBlock	Comment
-  HiLink maximaConditional	Conditional
-  HiLink maximaError	Error
-  HiLink maximaFunc	Delimiter
-  HiLink maximaOp                 Delimiter
-  HiLink maximaLabel	PreProc
-  HiLink maximaNumber	Number
-  HiLink maximaFloat	Float
-  HiLink maximaRepeat	Repeat
-  HiLink maximaSpecial	Type
-  HiLink maximaSpecialChar	SpecialChar
-  HiLink maximaStatement	Statement
-  HiLink maximaString	String
-  HiLink maximaTodo	Todo
+" The default methods for highlighting.  Can be overridden later
+HiLink maximaCharacter	Character
+HiLink maximaComma	Function
+HiLink maximaCommentBlock	Comment
+HiLink maximaConditional	Conditional
+HiLink maximaError	Error
+HiLink maximaFunc	Delimiter
+HiLink maximaOp                 Delimiter
+HiLink maximaLabel	PreProc
+HiLink maximaNumber	Number
+HiLink maximaFloat	Float
+HiLink maximaRepeat	Repeat
+HiLink maximaSpecial	Type
+HiLink maximaSpecialChar	SpecialChar
+HiLink maximaStatement	Statement
+HiLink maximaString	String
+HiLink maximaTodo	Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "maxima"

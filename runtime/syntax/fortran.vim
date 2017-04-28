@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
 " Version:	0.98
-" Last Change:	2016 Aug. 26
+" Last Change:	2016 Aug. 29
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
@@ -11,7 +11,7 @@
 "  Andrej Panjkov, Bram Moolenaar, Thomas Olsen, Michael Sternberg, Christian Reile,
 "  Walter Dieudonné, Alexander Wagner, Roman Bertle, Charles Rendleman,
 "  Andrew Griffiths, Joe Krahn, Hendrik Merx, Matt Thompson, Jan Hermann,
-"  Stefano Zaghi and Vishnu Krishnan.
+"  Stefano Zaghi and Vishnu V. Krishnan.
 
 if exists("b:current_syntax")
   finish
@@ -368,6 +368,7 @@ else
 endif
 
 syn match fortranComment	excludenl "!.*$" contains=@fortranCommentGroup,@spell
+syn match fortranOpenMP		excludenl 		"^\s*!\$\(OMP\)\=\s.*$"
 
 "cpp is often used with Fortran
 syn match	cPreProc		"^\s*#\s*\(define\|ifdef\)\>.*"
@@ -517,6 +518,7 @@ hi def link cIncluded		fortranString
 hi def link cInclude		Include
 hi def link cPreProc		PreProc
 hi def link cPreCondit		PreCondit
+hi def link fortranOpenMP       PreProc
 hi def link fortranParenError	Error
 hi def link fortranComment	Comment
 hi def link fortranSerialNumber	Todo

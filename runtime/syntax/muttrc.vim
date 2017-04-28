@@ -6,11 +6,8 @@
 
 " This file covers mutt version 1.7.0
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -18,11 +15,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " Set the keyword characters
-if version < 600
-  set isk=@,48-57,_,-
-else
-  setlocal isk=@,48-57,_,-
-endif
+setlocal isk=@,48-57,_,-
 
 " handling optional variables
 if !exists("use_mutt_sidebar")
@@ -636,160 +629,152 @@ syn keyword muttrcMono		contained mono		skipwhite nextgroup=muttrcColorField
 syn match   muttrcMonoLine	"^\s*mono\s\+\S\+"	skipwhite nextgroup=muttrcMonoAttrib contains=muttrcMono
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_muttrc_syntax_inits")
-  if version < 508
-    let did_muttrc_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink muttrcComment		Comment
-  HiLink muttrcEscape		SpecialChar
-  HiLink muttrcRXChars		SpecialChar
-  HiLink muttrcString		String
-  HiLink muttrcRXString		String
-  HiLink muttrcRXString2	String
-  HiLink muttrcSpecial		Special
-  HiLink muttrcHooks		Type
-  HiLink muttrcGroupFlag	Type
-  HiLink muttrcGroupDef		Macro
-  HiLink muttrcAddrDef		muttrcGroupFlag
-  HiLink muttrcRXDef		muttrcGroupFlag
-  HiLink muttrcRXPat		String
-  HiLink muttrcAliasGroupName	Macro
-  HiLink muttrcAliasKey	        Identifier
-  HiLink muttrcUnAliasKey	Identifier
-  HiLink muttrcAliasEncEmail	Identifier
-  HiLink muttrcAliasParens	Type
-  HiLink muttrcSetNumAssignment	Number
-  HiLink muttrcSetBoolAssignment	Boolean
-  HiLink muttrcSetQuadAssignment	Boolean
-  HiLink muttrcSetStrAssignment	String
-  HiLink muttrcEmail		Special
-  HiLink muttrcVariableInner	Special
-  HiLink muttrcEscapedVariable	String
-  HiLink muttrcHeader		Type
-  HiLink muttrcKeySpecial	SpecialChar
-  HiLink muttrcKey		Type
-  HiLink muttrcKeyName		SpecialChar
-  HiLink muttrcVarBool		Identifier
-  HiLink muttrcVarQuad		Identifier
-  HiLink muttrcVarNum		Identifier
-  HiLink muttrcVarStr		Identifier
-  HiLink muttrcMenu		Identifier
-  HiLink muttrcCommand		Keyword
-  HiLink muttrcMacroDescr	String
-  HiLink muttrcAction		Macro
-  HiLink muttrcBadAction	Error
-  HiLink muttrcBindFunction	Error
-  HiLink muttrcBindMenuList	Error
-  HiLink muttrcFunction		Macro
-  HiLink muttrcGroupKeyword	muttrcCommand
-  HiLink muttrcGroupLine	Error
-  HiLink muttrcSubscribeKeyword	muttrcCommand
-  HiLink muttrcSubscribeLine	Error
-  HiLink muttrcListsKeyword	muttrcCommand
-  HiLink muttrcListsLine	Error
-  HiLink muttrcAlternateKeyword	muttrcCommand
-  HiLink muttrcAlternatesLine	Error
-  HiLink muttrcAttachmentsLine	muttrcCommand
-  HiLink muttrcAttachmentsFlag	Type
-  HiLink muttrcAttachmentsMimeType	String
-  HiLink muttrcColorLine	Error
-  HiLink muttrcColorContext	Error
-  HiLink muttrcColorContextI	Identifier
-  HiLink muttrcColorContextH	Identifier
-  HiLink muttrcColorKeyword	muttrcCommand
-  HiLink muttrcColorKeywordI	muttrcColorKeyword
-  HiLink muttrcColorKeywordH	muttrcColorKeyword
-  HiLink muttrcColorField	Identifier
-  HiLink muttrcColor		Type
-  HiLink muttrcColorFG		Error
-  HiLink muttrcColorFGI		Error
-  HiLink muttrcColorFGH		Error
-  HiLink muttrcColorBG		Error
-  HiLink muttrcColorBGI		Error
-  HiLink muttrcColorBGH		Error
-  HiLink muttrcMonoAttrib	muttrcColor
-  HiLink muttrcMono		muttrcCommand
-  HiLink muttrcSimplePat	Identifier
-  HiLink muttrcSimplePatString	Macro
-  HiLink muttrcSimplePatMetas	Special
-  HiLink muttrcPattern		Error
-  HiLink muttrcUnColorLine	Error
-  HiLink muttrcUnColorKeyword	muttrcCommand
-  HiLink muttrcUnColorIndex	Identifier
-  HiLink muttrcShellString	muttrcEscape
-  HiLink muttrcRXHooks		muttrcCommand
-  HiLink muttrcRXHookNot	Type
-  HiLink muttrcPatHooks		muttrcCommand
-  HiLink muttrcPatHookNot	Type
-  HiLink muttrcFormatConditionals2 Type
-  HiLink muttrcIndexFormatStr	muttrcString
-  HiLink muttrcIndexFormatEscapes muttrcEscape
-  HiLink muttrcIndexFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcAliasFormatStr	muttrcString
-  HiLink muttrcAliasFormatEscapes muttrcEscape
-  HiLink muttrcAttachFormatStr	muttrcString
-  HiLink muttrcAttachFormatEscapes muttrcEscape
-  HiLink muttrcAttachFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcComposeFormatStr	muttrcString
-  HiLink muttrcComposeFormatEscapes muttrcEscape
-  HiLink muttrcFolderFormatStr	muttrcString
-  HiLink muttrcFolderFormatEscapes muttrcEscape
-  HiLink muttrcFolderFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcMixFormatStr	muttrcString
-  HiLink muttrcMixFormatEscapes muttrcEscape
-  HiLink muttrcMixFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcPGPFormatStr	muttrcString
-  HiLink muttrcPGPFormatEscapes muttrcEscape
-  HiLink muttrcPGPFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcPGPCmdFormatStr	muttrcString
-  HiLink muttrcPGPCmdFormatEscapes muttrcEscape
-  HiLink muttrcPGPCmdFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcStatusFormatStr	muttrcString
-  HiLink muttrcStatusFormatEscapes muttrcEscape
-  HiLink muttrcStatusFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcPGPGetKeysFormatStr	muttrcString
-  HiLink muttrcPGPGetKeysFormatEscapes muttrcEscape
-  HiLink muttrcSmimeFormatStr	muttrcString
-  HiLink muttrcSmimeFormatEscapes muttrcEscape
-  HiLink muttrcSmimeFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcTimeEscapes	muttrcEscape
-  HiLink muttrcPGPTimeEscapes	muttrcEscape
-  HiLink muttrcStrftimeEscapes	Type
-  HiLink muttrcStrftimeFormatStr muttrcString
-  HiLink muttrcFormatErrors Error
+HiLink muttrcComment		Comment
+HiLink muttrcEscape		SpecialChar
+HiLink muttrcRXChars		SpecialChar
+HiLink muttrcString		String
+HiLink muttrcRXString		String
+HiLink muttrcRXString2	String
+HiLink muttrcSpecial		Special
+HiLink muttrcHooks		Type
+HiLink muttrcGroupFlag	Type
+HiLink muttrcGroupDef		Macro
+HiLink muttrcAddrDef		muttrcGroupFlag
+HiLink muttrcRXDef		muttrcGroupFlag
+HiLink muttrcRXPat		String
+HiLink muttrcAliasGroupName	Macro
+HiLink muttrcAliasKey	        Identifier
+HiLink muttrcUnAliasKey	Identifier
+HiLink muttrcAliasEncEmail	Identifier
+HiLink muttrcAliasParens	Type
+HiLink muttrcSetNumAssignment	Number
+HiLink muttrcSetBoolAssignment	Boolean
+HiLink muttrcSetQuadAssignment	Boolean
+HiLink muttrcSetStrAssignment	String
+HiLink muttrcEmail		Special
+HiLink muttrcVariableInner	Special
+HiLink muttrcEscapedVariable	String
+HiLink muttrcHeader		Type
+HiLink muttrcKeySpecial	SpecialChar
+HiLink muttrcKey		Type
+HiLink muttrcKeyName		SpecialChar
+HiLink muttrcVarBool		Identifier
+HiLink muttrcVarQuad		Identifier
+HiLink muttrcVarNum		Identifier
+HiLink muttrcVarStr		Identifier
+HiLink muttrcMenu		Identifier
+HiLink muttrcCommand		Keyword
+HiLink muttrcMacroDescr	String
+HiLink muttrcAction		Macro
+HiLink muttrcBadAction	Error
+HiLink muttrcBindFunction	Error
+HiLink muttrcBindMenuList	Error
+HiLink muttrcFunction		Macro
+HiLink muttrcGroupKeyword	muttrcCommand
+HiLink muttrcGroupLine	Error
+HiLink muttrcSubscribeKeyword	muttrcCommand
+HiLink muttrcSubscribeLine	Error
+HiLink muttrcListsKeyword	muttrcCommand
+HiLink muttrcListsLine	Error
+HiLink muttrcAlternateKeyword	muttrcCommand
+HiLink muttrcAlternatesLine	Error
+HiLink muttrcAttachmentsLine	muttrcCommand
+HiLink muttrcAttachmentsFlag	Type
+HiLink muttrcAttachmentsMimeType	String
+HiLink muttrcColorLine	Error
+HiLink muttrcColorContext	Error
+HiLink muttrcColorContextI	Identifier
+HiLink muttrcColorContextH	Identifier
+HiLink muttrcColorKeyword	muttrcCommand
+HiLink muttrcColorKeywordI	muttrcColorKeyword
+HiLink muttrcColorKeywordH	muttrcColorKeyword
+HiLink muttrcColorField	Identifier
+HiLink muttrcColor		Type
+HiLink muttrcColorFG		Error
+HiLink muttrcColorFGI		Error
+HiLink muttrcColorFGH		Error
+HiLink muttrcColorBG		Error
+HiLink muttrcColorBGI		Error
+HiLink muttrcColorBGH		Error
+HiLink muttrcMonoAttrib	muttrcColor
+HiLink muttrcMono		muttrcCommand
+HiLink muttrcSimplePat	Identifier
+HiLink muttrcSimplePatString	Macro
+HiLink muttrcSimplePatMetas	Special
+HiLink muttrcPattern		Error
+HiLink muttrcUnColorLine	Error
+HiLink muttrcUnColorKeyword	muttrcCommand
+HiLink muttrcUnColorIndex	Identifier
+HiLink muttrcShellString	muttrcEscape
+HiLink muttrcRXHooks		muttrcCommand
+HiLink muttrcRXHookNot	Type
+HiLink muttrcPatHooks		muttrcCommand
+HiLink muttrcPatHookNot	Type
+HiLink muttrcFormatConditionals2 Type
+HiLink muttrcIndexFormatStr	muttrcString
+HiLink muttrcIndexFormatEscapes muttrcEscape
+HiLink muttrcIndexFormatConditionals muttrcFormatConditionals2
+HiLink muttrcAliasFormatStr	muttrcString
+HiLink muttrcAliasFormatEscapes muttrcEscape
+HiLink muttrcAttachFormatStr	muttrcString
+HiLink muttrcAttachFormatEscapes muttrcEscape
+HiLink muttrcAttachFormatConditionals muttrcFormatConditionals2
+HiLink muttrcComposeFormatStr	muttrcString
+HiLink muttrcComposeFormatEscapes muttrcEscape
+HiLink muttrcFolderFormatStr	muttrcString
+HiLink muttrcFolderFormatEscapes muttrcEscape
+HiLink muttrcFolderFormatConditionals muttrcFormatConditionals2
+HiLink muttrcMixFormatStr	muttrcString
+HiLink muttrcMixFormatEscapes muttrcEscape
+HiLink muttrcMixFormatConditionals muttrcFormatConditionals2
+HiLink muttrcPGPFormatStr	muttrcString
+HiLink muttrcPGPFormatEscapes muttrcEscape
+HiLink muttrcPGPFormatConditionals muttrcFormatConditionals2
+HiLink muttrcPGPCmdFormatStr	muttrcString
+HiLink muttrcPGPCmdFormatEscapes muttrcEscape
+HiLink muttrcPGPCmdFormatConditionals muttrcFormatConditionals2
+HiLink muttrcStatusFormatStr	muttrcString
+HiLink muttrcStatusFormatEscapes muttrcEscape
+HiLink muttrcStatusFormatConditionals muttrcFormatConditionals2
+HiLink muttrcPGPGetKeysFormatStr	muttrcString
+HiLink muttrcPGPGetKeysFormatEscapes muttrcEscape
+HiLink muttrcSmimeFormatStr	muttrcString
+HiLink muttrcSmimeFormatEscapes muttrcEscape
+HiLink muttrcSmimeFormatConditionals muttrcFormatConditionals2
+HiLink muttrcTimeEscapes	muttrcEscape
+HiLink muttrcPGPTimeEscapes	muttrcEscape
+HiLink muttrcStrftimeEscapes	Type
+HiLink muttrcStrftimeFormatStr muttrcString
+HiLink muttrcFormatErrors Error
 
-  HiLink muttrcBindFunctionNL	SpecialChar
-  HiLink muttrcBindKeyNL	SpecialChar
-  HiLink muttrcBindMenuListNL	SpecialChar
-  HiLink muttrcMacroDescrNL	SpecialChar
-  HiLink muttrcMacroBodyNL	SpecialChar
-  HiLink muttrcMacroKeyNL	SpecialChar
-  HiLink muttrcMacroMenuListNL	SpecialChar
-  HiLink muttrcColorMatchCountNL SpecialChar
-  HiLink muttrcColorNL		SpecialChar
-  HiLink muttrcColorRXNL	SpecialChar
-  HiLink muttrcColorBGNL	SpecialChar
-  HiLink muttrcColorFGNL	SpecialChar
-  HiLink muttrcAliasNameNL	SpecialChar
-  HiLink muttrcAliasENNL	SpecialChar
-  HiLink muttrcAliasNL		SpecialChar
-  HiLink muttrcUnAliasNL	SpecialChar
-  HiLink muttrcAliasGroupDefNL	SpecialChar
-  HiLink muttrcAliasEncEmailNL	SpecialChar
-  HiLink muttrcPatternNL	SpecialChar
-  HiLink muttrcUnColorPatNL	SpecialChar
-  HiLink muttrcUnColorAPNL	SpecialChar
-  HiLink muttrcUnColorIndexNL	SpecialChar
-  HiLink muttrcStringNL		SpecialChar
+HiLink muttrcBindFunctionNL	SpecialChar
+HiLink muttrcBindKeyNL	SpecialChar
+HiLink muttrcBindMenuListNL	SpecialChar
+HiLink muttrcMacroDescrNL	SpecialChar
+HiLink muttrcMacroBodyNL	SpecialChar
+HiLink muttrcMacroKeyNL	SpecialChar
+HiLink muttrcMacroMenuListNL	SpecialChar
+HiLink muttrcColorMatchCountNL SpecialChar
+HiLink muttrcColorNL		SpecialChar
+HiLink muttrcColorRXNL	SpecialChar
+HiLink muttrcColorBGNL	SpecialChar
+HiLink muttrcColorFGNL	SpecialChar
+HiLink muttrcAliasNameNL	SpecialChar
+HiLink muttrcAliasENNL	SpecialChar
+HiLink muttrcAliasNL		SpecialChar
+HiLink muttrcUnAliasNL	SpecialChar
+HiLink muttrcAliasGroupDefNL	SpecialChar
+HiLink muttrcAliasEncEmailNL	SpecialChar
+HiLink muttrcPatternNL	SpecialChar
+HiLink muttrcUnColorPatNL	SpecialChar
+HiLink muttrcUnColorAPNL	SpecialChar
+HiLink muttrcUnColorIndexNL	SpecialChar
+HiLink muttrcStringNL		SpecialChar
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "muttrc"
 

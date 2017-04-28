@@ -6,11 +6,8 @@
 "		Since DMAP shares some traits with fortran, this syntax file
 "		is based on the fortran.vim syntax file.
 "----------------------------------------------------------------------
-" Remove any old syntax stuff hanging around
-"syn clear
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 " DMAP is not case dependent
@@ -156,37 +153,30 @@ syn region nastranBulkData start=+ *[Bb][Uu][Ll][Kk] *$+ end=+^ [Ee][Nn][Dd] *[D
 syn keyword nastranUtilCard ECHOON ECHOOFF INCLUDE PARAM
 
 
-if version >= 508 || !exists("did_nastran_syntax_inits")
-  if version < 508
-     let did_nastran_syntax_inits = 1
-     command -nargs=+ HiLink hi link <args>
-  else
-     command -nargs=+ HiLink hi link <args>
-  endif
-  " The default methods for highlighting.  Can be overridden later
-  HiLink nastranDmapexecmod	     Statement
-  HiLink nastranDmapType	     Type
-  HiLink nastranDmapPreCondit	     Error
-  HiLink nastranDmapUtilmod	     PreProc
-  HiLink nastranDmapMatmod	     nastranDmapUtilmod
-  HiLink nastranDmapString	     String
-  HiLink nastranDmapNumber	     Constant
-  HiLink nastranDmapFloat	     nastranDmapNumber
-  HiLink nastranDmapInitTab	     nastranDmapNumber
-  HiLink nastranDmapTab		     nastranDmapNumber
-  HiLink nastranDmapLogical	     nastranDmapExecmod
-  HiLink nastranDmapImplicit	     Identifier
-  HiLink nastranDmapComment	     Comment
-  HiLink nastranDmapRepeat	     nastranDmapexecmod
-  HiLink nastranNastranCard	     nastranDmapPreCondit
-  HiLink nastranECSCard		     nastranDmapUtilmod
-  HiLink nastranFMSCard		     nastranNastranCard
-  HiLink nastranCC		     nastranDmapexecmod
-  HiLink nastranDelimiter	     Special
-  HiLink nastranBulkData	     nastranDmapType
-  HiLink nastranUtilCard	     nastranDmapexecmod
-  delcommand HiLink
-endif
+command -nargs=+ HiLink hi link <args>
+" The default methods for highlighting.  Can be overridden later
+HiLink nastranDmapexecmod	     Statement
+HiLink nastranDmapType	     Type
+HiLink nastranDmapPreCondit	     Error
+HiLink nastranDmapUtilmod	     PreProc
+HiLink nastranDmapMatmod	     nastranDmapUtilmod
+HiLink nastranDmapString	     String
+HiLink nastranDmapNumber	     Constant
+HiLink nastranDmapFloat	     nastranDmapNumber
+HiLink nastranDmapInitTab	     nastranDmapNumber
+HiLink nastranDmapTab		     nastranDmapNumber
+HiLink nastranDmapLogical	     nastranDmapExecmod
+HiLink nastranDmapImplicit	     Identifier
+HiLink nastranDmapComment	     Comment
+HiLink nastranDmapRepeat	     nastranDmapexecmod
+HiLink nastranNastranCard	     nastranDmapPreCondit
+HiLink nastranECSCard		     nastranDmapUtilmod
+HiLink nastranFMSCard		     nastranNastranCard
+HiLink nastranCC		     nastranDmapexecmod
+HiLink nastranDelimiter	     Special
+HiLink nastranBulkData	     nastranDmapType
+HiLink nastranUtilCard	     nastranDmapexecmod
+delcommand HiLink
 
 let b:current_syntax = "nastran"
 

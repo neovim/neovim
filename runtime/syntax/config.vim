@@ -11,11 +11,8 @@
 " script, so I wrote this quick and dirty patch.
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -37,28 +34,20 @@ syn region  configstring matchgroup=configfunction start="AC_MSG_[A-Z]*\ze(\[" m
 syn region  configstring matchgroup=configfunction start="AC_MSG_[A-Z]*\ze([^[]" matchgroup=configdelimiter end=")" contains=configdelimiter,@Spell
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_config_syntax_inits")
-  if version < 508
-    let did_config_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink configdelimiter Delimiter
-  HiLink configoperator  Operator
-  HiLink configcomment   Comment
-  HiLink configDnl  	 Comment
-  HiLink configfunction  Function
-  HiLink confignumber    Number
-  HiLink configkeyword   Keyword
-  HiLink configspecial   Special
-  HiLink configstring    String
+HiLink configdelimiter Delimiter
+HiLink configoperator  Operator
+HiLink configcomment   Comment
+HiLink configDnl  	 Comment
+HiLink configfunction  Function
+HiLink confignumber    Number
+HiLink configkeyword   Keyword
+HiLink configspecial   Special
+HiLink configstring    String
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "config"
 

@@ -10,15 +10,12 @@
 " Last Change:	2012 Oct 05
 " 		2013 Jun 12: adjusted javaScriptRegexpString (Kevin Locke)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
 " tuning parameters:
 " unlet javaScript_fold
 
 if !exists("main_syntax")
-  if version < 600
-    syntax clear
-  elseif exists("b:current_syntax")
+  " quit when a syntax file was already loaded
+  if exists("b:current_syntax")
     finish
   endif
   let main_syntax = 'javascript'
@@ -28,11 +25,6 @@ endif
 
 let s:cpo_save = &cpo
 set cpo&vim
-
-" Drop fold if it set but vim doesn't support it.
-if version < 600 && exists("javaScript_fold")
-  unlet javaScript_fold
-endif
 
 
 syn keyword javaScriptCommentTodo      TODO FIXME XXX TBD contained
@@ -87,51 +79,43 @@ if main_syntax == "javascript"
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_javascript_syn_inits")
-  if version < 508
-    let did_javascript_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink javaScriptComment		Comment
-  HiLink javaScriptLineComment		Comment
-  HiLink javaScriptCommentTodo		Todo
-  HiLink javaScriptSpecial		Special
-  HiLink javaScriptStringS		String
-  HiLink javaScriptStringD		String
-  HiLink javaScriptCharacter		Character
-  HiLink javaScriptSpecialCharacter	javaScriptSpecial
-  HiLink javaScriptNumber		javaScriptValue
-  HiLink javaScriptConditional		Conditional
-  HiLink javaScriptRepeat		Repeat
-  HiLink javaScriptBranch		Conditional
-  HiLink javaScriptOperator		Operator
-  HiLink javaScriptType			Type
-  HiLink javaScriptStatement		Statement
-  HiLink javaScriptFunction		Function
-  HiLink javaScriptBraces		Function
-  HiLink javaScriptError		Error
-  HiLink javaScrParenError		javaScriptError
-  HiLink javaScriptNull			Keyword
-  HiLink javaScriptBoolean		Boolean
-  HiLink javaScriptRegexpString		String
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
+HiLink javaScriptComment		Comment
+HiLink javaScriptLineComment		Comment
+HiLink javaScriptCommentTodo		Todo
+HiLink javaScriptSpecial		Special
+HiLink javaScriptStringS		String
+HiLink javaScriptStringD		String
+HiLink javaScriptCharacter		Character
+HiLink javaScriptSpecialCharacter	javaScriptSpecial
+HiLink javaScriptNumber		javaScriptValue
+HiLink javaScriptConditional		Conditional
+HiLink javaScriptRepeat		Repeat
+HiLink javaScriptBranch		Conditional
+HiLink javaScriptOperator		Operator
+HiLink javaScriptType			Type
+HiLink javaScriptStatement		Statement
+HiLink javaScriptFunction		Function
+HiLink javaScriptBraces		Function
+HiLink javaScriptError		Error
+HiLink javaScrParenError		javaScriptError
+HiLink javaScriptNull			Keyword
+HiLink javaScriptBoolean		Boolean
+HiLink javaScriptRegexpString		String
 
-  HiLink javaScriptIdentifier		Identifier
-  HiLink javaScriptLabel		Label
-  HiLink javaScriptException		Exception
-  HiLink javaScriptMessage		Keyword
-  HiLink javaScriptGlobal		Keyword
-  HiLink javaScriptMember		Keyword
-  HiLink javaScriptDeprecated		Exception 
-  HiLink javaScriptReserved		Keyword
-  HiLink javaScriptDebug		Debug
-  HiLink javaScriptConstant		Label
+HiLink javaScriptIdentifier		Identifier
+HiLink javaScriptLabel		Label
+HiLink javaScriptException		Exception
+HiLink javaScriptMessage		Keyword
+HiLink javaScriptGlobal		Keyword
+HiLink javaScriptMember		Keyword
+HiLink javaScriptDeprecated		Exception 
+HiLink javaScriptReserved		Keyword
+HiLink javaScriptDebug		Debug
+HiLink javaScriptConstant		Label
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "javascript"
 if main_syntax == 'javascript'

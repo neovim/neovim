@@ -15,20 +15,13 @@
 "		in your vimrc file or filetype.vim
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " Read the C syntax to start with
-if version < 600
-  so <sfile>:p:h/c.vim
-else
-  runtime! syntax/c.vim
-endif
+runtime! syntax/c.vim
 
 
 " FIXME: uses and changes several clusters defined in c.vim
@@ -199,61 +192,53 @@ syn cluster	cPreProcGroup	add=@splintAllStuff
 syn cluster	cMultiGroup	add=@splintAllStuff
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_splint_syntax_inits")
-  if version < 508
-    let did_splint_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink splintShortAnn		splintAnnotation
-  HiLink splintAnnotation	Comment
-  HiLink splintAnnError		splintError
-  HiLink splintAnnError2	splintError
-  HiLink splintFlag		SpecialComment
-  HiLink splintGlobalFlag	splintError
-  HiLink splintSpecialAnnot	splintAnnKey
-  HiLink splintStateAnnot	splintAnnKey
-  HiLink splintSpecTag		splintAnnKey
-  HiLink splintModifies		splintAnnKey
-  HiLink splintRequires		splintAnnKey
-  HiLink splintGlobals		splintAnnKey
-  HiLink splintGlobitem		Constant
-  HiLink splintGlobannot	splintAnnKey
-  HiLink splintWarning		splintAnnKey
-  HiLink splintModitem		Constant
-  HiLink splintIter		splintAnnKey
-  HiLink splintConst		splintAnnKey
-  HiLink splintAlt		splintAnnKey
-  HiLink splintType		splintAnnKey
-  HiLink splintGlobalType	splintAnnKey
-  HiLink splintMemMgm		splintAnnKey
-  HiLink splintAlias		splintAnnKey
-  HiLink splintExposure		splintAnnKey
-  HiLink splintDefState		splintAnnKey
-  HiLink splintGlobState	splintAnnKey
-  HiLink splintNullState	splintAnnKey
-  HiLink splintNullPred		splintAnnKey
-  HiLink splintExit		splintAnnKey
-  HiLink splintExec		splintAnnKey
-  HiLink splintSef		splintAnnKey
-  HiLink splintDecl		splintAnnKey
-  HiLink splintCase		splintAnnKey
-  HiLink splintBreak		splintAnnKey
-  HiLink splintUnreach		splintAnnKey
-  HiLink splintSpecFunc		splintAnnKey
-  HiLink splintErrSupp		splintAnnKey
-  HiLink splintTypeAcc		splintAnnKey
-  HiLink splintMacro		splintAnnKey
-  HiLink splintSpecType		splintAnnKey
-  HiLink splintAnnKey		Type
-  HiLink splintError		Error
+HiLink splintShortAnn		splintAnnotation
+HiLink splintAnnotation	Comment
+HiLink splintAnnError		splintError
+HiLink splintAnnError2	splintError
+HiLink splintFlag		SpecialComment
+HiLink splintGlobalFlag	splintError
+HiLink splintSpecialAnnot	splintAnnKey
+HiLink splintStateAnnot	splintAnnKey
+HiLink splintSpecTag		splintAnnKey
+HiLink splintModifies		splintAnnKey
+HiLink splintRequires		splintAnnKey
+HiLink splintGlobals		splintAnnKey
+HiLink splintGlobitem		Constant
+HiLink splintGlobannot	splintAnnKey
+HiLink splintWarning		splintAnnKey
+HiLink splintModitem		Constant
+HiLink splintIter		splintAnnKey
+HiLink splintConst		splintAnnKey
+HiLink splintAlt		splintAnnKey
+HiLink splintType		splintAnnKey
+HiLink splintGlobalType	splintAnnKey
+HiLink splintMemMgm		splintAnnKey
+HiLink splintAlias		splintAnnKey
+HiLink splintExposure		splintAnnKey
+HiLink splintDefState		splintAnnKey
+HiLink splintGlobState	splintAnnKey
+HiLink splintNullState	splintAnnKey
+HiLink splintNullPred		splintAnnKey
+HiLink splintExit		splintAnnKey
+HiLink splintExec		splintAnnKey
+HiLink splintSef		splintAnnKey
+HiLink splintDecl		splintAnnKey
+HiLink splintCase		splintAnnKey
+HiLink splintBreak		splintAnnKey
+HiLink splintUnreach		splintAnnKey
+HiLink splintSpecFunc		splintAnnKey
+HiLink splintErrSupp		splintAnnKey
+HiLink splintTypeAcc		splintAnnKey
+HiLink splintMacro		splintAnnKey
+HiLink splintSpecType		splintAnnKey
+HiLink splintAnnKey		Type
+HiLink splintError		Error
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "splint"
 

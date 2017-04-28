@@ -126,41 +126,33 @@ syn keyword dtdTodo contained TODO FIXME XXX
 syn sync lines=250
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_dtd_syn_inits")
-    if version < 508
-	let did_dtd_syn_inits = 1
-	command -nargs=+ HiLink hi link <args>
-    else
-	command -nargs=+ HiLink hi def link <args>
-    endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-    " The default highlighting.
-    HiLink dtdFunction		Function
-    HiLink dtdTag		Normal
-    HiLink dtdType		Type
-    HiLink dtdAttrType		dtdType
-    HiLink dtdAttrDef		dtdType
-    HiLink dtdConstant		Constant
-    HiLink dtdString		dtdConstant
-    HiLink dtdEnum		dtdConstant
-    HiLink dtdCard		dtdFunction
+" The default highlighting.
+HiLink dtdFunction		Function
+HiLink dtdTag		Normal
+HiLink dtdType		Type
+HiLink dtdAttrType		dtdType
+HiLink dtdAttrDef		dtdType
+HiLink dtdConstant		Constant
+HiLink dtdString		dtdConstant
+HiLink dtdEnum		dtdConstant
+HiLink dtdCard		dtdFunction
 
-    HiLink dtdEntity		Statement
-    HiLink dtdEntityPunct	dtdType
-    HiLink dtdParamEntityInst	dtdConstant
-    HiLink dtdParamEntityPunct	dtdType
-    HiLink dtdParamEntityDecl	dtdType
-    HiLink dtdParamEntityDPunct dtdComment
+HiLink dtdEntity		Statement
+HiLink dtdEntityPunct	dtdType
+HiLink dtdParamEntityInst	dtdConstant
+HiLink dtdParamEntityPunct	dtdType
+HiLink dtdParamEntityDecl	dtdType
+HiLink dtdParamEntityDPunct dtdComment
 
-    HiLink dtdComment		Comment
-    HiLink dtdTagName		Statement
-    HiLink dtdError		Error
-    HiLink dtdTodo		Todo
+HiLink dtdComment		Comment
+HiLink dtdTagName		Statement
+HiLink dtdError		Error
+HiLink dtdTodo		Todo
 
-    delcommand HiLink
-endif
+delcommand HiLink
 
 let &cpo = s:dtd_cpo_save
 unlet s:dtd_cpo_save

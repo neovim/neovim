@@ -6,11 +6,8 @@
 " URL:		http://www.eandem.co.uk/mrw/vim
 "
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -18,11 +15,7 @@ endif
 syn case ignore
 
 " As per current users documentation
-if version < 600
-  set isk=@,48-57,?,!,.,',+,-,*,&,\|,=,_,~
-else
-  setlocal isk=@,48-57,?,!,.,',+,-,*,&,\|,=,_,~
-endif
+setlocal isk=@,48-57,?,!,.,',+,-,*,&,\|,=,_,~
 
 " Yer TODO highlighter
 syn keyword	rebolTodo	contained TODO
@@ -145,65 +138,57 @@ syn keyword     rebolConstant   none
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_rebol_syntax_inits")
-  if version < 508
-    let did_rebol_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink rebolTodo     Todo
+HiLink rebolTodo     Todo
 
-  HiLink rebolStatement Statement
-  HiLink rebolLabel	Label
-  HiLink rebolConditional Conditional
-  HiLink rebolRepeat	Repeat
+HiLink rebolStatement Statement
+HiLink rebolLabel	Label
+HiLink rebolConditional Conditional
+HiLink rebolRepeat	Repeat
 
-  HiLink rebolOperator	Operator
-  HiLink rebolLogicOperator rebolOperator
-  HiLink rebolLogicFunction rebolLogicOperator
-  HiLink rebolMathOperator rebolOperator
-  HiLink rebolMathFunction rebolMathOperator
-  HiLink rebolBinaryOperator rebolOperator
-  HiLink rebolBinaryFunction rebolBinaryOperator
+HiLink rebolOperator	Operator
+HiLink rebolLogicOperator rebolOperator
+HiLink rebolLogicFunction rebolLogicOperator
+HiLink rebolMathOperator rebolOperator
+HiLink rebolMathFunction rebolMathOperator
+HiLink rebolBinaryOperator rebolOperator
+HiLink rebolBinaryFunction rebolBinaryOperator
 
-  HiLink rebolType     Type
-  HiLink rebolTypeFunction rebolOperator
+HiLink rebolType     Type
+HiLink rebolTypeFunction rebolOperator
 
-  HiLink rebolWord     Identifier
-  HiLink rebolWordPath rebolWord
-  HiLink rebolFunction	Function
+HiLink rebolWord     Identifier
+HiLink rebolWordPath rebolWord
+HiLink rebolFunction	Function
 
-  HiLink rebolCharacter Character
-  HiLink rebolSpecialCharacter SpecialChar
-  HiLink rebolString	String
+HiLink rebolCharacter Character
+HiLink rebolSpecialCharacter SpecialChar
+HiLink rebolString	String
 
-  HiLink rebolNumber   Number
-  HiLink rebolInteger  rebolNumber
-  HiLink rebolDecimal  rebolNumber
-  HiLink rebolTime     rebolNumber
-  HiLink rebolDate     rebolNumber
-  HiLink rebolMoney    rebolNumber
-  HiLink rebolBinary   rebolNumber
-  HiLink rebolEmail    rebolString
-  HiLink rebolFile     rebolString
-  HiLink rebolURL      rebolString
-  HiLink rebolIssue    rebolNumber
-  HiLink rebolTuple    rebolNumber
-  HiLink rebolFloat    Float
-  HiLink rebolBoolean  Boolean
+HiLink rebolNumber   Number
+HiLink rebolInteger  rebolNumber
+HiLink rebolDecimal  rebolNumber
+HiLink rebolTime     rebolNumber
+HiLink rebolDate     rebolNumber
+HiLink rebolMoney    rebolNumber
+HiLink rebolBinary   rebolNumber
+HiLink rebolEmail    rebolString
+HiLink rebolFile     rebolString
+HiLink rebolURL      rebolString
+HiLink rebolIssue    rebolNumber
+HiLink rebolTuple    rebolNumber
+HiLink rebolFloat    Float
+HiLink rebolBoolean  Boolean
 
-  HiLink rebolConstant Constant
+HiLink rebolConstant Constant
 
-  HiLink rebolComment	Comment
+HiLink rebolComment	Comment
 
-  HiLink rebolError	Error
+HiLink rebolError	Error
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 if exists("my_rebol_file")
   if file_readable(expand(my_rebol_file))

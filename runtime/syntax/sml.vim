@@ -8,11 +8,8 @@
 "               2002 Jun 02 - Fixed small typo  (MM)
 "               2001 Nov 20 - Fixed small highlighting bug with modules (MM)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -168,62 +165,54 @@ syn sync match smlSigSync     grouphere  smlSig     "\<sig\>"
 syn sync match smlSigSync     groupthere smlSig     "\<end\>"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sml_syntax_inits")
-  if version < 508
-    let did_sml_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink smlBraceErr	 Error
-  HiLink smlBrackErr	 Error
-  HiLink smlParenErr	 Error
+HiLink smlBraceErr	 Error
+HiLink smlBrackErr	 Error
+HiLink smlParenErr	 Error
 
-  HiLink smlCommentErr	 Error
+HiLink smlCommentErr	 Error
 
-  HiLink smlEndErr	 Error
-  HiLink smlThenErr	 Error
+HiLink smlEndErr	 Error
+HiLink smlThenErr	 Error
 
-  HiLink smlCharErr	 Error
+HiLink smlCharErr	 Error
 
-  HiLink smlComment	 Comment
+HiLink smlComment	 Comment
 
-  HiLink smlModPath	 Include
-  HiLink smlModule	 Include
-  HiLink smlModParam1	 Include
-  HiLink smlModType	 Include
-  HiLink smlMPRestr3	 Include
-  HiLink smlFullMod	 Include
-  HiLink smlModTypeRestr Include
-  HiLink smlWith	 Include
-  HiLink smlMTDef	 Include
+HiLink smlModPath	 Include
+HiLink smlModule	 Include
+HiLink smlModParam1	 Include
+HiLink smlModType	 Include
+HiLink smlMPRestr3	 Include
+HiLink smlFullMod	 Include
+HiLink smlModTypeRestr Include
+HiLink smlWith	 Include
+HiLink smlMTDef	 Include
 
-  HiLink smlConstructor  Constant
+HiLink smlConstructor  Constant
 
-  HiLink smlModPreRHS	 Keyword
-  HiLink smlMPRestr2	 Keyword
-  HiLink smlKeyword	 Keyword
-  HiLink smlFunDef	 Keyword
-  HiLink smlRefAssign	 Keyword
-  HiLink smlKeyChar	 Keyword
-  HiLink smlAnyVar	 Keyword
-  HiLink smlTopStop	 Keyword
-  HiLink smlOperator	 Keyword
+HiLink smlModPreRHS	 Keyword
+HiLink smlMPRestr2	 Keyword
+HiLink smlKeyword	 Keyword
+HiLink smlFunDef	 Keyword
+HiLink smlRefAssign	 Keyword
+HiLink smlKeyChar	 Keyword
+HiLink smlAnyVar	 Keyword
+HiLink smlTopStop	 Keyword
+HiLink smlOperator	 Keyword
 
-  HiLink smlBoolean	 Boolean
-  HiLink smlCharacter	 Character
-  HiLink smlNumber	 Number
-  HiLink smlReal	 Float
-  HiLink smlString	 String
-  HiLink smlType	 Type
-  HiLink smlTodo	 Todo
-  HiLink smlEncl	 Keyword
+HiLink smlBoolean	 Boolean
+HiLink smlCharacter	 Character
+HiLink smlNumber	 Number
+HiLink smlReal	 Float
+HiLink smlString	 String
+HiLink smlType	 Type
+HiLink smlTodo	 Todo
+HiLink smlEncl	 Keyword
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "sml"
 

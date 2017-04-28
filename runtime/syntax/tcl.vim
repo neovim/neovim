@@ -10,11 +10,8 @@
 " Version:	1.14
 " URL:		http://bitbucket.org/taylor_venable/metasyntax/src/tip/Config/vim/syntax/tcl.vim
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -238,49 +235,41 @@ syn region  tclComment		start=/;\s*\#/hs=s+1 skip="\\$" end="$" contains=tclTodo
 "syn sync ccomment tclComment
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_tcl_syntax_inits")
-  if version < 508
-    let did_tcl_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink tcltkSwitch		Special
-  HiLink tclExpand		Special
-  HiLink tclLabel		Label
-  HiLink tclConditional		Conditional
-  HiLink tclRepeat		Repeat
-  HiLink tclNumber		Number
-  HiLink tclError		Error
-  HiLink tclCommand		Statement
-  HiLink tclProcCommand		Type
-  HiLink tclString		String
-  HiLink tclComment		Comment
-  HiLink tclSpecial		Special
-  HiLink tclTodo		Todo
-  " Below here are the commands and their options.
-  HiLink tcltkCommandColor	Statement
-  HiLink tcltkWidgetColor	Structure
-  HiLink tclLineContinue	WarningMsg
+HiLink tcltkSwitch		Special
+HiLink tclExpand		Special
+HiLink tclLabel		Label
+HiLink tclConditional		Conditional
+HiLink tclRepeat		Repeat
+HiLink tclNumber		Number
+HiLink tclError		Error
+HiLink tclCommand		Statement
+HiLink tclProcCommand		Type
+HiLink tclString		String
+HiLink tclComment		Comment
+HiLink tclSpecial		Special
+HiLink tclTodo		Todo
+" Below here are the commands and their options.
+HiLink tcltkCommandColor	Statement
+HiLink tcltkWidgetColor	Structure
+HiLink tclLineContinue	WarningMsg
 if exists('g:tcl_warn_continuation')
-  HiLink tclNotLineContinue	ErrorMsg
+HiLink tclNotLineContinue	ErrorMsg
 endif
-  HiLink tcltkStringSwitch	Special
-  HiLink tcltkArraySwitch	Special
-  HiLink tcltkLsortSwitch	Special
-  HiLink tcltkPackSwitch	Special
-  HiLink tcltkPackConfSwitch	Special
-  HiLink tcltkMaths		Special
-  HiLink tcltkNamespaceSwitch	Special
-  HiLink tcltkWidgetSwitch	Special
-  HiLink tcltkPackConfColor	Identifier
-  HiLink tclVarRef		Identifier
+HiLink tcltkStringSwitch	Special
+HiLink tcltkArraySwitch	Special
+HiLink tcltkLsortSwitch	Special
+HiLink tcltkPackSwitch	Special
+HiLink tcltkPackConfSwitch	Special
+HiLink tcltkMaths		Special
+HiLink tcltkNamespaceSwitch	Special
+HiLink tcltkWidgetSwitch	Special
+HiLink tcltkPackConfColor	Identifier
+HiLink tclVarRef		Identifier
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "tcl"
 

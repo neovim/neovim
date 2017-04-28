@@ -9,9 +9,8 @@
 "   David Necas (Yeti) <yeti@physics.muni.cz>
 "   Stefano Zacchiroli <zack@debian.org>
 
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -50,38 +49,31 @@ syn match resolvOption /\<\%(ndots\|timeout\|attempts\):\d\+\>/ contained contai
 " Additional errors
 syn match resolvError /^search .\{257,}/
 
-if version >= 508 || !exists("did_config_syntax_inits")
-	if version < 508
-		let did_config_syntax_inits = 1
-		command! -nargs=+ HiLink hi link <args>
-	else
-		command! -nargs=+ HiLink hi def link <args>
-	endif
+command! -nargs=+ HiLink hi def link <args>
 
-	HiLink resolvIP Number
-	HiLink resolvIPNetmask Number
-	HiLink resolvHostname String
-	HiLink resolvOption String
+HiLink resolvIP Number
+HiLink resolvIPNetmask Number
+HiLink resolvHostname String
+HiLink resolvOption String
 
-	HiLink resolvIPNameserver Number
-	HiLink resolvHostnameSearch String
-	HiLink resolvIPNetmaskSortList Number
+HiLink resolvIPNameserver Number
+HiLink resolvHostnameSearch String
+HiLink resolvIPNetmaskSortList Number
 
-	HiLink resolvNameServer Identifier
-	HiLink resolvLwserver Identifier
-	HiLink resolvDomain Identifier
-	HiLink resolvSearch Identifier
-	HiLink resolvSortList Identifier
-	HiLink resolvOptions Identifier
+HiLink resolvNameServer Identifier
+HiLink resolvLwserver Identifier
+HiLink resolvDomain Identifier
+HiLink resolvSearch Identifier
+HiLink resolvSortList Identifier
+HiLink resolvOptions Identifier
 
-	HiLink resolvComment Comment
-	HiLink resolvOperator Operator
-	HiLink resolvError Error
-	HiLink resolvIPError Error
-	HiLink resolvIPSpecial Special
+HiLink resolvComment Comment
+HiLink resolvOperator Operator
+HiLink resolvError Error
+HiLink resolvIPError Error
+HiLink resolvIPSpecial Special
 
-	delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "resolv"
 

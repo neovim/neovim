@@ -9,9 +9,8 @@
 " Limitations:	Comments must start with either % or //
 "		(preferably %, Knuth-Style)
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -119,44 +118,36 @@ syn match mmixRegister		"r[A-Z]"
 syn keyword mmixRegister	rBB rTT rWW rXX rYY rZZ
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_mmix_syntax_inits")
-  if version < 508
-    let did_mmix_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink mmixAt		Type
-  HiLink mmixPseudo	Type
-  HiLink mmixRegister	Special
-  HiLink mmixSegments	Type
+" The default methods for highlighting.  Can be overridden later
+HiLink mmixAt		Type
+HiLink mmixPseudo	Type
+HiLink mmixRegister	Special
+HiLink mmixSegments	Type
 
-  HiLink mmixLabel	Special
-  HiLink mmixComment	Comment
-  HiLink mmixOpcode	Keyword
+HiLink mmixLabel	Special
+HiLink mmixComment	Comment
+HiLink mmixOpcode	Keyword
 
-  HiLink hexNumber	Number
-  HiLink decNumber	Number
-  HiLink octNumber	Number
+HiLink hexNumber	Number
+HiLink decNumber	Number
+HiLink octNumber	Number
 
-  HiLink mmixString	String
-  HiLink mmixChar	String
+HiLink mmixString	String
+HiLink mmixChar	String
 
-  HiLink mmixType	Type
-  HiLink mmixIdentifier	Normal
-  HiLink mmixSpecialComment Comment
+HiLink mmixType	Type
+HiLink mmixIdentifier	Normal
+HiLink mmixSpecialComment Comment
 
-  " My default color overrides:
-  " hi mmixSpecialComment ctermfg=red
-  "hi mmixLabel ctermfg=lightcyan
-  " hi mmixType ctermbg=black ctermfg=brown
+" My default color overrides:
+" hi mmixSpecialComment ctermfg=red
+"hi mmixLabel ctermfg=lightcyan
+" hi mmixType ctermbg=black ctermfg=brown
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "mmix"
 

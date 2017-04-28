@@ -5,11 +5,8 @@
 " LastChange:	8 Dec 2007
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-   syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
    finish
 endif
 
@@ -69,58 +66,50 @@ syn region bPreProc		start="^\s*#\s*\(pragma\>\|line\>\|warning\>\|warn\>\|error
 syn sync ccomment bComment minlines=10
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
+" Only when an item doesn't have highlighting yet
 
-if version >= 508 || !exists("did_b_syntax_inits")
-   if version < 508
-      let did_b_syntax_inits = 1
-      command -nargs=+ HiLink hi link <args>
-   else
-      command -nargs=+ HiLink hi def link <args>
-   endif
+command -nargs=+ HiLink hi def link <args>
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink bLabel	Label
-  HiLink bUserLabel	Label
-  HiLink bConditional	Conditional
-  HiLink bRepeat	Repeat
-  HiLink bLogic	Special
-  HiLink bCharacter	Character
-  HiLink bSpecialCharacter bSpecial
-  HiLink bNumber	Number
-  HiLink bFloat	Float
-  HiLink bOctalError	bError
-  HiLink bParenError	bError
+" The default methods for highlighting.  Can be overridden later
+HiLink bLabel	Label
+HiLink bUserLabel	Label
+HiLink bConditional	Conditional
+HiLink bRepeat	Repeat
+HiLink bLogic	Special
+HiLink bCharacter	Character
+HiLink bSpecialCharacter bSpecial
+HiLink bNumber	Number
+HiLink bFloat	Float
+HiLink bOctalError	bError
+HiLink bParenError	bError
 " HiLink bInParen	bError
-  HiLink bCommentError	bError
-  HiLink bBoolean	Identifier
-  HiLink bConstant	Identifier
-  HiLink bGuard	Identifier
-  HiLink bOperator	Operator
-  HiLink bKeywords	Operator
-  HiLink bOps		Identifier
-  HiLink bStructure	Structure
-  HiLink bStorageClass	StorageClass
-  HiLink bInclude	Include
-  HiLink bPreProc	PreProc
-  HiLink bDefine	Macro
-  HiLink bIncluded	bString
-  HiLink bError	Error
-  HiLink bStatement	Statement
-  HiLink bPreCondit	PreCondit
-  HiLink bType		Type
-  HiLink bCommentError	bError
-  HiLink bCommentString bString
-  HiLink bComment2String bString
-  HiLink bCommentSkip	bComment
-  HiLink bString	String
-  HiLink bComment	Comment
-  HiLink bSpecial	SpecialChar
-  HiLink bTodo		Todo
-  "hi link bIdentifier	Identifier
-  delcommand HiLink
-endif
+HiLink bCommentError	bError
+HiLink bBoolean	Identifier
+HiLink bConstant	Identifier
+HiLink bGuard	Identifier
+HiLink bOperator	Operator
+HiLink bKeywords	Operator
+HiLink bOps		Identifier
+HiLink bStructure	Structure
+HiLink bStorageClass	StorageClass
+HiLink bInclude	Include
+HiLink bPreProc	PreProc
+HiLink bDefine	Macro
+HiLink bIncluded	bString
+HiLink bError	Error
+HiLink bStatement	Statement
+HiLink bPreCondit	PreCondit
+HiLink bType		Type
+HiLink bCommentError	bError
+HiLink bCommentString bString
+HiLink bComment2String bString
+HiLink bCommentSkip	bComment
+HiLink bString	String
+HiLink bComment	Comment
+HiLink bSpecial	SpecialChar
+HiLink bTodo		Todo
+"hi link bIdentifier	Identifier
+delcommand HiLink
 
 let b:current_syntax = "b"
 

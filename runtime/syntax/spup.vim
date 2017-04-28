@@ -17,11 +17,8 @@
 " If you encounter problems or have questions or suggestions, mail me
 
 " Remove old syntax stuff
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -206,74 +203,66 @@ syn sync match spupSyncTitle      grouphere spupTitle      "^TITLE"
 syn sync match spupSyncUnit       grouphere spupUnit       "^UNIT"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_spup_syn_inits")
-    if version < 508
-	let did_spup_syn_inits = 1
-	command -nargs=+ HiLink hi link <args>
-    else
-	command -nargs=+ HiLink hi def link <args>
-    endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-    HiLink spupCdi	    spupSection
-    HiLink spupConditions   spupSection
-    HiLink spupDeclare	    spupSection
-    HiLink spupEstimation   spupSection
-    HiLink spupExternal	    spupSection
-    HiLink spupFlowsheet    spupSection
-    HiLink spupFunction	    spupSection
-    HiLink spupGlobal	    spupSection
-    HiLink spupHomotopy	    spupSection
-    HiLink spupMacro	    spupSection
-    HiLink spupModel	    spupSection
-    HiLink spupOperation    spupSection
-    HiLink spupOptions	    spupSection
-    HiLink spupProcedure    spupSection
-    HiLink spupProfiles	    spupSection
-    HiLink spupReport	    spupSection
-    HiLink spupTitle	    spupConstant  " this is correct, truly ;)
-    HiLink spupUnit	    spupSection
+HiLink spupCdi	    spupSection
+HiLink spupConditions   spupSection
+HiLink spupDeclare	    spupSection
+HiLink spupEstimation   spupSection
+HiLink spupExternal	    spupSection
+HiLink spupFlowsheet    spupSection
+HiLink spupFunction	    spupSection
+HiLink spupGlobal	    spupSection
+HiLink spupHomotopy	    spupSection
+HiLink spupMacro	    spupSection
+HiLink spupModel	    spupSection
+HiLink spupOperation    spupSection
+HiLink spupOptions	    spupSection
+HiLink spupProcedure    spupSection
+HiLink spupProfiles	    spupSection
+HiLink spupReport	    spupSection
+HiLink spupTitle	    spupConstant  " this is correct, truly ;)
+HiLink spupUnit	    spupSection
 
-    HiLink spupCdiSubs	      spupSubs
-    HiLink spupConditionsSubs spupSubs
-    HiLink spupDeclareSubs    spupSubs
-    HiLink spupEstimationSubs spupSubs
-    HiLink spupExternalSubs   spupSubs
-    HiLink spupFlowsheetSubs  spupSubs
-    HiLink spupFunctionSubs   spupSubs
-    HiLink spupHomotopySubs   spupSubs
-    HiLink spupMacroSubs      spupSubs
-    HiLink spupModelSubs      spupSubs
-    HiLink spupOperationSubs  spupSubs
-    HiLink spupOptionsSubs    spupSubs
-    HiLink spupProcedureSubs  spupSubs
-    HiLink spupReportSubs     spupSubs
-    HiLink spupUnitSubs	      spupSubs
+HiLink spupCdiSubs	      spupSubs
+HiLink spupConditionsSubs spupSubs
+HiLink spupDeclareSubs    spupSubs
+HiLink spupEstimationSubs spupSubs
+HiLink spupExternalSubs   spupSubs
+HiLink spupFlowsheetSubs  spupSubs
+HiLink spupFunctionSubs   spupSubs
+HiLink spupHomotopySubs   spupSubs
+HiLink spupMacroSubs      spupSubs
+HiLink spupModelSubs      spupSubs
+HiLink spupOperationSubs  spupSubs
+HiLink spupOptionsSubs    spupSubs
+HiLink spupProcedureSubs  spupSubs
+HiLink spupReportSubs     spupSubs
+HiLink spupUnitSubs	      spupSubs
 
-    HiLink spupCode	       Normal
-    HiLink spupComment	       Comment
-    HiLink spupComment2	       spupComment
-    HiLink spupConditional     Statement
-    HiLink spupConstant	       Constant
-    HiLink spupError	       Error
-    HiLink spupHelp	       Normal
-    HiLink spupIdentifier      Identifier
-    HiLink spupNumber	       Constant
-    HiLink spupOperator	       Special
-    HiLink spupOpenBrace       spupError
-    HiLink spupSection	       Statement
-    HiLink spupSpecial	       spupTextprocGeneric
-    HiLink spupStreams	       Type
-    HiLink spupString	       Constant
-    HiLink spupSubs	       Statement
-    HiLink spupSymbol	       Special
-    HiLink spupTextprocError   Normal
-    HiLink spupTextprocGeneric PreProc
-    HiLink spupTypes	       Type
+HiLink spupCode	       Normal
+HiLink spupComment	       Comment
+HiLink spupComment2	       spupComment
+HiLink spupConditional     Statement
+HiLink spupConstant	       Constant
+HiLink spupError	       Error
+HiLink spupHelp	       Normal
+HiLink spupIdentifier      Identifier
+HiLink spupNumber	       Constant
+HiLink spupOperator	       Special
+HiLink spupOpenBrace       spupError
+HiLink spupSection	       Statement
+HiLink spupSpecial	       spupTextprocGeneric
+HiLink spupStreams	       Type
+HiLink spupString	       Constant
+HiLink spupSubs	       Statement
+HiLink spupSymbol	       Special
+HiLink spupTextprocError   Normal
+HiLink spupTextprocGeneric PreProc
+HiLink spupTypes	       Type
 
-    delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "spup"
 

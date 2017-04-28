@@ -3,11 +3,8 @@
 " Maintainer:   Vadim Zeitlin <vadim@wxwindows.org>
 " Last Change:  2012 Feb 12 by Thilo Six
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -56,39 +53,31 @@ syn region  msidlSafeArray      start="SAFEARRAY(" end=")" contains=msidlStandar
 syn sync lines=50
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_msidl_syntax_inits")
-  if version < 508
-    let did_msidl_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink msidlInclude		Include
-  HiLink msidlPreProc		PreProc
-  HiLink msidlPreCondit		PreCondit
-  HiLink msidlDefine		Macro
-  HiLink msidlIncluded		String
-  HiLink msidlString		String
-  HiLink msidlComment		Comment
-  HiLink msidlTodo		Todo
-  HiLink msidlSpecial		SpecialChar
-  HiLink msidlLiteral		Number
-  HiLink msidlUUID		Number
+HiLink msidlInclude		Include
+HiLink msidlPreProc		PreProc
+HiLink msidlPreCondit		PreCondit
+HiLink msidlDefine		Macro
+HiLink msidlIncluded		String
+HiLink msidlString		String
+HiLink msidlComment		Comment
+HiLink msidlTodo		Todo
+HiLink msidlSpecial		SpecialChar
+HiLink msidlLiteral		Number
+HiLink msidlUUID		Number
 
-  HiLink msidlImport		Include
-  HiLink msidlEnum		StorageClass
-  HiLink msidlStruct		Structure
-  HiLink msidlTypedef		Typedef
-  HiLink msidlAttribute		StorageClass
+HiLink msidlImport		Include
+HiLink msidlEnum		StorageClass
+HiLink msidlStruct		Structure
+HiLink msidlTypedef		Typedef
+HiLink msidlAttribute		StorageClass
 
-  HiLink msidlStandardType	Type
-  HiLink msidlSafeArray		Type
+HiLink msidlStandardType	Type
+HiLink msidlSafeArray		Type
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "msidl"
 

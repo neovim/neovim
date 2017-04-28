@@ -14,41 +14,24 @@
 
 " pod is, btw, allowed everywhere, which is actually wrong :(
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " source is basically xml, with included html (this is common) and perl bits
-if version < 600
-  so <sfile>:p:h/xml.vim
-else
-  runtime! syntax/xml.vim
-endif
+runtime! syntax/xml.vim
 unlet b:current_syntax
 
 if exists("papp_include_html")
-  if version < 600
-    syn include @PAppHtml <sfile>:p:h/html.vim
-  else
-    syn include @PAppHtml syntax/html.vim
-  endif
+  syn include @PAppHtml syntax/html.vim
   unlet b:current_syntax
   syntax spell default  " added by Bram
 endif
 
-if version < 600
-  syn include @PAppPerl <sfile>:p:h/perl.vim
-else
-  syn include @PAppPerl syntax/perl.vim
-endif
+syn include @PAppPerl syntax/perl.vim
 
-if v:version >= 600
-   syn cluster xmlFoldCluster add=papp_perl,papp_xperl,papp_phtml,papp_pxml,papp_perlPOD
-endif
+syn cluster xmlFoldCluster add=papp_perl,papp_xperl,papp_phtml,papp_pxml,papp_perlPOD
 
 " preprocessor commands
 syn region papp_prep matchgroup=papp_prep start="^#\s*\(if\|elsif\)" end="$" keepend contains=@perlExpr contained

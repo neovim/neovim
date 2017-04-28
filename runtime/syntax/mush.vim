@@ -3,11 +3,8 @@
 " Based on vim Syntax file by: Bek Oberin <gossamer@tertius.net.au>
 " Last Updated: Fri Nov 04 20:28:15 2005
 "
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -185,42 +182,35 @@ syntax keyword mushAttribute use va vb vc vd ve vf vg vh vi vj vk vl vm vn
 syntax keyword mushAttribute vo vp vq vr vs vt vu vv vw vx vy vz
 
 
-if version >= 508 || !exists("did_mush_syntax_inits")
-  if version < 508
-    let did_mush_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink mushAttribute  Constant
-  HiLink mushCommand    Function
-  HiLink mushNumber     Number
-  HiLink mushSetting    PreProc
-  HiLink mushFunction   Statement
-  HiLink mushVariable   Identifier
-  HiLink mushSpecial    Special
-  HiLink mushTodo       Todo
-  HiLink mushFlag       Special
-  HiLink mushIdentifier Identifier
-  HiLink mushDefine     Macro
-  HiLink mushPreProc    PreProc
-  HiLink mushPreProcGroup PreProc 
-  HiLink mushPreCondit PreCondit
-  HiLink mushIncluded cString
-  HiLink  mushInclude Include
+" The default methods for highlighting.  Can be overridden later
+HiLink mushAttribute  Constant
+HiLink mushCommand    Function
+HiLink mushNumber     Number
+HiLink mushSetting    PreProc
+HiLink mushFunction   Statement
+HiLink mushVariable   Identifier
+HiLink mushSpecial    Special
+HiLink mushTodo       Todo
+HiLink mushFlag       Special
+HiLink mushIdentifier Identifier
+HiLink mushDefine     Macro
+HiLink mushPreProc    PreProc
+HiLink mushPreProcGroup PreProc 
+HiLink mushPreCondit PreCondit
+HiLink mushIncluded cString
+HiLink  mushInclude Include
 
 
 
 " Comments
-  HiLink mushCommentStart mushComment
-  HiLink mushComment    Comment
-  HiLink mushCommentString mushString
+HiLink mushCommentStart mushComment
+HiLink mushComment    Comment
+HiLink mushCommentString mushString
 
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "mush"
 

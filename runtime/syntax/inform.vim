@@ -4,10 +4,8 @@
 " URL:		http://www.gowarthomas.com/informvim
 " Last Change:  2006 April 20
 
-" Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -294,13 +292,8 @@ endif
 
 " Handling for different versions of VIM.
 
-if version >= 600
-  setlocal iskeyword+=$
-  command -nargs=+ SynDisplay syntax <args> display
-else
-  set iskeyword+=$
-  command -nargs=+ SynDisplay syntax <args>
-endif
+setlocal iskeyword+=$
+command -nargs=+ SynDisplay syntax <args> display
 
 " Grammar sections.
 
@@ -347,61 +340,54 @@ syn sync maxlines=500
 delcommand SynDisplay
 
 " The default highlighting.
-if version >= 508 || !exists("did_inform_syn_inits")
-  if version < 508
-    let did_inform_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink informDefine		Define
-  HiLink informType		Type
-  HiLink informInclude		Include
-  HiLink informPreCondit	PreCondit
-  HiLink informPreProc		PreProc
-  HiLink informGramPreProc	PreProc
-  HiLink informAsm		Special
-  if !exists("inform_suppress_obsolete")
-    HiLink informAsmObsolete		informError
-    HiLink informKeywordObsolete	informError
-  else
-    HiLink informAsmObsolete		Special
-    HiLink informKeywordObsolete	Keyword
-  endif
-  HiLink informPredicate	Operator
-  HiLink informSysFunc		Identifier
-  HiLink informSysConst		Identifier
-  HiLink informConditional	Conditional
-  HiLink informRepeat		Repeat
-  HiLink informStatement	Statement
-  HiLink informOperator		Operator
-  HiLink informKeyword		Keyword
-  HiLink informGrammar		Keyword
-  HiLink informDictString	String
-  HiLink informNumber		Number
-  HiLink informError		Error
-  HiLink informString		String
-  HiLink informComment		Comment
-  HiLink informAccent		Special
-  HiLink informStringUnicode	Special
-  HiLink informStringCode	Special
-  HiLink informTodo		Todo
-  if !exists("inform_highlight_simple")
-    HiLink informLibAttrib	Identifier
-    HiLink informLibProp	Identifier
-    HiLink informLibObj		Identifier
-    HiLink informLibRoutine	Identifier
-    HiLink informLibVariable	Identifier
-    HiLink informLibConst	Identifier
-    HiLink informLibAction	Identifier
-  endif
-  HiLink informBadDictString	informError
-  HiLink informBadAccent	informError
-  HiLink informBadStrUnicode	informError
-
-  delcommand HiLink
+HiLink informDefine		Define
+HiLink informType		Type
+HiLink informInclude		Include
+HiLink informPreCondit	PreCondit
+HiLink informPreProc		PreProc
+HiLink informGramPreProc	PreProc
+HiLink informAsm		Special
+if !exists("inform_suppress_obsolete")
+HiLink informAsmObsolete		informError
+HiLink informKeywordObsolete	informError
+else
+HiLink informAsmObsolete		Special
+HiLink informKeywordObsolete	Keyword
 endif
+HiLink informPredicate	Operator
+HiLink informSysFunc		Identifier
+HiLink informSysConst		Identifier
+HiLink informConditional	Conditional
+HiLink informRepeat		Repeat
+HiLink informStatement	Statement
+HiLink informOperator		Operator
+HiLink informKeyword		Keyword
+HiLink informGrammar		Keyword
+HiLink informDictString	String
+HiLink informNumber		Number
+HiLink informError		Error
+HiLink informString		String
+HiLink informComment		Comment
+HiLink informAccent		Special
+HiLink informStringUnicode	Special
+HiLink informStringCode	Special
+HiLink informTodo		Todo
+if !exists("inform_highlight_simple")
+HiLink informLibAttrib	Identifier
+HiLink informLibProp	Identifier
+HiLink informLibObj		Identifier
+HiLink informLibRoutine	Identifier
+HiLink informLibVariable	Identifier
+HiLink informLibConst	Identifier
+HiLink informLibAction	Identifier
+endif
+HiLink informBadDictString	informError
+HiLink informBadAccent	informError
+HiLink informBadStrUnicode	informError
+
+delcommand HiLink
 
 let b:current_syntax = "inform"
 

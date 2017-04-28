@@ -3,11 +3,8 @@
 " Maintainer:	Andreas Scherer <andreas.scherer@pobox.com>
 " Last Change:	April 25, 2001
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -157,40 +154,32 @@ syn match mfComment	"%.*$"
 syn sync maxlines=50
 
 " Define the default highlighting
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_mf_syntax_inits")
-  if version < 508
-    let did_mf_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink mfBoolExp	Statement
-  HiLink mfNumExp	Statement
-  HiLink mfInternal	Identifier
-  HiLink mfPairExp	Statement
-  HiLink mfPathExp	Statement
-  HiLink mfPenExp	Statement
-  HiLink mfPicExp	Statement
-  HiLink mfStringExp	Statement
-  HiLink mfCommand	Statement
-  HiLink mfType	Type
-  HiLink mfStatement	Statement
-  HiLink mfDefinition	Statement
-  HiLink mfCondition	Conditional
-  HiLink mfPrimitive	Statement
-  HiLink mfMacro	Macro
-  HiLink mfCoord	Identifier
-  HiLink mfPoint	Identifier
-  HiLink mfNumeric	Number
-  HiLink mfLength	Number
-  HiLink mfComment	Comment
-  HiLink mfString	String
+HiLink mfBoolExp	Statement
+HiLink mfNumExp	Statement
+HiLink mfInternal	Identifier
+HiLink mfPairExp	Statement
+HiLink mfPathExp	Statement
+HiLink mfPenExp	Statement
+HiLink mfPicExp	Statement
+HiLink mfStringExp	Statement
+HiLink mfCommand	Statement
+HiLink mfType	Type
+HiLink mfStatement	Statement
+HiLink mfDefinition	Statement
+HiLink mfCondition	Conditional
+HiLink mfPrimitive	Statement
+HiLink mfMacro	Macro
+HiLink mfCoord	Identifier
+HiLink mfPoint	Identifier
+HiLink mfNumeric	Number
+HiLink mfLength	Number
+HiLink mfComment	Comment
+HiLink mfString	String
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "mf"
 

@@ -4,9 +4,8 @@
 " Last Change: 2015 Oct 24  -> Rename syntax items from Snort -> Hog
 "              2012 Oct 24  -> Originalish release
 
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 

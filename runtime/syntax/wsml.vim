@@ -4,10 +4,8 @@
 " URL:		none
 " Last Change:  2006 Apr 30
 
-" Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -78,45 +76,37 @@ syn match   wsmlSpecial "\\u\d\{4\}"
 syn cluster wsmlTop add=wsmlString,wsmlCharacter,wsmlNumber,wsmlSpecial,wsmlStringError
 
 " Define the default highlighting.
-" " For version 5.7 and earlier: only when not done already
-" " For version 5.8 and later: only when an item doesn't have highlighting yet
- if version >= 508 || !exists("did_wsml_syn_inits")
-   if version < 508
-       let did_wsml_syn_inits = 1
-       command -nargs=+ HiLink hi link <args>
-   else
-       command -nargs=+ HiLink hi def link <args>
-   endif              
-   HiLink wsmlHeader			TypeDef
-   HiLink wsmlNamespace			TypeDef
-   HiLink wsmlOntology			Statement
-   HiLink wsmlAxiom			TypeDef
-   HiLink wsmlService			TypeDef
-   HiLink wsmlNFP			TypeDef
-   HiLink wsmlTopLevel			TypeDef
-   HiLink wsmlMediation			TypeDef 
-   HiLink wsmlBehavioral		TypeDef
-   HiLink wsmlChoreographyPri		TypeDef
-   HiLink wsmlChoreographySec		Operator
-   HiLink wsmlChoreographyTer		Special
-   HiLink wsmlString			String
-   HiLink wsmlIdentifier		Normal 
-   HiLink wsmlSqName                     Normal
-   HiLink wsmlVariable			Define
-   HiLink wsmlKeywordsInsideLEs		Operator
-   HiLink wsmlOperator			Operator
-   HiLink wsmlBrace			Operator
-   HiLink wsmlCharacter			Character
-   HiLink wsmlNumber			Number
-   HiLink wsmlDataTypes			Special
-   HiLink wsmlComment			Comment
-   HiLink wsmlDocComment		Comment
-   HiLink wsmlLineComment		Comment
-   HiLink wsmlTodo			Todo
-   HiLink wsmlFixMe			Error
-   HiLink wsmlCommentTitle		SpecialComment
-   HiLink wsmlCommentStar		wsmlComment
- endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
+HiLink wsmlHeader			TypeDef
+HiLink wsmlNamespace			TypeDef
+HiLink wsmlOntology			Statement
+HiLink wsmlAxiom			TypeDef
+HiLink wsmlService			TypeDef
+HiLink wsmlNFP			TypeDef
+HiLink wsmlTopLevel			TypeDef
+HiLink wsmlMediation			TypeDef 
+HiLink wsmlBehavioral		TypeDef
+HiLink wsmlChoreographyPri		TypeDef
+HiLink wsmlChoreographySec		Operator
+HiLink wsmlChoreographyTer		Special
+HiLink wsmlString			String
+HiLink wsmlIdentifier		Normal 
+HiLink wsmlSqName                     Normal
+HiLink wsmlVariable			Define
+HiLink wsmlKeywordsInsideLEs		Operator
+HiLink wsmlOperator			Operator
+HiLink wsmlBrace			Operator
+HiLink wsmlCharacter			Character
+HiLink wsmlNumber			Number
+HiLink wsmlDataTypes			Special
+HiLink wsmlComment			Comment
+HiLink wsmlDocComment		Comment
+HiLink wsmlLineComment		Comment
+HiLink wsmlTodo			Todo
+HiLink wsmlFixMe			Error
+HiLink wsmlCommentTitle		SpecialComment
+HiLink wsmlCommentStar		wsmlComment
 
 delcommand HiLink
 

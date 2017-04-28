@@ -4,11 +4,8 @@
 " Maintainer:	Dean Hill <dhill@hotmail.com>
 " Last Change:	2004 Aug 30
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -154,43 +151,35 @@ syn keyword sqlTodo TODO FIXME XXX DEBUG NOTE
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sql_syn_inits")
-  if version < 508
-    let did_sql_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
 
-  " === Comment syntax group ===
-  HiLink sqlComment	Comment
+" === Comment syntax group ===
+HiLink sqlComment	Comment
 
-  " === Constant syntax group ===
-  HiLink sqlNumber	Number
-  HiLink sqlBoolean	Boolean
-  HiLink sqlString	String
+" === Constant syntax group ===
+HiLink sqlNumber	Number
+HiLink sqlBoolean	Boolean
+HiLink sqlString	String
 
-  " === Statment syntax group ===
-  HiLink sqlStatement	Statement
-  HiLink sqlConditional	Conditional
-  HiLink sqlRepeat		Repeat
-  HiLink sqlKeyword		Keyword
-  HiLink sqlOperator	Operator
-  HiLink sqlException	Exception
+" === Statment syntax group ===
+HiLink sqlStatement	Statement
+HiLink sqlConditional	Conditional
+HiLink sqlRepeat		Repeat
+HiLink sqlKeyword		Keyword
+HiLink sqlOperator	Operator
+HiLink sqlException	Exception
 
-  " === Identifier syntax group ===
-  HiLink sqlFunction	Function
+" === Identifier syntax group ===
+HiLink sqlFunction	Function
 
-  " === Type syntax group ===
-  HiLink sqlType	Type
+" === Type syntax group ===
+HiLink sqlType	Type
 
-  " === Todo syntax group ===
-  HiLink sqlTodo	Todo
+" === Todo syntax group ===
+HiLink sqlTodo	Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "sqlinformix"

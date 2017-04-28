@@ -6,11 +6,8 @@
 " URL:		http://www.makalis.fr/~bertrand/rpl2/download/vim/indent/rpl.vim
 " Credits:	Nothing
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -417,77 +414,69 @@ syntax region rplString start=+\(^\|\s\+\)"+ end=+"\ze\($\|\s\+\)+ contains=rplS
 syntax match rplTab "\t"  transparent
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_rpl_syntax_inits")
-  if version < 508
-    let did_rpl_syntax_inits = 1
-    command -nargs=+ HiLink highlight link <args>
-  else
-    command -nargs=+ HiLink highlight default link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink highlight default link <args>
 
-  " The default highlighting.
+" The default highlighting.
 
-  HiLink rplControl		Statement
-  HiLink rplStatement		Statement
-  HiLink rplAlgConditional	Conditional
-  HiLink rplConditional		Repeat
-  HiLink rplConditionalError	Error
-  HiLink rplRepeat		Repeat
-  HiLink rplCycle		Repeat
-  HiLink rplUntil		Repeat
-  HiLink rplIntrinsic		Special
-  HiLink rplStorage		StorageClass
-  HiLink rplStorageExpr		StorageClass
-  HiLink rplStorageError	Error
-  HiLink rplReadWrite		rplIntrinsic
+HiLink rplControl		Statement
+HiLink rplStatement		Statement
+HiLink rplAlgConditional	Conditional
+HiLink rplConditional		Repeat
+HiLink rplConditionalError	Error
+HiLink rplRepeat		Repeat
+HiLink rplCycle		Repeat
+HiLink rplUntil		Repeat
+HiLink rplIntrinsic		Special
+HiLink rplStorage		StorageClass
+HiLink rplStorageExpr		StorageClass
+HiLink rplStorageError	Error
+HiLink rplReadWrite		rplIntrinsic
 
-  HiLink rplOperator		Operator
+HiLink rplOperator		Operator
 
-  HiLink rplList		Special
-  HiLink rplArray		Special
-  HiLink rplConstant		Identifier
-  HiLink rplExpr		Type
+HiLink rplList		Special
+HiLink rplArray		Special
+HiLink rplConstant		Identifier
+HiLink rplExpr		Type
 
-  HiLink rplString		String
-  HiLink rplStringGuilles	String
-  HiLink rplStringAntislash	String
+HiLink rplString		String
+HiLink rplStringGuilles	String
+HiLink rplStringAntislash	String
 
-  HiLink rplBinary		Boolean
-  HiLink rplOctal		Boolean
-  HiLink rplDecimal		Boolean
-  HiLink rplHexadecimal		Boolean
-  HiLink rplInteger		Number
-  HiLink rplFloat		Float
-  HiLink rplComplex		Float
-  HiLink rplBoolean		Identifier
+HiLink rplBinary		Boolean
+HiLink rplOctal		Boolean
+HiLink rplDecimal		Boolean
+HiLink rplHexadecimal		Boolean
+HiLink rplInteger		Number
+HiLink rplFloat		Float
+HiLink rplComplex		Float
+HiLink rplBoolean		Identifier
 
-  HiLink rplObsolete		Todo
+HiLink rplObsolete		Todo
 
-  HiLink rplPreCondit		PreCondit
-  HiLink rplInclude		Include
-  HiLink rplIncluded		rplString
-  HiLink rplInclude		Include
-  HiLink rplExecPath		Include
-  HiLink rplPreProc		PreProc
-  HiLink rplComment		Comment
-  HiLink rplCommentLine		Comment
-  HiLink rplCommentString	Comment
-  HiLink rplSubDelimitor	rplStorage
-  HiLink rplCommentError	Error
-  HiLink rplParenError		Error
-  HiLink rplSubError		Error
-  HiLink rplArrayError		Error
-  HiLink rplListError		Error
-  HiLink rplTab			Error
-  HiLink rplBinaryError		Error
-  HiLink rplOctalError		Error
-  HiLink rplDecimalError	Error
-  HiLink rplHexadecimalError	Error
+HiLink rplPreCondit		PreCondit
+HiLink rplInclude		Include
+HiLink rplIncluded		rplString
+HiLink rplInclude		Include
+HiLink rplExecPath		Include
+HiLink rplPreProc		PreProc
+HiLink rplComment		Comment
+HiLink rplCommentLine		Comment
+HiLink rplCommentString	Comment
+HiLink rplSubDelimitor	rplStorage
+HiLink rplCommentError	Error
+HiLink rplParenError		Error
+HiLink rplSubError		Error
+HiLink rplArrayError		Error
+HiLink rplListError		Error
+HiLink rplTab			Error
+HiLink rplBinaryError		Error
+HiLink rplOctalError		Error
+HiLink rplDecimalError	Error
+HiLink rplHexadecimalError	Error
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "rpl"
 

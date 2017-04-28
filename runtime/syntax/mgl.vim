@@ -6,9 +6,8 @@
 "
 " $Id: mgl.vim,v 1.1 2006/02/21 22:08:20 vimboss Exp $
 "
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -84,43 +83,35 @@ syn keyword mglPredefined	exception
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_mgl_syn_inits")
-  if version < 508
-    let did_mgl_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink mglBoolean		Boolean
-  HiLink mglComment		Comment
-  HiLink mglConditional		Conditional
-  HiLink mglConstant		Constant
-  HiLink mglException		Exception
-  HiLink mglFunction		Function
-  HiLink mglLabel		Label
-  HiLink mglMatrixDelimiter	Identifier
-  HiLink mglNumber		Number
-  HiLink mglHexNumber		Number
-  HiLink mglCharacter		Number
-  HiLink mglIpAddr		Number
-  HiLink mglOperator		Operator
-  HiLink mglPredefined		mglFunction
-  HiLink mglPreProc		PreProc
-  HiLink mglRepeat		Repeat
-  HiLink mglStatement		Statement
-  HiLink mglString		String
-  HiLink mglStringEscape	Special
-  HiLink mglStringEscapeGPC	Special
-  HiLink mglStringError		Error
-  HiLink mglStruct		mglStatement
-  HiLink mglSymbolOperator	mglOperator
-  HiLink mglType		Type
+HiLink mglBoolean		Boolean
+HiLink mglComment		Comment
+HiLink mglConditional		Conditional
+HiLink mglConstant		Constant
+HiLink mglException		Exception
+HiLink mglFunction		Function
+HiLink mglLabel		Label
+HiLink mglMatrixDelimiter	Identifier
+HiLink mglNumber		Number
+HiLink mglHexNumber		Number
+HiLink mglCharacter		Number
+HiLink mglIpAddr		Number
+HiLink mglOperator		Operator
+HiLink mglPredefined		mglFunction
+HiLink mglPreProc		PreProc
+HiLink mglRepeat		Repeat
+HiLink mglStatement		Statement
+HiLink mglString		String
+HiLink mglStringEscape	Special
+HiLink mglStringEscapeGPC	Special
+HiLink mglStringError		Error
+HiLink mglStruct		mglStatement
+HiLink mglSymbolOperator	mglOperator
+HiLink mglType		Type
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 
 let b:current_syntax = "mgl"

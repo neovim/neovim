@@ -7,11 +7,8 @@
 
 " Thanks to Ori Avtalion for feedback on the comment markers!
 
-" For version 5.x: Clear all syntax items
-" For version 6.0 and later: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -103,37 +100,29 @@ syn match asmDirective		"\.[A-Za-z][0-9A-Za-z-_]*"
 syn case match
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_asm_syntax_inits")
-  if version < 508
-    let did_asm_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink asmSection	Special
-  HiLink asmLabel	Label
-  HiLink asmComment	Comment
-  HiLink asmTodo	Todo
-  HiLink asmDirective	Statement
+" The default methods for highlighting.  Can be overridden later
+HiLink asmSection	Special
+HiLink asmLabel	Label
+HiLink asmComment	Comment
+HiLink asmTodo	Todo
+HiLink asmDirective	Statement
 
-  HiLink asmInclude	Include
-  HiLink asmCond	PreCondit
-  HiLink asmMacro	Macro
+HiLink asmInclude	Include
+HiLink asmCond	PreCondit
+HiLink asmMacro	Macro
 
-  HiLink hexNumber	Number
-  HiLink decNumber	Number
-  HiLink octNumber	Number
-  HiLink binNumber	Number
+HiLink hexNumber	Number
+HiLink decNumber	Number
+HiLink octNumber	Number
+HiLink binNumber	Number
 
-  HiLink asmIdentifier	Identifier
-  HiLink asmType	Type
+HiLink asmIdentifier	Identifier
+HiLink asmType	Type
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "asm"
 

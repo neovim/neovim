@@ -21,11 +21,8 @@
 " but only the contents of packages of Maple V Release 4, and the top-level
 " routines of Release 4.  <Jacques Carette - carette@mcmaster.ca>
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -551,82 +548,74 @@ endif
 " =====================================================================
 
 " Highlighting: Define the default highlighting. {{{1
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_maplev_syntax_inits")
-  if version < 508
-    let did_maplev_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  " Maple->Maple Links {{{2
-  HiLink mvBraceError	mvError
-  HiLink mvCurlyError	mvError
-  HiLink mvDebug		mvTodo
-  HiLink mvParenError	mvError
-  HiLink mvPkg_DEtools	mvPkgFunc
-  HiLink mvPkg_Galois	mvPkgFunc
-  HiLink mvPkg_GaussInt	mvPkgFunc
-  HiLink mvPkg_LREtools	mvPkgFunc
-  HiLink mvPkg_combinat	mvPkgFunc
-  HiLink mvPkg_combstruct	mvPkgFunc
-  HiLink mvPkg_difforms	mvPkgFunc
-  HiLink mvPkg_finance	mvPkgFunc
-  HiLink mvPkg_genfunc	mvPkgFunc
-  HiLink mvPkg_geometry	mvPkgFunc
-  HiLink mvPkg_grobner	mvPkgFunc
-  HiLink mvPkg_group	mvPkgFunc
-  HiLink mvPkg_inttrans	mvPkgFunc
-  HiLink mvPkg_liesymm	mvPkgFunc
-  HiLink mvPkg_linalg	mvPkgFunc
-  HiLink mvPkg_logic	mvPkgFunc
-  HiLink mvPkg_networks	mvPkgFunc
-  HiLink mvPkg_numapprox	mvPkgFunc
-  HiLink mvPkg_numtheory	mvPkgFunc
-  HiLink mvPkg_orthopoly	mvPkgFunc
-  HiLink mvPkg_padic	mvPkgFunc
-  HiLink mvPkg_plots	mvPkgFunc
-  HiLink mvPkg_plottools	mvPkgFunc
-  HiLink mvPkg_powseries	mvPkgFunc
-  HiLink mvPkg_process	mvPkgFunc
-  HiLink mvPkg_simplex	mvPkgFunc
-  HiLink mvPkg_stats	mvPkgFunc
-  HiLink mvPkg_student	mvPkgFunc
-  HiLink mvPkg_sumtools	mvPkgFunc
-  HiLink mvPkg_tensor	mvPkgFunc
-  HiLink mvPkg_totorder	mvPkgFunc
-  HiLink mvRange		mvOper
-  HiLink mvSemiError	mvError
-  HiLink mvDelim		Delimiter
+" Maple->Maple Links {{{2
+HiLink mvBraceError	mvError
+HiLink mvCurlyError	mvError
+HiLink mvDebug		mvTodo
+HiLink mvParenError	mvError
+HiLink mvPkg_DEtools	mvPkgFunc
+HiLink mvPkg_Galois	mvPkgFunc
+HiLink mvPkg_GaussInt	mvPkgFunc
+HiLink mvPkg_LREtools	mvPkgFunc
+HiLink mvPkg_combinat	mvPkgFunc
+HiLink mvPkg_combstruct	mvPkgFunc
+HiLink mvPkg_difforms	mvPkgFunc
+HiLink mvPkg_finance	mvPkgFunc
+HiLink mvPkg_genfunc	mvPkgFunc
+HiLink mvPkg_geometry	mvPkgFunc
+HiLink mvPkg_grobner	mvPkgFunc
+HiLink mvPkg_group	mvPkgFunc
+HiLink mvPkg_inttrans	mvPkgFunc
+HiLink mvPkg_liesymm	mvPkgFunc
+HiLink mvPkg_linalg	mvPkgFunc
+HiLink mvPkg_logic	mvPkgFunc
+HiLink mvPkg_networks	mvPkgFunc
+HiLink mvPkg_numapprox	mvPkgFunc
+HiLink mvPkg_numtheory	mvPkgFunc
+HiLink mvPkg_orthopoly	mvPkgFunc
+HiLink mvPkg_padic	mvPkgFunc
+HiLink mvPkg_plots	mvPkgFunc
+HiLink mvPkg_plottools	mvPkgFunc
+HiLink mvPkg_powseries	mvPkgFunc
+HiLink mvPkg_process	mvPkgFunc
+HiLink mvPkg_simplex	mvPkgFunc
+HiLink mvPkg_stats	mvPkgFunc
+HiLink mvPkg_student	mvPkgFunc
+HiLink mvPkg_sumtools	mvPkgFunc
+HiLink mvPkg_tensor	mvPkgFunc
+HiLink mvPkg_totorder	mvPkgFunc
+HiLink mvRange		mvOper
+HiLink mvSemiError	mvError
+HiLink mvDelim		Delimiter
 
-  " Maple->Standard Links {{{2
-  HiLink mvAssign		Delimiter
-  HiLink mvBool		Boolean
-  HiLink mvComma		Delimiter
-  HiLink mvComment		Comment
-  HiLink mvCond		Conditional
-  HiLink mvConstant		Number
-  HiLink mvDelayEval	Label
-  HiLink mvDcolon		Delimiter
-  HiLink mvError		Error
-  HiLink mvLibrary		Statement
-  HiLink mvNumber		Number
-  HiLink mvOper		Operator
-  HiLink mvAssign		Delimiter
-  HiLink mvPackage		Type
-  HiLink mvPkgFunc		Function
-  HiLink mvPktOption	Special
-  HiLink mvRepeat		Repeat
-  HiLink mvSpecial		Special
-  HiLink mvStatement	Statement
-  HiLink mvName		String
-  HiLink mvString		String
-  HiLink mvTodo		Todo
+" Maple->Standard Links {{{2
+HiLink mvAssign		Delimiter
+HiLink mvBool		Boolean
+HiLink mvComma		Delimiter
+HiLink mvComment		Comment
+HiLink mvCond		Conditional
+HiLink mvConstant		Number
+HiLink mvDelayEval	Label
+HiLink mvDcolon		Delimiter
+HiLink mvError		Error
+HiLink mvLibrary		Statement
+HiLink mvNumber		Number
+HiLink mvOper		Operator
+HiLink mvAssign		Delimiter
+HiLink mvPackage		Type
+HiLink mvPkgFunc		Function
+HiLink mvPktOption	Special
+HiLink mvRepeat		Repeat
+HiLink mvSpecial		Special
+HiLink mvStatement	Statement
+HiLink mvName		String
+HiLink mvString		String
+HiLink mvTodo		Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 " Current Syntax: {{{1
 let b:current_syntax = "maple"

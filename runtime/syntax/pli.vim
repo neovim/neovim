@@ -3,9 +3,8 @@
 " using keywords from http://www.kednos.com/pli/docs/reference_manual/6291pro_contents.html
 "    2012-11-13 Alan Thompson
 
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -222,57 +221,48 @@ endif
 syn sync minlines=10 maxlines=100
 
 " Define the default highlighting.
-" For version 5.x and earlier, only when not done already.
-" For version 5.8 and later, only when and item doesn't have highlighting
-" yet.
-if version >= 508 || !exists("did_pl1_syn_inits")
-    if version < 508
-        let did_pl1_syn_inits = 1
-        command -nargs=+ HiLink hi link <args>
-    else
-        command -nargs=+ HiLink hi def link <args>
-    endif
+" Only when and item doesn't have highlighting yet.
+command -nargs=+ HiLink hi def link <args>
 
-    HiLink pl1Attribute       Macro
-    HiLink pl1BlockError      Error
-    HiLink pl1BooleanLiteral  Boolean
-    HiLink pl1CharLiteral     Character
-    HiLink pl1Comment         Comment
-    HiLink pl1CommentL        Comment
-    HiLink pl1Conditional     Conditional
-    HiLink pl1Error           Error
-    HiLink pl1ErrInBracket    Error
-    HiLink pl1ErrInBlock      Error
-    HiLink pl1ErrInParen      Error
-    HiLink pl1Exception       Function
-    HiLink pl1FloatLiteral    Float
-    HiLink pl1Function        Function
-    HiLink pl1Garbage         Error
-    HiLink pl1HostIdentifier  Label
-    HiLink pl1Identifier      Normal
-    HiLink pl1IntLiteral      Number
-    HiLink pl1Operator        Operator
-    HiLink pl1Paren           Normal
-    HiLink pl1ParenError      Error
-    HiLink pl1SpaceError      Error
-    HiLink pl1Pseudo          PreProc
-    HiLink pl1PreProc         PreProc
-    HiLink pl1PreProcSym      PreProc
-    HiLink pl1Keyword         Keyword
-    HiLink pl1Other           Keyword
-    HiLink pl1Repeat          Repeat
-    HiLink pl1Statement       Keyword
-    HiLink pl1Storage         StorageClass
-    HiLink pl1StringError     Error
-    HiLink pl1StringLiteral   String
-    HiLink pl1CommentString   String
-    HiLink pl1Comment2String  String
-    HiLink pl1Symbol          Normal
-    HiLink pl1Trigger         Function
-    HiLink pl1TypeAttribute   StorageClass
-    HiLink pl1Todo            Todo
+HiLink pl1Attribute       Macro
+HiLink pl1BlockError      Error
+HiLink pl1BooleanLiteral  Boolean
+HiLink pl1CharLiteral     Character
+HiLink pl1Comment         Comment
+HiLink pl1CommentL        Comment
+HiLink pl1Conditional     Conditional
+HiLink pl1Error           Error
+HiLink pl1ErrInBracket    Error
+HiLink pl1ErrInBlock      Error
+HiLink pl1ErrInParen      Error
+HiLink pl1Exception       Function
+HiLink pl1FloatLiteral    Float
+HiLink pl1Function        Function
+HiLink pl1Garbage         Error
+HiLink pl1HostIdentifier  Label
+HiLink pl1Identifier      Normal
+HiLink pl1IntLiteral      Number
+HiLink pl1Operator        Operator
+HiLink pl1Paren           Normal
+HiLink pl1ParenError      Error
+HiLink pl1SpaceError      Error
+HiLink pl1Pseudo          PreProc
+HiLink pl1PreProc         PreProc
+HiLink pl1PreProcSym      PreProc
+HiLink pl1Keyword         Keyword
+HiLink pl1Other           Keyword
+HiLink pl1Repeat          Repeat
+HiLink pl1Statement       Keyword
+HiLink pl1Storage         StorageClass
+HiLink pl1StringError     Error
+HiLink pl1StringLiteral   String
+HiLink pl1CommentString   String
+HiLink pl1Comment2String  String
+HiLink pl1Symbol          Normal
+HiLink pl1Trigger         Function
+HiLink pl1TypeAttribute   StorageClass
+HiLink pl1Todo            Todo
 
-    delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "pl1"

@@ -9,13 +9,9 @@
 "		make it really linewise?
 "		+ add `display' where appropriate
 
-" Setup
-if version >= 600
-	if exists("b:current_syntax")
-		finish
-	endif
-else
-	syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+	finish
 endif
 
 syn case ignore
@@ -178,37 +174,30 @@ syn match apacheSection "<\/\=\(<IfVersion\)[^>]*>" contains=apacheAnything
 syn keyword apacheDeclaration VirtualDocumentRoot VirtualDocumentRootIP VirtualScriptAlias VirtualScriptAliasIP
 
 " Define the default highlighting
-if version >= 508 || !exists("did_apache_syntax_inits")
-	if version < 508
-		let did_apache_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+command -nargs=+ HiLink hi def link <args>
 
-	HiLink apacheAllowOverride apacheDeclaration
-	HiLink apacheAllowOverrideValue apacheOption
-	HiLink apacheAuthType apacheDeclaration
-	HiLink apacheAuthTypeValue apacheOption
-	HiLink apacheOptionOption apacheOption
-	HiLink apacheDeclaration Function
-	HiLink apacheAnything apacheOption
-	HiLink apacheOption Number
-	HiLink apacheComment Comment
-	HiLink apacheFixme Todo
-	HiLink apacheLimitSectionKeyword apacheLimitSection
-	HiLink apacheLimitSection apacheSection
-	HiLink apacheSection Label
-	HiLink apacheMethodOption Type
-	HiLink apacheAllowDeny Include
-	HiLink apacheAllowDenyValue Identifier
-	HiLink apacheOrder Special
-	HiLink apacheOrderValue String
-	HiLink apacheString String
-	HiLink apacheError Error
-	HiLink apacheUserID Number
+HiLink apacheAllowOverride apacheDeclaration
+HiLink apacheAllowOverrideValue apacheOption
+HiLink apacheAuthType apacheDeclaration
+HiLink apacheAuthTypeValue apacheOption
+HiLink apacheOptionOption apacheOption
+HiLink apacheDeclaration Function
+HiLink apacheAnything apacheOption
+HiLink apacheOption Number
+HiLink apacheComment Comment
+HiLink apacheFixme Todo
+HiLink apacheLimitSectionKeyword apacheLimitSection
+HiLink apacheLimitSection apacheSection
+HiLink apacheSection Label
+HiLink apacheMethodOption Type
+HiLink apacheAllowDeny Include
+HiLink apacheAllowDenyValue Identifier
+HiLink apacheOrder Special
+HiLink apacheOrderValue String
+HiLink apacheString String
+HiLink apacheError Error
+HiLink apacheUserID Number
 
-	delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "apache"

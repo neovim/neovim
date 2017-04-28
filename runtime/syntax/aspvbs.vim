@@ -11,10 +11,8 @@
 " Thanks to Dean Hall <hall@apt7.com> for testing the use of classes in
 " VBScripts which I've been too scared to do.
 
-" Quit when a syntax file was already loaded
-if version < 600
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -22,11 +20,7 @@ if !exists("main_syntax")
   let main_syntax = 'aspvbs'
 endif
 
-if version < 600
-  source <sfile>:p:h/html.vim
-else
-  runtime! syntax/html.vim
-endif
+runtime! syntax/html.vim
 unlet b:current_syntax
 
 syn cluster htmlPreProc add=AspVBScriptInsideHtmlTags
@@ -163,31 +157,23 @@ syn sync match htmlHighlight grouphere htmlTag "%>"
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_aspvbs_syn_inits")
-  if version < 508
-    let did_aspvbs_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  "HiLink AspVBScript		Special
-  HiLink AspVBSLineNumber	Comment
-  HiLink AspVBSNumber		Number
-  HiLink AspVBSError		Error
-  HiLink AspVBSStatement	Statement
-  HiLink AspVBSString		String
-  HiLink AspVBSComment		Comment
-  HiLink AspVBSTodo		Todo
-  HiLink AspVBSFunction		Identifier
-  HiLink AspVBSMethods		PreProc
-  HiLink AspVBSEvents		Special
-  HiLink AspVBSTypeSpecifier	Type
+"HiLink AspVBScript		Special
+HiLink AspVBSLineNumber	Comment
+HiLink AspVBSNumber		Number
+HiLink AspVBSError		Error
+HiLink AspVBSStatement	Statement
+HiLink AspVBSString		String
+HiLink AspVBSComment		Comment
+HiLink AspVBSTodo		Todo
+HiLink AspVBSFunction		Identifier
+HiLink AspVBSMethods		PreProc
+HiLink AspVBSEvents		Special
+HiLink AspVBSTypeSpecifier	Type
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "aspvbs"
 

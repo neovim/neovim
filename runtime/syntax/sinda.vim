@@ -8,11 +8,8 @@
 
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -32,11 +29,7 @@ syn case ignore
 let fortran_free_source=1
 
 " Load FORTRAN syntax file
-if version < 600
-  source <sfile>:p:h/fortran.vim
-else
-  runtime! syntax/fortran.vim
-endif
+runtime! syntax/fortran.vim
 unlet b:current_syntax
 
 
@@ -106,39 +99,31 @@ endif
 
 
 " Define the default highlighting
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sinda_syntax_inits")
-  if version < 508
-    let did_sinda_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink sindaMacro		Macro
-  HiLink sindaOptions		Special
-  HiLink sindaRoutine		Type
-  HiLink sindaControl		Special
-  HiLink sindaSubRoutine	Function
-  HiLink sindaIdentifier	Identifier
+HiLink sindaMacro		Macro
+HiLink sindaOptions		Special
+HiLink sindaRoutine		Type
+HiLink sindaControl		Special
+HiLink sindaSubRoutine	Function
+HiLink sindaIdentifier	Identifier
 
-  HiLink sindaFortran		PreProc
-  HiLink sindaMotran		PreProc
+HiLink sindaFortran		PreProc
+HiLink sindaMotran		PreProc
 
-  HiLink sindaComment		Comment
-  HiLink sindaHeader		Typedef
-  HiLink sindaIncludeFile	Type
-  HiLink sindaInteger		Number
-  HiLink sindaFloat		Float
-  HiLink sindaScientific	Float
+HiLink sindaComment		Comment
+HiLink sindaHeader		Typedef
+HiLink sindaIncludeFile	Type
+HiLink sindaInteger		Number
+HiLink sindaFloat		Float
+HiLink sindaScientific	Float
 
-  HiLink sindaEndData		Macro
+HiLink sindaEndData		Macro
 
-  HiLink sindaTodo		Todo
+HiLink sindaTodo		Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 
 let b:current_syntax = "sinda"

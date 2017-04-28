@@ -13,11 +13,8 @@
 " can be distinguished from begin/end, which is used for indentation,
 " and folding. (David Baelde)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax") && b:current_syntax == "ocaml"
+" quit when a syntax file was already loaded
+if exists("b:current_syntax") && b:current_syntax == "ocaml"
   finish
 endif
 
@@ -253,78 +250,70 @@ syn sync match ocamlSigSync     grouphere  ocamlSig     "\<sig\>"
 syn sync match ocamlSigSync     groupthere ocamlSig     "\<end\>"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_ocaml_syntax_inits")
-  if version < 508
-    let did_ocaml_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink ocamlBraceErr	   Error
-  HiLink ocamlBrackErr	   Error
-  HiLink ocamlParenErr	   Error
-  HiLink ocamlArrErr	   Error
+HiLink ocamlBraceErr	   Error
+HiLink ocamlBrackErr	   Error
+HiLink ocamlParenErr	   Error
+HiLink ocamlArrErr	   Error
 
-  HiLink ocamlCommentErr   Error
+HiLink ocamlCommentErr   Error
 
-  HiLink ocamlCountErr	   Error
-  HiLink ocamlDoErr	   Error
-  HiLink ocamlDoneErr	   Error
-  HiLink ocamlEndErr	   Error
-  HiLink ocamlThenErr	   Error
+HiLink ocamlCountErr	   Error
+HiLink ocamlDoErr	   Error
+HiLink ocamlDoneErr	   Error
+HiLink ocamlEndErr	   Error
+HiLink ocamlThenErr	   Error
 
-  HiLink ocamlCharErr	   Error
+HiLink ocamlCharErr	   Error
 
-  HiLink ocamlErr	   Error
+HiLink ocamlErr	   Error
 
-  HiLink ocamlComment	   Comment
+HiLink ocamlComment	   Comment
 
-  HiLink ocamlModPath	   Include
-  HiLink ocamlObject	   Include
-  HiLink ocamlModule	   Include
-  HiLink ocamlModParam1    Include
-  HiLink ocamlModType	   Include
-  HiLink ocamlMPRestr3	   Include
-  HiLink ocamlFullMod	   Include
-  HiLink ocamlModTypeRestr Include
-  HiLink ocamlWith	   Include
-  HiLink ocamlMTDef	   Include
+HiLink ocamlModPath	   Include
+HiLink ocamlObject	   Include
+HiLink ocamlModule	   Include
+HiLink ocamlModParam1    Include
+HiLink ocamlModType	   Include
+HiLink ocamlMPRestr3	   Include
+HiLink ocamlFullMod	   Include
+HiLink ocamlModTypeRestr Include
+HiLink ocamlWith	   Include
+HiLink ocamlMTDef	   Include
 
-  HiLink ocamlScript	   Include
+HiLink ocamlScript	   Include
 
-  HiLink ocamlConstructor  Constant
+HiLink ocamlConstructor  Constant
 
-  HiLink ocamlVal          Keyword
-  HiLink ocamlModPreRHS    Keyword
-  HiLink ocamlMPRestr2	   Keyword
-  HiLink ocamlKeyword	   Keyword
-  HiLink ocamlMethod	   Include
-  HiLink ocamlFunDef	   Keyword
-  HiLink ocamlRefAssign    Keyword
-  HiLink ocamlKeyChar	   Keyword
-  HiLink ocamlAnyVar	   Keyword
-  HiLink ocamlTopStop	   Keyword
-  HiLink ocamlOperator	   Keyword
+HiLink ocamlVal          Keyword
+HiLink ocamlModPreRHS    Keyword
+HiLink ocamlMPRestr2	   Keyword
+HiLink ocamlKeyword	   Keyword
+HiLink ocamlMethod	   Include
+HiLink ocamlFunDef	   Keyword
+HiLink ocamlRefAssign    Keyword
+HiLink ocamlKeyChar	   Keyword
+HiLink ocamlAnyVar	   Keyword
+HiLink ocamlTopStop	   Keyword
+HiLink ocamlOperator	   Keyword
 
-  HiLink ocamlBoolean	   Boolean
-  HiLink ocamlCharacter    Character
-  HiLink ocamlNumber	   Number
-  HiLink ocamlFloat	   Float
-  HiLink ocamlString	   String
+HiLink ocamlBoolean	   Boolean
+HiLink ocamlCharacter    Character
+HiLink ocamlNumber	   Number
+HiLink ocamlFloat	   Float
+HiLink ocamlString	   String
 
-  HiLink ocamlLabel	   Identifier
+HiLink ocamlLabel	   Identifier
 
-  HiLink ocamlType	   Type
+HiLink ocamlType	   Type
 
-  HiLink ocamlTodo	   Todo
+HiLink ocamlTodo	   Todo
 
-  HiLink ocamlEncl	   Keyword
+HiLink ocamlEncl	   Keyword
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "ocaml"
 

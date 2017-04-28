@@ -561,60 +561,57 @@ syn sync lines=100
 
 " ---------------------------------------------------------------------
 " Define Highlighting: {{{1
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508
-  command -nargs=+ HiLink hi def link <args>
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink lispCommentRegion	lispComment
-  HiLink lispAtomNmbr		lispNumber
-  HiLink lispAtomMark		lispMark
-  HiLink lispInStringString	lispString
+HiLink lispCommentRegion	lispComment
+HiLink lispAtomNmbr		lispNumber
+HiLink lispAtomMark		lispMark
+HiLink lispInStringString	lispString
 
-  HiLink lispAtom		Identifier
-  HiLink lispAtomBarSymbol	Special
-  HiLink lispBarSymbol		Special
-  HiLink lispComment		Comment
-  HiLink lispConcat		Statement
-  HiLink lispDecl		Statement
-  HiLink lispFunc		Statement
-  HiLink lispKey		Type
-  HiLink lispMark		Delimiter
-  HiLink lispNumber		Number
-  HiLink lispParenError		Error
-  HiLink lispEscapeSpecial	Type
-  HiLink lispString		String
-  HiLink lispTodo		Todo
-  HiLink lispVar		Statement
+HiLink lispAtom		Identifier
+HiLink lispAtomBarSymbol	Special
+HiLink lispBarSymbol		Special
+HiLink lispComment		Comment
+HiLink lispConcat		Statement
+HiLink lispDecl		Statement
+HiLink lispFunc		Statement
+HiLink lispKey		Type
+HiLink lispMark		Delimiter
+HiLink lispNumber		Number
+HiLink lispParenError		Error
+HiLink lispEscapeSpecial	Type
+HiLink lispString		String
+HiLink lispTodo		Todo
+HiLink lispVar		Statement
 
-  if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
-   if &bg == "dark"
-    hi def hlLevel0 ctermfg=red         guifg=red1
-    hi def hlLevel1 ctermfg=yellow      guifg=orange1
-    hi def hlLevel2 ctermfg=green       guifg=yellow1
-    hi def hlLevel3 ctermfg=cyan        guifg=greenyellow
-    hi def hlLevel4 ctermfg=magenta     guifg=green1
-    hi def hlLevel5 ctermfg=red         guifg=springgreen1
-    hi def hlLevel6 ctermfg=yellow      guifg=cyan1
-    hi def hlLevel7 ctermfg=green       guifg=slateblue1
-    hi def hlLevel8 ctermfg=cyan        guifg=magenta1
-    hi def hlLevel9 ctermfg=magenta     guifg=purple1
-   else
-    hi def hlLevel0 ctermfg=red         guifg=red3
-    hi def hlLevel1 ctermfg=darkyellow  guifg=orangered3
-    hi def hlLevel2 ctermfg=darkgreen   guifg=orange2
-    hi def hlLevel3 ctermfg=blue        guifg=yellow3
-    hi def hlLevel4 ctermfg=darkmagenta guifg=olivedrab4
-    hi def hlLevel5 ctermfg=red         guifg=green4
-    hi def hlLevel6 ctermfg=darkyellow  guifg=paleturquoise3
-    hi def hlLevel7 ctermfg=darkgreen   guifg=deepskyblue4
-    hi def hlLevel8 ctermfg=blue        guifg=darkslateblue
-    hi def hlLevel9 ctermfg=darkmagenta guifg=darkviolet
-   endif
-  endif
-
-  delcommand HiLink
+if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
+ if &bg == "dark"
+  hi def hlLevel0 ctermfg=red         guifg=red1
+  hi def hlLevel1 ctermfg=yellow      guifg=orange1
+  hi def hlLevel2 ctermfg=green       guifg=yellow1
+  hi def hlLevel3 ctermfg=cyan        guifg=greenyellow
+  hi def hlLevel4 ctermfg=magenta     guifg=green1
+  hi def hlLevel5 ctermfg=red         guifg=springgreen1
+  hi def hlLevel6 ctermfg=yellow      guifg=cyan1
+  hi def hlLevel7 ctermfg=green       guifg=slateblue1
+  hi def hlLevel8 ctermfg=cyan        guifg=magenta1
+  hi def hlLevel9 ctermfg=magenta     guifg=purple1
+ else
+  hi def hlLevel0 ctermfg=red         guifg=red3
+  hi def hlLevel1 ctermfg=darkyellow  guifg=orangered3
+  hi def hlLevel2 ctermfg=darkgreen   guifg=orange2
+  hi def hlLevel3 ctermfg=blue        guifg=yellow3
+  hi def hlLevel4 ctermfg=darkmagenta guifg=olivedrab4
+  hi def hlLevel5 ctermfg=red         guifg=green4
+  hi def hlLevel6 ctermfg=darkyellow  guifg=paleturquoise3
+  hi def hlLevel7 ctermfg=darkgreen   guifg=deepskyblue4
+  hi def hlLevel8 ctermfg=blue        guifg=darkslateblue
+  hi def hlLevel9 ctermfg=darkmagenta guifg=darkviolet
+ endif
 endif
+
+delcommand HiLink
 
 let b:current_syntax = "lisp"
 

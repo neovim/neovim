@@ -3,11 +3,8 @@
 " Maintainer:	Alex Jakushev <Alex.Jakushev@kemek.lt>
 " Last Change:	2004 May 12
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -224,48 +221,38 @@ syn keyword nsisError		UninstallExeName
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_nsis_syn_inits")
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  if version < 508
-    let did_nsys_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+HiLink nsisInstruction		Function
+HiLink nsisComment			Comment
+HiLink nsisLocalLabel			Label
+HiLink nsisGlobalLabel		Label
+HiLink nsisStatement			Statement
+HiLink nsisString			String
+HiLink nsisBoolean			Boolean
+HiLink nsisAttribOptions		Constant
+HiLink nsisExecShell			Constant
+HiLink nsisFileAttrib			Constant
+HiLink nsisMessageBox			Constant
+HiLink nsisRegistry			Identifier
+HiLink nsisNumber			Number
+HiLink nsisError			Error
+HiLink nsisUserVar			Identifier
+HiLink nsisSysVar			Identifier
+HiLink nsisAttribute			Type
+HiLink nsisCompiler			Type
+HiLink nsisTodo			Todo
+HiLink nsisCallback			Operator
+" preprocessor commands
+HiLink nsisPreprocSubst		PreProc
+HiLink nsisDefine			Define
+HiLink nsisMacro			Macro
+HiLink nsisPreCondit			PreCondit
+HiLink nsisInclude			Include
+HiLink nsisSystem			PreProc
 
-
-  HiLink nsisInstruction		Function
-  HiLink nsisComment			Comment
-  HiLink nsisLocalLabel			Label
-  HiLink nsisGlobalLabel		Label
-  HiLink nsisStatement			Statement
-  HiLink nsisString			String
-  HiLink nsisBoolean			Boolean
-  HiLink nsisAttribOptions		Constant
-  HiLink nsisExecShell			Constant
-  HiLink nsisFileAttrib			Constant
-  HiLink nsisMessageBox			Constant
-  HiLink nsisRegistry			Identifier
-  HiLink nsisNumber			Number
-  HiLink nsisError			Error
-  HiLink nsisUserVar			Identifier
-  HiLink nsisSysVar			Identifier
-  HiLink nsisAttribute			Type
-  HiLink nsisCompiler			Type
-  HiLink nsisTodo			Todo
-  HiLink nsisCallback			Operator
-  " preprocessor commands
-  HiLink nsisPreprocSubst		PreProc
-  HiLink nsisDefine			Define
-  HiLink nsisMacro			Macro
-  HiLink nsisPreCondit			PreCondit
-  HiLink nsisInclude			Include
-  HiLink nsisSystem			PreProc
-
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "nsis"
 

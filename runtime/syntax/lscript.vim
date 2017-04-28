@@ -9,11 +9,8 @@
 " and b) I'm not so crash hot at LotusScript either. If you see any problems
 " feel free to email me with them.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -179,34 +176,26 @@ syn region  lscriptLineNumber	start="^\d" end="\s"
 syn match   lscriptTypeSpecifier	"[a-zA-Z0-9][\$%&!#]"ms=s+1
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_lscript_syntax_inits")
-  if version < 508
-    let did_lscript_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  hi lscriptNotesType	term=underline ctermfg=DarkGreen guifg=SeaGreen gui=bold
+hi lscriptNotesType	term=underline ctermfg=DarkGreen guifg=SeaGreen gui=bold
 
-  HiLink lscriptNotesConst	lscriptNotesType
-  HiLink lscriptLineNumber	Comment
-  HiLink lscriptDatatype	Type
-  HiLink lscriptNumber		Number
-  HiLink lscriptError		Error
-  HiLink lscriptStatement	Statement
-  HiLink lscriptString		String
-  HiLink lscriptComment		Comment
-  HiLink lscriptTodo		Todo
-  HiLink lscriptFunction	Identifier
-  HiLink lscriptMethods		PreProc
-  HiLink lscriptEvents		Special
-  HiLink lscriptTypeSpecifier	Type
+HiLink lscriptNotesConst	lscriptNotesType
+HiLink lscriptLineNumber	Comment
+HiLink lscriptDatatype	Type
+HiLink lscriptNumber		Number
+HiLink lscriptError		Error
+HiLink lscriptStatement	Statement
+HiLink lscriptString		String
+HiLink lscriptComment		Comment
+HiLink lscriptTodo		Todo
+HiLink lscriptFunction	Identifier
+HiLink lscriptMethods		PreProc
+HiLink lscriptEvents		Special
+HiLink lscriptTypeSpecifier	Type
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "lscript"
 

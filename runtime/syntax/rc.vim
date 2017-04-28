@@ -8,11 +8,8 @@
 
 " This file is based on the c.vim
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -148,55 +145,47 @@ syn region rcPreProc		start="^\s*#\s*\(pragma\>\|line\>\|warning\>\|warn\>\|erro
 syn sync ccomment rcComment minlines=10
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_rc_syntax_inits")
-  if version < 508
-    let did_rc_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink rcCharacter	Character
-  HiLink rcSpecialCharacter rcSpecial
-  HiLink rcNumber	Number
-  HiLink rcFloat	Float
-  HiLink rcOctalError	rcError
-  HiLink rcParenError	rcError
-  HiLink rcInParen	rcError
-  HiLink rcCommentError	rcError
-  HiLink rcInclude	Include
-  HiLink rcPreProc	PreProc
-  HiLink rcDefine	Macro
-  HiLink rcIncluded	rcString
-  HiLink rcError	Error
-  HiLink rcPreCondit	PreCondit
-  HiLink rcCommentString rcString
-  HiLink rcComment2String rcString
-  HiLink rcCommentSkip	rcComment
-  HiLink rcString	String
-  HiLink rcComment	Comment
-  HiLink rcSpecial	SpecialChar
-  HiLink rcTodo	Todo
+HiLink rcCharacter	Character
+HiLink rcSpecialCharacter rcSpecial
+HiLink rcNumber	Number
+HiLink rcFloat	Float
+HiLink rcOctalError	rcError
+HiLink rcParenError	rcError
+HiLink rcInParen	rcError
+HiLink rcCommentError	rcError
+HiLink rcInclude	Include
+HiLink rcPreProc	PreProc
+HiLink rcDefine	Macro
+HiLink rcIncluded	rcString
+HiLink rcError	Error
+HiLink rcPreCondit	PreCondit
+HiLink rcCommentString rcString
+HiLink rcComment2String rcString
+HiLink rcCommentSkip	rcComment
+HiLink rcString	String
+HiLink rcComment	Comment
+HiLink rcSpecial	SpecialChar
+HiLink rcTodo	Todo
 
-  HiLink rcAttribute	rcCommonAttribute
-  HiLink rcStdId	rcStatement
-  HiLink rcStatement	Statement
+HiLink rcAttribute	rcCommonAttribute
+HiLink rcStdId	rcStatement
+HiLink rcStatement	Statement
 
-  " Default color overrides
-  hi def rcLanguage	term=reverse ctermbg=Red ctermfg=Yellow guibg=Red guifg=Yellow
-  hi def rcMainObject	term=underline ctermfg=Blue guifg=Blue
-  hi def rcSubObject	ctermfg=Green guifg=Green
-  hi def rcCaptionParam	term=underline ctermfg=DarkGreen guifg=Green
-  hi def rcParam	ctermfg=DarkGreen guifg=DarkGreen
-  hi def rcStatement	ctermfg=DarkGreen guifg=DarkGreen
-  hi def rcCommonAttribute	ctermfg=Brown guifg=Brown
+" Default color overrides
+hi def rcLanguage	term=reverse ctermbg=Red ctermfg=Yellow guibg=Red guifg=Yellow
+hi def rcMainObject	term=underline ctermfg=Blue guifg=Blue
+hi def rcSubObject	ctermfg=Green guifg=Green
+hi def rcCaptionParam	term=underline ctermfg=DarkGreen guifg=Green
+hi def rcParam	ctermfg=DarkGreen guifg=DarkGreen
+hi def rcStatement	ctermfg=DarkGreen guifg=DarkGreen
+hi def rcCommonAttribute	ctermfg=Brown guifg=Brown
 
-  "HiLink rcIdentifier	Identifier
+"HiLink rcIdentifier	Identifier
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "rc"
 

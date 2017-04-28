@@ -11,9 +11,8 @@
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -110,9 +109,7 @@ syn match	lifelinesNumber	"-\=\<\d\+\.\d*\>"
 syn match	lifelinesNumber	"-\=\.\d\+\>"
 
 " folding using {}
-if version >= 600
-	syn region lifelinesFoldBlock	start="{" end="}" transparent fold
-endif
+syn region lifelinesFoldBlock	start="{" end="}" transparent fold
 
 "catch errors caused by wrong parenthesis
 "adapted from original c.vim written by Bram Moolenaar
@@ -123,44 +120,36 @@ syn match	lifelinesParenError	")"
 syn match	lifelinesErrInParen	contained "[{}]"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
+" Only when an item doesn't have highlighting yet
 
-if version >= 508 || !exists("did_lifelines_syn_inits")
-  if version < 508
-    let did_lifelines_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink lifelinesConditional	Conditional
-  HiLink lifelinesArithm	Operator
-  HiLink lifelinesLogical	Conditional
-  HiLink lifelinesInclude	Include
-  HiLink lifelinesComment	Comment
-  HiLink lifelinesStatement	Statement
-  HiLink lifelinesUser		Statement
-  HiLink lifelinesFunct		Statement
-  HiLink lifelinesTable		Statement
-  HiLink lifelinesGedcom	Statement
-  HiLink lifelinesList		Statement
-  HiLink lifelinesRepeat	Repeat
-  HiLink lifelinesFam		Statement
-  HiLink lifelinesIndi		Statement
-  HiLink lifelinesProc		Statement
-  HiLink lifelinesDef		Statement
-  HiLink lifelinesString	String
-  HiLink lifelinesSpecial	Special
-  HiLink lifelinesNumber	Number
-  HiLink lifelinesParenError	Error
-  HiLink lifelinesErrInParen	Error
-  HiLink lifelinesError		Error
-  HiLink lifelinesTodo		Todo
-  HiLink lifelinesDecl		PreProc
+HiLink lifelinesConditional	Conditional
+HiLink lifelinesArithm	Operator
+HiLink lifelinesLogical	Conditional
+HiLink lifelinesInclude	Include
+HiLink lifelinesComment	Comment
+HiLink lifelinesStatement	Statement
+HiLink lifelinesUser		Statement
+HiLink lifelinesFunct		Statement
+HiLink lifelinesTable		Statement
+HiLink lifelinesGedcom	Statement
+HiLink lifelinesList		Statement
+HiLink lifelinesRepeat	Repeat
+HiLink lifelinesFam		Statement
+HiLink lifelinesIndi		Statement
+HiLink lifelinesProc		Statement
+HiLink lifelinesDef		Statement
+HiLink lifelinesString	String
+HiLink lifelinesSpecial	Special
+HiLink lifelinesNumber	Number
+HiLink lifelinesParenError	Error
+HiLink lifelinesErrInParen	Error
+HiLink lifelinesError		Error
+HiLink lifelinesTodo		Todo
+HiLink lifelinesDecl		PreProc
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "lifelines"
 

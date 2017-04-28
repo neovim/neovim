@@ -4,11 +4,8 @@
 " Co-Author:	Arthur van Leeuwen <arthurvl@sci.kun.nl>
 " Last Change:	2013 Oct 15 by Jurriën Stutterheim
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -52,49 +49,41 @@ syn match cleanFuncTypeDef "\([a-zA-Z].*\|(\=[-~@#$%^?!+*<>\/|&=:]\+)\=\)\s*\(in
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_clean_syntax_init")
-  if version < 508
-    let did_clean_syntax_init = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-   " Comments
-   HiLink cleanComment      Comment
-   " Constants and denotations
-   HiLink cleanStringDenot  String
-   HiLink cleanCharDenot    Character
-   HiLink cleanIntegerDenot Number
-   HiLink cleanBoolDenot    Boolean
-   HiLink cleanRealDenot    Float
-   " Identifiers
-   " Statements
-   HiLink cleanTypeClass    Keyword
-   HiLink cleanConditional  Conditional
-   HiLink cleanLabel		Label
-   HiLink cleanKeyword      Keyword
-   " Generic Preprocessing
-   HiLink cleanIncludeKeyword      Include
-   HiLink cleanModuleSystem PreProc
-   " Type
-   HiLink cleanBasicType    Type
-   HiLink cleanSpecialType  Type
-   HiLink cleanFuncTypeDef  Typedef
-   " Special
-   HiLink cleanSpecial      Special
-   HiLink cleanList			Special
-   HiLink cleanArray		Special
-   HiLink cleanRecord		Special
-   HiLink cleanTuple		Special
-   " Error
-   " Todo
-   HiLink cleanTodo         Todo
+ " Comments
+ HiLink cleanComment      Comment
+ " Constants and denotations
+ HiLink cleanStringDenot  String
+ HiLink cleanCharDenot    Character
+ HiLink cleanIntegerDenot Number
+ HiLink cleanBoolDenot    Boolean
+ HiLink cleanRealDenot    Float
+ " Identifiers
+ " Statements
+ HiLink cleanTypeClass    Keyword
+ HiLink cleanConditional  Conditional
+ HiLink cleanLabel		Label
+ HiLink cleanKeyword      Keyword
+ " Generic Preprocessing
+ HiLink cleanIncludeKeyword      Include
+ HiLink cleanModuleSystem PreProc
+ " Type
+ HiLink cleanBasicType    Type
+ HiLink cleanSpecialType  Type
+ HiLink cleanFuncTypeDef  Typedef
+ " Special
+ HiLink cleanSpecial      Special
+ HiLink cleanList			Special
+ HiLink cleanArray		Special
+ HiLink cleanRecord		Special
+ HiLink cleanTuple		Special
+ " Error
+ " Todo
+ HiLink cleanTodo         Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "clean"
 

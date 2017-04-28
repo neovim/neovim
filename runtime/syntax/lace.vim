@@ -9,11 +9,8 @@
 " it to the maintainer at <utilities@eiffel.com>
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -85,50 +82,42 @@ syn region laceParen		transparent start="(" end=")" contains=ALLBUT,laceParenErr
 syn sync lines=40
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_lace_syntax_inits")
-  if version < 508
-    let did_lace_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink laceTopStruct			PreProc
+HiLink laceTopStruct			PreProc
 
-  HiLink laceOptionClause		Statement
-  HiLink laceOptionMark			Constant
-  HiLink laceClusterProp		Label
-  HiLink laceAdaptClassName		Label
-  HiLink laceExternal			Statement
-  HiLink laceCluster			ModeMsg
+HiLink laceOptionClause		Statement
+HiLink laceOptionMark			Constant
+HiLink laceClusterProp		Label
+HiLink laceAdaptClassName		Label
+HiLink laceExternal			Statement
+HiLink laceCluster			ModeMsg
 
-  HiLink laceEscape				Special
+HiLink laceEscape				Special
 
-  HiLink laceBool				Boolean
-  HiLink laceString				String
-  HiLink laceCharacter			Character
-  HiLink laceClassName			Type
-  HiLink laceNumber				Number
+HiLink laceBool				Boolean
+HiLink laceString				String
+HiLink laceCharacter			Character
+HiLink laceClassName			Type
+HiLink laceNumber				Number
 
-  HiLink laceOperator			Special
-  HiLink laceArray				Special
-  HiLink laceExport				Special
-  HiLink laceCreation			Special
-  HiLink laceBrackets			Special
-  HiLink laceConstraint			Special
+HiLink laceOperator			Special
+HiLink laceArray				Special
+HiLink laceExport				Special
+HiLink laceCreation			Special
+HiLink laceBrackets			Special
+HiLink laceConstraint			Special
 
-  HiLink laceComment			Comment
+HiLink laceComment			Comment
 
-  HiLink laceError				Error
-  HiLink laceStringError		Error
-  HiLink laceParenError			Error
-  HiLink laceBracketError		Error
-  HiLink laceTodo				Todo
+HiLink laceError				Error
+HiLink laceStringError		Error
+HiLink laceParenError			Error
+HiLink laceBracketError		Error
+HiLink laceTodo				Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "lace"
 

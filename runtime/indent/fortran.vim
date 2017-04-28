@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
 " Version:	0.45
-" Last Change:	2016 Aug. 18
+" Last Change:	2016 Aug. 29
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-indent from Vim
 " Credits:
@@ -151,9 +151,6 @@ function FortranGetIndent(lnum)
   "First continuation line
   if prevstat =~ '&\s*$' && prev2stat !~ '&\s*$'
     let ind = ind + shiftwidth()
-  endif
-  if prevstat =~ '&\s*$' && prevstat =~ '\<else\s*if\>'
-    let ind = ind - shiftwidth()
   endif
   "Line after last continuation line
   if prevstat !~ '&\s*$' && prev2stat =~ '&\s*$' && prevstat !~? '\<then\>'

@@ -7,11 +7,8 @@
 " This syntax file defines highlighting for only very few features of
 " the GrADS scripting language.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -53,34 +50,26 @@ syn match gradsComment	"\*.*"
 " syn match gradsTypos	"!="
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't hgs highlighting+yet
-if version >= 508 || !exists("did_gs_syn_inits")
-  if version < 508
-	let did_gs_syn_inits = 1
-	command -nargs=+ HiLink hi link <args>
-  else
-	command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't hgs highlighting+yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink gradsStatement		Statement
+HiLink gradsStatement		Statement
 
-  HiLink gradsString		String
-  HiLink gradsNumber		Number
+HiLink gradsString		String
+HiLink gradsNumber		Number
 
-  HiLink gradsFixVariables	Special
-  HiLink gradsVariables		Identifier
-  HiLink gradsglobalVariables	Special
-  HiLink gradsConst		Special
+HiLink gradsFixVariables	Special
+HiLink gradsVariables		Identifier
+HiLink gradsglobalVariables	Special
+HiLink gradsConst		Special
 
-  HiLink gradsClassMethods	Function
+HiLink gradsClassMethods	Function
 
-  HiLink gradsOperator		Operator
-  HiLink gradsComment		Comment
+HiLink gradsOperator		Operator
+HiLink gradsComment		Comment
 
-  HiLink gradsTypos		Error
+HiLink gradsTypos		Error
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "grads"

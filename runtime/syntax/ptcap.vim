@@ -4,11 +4,8 @@
 " URL:		http://folk.uio.no/hakonrk/vim/syntax/ptcap.vim
 " Last Change:	2001 May 15
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -73,34 +70,27 @@ syn region ptcapField	    start=":" skip="[^\\]\(\\\\\)*\\$" end="[^\\]\(\\\\\)*
 syn region ptcapString	    matchgroup=ptcapOperator start="=" skip="[^\\]\(\\\\\)*\\:" matchgroup=ptcapDelimiter end=":"me=e-1 matchgroup=NONE end="[^\\]\(\\\\\)*[^\\]$" end="^$" contains=ptcapEscapedChar,ptcapLineCont keepend contained
 syn region ptcapComment	    start="^\s*#" end="$" contains=ptcapLeadBlank
 
-if version >= 508 || !exists("did_ptcap_syntax_inits")
-    if version < 508
-	let did_ptcap_syntax_inits = 1
-	command -nargs=+ HiLink hi link <args>
-    else
-	command -nargs=+ HiLink hi def link <args>
-    endif
+command -nargs=+ HiLink hi def link <args>
 
-    HiLink ptcapComment		Comment
-    HiLink ptcapDelimiter	Delimiter
-    " The highlighting of "ptcapEntry" should always be overridden by
-    " its contents, so I use Todo highlighting to indicate that there
-    " is work to be done with the syntax file if you can see it :-)
-    HiLink ptcapEntry		Todo
-    HiLink ptcapError		Error
-    HiLink ptcapEscapedChar	SpecialChar
-    HiLink ptcapField		Type
-    HiLink ptcapLeadBlank	NONE
-    HiLink ptcapLineCont	Special
-    HiLink ptcapNames		Label
-    HiLink ptcapNumber		NONE
-    HiLink ptcapNumberError	Error
-    HiLink ptcapOperator	Operator
-    HiLink ptcapSpecialCap	Type
-    HiLink ptcapString		NONE
+HiLink ptcapComment		Comment
+HiLink ptcapDelimiter	Delimiter
+" The highlighting of "ptcapEntry" should always be overridden by
+" its contents, so I use Todo highlighting to indicate that there
+" is work to be done with the syntax file if you can see it :-)
+HiLink ptcapEntry		Todo
+HiLink ptcapError		Error
+HiLink ptcapEscapedChar	SpecialChar
+HiLink ptcapField		Type
+HiLink ptcapLeadBlank	NONE
+HiLink ptcapLineCont	Special
+HiLink ptcapNames		Label
+HiLink ptcapNumber		NONE
+HiLink ptcapNumberError	Error
+HiLink ptcapOperator	Operator
+HiLink ptcapSpecialCap	Type
+HiLink ptcapString		NONE
 
-    delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "ptcap"
 

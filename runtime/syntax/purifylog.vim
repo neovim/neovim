@@ -3,11 +3,8 @@
 " Maintainer:	Gautam H. Mudunuri <gmudunur@informatica.com>
 " Last Change:	2003 May 11
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -57,62 +54,54 @@ syn match purifyLogZPR "^ZPR:.*$"
 syn match purifyLogZPW "^ZPW:.*$"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_purifyLog_syntax_inits")
-  if version < 508
-    let did_purifyLog_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-	HiLink purifyLogFIU purifyLogInformational
-	HiLink purifyLogMAF purifyLogInformational
-	HiLink purifyLogMIU purifyLogInformational
-	HiLink purifyLogSIG purifyLogInformational
-	HiLink purifyLogWPF purifyLogInformational
-	HiLink purifyLogWPM purifyLogInformational
-	HiLink purifyLogWPN purifyLogInformational
-	HiLink purifyLogWPR purifyLogInformational
-	HiLink purifyLogWPW purifyLogInformational
-	HiLink purifyLogWPX purifyLogInformational
+HiLink purifyLogFIU purifyLogInformational
+HiLink purifyLogMAF purifyLogInformational
+HiLink purifyLogMIU purifyLogInformational
+HiLink purifyLogSIG purifyLogInformational
+HiLink purifyLogWPF purifyLogInformational
+HiLink purifyLogWPM purifyLogInformational
+HiLink purifyLogWPN purifyLogInformational
+HiLink purifyLogWPR purifyLogInformational
+HiLink purifyLogWPW purifyLogInformational
+HiLink purifyLogWPX purifyLogInformational
 
-	HiLink purifyLogABR purifyLogWarning
-	HiLink purifyLogBSR purifyLogWarning
-	HiLink purifyLogBSW purifyLogWarning
-	HiLink purifyLogFMR purifyLogWarning
-	HiLink purifyLogMLK purifyLogWarning
-	HiLink purifyLogMSE purifyLogWarning
-	HiLink purifyLogPAR purifyLogWarning
-	HiLink purifyLogPLK purifyLogWarning
-	HiLink purifyLogSBR purifyLogWarning
-	HiLink purifyLogSOF purifyLogWarning
-	HiLink purifyLogUMC purifyLogWarning
-	HiLink purifyLogUMR purifyLogWarning
+HiLink purifyLogABR purifyLogWarning
+HiLink purifyLogBSR purifyLogWarning
+HiLink purifyLogBSW purifyLogWarning
+HiLink purifyLogFMR purifyLogWarning
+HiLink purifyLogMLK purifyLogWarning
+HiLink purifyLogMSE purifyLogWarning
+HiLink purifyLogPAR purifyLogWarning
+HiLink purifyLogPLK purifyLogWarning
+HiLink purifyLogSBR purifyLogWarning
+HiLink purifyLogSOF purifyLogWarning
+HiLink purifyLogUMC purifyLogWarning
+HiLink purifyLogUMR purifyLogWarning
 
-	HiLink purifyLogABW purifyLogCorrupting
-	HiLink purifyLogBRK purifyLogCorrupting
-	HiLink purifyLogFMW purifyLogCorrupting
-	HiLink purifyLogFNH purifyLogCorrupting
-	HiLink purifyLogFUM purifyLogCorrupting
-	HiLink purifyLogMRE purifyLogCorrupting
-	HiLink purifyLogSBW purifyLogCorrupting
+HiLink purifyLogABW purifyLogCorrupting
+HiLink purifyLogBRK purifyLogCorrupting
+HiLink purifyLogFMW purifyLogCorrupting
+HiLink purifyLogFNH purifyLogCorrupting
+HiLink purifyLogFUM purifyLogCorrupting
+HiLink purifyLogMRE purifyLogCorrupting
+HiLink purifyLogSBW purifyLogCorrupting
 
-	HiLink purifyLogCOR purifyLogFatal
-	HiLink purifyLogNPR purifyLogFatal
-	HiLink purifyLogNPW purifyLogFatal
-	HiLink purifyLogZPR purifyLogFatal
-	HiLink purifyLogZPW purifyLogFatal
+HiLink purifyLogCOR purifyLogFatal
+HiLink purifyLogNPR purifyLogFatal
+HiLink purifyLogNPW purifyLogFatal
+HiLink purifyLogZPR purifyLogFatal
+HiLink purifyLogZPW purifyLogFatal
 
-	HiLink purifyLogHeader		Comment
-	HiLink purifyLogInformational	PreProc
-	HiLink purifyLogWarning		Type
-	HiLink purifyLogCorrupting	Error
-	HiLink purifyLogFatal		Error
+HiLink purifyLogHeader		Comment
+HiLink purifyLogInformational	PreProc
+HiLink purifyLogWarning		Type
+HiLink purifyLogCorrupting	Error
+HiLink purifyLogFatal		Error
 
-	delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "purifylog"
 

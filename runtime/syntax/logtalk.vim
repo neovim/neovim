@@ -5,11 +5,8 @@
 " Last Change:	February 4, 2012
 
 
-" Quit when a syntax file was already loaded:
-
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -389,59 +386,49 @@ syn sync ccomment logtalkBlockComment maxlines=50
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-if version >= 508 || !exists("did_logtalk_syn_inits")
-	if version < 508
-		let did_logtalk_syn_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+HiLink	logtalkBlockComment	Comment
+HiLink	logtalkLineComment	Comment
 
-	HiLink	logtalkBlockComment	Comment
-	HiLink	logtalkLineComment	Comment
+HiLink	logtalkOpenEntityDir	Normal
+HiLink	logtalkOpenEntityDirTag	PreProc
 
-	HiLink	logtalkOpenEntityDir	Normal
-	HiLink	logtalkOpenEntityDirTag	PreProc
+HiLink	logtalkIfContainer	PreProc
+HiLink	logtalkIf		PreProc
+HiLink	logtalkElseIf		PreProc
+HiLink	logtalkElse		PreProc
 
-	HiLink	logtalkIfContainer	PreProc
-	HiLink	logtalkIf		PreProc
-	HiLink	logtalkElseIf		PreProc
-	HiLink	logtalkElse		PreProc
+HiLink	logtalkEntity		Normal
 
-	HiLink	logtalkEntity		Normal
+HiLink	logtalkEntityRel	Normal
+HiLink	logtalkEntityRelTag	PreProc
 
-	HiLink	logtalkEntityRel	Normal
-	HiLink	logtalkEntityRelTag	PreProc
+HiLink	logtalkCloseEntityDir	PreProc
 
-	HiLink	logtalkCloseEntityDir	PreProc
+HiLink	logtalkDir		Normal
+HiLink	logtalkDirTag		PreProc
 
-	HiLink	logtalkDir		Normal
-	HiLink	logtalkDirTag		PreProc
+HiLink	logtalkAtom		String
+HiLink	logtalkString		String
+HiLink	logtalkEscapeSequence	SpecialChar
 
-	HiLink	logtalkAtom		String
-	HiLink	logtalkString		String
-	HiLink	logtalkEscapeSequence	SpecialChar
+HiLink	logtalkNumber		Number
 
-	HiLink	logtalkNumber		Number
+HiLink	logtalkKeyword		Keyword
 
-	HiLink	logtalkKeyword		Keyword
+HiLink	logtalkBuiltIn		Keyword
+HiLink	logtalkBuiltInMethod	Keyword
 
-	HiLink	logtalkBuiltIn		Keyword
-	HiLink	logtalkBuiltInMethod	Keyword
+HiLink	logtalkOperator		Operator
 
-	HiLink	logtalkOperator		Operator
+HiLink	logtalkExtCall		Normal
+HiLink	logtalkExtCallTag	Operator
 
-	HiLink	logtalkExtCall		Normal
-	HiLink	logtalkExtCallTag	Operator
+HiLink	logtalkVariable		Identifier
 
-	HiLink	logtalkVariable		Identifier
-
-	delcommand HiLink
-
-endif
+delcommand HiLink
 
 
 let b:current_syntax = "logtalk"

@@ -5,11 +5,8 @@
 " Date:        6/30/2004
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -268,28 +265,21 @@ syn keyword mupadIdentifier	Tubular
 " graphics  meta-documentation Attributes
 syn keyword mupadIdentifier	objectGroupsListed
 
-if version >= 508 || !exists("did_mupad_syntax_inits")
-  if version < 508
-    let did_mupad_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink mupadComment		Comment
-  HiLink mupadString		String
-  HiLink mupadOperator		Operator
-  HiLink mupadSpecial		Special
-  HiLink mupadStatement		Statement
-  HiLink mupadUnderlined	Underlined
-  HiLink mupadConditional	Conditional
-  HiLink mupadRepeat		Repeat
-  HiLink mupadFunction		Function
-  HiLink mupadType		Type
-  HiLink mupadDefine		Define
-  HiLink mupadIdentifier	Identifier
+HiLink mupadComment		Comment
+HiLink mupadString		String
+HiLink mupadOperator		Operator
+HiLink mupadSpecial		Special
+HiLink mupadStatement		Statement
+HiLink mupadUnderlined	Underlined
+HiLink mupadConditional	Conditional
+HiLink mupadRepeat		Repeat
+HiLink mupadFunction		Function
+HiLink mupadType		Type
+HiLink mupadDefine		Define
+HiLink mupadIdentifier	Identifier
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 " TODO  More comprehensive listing.

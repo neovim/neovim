@@ -4,9 +4,8 @@
 " Maintainer:	Mario Schweigler <ms44@kent.ac.uk>
 " Last Change:	24 May 2003
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -86,41 +85,34 @@ syn match occamCDString		/<\|>\|=\|(\|)/ contained
 
 syn region occamCDirective	start=/#\(USE\|INCLUDE\|PRAGMA\|DEFINE\|UNDEFINE\|UNDEF\|IF\|ELIF\|ELSE\|ENDIF\|WARNING\|ERROR\|RELAX\)\>/ end=/$/ contains=occamString,occamComment,occamCDString
 
-if version >= 508 || !exists("did_occam_syn_inits")
-  if version < 508
-    let did_occam_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink occamType Type
-  HiLink occamKeyword Keyword
-  HiLink occamComment Comment
-  HiLink occamCommentTitle PreProc
-  HiLink occamTodo Todo
-  HiLink occamNote Todo
-  HiLink occamString String
-  HiLink occamCharString String
-  HiLink occamNumber Number
-  HiLink occamCDirective PreProc
-  HiLink occamCDString String
-  HiLink occamPPIdentifier PreProc
-  HiLink occamBoolean Boolean
-  HiLink occamSpecialChar SpecialChar
-  HiLink occamChar Character
-  HiLink occamStructure Structure
-  HiLink occamIdentifier Identifier
-  HiLink occamConstant Constant
-  HiLink occamOperator Operator
-  HiLink occamFunction Ignore
-  HiLink occamRepeat Repeat
-  HiLink occamConditional Conditional
-  HiLink occamBrackets Type
-  HiLink occamParantheses Delimiter
+HiLink occamType Type
+HiLink occamKeyword Keyword
+HiLink occamComment Comment
+HiLink occamCommentTitle PreProc
+HiLink occamTodo Todo
+HiLink occamNote Todo
+HiLink occamString String
+HiLink occamCharString String
+HiLink occamNumber Number
+HiLink occamCDirective PreProc
+HiLink occamCDString String
+HiLink occamPPIdentifier PreProc
+HiLink occamBoolean Boolean
+HiLink occamSpecialChar SpecialChar
+HiLink occamChar Character
+HiLink occamStructure Structure
+HiLink occamIdentifier Identifier
+HiLink occamConstant Constant
+HiLink occamOperator Operator
+HiLink occamFunction Ignore
+HiLink occamRepeat Repeat
+HiLink occamConditional Conditional
+HiLink occamBrackets Type
+HiLink occamParantheses Delimiter
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "occam"
 

@@ -3,11 +3,8 @@
 " Maintainer:	Dan Piponi <dan@tanelorn.demon.co.uk>
 " Last Change:	2001 May 09
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -75,45 +72,37 @@ syn keyword slVariable dtime dPdtime
 syn sync ccomment slComment minlines=10
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sl_syntax_inits")
-  if version < 508
-    let did_sl_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink slLabel	Label
-  HiLink slUserLabel	Label
-  HiLink slConditional	Conditional
-  HiLink slRepeat	Repeat
-  HiLink slCharacter	Character
-  HiLink slSpecialCharacter slSpecial
-  HiLink slNumber	Number
-  HiLink slFloat	Float
-  HiLink slParenError	slError
-  HiLink slInParen	slError
-  HiLink slCommentError	slError
-  HiLink slOperator	Operator
-  HiLink slStorageClass	StorageClass
-  HiLink slError	Error
-  HiLink slStatement	Statement
-  HiLink slType		Type
-  HiLink slCommentError	slError
-  HiLink slCommentString slString
-  HiLink slComment2String slString
-  HiLink slCommentSkip	slComment
-  HiLink slString	String
-  HiLink slComment	Comment
-  HiLink slSpecial	SpecialChar
-  HiLink slTodo	Todo
-  HiLink slVariable	Identifier
-  "HiLink slIdentifier	Identifier
+HiLink slLabel	Label
+HiLink slUserLabel	Label
+HiLink slConditional	Conditional
+HiLink slRepeat	Repeat
+HiLink slCharacter	Character
+HiLink slSpecialCharacter slSpecial
+HiLink slNumber	Number
+HiLink slFloat	Float
+HiLink slParenError	slError
+HiLink slInParen	slError
+HiLink slCommentError	slError
+HiLink slOperator	Operator
+HiLink slStorageClass	StorageClass
+HiLink slError	Error
+HiLink slStatement	Statement
+HiLink slType		Type
+HiLink slCommentError	slError
+HiLink slCommentString slString
+HiLink slComment2String slString
+HiLink slCommentSkip	slComment
+HiLink slString	String
+HiLink slComment	Comment
+HiLink slSpecial	SpecialChar
+HiLink slTodo	Todo
+HiLink slVariable	Identifier
+"HiLink slIdentifier	Identifier
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "sl"
 

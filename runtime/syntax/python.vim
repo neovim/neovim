@@ -36,11 +36,8 @@
 "   let python_highlight_all = 1
 "
 
-" For version 5.x: Clear all syntax items.
-" For version 6.x: Quit when a syntax file was already loaded.
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded.
+if exists("b:current_syntax")
   finish
 endif
 
@@ -292,51 +289,44 @@ endif
 " Sync at the beginning of class, function, or method definition.
 syn sync match pythonSync grouphere NONE "^\s*\%(def\|class\)\s\+\h\w*\s*("
 
-if version >= 508 || !exists("did_python_syn_inits")
-  if version <= 508
-    let did_python_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  " The default highlight links.  Can be overridden later.
-  HiLink pythonStatement	Statement
-  HiLink pythonConditional	Conditional
-  HiLink pythonRepeat		Repeat
-  HiLink pythonOperator		Operator
-  HiLink pythonException	Exception
-  HiLink pythonInclude		Include
-  HiLink pythonAsync		Statement
-  HiLink pythonDecorator	Define
-  HiLink pythonDecoratorName	Function
-  HiLink pythonFunction		Function
-  HiLink pythonComment		Comment
-  HiLink pythonTodo		Todo
-  HiLink pythonString		String
-  HiLink pythonRawString	String
-  HiLink pythonQuotes		String
-  HiLink pythonTripleQuotes	pythonQuotes
-  HiLink pythonEscape		Special
-  if !exists("python_no_number_highlight")
-    HiLink pythonNumber		Number
-  endif
-  if !exists("python_no_builtin_highlight")
-    HiLink pythonBuiltin	Function
-  endif
-  if !exists("python_no_exception_highlight")
-    HiLink pythonExceptions	Structure
-  endif
-  if exists("python_space_error_highlight")
-    HiLink pythonSpaceError	Error
-  endif
-  if !exists("python_no_doctest_highlight")
-    HiLink pythonDoctest	Special
-    HiLink pythonDoctestValue	Define
-  endif
-
-  delcommand HiLink
+" The default highlight links.  Can be overridden later.
+HiLink pythonStatement	Statement
+HiLink pythonConditional	Conditional
+HiLink pythonRepeat		Repeat
+HiLink pythonOperator		Operator
+HiLink pythonException	Exception
+HiLink pythonInclude		Include
+HiLink pythonAsync		Statement
+HiLink pythonDecorator	Define
+HiLink pythonDecoratorName	Function
+HiLink pythonFunction		Function
+HiLink pythonComment		Comment
+HiLink pythonTodo		Todo
+HiLink pythonString		String
+HiLink pythonRawString	String
+HiLink pythonQuotes		String
+HiLink pythonTripleQuotes	pythonQuotes
+HiLink pythonEscape		Special
+if !exists("python_no_number_highlight")
+  HiLink pythonNumber		Number
 endif
+if !exists("python_no_builtin_highlight")
+  HiLink pythonBuiltin	Function
+endif
+if !exists("python_no_exception_highlight")
+  HiLink pythonExceptions	Structure
+endif
+if exists("python_space_error_highlight")
+  HiLink pythonSpaceError	Error
+endif
+if !exists("python_no_doctest_highlight")
+  HiLink pythonDoctest	Special
+  HiLink pythonDoctestValue	Define
+endif
+
+delcommand HiLink
 
 let b:current_syntax = "python"
 

@@ -3,11 +3,8 @@
 " Maintainer:	Inaki Saez <jisaez@sfe.indra.es>
 " Last Change:	2001 May 09
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -61,37 +58,29 @@ syn sync maxlines=100
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_atlas_syntax_inits")
-  if version < 508
-    let did_atlas_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink atlasConditional	Conditional
-  HiLink atlasRepeat		Repeat
-  HiLink atlasStatement	Statement
-  HiLink atlasNumber		Number
-  HiLink atlasHexNumber	Number
-  HiLink atlasOctalNumber	Number
-  HiLink atlasBinNumber	Number
-  HiLink atlasDecimalNumber	Float
-  HiLink atlasFormatString	String
-  HiLink atlasString		String
-  HiLink atlasComment		Comment
-  HiLink atlasComment2		Comment
-  HiLink atlasInclude		Include
-  HiLink atlasDefine		Macro
-  HiLink atlasReserved		PreCondit
-  HiLink atlasStorageClass	StorageClass
-  HiLink atlasIdentifier	NONE
-  HiLink atlasSpecial		Special
+HiLink atlasConditional	Conditional
+HiLink atlasRepeat		Repeat
+HiLink atlasStatement	Statement
+HiLink atlasNumber		Number
+HiLink atlasHexNumber	Number
+HiLink atlasOctalNumber	Number
+HiLink atlasBinNumber	Number
+HiLink atlasDecimalNumber	Float
+HiLink atlasFormatString	String
+HiLink atlasString		String
+HiLink atlasComment		Comment
+HiLink atlasComment2		Comment
+HiLink atlasInclude		Include
+HiLink atlasDefine		Macro
+HiLink atlasReserved		PreCondit
+HiLink atlasStorageClass	StorageClass
+HiLink atlasIdentifier	NONE
+HiLink atlasSpecial		Special
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "atlas"
 

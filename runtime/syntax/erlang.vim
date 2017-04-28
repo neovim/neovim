@@ -28,11 +28,8 @@
 "
 "     syn keyword erlangAttribute myattr1 myattr2 contained
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -42,9 +39,7 @@ set cpo&vim
 " Case sensitive
 syn case match
 
-if version >= 600
-  setlocal iskeyword+=$,@-@
-endif
+setlocal iskeyword+=$,@-@
 
 " Comments
 syn match erlangComment           '%.*$' contains=erlangCommentAnnotation,erlangTodo
@@ -147,115 +142,107 @@ let b:erlang_syntax_synced = 1
 let s:old_style = (exists("g:erlang_old_style_highlight") &&
                   \g:erlang_old_style_highlight == 1)
 
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_erlang_inits")
-  if version < 508
-    let did_erlang_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  " Comments
-  HiLink erlangComment Comment
-  HiLink erlangCommentAnnotation Special
-  HiLink erlangTodo Todo
-  HiLink erlangShebang Comment
+" Comments
+HiLink erlangComment Comment
+HiLink erlangCommentAnnotation Special
+HiLink erlangTodo Todo
+HiLink erlangShebang Comment
 
-  " Numbers
-  HiLink erlangNumberInteger Number
-  HiLink erlangNumberFloat Float
+" Numbers
+HiLink erlangNumberInteger Number
+HiLink erlangNumberFloat Float
 
-  " Strings, atoms, characters
-  HiLink erlangString String
+" Strings, atoms, characters
+HiLink erlangString String
 
-  if s:old_style
-    HiLink erlangQuotedAtom Type
-  else
-    HiLink erlangQuotedAtom String
-  endif
-
-  HiLink erlangStringModifier Special
-  HiLink erlangQuotedAtomModifier Special
-  HiLink erlangModifier Special
-
-  " Operators, separators
-  HiLink erlangOperator Operator
-  HiLink erlangRightArrow Operator
-  if s:old_style
-    HiLink erlangBracket Normal
-    HiLink erlangPipe Normal
-  else
-    HiLink erlangBracket Delimiter
-    HiLink erlangPipe Delimiter
-  endif
-
-  " Atoms, functions, variables, macros
-  if s:old_style
-    HiLink erlangAtom Normal
-    HiLink erlangLocalFuncCall Normal
-    HiLink erlangLocalFuncRef Normal
-    HiLink erlangGlobalFuncCall Function
-    HiLink erlangGlobalFuncRef Function
-    HiLink erlangVariable Normal
-    HiLink erlangMacro Normal
-    HiLink erlangRecord Normal
-  else
-    HiLink erlangAtom String
-    HiLink erlangLocalFuncCall Normal
-    HiLink erlangLocalFuncRef Normal
-    HiLink erlangGlobalFuncCall Normal
-    HiLink erlangGlobalFuncRef Normal
-    HiLink erlangVariable Identifier
-    HiLink erlangMacro Macro
-    HiLink erlangRecord Structure
-  endif
-
-  " Bitstrings
-  if !s:old_style
-    HiLink erlangBitType Type
-  endif
-
-  " Constants and Directives
-  if s:old_style
-    HiLink erlangAttribute Type
-    HiLink erlangMacroDef Type
-    HiLink erlangUnknownAttribute Normal
-    HiLink erlangInclude Type
-    HiLink erlangRecordDef Type
-    HiLink erlangDefine Type
-    HiLink erlangPreCondit Type
-    HiLink erlangType Type
-  else
-    HiLink erlangAttribute Keyword
-    HiLink erlangMacroDef Macro
-    HiLink erlangUnknownAttribute Normal
-    HiLink erlangInclude Include
-    HiLink erlangRecordDef Keyword
-    HiLink erlangDefine Define
-    HiLink erlangPreCondit PreCondit
-    HiLink erlangType Type
-  endif
-
-  " Keywords
-  HiLink erlangKeyword Keyword
-
-  " Build-in-functions (BIFs)
-  HiLink erlangBIF Function
-
-  if s:old_style
-    HiLink erlangBoolean Statement
-    HiLink erlangExtra Statement
-    HiLink erlangSignal Statement
-  else
-    HiLink erlangBoolean Boolean
-    HiLink erlangExtra Statement
-    HiLink erlangSignal Statement
-  endif
-
-  delcommand HiLink
+if s:old_style
+HiLink erlangQuotedAtom Type
+else
+HiLink erlangQuotedAtom String
 endif
+
+HiLink erlangStringModifier Special
+HiLink erlangQuotedAtomModifier Special
+HiLink erlangModifier Special
+
+" Operators, separators
+HiLink erlangOperator Operator
+HiLink erlangRightArrow Operator
+if s:old_style
+HiLink erlangBracket Normal
+HiLink erlangPipe Normal
+else
+HiLink erlangBracket Delimiter
+HiLink erlangPipe Delimiter
+endif
+
+" Atoms, functions, variables, macros
+if s:old_style
+HiLink erlangAtom Normal
+HiLink erlangLocalFuncCall Normal
+HiLink erlangLocalFuncRef Normal
+HiLink erlangGlobalFuncCall Function
+HiLink erlangGlobalFuncRef Function
+HiLink erlangVariable Normal
+HiLink erlangMacro Normal
+HiLink erlangRecord Normal
+else
+HiLink erlangAtom String
+HiLink erlangLocalFuncCall Normal
+HiLink erlangLocalFuncRef Normal
+HiLink erlangGlobalFuncCall Normal
+HiLink erlangGlobalFuncRef Normal
+HiLink erlangVariable Identifier
+HiLink erlangMacro Macro
+HiLink erlangRecord Structure
+endif
+
+" Bitstrings
+if !s:old_style
+HiLink erlangBitType Type
+endif
+
+" Constants and Directives
+if s:old_style
+HiLink erlangAttribute Type
+HiLink erlangMacroDef Type
+HiLink erlangUnknownAttribute Normal
+HiLink erlangInclude Type
+HiLink erlangRecordDef Type
+HiLink erlangDefine Type
+HiLink erlangPreCondit Type
+HiLink erlangType Type
+else
+HiLink erlangAttribute Keyword
+HiLink erlangMacroDef Macro
+HiLink erlangUnknownAttribute Normal
+HiLink erlangInclude Include
+HiLink erlangRecordDef Keyword
+HiLink erlangDefine Define
+HiLink erlangPreCondit PreCondit
+HiLink erlangType Type
+endif
+
+" Keywords
+HiLink erlangKeyword Keyword
+
+" Build-in-functions (BIFs)
+HiLink erlangBIF Function
+
+if s:old_style
+HiLink erlangBoolean Statement
+HiLink erlangExtra Statement
+HiLink erlangSignal Statement
+else
+HiLink erlangBoolean Boolean
+HiLink erlangExtra Statement
+HiLink erlangSignal Statement
+endif
+
+delcommand HiLink
 
 let b:current_syntax = "erlang"
 

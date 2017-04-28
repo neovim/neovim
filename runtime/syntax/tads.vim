@@ -13,11 +13,8 @@
 " Actually, should cvtstr etc. be functions?! (change tadsFunction)
 " Make global etc. into Identifiers, since we don't have regular variables?
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -122,57 +119,49 @@ endif
 execute "syn sync maxlines=" . tads_sync_dist
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_tads_syn_inits")
-  if version < 508
-    let did_tads_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink tadsFunctionDef Function
-  HiLink tadsFunction  Structure
-  HiLink tadsClass     Structure
-  HiLink tadsClassDef  Identifier
-  HiLink tadsObjectDef Identifier
+" The default methods for highlighting.  Can be overridden later
+HiLink tadsFunctionDef Function
+HiLink tadsFunction  Structure
+HiLink tadsClass     Structure
+HiLink tadsClassDef  Identifier
+HiLink tadsObjectDef Identifier
 " no highlight for tadsEmbedded, so it prints as normal text w/in the string
 
-  HiLink tadsOperator	Operator
-  HiLink tadsStructure	Structure
-  HiLink tadsTodo	Todo
-  HiLink tadsLabel	Label
-  HiLink tadsConditional	Conditional
-  HiLink tadsRepeat	Repeat
-  HiLink tadsException	Exception
-  HiLink tadsStatement	Statement
-  HiLink tadsStorageClass	StorageClass
-  HiLink tadsKeyWord   Keyword
-  HiLink tadsSpecial	SpecialChar
-  HiLink tadsNumber	Number
-  HiLink tadsBoolean	Boolean
-  HiLink tadsDoubleString	tadsString
-  HiLink tadsSingleString	tadsString
+HiLink tadsOperator	Operator
+HiLink tadsStructure	Structure
+HiLink tadsTodo	Todo
+HiLink tadsLabel	Label
+HiLink tadsConditional	Conditional
+HiLink tadsRepeat	Repeat
+HiLink tadsException	Exception
+HiLink tadsStatement	Statement
+HiLink tadsStorageClass	StorageClass
+HiLink tadsKeyWord   Keyword
+HiLink tadsSpecial	SpecialChar
+HiLink tadsNumber	Number
+HiLink tadsBoolean	Boolean
+HiLink tadsDoubleString	tadsString
+HiLink tadsSingleString	tadsString
 
-  HiLink tadsOctalError	tadsError
-  HiLink tadsCommentError	tadsError
-  HiLink tadsBraceError	tadsError
-  HiLink tadsInBrace	tadsError
-  HiLink tadsError	Error
+HiLink tadsOctalError	tadsError
+HiLink tadsCommentError	tadsError
+HiLink tadsBraceError	tadsError
+HiLink tadsInBrace	tadsError
+HiLink tadsError	Error
 
-  HiLink tadsInclude	Include
-  HiLink tadsPreProc	PreProc
-  HiLink tadsDefine	Macro
-  HiLink tadsIncluded	tadsString
-  HiLink tadsPreCondit	PreCondit
+HiLink tadsInclude	Include
+HiLink tadsPreProc	PreProc
+HiLink tadsDefine	Macro
+HiLink tadsIncluded	tadsString
+HiLink tadsPreCondit	PreCondit
 
-  HiLink tadsString	String
-  HiLink tadsComment	Comment
+HiLink tadsString	String
+HiLink tadsComment	Comment
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 
 let b:current_syntax = "tads"

@@ -44,11 +44,9 @@
 " Let me know if you like it or send me patches, so that I can improve it
 " when I have time
 
-" Quit when a syntax file was already loaded
+" quit when a syntax file was already loaded
 if !exists("main_syntax")
-  if version < 600
-    syntax clear
-  elseif exists("b:current_syntax")
+  if exists("b:current_syntax")
     finish
   endif
   " we define it here so that included files can test for it
@@ -59,11 +57,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " don't use standard HiLink, it will not work with included syntax files
-if version < 508
-  command! -nargs=+ GroovyHiLink hi link <args>
-else
-  command! -nargs=+ GroovyHiLink hi def link <args>
-endif
+command! -nargs=+ GroovyHiLink hi def link <args>
 
 " ##########################
 " Java stuff taken from java.vim
@@ -329,23 +323,21 @@ if exists("groovy_highlight_debug")
 
   syn cluster groovyTop add=groovyDebug
 
-  if version >= 508 || !exists("did_c_syn_inits")
-    GroovyHiLink groovyDebug                 Debug
-    GroovyHiLink groovyDebugString           DebugString
-    GroovyHiLink groovyDebugStringError      groovyError
-    GroovyHiLink groovyDebugType             DebugType
-    GroovyHiLink groovyDebugBoolean          DebugBoolean
-    GroovyHiLink groovyDebugNumber           Debug
-    GroovyHiLink groovyDebugSpecial          DebugSpecial
-    GroovyHiLink groovyDebugSpecialCharacter DebugSpecial
-    GroovyHiLink groovyDebugCharacter        DebugString
-    GroovyHiLink groovyDebugParen            Debug
+  GroovyHiLink groovyDebug                 Debug
+  GroovyHiLink groovyDebugString           DebugString
+  GroovyHiLink groovyDebugStringError      groovyError
+  GroovyHiLink groovyDebugType             DebugType
+  GroovyHiLink groovyDebugBoolean          DebugBoolean
+  GroovyHiLink groovyDebugNumber           Debug
+  GroovyHiLink groovyDebugSpecial          DebugSpecial
+  GroovyHiLink groovyDebugSpecialCharacter DebugSpecial
+  GroovyHiLink groovyDebugCharacter        DebugString
+  GroovyHiLink groovyDebugParen            Debug
 
-    GroovyHiLink DebugString               String
-    GroovyHiLink DebugSpecial              Special
-    GroovyHiLink DebugBoolean              Boolean
-    GroovyHiLink DebugType                 Type
-  endif
+  GroovyHiLink DebugString               String
+  GroovyHiLink DebugSpecial              Special
+  GroovyHiLink DebugBoolean              Boolean
+  GroovyHiLink DebugType                 Type
 endif
 
 " Match all Exception classes
@@ -398,59 +390,54 @@ syn match   groovyParenError       "\]"
 
 " ###############################
 " java.vim default highlighting
-if version >= 508 || !exists("did_groovy_syn_inits")
-  if version < 508
-    let did_groovy_syn_inits = 1
-  endif
-  GroovyHiLink groovyFuncDef		Function
-  GroovyHiLink groovyBraces		Function
-  GroovyHiLink groovyBranch		Conditional
-  GroovyHiLink groovyUserLabelRef	groovyUserLabel
-  GroovyHiLink groovyLabel		Label
-  GroovyHiLink groovyUserLabel		Label
-  GroovyHiLink groovyConditional	Conditional
-  GroovyHiLink groovyRepeat		Repeat
-  GroovyHiLink groovyExceptions		Exception
-  GroovyHiLink groovyAssert 		Statement
-  GroovyHiLink groovyStorageClass	StorageClass
-  GroovyHiLink groovyMethodDecl		groovyStorageClass
-  GroovyHiLink groovyClassDecl		groovyStorageClass
-  GroovyHiLink groovyScopeDecl		groovyStorageClass
-  GroovyHiLink groovyBoolean		Boolean
-  GroovyHiLink groovySpecial		Special
-  GroovyHiLink groovySpecialError	Error
-  GroovyHiLink groovySpecialCharError	Error
-  GroovyHiLink groovyString		String
-  GroovyHiLink groovyRegexChar		String
-  GroovyHiLink groovyCharacter		Character
-  GroovyHiLink groovySpecialChar	SpecialChar
-  GroovyHiLink groovyNumber		Number
-  GroovyHiLink groovyError		Error
-  GroovyHiLink groovyStringError	Error
-  GroovyHiLink groovyStatement		Statement
-  GroovyHiLink groovyOperator		Operator
-  GroovyHiLink groovyComment		Comment
-  GroovyHiLink groovyDocComment		Comment
-  GroovyHiLink groovyLineComment	Comment
-  GroovyHiLink groovyConstant		Constant
-  GroovyHiLink groovyTypedef		Typedef
-  GroovyHiLink groovyTodo		Todo
+GroovyHiLink groovyFuncDef		Function
+GroovyHiLink groovyBraces		Function
+GroovyHiLink groovyBranch		Conditional
+GroovyHiLink groovyUserLabelRef	groovyUserLabel
+GroovyHiLink groovyLabel		Label
+GroovyHiLink groovyUserLabel		Label
+GroovyHiLink groovyConditional	Conditional
+GroovyHiLink groovyRepeat		Repeat
+GroovyHiLink groovyExceptions		Exception
+GroovyHiLink groovyAssert 		Statement
+GroovyHiLink groovyStorageClass	StorageClass
+GroovyHiLink groovyMethodDecl		groovyStorageClass
+GroovyHiLink groovyClassDecl		groovyStorageClass
+GroovyHiLink groovyScopeDecl		groovyStorageClass
+GroovyHiLink groovyBoolean		Boolean
+GroovyHiLink groovySpecial		Special
+GroovyHiLink groovySpecialError	Error
+GroovyHiLink groovySpecialCharError	Error
+GroovyHiLink groovyString		String
+GroovyHiLink groovyRegexChar		String
+GroovyHiLink groovyCharacter		Character
+GroovyHiLink groovySpecialChar	SpecialChar
+GroovyHiLink groovyNumber		Number
+GroovyHiLink groovyError		Error
+GroovyHiLink groovyStringError	Error
+GroovyHiLink groovyStatement		Statement
+GroovyHiLink groovyOperator		Operator
+GroovyHiLink groovyComment		Comment
+GroovyHiLink groovyDocComment		Comment
+GroovyHiLink groovyLineComment	Comment
+GroovyHiLink groovyConstant		Constant
+GroovyHiLink groovyTypedef		Typedef
+GroovyHiLink groovyTodo		Todo
 
-  GroovyHiLink groovyCommentTitle	SpecialComment
-  GroovyHiLink groovyDocTags		Special
-  GroovyHiLink groovyDocParam		Function
-  GroovyHiLink groovyCommentStar	groovyComment
+GroovyHiLink groovyCommentTitle	SpecialComment
+GroovyHiLink groovyDocTags		Special
+GroovyHiLink groovyDocParam		Function
+GroovyHiLink groovyCommentStar	groovyComment
 
-  GroovyHiLink groovyType		Type
-  GroovyHiLink groovyExternal		Include
+GroovyHiLink groovyType		Type
+GroovyHiLink groovyExternal		Include
 
-  GroovyHiLink htmlComment		Special
-  GroovyHiLink htmlCommentPart		Special
-  GroovyHiLink groovySpaceError		Error
-  GroovyHiLink groovyJDKBuiltin         Special
-  GroovyHiLink groovyJDKOperOverl       Operator
-  GroovyHiLink groovyJDKMethods         Function
-endif
+GroovyHiLink htmlComment		Special
+GroovyHiLink htmlCommentPart		Special
+GroovyHiLink groovySpaceError		Error
+GroovyHiLink groovyJDKBuiltin         Special
+GroovyHiLink groovyJDKOperOverl       Operator
+GroovyHiLink groovyJDKMethods         Function
 
 delcommand GroovyHiLink
 

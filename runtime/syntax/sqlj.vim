@@ -8,10 +8,8 @@
 
 " au BufNewFile,BufRead *.sqlj so $VIM/syntax/sqlj.vim
 
-" Remove any old syntax stuff hanging around
-if version < 600
-   syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
    finish
 endif
 
@@ -76,27 +74,20 @@ syn match sqlComment	"--.*"
 
 syn sync ccomment sqljComment
 
-if version >= 508 || !exists("did_sqlj_syn_inits")
-  if version < 508
-    let did_sqlj_syn_inits = 1
-    command! -nargs=+ HiLink hi link <args>
-  else
-    command! -nargs=+ HiLink hi def link <args>
-  endif
+command! -nargs=+ HiLink hi def link <args>
 
-  " The default methods for highlighting. Can be overridden later.
-  HiLink sqljComment	Comment
-  HiLink sqljKeyword	sqljSpecial
-  HiLink sqljNumber	Number
-  HiLink sqljOperator	sqljStatement
-  HiLink sqljSpecial	Special
-  HiLink sqljStatement	Statement
-  HiLink sqljString	String
-  HiLink sqljType	Type
-  HiLink sqljPre	PreProc
+" The default methods for highlighting. Can be overridden later.
+HiLink sqljComment	Comment
+HiLink sqljKeyword	sqljSpecial
+HiLink sqljNumber	Number
+HiLink sqljOperator	sqljStatement
+HiLink sqljSpecial	Special
+HiLink sqljStatement	Statement
+HiLink sqljString	String
+HiLink sqljType	Type
+HiLink sqljPre	PreProc
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "sqlj"
 

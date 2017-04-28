@@ -7,11 +7,8 @@
 " See format description at <http://msdn2.microsoft.com/en-us/library/aa385646.aspx>
 " This file is based on the rc.vim and c.vim
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 

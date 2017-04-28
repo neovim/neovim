@@ -10,11 +10,8 @@
 " crontab line format:
 " Minutes   Hours   Days   Months   Days_of_Week   Commands # comments
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -39,41 +36,33 @@ syntax match crontabCmnt "^\s*#.*" contains=@Spell
 syntax match crontabPercent "[^\\]%.*"lc=1 contained
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_crontab_syn_inits")
-	if version < 508
-		let did_crontab_syn_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-	HiLink crontabMin		Number
-	HiLink crontabHr		PreProc
-	HiLink crontabDay		Type
+HiLink crontabMin		Number
+HiLink crontabHr		PreProc
+HiLink crontabDay		Type
 
-	HiLink crontabMnth		Number
-	HiLink crontabMnth12		Number
-	HiLink crontabMnthS		Number
-	HiLink crontabMnthN		Number
+HiLink crontabMnth		Number
+HiLink crontabMnth12		Number
+HiLink crontabMnthS		Number
+HiLink crontabMnthN		Number
 
-	HiLink crontabDow		PreProc
-	HiLink crontabDow7		PreProc
-	HiLink crontabDowS		PreProc
-	HiLink crontabDowN		PreProc
+HiLink crontabDow		PreProc
+HiLink crontabDow7		PreProc
+HiLink crontabDowS		PreProc
+HiLink crontabDowN		PreProc
 
-	HiLink crontabNick		Special
-	HiLink crontabVar		Identifier
-	HiLink crontabPercent		Special
+HiLink crontabNick		Special
+HiLink crontabVar		Identifier
+HiLink crontabPercent		Special
 
 " comment out next line for to suppress unix commands coloring.
-	HiLink crontabCmd		Statement
+HiLink crontabCmd		Statement
 
-	HiLink crontabCmnt		Comment
+HiLink crontabCmnt		Comment
 
-	delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "crontab"
 

@@ -10,9 +10,6 @@
 
 " ---------------------------------------------------------------------
 " this version of syntax/yacc.vim requires 6.0 or later
-if version < 600
- finish
-endif
 if exists("b:current_syntax")
  syntax clear
 endif

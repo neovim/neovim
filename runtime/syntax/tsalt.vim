@@ -4,11 +4,8 @@
 " Last Change:	2012 Feb 03 by Thilo Six
 " Version Info: @(#)tsalt.vim	1.5	97/12/16 08:11:15
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -171,46 +168,38 @@ syn sync ccomment tsaltComment
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_tsalt_syntax_inits")
-  if version < 508
-    let did_tsalt_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-	HiLink tsaltFunction		Statement
-	HiLink tsaltSysVar		Type
-	"HiLink tsaltLibFunc		UserDefFunc
-	"HiLink tsaltConstants		Type
-	"HiLink tsaltFuncArg		Type
-	"HiLink tsaltOperator		Operator
-	"HiLink tsaltLabel		Label
-	"HiLink tsaltUserLabel		Label
-	HiLink tsaltConditional		Conditional
-	HiLink tsaltRepeat		Repeat
-	HiLink tsaltCharacter		SpecialChar
-	HiLink tsaltSpecialCharacter	SpecialChar
-	HiLink tsaltNumber		Number
-	HiLink tsaltFloat		Float
-	HiLink tsaltCommentError	tsaltError
-	HiLink tsaltInclude		Include
-	HiLink tsaltPreProc		PreProc
-	HiLink tsaltDefine		Macro
-	HiLink tsaltIncluded		tsaltString
-	HiLink tsaltError		Error
-	HiLink tsaltStatement		Statement
-	HiLink tsaltPreCondit		PreCondit
-	HiLink tsaltType		Type
-	HiLink tsaltString		String
-	HiLink tsaltComment		Comment
-	HiLink tsaltSpecial		Special
-	HiLink tsaltTodo		Todo
+HiLink tsaltFunction		Statement
+HiLink tsaltSysVar		Type
+"HiLink tsaltLibFunc		UserDefFunc
+"HiLink tsaltConstants		Type
+"HiLink tsaltFuncArg		Type
+"HiLink tsaltOperator		Operator
+"HiLink tsaltLabel		Label
+"HiLink tsaltUserLabel		Label
+HiLink tsaltConditional		Conditional
+HiLink tsaltRepeat		Repeat
+HiLink tsaltCharacter		SpecialChar
+HiLink tsaltSpecialCharacter	SpecialChar
+HiLink tsaltNumber		Number
+HiLink tsaltFloat		Float
+HiLink tsaltCommentError	tsaltError
+HiLink tsaltInclude		Include
+HiLink tsaltPreProc		PreProc
+HiLink tsaltDefine		Macro
+HiLink tsaltIncluded		tsaltString
+HiLink tsaltError		Error
+HiLink tsaltStatement		Statement
+HiLink tsaltPreCondit		PreCondit
+HiLink tsaltType		Type
+HiLink tsaltString		String
+HiLink tsaltComment		Comment
+HiLink tsaltSpecial		Special
+HiLink tsaltTodo		Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "tsalt"
 

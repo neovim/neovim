@@ -4,11 +4,8 @@
 " URL:		http://folk.uio.no/hakonrk/vim/syntax/simula.vim
 " Last Change:	2001 May 15
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -58,42 +55,35 @@ syn match	simulaReal		"-\=\<\d\+\(\.\d\+\)\=\(&&\=[+-]\=\d\+\)\=\>"
 " Real starting with a `.', optional exponent
 syn match	simulaReal		"-\=\.\d\+\(&&\=[+-]\=\d\+\)\=\>"
 
-if version >= 508 || !exists("did_simula_syntax_inits")
-    if version < 508
-	let did_simula_syntax_inits = 1
-	command -nargs=+ HiLink hi link <args>
-    else
-	command -nargs=+ HiLink hi def link <args>
-    endif
+command -nargs=+ HiLink hi def link <args>
 
-    HiLink simulaAssigned		Identifier
-    HiLink simulaBoolean		Boolean
-    HiLink simulaCharacter		Character
-    HiLink simulaCharError		Error
-    HiLink simulaComment		Comment
-    HiLink simulaCompound		Statement
-    HiLink simulaConditional		Conditional
-    HiLink simulaConstant		Constant
-    HiLink simulaFunction		Function
-    HiLink simulaNumber			Number
-    HiLink simulaOperator		Operator
-    HiLink simulaReal			Float
-    HiLink simulaReferenceType		Type
-    HiLink simulaRepeat			Repeat
-    HiLink simulaReserved		Error
-    HiLink simulaSemicolon		Statement
-    HiLink simulaSpecial		Special
-    HiLink simulaSpecialChar		SpecialChar
-    HiLink simulaSpecialCharErr		Error
-    HiLink simulaStatement		Statement
-    HiLink simulaStorageClass		StorageClass
-    HiLink simulaString			String
-    HiLink simulaStructure		Structure
-    HiLink simulaTodo			Todo
-    HiLink simulaType			Type
+HiLink simulaAssigned		Identifier
+HiLink simulaBoolean		Boolean
+HiLink simulaCharacter		Character
+HiLink simulaCharError		Error
+HiLink simulaComment		Comment
+HiLink simulaCompound		Statement
+HiLink simulaConditional		Conditional
+HiLink simulaConstant		Constant
+HiLink simulaFunction		Function
+HiLink simulaNumber			Number
+HiLink simulaOperator		Operator
+HiLink simulaReal			Float
+HiLink simulaReferenceType		Type
+HiLink simulaRepeat			Repeat
+HiLink simulaReserved		Error
+HiLink simulaSemicolon		Statement
+HiLink simulaSpecial		Special
+HiLink simulaSpecialChar		SpecialChar
+HiLink simulaSpecialCharErr		Error
+HiLink simulaStatement		Statement
+HiLink simulaStorageClass		StorageClass
+HiLink simulaString			String
+HiLink simulaStructure		Structure
+HiLink simulaTodo			Todo
+HiLink simulaType			Type
 
-    delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "simula"
 " vim: sts=4 sw=4 ts=8

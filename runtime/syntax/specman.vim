@@ -10,11 +10,8 @@
 "---------------------------------------------------------
 
 " Remove any old syntax stuff hanging around
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -137,46 +134,38 @@ syn region  specmanString start=+"+  end=+"+
 syn sync lines=50
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_specman_syn_inits")
-  if version < 508
-    let did_specman_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  " The default methods for highlighting.  Can be overridden later
-	HiLink	specmanConditional	Conditional
-	HiLink	specmanConstraint	Conditional
-	HiLink	specmanRepeat		Repeat
-	HiLink	specmanString		String
-	HiLink	specmanComment		Comment
-	HiLink	specmanConstant		Macro
-	HiLink	specmanNumber		Number
-	HiLink	specmanCompare		Operator
-	HiLink	specmanOperator		Operator
-	HiLink	specmanLogical		Operator
-	HiLink	specmanStatement	Statement
-	HiLink	specmanHDL		SpecialChar
-	HiLink	specmanMethod		Function
-	HiLink	specmanInclude		Include
-	HiLink	specmanStructure	Structure
-	HiLink	specmanBoolean		Boolean
-	HiLink	specmanFSM		Label
-	HiLink	specmanSpecial		Special
-	HiLink	specmanType		Type
-	HiLink	specmanTemporal		Type
-	HiLink	specmanFile		Include
-	HiLink	specmanPreCondit	Include
-	HiLink	specmanDefine		Typedef
-	HiLink	specmanLabel		Label
-	HiLink	specmanPacking		keyword
-	HiLink	specmanTodo		Todo
-	HiLink	specmanParenError	Error
-	HiLink	specmanErrInParen	Error
-	HiLink	specmanErrInBracket	Error
-	delcommand	HiLink
-endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
+" The default methods for highlighting.  Can be overridden later
+HiLink	specmanConditional	Conditional
+HiLink	specmanConstraint	Conditional
+HiLink	specmanRepeat		Repeat
+HiLink	specmanString		String
+HiLink	specmanComment		Comment
+HiLink	specmanConstant		Macro
+HiLink	specmanNumber		Number
+HiLink	specmanCompare		Operator
+HiLink	specmanOperator		Operator
+HiLink	specmanLogical		Operator
+HiLink	specmanStatement	Statement
+HiLink	specmanHDL		SpecialChar
+HiLink	specmanMethod		Function
+HiLink	specmanInclude		Include
+HiLink	specmanStructure	Structure
+HiLink	specmanBoolean		Boolean
+HiLink	specmanFSM		Label
+HiLink	specmanSpecial		Special
+HiLink	specmanType		Type
+HiLink	specmanTemporal		Type
+HiLink	specmanFile		Include
+HiLink	specmanPreCondit	Include
+HiLink	specmanDefine		Typedef
+HiLink	specmanLabel		Label
+HiLink	specmanPacking		keyword
+HiLink	specmanTodo		Todo
+HiLink	specmanParenError	Error
+HiLink	specmanErrInParen	Error
+HiLink	specmanErrInBracket	Error
+delcommand	HiLink
 
 let b:current_syntax = "specman"

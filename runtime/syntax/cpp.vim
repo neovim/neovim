@@ -4,21 +4,14 @@
 " Previous Maintainer:	Ken Shan <ccshan@post.harvard.edu>
 " Last Change:	2016 Jul 07
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " Read the C syntax to start with
-if version < 600
-  so <sfile>:p:h/c.vim
-else
-  runtime! syntax/c.vim
-  unlet b:current_syntax
-endif
+runtime! syntax/c.vim
+unlet b:current_syntax
 
 " C++ extensions
 syn keyword cppStatement	new delete this friend using
@@ -60,29 +53,22 @@ endif
 syn match cppMinMax "[<>]?"
 
 " Default highlighting
-if version >= 508 || !exists("did_cpp_syntax_inits")
-  if version < 508
-    let did_cpp_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink cppAccess		cppStatement
-  HiLink cppCast		cppStatement
-  HiLink cppExceptions		Exception
-  HiLink cppOperator		Operator
-  HiLink cppStatement		Statement
-  HiLink cppModifier		Type
-  HiLink cppType		Type
-  HiLink cppStorageClass	StorageClass
-  HiLink cppStructure		Structure
-  HiLink cppBoolean		Boolean
-  HiLink cppConstant		Constant
-  HiLink cppRawStringDelimiter	Delimiter
-  HiLink cppRawString		String
-  HiLink cppNumber		Number
-  delcommand HiLink
-endif
+command -nargs=+ HiLink hi def link <args>
+HiLink cppAccess		cppStatement
+HiLink cppCast		cppStatement
+HiLink cppExceptions		Exception
+HiLink cppOperator		Operator
+HiLink cppStatement		Statement
+HiLink cppModifier		Type
+HiLink cppType		Type
+HiLink cppStorageClass	StorageClass
+HiLink cppStructure		Structure
+HiLink cppBoolean		Boolean
+HiLink cppConstant		Constant
+HiLink cppRawStringDelimiter	Delimiter
+HiLink cppRawString		String
+HiLink cppNumber		Number
+delcommand HiLink
 
 let b:current_syntax = "cpp"
 

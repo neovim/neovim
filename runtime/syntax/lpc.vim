@@ -9,11 +9,8 @@
 
 " Nodule: This is the start nodule. {{{1
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -360,94 +357,86 @@ endif
 " Nodule: Highlight links {{{1
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_lpc_syn_inits")
-  if version < 508
-    let did_lpc_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink lpcModifier		lpcStorageClass
+HiLink lpcModifier		lpcStorageClass
 
-  HiLink lpcQuotedFmt		lpcFormat
-  HiLink lpcFormat		lpcSpecial
-  HiLink lpcCppString		lpcString	" Cpp means
-						" C Pre-Processor
-  HiLink lpcCommentL		lpcComment
-  HiLink lpcCommentStart	lpcComment
-  HiLink lpcUserLabel		lpcLabel
-  HiLink lpcSpecialCharacter	lpcSpecial
-  HiLink lpcOctal		lpcPreProc
-  HiLink lpcOctalZero		lpcSpecial  " LPC will treat octal numbers
-					    " as decimals, programmers should
-					    " be aware of that.
-  HiLink lpcEfunError		lpcError
-  HiLink lpcKeywdError		lpcError
-  HiLink lpcOctalError		lpcError
-  HiLink lpcParenError		lpcError
-  HiLink lpcErrInParen		lpcError
-  HiLink lpcErrInBracket	lpcError
-  HiLink lpcCommentError	lpcError
-  HiLink lpcCommentStartError	lpcError
-  HiLink lpcSpaceError		lpcError
-  HiLink lpcSpecialError	lpcError
-  HiLink lpcErrFunc		lpcError
+HiLink lpcQuotedFmt		lpcFormat
+HiLink lpcFormat		lpcSpecial
+HiLink lpcCppString		lpcString	" Cpp means
+					      " C Pre-Processor
+HiLink lpcCommentL		lpcComment
+HiLink lpcCommentStart	lpcComment
+HiLink lpcUserLabel		lpcLabel
+HiLink lpcSpecialCharacter	lpcSpecial
+HiLink lpcOctal		lpcPreProc
+HiLink lpcOctalZero		lpcSpecial  " LPC will treat octal numbers
+					  " as decimals, programmers should
+					  " be aware of that.
+HiLink lpcEfunError		lpcError
+HiLink lpcKeywdError		lpcError
+HiLink lpcOctalError		lpcError
+HiLink lpcParenError		lpcError
+HiLink lpcErrInParen		lpcError
+HiLink lpcErrInBracket	lpcError
+HiLink lpcCommentError	lpcError
+HiLink lpcCommentStartError	lpcError
+HiLink lpcSpaceError		lpcError
+HiLink lpcSpecialError	lpcError
+HiLink lpcErrFunc		lpcError
 
-  if exists("lpc_pre_v22")
-      HiLink lpcOldEfuns	lpc_efuns
-      HiLink lpcNewEfuns	lpcError
-  else
-      HiLink lpcOldEfuns	lpcReserved
-      HiLink lpcNewEfuns	lpc_efuns
-  endif
-  HiLink lpc_efuns		lpcFunction
-
-  HiLink lpcReserved		lpcPreProc
-  HiLink lpcTextString		lpcString   " This should be preprocessors, but
-  HiLink lpcArrayString		lpcPreProc  " let's make some difference
-					    " between text and array
-
-  HiLink lpcIncluded		lpcString
-  HiLink lpcCommentString	lpcString
-  HiLink lpcComment2String	lpcString
-  HiLink lpcCommentSkip		lpcComment
-  HiLink lpcCommentFunc		lpcComment
-
-  HiLink lpcCppSkip		lpcCppOut
-  HiLink lpcCppOut2		lpcCppOut
-  HiLink lpcCppOut		lpcComment
-
-  " Standard type below
-  HiLink lpcApplies		Special
-  HiLink lpcCharacter		Character
-  HiLink lpcComment		Comment
-  HiLink lpcConditional		Conditional
-  HiLink lpcConstant		Constant
-  HiLink lpcDefine		Macro
-  HiLink lpcError		Error
-  HiLink lpcFloat		Float
-  HiLink lpcFunction		Function
-  HiLink lpcIdentifier		Identifier
-  HiLink lpcInclude		Include
-  HiLink lpcLabel		Label
-  HiLink lpcNumber		Number
-  HiLink lpcOperator		Operator
-  HiLink lpcPreCondit		PreCondit
-  HiLink lpcPreProc		PreProc
-  HiLink lpcRepeat		Repeat
-  HiLink lpcStatement		Statement
-  HiLink lpcStorageClass	StorageClass
-  HiLink lpcString		String
-  HiLink lpcStructure		Structure
-  HiLink lpcSpecial		LineNr
-  HiLink lpcTodo		Todo
-  HiLink lpcType		Type
-
-  delcommand HiLink
+if exists("lpc_pre_v22")
+    HiLink lpcOldEfuns	lpc_efuns
+    HiLink lpcNewEfuns	lpcError
+else
+    HiLink lpcOldEfuns	lpcReserved
+    HiLink lpcNewEfuns	lpc_efuns
 endif
+HiLink lpc_efuns		lpcFunction
+
+HiLink lpcReserved		lpcPreProc
+HiLink lpcTextString		lpcString   " This should be preprocessors, but
+HiLink lpcArrayString		lpcPreProc  " let's make some difference
+					  " between text and array
+
+HiLink lpcIncluded		lpcString
+HiLink lpcCommentString	lpcString
+HiLink lpcComment2String	lpcString
+HiLink lpcCommentSkip		lpcComment
+HiLink lpcCommentFunc		lpcComment
+
+HiLink lpcCppSkip		lpcCppOut
+HiLink lpcCppOut2		lpcCppOut
+HiLink lpcCppOut		lpcComment
+
+" Standard type below
+HiLink lpcApplies		Special
+HiLink lpcCharacter		Character
+HiLink lpcComment		Comment
+HiLink lpcConditional		Conditional
+HiLink lpcConstant		Constant
+HiLink lpcDefine		Macro
+HiLink lpcError		Error
+HiLink lpcFloat		Float
+HiLink lpcFunction		Function
+HiLink lpcIdentifier		Identifier
+HiLink lpcInclude		Include
+HiLink lpcLabel		Label
+HiLink lpcNumber		Number
+HiLink lpcOperator		Operator
+HiLink lpcPreCondit		PreCondit
+HiLink lpcPreProc		PreProc
+HiLink lpcRepeat		Repeat
+HiLink lpcStatement		Statement
+HiLink lpcStorageClass	StorageClass
+HiLink lpcString		String
+HiLink lpcStructure		Structure
+HiLink lpcSpecial		LineNr
+HiLink lpcTodo		Todo
+HiLink lpcType		Type
+
+delcommand HiLink
 
 " Nodule: This is the end nodule. {{{1
 

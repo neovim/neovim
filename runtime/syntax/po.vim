@@ -6,11 +6,8 @@
 "               Leonardo Fontenelle (Spell checking)
 "               Nam SungHyun <namsh@kldp.org> (Original maintainer)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 let s:keepcpo= &cpo
@@ -82,61 +79,53 @@ syn match poAcceleratorStr  contained "[^&_~][&_~]\(\a\|\d\)[^:]"ms=s+1,me=e-1 c
 syn match poVariable contained "%\d"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_po_syn_inits")
-  if version < 508
-    let did_po_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink poCommentSources    PreProc
-  HiLink poComment	     Comment
-  HiLink poCommentAutomatic  Comment
-  HiLink poCommentTranslator Comment
-  HiLink poCommentFlags      Special
-  HiLink poCommentDiff       Comment
-  HiLink poCopyrightUnset    Todo
-  HiLink poFlagFuzzy         Todo
-  HiLink poDiffOld           Todo
-  HiLink poDiffNew          Special
-  HiLink poObsolete         Comment
+HiLink poCommentSources    PreProc
+HiLink poComment	     Comment
+HiLink poCommentAutomatic  Comment
+HiLink poCommentTranslator Comment
+HiLink poCommentFlags      Special
+HiLink poCommentDiff       Comment
+HiLink poCopyrightUnset    Todo
+HiLink poFlagFuzzy         Todo
+HiLink poDiffOld           Todo
+HiLink poDiffNew          Special
+HiLink poObsolete         Comment
 
-  HiLink poStatementMsgid   Statement
-  HiLink poStatementMsgstr  Statement
-  HiLink poStatementMsgidplural  Statement
-  HiLink poStatementMsgCTxt Statement
-  HiLink poPluralCaseN      Constant
+HiLink poStatementMsgid   Statement
+HiLink poStatementMsgstr  Statement
+HiLink poStatementMsgidplural  Statement
+HiLink poStatementMsgCTxt Statement
+HiLink poPluralCaseN      Constant
 
-  HiLink poStringCTxt	    Comment
-  HiLink poStringID	    String
-  HiLink poStringSTR	    String
-  HiLink poCommentKDE       Comment
-  HiLink poCommentKDEError  Error
-  HiLink poPluralKDE        Comment
-  HiLink poPluralKDEError   Error
-  HiLink poHeaderItem       Identifier
-  HiLink poHeaderUndefined  Todo
-  HiLink poKDEdesktopFile   Identifier
+HiLink poStringCTxt	    Comment
+HiLink poStringID	    String
+HiLink poStringSTR	    String
+HiLink poCommentKDE       Comment
+HiLink poCommentKDEError  Error
+HiLink poPluralKDE        Comment
+HiLink poPluralKDEError   Error
+HiLink poHeaderItem       Identifier
+HiLink poHeaderUndefined  Todo
+HiLink poKDEdesktopFile   Identifier
 
-  HiLink poHtml              Identifier
-  HiLink poHtmlNot           String
-  HiLink poHtmlTranslatables String
-  HiLink poLineBreak         String
+HiLink poHtml              Identifier
+HiLink poHtmlNot           String
+HiLink poHtmlTranslatables String
+HiLink poLineBreak         String
 
-  HiLink poFormat	    poSpecial
-  HiLink poSpecial	    Special
-  HiLink poAcceleratorId    Special
-  HiLink poAcceleratorStr   Special
-  HiLink poVariable         Special
+HiLink poFormat	    poSpecial
+HiLink poSpecial	    Special
+HiLink poAcceleratorId    Special
+HiLink poAcceleratorStr   Special
+HiLink poVariable         Special
 
-  HiLink poMsguniqError        Special
-  HiLink poMsguniqErrorMarkers Comment
+HiLink poMsguniqError        Special
+HiLink poMsguniqErrorMarkers Comment
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "po"
 

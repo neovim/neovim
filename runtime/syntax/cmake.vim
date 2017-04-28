@@ -12,11 +12,8 @@
 "               http://www.cmake.org/HTML/Copyright.html
 "               This implies that distribution with Vim is allowed
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 let s:keepcpo= &cpo
@@ -52,32 +49,24 @@ syn keyword cmakeTodo
             \ contained
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_cmake_syntax_inits")
-  if version < 508
-    let did_cmake_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink cmakeStatement Statement
-  HiLink cmakeComment Comment
-  HiLink cmakeString String
-  HiLink cmakeVariableValue Type
-  HiLink cmakeRegistry Underlined
-  HiLink cmakeArguments Identifier
-  HiLink cmakeArgument Constant
-  HiLink cmakeEnvironment Special
-  HiLink cmakeOperators Operator
-  HiLink cmakeMacro PreProc
-  HiLink cmakeError Error
-  HiLink cmakeTodo TODO
-  HiLink cmakeEscaped Special
+HiLink cmakeStatement Statement
+HiLink cmakeComment Comment
+HiLink cmakeString String
+HiLink cmakeVariableValue Type
+HiLink cmakeRegistry Underlined
+HiLink cmakeArguments Identifier
+HiLink cmakeArgument Constant
+HiLink cmakeEnvironment Special
+HiLink cmakeOperators Operator
+HiLink cmakeMacro PreProc
+HiLink cmakeError Error
+HiLink cmakeTodo TODO
+HiLink cmakeEscaped Special
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "cmake"
 

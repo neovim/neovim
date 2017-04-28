@@ -7,11 +7,8 @@
 " This is based on sh.vim by Lennart Schultz
 " but greatly simplified
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -53,28 +50,20 @@ syn match spiceParenError ")"
 syn sync minlines=50
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_spice_syntax_inits")
-  if version < 508
-    let did_spice_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink spiceTodo		Todo
-  HiLink spiceWrapLineOperator	spiceOperator
-  HiLink spiceSinglequote	spiceExpr
-  HiLink spiceExpr		Function
-  HiLink spiceParenError	Error
-  HiLink spiceStatement		Statement
-  HiLink spiceNumber		Number
-  HiLink spiceComment		Comment
-  HiLink spiceOperator		Operator
+HiLink spiceTodo		Todo
+HiLink spiceWrapLineOperator	spiceOperator
+HiLink spiceSinglequote	spiceExpr
+HiLink spiceExpr		Function
+HiLink spiceParenError	Error
+HiLink spiceStatement		Statement
+HiLink spiceNumber		Number
+HiLink spiceComment		Comment
+HiLink spiceOperator		Operator
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "spice"
 

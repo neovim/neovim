@@ -7,9 +7,7 @@
 " URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debchangelog.vim
 
 " Standard syntax initialization
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+if exists("b:current_syntax")
   finish
 endif
 
@@ -36,28 +34,21 @@ syn region debchangelogFooter start="^ [^ ]" end="$" contains=debchangelogEmail 
 syn region debchangelogEntry start="^  " end="$" contains=debchangelogCloses,debchangelogLP oneline
 
 " Associate our matches and regions with pretty colours
-if version >= 508 || !exists("did_debchangelog_syn_inits")
-  if version < 508
-    let did_debchangelog_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink debchangelogHeader		Error
-  HiLink debchangelogFooter		Identifier
-  HiLink debchangelogEntry		Normal
-  HiLink debchangelogCloses		Statement
-  HiLink debchangelogLP			Statement
-  HiLink debchangelogFirstKV		Identifier
-  HiLink debchangelogOtherKV		Identifier
-  HiLink debchangelogName		Comment
-  HiLink debchangelogVersion		Identifier
-  HiLink debchangelogTarget		Identifier
-  HiLink debchangelogEmail		Special
+HiLink debchangelogHeader		Error
+HiLink debchangelogFooter		Identifier
+HiLink debchangelogEntry		Normal
+HiLink debchangelogCloses		Statement
+HiLink debchangelogLP			Statement
+HiLink debchangelogFirstKV		Identifier
+HiLink debchangelogOtherKV		Identifier
+HiLink debchangelogName		Comment
+HiLink debchangelogVersion		Identifier
+HiLink debchangelogTarget		Identifier
+HiLink debchangelogEmail		Special
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "debchangelog"
 

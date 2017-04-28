@@ -5,11 +5,8 @@
 " Version:	7
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_XMATH
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -194,42 +191,34 @@ syn sync match xmathSyncComment	grouphere xmathCommentBlock "#{"
 syn sync match xmathSyncComment	groupthere NONE "}#"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_xmath_syntax_inits")
-  if version < 508
-    let did_xmath_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink xmathBraceError	xmathError
-  HiLink xmathCmd	xmathStatement
-  HiLink xmathCommentBlock	xmathComment
-  HiLink xmathCurlyError	xmathError
-  HiLink xmathFuncCmd	xmathStatement
-  HiLink xmathParenError	xmathError
+HiLink xmathBraceError	xmathError
+HiLink xmathCmd	xmathStatement
+HiLink xmathCommentBlock	xmathComment
+HiLink xmathCurlyError	xmathError
+HiLink xmathFuncCmd	xmathStatement
+HiLink xmathParenError	xmathError
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink xmathCharacter	Character
-  HiLink xmathComma	Delimiter
-  HiLink xmathComment	Comment
-  HiLink xmathCommentBlock	Comment
-  HiLink xmathConditional	Conditional
-  HiLink xmathError	Error
-  HiLink xmathFunc	Function
-  HiLink xmathLabel	PreProc
-  HiLink xmathNumber	Number
-  HiLink xmathRepeat	Repeat
-  HiLink xmathSpecial	Type
-  HiLink xmathSpecialChar	SpecialChar
-  HiLink xmathStatement	Statement
-  HiLink xmathString	String
-  HiLink xmathTodo	Todo
+" The default methods for highlighting.  Can be overridden later
+HiLink xmathCharacter	Character
+HiLink xmathComma	Delimiter
+HiLink xmathComment	Comment
+HiLink xmathCommentBlock	Comment
+HiLink xmathConditional	Conditional
+HiLink xmathError	Error
+HiLink xmathFunc	Function
+HiLink xmathLabel	PreProc
+HiLink xmathNumber	Number
+HiLink xmathRepeat	Repeat
+HiLink xmathSpecial	Type
+HiLink xmathSpecialChar	SpecialChar
+HiLink xmathStatement	Statement
+HiLink xmathString	String
+HiLink xmathTodo	Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "xmath"
 

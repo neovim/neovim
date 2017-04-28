@@ -5,11 +5,8 @@
 " Contributions from: Thilo Six
 " 
 " URL: https://github.com/eiffelhub/vim-eiffel
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -141,68 +138,60 @@ endif
 syn sync lines=40
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_eiffel_syntax_inits")
-  if version < 508
-    let did_eiffel_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink eiffelKeyword		Statement
-  HiLink eiffelProperty		Statement
-  HiLink eiffelInheritClause	Statement
-  HiLink eiffelStatement	Statement
-  HiLink eiffelDeclaration	Statement
-  HiLink eiffelAssertion	Statement
-  HiLink eiffelDebug		Statement
-  HiLink eiffelException	Statement
-  HiLink eiffelGenericCreate	Statement
+HiLink eiffelKeyword		Statement
+HiLink eiffelProperty		Statement
+HiLink eiffelInheritClause	Statement
+HiLink eiffelStatement	Statement
+HiLink eiffelDeclaration	Statement
+HiLink eiffelAssertion	Statement
+HiLink eiffelDebug		Statement
+HiLink eiffelException	Statement
+HiLink eiffelGenericCreate	Statement
 
-  HiLink eiffelAgent		Statement
-  HiLink eiffelConvert		Statement
+HiLink eiffelAgent		Statement
+HiLink eiffelConvert		Statement
 
-  HiLink eiffelTopStruct	PreProc
+HiLink eiffelTopStruct	PreProc
 
-  HiLink eiffelAll		Special
-  HiLink eiffelAnchored		Special
-  HiLink eiffelBitType		Special
+HiLink eiffelAll		Special
+HiLink eiffelAnchored		Special
+HiLink eiffelBitType		Special
 
 
-  HiLink eiffelBool		Boolean
-  HiLink eiffelString		String
-  HiLink eiffelCharacter	Character
-  HiLink eiffelClassName	Type
-  HiLink eiffelNumber		Number
+HiLink eiffelBool		Boolean
+HiLink eiffelString		String
+HiLink eiffelCharacter	Character
+HiLink eiffelClassName	Type
+HiLink eiffelNumber		Number
 
-  HiLink eiffelStringEscape	Special
+HiLink eiffelStringEscape	Special
 
-  HiLink eiffelOperator		Special
-  HiLink eiffelArray		Special
-  HiLink eiffelExport		Special
-  HiLink eiffelCreation		Special
-  HiLink eiffelBrackets		Special
-  HiLink eiffelGeneric		Special
-  HiLink eiffelGenericDecl	Special
-  HiLink eiffelConstraint	Special
-  HiLink eiffelCreate		Special
+HiLink eiffelOperator		Special
+HiLink eiffelArray		Special
+HiLink eiffelExport		Special
+HiLink eiffelCreation		Special
+HiLink eiffelBrackets		Special
+HiLink eiffelGeneric		Special
+HiLink eiffelGenericDecl	Special
+HiLink eiffelConstraint	Special
+HiLink eiffelCreate		Special
 
-  HiLink eiffelPredefined	Constant
+HiLink eiffelPredefined	Constant
 
-  HiLink eiffelComment		Comment
+HiLink eiffelComment		Comment
 
-  HiLink eiffelError		Error
-  HiLink eiffelBadConstant	Error
-  HiLink eiffelStringError	Error
-  HiLink eiffelParenError	Error
-  HiLink eiffelBracketError	Error
+HiLink eiffelError		Error
+HiLink eiffelBadConstant	Error
+HiLink eiffelStringError	Error
+HiLink eiffelParenError	Error
+HiLink eiffelBracketError	Error
 
-  HiLink eiffelTodo		Todo
+HiLink eiffelTodo		Todo
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "eiffel"
 

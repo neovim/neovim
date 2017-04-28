@@ -3,11 +3,8 @@
 " Maintainer:	Andreas Scherer <andreas.scherer@pobox.com>
 " Last Change:	April 30, 2001
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -15,11 +12,7 @@ let plain_mf_macros = 0 " plain.mf has no special meaning for MetaPost
 let other_mf_macros = 0 " cmbase.mf, logo.mf, ... neither
 
 " Read the Metafont syntax to start with
-if version < 600
-  source <sfile>:p:h/mf.vim
-else
-  runtime! syntax/mf.vim
-endif
+runtime! syntax/mf.vim
 
 " MetaPost has TeX inserts for typeset labels
 " verbatimtex, btex, and etex will be treated as keywords
@@ -108,24 +101,16 @@ if other_mp_macros
 endif
 
 " Define the default highlighting
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_mp_syntax_inits")
-  if version < 508
-    let did_mp_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink mpTeXinsert	String
-  HiLink mpTeXbegin	Statement
-  HiLink mpTeXend	Statement
-  HiLink mpInternal	mfInternal
-  HiLink mpMacro	Macro
+HiLink mpTeXinsert	String
+HiLink mpTeXbegin	Statement
+HiLink mpTeXend	Statement
+HiLink mpInternal	mfInternal
+HiLink mpMacro	Macro
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "mp"
 

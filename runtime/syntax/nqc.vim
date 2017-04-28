@@ -6,11 +6,8 @@
 " URL:		http://www.enotes.de/twiki/pub/Home/LegoMindstorms/nqc.vim
 " Filenames:	.nqc
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -326,52 +323,44 @@ endif
 exec "syn sync ccomment nqcComment minlines=" . nqc_minlines
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_nqc_syn_inits")
-  if version < 508
-    let did_nqc_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink nqcLabel		Label
-  HiLink nqcConditional		Conditional
-  HiLink nqcRepeat		Repeat
-  HiLink nqcCharacter		Character
-  HiLink nqcNumber		Number
-  HiLink nqcFloat		Float
-  HiLink nqcFunction		Function
-  HiLink nqcParenError		nqcError
-  HiLink nqcErrInParen		nqcError
-  HiLink nqcErrInBracket	nqcError
-  HiLink nqcCommentL		nqcComment
-  HiLink nqcCommentStart	nqcComment
-  HiLink nqcCommentError	nqcError
-  HiLink nqcCommentStartError	nqcError
-  HiLink nqcSpaceError		nqcError
-  HiLink nqcStorageClass	StorageClass
-  HiLink nqcInclude		Include
-  HiLink nqcPreProc		PreProc
-  HiLink nqcDefine		Macro
-  HiLink nqcIncluded		String
-  HiLink nqcError		Error
-  HiLink nqcStatement		Statement
-  HiLink nqcEvents		Statement
-  HiLink nqcPreCondit		PreCondit
-  HiLink nqcType		Type
-  HiLink nqcConstant		Constant
-  HiLink nqcCommentSkip		nqcComment
-  HiLink nqcComment		Comment
-  HiLink nqcTodo		Todo
-  HiLink nqcCppSkip		nqcCppOut
-  HiLink nqcCppOut2		nqcCppOut
-  HiLink nqcCppOut		Comment
+" The default methods for highlighting.  Can be overridden later
+HiLink nqcLabel		Label
+HiLink nqcConditional		Conditional
+HiLink nqcRepeat		Repeat
+HiLink nqcCharacter		Character
+HiLink nqcNumber		Number
+HiLink nqcFloat		Float
+HiLink nqcFunction		Function
+HiLink nqcParenError		nqcError
+HiLink nqcErrInParen		nqcError
+HiLink nqcErrInBracket	nqcError
+HiLink nqcCommentL		nqcComment
+HiLink nqcCommentStart	nqcComment
+HiLink nqcCommentError	nqcError
+HiLink nqcCommentStartError	nqcError
+HiLink nqcSpaceError		nqcError
+HiLink nqcStorageClass	StorageClass
+HiLink nqcInclude		Include
+HiLink nqcPreProc		PreProc
+HiLink nqcDefine		Macro
+HiLink nqcIncluded		String
+HiLink nqcError		Error
+HiLink nqcStatement		Statement
+HiLink nqcEvents		Statement
+HiLink nqcPreCondit		PreCondit
+HiLink nqcType		Type
+HiLink nqcConstant		Constant
+HiLink nqcCommentSkip		nqcComment
+HiLink nqcComment		Comment
+HiLink nqcTodo		Todo
+HiLink nqcCppSkip		nqcCppOut
+HiLink nqcCppOut2		nqcCppOut
+HiLink nqcCppOut		Comment
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "nqc"
 

@@ -9,11 +9,8 @@
 " Homepage: http://www.icsi.berkeley.edu/~sather
 " Sather files use .sa as suffix
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -61,44 +58,36 @@ syn match   satherComment	  "--.*" contains=satherComment2String,satherCharacter
 syn sync ccomment satherComment
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sather_syn_inits")
-  if version < 508
-    let did_sather_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink satherBranch		satherStatement
-  HiLink satherLabel		satherStatement
-  HiLink satherConditional	satherStatement
-  HiLink satherSynchronize	satherStatement
-  HiLink satherRepeat		satherStatement
-  HiLink satherExceptions	satherStatement
-  HiLink satherStorageClass	satherDeclarative
-  HiLink satherMethodDecl	satherDeclarative
-  HiLink satherClassDecl	satherDeclarative
-  HiLink satherScopeDecl	satherDeclarative
-  HiLink satherBoolValue	satherValue
-  HiLink satherSpecial		satherValue
-  HiLink satherString		satherValue
-  HiLink satherCharacter	satherValue
-  HiLink satherSpecialCharacter satherValue
-  HiLink satherNumber		satherValue
-  HiLink satherStatement	Statement
-  HiLink satherOperator		Statement
-  HiLink satherComment		Comment
-  HiLink satherType		Type
-  HiLink satherValue		String
-  HiLink satherString		String
-  HiLink satherSpecial		String
-  HiLink satherCharacter	String
-  HiLink satherDeclarative	Type
-  HiLink satherExternal		PreCondit
-  delcommand HiLink
-endif
+HiLink satherBranch		satherStatement
+HiLink satherLabel		satherStatement
+HiLink satherConditional	satherStatement
+HiLink satherSynchronize	satherStatement
+HiLink satherRepeat		satherStatement
+HiLink satherExceptions	satherStatement
+HiLink satherStorageClass	satherDeclarative
+HiLink satherMethodDecl	satherDeclarative
+HiLink satherClassDecl	satherDeclarative
+HiLink satherScopeDecl	satherDeclarative
+HiLink satherBoolValue	satherValue
+HiLink satherSpecial		satherValue
+HiLink satherString		satherValue
+HiLink satherCharacter	satherValue
+HiLink satherSpecialCharacter satherValue
+HiLink satherNumber		satherValue
+HiLink satherStatement	Statement
+HiLink satherOperator		Statement
+HiLink satherComment		Comment
+HiLink satherType		Type
+HiLink satherValue		String
+HiLink satherString		String
+HiLink satherSpecial		String
+HiLink satherCharacter	String
+HiLink satherDeclarative	Type
+HiLink satherExternal		PreCondit
+delcommand HiLink
 
 let b:current_syntax = "sather"
 

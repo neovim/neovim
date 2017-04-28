@@ -9,20 +9,13 @@
 "              Minor reserved keyword updates.
 " Last Update: Thursday September 15 15:36:03 CST 2005 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-   syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
    finish
 endif
 
 " Set the local value of the 'iskeyword' option
-if version >= 600
-   setlocal iskeyword=@,48-57,_,192-255
-else
-   set iskeyword=@,48-57,_,192-255
-endif
+setlocal iskeyword=@,48-57,_,192-255
 
 " Annex B.1 'All keywords'
 syn keyword verilogamsStatement above abs absdelay acos acosh ac_stim
@@ -113,36 +106,28 @@ syn match   verilogamsEscape "\\\o\o\=\o\=" contained
 syn sync lines=50
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_verilogams_syn_inits")
-   if version < 508
-      let did_verilogams_syn_inits = 1
-      command -nargs=+ HiLink hi link <args>
-   else
-      command -nargs=+ HiLink hi def link <args>
-   endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-   " The default highlighting.
-   HiLink verilogamsCharacter    Character
-   HiLink verilogamsConditional  Conditional
-   HiLink verilogamsRepeat       Repeat
-   HiLink verilogamsString       String
-   HiLink verilogamsTodo         Todo
-   HiLink verilogamsComment      Comment
-   HiLink verilogamsConstant     Constant
-   HiLink verilogamsLabel        Label
-   HiLink verilogamsNumber       Number
-   HiLink verilogamsOperator     Special
-   HiLink verilogamsStatement    Statement
-   HiLink verilogamsGlobal       Define
-   HiLink verilogamsDirective    SpecialComment
-   HiLink verilogamsEscape       Special
-   HiLink verilogamsType         Type
-   HiLink verilogamsSystask      Function
+" The default highlighting.
+HiLink verilogamsCharacter    Character
+HiLink verilogamsConditional  Conditional
+HiLink verilogamsRepeat       Repeat
+HiLink verilogamsString       String
+HiLink verilogamsTodo         Todo
+HiLink verilogamsComment      Comment
+HiLink verilogamsConstant     Constant
+HiLink verilogamsLabel        Label
+HiLink verilogamsNumber       Number
+HiLink verilogamsOperator     Special
+HiLink verilogamsStatement    Statement
+HiLink verilogamsGlobal       Define
+HiLink verilogamsDirective    SpecialComment
+HiLink verilogamsEscape       Special
+HiLink verilogamsType         Type
+HiLink verilogamsSystask      Function
 
-   delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "verilogams"
 

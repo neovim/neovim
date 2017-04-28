@@ -6,16 +6,11 @@
 " Last Changed:	2012-02-05 18:50:43
 " Support:	http://www.von-oppen.com/
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when this syntax file was already loaded
-if v:version < 600
-  syntax clear
-  set iskeyword+=-,*,#,+,_,/
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
-else
-  setlocal iskeyword+=-,*,#,+,_,/
 endif
+setlocal iskeyword+=-,*,#,+,_,/
 
 let s:cpo_save = &cpo
 set cpo&vim

@@ -5,10 +5,8 @@
 " Remark:       Euphoria has two syntax files, euphoria3.vim and euphoria4.vim; 
 "               For details see :help ft-euphoria-syntax
 
-" Quit if a (custom) syntax file was already loaded (compatible with Vim 5.8): 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 

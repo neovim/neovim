@@ -61,11 +61,8 @@
 "  unlet perl6_extended_q
 "  unlet perl6_extended_all
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 let s:keepcpo= &cpo
@@ -2063,176 +2060,168 @@ syn region p6PodFormatFrench
     \ contains=p6PodFormatAnglesFrench,p6PodFormatFrench,p6PodFormatOne,p6PodFormatTwo,p6PodFormatThree,p6PodVerticalBar,p6PodSemiColon,p6PodComma
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_perl6_syntax_inits")
-    if version < 508
-        let did_perl6_syntax_inits = 1
-        command -nargs=+ HiLink hi link <args>
-    else
-        command -nargs=+ HiLink hi def link <args>
-    endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-    HiLink p6EscOctOld       p6Error
-    HiLink p6PackageTwigil   p6Twigil
-    HiLink p6StringAngle     p6String
-    HiLink p6StringFrench    p6String
-    HiLink p6StringAngles    p6String
-    HiLink p6StringSQ        p6String
-    HiLink p6StringDQ        p6String
-    HiLink p6StringQ         p6String
-    HiLink p6RxStringSQ      p6String
-    HiLink p6RxStringDQ      p6String
-    HiLink p6Substitution    p6String
-    HiLink p6Transliteration p6String
-    HiLink p6StringAuto      p6String
-    HiLink p6StringP5Auto    p6String
-    HiLink p6Key             p6String
-    HiLink p6Match           p6String
-    HiLink p6RegexBlock      p6String
-    HiLink p6RxP5CharClass   p6String
-    HiLink p6RxP5QuoteMeta   p6String
-    HiLink p6RxCharClass     p6String
-    HiLink p6RxQuoteWords    p6String
-    HiLink p6ReduceOp        p6Operator
-    HiLink p6ReverseCrossOp  p6Operator
-    HiLink p6HyperOp         p6Operator
-    HiLink p6QuoteQ          p6Operator
-    HiLink p6RxRange         p6StringSpecial
-    HiLink p6RxAnchor        p6StringSpecial
-    HiLink p6RxP5Anchor      p6StringSpecial
-    HiLink p6CodePoint       p6StringSpecial
-    HiLink p6RxMeta          p6StringSpecial
-    HiLink p6RxP5Range       p6StringSpecial
-    HiLink p6RxP5CPId        p6StringSpecial
-    HiLink p6RxP5Posix       p6StringSpecial
-    HiLink p6RxP5Mod         p6StringSpecial
-    HiLink p6RxP5HexSeq      p6StringSpecial
-    HiLink p6RxP5OctSeq      p6StringSpecial
-    HiLink p6RxP5WriteRefId  p6StringSpecial
-    HiLink p6HexSequence     p6StringSpecial
-    HiLink p6OctSequence     p6StringSpecial
-    HiLink p6RxP5Named       p6StringSpecial
-    HiLink p6RxP5PropId      p6StringSpecial
-    HiLink p6RxP5Quantifier  p6StringSpecial
-    HiLink p6RxP5CountId     p6StringSpecial
-    HiLink p6RxP5Verb        p6StringSpecial
-    HiLink p6Escape          p6StringSpecial2
-    HiLink p6EscNull         p6StringSpecial2
-    HiLink p6EscHash         p6StringSpecial2
-    HiLink p6EscQQ           p6StringSpecial2
-    HiLink p6EscQuote        p6StringSpecial2
-    HiLink p6EscDoubleQuote  p6StringSpecial2
-    HiLink p6EscBackTick     p6StringSpecial2
-    HiLink p6EscForwardSlash p6StringSpecial2
-    HiLink p6EscVerticalBar  p6StringSpecial2
-    HiLink p6EscExclamation  p6StringSpecial2
-    HiLink p6EscDollar       p6StringSpecial2
-    HiLink p6EscOpenCurly    p6StringSpecial2
-    HiLink p6EscCloseCurly   p6StringSpecial2
-    HiLink p6EscCloseBracket p6StringSpecial2
-    HiLink p6EscCloseAngle   p6StringSpecial2
-    HiLink p6EscCloseFrench  p6StringSpecial2
-    HiLink p6EscBackSlash    p6StringSpecial2
-    HiLink p6RxEscape        p6StringSpecial2
-    HiLink p6RxCapture       p6StringSpecial2
-    HiLink p6RxAlternation   p6StringSpecial2
-    HiLink p6RxP5            p6StringSpecial2
-    HiLink p6RxP5ReadRef     p6StringSpecial2
-    HiLink p6RxP5Oct         p6StringSpecial2
-    HiLink p6RxP5Hex         p6StringSpecial2
-    HiLink p6RxP5EscMeta     p6StringSpecial2
-    HiLink p6RxP5Meta        p6StringSpecial2
-    HiLink p6RxP5Escape      p6StringSpecial2
-    HiLink p6RxP5CodePoint   p6StringSpecial2
-    HiLink p6RxP5WriteRef    p6StringSpecial2
-    HiLink p6RxP5Prop        p6StringSpecial2
+HiLink p6EscOctOld       p6Error
+HiLink p6PackageTwigil   p6Twigil
+HiLink p6StringAngle     p6String
+HiLink p6StringFrench    p6String
+HiLink p6StringAngles    p6String
+HiLink p6StringSQ        p6String
+HiLink p6StringDQ        p6String
+HiLink p6StringQ         p6String
+HiLink p6RxStringSQ      p6String
+HiLink p6RxStringDQ      p6String
+HiLink p6Substitution    p6String
+HiLink p6Transliteration p6String
+HiLink p6StringAuto      p6String
+HiLink p6StringP5Auto    p6String
+HiLink p6Key             p6String
+HiLink p6Match           p6String
+HiLink p6RegexBlock      p6String
+HiLink p6RxP5CharClass   p6String
+HiLink p6RxP5QuoteMeta   p6String
+HiLink p6RxCharClass     p6String
+HiLink p6RxQuoteWords    p6String
+HiLink p6ReduceOp        p6Operator
+HiLink p6ReverseCrossOp  p6Operator
+HiLink p6HyperOp         p6Operator
+HiLink p6QuoteQ          p6Operator
+HiLink p6RxRange         p6StringSpecial
+HiLink p6RxAnchor        p6StringSpecial
+HiLink p6RxP5Anchor      p6StringSpecial
+HiLink p6CodePoint       p6StringSpecial
+HiLink p6RxMeta          p6StringSpecial
+HiLink p6RxP5Range       p6StringSpecial
+HiLink p6RxP5CPId        p6StringSpecial
+HiLink p6RxP5Posix       p6StringSpecial
+HiLink p6RxP5Mod         p6StringSpecial
+HiLink p6RxP5HexSeq      p6StringSpecial
+HiLink p6RxP5OctSeq      p6StringSpecial
+HiLink p6RxP5WriteRefId  p6StringSpecial
+HiLink p6HexSequence     p6StringSpecial
+HiLink p6OctSequence     p6StringSpecial
+HiLink p6RxP5Named       p6StringSpecial
+HiLink p6RxP5PropId      p6StringSpecial
+HiLink p6RxP5Quantifier  p6StringSpecial
+HiLink p6RxP5CountId     p6StringSpecial
+HiLink p6RxP5Verb        p6StringSpecial
+HiLink p6Escape          p6StringSpecial2
+HiLink p6EscNull         p6StringSpecial2
+HiLink p6EscHash         p6StringSpecial2
+HiLink p6EscQQ           p6StringSpecial2
+HiLink p6EscQuote        p6StringSpecial2
+HiLink p6EscDoubleQuote  p6StringSpecial2
+HiLink p6EscBackTick     p6StringSpecial2
+HiLink p6EscForwardSlash p6StringSpecial2
+HiLink p6EscVerticalBar  p6StringSpecial2
+HiLink p6EscExclamation  p6StringSpecial2
+HiLink p6EscDollar       p6StringSpecial2
+HiLink p6EscOpenCurly    p6StringSpecial2
+HiLink p6EscCloseCurly   p6StringSpecial2
+HiLink p6EscCloseBracket p6StringSpecial2
+HiLink p6EscCloseAngle   p6StringSpecial2
+HiLink p6EscCloseFrench  p6StringSpecial2
+HiLink p6EscBackSlash    p6StringSpecial2
+HiLink p6RxEscape        p6StringSpecial2
+HiLink p6RxCapture       p6StringSpecial2
+HiLink p6RxAlternation   p6StringSpecial2
+HiLink p6RxP5            p6StringSpecial2
+HiLink p6RxP5ReadRef     p6StringSpecial2
+HiLink p6RxP5Oct         p6StringSpecial2
+HiLink p6RxP5Hex         p6StringSpecial2
+HiLink p6RxP5EscMeta     p6StringSpecial2
+HiLink p6RxP5Meta        p6StringSpecial2
+HiLink p6RxP5Escape      p6StringSpecial2
+HiLink p6RxP5CodePoint   p6StringSpecial2
+HiLink p6RxP5WriteRef    p6StringSpecial2
+HiLink p6RxP5Prop        p6StringSpecial2
 
-    HiLink p6Property       Tag
-    HiLink p6Attention      Todo
-    HiLink p6Type           Type
-    HiLink p6Error          Error
-    HiLink p6BlockLabel     Label
-    HiLink p6Float          Float
-    HiLink p6Normal         Normal
-    HiLink p6Package        Normal
-    HiLink p6PackageScope   Normal
-    HiLink p6Number         Number
-    HiLink p6VersionNum     Number
-    HiLink p6String         String
-    HiLink p6Repeat         Repeat
-    HiLink p6Keyword        Keyword
-    HiLink p6Pragma         Keyword
-    HiLink p6Module         Keyword
-    HiLink p6DeclareRoutine Keyword
-    HiLink p6VarStorage     Special
-    HiLink p6FlowControl    Special
-    HiLink p6NumberBase     Special
-    HiLink p6Twigil         Special
-    HiLink p6StringSpecial2 Special
-    HiLink p6VersionDot     Special
-    HiLink p6Comment        Comment
-    HiLink p6Include        Include
-    HiLink p6Shebang        PreProc
-    HiLink p6ClosureTrait   PreProc
-    HiLink p6Routine        Function
-    HiLink p6Operator       Operator
-    HiLink p6Version        Operator
-    HiLink p6Context        Operator
-    HiLink p6Quote          Delimiter
-    HiLink p6TypeConstraint PreCondit
-    HiLink p6Exception      Exception
-    HiLink p6Placeholder    Identifier
-    HiLink p6Variable       Identifier
-    HiLink p6VarSlash       Identifier
-    HiLink p6VarNum         Identifier
-    HiLink p6VarExclam      Identifier
-    HiLink p6VarMatch       Identifier
-    HiLink p6VarName        Identifier
-    HiLink p6MatchVar       Identifier
-    HiLink p6RxP5ReadRefId  Identifier
-    HiLink p6RxP5ModDef     Identifier
-    HiLink p6RxP5ModName    Identifier
-    HiLink p6Conditional    Conditional
-    HiLink p6StringSpecial  SpecialChar
+HiLink p6Property       Tag
+HiLink p6Attention      Todo
+HiLink p6Type           Type
+HiLink p6Error          Error
+HiLink p6BlockLabel     Label
+HiLink p6Float          Float
+HiLink p6Normal         Normal
+HiLink p6Package        Normal
+HiLink p6PackageScope   Normal
+HiLink p6Number         Number
+HiLink p6VersionNum     Number
+HiLink p6String         String
+HiLink p6Repeat         Repeat
+HiLink p6Keyword        Keyword
+HiLink p6Pragma         Keyword
+HiLink p6Module         Keyword
+HiLink p6DeclareRoutine Keyword
+HiLink p6VarStorage     Special
+HiLink p6FlowControl    Special
+HiLink p6NumberBase     Special
+HiLink p6Twigil         Special
+HiLink p6StringSpecial2 Special
+HiLink p6VersionDot     Special
+HiLink p6Comment        Comment
+HiLink p6Include        Include
+HiLink p6Shebang        PreProc
+HiLink p6ClosureTrait   PreProc
+HiLink p6Routine        Function
+HiLink p6Operator       Operator
+HiLink p6Version        Operator
+HiLink p6Context        Operator
+HiLink p6Quote          Delimiter
+HiLink p6TypeConstraint PreCondit
+HiLink p6Exception      Exception
+HiLink p6Placeholder    Identifier
+HiLink p6Variable       Identifier
+HiLink p6VarSlash       Identifier
+HiLink p6VarNum         Identifier
+HiLink p6VarExclam      Identifier
+HiLink p6VarMatch       Identifier
+HiLink p6VarName        Identifier
+HiLink p6MatchVar       Identifier
+HiLink p6RxP5ReadRefId  Identifier
+HiLink p6RxP5ModDef     Identifier
+HiLink p6RxP5ModName    Identifier
+HiLink p6Conditional    Conditional
+HiLink p6StringSpecial  SpecialChar
 
-    HiLink p6PodAbbr         p6Pod
-    HiLink p6PodAbbrEOF      p6Pod
-    HiLink p6PodAbbrNoCode   p6Pod
-    HiLink p6PodAbbrCode     p6PodCode
-    HiLink p6PodPara         p6Pod
-    HiLink p6PodParaEOF      p6Pod
-    HiLink p6PodParaNoCode   p6Pod
-    HiLink p6PodParaCode     p6PodCode
-    HiLink p6PodDelim        p6Pod
-    HiLink p6PodDelimEOF     p6Pod
-    HiLink p6PodDelimNoCode  p6Pod
-    HiLink p6PodDelimCode    p6PodCode
-    HiLink p6PodImplicitCode p6PodCode
-    HiLink p6PodExtraConfig  p6PodPrefix
-    HiLink p6PodVerticalBar  p6PodFormatCode
-    HiLink p6PodColon        p6PodFormatCode
-    HiLink p6PodSemicolon    p6PodFormatCode
-    HiLink p6PodComma        p6PodFormatCode
-    HiLink p6PodFormatOne    p6PodFormat
-    HiLink p6PodFormatTwo    p6PodFormat
-    HiLink p6PodFormatThree  p6PodFormat
-    HiLink p6PodFormatFrench p6PodFormat
+HiLink p6PodAbbr         p6Pod
+HiLink p6PodAbbrEOF      p6Pod
+HiLink p6PodAbbrNoCode   p6Pod
+HiLink p6PodAbbrCode     p6PodCode
+HiLink p6PodPara         p6Pod
+HiLink p6PodParaEOF      p6Pod
+HiLink p6PodParaNoCode   p6Pod
+HiLink p6PodParaCode     p6PodCode
+HiLink p6PodDelim        p6Pod
+HiLink p6PodDelimEOF     p6Pod
+HiLink p6PodDelimNoCode  p6Pod
+HiLink p6PodDelimCode    p6PodCode
+HiLink p6PodImplicitCode p6PodCode
+HiLink p6PodExtraConfig  p6PodPrefix
+HiLink p6PodVerticalBar  p6PodFormatCode
+HiLink p6PodColon        p6PodFormatCode
+HiLink p6PodSemicolon    p6PodFormatCode
+HiLink p6PodComma        p6PodFormatCode
+HiLink p6PodFormatOne    p6PodFormat
+HiLink p6PodFormatTwo    p6PodFormat
+HiLink p6PodFormatThree  p6PodFormat
+HiLink p6PodFormatFrench p6PodFormat
 
-    HiLink p6PodType           Type
-    HiLink p6PodConfigOption   String
-    HiLink p6PodCode           PreProc
-    HiLink p6Pod               Comment
-    HiLink p6PodComment        Comment
-    HiLink p6PodAutoQuote      Operator
-    HiLink p6PodConfigOperator Operator
-    HiLink p6PodPrefix         Statement
-    HiLink p6PodName           Identifier
-    HiLink p6PodFormatCode     SpecialChar
-    HiLink p6PodFormat         SpecialComment
+HiLink p6PodType           Type
+HiLink p6PodConfigOption   String
+HiLink p6PodCode           PreProc
+HiLink p6Pod               Comment
+HiLink p6PodComment        Comment
+HiLink p6PodAutoQuote      Operator
+HiLink p6PodConfigOperator Operator
+HiLink p6PodPrefix         Statement
+HiLink p6PodName           Identifier
+HiLink p6PodFormatCode     SpecialChar
+HiLink p6PodFormat         SpecialComment
 
-    delcommand HiLink
-endif
+delcommand HiLink
 
 " Syncing to speed up processing
 "syn sync match p6SyncPod groupthere p6PodAbbrRegion     "^=\K\k*\>"

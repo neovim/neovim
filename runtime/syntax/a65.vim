@@ -3,11 +3,8 @@
 " Maintainer:	Clemens Kirchgatterer <clemens@1541.org>
 " Last Change:	2014 Jan 05
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -138,29 +135,21 @@ syn match  a65End			excludenl /end$/ contained
 syn match  a65Continue	"\\$" contained
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_a65_syntax_inits")
-  if version < 508
-    let did_a65_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink a65Section	Special
-  HiLink a65Address	Special
-  HiLink a65Comment	Comment
-  HiLink a65PreProc	PreProc
-  HiLink a65Number	Number
-  HiLink a65String	String
-  HiLink a65Type	Statement
-  HiLink a65Opcode	Type
-  HiLink a65PC		Error
-  HiLink a65Todo	Todo
-  HiLink a65HiLo	Number
+HiLink a65Section	Special
+HiLink a65Address	Special
+HiLink a65Comment	Comment
+HiLink a65PreProc	PreProc
+HiLink a65Number	Number
+HiLink a65String	String
+HiLink a65Type	Statement
+HiLink a65Opcode	Type
+HiLink a65PC		Error
+HiLink a65Todo	Todo
+HiLink a65HiLo	Number
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "a65"

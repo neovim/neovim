@@ -6,12 +6,9 @@
 " URL: http://physics.muni.cz/~yeti/download/syntax/inittab.vim
 
 " Setup
-if version >= 600
-  if exists("b:current_syntax")
-    finish
-  endif
-else
-  syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+  finish
 endif
 
 syn case match
@@ -45,31 +42,24 @@ syn match inittabProcessPlus "+" contained nextgroup=inittabProcess,inittabError
 syn region inittabProcess start="/" end="$" transparent oneline contained contains=@inittabSh,inittabComment
 
 " Define the default highlighting
-if version >= 508 || !exists("did_inittab_syntax_inits")
-  if version < 508
-    let did_inittab_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink inittabComment Comment
-  HiLink inittabFixme Todo
-  HiLink inittabActionName Type
-  HiLink inittabError Error
-  HiLink inittabId Identifier
-  HiLink inittabRunLevels Special
+HiLink inittabComment Comment
+HiLink inittabFixme Todo
+HiLink inittabActionName Type
+HiLink inittabError Error
+HiLink inittabId Identifier
+HiLink inittabRunLevels Special
 
-  HiLink inittabColonProcess inittabColon
-  HiLink inittabColonAction inittabColon
-  HiLink inittabColonRunLevels inittabColon
-  HiLink inittabColon PreProc
+HiLink inittabColonProcess inittabColon
+HiLink inittabColonAction inittabColon
+HiLink inittabColonRunLevels inittabColon
+HiLink inittabColon PreProc
 
-  HiLink inittabShString String
-  HiLink inittabShOption Special
-  HiLink inittabShCommand Statement
+HiLink inittabShString String
+HiLink inittabShOption Special
+HiLink inittabShCommand Statement
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "inittab"

@@ -7,9 +7,7 @@
 " URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debcontrol.vim
 
 " Standard syntax initialization
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+if exists("b:current_syntax")
   finish
 endif
 
@@ -86,37 +84,30 @@ syn region debcontrolMultiField start="^\%(Build-\%(Conflicts\|Depends\)\%(-Inde
 syn region debcontrolMultiFieldSpell start="^\%(Description\):" skip="^ " end="^$"me=s-1 end="^[^ #]"me=s-1 contains=debcontrolKey,debcontrolEmail,debcontrolVariable,debcontrolComment,@Spell
 
 " Associate our matches and regions with pretty colours
-if version >= 508 || !exists("did_debcontrol_syn_inits")
-  if version < 508
-    let did_debcontrol_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink debcontrolKey		Keyword
-  HiLink debcontrolField	Normal
-  HiLink debcontrolStrictField	Error
-  HiLink debcontrolDeprecatedKey	Error
-  HiLink debcontrolMultiField	Normal
-  HiLink debcontrolArchitecture	Normal
-  HiLink debcontrolMultiArch	Normal
-  HiLink debcontrolName		Normal
-  HiLink debcontrolPriority	Normal
-  HiLink debcontrolSection	Normal
-  HiLink debcontrolPackageType	Normal
-  HiLink debcontrolVariable	Identifier
-  HiLink debcontrolEmail	Identifier
-  HiLink debcontrolVcsSvn	Identifier
-  HiLink debcontrolVcsCvs	Identifier
-  HiLink debcontrolVcsGit	Identifier
-  HiLink debcontrolHTTPUrl	Identifier
-  HiLink debcontrolDmUpload	Identifier
-  HiLink debcontrolComment	Comment
-  HiLink debcontrolElse		Special
+HiLink debcontrolKey		Keyword
+HiLink debcontrolField	Normal
+HiLink debcontrolStrictField	Error
+HiLink debcontrolDeprecatedKey	Error
+HiLink debcontrolMultiField	Normal
+HiLink debcontrolArchitecture	Normal
+HiLink debcontrolMultiArch	Normal
+HiLink debcontrolName		Normal
+HiLink debcontrolPriority	Normal
+HiLink debcontrolSection	Normal
+HiLink debcontrolPackageType	Normal
+HiLink debcontrolVariable	Identifier
+HiLink debcontrolEmail	Identifier
+HiLink debcontrolVcsSvn	Identifier
+HiLink debcontrolVcsCvs	Identifier
+HiLink debcontrolVcsGit	Identifier
+HiLink debcontrolHTTPUrl	Identifier
+HiLink debcontrolDmUpload	Identifier
+HiLink debcontrolComment	Comment
+HiLink debcontrolElse		Special
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "debcontrol"
 

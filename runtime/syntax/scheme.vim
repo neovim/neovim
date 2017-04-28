@@ -14,11 +14,8 @@
 
 " Initializing:
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -64,11 +61,7 @@ syn region schemeUnquote matchgroup=Delimiter start=",@#\[" end="\]" contains=AL
 
 " R5RS Scheme Functions and Syntax:
 
-if version < 600
-  set iskeyword=33,35-39,42-58,60-90,94,95,97-122,126,_
-else
-  setlocal iskeyword=33,35-39,42-58,60-90,94,95,97-122,126,_
-endif
+setlocal iskeyword=33,35-39,42-58,60-90,94,95,97-122,126,_
 
 syn keyword schemeSyntax lambda and or if cond case define let let* letrec
 syn keyword schemeSyntax begin do delay set! else =>
@@ -306,38 +299,30 @@ syn sync match matchPlace grouphere NONE "^[^ \t]"
 " ... i.e. synchronize on a line that starts at the left margin
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_scheme_syntax_inits")
-  if version < 508
-    let did_scheme_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink schemeSyntax		Statement
-  HiLink schemeFunc		Function
+HiLink schemeSyntax		Statement
+HiLink schemeFunc		Function
 
-  HiLink schemeString		String
-  HiLink schemeCharacter	Character
-  HiLink schemeNumber		Number
-  HiLink schemeBoolean		Boolean
+HiLink schemeString		String
+HiLink schemeCharacter	Character
+HiLink schemeNumber		Number
+HiLink schemeBoolean		Boolean
 
-  HiLink schemeDelimiter	Delimiter
-  HiLink schemeConstant		Constant
+HiLink schemeDelimiter	Delimiter
+HiLink schemeConstant		Constant
 
-  HiLink schemeComment		Comment
-  HiLink schemeMultilineComment	Comment
-  HiLink schemeError		Error
+HiLink schemeComment		Comment
+HiLink schemeMultilineComment	Comment
+HiLink schemeError		Error
 
-  HiLink schemeExtSyntax	Type
-  HiLink schemeExtFunc		PreProc
+HiLink schemeExtSyntax	Type
+HiLink schemeExtFunc		PreProc
 
-  HiLink schemeLang		PreProc
+HiLink schemeLang		PreProc
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "scheme"
 

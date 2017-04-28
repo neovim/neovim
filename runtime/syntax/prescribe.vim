@@ -4,11 +4,8 @@
 " URL:          http://www.hampft.de/vim/syntax/prescribe.vim
 " Last Change:	2005 Mar 04
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -44,25 +41,17 @@ syn region  prescribeString	start=+'+ end=+'+ skip=+\\'+
 syn region  prescribeComment	start=+CMNT+ end=+;+
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_prescribe_syn_inits")
-  if version < 508
-    let did_prescribe_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink prescribeSpecial		PreProc
-  HiLink prescribeStatement		Statement
-  HiLink prescribeNumber		Number
-  HiLink prescribeCSETArg		String
-  HiLink prescribeFRPOArg		String
-  HiLink prescribeComment		Comment
+HiLink prescribeSpecial		PreProc
+HiLink prescribeStatement		Statement
+HiLink prescribeNumber		Number
+HiLink prescribeCSETArg		String
+HiLink prescribeFRPOArg		String
+HiLink prescribeComment		Comment
 
-  delcommand HiLink
-endif
+delcommand HiLink
 
 let b:current_syntax = "prescribe"
 

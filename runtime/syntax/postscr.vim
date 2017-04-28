@@ -13,11 +13,8 @@
 " postscr_encodings             - highlight encoding names (there are a lot)
 " postscr_andornot_binary       - highlight and, or, and not as binary operators (not logical)
 "
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -25,11 +22,7 @@ endif
 syn case match
 
 " Keyword characters - all 7-bit ASCII bar PS delimiters and ws
-if version >= 600
-  setlocal iskeyword=33-127,^(,^),^<,^>,^[,^],^{,^},^/,^%
-else
-  set iskeyword=33-127,^(,^),^<,^>,^[,^],^{,^},^/,^%
-endif
+setlocal iskeyword=33-127,^(,^),^<,^>,^[,^],^{,^},^/,^%
 
 " Yer trusty old TODO highlghter!
 syn keyword postscrTodo contained  TODO
@@ -730,67 +723,59 @@ if exists("postscr_ghostscript")
 endif " GhostScript highlighting
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_postscr_syntax_inits")
-  if version < 508
-    let did_postscr_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ HiLink hi def link <args>
 
-  HiLink postscrComment         Comment
+HiLink postscrComment         Comment
 
-  HiLink postscrConstant        Constant
-  HiLink postscrString          String
-  HiLink postscrASCIIString     postscrString
-  HiLink postscrHexString       postscrString
-  HiLink postscrASCII85String   postscrString
-  HiLink postscrNumber          Number
-  HiLink postscrInteger         postscrNumber
-  HiLink postscrHex             postscrNumber
-  HiLink postscrRadix           postscrNumber
-  HiLink postscrFloat           Float
-  HiLink postscrBoolean         Boolean
+HiLink postscrConstant        Constant
+HiLink postscrString          String
+HiLink postscrASCIIString     postscrString
+HiLink postscrHexString       postscrString
+HiLink postscrASCII85String   postscrString
+HiLink postscrNumber          Number
+HiLink postscrInteger         postscrNumber
+HiLink postscrHex             postscrNumber
+HiLink postscrRadix           postscrNumber
+HiLink postscrFloat           Float
+HiLink postscrBoolean         Boolean
 
-  HiLink postscrIdentifier      Identifier
-  HiLink postscrProcedure       Function
+HiLink postscrIdentifier      Identifier
+HiLink postscrProcedure       Function
 
-  HiLink postscrName            Statement
-  HiLink postscrConditional     Conditional
-  HiLink postscrRepeat          Repeat
-  HiLink postscrL2Repeat        postscrRepeat
-  HiLink postscrOperator        Operator
-  HiLink postscrL1Operator      postscrOperator
-  HiLink postscrL2Operator      postscrOperator
-  HiLink postscrL3Operator      postscrOperator
-  HiLink postscrMathOperator    postscrOperator
-  HiLink postscrLogicalOperator postscrOperator
-  HiLink postscrBinaryOperator  postscrOperator
+HiLink postscrName            Statement
+HiLink postscrConditional     Conditional
+HiLink postscrRepeat          Repeat
+HiLink postscrL2Repeat        postscrRepeat
+HiLink postscrOperator        Operator
+HiLink postscrL1Operator      postscrOperator
+HiLink postscrL2Operator      postscrOperator
+HiLink postscrL3Operator      postscrOperator
+HiLink postscrMathOperator    postscrOperator
+HiLink postscrLogicalOperator postscrOperator
+HiLink postscrBinaryOperator  postscrOperator
 
-  HiLink postscrDSCComment      SpecialComment
-  HiLink postscrSpecialChar     SpecialChar
+HiLink postscrDSCComment      SpecialComment
+HiLink postscrSpecialChar     SpecialChar
 
-  HiLink postscrTodo            Todo
+HiLink postscrTodo            Todo
 
-  HiLink postscrError           Error
-  HiLink postscrSpecialCharError postscrError
-  HiLink postscrASCII85CharError postscrError
-  HiLink postscrHexCharError    postscrError
-  HiLink postscrASCIIStringError postscrError
-  HiLink postscrIdentifierError postscrError
+HiLink postscrError           Error
+HiLink postscrSpecialCharError postscrError
+HiLink postscrASCII85CharError postscrError
+HiLink postscrHexCharError    postscrError
+HiLink postscrASCIIStringError postscrError
+HiLink postscrIdentifierError postscrError
 
-  if exists("postscr_ghostscript")
-    HiLink postscrGSOperator      postscrOperator
-    HiLink postscrGSMathOperator  postscrMathOperator
-  else
-    HiLink postscrGSOperator      postscrError
-    HiLink postscrGSMathOperator  postscrError
-  endif
-
-  delcommand HiLink
+if exists("postscr_ghostscript")
+HiLink postscrGSOperator      postscrOperator
+HiLink postscrGSMathOperator  postscrMathOperator
+else
+HiLink postscrGSOperator      postscrError
+HiLink postscrGSMathOperator  postscrError
 endif
+
+delcommand HiLink
 
 let b:current_syntax = "postscr"
 
