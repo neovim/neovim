@@ -4286,32 +4286,6 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
 
 
     if (redraw_this) {
-      if (enc_dbcs != 0) {
-        /* Check if overwriting a double-byte with a single-byte or
-         * the other way around requires another character to be
-         * redrawn.  For UTF-8 this isn't needed, because comparing
-         * ScreenLinesUC[] is sufficient. */
-        if (char_cells == 1
-            && col + 1 < endcol
-            && (*mb_off2cells)(off_to, max_off_to) > 1) {
-          /* Writing a single-cell character over a double-cell
-           * character: need to redraw the next cell. */
-          ScreenLines[off_to + 1] = 0;
-          redraw_next = TRUE;
-        } else if (char_cells == 2
-                   && col + 2 < endcol
-                   && (*mb_off2cells)(off_to, max_off_to) == 1
-                   && (*mb_off2cells)(off_to + 1, max_off_to) > 1) {
-          /* Writing the second half of a double-cell character over
-           * a double-cell character: need to redraw the second
-           * cell. */
-          ScreenLines[off_to + 2] = 0;
-          redraw_next = TRUE;
-        }
-
-        if (enc_dbcs == DBCS_JPNU)
-          ScreenLines2[off_to] = ScreenLines2[off_from];
-      }
       /* When writing a single-width character over a double-width
        * character and at the end of the redrawn text, need to clear out
        * the right halve of the old character.
@@ -4342,10 +4316,7 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
       if (char_cells == 2)
         ScreenAttrs[off_to + 1] = ScreenAttrs[off_from];
 
-      if (enc_dbcs != 0 && char_cells == 2)
-        screen_char_2(off_to, row, col + coloff);
-      else
-        screen_char(off_to, row, col + coloff);
+      screen_char(off_to, row, col + coloff);
     }
 
     off_to += CHAR_CELLS;
@@ -5645,36 +5616,7 @@ static void screen_char(unsigned off, int row, int col)
     ui_puts(buf);
   } else {
     ui_putc(ScreenLines[off]);
-    // double-byte character in single-width cell
-    if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
-      ui_putc(ScreenLines2[off]);
-    }
   }
-}
-
-/*
- * Used for enc_dbcs only: Put one double-wide character at ScreenLines["off"]
- * on the screen at position 'row' and 'col'.
- * The attributes of the first byte is used for all.  This is required to
- * output the two bytes of a double-byte character with nothing in between.
- */
-static void screen_char_2(unsigned off, int row, int col)
-{
-  /* Check for illegal values (could be wrong when screen was resized). */
-  if (off + 1 >= (unsigned)(screen_Rows * screen_Columns))
-    return;
-
-  /* Outputting the last character on the screen may scrollup the screen.
-   * Don't to it!  Mark the character invalid (update it when scrolled up) */
-  if (row == screen_Rows - 1 && col >= screen_Columns - 2) {
-    ScreenAttrs[off] = (sattr_T)-1;
-    return;
-  }
-
-  /* Output the first byte normally (positions the cursor), then write the
-   * second byte directly. */
-  screen_char(off, row, col);
-  ui_putc(ScreenLines[off + 1]);
 }
 
 /*
