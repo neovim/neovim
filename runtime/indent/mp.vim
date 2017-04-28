@@ -2,7 +2,7 @@
 " Language:           MetaPost
 " Maintainer:         Nicola Vitacolonna <nvitacolonna@gmail.com>
 " Former Maintainers: Eugene Minkovskii <emin@mccme.ru>
-" Last Change:        2016 Oct 01
+" Last Change:        2016 Oct 2, 4:13pm
 " Version: 0.2
 
 if exists("b:did_indent")
@@ -57,7 +57,7 @@ let g:mp_open_tag = ''
 let g:mp_close_tag = ''
       \ . '\<fi\>'
       \ . '\|\<else\%[if]\>'
-      \ . '\|\<end\%(\|for\|group\|def\|fig\|char\|logochar\|glyph\|graph\)\>'
+      \ . '\|\<end\%(\|for\|group\|def\|fig\|char\|glyph\|graph\)\>'
       \ . '\|[)\]}]'
 
 " Statements that may span multiple lines and are ended by a semicolon. To
@@ -118,12 +118,10 @@ function! s:CommentOrString(line, pos)
   return in_string || (c >= 0 && c <= a:pos)
 endfunction
 
-" Find the first non-comment non-blank line before the current line. Skip also
-" verbatimtex/btex... etex blocks.
+" Find the first non-comment non-blank line before the current line.
 function! s:PrevNonBlankNonComment(lnum)
   let l:lnum = prevnonblank(a:lnum - 1)
-  while getline(l:lnum) =~# '^\s*%' ||
-        \ synIDattr(synID(a:lnum, 1, 1), "name") =~# '^mpTeXinsert$\|^tex\|^Delimiter'
+  while getline(l:lnum) =~# '^\s*%'
     let l:lnum = prevnonblank(l:lnum - 1)
   endwhile
   return l:lnum
@@ -220,25 +218,32 @@ endfunction
 "
 " Example:
 "
-"    shiftwidth=4
 "    def foo =
-"        makepen(subpath(T-n,t) of r %>
-"            shifted .5down %>
-"                --subpath(t,T) of r shifted .5up -- cycle) %<<
+"        makepen(
+"            subpath(T-n,t) of r  %>
+"                shifted .5down   %>
+"                    --subpath(t,T) of r shifted .5up -- cycle   %<<<
+"        )
 "        withcolor black
 "    enddef
 "
 " The default indentation of the previous example would be:
 "
 "    def foo =
-"        makepen(subpath(T-n,t) of r
-"        shifted .5down
-"        --subpath(t,T) of r shifted .5up -- cycle)
+"        makepen(
+"            subpath(T-n,t) of r
+"            shifted .5down
+"            --subpath(t,T) of r shifted .5up -- cycle
+"        )
 "        withcolor black
 "    enddef
 "
 " Personally, I prefer the latter, but anyway...
 function! GetMetaPostIndentIntern()
+  " Do not touch indentation inside verbatimtex/btex.. etex blocks.
+  if synIDattr(synID(v:lnum, 1, 1), "name") =~# '^mpTeXinsert$\|^tex\|^Delimiter'
+    return -1
+  endif
 
   " This is the reference line relative to which the current line is indented
   " (but see below).
@@ -327,8 +332,8 @@ function! GetMetaPostIndentIntern()
   "
   "    for i = 1 upto 3:  % <-- Current line: this gets the same indent as `draw ...`
   "
-  " NOTE: we get here if and only if L does not contain a statement (among
-  " those listed in g:mp_statement).
+  " NOTE: we get here only if L does not contain a statement (among those
+  " listed in g:mp_statement).
   if s:ValidMatchEnd(prev_text, ';'.s:eol, 0) >= 0 " L ends with a semicolon
     let stm_lnum = s:PrevNonBlankNonComment(lnum)
     while stm_lnum > 0

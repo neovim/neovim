@@ -2,7 +2,7 @@
 " Language:           MetaPost
 " Maintainer:         Nicola Vitacolonna <nvitacolonna@gmail.com>
 " Former Maintainers: Nikolai Weibull <now@bitwi.se>
-" Latest Revision:    2016 Oct 1
+" Latest Revision:    2016 Oct 2
 
 if exists("b:did_ftplugin")
   finish
@@ -34,7 +34,7 @@ endif
 
 let s:mp_regex = {
       \ 'beginsection' : '^\s*\%(\%(\|var\|primary\|secondary\|tertiary\)def\|begin\%(fig\|char\|logochar\|glyph\|graph\)\)\>',
-      \ 'endsection'   : '^\s*\%(enddef\|end\%(fig\|char\|logochar\|glyph\|graph\)\)\>',
+      \ 'endsection'   : '^\s*\%(enddef\|end\%(fig\|char\|glyph\|graph\)\)\>',
       \ 'beginblock'   : '^\s*\%(begingroup\|if\|for\%(\|suffixes\|ever\)\)\>',
       \ 'endblock'     : '^\s*\%(endgroup\|fi\|endfor\)\>'
       \ }
@@ -44,9 +44,7 @@ function! s:move_around(count, what, flags, visual)
     exe "normal! gv"
   endif
   call search(s:mp_regex[a:what], a:flags.'s') " 's' sets previous context mark
-  for i in range(2, a:count)
-    call search(s:mp_regex[a:what], a:flags)
-  endfor
+  call map(range(2, a:count), 'search(s:mp_regex[a:what], a:flags)')
 endfunction
 
 
@@ -72,9 +70,8 @@ if exists("loaded_matchit")
         \ '\<\%(\|var\|primary\|secondary\|tertiary\)def\>:\<enddef\>,' .
         \ '\<beginfig\>:\<endfig\>,' .
         \ '\<begingroup\>:\<endgroup\>,' .
-        \ '\<beginchar\>:\<endchar\>' .
-        \ '\<beginlogochar\>:\<endlogochar\>' .
-        \ '\<beginglyph\>:\<endglyph\>' .
+        \ '\<begin\%(logo\)\?char\>:\<endchar\>,' .
+        \ '\<beginglyph\>:\<endglyph\>,' .
         \ '\<begingraph\>:\<endgraph\>'
   " Ignore comments and strings
   let b:match_skip = 'synIDattr(synID(line("."), col("."), 1), "name")

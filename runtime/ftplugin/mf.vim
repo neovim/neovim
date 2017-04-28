@@ -2,7 +2,7 @@
 " Language:           METAFONT
 " Maintainer:         Nicola Vitacolonna <nvitacolonna@gmail.com>
 " Former Maintainers: Nikolai Weibull <now@bitwi.se>
-" Latest Revision:    2016 Oct 1
+" Latest Revision:    2016 Oct 2
 
 if exists("b:did_ftplugin")
   finish
@@ -25,7 +25,7 @@ let g:omni_syntax_group_exclude_mf = 'mfTodoComment'
 
 let s:mp_regex = {
       \ 'beginsection' : '^\s*\%(\%(\|var\|primary\|secondary\|tertiary\)def\|beginchar\|beginlogochar\)\>',
-      \ 'endsection'   : '^\s*\%(enddef\|endchar\|endlogochar\)\>',
+      \ 'endsection'   : '^\s*\%(enddef\|endchar\)\>',
       \ 'beginblock'   : '^\s*\%(begingroup\|if\|for\%(\|suffixes\|ever\)\)\>',
       \ 'endblock'     : '^\s*\%(endgroup\|fi\|endfor\)\>'
       \ }
@@ -35,9 +35,7 @@ function! s:move_around(count, what, flags, visual)
     exe "normal! gv"
   endif
   call search(s:mp_regex[a:what], a:flags.'s') " 's' sets previous context mark
-  for i in range(2, a:count)
-    call search(s:mp_regex[a:what], a:flags)
-  endfor
+  call map(range(2, a:count), 'search(s:mp_regex[a:what], a:flags)')
 endfunction
 
 
@@ -62,8 +60,7 @@ if exists("loaded_matchit")
         \ '\<for\%(\|suffixes\|ever\)\>:\<exit\%(if\|unless\)\>:\<endfor\>,' .
         \ '\<\%(\|var\|primary\|secondary\|tertiary\)def\>:\<enddef\>,' .
         \ '\<begingroup\>:\<endgroup\>,' .
-        \ '\<beginchar\>:\<endchar\>' .
-        \ '\<beginlogochar\>:\<endlogochar\>'
+        \ '\<begin\%(logo\)\?char\>:\<endchar\>'
   " Ignore comments and strings
   let b:match_skip = 'synIDattr(synID(line("."), col("."), 1), "name")
         \ =~# "mf\\(Comment\\|String\\)$"'
