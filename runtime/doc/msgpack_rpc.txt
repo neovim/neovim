@@ -450,6 +450,8 @@ states might be represented as separate modes.
 	Leave the cmdline.
 
 ["cmdline_show", content, pos, firstc, prompt]
+        content: List of [highlight group, string]
+	         [["Normal", "t"], ["Search", "est"], ...]
 	When cmdline_external is set to true, nvim will not draw the cmdline
 	on the grad, instead nvim will send ui events of the cmdline content
 	and cursor position to the remote ui. The content is the full content
