@@ -2,7 +2,7 @@
 " Language:     Debian sources.list
 " Maintainer:   Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
 " Former Maintainer: Matthijs Mohlmann <matthijs@cacholong.nl>
-" Last Change: 2016 Aug 30
+" Last Change: 2016 Sep 27
 " URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debsources.vim
 
 " Standard syntax initialization
@@ -39,7 +39,7 @@ let s:unsupported = [
 let &cpo=s:cpo
 
 " Match uri's
-syn match debsourcesUri            +\(http://\|ftp://\|[rs]sh://\|debtorrent://\|\(cdrom\|copy\|file\):\)[^' 	<>"]\++
+syn match debsourcesUri            +\(https\?://\|ftp://\|[rs]sh://\|debtorrent://\|\(cdrom\|copy\|file\):\)[^' 	<>"]\++
 exe 'syn match debsourcesDistrKeyword   +\([[:alnum:]_./]*\)\('. join(s:supported, '\|'). '\)\([-[:alnum:]_./]*\)+'
 exe 'syn match debsourcesUnsupportedDistrKeyword +\([[:alnum:]_./]*\)\('. join(s:unsupported, '\|') .'\)\([-[:alnum:]_./]*\)+'
 

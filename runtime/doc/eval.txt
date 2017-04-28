@@ -1241,7 +1241,7 @@ Examples for using a lambda expression with |sort()|, |map()| and |filter()|: >
 	:echo sort([3,7,2,1,4], {a, b -> a - b})
 <	[1, 2, 3, 4, 7]
 
-The lambda expression is also useful for Channel, Job and timer: >
+The lambda expression is also useful for jobs and timers: >
 	:let timer = timer_start(500,
 			\ {-> execute("echo 'Handler called'", "")},
 			\ {'repeat': 3})
@@ -3518,7 +3518,7 @@ filter({expr1}, {expr2})					*filter()*
 			call filter(myList, {idx, val -> idx * val <= 42})
 <		If you do not use "val" you can leave it out: >
 			call filter(myList, {idx -> idx % 2 == 1})
-
+<
 		The operation is done in-place.  If you want a |List| or
 		|Dictionary| to remain unmodified make a copy first: >
 			:let l = filter(copy(mylist), 'v:val =~ "KEEP"')

@@ -1,11 +1,12 @@
 " Vim indent file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	0.45
-" Last Change:	2016 Aug. 29
+" Version:	0.46
+" Last Change:	2016 Sep. 27
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-indent from Vim
 " Credits:
-"  Useful suggestions were made by: Albert Oliver Serra and Takuya Fujiwara.
+"  Useful suggestions were made, in chronological order, by:
+"  Albert Oliver Serra, Takuya Fujiwara and Philipp Edelmann.
 
 " Only load this indent file when no other was loaded.
 if exists("b:did_indent")
@@ -121,7 +122,8 @@ function FortranGetIndent(lnum)
     let prefix='\(\(pure\|impure\|elemental\|recursive\)\s\+\)\{,2}'
     let type='\(\(integer\|real\|double\s\+precision\|complex\|logical'
           \.'\|character\|type\|class\)\s*\S*\s\+\)\='
-    if prevstat =~? '^\s*\(module\|contains\/submodule\|program\)\>'
+    if prevstat =~? '^\s*\(contains\|submodule\|program\)\>'
+            \ ||prevstat =~? '^\s*'.'module\>\(\s*\procedure\)\@!'
             \ ||prevstat =~? '^\s*'.prefix.'subroutine\>'
             \ ||prevstat =~? '^\s*'.prefix.type.'function\>'
             \ ||prevstat =~? '^\s*'.type.prefix.'function\>'
@@ -129,7 +131,7 @@ function FortranGetIndent(lnum)
     endif
     if getline(v:lnum) =~? '^\s*contains\>'
           \ ||getline(v:lnum)=~? '^\s*end\s*'
-          \ .'\(function\|subroutine\|module\/submodule\|program\)\>'
+          \ .'\(function\|subroutine\|module\|submodule\|program\)\>'
       let ind = ind - shiftwidth()
     endif
   endif
