@@ -1184,6 +1184,9 @@ running) you have additional options:
 			file.  This list is read on startup and only changes
 			afterwards with ":rshada!".  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.
+			The output can be filtered with |:filter|, e.g.: >
+				filter /\.vim/ oldfiles
+<			The filtering happens on the file name.
 
 :bro[wse] o[ldfiles][!]
 			List file names as with |:oldfiles|, and then prompt

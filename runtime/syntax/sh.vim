@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Aug 23, 2016
-" Version:		161
+" Last Change:		Aug 26, 2016
+" Version:		162
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -500,7 +500,7 @@ syn match  shDerefString	contained	"\\["']"	nextgroup=shDerefPattern
 if exists("b:is_bash")
  " bash : ${parameter:offset}
  " bash : ${parameter:offset:length}
- syn region shDerefOff	contained	start=':'	end='\ze:'	end='\ze}'	contains=shDeref,shDerefSimple,shDerefEscape	nextgroup=shDerefLen,shDeref,shDerefSimple
+ syn region shDerefOff	contained	start=':\ze[^-=?+]'	end='\ze:'	end='\ze}'	contains=shDeref,shDerefSimple,shDerefEscape	nextgroup=shDerefLen,shDeref,shDerefSimple
  syn region shDerefOff	contained	start=':\s-'	end='\ze:'	end='\ze}'	contains=shDeref,shDerefSimple,shDerefEscape	nextgroup=shDerefLen,shDeref,shDerefSimple
  syn match  shDerefLen	contained	":[^}]\+"	contains=shDeref,shDerefSimple
 

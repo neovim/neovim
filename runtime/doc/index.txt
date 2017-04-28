@@ -982,7 +982,7 @@ tag		command	      action in Command-line editing mode	~
 |c_CTRL-E|	CTRL-E		cursor to end of command-line
 |'cedit'|	CTRL-F		default value for 'cedit': opens the
 				command-line window; otherwise not used
-		CTRL-G		not used
+|c_CTRL-G|	CTRL-G		next match when 'incsearch' is active
 |c_<BS>|	<BS>		delete the character in front of the cursor
 |c_digraph|	{char1} <BS> {char2}
 				enter digraph when 'digraph' is on
@@ -1015,7 +1015,7 @@ tag		command	      action in Command-line editing mode	~
 				insert the contents of a register or object
 				under the cursor literally
 		CTRL-S		(used for terminal control flow)
-		CTRL-T		not used
+|c_CTRL-T|	CTRL-T		previous match when 'incsearch' is active
 |c_CTRL-U|	CTRL-U		remove all characters
 |c_CTRL-V|	CTRL-V		insert next non-digit literally, insert three
 				digit decimal number as a single byte.
