@@ -3044,6 +3044,8 @@ delete({fname} [, {flags}])					*delete()*
 
 		When {flags} is "rf": Deletes the directory by the name
 		{fname} and everything in it, recursively.  BE CAREFUL!
+		Note: on MS-Windows it is not possible to delete a directory
+		that is being used.
 
 		The result is a Number, which is 0 if the delete operation was
 		successful and -1 when the deletion failed or partly failed.
@@ -6167,7 +6169,7 @@ rpcstop({channel})					    {Nvim} *rpcstop()*
 		connecting to |v:servername|.
 
 screenattr(row, col)						*screenattr()*
-		Like screenchar(), but return the attribute.  This is a rather
+		Like |screenchar()|, but return the attribute.  This is a rather
 		arbitrary number that can only be used to compare to the
 		attribute at other positions.
 

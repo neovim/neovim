@@ -425,7 +425,7 @@ accordingly.  Vim proceeds in this order:
 	-  The environment variable EXINIT.
 	   The value of $EXINIT is used as an Ex command line.
 
-     c. If the 'exrc' option is on (which is not the default), the current
+     c. If the 'exrc' option is on (which is NOT the default), the current
 	directory is searched for three files.  The first that exists is used,
 	the others are ignored.
 	-  The file ".nvimrc" (for Unix)
