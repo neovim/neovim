@@ -1,7 +1,9 @@
 " Vim syntax file
 " Language:    PROLOG
-" Maintainers: Thomas Koehler <jean-luc@picard.franken.de>
-" Last Change: 2013 May 23
+" Maintainer:  Thomas Koehler <jean-luc@picard.franken.de>
+"              Please be aware: I'm often slow to answer email due to a high
+"              non-computer related workload (sometimes 4-8 weeks)
+" Last Change: 2016 September 6
 " URL:         http://gott-gehabt.de/800_wer_wir_sind/thomas/Homepage/Computer/vim/syntax/prolog.vim
 
 " There are two sets of highlighting in here:

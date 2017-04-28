@@ -1,7 +1,9 @@
 " Vim syntax file
 " Language:	Motif UIL (User Interface Language)
 " Maintainer:	Thomas Koehler <jean-luc@picard.franken.de>
-" Last Change:	2013 May 23
+"		Please be aware: I'm often slow to answer email due to a high
+"		non-computer related workload (sometimes 4-8 weeks)
+" Last Change:	2016 September 6
 " URL:		http://gott-gehabt.de/800_wer_wir_sind/thomas/Homepage/Computer/vim/syntax/uil.vim
 
 " quit when a syntax file was already loaded
