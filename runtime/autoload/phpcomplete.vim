@@ -931,7 +931,7 @@ function! phpcomplete#EvaluateModifiers(modifiers, required_modifiers, prohibite
 		endfor
 
 		for modifier in a:modifiers
-			" if the modifier is prohibited its a no match
+			" if the modifier is prohibited it's a no match
 			if index(a:prohibited_modifiers, modifier) != -1
 				return 0
 			endif

@@ -381,7 +381,7 @@ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc15 start="<<-\s*\\\z([^ \
 
 " Here Strings: {{{1
 " =============
-" available for: bash; ksh (really should be ksh93 only) but not if its a posix
+" available for: bash; ksh (really should be ksh93 only) but not if it's a posix
 if exists("b:is_bash") || (exists("b:is_kornshell") && !exists("g:is_posix"))
  syn match shHereString "<<<"	skipwhite	nextgroup=shCmdParenRegion
 endif

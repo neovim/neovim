@@ -34,7 +34,7 @@ syn match  aveNumber		"[+-]\=\<[0-9]\+\>"
 " Operator
 
 syn keyword aveOperator		or and max min xor mod by
-" 'not' is a kind of a problem: Its an Operator as well as a method
+" 'not' is a kind of a problem: It's an Operator as well as a method
 " 'not' is only marked as an Operator if not applied as method
 syn match aveOperator		"[^\.]not[^a-zA-Z]"
 

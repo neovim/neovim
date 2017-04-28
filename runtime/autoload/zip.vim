@@ -65,14 +65,14 @@ endif
 " zip#Browse: {{{2
 fun! zip#Browse(zipfile)
 "  call Dfunc("zip#Browse(zipfile<".a:zipfile.">)")
-  " sanity check: insure that the zipfile has "PK" as its first two letters
+  " sanity check: ensure that the zipfile has "PK" as its first two letters
   "               (zipped files have a leading PK as a "magic cookie")
   if !filereadable(a:zipfile) || readfile(a:zipfile, "", 1)[0] !~ '^PK'
    exe "noautocmd e ".fnameescape(a:zipfile)
 "   call Dret("zip#Browse : not a zipfile<".a:zipfile.">")
    return
 "  else        " Decho
-"   call Decho("zip#Browse: a:zipfile<".a:zipfile."> passed PK test - its a zip file")
+"   call Decho("zip#Browse: a:zipfile<".a:zipfile."> passed PK test - it's a zip file")
   endif
 
   let repkeep= &report
@@ -95,7 +95,7 @@ fun! zip#Browse(zipfile)
   endif
   if !filereadable(a:zipfile)
    if a:zipfile !~# '^\a\+://'
-    " if its an url, don't complain, let url-handlers such as vim do its thing
+    " if it's an url, don't complain, let url-handlers such as vim do its thing
     redraw!
     echohl Error | echo "***error*** (zip#Browse) File not readable<".a:zipfile.">" | echohl None
 "    call inputsave()|call input("Press <cr> to continue")|call inputrestore()

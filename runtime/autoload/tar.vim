@@ -117,7 +117,7 @@ fun! tar#Browse(tarfile)
   if !filereadable(a:tarfile)
 "   call Decho('a:tarfile<'.a:tarfile.'> not filereadable')
    if a:tarfile !~# '^\a\+://'
-    " if its an url, don't complain, let url-handlers such as vim do its thing
+    " if it's an url, don't complain, let url-handlers such as vim do its thing
     redraw!
     echohl Error | echo "***error*** (tar#Browse) File not readable<".a:tarfile.">" | echohl None
    endif

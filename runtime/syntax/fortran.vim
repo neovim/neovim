@@ -1,17 +1,17 @@
 " Vim syntax file
 " Language:	Fortran 2008 (and older: Fortran 2003, 95, 90, and 77)
-" Version:	0.98
-" Last Change:	2016 Aug. 29
+" Version:	0.99
+" Last Change:	2016 Sep. 23
 " Maintainer:	Ajit J. Thakkar <ajit@unb.ca>; <http://www2.unb.ca/~ajit/>
 " Usage:	For instructions, do :help fortran-syntax from Vim
 " Credits:
-"  Version 0.1 (April 2000) was based on the fortran 77 syntax file by Mario Eusebio and
-"  Preben Guldberg. Since then, useful suggestions and contributions have been made,
-"  in chronological order, by:
+"  Version 0.1 (April 2000) for Fortran 95 was based on the Fortran 77 syntax file by
+"  Mario Eusebio and Preben Guldberg. Since then, useful suggestions and contributions
+"  have been made, in chronological order, by:
 "  Andrej Panjkov, Bram Moolenaar, Thomas Olsen, Michael Sternberg, Christian Reile,
 "  Walter Dieudonné, Alexander Wagner, Roman Bertle, Charles Rendleman,
 "  Andrew Griffiths, Joe Krahn, Hendrik Merx, Matt Thompson, Jan Hermann,
-"  Stefano Zaghi and Vishnu V. Krishnan.
+"  Stefano Zaghi, Vishnu V. Krishnan and Judicaël Grasset
 
 if exists("b:current_syntax")
   finish
@@ -368,7 +368,7 @@ else
 endif
 
 syn match fortranComment	excludenl "!.*$" contains=@fortranCommentGroup,@spell
-syn match fortranOpenMP		excludenl 		"^\s*!\$\(OMP\)\=\s.*$"
+syn match fortranOpenMP		excludenl 		"^\s*!\$\(OMP\)\=&\=\s.*$"
 
 "cpp is often used with Fortran
 syn match	cPreProc		"^\s*#\s*\(define\|ifdef\)\>.*"
