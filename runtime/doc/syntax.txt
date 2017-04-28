@@ -2692,7 +2692,6 @@ This will set the value of 'foldmethod' to "syntax" locally to the current
 buffer or window, which will enable syntax-based folding when editing Ruby
 filetypes.
 
-						*ruby_foldable_groups*
 Default folding is rather detailed, i.e., small syntax units like "if", "do",
 "%w[]" may create corresponding fold levels.
 
