@@ -152,7 +152,7 @@ q			Stops recording.
 :[addr]@:		Repeat last command-line.  First set cursor at line
 			[addr] (default is current line).
 
-							*:@@*
+:[addr]@							*:@@*
 :[addr]@@		Repeat the previous :@{0-9a-z"}.  First set cursor at
 			line [addr] (default is current line).
 

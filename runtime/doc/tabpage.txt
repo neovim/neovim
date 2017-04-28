@@ -195,6 +195,12 @@ Other commands:
 :tabs		List the tab pages and the windows they contain.
 		Shows a ">" for the current window.
 		Shows a "+" for modified buffers.
+		For example:
+			Tab page 1 ~
+			  + tabpage.txt ~
+			    ex_docmd.c ~
+			Tab page 2 ~
+			>   main.c ~
 
 
 REORDERING TAB PAGES:
