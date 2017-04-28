@@ -77,38 +77,36 @@ syn cluster wsmlTop add=wsmlString,wsmlCharacter,wsmlNumber,wsmlSpecial,wsmlStri
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink wsmlHeader			TypeDef
-HiLink wsmlNamespace			TypeDef
-HiLink wsmlOntology			Statement
-HiLink wsmlAxiom			TypeDef
-HiLink wsmlService			TypeDef
-HiLink wsmlNFP			TypeDef
-HiLink wsmlTopLevel			TypeDef
-HiLink wsmlMediation			TypeDef 
-HiLink wsmlBehavioral		TypeDef
-HiLink wsmlChoreographyPri		TypeDef
-HiLink wsmlChoreographySec		Operator
-HiLink wsmlChoreographyTer		Special
-HiLink wsmlString			String
-HiLink wsmlIdentifier		Normal 
-HiLink wsmlSqName                     Normal
-HiLink wsmlVariable			Define
-HiLink wsmlKeywordsInsideLEs		Operator
-HiLink wsmlOperator			Operator
-HiLink wsmlBrace			Operator
-HiLink wsmlCharacter			Character
-HiLink wsmlNumber			Number
-HiLink wsmlDataTypes			Special
-HiLink wsmlComment			Comment
-HiLink wsmlDocComment		Comment
-HiLink wsmlLineComment		Comment
-HiLink wsmlTodo			Todo
-HiLink wsmlFixMe			Error
-HiLink wsmlCommentTitle		SpecialComment
-HiLink wsmlCommentStar		wsmlComment
+hi def link wsmlHeader			TypeDef
+hi def link wsmlNamespace			TypeDef
+hi def link wsmlOntology			Statement
+hi def link wsmlAxiom			TypeDef
+hi def link wsmlService			TypeDef
+hi def link wsmlNFP			TypeDef
+hi def link wsmlTopLevel			TypeDef
+hi def link wsmlMediation			TypeDef 
+hi def link wsmlBehavioral		TypeDef
+hi def link wsmlChoreographyPri		TypeDef
+hi def link wsmlChoreographySec		Operator
+hi def link wsmlChoreographyTer		Special
+hi def link wsmlString			String
+hi def link wsmlIdentifier		Normal 
+hi def link wsmlSqName                     Normal
+hi def link wsmlVariable			Define
+hi def link wsmlKeywordsInsideLEs		Operator
+hi def link wsmlOperator			Operator
+hi def link wsmlBrace			Operator
+hi def link wsmlCharacter			Character
+hi def link wsmlNumber			Number
+hi def link wsmlDataTypes			Special
+hi def link wsmlComment			Comment
+hi def link wsmlDocComment		Comment
+hi def link wsmlLineComment		Comment
+hi def link wsmlTodo			Todo
+hi def link wsmlFixMe			Error
+hi def link wsmlCommentTitle		SpecialComment
+hi def link wsmlCommentStar		wsmlComment
 
-delcommand HiLink
 
 let b:current_syntax = "wsml"
 let b:spell_options="contained"

@@ -2,7 +2,7 @@
 " Language:    Lisp
 " Maintainer:  Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
 " Last Change: May 02, 2016
-" Version:     25
+" Version:     26
 " URL:	       http://www.drchip.org/astronaut/vim/index.html#SYNTAX_LISP
 "
 "  Thanks to F Xavier Noria for a list of 978 Common Lisp symbols taken from HyperSpec
@@ -561,57 +561,56 @@ syn sync lines=100
 
 " ---------------------------------------------------------------------
 " Define Highlighting: {{{1
-" Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
+if !exists("skip_lisp_syntax_inits")
 
-HiLink lispCommentRegion	lispComment
-HiLink lispAtomNmbr		lispNumber
-HiLink lispAtomMark		lispMark
-HiLink lispInStringString	lispString
+  hi def link lispCommentRegion	lispComment
+  hi def link lispAtomNmbr		lispNumber
+  hi def link lispAtomMark		lispMark
+  hi def link lispInStringString	lispString
 
-HiLink lispAtom		Identifier
-HiLink lispAtomBarSymbol	Special
-HiLink lispBarSymbol		Special
-HiLink lispComment		Comment
-HiLink lispConcat		Statement
-HiLink lispDecl		Statement
-HiLink lispFunc		Statement
-HiLink lispKey		Type
-HiLink lispMark		Delimiter
-HiLink lispNumber		Number
-HiLink lispParenError		Error
-HiLink lispEscapeSpecial	Type
-HiLink lispString		String
-HiLink lispTodo		Todo
-HiLink lispVar		Statement
+  hi def link lispAtom		Identifier
+  hi def link lispAtomBarSymbol	Special
+  hi def link lispBarSymbol		Special
+  hi def link lispComment		Comment
+  hi def link lispConcat		Statement
+  hi def link lispDecl		Statement
+  hi def link lispFunc		Statement
+  hi def link lispKey		Type
+  hi def link lispMark		Delimiter
+  hi def link lispNumber		Number
+  hi def link lispParenError		Error
+  hi def link lispEscapeSpecial	Type
+  hi def link lispString		String
+  hi def link lispTodo		Todo
+  hi def link lispVar		Statement
 
-if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
- if &bg == "dark"
-  hi def hlLevel0 ctermfg=red         guifg=red1
-  hi def hlLevel1 ctermfg=yellow      guifg=orange1
-  hi def hlLevel2 ctermfg=green       guifg=yellow1
-  hi def hlLevel3 ctermfg=cyan        guifg=greenyellow
-  hi def hlLevel4 ctermfg=magenta     guifg=green1
-  hi def hlLevel5 ctermfg=red         guifg=springgreen1
-  hi def hlLevel6 ctermfg=yellow      guifg=cyan1
-  hi def hlLevel7 ctermfg=green       guifg=slateblue1
-  hi def hlLevel8 ctermfg=cyan        guifg=magenta1
-  hi def hlLevel9 ctermfg=magenta     guifg=purple1
- else
-  hi def hlLevel0 ctermfg=red         guifg=red3
-  hi def hlLevel1 ctermfg=darkyellow  guifg=orangered3
-  hi def hlLevel2 ctermfg=darkgreen   guifg=orange2
-  hi def hlLevel3 ctermfg=blue        guifg=yellow3
-  hi def hlLevel4 ctermfg=darkmagenta guifg=olivedrab4
-  hi def hlLevel5 ctermfg=red         guifg=green4
-  hi def hlLevel6 ctermfg=darkyellow  guifg=paleturquoise3
-  hi def hlLevel7 ctermfg=darkgreen   guifg=deepskyblue4
-  hi def hlLevel8 ctermfg=blue        guifg=darkslateblue
-  hi def hlLevel9 ctermfg=darkmagenta guifg=darkviolet
- endif
+  if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
+   if &bg == "dark"
+    hi def hlLevel0 ctermfg=red         guifg=red1
+    hi def hlLevel1 ctermfg=yellow      guifg=orange1
+    hi def hlLevel2 ctermfg=green       guifg=yellow1
+    hi def hlLevel3 ctermfg=cyan        guifg=greenyellow
+    hi def hlLevel4 ctermfg=magenta     guifg=green1
+    hi def hlLevel5 ctermfg=red         guifg=springgreen1
+    hi def hlLevel6 ctermfg=yellow      guifg=cyan1
+    hi def hlLevel7 ctermfg=green       guifg=slateblue1
+    hi def hlLevel8 ctermfg=cyan        guifg=magenta1
+    hi def hlLevel9 ctermfg=magenta     guifg=purple1
+   else
+    hi def hlLevel0 ctermfg=red         guifg=red3
+    hi def hlLevel1 ctermfg=darkyellow  guifg=orangered3
+    hi def hlLevel2 ctermfg=darkgreen   guifg=orange2
+    hi def hlLevel3 ctermfg=blue        guifg=yellow3
+    hi def hlLevel4 ctermfg=darkmagenta guifg=olivedrab4
+    hi def hlLevel5 ctermfg=red         guifg=green4
+    hi def hlLevel6 ctermfg=darkyellow  guifg=paleturquoise3
+    hi def hlLevel7 ctermfg=darkgreen   guifg=deepskyblue4
+    hi def hlLevel8 ctermfg=blue        guifg=darkslateblue
+    hi def hlLevel9 ctermfg=darkmagenta guifg=darkviolet
+   endif
+  endif
+
 endif
-
-delcommand HiLink
 
 let b:current_syntax = "lisp"
 

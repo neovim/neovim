@@ -39,17 +39,15 @@ syntax match gedcom_date ".*" contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink gedcom_record Statement
-HiLink gedcom_id Comment
-HiLink gedcom_ii PreProc
-HiLink gedcom_in Type
-HiLink gedcom_name PreProc
-HiLink gedcom_cname Type
-HiLink gedcom_surname Identifier
-HiLink gedcom_date Constant
+hi def link gedcom_record Statement
+hi def link gedcom_id Comment
+hi def link gedcom_ii PreProc
+hi def link gedcom_in Type
+hi def link gedcom_name PreProc
+hi def link gedcom_cname Type
+hi def link gedcom_surname Identifier
+hi def link gedcom_date Constant
 
-delcommand HiLink
 
 let b:current_syntax = "gedcom"

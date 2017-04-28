@@ -52,18 +52,16 @@ syn region kwtRewBody		transparent keepend extend fold start="->\s*<" start="^\s
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink kwtStatement	cppStatement
-HiLink kwtDecl	cppStatement
-HiLink kwtCast	cppStatement
-HiLink kwtSep	Delimiter
-HiLink kwtViews	Label
-HiLink kwtPhylum	Type
-HiLink kwtOption	PreProc
-"HiLink cText	Comment
+hi def link kwtStatement	cppStatement
+hi def link kwtDecl	cppStatement
+hi def link kwtCast	cppStatement
+hi def link kwtSep	Delimiter
+hi def link kwtViews	Label
+hi def link kwtPhylum	Type
+hi def link kwtOption	PreProc
+"hi def link cText	Comment
 
-delcommand HiLink
 
 syn sync lines=300
 

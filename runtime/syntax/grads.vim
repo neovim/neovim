@@ -51,25 +51,23 @@ syn match gradsComment	"\*.*"
 
 " Define the default highlighting.
 " Only when an item doesn't hgs highlighting+yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink gradsStatement		Statement
+hi def link gradsStatement		Statement
 
-HiLink gradsString		String
-HiLink gradsNumber		Number
+hi def link gradsString		String
+hi def link gradsNumber		Number
 
-HiLink gradsFixVariables	Special
-HiLink gradsVariables		Identifier
-HiLink gradsglobalVariables	Special
-HiLink gradsConst		Special
+hi def link gradsFixVariables	Special
+hi def link gradsVariables		Identifier
+hi def link gradsglobalVariables	Special
+hi def link gradsConst		Special
 
-HiLink gradsClassMethods	Function
+hi def link gradsClassMethods	Function
 
-HiLink gradsOperator		Operator
-HiLink gradsComment		Comment
+hi def link gradsOperator		Operator
+hi def link gradsComment		Comment
 
-HiLink gradsTypos		Error
+hi def link gradsTypos		Error
 
-delcommand HiLink
 
 let b:current_syntax = "grads"

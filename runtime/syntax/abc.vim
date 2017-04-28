@@ -34,19 +34,17 @@ syn match abcComment "%.*$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink abcComment		Comment
-HiLink abcHeadField		Type
-HiLink abcBodyField		Special
-HiLink abcBar			Statement
-HiLink abcTuple			Statement
-HiLink abcBroken			Statement
-HiLink abcTie			Statement
-HiLink abcGuitarChord	Identifier
-HiLink abcNote			Constant
+hi def link abcComment		Comment
+hi def link abcHeadField		Type
+hi def link abcBodyField		Special
+hi def link abcBar			Statement
+hi def link abcTuple			Statement
+hi def link abcBroken			Statement
+hi def link abcTie			Statement
+hi def link abcGuitarChord	Identifier
+hi def link abcNote			Constant
 
-delcommand HiLink
 
 let b:current_syntax = "abc"
 

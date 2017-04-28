@@ -324,43 +324,41 @@ exec "syn sync ccomment nqcComment minlines=" . nqc_minlines
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink nqcLabel		Label
-HiLink nqcConditional		Conditional
-HiLink nqcRepeat		Repeat
-HiLink nqcCharacter		Character
-HiLink nqcNumber		Number
-HiLink nqcFloat		Float
-HiLink nqcFunction		Function
-HiLink nqcParenError		nqcError
-HiLink nqcErrInParen		nqcError
-HiLink nqcErrInBracket	nqcError
-HiLink nqcCommentL		nqcComment
-HiLink nqcCommentStart	nqcComment
-HiLink nqcCommentError	nqcError
-HiLink nqcCommentStartError	nqcError
-HiLink nqcSpaceError		nqcError
-HiLink nqcStorageClass	StorageClass
-HiLink nqcInclude		Include
-HiLink nqcPreProc		PreProc
-HiLink nqcDefine		Macro
-HiLink nqcIncluded		String
-HiLink nqcError		Error
-HiLink nqcStatement		Statement
-HiLink nqcEvents		Statement
-HiLink nqcPreCondit		PreCondit
-HiLink nqcType		Type
-HiLink nqcConstant		Constant
-HiLink nqcCommentSkip		nqcComment
-HiLink nqcComment		Comment
-HiLink nqcTodo		Todo
-HiLink nqcCppSkip		nqcCppOut
-HiLink nqcCppOut2		nqcCppOut
-HiLink nqcCppOut		Comment
+hi def link nqcLabel		Label
+hi def link nqcConditional		Conditional
+hi def link nqcRepeat		Repeat
+hi def link nqcCharacter		Character
+hi def link nqcNumber		Number
+hi def link nqcFloat		Float
+hi def link nqcFunction		Function
+hi def link nqcParenError		nqcError
+hi def link nqcErrInParen		nqcError
+hi def link nqcErrInBracket	nqcError
+hi def link nqcCommentL		nqcComment
+hi def link nqcCommentStart	nqcComment
+hi def link nqcCommentError	nqcError
+hi def link nqcCommentStartError	nqcError
+hi def link nqcSpaceError		nqcError
+hi def link nqcStorageClass	StorageClass
+hi def link nqcInclude		Include
+hi def link nqcPreProc		PreProc
+hi def link nqcDefine		Macro
+hi def link nqcIncluded		String
+hi def link nqcError		Error
+hi def link nqcStatement		Statement
+hi def link nqcEvents		Statement
+hi def link nqcPreCondit		PreCondit
+hi def link nqcType		Type
+hi def link nqcConstant		Constant
+hi def link nqcCommentSkip		nqcComment
+hi def link nqcComment		Comment
+hi def link nqcTodo		Todo
+hi def link nqcCppSkip		nqcCppOut
+hi def link nqcCppOut2		nqcCppOut
+hi def link nqcCppOut		Comment
 
-delcommand HiLink
 
 let b:current_syntax = "nqc"
 

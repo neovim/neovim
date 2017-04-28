@@ -77,32 +77,30 @@ syn match   dtALocale /\[.\{-}\]\s*=\@=/ containedin=ALL
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dtGroup		 Special
-HiLink dtComment	 Comment
-HiLink dtDelim		 String
+hi def link dtGroup		 Special
+hi def link dtComment	 Comment
+hi def link dtDelim		 String
 
-HiLink dtLocaleKey	 Type
-HiLink dtLocaleName	 Identifier
-HiLink dtXLocale	 Identifier
-HiLink dtALocale	 Identifier
+hi def link dtLocaleKey	 Type
+hi def link dtLocaleName	 Identifier
+hi def link dtXLocale	 Identifier
+hi def link dtALocale	 Identifier
 
-HiLink dtNumericKey	 Type
+hi def link dtNumericKey	 Type
 
-HiLink dtBooleanKey	 Type
-HiLink dtBooleanValue	 Constant
+hi def link dtBooleanKey	 Type
+hi def link dtBooleanValue	 Constant
 
-HiLink dtStringKey	 Type
+hi def link dtStringKey	 Type
 
-HiLink dtExecKey	 Type
-HiLink dtExecParam	 Special
-HiLink dtTypeKey	 Type
-HiLink dtTypeValue	 Constant
-HiLink dtNotStLabel	 Type
-HiLink dtXAddKey	 Type
+hi def link dtExecKey	 Type
+hi def link dtExecParam	 Special
+hi def link dtTypeKey	 Type
+hi def link dtTypeValue	 Constant
+hi def link dtNotStLabel	 Type
+hi def link dtXAddKey	 Type
 
-delcommand HiLink
 
 let b:current_syntax = "desktop"
 

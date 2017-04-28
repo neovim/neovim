@@ -323,31 +323,29 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink luaStatement		Statement
-HiLink luaRepeat		Repeat
-HiLink luaFor			Repeat
-HiLink luaString		String
-HiLink luaString2		String
-HiLink luaNumber		Number
-HiLink luaOperator		Operator
-HiLink luaIn			Operator
-HiLink luaConstant		Constant
-HiLink luaCond		Conditional
-HiLink luaElse		Conditional
-HiLink luaFunction		Function
-HiLink luaComment		Comment
-HiLink luaTodo		Todo
-HiLink luaTable		Structure
-HiLink luaError		Error
-HiLink luaParenError		Error
-HiLink luaBraceError		Error
-HiLink luaSpecial		SpecialChar
-HiLink luaFunc		Identifier
-HiLink luaLabel		Label
+hi def link luaStatement		Statement
+hi def link luaRepeat		Repeat
+hi def link luaFor			Repeat
+hi def link luaString		String
+hi def link luaString2		String
+hi def link luaNumber		Number
+hi def link luaOperator		Operator
+hi def link luaIn			Operator
+hi def link luaConstant		Constant
+hi def link luaCond		Conditional
+hi def link luaElse		Conditional
+hi def link luaFunction		Function
+hi def link luaComment		Comment
+hi def link luaTodo		Todo
+hi def link luaTable		Structure
+hi def link luaError		Error
+hi def link luaParenError		Error
+hi def link luaBraceError		Error
+hi def link luaSpecial		SpecialChar
+hi def link luaFunc		Identifier
+hi def link luaLabel		Label
 
-delcommand HiLink
 
 let b:current_syntax = "lua"
 

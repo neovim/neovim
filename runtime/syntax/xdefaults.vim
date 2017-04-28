@@ -107,27 +107,25 @@ syn keyword xdefaultsSymbol contained Y_RESOLUTION
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink xdefaultsLabel		Type
-HiLink xdefaultsValue		Constant
-HiLink xdefaultsComment	Comment
-HiLink xdefaultsCommentH	xdefaultsComment
-HiLink xdefaultsPreProc	PreProc
-HiLink xdefaultsInclude	xdefaultsPreProc
-HiLink xdefaultsCppSkip	xdefaultsCppOut
-HiLink xdefaultsCppOut2	xdefaultsCppOut
-HiLink xdefaultsCppOut	Comment
-HiLink xdefaultsIncluded	String
-HiLink xdefaultsDefine	Macro
-HiLink xdefaultsSymbol	Statement
-HiLink xdefaultsSpecial	Statement
-HiLink xdefaultsErrorLine	Error
-HiLink xdefaultsCommentError	Error
-HiLink xdefaultsPunct		Normal
-HiLink xdefaultsLineEnd	Special
-HiLink xdefaultsTodo		Todo
+hi def link xdefaultsLabel		Type
+hi def link xdefaultsValue		Constant
+hi def link xdefaultsComment	Comment
+hi def link xdefaultsCommentH	xdefaultsComment
+hi def link xdefaultsPreProc	PreProc
+hi def link xdefaultsInclude	xdefaultsPreProc
+hi def link xdefaultsCppSkip	xdefaultsCppOut
+hi def link xdefaultsCppOut2	xdefaultsCppOut
+hi def link xdefaultsCppOut	Comment
+hi def link xdefaultsIncluded	String
+hi def link xdefaultsDefine	Macro
+hi def link xdefaultsSymbol	Statement
+hi def link xdefaultsSpecial	Statement
+hi def link xdefaultsErrorLine	Error
+hi def link xdefaultsCommentError	Error
+hi def link xdefaultsPunct		Normal
+hi def link xdefaultsLineEnd	Special
+hi def link xdefaultsTodo		Todo
 
-delcommand HiLink
 
 let b:current_syntax = "xdefaults"
 

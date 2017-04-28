@@ -100,35 +100,32 @@ syn region loutHeadings matchgroup=loutHeads start='@\(\(Title\)\|\(Caption\)\)\
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting. Can be overrriden later.
-HiLink loutTodo Todo
-HiLink loutDefine Define
-HiLink loutEOmlDef Define
-HiLink loutFunction Function
-HiLink loutBraceError Error
-HiLink loutNULL Special
-HiLink loutComment Comment
-HiLink loutSpecial Special
-HiLink loutSymbols Character
-HiLink loutInclude Include
-HiLink loutKeyword Keyword
-HiLink loutTag Tag
-HiLink loutMath Number
+hi def link loutTodo Todo
+hi def link loutDefine Define
+hi def link loutEOmlDef Define
+hi def link loutFunction Function
+hi def link loutBraceError Error
+hi def link loutNULL Special
+hi def link loutComment Comment
+hi def link loutSpecial Special
+hi def link loutSymbols Character
+hi def link loutInclude Include
+hi def link loutKeyword Keyword
+hi def link loutTag Tag
+hi def link loutMath Number
 
-" HiLink Not really needed here, but I think it is more consistent.
-HiLink loutMBraces loutMath
+hi def link loutMBraces loutMath
 hi loutItalic term=italic cterm=italic gui=italic
-HiLink loutIBraces loutItalic
+hi def link loutIBraces loutItalic
 hi loutBold term=bold cterm=bold gui=bold
-HiLink loutBBraces loutBold
+hi def link loutBBraces loutBold
 hi loutBoldItalic term=bold,italic cterm=bold,italic gui=bold,italic
-HiLink loutBIBraces loutBoldItalic
+hi def link loutBIBraces loutBoldItalic
 hi loutHeadings term=bold cterm=bold guifg=indianred
-HiLink loutHeads loutHeadings
+hi def link loutHeads loutHeadings
 
-delcommand HiLink
 
 let b:current_syntax = "lout"
 

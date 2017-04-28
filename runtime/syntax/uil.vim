@@ -46,28 +46,26 @@ syn sync ccomment uilComment
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default highlighting.
-HiLink uilCharacter		uilString
-HiLink uilSpecialCharacter	uilSpecial
-HiLink uilNumber		uilString
-HiLink uilCommentError	uilError
-HiLink uilInclude		uilPreCondit
-HiLink uilDefine		uilPreCondit
-HiLink uilIncluded		uilString
-HiLink uilSpecialFunction	uilRessource
-HiLink uilRessource		Identifier
-HiLink uilSpecialStatement	Keyword
-HiLink uilError		Error
-HiLink uilPreCondit		PreCondit
-HiLink uilType		Type
-HiLink uilString		String
-HiLink uilComment		Comment
-HiLink uilSpecial		Special
-HiLink uilTodo		Todo
+hi def link uilCharacter		uilString
+hi def link uilSpecialCharacter	uilSpecial
+hi def link uilNumber		uilString
+hi def link uilCommentError	uilError
+hi def link uilInclude		uilPreCondit
+hi def link uilDefine		uilPreCondit
+hi def link uilIncluded		uilString
+hi def link uilSpecialFunction	uilRessource
+hi def link uilRessource		Identifier
+hi def link uilSpecialStatement	Keyword
+hi def link uilError		Error
+hi def link uilPreCondit		PreCondit
+hi def link uilType		Type
+hi def link uilString		String
+hi def link uilComment		Comment
+hi def link uilSpecial		Special
+hi def link uilTodo		Todo
 
-delcommand HiLink
 
 
 let b:current_syntax = "uil"

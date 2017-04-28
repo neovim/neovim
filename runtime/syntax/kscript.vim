@@ -35,24 +35,22 @@ syn region	kscriptString		start=+'''+  end=+'''+
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink kscriptConditional		Conditional
-HiLink kscriptRepeat			Repeat
-HiLink kscriptExceptions		Statement
-HiLink kscriptFunction		Function
-HiLink kscriptConst			Constant
-HiLink kscriptStatement		Statement
-HiLink kscriptLabel			Label
-HiLink kscriptStorageClass		StorageClass
-HiLink kscriptType			Type
-HiLink kscriptTodo			Todo
-HiLink kscriptComment		Comment
-HiLink kscriptString			String
-HiLink kscriptPreCondit		PreCondit
-HiLink kscriptHardCoded		Statement
+hi def link kscriptConditional		Conditional
+hi def link kscriptRepeat			Repeat
+hi def link kscriptExceptions		Statement
+hi def link kscriptFunction		Function
+hi def link kscriptConst			Constant
+hi def link kscriptStatement		Statement
+hi def link kscriptLabel			Label
+hi def link kscriptStorageClass		StorageClass
+hi def link kscriptType			Type
+hi def link kscriptTodo			Todo
+hi def link kscriptComment		Comment
+hi def link kscriptString			String
+hi def link kscriptPreCondit		PreCondit
+hi def link kscriptHardCoded		Statement
 
-delcommand HiLink
 
 let b:current_syntax = "kscript"
 

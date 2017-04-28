@@ -51,18 +51,16 @@ syn case match
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink bcKeyword		Statement
-HiLink bcType		Type
-HiLink bcConstant		Constant
-HiLink bcNumber		Number
-HiLink bcComment		Comment
-HiLink bcString		String
-HiLink bcSpecialChar		SpecialChar
-HiLink bcParenError		Error
+hi def link bcKeyword		Statement
+hi def link bcType		Type
+hi def link bcConstant		Constant
+hi def link bcNumber		Number
+hi def link bcComment		Comment
+hi def link bcString		String
+hi def link bcSpecialChar		SpecialChar
+hi def link bcParenError		Error
 
-delcommand HiLink
 
 let b:current_syntax = "bc"
 " vim: ts=8

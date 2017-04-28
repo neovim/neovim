@@ -54,17 +54,15 @@ syn sync lines=250
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink lotosStatement		Statement
-HiLink lotosProcess		Label
-HiLink lotosOperator		Operator
-HiLink lotosSort		Function
-HiLink lotosType		Type
-HiLink lotosComment		Comment
-HiLink lotosDelimiter		String
+hi def link lotosStatement		Statement
+hi def link lotosProcess		Label
+hi def link lotosOperator		Operator
+hi def link lotosSort		Function
+hi def link lotosType		Type
+hi def link lotosComment		Comment
+hi def link lotosDelimiter		String
 
-delcommand HiLink
 
 let b:current_syntax = "lotos"
 

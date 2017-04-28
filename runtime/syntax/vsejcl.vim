@@ -21,17 +21,15 @@ syn match vsejclParms /(.\{-})/ contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink vsejclComment		Comment
-HiLink vsejclField		Type
-HiLink vsejclKeyword		Statement
-HiLink vsejclObject		Constant
-HiLink vsejclString		Constant
-HiLink vsejclMisc			Special
-HiLink vsejclParms		Constant
+hi def link vsejclComment		Comment
+hi def link vsejclField		Type
+hi def link vsejclKeyword		Statement
+hi def link vsejclObject		Constant
+hi def link vsejclString		Constant
+hi def link vsejclMisc			Special
+hi def link vsejclParms		Constant
 
-delcommand HiLink
 
 let b:current_syntax = "vsejcl"
 

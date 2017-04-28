@@ -47,19 +47,17 @@ syn sync minlines=1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " append to the highlighting links in cupl.vim
 " The default highlighting.
-HiLink cuplsimOrder		cuplStatement
-HiLink cuplsimBase		cuplStatement
-HiLink cuplsimBaseType	cuplStatement
-HiLink cuplsimVectors		cuplStatement
-HiLink cuplsimStimulus	cuplNumber
-HiLink cuplsimOutput		cuplNumber
-HiLink cuplsimOrderFormat	cuplNumber
+hi def link cuplsimOrder		cuplStatement
+hi def link cuplsimBase		cuplStatement
+hi def link cuplsimBaseType	cuplStatement
+hi def link cuplsimVectors		cuplStatement
+hi def link cuplsimStimulus	cuplNumber
+hi def link cuplsimOutput		cuplNumber
+hi def link cuplsimOrderFormat	cuplNumber
 
-delcommand HiLink
 
 let b:current_syntax = "cuplsim"
 " vim:ts=8

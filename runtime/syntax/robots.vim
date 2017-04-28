@@ -38,19 +38,17 @@ syn match  robotsUrl		"http[s]\=://\S*"
 syn match  robotsMail		"\S*@\S*"
 syn region robotsString		start=+L\="+ skip=+\\\\\|\\"+ end=+"+
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink robotsComment		Comment
-HiLink robotsAgent		Type
-HiLink robotsDisallow		Statement
-HiLink robotsLine		Special
-HiLink robotsStar		Operator
-HiLink robotsDelimiter	Delimiter
-HiLink robotsUrl		String
-HiLink robotsMail		String
-HiLink robotsString		String
+hi def link robotsComment		Comment
+hi def link robotsAgent		Type
+hi def link robotsDisallow		Statement
+hi def link robotsLine		Special
+hi def link robotsStar		Operator
+hi def link robotsDelimiter	Delimiter
+hi def link robotsUrl		String
+hi def link robotsMail		String
+hi def link robotsString		String
 
-delcommand HiLink
 
 
 let b:current_syntax = "robots"

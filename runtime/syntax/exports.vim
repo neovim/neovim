@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	exports
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Oct 23, 2014
-" Version:	5
+" Last Change:	Aug 31, 2016
+" Version:	7
 " Notes:		This file includes both SysV and BSD 'isms
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_EXPORTS
 
@@ -36,24 +36,23 @@ syn match exportsSeparator	"[,:]"
 syn match exportsComment	"^\s*#.*$"	contains=@Spell
 
 " Define the default highlighting.
-" Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
+if !exists("skip_exports_syntax_inits")
 
-HiLink exportsKeyOptSet	exportsKeySettings
-HiLink exportsOptSet	exportsSettings
+  hi def link exportsKeyOptSet	exportsKeySettings
+  hi def link exportsOptSet	exportsSettings
 
-HiLink exportsComment	Comment
-HiLink exportsKeyOptions	Type
-HiLink exportsKeySettings	Keyword
-HiLink exportsOptions	Constant
-HiLink exportsSeparator	Constant
-HiLink exportsSettings	Constant
+  hi def link exportsComment	Comment
+  hi def link exportsKeyOptions	Type
+  hi def link exportsKeySettings	Keyword
+  hi def link exportsOptions	Constant
+  hi def link exportsSeparator	Constant
+  hi def link exportsSettings	Constant
 
-HiLink exportsOptError	Error
-HiLink exportsOptSetError	Error
-HiLink exportsSetError	Error
+  hi def link exportsOptError	Error
+  hi def link exportsOptSetError	Error
+  hi def link exportsSetError	Error
 
-delcommand HiLink
+endif
 
 let b:current_syntax = "exports"
 " vim: ts=10

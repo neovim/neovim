@@ -73,16 +73,14 @@ syn match   OPLMathsOperator    "-\|=\|[:<>+\*^/\\]"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink OPLStatement		Statement
-HiLink OPLNumber		Number
-HiLink OPLString		String
-HiLink OPLComment		Comment
-HiLink OPLMathsOperator	Conditional
-"  HiLink OPLError		Error
+hi def link OPLStatement		Statement
+hi def link OPLNumber		Number
+hi def link OPLString		String
+hi def link OPLComment		Comment
+hi def link OPLMathsOperator	Conditional
+"  hi def link OPLError		Error
 
-delcommand HiLink
 
 let b:current_syntax = "opl"
 

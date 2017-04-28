@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2016 Apr 24
+" Last Change: 2016 Aug 30
 " URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debchangelog.vim
 
 " Standard syntax initialization
@@ -34,21 +34,17 @@ syn region debchangelogFooter start="^ [^ ]" end="$" contains=debchangelogEmail 
 syn region debchangelogEntry start="^  " end="$" contains=debchangelogCloses,debchangelogLP oneline
 
 " Associate our matches and regions with pretty colours
-command -nargs=+ HiLink hi def link <args>
-
-HiLink debchangelogHeader		Error
-HiLink debchangelogFooter		Identifier
-HiLink debchangelogEntry		Normal
-HiLink debchangelogCloses		Statement
-HiLink debchangelogLP			Statement
-HiLink debchangelogFirstKV		Identifier
-HiLink debchangelogOtherKV		Identifier
-HiLink debchangelogName		Comment
-HiLink debchangelogVersion		Identifier
-HiLink debchangelogTarget		Identifier
-HiLink debchangelogEmail		Special
-
-delcommand HiLink
+hi def link debchangelogHeader  Error
+hi def link debchangelogFooter  Identifier
+hi def link debchangelogEntry   Normal
+hi def link debchangelogCloses  Statement
+hi def link debchangelogLP      Statement
+hi def link debchangelogFirstKV Identifier
+hi def link debchangelogOtherKV Identifier
+hi def link debchangelogName    Comment
+hi def link debchangelogVersion Identifier
+hi def link debchangelogTarget  Identifier
+hi def link debchangelogEmail   Special
 
 let b:current_syntax = "debchangelog"
 

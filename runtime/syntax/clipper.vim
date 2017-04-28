@@ -112,23 +112,21 @@ syntax match clipperComment		"^\*.*"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink clipperConditional		Conditional
-HiLink clipperRepeat			Repeat
-HiLink clipperNumber			Number
-HiLink clipperInclude		Include
-HiLink clipperComment		Comment
-HiLink clipperOperator		Operator
-HiLink clipperStorageClass		StorageClass
-HiLink clipperStatement		Statement
-HiLink clipperString			String
-HiLink clipperFunction		Function
-HiLink clipperLineContinuation	Special
-HiLink clipperDelimiters		Delimiter
-HiLink clipperUserVariable		Identifier
+hi def link clipperConditional		Conditional
+hi def link clipperRepeat			Repeat
+hi def link clipperNumber			Number
+hi def link clipperInclude		Include
+hi def link clipperComment		Comment
+hi def link clipperOperator		Operator
+hi def link clipperStorageClass		StorageClass
+hi def link clipperStatement		Statement
+hi def link clipperString			String
+hi def link clipperFunction		Function
+hi def link clipperLineContinuation	Special
+hi def link clipperDelimiters		Delimiter
+hi def link clipperUserVariable		Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "clipper"
 

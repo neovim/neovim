@@ -119,27 +119,25 @@ syn sync lines=100
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink jessAtomNmbr	jessNumber
-HiLink jessAtomMark	jessMark
+hi def link jessAtomNmbr	jessNumber
+hi def link jessAtomMark	jessMark
 
-HiLink jessAtom		Identifier
-HiLink jessAtomBarSymbol	Special
-HiLink jessBarSymbol	Special
-HiLink jessComment	Comment
-HiLink jessConcat	Statement
-HiLink jessDeclaration	Statement
-HiLink jessFunc		Statement
-HiLink jessKey		Type
-HiLink jessMark		Delimiter
-HiLink jessNumber	Number
-HiLink jessParenError	Error
-HiLink jessSpecial	Type
-HiLink jessString	String
-HiLink jessVar		Identifier
+hi def link jessAtom		Identifier
+hi def link jessAtomBarSymbol	Special
+hi def link jessBarSymbol	Special
+hi def link jessComment	Comment
+hi def link jessConcat	Statement
+hi def link jessDeclaration	Statement
+hi def link jessFunc		Statement
+hi def link jessKey		Type
+hi def link jessMark		Delimiter
+hi def link jessNumber	Number
+hi def link jessParenError	Error
+hi def link jessSpecial	Type
+hi def link jessString	String
+hi def link jessVar		Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "jess"
 

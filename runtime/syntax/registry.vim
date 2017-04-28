@@ -82,22 +82,20 @@ syn match registryHex		"^\s*\([0-9a-fA-F]\{2},\)\{0,999}\([0-9a-fA-F]\{2}\|\\\)$
 " Dword (32 bits)
 syn match registryDword		"dword:[0-9a-fA-F]\{8}$" contains=registrySpecial
 
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink registryComment	Comment
-HiLink registryHead		Constant
-HiLink registryHKEY		Constant
-HiLink registryPath		Special
-HiLink registryRemove	PreProc
-HiLink registryGUID		Identifier
-HiLink registrySpecial	Special
-HiLink registrySubKey	Type
-HiLink registryString	String
-HiLink registryHex		Number
-HiLink registryDword		Number
+hi def link registryComment	Comment
+hi def link registryHead		Constant
+hi def link registryHKEY		Constant
+hi def link registryPath		Special
+hi def link registryRemove	PreProc
+hi def link registryGUID		Identifier
+hi def link registrySpecial	Special
+hi def link registrySubKey	Type
+hi def link registryString	String
+hi def link registryHex		Number
+hi def link registryDword		Number
 
-delcommand HiLink
 
 
 let b:current_syntax = "registry"

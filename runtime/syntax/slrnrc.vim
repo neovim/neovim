@@ -148,35 +148,33 @@ syn match   slrnrcUnsetkey	'^\s*unsetkey\s\+\("\)\=\(article\|group\|readline\)\
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink slrnrcTodo		Todo
-HiLink slrnrcSpaceError	Error
-HiLink slrnrcNumber		Number
-HiLink slrnrcSpecKey		SpecialChar
-HiLink slrnrcKey		String
-HiLink slrnrcSpecChar		SpecialChar
-HiLink slrnrcString		String
-HiLink slrnSlangPreCondit	Special
-HiLink slrnrcComment		Comment
-HiLink slrnrcVarInt		Identifier
-HiLink slrnrcVarStr		Identifier
-HiLink slrnrcCmd		slrnrcSet
-HiLink slrnrcSet		Operator
-HiLink slrnrcColor		Keyword
-HiLink slrnrcColorObj		Identifier
-HiLink slrnrcColorVal		String
-HiLink slrnrcMono		Keyword
-HiLink slrnrcMonoObj		Identifier
-HiLink slrnrcMonoVal		String
-HiLink slrnrcFunArt		Macro
-HiLink slrnrcFunGroup		Macro
-HiLink slrnrcFunRead		Macro
-HiLink slrnrcSetkeyObj	Identifier
-HiLink slrnrcSetkey		Keyword
-HiLink slrnrcUnsetkey		slrnrcSetkey
+hi def link slrnrcTodo		Todo
+hi def link slrnrcSpaceError	Error
+hi def link slrnrcNumber		Number
+hi def link slrnrcSpecKey		SpecialChar
+hi def link slrnrcKey		String
+hi def link slrnrcSpecChar		SpecialChar
+hi def link slrnrcString		String
+hi def link slrnSlangPreCondit	Special
+hi def link slrnrcComment		Comment
+hi def link slrnrcVarInt		Identifier
+hi def link slrnrcVarStr		Identifier
+hi def link slrnrcCmd		slrnrcSet
+hi def link slrnrcSet		Operator
+hi def link slrnrcColor		Keyword
+hi def link slrnrcColorObj		Identifier
+hi def link slrnrcColorVal		String
+hi def link slrnrcMono		Keyword
+hi def link slrnrcMonoObj		Identifier
+hi def link slrnrcMonoVal		String
+hi def link slrnrcFunArt		Macro
+hi def link slrnrcFunGroup		Macro
+hi def link slrnrcFunRead		Macro
+hi def link slrnrcSetkeyObj	Identifier
+hi def link slrnrcSetkey		Keyword
+hi def link slrnrcUnsetkey		slrnrcSetkey
 
-delcommand HiLink
 
 let b:current_syntax = "slrnrc"
 

@@ -130,31 +130,29 @@ syn sync match trasysSync grouphere trasysComment "^HEADER DOCUMENTATION DATA"
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink trasysOptions		Special
-HiLink trasysSurface		Special
-HiLink trasysSurfaceType	Constant
-HiLink trasysSurfaceArgs	Constant
-HiLink trasysArgs		Constant
-HiLink trasysOperations	Statement
-HiLink trasysSubRoutine	Statement
-HiLink trassyPrcsrSegm	PreProc
-HiLink trasysIdentifier	Identifier
-HiLink trasysComment		Comment
-HiLink trasysHeader		Typedef
-HiLink trasysMacro		Macro
-HiLink trasysInteger		Number
-HiLink trasysFloat		Float
-HiLink trasysScientific	Float
+hi def link trasysOptions		Special
+hi def link trasysSurface		Special
+hi def link trasysSurfaceType	Constant
+hi def link trasysSurfaceArgs	Constant
+hi def link trasysArgs		Constant
+hi def link trasysOperations	Statement
+hi def link trasysSubRoutine	Statement
+hi def link trassyPrcsrSegm	PreProc
+hi def link trasysIdentifier	Identifier
+hi def link trasysComment		Comment
+hi def link trasysHeader		Typedef
+hi def link trasysMacro		Macro
+hi def link trasysInteger		Number
+hi def link trasysFloat		Float
+hi def link trasysScientific	Float
 
-HiLink trasysBlank		SpecialChar
+hi def link trasysBlank		SpecialChar
 
-HiLink trasysEndData		Macro
+hi def link trasysEndData		Macro
 
-HiLink trasysTodo		Todo
+hi def link trasysTodo		Todo
 
-delcommand HiLink
 
 
 let b:current_syntax = "trasys"

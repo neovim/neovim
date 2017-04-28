@@ -174,30 +174,28 @@ syn match apacheSection "<\/\=\(<IfVersion\)[^>]*>" contains=apacheAnything
 syn keyword apacheDeclaration VirtualDocumentRoot VirtualDocumentRootIP VirtualScriptAlias VirtualScriptAliasIP
 
 " Define the default highlighting
-command -nargs=+ HiLink hi def link <args>
 
-HiLink apacheAllowOverride apacheDeclaration
-HiLink apacheAllowOverrideValue apacheOption
-HiLink apacheAuthType apacheDeclaration
-HiLink apacheAuthTypeValue apacheOption
-HiLink apacheOptionOption apacheOption
-HiLink apacheDeclaration Function
-HiLink apacheAnything apacheOption
-HiLink apacheOption Number
-HiLink apacheComment Comment
-HiLink apacheFixme Todo
-HiLink apacheLimitSectionKeyword apacheLimitSection
-HiLink apacheLimitSection apacheSection
-HiLink apacheSection Label
-HiLink apacheMethodOption Type
-HiLink apacheAllowDeny Include
-HiLink apacheAllowDenyValue Identifier
-HiLink apacheOrder Special
-HiLink apacheOrderValue String
-HiLink apacheString String
-HiLink apacheError Error
-HiLink apacheUserID Number
+hi def link apacheAllowOverride apacheDeclaration
+hi def link apacheAllowOverrideValue apacheOption
+hi def link apacheAuthType apacheDeclaration
+hi def link apacheAuthTypeValue apacheOption
+hi def link apacheOptionOption apacheOption
+hi def link apacheDeclaration Function
+hi def link apacheAnything apacheOption
+hi def link apacheOption Number
+hi def link apacheComment Comment
+hi def link apacheFixme Todo
+hi def link apacheLimitSectionKeyword apacheLimitSection
+hi def link apacheLimitSection apacheSection
+hi def link apacheSection Label
+hi def link apacheMethodOption Type
+hi def link apacheAllowDeny Include
+hi def link apacheAllowDenyValue Identifier
+hi def link apacheOrder Special
+hi def link apacheOrderValue String
+hi def link apacheString String
+hi def link apacheError Error
+hi def link apacheUserID Number
 
-delcommand HiLink
 
 let b:current_syntax = "apache"

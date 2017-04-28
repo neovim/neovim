@@ -64,20 +64,18 @@ syn sync minlines=1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default highlighting.
-HiLink ahdlNumber		ahdlString
-HiLink ahdlMegafunction	ahdlIdentifier
-HiLink ahdlSpecialChar	SpecialChar
-HiLink ahdlKeyword		Statement
-HiLink ahdlString		String
-HiLink ahdlComment		Comment
-HiLink ahdlIdentifier		Identifier
-HiLink ahdlOperator		Operator
-HiLink ahdlTodo		Todo
+hi def link ahdlNumber		ahdlString
+hi def link ahdlMegafunction	ahdlIdentifier
+hi def link ahdlSpecialChar	SpecialChar
+hi def link ahdlKeyword		Statement
+hi def link ahdlString		String
+hi def link ahdlComment		Comment
+hi def link ahdlIdentifier		Identifier
+hi def link ahdlOperator		Operator
+hi def link ahdlTodo		Todo
 
-delcommand HiLink
 
 let b:current_syntax = "ahdl"
 " vim:ts=8

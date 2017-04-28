@@ -46,10 +46,8 @@ syn match antlrSep "[|:]\|\.\."
 syn keyword antlrActionToken TOKEN SKIP MORE SPECIAL_TOKEN
 syn keyword antlrError DEBUG IGNORE_IN_BNF
 
-command -nargs=+ HiLink hi def link <args>
-HiLink antlrSep Statement
-HiLink antlrPackages Statement
-delcommand HiLink
+hi def link antlrSep Statement
+hi def link antlrPackages Statement
 
 let b:current_syntax = "antlr"
 

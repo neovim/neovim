@@ -52,23 +52,21 @@ syn region modula2Set start="{" end="}"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink modula2Ident		Identifier
-HiLink modula2StdConst	Boolean
-HiLink modula2Type		Identifier
-HiLink modula2StdFunc		Identifier
-HiLink modula2Header		Type
-HiLink modula2Keyword		Statement
-HiLink modula2AttKeyword	PreProc
-HiLink modula2Comment		Comment
+hi def link modula2Ident		Identifier
+hi def link modula2StdConst	Boolean
+hi def link modula2Type		Identifier
+hi def link modula2StdFunc		Identifier
+hi def link modula2Header		Type
+hi def link modula2Keyword		Statement
+hi def link modula2AttKeyword	PreProc
+hi def link modula2Comment		Comment
 " The following is just a matter of taste (you want to try this instead):
 " hi modula2Comment term=bold ctermfg=DarkBlue guifg=Blue gui=bold
-HiLink modula2Todo		Todo
-HiLink modula2String		String
-HiLink modula2Set		String
+hi def link modula2Todo		Todo
+hi def link modula2String		String
+hi def link modula2Set		String
 
-delcommand HiLink
 
 let b:current_syntax = "modula2"
 

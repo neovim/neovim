@@ -20,7 +20,6 @@ syn keyword xpm2Todo		TODO FIXME XXX  contained
 syn match   xpm2Comment		"\!.*$"  contains=@Spell,xpm2Todo
 
 
-command -nargs=+ HiLink hi def link <args>
 command -nargs=+ Hi hi def <args>
 
 if has("gui_running")
@@ -55,7 +54,7 @@ if has("gui_running")
 	if s !~ '/'
 	  exe 'syn match xpm2Values /' . s . '/'
 	endif
-	HiLink xpm2Values Statement
+	hi def link xpm2Values Statement
 
 	let n = 1			" n = color index
 
@@ -104,11 +103,11 @@ if has("gui_running")
 	" now create syntax items
 	" highlight the color string as normal string (no pixel string)
 	exe 'syn match xpm2Col'.n.'Def /'.s.'/ contains=xpm2Col'.n.'inDef'
-	exe 'HiLink xpm2Col'.n.'Def Constant'
+	exe 'hi def link xpm2Col'.n.'Def Constant'
 
 	" but highlight the first whitespace after chars in its color
 	exe 'syn match xpm2Col'.n.'inDef /^'.chars.'/hs=s+'.(cpp).' contained'
-	exe 'HiLink xpm2Col'.n.'inDef xpm2Color'.n
+	exe 'hi def link xpm2Col'.n.'inDef xpm2Color'.n
 
 	" remove the following whitespace from chars
 	let chars = substitute(chars, '\\s\\+$', '', '')
@@ -138,13 +137,12 @@ endif		" has("gui_running")
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 " The default highlighting.
-HiLink xpm2Type		Type
-HiLink xpm2StorageClass	StorageClass
-HiLink xpm2Todo		Todo
-HiLink xpm2Comment		Comment
-HiLink xpm2PixelString	String
+hi def link xpm2Type		Type
+hi def link xpm2StorageClass	StorageClass
+hi def link xpm2Todo		Todo
+hi def link xpm2Comment		Comment
+hi def link xpm2PixelString	String
 
-delcommand HiLink
 delcommand Hi
 
 let b:current_syntax = "xpm2"

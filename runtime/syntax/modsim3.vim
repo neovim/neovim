@@ -76,22 +76,20 @@ syn match modsim3Literal "'[^']'\|''''"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink modsim3Keyword	Statement
-HiLink modsim3Block		Statement
-HiLink modsim3Comment1	Comment
-HiLink modsim3Comment2	Comment
-HiLink modsim3String		String
-HiLink modsim3Literal	Character
-HiLink modsim3Include	Statement
-HiLink modsim3Type		Type
-HiLink modsim3ParenError	Error
-HiLink modsim3Builtin	Function
-HiLink modsim3BuiltinNoParen	Function
+hi def link modsim3Keyword	Statement
+hi def link modsim3Block		Statement
+hi def link modsim3Comment1	Comment
+hi def link modsim3Comment2	Comment
+hi def link modsim3String		String
+hi def link modsim3Literal	Character
+hi def link modsim3Include	Statement
+hi def link modsim3Type		Type
+hi def link modsim3ParenError	Error
+hi def link modsim3Builtin	Function
+hi def link modsim3BuiltinNoParen	Function
 
-delcommand HiLink
 
 let b:current_syntax = "modsim3"
 

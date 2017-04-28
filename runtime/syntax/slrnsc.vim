@@ -45,25 +45,23 @@ syn match slrnScoreLine		"^\s*Score::\=\s\+=\=[-+]\=\d\+\s*\(%.*\)\=$" skipempty
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink slrnscComment		Comment
-HiLink slrnscSectionCom	slrnscComment
-HiLink slrnscGroup		String
-HiLink slrnscNumber		Number
-HiLink slrnscDate		Special
-HiLink slrnscDelim		Delimiter
-HiLink slrnscComma		SpecialChar
-HiLink slrnscOper		SpecialChar
-HiLink slrnscEsc		String
-HiLink slrnscSectionStd	Type
-HiLink slrnscSectionNot	Delimiter
-HiLink slrnscItem		Statement
-HiLink slrnscScore		Keyword
-HiLink slrnscScoreIdent	Identifier
-HiLink slrnscInclude		Keyword
+hi def link slrnscComment		Comment
+hi def link slrnscSectionCom	slrnscComment
+hi def link slrnscGroup		String
+hi def link slrnscNumber		Number
+hi def link slrnscDate		Special
+hi def link slrnscDelim		Delimiter
+hi def link slrnscComma		SpecialChar
+hi def link slrnscOper		SpecialChar
+hi def link slrnscEsc		String
+hi def link slrnscSectionStd	Type
+hi def link slrnscSectionNot	Delimiter
+hi def link slrnscItem		Statement
+hi def link slrnscScore		Keyword
+hi def link slrnscScoreIdent	Identifier
+hi def link slrnscInclude		Keyword
 
-delcommand HiLink
 
 let b:current_syntax = "slrnsc"
 

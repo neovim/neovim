@@ -46,20 +46,18 @@ syn region htmlTag start=+<[^/%]+ end=+>+ contains=htmlTagN,htmlString,htmlArg,h
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 " java.vim has redefined htmlComment highlighting
-HiLink htmlComment	 Comment
-HiLink htmlCommentPart Comment
+hi def link htmlComment	 Comment
+hi def link htmlCommentPart Comment
 " Be consistent with html highlight settings
-HiLink jspComment	 htmlComment
-HiLink jspTag		 htmlTag
-HiLink jspDirective	 jspTag
-HiLink jspDirName	 htmlTagName
-HiLink jspDirArg	 htmlArg
-HiLink jspCommand	 jspTag
-HiLink jspCommandName  htmlTagName
-HiLink jspCommandArg	 htmlArg
-delcommand HiLink
+hi def link jspComment	 htmlComment
+hi def link jspTag		 htmlTag
+hi def link jspDirective	 jspTag
+hi def link jspDirName	 htmlTagName
+hi def link jspDirArg	 htmlArg
+hi def link jspCommand	 jspTag
+hi def link jspCommandName  htmlTagName
+hi def link jspCommandArg	 htmlArg
 
 if main_syntax == 'jsp'
   unlet main_syntax

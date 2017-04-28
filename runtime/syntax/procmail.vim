@@ -31,25 +31,23 @@ syn region procmailRecipe start=+^\s*:.*$+ end=+^\s*\($\|}\)+me=e-1 contains=pro
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink procmailComment Comment
-HiLink procmailTodo    Todo
+hi def link procmailComment Comment
+hi def link procmailTodo    Todo
 
-HiLink procmailRecipe   Statement
-"HiLink procmailCondition   Statement
+hi def link procmailRecipe   Statement
+"hi def link procmailCondition   Statement
 
-HiLink procmailActionFolder	procmailAction
-HiLink procmailActionVariable procmailAction
-HiLink procmailActionForward	procmailAction
-HiLink procmailActionPipe	procmailAction
-HiLink procmailAction		Function
-HiLink procmailVar		Identifier
-HiLink procmailVarDecl	Identifier
+hi def link procmailActionFolder	procmailAction
+hi def link procmailActionVariable procmailAction
+hi def link procmailActionForward	procmailAction
+hi def link procmailActionPipe	procmailAction
+hi def link procmailAction		Function
+hi def link procmailVar		Identifier
+hi def link procmailVarDecl	Identifier
 
-HiLink procmailString String
+hi def link procmailString String
 
-delcommand HiLink
 
 let b:current_syntax = "procmail"
 

@@ -18,15 +18,13 @@ syn match cvsDir   contained "\S\+$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink cvsLine		Comment
-HiLink cvsDir		cvsFile
-HiLink cvsFile		Constant
-HiLink cvsFiles		cvsCom
-HiLink cvsTag		cvsCom
-HiLink cvsCom		Statement
+hi def link cvsLine		Comment
+hi def link cvsDir		cvsFile
+hi def link cvsFile		Constant
+hi def link cvsFiles		cvsCom
+hi def link cvsTag		cvsCom
+hi def link cvsCom		Statement
 
-delcommand HiLink
 
 let b:current_syntax = "cvs"

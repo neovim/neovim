@@ -57,11 +57,9 @@ syntax match webIgnoredStuff "@@"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink webRestrictedTeX String
+hi def link webRestrictedTeX String
 
-delcommand HiLink
 
 let b:current_syntax = "cweb"
 

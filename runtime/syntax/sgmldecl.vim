@@ -50,21 +50,19 @@ syn sync lines=250
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink	sgmldeclDeclKeys	Keyword
-HiLink	sgmldeclTypes		Type
-HiLink	sgmldeclConst		Constant
-HiLink	sgmldeclNConst		Constant
-HiLink	sgmldeclString		String
-HiLink	sgmldeclDeclBlock	Normal
-HiLink	sgmldeclBool		Boolean
-HiLink	sgmldeclSpecial		Special
-HiLink	sgmldeclComment		Comment
-HiLink	sgmldeclStatem		Statement
-HiLink	sgmldeclVariables	Type
+hi def link sgmldeclDeclKeys	Keyword
+hi def link sgmldeclTypes		Type
+hi def link sgmldeclConst		Constant
+hi def link sgmldeclNConst		Constant
+hi def link sgmldeclString		String
+hi def link sgmldeclDeclBlock	Normal
+hi def link sgmldeclBool		Boolean
+hi def link sgmldeclSpecial		Special
+hi def link sgmldeclComment		Comment
+hi def link sgmldeclStatem		Statement
+hi def link sgmldeclVariables	Type
 
-delcommand HiLink
 
 let b:current_syntax = "sgmldecl"
 

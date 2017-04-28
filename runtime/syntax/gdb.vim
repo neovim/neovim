@@ -85,18 +85,16 @@ exec "syn sync ccomment gdbComment minlines=" . gdb_minlines
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink gdbFuncDef	Function
-HiLink gdbComment	Comment
-HiLink gdbStatement	Statement
-HiLink gdbString	String
-HiLink gdbCharacter	Character
-HiLink gdbVariable	Identifier
-HiLink gdbSet		Constant
-HiLink gdbInfo	Type
-HiLink gdbDocument	Special
-HiLink gdbNumber	Number
-delcommand HiLink
+hi def link gdbFuncDef	Function
+hi def link gdbComment	Comment
+hi def link gdbStatement	Statement
+hi def link gdbString	String
+hi def link gdbCharacter	Character
+hi def link gdbVariable	Identifier
+hi def link gdbSet		Constant
+hi def link gdbInfo	Type
+hi def link gdbDocument	Special
+hi def link gdbNumber	Number
 
 let b:current_syntax = "gdb"
 

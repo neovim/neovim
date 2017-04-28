@@ -64,22 +64,20 @@ syn match takoutError	     "<<< Error >>>"
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink takoutPos		   Statement
-HiLink takoutNeg		   PreProc
-HiLink takoutTitle		   Type
-HiLink takoutFile		   takIncludeFile
-HiLink takoutInteger		   takInteger
+hi def link takoutPos		   Statement
+hi def link takoutNeg		   PreProc
+hi def link takoutTitle		   Type
+hi def link takoutFile		   takIncludeFile
+hi def link takoutInteger		   takInteger
 
-HiLink takoutSectionDelim	    Delimiter
-HiLink takoutSectionTitle	   Exception
-HiLink takoutHeaderDelim	   SpecialComment
-HiLink takoutLabel		   Identifier
+hi def link takoutSectionDelim	    Delimiter
+hi def link takoutSectionTitle	   Exception
+hi def link takoutHeaderDelim	   SpecialComment
+hi def link takoutLabel		   Identifier
 
-HiLink takoutError		   Error
+hi def link takoutError		   Error
 
-delcommand HiLink
 
 
 let b:current_syntax = "takout"

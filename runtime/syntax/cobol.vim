@@ -151,43 +151,41 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink cobolBAD      Error
-HiLink cobolBadID    Error
-HiLink cobolBadLine  Error
+hi def link cobolBAD      Error
+hi def link cobolBadID    Error
+hi def link cobolBadLine  Error
 if exists("g:cobol_legacy_code")
-    HiLink cobolMarker   Comment
+    hi def link cobolMarker   Comment
 else
-    HiLink cobolMarker   Error
+    hi def link cobolMarker   Error
 endif
-HiLink cobolCALLs    Function
-HiLink cobolComment  Comment
-HiLink cobolKeys     Comment
-HiLink cobolAreaB    Special
-HiLink cobolCompiler PreProc
-HiLink cobolCondFlow Special
-HiLink cobolCopy     PreProc
-HiLink cobolDeclA    cobolDecl
-HiLink cobolDecl     Type
-HiLink cobolExtras   Special
-HiLink cobolGoTo     Special
-HiLink cobolConstant Constant
-HiLink cobolNumber   Constant
-HiLink cobolPic      Constant
-HiLink cobolReserved Statement
-HiLink cobolDivision Label
-HiLink cobolSection  Label
-HiLink cobolParagraph Label
-HiLink cobolDivisionName  Keyword
-HiLink cobolSectionName   Keyword
-HiLink cobolParagraphName Keyword
-HiLink cobolString   Constant
-HiLink cobolTodo     Todo
-HiLink cobolWatch    Special
-HiLink cobolIndicator Special
+hi def link cobolCALLs    Function
+hi def link cobolComment  Comment
+hi def link cobolKeys     Comment
+hi def link cobolAreaB    Special
+hi def link cobolCompiler PreProc
+hi def link cobolCondFlow Special
+hi def link cobolCopy     PreProc
+hi def link cobolDeclA    cobolDecl
+hi def link cobolDecl     Type
+hi def link cobolExtras   Special
+hi def link cobolGoTo     Special
+hi def link cobolConstant Constant
+hi def link cobolNumber   Constant
+hi def link cobolPic      Constant
+hi def link cobolReserved Statement
+hi def link cobolDivision Label
+hi def link cobolSection  Label
+hi def link cobolParagraph Label
+hi def link cobolDivisionName  Keyword
+hi def link cobolSectionName   Keyword
+hi def link cobolParagraphName Keyword
+hi def link cobolString   Constant
+hi def link cobolTodo     Todo
+hi def link cobolWatch    Special
+hi def link cobolIndicator Special
 
-delcommand HiLink
 
 let b:current_syntax = "cobol"
 

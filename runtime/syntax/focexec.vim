@@ -67,23 +67,21 @@ syn match   focexecComment	"-\*.*"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink focexecString1		String
-HiLink focexecString2		String
-HiLink focexecNumber		Number
-HiLink focexecComment		Comment
-HiLink focexecTable		Keyword
-HiLink focexecModify		Keyword
-HiLink focexecNormal		Keyword
-HiLink focexecSet		Keyword
-HiLink focexecDash		Keyword
-HiLink focexecFileDef		Keyword
-HiLink focexecJoin		Keyword
-HiLink focexecAmperVar	Identifier
-HiLink focexecFuse		Function
+hi def link focexecString1		String
+hi def link focexecString2		String
+hi def link focexecNumber		Number
+hi def link focexecComment		Comment
+hi def link focexecTable		Keyword
+hi def link focexecModify		Keyword
+hi def link focexecNormal		Keyword
+hi def link focexecSet		Keyword
+hi def link focexecDash		Keyword
+hi def link focexecFileDef		Keyword
+hi def link focexecJoin		Keyword
+hi def link focexecAmperVar	Identifier
+hi def link focexecFuse		Function
 
-delcommand HiLink
 
 let b:current_syntax = "focexec"
 

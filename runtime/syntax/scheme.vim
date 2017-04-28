@@ -300,29 +300,27 @@ syn sync match matchPlace grouphere NONE "^[^ \t]"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink schemeSyntax		Statement
-HiLink schemeFunc		Function
+hi def link schemeSyntax		Statement
+hi def link schemeFunc		Function
 
-HiLink schemeString		String
-HiLink schemeCharacter	Character
-HiLink schemeNumber		Number
-HiLink schemeBoolean		Boolean
+hi def link schemeString		String
+hi def link schemeCharacter	Character
+hi def link schemeNumber		Number
+hi def link schemeBoolean		Boolean
 
-HiLink schemeDelimiter	Delimiter
-HiLink schemeConstant		Constant
+hi def link schemeDelimiter	Delimiter
+hi def link schemeConstant		Constant
 
-HiLink schemeComment		Comment
-HiLink schemeMultilineComment	Comment
-HiLink schemeError		Error
+hi def link schemeComment		Comment
+hi def link schemeMultilineComment	Comment
+hi def link schemeError		Error
 
-HiLink schemeExtSyntax	Type
-HiLink schemeExtFunc		PreProc
+hi def link schemeExtSyntax	Type
+hi def link schemeExtFunc		PreProc
 
-HiLink schemeLang		PreProc
+hi def link schemeLang		PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "scheme"
 

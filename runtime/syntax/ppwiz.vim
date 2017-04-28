@@ -61,24 +61,22 @@ syn cluster ppwizArgVal add=ppwizString,ppwizInteger
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink ppwizSpecial  Special
-HiLink ppwizEqual    ppwizSpecial
-HiLink ppwizOperator ppwizSpecial
-HiLink ppwizComment  Comment
-HiLink ppwizDef      PreProc
-HiLink ppwizMacro    Statement
-HiLink ppwizArg      Identifier
-HiLink ppwizStdVar   Identifier
-HiLink ppwizRexxVar  Identifier
-HiLink ppwizString   Constant
-HiLink ppwizInteger  Constant
-HiLink ppwizCont     ppwizSpecial
-HiLink ppwizError    Error
-HiLink ppwizHTML     Type
+hi def link ppwizSpecial  Special
+hi def link ppwizEqual    ppwizSpecial
+hi def link ppwizOperator ppwizSpecial
+hi def link ppwizComment  Comment
+hi def link ppwizDef      PreProc
+hi def link ppwizMacro    Statement
+hi def link ppwizArg      Identifier
+hi def link ppwizStdVar   Identifier
+hi def link ppwizRexxVar  Identifier
+hi def link ppwizString   Constant
+hi def link ppwizInteger  Constant
+hi def link ppwizCont     ppwizSpecial
+hi def link ppwizError    Error
+hi def link ppwizHTML     Type
 
-delcommand HiLink
 
 let b:current_syntax = "ppwiz"
 

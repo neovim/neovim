@@ -193,52 +193,50 @@ syn cluster	cMultiGroup	add=@splintAllStuff
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink splintShortAnn		splintAnnotation
-HiLink splintAnnotation	Comment
-HiLink splintAnnError		splintError
-HiLink splintAnnError2	splintError
-HiLink splintFlag		SpecialComment
-HiLink splintGlobalFlag	splintError
-HiLink splintSpecialAnnot	splintAnnKey
-HiLink splintStateAnnot	splintAnnKey
-HiLink splintSpecTag		splintAnnKey
-HiLink splintModifies		splintAnnKey
-HiLink splintRequires		splintAnnKey
-HiLink splintGlobals		splintAnnKey
-HiLink splintGlobitem		Constant
-HiLink splintGlobannot	splintAnnKey
-HiLink splintWarning		splintAnnKey
-HiLink splintModitem		Constant
-HiLink splintIter		splintAnnKey
-HiLink splintConst		splintAnnKey
-HiLink splintAlt		splintAnnKey
-HiLink splintType		splintAnnKey
-HiLink splintGlobalType	splintAnnKey
-HiLink splintMemMgm		splintAnnKey
-HiLink splintAlias		splintAnnKey
-HiLink splintExposure		splintAnnKey
-HiLink splintDefState		splintAnnKey
-HiLink splintGlobState	splintAnnKey
-HiLink splintNullState	splintAnnKey
-HiLink splintNullPred		splintAnnKey
-HiLink splintExit		splintAnnKey
-HiLink splintExec		splintAnnKey
-HiLink splintSef		splintAnnKey
-HiLink splintDecl		splintAnnKey
-HiLink splintCase		splintAnnKey
-HiLink splintBreak		splintAnnKey
-HiLink splintUnreach		splintAnnKey
-HiLink splintSpecFunc		splintAnnKey
-HiLink splintErrSupp		splintAnnKey
-HiLink splintTypeAcc		splintAnnKey
-HiLink splintMacro		splintAnnKey
-HiLink splintSpecType		splintAnnKey
-HiLink splintAnnKey		Type
-HiLink splintError		Error
+hi def link splintShortAnn		splintAnnotation
+hi def link splintAnnotation	Comment
+hi def link splintAnnError		splintError
+hi def link splintAnnError2	splintError
+hi def link splintFlag		SpecialComment
+hi def link splintGlobalFlag	splintError
+hi def link splintSpecialAnnot	splintAnnKey
+hi def link splintStateAnnot	splintAnnKey
+hi def link splintSpecTag		splintAnnKey
+hi def link splintModifies		splintAnnKey
+hi def link splintRequires		splintAnnKey
+hi def link splintGlobals		splintAnnKey
+hi def link splintGlobitem		Constant
+hi def link splintGlobannot	splintAnnKey
+hi def link splintWarning		splintAnnKey
+hi def link splintModitem		Constant
+hi def link splintIter		splintAnnKey
+hi def link splintConst		splintAnnKey
+hi def link splintAlt		splintAnnKey
+hi def link splintType		splintAnnKey
+hi def link splintGlobalType	splintAnnKey
+hi def link splintMemMgm		splintAnnKey
+hi def link splintAlias		splintAnnKey
+hi def link splintExposure		splintAnnKey
+hi def link splintDefState		splintAnnKey
+hi def link splintGlobState	splintAnnKey
+hi def link splintNullState	splintAnnKey
+hi def link splintNullPred		splintAnnKey
+hi def link splintExit		splintAnnKey
+hi def link splintExec		splintAnnKey
+hi def link splintSef		splintAnnKey
+hi def link splintDecl		splintAnnKey
+hi def link splintCase		splintAnnKey
+hi def link splintBreak		splintAnnKey
+hi def link splintUnreach		splintAnnKey
+hi def link splintSpecFunc		splintAnnKey
+hi def link splintErrSupp		splintAnnKey
+hi def link splintTypeAcc		splintAnnKey
+hi def link splintMacro		splintAnnKey
+hi def link splintSpecType		splintAnnKey
+hi def link splintAnnKey		Type
+hi def link splintError		Error
 
-delcommand HiLink
 
 let b:current_syntax = "splint"
 

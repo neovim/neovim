@@ -156,20 +156,18 @@ syn keyword winbatchImplicit xsendmessage xverifyccard yield
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink winbatchLabel		PreProc
-HiLink winbatchCtl		Operator
-HiLink winbatchStatement	Statement
-HiLink winbatchTodo		Todo
-HiLink winbatchString		String
-HiLink winbatchVar		Type
-HiLink winbatchComment	Comment
-HiLink winbatchImplicit	Special
-HiLink winbatchNumber		Number
-HiLink winbatchConstant	StorageClass
+hi def link winbatchLabel		PreProc
+hi def link winbatchCtl		Operator
+hi def link winbatchStatement	Statement
+hi def link winbatchTodo		Todo
+hi def link winbatchString		String
+hi def link winbatchVar		Type
+hi def link winbatchComment	Comment
+hi def link winbatchImplicit	Special
+hi def link winbatchNumber		Number
+hi def link winbatchConstant	StorageClass
 
-delcommand HiLink
 
 let b:current_syntax = "winbatch"
 

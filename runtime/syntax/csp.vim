@@ -147,37 +147,35 @@ syn sync lines=250
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
 " (For vim version <=5.7, the command groups are defined in
 " $VIMRUNTIME/syntax/synload.vim )
-HiLink cspComment			Comment
-HiLink cspNumber			Number
-HiLink cspConditional			Conditional
-HiLink cspOperator			Delimiter
-HiLink cspKeyword			Keyword
-HiLink cspReserved			SpecialChar
-HiLink cspInclude			Error
-HiLink cspIncludeKeyword		Include
-HiLink cspIncludeArg			Include
-HiLink cspAssert			PreCondit
-HiLink cspType			Type
-HiLink cspProcess			Function
-HiLink cspTodo			Todo
-HiLink cspOldRttComment		Define
-HiLink cspRttPragmaKeyword		Define
-HiLink cspSdlRttComment		Define
-HiLink cspRttPragmaArg		Define
-HiLink cspRttPragmaSdlArg		Define
-HiLink cspRttPragmaSdlName		Default
-HiLink cspRttPragmaSdlTailArg		Define
-HiLink cspRttPragmaSdlTransName	Default
-HiLink cspRttPragmaSdlTransTailArg	Define
-HiLink cspReservedIdentifier	Error
+hi def link cspComment			Comment
+hi def link cspNumber			Number
+hi def link cspConditional			Conditional
+hi def link cspOperator			Delimiter
+hi def link cspKeyword			Keyword
+hi def link cspReserved			SpecialChar
+hi def link cspInclude			Error
+hi def link cspIncludeKeyword		Include
+hi def link cspIncludeArg			Include
+hi def link cspAssert			PreCondit
+hi def link cspType			Type
+hi def link cspProcess			Function
+hi def link cspTodo			Todo
+hi def link cspOldRttComment		Define
+hi def link cspRttPragmaKeyword		Define
+hi def link cspSdlRttComment		Define
+hi def link cspRttPragmaArg		Define
+hi def link cspRttPragmaSdlArg		Define
+hi def link cspRttPragmaSdlName		Default
+hi def link cspRttPragmaSdlTailArg		Define
+hi def link cspRttPragmaSdlTransName	Default
+hi def link cspRttPragmaSdlTransTailArg	Define
+hi def link cspReservedIdentifier	Error
 " (Currently unused vim method: Debug)
 
-delcommand HiLink
 
 let b:current_syntax = "csp"
 

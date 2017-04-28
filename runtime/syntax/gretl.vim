@@ -62,25 +62,23 @@ syn region gBlockComment matchgroup=gCommentStart start="(\*" end="\*)"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink gComment      Comment
-HiLink gCommentStart Comment
-HiLink gBlockComment Comment
-HiLink gString       String
-HiLink gNumber       Number
-HiLink gBoolean      Boolean
-HiLink gFloat        Float
-HiLink gCommands     Repeat	
-HiLink gGenrFunc     Type
-HiLink gDelimiter    Delimiter
-HiLink gError        Error
-HiLink gBraceError   Error
-HiLink gCurlyError   Error
-HiLink gParenError   Error
-HiLink gIdentifier   Normal
-HiLink gVariable     Identifier
-HiLink gArrow	       Repeat
-delcommand HiLink
+hi def link gComment      Comment
+hi def link gCommentStart Comment
+hi def link gBlockComment Comment
+hi def link gString       String
+hi def link gNumber       Number
+hi def link gBoolean      Boolean
+hi def link gFloat        Float
+hi def link gCommands     Repeat	
+hi def link gGenrFunc     Type
+hi def link gDelimiter    Delimiter
+hi def link gError        Error
+hi def link gBraceError   Error
+hi def link gCurlyError   Error
+hi def link gParenError   Error
+hi def link gIdentifier   Normal
+hi def link gVariable     Identifier
+hi def link gArrow	       Repeat
 
 let b:current_syntax="gretl"
 

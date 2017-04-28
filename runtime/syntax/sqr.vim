@@ -236,28 +236,26 @@ syn match	sqrError	/.\+\zs!!.*/
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet.
-command -nargs=+ HiLink hi def link <args>
 
-HiLink sqrSection Statement
-HiLink sqrParagraph Statement
-HiLink sqrReserved Statement
-HiLink sqrParameter Statement
-HiLink sqrPreProc PreProc
-HiLink sqrSubstVar PreProc
-HiLink sqrCommand Statement
-HiLink sqrParam Type
-HiLink sqrFunction Special
+hi def link sqrSection Statement
+hi def link sqrParagraph Statement
+hi def link sqrReserved Statement
+hi def link sqrParameter Statement
+hi def link sqrPreProc PreProc
+hi def link sqrSubstVar PreProc
+hi def link sqrCommand Statement
+hi def link sqrParam Type
+hi def link sqrFunction Special
 
-HiLink sqrString String
-HiLink sqrStrOpen Todo
-HiLink sqrNumber Number
-HiLink sqrVariable Identifier
+hi def link sqrString String
+hi def link sqrStrOpen Todo
+hi def link sqrNumber Number
+hi def link sqrVariable Identifier
 
-HiLink sqrComment Comment
-HiLink sqrTodo Todo
-HiLink sqrError Error
+hi def link sqrComment Comment
+hi def link sqrTodo Todo
+hi def link sqrError Error
 
-delcommand HiLink
 
 let b:current_syntax = "sqr"
 

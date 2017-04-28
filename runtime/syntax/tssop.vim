@@ -54,21 +54,19 @@ syn match  tssopScientific  "-\=\<[0-9]*\.[0-9]*E[-+]\=[0-9]\+\>"
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink tssopParam		Statement
-HiLink tssopProp		Identifier
-HiLink tssopArgs		Special
+hi def link tssopParam		Statement
+hi def link tssopProp		Identifier
+hi def link tssopArgs		Special
 
-HiLink tssopComment		Statement
-HiLink tssopCommentString	Comment
-HiLink tssopPropName		Typedef
+hi def link tssopComment		Statement
+hi def link tssopCommentString	Comment
+hi def link tssopPropName		Typedef
 
-HiLink tssopInteger		Number
-HiLink tssopFloat		Float
-HiLink tssopScientific	Float
+hi def link tssopInteger		Number
+hi def link tssopFloat		Float
+hi def link tssopScientific	Float
 
-delcommand HiLink
 
 
 let b:current_syntax = "tssop"

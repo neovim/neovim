@@ -135,37 +135,35 @@ syn sync lines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 " The default methods for highlighting.  Can be overridden later
-HiLink	specmanConditional	Conditional
-HiLink	specmanConstraint	Conditional
-HiLink	specmanRepeat		Repeat
-HiLink	specmanString		String
-HiLink	specmanComment		Comment
-HiLink	specmanConstant		Macro
-HiLink	specmanNumber		Number
-HiLink	specmanCompare		Operator
-HiLink	specmanOperator		Operator
-HiLink	specmanLogical		Operator
-HiLink	specmanStatement	Statement
-HiLink	specmanHDL		SpecialChar
-HiLink	specmanMethod		Function
-HiLink	specmanInclude		Include
-HiLink	specmanStructure	Structure
-HiLink	specmanBoolean		Boolean
-HiLink	specmanFSM		Label
-HiLink	specmanSpecial		Special
-HiLink	specmanType		Type
-HiLink	specmanTemporal		Type
-HiLink	specmanFile		Include
-HiLink	specmanPreCondit	Include
-HiLink	specmanDefine		Typedef
-HiLink	specmanLabel		Label
-HiLink	specmanPacking		keyword
-HiLink	specmanTodo		Todo
-HiLink	specmanParenError	Error
-HiLink	specmanErrInParen	Error
-HiLink	specmanErrInBracket	Error
-delcommand	HiLink
+hi def link specmanConditional	Conditional
+hi def link specmanConstraint	Conditional
+hi def link specmanRepeat		Repeat
+hi def link specmanString		String
+hi def link specmanComment		Comment
+hi def link specmanConstant		Macro
+hi def link specmanNumber		Number
+hi def link specmanCompare		Operator
+hi def link specmanOperator		Operator
+hi def link specmanLogical		Operator
+hi def link specmanStatement	Statement
+hi def link specmanHDL		SpecialChar
+hi def link specmanMethod		Function
+hi def link specmanInclude		Include
+hi def link specmanStructure	Structure
+hi def link specmanBoolean		Boolean
+hi def link specmanFSM		Label
+hi def link specmanSpecial		Special
+hi def link specmanType		Type
+hi def link specmanTemporal		Type
+hi def link specmanFile		Include
+hi def link specmanPreCondit	Include
+hi def link specmanDefine		Typedef
+hi def link specmanLabel		Label
+hi def link specmanPacking		keyword
+hi def link specmanTodo		Todo
+hi def link specmanParenError	Error
+hi def link specmanErrInParen	Error
+hi def link specmanErrInBracket	Error
 
 let b:current_syntax = "specman"

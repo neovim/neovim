@@ -172,16 +172,14 @@ syn region docbkCite   start="<citation>"lc=10 end="</citation>"me=e-11 contains
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 hi def DocbkBold term=bold cterm=bold gui=bold
 
-HiLink docbkKeyword	Statement
-HiLink docbkRegion	DocbkBold
-HiLink docbkTitle	Title
-HiLink docbkRemark	Comment
-HiLink docbkCite	Constant
+hi def link docbkKeyword	Statement
+hi def link docbkRegion	DocbkBold
+hi def link docbkTitle	Title
+hi def link docbkRemark	Comment
+hi def link docbkCite	Constant
 
-delcommand HiLink
 
 let b:current_syntax = "docbk"
 

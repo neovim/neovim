@@ -50,26 +50,24 @@ syn match rtfFootNote "[#$K+]{\\footnote.*}" contains=rtfControlWord,rtfNewContr
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 
-HiLink rtfControlWord		Statement
-HiLink rtfNewControlWord	Special
-HiLink rtfControlSymbol	Constant
-HiLink rtfCharacter		Character
-HiLink rtfUnicodeCharacter	SpecialChar
-HiLink rtfFootNote		Comment
+hi def link rtfControlWord		Statement
+hi def link rtfNewControlWord	Special
+hi def link rtfControlSymbol	Constant
+hi def link rtfCharacter		Character
+hi def link rtfUnicodeCharacter	SpecialChar
+hi def link rtfFootNote		Comment
 
 " Define colors for the syntax file
 hi rtfRed	      term=underline cterm=underline ctermfg=DarkRed gui=underline guifg=DarkRed
 hi rtfGreen	      term=underline cterm=underline ctermfg=DarkGreen gui=underline guifg=DarkGreen
 hi rtfBlue	      term=underline cterm=underline ctermfg=DarkBlue gui=underline guifg=DarkBlue
 
-HiLink rtfRed	rtfRed
-HiLink rtfGreen	rtfGreen
-HiLink rtfBlue	rtfBlue
+hi def link rtfRed	rtfRed
+hi def link rtfGreen	rtfGreen
+hi def link rtfBlue	rtfBlue
 
-delcommand HiLink
 
 
 let b:current_syntax = "rtf"

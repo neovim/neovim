@@ -61,24 +61,22 @@ syn match srecChecksum "[0-9a-fA-F]\{2}$" contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting. Can be overridden later
-HiLink srecRecStart            srecRecType
-HiLink srecRecTypeUnknown      srecRecType
-HiLink srecRecType             WarningMsg
-HiLink srecByteCount           Constant
+hi def link srecRecStart            srecRecType
+hi def link srecRecTypeUnknown      srecRecType
+hi def link srecRecType             WarningMsg
+hi def link srecByteCount           Constant
 hi def srecAddressFieldUnknown term=italic cterm=italic gui=italic
-HiLink srecNoAddress           DiffAdd
-HiLink srecDataAddress         Comment
-HiLink srecRecCount            srecNoAddress
-HiLink srecStartAddress        srecDataAddress
+hi def link srecNoAddress           DiffAdd
+hi def link srecDataAddress         Comment
+hi def link srecRecCount            srecNoAddress
+hi def link srecStartAddress        srecDataAddress
 hi def srecDataOdd             term=bold cterm=bold gui=bold
 hi def srecDataEven            term=NONE cterm=NONE gui=NONE
-HiLink srecDataUnexpected      Error
-HiLink srecChecksum            DiffChange
+hi def link srecDataUnexpected      Error
+hi def link srecChecksum            DiffChange
 
-delcommand HiLink
 
 let b:current_syntax = "srec"
 

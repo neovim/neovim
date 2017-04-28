@@ -60,24 +60,22 @@ syn match sindaoutError		"<<< Error >>>"
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 hi sindaHeaderDelim  ctermfg=Black ctermbg=Green	       guifg=Black guibg=Green
 
-HiLink sindaoutPos		     Statement
-HiLink sindaoutNeg		     PreProc
-HiLink sindaoutTitle		     Type
-HiLink sindaoutFile		     sindaIncludeFile
-HiLink sindaoutInteger	     sindaInteger
+hi def link sindaoutPos		     Statement
+hi def link sindaoutNeg		     PreProc
+hi def link sindaoutTitle		     Type
+hi def link sindaoutFile		     sindaIncludeFile
+hi def link sindaoutInteger	     sindaInteger
 
-HiLink sindaoutSectionDelim	      Delimiter
-HiLink sindaoutSectionTitle	     Exception
-HiLink sindaoutHeaderDelim	     SpecialComment
-HiLink sindaoutLabel		     Identifier
+hi def link sindaoutSectionDelim	      Delimiter
+hi def link sindaoutSectionTitle	     Exception
+hi def link sindaoutHeaderDelim	     SpecialComment
+hi def link sindaoutLabel		     Identifier
 
-HiLink sindaoutError		     Error
+hi def link sindaoutError		     Error
 
-delcommand HiLink
 
 
 let b:current_syntax = "sindaout"

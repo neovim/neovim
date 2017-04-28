@@ -60,25 +60,23 @@ syn match       objIndex        "\d\+\/\d*\/\d*"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink objError           Error
-HiLink objComment         Comment
-HiLink objInclude         PreProc
-HiLink objFloat           Float
-HiLink objInt             Number
-HiLink objGroup           Structure
-HiLink objIndex           Constant
-HiLink objMaterial        Label
+hi def link objError           Error
+hi def link objComment         Comment
+hi def link objInclude         PreProc
+hi def link objFloat           Float
+hi def link objInt             Number
+hi def link objGroup           Structure
+hi def link objIndex           Constant
+hi def link objMaterial        Label
 
-HiLink objVertex          Keyword
-HiLink objNormale         Keyword
-HiLink objVertice         Keyword
-HiLink objFace            Keyword
-HiLink objKeywords        Keyword
+hi def link objVertex          Keyword
+hi def link objNormale         Keyword
+hi def link objVertice         Keyword
+hi def link objFace            Keyword
+hi def link objKeywords        Keyword
 
 
-delcommand HiLink
 
 let b:current_syntax = "obj"
 

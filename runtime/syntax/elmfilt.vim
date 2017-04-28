@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	Elm Filter rules
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Oct 23, 2014
-" Version:	6
+" Last Change:	Aug 31, 2016
+" Version:	8
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_ELMFILT
 
 " quit when a syntax file was already loaded
@@ -35,25 +35,24 @@ syn region	elmfiltString	contained	start="'" skip="'\(\\\\\)*\\['%]" end="'"	con
 syn match	elmfiltSpaceError	contained	"\s.*$"
 
 " Define the default highlighting.
-" Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
+if !exists("skip_elmfilt_syntax_inits")
 
-HiLink elmfiltAction	Statement
-HiLink elmfiltArg	Special
-HiLink elmfiltComment	Comment
-HiLink elmfiltCond	Statement
-HiLink elmfiltIf	Statement
-HiLink elmfiltMatch	Special
-HiLink elmfiltMatchError	Error
-HiLink elmfiltNumber	Number
-HiLink elmfiltOper	Operator
-HiLink elmfiltOperKey	Type
-HiLink elmfiltParenError	Error
-HiLink elmfiltSpaceError	Error
-HiLink elmfiltString	String
-HiLink elmfiltThenError	Error
+  hi def link elmfiltAction	Statement
+  hi def link elmfiltArg	Special
+  hi def link elmfiltComment	Comment
+  hi def link elmfiltCond	Statement
+  hi def link elmfiltIf	Statement
+  hi def link elmfiltMatch	Special
+  hi def link elmfiltMatchError	Error
+  hi def link elmfiltNumber	Number
+  hi def link elmfiltOper	Operator
+  hi def link elmfiltOperKey	Type
+  hi def link elmfiltParenError	Error
+  hi def link elmfiltSpaceError	Error
+  hi def link elmfiltString	String
+  hi def link elmfiltThenError	Error
 
-delcommand HiLink
+endif
 
 let b:current_syntax = "elmfilt"
 " vim: ts=9

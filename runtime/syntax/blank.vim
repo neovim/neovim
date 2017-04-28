@@ -26,13 +26,11 @@ syn case match
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink blankInstruction      Statement
-HiLink blankNumber	       Number
-HiLink blankString	       String
+hi def link blankInstruction      Statement
+hi def link blankNumber	       Number
+hi def link blankString	       String
 
-delcommand HiLink
 
 let b:current_syntax = "blank"
 

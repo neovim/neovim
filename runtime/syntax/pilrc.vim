@@ -117,22 +117,20 @@ syn region pilrcInclude start="public class" end="}"
 
 syn sync ccomment pilrcComment
 
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting
-HiLink pilrcKeyword		Statement
-HiLink pilrcType		Type
-HiLink pilrcError		Error
-HiLink pilrcCountry		SpecialChar
-HiLink pilrcLanguage		SpecialChar
-HiLink pilrcString		SpecialChar
-HiLink pilrcNumber		Number
-HiLink pilrcComment		Comment
-HiLink pilrcConstant		Constant
-HiLink pilrcFunction		Function
-HiLink pilrcInclude		SpecialChar
-HiLink pilrcIdentifier		Number
+hi def link pilrcKeyword		Statement
+hi def link pilrcType		Type
+hi def link pilrcError		Error
+hi def link pilrcCountry		SpecialChar
+hi def link pilrcLanguage		SpecialChar
+hi def link pilrcString		SpecialChar
+hi def link pilrcNumber		Number
+hi def link pilrcComment		Comment
+hi def link pilrcConstant		Constant
+hi def link pilrcFunction		Function
+hi def link pilrcInclude		SpecialChar
+hi def link pilrcIdentifier		Number
 
-delcommand HiLink
 
 let b:current_syntax = "pilrc"

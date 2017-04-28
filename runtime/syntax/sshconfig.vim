@@ -226,33 +226,31 @@ syn keyword sshconfigKeyword VisualHostKey
 syn keyword sshconfigKeyword XAuthLocation
 
 " Define the default highlighting
-command -nargs=+ HiLink hi def link <args>
 
-HiLink sshconfigComment        Comment
-HiLink sshconfigTodo           Todo
-HiLink sshconfigHostPort       sshconfigConstant
-HiLink sshconfigNumber         sshconfigConstant
-HiLink sshconfigConstant       Constant
-HiLink sshconfigYesNo          sshconfigEnum
-HiLink sshconfigCipher         sshconfigEnum
-HiLink sshconfigCiphers	 sshconfigEnum
-HiLink sshconfigMAC            sshconfigEnum
-HiLink sshconfigHostKeyAlgo    sshconfigEnum
-HiLink sshconfigLogLevel       sshconfigEnum
-HiLink sshconfigSysLogFacility sshconfigEnum
-HiLink sshconfigAddressFamily  sshconfigEnum
-HiLink sshconfigIPQoS		 sshconfigEnum
-HiLink sshconfigKbdInteractive sshconfigEnum
-HiLink sshconfigKexAlgo	 sshconfigEnum
-HiLink sshconfigTunnel	 sshconfigEnum
-HiLink sshconfigPreferredAuth  sshconfigEnum
-HiLink sshconfigVar            sshconfigEnum
-HiLink sshconfigEnum           Identifier
-HiLink sshconfigSpecial        Special
-HiLink sshconfigKeyword        Keyword
-HiLink sshconfigHostSect       Type
-HiLink sshconfigMatch          Type
-delcommand HiLink
+hi def link sshconfigComment        Comment
+hi def link sshconfigTodo           Todo
+hi def link sshconfigHostPort       sshconfigConstant
+hi def link sshconfigNumber         sshconfigConstant
+hi def link sshconfigConstant       Constant
+hi def link sshconfigYesNo          sshconfigEnum
+hi def link sshconfigCipher         sshconfigEnum
+hi def link sshconfigCiphers	 sshconfigEnum
+hi def link sshconfigMAC            sshconfigEnum
+hi def link sshconfigHostKeyAlgo    sshconfigEnum
+hi def link sshconfigLogLevel       sshconfigEnum
+hi def link sshconfigSysLogFacility sshconfigEnum
+hi def link sshconfigAddressFamily  sshconfigEnum
+hi def link sshconfigIPQoS		 sshconfigEnum
+hi def link sshconfigKbdInteractive sshconfigEnum
+hi def link sshconfigKexAlgo	 sshconfigEnum
+hi def link sshconfigTunnel	 sshconfigEnum
+hi def link sshconfigPreferredAuth  sshconfigEnum
+hi def link sshconfigVar            sshconfigEnum
+hi def link sshconfigEnum           Identifier
+hi def link sshconfigSpecial        Special
+hi def link sshconfigKeyword        Keyword
+hi def link sshconfigHostSect       Type
+hi def link sshconfigMatch          Type
 
 let b:current_syntax = "sshconfig"
 

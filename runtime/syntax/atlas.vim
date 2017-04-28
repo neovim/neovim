@@ -59,28 +59,26 @@ syn sync maxlines=100
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink atlasConditional	Conditional
-HiLink atlasRepeat		Repeat
-HiLink atlasStatement	Statement
-HiLink atlasNumber		Number
-HiLink atlasHexNumber	Number
-HiLink atlasOctalNumber	Number
-HiLink atlasBinNumber	Number
-HiLink atlasDecimalNumber	Float
-HiLink atlasFormatString	String
-HiLink atlasString		String
-HiLink atlasComment		Comment
-HiLink atlasComment2		Comment
-HiLink atlasInclude		Include
-HiLink atlasDefine		Macro
-HiLink atlasReserved		PreCondit
-HiLink atlasStorageClass	StorageClass
-HiLink atlasIdentifier	NONE
-HiLink atlasSpecial		Special
+hi def link atlasConditional	Conditional
+hi def link atlasRepeat		Repeat
+hi def link atlasStatement	Statement
+hi def link atlasNumber		Number
+hi def link atlasHexNumber	Number
+hi def link atlasOctalNumber	Number
+hi def link atlasBinNumber	Number
+hi def link atlasDecimalNumber	Float
+hi def link atlasFormatString	String
+hi def link atlasString		String
+hi def link atlasComment		Comment
+hi def link atlasComment2		Comment
+hi def link atlasInclude		Include
+hi def link atlasDefine		Macro
+hi def link atlasReserved		PreCondit
+hi def link atlasStorageClass	StorageClass
+hi def link atlasIdentifier	NONE
+hi def link atlasSpecial		Special
 
-delcommand HiLink
 
 let b:current_syntax = "atlas"
 

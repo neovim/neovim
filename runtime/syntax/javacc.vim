@@ -52,13 +52,11 @@ syn keyword javaccError DEBUG IGNORE_IN_BNF
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink javaccSpecToken Statement
-HiLink javaccActionToken Type
-HiLink javaccPackages javaScopeDecl
-HiLink javaccToken String
-HiLink javaccError Error
-delcommand HiLink
+hi def link javaccSpecToken Statement
+hi def link javaccActionToken Type
+hi def link javaccPackages javaScopeDecl
+hi def link javaccToken String
+hi def link javaccError Error
 
 let b:current_syntax = "javacc"
 let &cpo = s:cpo_save

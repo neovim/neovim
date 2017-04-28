@@ -42,16 +42,14 @@ syn region  prescribeComment	start=+CMNT+ end=+;+
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink prescribeSpecial		PreProc
-HiLink prescribeStatement		Statement
-HiLink prescribeNumber		Number
-HiLink prescribeCSETArg		String
-HiLink prescribeFRPOArg		String
-HiLink prescribeComment		Comment
+hi def link prescribeSpecial		PreProc
+hi def link prescribeStatement		Statement
+hi def link prescribeNumber		Number
+hi def link prescribeCSETArg		String
+hi def link prescribeFRPOArg		String
+hi def link prescribeComment		Comment
 
-delcommand HiLink
 
 let b:current_syntax = "prescribe"
 

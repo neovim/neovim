@@ -59,15 +59,13 @@ syn sync lines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink draculaIdentifier Identifier
-HiLink draculaStatement  Statement
-HiLink draculaType       Type
-HiLink draculaComment    Comment
-HiLink draculaPreProc    PreProc
+hi def link draculaIdentifier Identifier
+hi def link draculaStatement  Statement
+hi def link draculaType       Type
+hi def link draculaComment    Comment
+hi def link draculaPreProc    PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "dracula"
 

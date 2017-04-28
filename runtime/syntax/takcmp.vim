@@ -49,21 +49,19 @@ syn case ignore
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink takcmpTitle		   Type
-HiLink takcmpUnit		   PreProc
+hi def link takcmpTitle		   Type
+hi def link takcmpUnit		   PreProc
 
-HiLink takcmpLabel		   Statement
+hi def link takcmpLabel		   Statement
 
-HiLink takcmpHeader		   takHeader
+hi def link takcmpHeader		   takHeader
 
-HiLink takcmpDate		   Identifier
-HiLink takcmpTime		   Identifier
-HiLink takcmpInteger		   Number
-HiLink takcmpFloat		   Special
+hi def link takcmpDate		   Identifier
+hi def link takcmpTime		   Identifier
+hi def link takcmpInteger		   Number
+hi def link takcmpFloat		   Special
 
-delcommand HiLink
 
 
 let b:current_syntax = "takcmp"

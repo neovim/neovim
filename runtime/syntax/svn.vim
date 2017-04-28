@@ -40,19 +40,17 @@ syn sync match svnSync  grouphere svnRegion "^--.*--$"me=s-1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet.
-command -nargs=+ HiLink hi def link <args>
 
-HiLink svnSummary     Keyword
-HiLink svnBlank       Error
+hi def link svnSummary     Keyword
+hi def link svnBlank       Error
 
-HiLink svnRegion      Comment
-HiLink svnDelimiter   NonText
-HiLink svnRemoved     Constant
-HiLink svnAdded       Identifier
-HiLink svnModified    Special
-HiLink svnProperty    Special
-HiLink svnRenamed     Special
+hi def link svnRegion      Comment
+hi def link svnDelimiter   NonText
+hi def link svnRemoved     Constant
+hi def link svnAdded       Identifier
+hi def link svnModified    Special
+hi def link svnProperty    Special
+hi def link svnRenamed     Special
 
-delcommand HiLink
 
 let b:current_syntax = "svn"

@@ -74,20 +74,18 @@ syn match sqlComment	"--.*"
 
 syn sync ccomment sqljComment
 
-command! -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting. Can be overridden later.
-HiLink sqljComment	Comment
-HiLink sqljKeyword	sqljSpecial
-HiLink sqljNumber	Number
-HiLink sqljOperator	sqljStatement
-HiLink sqljSpecial	Special
-HiLink sqljStatement	Statement
-HiLink sqljString	String
-HiLink sqljType	Type
-HiLink sqljPre	PreProc
+hi def link sqljComment	Comment
+hi def link sqljKeyword	sqljSpecial
+hi def link sqljNumber	Number
+hi def link sqljOperator	sqljStatement
+hi def link sqljSpecial	Special
+hi def link sqljStatement	Statement
+hi def link sqljString	String
+hi def link sqljType	Type
+hi def link sqljPre	PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "sqlj"
 

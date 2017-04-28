@@ -59,26 +59,24 @@ syn match tppComment "^--##.*$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink tppAbstractOptionKey		Special
-HiLink tppPageLocalOptionKey		Keyword
-HiLink tppPageLocalSwitchKey		Keyword
-HiLink tppColorOptionKey		Keyword
-HiLink tppTimeOptionKey		Comment
-HiLink tppNewPageOptionKey		PreProc
-HiLink tppString			String
-HiLink tppColor			String
-HiLink tppTime			Number
-HiLink tppComment			Comment
-HiLink tppAbstractOption		Error
-HiLink tppPageLocalOption		Error
-HiLink tppPageLocalSwitch		Error
-HiLink tppColorOption			Error
-HiLink tppNewPageOption		Error
-HiLink tppTimeOption			Error
+hi def link tppAbstractOptionKey		Special
+hi def link tppPageLocalOptionKey		Keyword
+hi def link tppPageLocalSwitchKey		Keyword
+hi def link tppColorOptionKey		Keyword
+hi def link tppTimeOptionKey		Comment
+hi def link tppNewPageOptionKey		PreProc
+hi def link tppString			String
+hi def link tppColor			String
+hi def link tppTime			Number
+hi def link tppComment			Comment
+hi def link tppAbstractOption		Error
+hi def link tppPageLocalOption		Error
+hi def link tppPageLocalSwitch		Error
+hi def link tppColorOption			Error
+hi def link tppNewPageOption		Error
+hi def link tppTimeOption			Error
 
-delcommand HiLink
 
 let b:current_syntax = "tpp"
 

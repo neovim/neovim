@@ -182,35 +182,33 @@ syntax keyword mushAttribute use va vb vc vd ve vf vg vh vi vj vk vl vm vn
 syntax keyword mushAttribute vo vp vq vr vs vt vu vv vw vx vy vz
 
 
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink mushAttribute  Constant
-HiLink mushCommand    Function
-HiLink mushNumber     Number
-HiLink mushSetting    PreProc
-HiLink mushFunction   Statement
-HiLink mushVariable   Identifier
-HiLink mushSpecial    Special
-HiLink mushTodo       Todo
-HiLink mushFlag       Special
-HiLink mushIdentifier Identifier
-HiLink mushDefine     Macro
-HiLink mushPreProc    PreProc
-HiLink mushPreProcGroup PreProc 
-HiLink mushPreCondit PreCondit
-HiLink mushIncluded cString
-HiLink  mushInclude Include
+hi def link mushAttribute  Constant
+hi def link mushCommand    Function
+hi def link mushNumber     Number
+hi def link mushSetting    PreProc
+hi def link mushFunction   Statement
+hi def link mushVariable   Identifier
+hi def link mushSpecial    Special
+hi def link mushTodo       Todo
+hi def link mushFlag       Special
+hi def link mushIdentifier Identifier
+hi def link mushDefine     Macro
+hi def link mushPreProc    PreProc
+hi def link mushPreProcGroup PreProc 
+hi def link mushPreCondit PreCondit
+hi def link mushIncluded cString
+hi def link mushInclude Include
 
 
 
 " Comments
-HiLink mushCommentStart mushComment
-HiLink mushComment    Comment
-HiLink mushCommentString mushString
+hi def link mushCommentStart mushComment
+hi def link mushComment    Comment
+hi def link mushCommentString mushString
 
 
-delcommand HiLink
 
 let b:current_syntax = "mush"
 

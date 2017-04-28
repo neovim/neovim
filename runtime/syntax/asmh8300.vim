@@ -54,16 +54,14 @@ runtime! syntax/asm.vim
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink asmOpcode  Statement
-HiLink asmRegister  Identifier
+hi def link asmOpcode  Statement
+hi def link asmRegister  Identifier
 
 " My default-color overrides:
 "hi asmOpcode ctermfg=yellow
 "hi asmReg	ctermfg=lightmagenta
 
-delcommand HiLink
 
 let b:current_syntax = "asmh8300"
 

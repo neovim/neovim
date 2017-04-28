@@ -23,15 +23,13 @@ syn match abaqusBadLine	"^\s\+\*.*" display
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink abaqusComment	Comment
-HiLink abaqusKeyword	Statement
-HiLink abaqusParameter	Identifier
-HiLink abaqusValue	Constant
-HiLink abaqusBadLine    Error
+hi def link abaqusComment	Comment
+hi def link abaqusKeyword	Statement
+hi def link abaqusParameter	Identifier
+hi def link abaqusValue	Constant
+hi def link abaqusBadLine    Error
 
-delcommand HiLink
 
 let b:current_syntax = "abaqus"

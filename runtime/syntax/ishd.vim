@@ -385,26 +385,24 @@ syn region	ishdDefine		start="^\s*#\s*\(define\|undef\)\>" end="$" contains=ALLB
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink ishdNumber	    Number
-HiLink ishdError	    Error
-HiLink ishdStatement	    Statement
-HiLink ishdString	    String
-HiLink ishdComment	    Comment
-HiLink ishdTodo	    Todo
-HiLink ishdFunction	    Identifier
-HiLink ishdConstant	    PreProc
-HiLink ishdType	    Type
-HiLink ishdInclude	    Include
-HiLink ishdDefine	    Macro
-HiLink ishdIncluded	    String
-HiLink ishdPreCondit	    PreCondit
-HiLink ishdHashIf0Skip   ishdHashIf0
-HiLink ishdHashIf0End    ishdHashIf0
-HiLink ishdHashIf0	    Comment
+hi def link ishdNumber	    Number
+hi def link ishdError	    Error
+hi def link ishdStatement	    Statement
+hi def link ishdString	    String
+hi def link ishdComment	    Comment
+hi def link ishdTodo	    Todo
+hi def link ishdFunction	    Identifier
+hi def link ishdConstant	    PreProc
+hi def link ishdType	    Type
+hi def link ishdInclude	    Include
+hi def link ishdDefine	    Macro
+hi def link ishdIncluded	    String
+hi def link ishdPreCondit	    PreCondit
+hi def link ishdHashIf0Skip   ishdHashIf0
+hi def link ishdHashIf0End    ishdHashIf0
+hi def link ishdHashIf0	    Comment
 
-delcommand HiLink
 
 let b:current_syntax = "ishd"
 

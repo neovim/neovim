@@ -120,48 +120,46 @@ execute "syn sync maxlines=" . tads_sync_dist
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink tadsFunctionDef Function
-HiLink tadsFunction  Structure
-HiLink tadsClass     Structure
-HiLink tadsClassDef  Identifier
-HiLink tadsObjectDef Identifier
+hi def link tadsFunctionDef Function
+hi def link tadsFunction  Structure
+hi def link tadsClass     Structure
+hi def link tadsClassDef  Identifier
+hi def link tadsObjectDef Identifier
 " no highlight for tadsEmbedded, so it prints as normal text w/in the string
 
-HiLink tadsOperator	Operator
-HiLink tadsStructure	Structure
-HiLink tadsTodo	Todo
-HiLink tadsLabel	Label
-HiLink tadsConditional	Conditional
-HiLink tadsRepeat	Repeat
-HiLink tadsException	Exception
-HiLink tadsStatement	Statement
-HiLink tadsStorageClass	StorageClass
-HiLink tadsKeyWord   Keyword
-HiLink tadsSpecial	SpecialChar
-HiLink tadsNumber	Number
-HiLink tadsBoolean	Boolean
-HiLink tadsDoubleString	tadsString
-HiLink tadsSingleString	tadsString
+hi def link tadsOperator	Operator
+hi def link tadsStructure	Structure
+hi def link tadsTodo	Todo
+hi def link tadsLabel	Label
+hi def link tadsConditional	Conditional
+hi def link tadsRepeat	Repeat
+hi def link tadsException	Exception
+hi def link tadsStatement	Statement
+hi def link tadsStorageClass	StorageClass
+hi def link tadsKeyWord   Keyword
+hi def link tadsSpecial	SpecialChar
+hi def link tadsNumber	Number
+hi def link tadsBoolean	Boolean
+hi def link tadsDoubleString	tadsString
+hi def link tadsSingleString	tadsString
 
-HiLink tadsOctalError	tadsError
-HiLink tadsCommentError	tadsError
-HiLink tadsBraceError	tadsError
-HiLink tadsInBrace	tadsError
-HiLink tadsError	Error
+hi def link tadsOctalError	tadsError
+hi def link tadsCommentError	tadsError
+hi def link tadsBraceError	tadsError
+hi def link tadsInBrace	tadsError
+hi def link tadsError	Error
 
-HiLink tadsInclude	Include
-HiLink tadsPreProc	PreProc
-HiLink tadsDefine	Macro
-HiLink tadsIncluded	tadsString
-HiLink tadsPreCondit	PreCondit
+hi def link tadsInclude	Include
+hi def link tadsPreProc	PreProc
+hi def link tadsDefine	Macro
+hi def link tadsIncluded	tadsString
+hi def link tadsPreCondit	PreCondit
 
-HiLink tadsString	String
-HiLink tadsComment	Comment
+hi def link tadsString	String
+hi def link tadsComment	Comment
 
-delcommand HiLink
 
 
 let b:current_syntax = "tads"

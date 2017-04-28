@@ -37,13 +37,11 @@ syn sync minlines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink pcapBad WarningMsg
-HiLink pcapBadword WarningMsg
-HiLink pcapComment Comment
+hi def link pcapBad WarningMsg
+hi def link pcapBadword WarningMsg
+hi def link pcapComment Comment
 
-delcommand HiLink
 
 let b:current_syntax = "pcap"
 

@@ -271,20 +271,18 @@ syn region mysqlFunction         start="yearweek(" end=")" contains=ALL
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink mysqlKeyword            Statement
-HiLink mysqlSpecial            Special
-HiLink mysqlString             String
-HiLink mysqlNumber             Number
-HiLink mysqlVariable           Identifier
-HiLink mysqlComment            Comment
-HiLink mysqlType               Type
-HiLink mysqlOperator           Statement
-HiLink mysqlFlow               Statement
-HiLink mysqlFunction           Function
+hi def link mysqlKeyword            Statement
+hi def link mysqlSpecial            Special
+hi def link mysqlString             String
+hi def link mysqlNumber             Number
+hi def link mysqlVariable           Identifier
+hi def link mysqlComment            Comment
+hi def link mysqlType               Type
+hi def link mysqlOperator           Statement
+hi def link mysqlFlow               Statement
+hi def link mysqlFunction           Function
 
-delcommand HiLink
 
 let b:current_syntax = "mysql"
 

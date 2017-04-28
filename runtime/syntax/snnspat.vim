@@ -43,19 +43,17 @@ syn match	snnspatNumbers	"\d" contained
 syn match	snnspatComment	"#.*$" contains=snnspatTodo
 syn keyword	snnspatTodo	TODO XXX FIXME contained
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink snnspatGen		Statement
-HiLink snnspatHeader		Error
-HiLink snnspatNoHeader	Define
-HiLink snnspatNumbers		Number
-HiLink snnspatComment		Comment
-HiLink snnspatError		Error
-HiLink snnspatTodo		Todo
-HiLink snnspatAccepted	NONE
-HiLink snnspatBrac		NONE
+hi def link snnspatGen		Statement
+hi def link snnspatHeader		Error
+hi def link snnspatNoHeader	Define
+hi def link snnspatNumbers		Number
+hi def link snnspatComment		Comment
+hi def link snnspatError		Error
+hi def link snnspatTodo		Todo
+hi def link snnspatAccepted	NONE
+hi def link snnspatBrac		NONE
 
-delcommand HiLink
 
 let b:current_syntax = "snnspat"
 

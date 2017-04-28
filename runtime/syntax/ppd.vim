@@ -19,18 +19,16 @@ syn match	ppdContraints	"^*UIConstraints:"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 
-HiLink ppdComment		Comment
-HiLink ppdDefine		Statement
-HiLink ppdUI			Function
-HiLink ppdUIGroup		Function
-HiLink ppdDef			String
-HiLink ppdGUIText		Type
-HiLink ppdContraints		Special
+hi def link ppdComment		Comment
+hi def link ppdDefine		Statement
+hi def link ppdUI			Function
+hi def link ppdUIGroup		Function
+hi def link ppdDef			String
+hi def link ppdGUIText		Type
+hi def link ppdContraints		Special
 
-delcommand HiLink
 
 let b:current_syntax = "ppd"
 

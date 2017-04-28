@@ -83,21 +83,19 @@ syn case match
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink z8aSection		Special
-HiLink z8aLabel		Label
-HiLink z8aSpecialLabel	Label
-HiLink z8aComment		Comment
-HiLink z8aInstruction	Statement
-HiLink z8aSpecInst		Statement
-HiLink z8aInclude		Include
-HiLink z8aPreCondit		PreCondit
-HiLink z8aPreProc		PreProc
-HiLink z8aNumber		Number
-HiLink z8aString		String
+hi def link z8aSection		Special
+hi def link z8aLabel		Label
+hi def link z8aSpecialLabel	Label
+hi def link z8aComment		Comment
+hi def link z8aInstruction	Statement
+hi def link z8aSpecInst		Statement
+hi def link z8aInclude		Include
+hi def link z8aPreCondit		PreCondit
+hi def link z8aPreProc		PreProc
+hi def link z8aNumber		Number
+hi def link z8aString		String
 
-delcommand HiLink
 
 let b:current_syntax = "z8a"
 " vim: ts=8

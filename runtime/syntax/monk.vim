@@ -195,23 +195,21 @@ syn sync match matchPlace grouphere NONE "^[^ \t]"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink monkSyntax		Statement
-HiLink monkFunc		Function
+hi def link monkSyntax		Statement
+hi def link monkFunc		Function
 
-HiLink monkString		String
-HiLink monkChar		Character
-HiLink monkNumber		Number
-HiLink monkBoolean		Boolean
+hi def link monkString		String
+hi def link monkChar		Character
+hi def link monkNumber		Number
+hi def link monkBoolean		Boolean
 
-HiLink monkDelimiter	Delimiter
-HiLink monkConstant	Constant
+hi def link monkDelimiter	Delimiter
+hi def link monkConstant	Constant
 
-HiLink monkComment		Comment
-HiLink monkError		Error
+hi def link monkComment		Comment
+hi def link monkError		Error
 
-delcommand HiLink
 
 let b:current_syntax = "monk"
 

@@ -115,33 +115,31 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink	 htmlosSpecialIdentifier	Operator
-HiLink	 htmlosIdentifier	Identifier
-HiLink	 htmlosStorageClass	StorageClass
-HiLink	 htmlosComment	Comment
-HiLink	 htmlosBoolean	Boolean
-HiLink	 htmlosStringSingle	String
-HiLink	 htmlosStringDouble	String
-HiLink	 htmlosNumber	Number
-HiLink	 htmlosFloat	Float
-HiLink	 htmlosFunctions	Function
-HiLink	 htmlosRepeat	Repeat
-HiLink	 htmlosConditional	Conditional
-HiLink	 htmlosLabel	Label
-HiLink	 htmlosStatement	Statement
-HiLink	 htmlosKeyword	Statement
-HiLink	 htmlosType	Type
-HiLink	 htmlosDefine	Define
-HiLink	 htmlosParent	Delimiter
-HiLink	 htmlosError	Error
-HiLink	 htmlosTodo	Todo
-HiLink	htmlosOperator	Operator
-HiLink	htmlosRelation	Operator
+hi def link htmlosSpecialIdentifier	Operator
+hi def link htmlosIdentifier	Identifier
+hi def link htmlosStorageClass	StorageClass
+hi def link htmlosComment	Comment
+hi def link htmlosBoolean	Boolean
+hi def link htmlosStringSingle	String
+hi def link htmlosStringDouble	String
+hi def link htmlosNumber	Number
+hi def link htmlosFloat	Float
+hi def link htmlosFunctions	Function
+hi def link htmlosRepeat	Repeat
+hi def link htmlosConditional	Conditional
+hi def link htmlosLabel	Label
+hi def link htmlosStatement	Statement
+hi def link htmlosKeyword	Statement
+hi def link htmlosType	Type
+hi def link htmlosDefine	Define
+hi def link htmlosParent	Delimiter
+hi def link htmlosError	Error
+hi def link htmlosTodo	Todo
+hi def link htmlosOperator	Operator
+hi def link htmlosRelation	Operator
 
-delcommand HiLink
 let b:current_syntax = "htmlos"
 
 if main_syntax == 'htmlos'

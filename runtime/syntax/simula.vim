@@ -55,35 +55,33 @@ syn match	simulaReal		"-\=\<\d\+\(\.\d\+\)\=\(&&\=[+-]\=\d\+\)\=\>"
 " Real starting with a `.', optional exponent
 syn match	simulaReal		"-\=\.\d\+\(&&\=[+-]\=\d\+\)\=\>"
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink simulaAssigned		Identifier
-HiLink simulaBoolean		Boolean
-HiLink simulaCharacter		Character
-HiLink simulaCharError		Error
-HiLink simulaComment		Comment
-HiLink simulaCompound		Statement
-HiLink simulaConditional		Conditional
-HiLink simulaConstant		Constant
-HiLink simulaFunction		Function
-HiLink simulaNumber			Number
-HiLink simulaOperator		Operator
-HiLink simulaReal			Float
-HiLink simulaReferenceType		Type
-HiLink simulaRepeat			Repeat
-HiLink simulaReserved		Error
-HiLink simulaSemicolon		Statement
-HiLink simulaSpecial		Special
-HiLink simulaSpecialChar		SpecialChar
-HiLink simulaSpecialCharErr		Error
-HiLink simulaStatement		Statement
-HiLink simulaStorageClass		StorageClass
-HiLink simulaString			String
-HiLink simulaStructure		Structure
-HiLink simulaTodo			Todo
-HiLink simulaType			Type
+hi def link simulaAssigned		Identifier
+hi def link simulaBoolean		Boolean
+hi def link simulaCharacter		Character
+hi def link simulaCharError		Error
+hi def link simulaComment		Comment
+hi def link simulaCompound		Statement
+hi def link simulaConditional		Conditional
+hi def link simulaConstant		Constant
+hi def link simulaFunction		Function
+hi def link simulaNumber			Number
+hi def link simulaOperator		Operator
+hi def link simulaReal			Float
+hi def link simulaReferenceType		Type
+hi def link simulaRepeat			Repeat
+hi def link simulaReserved		Error
+hi def link simulaSemicolon		Statement
+hi def link simulaSpecial		Special
+hi def link simulaSpecialChar		SpecialChar
+hi def link simulaSpecialCharErr		Error
+hi def link simulaStatement		Statement
+hi def link simulaStorageClass		StorageClass
+hi def link simulaString			String
+hi def link simulaStructure		Structure
+hi def link simulaTodo			Todo
+hi def link simulaType			Type
 
-delcommand HiLink
 
 let b:current_syntax = "simula"
 " vim: sts=4 sw=4 ts=8

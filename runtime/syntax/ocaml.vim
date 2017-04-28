@@ -251,69 +251,67 @@ syn sync match ocamlSigSync     groupthere ocamlSig     "\<end\>"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink ocamlBraceErr	   Error
-HiLink ocamlBrackErr	   Error
-HiLink ocamlParenErr	   Error
-HiLink ocamlArrErr	   Error
+hi def link ocamlBraceErr	   Error
+hi def link ocamlBrackErr	   Error
+hi def link ocamlParenErr	   Error
+hi def link ocamlArrErr	   Error
 
-HiLink ocamlCommentErr   Error
+hi def link ocamlCommentErr   Error
 
-HiLink ocamlCountErr	   Error
-HiLink ocamlDoErr	   Error
-HiLink ocamlDoneErr	   Error
-HiLink ocamlEndErr	   Error
-HiLink ocamlThenErr	   Error
+hi def link ocamlCountErr	   Error
+hi def link ocamlDoErr	   Error
+hi def link ocamlDoneErr	   Error
+hi def link ocamlEndErr	   Error
+hi def link ocamlThenErr	   Error
 
-HiLink ocamlCharErr	   Error
+hi def link ocamlCharErr	   Error
 
-HiLink ocamlErr	   Error
+hi def link ocamlErr	   Error
 
-HiLink ocamlComment	   Comment
+hi def link ocamlComment	   Comment
 
-HiLink ocamlModPath	   Include
-HiLink ocamlObject	   Include
-HiLink ocamlModule	   Include
-HiLink ocamlModParam1    Include
-HiLink ocamlModType	   Include
-HiLink ocamlMPRestr3	   Include
-HiLink ocamlFullMod	   Include
-HiLink ocamlModTypeRestr Include
-HiLink ocamlWith	   Include
-HiLink ocamlMTDef	   Include
+hi def link ocamlModPath	   Include
+hi def link ocamlObject	   Include
+hi def link ocamlModule	   Include
+hi def link ocamlModParam1    Include
+hi def link ocamlModType	   Include
+hi def link ocamlMPRestr3	   Include
+hi def link ocamlFullMod	   Include
+hi def link ocamlModTypeRestr Include
+hi def link ocamlWith	   Include
+hi def link ocamlMTDef	   Include
 
-HiLink ocamlScript	   Include
+hi def link ocamlScript	   Include
 
-HiLink ocamlConstructor  Constant
+hi def link ocamlConstructor  Constant
 
-HiLink ocamlVal          Keyword
-HiLink ocamlModPreRHS    Keyword
-HiLink ocamlMPRestr2	   Keyword
-HiLink ocamlKeyword	   Keyword
-HiLink ocamlMethod	   Include
-HiLink ocamlFunDef	   Keyword
-HiLink ocamlRefAssign    Keyword
-HiLink ocamlKeyChar	   Keyword
-HiLink ocamlAnyVar	   Keyword
-HiLink ocamlTopStop	   Keyword
-HiLink ocamlOperator	   Keyword
+hi def link ocamlVal          Keyword
+hi def link ocamlModPreRHS    Keyword
+hi def link ocamlMPRestr2	   Keyword
+hi def link ocamlKeyword	   Keyword
+hi def link ocamlMethod	   Include
+hi def link ocamlFunDef	   Keyword
+hi def link ocamlRefAssign    Keyword
+hi def link ocamlKeyChar	   Keyword
+hi def link ocamlAnyVar	   Keyword
+hi def link ocamlTopStop	   Keyword
+hi def link ocamlOperator	   Keyword
 
-HiLink ocamlBoolean	   Boolean
-HiLink ocamlCharacter    Character
-HiLink ocamlNumber	   Number
-HiLink ocamlFloat	   Float
-HiLink ocamlString	   String
+hi def link ocamlBoolean	   Boolean
+hi def link ocamlCharacter    Character
+hi def link ocamlNumber	   Number
+hi def link ocamlFloat	   Float
+hi def link ocamlString	   String
 
-HiLink ocamlLabel	   Identifier
+hi def link ocamlLabel	   Identifier
 
-HiLink ocamlType	   Type
+hi def link ocamlType	   Type
 
-HiLink ocamlTodo	   Todo
+hi def link ocamlTodo	   Todo
 
-HiLink ocamlEncl	   Keyword
+hi def link ocamlEncl	   Keyword
 
-delcommand HiLink
 
 let b:current_syntax = "ocaml"
 

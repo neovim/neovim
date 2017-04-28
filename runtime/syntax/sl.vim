@@ -73,36 +73,34 @@ syn sync ccomment slComment minlines=10
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink slLabel	Label
-HiLink slUserLabel	Label
-HiLink slConditional	Conditional
-HiLink slRepeat	Repeat
-HiLink slCharacter	Character
-HiLink slSpecialCharacter slSpecial
-HiLink slNumber	Number
-HiLink slFloat	Float
-HiLink slParenError	slError
-HiLink slInParen	slError
-HiLink slCommentError	slError
-HiLink slOperator	Operator
-HiLink slStorageClass	StorageClass
-HiLink slError	Error
-HiLink slStatement	Statement
-HiLink slType		Type
-HiLink slCommentError	slError
-HiLink slCommentString slString
-HiLink slComment2String slString
-HiLink slCommentSkip	slComment
-HiLink slString	String
-HiLink slComment	Comment
-HiLink slSpecial	SpecialChar
-HiLink slTodo	Todo
-HiLink slVariable	Identifier
-"HiLink slIdentifier	Identifier
+hi def link slLabel	Label
+hi def link slUserLabel	Label
+hi def link slConditional	Conditional
+hi def link slRepeat	Repeat
+hi def link slCharacter	Character
+hi def link slSpecialCharacter slSpecial
+hi def link slNumber	Number
+hi def link slFloat	Float
+hi def link slParenError	slError
+hi def link slInParen	slError
+hi def link slCommentError	slError
+hi def link slOperator	Operator
+hi def link slStorageClass	StorageClass
+hi def link slError	Error
+hi def link slStatement	Statement
+hi def link slType		Type
+hi def link slCommentError	slError
+hi def link slCommentString slString
+hi def link slComment2String slString
+hi def link slCommentSkip	slComment
+hi def link slString	String
+hi def link slComment	Comment
+hi def link slSpecial	SpecialChar
+hi def link slTodo	Todo
+hi def link slVariable	Identifier
+"hi def link slIdentifier	Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "sl"
 

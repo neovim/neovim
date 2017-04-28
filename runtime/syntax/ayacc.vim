@@ -47,28 +47,26 @@ syn match	ayaccSep	"^[ \t]*%}"
 syn match	ayaccCurlyError	"[{}]"
 syn region	ayaccAction	matchgroup=ayaccCurly start="{" end="}" contains=ALLBUT,@ayaccActionGroup
 
-command -nargs=+ HiLink hi def link <args>
 
 " Internal ayacc highlighting links
-HiLink ayaccBrkt	ayaccStmt
-HiLink ayaccKey	ayaccStmt
-HiLink ayaccOper	ayaccStmt
-HiLink ayaccUnionStart	ayaccKey
+hi def link ayaccBrkt	ayaccStmt
+hi def link ayaccKey	ayaccStmt
+hi def link ayaccOper	ayaccStmt
+hi def link ayaccUnionStart	ayaccKey
 
 " External ayacc highlighting links
-HiLink ayaccCurly	Delimiter
-HiLink ayaccCurlyError	Error
-HiLink ayaccDefinition	Function
-HiLink ayaccDelim	Function
-HiLink ayaccKeyActn	Special
-HiLink ayaccSectionSep	Todo
-HiLink ayaccSep	Delimiter
-HiLink ayaccStmt	Statement
-HiLink ayaccType	Type
+hi def link ayaccCurly	Delimiter
+hi def link ayaccCurlyError	Error
+hi def link ayaccDefinition	Function
+hi def link ayaccDelim	Function
+hi def link ayaccKeyActn	Special
+hi def link ayaccSectionSep	Todo
+hi def link ayaccSep	Delimiter
+hi def link ayaccStmt	Statement
+hi def link ayaccType	Type
 
 " since Bram doesn't like my Delimiter :|
-HiLink Delimiter	Type
-delcommand HiLink
+hi def link Delimiter	Type
 
 let b:current_syntax = "ayacc"
 

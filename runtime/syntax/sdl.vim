@@ -127,27 +127,25 @@ syn sync ccomment sdlComment
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 command -nargs=+ Hi     hi def <args>
 
-HiLink  sdlException	Label
-HiLink  sdlConditional	sdlStatement
-HiLink  sdlVirtual		sdlStatement
-HiLink  sdlExported		sdlFlag
-HiLink  sdlCommentError	sdlError
-HiLink  sdlOperator		Operator
-HiLink  sdlStructure	sdlType
+hi def link sdlException	Label
+hi def link sdlConditional	sdlStatement
+hi def link sdlVirtual		sdlStatement
+hi def link sdlExported		sdlFlag
+hi def link sdlCommentError	sdlError
+hi def link sdlOperator		Operator
+hi def link sdlStructure	sdlType
 Hi	    sdlStatement	term=bold ctermfg=4 guifg=Blue
 Hi	    sdlFlag		term=bold ctermfg=4 guifg=Blue gui=italic
 Hi	    sdlNewState		term=italic ctermfg=2 guifg=Magenta gui=underline
 Hi	    sdlInput		term=bold guifg=Red
-HiLink  sdlType		Type
-HiLink  sdlString		String
-HiLink  sdlComment		Comment
-HiLink  sdlSpecial		Special
-HiLink  sdlError		Error
+hi def link sdlType		Type
+hi def link sdlString		String
+hi def link sdlComment		Comment
+hi def link sdlSpecial		Special
+hi def link sdlError		Error
 
-delcommand HiLink
 delcommand Hi
 
 let b:current_syntax = "sdl"

@@ -143,106 +143,104 @@ let s:old_style = (exists("g:erlang_old_style_highlight") &&
                   \g:erlang_old_style_highlight == 1)
 
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " Comments
-HiLink erlangComment Comment
-HiLink erlangCommentAnnotation Special
-HiLink erlangTodo Todo
-HiLink erlangShebang Comment
+hi def link erlangComment Comment
+hi def link erlangCommentAnnotation Special
+hi def link erlangTodo Todo
+hi def link erlangShebang Comment
 
 " Numbers
-HiLink erlangNumberInteger Number
-HiLink erlangNumberFloat Float
+hi def link erlangNumberInteger Number
+hi def link erlangNumberFloat Float
 
 " Strings, atoms, characters
-HiLink erlangString String
+hi def link erlangString String
 
 if s:old_style
-HiLink erlangQuotedAtom Type
+hi def link erlangQuotedAtom Type
 else
-HiLink erlangQuotedAtom String
+hi def link erlangQuotedAtom String
 endif
 
-HiLink erlangStringModifier Special
-HiLink erlangQuotedAtomModifier Special
-HiLink erlangModifier Special
+hi def link erlangStringModifier Special
+hi def link erlangQuotedAtomModifier Special
+hi def link erlangModifier Special
 
 " Operators, separators
-HiLink erlangOperator Operator
-HiLink erlangRightArrow Operator
+hi def link erlangOperator Operator
+hi def link erlangRightArrow Operator
 if s:old_style
-HiLink erlangBracket Normal
-HiLink erlangPipe Normal
+hi def link erlangBracket Normal
+hi def link erlangPipe Normal
 else
-HiLink erlangBracket Delimiter
-HiLink erlangPipe Delimiter
+hi def link erlangBracket Delimiter
+hi def link erlangPipe Delimiter
 endif
 
 " Atoms, functions, variables, macros
 if s:old_style
-HiLink erlangAtom Normal
-HiLink erlangLocalFuncCall Normal
-HiLink erlangLocalFuncRef Normal
-HiLink erlangGlobalFuncCall Function
-HiLink erlangGlobalFuncRef Function
-HiLink erlangVariable Normal
-HiLink erlangMacro Normal
-HiLink erlangRecord Normal
+hi def link erlangAtom Normal
+hi def link erlangLocalFuncCall Normal
+hi def link erlangLocalFuncRef Normal
+hi def link erlangGlobalFuncCall Function
+hi def link erlangGlobalFuncRef Function
+hi def link erlangVariable Normal
+hi def link erlangMacro Normal
+hi def link erlangRecord Normal
 else
-HiLink erlangAtom String
-HiLink erlangLocalFuncCall Normal
-HiLink erlangLocalFuncRef Normal
-HiLink erlangGlobalFuncCall Normal
-HiLink erlangGlobalFuncRef Normal
-HiLink erlangVariable Identifier
-HiLink erlangMacro Macro
-HiLink erlangRecord Structure
+hi def link erlangAtom String
+hi def link erlangLocalFuncCall Normal
+hi def link erlangLocalFuncRef Normal
+hi def link erlangGlobalFuncCall Normal
+hi def link erlangGlobalFuncRef Normal
+hi def link erlangVariable Identifier
+hi def link erlangMacro Macro
+hi def link erlangRecord Structure
 endif
 
 " Bitstrings
 if !s:old_style
-HiLink erlangBitType Type
+hi def link erlangBitType Type
 endif
 
 " Constants and Directives
 if s:old_style
-HiLink erlangAttribute Type
-HiLink erlangMacroDef Type
-HiLink erlangUnknownAttribute Normal
-HiLink erlangInclude Type
-HiLink erlangRecordDef Type
-HiLink erlangDefine Type
-HiLink erlangPreCondit Type
-HiLink erlangType Type
+hi def link erlangAttribute Type
+hi def link erlangMacroDef Type
+hi def link erlangUnknownAttribute Normal
+hi def link erlangInclude Type
+hi def link erlangRecordDef Type
+hi def link erlangDefine Type
+hi def link erlangPreCondit Type
+hi def link erlangType Type
 else
-HiLink erlangAttribute Keyword
-HiLink erlangMacroDef Macro
-HiLink erlangUnknownAttribute Normal
-HiLink erlangInclude Include
-HiLink erlangRecordDef Keyword
-HiLink erlangDefine Define
-HiLink erlangPreCondit PreCondit
-HiLink erlangType Type
+hi def link erlangAttribute Keyword
+hi def link erlangMacroDef Macro
+hi def link erlangUnknownAttribute Normal
+hi def link erlangInclude Include
+hi def link erlangRecordDef Keyword
+hi def link erlangDefine Define
+hi def link erlangPreCondit PreCondit
+hi def link erlangType Type
 endif
 
 " Keywords
-HiLink erlangKeyword Keyword
+hi def link erlangKeyword Keyword
 
 " Build-in-functions (BIFs)
-HiLink erlangBIF Function
+hi def link erlangBIF Function
 
 if s:old_style
-HiLink erlangBoolean Statement
-HiLink erlangExtra Statement
-HiLink erlangSignal Statement
+hi def link erlangBoolean Statement
+hi def link erlangExtra Statement
+hi def link erlangSignal Statement
 else
-HiLink erlangBoolean Boolean
-HiLink erlangExtra Statement
-HiLink erlangSignal Statement
+hi def link erlangBoolean Boolean
+hi def link erlangExtra Statement
+hi def link erlangSignal Statement
 endif
 
-delcommand HiLink
 
 let b:current_syntax = "erlang"
 

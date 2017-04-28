@@ -262,34 +262,32 @@ syn match ia64data "stringz\=\(\(\(\.ua\)\=\(\.msb\|\.lsb\)\=\)\|\(\(\.msb\|\.ls
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 "put masm groups with our groups
-HiLink masmOperator	ia64operator
-HiLink masmDirective	ia64Directive
-HiLink masmOpcode	ia64Opcode
-HiLink masmIdentifier	ia64Identifier
-HiLink masmFloat	ia64Float
+hi def link masmOperator	ia64operator
+hi def link masmDirective	ia64Directive
+hi def link masmOpcode	ia64Opcode
+hi def link masmIdentifier	ia64Identifier
+hi def link masmFloat	ia64Float
 
 "ia64 specific stuff
-HiLink ia64Label	Define
-HiLink ia64Comment	Comment
-HiLink ia64Directive	Type
-HiLink ia64opcode	Statement
-HiLink ia64registers	Operator
-HiLink ia64string	String
-HiLink ia64Hex		Number
-HiLink ia64Binary	Number
-HiLink ia64Octal	Number
-HiLink ia64Float	Float
-HiLink ia64Decimal	Number
-HiLink ia64Identifier	Identifier
-HiLink ia64data		Type
-HiLink ia64delimiter	Delimiter
-HiLink ia64operator	Operator
-HiLink ia64Todo		Todo
+hi def link ia64Label	Define
+hi def link ia64Comment	Comment
+hi def link ia64Directive	Type
+hi def link ia64opcode	Statement
+hi def link ia64registers	Operator
+hi def link ia64string	String
+hi def link ia64Hex		Number
+hi def link ia64Binary	Number
+hi def link ia64Octal	Number
+hi def link ia64Float	Float
+hi def link ia64Decimal	Number
+hi def link ia64Identifier	Identifier
+hi def link ia64data		Type
+hi def link ia64delimiter	Delimiter
+hi def link ia64operator	Operator
+hi def link ia64Todo		Todo
 
-delcommand HiLink
 
 let b:current_syntax = "ia64"
 

@@ -66,25 +66,23 @@ syn region hexExtAdrBlock start="^:[0-9a-fA-F]\{7}[24]" skip="^:[0-9a-fA-F]\{7}0
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting. Can be overridden later
-HiLink hexRecStart            hexRecType
-HiLink hexDataByteCount       Constant
+hi def link hexRecStart            hexRecType
+hi def link hexDataByteCount       Constant
 hi def hexAddressFieldUnknown term=italic cterm=italic gui=italic
-HiLink hexDataAddress         Comment
-HiLink hexNoAddress           DiffAdd
-HiLink hexRecTypeUnknown      hexRecType
-HiLink hexRecType             WarningMsg
+hi def link hexDataAddress         Comment
+hi def link hexNoAddress           DiffAdd
+hi def link hexRecTypeUnknown      hexRecType
+hi def link hexRecType             WarningMsg
 hi def hexDataFieldUnknown    term=italic cterm=italic gui=italic
 hi def hexDataOdd             term=bold cterm=bold gui=bold
 hi def hexDataEven            term=NONE cterm=NONE gui=NONE
-HiLink hexDataUnexpected      Error
-HiLink hexExtendedAddress     hexDataAddress
-HiLink hexStartAddress        hexDataAddress
-HiLink hexChecksum            DiffChange
+hi def link hexDataUnexpected      Error
+hi def link hexExtendedAddress     hexDataAddress
+hi def link hexStartAddress        hexDataAddress
+hi def link hexChecksum            DiffChange
 
-delcommand HiLink
 
 let b:current_syntax = "hex"
 

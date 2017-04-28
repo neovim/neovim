@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2015 Oct 24
+" Last Change: 2016 Aug 30
 " URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debcontrol.vim
 
 " Standard syntax initialization
@@ -26,7 +26,7 @@ syn match debControlSpace " "
 
 let s:kernels = '\%(linux\|hurd\|kfreebsd\|knetbsd\|kopensolaris\|netbsd\)'
 let s:archs = '\%(alpha\|amd64\|armeb\|armel\|armhf\|arm64\|avr32\|hppa\|i386'
-      \ . '\|ia64\|lpia\|m32r\|m68k\|mipsel\|mips\|powerpcspe\|powerpc\|ppc64el'
+      \ . '\|ia64\|lpia\|m32r\|m68k\|mipsel\|mips64el\|mips\|powerpcspe\|powerpc\|ppc64el'
       \ . '\|ppc64\|s390x\|s390\|sh3eb\|sh3\|sh4eb\|sh4\|sh\|sparc64\|sparc\|x32\)'
 let s:pairs = 'hurd-i386\|kfreebsd-i386\|kfreebsd-amd64\|knetbsd-i386\|kopensolaris-i386\|netbsd-alpha\|netbsd-i386'
 
@@ -84,30 +84,26 @@ syn region debcontrolMultiField start="^\%(Build-\%(Conflicts\|Depends\)\%(-Inde
 syn region debcontrolMultiFieldSpell start="^\%(Description\):" skip="^ " end="^$"me=s-1 end="^[^ #]"me=s-1 contains=debcontrolKey,debcontrolEmail,debcontrolVariable,debcontrolComment,@Spell
 
 " Associate our matches and regions with pretty colours
-command -nargs=+ HiLink hi def link <args>
-
-HiLink debcontrolKey		Keyword
-HiLink debcontrolField	Normal
-HiLink debcontrolStrictField	Error
-HiLink debcontrolDeprecatedKey	Error
-HiLink debcontrolMultiField	Normal
-HiLink debcontrolArchitecture	Normal
-HiLink debcontrolMultiArch	Normal
-HiLink debcontrolName		Normal
-HiLink debcontrolPriority	Normal
-HiLink debcontrolSection	Normal
-HiLink debcontrolPackageType	Normal
-HiLink debcontrolVariable	Identifier
-HiLink debcontrolEmail	Identifier
-HiLink debcontrolVcsSvn	Identifier
-HiLink debcontrolVcsCvs	Identifier
-HiLink debcontrolVcsGit	Identifier
-HiLink debcontrolHTTPUrl	Identifier
-HiLink debcontrolDmUpload	Identifier
-HiLink debcontrolComment	Comment
-HiLink debcontrolElse		Special
-
-delcommand HiLink
+hi def link debcontrolKey           Keyword
+hi def link debcontrolField         Normal
+hi def link debcontrolStrictField   Error
+hi def link debcontrolDeprecatedKey Error
+hi def link debcontrolMultiField    Normal
+hi def link debcontrolArchitecture  Normal
+hi def link debcontrolMultiArch     Normal
+hi def link debcontrolName          Normal
+hi def link debcontrolPriority      Normal
+hi def link debcontrolSection       Normal
+hi def link debcontrolPackageType   Normal
+hi def link debcontrolVariable      Identifier
+hi def link debcontrolEmail         Identifier
+hi def link debcontrolVcsSvn        Identifier
+hi def link debcontrolVcsCvs        Identifier
+hi def link debcontrolVcsGit        Identifier
+hi def link debcontrolHTTPUrl       Identifier
+hi def link debcontrolDmUpload      Identifier
+hi def link debcontrolComment       Comment
+hi def link debcontrolElse          Special
 
 let b:current_syntax = "debcontrol"
 

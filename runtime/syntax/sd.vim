@@ -50,22 +50,20 @@ syn keyword sdSpecial TRUE FALSE NULL
 syn keyword sdDelimiter STREAM STREAM_END
 syn match sdError /^search .\{257,}/
 
-command! -nargs=+ HiLink hi def link <args>
 
-HiLink sdIP Number
-HiLink sdHostname Type
-HiLink sdEncoding Identifier
-HiLink sdCoding Identifier
-HiLink sdSource Identifier
-HiLink sdComment Comment
-HiLink sdIPError Error
-HiLink sdError Error
-HiLink sdStatement Statement
-HiLink sdIPSpecial Special
-HiLink sdSpecial Special
-HiLink sdDelimiter Delimiter
+hi def link sdIP Number
+hi def link sdHostname Type
+hi def link sdEncoding Identifier
+hi def link sdCoding Identifier
+hi def link sdSource Identifier
+hi def link sdComment Comment
+hi def link sdIPError Error
+hi def link sdError Error
+hi def link sdStatement Statement
+hi def link sdIPSpecial Special
+hi def link sdSpecial Special
+hi def link sdDelimiter Delimiter
 
-delcommand HiLink
 
 let b:current_syntax = "sd"
 

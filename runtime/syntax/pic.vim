@@ -89,27 +89,25 @@ syn match picDirective   "#\=DEFINE"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink picTodo		Todo
-HiLink picComment		Comment
-HiLink picDirective		Statement
-HiLink picLabel		Label
-HiLink picString		String
+hi def link picTodo		Todo
+hi def link picComment		Comment
+hi def link picDirective		Statement
+hi def link picLabel		Label
+hi def link picString		String
 
-"HiLink picOpcode		Keyword
-"HiLink picRegister		Structure
-"HiLink picRegisterPart	Special
+"hi def link picOpcode		Keyword
+"hi def link picRegister		Structure
+"hi def link picRegisterPart	Special
 
-HiLink picASCII		String
-HiLink picBinary		Number
-HiLink picDecimal		Number
-HiLink picHexadecimal		Number
-HiLink picOctal		Number
+hi def link picASCII		String
+hi def link picBinary		Number
+hi def link picDecimal		Number
+hi def link picHexadecimal		Number
+hi def link picOctal		Number
 
-HiLink picIdentifier		Identifier
+hi def link picIdentifier		Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "pic"
 

@@ -101,28 +101,26 @@ syn case match
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink asmSection	Special
-HiLink asmLabel	Label
-HiLink asmComment	Comment
-HiLink asmTodo	Todo
-HiLink asmDirective	Statement
+hi def link asmSection	Special
+hi def link asmLabel	Label
+hi def link asmComment	Comment
+hi def link asmTodo	Todo
+hi def link asmDirective	Statement
 
-HiLink asmInclude	Include
-HiLink asmCond	PreCondit
-HiLink asmMacro	Macro
+hi def link asmInclude	Include
+hi def link asmCond	PreCondit
+hi def link asmMacro	Macro
 
-HiLink hexNumber	Number
-HiLink decNumber	Number
-HiLink octNumber	Number
-HiLink binNumber	Number
+hi def link hexNumber	Number
+hi def link decNumber	Number
+hi def link octNumber	Number
+hi def link binNumber	Number
 
-HiLink asmIdentifier	Identifier
-HiLink asmType	Type
+hi def link asmIdentifier	Identifier
+hi def link asmType	Type
 
-delcommand HiLink
 
 let b:current_syntax = "asm"
 

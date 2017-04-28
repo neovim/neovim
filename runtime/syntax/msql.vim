@@ -51,30 +51,28 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink msqlComment		Comment
-HiLink msqlString		String
-HiLink msqlNumber		Number
-HiLink msqlFloat		Float
-HiLink msqlIdentifier	Identifier
-HiLink msqlGlobalIdentifier	Identifier
-HiLink msqlIntVar		Identifier
-HiLink msqlEnvVar		Identifier
-HiLink msqlFunctions		Function
-HiLink msqlRepeat		Repeat
-HiLink msqlConditional	Conditional
-HiLink msqlStatement		Statement
-HiLink msqlType		Type
-HiLink msqlInclude		Include
-HiLink msqlDefine		Define
-HiLink msqlSpecialChar	SpecialChar
-HiLink msqlParentError	Error
-HiLink msqlTodo		Todo
-HiLink msqlOperator		Operator
-HiLink msqlRelation		Operator
+hi def link msqlComment		Comment
+hi def link msqlString		String
+hi def link msqlNumber		Number
+hi def link msqlFloat		Float
+hi def link msqlIdentifier	Identifier
+hi def link msqlGlobalIdentifier	Identifier
+hi def link msqlIntVar		Identifier
+hi def link msqlEnvVar		Identifier
+hi def link msqlFunctions		Function
+hi def link msqlRepeat		Repeat
+hi def link msqlConditional	Conditional
+hi def link msqlStatement		Statement
+hi def link msqlType		Type
+hi def link msqlInclude		Include
+hi def link msqlDefine		Define
+hi def link msqlSpecialChar	SpecialChar
+hi def link msqlParentError	Error
+hi def link msqlTodo		Todo
+hi def link msqlOperator		Operator
+hi def link msqlRelation		Operator
 
-delcommand HiLink
 
 let b:current_syntax = "msql"
 

@@ -26,14 +26,12 @@ syn match  dosiniComment  "^[#;].*$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dosiniNumber   Number
-HiLink dosiniHeader   Special
-HiLink dosiniComment  Comment
-HiLink dosiniLabel    Type
+hi def link dosiniNumber   Number
+hi def link dosiniHeader   Special
+hi def link dosiniComment  Comment
+hi def link dosiniLabel    Type
 
-delcommand HiLink
 
 let b:current_syntax = "dosini"
 

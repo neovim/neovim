@@ -64,20 +64,18 @@ syn sync match matchPlace grouphere NONE "^[^ \t]"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink latteSyntax		Statement
-HiLink latteVar			Function
+hi def link latteSyntax		Statement
+hi def link latteVar			Function
 
-HiLink latteString		String
-HiLink latteQuote			String
+hi def link latteString		String
+hi def link latteQuote			String
 
-HiLink latteDelimiter		Delimiter
-HiLink latteOperator		Operator
+hi def link latteDelimiter		Delimiter
+hi def link latteOperator		Operator
 
-HiLink latteComment		Comment
-HiLink latteError			Error
+hi def link latteComment		Comment
+hi def link latteError			Error
 
-delcommand HiLink
 
 let b:current_syntax = "latte"

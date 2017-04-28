@@ -58,26 +58,24 @@ syntax region gpParen		transparent start='(' end=')' contains=ALLBUT,gpParenErro
 syntax match gpParenError	")"
 syntax match gpInParen contained "[{}]"
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink gpConditional		Conditional
-HiLink gpRepeat		Repeat
-HiLink gpError		Error
-HiLink gpParenError		gpError
-HiLink gpInParen		gpError
-HiLink gpStatement		Statement
-HiLink gpString		String
-HiLink gpComment		Comment
-HiLink gpInterface		Type
-HiLink gpInput		Type
-HiLink gpInterfaceKey		Statement
-HiLink gpFunction		Function
-HiLink gpScope		Type
+hi def link gpConditional		Conditional
+hi def link gpRepeat		Repeat
+hi def link gpError		Error
+hi def link gpParenError		gpError
+hi def link gpInParen		gpError
+hi def link gpStatement		Statement
+hi def link gpString		String
+hi def link gpComment		Comment
+hi def link gpInterface		Type
+hi def link gpInput		Type
+hi def link gpInterfaceKey		Statement
+hi def link gpFunction		Function
+hi def link gpScope		Type
 " contained ones
-HiLink gpSpecial		Special
-HiLink gpTodo			Todo
-HiLink gpArgs			Type
-delcommand HiLink
+hi def link gpSpecial		Special
+hi def link gpTodo			Todo
+hi def link gpArgs			Type
 
 let b:current_syntax = "gp"
 let &cpo = s:cpo_save

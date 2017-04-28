@@ -105,15 +105,13 @@ syn keyword sambaKeyword contained store unknown unwriteable
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink sambaParameter Normal
-HiLink sambaKeyword   Type
-HiLink sambaSection   Statement
-HiLink sambaMacro     PreProc
-HiLink sambaComment   Comment
-HiLink sambaContinue  Operator
-HiLink sambaBoolean   Constant
-delcommand HiLink
+hi def link sambaParameter Normal
+hi def link sambaKeyword   Type
+hi def link sambaSection   Statement
+hi def link sambaMacro     PreProc
+hi def link sambaComment   Comment
+hi def link sambaContinue  Operator
+hi def link sambaBoolean   Constant
 
 let b:current_syntax = "samba"
 

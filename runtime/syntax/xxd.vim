@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:		bin using xxd
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Oct 23, 2014
-" Version:		8
+" Last Change:	Aug 31, 2016
+" Version:		10
 " Notes:		use :help xxd   to see how to invoke it
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_XXD
 
@@ -17,14 +17,13 @@ syn match xxdAscii				"  .\{,16\}\r\=$"hs=s+2	contains=xxdDot
 syn match xxdDot	contained	"[.\r]"
 
 " Define the default highlighting.
-" Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
+if !exists("skip_xxd_syntax_inits")
 
-HiLink xxdAddress	Constant
-HiLink xxdSep		Identifier
-HiLink xxdAscii	Statement
+ hi def link xxdAddress	Constant
+ hi def link xxdSep		Identifier
+ hi def link xxdAscii	Statement
 
-delcommand HiLink
+endif
 
 let b:current_syntax = "xxd"
 

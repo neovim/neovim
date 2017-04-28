@@ -84,26 +84,24 @@ syn region	acedbString	start=/"/ end=/"/ skip=/\\"/ oneline
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink acedbMagic	Special
-HiLink acedbHyb	Special
-HiLink acedbType	Type
-HiLink acedbOption	Type
-HiLink acedbSubclass	Type
-HiLink acedbSubtag	Include
-HiLink acedbFlag	Include
-HiLink acedbTag	Include
-HiLink acedbClass	Todo
-HiLink acedbHelp	Todo
-HiLink acedbXref	Identifier
-HiLink acedbModifier	Label
-HiLink acedbComment	Comment
-HiLink acedbBlock	ModeMsg
-HiLink acedbNumber	Number
-HiLink acedbString	String
+hi def link acedbMagic	Special
+hi def link acedbHyb	Special
+hi def link acedbType	Type
+hi def link acedbOption	Type
+hi def link acedbSubclass	Type
+hi def link acedbSubtag	Include
+hi def link acedbFlag	Include
+hi def link acedbTag	Include
+hi def link acedbClass	Todo
+hi def link acedbHelp	Todo
+hi def link acedbXref	Identifier
+hi def link acedbModifier	Label
+hi def link acedbComment	Comment
+hi def link acedbBlock	ModeMsg
+hi def link acedbNumber	Number
+hi def link acedbString	String
 
-delcommand HiLink
 
 let b:current_syntax = "acedb"
 

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	xa 6502 cross assembler
 " Maintainer:	Clemens Kirchgatterer <clemens@1541.org>
-" Last Change:	2014 Jan 05
+" Last Change:	2016 Aug 31
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -136,20 +136,18 @@ syn match  a65Continue	"\\$" contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink a65Section	Special
-HiLink a65Address	Special
-HiLink a65Comment	Comment
-HiLink a65PreProc	PreProc
-HiLink a65Number	Number
-HiLink a65String	String
-HiLink a65Type	Statement
-HiLink a65Opcode	Type
-HiLink a65PC		Error
-HiLink a65Todo	Todo
-HiLink a65HiLo	Number
+hi def link a65Section	Special
+hi def link a65Address	Special
+hi def link a65Comment	Comment
+hi def link a65PreProc	PreProc
+hi def link a65Number	Number
+hi def link a65String	String
+hi def link a65Type	Statement
+hi def link a65Opcode	Type
+hi def link a65PC		Error
+hi def link a65Todo	Todo
+hi def link a65HiLo	Number
 
-delcommand HiLink
 
 let b:current_syntax = "a65"

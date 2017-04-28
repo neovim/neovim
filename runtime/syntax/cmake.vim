@@ -50,23 +50,21 @@ syn keyword cmakeTodo
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink cmakeStatement Statement
-HiLink cmakeComment Comment
-HiLink cmakeString String
-HiLink cmakeVariableValue Type
-HiLink cmakeRegistry Underlined
-HiLink cmakeArguments Identifier
-HiLink cmakeArgument Constant
-HiLink cmakeEnvironment Special
-HiLink cmakeOperators Operator
-HiLink cmakeMacro PreProc
-HiLink cmakeError Error
-HiLink cmakeTodo TODO
-HiLink cmakeEscaped Special
+hi def link cmakeStatement Statement
+hi def link cmakeComment Comment
+hi def link cmakeString String
+hi def link cmakeVariableValue Type
+hi def link cmakeRegistry Underlined
+hi def link cmakeArguments Identifier
+hi def link cmakeArgument Constant
+hi def link cmakeEnvironment Special
+hi def link cmakeOperators Operator
+hi def link cmakeMacro PreProc
+hi def link cmakeError Error
+hi def link cmakeTodo TODO
+hi def link cmakeEscaped Special
 
-delcommand HiLink
 
 let b:current_syntax = "cmake"
 

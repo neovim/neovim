@@ -129,27 +129,25 @@ syn sync minlines=10 maxlines=100
 
 " Define the default highlighting.
 " Only when and item doesn't have highlighting yet.
-command -nargs=+ HiLink hi def link <args>
 
-HiLink stpConditional Conditional
-HiLink stpComment Comment
-HiLink stpKeyword Keyword
-HiLink stpNumber Number
-HiLink stpOperator Operator
-HiLink stpSpecial Special
-HiLink stpStatement Statement
-HiLink stpString String
-HiLink stpStringError Error
-HiLink stpType Type
-HiLink stpTodo Todo
-HiLink stpFunction Function
-HiLink stpGlobals Macro
-HiLink stpParen Normal
-HiLink stpParenError Error
-HiLink stpSQLKeyword Function
-HiLink stpRepeat Repeat
+hi def link stpConditional Conditional
+hi def link stpComment Comment
+hi def link stpKeyword Keyword
+hi def link stpNumber Number
+hi def link stpOperator Operator
+hi def link stpSpecial Special
+hi def link stpStatement Statement
+hi def link stpString String
+hi def link stpStringError Error
+hi def link stpType Type
+hi def link stpTodo Todo
+hi def link stpFunction Function
+hi def link stpGlobals Macro
+hi def link stpParen Normal
+hi def link stpParenError Error
+hi def link stpSQLKeyword Function
+hi def link stpRepeat Repeat
 
-delcommand HiLink
 
 let b:current_syntax = "stp"
 

@@ -30,17 +30,15 @@ syn match  ecdTagError	contained "[^>]<"ms=s+1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink ecdComment	Comment
-HiLink ecdAttr	Type
-HiLink ecdAttrN	Statement
-HiLink ecdAttrV	Value
-HiLink ecdTag		Function
-HiLink ecdTagN	Statement
-HiLink ecdTagError	Error
+hi def link ecdComment	Comment
+hi def link ecdAttr	Type
+hi def link ecdAttrN	Statement
+hi def link ecdAttrV	Value
+hi def link ecdTag		Function
+hi def link ecdTagN	Statement
+hi def link ecdTagError	Error
 
-delcommand HiLink
 
 let b:current_syntax = "ecd"
 " vim: ts=8

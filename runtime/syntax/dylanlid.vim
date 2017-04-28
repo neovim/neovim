@@ -19,12 +19,10 @@ syn sync	lines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dylanlidInfo		Type
-HiLink dylanlidEntry		String
+hi def link dylanlidInfo		Type
+hi def link dylanlidEntry		String
 
-delcommand HiLink
 
 let b:current_syntax = "dylanlid"
 

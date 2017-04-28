@@ -61,30 +61,28 @@ syn region descTagRegion start=/^\[\(F\|FLAG\)\]/ end=/$/ contains=descTag,descF
 syn region descTagRegion start=/^\[\(L\|LICENSE\)\]/ end=/$/ contains=descTag,descLicense
 
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink descFlag		Identifier
-HiLink descLicense		Identifier
-HiLink descCategory		Identifier
+hi def link descFlag		Identifier
+hi def link descLicense		Identifier
+hi def link descCategory		Identifier
 
-HiLink descTag		Type
-HiLink descUrl		Underlined
-HiLink descEmail		Underlined
+hi def link descTag		Type
+hi def link descUrl		Underlined
+hi def link descEmail		Underlined
 
 " priority tag colors
-HiLink descInstallX		Boolean
-HiLink descInstallO		Type
-HiLink descDash		Operator
-HiLink descDigit		Number
-HiLink descCompilePriority	Number
+hi def link descInstallX		Boolean
+hi def link descInstallO		Type
+hi def link descDash		Operator
+hi def link descDigit		Number
+hi def link descCompilePriority	Number
 
 " download tag colors
-HiLink descSum		Number
-HiLink descTarball		Underlined
+hi def link descSum		Number
+hi def link descTarball		Underlined
 
 " tag region colors
-HiLink descText		Comment
+hi def link descText		Comment
 
-delcommand HiLink
 
 let b:current_syntax = "desc"

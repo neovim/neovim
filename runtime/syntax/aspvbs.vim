@@ -158,22 +158,20 @@ syn sync match htmlHighlight grouphere htmlTag "%>"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-"HiLink AspVBScript		Special
-HiLink AspVBSLineNumber	Comment
-HiLink AspVBSNumber		Number
-HiLink AspVBSError		Error
-HiLink AspVBSStatement	Statement
-HiLink AspVBSString		String
-HiLink AspVBSComment		Comment
-HiLink AspVBSTodo		Todo
-HiLink AspVBSFunction		Identifier
-HiLink AspVBSMethods		PreProc
-HiLink AspVBSEvents		Special
-HiLink AspVBSTypeSpecifier	Type
+"hi def link AspVBScript		Special
+hi def link AspVBSLineNumber	Comment
+hi def link AspVBSNumber		Number
+hi def link AspVBSError		Error
+hi def link AspVBSStatement	Statement
+hi def link AspVBSString		String
+hi def link AspVBSComment		Comment
+hi def link AspVBSTodo		Todo
+hi def link AspVBSFunction		Identifier
+hi def link AspVBSMethods		PreProc
+hi def link AspVBSEvents		Special
+hi def link AspVBSTypeSpecifier	Type
 
-delcommand HiLink
 
 let b:current_syntax = "aspvbs"
 

@@ -38,16 +38,14 @@ syn region  dcdComment		start="\*" end="\;"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dcdFunction		Identifier
-HiLink dcdLabel		Constant
-HiLink dcdConditional		Conditional
-HiLink dcdDisplay		Type
-HiLink dcdStatement		Statement
-HiLink dcdSpecial		Special
-HiLink dcdComment		Comment
+hi def link dcdFunction		Identifier
+hi def link dcdLabel		Constant
+hi def link dcdConditional		Conditional
+hi def link dcdDisplay		Type
+hi def link dcdStatement		Statement
+hi def link dcdSpecial		Special
+hi def link dcdComment		Comment
 
-delcommand HiLink
 
 let b:current_syntax = "dcd"

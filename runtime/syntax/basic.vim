@@ -141,25 +141,23 @@ syn match   basicMathsOperator   "-\|=\|[:<>+\*^/\\]\|AND\|OR"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink basicLabel		Label
-HiLink basicConditional	Conditional
-HiLink basicRepeat		Repeat
-HiLink basicLineNumber	Comment
-HiLink basicNumber		Number
-HiLink basicError		Error
-HiLink basicStatement	Statement
-HiLink basicString		String
-HiLink basicComment		Comment
-HiLink basicSpecial		Special
-HiLink basicTodo		Todo
-HiLink basicFunction		Identifier
-HiLink basicTypeSpecifier Type
-HiLink basicFilenumber basicTypeSpecifier
+hi def link basicLabel		Label
+hi def link basicConditional	Conditional
+hi def link basicRepeat		Repeat
+hi def link basicLineNumber	Comment
+hi def link basicNumber		Number
+hi def link basicError		Error
+hi def link basicStatement	Statement
+hi def link basicString		String
+hi def link basicComment		Comment
+hi def link basicSpecial		Special
+hi def link basicTodo		Todo
+hi def link basicFunction		Identifier
+hi def link basicTypeSpecifier Type
+hi def link basicFilenumber basicTypeSpecifier
 "hi basicMathsOperator term=bold cterm=bold gui=bold
 
-delcommand HiLink
 
 let b:current_syntax = "basic"
 

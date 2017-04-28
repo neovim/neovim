@@ -20,16 +20,14 @@ syn region ldifFileValue   matchgroup=ldifPunctuation start=/:< / end=/\_$/ skip
 
 syn region ldifComment start=/^#/ end=/\_$/ skip=/\n /
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink ldifAttribute		Type
-HiLink ldifOption		Identifier
-HiLink ldifPunctuation	Normal
-HiLink ldifStringValue	String
-HiLink ldifBase64Value	Special
-HiLink ldifFileValue		Special
-HiLink ldifComment		Comment
+hi def link ldifAttribute		Type
+hi def link ldifOption		Identifier
+hi def link ldifPunctuation	Normal
+hi def link ldifStringValue	String
+hi def link ldifBase64Value	Special
+hi def link ldifFileValue		Special
+hi def link ldifComment		Comment
 
-delcommand HiLink
 
 let b:current_syntax = "ldif"

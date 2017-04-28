@@ -63,14 +63,12 @@ syn keyword	cynlibType	   In Out InST OutST Int Uint Const Cynclock
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink cynlibOperator   Operator
-HiLink cynlibMacro      Statement
-HiLink cynlibFunction   Statement
-HiLink cynlibppMacro      Statement
-HiLink cynlibType       Type
+hi def link cynlibOperator   Operator
+hi def link cynlibMacro      Statement
+hi def link cynlibFunction   Statement
+hi def link cynlibppMacro      Statement
+hi def link cynlibType       Type
 
-delcommand HiLink
 
 let b:current_syntax = "cynlib"

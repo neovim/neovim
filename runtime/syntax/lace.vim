@@ -83,41 +83,39 @@ syn sync lines=40
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink laceTopStruct			PreProc
+hi def link laceTopStruct			PreProc
 
-HiLink laceOptionClause		Statement
-HiLink laceOptionMark			Constant
-HiLink laceClusterProp		Label
-HiLink laceAdaptClassName		Label
-HiLink laceExternal			Statement
-HiLink laceCluster			ModeMsg
+hi def link laceOptionClause		Statement
+hi def link laceOptionMark			Constant
+hi def link laceClusterProp		Label
+hi def link laceAdaptClassName		Label
+hi def link laceExternal			Statement
+hi def link laceCluster			ModeMsg
 
-HiLink laceEscape				Special
+hi def link laceEscape				Special
 
-HiLink laceBool				Boolean
-HiLink laceString				String
-HiLink laceCharacter			Character
-HiLink laceClassName			Type
-HiLink laceNumber				Number
+hi def link laceBool				Boolean
+hi def link laceString				String
+hi def link laceCharacter			Character
+hi def link laceClassName			Type
+hi def link laceNumber				Number
 
-HiLink laceOperator			Special
-HiLink laceArray				Special
-HiLink laceExport				Special
-HiLink laceCreation			Special
-HiLink laceBrackets			Special
-HiLink laceConstraint			Special
+hi def link laceOperator			Special
+hi def link laceArray				Special
+hi def link laceExport				Special
+hi def link laceCreation			Special
+hi def link laceBrackets			Special
+hi def link laceConstraint			Special
 
-HiLink laceComment			Comment
+hi def link laceComment			Comment
 
-HiLink laceError				Error
-HiLink laceStringError		Error
-HiLink laceParenError			Error
-HiLink laceBracketError		Error
-HiLink laceTodo				Todo
+hi def link laceError				Error
+hi def link laceStringError		Error
+hi def link laceParenError			Error
+hi def link laceBracketError		Error
+hi def link laceTodo				Todo
 
-delcommand HiLink
 
 let b:current_syntax = "lace"
 

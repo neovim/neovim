@@ -68,48 +68,46 @@ syn sync ccomment bComment minlines=10
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink bLabel	Label
-HiLink bUserLabel	Label
-HiLink bConditional	Conditional
-HiLink bRepeat	Repeat
-HiLink bLogic	Special
-HiLink bCharacter	Character
-HiLink bSpecialCharacter bSpecial
-HiLink bNumber	Number
-HiLink bFloat	Float
-HiLink bOctalError	bError
-HiLink bParenError	bError
-" HiLink bInParen	bError
-HiLink bCommentError	bError
-HiLink bBoolean	Identifier
-HiLink bConstant	Identifier
-HiLink bGuard	Identifier
-HiLink bOperator	Operator
-HiLink bKeywords	Operator
-HiLink bOps		Identifier
-HiLink bStructure	Structure
-HiLink bStorageClass	StorageClass
-HiLink bInclude	Include
-HiLink bPreProc	PreProc
-HiLink bDefine	Macro
-HiLink bIncluded	bString
-HiLink bError	Error
-HiLink bStatement	Statement
-HiLink bPreCondit	PreCondit
-HiLink bType		Type
-HiLink bCommentError	bError
-HiLink bCommentString bString
-HiLink bComment2String bString
-HiLink bCommentSkip	bComment
-HiLink bString	String
-HiLink bComment	Comment
-HiLink bSpecial	SpecialChar
-HiLink bTodo		Todo
+hi def link bLabel	Label
+hi def link bUserLabel	Label
+hi def link bConditional	Conditional
+hi def link bRepeat	Repeat
+hi def link bLogic	Special
+hi def link bCharacter	Character
+hi def link bSpecialCharacter bSpecial
+hi def link bNumber	Number
+hi def link bFloat	Float
+hi def link bOctalError	bError
+hi def link bParenError	bError
+" hi def link bInParen	bError
+hi def link bCommentError	bError
+hi def link bBoolean	Identifier
+hi def link bConstant	Identifier
+hi def link bGuard	Identifier
+hi def link bOperator	Operator
+hi def link bKeywords	Operator
+hi def link bOps		Identifier
+hi def link bStructure	Structure
+hi def link bStorageClass	StorageClass
+hi def link bInclude	Include
+hi def link bPreProc	PreProc
+hi def link bDefine	Macro
+hi def link bIncluded	bString
+hi def link bError	Error
+hi def link bStatement	Statement
+hi def link bPreCondit	PreCondit
+hi def link bType		Type
+hi def link bCommentError	bError
+hi def link bCommentString bString
+hi def link bComment2String bString
+hi def link bCommentSkip	bComment
+hi def link bString	String
+hi def link bComment	Comment
+hi def link bSpecial	SpecialChar
+hi def link bTodo		Todo
 "hi link bIdentifier	Identifier
-delcommand HiLink
 
 let b:current_syntax = "b"
 

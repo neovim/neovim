@@ -55,53 +55,51 @@ syn match purifyLogZPW "^ZPW:.*$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink purifyLogFIU purifyLogInformational
-HiLink purifyLogMAF purifyLogInformational
-HiLink purifyLogMIU purifyLogInformational
-HiLink purifyLogSIG purifyLogInformational
-HiLink purifyLogWPF purifyLogInformational
-HiLink purifyLogWPM purifyLogInformational
-HiLink purifyLogWPN purifyLogInformational
-HiLink purifyLogWPR purifyLogInformational
-HiLink purifyLogWPW purifyLogInformational
-HiLink purifyLogWPX purifyLogInformational
+hi def link purifyLogFIU purifyLogInformational
+hi def link purifyLogMAF purifyLogInformational
+hi def link purifyLogMIU purifyLogInformational
+hi def link purifyLogSIG purifyLogInformational
+hi def link purifyLogWPF purifyLogInformational
+hi def link purifyLogWPM purifyLogInformational
+hi def link purifyLogWPN purifyLogInformational
+hi def link purifyLogWPR purifyLogInformational
+hi def link purifyLogWPW purifyLogInformational
+hi def link purifyLogWPX purifyLogInformational
 
-HiLink purifyLogABR purifyLogWarning
-HiLink purifyLogBSR purifyLogWarning
-HiLink purifyLogBSW purifyLogWarning
-HiLink purifyLogFMR purifyLogWarning
-HiLink purifyLogMLK purifyLogWarning
-HiLink purifyLogMSE purifyLogWarning
-HiLink purifyLogPAR purifyLogWarning
-HiLink purifyLogPLK purifyLogWarning
-HiLink purifyLogSBR purifyLogWarning
-HiLink purifyLogSOF purifyLogWarning
-HiLink purifyLogUMC purifyLogWarning
-HiLink purifyLogUMR purifyLogWarning
+hi def link purifyLogABR purifyLogWarning
+hi def link purifyLogBSR purifyLogWarning
+hi def link purifyLogBSW purifyLogWarning
+hi def link purifyLogFMR purifyLogWarning
+hi def link purifyLogMLK purifyLogWarning
+hi def link purifyLogMSE purifyLogWarning
+hi def link purifyLogPAR purifyLogWarning
+hi def link purifyLogPLK purifyLogWarning
+hi def link purifyLogSBR purifyLogWarning
+hi def link purifyLogSOF purifyLogWarning
+hi def link purifyLogUMC purifyLogWarning
+hi def link purifyLogUMR purifyLogWarning
 
-HiLink purifyLogABW purifyLogCorrupting
-HiLink purifyLogBRK purifyLogCorrupting
-HiLink purifyLogFMW purifyLogCorrupting
-HiLink purifyLogFNH purifyLogCorrupting
-HiLink purifyLogFUM purifyLogCorrupting
-HiLink purifyLogMRE purifyLogCorrupting
-HiLink purifyLogSBW purifyLogCorrupting
+hi def link purifyLogABW purifyLogCorrupting
+hi def link purifyLogBRK purifyLogCorrupting
+hi def link purifyLogFMW purifyLogCorrupting
+hi def link purifyLogFNH purifyLogCorrupting
+hi def link purifyLogFUM purifyLogCorrupting
+hi def link purifyLogMRE purifyLogCorrupting
+hi def link purifyLogSBW purifyLogCorrupting
 
-HiLink purifyLogCOR purifyLogFatal
-HiLink purifyLogNPR purifyLogFatal
-HiLink purifyLogNPW purifyLogFatal
-HiLink purifyLogZPR purifyLogFatal
-HiLink purifyLogZPW purifyLogFatal
+hi def link purifyLogCOR purifyLogFatal
+hi def link purifyLogNPR purifyLogFatal
+hi def link purifyLogNPW purifyLogFatal
+hi def link purifyLogZPR purifyLogFatal
+hi def link purifyLogZPW purifyLogFatal
 
-HiLink purifyLogHeader		Comment
-HiLink purifyLogInformational	PreProc
-HiLink purifyLogWarning		Type
-HiLink purifyLogCorrupting	Error
-HiLink purifyLogFatal		Error
+hi def link purifyLogHeader		Comment
+hi def link purifyLogInformational	PreProc
+hi def link purifyLogWarning		Type
+hi def link purifyLogCorrupting	Error
+hi def link purifyLogFatal		Error
 
-delcommand HiLink
 
 let b:current_syntax = "purifylog"
 

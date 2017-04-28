@@ -53,16 +53,14 @@ syn match	snnsnetNumbers	"\d" contained
 syn match	snnsnetComment	"#.*$" contains=snnsnetTodo
 syn keyword	snnsnetTodo	TODO XXX FIXME contained
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink snnsnetType		Type
-HiLink snnsnetComment		Comment
-HiLink snnsnetNumbers		Number
-HiLink snnsnetSection		Statement
-HiLink snnsnetTitle		Label
-HiLink snnsnetTodo		Todo
+hi def link snnsnetType		Type
+hi def link snnsnetComment		Comment
+hi def link snnsnetNumbers		Number
+hi def link snnsnetSection		Statement
+hi def link snnsnetTitle		Label
+hi def link snnsnetTodo		Todo
 
-delcommand HiLink
 
 let b:current_syntax = "snnsnet"
 

@@ -77,38 +77,36 @@ syn match       snobol4ErrInBracket display contained "[){}]\|<%\|%>"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink snobol4Constant        Constant
-HiLink snobol4Label           Label
-HiLink snobol4Goto            Repeat
-HiLink snobol4Conditional     Conditional
-HiLink snobol4Repeat          Repeat
-HiLink snobol4Number          Number
-HiLink snobol4Error           Error
-HiLink snobol4Statement       PreProc
-HiLink snobol4BogusStatement  snobol4Error
-HiLink snobol4String          String
-HiLink snobol4Comment         Comment
-HiLink snobol4Special         Special
-HiLink snobol4Todo            Todo
-HiLink snobol4Keyword         Keyword
-HiLink snobol4Function        Function
-HiLink snobol4MathsOperator   Operator
-HiLink snobol4ParenError      snobol4Error
-HiLink snobol4ErrInParen      snobol4Error
-HiLink snobol4ErrInBracket    snobol4Error
-HiLink snobol4SysVar          Keyword
-HiLink snobol4BogusSysVar     snobol4Error
+hi def link snobol4Constant        Constant
+hi def link snobol4Label           Label
+hi def link snobol4Goto            Repeat
+hi def link snobol4Conditional     Conditional
+hi def link snobol4Repeat          Repeat
+hi def link snobol4Number          Number
+hi def link snobol4Error           Error
+hi def link snobol4Statement       PreProc
+hi def link snobol4BogusStatement  snobol4Error
+hi def link snobol4String          String
+hi def link snobol4Comment         Comment
+hi def link snobol4Special         Special
+hi def link snobol4Todo            Todo
+hi def link snobol4Keyword         Keyword
+hi def link snobol4Function        Function
+hi def link snobol4MathsOperator   Operator
+hi def link snobol4ParenError      snobol4Error
+hi def link snobol4ErrInParen      snobol4Error
+hi def link snobol4ErrInBracket    snobol4Error
+hi def link snobol4SysVar          Keyword
+hi def link snobol4BogusSysVar     snobol4Error
 if exists("snobol4_strict_mode")
-HiLink snobol4ExtSysVar       WarningMsg
-HiLink snobol4ExtKeyword      WarningMsg
+hi def link snobol4ExtSysVar       WarningMsg
+hi def link snobol4ExtKeyword      WarningMsg
 else
-HiLink snobol4ExtSysVar       snobol4SysVar
-HiLink snobol4ExtKeyword      snobol4Keyword
+hi def link snobol4ExtSysVar       snobol4SysVar
+hi def link snobol4ExtKeyword      snobol4Keyword
 endif
 
-delcommand HiLink
 
 let b:current_syntax = "snobol4"
 " vim: ts=8

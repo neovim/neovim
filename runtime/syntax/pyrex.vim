@@ -37,17 +37,15 @@ syn match   pythonInclude     "from"
 syn match   pyrexForFrom        "\(for[^:]*\)\@<=from"
 
 " Default highlighting
-command -nargs=+ HiLink hi def link <args>
-HiLink pyrexStatement		Statement
-HiLink pyrexType		Type
-HiLink pyrexStructure		Structure
-HiLink pyrexInclude		PreCondit
-HiLink pyrexAccess		pyrexStatement
+hi def link pyrexStatement		Statement
+hi def link pyrexType		Type
+hi def link pyrexStructure		Structure
+hi def link pyrexInclude		PreCondit
+hi def link pyrexAccess		pyrexStatement
 if exists("python_highlight_builtins") || exists("pyrex_highlight_builtins")
-HiLink pyrexBuiltin	Function
+hi def link pyrexBuiltin	Function
 endif
-HiLink pyrexForFrom		Statement
+hi def link pyrexForFrom		Statement
 
-delcommand HiLink
 
 let b:current_syntax = "pyrex"

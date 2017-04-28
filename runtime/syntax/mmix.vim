@@ -119,35 +119,33 @@ syn keyword mmixRegister	rBB rTT rWW rXX rYY rZZ
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink mmixAt		Type
-HiLink mmixPseudo	Type
-HiLink mmixRegister	Special
-HiLink mmixSegments	Type
+hi def link mmixAt		Type
+hi def link mmixPseudo	Type
+hi def link mmixRegister	Special
+hi def link mmixSegments	Type
 
-HiLink mmixLabel	Special
-HiLink mmixComment	Comment
-HiLink mmixOpcode	Keyword
+hi def link mmixLabel	Special
+hi def link mmixComment	Comment
+hi def link mmixOpcode	Keyword
 
-HiLink hexNumber	Number
-HiLink decNumber	Number
-HiLink octNumber	Number
+hi def link hexNumber	Number
+hi def link decNumber	Number
+hi def link octNumber	Number
 
-HiLink mmixString	String
-HiLink mmixChar	String
+hi def link mmixString	String
+hi def link mmixChar	String
 
-HiLink mmixType	Type
-HiLink mmixIdentifier	Normal
-HiLink mmixSpecialComment Comment
+hi def link mmixType	Type
+hi def link mmixIdentifier	Normal
+hi def link mmixSpecialComment Comment
 
 " My default color overrides:
 " hi mmixSpecialComment ctermfg=red
 "hi mmixLabel ctermfg=lightcyan
 " hi mmixType ctermbg=black ctermfg=brown
 
-delcommand HiLink
 
 let b:current_syntax = "mmix"
 

@@ -215,35 +215,33 @@ if exists("ncf_highlight_unknowns")
     syn match Error "[^ \t]*" contains=ALL
 endif
 
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink ncfCommands		Statement
-HiLink ncfSetCommands	ncfCommands
-HiLink ncfLogins		ncfCommands
-HiLink ncfString		String
-HiLink ncfContString	ncfString
-HiLink ncfComment		Comment
-HiLink ncfImplicit		Type
-HiLink ncfBoolean		Boolean
-HiLink ncfScript		Identifier
-HiLink ncfNumber		Number
-HiLink ncfIPAddr		ncfNumber
-HiLink ncfHexNumber		ncfNumber
-HiLink ncfTime		ncfNumber
-HiLink ncfDSTTime		ncfNumber
-HiLink ncfPath		Constant
-HiLink ncfServerName	Special
-HiLink ncfIPXNet		ncfServerName
-HiLink ncfTimeTypes		Constant
-HiLink ncfSetCommandsNum	   ncfSetCommands
-HiLink ncfSetCommandsBool	   ncfSetCommands
-HiLink ncfSetCommandsStr	   ncfSetCommands
-HiLink ncfSetCommandsTime	   ncfSetCommands
-HiLink ncfSetCommandsTimeDate  ncfSetCommands
-HiLink ncfSetCommandsBindCon   ncfSetCommands
+hi def link ncfCommands		Statement
+hi def link ncfSetCommands	ncfCommands
+hi def link ncfLogins		ncfCommands
+hi def link ncfString		String
+hi def link ncfContString	ncfString
+hi def link ncfComment		Comment
+hi def link ncfImplicit		Type
+hi def link ncfBoolean		Boolean
+hi def link ncfScript		Identifier
+hi def link ncfNumber		Number
+hi def link ncfIPAddr		ncfNumber
+hi def link ncfHexNumber		ncfNumber
+hi def link ncfTime		ncfNumber
+hi def link ncfDSTTime		ncfNumber
+hi def link ncfPath		Constant
+hi def link ncfServerName	Special
+hi def link ncfIPXNet		ncfServerName
+hi def link ncfTimeTypes		Constant
+hi def link ncfSetCommandsNum	   ncfSetCommands
+hi def link ncfSetCommandsBool	   ncfSetCommands
+hi def link ncfSetCommandsStr	   ncfSetCommands
+hi def link ncfSetCommandsTime	   ncfSetCommands
+hi def link ncfSetCommandsTimeDate  ncfSetCommands
+hi def link ncfSetCommandsBindCon   ncfSetCommands
 
-delcommand HiLink
 
 
 let b:current_syntax = "ncf"

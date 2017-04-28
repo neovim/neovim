@@ -75,36 +75,34 @@ exec "sy sync ccomment melComment minlines=" . mel_minlines
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink melBoolean	Boolean
-HiLink melFunction	Function
-HiLink melIdentifier	Identifier
-HiLink melStatement	Statement
-HiLink melConditional Conditional
-HiLink melRepeat	Repeat
-HiLink melLabel	Label
-HiLink melOperator	Operator
-HiLink melKeyword	Keyword
-HiLink melException	Exception
-HiLink melInclude	Include
-HiLink melType	Type
-HiLink melStorageClass StorageClass
-HiLink melDebug	Debug
-HiLink melTodo	Todo
-HiLink melCharSpecial SpecialChar
-HiLink melString	String
-HiLink melInteger	Number
-HiLink melFloat	Float
-HiLink melMatrixVector Float
-HiLink melComment	Comment
-HiLink melError	Error
-HiLink melSpaceError	melError
-HiLink melCharError	melError
-HiLink melParenError	melError
-HiLink melInParen	melError
-HiLink melCommentError melError
+hi def link melBoolean	Boolean
+hi def link melFunction	Function
+hi def link melIdentifier	Identifier
+hi def link melStatement	Statement
+hi def link melConditional Conditional
+hi def link melRepeat	Repeat
+hi def link melLabel	Label
+hi def link melOperator	Operator
+hi def link melKeyword	Keyword
+hi def link melException	Exception
+hi def link melInclude	Include
+hi def link melType	Type
+hi def link melStorageClass StorageClass
+hi def link melDebug	Debug
+hi def link melTodo	Todo
+hi def link melCharSpecial SpecialChar
+hi def link melString	String
+hi def link melInteger	Number
+hi def link melFloat	Float
+hi def link melMatrixVector Float
+hi def link melComment	Comment
+hi def link melError	Error
+hi def link melSpaceError	melError
+hi def link melCharError	melError
+hi def link melParenError	melError
+hi def link melInParen	melError
+hi def link melCommentError melError
 
-delcommand HiLink
 
 let b:current_syntax = "mel"

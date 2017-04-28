@@ -102,15 +102,13 @@ endif
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink mpTeXinsert	String
-HiLink mpTeXbegin	Statement
-HiLink mpTeXend	Statement
-HiLink mpInternal	mfInternal
-HiLink mpMacro	Macro
+hi def link mpTeXinsert	String
+hi def link mpTeXbegin	Statement
+hi def link mpTeXend	Statement
+hi def link mpInternal	mfInternal
+hi def link mpMacro	Macro
 
-delcommand HiLink
 
 let b:current_syntax = "mp"
 

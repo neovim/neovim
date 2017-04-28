@@ -69,18 +69,16 @@ syn keyword systemverilogStatement   implements
 syn keyword systemverilogStatement   interconnect soft nettype
 
 " Define the default highlighting.
-command -nargs=+ HiLink hi def link <args>
 
 " The default highlighting.
-HiLink systemverilogStatement       Statement
-HiLink systemverilogTypeDef         TypeDef
-HiLink systemverilogConditional     Conditional
-HiLink systemverilogRepeat          Repeat
-HiLink systemverilogLabel           Label
-HiLink systemverilogGlobal          Define
-HiLink systemverilogNumber          Number
+hi def link systemverilogStatement       Statement
+hi def link systemverilogTypeDef         TypeDef
+hi def link systemverilogConditional     Conditional
+hi def link systemverilogRepeat          Repeat
+hi def link systemverilogLabel           Label
+hi def link systemverilogGlobal          Define
+hi def link systemverilogNumber          Number
 
-delcommand HiLink
 
 let b:current_syntax = "systemverilog"
 

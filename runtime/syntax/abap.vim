@@ -169,29 +169,27 @@ syn match   abapTodo     "\#EC\W\+\w\+"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink abapError          Error
-HiLink abapComment        Comment
-HiLink abapInclude        Include
-HiLink abapStatement      Statement
-HiLink abapComplexStatement      Statement
-HiLink abapSpecial        Special
-HiLink abapNamespace      Special
-HiLink abapSpecialTables  Special
-HiLink abapSymbolOperator abapOperator
-HiLink abapOperator       Operator
-HiLink abapCharString     String
-HiLink abapString         String
-HiLink abapFloat          Float
-HiLink abapTypes          Type
-HiLink abapSymbol         Structure
-HiLink abapStructure      Structure
-HiLink abapField          Variable
-HiLink abapNumber         Number
-HiLink abapHex            Number
+hi def link abapError          Error
+hi def link abapComment        Comment
+hi def link abapInclude        Include
+hi def link abapStatement      Statement
+hi def link abapComplexStatement      Statement
+hi def link abapSpecial        Special
+hi def link abapNamespace      Special
+hi def link abapSpecialTables  Special
+hi def link abapSymbolOperator abapOperator
+hi def link abapOperator       Operator
+hi def link abapCharString     String
+hi def link abapString         String
+hi def link abapFloat          Float
+hi def link abapTypes          Type
+hi def link abapSymbol         Structure
+hi def link abapStructure      Structure
+hi def link abapField          Variable
+hi def link abapNumber         Number
+hi def link abapHex            Number
 
-delcommand HiLink
 
 let b:current_syntax = "abap"
 

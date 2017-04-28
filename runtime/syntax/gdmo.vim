@@ -62,23 +62,21 @@ syn sync ccomment gdmoComment
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink gdmoCategory	      Structure
-HiLink gdmoRelationship     Macro
-HiLink gdmoDefinition       Statement
-HiLink gdmoReference	      Type
-HiLink gdmoExtension	      Operator
-HiLink gdmoBraces	      Function
-HiLink gdmoSpecial	      Special
-HiLink gdmoString	      String
-HiLink gdmoCharacter	      Character
-HiLink gdmoSpecialCharacter gdmoSpecial
-HiLink gdmoComment	      Comment
-HiLink gdmoLineComment      gdmoComment
-HiLink gdmoType	      Type
+hi def link gdmoCategory	      Structure
+hi def link gdmoRelationship     Macro
+hi def link gdmoDefinition       Statement
+hi def link gdmoReference	      Type
+hi def link gdmoExtension	      Operator
+hi def link gdmoBraces	      Function
+hi def link gdmoSpecial	      Special
+hi def link gdmoString	      String
+hi def link gdmoCharacter	      Character
+hi def link gdmoSpecialCharacter gdmoSpecial
+hi def link gdmoComment	      Comment
+hi def link gdmoLineComment      gdmoComment
+hi def link gdmoType	      Type
 
-delcommand HiLink
 
 let b:current_syntax = "gdmo"
 

@@ -26,13 +26,11 @@ syn match   masterComment	"\$.*"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink masterKeyword Keyword
-HiLink masterComment Comment
-HiLink masterString  String
+hi def link masterKeyword Keyword
+hi def link masterComment Comment
+hi def link masterString  String
 
-delcommand HiLink
 
 let b:current_syntax = "master"
 

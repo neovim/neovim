@@ -107,26 +107,25 @@ syn sync ccomment formComment minlines=10
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink formConditional	Conditional
-HiLink formNumber		Number
-HiLink formStatement		Statement
-HiLink formComment		Comment
-HiLink formPreProc		PreProc
-HiLink formDirective		PreProc
-HiLink formType		Type
-HiLink formString		String
-HiLink formNestedString	String
-HiLink formReserved           Error
-HiLink formTodo               Todo
-HiLink formSpecial            SpecialChar
+hi def link formConditional	Conditional
+hi def link formNumber		Number
+hi def link formStatement		Statement
+hi def link formComment		Comment
+hi def link formPreProc		PreProc
+hi def link formDirective		PreProc
+hi def link formType		Type
+hi def link formString		String
+hi def link formNestedString	String
+hi def link formReserved           Error
+hi def link formTodo               Todo
+hi def link formSpecial            SpecialChar
 
 if !exists("form_enhanced_color")
-HiLink formHeaderStatement	Statement
+hi def link formHeaderStatement	Statement
 else
 " enhanced color mode
-HiLink formHeaderStatement	HeaderStatement
+hi def link formHeaderStatement	HeaderStatement
 " dark and a light background for local types
 if &background == "dark"
 hi HeaderStatement term=underline ctermfg=LightGreen guifg=LightGreen gui=bold
@@ -140,7 +139,6 @@ hi Statement guifg=LightYellow
 endif
 endif
 
-delcommand HiLink
 
   let b:current_syntax = "form"
 

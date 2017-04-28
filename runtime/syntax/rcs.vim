@@ -50,16 +50,14 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet.
-command -nargs=+ HiLink hi def link <args>
 
-HiLink rcsKeyword     Keyword
-HiLink rcsNumber      Identifier
-HiLink rcsString      String
-HiLink rcsTextStr     String
-HiLink rcsSpecial     Special
-HiLink rcsDiffLines   Special
-HiLink rcsEOFError    Error
+hi def link rcsKeyword     Keyword
+hi def link rcsNumber      Identifier
+hi def link rcsString      String
+hi def link rcsTextStr     String
+hi def link rcsSpecial     Special
+hi def link rcsDiffLines   Special
+hi def link rcsEOFError    Error
 
-delcommand HiLink
 
 let b:current_syntax = "rcs"

@@ -61,23 +61,21 @@ syn match elfPunct "[,;]"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting. Can be overridden later.
-HiLink elfComment Comment
-HiLink elfPPCom Include
-HiLink elfKeyword Keyword
-HiLink elfSpecial Special
-HiLink elfEnvironment Special
-HiLink elfBraceError Error
-HiLink elfConditional Conditional
-HiLink elfMacro Function
-HiLink elfNumber Number
-HiLink elfString String
-HiLink elfParens Delimiter
-HiLink elfPunct Delimiter
+hi def link elfComment Comment
+hi def link elfPPCom Include
+hi def link elfKeyword Keyword
+hi def link elfSpecial Special
+hi def link elfEnvironment Special
+hi def link elfBraceError Error
+hi def link elfConditional Conditional
+hi def link elfMacro Function
+hi def link elfNumber Number
+hi def link elfString String
+hi def link elfParens Delimiter
+hi def link elfPunct Delimiter
 
-delcommand HiLink
 
 let b:current_syntax = "elf"
 

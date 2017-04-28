@@ -35,19 +35,17 @@ syn region  configstring matchgroup=configfunction start="AC_MSG_[A-Z]*\ze([^[]"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink configdelimiter Delimiter
-HiLink configoperator  Operator
-HiLink configcomment   Comment
-HiLink configDnl  	 Comment
-HiLink configfunction  Function
-HiLink confignumber    Number
-HiLink configkeyword   Keyword
-HiLink configspecial   Special
-HiLink configstring    String
+hi def link configdelimiter Delimiter
+hi def link configoperator  Operator
+hi def link configcomment   Comment
+hi def link configDnl  	 Comment
+hi def link configfunction  Function
+hi def link confignumber    Number
+hi def link configkeyword   Keyword
+hi def link configspecial   Special
+hi def link configstring    String
 
-delcommand HiLink
 
 let b:current_syntax = "config"
 

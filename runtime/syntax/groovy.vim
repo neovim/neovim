@@ -56,9 +56,6 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-" don't use standard HiLink, it will not work with included syntax files
-command! -nargs=+ GroovyHiLink hi def link <args>
-
 " ##########################
 " Java stuff taken from java.vim
 " some characters that cannot be in a groovy program (outside a string)
@@ -138,9 +135,9 @@ if exists("groovy_highlight_groovy_lang_ids") || exists("groovy_highlight_groovy
   syn keyword groovyJavaLangObject clone equals finalize getClass hashCode
   syn keyword groovyJavaLangObject notify notifyAll toString wait
 
-  GroovyHiLink groovyLangClass                   groovyConstant
-  GroovyHiLink groovyJavaLangClass               groovyExternal
-  GroovyHiLink groovyJavaLangObject              groovyConstant
+  hi def link groovyLangClass                   groovyConstant
+  hi def link groovyJavaLangClass               groovyExternal
+  hi def link groovyJavaLangObject              groovyConstant
   syn cluster groovyTop add=groovyJavaLangObject,groovyJavaLangClass,groovyLangClass
   syn cluster groovyClasses add=groovyJavaLangClass,groovyLangClass
 endif
@@ -214,9 +211,9 @@ syn region  groovyComment          start="/\*"  end="\*/" contains=@groovyCommen
 syn match   groovyCommentStar      contained "^\s*\*[^/]"me=e-1
 syn match   groovyCommentStar      contained "^\s*\*$"
 syn match   groovyLineComment      "//.*" contains=@groovyCommentSpecial2,groovyTodo,@Spell
-GroovyHiLink groovyCommentString groovyString
-GroovyHiLink groovyComment2String groovyString
-GroovyHiLink groovyCommentCharacter groovyCharacter
+hi def link groovyCommentString groovyString
+hi def link groovyComment2String groovyString
+hi def link groovyCommentCharacter groovyCharacter
 
 syn cluster groovyTop add=groovyComment,groovyLineComment
 
@@ -257,12 +254,12 @@ endif
 " syn region groovyELExpr start=+${+ end=+}+ keepend contained
 syn match groovyELExpr /\${.\{-}}/ contained
 syn match groovyELExpr /\$[a-zA-Z_][a-zA-Z0-9_.]*/ contained
-GroovyHiLink groovyELExpr Identifier
+hi def link groovyELExpr Identifier
 
 " TODO: better matching. I am waiting to understand how it really works in groovy
 " syn region  groovyClosureParamsBraces          start=+|+ end=+|+ contains=groovyClosureParams
 " syn match groovyClosureParams	"[ a-zA-Z0-9_*]\+" contained
-" GroovyHiLink groovyClosureParams Identifier
+" hi def link groovyClosureParams Identifier
 
 " next line disabled, it can cause a crash for a long line
 "syn match   groovyStringError      +"\([^"\\]\|\\.\)*$+
@@ -323,21 +320,21 @@ if exists("groovy_highlight_debug")
 
   syn cluster groovyTop add=groovyDebug
 
-  GroovyHiLink groovyDebug                 Debug
-  GroovyHiLink groovyDebugString           DebugString
-  GroovyHiLink groovyDebugStringError      groovyError
-  GroovyHiLink groovyDebugType             DebugType
-  GroovyHiLink groovyDebugBoolean          DebugBoolean
-  GroovyHiLink groovyDebugNumber           Debug
-  GroovyHiLink groovyDebugSpecial          DebugSpecial
-  GroovyHiLink groovyDebugSpecialCharacter DebugSpecial
-  GroovyHiLink groovyDebugCharacter        DebugString
-  GroovyHiLink groovyDebugParen            Debug
+  hi def link groovyDebug                 Debug
+  hi def link groovyDebugString           DebugString
+  hi def link groovyDebugStringError      groovyError
+  hi def link groovyDebugType             DebugType
+  hi def link groovyDebugBoolean          DebugBoolean
+  hi def link groovyDebugNumber           Debug
+  hi def link groovyDebugSpecial          DebugSpecial
+  hi def link groovyDebugSpecialCharacter DebugSpecial
+  hi def link groovyDebugCharacter        DebugString
+  hi def link groovyDebugParen            Debug
 
-  GroovyHiLink DebugString               String
-  GroovyHiLink DebugSpecial              Special
-  GroovyHiLink DebugBoolean              Boolean
-  GroovyHiLink DebugType                 Type
+  hi def link DebugString               String
+  hi def link DebugSpecial              Special
+  hi def link DebugBoolean              Boolean
+  hi def link DebugType                 Type
 endif
 
 " Match all Exception classes
@@ -371,7 +368,7 @@ exec "syn sync ccomment groovyComment minlines=" . groovy_minlines
 
 if exists("groovy_mark_braces_in_parens_as_errors")
   syn match groovyInParen          contained "[{}]"
-  GroovyHiLink groovyInParen        groovyError
+  hi def link groovyInParen        groovyError
   syn cluster groovyTop add=groovyInParen
 endif
 
@@ -380,7 +377,7 @@ syn region  groovyParenT  transparent matchgroup=groovyParen  start="("  end=")"
 syn region  groovyParenT1 transparent matchgroup=groovyParen1 start="(" end=")" contains=@groovyTop,groovyParenT2 contained
 syn region  groovyParenT2 transparent matchgroup=groovyParen2 start="(" end=")" contains=@groovyTop,groovyParenT  contained
 syn match   groovyParenError       ")"
-GroovyHiLink groovyParenError       groovyError
+hi def link groovyParenError       groovyError
 
 " catch errors caused by wrong square parenthesis
 syn region  groovyParenT  transparent matchgroup=groovyParen  start="\["  end="\]" contains=@groovyTop,groovyParenT1
@@ -390,56 +387,54 @@ syn match   groovyParenError       "\]"
 
 " ###############################
 " java.vim default highlighting
-GroovyHiLink groovyFuncDef		Function
-GroovyHiLink groovyBraces		Function
-GroovyHiLink groovyBranch		Conditional
-GroovyHiLink groovyUserLabelRef	groovyUserLabel
-GroovyHiLink groovyLabel		Label
-GroovyHiLink groovyUserLabel		Label
-GroovyHiLink groovyConditional	Conditional
-GroovyHiLink groovyRepeat		Repeat
-GroovyHiLink groovyExceptions		Exception
-GroovyHiLink groovyAssert 		Statement
-GroovyHiLink groovyStorageClass	StorageClass
-GroovyHiLink groovyMethodDecl		groovyStorageClass
-GroovyHiLink groovyClassDecl		groovyStorageClass
-GroovyHiLink groovyScopeDecl		groovyStorageClass
-GroovyHiLink groovyBoolean		Boolean
-GroovyHiLink groovySpecial		Special
-GroovyHiLink groovySpecialError	Error
-GroovyHiLink groovySpecialCharError	Error
-GroovyHiLink groovyString		String
-GroovyHiLink groovyRegexChar		String
-GroovyHiLink groovyCharacter		Character
-GroovyHiLink groovySpecialChar	SpecialChar
-GroovyHiLink groovyNumber		Number
-GroovyHiLink groovyError		Error
-GroovyHiLink groovyStringError	Error
-GroovyHiLink groovyStatement		Statement
-GroovyHiLink groovyOperator		Operator
-GroovyHiLink groovyComment		Comment
-GroovyHiLink groovyDocComment		Comment
-GroovyHiLink groovyLineComment	Comment
-GroovyHiLink groovyConstant		Constant
-GroovyHiLink groovyTypedef		Typedef
-GroovyHiLink groovyTodo		Todo
+hi def link groovyFuncDef		Function
+hi def link groovyBraces		Function
+hi def link groovyBranch		Conditional
+hi def link groovyUserLabelRef	groovyUserLabel
+hi def link groovyLabel		Label
+hi def link groovyUserLabel		Label
+hi def link groovyConditional	Conditional
+hi def link groovyRepeat		Repeat
+hi def link groovyExceptions		Exception
+hi def link groovyAssert 		Statement
+hi def link groovyStorageClass	StorageClass
+hi def link groovyMethodDecl		groovyStorageClass
+hi def link groovyClassDecl		groovyStorageClass
+hi def link groovyScopeDecl		groovyStorageClass
+hi def link groovyBoolean		Boolean
+hi def link groovySpecial		Special
+hi def link groovySpecialError	Error
+hi def link groovySpecialCharError	Error
+hi def link groovyString		String
+hi def link groovyRegexChar		String
+hi def link groovyCharacter		Character
+hi def link groovySpecialChar	SpecialChar
+hi def link groovyNumber		Number
+hi def link groovyError		Error
+hi def link groovyStringError	Error
+hi def link groovyStatement		Statement
+hi def link groovyOperator		Operator
+hi def link groovyComment		Comment
+hi def link groovyDocComment		Comment
+hi def link groovyLineComment	Comment
+hi def link groovyConstant		Constant
+hi def link groovyTypedef		Typedef
+hi def link groovyTodo		Todo
 
-GroovyHiLink groovyCommentTitle	SpecialComment
-GroovyHiLink groovyDocTags		Special
-GroovyHiLink groovyDocParam		Function
-GroovyHiLink groovyCommentStar	groovyComment
+hi def link groovyCommentTitle	SpecialComment
+hi def link groovyDocTags		Special
+hi def link groovyDocParam		Function
+hi def link groovyCommentStar	groovyComment
 
-GroovyHiLink groovyType		Type
-GroovyHiLink groovyExternal		Include
+hi def link groovyType		Type
+hi def link groovyExternal		Include
 
-GroovyHiLink htmlComment		Special
-GroovyHiLink htmlCommentPart		Special
-GroovyHiLink groovySpaceError		Error
-GroovyHiLink groovyJDKBuiltin         Special
-GroovyHiLink groovyJDKOperOverl       Operator
-GroovyHiLink groovyJDKMethods         Function
-
-delcommand GroovyHiLink
+hi def link htmlComment		Special
+hi def link htmlCommentPart		Special
+hi def link groovySpaceError		Error
+hi def link groovyJDKBuiltin         Special
+hi def link groovyJDKOperOverl       Operator
+hi def link groovyJDKMethods         Function
 
 
 let b:current_syntax = "groovy"

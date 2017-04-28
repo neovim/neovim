@@ -114,26 +114,24 @@ syn keyword amplTodo contained	 TODO FIXME XXX
 
 
 
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting. Can be overridden later.
-HiLink amplEntityKeyword	Keyword
-HiLink amplType		Type
-HiLink amplStatement		Statement
-HiLink amplOperators		Operator
-HiLink amplBasicOperators	Operator
-HiLink amplConditional	Conditional
-HiLink amplRepeat		Repeat
-HiLink amplStrings		String
-HiLink amplNumerics		Number
-HiLink amplSetFunction	Function
-HiLink amplBuiltInFunction	Function
-HiLink amplRandomGenerator	Function
-HiLink amplComment		Comment
-HiLink amplDotSuffix		Special
-HiLink amplPiecewise		Special
+hi def link amplEntityKeyword	Keyword
+hi def link amplType		Type
+hi def link amplStatement		Statement
+hi def link amplOperators		Operator
+hi def link amplBasicOperators	Operator
+hi def link amplConditional	Conditional
+hi def link amplRepeat		Repeat
+hi def link amplStrings		String
+hi def link amplNumerics		Number
+hi def link amplSetFunction	Function
+hi def link amplBuiltInFunction	Function
+hi def link amplRandomGenerator	Function
+hi def link amplComment		Comment
+hi def link amplDotSuffix		Special
+hi def link amplPiecewise		Special
 
-delcommand HiLink
 
 let b:current_syntax = "ampl"
 

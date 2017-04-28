@@ -1811,26 +1811,24 @@ syntax match pfmainSpecial	"\<smtpd\>"
 syntax match pfmainSpecial	"\<trace\>"
 syntax match pfmainSpecial	"\<verify\>"
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink pfmainConf	Statement
-HiLink pfmainRef	PreProc
-HiLink pfmainWord	identifier
+hi def link pfmainConf	Statement
+hi def link pfmainRef	PreProc
+hi def link pfmainWord	identifier
 
-HiLink pfmainDict	Type
-HiLink pfmainQueueDir	Constant
-HiLink pfmainTransport	Constant
-HiLink pfmainLock	Constant
-HiLink pfmainAnswer	Constant
+hi def link pfmainDict	Type
+hi def link pfmainQueueDir	Constant
+hi def link pfmainTransport	Constant
+hi def link pfmainLock	Constant
+hi def link pfmainAnswer	Constant
 
-HiLink pfmainComment	Comment
-HiLink pfmainNumber	Number
-HiLink pfmainTime	Number
-HiLink pfmainIP		Number
-HiLink pfmainVariable	Error
-HiLink pfmainSpecial	Special
+hi def link pfmainComment	Comment
+hi def link pfmainNumber	Number
+hi def link pfmainTime	Number
+hi def link pfmainIP		Number
+hi def link pfmainVariable	Error
+hi def link pfmainSpecial	Special
 
-delcommand HiLink
 
 let b:current_syntax = "pfmain"
 

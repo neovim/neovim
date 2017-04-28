@@ -53,38 +53,36 @@ syn region slangPreCondit start="^\s*#\s*\(ifdef\>\|ifndef\>\|iftrue\>\|ifnfalse
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink slangDefinition	Type
-HiLink slangBlock		slangDefinition
-HiLink slangLabel		Label
-HiLink slangConditional	Conditional
-HiLink slangRepeat		Repeat
-HiLink slangCharacter	Character
-HiLink slangFloat		Float
-HiLink slangImaginary	Float
-HiLink slangDecimal		slangNumber
-HiLink slangOctal		slangNumber
-HiLink slangHex		slangNumber
-HiLink slangNumber		Number
-HiLink slangParenError	Error
-HiLink slangOctalError	Error
-HiLink slangOperator		Operator
-HiLink slangStructure	Structure
-HiLink slangInclude		Include
-HiLink slangPreCondit	PreCondit
-HiLink slangError		Error
-HiLink slangStatement	Statement
-HiLink slangType		Type
-HiLink slangString		String
-HiLink slangConstant		Constant
-HiLink slangRangeArray	slangConstant
-HiLink slangComment		Comment
-HiLink slangSpecial		SpecialChar
-HiLink slangTodo		Todo
-HiLink slangDelim		Delimiter
+hi def link slangDefinition	Type
+hi def link slangBlock		slangDefinition
+hi def link slangLabel		Label
+hi def link slangConditional	Conditional
+hi def link slangRepeat		Repeat
+hi def link slangCharacter	Character
+hi def link slangFloat		Float
+hi def link slangImaginary	Float
+hi def link slangDecimal		slangNumber
+hi def link slangOctal		slangNumber
+hi def link slangHex		slangNumber
+hi def link slangNumber		Number
+hi def link slangParenError	Error
+hi def link slangOctalError	Error
+hi def link slangOperator		Operator
+hi def link slangStructure	Structure
+hi def link slangInclude		Include
+hi def link slangPreCondit	PreCondit
+hi def link slangError		Error
+hi def link slangStatement	Statement
+hi def link slangType		Type
+hi def link slangString		String
+hi def link slangConstant		Constant
+hi def link slangRangeArray	slangConstant
+hi def link slangComment		Comment
+hi def link slangSpecial		SpecialChar
+hi def link slangTodo		Todo
+hi def link slangDelim		Delimiter
 
-delcommand HiLink
 
 let b:current_syntax = "slang"
 

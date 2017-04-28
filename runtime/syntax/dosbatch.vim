@@ -109,40 +109,38 @@ syn keyword dosbatchImplicit    vol xcopy
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dosbatchTodo		Todo
+hi def link dosbatchTodo		Todo
 
-HiLink dosbatchStatement	Statement
-HiLink dosbatchCommands	dosbatchStatement
-HiLink dosbatchLabel		Label
-HiLink dosbatchConditional	Conditional
-HiLink dosbatchRepeat		Repeat
+hi def link dosbatchStatement	Statement
+hi def link dosbatchCommands	dosbatchStatement
+hi def link dosbatchLabel		Label
+hi def link dosbatchConditional	Conditional
+hi def link dosbatchRepeat		Repeat
 
-HiLink dosbatchOperator       Operator
-HiLink dosbatchEchoOperator   dosbatchOperator
-HiLink dosbatchIfOperator     dosbatchOperator
+hi def link dosbatchOperator       Operator
+hi def link dosbatchEchoOperator   dosbatchOperator
+hi def link dosbatchIfOperator     dosbatchOperator
 
-HiLink dosbatchArgument	Identifier
-HiLink dosbatchIdentifier     Identifier
-HiLink dosbatchVariable	dosbatchIdentifier
+hi def link dosbatchArgument	Identifier
+hi def link dosbatchIdentifier     Identifier
+hi def link dosbatchVariable	dosbatchIdentifier
 
-HiLink dosbatchSpecialChar	SpecialChar
-HiLink dosbatchString		String
-HiLink dosbatchNumber		Number
-HiLink dosbatchInteger	dosbatchNumber
-HiLink dosbatchHex		dosbatchNumber
-HiLink dosbatchBinary		dosbatchNumber
-HiLink dosbatchOctal		dosbatchNumber
+hi def link dosbatchSpecialChar	SpecialChar
+hi def link dosbatchString		String
+hi def link dosbatchNumber		Number
+hi def link dosbatchInteger	dosbatchNumber
+hi def link dosbatchHex		dosbatchNumber
+hi def link dosbatchBinary		dosbatchNumber
+hi def link dosbatchOctal		dosbatchNumber
 
-HiLink dosbatchComment	Comment
-HiLink dosbatchImplicit	Function
+hi def link dosbatchComment	Comment
+hi def link dosbatchImplicit	Function
 
-HiLink dosbatchSwitch		Special
+hi def link dosbatchSwitch		Special
 
-HiLink dosbatchCmd		PreProc
+hi def link dosbatchCmd		PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "dosbatch"
 

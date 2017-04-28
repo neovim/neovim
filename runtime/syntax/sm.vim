@@ -57,27 +57,25 @@ syn region smClause	matchgroup=Delimiter start="\$?." matchgroup=Delimiter end="
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink smClause	Special
-HiLink smClauseError	Error
-HiLink smComment	Comment
-HiLink smDefine	Statement
-HiLink smElse		Delimiter
-HiLink smHeader	Statement
-HiLink smHeaderSep	String
-HiLink smMesg		Special
-HiLink smPrecedence	Number
-HiLink smRewrite	Statement
-HiLink smRewriteComment	Comment
-HiLink smRewriteLhsToken	String
-HiLink smRewriteLhsUser	Statement
-HiLink smRewriteRhsToken	String
-HiLink smRuleset	Preproc
-HiLink smTrusted	Special
-HiLink smVar		String
+hi def link smClause	Special
+hi def link smClauseError	Error
+hi def link smComment	Comment
+hi def link smDefine	Statement
+hi def link smElse		Delimiter
+hi def link smHeader	Statement
+hi def link smHeaderSep	String
+hi def link smMesg		Special
+hi def link smPrecedence	Number
+hi def link smRewrite	Statement
+hi def link smRewriteComment	Comment
+hi def link smRewriteLhsToken	String
+hi def link smRewriteLhsUser	Statement
+hi def link smRewriteRhsToken	String
+hi def link smRuleset	Preproc
+hi def link smTrusted	Special
+hi def link smVar		String
 
-delcommand HiLink
 
 let b:current_syntax = "sm"
 

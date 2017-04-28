@@ -88,20 +88,18 @@ syn keyword eximKeyword server_prompts server_condition client_send
 syn keyword eximKeyword server_secret client_name client_secret
 
 " Define the default highlighting
-command -nargs=+ HiLink hi def link <args>
 
-HiLink eximComment Comment
-HiLink eximFixme Todo
-HiLink eximEnd Keyword
-HiLink eximNumber Number
-HiLink eximDriverName Constant
-HiLink eximConstant Constant
-HiLink eximTime Constant
-HiLink eximKeyword Type
-HiLink eximSpecialChar Special
-HiLink eximMacroName Preproc
-HiLink eximTransport Identifier
+hi def link eximComment Comment
+hi def link eximFixme Todo
+hi def link eximEnd Keyword
+hi def link eximNumber Number
+hi def link eximDriverName Constant
+hi def link eximConstant Constant
+hi def link eximTime Constant
+hi def link eximKeyword Type
+hi def link eximSpecialChar Special
+hi def link eximMacroName Preproc
+hi def link eximTransport Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "exim"

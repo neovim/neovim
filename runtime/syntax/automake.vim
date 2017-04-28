@@ -54,25 +54,23 @@ syn region  automakeMakeBString start=+`+  skip=+\\`+  end=+`+  contains=makeIde
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink automakePrimary     Statement
-HiLink automakeSecondary   Type
-HiLink automakeExtra       Special
-HiLink automakeOptions     Special
-HiLink automakeClean       Special
-HiLink automakeSubdirs     Statement
-HiLink automakeConditional PreProc
-HiLink automakeSubst       PreProc
-HiLink automakeComment1    makeComment
-HiLink automakeComment2    makeComment
-HiLink automakeMakeError   makeError
-HiLink automakeBadSubst    makeError
-HiLink automakeMakeDString makeDString
-HiLink automakeMakeSString makeSString
-HiLink automakeMakeBString makeBString
+hi def link automakePrimary     Statement
+hi def link automakeSecondary   Type
+hi def link automakeExtra       Special
+hi def link automakeOptions     Special
+hi def link automakeClean       Special
+hi def link automakeSubdirs     Statement
+hi def link automakeConditional PreProc
+hi def link automakeSubst       PreProc
+hi def link automakeComment1    makeComment
+hi def link automakeComment2    makeComment
+hi def link automakeMakeError   makeError
+hi def link automakeBadSubst    makeError
+hi def link automakeMakeDString makeDString
+hi def link automakeMakeSString makeSString
+hi def link automakeMakeBString makeBString
 
-delcommand HiLink
 
 let b:current_syntax = "automake"
 

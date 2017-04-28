@@ -283,47 +283,45 @@ syn region forthDeprecated start='locals|' end='|'
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting. Can be overridden later.
-HiLink forthTodo Todo
-HiLink forthOperators Operator
-HiLink forthMath Number
-HiLink forthInteger Number
-HiLink forthFloat Float
-HiLink forthStack Special
-HiLink forthRstack Special
-HiLink forthFStack Special
-HiLink forthSP Special
-HiLink forthMemory Function
-HiLink forthAdrArith Function
-HiLink forthMemBlks Function
-HiLink forthCond Conditional
-HiLink forthLoop Repeat
-HiLink forthColonDef Define
-HiLink forthEndOfColonDef Define
-HiLink forthDefine Define
-HiLink forthDebug Debug
-HiLink forthAssembler Include
-HiLink forthCharOps Character
-HiLink forthConversion String
-HiLink forthForth Statement
-HiLink forthVocs Statement
-HiLink forthString String
-HiLink forthComment Comment
-HiLink forthClassDef Define
-HiLink forthEndOfClassDef Define
-HiLink forthObjectDef Define
-HiLink forthEndOfObjectDef Define
-HiLink forthInclude Include
-HiLink forthLocals Type " nothing else uses type and locals must stand out
-HiLink forthDeprecated Error " if you must, change to Type
-HiLink forthFileMode Function
-HiLink forthFileWords Statement
-HiLink forthBlocks Statement
-HiLink forthSpaceError Error
+hi def link forthTodo Todo
+hi def link forthOperators Operator
+hi def link forthMath Number
+hi def link forthInteger Number
+hi def link forthFloat Float
+hi def link forthStack Special
+hi def link forthRstack Special
+hi def link forthFStack Special
+hi def link forthSP Special
+hi def link forthMemory Function
+hi def link forthAdrArith Function
+hi def link forthMemBlks Function
+hi def link forthCond Conditional
+hi def link forthLoop Repeat
+hi def link forthColonDef Define
+hi def link forthEndOfColonDef Define
+hi def link forthDefine Define
+hi def link forthDebug Debug
+hi def link forthAssembler Include
+hi def link forthCharOps Character
+hi def link forthConversion String
+hi def link forthForth Statement
+hi def link forthVocs Statement
+hi def link forthString String
+hi def link forthComment Comment
+hi def link forthClassDef Define
+hi def link forthEndOfClassDef Define
+hi def link forthObjectDef Define
+hi def link forthEndOfObjectDef Define
+hi def link forthInclude Include
+hi def link forthLocals Type " nothing else uses type and locals must stand out
+hi def link forthDeprecated Error " if you must, change to Type
+hi def link forthFileMode Function
+hi def link forthFileWords Statement
+hi def link forthBlocks Statement
+hi def link forthSpaceError Error
 
-delcommand HiLink
 
 let b:current_syntax = "forth"
 

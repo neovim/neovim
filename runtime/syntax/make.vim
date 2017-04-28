@@ -99,31 +99,29 @@ syn sync match makeCommandSync groupthere makeCommands "^[A-Za-z0-9_./$()%-][A-Z
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink makeNextLine		makeSpecial
-HiLink makeCmdNextLine	makeSpecial
-HiLink makeSpecTarget		Statement
+hi def link makeNextLine		makeSpecial
+hi def link makeCmdNextLine	makeSpecial
+hi def link makeSpecTarget		Statement
 if !exists("make_no_commands")
-HiLink makeCommands		Number
+hi def link makeCommands		Number
 endif
-HiLink makeImplicit		Function
-HiLink makeTarget		Function
-HiLink makeInclude		Include
-HiLink makePreCondit		PreCondit
-HiLink makeStatement		Statement
-HiLink makeIdent		Identifier
-HiLink makeSpecial		Special
-HiLink makeComment		Comment
-HiLink makeDString		String
-HiLink makeSString		String
-HiLink makeBString		Function
-HiLink makeError		Error
-HiLink makeTodo		Todo
-HiLink makeDefine		Define
-HiLink makeCommandError	Error
-HiLink makeConfig		PreCondit
-delcommand HiLink
+hi def link makeImplicit		Function
+hi def link makeTarget		Function
+hi def link makeInclude		Include
+hi def link makePreCondit		PreCondit
+hi def link makeStatement		Statement
+hi def link makeIdent		Identifier
+hi def link makeSpecial		Special
+hi def link makeComment		Comment
+hi def link makeDString		String
+hi def link makeSString		String
+hi def link makeBString		Function
+hi def link makeError		Error
+hi def link makeTodo		Todo
+hi def link makeDefine		Define
+hi def link makeCommandError	Error
+hi def link makeConfig		PreCondit
 
 let b:current_syntax = "make"
 

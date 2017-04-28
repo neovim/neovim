@@ -65,19 +65,17 @@ syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink podCommand		Statement
-HiLink podCmdText		String
-HiLink podOverIndent		Number
-HiLink podForKeywd		Identifier
-HiLink podFormat		Identifier
-HiLink podVerbatimLine	PreProc
-HiLink podSpecial		Identifier
-HiLink podEscape		String
-HiLink podEscape2		Number
+hi def link podCommand		Statement
+hi def link podCmdText		String
+hi def link podOverIndent		Number
+hi def link podForKeywd		Identifier
+hi def link podFormat		Identifier
+hi def link podVerbatimLine	PreProc
+hi def link podSpecial		Identifier
+hi def link podEscape		String
+hi def link podEscape2		Number
 
-delcommand HiLink
 
 if exists("perl_pod_spellcheck_headings")
   " Spell-check headings

@@ -57,25 +57,23 @@ syn match aveTypos	"!="
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting+yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink aveStatement		Statement
+hi def link aveStatement		Statement
 
-HiLink aveString		String
-HiLink aveNumber		Number
+hi def link aveString		String
+hi def link aveNumber		Number
 
-HiLink aveFixVariables	Special
-HiLink aveVariables		Identifier
-HiLink globalVariables	Special
-HiLink aveConst		Special
+hi def link aveFixVariables	Special
+hi def link aveVariables		Identifier
+hi def link globalVariables	Special
+hi def link aveConst		Special
 
-HiLink aveClassMethods	Function
+hi def link aveClassMethods	Function
 
-HiLink aveOperator		Operator
-HiLink aveComment		Comment
+hi def link aveOperator		Operator
+hi def link aveComment		Comment
 
-HiLink aveTypos		Error
+hi def link aveTypos		Error
 
-delcommand HiLink
 
 let b:current_syntax = "ave"

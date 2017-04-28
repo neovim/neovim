@@ -44,15 +44,13 @@ syn region modula3String start=+'+ end=+'+
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting.  Can be overridden later
-HiLink modula3Keyword	Statement
-HiLink modula3Block		PreProc
-HiLink modula3Comment	Comment
-HiLink modula3String		String
+hi def link modula3Keyword	Statement
+hi def link modula3Block		PreProc
+hi def link modula3Comment	Comment
+hi def link modula3String		String
 
-delcommand HiLink
 
 let b:current_syntax = "modula3"
 

@@ -46,26 +46,24 @@ syn match mgpNoDefault +^%nodefault$+
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink mgpLineSkip	Special
+hi def link mgpLineSkip	Special
 
-HiLink mgpHash	mgpComment
-HiLink mgpPercent	mgpComment
-HiLink mgpComment	Comment
+hi def link mgpHash	mgpComment
+hi def link mgpPercent	mgpComment
+hi def link mgpComment	Comment
 
-HiLink mgpCommand	Identifier
+hi def link mgpCommand	Identifier
 
-HiLink mgpLine	Type
+hi def link mgpLine	Type
 
-HiLink mgpFile	String
-HiLink mgpSize	Number
-HiLink mgpValue	Number
+hi def link mgpFile	String
+hi def link mgpSize	Number
+hi def link mgpValue	Number
 
-HiLink mgpPage	mgpDefine
-HiLink mgpNoDefault	mgpDefine
-HiLink mgpDefine	Define
+hi def link mgpPage	mgpDefine
+hi def link mgpNoDefault	mgpDefine
+hi def link mgpDefine	Define
 
-delcommand HiLink
 
 let b:current_syntax = "mgp"

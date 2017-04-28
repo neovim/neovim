@@ -501,45 +501,43 @@ syn keyword gnuplotStatement	unset update
 
 " ---- Define the default highlighting ---- "
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " ---- Comments ---- "
-HiLink gnuplotComment		Comment
+hi def link gnuplotComment		Comment
 
 " ---- Constants ---- "
-HiLink gnuplotString		String
-HiLink gnuplotNumber		Number
-HiLink gnuplotFloat		Float
+hi def link gnuplotString		String
+hi def link gnuplotNumber		Number
+hi def link gnuplotFloat		Float
 
 " ---- Identifiers ---- "
-HiLink gnuplotIdentifier	Identifier
+hi def link gnuplotIdentifier	Identifier
 
 " ---- Statements ---- "
-HiLink gnuplotConditional	Conditional
-HiLink gnuplotRepeat		Repeat
-HiLink gnuplotKeyword		Keyword
-HiLink gnuplotOperator	Operator
+hi def link gnuplotConditional	Conditional
+hi def link gnuplotRepeat		Repeat
+hi def link gnuplotKeyword		Keyword
+hi def link gnuplotOperator	Operator
 
 " ---- PreProcs ---- "
-HiLink gnuplotMacro		Macro
+hi def link gnuplotMacro		Macro
 
 " ---- Types ---- "
-HiLink gnuplotStatement	Type
-HiLink gnuplotFunc		Identifier
+hi def link gnuplotStatement	Type
+hi def link gnuplotFunc		Identifier
 
 " ---- Specials ---- "
-HiLink gnuplotSpecial		Special
-HiLink gnuplotUnit		Special
-HiLink gnuplotExternal	Special
+hi def link gnuplotSpecial		Special
+hi def link gnuplotUnit		Special
+hi def link gnuplotExternal	Special
 
 " ---- Errors ---- "
-HiLink gnuplotError		Error
-HiLink gnuplotOctalError	Error
+hi def link gnuplotError		Error
+hi def link gnuplotOctalError	Error
 
 " ---- Todos ---- "
-HiLink gnuplotTodo		Todo
+hi def link gnuplotTodo		Todo
 
-delcommand HiLink
 
 let b:current_syntax = "gnuplot"
 

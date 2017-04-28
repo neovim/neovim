@@ -196,28 +196,26 @@ syn region VRMLString start=+"+ skip=+\\\\\|\\"+ end=+"+ fold contains=VRMLSpeci
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink VRMLCharacter  VRMLString
-HiLink VRMLSpecialCharacter VRMLSpecial
-HiLink VRMLNumber     VRMLString
-HiLink VRMLValues     VRMLString
-HiLink VRMLString     String
-HiLink VRMLSpecial    Special
-HiLink VRMLComment    Comment
-HiLink VRMLNodes      Statement
-HiLink VRMLFields     Type
-HiLink VRMLEvents     Type
-HiLink VRMLfTypes     LineNr
+hi def link VRMLCharacter  VRMLString
+hi def link VRMLSpecialCharacter VRMLSpecial
+hi def link VRMLNumber     VRMLString
+hi def link VRMLValues     VRMLString
+hi def link VRMLString     String
+hi def link VRMLSpecial    Special
+hi def link VRMLComment    Comment
+hi def link VRMLNodes      Statement
+hi def link VRMLFields     Type
+hi def link VRMLEvents     Type
+hi def link VRMLfTypes     LineNr
 "  hi     VRMLfTypes     ctermfg=6 guifg=Brown
-HiLink VRMLInstances  PreCondit
-HiLink VRMLRoutes     PreCondit
-HiLink VRMLProtos     PreProc
-HiLink VRMLRouteNode  Identifier
-HiLink VRMLInstName   Identifier
-HiLink VRMLTypes      Identifier
+hi def link VRMLInstances  PreCondit
+hi def link VRMLRoutes     PreCondit
+hi def link VRMLProtos     PreProc
+hi def link VRMLRouteNode  Identifier
+hi def link VRMLInstName   Identifier
+hi def link VRMLTypes      Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "vrml"
 

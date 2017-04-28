@@ -156,35 +156,33 @@ exec "sy sync ccomment cscComment minlines=" . csc_minlines
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 hi cscVarName term=bold ctermfg=9 gui=bold guifg=blue
 
-HiLink	cscNumber	Number
-HiLink	cscOctal	Number
-HiLink	cscFloat	Float
-HiLink	cscParenE	Error
-HiLink	cscCommentE	Error
-HiLink	cscSpaceE	Error
-HiLink	cscError	Error
-HiLink	cscString	String
-HiLink	cscComment	Comment
-HiLink	cscTodo		Todo
-HiLink	cscStatement	Statement
-HiLink	cscIfError	Error
-HiLink	cscEqError	Error
-HiLink	cscFunction	Statement
-HiLink	cscCondition	Statement
-HiLink	cscWarn		WarningMsg
+hi def link cscNumber	Number
+hi def link cscOctal	Number
+hi def link cscFloat	Float
+hi def link cscParenE	Error
+hi def link cscCommentE	Error
+hi def link cscSpaceE	Error
+hi def link cscError	Error
+hi def link cscString	String
+hi def link cscComment	Comment
+hi def link cscTodo		Todo
+hi def link cscStatement	Statement
+hi def link cscIfError	Error
+hi def link cscEqError	Error
+hi def link cscFunction	Statement
+hi def link cscCondition	Statement
+hi def link cscWarn		WarningMsg
 
-HiLink	cscComE	Error
-HiLink	cscCom	Statement
-HiLink	cscComW	WarningMsg
+hi def link cscComE	Error
+hi def link cscCom	Statement
+hi def link cscComW	WarningMsg
 
-HiLink	cscBPMacro	Identifier
-HiLink	cscBPW		WarningMsg
+hi def link cscBPMacro	Identifier
+hi def link cscBPW		WarningMsg
 
-delcommand HiLink
 
 let b:current_syntax = "csc"
 

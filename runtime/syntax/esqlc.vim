@@ -46,15 +46,13 @@ syntax keyword esqlcStatement	truncate update
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink esqlcOperator	Operator
-HiLink esqlcStatement	Statement
-HiLink esqlcKeyword	esqlcSpecial
-HiLink esqlcSpecial	Special
-HiLink esqlcPreProc	PreProc
+hi def link esqlcOperator	Operator
+hi def link esqlcStatement	Statement
+hi def link esqlcKeyword	esqlcSpecial
+hi def link esqlcSpecial	Special
+hi def link esqlcPreProc	PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "esqlc"
 

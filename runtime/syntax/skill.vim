@@ -523,28 +523,26 @@ syn sync ccomment skillComment minlines=10
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink skillcdfFunctions	Function
-HiLink skillgeFunctions		Function
-HiLink skillhiFunctions		Function
-HiLink skillleFunctions		Function
-HiLink skilldbefFunctions	Function
-HiLink skillddFunctions		Function
-HiLink skillpcFunctions		Function
-HiLink skilltechFunctions	Function
-HiLink skillConstants		Constant
-HiLink skillFunction		Function
-HiLink skillKeywords		Statement
-HiLink skillConditional		Conditional
-HiLink skillRepeat			Repeat
-HiLink skillString			String
-HiLink skillTodo			Todo
-HiLink skillNote			Todo
-HiLink skillComment			Comment
-HiLink skillCommentError	Error
+hi def link skillcdfFunctions	Function
+hi def link skillgeFunctions		Function
+hi def link skillhiFunctions		Function
+hi def link skillleFunctions		Function
+hi def link skilldbefFunctions	Function
+hi def link skillddFunctions		Function
+hi def link skillpcFunctions		Function
+hi def link skilltechFunctions	Function
+hi def link skillConstants		Constant
+hi def link skillFunction		Function
+hi def link skillKeywords		Statement
+hi def link skillConditional		Conditional
+hi def link skillRepeat			Repeat
+hi def link skillString			String
+hi def link skillTodo			Todo
+hi def link skillNote			Todo
+hi def link skillComment			Comment
+hi def link skillCommentError	Error
 
-delcommand HiLink
 
 let b:current_syntax = "skill"
 

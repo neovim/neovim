@@ -117,19 +117,17 @@ syn sync ccomment fglComment
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink fglComment	Comment
-"HiLink fglKeyword	fglSpecial
-HiLink fglKeyword	fglStatement
-HiLink fglNumber	Number
-HiLink fglOperator	fglStatement
-HiLink fglSpecial	Special
-HiLink fglStatement	Statement
-HiLink fglString	String
-HiLink fglType	Type
+hi def link fglComment	Comment
+"hi def link fglKeyword	fglSpecial
+hi def link fglKeyword	fglStatement
+hi def link fglNumber	Number
+hi def link fglOperator	fglStatement
+hi def link fglSpecial	Special
+hi def link fglStatement	Statement
+hi def link fglString	String
+hi def link fglType	Type
 
-delcommand HiLink
 
 let b:current_syntax = "fgl"
 

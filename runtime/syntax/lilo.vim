@@ -119,58 +119,56 @@ syn match liloDecNumberPListComment "#.*$" contained nextgroup=liloDecNumberPLis
 syn match liloAnythingComment "#.*$" contained nextgroup=liloAnything,liloAnythingComment,liloError skipwhite skipempty
 
 " Define the default highlighting
-command -nargs=+ HiLink hi def link <args>
 
-HiLink liloEqPath             liloEquals
-HiLink liloEqWord             liloEquals
-HiLink liloEqVga              liloEquals
-HiLink liloEqDecNumber        liloEquals
-HiLink liloEqHexNumber        liloEquals
-HiLink liloEqNumber           liloEquals
-HiLink liloEqString           liloEquals
-HiLink liloEqAnything         liloEquals
-HiLink liloEquals             Special
+hi def link liloEqPath             liloEquals
+hi def link liloEqWord             liloEquals
+hi def link liloEqVga              liloEquals
+hi def link liloEqDecNumber        liloEquals
+hi def link liloEqHexNumber        liloEquals
+hi def link liloEqNumber           liloEquals
+hi def link liloEqString           liloEquals
+hi def link liloEqAnything         liloEquals
+hi def link liloEquals             Special
 
-HiLink liloError              Error
+hi def link liloError              Error
 
-HiLink liloEqPathComment      liloComment
-HiLink liloEqVgaComment       liloComment
-HiLink liloEqDecNumberComment liloComment
-HiLink liloEqHexNumberComment liloComment
-HiLink liloEqStringComment    liloComment
-HiLink liloEqAnythingComment  liloComment
-HiLink liloPathComment        liloComment
-HiLink liloVgaComment         liloComment
-HiLink liloDecNumberComment   liloComment
-HiLink liloHexNumberComment   liloComment
-HiLink liloNumberComment      liloComment
-HiLink liloStringComment      liloComment
-HiLink liloAnythingComment    liloComment
-HiLink liloComment            Comment
+hi def link liloEqPathComment      liloComment
+hi def link liloEqVgaComment       liloComment
+hi def link liloEqDecNumberComment liloComment
+hi def link liloEqHexNumberComment liloComment
+hi def link liloEqStringComment    liloComment
+hi def link liloEqAnythingComment  liloComment
+hi def link liloPathComment        liloComment
+hi def link liloVgaComment         liloComment
+hi def link liloDecNumberComment   liloComment
+hi def link liloHexNumberComment   liloComment
+hi def link liloNumberComment      liloComment
+hi def link liloStringComment      liloComment
+hi def link liloAnythingComment    liloComment
+hi def link liloComment            Comment
 
-HiLink liloDiskOpt            liloOption
-HiLink liloKernelOpt          liloOption
-HiLink liloImageOpt           liloOption
-HiLink liloOption             Keyword
+hi def link liloDiskOpt            liloOption
+hi def link liloKernelOpt          liloOption
+hi def link liloImageOpt           liloOption
+hi def link liloOption             Keyword
 
-HiLink liloDecNumber          liloNumber
-HiLink liloHexNumber          liloNumber
-HiLink liloDecNumberP         liloNumber
-HiLink liloNumber             Number
-HiLink liloString             String
-HiLink liloPath               Constant
+hi def link liloDecNumber          liloNumber
+hi def link liloHexNumber          liloNumber
+hi def link liloDecNumberP         liloNumber
+hi def link liloNumber             Number
+hi def link liloString             String
+hi def link liloPath               Constant
 
-HiLink liloSpecial            Special
-HiLink liloLabel              Title
-HiLink liloDecNumberList      Special
-HiLink liloDecNumberPList     Special
-HiLink liloAnything           Normal
-HiLink liloEnviron            Identifier
-HiLink liloVgaKeyword         Identifier
-HiLink liloImage              Type
-HiLink liloChRules            Preproc
-HiLink liloDisk               Preproc
+hi def link liloSpecial            Special
+hi def link liloLabel              Title
+hi def link liloDecNumberList      Special
+hi def link liloDecNumberPList     Special
+hi def link liloAnything           Normal
+hi def link liloEnviron            Identifier
+hi def link liloVgaKeyword         Identifier
+hi def link liloImage              Type
+hi def link liloChRules            Preproc
+hi def link liloDisk               Preproc
 
-delcommand HiLink
 
 let b:current_syntax = "lilo"

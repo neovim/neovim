@@ -45,22 +45,20 @@ syn match webmacroHash "[#{}\$]" contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink webmacroComment CommentTitle
-HiLink webmacroVariable PreProc
-HiLink webmacroIf webmacroStatement
-HiLink webmacroForeach webmacroStatement
-HiLink webmacroSet webmacroStatement
-HiLink webmacroInclude webmacroStatement
-HiLink webmacroParse webmacroStatement
-HiLink webmacroStatement Function
-HiLink webmacroNumber Number
-HiLink webmacroBoolean Boolean
-HiLink webmacroSpecial Special
-HiLink webmacroString String
-HiLink webmacroBracesError Error
-delcommand HiLink
+hi def link webmacroComment CommentTitle
+hi def link webmacroVariable PreProc
+hi def link webmacroIf webmacroStatement
+hi def link webmacroForeach webmacroStatement
+hi def link webmacroSet webmacroStatement
+hi def link webmacroInclude webmacroStatement
+hi def link webmacroParse webmacroStatement
+hi def link webmacroStatement Function
+hi def link webmacroNumber Number
+hi def link webmacroBoolean Boolean
+hi def link webmacroSpecial Special
+hi def link webmacroString String
+hi def link webmacroBracesError Error
 
 let b:current_syntax = "webmacro"
 

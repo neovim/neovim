@@ -131,23 +131,21 @@ syntax match sqlNumber  "-\=\<[0-9]*\.\=[0-9_]\>"
 
 syntax sync ccomment sqlComment
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink sqlComment Comment
-HiLink sqlKeyword Statement
-HiLink sqlNumber Number
-HiLink sqlOperator Statement
-HiLink sqlProcedure Statement
-HiLink sqlFunction Statement
-HiLink sqlSystem Identifier
-HiLink sqlSpecial Special
-HiLink sqlStatement Statement
-HiLink sqlString String
-HiLink sqlType Type
-HiLink sqlCodes Identifier
-HiLink sqlTriggers PreProc
+hi def link sqlComment Comment
+hi def link sqlKeyword Statement
+hi def link sqlNumber Number
+hi def link sqlOperator Statement
+hi def link sqlProcedure Statement
+hi def link sqlFunction Statement
+hi def link sqlSystem Identifier
+hi def link sqlSpecial Special
+hi def link sqlStatement Statement
+hi def link sqlString String
+hi def link sqlType Type
+hi def link sqlCodes Identifier
+hi def link sqlTriggers PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "sqlforms"
 

@@ -90,17 +90,15 @@ syn sync minlines=2000
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink omnimarkCommands		Statement
-HiLink omnimarkKeywords		Identifier
-HiLink omnimarkString		String
-HiLink omnimarkPatterns		Macro
-"  HiLink omnimarkNumber			Number
-HiLink omnimarkComment		Comment
-HiLink omnimarkEscape		Special
+hi def link omnimarkCommands		Statement
+hi def link omnimarkKeywords		Identifier
+hi def link omnimarkString		String
+hi def link omnimarkPatterns		Macro
+"  hi def link omnimarkNumber			Number
+hi def link omnimarkComment		Comment
+hi def link omnimarkEscape		Special
 
-delcommand HiLink
 
 let b:current_syntax = "omnimark"
 

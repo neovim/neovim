@@ -75,21 +75,19 @@ syn sync minlines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink stKeyword		Statement
-HiLink stMethod		Statement
-HiLink stComment		Comment
-HiLink stCharacter		Constant
-HiLink stString		Constant
-HiLink stSymbol		Special
-HiLink stNumber		Type
-HiLink stFloat		Type
-HiLink stError		Error
-HiLink stLocalVariables	Identifier
-HiLink stBlockVariable	Identifier
+hi def link stKeyword		Statement
+hi def link stMethod		Statement
+hi def link stComment		Comment
+hi def link stCharacter		Constant
+hi def link stString		Constant
+hi def link stSymbol		Special
+hi def link stNumber		Type
+hi def link stFloat		Type
+hi def link stError		Error
+hi def link stLocalVariables	Identifier
+hi def link stBlockVariable	Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "st"
 

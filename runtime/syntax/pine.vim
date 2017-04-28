@@ -345,12 +345,10 @@ syn match  pineComment  "^#.*$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink pineConfig	Type
-HiLink pineComment	Comment
-HiLink pineOption	Macro
-delcommand HiLink
+hi def link pineConfig	Type
+hi def link pineComment	Comment
+hi def link pineOption	Macro
 
 let b:current_syntax = "pine"
 

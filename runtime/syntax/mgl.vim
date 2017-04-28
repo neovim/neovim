@@ -84,34 +84,32 @@ syn keyword mglPredefined	exception
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink mglBoolean		Boolean
-HiLink mglComment		Comment
-HiLink mglConditional		Conditional
-HiLink mglConstant		Constant
-HiLink mglException		Exception
-HiLink mglFunction		Function
-HiLink mglLabel		Label
-HiLink mglMatrixDelimiter	Identifier
-HiLink mglNumber		Number
-HiLink mglHexNumber		Number
-HiLink mglCharacter		Number
-HiLink mglIpAddr		Number
-HiLink mglOperator		Operator
-HiLink mglPredefined		mglFunction
-HiLink mglPreProc		PreProc
-HiLink mglRepeat		Repeat
-HiLink mglStatement		Statement
-HiLink mglString		String
-HiLink mglStringEscape	Special
-HiLink mglStringEscapeGPC	Special
-HiLink mglStringError		Error
-HiLink mglStruct		mglStatement
-HiLink mglSymbolOperator	mglOperator
-HiLink mglType		Type
+hi def link mglBoolean		Boolean
+hi def link mglComment		Comment
+hi def link mglConditional		Conditional
+hi def link mglConstant		Constant
+hi def link mglException		Exception
+hi def link mglFunction		Function
+hi def link mglLabel		Label
+hi def link mglMatrixDelimiter	Identifier
+hi def link mglNumber		Number
+hi def link mglHexNumber		Number
+hi def link mglCharacter		Number
+hi def link mglIpAddr		Number
+hi def link mglOperator		Operator
+hi def link mglPredefined		mglFunction
+hi def link mglPreProc		PreProc
+hi def link mglRepeat		Repeat
+hi def link mglStatement		Statement
+hi def link mglString		String
+hi def link mglStringEscape	Special
+hi def link mglStringEscapeGPC	Special
+hi def link mglStringError		Error
+hi def link mglStruct		mglStatement
+hi def link mglSymbolOperator	mglOperator
+hi def link mglType		Type
 
-delcommand HiLink
 
 
 let b:current_syntax = "mgl"

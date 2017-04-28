@@ -340,54 +340,52 @@ syn sync maxlines=500
 delcommand SynDisplay
 
 " The default highlighting.
-command -nargs=+ HiLink hi def link <args>
 
-HiLink informDefine		Define
-HiLink informType		Type
-HiLink informInclude		Include
-HiLink informPreCondit	PreCondit
-HiLink informPreProc		PreProc
-HiLink informGramPreProc	PreProc
-HiLink informAsm		Special
+hi def link informDefine		Define
+hi def link informType		Type
+hi def link informInclude		Include
+hi def link informPreCondit	PreCondit
+hi def link informPreProc		PreProc
+hi def link informGramPreProc	PreProc
+hi def link informAsm		Special
 if !exists("inform_suppress_obsolete")
-HiLink informAsmObsolete		informError
-HiLink informKeywordObsolete	informError
+hi def link informAsmObsolete		informError
+hi def link informKeywordObsolete	informError
 else
-HiLink informAsmObsolete		Special
-HiLink informKeywordObsolete	Keyword
+hi def link informAsmObsolete		Special
+hi def link informKeywordObsolete	Keyword
 endif
-HiLink informPredicate	Operator
-HiLink informSysFunc		Identifier
-HiLink informSysConst		Identifier
-HiLink informConditional	Conditional
-HiLink informRepeat		Repeat
-HiLink informStatement	Statement
-HiLink informOperator		Operator
-HiLink informKeyword		Keyword
-HiLink informGrammar		Keyword
-HiLink informDictString	String
-HiLink informNumber		Number
-HiLink informError		Error
-HiLink informString		String
-HiLink informComment		Comment
-HiLink informAccent		Special
-HiLink informStringUnicode	Special
-HiLink informStringCode	Special
-HiLink informTodo		Todo
+hi def link informPredicate	Operator
+hi def link informSysFunc		Identifier
+hi def link informSysConst		Identifier
+hi def link informConditional	Conditional
+hi def link informRepeat		Repeat
+hi def link informStatement	Statement
+hi def link informOperator		Operator
+hi def link informKeyword		Keyword
+hi def link informGrammar		Keyword
+hi def link informDictString	String
+hi def link informNumber		Number
+hi def link informError		Error
+hi def link informString		String
+hi def link informComment		Comment
+hi def link informAccent		Special
+hi def link informStringUnicode	Special
+hi def link informStringCode	Special
+hi def link informTodo		Todo
 if !exists("inform_highlight_simple")
-HiLink informLibAttrib	Identifier
-HiLink informLibProp	Identifier
-HiLink informLibObj		Identifier
-HiLink informLibRoutine	Identifier
-HiLink informLibVariable	Identifier
-HiLink informLibConst	Identifier
-HiLink informLibAction	Identifier
+hi def link informLibAttrib	Identifier
+hi def link informLibProp	Identifier
+hi def link informLibObj		Identifier
+hi def link informLibRoutine	Identifier
+hi def link informLibVariable	Identifier
+hi def link informLibConst	Identifier
+hi def link informLibAction	Identifier
 endif
-HiLink informBadDictString	informError
-HiLink informBadAccent	informError
-HiLink informBadStrUnicode	informError
+hi def link informBadDictString	informError
+hi def link informBadAccent	informError
+hi def link informBadStrUnicode	informError
 
-delcommand HiLink
 
 let b:current_syntax = "inform"
 

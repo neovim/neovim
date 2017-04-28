@@ -136,30 +136,28 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink liteComment		Comment
-HiLink liteString		String
-HiLink liteNumber		Number
-HiLink liteFloat		Float
-HiLink liteIdentifier	Identifier
-HiLink liteGlobalIdentifier	Identifier
-HiLink liteIntVar		Identifier
-HiLink liteFunctions		Function
-HiLink liteRepeat		Repeat
-HiLink liteConditional	Conditional
-HiLink liteStatement		Statement
-HiLink liteType		Type
-HiLink liteInclude		Include
-HiLink liteDefine		Define
-HiLink liteSpecialChar	SpecialChar
-HiLink liteParentError	liteError
-HiLink liteError		Error
-HiLink liteTodo		Todo
-HiLink liteOperator		Operator
-HiLink liteRelation		Operator
+hi def link liteComment		Comment
+hi def link liteString		String
+hi def link liteNumber		Number
+hi def link liteFloat		Float
+hi def link liteIdentifier	Identifier
+hi def link liteGlobalIdentifier	Identifier
+hi def link liteIntVar		Identifier
+hi def link liteFunctions		Function
+hi def link liteRepeat		Repeat
+hi def link liteConditional	Conditional
+hi def link liteStatement		Statement
+hi def link liteType		Type
+hi def link liteInclude		Include
+hi def link liteDefine		Define
+hi def link liteSpecialChar	SpecialChar
+hi def link liteParentError	liteError
+hi def link liteError		Error
+hi def link liteTodo		Todo
+hi def link liteOperator		Operator
+hi def link liteRelation		Operator
 
-delcommand HiLink
 
 let b:current_syntax = "lite"
 

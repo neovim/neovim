@@ -79,26 +79,24 @@ syn match   expectSharpBang	"\%^#!.*"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink expectSharpBang	PreProc
-HiLink expectVariables	Special
-HiLink expectCommand		Function
-HiLink expectStatement	Statement
-HiLink expectConditional	Conditional
-HiLink expectRepeat		Repeat
-HiLink expectExpectOpts	Keyword
-HiLink expectOutVar		Special
-HiLink expectSpecial		Special
-HiLink expectNumber		Number
+hi def link expectSharpBang	PreProc
+hi def link expectVariables	Special
+hi def link expectCommand		Function
+hi def link expectStatement	Statement
+hi def link expectConditional	Conditional
+hi def link expectRepeat		Repeat
+hi def link expectExpectOpts	Keyword
+hi def link expectOutVar		Special
+hi def link expectSpecial		Special
+hi def link expectNumber		Number
 
-HiLink expectString		String
+hi def link expectString		String
 
-HiLink expectComment		Comment
-HiLink expectTodo		Todo
-"HiLink expectIdentifier	Identifier
+hi def link expectComment		Comment
+hi def link expectTodo		Todo
+"hi def link expectIdentifier	Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "expect"
 

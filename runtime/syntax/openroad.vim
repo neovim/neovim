@@ -233,22 +233,20 @@ endif
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 "
-command -nargs=+ HiLink hi def link <args>
 
-HiLink openroadKeyword	Statement
-HiLink openroadNumber	Number
-HiLink openroadString	String
-HiLink openroadComment	Comment
-HiLink openroadOperator	Operator
-HiLink openroadType		Type
-HiLink openroadFunc		Special
-HiLink openroadClass	Type
-HiLink openroadEvent	Statement
-HiLink openroadConst	Constant
-HiLink openroadVar		Identifier
-HiLink openroadIdent	Identifier
-HiLink openroadTodo		Todo
+hi def link openroadKeyword	Statement
+hi def link openroadNumber	Number
+hi def link openroadString	String
+hi def link openroadComment	Comment
+hi def link openroadOperator	Operator
+hi def link openroadType		Type
+hi def link openroadFunc		Special
+hi def link openroadClass	Type
+hi def link openroadEvent	Statement
+hi def link openroadConst	Constant
+hi def link openroadVar		Identifier
+hi def link openroadIdent	Identifier
+hi def link openroadTodo		Todo
 
-delcommand HiLink
 
 let b:current_syntax = "openroad"

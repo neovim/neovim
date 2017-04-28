@@ -39,16 +39,14 @@ syn match  apTagError	contained /[^>]</ms=s+1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink apComment	Comment
-HiLink apOption	Keyword
-"HiLink apLastValue	Identifier		ugly?
-HiLink apTag		Special
-HiLink apTagOption	Identifier
-HiLink apTagError	Error
+hi def link apComment	Comment
+hi def link apOption	Keyword
+"hi def link apLastValue	Identifier		ugly?
+hi def link apTag		Special
+hi def link apTagOption	Identifier
+hi def link apTagError	Error
 
-delcommand HiLink
 
 let b:current_syntax = "apachestyle"
 " vim: ts=8

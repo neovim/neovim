@@ -103,18 +103,16 @@ syn match	cabalStatement	"\cversion"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink cabalVersion       Number
-HiLink cabalTruth         Boolean
-HiLink cabalComment       Comment
-HiLink cabalStatement     Statement
-HiLink cabalCategory      Type
-HiLink cabalFunction      Function
-HiLink cabalConditional   Conditional
-HiLink cabalOperator      Operator
-HiLink cabalCompiler      Constant
-delcommand HiLink
+hi def link cabalVersion       Number
+hi def link cabalTruth         Boolean
+hi def link cabalComment       Comment
+hi def link cabalStatement     Statement
+hi def link cabalCategory      Type
+hi def link cabalFunction      Function
+hi def link cabalConditional   Conditional
+hi def link cabalOperator      Operator
+hi def link cabalCompiler      Constant
 
 let b:current_syntax = "cabal"
 

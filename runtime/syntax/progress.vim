@@ -276,35 +276,33 @@ syn sync lines=800
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default methods for highlighting. Can be overridden later.
-HiLink ProgressByte		Number
-HiLink ProgressCase		Repeat
-HiLink ProgressComment		Comment
-HiLink ProgressConditional	Conditional
-HiLink ProgressDebug		Debug
-HiLink ProgressDo		Repeat
-HiLink ProgressEndError		Error
-HiLink ProgressFor		Repeat
-HiLink ProgressFunction		Procedure
-HiLink ProgressIdentifier	Identifier
-HiLink ProgressInclude		Include
-HiLink ProgressMatrixDelimiter	Identifier
-HiLink ProgressNumber		Number
-HiLink ProgressOperator		Operator
-HiLink ProgressPreProc		PreProc
-HiLink ProgressProcedure	Procedure
-HiLink ProgressQuote		Delimiter
-HiLink ProgressRepeat		Repeat
-HiLink ProgressReserved		Statement
-HiLink ProgressSpaceError	Error
-HiLink ProgressString		String
-HiLink ProgressTodo		Todo
-HiLink ProgressType		Statement
-HiLink ProgressShowTab		Error
+hi def link ProgressByte		Number
+hi def link ProgressCase		Repeat
+hi def link ProgressComment		Comment
+hi def link ProgressConditional	Conditional
+hi def link ProgressDebug		Debug
+hi def link ProgressDo		Repeat
+hi def link ProgressEndError		Error
+hi def link ProgressFor		Repeat
+hi def link ProgressFunction		Procedure
+hi def link ProgressIdentifier	Identifier
+hi def link ProgressInclude		Include
+hi def link ProgressMatrixDelimiter	Identifier
+hi def link ProgressNumber		Number
+hi def link ProgressOperator		Operator
+hi def link ProgressPreProc		PreProc
+hi def link ProgressProcedure	Procedure
+hi def link ProgressQuote		Delimiter
+hi def link ProgressRepeat		Repeat
+hi def link ProgressReserved		Statement
+hi def link ProgressSpaceError	Error
+hi def link ProgressString		String
+hi def link ProgressTodo		Todo
+hi def link ProgressType		Statement
+hi def link ProgressShowTab		Error
 
-delcommand HiLink
 
 let b:current_syntax = "progress"
 

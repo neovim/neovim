@@ -118,19 +118,17 @@ syn keyword jpropertiesTodo		TODO FIXME XXX contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink jpropertiesComment	Comment
-HiLink jpropertiesTodo		Todo
-HiLink jpropertiesIdentifier	Identifier
-HiLink jpropertiesString	String
-HiLink jpropertiesExtendString	String
-HiLink jpropertiesCharacter	Character
-HiLink jpropertiesSpecial	Special
-HiLink jpropertiesSpecialChar	SpecialChar
-HiLink jpropertiesError	Error
+hi def link jpropertiesComment	Comment
+hi def link jpropertiesTodo		Todo
+hi def link jpropertiesIdentifier	Identifier
+hi def link jpropertiesString	String
+hi def link jpropertiesExtendString	String
+hi def link jpropertiesCharacter	Character
+hi def link jpropertiesSpecial	Special
+hi def link jpropertiesSpecialChar	SpecialChar
+hi def link jpropertiesError	Error
 
-delcommand HiLink
 
 let b:current_syntax = "jproperties"
 

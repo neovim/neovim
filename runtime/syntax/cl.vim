@@ -69,31 +69,29 @@ syn keyword	clStatement	clear clear_eol clear_eos close copy create unique with 
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink clifError	Error
-HiLink clSpaceError	Error
-HiLink clWhile		Repeat
-HiLink clConditional	Conditional
-HiLink clDebug		Debug
-HiLink clNeedsWork	Todo
-HiLink clTodo		Todo
-HiLink clComment	Comment
-HiLink clProcedure	Procedure
-HiLink clBreak		Procedure
-HiLink clInclude	Include
-HiLink clSetOption	Statement
-HiLink clSet		Identifier
-HiLink clPreProc	PreProc
-HiLink clOperator	Operator
-HiLink clNumber		Number
-HiLink clString		String
-HiLink clQuote		Delimiter
-HiLink clReserved	Identifier
-HiLink clFunction	Function
-HiLink clStatement	Statement
+hi def link clifError	Error
+hi def link clSpaceError	Error
+hi def link clWhile		Repeat
+hi def link clConditional	Conditional
+hi def link clDebug		Debug
+hi def link clNeedsWork	Todo
+hi def link clTodo		Todo
+hi def link clComment	Comment
+hi def link clProcedure	Procedure
+hi def link clBreak		Procedure
+hi def link clInclude	Include
+hi def link clSetOption	Statement
+hi def link clSet		Identifier
+hi def link clPreProc	PreProc
+hi def link clOperator	Operator
+hi def link clNumber		Number
+hi def link clString		String
+hi def link clQuote		Delimiter
+hi def link clReserved	Identifier
+hi def link clFunction	Function
+hi def link clStatement	Statement
 
-delcommand HiLink
 
 let b:current_syntax = "cl"
 

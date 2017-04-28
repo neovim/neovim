@@ -234,26 +234,24 @@ syn sync	minlines=600
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink	vhdlSpecial	Special
-HiLink	vhdlStatement   Statement
-HiLink	vhdlCharacter   Character
-HiLink	vhdlString	String
-HiLink	vhdlVector	Number
-HiLink	vhdlBoolean	Number
-HiLink	vhdlTodo	Todo
-HiLink	vhdlFixme	Fixme
-HiLink	vhdlComment	Comment
-HiLink	vhdlNumber	Number
-HiLink	vhdlTime	Number
-HiLink	vhdlType	Type
-HiLink	vhdlOperator    Operator
-HiLink	vhdlError	Error
-HiLink	vhdlAttribute   Special
-HiLink	vhdlPreProc	PreProc
+hi def link vhdlSpecial	Special
+hi def link vhdlStatement   Statement
+hi def link vhdlCharacter   Character
+hi def link vhdlString	String
+hi def link vhdlVector	Number
+hi def link vhdlBoolean	Number
+hi def link vhdlTodo	Todo
+hi def link vhdlFixme	Fixme
+hi def link vhdlComment	Comment
+hi def link vhdlNumber	Number
+hi def link vhdlTime	Number
+hi def link vhdlType	Type
+hi def link vhdlOperator    Operator
+hi def link vhdlError	Error
+hi def link vhdlAttribute   Special
+hi def link vhdlPreProc	PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "vhdl"
 

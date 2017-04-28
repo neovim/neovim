@@ -101,17 +101,15 @@ syn sync minlines=50
 " =====================
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink bibType	Identifier
-HiLink bibEntryKw	Statement
-HiLink bibNSEntryKw	PreProc
-HiLink bibKey		Special
-HiLink bibVariable	Constant
-HiLink bibUnescapedSpecial	Error
-HiLink bibComment	Comment
-HiLink bibComment2	Comment
-delcommand HiLink
+hi def link bibType	Identifier
+hi def link bibEntryKw	Statement
+hi def link bibNSEntryKw	PreProc
+hi def link bibKey		Special
+hi def link bibVariable	Constant
+hi def link bibUnescapedSpecial	Error
+hi def link bibComment	Comment
+hi def link bibComment2	Comment
 
 let b:current_syntax = "bib"
 

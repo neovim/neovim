@@ -66,20 +66,18 @@ syn region djangoComBlock start="{#" end="#}" contains=djangoTodo
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink djangoTagBlock PreProc
-HiLink djangoVarBlock PreProc
-HiLink djangoStatement Statement
-HiLink djangoFilter Identifier
-HiLink djangoArgument Constant
-HiLink djangoTagError Error
-HiLink djangoVarError Error
-HiLink djangoError Error
-HiLink djangoComment Comment
-HiLink djangoComBlock Comment
-HiLink djangoTodo Todo
+hi def link djangoTagBlock PreProc
+hi def link djangoVarBlock PreProc
+hi def link djangoStatement Statement
+hi def link djangoFilter Identifier
+hi def link djangoArgument Constant
+hi def link djangoTagError Error
+hi def link djangoVarError Error
+hi def link djangoError Error
+hi def link djangoComment Comment
+hi def link djangoComBlock Comment
+hi def link djangoTodo Todo
 
-delcommand HiLink
 
 let b:current_syntax = "django"

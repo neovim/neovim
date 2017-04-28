@@ -387,48 +387,46 @@ syn sync ccomment logtalkBlockComment maxlines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink	logtalkBlockComment	Comment
-HiLink	logtalkLineComment	Comment
+hi def link logtalkBlockComment	Comment
+hi def link logtalkLineComment	Comment
 
-HiLink	logtalkOpenEntityDir	Normal
-HiLink	logtalkOpenEntityDirTag	PreProc
+hi def link logtalkOpenEntityDir	Normal
+hi def link logtalkOpenEntityDirTag	PreProc
 
-HiLink	logtalkIfContainer	PreProc
-HiLink	logtalkIf		PreProc
-HiLink	logtalkElseIf		PreProc
-HiLink	logtalkElse		PreProc
+hi def link logtalkIfContainer	PreProc
+hi def link logtalkIf		PreProc
+hi def link logtalkElseIf		PreProc
+hi def link logtalkElse		PreProc
 
-HiLink	logtalkEntity		Normal
+hi def link logtalkEntity		Normal
 
-HiLink	logtalkEntityRel	Normal
-HiLink	logtalkEntityRelTag	PreProc
+hi def link logtalkEntityRel	Normal
+hi def link logtalkEntityRelTag	PreProc
 
-HiLink	logtalkCloseEntityDir	PreProc
+hi def link logtalkCloseEntityDir	PreProc
 
-HiLink	logtalkDir		Normal
-HiLink	logtalkDirTag		PreProc
+hi def link logtalkDir		Normal
+hi def link logtalkDirTag		PreProc
 
-HiLink	logtalkAtom		String
-HiLink	logtalkString		String
-HiLink	logtalkEscapeSequence	SpecialChar
+hi def link logtalkAtom		String
+hi def link logtalkString		String
+hi def link logtalkEscapeSequence	SpecialChar
 
-HiLink	logtalkNumber		Number
+hi def link logtalkNumber		Number
 
-HiLink	logtalkKeyword		Keyword
+hi def link logtalkKeyword		Keyword
 
-HiLink	logtalkBuiltIn		Keyword
-HiLink	logtalkBuiltInMethod	Keyword
+hi def link logtalkBuiltIn		Keyword
+hi def link logtalkBuiltInMethod	Keyword
 
-HiLink	logtalkOperator		Operator
+hi def link logtalkOperator		Operator
 
-HiLink	logtalkExtCall		Normal
-HiLink	logtalkExtCallTag	Operator
+hi def link logtalkExtCall		Normal
+hi def link logtalkExtCallTag	Operator
 
-HiLink	logtalkVariable		Identifier
+hi def link logtalkVariable		Identifier
 
-delcommand HiLink
 
 
 let b:current_syntax = "logtalk"

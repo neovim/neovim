@@ -357,15 +357,13 @@ syn sync ccomment hamsterHashComment
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink hamsterHashComment	Comment
-HiLink hamsterSpecial	Special
-HiLink hamsterStatement	Statement
-HiLink hamsterString	String
-HiLink hamsterFunction	Function
+hi def link hamsterHashComment	Comment
+hi def link hamsterSpecial	Special
+hi def link hamsterStatement	Statement
+hi def link hamsterString	String
+hi def link hamsterFunction	Function
 
-delcommand HiLink
 
 let b:current_syntax = "hamster"
 

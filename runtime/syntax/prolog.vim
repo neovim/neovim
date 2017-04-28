@@ -77,36 +77,34 @@ syn sync maxlines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default highlighting.
-HiLink prologComment          Comment
-HiLink prologCComment         Comment
-HiLink prologCharCode         Special
+hi def link prologComment          Comment
+hi def link prologCComment         Comment
+hi def link prologCharCode         Special
 
 if exists ("prolog_highlighting_clean")
 
-HiLink prologKeyword        Statement
-HiLink prologClauseHead     Statement
-HiLink prologClause Normal
+hi def link prologKeyword        Statement
+hi def link prologClauseHead     Statement
+hi def link prologClause Normal
 
 else
 
-HiLink prologKeyword        Keyword
-HiLink prologClauseHead     Constant
-HiLink prologClause Normal
-HiLink prologQuestion       PreProc
-HiLink prologSpecialCharacter Special
-HiLink prologNumber         Number
-HiLink prologAsIs           Normal
-HiLink prologCommentError   Error
-HiLink prologAtom           String
-HiLink prologString         String
-HiLink prologOperator       Operator
+hi def link prologKeyword        Keyword
+hi def link prologClauseHead     Constant
+hi def link prologClause Normal
+hi def link prologQuestion       PreProc
+hi def link prologSpecialCharacter Special
+hi def link prologNumber         Number
+hi def link prologAsIs           Normal
+hi def link prologCommentError   Error
+hi def link prologAtom           String
+hi def link prologString         String
+hi def link prologOperator       Operator
 
 endif
 
-delcommand HiLink
 
 let b:current_syntax = "prolog"
 

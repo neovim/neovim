@@ -15,11 +15,9 @@ syn match jargonMark	/{[^}]*}/
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink jargonChaptTitle	Title
-HiLink jargonEmailAddr	 Comment
-HiLink jargonUrl	 Comment
-HiLink jargonMark	Label
-delcommand HiLink
+hi def link jargonChaptTitle	Title
+hi def link jargonEmailAddr	 Comment
+hi def link jargonUrl	 Comment
+hi def link jargonMark	Label
 
 let b:current_syntax = "jargon"

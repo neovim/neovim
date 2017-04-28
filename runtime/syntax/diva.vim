@@ -78,20 +78,18 @@ syn match divaGeomFunctions		"\<geom\u\a\+\(45\|90\)\=("he=e-1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink divaDRCKeywords		Statement
-HiLink divaMeasKeywords		Statement
-HiLink divaCtrlFunctions	Conditional
-HiLink divaExtFunctions		Function
-HiLink divaDRCFunctions		Function
-HiLink divaFunctions		Function
-HiLink divaLayerFunctions	Function
-HiLink divaChkFunctions		Function
-HiLink divaLVSFunctions		Function
-HiLink divaGeomFunctions	Function
+hi def link divaDRCKeywords		Statement
+hi def link divaMeasKeywords		Statement
+hi def link divaCtrlFunctions	Conditional
+hi def link divaExtFunctions		Function
+hi def link divaDRCFunctions		Function
+hi def link divaFunctions		Function
+hi def link divaLayerFunctions	Function
+hi def link divaChkFunctions		Function
+hi def link divaLVSFunctions		Function
+hi def link divaGeomFunctions	Function
 
-delcommand HiLink
 
 let b:current_syntax = "diva"
 

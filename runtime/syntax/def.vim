@@ -30,16 +30,14 @@ syn match   defNumber	"0x\x\+"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink defComment	Comment
-HiLink defKeyword	Keyword
-HiLink defStorage	StorageClass
-HiLink defString	String
-HiLink defNumber	Number
-HiLink defOrdinal	Operator
+hi def link defComment	Comment
+hi def link defKeyword	Keyword
+hi def link defStorage	StorageClass
+hi def link defString	String
+hi def link defNumber	Number
+hi def link defOrdinal	Operator
 
-delcommand HiLink
 
 let b:current_syntax = "def"
 

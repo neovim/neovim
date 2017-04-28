@@ -104,14 +104,12 @@ syntax region beginCodeCode  matchgroup=texDelimiter start="{" end="}"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink lhsBirdTrack Comment
+hi def link lhsBirdTrack Comment
 
-HiLink beginCodeBegin	      texCmdName
-HiLink beginCodeCode	      texSection
+hi def link beginCodeBegin	      texCmdName
+hi def link beginCodeCode	      texSection
 
-delcommand HiLink
 
 " Restore cursor to original position, as it may have been disturbed
 " by the searches in our guessing code

@@ -57,33 +57,31 @@ syn match       asteriskSetting         "^host\s*=\s*\(dynamic\|\(\d\{1,3}\.\d\{
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink        asteriskComment		Comment
-HiLink        asteriskExten		String
-HiLink        asteriskContext         Preproc
-HiLink        asteriskPattern         Type
-HiLink        asteriskApp             Statement
-HiLink        asteriskInclude         Preproc
-HiLink        asteriskIncludeBad	Error
-HiLink        asteriskPriority        Preproc
-HiLink        asteriskLabel           Type
-HiLink        asteriskVar             String
-HiLink        asteriskVarLen          Function
-HiLink        asteriskExp             Type
-HiLink        asteriskCodecsPermit    Preproc
-HiLink        asteriskCodecs          String
-HiLink        asteriskType            Statement
-HiLink        asteriskTypeType        Type
-HiLink        asteriskAuth            String
-HiLink        asteriskAuthType        Type
-HiLink        asteriskIPRange         Identifier
-HiLink        asteriskIP              Identifier
-HiLink        asteriskPort            Identifier
-HiLink        asteriskHostname        Identifier
-HiLink        asteriskSetting         Statement
-HiLink        asteriskError           Error
-delcommand HiLink
+hi def link        asteriskComment		Comment
+hi def link        asteriskExten		String
+hi def link        asteriskContext         Preproc
+hi def link        asteriskPattern         Type
+hi def link        asteriskApp             Statement
+hi def link        asteriskInclude         Preproc
+hi def link        asteriskIncludeBad	Error
+hi def link        asteriskPriority        Preproc
+hi def link        asteriskLabel           Type
+hi def link        asteriskVar             String
+hi def link        asteriskVarLen          Function
+hi def link        asteriskExp             Type
+hi def link        asteriskCodecsPermit    Preproc
+hi def link        asteriskCodecs          String
+hi def link        asteriskType            Statement
+hi def link        asteriskTypeType        Type
+hi def link        asteriskAuth            String
+hi def link        asteriskAuthType        Type
+hi def link        asteriskIPRange         Identifier
+hi def link        asteriskIP              Identifier
+hi def link        asteriskPort            Identifier
+hi def link        asteriskHostname        Identifier
+hi def link        asteriskSetting         Statement
+hi def link        asteriskError           Error
 
 let b:current_syntax = "asterisk" 
 " vim: ts=8 sw=2

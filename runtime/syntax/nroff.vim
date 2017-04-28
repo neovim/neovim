@@ -196,53 +196,51 @@ syn keyword nroffTodo TODO XXX FIXME contained
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 "
-command -nargs=+ HiLink hi def link <args>
 
-HiLink nroffEscChar nroffSpecialChar
-HiLink nroffEscCharAr nroffSpecialChar
-HiLink nroffSpecialChar SpecialChar
-HiLink nroffSpace Delimiter
+hi def link nroffEscChar nroffSpecialChar
+hi def link nroffEscCharAr nroffSpecialChar
+hi def link nroffSpecialChar SpecialChar
+hi def link nroffSpace Delimiter
 
-HiLink nroffEscRegArg2 nroffEscRegArg
-HiLink nroffEscRegArg nroffIdent
+hi def link nroffEscRegArg2 nroffEscRegArg
+hi def link nroffEscRegArg nroffIdent
 
-HiLink nroffEscArg2 nroffEscArg
-HiLink nroffEscPar nroffEscape
+hi def link nroffEscArg2 nroffEscArg
+hi def link nroffEscPar nroffEscape
 
-HiLink nroffEscRegPar nroffEscape
-HiLink nroffEscArg nroffEscape
-HiLink nroffSize nroffEscape
-HiLink nroffEscape Preproc
+hi def link nroffEscRegPar nroffEscape
+hi def link nroffEscArg nroffEscape
+hi def link nroffSize nroffEscape
+hi def link nroffEscape Preproc
 
-HiLink nroffIgnore Comment
-HiLink nroffComment Comment
-HiLink nroffTodo Todo
+hi def link nroffIgnore Comment
+hi def link nroffComment Comment
+hi def link nroffTodo Todo
 
-HiLink nroffReqLeader nroffRequest
-HiLink nroffReqName nroffRequest
-HiLink nroffRequest Statement
-HiLink nroffCond PreCondit
-HiLink nroffDefIdent nroffIdent
-HiLink nroffIdent Identifier
+hi def link nroffReqLeader nroffRequest
+hi def link nroffReqName nroffRequest
+hi def link nroffRequest Statement
+hi def link nroffCond PreCondit
+hi def link nroffDefIdent nroffIdent
+hi def link nroffIdent Identifier
 
-HiLink nroffEquation PreProc
-HiLink nroffTable PreProc
-HiLink nroffPicture PreProc
-HiLink nroffRefer PreProc
-HiLink nroffGrap PreProc
-HiLink nroffGremlin PreProc
+hi def link nroffEquation PreProc
+hi def link nroffTable PreProc
+hi def link nroffPicture PreProc
+hi def link nroffRefer PreProc
+hi def link nroffGrap PreProc
+hi def link nroffGremlin PreProc
 
-HiLink nroffNumber Number
-HiLink nroffBadChar nroffError
-HiLink nroffSpaceError nroffError
-HiLink nroffError Error
+hi def link nroffNumber Number
+hi def link nroffBadChar nroffError
+hi def link nroffSpaceError nroffError
+hi def link nroffError Error
 
-HiLink nroffPreserve String
-HiLink nroffString String
-HiLink nroffDefinition String
-HiLink nroffDefSpecial Special
+hi def link nroffPreserve String
+hi def link nroffString String
+hi def link nroffDefinition String
+hi def link nroffDefSpecial Special
 
-delcommand HiLink
 
 let b:current_syntax = "nroff"
 

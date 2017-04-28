@@ -236,40 +236,38 @@ syn region  tclComment		start=/;\s*\#/hs=s+1 skip="\\$" end="$" contains=tclTodo
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink tcltkSwitch		Special
-HiLink tclExpand		Special
-HiLink tclLabel		Label
-HiLink tclConditional		Conditional
-HiLink tclRepeat		Repeat
-HiLink tclNumber		Number
-HiLink tclError		Error
-HiLink tclCommand		Statement
-HiLink tclProcCommand		Type
-HiLink tclString		String
-HiLink tclComment		Comment
-HiLink tclSpecial		Special
-HiLink tclTodo		Todo
+hi def link tcltkSwitch		Special
+hi def link tclExpand		Special
+hi def link tclLabel		Label
+hi def link tclConditional		Conditional
+hi def link tclRepeat		Repeat
+hi def link tclNumber		Number
+hi def link tclError		Error
+hi def link tclCommand		Statement
+hi def link tclProcCommand		Type
+hi def link tclString		String
+hi def link tclComment		Comment
+hi def link tclSpecial		Special
+hi def link tclTodo		Todo
 " Below here are the commands and their options.
-HiLink tcltkCommandColor	Statement
-HiLink tcltkWidgetColor	Structure
-HiLink tclLineContinue	WarningMsg
+hi def link tcltkCommandColor	Statement
+hi def link tcltkWidgetColor	Structure
+hi def link tclLineContinue	WarningMsg
 if exists('g:tcl_warn_continuation')
-HiLink tclNotLineContinue	ErrorMsg
+hi def link tclNotLineContinue	ErrorMsg
 endif
-HiLink tcltkStringSwitch	Special
-HiLink tcltkArraySwitch	Special
-HiLink tcltkLsortSwitch	Special
-HiLink tcltkPackSwitch	Special
-HiLink tcltkPackConfSwitch	Special
-HiLink tcltkMaths		Special
-HiLink tcltkNamespaceSwitch	Special
-HiLink tcltkWidgetSwitch	Special
-HiLink tcltkPackConfColor	Identifier
-HiLink tclVarRef		Identifier
+hi def link tcltkStringSwitch	Special
+hi def link tcltkArraySwitch	Special
+hi def link tcltkLsortSwitch	Special
+hi def link tcltkPackSwitch	Special
+hi def link tcltkPackConfSwitch	Special
+hi def link tcltkMaths		Special
+hi def link tcltkNamespaceSwitch	Special
+hi def link tcltkWidgetSwitch	Special
+hi def link tcltkPackConfColor	Identifier
+hi def link tclVarRef		Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "tcl"
 

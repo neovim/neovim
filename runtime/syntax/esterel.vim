@@ -62,19 +62,17 @@ syn match esterelNone			"\<else\s\+if\>$"
 syn match esterelNone			"\<else\s\+if\>\s"
 
 " Class Linking
-command -nargs=+ HiLink hi def link <args>
 
-HiLink esterelStatement		Statement
-HiLink esterelType			Type
-HiLink esterelComment		Comment
-HiLink esterelBoolean		Number
-HiLink esterelExpressions	Number
-HiLink esterelIO			String
-HiLink esterelOperator		Type
-HiLink esterelSysCall		Type
-HiLink esterelFunctions		Type
-HiLink esterelSpecial		Special
+hi def link esterelStatement		Statement
+hi def link esterelType			Type
+hi def link esterelComment		Comment
+hi def link esterelBoolean		Number
+hi def link esterelExpressions	Number
+hi def link esterelIO			String
+hi def link esterelOperator		Type
+hi def link esterelSysCall		Type
+hi def link esterelFunctions		Type
+hi def link esterelSpecial		Special
 
-delcommand HiLink
 
 let b:current_syntax = "esterel"

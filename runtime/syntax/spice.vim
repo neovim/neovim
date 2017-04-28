@@ -51,19 +51,17 @@ syn sync minlines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink spiceTodo		Todo
-HiLink spiceWrapLineOperator	spiceOperator
-HiLink spiceSinglequote	spiceExpr
-HiLink spiceExpr		Function
-HiLink spiceParenError	Error
-HiLink spiceStatement		Statement
-HiLink spiceNumber		Number
-HiLink spiceComment		Comment
-HiLink spiceOperator		Operator
+hi def link spiceTodo		Todo
+hi def link spiceWrapLineOperator	spiceOperator
+hi def link spiceSinglequote	spiceExpr
+hi def link spiceExpr		Function
+hi def link spiceParenError	Error
+hi def link spiceStatement		Statement
+hi def link spiceNumber		Number
+hi def link spiceComment		Comment
+hi def link spiceOperator		Operator
 
-delcommand HiLink
 
 let b:current_syntax = "spice"
 

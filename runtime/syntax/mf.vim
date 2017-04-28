@@ -155,31 +155,29 @@ syn sync maxlines=50
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink mfBoolExp	Statement
-HiLink mfNumExp	Statement
-HiLink mfInternal	Identifier
-HiLink mfPairExp	Statement
-HiLink mfPathExp	Statement
-HiLink mfPenExp	Statement
-HiLink mfPicExp	Statement
-HiLink mfStringExp	Statement
-HiLink mfCommand	Statement
-HiLink mfType	Type
-HiLink mfStatement	Statement
-HiLink mfDefinition	Statement
-HiLink mfCondition	Conditional
-HiLink mfPrimitive	Statement
-HiLink mfMacro	Macro
-HiLink mfCoord	Identifier
-HiLink mfPoint	Identifier
-HiLink mfNumeric	Number
-HiLink mfLength	Number
-HiLink mfComment	Comment
-HiLink mfString	String
+hi def link mfBoolExp	Statement
+hi def link mfNumExp	Statement
+hi def link mfInternal	Identifier
+hi def link mfPairExp	Statement
+hi def link mfPathExp	Statement
+hi def link mfPenExp	Statement
+hi def link mfPicExp	Statement
+hi def link mfStringExp	Statement
+hi def link mfCommand	Statement
+hi def link mfType	Type
+hi def link mfStatement	Statement
+hi def link mfDefinition	Statement
+hi def link mfCondition	Conditional
+hi def link mfPrimitive	Statement
+hi def link mfMacro	Macro
+hi def link mfCoord	Identifier
+hi def link mfPoint	Identifier
+hi def link mfNumeric	Number
+hi def link mfLength	Number
+hi def link mfComment	Comment
+hi def link mfString	String
 
-delcommand HiLink
 
 let b:current_syntax = "mf"
 

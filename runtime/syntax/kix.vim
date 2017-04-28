@@ -129,43 +129,41 @@ syn match   kixExpression	"<\|>\|<=\|>=\|<>"
 
 " Default highlighting.
 " Set default highlight only if it doesn't already have a value.
-command -nargs=+ HiLink hi def link <args>
 
-HiLink kixDoubleString		String
-HiLink kixSingleString		String
-HiLink kixStatement		Statement
-HiLink kixRepeat		Repeat
-HiLink kixComment		Comment
-HiLink kixBuiltin		Function
-HiLink kixLocalVar		Special
-HiLink kixMacro			Special
-HiLink kixEnvVar		Special
-HiLink kixLabel			Type
-HiLink kixFunction		Function
-HiLink kixInteger		Number
-HiLink kixHex			Number
-HiLink kixFloat			Number
-HiLink kixOperator		Operator
-HiLink kixExpression		Operator
+hi def link kixDoubleString		String
+hi def link kixSingleString		String
+hi def link kixStatement		Statement
+hi def link kixRepeat		Repeat
+hi def link kixComment		Comment
+hi def link kixBuiltin		Function
+hi def link kixLocalVar		Special
+hi def link kixMacro			Special
+hi def link kixEnvVar		Special
+hi def link kixLabel			Type
+hi def link kixFunction		Function
+hi def link kixInteger		Number
+hi def link kixHex			Number
+hi def link kixFloat			Number
+hi def link kixOperator		Operator
+hi def link kixExpression		Operator
 
-HiLink kixParenCloseError	Error
-HiLink kixBrackCloseError	Error
-HiLink kixStringError		Error
+hi def link kixParenCloseError	Error
+hi def link kixBrackCloseError	Error
+hi def link kixStringError		Error
 
-HiLink kixWhileError		Error
-HiLink kixWhileOK		Conditional
-HiLink kixDoError		Error
-HiLink kixDoOK			Conditional
-HiLink kixIfError		Error
-HiLink kixIfOK			Conditional
-HiLink kixSelectError		Error
-HiLink kixSelectOK		Conditional
-HiLink kixForNextError		Error
-HiLink kixForNextOK		Conditional
-HiLink kixForEachError		Error
-HiLink kixForEachOK		Conditional
+hi def link kixWhileError		Error
+hi def link kixWhileOK		Conditional
+hi def link kixDoError		Error
+hi def link kixDoOK			Conditional
+hi def link kixIfError		Error
+hi def link kixIfOK			Conditional
+hi def link kixSelectError		Error
+hi def link kixSelectOK		Conditional
+hi def link kixForNextError		Error
+hi def link kixForNextOK		Conditional
+hi def link kixForEachError		Error
+hi def link kixForEachOK		Conditional
 
-delcommand HiLink
 
 let b:current_syntax = "kix"
 

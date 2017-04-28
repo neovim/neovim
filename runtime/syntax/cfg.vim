@@ -34,17 +34,15 @@ syn match  CfgComment	"\/\/.*"
 
 " Define the default hightlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink CfgOnOff     Label
-HiLink CfgComment	Comment
-HiLink CfgSection	Type
-HiLink CfgString	String
-HiLink CfgParams    Keyword
-HiLink CfgValues    Constant
-HiLink CfgDirectory Directory
-HiLink UncPath      Directory
+hi def link CfgOnOff     Label
+hi def link CfgComment	Comment
+hi def link CfgSection	Type
+hi def link CfgString	String
+hi def link CfgParams    Keyword
+hi def link CfgValues    Constant
+hi def link CfgDirectory Directory
+hi def link UncPath      Directory
 
-delcommand HiLink
 
 let b:current_syntax = "cfg"
 " vim:ts=8

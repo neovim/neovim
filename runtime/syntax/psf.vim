@@ -72,18 +72,16 @@ syn match  psfComment "#.*$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink psfObject       Statement
-HiLink psfAttrib       Type
-HiLink psfQuotString   String
-HiLink psfObjTag       Identifier
-HiLink psfAttAbbrev    PreProc
-HiLink psfObjTags      Identifier
+hi def link psfObject       Statement
+hi def link psfAttrib       Type
+hi def link psfQuotString   String
+hi def link psfObjTag       Identifier
+hi def link psfAttAbbrev    PreProc
+hi def link psfObjTags      Identifier
 
-HiLink psfComment      Comment
+hi def link psfComment      Comment
 
-delcommand HiLink
 
 " Long descriptions and copyrights confuse the syntax highlighting, so
 " force vim to backup at least 100 lines before the top visible line

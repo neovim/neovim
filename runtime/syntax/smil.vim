@@ -113,29 +113,27 @@ syn region smilComment		      start=+<!DOCTYPE+ keepend end=+>+
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink smilTag			Function
-HiLink smilEndTag			Identifier
-HiLink smilArg			Type
-HiLink smilTagName			smilStatement
-HiLink smilSpecialTagName		Exception
-HiLink smilValue			Value
-HiLink smilSpecialChar		Special
+hi def link smilTag			Function
+hi def link smilEndTag			Identifier
+hi def link smilArg			Type
+hi def link smilTagName			smilStatement
+hi def link smilSpecialTagName		Exception
+hi def link smilValue			Value
+hi def link smilSpecialChar		Special
 
-HiLink smilSpecial			Special
-HiLink smilSpecialChar		Special
-HiLink smilString			String
-HiLink smilStatement			Statement
-HiLink smilComment			Comment
-HiLink smilCommentPart		Comment
-HiLink smilPreProc			PreProc
-HiLink smilValue			String
-HiLink smilCommentError		smilError
-HiLink smilTagError			smilError
-HiLink smilError			Error
+hi def link smilSpecial			Special
+hi def link smilSpecialChar		Special
+hi def link smilString			String
+hi def link smilStatement			Statement
+hi def link smilComment			Comment
+hi def link smilCommentPart		Comment
+hi def link smilPreProc			PreProc
+hi def link smilValue			String
+hi def link smilCommentError		smilError
+hi def link smilTagError			smilError
+hi def link smilError			Error
 
-delcommand HiLink
 
 let b:current_syntax = "smil"
 

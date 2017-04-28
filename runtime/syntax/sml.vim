@@ -166,53 +166,51 @@ syn sync match smlSigSync     groupthere smlSig     "\<end\>"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink smlBraceErr	 Error
-HiLink smlBrackErr	 Error
-HiLink smlParenErr	 Error
+hi def link smlBraceErr	 Error
+hi def link smlBrackErr	 Error
+hi def link smlParenErr	 Error
 
-HiLink smlCommentErr	 Error
+hi def link smlCommentErr	 Error
 
-HiLink smlEndErr	 Error
-HiLink smlThenErr	 Error
+hi def link smlEndErr	 Error
+hi def link smlThenErr	 Error
 
-HiLink smlCharErr	 Error
+hi def link smlCharErr	 Error
 
-HiLink smlComment	 Comment
+hi def link smlComment	 Comment
 
-HiLink smlModPath	 Include
-HiLink smlModule	 Include
-HiLink smlModParam1	 Include
-HiLink smlModType	 Include
-HiLink smlMPRestr3	 Include
-HiLink smlFullMod	 Include
-HiLink smlModTypeRestr Include
-HiLink smlWith	 Include
-HiLink smlMTDef	 Include
+hi def link smlModPath	 Include
+hi def link smlModule	 Include
+hi def link smlModParam1	 Include
+hi def link smlModType	 Include
+hi def link smlMPRestr3	 Include
+hi def link smlFullMod	 Include
+hi def link smlModTypeRestr Include
+hi def link smlWith	 Include
+hi def link smlMTDef	 Include
 
-HiLink smlConstructor  Constant
+hi def link smlConstructor  Constant
 
-HiLink smlModPreRHS	 Keyword
-HiLink smlMPRestr2	 Keyword
-HiLink smlKeyword	 Keyword
-HiLink smlFunDef	 Keyword
-HiLink smlRefAssign	 Keyword
-HiLink smlKeyChar	 Keyword
-HiLink smlAnyVar	 Keyword
-HiLink smlTopStop	 Keyword
-HiLink smlOperator	 Keyword
+hi def link smlModPreRHS	 Keyword
+hi def link smlMPRestr2	 Keyword
+hi def link smlKeyword	 Keyword
+hi def link smlFunDef	 Keyword
+hi def link smlRefAssign	 Keyword
+hi def link smlKeyChar	 Keyword
+hi def link smlAnyVar	 Keyword
+hi def link smlTopStop	 Keyword
+hi def link smlOperator	 Keyword
 
-HiLink smlBoolean	 Boolean
-HiLink smlCharacter	 Character
-HiLink smlNumber	 Number
-HiLink smlReal	 Float
-HiLink smlString	 String
-HiLink smlType	 Type
-HiLink smlTodo	 Todo
-HiLink smlEncl	 Keyword
+hi def link smlBoolean	 Boolean
+hi def link smlCharacter	 Character
+hi def link smlNumber	 Number
+hi def link smlReal	 Float
+hi def link smlString	 String
+hi def link smlType	 Type
+hi def link smlTodo	 Todo
+hi def link smlEncl	 Keyword
 
-delcommand HiLink
 
 let b:current_syntax = "sml"
 

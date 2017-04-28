@@ -245,24 +245,22 @@ syn match   ratpoisonVoidCommand	"^\s*\zswindows\ze\s*$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink ratpoisonBooleanArg	Boolean
-HiLink ratpoisonCommandArg	Keyword
-HiLink ratpoisonComment	Comment
-HiLink ratpoisonDefCommand	Identifier
-HiLink ratpoisonGravityArg	Constant
-HiLink ratpoisonKeySeqArg	Special
-HiLink ratpoisonNumberArg	Number
-HiLink ratpoisonSetArg	Keyword
-HiLink ratpoisonStringCommand	Identifier
-HiLink ratpoisonTodo		Todo
-HiLink ratpoisonVoidCommand	Identifier
-HiLink ratpoisonWinFmtArg	Special
-HiLink ratpoisonWinNameArg	Constant
-HiLink ratpoisonWinListArg	Constant
+hi def link ratpoisonBooleanArg	Boolean
+hi def link ratpoisonCommandArg	Keyword
+hi def link ratpoisonComment	Comment
+hi def link ratpoisonDefCommand	Identifier
+hi def link ratpoisonGravityArg	Constant
+hi def link ratpoisonKeySeqArg	Special
+hi def link ratpoisonNumberArg	Number
+hi def link ratpoisonSetArg	Keyword
+hi def link ratpoisonStringCommand	Identifier
+hi def link ratpoisonTodo		Todo
+hi def link ratpoisonVoidCommand	Identifier
+hi def link ratpoisonWinFmtArg	Special
+hi def link ratpoisonWinNameArg	Constant
+hi def link ratpoisonWinListArg	Constant
 
-delcommand HiLink
 
 let b:current_syntax = "ratpoison"
 

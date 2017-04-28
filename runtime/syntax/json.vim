@@ -93,30 +93,28 @@ syn region  jsonFold matchgroup=jsonBraces start="\[" end=/]\(\_s\+\ze"\)\@!/ tr
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink jsonPadding         Operator
-HiLink jsonString          String
-HiLink jsonTest          Label
-HiLink jsonEscape          Special
-HiLink jsonNumber          Number
-HiLink jsonBraces          Delimiter
-HiLink jsonNull            Function
-HiLink jsonBoolean         Boolean
-HiLink jsonKeyword         Label
+hi def link jsonPadding         Operator
+hi def link jsonString          String
+hi def link jsonTest          Label
+hi def link jsonEscape          Special
+hi def link jsonNumber          Number
+hi def link jsonBraces          Delimiter
+hi def link jsonNull            Function
+hi def link jsonBoolean         Boolean
+hi def link jsonKeyword         Label
 
 if (!exists("g:vim_json_warnings") || g:vim_json_warnings==1)
-HiLink jsonNumError        Error
-HiLink jsonCommentError    Error
-HiLink jsonSemicolonError  Error
-HiLink jsonTrailingCommaError     Error
-HiLink jsonMissingCommaError      Error
-HiLink jsonStringSQError        	Error
-HiLink jsonNoQuotesError        	Error
-HiLink jsonTripleQuotesError     	Error
+hi def link jsonNumError        Error
+hi def link jsonCommentError    Error
+hi def link jsonSemicolonError  Error
+hi def link jsonTrailingCommaError     Error
+hi def link jsonMissingCommaError      Error
+hi def link jsonStringSQError        	Error
+hi def link jsonNoQuotesError        	Error
+hi def link jsonTripleQuotesError     	Error
 endif
-HiLink jsonQuote           Quote
-HiLink jsonNoise           Noise
-delcommand HiLink
+hi def link jsonQuote           Quote
+hi def link jsonNoise           Noise
 
 let b:current_syntax = "json"
 if main_syntax == 'json'

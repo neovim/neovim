@@ -56,24 +56,22 @@ syn sync ccomment sliceComment
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink sliceComment	Comment
-HiLink sliceConstruct	Keyword
-HiLink sliceType	Type
-HiLink sliceString	String
-HiLink sliceIncluded	String
-HiLink sliceQualifier	Keyword
-HiLink sliceInclude	Include
-HiLink sliceGuard	PreProc
-HiLink sliceBoolean	Boolean
-HiLink sliceFloat	Number
-HiLink sliceNumber	Number
-HiLink sliceOctal	Number
-HiLink sliceOctalZero	Special
-HiLink sliceNumberError Special
+hi def link sliceComment	Comment
+hi def link sliceConstruct	Keyword
+hi def link sliceType	Type
+hi def link sliceString	String
+hi def link sliceIncluded	String
+hi def link sliceQualifier	Keyword
+hi def link sliceInclude	Include
+hi def link sliceGuard	PreProc
+hi def link sliceBoolean	Boolean
+hi def link sliceFloat	Number
+hi def link sliceNumber	Number
+hi def link sliceOctal	Number
+hi def link sliceOctalZero	Special
+hi def link sliceNumberError Special
 
-delcommand HiLink
 
 let b:current_syntax = "slice"
 

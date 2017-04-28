@@ -217,26 +217,24 @@ syn keyword idlangRoutine XVOLUME_WRITE_IMAGE XYOUTS ZOOM ZOOM_24
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink idlangConditional	Conditional
-HiLink idlangRoutine	Type
-HiLink idlangStatement	Statement
-HiLink idlangContinueLine	Todo
-HiLink idlangRealNumber	Float
-HiLink idlangNumber	Number
-HiLink idlangString	String
-HiLink idlangOperator	Operator
-HiLink idlangComment	Comment
-HiLink idlangTodo	Todo
-HiLink idlangPreCondit	Identifier
-HiLink idlangDblCommaError	Error
-HiLink idlangStop	Error
-HiLink idlangStrucvar	PreProc
-HiLink idlangSystem	Identifier
-HiLink idlangKeyword	Special
+hi def link idlangConditional	Conditional
+hi def link idlangRoutine	Type
+hi def link idlangStatement	Statement
+hi def link idlangContinueLine	Todo
+hi def link idlangRealNumber	Float
+hi def link idlangNumber	Number
+hi def link idlangString	String
+hi def link idlangOperator	Operator
+hi def link idlangComment	Comment
+hi def link idlangTodo	Todo
+hi def link idlangPreCondit	Identifier
+hi def link idlangDblCommaError	Error
+hi def link idlangStop	Error
+hi def link idlangStrucvar	PreProc
+hi def link idlangSystem	Identifier
+hi def link idlangKeyword	Special
 
-delcommand HiLink
 
 let b:current_syntax = "idlang"
 " vim: ts=18

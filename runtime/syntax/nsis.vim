@@ -222,37 +222,35 @@ syn keyword nsisError		UninstallExeName
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink nsisInstruction		Function
-HiLink nsisComment			Comment
-HiLink nsisLocalLabel			Label
-HiLink nsisGlobalLabel		Label
-HiLink nsisStatement			Statement
-HiLink nsisString			String
-HiLink nsisBoolean			Boolean
-HiLink nsisAttribOptions		Constant
-HiLink nsisExecShell			Constant
-HiLink nsisFileAttrib			Constant
-HiLink nsisMessageBox			Constant
-HiLink nsisRegistry			Identifier
-HiLink nsisNumber			Number
-HiLink nsisError			Error
-HiLink nsisUserVar			Identifier
-HiLink nsisSysVar			Identifier
-HiLink nsisAttribute			Type
-HiLink nsisCompiler			Type
-HiLink nsisTodo			Todo
-HiLink nsisCallback			Operator
+hi def link nsisInstruction		Function
+hi def link nsisComment			Comment
+hi def link nsisLocalLabel			Label
+hi def link nsisGlobalLabel		Label
+hi def link nsisStatement			Statement
+hi def link nsisString			String
+hi def link nsisBoolean			Boolean
+hi def link nsisAttribOptions		Constant
+hi def link nsisExecShell			Constant
+hi def link nsisFileAttrib			Constant
+hi def link nsisMessageBox			Constant
+hi def link nsisRegistry			Identifier
+hi def link nsisNumber			Number
+hi def link nsisError			Error
+hi def link nsisUserVar			Identifier
+hi def link nsisSysVar			Identifier
+hi def link nsisAttribute			Type
+hi def link nsisCompiler			Type
+hi def link nsisTodo			Todo
+hi def link nsisCallback			Operator
 " preprocessor commands
-HiLink nsisPreprocSubst		PreProc
-HiLink nsisDefine			Define
-HiLink nsisMacro			Macro
-HiLink nsisPreCondit			PreCondit
-HiLink nsisInclude			Include
-HiLink nsisSystem			PreProc
+hi def link nsisPreprocSubst		PreProc
+hi def link nsisDefine			Define
+hi def link nsisMacro			Macro
+hi def link nsisPreCondit			PreCondit
+hi def link nsisInclude			Include
+hi def link nsisSystem			PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "nsis"
 

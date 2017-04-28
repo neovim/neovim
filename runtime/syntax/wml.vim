@@ -130,23 +130,21 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink wmlNextLine	Special
-HiLink wmlUse		Include
-HiLink wmlUsed	String
-HiLink wmlBody	Special
-HiLink wmlDiverted	Label
-HiLink wmlDivert	Delimiter
-HiLink wmlDivertEnd	Delimiter
-HiLink wmlLocationId	Label
-HiLink wmlLocation	Delimiter
-" HiLink wmlLocationed	Delimiter
-HiLink wmlDefineName	String
-HiLink wmlComment	Comment
-HiLink wmlInclude	Include
-HiLink wmlSharpBang	PreProc
+hi def link wmlNextLine	Special
+hi def link wmlUse		Include
+hi def link wmlUsed	String
+hi def link wmlBody	Special
+hi def link wmlDiverted	Label
+hi def link wmlDivert	Delimiter
+hi def link wmlDivertEnd	Delimiter
+hi def link wmlLocationId	Label
+hi def link wmlLocation	Delimiter
+" hi def link wmlLocationed	Delimiter
+hi def link wmlDefineName	String
+hi def link wmlComment	Comment
+hi def link wmlInclude	Include
+hi def link wmlSharpBang	PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "wml"

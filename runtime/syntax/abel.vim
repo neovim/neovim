@@ -121,39 +121,37 @@ syn sync minlines=1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default highlighting.
-HiLink abelHeader		abelStatement
-HiLink abelSection		abelStatement
-HiLink abelDeclaration	abelStatement
-HiLink abelLogicalOperator	abelOperator
-HiLink abelRangeOperator	abelOperator
-HiLink abelAlternateOperator	abelOperator
-HiLink abelArithmeticOperator	abelOperator
-HiLink abelRelationalOperator	abelOperator
-HiLink abelAssignmentOperator	abelOperator
-HiLink abelTruthTableOperator	abelOperator
-HiLink abelSpecifier		abelStatement
-HiLink abelOperator		abelStatement
-HiLink abelStatement		Statement
-HiLink abelIdentifier		Identifier
-HiLink abelTypeId		abelType
-HiLink abelTypeIdChar		abelType
-HiLink abelType		Type
-HiLink abelNumber		abelString
-HiLink abelString		String
-HiLink abelConstant		Constant
-HiLink abelComment		Comment
-HiLink abelExtension		abelSpecial
-HiLink abelSpecialChar	abelSpecial
-HiLink abelTypeIdEnd		abelSpecial
-HiLink abelSpecial		Special
-HiLink abelDirective		PreProc
-HiLink abelTodo		Todo
-HiLink abelError		Error
+hi def link abelHeader		abelStatement
+hi def link abelSection		abelStatement
+hi def link abelDeclaration	abelStatement
+hi def link abelLogicalOperator	abelOperator
+hi def link abelRangeOperator	abelOperator
+hi def link abelAlternateOperator	abelOperator
+hi def link abelArithmeticOperator	abelOperator
+hi def link abelRelationalOperator	abelOperator
+hi def link abelAssignmentOperator	abelOperator
+hi def link abelTruthTableOperator	abelOperator
+hi def link abelSpecifier		abelStatement
+hi def link abelOperator		abelStatement
+hi def link abelStatement		Statement
+hi def link abelIdentifier		Identifier
+hi def link abelTypeId		abelType
+hi def link abelTypeIdChar		abelType
+hi def link abelType		Type
+hi def link abelNumber		abelString
+hi def link abelString		String
+hi def link abelConstant		Constant
+hi def link abelComment		Comment
+hi def link abelExtension		abelSpecial
+hi def link abelSpecialChar	abelSpecial
+hi def link abelTypeIdEnd		abelSpecial
+hi def link abelSpecial		Special
+hi def link abelDirective		PreProc
+hi def link abelTodo		Todo
+hi def link abelError		Error
 
-delcommand HiLink
 
 let b:current_syntax = "abel"
 

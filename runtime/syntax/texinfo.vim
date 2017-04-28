@@ -355,38 +355,36 @@ syn cluster texinfoReducedAll contains=texinfoSpecialChar,texinfoBrcPrmAtCmd
 " highlighting
 
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink texinfoSpecialChar	Special
-HiLink texinfoHFSpecialChar	Special
+hi def link texinfoSpecialChar	Special
+hi def link texinfoHFSpecialChar	Special
 
-HiLink texinfoError		Error
-HiLink texinfoIdent		Identifier
-HiLink texinfoAssignment	Identifier
-HiLink texinfoSinglePar	Identifier
-HiLink texinfoIndexPar	Identifier
-HiLink texinfoSIPar		Identifier
-HiLink texinfoDIEPar		Identifier
-HiLink texinfoTexCmd		PreProc
+hi def link texinfoError		Error
+hi def link texinfoIdent		Identifier
+hi def link texinfoAssignment	Identifier
+hi def link texinfoSinglePar	Identifier
+hi def link texinfoIndexPar	Identifier
+hi def link texinfoSIPar		Identifier
+hi def link texinfoDIEPar		Identifier
+hi def link texinfoTexCmd		PreProc
 
 
-HiLink texinfoAtCmd		Statement	"@-command
-HiLink texinfoPrmAtCmd	String		"@-command in one line with unknown nr. of parameters
+hi def link texinfoAtCmd		Statement	"@-command
+hi def link texinfoPrmAtCmd	String		"@-command in one line with unknown nr. of parameters
 					      "is String because is found as a region and is 'matchgroup'-ed
 					      "to texinfoAtCmd
-HiLink texinfoBrcPrmAtCmd	String		"@-command with parameter(s) in braces ({})
+hi def link texinfoBrcPrmAtCmd	String		"@-command with parameter(s) in braces ({})
 					      "is String because is found as a region and is 'matchgroup'-ed to texinfoAtCmd
-HiLink texinfoMltlnAtCmdFLine  texinfoAtCmd	"repeated embedded First lines in @-commands
-HiLink texinfoMltlnAtCmd	String		"@-command in multiple lines
+hi def link texinfoMltlnAtCmdFLine  texinfoAtCmd	"repeated embedded First lines in @-commands
+hi def link texinfoMltlnAtCmd	String		"@-command in multiple lines
 					      "is String because is found as a region and is 'matchgroup'-ed to texinfoAtCmd
-HiLink texinfoMltln2AtCmd	PreProc		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors)
-HiLink texinfoMltlnDMAtCmd	PreProc		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors; used for @detailmenu, which can be included in @menu)
-HiLink texinfoMltlnNAtCmd	Normal		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors)
-HiLink texinfoThisAtCmd	Statement	"@-command used in headers and footers (@this... series)
+hi def link texinfoMltln2AtCmd	PreProc		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors)
+hi def link texinfoMltlnDMAtCmd	PreProc		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors; used for @detailmenu, which can be included in @menu)
+hi def link texinfoMltlnNAtCmd	Normal		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors)
+hi def link texinfoThisAtCmd	Statement	"@-command used in headers and footers (@this... series)
 
-HiLink texinfoComment	Comment
+hi def link texinfoComment	Comment
 
-delcommand HiLink
 
 
 let b:current_syntax = "texinfo"

@@ -37,32 +37,30 @@ syntax match crontabPercent "[^\\]%.*"lc=1 contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink crontabMin		Number
-HiLink crontabHr		PreProc
-HiLink crontabDay		Type
+hi def link crontabMin		Number
+hi def link crontabHr		PreProc
+hi def link crontabDay		Type
 
-HiLink crontabMnth		Number
-HiLink crontabMnth12		Number
-HiLink crontabMnthS		Number
-HiLink crontabMnthN		Number
+hi def link crontabMnth		Number
+hi def link crontabMnth12		Number
+hi def link crontabMnthS		Number
+hi def link crontabMnthN		Number
 
-HiLink crontabDow		PreProc
-HiLink crontabDow7		PreProc
-HiLink crontabDowS		PreProc
-HiLink crontabDowN		PreProc
+hi def link crontabDow		PreProc
+hi def link crontabDow7		PreProc
+hi def link crontabDowS		PreProc
+hi def link crontabDowN		PreProc
 
-HiLink crontabNick		Special
-HiLink crontabVar		Identifier
-HiLink crontabPercent		Special
+hi def link crontabNick		Special
+hi def link crontabVar		Identifier
+hi def link crontabPercent		Special
 
 " comment out next line for to suppress unix commands coloring.
-HiLink crontabCmd		Statement
+hi def link crontabCmd		Statement
 
-HiLink crontabCmnt		Comment
+hi def link crontabCmnt		Comment
 
-delcommand HiLink
 
 let b:current_syntax = "crontab"
 

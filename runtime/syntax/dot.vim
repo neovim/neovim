@@ -72,27 +72,25 @@ syn sync maxlines=500
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dotParErr	 Error
-HiLink dotBraceErr	 Error
-HiLink dotBrackErr	 Error
+hi def link dotParErr	 Error
+hi def link dotBraceErr	 Error
+hi def link dotBrackErr	 Error
 
-HiLink dotComment	 Comment
-HiLink dotTodo	 Todo
+hi def link dotComment	 Comment
+hi def link dotTodo	 Todo
 
-HiLink dotParEncl	 Keyword
-HiLink dotBrackEncl	 Keyword
-HiLink dotBraceEncl	 Keyword
+hi def link dotParEncl	 Keyword
+hi def link dotBrackEncl	 Keyword
+hi def link dotBraceEncl	 Keyword
 
-HiLink dotKeyword	 Keyword
-HiLink dotType	 Type
-HiLink dotKeyChar	 Keyword
+hi def link dotKeyword	 Keyword
+hi def link dotType	 Type
+hi def link dotKeyChar	 Keyword
 
-HiLink dotString	 String
-HiLink dotIdentifier	 Identifier
+hi def link dotString	 String
+hi def link dotIdentifier	 Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "dot"
 

@@ -124,20 +124,18 @@ syn match radianceComment "#.*$" contains=radianceTodo
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink radianceKeyword	Keyword
-HiLink radianceExtraType	Type
-HiLink radianceSurfType	Type
-HiLink radianceLightType	Type
-HiLink radianceMatType	Type
-HiLink radiancePatType	Type
-HiLink radianceTexType	Type
-HiLink radianceMixType	Type
-HiLink radianceComment	Comment
-HiLink radianceCommand	Function
-HiLink radianceID		String
-HiLink radianceTodo		Todo
-delcommand HiLink
+hi def link radianceKeyword	Keyword
+hi def link radianceExtraType	Type
+hi def link radianceSurfType	Type
+hi def link radianceLightType	Type
+hi def link radianceMatType	Type
+hi def link radiancePatType	Type
+hi def link radianceTexType	Type
+hi def link radianceMixType	Type
+hi def link radianceComment	Comment
+hi def link radianceCommand	Function
+hi def link radianceID		String
+hi def link radianceTodo		Todo
 
 let b:current_syntax = "radiance"
 

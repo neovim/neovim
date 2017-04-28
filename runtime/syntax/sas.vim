@@ -41,7 +41,7 @@ syn region sasComment start=";\s*\*"hs=s+1 end=";" contains=sasTodo
 " Comments with * starting after a semicolon (Paulo Tanimoto)
 syn region sasComment start="^\s*\*" end=";" contains=sasTodo
 
-" This line defines macro variables in code.  HiLink at end of file
+" This line defines macro variables in code.  "hi def link" at end of file
 " defines the color scheme. Begin region with ampersand and end with
 " any non-word character offset by -1; put ampersand in the skip list
 " just in case it is used to concatenate macro variable values.
@@ -213,7 +213,6 @@ syn keyword sasUnderscore	_ALL_ _AUTOMATIC_ _CHARACTER_ _INFILE_ _N_ _NAME_ _NUL
 "  Define the default highlighting.
 "  Only when an item doesn't have highlighting yet
 
-command -nargs=+ HiLink hi def link <args>
 
 " Default sas enhanced editor color syntax
 hi sComment	term=bold cterm=NONE ctermfg=Green ctermbg=Black gui=NONE guifg=DarkGreen guibg=White
@@ -240,25 +239,24 @@ hi lNote	term=NONE cterm=NONE ctermfg=Cyan ctermbg=Black gui=none guifg=Blue gui
 
 " Special hilighting for the SAS proc section
 
-HiLink	sasComment	sComment
-HiLink	sasConditional	sKeyword
-HiLink	sasStep		sSection
-HiLink	sasFunction	sKeyword
-HiLink	sasMacro	mKeyword
-HiLink	sasMacroVar	NonText
-HiLink	sasNumber	sNumber
-HiLink	sasStatement	sKeyword
-HiLink	sasString	sString
-HiLink	sasProc		sProc
+hi def link sasComment	sComment
+hi def link sasConditional	sKeyword
+hi def link sasStep		sSection
+hi def link sasFunction	sKeyword
+hi def link sasMacro	mKeyword
+hi def link sasMacroVar	NonText
+hi def link sasNumber	sNumber
+hi def link sasStatement	sKeyword
+hi def link sasString	sString
+hi def link sasProc		sProc
 " (Bob Heckel)
-HiLink	sasTodo		Todo
-HiLink	sasErrMsg	lError
-HiLink	sasWarnMsg	lWarning
-HiLink	sasLogMsg	lNote
-HiLink	sasCards	sCard
+hi def link sasTodo		Todo
+hi def link sasErrMsg	lError
+hi def link sasWarnMsg	lWarning
+hi def link sasLogMsg	lNote
+hi def link sasCards	sCard
 " (Bob Heckel)
-HiLink	sasUnderscore	PreProc
-delcommand HiLink
+hi def link sasUnderscore	PreProc
 
 " Syncronize from beginning to keep large blocks from losing
 " syntax coloring while moving through code.

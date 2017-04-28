@@ -177,28 +177,26 @@ syn match  tssclScientific  "-\=\<[0-9]*\.[0-9]*E[-+]\=[0-9]\+\>"
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink tssclCommand		Statement
-HiLink tssclKeyword		Special
-HiLink tssclEnd		Macro
-HiLink tssclUnits		Special
+hi def link tssclCommand		Statement
+hi def link tssclKeyword		Special
+hi def link tssclEnd		Macro
+hi def link tssclUnits		Special
 
-HiLink tssclComment		Comment
-HiLink tssclDirective		Statement
-HiLink tssclConditional	Conditional
-HiLink tssclContChar		Macro
-HiLink tssclQualifier		Typedef
-HiLink tssclSymbol		Identifier
-HiLink tssclSymbol2		Symbol
-HiLink tssclString		String
-HiLink tssclOper		Operator
+hi def link tssclComment		Comment
+hi def link tssclDirective		Statement
+hi def link tssclConditional	Conditional
+hi def link tssclContChar		Macro
+hi def link tssclQualifier		Typedef
+hi def link tssclSymbol		Identifier
+hi def link tssclSymbol2		Symbol
+hi def link tssclString		String
+hi def link tssclOper		Operator
 
-HiLink tssclInteger		Number
-HiLink tssclFloat		Number
-HiLink tssclScientific	Number
+hi def link tssclInteger		Number
+hi def link tssclFloat		Number
+hi def link tssclScientific	Number
 
-delcommand HiLink
 
 
 let b:current_syntax = "tsscl"

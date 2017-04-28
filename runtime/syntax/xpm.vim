@@ -124,15 +124,13 @@ endif		" has("gui_running")
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink xpmType		Type
-HiLink xpmStorageClass	StorageClass
-HiLink xpmTodo		Todo
-HiLink xpmComment		Comment
-HiLink xpmPixelString	String
+hi def link xpmType		Type
+hi def link xpmStorageClass	StorageClass
+hi def link xpmTodo		Todo
+hi def link xpmComment		Comment
+hi def link xpmPixelString	String
 
-delcommand HiLink
 
 let b:current_syntax = "xpm"
 

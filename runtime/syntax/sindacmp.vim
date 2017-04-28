@@ -43,19 +43,17 @@ syn match  sindacmpFloat       "-\=\<[0-9]*\.[0-9]*"
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink sindacmpTitle		     Type
-HiLink sindacmpUnit		     PreProc
+hi def link sindacmpTitle		     Type
+hi def link sindacmpUnit		     PreProc
 
-HiLink sindacmpLabel		     Statement
+hi def link sindacmpLabel		     Statement
 
-HiLink sindacmpHeader		     sindaHeader
+hi def link sindacmpHeader		     sindaHeader
 
-HiLink sindacmpInteger	     Number
-HiLink sindacmpFloat		     Special
+hi def link sindacmpInteger	     Number
+hi def link sindacmpFloat		     Special
 
-delcommand HiLink
 
 
 let b:current_syntax = "sindacmp"

@@ -24,17 +24,15 @@ syn match	dylanintrInclude	"^\s*#\s*include\>\s*["<]" contains=intrIncluded
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dylanintrInfo		Special
-HiLink dylanintrInterface	Operator
-HiLink dylanintrMods		Type
-HiLink dylanintrClass		StorageClass
-HiLink dylanintrType		Type
-HiLink dylanintrIncluded	String
-HiLink dylanintrInclude	Include
+hi def link dylanintrInfo		Special
+hi def link dylanintrInterface	Operator
+hi def link dylanintrMods		Type
+hi def link dylanintrClass		StorageClass
+hi def link dylanintrType		Type
+hi def link dylanintrIncluded	String
+hi def link dylanintrInclude	Include
 
-delcommand HiLink
 
 let b:current_syntax = "dylanintr"
 

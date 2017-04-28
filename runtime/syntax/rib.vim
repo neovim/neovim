@@ -44,19 +44,17 @@ syn match	ribFloat	  display contained "[-]\=\.\d\+\(e[-+]\=\d\+\)\=\>"
 syn match	ribFloat	  display contained "[-]\=\d\+e[-+]\d\+\>"
 syn case match
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink ribStructure		Structure
-HiLink ribCommand		Statement
+hi def link ribStructure		Structure
+hi def link ribCommand		Statement
 
-HiLink ribStructureComment	SpecialComment
-HiLink ribLineComment		Comment
+hi def link ribStructureComment	SpecialComment
+hi def link ribLineComment		Comment
 
-HiLink ribString		String
-HiLink ribNumber		Number
-HiLink ribFloat		Float
+hi def link ribString		String
+hi def link ribNumber		Number
+hi def link ribFloat		Float
 
-delcommand HiLink
 
 
 let b:current_syntax = "rib"

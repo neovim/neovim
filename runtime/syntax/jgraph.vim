@@ -34,14 +34,12 @@ syn match  jgraphNumber		 "\-\=\.\d\+\>"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink jgraphComment	Comment
-HiLink jgraphCmd	Identifier
-HiLink jgraphType	Type
-HiLink jgraphNumber	Number
+hi def link jgraphComment	Comment
+hi def link jgraphCmd	Identifier
+hi def link jgraphType	Type
+hi def link jgraphNumber	Number
 
-delcommand HiLink
 
 
 let b:current_syntax = "jgraph"

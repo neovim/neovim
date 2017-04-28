@@ -56,18 +56,16 @@ syn region  htmlString   contained start=+'+ end=+'+ contains=htmlSpecialChar,ja
   syn region htmlLink start="<a\>\_[^>]*\<href\>" end="</a>"me=e-4 contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,javaScript,@htmlPreproc,smartyZone
 
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink smartyTagName Identifier
-HiLink smartyProperty Constant
+hi def link smartyTagName Identifier
+hi def link smartyProperty Constant
 " if you want the text inside the braces to be colored, then
 " remove the comment in from of the next statement
-"HiLink smartyZone Include
-HiLink smartyInFunc Function
-HiLink smartyBlock Constant
-HiLink smartyDot SpecialChar
-HiLink smartyModifier Function
-delcommand HiLink
+"hi def link smartyZone Include
+hi def link smartyInFunc Function
+hi def link smartyBlock Constant
+hi def link smartyDot SpecialChar
+hi def link smartyModifier Function
 
 let b:current_syntax = "smarty"
 

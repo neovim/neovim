@@ -282,7 +282,6 @@ syntax sync fromstart
 "set foldnestmax=1
 "set foldminlines=15
 
-command -nargs=+ HiLink hi def link <args>
 
 " NOTE - the following links are not guaranteed to
 " look good under all colorschemes.  You might need to
@@ -290,32 +289,31 @@ command -nargs=+ HiLink hi def link <args>
 " look good in yours
 
 
-HiLink mmaComment           Comment
-HiLink mmaCommentStar       Comment
-HiLink mmaFunctionComment   Comment
-HiLink mmaLooseQuote        Comment
-HiLink mmaGenericFunction   Function
-HiLink mmaVariable          Identifier
-"    HiLink mmaSymbol            Identifier
-HiLink mmaOperator          Operator
-HiLink mmaPatternOp         Operator
-HiLink mmaPureFunction      Operator
-HiLink mmaString            String
-HiLink mmaCommentString     String
-HiLink mmaUnicode           String
-HiLink mmaMessage           Type
-HiLink mmaNumber            Type
-HiLink mmaPattern           Type
-HiLink mmaError             Error
-HiLink mmaFixme             Error
-HiLink mmaPatternError      Error
-HiLink mmaTodo              Todo
-HiLink mmaemPHAsis          Special
-HiLink mmaFunctionTitle     Special
-HiLink mmaMessageType       Special
-HiLink mmaItem              Preproc
+hi def link mmaComment           Comment
+hi def link mmaCommentStar       Comment
+hi def link mmaFunctionComment   Comment
+hi def link mmaLooseQuote        Comment
+hi def link mmaGenericFunction   Function
+hi def link mmaVariable          Identifier
+"    hi def link mmaSymbol            Identifier
+hi def link mmaOperator          Operator
+hi def link mmaPatternOp         Operator
+hi def link mmaPureFunction      Operator
+hi def link mmaString            String
+hi def link mmaCommentString     String
+hi def link mmaUnicode           String
+hi def link mmaMessage           Type
+hi def link mmaNumber            Type
+hi def link mmaPattern           Type
+hi def link mmaError             Error
+hi def link mmaFixme             Error
+hi def link mmaPatternError      Error
+hi def link mmaTodo              Todo
+hi def link mmaemPHAsis          Special
+hi def link mmaFunctionTitle     Special
+hi def link mmaMessageType       Special
+hi def link mmaItem              Preproc
 
-delcommand HiLink
 
 let b:current_syntax = "mma"
 

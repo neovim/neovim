@@ -53,22 +53,20 @@ endif
 syn match cppMinMax "[<>]?"
 
 " Default highlighting
-command -nargs=+ HiLink hi def link <args>
-HiLink cppAccess		cppStatement
-HiLink cppCast		cppStatement
-HiLink cppExceptions		Exception
-HiLink cppOperator		Operator
-HiLink cppStatement		Statement
-HiLink cppModifier		Type
-HiLink cppType		Type
-HiLink cppStorageClass	StorageClass
-HiLink cppStructure		Structure
-HiLink cppBoolean		Boolean
-HiLink cppConstant		Constant
-HiLink cppRawStringDelimiter	Delimiter
-HiLink cppRawString		String
-HiLink cppNumber		Number
-delcommand HiLink
+hi def link cppAccess		cppStatement
+hi def link cppCast		cppStatement
+hi def link cppExceptions		Exception
+hi def link cppOperator		Operator
+hi def link cppStatement		Statement
+hi def link cppModifier		Type
+hi def link cppType		Type
+hi def link cppStorageClass	StorageClass
+hi def link cppStructure		Structure
+hi def link cppBoolean		Boolean
+hi def link cppConstant		Constant
+hi def link cppRawStringDelimiter	Delimiter
+hi def link cppRawString		String
+hi def link cppNumber		Number
 
 let b:current_syntax = "cpp"
 

@@ -436,25 +436,23 @@ syn cluster oraAll add=oraValue,oraModifier,oraString,oraSpecial,oraComment
 " highlighting
 
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink oraKeyword	  Statement		"usual keywords
-HiLink oraKeywordGroup  Type			"keywords which group other keywords
-HiLink oraKeywordPref   oraKeywordGroup	"keywords which act as prefixes
-HiLink oraKeywordObs	  Todo			"obsolete keywords
-HiLink oraKeywordUnd	  PreProc		"undocumented keywords
-HiLink oraKeywordUndObs oraKeywordObs		"undocumented obsolete keywords
-HiLink oraValue	  Identifier		"values, like true or false
-HiLink oraModifier	  oraValue		"modifies values
-HiLink oraString	  String		"strings
+hi def link oraKeyword	  Statement		"usual keywords
+hi def link oraKeywordGroup  Type			"keywords which group other keywords
+hi def link oraKeywordPref   oraKeywordGroup	"keywords which act as prefixes
+hi def link oraKeywordObs	  Todo			"obsolete keywords
+hi def link oraKeywordUnd	  PreProc		"undocumented keywords
+hi def link oraKeywordUndObs oraKeywordObs		"undocumented obsolete keywords
+hi def link oraValue	  Identifier		"values, like true or false
+hi def link oraModifier	  oraValue		"modifies values
+hi def link oraString	  String		"strings
 
-HiLink oraSpecial	  Special		"special characters
-HiLink oraError	  Error			"errors
-HiLink oraParenError	  oraError		"errors caused by mismatching parantheses
+hi def link oraSpecial	  Special		"special characters
+hi def link oraError	  Error			"errors
+hi def link oraParenError	  oraError		"errors caused by mismatching parantheses
 
-HiLink oraComment	  Comment		"comments
+hi def link oraComment	  Comment		"comments
 
-delcommand HiLink
 
 
 let b:current_syntax = "ora"

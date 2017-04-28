@@ -190,16 +190,14 @@ syn match   htmlTagN     contained +</\s*[-a-zA-Z0-9]\++hs=s+2 contains=htmlTagN
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dtmlIsTag			PreProc
-HiLink dtmlAttribute		Identifier
-HiLink dtmlMethod			Function
-HiLink dtmlComment		Comment
-HiLink dtmlTODO			Todo
-HiLink dtmlSpecialChar    Special
+hi def link dtmlIsTag			PreProc
+hi def link dtmlAttribute		Identifier
+hi def link dtmlMethod			Function
+hi def link dtmlComment		Comment
+hi def link dtmlTODO			Todo
+hi def link dtmlSpecialChar    Special
 
-delcommand HiLink
 
 let b:current_syntax = "dtml"
 

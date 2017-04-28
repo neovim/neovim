@@ -34,22 +34,20 @@ syn region sgmllnxDocType start=+<!doctype+ end=+>+
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink sgmllnxTag2	    Function
-HiLink sgmllnxTagN2	    Function
-HiLink sgmllnxTag	    Special
-HiLink sgmllnxEndTag	    Special
-HiLink sgmllnxParen	    Special
-HiLink sgmllnxEntity	    Type
-HiLink sgmllnxDocEnt	    Type
-HiLink sgmllnxTagName	    Statement
-HiLink sgmllnxComment	    Comment
-HiLink sgmllnxSpecial	    Special
-HiLink sgmllnxDocType	    PreProc
-HiLink sgmllnxTagError    Error
+hi def link sgmllnxTag2	    Function
+hi def link sgmllnxTagN2	    Function
+hi def link sgmllnxTag	    Special
+hi def link sgmllnxEndTag	    Special
+hi def link sgmllnxParen	    Special
+hi def link sgmllnxEntity	    Type
+hi def link sgmllnxDocEnt	    Type
+hi def link sgmllnxTagName	    Statement
+hi def link sgmllnxComment	    Comment
+hi def link sgmllnxSpecial	    Special
+hi def link sgmllnxDocType	    PreProc
+hi def link sgmllnxTagError    Error
 
-delcommand HiLink
 
 let b:current_syntax = "sgmllnx"
 

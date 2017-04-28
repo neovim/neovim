@@ -59,35 +59,33 @@ syn sync ccomment satherComment
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink satherBranch		satherStatement
-HiLink satherLabel		satherStatement
-HiLink satherConditional	satherStatement
-HiLink satherSynchronize	satherStatement
-HiLink satherRepeat		satherStatement
-HiLink satherExceptions	satherStatement
-HiLink satherStorageClass	satherDeclarative
-HiLink satherMethodDecl	satherDeclarative
-HiLink satherClassDecl	satherDeclarative
-HiLink satherScopeDecl	satherDeclarative
-HiLink satherBoolValue	satherValue
-HiLink satherSpecial		satherValue
-HiLink satherString		satherValue
-HiLink satherCharacter	satherValue
-HiLink satherSpecialCharacter satherValue
-HiLink satherNumber		satherValue
-HiLink satherStatement	Statement
-HiLink satherOperator		Statement
-HiLink satherComment		Comment
-HiLink satherType		Type
-HiLink satherValue		String
-HiLink satherString		String
-HiLink satherSpecial		String
-HiLink satherCharacter	String
-HiLink satherDeclarative	Type
-HiLink satherExternal		PreCondit
-delcommand HiLink
+hi def link satherBranch		satherStatement
+hi def link satherLabel		satherStatement
+hi def link satherConditional	satherStatement
+hi def link satherSynchronize	satherStatement
+hi def link satherRepeat		satherStatement
+hi def link satherExceptions	satherStatement
+hi def link satherStorageClass	satherDeclarative
+hi def link satherMethodDecl	satherDeclarative
+hi def link satherClassDecl	satherDeclarative
+hi def link satherScopeDecl	satherDeclarative
+hi def link satherBoolValue	satherValue
+hi def link satherSpecial		satherValue
+hi def link satherString		satherValue
+hi def link satherCharacter	satherValue
+hi def link satherSpecialCharacter satherValue
+hi def link satherNumber		satherValue
+hi def link satherStatement	Statement
+hi def link satherOperator		Statement
+hi def link satherComment		Comment
+hi def link satherType		Type
+hi def link satherValue		String
+hi def link satherString		String
+hi def link satherSpecial		String
+hi def link satherCharacter	String
+hi def link satherDeclarative	Type
+hi def link satherExternal		PreCondit
 
 let b:current_syntax = "sather"
 

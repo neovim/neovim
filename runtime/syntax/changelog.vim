@@ -39,21 +39,19 @@ syn match	changelogNumber	contained "[.-]*[0-9]\+"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink changelogText		Normal
-HiLink changelogBullet	Type
-HiLink changelogColon		Type
-HiLink changelogFiles		Comment
-HiLink changelogFuncs	Comment
-HiLink changelogHeader	Statement
-HiLink changelogMail		Special
-HiLink changelogNumber	Number
-HiLink changelogMonth		Number
-HiLink changelogDay		Number
-HiLink changelogError		Folded
+hi def link changelogText		Normal
+hi def link changelogBullet	Type
+hi def link changelogColon		Type
+hi def link changelogFiles		Comment
+hi def link changelogFuncs	Comment
+hi def link changelogHeader	Statement
+hi def link changelogMail		Special
+hi def link changelogNumber	Number
+hi def link changelogMonth		Number
+hi def link changelogDay		Number
+hi def link changelogError		Folded
 
-delcommand HiLink
 
 let b:current_syntax = "changelog"
 

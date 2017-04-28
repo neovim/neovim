@@ -93,30 +93,28 @@ syn sync minlines=1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default highlighting.
-HiLink cuplHeader	cuplStatement
-HiLink cuplLogicalOperator	 cuplOperator
-HiLink cuplRangeOperator	 cuplOperator
-HiLink cuplArithmeticOperator cuplOperator
-HiLink cuplAssignmentOperator cuplOperator
-HiLink cuplEqualityOperator	 cuplOperator
-HiLink cuplTruthTableOperator cuplOperator
-HiLink cuplOperator	cuplStatement
-HiLink cuplFunction	cuplStatement
-HiLink cuplStatement Statement
-HiLink cuplNumberRange cuplNumber
-HiLink cuplNumber	  cuplString
-HiLink cuplString	String
-HiLink cuplComment	Comment
-HiLink cuplExtension   cuplSpecial
-HiLink cuplSpecialChar cuplSpecial
-HiLink cuplSpecial	Special
-HiLink cuplDirective PreProc
-HiLink cuplTodo	Todo
+hi def link cuplHeader	cuplStatement
+hi def link cuplLogicalOperator	 cuplOperator
+hi def link cuplRangeOperator	 cuplOperator
+hi def link cuplArithmeticOperator cuplOperator
+hi def link cuplAssignmentOperator cuplOperator
+hi def link cuplEqualityOperator	 cuplOperator
+hi def link cuplTruthTableOperator cuplOperator
+hi def link cuplOperator	cuplStatement
+hi def link cuplFunction	cuplStatement
+hi def link cuplStatement Statement
+hi def link cuplNumberRange cuplNumber
+hi def link cuplNumber	  cuplString
+hi def link cuplString	String
+hi def link cuplComment	Comment
+hi def link cuplExtension   cuplSpecial
+hi def link cuplSpecialChar cuplSpecial
+hi def link cuplSpecial	Special
+hi def link cuplDirective PreProc
+hi def link cuplTodo	Todo
 
-delcommand HiLink
 
 let b:current_syntax = "cupl"
 

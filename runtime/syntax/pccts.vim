@@ -66,25 +66,23 @@ syn sync match pcctsSyncRule grouphere pcctsRule "\<[a-z][A-Za-z0-9_]*\>\(\s*\[[
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink pcctsDelim		Special
-HiLink pcctsTokenName		Identifier
-HiLink pcctsRuleName		Statement
-HiLink pcctsLabelHack		Label
-HiLink pcctsDirective		PreProc
-HiLink pcctsString		String
-HiLink pcctsComment		Comment
-HiLink pcctsClass		Statement
-HiLink pcctsClassName		Identifier
-HiLink pcctsException		Statement
-HiLink pcctsExceptionHandler	Keyword
-HiLink pcctsExceptionRuleRef	pcctsDelim
-HiLink pcctsExceptionID	Identifier
-HiLink pcctsRuleRef		Identifier
-HiLink pcctsSpecialChar	SpecialChar
+hi def link pcctsDelim		Special
+hi def link pcctsTokenName		Identifier
+hi def link pcctsRuleName		Statement
+hi def link pcctsLabelHack		Label
+hi def link pcctsDirective		PreProc
+hi def link pcctsString		String
+hi def link pcctsComment		Comment
+hi def link pcctsClass		Statement
+hi def link pcctsClassName		Identifier
+hi def link pcctsException		Statement
+hi def link pcctsExceptionHandler	Keyword
+hi def link pcctsExceptionRuleRef	pcctsDelim
+hi def link pcctsExceptionID	Identifier
+hi def link pcctsRuleRef		Identifier
+hi def link pcctsSpecialChar	SpecialChar
 
-delcommand HiLink
 
 let b:current_syntax = "pccts"
 

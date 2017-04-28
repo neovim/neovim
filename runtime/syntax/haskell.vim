@@ -126,58 +126,56 @@ syn region	cCppString	start=+L\="+ skip=+\\\\\|\\"\|\\$+ excludenl end=+"+ end='
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink hsModule			  hsStructure
-HiLink hsImport			  Include
-HiLink hsImportMod			  hsImport
-HiLink hsInfix			  PreProc
-HiLink hsStructure			  Structure
-HiLink hsStatement			  Statement
-HiLink hsConditional			  Conditional
-HiLink hsSpecialChar			  SpecialChar
-HiLink hsTypedef			  Typedef
-HiLink hsVarSym			  hsOperator
-HiLink hsConSym			  hsOperator
-HiLink hsOperator			  Operator
+hi def link hsModule			  hsStructure
+hi def link hsImport			  Include
+hi def link hsImportMod			  hsImport
+hi def link hsInfix			  PreProc
+hi def link hsStructure			  Structure
+hi def link hsStatement			  Statement
+hi def link hsConditional			  Conditional
+hi def link hsSpecialChar			  SpecialChar
+hi def link hsTypedef			  Typedef
+hi def link hsVarSym			  hsOperator
+hi def link hsConSym			  hsOperator
+hi def link hsOperator			  Operator
 if exists("hs_highlight_delimiters")
 " Some people find this highlighting distracting.
-HiLink hsDelimiter			  Delimiter
+hi def link hsDelimiter			  Delimiter
 endif
-HiLink hsSpecialCharError		  Error
-HiLink hsString			  String
-HiLink hsCharacter			  Character
-HiLink hsNumber			  Number
-HiLink hsFloat			  Float
-HiLink hsConditional			  Conditional
-HiLink hsLiterateComment		  hsComment
-HiLink hsBlockComment		  hsComment
-HiLink hsLineComment			  hsComment
-HiLink hsComment			  Comment
-HiLink hsPragma			  SpecialComment
-HiLink hsBoolean			  Boolean
-HiLink hsType			  Type
-HiLink hsMaybe			  hsEnumConst
-HiLink hsOrdering			  hsEnumConst
-HiLink hsEnumConst			  Constant
-HiLink hsDebug			  Debug
+hi def link hsSpecialCharError		  Error
+hi def link hsString			  String
+hi def link hsCharacter			  Character
+hi def link hsNumber			  Number
+hi def link hsFloat			  Float
+hi def link hsConditional			  Conditional
+hi def link hsLiterateComment		  hsComment
+hi def link hsBlockComment		  hsComment
+hi def link hsLineComment			  hsComment
+hi def link hsComment			  Comment
+hi def link hsPragma			  SpecialComment
+hi def link hsBoolean			  Boolean
+hi def link hsType			  Type
+hi def link hsMaybe			  hsEnumConst
+hi def link hsOrdering			  hsEnumConst
+hi def link hsEnumConst			  Constant
+hi def link hsDebug			  Debug
 
-HiLink cCppString		hsString
-HiLink cCommentStart		hsComment
-HiLink cCommentError		hsError
-HiLink cCommentStartError	hsError
-HiLink cInclude		Include
-HiLink cPreProc		PreProc
-HiLink cDefine		Macro
-HiLink cIncluded		hsString
-HiLink cError			Error
-HiLink cPreCondit		PreCondit
-HiLink cComment		Comment
-HiLink cCppSkip		cCppOut
-HiLink cCppOut2		cCppOut
-HiLink cCppOut		Comment
+hi def link cCppString		hsString
+hi def link cCommentStart		hsComment
+hi def link cCommentError		hsError
+hi def link cCommentStartError	hsError
+hi def link cInclude		Include
+hi def link cPreProc		PreProc
+hi def link cDefine		Macro
+hi def link cIncluded		hsString
+hi def link cError			Error
+hi def link cPreCondit		PreCondit
+hi def link cComment		Comment
+hi def link cCppSkip		cCppOut
+hi def link cCppOut2		cCppOut
+hi def link cCppOut		Comment
 
-delcommand HiLink
 
 let b:current_syntax = "haskell"
 

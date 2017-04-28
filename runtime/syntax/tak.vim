@@ -89,31 +89,29 @@ endif
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink takMacro		Macro
-HiLink takOptions		Special
-HiLink takRoutine		Type
-HiLink takControl		Special
-HiLink takSolids		Special
-HiLink takSolidsArg		Statement
-HiLink takIdentifier		Identifier
+hi def link takMacro		Macro
+hi def link takOptions		Special
+hi def link takRoutine		Type
+hi def link takControl		Special
+hi def link takSolids		Special
+hi def link takSolidsArg		Statement
+hi def link takIdentifier		Identifier
 
-HiLink takFortran		PreProc
-HiLink takMotran		PreProc
+hi def link takFortran		PreProc
+hi def link takMotran		PreProc
 
-HiLink takComment		Comment
-HiLink takHeader		Typedef
-HiLink takIncludeFile		Type
-HiLink takInteger		Number
-HiLink takFloat		Float
-HiLink takScientific		Float
+hi def link takComment		Comment
+hi def link takHeader		Typedef
+hi def link takIncludeFile		Type
+hi def link takInteger		Number
+hi def link takFloat		Float
+hi def link takScientific		Float
 
-HiLink takEndData		Macro
+hi def link takEndData		Macro
 
-HiLink takTodo		Todo
+hi def link takTodo		Todo
 
-delcommand HiLink
 
 
 let b:current_syntax = "tak"

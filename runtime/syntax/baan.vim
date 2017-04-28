@@ -1888,31 +1888,29 @@ syn keyword baanBshell bclm.set.desktop
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink baanConditional	Conditional
-HiLink baan3gl		Statement
-HiLink baan3glpre		PreProc
-HiLink baan4gl		Statement
-HiLink baan4glh		Statement
-HiLink baansql		Statement
-HiLink baansqlh		Statement
-HiLink baanDalHook		Statement
-HiLink baanNumber		Number
-HiLink baanString		String
-HiLink baanOpenStringError	Error
-HiLink baanConstant		Constant
-HiLink baanComment		Comment
-HiLink baanCommenth		Comment
-HiLink baanUncommented	Comment
-HiLink baanDLLUsage		Comment
-HiLink baanFunUsage		Comment
-HiLink baanIdentifier		Normal
-HiLink baanBshell		Function
-HiLink baanType		Type
-HiLink baanStorageClass	StorageClass
+hi def link baanConditional	Conditional
+hi def link baan3gl		Statement
+hi def link baan3glpre		PreProc
+hi def link baan4gl		Statement
+hi def link baan4glh		Statement
+hi def link baansql		Statement
+hi def link baansqlh		Statement
+hi def link baanDalHook		Statement
+hi def link baanNumber		Number
+hi def link baanString		String
+hi def link baanOpenStringError	Error
+hi def link baanConstant		Constant
+hi def link baanComment		Comment
+hi def link baanCommenth		Comment
+hi def link baanUncommented	Comment
+hi def link baanDLLUsage		Comment
+hi def link baanFunUsage		Comment
+hi def link baanIdentifier		Normal
+hi def link baanBshell		Function
+hi def link baanType		Type
+hi def link baanStorageClass	StorageClass
 
-delcommand HiLink
 
 let b:current_syntax = "baan"
 

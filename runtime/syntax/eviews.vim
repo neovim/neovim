@@ -63,26 +63,24 @@ syn match eParenError /[\]}]/ contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink eComment     Comment
-HiLink eConstant    Identifier
-HiLink eStringId    Identifier
-HiLink eCommand     Type
-HiLink eString      String
-HiLink eNumber      Number
-HiLink eBoolean     Boolean
-HiLink eFloat       Float
-HiLink eConditional Conditional
-HiLink eProgLang    Statement
-HiLink eOVP	      Statement
-HiLink eStdCmd      Statement
-HiLink eIdentifier  Normal
-HiLink eDelimiter   Delimiter
-HiLink eError       Error
-HiLink eBraceError  Error
-HiLink eCurlyError  Error
-HiLink eParenError  Error
-delcommand HiLink
+hi def link eComment     Comment
+hi def link eConstant    Identifier
+hi def link eStringId    Identifier
+hi def link eCommand     Type
+hi def link eString      String
+hi def link eNumber      Number
+hi def link eBoolean     Boolean
+hi def link eFloat       Float
+hi def link eConditional Conditional
+hi def link eProgLang    Statement
+hi def link eOVP	      Statement
+hi def link eStdCmd      Statement
+hi def link eIdentifier  Normal
+hi def link eDelimiter   Delimiter
+hi def link eError       Error
+hi def link eBraceError  Error
+hi def link eCurlyError  Error
+hi def link eParenError  Error
 
 let b:current_syntax="eviews"
 

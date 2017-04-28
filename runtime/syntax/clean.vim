@@ -50,40 +50,38 @@ syn match cleanFuncTypeDef "\([a-zA-Z].*\|(\=[-~@#$%^?!+*<>\/|&=:]\+)\=\)\s*\(in
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
  " Comments
- HiLink cleanComment      Comment
+ hi def link cleanComment      Comment
  " Constants and denotations
- HiLink cleanStringDenot  String
- HiLink cleanCharDenot    Character
- HiLink cleanIntegerDenot Number
- HiLink cleanBoolDenot    Boolean
- HiLink cleanRealDenot    Float
+ hi def link cleanStringDenot  String
+ hi def link cleanCharDenot    Character
+ hi def link cleanIntegerDenot Number
+ hi def link cleanBoolDenot    Boolean
+ hi def link cleanRealDenot    Float
  " Identifiers
  " Statements
- HiLink cleanTypeClass    Keyword
- HiLink cleanConditional  Conditional
- HiLink cleanLabel		Label
- HiLink cleanKeyword      Keyword
+ hi def link cleanTypeClass    Keyword
+ hi def link cleanConditional  Conditional
+ hi def link cleanLabel		Label
+ hi def link cleanKeyword      Keyword
  " Generic Preprocessing
- HiLink cleanIncludeKeyword      Include
- HiLink cleanModuleSystem PreProc
+ hi def link cleanIncludeKeyword      Include
+ hi def link cleanModuleSystem PreProc
  " Type
- HiLink cleanBasicType    Type
- HiLink cleanSpecialType  Type
- HiLink cleanFuncTypeDef  Typedef
+ hi def link cleanBasicType    Type
+ hi def link cleanSpecialType  Type
+ hi def link cleanFuncTypeDef  Typedef
  " Special
- HiLink cleanSpecial      Special
- HiLink cleanList			Special
- HiLink cleanArray		Special
- HiLink cleanRecord		Special
- HiLink cleanTuple		Special
+ hi def link cleanSpecial      Special
+ hi def link cleanList			Special
+ hi def link cleanArray		Special
+ hi def link cleanRecord		Special
+ hi def link cleanTuple		Special
  " Error
  " Todo
- HiLink cleanTodo         Todo
+ hi def link cleanTodo         Todo
 
-delcommand HiLink
 
 let b:current_syntax = "clean"
 

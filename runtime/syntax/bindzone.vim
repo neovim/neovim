@@ -68,31 +68,29 @@ syn match       zoneComment     /;.*/
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink zoneDirective    Macro
+hi def link zoneDirective    Macro
 
-HiLink zoneUnknown      Error
+hi def link zoneUnknown      Error
 
-HiLink zoneOrigin       Statement
-HiLink zoneOwnerName    Statement
-HiLink zoneDomain       Identifier
+hi def link zoneOrigin       Statement
+hi def link zoneOwnerName    Statement
+hi def link zoneDomain       Identifier
 
-HiLink zoneSpecial      Special
-HiLink zoneTTL          Constant
-HiLink zoneClass        Include
-HiLink zoneRRType       Type
+hi def link zoneSpecial      Special
+hi def link zoneTTL          Constant
+hi def link zoneClass        Include
+hi def link zoneRRType       Type
 
-HiLink zoneIPAddr       Number
-HiLink zoneIP6Addr      Number
-HiLink zoneText         String
-HiLink zoneNumber       Number
-HiLink zoneSerial       Special
+hi def link zoneIPAddr       Number
+hi def link zoneIP6Addr      Number
+hi def link zoneText         String
+hi def link zoneNumber       Number
+hi def link zoneSerial       Special
 
-HiLink zoneErrParen     Error
-HiLink zoneComment      Comment
+hi def link zoneErrParen     Error
+hi def link zoneComment      Comment
 
-delcommand HiLink
 
 let b:current_syntax = "bindzone"
 

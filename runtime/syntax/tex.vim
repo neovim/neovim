@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Jul 05, 2016
-" Version:	98
+" Last Change:	Aug 31, 2016
+" Version:	100
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -47,12 +47,6 @@ endif
 let s:keepcpo= &cpo
 set cpo&vim
 scriptencoding utf-8
-
-" Define the default highlighting. {{{1
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-let did_tex_syntax_inits = 1
-command -nargs=+ HiLink hi def link <args>
 
 " by default, enable all region-based highlighting
 let s:tex_fast= "bcmMprsSvV"
@@ -405,7 +399,7 @@ if !exists("g:tex_no_math")
  " TexNewMathZone: function creates a mathzone with the given suffix and mathzone name. {{{2
  "                 Starred forms are created if starform is true.  Starred
  "                 forms have syntax group and synchronization groups with a
- "                 "S" appended.  Handles: cluster, syntax, sync, and HiLink.
+ "                 "S" appended.  Handles: cluster, syntax, sync, and hi link.
  fun! TexNewMathZone(sfx,mathzone,starform)
    let grpname  = "texMathZone".a:sfx
    let syncname = "texSyncMathZone".a:sfx
@@ -1260,86 +1254,87 @@ endif
 
 " ---------------------------------------------------------------------
 " Highlighting: {{{1
-if did_tex_syntax_inits == 1
- let did_tex_syntax_inits= 2
+
+" Define the default highlighting. {{{1
+if !exists("skip_tex_syntax_inits")
+
   " TeX highlighting groups which should share similar highlighting
   if !exists("g:tex_no_error")
    if !exists("g:tex_no_math")
-    HiLink texBadMath		texError
-    HiLink texMathDelimBad	texError
-    HiLink texMathError		texError
+    hi def link texBadMath		texError
+    hi def link texMathDelimBad	texError
+    hi def link texMathError		texError
     if !b:tex_stylish
-      HiLink texOnlyMath	texError
+      hi def link texOnlyMath	texError
     endif
    endif
-   HiLink texError		Error
+   hi def link texError		Error
   endif
 
   hi texBoldStyle		gui=bold	cterm=bold
   hi texItalStyle		gui=italic	cterm=italic
   hi texBoldItalStyle		gui=bold,italic cterm=bold,italic
   hi texItalBoldStyle		gui=bold,italic cterm=bold,italic
-  HiLink texCite		texRefZone
-  HiLink texDefCmd		texDef
-  HiLink texDefName		texDef
-  HiLink texDocType		texCmdName
-  HiLink texDocTypeArgs		texCmdArgs
-  HiLink texInputFileOpt	texCmdArgs
-  HiLink texInputCurlies	texDelimiter
-  HiLink texLigature		texSpecialChar
+  hi def link texCite		texRefZone
+  hi def link texDefCmd		texDef
+  hi def link texDefName		texDef
+  hi def link texDocType		texCmdName
+  hi def link texDocTypeArgs		texCmdArgs
+  hi def link texInputFileOpt	texCmdArgs
+  hi def link texInputCurlies	texDelimiter
+  hi def link texLigature		texSpecialChar
   if !exists("g:tex_no_math")
-   HiLink texMathDelimSet1	texMathDelim
-   HiLink texMathDelimSet2	texMathDelim
-   HiLink texMathDelimKey	texMathDelim
-   HiLink texMathMatcher	texMath
-   HiLink texAccent		texStatement
-   HiLink texGreek		texStatement
-   HiLink texSuperscript	texStatement
-   HiLink texSubscript		texStatement
-   HiLink texSuperscripts 	texSuperscript
-   HiLink texSubscripts 	texSubscript
-   HiLink texMathSymbol		texStatement
-   HiLink texMathZoneV		texMath
-   HiLink texMathZoneW		texMath
-   HiLink texMathZoneX		texMath
-   HiLink texMathZoneY		texMath
-   HiLink texMathZoneV		texMath
-   HiLink texMathZoneZ		texMath
+   hi def link texMathDelimSet1	texMathDelim
+   hi def link texMathDelimSet2	texMathDelim
+   hi def link texMathDelimKey	texMathDelim
+   hi def link texMathMatcher	texMath
+   hi def link texAccent		texStatement
+   hi def link texGreek		texStatement
+   hi def link texSuperscript	texStatement
+   hi def link texSubscript		texStatement
+   hi def link texSuperscripts 	texSuperscript
+   hi def link texSubscripts 	texSubscript
+   hi def link texMathSymbol		texStatement
+   hi def link texMathZoneV		texMath
+   hi def link texMathZoneW		texMath
+   hi def link texMathZoneX		texMath
+   hi def link texMathZoneY		texMath
+   hi def link texMathZoneV		texMath
+   hi def link texMathZoneZ		texMath
   endif
-  HiLink texBeginEnd		texCmdName
-  HiLink texBeginEndName	texSection
-  HiLink texSpaceCode		texStatement
-  HiLink texStyleStatement	texStatement
-  HiLink texTypeSize		texType
-  HiLink texTypeStyle		texType
+  hi def link texBeginEnd		texCmdName
+  hi def link texBeginEndName	texSection
+  hi def link texSpaceCode		texStatement
+  hi def link texStyleStatement	texStatement
+  hi def link texTypeSize		texType
+  hi def link texTypeStyle		texType
 
    " Basic TeX highlighting groups
-  HiLink texCmdArgs		Number
-  HiLink texCmdName		Statement
-  HiLink texComment		Comment
-  HiLink texDef			Statement
-  HiLink texDefParm		Special
-  HiLink texDelimiter		Delimiter
-  HiLink texInput		Special
-  HiLink texInputFile		Special
-  HiLink texLength		Number
-  HiLink texMath		Special
-  HiLink texMathDelim		Statement
-  HiLink texMathOper		Operator
-  HiLink texNewCmd		Statement
-  HiLink texNewEnv		Statement
-  HiLink texOption		Number
-  HiLink texRefZone		Special
-  HiLink texSection		PreCondit
-  HiLink texSpaceCodeChar	Special
-  HiLink texSpecialChar		SpecialChar
-  HiLink texStatement		Statement
-  HiLink texString		String
-  HiLink texTodo		Todo
-  HiLink texType		Type
-  HiLink texZone		PreCondit
+  hi def link texCmdArgs		Number
+  hi def link texCmdName		Statement
+  hi def link texComment		Comment
+  hi def link texDef			Statement
+  hi def link texDefParm		Special
+  hi def link texDelimiter		Delimiter
+  hi def link texInput		Special
+  hi def link texInputFile		Special
+  hi def link texLength		Number
+  hi def link texMath		Special
+  hi def link texMathDelim		Statement
+  hi def link texMathOper		Operator
+  hi def link texNewCmd		Statement
+  hi def link texNewEnv		Statement
+  hi def link texOption		Number
+  hi def link texRefZone		Special
+  hi def link texSection		PreCondit
+  hi def link texSpaceCodeChar	Special
+  hi def link texSpecialChar		SpecialChar
+  hi def link texStatement		Statement
+  hi def link texString		String
+  hi def link texTodo		Todo
+  hi def link texType		Type
+  hi def link texZone		PreCondit
 
-  delcommand HiLink
 endif
 
 " Cleanup: {{{1

@@ -42,24 +42,22 @@ syn match inittabProcessPlus "+" contained nextgroup=inittabProcess,inittabError
 syn region inittabProcess start="/" end="$" transparent oneline contained contains=@inittabSh,inittabComment
 
 " Define the default highlighting
-command -nargs=+ HiLink hi def link <args>
 
-HiLink inittabComment Comment
-HiLink inittabFixme Todo
-HiLink inittabActionName Type
-HiLink inittabError Error
-HiLink inittabId Identifier
-HiLink inittabRunLevels Special
+hi def link inittabComment Comment
+hi def link inittabFixme Todo
+hi def link inittabActionName Type
+hi def link inittabError Error
+hi def link inittabId Identifier
+hi def link inittabRunLevels Special
 
-HiLink inittabColonProcess inittabColon
-HiLink inittabColonAction inittabColon
-HiLink inittabColonRunLevels inittabColon
-HiLink inittabColon PreProc
+hi def link inittabColonProcess inittabColon
+hi def link inittabColonAction inittabColon
+hi def link inittabColonRunLevels inittabColon
+hi def link inittabColon PreProc
 
-HiLink inittabShString String
-HiLink inittabShOption Special
-HiLink inittabShCommand Statement
+hi def link inittabShString String
+hi def link inittabShOption Special
+hi def link inittabShCommand Statement
 
-delcommand HiLink
 
 let b:current_syntax = "inittab"

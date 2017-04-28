@@ -122,34 +122,32 @@ syn match	lifelinesErrInParen	contained "[{}]"
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink lifelinesConditional	Conditional
-HiLink lifelinesArithm	Operator
-HiLink lifelinesLogical	Conditional
-HiLink lifelinesInclude	Include
-HiLink lifelinesComment	Comment
-HiLink lifelinesStatement	Statement
-HiLink lifelinesUser		Statement
-HiLink lifelinesFunct		Statement
-HiLink lifelinesTable		Statement
-HiLink lifelinesGedcom	Statement
-HiLink lifelinesList		Statement
-HiLink lifelinesRepeat	Repeat
-HiLink lifelinesFam		Statement
-HiLink lifelinesIndi		Statement
-HiLink lifelinesProc		Statement
-HiLink lifelinesDef		Statement
-HiLink lifelinesString	String
-HiLink lifelinesSpecial	Special
-HiLink lifelinesNumber	Number
-HiLink lifelinesParenError	Error
-HiLink lifelinesErrInParen	Error
-HiLink lifelinesError		Error
-HiLink lifelinesTodo		Todo
-HiLink lifelinesDecl		PreProc
+hi def link lifelinesConditional	Conditional
+hi def link lifelinesArithm	Operator
+hi def link lifelinesLogical	Conditional
+hi def link lifelinesInclude	Include
+hi def link lifelinesComment	Comment
+hi def link lifelinesStatement	Statement
+hi def link lifelinesUser		Statement
+hi def link lifelinesFunct		Statement
+hi def link lifelinesTable		Statement
+hi def link lifelinesGedcom	Statement
+hi def link lifelinesList		Statement
+hi def link lifelinesRepeat	Repeat
+hi def link lifelinesFam		Statement
+hi def link lifelinesIndi		Statement
+hi def link lifelinesProc		Statement
+hi def link lifelinesDef		Statement
+hi def link lifelinesString	String
+hi def link lifelinesSpecial	Special
+hi def link lifelinesNumber	Number
+hi def link lifelinesParenError	Error
+hi def link lifelinesErrInParen	Error
+hi def link lifelinesError		Error
+hi def link lifelinesTodo		Todo
+hi def link lifelinesDecl		PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "lifelines"
 

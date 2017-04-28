@@ -80,42 +80,40 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink javaScriptComment		Comment
-HiLink javaScriptLineComment		Comment
-HiLink javaScriptCommentTodo		Todo
-HiLink javaScriptSpecial		Special
-HiLink javaScriptStringS		String
-HiLink javaScriptStringD		String
-HiLink javaScriptCharacter		Character
-HiLink javaScriptSpecialCharacter	javaScriptSpecial
-HiLink javaScriptNumber		javaScriptValue
-HiLink javaScriptConditional		Conditional
-HiLink javaScriptRepeat		Repeat
-HiLink javaScriptBranch		Conditional
-HiLink javaScriptOperator		Operator
-HiLink javaScriptType			Type
-HiLink javaScriptStatement		Statement
-HiLink javaScriptFunction		Function
-HiLink javaScriptBraces		Function
-HiLink javaScriptError		Error
-HiLink javaScrParenError		javaScriptError
-HiLink javaScriptNull			Keyword
-HiLink javaScriptBoolean		Boolean
-HiLink javaScriptRegexpString		String
+hi def link javaScriptComment		Comment
+hi def link javaScriptLineComment		Comment
+hi def link javaScriptCommentTodo		Todo
+hi def link javaScriptSpecial		Special
+hi def link javaScriptStringS		String
+hi def link javaScriptStringD		String
+hi def link javaScriptCharacter		Character
+hi def link javaScriptSpecialCharacter	javaScriptSpecial
+hi def link javaScriptNumber		javaScriptValue
+hi def link javaScriptConditional		Conditional
+hi def link javaScriptRepeat		Repeat
+hi def link javaScriptBranch		Conditional
+hi def link javaScriptOperator		Operator
+hi def link javaScriptType			Type
+hi def link javaScriptStatement		Statement
+hi def link javaScriptFunction		Function
+hi def link javaScriptBraces		Function
+hi def link javaScriptError		Error
+hi def link javaScrParenError		javaScriptError
+hi def link javaScriptNull			Keyword
+hi def link javaScriptBoolean		Boolean
+hi def link javaScriptRegexpString		String
 
-HiLink javaScriptIdentifier		Identifier
-HiLink javaScriptLabel		Label
-HiLink javaScriptException		Exception
-HiLink javaScriptMessage		Keyword
-HiLink javaScriptGlobal		Keyword
-HiLink javaScriptMember		Keyword
-HiLink javaScriptDeprecated		Exception 
-HiLink javaScriptReserved		Keyword
-HiLink javaScriptDebug		Debug
-HiLink javaScriptConstant		Label
+hi def link javaScriptIdentifier		Identifier
+hi def link javaScriptLabel		Label
+hi def link javaScriptException		Exception
+hi def link javaScriptMessage		Keyword
+hi def link javaScriptGlobal		Keyword
+hi def link javaScriptMember		Keyword
+hi def link javaScriptDeprecated		Exception 
+hi def link javaScriptReserved		Keyword
+hi def link javaScriptDebug		Debug
+hi def link javaScriptConstant		Label
 
-delcommand HiLink
 
 let b:current_syntax = "javascript"
 if main_syntax == 'javascript'

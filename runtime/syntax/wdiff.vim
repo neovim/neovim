@@ -21,11 +21,9 @@ syn region wdiffNew start="{+" end="+}"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink wdiffOld       Special
-HiLink wdiffNew       Identifier
+hi def link wdiffOld       Special
+hi def link wdiffNew       Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "wdiff"

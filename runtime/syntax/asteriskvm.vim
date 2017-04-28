@@ -33,19 +33,17 @@ syn match       comma                   "[,|]" contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink        asteriskvmComment Comment
-HiLink        asteriskvmContext         Identifier
-HiLink        asteriskvmZone            Type
-HiLink        zoneName                String
-HiLink        zoneDef                 String
-HiLink        asteriskvmSetting         Type
-HiLink        asteriskvmSettingBool     Type
+hi def link        asteriskvmComment Comment
+hi def link        asteriskvmContext         Identifier
+hi def link        asteriskvmZone            Type
+hi def link        zoneName                String
+hi def link        zoneDef                 String
+hi def link        asteriskvmSetting         Type
+hi def link        asteriskvmSettingBool     Type
 
-HiLink        asteriskvmMailbox         Statement
-HiLink        mailboxEmail            String
-delcommand HiLink
+hi def link        asteriskvmMailbox         Statement
+hi def link        mailboxEmail            String
 
 let b:current_syntax = "asteriskvm"
 

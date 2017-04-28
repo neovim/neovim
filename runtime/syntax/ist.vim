@@ -39,19 +39,17 @@ syn match   IstTodo	   "DEBUG\|TODO"	 contained
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink IstInpSpec	Type
-HiLink IstOutSpec	Identifier
-HiLink IstString	String
-HiLink IstNumber	Number
-HiLink IstComment	Comment
-HiLink IstTodo	Todo
-HiLink IstSpecial	Special
-HiLink IstDoubleQuote	Label
-HiLink IstCharacter	Label
+hi def link IstInpSpec	Type
+hi def link IstOutSpec	Identifier
+hi def link IstString	String
+hi def link IstNumber	Number
+hi def link IstComment	Comment
+hi def link IstTodo	Todo
+hi def link IstSpecial	Special
+hi def link IstDoubleQuote	Label
+hi def link IstCharacter	Label
 
-delcommand HiLink
 
 let b:current_syntax = "ist"
 

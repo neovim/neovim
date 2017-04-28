@@ -42,11 +42,9 @@ syn keyword     cynppMacro      Instantiate
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink cLabel		Label
-HiLink cynppMacro  Statement
+hi def link cLabel		Label
+hi def link cynppMacro  Statement
 
-delcommand HiLink
 
 let b:current_syntax = "cynpp"

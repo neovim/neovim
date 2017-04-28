@@ -42,18 +42,16 @@ syn case match
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink tliNumber	Number
-HiLink tliString	String
-HiLink tliComment	Comment
-HiLink tliSpecial	SpecialChar
-HiLink tliIdentifier Identifier
-HiLink tliObject     Statement
-HiLink tliField      Type
-HiLink tliStyle      PreProc
+hi def link tliNumber	Number
+hi def link tliString	String
+hi def link tliComment	Comment
+hi def link tliSpecial	SpecialChar
+hi def link tliIdentifier Identifier
+hi def link tliObject     Statement
+hi def link tliField      Type
+hi def link tliStyle      PreProc
 
-delcommand HiLink
 
 let b:current_syntax = "tli"
 

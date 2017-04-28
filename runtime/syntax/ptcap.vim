@@ -70,27 +70,25 @@ syn region ptcapField	    start=":" skip="[^\\]\(\\\\\)*\\$" end="[^\\]\(\\\\\)*
 syn region ptcapString	    matchgroup=ptcapOperator start="=" skip="[^\\]\(\\\\\)*\\:" matchgroup=ptcapDelimiter end=":"me=e-1 matchgroup=NONE end="[^\\]\(\\\\\)*[^\\]$" end="^$" contains=ptcapEscapedChar,ptcapLineCont keepend contained
 syn region ptcapComment	    start="^\s*#" end="$" contains=ptcapLeadBlank
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink ptcapComment		Comment
-HiLink ptcapDelimiter	Delimiter
+hi def link ptcapComment		Comment
+hi def link ptcapDelimiter	Delimiter
 " The highlighting of "ptcapEntry" should always be overridden by
 " its contents, so I use Todo highlighting to indicate that there
 " is work to be done with the syntax file if you can see it :-)
-HiLink ptcapEntry		Todo
-HiLink ptcapError		Error
-HiLink ptcapEscapedChar	SpecialChar
-HiLink ptcapField		Type
-HiLink ptcapLeadBlank	NONE
-HiLink ptcapLineCont	Special
-HiLink ptcapNames		Label
-HiLink ptcapNumber		NONE
-HiLink ptcapNumberError	Error
-HiLink ptcapOperator	Operator
-HiLink ptcapSpecialCap	Type
-HiLink ptcapString		NONE
+hi def link ptcapEntry		Todo
+hi def link ptcapError		Error
+hi def link ptcapEscapedChar	SpecialChar
+hi def link ptcapField		Type
+hi def link ptcapLeadBlank	NONE
+hi def link ptcapLineCont	Special
+hi def link ptcapNames		Label
+hi def link ptcapNumber		NONE
+hi def link ptcapNumberError	Error
+hi def link ptcapOperator	Operator
+hi def link ptcapSpecialCap	Type
+hi def link ptcapString		NONE
 
-delcommand HiLink
 
 let b:current_syntax = "ptcap"
 

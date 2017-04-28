@@ -63,21 +63,19 @@ syn sync match aflexSyncPat	groupthere aflexPatBlock	"^%%$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
-HiLink	aflexSlashQuote	aflexPat
-HiLink	aflexBrace		aflexPat
-HiLink aflexAbbrvComment	aflexPatComment
+hi def link aflexSlashQuote	aflexPat
+hi def link aflexBrace		aflexPat
+hi def link aflexAbbrvComment	aflexPatComment
 
-HiLink	aflexAbbrv		SpecialChar
-HiLink	aflexAbbrvRegExp	Macro
-HiLink	aflexCFunctions	Function
-HiLink	aflexMorePat	SpecialChar
-HiLink	aflexPat		Function
-HiLink	aflexPatComment	Comment
-HiLink	aflexPatString	Function
-HiLink	aflexPatTag		Special
-HiLink	aflexSep		Delimiter
-delcommand HiLink
+hi def link aflexAbbrv		SpecialChar
+hi def link aflexAbbrvRegExp	Macro
+hi def link aflexCFunctions	Function
+hi def link aflexMorePat	SpecialChar
+hi def link aflexPat		Function
+hi def link aflexPatComment	Comment
+hi def link aflexPatString	Function
+hi def link aflexPatTag		Special
+hi def link aflexSep		Delimiter
 
 let b:current_syntax = "aflex"
 

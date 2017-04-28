@@ -26,14 +26,12 @@ syn keyword	chStructure	class
 syn keyword	chType		string_t array
 
 " Default highlighting
-command -nargs=+ HiLink hi def link <args>
 
-HiLink chAccess		chStatement
-HiLink chExceptions		Exception
-HiLink chStatement		Statement
-HiLink chType			Type
-HiLink chStructure		Structure
-delcommand HiLink
+hi def link chAccess		chStatement
+hi def link chExceptions		Exception
+hi def link chStatement		Statement
+hi def link chType			Type
+hi def link chStructure		Structure
 
 let b:current_syntax = "ch"
 

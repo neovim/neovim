@@ -189,39 +189,37 @@ syn match	namedParenError	+}\([^;]\|$\)+
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink namedComment	Comment
-HiLink namedInclude	Include
-HiLink namedKeyword	Keyword
-HiLink namedIntKeyword	Keyword
-HiLink namedIdentifier	Identifier
-HiLink namedIntIdent	Identifier
+hi def link namedComment	Comment
+hi def link namedInclude	Include
+hi def link namedKeyword	Keyword
+hi def link namedIntKeyword	Keyword
+hi def link namedIdentifier	Identifier
+hi def link namedIntIdent	Identifier
 
-HiLink namedString	String
-HiLink namedBool	Type
-HiLink namedNotBool	Error
-HiLink namedNumber	Number
-HiLink namedNotNumber	Error
+hi def link namedString	String
+hi def link namedBool	Type
+hi def link namedNotBool	Error
+hi def link namedNumber	Number
+hi def link namedNotNumber	Error
 
-HiLink namedOption	namedKeyword
-HiLink namedLogOption	namedKeyword
-HiLink namedCNOption	namedKeyword
-HiLink namedQSKeywords	Type
-HiLink namedCNKeywords	Type
-HiLink namedLogCategory	Type
-HiLink namedIPaddr	Number
-HiLink namedDomain	Identifier
-HiLink namedZoneOpt	namedKeyword
-HiLink namedZoneType	Type
-HiLink namedParenError	Error
-HiLink namedEParenError	Error
-HiLink namedIllegalDom	Error
-HiLink namedIPerror	Error
-HiLink namedSpareDot	Error
-HiLink namedError	Error
+hi def link namedOption	namedKeyword
+hi def link namedLogOption	namedKeyword
+hi def link namedCNOption	namedKeyword
+hi def link namedQSKeywords	Type
+hi def link namedCNKeywords	Type
+hi def link namedLogCategory	Type
+hi def link namedIPaddr	Number
+hi def link namedDomain	Identifier
+hi def link namedZoneOpt	namedKeyword
+hi def link namedZoneType	Type
+hi def link namedParenError	Error
+hi def link namedEParenError	Error
+hi def link namedIllegalDom	Error
+hi def link namedIPerror	Error
+hi def link namedSpareDot	Error
+hi def link namedError	Error
 
-delcommand HiLink
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

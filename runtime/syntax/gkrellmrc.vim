@@ -48,30 +48,28 @@ syn keyword gkrellmrcStyleCmd StyleMeter StyleChart StylePanel
 syn keyword gkrellmrcStyleItem textcolor alt_textcolor font alt_font transparency border label_position margin margins left_margin right_margin top_margin bottom_margin krell_depth krell_yoff krell_x_hot krell_expand krell_left_margin krell_right_margin
 
 " Define the default highlighting
-command -nargs=+ HiLink hi def link <args>
 
-HiLink gkrellmrcComment Comment
-HiLink gkrellmrcFixme Todo
+hi def link gkrellmrcComment Comment
+hi def link gkrellmrcFixme Todo
 
-HiLink gkrellmrcString gkrellmrcConstant
-HiLink gkrellmrcNumber gkrellmrcConstant
-HiLink gkrellmrcRGBColor gkrellmrcConstant
-HiLink gkrellmrcExpandMode gkrellmrcConstant
-HiLink gkrellmrcConstant Constant
+hi def link gkrellmrcString gkrellmrcConstant
+hi def link gkrellmrcNumber gkrellmrcConstant
+hi def link gkrellmrcRGBColor gkrellmrcConstant
+hi def link gkrellmrcExpandMode gkrellmrcConstant
+hi def link gkrellmrcConstant Constant
 
-HiLink gkrellmrcMeterName gkrellmrcClass
-HiLink gkrellmrcChartName gkrellmrcClass
-HiLink gkrellmrcSpecialClassName gkrellmrcClass
-HiLink gkrellmrcClass Type
+hi def link gkrellmrcMeterName gkrellmrcClass
+hi def link gkrellmrcChartName gkrellmrcClass
+hi def link gkrellmrcSpecialClassName gkrellmrcClass
+hi def link gkrellmrcClass Type
 
-HiLink gkrellmrcGlobal gkrellmrcItem
-HiLink gkrellmrcBuiltinExt gkrellmrcItem
-HiLink gkrellmrcStyleItem gkrellmrcItem
-HiLink gkrellmrcItem Function
+hi def link gkrellmrcGlobal gkrellmrcItem
+hi def link gkrellmrcBuiltinExt gkrellmrcItem
+hi def link gkrellmrcStyleItem gkrellmrcItem
+hi def link gkrellmrcItem Function
 
-HiLink gkrellmrcSetCmd Special
-HiLink gkrellmrcStyleCmd Statement
+hi def link gkrellmrcSetCmd Special
+hi def link gkrellmrcStyleCmd Statement
 
-delcommand HiLink
 
 let b:current_syntax = "gkrellmrc"

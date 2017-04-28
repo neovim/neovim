@@ -3243,20 +3243,18 @@ syn keyword xsMacro xiv_iv xuv_uv yystype
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink xsPrivate    Error
-HiLink xsSuperseded Error
-HiLink xsType       Type
-HiLink xsString     String
-HiLink xsConstant   Constant
-HiLink xsException  Exception
-HiLink xsKeyword    Keyword
-HiLink xsFunction   Function
-HiLink xsVariable   Identifier
-HiLink xsMacro      Macro
+hi def link xsPrivate    Error
+hi def link xsSuperseded Error
+hi def link xsType       Type
+hi def link xsString     String
+hi def link xsConstant   Constant
+hi def link xsException  Exception
+hi def link xsKeyword    Keyword
+hi def link xsFunction   Function
+hi def link xsVariable   Identifier
+hi def link xsMacro      Macro
 
-delcommand HiLink
 
 let b:current_syntax = "xs"
 

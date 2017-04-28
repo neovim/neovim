@@ -61,33 +61,31 @@ syn region	dylanHeader	start="^[Mm]odule:" end="^$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink dylanBlock		PreProc
-HiLink dylanBoolean		Boolean
-HiLink dylanCharacter		Character
-HiLink dylanClass		Structure
-HiLink dylanClassMods		StorageClass
-HiLink dylanComment		Comment
-HiLink dylanConditional	Conditional
-HiLink dylanConstant		Constant
-HiLink dylanException		Exception
-HiLink dylanHeader		Macro
-HiLink dylanImport		Include
-HiLink dylanLabel		Label
-HiLink dylanMiscMods		StorageClass
-HiLink dylanNumber		Number
-HiLink dylanOther		Keyword
-HiLink dylanOperator		Operator
-HiLink dylanParamDefs		Keyword
-HiLink dylanPrecondit		PreCondit
-HiLink dylanRepeat		Repeat
-HiLink dylanSimpleDefs	Keyword
-HiLink dylanStatement		Macro
-HiLink dylanString		String
-HiLink dylanVariable		Identifier
+hi def link dylanBlock		PreProc
+hi def link dylanBoolean		Boolean
+hi def link dylanCharacter		Character
+hi def link dylanClass		Structure
+hi def link dylanClassMods		StorageClass
+hi def link dylanComment		Comment
+hi def link dylanConditional	Conditional
+hi def link dylanConstant		Constant
+hi def link dylanException		Exception
+hi def link dylanHeader		Macro
+hi def link dylanImport		Include
+hi def link dylanLabel		Label
+hi def link dylanMiscMods		StorageClass
+hi def link dylanNumber		Number
+hi def link dylanOther		Keyword
+hi def link dylanOperator		Operator
+hi def link dylanParamDefs		Keyword
+hi def link dylanPrecondit		PreCondit
+hi def link dylanRepeat		Repeat
+hi def link dylanSimpleDefs	Keyword
+hi def link dylanStatement		Macro
+hi def link dylanString		String
+hi def link dylanVariable		Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "dylan"
 

@@ -359,33 +359,31 @@ syn keyword sicadStatement zparp zparpn zwinkp zwinkpn
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink sicadLabel PreProc
-HiLink sicadLabel1 sicadLabel
-HiLink sicadLabel2 sicadLabel
-HiLink sicadConditional Conditional
-HiLink sicadBoolean Boolean
-HiLink sicadNumber Number
-HiLink sicadFloat Float
-HiLink sicadOperator Operator
-HiLink sicadStatement Statement
-HiLink sicadParameter sicadStatement
-HiLink sicadGoto sicadStatement
-HiLink sicadLineCont sicadStatement
-HiLink sicadString String
-HiLink sicadComment Comment
-HiLink sicadSpecial Special
-HiLink sicadIdentifier Type
-"  HiLink sicadIdentifier Identifier
-HiLink sicadError Error
-HiLink sicadParenError sicadError
-HiLink sicadApostropheError sicadError
-HiLink sicadStringError sicadError
-HiLink sicadCommentError sicadError
-"  HiLink sqlStatement Special  " modified highlight group in sql.vim
+hi def link sicadLabel PreProc
+hi def link sicadLabel1 sicadLabel
+hi def link sicadLabel2 sicadLabel
+hi def link sicadConditional Conditional
+hi def link sicadBoolean Boolean
+hi def link sicadNumber Number
+hi def link sicadFloat Float
+hi def link sicadOperator Operator
+hi def link sicadStatement Statement
+hi def link sicadParameter sicadStatement
+hi def link sicadGoto sicadStatement
+hi def link sicadLineCont sicadStatement
+hi def link sicadString String
+hi def link sicadComment Comment
+hi def link sicadSpecial Special
+hi def link sicadIdentifier Type
+"  hi def link sicadIdentifier Identifier
+hi def link sicadError Error
+hi def link sicadParenError sicadError
+hi def link sicadApostropheError sicadError
+hi def link sicadStringError sicadError
+hi def link sicadCommentError sicadError
+"  hi def link sqlStatement Special  " modified highlight group in sql.vim
 
-delcommand HiLink
 
 let b:current_syntax = "sicad"
 

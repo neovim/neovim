@@ -152,34 +152,32 @@ syn keyword sqlTodo TODO FIXME XXX DEBUG NOTE
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 
 " === Comment syntax group ===
-HiLink sqlComment	Comment
+hi def link sqlComment	Comment
 
 " === Constant syntax group ===
-HiLink sqlNumber	Number
-HiLink sqlBoolean	Boolean
-HiLink sqlString	String
+hi def link sqlNumber	Number
+hi def link sqlBoolean	Boolean
+hi def link sqlString	String
 
 " === Statment syntax group ===
-HiLink sqlStatement	Statement
-HiLink sqlConditional	Conditional
-HiLink sqlRepeat		Repeat
-HiLink sqlKeyword		Keyword
-HiLink sqlOperator	Operator
-HiLink sqlException	Exception
+hi def link sqlStatement	Statement
+hi def link sqlConditional	Conditional
+hi def link sqlRepeat		Repeat
+hi def link sqlKeyword		Keyword
+hi def link sqlOperator	Operator
+hi def link sqlException	Exception
 
 " === Identifier syntax group ===
-HiLink sqlFunction	Function
+hi def link sqlFunction	Function
 
 " === Type syntax group ===
-HiLink sqlType	Type
+hi def link sqlType	Type
 
 " === Todo syntax group ===
-HiLink sqlTodo	Todo
+hi def link sqlTodo	Todo
 
-delcommand HiLink
 
 let b:current_syntax = "sqlinformix"

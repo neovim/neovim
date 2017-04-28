@@ -54,18 +54,16 @@ syn keyword bstField          volume year
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink bstComment           Comment
-HiLink bstString            String
-HiLink bstCommand           PreProc
-HiLink bstBuiltIn           Statement
-HiLink bstField             Special
-HiLink bstNumber            Number
-HiLink bstType              Type
-HiLink bstIdentifier        Identifier
-HiLink bstError             Error
-delcommand HiLink
+hi def link bstComment           Comment
+hi def link bstString            String
+hi def link bstCommand           PreProc
+hi def link bstBuiltIn           Statement
+hi def link bstField             Special
+hi def link bstNumber            Number
+hi def link bstType              Type
+hi def link bstIdentifier        Identifier
+hi def link bstError             Error
 
 let b:current_syntax = "bst"
 

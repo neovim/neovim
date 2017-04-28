@@ -54,30 +54,28 @@ syn sync lines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink msidlInclude		Include
-HiLink msidlPreProc		PreProc
-HiLink msidlPreCondit		PreCondit
-HiLink msidlDefine		Macro
-HiLink msidlIncluded		String
-HiLink msidlString		String
-HiLink msidlComment		Comment
-HiLink msidlTodo		Todo
-HiLink msidlSpecial		SpecialChar
-HiLink msidlLiteral		Number
-HiLink msidlUUID		Number
+hi def link msidlInclude		Include
+hi def link msidlPreProc		PreProc
+hi def link msidlPreCondit		PreCondit
+hi def link msidlDefine		Macro
+hi def link msidlIncluded		String
+hi def link msidlString		String
+hi def link msidlComment		Comment
+hi def link msidlTodo		Todo
+hi def link msidlSpecial		SpecialChar
+hi def link msidlLiteral		Number
+hi def link msidlUUID		Number
 
-HiLink msidlImport		Include
-HiLink msidlEnum		StorageClass
-HiLink msidlStruct		Structure
-HiLink msidlTypedef		Typedef
-HiLink msidlAttribute		StorageClass
+hi def link msidlImport		Include
+hi def link msidlEnum		StorageClass
+hi def link msidlStruct		Structure
+hi def link msidlTypedef		Typedef
+hi def link msidlAttribute		StorageClass
 
-HiLink msidlStandardType	Type
-HiLink msidlSafeArray		Type
+hi def link msidlStandardType	Type
+hi def link msidlSafeArray		Type
 
-delcommand HiLink
 
 let b:current_syntax = "msidl"
 

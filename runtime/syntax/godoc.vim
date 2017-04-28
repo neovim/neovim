@@ -10,11 +10,9 @@ endif
 syn case match
 syn match godocTitle "^\([A-Z][A-Z ]*\)$"
 
-command -nargs=+ HiLink hi def link <args>
 
-HiLink godocTitle Title
+hi def link godocTitle Title
 
-delcommand HiLink
 
 let b:current_syntax = 'godoc'
 

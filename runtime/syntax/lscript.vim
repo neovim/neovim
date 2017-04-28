@@ -177,25 +177,23 @@ syn match   lscriptTypeSpecifier	"[a-zA-Z0-9][\$%&!#]"ms=s+1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 hi lscriptNotesType	term=underline ctermfg=DarkGreen guifg=SeaGreen gui=bold
 
-HiLink lscriptNotesConst	lscriptNotesType
-HiLink lscriptLineNumber	Comment
-HiLink lscriptDatatype	Type
-HiLink lscriptNumber		Number
-HiLink lscriptError		Error
-HiLink lscriptStatement	Statement
-HiLink lscriptString		String
-HiLink lscriptComment		Comment
-HiLink lscriptTodo		Todo
-HiLink lscriptFunction	Identifier
-HiLink lscriptMethods		PreProc
-HiLink lscriptEvents		Special
-HiLink lscriptTypeSpecifier	Type
+hi def link lscriptNotesConst	lscriptNotesType
+hi def link lscriptLineNumber	Comment
+hi def link lscriptDatatype	Type
+hi def link lscriptNumber		Number
+hi def link lscriptError		Error
+hi def link lscriptStatement	Statement
+hi def link lscriptString		String
+hi def link lscriptComment		Comment
+hi def link lscriptTodo		Todo
+hi def link lscriptFunction	Identifier
+hi def link lscriptMethods		PreProc
+hi def link lscriptEvents		Special
+hi def link lscriptTypeSpecifier	Type
 
-delcommand HiLink
 
 let b:current_syntax = "lscript"
 

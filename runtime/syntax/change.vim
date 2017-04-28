@@ -19,12 +19,10 @@ syn region changeToMaterial start="^@y.*$"ms=e+1 end="^@z.*$"me=s-1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink changeFromMaterial String
-HiLink changeToMaterial Statement
+hi def link changeFromMaterial String
+hi def link changeToMaterial Statement
 
-delcommand HiLink
 
 let b:current_syntax = "change"
 

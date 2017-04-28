@@ -34,14 +34,12 @@ syn match       edifError       ")"
 syntax sync fromstart
 
 " Define the default highlighting.
-command -nargs=+ HiLink hi def link <args>
 
-HiLink edifInString		SpecialChar
-HiLink edifKeyword		Keyword
-HiLink edifNumber		Number
-HiLink edifInStringError	edifError
-HiLink edifError		Error
-HiLink edifString		String
-delcommand HiLink
+hi def link edifInString		SpecialChar
+hi def link edifKeyword		Keyword
+hi def link edifNumber		Number
+hi def link edifInStringError	edifError
+hi def link edifError		Error
+hi def link edifString		String
 
 let b:current_syntax = "edif"

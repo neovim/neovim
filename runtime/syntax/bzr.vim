@@ -38,15 +38,13 @@ syn sync match bzrSync  grouphere bzrRegion "^-\{14} This line and the following
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet.
-command -nargs=+ HiLink hi def link <args>
 
-HiLink bzrRemoved    Constant
-HiLink bzrAdded      Identifier
-HiLink bzrModified   Special
-HiLink bzrRenamed    Special
-HiLink bzrUnchanged  Special
-HiLink bzrUnknown    Special
+hi def link bzrRemoved    Constant
+hi def link bzrAdded      Identifier
+hi def link bzrModified   Special
+hi def link bzrRenamed    Special
+hi def link bzrUnchanged  Special
+hi def link bzrUnknown    Special
 
-delcommand HiLink
 
 let b:current_syntax = "bzr"

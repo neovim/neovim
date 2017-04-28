@@ -34,16 +34,14 @@ syn region  cheetahMultiLineComment start="#\*" end="\*#"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink cheetahPlaceHolder Identifier
-HiLink cheetahDirective PreCondit
-HiLink cheetahKeyword Define
-HiLink cheetahContinuation Special
-HiLink cheetahComment Comment
-HiLink cheetahMultiLineComment Comment
+hi def link cheetahPlaceHolder Identifier
+hi def link cheetahDirective PreCondit
+hi def link cheetahKeyword Define
+hi def link cheetahContinuation Special
+hi def link cheetahComment Comment
+hi def link cheetahMultiLineComment Comment
 
-delcommand HiLink
 
 let b:current_syntax = "cheetah"
 

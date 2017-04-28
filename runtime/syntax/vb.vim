@@ -336,31 +336,29 @@ syn match   vbTypeSpecifier  "#[a-zA-Z0-9]"me=e-1
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink vbBoolean		Boolean
-HiLink vbLineNumber		Comment
-HiLink vbComment		Comment
-HiLink vbConditional	Conditional
-HiLink vbConst			Constant
-HiLink vbDefine			Constant
-HiLink vbError			Error
-HiLink vbFunction		Identifier
-HiLink vbIdentifier		Identifier
-HiLink vbNumber			Number
-HiLink vbFloat			Float
-HiLink vbMethods		PreProc
-HiLink vbOperator		Operator
-HiLink vbRepeat			Repeat
-HiLink vbString			String
-HiLink vbStatement		Statement
-HiLink vbKeyword		Statement
-HiLink vbEvents			Special
-HiLink vbTodo			Todo
-HiLink vbTypes			Type
-HiLink vbTypeSpecifier	Type
+hi def link vbBoolean		Boolean
+hi def link vbLineNumber		Comment
+hi def link vbComment		Comment
+hi def link vbConditional	Conditional
+hi def link vbConst			Constant
+hi def link vbDefine			Constant
+hi def link vbError			Error
+hi def link vbFunction		Identifier
+hi def link vbIdentifier		Identifier
+hi def link vbNumber			Number
+hi def link vbFloat			Float
+hi def link vbMethods		PreProc
+hi def link vbOperator		Operator
+hi def link vbRepeat			Repeat
+hi def link vbString			String
+hi def link vbStatement		Statement
+hi def link vbKeyword		Statement
+hi def link vbEvents			Special
+hi def link vbTodo			Todo
+hi def link vbTypes			Type
+hi def link vbTypeSpecifier	Type
 
-delcommand HiLink
 
 let b:current_syntax = "vb"
 

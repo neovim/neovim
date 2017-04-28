@@ -99,22 +99,20 @@ syn sync      lines=100
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink herculesStatement  Statement
-HiLink herculesType       Type
-HiLink herculesComment    Comment
-HiLink herculesPreProc    PreProc
-HiLink herculesTodo       Todo
-HiLink herculesOutput     Include
-HiLink herculesCmdCmnt    Identifier
-HiLink herculesNumber     Number
-HiLink herculesBraceError herculesError
-HiLink herculesCurlyError herculesError
-HiLink herculesParenError herculesError
-HiLink herculesError      Error
+hi def link herculesStatement  Statement
+hi def link herculesType       Type
+hi def link herculesComment    Comment
+hi def link herculesPreProc    PreProc
+hi def link herculesTodo       Todo
+hi def link herculesOutput     Include
+hi def link herculesCmdCmnt    Identifier
+hi def link herculesNumber     Number
+hi def link herculesBraceError herculesError
+hi def link herculesCurlyError herculesError
+hi def link herculesParenError herculesError
+hi def link herculesError      Error
 
-delcommand HiLink
 
 let b:current_syntax = "hercules"
 

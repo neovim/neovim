@@ -96,25 +96,23 @@ syn sync minlines=50
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
 " The default highlighting.
-HiLink verilogCharacter       Character
-HiLink verilogConditional     Conditional
-HiLink verilogRepeat          Repeat
-HiLink verilogString          String
-HiLink verilogTodo            Todo
-HiLink verilogComment         Comment
-HiLink verilogConstant        Constant
-HiLink verilogLabel           Label
-HiLink verilogNumber          Number
-HiLink verilogOperator        Special
-HiLink verilogStatement       Statement
-HiLink verilogGlobal          Define
-HiLink verilogDirective       SpecialComment
-HiLink verilogEscape		 Special
+hi def link verilogCharacter       Character
+hi def link verilogConditional     Conditional
+hi def link verilogRepeat          Repeat
+hi def link verilogString          String
+hi def link verilogTodo            Todo
+hi def link verilogComment         Comment
+hi def link verilogConstant        Constant
+hi def link verilogLabel           Label
+hi def link verilogNumber          Number
+hi def link verilogOperator        Special
+hi def link verilogStatement       Statement
+hi def link verilogGlobal          Define
+hi def link verilogDirective       SpecialComment
+hi def link verilogEscape		 Special
 
-delcommand HiLink
 
 let b:current_syntax = "verilog"
 

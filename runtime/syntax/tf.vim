@@ -159,35 +159,33 @@ endif
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink tfComment		Comment
-HiLink tfString		String
-HiLink tfNumber		Number
-HiLink tfFloat		Float
-HiLink tfIdentifier		Identifier
-HiLink tfVar			Identifier
-HiLink tfWorld		Identifier
-HiLink tfReadonly		Identifier
-HiLink tfHook		Identifier
-HiLink tfFunctions		Function
-HiLink tfRepeat		Repeat
-HiLink tfConditional		Conditional
-HiLink tfLabel		Label
-HiLink tfStatement		Statement
-HiLink tfType		Type
-HiLink tfInclude		Include
-HiLink tfDefine		Define
-HiLink tfSpecialChar		SpecialChar
-HiLink tfSpecialCharEsc	SpecialChar
-HiLink tfParentError		Error
-HiLink tfTodo		Todo
-HiLink tfEndCommand		Delimiter
-HiLink tfJoinLines		Delimiter
-HiLink tfOperator		Operator
-HiLink tfRelation		Operator
+hi def link tfComment		Comment
+hi def link tfString		String
+hi def link tfNumber		Number
+hi def link tfFloat		Float
+hi def link tfIdentifier		Identifier
+hi def link tfVar			Identifier
+hi def link tfWorld		Identifier
+hi def link tfReadonly		Identifier
+hi def link tfHook		Identifier
+hi def link tfFunctions		Function
+hi def link tfRepeat		Repeat
+hi def link tfConditional		Conditional
+hi def link tfLabel		Label
+hi def link tfStatement		Statement
+hi def link tfType		Type
+hi def link tfInclude		Include
+hi def link tfDefine		Define
+hi def link tfSpecialChar		SpecialChar
+hi def link tfSpecialCharEsc	SpecialChar
+hi def link tfParentError		Error
+hi def link tfTodo		Todo
+hi def link tfEndCommand		Delimiter
+hi def link tfJoinLines		Delimiter
+hi def link tfOperator		Operator
+hi def link tfRelation		Operator
 
-delcommand HiLink
 
 let b:current_syntax = "tf"
 

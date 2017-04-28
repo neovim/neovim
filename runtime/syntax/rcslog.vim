@@ -14,13 +14,11 @@ syn match rcslogDate		"^date: .*$"
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink rcslogFile		Type
-HiLink rcslogRevision	Constant
-HiLink rcslogDate		Identifier
+hi def link rcslogFile		Type
+hi def link rcslogRevision	Constant
+hi def link rcslogDate		Identifier
 
-delcommand HiLink
 
 let b:current_syntax = "rcslog"
 

@@ -100,30 +100,28 @@ endif
 
 " Define the default highlighting
 " Only when an item doesn't have highlighting yet
-command -nargs=+ HiLink hi def link <args>
 
-HiLink sindaMacro		Macro
-HiLink sindaOptions		Special
-HiLink sindaRoutine		Type
-HiLink sindaControl		Special
-HiLink sindaSubRoutine	Function
-HiLink sindaIdentifier	Identifier
+hi def link sindaMacro		Macro
+hi def link sindaOptions		Special
+hi def link sindaRoutine		Type
+hi def link sindaControl		Special
+hi def link sindaSubRoutine	Function
+hi def link sindaIdentifier	Identifier
 
-HiLink sindaFortran		PreProc
-HiLink sindaMotran		PreProc
+hi def link sindaFortran		PreProc
+hi def link sindaMotran		PreProc
 
-HiLink sindaComment		Comment
-HiLink sindaHeader		Typedef
-HiLink sindaIncludeFile	Type
-HiLink sindaInteger		Number
-HiLink sindaFloat		Float
-HiLink sindaScientific	Float
+hi def link sindaComment		Comment
+hi def link sindaHeader		Typedef
+hi def link sindaIncludeFile	Type
+hi def link sindaInteger		Number
+hi def link sindaFloat		Float
+hi def link sindaScientific	Float
 
-HiLink sindaEndData		Macro
+hi def link sindaEndData		Macro
 
-HiLink sindaTodo		Todo
+hi def link sindaTodo		Todo
 
-delcommand HiLink
 
 
 let b:current_syntax = "sinda"
