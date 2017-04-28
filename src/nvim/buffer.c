@@ -3256,12 +3256,13 @@ int build_stl_str_hl(
         // { Move the truncated output
         memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
         out_p = out_p - n + 1;
-        /* Fill up space left over by half a double-wide char. */
-        while (++group_len < items[groupitems[groupdepth]].minwid)
+        // Fill up space left over by half a double-wide char.
+        while (++group_len < items[groupitems[groupdepth]].minwid) {
           *out_p++ = fillchar;
+        }
         // }
 
-        /* correct the start of the items for the truncation */
+        // correct the start of the items for the truncation
         for (int idx = groupitems[groupdepth] + 1; idx < curitem; idx++) {
           // Shift everything back by the number of removed bytes
           items[idx].start -= n;
@@ -3366,16 +3367,17 @@ int build_stl_str_hl(
     if (*fmt_p == STL_TABPAGENR || *fmt_p == STL_TABCLOSENR) {
       if (*fmt_p == STL_TABCLOSENR) {
         if (minwid == 0) {
-          /* %X ends the close label, go back to the previously
-           * define tab label nr. */
-          for (long n = curitem - 1; n >= 0; --n)
+          // %X ends the close label, go back to the previous tab label nr.
+          for (long n = curitem - 1; n >= 0; n--) {
             if (items[n].type == TabPage && items[n].minwid >= 0) {
               minwid = items[n].minwid;
               break;
             }
-        } else
-          /* close nrs are stored as negative values */
+          }
+        } else {
+          // close nrs are stored as negative values
           minwid = -minwid;
+        }
       }
       items[curitem].type = TabPage;
       items[curitem].start = out_p;
@@ -3396,7 +3398,7 @@ int build_stl_str_hl(
       }
       items[curitem].type = ClickFunc;
       items[curitem].start = out_p;
-      items[curitem].cmd = xmemdupz(t, (size_t) (((char *) fmt_p - t)));
+      items[curitem].cmd = xmemdupz(t, (size_t)(((char *)fmt_p - t)));
       items[curitem].minwid = minwid;
       fmt_p++;
       curitem++;
@@ -3917,13 +3919,14 @@ int build_stl_str_hl(
       trunc_p = items[0].start;
       item_idx = 0;
 
-      for (int i = 0; i < itemcnt; i++)
+      for (int i = 0; i < itemcnt; i++) {
         if (items[i].type == Trunc) {
           // Truncate at %< items.
           trunc_p = items[i].start;
           item_idx = i;
           break;
         }
+      }
     }
 
     // If the truncation point we found is beyond the maximum
@@ -4052,11 +4055,11 @@ int build_stl_str_hl(
         standard_spaces * (num_separators - 1);
 
       for (int i = 0; i < num_separators; i++) {
-        int dislocation = (i == (num_separators - 1)) ?
-          final_spaces : standard_spaces;
-        char_u *sep_loc = items[separator_locations[i]].start + dislocation;
-        STRMOVE(sep_loc, items[separator_locations[i]].start);
-        for (char_u *s = items[separator_locations[i]].start; s < sep_loc; s++) {
+        int dislocation = (i == (num_separators - 1))
+                          ? final_spaces : standard_spaces;
+        char_u *seploc = items[separator_locations[i]].start + dislocation;
+        STRMOVE(seploc, items[separator_locations[i]].start);
+        for (char_u *s = items[separator_locations[i]].start; s < seploc; s++) {
           *s = fillchar;
         }
 
@@ -4090,7 +4093,7 @@ int build_stl_str_hl(
     StlClickRecord *cur_tab_rec = tabtab;
     for (long l = 0; l < itemcnt; l++) {
       if (items[l].type == TabPage) {
-        cur_tab_rec->start = (char *) items[l].start;
+        cur_tab_rec->start = (char *)items[l].start;
         if (items[l].minwid == 0) {
           cur_tab_rec->def.type = kStlClickDisabled;
           cur_tab_rec->def.tabnr = 0;
@@ -4107,7 +4110,7 @@ int build_stl_str_hl(
         cur_tab_rec->def.func = NULL;
         cur_tab_rec++;
       } else if (items[l].type == ClickFunc) {
-        cur_tab_rec->start = (char *) items[l].start;
+        cur_tab_rec->start = (char *)items[l].start;
         cur_tab_rec->def.type = kStlClickFuncRun;
         cur_tab_rec->def.tabnr = items[l].minwid;
         cur_tab_rec->def.func = items[l].cmd;
