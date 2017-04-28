@@ -132,10 +132,6 @@ EXTERN u8char_T *ScreenLinesC[MAX_MCO];         /* composing characters */
 EXTERN int Screen_mco INIT(= 0);                /* value of p_mco used when
                                                    allocating ScreenLinesC[] */
 
-/* Only used for euc-jp: Second byte of a character that starts with 0x8e.
- * These are single-width. */
-EXTERN schar_T  *ScreenLines2 INIT(= NULL);
-
 EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
 EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
 

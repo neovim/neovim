@@ -24,8 +24,6 @@
  * cells the next byte in ScreenLines[] is 0.
  * ScreenLinesC[][] contain up to 'maxcombine' composing characters
  * (drawn on top of the first character).  There is 0 after the last one used.
- * ScreenLines2[] is only used for euc-jp to store the second byte if the
- * first byte is 0x8e (single-width character).
  *
  * The screen_*() functions write to the screen and handle updating
  * ScreenLines[].
@@ -5777,7 +5775,6 @@ void screenalloc(bool doclear)
   schar_T         *new_ScreenLines;
   u8char_T        *new_ScreenLinesUC = NULL;
   u8char_T        *new_ScreenLinesC[MAX_MCO];
-  schar_T         *new_ScreenLines2 = NULL;
   int i;
   sattr_T         *new_ScreenAttrs;
   unsigned        *new_LineOffset;
@@ -5884,8 +5881,6 @@ retry:
       xfree(new_ScreenLinesC[i]);
       new_ScreenLinesC[i] = NULL;
     }
-    xfree(new_ScreenLines2);
-    new_ScreenLines2 = NULL;
     xfree(new_ScreenAttrs);
     new_ScreenAttrs = NULL;
     xfree(new_LineOffset);
@@ -5942,11 +5937,6 @@ retry:
                   ScreenLinesC[i] + LineOffset[old_row],
                   (size_t)len * sizeof(u8char_T));
           }
-          if (ScreenLines2 != NULL) {
-            memmove(new_ScreenLines2 + new_LineOffset[new_row],
-                    ScreenLines2 + LineOffset[old_row],
-                    (size_t)len * sizeof(schar_T));
-          }
           memmove(new_ScreenAttrs + new_LineOffset[new_row],
                   ScreenAttrs + LineOffset[old_row],
                   (size_t)len * sizeof(sattr_T));
@@ -5964,7 +5954,6 @@ retry:
   for (i = 0; i < p_mco; ++i)
     ScreenLinesC[i] = new_ScreenLinesC[i];
   Screen_mco = p_mco;
-  ScreenLines2 = new_ScreenLines2;
   ScreenAttrs = new_ScreenAttrs;
   LineOffset = new_LineOffset;
   LineWraps = new_LineWraps;
@@ -6003,7 +5992,6 @@ void free_screenlines(void)
   xfree(ScreenLinesUC);
   for (i = 0; i < Screen_mco; ++i)
     xfree(ScreenLinesC[i]);
-  xfree(ScreenLines2);
   xfree(ScreenLines);
   xfree(ScreenAttrs);
   xfree(LineOffset);
