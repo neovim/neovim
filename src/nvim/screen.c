@@ -2136,6 +2136,86 @@ static int get_match_attr_at_column(win_T* wp, long column) {
   return attr;
 }
 
+struct SearchMatch {
+  int attr;
+  bool from_match;
+  bool has_area;
+};
+
+static struct SearchMatch get_search_match(win_T* wp, linenr_T lnum,
+                                                char_u *line, long diff) {
+  matchitem_T *current_match = wp->w_match_head;
+  match_T *shl;
+  bool shl_flag = false;
+
+  struct SearchMatch result = {
+    .attr       = 0,
+    .from_match = false,
+    .has_area   = false
+  };
+
+  while (current_match != NULL || !shl_flag) {
+    if (!shl_flag) {
+      shl = &search_hl;
+      shl_flag = true;
+    } else {
+      shl = &current_match->hl;  // -V595
+    }
+
+    shl->startcol = MAXCOL;
+    shl->endcol = MAXCOL;
+    shl->attr_cur = 0;
+    shl->is_addpos = false;
+
+    if (current_match != NULL) {
+      current_match->pos.cur= 0;
+    }
+
+    next_search_hl(wp, shl, lnum, (colnr_T)diff,
+                   shl == &search_hl ? NULL : current_match);
+
+    // Need to get the line again, a multi-line regexp may have made it
+    // invalid.
+    line = ml_get_buf(wp->w_buffer, lnum, false);
+
+    if (shl->lnum != 0 && shl->lnum <= lnum) {
+      if (shl->lnum == lnum) {
+        shl->startcol = shl->rm.startpos[0].col;
+      } else {
+        shl->startcol = 0;
+      }
+
+      int match_lnum = shl->lnum +
+        (shl->rm.endpos[0].lnum - shl->rm.startpos[0].lnum)
+
+      if (lnum == match_lnum) {
+        shl->endcol = shl->rm.endpos[0].col;
+      } else {
+        shl->endcol = MAXCOL;
+      }
+      // Highlight one character for an empty match.
+      if (shl->startcol == shl->endcol) {
+        if (line[shl->endcol] != NUL) {
+          shl->endcol += (*mb_ptr2len)(line + shl->endcol);
+        } else {
+          shl->endcol++;
+        }
+      }
+      if ((long)shl->startcol < diff) {   // match at leftcol
+        shl->attr_cur = shl->attr;
+        result.attr       = shl->attr;
+        result.from_match = shl != &search_hl;
+      }
+      result.has_area = true;
+    }
+    if (shl != &search_hl && current_match != NULL) {
+      current_match = current_match->next;
+    }
+  }
+
+  return result;
+}
+
 struct MatchConceal {
   bool has_match;
   bool is_first;
@@ -2418,7 +2498,6 @@ win_line (
                                         // in this line
   int attr = 0;                         // attributes for area highlighting
   int area_attr = 0;                    // attributes desired by highlighting
-  int search_attr = 0;                  // attributes desired by 'hlsearch'
   int vcol_save_attr = 0;               // saved attr for 'cursorcolumn'
   int syntax_attr = 0;                  // attributes desired by syntax
   bool has_syntax = false;              // this buffer has syntax highl.
@@ -2475,7 +2554,6 @@ win_line (
 
   int tabstop = (int)wp->w_buffer->b_p_ts;
 
-  bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_visualhl = false;            // this buffer has visual
   bool has_incsearchhl = false;         // this buffer has incsearch matches
   bool has_bufhl = false;               // this buffer has highlight matches
@@ -2508,6 +2586,12 @@ win_line (
     .has_match = false,
     .is_first = false,
     .conceal_char = 0
+  };
+
+  struct SearchMatch search_match = {
+    .attr = 0,
+    .from_match = false,
+    .has_area = false
   };
 
 # define VCOL_HLC (vcol - vcol_off)
@@ -2832,61 +2916,16 @@ win_line (
    * Handle highlighting the last used search pattern and matches.
    * Do this for both search_hl and the match list.
    */
-  current_match = wp->w_match_head;
-  shl_flag = false;
-  while (current_match != NULL || !shl_flag) {
-    if (!shl_flag) {
-      shl = &search_hl;
-      shl_flag = true;
-    } else {
-      shl = &current_match->hl;  // -V595
-    }
-    shl->startcol = MAXCOL;
-    shl->endcol = MAXCOL;
-    shl->attr_cur = 0;
-    shl->is_addpos = false;
-    long diff = (long)(ptr - line);
-    if (current_match != NULL) {
-      current_match->pos.cur= 0;
-    }
-    next_search_hl(wp, shl, lnum, (colnr_T)diff,
-                   shl == &search_hl ? NULL : current_match);
+  long diff = (long)(ptr - line);
 
-    // Need to get the line again, a multi-line regexp may have made it
-    // invalid.
-    line = ml_get_buf(wp->w_buffer, lnum, false);
-    ptr = line + diff;
+  struct SearchMatch search_match = get_search_match(wp, lnum, line, diff);
+  area_highlighting = search_match.has_area;
 
-    if (shl->lnum != 0 && shl->lnum <= lnum) {
-      if (shl->lnum == lnum) {
-        shl->startcol = shl->rm.startpos[0].col;
-      } else {
-        shl->startcol = 0;
-      }
-      if (lnum == shl->lnum + shl->rm.endpos[0].lnum
-                  - shl->rm.startpos[0].lnum) {
-          shl->endcol = shl->rm.endpos[0].col;
-      } else {
-          shl->endcol = MAXCOL;
-      }
-      // Highlight one character for an empty match.
-      if (shl->startcol == shl->endcol) {
-          if (line[shl->endcol] != NUL) {
-              shl->endcol += (*mb_ptr2len)(line + shl->endcol);
-          } else {
-              ++shl->endcol;
-          }
-      }
-      if ((long)shl->startcol < diff) {   // match at leftcol
-        shl->attr_cur = shl->attr;
-        search_attr = shl->attr;
-        search_attr_from_match = shl != &search_hl;
-      }
-      area_highlighting = true;
-    }
-    if (shl != &search_hl && current_match != NULL)
-      current_match = current_match->next;
-  }
+  // Need to get the line again, a multi-line regexp may have made it
+  // invalid.
+  line = ml_get_buf(wp->w_buffer, lnum, false);
+  ptr = line + diff;
+
 
   /* Cursor line highlighting for 'cursorline' in the current window.  Not
    * when Visual mode is active, because it's not clear what is selected
@@ -3151,8 +3190,9 @@ win_line (
 
         /* Use attributes from match with highest priority among
          * 'search_hl' and the match list. */
-        search_attr_from_match = false;
-        search_attr = search_hl.attr_cur;
+        search_match.attr       = search_hl.attr_cur;
+        search_match.from_match = false;
+
         current_match = wp->w_match_head;
         shl_flag = false;
         while (current_match != NULL || shl_flag == false) {
@@ -3165,8 +3205,8 @@ win_line (
           } else
             shl = &current_match->hl;
           if (shl->attr_cur != 0) {
-            search_attr = shl->attr_cur;
-            search_attr_from_match = shl != &search_hl;
+            search_match.attr       = shl->attr_cur;
+            search_match.from_match = shl != &search_hl;
           }
           if (shl != &search_hl && current_match != NULL)
             current_match = current_match->next;
@@ -3191,8 +3231,8 @@ win_line (
 
       if (area_attr != 0) {
         char_attr = hl_combine_attr(line_attr, area_attr);
-      } else if (search_attr != 0) {
-        char_attr = hl_combine_attr(line_attr, search_attr);
+      } else if (search_match.attr != 0) {
+        char_attr = hl_combine_attr(line_attr, search_match.attr);
       }
       // Use line_attr when not in the Visual or 'incsearch' area
       // (area_attr may be 0 when "should_invert" is unset).
@@ -3309,7 +3349,7 @@ win_line (
         mb_utf8 = (c >= 0x80);
         n_extra = (int)STRLEN(p_extra);
         c_extra = NUL;
-        if (area_attr == 0 && search_attr == 0) {
+        if (area_attr == 0 && search_match.attr == 0) {
           n_attr = n_extra + 1;
           extra_attr = hl_attr(HLF_8);
           saved_attr2 = char_attr;               // save current attr
@@ -3359,7 +3399,7 @@ win_line (
         n_extra = 1;
         c_extra = MB_FILLER_CHAR;
         SET_CHAR(' ')
-          if (area_attr == 0 && search_attr == 0) {
+          if (area_attr == 0 && search_match.attr == 0) {
             n_attr = n_extra + 1;
             extra_attr = hl_attr(HLF_AT);
             saved_attr2 = char_attr;             /* save current attr */
@@ -3719,7 +3759,7 @@ win_line (
           did_line_attr++;
 
           // don't do search HL for the rest of the line
-          if (line_attr != 0 && char_attr == search_attr && col > 0) {
+          if (line_attr != 0 && char_attr == search_match.attr && col > 0) {
             char_attr = line_attr;
           }
           if (diff_hlf == HLF_TXD) {
@@ -3792,7 +3832,7 @@ win_line (
     }
 
     // Don't override visual selection highlighting.
-    if (n_attr > 0 && draw_state == WL_LINE && !search_attr_from_match) {
+    if (n_attr > 0 && draw_state == WL_LINE && !search_match.from_match) {
       char_attr = hl_combine_attr(char_attr, extra_attr);
     }
 
