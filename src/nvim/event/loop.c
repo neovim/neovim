@@ -44,8 +44,7 @@ void loop_poll_events(Loop *loop, int ms)
     // we do not block indefinitely for I/O.
     uv_timer_start(&loop->poll_timer, timer_cb, (uint64_t)ms, (uint64_t)ms);
   } else if (ms == 0) {
-    // For ms == 0, we need to do a non-blocking event poll by
-    // setting the run mode to UV_RUN_NOWAIT.
+    // For ms == 0, do a non-blocking event poll.
     mode = UV_RUN_NOWAIT;
   }
 

@@ -74,9 +74,6 @@ typedef struct {
   bool out_isatty;
   SignalWatcher winch_handle, cont_handle;
   bool cont_received;
-  // Event scheduled by the ui bridge. Since the main thread suspends until
-  // the event is handled, it is fine to use a single field instead of a queue
-  Event scheduled_event;
   UGrid grid;
   kvec_t(Rect) invalid_regions;
   int out_fd;
@@ -776,7 +773,7 @@ static void tui_suspend(UI *ui)
   // before continuing. This is done in another callback to avoid
   // loop_poll_events recursion
   multiqueue_put_event(data->loop->fast_events,
-                       event_create(1, suspend_event, 1, ui));
+                       event_create(suspend_event, 1, ui));
 }
 
 static void tui_set_title(UI *ui, char *title)

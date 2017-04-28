@@ -8,16 +8,14 @@
 
 typedef void (*argv_callback)(void **argv);
 typedef struct message {
-  int priority;
   argv_callback handler;
   void *argv[EVENT_HANDLER_MAX_ARGC];
 } Event;
 typedef void(*event_scheduler)(Event event, void *data);
 
-#define VA_EVENT_INIT(event, p, h, a) \
+#define VA_EVENT_INIT(event, h, a) \
   do { \
     assert(a <= EVENT_HANDLER_MAX_ARGC); \
-    (event)->priority = p; \
     (event)->handler = h; \
     if (a) { \
       va_list args; \
@@ -29,11 +27,11 @@ typedef void(*event_scheduler)(Event event, void *data);
     } \
   } while (0)
 
-static inline Event event_create(int priority, argv_callback cb, int argc, ...)
+static inline Event event_create(argv_callback cb, int argc, ...)
 {
   assert(argc <= EVENT_HANDLER_MAX_ARGC);
   Event event;
-  VA_EVENT_INIT(&event, priority, cb, argc);
+  VA_EVENT_INIT(&event, cb, argc);
   return event;
 }
 

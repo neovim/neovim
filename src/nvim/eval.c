@@ -12575,59 +12575,18 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-/*
- * "mode()" function
- */
+/// "mode()" function
 static void f_mode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char_u buf[3];
+  char *mode = get_mode();
 
-  buf[1] = NUL;
-  buf[2] = NUL;
-
-  if (VIsual_active) {
-    if (VIsual_select)
-      buf[0] = VIsual_mode + 's' - 'v';
-    else
-      buf[0] = VIsual_mode;
-  } else if (State == HITRETURN || State == ASKMORE || State == SETWSIZE
-             || State == CONFIRM) {
-    buf[0] = 'r';
-    if (State == ASKMORE)
-      buf[1] = 'm';
-    else if (State == CONFIRM)
-      buf[1] = '?';
-  } else if (State == EXTERNCMD)
-    buf[0] = '!';
-  else if (State & INSERT) {
-    if (State & VREPLACE_FLAG) {
-      buf[0] = 'R';
-      buf[1] = 'v';
-    } else if (State & REPLACE_FLAG)
-      buf[0] = 'R';
-    else
-      buf[0] = 'i';
-  } else if (State & CMDLINE) {
-    buf[0] = 'c';
-    if (exmode_active)
-      buf[1] = 'v';
-  } else if (exmode_active) {
-    buf[0] = 'c';
-    buf[1] = 'e';
-  } else if (State & TERM_FOCUS) {
-    buf[0] = 't';
-  } else {
-    buf[0] = 'n';
-    if (finish_op)
-      buf[1] = 'o';
+  // Clear out the minor mode when the argument is not a non-zero number or
+  // non-empty string.
+  if (!non_zero_arg(&argvars[0])) {
+    mode[1] = NUL;
   }
 
-  /* Clear out the minor mode when the argument is not a non-zero number or
-   * non-empty string.  */
-  if (!non_zero_arg(&argvars[0]))
-    buf[1] = NUL;
-
-  rettv->vval.v_string = vim_strsave(buf);
+  rettv->vval.v_string = (char_u *)mode;
   rettv->v_type = VAR_STRING;
 }
 

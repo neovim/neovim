@@ -10,7 +10,7 @@ typedef struct multiqueue MultiQueue;
 typedef void (*put_callback)(MultiQueue *multiq, void *data);
 
 #define multiqueue_put(q, h, ...) \
-  multiqueue_put_event(q, event_create(1, h, __VA_ARGS__));
+  multiqueue_put_event(q, event_create(h, __VA_ARGS__));
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

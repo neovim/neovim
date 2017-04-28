@@ -29,6 +29,7 @@
 #include "nvim/log.h"
 #include "nvim/misc1.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/os/input.h"
 
 #define CHANNEL_BUFFER_SIZE 0xffff
 
@@ -89,6 +90,7 @@ static msgpack_sbuffer out_buffer;
 /// Initializes the module
 void channel_init(void)
 {
+  ch_before_blocking_events = multiqueue_new_child(main_loop.events);
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
@@ -433,16 +435,25 @@ static void handle_request(Channel *channel, msgpack_object *request)
     handler.async = true;
   }
 
-  RequestEvent *event_data = xmalloc(sizeof(RequestEvent));
-  event_data->channel = channel;
-  event_data->handler = handler;
-  event_data->args = args;
-  event_data->request_id = request_id;
+  RequestEvent *evdata = xmalloc(sizeof(RequestEvent));
+  evdata->channel = channel;
+  evdata->handler = handler;
+  evdata->args = args;
+  evdata->request_id = request_id;
   incref(channel);
   if (handler.async) {
-    on_request_event((void **)&event_data);
+    bool is_get_mode = sizeof("nvim_get_mode") - 1 == method->via.bin.size
+      && !strncmp("nvim_get_mode", method->via.bin.ptr, method->via.bin.size);
+
+    if (is_get_mode && !input_blocking()) {
+      // Defer the event to a special queue used by os/input.c. #6247
+      multiqueue_put(ch_before_blocking_events, on_request_event, 1, evdata);
+    } else {
+      // Invoke immediately.
+      on_request_event((void **)&evdata);
+    }
   } else {
-    multiqueue_put(channel->events, on_request_event, 1, event_data);
+    multiqueue_put(channel->events, on_request_event, 1, evdata);
   }
 }
 
