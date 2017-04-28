@@ -4,21 +4,12 @@
 " Filenames:    *.bst
 " $Id: bst.vim,v 1.2 2007/05/05 18:24:42 vimboss Exp $
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
-if version < 600
-    command -nargs=1 SetIsk set iskeyword=<args>
-else
-    command -nargs=1 SetIsk setlocal iskeyword=<args>
-endif
-SetIsk 48-57,#,$,',.,A-Z,a-z
-delcommand SetIsk
+setlocal iskeyword=48-57,#,$,',.,A-Z,a-z
 
 syn case ignore
 
@@ -62,27 +53,17 @@ syn keyword bstField          title type
 syn keyword bstField          volume year
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_bst_syn_inits")
-    if version < 508
-        let did_bst_syn_inits = 1
-        command -nargs=+ HiLink hi link <args>
-    else
-        command -nargs=+ HiLink hi def link <args>
-    endif
+" Only when an item doesn't have highlighting yet
 
-    HiLink bstComment           Comment
-    HiLink bstString            String
-    HiLink bstCommand           PreProc
-    HiLink bstBuiltIn           Statement
-    HiLink bstField             Special
-    HiLink bstNumber            Number
-    HiLink bstType              Type
-    HiLink bstIdentifier        Identifier
-    HiLink bstError             Error
-    delcommand HiLink
-endif
+hi def link bstComment           Comment
+hi def link bstString            String
+hi def link bstCommand           PreProc
+hi def link bstBuiltIn           Statement
+hi def link bstField             Special
+hi def link bstNumber            Number
+hi def link bstType              Type
+hi def link bstIdentifier        Identifier
+hi def link bstError             Error
 
 let b:current_syntax = "bst"
 

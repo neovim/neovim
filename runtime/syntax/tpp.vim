@@ -17,11 +17,8 @@
 " the latest version of this file.
 " SPAM is _NOT_ welcome - be ready to be reported!
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -51,11 +48,7 @@ syn region tppAbstractOption start="^--\%(author\|title\|date\|footer\)" end="$"
 
 if main_syntax != 'sh'
   " shell command
-  if version < 600
-    syn include @tppShExec <sfile>:p:h/sh.vim
-  else
-    syn include @tppShExec syntax/sh.vim
-  endif
+  syn include @tppShExec syntax/sh.vim
   unlet b:current_syntax
 
   syn region shExec matchgroup=tppPageLocalOptionKey start='^--exec *' keepend end='$' contains=@tppShExec
@@ -65,35 +58,25 @@ endif
 syn match tppComment "^--##.*$"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_tpp_syn_inits")
-  if version < 508
-    let did_tpp_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink tppAbstractOptionKey		Special
-  HiLink tppPageLocalOptionKey		Keyword
-  HiLink tppPageLocalSwitchKey		Keyword
-  HiLink tppColorOptionKey		Keyword
-  HiLink tppTimeOptionKey		Comment
-  HiLink tppNewPageOptionKey		PreProc
-  HiLink tppString			String
-  HiLink tppColor			String
-  HiLink tppTime			Number
-  HiLink tppComment			Comment
-  HiLink tppAbstractOption		Error
-  HiLink tppPageLocalOption		Error
-  HiLink tppPageLocalSwitch		Error
-  HiLink tppColorOption			Error
-  HiLink tppNewPageOption		Error
-  HiLink tppTimeOption			Error
+hi def link tppAbstractOptionKey		Special
+hi def link tppPageLocalOptionKey		Keyword
+hi def link tppPageLocalSwitchKey		Keyword
+hi def link tppColorOptionKey		Keyword
+hi def link tppTimeOptionKey		Comment
+hi def link tppNewPageOptionKey		PreProc
+hi def link tppString			String
+hi def link tppColor			String
+hi def link tppTime			Number
+hi def link tppComment			Comment
+hi def link tppAbstractOption		Error
+hi def link tppPageLocalOption		Error
+hi def link tppPageLocalSwitch		Error
+hi def link tppColorOption			Error
+hi def link tppNewPageOption		Error
+hi def link tppTimeOption			Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "tpp"
 

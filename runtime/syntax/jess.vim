@@ -4,19 +4,12 @@
 " Last change:	September 14, 2000
 " Based on lisp.vim by : Dr. Charles E. Campbell, Jr.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
-if version < 600
-  set iskeyword=42,43,45,47-58,60-62,64-90,97-122,_
-else
-  setlocal iskeyword=42,43,45,47-58,60-62,64-90,97-122,_
-endif
+setlocal iskeyword=42,43,45,47-58,60-62,64-90,97-122,_
 
 " Lists
 syn match	jessSymbol	![^()'`,"; \t]\+!	contained
@@ -125,36 +118,26 @@ syn match	jessComment	";.*$"
 syn sync lines=100
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_jess_syntax_inits")
-  if version < 508
-    let did_jess_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink jessAtomNmbr	jessNumber
-  HiLink jessAtomMark	jessMark
+hi def link jessAtomNmbr	jessNumber
+hi def link jessAtomMark	jessMark
 
-  HiLink jessAtom		Identifier
-  HiLink jessAtomBarSymbol	Special
-  HiLink jessBarSymbol	Special
-  HiLink jessComment	Comment
-  HiLink jessConcat	Statement
-  HiLink jessDeclaration	Statement
-  HiLink jessFunc		Statement
-  HiLink jessKey		Type
-  HiLink jessMark		Delimiter
-  HiLink jessNumber	Number
-  HiLink jessParenError	Error
-  HiLink jessSpecial	Type
-  HiLink jessString	String
-  HiLink jessVar		Identifier
+hi def link jessAtom		Identifier
+hi def link jessAtomBarSymbol	Special
+hi def link jessBarSymbol	Special
+hi def link jessComment	Comment
+hi def link jessConcat	Statement
+hi def link jessDeclaration	Statement
+hi def link jessFunc		Statement
+hi def link jessKey		Type
+hi def link jessMark		Delimiter
+hi def link jessNumber	Number
+hi def link jessParenError	Error
+hi def link jessSpecial	Type
+hi def link jessString	String
+hi def link jessVar		Identifier
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "jess"
 

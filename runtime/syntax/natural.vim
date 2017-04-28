@@ -6,16 +6,11 @@
 " Last Changed:	2012-02-05 18:50:43
 " Support:	http://www.von-oppen.com/
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when this syntax file was already loaded
-if v:version < 600
-  syntax clear
-  set iskeyword+=-,*,#,+,_,/
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
-else
-  setlocal iskeyword+=-,*,#,+,_,/
 endif
+setlocal iskeyword+=-,*,#,+,_,/
 
 let s:cpo_save = &cpo
 set cpo&vim
@@ -153,59 +148,50 @@ if v:version >= 600
 endif
 
 
-if v:version >= 508 || !exists("did_natural_syntax_inits")
-  if v:version < 508
-    let did_natural_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  " The default methods for highlighting.  Can be overridden later
+" The default methods for highlighting.  Can be overridden later
 
-  " Constants
-  HiLink naturalFormat		Constant
-  HiLink naturalAttribute	Constant
-  HiLink naturalNumber		Number
-  HiLink naturalString		String
-  HiLink naturalBoolean		Boolean
+" Constants
+hi def link naturalFormat		Constant
+hi def link naturalAttribute	Constant
+hi def link naturalNumber		Number
+hi def link naturalString		String
+hi def link naturalBoolean		Boolean
 
-  " All kinds of keywords
-  HiLink naturalConditional	Conditional
-  HiLink naturalRepeat		Repeat
-  HiLink naturalLoop		Repeat
-  HiLink naturalFlow		Keyword
-  HiLink naturalError		Keyword
-  HiLink naturalKeyword		Keyword
-  HiLink naturalOperator	Operator
-  HiLink naturalParGui		Operator
+" All kinds of keywords
+hi def link naturalConditional	Conditional
+hi def link naturalRepeat		Repeat
+hi def link naturalLoop		Repeat
+hi def link naturalFlow		Keyword
+hi def link naturalError		Keyword
+hi def link naturalKeyword		Keyword
+hi def link naturalOperator	Operator
+hi def link naturalParGui		Operator
 
-  " Labels
-  HiLink naturalLabel		Label
-  HiLink naturalRefLabel	Label
+" Labels
+hi def link naturalLabel		Label
+hi def link naturalRefLabel	Label
 
-  " Comments
-  HiLink naturalPComment	Comment
-  HiLink naturalComment		Comment
-  HiLink naturalTodo		Todo
-  HiLink naturalCommentMark	PreProc
+" Comments
+hi def link naturalPComment	Comment
+hi def link naturalComment		Comment
+hi def link naturalTodo		Todo
+hi def link naturalCommentMark	PreProc
 
-  HiLink naturalInclude		Include
-  HiLink naturalSysVar		Identifier
-  HiLink naturalLineNo		LineNr
-  HiLink naturalLineRef		Error
-  HiLink naturalSpecial		Special
-  HiLink naturalComKey		Todo
+hi def link naturalInclude		Include
+hi def link naturalSysVar		Identifier
+hi def link naturalLineNo		LineNr
+hi def link naturalLineRef		Error
+hi def link naturalSpecial		Special
+hi def link naturalComKey		Todo
 
-  " illegal things
-  HiLink naturalRMKeyword	Error
-  HiLink naturalLegalIdent	Error
+" illegal things
+hi def link naturalRMKeyword	Error
+hi def link naturalLegalIdent	Error
 
-  HiLink naturalType		Type
-  HiLink naturalFunction	Function
-  HiLink naturalObjName		PreProc
+hi def link naturalType		Type
+hi def link naturalFunction	Function
+hi def link naturalObjName		PreProc
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "natural"
 

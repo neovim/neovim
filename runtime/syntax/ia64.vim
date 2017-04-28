@@ -6,11 +6,8 @@
 " File Version: 0.7
 " Last Change:  2006 Sep 08
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -19,11 +16,7 @@ endif
 syn case ignore
 
 "  Identifier Keyword characters (defines \k)
-if version >= 600
-	setlocal iskeyword=@,48-57,#,$,.,:,?,@-@,_,~
-else
-	set iskeyword=@,48-57,#,$,.,:,?,@-@,_,~
-endif
+setlocal iskeyword=@,48-57,#,$,.,:,?,@-@,_,~
 
 syn sync minlines=5
 
@@ -268,43 +261,33 @@ syn match ia64data "real\([48]\|1[06]\)\(\(\(\.ua\)\=\(\.msb\|\.lsb\)\=\)\|\(\(\
 syn match ia64data "stringz\=\(\(\(\.ua\)\=\(\.msb\|\.lsb\)\=\)\|\(\(\.msb\|\.lsb\)\=\(\.ua\)\=\)\)\=\>"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_ia64_syn_inits")
-	if version < 508
-		let did_ia64_syn_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	"put masm groups with our groups
-	HiLink masmOperator	ia64operator
-	HiLink masmDirective	ia64Directive
-	HiLink masmOpcode	ia64Opcode
-	HiLink masmIdentifier	ia64Identifier
-	HiLink masmFloat	ia64Float
+"put masm groups with our groups
+hi def link masmOperator	ia64operator
+hi def link masmDirective	ia64Directive
+hi def link masmOpcode	ia64Opcode
+hi def link masmIdentifier	ia64Identifier
+hi def link masmFloat	ia64Float
 
-	"ia64 specific stuff
-	HiLink ia64Label	Define
-	HiLink ia64Comment	Comment
-	HiLink ia64Directive	Type
-	HiLink ia64opcode	Statement
-	HiLink ia64registers	Operator
-	HiLink ia64string	String
-	HiLink ia64Hex		Number
-	HiLink ia64Binary	Number
-	HiLink ia64Octal	Number
-	HiLink ia64Float	Float
-	HiLink ia64Decimal	Number
-	HiLink ia64Identifier	Identifier
-	HiLink ia64data		Type
-	HiLink ia64delimiter	Delimiter
-	HiLink ia64operator	Operator
-	HiLink ia64Todo		Todo
+"ia64 specific stuff
+hi def link ia64Label	Define
+hi def link ia64Comment	Comment
+hi def link ia64Directive	Type
+hi def link ia64opcode	Statement
+hi def link ia64registers	Operator
+hi def link ia64string	String
+hi def link ia64Hex		Number
+hi def link ia64Binary	Number
+hi def link ia64Octal	Number
+hi def link ia64Float	Float
+hi def link ia64Decimal	Number
+hi def link ia64Identifier	Identifier
+hi def link ia64data		Type
+hi def link ia64delimiter	Delimiter
+hi def link ia64operator	Operator
+hi def link ia64Todo		Todo
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "ia64"
 

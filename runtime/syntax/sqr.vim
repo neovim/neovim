@@ -16,19 +16,12 @@
 "    http://lanzarotta.tripod.com/vim.html
 "    jefflanzarotta at yahoo dot com
 
-" For version 5.x, clear all syntax items.
-" For version 6.x, quit when a syntax file was already loaded.
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
-if version >= 600
-  setlocal iskeyword=@,48-57,_,-,#,$,{,}
-else
-  set iskeyword=@,48-57,_,-,#,$,{,}
-endif
+setlocal iskeyword=@,48-57,_,-,#,$,{,}
 
 syn case ignore
 
@@ -220,75 +213,49 @@ syn match	  sqrNumber	/-\=\<\d*\.\=[0-9_]\>/
 syn keyword	sqrTodo		TODO FIXME XXX DEBUG NOTE ###
 syn match	sqrTodo		/???/
 
-if version >= 600
-  " See also the sqrString section above for handling of ! characters
-  " inside of strings.  (Those patterns override the ones below.)
-  syn match	sqrComment	/!\@<!!\([^!=].*\|$\)/ contains=sqrTodo
-  "				  the ! can't be preceded by another !,
-  "				  and must be followed by at least one
-  "				  character other than ! or =, or immediately
-  "				  by the end-of-line
-  syn match	sqrComment	/^!=.*/ contains=sqrTodo
-  syn match	sqrComment	/^!!.*/ contains=sqrTodo
-  syn match	sqrError	/^\s\+\zs!=.*/
-  "				  it's an error to have "!=" preceded by
-  "				  just whitespace on the line ("!="
-  "				  preceded by non-whitespace is treated
-  "				  as neither a comment nor an error, since
-  "				  it is often correct, i.e.
-  "				    if #count != 7
-  syn match	sqrError	/.\+\zs!!.*/
-  "				  a "!!" anywhere but at the beginning of
-  "				  the line is always an error
-else "For versions before 6.0, same idea as above but we are limited
-     "to simple patterns only.  Also, the sqrString patterns above
-     "don't seem to take precedence in v5 as they do in v6, so
-     "we split the last rule to ignore comments found inside of
-     "string literals.
-  syn match	sqrComment	/!\([^!=].*\|$\)/ contains=sqrTodo
-  syn match	sqrComment	/^!=.*/ contains=sqrTodo
-  syn match	sqrComment	/^!!.*/ contains=sqrTodo
-  syn match	sqrError	/^\s\+!=.*/
-  syn match	sqrError	/^[^'!]\+!!/
-  "				flag !! on lines that don't have ! or '
-  syn match	sqrError	/^\([^!']*'[^']*'[^!']*\)\+!!/
-  "				flag !! found after matched ' ' chars
-  "				(that aren't also commented)
-endif
+" See also the sqrString section above for handling of ! characters
+" inside of strings.  (Those patterns override the ones below.)
+syn match	sqrComment	/!\@<!!\([^!=].*\|$\)/ contains=sqrTodo
+"				  the ! can't be preceded by another !,
+"				  and must be followed by at least one
+"				  character other than ! or =, or immediately
+"				  by the end-of-line
+syn match	sqrComment	/^!=.*/ contains=sqrTodo
+syn match	sqrComment	/^!!.*/ contains=sqrTodo
+syn match	sqrError	/^\s\+\zs!=.*/
+"				  it's an error to have "!=" preceded by
+"				  just whitespace on the line ("!="
+"				  preceded by non-whitespace is treated
+"				  as neither a comment nor an error, since
+"				  it is often correct, i.e.
+"				    if #count != 7
+syn match	sqrError	/.\+\zs!!.*/
+"				  a "!!" anywhere but at the beginning of
+"				  the line is always an error
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier, only when not done already.
-" For version 5.8 and later, only when an item doesn't have highlighting yet.
-if version >= 508 || !exists("did_sqr_syn_inits")
-  if version < 508
-    let did_sqr_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet.
 
-  HiLink sqrSection Statement
-  HiLink sqrParagraph Statement
-  HiLink sqrReserved Statement
-  HiLink sqrParameter Statement
-  HiLink sqrPreProc PreProc
-  HiLink sqrSubstVar PreProc
-  HiLink sqrCommand Statement
-  HiLink sqrParam Type
-  HiLink sqrFunction Special
+hi def link sqrSection Statement
+hi def link sqrParagraph Statement
+hi def link sqrReserved Statement
+hi def link sqrParameter Statement
+hi def link sqrPreProc PreProc
+hi def link sqrSubstVar PreProc
+hi def link sqrCommand Statement
+hi def link sqrParam Type
+hi def link sqrFunction Special
 
-  HiLink sqrString String
-  HiLink sqrStrOpen Todo
-  HiLink sqrNumber Number
-  HiLink sqrVariable Identifier
+hi def link sqrString String
+hi def link sqrStrOpen Todo
+hi def link sqrNumber Number
+hi def link sqrVariable Identifier
 
-  HiLink sqrComment Comment
-  HiLink sqrTodo Todo
-  HiLink sqrError Error
+hi def link sqrComment Comment
+hi def link sqrTodo Todo
+hi def link sqrError Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "sqr"
 

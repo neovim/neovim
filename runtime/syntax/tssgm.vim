@@ -8,11 +8,8 @@
 
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -75,35 +72,25 @@ syn match  tssgmScientific  "-\=\<[0-9]*\.[0-9]*E[-+]\=[0-9]\+\>"
 
 
 " Define the default highlighting
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_tssgm_syntax_inits")
-  if version < 508
-    let did_tssgm_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink tssgmParam		Statement
-  HiLink tssgmSurfType		Type
-  HiLink tssgmArgs		Special
-  HiLink tssgmDelim		Typedef
-  HiLink tssgmEnd		Macro
-  HiLink tssgmUnits		Special
+hi def link tssgmParam		Statement
+hi def link tssgmSurfType		Type
+hi def link tssgmArgs		Special
+hi def link tssgmDelim		Typedef
+hi def link tssgmEnd		Macro
+hi def link tssgmUnits		Special
 
-  HiLink tssgmDefault		SpecialComment
-  HiLink tssgmComment		Statement
-  HiLink tssgmCommentString	Comment
-  HiLink tssgmSurfIdent		Identifier
-  HiLink tssgmString		Delimiter
+hi def link tssgmDefault		SpecialComment
+hi def link tssgmComment		Statement
+hi def link tssgmCommentString	Comment
+hi def link tssgmSurfIdent		Identifier
+hi def link tssgmString		Delimiter
 
-  HiLink tssgmInteger		Number
-  HiLink tssgmFloat		Float
-  HiLink tssgmScientific	Float
+hi def link tssgmInteger		Number
+hi def link tssgmFloat		Float
+hi def link tssgmScientific	Float
 
-  delcommand HiLink
-endif
 
 
 let b:current_syntax = "tssgm"

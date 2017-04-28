@@ -11,11 +11,8 @@
 " & Communications LTd.)
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -124,67 +121,57 @@ endif
 exec "syn sync ccomment chillComment minlines=" . chill_minlines
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_ch_syntax_inits")
-  if version < 508
-    let did_ch_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink chillLabel	Label
-  HiLink chillUserLabel	Label
-  HiLink chillConditional	Conditional
-  " hi chillConditional	term=bold ctermfg=red guifg=red gui=bold
+hi def link chillLabel	Label
+hi def link chillUserLabel	Label
+hi def link chillConditional	Conditional
+" hi def link chillConditional	term=bold ctermfg=red guifg=red gui=bold
 
-  HiLink chillRepeat	Repeat
-  HiLink chillProcess	Repeat
-  HiLink chillSignal	Repeat
-  HiLink chillCharacter	Character
-  HiLink chillSpecialCharacter chillSpecial
-  HiLink chillNumber	Number
-  HiLink chillFloat	Float
-  HiLink chillOctalError	chillError
-  HiLink chillParenError	chillError
-  HiLink chillInParen	chillError
-  HiLink chillCommentError	chillError
-  HiLink chillSpaceError	chillError
-  HiLink chillOperator	Operator
-  HiLink chillStructure	Structure
-  HiLink chillBlock	Operator
-  HiLink chillScope	Operator
-  "hi chillEDML     term=underline ctermfg=DarkRed guifg=Red
-  HiLink chillEDML	PreProc
-  "hi chillBoolConst	term=bold ctermfg=brown guifg=brown
-  HiLink chillBoolConst	Constant
-  "hi chillLogical	term=bold ctermfg=brown guifg=brown
-  HiLink chillLogical	Constant
-  HiLink chillStorageClass	StorageClass
-  HiLink chillInclude	Include
-  HiLink chillPreProc	PreProc
-  HiLink chillDefine	Macro
-  HiLink chillIncluded	chillString
-  HiLink chillError	Error
-  HiLink chillStatement	Statement
-  HiLink chillPreCondit	PreCondit
-  HiLink chillType	Type
-  HiLink chillCommentError	chillError
-  HiLink chillCommentString chillString
-  HiLink chillComment2String chillString
-  HiLink chillCommentSkip	chillComment
-  HiLink chillString	String
-  HiLink chillComment	Comment
-  " hi chillComment	term=None ctermfg=lightblue guifg=lightblue
-  HiLink chillSpecial	SpecialChar
-  HiLink chillTodo	Todo
-  HiLink chillBlock	Statement
-  "HiLink chillIdentifier	Identifier
-  HiLink chillBracket	Delimiter
+hi def link chillRepeat	Repeat
+hi def link chillProcess	Repeat
+hi def link chillSignal	Repeat
+hi def link chillCharacter	Character
+hi def link chillSpecialCharacter chillSpecial
+hi def link chillNumber	Number
+hi def link chillFloat	Float
+hi def link chillOctalError	chillError
+hi def link chillParenError	chillError
+hi def link chillInParen	chillError
+hi def link chillCommentError	chillError
+hi def link chillSpaceError	chillError
+hi def link chillOperator	Operator
+hi def link chillStructure	Structure
+hi def link chillBlock	Operator
+hi def link chillScope	Operator
+"hi def link chillEDML     term=underline ctermfg=DarkRed guifg=Red
+hi def link chillEDML	PreProc
+"hi def link chillBoolConst	term=bold ctermfg=brown guifg=brown
+hi def link chillBoolConst	Constant
+"hi def link chillLogical	term=bold ctermfg=brown guifg=brown
+hi def link chillLogical	Constant
+hi def link chillStorageClass	StorageClass
+hi def link chillInclude	Include
+hi def link chillPreProc	PreProc
+hi def link chillDefine	Macro
+hi def link chillIncluded	chillString
+hi def link chillError	Error
+hi def link chillStatement	Statement
+hi def link chillPreCondit	PreCondit
+hi def link chillType	Type
+hi def link chillCommentError	chillError
+hi def link chillCommentString chillString
+hi def link chillComment2String chillString
+hi def link chillCommentSkip	chillComment
+hi def link chillString	String
+hi def link chillComment	Comment
+" hi def link chillComment	term=None ctermfg=lightblue guifg=lightblue
+hi def link chillSpecial	SpecialChar
+hi def link chillTodo	Todo
+hi def link chillBlock	Statement
+"hi def link chillIdentifier	Identifier
+hi def link chillBracket	Delimiter
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "chill"
 

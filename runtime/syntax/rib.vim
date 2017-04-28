@@ -4,10 +4,8 @@
 " Last Change:	2003 May 11
 "
 
-" Remove any old syntax stuff hanging around
-if version < 600
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -46,26 +44,17 @@ syn match	ribFloat	  display contained "[-]\=\.\d\+\(e[-+]\=\d\+\)\=\>"
 syn match	ribFloat	  display contained "[-]\=\d\+e[-+]\d\+\>"
 syn case match
 
-if version >= 508 || !exists("did_rib_syntax_inits")
-  if version < 508
-    let did_rib_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink ribStructure		Structure
-  HiLink ribCommand		Statement
+hi def link ribStructure		Structure
+hi def link ribCommand		Statement
 
-  HiLink ribStructureComment	SpecialComment
-  HiLink ribLineComment		Comment
+hi def link ribStructureComment	SpecialComment
+hi def link ribLineComment		Comment
 
-  HiLink ribString		String
-  HiLink ribNumber		Number
-  HiLink ribFloat		Float
+hi def link ribString		String
+hi def link ribNumber		Number
+hi def link ribFloat		Float
 
-  delcommand HiLink
-end
 
 
 let b:current_syntax = "rib"

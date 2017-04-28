@@ -4,11 +4,8 @@
 "   based on original work of Bram Moolenaar <Bram@vim.org>
 " Last Change:	2001 May 09
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -54,32 +51,22 @@ syn region modula2String start="'" end="'"
 syn region modula2Set start="{" end="}"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_modula2_syntax_inits")
-  if version < 508
-    let did_modula2_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink modula2Ident		Identifier
-  HiLink modula2StdConst	Boolean
-  HiLink modula2Type		Identifier
-  HiLink modula2StdFunc		Identifier
-  HiLink modula2Header		Type
-  HiLink modula2Keyword		Statement
-  HiLink modula2AttKeyword	PreProc
-  HiLink modula2Comment		Comment
-  " The following is just a matter of taste (you want to try this instead):
-  " hi modula2Comment term=bold ctermfg=DarkBlue guifg=Blue gui=bold
-  HiLink modula2Todo		Todo
-  HiLink modula2String		String
-  HiLink modula2Set		String
+hi def link modula2Ident		Identifier
+hi def link modula2StdConst	Boolean
+hi def link modula2Type		Identifier
+hi def link modula2StdFunc		Identifier
+hi def link modula2Header		Type
+hi def link modula2Keyword		Statement
+hi def link modula2AttKeyword	PreProc
+hi def link modula2Comment		Comment
+" The following is just a matter of taste (you want to try this instead):
+" hi modula2Comment term=bold ctermfg=DarkBlue guifg=Blue gui=bold
+hi def link modula2Todo		Todo
+hi def link modula2String		String
+hi def link modula2Set		String
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "modula2"
 

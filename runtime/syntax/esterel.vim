@@ -6,11 +6,8 @@
 " Last Change:		Tue May  6 13:29:56 CEST 2008
 " Version:			0.8
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -65,26 +62,17 @@ syn match esterelNone			"\<else\s\+if\>$"
 syn match esterelNone			"\<else\s\+if\>\s"
 
 " Class Linking
-if version >= 508 || !exists("did_esterel_syntax_inits")
-  if version < 508
-    let did_esterel_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-	HiLink esterelStatement		Statement
-	HiLink esterelType			Type
-	HiLink esterelComment		Comment
-	HiLink esterelBoolean		Number
-	HiLink esterelExpressions	Number
-	HiLink esterelIO			String
-	HiLink esterelOperator		Type
-	HiLink esterelSysCall		Type
-	HiLink esterelFunctions		Type
-	HiLink esterelSpecial		Special
+hi def link esterelStatement		Statement
+hi def link esterelType			Type
+hi def link esterelComment		Comment
+hi def link esterelBoolean		Number
+hi def link esterelExpressions	Number
+hi def link esterelIO			String
+hi def link esterelOperator		Type
+hi def link esterelSysCall		Type
+hi def link esterelFunctions		Type
+hi def link esterelSpecial		Special
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "esterel"

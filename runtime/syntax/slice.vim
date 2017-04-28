@@ -3,11 +3,8 @@
 " Maintainer:	Morel Bodin <slice06@nym.hush.com>
 " Last Change:	2005 Dec 03
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -58,33 +55,23 @@ syn match sliceComment	"//.*"
 syn sync ccomment sliceComment
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_slice_syn_inits")
-  if version < 508
-    let did_slice_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink sliceComment	Comment
-  HiLink sliceConstruct	Keyword
-  HiLink sliceType	Type
-  HiLink sliceString	String
-  HiLink sliceIncluded	String
-  HiLink sliceQualifier	Keyword
-  HiLink sliceInclude	Include
-  HiLink sliceGuard	PreProc
-  HiLink sliceBoolean	Boolean
-  HiLink sliceFloat	Number
-  HiLink sliceNumber	Number
-  HiLink sliceOctal	Number
-  HiLink sliceOctalZero	Special
-  HiLink sliceNumberError Special
+hi def link sliceComment	Comment
+hi def link sliceConstruct	Keyword
+hi def link sliceType	Type
+hi def link sliceString	String
+hi def link sliceIncluded	String
+hi def link sliceQualifier	Keyword
+hi def link sliceInclude	Include
+hi def link sliceGuard	PreProc
+hi def link sliceBoolean	Boolean
+hi def link sliceFloat	Number
+hi def link sliceNumber	Number
+hi def link sliceOctal	Number
+hi def link sliceOctalZero	Special
+hi def link sliceNumberError Special
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "slice"
 

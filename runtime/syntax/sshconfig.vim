@@ -10,19 +10,12 @@
 "
 
 " Setup
-if version >= 600
-  if exists("b:current_syntax")
-    finish
-  endif
-else
-  syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+  finish
 endif
 
-if version >= 600
-  setlocal iskeyword=_,-,a-z,A-Z,48-57
-else
-  set iskeyword=_,-,a-z,A-Z,48-57
-endif
+setlocal iskeyword=_,-,a-z,A-Z,48-57
 
 
 " case on
@@ -233,40 +226,31 @@ syn keyword sshconfigKeyword VisualHostKey
 syn keyword sshconfigKeyword XAuthLocation
 
 " Define the default highlighting
-if version >= 508 || !exists("did_sshconfig_syntax_inits")
-  if version < 508
-    let did_sshconfig_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink sshconfigComment        Comment
-  HiLink sshconfigTodo           Todo
-  HiLink sshconfigHostPort       sshconfigConstant
-  HiLink sshconfigNumber         sshconfigConstant
-  HiLink sshconfigConstant       Constant
-  HiLink sshconfigYesNo          sshconfigEnum
-  HiLink sshconfigCipher         sshconfigEnum
-  HiLink sshconfigCiphers	 sshconfigEnum
-  HiLink sshconfigMAC            sshconfigEnum
-  HiLink sshconfigHostKeyAlgo    sshconfigEnum
-  HiLink sshconfigLogLevel       sshconfigEnum
-  HiLink sshconfigSysLogFacility sshconfigEnum
-  HiLink sshconfigAddressFamily  sshconfigEnum
-  HiLink sshconfigIPQoS		 sshconfigEnum
-  HiLink sshconfigKbdInteractive sshconfigEnum
-  HiLink sshconfigKexAlgo	 sshconfigEnum
-  HiLink sshconfigTunnel	 sshconfigEnum
-  HiLink sshconfigPreferredAuth  sshconfigEnum
-  HiLink sshconfigVar            sshconfigEnum
-  HiLink sshconfigEnum           Identifier
-  HiLink sshconfigSpecial        Special
-  HiLink sshconfigKeyword        Keyword
-  HiLink sshconfigHostSect       Type
-  HiLink sshconfigMatch          Type
-  delcommand HiLink
-endif
+hi def link sshconfigComment        Comment
+hi def link sshconfigTodo           Todo
+hi def link sshconfigHostPort       sshconfigConstant
+hi def link sshconfigNumber         sshconfigConstant
+hi def link sshconfigConstant       Constant
+hi def link sshconfigYesNo          sshconfigEnum
+hi def link sshconfigCipher         sshconfigEnum
+hi def link sshconfigCiphers	 sshconfigEnum
+hi def link sshconfigMAC            sshconfigEnum
+hi def link sshconfigHostKeyAlgo    sshconfigEnum
+hi def link sshconfigLogLevel       sshconfigEnum
+hi def link sshconfigSysLogFacility sshconfigEnum
+hi def link sshconfigAddressFamily  sshconfigEnum
+hi def link sshconfigIPQoS		 sshconfigEnum
+hi def link sshconfigKbdInteractive sshconfigEnum
+hi def link sshconfigKexAlgo	 sshconfigEnum
+hi def link sshconfigTunnel	 sshconfigEnum
+hi def link sshconfigPreferredAuth  sshconfigEnum
+hi def link sshconfigVar            sshconfigEnum
+hi def link sshconfigEnum           Identifier
+hi def link sshconfigSpecial        Special
+hi def link sshconfigKeyword        Keyword
+hi def link sshconfigHostSect       Type
+hi def link sshconfigMatch          Type
 
 let b:current_syntax = "sshconfig"
 

@@ -10,7 +10,7 @@ Options							*options*
 2. Automatically setting options	|auto-setting|
 3. Options summary			|option-summary|
 
-For an overview of options see help.txt |option-list|.
+For an overview of options see quickref.txt |option-list|.
 
 Vim has a number of internal variables and switches which can be set to
 achieve special effects.  These options come in three forms:
@@ -2092,7 +2092,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	uhex		Show unprintable characters hexadecimal as <xx>
 			instead of using ^C and ~C.
 
-	When neither "lastline" or "truncate" is included, a last line that
+	When neither "lastline" nor "truncate" is included, a last line that
 	doesn't fit is replaced with "@" lines.
 
 						*'eadirection'* *'ead'*
@@ -2219,10 +2219,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 					*'exrc'* *'ex'* *'noexrc'* *'noex'*
 'exrc' 'ex'		boolean (default off)
 			global
-	Enables the reading of .nvimrc and .exrc in the current directory.
-	If you switch this option on you should also consider setting the
-	'secure' option (see |initialization|).  Using this option comes
-	with a potential security risk, use with care!
+	Enables the reading of .vimrc and .exrc in the current directory.
+	Setting this option is a potential security leak.  E.g., consider
+	unpacking a package or fetching files from github, a .vimrc in there
+	might be a trojan horse.  BETTER NOT SET THIS OPTION!
+	Instead, define an autocommand in your .vimrc to set options for a
+	matching directory.
+
+	If you do switch this option on you should also consider setting the
+	'secure' option (see |initialization|).
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 	Also see |init.vim| and |gui-init|.
@@ -3426,6 +3431,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	original position when no match is found and when pressing <Esc>.  You
 	still need to finish the search command with <Enter> to move the
 	cursor to the match.
+	You can use the CTRL-G and CTRL-T keys to move to the next and
+	previous match. |c_CTRL-G| |c_CTRL-T|
 	Vim only searches for about half a second.  With a complicated
 	pattern and/or a lot of text the match may not be found.  This is to
 	avoid that Vim hangs while you are typing the pattern.
@@ -3915,10 +3922,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	Changes the special characters that can be used in search patterns.
 	See |pattern|.
-	NOTE: To avoid portability problems with using patterns, always keep
-	this option at the default "on".  Only switch it off when working with
-	old Vi scripts.  In any other situation write patterns that work when
-	'magic' is on.  Include "\M" when you want to |/\M|.
+	WARNING: Switching this option off most likely breaks plugins!  That
+	is because many patterns assume it's on and will fail when it's off.
+	Only switch it off when working with old Vi scripts.  In any other
+	situation write patterns that work when 'magic' is on.  Include "\M"
+	when you want to |/\M|.
 
 						*'makeef'* *'mef'*
 'makeef' 'mef'		string	(default: "")
@@ -4884,7 +4892,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   ordering.  This is for preferences to overrule or add to the 
 	   distributed defaults or system-wide settings (rarely needed).
 
-	More entries are added when using |packages|.
+	More entries are added when using |packages|.  If it gets very long
+	then `:set rtp` will be truncated, use `:echo &rtp` to see the full
+	string.
 
 	Note that, unlike 'path', no wildcards like "**" are allowed.  Normal
 	wildcards are allowed, but can significantly slow down searching for

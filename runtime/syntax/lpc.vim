@@ -2,18 +2,15 @@
 " Language:	LPC
 " Maintainer:	Shizhu Pan <poet@mudbuilder.net>
 " URL:		http://poet.tomud.com/pub/lpc.vim.bz2
-" Last Change:	2011 Dec 10 by Thilo Six
+" Last Change:	2016 Aug 31
 " Comments:	If you are using Vim 6.2 or later, see :h lpc.vim for
 "		file type recognizing, if not, you had to use modeline.
 
 
 " Nodule: This is the start nodule. {{{1
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -360,94 +357,84 @@ endif
 " Nodule: Highlight links {{{1
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_lpc_syn_inits")
-  if version < 508
-    let did_lpc_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink lpcModifier		lpcStorageClass
+hi def link lpcModifier		lpcStorageClass
 
-  HiLink lpcQuotedFmt		lpcFormat
-  HiLink lpcFormat		lpcSpecial
-  HiLink lpcCppString		lpcString	" Cpp means
-						" C Pre-Processor
-  HiLink lpcCommentL		lpcComment
-  HiLink lpcCommentStart	lpcComment
-  HiLink lpcUserLabel		lpcLabel
-  HiLink lpcSpecialCharacter	lpcSpecial
-  HiLink lpcOctal		lpcPreProc
-  HiLink lpcOctalZero		lpcSpecial  " LPC will treat octal numbers
-					    " as decimals, programmers should
-					    " be aware of that.
-  HiLink lpcEfunError		lpcError
-  HiLink lpcKeywdError		lpcError
-  HiLink lpcOctalError		lpcError
-  HiLink lpcParenError		lpcError
-  HiLink lpcErrInParen		lpcError
-  HiLink lpcErrInBracket	lpcError
-  HiLink lpcCommentError	lpcError
-  HiLink lpcCommentStartError	lpcError
-  HiLink lpcSpaceError		lpcError
-  HiLink lpcSpecialError	lpcError
-  HiLink lpcErrFunc		lpcError
+hi def link lpcQuotedFmt		lpcFormat
+hi def link lpcFormat		lpcSpecial
+hi def link lpcCppString		lpcString	" Cpp means
+					      " C Pre-Processor
+hi def link lpcCommentL		lpcComment
+hi def link lpcCommentStart	lpcComment
+hi def link lpcUserLabel		lpcLabel
+hi def link lpcSpecialCharacter	lpcSpecial
+hi def link lpcOctal		lpcPreProc
+hi def link lpcOctalZero		lpcSpecial  " LPC will treat octal numbers
+					  " as decimals, programmers should
+					  " be aware of that.
+hi def link lpcEfunError		lpcError
+hi def link lpcKeywdError		lpcError
+hi def link lpcOctalError		lpcError
+hi def link lpcParenError		lpcError
+hi def link lpcErrInParen		lpcError
+hi def link lpcErrInBracket	lpcError
+hi def link lpcCommentError	lpcError
+hi def link lpcCommentStartError	lpcError
+hi def link lpcSpaceError		lpcError
+hi def link lpcSpecialError	lpcError
+hi def link lpcErrFunc		lpcError
 
-  if exists("lpc_pre_v22")
-      HiLink lpcOldEfuns	lpc_efuns
-      HiLink lpcNewEfuns	lpcError
-  else
-      HiLink lpcOldEfuns	lpcReserved
-      HiLink lpcNewEfuns	lpc_efuns
-  endif
-  HiLink lpc_efuns		lpcFunction
-
-  HiLink lpcReserved		lpcPreProc
-  HiLink lpcTextString		lpcString   " This should be preprocessors, but
-  HiLink lpcArrayString		lpcPreProc  " let's make some difference
-					    " between text and array
-
-  HiLink lpcIncluded		lpcString
-  HiLink lpcCommentString	lpcString
-  HiLink lpcComment2String	lpcString
-  HiLink lpcCommentSkip		lpcComment
-  HiLink lpcCommentFunc		lpcComment
-
-  HiLink lpcCppSkip		lpcCppOut
-  HiLink lpcCppOut2		lpcCppOut
-  HiLink lpcCppOut		lpcComment
-
-  " Standard type below
-  HiLink lpcApplies		Special
-  HiLink lpcCharacter		Character
-  HiLink lpcComment		Comment
-  HiLink lpcConditional		Conditional
-  HiLink lpcConstant		Constant
-  HiLink lpcDefine		Macro
-  HiLink lpcError		Error
-  HiLink lpcFloat		Float
-  HiLink lpcFunction		Function
-  HiLink lpcIdentifier		Identifier
-  HiLink lpcInclude		Include
-  HiLink lpcLabel		Label
-  HiLink lpcNumber		Number
-  HiLink lpcOperator		Operator
-  HiLink lpcPreCondit		PreCondit
-  HiLink lpcPreProc		PreProc
-  HiLink lpcRepeat		Repeat
-  HiLink lpcStatement		Statement
-  HiLink lpcStorageClass	StorageClass
-  HiLink lpcString		String
-  HiLink lpcStructure		Structure
-  HiLink lpcSpecial		LineNr
-  HiLink lpcTodo		Todo
-  HiLink lpcType		Type
-
-  delcommand HiLink
+if exists("lpc_pre_v22")
+    hi def link lpcOldEfuns	lpc_efuns
+    hi def link lpcNewEfuns	lpcError
+else
+    hi def link lpcOldEfuns	lpcReserved
+    hi def link lpcNewEfuns	lpc_efuns
 endif
+hi def link lpc_efuns		lpcFunction
+
+hi def link lpcReserved		lpcPreProc
+hi def link lpcTextString		lpcString   " This should be preprocessors, but
+hi def link lpcArrayString		lpcPreProc  " let's make some difference
+					  " between text and array
+
+hi def link lpcIncluded		lpcString
+hi def link lpcCommentString	lpcString
+hi def link lpcComment2String	lpcString
+hi def link lpcCommentSkip		lpcComment
+hi def link lpcCommentFunc		lpcComment
+
+hi def link lpcCppSkip		lpcCppOut
+hi def link lpcCppOut2		lpcCppOut
+hi def link lpcCppOut		lpcComment
+
+" Standard type below
+hi def link lpcApplies		Special
+hi def link lpcCharacter		Character
+hi def link lpcComment		Comment
+hi def link lpcConditional		Conditional
+hi def link lpcConstant		Constant
+hi def link lpcDefine		Macro
+hi def link lpcError		Error
+hi def link lpcFloat		Float
+hi def link lpcFunction		Function
+hi def link lpcIdentifier		Identifier
+hi def link lpcInclude		Include
+hi def link lpcLabel		Label
+hi def link lpcNumber		Number
+hi def link lpcOperator		Operator
+hi def link lpcPreCondit		PreCondit
+hi def link lpcPreProc		PreProc
+hi def link lpcRepeat		Repeat
+hi def link lpcStatement		Statement
+hi def link lpcStorageClass	StorageClass
+hi def link lpcString		String
+hi def link lpcStructure		Structure
+hi def link lpcSpecial		LineNr
+hi def link lpcTodo		Todo
+hi def link lpcType		Type
+
 
 " Nodule: This is the end nodule. {{{1
 

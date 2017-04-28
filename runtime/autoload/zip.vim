@@ -1,7 +1,7 @@
 " zip.vim: Handles browsing zipfiles
 "            AUTOLOAD PORTION
-" Date:		Jul 02, 2013
-" Version:	27
+" Date:		Sep 13, 2016
+" Version:	28
 " Maintainer:	Charles E Campbell <NdrOchip@ScampbellPfamily.AbizM-NOSPAM>
 " License:	Vim License  (see vim's :help license)
 " Copyright:    Copyright (C) 2005-2013 Charles E. Campbell {{{1
@@ -20,10 +20,10 @@
 if &cp || exists("g:loaded_zip")
  finish
 endif
-let g:loaded_zip= "v27"
+let g:loaded_zip= "v28"
 if v:version < 702
  echohl WarningMsg
- echo "***warning*** this version of zip needs vim 7.2"
+ echo "***warning*** this version of zip needs vim 7.2 or later"
  echohl Normal
  finish
 endif
@@ -53,6 +53,9 @@ endif
 if !exists("g:zip_unzipcmd")
  let g:zip_unzipcmd= "unzip"
 endif
+if !exists("g:zip_extractcmd")
+ let g:zip_extractcmd= g:zip_unzipcmd
+endif
 
 " ----------------
 "  Functions: {{{1
@@ -62,14 +65,14 @@ endif
 " zip#Browse: {{{2
 fun! zip#Browse(zipfile)
 "  call Dfunc("zip#Browse(zipfile<".a:zipfile.">)")
-  " sanity check: insure that the zipfile has "PK" as its first two letters
+  " sanity check: ensure that the zipfile has "PK" as its first two letters
   "               (zipped files have a leading PK as a "magic cookie")
   if !filereadable(a:zipfile) || readfile(a:zipfile, "", 1)[0] !~ '^PK'
    exe "noautocmd e ".fnameescape(a:zipfile)
 "   call Dret("zip#Browse : not a zipfile<".a:zipfile.">")
    return
 "  else        " Decho
-"   call Decho("zip#Browse: a:zipfile<".a:zipfile."> passed PK test - its a zip file")
+"   call Decho("zip#Browse: a:zipfile<".a:zipfile."> passed PK test - it's a zip file")
   endif
 
   let repkeep= &report
@@ -92,7 +95,7 @@ fun! zip#Browse(zipfile)
   endif
   if !filereadable(a:zipfile)
    if a:zipfile !~# '^\a\+://'
-    " if its an url, don't complain, let url-handlers such as vim do its thing
+    " if it's an url, don't complain, let url-handlers such as vim do its thing
     redraw!
     echohl Error | echo "***error*** (zip#Browse) File not readable<".a:zipfile.">" | echohl None
 "    call inputsave()|call input("Press <cr> to continue")|call inputrestore()
@@ -136,8 +139,10 @@ fun! zip#Browse(zipfile)
    return
   endif
 
+  " Maps associated with zip plugin
   setlocal noma nomod ro
-  noremap <silent> <buffer> <cr> :call <SID>ZipBrowseSelect()<cr>
+  noremap <silent> <buffer> <cr>	:call <SID>ZipBrowseSelect()<cr>
+  noremap <silent> <buffer> x		:call zip#Extract()<cr>
 
   let &report= repkeep
 "  call Dret("zip#Browse")
@@ -204,6 +209,15 @@ fun! zip#Read(fname,mode)
   endif
 "  call Decho("zipfile<".zipfile.">")
 "  call Decho("fname  <".fname.">")
+  " sanity check
+  if !executable(substitute(g:zip_unzipcmd,'\s\+.*$','',''))
+   redraw!
+   echohl Error | echo "***error*** (zip#Read) sorry, your system doesn't appear to have the ".g:zip_unzipcmd." program" | echohl None
+"   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
+   let &report= repkeep
+"   call Dret("zip#Write")
+   return
+  endif
 
   " the following code does much the same thing as
   "   exe "keepj sil! r! ".g:zip_unzipcmd." -p -- ".s:Escape(zipfile,1)." ".s:Escape(fnameescape(fname),1)
@@ -236,9 +250,9 @@ fun! zip#Write(fname)
   set report=10
 
   " sanity checks
-  if !executable(g:zip_zipcmd)
+  if !executable(substitute(g:zip_zipcmd,'\s\+.*$','',''))
    redraw!
-   echohl Error | echo "***error*** (zip#Write) sorry, your system doesn't appear to have the zip pgm" | echohl None
+   echohl Error | echo "***error*** (zip#Write) sorry, your system doesn't appear to have the ".g:zip_zipcmd." program" | echohl None
 "   call inputsave()|call input("Press <cr> to continue")|call inputrestore()
    let &report= repkeep
 "   call Dret("zip#Write")
@@ -342,6 +356,48 @@ fun! zip#Write(fname)
 
   let &report= repkeep
 "  call Dret("zip#Write")
+endfun
+
+" ---------------------------------------------------------------------
+" zip#Extract: extract a file from a zip archive {{{2
+fun! zip#Extract()
+"  call Dfunc("zip#Extract()")
+
+  let repkeep= &report
+  set report=10
+  let fname= getline(".")
+"  call Decho("fname<".fname.">")
+
+  " sanity check
+  if fname =~ '^"'
+   let &report= repkeep
+"   call Dret("zip#Extract")
+   return
+  endif
+  if fname =~ '/$'
+   redraw!
+   echohl Error | echo "***error*** (zip#Extract) Please specify a file, not a directory" | echohl None
+   let &report= repkeep
+"   call Dret("zip#Extract")
+   return
+  endif
+
+  " extract the file mentioned under the cursor
+"  call Decho("system(".g:zip_extractcmd." ".shellescape(b:zipfile)." ".shellescape(shell).")")
+  call system(g:zip_extractcmd." ".shellescape(b:zipfile)." ".shellescape(shell))
+"  call Decho("zipfile<".b:zipfile.">")
+  if v:shell_error != 0
+   echohl Error | echo "***error*** ".g:zip_extractcmd." ".b:zipfile." ".fname.": failed!" | echohl NONE
+  elseif !filereadable(fname)
+   echohl Error | echo "***error*** attempted to extract ".fname." but it doesn't appear to be present!"
+  else
+   echo "***note*** successfully extracted ".fname
+  endif
+
+  " restore option
+  let &report= repkeep
+
+"  call Dret("zip#Extract")
 endfun
 
 " ---------------------------------------------------------------------

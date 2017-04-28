@@ -3,7 +3,7 @@
 " Maintainer:	Dávid Szabó ( complex857 AT gmail DOT com )
 " Previous Maintainer:	Mikolaj Machowski ( mikmach AT wp DOT pl )
 " URL: https://github.com/shawncplus/phpcomplete.vim
-" Last Change:  2015 Jul 13
+" Last Change:  2016 Oct 10
 "
 "	OPTIONS:
 "
@@ -195,6 +195,8 @@ function! phpcomplete#CompletePHP(findstart, base) " {{{
 			" }}}
 		elseif context =~? 'implements'
 			return phpcomplete#CompleteClassName(a:base, ['i'], current_namespace, imports)
+		elseif context =~? 'instanceof'
+			return phpcomplete#CompleteClassName(a:base, ['c', 'n'], current_namespace, imports)
 		elseif context =~? 'extends\s\+.\+$' && a:base == ''
 			return ['implements']
 		elseif context =~? 'extends'
@@ -787,6 +789,8 @@ function! phpcomplete#CompleteClassName(base, kinds, current_namespace, imports)
 
 	if kinds == ['c', 'i']
 		let filterstr = 'v:val =~? "\\(class\\|interface\\)\\s\\+[a-zA-Z_\\x7f-\\xff][a-zA-Z_0-9\\x7f-\\xff]*\\s*"'
+	elseif kinds == ['c', 'n']
+		let filterstr = 'v:val =~? "\\(class\\|namespace\\)\\s\\+[a-zA-Z_\\x7f-\\xff][a-zA-Z_0-9\\x7f-\\xff]*\\s*"'
 	elseif kinds == ['c']
 		let filterstr = 'v:val =~? "class\\s\\+[a-zA-Z_\\x7f-\\xff][a-zA-Z_0-9\\x7f-\\xff]*\\s*"'
 	elseif kinds == ['i']
@@ -931,7 +935,7 @@ function! phpcomplete#EvaluateModifiers(modifiers, required_modifiers, prohibite
 		endfor
 
 		for modifier in a:modifiers
-			" if the modifier is prohibited its a no match
+			" if the modifier is prohibited it's a no match
 			if index(a:prohibited_modifiers, modifier) != -1
 				return 0
 			endif
@@ -996,7 +1000,7 @@ function! phpcomplete#CompleteUserClass(context, base, sccontent, visibility) " 
 		let required_modifiers += ['static']
 	endif
 	let all_variable = filter(deepcopy(a:sccontent),
-					\ 'v:val =~ "^\\s*\\(var\\s\\+\\|public\\s\\+\\|protected\\s\\+\\|private\\s\\+\\|final\\s\\+\\|abstract\\s\\+\\|static\\s\\+\\)\\+\\$"')
+					\ 'v:val =~ "\\(^\\s*\\(var\\s\\+\\|public\\s\\+\\|protected\\s\\+\\|private\\s\\+\\|final\\s\\+\\|abstract\\s\\+\\|static\\s\\+\\)\\+\\$\\|^\\s*\\(\\/\\|\\*\\)*\\s*@property\\s\\+\\S\\+\\s\\S\\{-}\\s*$\\)"')
 
 	let variables = []
 	for i in all_variable
@@ -1160,6 +1164,14 @@ function! phpcomplete#GetTaglist(pattern) " {{{
 	endif
 
 	let tags = taglist(a:pattern)
+	for tag in tags
+		for prop in keys(tag)
+			if prop == 'cmd' || prop == 'static' || prop == 'kind' || prop == 'builtin'
+				continue
+			endif
+			let tag[prop] = substitute(tag[prop], '\\\\', '\\', 'g')
+		endfor
+	endfor
 	let s:cache_tags[a:pattern] = tags
 	let has_key = has_key(s:cache_tags, a:pattern)
 	let s:cache_tags_checksum = cache_checksum
@@ -1379,7 +1391,7 @@ function! phpcomplete#GetCallChainReturnType(classname_candidate, class_candidat
 			" Get Structured information of all classes and subclasses including namespace and includes
 			" try to find the method's return type in docblock comment
 			for classstructure in classcontents
-				let docblock_target_pattern = 'function\s\+&\?'.method.'\|\(public\|private\|protected\|var\).\+\$'.method
+				let docblock_target_pattern = 'function\s\+&\?'.method.'\>\|\(public\|private\|protected\|var\).\+\$'.method.'\>\|@property.\+\$'.method.'\>'
 				let doc_str = phpcomplete#GetDocBlock(split(classstructure.content, '\n'), docblock_target_pattern)
 				if doc_str != ''
 					break
@@ -1387,8 +1399,17 @@ function! phpcomplete#GetCallChainReturnType(classname_candidate, class_candidat
 			endfor
 			if doc_str != ''
 				let docblock = phpcomplete#ParseDocBlock(doc_str)
-				if has_key(docblock.return, 'type') || has_key(docblock.var, 'type')
-					let type = has_key(docblock.return, 'type') ? docblock.return.type : docblock.var.type
+				if has_key(docblock.return, 'type') || has_key(docblock.var, 'type') || len(docblock.properties) > 0
+					let type = has_key(docblock.return, 'type') ? docblock.return.type : has_key(docblock.var, 'type') ? docblock.var.type : ''
+
+					if type == ''
+						for property in docblock.properties
+							if property.description =~? method
+								let type = property.type
+								break
+							endif
+						endfor
+					endif
 
 					" there's a namespace in the type, threat the type as FQCN
 					if type =~ '\\'
@@ -1554,6 +1575,9 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 	elseif get(methodstack, 0) =~# function_invocation_pattern
 		let function_name = matchstr(methodstack[0], '^\s*\zs'.function_name_pattern)
 		let function_file = phpcomplete#GetFunctionLocation(function_name, a:current_namespace)
+		if function_file == ''
+			let function_file = phpcomplete#GetFunctionLocation(function_name, '\')
+		endif
 
 		if function_file == 'VIMPHP_BUILTINFUNCTION'
 			" built in function, grab the return type from the info string
@@ -1569,7 +1593,7 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 				let [class_candidate_namespace, function_imports] = phpcomplete#GetCurrentNameSpace(file_lines)
 				" try to expand the classname of the returned type with the context got from the function's source file
 
-				let [classname_candidate, unused] = phpcomplete#ExpandClassName(classname_candidate, class_candidate_namespace, function_imports)
+				let [classname_candidate, class_candidate_namespace] = phpcomplete#ExpandClassName(classname_candidate, class_candidate_namespace, function_imports)
 			endif
 		endif
 		if classname_candidate != ''
@@ -1650,9 +1674,10 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 					let sub_methodstack = phpcomplete#GetMethodStack(matchstr(line, '^\s*'.object.'\s*=&\?\s*\s\+\zs.*'))
 					let [classname_candidate, class_candidate_namespace] = phpcomplete#GetCallChainReturnType(
 						\ classname,
-						\ a:current_namespace,
+						\ namespace_for_class,
 						\ a:imports,
 						\ sub_methodstack)
+
 					return (class_candidate_namespace == '\' || class_candidate_namespace == '') ? classname_candidate : class_candidate_namespace.'\'.classname_candidate
 				endif
 			endif
@@ -1783,6 +1808,9 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 				let [function_name, function_namespace] = phpcomplete#ExpandClassName(function_name, a:current_namespace, a:imports)
 
 				let function_file = phpcomplete#GetFunctionLocation(function_name, function_namespace)
+				if function_file == ''
+					let function_file = phpcomplete#GetFunctionLocation(function_name, '\')
+				endif
 
 				if function_file == 'VIMPHP_BUILTINFUNCTION'
 					" built in function, grab the return type from the info string
@@ -1798,7 +1826,7 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 						let classname_candidate = docblock.return.type
 						let [class_candidate_namespace, function_imports] = phpcomplete#GetCurrentNameSpace(file_lines)
 						" try to expand the classname of the returned type with the context got from the function's source file
-						let [classname_candidate, unused] = phpcomplete#ExpandClassName(classname_candidate, class_candidate_namespace, function_imports)
+						let [classname_candidate, class_candidate_namespace] = phpcomplete#ExpandClassName(classname_candidate, class_candidate_namespace, function_imports)
 						break
 					endif
 				endif
@@ -1861,6 +1889,8 @@ function! phpcomplete#GetClassName(start_line, context, current_namespace, impor
 				for tag in tags
 					if tag.kind ==? 'v' && tag.cmd =~? '=\s*new\s\+\zs'.class_name_pattern.'\ze'
 						let classname = matchstr(tag.cmd, '=\s*new\s\+\zs'.class_name_pattern.'\ze')
+						" unescape the classname, it would have "\" doubled since it is an ex command
+						let classname = substitute(classname, '\\\(\_.\)', '\1', 'g')
 						return classname
 					endif
 				endfor
@@ -2077,6 +2107,19 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
 	endif
 	call searchpair('{', '', '}', 'W')
 	let class_closing_bracket_line = line('.')
+
+	" Include class docblock
+	let doc_line = cfline - 1
+	if getline(doc_line) =~? '^\s*\*/'
+		while doc_line != 0
+			if getline(doc_line) =~? '^\s*/\*\*'
+				let cfline = doc_line
+				break
+			endif
+			let doc_line -= 1
+		endwhile
+	endif
+
 	let classcontent = join(getline(cfline, class_closing_bracket_line), "\n")
 
 	let used_traits = []
@@ -2241,8 +2284,19 @@ function! phpcomplete#GetDocBlock(sccontent, search) " {{{
 		let line = a:sccontent[i]
 		" search for a function declaration
 		if line =~? a:search
-			let l = i - 1
-			" start backward serch for the comment block
+			if line =~? '@property'
+				let doc_line = i
+				while doc_line != sccontent_len - 1
+					if a:sccontent[doc_line] =~? '^\s*\*/'
+						let l = doc_line
+						break
+					endif
+					let doc_line += 1
+				endwhile
+			else
+				let l = i - 1
+			endif
+			" start backward search for the comment block
 			while l != 0
 				let line = a:sccontent[l]
 				" if it's a one line docblock like comment and we can just return it right away
@@ -2263,7 +2317,7 @@ function! phpcomplete#GetDocBlock(sccontent, search) " {{{
 				return ''
 			end
 
-			while l != 0
+			while l >= 0
 				let line = a:sccontent[l]
 				if line =~? '^\s*/\*\*'
 					let comment_start = l
@@ -2297,9 +2351,10 @@ function! phpcomplete#ParseDocBlock(docblock) " {{{
 		\ 'return': {},
 		\ 'throws': [],
 		\ 'var': {},
+		\ 'properties': [],
 		\ }
 
-	let res.description = substitute(matchstr(a:docblock, '\zs\_.\{-}\ze\(@var\|@param\|@return\|$\)'), '\(^\_s*\|\_s*$\)', '', 'g')
+	let res.description = substitute(matchstr(a:docblock, '\zs\_.\{-}\ze\(@type\|@var\|@param\|@return\|$\)'), '\(^\_s*\|\_s*$\)', '', 'g')
 	let docblock_lines = split(a:docblock, "\n")
 
 	let param_lines = filter(copy(docblock_lines), 'v:val =~? "^@param"')
@@ -2334,14 +2389,25 @@ function! phpcomplete#ParseDocBlock(docblock) " {{{
 		endif
 	endfor
 
-	let var_line = filter(copy(docblock_lines), 'v:val =~? "^@var"')
+	let var_line = filter(copy(docblock_lines), 'v:val =~? "^\\(@var\\|@type\\)"')
 	if len(var_line) > 0
-		let var_parts = matchlist(var_line[0], '@var\s\+\(\S\+\)\s*\(.*\)')
+		let var_parts = matchlist(var_line[0], '\(@var\|@type\)\s\+\(\S\+\)\s*\(.*\)')
 		let res['var'] = {
 					\ 'line': var_parts[0],
-					\ 'type': phpcomplete#GetTypeFromDocBlockParam(get(var_parts, 1, '')),
-					\ 'description': get(var_parts, 2, '')}
+					\ 'type': phpcomplete#GetTypeFromDocBlockParam(get(var_parts, 2, '')),
+					\ 'description': get(var_parts, 3, '')}
 	endif
+
+	let property_lines = filter(copy(docblock_lines), 'v:val =~? "^@property"')
+	for property_line in property_lines
+		let parts = matchlist(property_line, '\(@property\)\s\+\(\S\+\)\s*\(.*\)')
+		if len(parts) > 0
+			call add(res.properties, {
+						\ 'line': parts[0],
+						\ 'type': phpcomplete#GetTypeFromDocBlockParam(get(parts, 2, '')),
+						\ 'description': get(parts, 3, '')})
+		endif
+	endfor
 
 	return res
 endfunction
@@ -2498,6 +2564,7 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 						let	name = matchstr(name, '\\\zs[^\\]\+\ze$')
 					endif
 				endif
+
 				" leading slash is not required use imports are always absolute
 				let imports[name] = {'name': object, 'kind': ''}
 			endfor
@@ -2533,6 +2600,7 @@ function! phpcomplete#GetCurrentNameSpace(file_lines) " {{{
 								elseif !exists('no_namespace_candidate')
 									" save the first namespacless match to be used if no better
 									" candidate found later on
+									let tag.namespace = namespace_for_classes
 									let no_namespace_candidate = tag
 								endif
 							endif

@@ -11,19 +11,12 @@
 "
 
 " Setup
-if version >= 600
-  if exists("b:current_syntax")
-    finish
-  endif
-else
-  syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+  finish
 endif
 
-if version >= 600
-  setlocal iskeyword=_,-,a-z,A-Z,48-57
-else
-  set iskeyword=_,-,a-z,A-Z,48-57
-endif
+setlocal iskeyword=_,-,a-z,A-Z,48-57
 
 
 " case on
@@ -239,43 +232,34 @@ syn keyword sshdconfigKeyword XAuthLocation
 
 
 " Define the default highlighting
-if version >= 508 || !exists("did_sshdconfig_syntax_inits")
-  if version < 508
-    let did_sshdconfig_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink sshdconfigComment              Comment
-  HiLink sshdconfigTodo                 Todo
-  HiLink sshdconfigHostPort             sshdconfigConstant
-  HiLink sshdconfigTime                 sshdconfigConstant
-  HiLink sshdconfigNumber               sshdconfigConstant
-  HiLink sshdconfigConstant             Constant
-  HiLink sshdconfigYesNo                sshdconfigEnum
-  HiLink sshdconfigAddressFamily        sshdconfigEnum
-  HiLink sshdconfigPrivilegeSeparation  sshdconfigEnum
-  HiLink sshdconfigTcpForwarding        sshdconfigEnum
-  HiLink sshdconfigRootLogin            sshdconfigEnum
-  HiLink sshdconfigCiphers              sshdconfigEnum
-  HiLink sshdconfigMAC                  sshdconfigEnum
-  HiLink sshdconfigHostKeyAlgo          sshdconfigEnum
-  HiLink sshdconfigRootLogin            sshdconfigEnum
-  HiLink sshdconfigLogLevel             sshdconfigEnum
-  HiLink sshdconfigSysLogFacility       sshdconfigEnum
-  HiLink sshdconfigVar                  sshdconfigEnum
-  HiLink sshdconfigCompression          sshdconfigEnum
-  HiLink sshdconfigIPQoS                sshdconfigEnum
-  HiLink sshdconfigKexAlgo              sshdconfigEnum
-  HiLink sshdconfigTunnel               sshdconfigEnum
-  HiLink sshdconfigSubsystem            sshdconfigEnum
-  HiLink sshdconfigEnum                 Function
-  HiLink sshdconfigSpecial              Special
-  HiLink sshdconfigKeyword              Keyword
-  HiLink sshdconfigMatch                Type
-  delcommand HiLink
-endif
+hi def link sshdconfigComment              Comment
+hi def link sshdconfigTodo                 Todo
+hi def link sshdconfigHostPort             sshdconfigConstant
+hi def link sshdconfigTime                 sshdconfigConstant
+hi def link sshdconfigNumber               sshdconfigConstant
+hi def link sshdconfigConstant             Constant
+hi def link sshdconfigYesNo                sshdconfigEnum
+hi def link sshdconfigAddressFamily        sshdconfigEnum
+hi def link sshdconfigPrivilegeSeparation  sshdconfigEnum
+hi def link sshdconfigTcpForwarding        sshdconfigEnum
+hi def link sshdconfigRootLogin            sshdconfigEnum
+hi def link sshdconfigCiphers              sshdconfigEnum
+hi def link sshdconfigMAC                  sshdconfigEnum
+hi def link sshdconfigHostKeyAlgo          sshdconfigEnum
+hi def link sshdconfigRootLogin            sshdconfigEnum
+hi def link sshdconfigLogLevel             sshdconfigEnum
+hi def link sshdconfigSysLogFacility       sshdconfigEnum
+hi def link sshdconfigVar                  sshdconfigEnum
+hi def link sshdconfigCompression          sshdconfigEnum
+hi def link sshdconfigIPQoS                sshdconfigEnum
+hi def link sshdconfigKexAlgo              sshdconfigEnum
+hi def link sshdconfigTunnel               sshdconfigEnum
+hi def link sshdconfigSubsystem            sshdconfigEnum
+hi def link sshdconfigEnum                 Function
+hi def link sshdconfigSpecial              Special
+hi def link sshdconfigKeyword              Keyword
+hi def link sshdconfigMatch                Type
 
 let b:current_syntax = "sshdconfig"
 

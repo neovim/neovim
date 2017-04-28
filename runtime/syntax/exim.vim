@@ -6,12 +6,9 @@
 " URL: http://trific.ath.cx/Ftp/vim/syntax/exim.vim
 
 " Setup
-if version >= 600
-	if exists("b:current_syntax")
-		finish
-	endif
-else
-	syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+	finish
 endif
 
 syn case match
@@ -91,27 +88,18 @@ syn keyword eximKeyword server_prompts server_condition client_send
 syn keyword eximKeyword server_secret client_name client_secret
 
 " Define the default highlighting
-if version >= 508 || !exists("did_exim_syntax_inits")
-	if version < 508
-		let did_exim_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
 
-	HiLink eximComment Comment
-	HiLink eximFixme Todo
-	HiLink eximEnd Keyword
-	HiLink eximNumber Number
-	HiLink eximDriverName Constant
-	HiLink eximConstant Constant
-	HiLink eximTime Constant
-	HiLink eximKeyword Type
-	HiLink eximSpecialChar Special
-	HiLink eximMacroName Preproc
-	HiLink eximTransport Identifier
+hi def link eximComment Comment
+hi def link eximFixme Todo
+hi def link eximEnd Keyword
+hi def link eximNumber Number
+hi def link eximDriverName Constant
+hi def link eximConstant Constant
+hi def link eximTime Constant
+hi def link eximKeyword Type
+hi def link eximSpecialChar Special
+hi def link eximMacroName Preproc
+hi def link eximTransport Identifier
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "exim"

@@ -93,7 +93,7 @@ function! s:GetBufferRubyEntity( name, type, ... )
 
     let stopline = 1
 
-    let crex = '^\s*\<' . a:type . '\>\s*\<' . a:name . '\>\s*\(<\s*.*\s*\)\?'
+    let crex = '^\s*\<' . a:type . '\>\s*\<' . escape(a:name, '*') . '\>\s*\(<\s*.*\s*\)\?'
     let [lnum,lcol] = searchpos( crex, 'w' )
     "let [lnum,lcol] = searchpairpos( crex . '\zs', '', '\(end\|}\)', 'w' )
 
@@ -149,7 +149,7 @@ function! s:GetRubyVarType(v)
     let ctors = ctors.'\)'
 
     let fstr = '=\s*\([^ \t]\+.' . ctors .'\>\|[\[{"''/]\|%[xwQqr][(\[{@]\|[A-Za-z0-9@:\-()\.]\+...\?\|lambda\|&\)'
-    let sstr = ''.a:v.'\>\s*[+\-*/]*'.fstr
+    let sstr = ''.escape(a:v, '*').'\>\s*[+\-*/]*'.fstr
     let [lnum,lcol] = searchpos(sstr,'nb',stopline)
     if lnum != 0 && lcol != 0
         let str = matchstr(getline(lnum),fstr,lcol)
@@ -196,7 +196,7 @@ function! rubycomplete#Complete(findstart, base)
             if c =~ '\w'
                 continue
             elseif ! c =~ '\.'
-                idx = -1
+                let idx = -1
                 break
             else
                 break
@@ -262,6 +262,28 @@ class VimRubyCompletion
         eval( "require %s" % $1 ) if /.*require\s*(.*)$/.match( ln )
       rescue Exception
         #ignore?
+      end
+    end
+  end
+
+  def load_gems
+    fpath = VIM::evaluate("get(g:, 'rubycomplete_gemfile_path', 'Gemfile')")
+    return unless File.file?(fpath) && File.readable?(fpath)
+    want_bundler = VIM::evaluate("get(g:, 'rubycomplete_use_bundler')")
+    parse_file = !want_bundler
+    begin
+      require 'bundler'
+      Bundler.setup
+      Bundler.require
+    rescue Exception
+      parse_file = true
+    end
+    if parse_file
+      File.new(fpath).each_line do |line|
+        begin
+          require $1 if /\s*gem\s*['"]([^'"]+)/.match(line)
+        rescue Exception
+        end
       end
     end
   end
@@ -588,6 +610,10 @@ class VimRubyCompletion
       load_rails
     end
 
+    want_gems = VIM::evaluate("get(g:, 'rubycomplete_load_gemfile')")
+    load_gems unless want_gems.to_i.zero?
+    
+
     input = VIM::Buffer.current.line
     cpos = VIM::Window.current.cursor[1] - 1
     input = input[0..cpos]
@@ -678,7 +704,9 @@ class VimRubyCompletion
         cv = eval("self.class.constants")
         vartype = get_var_type( receiver )
         dprint "vartype: %s" % vartype
-        if vartype != ''
+
+        invalid_vartype = ['', "gets"]
+        if !invalid_vartype.include?(vartype)
           load_buffer_class( vartype )
 
           begin
@@ -706,7 +734,7 @@ class VimRubyCompletion
             methods.concat m.instance_methods(false)
           }
         end
-        variables += add_rails_columns( "#{vartype}" ) if vartype && vartype.length > 0
+        variables += add_rails_columns( "#{vartype}" ) if vartype && !invalid_vartype.include?(vartype)
 
       when /^\(?\s*[A-Za-z0-9:^@.%\/+*\(\)]+\.\.\.?[A-Za-z0-9:^@.%\/+*\(\)]+\s*\)?\.([^.]*)/
         message = $1

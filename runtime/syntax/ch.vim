@@ -8,21 +8,14 @@
 " Ch is a C/C++ interpreter with many high level extensions
 "
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " Read the C syntax to start with
-if version < 600
-  so <sfile>:p:h/c.vim
-else
-  runtime! syntax/c.vim
-  unlet b:current_syntax
-endif
+runtime! syntax/c.vim
+unlet b:current_syntax
 
 " Ch extentions
 
@@ -33,20 +26,12 @@ syn keyword	chStructure	class
 syn keyword	chType		string_t array
 
 " Default highlighting
-if version >= 508 || !exists("did_ch_syntax_inits")
-  if version < 508
-    let did_ch_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink chAccess		chStatement
-  HiLink chExceptions		Exception
-  HiLink chStatement		Statement
-  HiLink chType			Type
-  HiLink chStructure		Structure
-  delcommand HiLink
-endif
+
+hi def link chAccess		chStatement
+hi def link chExceptions		Exception
+hi def link chStatement		Statement
+hi def link chType			Type
+hi def link chStructure		Structure
 
 let b:current_syntax = "ch"
 

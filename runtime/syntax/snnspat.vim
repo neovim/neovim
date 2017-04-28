@@ -8,9 +8,8 @@
 " SNNS http://www-ra.informatik.uni-tuebingen.de/SNNS/
 " is a simulator for neural networks.
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -44,26 +43,17 @@ syn match	snnspatNumbers	"\d" contained
 syn match	snnspatComment	"#.*$" contains=snnspatTodo
 syn keyword	snnspatTodo	TODO XXX FIXME contained
 
-if version >= 508 || !exists("did_snnspat_syn_inits")
-  if version < 508
-    let did_snnspat_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink snnspatGen		Statement
-  HiLink snnspatHeader		Error
-  HiLink snnspatNoHeader	Define
-  HiLink snnspatNumbers		Number
-  HiLink snnspatComment		Comment
-  HiLink snnspatError		Error
-  HiLink snnspatTodo		Todo
-  HiLink snnspatAccepted	NONE
-  HiLink snnspatBrac		NONE
+hi def link snnspatGen		Statement
+hi def link snnspatHeader		Error
+hi def link snnspatNoHeader	Define
+hi def link snnspatNumbers		Number
+hi def link snnspatComment		Comment
+hi def link snnspatError		Error
+hi def link snnspatTodo		Todo
+hi def link snnspatAccepted	NONE
+hi def link snnspatBrac		NONE
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "snnspat"
 

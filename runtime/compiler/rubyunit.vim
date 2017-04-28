@@ -17,6 +17,8 @@ let s:cpo_save = &cpo
 set cpo-=C
 
 CompilerSet makeprg=testrb
+" CompilerSet makeprg=ruby\ -Itest
+" CompilerSet makeprg=m
 
 CompilerSet errorformat=\%W\ %\\+%\\d%\\+)\ Failure:,
 			\%C%m\ [%f:%l]:,

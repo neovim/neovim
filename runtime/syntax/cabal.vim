@@ -18,11 +18,8 @@
 " v1.0: Cabal syntax in vimball format
 "       (thanks to Magnus Therning)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -105,27 +102,17 @@ syn match	cabalStatement	"\ctype"
 syn match	cabalStatement	"\cversion"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_cabal_syn_inits")
-  if version < 508
-    let did_cabal_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink cabalVersion       Number
-  HiLink cabalTruth         Boolean
-  HiLink cabalComment       Comment
-  HiLink cabalStatement     Statement
-  HiLink cabalCategory      Type
-  HiLink cabalFunction      Function
-  HiLink cabalConditional   Conditional
-  HiLink cabalOperator      Operator
-  HiLink cabalCompiler      Constant
-  delcommand HiLink
-endif
+hi def link cabalVersion       Number
+hi def link cabalTruth         Boolean
+hi def link cabalComment       Comment
+hi def link cabalStatement     Statement
+hi def link cabalCategory      Type
+hi def link cabalFunction      Function
+hi def link cabalConditional   Conditional
+hi def link cabalOperator      Operator
+hi def link cabalCompiler      Constant
 
 let b:current_syntax = "cabal"
 

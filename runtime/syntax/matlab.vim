@@ -8,11 +8,8 @@
 " Change History:
 " 		- 'global' and 'persistent' keyword are now recognized
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -76,49 +73,39 @@ syn match matlabError	"-\=\<\d\+\.\d\+\.[^*/\\^]"
 syn match matlabError	"-\=\<\d\+\.\d\+[eEdD][-+]\=\d\+\.\([^*/\\^]\)"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_matlab_syntax_inits")
-  if version < 508
-    let did_matlab_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink matlabTransposeOperator	matlabOperator
-  HiLink matlabOperator			Operator
-  HiLink matlabLineContinuation		Special
-  HiLink matlabLabel			Label
-  HiLink matlabConditional		Conditional
-  HiLink matlabExceptions		Conditional
-  HiLink matlabRepeat			Repeat
-  HiLink matlabTodo			Todo
-  HiLink matlabString			String
-  HiLink matlabDelimiter		Identifier
-  HiLink matlabTransposeOther		Identifier
-  HiLink matlabNumber			Number
-  HiLink matlabFloat			Float
-  HiLink matlabFunction			Function
-  HiLink matlabError			Error
-  HiLink matlabImplicit			matlabStatement
-  HiLink matlabStatement		Statement
-  HiLink matlabOO			Statement
-  HiLink matlabSemicolon		SpecialChar
-  HiLink matlabComment			Comment
-  HiLink matlabMultilineComment		Comment
-  HiLink matlabScope			Type
+hi def link matlabTransposeOperator	matlabOperator
+hi def link matlabOperator			Operator
+hi def link matlabLineContinuation		Special
+hi def link matlabLabel			Label
+hi def link matlabConditional		Conditional
+hi def link matlabExceptions		Conditional
+hi def link matlabRepeat			Repeat
+hi def link matlabTodo			Todo
+hi def link matlabString			String
+hi def link matlabDelimiter		Identifier
+hi def link matlabTransposeOther		Identifier
+hi def link matlabNumber			Number
+hi def link matlabFloat			Float
+hi def link matlabFunction			Function
+hi def link matlabError			Error
+hi def link matlabImplicit			matlabStatement
+hi def link matlabStatement		Statement
+hi def link matlabOO			Statement
+hi def link matlabSemicolon		SpecialChar
+hi def link matlabComment			Comment
+hi def link matlabMultilineComment		Comment
+hi def link matlabScope			Type
 
-  HiLink matlabArithmeticOperator	matlabOperator
-  HiLink matlabRelationalOperator	matlabOperator
-  HiLink matlabLogicalOperator		matlabOperator
+hi def link matlabArithmeticOperator	matlabOperator
+hi def link matlabRelationalOperator	matlabOperator
+hi def link matlabLogicalOperator		matlabOperator
 
 "optional highlighting
-  "HiLink matlabIdentifier		Identifier
-  "HiLink matlabTab			Error
+"hi def link matlabIdentifier		Identifier
+"hi def link matlabTab			Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "matlab"
 

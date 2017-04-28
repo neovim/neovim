@@ -5,24 +5,13 @@
 "		files
 " Version:	0.5
 
-" HASTE
+" quit when a syntax file was already loaded
 if exists("b:current_syntax")
-    finish
-endif
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
   finish
 endif
-" Read the C syntax to start with
-if version < 600
-    so <sfile>:p:h/haste.vim
-else
-    runtime! syntax/haste.vim
-    unlet b:current_syntax
-endif
+" Read the haste syntax to start with
+runtime! syntax/haste.vim
+unlet b:current_syntax
 
 " case is significant
 syn case match

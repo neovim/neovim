@@ -2,7 +2,7 @@
 " Language:    Lisp
 " Maintainer:  Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
 " Last Change: May 02, 2016
-" Version:     25
+" Version:     26
 " URL:	       http://www.drchip.org/astronaut/vim/index.html#SYNTAX_LISP
 "
 "  Thanks to F Xavier Noria for a list of 978 Common Lisp symbols taken from HyperSpec
@@ -561,31 +561,28 @@ syn sync lines=100
 
 " ---------------------------------------------------------------------
 " Define Highlighting: {{{1
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508
-  command -nargs=+ HiLink hi def link <args>
+if !exists("skip_lisp_syntax_inits")
 
-  HiLink lispCommentRegion	lispComment
-  HiLink lispAtomNmbr		lispNumber
-  HiLink lispAtomMark		lispMark
-  HiLink lispInStringString	lispString
+  hi def link lispCommentRegion	lispComment
+  hi def link lispAtomNmbr		lispNumber
+  hi def link lispAtomMark		lispMark
+  hi def link lispInStringString	lispString
 
-  HiLink lispAtom		Identifier
-  HiLink lispAtomBarSymbol	Special
-  HiLink lispBarSymbol		Special
-  HiLink lispComment		Comment
-  HiLink lispConcat		Statement
-  HiLink lispDecl		Statement
-  HiLink lispFunc		Statement
-  HiLink lispKey		Type
-  HiLink lispMark		Delimiter
-  HiLink lispNumber		Number
-  HiLink lispParenError		Error
-  HiLink lispEscapeSpecial	Type
-  HiLink lispString		String
-  HiLink lispTodo		Todo
-  HiLink lispVar		Statement
+  hi def link lispAtom		Identifier
+  hi def link lispAtomBarSymbol	Special
+  hi def link lispBarSymbol		Special
+  hi def link lispComment		Comment
+  hi def link lispConcat		Statement
+  hi def link lispDecl		Statement
+  hi def link lispFunc		Statement
+  hi def link lispKey		Type
+  hi def link lispMark		Delimiter
+  hi def link lispNumber		Number
+  hi def link lispParenError		Error
+  hi def link lispEscapeSpecial	Type
+  hi def link lispString		String
+  hi def link lispTodo		Todo
+  hi def link lispVar		Statement
 
   if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
    if &bg == "dark"
@@ -613,7 +610,6 @@ if version >= 508
    endif
   endif
 
-  delcommand HiLink
 endif
 
 let b:current_syntax = "lisp"

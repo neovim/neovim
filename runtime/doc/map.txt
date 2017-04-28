@@ -437,6 +437,9 @@ with a space.
 Note: When using mappings for Visual mode, you can use the "'<" mark, which
 is the start of the last selected Visual area in the current buffer |'<|.
 
+The |:filter| command can be used to select what mappings to list.  The
+pattern is matched against the {lhs} and {rhs} in the raw form.
+
 							*:map-verbose*
 When 'verbose' is non-zero, listing a key map will also display where it was
 last defined.  Example: >
@@ -1136,6 +1139,10 @@ scripts.
 			    "	Command has the -register attribute
 			    b	Command is local to current buffer
 			(see below for details on attributes)
+			The list can be filtered on command name with
+			|:filter|, e.g., to list all commands with "Pyth" in
+			the name: >
+				filter Pyth command
 
 :com[mand] {cmd}	List the user-defined commands that start with {cmd}
 

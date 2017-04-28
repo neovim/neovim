@@ -3,11 +3,8 @@
 " Maintainer:	Francesco Chemolli <kinkie@kame.usr.dsi.unimi.it>
 " Last Change:	2001 May 10
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -104,51 +101,41 @@ syn match	pikeBitField	";\s*\I\i*\s*:\s*[1-9]"me=e-1
 syn sync ccomment pikeComment minlines=10
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_pike_syntax_inits")
-  if version < 508
-    let did_pike_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink pikeLabel		Label
-  HiLink pikeUserLabel		Label
-  HiLink pikeConditional	Conditional
-  HiLink pikeRepeat		Repeat
-  HiLink pikeCharacter		Character
-  HiLink pikeSpecialCharacter pikeSpecial
-  HiLink pikeNumber		Number
-  HiLink pikeFloat		Float
-  HiLink pikeOctalError		pikeError
-  HiLink pikeParenError		pikeError
-  HiLink pikeInParen		pikeError
-  HiLink pikeCommentError	pikeError
-  HiLink pikeOperator		Operator
-  HiLink pikeInclude		Include
-  HiLink pikePreProc		PreProc
-  HiLink pikeDefine		Macro
-  HiLink pikeIncluded		pikeString
-  HiLink pikeError		Error
-  HiLink pikeStatement		Statement
-  HiLink pikePreCondit		PreCondit
-  HiLink pikeType		Type
-  HiLink pikeCommentError	pikeError
-  HiLink pikeCommentString	pikeString
-  HiLink pikeComment2String	pikeString
-  HiLink pikeCommentSkip	pikeComment
-  HiLink pikeString		String
-  HiLink pikeComment		Comment
-  HiLink pikeSpecial		SpecialChar
-  HiLink pikeTodo		Todo
-  HiLink pikeException		pikeStatement
-  HiLink pikeCompoundType	Constant
-  "HiLink pikeIdentifier	Identifier
+hi def link pikeLabel		Label
+hi def link pikeUserLabel		Label
+hi def link pikeConditional	Conditional
+hi def link pikeRepeat		Repeat
+hi def link pikeCharacter		Character
+hi def link pikeSpecialCharacter pikeSpecial
+hi def link pikeNumber		Number
+hi def link pikeFloat		Float
+hi def link pikeOctalError		pikeError
+hi def link pikeParenError		pikeError
+hi def link pikeInParen		pikeError
+hi def link pikeCommentError	pikeError
+hi def link pikeOperator		Operator
+hi def link pikeInclude		Include
+hi def link pikePreProc		PreProc
+hi def link pikeDefine		Macro
+hi def link pikeIncluded		pikeString
+hi def link pikeError		Error
+hi def link pikeStatement		Statement
+hi def link pikePreCondit		PreCondit
+hi def link pikeType		Type
+hi def link pikeCommentError	pikeError
+hi def link pikeCommentString	pikeString
+hi def link pikeComment2String	pikeString
+hi def link pikeCommentSkip	pikeComment
+hi def link pikeString		String
+hi def link pikeComment		Comment
+hi def link pikeSpecial		SpecialChar
+hi def link pikeTodo		Todo
+hi def link pikeException		pikeStatement
+hi def link pikeCompoundType	Constant
+"hi def link pikeIdentifier	Identifier
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "pike"
 

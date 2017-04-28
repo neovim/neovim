@@ -982,7 +982,7 @@ tag		command	      action in Command-line editing mode	~
 |c_CTRL-E|	CTRL-E		cursor to end of command-line
 |'cedit'|	CTRL-F		default value for 'cedit': opens the
 				command-line window; otherwise not used
-		CTRL-G		not used
+|c_CTRL-G|	CTRL-G		next match when 'incsearch' is active
 |c_<BS>|	<BS>		delete the character in front of the cursor
 |c_digraph|	{char1} <BS> {char2}
 				enter digraph when 'digraph' is on
@@ -1000,7 +1000,7 @@ tag		command	      action in Command-line editing mode	~
 |c_CTRL-L|	CTRL-L		do completion on the pattern in front of the
 				cursor and insert the longest common part
 |c_<CR>|	<CR>		execute entered command
-|c_<CR>|	CTRL-M		same as <CR>
+|c_CTRL-M|	CTRL-M		same as <CR>
 |c_CTRL-N|	CTRL-N		after using 'wildchar' with multiple matches:
 				go to next match, otherwise: same as <Down>
 		CTRL-O		not used
@@ -1015,7 +1015,7 @@ tag		command	      action in Command-line editing mode	~
 				insert the contents of a register or object
 				under the cursor literally
 		CTRL-S		(used for terminal control flow)
-		CTRL-T		not used
+|c_CTRL-T|	CTRL-T		previous match when 'incsearch' is active
 |c_CTRL-U|	CTRL-U		remove all characters
 |c_CTRL-V|	CTRL-V		insert next non-digit literally, insert three
 				digit decimal number as a single byte.
@@ -1024,7 +1024,7 @@ tag		command	      action in Command-line editing mode	~
 		CTRL-Y		copy (yank) modeless selection
 		CTRL-Z		not used (reserved for suspend)
 |c_<Esc>|	<Esc>		abandon command-line without executing it
-|c_<Esc>|	CTRL-[		same as <Esc>
+|c_CTRL-[|	CTRL-[		same as <Esc>
 |c_CTRL-\_CTRL-N| CTRL-\ CTRL-N	go to Normal mode, abandon command-line
 |c_CTRL-\_CTRL-G| CTRL-\ CTRL-G	go to mode specified with 'insertmode',
 				abandon command-line

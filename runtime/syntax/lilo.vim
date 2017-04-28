@@ -5,21 +5,12 @@
 " Last Change: 2010-02-03
 
 " Setup
-if version >= 600
-  if exists("b:current_syntax")
-    finish
-  endif
-else
-  syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+  finish
 endif
 
-if version >= 600
-  command -nargs=1 SetIsk setlocal iskeyword=<args>
-else
-  command -nargs=1 SetIsk set iskeyword=<args>
-endif
-SetIsk @,48-57,.,-,_
-delcommand SetIsk
+setlocal iskeyword=@,48-57,.,-,_
 
 syn case ignore
 
@@ -128,65 +119,56 @@ syn match liloDecNumberPListComment "#.*$" contained nextgroup=liloDecNumberPLis
 syn match liloAnythingComment "#.*$" contained nextgroup=liloAnything,liloAnythingComment,liloError skipwhite skipempty
 
 " Define the default highlighting
-if version >= 508 || !exists("did_lilo_syntax_inits")
-  if version < 508
-    let did_lilo_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink liloEqPath             liloEquals
-  HiLink liloEqWord             liloEquals
-  HiLink liloEqVga              liloEquals
-  HiLink liloEqDecNumber        liloEquals
-  HiLink liloEqHexNumber        liloEquals
-  HiLink liloEqNumber           liloEquals
-  HiLink liloEqString           liloEquals
-  HiLink liloEqAnything         liloEquals
-  HiLink liloEquals             Special
+hi def link liloEqPath             liloEquals
+hi def link liloEqWord             liloEquals
+hi def link liloEqVga              liloEquals
+hi def link liloEqDecNumber        liloEquals
+hi def link liloEqHexNumber        liloEquals
+hi def link liloEqNumber           liloEquals
+hi def link liloEqString           liloEquals
+hi def link liloEqAnything         liloEquals
+hi def link liloEquals             Special
 
-  HiLink liloError              Error
+hi def link liloError              Error
 
-  HiLink liloEqPathComment      liloComment
-  HiLink liloEqVgaComment       liloComment
-  HiLink liloEqDecNumberComment liloComment
-  HiLink liloEqHexNumberComment liloComment
-  HiLink liloEqStringComment    liloComment
-  HiLink liloEqAnythingComment  liloComment
-  HiLink liloPathComment        liloComment
-  HiLink liloVgaComment         liloComment
-  HiLink liloDecNumberComment   liloComment
-  HiLink liloHexNumberComment   liloComment
-  HiLink liloNumberComment      liloComment
-  HiLink liloStringComment      liloComment
-  HiLink liloAnythingComment    liloComment
-  HiLink liloComment            Comment
+hi def link liloEqPathComment      liloComment
+hi def link liloEqVgaComment       liloComment
+hi def link liloEqDecNumberComment liloComment
+hi def link liloEqHexNumberComment liloComment
+hi def link liloEqStringComment    liloComment
+hi def link liloEqAnythingComment  liloComment
+hi def link liloPathComment        liloComment
+hi def link liloVgaComment         liloComment
+hi def link liloDecNumberComment   liloComment
+hi def link liloHexNumberComment   liloComment
+hi def link liloNumberComment      liloComment
+hi def link liloStringComment      liloComment
+hi def link liloAnythingComment    liloComment
+hi def link liloComment            Comment
 
-  HiLink liloDiskOpt            liloOption
-  HiLink liloKernelOpt          liloOption
-  HiLink liloImageOpt           liloOption
-  HiLink liloOption             Keyword
+hi def link liloDiskOpt            liloOption
+hi def link liloKernelOpt          liloOption
+hi def link liloImageOpt           liloOption
+hi def link liloOption             Keyword
 
-  HiLink liloDecNumber          liloNumber
-  HiLink liloHexNumber          liloNumber
-  HiLink liloDecNumberP         liloNumber
-  HiLink liloNumber             Number
-  HiLink liloString             String
-  HiLink liloPath               Constant
+hi def link liloDecNumber          liloNumber
+hi def link liloHexNumber          liloNumber
+hi def link liloDecNumberP         liloNumber
+hi def link liloNumber             Number
+hi def link liloString             String
+hi def link liloPath               Constant
 
-  HiLink liloSpecial            Special
-  HiLink liloLabel              Title
-  HiLink liloDecNumberList      Special
-  HiLink liloDecNumberPList     Special
-  HiLink liloAnything           Normal
-  HiLink liloEnviron            Identifier
-  HiLink liloVgaKeyword         Identifier
-  HiLink liloImage              Type
-  HiLink liloChRules            Preproc
-  HiLink liloDisk               Preproc
+hi def link liloSpecial            Special
+hi def link liloLabel              Title
+hi def link liloDecNumberList      Special
+hi def link liloDecNumberPList     Special
+hi def link liloAnything           Normal
+hi def link liloEnviron            Identifier
+hi def link liloVgaKeyword         Identifier
+hi def link liloImage              Type
+hi def link liloChRules            Preproc
+hi def link liloDisk               Preproc
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "lilo"

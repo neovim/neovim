@@ -5,11 +5,8 @@
 " URL:		http://classicalprogrammer.wikidot.com/local--files/vim-syntax-file-for-gdmo/gdmo.vim
 " Last change:	8th June, 2011
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -64,32 +61,22 @@ syn match gdmoBraces     "[{}]"
 syn sync ccomment gdmoComment
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_gdmo_syntax_inits")
-  if version < 508
-    let did_gdmo_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink gdmoCategory	      Structure
-  HiLink gdmoRelationship     Macro
-  HiLink gdmoDefinition       Statement
-  HiLink gdmoReference	      Type
-  HiLink gdmoExtension	      Operator
-  HiLink gdmoBraces	      Function
-  HiLink gdmoSpecial	      Special
-  HiLink gdmoString	      String
-  HiLink gdmoCharacter	      Character
-  HiLink gdmoSpecialCharacter gdmoSpecial
-  HiLink gdmoComment	      Comment
-  HiLink gdmoLineComment      gdmoComment
-  HiLink gdmoType	      Type
+hi def link gdmoCategory	      Structure
+hi def link gdmoRelationship     Macro
+hi def link gdmoDefinition       Statement
+hi def link gdmoReference	      Type
+hi def link gdmoExtension	      Operator
+hi def link gdmoBraces	      Function
+hi def link gdmoSpecial	      Special
+hi def link gdmoString	      String
+hi def link gdmoCharacter	      Character
+hi def link gdmoSpecialCharacter gdmoSpecial
+hi def link gdmoComment	      Comment
+hi def link gdmoLineComment      gdmoComment
+hi def link gdmoType	      Type
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "gdmo"
 

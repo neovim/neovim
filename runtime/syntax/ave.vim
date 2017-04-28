@@ -11,11 +11,8 @@
 " I use some technologies to automatically load avenue scripts
 " into ArcView.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -37,7 +34,7 @@ syn match  aveNumber		"[+-]\=\<[0-9]\+\>"
 " Operator
 
 syn keyword aveOperator		or and max min xor mod by
-" 'not' is a kind of a problem: Its an Operator as well as a method
+" 'not' is a kind of a problem: It's an Operator as well as a method
 " 'not' is only marked as an Operator if not applied as method
 syn match aveOperator		"[^\.]not[^a-zA-Z]"
 
@@ -59,34 +56,24 @@ syn match aveTypos	"=="
 syn match aveTypos	"!="
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting+yet
-if version >= 508 || !exists("did_ave_syn_inits")
-  if version < 508
-	let did_ave_syn_inits = 1
-	command -nargs=+ HiLink hi link <args>
-  else
-	command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting+yet
 
-  HiLink aveStatement		Statement
+hi def link aveStatement		Statement
 
-  HiLink aveString		String
-  HiLink aveNumber		Number
+hi def link aveString		String
+hi def link aveNumber		Number
 
-  HiLink aveFixVariables	Special
-  HiLink aveVariables		Identifier
-  HiLink globalVariables	Special
-  HiLink aveConst		Special
+hi def link aveFixVariables	Special
+hi def link aveVariables		Identifier
+hi def link globalVariables	Special
+hi def link aveConst		Special
 
-  HiLink aveClassMethods	Function
+hi def link aveClassMethods	Function
 
-  HiLink aveOperator		Operator
-  HiLink aveComment		Comment
+hi def link aveOperator		Operator
+hi def link aveComment		Comment
 
-  HiLink aveTypos		Error
+hi def link aveTypos		Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "ave"

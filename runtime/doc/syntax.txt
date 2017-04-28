@@ -2656,7 +2656,75 @@ your vimrc:							*g:filetype_r*
 
 RUBY						*ruby.vim* *ft-ruby-syntax*
 
-There are a number of options to the Ruby syntax highlighting.
+    Ruby: Operator highlighting		|ruby_operators|
+    Ruby: Whitespace errors		|ruby_space_errors|
+    Ruby: Folding			|ruby_fold| |ruby_foldable_groups|
+    Ruby: Reducing expensive operations	|ruby_no_expensive| |ruby_minlines|
+    Ruby: Spellchecking strings		|ruby_spellcheck_strings|
+
+						*ruby_operators*
+ Ruby: Operator highlighting ~
+
+Operators can be highlighted by defining "ruby_operators": >
+
+	:let ruby_operators = 1
+<
+						*ruby_space_errors*
+ Ruby: Whitespace errors ~
+
+Whitespace errors can be highlighted by defining "ruby_space_errors": >
+
+	:let ruby_space_errors = 1
+<
+This will highlight trailing whitespace and tabs preceded by a space character
+as errors.  This can be refined by defining "ruby_no_trail_space_error" and
+"ruby_no_tab_space_error" which will ignore trailing whitespace and tabs after
+spaces respectively.
+
+					*ruby_fold* *ruby_foldable_groups*
+ Ruby: Folding ~
+
+Folding can be enabled by defining "ruby_fold": >
+
+	:let ruby_fold = 1
+<
+This will set the value of 'foldmethod' to "syntax" locally to the current
+buffer or window, which will enable syntax-based folding when editing Ruby
+filetypes.
+
+Default folding is rather detailed, i.e., small syntax units like "if", "do",
+"%w[]" may create corresponding fold levels.
+
+You can set "ruby_foldable_groups" to restrict which groups are foldable: >
+
+        :let ruby_foldable_groups = 'if case %'
+<
+The value is a space-separated list of keywords:
+
+    keyword       meaning ~
+    --------  ------------------------------------- ~
+    ALL        Most block syntax (default)
+    NONE       Nothing
+    if         "if" or "unless" block
+    def        "def" block
+    class      "class" block
+    module     "module" block
+    do         "do" block
+    begin      "begin" block
+    case       "case" block
+    for        "for", "while", "until" loops
+    {          Curly bracket block or hash literal
+    [          Array literal
+    %          Literal with "%" notation, e.g.: %w(STRING), %!STRING!
+    /          Regexp
+    string     String and shell command output (surrounded by ', ", `)
+    :          Symbol
+    #          Multiline comment
+    <<         Here documents
+    __END__    Source code after "__END__" directive
+
+						*ruby_no_expensive*
+ Ruby: Reducing expensive operations ~
 
 By default, the "end" keyword is colorized according to the opening statement
 of the block it closes.  While useful, this feature can be expensive; if you
@@ -2667,6 +2735,8 @@ you may want to turn it off by defining the "ruby_no_expensive" variable: >
 <
 In this case the same color will be used for all control keywords.
 
+						*ruby_minlines*
+
 If you do want this feature enabled, but notice highlighting errors while
 scrolling backwards, which are fixed when redrawing with CTRL-L, try setting
 the "ruby_minlines" variable to a value larger than 50: >
@@ -2676,48 +2746,13 @@ the "ruby_minlines" variable to a value larger than 50: >
 Ideally, this value should be a number of lines large enough to embrace your
 largest class or module.
 
-Highlighting of special identifiers can be disabled by removing the
-rubyIdentifier highlighting: >
+						*ruby_spellcheck_strings*
+ Ruby: Spellchecking strings ~
 
-	:hi link rubyIdentifier NONE
-<
-This will prevent highlighting of special identifiers like "ConstantName",
-"$global_var", "@@class_var", "@instance_var", "| block_param |", and
-":symbol".
+Ruby syntax will perform spellchecking of strings if you define
+"ruby_spellcheck_strings": >
 
-Significant methods of Kernel, Module and Object are highlighted by default.
-This can be disabled by defining "ruby_no_special_methods": >
-
-	:let ruby_no_special_methods = 1
-<
-This will prevent highlighting of important methods such as "require", "attr",
-"private", "raise" and "proc".
-
-Ruby operators can be highlighted. This is enabled by defining
-"ruby_operators": >
-
-	:let ruby_operators = 1
-<
-Whitespace errors can be highlighted by defining "ruby_space_errors": >
-
-	:let ruby_space_errors = 1
-<
-This will highlight trailing whitespace and tabs preceded by a space character
-as errors.  This can be refined by defining "ruby_no_trail_space_error" and
-"ruby_no_tab_space_error" which will ignore trailing whitespace and tabs after
-spaces respectively.
-
-Folding can be enabled by defining "ruby_fold": >
-
-	:let ruby_fold = 1
-<
-This will set the 'foldmethod' option to "syntax" and allow folding of
-classes, modules, methods, code blocks, heredocs and comments.
-
-Folding of multiline comments can be disabled by defining
-"ruby_no_comment_fold": >
-
-	:let ruby_no_comment_fold = 1
+	:let ruby_spellcheck_strings = 1
 <
 
 SCHEME						*scheme.vim* *ft-scheme-syntax*
@@ -2815,9 +2850,11 @@ vimrc file: >
 (Adapted from the html.vim help text by Claudio Fleiner <claudio@fleiner.com>)
 
 
-SH		*sh.vim* *ft-sh-syntax* *ft-bash-syntax* *ft-ksh-syntax*
+		*ft-posix-synax* *ft-dash-syntax*
+SH		*sh.vim*  *ft-sh-syntax*  *ft-bash-syntax*  *ft-ksh-syntax*
 
-This covers the "normal" Unix (Bourne) sh, bash and the Korn shell.
+This covers syntax highlighting for the older Unix (Bourne) sh, and newer
+shells such as bash, dash, posix, and the Korn shells.
 
 Vim attempts to determine which shell type is in use by specifying that
 various filenames are of specific types: >
@@ -2826,28 +2863,31 @@ various filenames are of specific types: >
     bash: .bashrc* bashrc bash.bashrc .bash_profile* *.bash
 <
 If none of these cases pertain, then the first line of the file is examined
-(ex. /bin/sh  /bin/ksh	/bin/bash).  If the first line specifies a shelltype,
-then that shelltype is used.  However some files (ex. .profile) are known to
-be shell files but the type is not apparent.  Furthermore, on many systems
-sh is symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (Posix).
+(ex. looking for /bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a
+shelltype, then that shelltype is used.  However some files (ex. .profile) are
+known to be shell files but the type is not apparent.  Furthermore, on many
+systems sh is symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh"
+(Posix).
 
-One may specify a global default by instantiating one of the following three
+One may specify a global default by instantiating one of the following
 variables in your vimrc:
 
-    ksh: >
+   ksh: >
 	let g:is_kornshell = 1
-<   posix: (using this is the same as setting is_kornshell to 1) >
+<   posix:  (using this is the nearly the same as setting g:is_kornshell to 1) >
 	let g:is_posix     = 1
 <   bash: >
 	let g:is_bash	   = 1
 <   sh: (default) Bourne shell >
 	let g:is_sh	   = 1
 
+<   (dash users should use posix)
+
 If there's no "#! ..." line, and the user hasn't availed himself/herself of a
 default sh.vim syntax setting as just shown, then syntax/sh.vim will assume
 the Bourne shell syntax.  No need to quote RFCs or market penetration
 statistics in error reports, please -- just select the default version of the
-sh your system uses in your vimrc.
+sh your system uses and install the associated "let..." in your <.vimrc>.
 
 The syntax/sh.vim file provides several levels of syntax-based folding: >
 
@@ -2856,7 +2896,7 @@ The syntax/sh.vim file provides several levels of syntax-based folding: >
 	let g:sh_fold_enabled= 2     (enable heredoc folding)
 	let g:sh_fold_enabled= 4     (enable if/do/for folding)
 >
-then various syntax items (HereDocuments and function bodies) become
+then various syntax items (ie. HereDocuments and function bodies) become
 syntax-foldable (see |:syn-fold|).  You also may add these together
 to get multiple types of folding: >
 
@@ -2880,14 +2920,7 @@ reduce this, the "sh_maxlines" internal variable can be set.  Example: >
 The default is to use the twice sh_minlines.  Set it to a smaller number to
 speed up displaying.  The disadvantage is that highlight errors may appear.
 
-						*g:sh_isk* *g:sh_noisk*
-The shell languages appear to let "." be part of words, commands, etc;
-consequently it should be in the isk for sh.vim.  As of v116 of syntax/sh.vim,
-syntax/sh.vim will append the "." to |'iskeyword'| by default; you may control
-this behavior with: >
-	let g:sh_isk  = '..whatever characters you want as part of iskeyword'
-	let g:sh_noisk= 1  " otherwise, if this exists, the isk will NOT chg
-<
+
 						*sh-embed*  *sh-awk*
  Sh: EMBEDDING LANGUAGES~
 
@@ -3461,8 +3494,8 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 	and also determines where |:syn-keyword| will be checked for a new
 	match.
 
-	It is recommended when writing syntax files, to use this command
-	to the correct value for the specific syntax language and not change
+	It is recommended when writing syntax files, to use this command to
+	set the correct value for the specific syntax language and not change
 	the 'iskeyword' option.
 
 DEFINING KEYWORDS					*:syn-keyword*
@@ -3520,7 +3553,11 @@ DEFINING KEYWORDS					*:syn-keyword*
 
 DEFINING MATCHES					*:syn-match*
 
-:sy[ntax] match {group-name} [{options}] [excludenl] {pattern} [{options}]
+:sy[ntax] match {group-name} [{options}]
+		[excludenl]
+		[keepend]
+		{pattern}
+		[{options}]
 
 	This defines one match.
 
@@ -3529,6 +3566,9 @@ DEFINING MATCHES					*:syn-match*
 	[excludenl]		Don't make a pattern with the end-of-line "$"
 				extend a containing match or region.  Must be
 				given before the pattern. |:syn-excludenl|
+	keepend			Don't allow contained matches to go past a
+				match with the end pattern.  See
+				|:syn-keepend|.
 	{pattern}		The search pattern that defines the match.
 				See |:syn-pattern| below.
 				Note that the pattern may match more than one

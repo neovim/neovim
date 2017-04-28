@@ -7,11 +7,8 @@
 " Uses java.vim, and adds a few special things for JavaCC Parser files.
 " Those files usually have the extension  *.jj
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -19,11 +16,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " source the java.vim file
-if version < 600
-  source <sfile>:p:h/java.vim
-else
-  runtime! syntax/java.vim
-endif
+runtime! syntax/java.vim
 unlet b:current_syntax
 
 "remove catching errors caused by wrong parenthesis (does not work in javacc
@@ -58,22 +51,12 @@ syn keyword javaccActionToken TOKEN SKIP MORE SPECIAL_TOKEN
 syn keyword javaccError DEBUG IGNORE_IN_BNF
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_css_syn_inits")
-  if version < 508
-    let did_css_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink javaccSpecToken Statement
-  HiLink javaccActionToken Type
-  HiLink javaccPackages javaScopeDecl
-  HiLink javaccToken String
-  HiLink javaccError Error
-  delcommand HiLink
-endif
+" Only when an item doesn't have highlighting yet
+hi def link javaccSpecToken Statement
+hi def link javaccActionToken Type
+hi def link javaccPackages javaScopeDecl
+hi def link javaccToken String
+hi def link javaccError Error
 
 let b:current_syntax = "javacc"
 let &cpo = s:cpo_save

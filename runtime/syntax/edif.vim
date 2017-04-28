@@ -8,18 +8,12 @@
 "   IEC 61690-1 (EDIF Version 3 0 0)
 "   IEC 61690-2 (EDIF Version 4 0 0)
 
-" Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
-if version >= 600
- setlocal iskeyword=48-57,-,+,A-Z,a-z,_,&
-else
- set iskeyword=A-Z,a-z,_,&
-endif
+setlocal iskeyword=48-57,-,+,A-Z,a-z,_,&
 
 syn region	edifList	matchgroup=Delimiter start="(" end=")" contains=edifList,edifKeyword,edifString,edifNumber
 
@@ -37,28 +31,15 @@ syn match       edifKeyword     "(\@<=\s*[a-zA-Z&][a-zA-Z_0-9]*\>" contained
 syn match       edifError       ")"
 
 " synchronization
-if version < 600
-  syntax sync maxlines=250
-else
-  syntax sync fromstart
-endif
+syntax sync fromstart
 
 " Define the default highlighting.
-if version >= 508 || !exists("did_edif_syntax_inits")
-  if version < 508
-    let did_edif_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink edifInString		SpecialChar
-  HiLink edifKeyword		Keyword
-  HiLink edifNumber		Number
-  HiLink edifInStringError	edifError
-  HiLink edifError		Error
-  HiLink edifString		String
-  delcommand HiLink
-endif
+hi def link edifInString		SpecialChar
+hi def link edifKeyword		Keyword
+hi def link edifNumber		Number
+hi def link edifInStringError	edifError
+hi def link edifError		Error
+hi def link edifString		String
 
 let b:current_syntax = "edif"

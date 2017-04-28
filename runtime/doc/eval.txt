@@ -107,7 +107,7 @@ To test for a non-empty string, use empty(): >
 							*non-zero-arg*
 Function arguments often behave slightly different from |TRUE|: If the
 argument is present and it evaluates to a non-zero Number, |v:true| or a
-non-empty String, then the value is considere to be TRUE.
+non-empty String, then the value is considered to be TRUE.
 Note that " " and "0" are also non-empty strings, thus cause the mode to be
 cleared.  A List, Dictionary or Float is not a Number or String, thus
 evaluates to FALSE.
@@ -631,13 +631,17 @@ It's possible to form a variable name with curly braces, see
 
 Expression syntax summary, from least to most significant:
 
-|expr1| expr2 ? expr1 : expr1	if-then-else
+|expr1|	expr2
+	expr2 ? expr1 : expr1	if-then-else
 
-|expr2|	expr3 || expr3 ..	logical OR
+|expr2|	expr3
+	expr3 || expr3 ..	logical OR
 
-|expr3|	expr4 && expr4 ..	logical AND
+|expr3|	expr4
+	expr4 && expr4 ..	logical AND
 
-|expr4|	expr5 == expr5		equal
+|expr4|	expr5
+	expr5 == expr5		equal
 	expr5 != expr5		not equal
 	expr5 >	 expr5		greater than
 	expr5 >= expr5		greater than or equal
@@ -654,24 +658,28 @@ Expression syntax summary, from least to most significant:
 	expr5 is expr5		same |List| instance
 	expr5 isnot expr5	different |List| instance
 
-|expr5|	expr6 +	 expr6 ..	number addition or list concatenation
+|expr5|	expr6
+	expr6 +	 expr6 ..	number addition or list concatenation
 	expr6 -	 expr6 ..	number subtraction
 	expr6 .	 expr6 ..	string concatenation
 
-|expr6|	expr7 *	 expr7 ..	number multiplication
+|expr6|	expr7
+	expr7 *	 expr7 ..	number multiplication
 	expr7 /	 expr7 ..	number division
 	expr7 %	 expr7 ..	number modulo
 
-|expr7|	! expr7			logical NOT
+|expr7|	expr8
+	! expr7			logical NOT
 	- expr7			unary minus
 	+ expr7			unary plus
 
-|expr8|	expr8[expr1]		byte of a String or item of a |List|
+|expr8|	expr9
+	expr8[expr1]		byte of a String or item of a |List|
 	expr8[expr1 : expr1]	substring of a String or sublist of a |List|
 	expr8.name		entry in a |Dictionary|
 	expr8(expr1, ...)	function call with |Funcref| variable
 
-|expr9| number			number constant
+|expr9|	number			number constant
 	"string"		string constant, backslash is special
 	'string'		string constant, ' is doubled
 	[expr1, ...]		|List|
@@ -931,7 +939,7 @@ expr8[expr1]		item of String or |List|	*expr-[]* *E111*
 
 If expr8 is a Number or String this results in a String that contains the
 expr1'th single byte from expr8.  expr8 is used as a String, expr1 as a
-Number.  This doesn't recognize multi-byte encodings, see |byteidx()| for
+Number.  This doesn't recognize multi-byte encodings, see `byteidx()` for
 an alternative, or use `split()` to turn the string into a list of characters.
 
 Index zero gives the first byte.  This is like it works in C.  Careful:
@@ -1214,7 +1222,7 @@ The arguments are optional.  Example: >
 <	error function
 							*closure*
 Lambda expressions can access outer scope variables and arguments.  This is
-often called a closure.  Example where "i" a and "a:arg" are used in a lambda
+often called a closure.  Example where "i" and "a:arg" are used in a lambda
 while they exist in the function scope.  They remain valid even after the
 function returns: >
 	:function Foo(arg)
@@ -1233,7 +1241,7 @@ Examples for using a lambda expression with |sort()|, |map()| and |filter()|: >
 	:echo sort([3,7,2,1,4], {a, b -> a - b})
 <	[1, 2, 3, 4, 7]
 
-The lambda expression is also useful for Channel, Job and timer: >
+The lambda expression is also useful for jobs and timers: >
 	:let timer = timer_start(500,
 			\ {-> execute("echo 'Handler called'", "")},
 			\ {'repeat': 3})
@@ -2023,8 +2031,8 @@ expand({expr} [, {nosuf} [, {list}]])
 feedkeys({string} [, {mode}])	Number	add key sequence to typeahead buffer
 filereadable({file})		Number	|TRUE| if {file} is a readable file
 filewritable({file})		Number	|TRUE| if {file} is a writable file
-filter({expr}, {string})	List/Dict  remove items from {expr} where
-				{string} is 0
+filter({expr1}, {expr2})	List/Dict  remove items from {expr1} where
+					{expr2} is 0
 finddir({name}[, {path}[, {count}]])
 				String	find directory {name} in {path}
 findfile({name}[, {path}[, {count}]])
@@ -2048,7 +2056,7 @@ garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
 get({func}, {what})		any	get property of funcref/partial {func}
-getbufinfo( [{expr}])		List  	information about buffers
+getbufinfo([{expr}])		List	information about buffers
 getbufline({expr}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {expr}
 getbufvar({expr}, {varname} [, {def}])
@@ -2147,7 +2155,7 @@ lispindent({lnum})		Number	Lisp indent for line {lnum}
 localtime()			Number	current time
 log({expr})			Float	natural logarithm (base e) of {expr}
 log10({expr})			Float	logarithm of Float {expr} to base 10
-map({expr}, {string})		List/Dict  change each item in {expr} to {expr}
+map({expr1}, {expr2})		List/Dict  change each item in {expr1} to {expr}
 maparg({name}[, {mode} [, {abbr} [, {dict}]]])
 				String or Dict
 					rhs of mapping {name} in mode {mode}
@@ -3044,6 +3052,8 @@ delete({fname} [, {flags}])					*delete()*
 
 		When {flags} is "rf": Deletes the directory by the name
 		{fname} and everything in it, recursively.  BE CAREFUL!
+		Note: on MS-Windows it is not possible to delete a directory
+		that is being used.
 
 		The result is a Number, which is 0 if the delete operation was
 		successful and -1 when the deletion failed or partly failed.
@@ -3478,9 +3488,10 @@ filter({expr1}, {expr2})					*filter()*
 		is zero remove the item from the |List| or |Dictionary|.
 		{expr2} must be a |string| or |Funcref|.
 
-		if {expr2} is a |string|, inside {expr2} |v:val| has the value
+		If {expr2} is a |string|, inside {expr2} |v:val| has the value
 		of the current item.  For a |Dictionary| |v:key| has the key
-		of the current item.
+		of the current item and for a |List| |v:key| has the index of
+		the current item.
 		For a |Dictionary| |v:key| has the key of the current item.
 		Examples: >
 			call filter(mylist, 'v:val !~ "OLD"')
@@ -3503,6 +3514,10 @@ filter({expr1}, {expr2})					*filter()*
 			  return a:idx % 2 == 1
 			endfunc
 			call filter(mylist, function('Odd'))
+<		It is shorter when using a |lambda|: >
+			call filter(myList, {idx, val -> idx * val <= 42})
+<		If you do not use "val" you can leave it out: >
+			call filter(myList, {idx -> idx % 2 == 1})
 <
 		The operation is done in-place.  If you want a |List| or
 		|Dictionary| to remain unmodified make a copy first: >
@@ -4538,6 +4553,7 @@ histadd({history}, {item})				*histadd()*
 			"expr"	 or "="   typed expression history
 			"input"  or "@"	  input line history
 			"debug"  or ">"   debug command history
+			empty		  the current or last used history
 		The {history} string does not need to be the whole name, one
 		character is sufficient.
 		If {item} does already exist in the history, it will be
@@ -5140,6 +5156,10 @@ map({expr1}, {expr2})					*map()*
 			  return a:key . '-' . a:val
 			endfunc
 			call map(myDict, function('KeyValue'))
+<		It is shorter when using a |lambda|: >
+			call map(myDict, {key, val -> key . '-' . val})
+<		If you do not use "val" you can leave it out: >
+			call map(myDict, {key -> 'item: ' . key})
 <
 		The operation is done in-place.  If you want a |List| or
 		|Dictionary| to remain unmodified make a copy first: >
@@ -6167,7 +6187,7 @@ rpcstop({channel})					    {Nvim} *rpcstop()*
 		connecting to |v:servername|.
 
 screenattr(row, col)						*screenattr()*
-		Like screenchar(), but return the attribute.  This is a rather
+		Like |screenchar()|, but return the attribute.  This is a rather
 		arbitrary number that can only be used to compare to the
 		attribute at other positions.
 
@@ -7579,13 +7599,14 @@ timer_start({time}, {callback} [, {options}])
 		busy or Vim is not waiting for input the time will be longer.
 
 		{callback} is the function to call.  It can be the name of a
-		function or a Funcref.  It is called with one argument, which
+		function or a |Funcref|.  It is called with one argument, which
 		is the timer ID.  The callback is only invoked when Vim is
 		waiting for input.
 
 		{options} is a dictionary.  Supported entries:
 		   "repeat"	Number of times to repeat calling the
-		   		callback.  -1 means forever.
+				callback.  -1 means forever.  When not present
+				the callback will be called once.
 
 		Example: >
 			func MyHandler(timer)

@@ -5,10 +5,9 @@
 " Updated for 1.2 by Tilghman Lesher (Corydon76)
 " Last Change:	2015 Feb 27
 " version 0.4
-"
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -57,42 +56,33 @@ syn match       asteriskSetting         "^port\s*=\s*\d\{1,5}\s*$" contains=aste
 syn match       asteriskSetting         "^host\s*=\s*\(dynamic\|\(\d\{1,3}\.\d\{1,3}\.\d\{1,3}\.\d\{1,3}\)\|\([[:alnum:]][[:alnum:]\-\.]*\.[[:alpha:]]{2,10}\)\)" contains=asteriskIP,asteriskHostname
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_conf_syntax_inits")
-  if version < 508
-    let did_conf_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink        asteriskComment		Comment
-  HiLink        asteriskExten		String
-  HiLink        asteriskContext         Preproc
-  HiLink        asteriskPattern         Type
-  HiLink        asteriskApp             Statement
-  HiLink        asteriskInclude         Preproc
-  HiLink        asteriskIncludeBad	Error
-  HiLink        asteriskPriority        Preproc
-  HiLink        asteriskLabel           Type
-  HiLink        asteriskVar             String
-  HiLink        asteriskVarLen          Function
-  HiLink        asteriskExp             Type
-  HiLink        asteriskCodecsPermit    Preproc
-  HiLink        asteriskCodecs          String
-  HiLink        asteriskType            Statement
-  HiLink        asteriskTypeType        Type
-  HiLink        asteriskAuth            String
-  HiLink        asteriskAuthType        Type
-  HiLink        asteriskIPRange         Identifier
-  HiLink        asteriskIP              Identifier
-  HiLink        asteriskPort            Identifier
-  HiLink        asteriskHostname        Identifier
-  HiLink        asteriskSetting         Statement
-  HiLink        asteriskError           Error
- delcommand HiLink
-endif
+hi def link        asteriskComment		Comment
+hi def link        asteriskExten		String
+hi def link        asteriskContext         Preproc
+hi def link        asteriskPattern         Type
+hi def link        asteriskApp             Statement
+hi def link        asteriskInclude         Preproc
+hi def link        asteriskIncludeBad	Error
+hi def link        asteriskPriority        Preproc
+hi def link        asteriskLabel           Type
+hi def link        asteriskVar             String
+hi def link        asteriskVarLen          Function
+hi def link        asteriskExp             Type
+hi def link        asteriskCodecsPermit    Preproc
+hi def link        asteriskCodecs          String
+hi def link        asteriskType            Statement
+hi def link        asteriskTypeType        Type
+hi def link        asteriskAuth            String
+hi def link        asteriskAuthType        Type
+hi def link        asteriskIPRange         Identifier
+hi def link        asteriskIP              Identifier
+hi def link        asteriskPort            Identifier
+hi def link        asteriskHostname        Identifier
+hi def link        asteriskSetting         Statement
+hi def link        asteriskError           Error
+
 let b:current_syntax = "asterisk" 
 " vim: ts=8 sw=2
 

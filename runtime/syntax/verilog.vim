@@ -3,22 +3,15 @@
 " Maintainer:	Mun Johl <Mun.Johl@emulex.com>
 " Last Update:  Wed Jul 20 16:04:19 PDT 2011
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-   syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
    finish
 endif
 
 " Set the local value of the 'iskeyword' option.
 " NOTE: '?' was added so that verilogNumber would be processed correctly when
 "       '?' is the last character of the number.
-if version >= 600
-   setlocal iskeyword=@,48-57,63,_,192-255
-else
-   set iskeyword=@,48-57,63,_,192-255
-endif
+setlocal iskeyword=@,48-57,63,_,192-255
 
 " A bunch of useful Verilog keywords
 
@@ -102,34 +95,24 @@ syn region  verilogDirective   start="//\s*\$s dc_script_begin\>" end="//\s*\$s 
 syn sync minlines=50
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_verilog_syn_inits")
-   if version < 508
-      let did_verilog_syn_inits = 1
-      command -nargs=+ HiLink hi link <args>
-   else
-      command -nargs=+ HiLink hi def link <args>
-   endif
+" Only when an item doesn't have highlighting yet
 
-   " The default highlighting.
-   HiLink verilogCharacter       Character
-   HiLink verilogConditional     Conditional
-   HiLink verilogRepeat          Repeat
-   HiLink verilogString          String
-   HiLink verilogTodo            Todo
-   HiLink verilogComment         Comment
-   HiLink verilogConstant        Constant
-   HiLink verilogLabel           Label
-   HiLink verilogNumber          Number
-   HiLink verilogOperator        Special
-   HiLink verilogStatement       Statement
-   HiLink verilogGlobal          Define
-   HiLink verilogDirective       SpecialComment
-   HiLink verilogEscape		 Special
+" The default highlighting.
+hi def link verilogCharacter       Character
+hi def link verilogConditional     Conditional
+hi def link verilogRepeat          Repeat
+hi def link verilogString          String
+hi def link verilogTodo            Todo
+hi def link verilogComment         Comment
+hi def link verilogConstant        Constant
+hi def link verilogLabel           Label
+hi def link verilogNumber          Number
+hi def link verilogOperator        Special
+hi def link verilogStatement       Statement
+hi def link verilogGlobal          Define
+hi def link verilogDirective       SpecialComment
+hi def link verilogEscape		 Special
 
-   delcommand HiLink
-endif
 
 let b:current_syntax = "verilog"
 

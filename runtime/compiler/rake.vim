@@ -27,7 +27,11 @@ CompilerSet errorformat=
       \%\\s%#[%f:%l:\ %#%m,
       \%\\s%#%f:%l:\ %#%m,
       \%\\s%#%f:%l:,
-      \%m\ [%f:%l]:
+      \%m\ [%f:%l]:,
+      \%+Erake\ aborted!,
+      \%+EDon't\ know\ how\ to\ build\ task\ %.%#,
+      \%+Einvalid\ option:%.%#,
+      \%+Irake\ %\\S%\\+%\\s%\\+#\ %.%#
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

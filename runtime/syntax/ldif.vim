@@ -3,9 +3,8 @@
 " Maintainer:	Zak Johnson <zakj@nox.cx>
 " Last Change:	2003-12-30
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -21,23 +20,14 @@ syn region ldifFileValue   matchgroup=ldifPunctuation start=/:< / end=/\_$/ skip
 
 syn region ldifComment start=/^#/ end=/\_$/ skip=/\n /
 
-if version >= 508 || !exists("did_ldif_syn_inits")
-  if version < 508
-    let did_ldif_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink ldifAttribute		Type
-  HiLink ldifOption		Identifier
-  HiLink ldifPunctuation	Normal
-  HiLink ldifStringValue	String
-  HiLink ldifBase64Value	Special
-  HiLink ldifFileValue		Special
-  HiLink ldifComment		Comment
+hi def link ldifAttribute		Type
+hi def link ldifOption		Identifier
+hi def link ldifPunctuation	Normal
+hi def link ldifStringValue	String
+hi def link ldifBase64Value	Special
+hi def link ldifFileValue		Special
+hi def link ldifComment		Comment
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "ldif"

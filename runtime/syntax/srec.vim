@@ -24,11 +24,8 @@
 " States in parentheses in the upper format description indicate that they
 " should not appear in a valid file.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -63,33 +60,23 @@ syn match srecDataUnexpected "[0-9a-fA-F]\{2}" contained nextgroup=srecDataUnexp
 syn match srecChecksum "[0-9a-fA-F]\{2}$" contained
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_srec_syntax_inits")
-  if version < 508
-    let did_srec_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  " The default methods for highlighting. Can be overridden later
-  HiLink srecRecStart            srecRecType
-  HiLink srecRecTypeUnknown      srecRecType
-  HiLink srecRecType             WarningMsg
-  HiLink srecByteCount           Constant
-  hi def srecAddressFieldUnknown term=italic cterm=italic gui=italic
-  HiLink srecNoAddress           DiffAdd
-  HiLink srecDataAddress         Comment
-  HiLink srecRecCount            srecNoAddress
-  HiLink srecStartAddress        srecDataAddress
-  hi def srecDataOdd             term=bold cterm=bold gui=bold
-  hi def srecDataEven            term=NONE cterm=NONE gui=NONE
-  HiLink srecDataUnexpected      Error
-  HiLink srecChecksum            DiffChange
+" The default methods for highlighting. Can be overridden later
+hi def link srecRecStart            srecRecType
+hi def link srecRecTypeUnknown      srecRecType
+hi def link srecRecType             WarningMsg
+hi def link srecByteCount           Constant
+hi def srecAddressFieldUnknown term=italic cterm=italic gui=italic
+hi def link srecNoAddress           DiffAdd
+hi def link srecDataAddress         Comment
+hi def link srecRecCount            srecNoAddress
+hi def link srecStartAddress        srecDataAddress
+hi def srecDataOdd             term=bold cterm=bold gui=bold
+hi def srecDataEven            term=NONE cterm=NONE gui=NONE
+hi def link srecDataUnexpected      Error
+hi def link srecChecksum            DiffChange
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "srec"
 

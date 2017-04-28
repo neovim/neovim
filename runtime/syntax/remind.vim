@@ -13,9 +13,8 @@
 " version 0.7: updated email and link
 " version 0.6: added THROUGH keyword (courtesy of Ben Orchard)
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -48,35 +47,26 @@ syn match remindDates		"'[0-9]\{4}[/-][0-9]\{1,2}[/-][0-9]\{1,2}\(@[0-9]\{1,2}[:
 syn match remindWarning		display excludenl "\S\s\+$"ms=s+1
 
 
-if version >= 508 || !exists("did_remind_syn_inits")
-  if version < 508
-    let did_remind_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink remindCommands		Function
-  HiLink remindExpiry		Repeat
-  HiLink remindTag		Label
-  HiLink remindTimed		Statement
-  HiLink remindMove		Statement
-  HiLink remindSpecial		Include
-  HiLink remindRun		Function
-  HiLink remindConditional	Conditional
-  HiLink remindComment		Comment
-  HiLink remindTimes		String
-  HiLink remindString		String
-  HiLink remindDebug		Debug
-  HiLink remindVar		Identifier
-  HiLink remindSubst		Constant
-  HiLink remindAdvanceNumber	Number
-  HiLink remindDateSeparators	Comment
-  HiLink remindDates		String
-  HiLink remindWarning		Error
+hi def link remindCommands		Function
+hi def link remindExpiry		Repeat
+hi def link remindTag		Label
+hi def link remindTimed		Statement
+hi def link remindMove		Statement
+hi def link remindSpecial		Include
+hi def link remindRun		Function
+hi def link remindConditional	Conditional
+hi def link remindComment		Comment
+hi def link remindTimes		String
+hi def link remindString		String
+hi def link remindDebug		Debug
+hi def link remindVar		Identifier
+hi def link remindSubst		Constant
+hi def link remindAdvanceNumber	Number
+hi def link remindDateSeparators	Comment
+hi def link remindDates		String
+hi def link remindWarning		Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "remind"
 

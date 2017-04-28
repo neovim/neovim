@@ -6,19 +6,12 @@
 " URL: http://trific.ath.cx/Ftp/vim/syntax/gtkrc.vim
 
 " Setup
-if version >= 600
-	if exists("b:current_syntax")
-		finish
-	endif
-else
-	syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+	finish
 endif
 
-if version >= 600
-	setlocal iskeyword=_,-,a-z,A-Z,48-57
-else
-	set iskeyword=_,-,a-z,A-Z,48-57
-endif
+setlocal iskeyword=_,-,a-z,A-Z,48-57
 
 syn case match
 
@@ -86,57 +79,48 @@ syn sync minlines=50
 syn sync match gtkrcSyncClass groupthere NONE "^\s*class\>"
 
 " Define the default highlighting
-if version >= 508 || !exists("did_gtkrc_syntax_inits")
-	if version < 508
-		let did_gtkrc_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
 
-	HiLink gtkrcComment Comment
-	HiLink gtkrcFixme Todo
+hi def link gtkrcComment Comment
+hi def link gtkrcFixme Todo
 
-	HiLink gtkrcInclude Preproc
+hi def link gtkrcInclude Preproc
 
-	HiLink gtkrcACString gtkrcString
-	HiLink gtkrcBString gtkrcString
-	HiLink gtkrcString String
-	HiLink gtkrcNumber Number
-	HiLink gtkrcStateName gtkrcConstant
-	HiLink gtkrcPriorityName gtkrcConstant
-	HiLink gtkrcTextDirName gtkrcConstant
-	HiLink gtkrcSettingsName Function
-	HiLink gtkrcStockName Function
-	HiLink gtkrcConstant Constant
+hi def link gtkrcACString gtkrcString
+hi def link gtkrcBString gtkrcString
+hi def link gtkrcString String
+hi def link gtkrcNumber Number
+hi def link gtkrcStateName gtkrcConstant
+hi def link gtkrcPriorityName gtkrcConstant
+hi def link gtkrcTextDirName gtkrcConstant
+hi def link gtkrcSettingsName Function
+hi def link gtkrcStockName Function
+hi def link gtkrcConstant Constant
 
-	HiLink gtkrcPathSpecial gtkrcSpecial
-	HiLink gtkrcWPathSpecial gtkrcSpecial
-	HiLink gtkrcRGBColor gtkrcSpecial
-	HiLink gtkrcKeyMod gtkrcSpecial
-	HiLink gtkrcSpecial Special
+hi def link gtkrcPathSpecial gtkrcSpecial
+hi def link gtkrcWPathSpecial gtkrcSpecial
+hi def link gtkrcRGBColor gtkrcSpecial
+hi def link gtkrcKeyMod gtkrcSpecial
+hi def link gtkrcSpecial Special
 
-	HiLink gtkrcTop gtkrcKeyword
-	HiLink gtkrcPathSet gtkrcKeyword
-	HiLink gtkrcStyleKeyword gtkrcKeyword
-	HiLink gtkrcFunction gtkrcKeyword
-	HiLink gtkrcBind gtkrcKeyword
-	HiLink gtkrcKeyword Keyword
+hi def link gtkrcTop gtkrcKeyword
+hi def link gtkrcPathSet gtkrcKeyword
+hi def link gtkrcStyleKeyword gtkrcKeyword
+hi def link gtkrcFunction gtkrcKeyword
+hi def link gtkrcBind gtkrcKeyword
+hi def link gtkrcKeyword Keyword
 
-	HiLink gtkrcClassNameGnome gtkrcGtkClass
-	HiLink gtkrcClassName gtkrcGtkClass
-	HiLink gtkrcFunctionName gtkrcGtkClass
-	HiLink gtkrcGtkClass Type
+hi def link gtkrcClassNameGnome gtkrcGtkClass
+hi def link gtkrcClassName gtkrcGtkClass
+hi def link gtkrcFunctionName gtkrcGtkClass
+hi def link gtkrcGtkClass Type
 
-	HiLink gtkrcImage gtkrcOtherword
-	HiLink gtkrcOtherword Function
+hi def link gtkrcImage gtkrcOtherword
+hi def link gtkrcOtherword Function
 
-	HiLink gtkrcParenError gtkrcError
-	HiLink gtkrcBraceError gtkrcError
-	HiLink gtkrcBracketError gtkrcError
-	HiLink gtkrcError Error
+hi def link gtkrcParenError gtkrcError
+hi def link gtkrcBraceError gtkrcError
+hi def link gtkrcBracketError gtkrcError
+hi def link gtkrcError Error
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "gtkrc"

@@ -8,11 +8,8 @@
 "
 " Don't forget to run your config file through testparm(1)!
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -107,24 +104,14 @@ syn keyword sambaKeyword contained shutdown signing special spnego
 syn keyword sambaKeyword contained store unknown unwriteable
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_samba_syn_inits")
-  if version < 508
-    let did_samba_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink sambaParameter Normal
-  HiLink sambaKeyword   Type
-  HiLink sambaSection   Statement
-  HiLink sambaMacro     PreProc
-  HiLink sambaComment   Comment
-  HiLink sambaContinue  Operator
-  HiLink sambaBoolean   Constant
-  delcommand HiLink
-endif
+" Only when an item doesn't have highlighting yet
+hi def link sambaParameter Normal
+hi def link sambaKeyword   Type
+hi def link sambaSection   Statement
+hi def link sambaMacro     PreProc
+hi def link sambaComment   Comment
+hi def link sambaContinue  Operator
+hi def link sambaBoolean   Constant
 
 let b:current_syntax = "samba"
 

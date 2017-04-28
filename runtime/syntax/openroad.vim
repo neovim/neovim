@@ -3,12 +3,8 @@
 " Maintainer:	Luis Moreno <lmoreno@eresmas.net>
 " Last change:	2001 Jun 12
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-"
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -235,32 +231,22 @@ else
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
+" Only when an item doesn't have highlighting yet
 "
-if version >= 508 || !exists("did_openroad_syntax_inits")
-	if version < 508
-		let did_openroad_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
 
-	HiLink openroadKeyword	Statement
-	HiLink openroadNumber	Number
-	HiLink openroadString	String
-	HiLink openroadComment	Comment
-	HiLink openroadOperator	Operator
-	HiLink openroadType		Type
-	HiLink openroadFunc		Special
-	HiLink openroadClass	Type
-	HiLink openroadEvent	Statement
-	HiLink openroadConst	Constant
-	HiLink openroadVar		Identifier
-	HiLink openroadIdent	Identifier
-	HiLink openroadTodo		Todo
+hi def link openroadKeyword	Statement
+hi def link openroadNumber	Number
+hi def link openroadString	String
+hi def link openroadComment	Comment
+hi def link openroadOperator	Operator
+hi def link openroadType		Type
+hi def link openroadFunc		Special
+hi def link openroadClass	Type
+hi def link openroadEvent	Statement
+hi def link openroadConst	Constant
+hi def link openroadVar		Identifier
+hi def link openroadIdent	Identifier
+hi def link openroadTodo		Todo
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "openroad"

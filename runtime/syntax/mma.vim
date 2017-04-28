@@ -35,9 +35,8 @@
 "   fix nesting
 "   finish populating popular symbols
 
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -283,47 +282,38 @@ syntax sync fromstart
 "set foldnestmax=1
 "set foldminlines=15
 
-if version >= 508 || !exists("did_mma_syn_inits")
-	if version < 508
-		let did_mma_syn_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
 
-    " NOTE - the following links are not guaranteed to
-    " look good under all colorschemes.  You might need to
-    " :so $VIMRUNTIME/syntax/hitest.vim and tweak these to
-    " look good in yours
+" NOTE - the following links are not guaranteed to
+" look good under all colorschemes.  You might need to
+" :so $VIMRUNTIME/syntax/hitest.vim and tweak these to
+" look good in yours
 
 
-    HiLink mmaComment           Comment
-    HiLink mmaCommentStar       Comment
-    HiLink mmaFunctionComment   Comment
-    HiLink mmaLooseQuote        Comment
-	HiLink mmaGenericFunction   Function
-	HiLink mmaVariable          Identifier
-"    HiLink mmaSymbol            Identifier
-	HiLink mmaOperator          Operator
-    HiLink mmaPatternOp         Operator
-	HiLink mmaPureFunction      Operator
-	HiLink mmaString            String
-    HiLink mmaCommentString     String
-	HiLink mmaUnicode           String
-	HiLink mmaMessage           Type
-    HiLink mmaNumber            Type
-	HiLink mmaPattern           Type
-	HiLink mmaError             Error
-	HiLink mmaFixme             Error
-    HiLink mmaPatternError      Error
-    HiLink mmaTodo              Todo
-    HiLink mmaemPHAsis          Special
-    HiLink mmaFunctionTitle     Special
-    HiLink mmaMessageType       Special
-    HiLink mmaItem              Preproc
+hi def link mmaComment           Comment
+hi def link mmaCommentStar       Comment
+hi def link mmaFunctionComment   Comment
+hi def link mmaLooseQuote        Comment
+hi def link mmaGenericFunction   Function
+hi def link mmaVariable          Identifier
+"    hi def link mmaSymbol            Identifier
+hi def link mmaOperator          Operator
+hi def link mmaPatternOp         Operator
+hi def link mmaPureFunction      Operator
+hi def link mmaString            String
+hi def link mmaCommentString     String
+hi def link mmaUnicode           String
+hi def link mmaMessage           Type
+hi def link mmaNumber            Type
+hi def link mmaPattern           Type
+hi def link mmaError             Error
+hi def link mmaFixme             Error
+hi def link mmaPatternError      Error
+hi def link mmaTodo              Todo
+hi def link mmaemPHAsis          Special
+hi def link mmaFunctionTitle     Special
+hi def link mmaMessageType       Special
+hi def link mmaItem              Preproc
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "mma"
 

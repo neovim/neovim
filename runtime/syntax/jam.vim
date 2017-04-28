@@ -3,22 +3,15 @@
 " Maintainer:	Ralf Lemke (ralflemk@t-online.de)
 " Last change:	2012 Jan 08 by Thilo Six
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 let s:cpo_save = &cpo
 set cpo&vim
 
-if version >= 600
-  setlocal iskeyword=@,48-57,_,-
-else
-  set iskeyword=@,48-57,_,-
-endif
+setlocal iskeyword=@,48-57,_,-
 
 " A bunch of useful jam keywords
 syn keyword	jamStatement	break call dbms flush global include msg parms proc public receive return send unload vars
@@ -167,88 +160,78 @@ syntax match	jamCommentError	"\*/"
 syntax match    jamOperator3Error   "*/"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_jam_syn_inits")
-  if version < 508
-    let did_jam_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-    HiLink jamCommentL		jamComment
-    HiLink jamCommentL2		jamComment
-    HiLink jamOperator3Error	jamError
-    HiLink jamConditional	Conditional
-    HiLink jamRepeat		Repeat
-    HiLink jamCharacter		Character
-    HiLink jamSpecialCharacter	jamSpecial
-    HiLink jamNumber		Number
-    HiLink jamParenError	jamError
-    HiLink jamErrInParen	jamError
-    HiLink jamErrInBracket	jamError
-    HiLink jamCommentError	jamError
-    HiLink jamSpaceError	jamError
-    HiLink jamSpecialError	jamError
-    HiLink jamOperator1		jamOperator
-    HiLink jamOperator2		jamOperator
-    HiLink jamOperator3		jamOperator
-    HiLink jamOperator4		jamOperator
-    HiLink jamOperator5		jamOperator
-    HiLink jamOperator6		jamOperator
-    HiLink jamOperator7		jamOperator
-    HiLink jamOperator8		jamOperator
-    HiLink jamOperator9		jamOperator
-    HiLink jamOperator10	jamOperator
-    HiLink jamOperator11	jamOperator
-    HiLink jamOperator12	jamOperator
-    HiLink jamOperator13	jamOperator
-    HiLink jamOperator14	jamOperator
-    HiLink jamError		Error
-    HiLink jamStatement		Statement
-    HiLink jamPreCondit		PreCondit
-    HiLink jamCommentError	jamError
-    HiLink jamCommentString	jamString
-    HiLink jamComment2String	jamString
-    HiLink jamCommentSkip	jamComment
-    HiLink jamString		String
-    HiLink jamComment		Comment
-    HiLink jamSpecial		SpecialChar
-    HiLink jamTodo		Todo
-    HiLink jamCppSkip		jamCppOut
-    HiLink jamCppOut2		jamCppOut
-    HiLink jamCppOut		Comment
-    HiLink jamDBState1		Identifier
-    HiLink jamDBState2		Identifier
-    HiLink jamSQLState1		jamSQL
-    HiLink jamSQLState2		jamSQL
-    HiLink jamLibFunc1		jamLibFunc
-    HiLink jamLibFunc2		jamLibFunc
-    HiLink jamLibFunc3		jamLibFunc
-    HiLink jamLibFunc4		jamLibFunc
-    HiLink jamLibFunc5		jamLibFunc
-    HiLink jamLibFunc6		jamLibFunc
-    HiLink jamLibFunc7		jamLibFunc
-    HiLink jamLibFunc8		jamLibFunc
-    HiLink jamLibFunc9		jamLibFunc
-    HiLink jamVariable1		jamVariablen
-    HiLink jamVariable2		jamVariablen
-    HiLink jamVariable3		jamVariablen
-    HiLink jamVariable4		jamVariablen
-    HiLink jamVariable5		jamVariablen
-    HiLink jamVariable6		jamVariablen
-    HiLink jamVariable7		jamVariablen
-    HiLink jamVariable8		jamVariablen
-    HiLink jamVariable9		jamVariablen
-    HiLink jamVariable10	jamVariablen
-    HiLink jamVariablen		Constant
-    HiLink jamSQL		Type
-    HiLink jamLibFunc		PreProc
-    HiLink jamOperator		Special
+hi def link jamCommentL		jamComment
+hi def link jamCommentL2		jamComment
+hi def link jamOperator3Error	jamError
+hi def link jamConditional	Conditional
+hi def link jamRepeat		Repeat
+hi def link jamCharacter		Character
+hi def link jamSpecialCharacter	jamSpecial
+hi def link jamNumber		Number
+hi def link jamParenError	jamError
+hi def link jamErrInParen	jamError
+hi def link jamErrInBracket	jamError
+hi def link jamCommentError	jamError
+hi def link jamSpaceError	jamError
+hi def link jamSpecialError	jamError
+hi def link jamOperator1		jamOperator
+hi def link jamOperator2		jamOperator
+hi def link jamOperator3		jamOperator
+hi def link jamOperator4		jamOperator
+hi def link jamOperator5		jamOperator
+hi def link jamOperator6		jamOperator
+hi def link jamOperator7		jamOperator
+hi def link jamOperator8		jamOperator
+hi def link jamOperator9		jamOperator
+hi def link jamOperator10	jamOperator
+hi def link jamOperator11	jamOperator
+hi def link jamOperator12	jamOperator
+hi def link jamOperator13	jamOperator
+hi def link jamOperator14	jamOperator
+hi def link jamError		Error
+hi def link jamStatement		Statement
+hi def link jamPreCondit		PreCondit
+hi def link jamCommentError	jamError
+hi def link jamCommentString	jamString
+hi def link jamComment2String	jamString
+hi def link jamCommentSkip	jamComment
+hi def link jamString		String
+hi def link jamComment		Comment
+hi def link jamSpecial		SpecialChar
+hi def link jamTodo		Todo
+hi def link jamCppSkip		jamCppOut
+hi def link jamCppOut2		jamCppOut
+hi def link jamCppOut		Comment
+hi def link jamDBState1		Identifier
+hi def link jamDBState2		Identifier
+hi def link jamSQLState1		jamSQL
+hi def link jamSQLState2		jamSQL
+hi def link jamLibFunc1		jamLibFunc
+hi def link jamLibFunc2		jamLibFunc
+hi def link jamLibFunc3		jamLibFunc
+hi def link jamLibFunc4		jamLibFunc
+hi def link jamLibFunc5		jamLibFunc
+hi def link jamLibFunc6		jamLibFunc
+hi def link jamLibFunc7		jamLibFunc
+hi def link jamLibFunc8		jamLibFunc
+hi def link jamLibFunc9		jamLibFunc
+hi def link jamVariable1		jamVariablen
+hi def link jamVariable2		jamVariablen
+hi def link jamVariable3		jamVariablen
+hi def link jamVariable4		jamVariablen
+hi def link jamVariable5		jamVariablen
+hi def link jamVariable6		jamVariablen
+hi def link jamVariable7		jamVariablen
+hi def link jamVariable8		jamVariablen
+hi def link jamVariable9		jamVariablen
+hi def link jamVariable10	jamVariablen
+hi def link jamVariablen		Constant
+hi def link jamSQL		Type
+hi def link jamLibFunc		PreProc
+hi def link jamOperator		Special
 
-    delcommand HiLink
-endif
 
 let b:current_syntax = "jam"
 

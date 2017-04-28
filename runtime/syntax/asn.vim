@@ -4,11 +4,8 @@
 " URL:		http://www.fleiner.com/vim/syntax/asn.vim
 " Last Change:	2012 Oct 05
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -50,34 +47,24 @@ syn match asnBraces     "[{}]"
 syn sync ccomment asnComment
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_asn_syn_inits")
-  if version < 508
-    let did_asn_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink asnDefinition	Function
-  HiLink asnBraces		Function
-  HiLink asnStructure	Statement
-  HiLink asnBoolValue	Boolean
-  HiLink asnSpecial		Special
-  HiLink asnString		String
-  HiLink asnCharacter	Character
-  HiLink asnSpecialCharacter	asnSpecial
-  HiLink asnNumber		asnValue
-  HiLink asnComment		Comment
-  HiLink asnLineComment	asnComment
-  HiLink asnType		Type
-  HiLink asnTypeInfo		PreProc
-  HiLink asnValue		Number
-  HiLink asnExternal		Include
-  HiLink asnTagModifier	Function
-  HiLink asnFieldOption	Type
-  delcommand HiLink
-endif
+" Only when an item doesn't have highlighting yet
+hi def link asnDefinition	Function
+hi def link asnBraces		Function
+hi def link asnStructure	Statement
+hi def link asnBoolValue	Boolean
+hi def link asnSpecial		Special
+hi def link asnString		String
+hi def link asnCharacter	Character
+hi def link asnSpecialCharacter	asnSpecial
+hi def link asnNumber		asnValue
+hi def link asnComment		Comment
+hi def link asnLineComment	asnComment
+hi def link asnType		Type
+hi def link asnTypeInfo		PreProc
+hi def link asnValue		Number
+hi def link asnExternal		Include
+hi def link asnTagModifier	Function
+hi def link asnFieldOption	Type
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

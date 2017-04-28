@@ -4,10 +4,8 @@
 " Maintainer:	Rex Barzee <rex_barzee@hp.com>
 " Last change:	25 Apr 2001
 
-if version < 600
-  " Remove any old syntax stuff hanging around
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -73,27 +71,17 @@ syn match  psfComment "#.*$"
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_psf_syntax_inits")
-  if version < 508
-    let did_psf_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink psfObject       Statement
-  HiLink psfAttrib       Type
-  HiLink psfQuotString   String
-  HiLink psfObjTag       Identifier
-  HiLink psfAttAbbrev    PreProc
-  HiLink psfObjTags      Identifier
+hi def link psfObject       Statement
+hi def link psfAttrib       Type
+hi def link psfQuotString   String
+hi def link psfObjTag       Identifier
+hi def link psfAttAbbrev    PreProc
+hi def link psfObjTags      Identifier
 
-  HiLink psfComment      Comment
+hi def link psfComment      Comment
 
-  delcommand HiLink
-endif
 
 " Long descriptions and copyrights confuse the syntax highlighting, so
 " force vim to backup at least 100 lines before the top visible line

@@ -425,7 +425,7 @@ accordingly.  Vim proceeds in this order:
 	-  The environment variable EXINIT.
 	   The value of $EXINIT is used as an Ex command line.
 
-     c. If the 'exrc' option is on (which is not the default), the current
+     c. If the 'exrc' option is on (which is NOT the default), the current
 	directory is searched for three files.  The first that exists is used,
 	the others are ignored.
 	-  The file ".nvimrc" (for Unix)
@@ -1184,6 +1184,9 @@ running) you have additional options:
 			file.  This list is read on startup and only changes
 			afterwards with ":rshada!".  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.
+			The output can be filtered with |:filter|, e.g.: >
+				filter /\.vim/ oldfiles
+<			The filtering happens on the file name.
 
 :bro[wse] o[ldfiles][!]
 			List file names as with |:oldfiles|, and then prompt

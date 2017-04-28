@@ -163,34 +163,32 @@ syn sync minlines=10 maxlines=100
 
 " Define the default highlighting
 if !exists("did_falcon_syn_inits")
-    command -nargs=+ HiLink hi def link <args>
 
-    HiLink falconKeyword          Keyword
-    HiLink falconCommentString    String
-    HiLink falconTodo             Todo
-    HiLink falconConditional      Keyword
-    HiLink falconRepeat           Repeat
-    HiLink falconcommentSkip      Comment
-    HiLink falconComment          Comment
-    HiLink falconCommentL         Comment
-    HiLink falconConst            Constant
-    HiLink falconConstants        Constant
-    HiLink falconOperator         Operator
-    HiLink falconSymbol           Normal
-    HiLink falconSpaceError       Error
-    HiLink falconHexadecimal      Number
-    HiLink falconOctal            Number
-    HiLink falconIntLiteral       Number
-    HiLink falconFloatLiteral     Float
-    HiLink falconStringEscape     Special
-    HiLink falconStringDelimiter  Delimiter
-    HiLink falconString           String
-    HiLink falconBool             Constant
-    HiLink falconSharpBang        PreProc
-    HiLink falconInclude          Include
-    HiLink falconSymbol           Constant
-    HiLink falconSymbolOther      Delimiter
-    delcommand HiLink
+    hi def link falconKeyword          Keyword
+    hi def link falconCommentString    String
+    hi def link falconTodo             Todo
+    hi def link falconConditional      Keyword
+    hi def link falconRepeat           Repeat
+    hi def link falconcommentSkip      Comment
+    hi def link falconComment          Comment
+    hi def link falconCommentL         Comment
+    hi def link falconConst            Constant
+    hi def link falconConstants        Constant
+    hi def link falconOperator         Operator
+    hi def link falconSymbol           Normal
+    hi def link falconSpaceError       Error
+    hi def link falconHexadecimal      Number
+    hi def link falconOctal            Number
+    hi def link falconIntLiteral       Number
+    hi def link falconFloatLiteral     Float
+    hi def link falconStringEscape     Special
+    hi def link falconStringDelimiter  Delimiter
+    hi def link falconString           String
+    hi def link falconBool             Constant
+    hi def link falconSharpBang        PreProc
+    hi def link falconInclude          Include
+    hi def link falconSymbol           Constant
+    hi def link falconSymbolOther      Delimiter
 endif
 
 let b:current_syntax = "falcon"

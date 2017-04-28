@@ -3,19 +3,12 @@
 " Maintainer:	Paul Terray <mailto:terray@4dconcept.fr>
 " Last Change:	11 Oct 2000
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
-if version < 600
-  set iskeyword=@,48-57,_,128-167,224-235,-
-else
-  setlocal iskeyword=@,48-57,_,128-167,224-235,-
-endif
+setlocal iskeyword=@,48-57,_,128-167,224-235,-
 
 syn keyword omnimarkKeywords	ACTIVATE AGAIN
 syn keyword omnimarkKeywords	CATCH CLEAR CLOSE COPY COPY-CLEAR CROSS-TRANSLATE
@@ -96,26 +89,16 @@ syn match  omnimarkEscape contained +%[0-9][0-9]#+
 syn sync minlines=2000
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_omnimark_syntax_inits")
-  if version < 508
-    let did_omnimark_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink omnimarkCommands		Statement
-  HiLink omnimarkKeywords		Identifier
-  HiLink omnimarkString		String
-  HiLink omnimarkPatterns		Macro
-"  HiLink omnimarkNumber			Number
-  HiLink omnimarkComment		Comment
-  HiLink omnimarkEscape		Special
+hi def link omnimarkCommands		Statement
+hi def link omnimarkKeywords		Identifier
+hi def link omnimarkString		String
+hi def link omnimarkPatterns		Macro
+"  hi def link omnimarkNumber			Number
+hi def link omnimarkComment		Comment
+hi def link omnimarkEscape		Special
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "omnimark"
 

@@ -54,6 +54,9 @@ Example Vim script: >
 	EOF
 	endfunction
 <
+To see what version of Ruby you have: >
+	:ruby print RUBY_VERSION
+<
 
 						*:rubydo* *:rubyd* *E265*
 :[range]rubyd[o] {cmd}	Evaluate Ruby command {cmd} for each line in the

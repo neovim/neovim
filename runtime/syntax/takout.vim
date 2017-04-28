@@ -8,11 +8,8 @@
 
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -24,11 +21,7 @@ syn case match
 
 
 " Load TAK syntax file
-if version < 600
-  source <sfile>:p:h/tak.vim
-else
-  runtime! syntax/tak.vim
-endif
+runtime! syntax/tak.vim
 unlet b:current_syntax
 
 
@@ -70,31 +63,21 @@ syn match takoutError	     "<<< Error >>>"
 
 
 " Define the default highlighting
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_takout_syntax_inits")
-  if version < 508
-    let did_takout_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink takoutPos		   Statement
-  HiLink takoutNeg		   PreProc
-  HiLink takoutTitle		   Type
-  HiLink takoutFile		   takIncludeFile
-  HiLink takoutInteger		   takInteger
+hi def link takoutPos		   Statement
+hi def link takoutNeg		   PreProc
+hi def link takoutTitle		   Type
+hi def link takoutFile		   takIncludeFile
+hi def link takoutInteger		   takInteger
 
-  HiLink takoutSectionDelim	    Delimiter
-  HiLink takoutSectionTitle	   Exception
-  HiLink takoutHeaderDelim	   SpecialComment
-  HiLink takoutLabel		   Identifier
+hi def link takoutSectionDelim	    Delimiter
+hi def link takoutSectionTitle	   Exception
+hi def link takoutHeaderDelim	   SpecialComment
+hi def link takoutLabel		   Identifier
 
-  HiLink takoutError		   Error
+hi def link takoutError		   Error
 
-  delcommand HiLink
-endif
 
 
 let b:current_syntax = "takout"

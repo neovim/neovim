@@ -12,11 +12,8 @@
 "	Austin Ziegler <austin@halostatue.ca>,
 "	Markus Koenig <markus@stber-koenig.de>
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -320,52 +317,42 @@ if !exists("pascal_traditional")
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_pascal_syn_inits")
-  if version < 508
-    let did_pascal_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink pascalAcces		pascalStatement
-  HiLink pascalBoolean		Boolean
-  HiLink pascalComment		Comment
-  HiLink pascalConditional	Conditional
-  HiLink pascalConstant		Constant
-  HiLink pascalDelimiter	Identifier
-  HiLink pascalDirective	pascalStatement
-  HiLink pascalException	Exception
-  HiLink pascalFloat		Float
-  HiLink pascalFunction		Function
-  HiLink pascalLabel		Label
-  HiLink pascalMatrixDelimiter	Identifier
-  HiLink pascalModifier		Type
-  HiLink pascalNumber		Number
-  HiLink pascalOperator		Operator
-  HiLink pascalPredefined	pascalStatement
-  HiLink pascalPreProc		PreProc
-  HiLink pascalRepeat		Repeat
-  HiLink pascalSpaceError	Error
-  HiLink pascalStatement	Statement
-  HiLink pascalString		String
-  HiLink pascalStringEscape	Special
-  HiLink pascalStringEscapeGPC	Special
-  HiLink pascalStringError	Error
-  HiLink pascalStruct		pascalStatement
-  HiLink pascalSymbolOperator	pascalOperator
-  HiLink pascalTodo		Todo
-  HiLink pascalType		Type
-  HiLink pascalUnclassified	pascalStatement
-  "  HiLink pascalAsm		Assembler
-  HiLink pascalError		Error
-  HiLink pascalAsmKey		pascalStatement
-  HiLink pascalShowTab		Error
+hi def link pascalAcces		pascalStatement
+hi def link pascalBoolean		Boolean
+hi def link pascalComment		Comment
+hi def link pascalConditional	Conditional
+hi def link pascalConstant		Constant
+hi def link pascalDelimiter	Identifier
+hi def link pascalDirective	pascalStatement
+hi def link pascalException	Exception
+hi def link pascalFloat		Float
+hi def link pascalFunction		Function
+hi def link pascalLabel		Label
+hi def link pascalMatrixDelimiter	Identifier
+hi def link pascalModifier		Type
+hi def link pascalNumber		Number
+hi def link pascalOperator		Operator
+hi def link pascalPredefined	pascalStatement
+hi def link pascalPreProc		PreProc
+hi def link pascalRepeat		Repeat
+hi def link pascalSpaceError	Error
+hi def link pascalStatement	Statement
+hi def link pascalString		String
+hi def link pascalStringEscape	Special
+hi def link pascalStringEscapeGPC	Special
+hi def link pascalStringError	Error
+hi def link pascalStruct		pascalStatement
+hi def link pascalSymbolOperator	pascalOperator
+hi def link pascalTodo		Todo
+hi def link pascalType		Type
+hi def link pascalUnclassified	pascalStatement
+"  hi def link pascalAsm		Assembler
+hi def link pascalError		Error
+hi def link pascalAsmKey		pascalStatement
+hi def link pascalShowTab		Error
 
-  delcommand HiLink
-endif
 
 
 let b:current_syntax = "pascal"

@@ -12,10 +12,8 @@
 "
 " very basic things only (based on the modula2 and c files).
 
-if version < 600
-  " Remove any old syntax stuff hanging around
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -77,31 +75,21 @@ syn region modsim3String start=+"+ end=+"+
 syn match modsim3Literal "'[^']'\|''''"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_modsim3_syntax_inits")
-  if version < 508
-    let did_modsim3_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  " The default methods for highlighting.  Can be overridden later
-  HiLink modsim3Keyword	Statement
-  HiLink modsim3Block		Statement
-  HiLink modsim3Comment1	Comment
-  HiLink modsim3Comment2	Comment
-  HiLink modsim3String		String
-  HiLink modsim3Literal	Character
-  HiLink modsim3Include	Statement
-  HiLink modsim3Type		Type
-  HiLink modsim3ParenError	Error
-  HiLink modsim3Builtin	Function
-  HiLink modsim3BuiltinNoParen	Function
+" The default methods for highlighting.  Can be overridden later
+hi def link modsim3Keyword	Statement
+hi def link modsim3Block		Statement
+hi def link modsim3Comment1	Comment
+hi def link modsim3Comment2	Comment
+hi def link modsim3String		String
+hi def link modsim3Literal	Character
+hi def link modsim3Include	Statement
+hi def link modsim3Type		Type
+hi def link modsim3ParenError	Error
+hi def link modsim3Builtin	Function
+hi def link modsim3BuiltinNoParen	Function
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "modsim3"
 

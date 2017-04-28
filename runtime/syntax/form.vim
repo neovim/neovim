@@ -11,11 +11,8 @@
 " This syntax file is still in development. Please send suggestions
 " to the maintainer.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -109,49 +106,39 @@ syn match   formDirective	"^\=\.[a-zA-z][a-zA-Z0-9]*\>"
 syn sync ccomment formComment minlines=10
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_form_syn_inits")
-  if version < 508
-    let did_form_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink formConditional	Conditional
-  HiLink formNumber		Number
-  HiLink formStatement		Statement
-  HiLink formComment		Comment
-  HiLink formPreProc		PreProc
-  HiLink formDirective		PreProc
-  HiLink formType		Type
-  HiLink formString		String
-  HiLink formNestedString	String
-  HiLink formReserved           Error
-  HiLink formTodo               Todo
-  HiLink formSpecial            SpecialChar
+hi def link formConditional	Conditional
+hi def link formNumber		Number
+hi def link formStatement		Statement
+hi def link formComment		Comment
+hi def link formPreProc		PreProc
+hi def link formDirective		PreProc
+hi def link formType		Type
+hi def link formString		String
+hi def link formNestedString	String
+hi def link formReserved           Error
+hi def link formTodo               Todo
+hi def link formSpecial            SpecialChar
 
-  if !exists("form_enhanced_color")
-    HiLink formHeaderStatement	Statement
-  else
-  " enhanced color mode
-    HiLink formHeaderStatement	HeaderStatement
-    " dark and a light background for local types
-    if &background == "dark"
-      hi HeaderStatement term=underline ctermfg=LightGreen guifg=LightGreen gui=bold
-    else
-      hi HeaderStatement term=underline ctermfg=DarkGreen guifg=SeaGreen gui=bold
-    endif
-    " change slightly the default for dark gvim
-    if has("gui_running") && &background == "dark"
-      hi Conditional guifg=LightBlue gui=bold
-      hi Statement guifg=LightYellow
-    endif
-  endif
-
-  delcommand HiLink
+if !exists("form_enhanced_color")
+hi def link formHeaderStatement	Statement
+else
+" enhanced color mode
+hi def link formHeaderStatement	HeaderStatement
+" dark and a light background for local types
+if &background == "dark"
+hi HeaderStatement term=underline ctermfg=LightGreen guifg=LightGreen gui=bold
+else
+hi HeaderStatement term=underline ctermfg=DarkGreen guifg=SeaGreen gui=bold
 endif
+" change slightly the default for dark gvim
+if has("gui_running") && &background == "dark"
+hi Conditional guifg=LightBlue gui=bold
+hi Statement guifg=LightYellow
+endif
+endif
+
 
   let b:current_syntax = "form"
 

@@ -19,9 +19,8 @@
 "   let fstab_unknown_device_errors = 0
 "     do not highlight unknown devices as errors
 
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -229,65 +228,56 @@ syn match fsFreqPass /\s\+.\{-}$/ contains=@fsFreqPassCluster,@fsGeneralCluster 
 " Whole line comments
 syn match fsCommentLine /^#.*$/ contains=@Spell
 
-if version >= 508 || !exists("did_config_syntax_inits")
-	if version < 508
-		let did_config_syntax_inits = 1
-		command! -nargs=+ HiLink hi link <args>
-	else
-		command! -nargs=+ HiLink hi def link <args>
-	endif
 
-	HiLink fsOperator Operator
-	HiLink fsComment Comment
-	HiLink fsCommentLine Comment
+hi def link fsOperator Operator
+hi def link fsComment Comment
+hi def link fsCommentLine Comment
 
-	HiLink fsTypeKeyword Type
-	HiLink fsDeviceKeyword Identifier
-	HiLink fsDeviceLabel String
-	HiLink fsDeviceUUID String
-	HiLink fsDeviceSshfs String
-	HiLink fsFreqPassNumber Number
+hi def link fsTypeKeyword Type
+hi def link fsDeviceKeyword Identifier
+hi def link fsDeviceLabel String
+hi def link fsDeviceUUID String
+hi def link fsDeviceSshfs String
+hi def link fsFreqPassNumber Number
 
-	if exists('fstab_unknown_fs_errors') && fstab_unknown_fs_errors == 1
-		HiLink fsTypeUnknown Error
-	endif
-
-	if !exists('fstab_unknown_device_errors') || fstab_unknown_device_errors == 1
-		HiLink fsDeviceError Error
-	endif
-
-	HiLink fsMountPointError Error
-	HiLink fsMountPointKeyword Keyword
-	HiLink fsFreqPassError Error
-
-	HiLink fsOptionsGeneral Type
-	HiLink fsOptionsKeywords Keyword
-	HiLink fsOptionsNumber Number
-	HiLink fsOptionsNumberOctal Number
-	HiLink fsOptionsString String
-	HiLink fsOptionsSize Number
-	HiLink fsOptionsExt2Check String
-	HiLink fsOptionsExt2Errors String
-	HiLink fsOptionsExt3Journal String
-	HiLink fsOptionsExt3Data String
-	HiLink fsOptionsExt4Journal String
-	HiLink fsOptionsExt4Data String
-	HiLink fsOptionsExt4Barrier Number
-	HiLink fsOptionsFatCheck String
-	HiLink fsOptionsConv String
-	HiLink fsOptionsFatType Number
-	HiLink fsOptionsYesNo String
-	HiLink fsOptionsHpfsCase String
-	HiLink fsOptionsIsoMap String
-	HiLink fsOptionsReiserHash String
-	HiLink fsOptionsSshYesNoAsk String
-	HiLink fsOptionsUfsType String
-	HiLink fsOptionsUfsError String
-
-	HiLink fsOptionsVfatShortname String
-
-	delcommand HiLink
+if exists('fstab_unknown_fs_errors') && fstab_unknown_fs_errors == 1
+hi def link fsTypeUnknown Error
 endif
+
+if !exists('fstab_unknown_device_errors') || fstab_unknown_device_errors == 1
+hi def link fsDeviceError Error
+endif
+
+hi def link fsMountPointError Error
+hi def link fsMountPointKeyword Keyword
+hi def link fsFreqPassError Error
+
+hi def link fsOptionsGeneral Type
+hi def link fsOptionsKeywords Keyword
+hi def link fsOptionsNumber Number
+hi def link fsOptionsNumberOctal Number
+hi def link fsOptionsString String
+hi def link fsOptionsSize Number
+hi def link fsOptionsExt2Check String
+hi def link fsOptionsExt2Errors String
+hi def link fsOptionsExt3Journal String
+hi def link fsOptionsExt3Data String
+hi def link fsOptionsExt4Journal String
+hi def link fsOptionsExt4Data String
+hi def link fsOptionsExt4Barrier Number
+hi def link fsOptionsFatCheck String
+hi def link fsOptionsConv String
+hi def link fsOptionsFatType Number
+hi def link fsOptionsYesNo String
+hi def link fsOptionsHpfsCase String
+hi def link fsOptionsIsoMap String
+hi def link fsOptionsReiserHash String
+hi def link fsOptionsSshYesNoAsk String
+hi def link fsOptionsUfsType String
+hi def link fsOptionsUfsError String
+
+hi def link fsOptionsVfatShortname String
+
 
 let b:current_syntax = "fstab"
 

@@ -749,7 +749,7 @@ func! s:CssPrevNonComment(lnum, stopline)
   while 1
     let ccol = match(getline(lnum), '\*/')
     if ccol < 0
-      " No comment end thus its something else.
+      " No comment end thus it's something else.
       return lnum
     endif
     call cursor(lnum, ccol + 1)

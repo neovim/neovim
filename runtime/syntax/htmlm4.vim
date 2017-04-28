@@ -4,11 +4,8 @@
 " URL:		http://www.fleiner.com/vim/syntax/htmlm4.vim
 " Last Change:	2001 Apr 30
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -17,19 +14,12 @@ if !exists("main_syntax")
   let main_syntax='htmlm4'
 endif
 
-if version < 600
-  so <sfile>:p:h/html.vim
-else
-  runtime! syntax/html.vim
-endif
+runtime! syntax/html.vim
 unlet b:current_syntax
 syn case match
 
-if version < 600
-  so <sfile>:p:h/m4.vim
-else
-  runtime! syntax/m4.vim
-endif
+runtime! syntax/m4.vim
+
 unlet b:current_syntax
 syn cluster htmlPreproc add=@m4Top
 syn cluster m4StringContents add=htmlTag,htmlEndTag

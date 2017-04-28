@@ -565,6 +565,17 @@ These maps can be disabled with >
 	:let g:no_pdf_maps = 1
 <
 
+PYTHON						*ft-python-plugin* *PEP8*
+
+By default the following options are set, in accordance with PEP8: >
+
+	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
+
+To disable this behaviour, set the following variable in your vimrc: >
+	
+	let g:python_recommended_style = 0
+
+
 RPM SPEC						*ft-spec-plugin*
 
 Since the text for this plugin is rather long it has been put in a separate

@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2016 Aug 14
+" Last Change:	2016 Sep 14
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
@@ -36,11 +36,8 @@
 "   let python_highlight_all = 1
 "
 
-" For version 5.x: Clear all syntax items.
-" For version 6.x: Quit when a syntax file was already loaded.
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded.
+if exists("b:current_syntax")
   finish
 endif
 
@@ -91,14 +88,14 @@ syn keyword pythonAsync		async await
 " followed by decorator name, optional parenthesized list of arguments,
 " and the next line with either def, class, or another decorator.
 syn match   pythonDecorator
-  \ "\%(\%(^\s*\)\%(\%(>>>\|\.\.\.\)\s\+\)\=\)\zs@\%(\s*\h\%(\w\|\.\)*\%(([^)]*)\)\=\s*\n\s*\%(\.\.\.\s\+\)\=\%(@\s*\h\|\%(def\|class\)\s\+\)\)\@="
+  \ "\%(\%(^\s*\)\%(\%(>>>\|\.\.\.\)\s\+\)\=\)\zs@\%(\s*\h\%(\w\|\.\)*\s*\%((\_\s\{-}[^)]\_.\{-})\s*\)\=\%(#.*\)\=\n\s*\%(\.\.\.\s\+\)\=\%(@\s*\h\|\%(def\|class\)\s\+\)\)\@="
   \ display nextgroup=pythonDecoratorName skipwhite
 
 " A dot must be allowed because of @MyClass.myfunc decorators.
 " It must be preceded by a decorator symbol and on a separate line from
 " a function/class it decorates.
 syn match   pythonDecoratorName
-  \ "\%(@\s*\)\@<=\h\%(\w\|\.\)*\%(\%(([^)]*)\)\=\s*\n\)\@="
+  \ "\%(@\s*\)\@<=\h\%(\w\|\.\)*\%(\s*\%((\_\s\{-}[^)]\_.\{-})\s*\)\=\%(#.*\)\=\n\)\@="
   \ contained display nextgroup=pythonFunction skipnl
 
 " The zero-length non-grouping match of def or class before the function
@@ -292,50 +289,39 @@ endif
 " Sync at the beginning of class, function, or method definition.
 syn sync match pythonSync grouphere NONE "^\s*\%(def\|class\)\s\+\h\w*\s*("
 
-if version >= 508 || !exists("did_python_syn_inits")
-  if version <= 508
-    let did_python_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-
-  " The default highlight links.  Can be overridden later.
-  HiLink pythonStatement	Statement
-  HiLink pythonConditional	Conditional
-  HiLink pythonRepeat		Repeat
-  HiLink pythonOperator		Operator
-  HiLink pythonException	Exception
-  HiLink pythonInclude		Include
-  HiLink pythonAsync		Statement
-  HiLink pythonDecorator	Define
-  HiLink pythonDecoratorName	Function
-  HiLink pythonFunction		Function
-  HiLink pythonComment		Comment
-  HiLink pythonTodo		Todo
-  HiLink pythonString		String
-  HiLink pythonRawString	String
-  HiLink pythonQuotes		String
-  HiLink pythonTripleQuotes	pythonQuotes
-  HiLink pythonEscape		Special
-  if !exists("python_no_number_highlight")
-    HiLink pythonNumber		Number
-  endif
-  if !exists("python_no_builtin_highlight")
-    HiLink pythonBuiltin	Function
-  endif
-  if !exists("python_no_exception_highlight")
-    HiLink pythonExceptions	Structure
-  endif
-  if exists("python_space_error_highlight")
-    HiLink pythonSpaceError	Error
-  endif
-  if !exists("python_no_doctest_highlight")
-    HiLink pythonDoctest	Special
-    HiLink pythonDoctestValue	Define
-  endif
-
-  delcommand HiLink
+" The default highlight links.  Can be overridden later.
+hi def link pythonStatement		Statement
+hi def link pythonConditional		Conditional
+hi def link pythonRepeat		Repeat
+hi def link pythonOperator		Operator
+hi def link pythonException		Exception
+hi def link pythonInclude		Include
+hi def link pythonAsync			Statement
+hi def link pythonDecorator		Define
+hi def link pythonDecoratorName		Function
+hi def link pythonFunction		Function
+hi def link pythonComment		Comment
+hi def link pythonTodo			Todo
+hi def link pythonString		String
+hi def link pythonRawString		String
+hi def link pythonQuotes		String
+hi def link pythonTripleQuotes		pythonQuotes
+hi def link pythonEscape		Special
+if !exists("python_no_number_highlight")
+  hi def link pythonNumber		Number
+endif
+if !exists("python_no_builtin_highlight")
+  hi def link pythonBuiltin		Function
+endif
+if !exists("python_no_exception_highlight")
+  hi def link pythonExceptions		Structure
+endif
+if exists("python_space_error_highlight")
+  hi def link pythonSpaceError		Error
+endif
+if !exists("python_no_doctest_highlight")
+  hi def link pythonDoctest		Special
+  hi def link pythonDoctestValue	Define
 endif
 
 let b:current_syntax = "python"

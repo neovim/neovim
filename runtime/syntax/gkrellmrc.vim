@@ -6,19 +6,12 @@
 " URL: http://trific.ath.cx/Ftp/vim/syntax/gkrellmrc.vim
 
 " Setup
-if version >= 600
-	if exists("b:current_syntax")
-		finish
-	endif
-else
-	syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+	finish
 endif
 
-if version >= 600
-	setlocal iskeyword=_,-,a-z,A-Z,48-57
-else
-	set iskeyword=_,-,a-z,A-Z,48-57
-endif
+setlocal iskeyword=_,-,a-z,A-Z,48-57
 
 syn case match
 
@@ -55,37 +48,28 @@ syn keyword gkrellmrcStyleCmd StyleMeter StyleChart StylePanel
 syn keyword gkrellmrcStyleItem textcolor alt_textcolor font alt_font transparency border label_position margin margins left_margin right_margin top_margin bottom_margin krell_depth krell_yoff krell_x_hot krell_expand krell_left_margin krell_right_margin
 
 " Define the default highlighting
-if version >= 508 || !exists("did_gtkrc_syntax_inits")
-	if version < 508
-		let did_gtkrc_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
 
-	HiLink gkrellmrcComment Comment
-	HiLink gkrellmrcFixme Todo
+hi def link gkrellmrcComment Comment
+hi def link gkrellmrcFixme Todo
 
-	HiLink gkrellmrcString gkrellmrcConstant
-	HiLink gkrellmrcNumber gkrellmrcConstant
-	HiLink gkrellmrcRGBColor gkrellmrcConstant
-	HiLink gkrellmrcExpandMode gkrellmrcConstant
-	HiLink gkrellmrcConstant Constant
+hi def link gkrellmrcString gkrellmrcConstant
+hi def link gkrellmrcNumber gkrellmrcConstant
+hi def link gkrellmrcRGBColor gkrellmrcConstant
+hi def link gkrellmrcExpandMode gkrellmrcConstant
+hi def link gkrellmrcConstant Constant
 
-	HiLink gkrellmrcMeterName gkrellmrcClass
-	HiLink gkrellmrcChartName gkrellmrcClass
-	HiLink gkrellmrcSpecialClassName gkrellmrcClass
-	HiLink gkrellmrcClass Type
+hi def link gkrellmrcMeterName gkrellmrcClass
+hi def link gkrellmrcChartName gkrellmrcClass
+hi def link gkrellmrcSpecialClassName gkrellmrcClass
+hi def link gkrellmrcClass Type
 
-	HiLink gkrellmrcGlobal gkrellmrcItem
-	HiLink gkrellmrcBuiltinExt gkrellmrcItem
-	HiLink gkrellmrcStyleItem gkrellmrcItem
-	HiLink gkrellmrcItem Function
+hi def link gkrellmrcGlobal gkrellmrcItem
+hi def link gkrellmrcBuiltinExt gkrellmrcItem
+hi def link gkrellmrcStyleItem gkrellmrcItem
+hi def link gkrellmrcItem Function
 
-	HiLink gkrellmrcSetCmd Special
-	HiLink gkrellmrcStyleCmd Statement
+hi def link gkrellmrcSetCmd Special
+hi def link gkrellmrcStyleCmd Statement
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "gkrellmrc"
