@@ -138,8 +138,6 @@ static int cmd_showtail;                /* Only show path tail in lists ? */
 
 static int new_cmdpos;          /* position set by set_cmdline_pos() */
 
-static bool cmdline_external = false;
-
 /*
  * Type used by call_user_expand_func
  */
@@ -734,7 +732,7 @@ static int command_line_execute(VimState *state, int key)
       }
 
       if (!cmd_silent) {
-        if (!cmdline_external) {
+        if (!ui_is_external(kUICmdline)) {
           ui_cursor_goto(msg_row, 0);
         }
         ui_flush();
@@ -1675,12 +1673,12 @@ getcmdline (
     int indent               // indent for inside conditionals
 )
 {
-  if (cmdline_external) {
+  if (ui_is_external(kUICmdline)) {
     Array args = ARRAY_DICT_INIT;
     ui_event("cmdline_enter", args);
   }
   char_u *p = command_line_enter(firstc, count, indent);
-  if (cmdline_external) {
+  if (ui_is_external(kUICmdline)) {
     Array args = ARRAY_DICT_INIT;
     ui_event("cmdline_leave", args);
   }
@@ -2190,11 +2188,8 @@ static void draw_cmdline(int start, int len)
 {
   int i;
 
-  if (cmdline_external) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
-    ADD(args, INTEGER_OBJ(ccline.cmdpos));
-    ui_event("cmdline", args);
+  if (ui_is_external(kUICmdline)) {
+    ui_ext_cmdline_show();
     return;
   }
 
@@ -2286,6 +2281,32 @@ static void draw_cmdline(int start, int len)
     msg_outtrans_len(ccline.cmdbuff + start, len);
 }
 
+void ui_ext_cmdline_char(int c, int shift)
+{
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(&c))));
+    ADD(args, INTEGER_OBJ(shift));
+    ui_event("cmdline_char", args);
+}
+
+void ui_ext_cmdline_show(void)
+{
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+    ADD(args, INTEGER_OBJ(ccline.cmdpos));
+    if (ccline.cmdfirstc != NUL) {
+      ADD(args, STRING_OBJ(cstr_to_string((char *)(&ccline.cmdfirstc))));
+    } else {
+      ADD(args, STRING_OBJ(cstr_to_string("")));
+    }
+    if (ccline.cmdprompt != NULL) {
+      ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdprompt))));
+    } else {
+      ADD(args, STRING_OBJ(cstr_to_string("")));
+    }
+    ui_event("cmdline_show", args);
+}
+
 /*
  * Put a character on the command line.  Shifts the following text to the
  * right when "shift" is TRUE.  Used for CTRL-V, CTRL-K, etc.
@@ -2293,29 +2314,17 @@ static void draw_cmdline(int start, int len)
  */
 void putcmdline(int c, int shift)
 {
-  if (cmd_silent)
+  if (cmd_silent) {
     return;
-  if (!cmdline_external) {
+  }
+  if (!ui_is_external(kUICmdline)) {
     msg_no_more = TRUE;
     msg_putchar(c);
     if (shift)
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     msg_no_more = FALSE;
   } else {
-      char_u *p;
-      if (ccline.cmdpos == ccline.cmdlen || shift) {
-        p = vim_strnsave(ccline.cmdbuff, ccline.cmdlen + 1);
-      } else {
-        p = vim_strsave(ccline.cmdbuff);
-      }
-      p[ccline.cmdpos] = c;
-      if (shift)
-        STRCPY(p + ccline.cmdpos + 1, ccline.cmdbuff + ccline.cmdpos);
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, STRING_OBJ(cstr_to_string((char *)(p))));
-      ADD(args, INTEGER_OBJ(ccline.cmdpos));
-      ui_event("cmdline", args);
-      xfree(p);
+    ui_ext_cmdline_char(c, shift);
   }
   cursorcmd();
   ui_cursor_shape();
@@ -2665,27 +2674,19 @@ static void redrawcmdprompt(void)
 
   if (cmd_silent)
     return;
+  if (ui_is_external(kUICmdline)) {
+    ui_ext_cmdline_show();
+    return;
+  }
   if (ccline.cmdfirstc != NUL) {
-    if (cmdline_external) {
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, STRING_OBJ(cstr_to_string((char *)(&ccline.cmdfirstc))));
-      ui_event("cmdline_firstc", args);
-    } else {
-      msg_putchar(ccline.cmdfirstc);
-    }
+    msg_putchar(ccline.cmdfirstc);
   }
   if (ccline.cmdprompt != NULL) {
-    if (cmdline_external) {
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdprompt))));
-      ui_event("cmdline_prompt", args);
-    } else {
-      msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
-      ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
-      // do the reverse of set_cmdspos()
-      if (ccline.cmdfirstc != NUL) {
-        ccline.cmdindent--;
-      }
+    msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
+    ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
+    // do the reverse of set_cmdspos()
+    if (ccline.cmdfirstc != NUL) {
+      ccline.cmdindent--;
     }
   } else {
     for (i = ccline.cmdindent; i > 0; i--) {
@@ -2702,7 +2703,7 @@ void redrawcmd(void)
   if (cmd_silent)
     return;
 
-  if (cmdline_external) {
+  if (ui_is_external(kUICmdline)) {
     draw_cmdline(0, ccline.cmdlen);
     return;
   }
@@ -2750,7 +2751,7 @@ static void cursorcmd(void)
   if (cmd_silent)
     return;
 
-  if (cmdline_external) {
+  if (ui_is_external(kUICmdline)) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ(ccline.cmdpos));
     ui_event("cmdline_pos", args);
@@ -2774,7 +2775,7 @@ static void cursorcmd(void)
 
 void gotocmdline(int clr)
 {
-  if (cmdline_external) {
+  if (ui_is_external(kUICmdline)) {
       return;
   }
   msg_start();
@@ -5588,14 +5589,4 @@ histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
   *new_hisidx = &(hisidx[history_type]);
   *new_hisnum = &(hisnum[history_type]);
   return history[history_type];
-}
-
-void cmdline_set_external(bool external)
-{
-  cmdline_external = external;
-}
-
-bool cmdline_get_external(void)
-{
-  return cmdline_external;
 }

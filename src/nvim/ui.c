@@ -169,7 +169,6 @@ void ui_refresh(void)
   }
 
   row = col = 0;
-  cmdline_set_external(cmdline_external);
   screen_resize(width, height);
   for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
     ui_set_external(i, ext_widgets[i]);

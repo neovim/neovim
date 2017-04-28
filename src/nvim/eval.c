@@ -11095,12 +11095,16 @@ void get_user_input(const typval_T *const argvars,
     if (p == NULL) {
       p = prompt;
     } else {
-      p++;
-      msg_start();
-      msg_clr_eos();
-      msg_puts_attr_len(prompt, p - prompt, echo_attr);
-      msg_didout = false;
-      msg_starthere();
+      if (p == NULL) {
+        p = prompt;
+      } else {
+        p++;
+        msg_start();
+        msg_clr_eos();
+        msg_puts_attr_len(prompt, p - prompt, echo_attr);
+        msg_didout = false;
+        msg_starthere();
+      }
     }
   }
   cmdline_row = msg_row;

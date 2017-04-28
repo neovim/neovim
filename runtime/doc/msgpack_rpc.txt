@@ -260,22 +260,12 @@ a dictionary with these (optional) keys:
 				colors.
 				Set to false to use terminal color codes (at
 				most 256 different colors).
-
 	`ext_popupmenu`		Externalize the popupmenu. |ui-ext-popupmenu|
 	`ext_tabline`		Externalize the tabline. |ui-ext-tabline|
+	`ext_cmdline`		Externalize the cmdline. |ui-ext-cmdline|
 				Externalized widgets will not be drawn by
 				Nvim; only high-level data will be published
 				in new UI event kinds.
-
-	`popupmenu_external`:	Instead of drawing the completion popupmenu on
-				the grid, Nvim will send higher-level events to
-				the ui and let it draw the popupmenu.
-				Defaults to false.
-	cmdline_external:	Instead of drawing the cmdline on
-				the grid, Nvim will send higher-level events to
-				the ui and let it draw the cmdline.
-				Defaults to false.
-
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
 and a single argument, an array of screen updates (described below).  These
@@ -452,20 +442,14 @@ states might be represented as separate modes.
 	curtab:	  Current Tabpage
 	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
 
+							*ui-ext-cmdline*
 ["cmdline_enter"]
 	Enter the cmdline.
 
 ["cmdline_leave"]
 	Leave the cmdline.
 
-["cmdline_firstc", firstc]
-        The first character of the command, which could be : / ? etc. With
-	the firstc, you know wheither it's a command or a search.
-
-["cmdline_prompt", prompt]
-        The prompt of the cmdline.
-
-["cmdline", content, pos]
+["cmdline_show", content, pos, firstc, prompt]
 	When cmdline_external is set to true, nvim will not draw the cmdline
 	on the grad, instead nvim will send ui events of the cmdline content
 	and cursor position to the remote ui. The content is the full content
