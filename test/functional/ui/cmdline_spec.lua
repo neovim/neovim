@@ -118,6 +118,8 @@ describe('External command line completion', function()
                                  |
       ]], nil, nil, function()
         eq("3", content)
+        eq("\"", char)
+        eq(1, shift)
       end)
 
     end)
