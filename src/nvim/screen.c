@@ -2136,6 +2136,100 @@ static int get_match_attr_at_column(win_T* wp, long column) {
   return attr;
 }
 
+struct MatchConceal {
+  bool has_match;
+  bool is_first;
+  int conceal_char;
+};
+
+static struct MatchConceal get_match_conceal(win_T* wp, linenr_T lnum,
+                                             char_u *line, long diff) {
+  int conceal_id = syn_name2id((char_u *)"Conceal");
+
+  char_u *ptr = (char_u*)(line + diff);
+  matchitem_T *current_match = wp->w_match_head;
+  match_T* shl;
+  bool shl_flag = false;
+
+  struct MatchConceal result = {
+    .has_match    = false,
+    .is_first     = false,
+    .conceal_char = 0
+  };
+
+  while (current_match != NULL || shl_flag == false) {
+    if (shl_flag == false
+        && ((current_match != NULL
+             && current_match->priority > SEARCH_HL_PRIORITY)
+            || current_match == NULL)) {
+      shl = &search_hl;
+      shl_flag = true;
+    } else {
+      shl = &current_match->hl;
+    }
+
+    if (current_match != NULL) {
+      current_match->pos.cur= 0;
+    }
+    bool pos_inprogress = true; // mark that a position match search is
+    // in progress
+    while (shl->rm.regprog != NULL
+           || (current_match != NULL && pos_inprogress)) {
+      if (shl->startcol != MAXCOL
+          && diff >= (long)shl->startcol
+          && diff < (long)shl->endcol) {
+        int tmp_col = diff + MB_PTR2LEN(ptr);
+
+        if (shl->endcol < tmp_col) {
+          shl->endcol = tmp_col;
+        }
+        shl->attr_cur = shl->attr;
+        if (current_match != NULL && conceal_id == current_match->hlg_id) {
+          result.has_match    = true;
+          result.is_first     = diff == (long)shl->startcol ? 2 : 1;
+          result.conceal_char = current_match->conceal_char;
+        } else {
+          result.has_match    = false;
+          result.conceal_char = 0;
+        }
+      } else if (diff == (long)shl->endcol) {
+        shl->attr_cur = 0;
+
+        next_search_hl(wp, shl, lnum, (colnr_T)diff,
+                       shl == &search_hl ? NULL : current_match);
+        pos_inprogress = !(current_match == NULL || current_match->pos.cur== 0);
+
+        // Need to get the line again, a multi-line regexp
+        // may have made it invalid.
+        line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+        ptr = line + diff;
+
+        if (shl->lnum == lnum) {
+          shl->startcol = shl->rm.startpos[0].col;
+          if (shl->rm.endpos[0].lnum == 0)
+            shl->endcol = shl->rm.endpos[0].col;
+          else
+            shl->endcol = MAXCOL;
+
+          if (shl->startcol == shl->endcol) {
+            // highlight empty match, try again after it
+            shl->endcol += (*mb_ptr2len)(line + shl->endcol);
+          }
+
+          // Loop to check if the match starts at the current position
+          continue;
+        }
+      }
+      break;
+    }
+    if (shl != &search_hl && current_match != NULL) {
+      current_match = current_match->next;
+    }
+  }
+
+  return result;
+}
+
 static bool init_syntax(int lnum, win_T* wp) {
   int save_did_emsg;
   if (syntax_present(wp) && !wp->w_s->b_syn_error) {
@@ -2377,8 +2471,6 @@ win_line (
 
   int tabstop = (int)wp->w_buffer->b_p_ts;
 
-  int conceal_id = syn_name2id((char_u *)"Conceal");
-
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_visualhl = false;            // this buffer has visual
   bool has_incsearchhl = false;         // this buffer has incsearch matches
@@ -2404,11 +2496,16 @@ win_line (
   bool is_concealing  = false;
   int boguscols       = 0;              ///< nonexistent columns added to
                                         ///< force wrapping
+  int old_boguscols   = 0;
   int vcol_off        = 0;              ///< offset for concealed characters
   int did_wcol        = false;
-  int match_conc      = 0;              ///< cchar for match functions
-  int has_match_conc  = 0;              ///< match wants to conceal
-  int old_boguscols = 0;
+
+  struct MatchConceal match_conceal = {
+    .has_match = false,
+    .is_first = false,
+    .conceal_char = 0
+  };
+
 # define VCOL_HLC (vcol - vcol_off)
 # define FIX_FOR_BOGUSCOLS \
   { \
@@ -2814,7 +2911,8 @@ win_line (
 
   // Repeat for the whole displayed line.
   for (;; ) {
-    has_match_conc = 0;
+    match_conceal.has_match = false;
+
     // Skip this quickly when working on the text.
     if (draw_state != WL_LINE) {
       if (draw_state == WL_CMDLINE - 1 && n_extra == 0) {
@@ -3036,73 +3134,14 @@ win_line (
          * priority).
          */
         long diff = (long)(ptr - line);
-        current_match = wp->w_match_head;
-        shl_flag = false;
-        while (current_match != NULL || shl_flag == false) {
-          if (shl_flag == false
-              && ((current_match != NULL
-                   && current_match->priority > SEARCH_HL_PRIORITY)
-                  || current_match == NULL)) {
-            shl = &search_hl;
-            shl_flag = true;
-          } else
-            shl = &current_match->hl;
-          if (current_match != NULL) {
-            current_match->pos.cur= 0;
-          }
-          bool pos_inprogress = true; // mark that a position match search is
-                                      // in progress
-          while (shl->rm.regprog != NULL
-                                 || (current_match != NULL && pos_inprogress)) {
-            if (shl->startcol != MAXCOL
-                && diff >= (long)shl->startcol
-                && diff < (long)shl->endcol) {
-              int tmp_col = diff + MB_PTR2LEN(ptr);
 
-              if (shl->endcol < tmp_col) {
-                shl->endcol = tmp_col;
-              }
-              shl->attr_cur = shl->attr;
-              if (current_match != NULL && conceal_id == current_match->hlg_id) {
-                has_match_conc = diff == (long)shl->startcol ? 2 : 1;
-                match_conc = current_match->conceal_char;
-              } else {
-                has_match_conc = match_conc = 0;
-              }
-            } else if (diff == (long)shl->endcol) {
-              shl->attr_cur = 0;
+        match_conceal = get_match_conceal(wp, lnum, line, diff);
 
-              next_search_hl(wp, shl, lnum, (colnr_T)diff,
-                             shl == &search_hl ? NULL : current_match);
-              pos_inprogress = !(current_match == NULL || current_match->pos.cur== 0);
+        // Need to get the line again, a multi-line regexp
+        // may have made it invalid.
+        line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+        ptr  = line + diff;
 
-              /* Need to get the line again, a multi-line regexp
-               * may have made it invalid. */
-              line = ml_get_buf(wp->w_buffer, lnum, FALSE);
-              ptr = line + diff;
-
-              if (shl->lnum == lnum) {
-                shl->startcol = shl->rm.startpos[0].col;
-                if (shl->rm.endpos[0].lnum == 0)
-                  shl->endcol = shl->rm.endpos[0].col;
-                else
-                  shl->endcol = MAXCOL;
-
-                if (shl->startcol == shl->endcol) {
-                  // highlight empty match, try again after it
-                  shl->endcol += (*mb_ptr2len)(line + shl->endcol);
-                }
-
-                /* Loop to check if the match starts at the
-                 * current position */
-                continue;
-              }
-            }
-            break;
-          }
-          if (shl != &search_hl && current_match != NULL)
-            current_match = current_match->next;
-        }
 
         /* Use attributes from match with highest priority among
          * 'search_hl' and the match list. */
@@ -3689,17 +3728,18 @@ win_line (
       }
 
       if (should_conceal_line(wp, lnum, lnum_in_visual_area)
-          && ((syntax_flags & HL_CONCEAL) != 0 || has_match_conc > 0)) {
+          && ((syntax_flags & HL_CONCEAL) != 0 || match_conceal.has_match)) {
 
         char_attr = conceal_attr;
-        if ((prev_syntax_id != syntax_seqnr || has_match_conc > 1)
-            && (syn_get_sub_char() != NUL || match_conc
+        if ((prev_syntax_id != syntax_seqnr || match_conceal.is_first)
+            && (syn_get_sub_char() != NUL
+                || match_conceal.conceal_char
                 || wp->w_p_cole == 1)
             && wp->w_p_cole != 3) {
           // First time at this concealed item: display one
           // character.
-          if (match_conc) {
-            c = match_conc;
+          if (match_conceal.conceal_char) {
+            c = match_conceal.conceal_char;
           } else if (syn_get_sub_char() != NUL) {
             c = syn_get_sub_char();
           } else if (lcs_conceal != NUL) {
