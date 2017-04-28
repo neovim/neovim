@@ -2190,6 +2190,7 @@ static struct MatchConceal get_match_conceal(win_T* wp, linenr_T lnum,
           result.conceal_char = current_match->conceal_char;
         } else {
           result.has_match    = false;
+          result.is_first     = false;
           result.conceal_char = 0;
         }
       } else if (diff == (long)shl->endcol) {
