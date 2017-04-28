@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Aug 31, 2016
-" Version:		162
+" Last Change:		Sep 22, 2016
+" Version:		165
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -170,7 +170,7 @@ if exists("b:is_kornshell") || exists("b:is_bash")
 
  " Touch: {{{1
  " =====
- syn match shTouch	'\<touch\>[^;#]*'	skipwhite nextgroup=shComment contains=shTouchCmd
+ syn match shTouch	'\<touch\>[^;#]*'	skipwhite nextgroup=shComment contains=shTouchCmd,shDoubleQuote,shSingleQuote,shDeref,shDerefSimple
  syn match shTouchCmd	'\<touch\>'		contained
 endif
 
@@ -220,7 +220,7 @@ syn region shSubSh transparent matchgroup=shSubShRegion start="[^(]\zs(" end=")"
 "=======
 syn region shExpr	matchgroup=shRange start="\[" skip=+\\\\\|\\$\|\[+ end="\]" contains=@shTestList,shSpecial
 syn region shTest	transparent matchgroup=shStatement start="\<test\s" skip=+\\\\\|\\$+ matchgroup=NONE end="[;&|]"me=e-1 end="$" contains=@shExprList1
-syn region shNoQuote	start='\S'	skip='\%(\\\\\)*\\.'	end='\ze\s'	contained
+syn region shNoQuote	start='\S'	skip='\%(\\\\\)*\\.'	end='\ze\s'	contained contains=shDerefSimple,shDeref
 syn match  shAstQuote	contained	'\*\ze"'	nextgroup=shString
 syn match  shTestOpr	contained	'[^-+/%]\zs=' skipwhite nextgroup=shTestDoubleQuote,shTestSingleQuote,shTestPattern
 syn match  shTestOpr	contained	"<=\|>=\|!=\|==\|=\~\|-.\>\|-\(nt\|ot\|ef\|eq\|ne\|lt\|le\|gt\|ge\)\>\|[!<>]"
@@ -355,7 +355,11 @@ syn region  shBkslshDblQuote	contained	matchgroup=shQuote start=+"+ skip=+\\"+ e
 " Comments: {{{1
 "==========
 syn cluster	shCommentGroup	contains=shTodo,@Spell
-syn keyword	shTodo	contained		COMBAK FIXME TODO XXX
+if exists("b:is_bash")
+ syn match	shTodo	contained		"\<\%(COMBAK\|FIXME\|TODO\|XXX\)\ze:\=\>"
+else
+ syn keyword	shTodo	contained		COMBAK FIXME TODO XXX
+endif
 syn match	shComment		"^\s*\zs#.*$"	contains=@shCommentGroup
 syn match	shComment		"\s\zs#.*$"	contains=@shCommentGroup
 syn match	shComment	contained	"#.*$"	contains=@shCommentGroup
@@ -381,7 +385,7 @@ ShFoldHereDoc syn region shHereDoc matchgroup=shHereDoc15 start="<<-\s*\\\z([^ \
 
 " Here Strings: {{{1
 " =============
-" available for: bash; ksh (really should be ksh93 only) but not if it's a posix
+" available for: bash; ksh (really should be ksh93 only) but not if its a posix
 if exists("b:is_bash") || (exists("b:is_kornshell") && !exists("g:is_posix"))
  syn match shHereString "<<<"	skipwhite	nextgroup=shCmdParenRegion
 endif
