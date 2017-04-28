@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Aug 26
+" Last Change:	2016 Sep 15
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -671,6 +671,9 @@ au BufNewFile,BufRead *.dts,*.dtsi		setf dts
 
 " EDIF (*.edf,*.edif,*.edn,*.edo)
 au BufNewFile,BufRead *.ed\(f\|if\|n\|o\)	setf edif
+
+" EditorConfig (close enough to dosini)
+au BufNewFile,BufRead .editorconfig		setf dosini
 
 " Embedix Component Description
 au BufNewFile,BufRead *.ecd			setf ecd

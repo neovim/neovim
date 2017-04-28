@@ -1,9 +1,9 @@
 " zipPlugin.vim: Handles browsing zipfiles
 "            PLUGIN PORTION
-" Date:			Jun 07, 2013
+" Date:			Sep 13, 2016
 " Maintainer:	Charles E Campbell <NdrOchip@ScampbellPfamily.AbizM-NOSPAM>
 " License:		Vim License  (see vim's :help license)
-" Copyright:    Copyright (C) 2005-2013 Charles E. Campbell {{{1
+" Copyright:    Copyright (C) 2005-2016 Charles E. Campbell {{{1
 "               Permission is hereby granted to use and distribute this code,
 "               with or without modifications, provided that this copyright
 "               notice is copied with it. Like anything else that's free,
@@ -20,14 +20,14 @@
 if &cp || exists("g:loaded_zipPlugin")
  finish
 endif
-let g:loaded_zipPlugin = "v27"
+let g:loaded_zipPlugin = "v28"
 let s:keepcpo          = &cpo
 set cpo&vim
 
 " ---------------------------------------------------------------------
 " Options: {{{1
 if !exists("g:zipPlugin_ext")
- let g:zipPlugin_ext= '*.zip,*.jar,*.xpi,*.ja,*.war,*.ear,*.celzip,*.oxt,*.kmz,*.wsz,*.xap,*.docx,*.docm,*.dotx,*.dotm,*.potx,*.potm,*.ppsx,*.ppsm,*.pptx,*.pptm,*.ppam,*.sldx,*.thmx,*.xlam,*.xlsx,*.xlsm,*.xlsb,*.xltx,*.xltm,*.xlam,*.crtx,*.vdw,*.glox,*.gcsx,*.gqsx'
+ let g:zipPlugin_ext='*.apk,*.celzip,*.crtx,*.docm,*.docx,*.dotm,*.dotx,*.ear,*.epub,*.gcsx,*.glox,*.gqsx,*.ja,*.jar,*.kmz,*.oxt,*.potm,*.potx,*.ppam,*.ppsm,*.ppsx,*.pptm,*.pptx,*.sldx,*.thmx,*.vdw,*.war,*.wsz,*.xap,*.xlam,*.xlam,*.xlsb,*.xlsm,*.xlsx,*.xltm,*.xltx,*.xpi,*.zip'
 endif
 
 " ---------------------------------------------------------------------

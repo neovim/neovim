@@ -3496,8 +3496,8 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 	and also determines where |:syn-keyword| will be checked for a new
 	match.
 
-	It is recommended when writing syntax files, to use this command
-	to the correct value for the specific syntax language and not change
+	It is recommended when writing syntax files, to use this command to
+	set the correct value for the specific syntax language and not change
 	the 'iskeyword' option.
 
 DEFINING KEYWORDS					*:syn-keyword*
