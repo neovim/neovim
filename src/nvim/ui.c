@@ -281,7 +281,6 @@ void ui_refresh(void)
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
-  cmdline_set_external(cmdline_external);
   screen_resize(width, height);
   p_lz = save_p_lz;
 

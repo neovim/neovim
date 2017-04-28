@@ -11147,15 +11147,12 @@ void get_user_input(const typval_T *const argvars,
 
   cmd_silent = false;  // Want to see the prompt.
   // Only the part of the message after the last NL is considered as
-  // prompt for the command line.
-  const char *p = strrchr(prompt, '\n');
-  if (ui_is_external(kUICmdline)) {
-    p = prompt;
-  } else {
-    if (p == NULL) {
-      p = prompt;
-    } else {
-      p++;
+  // prompt for the command line, unlsess cmdline is externalized
+  const char *p = prompt;
+  if (!ui_is_external(kUICmdline)) {
+    const char *lastnl = strrchr(prompt, '\n');
+    if (lastnl != NULL) {
+      p = lastnl+1;
       msg_start();
       msg_clr_eos();
       msg_puts_attr_len(prompt, p - prompt, echo_attr);

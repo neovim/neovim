@@ -7,23 +7,21 @@ if helpers.pending_win32(pending) then return end
 describe('External command line completion', function()
   local screen
   local shown = false
-  local firstc, prompt, content, pos
+  local firstc, prompt, content, pos, char, shift
 
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, cmdline_external=true})
+    screen:attach({rgb=true, ext_cmdline=true})
     screen:set_on_event_handler(function(name, data)
       if name == "cmdline_enter" then
         shown = true
       elseif name == "cmdline_leave" then
         shown = false
-      elseif name == "cmdline_firstc" then
-        firstc = data[1]
-      elseif name == "cmdline_prompt" then
-        prompt = data[1]
-      elseif name == "cmdline" then
-        content, pos = unpack(data)
+      elseif name == "cmdline_show" then
+        content, pos, firstc, prompt = unpack(data)
+      elseif name == "cmdline_char" then
+        char, shift = unpack(data)
       elseif name == "cmdline_pos" then
         pos = data[1]
       end
@@ -120,6 +118,8 @@ describe('External command line completion', function()
                                  |
       ]], nil, nil, function()
         eq("3", content)
+        eq("\"", char)
+        eq(1, shift)
       end)
 
     end)
