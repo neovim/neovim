@@ -2564,38 +2564,6 @@ win_line (
   if (color_cols != NULL)
     draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
 
-  if (can_spell(wp)) {
-    /* Prepare for spell checking. */
-    has_spell = true;
-    extra_check = true;
-
-    /* Get the start of the next line, so that words that wrap to the next
-     * line are found too: "et<line-break>al.".
-     * Trick: skip a few chars for C/shell/Vim comments */
-    nextline[SPWORDLEN] = NUL;
-    if (lnum < wp->w_buffer->b_ml.ml_line_count) {
-      line = ml_get_buf(wp->w_buffer, lnum + 1, FALSE);
-      spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
-    }
-
-    /* When a word wrapped from the previous line the start of the current
-     * line is valid. */
-    if (lnum == checked_lnum)
-      cur_checked_col = checked_col;
-    checked_lnum = 0;
-
-    /* When there was a sentence end in the previous line may require a
-     * word starting with capital in this line.  In line 1 always check
-     * the first word. */
-    if (lnum != capital_lnum) {
-      capital_col = -1;
-    }
-    if (lnum == 1) {
-      capital_col = 0;
-    }
-    capital_lnum = 0;
-  }
-
   /*
    * handle visual active in this window
    */
@@ -2676,32 +2644,63 @@ win_line (
   }
 
   line = ml_get_buf(wp->w_buffer, lnum, FALSE);
-  ptr = line;
+  ptr  = line;
 
-  if (has_spell) {
+  if (can_spell(wp)) {
+    // Prepare for spell checking.
+    has_spell = true;
+    extra_check = true;
+
+    // Get the start of the next line, so that words that wrap to the next
+    // line are found too: "et<line-break>al.".
+    // Trick: skip a few chars for C/shell/Vim comments
+    nextline[SPWORDLEN] = NUL;
+    if (lnum < wp->w_buffer->b_ml.ml_line_count) {
+      spell_cat_line(nextline + SPWORDLEN,
+                     ml_get_buf(wp->w_buffer, lnum + 1, FALSE), SPWORDLEN);
+    }
+
+    // When a word wrapped from the previous line the start of the current
+    // line is valid.
+    if (lnum == checked_lnum) {
+      cur_checked_col = checked_col;
+    }
+    checked_lnum = 0;
+
+    // When there was a sentence end in the previous line may require a
+    // word starting with capital in this line.  In line 1 always check
+    // the first word.
+    if (lnum != capital_lnum) {
+      capital_col = -1;
+    }
+    if (lnum == 1) {
+      capital_col = 0;
+    }
+    capital_lnum = 0;
+
     // For checking first word with a capital skip white space.
     if (capital_col == 0) {
       capital_col = (int)(skipwhite(line) - line);
     }
 
-    /* To be able to spell-check over line boundaries copy the end of the
-     * current line into nextline[].  Above the start of the next line was
-     * copied to nextline[SPWORDLEN]. */
+    // To be able to spell-check over line boundaries copy the end of the
+    // current line into nextline[].  Above the start of the next line was
+    // copied to nextline[SPWORDLEN].
     if (nextline[SPWORDLEN] == NUL) {
-      /* No next line or it is empty. */
+      // No next line or it is empty.
       nextlinecol = MAXCOL;
       nextline_idx = 0;
     } else {
       long str_len = (long)STRLEN(line);
       if (str_len < SPWORDLEN) {
-        /* Short line, use it completely and append the start of the
-         * next line. */
+        // Short line, use it completely and append the start of the
+        // next line.
         nextlinecol = 0;
         memmove(nextline, line, (size_t)str_len);
         STRMOVE(nextline + str_len, nextline + SPWORDLEN);
         nextline_idx = str_len + 1;
       } else {
-        /* Long line, use only the last SPWORDLEN bytes. */
+        // Long line, use only the last SPWORDLEN bytes.
         nextlinecol = str_len - SPWORDLEN;
         memmove(nextline, line + nextlinecol, SPWORDLEN);  // -V512
         nextline_idx = SPWORDLEN + 1;
