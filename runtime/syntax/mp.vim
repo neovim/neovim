@@ -2,7 +2,7 @@
 " Language:           MetaPost
 " Maintainer:         Nicola Vitacolonna <nvitacolonna@gmail.com>
 " Former Maintainers: Andreas Scherer <andreas.scherer@pobox.com>
-" Last Change:        2016 Oct 01
+" Last Change:        2016 Oct 14
 
 if exists("b:current_syntax")
   finish
@@ -233,7 +233,10 @@ if get(g:, "other_mp_macros", 1)
 endif
 
 " Up to date as of 23-Sep-2016.
-if get(g:, "mp_metafun_macros", 0)
+if get(b:, 'mp_metafun_macros', get(g:, 'mp_metafun_macros', 0))
+  " Highlight TeX keywords (for use in ConTeXt documents)
+  syn match   mpTeXKeyword  '\\[a-zA-Z@]\+'
+
   " These keywords have been added manually.
   syn keyword mpPrimitive runscript
 
@@ -756,6 +759,7 @@ hi def link mpVariable     mfVariable
 hi def link mpConstant     mfConstant
 hi def link mpOnOff        mpPrimitive
 hi def link mpDash         mpPrimitive
+hi def link mpTeXKeyword   Identifier
 
 let b:current_syntax = "mp"
 
