@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2016 Sep 14
+" Last Change:	2016 Oct 29
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
@@ -46,6 +46,29 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
+if exists("python_no_doctest_highlight")
+  let python_no_doctest_code_highlight = 1
+endif
+
+if exists("python_highlight_all")
+  if exists("python_no_builtin_highlight")
+    unlet python_no_builtin_highlight
+  endif
+  if exists("python_no_doctest_code_highlight")
+    unlet python_no_doctest_code_highlight
+  endif
+  if exists("python_no_doctest_highlight")
+    unlet python_no_doctest_highlight
+  endif
+  if exists("python_no_exception_highlight")
+    unlet python_no_exception_highlight
+  endif
+  if exists("python_no_number_highlight")
+    unlet python_no_number_highlight
+  endif
+  let python_space_error_highlight = 1
+endif
+
 " Keep Python keywords in alphabetical order inside groups for easy
 " comparison with the table in the 'Python Language Reference'
 " https://docs.python.org/2/reference/lexical_analysis.html#keywords,
@@ -81,30 +104,31 @@ syn keyword pythonInclude	from import
 syn keyword pythonAsync		async await
 
 " Decorators (new in Python 2.4)
-" Python 3.5 introduced the use of the same symbol for matrix
-" multiplication.  We now have to exclude the symbol from being
-" highlighted when used in that context. Hence, the check that it's
-" preceded by empty space only (possibly in a docstring/doctest) and
-" followed by decorator name, optional parenthesized list of arguments,
-" and the next line with either def, class, or another decorator.
-syn match   pythonDecorator
-  \ "\%(\%(^\s*\)\%(\%(>>>\|\.\.\.\)\s\+\)\=\)\zs@\%(\s*\h\%(\w\|\.\)*\s*\%((\_\s\{-}[^)]\_.\{-})\s*\)\=\%(#.*\)\=\n\s*\%(\.\.\.\s\+\)\=\%(@\s*\h\|\%(def\|class\)\s\+\)\)\@="
-  \ display nextgroup=pythonDecoratorName skipwhite
-
 " A dot must be allowed because of @MyClass.myfunc decorators.
-" It must be preceded by a decorator symbol and on a separate line from
-" a function/class it decorates.
-syn match   pythonDecoratorName
-  \ "\%(@\s*\)\@<=\h\%(\w\|\.\)*\%(\s*\%((\_\s\{-}[^)]\_.\{-})\s*\)\=\%(#.*\)\=\n\)\@="
-  \ contained display nextgroup=pythonFunction skipnl
+syn match   pythonDecorator	"@" display contained
+syn match   pythonDecoratorName	"@\s*\h\%(\w\|\.\)*" display contains=pythonDecorator
 
-" The zero-length non-grouping match of def or class before the function
-" name is extremely important in pythonFunction.  Without it, everything
-" is interpreted as a function inside the contained environment of
-" doctests.
-syn match   pythonFunction
-  \ "\%(\%(^\s*\)\%(\%(>>>\|\.\.\.\)\s\+\)\=\%(def\|class\)\s\+\)\@<=\h\w*"
-  \ contained
+" Python 3.5 introduced the use of the same symbol for matrix multiplication:
+" https://www.python.org/dev/peps/pep-0465/.  We now have to exclude the
+" symbol from highlighting when used in that context.
+" Single line multiplication.
+syn match   pythonMatrixMultiply
+      \ "\%(\w\|[])]\)\s*@"
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ transparent
+" Multiplication continued on the next line after backslash.
+syn match   pythonMatrixMultiply
+      \ "[^\\]\\\s*\n\%(\s*\.\.\.\s\)\=\s\+@"
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ transparent
+" Multiplication in a parenthesized expression over multiple lines with @ at
+" the start of each continued line; very similar to decorators and complex.
+syn match   pythonMatrixMultiply
+      \ "^\s*\%(\%(>>>\|\.\.\.\)\s\+\)\=\zs\%(\h\|\%(\h\|[[(]\).\{-}\%(\w\|[])]\)\)\s*\n\%(\s*\.\.\.\s\)\=\s\+@\%(.\{-}\n\%(\s*\.\.\.\s\)\=\s\+@\)*"
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ transparent
+
+syn match   pythonFunction	"\h\w*" display contained
 
 syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
 syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
@@ -130,25 +154,6 @@ syn match   pythonEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
 " Python allows case-insensitive Unicode IDs: http://www.unicode.org/charts/
 syn match   pythonEscape	"\\N{\a\+\%(\s\a\+\)*}" contained
 syn match   pythonEscape	"\\$"
-
-if exists("python_highlight_all")
-  if exists("python_no_builtin_highlight")
-    unlet python_no_builtin_highlight
-  endif
-  if exists("python_no_doctest_code_highlight")
-    unlet python_no_doctest_code_highlight
-  endif
-  if exists("python_no_doctest_highlight")
-    unlet python_no_doctest_highlight
-  endif
-  if exists("python_no_exception_highlight")
-    unlet python_no_exception_highlight
-  endif
-  if exists("python_no_number_highlight")
-    unlet python_no_number_highlight
-  endif
-  let python_space_error_highlight = 1
-endif
 
 " It is very important to understand all details before changing the
 " regular expressions below or their order.
@@ -213,7 +218,9 @@ if !exists("python_no_builtin_highlight")
   " non-essential built-in functions; Python 2 only
   syn keyword pythonBuiltin	apply buffer coerce intern
   " avoid highlighting attributes as builtins
-  syn match   pythonAttribute	/\.\h\w*/hs=s+1 contains=ALLBUT,pythonBuiltin transparent
+  syn match   pythonAttribute	/\.\h\w*/hs=s+1
+	\ contains=ALLBUT,pythonBuiltin,pythonFunction,pythonAsync
+	\ transparent
 endif
 
 " From the 'Python Library Reference' class hierarchy at the bottom.
@@ -275,7 +282,7 @@ if !exists("python_no_doctest_highlight")
   if !exists("python_no_doctest_code_highlight")
     syn region pythonDoctest
 	  \ start="^\s*>>>\s" end="^\s*$"
-	  \ contained contains=ALLBUT,pythonDoctest,@Spell
+	  \ contained contains=ALLBUT,pythonDoctest,pythonFunction,@Spell
     syn region pythonDoctestValue
 	  \ start=+^\s*\%(>>>\s\|\.\.\.\s\|"""\|'''\)\@!\S\++ end="$"
 	  \ contained
@@ -287,7 +294,7 @@ if !exists("python_no_doctest_highlight")
 endif
 
 " Sync at the beginning of class, function, or method definition.
-syn sync match pythonSync grouphere NONE "^\s*\%(def\|class\)\s\+\h\w*\s*("
+syn sync match pythonSync grouphere NONE "^\%(def\|class\)\s\+\h\w*\s*[(:]"
 
 " The default highlight links.  Can be overridden later.
 hi def link pythonStatement		Statement

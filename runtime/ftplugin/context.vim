@@ -2,7 +2,7 @@
 " Language:           ConTeXt typesetting engine
 " Maintainer:         Nicola Vitacolonna <nvitacolonna@gmail.com>
 " Former Maintainers: Nikolai Weibull <now@bitwi.se>
-" Latest Revision:    2016 Oct 14
+" Latest Revision:    2016 Oct 30
 
 if exists("b:did_ftplugin")
   finish
@@ -21,7 +21,7 @@ let b:undo_ftplugin = "setl com< cms< def< inc< sua< fo< ofu<"
 
 setlocal comments=b:%D,b:%C,b:%M,:% commentstring=%\ %s formatoptions+=tjcroql2
 if get(b:, 'context_metapost', get(g:, 'context_metapost', 1))
-  setlocal omnifunc=context#complete
+  setlocal omnifunc=contextcomplete#Complete
   let g:omni_syntax_group_include_context = 'mf\w\+,mp\w\+'
   let g:omni_syntax_group_exclude_context = 'mfTodoComment'
 endif
