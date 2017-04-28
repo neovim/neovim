@@ -2292,7 +2292,12 @@ void ui_ext_cmdline_char(int c, int shift)
 void ui_ext_cmdline_show(void)
 {
     Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+    Array content = ARRAY_DICT_INIT;
+    Array text = ARRAY_DICT_INIT;
+    ADD(text, STRING_OBJ(cstr_to_string("Normal")));
+    ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+    ADD(content, ARRAY_OBJ(text));
+    ADD(args, ARRAY_OBJ(content));
     ADD(args, INTEGER_OBJ(ccline.cmdpos));
     if (ccline.cmdfirstc != NUL) {
       ADD(args, STRING_OBJ(cstr_to_string((char *)(&ccline.cmdfirstc))));

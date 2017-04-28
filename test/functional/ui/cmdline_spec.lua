@@ -54,7 +54,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq("sign", content)
+        eq({{'Normal', 'sign'}}, content)
         eq(4, pos)
       end)
 
@@ -66,7 +66,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq("sign", content)
+        eq({{'Normal', 'sign'}}, content)
         eq(true, shown)
         eq(3, pos)
       end)
@@ -79,7 +79,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq("sin", content)
+        eq({{'Normal', 'sin'}}, content)
         eq(true, shown)
         eq(2, pos)
       end)
@@ -105,7 +105,7 @@ describe('External command line completion', function()
       ]], nil, nil, function()
         eq(true, shown)
         eq("input", prompt)
-        eq("default", content)
+        eq({{'Normal', 'default'}}, content)
       end)
 
       feed('<cr>')
@@ -117,7 +117,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq("3", content)
+        eq({{'Normal', '3'}}, content)
         eq("\"", char)
         eq(1, shift)
       end)
