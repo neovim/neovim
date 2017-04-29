@@ -1810,7 +1810,7 @@ return {
   },
   {
     command='oldfiles',
-    flags=bit.bor(BANG, TRLBAR, SBOXOK, CMDWIN),
+    flags=bit.bor(BANG, TRLBAR, NOTADR, EXTRA, SBOXOK, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_oldfiles',
   },
