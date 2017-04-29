@@ -518,7 +518,8 @@ accordingly.  Vim proceeds in this order:
 	The |v:vim_did_enter| variable is set to 1.
 	The |VimEnter| autocommands are executed.
 
-Some hints on using initializations:
+
+Some hints on using initializations ~
 
 Standard setup:
 Create a vimrc file to set the default settings and mappings for all your edit
@@ -540,17 +541,23 @@ the ":version" command.  NOTE: System vimrc file needs specific compilation
 options (one needs to define SYS_VIMRC_FILE macros). If :version command does 
 not show anything like this, consider contacting the nvim package maintainer.
 
-Saving the current state of Vim to a file:
+
+Saving the current state of Vim to a file ~
+
 Whenever you have changed values of options or when you have created a
 mapping, then you may want to save them in a vimrc file for later use.  See
 |save-settings| about saving the current state of settings to a file.
 
-Avoiding setup problems for Vi users:
+
+Avoiding setup problems for Vi users ~
+
 Vi uses the variable EXINIT and the file "~/.exrc".  So if you do not want to
 interfere with Vi, then use the variable VIMINIT and the file init.vim 
 instead.
 
-MS-DOS line separators:
+
+MS-DOS line separators: ~
+
 On Windows systems Vim assumes that all the vimrc files have <CR> <NL> pairs
 as line separators.  This will give problems if you have a file with only
 <NL>s and have a line like ":map xx yy^M".  The trailing ^M will be ignored.
@@ -558,8 +565,10 @@ as line separators.  This will give problems if you have a file with only
 The $MYVIMRC or $MYGVIMRC file will be set to the first found vimrc and/or
 gvimrc file.
 
-Avoiding trojan horses:					*trojan-horse*
-While reading the vimrc or the exrc file in the current directory, some
+
+Avoiding trojan horses ~
+							*trojan-horse*
+While reading the "vimrc" or the "exrc" file in the current directory, some
 commands can be disabled for security reasons by setting the 'secure' option.
 This is always done when executing the command from a tags file.  Otherwise it
 would be possible that you accidentally use a vimrc or tags file that somebody
@@ -581,6 +590,8 @@ Be careful!
 part of the line in the tags file) is always done in secure mode.  This works
 just like executing a command from a vimrc/exrc in the current directory.
 
+
+If Vim startup is slow ~
 							*slow-start*
 If Vim takes a long time to start up, use the |--startuptime| argument to find
 out what happens.
@@ -590,6 +601,8 @@ while.  You can find out if this is the problem by disabling ShaDa for a
 moment (use the Vim argument "-i NONE", |-i|).  Try reducing the number of
 lines stored in a register with ":set shada='20,<50,s10".  |shada-file|.
 
+
+Intro message ~
 							*:intro*
 When Vim starts without a file name, an introductory message is displayed (for
 those who don't know what Vim is).  It is removed as soon as the display is
@@ -1187,15 +1200,6 @@ running) you have additional options:
 			The output can be filtered with |:filter|, e.g.: >
 				filter /\.vim/ oldfiles
 <			The filtering happens on the file name.
-
-:ol[dfiles] {pat}
-:ol[dfiles] /{pat}/
-			Like `:oldfiles` but only files matching {pat} will
-			be included.  {pat} is a Vim search pattern.  Instead
-			of enclosing it in / any non-ID character (see
-			|'isident'|) can be used, so long as it does not
-			appear in {pat}.  Without the enclosing character the
-			pattern cannot include the bar character.
 
 :bro[wse] o[ldfiles][!]
 			List file names as with |:oldfiles|, and then prompt
