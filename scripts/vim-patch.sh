@@ -136,7 +136,7 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%('${na_src}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove channel.txt, netbeans.txt, os_*.txt, todo.txt, version*.txt, tags
-  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|todo\.txt\|version\d\.txt\|tags'
+  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|tags'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('${na_doc}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.

@@ -276,6 +276,11 @@ Ed-compatible mode:
   ":set noedcompatible" is ignored
   ":set edcompatible" is an error
 
+	*t_xx* *:set-termcap* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
+Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
+terminal capabilities. Instead Nvim treats the terminal as any other UI. For
+example, 'guicursor' sets the terminal cursor style if possible.
+
 'ttyfast':
   ":set ttyfast" is ignored
   ":set nottyfast" is an error

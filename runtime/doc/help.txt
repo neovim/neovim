@@ -148,7 +148,6 @@ Special issues ~
 
 GUI ~
 |gui.txt|	Graphical User Interface (GUI)
-|gui_w32.txt|	Win32 GUI
 
 Interfaces ~
 |if_cscop.txt|	using Cscope with Vim

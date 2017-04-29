@@ -14,26 +14,8 @@ For an introduction to the most common features, see |usr_45.txt| in the user
 manual.
 For changing the language of messages and menus see |mlang.txt|.
 
-{not available when compiled without the |+multi_byte| feature}
-
-
-1.  Getting started			|mbyte-first|
-2.  Locale				|mbyte-locale|
-3.  Encoding				|mbyte-encoding|
-4.  Using a terminal			|mbyte-terminal|
-5.  Fonts on X11			|mbyte-fonts-X11|
-6.  Fonts on MS-Windows			|mbyte-fonts-MSwin|
-7.  Input on X11			|mbyte-XIM|
-8.  Input on MS-Windows			|mbyte-IME|
-9.  Input with a keymap			|mbyte-keymap|
-10. Using UTF-8				|mbyte-utf8|
-11. Overview of options			|mbyte-options|
-
-NOTE: This file contains UTF-8 characters.  These may show up as strange
-characters or boxes when using another encoding.
-
 ==============================================================================
-1. Getting started					*mbyte-first*
+Getting started						*mbyte-first*
 
 This is a summary of the multibyte features in Vim.  If you are lucky it works
 as described and you can start using Vim without much trouble.  If something
@@ -89,8 +71,7 @@ be displayed and edited correctly.
 
 For the GUI you must select fonts that work with UTF-8.  This
 is the difficult part.  It depends on the system you are using, the locale and
-a few other things.  See the chapters on fonts: |mbyte-fonts-X11| for
-X-Windows and |mbyte-fonts-MSwin| for MS-Windows.
+a few other things.
 
 For X11 you can set the 'guifontset' option to a list of fonts that together
 cover the characters that are used.  Example for Korean: >
@@ -120,7 +101,7 @@ The options 'iminsert', 'imsearch' and 'imcmdline' can be used to chose
 the different input methods or disable them temporarily.
 
 ==============================================================================
-2.  Locale						*mbyte-locale*
+Locale							*mbyte-locale*
 
 The easiest setup is when your whole system uses the locale you want to work
 in.  But it's also possible to set the locale for one shell you are working
@@ -209,7 +190,7 @@ Or specify $LANG when starting Vim:
 You could make a small shell script for this.
 
 ==============================================================================
-3.  Encoding				*mbyte-encoding*
+Encoding				*mbyte-encoding*
 
 In Nvim UTF-8 is always used internally to encode characters.
  This applies to all the places where text is used, including buffers (files
@@ -418,49 +399,7 @@ neither of them can be found Vim will still work but some conversions won't be
 possible.
 
 ==============================================================================
-4. Using a terminal					*mbyte-terminal*
-
-The GUI fully supports multi-byte characters.  It is also possible in a
-terminal, if the terminal supports the same encoding that Vim uses.  Thus this
-is less flexible.
-
-For example, you can run Vim in a xterm with added multi-byte support and/or
-|XIM|.  Examples are kterm (Kanji term) and hanterm (for Korean), Eterm
-(Enlightened terminal) and rxvt.
-
-UTF-8 IN XFREE86 XTERM					*UTF8-xterm*
-
-This is a short explanation of how to use UTF-8 character encoding in the
-xterm that comes with XFree86 by Thomas Dickey (text by Markus Kuhn).
-
-Get the latest xterm version which has now UTF-8 support:
-
-	http://invisible-island.net/xterm/xterm.html
-
-Compile it with "./configure --enable-wide-chars ; make"
-
-Also get the ISO 10646-1 version of various fonts, which is available on
-
-	http://www.cl.cam.ac.uk/~mgk25/download/ucs-fonts.tar.gz
-
-and install the font as described in the README file.
-
-Now start xterm with >
-
-  xterm -u8 -fn -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1
-or, for bigger character: >
-  xterm -u8 -fn -misc-fixed-medium-r-normal--15-140-75-75-c-90-iso10646-1
-
-and you will have a working UTF-8 terminal emulator.  Try both >
-
-   cat utf-8-demo.txt
-   vim utf-8-demo.txt
-
-with the demo text that comes with ucs-fonts.tar.gz in order to see
-whether there are any problems with UTF-8 in your xterm.
-
-==============================================================================
-5.  Fonts on X11					*mbyte-fonts-X11*
+Fonts on X11						*mbyte-fonts-X11*
 
 Unfortunately, using fonts in X11 is complicated.  The name of a single-byte
 font is a long string.  For multi-byte fonts we need several of these...
@@ -596,20 +535,7 @@ Also make sure that you set 'guifontset' before setting fonts for highlight
 groups.
 
 ==============================================================================
-6.  Fonts on MS-Windows				*mbyte-fonts-MSwin*
-
-The simplest is to use the font dialog to select fonts and try them out.  You
-can find this at the "Edit/Select Font..." menu.  Once you find a font name
-that works well you can use this command to see its name: >
-
-	:set guifont
-
-Then add a command to your |ginit.vim| file to set 'guifont': >
-
-	:set guifont=courier_new:h12
-
-==============================================================================
-7.  Input on X11				*mbyte-XIM*
+Input on X11					*mbyte-XIM*
 
 X INPUT METHOD (XIM) BACKGROUND			*XIM* *xim* *x-input-method*
 
@@ -768,7 +694,7 @@ For example, when you are using kinput2 as |IM-server| and sh, >
 <
 
 ==============================================================================
-8.  Input on MS-Windows					*mbyte-IME*
+Input on MS-Windows					*mbyte-IME*
 
 (Windows IME support)				*multibyte-ime* *IME*
 
@@ -842,7 +768,7 @@ Cursor color when IME or XIM is on				*CursorIM*
     status is on.
 
 ==============================================================================
-9. Input with a keymap					*mbyte-keymap*
+Input with a keymap					*mbyte-keymap*
 
 When the keyboard doesn't produce the characters you want to enter in your
 text, you can use the 'keymap' option.  This will translate one or more
@@ -1090,7 +1016,7 @@ Combining forms:
 ﭏ    0xfb4f  Xal  alef-lamed
 
 ==============================================================================
-10. Using UTF-8				*mbyte-utf8* *UTF-8* *utf-8* *utf8*
+Using UTF-8				*mbyte-utf8* *UTF-8* *utf-8* *utf8*
 							*Unicode* *unicode*
 The Unicode character set was designed to include all characters from other
 character sets.  Therefore it is possible to write text in any language using
@@ -1222,7 +1148,7 @@ not everybody is able to type a composing character.
 
 
 ==============================================================================
-11. Overview of options					*mbyte-options*
+Overview of options					*mbyte-options*
 
 These options are relevant for editing multi-byte files.  Check the help in
 options.txt for detailed information.

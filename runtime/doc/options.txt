@@ -130,39 +130,6 @@ A few special texts:
 	Last set from error handler ~
 		Option was cleared when evaluating it resulted in an error.
 
-{not available when compiled without the |+eval| feature}
-
-							*:set-termcap* *E522*
-For {option} the form "t_xx" may be used to set a terminal option.  This will
-override the value from the termcap.  You can then use it in a mapping.  If
-the "xx" part contains special characters, use the <t_xx> form: >
-	:set <t_#4>=^[Ot
-This can also be used to translate a special code for a normal key.  For
-example, if Alt-b produces <Esc>b, use this: >
-	:set <M-b>=^[b
-(the ^[ is a real <Esc> here, use CTRL-V <Esc> to enter it)
-The advantage over a mapping is that it works in all situations.
-
-You can define any key codes, e.g.: >
-	:set t_xy=^[foo;
-There is no warning for using a name that isn't recognized.  You can map these
-codes as you like: >
-	:map <t_xy> something
-<								*E846*
-When a key code is not set, it's like it does not exist.  Trying to get its
-value will result in an error: >
-	:set t_kb=
-	:set t_kb
-	E846: Key code not set: t_kb
-
-The t_xx options cannot be set from a |modeline| or in the |sandbox|, for
-security reasons.
-
-The listing from ":set" looks different from Vi.  Long string options are put
-at the end of the list.  The number of options is quite large.  The output of
-"set all" probably does not fit on the screen, causing Vim to give the
-|more-prompt|.
-
 							*option-backslash*
 To include white space in a string option value it has to be preceded with a
 backslash.  To include a backslash you have to use two.  Effectively this
@@ -628,7 +595,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See Unicode Standard Annex #11 (http://www.unicode.org/reports/tr11).
 
 	Vim may set this option automatically at startup time when Vim is
-	compiled with the |+termresponse| feature and if |t_u7| is set to the
+	compiled with the |+termresponse| feature and if t_u7 is set to the
 	escape sequence to request cursor position report.
 
 			*'autochdir'* *'acd'* *'noautochdir'* *'noacd'*
@@ -2840,8 +2807,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			blinking off you can use "blinkon0".  The cursor only
 			blinks when Vim is waiting for input, not while
 			executing a command.
-			To make the cursor blink in an xterm, see
-			|xterm-blink|.
 		{group-name}
 			a highlight group name, that sets the color and font
 			for the cursor
