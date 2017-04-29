@@ -582,6 +582,12 @@ Since the text for this plugin is rather long it has been put in a separate
 file: |pi_spec.txt|.
 
 
+RUST							*ft-rust*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |ft_rust.txt|.
+
+
 SHADA							*ft-shada*
 
 Allows editing binary |shada-file|s in a nice way.  Opened binary files are 
