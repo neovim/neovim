@@ -6159,6 +6159,50 @@ void ex_substitute(exarg_T *eap)
   unblock_autocmds();
 }
 
+/// Skip over the pattern argument of ":vimgrep /pat/[g][j]".
+/// Put the start of the pattern in "*s", unless "s" is NULL.
+/// If "flags" is not NULL put the flags in it: VGR_GLOBAL, VGR_NOJUMP.
+/// If "s" is not NULL terminate the pattern with a NUL.
+/// Return a pointer to the char just past the pattern plus flags.
+char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
+{
+  int c;
+
+  if (vim_isIDc(*p)) {
+    // ":vimgrep pattern fname"
+    if (s != NULL)
+      *s = p;
+    p = skiptowhite(p);
+    if (s != NULL && *p != NUL)
+      *p++ = NUL;
+  } else {
+    // ":vimgrep /pattern/[g][j] fname"
+    if (s != NULL)
+      *s = p + 1;
+    c = *p;
+    p = skip_regexp(p + 1, c, TRUE, NULL);
+    if (*p != c)
+      return NULL;
+
+    // Truncate the pattern.
+    if (s != NULL)
+      *p = NUL;
+    ++p;
+
+    // Find the flags
+    while (*p == 'g' || *p == 'j') {
+      if (flags != NULL) {
+        if (*p == 'g')
+          *flags |= VGR_GLOBAL;
+        else
+          *flags |= VGR_NOJUMP;
+      }
+      ++p;
+    }
+  }
+  return p;
+}
+
 /// List v:oldfiles in a nice way.
 void ex_oldfiles(exarg_T *eap)
 {
