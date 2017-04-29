@@ -2840,15 +2840,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 			blinking off you can use "blinkon0".  The cursor only
 			blinks when Vim is waiting for input, not while
 			executing a command.
-			To make the cursor blink in an xterm, see
-			|xterm-blink|.
+			To make the cursor blink in an xterm, see |xterm-blink|.
 		{group-name}
 			a highlight group name, that sets the color and font
-			for the cursor
+			for the cursor.
+			Requires 'termguicolors' to be set.
 		{group-name}/{group-name}
 			Two highlight group names, the first is used when
 			no language mappings are used, the other when they
 			are. |language-mapping|
+			Requires 'termguicolors' to be set.
 
 	Examples of parts:
 	   n-c-v:block-nCursor	in Normal, Command-line and Visual mode, use a
