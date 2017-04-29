@@ -6844,6 +6844,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'winheight' applies to the current window.  Use 'winminheight' to set
 	the minimal height for other windows.
 
+						*'winhighlight'* *'winhl'*
+'winhighlight' 'winhl'	string (default empty)
+			local to window
+	Highlight groups specific to a window.  It consists of items that must
+	be separated by a comma, each item is a global builtin highlight group
+	and a highlight group overidding it for this window, separated by a
+	colon. Currently only |hl-Normal| and |hl-NormalNC| can be overriden;
+	this is mostly useful for changing the background color. Example: >
+		set winhighlight=Normal:MyBackground,NormalNC:MyBackgroundNC
+<
 			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
 'winfixheight' 'wfh'	boolean	(default off)
 			local to window
