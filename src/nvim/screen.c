@@ -7087,8 +7087,6 @@ static void draw_tabline(void)
 
 void ui_ext_tabline_update(void)
 {
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, TABPAGE_OBJ(curtab->handle));
   Array tabs = ARRAY_DICT_INIT;
   FOR_ALL_TABS(tp) {
     Dictionary tab_info = ARRAY_DICT_INIT;
@@ -7100,9 +7098,7 @@ void ui_ext_tabline_update(void)
 
     ADD(tabs, DICTIONARY_OBJ(tab_info));
   }
-  ADD(args, ARRAY_OBJ(tabs));
-
-  ui_event("tabline_update", args);
+  ui_call_tabline_update(curtab->handle, tabs);
 }
 
 /*

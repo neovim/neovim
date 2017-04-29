@@ -38,5 +38,6 @@ void set_icon(String icon);
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col) REMOTE_ONLY;
 void popupmenu_hide(void) REMOTE_ONLY;
 void popupmenu_select(Integer selected) REMOTE_ONLY;
+void tabline_update(Tabpage current, Array tabs) REMOTE_ONLY;
 
 #endif  // NVIM_API_UI_EVENTS_IN_H
