@@ -445,7 +445,6 @@ notation	meaning		    equivalent	decimal value(s)	~
 <M-...>		alt-key or meta-key		*META* *meta* *alt* *<M-*
 <A-...>		same as <M-...>			*<A-*
 <D-...>		command-key or "super" key	*<D-*
-<t_xx>		key with "xx" entry in termcap
 -----------------------------------------------------------------------
 
 Note: The shifted cursor keys, the help key, and the undo key are only
@@ -480,7 +479,6 @@ the ":map" command.  The rules are:
 	   <S-F11>		Shifted function key 11
 	   <M-a>		Meta- a  ('a' with bit 8 set)
 	   <M-A>		Meta- A  ('A' with bit 8 set)
-	   <t_kd>		"kd" termcap entry (cursor down key)
 
 The <> notation uses <lt> to escape the special meaning of key names.  Using a
 backslash also works, but only when 'cpoptions' does not include the 'B' flag.

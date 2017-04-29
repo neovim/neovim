@@ -4636,8 +4636,7 @@ mentioned for the default values. See |:verbose-cmd| for more information.
 					*highlight-args* *E416* *E417* *E423*
 There are three types of terminals for highlighting:
 term	a normal terminal (vt100, xterm)
-cterm	a color terminal (Windows console, color-xterm, these have the "Co"
-	termcap entry)
+cterm	a color terminal (Windows console, color-xterm)
 gui	the GUI
 
 For each type the highlighting can be given.  This makes it possible to use
@@ -4677,20 +4676,11 @@ stop={term-list}				*term-list* *highlight-stop*
 	highlighted area.  This should undo the "start" argument.
 	Otherwise the screen will look messed up.
 
-	The {term-list} can have two forms:
-
-	1. A string with escape sequences.
-	   This is any string of characters, except that it can't start with
-	   "t_" and blanks are not allowed.  The <> notation is recognized
-	   here, so you can use things like "<Esc>" and "<Space>".  Example:
+        {term-list} is a a string with escape sequences. This is any string of
+        characters, except that it can't start with "t_" and blanks are not
+        allowed.  The <> notation is recognized here, so you can use things
+        like "<Esc>" and "<Space>".  Example:
 		start=<Esc>[27h;<Esc>[<Space>r;
-
-	2. A list of terminal codes.
-	   Each terminal code has the form "t_xx", where "xx" is the name of
-	   the termcap entry.  The codes have to be separated with commas.
-	   White space is not allowed.	Example:
-		start=t_C1,t_BL
-	   The terminal codes must exist for this to work.
 
 
 2. highlight arguments for color terminals
@@ -4716,7 +4706,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	unpredictable.	See your xterm documentation for the defaults.	The
 	colors for a color-xterm can be changed from the .Xdefaults file.
 	Unfortunately this means that it's not possible to get the same colors
-	for each user.	See |xterm-color| for info about color xterms.
+	for each user.
 
 	The MSDOS standard colors are fixed (in a console window), so these
 	have been used for the names.  But the meaning of color names in X11
@@ -5209,32 +5199,6 @@ When splitting the window, the new window will use the original syntax.
 ==============================================================================
 17. Color xterms				*xterm-color* *color-xterm*
 
-Most color xterms have only eight colors.  If you don't get colors with the
-default setup, it should work with these lines in your vimrc: >
-   :if &term =~ "xterm"
-   :  if has("terminfo")
-   :	set t_Co=8
-   :	set t_Sf=<Esc>[3%p1%dm
-   :	set t_Sb=<Esc>[4%p1%dm
-   :  else
-   :	set t_Co=8
-   :	set t_Sf=<Esc>[3%dm
-   :	set t_Sb=<Esc>[4%dm
-   :  endif
-   :endif
-<	[<Esc> is a real escape, type CTRL-V <Esc>]
-
-You might want to change the first "if" to match the name of your terminal,
-e.g. "dtterm" instead of "xterm".
-
-Note: Do these settings BEFORE doing ":syntax on".  Otherwise the colors may
-be wrong.
-							*xiterm* *rxvt*
-The above settings have been mentioned to work for xiterm and rxvt too.
-But for using 16 colors in an rxvt these should work with terminfo: >
-	:set t_AB=<Esc>[%?%p1%{8}%<%t25;%p1%{40}%+%e5;%p1%{32}%+%;%dm
-	:set t_AF=<Esc>[%?%p1%{8}%<%t22;%p1%{30}%+%e1;%p1%{22}%+%;%dm
-<
 							*colortest.vim*
 To test your color setup, a file has been included in the Vim distribution.
 To use it, execute this command: >
@@ -5244,111 +5208,6 @@ Some versions of xterm (and other terminals, like the Linux console) can
 output lighter foreground colors, even though the number of colors is defined
 at 8.  Therefore Vim sets the "cterm=bold" attribute for light foreground
 colors, when 't_Co' is 8.
-
-							*xfree-xterm*
-To get 16 colors or more, get the newest xterm version (which should be
-included with XFree86 3.3 and later).  You can also find the latest version
-at: >
-	http://invisible-island.net/xterm/xterm.html
-Here is a good way to configure it.  This uses 88 colors and enables the
-termcap-query feature, which allows Vim to ask the xterm how many colors it
-supports. >
-	./configure --disable-bold-color --enable-88-color --enable-tcap-query
-If you only get 8 colors, check the xterm compilation settings.
-(Also see |UTF8-xterm| for using this xterm with UTF-8 character encoding).
-
-This xterm should work with these lines in your vimrc (for 16 colors): >
-   :if has("terminfo")
-   :  set t_Co=16
-   :  set t_AB=<Esc>[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{92}%+%;%dm
-   :  set t_AF=<Esc>[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{82}%+%;%dm
-   :else
-   :  set t_Co=16
-   :  set t_Sf=<Esc>[3%dm
-   :  set t_Sb=<Esc>[4%dm
-   :endif
-<	[<Esc> is a real escape, type CTRL-V <Esc>]
-
-Without |+terminfo|, Vim will recognize these settings, and automatically
-translate cterm colors of 8 and above to "<Esc>[9%dm" and "<Esc>[10%dm".
-Colors above 16 are also translated automatically.
-
-For 256 colors this has been reported to work: >
-
-   :set t_AB=<Esc>[48;5;%dm
-   :set t_AF=<Esc>[38;5;%dm
-
-Or just set the TERM environment variable to "xterm-color" or "xterm-16color"
-and try if that works.
-
-You probably want to use these X resources (in your ~/.Xdefaults file):
-	XTerm*color0:			#000000
-	XTerm*color1:			#c00000
-	XTerm*color2:			#008000
-	XTerm*color3:			#808000
-	XTerm*color4:			#0000c0
-	XTerm*color5:			#c000c0
-	XTerm*color6:			#008080
-	XTerm*color7:			#c0c0c0
-	XTerm*color8:			#808080
-	XTerm*color9:			#ff6060
-	XTerm*color10:			#00ff00
-	XTerm*color11:			#ffff00
-	XTerm*color12:			#8080ff
-	XTerm*color13:			#ff40ff
-	XTerm*color14:			#00ffff
-	XTerm*color15:			#ffffff
-	Xterm*cursorColor:		Black
-
-[Note: The cursorColor is required to work around a bug, which changes the
-cursor color to the color of the last drawn text.  This has been fixed by a
-newer version of xterm, but not everybody is using it yet.]
-
-To get these right away, reload the .Xdefaults file to the X Option database
-Manager (you only need to do this when you just changed the .Xdefaults file): >
-  xrdb -merge ~/.Xdefaults
-<
-					*xterm-blink* *xterm-blinking-cursor*
-To make the cursor blink in an xterm, see tools/blink.c.  Or use Thomas
-Dickey's xterm above patchlevel 107 (see above for where to get it), with
-these resources:
-	XTerm*cursorBlink:	on
-	XTerm*cursorOnTime:	400
-	XTerm*cursorOffTime:	250
-	XTerm*cursorColor:	White
-
-							*hpterm-color*
-These settings work (more or less) for an hpterm, which only supports 8
-foreground colors: >
-   :if has("terminfo")
-   :  set t_Co=8
-   :  set t_Sf=<Esc>[&v%p1%dS
-   :  set t_Sb=<Esc>[&v7S
-   :else
-   :  set t_Co=8
-   :  set t_Sf=<Esc>[&v%dS
-   :  set t_Sb=<Esc>[&v7S
-   :endif
-<	[<Esc> is a real escape, type CTRL-V <Esc>]
-
-						*Eterm* *enlightened-terminal*
-These settings have been reported to work for the Enlightened terminal
-emulator, or Eterm.  They might work for all xterm-like terminals that use the
-bold attribute to get bright colors.  Add an ":if" like above when needed. >
-       :set t_Co=16
-       :set t_AF=^[[%?%p1%{8}%<%t3%p1%d%e%p1%{22}%+%d;1%;m
-       :set t_AB=^[[%?%p1%{8}%<%t4%p1%d%e%p1%{32}%+%d;1%;m
-<
-						*TTpro-telnet*
-These settings should work for TTpro telnet.  Tera Term Pro is a freeware /
-open-source program for MS-Windows. >
-	set t_Co=16
-	set t_AB=^[[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{32}%+5;%;%dm
-	set t_AF=^[[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{22}%+1;%;%dm
-Also make sure TTpro's Setup / Window / Full Color is enabled, and make sure
-that Setup / Font / Enable Bold is NOT enabled.
-(info provided by John Love-Jensen <eljay@Adobe.COM>)
-
 
 ==============================================================================
 18. When syntax is slow						*:syntime*

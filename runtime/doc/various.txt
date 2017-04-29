@@ -313,7 +313,6 @@ N  *+comments*		|'comments'| support
 B  *+conceal*		"conceal" support, see |conceal| |:syn-conceal| etc.
 B  *+cscope*		|cscope| support
 m  *+cursorbind*	|'cursorbind'| support
-m  *+cursorshape*	|termcap-cursor-shape| support
 m  *+debug*		Compiled for debugging.
 N  *+dialog_gui*	Support for |:confirm| with GUI dialog.
 N  *+dialog_con*	Support for |:confirm| with console dialog.
@@ -373,10 +372,8 @@ T  *+tag_binary*	binary searching in tags file |tag-binary-search|
 N  *+tag_old_static*	old method for static tags |tag-old-static|
 m  *+tag_any_white*	any white space allowed in tags file |tag-any-white|
 B  *+termguicolors*	24-bit color in xterm-compatible terminals support
-   *+terminfo*		uses |terminfo| instead of termcap
 N  *+termresponse*	support for |t_RV| and |v:termresponse|
 N  *+textobjects*	|text-objects| selection
-   *+tgetent*		non-Unix only: able to use external termcap
 N  *+timers*		the |timer_start()| function
 N  *+title*		Setting the window 'title' and 'icon'
 N  *+toolbar*		|gui-toolbar|
