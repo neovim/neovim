@@ -885,6 +885,24 @@ static void init_type_metadata(Dictionary *metadata)
   PUT(*metadata, "types", DICTIONARY_OBJ(types));
 }
 
+String copy_string(String str)
+{
+  if (str.data != NULL) {
+    return (String){ .data = xmemdupz(str.data, str.size), .size = str.size };
+  } else {
+    return (String)STRING_INIT;
+  }
+}
+
+Array copy_array(Array array)
+{
+  Array rv = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < array.size; i++) {
+    ADD(rv, copy_object(array.items[i]));
+  }
+  return rv;
+}
+
 /// Creates a deep clone of an object
 Object copy_object(Object obj)
 {
@@ -896,15 +914,10 @@ Object copy_object(Object obj)
       return obj;
 
     case kObjectTypeString:
-      return STRING_OBJ(cstr_to_string(obj.data.string.data));
+      return STRING_OBJ(copy_string(obj.data.string));
 
-    case kObjectTypeArray: {
-      Array rv = ARRAY_DICT_INIT;
-      for (size_t i = 0; i < obj.data.array.size; i++) {
-        ADD(rv, copy_object(obj.data.array.items[i]));
-      }
-      return ARRAY_OBJ(rv);
-    }
+    case kObjectTypeArray:
+      return ARRAY_OBJ(copy_array(obj.data.array));
 
     case kObjectTypeDictionary: {
       Dictionary rv = ARRAY_DICT_INIT;

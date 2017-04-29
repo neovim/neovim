@@ -87,6 +87,7 @@ for i = 6, #arg do
   headers[#headers + 1] = parts[#parts - 1]..'/'..parts[#parts]
 
   local input = io.open(full_path, 'rb')
+
   local tmp = grammar:match(input:read('*all'))
   for i = 1, #tmp do
     local fn = tmp[i]

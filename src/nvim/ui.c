@@ -89,6 +89,10 @@ static int old_mode_idx = -1;
 #define UI_CALL_MORE(method, ...) if (ui->method) ui->method(ui, __VA_ARGS__)
 #define UI_CALL_ZERO(method) if (ui->method) ui->method(ui)
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ui_events_call.generated.h"
+#endif
+
 void ui_builtin_start(void)
 {
 #ifdef FEAT_TUI
@@ -136,13 +140,13 @@ void ui_suspend(void)
 
 void ui_set_title(char *title)
 {
-  UI_CALL(set_title, title);
+  ui_call_set_title(cstr_as_string(title));
   UI_CALL(flush);
 }
 
 void ui_set_icon(char *icon)
 {
-  UI_CALL(set_icon, icon);
+  ui_call_set_icon(cstr_as_string(icon));
   UI_CALL(flush);
 }
 
@@ -390,7 +394,7 @@ void ui_mode_info_set(void)
 {
   Array style = mode_style_array();
   bool enabled = (*p_guicursor != NUL);
-  UI_CALL(mode_info_set, enabled, style);
+  ui_call_mode_info_set(enabled, style);
   api_free_array(style);
 }
 
@@ -420,11 +424,11 @@ static void send_output(uint8_t **ptr)
 
   while (*p >= 0x20) {
     size_t clen = (size_t)mb_ptr2len(p);
-    UI_CALL(put, p, (size_t)clen);
+    ui_call_put((String){.data = (char *)p, .size = clen});
     col++;
     if (mb_ptr2cells(p) > 1) {
       // double cell character, blank the next cell
-      UI_CALL(put, NULL, 0);
+      ui_call_put((String)STRING_INIT);
       col++;
     }
     if (utf_ambiguous_width(utf_ptr2char(p))) {
@@ -560,7 +564,8 @@ void ui_cursor_shape(void)
 
   if (old_mode_idx != mode_idx) {
     old_mode_idx = mode_idx;
-    UI_CALL(mode_change, mode_idx);
+    char *full_name = shape_table[mode_idx].full_name;
+    ui_call_mode_change(cstr_as_string(full_name), mode_idx);
   }
   conceal_check_cursur_line();
 }
