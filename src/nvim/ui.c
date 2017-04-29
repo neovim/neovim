@@ -33,6 +33,8 @@
 #include "nvim/syntax.h"
 #include "nvim/window.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/syntax.h"
+#include "nvim/api/vim.h"
 #ifdef FEAT_TUI
 # include "nvim/tui/tui.h"
 #else
@@ -135,8 +137,10 @@ bool ui_active(void)
 void ui_event(char *name, Array args)
 {
   bool args_consumed = false;
+  ILOG("%d uis active", ui_count);
   UI_CALL(event, name, args, &args_consumed);
-  if (!args_consumed) {
+  // && ui_count
+  if (!args_consumed ) {
     api_free_array(args);
   }
 }
@@ -180,6 +184,36 @@ void ui_refresh(void)
 static void ui_refresh_event(void **argv)
 {
   ui_refresh();
+}
+
+void ui_notify_changed_highlights(garray_T changed_highlights)
+{
+  // we might want to send batchs instead
+  // + save current hl_id value to restore it later
+  // for backwards compatibility
+  ILOG ("%d changed highlights", changed_highlights.ga_len);
+  Array args = ARRAY_DICT_INIT;
+  Error err;
+  bool refresh_cursor = false;
+  for (int idx = 0; idx < changed_highlights.ga_len; idx++) {
+    int hl_id = ((int *)changed_highlights.ga_data)[idx];
+    Dictionary dic = nvim_hl_from_id(hl_id, &err);
+    ADD(args, DICTIONARY_OBJ(dic));
+    ILOG("comparing with %d", shape_table[cursor_get_mode_idx()].id);
+    if (hl_id == shape_table[cursor_get_mode_idx()].id) {
+      refresh_cursor = true;
+    }
+  }
+
+  if (args.size) {
+    ui_event("highlights", (args));
+  }
+
+  if(refresh_cursor) {
+    ILOG("updating cursor !");
+    Array temp = ARRAY_DICT_INIT;
+    ui_event("refresh_cursor", temp);
+  }
 }
 
 void ui_schedule_refresh(void)

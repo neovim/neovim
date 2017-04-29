@@ -16,11 +16,6 @@ typedef enum {
 } UIWidget;
 #define UI_WIDGETS (kUIWildmenu + 1)
 
-typedef struct {
-  bool bold, underline, undercurl, italic, reverse;
-  int foreground, background, special;
-} HlAttrs;
-
 typedef struct ui_t UI;
 
 struct ui_t {

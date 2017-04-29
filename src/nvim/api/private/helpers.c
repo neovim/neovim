@@ -85,21 +85,24 @@ bool try_end(Error *err)
   return ERROR_SET(err);
 }
 
-///
-/// @param[out]
-bool attr2hlattr (int attr_code, bool use_rgb, HlAttrs *out)
+bool attr2hlattr(int attr_code, bool use_rgb, HlAttrs *out) {
+  HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
+  if (attr_code == HL_NORMAL) {
+    ILOG("HL_NORMAL");
+    *out = attrs;
+    return true;
+  }
+  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
+  return attrentry2hlattr(aep, use_rgb, out);
+}
+
+/// @param[out] out 
+bool attrentry2hlattr (attrentry_T *aep, bool use_rgb, HlAttrs *out)
 {
   assert (out);
 
   HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
-
-  if (attr_code == HL_NORMAL) {
-    *out = attrs;
-    return true;
-  }
-
   int mask = 0;
-  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
 
   if (!aep) {
     return false;
@@ -131,13 +134,13 @@ bool attr2hlattr (int attr_code, bool use_rgb, HlAttrs *out)
     }
 
     if (cterm_normal_bg_color != aep->cterm_bg_color) {
-      const char *name = cterm_int2name (aep->cterm_bg_color - 1);
-      if (name) {
-        attrs.background = (int)name_to_color (name);
-      } else {
-        attrs.background = aep->cterm_bg_color - 1;
-      }
-      ILOG("attr=%d  color to %d", attr_code, attrs.background);
+      // char *name = cterm_int2name (aep->cterm_bg_color - 1);
+      // if (name) {
+      //   attrs.background = (int)name_to_color ( (uint8_t *)name);
+      // } else {
+      //   attrs.background = aep->cterm_bg_color - 1;
+      // }
+      // ILOG("attr=%d  color to %d", attr_code, attrs.background);
     }
   }
 

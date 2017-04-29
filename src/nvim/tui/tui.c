@@ -83,6 +83,7 @@ typedef struct {
   bool mouse_enabled;
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
+  // HlAttrs cursor_attrs[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
   ModeShape showing_mode;
   TermType term;
@@ -97,12 +98,8 @@ typedef struct {
 
 static bool volatile got_winch = false;
 static bool cursor_style_enabled = false;
-<<<<<<< 13ec521414afe71423114144260c1787f0a7e79a
 static bool is_tmux = false;
-||||||| merged common ancestors
-=======
 static int cursor_bg = 0;
->>>>>>> tui: support gui=inverse and transparent colors
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -203,7 +200,7 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out(ui, data->unibi_ext.disable_focus_reporting);
-  flush_buf(ui, true);
+  flush_buf(ui, cursor_visible());
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
@@ -475,21 +472,10 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
   return shape;
 }
 
-static HlAttrs decode_hl_entry(Dictionary args)
+// if the cursor should be visible according to guicursor
+static bool cursor_visible (void)
 {
-  HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
-  for (size_t i = 0; i < args.size; i++) {
-    char *key = args.items[i].key.data;
-    Object value = args.items[i].value;
-    if (strequal(key, "reverse")) {
-      attrs.reverse = value.data.boolean;
-    } else if (strequal(key, "foreground")) {
-      attrs.foreground = (int)value.data.integer;
-    } else if (strequal(key, "background")) {
-      attrs.background = (int)value.data.integer;
-    }
-  }
-  return attrs;
+  return cursor_bg != -1;
 }
 
 static cursorentry_T decode_cursor_entry(Dictionary args)
@@ -508,9 +494,6 @@ static cursorentry_T decode_cursor_entry(Dictionary args)
       r.blinkoff = (int)value.data.integer;
     } else if (strequal(key, "hl_id")) {
       r.id = (int)value.data.integer;
-    } else if (strequal(key, "hl_dict")) {
-      r.attrs = decode_hl_entry(value.data.dictionary);
-      ILOG("decoded hl_dict with bg=%d", r.attrs.background);
     }
   }
   return r;
@@ -582,15 +565,31 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   // Support changing cursor shape on some popular terminals.
   const char *vte_version = os_getenv("VTE_VERSION");
 
-  if (c.id != 0 && ui->rgb) {
-    int attr = syn_id2attr(c.id);
-    if (attr > 0) {
-      attrentry_T *aep = syn_cterm_attr2entry(attr);
-      data->params[0].i = aep->rgb_bg_color;
-      unibi_out(ui, data->unibi_ext.set_cursor_color);
-    }
-  }
+  // if (c.id != 0 && ui->rgb) {
+  //   int attr = syn_id2attr(c.id);
+  //   if (attr > 0) {
+  //     attrentry_T *aep = syn_cterm_attr2entry(attr);
+  //     data->params[0].i = aep->rgb_bg_color;
+  //     unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
+  //   }
+  // }
 
+//   if (c.id != 0) {
+//     // int attr = syn_id2attr(c.id);
+//     // attrentry_T *aep = syn_cterm_attr2entry(attr);
+//     // cterm_bg_color
+//     cursor_bg = c.attrs.background;
+
+
+//     if (cursor_bg == -1) {
+//       unibi_out(ui, unibi_cursor_invisible);
+//     } else {
+//       unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
+//       data->params[0].i = cursor_bg;
+//       ILOG("setting cursor color ");
+//       unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
+//     }
+//   }
   if (data->term == kTermKonsole) {
     // Konsole uses a proprietary escape code to set the cursor shape
     // and does not support DECSCUSR.
@@ -622,37 +621,28 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     unibi_format(vars, vars + 26, "\x1b[%p1%d q",
                  data->params, out, ui, NULL, NULL);
   }
-<<<<<<< 13ec521414afe71423114144260c1787f0a7e79a
-||||||| merged common ancestors
-
-  if (c.id != 0 && ui->rgb) {
-    int attr = syn_id2attr(c.id);
-    if (attr > 0) {
-      attrentry_T *aep = syn_cterm_attr2entry(attr);
-      data->params[0].i = aep->rgb_bg_color;
-      unibi_out(ui, data->unibi_ext.set_cursor_color);
-    }
-  }
-=======
 
   // update cursor colors
   if (c.id != 0) {
-    // int attr = syn_id2attr(c.id);
-    // attrentry_T *aep = syn_cterm_attr2entry(attr);
-    // cterm_bg_color
-    cursor_bg = c.attrs.background;
-
+    // HlAttrs attr = data->cursor_attrs[mode];
+    int attr = syn_id2attr(c.id);
+    if (attr > 0) {
+      attrentry_T *aep = syn_cterm_attr2entry(attr);
+      cursor_bg = aep->rgb_bg_color; // todo depends on rgb
+    }
+    else {
+      cursor_bg = -1;
+    }
 
     if (cursor_bg == -1) {
       unibi_out(ui, unibi_cursor_invisible);
     } else {
       unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
       data->params[0].i = cursor_bg;
-      ILOG("setting cursor color ");
+      ILOG("setting cursor color");
       unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
     }
   }
->>>>>>> tui: support gui=inverse and transparent colors
 }
 
 /// @param mode editor mode
@@ -803,7 +793,7 @@ static void tui_flush(UI *ui)
 
   unibi_goto(ui, grid->row, grid->col);
 
-  flush_buf(ui, true);
+  flush_buf(ui, cursor_visible());
 }
 
 #ifdef UNIX
@@ -862,6 +852,41 @@ static void tui_set_icon(UI *ui, String icon)
 // to make a copy for the tui thread
 static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
+  TUIData *data = ui->data;
+  ILOG("tui_event [%s]", name);
+
+  if (STRCMP(name, "highlights") == 0) {
+
+    ILOG("Received hl update ");
+    // for (size_t i = 0; i < args.size; i++) {
+    //   // assert(args.items[i].type == kObjectTypeInteger);
+    //   if (args.items[i].type == kObjectTypeDictionary) {
+    //     Dictionary d = args.items[i].data.dictionary;
+    //     for (size_t i = 0; i < d.size; i++) {
+    //       char *key = d.items[i].key.data;
+    //       Object value = d.items[i].value;
+
+// //           if (strequal(key, "hl_id")) {
+// //             ModeShape mode;
+// //             int hl_id = (int)value.data.integer;
+// //             ILOG("Retrieved ID %d", hl_id);
+    //         // if (map_hlid_to_mode (data->cursor_shapes, hl_id, &mode)) {
+    //         //   data->cursor_attrs[mode] = decode_hl_entry(d);
+    //         //   // TODO refresh cursor
+    //         //   ILOG("Mapped to a cursor !!!!");
+    //         //   tui_set_mode (ui, data->showing_mode);
+    //         // }
+    //       // }
+    //     }
+
+    //   }
+    // }
+  } else if (STRCMP(name, "refresh_cursor") == 0) {
+    ILOG("refreshing cursor");
+    tui_set_mode (ui, data->showing_mode);
+  }
+
+
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)
@@ -1128,7 +1153,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
   uv_buf_t buf;
   TUIData *data = ui->data;
 
-  if (toggle_cursor && !data->busy && cursor_bg != -1) {
+  if (toggle_cursor && !data->busy) {
     // not busy and the cursor is invisible(see below). Append a "cursor
     // normal" command to the end of the buffer.
     data->bufsize += CNORM_COMMAND_MAX_SIZE;
@@ -1142,7 +1167,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 
-  if (toggle_cursor && !data->busy && cursor_bg != -1) {
+  if (toggle_cursor && !data->busy) {
     // not busy and cursor is visible(see above), append a "cursor invisible"
     // command to the beginning of the buffer for the next flush
     unibi_out(ui, unibi_cursor_invisible);

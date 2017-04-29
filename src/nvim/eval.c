@@ -16127,11 +16127,11 @@ static void f_synIDtrans(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int id = tv_get_number(&argvars[0]);
 
-  if (id > 0) {
+  // if (id > 0) {
     id = syn_get_final_id(id);
-  } else {
-    id = 0;
-  }
+  // } else {
+  //   id = 0;
+  // }
 
   rettv->vval.v_number = id;
 }

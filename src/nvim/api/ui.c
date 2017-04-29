@@ -16,6 +16,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/popupmnu.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/syntax.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -28,15 +29,6 @@ typedef struct {
 } UIData;
 
 static PMap(uint64_t) *connected_uis = NULL;
-
-void nvim_ui_get_highlights(Array highlights, Error *err)
-    FUNC_API_SINCE(2) FUNC_API_NOEVAL
-{
-  // TODO
-  // for (int i = 0; i < highlights.size; i++) {
-  //   highlights.items[i].data.string.data;
-  // }
-}
 
 void remote_ui_init(void)
     FUNC_API_NOEXPORT

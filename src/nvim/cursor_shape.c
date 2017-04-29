@@ -51,8 +51,8 @@ Array mode_style_array(bool use_rgb)
     }
     if (cur->used_for & SHAPE_CURSOR) {
       String shape_str;
-      HlAttrs attrs;
-      int attr;
+      // HlAttrs attrs;
+      // int attr;
       switch (cur->shape) {
         case SHAPE_BLOCK: shape_str = cstr_to_string("block"); break;
         case SHAPE_VER: shape_str = cstr_to_string("vertical"); break;
@@ -66,11 +66,11 @@ Array mode_style_array(bool use_rgb)
       PUT(dic, "blinkoff", INTEGER_OBJ(cur->blinkoff));
       PUT(dic, "hl_id", INTEGER_OBJ(cur->id));
 
-      attr = syn_id2attr(cur->id);
-      bool res = attr2hlattr (attr, use_rgb, &attrs);
-      if (res) {
-        PUT(dic, "hl_dict", DICTIONARY_OBJ(attr2dic (attrs)));
-      }
+      // attr = syn_id2attr(cur->id);
+      // bool res = attr2hlattr (attr, use_rgb, &attrs);
+      // if (res) {
+      //   PUT(dic, "hl_dict", DICTIONARY_OBJ(attr2dic (attrs)));
+      // }
       PUT(dic, "id_lm", INTEGER_OBJ(cur->id_lm));
     }
     PUT(dic, "name", STRING_OBJ(cstr_to_string(cur->full_name)));

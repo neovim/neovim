@@ -49,7 +49,7 @@
 #define NIL ((Object) {.type = kObjectTypeNil})
 
 #define PUT(dict, k, v) \
-  kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = v }))
+  kv_push(dict, ((KeyValuePair) { .key = cstr_to_string(k), .value = (v) }))
 
 #define ADD(array, item) \
   kv_push(array, item)

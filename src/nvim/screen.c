@@ -341,9 +341,10 @@ void update_screen(int type)
   /* reset cmdline_row now (may have been changed temporarily) */
   compute_cmdrow();
 
-  /* Check for changed highlighting */
-  if (need_highlight_changed)
+  // Check for changed highlighting
+  if (need_highlight_changed) {
     highlight_changed();
+  }
 
   if (type == CLEAR) {          /* first clear screen */
     screenclear();              /* will reset clear_cmdline */

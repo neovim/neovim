@@ -54,6 +54,108 @@ void nvim_command(String command, Error *err)
   try_end(err);
 }
 
+/// Retrieves highlight description from its name
+///
+/// @param name Highlight group name
+/// @return a highlight description in dictionary {'hl_id': X, 'bg': Y, 'fg': Z}
+/// @see nvim_hl_from_id
+Dictionary nvim_hl_from_name(String name, Error *err)
+  FUNC_API_SINCE(2)
+{
+  Dictionary result;
+  int id = syn_name2id ((const char_u *)name.data);
+  ILOG ("found id=%d", id);
+
+  // !hl_is_valid(id)
+  if (id < 0) {
+    api_set_error(err, kErrorTypeException, "Invalid highlight name");
+    return result;
+  }
+  result = nvim_hl_from_id(id, err);
+  return result;
+}
+
+/// Retrieves highlight description from its id
+///
+/// @param name Highlight group name
+/// @return a highlight description in a dictionary
+/// @see nvim_hl_from_id
+Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
+  FUNC_API_SINCE(2)
+{
+  HlAttrs attrs;
+  Dictionary dic = ARRAY_DICT_INIT;
+  attrentry_T attr;
+
+  PUT(dic, "hl_id", INTEGER_OBJ(hl_id));
+
+  /// OLDVERSION
+  int attrcode = syn_id2attr((int)hl_id);
+  bool res = attr2hlattr (attrcode, true, &attrs);
+  /// OLDVERSION
+
+  ILOG ("found attr=%d for hl_id=%d res=%d", attrcode, hl_id, res);
+  if (!hl_is_valid(hl_id)) {
+    api_set_error(err, kErrorTypeException, "Invalid highlight id");
+    return dic;
+  }
+  /// NEWVERSION
+  // attr = hl2attr (hl_id);
+  // bool res = attr2hlattr (&attr, true, &attrs);
+  // bool res = attrentry2hlattr (attr, true, &attrs);
+  /// NEWVERSION
+  if (res) {
+    dic = attr2dic (attrs);
+  }
+  return (dic);
+}
+
+/// Returns an array of dictionaries as produced by nvim_hl_from_id
+///
+/// @param highlights a list of highlights id (string or integer) to look for
+/// todo return array instead ? ArrayOf(HlAttrs)
+Object nvim_hl_get_list(Array highlights, Error *err)
+    FUNC_API_SINCE(2)
+{
+  Array args = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < highlights.size; i++) {
+    int hl_id;
+    // ADD(my_args, copy_object(args.items[i]));
+    if (highlights.items[i].type == kObjectTypeString) {
+      // convert string to hl id
+       hl_id = syn_name2id ((const char_u *)highlights.items[i].data.string.data);
+    }
+    else if (highlights.items[i].type != kObjectTypeInteger) {
+      api_set_error(err, kErrorTypeException, "Expecting integer or string");
+      // continue;
+      return ARRAY_OBJ(args);;
+    } else {
+      hl_id = (int)highlights.items[i].data.integer;
+    }
+
+    // int attr = syn_id2attr(hl_id);
+    // if (attr < 1) {
+    //   api_set_error(err, kErrorTypeException, "Invalid highlight id");
+    //   continue;
+    // }
+    Dictionary dic = nvim_hl_from_id(hl_id, err);
+    if (!err) {
+      return ARRAY_OBJ(args);
+    }
+    // HlAttrs attrs;
+    // bool res = attr2hlattr (attr, true, &attrs);
+    // if (res) {
+    //   Dictionary dic = attr2dic (attrs);
+    //   PUT(dic, "hl_id", INTEGER_OBJ(hl_id));
+    ADD(args, DICTIONARY_OBJ(dic));
+    // }
+
+    // GA_APPEND(int, &ui->subscribed_highlights, id);
+  }
+  return ARRAY_OBJ(args);
+}
+
+
 /// Passes input keys to Nvim.
 /// On VimL error: Does not fail, but updates v:errmsg.
 ///
