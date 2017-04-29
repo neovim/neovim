@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Sep 22
+" Last Change:	2016 Oct 31
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -858,7 +858,7 @@ au BufNewFile,BufRead *.ht			setf haste
 au BufNewFile,BufRead *.htpp			setf hastepreproc
 
 " Hercules
-au BufNewFile,BufRead *.vc,*.ev,*.rs,*.sum,*.errsum	setf hercules
+au BufNewFile,BufRead *.vc,*.ev,*.sum,*.errsum	setf hercules
 
 " HEX (Intel)
 au BufNewFile,BufRead *.hex,*.h32		setf hex
@@ -1756,6 +1756,9 @@ au BufNewFile,BufRead *.rb,*.rbw		setf ruby
 " RubyGems
 au BufNewFile,BufRead *.gemspec			setf ruby
 
+" Rust
+au BufNewFile,BufRead *.rs			setf rust
+
 " Rackup
 au BufNewFile,BufRead *.ru			setf ruby
 
@@ -2250,7 +2253,7 @@ func! s:FTtex()
 endfunc
 
 " ConTeXt
-au BufNewFile,BufRead tex/context/*/*.tex,*.mkii,*.mkiv   setf context
+au BufNewFile,BufRead tex/context/*/*.tex,*.mkii,*.mkiv,*.mkvi   setf context
 
 " Texinfo
 au BufNewFile,BufRead *.texinfo,*.texi,*.txi	setf texinfo
@@ -2666,6 +2669,9 @@ au BufNewFile,BufRead mutt{ng,}rc*,Mutt{ng,}rc*		call s:StarSetf('muttrc')
 
 " Nroff macros
 au BufNewFile,BufRead tmac.*			call s:StarSetf('nroff')
+
+" OpenBSD hostname.if
+au BufNewFile,BufRead /etc/hostname.*		call s:StarSetf('config')
 
 " Pam conf
 au BufNewFile,BufRead */etc/pam.d/*		call s:StarSetf('pamconf')

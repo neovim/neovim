@@ -1,10 +1,9 @@
 " Vim syntax file
 " Language:	sendmail
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Oct 23, 2014
-" Version:	7
+" Last Change:	Oct 25, 2016
+" Version:	8
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SM
-
 if exists("b:current_syntax")
   finish
 endif
@@ -62,10 +61,10 @@ hi def link smClause	Special
 hi def link smClauseError	Error
 hi def link smComment	Comment
 hi def link smDefine	Statement
-hi def link smElse		Delimiter
+hi def link smElse	Delimiter
 hi def link smHeader	Statement
 hi def link smHeaderSep	String
-hi def link smMesg		Special
+hi def link smMesg	Special
 hi def link smPrecedence	Number
 hi def link smRewrite	Statement
 hi def link smRewriteComment	Comment
@@ -75,7 +74,6 @@ hi def link smRewriteRhsToken	String
 hi def link smRuleset	Preproc
 hi def link smTrusted	Special
 hi def link smVar		String
-
 
 let b:current_syntax = "sm"
 
