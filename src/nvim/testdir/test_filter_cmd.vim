@@ -52,3 +52,25 @@ func Test_filter_fails()
   call assert_fails('filter! /pat/', 'E476:')
   call assert_fails('filter! /pat/ asdf', 'E492:')
 endfunc
+
+function s:complete_filter_cmd(filtcmd)
+  let keystroke = "\<TAB>\<C-R>=execute('let cmdline = getcmdline()')\<CR>\<C-C>"
+  let cmdline = ''
+  call feedkeys(':' . a:filtcmd . keystroke, 'ntx')
+  return cmdline
+endfunction
+
+func Test_filter_cmd_completion()
+  " Do not complete pattern
+  call assert_equal("filter \t", s:complete_filter_cmd('filter '))
+  call assert_equal("filter pat\t", s:complete_filter_cmd('filter pat'))
+  call assert_equal("filter /pat\t", s:complete_filter_cmd('filter /pat'))
+  call assert_equal("filter /pat/\t", s:complete_filter_cmd('filter /pat/'))
+
+  " Complete after string pattern
+  call assert_equal('filter pat print', s:complete_filter_cmd('filter pat pri'))
+
+  " Complete after regexp pattern
+  call assert_equal('filter /pat/ print', s:complete_filter_cmd('filter /pat/ pri'))
+  call assert_equal('filter #pat# print', s:complete_filter_cmd('filter #pat# pri'))
+endfunc
