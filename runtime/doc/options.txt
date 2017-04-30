@@ -2756,23 +2756,24 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 			*'guicursor'* *'gcr'* *E545* *E546* *E548* *E549*
-'guicursor' 'gcr'	string	(default "n-v-c:block-Cursor/lCursor,
-					ve:ver35-Cursor,
-					o:hor50-Cursor,
-					i-ci:ver25-Cursor/lCursor,
-					r-cr:hor20-Cursor/lCursor,
-					sm:block-Cursor
-					-blinkwait175-blinkoff150-blinkon175")
+'guicursor' 'gcr'	string	(default "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20")
 			global
 	Configures the cursor style for each mode. Works in the GUI and some
-	terminals. Unset to disable: >
-		:set guicursor=
-<
+	terminals.
+
 	With tmux you might need this in ~/.tmux.conf (see terminal-overrides
 	in the tmux(1) manual page): >
 		set -ga terminal-overrides ',*:Ss=\E[%p1%d q:Se=\E[2 q'
-<
-	The option is a comma separated list of parts.  Each part consists of a
+
+<	To disable cursor-styling, reset the option: >
+		:set guicursor=
+
+<	To enable mode shapes, "Cursor" highlight, and blinking: >
+		:set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
+		  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
+		  \,sm:block-blinkwait175-blinkoff150-blinkon175
+
+<	The option is a comma separated list of parts.  Each part consists of a
 	mode-list and an argument-list:
 		mode-list:argument-list,mode-list:argument-list,..
 	The mode-list is a dash separated list of these modes:
@@ -2800,14 +2801,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			the cursor starts blinking, blinkon is the time that
 			the cursor is shown and blinkoff is the time that the
 			cursor is not shown.  The times are in msec.  When one
-			of the numbers is zero, there is no blinking.  The
-			default is: "blinkwait700-blinkon400-blinkoff250".
-			These numbers are used for a missing entry.  This
-			means that blinking is enabled by default.  To switch
-			blinking off you can use "blinkon0".  The cursor only
-			blinks when Vim is waiting for input, not while
-			executing a command.
-		{group-name}
+			of the numbers is zero, there is no blinking. E.g.: >
+				:set guicursor=n:blinkon0
+<		{group-name}
 			a highlight group name, that sets the color and font
 			for the cursor
 		{group-name}/{group-name}

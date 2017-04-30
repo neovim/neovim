@@ -20,102 +20,102 @@ describe('ui/cursor', function()
   it("'guicursor' is published as a UI event", function()
     local expected_mode_info = {
       [1] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
         cell_percentage = 0,
         cursor_shape = 'block',
         name = 'normal',
-        hl_id = 46,
-        id_lm = 47,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 'n' },
       [2] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
         cell_percentage = 0,
         cursor_shape = 'block',
         name = 'visual',
-        hl_id = 46,
-        id_lm = 47,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 'v' },
       [3] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
         cell_percentage = 25,
         cursor_shape = 'vertical',
         name = 'insert',
-        hl_id = 46,
-        id_lm = 47,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 'i' },
       [4] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
         cell_percentage = 20,
         cursor_shape = 'horizontal',
         name = 'replace',
-        hl_id = 46,
-        id_lm = 47,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 'r' },
       [5] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
         cell_percentage = 0,
         cursor_shape = 'block',
         name = 'cmdline_normal',
-        hl_id = 46,
-        id_lm = 47,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 'c' },
       [6] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
         cell_percentage = 25,
         cursor_shape = 'vertical',
         name = 'cmdline_insert',
-        hl_id = 46,
-        id_lm = 47,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 'ci' },
       [7] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
         cell_percentage = 20,
         cursor_shape = 'horizontal',
         name = 'cmdline_replace',
-        hl_id = 46,
-        id_lm = 47,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 'cr' },
       [8] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
-        cell_percentage = 50,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
+        cell_percentage = 20,
         cursor_shape = 'horizontal',
         name = 'operator',
-        hl_id = 46,
-        id_lm = 46,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 'o' },
       [9] = {
-        blinkoff = 250,
-        blinkon = 400,
-        blinkwait = 700,
-        cell_percentage = 35,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
+        cell_percentage = 25,
         cursor_shape = 'vertical',
         name = 'visual_select',
-        hl_id = 46,
-        id_lm = 46,
+        hl_id = 0,
+        id_lm = 0,
         mouse_shape = 0,
         short_name = 've' },
       [10] = {
@@ -147,19 +147,19 @@ describe('ui/cursor', function()
         mouse_shape = 0,
         short_name = 'ml' },
       [17] = {
-        blinkoff = 150,
-        blinkon = 175,
-        blinkwait = 175,
+        blinkoff = 0,
+        blinkon = 0,
+        blinkwait = 0,
         cell_percentage = 0,
         cursor_shape = 'block',
         name = 'showmatch',
-        hl_id = 46,
-        id_lm = 46,
+        hl_id = 0,
+        id_lm = 0,
         short_name = 'sm' },
       }
 
     screen:expect(function()
-      -- Default 'guicursor' published on startup.
+      -- Default 'guicursor', published on startup.
       eq(expected_mode_info, screen._mode_info)
       eq(true, screen._cursor_style_enabled)
       eq('normal', screen.mode)
@@ -179,20 +179,53 @@ describe('ui/cursor', function()
     end)
 
     -- Change the cursor style.
-    meths.set_option('guicursor', 'n-v-c:ver35-blinkwait171-blinkoff172-blinkon173,ve:hor35,o:ver50,i-ci:block,r-cr:hor90,sm:ver42')
+    helpers.command('set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr-o:hor20'
+      ..',a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor'
+      ..',sm:block-blinkwait175-blinkoff150-blinkon175')
+
+    -- Update the expected values.
+    for _, m in ipairs(expected_mode_info) do
+      if m.name == 'showmatch' then
+        if m.blinkon then m.blinkon = 175 end
+        if m.blinkoff then m.blinkoff = 150 end
+        if m.blinkwait then m.blinkwait = 175 end
+      else
+        if m.blinkon then m.blinkon = 250 end
+        if m.blinkoff then m.blinkoff = 400 end
+        if m.blinkwait then m.blinkwait = 700 end
+      end
+      if m.hl_id then m.hl_id = 46 end
+      if m.id_lm then m.id_lm = 47 end
+    end
+
+    -- Assert the new expectation.
+    screen:expect(function()
+      eq(expected_mode_info, screen._mode_info)
+      eq(true, screen._cursor_style_enabled)
+      eq('normal', screen.mode)
+    end)
+
+    -- Another cursor style.
+    meths.set_option('guicursor', 'n-v-c:ver35-blinkwait171-blinkoff172-blinkon173'
+      ..',ve:hor35,o:ver50,i-ci:block,r-cr:hor90,sm:ver42')
     screen:expect(function()
       local named = {}
       for _, m in ipairs(screen._mode_info) do
         named[m.name] = m
       end
       eq('vertical', named.normal.cursor_shape)
+      eq(35, named.normal.cell_percentage)
       eq('horizontal', named.visual_select.cursor_shape)
+      eq(35, named.visual_select.cell_percentage)
       eq('vertical', named.operator.cursor_shape)
+      eq(50, named.operator.cell_percentage)
       eq('block', named.insert.cursor_shape)
       eq('vertical', named.showmatch.cursor_shape)
+      eq(90, named.cmdline_replace.cell_percentage)
       eq(171, named.normal.blinkwait)
       eq(172, named.normal.blinkoff)
       eq(173, named.normal.blinkon)
+      eq(42, named.showmatch.cell_percentage)
     end)
   end)
 
