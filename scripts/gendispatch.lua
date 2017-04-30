@@ -37,6 +37,8 @@ c_proto = Ct(
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
   Cg(Cc(false), 'async') *
   (fill * Cg((P('FUNC_API_SINCE(') * C(num ^ 1)) * P(')'), 'since') ^ -1) *
+  (fill * Cg((P('FUNC_API_DEPRECATED_SINCE(') * C(num ^ 1)) * P(')'),
+              'deprecated_since') ^ -1) *
   (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEVAL') * Cc(true)), 'noeval') ^ -1) *
@@ -122,6 +124,10 @@ for i,f in ipairs(shallowcopy(functions)) do
       os.exit(1)
     end
     f.since = tonumber(f.since)
+    if f.deprecated_since ~= nil then
+      f.deprecated_since = tonumber(f.deprecated_since)
+    end
+
     if startswith(f.name, "nvim_buf_") then
       ismethod = true
     elseif startswith(f.name, "nvim_win_") then
