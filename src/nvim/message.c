@@ -31,6 +31,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/normal.h"
+#include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
@@ -147,6 +148,12 @@ msg_attr_keep (
   static int entered = 0;
   int retval;
   char_u *buf = NULL;
+
+  // Skip messages not match ":filter pattern".
+  // Don't filter when there is an error.
+  if (!emsg_on_display && message_filtered(s)) {
+    return true;
+  }
 
   if (attr == 0) {
     set_vim_var_string(VV_STATUSMSG, (char *) s, -1);
@@ -1781,6 +1788,18 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
   }
 
   msg_check();
+}
+
+/// Return true when ":filter pattern" was used and "msg" does not match
+/// "pattern".
+bool message_filtered(char_u *msg)
+{
+  if (cmdmod.filter_regmatch.regprog == NULL) {
+    return false;
+  }
+
+  bool match = vim_regexec(&cmdmod.filter_regmatch, msg, (colnr_T)0);
+  return cmdmod.filter_force ? match : !match;
 }
 
 /*

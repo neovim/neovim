@@ -931,6 +931,12 @@ return {
     func='ex_filetype',
   },
   {
+    command='filter',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM),
+    addr_type=ADDR_LINES,
+    func='ex_wrongmodifier',
+  },
+  {
     command='find',
     flags=bit.bor(RANGE, NOTADR, BANG, FILE1, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_LINES,

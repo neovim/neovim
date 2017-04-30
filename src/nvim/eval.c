@@ -21779,52 +21779,6 @@ void last_set_msg(scid_T scriptID)
   }
 }
 
-/*
- * List v:oldfiles in a nice way.
- */
-void ex_oldfiles(exarg_T *eap)
-{
-  list_T      *l = get_vim_var_list(VV_OLDFILES);
-  listitem_T  *li;
-  long nr = 0;
-
-  if (l == NULL)
-    msg((char_u *)_("No old files"));
-  else {
-    msg_start();
-    msg_scroll = TRUE;
-    for (li = l->lv_first; li != NULL && !got_int; li = li->li_next) {
-      msg_outnum(++nr);
-      MSG_PUTS(": ");
-      msg_outtrans((char_u *)tv_get_string(&li->li_tv));
-      msg_clr_eos();
-      msg_putchar('\n');
-      ui_flush();                  /* output one line at a time */
-      os_breakcheck();
-    }
-    /* Assume "got_int" was set to truncate the listing. */
-    got_int = FALSE;
-
-    // File selection prompt on ":browse oldfiles"
-    if (cmdmod.browse) {
-      quit_more = false;
-      nr = prompt_for_number(false);
-      msg_starthere();
-      if (nr > 0 && nr <= l->lv_len) {
-        const char *const p = tv_list_find_str(l, nr - 1);
-        if (p == NULL) {
-          return;
-        }
-        char *const s = (char *)expand_env_save((char_u *)p);
-        eap->arg = (char_u *)s;
-        eap->cmdidx = CMD_edit;
-        do_exedit(eap, NULL);
-        xfree(s);
-      }
-    }
-  }
-}
-
 // reset v:option_new, v:option_old and v:option_type
 void reset_v_option_vars(void)
 {
