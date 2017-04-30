@@ -1,52 +1,8 @@
-lpeg = require('lpeg')
 mpack = require('mpack')
 
--- TODO: reduce copying
--- lpeg grammar for building api metadata from a set of header files. It
--- ignores comments and preprocessor commands and parses a very small subset
--- of C prototypes with a limited set of types
-P, R, S = lpeg.P, lpeg.R, lpeg.S
-C, Ct, Cc, Cg = lpeg.C, lpeg.Ct, lpeg.Cc, lpeg.Cg
+local nvimdir = arg[1]
+package.path = nvimdir .. '/?.lua;' .. package.path
 
-any = P(1) -- (consume one character)
-letter = R('az', 'AZ') + S('_$')
-num = R('09')
-alpha = letter + num
-nl = P('\r\n') + P('\n')
-not_nl = any - nl
-ws = S(' \t') + nl
-fill = ws ^ 0
-c_comment = P('//') * (not_nl ^ 0)
-c_preproc = P('#') * (not_nl ^ 0)
-typed_container =
-  (P('ArrayOf(') + P('DictionaryOf(')) * ((any - P(')')) ^ 1) * P(')')
-c_id = (
-  typed_container +
-  (letter * (alpha ^ 0))
-)
-c_void = P('void')
-c_param_type = (
-  ((P('Error') * fill * P('*') * fill) * Cc('error')) +
-  (C(c_id) * (ws ^ 1))
-  )
-c_type = (C(c_void) * (ws ^ 1)) + c_param_type
-c_param = Ct(c_param_type * C(c_id))
-c_param_list = c_param * (fill * (P(',') * fill * c_param) ^ 0)
-c_params = Ct(c_void + c_param_list)
-c_proto = Ct(
-  Cg(c_type, 'return_type') * Cg(c_id, 'name') *
-  fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
-  Cg(Cc(false), 'async') *
-  (fill * Cg((P('FUNC_API_SINCE(') * C(num ^ 1)) * P(')'), 'since') ^ -1) *
-  (fill * Cg((P('REMOTE_ONLY') * Cc(true)), 'remote_only') ^ -1) *
-  (fill * Cg((P('REMOTE_IMPL') * Cc(true)), 'remote_impl') ^ -1) *
-  (fill * Cg((P('BRIDGE_IMPL') * Cc(true)), 'bridge_impl') ^ -1) *
-  fill * P(';')
-  )
-grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
-
-
--- we need at least 4 arguments since the last two are output files
 assert(#arg == 6)
 input = io.open(arg[2], 'rb')
 proto_output = io.open(arg[3], 'wb')
@@ -54,9 +10,8 @@ call_output = io.open(arg[4], 'wb')
 remote_output = io.open(arg[5], 'wb')
 bridge_output = io.open(arg[6], 'wb')
 
-functions = {}
-
-local events = grammar:match(input:read('*all'))
+c_grammar = require('generators.c_grammar')
+local events = c_grammar.grammar:match(input:read('*all'))
 
 function write_signature(output, ev, prefix, notype)
   output:write('('..prefix)
@@ -175,8 +130,6 @@ for i = 1, #events do
   call_output:write("}\n\n")
 
 end
-
-
 
 proto_output:close()
 call_output:close()
