@@ -567,11 +567,15 @@ void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
 
 /// Gets the buffer number
 ///
+/// @deprecated The buffer number now is equal to the object id,
+///             so there is no need to use this function.
+///
 /// @param buffer     Buffer handle
 /// @param[out] err   Error details, if any
 /// @return Buffer number
 Integer nvim_buf_get_number(Buffer buffer, Error *err)
     FUNC_API_SINCE(1)
+    FUNC_API_DEPRECATED_SINCE(2)
 {
   Integer rv = 0;
   buf_T *buf = find_buffer_by_handle(buffer, err);

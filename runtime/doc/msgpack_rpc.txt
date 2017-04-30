@@ -221,7 +221,10 @@ Special types (msgpack EXT) ~
 
 An API method expecting one of these types may be passed an integer instead,
 although they are not interchangeable. For example, a Buffer may be passed as
-an integer, but not a Window or Tabpage.
+an integer, but not as a Window or Tabpage. The data in the EXT object is the
+object id encodes as a msgpack integer. For buffers this is equal to the
+buffer number and for windows the window id. For tabpages this is not equal to
+tabpage numbers.
 
 The most reliable way of determining the type codes for the special Nvim types
 is to inspect the `types` key of metadata dictionary returned by the
