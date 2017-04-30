@@ -2365,12 +2365,16 @@ void buflist_list(exarg_T *eap)
             && (buf == curbuf || curwin->w_alt_fnum != buf->b_fnum))) {
       continue;
     }
-    msg_putchar('\n');
     if (buf_spname(buf) != NULL)
       STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
     else
       home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, TRUE);
 
+    if (message_filtered(NameBuff)) {
+      continue;
+    }
+
+    msg_putchar('\n');
     len = vim_snprintf((char *)IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
         buf->b_fnum,
         buf->b_p_bl ? ' ' : 'u',
