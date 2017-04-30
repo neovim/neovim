@@ -44,6 +44,7 @@
 
 #define TOO_MANY_EVENTS 1000000
 #define STARTS_WITH(str, prefix) (!memcmp(str, prefix, sizeof(prefix) - 1))
+#define TMUX_WRAP(seq) (is_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
 
 typedef enum TermType {
   kTermUnknown,
@@ -95,6 +96,7 @@ typedef struct {
 
 static bool volatile got_winch = false;
 static bool cursor_style_enabled = false;
+static bool is_tmux = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -545,12 +547,19 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   TUIData *data = ui->data;
   cursorentry_T c = data->cursor_shapes[mode];
   int shape = c.shape;
-  bool is_tmux = os_getenv("TMUX") != NULL;
   unibi_var_t vars[26 + 26] = { { 0 } };
 
-# define TMUX_WRAP(seq) (is_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
   // Support changing cursor shape on some popular terminals.
   const char *vte_version = os_getenv("VTE_VERSION");
+
+  if (c.id != 0 && ui->rgb) {
+    int attr = syn_id2attr(c.id);
+    if (attr > 0) {
+      attrentry_T *aep = syn_cterm_attr2entry(attr);
+      data->params[0].i = aep->rgb_bg_color;
+      unibi_out(ui, data->unibi_ext.set_cursor_color);
+    }
+  }
 
   if (data->term == kTermKonsole) {
     // Konsole uses a proprietary escape code to set the cursor shape
@@ -582,15 +591,6 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     data->params[0].i = shape + (int)(c.blinkon == 0);
     unibi_format(vars, vars + 26, "\x1b[%p1%d q",
                  data->params, out, ui, NULL, NULL);
-  }
-
-  if (c.id != 0 && ui->rgb) {
-    int attr = syn_id2attr(c.id);
-    if (attr > 0) {
-      attrentry_T *aep = syn_cterm_attr2entry(attr);
-      data->params[0].i = aep->rgb_bg_color;
-      unibi_out(ui, data->unibi_ext.set_cursor_color);
-    }
   }
 }
 
@@ -952,6 +952,7 @@ static TermType detect_term(const char *term, const char *colorterm)
 static void fix_terminfo(TUIData *data)
 {
   unibi_term *ut = data->ut;
+  is_tmux = os_getenv("TMUX") != NULL;
 
   const char *term = os_getenv("TERM");
   const char *colorterm = os_getenv("COLORTERM");
@@ -1019,7 +1020,7 @@ end:
   // Fill some empty slots with common terminal strings
   if (data->term == kTermiTerm) {
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
-        ut, NULL, "\033]Pl%p1%06x\033\\");
+        ut, NULL, TMUX_WRAP("\033]Pl%p1%06x\033\\"));
   } else {
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, "\033]12;#%p1%06x\007");
