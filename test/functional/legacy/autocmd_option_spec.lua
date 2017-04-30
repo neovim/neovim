@@ -295,7 +295,7 @@ describe('au OptionSet', function()
 
         nvim.set_option('autochdir', true)
         eq(true, nvim.get_option('autochdir'))
-        expected_combination({'autochdir', '0', '1', 'global'})
+        expected_empty()
       end)
 
       it('should trigger if a number option be set globally', function()
@@ -303,7 +303,7 @@ describe('au OptionSet', function()
 
         nvim.set_option('cmdheight', 5)
         eq(5, nvim.get_option('cmdheight'))
-        expected_combination({'cmdheight', 1, 5, 'global'})
+        expected_empty()
       end)
 
       it('should trigger if a string option be set globally', function()
@@ -311,7 +311,7 @@ describe('au OptionSet', function()
 
         nvim.set_option('ambiwidth', 'double')
         eq('double', nvim.get_option('ambiwidth'))
-        expected_combination({'ambiwidth', 'single', 'double', 'global'})
+        expected_empty()
       end)
     end)
   end)

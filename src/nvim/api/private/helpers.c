@@ -18,6 +18,7 @@
 #include "nvim/memory.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/fileio.h"
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
 #include "nvim/option.h"
@@ -970,9 +971,11 @@ static void set_option_value_err(char *key,
                                  int opt_flags,
                                  Error *err)
 {
-  char *errmsg;
+  block_autocmds();
+  char *errmsg = set_option_value(key, numval, stringval, opt_flags);
+  unblock_autocmds();
 
-  if ((errmsg = set_option_value(key, numval, stringval, opt_flags))) {
+  if (errmsg) {
     if (try_end(err)) {
       return;
     }
