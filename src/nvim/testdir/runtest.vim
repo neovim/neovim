@@ -72,6 +72,7 @@ let v:testing = 1
 set directory^=.
 set backspace=
 set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
+set listchars=eol:$
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE='Xnvim.log'
 

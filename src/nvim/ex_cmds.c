@@ -1490,6 +1490,11 @@ void print_line(linenr_T lnum, int use_number, int list)
 {
   int save_silent = silent_mode;
 
+  // apply :filter /pat/
+  if (message_filtered(ml_get(lnum))) {
+    return;
+  }
+
   msg_start();
   silent_mode = FALSE;
   info_message = TRUE;          /* use mch_msg(), not mch_errmsg() */

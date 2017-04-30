@@ -1794,8 +1794,12 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
 /// "pattern".
 bool message_filtered(char_u *msg)
 {
-  return cmdmod.filter_regmatch.regprog != NULL
-    && !vim_regexec(&cmdmod.filter_regmatch, msg, (colnr_T)0);
+  if (cmdmod.filter_regmatch.regprog == NULL) {
+    return false;
+  }
+
+  bool match = vim_regexec(&cmdmod.filter_regmatch, msg, (colnr_T)0);
+  return cmdmod.filter_force ? match : !match;
 }
 
 /*

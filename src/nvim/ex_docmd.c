@@ -1356,6 +1356,13 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       if (!checkforcmd(&p, "filter", 4) || *p == NUL || ends_excmd(*p)) {
         break;
       }
+      if (*p == '!') {
+        cmdmod.filter_force = true;
+        p = skipwhite(p + 1);
+        if (*p == NUL || ends_excmd(*p)) {
+          break;
+        }
+      }
       p = skip_vimgrep_pat(p, &reg_pat, NULL);
       if (p == NULL || *p == NUL) {
         break;
@@ -4883,9 +4890,12 @@ static void uc_list(char_u *name, size_t name_len)
       cmd = USER_CMD_GA(gap, i);
       a = cmd->uc_argt;
 
-      /* Skip commands which don't match the requested prefix */
-      if (STRNCMP(name, cmd->uc_name, name_len) != 0)
+      // Skip commands which don't match the requested prefix and
+      // commands filtered out.
+      if (STRNCMP(name, cmd->uc_name, name_len) != 0
+          || message_filtered(cmd->uc_name)) {
         continue;
+      }
 
       /* Put out the title first time */
       if (!found)

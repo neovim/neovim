@@ -177,6 +177,7 @@ typedef struct {
   bool noswapfile;             ///< true when ":noswapfile" was used
   char_u *save_ei;             ///< saved value of 'eventignore'
   regmatch_T filter_regmatch;  ///< set by :filter /pat/
+  bool filter_force;           ///< set for :filter!
 } cmdmod_T;
 
 #endif  // NVIM_EX_CMDS_DEFS_H

@@ -932,7 +932,7 @@ return {
   },
   {
     command='filter',
-    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM),
     addr_type=ADDR_LINES,
     func='ex_wrongmodifier',
   },
