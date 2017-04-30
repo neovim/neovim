@@ -124,8 +124,9 @@ closed properly.  Mostly harmless.
   Command too recursive
 
 This happens when an Ex command executes an Ex command that executes an Ex
-command, etc.  This is only allowed 200 times.  When it's more there probably
-is an endless loop.  Probably a |:execute| or |:source| command is involved.
+command, etc.  The limit is 200 or the value of 'maxfuncdepth', whatever is
+larger.  When it's more there probably is an endless loop.  Probably a
+|:execute| or |:source| command is involved.
 
 							*E254*  >
   Cannot allocate color {name}

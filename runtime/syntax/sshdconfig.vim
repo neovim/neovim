@@ -6,8 +6,8 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Originally:	2009-07-09
-" Last Change:	2016 Mar 1
-" SSH Version:	7.2
+" Last Change:	2016 Dec 28
+" SSH Version:	7.4p1
 "
 
 " Setup
@@ -161,6 +161,7 @@ syn keyword sshdconfigKeyword Compression
 syn keyword sshdconfigKeyword DebianBanner
 syn keyword sshdconfigKeyword DenyGroups
 syn keyword sshdconfigKeyword DenyUsers
+syn keyword sshdconfigKeyword DisableForwarding
 syn keyword sshdconfigKeyword ForceCommand
 syn keyword sshdconfigKeyword GSSAPIAuthentication
 syn keyword sshdconfigKeyword GSSAPICleanupCredentials

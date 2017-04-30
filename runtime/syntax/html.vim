@@ -1,9 +1,9 @@
 " Vim syntax file
-" Language:	HTML
-" Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:		http://www.fleiner.com/vim/syntax/html.vim
-" Last Change:	2015 Jan 07
-"		included patch from David Felix
+" Language:             HTML
+" Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
+" Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
+" Last Change:          2016 Dec 29
+"                       included patch from Jorge Maldonado Ventura
 
 " Please check :help html.vim for some comments and a description of the options
 
@@ -52,6 +52,14 @@ syn match htmlTagName contained "\<\(b\|i\|u\|h[1-6]\|em\|strong\|head\|body\|ti
 syn keyword htmlTagName contained abbr acronym bdo button col label
 syn keyword htmlTagName contained colgroup del fieldset iframe ins legend
 syn keyword htmlTagName contained object optgroup q s tbody tfoot thead
+
+" new html 5 tags
+syn keyword htmlTagName contained article aside audio bdi canvas datalist
+syn keyword htmlTagName contained details embed figcaption figure
+syn keyword htmlTagName contained footer header hgroup main mark
+syn keyword htmlTagName contained menuitem meter nav output picture
+syn keyword htmlTagName contained progress rb rp rt rtc ruby section
+syn keyword htmlTagName contained slot source template time track video wbr
 
 " legal arg names
 syn keyword htmlArg contained action
