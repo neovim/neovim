@@ -3,12 +3,13 @@ mpack = require('mpack')
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
-assert(#arg == 6)
+assert(#arg == 7)
 input = io.open(arg[2], 'rb')
 proto_output = io.open(arg[3], 'wb')
 call_output = io.open(arg[4], 'wb')
 remote_output = io.open(arg[5], 'wb')
 bridge_output = io.open(arg[6], 'wb')
+metadata_output = io.open(arg[7], 'wb')
 
 c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
@@ -52,6 +53,12 @@ end
 for i = 1, #events do
   ev = events[i]
   assert(ev.return_type == 'void')
+
+  if ev.since == nil then
+    print("Ui event "..ev.name.." lacks since field.\n")
+    os.exit(1)
+  end
+  ev.since = tonumber(ev.since)
 
   if not ev.remote_only then
     proto_output:write('  void (*'..ev.name..')')
@@ -134,3 +141,20 @@ end
 proto_output:close()
 call_output:close()
 remote_output:close()
+
+-- don't expose internal attributes like "impl_name" in public metadata
+exported_attributes = {'name', 'parameters',
+                       'since', 'deprecated_since'}
+exported_events = {}
+for _,ev in ipairs(events) do
+  local f_exported = {}
+  for _,attr in ipairs(exported_attributes) do
+    f_exported[attr] = ev[attr]
+  end
+  exported_events[#exported_events+1] = f_exported
+end
+
+packed = mpack.pack(exported_events)
+dump_bin_array = require("generators.dump_bin_array")
+dump_bin_array(metadata_output, 'ui_events_metadata', packed)
+metadata_output:close()
