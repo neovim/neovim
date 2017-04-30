@@ -5,12 +5,13 @@ local buf, eq, feed_command = helpers.curbufmeths, helpers.eq, helpers.feed_comm
 local feed, nvim_prog, wait = helpers.feed, helpers.nvim_prog, helpers.wait
 local ok, set_session, spawn = helpers.ok, helpers.set_session, helpers.spawn
 
-local shada_file = 'test.shada'
+local shada_file = 'Xtest.shada'
 
 local function _clear()
-  set_session(spawn({nvim_prog, '--embed', '-u', 'NONE', '--cmd',
+  set_session(spawn({nvim_prog, '--embed', '-u', 'NONE',
                      -- Need shada for these tests.
-                     'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'}))
+                     '-i', shada_file,
+                     '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'}))
 end
 
 describe(':oldfiles', function()
@@ -29,8 +30,8 @@ describe(':oldfiles', function()
     screen:attach()
     feed_command('edit testfile1')
     feed_command('edit testfile2')
-    feed_command('wshada ' .. shada_file)
-    feed_command('rshada! ' .. shada_file)
+    feed_command('wshada')
+    feed_command('rshada!')
     local oldfiles = helpers.meths.get_vvar('oldfiles')
     feed_command('oldfiles')
     screen:expect([[
@@ -54,10 +55,9 @@ describe(':browse oldfiles', function()
     filename = buf.get_name()
     feed_command('edit testfile2')
     filename2 = buf.get_name()
-    feed_command('wshada ' .. shada_file)
+    feed_command('wshada')
     wait()
     _clear()
-    feed_command('rshada! ' .. shada_file)
 
     -- Ensure nvim is out of "Press ENTER..." prompt.
     feed('<cr>')
