@@ -6175,34 +6175,40 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
 
   if (vim_isIDc(*p)) {
     // ":vimgrep pattern fname"
-    if (s != NULL)
+    if (s != NULL) {
       *s = p;
+    }
     p = skiptowhite(p);
-    if (s != NULL && *p != NUL)
+    if (s != NULL && *p != NUL) {
       *p++ = NUL;
+    }
   } else {
     // ":vimgrep /pattern/[g][j] fname"
-    if (s != NULL)
+    if (s != NULL) {
       *s = p + 1;
+    }
     c = *p;
-    p = skip_regexp(p + 1, c, TRUE, NULL);
-    if (*p != c)
+    p = skip_regexp(p + 1, c, true, NULL);
+    if (*p != c) {
       return NULL;
+    }
 
     // Truncate the pattern.
-    if (s != NULL)
+    if (s != NULL) {
       *p = NUL;
-    ++p;
+    }
+    p++;
 
     // Find the flags
     while (*p == 'g' || *p == 'j') {
       if (flags != NULL) {
-        if (*p == 'g')
+        if (*p == 'g') {
           *flags |= VGR_GLOBAL;
-        else
+        } else {
           *flags |= VGR_NOJUMP;
+        }
       }
-      ++p;
+      p++;
     }
   }
   return p;
@@ -6219,7 +6225,7 @@ void ex_oldfiles(exarg_T *eap)
     msg((char_u *)_("No old files"));
   } else {
     msg_start();
-    msg_scroll = TRUE;
+    msg_scroll = true;
     for (li = l->lv_first; li != NULL && !got_int; li = li->li_next) {
       nr++;
       const char *fname = tv_get_string(&li->li_tv);
@@ -6234,8 +6240,8 @@ void ex_oldfiles(exarg_T *eap)
       }
     }
 
-    /* Assume "got_int" was set to truncate the listing. */
-    got_int = FALSE;
+    // Assume "got_int" was set to truncate the listing.
+    got_int = false;
 
     // File selection prompt on ":browse oldfiles"
     if (cmdmod.browse) {

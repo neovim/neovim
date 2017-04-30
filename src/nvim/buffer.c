@@ -2365,10 +2365,11 @@ void buflist_list(exarg_T *eap)
             && (buf == curbuf || curwin->w_alt_fnum != buf->b_fnum))) {
       continue;
     }
-    if (buf_spname(buf) != NULL)
+    if (buf_spname(buf) != NULL) {
       STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
-    else
-      home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, TRUE);
+    } else {
+      home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, true);
+    }
 
     if (message_filtered(NameBuff)) {
       continue;
