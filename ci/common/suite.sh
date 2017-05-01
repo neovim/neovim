@@ -16,7 +16,7 @@ ANSI_CLEAR="\033[0K"
 travis_fold() {
   local action="$1"
   local name="$2"
-  name="$(echo -n "$name" | tr '\n\0' '--' | sed 's/[^A-Za-z0-9]\+/-/g')"
+  name="$(echo -n "$name" | tr '\n\0' '--' | sed 's/[^A-Za-z0-9]\{1,\}/-/g')"
   name="$(echo -n "$name" | sed 's/-$//')"
   echo -en "travis_fold:${action}:${name}\r${ANSI_CLEAR}"
 }
