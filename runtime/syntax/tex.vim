@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Sep 20, 2016
-" Version:	101
+" Last Change:	Dec 07, 2016
+" Version:	102
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -494,13 +494,11 @@ if !exists("g:tex_no_math")
      \ ['\\backslash'  , '\'] ,
      \ ['\\downarrow'  , '↓'] ,
      \ ['\\Downarrow'  , '⇓'] ,
-     \ ['\\langle'     , '<'] ,
      \ ['\\lbrace'     , '['] ,
      \ ['\\lceil'      , '⌈'] ,
      \ ['\\lfloor'     , '⌊'] ,
      \ ['\\lgroup'     , '⌊'] ,
      \ ['\\lmoustache' , '⎛'] ,
-     \ ['\\rangle'     , '>'] ,
      \ ['\\rbrace'     , ']'] ,
      \ ['\\rceil'      , '⌉'] ,
      \ ['\\rfloor'     , '⌋'] ,
@@ -510,6 +508,15 @@ if !exists("g:tex_no_math")
      \ ['\\Uparrow'    , '↑'] ,
      \ ['\\updownarrow', '↕'] ,
      \ ['\\Updownarrow', '⇕']]
+  if &ambw == "double" || exists("g:tex_usedblwidth")
+    let s:texMathDelimList= s:texMathDelimList + [
+     \ ['\\langle'     , '〈'] ,
+     \ ['\\rangle'     , '〉'] ,
+  else
+    let s:texMathDelimList= s:texMathDelimList + [
+     \ ['\\langle'     , '<'] ,
+     \ ['\\rangle'     , '>']]
+  endif
   syn match texMathDelim	'\\[bB]igg\=[lr]' contained nextgroup=texMathDelimBad
   for texmath in s:texMathDelimList
    exe "syn match texMathDelim	'\\\\[bB]igg\\=[lr]\\=".texmath[0]."'	contained conceal cchar=".texmath[1]
@@ -680,6 +687,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['backslash'	, '∖'],
     \ ['barwedge'	, '⊼'],
     \ ['because'	, '∵'],
+    \ ['beth'           , 'ܒ'],
     \ ['between'	, '≬'],
     \ ['bigcap'		, '∩'],
     \ ['bigcirc'	, '○'],
@@ -699,6 +707,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['boxminus'	, '⊟'],
     \ ['boxplus'	, '⊞'],
     \ ['boxtimes'	, '⊠'],
+    \ ['Box'            , '☐'],
     \ ['bullet'	        , '•'],
     \ ['bumpeq'		, '≏'],
     \ ['Bumpeq'		, '≎'],
@@ -748,6 +757,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['eqslantgtr'	, '⪖'],
     \ ['eqslantless'	, '⪕'],
     \ ['equiv'		, '≡'],
+    \ ['eth'            , 'ð'],
     \ ['exists'		, '∃'],
     \ ['fallingdotseq'	, '≒'],
     \ ['flat'		, '♭'],
@@ -757,6 +767,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['geq'		, '≥'],
     \ ['geqq'		, '≧'],
     \ ['gets'		, '←'],
+    \ ['gimel'          , 'ℷ'],
     \ ['gg'		, '⟫'],
     \ ['gneqq'		, '≩'],
     \ ['gtrdot'		, '⋗'],
@@ -767,13 +778,17 @@ if has("conceal") && &enc == 'utf-8'
     \ ['heartsuit'	, '♡'],
     \ ['hookleftarrow'	, '↩'],
     \ ['hookrightarrow'	, '↪'],
+    \ ['iff'            , '⇔'],
     \ ['iiint'		, '∭'],
     \ ['iint'		, '∬'],
     \ ['Im'		, 'ℑ'],
     \ ['imath'		, 'ɩ'],
+    \ ['implies'	, '⇒'],
     \ ['in'		, '∈'],
     \ ['infty'		, '∞'],
     \ ['int'		, '∫'],
+    \ ['jmath'		, '𝚥'],
+    \ ['land'		, '∧'],
     \ ['lceil'		, '⌈'],
     \ ['ldots'		, '…'],
     \ ['le'		, '≤'],
@@ -800,6 +815,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['ll'		, '≪'],
     \ ['lmoustache'     , '╭'],
     \ ['lneqq'		, '≨'],
+    \ ['lor'		, '∨'],
     \ ['ltimes'		, '⋉'],
     \ ['mapsto'		, '↦'],
     \ ['measuredangle'	, '∡'],
@@ -826,6 +842,7 @@ if has("conceal") && &enc == 'utf-8'
     \ ['nless'		, '≮'],
     \ ['nmid'		, '∤'],
     \ ['notin'		, '∉'],
+    \ ['nparallel'      , '∦'],
     \ ['nprec'		, '⊀'],
     \ ['nrightarrow'	, '↛'],
     \ ['nRightarrow'	, '⇏'],
@@ -927,10 +944,12 @@ if has("conceal") && &enc == 'utf-8'
     \ ['trianglerighteq', '⊵'],
     \ ['twoheadleftarrow', '↞'],
     \ ['twoheadrightarrow', '↠'],
+    \ ['ulcorner'       , '⌜'],
     \ ['uparrow'	, '↑'],
     \ ['Uparrow'	, '⇑'],
     \ ['updownarrow'	, '↕'],
     \ ['Updownarrow'	, '⇕'],
+    \ ['urcorner'       , '⌝'],
     \ ['varnothing'	, '∅'],
     \ ['vartriangle'	, '∆'],
     \ ['vdash'		, '⊢'],
@@ -946,6 +965,15 @@ if has("conceal") && &enc == 'utf-8'
 "    \ ['jmath'		, 'X']
 "    \ ['uminus'	, 'X']
 "    \ ['uplus'		, 'X']
+  if &ambw == "double" || exists("g:tex_usedblwidth")
+    let s:texMathList= s:texMathList + [
+    \ ['right\\rangle'	, '〉'],
+    \ ['left\\langle'	, '〈']]
+  else
+    let s:texMathList= s:texMathList + [
+    \ ['right\\rangle'	, '>'],
+    \ ['left\\langle'	, '<']]
+  endif
   for texmath in s:texMathList
    if texmath[0] =~# '\w$'
     exe "syn match texMathSymbol '\\\\".texmath[0]."\\>' contained conceal cchar=".texmath[1]

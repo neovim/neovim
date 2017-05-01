@@ -952,6 +952,7 @@ Various:					*various-functions*
 
 	py3eval()		evaluate Python expression (|+python3|)
 	pyeval()		evaluate Python expression (|+python|)
+	pyxeval()		evaluate |python_x| expression
 
 ==============================================================================
 *41.7*	Defining a function

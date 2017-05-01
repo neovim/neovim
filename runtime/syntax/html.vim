@@ -3,7 +3,7 @@
 " Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
 " Repository:           https://notabug.org/jorgesumle/vim-html-syntax
-" Last Change:          2017 Jan 04
+" Last Change:          2017 Jan 21
 "                       included patch from Jorge Maldonado Ventura
 
 " Please check :help html.vim for some comments and a description of the options
@@ -55,9 +55,9 @@ syn keyword htmlTagName contained colgroup del fieldset iframe ins legend
 syn keyword htmlTagName contained object optgroup q s tbody tfoot thead
 
 " new html 5 tags
-syn keyword htmlTagName contained article aside audio bdi canvas datalist
-syn keyword htmlTagName contained details embed figcaption figure
-syn keyword htmlTagName contained footer header hgroup main mark
+syn keyword htmlTagName contained article aside audio bdi canvas data
+syn keyword htmlTagName contained datalist details embed figcaption figure
+syn keyword htmlTagName contained footer header hgroup keygen main mark
 syn keyword htmlTagName contained menuitem meter nav output picture
 syn keyword htmlTagName contained progress rb rp rt rtc ruby section
 syn keyword htmlTagName contained slot source template time track video wbr
@@ -97,8 +97,17 @@ syn keyword htmlArg contained rules scheme scope span standby style
 syn keyword htmlArg contained summary tabindex valuetype version
 
 " html 5 arg names
-syn keyword htmlArg contained contenteditable contextmenu draggable dropzone
-syn keyword htmlArg contained hidden spellcheck title translate
+syn keyword htmlArg contained allowfullscreen async autocomplete autofocus
+syn keyword htmlArg contained autoplay challenge contenteditable contextmenu
+syn keyword htmlArg contained controls crossorigin default dirname download
+syn keyword htmlArg contained draggable dropzone form formaction formenctype
+syn keyword htmlArg contained formmethod formnovalidate formtarget hidden
+syn keyword htmlArg contained high icon inputmode keytype kind list loop low
+syn keyword htmlArg contained max min minlength muted nonce novalidate open
+syn keyword htmlArg contained optimum pattern placeholder poster preload
+syn keyword htmlArg contained radiogroup required reversed sandbox spellcheck
+syn keyword htmlArg contained sizes srcset srcdoc srclang step title translate
+syn keyword htmlArg contained typemustmatch
 
 " special characters
 syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,8};"

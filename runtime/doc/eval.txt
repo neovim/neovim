@@ -2177,8 +2177,8 @@ matchstr({expr}, {pat}[, {start}[, {count}]])
 				String	{count}'th match of {pat} in {expr}
 matchstrpos({expr}, {pat}[, {start}[, {count}]])
 				List	{count}'th match of {pat} in {expr}
-max({list})			Number	maximum value of items in {list}
-min({list})			Number	minimum value of items in {list}
+max({expr})			Number	maximum value of items in {expr}
+min({expr})			Number	minimum value of items in {expr}
 mkdir({name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode([expr])			String	current editing mode
@@ -3915,6 +3915,10 @@ getchar([expr])						*getchar()*
 			  exe "normal " . v:mouse_col . "|"
 			endif
 <
+		When using bracketed paste only the first character is
+		returned, the rest of the pasted text is dropped.
+		|xterm-bracketed-paste|.
+
 		There is no prompt, you will somehow have to make clear to the
 		user that a character has to be typed.
 		There is no mapping for the character.
@@ -5481,16 +5485,20 @@ matchstrpos({expr}, {pat}[, {start}[, {count}]])		*matchstrpos()*
 		The type isn't changed, it's not necessarily a String.
 
 							*max()*
-max({list})	Return the maximum value of all items in {list}.
-		If {list} is not a list or one of the items in {list} cannot
-		be used as a Number this results in an error.
-		An empty |List| results in zero.
+max({expr})	Return the maximum value of all items in {expr}.
+		{expr} can be a list or a dictionary.  For a dictionary,
+		it returns the maximum of all values in the dictionary.
+		If {expr} is neither a list nor a dictionary, or one of the
+		items in {expr} cannot be used as a Number this results in
+                an error.  An empty |List| or |Dictionary| results in zero.
 
 							*min()*
-min({list})	Return the minimum value of all items in {list}.
-		If {list} is not a list or one of the items in {list} cannot
-		be used as a Number this results in an error.
-		An empty |List| results in zero.
+min({expr})	Return the minimum value of all items in {expr}.
+		{expr} can be a list or a dictionary.  For a dictionary,
+		it returns the minimum of all values in the dictionary.
+		If {expr} is neither a list nor a dictionary, or one of the
+		items in {expr} cannot be used as a Number this results in
+                an error.  An empty |List| or |Dictionary| results in zero.
 
 							*mkdir()* *E739*
 mkdir({name} [, {path} [, {prot}]])
@@ -7897,7 +7905,7 @@ winnr([{arg}])	The result is a Number, which is the number of the current
 		is returned.
 		The number can be used with |CTRL-W_w| and ":wincmd w"
 		|:wincmd|.
-		Also see |tabpagewinnr()|.
+		Also see |tabpagewinnr()| and |win_getid()|.
 
 							*winrestcmd()*
 winrestcmd()	Returns a sequence of |:resize| commands that should restore

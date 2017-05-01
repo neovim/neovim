@@ -3454,6 +3454,8 @@ DEFINING CASE						*:syn-case* *E390*
 	"ignore".  Note that any items before this are not affected, and all
 	items until the next ":syntax case" command are affected.
 
+:sy[ntax] case
+	Show either "syntax case match" or "syntax case ignore" (translated).
 
 SPELL CHECKING						*:syn-spell*
 
@@ -3470,6 +3472,11 @@ SPELL CHECKING						*:syn-spell*
 	spell checking is done for "default" and "toplevel".
 
 	To activate spell checking the 'spell' option must be set.
+
+:sy[ntax] spell
+	Show either "syntax spell toplevel", "syntax spell notoplevel" or
+	"syntax spell default" (translated).
+
 
 SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 
@@ -4063,6 +4070,9 @@ IMPLICIT CONCEAL					*:syn-conceal-implicit*
 	defined will have the "conceal" flag set implicitly. ":syn conceal
 	off" returns to the normal state where the "conceal" flag must be
 	given explicitly.
+
+:sy[ntax] conceal
+	Show either "syntax conceal on" or "syntax conceal off" (translated).
 
 ==============================================================================
 7. Syntax patterns				*:syn-pattern* *E401* *E402*
