@@ -9,21 +9,7 @@ Key mapping, abbreviations and user-defined commands.
 This subject is introduced in sections |05.3|, |24.7| and |40.1| of the user
 manual.
 
-1. Key mapping			|key-mapping|
-   1.1 MAP COMMANDS			|:map-commands|
-   1.2 Special arguments		|:map-arguments|
-   1.3 Mapping and modes		|:map-modes|
-   1.4 Listing mappings			|map-listing|
-   1.5 Mapping special keys		|:map-special-keys|
-   1.6 Special characters		|:map-special-chars|
-   1.7 What keys to map			|map-which-keys|
-   1.8 Examples				|map-examples|
-   1.9 Using mappings			|map-typing|
-   1.10 Mapping alt-keys		|:map-alt-keys|
-   1.11 Mapping an operator		|:map-operator|
-2. Abbreviations		|abbreviations|
-3. Local mappings and functions	|script-local|
-4. User-defined commands	|user-commands|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Key mapping				*key-mapping* *mapping* *macro*

@@ -10,16 +10,6 @@ These commands move the cursor position.  If the new position is off of the
 screen, the screen is scrolled to show the cursor (see also 'scrolljump' and
 'scrolloff' options).
 
-1. Motions and operators	|operator|
-2. Left-right motions		|left-right-motions|
-3. Up-down motions		|up-down-motions|
-4. Word motions			|word-motions|
-5. Text object motions		|object-motions|
-6. Text object selection	|object-select|
-7. Marks			|mark-motions|
-8. Jumps			|jump-motions|
-9. Various motions		|various-motions|
-
 General remarks:
 
 If you want to know where you are in the file use the "CTRL-G" command
@@ -35,6 +25,8 @@ at the keyboard.  Think of j as an arrow pointing downwards.
 The 'virtualedit' option can be set to make it possible to move the cursor to
 positions where there is no character or within a multi-column character (like
 a tab).
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Motions and operators				*operator*

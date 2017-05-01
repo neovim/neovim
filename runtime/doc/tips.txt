@@ -13,21 +13,7 @@ http://www.vim.org
 Don't forget to browse the user manual, it also contains lots of useful tips
 |usr_toc.txt|.
 
-Editing C programs				|C-editing|
-Finding where identifiers are used		|ident-search|
-Scrolling in Insert mode			|scroll-insert|
-Smooth scrolling				|scroll-smooth|
-Correcting common typing mistakes		|type-mistakes|
-Counting words, lines, etc.			|count-items|
-Restoring the cursor position			|restore-position|
-Renaming files					|rename-files|
-Change a name in multiple files			|change-name|
-Speeding up external commands			|speed-up|
-Useful mappings					|useful-mappings|
-Compressing the help files			|gzip-helpfile|
-Hex editing					|hex-editing|
-Using <> notation in autocommands		|autocmd-<>|
-Highlighting matching parens			|match-parens|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 Editing C programs					*C-editing*

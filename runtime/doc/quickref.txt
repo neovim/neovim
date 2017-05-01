@@ -988,7 +988,6 @@ Short explanation of each option:		*option-list*
 |g_CTRL-G|	   g CTRL-G	show cursor column, line, and character
 				   position
 |CTRL-C|	   CTRL-C	during searches: Interrupt the search
-|dos-CTRL-Break|   CTRL-Break	Windows: during searches: Interrupt the search
 |<Del>|		   <Del>	while entering a count: delete last character
 |:version|	:ve[rsion]	show version information
 |:normal|	:norm[al][!] {commands}

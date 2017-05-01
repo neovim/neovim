@@ -6,15 +6,7 @@
 
 Starting Vim						*starting*
 
-1. Vim arguments		|vim-arguments|
-2. Initialization		|initialization|
-3. $VIM and $VIMRUNTIME		|$VIM|
-4. Suspending			|suspend|
-5. Exiting			|exiting|
-6. Saving settings		|save-settings|
-7. Views and Sessions		|views-sessions|
-8. The ShaDa file		|shada-file|
-9. Base Directories     	|base-directories|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*

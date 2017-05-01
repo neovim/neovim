@@ -6,10 +6,7 @@
 
 Spell checking						*spell*
 
-1. Quick start			|spell-quickstart|
-2. Remarks on spell checking	|spell-remarks|
-3. Generating a spell file	|spell-mkspell|
-4. Spell file format		|spell-file-format|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Quick start					*spell-quickstart* *E756*

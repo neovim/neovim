@@ -6,14 +6,7 @@
 
 Printing						*printing*
 
-1. Introduction				|print-intro|
-2. Print options			|print-options|
-3. PostScript Printing			|postscript-printing|
-4. PostScript Printing Encoding		|postscript-print-encoding|
-5. PostScript CJK Printing		|postscript-cjk-printing|
-6. PostScript Printing Troubleshooting	|postscript-print-trouble|
-7. PostScript Utilities			|postscript-print-util|
-8. Formfeed Characters			|printing-formfeed|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						*print-intro*

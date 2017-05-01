@@ -8,9 +8,7 @@ This file contains an alphabetical list of messages and error messages that
 Vim produces.  You can use this if you don't understand what the message
 means.  It is not complete though.
 
-1. Old messages		|:messages|
-2. Error messages	|error-messages|
-3. Messages		|messages|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Old messages			*:messages* *:mes* *message-history*

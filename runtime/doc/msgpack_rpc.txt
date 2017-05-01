@@ -6,12 +6,7 @@
 
 RPC API for Nvim				     *RPC* *rpc* *msgpack-rpc*
 
-1. Introduction			|rpc-intro|
-2. API mapping			|rpc-api|
-3. Connecting			|rpc-connecting|
-4. Clients			|rpc-api-client|
-5. Types			|rpc-types|
-6. Remote UIs			|rpc-remote-ui|
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						            *rpc-intro*
@@ -33,7 +28,7 @@ programs can:
 The RPC API is like a more powerful version of Vim's `clientserver` feature.
 
 ==============================================================================
- 2. API mapping							    *rpc-api*
+2. API mapping							    *rpc-api*
 
 The Nvim C |API| is automatically exposed to the RPC API by the build system,
 which parses headers at src/nvim/api/*. A dispatch function is generated which

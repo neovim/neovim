@@ -6,17 +6,7 @@
 
 Editing files						*edit-files*
 
-1.  Introduction		|edit-intro|
-2.  Editing a file		|edit-a-file|
-3.  The argument list		|argument-list|
-4.  Writing			|writing|
-5.  Writing and quitting	|write-quit|
-6.  Dialogs			|edit-dialogs|
-7.  The current directory	|current-directory|
-8.  Editing binary files	|edit-binary|
-9.  Encryption			|encryption|
-10. Timestamps			|timestamps|
-11. File Searching		|file-searching|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						*edit-intro*

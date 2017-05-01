@@ -13,18 +13,7 @@ differently when used in combination with more than one window.
 The basics are explained in chapter 7 and 8 of the user manual |usr_07.txt|
 |usr_08.txt|.
 
-1.  Introduction				|windows-intro|
-2.  Starting Vim				|windows-starting|
-3.  Opening and closing a window		|opening-window|
-4.  Moving cursor to other windows		|window-move-cursor|
-5.  Moving windows around			|window-moving|
-6.  Window resizing				|window-resize|
-7.  Argument and buffer list commands		|buffer-list|
-8.  Do a command in all buffers or windows	|list-repeat|
-9.  Tag or file name under the cursor		|window-tag|
-10. The preview window				|preview-window|
-11. Using hidden buffers			|buffer-hidden|
-12. Special kinds of buffers			|special-buffers|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction					*windows-intro* *window*

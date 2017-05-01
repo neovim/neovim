@@ -11,6 +11,8 @@ via |msgpack-rpc|, Lua and VimL (|eval-api|).
 
 Applications can also embed libnvim to work with the C API directly.
 
+                                      Type <M-]> to see the table of contents.
+
 ==============================================================================
 API Types							   *api-types*
 

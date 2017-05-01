@@ -6,8 +6,7 @@
 
 Nvim's facilities for job control				  *job-control*
 
-1. Introduction			|job-control-intro|
-2. Usage			|job-control-usage|
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						    *job-control-intro*

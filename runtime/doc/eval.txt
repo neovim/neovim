@@ -12,23 +12,7 @@ Note: Expression evaluation can be disabled at compile time.  If this has been
 done, the features in this document are not available.	See |+eval| and
 |no-eval-feature|.
 
-1.  Variables			|variables|
-    1.1 Variable types
-    1.2 Function references		|Funcref|
-    1.3 Lists				|Lists|
-    1.4 Dictionaries			|Dictionaries|
-    1.5 More about variables		|more-variables|
-2.  Expression syntax		|expression-syntax|
-3.  Internal variable		|internal-variables|
-4.  Builtin Functions		|functions|
-5.  Defining functions		|user-functions|
-6.  Curly braces names		|curly-braces-names|
-7.  Commands			|expression-commands|
-8.  Exception handling		|exception-handling|
-9.  Examples			|eval-examples|
-10. No +eval feature		|no-eval-feature|
-11. The sandbox			|eval-sandbox|
-12. Textlock			|textlock|
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Variables						*variables*

@@ -6,14 +6,7 @@
 
 Introduction to Vim					*ref* *reference*
 
-1. Introduction			|intro|
-2. Vim on the internet		|internet|
-3. Credits			|credits|
-4. Notation			|notation|
-5. Modes, introduction		|vim-modes-intro|
-6. Switching from mode to mode	|mode-switching|
-7. The window contents		|window-contents|
-8. Definitions			|definitions|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						*intro*
