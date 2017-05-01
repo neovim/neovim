@@ -1305,7 +1305,8 @@ b:changedtick	The total number of changes to the current buffer.  It is
 		    :	let my_changedtick = b:changedtick
 		    :	call My_Update()
 		    :endif
-<
+<		You cannot change or delete the b:changedtick variable.
+
 						*window-variable* *w:var* *w:*
 A variable name that is preceded with "w:" is local to the current window.  It
 is deleted when the window is closed.
@@ -5734,7 +5735,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 		  %e	floating point number as 1.23e3, inf, -inf or nan
 		  %E	floating point number as 1.23E3, INF, -INF or NAN
 		  %g	floating point number, as %f or %e depending on value
-		  %G	floating point number, as %f or %E depending on value
+		  %G	floating point number, as %F or %E depending on value
 		  %%	the % character itself
 		  %p	representation of the pointer to the container
 
@@ -8170,6 +8171,7 @@ timers			Compiled with |timer_start()| support.
 title			Compiled with window title support |'title'|.
 toolbar			Compiled with support for |gui-toolbar|.
 unix			Unix version of Vim.
+unnamedplus		Compiled with support for "unnamedplus" in 'clipboard'
 user_commands		User-defined commands.
 vertsplit		Compiled with vertically split windows |:vsplit|.
 vim_starting		True while initial source'ing takes place. |startup|
@@ -8664,6 +8666,11 @@ This does NOT work: >
 			value and the global value are changed.
 			Example: >
 				:let &path = &path . ',/usr/local/include'
+<			This also works for terminal codes in the form t_xx.
+			But only for alphanumerical names.  Example: >
+				:let &t_k1 = "\<Esc>[234;"
+<			When the code does not exist yet it will be created as
+			a terminal key code, there is no error.
 
 :let &{option-name} .= {expr1}
 			For a string option: Append {expr1} to the value.

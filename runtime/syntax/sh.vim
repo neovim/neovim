@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Jan 03, 2017
-" Version:		167
+" Last Change:		Jan 30, 2017
+" Version:		168
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -346,7 +346,7 @@ syn region  shSingleQuote	matchgroup=shQuote start=+'+ end=+'+		contains=@Spell
 syn region  shDoubleQuote	matchgroup=shQuote start=+\%(\%(\\\\\)*\\\)\@<!"+ skip=+\\"+ end=+"+	contains=@shDblQuoteList,shStringSpecial,@Spell
 syn match   shStringSpecial	"[^[:print:] \t]"			contained
 syn match   shStringSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"
-syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"		nextgroup=shBkslshSnglQuote,shBkslshDblQuote
+syn match   shSpecial	"[^\\]\zs\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shSpecial	"^\%(\\\\\)*\\[\\"'`$()#]"
 syn match   shSpecialNxt	contained	"\\[\\"'`$()#]"
 syn region  shBkslshSnglQuote	contained	matchgroup=shQuote start=+'+ end=+'+	contains=@Spell

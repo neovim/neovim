@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language:	X Pixmap
 " Maintainer:	Ronald Schild <rs@scutum.de>
-" Last Change:	2008 May 28
+" Last Change:	2017 Feb 01
 " Version:	5.4n.1
+"               Jemma Nelson added termguicolors support
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -15,7 +16,7 @@ syn keyword xpmTodo		TODO FIXME XXX  contained
 syn region  xpmComment		start="/\*"  end="\*/"  contains=xpmTodo
 syn region  xpmPixelString	start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=@xpmColors
 
-if has("gui_running")
+if has("gui_running") || has("termguicolors") && &termguicolors
 
 let color  = ""
 let chars  = ""
@@ -120,7 +121,7 @@ endwhile
 
 unlet color chars colors cpp n i s
 
-endif		" has("gui_running")
+endif          " has("gui_running") || has("termguicolors") && &termguicolors
 
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet

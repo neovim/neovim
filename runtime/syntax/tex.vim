@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Dec 07, 2016
-" Version:	102
+" Last Change:	Jan 31, 2017
+" Version:	103
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -511,7 +511,7 @@ if !exists("g:tex_no_math")
   if &ambw == "double" || exists("g:tex_usedblwidth")
     let s:texMathDelimList= s:texMathDelimList + [
      \ ['\\langle'     , '〈'] ,
-     \ ['\\rangle'     , '〉'] ,
+     \ ['\\rangle'     , '〉']]
   else
     let s:texMathDelimList= s:texMathDelimList + [
      \ ['\\langle'     , '<'] ,
@@ -594,8 +594,6 @@ endif
 if s:tex_fast =~# 'v'
   if exists("g:tex_verbspell") && g:tex_verbspell
    syn region texZone		start="\\begin{[vV]erbatim}"		end="\\end{[vV]erbatim}\|%stopzone\>"	contains=@Spell
-   " listings package:
-   syn region texZone		start="\\begin{lstlisting}"		end="\\end{lstlisting}\|%stopzone\>"	contains=@Spell
    if b:tex_stylish
     syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z@]\)"	end="\z1\|%stopzone\>"			contains=@Spell
    else
