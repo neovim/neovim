@@ -34,7 +34,7 @@ Install from source
 
 See [the wiki](https://github.com/neovim/neovim/wiki/Building-Neovim) for details.
 
-Install from package
+Install from package!d
 --------------------
 
 Packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], and
@@ -49,7 +49,7 @@ Project layout
 - [`src/`](src/nvim/README.md): Application source code
 - `third-party/`: CMake sub-project to build third-party dependencies (if the
   `USE_BUNDLED_DEPS` flag is undefined or `USE_BUNDLED` CMake option is false).
-- [`test/`](test/README.md): Test files
+- [`test/`](test/README.md): Tst files
 
 What's been done so far
 -----------------------
