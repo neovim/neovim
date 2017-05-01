@@ -4659,7 +4659,7 @@ int vim_rename(const char_u *from, const char_u *to)
     return -1;
   }
 
-  // Avoid xmalloc() here as vim_rename() is called by buf_write() when neovim
+  // Avoid xmalloc() here as vim_rename() is called by buf_write() when nvim
   // is `preserve_exit()`ing.
   buffer = try_malloc(BUFSIZE);
   if (buffer == NULL) {

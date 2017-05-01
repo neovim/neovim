@@ -221,13 +221,9 @@ Bracketed paste mode allows terminal emulators to distinguish between typed
 text and pasted text.
 
 For terminal emulators that support it, this mode is enabled by default. Thus
-you can paste text without Neovim giving any special meaning to it. Most
-notably it won't try reindenting those lines.
-
-If your terminal emulator doesn't support it yet, you can get the old Vim
-behaviour by enabling |'paste'| temporarily.
-
-NOTE: See https://cirw.in/blog/bracketed-paste for technical details.
+you can paste text without Nvim giving any special meaning to it, e.g. it will
+not auto-indent the pasted text. See https://cirw.in/blog/bracketed-paste for
+technical details.
 
 					*mouse-mode-table* *mouse-overview*
 A short overview of what the mouse buttons do, when 'mousemodel' is "extend":

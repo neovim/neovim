@@ -3916,10 +3916,6 @@ getchar([expr])						*getchar()*
 			  exe "normal " . v:mouse_col . "|"
 			endif
 <
-		When using bracketed paste only the first character is
-		returned, the rest of the pasted text is dropped.
-		|xterm-bracketed-paste|.
-
 		There is no prompt, you will somehow have to make clear to the
 		user that a character has to be typed.
 		There is no mapping for the character.

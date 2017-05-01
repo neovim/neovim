@@ -100,8 +100,6 @@ editor. Even "legacy" Python and Ruby plugins which use the old Vim interfaces
 
 FEATURES ~
 
-|bracketed-paste-mode| is built-in and enabled by default.
-
 |META| (ALT) chords are recognized, even in the terminal. Any |<M-| mapping
 will work. Some examples: <M-1>, <M-2>, <M-BS>, <M-Del>, <M-Ins>, <M-/>,
 <M-\>, <M-Space>, <M-Enter>, <M-=>, <M-->, <M-?>, <M-$>, ...

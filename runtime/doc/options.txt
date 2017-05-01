@@ -4378,7 +4378,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'paste'* *'nopaste'*
 'paste'			boolean	(default off)
 			global
-	You probably don't have to set this option: |bracketed-paste-mode|.
+	This option is obsolete; |bracketed-paste-mode| is built-in.
 
 	Put Vim in Paste mode.  This is useful if you want to cut or copy
 	some text from one window and paste it in Vim.  This will avoid
