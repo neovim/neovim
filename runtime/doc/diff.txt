@@ -123,6 +123,8 @@ file for a moment and come back to the same file and be in diff mode again.
 		related options only happens in a window that has 'diff' set,
 		if the current window does not have 'diff' set then no options
 		in it are changed.
+		Hidden buffers are also removed from the list of diff'ed
+		buffers.
 
 The `:diffoff` command resets the relevant options to the values they had when
 using `:diffsplit`, `:diffpatch` , `:diffthis`. or starting Vim in diff mode.
@@ -156,7 +158,8 @@ The alignment of text will go wrong when:
 
 All the buffers edited in a window where the 'diff' option is set will join in
 the diff.  This is also possible for hidden buffers.  They must have been
-edited in a window first for this to be possible.
+edited in a window first for this to be possible.  To get rid of the hidden
+buffers use `:diffoff!`.
 
 					*:DiffOrig* *diff-original-file*
 Since 'diff' is a window-local option, it's possible to view the same buffer

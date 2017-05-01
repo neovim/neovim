@@ -1027,6 +1027,8 @@ Short explanation of each option:		*option-list*
 |c_<Up>|	<Up>/<Down>	   recall older/newer command-line that starts
 				      with current command
 |c_<S-Up>|	<S-Up>/<S-Down>	   recall older/newer command-line from history
+|c_CTRL-G|	CTRL-G		   next match when 'incsearch' is active
+|c_CTRL-T|	CTRL-T		   previous match when 'incsearch' is active
 |:history|	:his[tory]	   show older command-lines
 
 Context-sensitive completion on the command-line:

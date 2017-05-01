@@ -2,7 +2,7 @@
 " Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2016 Mar 30
+" Last Change:	2017 Jan 17
 " Version:	1.0
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -25,27 +25,22 @@
 if exists("b:did_indent") "{{{
   finish
 endif
+
+" Load the Javascript indent script first, it defines GetJavascriptIndent().
+" Undo the rest.
+" Load base python indent.
+if !exists('*GetJavascriptIndent')
+  runtime! indent/javascript.vim
+endif
 let b:did_indent = 1
 
 setlocal indentexpr=HtmlIndent()
 setlocal indentkeys=o,O,<Return>,<>>,{,},!^F
 
-" "j1" is included to make cindent() work better with Javascript.
-setlocal cino=j1
-" "J1" should be included, but it doen't work properly before 7.4.355.
-if has("patch-7.4.355")
-  setlocal cino+=J1
-endif
-" Before patch 7.4.355 indenting after "(function() {" does not work well, add
-" )2 to limit paren search.
-if !has("patch-7.4.355")
-  setlocal cino+=)2
-endif
-
 " Needed for % to work when finding start/end of a tag.
 setlocal matchpairs+=<:>
 
-let b:undo_indent = "setlocal inde< indk< cino<"
+let b:undo_indent = "setlocal inde< indk<"
 
 " b:hi_indent keeps state to speed up indenting consecutive lines.
 let b:hi_indent = {"lnum": -1}
@@ -596,7 +591,7 @@ func! s:Alien3()
     return eval(b:hi_js1indent)
   endif
   if b:hi_indent.scripttype == "javascript"
-    return cindent(v:lnum)
+    return GetJavascriptIndent()
   else
     return -1
   endif

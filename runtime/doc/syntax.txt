@@ -1472,7 +1472,7 @@ algorithm should work in the vast majority of cases.  In some cases, such as a
 file that begins with 500 or more full-line comments, the script may
 incorrectly decide that the fortran code is in fixed form.  If that happens,
 just add a non-comment statement beginning anywhere in the first five columns
-of the first twenty five lines, save (:w) and then reload (:e!) the file.
+of the first twenty-five lines, save (:w) and then reload (:e!) the file.
 
 Tabs in fortran files ~
 Tabs are not recognized by the Fortran standards.  Tabs are not a good idea in
@@ -2920,6 +2920,13 @@ reduce this, the "sh_maxlines" internal variable can be set.  Example: >
 The default is to use the twice sh_minlines.  Set it to a smaller number to
 speed up displaying.  The disadvantage is that highlight errors may appear.
 
+syntax/sh.vim tries to flag certain problems as errors; usually things like
+extra ']'s, 'done's, 'fi's, etc.  If you find the error handling problematic
+for your purposes, you may suppress such error highlighting by putting
+the following line in your .vimrc: >
+
+	let g:sh_no_error= 1
+<
 
 						*sh-embed*  *sh-awk*
  Sh: EMBEDDING LANGUAGES~
@@ -3222,11 +3229,11 @@ syntax highlighting script handles this with the following logic:
 	* If g:tex_stylish exists and is 1
 		then the file will be treated as a "sty" file, so the "_"
 		will be allowed as part of keywords
-		(irregardless of g:tex_isk)
+		(regardless of g:tex_isk)
 	* Else if the file's suffix is sty, cls, clo, dtx, or ltx,
 		then the file will be treated as a "sty" file, so the "_"
 		will be allowed as part of keywords
-		(irregardless of g:tex_isk)
+		(regardless of g:tex_isk)
 
 	* If g:tex_isk exists, then it will be used for the local 'iskeyword'
 	* Else the local 'iskeyword' will be set to 48-57,a-z,A-Z,192-255
@@ -3454,6 +3461,8 @@ DEFINING CASE						*:syn-case* *E390*
 	"ignore".  Note that any items before this are not affected, and all
 	items until the next ":syntax case" command are affected.
 
+:sy[ntax] case
+	Show either "syntax case match" or "syntax case ignore" (translated).
 
 SPELL CHECKING						*:syn-spell*
 
@@ -3470,6 +3479,11 @@ SPELL CHECKING						*:syn-spell*
 	spell checking is done for "default" and "toplevel".
 
 	To activate spell checking the 'spell' option must be set.
+
+:sy[ntax] spell
+	Show either "syntax spell toplevel", "syntax spell notoplevel" or
+	"syntax spell default" (translated).
+
 
 SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 
@@ -4063,6 +4077,9 @@ IMPLICIT CONCEAL					*:syn-conceal-implicit*
 	defined will have the "conceal" flag set implicitly. ":syn conceal
 	off" returns to the normal state where the "conceal" flag must be
 	given explicitly.
+
+:sy[ntax] conceal
+	Show either "syntax conceal on" or "syntax conceal off" (translated).
 
 ==============================================================================
 7. Syntax patterns				*:syn-pattern* *E401* *E402*

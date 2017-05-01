@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Oct 31
+" Last Change:	2017 Jan 06
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -305,7 +305,10 @@ au BufNewFile,BufRead *.bl			setf blank
 au BufNewFile,BufRead */etc/blkid.tab,*/etc/blkid.tab.old   setf xml
 
 " Bazel (http://bazel.io)
-autocmd BufRead,BufNewFile *.bzl,BUILD,WORKSPACE setfiletype bzl
+autocmd BufRead,BufNewFile *.bzl,WORKSPACE setfiletype bzl
+if has("fname_case")
+  autocmd BufRead,BufNewFile BUILD setfiletype bzl
+endif
 
 " C or lpc
 au BufNewFile,BufRead *.c			call s:FTlpc()
@@ -669,8 +672,14 @@ au BufNewFile,BufRead *.dtd			setf dtd
 " DTS/DSTI (device tree files)
 au BufNewFile,BufRead *.dts,*.dtsi		setf dts
 
-" EDIF (*.edf,*.edif,*.edn,*.edo)
-au BufNewFile,BufRead *.ed\(f\|if\|n\|o\)	setf edif
+" EDIF (*.edf,*.edif,*.edn,*.edo) or edn
+au BufNewFile,BufRead *.ed\(f\|if\|o\)		setf edif
+au BufNewFile,BufRead *.edn
+	\ if getline(1) =~ '^\s*(\s*edif\>' |
+	\   setf edif |
+	\ else |
+	\   setf clojure |
+	\ endif
 
 " EditorConfig (close enough to dosini)
 au BufNewFile,BufRead .editorconfig		setf dosini

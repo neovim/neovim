@@ -6,7 +6,8 @@
 "               Nikolai Weibull (Add CSS2 support)
 " Maintainer:   Jules Wang      <w.jq0722@gmail.com>
 " URL:          https://github.com/JulesWang/css.vim
-" Last Change:  2015 Apr.17
+" Last Change:  2017 Jan 14
+"  		cssClassName updated by Ryuichi Hayashida Jan 2016
 
 " quit when a syntax file was already loaded
 if !exists("main_syntax")
@@ -56,7 +57,7 @@ syn match cssSelectorOp2 "[~|^$*]\?=" contained
 syn region cssAttributeSelector matchgroup=cssSelectorOp start="\[" end="]" contains=cssUnicodeEscape,cssSelectorOp2,cssStringQ,cssStringQQ
 
 " .class and #id
-syn match cssClassName "\.[A-Za-z][A-Za-z0-9_-]\+" contains=cssClassNameDot
+syn match cssClassName "\.-\=[A-Za-z_][A-Za-z0-9_-]*" contains=cssClassNameDot
 syn match cssClassNameDot contained '\.'
 
 try

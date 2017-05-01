@@ -614,12 +614,14 @@ Directory for temporary files is created in the first suitable directory of:
 			For the {pattern} see |pattern|.
 			{string} can be a literal string, or something
 			special; see |sub-replace-special|.
+							*E939*
 			When [range] and [count] are omitted, replace in the
-			current line only.
-			When [count] is given, replace in [count] lines,
-			starting with the last line in [range].  When [range]
-			is omitted start in the current line.
-			Also see |cmdline-ranges|.
+			current line only.  When [count] is given, replace in
+			[count] lines, starting with the last line in [range].
+			When [range] is omitted start in the current line.
+			[count] must be a positive number.  Also see
+			|cmdline-ranges|.
+
 			See |:s_flags| for [flags].
 
 :[range]s[ubstitute] [flags] [count]

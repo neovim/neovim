@@ -5,8 +5,8 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Contributor:  Dean, Adam Kenneth <adam.ken.dean@hpe.com>
-" Last Change:	2016 Aug 11
-" SSH Version:	7.3p1
+" Last Change:	2016 Dec 28
+" SSH Version:	7.4p1
 "
 
 " Setup
@@ -181,6 +181,7 @@ syn keyword sshconfigKeyword IPQoS
 syn keyword sshconfigKeyword IdentitiesOnly
 syn keyword sshconfigKeyword IdentityFile
 syn keyword sshconfigKeyword IgnoreUnknown
+syn keyword sshconfigKeyword Include
 syn keyword sshconfigKeyword IPQoS
 syn keyword sshconfigKeyword KbdInteractiveAuthentication
 syn keyword sshconfigKeyword KbdInteractiveDevices

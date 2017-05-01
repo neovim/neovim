@@ -87,21 +87,18 @@ mention that.
 
 						*mail-list* *maillist*
 There are several mailing lists for Vim:
-<vim@vim.org>
+<vim@vim.org>					*vim-use* *vim_use*
 	For discussions about using existing versions of Vim: Useful mappings,
 	questions, answers, where to get a specific version, etc.  There are
 	quite a few people watching this list and answering questions, also
 	for beginners.  Don't hesitate to ask your question here.
-<vim-dev@vim.org>				*vim-dev* *vimdev*
+<vim-dev@vim.org>				*vim-dev* *vim_dev* *vimdev*
 	For discussions about changing Vim: New features, porting, patches,
 	beta-test versions, etc.
-<vim-announce@vim.org>				*vim-announce*
+<vim-announce@vim.org>				*vim-announce* *vim_announce*
 	Announcements about new versions of Vim; also for beta-test versions
 	and ports to different systems.  This is a read-only list.
-<vim-multibyte@vim.org>				*vim-multibyte*
-	For discussions about using and improving the multi-byte aspects of
-	Vim.
-<vim-mac@vim.org>				*vim-mac*
+<vim-mac@vim.org>				*vim-mac* *vim_mac*
 	For discussions about using and improving the Macintosh version of
 	Vim.
 

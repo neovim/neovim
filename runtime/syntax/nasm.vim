@@ -1,9 +1,10 @@
 " Vim syntax file
 " Language:	NASM - The Netwide Assembler (v0.98)
-" Maintainer:	Andriy Sokolov	<andriy145@gmail.com>
+" Maintainer:	Andrii Sokolov	<andriy145@gmail.com>
 " Original Author:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
 " Former Maintainer:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
-" Last Change:	2012 Feb 7
+" Contributors: Leonard König <leonard.r.koenig@gmail.com> (C string highlighting)
+" Last Change:	2017 Jan 23
 " NASM Home:	http://www.nasm.us/
 
 
@@ -67,8 +68,23 @@ syn match   nasmLabelError	"\<\~\s*\(\k*\s*:\|\$\=\.\k*\)"
 
 
 " Constants:
-syn match   nasmStringError	+["']+
+syn match   nasmStringError	+["'`]+
+" NASM is case sensitive here: eg. u-prefix allows for 4-digit, U-prefix for
+" 8-digit Unicode characters
+syn case match
+" one-char escape-sequences
+syn match   nasmCStringEscape  display contained "\\[’"‘\\\?abtnvfre]"
+" hex and octal numbers
+syn match   nasmCStringEscape  display contained "\\\(x\x\{2}\|\o\{1,3}\)"
+" Unicode characters
+syn match   nasmCStringEscape	display contained "\\\(u\x\{4}\|U\x\{8}\)"
+" ISO C99 format strings (copied from cFormat in runtime/syntax/c.vim)
+syn match   nasmCStringFormat	display "%\(\d\+\$\)\=[-+' #0*]*\(\d*\|\*\|\*\d\+\$\)\(\.\(\d*\|\*\|\*\d\+\$\)\)\=\([hlLjzt]\|ll\|hh\)\=\([aAbdiuoxXDOUfFeEgGcCsSpn]\|\[\^\=.[^]]*\]\)" contained
+syn match   nasmCStringFormat	display "%%" contained
 syn match   nasmString		+\("[^"]\{-}"\|'[^']\{-}'\)+
+" Highlight C escape- and format-sequences within ``-strings
+syn match   nasmCString	+\(`[^`]\{-}`\)+ contains=nasmCStringEscape,nasmCStringFormat extend
+syn case ignore
 syn match   nasmBinNumber	"\<[0-1]\+b\>"
 syn match   nasmBinNumber	"\<\~[0-1]\+b\>"lc=1
 syn match   nasmOctNumber	"\<\o\+q\>"
@@ -443,7 +459,10 @@ hi def link nasmInCommentTodo	Todo
 
 " Constant Group:
 hi def link nasmString		String
+hi def link nasmCString	String
 hi def link nasmStringError	Error
+hi def link nasmCStringEscape	SpecialChar
+hi def link nasmCStringFormat	SpecialChar
 hi def link nasmBinNumber		Number
 hi def link nasmOctNumber		Number
 hi def link nasmDecNumber		Number
