@@ -11,14 +11,35 @@ FAIL_SUMMARY=""
 END_MARKER="$BUILD_DIR/.tests_finished"
 FAIL_SUMMARY_FILE="$BUILD_DIR/.test_errors"
 
+ANSI_CLEAR="\033[0K"
+
+travis_fold() {
+  local action="$1"
+  local name="$2"
+  name="$(echo -n "$name" | tr '\n\0' '--' | sed 's/[^A-Za-z0-9]\+/-/g')"
+  name="$(echo -n "$name" | sed 's/-$//')"
+  echo -en "travis_fold:${action}:${name}\r${ANSI_CLEAR}"
+}
+
+if test "$TRAVIS" != "true" ; then
+  travis_fold() {
+    return 0
+  }
+fi
+
 enter_suite() {
+  set +x
   FAILED=0
   rm -f "${END_MARKER}"
   local suite_name="$1"
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE}/$suite_name"
+  travis_fold start "${NVIM_TEST_CURRENT_SUITE}"
+  set -x
 }
 
 exit_suite() {
+  set +x
+  travis_fold end "${NVIM_TEST_CURRENT_SUITE}"
   if test $FAILED -ne 0 ; then
     echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"
     echo "${FAIL_SUMMARY}"

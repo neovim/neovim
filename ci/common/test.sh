@@ -166,3 +166,8 @@ install_nvim() {(
 
   exit_suite
 )}
+
+csi_clean() {
+  find "${BUILD_DIR}/bin" -name 'test-includes-*' -delete
+  find "${BUILD_DIR}" -name '*test-include*.o' -delete
+}
