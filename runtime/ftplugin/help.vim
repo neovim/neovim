@@ -82,7 +82,7 @@ if !exists('g:no_plugin_maps')
     endwhile
 
     call setloclist(0, toc, ' ')
-    call setloclist(0, [], ' ', {'title': 'Help TOC'})
+    call setloclist(0, [], 'a', {'title': 'Help TOC'})
     lopen
     let w:qf_toc = bufname
   endfunction

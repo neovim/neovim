@@ -171,7 +171,7 @@ function! man#show_toc() abort
   endwhile
 
   call setloclist(0, toc, ' ')
-  call setloclist(0, [], ' ', {'title': 'Man TOC'})
+  call setloclist(0, [], 'a', {'title': 'Man TOC'})
   lopen
   let w:qf_toc = bufname
 endfunction
