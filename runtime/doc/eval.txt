@@ -7061,7 +7061,7 @@ strcharpart({src}, {start}[, {len}])			*strcharpart()*
 		Like |strpart()| but using character index and length instead
 		of byte index and length.
 		When a character index is used where a character does not
-		exist it is assumed to be one byte.  For example: >
+		exist it is assumed to be one character.  For example: >
 			strcharpart('abc', -1, 2)
 <		results in 'a'.
 

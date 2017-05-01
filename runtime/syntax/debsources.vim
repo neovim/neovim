@@ -2,7 +2,7 @@
 " Language:     Debian sources.list
 " Maintainer:   Debian Vim Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
 " Former Maintainer: Matthijs Mohlmann <matthijs@cacholong.nl>
-" Last Change: 2016 Sep 27
+" Last Change: 2016 Nov 12
 " URL: https://anonscm.debian.org/cgit/pkg-vim/vim.git/plain/runtime/syntax/debsources.vim
 
 " Standard syntax initialization
@@ -25,7 +25,7 @@ let s:supported = [
       \ 'oldstable', 'stable', 'testing', 'unstable', 'experimental',
       \ 'squeeze', 'wheezy', 'jessie', 'stretch', 'sid', 'rc-buggy',
       \
-      \ 'precise', 'trusty', 'xenial', 'yakkety', 'devel'
+      \ 'precise', 'trusty', 'xenial', 'yakkety', 'zesty', 'devel'
       \ ]
 let s:unsupported = [
       \ 'buzz', 'rex', 'bo', 'hamm', 'slink', 'potato',

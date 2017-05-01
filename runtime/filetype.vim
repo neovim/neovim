@@ -672,8 +672,14 @@ au BufNewFile,BufRead *.dtd			setf dtd
 " DTS/DSTI (device tree files)
 au BufNewFile,BufRead *.dts,*.dtsi		setf dts
 
-" EDIF (*.edf,*.edif,*.edn,*.edo)
-au BufNewFile,BufRead *.ed\(f\|if\|n\|o\)	setf edif
+" EDIF (*.edf,*.edif,*.edn,*.edo) or edn
+au BufNewFile,BufRead *.ed\(f\|if\|o\)		setf edif
+au BufNewFile,BufRead *.edn
+	\ if getline(1) =~ '^\s*(\s*edif\>' |
+	\   setf edif |
+	\ else |
+	\   setf clojure |
+	\ endif
 
 " EditorConfig (close enough to dosini)
 au BufNewFile,BufRead .editorconfig		setf dosini

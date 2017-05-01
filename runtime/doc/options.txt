@@ -4085,7 +4085,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to buffer
 	When off the buffer contents cannot be changed.  The 'fileformat' and
 	'fileencoding' options also can't be changed.
-	Can be reset with the |-M| command line argument.
+	Can be reset on startup with the |-M| command line argument.
 
 				*'modified'* *'mod'* *'nomodified'* *'nomod'*
 'modified' 'mod'	boolean	(default off)
@@ -4656,6 +4656,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	buffer, unless the 'Z' flag is in 'cpoptions'.
 	When using the ":view" command the 'readonly' option is
 	set for the newly edited buffer.
+	See 'modifiable' for disallowing changes to the buffer.
 
 						*'redrawtime'* *'rdt'*
 'redrawtime' 'rdt'	number	(default 2000)

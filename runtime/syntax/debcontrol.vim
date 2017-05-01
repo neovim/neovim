@@ -38,7 +38,7 @@ unlet s:kernels s:archs s:pairs
 syn match debcontrolMultiArch contained "\%(no\|foreign\|allowed\|same\)"
 syn match debcontrolName contained "[a-z0-9][a-z0-9+.-]\+"
 syn match debcontrolPriority contained "\(extra\|important\|optional\|required\|standard\)"
-syn match debcontrolSection contained "\v((contrib|non-free|non-US/main|non-US/contrib|non-US/non-free|restricted|universe|multiverse)/)?(admin|cli-mono|comm|database|debian-installer|debug|devel|doc|editors|education|electronics|embedded|fonts|games|gnome|gnustep|gnu-r|graphics|hamradio|haskell|httpd|interpreters|introspection|java|kde|kernel|libs|libdevel|lisp|localization|mail|math|metapackages|misc|net|news|ocaml|oldlibs|otherosfs|perl|php|python|ruby|science|shells|sound|text|tex|utils|vcs|video|web|x11|xfce|zope)"
+syn match debcontrolSection contained "\v((contrib|non-free|non-US/main|non-US/contrib|non-US/non-free|restricted|universe|multiverse)/)?(admin|cli-mono|comm|database|debian-installer|debug|devel|doc|editors|education|electronics|embedded|fonts|games|gnome|gnustep|gnu-r|graphics|hamradio|haskell|httpd|interpreters|introspection|java|javascript|kde|kernel|libs|libdevel|lisp|localization|mail|math|metapackages|misc|net|news|ocaml|oldlibs|otherosfs|perl|php|python|ruby|rust|science|shells|sound|text|tex|utils|vcs|video|web|x11|xfce|zope)"
 syn match debcontrolPackageType contained "u\?deb"
 syn match debcontrolVariable contained "\${.\{-}}"
 syn match debcontrolDmUpload contained "\cyes"

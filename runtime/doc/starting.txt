@@ -181,6 +181,7 @@ argument.
 		the executable "view" has the same effect as the -R argument.
 		The 'updatecount' option will be set to 10000, meaning that
 		the swap file will not be updated automatically very often.
+		See |-M| for disallowing modifications.
 
 							*-m*
 -m		Modifications not allowed to be written.  The 'write' option
@@ -734,7 +735,7 @@ There are several ways to exit Vim:
 - Use `:cquit`.  Also when there are changes.
 
 When using `:cquit` or when there was an error message Vim exits with exit
-code 1.  Errors can be avoided by using `:silent!`.
+code 1.  Errors can be avoided by using `:silent!` or with `:catch`.
 
 ==============================================================================
 6. Saving settings					*save-settings*
