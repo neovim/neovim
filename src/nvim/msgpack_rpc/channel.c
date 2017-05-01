@@ -442,8 +442,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   evdata->request_id = request_id;
   incref(channel);
   if (handler.async) {
-    bool is_get_mode = sizeof("nvim_get_mode") - 1 == method->via.bin.size
-      && !strncmp("nvim_get_mode", method->via.bin.ptr, method->via.bin.size);
+    bool is_get_mode = handler.fn == handle_nvim_get_mode;
 
     if (is_get_mode && !input_blocking()) {
       // Defer the event to a special queue used by os/input.c. #6247
