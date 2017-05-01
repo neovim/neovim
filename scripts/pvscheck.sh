@@ -10,9 +10,16 @@ get_jobs_num() {
 
 help() {
   echo 'Usage:'
-  echo '  pvscheck.sh [target-directory [branch]]'
-  echo '  pvscheck.sh [--recheck] [target-directory]'
+  echo '  pvscheck.sh [--pvs URL] [target-directory [branch]]'
+  echo '  pvscheck.sh [--pvs URL] [--recheck] [target-directory]'
   echo '  pvscheck.sh --patch [--only-build]'
+  echo
+  echo '    --pvs: Use the specified URL as a path to pvs-studio archive.'
+  echo '           By default latest tested version is used.'
+  echo
+  echo '           May use `--pvs detect` to try detecting latest version.'
+  echo '           That assumes certain viva64.com site properties and'
+  echo '           may be broken by the site update.'
   echo
   echo '    --patch: patch sources in the current directory.'
   echo '             Does not patch already patched files.'
@@ -38,10 +45,12 @@ EOF
 }
 
 install_pvs() {
+  local pvs_url="$1"
+
   mkdir pvs-studio
   cd pvs-studio
 
-  curl -o pvs-studio.tar.gz "$PVS_URL"
+  curl -L -o pvs-studio.tar.gz "$pvs_url"
   tar xzf pvs-studio.tar.gz
   rm pvs-studio.tar.gz
   local pvsdir="$(find . -maxdepth 1 -mindepth 1)"
@@ -108,14 +117,15 @@ run_analysis() {
 }
 
 do_check() {
-  local tgt="${1}"
-  local branch="${2}"
+  local tgt="$1"
+  local branch="$2"
+  local pvs_url="$3"
 
   git clone --branch="$branch" . "$tgt"
 
   cd "$tgt"
 
-  install_pvs
+  install_pvs "$pvs_url"
 
   create_compile_commands
 
@@ -132,8 +142,13 @@ do_recheck() {
   run_analysis
 }
 
+detect_url() {
+  curl -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
+  | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz'
+}
+
 main() {
-  local PVS_URL="http://files.viva64.com/pvs-studio-6.15.21741.1-x86_64.tgz"
+  local pvs_url="http://files.viva64.com/pvs-studio-6.15.21741.1-x86_64.tgz"
 
   if test "$1" = "--help" ; then
     help
@@ -141,6 +156,15 @@ main() {
   fi
 
   set -x
+
+  if test "$1" = "--pvs" ; then
+    shift
+    pvs_url="$1" ; shift
+
+    if test "$pvs_url" = "detect" ; then
+      pvs_url="$(detect_url)"
+    fi
+  fi
 
   if test "$1" = "--patch" ; then
     shift
@@ -163,7 +187,7 @@ main() {
   local branch="${2:-master}"
 
   if test -z "$recheck" ; then
-    do_check "$tgt" "$branch"
+    do_check "$tgt" "$branch" "$pvs_url"
   else
     do_recheck "$tgt"
   fi
