@@ -133,7 +133,7 @@ do_recheck() {
 }
 
 main() {
-  local PVS_URL="http://files.viva64.com/pvs-studio-6.14.21446.1-x86_64.tgz"
+  local PVS_URL="http://files.viva64.com/pvs-studio-6.15.21741.1-x86_64.tgz"
 
   if test "$1" = "--help" ; then
     help
