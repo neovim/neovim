@@ -270,7 +270,7 @@ nvim_get_option({name})                                    *nvim_get_option()*
                     {name}  Option name
 
                 Return:~
-                    Option value
+                    Option value (global)
 
 nvim_set_option({name}, {value})                           *nvim_set_option()*
                 Sets an option value
@@ -369,6 +369,17 @@ nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
 
 nvim_get_color_map()                                    *nvim_get_color_map()*
                 TODO: Documentation
+
+nvim_get_mode()                                              *nvim_get_mode()*
+                Gets the current mode.
+                mode:     Mode string. |mode()|
+                blocking: true if Nvim is waiting for input.
+
+                Attributes:~
+                    {async}
+
+                Return:~
+                    Dictionary { "mode": String, "blocking": Boolean }
 
 nvim_get_api_info()                                      *nvim_get_api_info()*
                 TODO: Documentation
@@ -513,15 +524,6 @@ nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
                     {buffer}  Buffer handle
                     {name}    Option name
                     {value}   Option value
-
-nvim_buf_get_number({buffer})                          *nvim_buf_get_number()*
-                Gets the buffer number
-
-                Parameters:~
-                    {buffer}  Buffer handle
-
-                Return:~
-                    Buffer number
 
 nvim_buf_get_name({buffer})                              *nvim_buf_get_name()*
                 Gets the full file name for the buffer
