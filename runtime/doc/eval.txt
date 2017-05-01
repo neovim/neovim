@@ -394,10 +394,6 @@ This works like: >
 	:   let index = index + 1
 	:endwhile
 
-Note that all items in the list should be of the same type, otherwise this
-results in error |E706|.  To avoid this |:unlet| the variable at the end of
-the loop.
-
 If all you want to do is modify each item in the list then the |map()|
 function will be a simpler method than a for loop.
 
@@ -7429,8 +7425,7 @@ systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 		unless {keepempty} is non-zero.
 		Note that on MS-Windows you may get trailing CR characters.
 
-		Returns an empty string on error, so be careful not to run 
-		into |E706|.
+		Returns an empty string on error.
 
 
 tabpagebuflist([{arg}])					*tabpagebuflist()*
