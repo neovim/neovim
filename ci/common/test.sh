@@ -110,6 +110,7 @@ run_oldtests() {(
 )}
 
 check_runtime_files() {(
+  set +x
   local test_name="$1" ; shift
   local message="$1" ; shift
   local tst="$1" ; shift
