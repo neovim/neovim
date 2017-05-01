@@ -135,16 +135,16 @@ do_recheck() {
 main() {
   local PVS_URL="http://files.viva64.com/pvs-studio-6.14.21446.1-x86_64.tgz"
 
-  if test "x$1" = "x--help" ; then
+  if test "$1" = "--help" ; then
     help
     return
   fi
 
   set -x
 
-  if test "x$1" = "x--patch" ; then
+  if test "$1" = "--patch" ; then
     shift
-    if test "x$1" = "x--only-build" ; then
+    if test "$1" = "--only-build" ; then
       shift
       patch_sources --only-build
     else
@@ -154,7 +154,7 @@ main() {
   fi
 
   local recheck=
-  if test "x$1" = "x--recheck" ; then
+  if test "$1" = "--recheck" ; then
     recheck=1
     shift
   fi
@@ -162,7 +162,7 @@ main() {
   local tgt="${1:-$PWD/../neovim-pvs}"
   local branch="${2:-master}"
 
-  if test "x$recheck" = "x" ; then
+  if test -z "$recheck" ; then
     do_check "$tgt" "$branch"
   else
     do_recheck "$tgt"
