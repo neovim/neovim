@@ -6,9 +6,7 @@
 
 Help on help files					*helphelp*
 
-1. Help commands		|online-help|
-2. Translated help files	|help-translated|
-3. Writing help files		|help-writing|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Help commands					*online-help*
@@ -24,6 +22,8 @@ Help on help files					*helphelp*
 			the very top.
 			The 'helplang' option is used to select a language, if
 			the main help file is available in several languages.
+
+			Type <M-]> to see the table of contents.
 
 						*{subject}* *E149* *E661*
 :h[elp] {subject}	Like ":help", additionally jump to the tag {subject}.

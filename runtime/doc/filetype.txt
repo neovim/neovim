@@ -6,11 +6,9 @@
 
 Filetypes						*filetype* *file-type*
 
-1. Filetypes					|filetypes|
-2. Filetype plugin				|filetype-plugins|
-3. Docs for the default filetype plugins.	|ftplugin-docs|
-
 Also see |autocmd.txt|.
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Filetypes					*filetypes* *file-types*
@@ -542,6 +540,7 @@ K or CTRL-]               Jump to the manpage for the <cWORD> under the
                           cursor. Takes a count for the section.
 CTRL-T                    Jump back to the location that the manpage was
                           opened from.
+META-]                    Show the manpage outline in the |location-list|.
 q                         :quit if invoked as $MANPAGER, otherwise :close.
 
 Variables:

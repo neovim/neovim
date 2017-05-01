@@ -6,8 +6,7 @@
 
 Various commands					*various*
 
-1. Various commands		|various-cmds|
-2. Using Vim like less or more	|less|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Various commands					*various-cmds*

@@ -8,17 +8,7 @@ Automatic commands					*autocommand*
 
 For a basic explanation, see section |40.3| in the user manual.
 
-1.  Introduction		|autocmd-intro|
-2.  Defining autocommands	|autocmd-define|
-3.  Removing autocommands	|autocmd-remove|
-4.  Listing autocommands	|autocmd-list|
-5.  Events			|autocmd-events|
-6.  Patterns			|autocmd-patterns|
-7.  Buffer-local autocommands	|autocmd-buflocal|
-8.  Groups			|autocmd-groups|
-9.  Executing autocommands	|autocmd-execute|
-10. Using autocommands		|autocmd-use|
-11. Disabling autocommands	|autocmd-disable|
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						*autocmd-intro*

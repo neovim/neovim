@@ -20,24 +20,7 @@ In the User Manual:
 |usr_06.txt| introduces syntax highlighting.
 |usr_44.txt| introduces writing a syntax file.
 
-1.  Quick start			|:syn-qstart|
-2.  Syntax files		|:syn-files|
-3.  Syntax loading procedure	|syntax-loading|
-4.  Syntax file remarks		|:syn-file-remarks|
-5.  Defining a syntax		|:syn-define|
-6.  :syntax arguments		|:syn-arguments|
-7.  Syntax patterns		|:syn-pattern|
-8.  Syntax clusters		|:syn-cluster|
-9.  Including syntax files	|:syn-include|
-10. Synchronizing		|:syn-sync|
-11. Listing syntax items	|:syntax|
-12. Highlight command		|:highlight|
-13. Linking groups		|:highlight-link|
-14. Cleaning up			|:syn-clear|
-15. Highlighting tags		|tag-highlight|
-16. Window-local syntax		|:ownsyntax|
-17. Color xterms		|xterm-color|
-18. When syntax is slow		|:syntime|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Quick start						*:syn-qstart*

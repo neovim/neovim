@@ -151,6 +151,31 @@ function! s:put_page(page) abort
   setlocal filetype=man
 endfunction
 
+function! man#show_toc() abort
+  let bufname = bufname('%')
+  let info = getloclist(0, {'winid': 1})
+  if !empty(info) && getwinvar(info.winid, 'qf_toc') ==# bufname
+    lopen
+    return
+  endif
+
+  let toc = []
+  let lnum = 2
+  let last_line = line('$') - 1
+  while lnum && lnum < last_line
+    let text = getline(lnum)
+    if text =~# '^\%( \{3\}\)\=\S.*$'
+      call add(toc, {'bufnr': bufnr('%'), 'lnum': lnum, 'text': text})
+    endif
+    let lnum = nextnonblank(lnum + 1)
+  endwhile
+
+  call setloclist(0, toc, ' ')
+  call setloclist(0, [], 'a', {'title': 'Man TOC'})
+  lopen
+  let w:qf_toc = bufname
+endfunction
+
 " attempt to extract the name and sect out of 'name(sect)'
 " otherwise just return the largest string of valid characters in ref
 function! man#extract_sect_and_name_ref(ref) abort

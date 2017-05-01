@@ -6,17 +6,9 @@
 
 The Python Interface to Vim				*python* *Python*
 
-1. Commands					|python-commands|
-2. The vim module				|python-vim|
-3. Buffer objects				|python-buffer|
-4. Range objects				|python-range|
-5. Window objects				|python-window|
-6. Tab page objects				|python-tabpage|
-7. vim.bindeval objects				|python-bindeval-objects|
-8. pyeval(), py3eval() Vim functions		|python-pyeval|
-9. Python 3					|python3|
-
 See |provider-python| for more information. {Nvim}
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Commands						*python-commands*

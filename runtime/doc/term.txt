@@ -4,13 +4,15 @@
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
-Terminal information					*terminal-info*
+Terminal information
 
 Vim uses information about the terminal you are using to fill the screen and
 recognize what keys you hit.  If this information is not correct, the screen
 may be messed up or keys may not be recognized.  The actions which have to be
 performed on the screen are accomplished by outputting a string of
 characters.
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 Startup						*startup-terminal*

@@ -48,9 +48,8 @@ Tuning Vim
 Reference manual
 |reference_toc|     More detailed information for all commands
 
-The user manual is available as a single, ready to print HTML and PDF file
-here:
-	http://vimdoc.sf.net
+The user manual is online:
+	https://neovim.io/doc/user
 
 ==============================================================================
 Getting Started ~

@@ -10,11 +10,7 @@ eight versions of the same file.
 
 The basics are explained in section |08.7| of the user manual.
 
-1. Starting diff mode		|diff-mode|
-2. Viewing diffs		|view-diffs|
-3. Jumping to diffs		|jumpto-diffs|
-4. Copying diffs		|copy-diffs|
-5. Diff options			|diff-options|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Starting diff mode

@@ -6,13 +6,12 @@
 
 Development of Nvim.					*development*
 
-1. Design goals		        |design-goals|
-2. Developer guidelines	        |dev-help|
-
 Nvim is open source software.  Everybody is encouraged to contribute.
     https://github.com/neovim/neovim/blob/master/CONTRIBUTING.md
 
 See src/nvim/README.md for an overview of the source code.
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 Design goals						*design-goals*

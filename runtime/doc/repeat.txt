@@ -8,14 +8,7 @@ Repeating commands, Vim scripts and debugging			*repeating*
 
 Chapter 26 of the user manual introduces repeating |usr_26.txt|.
 
-1. Single repeats		|single-repeat|
-2. Multiple repeats		|multi-repeat|
-3. Complex repeats		|complex-repeat|
-4. Using Vim scripts		|using-scripts|
-5. Using Vim packages		|packages|
-6. Creating Vim packages	|package-create|
-7. Debugging scripts		|debug-scripts|
-8. Profiling			|profiling|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Single repeats					*single-repeat*
