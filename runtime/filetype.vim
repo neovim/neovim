@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Oct 31
+" Last Change:	2017 Jan 06
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -305,7 +305,10 @@ au BufNewFile,BufRead *.bl			setf blank
 au BufNewFile,BufRead */etc/blkid.tab,*/etc/blkid.tab.old   setf xml
 
 " Bazel (http://bazel.io)
-autocmd BufRead,BufNewFile *.bzl,BUILD,WORKSPACE setfiletype bzl
+autocmd BufRead,BufNewFile *.bzl,WORKSPACE setfiletype bzl
+if has("fname_case")
+  autocmd BufRead,BufNewFile BUILD setfiletype bzl
+endif
 
 " C or lpc
 au BufNewFile,BufRead *.c			call s:FTlpc()

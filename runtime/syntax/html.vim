@@ -2,7 +2,8 @@
 " Language:             HTML
 " Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
-" Last Change:          2016 Dec 29
+" Repository:           https://notabug.org/jorgesumle/vim-html-syntax
+" Last Change:          2017 Jan 04
 "                       included patch from Jorge Maldonado Ventura
 
 " Please check :help html.vim for some comments and a description of the options
@@ -94,6 +95,10 @@ syn keyword htmlArg contained headers hreflang lang language longdesc
 syn keyword htmlArg contained multiple nohref nowrap object profile readonly
 syn keyword htmlArg contained rules scheme scope span standby style
 syn keyword htmlArg contained summary tabindex valuetype version
+
+" html 5 arg names
+syn keyword htmlArg contained contenteditable contextmenu draggable dropzone
+syn keyword htmlArg contained hidden spellcheck title translate
 
 " special characters
 syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,8};"

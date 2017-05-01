@@ -7421,7 +7421,8 @@ systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 		output separated by NL) with NULs transformed into NLs. Output 
 		is the same as |readfile()| will output with {binary} argument 
 		set to "b", except that a final newline is not preserved,
-		unless {keepempty} is present and it's non-zero.
+		unless {keepempty} is non-zero.
+		Note that on MS-Windows you may get trailing CR characters.
 
 		Returns an empty string on error, so be careful not to run 
 		into |E706|.
