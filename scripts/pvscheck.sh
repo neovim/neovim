@@ -13,7 +13,7 @@ get_jobs_num() {
 
 help() {
   echo 'Usage:'
-  echo '  pvscheck.sh [--pvs URL] [target-directory [branch]]'
+  echo '  pvscheck.sh [--pvs URL] [--deps] [target-directory [branch]]'
   echo '  pvscheck.sh [--pvs URL] [--recheck] [target-directory]'
   echo '  pvscheck.sh [--pvs URL] --pvs-install {target-directory}'
   echo '  pvscheck.sh --patch [--only-build]'
@@ -24,6 +24,10 @@ help() {
   echo '           May use `--pvs detect` to try detecting latest version.'
   echo '           That assumes certain viva64.com site properties and'
   echo '           may be broken by the site update.'
+  echo
+  echo '    --deps: (for regular run) Use top-level Makefile and build deps.'
+  echo '            Without this it assumes all dependencies are already'
+  echo '            installed.'
   echo
   echo '    --only-build: (for --patch) Only patch files in ./build directory.'
   echo
@@ -252,15 +256,22 @@ adjust_path() {
 
 create_compile_commands() {(
   local tgt="$1" ; shift
+  local deps="$1" ; shift
 
   export CC=clang
   export CFLAGS=' -O0 '
 
-  mkdir "$tgt/build"
-  cd "$tgt/build"
+  if test -z "$deps" ; then
+    mkdir "$tgt/build"
+    cd "$tgt/build"
 
-  cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
-  make -j"$(get_jobs_num)"
+    cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
+    make -j"$(get_jobs_num)"
+  else
+    cd "$tgt"
+
+    make -j"$(get_jobs_num)" CMAKE_EXTRA_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
+  fi
   find src/nvim/auto -name '*.test-include.c' -delete
 )}
 
@@ -318,6 +329,7 @@ do_check() {
   local tgt="$1" ; shift
   local branch="$1" ; shift
   local pvs_url="$1" ; shift
+  local deps="$1" ; shift
 
   git clone --branch="$branch" . "$tgt"
 
@@ -325,7 +337,7 @@ do_check() {
 
   adjust_path "$tgt"
 
-  create_compile_commands "$tgt"
+  create_compile_commands "$tgt" "$deps"
 
   run_analysis "$tgt"
 }
@@ -358,6 +370,7 @@ main() {
       only-build 'store_const --only-build' \
       recheck store_const \
       pvs-install store_const \
+      deps store_const \
       -- \
       'store tgt "$PWD/../neovim-pvs"' \
       'store branch master' \
@@ -378,7 +391,7 @@ main() {
   elif test -n "$recheck" ; then
     do_recheck "$tgt"
   else
-    do_check "$tgt" "$branch" "$pvs_url"
+    do_check "$tgt" "$branch" "$pvs_url" "$deps"
   fi
 }
 
