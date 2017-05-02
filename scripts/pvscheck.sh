@@ -1,5 +1,8 @@
 #!/bin/sh
 set -e
+# Note: -u causes problems with posh, it barks at “undefined” $@ when no
+# arguments provided.
+test -z "$POSH_VERSION" && set -u
 
 get_jobs_num() {
   local num="$(cat /proc/cpuinfo | grep -c "^processor")"
@@ -36,6 +39,178 @@ help() {
   echo '            Default: master.'
 }
 
+getopts_error() {
+  printf '%s\n' "$1" >&2
+  echo 'return 1'
+  return 1
+}
+
+# Usage `eval "$(getopts_long long_defs -- positionals_defs -- "$@")"`
+#
+# long_defs: list of pairs of arguments like `longopt action`.
+# positionals_defs: list of arguments like `action`.
+#
+# `action` is a space-separated commands:
+#
+#   store_const [const] [varname] [default]
+#     Store constant [const] (default 1) (note: eval’ed) if argument is present
+#     (long options only). Assumes long option accepts no arguments.
+#   store [varname] [default]
+#     Store value. Assumes long option needs an argument.
+#   run {func} [varname] [default]
+#     Run function {func} and store its output to the [varname]. Assumes no
+#     arguments accepted (long options only).
+#   modify {func} [varname] [default]
+#     Like run, but assumes a single argument, passed to function {func} as $1.
+#
+#   All actions stores empty value if neither [varname] nor [default] are
+#   present. [default] is evaled by top-level `eval`, so be careful. Also note
+#   that no arguments may contain spaces, including [default] and [const].
+getopts_long() {
+  local positional=
+  local opt_bases=""
+  while test $# -gt 0 ; do
+    local arg="$1" ; shift
+    local opt_base=
+    local act=
+    local opt_name=
+    if test -z "$positional" ; then
+      if test "$arg" = "--" ; then
+        positional=0
+        continue
+      fi
+      act="$1" ; shift
+      opt_name="$(echo "$arg" | tr '-' '_')"
+      opt_base="longopt_$opt_name"
+    else
+      if test "$arg" = "--" ; then
+        break
+      fi
+      : $(( positional+=1 ))
+      act="$arg"
+      opt_name="arg_$positional"
+      opt_base="positional_$positional"
+    fi
+    opt_bases="$opt_bases $opt_base"
+    eval "local varname_$opt_base=$opt_name"
+    local i=0
+    for act_subarg in $act ; do
+      eval "local act_$(( i+=1 ))_$opt_base=\"\$act_subarg\""
+    done
+  done
+  # Process options
+  local positional=0
+  local force_positional=
+  while test $# -gt 0 ; do
+    local argument="$1" ; shift
+    local opt_base=
+    local has_equal=
+    local equal_arg=
+    local is_positional=
+    if test "$argument" = "--" ; then
+      force_positional=1
+      continue
+    elif test -z "$force_positional" && test "${argument#--}" != "$argument"
+    then
+      local opt_name="${argument#--}"
+      local opt_name_striparg="${opt_name%%=*}"
+      if test "$opt_name" = "$opt_name_striparg" ; then
+        has_equal=0
+      else
+        has_equal=1
+        equal_arg="${argument#*=}"
+        opt_name="$opt_name_striparg"
+      fi
+      # Use trailing x to prevent stripping newlines
+      opt_name="$(printf '%sx' "$opt_name" | tr '-' '_')"
+      opt_name="${opt_name%x}"
+      if test -n "$(printf '%sx' "$opt_name" | tr -d 'a-z_')" ; then
+        getopts_error "Option contains invalid characters: $opt_name"
+      fi
+      opt_base="longopt_$opt_name"
+    else
+      : $(( positional+=1 ))
+      opt_base="positional_$positional"
+      is_positional=1
+    fi
+    if test -n "$opt_base" ; then
+      eval "local occurred_$opt_base=1"
+
+      eval "local act_1=\"\$act_1_$opt_base\""
+      eval "local varname=\"\$varname_$opt_base\""
+      local need_val=
+      local func=
+      case "$act_1" in
+        (store_const)
+          eval "local const=\"\${act_2_${opt_base}:-1}\""
+          eval "local varname=\"\${act_3_${opt_base}:-$varname}\""
+          printf 'local %s=%s\n' "$varname" "$const"
+          ;;
+        (store)
+          eval "varname=\"\${act_2_${opt_base}:-$varname}\""
+          need_val=1
+          ;;
+        (run)
+          eval "func=\"\${act_2_${opt_base}}\""
+          eval "varname=\"\${act_3_${opt_base}:-$varname}\""
+          printf 'local %s="$(%s)"\n' "$varname" "$func"
+          ;;
+        (modify)
+          eval "func=\"\${act_2_${opt_base}}\""
+          eval "varname=\"\${act_3_${opt_base}:-$varname}\""
+          need_val=1
+          ;;
+      esac
+      if test -n "$need_val" ; then
+        local val=
+        if test -z "$is_positional" ; then
+          if test $has_equal = 1 ; then
+            val="$equal_arg"
+          else
+            if test $# -eq 0 ; then
+              getopts_error "Missing argument for $opt_name"
+            fi
+            val="$1" ; shift
+          fi
+        else
+          val="$argument"
+        fi
+        local escaped_val="'$(printf "%s" "$val" | sed "s/'/'\\\\''/g")'"
+        case "$act_1" in
+          (store)
+            printf 'local %s=%s\n' "$varname" "$escaped_val"
+            ;;
+          (modify)
+            printf 'local %s="$(%s %s)"\n' "$varname" "$func" "$escaped_val"
+            ;;
+        esac
+      fi
+    fi
+  done
+  # Print default values when no values were provided
+  local opt_base=
+  for opt_base in $opt_bases ; do
+    eval "local occurred=\"\${occurred_$opt_base:-}\""
+    if test -n "$occurred" ; then
+      continue
+    fi
+    eval "local act_1=\"\$act_1_$opt_base\""
+    eval "local varname=\"\$varname_$opt_base\""
+    case "$act_1" in
+      (store)
+        eval "local varname=\"\${act_2_${opt_base}:-$varname}\""
+        eval "local default=\"\${act_3_${opt_base}:-}\""
+        printf 'local %s=%s\n' "$varname" "$default"
+        ;;
+      (store_const|run|modify)
+        eval "local varname=\"\${act_3_${opt_base}:-$varname}\""
+        eval "local default=\"\${act_4_${opt_base}:-}\""
+        printf 'local %s=%s\n' "$varname" "$default"
+        ;;
+    esac
+  done
+}
+
 get_pvs_comment() {
   cat > pvs-comment << EOF
 // This is an open source non-commercial project. Dear PVS-Studio, please check
@@ -62,18 +237,16 @@ install_pvs() {
   cd ..
 }
 
-create_compile_commands() {
+create_compile_commands() {(
+  export CC=clang
+  export CFLAGS=' -O0 '
+
   mkdir build
   cd build
-  env \
-    CC=clang \
-    CFLAGS=' -O0 ' \
-    cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
+  cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
   make -j"$(get_jobs_num)"
   find src/nvim/auto -name '*.test-include.c' -delete
-
-  cd ..
-}
+)}
 
 patch_sources() {
   get_pvs_comment
@@ -87,7 +260,7 @@ patch_sources() {
     fi
   '
 
-  if test "x$1" != "x--only-build" ; then
+  if test "${1:-}" != "--only-build" ; then
     find \
       src/nvim test/functional/fixtures test/unit/fixtures \
       -name '*.c' \
@@ -117,9 +290,9 @@ run_analysis() {
 }
 
 do_check() {
-  local tgt="$1"
-  local branch="$2"
-  local pvs_url="$3"
+  local tgt="$1" ; shift
+  local branch="$1" ; shift
+  local pvs_url="$1" ; shift
 
   git clone --branch="$branch" . "$tgt"
 
@@ -133,7 +306,7 @@ do_check() {
 }
 
 do_recheck() {
-  local tgt="${1}"
+  local tgt="$1"
 
   cd "$tgt"
 
@@ -143,48 +316,41 @@ do_recheck() {
 }
 
 detect_url() {
-  curl -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
-  | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz'
+  local url="${1:-detect}"
+  if test "$url" = detect ; then
+    curl -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
+    | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz'
+  else
+    printf '%s' "$url"
+  fi
 }
 
 main() {
-  local pvs_url="http://files.viva64.com/pvs-studio-6.15.21741.1-x86_64.tgz"
+  local def_pvs_url="http://files.viva64.com/pvs-studio-6.15.21741.1-x86_64.tgz"
+  eval "$(
+    getopts_long \
+      help store_const \
+      pvs 'modify detect_url pvs_url "${def_pvs_url}"' \
+      patch store_const \
+      only-build 'store_const --only-build' \
+      recheck store_const \
+      -- \
+      'store tgt "$PWD/../neovim-pvs"' \
+      'store branch master' \
+      -- "$@"
+  )"
 
-  if test "$1" = "--help" ; then
+  if test -n "$help" ; then
     help
-    return
+    return 0
   fi
 
   set -x
 
-  if test "$1" = "--pvs" ; then
-    shift
-    pvs_url="$1" ; shift
-
-    if test "$pvs_url" = "detect" ; then
-      pvs_url="$(detect_url)"
-    fi
+  if test -n "$patch" ; then
+    patch_sources "$only_build"
+    return $?
   fi
-
-  if test "$1" = "--patch" ; then
-    shift
-    if test "$1" = "--only-build" ; then
-      shift
-      patch_sources --only-build
-    else
-      patch_sources
-    fi
-    exit $?
-  fi
-
-  local recheck=
-  if test "$1" = "--recheck" ; then
-    recheck=1
-    shift
-  fi
-
-  local tgt="${1:-$PWD/../neovim-pvs}"
-  local branch="${2:-master}"
 
   if test -z "$recheck" ; then
     do_check "$tgt" "$branch" "$pvs_url"
