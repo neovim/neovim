@@ -136,7 +136,7 @@ clint-full: build/.ran-cmake
 check-single-includes: build/.ran-cmake
 	+$(BUILD_CMD) -C build check-single-includes
 
-appimage: | nvim
+appimage:
 	sh scripts/genappimage.sh
 
 lint: check-single-includes clint testlint

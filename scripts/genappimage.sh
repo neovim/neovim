@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 ########################################################################
 # Package the baries built on Travis-CI as an AppImage
@@ -10,28 +10,30 @@ if [ -z "$ARCH" ]; then
   export ARCH="$(arch)"
 fi
 
-APP=NVim
-LOWERAPP="${APP,,}"
+APP=NeoVim
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 APP_BUILD_DIR="$ROOT_DIR/build"
 APP_DIR="$APP_BUILD_DIR/$APP.AppDir"
 
-# cd neovim
 GIT_REV="$(git rev-parse --short HEAD)"
 
-# Since neovim increments versions slower than vim, using
-# the commit's date makes more sense.
-VIM_VER="$(date -d "@$(git log -1 --format=%ct)" "+%F")"
+# Get the version string of nvim
+VIM_VER="$("$ROOT_DIR"/build/bin/nvim --version | head -n 1 | grep -o 'v.*')"
+# Get the date of the latest commit
+COMMIT_DATE="$(git show --no-patch --date='short' --format='%cd')"
 
 
-make install DESTDIR="$APP_DIR"
+# make deps
+# Install runtime files and nvim binary into the AppImage
+make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${APP_DIR}/usr"
+make install
 
 # Move runtime from /usr/local to /usr
 mv "$APP_DIR"/usr/local/* "$APP_DIR/usr/"
 
 cd "$APP_BUILD_DIR"
 
-wget -q https://github.com/probonopd/AppImages/raw/master/functions.sh -O ./appimage_functions.sh
+curl -Lo "$APP_BUILD_DIR"/appimage_functions.sh https://github.com/probonopd/AppImages/raw/master/functions.sh
 . ./appimage_functions.sh
 
 cd "$APP".AppDir
@@ -59,9 +61,10 @@ cd "$APP".AppDir
 #get_apprun
 
 # get_desktop
-find "${ROOT_DIR}" -name "${LOWERAPP}.desktop" -xdev -exec cp {} "${LOWERAPP}.desktop" \;
 
-find "${ROOT_DIR}" -name "nvim.png" -xdev -exec cp {} "${LOWERAPP}.png" \;
+cp "$ROOT_DIR"/runtime/nvim.desktop "$APP_DIR"
+
+cp "$ROOT_DIR"/runtime/nvim.png "$APP_DIR"
 
 # mkdir -p ./usr/lib/x86_64-linux-gnu
 # copy custom libruby.so 1.9
@@ -95,23 +98,17 @@ delete_blacklisted
 # get_desktopintegration "$LOWERAPP"
 
 ########################################################################
-# Determine the version of the app; also include needed glibc version
+# Determine the version of the app; For use in file filename
 ########################################################################
 
-VERSION="Nightly-$VIM_VER-git$GIT_REV"
+VERSION="Nightly-$COMMIT_DATE-$VIM_VER"
 
+########################################################################
 ########################################################################
 # Patch away absolute paths; it would be nice if they were relative
 ########################################################################
 
-# Using a single sed on '/usr/' breaks file headers, so we need to use one
-# for each subfolder.
-#sed -i -e "s|/usr/share/|$APPDIR/usr/share/|g"     usr/bin/nvim
-#sed -i -e "s|/usr/lib/|$APPDIR/usr/lib/|g"         usr/bin/nvim
-#sed -i -e "s|/usr/local/|$APPDIR/usr/|g"     usr/bin/nvim
-#sed -i -e "s|/usr/share/doc/vim/|$APPDIR/usr/share/doc/vim/|g" usr/bin/nvim
-
-patch_strings_in_file "$APP_DIR"/usr/bin/nvim '/usr/local/nvim' '$APPDIR/usr/nvim'
+# patch_strings_in_file "$APP_DIR"/usr/bin/nvim '/usr/local/nvim' '$APPDIR/usr/nvim'
 
 # remove unneeded stuff
 # rmdir ./usr/lib64 || true
@@ -126,13 +123,20 @@ patch_strings_in_file "$APP_DIR"/usr/bin/nvim '/usr/local/nvim' '$APPDIR/usr/nvi
 # Now packaging it as an AppImage
 ########################################################################
 
-find "${ROOT_DIR}" -name "nvim.apprun" -xdev -exec cp {} "$APP_DIR/AppRun" \;
+
+cd "$APP_DIR"
+# No need for a fancy script. AppRun can just be a symlink to nvim.
+ln -s ./usr/bin/nvim AppRun
+cd -
 
 cd .. # Go out of AppImage
 
+# Build the AppImage executable.
+# Name format is"NeoVim-Nightly-${COMMIT_DATE}-${NEOVIM_VERSION}-glibc${GLIBC_VERSION}-${ARCHITECTURE}.AppImage"
 generate_appimage
 
 mv "$ROOT_DIR"/out/*.AppImage "$ROOT_DIR"/build/bin
+# Remove the (now empty) folder the AppImage was built in
 rm -r "$ROOT_DIR"/out
 # cp ../out/*.AppImage "$TRAVIS_BUILD_DIR"
 
