@@ -15,6 +15,7 @@ help() {
   echo 'Usage:'
   echo '  pvscheck.sh [--pvs URL] [target-directory [branch]]'
   echo '  pvscheck.sh [--pvs URL] [--recheck] [target-directory]'
+  echo '  pvscheck.sh [--pvs URL] --pvs-install {target-directory}'
   echo '  pvscheck.sh --patch [--only-build]'
   echo
   echo '    --pvs: Use the specified URL as a path to pvs-studio archive.'
@@ -24,11 +25,13 @@ help() {
   echo '           That assumes certain viva64.com site properties and'
   echo '           may be broken by the site update.'
   echo
+  echo '    --only-build: (for --patch) Only patch files in ./build directory.'
+  echo
+  echo '    --pvs-install: Only install PVS-studio to the specified location.'
+  echo
   echo '    --patch: patch sources in the current directory.'
   echo '             Does not patch already patched files.'
   echo '             Does not run analysis.'
-  echo
-  echo '    --only-build: Only patch files in ./build directory.'
   echo
   echo '    --recheck: run analysis on a prepared target directory.'
   echo
@@ -354,6 +357,7 @@ main() {
       patch store_const \
       only-build 'store_const --only-build' \
       recheck store_const \
+      pvs-install store_const \
       -- \
       'store tgt "$PWD/../neovim-pvs"' \
       'store branch master' \
@@ -369,13 +373,12 @@ main() {
 
   if test -n "$patch" ; then
     patch_sources "$only_build" "$tgt"
-    return $?
-  fi
-
-  if test -z "$recheck" ; then
-    do_check "$tgt" "$branch" "$pvs_url"
-  else
+  elif test -n "$pvs_install" ; then
+    install_pvs "$tgt" "$pvs_url"
+  elif test -n "$recheck" ; then
     do_recheck "$tgt"
+  else
+    do_check "$tgt" "$branch" "$pvs_url"
   fi
 }
 
