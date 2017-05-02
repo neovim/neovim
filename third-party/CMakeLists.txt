@@ -124,8 +124,8 @@ set(GPERF_SHA256 767112a204407e62dbc3106647cf839ed544f3cf5d0f0523aaa2508623aad63
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
 set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
 
-set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.6/neovim-qt.zip)
-set(WINGUI_SHA256 90217351e9e51c81ef5bba39066f00d05e15ef1f881882c3c682e61cd446c211)
+set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.7/neovim-qt.zip)
+set(WINGUI_SHA256 b548f6e4045f16a10163b0e433f05b115b2f877cb47c4eacbf80eaad1a8429ab)
 
 set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.3/win32yank.zip)
 set(WIN32YANK_SHA256 b474439ed2854a9a24941d66970c7fcfece219401eaaa5ebc0ffcc962e69887a)
