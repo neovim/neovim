@@ -263,16 +263,29 @@ create_compile_commands() {(
 
   if test -z "$deps" ; then
     mkdir -p "$tgt/build"
-    cd "$tgt/build"
+    (
+      cd "$tgt/build"
 
-    cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
-    make -j"$(get_jobs_num)"
+      cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
+      make -j"$(get_jobs_num)"
+    )
   else
-    cd "$tgt"
+    (
+      cd "$tgt"
 
-    make -j"$(get_jobs_num)" CMAKE_EXTRA_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
+      make -j"$(get_jobs_num)" CMAKE_EXTRA_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
+    )
   fi
-  find src/nvim/auto -name '*.test-include.c' -delete
+  find "$tgt/build/src/nvim/auto" -name '*.test-include.c' -delete
+)}
+
+# Warning: realdir below only cares about directories unlike realpath.
+#
+# realpath is not available in Ubuntu trusty yet.
+realdir() {(
+  local dir="$1"
+  cd "$dir"
+  printf '%s\n' "$PWD"
 )}
 
 patch_sources() {(
@@ -374,7 +387,7 @@ main() {
       pvs-install store_const \
       deps store_const \
       -- \
-      'store tgt "$PWD/../neovim-pvs"' \
+      'modify realdir tgt "$PWD/../neovim-pvs"' \
       'store branch master' \
       -- "$@"
   )"
