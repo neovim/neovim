@@ -262,7 +262,7 @@ create_compile_commands() {(
   export CFLAGS=' -O0 '
 
   if test -z "$deps" ; then
-    mkdir "$tgt/build"
+    mkdir -p "$tgt/build"
     cd "$tgt/build"
 
     cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
@@ -346,6 +346,8 @@ do_recheck() {
   local tgt="$1"
 
   adjust_path "$tgt"
+
+  create_compile_commands "$tgt" "$deps"
 
   run_analysis "$tgt"
 }
