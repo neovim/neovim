@@ -124,10 +124,8 @@ VERSION="Nightly-$COMMIT_DATE-$VIM_VER"
 ########################################################################
 
 
-cd "$APP_DIR"
 # No need for a fancy script. AppRun can just be a symlink to nvim.
-ln -s ./usr/bin/nvim AppRun
-cd -
+ln -s usr/bin/nvim "$APP_DIR"/AppRun
 
 cd .. # Go out of AppImage
 
