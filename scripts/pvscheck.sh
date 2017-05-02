@@ -10,9 +10,16 @@ get_jobs_num() {
 
 help() {
   echo 'Usage:'
-  echo '  pvscheck.sh [target-directory [branch]]'
-  echo '  pvscheck.sh [--recheck] [target-directory]'
+  echo '  pvscheck.sh [--pvs URL] [target-directory [branch]]'
+  echo '  pvscheck.sh [--pvs URL] [--recheck] [target-directory]'
   echo '  pvscheck.sh --patch [--only-build]'
+  echo
+  echo '    --pvs: Use the specified URL as a path to pvs-studio archive.'
+  echo '           By default latest tested version is used.'
+  echo
+  echo '           May use `--pvs detect` to try detecting latest version.'
+  echo '           That assumes certain viva64.com site properties and'
+  echo '           may be broken by the site update.'
   echo
   echo '    --patch: patch sources in the current directory.'
   echo '             Does not patch already patched files.'
@@ -38,10 +45,12 @@ EOF
 }
 
 install_pvs() {
+  local pvs_url="$1"
+
   mkdir pvs-studio
   cd pvs-studio
 
-  curl -o pvs-studio.tar.gz "$PVS_URL"
+  curl -L -o pvs-studio.tar.gz "$pvs_url"
   tar xzf pvs-studio.tar.gz
   rm pvs-studio.tar.gz
   local pvsdir="$(find . -maxdepth 1 -mindepth 1)"
@@ -108,14 +117,15 @@ run_analysis() {
 }
 
 do_check() {
-  local tgt="${1}"
-  local branch="${2}"
+  local tgt="$1"
+  local branch="$2"
+  local pvs_url="$3"
 
   git clone --branch="$branch" . "$tgt"
 
   cd "$tgt"
 
-  install_pvs
+  install_pvs "$pvs_url"
 
   create_compile_commands
 
@@ -132,19 +142,33 @@ do_recheck() {
   run_analysis
 }
 
-main() {
-  local PVS_URL="http://files.viva64.com/pvs-studio-6.14.21446.1-x86_64.tgz"
+detect_url() {
+  curl -L 'https://www.viva64.com/en/pvs-studio-download-linux/' \
+  | grep -o 'https\{0,1\}://[^"<>]\{1,\}/pvs-studio[^/"<>]*\.tgz'
+}
 
-  if test "x$1" = "x--help" ; then
+main() {
+  local pvs_url="http://files.viva64.com/pvs-studio-6.15.21741.1-x86_64.tgz"
+
+  if test "$1" = "--help" ; then
     help
     return
   fi
 
   set -x
 
-  if test "x$1" = "x--patch" ; then
+  if test "$1" = "--pvs" ; then
     shift
-    if test "x$1" = "x--only-build" ; then
+    pvs_url="$1" ; shift
+
+    if test "$pvs_url" = "detect" ; then
+      pvs_url="$(detect_url)"
+    fi
+  fi
+
+  if test "$1" = "--patch" ; then
+    shift
+    if test "$1" = "--only-build" ; then
       shift
       patch_sources --only-build
     else
@@ -154,7 +178,7 @@ main() {
   fi
 
   local recheck=
-  if test "x$1" = "x--recheck" ; then
+  if test "$1" = "--recheck" ; then
     recheck=1
     shift
   fi
@@ -162,8 +186,8 @@ main() {
   local tgt="${1:-$PWD/../neovim-pvs}"
   local branch="${2:-master}"
 
-  if test "x$recheck" = "x" ; then
-    do_check "$tgt" "$branch"
+  if test -z "$recheck" ; then
+    do_check "$tgt" "$branch" "$pvs_url"
   else
     do_recheck "$tgt"
   fi
