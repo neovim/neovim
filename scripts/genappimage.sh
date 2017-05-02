@@ -10,7 +10,7 @@ if [ -z "$ARCH" ]; then
   export ARCH="$(arch)"
 fi
 
-APP=NeoVim
+APP=Neovim
 ROOT_DIR="$(git rev-parse --show-toplevel)"
 APP_BUILD_DIR="$ROOT_DIR/build"
 APP_DIR="$APP_BUILD_DIR/$APP.AppDir"
