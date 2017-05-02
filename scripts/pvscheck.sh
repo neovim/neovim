@@ -212,15 +212,20 @@ getopts_long() {
 }
 
 get_pvs_comment() {
-  cat > pvs-comment << EOF
+  local tgt="$1" ; shift
+
+  cat > "$tgt/pvs-comment" << EOF
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 EOF
 }
 
-install_pvs() {
-  local pvs_url="$1"
+install_pvs() {(
+  local tgt="$1" ; shift
+  local pvs_url="$1" ; shift
+
+  cd "$tgt"
 
   mkdir pvs-studio
   cd pvs-studio
@@ -231,25 +236,36 @@ install_pvs() {
   local pvsdir="$(find . -maxdepth 1 -mindepth 1)"
   find "$pvsdir" -maxdepth 1 -mindepth 1 -exec mv '{}' . \;
   rmdir "$pvsdir"
+)}
 
-  export PATH="$PWD/bin${PATH+:}${PATH}"
-
-  cd ..
+adjust_path() {
+  if test -d "$tgt/pvs-studio" ; then
+    local saved_pwd="$PWD"
+    cd "$tgt/pvs-studio"
+    export PATH="$PWD/bin${PATH+:}${PATH}"
+    cd "$saved_pwd"
+  fi
 }
 
 create_compile_commands() {(
+  local tgt="$1" ; shift
+
   export CC=clang
   export CFLAGS=' -O0 '
 
-  mkdir build
-  cd build
+  mkdir "$tgt/build"
+  cd "$tgt/build"
+
   cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
   make -j"$(get_jobs_num)"
   find src/nvim/auto -name '*.test-include.c' -delete
 )}
 
-patch_sources() {
-  get_pvs_comment
+patch_sources() {(
+  local tgt="$1" ; shift
+  local only_bulid="${1:-}"
+
+  get_pvs_comment "$tgt"
 
   local sh_script='
     pvs_comment="$(cat pvs-comment ; echo -n EOS)"
@@ -260,7 +276,9 @@ patch_sources() {
     fi
   '
 
-  if test "${1:-}" != "--only-build" ; then
+  cd "$tgt"
+
+  if test "$only_build" != "--only-build" ; then
     find \
       src/nvim test/functional/fixtures test/unit/fixtures \
       -name '*.c' \
@@ -273,9 +291,13 @@ patch_sources() {
     -exec /bin/sh -c "$sh_script" - '{}' \;
 
   rm pvs-comment
-}
+)}
 
-run_analysis() {
+run_analysis() {(
+  local tgt="$1" ; shift
+
+  cd "$tgt"
+
   pvs-studio-analyzer \
     analyze \
       --threads "$(get_jobs_num)" \
@@ -287,7 +309,7 @@ run_analysis() {
   plog-converter -t xml -o PVS-studio.xml PVS-studio.log
   plog-converter -t errorfile -o PVS-studio.err PVS-studio.log
   plog-converter -t tasklist -o PVS-studio.tsk PVS-studio.log
-}
+)}
 
 do_check() {
   local tgt="$1" ; shift
@@ -296,23 +318,21 @@ do_check() {
 
   git clone --branch="$branch" . "$tgt"
 
-  cd "$tgt"
+  install_pvs "$tgt" "$pvs_url"
 
-  install_pvs "$pvs_url"
+  adjust_path "$tgt"
 
-  create_compile_commands
+  create_compile_commands "$tgt"
 
-  run_analysis
+  run_analysis "$tgt"
 }
 
 do_recheck() {
   local tgt="$1"
 
-  cd "$tgt"
+  adjust_path "$tgt"
 
-  export PATH="$PWD/pvs-studio/bin${PATH+:}${PATH}"
-
-  run_analysis
+  run_analysis "$tgt"
 }
 
 detect_url() {
@@ -348,7 +368,7 @@ main() {
   set -x
 
   if test -n "$patch" ; then
-    patch_sources "$only_build"
+    patch_sources "$only_build" "$tgt"
     return $?
   fi
 
