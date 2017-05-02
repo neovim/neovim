@@ -6,7 +6,9 @@
 # For more information, see http://appimage.org/
 ########################################################################
 
-export ARCH="${$ARCH:-$(arch)}"
+if [ -z "$ARCH" ]; then
+  export ARCH="$(arch)"
+fi
 
 APP=NVim
 LOWERAPP="${APP,,}"
@@ -21,10 +23,6 @@ GIT_REV="$(git rev-parse --short HEAD)"
 # the commit's date makes more sense.
 VIM_VER="$(date -d "@$(git log -1 --format=%ct)" "+%F")"
 
-
-make deps
-
-make
 
 make install DESTDIR="$APP_DIR"
 
