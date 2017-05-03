@@ -31,6 +31,27 @@ describe("'wildmode'", function()
         :sign define^             |
       ]])
     end)
+
+    it('does not crash after cycling back to original text', function()
+      command('set wildmode=full')
+      feed(':j<Tab><Tab><Tab>')
+      screen:expect([[
+                                 |
+        ~                        |
+        ~                        |
+        join  jumps              |
+        :j^                       |
+      ]])
+      -- This would cause nvim to crash before #6650
+      feed('<BS><Tab>')
+      screen:expect([[
+                                 |
+        ~                        |
+        ~                        |
+        !  #  &  <  =  >  @  >   |
+        :!^                       |
+      ]])
+    end)
   end)
 end)
 

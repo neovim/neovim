@@ -1411,7 +1411,8 @@ do_set (
           errmsg = (char_u *)set_bool_option(opt_idx, varp, (int)value,
                                              opt_flags);
         } else {  // Numeric or string.
-          if (strchr("=:&<", nextchar) == NULL || prefix != 1) {
+          if (vim_strchr((const char_u *)"=:&<", nextchar) == NULL
+              || prefix != 1) {
             errmsg = e_invarg;
             goto skip;
           }

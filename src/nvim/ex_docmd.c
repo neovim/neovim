@@ -2687,7 +2687,7 @@ const char * set_one_cmd_context(
 
   // 2. skip comment lines and leading space, colons or bars
   const char *cmd;
-  for (cmd = buff; strchr(" \t:|", *cmd) != NULL; cmd++) {
+  for (cmd = buff; vim_strchr((const char_u *)" \t:|", *cmd) != NULL; cmd++) {
   }
   xp->xp_pattern = (char_u *)cmd;
 
@@ -2748,7 +2748,7 @@ const char * set_one_cmd_context(
       }
     }
     // check for non-alpha command
-    if (p == cmd && strchr("@*!=><&~#", *p) != NULL) {
+    if (p == cmd && vim_strchr((const char_u *)"@*!=><&~#", *p) != NULL) {
       p++;
     }
     len = (size_t)(p - cmd);
@@ -2779,7 +2779,7 @@ const char * set_one_cmd_context(
     return NULL;
 
   if (ea.cmdidx == CMD_SIZE) {
-    if (*cmd == 's' && strchr("cgriI", cmd[1]) != NULL) {
+    if (*cmd == 's' && vim_strchr((const char_u *)"cgriI", cmd[1]) != NULL) {
       ea.cmdidx = CMD_substitute;
       p = cmd + 1;
     } else if (cmd[0] >= 'A' && cmd[0] <= 'Z') {
