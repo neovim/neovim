@@ -52,6 +52,9 @@ typedef enum TermType {
   kTermiTerm,
   kTermKonsole,
   kTermRxvt,
+  kTermDTTerm,
+  kTermXTerm,
+  kTermTeraTerm,
 } TermType;
 
 typedef struct {
@@ -423,9 +426,18 @@ static void tui_resize(UI *ui, int width, int height)
   ugrid_resize(&data->grid, width, height);
 
   if (!got_winch) {  // Try to resize the terminal window.
-    char r[16];  // enough for 9999x9999
-    snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
-    out(ui, r, strlen(r));
+    // One cannot expect all terminals to cope with any old ECMA-48 control sequence that one might like to emit.
+    // dtterm originated this extension.
+    // xterm and TeraTerm documentation confirm them understanding it.
+    // Konsole understands it, per commentary in VT102Emulation.cpp .
+    if (data->term == kTermDTTerm
+        || data->term == kTermXTerm
+        || data->term == kTermKonsole
+        || data->term == kTermTeraTerm) {
+      char r[16];  // enough for 9999x9999
+      snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
+      out(ui, r, strlen(r));
+    }
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
     got_winch = false;
   }
@@ -954,6 +966,15 @@ static TermType detect_term(const char *term, const char *colorterm)
   if (colorterm && strstr(colorterm, "gnome-terminal")) {
     return kTermGnome;
   }
+  if (STARTS_WITH(term, "xterm")) {
+    return kTermXTerm;
+  }
+  if (STARTS_WITH(term, "dtterm")) {
+    return kTermDTTerm;
+  }
+  if (STARTS_WITH(term, "teraterm")) {
+    return kTermTeraTerm;
+  }
   return kTermUnknown;
 }
 
@@ -974,14 +995,14 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<20/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
-  } else if (STARTS_WITH(term, "xterm")) {
+  } else if (data->term == kTermXTerm) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]0;");
   } else if (STARTS_WITH(term, "screen") || STARTS_WITH(term, "tmux")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   }
 
-  if (STARTS_WITH(term, "xterm") || data->term == kTermRxvt) {
+  if (data->term == kTermXTerm || data->term == kTermRxvt) {
     const char *normal = unibi_get_str(ut, unibi_cursor_normal);
     if (!normal) {
       unibi_set_str(ut, unibi_cursor_normal, "\x1b[?25h");
