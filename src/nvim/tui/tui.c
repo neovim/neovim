@@ -575,7 +575,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
       default: WLOG("Unknown shape value %d", shape); break;
     }
     data->params[0].i = shape;
-    data->params[1].i = (c.blinkon == 0);
+    data->params[1].i = (c.blinkon != 0);
 
     unibi_format(vars, vars + 26,
       TMUX_WRAP("\x1b]50;CursorShape=%p1%d;BlinkingCursorEnabled=%p2%d\x07"),
