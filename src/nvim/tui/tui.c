@@ -430,9 +430,18 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   ugrid_resize(&data->grid, (int)width, (int)height);
 
   if (!got_winch) {  // Try to resize the terminal window.
-    data->params[0].i = height;
-    data->params[1].i = width;
-    unibi_out(ui, data->unibi_ext.resize_screen);
+    // One cannot expect all terminals to cope with any old ECMA-48 control sequence that one might like to emit.
+    // dtterm originated this extension.
+    // xterm and TeraTerm documentation confirm them understanding it.
+    // Konsole understands it, per commentary in VT102Emulation.cpp .
+    if (data->term == kTermDTTerm
+        || data->term == kTermXTerm
+        || data->term == kTermKonsole
+        || data->term == kTermTeraTerm) {
+      char r[16];  // enough for 9999x9999
+      snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
+      out(ui, r, strlen(r));
+    }
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
     got_winch = false;
   }
