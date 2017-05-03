@@ -2,13 +2,22 @@
 :: MSYS2, this allows using all the dependencies and tools available
 :: in MSYS2, but we cannot build inside the MSYS2 shell.
 echo on
+
+set BUILD_TYPE=Release
 if "%CONFIGURATION%" == "MINGW_32" (
   set ARCH=i686
   set BITS=32
-) else (
+)
+if "%CONFIGURATION%" == "MINGW_64" (
   set ARCH=x86_64
   set BITS=64
+) else (
+  :: Debug build
+  set ARCH=i686
+  set BITS=32
+  set BUILD_TYPE=Debug
 )
+
 :: We cannot have sh.exe in the PATH (MinGW)
 set PATH=%PATH:C:\Program Files\Git\usr\bin;=%
 set PATH=C:\msys64\mingw%BITS%\bin;C:\Windows\System32;C:\Windows;%PATH%
@@ -31,14 +40,14 @@ python3 -c "import neovim; print(str(neovim))" || goto :error
 
 mkdir .deps
 cd .deps
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release ..\third-party\ || goto :error
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ..\third-party\ || goto :error
 mingw32-make VERBOSE=1 || goto :error
 cd ..
 
 :: Build Neovim
 mkdir build
 cd build
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUSTED_OUTPUT_TYPE=nvim -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DBUSTED_OUTPUT_TYPE=nvim -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
 mingw32-make VERBOSE=1 || goto :error
 bin\nvim --version || goto :error
 
@@ -46,8 +55,8 @@ bin\nvim --version || goto :error
 mingw32-make functionaltest VERBOSE=1 || goto :error
 
 :: Build artifacts
-cpack -G ZIP -C Release
-if defined APPVEYOR_REPO_TAG_NAME cpack -G NSIS -C Release
+cpack -G ZIP -C %BUILD_TYPE%
+if defined APPVEYOR_REPO_TAG_NAME cpack -G NSIS -C %BUILD_TYPE%
 
 goto :EOF
 :error
