@@ -65,7 +65,7 @@ if(HAVE_LIBKSTAT)
 endif()
 
 check_library_exists(kvm kvm_open "kvm.h" HAVE_LIBKVM)
-if(HAVE_LIBKVM)
+if(HAVE_LIBKVM AND NOT CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
   list(APPEND LIBUV_LIBRARIES kvm)
 endif()
 
