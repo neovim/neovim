@@ -1016,9 +1016,11 @@ static void fix_terminfo(TUIData *data)
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 
   if ((colorterm && strstr(colorterm, "256"))
+      || STARTS_WITH(term, "linux")
       || strstr(term, "256")
       || strstr(term, "xterm")) {
-    // Assume TERM=~xterm or COLORTERM=~256 supports 256 colors.
+    // Linux 4.8+ supports 256-color SGR, but terminfo has 8-color setaf/setab.
+    // Assume TERM=~xterm|linux or COLORTERM=~256 supports 256 colors.
     unibi_set_num(ut, unibi_max_colors, 256);
     unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
     unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
