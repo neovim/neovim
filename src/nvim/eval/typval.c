@@ -1869,7 +1869,7 @@ void tv_free(typval_T *tv)
       }
       case VAR_FUNC: {
         func_unref(tv->vval.v_string);
-        // FALLTHROUGH
+        FALLTHROUGH;
       }
       case VAR_STRING: {
         xfree(tv->vval.v_string);
