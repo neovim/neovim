@@ -1016,8 +1016,12 @@ static void fix_terminfo(TUIData *data)
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 
   if ((colorterm && strstr(colorterm, "256"))
+      || STARTS_WITH(term, "linux")
       || strstr(term, "256")
       || strstr(term, "xterm")) {
+    // Linux has supported the 256-colour control sequences since 4.8, but its
+    // terminfo entry as of 2016-11-27 only advertises 8 colour support.
+    // This also fixes up the linux-16color terminfo entry as a bonus.
     // Assume TERM=~xterm or COLORTERM=~256 supports 256 colors.
     unibi_set_num(ut, unibi_max_colors, 256);
     unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
