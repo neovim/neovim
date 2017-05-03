@@ -1,5 +1,6 @@
 version: '{build}'
 configuration:
+- DEBUG
 - MINGW_64
 - MINGW_32
 install: []
