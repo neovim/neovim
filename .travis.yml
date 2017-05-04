@@ -54,9 +54,6 @@ matrix:
       env: CI_TARGET=lint
     - os: linux
       compiler: gcc-5
-      env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
-    - os: linux
-      compiler: gcc-5
       env: FUNCTIONALTEST=functionaltest-lua
     - os: linux
       # Travis creates a cache per compiler.
