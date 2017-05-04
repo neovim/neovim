@@ -428,14 +428,12 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   ugrid_resize(&data->grid, (int)width, (int)height);
 
   if (!got_winch) {  // Try to resize the terminal window.
-    // One cannot expect all terminals to cope with any old ECMA-48 control sequence that one might like to emit.
-    // dtterm originated this extension.
-    // xterm and TeraTerm documentation confirm them understanding it.
-    // Konsole understands it, per commentary in VT102Emulation.cpp .
-    if (data->term == kTermDTTerm
-        || data->term == kTermXTerm
-        || data->term == kTermKonsole
-        || data->term == kTermTeraTerm) {
+    // Only send this control sequence extension to terminal types that we know understand it.
+    if (data->term == kTermDTTerm          // originated this extension
+        || data->term == kTermXTerm        // per xterm ctlseqs doco
+        || data->term == kTermKonsole      // per commentary in VT102Emulation.cpp
+        || data->term == kTermTeraTerm     // per TeraTerm "Supported Control Functions" doco
+        || data->term == kTermRxvt) {      // per command.C
       char r[16];  // enough for 9999x9999
       snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
       out(ui, r, strlen(r));
