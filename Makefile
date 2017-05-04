@@ -86,6 +86,7 @@ endif
 	mkdir -p build
 	touch $@
 
+
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
 oldtest: | nvim helptags
 	+$(SINGLE_MAKE) -C src/nvim/testdir clean
@@ -135,6 +136,9 @@ clint-full: build/.ran-cmake
 check-single-includes: build/.ran-cmake
 	+$(BUILD_CMD) -C build check-single-includes
 
+appimage:
+	sh scripts/genappimage.sh
+
 lint: check-single-includes clint testlint
 
-.PHONY: test testlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install
+.PHONY: test testlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage
