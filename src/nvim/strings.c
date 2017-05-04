@@ -476,21 +476,18 @@ char_u *vim_strchr(const char_u *string, int c)
 }
 
 /*
- * Version of strchr() that only works for bytes and handles unsigned char
- * strings with characters above 128 correctly. It also doesn't return a
- * pointer to the NUL at the end of the string.
+ * Search for c in buf. Appropriately handles values of c in [0, 255].
+ * This function preserves backward compatibility with previous vim code.
  */
-char_u *vim_strbyte(const char_u *string, int c)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  const char_u *p = string;
+char_u *vim_strbyte(const char_u *str, int c) {
+  /* if c == 0, then we are looking for the NUL char. The old version of this func
+   *   returned NULL in this case.
+   * if c < 0 or c > 255,  then we are looking for a byte outside the unsigned char range.
+   *   In this case, the old func returned NULL. */
+  if (c > (unsigned char) -1 || c <= 0)
+    return NULL;
 
-  while (*p != NUL) {
-    if (*p == c)
-      return (char_u *) p;
-    ++p;
-  }
-  return NULL;
+  return (char_u*) strchr((const char*) str, c);
 }
 
 /*
