@@ -26,7 +26,7 @@ struct process {
   Stream *in, *out, *err;
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
-  bool closed, term_sent, detach;
+  bool closed, detach;
   MultiQueue *events;
 };
 
@@ -48,7 +48,6 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
     .err = NULL,
     .cb = NULL,
     .closed = false,
-    .term_sent = false,
     .internal_close_cb = NULL,
     .internal_exit_cb = NULL,
     .detach = false
