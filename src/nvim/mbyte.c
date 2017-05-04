@@ -1367,7 +1367,7 @@ int utf16_to_utf8(const WCHAR *strw, char **str)
     return GetLastError();
   }
 
-  *str = xmalloc(utf8_len);
+  *str = xmallocz(utf8_len);
 
   // Convert to UTF-8.
   utf8_len = WideCharToMultiByte(CP_UTF8,
