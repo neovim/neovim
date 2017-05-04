@@ -14310,7 +14310,8 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   int result = server_start((char *) rettv->vval.v_string);
   if (result != 0) {
-    EMSG2("Failed to start server: %s", uv_strerror(result));
+    EMSG2("Failed to start server: %s",
+          result > 0 ? "Unknonwn system error" : uv_strerror(result));
   }
 }
 
