@@ -366,7 +366,7 @@ describe("tui 't_Co' (terminal colors)", function()
 
   it("TERM=linux-16color uses 256 colors", function()
     if is_linux then
-      assert_term_colors("linux", nil, 256)
+      assert_term_colors("linux-16color", nil, 256)
     else
       pending()
     end
