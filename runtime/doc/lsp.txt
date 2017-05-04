@@ -1,0 +1,131 @@
+*lsp.txt* The Language Server Protocol
+
+        NVIM REFERENCE MANUAL
+
+
+Nvim LSP API
+
+Neovim exposes a powerful API that conforms to Microsoft's published Language
+Server Protocol specification. The documentation can be found here:
+
+    https://github.com/Microsoft/language-server-protocol
+
+================================================================================
+                                                                  *lsp-request*
+Requests
+
+To make a request of the language server client running in Nvim, the following
+API is defined:
+>
+    :call lsp#request(request_name, arguments, optional_callback)
+<
+
+                                                                *lsp#request()*
+lsp#request({request_name}, {arguments}, [optional_callback], [server])
+        Creates and sends a request to the [server]. Will fill in any missing
+        required arguments as defined by the language server protocol. Will
+        call the default callback for the request (if it exists), unless an
+        [optional_callback] is specified, in which case that will be called
+        upon completion of the request.
+
+        Parameters:~
+            {request_name}: The name of the request, as specified by the
+            language server protocol.
+                Example: 'textDocument/hover'
+
+            {arguments}: The arguments that should be passed to the language
+            server. If any required keys are missing, Nvim will fill those in
+            with reasonable default values.
+                Example (with 'textDocument/hover'):
+                    Passed in:
+                        `{}`
+
+                    Sent:
+>
+                        {
+                            'textDocument': '/home/user/test/example.lua',
+                            'position': { 'line': 13, 'character': 17 }
+                        }
+<
+                Example (with 'textDocument/rename'):
+                    Passed in:
+>
+                        {
+                            'newName': 'exampleRename'
+                        }
+<
+                    Sent:
+>
+                        {
+                            'textDocument': '/home/user/test/rename.lua',
+                            'position': { 'line': 16, 'character': 8 }
+                            'newName': 'exampleRename'
+                        }
+<
+
+            [optional_callback]: An optional callback that will be executed
+            once the response has been received. If this is passed and not
+            |v:null|, then the |lsp-default-callback| will not be executed for
+            this request. If this request does not have a
+            |lsp-default-callback| and this parameter is not passed, then no
+            callback will be executed upon receiving the request.
+
+            The callback must be a string with the name of the vimscript
+            function to call. The signature must be:
+
+                `func_name(data, err)`
+
+            where both {data} and {err} are dictionaries containing the
+            possible response data or error data as specified by the language
+            server protocol.
+
+            The callback will be executed from lua running:
+
+                `vim.api.nvim_call_function('func_name', { data, err })`
+
+            [server]: The name of the server. This will default to the
+            language server associated with the current |filetype| if nothing
+            is passed.
+
+            Configuration for the default server can be found at
+            |lsp-configuration|.
+
+================================================================================
+                                                         *lsp-default-callback*
+
+The following requests have built-in callbacks defined to handle the response
+in an idiomatic vim fashion.
+
+================================================================================
+                                                                 *lsp-autocmds*
+
+The language server implementation in Neovim will fire |autocmd-User| events
+upon each request and response so that users can attach to whenever these
+events are triggered.
+
+For the request 'textDocument/hover', the following autocmds will be fired:
+
+    'textDocument/hover/pre'
+    'textDocument/hover/post'
+
+    -- FIXME: Implement response autocmds
+    'textDocument/hover/response'
+
+================================================================================
+                                                            *lsp-configuration*
+
+                                                             *lsp#client#add()*
+lsp#client#add({ftype}, {configuration}):
+    Used to add a language server.
+
+    Parameters:~
+        {ftype}: A string or list of strings of filetypes to associate with
+        this server.
+
+        {configuration} (dictionary): The command to be sent to start the server
+            `name`        (string):   The name of the server
+            `command`     (string):   The command to start the server
+            `arguments`   (list):     Any arguments to pass to the server
+
+
+ vim:tw=78:ts=8:ft=help:norl:
