@@ -1043,7 +1043,7 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
 
   win_init_some(newp, oldp);
 
-  check_colorcolumn(newp);
+  didset_window_options(newp);
 }
 
 /*

@@ -8,6 +8,9 @@
 //   - Add a BV_XX or WV_XX entry to option_defs.h
 //   - Add a variable to the window or buffer struct in buffer_defs.h.
 //   - For a window option, add some code to copy_winopt().
+//   - For a window string option, add code to check_winopt()
+//     and clear_winopt(). If setting the option needs parsing,
+//     add some code to didset_window_options().
 //   - For a buffer option, add some code to buf_copy_options().
 //   - For a buffer string option, add code to check_buf_options().
 // - If it's a numeric option, add any necessary bounds checks to do_set().
@@ -5514,7 +5517,6 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
   /* Is this right? */
   wp_to->w_farsi = wp_from->w_farsi;
-  briopt_check(wp_to);
 }
 
 /*
@@ -5615,6 +5617,13 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_cocu);
   clear_string_option(&wop->wo_briopt);
 }
+
+void didset_window_options(win_T *wp)
+{
+  check_colorcolumn(wp);
+  briopt_check(wp);
+}
+
 
 /*
  * Copy global option values to local options for one buffer.

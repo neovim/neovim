@@ -2316,7 +2316,7 @@ void get_winopts(buf_T *buf)
   /* Set 'foldlevel' to 'foldlevelstart' if it's not negative. */
   if (p_fdls >= 0)
     curwin->w_p_fdl = p_fdls;
-  check_colorcolumn(curwin);
+  didset_window_options(curwin);
 }
 
 /*
