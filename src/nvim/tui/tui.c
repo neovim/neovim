@@ -428,12 +428,12 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   ugrid_resize(&data->grid, (int)width, (int)height);
 
   if (!got_winch) {  // Try to resize the terminal window.
-    // Only send this control sequence extension to terminal types that we know understand it.
-    if (data->term == kTermDTTerm          // originated this extension
-        || data->term == kTermXTerm        // per xterm ctlseqs doco
-        || data->term == kTermKonsole      // per commentary in VT102Emulation.cpp
-        || data->term == kTermTeraTerm     // per TeraTerm "Supported Control Functions" doco
-        || data->term == kTermRxvt) {      // per command.C
+    // Only send this extension to terminal types that we know understand it.
+    if (data->term == kTermDTTerm      // originated this extension
+        || data->term == kTermXTerm    // per xterm ctlseqs doco
+        || data->term == kTermKonsole  // per commentary in VT102Emulation.cpp
+        || data->term == kTermTeraTerm // per TeraTerm "Supported Control Functions" doco
+        || data->term == kTermRxvt) {  // per command.C
       char r[16];  // enough for 9999x9999
       snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
       out(ui, r, strlen(r));
