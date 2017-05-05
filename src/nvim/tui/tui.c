@@ -95,6 +95,7 @@ typedef struct {
     int set_rgb_foreground, set_rgb_background;
     int set_cursor_color;
     int enable_focus_reporting, disable_focus_reporting;
+    int resize_screen;
   } unibi_ext;
 } TUIData;
 
@@ -157,6 +158,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.disable_bracketed_paste = -1;
   data->unibi_ext.enable_focus_reporting = -1;
   data->unibi_ext.disable_focus_reporting = -1;
+  data->unibi_ext.resize_screen = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
   // setup unibilium
@@ -428,16 +430,9 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   ugrid_resize(&data->grid, (int)width, (int)height);
 
   if (!got_winch) {  // Try to resize the terminal window.
-    // Only send this extension to terminal types that we know understand it.
-    if (data->term == kTermDTTerm      // originated this extension
-        || data->term == kTermXTerm    // per xterm ctlseqs doco
-        || data->term == kTermKonsole  // per commentary in VT102Emulation.cpp
-        || data->term == kTermTeraTerm // per TeraTerm "Supported Control Functions" doco
-        || data->term == kTermRxvt) {  // per command.C
-      char r[16];  // enough for 9999x9999
-      snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
-      out(ui, r, strlen(r));
-    }
+    data->params[0].i = (int)height;
+    data->params[1].i = (int)width;
+    unibi_out(ui, data->unibi_ext.resize_screen);
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
     got_winch = false;
   }
@@ -1046,6 +1041,16 @@ static void fix_terminfo(TUIData *data)
     unibi_set_num(ut, unibi_max_colors, 256);
     unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
     unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
+  }
+
+  // Only define this capability for terminal types that we know understand it.
+  if (data->term == kTermDTTerm      // originated this extension
+      || data->term == kTermXTerm    // per xterm ctlseqs doco
+      || data->term == kTermKonsole  // per commentary in VT102Emulation.cpp
+      || data->term == kTermTeraTerm // per TeraTerm "Supported Control Functions" doco
+      || data->term == kTermRxvt) {  // per command.C
+    data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut, NULL,
+	"\x1b[8;%p1%d;%p2%dt");
   }
 
 end:
