@@ -429,7 +429,6 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  if_cscope_defs.h
   misc2.h
   msgpack_rpc/server.h
   os/shell.h
@@ -438,7 +437,6 @@ set(NO_SINGLE_CHECK_HEADERS
   regexp_defs.h
   syntax_defs.h
   terminal.h
-  tui/tui.h
   undo.h
   undo_defs.h
 )
