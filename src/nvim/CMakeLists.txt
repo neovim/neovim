@@ -438,7 +438,6 @@ set(NO_SINGLE_CHECK_HEADERS
   regexp_defs.h
   syntax_defs.h
   terminal.h
-  tui/tui.h
   undo.h
   undo_defs.h
 )
