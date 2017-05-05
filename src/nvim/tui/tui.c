@@ -1132,11 +1132,11 @@ static void fix_terminfo(TUIData *data)
   }
 
   // Only define this capability for terminal types that we know understand it.
-  if (data->term == kTermDTTerm       // originated this extension
-      || data->term == kTermXTerm     // per xterm ctlseqs doc
-      || data->term == kTermKonsole   // per commentary in VT102Emulation.cpp
-      || data->term == kTermTeraTerm  // per "Supported Control Functions" doc
-      || data->term == kTermRxvt) {   // per command.C
+  if (data->term == kTermDTTerm      // originated this extension
+      || data->term == kTermXTerm    // per xterm ctlseqs doco
+      || data->term == kTermKonsole  // per commentary in VT102Emulation.cpp
+      || data->term == kTermTeraTerm // per TeraTerm "Supported Control Functions" doco
+      || data->term == kTermRxvt) {  // per command.C
     data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[8;%p1%d;%p2%dt");
   }
