@@ -1715,7 +1715,7 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
 ///
 /// @param fname is the filename to expand
 /// @return [allocated] Full path (NULL for failure).
-char *fix_fname(char *fname)
+char *fix_fname(const char *fname)
 {
 #ifdef UNIX
   return FullName_save(fname, true);

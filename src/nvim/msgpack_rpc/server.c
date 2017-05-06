@@ -97,6 +97,18 @@ char *server_address_new(void)
 #endif
 }
 
+/// Check if this instance owns a pipe address.
+/// The argument must already be resolved to an absolute path!
+bool server_owns_pipe_address(const char *path)
+{
+  for (int i = 0; i < watchers.ga_len; i++) {
+    if (!strcmp(path, ((SocketWatcher **)watchers.ga_data)[i]->addr)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Starts listening for API calls.
 ///
 /// The socket type is determined by parsing `endpoint`: If it's a valid IPv4

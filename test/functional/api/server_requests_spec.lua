@@ -282,4 +282,20 @@ describe('server -> client', function()
     end)
   end)
 
+  describe('when connecting to its own pipe adress', function()
+    it('it does not deadlock', function()
+      local address = funcs.serverlist()[1]
+      local first = string.sub(address,1,1)
+      ok(first == '/' or first == '\\')
+      local serverpid = funcs.getpid()
+
+      local id = funcs.sockconnect('pipe', address, {rpc=true})
+
+      funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
+      eq('hello', meths.get_current_line())
+      eq(serverpid, funcs.rpcrequest(id, "nvim_eval", "getpid()"))
+
+      eq(id, funcs.rpcrequest(id, 'nvim_get_api_info')[1])
+    end)
+  end)
 end)
