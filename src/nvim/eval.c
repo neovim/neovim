@@ -3934,7 +3934,7 @@ eval6 (
     typval_T *rettv,
     int evaluate,
     int want_string              /* after "." operator */
-)
+) FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   typval_T var2;
   int op;

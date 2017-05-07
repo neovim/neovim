@@ -25,7 +25,7 @@ char *e_listidx = N_("E684: list index out of range: %" PRId64);
 /// @return OK or FAIL.
 int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
                 const char *const op)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   // Can't do anything with a Funcref, a Dict or special value on the right.
   if (tv2->v_type != VAR_FUNC && tv2->v_type != VAR_DICT) {
