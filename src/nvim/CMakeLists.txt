@@ -429,10 +429,6 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  misc2.h
-  msgpack_rpc/server.h
-  os/shell.h
-  os_unix.h
   os/win_defs.h
   regexp_defs.h
   syntax_defs.h
