@@ -43,7 +43,7 @@ Pull requests ("PRs")
   - Use the `ri` git alias:
     ```
     [alias]
-    ri = "!sh -c 't=\"${1:-master}\" ; s=\"${2:-HEAD}\" ; if git merge-base --is-ancestor \"$t\" \"$s\" ; then o=\"$t\" ; else mb=\"$(git merge-base \"$t\" \"$s\")\" ; if test \"x$mb\" = x ; then o=\"$t\" ; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\" ; if test \"x$lm\" = x ; then o=\"$mb\" ; else o=\"$lm\" ; fi ; fi ; fi ; [ $# -gt 0 ] && shift ; [ $# -gt 0 ] && shift ; git rebase --interactive \"$o\" \"$@\"' -"
+    ri = "!sh -c 't=\"${1:-master}\"; s=\"${2:-HEAD}\"; mb=\"$(git merge-base \"$t\" \"$s\")\"; if test \"x$mb\" = x ; then o=\"$t\"; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\"; if test \"x$lm\" = x ; then o=\"$mb\"; else o=\"$lm\"; fi; fi; test $# -gt 0 && shift; test $# -gt 0 && shift; git rebase --interactive \"$o\" \"$@\"'"
     ```
     This avoids unnecessary rebases yet still allows you to combine related
     commits, separate monolithic commits, etc.
