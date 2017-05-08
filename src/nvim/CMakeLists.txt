@@ -340,6 +340,15 @@ endif()
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
 set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
 
+if(CMAKE_VERSION VERSION_LESS "2.8.8")
+  if(PREFER_LUAJIT)
+    include_directories(${LUAJIT_INCLUDE_DIRS})
+  else()
+    message(FATAL_ERROR
+            "Must support INCLUDE_DIRECTORIES target property to build")
+  endif()
+endif()
+
 if(PREFER_LUAJIT)
   list(APPEND NVIM_EXEC_LINK_LIBRARIES ${LUAJIT_LIBRARIES})
 else()
