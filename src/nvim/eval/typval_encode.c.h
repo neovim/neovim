@@ -233,10 +233,6 @@
 ///
 /// This name will only be used by one of the above macros which are defined by
 /// the caller. Functions defined here do not use first argument directly.
-#ifndef NVIM_EVAL_TYPVAL_ENCODE_C_H
-#define NVIM_EVAL_TYPVAL_ENCODE_C_H
-#undef NVIM_EVAL_TYPVAL_ENCODE_C_H
-
 #include <stddef.h>
 #include <inttypes.h>
 #include <assert.h>
@@ -816,4 +812,3 @@ encode_vim_to__error_ret:
   // Prevent “unused label” warnings.
   goto typval_encode_stop_converting_one_item;  // -V779
 }
-#endif  // NVIM_EVAL_TYPVAL_ENCODE_C_H

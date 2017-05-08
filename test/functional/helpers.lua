@@ -566,7 +566,7 @@ local function get_pathsep()
   return funcs.fnamemodify('.', ':p'):sub(-1)
 end
 
-local M = {
+local module = {
   prepend_argv = prepend_argv,
   clear = clear,
   connect = connect,
@@ -641,5 +641,5 @@ return function(after_each)
       check_cores('build/bin/nvim')
     end)
   end
-  return M
+  return module
 end

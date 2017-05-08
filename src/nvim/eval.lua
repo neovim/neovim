@@ -193,6 +193,7 @@ return {
     localtime={},
     log={args=1, func="float_op_wrapper", data="&log"},
     log10={args=1, func="float_op_wrapper", data="&log10"},
+    luaeval={args={1, 2}},
     map={args=2},
     maparg={args={1, 4}},
     mapcheck={args={1, 3}},

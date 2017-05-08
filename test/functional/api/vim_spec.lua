@@ -337,6 +337,17 @@ describe('api', function()
       eq('\128\253\44', helpers.nvim('replace_termcodes',
                                      '<LeftMouse>', true, true, true))
     end)
+
+    it('does not crash when transforming an empty string', function()
+      -- Actually does not test anything, because current code will use NULL for
+      -- an empty string.
+      --
+      -- Problem here is that if String argument has .data in allocated memory
+      -- then `return str` in vim_replace_termcodes body will make Neovim free
+      -- `str.data` twice: once when freeing arguments, then when freeing return
+      -- value.
+      eq('', meths.replace_termcodes('', true, true, true))
+    end)
   end)
 
   describe('nvim_feedkeys', function()

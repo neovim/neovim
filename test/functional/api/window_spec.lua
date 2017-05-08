@@ -9,6 +9,7 @@ local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
+local meths = helpers.meths
 local command = helpers.command
 
 -- check if str is visible at the beginning of some line
@@ -53,6 +54,12 @@ describe('api/win', function()
       curwin('set_cursor', {2, 6})
       nvim('command', 'normal i dumb')
       eq('typing\n  some dumb text', curbuf_contents())
+    end)
+
+    it('does not leak memory when using invalid window ID with invalid pos',
+    function()
+      eq({false, 'Invalid window id'},
+         meth_pcall(meths.win_set_cursor, 1, {"b\na"}))
     end)
 
     it('updates the screen, and also when the window is unfocused', function()

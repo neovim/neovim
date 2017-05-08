@@ -950,6 +950,7 @@ Various:					*various-functions*
 	taglist()		get list of matching tags
 	tagfiles()		get a list of tags files
 
+	luaeval()		evaluate Lua expression
 	py3eval()		evaluate Python expression (|+python3|)
 	pyeval()		evaluate Python expression (|+python|)
 	pyxeval()		evaluate |python_x| expression

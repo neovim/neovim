@@ -41,10 +41,6 @@
 // $ gcc -E -dM - </dev/null
 // $ echo | clang -dM -E -
 
-#ifndef NVIM_FUNC_ATTR_H
-#define NVIM_FUNC_ATTR_H
-#undef NVIM_FUNC_ATTR_H
-
 #ifdef FUNC_ATTR_MALLOC
 # undef FUNC_ATTR_MALLOC
 #endif
@@ -214,4 +210,3 @@
 # define FUNC_ATTR_NONNULL_ARG(...)
 # define FUNC_ATTR_NONNULL_RET
 #endif
-#endif  // NVIM_FUNC_ATTR_H

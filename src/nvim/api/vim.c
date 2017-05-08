@@ -144,7 +144,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
 {
   if (str.size == 0) {
     // Empty string
-    return str;
+    return (String) { .data = NULL, .size = 0 };
   }
 
   char *ptr = NULL;
@@ -203,7 +203,8 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
-/// Calls a VimL function with the given arguments.
+/// Calls a VimL function with the given arguments
+///
 /// On VimL error: Returns a generic error; v:errmsg is not updated.
 ///
 /// @param fname    Function to call
@@ -854,4 +855,58 @@ static void write_msg(String message, bool to_err)
   }
   --no_wait_return;
   msg_end();
+}
+
+// Functions used for testing purposes
+
+/// Returns object given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  obj  Object to return.
+///
+/// @return its argument.
+Object nvim__id(Object obj)
+{
+  return copy_object(obj);
+}
+
+/// Returns array given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  arr  Array to return.
+///
+/// @return its argument.
+Array nvim__id_array(Array arr)
+{
+  return copy_object(ARRAY_OBJ(arr)).data.array;
+}
+
+/// Returns dictionary given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  dct  Dictionary to return.
+///
+/// @return its argument.
+Dictionary nvim__id_dictionary(Dictionary dct)
+{
+  return copy_object(DICTIONARY_OBJ(dct)).data.dictionary;
+}
+
+/// Returns floating-point value given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  flt  Value to return.
+///
+/// @return its argument.
+Float nvim__id_float(Float flt)
+{
+  return flt;
 }

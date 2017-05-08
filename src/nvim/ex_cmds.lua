@@ -1548,19 +1548,19 @@ return {
     command='lua',
     flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_script_ni',
+    func='ex_lua',
   },
   {
     command='luado',
     flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_luado',
   },
   {
     command='luafile',
     flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_luafile',
   },
   {
     command='lvimgrep',

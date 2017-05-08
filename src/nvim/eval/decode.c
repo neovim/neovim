@@ -11,6 +11,7 @@
 #include "nvim/ascii.h"
 #include "nvim/macros.h"
 #include "nvim/message.h"
+#include "nvim/globals.h"
 #include "nvim/charset.h"  // vim_str2nr
 #include "nvim/lib/kvec.h"
 #include "nvim/vim.h"  // OK, FAIL
@@ -223,6 +224,78 @@ static inline int json_decoder_pop(ValuesStackItem obj,
     } \
   } while (0)
 
+/// Create a new special dictionary that ought to represent a MAP
+///
+/// @param[out]  ret_tv  Address where new special dictionary is saved.
+///
+/// @return [allocated] list which should contain key-value pairs. Return value
+///                     may be safely ignored.
+list_T *decode_create_map_special_dict(typval_T *const ret_tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  list_T *const list = tv_list_alloc();
+  list->lv_refcount++;
+  create_special_dict(ret_tv, kMPMap, ((typval_T) {
+    .v_type = VAR_LIST,
+    .v_lock = VAR_UNLOCKED,
+    .vval = { .v_list = list },
+  }));
+  return list;
+}
+
+/// Convert char* string to typval_T
+///
+/// Depending on whether string has (no) NUL bytes, it may use a special
+/// dictionary or decode string to VAR_STRING.
+///
+/// @param[in]  s  String to decode.
+/// @param[in]  len  String length.
+/// @param[in]  hasnul  Whether string has NUL byte, not or it was not yet
+///                     determined.
+/// @param[in]  binary  If true, save special string type as kMPBinary,
+///                     otherwise kMPString.
+/// @param[in]  s_allocated  If true, then `s` was allocated and can be saved in
+///                          a returned structure. If it is not saved there, it
+///                          will be freed.
+///
+/// @return Decoded string.
+typval_T decode_string(const char *const s, const size_t len,
+                       const TriState hasnul, const bool binary,
+                       const bool s_allocated)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  assert(s != NULL || len == 0);
+  const bool really_hasnul = (hasnul == kNone
+                              ? memchr(s, NUL, len) != NULL
+                              : (bool)hasnul);
+  if (really_hasnul) {
+    list_T *const list = tv_list_alloc();
+    list->lv_refcount++;
+    typval_T tv;
+    create_special_dict(&tv, binary ? kMPBinary : kMPString, ((typval_T) {
+      .v_type = VAR_LIST,
+      .v_lock = VAR_UNLOCKED,
+      .vval = { .v_list = list },
+    }));
+    const int elw_ret = encode_list_write((void *)list, s, len);
+    if (s_allocated) {
+      xfree((void *)s);
+    }
+    if (elw_ret == -1) {
+      tv_clear(&tv);
+      return (typval_T) { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
+    }
+    return tv;
+  } else {
+    return (typval_T) {
+      .v_type = VAR_STRING,
+      .v_lock = VAR_UNLOCKED,
+      .vval = { .v_string = (char_u *)(
+          s_allocated ? (char *)s : xmemdupz(s, len)) },
+    };
+  }
+}
+
 /// Parse JSON double-quoted string
 ///
 /// @param[in]  buf  Buffer being converted.
@@ -416,29 +489,13 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
   }
   PUT_FST_IN_PAIR(fst_in_pair, str_end);
 #undef PUT_FST_IN_PAIR
-  if (hasnul) {
-    typval_T obj;
-    list_T *const list = tv_list_alloc();
-    list->lv_refcount++;
-    create_special_dict(&obj, kMPString, ((typval_T) {
-      .v_type = VAR_LIST,
-      .v_lock = VAR_UNLOCKED,
-      .vval = { .v_list = list },
-    }));
-    if (encode_list_write((void *) list, str, (size_t) (str_end - str))
-        == -1) {
-      tv_clear(&obj);
-      goto parse_json_string_fail;
-    }
-    xfree(str);
-    POP(obj, true);
-  } else {
-    *str_end = NUL;
-    POP(((typval_T) {
-      .v_type = VAR_STRING,
-      .vval = { .v_string = (char_u *) str },
-    }), false);
+  *str_end = NUL;
+  typval_T obj = decode_string(
+      str, (size_t)(str_end - str), hasnul ? kTrue : kFalse, false, true);
+  if (obj.v_type == VAR_UNKNOWN) {
+    goto parse_json_string_fail;
   }
+  POP(obj, obj.v_type != VAR_STRING);
   goto parse_json_string_ret;
 parse_json_string_fail:
   ret = FAIL;
@@ -812,13 +869,7 @@ json_decode_string_cycle_start:
         list_T *val_list = NULL;
         if (next_map_special) {
           next_map_special = false;
-          val_list = tv_list_alloc();
-          val_list->lv_refcount++;
-          create_special_dict(&tv, kMPMap, ((typval_T) {
-            .v_type = VAR_LIST,
-            .v_lock = VAR_UNLOCKED,
-            .vval = { .v_list = val_list },
-          }));
+          val_list = decode_create_map_special_dict(&tv);
         } else {
           dict_T *dict = tv_dict_alloc();
           dict->dv_refcount++;
@@ -971,37 +1022,17 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       break;
     }
     case MSGPACK_OBJECT_STR: {
-      list_T *const list = tv_list_alloc();
-      list->lv_refcount++;
-      create_special_dict(rettv, kMPString, ((typval_T) {
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval = { .v_list = list },
-      }));
-      if (encode_list_write((void *) list, mobj.via.str.ptr, mobj.via.str.size)
-          == -1) {
+      *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, kTrue, false,
+                             false);
+      if (rettv->v_type == VAR_UNKNOWN) {
         return FAIL;
       }
       break;
     }
     case MSGPACK_OBJECT_BIN: {
-      if (memchr(mobj.via.bin.ptr, NUL, mobj.via.bin.size) == NULL) {
-        *rettv = (typval_T) {
-          .v_type = VAR_STRING,
-          .v_lock = VAR_UNLOCKED,
-          .vval = { .v_string = xmemdupz(mobj.via.bin.ptr, mobj.via.bin.size) },
-        };
-        break;
-      }
-      list_T *const list = tv_list_alloc();
-      list->lv_refcount++;
-      create_special_dict(rettv, kMPBinary, ((typval_T) {
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval = { .v_list = list },
-      }));
-      if (encode_list_write((void *) list, mobj.via.bin.ptr, mobj.via.bin.size)
-          == -1) {
+      *rettv = decode_string(mobj.via.bin.ptr, mobj.via.bin.size, kNone, true,
+                             false);
+      if (rettv->v_type == VAR_UNKNOWN) {
         return FAIL;
       }
       break;
@@ -1058,13 +1089,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       }
       break;
 msgpack_to_vim_generic_map: {}
-      list_T *const list = tv_list_alloc();
-      list->lv_refcount++;
-      create_special_dict(rettv, kMPMap, ((typval_T) {
-        .v_type = VAR_LIST,
-        .v_lock = VAR_UNLOCKED,
-        .vval = { .v_list = list },
-      }));
+      list_T *const list = decode_create_map_special_dict(rettv);
       for (size_t i = 0; i < mobj.via.map.size; i++) {
         list_T *const kv_pair = tv_list_alloc();
         tv_list_append_list(list, kv_pair);

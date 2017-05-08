@@ -97,6 +97,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/lib/khash.h"
 #include "nvim/lib/queue.h"
+#include "nvim/lua/executor.h"
 #include "nvim/eval/typval.h"
 #include "nvim/eval/executor.h"
 #include "nvim/eval/gc.h"
@@ -6510,7 +6511,7 @@ static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   Error err = ERROR_INIT;
-  Object result = fn(INTERNAL_CALL, args, &err);
+  Object result = fn(VIML_INTERNAL_CALL, args, &err);
 
   if (ERROR_SET(&err)) {
     nvim_err_writeln(cstr_as_string(err.msg));
@@ -10973,7 +10974,9 @@ static int inputsecret_flag = 0;
  * prompt. The third argument to f_inputdialog() specifies the value to return
  * when the user cancels the prompt.
  */
-static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
+void get_user_input(const typval_T *const argvars,
+                    typval_T *const rettv, const bool inputdialog)
+  FUNC_ATTR_NONNULL_ALL
 {
   const char *prompt = tv_get_string_chk(&argvars[0]);
   int cmd_silent_save = cmd_silent;
@@ -12074,6 +12077,18 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
       xfree(mapmode);
     }
   }
+}
+
+/// luaeval() function implementation
+static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char *const str = (const char *)tv_get_string_chk(&argvars[0]);
+  if (str == NULL) {
+    return;
+  }
+
+  executor_eval_lua(cstr_as_string((char *)str), &argvars[1], rettv);
 }
 
 /*

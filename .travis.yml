@@ -66,7 +66,9 @@ matrix:
       env: BUILD_32BIT=ON
     - os: linux
       compiler: clang-3.9
-      env: CLANG_SANITIZER=ASAN_UBSAN
+      env: >
+        CLANG_SANITIZER=ASAN_UBSAN
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUAJIT=false"
     - os: linux
       compiler: clang-3.9
       env: CLANG_SANITIZER=TSAN
