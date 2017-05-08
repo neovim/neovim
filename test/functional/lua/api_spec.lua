@@ -37,13 +37,16 @@ describe('luaeval(vim.api.…)', function()
 
     it('transforms API error from nvim_win_set_cursor into lua error', function()
       eq({false, 'Argument "pos" must be a [row, col] array'},
-         funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, 1, {1, 2, 3})}'))
+         funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, 0, {1, 2, 3})}'))
+      -- Used to produce a memory leak due to a bug in nvim_win_set_cursor
+      eq({false, 'Invalid window id'},
+         funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, -1, {1, 2, 3})}'))
     end)
 
     it('transforms API error from nvim_win_set_cursor + same array as in first test into lua error',
     function()
       eq({false, 'Argument "pos" must be a [row, col] array'},
-         funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, 1, {"b\\na"})}'))
+         funcs.luaeval('{pcall(vim.api.nvim_win_set_cursor, 0, {"b\\na"})}'))
     end)
   end)
 
