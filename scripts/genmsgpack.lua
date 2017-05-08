@@ -401,7 +401,7 @@ local function process_function(fn)
     Error err = ERROR_INIT;
     if (lua_gettop(lstate) != %i) {
       api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
-      return luaL_error(lstate, "%%s", err.msg);
+      goto exit_0;
     }
   ]], lua_c_function_name, #fn.parameters, #fn.parameters,
       (#fn.parameters == 1) and '' or 's'))
@@ -420,11 +420,11 @@ local function process_function(fn)
     const %s %s = nlua_pop_%s(lstate, &err);
 
     if (ERROR_SET(&err)) {
-      %s
-      return luaL_error(lstate, "%%s", err.msg);
+      goto exit_%u;
     }
-    ]], param[1], cparam, param_type, table.concat(free_code, '\n      ')))
-    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(lc_param_type, cparam)
+    ]], param[1], cparam, param_type, #fn.parameters - j))
+    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(
+      lc_param_type, cparam)
     cparams = cparam .. ', ' .. cparams
   end
   if fn.receives_channel_id then
@@ -435,7 +435,28 @@ local function process_function(fn)
   else
     cparams = cparams:gsub(', $', '')
   end
-  free_at_exit_code = table.concat(free_code, '\n    ')
+  local free_at_exit_code = ''
+  for i = 1, #free_code do
+    local rev_i = #free_code - i + 1
+    local code = free_code[rev_i]
+    if i == 1 then
+      free_at_exit_code = free_at_exit_code .. ('\n    %s'):format(code)
+    else
+      free_at_exit_code = free_at_exit_code .. ('\n  exit_%u:\n    %s'):format(
+        rev_i, code)
+    end
+  end
+  local err_throw_code = [[
+
+  exit_0:
+    if (ERROR_SET(&err)) {
+      luaL_where(lstate, 1);
+      lua_pushstring(lstate, err.msg);
+      api_clear_error(&err);
+      lua_concat(lstate, 2);
+      return lua_error(lstate);
+    }
+  ]]
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then
       return_type = 'Array'
@@ -444,24 +465,20 @@ local function process_function(fn)
     end
     write_shifted_output(output, string.format([[
     const %s ret = %s(%s);
-    %s
-    if (ERROR_SET(&err)) {
-      return luaL_error(lstate, "%%s", err.msg);
-    }
     nlua_push_%s(lstate, ret);
     api_free_%s(ret);
+  %s
+  %s
     return 1;
-    ]], fn.return_type, fn.name, cparams, free_at_exit_code, return_type,
-        return_type:lower()))
+    ]], fn.return_type, fn.name, cparams, return_type, return_type:lower(),
+        free_at_exit_code, err_throw_code))
   else
     write_shifted_output(output, string.format([[
     %s(%s);
-    %s
-    if (ERROR_SET(&err)) {
-      return luaL_error(lstate, "%%s", err.msg);
-    }
+  %s
+  %s
     return 0;
-    ]], fn.name, cparams, free_at_exit_code))
+    ]], fn.name, cparams, free_at_exit_code, err_throw_code))
   end
   write_shifted_output(output, [[
   }
