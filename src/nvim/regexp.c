@@ -3427,32 +3427,26 @@ static long bt_regexec_both(char_u *line,
       c = *prog->regmust;
     s = line + col;
 
-    /*
-     * This is used very often, esp. for ":global".  Use three versions of
-     * the loop to avoid overhead of conditions.
-     */
-    if (!ireg_ic
-        && !has_mbyte
-        )
-      while ((s = vim_strbyte(s, c)) != NULL) {
-        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0)
-          break;                        /* Found it. */
-        ++s;
-      }
-    else if (!ireg_ic || (!enc_utf8 && mb_char2len(c) > 1))
+    // This is used very often, esp. for ":global".  Use two versions of
+    // the loop to avoid overhead of conditions.
+    if (!ireg_ic) {
       while ((s = vim_strchr(s, c)) != NULL) {
-        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0)
-          break;                        /* Found it. */
+        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
+          break;  // Found it.
+        }
         mb_ptr_adv(s);
       }
-    else
+    } else {
       while ((s = cstrchr(s, c)) != NULL) {
-        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0)
-          break;                        /* Found it. */
+        if (cstrncmp(s, prog->regmust, &prog->regmlen) == 0) {
+          break;  // Found it.
+        }
         mb_ptr_adv(s);
       }
-    if (s == NULL)              /* Not present. */
+    }
+    if (s == NULL) {  // Not present.
       goto theend;
+    }
   }
 
   regline = line;
@@ -3482,14 +3476,8 @@ static long bt_regexec_both(char_u *line,
     /* Messy cases:  unanchored match. */
     while (!got_int) {
       if (prog->regstart != NUL) {
-        /* Skip until the char we know it must start with.
-         * Used often, do some work to avoid call overhead. */
-        if (!ireg_ic
-            && !has_mbyte
-            )
-          s = vim_strbyte(regline + col, prog->regstart);
-        else
-          s = cstrchr(regline + col, prog->regstart);
+        // Skip until the char we know it must start with.
+        s = cstrchr(regline + col, prog->regstart);
         if (s == NULL) {
           retval = 0;
           break;
@@ -6299,44 +6287,37 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
 /*
  * cstrchr: This function is used a lot for simple searches, keep it fast!
  */
-static char_u *cstrchr(char_u *s, int c)
+static inline char_u *cstrchr(const char_u *const s, const int c)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_ALWAYS_INLINE
 {
-  char_u      *p;
-  int cc;
-
-  if (!ireg_ic
-      || (!enc_utf8 && mb_char2len(c) > 1)
-      )
+  if (!ireg_ic) {
     return vim_strchr(s, c);
+  }
 
-  /* tolower() and toupper() can be slow, comparing twice should be a lot
-   * faster (esp. when using MS Visual C++!).
-   * For UTF-8 need to use folded case. */
+  // Use folded case for UTF-8, slow! For ASCII use libc strpbrk which is
+  // expected to be highly optimized.
   if (c > 0x80) {
-    cc = utf_fold(c);
-  } else if (mb_isupper(c)) {
-    cc = mb_tolower(c);
-  } else if (mb_islower(c)) {
-    cc = mb_toupper(c);
+    const int folded_c = utf_fold(c);
+    for (const char_u *p = s; *p != NUL; p += utfc_ptr2len(p)) {
+      if (utf_fold(utf_ptr2char(p)) == folded_c) {
+        return (char_u *)p;
+      }
+    }
+    return NULL;
+  }
+
+  int cc;
+  if (ASCII_ISUPPER(c)) {
+    cc = TOLOWER_ASC(c);
+  } else if (ASCII_ISLOWER(c)) {
+    cc = TOUPPER_ASC(c);
   } else {
     return vim_strchr(s, c);
   }
 
-  if (has_mbyte) {
-    for (p = s; *p != NUL; p += (*mb_ptr2len)(p)) {
-      if (enc_utf8 && c > 0x80) {
-        if (utf_fold(utf_ptr2char(p)) == cc)
-          return p;
-      } else if (*p == c || *p == cc)
-        return p;
-    }
-  } else
-    /* Faster version for when there are no multi-byte characters. */
-    for (p = s; *p != NUL; ++p)
-      if (*p == c || *p == cc)
-        return p;
-
-  return NULL;
+  char tofind[] = { (char)c, (char)cc, NUL };
+  return (char_u *)strpbrk((const char *)s, tofind);
 }
 
 /***************************************************************

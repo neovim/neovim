@@ -425,72 +425,28 @@ int vim_strnicmp(const char *s1, const char *s2, size_t len)
 }
 #endif
 
-/*
- * Version of strchr() and strrchr() that handle unsigned char strings
- * with characters from 128 to 255 correctly.  It also doesn't return a
- * pointer to the NUL at the end of the string.
- */
-char_u *vim_strchr(const char_u *string, int c)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+/// strchr() version which handles multibyte strings
+///
+/// @param[in]  string  String to search in.
+/// @param[in]  c  Character to search for. Must be a valid character.
+///
+/// @return Pointer to the first byte of the found character in string or NULL
+///         if it was not found. NUL character is never found, use `strlen()`
+///         instead.
+char_u *vim_strchr(const char_u *const string, const int c)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int b;
-
-  const char_u *p = string;
-  if (enc_utf8 && c >= 0x80) {
-    while (*p != NUL) {
-      int l = (*mb_ptr2len)(p);
-
-      // Avoid matching an illegal byte here.
-      if (l > 1 && utf_ptr2char(p) == c) {
-        return (char_u *) p;
-      }
-      p += l;
-    }
+  assert(c >= 0);
+  if (c == 0) {
     return NULL;
+  } else if (c < 0x80) {
+    return (char_u *)strchr((const char *)string, c);
+  } else {
+    char u8char[MB_MAXBYTES + 1];
+    const int len = utf_char2bytes(c, (char_u *)u8char);
+    u8char[len] = NUL;
+    return (char_u *)strstr((const char *)string, u8char);
   }
-  if (enc_dbcs != 0 && c > 255) {
-    int n2 = c & 0xff;
-
-    c = ((unsigned)c >> 8) & 0xff;
-    while ((b = *p) != NUL) {
-      if (b == c && p[1] == n2)
-        return (char_u *) p;
-      p += (*mb_ptr2len)(p);
-    }
-    return NULL;
-  }
-  if (has_mbyte) {
-    while ((b = *p) != NUL) {
-      if (b == c)
-        return (char_u *) p;
-      p += (*mb_ptr2len)(p);
-    }
-    return NULL;
-  }
-  while ((b = *p) != NUL) {
-    if (b == c)
-      return (char_u *) p;
-    ++p;
-  }
-  return NULL;
-}
-
-/*
- * Version of strchr() that only works for bytes and handles unsigned char
- * strings with characters above 128 correctly. It also doesn't return a
- * pointer to the NUL at the end of the string.
- */
-char_u *vim_strbyte(const char_u *string, int c)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
-{
-  const char_u *p = string;
-
-  while (*p != NUL) {
-    if (*p == c)
-      return (char_u *) p;
-    ++p;
-  }
-  return NULL;
 }
 
 /*

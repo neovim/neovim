@@ -359,10 +359,10 @@ int bomb_size(void)
  */
 void remove_bom(char_u *s)
 {
-  char_u *p = s;
+  char *p = (char *)s;
 
-  while ((p = vim_strbyte(p, 0xef)) != NULL) {
-    if (p[1] == 0xbb && p[2] == 0xbf) {
+  while ((p = strchr(p, 0xef)) != NULL) {
+    if ((uint8_t)p[1] == 0xbb && (uint8_t)p[2] == 0xbf) {
       STRMOVE(p, p + 3);
     } else {
       p++;
