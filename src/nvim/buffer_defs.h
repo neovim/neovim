@@ -18,6 +18,8 @@ typedef struct {
 
 // for garray_T
 #include "nvim/garray.h"
+// for HLF_COUNT
+#include "nvim/highlight_defs.h"
 // for pos_T, lpos_T and linenr_T
 #include "nvim/pos.h"
 // for the number window-local and buffer-local options
@@ -936,9 +938,13 @@ struct window_S {
 
   synblock_T  *w_s;                 /* for :ownsyntax */
 
-  int w_hl_id;                      ///< 'winhighlight' id
-  int w_hl_id_inactive;             ///< 'winhighlight' id for inactive window
-  int w_hl_attr;                    ///< 'winhighlight' final attrs
+  int w_hl_id_normal;               ///< 'winhighlight' normal id
+  int w_hl_attr_normal;             ///< 'winhighlight' normal final attrs
+
+  int w_hl_ids[HLF_COUNT];          ///< 'winhighlight' id
+  int w_hl_attrs[HLF_COUNT];        ///< 'winhighlight' final attrs
+
+  int w_hl_needs_update;            ///< attrs need to be recalculated
 
   win_T       *w_prev;              /* link to previous window */
   win_T       *w_next;              /* link to next window */
@@ -1168,5 +1174,10 @@ struct window_S {
    */
   qf_info_T   *w_llist_ref;
 };
+
+static inline int win_hl_attr(win_T *wp, int hlf)
+{
+  return wp->w_hl_attrs[hlf];
+}
 
 #endif // NVIM_BUFFER_DEFS_H

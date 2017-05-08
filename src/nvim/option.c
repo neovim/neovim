@@ -3579,7 +3579,9 @@ static char_u *compile_cap_prog(synblock_T *synblock)
 /// Handle setting `winhighlight' in window "wp"
 static bool parse_winhl_opt(win_T *wp)
 {
-  int w_hl_id = 0, w_hl_id_inactive = 0;
+  int w_hl_id_normal = 0;
+  int w_hl_ids[HLF_COUNT] = {0};
+  int hlf;
 
   const char *p = (const char *)wp->w_p_winhl;
   while (*p) {
@@ -3593,18 +3595,25 @@ static bool parse_winhl_opt(win_T *wp)
     int hl_id = syn_check_group((char_u *)hi, (int)(commap-hi));
 
     if (strncmp("Normal", p, nlen) == 0) {
-      w_hl_id = hl_id;
-    } else if (strncmp("NormalNC", p, nlen) == 0) {
-      w_hl_id_inactive = hl_id;
+      w_hl_id_normal = hl_id;
     } else {
-      return false;
+      for (hlf = 0; hlf < (int)HLF_COUNT; ++hlf) {
+        if (strncmp(hlf_names[hlf], p, nlen) == 0) {
+          w_hl_ids[hlf] = hl_id;
+          break;
+        }
+      }
+      if (hlf == HLF_COUNT) {
+        return false;
+      }
     }
 
     p = *commap ? commap+1 : "";
   }
 
-  wp->w_hl_id = w_hl_id;
-  wp->w_hl_id_inactive = w_hl_id_inactive;
+  wp->w_hl_id_normal = w_hl_id_normal;
+  memcpy(wp->w_hl_ids, w_hl_ids, sizeof(w_hl_ids));
+  wp->w_hl_needs_update = true;
   return true;
 }
 
