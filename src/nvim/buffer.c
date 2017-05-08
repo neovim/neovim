@@ -449,7 +449,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   if (buf->terminal) {
     terminal_close(buf->terminal, NULL);
-  } 
+  }
 
   /* Always remove the buffer when there is no file name. */
   if (buf->b_ffname == NULL)

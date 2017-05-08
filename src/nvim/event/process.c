@@ -20,9 +20,9 @@
 # include "event/process.c.generated.h"
 #endif
 
-// Time for a process to exit cleanly before we send KILL.
-#define KILL_TIMEOUT_MS 2000
-#define KILL_TIMEOUT_NS (KILL_TIMEOUT_MS * 1000000)
+// Time (ns) for a process to exit cleanly before we send TERM/KILL.
+#define TERM_TIMEOUT 1000000000
+#define KILL_TIMEOUT (TERM_TIMEOUT * 2)
 
 #define CLOSE_PROC_STREAM(proc, stream) \
   do { \
@@ -121,6 +121,8 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
       // Close handles to process without killing it.
       CREATE_EVENT(loop->events, process_close_handles, 1, proc);
     } else {
+      uv_kill(proc->pid, SIGTERM);
+      proc->term_sent = true;
       process_stop(proc);
     }
   }
@@ -242,16 +244,12 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
       abort();
   }
 
-  ILOG("Sending SIGTERM to pid %d", proc->pid);
-  uv_kill(proc->pid, SIGTERM);
-
   Loop *loop = proc->loop;
   if (!loop->children_stop_requests++) {
     // When there's at least one stop request pending, start a timer that
-    // will periodically check if a signal should be send to the job.
+    // will periodically check if a signal should be send to a to the job
     DLOG("Starting job kill timer");
-    uv_timer_start(&loop->children_kill_timer, children_kill_cb,
-                   KILL_TIMEOUT_MS, 100);
+    uv_timer_start(&loop->children_kill_timer, children_kill_cb, 100, 100);
   }
 }
 
@@ -269,7 +267,11 @@ static void children_kill_cb(uv_timer_t *handle)
     }
     uint64_t elapsed = now - proc->stopped_time;
 
-    if (elapsed >= KILL_TIMEOUT_NS) {
+    if (!proc->term_sent && elapsed >= TERM_TIMEOUT) {
+      ILOG("Sending SIGTERM to pid %d", proc->pid);
+      uv_kill(proc->pid, SIGTERM);
+      proc->term_sent = true;
+    } else if (elapsed >= KILL_TIMEOUT) {
       ILOG("Sending SIGKILL to pid %d", proc->pid);
       uv_kill(proc->pid, SIGKILL);
     }
