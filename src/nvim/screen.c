@@ -1584,6 +1584,11 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
 # define FDC_OFF n
   int fdc = compute_foldcolumn(wp, 0);
 
+  int attr = hl_attr(hl);
+  if (wp->w_hl_attr != 0) {
+    attr = hl_combine_attr(wp->w_hl_attr, attr);
+  }
+
   if (wp->w_p_rl) {
     // No check for cmdline window: should never be right-left.
     n = fdc;
@@ -1612,10 +1617,10 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
 
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                 wp->w_wincol, W_ENDCOL(wp) - 1 - FDC_OFF,
-                c2, c2, hl_attr(hl));
+                c2, c2, attr);
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                 W_ENDCOL(wp) - 1 - FDC_OFF, W_ENDCOL(wp) - FDC_OFF,
-                c1, c2, hl_attr(hl));
+                c1, c2, attr);
   } else {
     if (cmdwin_type != 0 && wp == curwin) {
       /* draw the cmdline character in the leftmost column */
@@ -1653,7 +1658,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
 
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                 wp->w_wincol + FDC_OFF, W_ENDCOL(wp),
-                c1, c2, hl_attr(hl));
+                c1, c2, attr);
   }
   set_empty_rows(wp, row);
 }
@@ -2418,6 +2423,10 @@ win_line (
     line_attr = hl_attr(HLF_QFL);
   }
 
+  if (wp->w_hl_attr != 0) {
+    line_attr = hl_combine_attr(wp->w_hl_attr, line_attr);
+  }
+
   if (line_attr != 0) {
     area_highlighting = true;
   }
@@ -2849,6 +2858,10 @@ win_line (
         } else
           char_attr = 0;
       }
+
+      if (wp->w_hl_attr != 0) {
+        char_attr = hl_combine_attr(wp->w_hl_attr, char_attr);
+      }
     }
 
     /* When still displaying '$' of change command, stop at cursor */
@@ -3083,10 +3096,14 @@ win_line (
             mb_l = 1;
             mb_utf8 = FALSE;
             multi_attr = hl_attr(HLF_AT);
-            /* put the pointer back to output the double-width
-             * character at the start of the next line. */
-            ++n_extra;
-            --p_extra;
+            if (wp->w_hl_attr != 0) {
+              multi_attr = hl_combine_attr(wp->w_hl_attr, multi_attr);
+            }
+
+            // put the pointer back to output the double-width
+            // character at the start of the next line.
+            n_extra++;
+            p_extra--;
           } else {
             n_extra -= mb_l - 1;
             p_extra += mb_l - 1;
@@ -3221,11 +3238,15 @@ win_line (
           mb_utf8 = FALSE;
           mb_l = 1;
           multi_attr = hl_attr(HLF_AT);
-          /* Put pointer back so that the character will be
-           * displayed at the start of the next line. */
-          --ptr;
-        } else if (*ptr != NUL)
+          if (wp->w_hl_attr != 0) {
+            multi_attr = hl_combine_attr(wp->w_hl_attr, multi_attr);
+          }
+          // Put pointer back so that the character will be
+          // displayed at the start of the next line.
+          ptr--;
+        } else if (*ptr != NUL) {
           ptr += mb_l - 1;
+        }
 
         /* If a double-width char doesn't fit at the left side display
          * a '<' in the first column.  Don't do this for unprintable
@@ -3752,7 +3773,10 @@ win_line (
         mb_utf8 = false;  // don't draw as UTF-8
       }
       saved_attr3 = char_attr;  // save current attr
-      char_attr = hl_attr(HLF_AT);  // later copied to char_attr
+      char_attr = hl_attr(HLF_AT);  // overwriting char_attr
+      if (wp->w_hl_attr != 0) {
+        char_attr = hl_combine_attr(wp->w_hl_attr, char_attr);
+      }
       n_attr3 = 1;
     }
 
@@ -3836,6 +3860,10 @@ win_line (
             }
           }
         }
+
+        if (wp->w_hl_attr != 0) {
+          char_attr = hl_combine_attr(wp->w_hl_attr, char_attr);
+        }
         ScreenAttrs[off] = char_attr;
         if (wp->w_p_rl) {
           --col;
@@ -3897,6 +3925,14 @@ win_line (
             if (rightmost_vcol < color_cols[i])
               rightmost_vcol = color_cols[i];
 
+        int cuc_attr = hl_attr(HLF_CUC);
+        int mc_attr = hl_attr(HLF_MC);
+        if (wp->w_hl_attr != 0) {
+          cuc_attr = hl_combine_attr(wp->w_hl_attr, cuc_attr);
+          mc_attr = hl_combine_attr(wp->w_hl_attr, mc_attr);
+        }
+
+
         while (col < wp->w_width) {
           ScreenLines[off] = ' ';
           if (enc_utf8)
@@ -3906,12 +3942,13 @@ win_line (
             draw_color_col = advance_color_col(VCOL_HLC,
                 &color_cols);
 
-          if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol)
-            ScreenAttrs[off++] = hl_attr(HLF_CUC);
-          else if (draw_color_col && VCOL_HLC == *color_cols)
-            ScreenAttrs[off++] = hl_attr(HLF_MC);
-          else
-            ScreenAttrs[off++] = 0;
+          if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol) {
+            ScreenAttrs[off++] = cuc_attr;
+          } else if (draw_color_col && VCOL_HLC == *color_cols) {
+            ScreenAttrs[off++] = mc_attr;
+          } else {
+            ScreenAttrs[off++] = wp->w_hl_attr;
+          }
 
           if (VCOL_HLC >= rightmost_vcol)
             break;
@@ -3920,6 +3957,7 @@ win_line (
         }
       }
 
+      // TODO(bfredl): integrate with the common beyond-the-end-loop
       if (wp->w_buffer->terminal) {
         // terminal buffers may need to highlight beyond the end of the
         // logical line
@@ -3961,6 +3999,9 @@ win_line (
             || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
       c = lcs_ext;
       char_attr = hl_attr(HLF_AT);
+      if (wp->w_hl_attr != 0) {
+        char_attr = hl_combine_attr(wp->w_hl_attr, char_attr);
+      }
       mb_c = c;
       if (enc_utf8 && (*mb_char2len)(c) > 1) {
         mb_utf8 = TRUE;
@@ -5510,7 +5551,19 @@ static void init_search_hl(win_T *wp)
   search_hl.buf = wp->w_buffer;
   search_hl.lnum = 0;
   search_hl.first_lnum = 0;
-  /* time limit is set at the toplevel, for all windows */
+  // time limit is set at the toplevel, for all windows
+
+  // determine window specific background set in 'winhighlight'
+  if (wp != curwin && wp->w_hl_id_inactive > 0) {
+    wp->w_hl_attr = syn_id2attr(wp->w_hl_id_inactive);
+  } else if (wp->w_hl_id > 0) {
+    wp->w_hl_attr = syn_id2attr(wp->w_hl_id);
+  } else {
+    wp->w_hl_attr = 0;
+  }
+  if (wp != curwin) {
+    wp->w_hl_attr = hl_combine_attr(hl_attr(HLF_INACTIVE), wp->w_hl_attr);
+  }
 }
 
 /*

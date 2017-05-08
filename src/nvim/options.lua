@@ -2702,6 +2702,14 @@ return {
       defaults={if_true={vi="menu"}}
     },
     {
+      full_name='winhighlight', abbreviation='winhl',
+      type='string', scope={'window'},
+      vi_def=true,
+      alloced=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='window', abbreviation='wi',
       type='number', scope={'global'},
       vi_def=true,

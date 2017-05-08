@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local os = require('os')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command = helpers.command
-local eval = helpers.eval
+local eval, exc_exec = helpers.eval, helpers.exc_exec
 local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
 
 describe('colorscheme compatibility', function()
@@ -650,3 +650,296 @@ describe("'listchars' highlight", function()
     ]])
   end)
 end)
+
+describe("'winhighlight' highlight", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(20,8)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {background = Screen.colors.DarkBlue},
+      [2] = {background = Screen.colors.DarkBlue, bold = true, foreground = Screen.colors.Blue1},
+      [3] = {bold = true, reverse = true},
+      [4] = {reverse = true},
+      [5] = {background = Screen.colors.DarkGreen},
+      [6] = {background = Screen.colors.DarkGreen, bold = true, foreground = Screen.colors.Blue1},
+      [7] = {background = Screen.colors.DarkMagenta},
+      [8] = {background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1},
+      [9] = {foreground = Screen.colors.Brown},
+      [10] = {foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue},
+    })
+    command("hi Background1 guibg=DarkBlue")
+    command("hi Background2 guibg=DarkGreen")
+  end)
+
+  it('works', function()
+    insert("aa")
+    command("split")
+    command("set winhl=Normal:Background1")
+    screen:expect([[
+      {1:a^a                  }|
+      {2:~                   }|
+      {2:~                   }|
+      {3:[No Name] [+]       }|
+      aa                  |
+      {0:~                   }|
+      {4:[No Name] [+]       }|
+                          |
+    ]])
+
+    command("enew")
+    screen:expect([[
+      {1:^                    }|
+      {2:~                   }|
+      {2:~                   }|
+      {3:[No Name]           }|
+      aa                  |
+      {0:~                   }|
+      {4:[No Name] [+]       }|
+                          |
+    ]])
+  end)
+
+  it('handles invalid values', function()
+    command("set winhl=Normal:Background1")
+    screen:expect([[
+      {1:^                    }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+                          |
+    ]])
+
+    eq('Vim(set):E474: Invalid argument: winhl=xxx:yyy',
+       exc_exec("set winhl=xxx:yyy"))
+    eq('Normal:Background1', eval('&winhl'))
+    screen:expect([[
+      {1:^                    }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+                          |
+    ]])
+  end)
+
+
+  it('works local to the buffer', function()
+    insert("aa")
+    command("split")
+    command("setlocal winhl=Normal:Background1")
+    screen:expect([[
+      {1:a^a                  }|
+      {2:~                   }|
+      {2:~                   }|
+      {3:[No Name] [+]       }|
+      aa                  |
+      {0:~                   }|
+      {4:[No Name] [+]       }|
+                          |
+    ]])
+
+    command("enew")
+    screen:expect([[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+      aa                  |
+      {0:~                   }|
+      {4:[No Name] [+]       }|
+                          |
+    ]])
+
+    command("bnext")
+    screen:expect([[
+      {1:^aa                  }|
+      {2:~                   }|
+      {2:~                   }|
+      {3:[No Name] [+]       }|
+      aa                  |
+      {0:~                   }|
+      {4:[No Name] [+]       }|
+      <f 1 --100%-- col 1 |
+    ]])
+
+  end)
+
+  it('for inactive window works', function()
+    command("set winhl=Normal:Background1,NormalNC:Background2")
+    -- tests global value is copied across split
+    command("split")
+    screen:expect([[
+      {1:^                    }|
+      {2:~                   }|
+      {2:~                   }|
+      {3:[No Name]           }|
+      {5:                    }|
+      {6:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]])
+
+    feed("<c-w><c-w>")
+    screen:expect([[
+      {5:                    }|
+      {6:~                   }|
+      {6:~                   }|
+      {4:[No Name]           }|
+      {1:^                    }|
+      {2:~                   }|
+      {3:[No Name]           }|
+                          |
+    ]])
+
+    feed("<c-w><c-w>")
+    screen:expect([[
+      {1:^                    }|
+      {2:~                   }|
+      {2:~                   }|
+      {3:[No Name]           }|
+      {5:                    }|
+      {6:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]])
+
+  end)
+
+  it('works with NormalNC', function()
+    command("hi NormalNC guibg=DarkMagenta")
+    -- tests global value is copied across split
+    command("split")
+    screen:expect([[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+      {7:                    }|
+      {8:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]])
+
+    command("wincmd w")
+    screen:expect([[
+      {7:                    }|
+      {8:~                   }|
+      {8:~                   }|
+      {4:[No Name]           }|
+      ^                    |
+      {0:~                   }|
+      {3:[No Name]           }|
+                          |
+    ]])
+
+
+    -- winbg=Normal:... overrides global NormalNC
+    command("set winhl=Normal:Background1")
+    screen:expect([[
+      {7:                    }|
+      {8:~                   }|
+      {8:~                   }|
+      {4:[No Name]           }|
+      {1:^                    }|
+      {2:~                   }|
+      {3:[No Name]           }|
+                          |
+    ]])
+
+    command("wincmd w")
+    screen:expect([[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+      {1:                    }|
+      {2:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]])
+
+    command("wincmd w")
+    command("set winhl=Normal:Background1,NormalNC:Background2")
+    screen:expect([[
+      {7:                    }|
+      {8:~                   }|
+      {8:~                   }|
+      {4:[No Name]           }|
+      {1:^                    }|
+      {2:~                   }|
+      {3:[No Name]           }|
+                          |
+    ]])
+
+    command("wincmd w")
+    screen:expect([[
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name]           }|
+      {5:                    }|
+      {6:~                   }|
+      {4:[No Name]           }|
+                          |
+    ]])
+
+  end)
+
+  it('applies also to non-text', function()
+    insert('Lorem ipsum dolor sit amet ')
+    command('set shiftwidth=2')
+    feed('>>')
+    command('set number')
+    command('set breakindent')
+    command('set briopt=shift:5,min:0')
+    command('set list')
+    command('set showbreak=↪')
+    screen:expect([[
+      {9:  1 }  ^Lorem ipsum do|
+      {9:    }       {0:↪}lor sit |
+      {9:    }       {0:↪}amet{0:-}   |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+
+    command('set winhl=Normal:Background1')
+    screen:expect([[
+      {10:  1 }{1:  ^Lorem ipsum do}|
+      {10:    }{1:       }{2:↪}{1:lor sit }|
+      {10:    }{1:       }{2:↪}{1:amet}{2:-}{1:   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+                          |
+    ]])
+
+    command('set nowrap')
+    command('set listchars+=extends:❯,precedes:❮')
+    feed('3w')
+    screen:expect([[
+      {10:  1 }{2:❮}{1: dolor ^sit ame}{2:❯}|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+      {2:~                   }|
+                          |
+    ]])
+  end)
+end)
+
+

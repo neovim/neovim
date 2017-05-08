@@ -4922,6 +4922,8 @@ NonText		'@' at the end of the window, characters from 'showbreak'
 		fit at the end of the line). See also |hl-EndOfBuffer|.
 							*hl-Normal*
 Normal		normal text
+							*hl-NormalNC*
+NormalNC	normal text in non-current window
 							*hl-Pmenu*
 Pmenu		Popup menu: normal item.
 							*hl-PmenuSel*

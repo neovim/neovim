@@ -465,6 +465,7 @@ typedef enum {
   , HLF_MC          // 'colorcolumn'
   , HLF_QFL         // selected quickfix line
   , HLF_0           // Whitespace
+  , HLF_INACTIVE    // NormalNC: Normal text in non-current windows
   , HLF_COUNT       // MUST be the last one
 } hlf_T;
 
@@ -473,7 +474,7 @@ typedef enum {
 #define HL_FLAGS { '8', '~', 'z', 'Z', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', \
                    'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', \
                    'A', 'C', 'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', \
-                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q', '0' }
+                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q', '0', 'I' }
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */

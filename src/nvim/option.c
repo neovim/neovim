@@ -8,6 +8,9 @@
 //   - Add a BV_XX or WV_XX entry to option_defs.h
 //   - Add a variable to the window or buffer struct in buffer_defs.h.
 //   - For a window option, add some code to copy_winopt().
+//   - For a window string option, add code to check_winopt()
+//     and clear_winopt(). If setting the option needs parsing,
+//     add some code to didset_window_options().
 //   - For a buffer option, add some code to buf_copy_options().
 //   - For a buffer string option, add code to check_buf_options().
 // - If it's a numeric option, add any necessary bounds checks to do_set().
@@ -249,7 +252,7 @@ typedef struct vimoption {
   "B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel," \
   "x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill," \
   "!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine," \
-  "0:Whitespace"
+  "0:Whitespace,I:NormalNC"
 
 /*
  * options[] is initialized here.
@@ -3171,6 +3174,10 @@ did_set_string_option (
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     }
+  } else if (varp == &curwin->w_p_winhl) {
+    if (!parse_winhl_opt(curwin)) {
+      errmsg = e_invarg;
+    }
   } else {
     // Options that are a list of flags.
     p = NULL;
@@ -3577,6 +3584,38 @@ static char_u *compile_cap_prog(synblock_T *synblock)
 
   vim_regfree(rp);
   return NULL;
+}
+
+/// Handle setting `winhighlight' in window "wp"
+static bool parse_winhl_opt(win_T *wp)
+{
+  int w_hl_id = 0, w_hl_id_inactive = 0;
+
+  const char *p = (const char *)wp->w_p_winhl;
+  while (*p) {
+    char *colon = strchr(p, ':');
+    if (!colon) {
+      return false;
+    }
+    size_t nlen = (size_t)(colon-p);
+    char *hi = colon+1;
+    char *commap = xstrchrnul(hi, ',');
+    int hl_id = syn_check_group((char_u *)hi, (int)(commap-hi));
+
+    if (strncmp("Normal", p, nlen) == 0) {
+      w_hl_id = hl_id;
+    } else if (strncmp("NormalNC", p, nlen) == 0) {
+      w_hl_id_inactive = hl_id;
+    } else {
+      return false;
+    }
+
+    p = *commap ? commap+1 : "";
+  }
+
+  wp->w_hl_id = w_hl_id;
+  wp->w_hl_id_inactive = w_hl_id_inactive;
+  return true;
 }
 
 /*
@@ -5488,6 +5527,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_WM:     return (char_u *)&(curbuf->b_p_wm);
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
   case PV_SCL:    return (char_u *)&(curwin->w_p_scl);
+  case PV_WINHL:  return (char_u *)&(curwin->w_p_winhl);
   default:        EMSG(_("E356: get_varp ERROR"));
   }
   /* always return a valid pointer to avoid a crash! */
@@ -5514,7 +5554,6 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
   /* Is this right? */
   wp_to->w_farsi = wp_from->w_farsi;
-  briopt_check(wp_to);
 }
 
 /*
@@ -5566,6 +5605,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdt = vim_strsave(from->wo_fdt);
   to->wo_fmr = vim_strsave(from->wo_fmr);
   to->wo_scl = vim_strsave(from->wo_scl);
+  to->wo_winhl = vim_strsave(from->wo_winhl);
   check_winopt(to);             // don't want NULL pointers
 }
 
@@ -5595,6 +5635,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_cc);
   check_string_option(&wop->wo_cocu);
   check_string_option(&wop->wo_briopt);
+  check_string_option(&wop->wo_winhl);
 }
 
 /*
@@ -5614,7 +5655,16 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_cc);
   clear_string_option(&wop->wo_cocu);
   clear_string_option(&wop->wo_briopt);
+  clear_string_option(&wop->wo_winhl);
 }
+
+void didset_window_options(win_T *wp)
+{
+  check_colorcolumn(wp);
+  briopt_check(wp);
+  parse_winhl_opt(wp);
+}
+
 
 /*
  * Copy global option values to local options for one buffer.

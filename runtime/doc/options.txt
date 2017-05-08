@@ -3128,7 +3128,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	use for that occasion.  The occasions are:
 	|hl-SpecialKey|	 8  Meta and special keys listed with ":map"
 	|hl-Whitespace|	 0
-	|hl-EndOfBuffer|   ~ lines after the last line in the buffer
+	|hl-EndOfBuffer|   ~  lines after the last line in the buffer
+	|hl-NormalNC|	 I  non-current ("inactive") window
 	|hl-TermCursor|	 z  Cursor in a focused terminal
 	|hl-TermCursorNC|  Z Cursor in an unfocused terminal
 	|hl-NonText|	 @  '@' at the end of the window and
@@ -6843,6 +6844,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'winheight' applies to the current window.  Use 'winminheight' to set
 	the minimal height for other windows.
 
+						*'winhighlight'* *'winhl'*
+'winhighlight' 'winhl'	string (default empty)
+			local to window
+	Window-local highlights.  Comma-delimited list of |group-name| pairs
+	"{hl-builtin}:{hl-group},..." where each {hl-builtin} is a group (from
+	|highlight-groups|) to be overridden by {hl-group} in the window where
+	this option was set.
+	Currently |hl-Normal| and |hl-NormalNC| can be overridden.
+	Useful for changing the background color. Example: >
+		set winhighlight=Normal:MyNormal,NormalNC:MyNormalNC
+<
 			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
 'winfixheight' 'wfh'	boolean	(default off)
 			local to window
