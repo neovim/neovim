@@ -4849,10 +4849,9 @@ guisp={color-name}					*highlight-guisp*
   :highlight Comment guifg=#11f0c3 guibg=#ff00ff
 <
 					*highlight-groups* *highlight-default*
-These are the default highlighting groups.  These groups are used by the
-'highlight' option default.  Note that the highlighting depends on the value
-of 'background'.  You can see the current settings with the ":highlight"
-command.
+These are the builtin highlighting groups.  Note that the highlighting depends
+on the value of 'background'.  You can see the current settings with the
+":highlight" command.
 							*hl-ColorColumn*
 ColorColumn	used for the columns set with 'colorcolumn'
 							*hl-Conceal*

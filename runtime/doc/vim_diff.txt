@@ -310,6 +310,7 @@ Other options:
   'esckeys'
   'guioptions' "t" flag was removed
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
+  'highlight' (the builtin default group names are always used)
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*

@@ -15,7 +15,7 @@ describe('&encoding', function()
     feed_command('set encoding=latin1')
     -- error message expected
     feed('<cr>')
-    neq(nil, string.find(eval('v:errmsg'), '^E474:'))
+    neq(nil, string.find(eval('v:errmsg'), '^E519:'))
     eq('utf-8', eval('&encoding'))
     -- check nvim is still in utf-8 mode
     eq(3, eval('strwidth("Bär")'))
@@ -25,7 +25,7 @@ describe('&encoding', function()
     clear('--cmd', 'set enc=latin1')
     -- error message expected
     feed('<cr>')
-    neq(nil, string.find(eval('v:errmsg'), '^E474:'))
+    neq(nil, string.find(eval('v:errmsg'), '^E519:'))
     eq('utf-8', eval('&encoding'))
     eq(3, eval('strwidth("Bär")'))
   end)
