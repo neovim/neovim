@@ -53,10 +53,10 @@ syn case ignore
 syn keyword vimGroup contained	Comment Constant String Character Number Boolean Float Identifier Function Statement Conditional Repeat Label Operator Keyword Exception PreProc Include Define Macro PreCondit Type StorageClass Structure Typedef Special SpecialChar Tag Delimiter SpecialComment Debug Underlined Ignore Error Todo 
 
 " Default highlighting groups {{{2
-syn keyword vimHLGroup contained	ColorColumn Cursor CursorColumn CursorIM CursorLine CursorLineNr DiffAdd DiffChange DiffDelete DiffText Directory ErrorMsg FoldColumn Folded IncSearch LineNr MatchParen Menu ModeMsg MoreMsg NonText Normal Pmenu PmenuSbar PmenuSel PmenuThumb Question Scrollbar Search SignColumn SpecialKey SpellBad SpellCap SpellLocal SpellRare StatusLine StatusLineNC TabLine TabLineFill TabLineSel Title Tooltip VertSplit Visual WarningMsg WildMenu
+syn keyword vimHLGroup contained	ColorColumn Cursor CursorColumn CursorIM CursorLine CursorLineNr DiffAdd DiffChange DiffDelete DiffText Directory EndOfBuffer ErrorMsg FoldColumn Folded IncSearch LineNr MatchParen Menu ModeMsg MoreMsg NonText Normal Pmenu PmenuSbar PmenuSel PmenuThumb Question Scrollbar Search SignColumn SpecialKey SpellBad SpellCap SpellLocal SpellRare StatusLine StatusLineNC TabLine TabLineFill TabLineSel Title Tooltip VertSplit Visual WarningMsg WildMenu 
 syn match vimHLGroup contained	"Conceal"
 syn keyword vimOnlyHLGroup contained	VisualNOS
-syn keyword nvimHLGroup contained	EndOfBuffer Substitute TermCursor TermCursorNC QuickFixLine
+syn keyword nvimHLGroup contained	Substitute TermCursor TermCursorNC QuickFixLine
 "}}}2
 syn case match
 " Special Vim Highlighting (not automatic) {{{1
@@ -133,14 +133,15 @@ endif
 syn match vimNumber	"\<\d\+\%(\.\d\+\%([eE][+-]\=\d\+\)\=\)\=" skipwhite nextgroup=vimGlobal,vimSubst,vimCommand
 syn match vimNumber	"-\d\+\%(\.\d\+\%([eE][+-]\=\d\+\)\=\)\="  skipwhite nextgroup=vimGlobal,vimSubst,vimCommand
 syn match vimNumber	"\<0[xX]\x\+"
+syn match vimNumber	"\<0[bB][01]\+"
 syn match vimNumber	"\%(^\|[^a-zA-Z]\)\zs#\x\{6}"
 
 " All vimCommands are contained by vimIsCommands. {{{2
 syn match vimCmdSep	"[:|]\+"	skipwhite nextgroup=vimAddress,vimAutoCmd,vimIsCommand,vimExtCmd,vimFilter,vimLet,vimMap,vimMark,vimSet,vimSyntax,vimUserCmd
 syn match vimIsCommand	"\<\h\w*\>"	contains=vimCommand
 syn match vimVar        contained	"\<\h[a-zA-Z0-9#_]*\>"
-syn match vimVar		"\<[bwglsav]:\h[a-zA-Z0-9#_]*\>"
-syn match vimFBVar      contained   "\<[bwglsav]:\h[a-zA-Z0-9#_]*\>"
+syn match vimVar		"\<[bwglstav]:\h[a-zA-Z0-9#_]*\>"
+syn match vimFBVar      contained   "\<[bwglstav]:\h[a-zA-Z0-9#_]*\>"
 syn keyword vimCommand  contained	in
 
 " Insertions And Appends: insert append {{{2
@@ -194,7 +195,7 @@ endif
 " Functions : Tag is provided for those who wish to highlight tagged functions {{{2
 " =========
 syn cluster	vimFuncList	contains=vimCommand,vimFunctionError,vimFuncKey,Tag,vimFuncSID
-syn cluster	vimFuncBodyList	contains=vimAbb,vimAddress,vimAugroupKey,vimAutoCmd,vimCmplxRepeat,vimComment,vimComment,vimContinue,vimCtrlChar,vimEcho,vimEchoHL,vimExecute,vimIf,vimIsCommand,vimFBVar,vimFunc,vimFunction,vimFuncVar,vimGlobal,vimHighlight,vimIsCommand,vimLet,vimLineComment,vimMap,vimMark,vimNorm,vimNotation,vimNotFunc,vimNumber,vimOper,vimOperParen,vimRegion,vimRegister,vimSet,vimSpecFile,vimString,vimSubst,vimSynLine,vimUnmap,vimUserCommand,nvimUnmap,nvimMap
+syn cluster	vimFuncBodyList	contains=vimAbb,vimAddress,vimAugroupKey,vimAutoCmd,vimCmplxRepeat,vimComment,vimContinue,vimCtrlChar,vimEcho,vimEchoHL,vimExecute,vimIf,vimIsCommand,vimFBVar,vimFunc,vimFunction,vimFuncVar,vimGlobal,vimHighlight,vimIsCommand,vimLet,vimLineComment,vimMap,vimMark,vimNorm,vimNotation,vimNotFunc,vimNumber,vimOper,vimOperParen,vimRegion,vimRegister,vimSet,vimSpecFile,vimString,vimSubst,vimSynLine,vimUnmap,vimUserCommand
 syn match	vimFunction	"\<fu\%[nction]!\=\s\+\%(<[sS][iI][dD]>\|[sSgGbBwWtTlL]:\)\=\%(\i\|[#.]\|{.\{-1,}}\)*\ze\s*("	contains=@vimFuncList nextgroup=vimFuncBody
 
 if exists("g:vimsyn_folding") && g:vimsyn_folding =~# 'f'
@@ -470,7 +471,7 @@ syn cluster vimFuncBodyList add=vimSynType
 syn cluster	vimSynMtchGroup	contains=vimMtchComment,vimSynContains,vimSynError,vimSynMtchOpt,vimSynNextgroup,vimSynRegPat,vimNotation
 syn keyword	vimSynType	contained	match	skipwhite nextgroup=vimSynMatchRegion
 syn region	vimSynMatchRegion	contained keepend	matchgroup=vimGroupName start="\h\w*" matchgroup=vimSep end="|\|$" contains=@vimSynMtchGroup
-syn match	vimSynMtchOpt	contained	"\<\(conceal\|transparent\|contained\|excludenl\|skipempty\|skipwhite\|display\|extend\|skipnl\|fold\)\>"
+syn match	vimSynMtchOpt	contained	"\<\(conceal\|transparent\|contained\|excludenl\|keepend\|skipempty\|skipwhite\|display\|extend\|skipnl\|fold\)\>"
 if has("conceal")
  syn match	vimSynMtchOpt	contained	"\<cchar="	nextgroup=vimSynMtchCchar
  syn match	vimSynMtchCchar	contained	"\S"
@@ -772,171 +773,169 @@ syn sync match vimAugroupSyncA	groupthere NONE	"\<aug\%[roup]\>\s\+[eE][nN][dD]"
 " Highlighting Settings {{{2
 " ====================
 
-if !exists("g:vimsyn_noerror")
- hi def link vimBehaveError	vimError
- hi def link vimCollClassErr	vimError
- hi def link vimErrSetting	vimError
- hi def link vimEmbedError	vimError
- hi def link vimFTError	vimError
- hi def link vimFunctionError	vimError
- hi def link vimFunc         	vimError
- hi def link vimHiAttribList	vimError
- hi def link vimHiCtermError	vimError
- hi def link vimHiKeyError	vimError
- hi def link vimKeyCodeError	vimError
- hi def link vimMapModErr	vimError
- hi def link vimSubstFlagErr	vimError
- hi def link vimSynCaseError	vimError
- hi def link vimBufnrWarn	vimWarn
-endif
+if !exists("skip_vim_syntax_inits")
+ if !exists("g:vimsyn_noerror")
+  hi def link vimBehaveError	vimError
+  hi def link vimCollClassErr	vimError
+  hi def link vimErrSetting	vimError
+  hi def link vimEmbedError	vimError
+  hi def link vimFTError	vimError
+  hi def link vimFunctionError	vimError
+  hi def link vimFunc         	vimError
+  hi def link vimHiAttribList	vimError
+  hi def link vimHiCtermError	vimError
+  hi def link vimHiKeyError	vimError
+  hi def link vimKeyCodeError	vimError
+  hi def link vimMapModErr	vimError
+  hi def link vimSubstFlagErr	vimError
+  hi def link vimSynCaseError	vimError
+  hi def link vimBufnrWarn	vimWarn
+ endif
 
-hi def link vimAbb	vimCommand
-hi def link vimAddress	vimMark
-hi def link vimAugroupError	vimError
-hi def link vimAugroupKey	vimCommand
-hi def link vimAuHighlight	vimHighlight
-hi def link vimAutoCmdOpt	vimOption
-hi def link vimAutoCmd	vimCommand
-hi def link vimAutoEvent	Type
-hi def link nvimAutoEvent	vimAutoEvent
-hi def link vimAutoSet	vimCommand
-hi def link vimBehaveModel	vimBehave
-hi def link vimBehave	vimCommand
-hi def link vimBracket	Delimiter
-hi def link vimCmplxRepeat	SpecialChar
-hi def link vimCommand	Statement
-hi def link vimComment	Comment
-hi def link vimCommentString	vimString
-hi def link vimCommentTitle	PreProc
-hi def link vimCondHL	vimCommand
-hi def link vimContinue	Special
-hi def link vimCtrlChar	SpecialChar
-hi def link vimEchoHLNone	vimGroup
-hi def link vimEchoHL	vimCommand
-hi def link vimElseIfErr	Error
-hi def link vimElseif	vimCondHL
-hi def link vimEnvvar	PreProc
-hi def link vimError	Error
-hi def link vimFBVar	vimVar
-hi def link vimFgBgAttrib	vimHiAttrib
-hi def link vimFold	Folded
-hi def link vimFTCmd	vimCommand
-hi def link vimFTOption	vimSynType
-hi def link vimFuncKey	vimCommand
-hi def link vimFuncName	Function
-hi def link vimFuncSID	Special
-hi def link vimFuncVar	Identifier
-hi def link vimGroupAdd	vimSynOption
-hi def link vimGroupName	vimGroup
-hi def link vimGroupRem	vimSynOption
-hi def link vimGroupSpecial	Special
-hi def link vimGroup	Type
-hi def link vimHiAttrib	PreProc
-hi def link vimHiClear	vimHighlight
-hi def link vimHiCtermFgBg	vimHiTerm
-hi def link vimHiCTerm	vimHiTerm
-hi def link vimHighlight	vimCommand
-hi def link vimHiGroup	vimGroupName
-hi def link vimHiGuiFgBg	vimHiTerm
-hi def link vimHiGuiFont	vimHiTerm
-hi def link vimHiGuiRgb	vimNumber
-hi def link vimHiGui	vimHiTerm
-hi def link vimHiNmbr	Number
-hi def link vimHiStartStop	vimHiTerm
-hi def link vimHiTerm	Type
-hi def link vimHLGroup	vimGroup
-hi def link nvimHLGroup	vimHLGroup
-hi def link vimHLMod	PreProc
-hi def link vimInsert	vimString
-hi def link vimIskSep	Delimiter
-hi def link vimKeyCode	vimSpecFile
-hi def link vimKeyword	Statement
-hi def link vimLet	vimCommand
-hi def link vimLineComment	vimComment
-hi def link vimMapBang	vimCommand
-hi def link vimMapModKey	vimFuncSID
-hi def link vimMapMod	vimBracket
-hi def link vimMap	vimCommand
-hi def link nvimMap	vimMap
-hi def link vimMark	Number
-hi def link vimMarkNumber	vimNumber
-hi def link vimMenuMod	vimMapMod
-hi def link vimMenuNameMore	vimMenuName
-hi def link vimMenuName	PreProc
-hi def link vimMtchComment	vimComment
-hi def link vimNorm	vimCommand
-hi def link vimNotation	Special
-hi def link vimNotFunc	vimCommand
-hi def link vimNotPatSep	vimString
-hi def link vimNumber	Number
-hi def link vimOperError	Error
-hi def link vimOper	Operator
-hi def link vimOption	PreProc
-hi def link vimParenSep	Delimiter
-hi def link vimPatSepErr	vimPatSep
-hi def link vimPatSepR	vimPatSep
-hi def link vimPatSep	SpecialChar
-hi def link vimPatSepZone	vimString
-hi def link vimPatSepZ	vimPatSep
-hi def link vimPattern	Type
-hi def link vimPlainMark	vimMark
-hi def link vimPlainRegister	vimRegister
-hi def link vimRegister	SpecialChar
-hi def link vimScriptDelim	Comment
-hi def link vimSearchDelim	Statement
-hi def link vimSearch	vimString
-hi def link vimSep	Delimiter
-hi def link vimSetMod	vimOption
-hi def link vimSetSep	Statement
-hi def link vimSetString	vimString
-hi def link vimSpecFile	Identifier
-hi def link vimSpecFileMod	vimSpecFile
-hi def link vimSpecial	Type
-hi def link vimStatement	Statement
-hi def link vimStringCont	vimString
-hi def link vimString	String
-hi def link vimSubst1	vimSubst
-hi def link vimSubstDelim	Delimiter
-hi def link vimSubstFlags	Special
-hi def link vimSubstSubstr	SpecialChar
-hi def link vimSubstTwoBS	vimString
-hi def link vimSubst	vimCommand
-hi def link vimSynCaseError	Error
-hi def link vimSynCase	Type
-hi def link vimSyncC	Type
-hi def link vimSyncError	Error
-hi def link vimSyncGroupName	vimGroupName
-hi def link vimSyncGroup	vimGroupName
-hi def link vimSyncKey	Type
-hi def link vimSyncNone	Type
-hi def link vimSynContains	vimSynOption
-hi def link vimSynError	Error
-hi def link vimSynKeyContainedin	vimSynContains
-hi def link vimSynKeyOpt	vimSynOption
-hi def link vimSynMtchGrp	vimSynOption
-hi def link vimSynMtchOpt	vimSynOption
-hi def link vimSynNextgroup	vimSynOption
-hi def link vimSynNotPatRange	vimSynRegPat
-hi def link vimSynOption	Special
-hi def link vimSynPatRange	vimString
-hi def link vimSynRegOpt	vimSynOption
-hi def link vimSynRegPat	vimString
-hi def link vimSynReg	Type
-hi def link vimSyntax	vimCommand
-hi def link vimSynType	vimSpecial
-hi def link vimTodo	Todo
-hi def link vimUnmap	vimMap
-hi def link nvimUnmap	vimMap
-hi def link vimUserAttrbCmpltFunc	Special
-hi def link vimUserAttrbCmplt	vimSpecial
-hi def link vimUserAttrbKey	vimOption
-hi def link vimUserAttrb	vimSpecial
-hi def link vimUserAttrbError	Error
-hi def link vimUserCmdError	Error
-hi def link vimUserCommand	vimCommand
-hi def link vimUserFunc	Normal
-hi def link vimVar	Identifier
-hi def link vimWarn	WarningMsg
+ hi def link vimAbb	vimCommand
+ hi def link vimAddress	vimMark
+ hi def link vimAugroupError	vimError
+ hi def link vimAugroupKey	vimCommand
+ hi def link vimAuHighlight	vimHighlight
+ hi def link vimAutoCmdOpt	vimOption
+ hi def link vimAutoCmd	vimCommand
+ hi def link vimAutoEvent	Type
+ hi def link vimAutoSet	vimCommand
+ hi def link vimBehaveModel	vimBehave
+ hi def link vimBehave	vimCommand
+ hi def link vimBracket	Delimiter
+ hi def link vimCmplxRepeat	SpecialChar
+ hi def link vimCommand	Statement
+ hi def link vimComment	Comment
+ hi def link vimCommentString	vimString
+ hi def link vimCommentTitle	PreProc
+ hi def link vimCondHL	vimCommand
+ hi def link vimContinue	Special
+ hi def link vimCtrlChar	SpecialChar
+ hi def link vimEchoHLNone	vimGroup
+ hi def link vimEchoHL	vimCommand
+ hi def link vimElseIfErr	Error
+ hi def link vimElseif	vimCondHL
+ hi def link vimEnvvar	PreProc
+ hi def link vimError	Error
+ hi def link vimFBVar	vimVar
+ hi def link vimFgBgAttrib	vimHiAttrib
+ hi def link vimFold	Folded
+ hi def link vimFTCmd	vimCommand
+ hi def link vimFTOption	vimSynType
+ hi def link vimFuncKey	vimCommand
+ hi def link vimFuncName	Function
+ hi def link vimFuncSID	Special
+ hi def link vimFuncVar	Identifier
+ hi def link vimGroupAdd	vimSynOption
+ hi def link vimGroupName	vimGroup
+ hi def link vimGroupRem	vimSynOption
+ hi def link vimGroupSpecial	Special
+ hi def link vimGroup	Type
+ hi def link vimHiAttrib	PreProc
+ hi def link vimHiClear	vimHighlight
+ hi def link vimHiCtermFgBg	vimHiTerm
+ hi def link vimHiCTerm	vimHiTerm
+ hi def link vimHighlight	vimCommand
+ hi def link vimHiGroup	vimGroupName
+ hi def link vimHiGuiFgBg	vimHiTerm
+ hi def link vimHiGuiFont	vimHiTerm
+ hi def link vimHiGuiRgb	vimNumber
+ hi def link vimHiGui	vimHiTerm
+ hi def link vimHiNmbr	Number
+ hi def link vimHiStartStop	vimHiTerm
+ hi def link vimHiTerm	Type
+ hi def link vimHLGroup	vimGroup
+ hi def link vimHLMod	PreProc
+ hi def link vimInsert	vimString
+ hi def link vimIskSep	Delimiter
+ hi def link vimKeyCode	vimSpecFile
+ hi def link vimKeyword	Statement
+ hi def link vimLet	vimCommand
+ hi def link vimLineComment	vimComment
+ hi def link vimMapBang	vimCommand
+ hi def link vimMapModKey	vimFuncSID
+ hi def link vimMapMod	vimBracket
+ hi def link vimMap	vimCommand
+ hi def link vimMark	Number
+ hi def link vimMarkNumber	vimNumber
+ hi def link vimMenuMod	vimMapMod
+ hi def link vimMenuNameMore	vimMenuName
+ hi def link vimMenuName	PreProc
+ hi def link vimMtchComment	vimComment
+ hi def link vimNorm	vimCommand
+ hi def link vimNotation	Special
+ hi def link vimNotFunc	vimCommand
+ hi def link vimNotPatSep	vimString
+ hi def link vimNumber	Number
+ hi def link vimOperError	Error
+ hi def link vimOper	Operator
+ hi def link vimOption	PreProc
+ hi def link vimParenSep	Delimiter
+ hi def link vimPatSepErr	vimPatSep
+ hi def link vimPatSepR	vimPatSep
+ hi def link vimPatSep	SpecialChar
+ hi def link vimPatSepZone	vimString
+ hi def link vimPatSepZ	vimPatSep
+ hi def link vimPattern	Type
+ hi def link vimPlainMark	vimMark
+ hi def link vimPlainRegister	vimRegister
+ hi def link vimRegister	SpecialChar
+ hi def link vimScriptDelim	Comment
+ hi def link vimSearchDelim	Statement
+ hi def link vimSearch	vimString
+ hi def link vimSep	Delimiter
+ hi def link vimSetMod	vimOption
+ hi def link vimSetSep	Statement
+ hi def link vimSetString	vimString
+ hi def link vimSpecFile	Identifier
+ hi def link vimSpecFileMod	vimSpecFile
+ hi def link vimSpecial	Type
+ hi def link vimStatement	Statement
+ hi def link vimStringCont	vimString
+ hi def link vimString	String
+ hi def link vimSubst1	vimSubst
+ hi def link vimSubstDelim	Delimiter
+ hi def link vimSubstFlags	Special
+ hi def link vimSubstSubstr	SpecialChar
+ hi def link vimSubstTwoBS	vimString
+ hi def link vimSubst	vimCommand
+ hi def link vimSynCaseError	Error
+ hi def link vimSynCase	Type
+ hi def link vimSyncC	Type
+ hi def link vimSyncError	Error
+ hi def link vimSyncGroupName	vimGroupName
+ hi def link vimSyncGroup	vimGroupName
+ hi def link vimSyncKey	Type
+ hi def link vimSyncNone	Type
+ hi def link vimSynContains	vimSynOption
+ hi def link vimSynError	Error
+ hi def link vimSynKeyContainedin	vimSynContains
+ hi def link vimSynKeyOpt	vimSynOption
+ hi def link vimSynMtchGrp	vimSynOption
+ hi def link vimSynMtchOpt	vimSynOption
+ hi def link vimSynNextgroup	vimSynOption
+ hi def link vimSynNotPatRange	vimSynRegPat
+ hi def link vimSynOption	Special
+ hi def link vimSynPatRange	vimString
+ hi def link vimSynRegOpt	vimSynOption
+ hi def link vimSynRegPat	vimString
+ hi def link vimSynReg	Type
+ hi def link vimSyntax	vimCommand
+ hi def link vimSynType	vimSpecial
+ hi def link vimTodo	Todo
+ hi def link vimUnmap	vimMap
+ hi def link vimUserAttrbCmpltFunc	Special
+ hi def link vimUserAttrbCmplt	vimSpecial
+ hi def link vimUserAttrbKey	vimOption
+ hi def link vimUserAttrb	vimSpecial
+ hi def link vimUserAttrbError	Error
+ hi def link vimUserCmdError	Error
+ hi def link vimUserCommand	vimCommand
+ hi def link vimUserFunc	Normal
+ hi def link vimVar	Identifier
+ hi def link vimWarn	WarningMsg
+endif
 
 " Current Syntax Variable: {{{2
 let b:current_syntax = "vim"

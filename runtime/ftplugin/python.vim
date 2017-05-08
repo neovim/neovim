@@ -2,7 +2,7 @@
 " Language:	python
 " Maintainer:	James Sully <sullyj3@gmail.com>
 " Previous Maintainer: Johannes Zellner <johannes@zellner.org>
-" Last Change:	Wed, 29 June 2016
+" Last Change:	Tue, 09 October 2016
 " https://github.com/sullyj3/vim-ftplugin-python
 
 if exists("b:did_ftplugin") | finish | endif
@@ -22,15 +22,25 @@ setlocal omnifunc=pythoncomplete#Complete
 
 set wildignore+=*.pyc
 
-nnoremap <silent> <buffer> ]] :call <SID>Python_jump('n', '\v%$\|^(class\|def)>', 'W')<cr>
-nnoremap <silent> <buffer> [[ :call <SID>Python_jump('n', '\v^(class\|def)>', 'Wb')<cr>
-nnoremap <silent> <buffer> ]m :call <SID>Python_jump('n', '\v%$\|^\s*(class\|def)>', 'W')<cr>
-nnoremap <silent> <buffer> [m :call <SID>Python_jump('n', '\v^\s*(class\|def)>', 'Wb')<cr>
+let b:next_toplevel='\v%$\|^(class\|def\|async def)>'
+let b:prev_toplevel='\v^(class\|def\|async def)>'
+let b:next='\v%$\|^\s*(class\|def\|async def)>'
+let b:prev='\v^\s*(class\|def\|async def)>'
 
-xnoremap <silent> <buffer> ]] :call <SID>Python_jump('x', '\v%$\|^(class\|def)>', 'W')<cr>
-xnoremap <silent> <buffer> [[ :call <SID>Python_jump('x', '\v^(class\|def)>', 'Wb')<cr>
-xnoremap <silent> <buffer> ]m :call <SID>Python_jump('x', '\v%$\|^\s*(class\|def)>', 'W')<cr>
-xnoremap <silent> <buffer> [m :call <SID>Python_jump('x', '\v^\s*(class\|def)>', 'Wb')<cr>
+execute "nnoremap <silent> <buffer> ]] :call <SID>Python_jump('n', '". b:next_toplevel."', 'W')<cr>"
+execute "nnoremap <silent> <buffer> [[ :call <SID>Python_jump('n', '". b:prev_toplevel."', 'Wb')<cr>"
+execute "nnoremap <silent> <buffer> ]m :call <SID>Python_jump('n', '". b:next."', 'W')<cr>"
+execute "nnoremap <silent> <buffer> [m :call <SID>Python_jump('n', '". b:prev."', 'Wb')<cr>"
+
+execute "onoremap <silent> <buffer> ]] :call <SID>Python_jump('o', '". b:next_toplevel."', 'W')<cr>"
+execute "onoremap <silent> <buffer> [[ :call <SID>Python_jump('o', '". b:prev_toplevel."', 'Wb')<cr>"
+execute "onoremap <silent> <buffer> ]m :call <SID>Python_jump('o', '". b:next."', 'W')<cr>"
+execute "onoremap <silent> <buffer> [m :call <SID>Python_jump('o', '". b:prev."', 'Wb')<cr>"
+
+execute "xnoremap <silent> <buffer> ]] :call <SID>Python_jump('x', '". b:next_toplevel."', 'W')<cr>"
+execute "xnoremap <silent> <buffer> [[ :call <SID>Python_jump('x', '". b:prev_toplevel."', 'Wb')<cr>"
+execute "xnoremap <silent> <buffer> ]m :call <SID>Python_jump('x', '". b:next."', 'W')<cr>"
+execute "xnoremap <silent> <buffer> [m :call <SID>Python_jump('x', '". b:prev."', 'Wb')<cr>"
 
 if !exists('*<SID>Python_jump')
   fun! <SID>Python_jump(mode, motion, flags) range
@@ -56,8 +66,10 @@ if has("browsefilter") && !exists("b:browsefilter")
                 \ "All Files (*.*)\t*.*\n"
 endif
 
-" As suggested by PEP8.
-setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
+if !exists("g:python_recommended_style") || g:python_recommended_style != 0
+    " As suggested by PEP8.
+    setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
+endif
 
 " First time: try finding "pydoc".
 if !exists('g:pydoc_executable')

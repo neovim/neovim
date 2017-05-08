@@ -61,7 +61,6 @@ an 50.10.320 &Syntax.AB.Ascii\ Doc :cal SetSyn("asciidoc")<CR>
 an 50.10.330 &Syntax.AB.ASP\ with\ VBScript :cal SetSyn("aspvbs")<CR>
 an 50.10.340 &Syntax.AB.ASP\ with\ Perl :cal SetSyn("aspperl")<CR>
 an 50.10.350 &Syntax.AB.Assembly.680x0 :cal SetSyn("asm68k")<CR>
-an 50.10.355 &Syntax.AB.Assembly.AVR :cal SetSyn("avra")<CR>
 an 50.10.360 &Syntax.AB.Assembly.Flat :cal SetSyn("fasm")<CR>
 an 50.10.370 &Syntax.AB.Assembly.GNU :cal SetSyn("asm")<CR>
 an 50.10.380 &Syntax.AB.Assembly.GNU\ H-8300 :cal SetSyn("asmh8300")<CR>
@@ -162,31 +161,31 @@ an 50.30.290 &Syntax.DE.Doxygen.C\ with\ doxygen :cal SetSyn("c.doxygen")<CR>
 an 50.30.300 &Syntax.DE.Doxygen.C++\ with\ doxygen :cal SetSyn("cpp.doxygen")<CR>
 an 50.30.310 &Syntax.DE.Doxygen.IDL\ with\ doxygen :cal SetSyn("idl.doxygen")<CR>
 an 50.30.320 &Syntax.DE.Doxygen.Java\ with\ doxygen :cal SetSyn("java.doxygen")<CR>
-an 50.30.320 &Syntax.DE.Doxygen.DataScript\ with\ doxygen :cal SetSyn("datascript.doxygen")<CR>
-an 50.30.330 &Syntax.DE.Dracula :cal SetSyn("dracula")<CR>
-an 50.30.340 &Syntax.DE.DSSSL :cal SetSyn("dsl")<CR>
-an 50.30.350 &Syntax.DE.DTD :cal SetSyn("dtd")<CR>
-an 50.30.360 &Syntax.DE.DTML\ (Zope) :cal SetSyn("dtml")<CR>
-an 50.30.370 &Syntax.DE.DTrace :cal SetSyn("dtrace")<CR>
-an 50.30.380 &Syntax.DE.Dts/dtsi :cal SetSyn("dts")<CR>
-an 50.30.390 &Syntax.DE.Dylan.Dylan :cal SetSyn("dylan")<CR>
-an 50.30.400 &Syntax.DE.Dylan.Dylan\ interface :cal SetSyn("dylanintr")<CR>
-an 50.30.410 &Syntax.DE.Dylan.Dylan\ lid :cal SetSyn("dylanlid")<CR>
-an 50.30.430 &Syntax.DE.EDIF :cal SetSyn("edif")<CR>
-an 50.30.440 &Syntax.DE.Eiffel :cal SetSyn("eiffel")<CR>
-an 50.30.450 &Syntax.DE.Elinks\ config :cal SetSyn("elinks")<CR>
-an 50.30.460 &Syntax.DE.Elm\ filter\ rules :cal SetSyn("elmfilt")<CR>
-an 50.30.470 &Syntax.DE.Embedix\ Component\ Description :cal SetSyn("ecd")<CR>
-an 50.30.480 &Syntax.DE.ERicsson\ LANGuage :cal SetSyn("erlang")<CR>
-an 50.30.490 &Syntax.DE.ESMTP\ rc :cal SetSyn("esmtprc")<CR>
-an 50.30.500 &Syntax.DE.ESQL-C :cal SetSyn("esqlc")<CR>
-an 50.30.510 &Syntax.DE.Essbase\ script :cal SetSyn("csc")<CR>
-an 50.30.520 &Syntax.DE.Esterel :cal SetSyn("esterel")<CR>
-an 50.30.530 &Syntax.DE.Eterm\ config :cal SetSyn("eterm")<CR>
-an 50.30.540 &Syntax.DE.Eviews :cal SetSyn("eviews")<CR>
-an 50.30.550 &Syntax.DE.Exim\ conf :cal SetSyn("exim")<CR>
-an 50.30.560 &Syntax.DE.Expect :cal SetSyn("expect")<CR>
-an 50.30.570 &Syntax.DE.Exports :cal SetSyn("exports")<CR>
+an 50.30.330 &Syntax.DE.Doxygen.DataScript\ with\ doxygen :cal SetSyn("datascript.doxygen")<CR>
+an 50.30.340 &Syntax.DE.Dracula :cal SetSyn("dracula")<CR>
+an 50.30.350 &Syntax.DE.DSSSL :cal SetSyn("dsl")<CR>
+an 50.30.360 &Syntax.DE.DTD :cal SetSyn("dtd")<CR>
+an 50.30.370 &Syntax.DE.DTML\ (Zope) :cal SetSyn("dtml")<CR>
+an 50.30.380 &Syntax.DE.DTrace :cal SetSyn("dtrace")<CR>
+an 50.30.390 &Syntax.DE.Dts/dtsi :cal SetSyn("dts")<CR>
+an 50.30.400 &Syntax.DE.Dylan.Dylan :cal SetSyn("dylan")<CR>
+an 50.30.410 &Syntax.DE.Dylan.Dylan\ interface :cal SetSyn("dylanintr")<CR>
+an 50.30.420 &Syntax.DE.Dylan.Dylan\ lid :cal SetSyn("dylanlid")<CR>
+an 50.30.440 &Syntax.DE.EDIF :cal SetSyn("edif")<CR>
+an 50.30.450 &Syntax.DE.Eiffel :cal SetSyn("eiffel")<CR>
+an 50.30.460 &Syntax.DE.Elinks\ config :cal SetSyn("elinks")<CR>
+an 50.30.470 &Syntax.DE.Elm\ filter\ rules :cal SetSyn("elmfilt")<CR>
+an 50.30.480 &Syntax.DE.Embedix\ Component\ Description :cal SetSyn("ecd")<CR>
+an 50.30.490 &Syntax.DE.ERicsson\ LANGuage :cal SetSyn("erlang")<CR>
+an 50.30.500 &Syntax.DE.ESMTP\ rc :cal SetSyn("esmtprc")<CR>
+an 50.30.510 &Syntax.DE.ESQL-C :cal SetSyn("esqlc")<CR>
+an 50.30.520 &Syntax.DE.Essbase\ script :cal SetSyn("csc")<CR>
+an 50.30.530 &Syntax.DE.Esterel :cal SetSyn("esterel")<CR>
+an 50.30.540 &Syntax.DE.Eterm\ config :cal SetSyn("eterm")<CR>
+an 50.30.550 &Syntax.DE.Eviews :cal SetSyn("eviews")<CR>
+an 50.30.560 &Syntax.DE.Exim\ conf :cal SetSyn("exim")<CR>
+an 50.30.570 &Syntax.DE.Expect :cal SetSyn("expect")<CR>
+an 50.30.580 &Syntax.DE.Exports :cal SetSyn("exports")<CR>
 an 50.40.100 &Syntax.FG.Falcon :cal SetSyn("falcon")<CR>
 an 50.40.110 &Syntax.FG.Fantom :cal SetSyn("fan")<CR>
 an 50.40.120 &Syntax.FG.Fetchmail :cal SetSyn("fetchmail")<CR>
@@ -328,7 +327,6 @@ an 50.70.270 &Syntax.M.Messages\ (/var/log) :cal SetSyn("messages")<CR>
 an 50.70.280 &Syntax.M.Metafont :cal SetSyn("mf")<CR>
 an 50.70.290 &Syntax.M.MetaPost :cal SetSyn("mp")<CR>
 an 50.70.300 &Syntax.M.MGL :cal SetSyn("mgl")<CR>
-an 50.70.305 &Syntax.M.MIX :cal SetSyn("mix")<CR>
 an 50.70.310 &Syntax.M.MMIX :cal SetSyn("mmix")<CR>
 an 50.70.320 &Syntax.M.Modconf :cal SetSyn("modconf")<CR>
 an 50.70.330 &Syntax.M.Model :cal SetSyn("model")<CR>

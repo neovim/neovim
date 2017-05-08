@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * screen.c: code for displaying on the screen
  *
@@ -102,6 +105,7 @@
 #include "nvim/indent.h"
 #include "nvim/getchar.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -128,6 +132,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -1015,14 +1020,10 @@ static void win_update(win_T *wp)
     linenr_T from, to;
 
     if (VIsual_active) {
-      if (VIsual_active
-          && (VIsual_mode != wp->w_old_visual_mode
-              || type == INVERTED_ALL)) {
-        /*
-         * If the type of Visual selection changed, redraw the whole
-         * selection.  Also when the ownership of the X selection is
-         * gained or lost.
-         */
+      if (VIsual_mode != wp->w_old_visual_mode || type == INVERTED_ALL) {
+        // If the type of Visual selection changed, redraw the whole
+        // selection.  Also when the ownership of the X selection is
+        // gained or lost.
         if (curwin->w_cursor.lnum < VIsual.lnum) {
           from = curwin->w_cursor.lnum;
           to = VIsual.lnum;
@@ -1687,7 +1688,7 @@ static int compute_foldcolumn(win_T *wp, int col)
  */
 static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T lnum, int row)
 {
-  char_u buf[51];
+  char_u buf[FOLD_TEXT_LEN];
   pos_T       *top, *bot;
   linenr_T lnume = lnum + fold_count - 1;
   int len;
@@ -2448,7 +2449,7 @@ win_line (
       } else {
         /* Long line, use only the last SPWORDLEN bytes. */
         nextlinecol = v - SPWORDLEN;
-        memmove(nextline, line + nextlinecol, SPWORDLEN);
+        memmove(nextline, line + nextlinecol, SPWORDLEN);  // -V512
         nextline_idx = SPWORDLEN + 1;
       }
     }
@@ -2580,13 +2581,14 @@ win_line (
    * Do this for both search_hl and the match list.
    */
   cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
+  shl_flag = false;
+  while (cur != NULL || !shl_flag) {
+    if (!shl_flag) {
       shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
+      shl_flag = true;
+    } else {
+      shl = &cur->hl;  // -V595
+    }
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
@@ -2784,8 +2786,8 @@ win_line (
       // draw 'breakindent': indent wrapped text accodringly
       if (draw_state == WL_BRI - 1 && n_extra == 0) {
         draw_state = WL_BRI;
-        if (wp->w_p_bri && n_extra == 0 && row != startrow && filler_lines == 0) {
-          char_attr = 0; // was: hl_attr(HLF_AT);
+        if (wp->w_p_bri && row != startrow && filler_lines == 0) {
+          char_attr = 0;  // was: hl_attr(HLF_AT);
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = hl_attr(diff_hlf);
@@ -5330,43 +5332,39 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     c = *ptr;
     /* check if this is the first byte of a multibyte */
     if (l_has_mbyte) {
-      if (l_enc_utf8 && len > 0)
+      if (len > 0) {
         mbyte_blen = utfc_ptr2len_len(ptr, (int)((text + len) - ptr));
-      else
-        mbyte_blen = (*mb_ptr2len)(ptr);
-      if (l_enc_dbcs == DBCS_JPNU && c == 0x8e)
-        mbyte_cells = 1;
-      else if (l_enc_dbcs != 0)
-        mbyte_cells = mbyte_blen;
-      else {            /* enc_utf8 */
-        if (len >= 0)
-          u8c = utfc_ptr2char_len(ptr, u8cc,
-              (int)((text + len) - ptr));
-        else
-          u8c = utfc_ptr2char(ptr, u8cc);
-        mbyte_cells = utf_char2cells(u8c);
-        if (p_arshape && !p_tbidi && arabic_char(u8c)) {
-          /* Do Arabic shaping. */
-          if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
-            /* Past end of string to be displayed. */
-            nc = NUL;
-            nc1 = NUL;
-          } else {
-            nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
-                (int)((text + len) - ptr - mbyte_blen));
-            nc1 = pcc[0];
-          }
-          pc = prev_c;
-          prev_c = u8c;
-          u8c = arabic_shape(u8c, &c, &u8cc[0], nc, nc1, pc);
-        } else
-          prev_c = u8c;
-        if (col + mbyte_cells > screen_Columns) {
-          /* Only 1 cell left, but character requires 2 cells:
-           * display a '>' in the last column to avoid wrapping. */
-          c = '>';
-          mbyte_cells = 1;
+      } else {
+        mbyte_blen = utfc_ptr2len(ptr);
+      }
+      if (len >= 0) {
+        u8c = utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr));
+      } else {
+        u8c = utfc_ptr2char(ptr, u8cc);
+      }
+      mbyte_cells = utf_char2cells(u8c);
+      if (p_arshape && !p_tbidi && arabic_char(u8c)) {
+        // Do Arabic shaping.
+        if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
+          // Past end of string to be displayed.
+          nc = NUL;
+          nc1 = NUL;
+        } else {
+          nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
+                                 (int)((text + len) - ptr - mbyte_blen));
+          nc1 = pcc[0];
         }
+        pc = prev_c;
+        prev_c = u8c;
+        u8c = arabic_shape(u8c, &c, &u8cc[0], nc, nc1, pc);
+      } else {
+        prev_c = u8c;
+      }
+      if (col + mbyte_cells > screen_Columns) {
+        // Only 1 cell left, but character requires 2 cells:
+        // display a '>' in the last column to avoid wrapping. */
+        c = '>';
+        mbyte_cells = 1;
       }
     }
 
@@ -5374,16 +5372,11 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     force_redraw_next = FALSE;
 
     need_redraw = ScreenLines[off] != c
-                  || (mbyte_cells == 2
-                      && ScreenLines[off + 1] != (l_enc_dbcs ? ptr[1] : 0))
-                  || (l_enc_dbcs == DBCS_JPNU
-                      && c == 0x8e
-                      && ScreenLines2[off] != ptr[1])
-                  || (l_enc_utf8
-                      && (ScreenLinesUC[off] !=
-                          (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
-                          || (ScreenLinesUC[off] != 0
-                              && screen_comp_differs(off, u8cc))))
+                  || (mbyte_cells == 2 && ScreenLines[off + 1] != 0)
+                  || (ScreenLinesUC[off] !=
+                      (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
+                      || (ScreenLinesUC[off] != 0
+                          && screen_comp_differs(off, u8cc)))
                   || ScreenAttrs[off] != attr
                   || exmode_active;
 
@@ -5537,13 +5530,14 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
    * Do this both for search_hl and the match list.
    */
   cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
+  shl_flag = false;
+  while (cur != NULL || shl_flag == false) {
+    if (shl_flag == false) {
       shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
+      shl_flag = true;
+    } else {
+      shl = &cur->hl;  // -V595
+    }
     if (shl->rm.regprog != NULL
         && shl->lnum == 0
         && re_multiline(shl->rm.regprog)) {
@@ -6102,8 +6096,7 @@ retry:
     if (new_ScreenLinesC[i] == NULL)
       break;
   if (new_ScreenLines == NULL
-      || (l_enc_utf8 && (new_ScreenLinesUC == NULL || i != p_mco))
-      || (l_enc_dbcs == DBCS_JPNU && new_ScreenLines2 == NULL)
+      || (new_ScreenLinesUC == NULL || i != p_mco)
       || new_ScreenAttrs == NULL
       || new_LineOffset == NULL
       || new_LineWraps == NULL
@@ -6188,13 +6181,14 @@ retry:
                   ScreenLinesC[i] + LineOffset[old_row],
                   (size_t)len * sizeof(u8char_T));
           }
-          if (l_enc_dbcs == DBCS_JPNU && ScreenLines2 != NULL)
+          if (ScreenLines2 != NULL) {
             memmove(new_ScreenLines2 + new_LineOffset[new_row],
-                ScreenLines2 + LineOffset[old_row],
-                (size_t)len * sizeof(schar_T));
+                    ScreenLines2 + LineOffset[old_row],
+                    (size_t)len * sizeof(schar_T));
+          }
           memmove(new_ScreenAttrs + new_LineOffset[new_row],
-              ScreenAttrs + LineOffset[old_row],
-              (size_t)len * sizeof(sattr_T));
+                  ScreenAttrs + LineOffset[old_row],
+                  (size_t)len * sizeof(sattr_T));
         }
       }
     }
@@ -6894,6 +6888,10 @@ static void draw_tabline(void)
   }
   redraw_tabline = false;
 
+  if (ui_is_external(kUITabline)) {
+    ui_ext_tabline_update();
+    return;
+  }
 
   if (tabline_height() < 1)
     return;
@@ -7032,6 +7030,26 @@ static void draw_tabline(void)
   /* Reset the flag here again, in case evaluating 'tabline' causes it to be
    * set. */
   redraw_tabline = FALSE;
+}
+
+void ui_ext_tabline_update(void)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, TABPAGE_OBJ(curtab->handle));
+  Array tabs = ARRAY_DICT_INIT;
+  FOR_ALL_TABS(tp) {
+    Dictionary tab_info = ARRAY_DICT_INIT;
+    PUT(tab_info, "tab", TABPAGE_OBJ(tp->handle));
+
+    win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
+    get_trans_bufname(cwp->w_buffer);
+    PUT(tab_info, "name", STRING_OBJ(cstr_to_string((char *)NameBuff)));
+
+    ADD(tabs, DICTIONARY_OBJ(tab_info));
+  }
+  ADD(args, ARRAY_OBJ(tabs));
+
+  ui_event("tabline_update", args);
 }
 
 /*

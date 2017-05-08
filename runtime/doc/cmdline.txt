@@ -13,13 +13,7 @@ Command-line mode is used to enter Ex commands (":"), search patterns
 Basic command line editing is explained in chapter 20 of the user manual
 |usr_20.txt|.
 
-1. Command-line editing		|cmdline-editing|
-2. Command-line completion	|cmdline-completion|
-3. Ex command-lines		|cmdline-lines|
-4. Ex command-line ranges	|cmdline-ranges|
-5. Ex command-line flags	|ex-flags|
-6. Ex special characters	|cmdline-special|
-7. Command-line window		|cmdline-window|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Command-line editing					*cmdline-editing*
@@ -219,9 +213,10 @@ CTRL-Y		When there is a modeless selection, copy the selection into
 		the clipboard. |modeless-selection|
 		If there is no selection CTRL-Y is inserted as a character.
 
-CTRL-J					*c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
+CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
 <CR> or <NL>	start entered command
-							*c_<Esc>* *c_Esc*
+
+CTRL-[						*c_CTRL-[* *c_<Esc>* *c_Esc*
 <Esc>		When typed and 'x' not present in 'cpoptions', quit
 		Command-line mode without executing.  In macros or when 'x'
 		present in 'cpoptions', start entered command.
@@ -999,10 +994,10 @@ There are several ways to leave the command-line window:
 		Insert and in Normal mode.
 CTRL-C		Continue in Command-line mode.  The command-line under the
 		cursor is used as the command-line.  Works both in Insert and
-		in Normal mode.  ":close" also works.  There is no redraw,
-		thus the window will remain visible.
+		in Normal mode.  There is no redraw, thus the window will
+		remain visible.
 :quit		Discard the command line and go back to Normal mode.
-		":exit", ":xit" and CTRL-\ CTRL-N also work.
+		":close", ":exit", ":xit" and CTRL-\ CTRL-N also work.
 :qall		Quit Vim, unless there are changes in some buffer.
 :qall!		Quit Vim, discarding changes to any buffer.
 

@@ -64,13 +64,13 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 2)
-set(NVIM_VERSION_PATCH 0)
+set(NVIM_VERSION_PATCH 1)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
 set(NVIM_API_LEVEL 2)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
-set(NVIM_API_PRERELEASE true)
+set(NVIM_API_PRERELEASE false)
 
 file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
 include(GetGitRevisionDescription)
@@ -332,11 +332,7 @@ if(MSGPACK_HAS_FLOAT32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_MSGPACK_HAS_FLOAT32")
 endif()
 
-if(UNIX)
-  option(FEAT_TUI "Enable the Terminal UI" ON)
-else()
-  option(FEAT_TUI "Enable the Terminal UI" OFF)
-endif()
+option(FEAT_TUI "Enable the Terminal UI" ON)
 
 if(FEAT_TUI)
   find_package(Unibilium REQUIRED)

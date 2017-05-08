@@ -17,6 +17,7 @@
 #include "nvim/pos.h"      // for linenr_T
 #include "nvim/gettext.h"
 #include "nvim/message.h"
+#include "nvim/macros.h"
 
 /// Type used for VimL VAR_NUMBER values
 typedef int varnumber_T;
@@ -422,6 +423,23 @@ static inline bool tv_is_func(const typval_T tv)
 {
   return tv.v_type == VAR_FUNC || tv.v_type == VAR_PARTIAL;
 }
+
+/// Specify that argument needs to be translated
+///
+/// Used for size_t length arguments to avoid calling gettext() and strlen()
+/// unless needed.
+#define TV_TRANSLATE (SIZE_MAX)
+
+/// Specify that argument is a NUL-terminated C string
+///
+/// Used for size_t length arguments to avoid calling strlen() unless needed.
+#define TV_CSTRING (SIZE_MAX - 1)
+
+#ifdef UNIT_TESTING
+// Do not use enum constants, see commit message.
+EXTERN const size_t kTVCstring INIT(= TV_CSTRING);
+EXTERN const size_t kTVTranslate INIT(= TV_TRANSLATE);
+#endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/typval.h.generated.h"

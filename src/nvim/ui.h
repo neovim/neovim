@@ -6,6 +6,15 @@
 #include <stdint.h>
 
 #include "api/private/defs.h"
+#include "nvim/buffer_defs.h"
+
+typedef enum {
+  kUICmdline = 0,
+  kUIPopupmenu,
+  kUITabline,
+  kUIWildmenu,
+} UIWidget;
+#define UI_WIDGETS (kUIWildmenu + 1)
 
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;
@@ -15,20 +24,21 @@ typedef struct {
 typedef struct ui_t UI;
 
 struct ui_t {
-  bool rgb, pum_external;
+  bool rgb;
+  bool ui_ext[UI_WIDGETS];  ///< Externalized widgets
   int width, height;
   void *data;
   void (*resize)(UI *ui, int rows, int columns);
   void (*clear)(UI *ui);
   void (*eol_clear)(UI *ui);
   void (*cursor_goto)(UI *ui, int row, int col);
-  void (*cursor_style_set)(UI *ui, bool enabled, Dictionary cursor_styles);
+  void (*mode_info_set)(UI *ui, bool enabled, Array cursor_styles);
   void (*update_menu)(UI *ui);
   void (*busy_start)(UI *ui);
   void (*busy_stop)(UI *ui);
   void (*mouse_on)(UI *ui);
   void (*mouse_off)(UI *ui);
-  void (*mode_change)(UI *ui, int mode);
+  void (*mode_change)(UI *ui, int mode_idx);
   void (*set_scroll_region)(UI *ui, int top, int bot, int left, int right);
   void (*scroll)(UI *ui, int count);
   void (*highlight_set)(UI *ui, HlAttrs attrs);

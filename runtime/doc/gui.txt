@@ -6,25 +6,10 @@
 
 Vim's Graphical User Interface				*gui* *GUI*
 
-1. Starting the GUI		|gui-start|
-2. Scrollbars			|gui-scrollbars|
-3. Mouse Control		|gui-mouse|
-4. Making GUI Selections	|gui-selections|
-5. Menus			|menus|
-6. Extras			|gui-extras|
-
-Other GUI documentation:
-|gui_w32.txt|	For specific items of the Win32 GUI.
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Starting the GUI				*gui-start* *E229* *E233*
-
-First you must make sure you actually have a version of Vim with the GUI code
-included.
-
-How to start the GUI depends on the system used.  Mostly you can run the
-GUI version of Vim with:
-    gvim [options] [files...]
 
 				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
 The gvimrc file is where GUI-specific startup commands should be placed.  It
@@ -32,8 +17,6 @@ is always sourced after the |init.vim| file.  If you have one then the
 $MYGVIMRC environment variable has its name.
 
 When the GUI starts up initializations are carried out, in this order:
-- The 'term' option is set to "builtin_gui" and terminal options are reset to
-  their default value for the GUI |terminal-options|.
 - If the system menu file exists, it is sourced.  The name of this file is
   normally "$VIMRUNTIME/menu.vim".  You can check this with ":version".  Also
   see |$VIMRUNTIME|.  To skip loading the system menu include 'M' in
@@ -92,8 +75,7 @@ and only the first one that is found is read.
 :winp[os] {X} {Y}							*E466*
 		Put the GUI vim window at the given {X} and {Y} coordinates.
 		The coordinates should specify the position in pixels of the
-		top left corner of the window.  Does not work in all versions.
-		Does work in an (new) xterm |xterm-color|.
+		top left corner of the window.
 		When the GUI window has not been opened yet, the values are
 		remembered until the window is opened.  The position is
 		adjusted to make the window fit on the screen (if possible).

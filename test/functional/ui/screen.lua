@@ -284,18 +284,13 @@ function Screen:wait(check, timeout)
 
   if failure_after_success then
     print([[
-Warning: Screen changes have been received after the expected state was seen.
-This is probably due to an indeterminism in the test. Try adding
-`wait()` (or even a separate `screen:expect(...)`) at a point of possible
-indeterminism, typically in between a `feed()` or `execute()` which is non-
-synchronous, and a synchronous api call.
 
-Note that sometimes a `wait` can trigger redraws and consequently generate more
-indeterminism. If adding `wait` calls seems to increase the frequency of these
-messages, try removing every `wait` call in the test.
-
-If everything else fails, use Screen:redraw_debug to help investigate what is
-  causing the problem.
+Warning: Screen changes were received after the expected state. This indicates
+indeterminism in the test. Try adding wait() (or screen:expect(...)) between
+asynchronous (feed(), nvim_input()) and synchronous API calls.
+  - Use Screen:redraw_debug() to investigate the problem.
+  - wait() can trigger redraws and consequently generate more indeterminism.
+    In that case try removing every wait().
       ]])
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
@@ -317,12 +312,13 @@ function Screen:_redraw(updates)
     -- print(require('inspect')(update))
     local method = update[1]
     for i = 2, #update do
-      local handler = self['_handle_'..method]
+      local handler_name = '_handle_'..method
+      local handler = self[handler_name]
       if handler ~= nil then
         handler(self, unpack(update[i]))
       else
         assert(self._on_event,
-          "Add Screen:_handle_XXX method or call Screen:set_on_event_handler")
+          "Add Screen:"..handler_name.." or call Screen:set_on_event_handler")
         self._on_event(method, update[i])
       end
     end
@@ -353,9 +349,9 @@ function Screen:_handle_resize(width, height)
   }
 end
 
-function Screen:_handle_cursor_style_set(enabled, style)
-  self._cursor_style_enabled = enabled
-  self._cursor_style = style
+function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
+  self._cursor_style_enabled = cursor_style_enabled
+  self._mode_info = mode_info
 end
 
 function Screen:_handle_clear()
@@ -389,9 +385,8 @@ function Screen:_handle_mouse_off()
   self._mouse_enabled = false
 end
 
-function Screen:_handle_mode_change(mode)
-  assert(mode == 'insert' or mode == 'replace'
-        or mode == 'normal' or mode == 'cmdline')
+function Screen:_handle_mode_change(mode, idx)
+  assert(mode == self._mode_info[idx+1].name)
   self.mode = mode
 end
 

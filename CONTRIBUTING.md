@@ -6,10 +6,15 @@ Getting started
 If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
-- Help us [review pull requests](#reviewing)!
 - Merge a [Vim patch].
 - Try a [complexity:low] issue.
-- Fix [clang-scan] or [coverity](#coverity) warnings.
+- Fix [clang-scan], [coverity](#coverity), and [PVS](#pvs-studio) warnings.
+
+Developer guidelines
+--------------------
+
+- Nvim developers should read `:help dev-help`.
+- External UI developers should read `:help dev-ui`.
 
 Reporting problems
 ------------------
@@ -26,17 +31,25 @@ Reporting problems
 Pull requests ("PRs")
 ---------------------
 
-- To avoid duplicate work, you may want to create a `[WIP]` pull request so that
-  others know what you are working on.
-- Avoid cosmetic changes to unrelated files in the same commit: extra noise
-  makes reviews more difficult.
+- To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
+- Avoid cosmetic changes to unrelated files in the same commit: noise makes
+  reviews take longer.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
-- [Rebase your feature branch][git-rebasing] onto (upstream) master before
-  opening the PR.
-- After addressing the review comments, it's fine to rebase and force-push to
-  your review.
-- Try to [tidy your history][git-history-rewriting]: combine related commits
-  with interactive rebasing, separate monolithic commits, etc.
+- Use a **rebase workflow** for small PRs.
+  - After addressing review comments, it's fine to rebase and force-push.
+- Use a **merge workflow** for big, high-risk PRs.
+  - Merge `master` into your PR when there are conflicts or when master
+    introduces breaking changes.
+  - Use the `ri` git alias:
+    ```
+    [alias]
+    ri = "!sh -c 't=\"${1:-master}\" ; s=\"${2:-HEAD}\" ; if git merge-base --is-ancestor \"$t\" \"$s\" ; then o=\"$t\" ; else mb=\"$(git merge-base \"$t\" \"$s\")\" ; if test \"x$mb\" = x ; then o=\"$t\" ; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\" ; if test \"x$lm\" = x ; then o=\"$mb\" ; else o=\"$lm\" ; fi ; fi ; fi ; [ $# -gt 0 ] && shift ; [ $# -gt 0 ] && shift ; git rebase --interactive \"$o\" \"$@\"' -"
+    ```
+    This avoids unnecessary rebases yet still allows you to combine related
+    commits, separate monolithic commits, etc.
+  - Do not edit commits that come before the merge commit.
+- During a squash/fixup, use `exec make -C build unittest` between each
+  pick/edit/reword.
 
 ### Stages: WIP, RFC, RDY
 
@@ -110,6 +123,11 @@ Use this commit-message format for coverity fixes:
     coverity/<id>: <description of what fixed the defect>
 
 where `<id>` is the Coverity ID (CID). For example see [#804](https://github.com/neovim/neovim/pull/804).
+
+### PVS-Studio
+
+Run `scripts/pvscheck.sh` to check the codebase with [PVS
+Studio](https://www.viva64.com/en/pvs-studio/).
 
 Reviewing
 ---------

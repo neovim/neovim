@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /* for debugging */
 /* #define CHECK(c, s)	if (c) EMSG(s) */
 #define CHECK(c, s)
@@ -616,7 +619,7 @@ static bool ml_check_b0_strings(ZERO_BL *b0p)
   return (memchr(b0p->b0_version, NUL, 10)
           && memchr(b0p->b0_uname, NUL, B0_UNAME_SIZE)
           && memchr(b0p->b0_hname, NUL, B0_HNAME_SIZE)
-          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));
+          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));  // -V512
 }
 
 /*
@@ -3362,29 +3365,32 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
           }
 
           if (swap_exists_action != SEA_NONE && choice == 0) {
-            char *name;
+            const char *const sw_msg_1 = _("Swap file \"");
+            const char *const sw_msg_2 = _("\" already exists!");
 
             const size_t fname_len = strlen(fname);
-            name = xmalloc(fname_len
-                           + strlen(_("Swap file \""))
-                           + strlen(_("\" already exists!")) + 5);
-            STRCPY(name, _("Swap file \""));
-            home_replace(NULL, (char_u *) fname, (char_u *)&name[strlen(name)],
-                fname_len, true);
-            STRCAT(name, _("\" already exists!"));
-            choice = do_dialog(VIM_WARNING,
-                (char_u *)_("VIM - ATTENTION"),
-                (char_u *)(name == NULL
-                           ? _("Swap file already exists!")
-                           : name),
+            const size_t sw_msg_1_len = strlen(sw_msg_1);
+            const size_t sw_msg_2_len = strlen(sw_msg_2);
+
+            const size_t name_len = sw_msg_1_len + fname_len + sw_msg_2_len + 5;
+
+            char *const name = xmalloc(name_len);
+            memcpy(name, sw_msg_1, sw_msg_1_len + 1);
+            home_replace(NULL, (char_u *)fname, (char_u *)&name[sw_msg_1_len],
+                         fname_len, true);
+            xstrlcat(name, sw_msg_2, name_len);
+            choice = do_dialog(VIM_WARNING, (char_u *)_("VIM - ATTENTION"),
+                               (char_u *)name,
 # if defined(UNIX)
-                process_still_running
-                ? (char_u *)_(
-                    "&Open Read-Only\n&Edit anyway\n&Recover\n&Quit\n&Abort") :
+                               process_still_running
+                               ? (char_u *)_(
+                                   "&Open Read-Only\n&Edit anyway\n&Recover"
+                                   "\n&Quit\n&Abort") :
 # endif
-                (char_u *)_(
-                    "&Open Read-Only\n&Edit anyway\n&Recover\n&Delete it\n&Quit\n&Abort"),
-                1, NULL, FALSE);
+                               (char_u *)_(
+                                   "&Open Read-Only\n&Edit anyway\n&Recover"
+                                   "\n&Delete it\n&Quit\n&Abort"),
+                               1, NULL, false);
 
 # if defined(UNIX)
             if (process_still_running && choice >= 4)

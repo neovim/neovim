@@ -6,9 +6,7 @@
 
 Help on help files					*helphelp*
 
-1. Help commands		|online-help|
-2. Translated help files	|help-translated|
-3. Writing help files		|help-writing|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Help commands					*online-help*
@@ -25,12 +23,20 @@ Help on help files					*helphelp*
 			The 'helplang' option is used to select a language, if
 			the main help file is available in several languages.
 
+			Type <M-]> to see the table of contents.
+
 						*{subject}* *E149* *E661*
 :h[elp] {subject}	Like ":help", additionally jump to the tag {subject}.
-			{subject} can include wildcards like "*", "?" and
+			For example:  >
+				:help options
+
+<			{subject} can include wildcards such as "*", "?" and
 			"[a-z]":
 			   :help z?	jump to help for any "z" command
 			   :help z.	jump to the help for "z."
+			But when a tag exists it is taken literally:
+			   :help :?	jump to help for ":?"
+
 			If there is no full match for the pattern, or there
 			are several matches, the "best" match will be used.
 			A sophisticated algorithm is used to decide which
@@ -67,18 +73,19 @@ Help on help files					*helphelp*
 			example to find help for CTRL-V in Insert mode: >
 				:help i^V
 <
-			To use a regexp |pattern|, first do ":help" and then
+			It is also possible to first do ":help" and then
 			use ":tag {pattern}" in the help window.  The
 			":tnext" command can then be used to jump to other
 			matches, "tselect" to list matches and choose one. >
-				:help index| :tse z.
+				:help index
+				:tselect /.*mode
 
 <			When there is no argument you will see matches for
 			"help", to avoid listing all possible matches (that
 			would be very slow).
 			The number of matches displayed is limited to 300.
 
-			This command can be followed by '|' and another
+			The `:help` command can be followed by '|' and another
 			command, but you don't need to escape the '|' inside a
 			help command.  So these both work: >
 				:help |

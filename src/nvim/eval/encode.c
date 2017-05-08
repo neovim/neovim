@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file encode.c
 ///
 /// File containing functions for encoding and decoding VimL values.
@@ -179,9 +182,9 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
       }
     }
   }
-  EMSG3(msg, objname, (kv_size(*mpstack) == 0
-                       ? _("itself")
-                       : (char *) msg_ga.ga_data));
+  emsgf(msg, _(objname), (kv_size(*mpstack) == 0
+                          ? _("itself")
+                          : (char *)msg_ga.ga_data));
   ga_clear(&msg_ga);
   return FAIL;
 }
@@ -790,7 +793,7 @@ char *encode_tv2string(typval_T *tv, size_t *len)
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
   const int evs_ret = encode_vim_to_string(&ga, tv,
-                                           "encode_tv2string() argument");
+                                           N_("encode_tv2string() argument"));
   (void)evs_ret;
   assert(evs_ret == OK);
   did_echo_string_emsg = false;
@@ -818,7 +821,7 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
       ga_concat(&ga, tv->vval.v_string);
     }
   } else {
-    const int eve_ret = encode_vim_to_echo(&ga, tv, ":echo argument");
+    const int eve_ret = encode_vim_to_echo(&ga, tv, N_(":echo argument"));
     (void)eve_ret;
     assert(eve_ret == OK);
   }
@@ -841,7 +844,8 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
-  const int evj_ret = encode_vim_to_json(&ga, tv, "encode_tv2json() argument");
+  const int evj_ret = encode_vim_to_json(&ga, tv,
+                                         N_("encode_tv2json() argument"));
   if (!evj_ret) {
     ga_clear(&ga);
   }

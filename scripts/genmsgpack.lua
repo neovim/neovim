@@ -37,6 +37,8 @@ c_proto = Ct(
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
   Cg(Cc(false), 'async') *
   (fill * Cg((P('FUNC_API_SINCE(') * C(num ^ 1)) * P(')'), 'since') ^ -1) *
+  (fill * Cg((P('FUNC_API_DEPRECATED_SINCE(') * C(num ^ 1)) * P(')'),
+              'deprecated_since') ^ -1) *
   (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEVAL') * Cc(true)), 'noeval') ^ -1) *
@@ -134,6 +136,10 @@ for i,f in ipairs(shallowcopy(functions)) do
       os.exit(1)
     end
     f.since = tonumber(f.since)
+    if f.deprecated_since ~= nil then
+      f.deprecated_since = tonumber(f.deprecated_since)
+    end
+
     if startswith(f.name, "nvim_buf_") then
       ismethod = true
     elseif startswith(f.name, "nvim_win_") then
@@ -247,8 +253,7 @@ for i = 1, #functions do
     end
     output:write('\n')
     output:write('\n  if (args.size != '..#fn.parameters..') {')
-    output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
-    output:write('\n    error->set = true;')
+    output:write('\n    api_set_error(error, kErrorTypeException, "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
     output:write('\n    goto cleanup;')
     output:write('\n  }\n')
 
@@ -273,8 +278,7 @@ for i = 1, #functions do
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
         end
         output:write('\n  } else {')
-        output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
-        output:write('\n    error->set = true;')
+        output:write('\n    api_set_error(error, kErrorTypeException, "Wrong type for argument '..j..', expecting '..param[1]..'");')
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
       else
@@ -314,7 +318,7 @@ for i = 1, #functions do
         output:write('error);\n')
       end
       -- and check for the error
-      output:write('\n  if (error->set) {')
+      output:write('\n  if (ERROR_SET(error)) {')
       output:write('\n    goto cleanup;')
       output:write('\n  }\n')
     else
@@ -394,9 +398,9 @@ local function process_function(fn)
 
   static int %s(lua_State *lstate)
   {
-    Error err = {.set = false};
+    Error err = ERROR_INIT;
     if (lua_gettop(lstate) != %i) {
-      api_set_error(&err, Validation, "Expected %i argument%s");
+      api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
       return luaL_error(lstate, "%%s", err.msg);
     }
   ]], lua_c_function_name, #fn.parameters, #fn.parameters,
@@ -415,7 +419,7 @@ local function process_function(fn)
     write_shifted_output(output, string.format([[
     const %s %s = nlua_pop_%s(lstate, &err);
 
-    if (err.set) {
+    if (ERROR_SET(&err)) {
       %s
       return luaL_error(lstate, "%%s", err.msg);
     }
@@ -441,7 +445,7 @@ local function process_function(fn)
     write_shifted_output(output, string.format([[
     const %s ret = %s(%s);
     %s
-    if (err.set) {
+    if (ERROR_SET(&err)) {
       return luaL_error(lstate, "%%s", err.msg);
     }
     nlua_push_%s(lstate, ret);
@@ -453,7 +457,7 @@ local function process_function(fn)
     write_shifted_output(output, string.format([[
     %s(%s);
     %s
-    if (err.set) {
+    if (ERROR_SET(&err)) {
       return luaL_error(lstate, "%%s", err.msg);
     }
     return 0;

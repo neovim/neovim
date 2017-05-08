@@ -3,20 +3,13 @@
 " Maintainer:	Preben 'Peppe' Guldberg <peppe@wielders.org>
 " Last Change:	8 Oct 2004
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " characters in newsgroup names
-if version < 600
-  set isk=@,48-57,.,-,_,+
-else
-  setlocal isk=@,48-57,.,-,_,+
-endif
+setlocal isk=@,48-57,.,-,_,+
 
 syn match slrnscComment		"%.*$"
 syn match slrnscSectionCom	".].*"lc=2
@@ -51,34 +44,24 @@ syn match slrnscScoreIdent	contained "%.*"
 syn match slrnScoreLine		"^\s*Score::\=\s\+=\=[-+]\=\d\+\s*\(%.*\)\=$" skipempty nextgroup=slrnscScoreItem contains=slrnscScore,slrnscDelim,slrnscOper,slrnscNumber,slrnscScoreIdent
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_slrnsc_syntax_inits")
-  if version < 508
-    let did_slrnsc_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink slrnscComment		Comment
-  HiLink slrnscSectionCom	slrnscComment
-  HiLink slrnscGroup		String
-  HiLink slrnscNumber		Number
-  HiLink slrnscDate		Special
-  HiLink slrnscDelim		Delimiter
-  HiLink slrnscComma		SpecialChar
-  HiLink slrnscOper		SpecialChar
-  HiLink slrnscEsc		String
-  HiLink slrnscSectionStd	Type
-  HiLink slrnscSectionNot	Delimiter
-  HiLink slrnscItem		Statement
-  HiLink slrnscScore		Keyword
-  HiLink slrnscScoreIdent	Identifier
-  HiLink slrnscInclude		Keyword
+hi def link slrnscComment		Comment
+hi def link slrnscSectionCom	slrnscComment
+hi def link slrnscGroup		String
+hi def link slrnscNumber		Number
+hi def link slrnscDate		Special
+hi def link slrnscDelim		Delimiter
+hi def link slrnscComma		SpecialChar
+hi def link slrnscOper		SpecialChar
+hi def link slrnscEsc		String
+hi def link slrnscSectionStd	Type
+hi def link slrnscSectionNot	Delimiter
+hi def link slrnscItem		Statement
+hi def link slrnscScore		Keyword
+hi def link slrnscScoreIdent	Identifier
+hi def link slrnscInclude		Keyword
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "slrnsc"
 

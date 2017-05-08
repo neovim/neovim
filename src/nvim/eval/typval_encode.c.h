@@ -485,7 +485,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             }
             if (is_string) {
               TYPVAL_ENCODE_CONV_STR_STRING(tv, buf, len);
-            } else {
+            } else {  // -V523
               TYPVAL_ENCODE_CONV_STRING(tv, buf, len);
             }
             xfree(buf);
@@ -607,7 +607,7 @@ _convert_one_value_regular_dict: {}
 typval_encode_stop_converting_one_item:
   return OK;
   // Prevent “unused label” warnings.
-  goto typval_encode_stop_converting_one_item;
+  goto typval_encode_stop_converting_one_item;  // -V779
 }
 
 TYPVAL_ENCODE_SCOPE int _TYPVAL_ENCODE_ENCODE(
@@ -810,5 +810,5 @@ encode_vim_to__error_ret:
   _mp_destroy(mpstack);
   return FAIL;
   // Prevent “unused label” warnings.
-  goto typval_encode_stop_converting_one_item;
+  goto typval_encode_stop_converting_one_item;  // -V779
 }

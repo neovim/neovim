@@ -12,11 +12,8 @@
 "		Attempted to match SAS default syntax colors;
 "		Changed syncing so it doesn't lose colors on large blocks;
 "		Much thanks to Bob Heckel for knowledgeable tweaking.
-"  For version 5.x: Clear all syntax items
-"  For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-   syntax clear
-elseif exists("b:current_syntax")
+"  quit when a syntax file was already loaded
+if exists("b:current_syntax")
    finish
 endif
 
@@ -44,7 +41,7 @@ syn region sasComment start=";\s*\*"hs=s+1 end=";" contains=sasTodo
 " Comments with * starting after a semicolon (Paulo Tanimoto)
 syn region sasComment start="^\s*\*" end=";" contains=sasTodo
 
-" This line defines macro variables in code.  HiLink at end of file
+" This line defines macro variables in code.  "hi def link" at end of file
 " defines the color scheme. Begin region with ampersand and end with
 " any non-word character offset by -1; put ampersand in the skip list
 " just in case it is used to concatenate macro variable values.
@@ -52,11 +49,7 @@ syn region sasComment start="^\s*\*" end=";" contains=sasTodo
 " Thanks to ronald höllwarth for this fix to an intra-versioning
 " problem with this little feature
 
-if version < 600
-   syn region sasMacroVar	start="\&" skip="[_&]" end="\W"he=e-1
-else		 " for the older Vim's just do it their way ...
-   syn region sasMacroVar	start="&" skip="[_&]" end="\W"he=e-1
-endif
+syn region sasMacroVar	start="&" skip="[_&]" end="\W"he=e-1
 
 
 " I dont think specific PROCs need to be listed if use this line (Bob Heckel).
@@ -218,62 +211,52 @@ syn keyword sasUnderscore	_ALL_ _AUTOMATIC_ _CHARACTER_ _INFILE_ _N_ _NAME_ _NUL
 " End of SAS Functions
 
 "  Define the default highlighting.
-"  For version 5.7 and earlier: only when not done already
-"  For version 5.8 and later: only when an item doesn't have highlighting yet
+"  Only when an item doesn't have highlighting yet
 
-if version >= 508 || !exists("did_sas_syntax_inits")
-   if version < 508
-      let did_sas_syntax_inits = 1
-      command -nargs=+ HiLink hi link <args>
-   else
-      command -nargs=+ HiLink hi def link <args>
-   endif
 
-   " Default sas enhanced editor color syntax
-	hi sComment	term=bold cterm=NONE ctermfg=Green ctermbg=Black gui=NONE guifg=DarkGreen guibg=White
-	hi sCard	term=bold cterm=NONE ctermfg=Black ctermbg=Yellow gui=NONE guifg=Black guibg=LightYellow
-	hi sDate_Time	term=NONE cterm=bold ctermfg=Green ctermbg=Black gui=bold guifg=SeaGreen guibg=White
-	hi sKeyword	term=NONE cterm=NONE ctermfg=Blue  ctermbg=Black gui=NONE guifg=Blue guibg=White
-	hi sFmtInfmt	term=NONE cterm=NONE ctermfg=LightGreen ctermbg=Black gui=NONE guifg=SeaGreen guibg=White
-	hi sString	term=NONE cterm=NONE ctermfg=Magenta ctermbg=Black gui=NONE guifg=Purple guibg=White
-	hi sText	term=NONE cterm=NONE ctermfg=White ctermbg=Black gui=bold guifg=Black guibg=White
-	hi sNumber	term=NONE cterm=bold ctermfg=Green ctermbg=Black gui=bold guifg=SeaGreen guibg=White
-	hi sProc	term=NONE cterm=bold ctermfg=Blue ctermbg=Black gui=bold guifg=Navy guibg=White
-	hi sSection	term=NONE cterm=bold ctermfg=Blue ctermbg=Black gui=bold guifg=Navy guibg=White
-	hi mDefine	term=NONE cterm=bold ctermfg=White ctermbg=Black gui=bold guifg=Black guibg=White
-	hi mKeyword	term=NONE cterm=NONE ctermfg=Blue ctermbg=Black gui=NONE guifg=Blue guibg=White
-	hi mReference	term=NONE cterm=bold ctermfg=White ctermbg=Black gui=bold guifg=Blue guibg=White
-	hi mSection	term=NONE cterm=NONE ctermfg=Blue ctermbg=Black gui=bold guifg=Navy guibg=White
-	hi mText	term=NONE cterm=NONE ctermfg=White ctermbg=Black gui=bold guifg=Black guibg=White
+" Default sas enhanced editor color syntax
+hi sComment	term=bold cterm=NONE ctermfg=Green ctermbg=Black gui=NONE guifg=DarkGreen guibg=White
+hi sCard	term=bold cterm=NONE ctermfg=Black ctermbg=Yellow gui=NONE guifg=Black guibg=LightYellow
+hi sDate_Time	term=NONE cterm=bold ctermfg=Green ctermbg=Black gui=bold guifg=SeaGreen guibg=White
+hi sKeyword	term=NONE cterm=NONE ctermfg=Blue  ctermbg=Black gui=NONE guifg=Blue guibg=White
+hi sFmtInfmt	term=NONE cterm=NONE ctermfg=LightGreen ctermbg=Black gui=NONE guifg=SeaGreen guibg=White
+hi sString	term=NONE cterm=NONE ctermfg=Magenta ctermbg=Black gui=NONE guifg=Purple guibg=White
+hi sText	term=NONE cterm=NONE ctermfg=White ctermbg=Black gui=bold guifg=Black guibg=White
+hi sNumber	term=NONE cterm=bold ctermfg=Green ctermbg=Black gui=bold guifg=SeaGreen guibg=White
+hi sProc	term=NONE cterm=bold ctermfg=Blue ctermbg=Black gui=bold guifg=Navy guibg=White
+hi sSection	term=NONE cterm=bold ctermfg=Blue ctermbg=Black gui=bold guifg=Navy guibg=White
+hi mDefine	term=NONE cterm=bold ctermfg=White ctermbg=Black gui=bold guifg=Black guibg=White
+hi mKeyword	term=NONE cterm=NONE ctermfg=Blue ctermbg=Black gui=NONE guifg=Blue guibg=White
+hi mReference	term=NONE cterm=bold ctermfg=White ctermbg=Black gui=bold guifg=Blue guibg=White
+hi mSection	term=NONE cterm=NONE ctermfg=Blue ctermbg=Black gui=bold guifg=Navy guibg=White
+hi mText	term=NONE cterm=NONE ctermfg=White ctermbg=Black gui=bold guifg=Black guibg=White
 
 " Colors that closely match SAS log colors for default color scheme
-	hi lError	term=NONE cterm=NONE ctermfg=Red ctermbg=Black gui=none guifg=Red guibg=White
-	hi lWarning	term=NONE cterm=NONE ctermfg=Green ctermbg=Black gui=none guifg=Green guibg=White
-	hi lNote	term=NONE cterm=NONE ctermfg=Cyan ctermbg=Black gui=none guifg=Blue guibg=White
+hi lError	term=NONE cterm=NONE ctermfg=Red ctermbg=Black gui=none guifg=Red guibg=White
+hi lWarning	term=NONE cterm=NONE ctermfg=Green ctermbg=Black gui=none guifg=Green guibg=White
+hi lNote	term=NONE cterm=NONE ctermfg=Cyan ctermbg=Black gui=none guifg=Blue guibg=White
 
 
-   " Special hilighting for the SAS proc section
+" Special hilighting for the SAS proc section
 
-	HiLink	sasComment	sComment
-	HiLink	sasConditional	sKeyword
-	HiLink	sasStep		sSection
-	HiLink	sasFunction	sKeyword
-	HiLink	sasMacro	mKeyword
-	HiLink	sasMacroVar	NonText
-	HiLink	sasNumber	sNumber
-	HiLink	sasStatement	sKeyword
-	HiLink	sasString	sString
-	HiLink	sasProc		sProc
-   " (Bob Heckel)
-	HiLink	sasTodo		Todo
-	HiLink	sasErrMsg	lError
-	HiLink	sasWarnMsg	lWarning
-	HiLink	sasLogMsg	lNote
-	HiLink	sasCards	sCard
-  " (Bob Heckel)
-	HiLink	sasUnderscore	PreProc
-	delcommand HiLink
-endif
+hi def link sasComment	sComment
+hi def link sasConditional	sKeyword
+hi def link sasStep		sSection
+hi def link sasFunction	sKeyword
+hi def link sasMacro	mKeyword
+hi def link sasMacroVar	NonText
+hi def link sasNumber	sNumber
+hi def link sasStatement	sKeyword
+hi def link sasString	sString
+hi def link sasProc		sProc
+" (Bob Heckel)
+hi def link sasTodo		Todo
+hi def link sasErrMsg	lError
+hi def link sasWarnMsg	lWarning
+hi def link sasLogMsg	lNote
+hi def link sasCards	sCard
+" (Bob Heckel)
+hi def link sasUnderscore	PreProc
 
 " Syncronize from beginning to keep large blocks from losing
 " syntax coloring while moving through code.

@@ -9,21 +9,7 @@ Key mapping, abbreviations and user-defined commands.
 This subject is introduced in sections |05.3|, |24.7| and |40.1| of the user
 manual.
 
-1. Key mapping			|key-mapping|
-   1.1 MAP COMMANDS			|:map-commands|
-   1.2 Special arguments		|:map-arguments|
-   1.3 Mapping and modes		|:map-modes|
-   1.4 Listing mappings			|map-listing|
-   1.5 Mapping special keys		|:map-special-keys|
-   1.6 Special characters		|:map-special-chars|
-   1.7 What keys to map			|map-which-keys|
-   1.8 Examples				|map-examples|
-   1.9 Using mappings			|map-typing|
-   1.10 Mapping alt-keys		|:map-alt-keys|
-   1.11 Mapping an operator		|:map-operator|
-2. Abbreviations		|abbreviations|
-3. Local mappings and functions	|script-local|
-4. User-defined commands	|user-commands|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Key mapping				*key-mapping* *mapping* *macro*
@@ -437,6 +423,9 @@ with a space.
 Note: When using mappings for Visual mode, you can use the "'<" mark, which
 is the start of the last selected Visual area in the current buffer |'<|.
 
+The |:filter| command can be used to select what mappings to list.  The
+pattern is matched against the {lhs} and {rhs} in the raw form.
+
 							*:map-verbose*
 When 'verbose' is non-zero, listing a key map will also display where it was
 last defined.  Example: >
@@ -450,42 +439,30 @@ See |:verbose-cmd| for more information.
 
 1.5 MAPPING SPECIAL KEYS				*:map-special-keys*
 
-There are three ways to map a special key:
+There are two ways to map a special key:
 1. The Vi-compatible method: Map the key code.  Often this is a sequence that
    starts with <Esc>.  To enter a mapping like this you type ":map " and then
    you have to type CTRL-V before hitting the function key.  Note that when
-   the key code for the key is in the termcap (the t_ options), it will
-   automatically be translated into the internal code and become the second
-   way of mapping (unless the 'k' flag is included in 'cpoptions').
+   the key code for the key is in the termcap, it will automatically be
+   translated into the internal code and become the second way of mapping
+   (unless the 'k' flag is included in 'cpoptions').
 2. The second method is to use the internal code for the function key.  To
    enter such a mapping type CTRL-K and then hit the function key, or use
    the form "#1", "#2", .. "#9", "#0", "<Up>", "<S-Down>", "<S-F7>", etc.
    (see table of keys |key-notation|, all keys from <Up> can be used).  The
    first ten function keys can be defined in two ways: Just the number, like
    "#2", and with "<F>", like "<F2>".  Both stand for function key 2.  "#0"
-   refers to function key 10, defined with option 't_f10', which may be
-   function key zero on some keyboards.  The <> form cannot be used when
-   'cpoptions' includes the '<' flag.
-3. Use the termcap entry, with the form <t_xx>, where "xx" is the name of the
-   termcap entry.  Any string entry can be used.  For example: >
-     :map <t_F3> G
-<  Maps function key 13 to "G".  This does not work if 'cpoptions' includes
-   the '<' flag.
-
-The advantage of the second and third method is that the mapping will work on
-different terminals without modification (the function key will be
-translated into the same internal code or the actual key code, no matter what
-terminal you are using.  The termcap must be correct for this to work, and you
-must use the same mappings).
+   refers to function key 10.  The <> form cannot be used when 'cpoptions'
+   includes the '<' flag.
 
 DETAIL: Vim first checks if a sequence from the keyboard is mapped.  If it
-isn't the terminal key codes are tried (see |terminal-options|).  If a
-terminal code is found it is replaced with the internal code.  Then the check
-for a mapping is done again (so you can map an internal code to something
-else).  What is written into the script file depends on what is recognized.
-If the terminal key code was recognized as a mapping the key code itself is
-written to the script file.  If it was recognized as a terminal code the
-internal code is written to the script file.
+isn't the terminal key codes are tried.  If a terminal code is found it is
+replaced with the internal code.  Then the check for a mapping is done again
+(so you can map an internal code to something else).  What is written into the
+script file depends on what is recognized. If the terminal key code was
+recognized as a mapping the key code itself is written to the script file.  If
+it was recognized as a terminal code the internal code is written to the
+script file.
 
 
 1.6 SPECIAL CHARACTERS					*:map-special-chars*
@@ -720,9 +697,6 @@ special key: >
 Don't type a real <Esc>, Vim will recognize the key code and replace it with
 <F1> anyway.
 
-Another problem may be that when keeping ALT or Meta pressed the terminal
-prepends ESC instead of setting the 8th bit.  See |:map-alt-keys|.
-
 						*recursive_mapping*
 If you include the {lhs} in the {rhs} you have a recursive mapping.  When
 {lhs} is typed, it will be replaced with {rhs}.  When the {lhs} which is
@@ -762,46 +736,14 @@ in the original Vi, you would get back the text before the first undo).
 
 1.10 MAPPING ALT-KEYS					*:map-alt-keys*
 
-In the GUI Vim handles the Alt key itself, thus mapping keys with ALT should
-always work.  But in a terminal Vim gets a sequence of bytes and has to figure
-out whether ALT was pressed or not.
-
-By default Vim assumes that pressing the ALT key sets the 8th bit of a typed
-character.  Most decent terminals can work that way, such as xterm, aterm and
-rxvt.  If your <A-k> mappings don't work it might be that the terminal is
-prefixing the character with an ESC character.  But you can just as well type
-ESC before a character, thus Vim doesn't know what happened (except for
-checking the delay between characters, which is not reliable).
-
-As of this writing, some mainstream terminals like gnome-terminal and konsole
-use the ESC prefix.  There doesn't appear a way to have them use the 8th bit
-instead.  Xterm should work well by default.  Aterm and rxvt should work well
-when started with the "--meta8" argument.  You can also tweak resources like
-"metaSendsEscape", "eightBitInput" and "eightBitOutput".
-
-On the Linux console, this behavior can be toggled with the "setmetamode"
-command.  Bear in mind that not using an ESC prefix could get you in trouble
-with other programs.  You should make sure that bash has the "convert-meta"
-option set to "on" in order for your Meta keybindings to still work on it
-(it's the default readline behavior, unless changed by specific system
-configuration).  For that, you can add the line: >
-
-	set convert-meta on
-
-to your ~/.inputrc file. If you're creating the file, you might want to use: >
-
-	$include /etc/inputrc
-
-as the first line, if that file exists on your system, to keep global options.
-This may cause a problem for entering special characters, such as the umlaut.
-Then you should use CTRL-V before that character.
-
-Bear in mind that convert-meta has been reported to have troubles when used in
-UTF-8 locales.  On terminals like xterm, the "metaSendsEscape" resource can be
-toggled on the fly through the "Main Options" menu, by pressing Ctrl-LeftClick
-on the terminal; that's a good last resource in case you want to send ESC when
-using other applications but not when inside VIM.
-
+In the GUI Nvim handles the |ALT| key itself, thus mapping keys with ALT
+should always work.  But in a terminal Nvim gets a sequence of bytes and has
+to figure out whether ALT was pressed.  Terminals may use ESC to indicate that
+ALT was pressed.  If ESC is followed by a {key} within 'ttimeoutlen'
+milliseconds, the ESC is interpreted as:
+        <ALT-{key}>
+otherwise it is interpreted as two key presses:
+        <ESC> {key}
 
 1.11 MAPPING AN OPERATOR				*:map-operator*
 
@@ -1171,6 +1113,10 @@ scripts.
 			    "	Command has the -register attribute
 			    b	Command is local to current buffer
 			(see below for details on attributes)
+			The list can be filtered on command name with
+			|:filter|, e.g., to list all commands with "Pyth" in
+			the name: >
+				filter Pyth command
 
 :com[mand] {cmd}	List the user-defined commands that start with {cmd}
 

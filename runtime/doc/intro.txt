@@ -6,14 +6,7 @@
 
 Introduction to Vim					*ref* *reference*
 
-1. Introduction			|intro|
-2. Vim on the internet		|internet|
-3. Credits			|credits|
-4. Notation			|notation|
-5. Modes, introduction		|vim-modes-intro|
-6. Switching from mode to mode	|mode-switching|
-7. The window contents		|window-contents|
-8. Definitions			|definitions|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						*intro*
@@ -33,11 +26,6 @@ It can be accessed from within Vim with the <Help> or <F1> key and with the
    The 'helpfile' option can be set to the name of the help file, in case it
 is not located in the default place.  You can jump to subjects like with tags:
 Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
-
-This manual refers to Vim on various machines.  There may be small differences
-between different computers and terminals.  Besides the remarks given in this
-document, there is a separate document for each supported system, see
-|sys-file-list|.
 
 							*pronounce*
 Vim is pronounced as one word, like Jim, not vi-ai-em.  It's written with a
@@ -92,21 +80,18 @@ mention that.
 
 						*mail-list* *maillist*
 There are several mailing lists for Vim:
-<vim@vim.org>
+<vim@vim.org>					*vim-use* *vim_use*
 	For discussions about using existing versions of Vim: Useful mappings,
 	questions, answers, where to get a specific version, etc.  There are
 	quite a few people watching this list and answering questions, also
 	for beginners.  Don't hesitate to ask your question here.
-<vim-dev@vim.org>				*vim-dev* *vimdev*
+<vim-dev@vim.org>				*vim-dev* *vim_dev* *vimdev*
 	For discussions about changing Vim: New features, porting, patches,
 	beta-test versions, etc.
-<vim-announce@vim.org>				*vim-announce*
+<vim-announce@vim.org>				*vim-announce* *vim_announce*
 	Announcements about new versions of Vim; also for beta-test versions
 	and ports to different systems.  This is a read-only list.
-<vim-multibyte@vim.org>				*vim-multibyte*
-	For discussions about using and improving the multi-byte aspects of
-	Vim.
-<vim-mac@vim.org>				*vim-mac*
+<vim-mac@vim.org>				*vim-mac* *vim_mac*
 	For discussions about using and improving the Macintosh version of
 	Vim.
 
@@ -131,10 +116,7 @@ http://www.vim.org/maillist.php
 
 Bug reports:				*bugs* *bug-reports* *bugreport.vim*
 
-Send bug reports to: Vim Developers <vim-dev@vim.org>
-This is a maillist, you need to become a member first and many people will see
-the message.  If you don't want that, e.g. because it is a security issue,
-send it to <bugs@vim.org>, this only goes to the Vim maintainer (that's Bram).
+Report bugs on GitHub: https://github.com/neovim/neovim/issues
 
 Please be brief; all the time that is spent on answering mail is subtracted
 from the time that is spent on improving Vim!  Always give a reproducible
@@ -453,7 +435,6 @@ notation	meaning		    equivalent	decimal value(s)	~
 <M-...>		alt-key or meta-key		*META* *meta* *alt* *<M-*
 <A-...>		same as <M-...>			*<A-*
 <D-...>		command-key or "super" key	*<D-*
-<t_xx>		key with "xx" entry in termcap
 -----------------------------------------------------------------------
 
 Note: The shifted cursor keys, the help key, and the undo key are only
@@ -488,7 +469,6 @@ the ":map" command.  The rules are:
 	   <S-F11>		Shifted function key 11
 	   <M-a>		Meta- a  ('a' with bit 8 set)
 	   <M-A>		Meta- A  ('A' with bit 8 set)
-	   <t_kd>		"kd" termcap entry (cursor down key)
 
 The <> notation uses <lt> to escape the special meaning of key names.  Using a
 backslash also works, but only when 'cpoptions' does not include the 'B' flag.

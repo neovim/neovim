@@ -126,7 +126,7 @@ describe('api/buf', function()
       eq(1, curbufmeths.get_number())
       local err, emsg = pcall(bufmeths.set_lines, 1, 1, 2, false, {'b\na'})
       eq(false, err)
-      local exp_emsg = 'string cannot contain newlines'
+      local exp_emsg = 'String cannot contain newlines'
       -- Expected {filename}:{lnum}: {exp_emsg}
       eq(': ' .. exp_emsg, emsg:sub(-#exp_emsg - 2))
     end)
@@ -281,7 +281,7 @@ describe('api/buf', function()
       eq(1, funcs.exists('b:lua'))
       curbufmeths.del_var('lua')
       eq(0, funcs.exists('b:lua'))
-      eq({false, 'Key "lua" doesn\'t exist'}, meth_pcall(curbufmeths.del_var, 'lua'))
+      eq({false, 'Key does not exist: lua'}, meth_pcall(curbufmeths.del_var, 'lua'))
       curbufmeths.set_var('lua', 1)
       command('lockvar b:lua')
       eq({false, 'Key is locked: lua'}, meth_pcall(curbufmeths.del_var, 'lua'))

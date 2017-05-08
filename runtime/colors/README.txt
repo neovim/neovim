@@ -41,8 +41,15 @@ this autocmd might be useful:
      autocmd SourcePre */colors/blue_sky.vim set background=dark
 Replace "blue_sky" with the name of the colorscheme.
 
-In case you want to tweak a colorscheme after it was loaded, check out that
+In case you want to tweak a colorscheme after it was loaded, check out the
 ColorScheme autocmd event.
+
+To customize a colorscheme use another name, e.g.  "~/.vim/colors/mine.vim",
+and use `:runtime` to load the original colorscheme:
+	" load the "evening" colorscheme
+	runtime colors/evening.vim
+	" change the color of statements
+	hi Statement ctermfg=Blue guifg=Blue
 
 To see which highlight group is used where, find the help for
 "highlight-groups" and "group-name".

@@ -8,11 +8,8 @@
 
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -32,11 +29,7 @@ syn case ignore
 let fortran_free_source=1
 
 " Load FORTRAN syntax file
-if version < 600
-  source <sfile>:p:h/fortran.vim
-else
-  runtime! syntax/fortran.vim
-endif
+runtime! syntax/fortran.vim
 unlet b:current_syntax
 
 
@@ -95,40 +88,30 @@ endif
 
 
 " Define the default highlighting
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_tak_syntax_inits")
-  if version < 508
-    let did_tak_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink takMacro		Macro
-  HiLink takOptions		Special
-  HiLink takRoutine		Type
-  HiLink takControl		Special
-  HiLink takSolids		Special
-  HiLink takSolidsArg		Statement
-  HiLink takIdentifier		Identifier
+hi def link takMacro		Macro
+hi def link takOptions		Special
+hi def link takRoutine		Type
+hi def link takControl		Special
+hi def link takSolids		Special
+hi def link takSolidsArg		Statement
+hi def link takIdentifier		Identifier
 
-  HiLink takFortran		PreProc
-  HiLink takMotran		PreProc
+hi def link takFortran		PreProc
+hi def link takMotran		PreProc
 
-  HiLink takComment		Comment
-  HiLink takHeader		Typedef
-  HiLink takIncludeFile		Type
-  HiLink takInteger		Number
-  HiLink takFloat		Float
-  HiLink takScientific		Float
+hi def link takComment		Comment
+hi def link takHeader		Typedef
+hi def link takIncludeFile		Type
+hi def link takInteger		Number
+hi def link takFloat		Float
+hi def link takScientific		Float
 
-  HiLink takEndData		Macro
+hi def link takEndData		Macro
 
-  HiLink takTodo		Todo
+hi def link takTodo		Todo
 
-  delcommand HiLink
-endif
 
 
 let b:current_syntax = "tak"

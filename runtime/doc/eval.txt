@@ -12,23 +12,7 @@ Note: Expression evaluation can be disabled at compile time.  If this has been
 done, the features in this document are not available.	See |+eval| and
 |no-eval-feature|.
 
-1.  Variables			|variables|
-    1.1 Variable types
-    1.2 Function references		|Funcref|
-    1.3 Lists				|Lists|
-    1.4 Dictionaries			|Dictionaries|
-    1.5 More about variables		|more-variables|
-2.  Expression syntax		|expression-syntax|
-3.  Internal variable		|internal-variables|
-4.  Builtin Functions		|functions|
-5.  Defining functions		|user-functions|
-6.  Curly braces names		|curly-braces-names|
-7.  Commands			|expression-commands|
-8.  Exception handling		|exception-handling|
-9.  Examples			|eval-examples|
-10. No +eval feature		|no-eval-feature|
-11. The sandbox			|eval-sandbox|
-12. Textlock			|textlock|
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Variables						*variables*
@@ -38,7 +22,7 @@ done, the features in this document are not available.	See |+eval| and
 There are six types of variables:
 
 Number		A 32 or 64 bit signed number.  |expr-number| *Number*
-		Examples:  -123  0x10  0177
+		Examples:  -123  0x10  0177  0b1011
 
 Float		A floating point number. |floating-point-format| *Float*
 		Examples: 123.456  1.15e-6  -1.1e3
@@ -107,7 +91,7 @@ To test for a non-empty string, use empty(): >
 							*non-zero-arg*
 Function arguments often behave slightly different from |TRUE|: If the
 argument is present and it evaluates to a non-zero Number, |v:true| or a
-non-empty String, then the value is considere to be TRUE.
+non-empty String, then the value is considered to be TRUE.
 Note that " " and "0" are also non-empty strings, thus cause the mode to be
 cleared.  A List, Dictionary or Float is not a Number or String, thus
 evaluates to FALSE.
@@ -394,10 +378,6 @@ This works like: >
 	:   let index = index + 1
 	:endwhile
 
-Note that all items in the list should be of the same type, otherwise this
-results in error |E706|.  To avoid this |:unlet| the variable at the end of
-the loop.
-
 If all you want to do is modify each item in the list then the |map()|
 function will be a simpler method than a for loop.
 
@@ -631,13 +611,17 @@ It's possible to form a variable name with curly braces, see
 
 Expression syntax summary, from least to most significant:
 
-|expr1| expr2 ? expr1 : expr1	if-then-else
+|expr1|	expr2
+	expr2 ? expr1 : expr1	if-then-else
 
-|expr2|	expr3 || expr3 ..	logical OR
+|expr2|	expr3
+	expr3 || expr3 ..	logical OR
 
-|expr3|	expr4 && expr4 ..	logical AND
+|expr3|	expr4
+	expr4 && expr4 ..	logical AND
 
-|expr4|	expr5 == expr5		equal
+|expr4|	expr5
+	expr5 == expr5		equal
 	expr5 != expr5		not equal
 	expr5 >	 expr5		greater than
 	expr5 >= expr5		greater than or equal
@@ -654,24 +638,28 @@ Expression syntax summary, from least to most significant:
 	expr5 is expr5		same |List| instance
 	expr5 isnot expr5	different |List| instance
 
-|expr5|	expr6 +	 expr6 ..	number addition or list concatenation
+|expr5|	expr6
+	expr6 +	 expr6 ..	number addition or list concatenation
 	expr6 -	 expr6 ..	number subtraction
 	expr6 .	 expr6 ..	string concatenation
 
-|expr6|	expr7 *	 expr7 ..	number multiplication
+|expr6|	expr7
+	expr7 *	 expr7 ..	number multiplication
 	expr7 /	 expr7 ..	number division
 	expr7 %	 expr7 ..	number modulo
 
-|expr7|	! expr7			logical NOT
+|expr7|	expr8
+	! expr7			logical NOT
 	- expr7			unary minus
 	+ expr7			unary plus
 
-|expr8|	expr8[expr1]		byte of a String or item of a |List|
+|expr8|	expr9
+	expr8[expr1]		byte of a String or item of a |List|
 	expr8[expr1 : expr1]	substring of a String or sublist of a |List|
 	expr8.name		entry in a |Dictionary|
 	expr8(expr1, ...)	function call with |Funcref| variable
 
-|expr9| number			number constant
+|expr9|	number			number constant
 	"string"		string constant, backslash is special
 	'string'		string constant, ' is doubled
 	[expr1, ...]		|List|
@@ -931,7 +919,7 @@ expr8[expr1]		item of String or |List|	*expr-[]* *E111*
 
 If expr8 is a Number or String this results in a String that contains the
 expr1'th single byte from expr8.  expr8 is used as a String, expr1 as a
-Number.  This doesn't recognize multi-byte encodings, see |byteidx()| for
+Number.  This doesn't recognize multi-byte encodings, see `byteidx()` for
 an alternative, or use `split()` to turn the string into a list of characters.
 
 Index zero gives the first byte.  This is like it works in C.  Careful:
@@ -1022,9 +1010,10 @@ When expr8 is a |Funcref| type variable, invoke the function it refers to.
 number
 ------
 number			number constant			*expr-number* 
-						*hex-number* *octal-number*
+				*hex-number* *octal-number* *binary-number*
 
-Decimal, Hexadecimal (starting with 0x or 0X), or Octal (starting with 0).
+Decimal, Hexadecimal (starting with 0x or 0X), Binary (starting with 0b or 0B)
+and Octal (starting with 0).
 
 						*floating-point-format*
 Floating point numbers can be written in two forms:
@@ -1213,8 +1202,8 @@ The arguments are optional.  Example: >
 <	error function
 							*closure*
 Lambda expressions can access outer scope variables and arguments.  This is
-often called a closure.  Example where "i" a and "a:arg" are used in a lambda
-while they exists in the function scope.  They remain valid even after the
+often called a closure.  Example where "i" and "a:arg" are used in a lambda
+while they exist in the function scope.  They remain valid even after the
 function returns: >
 	:function Foo(arg)
 	:  let i = 3
@@ -1232,7 +1221,7 @@ Examples for using a lambda expression with |sort()|, |map()| and |filter()|: >
 	:echo sort([3,7,2,1,4], {a, b -> a - b})
 <	[1, 2, 3, 4, 7]
 
-The lambda expression is also useful for Channel, Job and timer: >
+The lambda expression is also useful for jobs and timers: >
 	:let timer = timer_start(500,
 			\ {-> execute("echo 'Handler called'", "")},
 			\ {'repeat': 3})
@@ -1296,7 +1285,8 @@ b:changedtick	The total number of changes to the current buffer.  It is
 		    :	let my_changedtick = b:changedtick
 		    :	call My_Update()
 		    :endif
-<
+<		You cannot change or delete the b:changedtick variable.
+
 						*window-variable* *w:var* *w:*
 A variable name that is preceded with "w:" is local to the current window.  It
 is deleted when the window is closed.
@@ -1425,8 +1415,8 @@ v:beval_winnr	The number of the window, over which the mouse pointer is. Only
 		window gets a number).
 
 					*v:beval_winid* *beval_winid-variable*
-v:beval_winid	The window ID of the window, over which the mouse pointer is.
-		Otherwise like v:beval_winnr.
+v:beval_winid	The |window-ID| of the window, over which the mouse pointer
+		is.  Otherwise like v:beval_winnr.
 
 					*v:char* *char-variable*
 v:char		Argument for evaluating 'formatexpr' and used for the typed
@@ -1524,13 +1514,18 @@ v:errors	Errors found by assert functions, such as |assert_true()|.
 		list by the assert function.
 
 					*v:event* *event-variable*
-v:event		Dictionary of event data for the current |autocommand|.  The
-		available keys differ per event type and are specified at the
-		documentation for each |event|.  The possible keys are:
-			operator	The operation performed.  Unlike
-					|v:operator|, it is set also for an Ex
-					mode command.  For instance, |:yank| is
-					translated to "|y|".
+v:event		Dictionary of event data for the current |autocommand|.  Valid
+		only during the autocommand lifetime: storing or passing
+		`v:event` is invalid.  Copy it instead: >
+			au TextYankPost * let g:foo = deepcopy(v:event)
+<		Keys vary by event; see the documentation for the specific
+		event, e.g. |TextYankPost|.
+			KEY		DESCRIPTION ~
+			operator	The current |operator|.  Also set for
+					Ex commands (unlike |v:operator|). For
+					example if |TextYankPost| is triggered
+					by the |:yank| Ex command then
+					`v:event['operator']` is "y".
 			regcontents	Text stored in the register as a
 					|readfile()|-style list of lines.
 			regname 	Requested register (e.g "x" for "xyy)
@@ -1681,7 +1676,7 @@ v:mouse_win	Window number for a mouse click obtained with |getchar()|.
 		zero when there was no mouse button click.
 
 					*v:mouse_winid* *mouse_winid-variable*
-v:mouse_winid	Window ID for a mouse click obtained with |getchar()|.
+v:mouse_winid	|window-ID| for a mouse click obtained with |getchar()|.
 		The value is zero when there was no mouse button click.
 
 					*v:mouse_lnum* *mouse_lnum-variable*
@@ -1917,9 +1912,10 @@ v:vim_did_enter	Zero until most of startup is done.  It is set to one just
 v:warningmsg	Last given warning message.  It's allowed to set this variable.
 
 					*v:windowid* *windowid-variable*
-v:windowid	Application-specific window ID ("window handle" in MS-Windows)
-		which may be set by any attached UI. Defaults to zero.
-		Note: for windows inside Vim use |winnr()| or |win_getid()|.
+v:windowid	Application-specific window "handle" which may be set by any
+		attached UI. Defaults to zero.
+		Note: For Nvim |windows| use |winnr()| or |win_getid()|, see
+		|window-ID|.
 
 ==============================================================================
 4. Builtin Functions					*functions*
@@ -1947,7 +1943,7 @@ assert_exception( {error} [, {msg}]) none  assert {error} is in v:exception
 assert_fails( {cmd} [, {error}])     none  assert {cmd} fails
 assert_false({actual} [, {msg}])     none  assert {actual} is false
 assert_inrange({lower}, {upper}, {actual} [, {msg}])
-				none  	assert {actual} is inside the range
+				none	assert {actual} is inside the range
 assert_match( {pat}, {text} [, {msg}]) none  assert {pat} matches {text}
 assert_notequal( {exp}, {act} [, {msg}]) none  assert {exp} is not equal {act}
 assert_notmatch( {pat}, {text} [, {msg}]) none  assert {pat} not matches {text}
@@ -1963,7 +1959,7 @@ buflisted({expr})		Number	|TRUE| if buffer {expr} is listed
 bufloaded({expr})		Number	|TRUE| if buffer {expr} is loaded
 bufname({expr})		String	Name of the buffer {expr}
 bufnr({expr} [, {create}])	Number	Number of the buffer {expr}
-bufwinid({expr})		Number	window ID of buffer {expr}
+bufwinid({expr})		Number	|window-ID| of buffer {expr}
 bufwinnr({expr})		Number	window number of buffer {expr}
 byte2line({byte})		Number	line number at byte count {byte}
 byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
@@ -1986,7 +1982,7 @@ cos({expr})			Float	cosine of {expr}
 cosh({expr})			Float	hyperbolic cosine of {expr}
 count({list}, {expr} [, {ic} [, {start}]])
 				Number	 count how many {expr} are in {list}
-cscope_connection([{num} , {dbpath} [, {prepend}]])
+cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
@@ -2016,8 +2012,8 @@ expand({expr} [, {nosuf} [, {list}]])
 feedkeys({string} [, {mode}])	Number	add key sequence to typeahead buffer
 filereadable({file})		Number	|TRUE| if {file} is a readable file
 filewritable({file})		Number	|TRUE| if {file} is a writable file
-filter({expr}, {string})	List/Dict  remove items from {expr} where
-				{string} is 0
+filter({expr1}, {expr2})	List/Dict  remove items from {expr1} where
+					{expr2} is 0
 finddir({name}[, {path}[, {count}]])
 				String	find directory {name} in {path}
 findfile({name}[, {path}[, {count}]])
@@ -2041,7 +2037,7 @@ garbagecollect([{atexit}])	none	free memory, breaking cyclic references
 get({list}, {idx} [, {def}])	any	get item {idx} from {list} or {def}
 get({dict}, {key} [, {def}])	any	get item {key} from {dict} or {def}
 get({func}, {what})		any	get property of funcref/partial {func}
-getbufinfo( [{expr}])		List  	information about buffers
+getbufinfo([{expr}])		List	information about buffers
 getbufline({expr}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {expr}
 getbufvar({expr}, {varname} [, {def}])
@@ -2141,7 +2137,7 @@ localtime()			Number	current time
 log({expr})			Float	natural logarithm (base e) of {expr}
 log10({expr})			Float	logarithm of Float {expr} to base 10
 luaeval({expr}[, {expr}])	any	evaluate Lua expression
-map({expr}, {string})		List/Dict  change each item in {expr} to {expr}
+map({expr1}, {expr2})		List/Dict  change each item in {expr1} to {expr}
 maparg({name}[, {mode} [, {abbr} [, {dict}]]])
 				String or Dict
 					rhs of mapping {name} in mode {mode}
@@ -2163,8 +2159,8 @@ matchstr({expr}, {pat}[, {start}[, {count}]])
 				String	{count}'th match of {pat} in {expr}
 matchstrpos({expr}, {pat}[, {start}[, {count}]])
 				List	{count}'th match of {pat} in {expr}
-max({list})			Number	maximum value of items in {list}
-min({list})			Number	minimum value of items in {list}
+max({expr})			Number	maximum value of items in {expr}
+min({expr})			Number	minimum value of items in {expr}
 mkdir({name} [, {path} [, {prot}]])
 				Number	create directory {name}
 mode([expr])			String	current editing mode
@@ -2298,9 +2294,12 @@ tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
 tempname()			String	name for a temporary file
 test_garbagecollect_now()	none	free memory right now for testing
+timer_info([{id}])		List	information about timers
+timer_pause({id}, {pause})	none	pause or unpause a timer
 timer_start({time}, {callback} [, {options}])
 				Number	create a timer
 timer_stop({timer})		none	stop a timer
+timer_stopall()			none	stop all timers
 tolower({expr})			String	the String {expr} switched to lowercase
 toupper({expr})			String	the String {expr} switched to uppercase
 tr({src}, {fromstr}, {tostr})	String	translate chars of {src} in {fromstr}
@@ -2316,10 +2315,10 @@ virtcol({expr})			Number	screen column of cursor or mark
 visualmode([expr])		String	last visual mode used
 wildmenumode()			Number	whether 'wildmenu' mode is active
 win_findbuf({bufnr})		List	find windows containing {bufnr}
-win_getid([{win} [, {tab}]])	Number	get window ID for {win} in {tab}
-win_gotoid({expr})		Number	go to window with ID {expr}
-win_id2tabwin({expr})		List	get tab and window nr from window ID
-win_id2win({expr})		Number	get window nr from window ID
+win_getid([{win} [, {tab}]])	Number	get |window-ID| for {win} in {tab}
+win_gotoid({expr})		Number	go to |window-ID| {expr}
+win_id2tabwin({expr})		List	get tab and window nr from |window-ID|
+win_id2win({expr})		Number	get window nr from |window-ID|
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
 winheight({nr})			Number	height of window {nr}
@@ -2410,7 +2409,7 @@ arglistid([{winnr} [, {tabnr}]])
 		With {winnr} only use this window in the current tab page.
 		With {winnr} and {tabnr} use the window in the specified tab
 		page.
-		{winnr} can be the window number or the window ID.
+		{winnr} can be the window number or the |window-ID|.
 
 							*argv()*
 argv([{nr}])	The result is the {nr}th file in the argument list of the
@@ -2456,7 +2455,7 @@ assert_exception({error} [, {msg}])			*assert_exception()*
 assert_fails({cmd} [, {error}])					*assert_fails()*
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce an error.
-		When {error} is given it must match |v:errmsg|.
+		When {error} is given it must match in |v:errmsg|.
 
 assert_false({actual} [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to
@@ -2645,7 +2644,7 @@ bufnr({expr} [, {create}])
 		them.  Use bufexists() to test for the existence of a buffer.
 
 bufwinid({expr})					*bufwinid()*
-		The result is a Number, which is the window ID of the first
+		The result is a Number, which is the |window-ID| of the first
 		window associated with buffer {expr}.  For the use of {expr},
 		see |bufname()| above.  If buffer {expr} doesn't exist or
 		there is no such window, -1 is returned.  Example: >
@@ -3035,6 +3034,8 @@ delete({fname} [, {flags}])					*delete()*
 
 		When {flags} is "rf": Deletes the directory by the name
 		{fname} and everything in it, recursively.  BE CAREFUL!
+		Note: on MS-Windows it is not possible to delete a directory
+		that is being used.
 
 		The result is a Number, which is 0 if the delete operation was
 		successful and -1 when the deletion failed or partly failed.
@@ -3199,8 +3200,12 @@ exepath({expr})						*exepath()*
 
 							*exists()*
 exists({expr})	The result is a Number, which is |TRUE| if {expr} is
-		defined, zero otherwise.  The {expr} argument is a string,
-		which contains one of these:
+		defined, zero otherwise.
+
+		For checking for a supported feature use |has()|.
+		For checking if a file exists use |filereadable()|.
+
+		The {expr} argument is a string, which contains one of these:
 			&option-name	Vim option (only checks if it exists,
 					not if it really works)
 			+option-name	Vim option that works.
@@ -3248,7 +3253,6 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 					event and pattern.
 			##event		autocommand for this event is
 					supported.
-		For checking for a supported feature use |has()|.
 
 		Examples: >
 			exists("&mouse")
@@ -3466,9 +3470,10 @@ filter({expr1}, {expr2})					*filter()*
 		is zero remove the item from the |List| or |Dictionary|.
 		{expr2} must be a |string| or |Funcref|.
 
-		if {expr2} is a |string|, inside {expr2} |v:val| has the value
+		If {expr2} is a |string|, inside {expr2} |v:val| has the value
 		of the current item.  For a |Dictionary| |v:key| has the key
-		of the current item.
+		of the current item and for a |List| |v:key| has the index of
+		the current item.
 		For a |Dictionary| |v:key| has the key of the current item.
 		Examples: >
 			call filter(mylist, 'v:val !~ "OLD"')
@@ -3491,6 +3496,10 @@ filter({expr1}, {expr2})					*filter()*
 			  return a:idx % 2 == 1
 			endfunc
 			call filter(mylist, function('Odd'))
+<		It is shorter when using a |lambda|: >
+			call filter(myList, {idx, val -> idx * val <= 42})
+<		If you do not use "val" you can leave it out: >
+			call filter(myList, {idx -> idx % 2 == 1})
 <
 		The operation is done in-place.  If you want a |List| or
 		|Dictionary| to remain unmodified make a copy first: >
@@ -4061,7 +4070,7 @@ getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 			getcwd(0)
 			getcwd(0, 0)
 <		If {winnr} is -1 it is ignored, only the tab is resolved.
-		{winnr} can be the window number or the window ID.
+		{winnr} can be the window number or the |window-ID|.
 
 
 getfsize({fname})					*getfsize()*
@@ -4156,7 +4165,7 @@ getline({lnum} [, {end}])
 
 getloclist({nr},[, {what}])				*getloclist()*
 		Returns a list with all the entries in the location list for
-		window {nr}. {nr} can be the window number or the window ID.
+		window {nr}.  {nr} can be the window number or the |window-ID|.
 		When {nr} is zero the current window is used.
 
 		For a location list window, the displayed location list is
@@ -4231,7 +4240,7 @@ getqflist([{what}])					*getqflist()*
 			type	type of the error, 'E', '1', etc.
 			valid	|TRUE|: recognized error message
 
-		When there is no error list or it's empty an empty list is
+		When there is no error list or it's empty, an empty list is
 		returned. Quickfix list entries with non-existing buffer
 		number are returned with "bufnr" set to zero.
 
@@ -4246,8 +4255,8 @@ getqflist([{what}])					*getqflist()*
 		returns only the items listed in {what} as a dictionary. The
 		following string items are supported in {what}:
 			nr	get information for this quickfix list
-			title	get list title
-			winid	get window id (if opened)
+			title	get the list title
+			winid	get the |window-ID| (if opened)
 			all	all of the above quickfix properties
 		Non-string items in {what} are ignored.
 		If "nr" is not present then the current quickfix list is used.
@@ -4257,7 +4266,7 @@ getqflist([{what}])					*getqflist()*
 		The returned dictionary contains the following entries:
 			nr	quickfix list number
 			title	quickfix list title text
-			winid	quickfix window id (if opened)
+			winid	quickfix |window-ID| (if opened)
 
 		Examples: >
 			:echo getqflist({'all': 1})
@@ -4268,7 +4277,7 @@ getreg([{regname} [, 1 [, {list}]]])			*getreg()*
 		The result is a String, which is the contents of register
 		{regname}.  Example: >
 			:let cliptext = getreg('*')
-<		When {regname} was not set the result is a empty string.
+<		When {regname} was not set the result is an empty string.
 
 		getreg('=') returns the last evaluated value of the expression
 		register.  (For use in maps.)
@@ -4304,10 +4313,10 @@ gettabinfo([{arg}])					*gettabinfo()*
 		empty List is returned.
 
 		Each List item is a Dictionary with the following entries:
-			nr		tab page number.
+			tabnr		tab page number.
 			variables	a reference to the dictionary with
 					tabpage-local variables
-			windows		List of window IDs in the tag page.
+			windows		List of |window-ID|s in the tag page.
 
 gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
@@ -4331,7 +4340,7 @@ gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 		Note that {varname} must be the name without "w:".
 		Tabs are numbered starting with one.  For the current tabpage
 		use |getwinvar()|.
-		{winnr} can be the window number or the window ID.
+		{winnr} can be the window number or the |window-ID|.
 		When {winnr} is zero the current window is used.
 		This also works for a global option, buffer-local option and
 		window-local option, but it doesn't work for a global variable
@@ -4359,20 +4368,20 @@ getwininfo([{winid}])					*getwininfo()*
 		is returned.  If the window does not exist the result is an
 		empty list.
 
-		Without an information about all the windows in all the tab
-		pages is returned.
+		Without {winid} information about all the windows in all the
+		tab pages is returned.
 
 		Each List item is a Dictionary with the following entries:
-			bufnum		number of buffer in the window
+			bufnr		number of buffer in the window
 			height		window height
 			loclist		1 if showing a location list
-			nr		window number
 			quickfix	1 if quickfix or location list window
-			tpnr		tab page number
+			tabnr		tab page number
 			variables	a reference to the dictionary with
 					window-local variables
 			width		window width
-			winid		window ID
+			winid		|window-ID|
+			winnr		window number
 
 		To obtain all window-local variables use: >
 			gettabwinvar({tabnr}, {winnr}, '&')
@@ -4476,9 +4485,8 @@ has_key({dict}, {key})					*has_key()*
 		an entry with key {key}.  Zero otherwise.
 
 haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
-		The result is a Number, which is 1 when the specified tabpage
-		or window has a local path set via |:lcd| or |:tcd|, and
-		0 otherwise.
+		The result is a Number, which is 1 when the tabpage or window
+		has set a local path via |:tcd| or |:lcd|, otherwise 0.
 
 		Tabs and windows are identified by their respective numbers,
 		0 means current tab or window. Missing argument implies 0.
@@ -4486,7 +4494,9 @@ haslocaldir([{winnr}[, {tabnr}]])			*haslocaldir()*
 			haslocaldir()
 			haslocaldir(0)
 			haslocaldir(0, 0)
-<		{winnr} can be the window number or the window ID.
+<		With {winnr} use that window in the current tabpage.
+		With {winnr} and {tabnr} use the window in that tabpage.
+		{winnr} can be the window number or the |window-ID|.
 		If {winnr} is -1 it is ignored, only the tab is resolved.
 
 hasmapto({what} [, {mode} [, {abbr}]])			*hasmapto()*
@@ -4525,6 +4535,7 @@ histadd({history}, {item})				*histadd()*
 			"expr"	 or "="   typed expression history
 			"input"  or "@"	  input line history
 			"debug"  or ">"   debug command history
+			empty		  the current or last used history
 		The {history} string does not need to be the whole name, one
 		character is sufficient.
 		If {item} does already exist in the history, it will be
@@ -4848,16 +4859,18 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		Spawns {cmd} as a job.  If {cmd} is a |List| it is run
 		directly.  If {cmd} is a |String| it is processed like this: >
 		  :call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
-<		NOTE: This only shows the idea; see |shell-unquoting| before
-		constructing lists with 'shell' or 'shellcmdflag'.
+<		(Only shows the idea; see |shell-unquoting| for full details.)
 
-		NOTE: On Windows if {cmd} is a List, cmd[0] must be a valid
-		executable (.exe, .com).  If the executable is in $PATH it can
-		be called by name, with or without an extension: >
-		   :call jobstart(['ping', 'neovim.io'])
-<		If it is a path (not a name), it must include the extension: >
-		   :call jobstart(['System32\ping.exe', 'neovim.io'])
-<
+		NOTE: on Windows if {cmd} is a List:
+		  - cmd[0] must be an executable (not a "built-in"). If it is
+		    in $PATH it can be called by name, without an extension: >
+		      :call jobstart(['ping', 'neovim.io'])
+<		    If it is a full or partial path, extension is required: >
+		      :call jobstart(['System32\ping.exe', 'neovim.io'])
+<		  - {cmd} is collapsed to a string of quoted args as expected
+		    by CommandLineToArgvW https://msdn.microsoft.com/bb776391
+		    unless cmd[0] is some form of "cmd.exe".
+
 		{opts} is a dictionary with these keys:
 		  on_stdout: stdout event handler (function name or |Funcref|)
 		  on_stderr: stderr event handler (function name or |Funcref|)
@@ -5128,6 +5141,10 @@ map({expr1}, {expr2})					*map()*
 			  return a:key . '-' . a:val
 			endfunc
 			call map(myDict, function('KeyValue'))
+<		It is shorter when using a |lambda|: >
+			call map(myDict, {key, val -> key . '-' . val})
+<		If you do not use "val" you can leave it out: >
+			call map(myDict, {key -> 'item: ' . key})
 <
 		The operation is done in-place.  If you want a |List| or
 		|Dictionary| to remain unmodified make a copy first: >
@@ -5334,7 +5351,8 @@ matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		available from |getmatches()|.	All matches can be deleted in
 		one operation by |clearmatches()|.
 
-matchaddpos({group}, {pos}[, {priority}[, {id}[, {dict}]]])		*matchaddpos()*
+							*matchaddpos()*
+matchaddpos({group}, {pos}[, {priority}[, {id}[, {dict}]]])
 		Same as |matchadd()|, but requires a list of positions {pos}
 		instead of a pattern. This command is faster than |matchadd()|
 		because it does not require to handle regular expressions and
@@ -5448,16 +5466,20 @@ matchstrpos({expr}, {pat}[, {start}[, {count}]])		*matchstrpos()*
 		The type isn't changed, it's not necessarily a String.
 
 							*max()*
-max({list})	Return the maximum value of all items in {list}.
-		If {list} is not a list or one of the items in {list} cannot
-		be used as a Number this results in an error.
-		An empty |List| results in zero.
+max({expr})	Return the maximum value of all items in {expr}.
+		{expr} can be a list or a dictionary.  For a dictionary,
+		it returns the maximum of all values in the dictionary.
+		If {expr} is neither a list nor a dictionary, or one of the
+		items in {expr} cannot be used as a Number this results in
+                an error.  An empty |List| or |Dictionary| results in zero.
 
 							*min()*
-min({list})	Return the minimum value of all items in {list}.
-		If {list} is not a list or one of the items in {list} cannot
-		be used as a Number this results in an error.
-		An empty |List| results in zero.
+min({expr})	Return the minimum value of all items in {expr}.
+		{expr} can be a list or a dictionary.  For a dictionary,
+		it returns the minimum of all values in the dictionary.
+		If {expr} is neither a list nor a dictionary, or one of the
+		items in {expr} cannot be used as a Number this results in
+                an error.  An empty |List| or |Dictionary| results in zero.
 
 							*mkdir()* *E739*
 mkdir({name} [, {path} [, {prot}]])
@@ -5693,7 +5715,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 		  %e	floating point number as 1.23e3, inf, -inf or nan
 		  %E	floating point number as 1.23E3, INF, -INF or NAN
 		  %g	floating point number, as %f or %e depending on value
-		  %G	floating point number, as %f or %E depending on value
+		  %G	floating point number, as %F or %E depending on value
 		  %%	the % character itself
 		  %p	representation of the pointer to the container
 
@@ -5804,6 +5826,9 @@ printf({fmt}, {expr1} ...)				*printf()*
 		s	The text of the String argument is used.  If a
 			precision is specified, no more bytes than the number
 			specified are used.
+			If the argument is not a String type, it is
+			automatically converted to text with the same format
+			as ":echo".
 							*printf-S*
 		S	The text of the String argument is used.  If a
 			precision is specified, no more display cells than the
@@ -6151,7 +6176,7 @@ rpcstop({channel})					    {Nvim} *rpcstop()*
 		connecting to |v:servername|.
 
 screenattr(row, col)						*screenattr()*
-		Like screenchar(), but return the attribute.  This is a rather
+		Like |screenchar()|, but return the attribute.  This is a rather
 		arbitrary number that can only be used to compare to the
 		attribute at other positions.
 
@@ -6527,7 +6552,7 @@ setline({lnum}, {text})					*setline()*
 
 setloclist({nr}, {list} [, {action}[, {what}]])		*setloclist()*
 		Create or replace or add to the location list for window {nr}.
-		{nr} can be the window number or the window ID.
+		{nr} can be the window number or the |window-ID|.
 		When {nr} is zero the current window is used.
 
 		For a location list window, the displayed location list is
@@ -6719,7 +6744,7 @@ settabwinvar({tabnr}, {winnr}, {varname}, {val})	*settabwinvar()*
 		{val}.
 		Tabs are numbered starting with one.  For the current tabpage
 		use |setwinvar()|.
-		{winnr} can be the window number or the window ID.
+		{winnr} can be the window number or the |window-ID|.
 		When {winnr} is zero the current window is used.
 		This also works for a global or local buffer option, but it
 		doesn't work for a global or local buffer variable.
@@ -7025,7 +7050,7 @@ strcharpart({src}, {start}[, {len}])			*strcharpart()*
 		Like |strpart()| but using character index and length instead
 		of byte index and length.
 		When a character index is used where a character does not
-		exist it is assumed to be one byte.  For example: >
+		exist it is assumed to be one character.  For example: >
 			strcharpart('abc', -1, 2)
 <		results in 'a'.
 
@@ -7170,7 +7195,7 @@ strwidth({expr})					*strwidth()*
 		Ambiguous, this function's return value depends on 'ambiwidth'.
 		Also see |strlen()|, |strdisplaywidth()| and |strchars()|.
 
-submatch({nr}[, {list}])				*submatch()*
+submatch({nr}[, {list}])			*submatch()* *E935*
 		Only for an expression in a |:substitute| command or
 		substitute() function.
 		Returns the {nr}'th submatch of the matched text.  When {nr}
@@ -7385,16 +7410,16 @@ systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
 		output separated by NL) with NULs transformed into NLs. Output 
 		is the same as |readfile()| will output with {binary} argument 
 		set to "b", except that a final newline is not preserved,
-		unless {keepempty} is present and it's non-zero.
+		unless {keepempty} is non-zero.
+		Note that on MS-Windows you may get trailing CR characters.
 
-		Returns an empty string on error, so be careful not to run 
-		into |E706|.
+		Returns an empty string on error.
 
 
 tabpagebuflist([{arg}])					*tabpagebuflist()*
 		The result is a |List|, where each item is the number of the
 		buffer associated with each window in the current tab page.
-		{arg} specifies the number of tab page to be used.  When
+		{arg} specifies the number of the tab page to be used. When
 		omitted the current tab page is used.
 		When {arg} is invalid the number zero is returned.
 		To get a list of all buffers in all tabs use this: >
@@ -7525,7 +7550,36 @@ tanh({expr})						*tanh()*
 <			-0.761594
 
 
-							*timer_start()*
+							*timer_info()*
+timer_info([{id}])
+		Return a list with information about timers.
+		When {id} is given only information about this timer is
+		returned.  When timer {id} does not exist an empty list is
+		returned.
+		When {id} is omitted information about all timers is returned.
+
+		For each timer the information is stored in a Dictionary with
+		these items:
+		    "id"	    the timer ID
+		    "time"	    time the timer was started with
+		    "repeat"	    number of times the timer will still fire;
+				    -1 means forever
+		    "callback"	    the callback
+
+timer_pause({timer}, {paused})				*timer_pause()*
+		Pause or unpause a timer.  A paused timer does not invoke its
+		callback when its time expires.  Unpausing a timer may cause
+		the callback to be invoked almost immediately if enough time
+		has passed.
+
+		Pausing a timer is useful to avoid the callback to be called
+		for a short time.
+
+		If {paused} evaluates to a non-zero Number or a non-empty
+		String, then the timer is paused, otherwise it is unpaused.
+		See |non-zero-arg|.
+
+						*timer_start()* *timer* *timers*
 timer_start({time}, {callback} [, {options}])
 		Create a timer and return the timer ID.
 
@@ -7534,13 +7588,14 @@ timer_start({time}, {callback} [, {options}])
 		busy or Vim is not waiting for input the time will be longer.
 
 		{callback} is the function to call.  It can be the name of a
-		function or a Funcref.  It is called with one argument, which
+		function or a |Funcref|.  It is called with one argument, which
 		is the timer ID.  The callback is only invoked when Vim is
 		waiting for input.
 
 		{options} is a dictionary.  Supported entries:
 		   "repeat"	Number of times to repeat calling the
-		   		callback.  -1 means forever.
+				callback.  -1 means forever.  When not present
+				the callback will be called once.
 
 		Example: >
 			func MyHandler(timer)
@@ -7554,7 +7609,12 @@ timer_start({time}, {callback} [, {options}])
 timer_stop({timer})					*timer_stop()*
 		Stop a timer.  The timer callback will no longer be invoked.
 		{timer} is an ID returned by timer_start(), thus it must be a
-		Number.
+		Number.  If {timer} does not exist there is no error.
+
+timer_stopall()						*timer_stopall()*
+		Stop all timers.  The timer callbacks will no longer be
+		invoked.  Useful if some timers is misbehaving.  If there are
+		no timers there is no error.
 
 tolower({expr})						*tolower()*
 		The result is a copy of the String given, with all uppercase
@@ -7756,11 +7816,11 @@ wildmenumode()					*wildmenumode()*
 
 
 win_findbuf({bufnr})					*win_findbuf()*
-		Returns a list with window IDs for windows that contain buffer
-		{bufnr}.  When there is none the list is empty.
+		Returns a list with |window-ID|s for windows that contain
+		buffer {bufnr}.  When there is none the list is empty.
 
 win_getid([{win} [, {tab}]])				*win_getid()*
-		Get the window ID for the specified window.
+		Get the |window-ID| for the specified window.
 		When {win} is missing use the current window.
 		With {win} this is the window number.  The top window has
 		number 1.
@@ -7785,7 +7845,7 @@ win_id2win({expr})					*win_id2win()*
 							*winbufnr()*
 winbufnr({nr})	The result is a Number, which is the number of the buffer
 		associated with window {nr}.  {nr} can be the window number or
-		the window ID.
+		the |window-ID|.
 		When {nr} is zero, the number of the buffer in the current
 		window is returned.
 		When window {nr} doesn't exist, -1 is returned.
@@ -7799,7 +7859,7 @@ wincol()	The result is a Number, which is the virtual column of the
 
 winheight({nr})						*winheight()*
 		The result is a Number, which is the height of window {nr}.
-		{nr} can be the window number or the window ID.
+		{nr} can be the window number or the |window-ID|.
 		When {nr} is zero, the height of the current window is
 		returned.  When window {nr} doesn't exist, -1 is returned.
 		An existing window always has a height of zero or more.
@@ -7825,7 +7885,7 @@ winnr([{arg}])	The result is a Number, which is the number of the current
 		is returned.
 		The number can be used with |CTRL-W_w| and ":wincmd w"
 		|:wincmd|.
-		Also see |tabpagewinnr()|.
+		Also see |tabpagewinnr()| and |win_getid()|.
 
 							*winrestcmd()*
 winrestcmd()	Returns a sequence of |:resize| commands that should restore
@@ -7879,7 +7939,7 @@ winsaveview()	Returns a |Dictionary| that contains information to restore
 
 winwidth({nr})						*winwidth()*
 		The result is a Number, which is the width of window {nr}.
-		{nr} can be the window number or the window ID.
+		{nr} can be the window number or the |window-ID|.
 		When {nr} is zero, the width of the current window is
 		returned.  When window {nr} doesn't exist, -1 is returned.
 		An existing window always has a width of zero or more.
@@ -8090,6 +8150,7 @@ timers			Compiled with |timer_start()| support.
 title			Compiled with window title support |'title'|.
 toolbar			Compiled with support for |gui-toolbar|.
 unix			Unix version of Vim.
+unnamedplus		Compiled with support for "unnamedplus" in 'clipboard'
 user_commands		User-defined commands.
 vertsplit		Compiled with vertically split windows |:vsplit|.
 vim_starting		True while initial source'ing takes place. |startup|
@@ -8584,6 +8645,11 @@ This does NOT work: >
 			value and the global value are changed.
 			Example: >
 				:let &path = &path . ',/usr/local/include'
+<			This also works for terminal codes in the form t_xx.
+			But only for alphanumerical names.  Example: >
+				:let &t_k1 = "\<Esc>[234;"
+<			When the code does not exist yet it will be created as
+			a terminal key code, there is no error.
 
 :let &{option-name} .= {expr1}
 			For a string option: Append {expr1} to the value.

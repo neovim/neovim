@@ -182,7 +182,7 @@ the following:
 
 This tells you that you might want to fix something on line 33.  So how do you
 find line 33?  One way is to do "9999k" to go to the top of the file and "32j"
-to go down thirty two lines.  It is not a good way, but it works.  A much
+to go down thirty-two lines.  It is not a good way, but it works.  A much
 better way of doing things is to use the "G" command.  With a count, this
 command positions you at the given line number.  For example, "33G" puts you
 on line 33.  (For a better way of going through a compiler's error list, see

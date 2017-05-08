@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Vim help file
 " Maintainer:	Bram Moolenaar (Bram@vim.org)
-" Last Change:	2016 Apr 01
+" Last Change:	2016 Sep 02
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -50,6 +50,7 @@ else
   syn match helpIgnore		"." contained
 endif
 syn keyword helpNote		note Note NOTE note: Note: NOTE: Notes Notes:
+syn keyword helpWarning		WARNING: Warning:
 syn match helpSpecial		"\<N\>"
 syn match helpSpecial		"\<N\.$"me=e-1
 syn match helpSpecial		"\<N\.\s"me=e-2
@@ -86,6 +87,8 @@ syn match helpSpecial		"CTRL-PageDown"
 syn match helpSpecial		"CTRL-Insert"
 syn match helpSpecial		"CTRL-Del"
 syn match helpSpecial		"CTRL-{char}"
+syn match helpSpecial		"META-."
+syn match helpSpecial		"ALT-."
 
 " Highlight group items in their own color.
 syn match helpComment		"\t[* ]Comment\t\+[a-z].*"
@@ -161,6 +164,7 @@ hi def link helpExample		Comment
 hi def link helpOption		Type
 hi def link helpSpecial		Special
 hi def link helpNote		Todo
+hi def link helpWarning		Todo
 
 hi def link helpComment		Comment
 hi def link helpConstant	Constant

@@ -10,11 +10,8 @@
 " - one character labels weren't displayed correctly.
 " - nonexistent Snobol4 keywords displayed as errors.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -79,47 +76,37 @@ syn match       snobol4ErrInBracket display contained "[){}]\|<%\|%>"
 " syn match       snobol4Comment      "^\#\!.*$"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_snobol4_syntax_inits")
-  if version < 508
-    let did_snobol4_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink snobol4Constant        Constant
-  HiLink snobol4Label           Label
-  HiLink snobol4Goto            Repeat
-  HiLink snobol4Conditional     Conditional
-  HiLink snobol4Repeat          Repeat
-  HiLink snobol4Number          Number
-  HiLink snobol4Error           Error
-  HiLink snobol4Statement       PreProc
-  HiLink snobol4BogusStatement  snobol4Error
-  HiLink snobol4String          String
-  HiLink snobol4Comment         Comment
-  HiLink snobol4Special         Special
-  HiLink snobol4Todo            Todo
-  HiLink snobol4Keyword         Keyword
-  HiLink snobol4Function        Function
-  HiLink snobol4MathsOperator   Operator
-  HiLink snobol4ParenError      snobol4Error
-  HiLink snobol4ErrInParen      snobol4Error
-  HiLink snobol4ErrInBracket    snobol4Error
-  HiLink snobol4SysVar          Keyword
-  HiLink snobol4BogusSysVar     snobol4Error
-  if exists("snobol4_strict_mode")
-    HiLink snobol4ExtSysVar       WarningMsg
-    HiLink snobol4ExtKeyword      WarningMsg
-  else
-    HiLink snobol4ExtSysVar       snobol4SysVar
-    HiLink snobol4ExtKeyword      snobol4Keyword
-  endif
-
-  delcommand HiLink
+hi def link snobol4Constant        Constant
+hi def link snobol4Label           Label
+hi def link snobol4Goto            Repeat
+hi def link snobol4Conditional     Conditional
+hi def link snobol4Repeat          Repeat
+hi def link snobol4Number          Number
+hi def link snobol4Error           Error
+hi def link snobol4Statement       PreProc
+hi def link snobol4BogusStatement  snobol4Error
+hi def link snobol4String          String
+hi def link snobol4Comment         Comment
+hi def link snobol4Special         Special
+hi def link snobol4Todo            Todo
+hi def link snobol4Keyword         Keyword
+hi def link snobol4Function        Function
+hi def link snobol4MathsOperator   Operator
+hi def link snobol4ParenError      snobol4Error
+hi def link snobol4ErrInParen      snobol4Error
+hi def link snobol4ErrInBracket    snobol4Error
+hi def link snobol4SysVar          Keyword
+hi def link snobol4BogusSysVar     snobol4Error
+if exists("snobol4_strict_mode")
+hi def link snobol4ExtSysVar       WarningMsg
+hi def link snobol4ExtKeyword      WarningMsg
+else
+hi def link snobol4ExtSysVar       snobol4SysVar
+hi def link snobol4ExtKeyword      snobol4Keyword
 endif
+
 
 let b:current_syntax = "snobol4"
 " vim: ts=8

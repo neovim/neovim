@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
@@ -74,7 +77,7 @@ typedef struct {
   size_t idx;
 } MPToAPIObjectStackItem;
 
-/// Convert type used by msgpack parser to Neovim own API type
+/// Convert type used by msgpack parser to Nvim API type.
 ///
 /// @param[in]  obj  Msgpack value to convert.
 /// @param[out]  arg  Location where result of conversion will be saved.
@@ -485,8 +488,7 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
                                          Array args,
                                          Error *error)
 {
-  snprintf(error->msg, sizeof(error->msg), "Invalid method name");
-  error->set = true;
+  api_set_error(error, kErrorTypeException, "Invalid method name");
   return NIL;
 }
 
@@ -495,8 +497,7 @@ Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
                                             Array args,
                                             Error *error)
 {
-  snprintf(error->msg, sizeof(error->msg), "Invalid method arguments");
-  error->set = true;
+  api_set_error(error, kErrorTypeException, "Invalid method arguments");
   return NIL;
 }
 
@@ -529,7 +530,7 @@ void msgpack_rpc_serialize_response(uint64_t response_id,
   msgpack_pack_int(pac, 1);
   msgpack_pack_uint64(pac, response_id);
 
-  if (err->set) {
+  if (ERROR_SET(err)) {
     // error represented by a [type, message] array
     msgpack_pack_array(pac, 2);
     msgpack_rpc_from_integer(err->type, pac);
@@ -582,49 +583,49 @@ void msgpack_rpc_validate(uint64_t *response_id,
   *response_id = NO_RESPONSE;
   // Validate the basic structure of the msgpack-rpc payload
   if (req->type != MSGPACK_OBJECT_ARRAY) {
-    api_set_error(err, Validation, _("Message is not an array"));
+    api_set_error(err, kErrorTypeValidation, "Message is not an array");
     return;
   }
 
   if (req->via.array.size == 0) {
-    api_set_error(err, Validation, _("Message is empty"));
+    api_set_error(err, kErrorTypeValidation, "Message is empty");
     return;
   }
 
   if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    api_set_error(err, Validation, _("Message type must be an integer"));
+    api_set_error(err, kErrorTypeValidation, "Message type must be an integer");
     return;
   }
 
   uint64_t type = req->via.array.ptr[0].via.u64;
   if (type != kMessageTypeRequest && type != kMessageTypeNotification) {
-    api_set_error(err, Validation, _("Unknown message type"));
+    api_set_error(err, kErrorTypeValidation, "Unknown message type");
     return;
   }
 
   if ((type == kMessageTypeRequest && req->via.array.size != 4)
       || (type == kMessageTypeNotification && req->via.array.size != 3)) {
-    api_set_error(err, Validation, _("Request array size should be 4 (request) "
-                                     "or 3 (notification)"));
+    api_set_error(err, kErrorTypeValidation,
+                  "Request array size must be 4 (request) or 3 (notification)");
     return;
   }
 
   if (type == kMessageTypeRequest) {
     msgpack_object *id_obj = msgpack_rpc_msg_id(req);
     if (!id_obj) {
-      api_set_error(err, Validation, _("ID must be a positive integer"));
+      api_set_error(err, kErrorTypeValidation, "ID must be a positive integer");
       return;
     }
     *response_id = id_obj->via.u64;
   }
 
   if (!msgpack_rpc_method(req)) {
-    api_set_error(err, Validation, _("Method must be a string"));
+    api_set_error(err, kErrorTypeValidation, "Method must be a string");
     return;
   }
 
   if (!msgpack_rpc_args(req)) {
-    api_set_error(err, Validation, _("Parameters must be an array"));
+    api_set_error(err, kErrorTypeValidation, "Parameters must be an array");
     return;
   }
 }

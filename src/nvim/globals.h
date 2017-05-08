@@ -548,6 +548,7 @@ EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
   FOR_ALL_TABS(tp) \
     FOR_ALL_WINDOWS_IN_TAB(wp, tp)
 
+// -V:FOR_ALL_WINDOWS_IN_TAB:501
 # define FOR_ALL_WINDOWS_IN_TAB(wp, tp) \
   for (win_T *wp = ((tp) == curtab) \
               ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)

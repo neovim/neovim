@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, insert, eq = helpers.clear, helpers.insert, helpers.eq
-local execute, expect = helpers.execute, helpers.expect
+local command, expect = helpers.command, helpers.expect
 local feed, eval = helpers.feed, helpers.eval
 local exc_exec = helpers.exc_exec
 
@@ -17,13 +17,7 @@ describe('gu and gU', function()
   end)
 
   describe('works in Turkish locale', function()
-    if helpers.pending_win32(pending) then return end
-
     clear()
-    if eval('has("mac")') ~= 0 then
-      pending("not yet on macOS", function() end)
-      return
-    end
 
     local err = exc_exec('lang ctype tr_TR.UTF-8')
     if err ~= 0 then
@@ -32,7 +26,7 @@ describe('gu and gU', function()
     end
 
     before_each(function()
-      execute('lang ctype tr_TR.UTF-8')
+      command('lang ctype tr_TR.UTF-8')
     end)
 
     it('with default casemap', function()
@@ -46,14 +40,24 @@ describe('gu and gU', function()
     end)
 
     it('with casemap=""', function()
-      execute('set casemap=')
-      -- expect Turkish locale behavior
-      insert("iI")
-      feed("VgU")
-      expect("İI")
-      feed("Vgu")
-      expect("iı")
+      command('set casemap=')
+      -- expect either Turkish locale behavior or ASCII behavior
+      local iupper = eval("toupper('i')")
+      if iupper == "İ" then
+        insert("iI")
+        feed("VgU")
+        expect("İI")
+        feed("Vgu")
+        expect("iı")
+      elseif iupper == "I" then
+        insert("iI")
+        feed("VgU")
+        expect("II")
+        feed("Vgu")
+        expect("ii")
+      else
+        error("expected toupper('i') to be either 'I' or 'İ'")
+      end
     end)
-
   end)
 end)

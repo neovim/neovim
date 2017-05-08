@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -47,7 +50,7 @@ typedef struct {
 /// @param extra_args Extra arguments to the shell, or NULL.
 /// @return Newly allocated argument vector. Must be freed with shell_free_argv.
 char **shell_build_argv(const char *cmd, const char *extra_args)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
@@ -124,11 +127,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   }
 
   size_t nread;
-
   int exitcode = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
                               input.data, input.len, output_ptr, &nread,
                               emsg_silent, forward_output);
-
   xfree(input.data);
 
   if (output) {

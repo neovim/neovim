@@ -7,11 +7,8 @@
 "               Michael Dotzler <Michael.Dotzler@leoni.com>
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -123,30 +120,20 @@ syn match	squidRegexOpt	contained "\(^\s*acl\s\+\S\+\s\+\S\+\(_regex\|_mime_type
 syn sync minlines=3
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_squid_syntax_inits")
-  if version < 508
-    let did_squid_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink squidTodo	Todo
-  HiLink squidComment	Comment
-  HiLink squidTag	Special
-  HiLink squidConf	Keyword
-  HiLink squidOpt	Constant
-  HiLink squidAction	String
-  HiLink squidNumber	Number
-  HiLink squidIP	Number
-  HiLink squidAcl	Keyword
-  HiLink squidStr	String
-  HiLink squidRegexOpt	Special
+hi def link squidTodo	Todo
+hi def link squidComment	Comment
+hi def link squidTag	Special
+hi def link squidConf	Keyword
+hi def link squidOpt	Constant
+hi def link squidAction	String
+hi def link squidNumber	Number
+hi def link squidIP	Number
+hi def link squidAcl	Keyword
+hi def link squidStr	String
+hi def link squidRegexOpt	Special
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "squid"
 

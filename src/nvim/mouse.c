@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdbool.h>
 
 #include "nvim/mouse.h"
@@ -456,6 +459,7 @@ void setmouse(void)
 {
   int checkfor;
 
+  ui_cursor_shape();
 
   /* be quick when mouse is off */
   if (*p_mouse == NUL)

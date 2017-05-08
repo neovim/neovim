@@ -751,7 +751,7 @@ Short explanation of each option:		*option-list*
 'keywordprg'	  'kp'	    program to use for the "K" command
 'langmap'	  'lmap'    alphabetic characters for other language mode
 'langmenu'	  'lm'	    language to be used for the menus
-'langnoremap'	  'lnr'	    do not apply 'langmap' to mapped characters
+'langremap'	  'lrm'	    do apply 'langmap' to mapped characters
 'laststatus'	  'ls'	    tells when last window has status lines
 'lazyredraw'	  'lz'	    don't redraw while executing macros
 'linebreak'	  'lbr'     wrap long lines at a blank
@@ -988,7 +988,6 @@ Short explanation of each option:		*option-list*
 |g_CTRL-G|	   g CTRL-G	show cursor column, line, and character
 				   position
 |CTRL-C|	   CTRL-C	during searches: Interrupt the search
-|dos-CTRL-Break|   CTRL-Break	Windows: during searches: Interrupt the search
 |<Del>|		   <Del>	while entering a count: delete last character
 |:version|	:ve[rsion]	show version information
 |:normal|	:norm[al][!] {commands}
@@ -1027,6 +1026,8 @@ Short explanation of each option:		*option-list*
 |c_<Up>|	<Up>/<Down>	   recall older/newer command-line that starts
 				      with current command
 |c_<S-Up>|	<S-Up>/<S-Down>	   recall older/newer command-line from history
+|c_CTRL-G|	CTRL-G		   next match when 'incsearch' is active
+|c_CTRL-T|	CTRL-T		   previous match when 'incsearch' is active
 |:history|	:his[tory]	   show older command-lines
 
 Context-sensitive completion on the command-line:

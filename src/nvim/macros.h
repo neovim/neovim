@@ -29,25 +29,6 @@
 #define S_LEN(s) (s), (sizeof(s) - 1)
 
 /*
- * Position comparisons
- */
-# define lt(a, b) (((a).lnum != (b).lnum) \
-                   ? (a).lnum < (b).lnum \
-                   : (a).col != (b).col \
-                   ? (a).col < (b).col \
-                   : (a).coladd < (b).coladd)
-# define ltp(a, b) (((a)->lnum != (b)->lnum) \
-                    ? (a)->lnum < (b)->lnum \
-                    : (a)->col != (b)->col \
-                    ? (a)->col < (b)->col \
-                    : (a)->coladd < (b)->coladd)
-# define equalpos(a, b) (((a).lnum == (b).lnum) && ((a).col == (b).col) && \
-                         ((a).coladd == (b).coladd))
-# define clearpos(a) {(a)->lnum = 0; (a)->col = 0; (a)->coladd = 0; }
-
-#define ltoreq(a, b) (lt(a, b) || equalpos(a, b))
-
-/*
  * lineempty() - return TRUE if the line is empty
  */
 #define lineempty(p) (*ml_get(p) == NUL)
@@ -94,7 +75,7 @@
   do { \
     if (*p_langmap \
         && (condition) \
-        && (p_lrm || (!p_lrm && KeyTyped)) \
+        && (p_lrm || KeyTyped) \
         && !KeyStuffed \
         && (c) >= 0) \
     { \
@@ -120,8 +101,10 @@
 /* mch_open_rw(): invoke os_open() with third argument for user R/W. */
 #if defined(UNIX)  /* open in rw------- mode */
 # define mch_open_rw(n, f)      os_open((n), (f), (mode_t)0600)
+#elif defined(WIN32)
+# define mch_open_rw(n, f)      os_open((n), (f), S_IREAD | S_IWRITE)
 #else
-#  define mch_open_rw(n, f)     os_open((n), (f), 0)
+# define mch_open_rw(n, f)      os_open((n), (f), 0)
 #endif
 
 # define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))

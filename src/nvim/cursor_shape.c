@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stdint.h>
 #include "nvim/vim.h"
@@ -11,7 +14,7 @@
 #include "nvim/ui.h"
 
 /// Handling of cursor and mouse pointer shapes in various modes.
-static cursorentry_T shape_table[SHAPE_IDX_COUNT] =
+cursorentry_T shape_table[SHAPE_IDX_COUNT] =
 {
   // Values are set by 'guicursor' and 'mouseshape'.
   // Adjust the SHAPE_IDX_ defines when changing this!
@@ -34,11 +37,11 @@ static cursorentry_T shape_table[SHAPE_IDX_COUNT] =
   { "showmatch", 0, 0, 0, 100L, 100L, 100L, 0, 0, "sm", SHAPE_CURSOR },
 };
 
-/// Converts cursor_shapes into a Dictionary of dictionaries
-/// @return dictionary of the form {"normal" : { "cursor_shape": ... }, ...}
-Dictionary cursor_shape_dict(void)
+/// Converts cursor_shapes into an Array of Dictionaries
+/// @return Array of the form {[ "cursor_shape": ... ], ...}
+Array mode_style_array(void)
 {
-  Dictionary all = ARRAY_DICT_INIT;
+  Array all = ARRAY_DICT_INIT;
 
   for (int i = 0; i < SHAPE_IDX_COUNT; i++) {
     Dictionary dic = ARRAY_DICT_INIT;
@@ -62,9 +65,10 @@ Dictionary cursor_shape_dict(void)
       PUT(dic, "hl_id", INTEGER_OBJ(cur->id));
       PUT(dic, "id_lm", INTEGER_OBJ(cur->id_lm));
     }
+    PUT(dic, "name", STRING_OBJ(cstr_to_string(cur->full_name)));
     PUT(dic, "short_name", STRING_OBJ(cstr_to_string(cur->name)));
 
-    PUT(all, cur->full_name, DICTIONARY_OBJ(dic));
+    ADD(all, DICTIONARY_OBJ(dic));
   }
 
   return all;
@@ -138,9 +142,9 @@ char_u *parse_shape_opt(int what)
           {
             // Set the defaults, for the missing parts
             shape_table[idx].shape = SHAPE_BLOCK;
-            shape_table[idx].blinkwait = 700L;
-            shape_table[idx].blinkon = 400L;
-            shape_table[idx].blinkoff = 250L;
+            shape_table[idx].blinkwait = 0L;
+            shape_table[idx].blinkon = 0L;
+            shape_table[idx].blinkoff = 0L;
           }
         }
 
@@ -240,7 +244,7 @@ char_u *parse_shape_opt(int what)
       shape_table[SHAPE_IDX_VE].id_lm = shape_table[SHAPE_IDX_V].id_lm;
     }
   }
-  ui_cursor_style_set();
+  ui_mode_info_set();
   return NULL;
 }
 
@@ -260,3 +264,35 @@ int cursor_mode_str2int(const char *mode)
   return -1;
 }
 
+
+/// Return the index into shape_table[] for the current mode.
+int cursor_get_mode_idx(void)
+{
+  if (State == SHOWMATCH) {
+    return SHAPE_IDX_SM;
+  } else if (State & VREPLACE_FLAG) {
+    return SHAPE_IDX_R;
+  } else if (State & REPLACE_FLAG) {
+    return SHAPE_IDX_R;
+  } else if (State & INSERT) {
+    return SHAPE_IDX_I;
+  } else if (State & CMDLINE) {
+    if (cmdline_at_end()) {
+      return SHAPE_IDX_C;
+    } else if (cmdline_overstrike()) {
+      return SHAPE_IDX_CR;
+    } else {
+      return SHAPE_IDX_CI;
+    }
+  } else if (finish_op) {
+    return SHAPE_IDX_O;
+  } else if (VIsual_active) {
+    if (*p_sel == 'e') {
+      return SHAPE_IDX_VE;
+    } else {
+      return SHAPE_IDX_V;
+    }
+  } else {
+    return SHAPE_IDX_N;
+  }
+}

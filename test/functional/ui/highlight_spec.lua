@@ -2,23 +2,23 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local command = helpers.command
+local eval = helpers.eval
 local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
 
-if helpers.pending_win32(pending) then return end
-
-describe('color scheme compatibility', function()
+describe('colorscheme compatibility', function()
   before_each(function()
     clear()
   end)
 
   it('t_Co is set to 256 by default', function()
-    eq('256', request('vim_eval', '&t_Co'))
+    eq('256', eval('&t_Co'))
     request('nvim_set_option', 't_Co', '88')
-    eq('88', request('vim_eval', '&t_Co'))
+    eq('88', eval('&t_Co'))
   end)
 end)
 
-describe('manual syntax highlight', function()
+describe('highlight: `:syntax manual`', function()
   -- When using manual syntax highlighting, it should be preserved even when
   -- switching buffers... bug did only occur without :set hidden
   -- Ref: vim patch 7.4.1236
@@ -63,32 +63,32 @@ describe('manual syntax highlight', function()
   end)
 
   it("works with buffer switch and 'nohidden'", function()
-    feed_command('e tmp1.vim')
-    feed_command('e Xtest-functional-ui-highlight.tmp.vim')
-    feed_command('filetype on')
-    feed_command('syntax manual')
-    feed_command('set ft=vim')
-    feed_command('set syntax=ON')
+    command('e tmp1.vim')
+    command('e Xtest-functional-ui-highlight.tmp.vim')
+    command('filetype on')
+    command('syntax manual')
+    command('set filetype=vim fileformat=unix')
+    command('set syntax=ON')
     feed('iecho 1<esc>0')
 
-    feed_command('set nohidden')
-    feed_command('w')
-    feed_command('bn')
-    feed_command('bp')
+    command('set nohidden')
+    command('w')
+    command('silent bn')
+    eq("tmp1.vim", eval("fnamemodify(bufname('%'), ':t')"))
+    feed_command('silent bp')
+    eq("Xtest-functional-ui-highlight.tmp.vim", eval("fnamemodify(bufname('%'), ':t')"))
     screen:expect([[
       {1:^echo} 1              |
       {0:~                   }|
       {0:~                   }|
       {0:~                   }|
-      <ht.tmp.vim" 1L, 7C |
+      :silent bp          |
     ]])
   end)
 end)
 
 
-describe('Default highlight groups', function()
-  -- Test the default attributes for highlight groups shown by the :highlight
-  -- command
+describe('highlight defaults', function()
   local screen
 
   before_each(function()
@@ -279,6 +279,11 @@ describe('Default highlight groups', function()
       {0:~                                                    }|
                                                            |
     ]], {[0] = {bold=true, foreground=Screen.colors.Blue}})
+  end)
+
+  it('Cursor after `:hi clear|syntax reset` #6508', function()
+    command('highlight clear|syntax reset')
+    eq('guifg=bg guibg=fg', eval([[matchstr(execute('hi Cursor'), '\v(gui|cterm).*$')]]))
   end)
 
   it('Whitespace highlight', function()

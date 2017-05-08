@@ -32,20 +32,15 @@ local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' belloff= noshowcmd noruler nomore'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                    '--cmd', nvim_set, '--embed'}
-
-local mpack = require('mpack')
-
-local tmpname = global_helpers.tmpname
-local uname = global_helpers.uname
-
--- Formulate a path to the directory containing nvim.  We use this to
--- help run test executables.  It helps to keep the tests working, even
--- when the build is not in the default location.
+-- Directory containing nvim.
 local nvim_dir = nvim_prog:gsub("[/\\][^/\\]+$", "")
 if nvim_dir == nvim_prog then
   nvim_dir = "."
 end
 
+local mpack = require('mpack')
+local tmpname = global_helpers.tmpname
+local uname = global_helpers.uname
 local prepend_argv
 
 if os.getenv('VALGRIND') then
@@ -353,7 +348,7 @@ end
 local function set_shell_powershell()
   source([[
     set shell=powershell shellquote=\" shellpipe=\| shellredir=>
-    set shellcmdflag=\ -ExecutionPolicy\ RemoteSigned\ -Command
+    set shellcmdflag=\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
     let &shellxquote=' '
   ]])
 end
@@ -390,14 +385,21 @@ local function curbuf(method, ...)
 end
 
 local function wait()
-  -- Execute 'vim_eval' (a deferred function) to block
+  -- Execute 'nvim_eval' (a deferred function) to block
   -- until all pending input is processed.
-  session:request('vim_eval', '1')
+  session:request('nvim_eval', '1')
 end
 
 -- sleeps the test runner (_not_ the nvim instance)
 local function sleep(ms)
-  run(nil, nil, nil, ms)
+  local function notification_cb(method, _)
+    if method == "redraw" then
+      error("Screen is attached; use screen:sleep() instead.")
+    end
+    return true
+  end
+
+  run(nil, notification_cb, nil, ms)
 end
 
 local function curbuf_contents()
@@ -430,21 +432,27 @@ end
 
 local function do_rmdir(path)
   if lfs.attributes(path, 'mode') ~= 'directory' then
-    return nil
+    return  -- Don't complain.
   end
   for file in lfs.dir(path) do
     if file ~= '.' and file ~= '..' then
       local abspath = path..'/'..file
       if lfs.attributes(abspath, 'mode') == 'directory' then
-        local ret = do_rmdir(abspath)  -- recurse
-        if not ret then
-          return nil
-        end
+        do_rmdir(abspath)  -- recurse
       else
         local ret, err = os.remove(abspath)
         if not ret then
-          error('os.remove: '..err)
-          return nil
+          if not session then
+            error('os.remove: '..err)
+          else
+            -- Try Nvim delete(): it handles `readonly` attribute on Windows,
+            -- and avoids Lua cross-version/platform incompatibilities.
+            if -1 == nvim_call('delete', abspath) then
+              local hint = (os_name() == 'windows'
+                and ' (hint: try :%bwipeout! before rmdir())' or '')
+              error('delete() failed'..hint..': '..abspath)
+            end
+          end
         end
       end
     end
@@ -453,7 +461,6 @@ local function do_rmdir(path)
   if not ret then
     error('lfs.rmdir('..path..'): '..err)
   end
-  return ret
 end
 
 local function rmdir(path)

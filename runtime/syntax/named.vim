@@ -11,25 +11,16 @@
 " This file could do with a lot of improvements, so comments are welcome.
 " Please submit the named.conf (segment) with any comments.
 "
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 syn case match
 
-if version >= 600
-  setlocal iskeyword=.,-,48-58,A-Z,a-z,_
-else
-  set iskeyword=.,-,48-58,A-Z,a-z,_
-endif
+setlocal iskeyword=.,-,48-58,A-Z,a-z,_
 
-if version >= 600
-  syn sync match namedSync grouphere NONE "^(zone|controls|acl|key)"
-endif
+syn sync match namedSync grouphere NONE "^(zone|controls|acl|key)"
 
 let s:save_cpo = &cpo
 set cpo-=C
@@ -197,48 +188,38 @@ syn match	namedEParenError	contained +{+
 syn match	namedParenError	+}\([^;]\|$\)+
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_named_syn_inits")
-  if version < 508
-    let did_named_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink namedComment	Comment
-  HiLink namedInclude	Include
-  HiLink namedKeyword	Keyword
-  HiLink namedIntKeyword	Keyword
-  HiLink namedIdentifier	Identifier
-  HiLink namedIntIdent	Identifier
+hi def link namedComment	Comment
+hi def link namedInclude	Include
+hi def link namedKeyword	Keyword
+hi def link namedIntKeyword	Keyword
+hi def link namedIdentifier	Identifier
+hi def link namedIntIdent	Identifier
 
-  HiLink namedString	String
-  HiLink namedBool	Type
-  HiLink namedNotBool	Error
-  HiLink namedNumber	Number
-  HiLink namedNotNumber	Error
+hi def link namedString	String
+hi def link namedBool	Type
+hi def link namedNotBool	Error
+hi def link namedNumber	Number
+hi def link namedNotNumber	Error
 
-  HiLink namedOption	namedKeyword
-  HiLink namedLogOption	namedKeyword
-  HiLink namedCNOption	namedKeyword
-  HiLink namedQSKeywords	Type
-  HiLink namedCNKeywords	Type
-  HiLink namedLogCategory	Type
-  HiLink namedIPaddr	Number
-  HiLink namedDomain	Identifier
-  HiLink namedZoneOpt	namedKeyword
-  HiLink namedZoneType	Type
-  HiLink namedParenError	Error
-  HiLink namedEParenError	Error
-  HiLink namedIllegalDom	Error
-  HiLink namedIPerror	Error
-  HiLink namedSpareDot	Error
-  HiLink namedError	Error
+hi def link namedOption	namedKeyword
+hi def link namedLogOption	namedKeyword
+hi def link namedCNOption	namedKeyword
+hi def link namedQSKeywords	Type
+hi def link namedCNKeywords	Type
+hi def link namedLogCategory	Type
+hi def link namedIPaddr	Number
+hi def link namedDomain	Identifier
+hi def link namedZoneOpt	namedKeyword
+hi def link namedZoneType	Type
+hi def link namedParenError	Error
+hi def link namedEParenError	Error
+hi def link namedIllegalDom	Error
+hi def link namedIPerror	Error
+hi def link namedSpareDot	Error
+hi def link namedError	Error
 
-  delcommand HiLink
-endif
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

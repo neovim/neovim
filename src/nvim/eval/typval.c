@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
@@ -136,7 +139,7 @@ void tv_list_watch_fix(list_T *const l, const listitem_T *const item)
 ///
 /// @return [allocated] new list.
 list_T *tv_list_alloc(void)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   list_T *const list = xcalloc(1, sizeof(list_T));
 
@@ -1011,7 +1014,6 @@ void tv_dict_item_free(dictitem_T *const item)
 /// @return [allocated] new dictionary item.
 static dictitem_T *tv_dict_item_copy(dictitem_T *const di)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-  FUNC_ATTR_MALLOC
 {
   dictitem_T *const new_di = tv_dict_item_alloc((const char *)di->di_key);
   tv_copy(&di->di_tv, &new_di->di_tv);
@@ -1040,7 +1042,7 @@ void tv_dict_item_remove(dict_T *const dict, dictitem_T *const item)
 ///
 /// @return [allocated] new dictionary.
 dict_T *tv_dict_alloc(void)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dict_T *const d = xmalloc(sizeof(dict_T));
 
@@ -1577,7 +1579,7 @@ void tv_dict_set_keys_readonly(dict_T *const dict)
 ///
 /// @return [allocated] pointer to the created list.
 list_T *tv_list_alloc_ret(typval_T *const ret_tv)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_ALL
 {
   list_T *const l = tv_list_alloc();
   ret_tv->vval.v_list = l;
@@ -1799,11 +1801,13 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 #define TYPVAL_ENCODE_NAME nothing
 #define TYPVAL_ENCODE_FIRST_ARG_TYPE const void *const
 #define TYPVAL_ENCODE_FIRST_ARG_NAME ignored
+#define TYPVAL_ENCODE_TRANSLATE_OBJECT_NAME
 #include "nvim/eval/typval_encode.c.h"
 #undef TYPVAL_ENCODE_SCOPE
 #undef TYPVAL_ENCODE_NAME
 #undef TYPVAL_ENCODE_FIRST_ARG_TYPE
 #undef TYPVAL_ENCODE_FIRST_ARG_NAME
+#undef TYPVAL_ENCODE_TRANSLATE_OBJECT_NAME
 
 #undef TYPVAL_ENCODE_ALLOW_SPECIALS
 #undef TYPVAL_ENCODE_CONV_NIL
@@ -1838,8 +1842,13 @@ static inline void _nothing_conv_dict_end(typval_T *const tv,
 void tv_clear(typval_T *const tv)
 {
   if (tv != NULL && tv->v_type != VAR_UNKNOWN) {
-    const int evn_ret = encode_vim_to_nothing(NULL, tv,
-                                              _("tv_clear() argument"));
+    // WARNING: do not translate the string here, gettext is slow and function
+    // is used *very* often. At the current state encode_vim_to_nothing() does
+    // not error out and does not use the argument anywhere.
+    //
+    // If situation changes and this argument will be used, translate it in the
+    // place where it is used.
+    const int evn_ret = encode_vim_to_nothing(NULL, tv, "tv_clear() argument");
     (void)evn_ret;
     assert(evn_ret == OK);
   }
@@ -2042,11 +2051,20 @@ bool tv_islocked(const typval_T *const tv)
 ///
 /// @param[in]  lock  Lock status.
 /// @param[in]  name  Variable name, used in the error message.
-/// @param[in]  name_len  Variable name length.
+/// @param[in]  name_len  Variable name length. Use #TV_TRANSLATE to translate
+///                       variable name and compute the length. Use #TV_CSTRING
+///                       to compute the length with strlen() without
+///                       translating.
+///
+///                       Both #TV_… values are used for optimization purposes:
+///                       variable name with its length is needed only in case
+///                       of error, when no error occurs computing them is
+///                       a waste of CPU resources. This especially applies to
+///                       gettext.
 ///
 /// @return true if variable is locked, false otherwise.
-bool tv_check_lock(const VarLockStatus lock, const char *const name,
-                   const size_t name_len)
+bool tv_check_lock(const VarLockStatus lock, const char *name,
+                   size_t name_len)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const char *error_message = NULL;
@@ -2065,10 +2083,17 @@ bool tv_check_lock(const VarLockStatus lock, const char *const name,
   }
   assert(error_message != NULL);
 
-  const char *const unknown_name = _("Unknown");
+  if (name == NULL) {
+    name = _("Unknown");
+    name_len = strlen(name);
+  } else if (name_len == TV_TRANSLATE) {
+    name = _(name);
+    name_len = strlen(name);
+  } else if (name_len == TV_CSTRING) {
+    name_len = strlen(name);
+  }
 
-  emsgf(_(error_message), (name != NULL ? name_len : strlen(unknown_name)),
-        (name != NULL ? name : unknown_name));
+  emsgf(_(error_message), (int)name_len, name);
 
   return true;
 }

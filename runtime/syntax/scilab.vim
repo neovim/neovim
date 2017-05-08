@@ -9,11 +9,8 @@
 "
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -66,49 +63,39 @@ syn match scilabOverload			"%[A-Za-z0-9?!_#$]\+_[A-Za-z0-9?!_#$]\+"
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_scilab_syntax_inits")
-	if version < 508
-		let did_scilab_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	HiLink	scilabStatement				Statement
-	HiLink	scilabFunction				Keyword
-	HiLink	scilabPredicate				Keyword
-	HiLink	scilabKeyword				Keyword
-	HiLink	scilabDebug					Debug
-	HiLink	scilabRepeat				Repeat
-	HiLink	scilabConditional			Conditional
-	HiLink	scilabMultiplex				Conditional
+hi def link scilabStatement				Statement
+hi def link scilabFunction				Keyword
+hi def link scilabPredicate				Keyword
+hi def link scilabKeyword				Keyword
+hi def link scilabDebug					Debug
+hi def link scilabRepeat				Repeat
+hi def link scilabConditional			Conditional
+hi def link scilabMultiplex				Conditional
 
-	HiLink	scilabConstant				Constant
-	HiLink	scilabBoolean				Boolean
+hi def link scilabConstant				Constant
+hi def link scilabBoolean				Boolean
 
-	HiLink	scilabDelimiter				Delimiter
-	HiLink	scilabMlistAccess			Delimiter
-	HiLink	scilabComparison			Operator
-	HiLink	scilabLogical				Operator
-	HiLink	scilabAssignment			Operator
-	HiLink	scilabArithmetic			Operator
-	HiLink	scilabRange					Operator
-	HiLink	scilabLineContinuation		Underlined
-	HiLink	scilabTransposition			Operator
+hi def link scilabDelimiter				Delimiter
+hi def link scilabMlistAccess			Delimiter
+hi def link scilabComparison			Operator
+hi def link scilabLogical				Operator
+hi def link scilabAssignment			Operator
+hi def link scilabArithmetic			Operator
+hi def link scilabRange					Operator
+hi def link scilabLineContinuation		Underlined
+hi def link scilabTransposition			Operator
 
-	HiLink	scilabTodo					Todo
-	HiLink	scilabComment				Comment
+hi def link scilabTodo					Todo
+hi def link scilabComment				Comment
 
-	HiLink	scilabNumber				Number
-	HiLink	scilabString				String
+hi def link scilabNumber				Number
+hi def link scilabString				String
 
-	HiLink	scilabIdentifier			Identifier
-	HiLink	scilabOverload				Special
+hi def link scilabIdentifier			Identifier
+hi def link scilabOverload				Special
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "scilab"
 

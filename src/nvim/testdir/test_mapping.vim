@@ -150,3 +150,11 @@ func Test_break_undo()
   call assert_equal('new line here', getline(line('$') - 1))
   set nomodified
 endfunc
+
+func Test_map_meta_quotes()
+  imap <M-"> foo
+  call feedkeys("Go-\<M-\">-\<Esc>", "xt")
+  call assert_equal("-foo-", getline('$'))
+  set nomodified
+  iunmap <M-">
+endfunc

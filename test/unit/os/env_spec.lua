@@ -67,12 +67,37 @@ describe('env function', function()
     end)
   end)
 
+  describe('os_shell_is_cmdexe', function()
+    itp('returns true for expected names', function()
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('cmd.exe')))
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('cmd')))
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('CMD.EXE')))
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('CMD')))
+
+      os_setenv('COMSPEC', '/foo/bar/cmd.exe', 0)
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('$COMSPEC')))
+      os_setenv('COMSPEC', [[C:\system32\cmd.exe]], 0)
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('$COMSPEC')))
+    end)
+    itp('returns false for unexpected names', function()
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('powershell')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr(' cmd.exe ')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('cm')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('md')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('cmd.ex')))
+
+      os_setenv('COMSPEC', '/foo/bar/cmd', 0)
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('$COMSPEC')))
+    end)
+  end)
+
   describe('os_getenv', function()
     itp('reads an env variable', function()
       local name = 'NVIM_UNIT_TEST_GETENV_1N'
       local value = 'NVIM_UNIT_TEST_GETENV_1V'
       eq(NULL, os_getenv(name))
-      -- need to use os_setenv, because lua dosn't have a setenv function
+      -- Use os_setenv because Lua dosen't have setenv.
       os_setenv(name, value, 1)
       eq(value, os_getenv(name))
     end)

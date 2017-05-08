@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Jul 21
+" Last Change:	2017 Jan 06
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -305,7 +305,10 @@ au BufNewFile,BufRead *.bl			setf blank
 au BufNewFile,BufRead */etc/blkid.tab,*/etc/blkid.tab.old   setf xml
 
 " Bazel (http://bazel.io)
-autocmd BufRead,BufNewFile *.bzl,BUILD,WORKSPACE setfiletype bzl
+autocmd BufRead,BufNewFile *.bzl,WORKSPACE setfiletype bzl
+if has("fname_case")
+  autocmd BufRead,BufNewFile BUILD setfiletype bzl
+endif
 
 " C or lpc
 au BufNewFile,BufRead *.c			call s:FTlpc()
@@ -669,8 +672,17 @@ au BufNewFile,BufRead *.dtd			setf dtd
 " DTS/DSTI (device tree files)
 au BufNewFile,BufRead *.dts,*.dtsi		setf dts
 
-" EDIF (*.edf,*.edif,*.edn,*.edo)
-au BufNewFile,BufRead *.ed\(f\|if\|n\|o\)	setf edif
+" EDIF (*.edf,*.edif,*.edn,*.edo) or edn
+au BufNewFile,BufRead *.ed\(f\|if\|o\)		setf edif
+au BufNewFile,BufRead *.edn
+	\ if getline(1) =~ '^\s*(\s*edif\>' |
+	\   setf edif |
+	\ else |
+	\   setf clojure |
+	\ endif
+
+" EditorConfig (close enough to dosini)
+au BufNewFile,BufRead .editorconfig		setf dosini
 
 " Embedix Component Description
 au BufNewFile,BufRead *.ecd			setf ecd
@@ -688,8 +700,8 @@ func! s:FTe()
     let n = 1
     while n < 100 && n < line("$")
       if getline(n) =~ "^\\s*\\(<'\\|'>\\)\\s*$"
-        setf specman
-        return
+	setf specman
+	return
       endif
       let n = n + 1
     endwhile
@@ -775,8 +787,7 @@ au BufNewFile,BufRead *.mo,*.gdmo		setf gdmo
 au BufNewFile,BufRead *.ged,lltxxxxx.txt	setf gedcom
 
 " Git
-au BufNewFile,BufRead COMMIT_EDITMSG		setf gitcommit
-au BufNewFile,BufRead MERGE_MSG			setf gitcommit
+au BufNewFile,BufRead COMMIT_EDITMSG,MERGE_MSG,TAG_EDITMSG setf gitcommit
 au BufNewFile,BufRead *.git/config,.gitconfig,.gitmodules setf gitconfig
 au BufNewFile,BufRead *.git/modules/*/config	setf gitconfig
 au BufNewFile,BufRead */.config/git/config	setf gitconfig
@@ -803,6 +814,10 @@ au BufNewFile,BufRead *.gp,.gprc		setf gp
 au BufNewFile,BufRead */.gnupg/options		setf gpg
 au BufNewFile,BufRead */.gnupg/gpg.conf		setf gpg
 au BufNewFile,BufRead */usr/*/gnupg/options.skel setf gpg
+if !empty($GNUPGHOME)
+  au BufNewFile,BufRead $GNUPGHOME/options	setf gpg
+  au BufNewFile,BufRead $GNUPGHOME/gpg.conf	setf gpg
+endif
 
 " gnash(1) configuration files
 au BufNewFile,BufRead gnashrc,.gnashrc,gnashpluginrc,.gnashpluginrc setf gnash
@@ -852,7 +867,7 @@ au BufNewFile,BufRead *.ht			setf haste
 au BufNewFile,BufRead *.htpp			setf hastepreproc
 
 " Hercules
-au BufNewFile,BufRead *.vc,*.ev,*.rs,*.sum,*.errsum	setf hercules
+au BufNewFile,BufRead *.vc,*.ev,*.sum,*.errsum	setf hercules
 
 " HEX (Intel)
 au BufNewFile,BufRead *.hex,*.h32		setf hex
@@ -1750,6 +1765,9 @@ au BufNewFile,BufRead *.rb,*.rbw		setf ruby
 " RubyGems
 au BufNewFile,BufRead *.gemspec			setf ruby
 
+" Rust
+au BufNewFile,BufRead *.rs			setf rust
+
 " Rackup
 au BufNewFile,BufRead *.ru			setf ruby
 
@@ -1776,6 +1794,9 @@ au BufNewFile,BufRead *.sass			setf sass
 
 " Sather
 au BufNewFile,BufRead *.sa			setf sather
+
+" Scala
+au BufNewFile,BufRead *.scala			setf scala
 
 " Scilab
 au BufNewFile,BufRead *.sci,*.sce		setf scilab
@@ -2049,7 +2070,7 @@ func! s:FTRules()
     if line =~ s:ft_rules_udev_rules_pattern
       let udev_rules = substitute(line, s:ft_rules_udev_rules_pattern, '\1', "")
       if dir == udev_rules
-        setf udevrules
+	setf udevrules
       endif
       break
     endif
@@ -2241,7 +2262,7 @@ func! s:FTtex()
 endfunc
 
 " ConTeXt
-au BufNewFile,BufRead tex/context/*/*.tex,*.mkii,*.mkiv   setf context
+au BufNewFile,BufRead tex/context/*/*.tex,*.mkii,*.mkiv,*.mkvi   setf context
 
 " Texinfo
 au BufNewFile,BufRead *.texinfo,*.texi,*.txi	setf texinfo
@@ -2301,7 +2322,7 @@ au BufNewFile,BufRead */etc/updatedb.conf	setf updatedb
 au BufNewFile,BufRead */usr/share/upstart/*.conf	       setf upstart
 au BufNewFile,BufRead */usr/share/upstart/*.override	       setf upstart
 au BufNewFile,BufRead */etc/init/*.conf,*/etc/init/*.override  setf upstart
-au BufNewFile,BufRead */.init/*.conf,*/.init/*.override        setf upstart
+au BufNewFile,BufRead */.init/*.conf,*/.init/*.override	       setf upstart
 au BufNewFile,BufRead */.config/upstart/*.conf		       setf upstart
 au BufNewFile,BufRead */.config/upstart/*.override	       setf upstart
 
@@ -2657,6 +2678,9 @@ au BufNewFile,BufRead mutt{ng,}rc*,Mutt{ng,}rc*		call s:StarSetf('muttrc')
 
 " Nroff macros
 au BufNewFile,BufRead tmac.*			call s:StarSetf('nroff')
+
+" OpenBSD hostname.if
+au BufNewFile,BufRead /etc/hostname.*		call s:StarSetf('config')
 
 " Pam conf
 au BufNewFile,BufRead */etc/pam.d/*		call s:StarSetf('pamconf')

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // Terminal UI functions. Invoked (by ui_bridge.c) on the TUI thread.
 
 #include <assert.h>
@@ -40,6 +43,16 @@
 #define OUTBUF_SIZE 0xffff
 
 #define TOO_MANY_EVENTS 1000000
+#define STARTS_WITH(str, prefix) (!memcmp(str, prefix, sizeof(prefix) - 1))
+#define TMUX_WRAP(seq) (is_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
+
+typedef enum TermType {
+  kTermUnknown,
+  kTermGnome,
+  kTermiTerm,
+  kTermKonsole,
+  kTermRxvt,
+} TermType;
 
 typedef struct {
   int top, bot, left, right;
@@ -62,9 +75,6 @@ typedef struct {
   bool out_isatty;
   SignalWatcher winch_handle, cont_handle;
   bool cont_received;
-  // Event scheduled by the ui bridge. Since the main thread suspends until
-  // the event is handled, it is fine to use a single field instead of a queue
-  Event scheduled_event;
   UGrid grid;
   kvec_t(Rect) invalid_regions;
   int out_fd;
@@ -73,7 +83,8 @@ typedef struct {
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
-  int showing_mode;
+  ModeShape showing_mode;
+  TermType term;
   struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
@@ -85,6 +96,7 @@ typedef struct {
 
 static bool volatile got_winch = false;
 static bool cursor_style_enabled = false;
+static bool is_tmux = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -96,12 +108,11 @@ UI *tui_start(void)
   UI *ui = xcalloc(1, sizeof(UI));
   ui->stop = tui_stop;
   ui->rgb = p_tgc;
-  ui->pum_external = false;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
   ui->eol_clear = tui_eol_clear;
   ui->cursor_goto = tui_cursor_goto;
-  ui->cursor_style_set = tui_cursor_style_set;
+  ui->mode_info_set = tui_mode_info_set;
   ui->update_menu = tui_update_menu;
   ui->busy_start = tui_busy_start;
   ui->busy_stop = tui_busy_stop;
@@ -122,6 +133,9 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->event = tui_event;
+
+  memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
+
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
 
@@ -131,7 +145,7 @@ static void terminfo_start(UI *ui)
   data->can_use_terminal_scroll = true;
   data->bufpos = 0;
   data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
-  data->showing_mode = 0;
+  data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
   data->unibi_ext.set_cursor_color = -1;
@@ -173,7 +187,7 @@ static void terminfo_stop(UI *ui)
 {
   TUIData *data = ui->data;
   // Destroy output stuff
-  tui_mode_change(ui, NORMAL);
+  tui_mode_change(ui, SHAPE_IDX_N);
   tui_mouse_off(ui);
   unibi_out(ui, unibi_exit_attribute_mode);
   // cursor should be set to normal before exiting alternate screen
@@ -237,7 +251,9 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   kv_init(data->invalid_regions);
   signal_watcher_init(data->loop, &data->winch_handle, ui);
   signal_watcher_init(data->loop, &data->cont_handle, data);
+#ifdef UNIX
   signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
+#endif
   tui_terminal_start(ui);
   data->stop = false;
   // allow the main thread to continue, we are ready to start handling UI
@@ -266,10 +282,12 @@ static void tui_scheduler(Event event, void *d)
   loop_schedule(data->loop, event);
 }
 
+#ifdef UNIX
 static void sigcont_cb(SignalWatcher *watcher, int signum, void *data)
 {
   ((TUIData *)data)->cont_received = true;
 }
+#endif
 
 static void sigwinch_cb(SignalWatcher *watcher, int signum, void *data)
 {
@@ -472,27 +490,24 @@ static cursorentry_T decode_cursor_entry(Dictionary args)
   return r;
 }
 
-static void tui_cursor_style_set(UI *ui, bool enabled, Dictionary args)
+static void tui_mode_info_set(UI *ui, bool guicursor_enabled, Array args)
 {
-  cursor_style_enabled = enabled;
-  if (!enabled) {
+  cursor_style_enabled = guicursor_enabled;
+  if (!guicursor_enabled) {
     return;  // Do not send cursor style control codes.
   }
   TUIData *data = ui->data;
 
   assert(args.size);
-  // Keys: as defined by `shape_table`.
+
+  // cursor style entries as defined by `shape_table`.
   for (size_t i = 0; i < args.size; i++) {
-    char *mode_name = args.items[i].key.data;
-    const int mode_id = cursor_mode_str2int(mode_name);
-    assert(mode_id >= 0);
-    cursorentry_T r = decode_cursor_entry(args.items[i].value.data.dictionary);
-    r.full_name = mode_name;
-    data->cursor_shapes[mode_id] = r;
+    assert(args.items[i].type == kObjectTypeDictionary);
+    cursorentry_T r = decode_cursor_entry(args.items[i].data.dictionary);
+    data->cursor_shapes[i] = r;
   }
 
-  MouseMode cursor_mode = tui_mode2cursor(data->showing_mode);
-  tui_set_cursor(ui, cursor_mode);
+  tui_set_mode(ui, data->showing_mode);
 }
 
 static void tui_update_menu(UI *ui)
@@ -528,8 +543,7 @@ static void tui_mouse_off(UI *ui)
   }
 }
 
-/// @param mode one of SHAPE_XXX
-static void tui_set_cursor(UI *ui, MouseMode mode)
+static void tui_set_mode(UI *ui, ModeShape mode)
 {
   if (!cursor_style_enabled) {
     return;
@@ -537,14 +551,21 @@ static void tui_set_cursor(UI *ui, MouseMode mode)
   TUIData *data = ui->data;
   cursorentry_T c = data->cursor_shapes[mode];
   int shape = c.shape;
-  bool inside_tmux = os_getenv("TMUX") != NULL;
   unibi_var_t vars[26 + 26] = { { 0 } };
 
-# define TMUX_WRAP(seq) (inside_tmux ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
   // Support changing cursor shape on some popular terminals.
   const char *vte_version = os_getenv("VTE_VERSION");
 
-  if (os_getenv("KONSOLE_PROFILE_NAME") || os_getenv("KONSOLE_DBUS_SESSION")) {
+  if (c.id != 0 && ui->rgb) {
+    int attr = syn_id2attr(c.id);
+    if (attr > 0) {
+      attrentry_T *aep = syn_cterm_attr2entry(attr);
+      data->params[0].i = aep->rgb_bg_color;
+      unibi_out(ui, data->unibi_ext.set_cursor_color);
+    }
+  }
+
+  if (data->term == kTermKonsole) {
     // Konsole uses a proprietary escape code to set the cursor shape
     // and does not support DECSCUSR.
     switch (shape) {
@@ -554,7 +575,7 @@ static void tui_set_cursor(UI *ui, MouseMode mode)
       default: WLOG("Unknown shape value %d", shape); break;
     }
     data->params[0].i = shape;
-    data->params[1].i = (c.blinkon == 0);
+    data->params[1].i = (c.blinkon != 0);
 
     unibi_format(vars, vars + 26,
       TMUX_WRAP("\x1b]50;CursorShape=%p1%d;BlinkingCursorEnabled=%p2%d\x07"),
@@ -567,59 +588,22 @@ static void tui_set_cursor(UI *ui, MouseMode mode)
 
     switch (shape) {
       case SHAPE_BLOCK: shape = 1; break;
-      case SHAPE_VER:   shape = 5; break;
       case SHAPE_HOR:   shape = 3; break;
+      case SHAPE_VER:   shape = 5; break;
       default: WLOG("Unknown shape value %d", shape); break;
     }
-    data->params[0].i = shape + (c.blinkon ==0);
+    data->params[0].i = shape + (int)(c.blinkon == 0);
     unibi_format(vars, vars + 26, "\x1b[%p1%d q",
                  data->params, out, ui, NULL, NULL);
-  }
-
-  if (c.id != 0 && ui->rgb) {
-    int attr = syn_id2attr(c.id);
-    attrentry_T *aep = syn_cterm_attr2entry(attr);
-    data->params[0].i = aep->rgb_bg_color;
-    unibi_out(ui, data->unibi_ext.set_cursor_color);
-  }
-}
-
-/// Returns cursor mode from edit mode
-static MouseMode tui_mode2cursor(int mode)
-{
-  switch (mode) {
-    case INSERT:  return SHAPE_IDX_I;
-    case CMDLINE: return SHAPE_IDX_C;
-    case REPLACE: return SHAPE_IDX_R;
-    case NORMAL:
-    default:      return SHAPE_IDX_N;
   }
 }
 
 /// @param mode editor mode
-static void tui_mode_change(UI *ui, int mode)
+static void tui_mode_change(UI *ui, int mode_idx)
 {
   TUIData *data = ui->data;
-
-  if (mode == INSERT) {
-    if (data->showing_mode != INSERT) {
-      tui_set_cursor(ui, SHAPE_IDX_I);
-    }
-  } else if (mode == CMDLINE) {
-    if (data->showing_mode != CMDLINE) {
-      tui_set_cursor(ui, SHAPE_IDX_C);
-    }
-  } else if (mode == REPLACE) {
-    if (data->showing_mode != REPLACE) {
-      tui_set_cursor(ui, SHAPE_IDX_R);
-    }
-  } else {
-    assert(mode == NORMAL);
-    if (data->showing_mode != NORMAL) {
-      tui_set_cursor(ui, SHAPE_IDX_N);
-    }
-  }
-  data->showing_mode = mode;
+  tui_set_mode(ui, (ModeShape)mode_idx);
+  data->showing_mode = (ModeShape)mode_idx;
 }
 
 static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
@@ -764,6 +748,7 @@ static void tui_flush(UI *ui)
   flush_buf(ui, true);
 }
 
+#ifdef UNIX
 static void suspend_event(void **argv)
 {
   UI *ui = argv[0];
@@ -785,15 +770,18 @@ static void suspend_event(void **argv)
   // resume the main thread
   CONTINUE(data->bridge);
 }
+#endif
 
 static void tui_suspend(UI *ui)
 {
+#ifdef UNIX
   TUIData *data = ui->data;
   // kill(0, SIGTSTP) won't stop the UI thread, so we must poll for SIGCONT
   // before continuing. This is done in another callback to avoid
   // loop_poll_events recursion
   multiqueue_put_event(data->loop->fast_events,
-                       event_create(1, suspend_event, 1, ui));
+                       event_create(suspend_event, 1, ui));
+#endif
 }
 
 static void tui_set_title(UI *ui, char *title)
@@ -951,19 +939,37 @@ static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
   }
 }
 
+static TermType detect_term(const char *term, const char *colorterm)
+{
+  if (STARTS_WITH(term, "rxvt")) {
+    return kTermRxvt;
+  }
+  if (os_getenv("KONSOLE_PROFILE_NAME") || os_getenv("KONSOLE_DBUS_SESSION")) {
+    return kTermKonsole;
+  }
+  const char *termprg = os_getenv("TERM_PROGRAM");
+  if (termprg && strstr(termprg, "iTerm.app")) {
+    return kTermiTerm;
+  }
+  if (colorterm && strstr(colorterm, "gnome-terminal")) {
+    return kTermGnome;
+  }
+  return kTermUnknown;
+}
+
 static void fix_terminfo(TUIData *data)
 {
   unibi_term *ut = data->ut;
+  is_tmux = os_getenv("TMUX") != NULL;
 
   const char *term = os_getenv("TERM");
   const char *colorterm = os_getenv("COLORTERM");
   if (!term) {
     goto end;
   }
+  data->term = detect_term(term, colorterm);
 
-#define STARTS_WITH(str, prefix) (!memcmp(str, prefix, sizeof(prefix) - 1))
-
-  if (STARTS_WITH(term, "rxvt")) {
+  if (data->term == kTermRxvt) {
     unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[m\x1b(B");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<20/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
@@ -975,7 +981,7 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   }
 
-  if (STARTS_WITH(term, "xterm") || STARTS_WITH(term, "rxvt")) {
+  if (STARTS_WITH(term, "xterm") || data->term == kTermRxvt) {
     const char *normal = unibi_get_str(ut, unibi_cursor_normal);
     if (!normal) {
       unibi_set_str(ut, unibi_cursor_normal, "\x1b[?25h");
@@ -1010,9 +1016,11 @@ static void fix_terminfo(TUIData *data)
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 
   if ((colorterm && strstr(colorterm, "256"))
+      || STARTS_WITH(term, "linux")
       || strstr(term, "256")
       || strstr(term, "xterm")) {
-    // Assume TERM~=xterm or COLORTERM~=256 supports 256 colors.
+    // Linux 4.8+ supports 256-color SGR, but terminfo has 8-color setaf/setab.
+    // Assume TERM=~xterm|linux or COLORTERM=~256 supports 256 colors.
     unibi_set_num(ut, unibi_max_colors, 256);
     unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
     unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
@@ -1020,8 +1028,13 @@ static void fix_terminfo(TUIData *data)
 
 end:
   // Fill some empty slots with common terminal strings
-  data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
-      ut, NULL, "\033]12;#%p1%06x\007");
+  if (data->term == kTermiTerm) {
+    data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
+        ut, NULL, TMUX_WRAP("\033]Pl%p1%06x\033\\"));
+  } else {
+    data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
+        ut, NULL, "\033]12;#%p1%06x\007");
+  }
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,

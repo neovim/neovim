@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * getchar.c
  *
@@ -302,13 +305,13 @@ static void add_num_buff(buffheader_T *buf, long n)
  */
 static void add_char_buff(buffheader_T *buf, int c)
 {
-  char bytes[MB_MAXBYTES + 1];
+  uint8_t bytes[MB_MAXBYTES + 1];
 
   int len;
   if (IS_SPECIAL(c)) {
     len = 1;
   } else {
-    len = (*mb_char2bytes)(c, (char_u *)bytes);
+    len = mb_char2bytes(c, bytes);
   }
 
   for (int i = 0; i < len; i++) {
@@ -1589,7 +1592,7 @@ vungetc ( /* unget one character (can only be done once!) */
 ///    This may do a blocking wait if "advance" is TRUE.
 ///
 /// if "advance" is TRUE (vgetc()):
-///    really get the character.
+///    Really get the character.
 ///    KeyTyped is set to TRUE in the case the user typed the key.
 ///    KeyStuffed is TRUE if the character comes from the stuff buffer.
 /// if "advance" is FALSE (vpeekc()):
@@ -1849,11 +1852,12 @@ static int vgetorpeek(int advance)
                     mp_match = mp;
                     mp_match_len = keylen;
                   }
-                } else
-                /* No match; may have to check for
-                 * termcode at next character. */
-                if (max_mlen < mlen)
-                  max_mlen = mlen;
+                } else {
+                  // No match; may have to check for termcode at next character.
+                  if (max_mlen < mlen) {
+                    max_mlen = mlen;
+                  }
+                }
               }
             }
 
@@ -3164,6 +3168,10 @@ showmap (
 {
   size_t len = 1;
 
+  if (message_filtered(mp->m_keys) && message_filtered(mp->m_str)) {
+    return;
+  }
+
   if (msg_didout || msg_silent != 0) {
     msg_putchar('\n');
     if (got_int)            /* 'q' typed at MORE prompt */
@@ -3588,8 +3596,8 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
       char_u *q = mp->m_keys;
       int match;
 
-      if (vim_strbyte(mp->m_keys, K_SPECIAL) != NULL) {
-        /* might have CSI escaped mp->m_keys */
+      if (strchr((const char *)mp->m_keys, K_SPECIAL) != NULL) {
+        // Might have CSI escaped mp->m_keys.
         q = vim_strsave(mp->m_keys);
         vim_unescape_csi(q);
         qlen = (int)STRLEN(q);

@@ -1,11 +1,11 @@
-// env.c -- environment variable access
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
+// Environment inspection
 
 #include <assert.h>
-
 #include <uv.h>
 
-// vim.h must be included before charset.h (and possibly others) or things
-// blow up
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
@@ -644,7 +644,7 @@ char *vim_getenv(const char *name)
             exe_name,
             "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
             MAXPATHL) == OK) {
-          vim_path = exe_name;
+          vim_path = exe_name;  // -V507
         }
       }
     }
@@ -678,6 +678,7 @@ char *vim_getenv(const char *name)
         vim_path = NULL;
       }
     }
+    assert(vim_path != exe_name);
   }
 
 #ifdef HAVE_PATHDEF
@@ -914,8 +915,36 @@ bool os_term_is_nice(void)
   return true;
 #else
   const char *vte_version = os_getenv("VTE_VERSION");
-  return (vte_version && atoi(vte_version) >= 3900)
-    || NULL != os_getenv("KONSOLE_PROFILE_NAME")
-    || NULL != os_getenv("KONSOLE_DBUS_SESSION");
+  if ((vte_version && atoi(vte_version) >= 3900)
+      || os_getenv("KONSOLE_PROFILE_NAME")
+      || os_getenv("KONSOLE_DBUS_SESSION")) {
+    return true;
+  }
+  const char *termprg = os_getenv("TERM_PROGRAM");
+  if (termprg && striequal(termprg, "iTerm.app")) {
+    return true;
+  }
+  const char *term = os_getenv("TERM");
+  if (term && strncmp(term, "rxvt", 4) == 0) {
+    return true;
+  }
+  return false;
 #endif
+}
+
+/// Returns true if `sh` looks like it resolves to "cmd.exe".
+bool os_shell_is_cmdexe(const char *sh)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (*sh == NUL) {
+    return false;
+  }
+  if (striequal(sh, "$COMSPEC")) {
+    const char *comspec = os_getenv("COMSPEC");
+    return striequal("cmd.exe", (char *)path_tail((char_u *)comspec));
+  }
+  if (striequal(sh, "cmd.exe") || striequal(sh, "cmd")) {
+    return true;
+  }
+  return striequal("cmd.exe", (char *)path_tail((char_u *)sh));
 }

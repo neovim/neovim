@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * syntax.c: code for syntax highlighting
  */
@@ -5898,6 +5901,8 @@ static void syntime_report(void)
 static char *highlight_init_both[] =
 {
   "Conceal      ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
+  "Cursor       guibg=fg guifg=bg",
+  "lCursor      guibg=fg guifg=bg",
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
   "ErrorMsg     ctermbg=DarkRed ctermfg=White guibg=Red guifg=White",
   "IncSearch    cterm=reverse gui=reverse",

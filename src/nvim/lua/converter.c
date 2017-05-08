@@ -719,7 +719,7 @@ String nlua_pop_String(lua_State *lstate, Error *err)
 {
   if (lua_type(lstate, -1) != LUA_TSTRING) {
     lua_pop(lstate, 1);
-    api_set_error(err, Validation, "Expected lua string");
+    api_set_error(err, kErrorTypeValidation, "Expected lua string");
     return (String) { .size = 0, .data = NULL };
   }
   String ret;
@@ -740,14 +740,14 @@ Integer nlua_pop_Integer(lua_State *lstate, Error *err)
 {
   if (lua_type(lstate, -1) != LUA_TNUMBER) {
     lua_pop(lstate, 1);
-    api_set_error(err, Validation, "Expected lua number");
+    api_set_error(err, kErrorTypeValidation, "Expected lua number");
     return 0;
   }
   const lua_Number n = lua_tonumber(lstate, -1);
   lua_pop(lstate, 1);
   if (n > (lua_Number)API_INTEGER_MAX || n < (lua_Number)API_INTEGER_MIN
       || ((lua_Number)((Integer)n)) != n) {
-    api_set_error(err, Exception, "Number is not integral");
+    api_set_error(err, kErrorTypeException, "Number is not integral");
     return 0;
   }
   return (Integer)n;
@@ -778,7 +778,7 @@ static inline LuaTableProps nlua_check_type(lua_State *const lstate,
 {
   if (lua_type(lstate, -1) != LUA_TTABLE) {
     if (err) {
-      api_set_error(err, Validation, "Expected lua table");
+      api_set_error(err, kErrorTypeValidation, "Expected lua table");
     }
     return (LuaTableProps) { .type = kObjectTypeNil };
   }
@@ -791,7 +791,7 @@ static inline LuaTableProps nlua_check_type(lua_State *const lstate,
 
   if (table_props.type != type) {
     if (err) {
-      api_set_error(err, Validation, "Unexpected type");
+      api_set_error(err, kErrorTypeValidation, "Unexpected type");
     }
   }
 
@@ -843,7 +843,7 @@ static Array nlua_pop_Array_unchecked(lua_State *const lstate,
     lua_rawgeti(lstate, -1, (int)i);
 
     val = nlua_pop_Object(lstate, err);
-    if (err->set) {
+    if (ERROR_SET(err)) {
       ret.size = i - 1;
       lua_pop(lstate, 1);
       api_free_array(ret);
@@ -902,7 +902,7 @@ static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate,
       ret.items[i].key = nlua_pop_String(lstate, err);
       // stack: dict, key, value
 
-      if (!err->set) {
+      if (!ERROR_SET(err)) {
         ret.items[i].value = nlua_pop_Object(lstate, err);
         // stack: dict, key
       } else {
@@ -910,7 +910,7 @@ static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate,
         // stack: dict, key
       }
 
-      if (err->set) {
+      if (ERROR_SET(err)) {
         ret.size = i;
         api_free_dictionary(ret);
         lua_pop(lstate, 2);
@@ -959,9 +959,9 @@ Object nlua_pop_Object(lua_State *const lstate, Error *const err)
   const int initial_size = lua_gettop(lstate);
   kvec_t(ObjPopStackItem) stack = KV_INITIAL_VALUE;
   kv_push(stack, ((ObjPopStackItem) { &ret, false }));
-  while (!err->set && kv_size(stack)) {
+  while (!ERROR_SET(err) && kv_size(stack)) {
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
-      api_set_error(err, Exception, "Lua failed to grow stack");
+      api_set_error(err, kErrorTypeException, "Lua failed to grow stack");
       break;
     }
     ObjPopStackItem cur = kv_pop(stack);
@@ -1092,7 +1092,8 @@ Object nlua_pop_Object(lua_State *const lstate, Error *const err)
             break;
           }
           case kObjectTypeNil: {
-            api_set_error(err, Validation, "Cannot convert given lua table");
+            api_set_error(err, kErrorTypeValidation,
+                          "Cannot convert given lua table");
             break;
           }
           default: {
@@ -1102,7 +1103,8 @@ Object nlua_pop_Object(lua_State *const lstate, Error *const err)
         break;
       }
       default: {
-        api_set_error(err, Validation, "Cannot convert given lua type");
+        api_set_error(err, kErrorTypeValidation,
+                      "Cannot convert given lua type");
         break;
       }
     }
@@ -1111,7 +1113,7 @@ Object nlua_pop_Object(lua_State *const lstate, Error *const err)
     }
   }
   kv_destroy(stack);
-  if (err->set) {
+  if (ERROR_SET(err)) {
     api_free_object(ret);
     ret = NIL;
     lua_pop(lstate, lua_gettop(lstate) - initial_size + 1);

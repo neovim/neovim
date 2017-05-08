@@ -499,36 +499,16 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  getchar.h
-  if_cscope_defs.h
   misc2.h
   msgpack_rpc/server.h
-  option.h
   os/shell.h
   os_unix.h
   os/win_defs.h
-  popupmnu.h
-  quickfix.h
-  regexp.h
   regexp_defs.h
-  screen.h
-  search.h
-  sha256.h
-  sign_defs.h
-  spell.h
-  spellfile.h
-  syntax.h
   syntax_defs.h
-  tag.h
   terminal.h
-  tui/tui.h
-  ugrid.h
-  ui.h
-  ui_bridge.h
   undo.h
   undo_defs.h
-  version.h
-  window.h
 )
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)

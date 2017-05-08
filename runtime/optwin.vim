@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2016 Aug 12
+" Last Change:	2017 Jan 28
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -1146,8 +1146,8 @@ endif
 if has("langmap")
   call append("$", "langmap\tlist of characters that are translated in Normal mode")
   call <SID>OptionG("lmap", &lmap)
-  call append("$", "langnoremap\tdon't apply 'langmap' to mapped characters")
-  call <SID>BinOptionG("lnr", &lnr)
+  call append("$", "langremap\tapply 'langmap' to mapped characters")
+  call <SID>BinOptionG("lrm", &lrm)
 endif
 if has("xim")
   call append("$", "imdisable\twhen set never use IM; overrules following IM options")

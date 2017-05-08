@@ -3,11 +3,8 @@
 " Maintainer:	Igor N. Prischepoff (igor@tyumbit.ru, pri_igor@mail.ru)
 " Last change:	2012 Aug 11
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syntax clear
-elseif exists ("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists ("b:current_syntax")
     finish
 endif
 
@@ -36,25 +33,16 @@ syn match  CfgComment	";.*"
 syn match  CfgComment	"\/\/.*"
 
 " Define the default hightlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_cfg_syn_inits")
-    if version < 508
-	let did_cfg_syn_inits = 1
-	command -nargs=+ HiLink hi link <args>
-    else
-	command -nargs=+ HiLink hi def link <args>
-    endif
-    HiLink CfgOnOff     Label
-    HiLink CfgComment	Comment
-    HiLink CfgSection	Type
-    HiLink CfgString	String
-    HiLink CfgParams    Keyword
-    HiLink CfgValues    Constant
-    HiLink CfgDirectory Directory
-    HiLink UncPath      Directory
+" Only when an item doesn't have highlighting yet
+hi def link CfgOnOff     Label
+hi def link CfgComment	Comment
+hi def link CfgSection	Type
+hi def link CfgString	String
+hi def link CfgParams    Keyword
+hi def link CfgValues    Constant
+hi def link CfgDirectory Directory
+hi def link UncPath      Directory
 
-    delcommand HiLink
-endif
+
 let b:current_syntax = "cfg"
 " vim:ts=8

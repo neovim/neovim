@@ -6,17 +6,9 @@
 
 The Python Interface to Vim				*python* *Python*
 
-1. Commands					|python-commands|
-2. The vim module				|python-vim|
-3. Buffer objects				|python-buffer|
-4. Range objects				|python-range|
-5. Window objects				|python-window|
-6. Tab page objects				|python-tabpage|
-7. vim.bindeval objects				|python-bindeval-objects|
-8. pyeval(), py3eval() Vim functions		|python-pyeval|
-9. Python 3					|python3|
-
 See |provider-python| for more information. {Nvim}
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Commands						*python-commands*
@@ -48,7 +40,11 @@ Example: >
 			print 'EAT ME'
 	EOF
 	endfunction
-<
+
+To see what version of Python you have: >
+	:python import sys
+	:python print(sys.version)
+
 Note: Python is very sensitive to the indenting.  Make sure the "class" line
 and "EOF" do not have any indent.
 
@@ -692,6 +688,10 @@ functions to evaluate Python expressions and pass their values to VimL.
 The `:py3` and `:python3` commands work similar to `:python`.  A simple check
 if the `:py3` command is working: >
 	:py3 print("Hello")
+
+To see what version of Python you have: >
+	:py3 import sys
+	:py3 print(sys.version)
 <							*:py3file*
 The `:py3file` command works similar to `:pyfile`.
 							*:py3do*

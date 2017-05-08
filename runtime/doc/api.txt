@@ -9,8 +9,9 @@ Nvim API							   *API* *api*
 Nvim exposes a powerful API that can be used by plugins and external processes
 via |msgpack-rpc|, Lua and VimL (|eval-api|).
 
-Nvim can also be embedded in C applications as libnvim, so the application
-can control the embedded instance by calling the C API directly.
+Applications can also embed libnvim to work with the C API directly.
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 API Types							   *api-types*
@@ -53,6 +54,28 @@ types			Custom handle types defined by Nvim
 error_types		Possible error types returned by API functions
 
 External programs ("clients") can use the metadata to discover the |rpc-api|.
+
+==============================================================================
+API contract                                                     *api-contract*
+
+The API is made of functions and events. Clients call functions like those
+described at |api-global|, and may "attach" in order to receive rich events,
+described at |rpc-remote-ui|.
+
+As Nvim develops, its API may change only according the following "contract":
+
+- New functions and events may be added.
+  - Any such extensions are OPTIONAL: old clients may ignore them.
+- Function signatures will NOT CHANGE (after release).
+  - Functions introduced in the development (unreleased) version MAY CHANGE.
+    (Clients can dynamically check `api_prerelease`, etc. |api-metadata|)
+- Event parameters will not be removed or reordered (after release).
+- Events may be EXTENDED: new parameters may be added.
+- New items may be ADDED to map/list parameters/results of functions and
+  events.
+  - Any such new items are OPTIONAL: old clients may ignore them.
+  - Existing items will not be removed (after release).
+- Deprecated functions will not be removed until Nvim version 2.0
 
 ==============================================================================
 Buffer highlighting					       *api-highlights*
@@ -247,7 +270,7 @@ nvim_get_option({name})                                    *nvim_get_option()*
                     {name}  Option name
 
                 Return:~
-                    Option value
+                    Option value (global)
 
 nvim_set_option({name}, {value})                           *nvim_set_option()*
                 Sets an option value
@@ -346,6 +369,17 @@ nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
 
 nvim_get_color_map()                                    *nvim_get_color_map()*
                 TODO: Documentation
+
+nvim_get_mode()                                              *nvim_get_mode()*
+                Gets the current mode.
+                mode:     Mode string. |mode()|
+                blocking: true if Nvim is waiting for input.
+
+                Attributes:~
+                    {async}
+
+                Return:~
+                    Dictionary { "mode": String, "blocking": Boolean }
 
 nvim_get_api_info()                                      *nvim_get_api_info()*
                 TODO: Documentation
@@ -490,15 +524,6 @@ nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
                     {buffer}  Buffer handle
                     {name}    Option name
                     {value}   Option value
-
-nvim_buf_get_number({buffer})                          *nvim_buf_get_number()*
-                Gets the buffer number
-
-                Parameters:~
-                    {buffer}  Buffer handle
-
-                Return:~
-                    Buffer number
 
 nvim_buf_get_name({buffer})                              *nvim_buf_get_name()*
                 Gets the full file name for the buffer

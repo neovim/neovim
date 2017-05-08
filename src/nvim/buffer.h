@@ -103,7 +103,8 @@ static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
   assert(changedtick_di->di_flags == (DI_FLAGS_RO|DI_FLAGS_FIX));
 # endif
   assert(changedtick_di == (dictitem_T *)&buf->changedtick_di);
-  assert(&buf->b_changedtick == &buf->changedtick_di.di_tv.vval.v_number);
+  assert(&buf->b_changedtick  // -V501
+         == &buf->changedtick_di.di_tv.vval.v_number);
 #endif
   buf->b_changedtick = changedtick;
 }

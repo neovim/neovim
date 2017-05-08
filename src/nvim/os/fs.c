@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // fs.c -- filesystem access
 #include <stdbool.h>
 #include <stddef.h>
@@ -58,9 +61,9 @@ void fs_init(void)
 }
 
 
-/// Change to the given directory.
+/// Changes the current directory to `path`.
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or negative error code.
 int os_chdir(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {

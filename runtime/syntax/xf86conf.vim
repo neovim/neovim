@@ -10,12 +10,8 @@
 "							 to force XFree86 3.x or 4.x XF86Config syntax
 
 " Setup
-if version >= 600
-	if exists("b:current_syntax")
-		finish
-	endif
-else
-	echo "Sorry, but this syntax file relies on Vim 6 features.	 Either upgrade Vim or usea version of " . expand("<sfile>:t:r") . " syntax file appropriate for Vim " . version/100 . "." . version %100 . "."
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 

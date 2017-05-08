@@ -10,8 +10,10 @@
 #define ARRAY_DICT_INIT {.size = 0, .capacity = 0, .items = NULL}
 #define STRING_INIT {.data = NULL, .size = 0}
 #define OBJECT_INIT { .type = kObjectTypeNil }
-#define ERROR_INIT { .set = false }
+#define ERROR_INIT { .type = kErrorTypeNone, .msg = NULL }
 #define REMOTE_TYPE(type) typedef handle_T type
+
+#define ERROR_SET(e) ((e)->type != kErrorTypeNone)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # define ArrayOf(...) Array
@@ -22,6 +24,7 @@ typedef int handle_T;
 
 // Basic types
 typedef enum {
+  kErrorTypeNone = -1,
   kErrorTypeException,
   kErrorTypeValidation
 } ErrorType;
@@ -59,8 +62,7 @@ static inline bool is_internal_call(const uint64_t channel_id)
 
 typedef struct {
   ErrorType type;
-  char msg[1024];
-  bool set;
+  char *msg;
 } Error;
 
 typedef bool Boolean;

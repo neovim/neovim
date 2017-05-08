@@ -8,11 +8,8 @@
 
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -24,11 +21,7 @@ syn case match
 
 
 " Load SINDA syntax file
-if version < 600
-  source <sfile>:p:h/sinda.vim
-else
-  runtime! syntax/sinda.vim
-endif
+runtime! syntax/sinda.vim
 unlet b:current_syntax
 
 
@@ -66,33 +59,23 @@ syn match sindaoutError		"<<< Error >>>"
 
 
 " Define the default highlighting
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sindaout_syntax_inits")
-  if version < 508
-    let did_sindaout_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  hi sindaHeaderDelim  ctermfg=Black ctermbg=Green	       guifg=Black guibg=Green
+hi sindaHeaderDelim  ctermfg=Black ctermbg=Green	       guifg=Black guibg=Green
 
-  HiLink sindaoutPos		     Statement
-  HiLink sindaoutNeg		     PreProc
-  HiLink sindaoutTitle		     Type
-  HiLink sindaoutFile		     sindaIncludeFile
-  HiLink sindaoutInteger	     sindaInteger
+hi def link sindaoutPos		     Statement
+hi def link sindaoutNeg		     PreProc
+hi def link sindaoutTitle		     Type
+hi def link sindaoutFile		     sindaIncludeFile
+hi def link sindaoutInteger	     sindaInteger
 
-  HiLink sindaoutSectionDelim	      Delimiter
-  HiLink sindaoutSectionTitle	     Exception
-  HiLink sindaoutHeaderDelim	     SpecialComment
-  HiLink sindaoutLabel		     Identifier
+hi def link sindaoutSectionDelim	      Delimiter
+hi def link sindaoutSectionTitle	     Exception
+hi def link sindaoutHeaderDelim	     SpecialComment
+hi def link sindaoutLabel		     Identifier
 
-  HiLink sindaoutError		     Error
+hi def link sindaoutError		     Error
 
-  delcommand HiLink
-endif
 
 
 let b:current_syntax = "sindaout"

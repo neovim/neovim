@@ -232,6 +232,25 @@ a
 a]], '2,3m0')
       eq({1, 2, 0, 0, 0}, get_folds())
     end)
+    it('handles shifting all remaining folds', function()
+      test_move_indent([[
+	a
+		a
+		a
+		a
+	a
+		a
+		a
+		a
+	a
+		a
+		a
+		a
+		a
+	a
+a]], '13m7')
+      eq({1, 2, 2, 2, 1, 2, 2, 1, 1, 1, 2, 2, 2, 1, 0}, get_folds())
+    end)
   end)
   it('updates correctly on :read', function()
     -- luacheck: ignore 621

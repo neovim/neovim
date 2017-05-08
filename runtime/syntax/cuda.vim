@@ -3,20 +3,13 @@
 " Maintainer:	Timothy B. Terriberry <tterribe@users.sourceforge.net>
 " Last Change:	2007 Oct 13
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " Read the C syntax to start with
-if version < 600
-  source <sfile>:p:h/c.vim
-else
-  runtime! syntax/c.vim
-endif
+runtime! syntax/c.vim
 
 " CUDA extentions
 syn keyword cudaStorageClass	__device__ __global__ __host__

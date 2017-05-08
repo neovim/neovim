@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	awk, nawk, gawk, mawk
 " Maintainer:	Antonio Colombo <azc100@gmail.com>
-" Last Change:	2016 Jul 15
+" Last Change:	2016 Sep 05
 
 " AWK  ref. is: Alfred V. Aho, Brian W. Kernighan, Peter J. Weinberger
 " The AWK Programming Language, Addison-Wesley, 1988
@@ -71,6 +71,10 @@ syn keyword awkVariables	ARGC ARGV ARGIND ENVIRON ERRNO FILENAME
 syn keyword awkVariables	FNR NF FUNCTAB NR PROCINFO RLENGTH RSTART 
 syn keyword awkVariables	RT SYMTAB
 
+" Arithmetic operators: +, and - take care of ++, and --
+syn match   awkOperator		"+\|-\|\*\|/\|%\|="
+syn match   awkOperator		"+=\|-=\|\*=\|/=\|%="
+syn match   awkOperator		"\^\|\^="
 
 " Octal format character.
 syn match   awkSpecialCharacter display contained "\\[0-7]\{1,3\}"
@@ -124,11 +128,6 @@ syn case match
 
 "syn match  awkIdentifier	"\<[a-zA-Z_][a-zA-Z0-9_]*\>"
 
-" Arithmetic operators: +, and - take care of ++, and --
-syn match   awkOperator	"+\|-\|\*\|/\|%\|="
-syn match   awkOperator	"+=\|-=\|\*=\|/=\|%="
-syn match   awkOperator	"^\|^="
-
 " Comparison expressions.
 syn match   awkExpression	"==\|>=\|=>\|<=\|=<\|\!="
 syn match   awkExpression	"\~\|\!\~"
@@ -167,7 +166,6 @@ syn region awkArray		transparent start="\[" end="\]" contains=awkArray,awkArrayE
 syn sync ccomment awkArray maxlines=10
 
 " Define the default highlighting.
-" Only used when an item doesn't have highlighting yet
 hi def link awkConditional	Conditional
 hi def link awkFunction		Function
 hi def link awkRepeat		Repeat

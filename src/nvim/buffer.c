@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * buffer.c: functions for dealing with the buffer structure
  */
@@ -741,11 +744,12 @@ static void clear_wininfo(buf_T *buf)
  */
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
-  (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
-                  start, dir, count, eap->forceit);
   bufref_T old_curbuf;
   set_bufref(&old_curbuf, curbuf);
   swap_exists_action = SEA_DIALOG;
+
+  (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
+                  start, dir, count, eap->forceit);
 
   if (swap_exists_action == SEA_QUIT && *eap->cmd == 's') {
     cleanup_T cs;
@@ -1838,9 +1842,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   return FAIL;
 }
 
-/*
- * go to the last know line number for the current buffer
- */
+// Go to the last known line number for the current buffer.
 void buflist_getfpos(void)
 {
   pos_T       *fpos;
@@ -2338,9 +2340,7 @@ linenr_T buflist_findlnum(buf_T *buf)
   return buflist_findfpos(buf)->lnum;
 }
 
-/*
- * List all know file names (for :files and :buffers command).
- */
+// List all known file names (for :files and :buffers command).
 void buflist_list(exarg_T *eap)
 {
   buf_T       *buf;
@@ -2365,12 +2365,17 @@ void buflist_list(exarg_T *eap)
             && (buf == curbuf || curwin->w_alt_fnum != buf->b_fnum))) {
       continue;
     }
-    msg_putchar('\n');
-    if (buf_spname(buf) != NULL)
+    if (buf_spname(buf) != NULL) {
       STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
-    else
-      home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, TRUE);
+    } else {
+      home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, true);
+    }
 
+    if (message_filtered(NameBuff)) {
+      continue;
+    }
+
+    msg_putchar('\n');
     len = vim_snprintf((char *)IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
         buf->b_fnum,
         buf->b_p_bl ? ' ' : 'u',
@@ -3060,7 +3065,7 @@ int build_stl_str_hl(
     StlClickRecord *tabtab
 )
 {
-  int groupitem[STL_MAX_ITEM];
+  int groupitems[STL_MAX_ITEM];
   struct stl_item {
     // Where the item starts in the status line output buffer
     char_u *start;
@@ -3080,7 +3085,7 @@ int build_stl_str_hl(
       ClickFunc,
       Trunc
     } type;
-  } item[STL_MAX_ITEM];
+  } items[STL_MAX_ITEM];
 #define TMPLEN 70
   char_u tmp[TMPLEN];
   char_u      *usefmt = fmt;
@@ -3182,16 +3187,16 @@ int build_stl_str_hl(
       if (groupdepth > 0) {
         continue;
       }
-      item[curitem].type = Separate;
-      item[curitem++].start = out_p;
+      items[curitem].type = Separate;
+      items[curitem++].start = out_p;
       continue;
     }
 
     // STL_TRUNCMARK: Where to begin truncating if the statusline is too long.
     if (*fmt_p == STL_TRUNCMARK) {
       fmt_p++;
-      item[curitem].type = Trunc;
-      item[curitem++].start = out_p;
+      items[curitem].type = Trunc;
+      items[curitem++].start = out_p;
       continue;
     }
 
@@ -3207,7 +3212,7 @@ int build_stl_str_hl(
       // Determine how long the group is.
       // Note: We set the current output position to null
       //       so `vim_strsize` will work.
-      char_u *t = item[groupitem[groupdepth]].start;
+      char_u *t = items[groupitems[groupdepth]].start;
       *out_p = NUL;
       long group_len = vim_strsize(t);
 
@@ -3217,11 +3222,11 @@ int build_stl_str_hl(
       // move the output pointer back to where the group started.
       // Note: This erases any non-item characters that were in the group.
       //       Otherwise there would be no reason to do this step.
-      if (curitem > groupitem[groupdepth] + 1
-          && item[groupitem[groupdepth]].minwid == 0) {
+      if (curitem > groupitems[groupdepth] + 1
+          && items[groupitems[groupdepth]].minwid == 0) {
         bool has_normal_items = false;
-        for (long n = groupitem[groupdepth] + 1; n < curitem; n++) {
-          if (item[n].type == Normal || item[n].type == Highlight) {
+        for (long n = groupitems[groupdepth] + 1; n < curitem; n++) {
+          if (items[n].type == Normal || items[n].type == Highlight) {
             has_normal_items = true;
             break;
           }
@@ -3235,18 +3240,18 @@ int build_stl_str_hl(
 
       // If the group is longer than it is allowed to be
       // truncate by removing bytes from the start of the group text.
-      if (group_len > item[groupitem[groupdepth]].maxwid) {
+      if (group_len > items[groupitems[groupdepth]].maxwid) {
         // { Determine the number of bytes to remove
         long n;
         if (has_mbyte) {
           /* Find the first character that should be included. */
           n = 0;
-          while (group_len >= item[groupitem[groupdepth]].maxwid) {
+          while (group_len >= items[groupitems[groupdepth]].maxwid) {
             group_len -= ptr2cells(t + n);
             n += (*mb_ptr2len)(t + n);
           }
         } else {
-          n = (long)(out_p - t) - item[groupitem[groupdepth]].maxwid + 1;
+          n = (long)(out_p - t) - items[groupitems[groupdepth]].maxwid + 1;
         }
         // }
 
@@ -3256,25 +3261,26 @@ int build_stl_str_hl(
         // { Move the truncated output
         memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
         out_p = out_p - n + 1;
-        /* Fill up space left over by half a double-wide char. */
-        while (++group_len < item[groupitem[groupdepth]].minwid)
+        // Fill up space left over by half a double-wide char.
+        while (++group_len < items[groupitems[groupdepth]].minwid) {
           *out_p++ = fillchar;
+        }
         // }
 
-        /* correct the start of the items for the truncation */
-        for (int idx = groupitem[groupdepth] + 1; idx < curitem; idx++) {
+        // correct the start of the items for the truncation
+        for (int idx = groupitems[groupdepth] + 1; idx < curitem; idx++) {
           // Shift everything back by the number of removed bytes
-          item[idx].start -= n;
+          items[idx].start -= n;
 
           // If the item was partially or completely truncated, set its
           // start to the start of the group
-          if (item[idx].start < t) {
-            item[idx].start = t;
+          if (items[idx].start < t) {
+            items[idx].start = t;
           }
         }
       // If the group is shorter than the minimum width, add padding characters.
-      } else if (abs(item[groupitem[groupdepth]].minwid) > group_len) {
-        long min_group_width = item[groupitem[groupdepth]].minwid;
+      } else if (abs(items[groupitems[groupdepth]].minwid) > group_len) {
+        long min_group_width = items[groupitems[groupdepth]].minwid;
         // If the group is left-aligned, add characters to the right.
         if (min_group_width < 0) {
           min_group_width = 0 - min_group_width;
@@ -3293,8 +3299,8 @@ int build_stl_str_hl(
           // }
 
           // Adjust item start positions
-          for (int n = groupitem[groupdepth] + 1; n < curitem; n++) {
-            item[n].start += group_len;
+          for (int n = groupitems[groupdepth] + 1; n < curitem; n++) {
+            items[n].start += group_len;
           }
 
           // Prepend the fill characters
@@ -3332,9 +3338,9 @@ int build_stl_str_hl(
     // User highlight groups override the min width field
     // to denote the styling to use.
     if (*fmt_p == STL_USER_HL) {
-      item[curitem].type = Highlight;
-      item[curitem].start = out_p;
-      item[curitem].minwid = minwid > 9 ? 1 : minwid;
+      items[curitem].type = Highlight;
+      items[curitem].start = out_p;
+      items[curitem].minwid = minwid > 9 ? 1 : minwid;
       fmt_p++;
       curitem++;
       continue;
@@ -3366,20 +3372,21 @@ int build_stl_str_hl(
     if (*fmt_p == STL_TABPAGENR || *fmt_p == STL_TABCLOSENR) {
       if (*fmt_p == STL_TABCLOSENR) {
         if (minwid == 0) {
-          /* %X ends the close label, go back to the previously
-           * define tab label nr. */
-          for (long n = curitem - 1; n >= 0; --n)
-            if (item[n].type == TabPage && item[n].minwid >= 0) {
-              minwid = item[n].minwid;
+          // %X ends the close label, go back to the previous tab label nr.
+          for (long n = curitem - 1; n >= 0; n--) {
+            if (items[n].type == TabPage && items[n].minwid >= 0) {
+              minwid = items[n].minwid;
               break;
             }
-        } else
-          /* close nrs are stored as negative values */
+          }
+        } else {
+          // close nrs are stored as negative values
           minwid = -minwid;
+        }
       }
-      item[curitem].type = TabPage;
-      item[curitem].start = out_p;
-      item[curitem].minwid = minwid;
+      items[curitem].type = TabPage;
+      items[curitem].start = out_p;
+      items[curitem].minwid = minwid;
       fmt_p++;
       curitem++;
       continue;
@@ -3394,10 +3401,10 @@ int build_stl_str_hl(
       if (*fmt_p != STL_CLICK_FUNC) {
         break;
       }
-      item[curitem].type = ClickFunc;
-      item[curitem].start = out_p;
-      item[curitem].cmd = xmemdupz(t, (size_t) (((char *) fmt_p - t)));
-      item[curitem].minwid = minwid;
+      items[curitem].type = ClickFunc;
+      items[curitem].start = out_p;
+      items[curitem].cmd = xmemdupz(t, (size_t)(((char *)fmt_p - t)));
+      items[curitem].minwid = minwid;
       fmt_p++;
       curitem++;
       continue;
@@ -3420,11 +3427,11 @@ int build_stl_str_hl(
 
     // Denotes the start of a new group
     if (*fmt_p == '(') {
-      groupitem[groupdepth++] = curitem;
-      item[curitem].type = Group;
-      item[curitem].start = out_p;
-      item[curitem].minwid = minwid;
-      item[curitem].maxwid = maxwid;
+      groupitems[groupdepth++] = curitem;
+      items[curitem].type = Group;
+      items[curitem].start = out_p;
+      items[curitem].minwid = minwid;
+      items[curitem].maxwid = maxwid;
       fmt_p++;
       curitem++;
       continue;
@@ -3451,7 +3458,7 @@ int build_stl_str_hl(
     case STL_FULLPATH:
     case STL_FILENAME:
     {
-      // Set fillable to false to that ' ' in the filename will not
+      // Set fillable to false so that ' ' in the filename will not
       // get replaced with the fillchar
       fillable = false;
       if (buf_spname(wp->w_buffer) != NULL) {
@@ -3703,9 +3710,9 @@ int build_stl_str_hl(
 
       // Create a highlight item based on the name
       if (*fmt_p == '#') {
-        item[curitem].type = Highlight;
-        item[curitem].start = out_p;
-        item[curitem].minwid = -syn_namen2id(t, (int)(fmt_p - t));
+        items[curitem].type = Highlight;
+        items[curitem].start = out_p;
+        items[curitem].minwid = -syn_namen2id(t, (int)(fmt_p - t));
         curitem++;
         fmt_p++;
       }
@@ -3716,8 +3723,8 @@ int build_stl_str_hl(
     // If we made it this far, the item is normal and starts at
     // our current position in the output buffer.
     // Non-normal items would have `continued`.
-    item[curitem].start = out_p;
-    item[curitem].type = Normal;
+    items[curitem].start = out_p;
+    items[curitem].type = Normal;
 
     // Copy the item string into the output buffer
     if (str != NULL && *str) {
@@ -3874,7 +3881,7 @@ int build_stl_str_hl(
 
     // Otherwise, there was nothing to print so mark the item as empty
     } else {
-      item[curitem].type = Empty;
+      items[curitem].type = Empty;
     }
 
     // Only free the string buffer if we allocated it.
@@ -3899,8 +3906,7 @@ int build_stl_str_hl(
   }
 
   // We have now processed the entire statusline format string.
-  // What follows is post-processing to handle alignment and
-  // highlighting factors.
+  // What follows is post-processing to handle alignment and highlighting.
 
   int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth) {
@@ -3915,16 +3921,17 @@ int build_stl_str_hl(
     // Otherwise, look for the truncation item
     } else {
       // Default to truncating at the first item
-      trunc_p = item[0].start;
+      trunc_p = items[0].start;
       item_idx = 0;
 
-      for (int i = 0; i < itemcnt; i++)
-        if (item[i].type == Trunc) {
-          // Truncate at %< item.
-          trunc_p = item[i].start;
+      for (int i = 0; i < itemcnt; i++) {
+        if (items[i].type == Trunc) {
+          // Truncate at %< items.
+          trunc_p = items[i].start;
           item_idx = i;
           break;
         }
+      }
     }
 
     // If the truncation point we found is beyond the maximum
@@ -3954,7 +3961,7 @@ int build_stl_str_hl(
       // Ignore any items in the statusline that occur after
       // the truncation point
       for (int i = 0; i < itemcnt; i++) {
-        if (item[i].start > trunc_p) {
+        if (items[i].start > trunc_p) {
           itemcnt = i;
           break;
         }
@@ -4009,12 +4016,12 @@ int build_stl_str_hl(
       for (int i = item_idx; i < itemcnt; i++) {
         // Items starting at or after the end of the truncated section need
         // to be moved backwards.
-        if (item[i].start >= trunc_end_p) {
-          item[i].start -= item_offset;
+        if (items[i].start >= trunc_end_p) {
+          items[i].start -= item_offset;
         // Anything inside the truncated area is set to start
         // at the `<` truncation character.
         } else {
-          item[i].start = trunc_p;
+          items[i].start = trunc_p;
         }
       }
       // }
@@ -4030,7 +4037,7 @@ int build_stl_str_hl(
     // figuring out how many groups there are.
     int num_separators = 0;
     for (int i = 0; i < itemcnt; i++) {
-      if (item[i].type == Separate) {
+      if (items[i].type == Separate) {
         num_separators++;
       }
     }
@@ -4042,7 +4049,7 @@ int build_stl_str_hl(
       int separator_locations[STL_MAX_ITEM];
       int index = 0;
       for (int i = 0; i < itemcnt; i++) {
-        if (item[i].type == Separate) {
+        if (items[i].type == Separate) {
           separator_locations[index] = i;
           index++;
         }
@@ -4053,18 +4060,18 @@ int build_stl_str_hl(
         standard_spaces * (num_separators - 1);
 
       for (int i = 0; i < num_separators; i++) {
-        int dislocation = (i == (num_separators - 1)) ?
-          final_spaces : standard_spaces;
-        char_u *sep_loc = item[separator_locations[i]].start + dislocation;
-        STRMOVE(sep_loc, item[separator_locations[i]].start);
-        for (char_u *s = item[separator_locations[i]].start; s < sep_loc; s++) {
+        int dislocation = (i == (num_separators - 1))
+                          ? final_spaces : standard_spaces;
+        char_u *seploc = items[separator_locations[i]].start + dislocation;
+        STRMOVE(seploc, items[separator_locations[i]].start);
+        for (char_u *s = items[separator_locations[i]].start; s < seploc; s++) {
           *s = fillchar;
         }
 
         for (int item_idx = separator_locations[i] + 1;
              item_idx < itemcnt;
              item_idx++) {
-          item[item_idx].start += dislocation;
+          items[item_idx].start += dislocation;
         }
       }
 
@@ -4076,9 +4083,9 @@ int build_stl_str_hl(
   if (hltab != NULL) {
     struct stl_hlrec *sp = hltab;
     for (long l = 0; l < itemcnt; l++) {
-      if (item[l].type == Highlight) {
-        sp->start = item[l].start;
-        sp->userhl = item[l].minwid;
+      if (items[l].type == Highlight) {
+        sp->start = items[l].start;
+        sp->userhl = items[l].minwid;
         sp++;
       }
     }
@@ -4090,14 +4097,14 @@ int build_stl_str_hl(
   if (tabtab != NULL) {
     StlClickRecord *cur_tab_rec = tabtab;
     for (long l = 0; l < itemcnt; l++) {
-      if (item[l].type == TabPage) {
-        cur_tab_rec->start = (char *) item[l].start;
-        if (item[l].minwid == 0) {
+      if (items[l].type == TabPage) {
+        cur_tab_rec->start = (char *)items[l].start;
+        if (items[l].minwid == 0) {
           cur_tab_rec->def.type = kStlClickDisabled;
           cur_tab_rec->def.tabnr = 0;
         } else {
-          int tabnr = item[l].minwid;
-          if (item[l].minwid > 0) {
+          int tabnr = items[l].minwid;
+          if (items[l].minwid > 0) {
             cur_tab_rec->def.type = kStlClickTabSwitch;
           } else {
             cur_tab_rec->def.type = kStlClickTabClose;
@@ -4107,11 +4114,11 @@ int build_stl_str_hl(
         }
         cur_tab_rec->def.func = NULL;
         cur_tab_rec++;
-      } else if (item[l].type == ClickFunc) {
-        cur_tab_rec->start = (char *) item[l].start;
+      } else if (items[l].type == ClickFunc) {
+        cur_tab_rec->start = (char *)items[l].start;
         cur_tab_rec->def.type = kStlClickFuncRun;
-        cur_tab_rec->def.tabnr = item[l].minwid;
-        cur_tab_rec->def.func = item[l].cmd;
+        cur_tab_rec->def.tabnr = items[l].minwid;
+        cur_tab_rec->def.func = items[l].cmd;
         cur_tab_rec++;
       }
     }

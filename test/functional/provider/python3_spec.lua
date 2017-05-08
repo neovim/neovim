@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local eval, command, feed = helpers.eval, helpers.command, helpers.feed
 local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
 local expect, write_file = helpers.expect, helpers.write_file
+local feed_command = helpers.feed_command
 
 do
   clear()
@@ -28,6 +29,15 @@ describe('python3 commands and functions', function()
   it('python3_execute', function()
     command('python3 vim.vars["set_by_python3"] = [100, 0]')
     eq({100, 0}, eval('g:set_by_python3'))
+  end)
+
+  it('does not truncate error message <1 MB', function()
+    -- XXX: Python limits the error name to 200 chars, so this test is
+    -- mostly bogus.
+    local very_long_symbol = string.rep('a', 1200)
+    feed_command(':silent! py3 print('..very_long_symbol..' b)')
+    -- Truncated error message would not contain this (last) line.
+    eq('SyntaxError: invalid syntax', eval('v:errmsg'))
   end)
 
   it('python3_execute with nested commands', function()

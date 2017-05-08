@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * NFA regular expression implementation.
  *
@@ -2772,15 +2775,10 @@ static int nfa_max_width(nfa_state_T *startstate, int depth)
     case NFA_ANY:
     case NFA_START_COLL:
     case NFA_START_NEG_COLL:
-      /* matches some character, including composing chars */
-      if (enc_utf8)
-        len += MB_MAXBYTES;
-      else if (has_mbyte)
-        len += 2;
-      else
-        ++len;
+      // Matches some character, including composing chars.
+      len += MB_MAXBYTES;
       if (state->c != NFA_ANY) {
-        /* skip over the characters */
+        // Skip over the characters.
         state = state->out1->out;
         continue;
       }
@@ -4412,8 +4410,9 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_ESCAPE:
-    if (c == '\033')
+    if (c == ESC) {
       return OK;
+    }
     break;
 
   default:
@@ -4856,17 +4855,10 @@ static int failure_chance(nfa_state_T *state, int depth)
  */
 static int skip_to_start(int c, colnr_T *colp)
 {
-  char_u *s;
-
-  /* Used often, do some work to avoid call overhead. */
-  if (!ireg_ic
-      && !has_mbyte
-      )
-    s = vim_strbyte(regline + *colp, c);
-  else
-    s = cstrchr(regline + *colp, c);
-  if (s == NULL)
+  const char_u *const s = cstrchr(regline + *colp, c);
+  if (s == NULL) {
     return FAIL;
+  }
   *colp = (int)(s - regline);
   return OK;
 }

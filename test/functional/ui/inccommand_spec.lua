@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
+local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
 local eval = helpers.eval
@@ -21,9 +22,9 @@ local default_text = [[
 
 local function common_setup(screen, inccommand, text)
   if screen then
-    feed_command("syntax on")
-    feed_command("set nohlsearch")
-    feed_command("hi Substitute guifg=red guibg=yellow")
+    command("syntax on")
+    command("set nohlsearch")
+    command("hi Substitute guifg=red guibg=yellow")
     screen:attach()
     screen:set_default_attr_ids({
       [1]  = {foreground = Screen.colors.Fuchsia},
@@ -46,7 +47,7 @@ local function common_setup(screen, inccommand, text)
     })
   end
 
-  feed_command("set inccommand=" .. (inccommand and inccommand or ""))
+  command("set inccommand=" .. (inccommand and inccommand or ""))
 
   if text then
     insert(text)
@@ -456,7 +457,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
       insert("X")
       feed("IY<esc>")
       feed(":%s/tw/MO/<esc>")
-      -- execute("undo") here would cause "Press ENTER".
+      -- feed_command("undo") here would cause "Press ENTER".
       feed("u")
       expect(default_text:gsub("Inc", "XInc"))
       feed("u")
@@ -514,7 +515,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
       feed("Ay<esc>")
       feed("Az<esc>")
       feed(":%s/tw/AR<esc>")
-      -- using execute("undo") here will result in a "Press ENTER" prompt
+      -- feed_command("undo") here would cause "Press ENTER".
       feed("u")
       expect(default_text:gsub("lines", "linesxy"))
       feed("u")
@@ -603,7 +604,7 @@ describe(":substitute, 'inccommand' preserves undo", function()
 
       feed_command("set undolevels=-1")
       feed(":%s/tw/MO/g<enter>")
-      -- using execute("undo") here will result in a "Press ENTER" prompt
+      -- feed_command("undo") here will result in a "Press ENTER" prompt
       feed("u")
       if case == "split" then
         screen:expect([[
@@ -804,7 +805,7 @@ describe(":substitute, inccommand=split", function()
   it('does not show split window for :s/', function()
     feed("2gg")
     feed(":s/tw")
-    wait()
+    screen:sleep(1)
     screen:expect([[
       Inc substitution on           |
       two lines                     |
@@ -1291,14 +1292,14 @@ describe("'inccommand' and :cnoremap", function()
   it('work with remapped characters', function()
     for _, case in pairs(cases) do
       refresh(case)
-      local command = "%s/lines/LINES/g"
+      local cmd = "%s/lines/LINES/g"
 
-      for i = 1, string.len(command) do
-        local c = string.sub(command, i, i)
+      for i = 1, string.len(cmd) do
+        local c = string.sub(cmd, i, i)
         feed_command("cnoremap ".. c .. " " .. c)
       end
 
-      feed_command(command)
+      feed_command(cmd)
       expect([[
         Inc substitution on
         two LINES

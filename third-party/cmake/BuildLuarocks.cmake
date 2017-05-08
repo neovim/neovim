@@ -167,7 +167,7 @@ if(USE_BUNDLED_BUSTED)
 
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-25/nvim-client-0.0.1-25.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-26/nvim-client-0.0.1-26.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS luv)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)

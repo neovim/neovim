@@ -6,15 +6,7 @@
 
 This subject is introduced in section |30.1| of the user manual.
 
-1. Using QuickFix commands		|quickfix|
-2. The error window			|quickfix-window|
-3. Using more than one list of errors	|quickfix-error-lists|
-4. Using :make				|:make_makeprg|
-5. Using :grep				|grep|
-6. Selecting a compiler			|compiler-select|
-7. The error format			|error-file-format|
-8. The directory stack			|quickfix-directory-stack|
-9. Specific error file formats		|errorformats|
+                                      Type <M-]> to see the table of contents.
 
 =============================================================================
 1. Using QuickFix commands			*quickfix* *Quickfix* *E42*
@@ -872,7 +864,7 @@ need to write down a "todo" list.
 
 
 The Vim plugins in the "compiler" directory will set options to use the
-selected compiler.  For ":compiler" local options are set, for ":compiler!"
+selected compiler.  For `:compiler` local options are set, for `:compiler!`
 global options.
 							*current_compiler*
 To support older Vim versions, the plugins always use "current_compiler" and

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * fileio.c: read from and write to a file
  */
@@ -730,43 +733,16 @@ readfile (
     fenc = (char_u *)"";                /* binary: don't convert */
     fenc_alloced = FALSE;
   } else if (curbuf->b_help) {
-    char_u firstline[80];
-    int fc;
+    // Help files are either utf-8 or latin1.  Try utf-8 first, if this
+    // fails it must be latin1.
+    // It is needed when the first line contains non-ASCII characters.
+    // That is only in *.??x files.
+    fenc_next = (char_u *)"latin1";
+    fenc = (char_u *)"utf-8";
 
-    /* Help files are either utf-8 or latin1.  Try utf-8 first, if this
-     * fails it must be latin1.
-     * Always do this when 'encoding' is "utf-8".  Otherwise only do
-     * this when needed to avoid [converted] remarks all the time.
-     * It is needed when the first line contains non-ASCII characters.
-     * That is only in *.??x files. */
-    fenc = (char_u *)"latin1";
-    c = enc_utf8;
-    if (!c && !read_stdin) {
-      fc = fname[STRLEN(fname) - 1];
-      if (TOLOWER_ASC(fc) == 'x') {
-        /* Read the first line (and a bit more).  Immediately rewind to
-         * the start of the file.  If the read() fails "len" is -1. */
-        len = read_eintr(fd, firstline, 80);
-        lseek(fd, (off_t)0L, SEEK_SET);
-        for (p = firstline; p < firstline + len; ++p)
-          if (*p >= 0x80) {
-            c = TRUE;
-            break;
-          }
-      }
-    }
+    fenc_alloced = false;
 
-    if (c) {
-      fenc_next = fenc;
-      fenc = (char_u *)"utf-8";
-
-      /* When the file is utf-8 but a character doesn't fit in
-       * 'encoding' don't retry.  In help text editing utf-8 bytes
-       * doesn't make sense. */
-      if (!enc_utf8)
-        keep_dest_enc = TRUE;
-    }
-    fenc_alloced = FALSE;
+    c = 1;
   } else if (*p_fencs == NUL) {
     fenc = curbuf->b_p_fenc;            /* use format from buffer */
     fenc_alloced = FALSE;
@@ -4683,7 +4659,7 @@ int vim_rename(const char_u *from, const char_u *to)
     return -1;
   }
 
-  // Avoid xmalloc() here as vim_rename() is called by buf_write() when neovim
+  // Avoid xmalloc() here as vim_rename() is called by buf_write() when nvim
   // is `preserve_exit()`ing.
   buffer = try_malloc(BUFSIZE);
   if (buffer == NULL) {

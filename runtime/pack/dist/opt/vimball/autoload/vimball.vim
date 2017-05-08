@@ -347,7 +347,7 @@ fun! vimball#Vimball(really,...)
 "   call Decho("exe tabn ".curtabnr)
     exe "tabn ".curtabnr
 
-    " set up help if its a doc/*.txt file
+    " set up help if it's a doc/*.txt file
 "   call Decho("didhelp<".didhelp."> fname<".fname.">")
     if a:really && didhelp == "" && fname =~ 'doc/[^/]\+\.\(txt\|..x\)$'
     	let didhelp= substitute(fname,'^\(.*\<doc\)[/\\][^.]*\.\(txt\|..x\)$','\1','')

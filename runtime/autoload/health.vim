@@ -33,7 +33,7 @@ function! health#check(plugin_names) abort
   setlocal wrap breakindent
   setlocal filetype=markdown
   setlocal conceallevel=2 concealcursor=nc
-  setlocal keywordprg=:help
+  setlocal keywordprg=:help iskeyword=@,48-57,_,192-255,-,#
   call s:enhance_syntax()
 
   if empty(healthchecks)
@@ -88,7 +88,7 @@ endfunction
 
 " Changes ':h clipboard' to ':help |clipboard|'.
 function! s:help_to_link(s) abort
-  return substitute(a:s, '\v[''"]?:h%[elp] ([^''"]+)[''"]?', '":help |\1|"', 'g')
+  return substitute(a:s, '\v:h%[elp] ([^|][^"\r\n]+)', ':help |\1|', 'g')
 endfunction
 
 " Format a message for a specific report item

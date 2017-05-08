@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -44,6 +47,7 @@
 #define MAX_UI_COUNT 16
 
 static UI *uis[MAX_UI_COUNT];
+static bool ui_ext[UI_WIDGETS] = { 0 };
 static size_t ui_count = 0;
 static int row = 0, col = 0;
 static struct {
@@ -53,6 +57,7 @@ static int current_attr_code = 0;
 static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
+static int old_mode_idx = -1;
 
 // UI_CALL invokes a function on all registered UI instances. The functions can
 // have 0-5 arguments (configurable by SELECT_NTH).
@@ -150,12 +155,6 @@ void ui_event(char *name, Array args)
   }
 }
 
-// May update the shape of the cursor.
-void ui_cursor_shape(void)
-{
-  ui_mode_change();
-}
-
 void ui_refresh(void)
 {
   if (!ui_active()) {
@@ -168,19 +167,28 @@ void ui_refresh(void)
   }
 
   int width = INT_MAX, height = INT_MAX;
-  bool pum_external = true;
+  bool ext_widgets[UI_WIDGETS];
+  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+    ext_widgets[i] = true;
+  }
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
-    pum_external &= ui->pum_external;
+    for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+      ext_widgets[i] &= ui->ui_ext[i];
+    }
   }
 
   row = col = 0;
   screen_resize(width, height);
-  pum_set_external(pum_external);
-  ui_cursor_style_set();
+  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+    ui_set_external(i, ext_widgets[i]);
+  }
+  ui_mode_info_set();
+  old_mode_idx = -1;
+  ui_cursor_shape();
 }
 
 static void ui_refresh_event(void **argv)
@@ -190,7 +198,7 @@ static void ui_refresh_event(void **argv)
 
 void ui_schedule_refresh(void)
 {
-  loop_schedule(&main_loop, event_create(1, ui_refresh_event, 0));
+  loop_schedule(&main_loop, event_create(ui_refresh_event, 0));
 }
 
 void ui_resize(int new_width, int new_height)
@@ -378,12 +386,12 @@ void ui_cursor_goto(int new_row, int new_col)
   pending_cursor_update = true;
 }
 
-void ui_cursor_style_set(void)
+void ui_mode_info_set(void)
 {
-  Dictionary style = cursor_shape_dict();
+  Array style = mode_style_array();
   bool enabled = (*p_guicursor != NUL);
-  UI_CALL(cursor_style_set, enabled, style);
-  api_free_dictionary(style);
+  UI_CALL(mode_info_set, enabled, style);
+  api_free_array(style);
 }
 
 void ui_update_menu(void)
@@ -541,25 +549,32 @@ static void flush_cursor_update(void)
   }
 }
 
-// Notify that the current mode has changed. Can be used to change cursor
-// shape, for example.
-static void ui_mode_change(void)
+/// Check if current mode has changed.
+/// May update the shape of the cursor.
+void ui_cursor_shape(void)
 {
-  int mode;
   if (!full_screen) {
     return;
   }
-  // Get a simple UI mode out of State.
-  if ((State & REPLACE) == REPLACE) {
-    mode = REPLACE;
-  } else if (State & INSERT) {
-    mode = INSERT;
-  } else if (State & CMDLINE) {
-    mode = CMDLINE;
-  } else {
-    mode = NORMAL;
+  int mode_idx = cursor_get_mode_idx();
+
+  if (old_mode_idx != mode_idx) {
+    old_mode_idx = mode_idx;
+    UI_CALL(mode_change, mode_idx);
   }
-  UI_CALL(mode_change, mode);
   conceal_check_cursur_line();
 }
 
+/// Returns true if `widget` is externalized.
+bool ui_is_external(UIWidget widget)
+{
+  return ui_ext[widget];
+}
+
+/// Sets `widget` as "external".
+/// Such widgets are not drawn by Nvim; external UIs are expected to handle
+/// higher-level UI events and present the data.
+void ui_set_external(UIWidget widget, bool external)
+{
+  ui_ext[widget] = external;
+}

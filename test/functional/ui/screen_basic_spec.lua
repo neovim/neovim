@@ -6,7 +6,7 @@ local insert = helpers.insert
 local eq = helpers.eq
 local eval = helpers.eval
 
-describe('Initial screen', function()
+describe('screen', function()
   local screen
   local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
                      '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
@@ -27,7 +27,7 @@ describe('Initial screen', function()
     screen:detach()
   end)
 
-  it('is the default initial screen', function()
+  it('default initial screen', function()
       screen:expect([[
       ^                                                     |
       {0:~                                                    }|
@@ -565,125 +565,22 @@ describe('Screen', function()
       ]])
     end)
   end)
+end)
 
-  describe('mode change', function()
-    before_each(function()
-      screen:try_resize(25, 5)
-    end)
-
-    it('works in normal mode', function()
-      screen:expect([[
-        ^                         |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-                                 |
-      ]],nil,nil,function ()
-        eq("normal", screen.mode)
-      end)
-    end)
-
-    it('works in insert mode', function()
-      feed('i')
-      screen:expect([[
-        ^                         |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-        {2:-- INSERT --}             |
-      ]],nil,nil,function ()
-        eq("insert", screen.mode)
-      end)
-
-      feed('word<esc>')
-      screen:expect([[
-        wor^d                     |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-                                 |
-      ]], nil, nil, function ()
-        eq("normal", screen.mode)
-      end)
-    end)
-
-    it('works in replace mode', function()
-      feed('R')
-      screen:expect([[
-        ^                         |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-        {2:-- REPLACE --}            |
-      ]], nil, nil, function ()
-        eq("replace", screen.mode)
-      end)
-
-      feed('word<esc>')
-      screen:expect([[
-        wor^d                     |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-                                 |
-      ]], nil, nil, function ()
-        eq("normal", screen.mode)
-      end)
-    end)
-
-    it('works in cmdline mode', function()
-      feed(':')
-      screen:expect([[
-                                 |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-        :^                        |
-      ]],nil,nil,function ()
-        eq("cmdline", screen.mode)
-      end)
-
-      feed('<esc>/')
-      screen:expect([[
-                                 |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-        /^                        |
-      ]],nil,nil,function ()
-        eq("cmdline", screen.mode)
-      end)
-
-
-      feed('<esc>?')
-      screen:expect([[
-                                 |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-        ?^                        |
-      ]],nil,nil,function ()
-        eq("cmdline", screen.mode)
-      end)
-
-      feed('<esc>')
-      screen:expect([[
-        ^                         |
-        {0:~                        }|
-        {0:~                        }|
-        {0:~                        }|
-                                 |
-      ]],nil,nil,function ()
-        eq("normal", screen.mode)
-      end)
-    end)
+describe('nvim_ui_attach()', function()
+  before_each(function()
+    clear()
   end)
-
-  it('nvim_ui_attach() handles very large width/height #2180', function()
-    screen:detach()
-    screen = Screen.new(999, 999)
+  it('handles very large width/height #2180', function()
+    local screen = Screen.new(999, 999)
     screen:attach()
     eq(999, eval('&lines'))
     eq(999, eval('&columns'))
+  end)
+  it('invalid option returns error', function()
+    local screen = Screen.new()
+    local status, rv = pcall(function() screen:attach({foo={'foo'}}) end)
+    eq(false, status)
+    eq('No such ui option', rv:match("No such .*"))
   end)
 end)

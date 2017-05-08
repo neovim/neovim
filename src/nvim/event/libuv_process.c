@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 
 #include <uv.h>
@@ -8,6 +11,7 @@
 #include "nvim/event/process.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/log.h"
+#include "nvim/os/os.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/libuv_process.c.generated.h"
@@ -24,6 +28,13 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   if (proc->detach) {
       uvproc->uvopts.flags |= UV_PROCESS_DETACHED;
   }
+#ifdef WIN32
+  // libuv collapses the argv to a CommandLineToArgvW()-style string. cmd.exe
+  // expects a different syntax (must be prepared by the caller before now).
+  if (os_shell_is_cmdexe(proc->argv[0])) {
+    uvproc->uvopts.flags |= UV_PROCESS_WINDOWS_VERBATIM_ARGUMENTS;
+  }
+#endif
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;
   uvproc->uvopts.env = NULL;

@@ -13,10 +13,8 @@
 
 
 " Setup Syntax:
-if version < 600
-  "  Clear old syntax settings
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 "  Virata syntax is case insensitive (mostly)
@@ -156,63 +154,53 @@ syn sync minlines=50		"for multiple region nesting
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later  : only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_virata_syntax_inits")
-  if version < 508
-    let did_virata_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  " Sub Links:
-  HiLink virataDefSubstError	virataPreProcError
-  HiLink virataDefSubst		virataPreProc
-  HiLink virataInAlter		virataOperator
-  HiLink virataInExec		virataOperator
-  HiLink virataInExport		virataOperator
-  HiLink virataInImport		virataOperator
-  HiLink virataInInstance	virataOperator
-  HiLink virataInMake		virataOperator
-  HiLink virataInModule		virataOperator
-  HiLink virataInProcess	virataOperator
-  HiLink virataInMacAddr	virataHexNumber
+" Sub Links:
+hi def link virataDefSubstError	virataPreProcError
+hi def link virataDefSubst		virataPreProc
+hi def link virataInAlter		virataOperator
+hi def link virataInExec		virataOperator
+hi def link virataInExport		virataOperator
+hi def link virataInImport		virataOperator
+hi def link virataInInstance	virataOperator
+hi def link virataInMake		virataOperator
+hi def link virataInModule		virataOperator
+hi def link virataInProcess	virataOperator
+hi def link virataInMacAddr	virataHexNumber
 
-  " Comment Group:
-  HiLink virataComment		Comment
-  HiLink virataSpclComment	SpecialComment
-  HiLink virataInCommentTodo	Todo
+" Comment Group:
+hi def link virataComment		Comment
+hi def link virataSpclComment	SpecialComment
+hi def link virataInCommentTodo	Todo
 
-  " Constant Group:
-  HiLink virataString		String
-  HiLink virataStringError	Error
-  HiLink virataCharacter	Character
-  HiLink virataSpclChar		Special
-  HiLink virataDecNumber	Number
-  HiLink virataHexNumber	Number
-  HiLink virataSizeNumber	Number
-  HiLink virataNumberError	Error
+" Constant Group:
+hi def link virataString		String
+hi def link virataStringError	Error
+hi def link virataCharacter	Character
+hi def link virataSpclChar		Special
+hi def link virataDecNumber	Number
+hi def link virataHexNumber	Number
+hi def link virataSizeNumber	Number
+hi def link virataNumberError	Error
 
-  " Identifier Group:
-  HiLink virataIdentError	Error
+" Identifier Group:
+hi def link virataIdentError	Error
 
-  " PreProc Group:
-  HiLink virataPreProc		PreProc
-  HiLink virataDefine		Define
-  HiLink virataInclude		Include
-  HiLink virataPreCondit	PreCondit
-  HiLink virataPreProcError	Error
-  HiLink virataPreProcWarn	Todo
+" PreProc Group:
+hi def link virataPreProc		PreProc
+hi def link virataDefine		Define
+hi def link virataInclude		Include
+hi def link virataPreCondit	PreCondit
+hi def link virataPreProcError	Error
+hi def link virataPreProcWarn	Todo
 
-  " Directive Group:
-  HiLink virataStatement	Statement
-  HiLink virataCfgStatement	Statement
-  HiLink virataOperator		Operator
-  HiLink virataDirective	Keyword
+" Directive Group:
+hi def link virataStatement	Statement
+hi def link virataCfgStatement	Statement
+hi def link virataOperator		Operator
+hi def link virataDirective	Keyword
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "virata"
 

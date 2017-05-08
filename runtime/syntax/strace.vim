@@ -5,12 +5,9 @@
 " Last Change: 2015-01-16
 
 " Setup
-if version >= 600
-	if exists("b:current_syntax")
-		finish
-	endif
-else
-	syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+	finish
 endif
 
 syn case match
@@ -35,31 +32,22 @@ syn match straceOperator "[-+=*/!%&|:,]"
 syn region straceComment start="/\*" end="\*/" oneline
 
 " Define the default highlighting
-if version >= 508 || !exists("did_strace_syntax_inits")
-	if version < 508
-		let did_strace_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
 
-	HiLink straceComment Comment
-	HiLink straceVerbosed Comment
-	HiLink stracePID PreProc
-	HiLink straceNumber Number
-	HiLink straceNumberRHS Type
-	HiLink straceOtherRHS Type
-	HiLink straceString String
-	HiLink straceConstant Function
-	HiLink straceEquals Type
-	HiLink straceSysCallEmbed straceSysCall
-	HiLink straceSysCall Statement
-	HiLink straceParenthesis Statement
-	HiLink straceOperator Normal
-	HiLink straceSpecialChar Special
-	HiLink straceOtherPID PreProc
+hi def link straceComment Comment
+hi def link straceVerbosed Comment
+hi def link stracePID PreProc
+hi def link straceNumber Number
+hi def link straceNumberRHS Type
+hi def link straceOtherRHS Type
+hi def link straceString String
+hi def link straceConstant Function
+hi def link straceEquals Type
+hi def link straceSysCallEmbed straceSysCall
+hi def link straceSysCall Statement
+hi def link straceParenthesis Statement
+hi def link straceOperator Normal
+hi def link straceSpecialChar Special
+hi def link straceOtherPID PreProc
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "strace"

@@ -119,7 +119,7 @@ describe('api', function()
       eq(1, funcs.exists('g:lua'))
       meths.del_var('lua')
       eq(0, funcs.exists('g:lua'))
-      eq({false, 'Key "lua" doesn\'t exist'}, meth_pcall(meths.del_var, 'lua'))
+      eq({false, 'Key does not exist: lua'}, meth_pcall(meths.del_var, 'lua'))
       meths.set_var('lua', 1)
       command('lockvar lua')
       eq({false, 'Key is locked: lua'}, meth_pcall(meths.del_var, 'lua'))
@@ -218,6 +218,102 @@ describe('api', function()
       nvim('set_current_tabpage', nvim('list_tabpages')[2])
       eq(nvim('list_tabpages')[2], nvim('get_current_tabpage'))
       eq(nvim('list_wins')[2], nvim('get_current_win'))
+    end)
+  end)
+
+  describe('nvim_get_mode', function()
+    it("during normal-mode `g` returns blocking=true", function()
+      nvim("input", "o")                -- add a line
+      eq({mode='i', blocking=false}, nvim("get_mode"))
+      nvim("input", [[<C-\><C-N>]])
+      eq(2, nvim("eval", "line('.')"))
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+
+      nvim("input", "g")
+      eq({mode='n', blocking=true}, nvim("get_mode"))
+
+      nvim("input", "k")                -- complete the operator
+      eq(1, nvim("eval", "line('.')"))  -- verify the completed operator
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it("returns the correct result multiple consecutive times", function()
+      for _ = 1,5 do
+        eq({mode='n', blocking=false}, nvim("get_mode"))
+      end
+      nvim("input", "g")
+      for _ = 1,4 do
+        eq({mode='n', blocking=true}, nvim("get_mode"))
+      end
+      nvim("input", "g")
+      for _ = 1,7 do
+        eq({mode='n', blocking=false}, nvim("get_mode"))
+      end
+    end)
+
+    it("during normal-mode CTRL-W, returns blocking=true", function()
+      nvim("input", "<C-W>")
+      eq({mode='n', blocking=true}, nvim("get_mode"))
+
+      nvim("input", "s")                  -- complete the operator
+      eq(2, nvim("eval", "winnr('$')"))   -- verify the completed operator
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it("during press-enter prompt returns blocking=true", function()
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      command("echom 'msg1'")
+      command("echom 'msg2'")
+      command("echom 'msg3'")
+      command("echom 'msg4'")
+      command("echom 'msg5'")
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim("input", ":messages<CR>")
+      eq({mode='r', blocking=true}, nvim("get_mode"))
+    end)
+
+    it("during getchar() returns blocking=false", function()
+      nvim("input", ":let g:test_input = nr2char(getchar())<CR>")
+      -- Events are enabled during getchar(), RPC calls are *not* blocked. #5384
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq(0, nvim("eval", "exists('g:test_input')"))
+      nvim("input", "J")
+      eq("J", nvim("eval", "g:test_input"))
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    -- TODO: bug #6247#issuecomment-286403810
+    it("batched with input", function()
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      command("echom 'msg1'")
+      command("echom 'msg2'")
+      command("echom 'msg3'")
+      command("echom 'msg4'")
+      command("echom 'msg5'")
+
+      local req = {
+        {'nvim_get_mode', {}},
+        {'nvim_input',    {':messages<CR>'}},
+        {'nvim_get_mode', {}},
+        {'nvim_eval',     {'1'}},
+      }
+      eq({{{mode='n', blocking=false},
+          13,
+          {mode='n', blocking=false},  -- TODO: should be blocked=true
+          1},
+        NIL}, meths.call_atomic(req))
+      eq({mode='r', blocking=true}, nvim("get_mode"))
+    end)
+    -- TODO: bug #6166
+    it("during insert-mode map-pending, returns blocking=true #6166", function()
+      command("inoremap xx foo")
+      nvim("input", "ix")
+      eq({mode='i', blocking=true}, nvim("get_mode"))
+    end)
+    -- TODO: bug #6166
+    it("during normal-mode gU, returns blocking=false #6166", function()
+      nvim("input", "gu")
+      eq({mode='no', blocking=false}, nvim("get_mode"))
     end)
   end)
 
@@ -423,7 +519,7 @@ describe('api', function()
       eq(5, meths.get_var('avar'))
     end)
 
-    it('throws error on malformated arguments', function()
+    it('throws error on malformed arguments', function()
       local req = {
         {'nvim_set_var', {'avar', 1}},
         {'nvim_set_var'},
@@ -450,7 +546,7 @@ describe('api', function()
       }
       status, err = pcall(meths.call_atomic, req)
       eq(false, status)
-      ok(err:match('args must be Array') ~= nil)
+      ok(err:match('Args must be Array') ~= nil)
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
       eq({''}, meths.buf_get_lines(0, 0, -1, true))
@@ -463,7 +559,14 @@ describe('api', function()
     ok(err:match('Invalid option name') ~= nil)
   end)
 
-  it("doesn't leak memory on incorrect argument types", function()
+  it('does not truncate error message <1 MB #5984', function()
+    local very_long_name = 'A'..('x'):rep(10000)..'Z'
+    local status, err = pcall(nvim, 'get_option', very_long_name)
+    eq(false, status)
+    eq(very_long_name, err:match('Ax+Z?'))
+  end)
+
+  it("does not leak memory on incorrect argument types", function()
     local status, err = pcall(nvim, 'set_current_dir',{'not', 'a', 'dir'})
     eq(false, status)
     ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)

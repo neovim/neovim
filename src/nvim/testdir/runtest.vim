@@ -72,6 +72,7 @@ let v:testing = 1
 set directory^=.
 set backspace=
 set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
+set listchars=eol:$
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE='Xnvim.log'
 
@@ -133,7 +134,7 @@ else
 endif
 
 " Names of flaky tests.
-let s:flaky = []
+let s:flaky = ['Test_with_partial_callback']
 
 " Locate Test_ functions and execute them.
 set nomore

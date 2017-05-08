@@ -6,15 +6,7 @@
 
 Starting Vim						*starting*
 
-1. Vim arguments		|vim-arguments|
-2. Initialization		|initialization|
-3. $VIM and $VIMRUNTIME		|$VIM|
-4. Suspending			|suspend|
-5. Exiting			|exiting|
-6. Saving settings		|save-settings|
-7. Views and Sessions		|views-sessions|
-8. The ShaDa file		|shada-file|
-9. Base Directories     	|base-directories|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*
@@ -181,6 +173,7 @@ argument.
 		the executable "view" has the same effect as the -R argument.
 		The 'updatecount' option will be set to 10000, meaning that
 		the swap file will not be updated automatically very often.
+		See |-M| for disallowing modifications.
 
 							*-m*
 -m		Modifications not allowed to be written.  The 'write' option
@@ -425,7 +418,7 @@ accordingly.  Vim proceeds in this order:
 	-  The environment variable EXINIT.
 	   The value of $EXINIT is used as an Ex command line.
 
-     c. If the 'exrc' option is on (which is not the default), the current
+     c. If the 'exrc' option is on (which is NOT the default), the current
 	directory is searched for three files.  The first that exists is used,
 	the others are ignored.
 	-  The file ".nvimrc" (for Unix)
@@ -518,7 +511,8 @@ accordingly.  Vim proceeds in this order:
 	The |v:vim_did_enter| variable is set to 1.
 	The |VimEnter| autocommands are executed.
 
-Some hints on using initializations:
+
+Some hints on using initializations ~
 
 Standard setup:
 Create a vimrc file to set the default settings and mappings for all your edit
@@ -540,17 +534,23 @@ the ":version" command.  NOTE: System vimrc file needs specific compilation
 options (one needs to define SYS_VIMRC_FILE macros). If :version command does 
 not show anything like this, consider contacting the nvim package maintainer.
 
-Saving the current state of Vim to a file:
+
+Saving the current state of Vim to a file ~
+
 Whenever you have changed values of options or when you have created a
 mapping, then you may want to save them in a vimrc file for later use.  See
 |save-settings| about saving the current state of settings to a file.
 
-Avoiding setup problems for Vi users:
+
+Avoiding setup problems for Vi users ~
+
 Vi uses the variable EXINIT and the file "~/.exrc".  So if you do not want to
 interfere with Vi, then use the variable VIMINIT and the file init.vim 
 instead.
 
-MS-DOS line separators:
+
+MS-DOS line separators: ~
+
 On Windows systems Vim assumes that all the vimrc files have <CR> <NL> pairs
 as line separators.  This will give problems if you have a file with only
 <NL>s and have a line like ":map xx yy^M".  The trailing ^M will be ignored.
@@ -558,8 +558,10 @@ as line separators.  This will give problems if you have a file with only
 The $MYVIMRC or $MYGVIMRC file will be set to the first found vimrc and/or
 gvimrc file.
 
-Avoiding trojan horses:					*trojan-horse*
-While reading the vimrc or the exrc file in the current directory, some
+
+Avoiding trojan horses ~
+							*trojan-horse*
+While reading the "vimrc" or the "exrc" file in the current directory, some
 commands can be disabled for security reasons by setting the 'secure' option.
 This is always done when executing the command from a tags file.  Otherwise it
 would be possible that you accidentally use a vimrc or tags file that somebody
@@ -581,6 +583,8 @@ Be careful!
 part of the line in the tags file) is always done in secure mode.  This works
 just like executing a command from a vimrc/exrc in the current directory.
 
+
+If Vim startup is slow ~
 							*slow-start*
 If Vim takes a long time to start up, use the |--startuptime| argument to find
 out what happens.
@@ -590,6 +594,8 @@ while.  You can find out if this is the problem by disabling ShaDa for a
 moment (use the Vim argument "-i NONE", |-i|).  Try reducing the number of
 lines stored in a register with ":set shada='20,<50,s10".  |shada-file|.
 
+
+Intro message ~
 							*:intro*
 When Vim starts without a file name, an introductory message is displayed (for
 those who don't know what Vim is).  It is removed as soon as the display is
@@ -721,7 +727,7 @@ There are several ways to exit Vim:
 - Use `:cquit`.  Also when there are changes.
 
 When using `:cquit` or when there was an error message Vim exits with exit
-code 1.  Errors can be avoided by using `:silent!`.
+code 1.  Errors can be avoided by using `:silent!` or with `:catch`.
 
 ==============================================================================
 6. Saving settings					*save-settings*
@@ -922,7 +928,7 @@ You might want to clean up your 'viewdir' directory now and then.
 
 To automatically save and restore views for *.c files: >
 	au BufWinLeave *.c mkview
-	au BufWinEnter *.c silent loadview
+	au BufWinEnter *.c silent! loadview
 
 ==============================================================================
 8. The ShaDa file				*shada* *shada-file*
@@ -1182,8 +1188,11 @@ running) you have additional options:
 						*:o* *:ol* *:oldfiles*
 :o[ldfiles]		List the files that have marks stored in the ShaDa
 			file.  This list is read on startup and only changes
-			afterwards with ":rshada!".  Also see |v:oldfiles|.
+			afterwards with `:rshada!`.  Also see |v:oldfiles|.
 			The number can be used with |c_#<|.
+			The output can be filtered with |:filter|, e.g.: >
+				filter /\.vim/ oldfiles
+<			The filtering happens on the file name.
 
 :bro[wse] o[ldfiles][!]
 			List file names as with |:oldfiles|, and then prompt

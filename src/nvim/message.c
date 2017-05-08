@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * message.c: functions for displaying messages on the command line
  */
@@ -28,6 +31,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/normal.h"
+#include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
@@ -144,6 +148,12 @@ msg_attr_keep (
   static int entered = 0;
   int retval;
   char_u *buf = NULL;
+
+  // Skip messages not match ":filter pattern".
+  // Don't filter when there is an error.
+  if (!emsg_on_display && message_filtered(s)) {
+    return true;
+  }
 
   if (attr == 0) {
     set_vim_var_string(VV_STATUSMSG, (char *) s, -1);
@@ -601,7 +611,7 @@ void msg_schedule_emsgf(const char *const fmt, ...)
   va_end(ap);
 
   char *s = xstrdup((char *)IObuff);
-  loop_schedule(&main_loop, event_create(1, msg_emsgf_event, 1, s));
+  loop_schedule(&main_loop, event_create(msg_emsgf_event, 1, s));
 }
 
 /*
@@ -1165,15 +1175,9 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
    * Normal characters are printed several at a time.
    */
   while (--len >= 0) {
-    if (enc_utf8) {
-      // Don't include composing chars after the end.
-      mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
-    } else if (has_mbyte) {
-      mb_l = (*mb_ptr2len)((char_u *)str);
-    } else {
-      mb_l = 1;
-    }
-    if (has_mbyte && mb_l > 1) {
+    // Don't include composing chars after the end.
+    mb_l = utfc_ptr2len_len((char_u *)str, len + 1);
+    if (mb_l > 1) {
       c = (*mb_ptr2char)((char_u *)str);
       if (vim_isprintc(c)) {
         // Printable multi-byte char: count the cells.
@@ -1663,16 +1667,13 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
 
       // Display char in last column before showing more-prompt.
       if (*s >= ' ' && !cmdmsg_rl) {
-        if (has_mbyte) {
-          if (enc_utf8 && maxlen >= 0)
-            /* avoid including composing chars after the end */
-            l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
-          else
-            l = (*mb_ptr2len)(s);
-          s = screen_puts_mbyte((char_u *)s, l, attr);
+        if (maxlen >= 0) {
+          // Avoid including composing chars after the end.
+          l = utfc_ptr2len_len(s, (int)((str + maxlen) - s));
         } else {
-          msg_screen_putchar(*s++, attr);
+          l = utfc_ptr2len(s);
         }
+        s = screen_puts_mbyte((char_u *)s, l, attr);
         did_last_char = true;
       } else {
         did_last_char = false;
@@ -1787,6 +1788,18 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
   }
 
   msg_check();
+}
+
+/// Return true when ":filter pattern" was used and "msg" does not match
+/// "pattern".
+bool message_filtered(char_u *msg)
+{
+  if (cmdmod.filter_regmatch.regprog == NULL) {
+    return false;
+  }
+
+  bool match = vim_regexec(&cmdmod.filter_regmatch, msg, (colnr_T)0);
+  return cmdmod.filter_force ? match : !match;
 }
 
 /*

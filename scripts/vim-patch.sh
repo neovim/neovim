@@ -136,19 +136,19 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%('${na_src}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove channel.txt, netbeans.txt, os_*.txt, todo.txt, version*.txt, tags
-  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|todo\.txt\|version\d\.txt\|tags'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\%('${na_doc}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|tags'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('${na_doc}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
   # Remove some testdir/Make_*.mak files
   local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\%('${na_src_testdir}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('${na_src_testdir}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove some *.po files. #5622
   local na_po='sjiscorr.c\|ja.sjis.po\|ko.po\|pl.cp1250.po\|pl.po\|ru.cp1251.po\|uk.cp1251.po\|zh_CN.cp936.po\|zh_CN.po\|zh_TW.po'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\%('${na_po}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\<\%('${na_po}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Rename src/ paths to src/nvim/
   LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g' \

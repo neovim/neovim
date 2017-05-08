@@ -435,121 +435,119 @@ else
   syn sync minlines=0
 endif
 
-command -nargs=+ HiLink hi def link <args>
 
 " NOTE: If you're linking new highlight groups to perlString, please also put
 "       them into b:match_skip in ftplugin/perl.vim.
 
 " The default highlighting.
-HiLink perlSharpBang		PreProc
-HiLink perlControl		PreProc
-HiLink perlInclude		Include
-HiLink perlSpecial		Special
-HiLink perlString		String
-HiLink perlCharacter		Character
-HiLink perlNumber		Number
-HiLink perlFloat		Float
-HiLink perlType			Type
-HiLink perlIdentifier		Identifier
-HiLink perlLabel		Label
-HiLink perlStatement		Statement
-HiLink perlConditional		Conditional
-HiLink perlRepeat		Repeat
-HiLink perlOperator		Operator
-HiLink perlFunction		Keyword
-HiLink perlSubName		Function
-HiLink perlSubPrototype		Type
-HiLink perlSubAttributes	PreProc
-HiLink perlSubAttributesCont	perlSubAttributes
-HiLink perlComment		Comment
-HiLink perlTodo			Todo
+hi def link perlSharpBang		PreProc
+hi def link perlControl		PreProc
+hi def link perlInclude		Include
+hi def link perlSpecial		Special
+hi def link perlString		String
+hi def link perlCharacter		Character
+hi def link perlNumber		Number
+hi def link perlFloat		Float
+hi def link perlType			Type
+hi def link perlIdentifier		Identifier
+hi def link perlLabel		Label
+hi def link perlStatement		Statement
+hi def link perlConditional		Conditional
+hi def link perlRepeat		Repeat
+hi def link perlOperator		Operator
+hi def link perlFunction		Keyword
+hi def link perlSubName		Function
+hi def link perlSubPrototype		Type
+hi def link perlSubAttributes	PreProc
+hi def link perlSubAttributesCont	perlSubAttributes
+hi def link perlComment		Comment
+hi def link perlTodo			Todo
 if exists("perl_string_as_statement")
-  HiLink perlStringStartEnd	perlStatement
+  hi def link perlStringStartEnd	perlStatement
 else
-  HiLink perlStringStartEnd	perlString
+  hi def link perlStringStartEnd	perlString
 endif
-HiLink perlVStringV		perlStringStartEnd
-HiLink perlList			perlStatement
-HiLink perlMisc			perlStatement
-HiLink perlVarPlain		perlIdentifier
-HiLink perlVarPlain2		perlIdentifier
-HiLink perlArrow		perlIdentifier
-HiLink perlFiledescRead		perlIdentifier
-HiLink perlFiledescStatement	perlIdentifier
-HiLink perlVarSimpleMember	perlIdentifier
-HiLink perlVarSimpleMemberName 	perlString
-HiLink perlVarNotInMatches	perlIdentifier
-HiLink perlVarSlash		perlIdentifier
-HiLink perlQQ			perlString
-HiLink perlHereDoc		perlString
-HiLink perlStringUnexpanded	perlString
-HiLink perlSubstitutionSQ	perlString
-HiLink perlSubstitutionGQQ	perlString
-HiLink perlTranslationGQ	perlString
-HiLink perlMatch		perlString
-HiLink perlMatchStartEnd	perlStatement
-HiLink perlFormatName		perlIdentifier
-HiLink perlFormatField		perlString
-HiLink perlPackageDecl		perlType
-HiLink perlStorageClass		perlType
-HiLink perlPackageRef		perlType
-HiLink perlStatementPackage	perlStatement
-HiLink perlStatementStorage	perlStatement
-HiLink perlStatementControl	perlStatement
-HiLink perlStatementScalar	perlStatement
-HiLink perlStatementRegexp	perlStatement
-HiLink perlStatementNumeric	perlStatement
-HiLink perlStatementList	perlStatement
-HiLink perlStatementHash	perlStatement
-HiLink perlStatementIOfunc	perlStatement
-HiLink perlStatementFiledesc	perlStatement
-HiLink perlStatementVector	perlStatement
-HiLink perlStatementFiles	perlStatement
-HiLink perlStatementFlow	perlStatement
-HiLink perlStatementInclude	perlStatement
-HiLink perlStatementProc	perlStatement
-HiLink perlStatementSocket	perlStatement
-HiLink perlStatementIPC		perlStatement
-HiLink perlStatementNetwork	perlStatement
-HiLink perlStatementPword	perlStatement
-HiLink perlStatementTime	perlStatement
-HiLink perlStatementMisc	perlStatement
-HiLink perlStatementIndirObj	perlStatement
-HiLink perlFunctionName		perlIdentifier
-HiLink perlMethod		perlIdentifier
-HiLink perlFunctionPRef		perlType
-HiLink perlPOD			perlComment
-HiLink perlShellCommand		perlString
-HiLink perlSpecialAscii		perlSpecial
-HiLink perlSpecialDollar	perlSpecial
-HiLink perlSpecialString	perlSpecial
-HiLink perlSpecialStringU	perlSpecial
-HiLink perlSpecialMatch		perlSpecial
-HiLink perlDATA			perlComment
+hi def link perlVStringV		perlStringStartEnd
+hi def link perlList			perlStatement
+hi def link perlMisc			perlStatement
+hi def link perlVarPlain		perlIdentifier
+hi def link perlVarPlain2		perlIdentifier
+hi def link perlArrow		perlIdentifier
+hi def link perlFiledescRead		perlIdentifier
+hi def link perlFiledescStatement	perlIdentifier
+hi def link perlVarSimpleMember	perlIdentifier
+hi def link perlVarSimpleMemberName 	perlString
+hi def link perlVarNotInMatches	perlIdentifier
+hi def link perlVarSlash		perlIdentifier
+hi def link perlQQ			perlString
+hi def link perlHereDoc		perlString
+hi def link perlStringUnexpanded	perlString
+hi def link perlSubstitutionSQ	perlString
+hi def link perlSubstitutionGQQ	perlString
+hi def link perlTranslationGQ	perlString
+hi def link perlMatch		perlString
+hi def link perlMatchStartEnd	perlStatement
+hi def link perlFormatName		perlIdentifier
+hi def link perlFormatField		perlString
+hi def link perlPackageDecl		perlType
+hi def link perlStorageClass		perlType
+hi def link perlPackageRef		perlType
+hi def link perlStatementPackage	perlStatement
+hi def link perlStatementStorage	perlStatement
+hi def link perlStatementControl	perlStatement
+hi def link perlStatementScalar	perlStatement
+hi def link perlStatementRegexp	perlStatement
+hi def link perlStatementNumeric	perlStatement
+hi def link perlStatementList	perlStatement
+hi def link perlStatementHash	perlStatement
+hi def link perlStatementIOfunc	perlStatement
+hi def link perlStatementFiledesc	perlStatement
+hi def link perlStatementVector	perlStatement
+hi def link perlStatementFiles	perlStatement
+hi def link perlStatementFlow	perlStatement
+hi def link perlStatementInclude	perlStatement
+hi def link perlStatementProc	perlStatement
+hi def link perlStatementSocket	perlStatement
+hi def link perlStatementIPC		perlStatement
+hi def link perlStatementNetwork	perlStatement
+hi def link perlStatementPword	perlStatement
+hi def link perlStatementTime	perlStatement
+hi def link perlStatementMisc	perlStatement
+hi def link perlStatementIndirObj	perlStatement
+hi def link perlFunctionName		perlIdentifier
+hi def link perlMethod		perlIdentifier
+hi def link perlFunctionPRef		perlType
+hi def link perlPOD			perlComment
+hi def link perlShellCommand		perlString
+hi def link perlSpecialAscii		perlSpecial
+hi def link perlSpecialDollar	perlSpecial
+hi def link perlSpecialString	perlSpecial
+hi def link perlSpecialStringU	perlSpecial
+hi def link perlSpecialMatch		perlSpecial
+hi def link perlDATA			perlComment
 
 " NOTE: Due to a bug in Vim (or more likely, a misunderstanding on my part),
 "       I had to remove the transparent property from the following regions
 "       in order to get them to highlight correctly.  Feel free to remove
 "       these and reinstate the transparent property if you know how.
-HiLink perlParensSQ		perlString
-HiLink perlBracketsSQ		perlString
-HiLink perlBracesSQ		perlString
-HiLink perlAnglesSQ		perlString
+hi def link perlParensSQ		perlString
+hi def link perlBracketsSQ		perlString
+hi def link perlBracesSQ		perlString
+hi def link perlAnglesSQ		perlString
 
-HiLink perlParensDQ		perlString
-HiLink perlBracketsDQ		perlString
-HiLink perlBracesDQ		perlString
-HiLink perlAnglesDQ		perlString
+hi def link perlParensDQ		perlString
+hi def link perlBracketsDQ		perlString
+hi def link perlBracesDQ		perlString
+hi def link perlAnglesDQ		perlString
 
-HiLink perlSpecialStringU2	perlString
+hi def link perlSpecialStringU2	perlString
 
 " Possible errors
-HiLink perlNotEmptyLine		Error
-HiLink perlElseIfError		Error
-HiLink perlSubPrototypeError	Error
-HiLink perlSubError		Error
+hi def link perlNotEmptyLine		Error
+hi def link perlElseIfError		Error
+hi def link perlSubPrototypeError	Error
+hi def link perlSubError		Error
 
-delcommand HiLink
 
 " Syncing to speed up processing
 "

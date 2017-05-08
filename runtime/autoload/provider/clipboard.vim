@@ -86,7 +86,7 @@ function! provider#clipboard#Executable() abort
     return 'win32yank'
   endif
 
-  let s:err = 'clipboard: No clipboard tool available. See :help clipboard'
+  let s:err = 'clipboard: No clipboard tool available. :help clipboard'
   return ''
 endfunction
 

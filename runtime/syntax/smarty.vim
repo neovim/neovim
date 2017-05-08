@@ -8,11 +8,10 @@
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded
 if !exists("main_syntax")
-  if version < 600
-    syntax clear
-  elseif exists("b:current_syntax")
-  finish
-endif
+  " quit when a syntax file was already loaded
+  if exists("b:current_syntax")
+    finish
+  endif
   let main_syntax = 'smarty'
 endif
 
@@ -57,25 +56,16 @@ syn region  htmlString   contained start=+'+ end=+'+ contains=htmlSpecialChar,ja
   syn region htmlLink start="<a\>\_[^>]*\<href\>" end="</a>"me=e-4 contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,javaScript,@htmlPreproc,smartyZone
 
 
-if version >= 508 || !exists("did_smarty_syn_inits")
-  if version < 508
-    let did_smarty_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink smartyTagName Identifier
-  HiLink smartyProperty Constant
-  " if you want the text inside the braces to be colored, then
-  " remove the comment in from of the next statement
-  "HiLink smartyZone Include
-  HiLink smartyInFunc Function
-  HiLink smartyBlock Constant
-  HiLink smartyDot SpecialChar
-  HiLink smartyModifier Function
-  delcommand HiLink
-endif
+hi def link smartyTagName Identifier
+hi def link smartyProperty Constant
+" if you want the text inside the braces to be colored, then
+" remove the comment in from of the next statement
+"hi def link smartyZone Include
+hi def link smartyInFunc Function
+hi def link smartyBlock Constant
+hi def link smartyDot SpecialChar
+hi def link smartyModifier Function
 
 let b:current_syntax = "smarty"
 

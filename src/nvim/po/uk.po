@@ -82,7 +82,7 @@ msgid "Key length is too high"
 msgstr "Довжина ключа завелика"
 
 #, c-format
-msgid "Key \"%s\" doesn't exist"
+msgid "Key does not exist: %s"
 msgstr "Ключ «%s» не існує"
 
 msgid "Empty option name"
@@ -3719,7 +3719,7 @@ msgid "Calling shell to execute: \"%s\""
 msgstr "Викликається оболонка щоб виконати: «%s»"
 
 #, c-format
-msgid "Invalid channel \"%<PRIu64>\""
+msgid "Invalid channel: %<PRIu64>"
 msgstr "Некоректний канал «%<PRIu64>»"
 
 msgid "Message is not an array"
@@ -3734,7 +3734,7 @@ msgstr "Повідомлення має бути цілим числом"
 msgid "Unknown message type"
 msgstr "Невідомий тип повідомлення"
 
-msgid "Request array size should be 4 (request) or 3 (notification)"
+msgid "Request array size must be 4 (request) or 3 (notification)"
 msgstr "Розмір масиву запиту має бути 4 (запит) чи 3 (повідомлення)"
 
 msgid "ID must be a positive integer"

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file version.c
 ///
 /// Nvim was forked from Vim 7.4.160.
@@ -82,7 +85,7 @@ static const int included_patches[] = {
   2362,
   // 2361 NA
   // 2360,
-  // 2359 NA
+  2359,
   // 2358 NA
   2357,
   // 2356,
@@ -109,7 +112,7 @@ static const int included_patches[] = {
   2335,
   2334,
   2333,
-  // 2332 NA
+  2332,
   2331,
   2330,
   2329,
@@ -137,7 +140,7 @@ static const int included_patches[] = {
   2307,
   2306,
   2305,
-  // 2304 NA
+  2304,
   2303,
   // 2302 NA
   // 2301 NA
@@ -160,7 +163,7 @@ static const int included_patches[] = {
   2284,
   2283,
   // 2282 NA
-  // 2281 NA
+  2281,
   2280,
   2279,
   // 2278 NA
@@ -178,7 +181,7 @@ static const int included_patches[] = {
   2266,
   2265,
   2264,
-  // 2263,
+  2263,
   // 2262 NA
   // 2261 NA
   // 2260 NA
@@ -195,14 +198,14 @@ static const int included_patches[] = {
   2249,
   2248,
   // 2247 NA
-  // 2246,
-  // 2245,
-  // 2244,
+  2246,
+  2245,
+  2244,
   // 2243 NA
-  // 2242,
-  // 2241,
-  // 2240,
-  // 2239,
+  2242,
+  2241,
+  2240,
+  2239,
   // 2238 NA
   2237,
   2236,
@@ -210,7 +213,7 @@ static const int included_patches[] = {
   // 2234 NA
   2233,
   // 2232 NA
-  // 2231,
+  2231,
   2230,
   // 2229,
   2228,
@@ -232,7 +235,7 @@ static const int included_patches[] = {
   2212,
   // 2211 NA
   // 2210 NA
-  // 2209,
+  2209,
   2208,
   // 2207 NA
   // 2206 NA
@@ -260,23 +263,23 @@ static const int included_patches[] = {
   2184,
   2183,
   // 2182 NA
-  // 2181,
-  // 2180,
-  // 2179,
+  // 2181 NA
+  2180,
+  2179,
   2178,
   2177,
   // 2176 NA
   2175,
   2174,
-  // 2173,
+  2173,
   2172,
-  // 2171,
-  // 2170,
+  // 2171 NA
+  2170,
   2169,
   // 2168 NA
   // 2167 NA
   // 2166 NA
-  // 2165,
+  2165,
   2164,
   2163,
   2162,
@@ -289,7 +292,7 @@ static const int included_patches[] = {
   // 2155 NA
   // 2154 NA
   // 2153 NA
-  // 2152,
+  2152,
   2151,
   // 2150 NA
   2149,

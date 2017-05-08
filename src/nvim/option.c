@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // User-settable options. Checklist for adding a new option:
 // - Put it in options.lua
 // - For a global option: Add a variable for it in option_defs.h.
@@ -1408,7 +1411,8 @@ do_set (
           errmsg = (char_u *)set_bool_option(opt_idx, varp, (int)value,
                                              opt_flags);
         } else {  // Numeric or string.
-          if (strchr("=:&<", nextchar) == NULL || prefix != 1) {
+          if (vim_strchr((const char_u *)"=:&<", nextchar) == NULL
+              || prefix != 1) {
             errmsg = e_invarg;
             goto skip;
           }
@@ -4223,7 +4227,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   } else if (pp == &curbuf->b_p_scbk || pp == &p_scbk) {
     // 'scrollback'
     if (*pp < -1 || *pp > SB_MAX
-        || (opt_flags == OPT_LOCAL && !curbuf->terminal)) {
+        || (*pp != -1 && opt_flags == OPT_LOCAL && !curbuf->terminal)) {
       errmsg = e_invarg;
       *pp = old_value;
     } else if (curbuf->terminal) {
@@ -4818,7 +4822,7 @@ int find_key_option_len(const char_u *arg, size_t len)
   } else {
     arg--;  // put arg at the '<'
     modifiers = 0;
-    key = find_special_key(&arg, len + 1, &modifiers, true, true);
+    key = find_special_key(&arg, len + 1, &modifiers, true, true, false);
     if (modifiers) {  // can't handle modifiers here
       key = 0;
     }
@@ -6974,7 +6978,7 @@ bool signcolumn_on(win_T *wp)
 
 /// Get window or buffer local options
 dict_T *get_winbuf_options(const int bufopt)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dict_T *const d = tv_dict_alloc();
 

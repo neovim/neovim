@@ -10,21 +10,12 @@ short description.  The lists are sorted on ASCII value.
 Tip: When looking for certain functionality, use a search command.  E.g.,
 to look for deleting something, use: "/delete".
 
-1. Insert mode				|insert-index|
-2. Normal mode				|normal-index|
-   2.1. Text objects			|objects|
-   2.2. Window commands			|CTRL-W|
-   2.3. Square bracket commands		|[|
-   2.4. Commands starting with 'g'	|g|
-   2.5. Commands starting with 'z'	|z|
-3. Visual mode				|visual-index|
-4. Command-line editing			|ex-edit-index|
-5. EX commands				|ex-cmd-index|
-
 For an overview of options see help.txt |option-list|.
 For an overview of built-in functions see |functions|.
 For a list of Vim variables see |vim-variable|.
 For a complete listing of all help items see |help-tags|.
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Insert mode						*insert-index*
@@ -982,7 +973,7 @@ tag		command	      action in Command-line editing mode	~
 |c_CTRL-E|	CTRL-E		cursor to end of command-line
 |'cedit'|	CTRL-F		default value for 'cedit': opens the
 				command-line window; otherwise not used
-		CTRL-G		not used
+|c_CTRL-G|	CTRL-G		next match when 'incsearch' is active
 |c_<BS>|	<BS>		delete the character in front of the cursor
 |c_digraph|	{char1} <BS> {char2}
 				enter digraph when 'digraph' is on
@@ -1000,7 +991,7 @@ tag		command	      action in Command-line editing mode	~
 |c_CTRL-L|	CTRL-L		do completion on the pattern in front of the
 				cursor and insert the longest common part
 |c_<CR>|	<CR>		execute entered command
-|c_<CR>|	CTRL-M		same as <CR>
+|c_CTRL-M|	CTRL-M		same as <CR>
 |c_CTRL-N|	CTRL-N		after using 'wildchar' with multiple matches:
 				go to next match, otherwise: same as <Down>
 		CTRL-O		not used
@@ -1015,7 +1006,7 @@ tag		command	      action in Command-line editing mode	~
 				insert the contents of a register or object
 				under the cursor literally
 		CTRL-S		(used for terminal control flow)
-		CTRL-T		not used
+|c_CTRL-T|	CTRL-T		previous match when 'incsearch' is active
 |c_CTRL-U|	CTRL-U		remove all characters
 |c_CTRL-V|	CTRL-V		insert next non-digit literally, insert three
 				digit decimal number as a single byte.
@@ -1024,7 +1015,7 @@ tag		command	      action in Command-line editing mode	~
 		CTRL-Y		copy (yank) modeless selection
 		CTRL-Z		not used (reserved for suspend)
 |c_<Esc>|	<Esc>		abandon command-line without executing it
-|c_<Esc>|	CTRL-[		same as <Esc>
+|c_CTRL-[|	CTRL-[		same as <Esc>
 |c_CTRL-\_CTRL-N| CTRL-\ CTRL-N	go to Normal mode, abandon command-line
 |c_CTRL-\_CTRL-G| CTRL-\ CTRL-G	go to mode specified with 'insertmode',
 				abandon command-line
@@ -1202,7 +1193,7 @@ tag	      command	      action ~
 |:display|	:di[splay]	display registers
 |:djump|	:dj[ump]	jump to #define
 |:dl|		:dl		short for |:delete| with the 'l' flag
-|:dl|		:del[ete]l	short for |:delete| with the 'l' flag
+|:del|		:del[ete]l	short for |:delete| with the 'l' flag
 |:dlist|	:dli[st]	list #defines
 |:doautocmd|	:do[autocmd]	apply autocommands to current buffer
 |:doautoall|	:doautoa[ll]	apply autocommands for all loaded buffers
@@ -1234,6 +1225,7 @@ tag	      command	      action ~
 |:file|		:f[ile]		show or set the current file name
 |:files|	:files		list all files in the buffer list
 |:filetype|	:filet[ype]	switch file type detection on/off
+|:filter|	:filt[er]	filter output of following command
 |:find|		:fin[d]		find file in 'path' and edit it
 |:finally|	:fina[lly]	part of a :try command
 |:finish|	:fini[sh]	quit sourcing a Vim script

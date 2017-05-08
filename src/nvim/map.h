@@ -25,7 +25,6 @@
   void map_##T##_##U##_clear(Map(T, U) *map);
 
 MAP_DECLS(int, int)
-MAP_DECLS(cstr_t, uint64_t)
 MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(ptr_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)

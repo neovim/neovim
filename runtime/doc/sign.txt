@@ -7,8 +7,7 @@
 
 Sign Support Features				*sign-support*
 
-1. Introduction				|sign-intro|
-2. Commands				|sign-commands|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction					*sign-intro* *signs*
@@ -188,7 +187,9 @@ JUMPING TO A SIGN					*:sign-jump* *E157*
 		If the file isn't displayed in window and the current file can
 		not be |abandon|ed this fails.
 
-:sign jump {id} buffer={nr}
-		Same, but use buffer {nr}.
+:sign jump {id} buffer={nr}					*E934*
+		Same, but use buffer {nr}.  This fails if buffer {nr} does not
+		have a name.
+
 
  vim:tw=78:ts=8:ft=help:norl:

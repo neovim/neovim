@@ -4,13 +4,15 @@ local helpers = require('test.functional.helpers')(after_each)
 local buf, eq, feed_command = helpers.curbufmeths, helpers.eq, helpers.feed_command
 local feed, nvim_prog, wait = helpers.feed, helpers.nvim_prog, helpers.wait
 local ok, set_session, spawn = helpers.ok, helpers.set_session, helpers.spawn
+local eval = helpers.eval
 
-local shada_file = 'test.shada'
+local shada_file = 'Xtest.shada'
 
 local function _clear()
-  set_session(spawn({nvim_prog, '--embed', '-u', 'NONE', '--cmd',
+  set_session(spawn({nvim_prog, '--embed', '-u', 'NONE',
                      -- Need shada for these tests.
-                     'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'}))
+                     '-i', shada_file,
+                     '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'}))
 end
 
 describe(':oldfiles', function()
@@ -29,8 +31,8 @@ describe(':oldfiles', function()
     screen:attach()
     feed_command('edit testfile1')
     feed_command('edit testfile2')
-    feed_command('wshada ' .. shada_file)
-    feed_command('rshada! ' .. shada_file)
+    feed_command('wshada')
+    feed_command('rshada!')
     local oldfiles = helpers.meths.get_vvar('oldfiles')
     feed_command('oldfiles')
     screen:expect([[
@@ -40,6 +42,38 @@ describe(':oldfiles', function()
                                                                                                           |
       Press ENTER or type command to continue^                                                             |
     ]])
+  end)
+
+  it('can be filtered with :filter', function()
+    feed_command('edit file_one.txt')
+    local file1 = buf.get_name()
+    feed_command('edit file_two.txt')
+    local file2 = buf.get_name()
+    feed_command('edit another.txt')
+    local another = buf.get_name()
+    feed_command('wshada')
+    feed_command('rshada!')
+
+    local function get_oldfiles(cmd)
+      local t = eval([[split(execute(']]..cmd..[['), "\n")]])
+      for i, _ in ipairs(t) do
+        t[i] = t[i]:gsub('^%d+:%s+', '')
+      end
+      table.sort(t)
+      return t
+    end
+
+    local oldfiles = get_oldfiles('oldfiles')
+    eq({another, file1, file2}, oldfiles)
+
+    oldfiles = get_oldfiles('filter file_ oldfiles')
+    eq({file1, file2}, oldfiles)
+
+    oldfiles = get_oldfiles('filter /another/ oldfiles')
+    eq({another}, oldfiles)
+
+    oldfiles = get_oldfiles('filter! file_ oldfiles')
+    eq({another}, oldfiles)
   end)
 end)
 
@@ -54,10 +88,9 @@ describe(':browse oldfiles', function()
     filename = buf.get_name()
     feed_command('edit testfile2')
     filename2 = buf.get_name()
-    feed_command('wshada ' .. shada_file)
+    feed_command('wshada')
     wait()
     _clear()
-    feed_command('rshada! ' .. shada_file)
 
     -- Ensure nvim is out of "Press ENTER..." prompt.
     feed('<cr>')

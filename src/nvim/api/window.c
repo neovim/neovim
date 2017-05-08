@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -62,8 +65,8 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
       || pos.items[1].type != kObjectTypeInteger) {
     api_set_error(err,
-                  Validation,
-                  _("Argument \"pos\" must be a [row, col] array"));
+                  kErrorTypeValidation,
+                  "Argument \"pos\" must be a [row, col] array");
     return;
   }
 
@@ -75,12 +78,12 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   int64_t col = pos.items[1].data.integer;
 
   if (row <= 0 || row > win->w_buffer->b_ml.ml_line_count) {
-    api_set_error(err, Validation, _("Cursor position outside buffer"));
+    api_set_error(err, kErrorTypeValidation, "Cursor position outside buffer");
     return;
   }
 
   if (col > MAXCOL || col < 0) {
-    api_set_error(err, Validation, _("Column value outside range"));
+    api_set_error(err, kErrorTypeValidation, "Column value outside range");
     return;
   }
 
@@ -129,7 +132,7 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
   }
 
   if (height > INT_MAX || height < INT_MIN) {
-    api_set_error(err, Validation, _("Height value outside range"));
+    api_set_error(err, kErrorTypeValidation, "Height value outside range");
     return;
   }
 
@@ -174,7 +177,7 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
   }
 
   if (width > INT_MAX || width < INT_MIN) {
-    api_set_error(err, Validation, _("Width value outside range"));
+    api_set_error(err, kErrorTypeValidation, "Width value outside range");
     return;
   }
 
@@ -384,6 +387,8 @@ Boolean nvim_win_is_valid(Window window)
     FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
-  return find_window_by_handle(window, &stub) != NULL;
+  Boolean ret = find_window_by_handle(window, &stub) != NULL;
+  api_clear_error(&stub);
+  return ret;
 }
 

@@ -1,5 +1,5 @@
-source "${CI_DIR}/common/build.sh"
-source "${CI_DIR}/common/suite.sh"
+. "${CI_DIR}/common/build.sh"
+. "${CI_DIR}/common/suite.sh"
 
 print_core() {
   local app="$1"
@@ -9,7 +9,7 @@ print_core() {
     return 0
   fi
   echo "======= Core file $core ======="
-  if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+  if test "${TRAVIS_OS_NAME}" = osx ; then
     lldb -Q -o "bt all" -f "${app}" -c "${core}"
   else
     gdb -n -batch -ex 'thread apply all bt full' "${app}" -c "${core}"
@@ -23,13 +23,13 @@ check_core_dumps() {
     shift
   fi
   local app="${1:-${BUILD_DIR}/bin/nvim}"
-  if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
+  if test "${TRAVIS_OS_NAME}" = osx ; then
     local cores="$(find /cores/ -type f -print)"
   else
     local cores="$(find ./ -type f -name 'core.*' -print)"
   fi
 
-  if [ -z "${cores}" ]; then
+  if test -z "${cores}" ; then
     return
   fi
   local core
@@ -61,7 +61,7 @@ check_logs() {
     cat "${log}"
     err=1
   done
-  if [[ -n "${err}" ]]; then
+  if test -n "${err}" ; then
     fail 'logs' E 'Runtime errors detected.'
   fi
 }
@@ -76,7 +76,7 @@ asan_check() {
 
 run_unittests() {(
   enter_suite unittests
-  ulimit -c unlimited
+  ulimit -c unlimited || true
   if ! build_make unittest ; then
     fail 'unittests' F 'Unit tests failed'
   fi
@@ -86,7 +86,7 @@ run_unittests() {(
 
 run_functionaltests() {(
   enter_suite functionaltests
-  ulimit -c unlimited
+  ulimit -c unlimited || true
   if ! build_make ${FUNCTIONALTEST}; then
     fail 'functionaltests' F 'Functional tests failed'
   fi
@@ -98,7 +98,7 @@ run_functionaltests() {(
 
 run_oldtests() {(
   enter_suite oldtests
-  ulimit -c unlimited
+  ulimit -c unlimited || true
   if ! make -C "${TRAVIS_BUILD_DIR}/src/nvim/testdir"; then
     reset
     fail 'oldtests' F 'Legacy tests failed'
@@ -109,6 +109,27 @@ run_oldtests() {(
   exit_suite
 )}
 
+check_runtime_files() {(
+  set +x
+  local test_name="$1" ; shift
+  local message="$1" ; shift
+  local tst="$1" ; shift
+
+  cd runtime
+  for file in $(git ls-files "$@") ; do
+    # Check that test is not trying to work with files with spaces/etc
+    # Prefer failing the build over using more robust construct because files
+    # with IFS are not welcome.
+    if ! test -e "$file" ; then
+      fail "$test_name" E \
+        "It appears that $file is only a part of the file name"
+    fi
+    if ! test "$tst" "$INSTALL_PREFIX/share/nvim/runtime/$file" ; then
+      fail "$test_name" F "$(printf "$message" "$file")"
+    fi
+  done
+)}
+
 install_nvim() {(
   enter_suite 'install_nvim'
   if ! build_make install ; then
@@ -117,34 +138,37 @@ install_nvim() {(
   fi
 
   "${INSTALL_PREFIX}/bin/nvim" --version
-  "${INSTALL_PREFIX}/bin/nvim" -u NONE -e -c ':help' -c ':qall' || {
+  if ! "${INSTALL_PREFIX}/bin/nvim" -u NONE -e -c ':help' -c ':qall' ; then
     echo "Running ':help' in the installed nvim failed."
     echo "Maybe the helptags have not been generated properly."
     fail 'help' F 'Failed running :help'
-  }
+  fi
 
-  local genvimsynf=syntax/vim/generated.vim
   # Check that all runtime files were installed
-  for file in doc/tags $genvimsynf $(
-    cd runtime ; git ls-files | grep -e '.vim$' -e '.ps$' -e '.dict$' -e '.py$' -e '.tutor$'
-  ) ; do
-    if ! test -e "${INSTALL_PREFIX}/share/nvim/runtime/$file" ; then
-      fail 'runtime-install' F "It appears that $file is not installed."
-    fi
-  done
+  check_runtime_files \
+    'runtime-install' \
+    'It appears that %s is not installed.' \
+    -e \
+    '*.vim' '*.ps' '*.dict' '*.py' '*.tutor'
+
+  # Check that some runtime files are installed and are executables
+  check_runtime_files \
+    'not-exe' \
+    'It appears that %s is not installed or is not executable.' \
+    -x \
+    '*.awk' '*.sh' '*.bat'
 
   # Check that generated syntax file has function names, #5060.
+  local genvimsynf=syntax/vim/generated.vim
   local gpat='syn keyword vimFuncName .*eval'
-  if ! grep -q "$gpat" "${INSTALL_PREFIX}/share/nvim/runtime/$genvimsynf"; then
+  if ! grep -q "$gpat" "${INSTALL_PREFIX}/share/nvim/runtime/$genvimsynf" ; then
     fail 'funcnames' F "It appears that $genvimsynf does not contain $gpat."
   fi
 
-  for file in $(
-    cd runtime ; git ls-files | grep -e '.awk$' -e '.sh$' -e '.bat$'
-  ) ; do
-    if ! test -x "${INSTALL_PREFIX}/share/nvim/runtime/$file" ; then
-      fail 'not-exe' F "It appears that $file is not installed or is not executable."
-    fi
-  done
   exit_suite
 )}
+
+csi_clean() {
+  find "${BUILD_DIR}/bin" -name 'test-includes-*' -delete
+  find "${BUILD_DIR}" -name '*test-include*.o' -delete
+}

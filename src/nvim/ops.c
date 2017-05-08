@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * ops.c: implementation of various operators: op_shift, op_delete, op_tilde,
  *        op_change, op_yank, do_put, do_join
@@ -802,7 +805,6 @@ static bool is_append_register(int regname)
 /// Returns a copy of contents in register `name`
 /// for use in do_put. Should be freed by caller.
 yankreg_T *copy_register(int name)
-  FUNC_ATTR_MALLOC
   FUNC_ATTR_NONNULL_RET
 {
   yankreg_T *reg = get_yank_register(name, YREG_PASTE);
@@ -2786,7 +2788,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (curbuf->terminal) {
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {  // -V756
       // feed the lines to the terminal
       for (size_t j = 0; j < y_size; j++) {
         if (j) {
