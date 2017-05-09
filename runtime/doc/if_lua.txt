@@ -107,7 +107,7 @@ position are restricted when the command is executed in the |sandbox|.
 
 Lua interfaces Vim through the "vim" module. Currently it only has `api` 
 submodule which is a table with all API functions. Descriptions of these 
-functions may be found in |api-funcs.txt|.
+functions may be found in |api.txt|.
 
 ==============================================================================
 3. The luaeval function					*lua-luaeval* *lua-eval*
