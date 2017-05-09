@@ -428,16 +428,15 @@ int vim_strnicmp(const char *s1, const char *s2, size_t len)
 /// strchr() version which handles multibyte strings
 ///
 /// @param[in]  string  String to search in.
-/// @param[in]  c  Character to search for. Must be a valid character.
+/// @param[in]  c  Character to search for.
 ///
 /// @return Pointer to the first byte of the found character in string or NULL
-///         if it was not found. NUL character is never found, use `strlen()`
-///         instead.
+///         if it was not found or character is invalid. NUL character is never
+///         found, use `strlen()` instead.
 char_u *vim_strchr(const char_u *const string, const int c)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  assert(c >= 0);
-  if (c == 0) {
+  if (c <= 0) {
     return NULL;
   } else if (c < 0x80) {
     return (char_u *)strchr((const char *)string, c);
