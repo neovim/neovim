@@ -4,15 +4,6 @@ function! s:check_config() abort
   let ok = v:true
   call health#report_start('Configuration')
 
-  if get(g:, 'loaded_sensible', 0)
-    let ok = v:false
-    let sensible_pi = globpath(&runtimepath, '**/sensible.vim', 1, 1)
-    call health#report_info("found sensible.vim plugin:\n".join(sensible_pi, "\n"))
-    call health#report_error("sensible.vim plugin is not needed; Nvim has the same defaults built-in."
-      \ ." Also, sensible.vim sets 'ttimeoutlen' to a sub-optimal value.",
-      \ ["Remove sensible.vim plugin, or wrap it in a `if !has('nvim')` check."])
-  endif
-
   if exists('$NVIM_TUI_ENABLE_CURSOR_SHAPE')
     let ok = v:false
     call health#report_warn("$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+",
