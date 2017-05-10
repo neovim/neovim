@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
-local wait = helpers.wait
 local feed = helpers.feed
 local meths = helpers.meths
 local clear = helpers.clear
@@ -51,9 +50,7 @@ describe('input()', function()
       {T:Test}                     |
       {T:Foo}^                      |
     ]])
-    wait()
     command('redraw!')
-    wait()
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -65,9 +62,7 @@ describe('input()', function()
   it('works correctly with multiple numeric arguments (many args)', function()
     command('hi Test ctermfg=Red guifg=Red term=bold')
     feed([[:echohl Test | call input(1, 2)<CR>]])
-    wait()  -- Without wait() it first shows `12` line and then empty line.
     command('redraw!')  -- Without this it shows two `12` lines.
-    wait()
     -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
@@ -77,7 +72,6 @@ describe('input()', function()
       {T:1}2^                       |
     ]])
     feed('<BS>')
-    wait()
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -88,7 +82,6 @@ describe('input()', function()
   end)
   it('works correctly with multiple numeric arguments (dict arg)', function()
     feed([[:echohl Test | echo input({"prompt": 1, "default": 2, "cancelreturn": 3})<CR>]])
-    wait()  -- Without wait() it first shows `12` line and then empty line.
     command('redraw!')  -- Without this it shows two `12` lines.
     -- None of the above problems happen when testing manually.
     screen:expect([[
@@ -99,7 +92,6 @@ describe('input()', function()
       {T:1}2^                       |
     ]])
     feed('<BS>')
-    wait()
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -108,7 +100,6 @@ describe('input()', function()
       {T:1}^                        |
     ]])
     feed('<Esc>')
-    wait()
     screen:expect([[
       ^                         |
       {EOB:~                        }|
@@ -119,7 +110,6 @@ describe('input()', function()
   end)
   it('allows omitting everything with dictionary argument', function()
     feed(':echohl Test | echo input({})<CR>')
-    wait()
     command('redraw!')
     screen:expect([[
                                |
@@ -131,33 +121,25 @@ describe('input()', function()
   end)
   it('supports completion', function()
     feed(':let var = input("", "", "custom,CustomCompl")<CR>')
-    wait()
     feed('<Tab><CR>')
     eq('TEST', meths.get_var('var'))
 
     feed(':let var = input({"completion": "customlist,CustomListCompl"})<CR>')
-    wait()
     feed('<Tab><CR>')
-    wait()
     eq('FOO', meths.get_var('var'))
   end)
   it('supports cancelreturn', function()
     feed(':let var = input({"cancelreturn": "BAR"})<CR>')
-    wait()
     feed('<Esc>')
-    wait()
     eq('BAR', meths.get_var('var'))
   end)
   it('supports default string', function()
     feed(':let var = input("", "DEF1")<CR>')
-    wait()
     feed('<CR>')
     eq('DEF1', meths.get_var('var'))
 
     feed(':let var = input({"default": "DEF2"})<CR>')
-    wait()
     feed('<CR>')
-    wait()
     eq('DEF2', meths.get_var('var'))
   end)
   it('errors out on invalid inputs', function()
@@ -201,9 +183,7 @@ describe('inputdialog()', function()
       {T:Test}                     |
       {T:Foo}^                      |
     ]])
-    wait()
     command('redraw!')
-    wait()
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -215,9 +195,7 @@ describe('inputdialog()', function()
   it('works correctly with multiple numeric arguments (many args)', function()
     command('hi Test ctermfg=Red guifg=Red term=bold')
     feed([[:echohl Test | call inputdialog(1, 2)<CR>]])
-    wait()  -- Without wait() it first shows `12` line and then empty line.
     command('redraw!')  -- Without this it shows two `12` lines.
-    wait()
     -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
@@ -227,7 +205,6 @@ describe('inputdialog()', function()
       {T:1}2^                       |
     ]])
     feed('<BS>')
-    wait()
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -238,7 +215,6 @@ describe('inputdialog()', function()
   end)
   it('works correctly with multiple numeric arguments (dict arg)', function()
     feed([[:echohl Test | echo inputdialog({"prompt": 1, "default": 2, "cancelreturn": 3})<CR>]])
-    wait()  -- Without wait() it first shows `12` line and then empty line.
     command('redraw!')  -- Without this it shows two `12` lines.
     -- None of the above problems happen when testing manually.
     screen:expect([[
@@ -249,7 +225,6 @@ describe('inputdialog()', function()
       {T:1}2^                       |
     ]])
     feed('<BS>')
-    wait()
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -258,7 +233,6 @@ describe('inputdialog()', function()
       {T:1}^                        |
     ]])
     feed('<Esc>')
-    wait()
     screen:expect([[
       ^                         |
       {EOB:~                        }|
@@ -269,7 +243,6 @@ describe('inputdialog()', function()
   end)
   it('allows omitting everything with dictionary argument', function()
     feed(':echohl Test | echo inputdialog({})<CR>')
-    wait()
     command('redraw!')
     screen:expect([[
                                |
@@ -281,34 +254,25 @@ describe('inputdialog()', function()
   end)
   it('supports completion', function()
     feed(':let var = inputdialog({"completion": "customlist,CustomListCompl"})<CR>')
-    wait()
     feed('<Tab><CR>')
-    wait()
     eq('FOO', meths.get_var('var'))
   end)
   it('supports cancelreturn', function()
     feed(':let var = inputdialog("", "", "CR1")<CR>')
-    wait()
     feed('<Esc>')
-    wait()
     eq('CR1', meths.get_var('var'))
 
     feed(':let var = inputdialog({"cancelreturn": "BAR"})<CR>')
-    wait()
     feed('<Esc>')
-    wait()
     eq('BAR', meths.get_var('var'))
   end)
   it('supports default string', function()
     feed(':let var = inputdialog("", "DEF1")<CR>')
-    wait()
     feed('<CR>')
     eq('DEF1', meths.get_var('var'))
 
     feed(':let var = inputdialog({"default": "DEF2"})<CR>')
-    wait()
     feed('<CR>')
-    wait()
     eq('DEF2', meths.get_var('var'))
   end)
   it('errors out on invalid inputs', function()
