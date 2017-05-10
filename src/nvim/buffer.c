@@ -23,6 +23,7 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include "nvim/log.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
@@ -2853,9 +2854,8 @@ void maketitle(void)
 
         use_sandbox = was_set_insecurely((char_u *)"titlestring", 0);
         called_emsg = FALSE;
-        build_stl_str_hl(curwin, t_str, sizeof(buf),
-            p_titlestring, use_sandbox,
-            0, maxlen, NULL, NULL);
+        build_stl_str_hl(curwin, t_str, sizeof(buf), p_titlestring,
+                         use_sandbox, 0, maxlen, NULL, NULL, NULL, NULL);
         if (called_emsg)
           set_string_option_direct((char_u *)"titlestring", -1,
               (char_u *)"", OPT_FREE, SID_ERROR);
@@ -2943,9 +2943,8 @@ void maketitle(void)
 
         use_sandbox = was_set_insecurely((char_u *)"iconstring", 0);
         called_emsg = FALSE;
-        build_stl_str_hl(curwin, i_str, sizeof(buf),
-            p_iconstring, use_sandbox,
-            0, 0, NULL, NULL);
+        build_stl_str_hl(curwin, i_str, sizeof(buf), p_iconstring, use_sandbox,
+                         0, 0, NULL, NULL, NULL, NULL);
         if (called_emsg)
           set_string_option_direct((char_u *)"iconstring", -1,
               (char_u *)"", OPT_FREE, SID_ERROR);
@@ -3045,6 +3044,7 @@ typedef enum {
 /// @param out The output buffer to write the statusline to
 ///            Note: This should not be NameBuff
 /// @param outlen The length of the output buffer
+/// @param outitems[out] Allocated NULL-terminated array of statusline items.
 /// @param fmt The statusline format string
 /// @param use_sandbox Use a sandboxed environment when evaluating fmt
 /// @param fillchar Character to use when filling empty space in the statusline
@@ -3062,30 +3062,18 @@ int build_stl_str_hl(
     char_u fillchar,
     int maxwidth,
     struct stl_hlrec *hltab,
-    StlClickRecord *tabtab
+    StlClickRecord *tabtab,
+    StlItem *outitems,
+    size_t *outitemscnt
 )
 {
+  static bool entered = false;
+  static StlItem items2[STL_MAX_ITEM];
+  assert(!entered);
+  entered = true;
+
   int groupitems[STL_MAX_ITEM];
-  struct stl_item {
-    // Where the item starts in the status line output buffer
-    char_u *start;
-    // Function to run for ClickFunc items.
-    char *cmd;
-    // The minimum width of the item
-    int minwid;
-    // The maximum width of the item
-    int maxwid;
-    enum {
-      Normal,
-      Empty,
-      Group,
-      Separate,
-      Highlight,
-      TabPage,
-      ClickFunc,
-      Trunc
-    } type;
-  } items[STL_MAX_ITEM];
+  StlItem *items = outitems ? outitems : items2;
 #define TMPLEN 70
   char_u tmp[TMPLEN];
   char_u      *usefmt = fmt;
@@ -3905,6 +3893,10 @@ int build_stl_str_hl(
     xfree(usefmt);
   }
 
+  if (outitemscnt) {
+    *outitemscnt = (size_t)itemcnt;
+  }
+
   // We have now processed the entire statusline format string.
   // What follows is post-processing to handle alignment and highlighting.
 
@@ -4128,6 +4120,7 @@ int build_stl_str_hl(
     cur_tab_rec->def.func = NULL;
   }
 
+  entered = false;
   return width;
 }
 

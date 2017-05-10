@@ -5174,9 +5174,8 @@ win_redr_custom (
   /* Make a copy, because the statusline may include a function call that
    * might change the option value and free the memory. */
   stl = vim_strsave(stl);
-  width = build_stl_str_hl(ewp, buf, sizeof(buf),
-      stl, use_sandbox,
-      fillchar, maxwidth, hltab, tabtab);
+  width = build_stl_str_hl(ewp, buf, sizeof(buf), stl, use_sandbox, fillchar,
+                           maxwidth, hltab, tabtab, NULL, NULL);
   xfree(stl);
   ewp->w_p_crb = p_crb_save;
 
@@ -7087,6 +7086,49 @@ static void draw_tabline(void)
 
 void ui_ext_tabline_update(void)
 {
+  char_u buf[MAXPATHL];
+  char_u      *stl;
+  int fillchar = ' ';
+  int maxwidth = Columns;
+  int use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
+  struct stl_hlrec hltab[STL_MAX_ITEM];
+  StlClickRecord tabtab[STL_MAX_ITEM];
+  char_u *p;
+  int len;
+  size_t tabcount = 0;
+  FOR_ALL_TABS(tp) {
+    tabcount++;
+  }
+
+  if (*p_tal != NUL) {
+    // XXX: Cargo-cult copied from win_redr_custom(). Still needed?
+    int p_crb_save = curwin->w_p_crb;
+    curwin->w_p_crb = FALSE;
+
+    /* Make a copy, because the statusline may include a function call that
+     * might change the option value and free the memory. */
+    stl = vim_strsave(p_tal);
+    StlItem items[STL_MAX_ITEM];
+    size_t itemscnt = 0;
+    (void)build_stl_str_hl(curwin, buf, sizeof(buf), stl, use_sandbox,
+                           fillchar, maxwidth, hltab, tabtab, items, &itemscnt);
+    xfree(stl);
+
+    curwin->w_p_crb = p_crb_save;
+
+    char *prevstart = itemscnt > 0 ? (char *)items[0].start : NULL;
+    char str[1024] = { 0 };
+    for (size_t l = 0; l < itemscnt; l++) {
+      if (items[l].type == TabPage) {
+        memset(str, 0, sizeof(str));
+        size_t len = (size_t)((char *)items[l].start - prevstart);
+        memcpy(str, prevstart, MIN(len, sizeof(str)));
+        prevstart = (char *)items[l].start;
+        ILOG("tab=%s", str);
+      }
+    }
+  }
+
   Array args = ARRAY_DICT_INIT;
   ADD(args, TABPAGE_OBJ(curtab->handle));
   Array tabs = ARRAY_DICT_INIT;

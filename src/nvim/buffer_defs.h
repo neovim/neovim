@@ -88,6 +88,7 @@ typedef struct {
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
+typedef struct StlItem StlItem;
 
 // for struct memline (it needs memfile_T)
 #include "nvim/memline_defs.h"
@@ -1163,6 +1164,27 @@ struct window_S {
    * In a non-location list window, w_llist_ref is NULL.
    */
   qf_info_T   *w_llist_ref;
+};
+
+struct StlItem {
+  // Where the item starts in the status line output buffer
+  char_u *start;
+  // Function to run for ClickFunc items.
+  char *cmd;
+  // The minimum width of the item
+  int minwid;
+  // The maximum width of the item
+  int maxwid;
+  enum {
+    Normal,
+    Empty,
+    Group,
+    Separate,
+    Highlight,
+    TabPage,
+    ClickFunc,
+    Trunc
+  } type;
 };
 
 #endif // NVIM_BUFFER_DEFS_H
