@@ -60,9 +60,8 @@ describe('input()', function()
     ]])
   end)
   it('works correctly with multiple numeric arguments (many args)', function()
-    command('hi Test ctermfg=Red guifg=Red term=bold')
-    feed([[:echohl Test | call input(1, 2)<CR>]])
-    command('redraw!')  -- Without this it shows two `12` lines.
+    command('echohl Test')
+    feed([[:call input(1, 2)<CR>]])
     -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
@@ -82,7 +81,7 @@ describe('input()', function()
   end)
   it('works correctly with multiple numeric arguments (dict arg)', function()
     feed([[:echohl Test | echo input({"prompt": 1, "default": 2, "cancelreturn": 3})<CR>]])
-    command('redraw!')  -- Without this it shows two `12` lines.
+    command('redraw!')  -- Without this it shows `12` on the line above.
     -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
@@ -109,8 +108,8 @@ describe('input()', function()
     ]])
   end)
   it('allows omitting everything with dictionary argument', function()
-    feed(':echohl Test | echo input({})<CR>')
-    command('redraw!')
+    command('echohl Test')
+    feed([[:call input({})<CR>]])
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -193,9 +192,8 @@ describe('inputdialog()', function()
     ]])
   end)
   it('works correctly with multiple numeric arguments (many args)', function()
-    command('hi Test ctermfg=Red guifg=Red term=bold')
-    feed([[:echohl Test | call inputdialog(1, 2)<CR>]])
-    command('redraw!')  -- Without this it shows two `12` lines.
+    command('echohl Test')
+    feed([[:call inputdialog(1, 2)<CR>]])
     -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
@@ -215,7 +213,7 @@ describe('inputdialog()', function()
   end)
   it('works correctly with multiple numeric arguments (dict arg)', function()
     feed([[:echohl Test | echo inputdialog({"prompt": 1, "default": 2, "cancelreturn": 3})<CR>]])
-    command('redraw!')  -- Without this it shows two `12` lines.
+    command('redraw!')  -- Without this it shows `12` on the line above.
     -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
@@ -242,8 +240,8 @@ describe('inputdialog()', function()
     ]])
   end)
   it('allows omitting everything with dictionary argument', function()
-    feed(':echohl Test | echo inputdialog({})<CR>')
-    command('redraw!')
+    command('echohl Test')
+    feed(':echo inputdialog({})<CR>')
     screen:expect([[
                                |
       {EOB:~                        }|
