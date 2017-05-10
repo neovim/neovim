@@ -105,7 +105,7 @@ for i,f in ipairs(shallowcopy(functions)) do
       ismethod = true
     end
   else
-    f.noeval = true
+    f.remote_only = true
     f.since = 0
     f.deprecated_since = 1
   end
@@ -127,7 +127,7 @@ for i,f in ipairs(shallowcopy(functions)) do
       newf.return_type = "Object"
     end
     newf.impl_name = f.name
-    newf.noeval = true
+    newf.remote_only = true
     newf.since = 0
     newf.deprecated_since = 1
     functions[#functions+1] = newf
@@ -432,7 +432,7 @@ local function process_function(fn)
 end
 
 for _, fn in ipairs(functions) do
-  if not fn.noeval or fn.name:sub(1, 4) == '_vim' then
+  if not fn.remote_only or fn.name:sub(1, 4) == '_vim' then
     process_function(fn)
   end
 end

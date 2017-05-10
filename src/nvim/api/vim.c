@@ -659,7 +659,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
 void nvim_subscribe(uint64_t channel_id, String event)
-    FUNC_API_SINCE(1) FUNC_API_NOEVAL
+    FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   size_t length = (event.size < METHOD_MAXLEN ? event.size : METHOD_MAXLEN);
   char e[METHOD_MAXLEN + 1];
@@ -673,7 +673,7 @@ void nvim_subscribe(uint64_t channel_id, String event)
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
 void nvim_unsubscribe(uint64_t channel_id, String event)
-    FUNC_API_SINCE(1) FUNC_API_NOEVAL
+    FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   size_t length = (event.size < METHOD_MAXLEN ?
                    event.size :
@@ -722,7 +722,7 @@ Dictionary nvim_get_mode(void)
 }
 
 Array nvim_get_api_info(uint64_t channel_id)
-    FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_NOEVAL
+    FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_REMOTE_ONLY
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -755,7 +755,7 @@ Array nvim_get_api_info(uint64_t channel_id)
 /// which resulted in an error, the error type and the error message. If an
 /// error ocurred, the values from all preceding calls will still be returned.
 Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
-    FUNC_API_SINCE(1) FUNC_API_NOEVAL
+    FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   Array rv = ARRAY_DICT_INIT;
   Array results = ARRAY_DICT_INIT;

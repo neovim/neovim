@@ -40,10 +40,9 @@ local c_proto = Ct(
               'deprecated_since') ^ -1) *
   (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
-  (fill * Cg((P('FUNC_API_NOEVAL') * Cc(true)), 'noeval') ^ -1) *
-  (fill * Cg((P('REMOTE_ONLY') * Cc(true)), 'remote_only') ^ -1) *
-  (fill * Cg((P('REMOTE_IMPL') * Cc(true)), 'remote_impl') ^ -1) *
-  (fill * Cg((P('BRIDGE_IMPL') * Cc(true)), 'bridge_impl') ^ -1) *
+  (fill * Cg((P('FUNC_API_REMOTE_ONLY') * Cc(true)), 'remote_only') ^ -1) *
+  (fill * Cg((P('FUNC_API_REMOTE_IMPL') * Cc(true)), 'remote_impl') ^ -1) *
+  (fill * Cg((P('FUNC_API_BRIDGE_IMPL') * Cc(true)), 'bridge_impl') ^ -1) *
   fill * P(';')
   )
 
