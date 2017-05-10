@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local global_helpers = require('test.helpers')
 local eq = helpers.eq
 local eval = helpers.eval
 local clear = helpers.clear
@@ -10,7 +9,7 @@ local funcs = helpers.funcs
 local Screen = require('test.functional.ui.screen')
 local command = helpers.command
 local feed = helpers.feed
-local uname = global_helpers.uname
+local iswin = helpers.iswin
 
 describe('execute()', function()
   before_each(clear)
@@ -123,7 +122,7 @@ describe('execute()', function()
   -- This deviates from vim behavior, but is consistent
   -- with how nvim currently displays the output.
   it('does capture shell-command output', function()
-    local win_lf = (uname() == 'Windows' and '\13') or ''
+    local win_lf = iswin() and '\13' or ''
     eq('\n:!echo foo\r\n\nfoo'..win_lf..'\n', funcs.execute('!echo foo'))
   end)
 
