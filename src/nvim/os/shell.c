@@ -464,9 +464,10 @@ static void out_data_append_to_screen(char *output, size_t remaining,
       continue;
     }
 
-    // Translate NUL to SOH
-    if (output[off] == NUL) {
-      output[off] = 1;
+    // TODO(bfredl): using msg_puts would be better until
+    // terminal emulation is implemented.
+    if (output[off] < 0x20) {
+      output[off] = ' ';
     }
 
     off++;

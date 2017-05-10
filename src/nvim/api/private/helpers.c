@@ -33,6 +33,7 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.c.generated.h"
 # include "api/private/funcs_metadata.generated.h"
+# include "api/private/ui_events_metadata.generated.h"
 #endif
 
 /// Start block that may cause vimscript exceptions
@@ -820,6 +821,7 @@ Dictionary api_metadata(void)
   if (!metadata.size) {
     PUT(metadata, "version", DICTIONARY_OBJ(version_dict()));
     init_function_metadata(&metadata);
+    init_ui_event_metadata(&metadata);
     init_error_type_metadata(&metadata);
     init_type_metadata(&metadata);
   }
@@ -841,6 +843,22 @@ static void init_function_metadata(Dictionary *metadata)
   msgpack_rpc_to_object(&unpacked.data, &functions);
   msgpack_unpacked_destroy(&unpacked);
   PUT(*metadata, "functions", functions);
+}
+
+static void init_ui_event_metadata(Dictionary *metadata)
+{
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  if (msgpack_unpack_next(&unpacked,
+                          (const char *)ui_events_metadata,
+                          sizeof(ui_events_metadata),
+                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+    abort();
+  }
+  Object ui_events;
+  msgpack_rpc_to_object(&unpacked.data, &ui_events);
+  msgpack_unpacked_destroy(&unpacked);
+  PUT(*metadata, "ui_events", ui_events);
 }
 
 static void init_error_type_metadata(Dictionary *metadata)
@@ -885,6 +903,24 @@ static void init_type_metadata(Dictionary *metadata)
   PUT(*metadata, "types", DICTIONARY_OBJ(types));
 }
 
+String copy_string(String str)
+{
+  if (str.data != NULL) {
+    return (String){ .data = xmemdupz(str.data, str.size), .size = str.size };
+  } else {
+    return (String)STRING_INIT;
+  }
+}
+
+Array copy_array(Array array)
+{
+  Array rv = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < array.size; i++) {
+    ADD(rv, copy_object(array.items[i]));
+  }
+  return rv;
+}
+
 /// Creates a deep clone of an object
 Object copy_object(Object obj)
 {
@@ -896,15 +932,10 @@ Object copy_object(Object obj)
       return obj;
 
     case kObjectTypeString:
-      return STRING_OBJ(cstr_to_string(obj.data.string.data));
+      return STRING_OBJ(copy_string(obj.data.string));
 
-    case kObjectTypeArray: {
-      Array rv = ARRAY_DICT_INIT;
-      for (size_t i = 0; i < obj.data.array.size; i++) {
-        ADD(rv, copy_object(obj.data.array.items[i]));
-      }
-      return ARRAY_OBJ(rv);
-    }
+    case kObjectTypeArray:
+      return ARRAY_OBJ(copy_array(obj.data.array));
 
     case kObjectTypeDictionary: {
       Dictionary rv = ARRAY_DICT_INIT;

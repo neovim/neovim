@@ -1952,15 +1952,7 @@ did_set_title (
 {
   if (starting != NO_SCREEN) {
     maketitle();
-    if (icon) {
-      if (!p_icon) {
-        ui_set_icon(NULL);
-      }
-    } else {
-      if (!p_title) {
-        ui_set_title(NULL);
-      }
-    }
+    resettitle();
   }
 }
 
@@ -3282,7 +3274,7 @@ did_set_string_option (
 
   if (varp == &p_mouse) {
     if (*p_mouse == NUL) {
-      ui_mouse_off();
+      ui_call_mouse_off();
     } else {
       setmouse();  // in case 'mouse' changed
     }

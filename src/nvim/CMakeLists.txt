@@ -11,31 +11,38 @@ endif()
 endif()
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
+set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
-set(MSGPACK_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genmsgpack.lua)
+set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
+set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.generated.c)
-set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
+set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
 set(GENERATED_FUNCS_METADATA ${GENERATED_DIR}/api/private/funcs_metadata.generated.h)
+set(GENERATED_UI_EVENTS ${GENERATED_DIR}/ui_events.generated.h)
+set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
+set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
+set(GENERATED_UI_EVENTS_BRIDGE ${GENERATED_DIR}/ui_events_bridge.generated.h)
+set(GENERATED_UI_EVENTS_METADATA ${GENERATED_DIR}/api/private/ui_events_metadata.generated.h)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
 set(GENERATED_FUNCS ${GENERATED_DIR}/funcs.generated.h)
 set(GENERATED_EVENTS_ENUM ${GENERATED_INCLUDES_DIR}/auevents_enum.generated.h)
 set(GENERATED_EVENTS_NAMES_MAP ${GENERATED_DIR}/auevents_name_map.generated.h)
 set(GENERATED_OPTIONS ${GENERATED_DIR}/options.generated.h)
-set(EX_CMDS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genex_cmds.lua)
-set(FUNCS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/geneval.lua)
-set(EVENTS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gen_events.lua)
-set(OPTIONS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genoptions.lua)
-set(UNICODE_TABLES_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genunicodetables.lua)
+set(EX_CMDS_GENERATOR ${GENERATOR_DIR}/gen_ex_cmds.lua)
+set(FUNCS_GENERATOR ${GENERATOR_DIR}/gen_eval.lua)
+set(EVENTS_GENERATOR ${GENERATOR_DIR}/gen_events.lua)
+set(OPTIONS_GENERATOR ${GENERATOR_DIR}/gen_options.lua)
+set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
 set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
 set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
-set(CHAR_BLOB_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gencharblob.lua)
+set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
 set(LINT_SUPPRESS_URL "${LINT_SUPPRESS_URL_BASE}/errors.json")
@@ -49,6 +56,7 @@ set(LINT_SUPPRESSES_INSTALL_SCRIPT "${PROJECT_SOURCE_DIR}/cmake/InstallClintErro
 
 file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
 file(GLOB API_HEADERS api/*.h)
+list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
 file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
 
 include_directories(${GENERATED_DIR})
@@ -185,7 +193,11 @@ endfunction()
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
               "${CMAKE_CURRENT_LIST_DIR}/regexp_nfa.c"
-              ${GENERATED_API_DISPATCH})
+              ${GENERATED_API_DISPATCH}
+              "${GENERATED_UI_EVENTS_CALL}"
+              "${GENERATED_UI_EVENTS_REMOTE}"
+              "${GENERATED_UI_EVENTS_BRIDGE}"
+              )
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${CMAKE_CURRENT_LIST_DIR}" "${full_d}")
   if(${d} MATCHES "^[.][.]|auto/")
@@ -228,7 +240,7 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
 add_custom_command(
   OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
          ${API_METADATA} ${MSGPACK_LUA_C_BINDINGS}
-  COMMAND ${LUA_PRG} ${MSGPACK_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+  COMMAND ${LUA_PRG} ${API_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
                      ${GENERATED_API_DISPATCH}
                      ${GENERATED_FUNCS_METADATA} ${API_METADATA}
                      ${MSGPACK_LUA_C_BINDINGS}
@@ -236,7 +248,7 @@ add_custom_command(
   DEPENDS
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
-    ${MSGPACK_GENERATOR}
+    ${API_DISPATCH_GENERATOR}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
 )
 
@@ -251,6 +263,24 @@ add_custom_command(
 
 list(APPEND NVIM_GENERATED_SOURCES
   "${MSGPACK_LUA_C_BINDINGS}"
+)
+
+add_custom_command(
+  OUTPUT ${GENERATED_UI_EVENTS}
+         ${GENERATED_UI_EVENTS_CALL}
+         ${GENERATED_UI_EVENTS_REMOTE}
+         ${GENERATED_UI_EVENTS_BRIDGE}
+         ${GENERATED_UI_EVENTS_METADATA}
+  COMMAND ${LUA_PRG} ${API_UI_EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
+                     ${GENERATED_UI_EVENTS}
+                     ${GENERATED_UI_EVENTS_CALL}
+                     ${GENERATED_UI_EVENTS_REMOTE}
+                     ${GENERATED_UI_EVENTS_BRIDGE}
+                     ${GENERATED_UI_EVENTS_METADATA}
+  DEPENDS
+    ${API_UI_EVENTS_GENERATOR}
+    ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
 )
 
 list(APPEND NVIM_GENERATED_FOR_HEADERS
@@ -518,7 +548,7 @@ set(NO_SINGLE_CHECK_HEADERS
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)
 
-  if(NOT ${hfile} MATCHES "[.]c[.]h$")
+  if(NOT ${hfile} MATCHES "[.](c|in)[.]h$")
     set(tsource "${GENERATED_DIR}/${relative_path}.test-include.c")
     write_file("${tsource}" "#include \"${hfile}\"\nint main(int argc, char **argv) { return 0; }")
     add_executable(

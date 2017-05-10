@@ -1,50 +1,4 @@
-lpeg = require('lpeg')
 mpack = require('mpack')
-
--- lpeg grammar for building api metadata from a set of header files. It
--- ignores comments and preprocessor commands and parses a very small subset
--- of C prototypes with a limited set of types
-P, R, S = lpeg.P, lpeg.R, lpeg.S
-C, Ct, Cc, Cg = lpeg.C, lpeg.Ct, lpeg.Cc, lpeg.Cg
-
-any = P(1) -- (consume one character)
-letter = R('az', 'AZ') + S('_$')
-num = R('09')
-alpha = letter + num
-nl = P('\r\n') + P('\n')
-not_nl = any - nl
-ws = S(' \t') + nl
-fill = ws ^ 0
-c_comment = P('//') * (not_nl ^ 0)
-c_preproc = P('#') * (not_nl ^ 0)
-typed_container =
-  (P('ArrayOf(') + P('DictionaryOf(')) * ((any - P(')')) ^ 1) * P(')')
-c_id = (
-  typed_container +
-  (letter * (alpha ^ 0))
-)
-c_void = P('void')
-c_param_type = (
-  ((P('Error') * fill * P('*') * fill) * Cc('error')) +
-  (C(c_id) * (ws ^ 1))
-  )
-c_type = (C(c_void) * (ws ^ 1)) + c_param_type
-c_param = Ct(c_param_type * C(c_id))
-c_param_list = c_param * (fill * (P(',') * fill * c_param) ^ 0)
-c_params = Ct(c_void + c_param_list)
-c_proto = Ct(
-  Cg(c_type, 'return_type') * Cg(c_id, 'name') *
-  fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
-  Cg(Cc(false), 'async') *
-  (fill * Cg((P('FUNC_API_SINCE(') * C(num ^ 1)) * P(')'), 'since') ^ -1) *
-  (fill * Cg((P('FUNC_API_DEPRECATED_SINCE(') * C(num ^ 1)) * P(')'),
-              'deprecated_since') ^ -1) *
-  (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
-  (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
-  (fill * Cg((P('FUNC_API_NOEVAL') * Cc(true)), 'noeval') ^ -1) *
-  fill * P(';')
-  )
-grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 
 -- we need at least 4 arguments since the last two are output files
 if arg[1] == '--help' then
@@ -59,8 +13,8 @@ end
 assert(#arg >= 4)
 functions = {}
 
-local nvimsrcdir = arg[1]
-package.path = nvimsrcdir .. '/?.lua;' .. package.path
+local nvimdir = arg[1]
+package.path = nvimdir .. '/?.lua;' .. package.path
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
@@ -77,6 +31,8 @@ lua_c_bindings_outputf = arg[5]
 -- set of function names, used to detect duplicates
 function_names = {}
 
+c_grammar = require('generators.c_grammar')
+
 -- read each input file, parse and append to the api metadata
 for i = 6, #arg do
   local full_path = arg[i]
@@ -87,7 +43,8 @@ for i = 6, #arg do
   headers[#headers + 1] = parts[#parts - 1]..'/'..parts[#parts]
 
   local input = io.open(full_path, 'rb')
-  local tmp = grammar:match(input:read('*all'))
+
+  local tmp = c_grammar.grammar:match(input:read('*all'))
   for i = 1, #tmp do
     local fn = tmp[i]
     if not fn.noexport then
@@ -148,7 +105,7 @@ for i,f in ipairs(shallowcopy(functions)) do
       ismethod = true
     end
   else
-    f.noeval = true
+    f.remote_only = true
     f.since = 0
     f.deprecated_since = 1
   end
@@ -170,7 +127,7 @@ for i,f in ipairs(shallowcopy(functions)) do
       newf.return_type = "Object"
     end
     newf.impl_name = f.name
-    newf.noeval = true
+    newf.remote_only = true
     newf.since = 0
     newf.deprecated_since = 1
     functions[#functions+1] = newf
@@ -192,23 +149,12 @@ for _,f in ipairs(functions) do
 end
 
 
-funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
-funcs_metadata_output:write([[
-static const uint8_t funcs_metadata[] = {
-]])
-
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-packed_exported_functions = mpack.pack(exported_functions)
-for i = 1, #packed_exported_functions do
-  funcs_metadata_output:write(string.byte(packed_exported_functions, i)..', ')
-  if i % 10 == 0 then
-    funcs_metadata_output:write('\n  ')
-  end
-end
-funcs_metadata_output:write([[
-};
-]])
+funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
+packed = mpack.pack(exported_functions)
+dump_bin_array = require("generators.dump_bin_array")
+dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
 
 -- start building the dispatch wrapper output
@@ -216,7 +162,7 @@ output = io.open(dispatch_outputf, 'wb')
 
 local function real_type(type)
   local rv = type
-  if typed_container:match(rv) then
+  if c_grammar.typed_container:match(rv) then
     if rv:match('Array') then
       rv = 'Array'
     else
@@ -486,7 +432,7 @@ local function process_function(fn)
 end
 
 for _, fn in ipairs(functions) do
-  if not fn.noeval or fn.name:sub(1, 4) == '_vim' then
+  if not fn.remote_only or fn.name:sub(1, 4) == '_vim' then
     process_function(fn)
   end
 end

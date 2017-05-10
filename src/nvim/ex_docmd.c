@@ -6285,13 +6285,14 @@ static void ex_stop(exarg_T *eap)
       autowrite_all();
     }
     ui_cursor_goto((int)Rows - 1, 0);
-    ui_putc('\n');
+    ui_linefeed();
     ui_flush();
-    ui_suspend();               /* call machine specific function */
+    ui_call_suspend();  // call machine specific function
+    ui_flush();
     maketitle();
-    resettitle();               /* force updating the title */
+    resettitle();  // force updating the title
     redraw_later_clear();
-    ui_refresh();            /* may have resized window */
+    ui_refresh();  // may have resized window
   }
 }
 

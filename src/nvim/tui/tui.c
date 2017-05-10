@@ -187,7 +187,7 @@ static void terminfo_stop(UI *ui)
 {
   TUIData *data = ui->data;
   // Destroy output stuff
-  tui_mode_change(ui, SHAPE_IDX_N);
+  tui_mode_change(ui, (String)STRING_INIT, SHAPE_IDX_N);
   tui_mouse_off(ui);
   unibi_out(ui, unibi_exit_attribute_mode);
   // cursor should be set to normal before exiting alternate screen
@@ -417,14 +417,14 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
   unibi_goto(ui, grid->row, grid->col);
 }
 
-static void tui_resize(UI *ui, int width, int height)
+static void tui_resize(UI *ui, Integer width, Integer height)
 {
   TUIData *data = ui->data;
-  ugrid_resize(&data->grid, width, height);
+  ugrid_resize(&data->grid, (int)width, (int)height);
 
   if (!got_winch) {  // Try to resize the terminal window.
     char r[16];  // enough for 9999x9999
-    snprintf(r, sizeof(r), "\x1b[8;%d;%dt", height, width);
+    snprintf(r, sizeof(r), "\x1b[8;%d;%dt", (int)height, (int)width);
     out(ui, r, strlen(r));
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
     got_winch = false;
@@ -447,11 +447,11 @@ static void tui_eol_clear(UI *ui)
   clear_region(ui, grid->row, grid->row, grid->col, grid->right);
 }
 
-static void tui_cursor_goto(UI *ui, int row, int col)
+static void tui_cursor_goto(UI *ui, Integer row, Integer col)
 {
   TUIData *data = ui->data;
-  ugrid_goto(&data->grid, row, col);
-  unibi_goto(ui, row, col);
+  ugrid_goto(&data->grid, (int)row, (int)col);
+  unibi_goto(ui, (int)row, (int)col);
 }
 
 CursorShape tui_cursor_decode_shape(const char *shape_str)
@@ -599,30 +599,31 @@ static void tui_set_mode(UI *ui, ModeShape mode)
 }
 
 /// @param mode editor mode
-static void tui_mode_change(UI *ui, int mode_idx)
+static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
 {
   TUIData *data = ui->data;
   tui_set_mode(ui, (ModeShape)mode_idx);
   data->showing_mode = (ModeShape)mode_idx;
 }
 
-static void tui_set_scroll_region(UI *ui, int top, int bot, int left,
-                                  int right)
+static void tui_set_scroll_region(UI *ui, Integer top, Integer bot,
+                                  Integer left, Integer right)
 {
   TUIData *data = ui->data;
-  ugrid_set_scroll_region(&data->grid, top, bot, left, right);
+  ugrid_set_scroll_region(&data->grid, (int)top, (int)bot,
+                          (int)left, (int)right);
   data->can_use_terminal_scroll =
     left == 0 && right == ui->width - 1
     && ((top == 0 && bot == ui->height - 1)
         || unibi_get_str(data->ut, unibi_change_scroll_region));
 }
 
-static void tui_scroll(UI *ui, int count)
+static void tui_scroll(UI *ui, Integer count)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
   int clear_top, clear_bot;
-  ugrid_scroll(grid, count, &clear_top, &clear_bot);
+  ugrid_scroll(grid, (int)count, &clear_top, &clear_bot);
 
   if (data->can_use_terminal_scroll) {
     // Change terminal scroll region and move cursor to the top
@@ -642,7 +643,7 @@ static void tui_scroll(UI *ui, int count)
       if (count == 1) {
         unibi_out(ui, unibi_delete_line);
       } else {
-        data->params[0].i = count;
+        data->params[0].i = (int)count;
         unibi_out(ui, unibi_parm_delete_line);
       }
     }
@@ -652,7 +653,7 @@ static void tui_scroll(UI *ui, int count)
       if (count == -1) {
         unibi_out(ui, unibi_insert_line);
       } else {
-        data->params[0].i = -count;
+        data->params[0].i = -(int)count;
         unibi_out(ui, unibi_parm_insert_line);
       }
     }
@@ -683,10 +684,10 @@ static void tui_highlight_set(UI *ui, HlAttrs attrs)
   ((TUIData *)ui->data)->grid.attrs = attrs;
 }
 
-static void tui_put(UI *ui, uint8_t *text, size_t size)
+static void tui_put(UI *ui, String text)
 {
   TUIData *data = ui->data;
-  print_cell(ui, ugrid_put(&data->grid, text, size));
+  print_cell(ui, ugrid_put(&data->grid, (uint8_t *)text.data, text.size));
 }
 
 static void tui_bell(UI *ui)
@@ -699,17 +700,17 @@ static void tui_visual_bell(UI *ui)
   unibi_out(ui, unibi_flash_screen);
 }
 
-static void tui_update_fg(UI *ui, int fg)
+static void tui_update_fg(UI *ui, Integer fg)
 {
-  ((TUIData *)ui->data)->grid.fg = fg;
+  ((TUIData *)ui->data)->grid.fg = (int)fg;
 }
 
-static void tui_update_bg(UI *ui, int bg)
+static void tui_update_bg(UI *ui, Integer bg)
 {
-  ((TUIData *)ui->data)->grid.bg = bg;
+  ((TUIData *)ui->data)->grid.bg = (int)bg;
 }
 
-static void tui_update_sp(UI *ui, int sp)
+static void tui_update_sp(UI *ui, Integer sp)
 {
   // Do nothing; 'special' color is for GUI only
 }
@@ -784,19 +785,19 @@ static void tui_suspend(UI *ui)
 #endif
 }
 
-static void tui_set_title(UI *ui, char *title)
+static void tui_set_title(UI *ui, String title)
 {
   TUIData *data = ui->data;
-  if (!(title && unibi_get_str(data->ut, unibi_to_status_line)
+  if (!(title.data && unibi_get_str(data->ut, unibi_to_status_line)
         && unibi_get_str(data->ut, unibi_from_status_line))) {
     return;
   }
   unibi_out(ui, unibi_to_status_line);
-  out(ui, title, strlen(title));
+  out(ui, title.data, title.size);
   unibi_out(ui, unibi_from_status_line);
 }
 
-static void tui_set_icon(UI *ui, char *icon)
+static void tui_set_icon(UI *ui, String icon)
 {
 }
 

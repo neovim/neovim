@@ -5956,7 +5956,7 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
         col = off - LineOffset[row];
         screen_stop_highlight();
         ui_cursor_goto(row, col);        // clear rest of this screen line
-        ui_eol_clear();
+        ui_call_eol_clear();
         col = end_col - col;
         while (col--) {                 /* clear chars in ScreenLines */
           ScreenLines[off] = ' ';
@@ -6345,10 +6345,10 @@ static void screenclear2(void)
     LineWraps[i] = FALSE;
   }
 
-  ui_clear();  // clear the display
-  clear_cmdline = FALSE;
-  mode_displayed = FALSE;
-  screen_cleared = TRUE;        /* can use contents of ScreenLines now */
+  ui_call_clear();  // clear the display
+  clear_cmdline = false;
+  mode_displayed = false;
+  screen_cleared = true;  // can use contents of ScreenLines now
 
   win_rest_invalid(firstwin);
   redraw_cmdline = TRUE;
@@ -6647,7 +6647,7 @@ int screen_ins_lines (
     }
   }
 
-  ui_append_lines(line_count);
+  ui_call_scroll(-line_count);
 
   return OK;
 }
@@ -6702,7 +6702,7 @@ int screen_del_lines (
     }
   }
 
-  ui_delete_lines(line_count);
+  ui_call_scroll(line_count);
 
   return OK;
 }
@@ -7087,8 +7087,6 @@ static void draw_tabline(void)
 
 void ui_ext_tabline_update(void)
 {
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, TABPAGE_OBJ(curtab->handle));
   Array tabs = ARRAY_DICT_INIT;
   FOR_ALL_TABS(tp) {
     Dictionary tab_info = ARRAY_DICT_INIT;
@@ -7100,9 +7098,7 @@ void ui_ext_tabline_update(void)
 
     ADD(tabs, DICTIONARY_OBJ(tab_info));
   }
-  ADD(args, ARRAY_OBJ(tabs));
-
-  ui_event("tabline_update", args);
+  ui_call_tabline_update(curtab->handle, tabs);
 }
 
 /*
