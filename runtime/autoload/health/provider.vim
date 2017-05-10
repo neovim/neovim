@@ -157,7 +157,7 @@ function! s:version_info(python) abort
         \ ]))
 
   if empty(python_version)
-    let python_version = 'unable to parse python response'
+    let python_version = 'unable to parse '.a:python.' response'
   endif
 
   let nvim_path = s:trim(s:system([
@@ -176,7 +176,7 @@ function! s:version_info(python) abort
   endfunction
 
   " Try to get neovim.VERSION (added in 0.1.11dev).
-  let nvim_version = s:system(['python', '-c',
+  let nvim_version = s:system([a:python, '-c',
         \ 'from neovim import VERSION as v; '.
         \ 'print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))'],
         \ '', 1, 1)
