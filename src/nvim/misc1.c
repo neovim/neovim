@@ -2536,9 +2536,9 @@ void vim_beep(unsigned val)
   if (emsg_silent == 0) {
     if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
       if (p_vb) {
-        ui_visual_bell();
+        ui_call_visual_bell();
       } else {
-        ui_putc(BELL);
+        ui_call_bell();
       }
     }
 
@@ -2691,7 +2691,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   if (p_verbose > 3) {
     verbose_enter();
     smsg(_("Calling shell to execute: \"%s\""), cmd == NULL ? p_sh : cmd);
-    ui_putc('\n');
+    ui_linefeed();
     verbose_leave();
   }
 

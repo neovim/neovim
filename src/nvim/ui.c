@@ -132,24 +132,6 @@ bool ui_active(void)
   return ui_count != 0;
 }
 
-void ui_suspend(void)
-{
-  UI_CALL(suspend);
-  UI_CALL(flush);
-}
-
-void ui_set_title(char *title)
-{
-  ui_call_set_title(cstr_as_string(title));
-  UI_CALL(flush);
-}
-
-void ui_set_icon(char *icon)
-{
-  ui_call_set_icon(cstr_as_string(icon));
-  UI_CALL(flush);
-}
-
 void ui_event(char *name, Array args)
 {
   bool args_consumed = false;
@@ -218,31 +200,21 @@ void ui_resize(int new_width, int new_height)
   sr.bot = height - 1;
   sr.left = 0;
   sr.right = width - 1;
-  UI_CALL(resize, width, height);
+  ui_call_resize(width, height);
 }
 
 void ui_busy_start(void)
 {
   if (!(busy++)) {
-    UI_CALL(busy_start);
+    ui_call_busy_start();
   }
 }
 
 void ui_busy_stop(void)
 {
   if (!(--busy)) {
-    UI_CALL(busy_stop);
+    ui_call_busy_stop();
   }
-}
-
-void ui_mouse_on(void)
-{
-  UI_CALL(mouse_on);
-}
-
-void ui_mouse_off(void)
-{
-  UI_CALL(mouse_off);
 }
 
 void ui_attach_impl(UI *ui)
@@ -285,11 +257,6 @@ void ui_detach_impl(UI *ui)
   }
 }
 
-void ui_clear(void)
-{
-  UI_CALL(clear);
-}
-
 // Set scrolling region for window 'wp'.
 // The region starts 'off' lines from the start of the window.
 // Also set the vertical scroll region for a vertically split window.  Always
@@ -304,7 +271,7 @@ void ui_set_scroll_region(win_T *wp, int off)
     sr.right = wp->w_wincol + wp->w_width - 1;
   }
 
-  UI_CALL(set_scroll_region, sr.top, sr.bot, sr.left, sr.right);
+  ui_call_set_scroll_region(sr.top, sr.bot, sr.left, sr.right);
 }
 
 // Reset scrolling region to the whole screen.
@@ -314,22 +281,7 @@ void ui_reset_scroll_region(void)
   sr.bot = (int)Rows - 1;
   sr.left = 0;
   sr.right = (int)Columns - 1;
-  UI_CALL(set_scroll_region, sr.top, sr.bot, sr.left, sr.right);
-}
-
-void ui_append_lines(int count)
-{
-  UI_CALL(scroll, -count);
-}
-
-void ui_delete_lines(int count)
-{
-  UI_CALL(scroll, count);
-}
-
-void ui_eol_clear(void)
-{
-  UI_CALL(eol_clear);
+  ui_call_set_scroll_region(sr.top, sr.bot, sr.left, sr.right);
 }
 
 void ui_start_highlight(int attr_code)
@@ -354,23 +306,31 @@ void ui_stop_highlight(void)
   set_highlight_args(current_attr_code);
 }
 
-void ui_visual_bell(void)
-{
-  UI_CALL(visual_bell);
-}
-
 void ui_puts(uint8_t *str)
 {
-  uint8_t *ptr = str;
+  uint8_t *p = str;
   uint8_t c;
 
-  while ((c = *ptr)) {
+  while ((c = *p)) {
     if (c < 0x20) {
-      parse_control_character(c);
-      ptr++;
-    } else {
-      send_output(&ptr);
+      abort();
     }
+
+    size_t clen = (size_t)mb_ptr2len(p);
+    ui_call_put((String){ .data = (char *)p, .size = clen });
+    col++;
+    if (mb_ptr2cells(p) > 1) {
+      // double cell character, blank the next cell
+      ui_call_put((String)STRING_INIT);
+      col++;
+    }
+    if (utf_ambiguous_width(utf_ptr2char(p))) {
+      pending_cursor_update = true;
+    }
+    if (col >= width) {
+      ui_linefeed();
+    }
+    p += clen;
   }
 }
 
@@ -398,11 +358,6 @@ void ui_mode_info_set(void)
   api_free_array(style);
 }
 
-void ui_update_menu(void)
-{
-    UI_CALL(update_menu);
-}
-
 int ui_current_row(void)
 {
   return row;
@@ -415,47 +370,7 @@ int ui_current_col(void)
 
 void ui_flush(void)
 {
-  UI_CALL(flush);
-}
-
-static void send_output(uint8_t **ptr)
-{
-  uint8_t *p = *ptr;
-
-  while (*p >= 0x20) {
-    size_t clen = (size_t)mb_ptr2len(p);
-    ui_call_put((String){.data = (char *)p, .size = clen});
-    col++;
-    if (mb_ptr2cells(p) > 1) {
-      // double cell character, blank the next cell
-      ui_call_put((String)STRING_INIT);
-      col++;
-    }
-    if (utf_ambiguous_width(utf_ptr2char(p))) {
-      pending_cursor_update = true;
-    }
-    if (col >= width) {
-      ui_linefeed();
-    }
-    p += clen;
-  }
-
-  *ptr = p;
-}
-
-static void parse_control_character(uint8_t c)
-{
-  if (c == '\n') {
-    ui_linefeed();
-  } else if (c == '\r') {
-    ui_carriage_return();
-  } else if (c == '\b') {
-    ui_cursor_left();
-  } else if (c == Ctrl_L) {
-    ui_cursor_right();
-  } else if (c == Ctrl_G) {
-    UI_CALL(bell);
-  }
+  ui_call_flush();
 }
 
 static void set_highlight_args(int attr_code)
@@ -513,43 +428,23 @@ end:
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 
-static void ui_linefeed(void)
+void ui_linefeed(void)
 {
   int new_col = 0;
   int new_row = row;
   if (new_row < sr.bot) {
     new_row++;
   } else {
-    UI_CALL(scroll, 1);
+    ui_call_scroll(1);
   }
   ui_cursor_goto(new_row, new_col);
-}
-
-static void ui_carriage_return(void)
-{
-  int new_col = 0;
-  ui_cursor_goto(row, new_col);
-}
-
-static void ui_cursor_left(void)
-{
-  int new_col = col - 1;
-  assert(new_col >= 0);
-  ui_cursor_goto(row, new_col);
-}
-
-static void ui_cursor_right(void)
-{
-  int new_col = col + 1;
-  assert(new_col < width);
-  ui_cursor_goto(row, new_col);
 }
 
 static void flush_cursor_update(void)
 {
   if (pending_cursor_update) {
     pending_cursor_update = false;
-    UI_CALL(cursor_goto, row, col);
+    ui_call_cursor_goto(row, col);
   }
 }
 

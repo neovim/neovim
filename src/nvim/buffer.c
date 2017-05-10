@@ -24,6 +24,7 @@
 #include <inttypes.h>
 
 #include "nvim/api/private/handle.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/vim.h"
@@ -3001,13 +3002,13 @@ static bool ti_change(char_u *str, char_u **last)
   return false;
 }
 
-/*
- * Put current window title back (used after calling a shell)
- */
+
+/// Set current window title
 void resettitle(void)
 {
-  ui_set_title((char *)lasttitle);
-  ui_set_icon((char *)lasticon);
+  ui_call_set_title(cstr_as_string((char *)lasttitle));
+  ui_call_set_icon(cstr_as_string((char *)lasticon));
+  ui_flush();
 }
 
 # if defined(EXITFREE)
