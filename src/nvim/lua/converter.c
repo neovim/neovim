@@ -320,7 +320,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
               cur.special = table_props.has_string_with_nul;
               if (table_props.has_string_with_nul) {
                 decode_create_map_special_dict(cur.tv);
-                assert(cur.tv->v_type = VAR_DICT);
+                assert(cur.tv->v_type == VAR_DICT);
                 dictitem_T *const val_di = tv_dict_find(cur.tv->vval.v_dict,
                                                         S_LEN("_VAL"));
                 assert(val_di != NULL);
