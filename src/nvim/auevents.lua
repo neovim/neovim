@@ -90,9 +90,11 @@ return {
     'VimLeave',               -- before exiting Vim
     'VimLeavePre',            -- before exiting Vim and writing ShaDa file
     'VimResized',             -- after Vim window was resized
-    'WinNew',                 -- when entering a new window
+    'VimResume',              -- after resuming Vim
+    'VimSuspend',             -- before suspending Vim
     'WinEnter',               -- after entering a window
     'WinLeave',               -- before leaving a window
+    'WinNew',                 -- when entering a new window
   },
   aliases = {
     BufCreate = 'BufAdd',

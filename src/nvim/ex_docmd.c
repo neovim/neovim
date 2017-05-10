@@ -6284,14 +6284,18 @@ static void ex_stop(exarg_T *eap)
     if (!eap->forceit) {
       autowrite_all();
     }
+    apply_autocmds(EVENT_VIMSUSPEND, NULL, NULL, FALSE, NULL);
     ui_cursor_goto((int)Rows - 1, 0);
     ui_putc('\n');
     ui_flush();
-    ui_suspend();               /* call machine specific function */
+
+    ui_suspend();               // call machine specific function
+
     maketitle();
-    resettitle();               /* force updating the title */
+    resettitle();               // force updating the title
     redraw_later_clear();
-    ui_refresh();            /* may have resized window */
+    ui_refresh();               // may have resized window
+    apply_autocmds(EVENT_VIMRESUME, NULL, NULL, FALSE, NULL);
   }
 }
 
