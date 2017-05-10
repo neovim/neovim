@@ -62,7 +62,6 @@ describe('input()', function()
   it('works correctly with multiple numeric arguments (many args)', function()
     command('echohl Test')
     feed([[:call input(1, 2)<CR>]])
-    -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -82,7 +81,6 @@ describe('input()', function()
   it('works correctly with multiple numeric arguments (dict arg)', function()
     feed([[:echohl Test | echo input({"prompt": 1, "default": 2, "cancelreturn": 3})<CR>]])
     command('redraw!')  -- Without this it shows `12` on the line above.
-    -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -194,7 +192,6 @@ describe('inputdialog()', function()
   it('works correctly with multiple numeric arguments (many args)', function()
     command('echohl Test')
     feed([[:call inputdialog(1, 2)<CR>]])
-    -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -214,7 +211,6 @@ describe('inputdialog()', function()
   it('works correctly with multiple numeric arguments (dict arg)', function()
     feed([[:echohl Test | echo inputdialog({"prompt": 1, "default": 2, "cancelreturn": 3})<CR>]])
     command('redraw!')  -- Without this it shows `12` on the line above.
-    -- None of the above problems happen when testing manually.
     screen:expect([[
                                |
       {EOB:~                        }|
