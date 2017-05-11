@@ -110,14 +110,14 @@ describe('External command line completion', function()
     screen:detach()
   end)
 
-  local expected = {
+  local expected = {{
       'define',
       'jump',
       'list',
       'place',
       'undefine',
       'unplace',
-  }
+  }}
 
   describe("'wildmenu'", function()
     it(':sign <tab> shows wildmenu completions', function()
