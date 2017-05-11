@@ -43,29 +43,35 @@ restarting the {cmd} when the session is loaded.
 ==============================================================================
 Input						     *terminal-emulator-input*
 
-To send input, enter terminal mode using any command that would enter "insert
+To send input, enter terminal-mode using any command that would enter "insert
 mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
 except <C-\><C-N> are sent to the underlying program. Use <C-\><C-N> to return
-to normal mode. |CTRL-\_CTRL-N|
+to normal-mode. |CTRL-\_CTRL-N|
 
-Terminal mode has its own |:tnoremap| namespace for mappings, this can be used
-to automate any terminal interaction. To map <Esc> to exit terminal mode: >
+Terminal-mode has its own |:tnoremap| namespace for mappings, this can be used
+to automate any terminal interaction.
+
+To map <Esc> to exit terminal-mode: >
     :tnoremap <Esc> <C-\><C-n>
-<
-Navigating to other windows is only possible in normal mode. For convenience,
-you could use these mappings: >
-    :tnoremap <A-h> <C-\><C-n><C-w>h
-    :tnoremap <A-j> <C-\><C-n><C-w>j
-    :tnoremap <A-k> <C-\><C-n><C-w>k
-    :tnoremap <A-l> <C-\><C-n><C-w>l
+
+To simulate |i_CTRL-R| in terminal-mode: >
+    :tnoremap <expr> <C-R> '<C-\><C-N>"'.nr2char(getchar()).'pi'
+
+To use `ALT+{h,j,k,l}` to navigate windows from any mode: >
+    :tnoremap <A-h> <C-\><C-N><C-w>h
+    :tnoremap <A-j> <C-\><C-N><C-w>j
+    :tnoremap <A-k> <C-\><C-N><C-w>k
+    :tnoremap <A-l> <C-\><C-N><C-w>l
+    :inoremap <A-h> <C-\><C-N><C-w>h
+    :inoremap <A-j> <C-\><C-N><C-w>j
+    :inoremap <A-k> <C-\><C-N><C-w>k
+    :inoremap <A-l> <C-\><C-N><C-w>l
     :nnoremap <A-h> <C-w>h
     :nnoremap <A-j> <C-w>j
     :nnoremap <A-k> <C-w>k
     :nnoremap <A-l> <C-w>l
-<
-Then you can use `Alt+{h,j,k,l}` to navigate between windows from any mode.
 
-Mouse input is supported, and has the following behavior:
+Mouse input has the following behavior:
 
 - If the program has enabled mouse events, the corresponding events will be
   forwarded to the program.
