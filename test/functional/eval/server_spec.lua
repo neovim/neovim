@@ -5,6 +5,12 @@ local command = helpers.command
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local os_name = helpers.os_name
 
+local function clear_serverlist()
+    for _, server in pairs(funcs.serverlist()) do
+      funcs.serverstop(server)
+    end
+end
+
 describe('serverstart(), serverstop()', function()
   before_each(clear)
 
@@ -52,6 +58,32 @@ describe('serverstart(), serverstop()', function()
     command("call serverstop('bogus-socket-name')")
   end)
 
+  it('parses endpoints correctly', function()
+    clear_serverlist()
+    eq({}, funcs.serverlist())
+
+    funcs.serverstart('127.0.0.1:0')  -- assign random port
+    assert(string.match(funcs.serverlist()[1], '127.0.0.1:%d+'))
+    clear_serverlist()
+
+    funcs.serverstart('127.0.0.1:')  -- assign random port
+    assert(string.match(funcs.serverlist()[1], '127.0.0.1:%d+'))
+    clear_serverlist()
+
+    funcs.serverstart('127.0.0.1:12345')
+    funcs.serverstart('127.0.0.1:12345')  -- exists already; ignore
+    funcs.serverstart('::1:12345')
+    funcs.serverstart('::1:12345')        -- exists already; ignore
+    local expected = {
+      '127.0.0.1:12345',
+      '::1:12345',
+    }
+    eq(expected, funcs.serverlist())
+    clear_serverlist()
+
+    funcs.serverstart('127.0.0.1:65536')  -- invalid port
+    eq({}, funcs.serverlist())
+  end)
 end)
 
 describe('serverlist()', function()
