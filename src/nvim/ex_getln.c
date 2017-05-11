@@ -2286,12 +2286,7 @@ void ui_ext_cmdline_show(void)
     ADD(text, STRING_OBJ(cstr_to_string("Normal")));
     ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
     ADD(content, ARRAY_OBJ(text));
-    char *firstc = (char []) { (char)ccline.cmdfirstc };
-    String str = (String) {
-        .data = xmemdupz(firstc, 1),
-        .size = 1
-    };
-    ui_call_cmdline_show(content, ccline.cmdpos, str, cstr_to_string((char *)(ccline.cmdprompt)));
+    ui_call_cmdline_show(content, ccline.cmdpos, cchar_to_string((char)ccline.cmdfirstc), cstr_to_string((char *)(ccline.cmdprompt)));
 }
 
 /*
@@ -2311,7 +2306,7 @@ void putcmdline(int c, int shift)
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     msg_no_more = FALSE;
   } else {
-    ui_call_cmdline_char(cstr_to_string((char *)(&c)), shift);
+    ui_call_cmdline_char(cchar_to_string((char)(c)), shift);
   }
   cursorcmd();
   ui_cursor_shape();
