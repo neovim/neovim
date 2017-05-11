@@ -1,6 +1,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
-local nvim, eq, neq, eval = helpers.nvim, helpers.eq, helpers.neq, helpers.eval
+local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
+local command = helpers.command
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local os_name = helpers.os_name
 
@@ -9,12 +10,12 @@ describe('serverstart(), serverstop()', function()
 
   it('sets $NVIM_LISTEN_ADDRESS on first invocation', function()
     -- Unset $NVIM_LISTEN_ADDRESS
-    nvim('command', 'let $NVIM_LISTEN_ADDRESS = ""')
+    command('let $NVIM_LISTEN_ADDRESS = ""')
 
     local s = eval('serverstart()')
     assert(s ~= nil and s:len() > 0, "serverstart() returned empty")
     eq(s, eval('$NVIM_LISTEN_ADDRESS'))
-    nvim('command', "call serverstop('"..s.."')")
+    command("call serverstop('"..s.."')")
     eq('', eval('$NVIM_LISTEN_ADDRESS'))
   end)
 
@@ -47,8 +48,8 @@ describe('serverstart(), serverstop()', function()
   end)
 
   it('serverstop() ignores invalid input', function()
-    nvim('command', "call serverstop('')")
-    nvim('command', "call serverstop('bogus-socket-name')")
+    command("call serverstop('')")
+    command("call serverstop('bogus-socket-name')")
   end)
 
 end)
@@ -75,7 +76,7 @@ describe('serverlist()', function()
     -- The new servers should be at the end of the list.
     for i = 1, #servs do
       eq(servs[i], new_servs[i + n])
-      nvim('command', "call serverstop('"..servs[i].."')")
+      command("call serverstop('"..servs[i].."')")
     end
     -- After serverstop() the servers should NOT be in the list.
     eq(n, eval('len(serverlist())'))
