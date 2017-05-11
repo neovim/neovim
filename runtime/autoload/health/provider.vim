@@ -91,7 +91,7 @@ function! s:download(url) abort
   if executable('curl')
     let rv = s:system(['curl', '-sL', a:url], '', 1, 1)
     return s:shell_error ? 'curl error with '.a:url.': '.s:shell_error : rv
-  elseif executable('python')
+  elseif executable(a:python)
     let script = "
           \try:\n
           \    from urllib.request import urlopen\n
@@ -101,12 +101,12 @@ function! s:download(url) abort
           \response = urlopen('".a:url."')\n
           \print(response.read().decode('utf8'))\n
           \"
-    let rv = s:system(['python', '-c', script])
+    let rv = s:system([a:python, '-c', script])
     return empty(rv) && s:shell_error
-          \ ? 'python urllib.request error: '.s:shell_error
+          \ ? a:python + 'urllib.request error: '.s:shell_error
           \ : rv
   endif
-  return 'missing `curl` and `python`, cannot make pypi request'
+  return 'missing `curl` and `' + a:python + '`, cannot make pypi request'
 endfunction
 
 " Check for clipboard tools.
@@ -157,7 +157,7 @@ function! s:version_info(python) abort
         \ ]))
 
   if empty(python_version)
-    let python_version = 'unable to parse python response'
+    let python_version = 'unable to parse ' + a:python + ' response'
   endif
 
   let nvim_path = s:trim(s:system([
@@ -176,7 +176,7 @@ function! s:version_info(python) abort
   endfunction
 
   " Try to get neovim.VERSION (added in 0.1.11dev).
-  let nvim_version = s:system(['python', '-c',
+  let nvim_version = s:system([a:python, '-c',
         \ 'from neovim import VERSION as v; '.
         \ 'print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))'],
         \ '', 1, 1)
