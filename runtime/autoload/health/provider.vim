@@ -38,6 +38,16 @@ function! s:system_handler(jobid, data, event) dict abort
   endif
 endfunction
 
+" Attempts to construct a shell command from an args list.
+" Only for display, to help users debug a failed command.
+function! s:shellify(cmd) abort
+  if type(a:cmd) != type([])
+    return a:cmd
+  endif
+  return join(map(copy(a:cmd),
+    \'v:val =~# ''\m[\-.a-zA-Z_/]'' ? shellescape(v:val) : v:val'), ' ')
+endfunction
+
 " Run a system command and timeout after 30 seconds.
 function! s:system(cmd, ...) abort
   let stdin = a:0 ? a:1 : ''
@@ -54,8 +64,7 @@ function! s:system(cmd, ...) abort
   let jobid = jobstart(a:cmd, opts)
 
   if jobid < 1
-    call health#report_error(printf('Command error %d: %s', jobid,
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd))
+    call health#report_error(printf('Command error (job=%d): %s', jobid, s:shellify(a:cmd)))
     let s:shell_error = 1
     return opts.output
   endif
@@ -66,13 +75,11 @@ function! s:system(cmd, ...) abort
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
-    call health#report_error(printf('Command timed out: %s',
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd))
+    call health#report_error(printf('Command timed out: %s', s:shellify(a:cmd)))
     call jobstop(jobid)
   elseif s:shell_error != 0 && !ignore_error
-    call health#report_error(printf('Command error (%d) %s: %s', jobid,
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd,
-          \ opts.output))
+    call health#report_error(printf("Command error (job=%d): %s\nOutput: %s", jobid,
+          \ s:shellify(a:cmd), opts.output))
   endif
 
   return opts.output
