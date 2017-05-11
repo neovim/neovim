@@ -4244,7 +4244,7 @@ static bool typebuf_match_len(const uint8_t *str, int *mlen)
 /// @param  index  The index in the maphash[]
 /// @param  buf  The buffer to get the maphash from. NULL for global
 mapblock_T *get_maphash(int index, buf_T *buf)
-  FUNC_ATTR_PURE
+    FUNC_ATTR_PURE
 {
   if (index > MAX_MAPHASH) {
     return NULL;

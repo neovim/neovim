@@ -748,7 +748,7 @@ Dictionary nvim_get_mode(void)
 /// @param  mode  The abbreviation for the mode
 /// @returns  An array of maparg() like dictionaries describing mappings
 ArrayOf(Dictionary) nvim_get_keymap(String mode)
-    FUNC_API_SINCE(2)
+    FUNC_API_SINCE(3)
 {
   return keymap_array(mode, NULL);
 }

@@ -462,7 +462,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param[out]  err   Error details, if any
 /// @returns An array of maparg() like dictionaries describing mappings
 ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
-  FUNC_API_SINCE(2)
+    FUNC_API_SINCE(3)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
