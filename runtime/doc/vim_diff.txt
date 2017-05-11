@@ -241,21 +241,19 @@ Lua interface (|if_lua.txt|):
 - `:lua error('TEST')` will print “TEST” as the error in Vim and “E5105: Error 
   while calling lua chunk: [string "<VimL compiled string>"]:1: TEST” in 
   Neovim.
-- Lua has direct access to Neovim api via `vim.api`.
-- Currently most of features are missing.
+- Lua has direct access to Nvim |API| via `vim.api`.
+- Currently, most legacy Vim features are missing.
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
-				     *if_lua* *if_perl* *if_mzscheme* *if_tcl*
 
-These legacy Vim features may be implemented in the future, but they are not
-planned for the current milestone.
+Some legacy Vim features are not implemented:
 
 - |if_py|: vim.bindeval() and vim.Function() are not supported
-- |if_lua|
-- |if_perl|
-- |if_mzscheme|
-- |if_tcl|
+- |if_lua|: the `vim` object currently only supports `vim.api`
+- *if_perl*
+- *if_mzscheme*
+- *if_tcl*
 
 ==============================================================================
 6. Removed features					 *nvim-features-removed*

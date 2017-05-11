@@ -1,21 +1,19 @@
-*if_lua.txt*    For Neovim
+*if_lua.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Luis Carvalho
 
 
-The Lua Interface to Vim				*lua* *Lua*
+Lua Interface to Nvim					*lua* *Lua*
 
-1. Commands			|lua-commands|
-2. The vim module		|lua-vim|
-3. The luaeval function		|lua-luaeval|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Commands						*lua-commands*
 
 							*:lua*
 :[range]lua {chunk}
-			Execute Lua chunk {chunk}.    {not in Vi}
+			Execute Lua chunk {chunk}.
 
 Examples:
 >
@@ -25,7 +23,7 @@ Examples:
 :[range]lua << {endmarker}
 {script}
 {endmarker}
-			Execute Lua script {script}.  {not in Vi}
+			Execute Lua script {script}.
 			Note: This command doesn't work when the Lua
 			feature wasn't compiled in.  To avoid errors, see
 			|script-here|.
@@ -48,8 +46,8 @@ Example:
 	EOF
 	endfunction
 
-Note that in example variables are prefixed with local: they will disappear 
-when block finishes. This is not the case for globals.
+Note that the variables are prefixed with `local`: they will disappear when
+block finishes. This is not the case for globals.
 
 To see what version of Lua you have: >
 	:lua print(_VERSION)
@@ -66,7 +64,6 @@ If you use LuaJIT you can also use this: >
 			If the value returned by the function is a string it
 			becomes the text of the line in the current turn. The
 			default for [range] is the whole file: "1,$".
-							{not in Vi}
 
 Examples:
 >
@@ -80,7 +77,7 @@ Examples:
 
 							*:luafile*
 :[range]luafile {file}
-			Execute Lua script in {file}. {not in Vi}
+			Execute Lua script in {file}.
 			The whole argument is used as a single file name.
 
 Examples:
@@ -107,7 +104,7 @@ position are restricted when the command is executed in the |sandbox|.
 
 Lua interfaces Vim through the "vim" module. Currently it only has `api` 
 submodule which is a table with all API functions. Descriptions of these 
-functions may be found in |api-funcs.txt|.
+functions may be found in |api.txt|.
 
 ==============================================================================
 3. The luaeval function					*lua-luaeval* *lua-eval*
