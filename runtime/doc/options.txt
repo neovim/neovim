@@ -4368,7 +4368,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that typing <F10> in paste mode inserts "<F10>", since in paste
 	mode everything is inserted literally, except the 'pastetoggle' key
 	sequence.
-	When the value has several bytes 'ttimeoutlen' applies.
+	No timeout is used, this means that a multi-key 'pastetoggle' can not
+	be triggered manually.
 
 						*'pex'* *'patchexpr'*
 'patchexpr' 'pex'	string	(default "")
