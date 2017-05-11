@@ -7,19 +7,19 @@ if helpers.pending_win32(pending) then return end
 describe('External command line completion', function()
   local screen
   local shown = false
-  local firstc, prompt, content, pos, char, shift
+  local firstc, prompt, content, pos, char, shift, level, current_hide_level
 
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, ext_cmdline=true})
     screen:set_on_event_handler(function(name, data)
-      if name == "cmdline_enter" then
-        shown = true
-      elseif name == "cmdline_hide" then
+      if name == "cmdline_hide" then
         shown = false
+        current_hide_level = data[1]
       elseif name == "cmdline_show" then
-        content, pos, firstc, prompt = unpack(data)
+        shown = true
+        content, pos, firstc, prompt, level = unpack(data)
       elseif name == "cmdline_char" then
         char, shift = unpack(data)
       elseif name == "cmdline_pos" then
@@ -107,9 +107,34 @@ describe('External command line completion', function()
         eq("input", prompt)
         eq({{'Normal', 'default'}}, content)
       end)
+      feed('<cr>')
+
+      feed(':')
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq(1, level)
+      end)
+
+      feed('<C-R>=1+2')
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq({{'Normal', '1+2'}}, content)
+        eq("\"", char)
+        eq(1, shift)
+        eq(2, level)
+      end)
 
       feed('<cr>')
-      feed(':<C-R>=1+2<cr>')
       screen:expect([[
         ^                         |
         ~                        |
@@ -118,8 +143,19 @@ describe('External command line completion', function()
                                  |
       ]], nil, nil, function()
         eq({{'Normal', '3'}}, content)
-        eq("\"", char)
-        eq(1, shift)
+        eq(2, current_hide_level)
+        eq(1, level)
+      end)
+
+      feed('<esc>')
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq(1, current_hide_level)
       end)
 
     end)

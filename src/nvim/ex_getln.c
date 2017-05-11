@@ -86,6 +86,7 @@ struct cmdline_info {
   int xp_context;               /* type of expansion */
   char_u      *xp_arg;          /* user-defined expansion arg */
   int input_fn;                 /* when TRUE Invoked for input() function */
+  int level;                    // current cmdline level
 };
 
 typedef struct command_line_state {
@@ -179,6 +180,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     cmd_hkmap = 0;
   }
 
+  ccline.level++;
   ccline.overstrike = false;                // always start in insert mode
   s->old_cursor = curwin->w_cursor;         // needs to be restored later
   s->old_curswant = curwin->w_curswant;
@@ -343,6 +345,11 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
     // Make ccline empty, getcmdline() may try to use it.
     ccline.cmdbuff = NULL;
+
+    if (ui_is_external(kUICmdline)) {
+      ui_call_cmdline_hide(ccline.level);
+    }
+    ccline.level--;
     return p;
   }
 }
@@ -1673,14 +1680,7 @@ getcmdline (
     int indent               // indent for inside conditionals
 )
 {
-  if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_enter();
-  }
-  char_u *p = command_line_enter(firstc, count, indent);
-  if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_hide();
-  }
-  return p;
+  return command_line_enter(firstc, count, indent);;
 }
 
 /*
@@ -2286,7 +2286,7 @@ void ui_ext_cmdline_show(void)
     ADD(text, STRING_OBJ(cstr_to_string("Normal")));
     ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
     ADD(content, ARRAY_OBJ(text));
-    ui_call_cmdline_show(content, ccline.cmdpos, cchar_to_string((char)ccline.cmdfirstc), cstr_to_string((char *)(ccline.cmdprompt)));
+    ui_call_cmdline_show(content, ccline.cmdpos, cchar_to_string((char)ccline.cmdfirstc), cstr_to_string((char *)(ccline.cmdprompt)), ccline.level);
 }
 
 /*
@@ -2734,7 +2734,7 @@ static void cursorcmd(void)
     return;
 
   if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_pos(ccline.cmdpos);
+    ui_call_cmdline_pos(ccline.cmdpos, ccline.level);
     return;
   }
 
