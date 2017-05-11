@@ -1831,13 +1831,11 @@ getcmdline (
 )
 {
   if (ui_is_external(kUICmdline)) {
-    Array args = ARRAY_DICT_INIT;
-    ui_event("cmdline_enter", args);
+    ui_call_cmdline_enter();
   }
   char_u *p = command_line_enter(firstc, count, indent);
   if (ui_is_external(kUICmdline)) {
-    Array args = ARRAY_DICT_INIT;
-    ui_event("cmdline_hide", args);
+    ui_call_cmdline_hide();
   }
   return p;
 }
@@ -2720,32 +2718,19 @@ draw_cmdline_no_arabicshape:
   }
 }
 
-void ui_ext_cmdline_char(int c, int shift)
-{
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, STRING_OBJ(cstr_to_string((char *)(&c))));
-    ADD(args, INTEGER_OBJ(shift));
-    ui_event("cmdline_char", args);
-}
-
 void ui_ext_cmdline_show(void)
 {
-    Array args = ARRAY_DICT_INIT;
     Array content = ARRAY_DICT_INIT;
     Array text = ARRAY_DICT_INIT;
     ADD(text, STRING_OBJ(cstr_to_string("Normal")));
     ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
     ADD(content, ARRAY_OBJ(text));
-    ADD(args, ARRAY_OBJ(content));
-    ADD(args, INTEGER_OBJ(ccline.cmdpos));
     char *firstc = (char []) { (char)ccline.cmdfirstc };
     String str = (String) {
         .data = xmemdupz(firstc, 1),
         .size = 1
     };
-    ADD(args, STRING_OBJ(str));
-    ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdprompt))));
-    ui_event("cmdline_show", args);
+    ui_call_cmdline_show(content, ccline.cmdpos, str, cstr_to_string((char *)(ccline.cmdprompt)));
 }
 
 /*
@@ -2765,7 +2750,7 @@ void putcmdline(int c, int shift)
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     msg_no_more = FALSE;
   } else {
-    ui_ext_cmdline_char(c, shift);
+    ui_call_cmdline_char(cstr_to_string((char *)(&c)), shift);
   }
   cursorcmd();
   ui_cursor_shape();
@@ -3193,9 +3178,7 @@ static void cursorcmd(void)
     return;
 
   if (ui_is_external(kUICmdline)) {
-    Array args = ARRAY_DICT_INIT;
-    ADD(args, INTEGER_OBJ(ccline.cmdpos));
-    ui_event("cmdline_pos", args);
+    ui_call_cmdline_pos(ccline.cmdpos);
     return;
   }
 
