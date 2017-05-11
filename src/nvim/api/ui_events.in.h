@@ -66,6 +66,12 @@ void popupmenu_hide(void)
 void popupmenu_select(Integer selected)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void tabline_update(Tabpage current, Array tabs)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+    FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void wildmenu_show(Array content)
+    FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void wildmenu_select(Integer selected)
+    FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void wildmenu_hide(void)
+    FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 #endif  // NVIM_API_UI_EVENTS_IN_H

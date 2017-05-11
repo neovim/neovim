@@ -452,8 +452,7 @@ static int command_line_execute(VimState *state, int key)
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
     if (ui_is_external(kUIWildmenu)) {
-      Array args = ARRAY_DICT_INIT;
-      ui_event("wildmenu_hide", args);
+      ui_call_wildmenu_hide();
     }
     (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
     s->did_wild_list = false;
@@ -2934,9 +2933,7 @@ ExpandOne (
       }
       if (p_wmnu) {
         if (ui_is_external(kUIWildmenu)) {
-          Array args = ARRAY_DICT_INIT;
-          ADD(args, INTEGER_OBJ(findex));
-          ui_event("wildmenu_select", args);
+          ui_call_wildmenu_select(findex);
         } else {
           win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
                                   findex, cmd_showtail);
@@ -3306,7 +3303,7 @@ static int showmatches(expand_T *xp, int wildmenu)
     for (i = 0; i < num_files; i++) {
       ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
     }
-    ui_event("wildmenu_show", args);
+    ui_call_wildmenu_show(args);
     return EXPAND_OK;
   }
 
