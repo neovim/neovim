@@ -79,8 +79,9 @@ describe('input()', function()
     ]])
   end)
   it('works correctly with multiple numeric arguments (dict arg)', function()
-    feed([[:echohl Test | echo input({"prompt": 1, "default": 2, "cancelreturn": 3})<CR>]])
-    command('redraw!')  -- Without this it shows `12` on the line above.
+    command('echohl Test')
+    meths.set_var('opts', {prompt=1, default=2, cancelreturn=3})
+    feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -103,6 +104,42 @@ describe('input()', function()
       {EOB:~                        }|
       {EOB:~                        }|
       {T:3}                        |
+    ]])
+  end)
+  it('works correctly with redraw', function()
+    command('echohl Test')
+    meths.set_var('opts', {prompt='Foo>', default='Bar'})
+    feed([[:echo inputdialog(opts)<CR>]])
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {T:Foo>}Bar^                  |
+    ]])
+    command('redraw!')
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {T:Foo>}Bar^                  |
+    ]])
+    feed('<BS>')
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {T:Foo>}Ba^                   |
+    ]])
+    command('redraw!')
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {T:Foo>}Ba^                   |
     ]])
   end)
   it('allows omitting everything with dictionary argument', function()
@@ -209,8 +246,9 @@ describe('inputdialog()', function()
     ]])
   end)
   it('works correctly with multiple numeric arguments (dict arg)', function()
-    feed([[:echohl Test | echo inputdialog({"prompt": 1, "default": 2, "cancelreturn": 3})<CR>]])
-    command('redraw!')  -- Without this it shows `12` on the line above.
+    command('echohl Test')
+    meths.set_var('opts', {prompt=1, default=2, cancelreturn=3})
+    feed([[:echo input(opts)<CR>]])
     screen:expect([[
                                |
       {EOB:~                        }|
@@ -233,6 +271,42 @@ describe('inputdialog()', function()
       {EOB:~                        }|
       {EOB:~                        }|
       {T:3}                        |
+    ]])
+  end)
+  it('works correctly with redraw', function()
+    command('echohl Test')
+    meths.set_var('opts', {prompt='Foo>', default='Bar'})
+    feed([[:echo input(opts)<CR>]])
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {T:Foo>}Bar^                  |
+    ]])
+    command('redraw!')
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {T:Foo>}Bar^                  |
+    ]])
+    feed('<BS>')
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {T:Foo>}Ba^                   |
+    ]])
+    command('redraw!')
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {T:Foo>}Ba^                   |
     ]])
   end)
   it('allows omitting everything with dictionary argument', function()
