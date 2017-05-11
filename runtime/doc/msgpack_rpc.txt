@@ -446,8 +446,8 @@ states might be represented as separate modes.
 ["cmdline_enter"]
 	Enter the cmdline.
 
-["cmdline_leave"]
-	Leave the cmdline.
+["cmdline_hide"]
+	Hide the cmdline.
 
 ["cmdline_show", content, pos, firstc, prompt]
         content: List of [highlight group, string]

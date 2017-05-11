@@ -1680,7 +1680,7 @@ getcmdline (
   char_u *p = command_line_enter(firstc, count, indent);
   if (ui_is_external(kUICmdline)) {
     Array args = ARRAY_DICT_INIT;
-    ui_event("cmdline_leave", args);
+    ui_event("cmdline_hide", args);
   }
   return p;
 }
@@ -2299,16 +2299,13 @@ void ui_ext_cmdline_show(void)
     ADD(content, ARRAY_OBJ(text));
     ADD(args, ARRAY_OBJ(content));
     ADD(args, INTEGER_OBJ(ccline.cmdpos));
-    if (ccline.cmdfirstc != NUL) {
-      ADD(args, STRING_OBJ(cstr_to_string((char *)(&ccline.cmdfirstc))));
-    } else {
-      ADD(args, STRING_OBJ(cstr_to_string("")));
-    }
-    if (ccline.cmdprompt != NULL) {
-      ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdprompt))));
-    } else {
-      ADD(args, STRING_OBJ(cstr_to_string("")));
-    }
+    char *firstc = (char []) { (char)ccline.cmdfirstc };
+    String str = (String) {
+        .data = xmemdupz(firstc, 1),
+        .size = 1
+    };
+    ADD(args, STRING_OBJ(str));
+    ADD(args, STRING_OBJ(cstr_to_string((char *)(ccline.cmdprompt))));
     ui_event("cmdline_show", args);
 }
 

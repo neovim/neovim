@@ -16,7 +16,7 @@ describe('External command line completion', function()
     screen:set_on_event_handler(function(name, data)
       if name == "cmdline_enter" then
         shown = true
-      elseif name == "cmdline_leave" then
+      elseif name == "cmdline_hide" then
         shown = false
       elseif name == "cmdline_show" then
         content, pos, firstc, prompt = unpack(data)
