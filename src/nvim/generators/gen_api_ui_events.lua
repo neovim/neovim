@@ -147,11 +147,16 @@ exported_attributes = {'name', 'parameters',
                        'since', 'deprecated_since'}
 exported_events = {}
 for _,ev in ipairs(events) do
-  local f_exported = {}
+  local ev_exported = {}
   for _,attr in ipairs(exported_attributes) do
-    f_exported[attr] = ev[attr]
+    ev_exported[attr] = ev[attr]
   end
-  exported_events[#exported_events+1] = f_exported
+  for _,p in ipairs(ev_exported.parameters) do
+    if p[1] == 'HlAttrs' then
+      p[1] = 'Dictionary'
+    end
+  end
+  exported_events[#exported_events+1] = ev_exported
 end
 
 packed = mpack.pack(exported_events)
