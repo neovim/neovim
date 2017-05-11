@@ -91,6 +91,7 @@ struct cmdline_info {
   int input_fn;                 // when TRUE Invoked for input() function
   unsigned prompt_id;  ///< Prompt number, used to disable coloring on errors.
   Callback highlight_callback;  ///< Callback used for coloring user input.
+  int level;                    // current cmdline level
 };
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
@@ -238,7 +239,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     cmd_hkmap = 0;
   }
 
+  // TODO(bfredl): can these be combined?
   ccline.prompt_id = last_prompt_id++;
+  ccline.level++;
   ccline.overstrike = false;                // always start in insert mode
   clearpos(&s->match_end);
   s->save_cursor = curwin->w_cursor;        // may be restored later
@@ -414,6 +417,11 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
     // Make ccline empty, getcmdline() may try to use it.
     ccline.cmdbuff = NULL;
+
+    if (ui_is_external(kUICmdline)) {
+      ui_call_cmdline_hide(ccline.level);
+    }
+    ccline.level--;
     return p;
   }
 }
@@ -1830,14 +1838,7 @@ getcmdline (
     int indent               // indent for inside conditionals
 )
 {
-  if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_enter();
-  }
-  char_u *p = command_line_enter(firstc, count, indent);
-  if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_hide();
-  }
-  return p;
+  return command_line_enter(firstc, count, indent);
 }
 
 /// Get a command line with a prompt
@@ -2720,17 +2721,12 @@ draw_cmdline_no_arabicshape:
 
 void ui_ext_cmdline_show(void)
 {
-    Array content = ARRAY_DICT_INIT;
-    Array text = ARRAY_DICT_INIT;
-    ADD(text, STRING_OBJ(cstr_to_string("Normal")));
-    ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
-    ADD(content, ARRAY_OBJ(text));
-    char *firstc = (char []) { (char)ccline.cmdfirstc };
-    String str = (String) {
-        .data = xmemdupz(firstc, 1),
-        .size = 1
-    };
-    ui_call_cmdline_show(content, ccline.cmdpos, str, cstr_to_string((char *)(ccline.cmdprompt)));
+  Array content = ARRAY_DICT_INIT;
+  Array text = ARRAY_DICT_INIT;
+  ADD(text, STRING_OBJ(cstr_to_string("Normal")));
+  ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+  ADD(content, ARRAY_OBJ(text));
+  ui_call_cmdline_show(content, ccline.cmdpos, cchar_to_string((char)ccline.cmdfirstc), cstr_to_string((char *)(ccline.cmdprompt)), ccline.level);
 }
 
 /*
@@ -2750,7 +2746,7 @@ void putcmdline(int c, int shift)
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     msg_no_more = FALSE;
   } else {
-    ui_call_cmdline_char(cstr_to_string((char *)(&c)), shift);
+    ui_call_cmdline_char(cchar_to_string((char)(c)), shift, ccline.level);
   }
   cursorcmd();
   ui_cursor_shape();
@@ -3178,7 +3174,7 @@ static void cursorcmd(void)
     return;
 
   if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_pos(ccline.cmdpos);
+    ui_call_cmdline_pos(ccline.cmdpos, ccline.level);
     return;
   }
 
@@ -3200,7 +3196,7 @@ static void cursorcmd(void)
 void gotocmdline(int clr)
 {
   if (ui_is_external(kUICmdline)) {
-      return;
+    return;
   }
   msg_start();
   if (cmdmsg_rl)

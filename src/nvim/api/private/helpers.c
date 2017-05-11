@@ -667,6 +667,22 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
   return rv;
 }
 
+/// Allocates a String consisting of a single char. Does not support multibyte
+/// characters. The resulting string is also NUL-terminated, to facilitate
+/// interoperating with code using C strings.
+///
+/// @param char the char to convert
+/// @return the resulting String, if the input char was NUL, an
+///         empty String is returned
+String cchar_to_string(char c)
+{
+  char buf[] = { c, NUL };
+  return (String) {
+    .data = xmemdupz(buf, 1),
+    .size = (c != NUL) ? 1 : 0
+  };
+}
+
 /// Copies a C string into a String (binary safe string, characters + length).
 /// The resulting string is also NUL-terminated, to facilitate interoperating
 /// with code using C strings.
