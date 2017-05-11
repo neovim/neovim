@@ -20,10 +20,14 @@ describe('External command line completion', function()
       elseif name == "cmdline_show" then
         shown = true
         content, pos, firstc, prompt, level = unpack(data)
-      elseif name == "cmdline_char" then
-        char, shift = unpack(data)
-      elseif name == "cmdline_pos" then
-        pos = data[1]
+      elseif name == "cmdline_update" then
+        local update = data[1]
+        if update["type"] == "pos" then
+            pos = update["pos"]
+        elseif update["type"] == "char" then
+            char = update["char"]
+            shift = update["shift"]
+        end
       end
     end)
   end)

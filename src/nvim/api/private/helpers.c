@@ -609,11 +609,11 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
 ///         empty String is returned
 String cchar_to_string(char c)
 {
-    char buf[] = { c, NUL };
-    return (String) {
-        .data = xmemdupz(buf, 1),
-        .size = (c != NUL) ? 1 : 0
-    };
+  char buf[] = { c, NUL };
+  return (String) {
+    .data = xmemdupz(buf, 1),
+    .size = (c != NUL) ? 1 : 0
+  };
 }
 
 /// Copies a C string into a String (binary safe string, characters + length).

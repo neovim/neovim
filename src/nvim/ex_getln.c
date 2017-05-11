@@ -2281,12 +2281,12 @@ static void draw_cmdline(int start, int len)
 
 void ui_ext_cmdline_show(void)
 {
-    Array content = ARRAY_DICT_INIT;
-    Array text = ARRAY_DICT_INIT;
-    ADD(text, STRING_OBJ(cstr_to_string("Normal")));
-    ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
-    ADD(content, ARRAY_OBJ(text));
-    ui_call_cmdline_show(content, ccline.cmdpos, cchar_to_string((char)ccline.cmdfirstc), cstr_to_string((char *)(ccline.cmdprompt)), ccline.level);
+  Array content = ARRAY_DICT_INIT;
+  Array text = ARRAY_DICT_INIT;
+  ADD(text, STRING_OBJ(cstr_to_string("Normal")));
+  ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+  ADD(content, ARRAY_OBJ(text));
+  ui_call_cmdline_show(content, ccline.cmdpos, cchar_to_string((char)ccline.cmdfirstc), cstr_to_string((char *)(ccline.cmdprompt)), ccline.level);
 }
 
 /*
@@ -2306,7 +2306,12 @@ void putcmdline(int c, int shift)
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     msg_no_more = FALSE;
   } else {
-    ui_call_cmdline_char(cchar_to_string((char)(c)), shift);
+    Dictionary update = ARRAY_DICT_INIT;
+    PUT(update, "type",  STRING_OBJ(cstr_to_string("char")));
+    PUT(update, "char",  STRING_OBJ(cchar_to_string((char)(c))));
+    PUT(update, "shift", INTEGER_OBJ(shift));
+    PUT(update, "level", INTEGER_OBJ(ccline.level));
+    ui_call_cmdline_update(update);
   }
   cursorcmd();
   ui_cursor_shape();
@@ -2734,7 +2739,11 @@ static void cursorcmd(void)
     return;
 
   if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_pos(ccline.cmdpos, ccline.level);
+    Dictionary update = ARRAY_DICT_INIT;
+    PUT(update, "type",  STRING_OBJ(cstr_to_string("pos")));
+    PUT(update, "pos", INTEGER_OBJ(ccline.cmdpos));
+    PUT(update, "level", INTEGER_OBJ(ccline.level));
+    ui_call_cmdline_update(update);
     return;
   }
 
@@ -2756,7 +2765,7 @@ static void cursorcmd(void)
 void gotocmdline(int clr)
 {
   if (ui_is_external(kUICmdline)) {
-      return;
+    return;
   }
   msg_start();
   if (cmdmsg_rl)
