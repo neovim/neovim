@@ -4878,8 +4878,9 @@ void fix_help_buffer(void)
                   continue;
                 e1 = vim_strrchr(t1, '.');
                 e2 = vim_strrchr(path_tail(f2), '.');
-                if (e1 == NULL || e2 == NULL)
+                if (e1 == NULL || e2 == NULL) {
                   continue;
+                }
                 if (fnamecmp(e1, ".txt") != 0
                     && fnamecmp(e1, fname + 4) != 0) {
                   /* Not .txt and not .abx, remove it. */
@@ -5949,9 +5950,8 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   // :sign define {name} {args}... {last}=
   //                               |     |
   //                            last     p
-  if (p == NULL)
-  {
-    /* Expand last argument name (before equal sign). */
+  if (p == NULL) {
+    // Expand last argument name (before equal sign).
     xp->xp_pattern = last;
     switch (cmd_idx)
     {

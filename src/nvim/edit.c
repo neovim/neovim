@@ -4926,7 +4926,7 @@ static unsigned quote_meta(char_u *dest, char_u *src, int len)
           || ctrl_x_mode == CTRL_X_THESAURUS)
         break;
       // fallthrough
-    case '^':                   /* currently it's not needed. */
+    case '^':                   // currently it's not needed.
     case '$':
       m++;
       if (dest != NULL)
