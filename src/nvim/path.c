@@ -435,7 +435,7 @@ bool add_pathsep(char *p)
 /// @return [allocated] Copy of absolute path to `fname` or NULL when
 ///                     `fname` is NULL.
 char *FullName_save(const char *fname, bool force)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+  FUNC_ATTR_MALLOC
 {
   if (fname == NULL) {
     return NULL;
@@ -453,7 +453,7 @@ char *FullName_save(const char *fname, bool force)
 /// @param name An absolute or relative path.
 /// @return The absolute path of `name`.
 char_u *save_absolute_path(const char_u *name)
-  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   if (!path_is_absolute_path(name)) {
     return (char_u *)FullName_save((char *)name, true);
