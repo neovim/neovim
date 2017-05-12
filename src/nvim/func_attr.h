@@ -113,16 +113,19 @@
 #  define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
 #  define REAL_FATTR_NORETURN __attribute__((noreturn))
 
-#  ifdef __clang__
-// clang only
+#  if defined(__clang__) && __clang__ == 1
+// clang
+#   if (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 7))
+#    define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))
+#   endif
 #  elif defined(__INTEL_COMPILER)
-// intel only
+// intel compiler
 #  else
 #   define GCC_VERSION \
             (__GNUC__ * 10000 + \
              __GNUC_MINOR__ * 100 + \
              __GNUC_PATCHLEVEL__)
-// gcc only
+// gcc
 #   define REAL_FATTR_ALLOC_SIZE(x) __attribute__((alloc_size(x)))
 #   define REAL_FATTR_ALLOC_SIZE_PROD(x, y) __attribute__((alloc_size(x, y)))
 #   if GCC_VERSION >= 40900
