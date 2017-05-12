@@ -566,14 +566,14 @@ local function get_pathsep()
   return funcs.fnamemodify('.', ':p'):sub(-1)
 end
 
-local function check_provider(provider)
+local function missing_provider(provider)
   if provider == 'ruby' then
     local prog = funcs['provider#' .. provider .. '#Detect']()
-    return prog ~= ''
+    return prog == '' and (provider .. ' not detected') or false
   elseif provider == 'python' or provider == 'python3' then
     local py_major_version = (provider == 'python3' and 3 or 2)
     local errors = funcs['provider#pythonx#Detect'](py_major_version)[2]
-    return errors == ''
+    return errors ~= '' and errors or false
   else
     assert(false, 'Unknown provider: ' .. provider)
   end
@@ -645,7 +645,7 @@ local module = {
   meth_pcall = meth_pcall,
   NIL = mpack.NIL,
   get_pathsep = get_pathsep,
-  check_provider = check_provider,
+  missing_provider = missing_provider,
 }
 
 return function(after_each)

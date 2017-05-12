@@ -7,7 +7,7 @@ local clear = helpers.clear
 local dedent = helpers.dedent
 local source = helpers.source
 local exc_exec = helpers.exc_exec
-local check_provider = helpers.check_provider
+local missing_provider = helpers.missing_provider
 
 before_each(clear)
 
@@ -61,9 +61,9 @@ describe('script_get-based command', function()
   test_garbage_exec('lua', true)
 
   -- Provider-based scripts
-  test_garbage_exec('ruby', check_provider('ruby'))
-  test_garbage_exec('python', check_provider('python'))
-  test_garbage_exec('python3', check_provider('python3'))
+  test_garbage_exec('ruby', not missing_provider('ruby'))
+  test_garbage_exec('python', not missing_provider('python'))
+  test_garbage_exec('python3', not missing_provider('python3'))
 
   -- Missing scripts
   test_garbage_exec('tcl', false)

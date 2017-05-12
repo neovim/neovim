@@ -10,11 +10,11 @@ local expect = helpers.expect
 local command = helpers.command
 local write_file = helpers.write_file
 local curbufmeths = helpers.curbufmeths
-local check_provider = helpers.check_provider
+local missing_provider = helpers.missing_provider
 
 do
   clear()
-  if not check_provider('ruby') then
+  if missing_provider('ruby') then
     pending(
       "Cannot find the neovim RubyGem. Try :CheckHealth",
       function() end)
