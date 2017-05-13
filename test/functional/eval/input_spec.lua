@@ -31,7 +31,7 @@ before_each(function()
 end)
 
 describe('input()', function()
-  it('works correctly with multiline prompts', function()
+  it('works with multiline prompts', function()
     feed([[:call input("Test\nFoo")<CR>]])
     screen:expect([[
       {EOB:~                        }|
@@ -41,7 +41,7 @@ describe('input()', function()
       Foo^                      |
     ]])
   end)
-  it('works correctly with multiline prompts and :echohl', function()
+  it('works with multiline prompts and :echohl', function()
     feed([[:echohl Test | call input("Test\nFoo")<CR>]])
     screen:expect([[
       {EOB:~                        }|
@@ -106,7 +106,7 @@ describe('input()', function()
       {T:3}                        |
     ]])
   end)
-  it('works correctly with redraw', function()
+  it('works with redraw', function()
     command('echohl Test')
     meths.set_var('opts', {prompt='Foo>', default='Bar'})
     feed([[:echo inputdialog(opts)<CR>]])
@@ -198,7 +198,7 @@ describe('input()', function()
   end)
 end)
 describe('inputdialog()', function()
-  it('works correctly with multiline prompts', function()
+  it('works with multiline prompts', function()
     feed([[:call inputdialog("Test\nFoo")<CR>]])
     screen:expect([[
       {EOB:~                        }|
@@ -208,7 +208,7 @@ describe('inputdialog()', function()
       Foo^                      |
     ]])
   end)
-  it('works correctly with multiline prompts and :echohl', function()
+  it('works with multiline prompts and :echohl', function()
     feed([[:echohl Test | call inputdialog("Test\nFoo")<CR>]])
     screen:expect([[
       {EOB:~                        }|
@@ -273,7 +273,7 @@ describe('inputdialog()', function()
       {T:3}                        |
     ]])
   end)
-  it('works correctly with redraw', function()
+  it('works with redraw', function()
     command('echohl Test')
     meths.set_var('opts', {prompt='Foo>', default='Bar'})
     feed([[:echo input(opts)<CR>]])
