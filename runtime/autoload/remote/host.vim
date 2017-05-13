@@ -118,14 +118,14 @@ function! s:RegistrationCommands(host) abort
   let paths = map(paths, 'tr(resolve(v:val),"\\","/")') " Normalize slashes #4795
   let paths = uniq(sort(paths))
   if empty(paths)
-    return []
+    return {}
   endif
 
   for path in paths
     call remote#host#RegisterPlugin(host_id, path, [])
   endfor
   let channel = remote#host#Require(host_id)
-  let lines = []
+  let plugins = {}
   let registered = []
   for path in paths
     unlet! specs
@@ -135,12 +135,7 @@ function! s:RegistrationCommands(host) abort
       " plugin
       continue
     endif
-    call add(lines, "call remote#host#RegisterPlugin('".a:host
-          \ ."', '".path."', [")
-    for spec in specs
-      call add(lines, "      \\ ".string(spec).",")
-    endfor
-    call add(lines, "     \\ ])")
+    let plugins[path] = specs
     call add(registered, path)
   endfor
   echomsg printf("remote/host: %s host registered plugins %s",
@@ -150,26 +145,23 @@ function! s:RegistrationCommands(host) abort
   call rpcstop(s:hosts[host_id].channel)
   call remove(s:hosts, host_id)
   call remove(s:plugins_for_host, host_id)
-  return lines
+  return plugins
 endfunction
 
 function! remote#host#UpdateRemotePlugins() abort
-  let commands = []
+  let specs = {}
   let hosts = keys(s:hosts)
   for host in hosts
     if has_key(s:plugin_patterns, host)
       try
-        let commands +=
-              \   ['" '.host.' plugins']
-              \ + s:RegistrationCommands(host)
-              \ + ['', '']
+        let specs[host] = s:RegistrationCommands(host)
       catch
         echomsg v:throwpoint
         echomsg v:exception
       endtry
     endif
   endfor
-  call writefile(commands, g:loaded_remote_plugins)
+  call writefile(msgpackdump([specs]), g:loaded_remote_plugins)
   echomsg printf('remote/host: generated rplugin manifest: %s',
         \ g:loaded_remote_plugins)
 endfunction

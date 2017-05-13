@@ -25,11 +25,12 @@ function! s:GetManifestPath() abort
     let manifest_base = dest
   endif
 
-  return manifest_base.'/rplugin.vim'
+  return manifest_base.'/rplugin.mpack'
 endfunction
 
 " Old manifest file based on known script locations.
 function! s:GetOldManifestPath() abort
+  return ''
   let prefix = exists('$MYVIMRC')
         \ ? $MYVIMRC
         \ : matchstr(get(split(execute('scriptnames'), '\n'), 0, ''), '\f\+$')
@@ -51,9 +52,15 @@ endfunction
 
 function! s:LoadRemotePlugins() abort
   let g:loaded_remote_plugins = s:GetManifest()
-  if filereadable(g:loaded_remote_plugins)
-    execute 'source' fnameescape(g:loaded_remote_plugins)
+  if !filereadable(g:loaded_remote_plugins)
+    return
   endif
+  let hosts = msgpackparse(readfile(g:loaded_remote_plugins, 'b'))[0]
+  for [host, plugins] in items(hosts)
+    for [path, commands] in items(plugins)
+      call remote#host#RegisterPlugin(host, path, commands)
+    endfor
+  endfor
 endfunction
 
 command! -bar UpdateRemotePlugins call remote#host#UpdateRemotePlugins()
