@@ -171,7 +171,7 @@ if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
 endif()
 
 get_directory_property(gen_includes INCLUDE_DIRECTORIES)
-foreach(gen_include ${gen_includes} ${LUAJIT_INCLUDE_DIRS})
+foreach(gen_include ${gen_includes} ${LUA_PREFERRED_INCLUDE_DIRS})
   list(APPEND gen_cflags "-I${gen_include}")
 endforeach()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
@@ -367,24 +367,13 @@ if(UNIX)
   )
 endif()
 
-set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
-set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
+set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
 if(CMAKE_VERSION VERSION_LESS "2.8.8")
-  if(PREFER_LUAJIT)
-    include_directories(${LUAJIT_INCLUDE_DIRS})
-  else()
-    message(FATAL_ERROR
-            "Must support INCLUDE_DIRECTORIES target property to build")
-  endif()
+  # Use include_directories() because INCLUDE_DIRECTORIES target property
+  # is not supported
+  include_directories(${LUA_PREFERRED_INCLUDE_DIRS})
 endif()
-
-if(PREFER_LUAJIT)
-  list(APPEND NVIM_EXEC_LINK_LIBRARIES ${LUAJIT_LIBRARIES})
-else()
-  list(APPEND NVIM_EXEC_LINK_LIBRARIES ${LUA_LIBRARIES})
-endif()
-list(APPEND NVIM_TEST_LINK_LIBRARIES ${LUAJIT_LIBRARIES})
 
 # Don't use jemalloc in the unit test library.
 if(JEMALLOC_FOUND)
@@ -396,11 +385,6 @@ add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
-if(PREFER_LUAJIT)
-  set(LUA_PREFERRED_INCLUDE_DIRS ${LUAJIT_INCLUDE_DIRS})
-else()
-  set(LUA_PREFERRED_INCLUDE_DIRS ${LUA_INCLUDE_DIRS})
-endif()
 set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
 
@@ -458,8 +442,7 @@ add_library(
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
 )
 set_property(TARGET libnvim APPEND PROPERTY
-             INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS})
-target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
+             INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
 set_target_properties(
   libnvim
   PROPERTIES
@@ -471,28 +454,32 @@ set_property(
   APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB "
 )
 
-add_library(
-  nvim-test
-  MODULE
-  EXCLUDE_FROM_ALL
-  ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
-  ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${UNIT_TEST_FIXTURES}
-)
-target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
-set_property(
-  TARGET nvim-test
-  APPEND PROPERTY INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS}
-)
-set_target_properties(
-  nvim-test
-  PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-)
-set_property(
-  TARGET nvim-test
-  APPEND_STRING PROPERTY COMPILE_FLAGS " -DUNIT_TESTING "
-)
+if(LUAJIT_FOUND)
+  set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUAJIT_LIBRARIES})
+  add_library(
+    nvim-test
+    MODULE
+    EXCLUDE_FROM_ALL
+    ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
+    ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
+    ${UNIT_TEST_FIXTURES}
+  )
+  target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
+  target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
+  set_property(
+    TARGET nvim-test
+    APPEND PROPERTY INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS}
+  )
+  set_target_properties(
+    nvim-test
+    PROPERTIES
+      POSITION_INDEPENDENT_CODE ON
+  )
+  set_property(
+    TARGET nvim-test
+    APPEND_STRING PROPERTY COMPILE_FLAGS " -DUNIT_TESTING "
+  )
+endif()
 
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
