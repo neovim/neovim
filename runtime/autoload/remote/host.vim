@@ -1,4 +1,6 @@
 let s:hosts = {}
+let s:info_pending = {}
+let g:info_pending = s:info_pending
 let s:plugin_patterns = {}
 let s:plugins_for_host = {}
 
@@ -42,9 +44,26 @@ function! remote#host#Require(name) abort
           \ }
     let host.channel = call(host.factory, [host_info])
     let host.initialized = 1
+    let s:info_pending[host.channel] = a:name
   endif
   return host.channel
 endfunction
+
+function! remote#host#on_channelinfo(info)
+  let g:tending = deepcopy(s:info_pending)
+  if get(s:info_pending,a:info.id,v:null) == v:null
+    return
+  endif
+  let g:info = a:info
+  if a:info.type == "host"
+    let name = remove(s:info_pending,a:info.id)
+    let s:hosts[name].info = deepcopy(a:info)
+    if has_key(a:info.methods, 'register_host')
+      call rpcrequest(a:info.id, 'register_host', name)
+    endif
+  endif
+endfunction
+
 
 function! remote#host#IsRunning(name) abort
   if !has_key(s:hosts, a:name)
@@ -66,20 +85,24 @@ endfunction
 "
 " The third item in a declaration is a boolean: non zero means the command,
 " autocommand or function will be executed synchronously with rpcrequest.
-function! remote#host#RegisterPlugin(host, path, specs) abort
+function! remote#host#RegisterPlugin(host, path, specs, ...) abort
   let plugins = remote#host#PluginsForHost(a:host)
 
-  for plugin in plugins
-    if plugin.path == a:path
-      throw 'Plugin "'.a:path.'" is already registered'
-    endif
-  endfor
+  let is_update = a:0 > 0 && a:1
 
-  if has_key(s:hosts, a:host) && remote#host#IsRunning(a:host)
-    " For now we won't allow registration of plugins when the host is already
-    " running.
-    throw 'Host "'.a:host.'" is already running'
-  endif
+  if !is_update
+    for plugin in plugins
+      if plugin.path == a:path
+        "throw 'Plugin "'.a:path.'" is already registered'
+      endif
+    endfor
+
+    if has_key(s:hosts, a:host) && remote#host#IsRunning(a:host)
+      " For now we won't allow registration of plugins when the host is already
+      " running.
+      throw 'Host "'.a:host.'" is already running'
+    endif
+  end
 
   for spec in a:specs
     let type = spec.type
@@ -106,7 +129,9 @@ function! remote#host#RegisterPlugin(host, path, specs) abort
     endif
   endfor
 
-  call add(plugins, {'path': a:path, 'specs': a:specs})
+  if !is_update
+    call add(plugins, {'path': a:path, 'specs': a:specs})
+  endif
 endfunction
 
 function! s:RegistrationCommands(host) abort
@@ -164,6 +189,23 @@ function! remote#host#UpdateRemotePlugins() abort
   call writefile(msgpackdump([specs]), g:loaded_remote_plugins)
   echomsg printf('remote/host: generated rplugin manifest: %s',
         \ g:loaded_remote_plugins)
+endfunction
+
+function! remote#host#HostUpdateSpecs(host, new, complete)
+  " TODO: reuse shada timestamp logic?
+  let specs = msgpackparse(readfile(g:loaded_remote_plugins, 'b'))[0]
+  if a:complete
+    let plugins = a:new
+  else
+    let old = get(specs, a:host, {})
+    let plugins = extend(old, a:new)
+  end
+  let specs[a:host] = plugins
+  call writefile(msgpackdump([specs]), g:loaded_remote_plugins)
+  for [path,commands] in items(a:new)
+    call remote#host#RegisterPlugin(a:host, path, commands, v:true)
+  endfor
+
 endfunction
 
 function! remote#host#PluginsForHost(host) abort

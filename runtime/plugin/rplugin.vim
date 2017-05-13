@@ -65,4 +65,9 @@ endfunction
 
 command! -bar UpdateRemotePlugins call remote#host#UpdateRemotePlugins()
 
+augroup remote_host
+    au!
+    au ChanInfo * call remote#host#on_channelinfo(v:event.info)
+augroup END
+
 call s:LoadRemotePlugins()
