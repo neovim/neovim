@@ -9596,13 +9596,15 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (from) {
         break;
       }
-    case kCdScopeTab:         // FALLTHROUGH
+      // fallthrough
+    case kCdScopeTab:
       assert(tp);
       from = tp->tp_localdir;
       if (from) {
         break;
       }
-    case kCdScopeGlobal:      // FALLTHROUGH
+      // fallthrough
+    case kCdScopeGlobal:
       if (globaldir) {        // `globaldir` is not always set.
         from = globaldir;
       } else if (os_dirname(cwd, MAXPATHL) == FAIL) {  // Get the OS CWD.

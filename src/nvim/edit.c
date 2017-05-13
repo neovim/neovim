@@ -4916,14 +4916,17 @@ static unsigned quote_meta(char_u *dest, char_u *src, int len)
       if (ctrl_x_mode == CTRL_X_DICTIONARY
           || ctrl_x_mode == CTRL_X_THESAURUS)
         break;
+      // fallthrough
     case '~':
       if (!p_magic)             /* quote these only if magic is set */
         break;
+      // fallthrough
     case '\\':
       if (ctrl_x_mode == CTRL_X_DICTIONARY
           || ctrl_x_mode == CTRL_X_THESAURUS)
         break;
-    case '^':                   /* currently it's not needed. */
+      // fallthrough
+    case '^':                   // currently it's not needed.
     case '$':
       m++;
       if (dest != NULL)

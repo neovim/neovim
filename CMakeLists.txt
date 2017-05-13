@@ -221,6 +221,11 @@ else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
 
+  check_c_compiler_flag(-Wimplicit-fallthrough HAS_WIMPLICIT_FALLTHROUGH_FLAG)
+  if(HAS_WIMPLICIT_FALLTHROUGH_FLAG)
+    add_definitions(-Wimplicit-fallthrough)
+  endif()
+
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
   # 3.4.1 used there.
   if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")

@@ -89,6 +89,10 @@
 # undef FUNC_ATTR_NONNULL_RET
 #endif
 
+#ifdef FUNC_ATTR_NORETURN
+# undef FUNC_ATTR_NORETURN
+#endif
+
 #ifndef DID_REAL_ATTR
 # define DID_REAL_ATTR
 # ifdef __GNUC__
@@ -107,6 +111,7 @@
 #  define REAL_FATTR_UNUSED __attribute__((unused))
 #  define REAL_FATTR_NONNULL_ALL __attribute__((nonnull))
 #  define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
+#  define REAL_FATTR_NORETURN __attribute__((noreturn))
 
 #  ifdef __clang__
 // clang only
@@ -176,6 +181,10 @@
 # ifndef REAL_FATTR_NONNULL_RET
 #  define REAL_FATTR_NONNULL_RET
 # endif
+
+# ifndef REAL_FATTR_NORETURN
+#  define REAL_FATTR_NORETURN
+# endif
 #endif
 
 #ifdef DEFINE_FUNC_ATTRIBUTES
@@ -196,6 +205,7 @@
 # define FUNC_ATTR_NONNULL_ALL REAL_FATTR_NONNULL_ALL
 # define FUNC_ATTR_NONNULL_ARG(...) REAL_FATTR_NONNULL_ARG(__VA_ARGS__)
 # define FUNC_ATTR_NONNULL_RET REAL_FATTR_NONNULL_RET
+# define FUNC_ATTR_NORETURN REAL_FATTR_NORETURN
 #elif !defined(DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
 # define FUNC_ATTR_MALLOC
 # define FUNC_ATTR_ALLOC_SIZE(x)
@@ -209,4 +219,5 @@
 # define FUNC_ATTR_NONNULL_ALL
 # define FUNC_ATTR_NONNULL_ARG(...)
 # define FUNC_ATTR_NONNULL_RET
+# define FUNC_ATTR_NORETURN
 #endif
