@@ -314,12 +314,18 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
-option(PREFER_LUAJIT "Prefer LuaJIT over Lua when compiling executable. Test library always uses luajit." ON)
+# Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
+option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 
-find_package(LuaJit REQUIRED)
-
-if(NOT PREFER_LUAJIT)
+if(PREFER_LUA)
   find_package(Lua REQUIRED)
+  set(LUA_PREFERRED_INCLUDE_DIRS ${LUA_INCLUDE_DIR})
+  set(LUA_PREFERRED_LIBRARIES ${LUA_LIBRARIES})
+  find_package(LuaJit)
+else()
+  find_package(LuaJit REQUIRED)
+  set(LUA_PREFERRED_INCLUDE_DIRS ${LUAJIT_INCLUDE_DIRS})
+  set(LUA_PREFERRED_LIBRARIES ${LUAJIT_LIBRARIES})
 endif()
 
 list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
