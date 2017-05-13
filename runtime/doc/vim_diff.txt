@@ -244,6 +244,10 @@ Lua interface (|if_lua.txt|):
 - Lua has direct access to Nvim |API| via `vim.api`.
 - Currently, most legacy Vim features are missing.
 
+|input()| and |inputdialog()| gained support for each other’s features (return 
+on cancel and completion respectively) via dictionary argument (replaces all 
+other arguments if used).
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 
