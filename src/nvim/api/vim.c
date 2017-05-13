@@ -15,6 +15,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/buffer.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/lua/executor.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/file_search.h"
@@ -252,6 +253,25 @@ free_vim_args:
   }
 
   return rv;
+}
+
+/// Execute lua code. Parameters might be passed, they are available inside
+/// the chunk as `...`. The chunk can return a value.
+///
+/// To evaluate an expression, it must be prefixed with "return ". For
+/// instance, to call a lua function with arguments sent in and get its
+/// return value back, use the code "return my_function(...)".
+///
+/// @param code       lua code to execute
+/// @param args       Arguments to the code
+/// @param[out] err   Details of an error encountered while parsing
+///                   or executing the lua code.
+///
+/// @return           Return value of lua code if present or NIL.
+Object nvim_execute_lua(String code, Array args, Error *err)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
+{
+  return executor_exec_lua_api(code, args, err);
 }
 
 /// Calculates the number of display cells occupied by `text`.

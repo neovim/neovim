@@ -373,6 +373,46 @@ static int nlua_eval_lua_string(lua_State *const lstate)
   return 0;
 }
 
+/// Evaluate lua string
+///
+/// Expects four values on the stack: string to evaluate, pointer to args array,
+/// and locations where result and error are saved, respectively. Always
+/// returns nothing (from the lua point of view).
+static int nlua_exec_lua_string_api(lua_State *const lstate)
+    FUNC_ATTR_NONNULL_ALL
+{
+  const String *str = (const String *)lua_touserdata(lstate, 1);
+  const Array *args = (const Array *)lua_touserdata(lstate, 2);
+  Object *retval = (Object *)lua_touserdata(lstate, 3);
+  Error *err = (Error *)lua_touserdata(lstate, 4);
+
+  lua_pop(lstate, 4);
+
+  if (luaL_loadbuffer(lstate, str->data, str->size, "<nvim>")) {
+    size_t len;
+    const char *str = lua_tolstring(lstate, -1, &len);
+    api_set_error(err, kErrorTypeValidation,
+                  "Error loading lua: %.*s", (int)len, str);
+    return 0;
+  }
+
+  for (size_t i = 0; i < args->size; i++) {
+    nlua_push_Object(lstate, args->items[i]);
+  }
+
+  if (lua_pcall(lstate, (int)args->size, 1, 0)) {
+    size_t len;
+    const char *str = lua_tolstring(lstate, -1, &len);
+    api_set_error(err, kErrorTypeException,
+                  "Error executing lua: %.*s", (int)len, str);
+    return 0;
+  }
+
+  *retval = nlua_pop_Object(lstate, err);
+
+  return 0;
+}
+
 /// Print as a Vim message
 ///
 /// @param  lstate  Lua interpreter state.
@@ -515,6 +555,28 @@ void executor_eval_lua(const String str, typval_T *const arg,
   NLUA_CALL_C_FUNCTION_3(global_lstate, nlua_eval_lua_string, 0,
                          (void *)&str, arg, ret_tv);
 }
+
+/// Execute lua string
+///
+/// Used for nvim_execute_lua().
+///
+/// @param[in]  str  String to execute.
+/// @param[in]  args array of ... args
+/// @param[out]  err  Location where error will be saved.
+///
+/// @return Return value of the execution.
+Object executor_exec_lua_api(const String str, const Array args, Error *err)
+{
+  if (global_lstate == NULL) {
+    global_lstate = init_lua();
+  }
+
+  Object retval = NIL;
+  NLUA_CALL_C_FUNCTION_4(global_lstate, nlua_exec_lua_string_api, 0,
+                         (void *)&str, (void *)&args, &retval, err);
+  return retval;
+}
+
 
 /// Run lua string
 ///
