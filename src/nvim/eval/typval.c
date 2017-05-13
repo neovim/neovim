@@ -1210,7 +1210,8 @@ char *tv_dict_get_string(const dict_T *const d, const char *const key,
 ///
 /// @param[in]  d  Dictionary to get item from.
 /// @param[in]  key  Dictionary key.
-/// @param[in]  numbuf  Numbuf for.
+/// @param[in]  numbuf  Buffer for non-string items converted to strings, at
+///                     least of #NUMBUFLEN length.
 ///
 /// @return NULL if key does not exist, empty string in case of type error,
 ///         string item value otherwise.
@@ -1230,7 +1231,8 @@ const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key,
 /// @param[in]  d  Dictionary to get item from.
 /// @param[in]  key  Dictionary key.
 /// @param[in]  key_len  Key length.
-/// @param[in]  numbuf  Numbuf for.
+/// @param[in]  numbuf  Buffer for non-string items converted to strings, at
+///                     least of #NUMBUFLEN length.
 /// @param[in]  def  Default return when key does not exist.
 ///
 /// @return `def` when key does not exist,
