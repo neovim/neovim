@@ -196,11 +196,13 @@ int os_nodetype(const char *name)
 }
 
 /// Gets the absolute path of the currently running executable.
+/// May fail if procfs is missing. #6734
+/// @see path_exepath
 ///
-/// @param[out] buffer Returns the path string.
+/// @param[out] buffer Full path to the executable.
 /// @param[in]  size   Size of `buffer`.
 ///
-/// @return `0` on success, or libuv error code on failure.
+/// @return 0 on success, or libuv error code.
 int os_exepath(char *buffer, size_t *size)
   FUNC_ATTR_NONNULL_ALL
 {
