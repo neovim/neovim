@@ -68,7 +68,7 @@ matrix:
       compiler: clang-3.9
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
-        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUAJIT=false"
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
     - os: linux
       compiler: clang-3.9
       env: CLANG_SANITIZER=TSAN
