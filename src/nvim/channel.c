@@ -1,11 +1,13 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/event/socket.h"
+#include "nvim/fileio.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
@@ -145,6 +147,9 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
         return false;
       }
       break;
+
+    default:
+      abort();
   }
 
   return true;
@@ -180,46 +185,10 @@ static Channel *channel_alloc(ChannelStreamType type)
   return chan;
 }
 
-/// Not implemented, only logging for now
 void channel_create_event(Channel *chan, const char *ext_source)
 {
 #if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
-  const char *stream_desc;
-  const char *mode_desc;
   const char *source;
-
-  switch (chan->streamtype) {
-    case kChannelStreamProc:
-      if (chan->stream.proc.type == kProcessTypePty) {
-          stream_desc = "pty job";
-      } else {
-          stream_desc = "job";
-      }
-      break;
-
-    case kChannelStreamStdio:
-       stream_desc = "stdio";
-       break;
-
-    case kChannelStreamSocket:
-      stream_desc = "socket";
-      break;
-
-    case kChannelStreamInternal:
-      stream_desc = "socket (internal)";
-      break;
-
-    default:
-      stream_desc = "?";
-  }
-
-  if (chan->is_rpc) {
-    mode_desc = ", rpc";
-  } else if (chan->term) {
-    mode_desc = ", terminal";
-  } else {
-    mode_desc = "";
-  }
 
   if (ext_source) {
     // TODO(bfredl): in a future improved traceback solution,
@@ -230,12 +199,21 @@ void channel_create_event(Channel *chan, const char *ext_source)
     source = (const char *)IObuff;
   }
 
-  ILOG("new channel %" PRIu64 " (%s%s): %s", chan->id, stream_desc,
-       mode_desc, source);
+  Dictionary info = channel_info(chan->id);
+  typval_T tv = TV_INITIAL_VALUE;
+  // TODO(bfredl): do the conversion in one step. Also would be nice
+  // to pretty print top level dict in defined order
+  (void)object_to_vim(DICTIONARY_OBJ(info), &tv, NULL);
+  char *str = encode_tv2json(&tv, NULL);
+  ILOG("new channel %" PRIu64 " (%s) : %s", chan->id, source, str);
+  xfree(str);
+  api_free_dictionary(info);
+
 #else
-  (void)chan;
   (void)ext_source;
 #endif
+
+  channel_info_changed(chan, true);
 }
 
 void channel_incref(Channel *chan)
@@ -755,3 +733,95 @@ static void term_close(void *data)
   multiqueue_put(chan->events, term_delayed_free, 1, data);
 }
 
+void channel_info_changed(Channel *chan, bool new)
+{
+  event_T event = new ? EVENT_CHANOPEN : EVENT_CHANINFO;
+  if (has_event(event)) {
+    channel_incref(chan);
+    multiqueue_put(main_loop.events, set_info_event,
+                   2, chan, event);
+  }
+}
+
+static void set_info_event(void **argv)
+{
+  Channel *chan = argv[0];
+  event_T event = (event_T)(ptrdiff_t)argv[1];
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  Dictionary info = channel_info(chan->id);
+  typval_T retval;
+  (void)object_to_vim(DICTIONARY_OBJ(info), &retval, NULL);
+  tv_dict_add_dict(dict, S_LEN("info"), retval.vval.v_dict);
+
+  apply_autocmds(event, NULL, NULL, false, curbuf);
+
+  tv_dict_clear(dict);
+  api_free_dictionary(info);
+  channel_decref(chan);
+}
+
+Dictionary channel_info(uint64_t id)
+{
+  Channel *chan = find_channel(id);
+  if (!chan) {
+    return (Dictionary)ARRAY_DICT_INIT;
+  }
+
+  Dictionary info = ARRAY_DICT_INIT;
+  PUT(info, "id", INTEGER_OBJ((Integer)chan->id));
+
+  const char *stream_desc, *mode_desc;
+  switch (chan->streamtype) {
+    case kChannelStreamProc:
+      stream_desc = "job";
+      if (chan->stream.proc.type == kProcessTypePty) {
+        const char *name = pty_process_tty_name(&chan->stream.pty);
+        PUT(info, "pty", STRING_OBJ(cstr_to_string(name)));
+      }
+      break;
+
+    case kChannelStreamStdio:
+       stream_desc = "stdio";
+       break;
+
+    case kChannelStreamStderr:
+       stream_desc = "stderr";
+       break;
+
+    case kChannelStreamInternal:
+       PUT(info, "internal", BOOLEAN_OBJ(true));
+      // FALLTHROUGH
+
+    case kChannelStreamSocket:
+      stream_desc = "socket";
+      break;
+
+    default:
+      abort();
+  }
+  PUT(info, "stream", STRING_OBJ(cstr_to_string(stream_desc)));
+
+  if (chan->is_rpc) {
+    mode_desc = "rpc";
+    PUT(info, "client", DICTIONARY_OBJ(rpc_client_info(chan)));
+  } else if (chan->term) {
+    mode_desc = "terminal";
+    PUT(info, "buffer", BUFFER_OBJ(terminal_buf(chan->term)));
+  } else {
+    mode_desc = "bytes";
+  }
+  PUT(info, "mode", STRING_OBJ(cstr_to_string(mode_desc)));
+
+  return info;
+}
+
+Array channel_all_info(void)
+{
+  Channel *channel;
+  Array ret = ARRAY_DICT_INIT;
+  map_foreach_value(channels, channel, {
+    ADD(ret, DICTIONARY_OBJ(channel_info(channel->id)));
+  });
+  return ret;
+}

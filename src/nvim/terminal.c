@@ -619,6 +619,11 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
   }
 }
 
+Buffer terminal_buf(const Terminal *term)
+{
+  return term->buf_handle;
+}
+
 // }}}
 // libvterm callbacks {{{
 

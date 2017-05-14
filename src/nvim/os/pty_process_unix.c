@@ -115,6 +115,11 @@ error:
   return status;
 }
 
+const char *pty_process_tty_name(PtyProcess *ptyproc)
+{
+  return ptsname(ptyproc->tty_fd);
+}
+
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
