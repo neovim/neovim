@@ -417,10 +417,11 @@ static void set_highlight_args(int attr_code)
   HlAttrs rgb_attrs;
   HlAttrs cterm_attrs;
   bool result = attr2hlattr (attr_code, true, &rgb_attrs);
-  assert (result);
+  // assert (result);
   result = attr2hlattr (attr_code, false, &cterm_attrs);
-  assert (result);
+  // assert (result);
   // UI_CALL(highlight_set, attrs);
+  // TODO use ui_call_XXXX
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 

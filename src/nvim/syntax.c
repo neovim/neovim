@@ -64,7 +64,7 @@
 #include "nvim/os/time.h"
 
 static bool did_syntax_onoff = false;
-static int invalid_group_id = 0; // for now let it to 0
+static int invalid_group_id = -1; // for now let it to 0
 
 // TODO(teto) use array instead GA_EMPTY_INIT_VALUE
 static garray_T changed_highlights  = { 0, 0, sizeof(int), 10, NULL };
@@ -105,7 +105,7 @@ struct hl_group {
 // highlight groups for 'highlight' option
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
-#define MATT_HACK() { int id = syn_check_group("Normal", strlen("Normal")); assert (id == 0); }
+// #define MATT_HACK() { int id = syn_check_group("Normal", strlen("Normal")); assert (id == 0); }
 
 #define HL_TABLE() ((struct hl_group *)((highlight_ga.ga_data)))
 
@@ -3676,7 +3676,7 @@ syn_list_one (
       msg_putchar(' ');
       if (spp->sp_sync_idx >= 0)
         msg_outtrans(HL_TABLE()[SYN_ITEMS(curwin->w_s)
-                                [spp->sp_sync_idx].sp_syn.id - 1].sg_name);
+                                [spp->sp_sync_idx].sp_syn.id].sg_name);
       else
         MSG_PUTS("NONE");
       msg_putchar(' ');
@@ -3684,11 +3684,11 @@ syn_list_one (
   }
 
   /* list the link, if there is one */
-  if (HL_TABLE()[id - 1].sg_link && (did_header || link_only) && !got_int) {
+  if (HL_TABLE()[id].sg_link && (did_header || link_only) && !got_int) {
     (void)syn_list_header(did_header, 999, id);
     msg_puts_attr("links to", attr);
     msg_putchar(' ');
-    msg_outtrans(HL_TABLE()[HL_TABLE()[id - 1].sg_link - 1].sg_name);
+    msg_outtrans(HL_TABLE()[HL_TABLE()[id].sg_link - 1].sg_name);
   }
 }
 
@@ -5937,7 +5937,7 @@ static void syntime_report(void)
     MSG_PUTS(profile_msg(p->average));
     MSG_PUTS(" ");
     msg_advance(50);
-    msg_outtrans(HL_TABLE()[p->id - 1].sg_name);
+    msg_outtrans(HL_TABLE()[p->id].sg_name);
     MSG_PUTS(" ");
 
     msg_advance(69);
@@ -6107,8 +6107,9 @@ init_highlight (int both, int reset)
 
   pp = (*p_bg == 'l') ?  highlight_init_light : highlight_init_dark;
 
-  for (i = 0; pp[i] != NULL; ++i)
+  for (i = 0; pp[i] != NULL; ++i) {
     do_highlight((char_u *)pp[i], reset, TRUE);
+  }
 
   /* Reverse looks ugly, but grey may not work for 8 colors.  Thus let it
    * depend on the number of colors available.
@@ -6181,12 +6182,7 @@ int load_colors(char_u *name)
 /// "forceit" and "init" both TRUE.
 /// @param init TRUE when called for initializing
 void
-do_highlight(
-    char_u *line,
-    int forceit,
-    int init
-)
-{
+do_highlight(char_u *line, int forceit, int init) {
   char_u      *name_end;
   char_u      *linep;
   char_u      *key_start;
@@ -6211,7 +6207,7 @@ do_highlight(
    * If no argument, list current highlighting.
    */
   if (ends_excmd(*line)) {
-    for (int i = 1; i <= highlight_ga.ga_len && !got_int; ++i) {
+    for (int i = 0; i < highlight_ga.ga_len && !got_int; i++) {
       /* TODO: only call when the group has attributes set */
       highlight_list_one(i);
     }
@@ -6247,10 +6243,11 @@ do_highlight(
    */
   if (!doclear && !dolink && ends_excmd(*linep)) {
     id = syn_namen2id(line, (int)(name_end - line));
-    // if (id == 0)
-    //   EMSG2(_("E411: highlight group not found: %s"), line);
-    // else
+    if (id == invalid_group_id) {
+      EMSG2(_("E411: highlight group not found: %s"), line);
+    } else {
       highlight_list_one(id);
+    }
     return;
   }
 
@@ -6287,22 +6284,22 @@ do_highlight(
       to_id = syn_check_group(to_start, (int)(to_end - to_start));
     }
 
-    if (hl_is_valid(from_id) && (!init || HL_TABLE()[from_id - 1].sg_set == 0)) {
+    if (hl_is_valid(from_id) && (!init || HL_TABLE()[from_id].sg_set == 0)) {
       /*
        * Don't allow a link when there already is some highlighting
        * for the group, unless '!' is used
        */
       if (hl_is_valid(to_id) && !forceit && !init
-          && hl_has_settings(from_id - 1, dodefault)) {
+          && hl_has_settings(from_id, dodefault)) {
         if (sourcing_name == NULL && !dodefault) {
           EMSG(_("E414: group has settings, highlight link ignored"));
         }
       } else {
         if (!init) {
-          HL_TABLE()[from_id - 1].sg_set |= SG_LINK;
+          HL_TABLE()[from_id].sg_set |= SG_LINK;
         }
-        HL_TABLE()[from_id - 1].sg_link = to_id;
-        HL_TABLE()[from_id - 1].sg_scriptID = current_SID;
+        HL_TABLE()[from_id].sg_link = to_id;
+        HL_TABLE()[from_id].sg_scriptID = current_SID;
         redraw_all_later(SOME_VALID);
       }
     }
@@ -6345,9 +6342,9 @@ do_highlight(
    * Find the group name in the table.  If it does not exist yet, add it.
    */
   id = syn_check_group(line, (int)(name_end - line));
-  if (id == 0)                          /* failed (out of memory) */
+  if (id == invalid_group_id)                          /* failed (out of memory) */
     return;
-  idx = id - 1;                         /* index is ID minus one */
+  idx = id;
 
   /* Return if "default" was used and the group already has settings. */
   if (dodefault && hl_has_settings(idx, TRUE))
@@ -6646,7 +6643,7 @@ do_highlight(
        * When highlighting has been given for a group, don't link it.
        */
       if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK))
-        HL_TABLE()[idx].sg_link = 0;
+        HL_TABLE()[idx].sg_link = invalid_group_id;
 
       /*
        * Continue with next argument.
@@ -6658,7 +6655,7 @@ do_highlight(
   /*
    * If there is an error, and it's a new entry, remove it from the table.
    */
-  if (error && idx == highlight_ga.ga_len) {
+  if (error && idx - 1 == highlight_ga.ga_len) {
     syn_unadd_group();
     // xfree(key);
     // xfree(arg);
@@ -6683,10 +6680,10 @@ do_highlight(
   xfree(key);
   xfree(arg);
   if (!error) {
-    ILOG("changed_hl add idx=%d (array of size %d)", idx + 1, changed_highlights.ga_len);
+    ILOG("changed_hl add idx=%d (array of size %d)", idx, changed_highlights.ga_len);
 
     // if (changed_highlights.ga_len < 10) {
-    GA_APPEND(int, &changed_highlights, idx + 1);
+    GA_APPEND(int, &changed_highlights, idx);
     // }
   }
 
@@ -6758,7 +6755,7 @@ static void highlight_clear(int idx)
   HL_TABLE()[idx].sg_rgb_sp_name = NULL;
   // Clear the script ID only when there is no link, since that is not
   // cleared.
-  if (HL_TABLE()[idx].sg_link == 0) {
+  if (HL_TABLE()[idx].sg_link == invalid_group_id) {
     HL_TABLE()[idx].sg_scriptID = 0;
   }
 }
@@ -6924,7 +6921,7 @@ static void highlight_list_one(int id)
   struct hl_group     *sgp;
   int didh = FALSE;
 
-  sgp = &HL_TABLE()[id - 1];        /* index is ID minus one */
+  sgp = &HL_TABLE()[id];        /* index is ID minus one */
 
   didh = highlight_list_arg(id, didh, LIST_ATTR,
       sgp->sg_cterm, NULL, "cterm");
@@ -6947,7 +6944,7 @@ static void highlight_list_one(int id)
     didh = true;
     msg_puts_attr("links to", hl_attr(HLF_D));
     msg_putchar(' ');
-    msg_outtrans(HL_TABLE()[HL_TABLE()[id - 1].sg_link - 1].sg_name);
+    msg_outtrans(HL_TABLE()[HL_TABLE()[id].sg_link].sg_name);
   }
 
   if (!didh)
@@ -7008,14 +7005,14 @@ const char *highlight_has_attr(const int id, const int flag, const int modec)
 {
   int attr;
 
-  if (id <= 0 || id > highlight_ga.ga_len) {
+  if (hl_invalid_id(id)) {
     return NULL;
   }
 
   if (modec == 'g') {
-    attr = HL_TABLE()[id - 1].sg_gui;
+    attr = HL_TABLE()[id].sg_gui;
   } else {
-    attr = HL_TABLE()[id - 1].sg_cterm;
+    attr = HL_TABLE()[id].sg_cterm;
   }
 
   return (attr & flag) ? "1" : NULL;
@@ -7040,7 +7037,7 @@ const char *highlight_color(const int id, const char *const what,
   bool sp = false;
   bool font = false;
 
-  if (id <= 0 || id > highlight_ga.ga_len) {
+  if (hl_invalid_id(id)) {
     return NULL;
   }
 
@@ -7057,11 +7054,11 @@ const char *highlight_color(const int id, const char *const what,
   if (modec == 'g') {
     if (what[2] == '#' && ui_rgb_attached()) {
       if (fg) {
-          n = HL_TABLE()[id - 1].sg_rgb_fg;
+          n = HL_TABLE()[id].sg_rgb_fg;
       } else if (sp) {
-          n = HL_TABLE()[id - 1].sg_rgb_sp;
+          n = HL_TABLE()[id].sg_rgb_sp;
       } else {
-          n = HL_TABLE()[id - 1].sg_rgb_bg;
+          n = HL_TABLE()[id].sg_rgb_bg;
       }
       if (n < 0 || n > 0xffffff) {
         return NULL;
@@ -7070,21 +7067,21 @@ const char *highlight_color(const int id, const char *const what,
       return name;
     }
     if (fg) {
-      return (const char *)HL_TABLE()[id - 1].sg_rgb_fg_name;
+      return (const char *)HL_TABLE()[id].sg_rgb_fg_name;
     }
     if (sp) {
-      return (const char *)HL_TABLE()[id - 1].sg_rgb_sp_name;
+      return (const char *)HL_TABLE()[id].sg_rgb_sp_name;
     }
-    return (const char *)HL_TABLE()[id - 1].sg_rgb_bg_name;
+    return (const char *)HL_TABLE()[id].sg_rgb_bg_name;
   }
   if (font || sp) {
     return NULL;
   }
   if (modec == 'c') {
     if (fg) {
-      n = HL_TABLE()[id - 1].sg_cterm_fg - 1;
+      n = HL_TABLE()[id].sg_cterm_fg;
     } else {
-      n = HL_TABLE()[id - 1].sg_cterm_bg - 1;
+      n = HL_TABLE()[id].sg_cterm_bg;
     }
     if (n < 0) {
       return NULL;
@@ -7100,7 +7097,7 @@ const char *highlight_color(const int id, const char *const what,
  * Output the syntax list header.
  * Return TRUE when started a new line.
  */
-static int 
+static int
 syn_list_header (
     int did_header,                 /* did header already */
     int outlen,                     /* length of string that comes */
@@ -7114,7 +7111,7 @@ syn_list_header (
     msg_putchar('\n');
     if (got_int)
       return TRUE;
-    msg_outtrans(HL_TABLE()[id - 1].sg_name);
+    msg_outtrans(HL_TABLE()[id].sg_name);
     endcol = 15;
   } else if (msg_col + outlen + 1 >= Columns)   {
     msg_putchar('\n');
@@ -7168,9 +7165,10 @@ set_hl_attr (int hl_id)
   attrentry_T at_en;
   struct hl_group     *sgp = HL_TABLE() + hl_id;
 
-  /* The "Normal" group doesn't need an attribute number */
-  if (sgp->sg_name_u != NULL && STRCMP(sgp->sg_name_u, "NORMAL") == 0)
+  // The "Normal" group doesn't need an attribute number
+  if (sgp->sg_name_u != NULL && STRCMP(sgp->sg_name_u, "NORMAL") == 0) {
     return;
+  }
 
   at_en = hl2attr(hl_id);
 
@@ -7194,16 +7192,22 @@ int syn_name2id(const char_u *name)
   int i;
   char_u name_u[200];
 
+  ILOG("Looking for group %s", name);
   /* Avoid using stricmp() too much, it's slow on some systems */
   /* Avoid alloc()/free(), these are slow too.  ID names over 200 chars
    * don't deserve to be found! */
   STRLCPY(name_u, name, 200);
   vim_strup(name_u);
-  for (i = highlight_ga.ga_len; --i >= 0; )
+  for (i = highlight_ga.ga_len; --i >= 0; ) {
     if (HL_TABLE()[i].sg_name_u != NULL
-        && STRCMP(name_u, HL_TABLE()[i].sg_name_u) == 0)
-      break;
-  return i + 1;
+        && STRCMP(name_u, HL_TABLE()[i].sg_name_u) == 0) {
+      ILOG("Match found with id %d", i);
+
+      return i;
+    }
+  }
+  ILOG("Group %s not found", name);
+  return invalid_group_id;
 }
 
 /*
@@ -7211,7 +7215,7 @@ int syn_name2id(const char_u *name)
  */
 int highlight_exists(const char_u *name)
 {
-  return syn_name2id(name) > 0;
+  return hl_is_valid(syn_name2id(name));
 }
 
 /*
@@ -7220,9 +7224,9 @@ int highlight_exists(const char_u *name)
  */
 char_u *syn_id2name(int id)
 {
-  if (id <= 0 || id > highlight_ga.ga_len)
+  if (hl_invalid_id(id))
     return (char_u *)"";
-  return HL_TABLE()[id - 1].sg_name;
+  return HL_TABLE()[id].sg_name;
 }
 
 /*
@@ -7250,7 +7254,9 @@ int syn_check_group(char_u *pp, int len)
 
   // HACK we need to make sure that the first highlight is the "Normal" hl
   if (highlight_ga.ga_len == 0) {
-    syn_add_group("NORMAL");
+    ILOG("Adding NORMAL group");
+    int res = syn_add_group("NORMAL");
+    assert(res == 0);
   }
 
   int id = syn_name2id(name);
@@ -7276,7 +7282,7 @@ static int syn_add_group(char_u *name)
     if (!vim_isprintc(*p)) {
       EMSG2(_("E669: Unprintable character in group name %s"), name);
       xfree(name);
-      return 0;
+      return invalid_group_id;
     } else if (!ASCII_ISALNUM(*p) && *p != '_')   {
       /* This is an error, but since there previously was no check only
        * give a warning. */
@@ -7306,9 +7312,9 @@ static int syn_add_group(char_u *name)
   hlgp->sg_name = name;
   hlgp->sg_name_u = vim_strsave_up(name);
 
-  ILOG("Adding group name %s as id %d", name, highlight_ga.ga_len);
+  ILOG("Adding group name %s as id %d", name, highlight_ga.ga_len-1);
 
-  return highlight_ga.ga_len;               /* ID is index plus one */
+  return highlight_ga.ga_len-1;
 }
 
 /// When, just after calling syn_add_group(), an error is discovered, this
@@ -7328,7 +7334,7 @@ int syn_id2attr(int hl_id)
   struct hl_group     *sgp;
 
   hl_id = syn_get_final_id(hl_id);
-  sgp = &HL_TABLE()[hl_id - 1];             /* index is ID minus one */
+  sgp = &HL_TABLE()[hl_id];             /* index is ID minus one */
   return sgp->sg_attr;
 }
 
@@ -7337,7 +7343,7 @@ bool hl_is_valid (int hl_id) {
 }
 bool hl_invalid_id (int hl_id) {
   // TODO adjust when setting invalid_group_id to -1
-  return (hl_id > highlight_ga.ga_len || hl_id <= invalid_group_id);
+  return (hl_id >= highlight_ga.ga_len || hl_id <= invalid_group_id);
 }
 
 /// Translate a group ID to the final group ID (following links).
@@ -7357,8 +7363,8 @@ int syn_get_final_id(int hl_id)
    * Look out for loops!  Break after 100 links.
    */
   for (count = 100; --count >= 0; ) {
-    sgp = &HL_TABLE()[hl_id - 1];           /* index is ID minus one */
-    if (sgp->sg_link == 0 || sgp->sg_link > highlight_ga.ga_len)
+    sgp = &HL_TABLE()[hl_id];
+    if (hl_invalid_id(sgp->sg_link))
       break;
     hl_id = sgp->sg_link;
   }
@@ -7450,28 +7456,28 @@ void highlight_changed(void)
       hlt[hlcnt + i].sg_link = 0;
 
       /* Apply difference between UserX and HLF_S to HLF_SNC */
-      hlt[hlcnt + i].sg_cterm ^= hlt[id - 1].sg_cterm ^ hlt[id_S - 1].sg_cterm;
+      hlt[hlcnt + i].sg_cterm ^= hlt[id].sg_cterm ^ hlt[id_S].sg_cterm;
 
-      if (hlt[id - 1].sg_cterm_fg != hlt[id_S - 1].sg_cterm_fg) {
-        hlt[hlcnt + i].sg_cterm_fg = hlt[id - 1].sg_cterm_fg;
+      if (hlt[id].sg_cterm_fg != hlt[id_S].sg_cterm_fg) {
+        hlt[hlcnt + i].sg_cterm_fg = hlt[id].sg_cterm_fg;
       }
 
-      if (hlt[id - 1].sg_cterm_bg != hlt[id_S - 1].sg_cterm_bg) {
-        hlt[hlcnt + i].sg_cterm_bg = hlt[id - 1].sg_cterm_bg;
+      if (hlt[id].sg_cterm_bg != hlt[id_S].sg_cterm_bg) {
+        hlt[hlcnt + i].sg_cterm_bg = hlt[id].sg_cterm_bg;
       }
 
-      hlt[hlcnt + i].sg_gui ^= hlt[id - 1].sg_gui ^ hlt[id_S - 1].sg_gui;
+      hlt[hlcnt + i].sg_gui ^= hlt[id].sg_gui ^ hlt[id_S].sg_gui;
 
-      if (hlt[id - 1].sg_rgb_fg != hlt[id_S - 1].sg_rgb_fg) {
-        hlt[hlcnt + i].sg_rgb_fg = hlt[id - 1].sg_rgb_fg;
+      if (hlt[id].sg_rgb_fg != hlt[id_S].sg_rgb_fg) {
+        hlt[hlcnt + i].sg_rgb_fg = hlt[id].sg_rgb_fg;
       }
 
-      if (hlt[id - 1].sg_rgb_bg != hlt[id_S - 1].sg_rgb_bg) {
-        hlt[hlcnt + i].sg_rgb_bg = hlt[id - 1].sg_rgb_bg;
+      if (hlt[id].sg_rgb_bg != hlt[id_S].sg_rgb_bg) {
+        hlt[hlcnt + i].sg_rgb_bg = hlt[id].sg_rgb_bg;
       }
 
-      if (hlt[id - 1].sg_rgb_sp != hlt[id_S - 1].sg_rgb_sp) {
-        hlt[hlcnt + i].sg_rgb_sp = hlt[id - 1].sg_rgb_sp;
+      if (hlt[id].sg_rgb_sp != hlt[id_S].sg_rgb_sp) {
+        hlt[hlcnt + i].sg_rgb_sp = hlt[id].sg_rgb_sp;
       }
 
       highlight_ga.ga_len = hlcnt + i + 1;

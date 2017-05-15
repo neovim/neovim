@@ -95,7 +95,7 @@ Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
   /// OLDVERSION
 
   ILOG ("found attr=%d for hl_id=%d res=%d", attrcode, hl_id, res);
-  if (!hl_is_valid(hl_id)) {
+  if (hl_invalid_id(hl_id)) {
     api_set_error(err, kErrorTypeException, "Invalid highlight id");
     return dic;
   }
