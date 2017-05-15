@@ -2265,7 +2265,7 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
     do {
       const char *dir;
       size_t dir_len;
-      iter = vim_colon_env_iter(path, iter, &dir, &dir_len);
+      iter = vim_env_iter(ENV_SEPCHAR, path, iter, &dir, &dir_len);
       if (dir == NULL || dir_len == 0) {
         break;
       }

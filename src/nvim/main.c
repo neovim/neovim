@@ -1685,7 +1685,7 @@ static bool do_user_initialization(void)
     do {
       const char *dir;
       size_t dir_len;
-      iter = vim_colon_env_iter(config_dirs, iter, &dir, &dir_len);
+      iter = vim_env_iter(':', config_dirs, iter, &dir, &dir_len);
       if (dir == NULL || dir_len == 0) {
         break;
       }
