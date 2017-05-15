@@ -3120,82 +3120,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Think twice when using ":q!" or ":qa!".
 
 						*'highlight'* *'hl'*
-'highlight' 'hl'	string	(default: string of "c:group,..." pairs)
+'highlight' 'hl'	Removed. |vim-differences|
 			global
-	This option can be used to set highlighting mode for various
-	occasions.  It is a comma separated list of character pairs.  The
-	first character in a pair gives the occasion, the second the mode to
-	use for that occasion.  The occasions are:
-	|hl-SpecialKey|	 8  Meta and special keys listed with ":map"
-	|hl-Whitespace|	 0
-	|hl-EndOfBuffer|   ~  lines after the last line in the buffer
-	|hl-NormalNC|	 I  non-current ("inactive") window
-	|hl-TermCursor|	 z  Cursor in a focused terminal
-	|hl-TermCursorNC|  Z Cursor in an unfocused terminal
-	|hl-NonText|	 @  '@' at the end of the window and
-			    characters from 'showbreak'
-	|hl-Directory|	 d  directories in CTRL-D listing and other special
-			    things in listings
-	|hl-ErrorMsg|	 e  error messages
-	|hl-IncSearch|	 i  'incsearch' highlighting
-	|hl-Search|	 l  last search pattern highlighting (see 'hlsearch')
-	|hl-MoreMsg|	 m  |more-prompt|
-	|hl-ModeMsg|	 M  Mode (e.g., "-- INSERT --")
-	|hl-LineNr|	 n  line number for ":number" and ":#" commands, and
-			    when 'number' or 'relativenumber' option is set.
-	|hl-CursorLineNr|  N like n for when 'cursorline' or 'relativenumber' is
-			    set.
-	|hl-Question|	 r  |hit-enter| prompt and yes/no questions
-	|hl-StatusLine|	 s  status line of current window |status-line|
-	|hl-StatusLineNC|  S  status lines of not-current windows
-	|hl-Title|	 t  Titles for output from ":set all", ":autocmd" etc.
-	|hl-VertSplit|	 c  column used to separate vertically split windows
-	|hl-Visual|	 v  Visual mode
-	|hl-WarningMsg|	 w  warning messages
-	|hl-WildMenu|	 W  wildcard matches displayed for 'wildmenu'
-	|hl-Folded|	 f  line used for closed folds
-	|hl-FoldColumn|	 F  'foldcolumn'
-	|hl-DiffAdd|	 A  added line in diff mode
-	|hl-DiffChange|	 C  changed line in diff mode
-	|hl-DiffDelete|	 D  deleted line in diff mode
-	|hl-DiffText|	 T  inserted text in diff mode
-	|hl-SignColumn|	 >  column used for |signs|
-	|hl-SpellBad|	 B  misspelled word |spell|
-	|hl-SpellCap|	 P  word that should start with capital |spell|
-	|hl-SpellRare|	 R  rare word |spell|
-	|hl-SpellLocal|	 L  word from other region |spell|
-	|hl-Conceal|	 -  the placeholders used for concealed characters
-			    (see 'conceallevel')
-	|hl-Pmenu|       +  popup menu normal line
-	|hl-PmenuSel|    =  popup menu normal line
-	|hl-PmenuSbar|   x  popup menu scrollbar
-	|hl-PmenuThumb|  X  popup menu scrollbar thumb
-
-	|hl-TabLine|	 *
-	|hl-TabLineFill|   _
-	|hl-TabLineSel|    #
-
-	|hl-ColorColumn|   o
-	|hl-CursorColumn|  !
-	|hl-CursorLine|    .
-	|hl-QuickFixLine|  q
-
-	The display modes are:
-		r	reverse		(termcap entry "mr" and "me")
-		i	italic		(termcap entry "ZH" and "ZR")
-		b	bold		(termcap entry "md" and "me")
-		s	standout	(termcap entry "so" and "se")
-		u	underline	(termcap entry "us" and "ue")
-		c	undercurl	(termcap entry "Cs" and "Ce")
-		n	no highlighting
-		-	no highlighting
-		:	use a highlight group
-	The default is used for occasions that are not included.
-	When using the ':' display mode, this must be followed by the name of
-	a highlight group.  A highlight group can be used to define any type
-	of highlighting, including using color.  See |:highlight| on how to
-	define one.  The default uses a different group for each occasion.
-	See |highlight-default| for the default highlight groups.
+	The builtin |highlight-groups| cannot be changed.
 
 				 *'hlsearch'* *'hls'* *'nohlsearch'* *'nohls'*
 'hlsearch' 'hls'	boolean	(default on)

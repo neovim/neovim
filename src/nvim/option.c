@@ -247,7 +247,7 @@ typedef struct vimoption {
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
   "d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr," \
   "N:CursorLineNr,r:Question,s:StatusLine,S:StatusLineNC,c:VertSplit,t:Title," \
-  "v:Visual,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn," \
+  "v:Visual,V:VisualNOS,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn," \
   "A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal," \
   "B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel," \
   "x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill," \
@@ -2124,7 +2124,7 @@ static void didset_options(void)
 static void didset_options2(void)
 {
   // Initialize the highlight_attr[] table.
-  (void)highlight_changed();
+  highlight_changed();
 
   // Parse default for 'clipboard'.
   (void)opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
@@ -2538,11 +2538,11 @@ did_set_string_option (
       if (s[2] == NUL)
         break;
     }
-  }
-  /* 'highlight' */
-  else if (varp == &p_hl) {
-    if (highlight_changed() == FAIL)
-      errmsg = e_invarg;        /* invalid flags */
+  } else if (varp == &p_hl) {
+    // 'highlight'
+    if (strcmp((char *)(*varp), HIGHLIGHT_INIT) != 0) {
+      errmsg = e_unsupportedoption;
+    }
   }
   /* 'nrformats' */
   else if (gvarp == &p_nf) {
@@ -2639,7 +2639,7 @@ did_set_string_option (
       if (varp == &p_enc) {
         // only encoding=utf-8 allowed
         if (STRCMP(p_enc, "utf-8") != 0) {
-          errmsg = e_invarg;
+          errmsg = e_unsupportedoption;
         }
       }
     }
@@ -3207,8 +3207,6 @@ did_set_string_option (
      */
     if (did_chartab)
       (void)init_chartab();
-    if (varp == &p_hl)
-      (void)highlight_changed();
   } else {
     /* Remember where the option was set. */
     set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
@@ -4825,17 +4823,6 @@ char *set_option_value(const char *const name, const long number,
     }
   }
   return NULL;
-}
-
-char_u *get_highlight_default(void)
-{
-  int i;
-
-  i = findoption("hl");
-  if (i >= 0) {
-    return options[i].def_val[VI_DEFAULT];
-  }
-  return (char_u *)NULL;
 }
 
 /*

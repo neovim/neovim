@@ -107,8 +107,10 @@ Options:
   'cpoptions' flags: |cpo-_|
   'guicursor' works in the terminal
   'inccommand' shows interactive results for |:substitute|-like commands
+  'scrollback'
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
+  'winhighlight' window-local highlights
 
 Variables:
   |v:event|
@@ -291,9 +293,6 @@ MS-DOS support:
   'bioskey'
   'conskey'
 
-Highlight groups:
-  |hl-VisualNOS|
-
 Test functions:
   test_alloc_fail()
   test_autochdir()
@@ -314,6 +313,7 @@ Other options:
   'esckeys'
   'guioptions' "t" flag was removed
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
+  'highlight' (the builtin |highlight-groups| cannot be changed)
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*

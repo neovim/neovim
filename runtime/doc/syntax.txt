@@ -4849,10 +4849,9 @@ guisp={color-name}					*highlight-guisp*
   :highlight Comment guifg=#11f0c3 guibg=#ff00ff
 <
 					*highlight-groups* *highlight-default*
-These are the default highlighting groups.  These groups are used by the
-'highlight' option default.  Note that the highlighting depends on the value
-of 'background'.  You can see the current settings with the ":highlight"
-command.
+These are the builtin highlighting groups.  Note that the highlighting depends
+on the value of 'background'.  You can see the current settings with the
+":highlight" command.
 							*hl-ColorColumn*
 ColorColumn	used for the columns set with 'colorcolumn'
 							*hl-Conceal*
@@ -4973,6 +4972,8 @@ TabLineSel	tab pages line, active tab page label
 Title		titles for output from ":set all", ":autocmd" etc.
 							*hl-Visual*
 Visual		Visual mode selection
+ 							*hl-VisualNOS*
+VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
 							*hl-WarningMsg*
 WarningMsg	warning messages
 							*hl-Whitespace*
