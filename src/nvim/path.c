@@ -2237,3 +2237,50 @@ int path_is_absolute_path(const char_u *fname)
   return *fname == '/' || *fname == '~';
 #endif
 }
+
+/// Builds a full path from an invocation name `argv0`, based on heuristics.
+///
+/// @param[in]  argv0     Name by which Nvim was invoked.
+/// @param[out] buf       Guessed full path to `argv0`.
+/// @param[in]  bufsize   Size of `buf`.
+///
+/// @see os_exepath
+void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char *path = getenv("PATH");
+
+  if (path == NULL || path_is_absolute_path((char_u *)argv0)) {
+    xstrlcpy(buf, argv0, bufsize);
+  } else if (argv0[0] == '.' || strchr(argv0, PATHSEP)) {
+    // Relative to CWD.
+    if (os_dirname((char_u *)buf, MAXPATHL) != OK) {
+      buf[0] = NUL;
+    }
+    xstrlcat(buf, PATHSEPSTR, bufsize);
+    xstrlcat(buf, argv0, bufsize);
+  } else {
+    // Search $PATH for plausible location.
+    const void *iter = NULL;
+    do {
+      const char *dir;
+      size_t dir_len;
+      iter = vim_env_iter(ENV_SEPCHAR, path, iter, &dir, &dir_len);
+      if (dir == NULL || dir_len == 0) {
+        break;
+      }
+      if (dir_len + 1 > sizeof(NameBuff)) {
+        continue;
+      }
+      xstrlcpy((char *)NameBuff, dir, dir_len + 1);
+      xstrlcat((char *)NameBuff, PATHSEPSTR, sizeof(NameBuff));
+      xstrlcat((char *)NameBuff, argv0, sizeof(NameBuff));
+      if (os_can_exe(NameBuff, NULL, false)) {
+        xstrlcpy(buf, (char *)NameBuff, bufsize);
+        return;
+      }
+    } while (iter != NULL);
+    // Not found in $PATH, fall back to argv0.
+    xstrlcpy(buf, argv0, bufsize);
+  }
+}

@@ -13,7 +13,7 @@ require('lfs')
 
 local cimp = cimport('./src/nvim/os/os.h')
 
-describe('env function', function()
+describe('env.c', function()
   local function os_setenv(name, value, override)
     return cimp.os_setenv(to_cstr(name), to_cstr(value), override)
   end

@@ -1223,7 +1223,8 @@ static void init_path(char *exename)
   size_t exepathlen = MAXPATHL;
   // Make v:progpath absolute.
   if (os_exepath(exepath, &exepathlen) != 0) {
-    EMSG2(e_intern2, "init_path()");
+    // Fall back to argv[0]. Missing procfs? #6734
+    path_guess_exepath(exename, exepath, sizeof(exepath));
   }
   set_vim_var_string(VV_PROGPATH, exepath, -1);
   set_vim_var_string(VV_PROGNAME, (char *)path_tail((char_u *)exename), -1);
@@ -1684,7 +1685,7 @@ static bool do_user_initialization(void)
     do {
       const char *dir;
       size_t dir_len;
-      iter = vim_colon_env_iter(config_dirs, iter, &dir, &dir_len);
+      iter = vim_env_iter(':', config_dirs, iter, &dir, &dir_len);
       if (dir == NULL || dir_len == 0) {
         break;
       }

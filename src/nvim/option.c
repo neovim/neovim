@@ -341,7 +341,7 @@ static inline size_t compute_double_colon_len(const char *const val,
   do {
     size_t dir_len;
     const char *dir;
-    iter = vim_colon_env_iter(val, iter, &dir, &dir_len);
+    iter = vim_env_iter(':', val, iter, &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
       ret += ((dir_len + memcnt(dir, ',', dir_len) + common_suf_len
                + !after_pathsep(dir, dir + dir_len)) * 2
@@ -385,8 +385,8 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
   do {
     size_t dir_len;
     const char *dir;
-    iter = (forward ? vim_colon_env_iter : vim_colon_env_iter_rev)(
-        val, iter, &dir, &dir_len);
+    iter = (forward ? vim_env_iter : vim_env_iter_rev)(':', val, iter, &dir,
+                                                       &dir_len);
     if (dir != NULL && dir_len > 0) {
       dest = strcpy_comma_escaped(dest, dir, dir_len);
       if (!after_pathsep(dest - 1, dest)) {
