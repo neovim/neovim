@@ -2306,12 +2306,7 @@ void putcmdline(int c, int shift)
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     msg_no_more = FALSE;
   } else {
-    Dictionary update = ARRAY_DICT_INIT;
-    PUT(update, "type",  STRING_OBJ(cstr_to_string("char")));
-    PUT(update, "char",  STRING_OBJ(cchar_to_string((char)(c))));
-    PUT(update, "shift", INTEGER_OBJ(shift));
-    PUT(update, "level", INTEGER_OBJ(ccline.level));
-    ui_call_cmdline_update(update);
+    ui_call_cmdline_char(cchar_to_string((char)(c)), shift, ccline.level);
   }
   cursorcmd();
   ui_cursor_shape();
@@ -2739,11 +2734,7 @@ static void cursorcmd(void)
     return;
 
   if (ui_is_external(kUICmdline)) {
-    Dictionary update = ARRAY_DICT_INIT;
-    PUT(update, "type",  STRING_OBJ(cstr_to_string("pos")));
-    PUT(update, "pos", INTEGER_OBJ(ccline.cmdpos));
-    PUT(update, "level", INTEGER_OBJ(ccline.level));
-    ui_call_cmdline_update(update);
+    ui_call_cmdline_pos(ccline.cmdpos, ccline.level);
     return;
   }
 
