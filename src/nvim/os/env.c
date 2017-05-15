@@ -634,18 +634,17 @@ char *vim_getenv(const char *name)
     char exe_name[MAXPATHL];
     // Find runtime path relative to the nvim binary: ../share/nvim/runtime
     if (vim_path == NULL) {
-      size_t exe_name_len = MAXPATHL;
-      if (os_exepath(exe_name, &exe_name_len) == 0) {
-        char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
-        *path_end = '\0';  // remove the trailing "nvim.exe"
-        path_end = (char *)path_tail((char_u *)exe_name);
-        *path_end = '\0';  // remove the trailing "bin/"
-        if (append_path(
-            exe_name,
-            "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
-            MAXPATHL) == OK) {
-          vim_path = exe_name;  // -V507
-        }
+      xstrlcpy(exe_name, (char *)get_vim_var_str(VV_PROGPATH),
+               sizeof(exe_name));
+      char *path_end = (char *)path_tail_with_sep((char_u *)exe_name);
+      *path_end = '\0';  // remove the trailing "nvim.exe"
+      path_end = (char *)path_tail((char_u *)exe_name);
+      *path_end = '\0';  // remove the trailing "bin/"
+      if (append_path(
+          exe_name,
+          "share" _PATHSEPSTR "nvim" _PATHSEPSTR "runtime" _PATHSEPSTR,
+          MAXPATHL) == OK) {
+        vim_path = exe_name;  // -V507
       }
     }
 
