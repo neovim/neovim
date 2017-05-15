@@ -83,7 +83,6 @@ typedef struct {
   bool mouse_enabled;
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
-  // HlAttrs cursor_attrs[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
   ModeShape showing_mode;
   TermType term;
@@ -473,7 +472,7 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
 }
 
 // if the cursor should be visible according to guicursor
-static bool cursor_visible (void)
+static bool cursor_visible(void)
 {
   return cursor_bg != -1;
 }
@@ -624,13 +623,11 @@ static void tui_set_mode(UI *ui, ModeShape mode)
 
   // update cursor colors
   if (c.id != 0) {
-    // HlAttrs attr = data->cursor_attrs[mode];
     int attr = syn_id2attr(c.id);
     if (attr > 0) {
       attrentry_T *aep = syn_cterm_attr2entry(attr);
-      cursor_bg = aep->rgb_bg_color; // todo depends on rgb
-    }
-    else {
+      cursor_bg = aep->rgb_bg_color;
+    } else {
       cursor_bg = -1;
     }
 
@@ -856,37 +853,11 @@ static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
   ILOG("tui_event [%s]", name);
 
   if (STRCMP(name, "highlights") == 0) {
-
     ILOG("Received hl update ");
-    // for (size_t i = 0; i < args.size; i++) {
-    //   // assert(args.items[i].type == kObjectTypeInteger);
-    //   if (args.items[i].type == kObjectTypeDictionary) {
-    //     Dictionary d = args.items[i].data.dictionary;
-    //     for (size_t i = 0; i < d.size; i++) {
-    //       char *key = d.items[i].key.data;
-    //       Object value = d.items[i].value;
-
-// //           if (strequal(key, "hl_id")) {
-// //             ModeShape mode;
-// //             int hl_id = (int)value.data.integer;
-// //             ILOG("Retrieved ID %d", hl_id);
-    //         // if (map_hlid_to_mode (data->cursor_shapes, hl_id, &mode)) {
-    //         //   data->cursor_attrs[mode] = decode_hl_entry(d);
-    //         //   // TODO refresh cursor
-    //         //   ILOG("Mapped to a cursor !!!!");
-    //         //   tui_set_mode (ui, data->showing_mode);
-    //         // }
-    //       // }
-    //     }
-
-    //   }
-    // }
   } else if (STRCMP(name, "refresh_cursor") == 0) {
     ILOG("refreshing cursor");
-    tui_set_mode (ui, data->showing_mode);
+    tui_set_mode(ui, data->showing_mode);
   }
-
-
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)

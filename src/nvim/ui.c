@@ -33,7 +33,6 @@
 #include "nvim/syntax.h"
 #include "nvim/window.h"
 #include "nvim/cursor_shape.h"
-#include "nvim/syntax.h"
 #include "nvim/api/vim.h"
 #ifdef FEAT_TUI
 # include "nvim/tui/tui.h"
@@ -137,10 +136,8 @@ bool ui_active(void)
 void ui_event(char *name, Array args)
 {
   bool args_consumed = false;
-  ILOG("%d uis active", ui_count);
   UI_CALL(event, name, args, &args_consumed);
-  // && ui_count
-  if (!args_consumed ) {
+  if (!args_consumed) {
     api_free_array(args);
   }
 }
@@ -191,7 +188,7 @@ void ui_notify_changed_highlights(garray_T changed_highlights)
   // we might want to send batchs instead
   // + save current hl_id value to restore it later
   // for backwards compatibility
-  ILOG ("%d changed highlights", changed_highlights.ga_len);
+  ILOG("%d changed highlights", changed_highlights.ga_len);
   Array args = ARRAY_DICT_INIT;
   Error err;
   bool refresh_cursor = false;
@@ -209,7 +206,7 @@ void ui_notify_changed_highlights(garray_T changed_highlights)
     ui_event("highlights", (args));
   }
 
-  if(refresh_cursor) {
+  if (refresh_cursor) {
     ILOG("updating cursor !");
     Array temp = ARRAY_DICT_INIT;
     ui_event("refresh_cursor", temp);
@@ -416,12 +413,12 @@ static void set_highlight_args(int attr_code)
 {
   HlAttrs rgb_attrs;
   HlAttrs cterm_attrs;
-  bool result = attr2hlattr (attr_code, true, &rgb_attrs);
-  // assert (result);
-  result = attr2hlattr (attr_code, false, &cterm_attrs);
-  // assert (result);
+  bool result = attr2hlattr(attr_code, true, &rgb_attrs);
+  assert(result);
+  result = attr2hlattr(attr_code, false, &cterm_attrs);
+  assert(result);
   // UI_CALL(highlight_set, attrs);
-  // TODO use ui_call_XXXX
+  // TODO(matt): use ui_call_XXXX
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 

@@ -2828,6 +2828,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :highlight Cursor gui=reverse guifg=NONE guibg=NONE
 	    :highlight Cursor gui=NONE guifg=bg guibg=fg
 <
+
+
+Terminal support
+                |shape | color | transparency | reverse
+                |______________________________________
+vte-based (> 0) |      |
+iterm           |
+konsole         |
+
 					*'guifont'* *'gfn'*
 						   *E235* *E596*
 'guifont' 'gfn'		string	(default "")

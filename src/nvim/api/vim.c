@@ -63,12 +63,12 @@ Dictionary nvim_hl_from_name(String name, Error *err)
   FUNC_API_SINCE(2)
 {
   Dictionary result;
-  int id = syn_name2id ((const char_u *)name.data);
-  ILOG ("found id=%d", id);
+  int id = syn_name2id((const char_u *)name.data);
+  ILOG("found id=%d", id);
 
-  // !hl_is_valid(id)
-  if (id < 0) {
-    api_set_error(err, kErrorTypeException, "Invalid highlight name");
+  if (hl_invalid_id(id)) {
+    api_set_error(err, kErrorTypeException, "Invalid highlight name %s",
+                  name.data);
     return result;
   }
   result = nvim_hl_from_id(id, err);
@@ -85,18 +85,18 @@ Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
 {
   HlAttrs attrs;
   Dictionary dic = ARRAY_DICT_INIT;
-  attrentry_T attr;
+  // attrentry_T attr;
 
   PUT(dic, "hl_id", INTEGER_OBJ(hl_id));
 
   /// OLDVERSION
   int attrcode = syn_id2attr((int)hl_id);
-  bool res = attr2hlattr (attrcode, true, &attrs);
+  bool res = attr2hlattr(attrcode, true, &attrs);
   /// OLDVERSION
 
-  ILOG ("found attr=%d for hl_id=%d res=%d", attrcode, hl_id, res);
-  if (hl_invalid_id(hl_id)) {
-    api_set_error(err, kErrorTypeException, "Invalid highlight id");
+  ILOG("found attr=%d for hl_id=%d res=%d", attrcode, hl_id, res);
+  if (hl_invalid_id((int)hl_id)) {
+    api_set_error(err, kErrorTypeException, "Invalid highlight id %d", hl_id);
     return dic;
   }
   /// NEWVERSION
@@ -105,7 +105,7 @@ Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
   // bool res = attrentry2hlattr (attr, true, &attrs);
   /// NEWVERSION
   if (res) {
-    dic = attr2dic (attrs);
+    dic = attr2dic(attrs);
   }
   return (dic);
 }
@@ -120,14 +120,10 @@ Object nvim_hl_get_list(Array highlights, Error *err)
   Array args = ARRAY_DICT_INIT;
   for (size_t i = 0; i < highlights.size; i++) {
     int hl_id;
-    // ADD(my_args, copy_object(args.items[i]));
     if (highlights.items[i].type == kObjectTypeString) {
-      // convert string to hl id
-       hl_id = syn_name2id ((const char_u *)highlights.items[i].data.string.data);
-    }
-    else if (highlights.items[i].type != kObjectTypeInteger) {
+      hl_id = syn_name2id((const char_u *)highlights.items[i].data.string.data);
+    } else if (highlights.items[i].type != kObjectTypeInteger) {
       api_set_error(err, kErrorTypeException, "Expecting integer or string");
-      // continue;
       return ARRAY_OBJ(args);;
     } else {
       hl_id = (int)highlights.items[i].data.integer;
@@ -142,15 +138,7 @@ Object nvim_hl_get_list(Array highlights, Error *err)
     if (!err) {
       return ARRAY_OBJ(args);
     }
-    // HlAttrs attrs;
-    // bool res = attr2hlattr (attr, true, &attrs);
-    // if (res) {
-    //   Dictionary dic = attr2dic (attrs);
-    //   PUT(dic, "hl_id", INTEGER_OBJ(hl_id));
     ADD(args, DICTIONARY_OBJ(dic));
-    // }
-
-    // GA_APPEND(int, &ui->subscribed_highlights, id);
   }
   return ARRAY_OBJ(args);
 }

@@ -85,7 +85,8 @@ bool try_end(Error *err)
   return ERROR_SET(err);
 }
 
-bool attr2hlattr(int attr_code, bool use_rgb, HlAttrs *out) {
+bool attr2hlattr(int attr_code, bool use_rgb, HlAttrs *out)
+{
   HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
   if (attr_code == HL_NORMAL) {
     ILOG("HL_NORMAL");
@@ -96,10 +97,9 @@ bool attr2hlattr(int attr_code, bool use_rgb, HlAttrs *out) {
   return attrentry2hlattr(aep, use_rgb, out);
 }
 
-/// @param[out] out 
-bool attrentry2hlattr (attrentry_T *aep, bool use_rgb, HlAttrs *out)
+bool attrentry2hlattr(attrentry_T *aep, bool use_rgb, HlAttrs *out)
 {
-  assert (out);
+  assert(out);
 
   HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
   int mask = 0;
@@ -148,7 +148,7 @@ bool attrentry2hlattr (attrentry_T *aep, bool use_rgb, HlAttrs *out)
   return true;
 }
 
-Dictionary attr2dic (HlAttrs attrs)
+Dictionary attr2dic(HlAttrs attrs)
 {
   Dictionary hl = ARRAY_DICT_INIT;
 

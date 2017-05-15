@@ -3,10 +3,12 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
+local feed, insert = helpers.feed, helpers.insert
 local command = helpers.command
 local eval, exc_exec = helpers.eval, helpers.exc_exec
 local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
+local ok = helpers.ok
+local meths = helpers.meths
 
 
 describe('highlight api', function()
@@ -20,7 +22,7 @@ describe('highlight api', function()
     clear()
     -- screen = Screen.new(20,5)
     -- screen:attach()
-    --syntax highlight for vimcscripts "echo"
+    -- syntax highlight for vimcscripts "echo"
     -- screen:set_default_attr_ids( {
     --   [0] = {bold=true, foreground=Screen.colors.Blue},
     --   [1] = {bold=true, foreground=Screen.colors.Brown}
@@ -38,12 +40,21 @@ describe('highlight api', function()
     -- eval('nvim_hl_from_id(47)')
     -- nvim_async
     --
-    local cursor_expected_hl = {Screen.colors.Yellow, foreground = Screen.colors.Red}
+    local cursor_expected = {Screen.colors.Yellow, foreground = Screen.colors.Red}
+    -- local cursor_expected = {Screen.colors.Yellow, foreground = Screen.colors.Red}
 
     -- feed_command('hi! Cursor guifg=red guibg=yellow guisp=red')
     local cursor_from_name_res = nvim("hl_from_name", 'Normal')
     -- local cursor_from_id_res = eval('nvim_hl_from_id(47)')
-    eq(cursor_expected_hl, cursor_from_name_res)
+    eq(nvim("hl_from_name", 'Normal'), {})
+    local err, emsg = pcall(meths.hl_from_name , 'unknown_highlight')
+    eq(false, err)
+    print("tot", emsg)
+    local error_pattern = 'Invalid highlight'
+
+    ok(string.find(emsg, error_pattern) ~= nil)
+    -- eq(nvim("hl_from_name", 'unknown_highlight'), {})
+    -- eq(cursor_expected, nvim("hl_from_name", 'Normal'))
     -- eq( eval('nvim_hl_from_id(47)')
     -- feed_command('e Xtest-functional-ui-highlight.tmp.vim')
     -- feed_command('filetype on')

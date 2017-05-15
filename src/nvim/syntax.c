@@ -14,14 +14,14 @@
 /// The 'Normal' group is a special group; changing it requires to update all
 /// groups via highlight_attr_set_all()
 ///
-/// ::highlight_attr is controlled by the 'highlight' option and tells 
+/// ::highlight_attr is controlled by the 'highlight' option and tells
 /// how to combine highlights on special occasions (e.g., when 'cursorline' is
 /// enabled, one may need to compose the resulting colors). highlight_attr
 /// itself can be combination of several groups.
 ///
 ///
 /// Upon changing 'need_highlight_changed' is set to defer the call to
-/// highlight_changed() so that loading colorschemes does not impact attribute 
+/// highlight_changed() so that loading colorschemes does not impact attribute
 /// generation too hard
 ///
 
@@ -64,9 +64,9 @@
 #include "nvim/os/time.h"
 
 static bool did_syntax_onoff = false;
-static int invalid_group_id = -1; // for now let it to 0
+static int invalid_group_id = -1;  // for now let it to 0
 
-// TODO(teto) use array instead GA_EMPTY_INIT_VALUE
+// TODO(teto): use array instead GA_EMPTY_INIT_VALUE
 static garray_T changed_highlights  = { 0, 0, sizeof(int), 10, NULL };
 
 /// Structure that stores information about a highlight group.
@@ -104,8 +104,6 @@ struct hl_group {
 
 // highlight groups for 'highlight' option
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
-
-// #define MATT_HACK() { int id = syn_check_group("Normal", strlen("Normal")); assert (id == 0); }
 
 #define HL_TABLE() ((struct hl_group *)((highlight_ga.ga_data)))
 
@@ -293,44 +291,43 @@ static char *(cterm_color_names[28]) = {
 };
 // terminals with less than 16 colors...
 // index of color in ::cterm_color_names
-static int color_numbers_8[28] = {0, 4, 2, 6,
+static int color_numbers_8[28] = { 0, 4, 2, 6,
                                   1, 5, 3, 3,
                                   7, 7,
                                   7, 7, 0+8, 0+8,
                                   4+8, 4+8, 2+8, 2+8,
                                   6+8, 6+8, 1+8, 1+8, 5+8,
-                                  5+8, 3+8, 3+8, 7+8, -1};
+                                  5+8, 3+8, 3+8, 7+8, -1 };
 
 
-static int color_numbers_16[28] = {0, 1, 2, 3,
+static int color_numbers_16[28] = { 0, 1, 2, 3,
                                     4, 5, 6, 6,
                                     7, 7,
                                     7, 7, 8, 8,
                                     9, 9, 10, 10,
                                     11, 11, 12, 12, 13,
-                                    13, 14, 14, 15, -1};
+                                    13, 14, 14, 15, -1 };
 // for xterm with 88 colors...
-static int color_numbers_88[28] = {0, 4, 2, 6,
+static int color_numbers_88[28] = { 0, 4, 2, 6,
                                     1, 5, 32, 72,
                                     84, 84,
                                     7, 7, 82, 82,
                                     12, 43, 10, 61,
                                     14, 63, 9, 74, 13,
-                                    75, 11, 78, 15, -1};
+                                    75, 11, 78, 15, -1 };
 // for xterm with 256 colors...
-static int color_numbers_256[28] = {0, 4, 2, 6,
+static int color_numbers_256[28] = { 0, 4, 2, 6,
                                     1, 5, 130, 130,
                                     248, 248,
                                     7, 7, 242, 242,
                                     12, 81, 10, 121,
                                     14, 159, 9, 224, 13,
-                                    225, 11, 229, 15, -1};
-/*
- * Methods of combining two clusters
- */
-#define CLUSTER_REPLACE     1   /* replace first list with second */
-#define CLUSTER_ADD         2   /* add second list to first */
-#define CLUSTER_SUBTRACT    3   /* subtract second list from first */
+                                    225, 11, 229, 15, -1 };
+
+// Methods of combining two clusters
+#define CLUSTER_REPLACE     1   // replace first list with second
+#define CLUSTER_ADD         2   // add second list to first
+#define CLUSTER_SUBTRACT    3   // subtract second list from first
 
 #define SYN_CLSTR(buf)  ((syn_cluster_T *)((buf)->b_syn_clusters.ga_data))
 
@@ -3674,16 +3671,17 @@ syn_list_one (
         msg_puts_attr("groupthere", attr);
       }
       msg_putchar(' ');
-      if (spp->sp_sync_idx >= 0)
+      if (spp->sp_sync_idx >= 0) {
         msg_outtrans(HL_TABLE()[SYN_ITEMS(curwin->w_s)
                                 [spp->sp_sync_idx].sp_syn.id].sg_name);
-      else
+      } else {
         MSG_PUTS("NONE");
+      }
       msg_putchar(' ');
     }
   }
 
-  /* list the link, if there is one */
+  // list the link, if there is one
   if (HL_TABLE()[id].sg_link && (did_header || link_only) && !got_int) {
     (void)syn_list_header(did_header, 999, id);
     msg_puts_attr("links to", attr);
@@ -4454,9 +4452,9 @@ syn_cmd_match (
      * Check for trailing command and illegal trailing arguments.
      */
     eap->nextcmd = check_nextcmd(rest);
-    if (!ends_excmd(*rest) || eap->skip)
+    if (!ends_excmd(*rest) || eap->skip) {
       rest = NULL;
-    else {
+    } else {
       syn_id = syn_check_group(arg, (int)(group_name_end - arg));
       if (hl_is_valid(syn_id)) {
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
@@ -5322,9 +5320,7 @@ get_id_list (
         if (vim_strpbrk(name + 1, (char_u *)"\\.*^$~[") == NULL) {
           id = syn_check_group(name + 1, (int)(end - p));
         } else {
-          /*
-           * Handle match of regexp with group names.
-           */
+          // Handle match of regexp with group names.
           *name = '^';
           STRCAT(name, "$");
           regmatch.regprog = vim_regcomp(name, RE_MAGIC);
@@ -6067,7 +6063,7 @@ static char *highlight_init_dark[] =
 /// @param both include groups where 'bg' doesn't matter
 /// @param reset clear groups first
 void
-init_highlight (int both, int reset)
+init_highlight(int both, int reset)
 {
   int i;
   char        **pp;
@@ -6095,20 +6091,20 @@ init_highlight (int both, int reset)
   if (both) {
     had_both = TRUE;
     pp = highlight_init_both;
-    for (i = 0; pp[i] != NULL; ++i) {
-      do_highlight((char_u *)pp[i], reset, TRUE);
+    for (i = 0; pp[i] != NULL; i++) {
+      do_highlight((char_u *)pp[i], reset, true);
     }
   } else if (!had_both) {
-    /* Don't do anything before the call with both == TRUE from main().
-     * Not everything has been setup then, and that call will overrule
-     * everything anyway. */
+    // Don't do anything before the call with both == TRUE from main().
+    // Not everything has been setup then, and that call will overrule
+    // everything anyway.
     return;
   }
 
   pp = (*p_bg == 'l') ?  highlight_init_light : highlight_init_dark;
 
-  for (i = 0; pp[i] != NULL; ++i) {
-    do_highlight((char_u *)pp[i], reset, TRUE);
+  for (i = 0; pp[i] != NULL; i++) {
+    do_highlight((char_u *)pp[i], reset, true);
   }
 
   /* Reverse looks ugly, but grey may not work for 8 colors.  Thus let it
@@ -6120,8 +6116,8 @@ init_highlight (int both, int reset)
     do_highlight(
         (char_u *)(*p_bg == 'l'
                    ? "Visual cterm=NONE ctermbg=LightGrey"
-                   : "Visual cterm=NONE ctermbg=DarkGrey"), FALSE,
-        TRUE);
+                   : "Visual cterm=NONE ctermbg=DarkGrey"), false,
+        true);
   } else {
     do_highlight((char_u *)"Visual cterm=reverse ctermbg=NONE",
         FALSE, TRUE);
@@ -6208,7 +6204,7 @@ do_highlight(char_u *line, int forceit, int init) {
    */
   if (ends_excmd(*line)) {
     for (int i = 0; i < highlight_ga.ga_len && !got_int; i++) {
-      /* TODO: only call when the group has attributes set */
+      // todo: only call when the group has attributes set
       highlight_list_one(i);
     }
     return;
@@ -6285,10 +6281,9 @@ do_highlight(char_u *line, int forceit, int init) {
     }
 
     if (hl_is_valid(from_id) && (!init || HL_TABLE()[from_id].sg_set == 0)) {
-      /*
-       * Don't allow a link when there already is some highlighting
-       * for the group, unless '!' is used
-       */
+      // Don't allow a link when there already is some highlighting
+      // for the group, unless '!' is used
+
       if (hl_is_valid(to_id) && !forceit && !init
           && hl_has_settings(from_id, dodefault)) {
         if (sourcing_name == NULL && !dodefault) {
@@ -6304,9 +6299,8 @@ do_highlight(char_u *line, int forceit, int init) {
       }
     }
 
-    /* Only call highlight_changed() once, after sourcing a syntax file */
+    // Only call highlight_changed() once, after sourcing a syntax file
     need_highlight_changed = true;
-    // TODO adds some pb to airline when there
 
     ILOG("changed_hl add from_id=%d", from_id);
     GA_APPEND(int, &changed_highlights, from_id);
@@ -6342,8 +6336,10 @@ do_highlight(char_u *line, int forceit, int init) {
    * Find the group name in the table.  If it does not exist yet, add it.
    */
   id = syn_check_group(line, (int)(name_end - line));
-  if (id == invalid_group_id)                          /* failed (out of memory) */
+  if (id == invalid_group_id) {
+    // failed (out of memory)
     return;
+  }
   idx = id;
 
   /* Return if "default" was used and the group already has settings. */
@@ -6498,7 +6494,7 @@ do_highlight(char_u *line, int forceit, int init) {
               break;
             }
           } else {
-            /* reduce calls to STRICMP a bit, it can be slow */
+            // reduce calls to STRICMP a bit, it can be slow
             off = TOUPPER_ASC(*arg);
             for (i = ARRAY_SIZE(cterm_color_names); --i >= 0; ) {
               if (off == cterm_color_names[i][0]
@@ -6525,7 +6521,7 @@ do_highlight(char_u *line, int forceit, int init) {
                    * colors (on some terminals, e.g. "linux") */
                   if (color & 8) {
                     HL_TABLE()[idx].sg_cterm |= HL_BOLD;
-                    HL_TABLE()[idx].sg_cterm_bold = TRUE;
+                    HL_TABLE()[idx].sg_cterm_bold = true;
                   } else {
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
                   }
@@ -6544,8 +6540,8 @@ do_highlight(char_u *line, int forceit, int init) {
           }
 
           // color is now set
-          /* Add one to the argument, to avoid zero.  Zero is used for
-           * "NONE", then "color" is -1. */
+          // Add one to the argument, to avoid zero.  Zero is used for
+          // "NONE", then "color" is -1.
           if (key[5] == 'F') {
             HL_TABLE()[idx].sg_cterm_fg = color + 1;
             if (is_normal_group) {
@@ -6642,8 +6638,9 @@ do_highlight(char_u *line, int forceit, int init) {
       /*
        * When highlighting has been given for a group, don't link it.
        */
-      if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK))
+      if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK)) {
         HL_TABLE()[idx].sg_link = invalid_group_id;
+      }
 
       /*
        * Continue with next argument.
@@ -6662,7 +6659,6 @@ do_highlight(char_u *line, int forceit, int init) {
     // return FAIL;
 
   } else {
-
     if (is_normal_group) {
       HL_TABLE()[idx].sg_attr = 0;
       // Need to update all groups, because they might be using "bg" and/or
@@ -6675,19 +6671,16 @@ do_highlight(char_u *line, int forceit, int init) {
     }
     HL_TABLE()[idx].sg_scriptID = current_SID;
     redraw_all_later(NOT_VALID);
-
   }
   xfree(key);
   xfree(arg);
   if (!error) {
-    ILOG("changed_hl add idx=%d (array of size %d)", idx, changed_highlights.ga_len);
-
-    // if (changed_highlights.ga_len < 10) {
+    ILOG("changed_hl add idx=%d (array of size %d)",
+         idx, changed_highlights.ga_len);
     GA_APPEND(int, &changed_highlights, idx);
-    // }
   }
 
-  /* Only call highlight_changed() once, after sourcing a syntax file */
+  // Only call highlight_changed() once, after sourcing a syntax file
   need_highlight_changed = true;
 }
 
@@ -6921,7 +6914,7 @@ static void highlight_list_one(int id)
   struct hl_group     *sgp;
   int didh = FALSE;
 
-  sgp = &HL_TABLE()[id];        /* index is ID minus one */
+  sgp = &HL_TABLE()[id];
 
   didh = highlight_list_arg(id, didh, LIST_ATTR,
       sgp->sg_cterm, NULL, "cterm");
@@ -7093,15 +7086,16 @@ const char *highlight_color(const int id, const char *const what,
   return NULL;
 }
 
-/*
- * Output the syntax list header.
- * Return TRUE when started a new line.
- */
+/// Output the syntax list header.
+/// @param did_header did header already
+/// @param outlen length of string that comes
+/// @param id highlight group id
+/// @return TRUE when started a new line.
 static int
-syn_list_header (
-    int did_header,                 /* did header already */
-    int outlen,                     /* length of string that comes */
-    int id                         /* highlight group id */
+syn_list_header(
+    int did_header,
+    int outlen,
+    int id
 )
 {
   int endcol = 19;
@@ -7109,8 +7103,9 @@ syn_list_header (
 
   if (!did_header) {
     msg_putchar('\n');
-    if (got_int)
-      return TRUE;
+    if (got_int) {
+      return true;
+    }
     msg_outtrans(HL_TABLE()[id].sg_name);
     endcol = 15;
   } else if (msg_col + outlen + 1 >= Columns)   {
@@ -7160,7 +7155,7 @@ attrentry_T hl2attr(int hl_id)
 /// Called after one of the attributes has changed.
 /// @param idx highlight
 static void
-set_hl_attr (int hl_id)
+set_hl_attr(int hl_id)
 {
   attrentry_T at_en;
   struct hl_group     *sgp = HL_TABLE() + hl_id;
@@ -7192,7 +7187,6 @@ int syn_name2id(const char_u *name)
   int i;
   char_u name_u[200];
 
-  ILOG("Looking for group %s", name);
   /* Avoid using stricmp() too much, it's slow on some systems */
   /* Avoid alloc()/free(), these are slow too.  ID names over 200 chars
    * don't deserve to be found! */
@@ -7224,8 +7218,9 @@ int highlight_exists(const char_u *name)
  */
 char_u *syn_id2name(int id)
 {
-  if (hl_invalid_id(id))
+  if (hl_invalid_id(id)) {
     return (char_u *)"";
+  }
   return HL_TABLE()[id].sg_name;
 }
 
@@ -7334,15 +7329,17 @@ int syn_id2attr(int hl_id)
   struct hl_group     *sgp;
 
   hl_id = syn_get_final_id(hl_id);
-  sgp = &HL_TABLE()[hl_id];             /* index is ID minus one */
+  sgp = &HL_TABLE()[hl_id];
   return sgp->sg_attr;
 }
 
-bool hl_is_valid (int hl_id) {
+bool hl_is_valid(int hl_id)
+{
   return !hl_invalid_id(hl_id);
 }
-bool hl_invalid_id (int hl_id) {
-  // TODO adjust when setting invalid_group_id to -1
+
+bool hl_invalid_id(int hl_id)
+{
   return (hl_id >= highlight_ga.ga_len || hl_id <= invalid_group_id);
 }
 
@@ -7364,8 +7361,9 @@ int syn_get_final_id(int hl_id)
    */
   for (count = 100; --count >= 0; ) {
     sgp = &HL_TABLE()[hl_id];
-    if (hl_invalid_id(sgp->sg_link))
+    if (hl_invalid_id(sgp->sg_link)) {
       break;
+    }
     hl_id = sgp->sg_link;
   }
 
@@ -7423,7 +7421,7 @@ void highlight_changed(void)
     highlight_attr[hlf] = attr;
   }
 
-  /* Setup the user highlights (used in statusline)
+  /* Setup the user highlights
    *
    * Temporarily  utilize 10 more hl entries.  Have to be in there
    * simultaneously in case of table overflows in get_attr_entry()
@@ -7450,12 +7448,12 @@ void highlight_changed(void)
         hlt[hlcnt + i].sg_gui = highlight_attr[HLF_SNC];
       } else {
         memmove(&hlt[hlcnt + i],
-            &hlt[id_SNC - 1],
-            sizeof(struct hl_group));
+                &hlt[id_SNC - 1],
+                sizeof(struct hl_group));
       }
       hlt[hlcnt + i].sg_link = 0;
 
-      /* Apply difference between UserX and HLF_S to HLF_SNC */
+      // Apply difference between UserX and HLF_S to HLF_SNC
       hlt[hlcnt + i].sg_cterm ^= hlt[id].sg_cterm ^ hlt[id_S].sg_cterm;
 
       if (hlt[id].sg_cterm_fg != hlt[id_S].sg_cterm_fg) {
@@ -8282,12 +8280,12 @@ const char *cterm_int2name(int color)
   }
 
   switch (t_colors) {
-    case 8: color_idx = color_numbers_8;break;
-    case 16: color_idx = color_numbers_16;break;
-    case 88: color_idx = color_numbers_88;break;
-    case 256: color_idx = color_numbers_256;break;
+    case 8: color_idx = color_numbers_8; break;
+    case 16: color_idx = color_numbers_16; break;
+    case 88: color_idx = color_numbers_88; break;
+    case 256: color_idx = color_numbers_256; break;
     default: return NULL;
-  };
+  }
 
   for (int i = ARRAY_SIZE(cterm_color_names); i-- >= 0; ) {
     if (color == color_idx[i]) {
