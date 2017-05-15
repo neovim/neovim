@@ -1680,7 +1680,7 @@ getcmdline (
     int indent               // indent for inside conditionals
 )
 {
-  return command_line_enter(firstc, count, indent);;
+  return command_line_enter(firstc, count, indent);
 }
 
 /*
