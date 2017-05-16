@@ -196,13 +196,14 @@ void ui_notify_changed_highlights(garray_T changed_highlights)
     int hl_id = ((int *)changed_highlights.ga_data)[idx];
     Dictionary dic = nvim_hl_from_id(hl_id, &err);
     ADD(args, DICTIONARY_OBJ(dic));
-    ILOG("comparing with %d", shape_table[cursor_get_mode_idx()].id);
+    // ILOG("comparing with %d", shape_table[cursor_get_mode_idx()].id);
     if (hl_id == shape_table[cursor_get_mode_idx()].id) {
       refresh_cursor = true;
     }
   }
 
   if (args.size) {
+    ILOG("submit %d updated hl", args.size);
     ui_event("highlights", (args));
   }
 

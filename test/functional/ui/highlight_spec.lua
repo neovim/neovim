@@ -943,3 +943,28 @@ describe("'winhighlight' highlight", function()
 end)
 
 
+describe("highlight", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(20,5)
+    screen:attach()
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+  it('notifies UI on update', function()
+      screen:expect(function()
+        eq('normal', screen.mode)
+        command("highlight Normal guibg=red")
+        -- command("highlight Cursor guibg=red")
+        command("highlight CursorColumn guibg=red")
+        -- TODO  can't make it recognize the thing
+        -- eq({ { background = Screen.colors.Red } }, screen._highlights)
+      end)
+  end)
+
+end)
+

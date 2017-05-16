@@ -60,11 +60,10 @@ void nvim_command(String command, Error *err)
 /// @return a highlight description in dictionary {'hl_id': X, 'bg': Y, 'fg': Z}
 /// @see nvim_hl_from_id
 Dictionary nvim_hl_from_name(String name, Error *err)
-  FUNC_API_SINCE(2)
+  FUNC_API_SINCE(3)
 {
-  Dictionary result;
+  Dictionary result = ARRAY_DICT_INIT;
   int id = syn_name2id((const char_u *)name.data);
-  ILOG("found id=%d", id);
 
   if (hl_invalid_id(id)) {
     api_set_error(err, kErrorTypeException, "Invalid highlight name %s",
@@ -81,20 +80,17 @@ Dictionary nvim_hl_from_name(String name, Error *err)
 /// @return a highlight description in a dictionary
 /// @see nvim_hl_from_id
 Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
-  FUNC_API_SINCE(2)
+  FUNC_API_SINCE(3)
 {
   HlAttrs attrs;
   Dictionary dic = ARRAY_DICT_INIT;
-  // attrentry_T attr;
 
   PUT(dic, "hl_id", INTEGER_OBJ(hl_id));
 
-  /// OLDVERSION
   int attrcode = syn_id2attr((int)hl_id);
   bool res = attr2hlattr(attrcode, true, &attrs);
-  /// OLDVERSION
 
-  ILOG("found attr=%d for hl_id=%d res=%d", attrcode, hl_id, res);
+  // ILOG("found attr=%d for hl_id=%d res=%d", attrcode, hl_id, res);
   if (hl_invalid_id((int)hl_id)) {
     api_set_error(err, kErrorTypeException, "Invalid highlight id %d", hl_id);
     return dic;
@@ -115,7 +111,7 @@ Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
 /// @param highlights a list of highlights id (string or integer) to look for
 /// todo return array instead ? ArrayOf(HlAttrs)
 Object nvim_hl_get_list(Array highlights, Error *err)
-    FUNC_API_SINCE(2)
+    FUNC_API_SINCE(3)
 {
   Array args = ARRAY_DICT_INIT;
   for (size_t i = 0; i < highlights.size; i++) {

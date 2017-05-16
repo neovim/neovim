@@ -68,6 +68,7 @@ static int invalid_group_id = -1;  // for now let it to 0
 
 // TODO(teto): use array instead GA_EMPTY_INIT_VALUE
 static garray_T changed_highlights  = { 0, 0, sizeof(int), 10, NULL };
+// static Array changed_highlights  = ARRAY_DICT_INIT;
 
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in
@@ -3363,11 +3364,12 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
         }
       } else {
         id = syn_namen2id(arg, (int)(arg_end - arg));
-        if (id == 0) {
+        if (hl_invalid_id(id)) {
           EMSG2(_(e_nogroup), arg);
           break;
-        } else
+        } else {
           syn_clear_one(id, syncing);
+        }
       }
       arg = skipwhite(arg_end);
     }
@@ -3535,16 +3537,18 @@ syn_cmd_list (
       arg_end = skiptowhite(arg);
       if (*arg == '@') {
         int id = syn_scl_namen2id(arg + 1, (int)(arg_end - arg - 1));
-        if (id == 0)
+        if (hl_invalid_id(id)) {
           EMSG2(_("E392: No such syntax cluster: %s"), arg);
-        else
+        } else {
           syn_list_cluster(id - SYNID_CLUSTER);
+        }
       } else {
         int id = syn_namen2id(arg, (int)(arg_end - arg));
-        if (id == 0)
+        if (hl_invalid_id(id)) {
           EMSG2(_(e_nogroup), arg);
-        else
-          syn_list_one(id, syncing, TRUE);
+        } else {
+          syn_list_one(id, syncing, true);
+        }
       }
       arg = skipwhite(arg_end);
     }
@@ -3682,11 +3686,12 @@ syn_list_one (
   }
 
   // list the link, if there is one
-  if (HL_TABLE()[id].sg_link && (did_header || link_only) && !got_int) {
+  if (hl_is_valid(HL_TABLE()[id].sg_link)
+      && (did_header || link_only) && !got_int) {
     (void)syn_list_header(did_header, 999, id);
     msg_puts_attr("links to", attr);
     msg_putchar(' ');
-    msg_outtrans(HL_TABLE()[HL_TABLE()[id].sg_link - 1].sg_name);
+    msg_outtrans(HL_TABLE()[HL_TABLE()[id].sg_link].sg_name);
   }
 }
 
@@ -6304,6 +6309,7 @@ do_highlight(char_u *line, int forceit, int init) {
 
     ILOG("changed_hl add from_id=%d", from_id);
     GA_APPEND(int, &changed_highlights, from_id);
+    // PUTS(changed_highlights, INTEGER_OBJ(from_id));
 
     return;
   }
@@ -6346,7 +6352,7 @@ do_highlight(char_u *line, int forceit, int init) {
   if (dodefault && hl_has_settings(idx, TRUE))
     return;
 
-  is_normal_group = (STRCMP(HL_TABLE()[idx].sg_name_u, "NORMAL") == 0);
+  is_normal_group = (STRCMP(HL_TABLE()[idx].sg_name_u, "Normal") == 0);
 
   /* Clear the highlighting for ":hi clear {group}" and ":hi clear". */
   if (doclear || (forceit && init)) {
@@ -6482,7 +6488,7 @@ do_highlight(char_u *line, int forceit, int init) {
               color = cterm_normal_fg_color - 1;
             } else {
               EMSG(_("E419: FG color unknown"));
-              error = TRUE;
+              error = true;
               break;
             }
           } else if (STRICMP(arg, "bg") == 0)   {
@@ -6490,7 +6496,7 @@ do_highlight(char_u *line, int forceit, int init) {
               color = cterm_normal_bg_color - 1;
             } else {
               EMSG(_("E420: BG color unknown"));
-              error = TRUE;
+              error = true;
               break;
             }
           } else {
@@ -6678,6 +6684,7 @@ do_highlight(char_u *line, int forceit, int init) {
     ILOG("changed_hl add idx=%d (array of size %d)",
          idx, changed_highlights.ga_len);
     GA_APPEND(int, &changed_highlights, idx);
+    // PUTS(changed_highlights, INTEGER_OBJ(idx));
   }
 
   // Only call highlight_changed() once, after sourcing a syntax file
@@ -6932,7 +6939,7 @@ static void highlight_list_one(int id)
   didh = highlight_list_arg(id, didh, LIST_STRING,
                             0, sgp->sg_rgb_sp_name, "guisp");
 
-  if (sgp->sg_link && !got_int) {
+  if (hl_is_valid(sgp->sg_link) && !got_int) {
     (void)syn_list_header(didh, 9999, id);
     didh = true;
     msg_puts_attr("links to", hl_attr(HLF_D));
@@ -7249,8 +7256,7 @@ int syn_check_group(char_u *pp, int len)
 
   // HACK we need to make sure that the first highlight is the "Normal" hl
   if (highlight_ga.ga_len == 0) {
-    ILOG("Adding NORMAL group");
-    int res = syn_add_group("NORMAL");
+    int res = syn_add_group((char_u *)"Normal");
     assert(res == 0);
   }
 
@@ -7266,7 +7272,7 @@ int syn_check_group(char_u *pp, int len)
 /// Add new highlight group and return it's ID.
 /// @param name must be an allocated string, it will be consumed.
 ///
-/// @return 0 for failure, else the allocated group id
+/// @return invalid_group_id for failure, else the allocated group id
 /// @see syn_check_group
 static int syn_add_group(char_u *name)
 {
@@ -7306,6 +7312,7 @@ static int syn_add_group(char_u *name)
   memset(hlgp, 0, sizeof(*hlgp));
   hlgp->sg_name = name;
   hlgp->sg_name_u = vim_strsave_up(name);
+  hlgp->sg_link = invalid_group_id;
 
   ILOG("Adding group name %s as id %d", name, highlight_ga.ga_len-1);
 
@@ -7428,16 +7435,17 @@ void highlight_changed(void)
    */
   ga_grow(&highlight_ga, 10);
   hlcnt = highlight_ga.ga_len;
-  if (id_S == 0) {  /* Make sure id_S is always valid to simplify code below */
+  if (hl_invalid_id(id_S)) {
+    // Make sure id_S is always valid to simplify code below
     memset(&HL_TABLE()[hlcnt + 9], 0, sizeof(struct hl_group));
-    id_S = hlcnt + 10;
+    id_S = hlcnt + 9;
   }
   for (int i = 0; i < 9; i++) {
     sprintf((char *)userhl, "User%d", i + 1);
     id = syn_name2id(userhl);
-    if (id == 0) {
-      highlight_user[i] = 0;
-      highlight_stlnc[i] = 0;
+    if (hl_invalid_id(id)) {
+      highlight_user[i] = invalid_group_id;
+      highlight_stlnc[i] = invalid_group_id;
     } else {
       struct hl_group *hlt = HL_TABLE();
 
@@ -7448,10 +7456,10 @@ void highlight_changed(void)
         hlt[hlcnt + i].sg_gui = highlight_attr[HLF_SNC];
       } else {
         memmove(&hlt[hlcnt + i],
-                &hlt[id_SNC - 1],
+                &hlt[id_SNC],
                 sizeof(struct hl_group));
       }
-      hlt[hlcnt + i].sg_link = 0;
+      hlt[hlcnt + i].sg_link = invalid_group_id;
 
       // Apply difference between UserX and HLF_S to HLF_SNC
       hlt[hlcnt + i].sg_cterm ^= hlt[id].sg_cterm ^ hlt[id_S].sg_cterm;
@@ -7485,11 +7493,8 @@ void highlight_changed(void)
   }
   highlight_ga.ga_len = hlcnt;
 
-  // changed_highlights
   ui_notify_changed_highlights(changed_highlights);
   ga_clear(&changed_highlights);
-
-  return OK;
 }
 
 

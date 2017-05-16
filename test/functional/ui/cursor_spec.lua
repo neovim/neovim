@@ -243,4 +243,15 @@ describe('ui/cursor', function()
     end)
   end)
 
-end)
+  it("update current mode highlight refreshes cursor", function()
+      eq(false or nil, screen._refresh_cursor)
+      helpers.command('set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr-o:hor20'
+        ..',a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor'
+        ..',sm:block-blinkwait175-blinkoff150-blinkon175')
+      screen:expect(function()
+        eq('normal', screen.mode)
+        command("highlight Cursor guibg=red")
+        eq(true, screen._refresh_cursor)
+      end)
+    end)
+  end)

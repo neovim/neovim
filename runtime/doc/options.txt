@@ -2830,12 +2830,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 <
 
 
-Terminal support
-                |shape | color | transparency | reverse
-                |______________________________________
-vte-based (> 0) |      |
-iterm           |
-konsole         |
+Terminal support (x => supported, empty => unsupported)
+                  |shape|color|transparency|reverse
+__________________|________________________________
+vte-based (> 3.9) |  x  |  x  |      x     |
+iterm             |  x  |  x  |            |
+Konsole           |  x  |     |            |
+Rxvt              |  x  |     |            |
+
 
 					*'guifont'* *'gfn'*
 						   *E235* *E596*

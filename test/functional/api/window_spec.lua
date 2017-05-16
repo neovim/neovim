@@ -8,7 +8,7 @@ local curwinmeths = helpers.curwinmeths
 local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
-local geth_pcall = helpers.meth_pcall
+local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local command = helpers.command
 

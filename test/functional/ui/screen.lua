@@ -349,6 +349,15 @@ function Screen:_handle_resize(width, height)
   }
 end
 
+function Screen:_handle_highlights(highlights)
+  print('HLLLLL', highlights)
+  self._highlights = highlights
+end
+
+function Screen:_handle_refresh_cursor()
+  self._refresh_cursor = true
+end
+
 function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
   self._cursor_style_enabled = cursor_style_enabled
   self._mode_info = mode_info

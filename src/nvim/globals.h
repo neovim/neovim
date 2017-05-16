@@ -945,7 +945,6 @@ EXTERN int must_redraw INIT(= 0);           /* type of redraw necessary */
 EXTERN int skip_redraw INIT(= FALSE);       /* skip redraw once */
 EXTERN int do_redraw INIT(= FALSE);         /* extra redraw once */
 
-// 0 => No change, 1 => highlight changed, 2 => all changed
 EXTERN int need_highlight_changed INIT(= true);
 EXTERN char *used_shada_file INIT(= NULL);  // name of the ShaDa file to use
 

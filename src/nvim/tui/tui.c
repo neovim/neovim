@@ -850,12 +850,11 @@ static void tui_set_icon(UI *ui, String icon)
 static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
   TUIData *data = ui->data;
-  ILOG("tui_event [%s]", name);
-
   if (STRCMP(name, "highlights") == 0) {
-    ILOG("Received hl update ");
-  } else if (STRCMP(name, "refresh_cursor") == 0) {
-    ILOG("refreshing cursor");
+    ILOG("received hl update");
+  }
+
+  if (STRCMP(name, "refresh_cursor") == 0) {
     tui_set_mode(ui, data->showing_mode);
   }
 }
