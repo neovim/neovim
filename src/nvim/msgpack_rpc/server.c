@@ -118,7 +118,12 @@ int server_start(const char *endpoint)
   }
 
   SocketWatcher *watcher = xmalloc(sizeof(SocketWatcher));
-  socket_watcher_init(&main_loop, watcher, endpoint);
+
+  int result = socket_watcher_init(&main_loop, watcher, endpoint);
+  if (result < 0) {
+    xfree(watcher);
+    return result;
+  }
 
   // Check if a watcher for the endpoint already exists
   for (int i = 0; i < watchers.ga_len; i++) {
@@ -132,7 +137,7 @@ int server_start(const char *endpoint)
     }
   }
 
-  int result = socket_watcher_start(watcher, MAX_CONNECTIONS, connection_cb);
+  result = socket_watcher_start(watcher, MAX_CONNECTIONS, connection_cb);
   if (result < 0) {
     ELOG("Failed to start server: %s", uv_strerror(result));
     socket_watcher_close(watcher, free_server);

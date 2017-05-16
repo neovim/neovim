@@ -18,13 +18,14 @@
 #include "nvim/memory.h"
 #include "nvim/macros.h"
 #include "nvim/charset.h"
+#include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/socket.c.generated.h"
 #endif
 
-void socket_watcher_init(Loop *loop, SocketWatcher *watcher,
-                         const char *endpoint)
+int socket_watcher_init(Loop *loop, SocketWatcher *watcher,
+                        const char *endpoint)
   FUNC_ATTR_NONNULL_ALL
 {
   xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr));
@@ -32,33 +33,34 @@ void socket_watcher_init(Loop *loop, SocketWatcher *watcher,
   char *host_end = strrchr(addr, ':');
 
   if (host_end && addr != host_end) {
-    intmax_t port;
-    int ret = getdigits_safe(&(char_u *){ (char_u *)host_end + 1 }, &port);
-    if (ret == FAIL || port < 0 || port > UINT16_MAX) {
-      // Invalid port.
-      goto do_pipe;
+    // Split user specified address into two strings, addr(hostname) and port.
+    // The port part in watcher->addr will be updated later.
+    *host_end = '\0';
+    char *port = host_end + 1;
+    intmax_t iport;
+
+    int ret = getdigits_safe(&(char_u *){ (char_u *)port }, &iport);
+    if (ret == FAIL || iport < 0 || iport > UINT16_MAX) {
+      ELOG("Invalid port: %s", port);
+      return UV_EINVAL;
     }
 
-    *host_end = '\0';
     uv_getaddrinfo_t request;
 
-    int retval = uv_getaddrinfo(&loop->uv, &request, NULL, addr, host_end+1,
+    int retval = uv_getaddrinfo(&loop->uv, &request, NULL, addr, port,
                                 &(struct addrinfo){
                                   .ai_family = AF_UNSPEC,
                                   .ai_socktype = SOCK_STREAM,
                                 });
-    *host_end = ':';
     if (retval != 0) {
-      // Failed to look up address.
-      goto do_pipe;
+      ELOG("Host lookup failed: %s", endpoint);
+      return retval;
     }
-    *(host_end + 1) = '\0';
     watcher->uv.tcp.addrinfo = request.addrinfo;
 
     uv_tcp_init(&loop->uv, &watcher->uv.tcp.handle);
     watcher->stream = STRUCT_CAST(uv_stream_t, &watcher->uv.tcp.handle);
   } else {
-do_pipe:
     uv_pipe_init(&loop->uv, &watcher->uv.pipe.handle, 0);
     watcher->stream = STRUCT_CAST(uv_stream_t, &watcher->uv.pipe.handle);
   }
@@ -68,6 +70,8 @@ do_pipe:
   watcher->close_cb = NULL;
   watcher->events = NULL;
   watcher->data = NULL;
+
+  return 0;
 }
 
 int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
@@ -98,7 +102,7 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
           : ((struct sockaddr_in6 *)&sas)->sin6_port;
         // v:servername uses the string from watcher->addr
         size_t len = strlen(watcher->addr);
-        snprintf(watcher->addr+len, sizeof(watcher->addr)-len, "%" PRIu16,
+        snprintf(watcher->addr+len, sizeof(watcher->addr)-len, ":%" PRIu16,
                  ntohs(port));
         break;
       }
