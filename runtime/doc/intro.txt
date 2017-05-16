@@ -489,7 +489,7 @@ examples and use them directly.  Or type them literally, including the '<' and
 ==============================================================================
 5. Modes, introduction				*vim-modes-intro* *vim-modes*
 
-Vim has six BASIC modes:
+Vim has seven BASIC modes:
 
 					*Normal* *Normal-mode* *command-mode*
 Normal mode		In Normal mode you can enter all the normal editor
@@ -524,6 +524,13 @@ Cmdline mode		can enter one line of text at the bottom of the
 Ex mode			Like Command-line mode, but after entering a command
 			you remain in Ex mode.  Very limited editing of the
 			command line.  |Ex-mode|
+
+							*Terminal-mode*
+Terminal mode		In Terminal mode all input (except |c_CTRL-\_CTRL-N|)
+			is sent to the process running in the current
+			|terminal| buffer.
+			If the 'showmode' option is on "-- TERMINAL --" is shown
+			at the bottom of the window.
 
 There are six ADDITIONAL modes.  These are variants of the BASIC modes:
 
