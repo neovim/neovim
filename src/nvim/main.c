@@ -124,7 +124,7 @@ typedef struct {
 
 Loop main_loop;
 
-static char *argv0;
+static char *argv0 = NULL;
 
 // Error messages
 static const char *err_arg_missing = N_("Argument missing after");
@@ -179,11 +179,9 @@ void early_init(void)
   log_init();
   fs_init();
   handle_init();
-
   eval_init();          // init global variables
-
-  // Init the table of Normal mode commands.
-  init_normal_cmds();
+  init_path(argv0 ? argv0 : "nvim");
+  init_normal_cmds();   // Init the table of Normal mode commands.
 
 #if defined(HAVE_LOCALE_H)
   // Setup to use the current locale (for ctype() and many other things).
@@ -221,7 +219,7 @@ int nvim_main(int argc, char **argv)
 int main(int argc, char **argv)
 #endif
 {
-  argv0 = (char *)path_tail((char_u *)argv[0]);
+  argv0 = argv[0];
 
   char_u *fname = NULL;   // file name from command line
   mparm_T params;         // various parameters passed between
@@ -240,8 +238,6 @@ int main(int argc, char **argv)
 
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
-
-  init_path(argv[0]);
 
   event_init();
   /*
@@ -1217,7 +1213,8 @@ static void check_and_set_isatty(mparm_T *paramp)
 }
 
 // Sets v:progname and v:progpath. Also modifies $PATH on Windows.
-static void init_path(char *exename)
+static void init_path(const char *exename)
+  FUNC_ATTR_NONNULL_ALL
 {
   char exepath[MAXPATHL] = { 0 };
   size_t exepathlen = MAXPATHL;
@@ -1834,9 +1831,11 @@ static bool file_owned(const char *fname)
 /// @param str     string to append to the primary error message, or NULL
 static void mainerr(const char *errstr, const char *str)
 {
+  char *prgname = (char *)path_tail((char_u *)argv0);
+
   signal_stop();              // kill us with CTRL-C here, if you like
 
-  mch_errmsg(argv0);
+  mch_errmsg(prgname);
   mch_errmsg(": ");
   mch_errmsg(_(errstr));
   if (str != NULL) {
@@ -1845,7 +1844,7 @@ static void mainerr(const char *errstr, const char *str)
     mch_errmsg("\"");
   }
   mch_errmsg(_("\nMore info with \""));
-  mch_errmsg(argv0);
+  mch_errmsg(prgname);
   mch_errmsg(" -h\"\n");
 
   mch_exit(1);

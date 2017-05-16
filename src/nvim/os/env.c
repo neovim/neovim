@@ -600,6 +600,10 @@ const void *vim_env_iter_rev(const char delim,
 /// @param name Environment variable to expand
 char *vim_getenv(const char *name)
 {
+  // init_path() should have been called before now.
+  assert(get_vim_var_str(VV_PROGPATH)
+         && get_vim_var_str(VV_PROGPATH)[0] != NUL);
+
   const char *kos_env_path = os_getenv(name);
   if (kos_env_path != NULL) {
     return xstrdup(kos_env_path);
