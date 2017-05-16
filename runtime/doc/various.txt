@@ -211,6 +211,11 @@ g8			Print the hex values of the bytes used in the
 :te[rminal][!]		Open an interactive shell in a |terminal-emulator|.
 			Use the shell specified in 'shell'.
 
+			The new terminal buffer takes over the current split
+			window (like |:edit|). This fails when changes have
+			been made to the current buffer, unless 'hidden' is
+			set.
+
 						  *:terminal_c*
 :te[rminal][!] {cmd}	Execute {cmd} with 'shell' in a |terminal-emulator|
 			buffer.  Equivalent to: >
