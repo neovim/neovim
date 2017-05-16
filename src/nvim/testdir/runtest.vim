@@ -134,7 +134,10 @@ else
 endif
 
 " Names of flaky tests.
-let s:flaky = ['Test_with_partial_callback()']
+let s:flaky = [
+      \ 'Test_with_partial_callback()',
+      \ 'Test_oneshot()'
+      \ ]
 
 " Locate Test_ functions and execute them.
 set nomore
