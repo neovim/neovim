@@ -10,7 +10,8 @@ build_deps() {
   if test "${BUILD_32BIT}" = ON ; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
   fi
-  if test "${FUNCTIONALTEST}" = "functionaltest-lua" ; then
+  if test "${FUNCTIONALTEST}" = "functionaltest-lua" \
+     || test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
   fi
 

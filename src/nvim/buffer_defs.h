@@ -233,6 +233,8 @@ typedef struct {
 # define w_p_crb_save w_onebuf_opt.wo_crb_save
   char_u *wo_scl;
 # define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
+  char_u *wo_winhl;
+# define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
 
   int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
@@ -929,6 +931,10 @@ struct window_S {
                                     ///< often, keep it the first item!)
 
   synblock_T  *w_s;                 /* for :ownsyntax */
+
+  int w_hl_id;                      ///< 'winhighlight' id
+  int w_hl_id_inactive;             ///< 'winhighlight' id for inactive window
+  int w_hl_attr;                    ///< 'winhighlight' final attrs
 
   win_T       *w_prev;              /* link to previous window */
   win_T       *w_next;              /* link to next window */

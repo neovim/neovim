@@ -413,8 +413,7 @@ EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
 
 /*
  * Values for index in highlight_attr[].
- * When making changes, also update HL_FLAGS below!  And update the default
- * value of 'highlight' in option.c.
+ * When making changes, also update hlf_names below!
  */
 typedef enum {
   HLF_8 = 0         /* Meta & special keys listed with ":map", text that is
@@ -447,8 +446,8 @@ typedef enum {
   , HLF_CHD         // Changed diff line
   , HLF_DED         // Deleted diff line
   , HLF_TXD         // Text Changed in diff line
-  , HLF_CONCEAL     // Concealed text
   , HLF_SC          // Sign column
+  , HLF_CONCEAL     // Concealed text
   , HLF_SPB         // SpellBad
   , HLF_SPC         // SpellCap
   , HLF_SPR         // SpellRare
@@ -465,15 +464,60 @@ typedef enum {
   , HLF_MC          // 'colorcolumn'
   , HLF_QFL         // selected quickfix line
   , HLF_0           // Whitespace
+  , HLF_INACTIVE    // NormalNC: Normal text in non-current windows
   , HLF_COUNT       // MUST be the last one
 } hlf_T;
 
-/* The HL_FLAGS must be in the same order as the HLF_ enums!
- * When changing this also adjust the default for 'highlight'. */
-#define HL_FLAGS { '8', '~', 'z', 'Z', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', \
-                   'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', \
-                   'A', 'C', 'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', \
-                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q', '0' }
+EXTERN const char *hlf_names[] INIT(= {
+  [HLF_8] = "SpecialKey",
+  [HLF_EOB] = "EndOfBuffer",
+  [HLF_TERM] = "TermCursor",
+  [HLF_TERMNC] = "TermCursorNC",
+  [HLF_AT] = "NonText",
+  [HLF_D] = "Directory",
+  [HLF_E] = "ErrorMsg",
+  [HLF_I] = "IncSearch",
+  [HLF_L] = "Search",
+  [HLF_M] = "MoreMsg",
+  [HLF_CM] = "ModeMsg",
+  [HLF_N] = "LineNr",
+  [HLF_CLN] = "CursorLineNr",
+  [HLF_R] = "Question",
+  [HLF_S] = "StatusLine",
+  [HLF_SNC] = "StatusLineNC",
+  [HLF_C] = "VertSplit",
+  [HLF_T] = "Title",
+  [HLF_V] = "Visual",
+  [HLF_VNC] = "VisualNOS",
+  [HLF_W] = "WarningMsg",
+  [HLF_WM] = "WildMenu",
+  [HLF_FL] = "Folded",
+  [HLF_FC] = "FoldColumn",
+  [HLF_ADD] = "DiffAdd",
+  [HLF_CHD] = "DiffChange",
+  [HLF_DED] = "DiffDelete",
+  [HLF_TXD] = "DiffText",
+  [HLF_SC] = "SignColumn",
+  [HLF_CONCEAL] = "Conceal",
+  [HLF_SPB] = "SpellBad",
+  [HLF_SPC] = "SpellCap",
+  [HLF_SPR] = "SpellRare",
+  [HLF_SPL] = "SpellLocal",
+  [HLF_PNI] = "Pmenu",
+  [HLF_PSI] = "PmenuSel",
+  [HLF_PSB] = "PmenuSbar",
+  [HLF_PST] = "PmenuThumb",
+  [HLF_TP] = "TabLine",
+  [HLF_TPS] = "TabLineSel",
+  [HLF_TPF] = "TabLineFill",
+  [HLF_CUC] = "CursorColumn",
+  [HLF_CUL] = "CursorLine",
+  [HLF_MC] = "ColorColumn",
+  [HLF_QFL] = "QuickFixLine",
+  [HLF_0] = "Whitespace",
+  [HLF_INACTIVE] = "NormalNC",
+});
+
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */

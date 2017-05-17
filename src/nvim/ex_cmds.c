@@ -4878,8 +4878,9 @@ void fix_help_buffer(void)
                   continue;
                 e1 = vim_strrchr(t1, '.');
                 e2 = vim_strrchr(path_tail(f2), '.');
-                if (e1 == NUL || e2 == NUL)
+                if (e1 == NULL || e2 == NULL) {
                   continue;
+                }
                 if (fnamecmp(e1, ".txt") != 0
                     && fnamecmp(e1, fname + 4) != 0) {
                   /* Not .txt and not .abx, remove it. */
@@ -5101,14 +5102,13 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
       }
       p1 = vim_strchr(IObuff, '*');             /* find first '*' */
       while (p1 != NULL) {
-        /* Use vim_strbyte() instead of vim_strchr() so that when
-         * 'encoding' is dbcs it still works, don't find '*' in the
-         * second byte. */
-        p2 = vim_strbyte(p1 + 1, '*');          /* find second '*' */
-        if (p2 != NULL && p2 > p1 + 1) {        /* skip "*" and "**" */
-          for (s = p1 + 1; s < p2; ++s)
-            if (*s == ' ' || *s == '\t' || *s == '|')
+        p2 = (char_u *)strchr((const char *)p1 + 1, '*');  // Find second '*'.
+        if (p2 != NULL && p2 > p1 + 1) {  // Skip "*" and "**".
+          for (s = p1 + 1; s < p2; s++) {
+            if (*s == ' ' || *s == '\t' || *s == '|') {
               break;
+            }
+          }
 
           /*
            * Only accept a *tag* when it consists of valid
@@ -5950,9 +5950,8 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   // :sign define {name} {args}... {last}=
   //                               |     |
   //                            last     p
-  if (p == NUL)
-  {
-    /* Expand last argument name (before equal sign). */
+  if (p == NULL) {
+    // Expand last argument name (before equal sign).
     xp->xp_pattern = last;
     switch (cmd_idx)
     {

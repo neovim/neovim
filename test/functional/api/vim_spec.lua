@@ -81,6 +81,36 @@ describe('api', function()
     end)
   end)
 
+  describe('nvim_execute_lua', function()
+    it('works', function()
+      meths.execute_lua('vim.api.nvim_set_var("test", 3)', {})
+      eq(3, meths.get_var('test'))
+
+      eq(17, meths.execute_lua('a, b = ...\nreturn a + b', {10,7}))
+
+      eq(NIL, meths.execute_lua('function xx(a,b)\nreturn a..b\nend',{}))
+      eq("xy", meths.execute_lua('return xx(...)', {'x','y'}))
+    end)
+
+    it('reports errors', function()
+      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
+                 "'=' expected near '+'"},
+         meth_pcall(meths.execute_lua, 'a+*b', {}))
+
+      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
+                 "unexpected symbol near '1'"},
+         meth_pcall(meths.execute_lua, '1+2', {}))
+
+      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
+                 "unexpected symbol"},
+         meth_pcall(meths.execute_lua, 'aa=bb\0', {}))
+
+      eq({false, 'Error executing lua: [string "<nvim>"]:1: '..
+                 "attempt to call global 'bork' (a nil value)"},
+         meth_pcall(meths.execute_lua, 'bork()', {}))
+    end)
+  end)
+
   describe('nvim_input', function()
     it("VimL error: does NOT fail, updates v:errmsg", function()
       local status, _ = pcall(nvim, "input", ":call bogus_fn()<CR>")
@@ -336,6 +366,17 @@ describe('api', function()
       -- 128       253      44
       eq('\128\253\44', helpers.nvim('replace_termcodes',
                                      '<LeftMouse>', true, true, true))
+    end)
+
+    it('does not crash when transforming an empty string', function()
+      -- Actually does not test anything, because current code will use NULL for
+      -- an empty string.
+      --
+      -- Problem here is that if String argument has .data in allocated memory
+      -- then `return str` in vim_replace_termcodes body will make Neovim free
+      -- `str.data` twice: once when freeing arguments, then when freeing return
+      -- value.
+      eq('', meths.replace_termcodes('', true, true, true))
     end)
   end)
 

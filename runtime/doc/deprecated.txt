@@ -26,9 +26,6 @@ Events ~
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
 *FileEncoding*		Never fired; equivalent to |EncodingChanged|.
 
-Highlight groups ~
-*hl-VisualNOS*		Obsolete. |vim-differences| {Nvim}
-
 Keycodes ~
 *<MouseDown>*		Use <ScrollWheelUp> instead.
 *<MouseUp>*		Use <ScrollWheelDown> instead.

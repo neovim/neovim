@@ -634,6 +634,7 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
           config |= CLASS_o7;
           break;
         }
+        return FAIL;
       case 'a':
         if (*(p + 2) == 'z') {
           config |= CLASS_az;
@@ -642,6 +643,7 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
           config |= CLASS_af;
           break;
         }
+        return FAIL;
       case 'A':
         if (*(p + 2) == 'Z') {
           config |= CLASS_AZ;
@@ -650,7 +652,7 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
           config |= CLASS_AF;
           break;
         }
-      /* FALLTHROUGH */
+        return FAIL;
       default:
         return FAIL;
       }
@@ -4194,6 +4196,7 @@ skip_add:
       subs = addstate(l, state->out, subs, pim, off_arg);
       break;
     }
+    // fallthrough
   case NFA_MCLOSE1:
   case NFA_MCLOSE2:
   case NFA_MCLOSE3:
@@ -4855,17 +4858,10 @@ static int failure_chance(nfa_state_T *state, int depth)
  */
 static int skip_to_start(int c, colnr_T *colp)
 {
-  char_u *s;
-
-  /* Used often, do some work to avoid call overhead. */
-  if (!ireg_ic
-      && !has_mbyte
-      )
-    s = vim_strbyte(regline + *colp, c);
-  else
-    s = cstrchr(regline + *colp, c);
-  if (s == NULL)
+  const char_u *const s = cstrchr(regline + *colp, c);
+  if (s == NULL) {
     return FAIL;
+  }
   *colp = (int)(s - regline);
   return OK;
 }

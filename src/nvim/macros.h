@@ -153,4 +153,22 @@
 #define STR_(x) #x
 #define STR(x) STR_(x)
 
+#ifndef __has_attribute
+# define NVIM_HAS_ATTRIBUTE(x) 0
+#elif defined(__clang__) && __clang__ == 1 \
+    && (__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ <= 5))
+// Starting in Clang 3.6, __has_attribute was fixed to only report true for
+// GNU-style attributes.  Prior to that, it reported true if _any_ backend
+// supported the attribute.
+# define NVIM_HAS_ATTRIBUTE(x) 0
+#else
+# define NVIM_HAS_ATTRIBUTE __has_attribute
+#endif
+
+#if NVIM_HAS_ATTRIBUTE(fallthrough)
+# define FALLTHROUGH __attribute__((fallthrough))
+#else
+# define FALLTHROUGH
+#endif
+
 #endif  // NVIM_MACROS_H

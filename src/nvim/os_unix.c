@@ -133,7 +133,7 @@ void mch_free_acl(vim_acl_T aclent)
 }
 #endif
 
-void mch_exit(int r)
+void mch_exit(int r) FUNC_ATTR_NORETURN
 {
   exiting = true;
 

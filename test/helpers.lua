@@ -263,6 +263,14 @@ local function which(exe)
   end
 end
 
+local function shallowcopy(orig)
+  local copy = {}
+  for orig_key, orig_value in pairs(orig) do
+    copy[orig_key] = orig_value
+  end
+  return copy
+end
+
 local function concat_tables(...)
   local ret = {}
   for i = 1, select('#', ...) do
@@ -311,6 +319,7 @@ return {
   check_cores = check_cores,
   hasenv = hasenv,
   which = which,
+  shallowcopy = shallowcopy,
   concat_tables = concat_tables,
   dedent = dedent,
 }

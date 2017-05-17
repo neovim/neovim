@@ -3,14 +3,14 @@ local eval, command, feed = helpers.eval, helpers.command, helpers.feed
 local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
 local expect, write_file = helpers.expect, helpers.write_file
 local feed_command = helpers.feed_command
+local missing_provider = helpers.missing_provider
 
 do
   clear()
-  command('let [g:interp, g:errors] = provider#pythonx#Detect(3)')
-  local errors = eval('g:errors')
-  if errors ~= '' then
+  local err = missing_provider('python3')
+  if err then
     pending(
-      'Python 3 (or the Python 3 neovim module) is broken or missing:\n' .. errors,
+      'Python 3 (or the Python 3 neovim module) is broken or missing:\n' .. err,
       function() end)
     return
   end

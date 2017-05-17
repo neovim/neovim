@@ -247,7 +247,7 @@ ex_menu (
     xfree(map_buf);
   }
 
-  ui_update_menu();
+  ui_call_update_menu();
 
 theend:
   ;

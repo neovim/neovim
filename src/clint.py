@@ -182,6 +182,7 @@ _ERROR_CATEGORIES = [
     'build/include_order',
     'build/printf_format',
     'build/storage_class',
+    'build/useless_fattr',
     'readability/alt_tokens',
     'readability/bool',
     'readability/braces',
@@ -1225,6 +1226,10 @@ def CheckForHeaderGuard(filename, lines, error):
       lines: An array of strings, each representing a line of the file.
       error: The function to call with any errors found.
     """
+    if filename.endswith('.c.h') or FileInfo(filename).RelativePath() in set((
+        'func_attr.h',
+    )):
+        return
 
     cppvar = GetHeaderGuardCPPVariable(filename)
 

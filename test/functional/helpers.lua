@@ -566,7 +566,20 @@ local function get_pathsep()
   return funcs.fnamemodify('.', ':p'):sub(-1)
 end
 
-local M = {
+local function missing_provider(provider)
+  if provider == 'ruby' then
+    local prog = funcs['provider#' .. provider .. '#Detect']()
+    return prog == '' and (provider .. ' not detected') or false
+  elseif provider == 'python' or provider == 'python3' then
+    local py_major_version = (provider == 'python3' and 3 or 2)
+    local errors = funcs['provider#pythonx#Detect'](py_major_version)[2]
+    return errors ~= '' and errors or false
+  else
+    assert(false, 'Unknown provider: ' .. provider)
+  end
+end
+
+local module = {
   prepend_argv = prepend_argv,
   clear = clear,
   connect = connect,
@@ -632,6 +645,7 @@ local M = {
   meth_pcall = meth_pcall,
   NIL = mpack.NIL,
   get_pathsep = get_pathsep,
+  missing_provider = missing_provider,
 }
 
 return function(after_each)
@@ -641,5 +655,5 @@ return function(after_each)
       check_cores('build/bin/nvim')
     end)
   end
-  return M
+  return module
 end

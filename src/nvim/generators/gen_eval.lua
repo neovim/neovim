@@ -25,7 +25,7 @@ local gperfpipe = io.open(funcsfname .. '.gperf', 'wb')
 local funcs = require('eval').funcs
 local metadata = mpack.unpack(io.open(arg[3], 'rb'):read("*all"))
 for i,fun in ipairs(metadata) do
-  if not fun.noeval then
+  if not fun.remote_only then
     funcs[fun.name] = {
       args=#fun.parameters,
       func='api_wrapper',

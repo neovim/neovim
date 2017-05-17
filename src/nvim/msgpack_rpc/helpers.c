@@ -24,12 +24,12 @@ static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
 #define HANDLE_TYPE_CONVERSION_IMPL(t, lt) \
-  bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
-                           Integer *const arg) \
-    FUNC_ATTR_NONNULL_ALL \
+  static bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
+                                  Integer *const arg) \
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
   { \
     if (obj->type != MSGPACK_OBJECT_EXT \
-        || obj->via.ext.type != kObjectType##t) { \
+        || obj->via.ext.type + EXT_OBJECT_TYPE_SHIFT != kObjectType##t) { \
       return false; \
     } \
     \
@@ -48,13 +48,14 @@ static msgpack_sbuffer sbuffer;
     return true; \
   } \
   \
-  void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
+  static void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
     FUNC_ATTR_NONNULL_ARG(2) \
   { \
     msgpack_packer pac; \
     msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
     msgpack_pack_int64(&pac, (handle_T)o); \
-    msgpack_pack_ext(res, sbuffer.size, kObjectType##t); \
+    msgpack_pack_ext(res, sbuffer.size, \
+                     kObjectType##t - EXT_OBJECT_TYPE_SHIFT); \
     msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size); \
     msgpack_sbuffer_clear(&sbuffer); \
   }
@@ -126,7 +127,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
       {
         STATIC_ASSERT(sizeof(Float) == sizeof(cur.mobj->via.f64),
                       "Msgpack floating-point size does not match API integer");
-        *cur.aobj = FLOATING_OBJ(cur.mobj->via.f64);
+        *cur.aobj = FLOAT_OBJ(cur.mobj->via.f64);
         break;
       }
 #define STR_CASE(type, attr, obj, dest, conv) \
@@ -225,7 +226,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         break;
       }
       case MSGPACK_OBJECT_EXT: {
-        switch (cur.mobj->via.ext.type) {
+        switch ((ObjectType)(cur.mobj->via.ext.type + EXT_OBJECT_TYPE_SHIFT)) {
           case kObjectTypeBuffer: {
             cur.aobj->type = kObjectTypeBuffer;
             ret = msgpack_rpc_to_buffer(cur.mobj, &cur.aobj->data.integer);
@@ -239,6 +240,15 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
           case kObjectTypeTabpage: {
             cur.aobj->type = kObjectTypeTabpage;
             ret = msgpack_rpc_to_tabpage(cur.mobj, &cur.aobj->data.integer);
+            break;
+          }
+          case kObjectTypeNil:
+          case kObjectTypeBoolean:
+          case kObjectTypeInteger:
+          case kObjectTypeFloat:
+          case kObjectTypeString:
+          case kObjectTypeArray:
+          case kObjectTypeDictionary: {
             break;
           }
         }
@@ -364,6 +374,9 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
   kv_push(stack, ((APIToMPObjectStackItem) { &result, false, 0 }));
   while (kv_size(stack)) {
     APIToMPObjectStackItem cur = kv_last(stack);
+    STATIC_ASSERT(kObjectTypeWindow == kObjectTypeBuffer + 1
+                  && kObjectTypeTabpage == kObjectTypeWindow + 1,
+                  "Buffer, window and tabpage enum items are in order");
     switch (cur.aobj->type) {
       case kObjectTypeNil: {
         msgpack_pack_nil(res);

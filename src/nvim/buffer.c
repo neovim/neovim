@@ -24,6 +24,7 @@
 #include <inttypes.h>
 
 #include "nvim/api/private/handle.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/vim.h"
@@ -449,7 +450,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   if (buf->terminal) {
     terminal_close(buf->terminal, NULL);
-  } 
+  }
 
   /* Always remove the buffer when there is no file name. */
   if (buf->b_ffname == NULL)
@@ -2316,7 +2317,7 @@ void get_winopts(buf_T *buf)
   /* Set 'foldlevel' to 'foldlevelstart' if it's not negative. */
   if (p_fdls >= 0)
     curwin->w_p_fdl = p_fdls;
-  check_colorcolumn(curwin);
+  didset_window_options(curwin);
 }
 
 /*
@@ -3001,13 +3002,13 @@ static bool ti_change(char_u *str, char_u **last)
   return false;
 }
 
-/*
- * Put current window title back (used after calling a shell)
- */
+
+/// Set current window title
 void resettitle(void)
 {
-  ui_set_title((char *)lasttitle);
-  ui_set_icon((char *)lasticon);
+  ui_call_set_title(cstr_as_string((char *)lasttitle));
+  ui_call_set_icon(cstr_as_string((char *)lasticon));
+  ui_flush();
 }
 
 # if defined(EXITFREE)
@@ -3606,6 +3607,7 @@ int build_stl_str_hl(
 
     case STL_OFFSET_X:
       base = kNumBaseHexadecimal;
+      // fallthrough
     case STL_OFFSET:
     {
       long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL);
@@ -3616,6 +3618,7 @@ int build_stl_str_hl(
     }
     case STL_BYTEVAL_X:
       base = kNumBaseHexadecimal;
+      // fallthrough
     case STL_BYTEVAL:
       num = byteval;
       if (num == NL)

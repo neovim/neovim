@@ -11,30 +11,38 @@ endif()
 endif()
 
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
+set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
-set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendispatch.lua)
-file(GLOB API_HEADERS api/*.h)
-file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
+set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
+set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
-set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
+set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.generated.c)
+set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
 set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
 set(GENERATED_FUNCS_METADATA ${GENERATED_DIR}/api/private/funcs_metadata.generated.h)
+set(GENERATED_UI_EVENTS ${GENERATED_DIR}/ui_events.generated.h)
+set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
+set(GENERATED_UI_EVENTS_REMOTE ${GENERATED_DIR}/ui_events_remote.generated.h)
+set(GENERATED_UI_EVENTS_BRIDGE ${GENERATED_DIR}/ui_events_bridge.generated.h)
+set(GENERATED_UI_EVENTS_METADATA ${GENERATED_DIR}/api/private/ui_events_metadata.generated.h)
 set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
 set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
 set(GENERATED_FUNCS ${GENERATED_DIR}/funcs.generated.h)
 set(GENERATED_EVENTS_ENUM ${GENERATED_INCLUDES_DIR}/auevents_enum.generated.h)
 set(GENERATED_EVENTS_NAMES_MAP ${GENERATED_DIR}/auevents_name_map.generated.h)
 set(GENERATED_OPTIONS ${GENERATED_DIR}/options.generated.h)
-set(EX_CMDS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genex_cmds.lua)
-set(FUNCS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/geneval.lua)
-set(EVENTS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gen_events.lua)
-set(OPTIONS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genoptions.lua)
-set(UNICODE_TABLES_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genunicodetables.lua)
+set(EX_CMDS_GENERATOR ${GENERATOR_DIR}/gen_ex_cmds.lua)
+set(FUNCS_GENERATOR ${GENERATOR_DIR}/gen_eval.lua)
+set(EVENTS_GENERATOR ${GENERATOR_DIR}/gen_events.lua)
+set(OPTIONS_GENERATOR ${GENERATOR_DIR}/gen_options.lua)
+set(UNICODE_TABLES_GENERATOR ${GENERATOR_DIR}/gen_unicode_tables.lua)
 set(UNICODE_DIR ${PROJECT_SOURCE_DIR}/unicode)
-file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
 set(GENERATED_UNICODE_TABLES ${GENERATED_DIR}/unicode_tables.generated.h)
+set(VIM_MODULE_FILE ${GENERATED_DIR}/lua/vim_module.generated.h)
+set(VIM_MODULE_SOURCE ${PROJECT_SOURCE_DIR}/src/nvim/lua/vim.lua)
+set(CHAR_BLOB_GENERATOR ${GENERATOR_DIR}/gen_char_blob.lua)
 set(LINT_SUPPRESS_FILE ${PROJECT_BINARY_DIR}/errors.json)
 set(LINT_SUPPRESS_URL_BASE "https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint")
 set(LINT_SUPPRESS_URL "${LINT_SUPPRESS_URL_BASE}/errors.json")
@@ -45,6 +53,11 @@ set(LINT_SUPPRESSES_URL "${LINT_SUPPRESS_URL_BASE}/errors.tar.gz")
 set(LINT_SUPPRESSES_ARCHIVE ${LINT_SUPPRESSES_ROOT}/errors.tar.gz)
 set(LINT_SUPPRESSES_TOUCH_FILE "${TOUCHES_DIR}/unpacked-clint-errors-archive")
 set(LINT_SUPPRESSES_INSTALL_SCRIPT "${PROJECT_SOURCE_DIR}/cmake/InstallClintErrors.cmake")
+
+file(GLOB UNICODE_FILES ${UNICODE_DIR}/*.txt)
+file(GLOB API_HEADERS api/*.h)
+list(REMOVE_ITEM API_HEADERS ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h)
+file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
 
 include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
@@ -67,6 +80,7 @@ foreach(subdir
         tui
         event
         eval
+        lua
        )
   if(${subdir} MATCHES "tui" AND NOT FEAT_TUI)
     continue()
@@ -157,7 +171,7 @@ if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
 endif()
 
 get_directory_property(gen_includes INCLUDE_DIRECTORIES)
-foreach(gen_include ${gen_includes})
+foreach(gen_include ${gen_includes} ${LUA_PREFERRED_INCLUDE_DIRS})
   list(APPEND gen_cflags "-I${gen_include}")
 endforeach()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type)
@@ -179,7 +193,11 @@ endfunction()
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
               "${CMAKE_CURRENT_LIST_DIR}/regexp_nfa.c"
-              ${GENERATED_API_DISPATCH})
+              ${GENERATED_API_DISPATCH}
+              "${GENERATED_UI_EVENTS_CALL}"
+              "${GENERATED_UI_EVENTS_REMOTE}"
+              "${GENERATED_UI_EVENTS_BRIDGE}"
+              )
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${CMAKE_CURRENT_LIST_DIR}" "${full_d}")
   if(${d} MATCHES "^[.][.]|auto/")
@@ -219,16 +237,50 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
     ${UNICODE_FILES}
 )
 
-add_custom_command(OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
-                          ${API_METADATA}
-  COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
-                     ${API_HEADERS} ${GENERATED_API_DISPATCH}
+add_custom_command(
+  OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
+         ${API_METADATA} ${MSGPACK_LUA_C_BINDINGS}
+  COMMAND ${LUA_PRG} ${API_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                     ${GENERATED_API_DISPATCH}
                      ${GENERATED_FUNCS_METADATA} ${API_METADATA}
+                     ${MSGPACK_LUA_C_BINDINGS}
+                     ${API_HEADERS}
   DEPENDS
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
-    ${DISPATCH_GENERATOR}
+    ${API_DISPATCH_GENERATOR}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
+)
+
+add_custom_command(
+  OUTPUT ${VIM_MODULE_FILE}
+  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_SOURCE}
+                     ${VIM_MODULE_FILE} vim_module
+  DEPENDS
+    ${CHAR_BLOB_GENERATOR}
+    ${VIM_MODULE_SOURCE}
+)
+
+list(APPEND NVIM_GENERATED_SOURCES
+  "${MSGPACK_LUA_C_BINDINGS}"
+)
+
+add_custom_command(
+  OUTPUT ${GENERATED_UI_EVENTS}
+         ${GENERATED_UI_EVENTS_CALL}
+         ${GENERATED_UI_EVENTS_REMOTE}
+         ${GENERATED_UI_EVENTS_BRIDGE}
+         ${GENERATED_UI_EVENTS_METADATA}
+  COMMAND ${LUA_PRG} ${API_UI_EVENTS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
+                     ${GENERATED_UI_EVENTS}
+                     ${GENERATED_UI_EVENTS_CALL}
+                     ${GENERATED_UI_EVENTS_REMOTE}
+                     ${GENERATED_UI_EVENTS_BRIDGE}
+                     ${GENERATED_UI_EVENTS_METADATA}
+  DEPENDS
+    ${API_UI_EVENTS_GENERATOR}
+    ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
 )
 
 list(APPEND NVIM_GENERATED_FOR_HEADERS
@@ -242,6 +294,7 @@ list(APPEND NVIM_GENERATED_FOR_SOURCES
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
   "${GENERATED_UNICODE_TABLES}"
+  "${VIM_MODULE_FILE}"
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
@@ -314,7 +367,13 @@ if(UNIX)
   )
 endif()
 
-set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES})
+set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
+
+if(CMAKE_VERSION VERSION_LESS "2.8.8")
+  # Use include_directories() because INCLUDE_DIRECTORIES target property
+  # is not supported
+  include_directories(${LUA_PREFERRED_INCLUDE_DIRS})
+endif()
 
 # Don't use jemalloc in the unit test library.
 if(JEMALLOC_FOUND)
@@ -325,6 +384,9 @@ add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
+
+set_property(TARGET nvim APPEND PROPERTY
+             INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
 
 if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim
@@ -372,6 +434,53 @@ if(WIN32)
   add_dependencies(nvim_runtime_deps external_blobs)
 endif()
 
+add_library(
+  libnvim
+  STATIC
+  EXCLUDE_FROM_ALL
+  ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
+  ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
+)
+set_property(TARGET libnvim APPEND PROPERTY
+             INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+set_target_properties(
+  libnvim
+  PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME nvim
+)
+set_property(
+  TARGET libnvim
+  APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB "
+)
+
+if(LUAJIT_FOUND)
+  set(NVIM_TEST_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUAJIT_LIBRARIES})
+  add_library(
+    nvim-test
+    MODULE
+    EXCLUDE_FROM_ALL
+    ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
+    ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
+    ${UNIT_TEST_FIXTURES}
+  )
+  target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})
+  target_link_libraries(libnvim ${NVIM_TEST_LINK_LIBRARIES})
+  set_property(
+    TARGET nvim-test
+    APPEND PROPERTY INCLUDE_DIRECTORIES ${LUAJIT_INCLUDE_DIRS}
+  )
+  set_target_properties(
+    nvim-test
+    PROPERTIES
+      POSITION_INDEPENDENT_CODE ON
+  )
+  set_property(
+    TARGET nvim-test
+    APPEND_STRING PROPERTY COMPILE_FLAGS " -DUNIT_TESTING "
+  )
+endif()
+
 if(CLANG_ASAN_UBSAN)
   message(STATUS "Enabling Clang address sanitizer and undefined behavior sanitizer for nvim.")
   check_c_compiler_flag(-fno-sanitize-recover=all SANITIZE_RECOVER_ALL)
@@ -396,19 +505,6 @@ elseif(CLANG_TSAN)
   set_property(TARGET nvim APPEND_STRING PROPERTY LINK_FLAGS "-fsanitize=thread ")
 endif()
 
-add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
-target_link_libraries(libnvim ${NVIM_LINK_LIBRARIES})
-set_target_properties(libnvim PROPERTIES
-  POSITION_INDEPENDENT_CODE ON
-  OUTPUT_NAME nvim)
-set_property(TARGET libnvim APPEND_STRING PROPERTY COMPILE_FLAGS " -DMAKE_LIB ")
-
-add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${UNIT_TEST_FIXTURES} ${NVIM_HEADERS})
-target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
-set_property(TARGET nvim-test APPEND_STRING PROPERTY COMPILE_FLAGS -DUNIT_TESTING)
-
 function(get_test_target prefix sfile relative_path_var target_var)
   get_filename_component(full_d "${sfile}" PATH)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
@@ -429,29 +525,27 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  if_cscope_defs.h
-  misc2.h
-  msgpack_rpc/server.h
-  os/shell.h
-  os_unix.h
   os/win_defs.h
   regexp_defs.h
   syntax_defs.h
   terminal.h
-  tui/tui.h
   undo.h
   undo_defs.h
 )
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)
 
-  if(NOT ${hfile} MATCHES "[.]c[.]h$")
+  if(NOT ${hfile} MATCHES "[.](c|in)[.]h$")
     set(tsource "${GENERATED_DIR}/${relative_path}.test-include.c")
     write_file("${tsource}" "#include \"${hfile}\"\nint main(int argc, char **argv) { return 0; }")
     add_executable(
       ${texe}
       EXCLUDE_FROM_ALL
       ${tsource} ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_HEADERS})
+    set_property(
+      TARGET ${texe}
+      APPEND PROPERTY INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS}
+    )
 
     list(FIND NO_SINGLE_CHECK_HEADERS "${relative_path}" hfile_exclude_idx)
     if(${hfile_exclude_idx} EQUAL -1)

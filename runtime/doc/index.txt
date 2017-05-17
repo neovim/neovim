@@ -1331,6 +1331,9 @@ tag	      command	      action ~
 |:ltag|		:lt[ag]		jump to tag and add matching tags to the
 				location list
 |:lunmap|	:lu[nmap]	like ":unmap!" but includes Lang-Arg mode
+|:lua|		:lua		execute Lua command
+|:luado|	:luad[o]	execute Lua command for each line
+|:luafile|	:luaf[ile]	execute Lua script file
 |:lvimgrep|	:lv[imgrep]	search for pattern in files
 |:lvimgrepadd|	:lvimgrepa[dd]	like :vimgrep, but append to current list
 |:lwindow|	:lw[indow]	open or close location window

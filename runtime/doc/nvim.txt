@@ -18,10 +18,10 @@ differences from Vim.
 ==============================================================================
 Transitioning from Vim				*nvim-from-vim*
 
-To start the transition, create `~/.config/nvim/init.vim` with these contents:
+To start the transition, create ~/.config/nvim/init.vim with these contents:
 >
-    set runtimepath+=~/.vim,~/.vim/after
-    set packpath+=~/.vim
+    set runtimepath^=~/.vim runtimepath+=~/.vim/after
+    let &packpath = &runtimepath
     source ~/.vimrc
 <
 Note: If your system sets `$XDG_CONFIG_HOME`, use that instead of `~/.config`

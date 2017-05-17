@@ -1268,6 +1268,7 @@ static int command_line_handle_key(CommandLineState *s)
       }
       return command_line_changed(s);
     }
+    // fallthrough
 
   case K_UP:
   case K_DOWN:
@@ -5380,47 +5381,61 @@ static int ex_window(void)
   return cmdwin_result;
 }
 
-/*
- * Used for commands that either take a simple command string argument, or:
- *	cmd << endmarker
- *	  {script}
- *	endmarker
- * Returns a pointer to allocated memory with {script} or NULL.
- */
-char_u *script_get(exarg_T *eap, char_u *cmd)
+/// Get script string
+///
+/// Used for commands which accept either `:command script` or
+///
+///     :command << endmarker
+///       script
+///     endmarker
+///
+/// @param  eap  Command being run.
+/// @param[out]  lenp  Location where length of resulting string is saved. Will
+///                    be set to zero when skipping.
+///
+/// @return [allocated] NULL or script. Does not show any error messages.
+///                     NULL is returned when skipping and on error.
+char *script_get(exarg_T *const eap, size_t *const lenp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
-  char_u      *theline;
-  char        *end_pattern = NULL;
-  char dot[] = ".";
-  garray_T ga;
+  const char *const cmd = (const char *)eap->arg;
 
-  if (cmd[0] != '<' || cmd[1] != '<' || eap->getline == NULL)
-    return NULL;
+  if (cmd[0] != '<' || cmd[1] != '<' || eap->getline == NULL) {
+    *lenp = STRLEN(eap->arg);
+    return eap->skip ? NULL : xmemdupz(eap->arg, *lenp);
+  }
 
-  ga_init(&ga, 1, 0x400);
+  garray_T ga = { .ga_data = NULL, .ga_len = 0 };
+  if (!eap->skip) {
+    ga_init(&ga, 1, 0x400);
+  }
 
-  if (cmd[2] != NUL)
-    end_pattern = (char *)skipwhite(cmd + 2);
-  else
-    end_pattern = dot;
-
-  for (;; ) {
-    theline = eap->getline(
+  const char *const end_pattern = (
+      cmd[2] != NUL
+      ? (const char *)skipwhite((const char_u *)cmd + 2)
+      : ".");
+  for (;;) {
+    char *const theline = (char *)eap->getline(
         eap->cstack->cs_looplevel > 0 ? -1 :
         NUL, eap->cookie, 0);
 
-    if (theline == NULL || STRCMP(end_pattern, theline) == 0) {
+    if (theline == NULL || strcmp(end_pattern, theline) == 0) {
       xfree(theline);
       break;
     }
 
-    ga_concat(&ga, theline);
-    ga_append(&ga, '\n');
+    if (!eap->skip) {
+      ga_concat(&ga, (const char_u *)theline);
+      ga_append(&ga, '\n');
+    }
     xfree(theline);
   }
-  ga_append(&ga, NUL);
+  *lenp = (size_t)ga.ga_len;  // Set length without trailing NUL.
+  if (!eap->skip) {
+    ga_append(&ga, NUL);
+  }
 
-  return (char_u *)ga.ga_data;
+  return (char *)ga.ga_data;
 }
 
 /// Iterate over history items

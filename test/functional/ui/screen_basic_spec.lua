@@ -565,6 +565,46 @@ describe('Screen', function()
       ]])
     end)
   end)
+
+  describe('press enter', function()
+    it('does not crash on <F1> at “Press ENTER”', function()
+      command('nnoremap <F1> :echo "TEST"<CR>')
+      feed(':ls<CR>')
+      screen:expect([[
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        :ls                                                  |
+          1 %a   "[No Name]"                    line 1       |
+        {7:Press ENTER or type command to continue}^              |
+      ]])
+      feed('<F1>')
+      screen:expect([[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        TEST                                                 |
+      ]])
+    end)
+  end)
 end)
 
 describe('nvim_ui_attach()', function()

@@ -48,14 +48,19 @@ env:
     - FUNCTIONALTEST=functionaltest
     - CI_TARGET=tests
 
-matrix:
+jobs:
   include:
+    - stage: sanitizers
+      os: linux
+      compiler: clang-3.9
+      env: >
+        CLANG_SANITIZER=ASAN_UBSAN
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
     - os: linux
-      env: CI_TARGET=lint
-    - os: linux
-      compiler: gcc-5
-      env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
-    - os: linux
+      compiler: clang-3.9
+      env: CLANG_SANITIZER=TSAN
+    - stage: normal builds
+      os: linux
       compiler: gcc-5
       env: FUNCTIONALTEST=functionaltest-lua
     - os: linux
@@ -64,18 +69,19 @@ matrix:
       # dependencies in a separate cache.
       compiler: gcc-5 -m32
       env: BUILD_32BIT=ON
-    - os: linux
-      compiler: clang-3.9
-      env: CLANG_SANITIZER=ASAN_UBSAN
-    - os: linux
-      compiler: clang-3.9
-      env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
       osx_image: xcode7.3  # macOS 10.11
     - os: osx
       compiler: gcc-4.9
       osx_image: xcode7.3  # macOS 10.11
+    - stage: lint
+      os: linux
+      env: CI_TARGET=lint
+    - stage: coverage
+      os: linux
+      compiler: gcc-5
+      env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
   allow_failures:
     - env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
   fast_finish: true

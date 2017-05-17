@@ -15,6 +15,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/buffer.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/lua/executor.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/file_search.h"
@@ -144,7 +145,7 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
 {
   if (str.size == 0) {
     // Empty string
-    return str;
+    return (String) { .data = NULL, .size = 0 };
   }
 
   char *ptr = NULL;
@@ -203,7 +204,8 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
-/// Calls a VimL function with the given arguments.
+/// Calls a VimL function with the given arguments
+///
 /// On VimL error: Returns a generic error; v:errmsg is not updated.
 ///
 /// @param fname    Function to call
@@ -251,6 +253,25 @@ free_vim_args:
   }
 
   return rv;
+}
+
+/// Execute lua code. Parameters might be passed, they are available inside
+/// the chunk as `...`. The chunk can return a value.
+///
+/// To evaluate an expression, it must be prefixed with "return ". For
+/// instance, to call a lua function with arguments sent in and get its
+/// return value back, use the code "return my_function(...)".
+///
+/// @param code       lua code to execute
+/// @param args       Arguments to the code
+/// @param[out] err   Details of an error encountered while parsing
+///                   or executing the lua code.
+///
+/// @return           Return value of lua code if present or NIL.
+Object nvim_execute_lua(String code, Array args, Error *err)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
+{
+  return executor_exec_lua_api(code, args, err);
 }
 
 /// Calculates the number of display cells occupied by `text`.
@@ -658,7 +679,7 @@ void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
 void nvim_subscribe(uint64_t channel_id, String event)
-    FUNC_API_SINCE(1) FUNC_API_NOEVAL
+    FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   size_t length = (event.size < METHOD_MAXLEN ? event.size : METHOD_MAXLEN);
   char e[METHOD_MAXLEN + 1];
@@ -672,7 +693,7 @@ void nvim_subscribe(uint64_t channel_id, String event)
 /// @param channel_id Channel id (passed automatically by the dispatcher)
 /// @param event      Event type string
 void nvim_unsubscribe(uint64_t channel_id, String event)
-    FUNC_API_SINCE(1) FUNC_API_NOEVAL
+    FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   size_t length = (event.size < METHOD_MAXLEN ?
                    event.size :
@@ -721,7 +742,7 @@ Dictionary nvim_get_mode(void)
 }
 
 Array nvim_get_api_info(uint64_t channel_id)
-    FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_NOEVAL
+    FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_REMOTE_ONLY
 {
   Array rv = ARRAY_DICT_INIT;
 
@@ -754,7 +775,7 @@ Array nvim_get_api_info(uint64_t channel_id)
 /// which resulted in an error, the error type and the error message. If an
 /// error ocurred, the values from all preceding calls will still be returned.
 Array nvim_call_atomic(uint64_t channel_id, Array calls, Error *err)
-    FUNC_API_SINCE(1) FUNC_API_NOEVAL
+    FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
   Array rv = ARRAY_DICT_INIT;
   Array results = ARRAY_DICT_INIT;
@@ -854,4 +875,58 @@ static void write_msg(String message, bool to_err)
   }
   --no_wait_return;
   msg_end();
+}
+
+// Functions used for testing purposes
+
+/// Returns object given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  obj  Object to return.
+///
+/// @return its argument.
+Object nvim__id(Object obj)
+{
+  return copy_object(obj);
+}
+
+/// Returns array given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  arr  Array to return.
+///
+/// @return its argument.
+Array nvim__id_array(Array arr)
+{
+  return copy_object(ARRAY_OBJ(arr)).data.array;
+}
+
+/// Returns dictionary given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  dct  Dictionary to return.
+///
+/// @return its argument.
+Dictionary nvim__id_dictionary(Dictionary dct)
+{
+  return copy_object(DICTIONARY_OBJ(dct)).data.dictionary;
+}
+
+/// Returns floating-point value given as argument
+///
+/// This API function is used for testing. One should not rely on its presence
+/// in plugins.
+///
+/// @param[in]  flt  Value to return.
+///
+/// @return its argument.
+Float nvim__id_float(Float flt)
+{
+  return flt;
 }

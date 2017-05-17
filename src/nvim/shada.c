@@ -2047,7 +2047,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
       }
       case kSDReadStatusNotShaDa: {
         ret = kSDWriteReadNotShada;
-        // fallthrough
+        FALLTHROUGH;
       }
       case kSDReadStatusReadError: {
         return ret;

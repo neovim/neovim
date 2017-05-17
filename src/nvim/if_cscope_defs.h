@@ -18,6 +18,7 @@
 
 #include "nvim/os/os_defs.h"
 #include "nvim/os/fs_defs.h"
+#include "nvim/ex_cmds_defs.h"
 
 #define CSCOPE_SUCCESS          0
 #define CSCOPE_FAILURE          -1

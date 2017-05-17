@@ -66,6 +66,7 @@ function! health#check(plugin_names) abort
   " needed for plasticboy/vim-markdown, because it uses fdm=expr
   normal! zR
   setlocal nomodified
+  setlocal bufhidden=hide
   redraw|echo ''
 endfunction
 

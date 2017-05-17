@@ -8,6 +8,9 @@
 //   - Add a BV_XX or WV_XX entry to option_defs.h
 //   - Add a variable to the window or buffer struct in buffer_defs.h.
 //   - For a window option, add some code to copy_winopt().
+//   - For a window string option, add code to check_winopt()
+//     and clear_winopt(). If setting the option needs parsing,
+//     add some code to didset_window_options().
 //   - For a buffer option, add some code to buf_copy_options().
 //   - For a buffer string option, add code to check_buf_options().
 // - If it's a numeric option, add any necessary bounds checks to do_set().
@@ -244,12 +247,12 @@ typedef struct vimoption {
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
   "d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr," \
   "N:CursorLineNr,r:Question,s:StatusLine,S:StatusLineNC,c:VertSplit,t:Title," \
-  "v:Visual,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn," \
+  "v:Visual,V:VisualNOS,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn," \
   "A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal," \
   "B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel," \
   "x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill," \
   "!:CursorColumn,.:CursorLine,o:ColorColumn,q:QuickFixLine," \
-  "0:Whitespace"
+  "0:Whitespace,I:NormalNC"
 
 /*
  * options[] is initialized here.
@@ -338,7 +341,7 @@ static inline size_t compute_double_colon_len(const char *const val,
   do {
     size_t dir_len;
     const char *dir;
-    iter = vim_colon_env_iter(val, iter, &dir, &dir_len);
+    iter = vim_env_iter(':', val, iter, &dir, &dir_len);
     if (dir != NULL && dir_len > 0) {
       ret += ((dir_len + memcnt(dir, ',', dir_len) + common_suf_len
                + !after_pathsep(dir, dir + dir_len)) * 2
@@ -382,8 +385,8 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
   do {
     size_t dir_len;
     const char *dir;
-    iter = (forward ? vim_colon_env_iter : vim_colon_env_iter_rev)(
-        val, iter, &dir, &dir_len);
+    iter = (forward ? vim_env_iter : vim_env_iter_rev)(':', val, iter, &dir,
+                                                       &dir_len);
     if (dir != NULL && dir_len > 0) {
       dest = strcpy_comma_escaped(dest, dir, dir_len);
       if (!after_pathsep(dest - 1, dest)) {
@@ -1949,15 +1952,7 @@ did_set_title (
 {
   if (starting != NO_SCREEN) {
     maketitle();
-    if (icon) {
-      if (!p_icon) {
-        ui_set_icon(NULL);
-      }
-    } else {
-      if (!p_title) {
-        ui_set_title(NULL);
-      }
-    }
+    resettitle();
   }
 }
 
@@ -2129,7 +2124,7 @@ static void didset_options(void)
 static void didset_options2(void)
 {
   // Initialize the highlight_attr[] table.
-  (void)highlight_changed();
+  highlight_changed();
 
   // Parse default for 'clipboard'.
   (void)opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
@@ -2543,11 +2538,11 @@ did_set_string_option (
       if (s[2] == NUL)
         break;
     }
-  }
-  /* 'highlight' */
-  else if (varp == &p_hl) {
-    if (highlight_changed() == FAIL)
-      errmsg = e_invarg;        /* invalid flags */
+  } else if (varp == &p_hl) {
+    // 'highlight'
+    if (strcmp((char *)(*varp), HIGHLIGHT_INIT) != 0) {
+      errmsg = e_unsupportedoption;
+    }
   }
   /* 'nrformats' */
   else if (gvarp == &p_nf) {
@@ -2644,7 +2639,7 @@ did_set_string_option (
       if (varp == &p_enc) {
         // only encoding=utf-8 allowed
         if (STRCMP(p_enc, "utf-8") != 0) {
-          errmsg = e_invarg;
+          errmsg = e_unsupportedoption;
         }
       }
     }
@@ -3171,6 +3166,10 @@ did_set_string_option (
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     }
+  } else if (varp == &curwin->w_p_winhl) {
+    if (!parse_winhl_opt(curwin)) {
+      errmsg = e_invarg;
+    }
   } else {
     // Options that are a list of flags.
     p = NULL;
@@ -3208,8 +3207,6 @@ did_set_string_option (
      */
     if (did_chartab)
       (void)init_chartab();
-    if (varp == &p_hl)
-      (void)highlight_changed();
   } else {
     /* Remember where the option was set. */
     set_option_scriptID_idx(opt_idx, opt_flags, current_SID);
@@ -3275,7 +3272,7 @@ did_set_string_option (
 
   if (varp == &p_mouse) {
     if (*p_mouse == NUL) {
-      ui_mouse_off();
+      ui_call_mouse_off();
     } else {
       setmouse();  // in case 'mouse' changed
     }
@@ -3577,6 +3574,38 @@ static char_u *compile_cap_prog(synblock_T *synblock)
 
   vim_regfree(rp);
   return NULL;
+}
+
+/// Handle setting `winhighlight' in window "wp"
+static bool parse_winhl_opt(win_T *wp)
+{
+  int w_hl_id = 0, w_hl_id_inactive = 0;
+
+  const char *p = (const char *)wp->w_p_winhl;
+  while (*p) {
+    char *colon = strchr(p, ':');
+    if (!colon) {
+      return false;
+    }
+    size_t nlen = (size_t)(colon-p);
+    char *hi = colon+1;
+    char *commap = xstrchrnul(hi, ',');
+    int hl_id = syn_check_group((char_u *)hi, (int)(commap-hi));
+
+    if (strncmp("Normal", p, nlen) == 0) {
+      w_hl_id = hl_id;
+    } else if (strncmp("NormalNC", p, nlen) == 0) {
+      w_hl_id_inactive = hl_id;
+    } else {
+      return false;
+    }
+
+    p = *commap ? commap+1 : "";
+  }
+
+  wp->w_hl_id = w_hl_id;
+  wp->w_hl_id_inactive = w_hl_id_inactive;
+  return true;
 }
 
 /*
@@ -4796,17 +4825,6 @@ char *set_option_value(const char *const name, const long number,
   return NULL;
 }
 
-char_u *get_highlight_default(void)
-{
-  int i;
-
-  i = findoption("hl");
-  if (i >= 0) {
-    return options[i].def_val[VI_DEFAULT];
-  }
-  return (char_u *)NULL;
-}
-
 /*
  * Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
  */
@@ -5488,6 +5506,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_WM:     return (char_u *)&(curbuf->b_p_wm);
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
   case PV_SCL:    return (char_u *)&(curwin->w_p_scl);
+  case PV_WINHL:  return (char_u *)&(curwin->w_p_winhl);
   default:        EMSG(_("E356: get_varp ERROR"));
   }
   /* always return a valid pointer to avoid a crash! */
@@ -5514,7 +5533,6 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
   /* Is this right? */
   wp_to->w_farsi = wp_from->w_farsi;
-  briopt_check(wp_to);
 }
 
 /*
@@ -5566,6 +5584,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_fdt = vim_strsave(from->wo_fdt);
   to->wo_fmr = vim_strsave(from->wo_fmr);
   to->wo_scl = vim_strsave(from->wo_scl);
+  to->wo_winhl = vim_strsave(from->wo_winhl);
   check_winopt(to);             // don't want NULL pointers
 }
 
@@ -5595,6 +5614,7 @@ static void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_cc);
   check_string_option(&wop->wo_cocu);
   check_string_option(&wop->wo_briopt);
+  check_string_option(&wop->wo_winhl);
 }
 
 /*
@@ -5614,7 +5634,16 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_cc);
   clear_string_option(&wop->wo_cocu);
   clear_string_option(&wop->wo_briopt);
+  clear_string_option(&wop->wo_winhl);
 }
+
+void didset_window_options(win_T *wp)
+{
+  check_colorcolumn(wp);
+  briopt_check(wp);
+  parse_winhl_opt(wp);
+}
+
 
 /*
  * Copy global option values to local options for one buffer.

@@ -62,15 +62,15 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
 
+  if (!win) {
+    return;
+  }
+
   if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
       || pos.items[1].type != kObjectTypeInteger) {
     api_set_error(err,
                   kErrorTypeValidation,
                   "Argument \"pos\" must be a [row, col] array");
-    return;
-  }
-
-  if (!win) {
     return;
   }
 

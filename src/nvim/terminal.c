@@ -302,8 +302,16 @@ void terminal_close(Terminal *term, char *msg)
   }
 
   term->forward_mouse = false;
-  term->closed = true;
+
+  // flush any pending changes to the buffer
+  if (!exiting) {
+    block_autocmds();
+    refresh_terminal(term);
+    unblock_autocmds();
+  }
+
   buf_T *buf = handle_get_buffer(term->buf_handle);
+  term->closed = true;
 
   if (!msg || exiting) {
     // If no msg was given, this was called by close_buffer(buffer.c).  Or if
@@ -675,7 +683,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
 static int term_bell(void *data)
 {
-  ui_putc('\x07');
+  ui_call_bell();
   return 1;
 }
 

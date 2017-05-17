@@ -1749,9 +1749,7 @@ v:profiling	Normally zero.	Set to one after using ":profile start".
 		See |profiling|.
 
 					*v:progname* *progname-variable*
-v:progname	Contains the name (with path removed) with which Nvim was
-		invoked.  Allows you to do special initialisations for any
-		name you might symlink to Nvim.
+v:progname	The name by which Nvim was invoked (with path removed).
 		Read-only.
 
 					*v:progpath* *progpath-variable*
@@ -2136,6 +2134,7 @@ lispindent({lnum})		Number	Lisp indent for line {lnum}
 localtime()			Number	current time
 log({expr})			Float	natural logarithm (base e) of {expr}
 log10({expr})			Float	logarithm of Float {expr} to base 10
+luaeval({expr}[, {expr}])	any	evaluate Lua expression
 map({expr1}, {expr2})		List/Dict  change each item in {expr1} to {expr}
 maparg({name}[, {mode} [, {abbr} [, {dict}]]])
 				String or Dict
@@ -4664,10 +4663,23 @@ index({list}, {expr} [, {start} [, {ic}]])			*index()*
 
 
 input({prompt} [, {text} [, {completion}]])		*input()*
+input({opts})
 		The result is a String, which is whatever the user typed on
 		the command-line.  The {prompt} argument is either a prompt
 		string, or a blank string (for no prompt).  A '\n' can be used
 		in the prompt to start a new line.
+
+		In the second form it accepts a single dictionary with the 
+		following keys, any of which may be omitted:
+
+		Key           Default  Description ~
+		prompt        ""       Same as {prompt} in the first form.
+		default       ""       Same as {text} in the first form.
+		completion    nothing  Same as {completion} in the first form.
+		cancelreturn  ""       Same as {cancelreturn} from
+		                       |inputdialog()|. Also works with 
+		                       input().
+
 		The highlighting set with |:echohl| is used for the prompt.
 		The input is entered just like a command-line, with the same
 		editing commands and mappings.	There is a separate history
@@ -4709,6 +4721,7 @@ input({prompt} [, {text} [, {completion}]])		*input()*
 			:endfunction
 
 inputdialog({prompt} [, {text} [, {cancelreturn}]])		*inputdialog()*
+inputdialog({opts})
 		Like |input()|, but when the GUI is running and text dialogs
 		are supported, a dialog window pops up to input the text.
 		Example: >
@@ -4720,7 +4733,6 @@ inputdialog({prompt} [, {text} [, {cancelreturn}]])		*inputdialog()*
 		omitted an empty string is returned.
 		Hitting <Enter> works like pressing the OK button.  Hitting
 		<Esc> works like pressing the Cancel button.
-		NOTE: Command-line completion is not supported.
 
 inputlist({textlist})					*inputlist()*
 		{textlist} must be a |List| of strings.  This |List| is
@@ -5109,6 +5121,9 @@ log10({expr})						*log10()*
 			:echo log10(0.01)
 <			-2.0
 
+luaeval({expr}[, {expr}])
+		Evaluate Lua expression {expr} and return its result converted 
+		to Vim data structures. See |lua-luaeval| for more details.
 
 map({expr1}, {expr2})					*map()*
 		{expr1} must be a |List| or a |Dictionary|.
