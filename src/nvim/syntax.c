@@ -6202,8 +6202,6 @@ do_highlight(char_u *line, int forceit, int init) {
   int color;
   int is_normal_group = FALSE;                  /* "Normal" group */
 
-  // MATT_HACK();
-
   /*
    * If no argument, list current highlighting.
    */
@@ -6352,7 +6350,7 @@ do_highlight(char_u *line, int forceit, int init) {
   if (dodefault && hl_has_settings(idx, TRUE))
     return;
 
-  is_normal_group = (STRCMP(HL_TABLE()[idx].sg_name_u, "Normal") == 0);
+  is_normal_group = (STRCMP(HL_TABLE()[idx].sg_name_u, "NORMAL") == 0);
 
   /* Clear the highlighting for ":hi clear {group}" and ":hi clear". */
   if (doclear || (forceit && init)) {

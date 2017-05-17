@@ -564,31 +564,35 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   // Support changing cursor shape on some popular terminals.
   const char *vte_version = os_getenv("VTE_VERSION");
 
-  // if (c.id != 0 && ui->rgb) {
+  if (c.id != 0 && ui->rgb) {
+    int attr = syn_id2attr(c.id);
+    if (attr > 0) {
+      attrentry_T *aep = syn_cterm_attr2entry(attr);
+      data->params[0].i = aep->rgb_bg_color;
+      unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
+    }
+  }
+
+  // update cursor colors
+  // if (c.id != 0) {
   //   int attr = syn_id2attr(c.id);
   //   if (attr > 0) {
   //     attrentry_T *aep = syn_cterm_attr2entry(attr);
-  //     data->params[0].i = aep->rgb_bg_color;
+  //     cursor_bg = aep->rgb_bg_color;
+  //   } else {
+  //     cursor_bg = -1;
+  //   }
+
+  //   if (cursor_bg == -1) {
+  //     unibi_out(ui, unibi_cursor_invisible);
+  //   } else {
+  //     unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
+  //     data->params[0].i = cursor_bg;
+  //     ILOG("setting cursor color");
   //     unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
   //   }
   // }
 
-//   if (c.id != 0) {
-//     // int attr = syn_id2attr(c.id);
-//     // attrentry_T *aep = syn_cterm_attr2entry(attr);
-//     // cterm_bg_color
-//     cursor_bg = c.attrs.background;
-
-
-//     if (cursor_bg == -1) {
-//       unibi_out(ui, unibi_cursor_invisible);
-//     } else {
-//       unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
-//       data->params[0].i = cursor_bg;
-//       ILOG("setting cursor color ");
-//       unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
-//     }
-//   }
   if (data->term == kTermKonsole) {
     // Konsole uses a proprietary escape code to set the cursor shape
     // and does not support DECSCUSR.
@@ -619,26 +623,6 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     data->params[0].i = shape + (int)(c.blinkon == 0);
     unibi_format(vars, vars + 26, "\x1b[%p1%d q",
                  data->params, out, ui, NULL, NULL);
-  }
-
-  // update cursor colors
-  if (c.id != 0) {
-    int attr = syn_id2attr(c.id);
-    if (attr > 0) {
-      attrentry_T *aep = syn_cterm_attr2entry(attr);
-      cursor_bg = aep->rgb_bg_color;
-    } else {
-      cursor_bg = -1;
-    }
-
-    if (cursor_bg == -1) {
-      unibi_out(ui, unibi_cursor_invisible);
-    } else {
-      unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
-      data->params[0].i = cursor_bg;
-      ILOG("setting cursor color");
-      unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
-    }
   }
 }
 
@@ -855,7 +839,7 @@ static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
   }
 
   if (STRCMP(name, "refresh_cursor") == 0) {
-    tui_set_mode(ui, data->showing_mode);
+    // tui_set_mode(ui, data->showing_mode);
   }
 }
 

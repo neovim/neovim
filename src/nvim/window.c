@@ -5512,11 +5512,13 @@ void restore_buffer(bufref_T *save_curbuf)
 }
 
 
-// Add match to the match list of window 'wp'.  The pattern 'pat' will be
-// highlighted with the group 'grp' with priority 'prio'.
-// Optionally, a desired ID 'id' can be specified (greater than or equal to 1).
-// If no particular ID is desired, -1 must be specified for 'id'.
-// Return ID of added match, -1 on failure.
+/// Add match to the match list of window 'wp'.  The pattern 'pat' will be
+/// highlighted with the group 'grp' with priority 'prio'.
+/// Optionally, a desired ID 'id' can be specified (greater than or equal to 1).
+/// @param[in] id a desired ID 'id' can be specified
+///               (greater than or equal to 1). -1 must be specified if no
+///               particular ID is desired
+/// @return ID of added match, -1 on failure.
 int match_add(win_T *wp, const char *const grp, const char *const pat,
               int prio, int id, list_T *pos_list,
               const char *const conceal_char)
@@ -5547,7 +5549,9 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
       cur = cur->next;
     }
   }
-  if ((hlg_id = syn_name2id((const char_u *)grp)) == 0) {
+
+  hlg_id = syn_name2id((const char_u *)grp);
+  if (hl_invalid_id(hlg_id)) {
     EMSG2(_(e_nogroup), grp);
     return -1;
   }
@@ -5694,10 +5698,9 @@ fail:
   return -1;
 }
 
-/*
- * Delete match with ID 'id' in the match list of window 'wp'.
- * Print error messages if 'perr' is TRUE.
- */
+
+/// Delete match with ID 'id' in the match list of window 'wp'.
+/// Print error messages if 'perr' is TRUE.
 int match_delete(win_T *wp, int id, int perr)
 {
   matchitem_T *cur = wp->w_match_head;
