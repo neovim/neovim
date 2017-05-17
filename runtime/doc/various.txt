@@ -214,12 +214,12 @@ g8			Print the hex values of the bytes used in the
 			      :call termopen('{cmd}')
 			      :startinsert
 <
+			See |termopen()|.
+
 			Without {cmd}, start an interactive shell.
 
 			Creating the terminal buffer fails when changes have been
 			made to the current buffer, unless 'hidden' is set.
-
-			See |jobstart()|.
 
 			To enter |Terminal-mode| automatically: >
 			      autocmd BufEnter term://* startinsert
