@@ -5,6 +5,7 @@
 
 
 Terminal emulator					   *terminal-emulator*
+							     *terminal-buffer*
 
 Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
 presented as a special buffer type, asynchronously updated from the virtual

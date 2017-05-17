@@ -208,8 +208,8 @@ g8			Print the hex values of the bytes used in the
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
 						  *:terminal* *:te*
-:te[rminal][!] [{cmd}]	Execute {cmd} with 'shell' in a new |terminal-emulator|
-			buffer.  Equivalent to: >
+:te[rminal][!] [{cmd}]	Execute {cmd} with 'shell' in a new |terminal-buffer|.
+			Equivalent to: >
 			      :enew
 			      :call termopen('{cmd}')
 			      :startinsert
