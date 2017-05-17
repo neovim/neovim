@@ -208,14 +208,7 @@ g8			Print the hex values of the bytes used in the
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
 						  *:terminal* *:te*
-:te[rminal][!]		Open an interactive shell in a |terminal-emulator|.
-			Use the shell specified in 'shell'.
-
-			The new terminal buffer takes over the current window
-			(like |:edit|).
-
-						  *:terminal_c*
-:te[rminal][!] {cmd}	Execute {cmd} with 'shell' in a |terminal-emulator|
+:te[rminal][!] [{cmd}]	Execute {cmd} with 'shell' in a new |terminal-emulator|
 			buffer.  Equivalent to: >
 			      :enew
 			      :call termopen('{cmd}')
