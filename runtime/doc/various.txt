@@ -219,7 +219,7 @@ g8			Print the hex values of the bytes used in the
 
 			See |jobstart()|.
 
-			To enter terminal mode automatically: >
+			To enter |Terminal-mode| automatically: >
 			      autocmd BufEnter term://* startinsert
 			      autocmd BufLeave term://* stopinsert
 <

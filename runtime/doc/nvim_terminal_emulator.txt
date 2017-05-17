@@ -44,7 +44,7 @@ restarting the {cmd} when the session is loaded.
 ==============================================================================
 Input						     *terminal-emulator-input*
 
-To send input, enter terminal-mode using any command that would enter "insert
+To send input, enter |Terminal-mode| using any command that would enter "insert
 mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
 except <C-\><C-N> are sent to the underlying program. Use <C-\><C-N> to return
 to normal-mode. |CTRL-\_CTRL-N|
