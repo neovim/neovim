@@ -428,8 +428,8 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   ugrid_resize(&data->grid, (int)width, (int)height);
 
   if (!got_winch) {  // Try to resize the terminal window.
-    data->params[0].i = height;
-    data->params[1].i = width;
+    data->params[0].i = (int)height;
+    data->params[1].i = (int)width;
     unibi_out(ui, data->unibi_ext.resize_screen);
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
     got_winch = false;
