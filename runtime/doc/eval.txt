@@ -4883,9 +4883,9 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		    unless cmd[0] is some form of "cmd.exe".
 
 		{opts} is a dictionary with these keys:
-		  on_stdout: stdout event handler (function name or |Funcref|)
-		  on_stderr: stderr event handler (function name or |Funcref|)
-		  on_exit  : exit event handler (function name or |Funcref|)
+		  |on_stdout|: stdout event handler (function name or |Funcref|)
+		  |on_stderr|: stderr event handler (function name or |Funcref|)
+		  |on_exit|  : exit event handler (function name or |Funcref|)
 		  cwd      : Working directory of the job; defaults to
 		             |current-directory|.
 		  rpc      : If set, |msgpack-rpc| will be used to communicate
