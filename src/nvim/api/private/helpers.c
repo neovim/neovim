@@ -89,7 +89,6 @@ bool attr2hlattr(int attr_code, bool use_rgb, HlAttrs *out)
 {
   HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
   if (attr_code == HL_NORMAL) {
-    ILOG("HL_NORMAL");
     *out = attrs;
     return true;
   }
@@ -138,7 +137,7 @@ bool attrentry2hlattr(attrentry_T *aep, bool use_rgb, HlAttrs *out)
       // if (name) {
       //   attrs.background = (int)name_to_color ( (uint8_t *)name);
       // } else {
-      //   attrs.background = aep->cterm_bg_color - 1;
+        attrs.background = aep->cterm_bg_color - 1;
       // }
       // ILOG("attr=%d  color to %d", attr_code, attrs.background);
     }

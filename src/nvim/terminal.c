@@ -591,6 +591,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int attr_id = 0;
 
     if (hl_attrs || vt_fg != -1 || vt_bg != -1) {
+      ILOG("TEST");
       attr_id = get_attr_entry(&(attrentry_T) {
         .cterm_ae_attr = (int16_t)hl_attrs,
         .cterm_fg_color = vt_fg_idx,
@@ -603,6 +604,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 
     if (term->cursor.visible && term->cursor.row == row
         && term->cursor.col == col) {
+      ILOG("TEST2");
       attr_id = hl_combine_attr(attr_id, is_focused(term) && wp == curwin ?
           hl_attr(HLF_TERM) : hl_attr(HLF_TERMNC));
     }

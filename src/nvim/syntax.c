@@ -64,11 +64,10 @@
 #include "nvim/os/time.h"
 
 static bool did_syntax_onoff = false;
-static int invalid_group_id = -1;  // for now let it to 0
+static int invalid_group_id = -1;
 
-// TODO(teto): use array instead GA_EMPTY_INIT_VALUE
+// TODO(teto): use array instead GA_EMPTY_INIT_VALUE ?
 static garray_T changed_highlights  = { 0, 0, sizeof(int), 10, NULL };
-// static Array changed_highlights  = ARRAY_DICT_INIT;
 
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in
@@ -3676,6 +3675,7 @@ syn_list_one (
       }
       msg_putchar(' ');
       if (spp->sp_sync_idx >= 0) {
+        // TODO check
         msg_outtrans(HL_TABLE()[SYN_ITEMS(curwin->w_s)
                                 [spp->sp_sync_idx].sp_syn.id].sg_name);
       } else {
@@ -6286,7 +6286,6 @@ do_highlight(char_u *line, int forceit, int init) {
     if (hl_is_valid(from_id) && (!init || HL_TABLE()[from_id].sg_set == 0)) {
       // Don't allow a link when there already is some highlighting
       // for the group, unless '!' is used
-
       if (hl_is_valid(to_id) && !forceit && !init
           && hl_has_settings(from_id, dodefault)) {
         if (sourcing_name == NULL && !dodefault) {
@@ -6304,11 +6303,7 @@ do_highlight(char_u *line, int forceit, int init) {
 
     // Only call highlight_changed() once, after sourcing a syntax file
     need_highlight_changed = true;
-
-    ILOG("changed_hl add from_id=%d", from_id);
     GA_APPEND(int, &changed_highlights, from_id);
-    // PUTS(changed_highlights, INTEGER_OBJ(from_id));
-
     return;
   }
 
@@ -6656,12 +6651,8 @@ do_highlight(char_u *line, int forceit, int init) {
   /*
    * If there is an error, and it's a new entry, remove it from the table.
    */
-  if (error && idx - 1 == highlight_ga.ga_len) {
+  if (error && idx + 1 == highlight_ga.ga_len) {
     syn_unadd_group();
-    // xfree(key);
-    // xfree(arg);
-    // return FAIL;
-
   } else {
     if (is_normal_group) {
       HL_TABLE()[idx].sg_attr = 0;
@@ -6682,7 +6673,6 @@ do_highlight(char_u *line, int forceit, int init) {
     ILOG("changed_hl add idx=%d (array of size %d)",
          idx, changed_highlights.ga_len);
     GA_APPEND(int, &changed_highlights, idx);
-    // PUTS(changed_highlights, INTEGER_OBJ(idx));
   }
 
   // Only call highlight_changed() once, after sourcing a syntax file
@@ -6753,7 +6743,7 @@ static void highlight_clear(int idx)
   HL_TABLE()[idx].sg_rgb_sp_name = NULL;
   // Clear the script ID only when there is no link, since that is not
   // cleared.
-  if (HL_TABLE()[idx].sg_link == invalid_group_id) {
+  if (hl_invalid_id(HL_TABLE()[idx].sg_link)) {
     HL_TABLE()[idx].sg_scriptID = 0;
   }
 }
@@ -6905,14 +6895,19 @@ int hl_combine_attr(int char_attr, int prim_attr)
 attrentry_T *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
-  if (attr >= attr_table.ga_len)          /* did ":syntax clear" */
+  if (attr >= attr_table.ga_len) {
+    // did ":syntax clear"
     return NULL;
+  }
   return &(ATTR_ENTRY(attr));
 }
 
+/// \addtogroup LIST_XXX
+/// @{
 #define LIST_ATTR   1
 #define LIST_STRING 2
 #define LIST_INT    3
+/// @}
 
 static void highlight_list_one(int id)
 {
@@ -6951,6 +6946,7 @@ static void highlight_list_one(int id)
     last_set_msg(sgp->sg_scriptID);
 }
 
+/// @param type one of \ref LIST_XXX
 static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg, char *name)
 {
   char_u buf[100];
@@ -7077,9 +7073,9 @@ const char *highlight_color(const int id, const char *const what,
   }
   if (modec == 'c') {
     if (fg) {
-      n = HL_TABLE()[id].sg_cterm_fg;
+      n = HL_TABLE()[id].sg_cterm_fg - 1;
     } else {
-      n = HL_TABLE()[id].sg_cterm_bg;
+      n = HL_TABLE()[id].sg_cterm_bg - 1;
     }
     if (n < 0) {
       return NULL;
@@ -7200,8 +7196,7 @@ int syn_name2id(const char_u *name)
   for (i = highlight_ga.ga_len; --i >= 0; ) {
     if (HL_TABLE()[i].sg_name_u != NULL
         && STRCMP(name_u, HL_TABLE()[i].sg_name_u) == 0) {
-      ILOG("Match found with id %d", i);
-
+      // ILOG("Match found with id %d", i);
       return i;
     }
   }
@@ -7279,7 +7274,7 @@ static int syn_add_group(char_u *name)
   /* Check that the name is ASCII letters, digits and underscore. */
   for (p = name; *p != NUL; ++p) {
     if (!vim_isprintc(*p)) {
-      EMSG2(_("E669: Unprintable character in group name %s"), name);
+      EMSG(_("E669: Unprintable character in group name"));
       xfree(name);
       return invalid_group_id;
     } else if (!ASCII_ISALNUM(*p) && *p != '_')   {
@@ -7312,7 +7307,7 @@ static int syn_add_group(char_u *name)
   hlgp->sg_name_u = vim_strsave_up(name);
   hlgp->sg_link = invalid_group_id;
 
-  ILOG("Adding group name %s as id %d", name, highlight_ga.ga_len-1);
+  // ILOG("Adding group name %s as id %d", name, highlight_ga.ga_len-1);
 
   return highlight_ga.ga_len-1;
 }
@@ -7402,8 +7397,8 @@ void highlight_changed(void)
   int attr;
   int id;
   char_u userhl[10];
-  int id_SNC = -1;
-  int id_S = -1;
+  int id_SNC = invalid_group_id;
+  int id_S = invalid_group_id;
   int hlcnt;
 
   need_highlight_changed = false;
@@ -7414,7 +7409,7 @@ void highlight_changed(void)
   /// Translate builtin highlight groups into attributes for quick lookup.
   for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
     id = syn_check_group((char_u *)hlf_names[hlf], STRLEN(hlf_names[hlf]));
-    if (id == 0) {
+    if (id == invalid_group_id) {
       abort();
     }
     attr = syn_id2attr(id);
@@ -7484,9 +7479,9 @@ void highlight_changed(void)
         hlt[hlcnt + i].sg_rgb_sp = hlt[id].sg_rgb_sp;
       }
 
-      highlight_ga.ga_len = hlcnt + i + 1;
-      set_hl_attr(hlcnt + i);           /* At long last we can apply */
-      highlight_stlnc[i] = syn_id2attr(hlcnt + i + 1);
+      highlight_ga.ga_len = hlcnt + i;
+      set_hl_attr(hlcnt + i);           // At long last we can apply
+      highlight_stlnc[i] = syn_id2attr(hlcnt + i);
     }
   }
   highlight_ga.ga_len = hlcnt;
@@ -7580,7 +7575,7 @@ const char *get_highlight_name(expand_T *const xp, const int idx)
   } else if (idx == highlight_ga.ga_len + include_none + include_default + 1
              && include_link != 0) {
     return "clear";
-  } else if (idx < 0 || idx >= highlight_ga.ga_len) {
+  } else if (hl_invalid_id(idx)) {
     return NULL;
   }
   return (const char *)HL_TABLE()[idx].sg_name;

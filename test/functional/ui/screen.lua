@@ -180,7 +180,7 @@ end
 --
 -- expected:    Expected screen state (string). Each line represents a screen
 --              row. Last character of each row (typically "|") is stripped.
---              Common indentation is stripped.
+--              Common indentation is stripped. "^" represents cursor position.
 --              Used as `condition` if NOT a string; must be the ONLY arg then.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
