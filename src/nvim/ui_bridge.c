@@ -86,7 +86,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.suspend = ui_bridge_suspend;
   rv->bridge.set_title = ui_bridge_set_title;
   rv->bridge.set_icon = ui_bridge_set_icon;
-  // rv->bridge.event = ui_bridge_event;
+  rv->bridge.event = ui_bridge_event;
 
   rv->scheduler = scheduler;
 
@@ -182,3 +182,24 @@ static void ui_bridge_suspend_event(void **argv)
   UI *ui = UI(argv[0]);
   ui->suspend(ui);
 }
+
+static void ui_bridge_event(UI *b, char *name, Array args, bool *args_consumed)
+{
+  Object *argsp = xmalloc(sizeof(*argsp));
+  *argsp = copy_object(ARRAY_OBJ(args));
+  ILOG("Bridge set_event");
+  UI_CALL(b, event, 3, b, name ? xstrdup(name) : NULL, argsp);
+  *args_consumed = true;  // do not free it twice
+}
+static void ui_bridge_event_event(void **argv)
+{
+  UI *ui = UI(argv[0]);
+  Object *args = argv[2];
+  bool temp = false;
+
+  ILOG("Bridge set_event");
+  ui->event(ui, argv[1], args->data.array, &temp);
+  xfree(argv[1]);
+  // api_free_object(*args);
+}
+

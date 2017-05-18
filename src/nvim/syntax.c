@@ -3675,7 +3675,7 @@ syn_list_one (
       }
       msg_putchar(' ');
       if (spp->sp_sync_idx >= 0) {
-        // TODO check
+        // TODO check id is correct
         msg_outtrans(HL_TABLE()[SYN_ITEMS(curwin->w_s)
                                 [spp->sp_sync_idx].sp_syn.id].sg_name);
       } else {
@@ -6892,6 +6892,8 @@ int hl_combine_attr(int char_attr, int prim_attr)
   return get_attr_entry(&new_en);
 }
 
+/// \note this function does not apply exclusively to cterm attr contrary
+/// to what its name implies :s
 attrentry_T *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
@@ -6947,7 +6949,8 @@ static void highlight_list_one(int id)
 }
 
 /// @param type one of \ref LIST_XXX
-static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg, char *name)
+static int highlight_list_arg(int id, int didh, int type, int iarg,
+                              char_u *sarg, char *name)
 {
   char_u buf[100];
   char_u      *ts;
@@ -8281,8 +8284,8 @@ const char *cterm_int2name(int color)
     case 8: color_idx = color_numbers_8; break;
     case 16: color_idx = color_numbers_16; break;
     case 88: color_idx = color_numbers_88; break;
-    case 256: color_idx = color_numbers_256; break;
-    default: return NULL;
+    case 256:
+    default: color_idx = color_numbers_256; break;
   }
 
   for (int i = ARRAY_SIZE(cterm_color_names); i-- >= 0; ) {

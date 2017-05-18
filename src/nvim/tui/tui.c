@@ -564,34 +564,43 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   // Support changing cursor shape on some popular terminals.
   const char *vte_version = os_getenv("VTE_VERSION");
 
-  if (hl_is_valid(c.id) && ui->rgb) {
-    int attr = syn_id2attr(c.id);
-    if (attr >= 0) {
-      attrentry_T *aep = syn_cterm_attr2entry(attr);
-      data->params[0].i = aep->rgb_bg_color;
-      unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
-    }
-  }
-
-  // update cursor colors
-  // if (c.id != 0) {
+  // if (hl_is_valid(c.id) && ui->rgb) {
   //   int attr = syn_id2attr(c.id);
-  //   if (attr > 0) {
+  //   if (attr >= 0) {
   //     attrentry_T *aep = syn_cterm_attr2entry(attr);
-  //     cursor_bg = aep->rgb_bg_color;
-  //   } else {
-  //     cursor_bg = -1;
-  //   }
-
-  //   if (cursor_bg == -1) {
-  //     unibi_out(ui, unibi_cursor_invisible);
-  //   } else {
-  //     unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
-  //     data->params[0].i = cursor_bg;
-  //     ILOG("setting cursor color");
+  //     data->params[0].i = aep->rgb_bg_color;
   //     unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
   //   }
   // }
+
+  // update cursor colors
+  if (hl_is_valid(c.id) && c.id != 0) {
+    int attr = syn_id2attr(c.id);
+    if (attr > 0) {
+      attrentry_T *aep = syn_cterm_attr2entry(attr);
+
+      if (ui->rgb) {
+        cursor_bg = aep->rgb_bg_color;
+      } else {
+        const char *name = cterm_int2name(aep->cterm_bg_color - 1);
+        // ILOG("Translates to name %s", name);
+        if (name) {
+          cursor_bg = (int)name_to_color((uint8_t *)name);
+        }
+      }
+    } else {
+      cursor_bg = -1;
+    }
+
+    if (cursor_bg == -1) {
+      unibi_out(ui, unibi_cursor_invisible);
+    } else {
+      unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
+      data->params[0].i = cursor_bg;
+      ILOG("setting cursor color");
+      unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
+    }
+  }
 
   if (data->term == kTermKonsole) {
     // Konsole uses a proprietary escape code to set the cursor shape
@@ -834,12 +843,14 @@ static void tui_set_icon(UI *ui, String icon)
 static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
   TUIData *data = ui->data;
+  ILOG("receivent Event [%s]", name);
   if (STRCMP(name, "highlights") == 0) {
     ILOG("received hl update");
   }
-
+// refresh_cursor
   if (STRCMP(name, "refresh_cursor") == 0) {
-    // tui_set_mode(ui, data->showing_mode);
+    ILOG("refresh_cursor update");
+    tui_set_mode(ui, data->showing_mode);
   }
 }
 
