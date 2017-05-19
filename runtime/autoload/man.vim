@@ -2,15 +2,21 @@
 
 let s:man_find_arg = "-w"
 
-" TODO(nhooyr) Completion may work on SunOS; I'm not sure if `man -l` displays
-" the list of searched directories.
-try
-  if !has('win32') && $OSTYPE !~? 'cygwin\|linux' && system('uname -s') =~? 'SunOS' && system('uname -r') =~# '^5'
-    let s:man_find_arg = '-l'
-  endif
-catch /E145:/
-  " Ignore the error in restricted mode
-endtry
+function s:init() abort
+  " TODO(nhooyr) Completion may work on SunOS; I'm not sure if `man -l` displays
+  " the list of searched directories.
+  try
+    if !has('win32') && $OSTYPE !~? 'cygwin\|linux' && system('uname -s') =~? 'SunOS' && system('uname -r') =~# '^5'
+      let s:man_find_arg = '-l'
+    endif
+    let s:localfile_arg = 1
+    call s:get_page(s:get_path('', 'man'))
+  catch /E145:/
+    " Ignore the error in restricted mode
+  catch /command error .*/
+    let s:localfile_arg = 0
+  endtry
+endfunction
 
 function! man#open_page(count, count1, mods, ...) abort
   if a:0 > 2
@@ -88,10 +94,8 @@ endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
-  if a:event == 'stdout'
-    let self.stdout .= join(a:data, "\n")
-  elseif a:event == 'stderr'
-    let self.stderr .= join(a:data, "\n")
+  if a:event is# 'stdout' || a:event is# 'stderr'
+    let self[a:event] .= join(a:data, "\n")
   else
     let self.exit_code = a:data
   endif
@@ -118,7 +122,7 @@ function! s:system(cmd, ...) abort
     try
       call jobstop(jobid)
       throw printf('command timed out: %s', join(a:cmd))
-    catch /^Vim\%((\a\+)\)\=:E900/
+    catch /^Vim(call):E900:/
     endtry
   elseif res[0] == -2
     throw printf('command interrupted: %s', join(a:cmd))
@@ -136,8 +140,7 @@ function! s:get_page(path) abort
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   let cmd = ['env', 'MANPAGER=cat', 'MANWIDTH='.manwidth, 'man']
-  " Use -l everywhere except macOS. #6683
-  return s:system(cmd + (has('mac') ? [a:path] : ['-l', a:path]))
+  return s:system(cmd + (s:localfile_arg ? ['-l', a:path] : [a:path]))
 endfunction
 
 function! s:put_page(page) abort
@@ -375,3 +378,5 @@ function! man#init_pager() abort
   endtry
   execute 'silent file man://'.fnameescape(ref)
 endfunction
+
+call s:init()
