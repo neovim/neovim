@@ -2468,8 +2468,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
               }
             }
 
-            if (aff_entry->ae_chop == NULL
-                && aff_entry->ae_flags == NULL) {
+            if (aff_entry->ae_chop == NULL) {
               int idx;
               char_u      **pp;
               int n;
