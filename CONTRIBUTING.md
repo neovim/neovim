@@ -8,7 +8,7 @@ low-risk/isolated tasks:
 
 - Merge a [Vim patch].
 - Try a [complexity:low] issue.
-- Fix [clang-scan], [coverity](#coverity), and [PVS](#pvs-studio) warnings.
+- Fix bugs found by [clang-scan], [coverity](#coverity), and [PVS](#pvs-studio).
 
 Developer guidelines
 --------------------
@@ -115,8 +115,7 @@ QuickBuild uses this invocation:
 ### Coverity
 
 [Coverity](https://scan.coverity.com/projects/neovim-neovim) runs against the
-master build. If you want to view the defects, just request access at the
-_Contributor_ level. An Admin will grant you permission.
+master build. To view the defects, just request access; you will be approved.
 
 Use this commit-message format for coverity fixes:
 
@@ -126,8 +125,9 @@ where `<id>` is the Coverity ID (CID). For example see [#804](https://github.com
 
 ### PVS-Studio
 
-Run `scripts/pvscheck.sh` to check the codebase with [PVS
-Studio](https://www.viva64.com/en/pvs-studio/).
+View the [PVS analysis report](https://neovim.io/doc/reports/pvs/) to see bugs
+found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
+You can run `scripts/pvscheck.sh` locally to run PVS on your machine.
 
 Reviewing
 ---------

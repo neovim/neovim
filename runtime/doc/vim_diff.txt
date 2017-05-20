@@ -85,9 +85,9 @@ Working intuitively and consistently is a major goal of Nvim. Examples:
 ARCHITECTURE ~
 
 External plugins run in separate processes. |remote-plugin| This improves
-stability and allows those plugins to perform tasks without blocking the
-editor. Even "legacy" Python and Ruby plugins which use the old Vim interfaces
-(|if_py| and |if_ruby|) run out-of-process.
+stability and allows those plugins to work without blocking the editor. Even
+"legacy" Python and Ruby plugins which use the old Vim interfaces (|if_py| and
+|if_ruby|) run out-of-process.
 
 
 FEATURES ~
