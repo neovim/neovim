@@ -3794,8 +3794,7 @@ makemap (
   char        *cmd;
   int abbr;
   int hash;
-  int did_cpo = FALSE;
-  int i;
+  bool did_cpo = false;
 
   validate_maphash();
 
@@ -3923,13 +3922,15 @@ makemap (
           /* When outputting <> form, need to make sure that 'cpo'
            * is set to the Vim default. */
           if (!did_cpo) {
-            if (*mp->m_str == NUL)                      /* will use <Nop> */
-              did_cpo = TRUE;
-            else
-              for (i = 0; i < 2; ++i)
-                for (p = (i ? mp->m_str : mp->m_keys); *p; ++p)
-                  if (*p == K_SPECIAL || *p == NL)
-                    did_cpo = TRUE;
+            if (*mp->m_str == NUL) {  // Will use <Nop>.
+              did_cpo = true;
+            } else {
+              const char specials[] = { (char)(uint8_t)K_SPECIAL, NL, NUL };
+              if (strpbrk((const char *)mp->m_str, specials) != NULL
+                  || strpbrk((const char *)mp->m_keys, specials) != NULL) {
+                did_cpo = true;
+              }
+            }
             if (did_cpo) {
               if (fprintf(fd, "let s:cpo_save=&cpo") < 0
                   || put_eol(fd) < 0
