@@ -13058,8 +13058,9 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
             /* have to shuffle buf to close gap */
             int adjust_prevlen = 0;
 
-            if (dest < buf) {
-              adjust_prevlen = (int)(buf - dest);               /* must be 1 or 2 */
+            if (dest < buf) {  // -V782
+              adjust_prevlen = (int)(buf - dest);  // -V782
+              // adjust_prevlen must be 1 or 2.
               dest = buf;
             }
             if (readlen > p - buf + 1)
