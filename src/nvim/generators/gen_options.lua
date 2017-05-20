@@ -118,8 +118,7 @@ local get_value = function(v)
 end
 
 local get_defaults = function(d)
-  return ('{' .. get_value(d.vi) .. '/* -V542 */, '
-          .. get_value(d.vim) .. '/* -V542 */}')
+  return ('{' .. get_value(d.vi) .. ', ' .. get_value(d.vim) .. '}')
 end
 
 local defines = {}

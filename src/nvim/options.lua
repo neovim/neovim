@@ -34,6 +34,11 @@ local macros=function(s)
     return s
   end
 end
+local imacros=function(s)
+  return function()
+    return '(intptr_t)' .. s
+  end
+end
 local N_=function(s)
   return function()
     return 'N_(' .. cstr(s) .. ')'
@@ -2648,7 +2653,7 @@ return {
       type='number', scope={'global'},
       vim=true,
       varname='p_wc',
-      defaults={if_true={vi=macros('Ctrl_E'), vim=macros('TAB')}}
+      defaults={if_true={vi=imacros('Ctrl_E'), vim=imacros('TAB')}}
     },
     {
       full_name='wildcharm', abbreviation='wcm',
