@@ -36,6 +36,7 @@
 #include "nvim/tui/tui.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/syntax.h"
+#include "nvim/macros.h"
 
 // Space reserved in the output buffer to restore the cursor to normal when
 // flushing. No existing terminal will require 32 bytes to do that.
@@ -1079,7 +1080,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
 
   buf.base = data->buf;
   buf.len = data->bufpos;
-  uv_write(&req, (uv_stream_t *)&data->output_handle, &buf, 1, NULL);
+  uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle), &buf, 1, NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 
