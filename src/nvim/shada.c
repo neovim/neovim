@@ -1277,8 +1277,6 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         if (cur_entry.data.search_pattern.is_last_used) {
           set_last_used_pattern(
               cur_entry.data.search_pattern.is_substitute_pattern);
-        }
-        if (cur_entry.data.search_pattern.is_last_used) {
           SET_NO_HLSEARCH(!cur_entry.data.search_pattern.highlighted);
         }
         // Do not free shada entry: its allocated memory was saved above.

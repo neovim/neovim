@@ -309,6 +309,8 @@ static keyentry_T dumkey;
 #define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char_u *)&dumkey)))
 #define HI2KE(hi)      HIKEY2KE((hi)->hi_key)
 
+// -V:HI2KE:782
+
 /*
  * To reduce the time spent in keepend(), remember at which level in the state
  * stack the first item with "keepend" is present.  When "-1", there is no

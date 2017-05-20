@@ -54,6 +54,7 @@
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/assert.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
@@ -108,7 +109,8 @@ memfile_T *mf_open(char_u *fname, int flags)
   if (mfp->mf_fd >= 0 && os_fileinfo_fd(mfp->mf_fd, &file_info)) {
     uint64_t blocksize = os_fileinfo_blocksize(&file_info);
     if (blocksize >= MIN_SWAP_PAGE_SIZE && blocksize <= MAX_SWAP_PAGE_SIZE) {
-      assert(blocksize <= UINT_MAX);
+      STATIC_ASSERT(MAX_SWAP_PAGE_SIZE <= UINT_MAX,
+                    "MAX_SWAP_PAGE_SIZE must fit into an unsigned");
       mfp->mf_page_size = (unsigned)blocksize;
     }
   }

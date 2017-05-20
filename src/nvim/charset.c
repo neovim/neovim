@@ -545,18 +545,8 @@ void transchar_nonprint(char_u *buf, int c)
     buf[1] = (char_u)(c ^ 0x40);
 
     buf[2] = NUL;
-  } else if (c >= 0x80) {
-    transchar_hex(buf, c);
-  } else if ((c >= ' ' + 0x80) && (c <= '~' + 0x80)) {
-    // 0xa0 - 0xfe
-    buf[0] = '|';
-    buf[1] = (char_u)(c - 0x80);
-    buf[2] = NUL;
   } else {
-    // 0x80 - 0x9f and 0xff
-    buf[0] = '~';
-    buf[1] = (char_u)((c - 0x80) ^ 0x40);
-    buf[2] = NUL;
+    transchar_hex(buf, c);
   }
 }
 

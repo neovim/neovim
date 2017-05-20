@@ -14,7 +14,7 @@ get_jobs_num() {
 help() {
   echo 'Usage:'
   echo '  pvscheck.sh [--pvs URL] [--deps] [target-directory [branch]]'
-  echo '  pvscheck.sh [--pvs URL] [--recheck] [target-directory]'
+  echo '  pvscheck.sh [--pvs URL] [--recheck|--only-analyse] [target-directory]'
   echo '  pvscheck.sh [--pvs URL] --pvs-install {target-directory}'
   echo '  pvscheck.sh --patch [--only-build]'
   echo
@@ -39,6 +39,9 @@ help() {
   echo
   echo '    --recheck: run analysis on a prepared target directory.'
   echo
+  echo '    --only-analyse: run analysis on a prepared target directory '
+  echo '                    without building Neovim.'
+  echo
   echo '    target-directory: Directory where build should occur.'
   echo '                      Default: ../neovim-pvs'
   echo
@@ -47,7 +50,17 @@ help() {
 }
 
 getopts_error() {
-  printf '%s\n' "$1" >&2
+  local msg="$1" ; shift
+  local do_help=
+  if test "$msg" = "--help" ; then
+    msg="$1" ; shift
+    do_help=1
+  fi
+  printf '%s\n' "$msg" >&2
+  if test -n "$do_help" ; then
+    printf '\n' >&2
+    help >&2
+  fi
   echo 'return 1'
   return 1
 }
@@ -143,8 +156,8 @@ getopts_long() {
     if test -n "$opt_base" ; then
       eval "local occurred_$opt_base=1"
 
-      eval "local act_1=\"\$act_1_$opt_base\""
-      eval "local varname=\"\$varname_$opt_base\""
+      eval "local act_1=\"\${act_1_$opt_base:-}\""
+      eval "local varname=\"\${varname_$opt_base:-}\""
       local need_val=
       local func=
       case "$act_1" in
@@ -166,6 +179,9 @@ getopts_long() {
           eval "func=\"\${act_2_${opt_base}}\""
           eval "varname=\"\${act_3_${opt_base}:-$varname}\""
           need_val=1
+          ;;
+        ("")
+          getopts_error --help "Wrong argument: $argument"
           ;;
       esac
       if test -n "$need_val" ; then
@@ -290,7 +306,7 @@ realdir() {(
 
 patch_sources() {(
   local tgt="$1" ; shift
-  local only_bulid="${1:-}"
+  local only_bulid="${1}" ; shift
 
   get_pvs_comment "$tgt"
 
@@ -348,19 +364,22 @@ do_check() {
 
   install_pvs "$tgt" "$pvs_url"
 
-  adjust_path "$tgt"
-
-  create_compile_commands "$tgt" "$deps"
-
-  run_analysis "$tgt"
+  do_recheck "$tgt" "$deps"
 }
 
 do_recheck() {
-  local tgt="$1"
-
-  adjust_path "$tgt"
+  local tgt="$1" ; shift
+  local deps="$2" ; shift
 
   create_compile_commands "$tgt" "$deps"
+
+  do_analysis "$tgt"
+}
+
+do_analysis() {
+  local tgt="$1" ; shift
+
+  adjust_path "$tgt"
 
   run_analysis "$tgt"
 }
@@ -384,6 +403,7 @@ main() {
       patch store_const \
       only-build 'store_const --only-build' \
       recheck store_const \
+      only-analyse store_const \
       pvs-install store_const \
       deps store_const \
       -- \
@@ -400,11 +420,13 @@ main() {
   set -x
 
   if test -n "$patch" ; then
-    patch_sources "$only_build" "$tgt"
+    patch_sources "$tgt" "$only_build"
   elif test -n "$pvs_install" ; then
     install_pvs "$tgt" "$pvs_url"
   elif test -n "$recheck" ; then
-    do_recheck "$tgt"
+    do_recheck "$tgt" "$deps"
+  elif test -n "$only_analyse" ; then
+    do_analysis "$tgt"
   else
     do_check "$tgt" "$branch" "$pvs_url" "$deps"
   fi

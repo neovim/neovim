@@ -16,6 +16,7 @@
 #include "nvim/strings.h"
 #include "nvim/path.h"
 #include "nvim/memory.h"
+#include "nvim/macros.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/socket.c.generated.h"
@@ -71,10 +72,10 @@ void socket_watcher_init(Loop *loop, SocketWatcher *watcher,
 
   if (tcp) {
     uv_tcp_init(&loop->uv, &watcher->uv.tcp.handle);
-    watcher->stream = (uv_stream_t *)&watcher->uv.tcp.handle;
+    watcher->stream = STRUCT_CAST(uv_stream_t, &watcher->uv.tcp.handle);
   } else {
     uv_pipe_init(&loop->uv, &watcher->uv.pipe.handle, 0);
-    watcher->stream = (uv_stream_t *)&watcher->uv.pipe.handle;
+    watcher->stream = STRUCT_CAST(uv_stream_t, &watcher->uv.pipe.handle);
   }
 
   watcher->stream->data = watcher;
@@ -122,10 +123,10 @@ int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
   uv_stream_t *client;
 
   if (watcher->stream->type == UV_TCP) {
-    client = (uv_stream_t *)&stream->uv.tcp;
+    client = STRUCT_CAST(uv_stream_t, &stream->uv.tcp);
     uv_tcp_init(watcher->uv.tcp.handle.loop, (uv_tcp_t *)client);
   } else {
-    client = (uv_stream_t *)&stream->uv.pipe;
+    client = STRUCT_CAST(uv_stream_t, &stream->uv.pipe);
     uv_pipe_init(watcher->uv.pipe.handle.loop, (uv_pipe_t *)client, 0);
   }
 

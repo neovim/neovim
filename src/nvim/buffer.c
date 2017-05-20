@@ -828,7 +828,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
      * new aborting error, interrupt, or uncaught exception. */
     leave_cleanup(&cs);
   }
-  swap_exists_action = SEA_NONE;
+  swap_exists_action = SEA_NONE;  // -V519
 }
 
 /*
