@@ -1123,13 +1123,13 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
 
   if (strequal(name, "key_backspace")) {
     ILOG("libtermkey:kbs=%s", value);
-    if (stty_erase != NULL && stty_erase[0] != 0) {
+    if (stty_erase[0] != 0) {
       return stty_erase;
     }
   } else if (strequal(name, "key_dc")) {
     ILOG("libtermkey:kdch1=%s", value);
     // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
-    if (stty_erase != NULL && value != NULL && strequal(stty_erase, value)) {
+    if (value != NULL && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;
     }
   }
