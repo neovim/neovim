@@ -21160,7 +21160,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
 
   if (func_or_func_caller_profiling) {
     call_start = profile_end(call_start);
-    call_start = profile_sub_wait(wait_start, call_start);
+    call_start = profile_sub_wait(wait_start, call_start);  // -V614
     fp->uf_tm_total = profile_add(fp->uf_tm_total, call_start);
     fp->uf_tm_self = profile_self(fp->uf_tm_self, call_start,
         fp->uf_tm_children);
