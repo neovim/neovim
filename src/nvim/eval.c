@@ -21094,9 +21094,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
             // Do not want errors such as E724 here.
             emsg_off++;
             char *tofree = encode_tv2string(&argvars[i], NULL);
-            char *s = tofree;
             emsg_off--;
-            if (s != NULL) {
+            if (tofree != NULL) {
+              char *s = tofree;
               char buf[MSG_BUF_LEN];
               if (vim_strsize((char_u *)s) > MSG_BUF_CLEN) {
                 trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN,
