@@ -45,15 +45,5 @@ describe('highlight api', function()
     ok(string.find(emsg, 'Invalid highlight name') ~= nil)
   end)
 
-  it("get_list", function()
-
-    local requested_hl = {0, 'CursorColumn'}
-    local results = meths.hl_get_list(requested_hl)
-
-    local expected = { nvim("hl_from_name", 'Normal'),
-                       nvim("hl_from_name", 'CursorColumn') }
-
-    eq(results, expected)
-  end)
 end)
 

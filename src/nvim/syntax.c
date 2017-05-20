@@ -20,10 +20,9 @@
 /// itself can be combination of several groups.
 ///
 ///
-/// Upon changing 'need_highlight_changed' is set to defer the call to
-/// highlight_changed() so that loading colorschemes does not impact attribute
-/// generation too hard
-///
+/// Upon changing highlights, \p need_highlight_changed is used to differ the
+/// call to highlight_changed() so that loading colorschemes
+/// does not impact attribute generation too hard
 
 #include <assert.h>
 #include <ctype.h>
@@ -67,7 +66,8 @@ static bool did_syntax_onoff = false;
 static int invalid_group_id = -1;
 
 // TODO(teto): use array instead GA_EMPTY_INIT_VALUE ?
-static garray_T changed_highlights  = { 0, 0, sizeof(int), 10, NULL };
+// static garray_T changed_highlights  = { 0, 0, sizeof(int), 10, NULL };
+static Array changed_highlights  = ARRAY_DICT_INIT;
 
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in
@@ -3675,7 +3675,7 @@ syn_list_one (
       }
       msg_putchar(' ');
       if (spp->sp_sync_idx >= 0) {
-        // TODO check id is correct
+        // TODO(teto): check id is correct
         msg_outtrans(HL_TABLE()[SYN_ITEMS(curwin->w_s)
                                 [spp->sp_sync_idx].sp_syn.id].sg_name);
       } else {
@@ -6303,7 +6303,8 @@ do_highlight(char_u *line, int forceit, int init) {
 
     // Only call highlight_changed() once, after sourcing a syntax file
     need_highlight_changed = true;
-    GA_APPEND(int, &changed_highlights, from_id);
+    // GA_APPEND(int, &changed_highlights, from_id);
+    PUT(changed_highlights, INTEGER_OBJ(from_id));
     return;
   }
 
@@ -6672,7 +6673,8 @@ do_highlight(char_u *line, int forceit, int init) {
   if (!error) {
     ILOG("changed_hl add idx=%d (array of size %d)",
          idx, changed_highlights.ga_len);
-    GA_APPEND(int, &changed_highlights, idx);
+    // GA_APPEND(int, &changed_highlights, idx);
+    PUT(changed_highlights, INTEGER_OBJ(from_id));
   }
 
   // Only call highlight_changed() once, after sourcing a syntax file
@@ -7096,11 +7098,7 @@ const char *highlight_color(const int id, const char *const what,
 /// @param id highlight group id
 /// @return TRUE when started a new line.
 static int
-syn_list_header(
-    int did_header,
-    int outlen,
-    int id
-)
+syn_list_header(int did_header, int outlen, int id)
 {
   int endcol = 19;
   int newline = TRUE;
@@ -7489,8 +7487,10 @@ void highlight_changed(void)
   }
   highlight_ga.ga_len = hlcnt;
 
-  ui_notify_changed_highlights(changed_highlights);
-  ga_clear(&changed_highlights);
+  // ui_notify_changed_highlights(changed_highlights);
+  ui_call_highlights_changed(changed_highlights);
+  ui_cursor_shape();
+  api_free_array(highlight_changed);
 }
 
 

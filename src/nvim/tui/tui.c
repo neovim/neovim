@@ -847,11 +847,6 @@ static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
   if (STRCMP(name, "highlights") == 0) {
     ILOG("received hl update");
   }
-// refresh_cursor
-  if (STRCMP(name, "refresh_cursor") == 0) {
-    ILOG("refresh_cursor update");
-    tui_set_mode(ui, data->showing_mode);
-  }
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)

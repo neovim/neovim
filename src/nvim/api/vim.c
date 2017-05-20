@@ -106,40 +106,6 @@ Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
   return (dic);
 }
 
-/// Returns an array of dictionaries as produced by nvim_hl_from_id
-///
-/// @param highlights a list of highlights id (string or integer) to look for
-/// todo return array instead ? ArrayOf(HlAttrs)
-Object nvim_hl_get_list(Array highlights, Error *err)
-    FUNC_API_SINCE(3)
-{
-  Array args = ARRAY_DICT_INIT;
-  for (size_t i = 0; i < highlights.size; i++) {
-    int hl_id;
-    if (highlights.items[i].type == kObjectTypeString) {
-      hl_id = syn_name2id((const char_u *)highlights.items[i].data.string.data);
-    } else if (highlights.items[i].type != kObjectTypeInteger) {
-      api_set_error(err, kErrorTypeException, "Expecting integer or string");
-      return ARRAY_OBJ(args);;
-    } else {
-      hl_id = (int)highlights.items[i].data.integer;
-    }
-
-    // int attr = syn_id2attr(hl_id);
-    // if (attr < 1) {
-    //   api_set_error(err, kErrorTypeException, "Invalid highlight id");
-    //   continue;
-    // }
-    Dictionary dic = nvim_hl_from_id(hl_id, err);
-    if (!err) {
-      return ARRAY_OBJ(args);
-    }
-    ADD(args, DICTIONARY_OBJ(dic));
-  }
-  return ARRAY_OBJ(args);
-}
-
-
 /// Passes input keys to Nvim.
 /// On VimL error: Does not fail, but updates v:errmsg.
 ///
