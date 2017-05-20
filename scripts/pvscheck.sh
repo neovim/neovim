@@ -306,7 +306,7 @@ realdir() {(
 
 patch_sources() {(
   local tgt="$1" ; shift
-  local only_bulid="${1:-}"
+  local only_bulid="${1}" ; shift
 
   get_pvs_comment "$tgt"
 
@@ -420,7 +420,7 @@ main() {
   set -x
 
   if test -n "$patch" ; then
-    patch_sources "$only_build" "$tgt"
+    patch_sources "$tgt" "$only_build"
   elif test -n "$pvs_install" ; then
     install_pvs "$tgt" "$pvs_url"
   elif test -n "$recheck" ; then
