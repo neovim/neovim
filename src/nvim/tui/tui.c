@@ -82,7 +82,7 @@ typedef struct {
   UGrid grid;
   kvec_t(Rect) invalid_regions;
   int out_fd;
-  bool can_use_terminal_scroll;
+  bool scroll_region_is_full_screen;
   bool mouse_enabled;
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
@@ -96,6 +96,7 @@ typedef struct {
     int set_cursor_color;
     int enable_focus_reporting, disable_focus_reporting;
     int resize_screen;
+    int reset_scroll_region;
   } unibi_ext;
 } TUIData;
 
@@ -147,7 +148,7 @@ UI *tui_start(void)
 static void terminfo_start(UI *ui)
 {
   TUIData *data = ui->data;
-  data->can_use_terminal_scroll = true;
+  data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
   data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
   data->showing_mode = SHAPE_IDX_N;
@@ -159,6 +160,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.enable_focus_reporting = -1;
   data->unibi_ext.disable_focus_reporting = -1;
   data->unibi_ext.resize_screen = -1;
+  data->unibi_ext.reset_scroll_region = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
   // setup unibilium
@@ -424,6 +426,19 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
   unibi_goto(ui, grid->row, grid->col);
 }
 
+static void reset_scroll_region(UI *ui)
+{
+  TUIData *data = ui->data;
+
+  if (0 <= data->unibi_ext.reset_scroll_region) {
+    unibi_out(ui, data->unibi_ext.reset_scroll_region);
+  } else {
+    data->params[0].i = 0;
+    data->params[1].i = ui->height - 1;
+    unibi_out(ui, unibi_change_scroll_region);
+  }
+}
+
 static void tui_resize(UI *ui, Integer width, Integer height)
 {
   TUIData *data = ui->data;
@@ -433,6 +448,10 @@ static void tui_resize(UI *ui, Integer width, Integer height)
     data->params[0].i = (int)height;
     data->params[1].i = (int)width;
     unibi_out(ui, data->unibi_ext.resize_screen);
+    // DECSLPP does not reset the scroll region.
+    if (data->scroll_region_is_full_screen) {
+      reset_scroll_region(ui);
+    }
   } else {  // Already handled the SIGWINCH signal; avoid double-resize.
     got_winch = false;
   }
@@ -619,10 +638,9 @@ static void tui_set_scroll_region(UI *ui, Integer top, Integer bot,
   TUIData *data = ui->data;
   ugrid_set_scroll_region(&data->grid, (int)top, (int)bot,
                           (int)left, (int)right);
-  data->can_use_terminal_scroll =
+  data->scroll_region_is_full_screen =
     left == 0 && right == ui->width - 1
-    && ((top == 0 && bot == ui->height - 1)
-        || unibi_get_str(data->ut, unibi_change_scroll_region));
+    && top == 0 && bot == ui->height - 1;
 }
 
 static void tui_scroll(UI *ui, Integer count)
@@ -632,31 +650,28 @@ static void tui_scroll(UI *ui, Integer count)
   int clear_top, clear_bot;
   ugrid_scroll(grid, (int)count, &clear_top, &clear_bot);
 
-  if (data->can_use_terminal_scroll) {
+  if (data->scroll_region_is_full_screen || 0 <= unibi_change_scroll_region) {
     // Change terminal scroll region and move cursor to the top
-    data->params[0].i = grid->top;
-    data->params[1].i = grid->bot;
-    unibi_out(ui, unibi_change_scroll_region);
+    if (!data->scroll_region_is_full_screen) {
+      data->params[0].i = grid->top;
+      data->params[1].i = grid->bot;
+      unibi_out(ui, unibi_change_scroll_region);
+    }
     unibi_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
     HlAttrs clear_attrs = EMPTY_ATTRS;
     clear_attrs.foreground = grid->fg;
     clear_attrs.background = grid->bg;
     update_attrs(ui, clear_attrs);
-  }
 
-  if (count > 0) {
-    if (data->can_use_terminal_scroll) {
+    if (count > 0) {
       if (count == 1) {
         unibi_out(ui, unibi_delete_line);
       } else {
         data->params[0].i = (int)count;
         unibi_out(ui, unibi_parm_delete_line);
       }
-    }
-
-  } else {
-    if (data->can_use_terminal_scroll) {
+    } else {
       if (count == -1) {
         unibi_out(ui, unibi_insert_line);
       } else {
@@ -664,13 +679,11 @@ static void tui_scroll(UI *ui, Integer count)
         unibi_out(ui, unibi_parm_insert_line);
       }
     }
-  }
 
-  if (data->can_use_terminal_scroll) {
     // Restore terminal scroll region and cursor
-    data->params[0].i = 0;
-    data->params[1].i = ui->height - 1;
-    unibi_out(ui, unibi_change_scroll_region);
+    if (!data->scroll_region_is_full_screen) {
+      reset_scroll_region(ui);
+    }
     unibi_goto(ui, grid->row, grid->col);
 
     if (grid->bg != -1) {
@@ -1015,6 +1028,8 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_change_scroll_region, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_clear_screen, "\x1b[H\x1b[2J");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
+    data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[r");
   }
 
   data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
