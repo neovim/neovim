@@ -14,7 +14,7 @@ get_jobs_num() {
 help() {
   echo 'Usage:'
   echo '  pvscheck.sh [--pvs URL] [--deps] [target-directory [branch]]'
-  echo '  pvscheck.sh [--pvs URL] [--recheck] [target-directory]'
+  echo '  pvscheck.sh [--pvs URL] [--recheck|--only-analyse] [target-directory]'
   echo '  pvscheck.sh [--pvs URL] --pvs-install {target-directory}'
   echo '  pvscheck.sh --patch [--only-build]'
   echo
@@ -38,6 +38,9 @@ help() {
   echo '             Does not run analysis.'
   echo
   echo '    --recheck: run analysis on a prepared target directory.'
+  echo
+  echo '    --only-analyse: run analysis on a prepared target directory '
+  echo '                    without building Neovim.'
   echo
   echo '    target-directory: Directory where build should occur.'
   echo '                      Default: ../neovim-pvs'
@@ -348,19 +351,22 @@ do_check() {
 
   install_pvs "$tgt" "$pvs_url"
 
-  adjust_path "$tgt"
-
-  create_compile_commands "$tgt" "$deps"
-
-  run_analysis "$tgt"
+  do_recheck "$tgt" "$deps"
 }
 
 do_recheck() {
-  local tgt="$1"
-
-  adjust_path "$tgt"
+  local tgt="$1" ; shift
+  local deps="$2" ; shift
 
   create_compile_commands "$tgt" "$deps"
+
+  do_analysis "$tgt"
+}
+
+do_analysis() {
+  local tgt="$1" ; shift
+
+  adjust_path "$tgt"
 
   run_analysis "$tgt"
 }
@@ -384,6 +390,7 @@ main() {
       patch store_const \
       only-build 'store_const --only-build' \
       recheck store_const \
+      only-analyse store_const \
       pvs-install store_const \
       deps store_const \
       -- \
@@ -404,7 +411,9 @@ main() {
   elif test -n "$pvs_install" ; then
     install_pvs "$tgt" "$pvs_url"
   elif test -n "$recheck" ; then
-    do_recheck "$tgt"
+    do_recheck "$tgt" "$deps"
+  elif test -n "$only_analyse" ; then
+    do_analysis "$tgt"
   else
     do_check "$tgt" "$branch" "$pvs_url" "$deps"
   fi
