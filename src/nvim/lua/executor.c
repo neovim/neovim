@@ -107,9 +107,16 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t len;
-  const char *const str = lua_tolstring(lstate, -1, &len);
+  const char *str = lua_tolstring(lstate, -1, &len);
 
-  emsgf(msg, (int)len, str);
+  char errbuf[IOSIZE];
+  // vim_vsnprintf special case to make tests happy
+  if (str == NULL) {
+    str = "[NULL]";
+    len = 6;
+  }
+  snprintf(errbuf, ARRAY_SIZE(errbuf), msg, (int)len, str);
+  emsg((const char_u *)errbuf);
 
   lua_pop(lstate, 1);
 }
@@ -491,8 +498,17 @@ static int nlua_print(lua_State *const lstate)
   ga_clear(&msg_ga);
   return 0;
 nlua_print_error:
-  emsgf(_("E5114: Error while converting print argument #%i: %.*s"),
-        curargidx, errmsg_len, errmsg);
+  ;
+  char errbuf[IOSIZE];
+  // vim_vsnprintf special case to make tests happy
+  if (errmsg == NULL) {
+    errmsg = "[NULL]";
+    errmsg_len = 6;
+  }
+  snprintf(errbuf, ARRAY_SIZE(errbuf),
+           _("E5114: Error while converting print argument #%i: %.*s"),
+           curargidx, (int)errmsg_len, errmsg);
+  emsg((const char_u *)errbuf);
   ga_clear(&msg_ga);
   lua_pop(lstate, lua_gettop(lstate));
   return 0;
