@@ -50,7 +50,17 @@ help() {
 }
 
 getopts_error() {
-  printf '%s\n' "$1" >&2
+  local msg="$1" ; shift
+  local do_help=
+  if test "$msg" = "--help" ; then
+    msg="$1" ; shift
+    do_help=1
+  fi
+  printf '%s\n' "$msg" >&2
+  if test -n "$do_help" ; then
+    printf '\n' >&2
+    help >&2
+  fi
   echo 'return 1'
   return 1
 }
@@ -146,8 +156,8 @@ getopts_long() {
     if test -n "$opt_base" ; then
       eval "local occurred_$opt_base=1"
 
-      eval "local act_1=\"\$act_1_$opt_base\""
-      eval "local varname=\"\$varname_$opt_base\""
+      eval "local act_1=\"\${act_1_$opt_base:-}\""
+      eval "local varname=\"\${varname_$opt_base:-}\""
       local need_val=
       local func=
       case "$act_1" in
@@ -169,6 +179,9 @@ getopts_long() {
           eval "func=\"\${act_2_${opt_base}}\""
           eval "varname=\"\${act_3_${opt_base}:-$varname}\""
           need_val=1
+          ;;
+        ("")
+          getopts_error --help "Wrong argument: $argument"
           ;;
       esac
       if test -n "$need_val" ; then
