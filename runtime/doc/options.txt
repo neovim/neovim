@@ -2803,7 +2803,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 				:set guicursor=n:blinkon0
 <		{group-name}
 			a highlight group name, that sets the color and font
-			for the cursor
+			for the cursor. If an invalid group is set, the TUI won't change colors
+      contrary to vim. If the group has guibg=NONE then the cursor becomes
+      invisible.
 		{group-name}/{group-name}
 			Two highlight group names, the first is used when
 			no language mappings are used, the other when they
@@ -2828,17 +2830,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	    :highlight Cursor gui=reverse guifg=NONE guibg=NONE
 	    :highlight Cursor gui=NONE guifg=bg guibg=fg
 <
-
-
-Terminal support (x => supported, empty => unsupported)
-                  |shape|color|transparency|reverse
-__________________|________________________________
-vte-based (> 3.9) |  x  |  x  |      x     |
-iterm             |  x  |  x  |            |
-Konsole           |  x  |     |            |
-Rxvt              |  x  |     |            |
-
-
 					*'guifont'* *'gfn'*
 						   *E235* *E596*
 'guifont' 'gfn'		string	(default "")

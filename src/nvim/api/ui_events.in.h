@@ -58,7 +58,7 @@ void set_title(String title)
     FUNC_API_SINCE(3);
 void set_icon(String icon)
     FUNC_API_SINCE(3);
-void highlights_changed(Array highlights_changed)
+void highlight_info_set(Array highlights_changed)
     FUNC_API_SINCE(3);
 
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col)

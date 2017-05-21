@@ -36,6 +36,7 @@ these differences.
 - 'directory' defaults to ~/.local/share/nvim/swap// (|xdg|), auto-created
 - 'display' defaults to "lastline"
 - 'formatoptions' defaults to "tcqj"
+- 'guicursor' defaults to 'n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20'
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is set by default
 - 'incsearch' is set by default

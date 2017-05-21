@@ -518,6 +518,9 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_INACTIVE] = "NormalNC",
 });
 
+EXTERN const int kColorInvalid INIT(= -1);
+EXTERN const int kColorNone INIT(= -2);
+
 
 EXTERN int highlight_attr[HLF_COUNT];       ///< Highl. attr for each context
 EXTERN int highlight_user[9];                   ///< [1-9] attributes

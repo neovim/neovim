@@ -5,11 +5,14 @@
 ///
 /// \brief code for syntax highlighting
 ///
-/// structure hl_group describes a highlighting group. The array highlight_ga
-/// stores the different groups. Groups can link to other groups (":hi link")
+/// structure hl_group describes a highlighting group. The array
+/// \ref highlight_ga stores the different groups.
+/// Groups can link to other groups (":hi link")
 ///
-/// A text may use a combination of these higlights, which is cached in
-/// 'attr_table', an array of attrentry_T.
+/// Depending if the ui accepts rgb values (see termguicolors for TUI), if
+/// higlights need to be combined (to 'highlight' spelling mistakes for
+/// example), these groups are converted in \ref attrentry_T and cached in
+/// attr_table.
 ///
 /// The 'Normal' group is a special group; changing it requires to update all
 /// groups via highlight_attr_set_all()
@@ -64,7 +67,7 @@
 #include "nvim/api/private/helpers.h"
 
 static bool did_syntax_onoff = false;
-static int invalid_group_id = -1;
+static const int kInvalidGroupId = -1;
 
 // TODO(teto): use array instead GA_EMPTY_INIT_VALUE ?
 // static garray_T changed_highlights  = { 0, 0, sizeof(int), 10, NULL };
@@ -131,8 +134,8 @@ static char *(hl_name_table[]) =
 {"bold", "standout", "underline", "undercurl",
  "italic", "reverse", "inverse", "NONE"};
 static int hl_attr_table[] =
-{HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
- HL_INVERSE, 0};
+  { HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
+    HL_INVERSE, HL_NONE };
 
 /*
  * The patterns that are being searched for are stored in a syn_pattern.
@@ -3687,7 +3690,7 @@ syn_list_one (
   }
 
   // list the link, if there is one
-  if (hl_is_valid(HL_TABLE()[id].sg_link)
+  if (hl_valid_id(HL_TABLE()[id].sg_link)
       && (did_header || link_only) && !got_int) {
     (void)syn_list_header(did_header, 999, id);
     msg_puts_attr("links to", attr);
@@ -4324,7 +4327,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
 
   if (rest != NULL) {
     syn_id = syn_check_group(arg, (int)(group_name_end - arg));
-    if (syn_id != invalid_group_id) {
+    if (syn_id != kInvalidGroupId) {
       // Allocate a buffer, for removing backslashes in the keyword.
       keyword_copy = xmalloc(STRLEN(rest) + 1);
     }
@@ -4462,7 +4465,7 @@ syn_cmd_match (
       rest = NULL;
     } else {
       syn_id = syn_check_group(arg, (int)(group_name_end - arg));
-      if (hl_is_valid(syn_id)) {
+      if (hl_valid_id(syn_id)) {
         syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
         /*
          * Store the pattern in the syn_items list
@@ -6208,7 +6211,7 @@ do_highlight(char_u *line, int forceit, int init) {
    */
   if (ends_excmd(*line)) {
     for (int i = 0; i < highlight_ga.ga_len && !got_int; i++) {
-      // todo: only call when the group has attributes set
+      // todo(vim): only call when the group has attributes set
       highlight_list_one(i);
     }
     return;
@@ -6243,7 +6246,7 @@ do_highlight(char_u *line, int forceit, int init) {
    */
   if (!doclear && !dolink && ends_excmd(*linep)) {
     id = syn_namen2id(line, (int)(name_end - line));
-    if (id == invalid_group_id) {
+    if (id == kInvalidGroupId) {
       EMSG2(_("E411: highlight group not found: %s"), line);
     } else {
       highlight_list_one(id);
@@ -6279,15 +6282,15 @@ do_highlight(char_u *line, int forceit, int init) {
 
     from_id = syn_check_group(from_start, (int)(from_end - from_start));
     if (STRNCMP(to_start, "NONE", 4) == 0) {
-      to_id = invalid_group_id;
+      to_id = kInvalidGroupId;
     } else {
       to_id = syn_check_group(to_start, (int)(to_end - to_start));
     }
 
-    if (hl_is_valid(from_id) && (!init || HL_TABLE()[from_id].sg_set == 0)) {
+    if (hl_valid_id(from_id) && (!init || HL_TABLE()[from_id].sg_set == 0)) {
       // Don't allow a link when there already is some highlighting
       // for the group, unless '!' is used
-      if (hl_is_valid(to_id) && !forceit && !init
+      if (hl_valid_id(to_id) && !forceit && !init
           && hl_has_settings(from_id, dodefault)) {
         if (sourcing_name == NULL && !dodefault) {
           EMSG(_("E414: group has settings, highlight link ignored"));
@@ -6337,7 +6340,7 @@ do_highlight(char_u *line, int forceit, int init) {
    * Find the group name in the table.  If it does not exist yet, add it.
    */
   id = syn_check_group(line, (int)(name_end - line));
-  if (id == invalid_group_id) {
+  if (id == kInvalidGroupId) {
     // failed (out of memory)
     return;
   }
@@ -6603,7 +6606,7 @@ do_highlight(char_u *line, int forceit, int init) {
             HL_TABLE()[idx].sg_rgb_bg = name_to_color(arg);
           } else {
             HL_TABLE()[idx].sg_rgb_bg_name = NULL;
-            HL_TABLE()[idx].sg_rgb_bg = -1;
+            HL_TABLE()[idx].sg_rgb_bg = kColorNone;
           }
         }
 
@@ -6640,7 +6643,7 @@ do_highlight(char_u *line, int forceit, int init) {
        * When highlighting has been given for a group, don't link it.
        */
       if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK)) {
-        HL_TABLE()[idx].sg_link = invalid_group_id;
+        HL_TABLE()[idx].sg_link = kInvalidGroupId;
       }
 
       /*
@@ -6935,7 +6938,7 @@ static void highlight_list_one(int id)
   didh = highlight_list_arg(id, didh, LIST_STRING,
                             0, sgp->sg_rgb_sp_name, "guisp");
 
-  if (hl_is_valid(sgp->sg_link) && !got_int) {
+  if (hl_valid_id(sgp->sg_link) && !got_int) {
     (void)syn_list_header(didh, 9999, id);
     didh = true;
     msg_puts_attr("links to", hl_attr(HLF_D));
@@ -7146,9 +7149,9 @@ attrentry_T hl2attr(int hl_id)
   // FIXME(tarruda): The "unset value" for rgb is -1, but since hlgroup is
   // initialized with 0(by garray functions), check for sg_rgb_{f,b}g_name
   // before setting attr_entry->{f,g}g_color to a other than -1
-  at_en.rgb_fg_color = sgp->sg_rgb_fg_name ? sgp->sg_rgb_fg : -1;
-  at_en.rgb_bg_color = sgp->sg_rgb_bg_name ? sgp->sg_rgb_bg : -1;
-  at_en.rgb_sp_color = sgp->sg_rgb_sp_name ? sgp->sg_rgb_sp : -1;
+  at_en.rgb_fg_color = sgp->sg_rgb_fg;
+  at_en.rgb_bg_color = sgp->sg_rgb_bg;
+  at_en.rgb_sp_color = sgp->sg_rgb_sp;
   return at_en;
 }
 
@@ -7177,6 +7180,7 @@ set_hl_attr(int hl_id)
     // If all the fields are cleared, clear the attr field back to default value
     sgp->sg_attr = 0;
   }
+  return at_en;
 }
 
 /// Lookup a highlight group name and return it's ID.
@@ -7201,7 +7205,7 @@ int syn_name2id(const char_u *name)
     }
   }
   ILOG("Group %s not found", name);
-  return invalid_group_id;
+  return kInvalidGroupId;
 }
 
 /*
@@ -7209,7 +7213,7 @@ int syn_name2id(const char_u *name)
  */
 int highlight_exists(const char_u *name)
 {
-  return hl_is_valid(syn_name2id(name));
+  return hl_valid_id(syn_name2id(name));
 }
 
 /*
@@ -7265,7 +7269,7 @@ int syn_check_group(char_u *pp, int len)
 /// Add new highlight group and return it's ID.
 /// @param name must be an allocated string, it will be consumed.
 ///
-/// @return invalid_group_id for failure, else the allocated group id
+/// @return kInvalidGroupId for failure, else the allocated group id
 /// @see syn_check_group
 static int syn_add_group(char_u *name)
 {
@@ -7276,7 +7280,7 @@ static int syn_add_group(char_u *name)
     if (!vim_isprintc(*p)) {
       EMSG(_("E669: Unprintable character in group name"));
       xfree(name);
-      return invalid_group_id;
+      return kInvalidGroupId;
     } else if (!ASCII_ISALNUM(*p) && *p != '_')   {
       /* This is an error, but since there previously was no check only
        * give a warning. */
@@ -7297,7 +7301,7 @@ static int syn_add_group(char_u *name)
   if (highlight_ga.ga_len >= MAX_HL_ID) {
     EMSG(_("E849: Too many highlight and syntax groups"));
     xfree(name);
-    return invalid_group_id;
+    return kInvalidGroupId;
   }
 
   // Append another syntax_highlight entry.
@@ -7305,7 +7309,7 @@ static int syn_add_group(char_u *name)
   memset(hlgp, 0, sizeof(*hlgp));
   hlgp->sg_name = name;
   hlgp->sg_name_u = vim_strsave_up(name);
-  hlgp->sg_link = invalid_group_id;
+  hlgp->sg_link = kInvalidGroupId;
 
   // ILOG("Adding group name %s as id %d", name, highlight_ga.ga_len-1);
 
@@ -7333,18 +7337,19 @@ int syn_id2attr(int hl_id)
   return sgp->sg_attr;
 }
 
-bool hl_is_valid(int hl_id)
+bool hl_valid_id(int hl_id) FUNC_ATTR_PURE
 {
   return !hl_invalid_id(hl_id);
 }
 
-bool hl_invalid_id(int hl_id)
+bool hl_invalid_id(int hl_id) FUNC_ATTR_PURE
 {
-  return (hl_id >= highlight_ga.ga_len || hl_id <= invalid_group_id);
+  return (hl_id >= highlight_ga.ga_len || hl_id <= kInvalidGroupId);
 }
 
 /// Translate a group ID to the final group ID (following links).
-/// @return 0 if not found, final highlight id otherwise
+///
+/// @return \p kInvalidGroupId if not found, final highlight id otherwise
 int syn_get_final_id(int hl_id)
 {
   int count;
@@ -7352,7 +7357,7 @@ int syn_get_final_id(int hl_id)
 
   if (hl_invalid_id(hl_id)) {
     // Can be called from eval!!
-    return invalid_group_id;
+    return kInvalidGroupId;
   }
 
   /*
@@ -7397,8 +7402,8 @@ void highlight_changed(void)
   int attr;
   int id;
   char_u userhl[10];
-  int id_SNC = invalid_group_id;
-  int id_S = invalid_group_id;
+  int id_SNC = kInvalidGroupId;
+  int id_S = kInvalidGroupId;
   int hlcnt;
 
   need_highlight_changed = false;
@@ -7409,7 +7414,7 @@ void highlight_changed(void)
   /// Translate builtin highlight groups into attributes for quick lookup.
   for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
     id = syn_check_group((char_u *)hlf_names[hlf], STRLEN(hlf_names[hlf]));
-    if (id == invalid_group_id) {
+    if (id == kInvalidGroupId) {
       abort();
     }
     attr = syn_id2attr(id);
@@ -7437,8 +7442,8 @@ void highlight_changed(void)
     sprintf((char *)userhl, "User%d", i + 1);
     id = syn_name2id(userhl);
     if (hl_invalid_id(id)) {
-      highlight_user[i] = invalid_group_id;
-      highlight_stlnc[i] = invalid_group_id;
+      highlight_user[i] = kInvalidGroupId;
+      highlight_stlnc[i] = kInvalidGroupId;
     } else {
       struct hl_group *hlt = HL_TABLE();
 
@@ -7452,7 +7457,7 @@ void highlight_changed(void)
                 &hlt[id_SNC],
                 sizeof(struct hl_group));
       }
-      hlt[hlcnt + i].sg_link = invalid_group_id;
+      hlt[hlcnt + i].sg_link = kInvalidGroupId;
 
       // Apply difference between UserX and HLF_S to HLF_SNC
       hlt[hlcnt + i].sg_cterm ^= hlt[id].sg_cterm ^ hlt[id_S].sg_cterm;
@@ -7486,8 +7491,7 @@ void highlight_changed(void)
   }
   highlight_ga.ga_len = hlcnt;
 
-  ui_call_highlights_changed(changed_highlights);
-  // ui_cursor_shape();
+  ui_call_highlight_info_set(changed_highlights);
   // api_free_array(changed_highlights);
 }
 
@@ -8295,12 +8299,7 @@ const char *cterm_int2name(int color)
   return NULL;
 }
 
-/// Translate to RgbValue if \p name is an hex value (e.g. #XXXXXX),
-/// else look into \p color_name_table to translate a color name to  its
-/// hex value
-///
-/// @param[in] name string value to convert to RGB
-/// return the hex value or -1 if could not find a correct value
+/// @see nvim_get_color_by_name
 RgbValue name_to_color(const uint8_t *name)
 {
 
@@ -8313,6 +8312,8 @@ RgbValue name_to_color(const uint8_t *name)
     return normal_bg;
   } else if (!STRICMP(name, "fg") || !STRICMP(name, "foreground")) {
     return normal_fg;
+  } else if (!STRICMP(name, "NONE")) {
+    return kColorNone;
   }
 
   for (int i = 0; color_name_table[i].name != NULL; i++) {
@@ -8321,7 +8322,7 @@ RgbValue name_to_color(const uint8_t *name)
     }
   }
 
-  return -1;
+  return kColorInvalid;
 }
 
 /**************************************

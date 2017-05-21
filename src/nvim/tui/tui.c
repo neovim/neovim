@@ -135,7 +135,7 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->event = tui_event;
-  ui->highlights_changed = tui_highlights_changed;
+  ui->highlight_info_set = tui_highlight_info_set;
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
@@ -474,7 +474,7 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
 // if the cursor should be visible according to guicursor
 static bool cursor_visible(void)
 {
-  return cursor_bg != -1;
+  return cursor_bg != -2;
 }
 
 static cursorentry_T decode_cursor_entry(Dictionary args)
@@ -564,7 +564,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   // Support changing cursor shape on some popular terminals.
   const char *vte_version = os_getenv("VTE_VERSION");
 
-  // if (hl_is_valid(c.id) && ui->rgb) {
+  // if (hl_valid_id(c.id) && ui->rgb) {
   //   int attr = syn_id2attr(c.id);
   //   if (attr >= 0) {
   //     attrentry_T *aep = syn_cterm_attr2entry(attr);
@@ -574,7 +574,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   // }
 
   // update cursor colors
-  if (hl_is_valid(c.id) && c.id != 0) {
+  if (hl_valid_id(c.id) && c.id != 0) {
     HlAttrs hl;
     int attr = syn_id2attr(c.id);
     bool res = attr2hlattr(attr, p_tgc, &hl);
@@ -599,7 +599,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
       cursor_bg = -1;
     }
 
-    if (cursor_bg == -1) {
+    if (cursor_bg == kColorNone) {
       unibi_out(ui, unibi_cursor_invisible);
     } else {
       unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
@@ -853,7 +853,7 @@ static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
 }
 
-static void tui_highlights_changed(UI *ui, Array highlights_changed)
+static void tui_highlight_info_set(UI *ui, Array highlights_changed)
 {
   TUIData *data = ui->data;
   // redraw the cursor just in case its hl changed

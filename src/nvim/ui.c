@@ -142,6 +142,104 @@ void ui_event(char *name, Array args)
   }
 }
 
+bool attr2hlattr(int attr_code, bool use_rgb, HlAttrs *out)
+{
+  HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
+  if (attr_code == HL_NORMAL) {
+    *out = attrs;
+    return true;
+  }
+  attrentry_T *aep = syn_cterm_attr2entry(attr_code);
+  return attrentry2hlattr(aep, use_rgb, out);
+}
+
+/// @param[in] aep data to convert
+/// @param[out] out structure that will be sent to UIs
+bool attrentry2hlattr(const attrentry_T *aep, bool use_rgb, HlAttrs *out)
+{
+  assert(out);
+
+  HlAttrs attrs = { false, false, false, false, false, -1, -1, -1 };
+  int mask = 0;
+
+  if (!aep) {
+    return false;
+  }
+
+  mask = use_rgb ? aep->rgb_ae_attr : aep->cterm_ae_attr;
+
+  attrs.bold = mask & HL_BOLD;
+  attrs.underline = mask & HL_UNDERLINE;
+  attrs.undercurl = mask & HL_UNDERCURL;
+  attrs.italic = mask & HL_ITALIC;
+  attrs.reverse = mask & (HL_INVERSE | HL_STANDOUT);
+
+  if (use_rgb) {
+    if (aep->rgb_fg_color != normal_fg) {
+      attrs.foreground = aep->rgb_fg_color;
+    }
+
+    if (aep->rgb_bg_color != normal_bg) {
+      attrs.background = aep->rgb_bg_color;
+    }
+
+    if (aep->rgb_sp_color != normal_sp) {
+      attrs.special = aep->rgb_sp_color;
+    }
+  } else {
+    if (cterm_normal_fg_color != aep->cterm_fg_color) {
+      attrs.foreground = aep->cterm_fg_color - 1;
+    }
+
+    if (cterm_normal_bg_color != aep->cterm_bg_color) {
+        attrs.background = aep->cterm_bg_color - 1;
+    }
+  }
+
+  *out = attrs;
+  return true;
+}
+
+Dictionary attr2dic(HlAttrs attrs)
+{
+  Dictionary hl = ARRAY_DICT_INIT;
+
+  if (attrs.bold) {
+    PUT(hl, "bold", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.underline) {
+    PUT(hl, "underline", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.undercurl) {
+    PUT(hl, "undercurl", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.italic) {
+    PUT(hl, "italic", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.reverse) {
+    PUT(hl, "reverse", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.foreground != -1) {
+    PUT(hl, "foreground", INTEGER_OBJ(attrs.foreground));
+  }
+
+  if (attrs.background != -1) {
+    PUT(hl, "background", INTEGER_OBJ(attrs.background));
+  }
+
+  if (attrs.special != -1) {
+    PUT(hl, "special", INTEGER_OBJ(attrs.special));
+  }
+
+  return hl;
+}
+
+
 void ui_refresh(void)
 {
   if (!ui_active()) {

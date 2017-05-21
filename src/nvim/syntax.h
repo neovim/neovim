@@ -17,6 +17,7 @@
 #define HL_UNDERLINE   0x08
 #define HL_UNDERCURL   0x10
 #define HL_STANDOUT    0x20
+#define HL_NONE        0x00
 /// @}
 
 #define HL_CONTAINED   0x01    /* not used on toplevel */

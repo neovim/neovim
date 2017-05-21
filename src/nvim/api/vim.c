@@ -32,6 +32,7 @@
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
+#include "nvim/ui.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -58,8 +59,8 @@ void nvim_command(String command, Error *err)
 ///
 /// @param name Highlight group name
 /// @return a highlight description in dictionary {'hl_id': X, 'bg': Y, 'fg': Z}
-/// @see nvim_hl_from_id
-Dictionary nvim_hl_from_name(String name, Error *err)
+/// @see nvim_get_hl_by_id
+Dictionary nvim_get_hl_by_name(String name, Error *err)
   FUNC_API_SINCE(3)
 {
   Dictionary result = ARRAY_DICT_INIT;
@@ -70,7 +71,7 @@ Dictionary nvim_hl_from_name(String name, Error *err)
                   name.data);
     return result;
   }
-  result = nvim_hl_from_id(id, err);
+  result = nvim_get_hl_by_id(id, err);
   return result;
 }
 
@@ -78,8 +79,8 @@ Dictionary nvim_hl_from_name(String name, Error *err)
 ///
 /// @param name Highlight group name
 /// @return a highlight description in a dictionary
-/// @see nvim_hl_from_id
-Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
+/// @see nvim_get_hl_by_name
+Dictionary nvim_get_hl_by_id(Integer hl_id, Error *err)
   FUNC_API_SINCE(3)
 {
   HlAttrs attrs;
@@ -90,7 +91,6 @@ Dictionary nvim_hl_from_id(Integer hl_id, Error *err)
   int attrcode = syn_id2attr((int)hl_id);
   bool res = attr2hlattr(attrcode, true, &attrs);
 
-  // ILOG("found attr=%d for hl_id=%d res=%d", attrcode, hl_id, res);
   if (hl_invalid_id((int)hl_id)) {
     api_set_error(err, kErrorTypeException, "Invalid highlight id %d", hl_id);
     return dic;
@@ -756,12 +756,21 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
   channel_unsubscribe(channel_id, e);
 }
 
+/// Translate to integer if \p name is an hex value (e.g. #XXXXXX),
+/// else look into \p color_name_table to translate a color name to  its
+/// hex value
+///
+/// @param[in] name string value to convert to RGB, e.g. "red", "#ff00ff", "bg"
+/// @return the hex value or -1 if could not find a correct value
 Integer nvim_get_color_by_name(String name)
     FUNC_API_SINCE(1)
 {
   return name_to_color((uint8_t *)name.data);
 }
 
+/// Maps X11 color names to their respective RGB integer
+///
+/// @returns a dictionary of [color_name] = integer value
 Dictionary nvim_get_color_map(void)
     FUNC_API_SINCE(1)
 {
