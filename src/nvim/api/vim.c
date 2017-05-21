@@ -135,7 +135,8 @@ Integer nvim_input(String keys)
   return (Integer)input_enqueue(keys);
 }
 
-/// Replaces any terminal codes with the internal representation
+/// Replaces terminal codes and key codes (<CR>, <Esc>, ...) in a string with
+/// the internal representation.
 ///
 /// @see replace_termcodes
 /// @see cpoptions
