@@ -6462,11 +6462,20 @@ serverlist()						*serverlist()*
 			nvim --cmd "echo serverlist()" --cmd "q"
 <
 serverstart([{address}])				*serverstart()*
-		Opens a named pipe or TCP socket at {address} for clients to
-		connect to and returns {address}. If no address is given, it
-		is equivalent to: >
+		Opens a TCP socket (IPv4/IPv6), Unix domain socket (Unix),
+		or named pipe (Windows) at {address} for clients to connect
+		to and returns {address}.
+
+		If {address} contains `:`, a TCP socket is used. Everything in
+		front of the last occurrence of `:` is the IP or hostname,
+		everything after it the port. If the port is empty or `0`,
+		a random port will be assigned.
+
+		If no address is given, it is equivalent to: >
 			:call serverstart(tempname())
+
 < 		|$NVIM_LISTEN_ADDRESS| is set to {address} if not already set.
+
 							*--servername*
 		The Vim command-line option `--servername` can be imitated: >
 			nvim --cmd "let g:server_addr = serverstart('foo')"
