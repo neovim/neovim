@@ -96,7 +96,9 @@ bool attr2hlattr(int attr_code, bool use_rgb, HlAttrs *out)
   return attrentry2hlattr(aep, use_rgb, out);
 }
 
-bool attrentry2hlattr(attrentry_T *aep, bool use_rgb, HlAttrs *out)
+/// @param[in] aep data to convert
+/// @param[out] out structure that will be sent to UIs
+bool attrentry2hlattr(const attrentry_T *aep, bool use_rgb, HlAttrs *out)
 {
   assert(out);
 
@@ -133,13 +135,7 @@ bool attrentry2hlattr(attrentry_T *aep, bool use_rgb, HlAttrs *out)
     }
 
     if (cterm_normal_bg_color != aep->cterm_bg_color) {
-      // char *name = cterm_int2name (aep->cterm_bg_color - 1);
-      // if (name) {
-      //   attrs.background = (int)name_to_color ( (uint8_t *)name);
-      // } else {
         attrs.background = aep->cterm_bg_color - 1;
-      // }
-      // ILOG("attr=%d  color to %d", attr_code, attrs.background);
     }
   }
 

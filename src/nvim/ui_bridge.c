@@ -87,6 +87,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.set_title = ui_bridge_set_title;
   rv->bridge.set_icon = ui_bridge_set_icon;
   rv->bridge.event = ui_bridge_event;
+  rv->bridge.highlights_changed = ui_bridge_highlights_changed;
 
   rv->scheduler = scheduler;
 

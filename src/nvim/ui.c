@@ -365,15 +365,10 @@ void ui_cursor_goto(int new_row, int new_col)
 
 void ui_mode_info_set(void)
 {
+  Array style = mode_style_array();
   bool enabled = (*p_guicursor != NUL);
-  UI_CALL(mode_info_set, enabled, mode_style_array(ui->rgb));
-  // todo
-  // api_free_array(style);
-}
-
-void ui_update_menu(void)
-{
-    UI_CALL(update_menu);
+  ui_call_mode_info_set(enabled, style);
+  api_free_array(style);
 }
 
 int ui_current_row(void)
@@ -399,8 +394,6 @@ static void set_highlight_args(int attr_code)
   assert(result);
   result = attr2hlattr(attr_code, false, &cterm_attrs);
   assert(result);
-  // UI_CALL(highlight_set, attrs);
-  // TODO(matt): use ui_call_XXXX
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 

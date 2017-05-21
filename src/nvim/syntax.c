@@ -61,6 +61,7 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 static bool did_syntax_onoff = false;
 static int invalid_group_id = -1;
@@ -6304,7 +6305,7 @@ do_highlight(char_u *line, int forceit, int init) {
     // Only call highlight_changed() once, after sourcing a syntax file
     need_highlight_changed = true;
     // GA_APPEND(int, &changed_highlights, from_id);
-    PUT(changed_highlights, INTEGER_OBJ(from_id));
+    ADD(changed_highlights, INTEGER_OBJ(from_id));
     return;
   }
 
@@ -6671,10 +6672,8 @@ do_highlight(char_u *line, int forceit, int init) {
   xfree(key);
   xfree(arg);
   if (!error) {
-    ILOG("changed_hl add idx=%d (array of size %d)",
-         idx, changed_highlights.ga_len);
     // GA_APPEND(int, &changed_highlights, idx);
-    PUT(changed_highlights, INTEGER_OBJ(from_id));
+    ADD(changed_highlights, INTEGER_OBJ(idx));
   }
 
   // Only call highlight_changed() once, after sourcing a syntax file
@@ -7487,10 +7486,9 @@ void highlight_changed(void)
   }
   highlight_ga.ga_len = hlcnt;
 
-  // ui_notify_changed_highlights(changed_highlights);
   ui_call_highlights_changed(changed_highlights);
-  ui_cursor_shape();
-  api_free_array(highlight_changed);
+  // ui_cursor_shape();
+  // api_free_array(changed_highlights);
 }
 
 

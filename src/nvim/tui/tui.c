@@ -98,7 +98,7 @@ typedef struct {
 static bool volatile got_winch = false;
 static bool cursor_style_enabled = false;
 static bool is_tmux = false;
-static int cursor_bg = 0;
+static int cursor_bg = -1;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -135,7 +135,7 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->event = tui_event;
-
+  ui->highlights_changed = tui_highlights_changed;
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
@@ -322,7 +322,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   int fg = attrs.foreground != -1 ? attrs.foreground : grid->fg;
   int bg = attrs.background != -1 ? attrs.background : grid->bg;
 
-  if (ui->rgb) {
+  if (p_tgc) {
     if (fg != -1) {
       data->params[0].i = (fg >> 16) & 0xff;  // red
       data->params[1].i = (fg >> 8) & 0xff;   // green
@@ -575,18 +575,25 @@ static void tui_set_mode(UI *ui, ModeShape mode)
 
   // update cursor colors
   if (hl_is_valid(c.id) && c.id != 0) {
+    HlAttrs hl;
     int attr = syn_id2attr(c.id);
-    if (attr > 0) {
-      attrentry_T *aep = syn_cterm_attr2entry(attr);
-
-      if (ui->rgb) {
-        cursor_bg = aep->rgb_bg_color;
+    bool res = attr2hlattr(attr, p_tgc, &hl);
+    assert(res);
+    ILOG("valid cursor hl %d with attr %d", c.id, attr);
+    if (attr >= 0) {
+      // attrentry_T *aep = syn_cterm_attr2entry(attr);
+      // bool res = attrentry2hlattr(aep, p_tgc, attr);
+      // assert(res);
+      if (p_tgc) {
+        // cursor_bg = aep->rgb_bg_color;
+        cursor_bg = hl.background;
+        ILOG("TERMGUICOLORS cursor=%d", cursor_bg);
       } else {
-        const char *name = cterm_int2name(aep->cterm_bg_color - 1);
-        // ILOG("Translates to name %s", name);
-        if (name) {
-          cursor_bg = (int)name_to_color((uint8_t *)name);
-        }
+        // const char *name = cterm_int2name(aep->cterm_bg_color - 1);
+        // // ILOG("Translates to name %s", name);
+        // if (name) {
+        //   cursor_bg = (int)name_to_color((uint8_t *)name);
+        // }
       }
     } else {
       cursor_bg = -1;
@@ -600,6 +607,8 @@ static void tui_set_mode(UI *ui, ModeShape mode)
       ILOG("setting cursor color");
       unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
     }
+  } else {
+    ILOG("invalid cursor hl %d", c.id);
   }
 
   if (data->term == kTermKonsole) {
@@ -842,11 +851,14 @@ static void tui_set_icon(UI *ui, String icon)
 // to make a copy for the tui thread
 static void tui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
+}
+
+static void tui_highlights_changed(UI *ui, Array highlights_changed)
+{
   TUIData *data = ui->data;
-  ILOG("receivent Event [%s]", name);
-  if (STRCMP(name, "highlights") == 0) {
-    ILOG("received hl update");
-  }
+  // redraw the cursor just in case its hl changed
+  ILOG("refresh_cursor update");
+  tui_set_mode(ui, data->showing_mode);
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)
