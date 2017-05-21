@@ -460,7 +460,6 @@ include(InstallHelpers)
 file(GLOB MANPAGES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   man/nvim.1)
-
 install_helper(
   FILES ${MANPAGES}
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
