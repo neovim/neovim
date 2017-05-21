@@ -2,8 +2,8 @@
 local Screen = require('test.functional.ui.screen')
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, feed_command, expect_any =
-  helpers.feed, helpers.insert, helpers.feed_command, helpers.expect_any
+local feed, insert, feed_command, expect, expect_any =
+  helpers.feed, helpers.insert, helpers.feed_command, helpers.expect, helpers.expect_any
 
 describe('folding', function()
   local screen
@@ -188,6 +188,17 @@ describe('folding', function()
       1
       2
       0]])
+  end)
+
+  it("Regression #6549", function()
+    feed_command('let g:markdown_folding = 1')
+    feed_command('term top')
+    feed_command('e 045_test_data.md')
+
+    feed_command('sleep 2')
+    helpers.wait()
+
+    expect([[# hi]])
   end)
 
   it('can be opened after :move', function()
