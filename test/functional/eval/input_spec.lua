@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
+local wait = helpers.wait
 local feed = helpers.feed
 local meths = helpers.meths
 local clear = helpers.clear
