@@ -1065,7 +1065,6 @@ static void fix_terminfo(TUIData *data)
   data->term = detect_term(term, colorterm);
 
   if (data->term == kTermRxvt) {
-    unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[m\x1b(B");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<20/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
@@ -1115,9 +1114,9 @@ static void fix_terminfo(TUIData *data)
   data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1004l");
 
-#define XTERM_SETAF \
+#define XTERM_SETAF_256 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
-#define XTERM_SETAB \
+#define XTERM_SETAB_256 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 
   if ((colorterm && strstr(colorterm, "256"))
@@ -1127,8 +1126,8 @@ static void fix_terminfo(TUIData *data)
     // Linux 4.8+ supports 256-color SGR, but terminfo has 8-color setaf/setab.
     // Assume TERM=~xterm|linux or COLORTERM=~256 supports 256 colors.
     unibi_set_num(ut, unibi_max_colors, 256);
-    unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
-    unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
+    unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
+    unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
   }
 
   // Only define this capability for terminal types that we know understand it.
@@ -1147,6 +1146,12 @@ static void fix_terminfo(TUIData *data)
   }
 
 end:
+
+#define XTERM_SETAF_16 \
+  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
+#define XTERM_SETAB_16 \
+  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
+
   // Fill some empty slots with common terminal strings
   if (data->term == kTermiTerm) {
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
@@ -1165,14 +1170,14 @@ end:
       "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
   unibi_set_if_empty(ut, unibi_cursor_address, "\x1b[%i%p1%d;%p2%dH");
   unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[0;10m");
-  unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF);
-  unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB);
+  unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF_16);
+  unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB_16);
   unibi_set_if_empty(ut, unibi_enter_bold_mode, "\x1b[1m");
   unibi_set_if_empty(ut, unibi_enter_underline_mode, "\x1b[4m");
   unibi_set_if_empty(ut, unibi_enter_reverse_mode, "\x1b[7m");
   unibi_set_if_empty(ut, unibi_bell, "\x07");
-  unibi_set_if_empty(data->ut, unibi_enter_ca_mode, "\x1b[?1049h");
-  unibi_set_if_empty(data->ut, unibi_exit_ca_mode, "\x1b[?1049l");
+  unibi_set_if_empty(ut, unibi_enter_ca_mode, "\x1b[?1049h");
+  unibi_set_if_empty(ut, unibi_exit_ca_mode, "\x1b[?1049l");
   unibi_set_if_empty(ut, unibi_delete_line, "\x1b[M");
   unibi_set_if_empty(ut, unibi_parm_delete_line, "\x1b[%p1%dM");
   unibi_set_if_empty(ut, unibi_insert_line, "\x1b[L");
