@@ -87,6 +87,7 @@ typedef struct {
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
+  bool default_attr;
   ModeShape showing_mode;
   TermType term;
   struct {
@@ -151,6 +152,7 @@ static void terminfo_start(UI *ui)
   data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
   data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
+  data->default_attr = false;
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
@@ -323,7 +325,10 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 
   data->print_attrs = attrs;
-  unibi_out(ui, unibi_exit_attribute_mode);
+  if (!data->default_attr) {
+    data->default_attr = true;
+    unibi_out(ui, unibi_exit_attribute_mode);
+  }
   UGrid *grid = &data->grid;
 
   int fg = attrs.foreground != -1 ? attrs.foreground : grid->fg;
@@ -335,6 +340,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
       data->params[1].i = (fg >> 8) & 0xff;   // green
       data->params[2].i = fg & 0xff;          // blue
       unibi_out(ui, data->unibi_ext.set_rgb_foreground);
+      data->default_attr = false;
     }
 
     if (bg != -1) {
@@ -342,30 +348,37 @@ static void update_attrs(UI *ui, HlAttrs attrs)
       data->params[1].i = (bg >> 8) & 0xff;   // green
       data->params[2].i = bg & 0xff;          // blue
       unibi_out(ui, data->unibi_ext.set_rgb_background);
+      data->default_attr = false;
     }
   } else {
     if (fg != -1) {
       data->params[0].i = fg;
       unibi_out(ui, unibi_set_a_foreground);
+      data->default_attr = false;
     }
 
     if (bg != -1) {
       data->params[0].i = bg;
       unibi_out(ui, unibi_set_a_background);
+      data->default_attr = false;
     }
   }
 
   if (attrs.bold) {
     unibi_out(ui, unibi_enter_bold_mode);
+    data->default_attr = false;
   }
   if (attrs.italic) {
     unibi_out(ui, unibi_enter_italics_mode);
+    data->default_attr = false;
   }
   if (attrs.underline || attrs.undercurl) {
     unibi_out(ui, unibi_enter_underline_mode);
+    data->default_attr = false;
   }
   if (attrs.reverse) {
     unibi_out(ui, unibi_enter_reverse_mode);
+    data->default_attr = false;
   }
 }
 
