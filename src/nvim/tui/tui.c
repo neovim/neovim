@@ -216,11 +216,6 @@ static void tui_terminal_start(UI *ui)
   terminfo_start(ui);
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
-
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
-  data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
-#endif
-  term_input_init(&data->input, data->loop);
   term_input_start(&data->input);
 }
 
@@ -255,8 +250,14 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 #ifdef UNIX
   signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
 #endif
+
+#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
+  data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
+#endif
+  term_input_init(&data->input, &tui_loop);
   tui_terminal_start(ui);
   data->stop = false;
+
   // allow the main thread to continue, we are ready to start handling UI
   // callbacks
   CONTINUE(bridge);
