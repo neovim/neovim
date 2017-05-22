@@ -299,7 +299,7 @@ ArrayOf(String) nvim_list_runtime_paths(void)
     FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
-  uint8_t *rtp = p_rtp;
+  char_u *rtp = p_rtp;
 
   if (*rtp == NUL) {
     // No paths
@@ -313,13 +313,14 @@ ArrayOf(String) nvim_list_runtime_paths(void)
     }
     rtp++;
   }
+  rv.size++;
 
   // Allocate memory for the copies
-  rv.items = xmalloc(sizeof(Object) * rv.size);
+  rv.items = xmalloc(sizeof(*rv.items) * rv.size);
   // Reset the position
   rtp = p_rtp;
   // Start copying
-  for (size_t i = 0; i < rv.size && *rtp != NUL; i++) {
+  for (size_t i = 0; i < rv.size; i++) {
     rv.items[i].type = kObjectTypeString;
     rv.items[i].data.string.data = xmalloc(MAXPATHL);
     // Copy the path from 'runtimepath' to rv.items[i]
@@ -708,7 +709,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 Integer nvim_get_color_by_name(String name)
     FUNC_API_SINCE(1)
 {
-  return name_to_color((uint8_t *)name.data);
+  return name_to_color((char_u *)name.data);
 }
 
 Dictionary nvim_get_color_map(void)
@@ -859,7 +860,7 @@ static void write_msg(String message, bool to_err)
 #define PUSH_CHAR(i, pos, line_buf, msg) \
   if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) { \
     line_buf[pos] = NUL; \
-    msg((uint8_t *)line_buf); \
+    msg((char_u *)line_buf); \
     pos = 0; \
     continue; \
   } \

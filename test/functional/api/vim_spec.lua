@@ -327,11 +327,11 @@ describe('api', function()
         {'nvim_get_mode', {}},
         {'nvim_eval',     {'1'}},
       }
-      eq({{{mode='n', blocking=false},
-          13,
-          {mode='n', blocking=false},  -- TODO: should be blocked=true
-          1},
-        NIL}, meths.call_atomic(req))
+      eq({ { {mode='n', blocking=false},
+             13,
+             {mode='n', blocking=false},  -- TODO: should be blocked=true
+             1 },
+           NIL}, meths.call_atomic(req))
       eq({mode='r', blocking=true}, nvim("get_mode"))
     end)
     -- TODO: bug #6166
@@ -585,6 +585,36 @@ describe('api', function()
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
       eq({''}, meths.buf_get_lines(0, 0, -1, true))
+    end)
+  end)
+
+  describe('list_runtime_paths', function()
+    it('returns nothing with empty &runtimepath', function()
+      meths.set_option('runtimepath', '')
+      eq({}, meths.list_runtime_paths())
+    end)
+    it('returns single runtimepath', function()
+      meths.set_option('runtimepath', 'a')
+      eq({'a'}, meths.list_runtime_paths())
+    end)
+    it('returns two runtimepaths', function()
+      meths.set_option('runtimepath', 'a,b')
+      eq({'a', 'b'}, meths.list_runtime_paths())
+    end)
+    it('returns empty strings when appropriate', function()
+      meths.set_option('runtimepath', 'a,,b')
+      eq({'a', '', 'b'}, meths.list_runtime_paths())
+      meths.set_option('runtimepath', ',a,b')
+      eq({'', 'a', 'b'}, meths.list_runtime_paths())
+      meths.set_option('runtimepath', 'a,b,')
+      eq({'a', 'b', ''}, meths.list_runtime_paths())
+    end)
+    it('truncates too long paths', function()
+      local long_path = ('/a'):rep(8192)
+      meths.set_option('runtimepath', long_path)
+      local paths_list = meths.list_runtime_paths()
+      neq({long_path}, paths_list)
+      eq({long_path:sub(1, #(paths_list[1]))}, paths_list)
     end)
   end)
 
