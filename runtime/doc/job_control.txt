@@ -75,6 +75,7 @@ Here's what is happening:
 - The `JobHandler()` function is a callback passed to |jobstart()| to handle
   various job events. It takes care of displaying stdout/stderr received from
   the shells.
+						*on_stdout* *on_stderr* *on_exit*
 - The arguments passed to `JobHandler()` are:
 
   0: The job id
