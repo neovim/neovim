@@ -4044,7 +4044,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	listing continues until finished.
 
 						*'mouse'* *E538*
-'mouse'			string	(default "a")
+'mouse'			string	(default "")
 			global
 
 	Enable the use of the mouse.  Only works for certain terminals.

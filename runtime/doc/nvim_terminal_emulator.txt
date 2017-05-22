@@ -4,8 +4,7 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Terminal emulator					   *terminal-emulator*
-							     *terminal-buffer*
+Terminal emulator				*terminal* *terminal-emulator*
 
 Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
 presented as a special buffer type, asynchronously updated from the virtual
@@ -89,6 +88,17 @@ Configuration				     *terminal-emulator-configuration*
 Options:		'scrollback'
 Events:			|TermOpen|, |TermClose|
 Highlight groups:	|hl-TermCursor|, |hl-TermCursorNC|
+
+Terminal sets local defaults for some options, which may differ from your
+global configuration.
+
+- 'list' is disabled
+- 'number' is disabled
+- 'relativenumber' is disabled (cannot be changed in |Terminal-mode|)
+- 'wrap' is disabled
+
+You can change the defaults with a TermOpen autocommand: >
+	au TermOpen * setlocal number
 
 Terminal colors can be customized with these variables:
 
