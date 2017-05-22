@@ -1052,6 +1052,14 @@ static TermType detect_term(const char *term, const char *colorterm)
   return kTermUnknown;
 }
 
+/// This has three tasks.
+/// 1. On termcap-only systems, it reads $TERM and fills in all of the things
+/// that unibilium (which uses terminfo) will not have.
+/// 2. It fills in extra capabilities that unibilium and terminfo do not know
+/// anything about, such as bracketed paste control.  Some of these are
+/// (wrongly) assumed to be universal.  Others are dependent from $TERM .
+/// 3. It fills in capabilities that might have been missing from the termcap
+/// entry that we nonetheless need, which are also worked out from $TERM .
 static void fix_terminfo(TUIData *data)
 {
   unibi_term *ut = data->ut;
