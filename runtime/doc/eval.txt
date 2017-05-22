@@ -2845,8 +2845,6 @@ confirm({msg} [, {choices} [, {default} [, {type}]]])
 		Confirm() offers the user a dialog, from which a choice can be
 		made.  It returns the number of the choice.  For the first
 		choice this is 1.
-		Note: confirm() is only supported when compiled with dialog
-		support, see |+dialog_con| and |+dialog_gui|.
 
 		{msg} is displayed in a |dialog| with {choices} as the
 		alternatives.  When {choices} is missing or empty, "&OK" is
@@ -8030,7 +8028,7 @@ There are four types of features:
 	:if has("cindent")
 2.  Features that are only supported when certain conditions have been met.
     Example: >
-	:if has("gui_running")
+	:if has("win32")
 <							*has-patch*
 3.  {Nvim} version. The "nvim-1.2.3" feature means that the Nvim version is
     1.2.3 or later. Example: >
@@ -8065,17 +8063,14 @@ browse			Compiled with |:browse| support, and browse() will
 browsefilter		Compiled with support for |browsefilter|.
 byte_offset		Compiled with support for 'o' in 'statusline'
 cindent			Compiled with 'cindent' support.
-clientserver		Compiled with remote invocation support |clientserver|.
 clipboard		Compiled with 'clipboard' support.
 cmdline_compl		Compiled with |cmdline-completion| support.
 cmdline_hist		Compiled with |cmdline-history| support.
 cmdline_info		Compiled with 'showcmd' and 'ruler' support.
 comments		Compiled with |'comments'| support.
-compatible		Compiled to be very Vi compatible.
 cscope			Compiled with |cscope| support.
 debug			Compiled with "DEBUG" defined.
 dialog_con		Compiled with console dialog support.
-dialog_gui		Compiled with GUI dialog support.
 digraphs		Compiled with support for digraphs.
 eval			Compiled with expression evaluation support.  Always
 			true, of course!
@@ -8093,9 +8088,6 @@ fname_case		Case in file names matters (for Windows this is not
 			present).
 folding			Compiled with |folding| support.
 gettext			Compiled with message translation |multi-lang|
-gui			Compiled with GUI enabled.
-gui_running		Vim is running in the GUI, or it will start soon.
-gui_win32		Compiled with MS Windows Win32 GUI.
 iconv			Can use iconv() for conversion.
 insert_expand		Compiled with support for CTRL-X expansion commands in
 			Insert mode.
@@ -8110,8 +8102,7 @@ lispindent		Compiled with support for lisp indenting.
 listcmds		Compiled with commands for the buffer list |:files|
 			and the argument list |arglist|.
 localmap		Compiled with local mappings and abbr. |:map-local|
-mac			Macintosh version of Vim.
-macunix			Macintosh version of Vim, using Unix files (OS-X).
+mac			macOS version of Vim.
 menu			Compiled with support for |:menu|.
 mksession		Compiled with support for |:mksession|.
 modify_fname		Compiled with file name modifiers. |filename-modifiers|
@@ -8119,17 +8110,15 @@ mouse			Compiled with support mouse.
 mouseshape		Compiled with support for 'mouseshape'.
 multi_byte		Compiled with support for 'encoding'
 multi_byte_encoding	'encoding' is set to a multi-byte encoding.
-multi_byte_ime		Compiled with support for IME input method.
 multi_lang		Compiled with support for multiple languages.
 nvim			This is Nvim. |has-patch|
-ole			Compiled with OLE automation support for Win32.
 path_extra		Compiled with up/downwards search in 'path' and 'tags'
 persistent_undo		Compiled with support for persistent undo history.
 postscript		Compiled with PostScript file printing.
 printer			Compiled with |:hardcopy| support.
 profile			Compiled with |:profile| support.
-python			Compiled with Python 2.x interface. |has-python|
-python3			Compiled with Python 3.x interface. |has-python|
+python			Legacy Vim Python 2.x API is available. |has-python|
+python3			Legacy Vim Python 3.x API is available. |has-python|
 quickfix		Compiled with |quickfix| support.
 reltime			Compiled with |reltime()| support.
 rightleft		Compiled with 'rightleft' support.
@@ -8152,14 +8141,10 @@ tag_old_static		Compiled with support for old static tags
 			|tag-old-static|.
 tag_any_white		Compiled with support for any white characters in tags
 			files |tag-any-white|.
-terminfo		Compiled with terminfo instead of termcap.
 termresponse		Compiled with support for |t_RV| and |v:termresponse|.
 textobjects		Compiled with support for |text-objects|.
-tgetent			Compiled with tgetent support, able to use a termcap
-			or terminfo file.
 timers			Compiled with |timer_start()| support.
 title			Compiled with window title support |'title'|.
-toolbar			Compiled with support for |gui-toolbar|.
 unix			Unix version of Vim.
 unnamedplus		Compiled with support for "unnamedplus" in 'clipboard'
 user_commands		User-defined commands.
@@ -8174,17 +8159,9 @@ vreplace		Compiled with |gR| and |gr| commands.
 wildignore		Compiled with 'wildignore' option.
 wildmenu		Compiled with 'wildmenu' option.
 win32			Windows version of Vim (32 or 64 bit).
-win32unix		Windows version of Vim, using Unix files (Cygwin).
-win64			Windows version of Vim (64 bit).
 winaltkeys		Compiled with 'winaltkeys' option.
 windows			Compiled with support for more than one window.
 writebackup		Compiled with 'writebackup' default on.
-xfontset		Compiled with X fontset support |xfontset|.
-xim			Compiled with X input method support |xim|.
-xpm			Compiled with pixmap support.
-xpm_w32			Compiled with pixmap support for Win32. (Only for
-			backward compatibility. Use "xpm" instead.)
-x11			Compiled with X11 support.
 
 							*string-match*
 Matching a pattern in a String
