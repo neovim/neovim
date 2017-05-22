@@ -2226,6 +2226,12 @@ static bool color_cmdline(void)
       goto color_cmdline_error;
     }
     can_free_cb = true;
+  } else if (ccline.cmdfirstc == '=') {
+    if (!tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_expr"),
+                              &color_cb)) {
+      goto color_cmdline_error;
+    }
+    can_free_cb = true;
   } else {
     goto color_cmdline_end;
   }
