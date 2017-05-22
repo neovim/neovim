@@ -199,7 +199,11 @@ static void terminfo_start(UI *ui)
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
+#ifdef WIN32
     uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
+#else
+    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+#endif
   } else {
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
@@ -401,10 +405,119 @@ static void print_cell(UI *ui, UCell *ptr)
   out(ui, ptr->data, strlen(ptr->data));
 }
 
+static bool cheap_to_print(UI *ui, int row, int col, int next)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  UCell *cell = grid->cells[row] + col;
+  while (next) {
+    --next;
+    if (attrs_differ(cell->attrs, data->print_attrs)) {
+      if (data->default_attr) {
+	return false;
+      }
+    }
+    if (strlen(cell->data) > 1) {
+      return false;
+    }
+    ++cell;
+  }
+  return true;
+}
+
+/// This optimizes several cases where it is cheaper to do something other
+/// than send a full cursor positioning control sequence.  However, there are
+/// some further optimizations that may seem obvious but that will not work.
+///
+/// We cannot use VT (ASCII 0/11) for moving the cursor up, because VT means
+/// move the cursor down on a DEC terminal.  Similarly, on a DEC terminal FF
+/// (ASCII 0/12) means the same thing and does not mean home.  VT, CVT, and
+/// TAB also stop at software-defined tabulation stops, not at a fixed set
+/// of row/column positions.
+static void cursor_goto(UI *ui, int row, int col)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  if (row == grid->row && col == grid->col)
+    return;
+  if (0 == row && 0 == col) {
+    unibi_out(ui, unibi_cursor_home);
+    ugrid_goto(&data->grid, row, col);
+    return;
+  }
+  if (0 == col && 0 != grid->col) {
+    unibi_out(ui, unibi_carriage_return);
+    ugrid_goto(&data->grid, grid->row, col);
+  } else if (col > grid->col) {
+      int n = col - grid->col;
+      if (n <= (row == grid->row ? 4 : 2) && cheap_to_print(ui, grid->row, grid->col, n)) {
+	UGRID_FOREACH_CELL(grid, grid->row, grid->row,
+	  grid->col, col - 1, {
+	  print_cell(ui, cell);
+	  ++grid->col;
+	});
+      }
+  }
+  if (row == grid->row) {
+    if (col < grid->col) {
+      int n = grid->col - col;
+      if (n <= 4) { // This might be just BS, so it is considered really cheap.
+	while (n--)
+	  unibi_out(ui, unibi_cursor_left);
+      } else {
+	data->params[0].i = n;
+	unibi_out(ui, unibi_parm_left_cursor);
+      }
+      ugrid_goto(&data->grid, row, col);
+      return;
+    } else if (col > grid->col) {
+      int n = col - grid->col;
+      if (n <= 2) {
+	while (n--)
+	  unibi_out(ui, unibi_cursor_right);
+      } else {
+	data->params[0].i = n;
+	unibi_out(ui, unibi_parm_right_cursor);
+      }
+      ugrid_goto(&data->grid, row, col);
+      return;
+    }
+  }
+  if (col == grid->col) {
+    if (row > grid->row) {
+      int n = row - grid->row;
+      if (n <= 4) { // This might be just LF, so it is considered really cheap.
+	while (n--)
+	  unibi_out(ui, unibi_cursor_down);
+      } else {
+	data->params[0].i = n;
+	unibi_out(ui, unibi_parm_down_cursor);
+      }
+      ugrid_goto(&data->grid, row, col);
+      return;
+    } else if (row < grid->row) {
+      int n = grid->row - row;
+      if (n <= 2) {
+	while (n--)
+	  unibi_out(ui, unibi_cursor_up);
+      } else {
+	data->params[0].i = n;
+	unibi_out(ui, unibi_parm_up_cursor);
+      }
+      ugrid_goto(&data->grid, row, col);
+      return;
+    }
+  }
+  unibi_goto(ui, row, col);
+  ugrid_goto(&data->grid, row, col);
+}
+
 static void clear_region(UI *ui, int top, int bot, int left, int right)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
+  int saved_row = grid->row;
+  int saved_col = grid->col;
 
   bool cleared = false;
   if (grid->bg == -1 && right == ui->width -1) {
@@ -419,7 +532,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
         if (top == 0) {
           unibi_out(ui, unibi_clear_screen);
         } else {
-          unibi_goto(ui, top, 0);
+          cursor_goto(ui, top, 0);
           unibi_out(ui, unibi_clr_eos);
         }
         cleared = true;
@@ -429,7 +542,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
     if (!cleared) {
       // iterate through each line and clear with clr_eol
       for (int row = top; row <= bot; ++row) {
-        unibi_goto(ui, row, left);
+        cursor_goto(ui, row, left);
         unibi_out(ui, unibi_clr_eol);
       }
       cleared = true;
@@ -438,18 +551,15 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
 
   if (!cleared) {
     // could not clear using faster terminal codes, refresh the whole region
-    int currow = -1;
     UGRID_FOREACH_CELL(grid, top, bot, left, right, {
-      if (currow != row) {
-        unibi_goto(ui, row, col);
-        currow = row;
-      }
+      cursor_goto(ui, row, col);
       print_cell(ui, cell);
+      ++grid->col;
     });
   }
 
   // restore cursor
-  unibi_goto(ui, grid->row, grid->col);
+  cursor_goto(ui, saved_row, saved_col);
 }
 
 static bool can_use_scroll(UI * ui)
@@ -552,9 +662,7 @@ static void tui_eol_clear(UI *ui)
 
 static void tui_cursor_goto(UI *ui, Integer row, Integer col)
 {
-  TUIData *data = ui->data;
-  ugrid_goto(&data->grid, (int)row, (int)col);
-  unibi_goto(ui, (int)row, (int)col);
+  cursor_goto(ui, (int)row, (int)col);
 }
 
 CursorShape tui_cursor_decode_shape(const char *shape_str)
@@ -728,6 +836,8 @@ static void tui_scroll(UI *ui, Integer count)
   ugrid_scroll(grid, (int)count, &clear_top, &clear_bot);
 
   if (can_use_scroll(ui)) {
+    int saved_row = grid->row;
+    int saved_col = grid->col;
     bool scroll_clears_to_current_colour =
       unibi_get_bool(data->ut, unibi_back_color_erase);
 
@@ -735,7 +845,7 @@ static void tui_scroll(UI *ui, Integer count)
     if (!data->scroll_region_is_full_screen) {
       set_scroll_region(ui);
     }
-    unibi_goto(ui, grid->top, grid->left);
+    cursor_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
     if (scroll_clears_to_current_colour) {
       HlAttrs clear_attrs = EMPTY_ATTRS;
@@ -764,7 +874,7 @@ static void tui_scroll(UI *ui, Integer count)
     if (!data->scroll_region_is_full_screen) {
       reset_scroll_region(ui);
     }
-    unibi_goto(ui, grid->row, grid->col);
+    cursor_goto(ui, saved_row, saved_col);
 
     if (!scroll_clears_to_current_colour) {
       // This is required because scrolling will leave wrong background in the
@@ -830,19 +940,19 @@ static void tui_flush(UI *ui)
     tui_busy_stop(ui);  // avoid hidden cursor
   }
 
+  int saved_row = grid->row;
+  int saved_col = grid->col;
+
   while (kv_size(data->invalid_regions)) {
     Rect r = kv_pop(data->invalid_regions);
-    int currow = -1;
     UGRID_FOREACH_CELL(grid, r.top, r.bot, r.left, r.right, {
-      if (currow != row) {
-        unibi_goto(ui, row, col);
-        currow = row;
-      }
+      cursor_goto(ui, row, col);
       print_cell(ui, cell);
+      ++grid->col;
     });
   }
 
-  unibi_goto(ui, grid->row, grid->col);
+  cursor_goto(ui, saved_row, saved_col);
 
   flush_buf(ui, true);
 }
@@ -1190,6 +1300,22 @@ end:
   data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
   unibi_set_if_empty(ut, unibi_cursor_address, "\x1b[%i%p1%d;%p2%dH");
+  unibi_set_if_empty(ut, unibi_cursor_home, "\x1b[H");
+  unibi_set_if_empty(ut, unibi_parm_left_cursor, "\x1b[%p1%dD");
+  unibi_set_if_empty(ut, unibi_parm_right_cursor, "\x1b[%p1%dC");
+  unibi_set_if_empty(ut, unibi_parm_down_cursor, "\x1b[%p1%dB");
+  unibi_set_if_empty(ut, unibi_parm_up_cursor, "\x1b[%p1%dA");
+  unibi_set_if_empty(ut, unibi_cursor_left, "\x08");
+  unibi_set_if_empty(ut, unibi_cursor_right, "\x1b[C");
+#if defined(WIN32)
+  unibi_set_if_empty(ut, unibi_cursor_down, "\x1b[B");
+#else
+  // N.B. This relies upon the terminal really being in cfmakeraw() mode,
+  // which libuv's RAW mode is in fact not.
+  unibi_set_if_empty(ut, unibi_cursor_down, "\x0a");
+#endif
+  unibi_set_if_empty(ut, unibi_cursor_up, "\x1b[A");
+  unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[0;10m");
   unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF_16);
   unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB_16);
