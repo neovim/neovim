@@ -208,15 +208,20 @@ g8			Print the hex values of the bytes used in the
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
 						  *:terminal* *:te*
-:te[rminal][!] {cmd}	Execute {cmd} with 'shell' in a |terminal-emulator|
-                        buffer.  Equivalent to: >
+:te[rminal][!] [{cmd}]	Execute {cmd} with 'shell' in a new |terminal-buffer|.
+			Equivalent to: >
 			      :enew
 			      :call termopen('{cmd}')
 			      :startinsert
 <
-                        See |jobstart()|.
+			See |termopen()|.
 
-			To enter terminal mode automatically: >
+			Without {cmd}, start an interactive shell.
+
+			Creating the terminal buffer fails when changes have been
+			made to the current buffer, unless 'hidden' is set.
+
+			To enter |Terminal-mode| automatically: >
 			      autocmd BufEnter term://* startinsert
 			      autocmd BufLeave term://* stopinsert
 <
