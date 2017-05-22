@@ -15,7 +15,7 @@ local NULL = ffi.cast('void *', 0)
 describe('shell functions', function()
   before_each(function()
     -- os_system() can't work when the p_sh and p_shcf variables are unset
-    cimported.p_sh = to_cstr('/bin/bash')
+    cimported.p_sh = to_cstr('/bin/sh')
     cimported.p_shcf = to_cstr('-c')
     cimported.p_sxq = to_cstr('')
     cimported.p_sxe = to_cstr('')
@@ -81,19 +81,19 @@ describe('shell functions', function()
 
   describe('shell_build_argv', function()
     itp('works with NULL arguments', function()
-      eq({'/bin/bash'}, shell_build_argv(nil, nil))
+      eq({'/bin/sh'}, shell_build_argv(nil, nil))
     end)
 
     itp('works with cmd', function()
-      eq({'/bin/bash', '-c', 'abc  def'}, shell_build_argv('abc  def', nil))
+      eq({'/bin/sh', '-c', 'abc  def'}, shell_build_argv('abc  def', nil))
     end)
 
     itp('works with extra_args', function()
-      eq({'/bin/bash', 'ghi  jkl'}, shell_build_argv(nil, 'ghi  jkl'))
+      eq({'/bin/sh', 'ghi  jkl'}, shell_build_argv(nil, 'ghi  jkl'))
     end)
 
     itp('works with cmd and extra_args', function()
-      eq({'/bin/bash', 'ghi  jkl', '-c', 'abc  def'}, shell_build_argv('abc  def', 'ghi  jkl'))
+      eq({'/bin/sh', 'ghi  jkl', '-c', 'abc  def'}, shell_build_argv('abc  def', 'ghi  jkl'))
     end)
 
     itp('splits and unquotes &shell and &shellcmdflag', function()
@@ -112,7 +112,7 @@ describe('shell functions', function()
 
       local argv = ffi.cast('char**',
                         cimported.shell_build_argv(to_cstr('echo &|<>()@^'), nil))
-      eq(ffi.string(argv[0]), '/bin/bash')
+      eq(ffi.string(argv[0]), '/bin/sh')
       eq(ffi.string(argv[1]), '-c')
       eq(ffi.string(argv[2]), '(echo ^&^|^<^>^(^)^@^^)')
       eq(nil, argv[3])
@@ -124,7 +124,7 @@ describe('shell functions', function()
 
       local argv = ffi.cast('char**', cimported.shell_build_argv(
                                           to_cstr('echo -n some text'), nil))
-      eq(ffi.string(argv[0]), '/bin/bash')
+      eq(ffi.string(argv[0]), '/bin/sh')
       eq(ffi.string(argv[1]), '-c')
       eq(ffi.string(argv[2]), '"(echo -n some text)"')
       eq(nil, argv[3])
@@ -136,7 +136,7 @@ describe('shell functions', function()
 
       local argv = ffi.cast('char**', cimported.shell_build_argv(
                                           to_cstr('echo -n some text'), nil))
-      eq(ffi.string(argv[0]), '/bin/bash')
+      eq(ffi.string(argv[0]), '/bin/sh')
       eq(ffi.string(argv[1]), '-c')
       eq(ffi.string(argv[2]), '"echo -n some text"')
       eq(nil, argv[3])
@@ -145,7 +145,7 @@ describe('shell functions', function()
     itp('with empty shellxquote/shellxescape', function()
       local argv = ffi.cast('char**', cimported.shell_build_argv(
                                           to_cstr('echo -n some text'), nil))
-      eq(ffi.string(argv[0]), '/bin/bash')
+      eq(ffi.string(argv[0]), '/bin/sh')
       eq(ffi.string(argv[1]), '-c')
       eq(ffi.string(argv[2]), 'echo -n some text')
       eq(nil, argv[3])
