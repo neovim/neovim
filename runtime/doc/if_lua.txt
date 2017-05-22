@@ -9,7 +9,32 @@ Lua Interface to Nvim					*lua* *Lua*
                                       Type <M-]> to see the table of contents.
 
 ==============================================================================
-1. Commands						*lua-commands*
+1. Importing modules					*lua-require*
+
+Neovim lua interface automatically adjusts `package.path` and `package.cpath` 
+according to effective &runtimepath value.  Adjustment happens after each time 
+'runtimepath' is changed, `package.path` and `package.cpath` are adjusted by 
+prepending directories from 'runtimepath' each suffixed by `/lua` and 
+`?`-containing suffixes from `package.path` and `package.cpath`. I.e. when 
+'runtimepath' option contains `/foo` and `package.path` contains only 
+`./a?d/j/g.nlua;./?.lua;/bar/?.lua` the resulting `package.path` after 
+adjustments will look like this: >
+
+	/foo/lua/?.lua;/foo/lua/a?d/j/g.nlua;./a?d/j/g.nlua;./?.lua;/bar/?.lua
+
+Note that code have taken everything starting from the last path component 
+from existing paths containing a question mark as a `?`-containing suffix, but 
+only applied unique suffixes.
+
+Note 2: even though adjustments happens automatically Neovim does not track 
+current values of `package.path` or `package.cpath`. If you happened to delete 
+some paths from there you need to reset 'runtimepath' to make them readded.
+
+Note 3: paths from 'runtimepath' which contain semicolons cannot be put into 
+`package.[c]path` and thus are ignored.
+
+==============================================================================
+2. Commands						*lua-commands*
 
 							*:lua*
 :[range]lua {chunk}

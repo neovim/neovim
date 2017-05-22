@@ -244,6 +244,8 @@ Lua interface (|if_lua.txt|):
   while calling lua chunk: [string "<VimL compiled string>"]:1: TEST” in 
   Neovim.
 - Lua has direct access to Nvim |API| via `vim.api`.
+- Lua package.path and package.cpath are automatically updated according to
+  'runtimepath': |lua-require|.
 - Currently, most legacy Vim features are missing.
 
 |input()| and |inputdialog()| gained support for each other’s features (return 

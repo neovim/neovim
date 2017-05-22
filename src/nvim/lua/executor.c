@@ -14,6 +14,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/vim.h"
 #include "nvim/ex_getln.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/message.h"
 #include "nvim/memline.h"
 #include "nvim/buffer_defs.h"
@@ -284,7 +285,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 ///
 /// Crashes NeoVim if initialization fails. Should be called once per lua
 /// interpreter instance.
-static lua_State *init_lua(void)
+///
+/// @return New lua interpreter instance.
+static lua_State *nlua_init(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   lua_State *lstate = luaL_newstate();
@@ -297,7 +300,43 @@ static lua_State *init_lua(void)
   return lstate;
 }
 
-static lua_State *global_lstate = NULL;
+/// Enter lua interpreter
+///
+/// Calls nlua_init() if needed. Is responsible for pre-lua call initalization
+/// like updating `package.[c]path` with directories derived from &runtimepath.
+///
+/// @return Interprter instance to use. Will either be initialized now or taken
+///         from previous initalization.
+static lua_State *nlua_enter(void)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static lua_State *global_lstate = NULL;
+  if (global_lstate == NULL) {
+    global_lstate = nlua_init();
+  }
+  lua_State *const lstate = global_lstate;
+  // Last used p_rtp value. Must not be dereferenced because value pointed to
+  // may already be freed. Used to check whether &runtimepath option value
+  // changed.
+  static const void *last_p_rtp = NULL;
+  if (last_p_rtp != (const void *)p_rtp) {
+    // stack: (empty)
+    lua_getglobal(lstate, "vim");
+    // stack: vim
+    lua_getfield(lstate, -1, "_update_package_paths");
+    // stack: vim, vim._update_package_paths
+    if (lua_pcall(lstate, 0, 0, 0)) {
+      // stack: vim, error
+      nlua_error(lstate, _("E5117: Error while updating package paths: %.*s"));
+      // stack: vim
+    }
+    // stack: vim
+    lua_pop(lstate, 1);
+    // stack: (empty)
+    last_p_rtp = (const void *)p_rtp;
+  }
+  return lstate;
+}
 
 /// Execute lua string
 ///
@@ -308,11 +347,7 @@ static lua_State *global_lstate = NULL;
 void executor_exec_lua(const String str, typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (global_lstate == NULL) {
-    global_lstate = init_lua();
-  }
-
-  NLUA_CALL_C_FUNCTION_2(global_lstate, nlua_exec_lua_string, 0,
+  NLUA_CALL_C_FUNCTION_2(nlua_enter(), nlua_exec_lua_string, 0,
                          (void *)&str, ret_tv);
 }
 
@@ -551,11 +586,7 @@ void executor_eval_lua(const String str, typval_T *const arg,
                        typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (global_lstate == NULL) {
-    global_lstate = init_lua();
-  }
-
-  NLUA_CALL_C_FUNCTION_3(global_lstate, nlua_eval_lua_string, 0,
+  NLUA_CALL_C_FUNCTION_3(nlua_enter(), nlua_eval_lua_string, 0,
                          (void *)&str, arg, ret_tv);
 }
 
@@ -570,12 +601,8 @@ void executor_eval_lua(const String str, typval_T *const arg,
 /// @return Return value of the execution.
 Object executor_exec_lua_api(const String str, const Array args, Error *err)
 {
-  if (global_lstate == NULL) {
-    global_lstate = init_lua();
-  }
-
   Object retval = NIL;
-  NLUA_CALL_C_FUNCTION_4(global_lstate, nlua_exec_lua_string_api, 0,
+  NLUA_CALL_C_FUNCTION_4(nlua_enter(), nlua_exec_lua_string_api, 0,
                          (void *)&str, (void *)&args, &retval, err);
   return retval;
 }
@@ -609,9 +636,6 @@ void ex_lua(exarg_T *const eap)
 void ex_luado(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (global_lstate == NULL) {
-    global_lstate = init_lua();
-  }
   if (u_save(eap->line1 - 1, eap->line2 + 1) == FAIL) {
     EMSG(_("cannot save undo information"));
     return;
@@ -621,7 +645,7 @@ void ex_luado(exarg_T *const eap)
     .data = (char *)eap->arg,
   };
   const linenr_T range[] = { eap->line1, eap->line2 };
-  NLUA_CALL_C_FUNCTION_2(global_lstate, nlua_exec_luado_string, 0,
+  NLUA_CALL_C_FUNCTION_2(nlua_enter(), nlua_exec_luado_string, 0,
                          (void *)&cmd, (void *)range);
 }
 
@@ -633,9 +657,6 @@ void ex_luado(exarg_T *const eap)
 void ex_luafile(exarg_T *const eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (global_lstate == NULL) {
-    global_lstate = init_lua();
-  }
-  NLUA_CALL_C_FUNCTION_1(global_lstate, nlua_exec_lua_file, 0,
+  NLUA_CALL_C_FUNCTION_1(nlua_enter(), nlua_exec_lua_file, 0,
                          (void *)eap->arg);
 }
