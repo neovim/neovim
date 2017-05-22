@@ -41,6 +41,8 @@
 // $ gcc -E -dM - </dev/null
 // $ echo | clang -dM -E -
 
+#include "nvim/macros.h"
+
 #ifdef FUNC_ATTR_MALLOC
 # undef FUNC_ATTR_MALLOC
 #endif
@@ -96,8 +98,7 @@
 #ifndef DID_REAL_ATTR
 # define DID_REAL_ATTR
 # ifdef __GNUC__
-// place defines for all gnulikes here, for now that's gcc, clang and
-// intel.
+// For all gnulikes: gcc, clang, intel.
 
 // place these after the argument list of the function declaration
 // (not definition), like so:
@@ -113,26 +114,17 @@
 #  define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
 #  define REAL_FATTR_NORETURN __attribute__((noreturn))
 
-#  ifdef __clang__
-// clang only
-#  elif defined(__INTEL_COMPILER)
-// intel only
-#  else
-#   define GCC_VERSION \
-            (__GNUC__ * 10000 + \
-             __GNUC_MINOR__ * 100 + \
-             __GNUC_PATCHLEVEL__)
-// gcc only
+#  if NVIM_HAS_ATTRIBUTE(returns_nonnull)
+#   define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))
+#  endif
+
+#  if NVIM_HAS_ATTRIBUTE(alloc_size)
 #   define REAL_FATTR_ALLOC_SIZE(x) __attribute__((alloc_size(x)))
 #   define REAL_FATTR_ALLOC_SIZE_PROD(x, y) __attribute__((alloc_size(x, y)))
-#   if GCC_VERSION >= 40900
-#    define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))
-#   endif
 #  endif
 # endif
 
-// define function attributes that haven't been defined for this specific
-// compiler.
+// Define attributes that are not defined for this compiler.
 
 # ifndef REAL_FATTR_MALLOC
 #  define REAL_FATTR_MALLOC

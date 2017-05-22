@@ -36,6 +36,7 @@
 #include "nvim/tui/tui.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/syntax.h"
+#include "nvim/macros.h"
 
 // Space reserved in the output buffer to restore the cursor to normal when
 // flushing. No existing terminal will require 32 bytes to do that.
@@ -215,11 +216,6 @@ static void tui_terminal_start(UI *ui)
   terminfo_start(ui);
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
-
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
-  data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
-#endif
-  term_input_init(&data->input, data->loop);
   term_input_start(&data->input);
 }
 
@@ -254,8 +250,14 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 #ifdef UNIX
   signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
 #endif
+
+#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
+  data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
+#endif
+  term_input_init(&data->input, &tui_loop);
   tui_terminal_start(ui);
   data->stop = false;
+
   // allow the main thread to continue, we are ready to start handling UI
   // callbacks
   CONTINUE(bridge);
@@ -1079,7 +1081,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
 
   buf.base = data->buf;
   buf.len = data->bufpos;
-  uv_write(&req, (uv_stream_t *)&data->output_handle, &buf, 1, NULL);
+  uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle), &buf, 1, NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 
@@ -1122,13 +1124,13 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
 
   if (strequal(name, "key_backspace")) {
     ILOG("libtermkey:kbs=%s", value);
-    if (stty_erase != NULL && stty_erase[0] != 0) {
+    if (stty_erase[0] != 0) {
       return stty_erase;
     }
   } else if (strequal(name, "key_dc")) {
     ILOG("libtermkey:kdch1=%s", value);
     // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
-    if (stty_erase != NULL && value != NULL && strequal(stty_erase, value)) {
+    if (value != NULL && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;
     }
   }

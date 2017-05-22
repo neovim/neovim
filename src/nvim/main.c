@@ -656,8 +656,9 @@ void getout(int exitval)
 ///
 /// @return argument's numeric value otherwise
 static int get_number_arg(const char *p, int *idx, int def)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (ascii_isdigit(p[*idx])) {
+  if (ascii_isdigit(p[*idx])) {  // -V522
     def = atoi(&(p[*idx]));
     while (ascii_isdigit(p[*idx])) {
       *idx = *idx + 1;

@@ -368,6 +368,11 @@ describe('api', function()
                                      '<LeftMouse>', true, true, true))
     end)
 
+    it('converts keycodes', function()
+      eq('\nx\27x\rx<x', helpers.nvim('replace_termcodes',
+         '<NL>x<Esc>x<CR>x<lt>x', true, true, true))
+    end)
+
     it('does not crash when transforming an empty string', function()
       -- Actually does not test anything, because current code will use NULL for
       -- an empty string.

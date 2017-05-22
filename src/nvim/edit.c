@@ -3422,7 +3422,6 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
     else
       return;        /* nothing to do */
   }
-  assert(ptr != NULL);
   if (compl_orig_text != NULL) {
     p = compl_orig_text;
     for (len = 0; p[len] != NUL && p[len] == ptr[len]; ++len)
@@ -3434,7 +3433,6 @@ static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg)
   } else {
     len = 0;
   }
-  assert(ptr != NULL);
   AppendToRedobuffLit(ptr + len, -1);
 }
 

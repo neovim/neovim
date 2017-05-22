@@ -171,4 +171,16 @@
 # define FALLTHROUGH
 #endif
 
+// -V:STRUCT_CAST:641
+
+/// Change type of structure pointers: cast `struct a *` to `struct b *`
+///
+/// Used to silence PVS errors.
+///
+/// @param  Type  Structure to cast to.
+/// @param  obj  Object to cast.
+///
+/// @return ((Type *)obj).
+#define STRUCT_CAST(Type, obj) ((Type *)(obj))
+
 #endif  // NVIM_MACROS_H

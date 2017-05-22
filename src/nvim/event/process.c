@@ -14,6 +14,7 @@
 #include "nvim/event/libuv_process.h"
 #include "nvim/os/pty_process.h"
 #include "nvim/globals.h"
+#include "nvim/macros.h"
 #include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -82,7 +83,8 @@ int process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   if (proc->in) {
-    stream_init(NULL, proc->in, -1, (uv_stream_t *)&proc->in->uv.pipe);
+    stream_init(NULL, proc->in, -1,
+                STRUCT_CAST(uv_stream_t, &proc->in->uv.pipe));
     proc->in->events = proc->events;
     proc->in->internal_data = proc;
     proc->in->internal_close_cb = on_process_stream_close;
@@ -90,7 +92,8 @@ int process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   if (proc->out) {
-    stream_init(NULL, proc->out, -1, (uv_stream_t *)&proc->out->uv.pipe);
+    stream_init(NULL, proc->out, -1,
+                STRUCT_CAST(uv_stream_t, &proc->out->uv.pipe));
     proc->out->events = proc->events;
     proc->out->internal_data = proc;
     proc->out->internal_close_cb = on_process_stream_close;
@@ -98,7 +101,8 @@ int process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   if (proc->err) {
-    stream_init(NULL, proc->err, -1, (uv_stream_t *)&proc->err->uv.pipe);
+    stream_init(NULL, proc->err, -1,
+                STRUCT_CAST(uv_stream_t, &proc->err->uv.pipe));
     proc->err->events = proc->events;
     proc->err->internal_data = proc;
     proc->err->internal_close_cb = on_process_stream_close;

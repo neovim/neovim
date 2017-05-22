@@ -13058,8 +13058,9 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
             /* have to shuffle buf to close gap */
             int adjust_prevlen = 0;
 
-            if (dest < buf) {
-              adjust_prevlen = (int)(buf - dest);               /* must be 1 or 2 */
+            if (dest < buf) {  // -V782
+              adjust_prevlen = (int)(buf - dest);  // -V782
+              // adjust_prevlen must be 1 or 2.
               dest = buf;
             }
             if (readlen > p - buf + 1)
@@ -21093,9 +21094,9 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
             // Do not want errors such as E724 here.
             emsg_off++;
             char *tofree = encode_tv2string(&argvars[i], NULL);
-            char *s = tofree;
             emsg_off--;
-            if (s != NULL) {
+            if (tofree != NULL) {
+              char *s = tofree;
               char buf[MSG_BUF_LEN];
               if (vim_strsize((char_u *)s) > MSG_BUF_CLEN) {
                 trunc_string((char_u *)s, (char_u *)buf, MSG_BUF_CLEN,
@@ -21159,7 +21160,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
 
   if (func_or_func_caller_profiling) {
     call_start = profile_end(call_start);
-    call_start = profile_sub_wait(wait_start, call_start);
+    call_start = profile_sub_wait(wait_start, call_start);  // -V614
     fp->uf_tm_total = profile_add(fp->uf_tm_total, call_start);
     fp->uf_tm_self = profile_self(fp->uf_tm_self, call_start,
         fp->uf_tm_children);

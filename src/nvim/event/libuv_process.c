@@ -11,6 +11,7 @@
 #include "nvim/event/process.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/os/os.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -47,17 +48,20 @@ int libuv_process_spawn(LibuvProcess *uvproc)
 
   if (proc->in) {
     uvproc->uvstdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
-    uvproc->uvstdio[0].data.stream = (uv_stream_t *)&proc->in->uv.pipe;
+    uvproc->uvstdio[0].data.stream = STRUCT_CAST(uv_stream_t,
+                                                 &proc->in->uv.pipe);
   }
 
   if (proc->out) {
     uvproc->uvstdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-    uvproc->uvstdio[1].data.stream = (uv_stream_t *)&proc->out->uv.pipe;
+    uvproc->uvstdio[1].data.stream = STRUCT_CAST(uv_stream_t,
+                                                 &proc->out->uv.pipe);
   }
 
   if (proc->err) {
     uvproc->uvstdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-    uvproc->uvstdio[2].data.stream = (uv_stream_t *)&proc->err->uv.pipe;
+    uvproc->uvstdio[2].data.stream = STRUCT_CAST(uv_stream_t,
+                                                 &proc->err->uv.pipe);
   }
 
   int status;

@@ -854,30 +854,4 @@ This section describes other features which are related to the GUI.
 - In the GUI, several normal keys may have modifiers in mappings etc, these
   are <Space>, <Tab>, <NL>, <CR>, <Esc>.
 
-- To check in a Vim script if the GUI is being used, you can use something
-  like this: >
-
-	if has("gui_running")
-	   echo "yes, we have a GUI"
-	else
-	   echo "Boring old console"
-	endif
-<							*setting-guifont*
-- When you use the same vimrc file on various systems, you can use something
-  like this to set options specifically for each type of GUI: >
-
-	if has("gui_running")
-	    if has("gui_gtk2")
-		:set guifont=Luxi\ Mono\ 12
-	    elseif has("x11")
-		" Also for GTK 1
-		:set guifont=*-lucidatypewriter-medium-r-normal-*-*-180-*-*-m-*-*
-	    elseif has("gui_win32")
-		:set guifont=Luxi_Mono:h12:cANSI
-	    endif
-	endif
-
-A recommended Japanese font is MS Mincho.  You can find info here:
-http://www.lexikan.com/mincho.htm
-
  vim:tw=78:sw=4:ts=8:ft=help:norl:

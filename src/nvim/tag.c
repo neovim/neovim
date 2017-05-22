@@ -208,10 +208,9 @@ do_tag (
   clearpos(&saved_fmark.mark);          /* shutup gcc 4.0 */
   saved_fmark.fnum = 0;
 
-  /*
-   * Don't add a tag to the tagstack if 'tagstack' has been reset.
-   */
-  if (!p_tgst && *tag != NUL) {
+  // Don't add a tag to the tagstack if 'tagstack' has been reset.
+  assert(tag != NULL);
+  if (!p_tgst && *tag != NUL) {  // -V522
     use_tagstack = false;
     new_tag = true;
     if (g_do_tagpreview != 0) {
