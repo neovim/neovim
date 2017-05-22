@@ -56,6 +56,7 @@ typedef enum TermType {
   kTermDTTerm,
   kTermXTerm,
   kTermTeraTerm,
+  kTermPuTTY,
 } TermType;
 
 typedef struct {
@@ -1172,6 +1173,9 @@ static TermType detect_term(const char *term, const char *colorterm)
   if (STARTS_WITH(term, "teraterm")) {
     return kTermTeraTerm;
   }
+  if (STARTS_WITH(term, "putty")) {
+    return kTermPuTTY;
+  }
   return kTermUnknown;
 }
 
@@ -1220,13 +1224,15 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_cursor_invisible, "\x1b[?25l");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<100/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b(B\x1b[m");
+    unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
     unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
     unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
+  }
+  if (data->term == kTermXTerm || data->term == kTermRxvt || data->term == kTermPuTTY) {
     unibi_set_if_empty(ut, unibi_change_scroll_region, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_clear_screen, "\x1b[H\x1b[2J");
-    unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_bool(ut, unibi_back_color_erase, true);
   }
 
@@ -1271,7 +1277,7 @@ static void fix_terminfo(TUIData *data)
       "\x1b[8;%p1%d;%p2%dt");
   }
 
-  if (data->term == kTermXTerm || data->term == kTermRxvt) {
+  if (data->term == kTermXTerm || data->term == kTermRxvt || data->term == kTermPuTTY) {
     data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[r");
   }
