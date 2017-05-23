@@ -263,7 +263,7 @@ end
 
 function Screen:expect_after_resize(expected)
   if iswin() then
-    retry(nil, nil, function()
+    retry(nil, 100000, function()
       nvim('command', 'call jobsend(b:terminal_job_id, "\\<C-q>")')
       self:expect(expected)
     end)
