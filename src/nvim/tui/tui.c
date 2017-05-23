@@ -415,7 +415,7 @@ static bool cheap_to_print(UI *ui, int row, int col, int next)
     --next;
     if (attrs_differ(cell->attrs, data->print_attrs)) {
       if (data->default_attr) {
-	return false;
+        return false;
       }
     }
     if (strlen(cell->data) > 1) {
@@ -439,8 +439,9 @@ static void cursor_goto(UI *ui, int row, int col)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
-  if (row == grid->row && col == grid->col)
+  if (row == grid->row && col == grid->col) {
     return;
+  }
   if (0 == row && 0 == col) {
     unibi_out(ui, unibi_cursor_home);
     ugrid_goto(&data->grid, row, col);
@@ -456,34 +457,37 @@ static void cursor_goto(UI *ui, int row, int col)
     ugrid_goto(&data->grid, grid->row, 0);
   } else if (col > grid->col) {
       int n = col - grid->col;
-      if (n <= (row == grid->row ? 4 : 2) && cheap_to_print(ui, grid->row, grid->col, n)) {
-	UGRID_FOREACH_CELL(grid, grid->row, grid->row,
-	  grid->col, col - 1, {
-	  print_cell(ui, cell);
-	  ++grid->col;
-	});
+      if (n <= (row == grid->row ? 4 : 2)
+          && cheap_to_print(ui, grid->row, grid->col, n)) {
+        UGRID_FOREACH_CELL(grid, grid->row, grid->row,
+          grid->col, col - 1, {
+          print_cell(ui, cell);
+          ++grid->col;
+        });
       }
   }
   if (row == grid->row) {
     if (col < grid->col) {
       int n = grid->col - col;
       if (n <= 4) { // This might be just BS, so it is considered really cheap.
-	while (n--)
-	  unibi_out(ui, unibi_cursor_left);
+        while (n--) {
+          unibi_out(ui, unibi_cursor_left);
+	}
       } else {
-	data->params[0].i = n;
-	unibi_out(ui, unibi_parm_left_cursor);
+        data->params[0].i = n;
+        unibi_out(ui, unibi_parm_left_cursor);
       }
       ugrid_goto(&data->grid, row, col);
       return;
     } else if (col > grid->col) {
       int n = col - grid->col;
       if (n <= 2) {
-	while (n--)
-	  unibi_out(ui, unibi_cursor_right);
+        while (n--) {
+          unibi_out(ui, unibi_cursor_right);
+	}
       } else {
-	data->params[0].i = n;
-	unibi_out(ui, unibi_parm_right_cursor);
+        data->params[0].i = n;
+        unibi_out(ui, unibi_parm_right_cursor);
       }
       ugrid_goto(&data->grid, row, col);
       return;
@@ -493,22 +497,24 @@ static void cursor_goto(UI *ui, int row, int col)
     if (row > grid->row) {
       int n = row - grid->row;
       if (n <= 4) { // This might be just LF, so it is considered really cheap.
-	while (n--)
-	  unibi_out(ui, unibi_cursor_down);
+        while (n--) {
+          unibi_out(ui, unibi_cursor_down);
+	}
       } else {
-	data->params[0].i = n;
-	unibi_out(ui, unibi_parm_down_cursor);
+        data->params[0].i = n;
+        unibi_out(ui, unibi_parm_down_cursor);
       }
       ugrid_goto(&data->grid, row, col);
       return;
     } else if (row < grid->row) {
       int n = grid->row - row;
       if (n <= 2) {
-	while (n--)
-	  unibi_out(ui, unibi_cursor_up);
+        while (n--) {
+          unibi_out(ui, unibi_cursor_up);
+	}
       } else {
-	data->params[0].i = n;
-	unibi_out(ui, unibi_parm_up_cursor);
+        data->params[0].i = n;
+        unibi_out(ui, unibi_parm_up_cursor);
       }
       ugrid_goto(&data->grid, row, col);
       return;
@@ -575,10 +581,10 @@ static bool can_use_scroll(UI * ui)
 
   return data->scroll_region_is_full_screen ||
     (data->can_change_scroll_region &&
-      ( (grid->left == 0 && grid->right == ui->width - 1) ||
+     ( (grid->left == 0 && grid->right == ui->width - 1) ||
         data->can_set_lr_margin ||
-	data->can_set_left_right_margin
-      )
+        data->can_set_left_right_margin
+     )
     );
 }
 
@@ -1237,7 +1243,8 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
     unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
   }
-  if (data->term == kTermXTerm || data->term == kTermRxvt || data->term == kTermPuTTY) {
+  if (data->term == kTermXTerm || data->term == kTermRxvt
+      || data->term == kTermPuTTY) {
     unibi_set_if_empty(ut, unibi_change_scroll_region, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_clear_screen, "\x1b[H\x1b[2J");
     unibi_set_bool(ut, unibi_back_color_erase, true);
@@ -1281,10 +1288,11 @@ static void fix_terminfo(TUIData *data)
       || data->term == kTermTeraTerm // per TeraTerm "Supported Control Functions" doco
       || data->term == kTermRxvt) {  // per command.C
     data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut, NULL,
-	"\x1b[8;%p1%d;%p2%dt");
+        "\x1b[8;%p1%d;%p2%dt");
   }
 
-  if (data->term == kTermXTerm || data->term == kTermRxvt || data->term == kTermPuTTY) {
+  if (data->term == kTermXTerm || data->term == kTermRxvt
+      || data->term == kTermPuTTY) {
     data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[r");
   }
