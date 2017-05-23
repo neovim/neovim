@@ -170,6 +170,8 @@ static void terminfo_start(UI *ui)
   // NOTE: Do this *before* changing terminal settings. #6433
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_clear_screen);
+  // Initialize the cursor shape.
+  unibi_out(ui, data->unibi_ext.set_cursor_shape_block);
   // Enable bracketed paste
   unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
   // Enable focus reporting
