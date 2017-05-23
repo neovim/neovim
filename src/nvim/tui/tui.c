@@ -543,6 +543,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
       if (bot == ui->height - 1) {
         if (top == 0) {
           unibi_out(ui, unibi_clear_screen);
+          ugrid_goto(&data->grid, top, left);
         } else {
           cursor_goto(ui, top, 0);
           unibi_out(ui, unibi_clr_eos);
