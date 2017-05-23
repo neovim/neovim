@@ -446,9 +446,14 @@ static void cursor_goto(UI *ui, int row, int col)
     ugrid_goto(&data->grid, row, col);
     return;
   }
-  if (0 == col && 0 != grid->col) {
+  if (0 == col ? col != grid->col :
+      1 == col ? 2 < grid->col && cheap_to_print(ui, grid->row, 0, col) :
+      2 == col ? 5 < grid->col && cheap_to_print(ui, grid->row, 0, col) :
+      false) {
+    // Motion to left margin from anywhere else, or CR + printing chars is
+    // even less expensive than using BSes or CUB.
     unibi_out(ui, unibi_carriage_return);
-    ugrid_goto(&data->grid, grid->row, col);
+    ugrid_goto(&data->grid, grid->row, 0);
   } else if (col > grid->col) {
       int n = col - grid->col;
       if (n <= (row == grid->row ? 4 : 2) && cheap_to_print(ui, grid->row, grid->col, n)) {
