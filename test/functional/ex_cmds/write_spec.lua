@@ -94,7 +94,7 @@ describe(':write', function()
     write_file(fname, 'content0')
     eq(0, exc_exec('edit ' .. fname))
     funcs.setline(1, 'TTY')
-    eq('Vim(write):E510: Cannot make backup file (add ! to override)',
+    eq('Vim(write):E510: Can\'t make backup file (add ! to override)',
        exc_exec('write'))
     meths.set_option('backup', false)
     funcs.setfperm(fname, 'r--------')
@@ -104,7 +104,7 @@ describe(':write', function()
     os.remove(fname_bak)
     write_file(fname_bak, 'TTYX')
     lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)
-    eq('Vim(write):E166: Cannot open linked file for writing',
+    eq('Vim(write):E166: Can\'t open linked file for writing',
        exc_exec('write!'))
   end)
 end)
