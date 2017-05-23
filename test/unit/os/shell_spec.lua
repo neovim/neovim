@@ -53,14 +53,14 @@ describe('shell functions', function()
 
   describe('os_system', function()
     itp('can echo some output (shell builtin)', function()
-      local cmd, text = 'echo -n', 'some text'
+      local cmd, text = 'printf "%s "', 'some text '
       local status, output = os_system(cmd .. ' ' .. text)
       eq(text, output)
       eq(0, status)
     end)
 
     itp('can deal with empty output', function()
-      local cmd = 'echo -n'
+      local cmd = 'printf ""'
       local status, output = os_system(cmd)
       eq('', output)
       eq(0, status)
