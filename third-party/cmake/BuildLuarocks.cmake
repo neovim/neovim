@@ -79,7 +79,7 @@ elseif(MSVC OR MINGW)
     ${MINGW_FLAG}
     /LUAMOD ${DEPS_BIN_DIR}/lua)
 
-  set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/2.2/luarocks.bat)
+  set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/luarocks.bat)
 else()
   message(FATAL_ERROR "Trying to build luarocks in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
