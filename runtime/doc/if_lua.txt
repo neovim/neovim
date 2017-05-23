@@ -17,10 +17,10 @@ according to effective &runtimepath value.  Adjustment happens after each time
 prepending directories from 'runtimepath' each suffixed by `/lua` and 
 `?`-containing suffixes from `package.path` and `package.cpath`. I.e. when 
 'runtimepath' option contains `/foo` and `package.path` contains only 
-`./a?d/j/g.nlua;./?.lua;/bar/?.lua` the resulting `package.path` after 
+`./?.lua;./a?d/j/g.nlua;/bar/?.lua` the resulting `package.path` after 
 adjustments will look like this: >
 
-	/foo/lua/?.lua;/foo/lua/a?d/j/g.nlua;./a?d/j/g.nlua;./?.lua;/bar/?.lua
+	/foo/lua/?.lua;/foo/lua/a?d/j/g.nlua;./?.lua;./a?d/j/g.nlua;/bar/?.lua
 
 Note that code have taken everything starting from the last path component 
 from existing paths containing a question mark as a `?`-containing suffix, but 
@@ -32,6 +32,83 @@ some paths from there you need to reset 'runtimepath' to make them readded.
 
 Note 3: paths from 'runtimepath' which contain semicolons cannot be put into 
 `package.[c]path` and thus are ignored.
+
+------------------------------------------------------------------------------
+1.1. Example of the plugin which uses lua modules:	*lua-require-example*
+
+The following example plugin adds a command `:MakeCharBlob` which transforms 
+current buffer into a long `unsigned char` array.  Lua contains transformation 
+function in a module `lua/charblob.lua` which is imported in 
+`autoload/charblob.vim` (`require("charblob")`).  Example plugin is supposed 
+to be put into any directory from 'runtimepath', e.g. `~/.config/nvim` (in 
+this case `lua/charblob.lua` means `~/.config/nvim/lua/charblob.lua`).
+
+autoload/charblob.vim: >
+
+	function charblob#encode_buffer()
+	  call setline(1, luaeval(
+	  \    'require("charblob").encode(unpack(_A))',
+	  \    [getline(1, '$'), &textwidth, '  ']))
+	endfunction
+
+plugin/charblob.vim: >
+
+	if exists('g:charblob_loaded')
+	  finish
+	endif
+	let g:charblob_loaded = 1
+
+	command MakeCharBlob :call charblob#encode_buffer()
+
+lua/charblob.lua: >
+
+	local function charblob_bytes_iter(lines)
+	  local init_s = {
+	    next_line_idx = 1,
+	    next_byte_idx = 1,
+	    lines = lines,
+	  }
+	  local function next(s, _)
+	    if lines[s.next_line_idx] == nil then
+	      return nil
+	    end
+	    if s.next_byte_idx > #(lines[s.next_line_idx]) then
+	      s.next_line_idx = s.next_line_idx + 1
+	      s.next_byte_idx = 1
+	      return ('\n'):byte()
+	    end
+	    local ret = lines[s.next_line_idx]:byte(s.next_byte_idx)
+	    if ret == ('\n'):byte() then
+	      ret = 0  -- See :h NL-used-for-NUL.
+	    end
+	    s.next_byte_idx = s.next_byte_idx + 1
+	    return ret
+	  end
+	  return next, init_s, nil
+	end
+
+	local function charblob_encode(lines, textwidth, indent)
+	  local ret = {
+	    'const unsigned char blob[] = {',
+	    indent,
+	  }
+	  for byte in charblob_bytes_iter(lines) do
+	    --                .- space + number (width 3) + comma
+	    if #(ret[#ret]) + 5 > textwidth then
+	      ret[#ret + 1] = indent
+	    else
+	      ret[#ret] = ret[#ret] .. ' '
+	    end
+	    ret[#ret] = ret[#ret] .. (('%3u,'):format(byte))
+	  end
+	  ret[#ret + 1] = '};'
+	  return ret
+	end
+
+	return {
+	  bytes_iter = charblob_bytes_iter,
+	  encode = charblob_encode,
+	}
 
 ==============================================================================
 2. Commands						*lua-commands*
