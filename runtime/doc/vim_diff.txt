@@ -281,6 +281,14 @@ Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
 terminal capabilities. Instead Nvim treats the terminal as any other UI. For
 example, 'guicursor' sets the terminal cursor style if possible.
 
+						*xterm-8bit* *xterm-8-bit*
+Xterm can be run in a mode where it uses true 8-bit CSI.  Supporting this
+requires autodetection of whether the terminal is in UTF-8 mode or non-UTF-8
+mode, as the 8-bit CSI character has to be written differently in each case.
+Vim issues a "request version" sequence to the terminal at startup and looks
+at how the terminal is sending CSI.  Nvim does not issue such a sequence and
+always uses 7-bit control sequences.
+
 'ttyfast':
   ":set ttyfast" is ignored
   ":set nottyfast" is an error
