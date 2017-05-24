@@ -156,6 +156,10 @@ are always available and may be used simultaneously in separate plugins.  The
 `neovim` pip package must be installed to use Python plugins in Nvim (see
 |provider-python|).
 
+Because of general |256-color| usage whereever possible, Nvim will even use
+256-colour capability on Linux virtual terminals.  Vim uses only 8 colours
+plus bright foreground on Linux VTs.
+
 |:!| does not support "interactive" commands. Use |:terminal| instead.
 (GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
 
@@ -280,6 +284,11 @@ Ed-compatible mode:
 Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
 terminal capabilities. Instead Nvim treats the terminal as any other UI. For
 example, 'guicursor' sets the terminal cursor style if possible.
+
+								*termcap*
+Nvim never uses the termcap database and only uses |terminfo|.  See
+|builtin-terms| for what happens on operating systems without a terminfo
+database.
 
 						*xterm-8bit* *xterm-8-bit*
 Xterm can be run in a mode where it uses true 8-bit CSI.  Supporting this

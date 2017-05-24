@@ -5207,10 +5207,7 @@ To test your color setup, a file has been included in the Vim distribution.
 To use it, execute this command: >
    :runtime syntax/colortest.vim
 
-Some versions of xterm (and other terminals, like the Linux console) can
-output lighter foreground colors, even though the number of colors is defined
-at 8.  Therefore Vim sets the "cterm=bold" attribute for light foreground
-colors, when 't_Co' is 8.
+Nvim uses |256-color| and |true-color| terminal capabilities whereever possible.
 
 ==============================================================================
 18. When syntax is slow						*:syntime*
