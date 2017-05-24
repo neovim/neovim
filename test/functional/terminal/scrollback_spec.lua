@@ -396,7 +396,7 @@ describe("'scrollback' option", function()
 
     curbufmeths.set_option('scrollback', 0)
     if iswin() then
-      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\13') -- \13 = <CR>
+      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
     else
       feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
     end
@@ -422,7 +422,7 @@ describe("'scrollback' option", function()
 
     wait()
     if iswin() then
-      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\13') -- \13 = <CR>
+      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
     else
       feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
     end
@@ -439,7 +439,7 @@ describe("'scrollback' option", function()
     -- 'scrollback' option is synchronized with the internal sb_buffer.
     command('sleep 100m')
     if iswin() then
-      feed_data('for($i=1;$i -le 40;$i++){Write-Host \"line$i\"}\13') -- \13 = <CR>
+      feed_data('for($i=1;$i -le 40;$i++){Write-Host \"line$i\"}\r')
     else
       feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
     end
