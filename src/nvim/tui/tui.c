@@ -185,8 +185,8 @@ static void terminfo_start(UI *ui)
   data->can_set_lr_margin =
     !!unibi_get_str(data->ut, unibi_set_lr_margin);
   data->can_set_left_right_margin =
-    !!unibi_get_str(data->ut, unibi_set_left_margin_parm) &&
-    !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
+    !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
+    && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
@@ -587,6 +587,70 @@ static bool can_use_scroll(UI * ui)
         data->can_set_left_right_margin
      )
     );
+}
+
+static void set_scroll_region(UI *ui)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+
+  data->params[0].i = grid->top;
+  data->params[1].i = grid->bot;
+  unibi_out(ui, unibi_change_scroll_region);
+  if (grid->left != 0 || grid->right != ui->width - 1) {
+    unibi_out(ui, data->unibi_ext.enable_lr_margin);
+    if (data->can_set_lr_margin) {
+      data->params[0].i = grid->left;
+      data->params[1].i = grid->right;
+      unibi_out(ui, unibi_set_lr_margin);
+    } else {
+      data->params[0].i = grid->left;
+      unibi_out(ui, unibi_set_left_margin_parm);
+      data->params[0].i = grid->right;
+      unibi_out(ui, unibi_set_right_margin_parm);
+    }
+  }
+  unibi_goto(ui, grid->row, grid->col);
+}
+
+static void reset_scroll_region(UI *ui)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+
+  if (0 <= data->unibi_ext.reset_scroll_region) {
+    unibi_out(ui, data->unibi_ext.reset_scroll_region);
+  } else {
+    data->params[0].i = 0;
+    data->params[1].i = ui->height - 1;
+    unibi_out(ui, unibi_change_scroll_region);
+  }
+  if (grid->left != 0 || grid->right != ui->width - 1) {
+    if (data->can_set_lr_margin) {
+      data->params[0].i = 0;
+      data->params[1].i = ui->width - 1;
+      unibi_out(ui, unibi_set_lr_margin);
+    } else {
+      data->params[0].i = 0;
+      unibi_out(ui, unibi_set_left_margin_parm);
+      data->params[0].i = ui->width - 1;
+      unibi_out(ui, unibi_set_right_margin_parm);
+    }
+    unibi_out(ui, data->unibi_ext.disable_lr_margin);
+  }
+  unibi_goto(ui, grid->row, grid->col);
+}
+
+static bool can_use_scroll(UI * ui)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+
+  return data->scroll_region_is_full_screen
+    || (data->can_change_scroll_region
+        && ((grid->left == 0 && grid->right == ui->width - 1)
+            || data->can_set_lr_margin
+            || data->can_set_left_right_margin));
 }
 
 static void set_scroll_region(UI *ui)
@@ -1294,6 +1358,21 @@ static void fix_terminfo(TUIData *data)
 
   if (data->term == kTermXTerm || data->term == kTermRxvt
       || data->term == kTermPuTTY) {
+    data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[r");
+  }
+
+  // Only define this capability for terminal types that we know understand it.
+  if (data->term == kTermDTTerm       // originated this extension
+      || data->term == kTermXTerm     // per xterm ctlseqs doc
+      || data->term == kTermKonsole   // per commentary in VT102Emulation.cpp
+      || data->term == kTermTeraTerm  // per "Supported Control Functions" doc
+      || data->term == kTermRxvt) {   // per command.C
+    data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[8;%p1%d;%p2%dt");
+  }
+
+  if (data->term == kTermXTerm || data->term == kTermRxvt) {
     data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[r");
   }
