@@ -183,9 +183,10 @@ describe('package.path/package.cpath', function()
   local function get_new_paths(sufs, runtimepaths)
     runtimepaths = runtimepaths or meths.list_runtime_paths()
     local new_paths = {}
+    local sep = package.config:sub(1, 1)
     for _, v in ipairs(runtimepaths) do
       for _, suf in ipairs(sufs) do
-        new_paths[#new_paths + 1] = v .. suf:sub(1, 1) .. 'lua' .. suf
+        new_paths[#new_paths + 1] = v .. sep .. 'lua' .. suf
       end
     end
     return new_paths
@@ -225,23 +226,23 @@ describe('package.path/package.cpath', function()
     eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
   end)
   it('understands uncommon suffixes', function()
-    set_path('path', './?/foo/bar/baz/x.nlua')
+    set_path('cpath', './?/foo/bar/baz/x.nlua')
     meths.set_option('runtimepath', 'a')
     local new_paths = get_new_paths({'/?/foo/bar/baz/x.nlua'}, {'a'})
     local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
+    eq(new_paths_str, eval_lua('package.cpath'):sub(1, #new_paths_str))
 
-    set_path('path', './yyy?zzz/x')
+    set_path('cpath', './yyy?zzz/x')
     meths.set_option('runtimepath', 'b')
     new_paths = get_new_paths({'/yyy?zzz/x'}, {'b'})
     new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
+    eq(new_paths_str, eval_lua('package.cpath'):sub(1, #new_paths_str))
 
-    set_path('path', './yyy?zzz/123?ghi/x')
+    set_path('cpath', './yyy?zzz/123?ghi/x')
     meths.set_option('runtimepath', 'b')
     new_paths = get_new_paths({'/yyy?zzz/123?ghi/x'}, {'b'})
     new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str, eval_lua('package.path'):sub(1, #new_paths_str))
+    eq(new_paths_str, eval_lua('package.cpath'):sub(1, #new_paths_str))
   end)
   it('preserves empty items', function()
     local many_empty_path = ';;;;;;'
@@ -249,17 +250,19 @@ describe('package.path/package.cpath', function()
     set_path('path', many_empty_path)
     set_path('cpath', many_empty_cpath)
     meths.set_option('runtimepath', 'a')
-    -- No suffixes known, so can’t add anything
-    eq(many_empty_path, eval_lua('package.path'))
-    local new_paths = get_new_paths({'/?.luaso'}, {'a'})
+    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {'a'})
     local new_paths_str = table.concat(new_paths, ';')
-    eq(new_paths_str .. ';' .. many_empty_cpath, eval_lua('package.cpath'))
+    eq(new_paths_str .. ';' .. many_empty_path, eval_lua('package.path'))
+    local new_cpaths = get_new_paths({'/?.luaso'}, {'a'})
+    local new_cpaths_str = table.concat(new_cpaths, ';')
+    eq(new_cpaths_str .. ';' .. many_empty_cpath, eval_lua('package.cpath'))
   end)
   it('preserves empty value', function()
     set_path('path', '')
     meths.set_option('runtimepath', 'a')
-    -- No suffixes known, so can’t add anything
-    eq('', eval_lua('package.path'))
+    local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'}, {'a'})
+    local new_paths_str = table.concat(new_paths, ';')
+    eq(new_paths_str .. ';', eval_lua('package.path'))
   end)
   it('purges out all additions if runtimepath is set to empty', function()
     local new_paths = get_new_paths(sl{'/?.lua', '/?/init.lua'})

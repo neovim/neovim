@@ -13,14 +13,17 @@ Lua Interface to Nvim					*lua* *Lua*
 
 Neovim lua interface automatically adjusts `package.path` and `package.cpath` 
 according to effective &runtimepath value.  Adjustment happens after each time 
-'runtimepath' is changed, `package.path` and `package.cpath` are adjusted by 
-prepending directories from 'runtimepath' each suffixed by `/lua` and 
-`?`-containing suffixes from `package.path` and `package.cpath`. I.e. when 
-'runtimepath' option contains `/foo` and `package.path` contains only 
-`./?.lua;./a?d/j/g.nlua;/bar/?.lua` the resulting `package.path` after 
+'runtimepath' is changed. `package.path` is adjusted by simply appending 
+`/lua/?.lua` and `/lua/?/init.lua` to each directory from 'runtimepath' (`/` 
+is actually a first character from `package.config`).
+
+`package.cpath` is adjusted by prepending directories from 'runtimepath' each 
+suffixed by `/lua` and `?`-containing suffixes from existing `package.cpath`. 
+I.e. when 'runtimepath' option contains `/foo` and `package.cpath` contains 
+only `./?.so;./a?d/j/g.elf;/bar/?.so` the resulting `package.cpath` after 
 adjustments will look like this: >
 
-	/foo/lua/?.lua;/foo/lua/a?d/j/g.nlua;./?.lua;./a?d/j/g.nlua;/bar/?.lua
+	/foo/lua/?.so;/foo/lua/a?d/j/g.elf;./?.so;./a?d/j/g.elf;/bar/?.so
 
 Note that code have taken everything starting from the last path component 
 from existing paths containing a question mark as a `?`-containing suffix, but 
@@ -31,7 +34,8 @@ current values of `package.path` or `package.cpath`. If you happened to delete
 some paths from there you need to reset 'runtimepath' to make them readded.
 
 Note 3: paths from 'runtimepath' which contain semicolons cannot be put into 
-`package.[c]path` and thus are ignored.
+`package.[c]path` for that being a semicolon-separated list and thus are 
+ignored.
 
 ------------------------------------------------------------------------------
 1.1. Example of the plugin which uses lua modules:	*lua-require-example*

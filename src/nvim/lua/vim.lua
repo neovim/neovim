@@ -9,7 +9,6 @@ local function _update_package_paths()
   local sep = package.config:sub(1, 1)
   for _, key in ipairs({'path', 'cpath'}) do
     local orig_str = package[key] .. ';'
-    local pathtrails = {}
     local pathtrails_ordered = {}
     local orig = {}
     -- Note: ignores trailing item without trailing `;`. Not using something
@@ -17,13 +16,21 @@ local function _update_package_paths()
     for s in orig_str:gmatch('[^;]*;') do
       s = s:sub(1, -2)  -- Strip trailing semicolon
       orig[#orig + 1] = s
-      -- Find out path patterns. pathtrail should contain something like
-      -- /?.so, /?/init.lua, /?.lua. This allows not to bother determining what
-      -- correct suffixes are.
-      local pathtrail = s:match('[/\\][^/\\]*%?.*$')
-      if pathtrail and not pathtrails[pathtrail] then
-        pathtrails[pathtrail] = true
-        pathtrails_ordered[#pathtrails_ordered + 1] = pathtrail
+    end
+    if key == 'path' then
+      -- /?.lua and /?/init.lua
+      pathtrails_ordered = {sep .. '?.lua', sep .. '?' .. sep .. 'init.lua'}
+    else
+      local pathtrails = {}
+      for _, s in ipairs(orig) do
+        -- Find out path patterns. pathtrail should contain something like
+        -- /?.so, \?.dll. This allows not to bother determining what correct
+        -- suffixes are.
+        local pathtrail = s:match('[/\\][^/\\]*%?.*$')
+        if pathtrail and not pathtrails[pathtrail] then
+          pathtrails[pathtrail] = true
+          pathtrails_ordered[#pathtrails_ordered + 1] = pathtrail
+        end
       end
     end
     local new = {}
