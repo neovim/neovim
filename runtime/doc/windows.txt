@@ -117,7 +117,7 @@ check if the 'highlight' option contains "si".  In version 3.0, this meant to
 invert the status line.  Now it should be "sr", reverse the status line, as
 "si" now stands for italic!  If italic is not available on your terminal, the
 status line is inverted anyway; you will only see this problem on terminals
-that have |terminfo| capbilities for italics.
+that have |terminfo| capabilities for italics.
 
 ==============================================================================
 3. Opening and closing a window				*opening-window* *E36*

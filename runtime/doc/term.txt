@@ -192,7 +192,7 @@ scrolling ('wrap' option off) consider setting 'sidescroll' to a small
 number.
 
 If you have a slow terminal you may want to reset the 'showcmd' and 'ruler'
-options.  The command characters and cursor poritions will not be shown in the
+options.  The command characters and cursor positions will not be shown in the
 status line (which involves a lot of cursor motions and attribute changes for
 every keypress or movement).  If the terminal scrolls very slowly, set the
 'scrolljump' to 5 or so.  If the cursor is moved off the screen (e.g., with

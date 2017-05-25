@@ -773,8 +773,6 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   cursorentry_T c = data->cursor_shapes[mode];
   int shape = c.shape;
 
-  // Support changing cursor shape on some popular terminals.
-
   if (c.id != 0 && ui->rgb) {
     int attr = syn_id2attr(c.id);
     if (attr > 0) {
@@ -2063,7 +2061,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             "%e%{1}"                // everything else is bar
             "%;%d;BlinkingCursorEnabled=%?"
             "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
-            "%e%p1%{1}%&"  // in all other cases we can teeat bit #0 as a flag.
+            "%e%p1%{1}%&"  // in all other cases we can treat bit #0 as a flag.
             "%;%d\x07"));
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
