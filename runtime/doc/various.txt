@@ -212,7 +212,6 @@ g8			Print the hex values of the bytes used in the
 			Equivalent to: >
 			      :enew
 			      :call termopen('{cmd}')
-			      :startinsert
 <
 			See |termopen()|.
 
