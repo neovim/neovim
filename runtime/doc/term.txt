@@ -95,10 +95,33 @@ for this extension.  So Nvim simply assumes that (all) "dtterm", "xterm",
 
 					*cursor-shape* *termcap-cursor-shape*
 Nvim will adjust the shape of the cursor from a block to a line when in insert
-mode, on terminals that support it.  If Konsole is detected, it will use the
-idiosyncratic Konsole terminal control sequences for this, attempting to do
-the right thing if tmux is between Nvim and Konsole.  Otherwise, it uses the
-conventional DECSCUSR control sequences.
+mode (or as specified by the 'guicursor' option), on terminals that support
+it.  It uses the same |terminfo| extensions that were pioneered by tmux for
+this: "Ss" and "Se".  If your terminfo definition specifies these, as some
+(such as "xterm+tmux") do, then nothing more is required.
+
+If your terminfo definition is missing them, then Nvim will on a wide range of
+terminals resort to using the conventional DECSUSR control sequence for
+adjusting the cursor shape.  If Konsole is detected, Nvim will use the
+idiosyncratic Konsole terminal control sequences for this.
+
+Note: tmux itself accepts the conventional DECSUSR control sequence, the same
+as many other terminals do.  It has to translate this into whatever control
+sequence is appropriate for the terminal that it is outputting to.  Like Nvim,
+it will use the "Ss" and "Se" capabilities from terminfo if they are present.
+
+Unlike Nvim, if they are not present in terminfo you will have to add them by
+setting the tmux "terminal-overrides" setting in $HOME/.tmux.conf .  It will
+appear that Nvim is not changing the cursor, but in fact it is tmux receiving
+instructions from Nvim to change the cursor and not knowing what to do.  See
+the tmux(1) manual page for the details of how and what to do in the tmux
+configuration file.  It will look something like: >
+		set -ga terminal-overrides '*:Ss=\E[%p1%d q:Se=\E[ q'
+<or (alas!) for Konsole specifically, something more complex like: >
+	set -ga terminal-overrides \
+        'xterm*:\E]50;CursorShape=%?%p1%{3}%<%t%{0}%e%{1}%;%d\007'
+<but these are only rough examples that do not include all of the other stuff
+that occurs in that setting.
 
 							*cs7-problem*
 Note: If the terminal settings are changed after running Vim, you might have

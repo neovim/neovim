@@ -2756,14 +2756,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'guicursor'* *'gcr'* *E545* *E546* *E548* *E549*
 'guicursor' 'gcr'	string	(default "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20")
 			global
-	Configures the cursor style for each mode. Works in the GUI and some
-	terminals.
+	Configures the cursor style for each mode. Works in the GUI and many
+	terminals.  See |cursor-shape| for details.
 
-	With tmux you might need this in ~/.tmux.conf (see terminal-overrides
-	in the tmux(1) manual page): >
-		set -ga terminal-overrides ',*:Ss=\E[%p1%d q:Se=\E[2 q'
-
-<	To disable cursor-styling, reset the option: >
+	To disable cursor-styling, reset the option: >
 		:set guicursor=
 
 <	To enable mode shapes, "Cursor" highlight, and blinking: >

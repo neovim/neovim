@@ -44,8 +44,9 @@
 #define OUTBUF_SIZE 0xffff
 
 #define TOO_MANY_EVENTS 1000000
-#define STARTS_WITH(str, prefix) (!memcmp(str, prefix, sizeof(prefix) - 1))
+#define STARTS_WITH(str, prefix) (!memcmp((str), (prefix), sizeof(prefix) - 1))
 #define TMUX_WRAP(is_tmux,seq) ((is_tmux) ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
+#define LINUXRESETC "\x1b[?0c"
 
 typedef struct {
   int top, bot, left, right;
@@ -90,7 +91,7 @@ typedef struct {
     int enable_focus_reporting, disable_focus_reporting;
     int resize_screen;
     int reset_scroll_region;
-    int konsole_cursor_shape, dec_cursor_shape;
+    int set_cursor_style, reset_cursor_style;
   } unibi_ext;
 } TUIData;
 
@@ -157,8 +158,8 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.disable_focus_reporting = -1;
   data->unibi_ext.resize_screen = -1;
   data->unibi_ext.reset_scroll_region = -1;
-  data->unibi_ext.konsole_cursor_shape = -1;
-  data->unibi_ext.dec_cursor_shape = -1;
+  data->unibi_ext.set_cursor_style = -1;
+  data->unibi_ext.reset_cursor_style = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
   // setup unibilium
@@ -174,7 +175,7 @@ static void terminfo_start(UI *ui)
   bool iterm = termprg && strstr(termprg, "iTerm.app");
   bool konsole = os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
-  patch_terminfo_bugs(data->ut, term, colorterm, vte_version, konsole, iterm);
+  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm);
   augment_terminfo(data, term, colorterm, vte_version, konsole, iterm);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
@@ -784,23 +785,13 @@ static void tui_set_mode(UI *ui, ModeShape mode)
   }
 
   switch (shape) {
-    case SHAPE_BLOCK: shape = 0; break;
-    case SHAPE_VER:   shape = 1; break;
-    case SHAPE_HOR:   shape = 2; break;
-    default: WLOG("Unknown shape value %d", shape); break;
-  }
-  data->params[0].i = shape;
-  data->params[1].i = (c.blinkon != 0);
-  unibi_out(ui, data->unibi_ext.konsole_cursor_shape);
-
-  switch (shape) {
     case SHAPE_BLOCK: shape = 1; break;
     case SHAPE_HOR:   shape = 3; break;
     case SHAPE_VER:   shape = 5; break;
     default: WLOG("Unknown shape value %d", shape); break;
   }
   data->params[0].i = shape + (int)(c.blinkon == 0);
-  unibi_out(ui, data->unibi_ext.dec_cursor_shape);
+  unibi_out(ui, data->unibi_ext.set_cursor_style);
 }
 
 /// @param mode editor mode
@@ -1141,6 +1132,22 @@ static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
     unibi_set_str(ut, str, val);
   }
 }
+
+static int unibi_find_ext_str(unibi_term *ut, const char *name)
+{
+  size_t max = unibi_count_ext_bool(ut);
+  for (size_t i = 0; i < max; ++i) {
+    const char * n = unibi_get_ext_str_name(ut, i);
+    if (0 == strcmp(n, name)) {
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
+// One creates the dumps from terminfo.src by using
+//      od -t d1 -w
+// on the compiled files.
 
 // Taken from unibilium/t/static_xterm.c as of 2015-08-14.
 // This is an 8-colour terminfo description that lacks
@@ -1876,24 +1883,38 @@ static unibi_term *load_builtin_terminfo(const char * term)
 /// terminal types.  So patch the terminfo records after loading from an
 /// external or a built-in database.  In an ideal world, the real terminfo data
 /// would be correct and complete, and this function would be almost empty.
-static void patch_terminfo_bugs(unibi_term *ut, const char *term,
+static void patch_terminfo_bugs(TUIData *data, const char *term,
     const char *colorterm, long vte_version, bool konsole, bool iterm)
 {
+  unibi_term *ut = data->ut;
+  bool true_xterm = !!os_getenv("XTERM_VERSION");
   bool xterm = term && STARTS_WITH(term, "xterm");
   bool mate = colorterm && strstr(colorterm, "mate-terminal");
   bool gnome = colorterm && strstr(colorterm, "gnome-terminal");
   bool linux = term && STARTS_WITH(term, "linux");
   bool rxvt = term && STARTS_WITH(term, "rxvt");
+  bool teraterm = term && STARTS_WITH(term, "teraterm");
+  bool putty = term && STARTS_WITH(term, "putty");
+  bool screen = term && STARTS_WITH(term, "screen");
+  bool tmux_wrap = screen && !!os_getenv("TMUX");
 
-  const char *fix_normal = unibi_get_str(ut, unibi_cursor_normal);
+  char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
     if (STARTS_WITH(fix_normal, "\x1b[?12l")) {
-      // terminfo typically includes DECRST 12 as part of setting up the normal
-      // cursor, which interferes with the user's control via
-      // NVIM_TUI_ENABLE_CURSOR_SHAPE.  When DECRST 12 is present, skip over
-      // it, but honor the rest of the TI setting.
-      fix_normal += strlen("\x1b[?12l");
+      // terminfo typically includes DECRST 12 as part of setting up the
+      // normal cursor, which interferes with the user's control via
+      // set_cursor_style.  When DECRST 12 is present, skip over it, but honor
+      // the rest of the cnorm setting.
+      fix_normal += sizeof "\x1b[?12l" - 1;
       unibi_set_str(ut, unibi_cursor_normal, fix_normal);
+    }
+    if (linux
+        && (strlen(fix_normal) + 1) >= (sizeof LINUXRESETC - 1)
+        && !memcmp(strchr(fix_normal,0) - (sizeof LINUXRESETC - 1), LINUXRESETC, sizeof LINUXRESETC - 1)) {
+      // The Linux terminfo entry similarly includes a Linux-idiosyncractic
+      // cursor shape reset in cnorm, which similarly interferes with
+      // set_cursor_style.
+      fix_normal[strlen(fix_normal) - (sizeof LINUXRESETC - 1)] = 0;
     }
   }
 
@@ -1904,10 +1925,9 @@ static void patch_terminfo_bugs(unibi_term *ut, const char *term,
     // their own terminal types and terminfo entries, like PuTTY does, and not
     // claim to be xterm.  Or they would mimic xterm properly enough to be
     // treatable as xterm.
-#if 0	// We don't need to identify this specifically, for now.
+#if 0   // We don't need to identify this specifically, for now.
     bool roxterm = !!os_getenv("ROXTERM_ID");
 #endif
-    bool true_xterm = !!os_getenv("XTERM_VERSION");
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]0;");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
@@ -1921,7 +1941,7 @@ static void patch_terminfo_bugs(unibi_term *ut, const char *term,
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
-  } else if (term && STARTS_WITH(term, "screen")) {
+  } else if (screen) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   } else if (term && STARTS_WITH(term, "tmux")) {
@@ -1968,6 +1988,91 @@ static void patch_terminfo_bugs(unibi_term *ut, const char *term,
       unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB_16);
     }
   }
+
+  // Dickey ncurses terminfo has included the Ss and Se capabilities, pioneered
+  // by tmux, since 2011-07-14.  So adding them to terminal types, that do
+  // actually have such control sequences but lack the currect definitions in
+  // terminfo, is a fixup, not an augmentation.
+  data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
+  data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
+  if (-1 == data->unibi_ext.set_cursor_style) {
+    // The DECSCUSR sequence to change the cursor shape is widely
+    // supported by several terminal types and should be in many
+    // teminfo entries.  See
+    // https://github.com/gnachman/iTerm2/pull/92 for more.
+    // xterm even has an extended version that has a vertical bar.
+    if (true_xterm     // per xterm ctlseqs doco (since version 282)
+        // Allows forcing the use of DECSCUSR on linux type terminals, such as
+        // console-terminal-emulator from the nosh toolset, which does indeed
+        // implement the xterm extension:
+        || (linux && (true_xterm || (vte_version > 0) || colorterm))) {
+      data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
+          "\x1b[%p1%d q");
+      if (-1 == data->unibi_ext.reset_cursor_style) {
+          data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
+              "");
+      }
+      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[ q");
+    } else if (putty   // per MinTTY 0.4.3-1 release notes from 2009
+        || teraterm    // per TeraTerm "Supported Control Functions" doco
+        || (vte_version >= 3900)  // VTE-based terminals since this version.
+        // per tmux manual page and per
+        // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
+        || screen) {
+      // Since we use the xterm extension, we have to map it to the unextended
+      // form.
+      data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
+          "\x1b[%?"
+          "%p1%{4}%>" "%t%p1%{2}%-" 	// a bit of a bodge for extension values
+          "%e%p1"              // the conventional codes are just passed through
+          "%;%d q");
+      if (-1 == data->unibi_ext.reset_cursor_style) {
+          data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
+              "");
+      }
+      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[ q");
+    } else if (linux) {
+      // Linux uses an idiosyncratic escape code to set the cursor shape and does
+      // not support DECSCUSR.
+      data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
+          "\x1b[?"
+          "%?"
+          // The parameter passed to Ss is the DECSCUSR parameter, so the
+          // terminal capability has to translate into the Linux idiosyncratic
+          // parameter.
+          "%p1%{2}%<" "%t%{8}"  // blink block
+          "%p1%{2}%=" "%t%{24}" // steady block
+          "%p1%{3}%=" "%t%{1}"  // blink underline
+          "%p1%{4}%=" "%t%{17}" // steady underline
+          "%p1%{5}%=" "%t%{1}"  // blink bar
+          "%p1%{6}%=" "%t%{17}" // steady bar
+          "%e%{0}"              // anything else
+          "%;" "%dc");
+      if (-1 == data->unibi_ext.reset_cursor_style) {
+          data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
+              "");
+      }
+      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[?c");
+    } else if (konsole) {
+      // Konsole uses an idiosyncratic escape code to set the cursor shape and does
+      // not support DECSCUSR.  The tmux wrapping is unused, now.
+      data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
+          TMUX_WRAP(tmux_wrap, "\x1b]50;CursorShape=%?"
+            "%p1%{3}%<" "%t%{0}"    // block
+            "%e%p1%{4}%<" "%t%{2}"  // underline
+            "%e%{1}"                // everything else is bar
+            "%;%d;BlinkingCursorEnabled=%?"
+            "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
+            "%e%p1%{1}%&"  // in all other cases we can teeat bit #0 as a flag.
+            "%;%d\x07"));
+      if (-1 == data->unibi_ext.reset_cursor_style) {
+          data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
+              "");
+      }
+      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
+          TMUX_WRAP(tmux_wrap, "\x1b]50;CursorShape=0;BlinkingCursorEnabled=1\x07"));
+    }
+  }
 }
 
 /// This adds stuff that is not in standard terminfo as extended unibilium
@@ -1976,15 +2081,16 @@ static void augment_terminfo(TUIData *data, const char *term,
     const char *colorterm, long vte_version, bool konsole, bool iterm)
 {
   unibi_term *ut = data->ut;
-  bool putty = term && STARTS_WITH(term, "putty");
   bool xterm = term && STARTS_WITH(term, "xterm");
   bool dtterm = term && STARTS_WITH(term, "dtterm");
-  bool teraterm = term && STARTS_WITH(term, "teraterm");
-  bool rxvt = term && STARTS_WITH(term, "rxvt");
   bool linux = term && STARTS_WITH(term, "linux");
-  bool tmux_wrap = !!os_getenv("TMUX");
+  bool rxvt = term && STARTS_WITH(term, "rxvt");
+  bool teraterm = term && STARTS_WITH(term, "teraterm");
+  bool putty = term && STARTS_WITH(term, "putty");
+  bool screen = term && STARTS_WITH(term, "screen");
+  bool tmux_wrap = screen && !!os_getenv("TMUX");
   bool truecolor = colorterm
-    && (STRCMP(colorterm, "truecolor") || STRCMP(colorterm, "24bit"));
+    && (0 == strcmp(colorterm, "truecolor") || 0 == strcmp(colorterm, "24bit"));
 
   // Only define this capability for terminal types that we know understand it.
   if (dtterm         // originated this extension
@@ -2012,19 +2118,6 @@ static void augment_terminfo(TUIData *data, const char *term,
   } else if (xterm) {
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, "\033]12;#%p1%06x\007");
-  }
-  if (konsole) {
-    // Konsole uses a proprietary escape code to set the cursor shape
-    // and does not support DECSCUSR.
-    data->unibi_ext.konsole_cursor_shape = (int)unibi_add_ext_str(ut, NULL,
-        TMUX_WRAP(tmux_wrap, "\x1b]50;CursorShape=%p1%d;BlinkingCursorEnabled=%p2%d\x07"));
-  } else if (0 == vte_version || vte_version >= 3900) {
-    // Assume that the terminal supports DECSCUSR unless it is an
-    // old VTE based terminal.  This should not get wrapped for tmux,
-    // which will handle it via its Ss/Se terminfo extension - usually
-    // according to its terminal-overrides.
-    data->unibi_ext.dec_cursor_shape = (int)unibi_add_ext_str(ut, NULL,
-        "\x1b[%p1%d q");
   }
 
   /// Terminals generally ignore private modes that they do not recognize,
