@@ -12,30 +12,64 @@ Lua Interface to Nvim					*lua* *Lua*
 1. Importing modules					*lua-require*
 
 Neovim lua interface automatically adjusts `package.path` and `package.cpath` 
-according to effective &runtimepath value.  Adjustment happens after each time 
+according to effective &runtimepath value.  Adjustment happens after 
 'runtimepath' is changed. `package.path` is adjusted by simply appending 
 `/lua/?.lua` and `/lua/?/init.lua` to each directory from 'runtimepath' (`/` 
-is actually a first character from `package.config`).
+is actually the first character of `package.config`).
 
-`package.cpath` is adjusted by prepending directories from 'runtimepath' each 
-suffixed by `/lua` and `?`-containing suffixes from existing `package.cpath`. 
-I.e. when 'runtimepath' option contains `/foo` and `package.cpath` contains 
-only `./?.so;./a?d/j/g.elf;/bar/?.so` the resulting `package.cpath` after 
-adjustments will look like this: >
+Similarly to `package.path`, modified directories from `runtimepath` are also 
+added to `package.cpath`.  In this case, instead of appending `/lua/?.lua` and 
+`/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of 
+the existing `package.cpath` are used.  Here is an example:
 
-	/foo/lua/?.so;/foo/lua/a?d/j/g.elf;./?.so;./a?d/j/g.elf;/bar/?.so
+1. Given that
+   - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
+   - initial (defined at compile time or derived from 
+     `$LUA_CPATH`/`$LUA_INIT`) `package.cpath` contains 
+     `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
+2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in 
+   order: parts of the path starting from the first path component containing 
+   question mark and preceding path separator.
+3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same 
+   as the suffix of the first path from `package.path` (i.e. `./?.so`).  Which 
+   leaves `/?.so` and `/a?d/j/g.elf`, in this order.
+4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`.  The 
+   second one contains semicolon which is a paths separator so it is out, 
+   leaving only `/foo/bar` and `/abc`, in order.
+5. The cartesian product of paths from 4. and suffixes from 3. is taken, 
+   giving four variants. In each variant `/lua` path segment is inserted 
+   between path and suffix, leaving
 
-Note that code have taken everything starting from the last path component 
-from existing paths containing a question mark as a `?`-containing suffix, but 
-only applied unique suffixes.
+   - `/foo/bar/lua/?.so`
+   - `/foo/bar/lua/a?d/j/g.elf`
+   - `/abc/lua/?.so`
+   - `/abc/lua/a?d/j/g.elf`
+
+6. New paths are prepended to the original `package.cpath`.
+
+The result will look like this:
+
+    `/foo/bar,/xxx;yyy/baz,/abc` ('runtimepath')
+    × `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so` (`package.cpath`)
+
+    = `/foo/bar/lua/?.so;/foo/bar/lua/a?d/j/g.elf;/abc/lua/?.so;/abc/lua/a?d/j/g.elf;./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`
+
+Note: to keep up with 'runtimepath' updates paths added at previous update are 
+remembered and removed at the next update, while all paths derived from the 
+new 'runtimepath' are prepended as described above.  This allows removing 
+paths when path is removed from 'runtimepath', adding paths when they are 
+added and reordering `package.path`/`package.cpath` content if 'runtimepath' 
+was reordered.
 
 Note 2: even though adjustments happens automatically Neovim does not track 
-current values of `package.path` or `package.cpath`. If you happened to delete 
-some paths from there you need to reset 'runtimepath' to make them readded.
+current values of `package.path` or `package.cpath`.  If you happened to 
+delete some paths from there you need to reset 'runtimepath' to make them 
+readded.  Just running `let &runtimepath = &runtimepath` should work.
 
-Note 3: paths from 'runtimepath' which contain semicolons cannot be put into 
-`package.[c]path` for that being a semicolon-separated list and thus are 
-ignored.
+Note 3: skipping paths from 'runtimepath' which contain semicolons applies 
+both to `package.path` and `package.cpath`.  Given that there is a number of 
+badly written plugins using shell which will not work with paths containing 
+semicolons it is better to not have them in 'runtimepath' at all.
 
 ------------------------------------------------------------------------------
 1.1. Example of the plugin which uses lua modules:	*lua-require-example*
