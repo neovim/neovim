@@ -9835,7 +9835,7 @@ static void ex_terminal(exarg_T *eap)
   if (*eap->arg != NUL) {  // Run {cmd} in 'shell'.
     char *name = (char *)vim_strsave_escaped(eap->arg, (char_u *)"\"\\");
     snprintf(ex_cmd, sizeof(ex_cmd),
-             ":enew%s | call termopen(\"%s\") | startinsert",
+             ":enew%s | call termopen(\"%s\")",
              eap->forceit ? "!" : "", name);
     xfree(name);
   } else {  // No {cmd}: run the job with tokenized 'shell'.
@@ -9857,7 +9857,7 @@ static void ex_terminal(exarg_T *eap)
     shell_free_argv(argv);
 
     snprintf(ex_cmd, sizeof(ex_cmd),
-             ":enew%s | call termopen([%s]) | startinsert",
+             ":enew%s | call termopen([%s])",
              eap->forceit ? "!" : "", shell_argv + 1);
   }
 
