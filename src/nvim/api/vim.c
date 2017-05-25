@@ -742,6 +742,17 @@ Dictionary nvim_get_mode(void)
   return rv;
 }
 
+/// Get a list of dictionaries describing global (i.e. non-buffer) mappings
+/// Note that the "buffer" key will be 0 to represent false.
+///
+/// @param  mode  The abbreviation for the mode
+/// @returns  An array of maparg() like dictionaries describing mappings
+ArrayOf(Dictionary) nvim_get_keymap(String mode)
+    FUNC_API_SINCE(3)
+{
+  return keymap_array(mode, NULL);
+}
+
 Array nvim_get_api_info(uint64_t channel_id)
     FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_REMOTE_ONLY
 {

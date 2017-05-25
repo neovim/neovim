@@ -24,6 +24,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/getchar.h"
 
 /// Helper structure for vim_to_object
 typedef struct {
@@ -1033,4 +1034,42 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
   va_end(args2);
 
   err->type = errType;
+}
+
+/// Get an array containing dictionaries describing mappings
+/// based on mode and buffer id
+///
+/// @param  mode  The abbreviation for the mode
+/// @param  buf  The buffer to get the mapping array. NULL for global
+/// @returns An array of maparg() like dictionaries describing mappings
+ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
+{
+  Array mappings = ARRAY_DICT_INIT;
+  dict_T *const dict = tv_dict_alloc();
+
+  // Convert the string mode to the integer mode
+  // that is stored within each mapblock
+  char_u *p = (char_u *)mode.data;
+  int int_mode = get_map_mode(&p, 0);
+
+  // Determine the desired buffer value
+  long buffer_value = (buf == NULL) ? 0 : buf->handle;
+
+  for (int i = 0; i < MAX_MAPHASH; i++) {
+    for (const mapblock_T *current_maphash = get_maphash(i, buf);
+         current_maphash;
+         current_maphash = current_maphash->m_next) {
+      // Check for correct mode
+      if (int_mode & current_maphash->m_mode) {
+        mapblock_fill_dict(dict, current_maphash, buffer_value, false);
+        ADD(mappings, vim_to_object(
+            (typval_T[]) { { .v_type = VAR_DICT, .vval.v_dict = dict } }));
+
+        tv_dict_clear(dict);
+      }
+    }
+  }
+  tv_dict_free(dict);
+
+  return mappings;
 }

@@ -12102,22 +12102,7 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     tv_dict_alloc_ret(rettv);
     if (rhs != NULL) {
       // Return a dictionary.
-      char_u *lhs = str2special_save(mp->m_keys, true);
-      char *const mapmode = map_mode_to_chars(mp->m_mode);
-      dict_T *dict = rettv->vval.v_dict;
-
-      tv_dict_add_str(dict, S_LEN("lhs"), (const char *)lhs);
-      tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
-      tv_dict_add_nr(dict, S_LEN("noremap"), mp->m_noremap ? 1 : 0);
-      tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
-      tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
-      tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ID);
-      tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_local);
-      tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
-      tv_dict_add_str(dict, S_LEN("mode"), mapmode);
-
-      xfree(lhs);
-      xfree(mapmode);
+      mapblock_fill_dict(rettv->vval.v_dict, mp, buffer_local, true);
     }
   }
 }
@@ -12132,6 +12117,46 @@ static void f_luaeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   executor_eval_lua(cstr_as_string((char *)str), &argvars[1], rettv);
+}
+
+/// Fill a dictionary with all applicable maparg() like dictionaries
+///
+/// @param  dict  The dictionary to be filled
+/// @param  mp  The maphash that contains the mapping information
+/// @param  buffer_value  The "buffer" value
+/// @param  compatible  True for compatible with old maparg() dict
+void mapblock_fill_dict(dict_T *const dict,
+                        const mapblock_T *const mp,
+                        long buffer_value,
+                        bool compatible)
+    FUNC_ATTR_NONNULL_ALL
+{
+  char_u *lhs = str2special_save(mp->m_keys, true);
+  char *const mapmode = map_mode_to_chars(mp->m_mode);
+  varnumber_T noremap_value;
+
+  if (compatible) {
+    // Keep old compatible behavior
+    // This is unable to determine whether a mapping is a <script> mapping
+    noremap_value = !!mp->m_noremap;
+  } else {
+    // Distinguish between <script> mapping
+    // If it's not a <script> mapping, check if it's a noremap
+    noremap_value = mp->m_noremap == REMAP_SCRIPT ? 2 : !!mp->m_noremap;
+  }
+
+  tv_dict_add_str(dict, S_LEN("lhs"), (const char *)lhs);
+  tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
+  tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
+  tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
+  tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
+  tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ID);
+  tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_value);
+  tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
+  tv_dict_add_str(dict, S_LEN("mode"), mapmode);
+
+  xfree(lhs);
+  xfree(mapmode);
 }
 
 /*

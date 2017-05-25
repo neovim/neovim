@@ -453,6 +453,26 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
   return buf->b_changedtick;
 }
 
+/// Get a list of dictionaries describing buffer-local mappings
+/// Note that the buffer key in the dictionary will represent the buffer
+/// handle where the mapping is present
+///
+/// @param  mode  The abbreviation for the mode
+/// @param  buffer_id  Buffer handle
+/// @param[out]  err   Error details, if any
+/// @returns An array of maparg() like dictionaries describing mappings
+ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
+    FUNC_API_SINCE(3)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return (Array)ARRAY_DICT_INIT;
+  }
+
+  return keymap_array(mode, buf);
+}
+
 /// Sets a buffer-scoped (b:) variable
 ///
 /// @param buffer     Buffer handle

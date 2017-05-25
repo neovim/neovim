@@ -438,6 +438,9 @@ typedef TV_DICTITEM_STRUCT(sizeof("changedtick")) ChangedtickDictItem;
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2
 
+// Maximum number of maphash blocks we will have
+#define MAX_MAPHASH 256
+
 /*
  * buffer: structure that holds information about one file
  *
@@ -526,8 +529,8 @@ struct file_buffer {
    */
   uint64_t b_chartab[4];
 
-  /* Table used for mappings local to a buffer. */
-  mapblock_T  *(b_maphash[256]);
+  // Table used for mappings local to a buffer.
+  mapblock_T  *(b_maphash[MAX_MAPHASH]);
 
   /* First abbreviation local to a buffer. */
   mapblock_T  *b_first_abbr;
