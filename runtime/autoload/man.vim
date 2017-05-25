@@ -3,7 +3,17 @@
 let s:find_arg = '-w'
 let s:localfile_arg = v:true  " Always use -l if possible. #6683
 
+function! s:check_section_flag()
+  for flag in ['-s', '-S']
+    call system(['env', 'MANPAGER=cat', 'man', flag, '1', 'man'])
+    if !v:shell_error
+      return flag
+    endif
+  endfor
+endfunction
+
 function! s:init() abort
+  let s:section_arg = s:check_section_flag()
   " TODO(nhooyr): Does `man -l` on SunOS list searched directories?
   try
     if !has('win32') && $OSTYPE !~? 'cygwin\|linux' && system('uname -s') =~? 'SunOS' && system('uname -r') =~# '^5'
@@ -211,7 +221,7 @@ function! s:get_path(sect, name) abort
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return s:system(['man', s:find_arg, '-s', a:sect, a:name])
+  return s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])
 endfunction
 
 function! s:verify_exists(sect, name) abort
