@@ -243,7 +243,9 @@ function! s:check_python(version) abort
   let python_multiple = []
 
   if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
-    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
+    call health#report_info('Disabled due to: `'.loaded_var.'='.eval(loaded_var).'`')
+    call health#report_info('Enable by setting: `'.loaded_var.'='.!eval(loaded_var).'`')
+    call health#report_info('See `:help provider-python` for more information')
     return
   endif
 
@@ -430,7 +432,9 @@ function! s:check_ruby() abort
 
   let loaded_var = 'g:loaded_ruby_provider'
   if exists(loaded_var) && !exists('*provider#ruby#Call')
-    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
+    call health#report_info('Disabled due to: `'.loaded_var.'='.eval(loaded_var).'`')
+    call health#report_info('Enable by setting: `'.loaded_var.'='.!eval(loaded_var).'`')
+    call health#report_info('See `:help provider-ruby` for more information')
     return
   endif
 
