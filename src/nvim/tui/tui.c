@@ -1891,7 +1891,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool xterm = term && STARTS_WITH(term, "xterm");
   bool mate = colorterm && strstr(colorterm, "mate-terminal");
   bool gnome = colorterm && strstr(colorterm, "gnome-terminal");
-  bool linux = term && STARTS_WITH(term, "linux");
+  bool linuxvt = term && STARTS_WITH(term, "linux");
   bool rxvt = term && STARTS_WITH(term, "rxvt");
   bool teraterm = term && STARTS_WITH(term, "teraterm");
   bool putty = term && STARTS_WITH(term, "putty");
@@ -1908,7 +1908,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       fix_normal += sizeof "\x1b[?12l" - 1;
       unibi_set_str(ut, unibi_cursor_normal, fix_normal);
     }
-    if (linux
+    if (linuxvt
         && (strlen(fix_normal) + 1) >= (sizeof LINUXRESETC - 1)
         && !memcmp(strchr(fix_normal,0) - (sizeof LINUXRESETC - 1), LINUXRESETC, sizeof LINUXRESETC - 1)) {
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
@@ -1947,7 +1947,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (term && STARTS_WITH(term, "tmux")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
-  } else if (linux) {
+  } else if (linuxvt) {
     // No deviations from the vanilla terminfo.
   } else if (term && STARTS_WITH(term, "putty")) {
     // No deviations from the vanilla terminfo.
@@ -1970,7 +1970,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals for
     // more on this.
     if (konsole || mate || xterm || gnome || rxvt
-        || linux  // Linux 4.8+ supports 256-colour SGR.
+        || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || (colorterm && strstr(colorterm, "256"))
         || (term && strstr(term, "256"))
         ) {
@@ -2005,7 +2005,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         // Allows forcing the use of DECSCUSR on linux type terminals, such as
         // console-terminal-emulator from the nosh toolset, which does indeed
         // implement the xterm extension:
-        || (linux && (true_xterm || (vte_version > 0) || colorterm))) {
+        || (linuxvt && (true_xterm || (vte_version > 0) || colorterm))) {
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           "\x1b[%p1%d q");
       if (-1 == data->unibi_ext.reset_cursor_style) {
@@ -2031,7 +2031,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
               "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[ q");
-    } else if (linux) {
+    } else if (linuxvt) {
       // Linux uses an idiosyncratic escape code to set the cursor shape and does
       // not support DECSCUSR.
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
@@ -2083,7 +2083,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   unibi_term *ut = data->ut;
   bool xterm = term && STARTS_WITH(term, "xterm");
   bool dtterm = term && STARTS_WITH(term, "dtterm");
-  bool linux = term && STARTS_WITH(term, "linux");
+  bool linuxvt = term && STARTS_WITH(term, "linux");
   bool rxvt = term && STARTS_WITH(term, "rxvt");
   bool teraterm = term && STARTS_WITH(term, "teraterm");
   bool putty = term && STARTS_WITH(term, "putty");
@@ -2106,7 +2106,7 @@ static void augment_terminfo(TUIData *data, const char *term,
       "\x1b[r");
   }
   // See https://gist.github.com/XVilka/8346728 for more about this.
-  if (putty || xterm || rxvt || linux || konsole || iterm || truecolor) {
+  if (putty || xterm || rxvt || linuxvt || konsole || iterm || truecolor) {
     data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, NULL,
         "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
     data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, NULL,
