@@ -1845,10 +1845,11 @@ v:t_number	Value of Number type.  Read-only.  See: |type()|
 v:t_string	Value of String type.  Read-only.  See: |type()|
 
 				*v:termresponse* *termresponse-variable*
-v:termresponse	The escape sequence returned by the terminal for the |t_RV|
-		termcap entry.	It is set when Vim receives an escape sequence
-		that starts with ESC [ or CSI and ends in a 'c', with only
-		digits, ';' and '.' in between.
+v:termresponse	The escape sequence returned by the terminal for the DA
+		(request primary device attributes) control sequence.  It is
+		set when Vim receives an escape sequence that starts with ESC
+		[ or CSI and ends in a 'c', with only digits, ';' and '.' in
+		between.
 		When this option is set, the TermResponse autocommand event is
 		fired, so that you can react to the response from the
 		terminal.

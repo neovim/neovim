@@ -4696,7 +4696,7 @@ cterm={attr-list}					*highlight-cterm*
 ctermfg={color-nr}				*highlight-ctermfg* *E421*
 ctermbg={color-nr}				*highlight-ctermbg*
 	The {color-nr} argument is a color number.  Its range is zero to
-	(not including) the number given by the termcap entry "Co".
+	(not including) the number of |terminfo-colors| available.
 	The actual color with this number depends on the type of terminal
 	and its settings.  Sometimes the color also depends on the settings of
 	"cterm".  For example, on some systems "cterm=bold ctermfg=3" gives
@@ -4768,9 +4768,8 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	delete the "g:colors_name" variable when you don't want this.
 
 	When you have set "ctermfg" or "ctermbg" for the Normal group, Vim
-	needs to reset the color when exiting.	This is done with the "op"
-	termcap entry |t_op|.  If this doesn't work correctly, try setting the
-	't_op' option in your vimrc.
+	needs to reset the color when exiting.	This is done with the
+	"orig_pair" |terminfo| entry.
 							*E419* *E420*
 	When Vim knows the normal foreground and background colors, "fg" and
 	"bg" can be used as color names.  This only works after setting the
