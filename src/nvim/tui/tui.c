@@ -1148,7 +1148,7 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
 // on the compiled files.
 
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
-// This is a 256-colour terminfo description that lacks
+// This is a 256-colour terminfo description that lacks true-colour and
 // DECSTBN/DECSLRM/DECLRMM capabilities that xterm actually has.
 static const char xterm_256colour_terminfo[] = {
   26,   1,  37,   0,  29,   0,  15,   0, 105,   1, -42,   5, 120, 116, 101, 114,
@@ -1588,6 +1588,8 @@ static const char iterm_16colour_terminfo[] = {
   53,  59,  37, 112,  49,  37, 100,  37,  59, 109,   0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
+// This is a 256-colour terminfo description that lacks true-colour
+// capabilities that rxvt actually has.
 static const char rxvt_256colour_terminfo[] = {
   26,   1,  47,   0,  29,   0,  15,   0, 110,   1, -31,   4, 114, 120, 118, 116,
   45,  50,  53,  54,  99, 111, 108, 111, 114, 124, 114, 120, 118, 116,  32,  50,
@@ -1723,6 +1725,8 @@ static const char rxvt_256colour_terminfo[] = {
   40,  48,   0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
+// This is a 16-colour terminfo description that lacks true-colour
+// and 256-colour capabilities that linux (4.8+) actually has.
 static const char linux_16colour_terminfo[] = {
   26,   1,  43,   0,  29,   0,  16,   0, 125,   1, 125,   3, 108, 105, 110, 117,
  120,  45,  49,  54,  99, 111, 108, 111, 114, 124, 108, 105, 110, 117, 120,  32,
@@ -2066,6 +2070,8 @@ static const char interix_8colour_terminfo[] = {
    0,  27,  91,  52,  37, 112,  49,  37, 100, 109,   0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
+// This is a 256-colour terminfo description that lacks true-colour
+// capabilities that stterm actually has.
 static const char st_256colour_terminfo[] = {
   26,   1,  55,   0,  29,   0,  15,   0, 105,   1, 117,   5, 115, 116,  45,  50,
   53,  54,  99, 111, 108, 111, 114, 124, 115, 116, 116, 101, 114, 109,  45,  50,
@@ -2510,23 +2516,25 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[?c");
     } else if (konsole) {
-      // Konsole uses an idiosyncratic escape code to set the cursor shape and does
-      // not support DECSCUSR.  The tmux wrapping is unused, now.
+      // Konsole uses an idiosyncratic escape code to set the cursor shape and
+      // does not support DECSCUSR.  This makes Konsole set up and apply a
+      // nonce profile, which has side-effects on temporary font resizing.
+      // In an ideal world, Konsole would just support DECSCUSR.
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-          TMUX_WRAP(tmux_wrap, "\x1b]50;CursorShape=%?"
-            "%p1%{3}%<" "%t%{0}"    // block
-            "%e%p1%{4}%<" "%t%{2}"  // underline
-            "%e%{1}"                // everything else is bar
-            "%;%d;BlinkingCursorEnabled=%?"
-            "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
-            "%e%p1%{1}%&"  // in all other cases we can treat bit #0 as a flag.
-            "%;%d\x07"));
+          "\x1b]50;CursorShape=%?"
+          "%p1%{3}%<" "%t%{0}"    // block
+          "%e%p1%{4}%<" "%t%{2}"  // underline
+          "%e%{1}"                // everything else is bar
+          "%;%d;BlinkingCursorEnabled=%?"
+          "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
+          "%e%p1%{1}%&"  // in all other cases we can treat bit #0 as a flag.
+          "%;%d\x07");
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
               "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-          TMUX_WRAP(tmux_wrap, "\x1b]50;CursorShape=0;BlinkingCursorEnabled=1\x07"));
+          "\x1b]50;\x07");
     }
   }
 }
@@ -2601,6 +2609,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   }
 
   if (iterm) {
+    // FIXME: Bypassing tmux like this affects the cursor colour globally, in
+    // all panes, which is not particularly desirable.  A better approach
+    // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP(tmux_wrap, "\033]Pl%p1%06x\033\\"));
   } else if (xterm) {
