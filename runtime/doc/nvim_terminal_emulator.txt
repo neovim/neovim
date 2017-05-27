@@ -93,12 +93,11 @@ Terminal sets local defaults for some options, which may differ from your
 global configuration.
 
 - 'list' is disabled
-- 'number' is disabled
-- 'relativenumber' is disabled (cannot be changed in |Terminal-mode|)
 - 'wrap' is disabled
+- 'relativenumber' is disabled in |Terminal-mode| (and cannot be enabled)
 
 You can change the defaults with a TermOpen autocommand: >
-	au TermOpen * setlocal number
+	au TermOpen * setlocal list
 
 Terminal colors can be customized with these variables:
 
