@@ -2358,7 +2358,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool teraterm = term && STARTS_WITH(term, "teraterm");
   bool putty = term && STARTS_WITH(term, "putty");
   bool screen = term && STARTS_WITH(term, "screen");
-  bool tmux_wrap = screen && !!os_getenv("TMUX");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
