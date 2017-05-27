@@ -76,6 +76,7 @@ typedef struct {
   bool can_change_scroll_region;
   bool can_set_lr_margin;
   bool can_set_left_right_margin;
+  bool immediate_wrap_after_last_column;
   bool mouse_enabled;
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
@@ -184,6 +185,8 @@ static void terminfo_start(UI *ui)
   data->can_set_left_right_margin =
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
+  data->immediate_wrap_after_last_column =
+    term && STARTS_WITH(term, "interix");
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
@@ -423,6 +426,23 @@ static bool cheap_to_print(UI *ui, int row, int col, int next)
   return true;
 }
 
+/// The behaviour that this is checking for the absence of is undocumented,
+/// but is implemented in the majority of terminals and terminal emulators.
+/// Printing at the right margin does not cause an automatic wrap until the
+/// next character is printed, holding the cursor in place until then.
+static void check_final_column_wrap(UI *ui)
+{
+  TUIData *data = ui->data;
+  if (!data->immediate_wrap_after_last_column) {
+    return;
+  }
+  UGrid *grid = &data->grid;
+  if (grid->col == ui->width) {
+    grid->col = 0;
+    ++grid->row;
+  }
+}
+
 /// This optimizes several cases where it is cheaper to do something other
 /// than send a full cursor positioning control sequence.  However, there are
 /// some further optimizations that may seem obvious but that will not work.
@@ -460,6 +480,7 @@ static void cursor_goto(UI *ui, int row, int col)
           grid->col, col - 1, {
           print_cell(ui, cell);
           ++grid->col;
+          check_final_column_wrap(ui);
         });
       }
   }
@@ -471,6 +492,9 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_left);
         }
       } else {
+        if (!data->immediate_wrap_after_last_column && grid->col >= ui->width) {
+          --n;  // We have calculated one too many columns because of delayed wrap.
+        }
         data->params[0].i = n;
         unibi_out(ui, unibi_parm_left_cursor);
       }
@@ -565,6 +589,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
       cursor_goto(ui, row, col);
       print_cell(ui, cell);
       ++grid->col;
+      check_final_column_wrap(ui);
     });
   }
 
@@ -879,6 +904,7 @@ static void tui_put(UI *ui, String text)
 {
   TUIData *data = ui->data;
   print_cell(ui, ugrid_put(&data->grid, (uint8_t *)text.data, text.size));
+  check_final_column_wrap(ui);
 }
 
 static void tui_bell(UI *ui)
@@ -932,6 +958,7 @@ static void tui_flush(UI *ui)
       cursor_goto(ui, row, col);
       print_cell(ui, cell);
       ++grid->col;
+      check_final_column_wrap(ui);
     });
   }
 
@@ -2408,6 +2435,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (term && STARTS_WITH(term, "tmux")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
+  } else if (term && STARTS_WITH(term, "interix")) {
+    unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   } else if (linuxvt) {
     // No deviations from the vanilla terminfo.
   } else if (term && STARTS_WITH(term, "putty")) {
