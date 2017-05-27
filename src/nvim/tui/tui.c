@@ -2462,7 +2462,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // teminfo entries.  See
     // https://github.com/gnachman/iTerm2/pull/92 for more.
     // xterm even has an extended version that has a vertical bar.
-    if (true_xterm     // per xterm ctlseqs doco (since version 282)
+    if (true_xterm    // per xterm ctlseqs doco (since version 282)
+        || rxvt       // per command.C
+        || iterm      // per analysis of VT100Terminal.m
         // Allows forcing the use of DECSCUSR on linux type terminals, such as
         // console-terminal-emulator from the nosh toolset, which does indeed
         // implement the xterm extension:
