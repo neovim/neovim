@@ -318,6 +318,7 @@ end)
 describe("tui 't_Co' (terminal colors)", function()
   local screen
   local is_linux = (helpers.eval("system('uname') =~? 'linux'") == 1)
+  local is_freebsd = (helpers.eval("system('uname') =~? 'FreeBSD'") == 1)
 
   local function assert_term_colors(term, colorterm, maxcolors)
     helpers.clear({env={TERM=term}, args={}})
@@ -332,7 +333,7 @@ describe("tui 't_Co' (terminal colors)", function()
     thelpers.feed_data(":echo &t_Co\n")
     helpers.wait()
     local tline
-    if maxcolors == 8 then
+    if maxcolors == 8 or maxcolors == 16 then
       tline = "~                                                 "
     else
       tline = "{4:~                                                 }"
@@ -348,35 +349,71 @@ describe("tui 't_Co' (terminal colors)", function()
     ]], tline, tline, tline, tostring(maxcolors and maxcolors or "")))
   end
 
-  it("unknown TERM sets empty 't_Co'", function()
-    assert_term_colors("yet-another-term", nil, nil)
+  -- ansi and no terminal type at all:
+
+  it("no TERM uses 8 colors", function()
+    assert_term_colors(nil, nil, 8)
   end)
 
-  it("unknown TERM with COLORTERM=screen-256color uses 256 colors", function()
-    assert_term_colors("yet-another-term", "screen-256color", 256)
+  it("TERM=ansi no COLORTERM uses 8 colors", function()
+    assert_term_colors("ansi", nil, 8)
   end)
+
+  it("TERM=ansi with COLORTERM=anything-no-number uses 16 colors", function()
+    assert_term_colors("ansi", "yet-another-term", 16)
+  end)
+
+  it("unknown TERM COLORTERM with 256 in name uses 256 colors", function()
+    assert_term_colors("ansi", "yet-another-term-256color", 256)
+  end)
+
+  it("TERM=ansi-256color sets 256 colours", function()
+    assert_term_colors("ansi-256color", nil, 256)
+  end)
+
+  -- Unknown terminal types:
+
+  it("unknown TERM no COLORTERM sets 8 colours", function()
+    assert_term_colors("yet-another-term", nil, 8)
+  end)
+
+  it("unknown TERM with COLORTERM=anything-no-number uses 16 colors", function()
+    assert_term_colors("yet-another-term", "yet-another-term", 16)
+  end)
+
+  it("unknown TERM with 256 in name sets 256 colours", function()
+    assert_term_colors("yet-another-term-256color", nil, 256)
+  end)
+
+  it("unknown TERM COLORTERM with 256 in name uses 256 colors", function()
+    assert_term_colors("yet-another-term", "yet-another-term-256color", 256)
+  end)
+
+  -- Linux kernel terminal emulator:
 
   it("TERM=linux uses 256 colors", function()
-    if is_linux then
-      assert_term_colors("linux", nil, 256)
-    else
-      pending()
-    end
+    assert_term_colors("linux", nil, 256)
   end)
 
   it("TERM=linux-16color uses 256 colors", function()
-    if is_linux then
-      assert_term_colors("linux-16color", nil, 256)
+    assert_term_colors("linux-16color", nil, 256)
+  end)
+
+  -- screen and tmux:
+
+  it("TERM=screen no COLORTERM uses 8/256 colors", function()
+    if is_freebsd then
+      assert_term_colors("screen", nil, 256)
     else
-      pending()
+      assert_term_colors("screen", nil, 8)
     end
   end)
 
-  it("TERM=screen uses 8 colors", function()
-    if is_linux then
-      assert_term_colors("screen", nil, 8)
+  it("TERM=screen COLORTERM=screen uses 16/256 colors", function()
+    if is_freebsd then
+      assert_term_colors("screen", "screen", 256)
     else
-      pending()
+      assert_term_colors("screen", "screen", 16)
     end
   end)
 
@@ -384,15 +421,82 @@ describe("tui 't_Co' (terminal colors)", function()
     assert_term_colors("screen", "screen-256color", 256)
   end)
 
-  it("TERM=yet-another-term COLORTERM=screen-256color uses 256 colors", function()
-    assert_term_colors("screen", "screen-256color", 256)
+  it("TERM=screen-256color no COLORTERM uses 256 colors", function()
+    assert_term_colors("screen-256color", nil, 256)
   end)
+
+  it("TERM=tmux no COLORTERM uses 8/256 colors", function()
+    if is_freebsd then
+      assert_term_colors("tmux", nil, 256)
+    else
+      assert_term_colors("tmux", nil, 8)
+    end
+  end)
+
+  it("TERM=tmux COLORTERM=tmux uses 16/256 colors", function()
+    if is_freebsd then
+      assert_term_colors("tmux", "tmux", 256)
+    else
+      assert_term_colors("tmux", "tmux", 16)
+    end
+  end)
+
+  it("TERM=tmux COLORTERM=tmux-256color uses 256 colors", function()
+    assert_term_colors("tmux", "tmux-256color", 256)
+  end)
+
+  it("TERM=tmux-256color no COLORTERM uses 256 colors", function()
+    assert_term_colors("tmux-256color", nil, 256)
+  end)
+
+  -- xterm and imitators:
 
   it("TERM=xterm uses 256 colors", function()
     assert_term_colors("xterm", nil, 256)
   end)
 
+  it("TERM=xterm COLORTERM=gnome-terminal uses 256 colors", function()
+    assert_term_colors("xterm", "gnome-terminal", 256)
+  end)
+
+  it("TERM=xterm COLORTERM=mate-terminal uses 256 colors", function()
+    assert_term_colors("xterm", "mate-terminal", 256)
+  end)
+
   it("TERM=xterm-256color uses 256 colors", function()
     assert_term_colors("xterm-256color", nil, 256)
   end)
+
+  -- rxvt and stterm:
+
+  it("TERM=rxvt no COLORTERM uses 256 colors", function()
+    assert_term_colors("rxvt", nil, 256)
+  end)
+
+  it("TERM=rxvt-256color uses 256 colors", function()
+    assert_term_colors("rxvt-256color", nil, 256)
+  end)
+
+  it("TERM=st no COLORTERM uses 256 colors", function()
+    assert_term_colors("st", nil, 256)
+  end)
+
+  it("TERM=st-256color uses 256 colors", function()
+    assert_term_colors("st-256color", nil, 256)
+  end)
+
+  -- others:
+
+  it("TERM=interix uses 8 colors", function()
+    assert_term_colors("interix", nil, 8)
+  end)
+
+  it("TERM=iterm uses 16/256 colors", function()
+    if is_freebsd then
+      assert_term_colors("iterm", nil, 256)
+    else
+      assert_term_colors("iterm", nil, 16)
+    end
+  end)
+
 end)
