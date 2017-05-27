@@ -168,7 +168,7 @@ int main(int argc, char **argv)
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   // XXX: Without this the SIGHUP handler is skipped on some systems.
-  sleep(100);
+  sleep(1);
 
   return 0;
 }

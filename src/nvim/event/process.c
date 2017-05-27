@@ -230,6 +230,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   proc->stopped_time = os_hrtime();
+  os_microdelay(1, true);
   switch (proc->type) {
     case kProcessTypeUv:
       // Close the process's stdin. If the process doesn't close its own
