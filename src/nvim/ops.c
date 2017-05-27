@@ -2732,7 +2732,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
    * Using inserted text works differently, because the register includes
    * special characters (newlines, etc.).
    */
-  if (regname == '.') {
+  if (regname == '.' && !reg) {
     bool non_linewise_vis = (VIsual_active && VIsual_mode != 'V');
 
     // PUT_LINE has special handling below which means we use 'i' to start.
@@ -2815,7 +2815,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
    * For special registers '%' (file name), '#' (alternate file name) and
    * ':' (last command line), etc. we have to create a fake yank register.
    */
-  if (get_spec_reg(regname, &insert_string, &allocated, true)) {
+  if (!reg && get_spec_reg(regname, &insert_string, &allocated, true)) {
     if (insert_string == NULL) {
       return;
     }
@@ -5673,6 +5673,71 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
 
 end:
   return target;
+}
+
+/// @param[out] reg Expected to be empty
+bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
+{
+  if (regtype.size > 1) {
+    return false;
+  }
+  char type = regtype.data ? regtype.data[0] : NUL;
+
+  switch (type) {
+  case 0:
+    reg->y_type = kMTUnknown;
+    break;
+  case 'v': case 'c':
+    reg->y_type = kMTCharWise;
+    break;
+  case 'V': case 'l':
+    reg->y_type = kMTLineWise;
+    break;
+  case 'b': case Ctrl_V:
+    reg->y_type = kMTBlockWise;
+    break;
+  default:
+    return false;
+  }
+
+  reg->y_array = xcalloc(lines, sizeof(uint8_t *));
+  reg->y_size = lines;
+  reg->additional_data = NULL;
+  reg->timestamp = 0;
+  return true;
+}
+
+void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
+{
+  if (reg->y_size > 0 && strlen((char *)reg->y_array[reg->y_size-1]) == 0) {
+    // a known-to-be charwise yank might have a final linebreak
+    // but otherwise there is no line after the final newline
+    if (reg->y_type != kMTCharWise) {
+      if (reg->y_type == kMTUnknown || clipboard_adjust) {
+        xfree(reg->y_array[reg->y_size-1]);
+        reg->y_size--;
+      }
+      if (reg->y_type == kMTUnknown) {
+        reg->y_type = kMTLineWise;
+      }
+    }
+  } else {
+    if (reg->y_type == kMTUnknown) {
+      reg->y_type = kMTCharWise;
+    }
+  }
+
+  if (reg->y_type == kMTBlockWise) {
+    size_t maxlen = 0;
+    for (size_t i = 0; i < reg->y_size; i++) {
+      size_t rowlen = STRLEN(reg->y_array[i]);
+      if (rowlen > maxlen) {
+        maxlen = rowlen;
+      }
+    }
+    assert(maxlen <= INT_MAX);
+    reg->y_width = (int)maxlen - 1;
+  }
 }
 
 static bool get_clipboard(int name, yankreg_T **target, bool quiet)

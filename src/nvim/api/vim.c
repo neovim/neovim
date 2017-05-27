@@ -36,6 +36,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/fileio.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
 #include "nvim/syntax.h"
@@ -1202,6 +1203,53 @@ Dictionary nvim_get_namespaces(void)
   })
 
   return retval;
+}
+
+/// @param lines contents. One empty line for no-op, zero lines to emulate error
+/// @param type type ("c", "l", "b") or empty to guess from contents
+/// @param name if emulates put from a register, otherwise empty
+/// @param prev True to emulate "P" otherwise "p"
+/// @param count repeat count
+/// @param[out] err details of an error that have occurred, if any.
+void nvim_put(ArrayOf(String) lines, String type, String regname, Boolean prev, Integer count, Error *err)
+  FUNC_API_SINCE(6)
+{
+  if (regname.size > 1) {
+    api_set_error(err,
+                  kErrorTypeValidation,
+                  "regname must be a single ASCII char or the empty string");
+    return;
+  }
+  yankreg_T *reg = xcalloc(sizeof(yankreg_T), 1);
+  if (!prepare_yankreg_from_object(reg, type, lines.size)) {
+    api_set_error(err,
+                  kErrorTypeValidation,
+                  "Invalid regtype %s",
+                  type.data);
+    return;
+  }
+
+  for (size_t i = 0; i < lines.size; i++) {
+    if (lines.items[i].type != kObjectTypeString) {
+      api_set_error(err,
+                    kErrorTypeValidation,
+                    "All items in the lines array must be strings");
+      goto cleanup;
+    }
+    String line = lines.items[i].data.string;
+    reg->y_array[i] = (char_u *)xmemdupz(line.data, line.size);
+    memchrsub(reg->y_array[i], NUL, NL, line.size);
+  }
+
+  finish_yankreg_from_object(reg, false);
+
+  int name = regname.size ? regname.data[0] : NUL;
+  do_put(name, reg, prev ? BACKWARD : FORWARD, (long)count, 0);
+
+cleanup:
+  free_register(reg);
+  xfree(reg);
+
 }
 
 /// Subscribes to event broadcasts.
