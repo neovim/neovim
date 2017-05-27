@@ -2447,7 +2447,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 
   // Dickey ncurses terminfo has included the Ss and Se capabilities, pioneered
   // by tmux, since 2011-07-14.  So adding them to terminal types, that do
-  // actually have such control sequences but lack the currect definitions in
+  // actually have such control sequences but lack the correct definitions in
   // terminfo, is a fixup, not an augmentation.
   data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
   data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
@@ -2479,7 +2479,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       // form.
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           "\x1b[%?"
-          "%p1%{4}%>" "%t%p1%{2}%-" 	// a bit of a bodge for extension values
+          "%p1%{4}%>" "%t%p1%{2}%-"     // a bit of a bodge for extension values
           "%e%p1"              // the conventional codes are just passed through
           "%;%d q");
       if (-1 == data->unibi_ext.reset_cursor_style) {
@@ -2537,6 +2537,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     const char *colorterm, long vte_version, bool konsole, bool iterm)
 {
   unibi_term *ut = data->ut;
+  bool true_xterm = !!os_getenv("XTERM_VERSION");
   bool xterm = term && STARTS_WITH(term, "xterm");
   bool dtterm = term && STARTS_WITH(term, "dtterm");
   bool linuxvt = term && STARTS_WITH(term, "linux");
@@ -2544,6 +2545,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool teraterm = term && STARTS_WITH(term, "teraterm");
   bool putty = term && STARTS_WITH(term, "putty");
   bool screen = term && STARTS_WITH(term, "screen");
+  bool st = term && STARTS_WITH(term, "st");
   bool tmux_wrap = screen && !!os_getenv("TMUX");
   bool truecolor = colorterm
     && (0 == strcmp(colorterm, "truecolor") || 0 == strcmp(colorterm, "24bit"));
@@ -2561,13 +2563,43 @@ static void augment_terminfo(TUIData *data, const char *term,
     data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[r");
   }
-  // See https://gist.github.com/XVilka/8346728 for more about this.
-  if (putty || xterm || rxvt || linuxvt || konsole || iterm || truecolor) {
-    data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, NULL,
-        "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
-    data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, NULL,
-        "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
+
+  // Dickey ncurses terminfo does not include the setrgbf and setrgbb
+  // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  So adding
+  // them to terminal types, that do actually have such control sequences but
+  // lack the correct definitions in terminfo, is an augmentation, not a
+  // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
+  bool has_standard_rgb = vte_version >= 3600  // per GNOME bug #685759
+    || true_xterm;
+  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
+  bool has_non_standard_rgb =
+    linuxvt     // Linux 4.8+ supports true-colour SGR.
+    || konsole  // per commentary in VT102Emulation.cpp
+    // per http://lists.schmorp.de/pipermail/rxvt-unicode/2016q2/002261.html
+    || rxvt
+    || st       // per experimentation
+    || iterm || truecolor;
+  data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
+  if (-1 == data->unibi_ext.set_rgb_foreground) {
+    if (has_standard_rgb) {
+      data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
+          "\x1b[38:2:%p1%d:%p2%d:%p3%dm");
+    } else if (has_non_standard_rgb) {
+      data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
+          "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
+    }
   }
+  data->unibi_ext.set_rgb_background = unibi_find_ext_str(ut, "setrgbb");
+  if (-1 == data->unibi_ext.set_rgb_background) {
+    if (has_standard_rgb) {
+      data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
+          "\x1b[48:2:%p1%d:%p2%d:%p3%dm");
+    } else if (has_non_standard_rgb) {
+      data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
+          "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
+    }
+  }
+
   if (iterm) {
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP(tmux_wrap, "\033]Pl%p1%06x\033\\"));

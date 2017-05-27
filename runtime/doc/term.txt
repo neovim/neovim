@@ -82,11 +82,16 @@ operation; and it will override |terminfo| saying that it has fewer colours
 available.
 
 						*true-color* *xterm-true-color*
-Nvim supports using true (24-bit) colours in the terminal.  |terminfo| does
-not contain flags to say when terminals have true colour support.  So Nvim
-simply assumes true colour support for (all) "xterm", "rxvt", "linux",
-"putty", and "iterm" terminal types, or when Konsole or a terminal emulator
-that sets the COLORTERM environment variable to "truecolor" is detected.
+Nvim supports using true (24-bit) colours in the terminal, on terminals that
+support it.  It uses the same |terminfo| extensions that were proposed by
+Rüdiger Sonderfeld in 2013 for this: "setrgbf" and "setrgbb".  If your
+terminfo definition specifies these, then nothing more is required.
+
+If your terminfo definition is missing them, then Nvim will on a wide range of
+terminals resort to using the ISO 8613-6:1994/ITU T.416:1993 control sequences
+for setting RGB colours.  This includes the "rxvt", "linux", "st", and "iterm"
+terminal types, or when Konsole, genuine Xterm, or a terminal emulator that
+sets the COLORTERM environment variable to "truecolor" is detected.
 
 							*xterm-resize*
 Nvim can resize the terminal display on some terminals that implement an
@@ -99,12 +104,14 @@ Nvim will adjust the shape of the cursor from a block to a line when in insert
 mode (or as specified by the 'guicursor' option), on terminals that support
 it.  It uses the same |terminfo| extensions that were pioneered by tmux for
 this: "Ss" and "Se".  If your terminfo definition specifies these, as some
-(such as "xterm+tmux") do, then nothing more is required.
+(such as those based upon "xterm+tmux") do, then nothing more is required.
 
 If your terminfo definition is missing them, then Nvim will on a wide range of
 terminals resort to using the conventional DECSUSR control sequence for
 adjusting the cursor shape.  If Konsole is detected, Nvim will use the
-idiosyncratic Konsole terminal control sequences for this.
+idiosyncratic Konsole terminal control sequences for this.  Similarly if the
+Linux kernel's built-in terminal emulator is detected, with its idiosyncratic
+control sequence.
 
 Note: tmux itself accepts the conventional DECSUSR control sequence, the same
 as many other terminals do.  It has to translate this into whatever control
