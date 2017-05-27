@@ -1136,7 +1136,7 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
   size_t max = unibi_count_ext_str(ut);
   for (size_t i = 0; i < max; ++i) {
     const char * n = unibi_get_ext_str_name(ut, i);
-    if (0 == strcmp(n, name)) {
+    if (n && 0 == strcmp(n, name)) {
       return (int)i;
     }
   }
