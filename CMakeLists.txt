@@ -228,7 +228,7 @@ else()
 
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
   # 3.4.1 used there.
-  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND CMAKE_C_COMPILER_ID MATCHES "Clang")
     add_definitions(-Wno-c11-extensions)
   endif()
 endif()
@@ -456,7 +456,6 @@ include(InstallHelpers)
 file(GLOB MANPAGES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   man/nvim.1)
-
 install_helper(
   FILES ${MANPAGES}
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
