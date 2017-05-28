@@ -48,6 +48,12 @@
 #define TMUX_WRAP(is_tmux,seq) ((is_tmux) ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
 #define LINUXRESETC "\x1b[?0c"
 
+// Per the commentary in terminfo, only a minus sign is a true suffix
+// separator.
+#define TERMINAL_FAMILY(term, prefix) ((term) \
+    && (0 == memcmp((term), (prefix), sizeof(prefix) - 1)) \
+    && ('\0' == (term)[sizeof(prefix) - 1] || '-' == (term)[sizeof(prefix) - 1]))
+
 typedef struct {
   int top, bot, left, right;
 } Rect;
@@ -186,7 +192,7 @@ static void terminfo_start(UI *ui)
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
   data->immediate_wrap_after_last_column =
-    term && STARTS_WITH(term, "interix");
+    TERMINAL_FAMILY(term, "interix");
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
@@ -2344,23 +2350,23 @@ static const char ansi_terminfo[] = {
 /// behave as much like an external terminfo database as possible.
 static unibi_term *load_builtin_terminfo(const char * term)
 {
-  if (term && STARTS_WITH(term, "xterm")) {
+  if (TERMINAL_FAMILY(term, "xterm")) {
     return unibi_from_mem(xterm_256colour_terminfo, sizeof xterm_256colour_terminfo);
-  } else if (term && STARTS_WITH(term, "screen")) {
+  } else if (TERMINAL_FAMILY(term, "screen")) {
     return unibi_from_mem(screen_256colour_terminfo, sizeof screen_256colour_terminfo);
-  } else if (term && STARTS_WITH(term, "tmux")) {
+  } else if (TERMINAL_FAMILY(term, "tmux")) {
     return unibi_from_mem(tmux_256colour_terminfo, sizeof tmux_256colour_terminfo);
-  } else if (term && STARTS_WITH(term, "rxvt")) {
+  } else if (TERMINAL_FAMILY(term, "rxvt")) {
     return unibi_from_mem(rxvt_256colour_terminfo, sizeof rxvt_256colour_terminfo);
-  } else if (term && STARTS_WITH(term, "putty")) {
+  } else if (TERMINAL_FAMILY(term, "putty")) {
     return unibi_from_mem(putty_256colour_terminfo, sizeof putty_256colour_terminfo);
-  } else if (term && STARTS_WITH(term, "linux")) {
+  } else if (TERMINAL_FAMILY(term, "linux")) {
     return unibi_from_mem(linux_16colour_terminfo, sizeof linux_16colour_terminfo);
-  } else if (term && STARTS_WITH(term, "interix")) {
+  } else if (TERMINAL_FAMILY(term, "interix")) {
     return unibi_from_mem(interix_8colour_terminfo, sizeof interix_8colour_terminfo);
-  } else if (term && (STARTS_WITH(term, "iterm") || STARTS_WITH(term, "iTerm"))) {
+  } else if (TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app")) {
     return unibi_from_mem(iterm_16colour_terminfo, sizeof iterm_16colour_terminfo);
-  } else if (term && STARTS_WITH(term, "st")) {
+  } else if (TERMINAL_FAMILY(term, "st")) {
     return unibi_from_mem(st_256colour_terminfo, sizeof st_256colour_terminfo);
   } else {
     return unibi_from_mem(ansi_terminfo, sizeof ansi_terminfo);
@@ -2377,14 +2383,15 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 {
   unibi_term *ut = data->ut;
   bool true_xterm = !!os_getenv("XTERM_VERSION");
-  bool xterm = term && STARTS_WITH(term, "xterm");
+  bool xterm = TERMINAL_FAMILY(term, "xterm");
   bool mate = colorterm && strstr(colorterm, "mate-terminal");
   bool gnome = colorterm && strstr(colorterm, "gnome-terminal");
-  bool linuxvt = term && STARTS_WITH(term, "linux");
-  bool rxvt = term && STARTS_WITH(term, "rxvt");
-  bool teraterm = term && STARTS_WITH(term, "teraterm");
-  bool putty = term && STARTS_WITH(term, "putty");
-  bool screen = term && STARTS_WITH(term, "screen");
+  bool linuxvt = TERMINAL_FAMILY(term, "linux");
+  bool rxvt = TERMINAL_FAMILY(term, "rxvt");
+  bool teraterm = TERMINAL_FAMILY(term, "teraterm");
+  bool putty = TERMINAL_FAMILY(term, "putty");
+  bool screen = TERMINAL_FAMILY(term, "screen");
+  bool st = TERMINAL_FAMILY(term, "st");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -2432,16 +2439,16 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (screen) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
-  } else if (term && STARTS_WITH(term, "tmux")) {
+  } else if (TERMINAL_FAMILY(term, "tmux")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
-  } else if (term && STARTS_WITH(term, "interix")) {
+  } else if (TERMINAL_FAMILY(term, "interix")) {
     unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   } else if (linuxvt) {
     // No deviations from the vanilla terminfo.
-  } else if (term && STARTS_WITH(term, "putty")) {
+  } else if (TERMINAL_FAMILY(term, "putty")) {
     // No deviations from the vanilla terminfo.
-  } else if (term && (STARTS_WITH(term, "iterm") || STARTS_WITH(term, "iTerm"))) {
+  } else if (TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app")) {
     // No deviations from the vanilla terminfo.
   }
 
@@ -2576,14 +2583,14 @@ static void augment_terminfo(TUIData *data, const char *term,
 {
   unibi_term *ut = data->ut;
   bool true_xterm = !!os_getenv("XTERM_VERSION");
-  bool xterm = term && STARTS_WITH(term, "xterm");
-  bool dtterm = term && STARTS_WITH(term, "dtterm");
-  bool linuxvt = term && STARTS_WITH(term, "linux");
-  bool rxvt = term && STARTS_WITH(term, "rxvt");
-  bool teraterm = term && STARTS_WITH(term, "teraterm");
-  bool putty = term && STARTS_WITH(term, "putty");
-  bool screen = term && STARTS_WITH(term, "screen");
-  bool st = term && STARTS_WITH(term, "st");
+  bool xterm = TERMINAL_FAMILY(term, "xterm");
+  bool dtterm = TERMINAL_FAMILY(term, "dtterm");
+  bool linuxvt = TERMINAL_FAMILY(term, "linux");
+  bool rxvt = TERMINAL_FAMILY(term, "rxvt");
+  bool teraterm = TERMINAL_FAMILY(term, "teraterm");
+  bool putty = TERMINAL_FAMILY(term, "putty");
+  bool screen = TERMINAL_FAMILY(term, "screen");
+  bool st = TERMINAL_FAMILY(term, "st");
   bool tmux_wrap = screen && !!os_getenv("TMUX");
   bool truecolor = colorterm
     && (0 == strcmp(colorterm, "truecolor") || 0 == strcmp(colorterm, "24bit"));
