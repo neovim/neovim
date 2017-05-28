@@ -399,7 +399,15 @@ describe("tui 't_Co' (terminal colors)", function()
     assert_term_colors("linux-16color", nil, 256)
   end)
 
+  it("TERM=linux-256color uses 256 colors", function()
+    assert_term_colors("linux-256color", nil, 256)
+  end)
+
   -- screen and tmux:
+  --
+  -- FreeBSD falls back to the built-in screen-256colour entry.
+  -- Linux and MacOS have a screen entry in external terminfo with 8 colours,
+  -- which is raised to 16 by COLORTERM.
 
   it("TERM=screen no COLORTERM uses 8/256 colors", function()
     if is_freebsd then
@@ -460,32 +468,45 @@ describe("tui 't_Co' (terminal colors)", function()
   end)
 
   -- rxvt and stterm:
+  --
+  -- FreeBSD and MacOS fall back to the built-in rxvt-256color and
+  -- st-256colour entries.
+  -- Linux has an rxvt, an st, and an st-16color entry in external terminfo
+  -- with 8, 8, and 16 colours respectively, which are raised to 256.
 
   it("TERM=rxvt no COLORTERM uses 256 colors", function()
     assert_term_colors("rxvt", nil, 256)
+  end)
+
+  it("TERM=rxvt COLORTERM=rxvt uses 256 colors", function()
+    assert_term_colors("rxvt", "rxvt", 256)
   end)
 
   it("TERM=rxvt-256color uses 256 colors", function()
     assert_term_colors("rxvt-256color", nil, 256)
   end)
 
-  it("TERM=st no COLORTERM uses 8/256 colors", function()
-    if is_freebsd then
-      assert_term_colors("st", nil, 256)
-    else
-      assert_term_colors("st", nil, 8)
-    end
+  it("TERM=st no COLORTERM uses 256 colors", function()
+    assert_term_colors("st", nil, 256)
   end)
 
-  it("TERM=st COLORTERM=st uses 16/256 colors", function()
-    if is_freebsd then
-      assert_term_colors("st", "st", 256)
-    else
-      assert_term_colors("st", "st", 16)
-    end
+  it("TERM=st COLORTERM=st uses 256 colors", function()
+    assert_term_colors("st", "st", 256)
   end)
 
   it("TERM=st COLORTERM=st-256color uses 256 colors", function()
+    assert_term_colors("st", "st-256color", 256)
+  end)
+
+  it("TERM=st-16color no COLORTERM uses 8/256 colors", function()
+    assert_term_colors("st", nil, 256)
+  end)
+
+  it("TERM=st-16color COLORTERM=st uses 16/256 colors", function()
+    assert_term_colors("st", "st", 256)
+  end)
+
+  it("TERM=st-16color COLORTERM=st-256color uses 256 colors", function()
     assert_term_colors("st", "st-256color", 256)
   end)
 
@@ -497,6 +518,10 @@ describe("tui 't_Co' (terminal colors)", function()
 
   it("TERM=interix uses 8 colors", function()
     assert_term_colors("interix", nil, 8)
+  end)
+
+  it("TERM=iTerm.app uses 256 colors", function()
+    assert_term_colors("iTerm.app", nil, 256)
   end)
 
   it("TERM=iterm uses 256 colors", function()

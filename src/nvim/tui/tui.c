@@ -2459,7 +2459,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals for
     // more on this.
-    if (konsole || mate || xterm || gnome || rxvt
+    if (konsole || mate || xterm || gnome || rxvt || st
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || (colorterm && strstr(colorterm, "256"))
         || (term && strstr(term, "256"))
