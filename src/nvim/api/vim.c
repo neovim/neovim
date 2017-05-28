@@ -29,6 +29,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memline.h"
+#include "nvim/mark.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/popupmnu.h"
@@ -1244,7 +1245,16 @@ void nvim_put(ArrayOf(String) lines, String type, String regname, Boolean prev, 
   finish_yankreg_from_object(reg, false);
 
   int name = regname.size ? regname.data[0] : NUL;
-  do_put(name, reg, prev ? BACKWARD : FORWARD, (long)count, 0);
+  bool VIsual_was_active = VIsual_active;
+  int flags = 0;
+  if (State & INSERT) {
+    flags |= PUT_CURSEND;
+  } else if (VIsual_active) {
+    // TODO: fix VIsual when cursor is before, or emulate the delete as well
+    flags |= lt(VIsual, curwin->w_cursor) ? PUT_CURSEND : 0;
+  }
+  do_put(name, reg, prev ? BACKWARD : FORWARD, (long)count, flags);
+  VIsual_active = VIsual_was_active;
 
 cleanup:
   free_register(reg);
