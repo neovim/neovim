@@ -45,6 +45,12 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher,
       return UV_EINVAL;
     }
 
+    if (*port == NUL) {
+      // When no port is given, (uv_)getaddrinfo expects NULL otherwise the
+      // implementation may attempt to lookup the service by name (and fail)
+      port = NULL;
+    }
+
     uv_getaddrinfo_t request;
 
     int retval = uv_getaddrinfo(&loop->uv, &request, NULL, addr, port,
