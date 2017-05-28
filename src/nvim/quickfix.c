@@ -188,6 +188,11 @@ typedef struct {
  */
 #define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? wp->w_llist_ref : wp->w_llist)
 
+// Looking up a buffer can be slow if there are many.  Remember the last one
+// to make this a lot faster if there are multiple matches in the same file.
+static char_u *qf_last_bufname = NULL;
+static bufref_T  qf_last_bufref = { NULL, 0 };
+
 /*
  * Read the errorfile "efile" into memory, line by line, building the error
  * list. Set the error list's title to qf_title.
@@ -968,6 +973,10 @@ qf_init_ext(
   int retval = -1;                      // default: return error flag
   int status;
 
+  // Do not used the cached buffer, it may have been wiped out.
+  xfree(qf_last_bufname);
+  qf_last_bufname = NULL;
+
   fields.namebuf = xmalloc(CMDBUFFSIZE + 1);
   fields.errmsglen = CMDBUFFSIZE + 1;
   fields.errmsg = xmalloc(fields.errmsglen);
@@ -1398,11 +1407,6 @@ void copy_loclist(win_T *from, win_T *to)
 
   to->w_llist->qf_curlist = qi->qf_curlist;     /* current list */
 }
-
-// Looking up a buffer can be slow if there are many. Remember the last one to
-// make this a lot faster if there are multiple matches in the same file.
-static char_u *qf_last_bufname = NULL;
-static bufref_T qf_last_bufref = { NULL, 0 };
 
 // Get buffer number for file "directory.fname".
 // Also sets the b_has_qf_entry flag.
