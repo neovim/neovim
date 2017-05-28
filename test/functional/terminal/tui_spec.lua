@@ -479,14 +479,14 @@ describe("tui 't_Co' (terminal colors)", function()
 
   it("TERM=st COLORTERM=st uses 16/256 colors", function()
     if is_freebsd then
-      assert_term_colors("st", nil, 256)
+      assert_term_colors("st", "st", 256)
     else
-      assert_term_colors("st", nil, 16)
+      assert_term_colors("st", "st", 16)
     end
   end)
 
   it("TERM=st COLORTERM=st-256color uses 256 colors", function()
-    assert_term_colors("st", nil, 256)
+    assert_term_colors("st", "st-256color", 256)
   end)
 
   it("TERM=st-256color uses 256 colors", function()
