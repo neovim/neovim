@@ -62,12 +62,14 @@ describe('serverstart(), serverstop()', function()
     clear_serverlist()
     eq({}, funcs.serverlist())
 
-    funcs.serverstart('127.0.0.1:0')  -- assign random port
-    assert(string.match(funcs.serverlist()[1], '127.0.0.1:%d+'))
+    local s = funcs.serverstart('127.0.0.1:0')  -- assign random port
+    assert(string.match(s, '127.0.0.1:%d+'))
+    eq(s, funcs.serverlist()[1])
     clear_serverlist()
 
-    funcs.serverstart('127.0.0.1:')  -- assign random port
-    assert(string.match(funcs.serverlist()[1], '127.0.0.1:%d+'))
+    s = funcs.serverstart('127.0.0.1:')  -- assign random port
+    assert(string.match(s, '127.0.0.1:%d+'))
+    eq(s, funcs.serverlist()[1])
     clear_serverlist()
 
     funcs.serverstart('127.0.0.1:12345')
