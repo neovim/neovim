@@ -1512,7 +1512,7 @@ static const char screen_256colour_terminfo[] = {
     85, 80, 53, 0, 107, 97, 50, 0, 107, 98, 49, 0, 107, 98, 51, 0, 107, 99, 50, 0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
-static const char iterm_16colour_terminfo[] = {
+static const char iterm_256colour_terminfo[] = {
   26,   1,  57,   0,  29,   0,  15,   0, 105,   1,  73,   3, 105,  84, 101, 114,
  109,  46,  97, 112, 112, 124, 105, 116, 101, 114, 109, 124, 105,  84, 101, 114,
  109,  46,  97, 112, 112,  32, 116, 101, 114, 109, 105, 110,  97, 108,  32, 101,
@@ -2365,7 +2365,7 @@ static unibi_term *load_builtin_terminfo(const char * term)
   } else if (TERMINAL_FAMILY(term, "interix")) {
     return unibi_from_mem(interix_8colour_terminfo, sizeof interix_8colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app")) {
-    return unibi_from_mem(iterm_16colour_terminfo, sizeof iterm_16colour_terminfo);
+    return unibi_from_mem(iterm_256colour_terminfo, sizeof iterm_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "st")) {
     return unibi_from_mem(st_256colour_terminfo, sizeof st_256colour_terminfo);
   } else {
@@ -2379,7 +2379,7 @@ static unibi_term *load_builtin_terminfo(const char * term)
 /// external or a built-in database.  In an ideal world, the real terminfo data
 /// would be correct and complete, and this function would be almost empty.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
-    const char *colorterm, long vte_version, bool konsole, bool iterm)
+    const char *colorterm, long vte_version, bool konsole, bool iterm_env)
 {
   unibi_term *ut = data->ut;
   bool true_xterm = !!os_getenv("XTERM_VERSION");
@@ -2392,6 +2392,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool putty = TERMINAL_FAMILY(term, "putty");
   bool screen = TERMINAL_FAMILY(term, "screen");
   bool st = TERMINAL_FAMILY(term, "st");
+  bool iterm = TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app");
+  bool iterm_pretending_xterm = xterm && iterm_env;
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -2446,15 +2448,22 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   } else if (linuxvt) {
     // No deviations from the vanilla terminfo.
-  } else if (TERMINAL_FAMILY(term, "putty")) {
+  } else if (putty) {
     // No deviations from the vanilla terminfo.
-  } else if (TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app")) {
+  } else if (iterm) {
+    // No deviations from the vanilla terminfo.
+  } else if (st) {
     // No deviations from the vanilla terminfo.
   }
 
 #define XTERM_SETAF_256 \
-  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
+  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38:5:%p1%d%;m"
 #define XTERM_SETAB_256 \
+  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48:5:%p1%d%;m"
+  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
+#define XTERM_SETAF_256_NONSTANDARD \
+  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
+#define XTERM_SETAB_256_NONSTANDARD \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 #define XTERM_SETAF_16 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
@@ -2466,14 +2475,18 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals for
     // more on this.
-    if (konsole || mate || xterm || gnome || rxvt || st
+    if (xterm && true_xterm) {
+      unibi_set_num(ut, unibi_max_colors, 256);
+      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
+      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
+    } else if (konsole || mate || xterm || gnome || rxvt || st
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || (colorterm && strstr(colorterm, "256"))
         || (term && strstr(term, "256"))
         ) {
       unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
+      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_NONSTANDARD);
+      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_NONSTANDARD);
     }
   }
   // Terminals where there is actually 16-colour SGR support despite what
@@ -2500,7 +2513,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // xterm even has an extended version that has a vertical bar.
     if (true_xterm    // per xterm ctlseqs doco (since version 282)
         || rxvt       // per command.C
-        || iterm      // per analysis of VT100Terminal.m
+        // per analysis of VT100Terminal.m
+        || iterm || iterm_pretending_xterm
         // Allows forcing the use of DECSCUSR on linux type terminals, such as
         // console-terminal-emulator from the nosh toolset, which does indeed
         // implement the xterm extension:
@@ -2579,7 +2593,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 /// This adds stuff that is not in standard terminfo as extended unibilium
 /// capabilities.
 static void augment_terminfo(TUIData *data, const char *term,
-    const char *colorterm, long vte_version, bool konsole, bool iterm)
+    const char *colorterm, long vte_version, bool konsole, bool iterm_env)
 {
   unibi_term *ut = data->ut;
   bool true_xterm = !!os_getenv("XTERM_VERSION");
@@ -2591,6 +2605,8 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool putty = TERMINAL_FAMILY(term, "putty");
   bool screen = TERMINAL_FAMILY(term, "screen");
   bool st = TERMINAL_FAMILY(term, "st");
+  bool iterm = TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app");
+  bool iterm_pretending_xterm = xterm && iterm_env;
   bool tmux_wrap = screen && !!os_getenv("TMUX");
   bool truecolor = colorterm
     && (0 == strcmp(colorterm, "truecolor") || 0 == strcmp(colorterm, "24bit"));
@@ -2615,6 +2631,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   // lack the correct definitions in terminfo, is an augmentation, not a
   // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
   bool has_standard_rgb = vte_version >= 3600  // per GNOME bug #685759
+    || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
     || true_xterm;
   // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
   bool has_non_standard_rgb =
@@ -2623,7 +2640,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     // per http://lists.schmorp.de/pipermail/rxvt-unicode/2016q2/002261.html
     || rxvt
     || st       // per experimentation
-    || iterm || truecolor;
+    || truecolor;
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
   if (-1 == data->unibi_ext.set_rgb_foreground) {
     if (has_standard_rgb) {
@@ -2645,7 +2662,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     }
   }
 
-  if (iterm) {
+  if (iterm || iterm_pretending_xterm) {
     // FIXME: Bypassing tmux like this affects the cursor colour globally, in
     // all panes, which is not particularly desirable.  A better approach
     // would use a tmux control sequence and an extra if(screen) test.
