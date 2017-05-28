@@ -17,60 +17,53 @@
 #include "nvim/path.h"
 #include "nvim/memory.h"
 #include "nvim/macros.h"
+#include "nvim/charset.h"
+#include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/socket.c.generated.h"
 #endif
 
-#define NVIM_DEFAULT_TCP_PORT 7450
-
-void socket_watcher_init(Loop *loop, SocketWatcher *watcher,
-    const char *endpoint, void *data)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_NONNULL_ARG(3)
+int socket_watcher_init(Loop *loop, SocketWatcher *watcher,
+                        const char *endpoint)
+  FUNC_ATTR_NONNULL_ALL
 {
-  // Trim to `ADDRESS_MAX_SIZE`
-  if (xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr))
-      >= sizeof(watcher->addr)) {
-    // TODO(aktau): since this is not what the user wanted, perhaps we
-    // should return an error here
-    WLOG("Address was too long, truncated to %s", watcher->addr);
-  }
+  xstrlcpy(watcher->addr, endpoint, sizeof(watcher->addr));
+  char *addr = watcher->addr;
+  char *host_end = strrchr(addr, ':');
 
-  bool tcp = true;
-  char ip[16], *ip_end = xstrchrnul(watcher->addr, ':');
+  if (host_end && addr != host_end) {
+    // Split user specified address into two strings, addr(hostname) and port.
+    // The port part in watcher->addr will be updated later.
+    *host_end = '\0';
+    char *port = host_end + 1;
+    intmax_t iport;
 
-  // (ip_end - addr) is always > 0, so convert to size_t
-  size_t addr_len = (size_t)(ip_end - watcher->addr);
-
-  if (addr_len > sizeof(ip) - 1) {
-    // Maximum length of an IPv4 address buffer is 15 (eg: 255.255.255.255)
-    addr_len = sizeof(ip) - 1;
-  }
-
-  // Extract the address part
-  xstrlcpy(ip, watcher->addr, addr_len + 1);
-  int port = NVIM_DEFAULT_TCP_PORT;
-
-  if (*ip_end == ':') {
-    // Extract the port
-    long lport = strtol(ip_end + 1, NULL, 10); // NOLINT
-    if (lport <= 0 || lport > 0xffff) {
-      // Invalid port, treat as named pipe or unix socket
-      tcp = false;
-    } else {
-      port = (int) lport;
+    int ret = getdigits_safe(&(char_u *){ (char_u *)port }, &iport);
+    if (ret == FAIL || iport < 0 || iport > UINT16_MAX) {
+      ELOG("Invalid port: %s", port);
+      return UV_EINVAL;
     }
-  }
 
-  if (tcp) {
-    // Try to parse ip address
-    if (uv_ip4_addr(ip, port, &watcher->uv.tcp.addr)) {
-      // Invalid address, treat as named pipe or unix socket
-      tcp = false;
+    if (*port == NUL) {
+      // When no port is given, (uv_)getaddrinfo expects NULL otherwise the
+      // implementation may attempt to lookup the service by name (and fail)
+      port = NULL;
     }
-  }
 
-  if (tcp) {
+    uv_getaddrinfo_t request;
+
+    int retval = uv_getaddrinfo(&loop->uv, &request, NULL, addr, port,
+                                &(struct addrinfo){
+                                  .ai_family = AF_UNSPEC,
+                                  .ai_socktype = SOCK_STREAM,
+                                });
+    if (retval != 0) {
+      ELOG("Host lookup failed: %s", endpoint);
+      return retval;
+    }
+    watcher->uv.tcp.addrinfo = request.addrinfo;
+
     uv_tcp_init(&loop->uv, &watcher->uv.tcp.handle);
     watcher->stream = STRUCT_CAST(uv_stream_t, &watcher->uv.tcp.handle);
   } else {
@@ -82,33 +75,60 @@ void socket_watcher_init(Loop *loop, SocketWatcher *watcher,
   watcher->cb = NULL;
   watcher->close_cb = NULL;
   watcher->events = NULL;
+  watcher->data = NULL;
+
+  return 0;
 }
 
 int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
   FUNC_ATTR_NONNULL_ALL
 {
   watcher->cb = cb;
-  int result;
+  int result = UV_EINVAL;
 
   if (watcher->stream->type == UV_TCP) {
-    result = uv_tcp_bind(&watcher->uv.tcp.handle,
-                         (const struct sockaddr *)&watcher->uv.tcp.addr, 0);
+    struct addrinfo *ai = watcher->uv.tcp.addrinfo;
+
+    for (; ai; ai = ai->ai_next) {
+      result = uv_tcp_bind(&watcher->uv.tcp.handle, ai->ai_addr, 0);
+      if (result != 0) {
+        continue;
+      }
+      result = uv_listen(watcher->stream, backlog, connection_cb);
+      if (result == 0) {
+        struct sockaddr_storage sas;
+
+        // When the endpoint in socket_watcher_init() didn't specify a port
+        // number, a free random port number will be assigned. sin_port will
+        // contain 0 in this case, unless uv_tcp_getsockname() is used first.
+        uv_tcp_getsockname(&watcher->uv.tcp.handle, (struct sockaddr *)&sas,
+                           &(int){ sizeof(sas) });
+        uint16_t port = (uint16_t)((sas.ss_family == AF_INET)
+                                   ? ((struct sockaddr_in  *)&sas)->sin_port
+                                   : ((struct sockaddr_in6 *)&sas)->sin6_port);
+        // v:servername uses the string from watcher->addr
+        size_t len = strlen(watcher->addr);
+        snprintf(watcher->addr+len, sizeof(watcher->addr)-len, ":%" PRIu16,
+                 ntohs(port));
+        break;
+      }
+    }
+    uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
   } else {
     result = uv_pipe_bind(&watcher->uv.pipe.handle, watcher->addr);
-  }
-
-  if (result == 0) {
-    result = uv_listen(watcher->stream, backlog, connection_cb);
+    if (result == 0) {
+      result = uv_listen(watcher->stream, backlog, connection_cb);
+    }
   }
 
   assert(result <= 0);  // libuv should return negative error code or zero.
   if (result < 0) {
-    if (result == -EACCES) {
+    if (result == UV_EACCES) {
       // Libuv converts ENOENT to EACCES for Windows compatibility, but if
       // the parent directory does not exist, ENOENT would be more accurate.
       *path_tail((char_u *)watcher->addr) = NUL;
       if (!os_path_exists((char_u *)watcher->addr)) {
-        result = -ENOENT;
+        result = UV_ENOENT;
       }
     }
     return result;

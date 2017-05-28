@@ -14321,22 +14321,39 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  char *address;
   // If the user supplied an address, use it, otherwise use a temp.
   if (argvars[0].v_type != VAR_UNKNOWN) {
     if (argvars[0].v_type != VAR_STRING) {
       EMSG(_(e_invarg));
       return;
     } else {
-      rettv->vval.v_string = (char_u *)xstrdup(tv_get_string(argvars));
+      address = xstrdup(tv_get_string(argvars));
     }
   } else {
-    rettv->vval.v_string = (char_u *)server_address_new();
+    address = server_address_new();
   }
 
-  int result = server_start((char *) rettv->vval.v_string);
+  int result = server_start(address);
+  xfree(address);
+
   if (result != 0) {
-    EMSG2("Failed to start server: %s", uv_strerror(result));
+    EMSG2("Failed to start server: %s",
+          result > 0 ? "Unknonwn system error" : uv_strerror(result));
+    return;
   }
+
+  // Since it's possible server_start adjusted the given {address} (e.g.,
+  // "localhost:" will now have a port), return the final value to the user.
+  size_t n;
+  char **addrs = server_address_list(&n);
+  rettv->vval.v_string = (char_u *)addrs[n - 1];
+
+  n--;
+  for (size_t i = 0; i < n; i++) {
+    xfree(addrs[i]);
+  }
+  xfree(addrs);
 }
 
 /// "serverstop()" function
