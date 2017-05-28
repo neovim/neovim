@@ -44,14 +44,16 @@
 #define OUTBUF_SIZE 0xffff
 
 #define TOO_MANY_EVENTS 1000000
-#define STARTS_WITH(str, prefix) (!memcmp((str), (prefix), sizeof(prefix) - 1))
+#define STARTS_WITH(str, prefix) (strlen(term) >= (sizeof(prefix) - 1) \
+    && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
 #define TMUX_WRAP(is_tmux,seq) ((is_tmux) ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
 #define LINUXRESETC "\x1b[?0c"
 
 // Per the commentary in terminfo, only a minus sign is a true suffix
 // separator.
 #define TERMINAL_FAMILY(term, prefix) ((term) \
-    && (0 == memcmp((term), (prefix), sizeof(prefix) - 1)) \
+    && strlen(term) >= (sizeof(prefix) - 1) \
+    && 0 == memcmp((term), (prefix), sizeof(prefix) - 1) \
     && ('\0' == (term)[sizeof(prefix) - 1] || '-' == (term)[sizeof(prefix) - 1]))
 
 typedef struct {
