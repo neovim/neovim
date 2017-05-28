@@ -103,9 +103,9 @@ int socket_watcher_start(SocketWatcher *watcher, int backlog, socket_cb cb)
         // contain 0 in this case, unless uv_tcp_getsockname() is used first.
         uv_tcp_getsockname(&watcher->uv.tcp.handle, (struct sockaddr *)&sas,
                            &(int){ sizeof(sas) });
-        uint16_t port = (sas.ss_family == AF_INET)
-          ? ((struct sockaddr_in  *)&sas)->sin_port
-          : ((struct sockaddr_in6 *)&sas)->sin6_port;
+        uint16_t port = (uint16_t)((sas.ss_family == AF_INET)
+                                   ? ((struct sockaddr_in  *)&sas)->sin_port
+                                   : ((struct sockaddr_in6 *)&sas)->sin6_port);
         // v:servername uses the string from watcher->addr
         size_t len = strlen(watcher->addr);
         snprintf(watcher->addr+len, sizeof(watcher->addr)-len, ":%" PRIu16,
