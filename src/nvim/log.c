@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <uv.h>
 
 #include "nvim/log.h"
 #include "nvim/types.h"
@@ -95,6 +96,25 @@ bool do_log(int log_level, const char *func_name, int line_num, bool eol,
 end:
   log_unlock();
   return ret;
+}
+
+void log_uv_handles(void *loop)
+{
+  uv_loop_t *l = loop;
+  log_lock();
+  FILE *log_file = open_log_file();
+
+  if (log_file == NULL) {
+    goto end;
+  }
+
+  uv_print_all_handles(l, log_file);
+
+  if (log_file != stderr && log_file != stdout) {
+    fclose(log_file);
+  }
+end:
+  log_unlock();
 }
 
 /// Open the log file for appending.
