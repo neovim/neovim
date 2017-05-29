@@ -14822,7 +14822,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           }
           break;
         }
-        case 'u': case '"': { // unnamed register
+        case 'u': case '"': {  // unnamed register
           set_unnamed = true;
           break;
         }

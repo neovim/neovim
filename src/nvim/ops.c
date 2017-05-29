@@ -5820,8 +5820,8 @@ size_t op_register_amount(void)
 
 /// Set register to a given value
 ///
-/// @param[in]  name        Register name.
-/// @param[in]  reg         Register value.
+/// @param[in]  name  Register name.
+/// @param[in]  reg  Register value.
 /// @param[in]  is_unnamed  Whether to set the unnamed regiseter to reg
 ///
 /// @return true on success, false on failure.
@@ -5860,6 +5860,7 @@ const yankreg_T *op_register_get(const char name)
 ///
 /// @return true on success, false on failure.
 bool op_register_set_previous(const char name)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int i = op_reg_index(name);
   if (i == -1) {

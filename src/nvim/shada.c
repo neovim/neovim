@@ -285,9 +285,9 @@ typedef struct {
       char name;
       MotionType type;
       char **contents;
+      bool is_unnamed;
       size_t contents_size;
       size_t width;
-      bool is_unnamed;
       dict_T *additional_data;
     } reg;
     struct global_var {
@@ -2329,12 +2329,14 @@ static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
   }
 }
 
-/// Initializes registers for writing to the ShaDa file
+/// Initialize registers for writing to the ShaDa file
 ///
 /// @param[in]  wms  The WriteMergerState used when writing.
-/// @param[in]  max_reg_lines The maximum number of register lines.
-static void shada_initialize_registers(WriteMergerState *const wms,
-                                       int max_reg_lines) {
+/// @param[in]  max_reg_lines  The maximum number of register lines.
+static inline void shada_initialize_registers(WriteMergerState *const wms,
+                                              int max_reg_lines)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
   const void *reg_iter = NULL;
   const bool limit_reg_lines = max_reg_lines >= 0;
   do {
@@ -2345,7 +2347,7 @@ static void shada_initialize_registers(WriteMergerState *const wms,
     if (name == NUL) {
       break;
     }
-    if (limit_reg_lines && reg.y_size > max_reg_lines) {
+    if (limit_reg_lines && reg.y_size > (size_t)max_reg_lines) {
       continue;
     }
     wms->registers[op_reg_index(name)] = (PossiblyFreedShadaEntry) {
@@ -2355,10 +2357,10 @@ static void shada_initialize_registers(WriteMergerState *const wms,
         .timestamp = reg.timestamp,
         .data = {
           .reg = {
-            .contents = (char **) reg.y_array,
-            .contents_size = (size_t) reg.y_size,
+            .contents = (char **)reg.y_array,
+            .contents_size = (size_t)reg.y_size,
             .type = reg.y_type,
-            .width = (size_t) (reg.y_type == kMTBlockWise ? reg.y_width : 0),
+            .width = (size_t)(reg.y_type == kMTBlockWise ? reg.y_width : 0),
             .additional_data = reg.additional_data,
             .name = name,
             .is_unnamed = is_unnamed,
