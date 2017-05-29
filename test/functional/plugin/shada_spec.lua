@@ -179,6 +179,7 @@ describe('In autoload/shada.vim', function()
         '  + n    name                 \'@\'',
         '  + rc   contents             ["abc", "def"]',
         '  + rt   type                 CHARACTERWISE',
+        '  + ru   is_unnamed           FALSE',
         '  + rw   block width          10',
         '  + sb   search backward      TRUE',
         '  + sc   smartcase value      FALSE',
@@ -204,6 +205,7 @@ describe('In autoload/shada.vim', function()
         'rt': 0,
         'rw': 10,
         'rc': ['abc', 'def'],
+        'ru': {'_TYPE': v:msgpack_types.boolean, '_VAL': 0},
         'n': 0x40,
         'l': 10,
         'c': 0,
@@ -226,6 +228,8 @@ describe('In autoload/shada.vim', function()
          .. '0 (CHARACTERWISE), 1 (LINEWISE), 2 (BLOCKWISE)',
         '  + rt   type             10',
         '  # Expected boolean',
+        '  + ru   is_unnamed       10',
+        '  # Expected boolean',
         '  + sc   smartcase value  NIL',
         '  # Expected boolean',
         '  + sm   magic value      "TRUE"',
@@ -240,6 +244,7 @@ describe('In autoload/shada.vim', function()
         'sp': {'_TYPE': v:msgpack_types.string, '_VAL': ["abc"]},
         'rt': 10,
         'rc': '10',
+        'ru': 10,
         'n': -0x40,
         'l': -10,
         'c': 'abc',
@@ -720,12 +725,14 @@ describe('In autoload/shada.vim', function()
         '  # Expected integer',
         '  + rw   block width  ""',
         '  + rt   type         BLOCKWISE',
-        '  + ru   is_unnamed   FALSE',
+        '  # Expected boolean',
+        '  + ru   is_unnamed   ""',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
         'rc': ['abcdefghijklmnopqrstuvwxyz', 'abcdefghijklmnopqrstuvwxyz'],
         'rw': "",
         'rt': 2,
+        'ru': ""
       }}] ]]):gsub('\n', ''))
       sd2strings_eq({
         'Register with timestamp ' .. epoch .. ':',
@@ -738,12 +745,14 @@ describe('In autoload/shada.vim', function()
         '  # Unexpected enum value: expected one of 0 (CHARACTERWISE), '
         .. '1 (LINEWISE), 2 (BLOCKWISE)',
         '  + rt   type         10',
-        '  + ru   is_unnamed   FALSE',
+        '  # Expected boolean',
+        '  + ru   is_unnamed   ["abc", "def"]',
       }, ([[ [{'type': 5, 'timestamp': 0, 'data': {
         'n': 0x20,
         'rc': 0,
         'rw': -1,
         'rt': 10,
+        'ru': ['abc', 'def'],
       }}] ]]):gsub('\n', ''))
       sd2strings_eq({
         'Register with timestamp ' .. epoch .. ':',
