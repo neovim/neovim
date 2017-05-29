@@ -1187,7 +1187,7 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
 // This is a 256-colour terminfo description that lacks true-colour and
 // DECSTBM/DECSLRM/DECLRMM capabilities that xterm actually has.
-static const char xterm_256colour_terminfo[] = {
+static const signed char xterm_256colour_terminfo[] = {
   26,   1,  37,   0,  29,   0,  15,   0, 105,   1, -42,   5, 120, 116, 101, 114,
  109,  45,  50,  53,  54,  99, 111, 108, 111, 114, 124, 120, 116, 101, 114, 109,
   32, 119, 105, 116, 104,  32,  50,  53,  54,  32,  99, 111, 108, 111, 114, 115,
@@ -1338,7 +1338,7 @@ static const char xterm_256colour_terminfo[] = {
 // Taken from unibilium/t/static_tmux.c as of 2015-08-14.
 // This is an 256-colour terminfo description that lacks
 // status line capabilities that tmux actually has.
-static const char tmux_256colour_terminfo[] = {
+static const signed char tmux_256colour_terminfo[] = {
     26, 1, 56, 0, 15, 0, 15, 0, 105, 1, -48, 2, 116, 109, 117, 120, 124, 86, 84, 32,
     49, 48, 48, 47, 65, 78, 83, 73, 32, 88, 51, 46, 54, 52, 32, 118, 105, 114, 116, 117,
     97, 108, 32, 116, 101, 114, 109, 105, 110, 97, 108, 32, 119, 105, 116, 104, 32, 50, 53, 54,
@@ -1421,7 +1421,7 @@ static const char tmux_256colour_terminfo[] = {
 // Taken from unibilium/t/static_screen-256color.c as of 2015-08-14.
 // This is an 256-colour terminfo description that lacks
 // status line capabilities that screen actually has.
-static const char screen_256colour_terminfo[] = {
+static const signed char screen_256colour_terminfo[] = {
     26, 1, 43, 0, 43, 0, 15, 0, 105, 1, -43, 2, 115, 99, 114, 101, 101, 110, 45, 50,
     53, 54, 99, 111, 108, 111, 114, 124, 71, 78, 85, 32, 83, 99, 114, 101, 101, 110, 32, 119,
     105, 116, 104, 32, 50, 53, 54, 32, 99, 111, 108, 111, 114, 115, 0, 0, 1, 0, 0, 1,
@@ -1516,7 +1516,7 @@ static const char screen_256colour_terminfo[] = {
     85, 80, 53, 0, 107, 97, 50, 0, 107, 98, 49, 0, 107, 98, 51, 0, 107, 99, 50, 0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
-static const char iterm_256colour_terminfo[] = {
+static const signed char iterm_256colour_terminfo[] = {
   26,   1,  57,   0,  29,   0,  15,   0, 105,   1,  73,   3, 105,  84, 101, 114,
  109,  46,  97, 112, 112, 124, 105, 116, 101, 114, 109, 124, 105,  84, 101, 114,
  109,  46,  97, 112, 112,  32, 116, 101, 114, 109, 105, 110,  97, 108,  32, 101,
@@ -1627,7 +1627,7 @@ static const char iterm_256colour_terminfo[] = {
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
 // This is a 256-colour terminfo description that lacks true-colour
 // capabilities that rxvt actually has.
-static const char rxvt_256colour_terminfo[] = {
+static const signed char rxvt_256colour_terminfo[] = {
   26,   1,  47,   0,  29,   0,  15,   0, 110,   1, -31,   4, 114, 120, 118, 116,
   45,  50,  53,  54,  99, 111, 108, 111, 114, 124, 114, 120, 118, 116,  32,  50,
   46,  55,  46,  57,  32, 119, 105, 116, 104,  32, 120, 116, 101, 114, 109,  32,
@@ -1764,7 +1764,7 @@ static const char rxvt_256colour_terminfo[] = {
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
 // This is a 16-colour terminfo description that lacks true-colour
 // and 256-colour capabilities that linux (4.8+) actually has.
-static const char linux_16colour_terminfo[] = {
+static const signed char linux_16colour_terminfo[] = {
   26,   1,  43,   0,  29,   0,  16,   0, 125,   1, 125,   3, 108, 105, 110, 117,
  120,  45,  49,  54,  99, 111, 108, 111, 114, 124, 108, 105, 110, 117, 120,  32,
   99, 111, 110, 115, 111, 108, 101,  32, 119, 105, 116, 104,  32,  49,  54,  32,
@@ -1878,7 +1878,7 @@ static const char linux_16colour_terminfo[] = {
   91,  49,  49, 109,   0,  27,  91,  49,  48, 109,   0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
-static const char putty_256colour_terminfo[] = {
+static const signed char putty_256colour_terminfo[] = {
   26,   1,  48,   0,  29,   0,  16,   0, 125,   1,-106,   4, 112, 117, 116, 116,
  121,  45,  50,  53,  54,  99, 111, 108, 111, 114, 124,  80, 117,  84,  84,  89,
   32,  48,  46,  53,  56,  32, 119, 105, 116, 104,  32, 120, 116, 101, 114, 109,
@@ -2010,7 +2010,7 @@ static const char putty_256colour_terminfo[] = {
   49,  49, 109,   0,  27,  91,  49,  48, 109,   0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
-static const char interix_8colour_terminfo[] = {
+static const signed char interix_8colour_terminfo[] = {
   26,   1,  82,   0,  15,   0,  16,   0, 105,   1, 123,   2, 105, 110, 116, 101,
  114, 105, 120, 124, 111, 112, 101, 110, 110, 116, 124, 111, 112, 101, 110, 110,
  116,  45,  50,  53, 124, 110, 116,  99, 111, 110, 115, 111, 108, 101, 124, 110,
@@ -2109,7 +2109,7 @@ static const char interix_8colour_terminfo[] = {
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
 // This is a 256-colour terminfo description that lacks true-colour
 // capabilities that stterm actually has.
-static const char st_256colour_terminfo[] = {
+static const signed char st_256colour_terminfo[] = {
   26,   1,  55,   0,  29,   0,  15,   0, 105,   1, 117,   5, 115, 116,  45,  50,
   53,  54,  99, 111, 108, 111, 114, 124, 115, 116, 116, 101, 114, 109,  45,  50,
   53,  54,  99, 111, 108, 111, 114, 124, 115, 105, 109, 112, 108, 101, 116, 101,
@@ -2255,7 +2255,7 @@ static const char st_256colour_terminfo[] = {
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
 // This is a 256-colour terminfo description that lacks true-colour
 // capabilities that gnome actually has.
-static const char vte_256colour_terminfo[] = {
+static const signed char vte_256colour_terminfo[] = {
   26,    1,   52,    0,   29,    0,   15,    0,  105,    1,  -55,    5,  103,  110,  111,  109,
  101,   45,   50,   53,   54,   99,  111,  108,  111,  114,  124,   71,   78,   79,   77,   69,
   32,   84,  101,  114,  109,  105,  110,   97,  108,   32,  119,  105,  116,  104,   32,  120,
@@ -2404,7 +2404,7 @@ static const char vte_256colour_terminfo[] = {
   49,   37,  100,   37,   59,  109,    0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
-static const char ansi_terminfo[] = {
+static const signed char ansi_terminfo[] = {
   26,   1,  40,   0,  23,   0,  16,   0, 125,   1,  68,   2,  97, 110, 115, 105,
  124,  97, 110, 115, 105,  47, 112,  99,  45, 116, 101, 114, 109,  32,  99, 111,
  109, 112,  97, 116, 105,  98, 108, 101,  32, 119, 105, 116, 104,  32,  99, 111,
@@ -2506,27 +2506,27 @@ static const char ansi_terminfo[] = {
 static unibi_term *load_builtin_terminfo(const char * term)
 {
   if (TERMINAL_FAMILY(term, "xterm")) {
-    return unibi_from_mem(xterm_256colour_terminfo, sizeof xterm_256colour_terminfo);
+    return unibi_from_mem((const char *)xterm_256colour_terminfo, sizeof xterm_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "screen")) {
-    return unibi_from_mem(screen_256colour_terminfo, sizeof screen_256colour_terminfo);
+    return unibi_from_mem((const char *)screen_256colour_terminfo, sizeof screen_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "tmux")) {
-    return unibi_from_mem(tmux_256colour_terminfo, sizeof tmux_256colour_terminfo);
+    return unibi_from_mem((const char *)tmux_256colour_terminfo, sizeof tmux_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "rxvt")) {
-    return unibi_from_mem(rxvt_256colour_terminfo, sizeof rxvt_256colour_terminfo);
+    return unibi_from_mem((const char *)rxvt_256colour_terminfo, sizeof rxvt_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "putty")) {
-    return unibi_from_mem(putty_256colour_terminfo, sizeof putty_256colour_terminfo);
+    return unibi_from_mem((const char *)putty_256colour_terminfo, sizeof putty_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "linux")) {
-    return unibi_from_mem(linux_16colour_terminfo, sizeof linux_16colour_terminfo);
+    return unibi_from_mem((const char *)linux_16colour_terminfo, sizeof linux_16colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "interix")) {
-    return unibi_from_mem(interix_8colour_terminfo, sizeof interix_8colour_terminfo);
+    return unibi_from_mem((const char *)interix_8colour_terminfo, sizeof interix_8colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app")) {
-    return unibi_from_mem(iterm_256colour_terminfo, sizeof iterm_256colour_terminfo);
+    return unibi_from_mem((const char *)iterm_256colour_terminfo, sizeof iterm_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "st")) {
-    return unibi_from_mem(st_256colour_terminfo, sizeof st_256colour_terminfo);
+    return unibi_from_mem((const char *)st_256colour_terminfo, sizeof st_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "gnome") || TERMINAL_FAMILY(term, "vte")) {
-    return unibi_from_mem(vte_256colour_terminfo, sizeof vte_256colour_terminfo);
+    return unibi_from_mem((const char *)vte_256colour_terminfo, sizeof vte_256colour_terminfo);
   } else {
-    return unibi_from_mem(ansi_terminfo, sizeof ansi_terminfo);
+    return unibi_from_mem((const char *)ansi_terminfo, sizeof ansi_terminfo);
   }
 }
 
@@ -2690,7 +2690,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[ q");
     } else if (putty   // per MinTTY 0.4.3-1 release notes from 2009
-        || per https://bugzilla.gnome.org/show_bug.cgi?id=720821
+        // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
         || (vte_version >= 3900)
         // per tmux manual page and per
         // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
