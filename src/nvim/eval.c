@@ -14880,7 +14880,8 @@ free_lstval:
   rettv->vval.v_number = 0;
 
   if (set_unnamed) {
-    op_register_set_previous(regname);
+    // Discard the result. We already handle the error case.
+    if (op_register_set_previous(regname)) { }
   }
 }
 
