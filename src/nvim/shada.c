@@ -475,6 +475,7 @@ static const ShadaEntry sd_default_values[] = {
           .type = kMTCharWise,
           .contents = NULL,
           .contents_size = 0,
+          .is_unnamed = false,
           .width = 0,
           .additional_data = NULL),
   DEF_SDE(Variable, global_var,
