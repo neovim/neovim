@@ -177,6 +177,7 @@ static void terminfo_start(UI *ui)
   if (!data->ut) {
     data->ut = load_builtin_terminfo(term);
   }
+  // None of the following work over SSH; see :help TERM .
   const char *colorterm = os_getenv("COLORTERM");
   const char *termprg = os_getenv("TERM_PROGRAM");
   const char *vte_version_env = os_getenv("VTE_VERSION");
@@ -184,6 +185,7 @@ static void terminfo_start(UI *ui)
   bool iterm = termprg && strstr(termprg, "iTerm.app");
   bool konsole = os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
+
   patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm);
   augment_terminfo(data, term, colorterm, vte_version, konsole, iterm);
   data->can_change_scroll_region =
@@ -2547,6 +2549,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool st = TERMINAL_FAMILY(term, "st");
   bool gnome = TERMINAL_FAMILY(term, "gnome") || TERMINAL_FAMILY(term, "vte");
   bool iterm = TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app");
+  // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool gnome_pretending_xterm = xterm && colorterm && strstr(colorterm, "gnome-terminal");
   bool mate_pretending_xterm = xterm && colorterm && strstr(colorterm, "mate-terminal");
@@ -2596,7 +2599,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
   } else if (screen) {
-    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
+    // per the screen manual; 2017-04 terminfo.src lacks these.
+    unibi_set_if_empty(ut, unibi_to_status_line, "\x1bk");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   } else if (TERMINAL_FAMILY(term, "tmux")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
@@ -2632,11 +2636,11 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals for
     // more on this.
-    if (true_xterm) {
+    if (true_xterm || iterm || iterm_pretending_xterm) {
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
-    } else if (konsole || iterm || xterm || gnome || rxvt || st
+    } else if (konsole || xterm || gnome || rxvt || st
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || mate_pretending_xterm || gnome_pretending_xterm
         || (colorterm && strstr(colorterm, "256"))
@@ -2673,6 +2677,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         || rxvt       // per command.C
         // per analysis of VT100Terminal.m
         || iterm || iterm_pretending_xterm
+        || teraterm    // per TeraTerm "Supported Control Functions" doco
         // Allows forcing the use of DECSCUSR on linux type terminals, such as
         // console-terminal-emulator from the nosh toolset, which does indeed
         // implement the xterm extension:
@@ -2685,8 +2690,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[ q");
     } else if (putty   // per MinTTY 0.4.3-1 release notes from 2009
-        || teraterm    // per TeraTerm "Supported Control Functions" doco
-        || (vte_version >= 3900)  // VTE-based terminals since this version.
+        || per https://bugzilla.gnome.org/show_bug.cgi?id=720821
+        || (vte_version >= 3900)
         // per tmux manual page and per
         // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
         || screen) {
@@ -2764,6 +2769,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool screen = TERMINAL_FAMILY(term, "screen");
   bool st = TERMINAL_FAMILY(term, "st");
   bool iterm = TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app");
+  // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool true_xterm = xterm && !!xterm_version;
   bool tmux_wrap = screen && !!os_getenv("TMUX");
