@@ -24,10 +24,30 @@ the pc terminal, for Unix an ansi terminal.
 On Unix the terminfo database is used.  There is no access to the terminfo
 settings with |:set|.
 
+If you experience terminal difficulties, first ensure that you have set the
+correct terminal type in your $TERM environment variable so that Nvim is
+pulling the correct entry from the terminfo database in the first place.
+
+As noted in the commentary in the terminfo source file:
+ - The correct $TERM for GNOME Terminal has been "gnome" since 1999, or
+   "gnome-256color" since 2006.  "vte" and "vte-256color" are equivalents.
+   "xterm" and "xterm-256color" are incorrect.
+ - The correct $TERM for iTerm.app is "iterm" or "iTerm.app".  "xterm" and
+   "xterm-256color" are incorrect; for starters they do not include
+   iTerm.app's status line capability.
+ - The correct $TERM for Terminal.app is "nsterm".  "vt100", "xterm", and
+   "xterm-256color" are incorrect; for starters they do not include
+   Terminal.app's status line capability or correctly describe its
+   cursor-addressed mode.
+ - The correct $TERM for tmux is "tmux" or "tmux-256color".  "screen" is
+   incorrect; for starters it does not include tmux's italics and status line
+   capabilities or correctly describe how to set inverse video.
+
 					*builtin-terms* *builtin_terms*
-If a terminfo database is not available, Nvim will look up the terminal type
-in a compiled-in mini-database of terminfo entries for "xterm", "putty",
-"screen", "tmux", "rxvt", "iterm", "interix", "linux", and "ansi".
+If a |terminfo| database is not available, or no entry for the terminal type is
+found in that database, Nvim will look up the terminal type in a compiled-in
+mini-database of terminfo entries for "xterm", "putty", "screen", "tmux",
+"rxvt", "iterm", "interix", "linux", "st", "vte", "gnome", and "ansi".
 
 The lookup matches the initial portion of the terminal type, so (for example)
 "putty-256color" and "putty" will both be mapped to the built-in "putty"
@@ -36,6 +56,14 @@ capable if possible.  See |termcap-colors|.
 
 If no built-in terminfo record matches the terminal type, the built-in "ansi"
 terminfo record is used as a final fallback.
+
+The built-in mini-database is not combined with an external terminfo database,
+nor can it be used in preference to one.  You can thus entirely override any
+omissions or out-of-date information in the built-in terminfo database by
+supplying an external one with entries for the terminal type.  Note that the
+Unibilium library (used by Nvim to read terminfo) allows you to override an
+out-of-date system terminfo database with one in your $HOME/.terminfo/
+directory.
 
 Settings depending on terminal			*term-dependent-settings*
 

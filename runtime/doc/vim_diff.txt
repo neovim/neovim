@@ -160,6 +160,11 @@ Because of general |256-color| usage whereever possible, Nvim will even use
 256-colour capability on Linux virtual terminals.  Vim uses only 8 colours
 plus bright foreground on Linux VTs.
 
+Vim combines what is in its |builtin-terms| with what it reads from termcap,
+and has a |ttybuiltin| setting to control how that combination works.  Nvim
+uses either one or the other of an external |terminfo| entry or the built-in
+one.  It does not attempt to mix data from the two.
+
 |:!| does not support "interactive" commands. Use |:terminal| instead.
 (GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
 
