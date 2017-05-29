@@ -76,13 +76,15 @@ supplying an external one with entries for the terminal type.
 Settings depending on terminal			*term-dependent-settings*
 
 If you want to set options or mappings, depending on the terminal name, you
-can do this best in your vimrc.  Example: >
+can do this best in your init.vim.  Example: >
 
-   if &term == "xterm"
-     ... xterm maps and settings ...
-   elseif &term =~ "vt10."
-     ... vt100, vt102 maps and settings ...
-   endif
+    if $TERM =~ '^\(rxvt\|screen\)\(\|-.*\)'
+        set notermguicolors
+    elseif $TERM =~ '^\(xterm\|tmux\)\(\|-.*\)'
+        set termguicolors
+    elseif $TERM =~ ...
+	... and so forth ...
+    endif
 <
 					*scroll-region* *xterm-scroll-region*
 Where possible, Nvim will use the terminal's ability to set a scroll region in
