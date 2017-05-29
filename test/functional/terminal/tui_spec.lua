@@ -514,6 +514,45 @@ describe("tui 't_Co' (terminal colors)", function()
     assert_term_colors("st-256color", nil, 256)
   end)
 
+  -- gnome and vte:
+  --
+  -- FreeBSD and MacOS fall back to the built-in vte-256color entry.
+  -- Linux has a gnome, a vte, a gnome-256color, and a vte-256color entry in
+  -- external terminfo with 8, 8, 256, and 256 colours respectively, which are
+  -- raised to 256.
+
+  it("TERM=gnome no COLORTERM uses 256 colors", function()
+    assert_term_colors("gnome", nil, 256)
+  end)
+
+  it("TERM=gnome COLORTERM=gnome uses 256 colors", function()
+    assert_term_colors("gnome", "gnome", 256)
+  end)
+
+  it("TERM=gnome COLORTERM=gnome-256color uses 256 colors", function()
+    assert_term_colors("gnome", "gnome-256color", 256)
+  end)
+
+  it("TERM=gnome-256color uses 256 colors", function()
+    assert_term_colors("gnome-256color", nil, 256)
+  end)
+
+  it("TERM=vte no COLORTERM uses 256 colors", function()
+    assert_term_colors("vte", nil, 256)
+  end)
+
+  it("TERM=vte COLORTERM=vte uses 256 colors", function()
+    assert_term_colors("vte", "vte", 256)
+  end)
+
+  it("TERM=vte COLORTERM=vte-256color uses 256 colors", function()
+    assert_term_colors("vte", "vte-256color", 256)
+  end)
+
+  it("TERM=vte-256color uses 256 colors", function()
+    assert_term_colors("vte-256color", nil, 256)
+  end)
+
   -- others:
 
   it("TERM=interix uses 8 colors", function()

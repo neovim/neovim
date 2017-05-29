@@ -1179,12 +1179,12 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
 }
 
 // One creates the dumps from terminfo.src by using
-//      od -t d1 -w
+//      od -t d1 -w16 | cut -c9- | sed -e 's/\>/,/g'
 // on the compiled files.
 
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
 // This is a 256-colour terminfo description that lacks true-colour and
-// DECSTBN/DECSLRM/DECLRMM capabilities that xterm actually has.
+// DECSTBM/DECSLRM/DECLRMM capabilities that xterm actually has.
 static const char xterm_256colour_terminfo[] = {
   26,   1,  37,   0,  29,   0,  15,   0, 105,   1, -42,   5, 120, 116, 101, 114,
  109,  45,  50,  53,  54,  99, 111, 108, 111, 114, 124, 120, 116, 101, 114, 109,
@@ -2251,6 +2251,157 @@ static const char st_256colour_terminfo[] = {
  100,  37,  59, 109,   0
 };
 // Taken from Dickey ncurses terminfo.src dated 2017-04-22.
+// This is a 256-colour terminfo description that lacks true-colour
+// capabilities that gnome actually has.
+static const char vte_256colour_terminfo[] = {
+  26,    1,   52,    0,   29,    0,   15,    0,  105,    1,  -55,    5,  103,  110,  111,  109,
+ 101,   45,   50,   53,   54,   99,  111,  108,  111,  114,  124,   71,   78,   79,   77,   69,
+  32,   84,  101,  114,  109,  105,  110,   97,  108,   32,  119,  105,  116,  104,   32,  120,
+ 116,  101,  114,  109,   32,   50,   53,   54,   45,   99,  111,  108,  111,  114,  115,    0,
+   0,    1,    0,    0,    1,    0,    0,    0,    0,    0,    0,    0,    0,    1,    1,    0,
+   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    1,    1,    0,   80,    0,
+   8,    0,   24,    0,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,    0,    1,   -1,  127,    0,    0,    4,    0,
+   6,    0,    8,    0,   25,    0,   30,    0,   38,    0,   42,    0,   46,    0,   -1,   -1,
+  57,    0,   74,    0,   76,    0,   80,    0,   87,    0,   -1,   -1,   89,    0,   96,    0,
+  -1,   -1,  100,    0,   -1,   -1,  104,    0,  108,    0,   -1,   -1,   -1,   -1,  112,    0,
+  -1,   -1,  114,    0,  119,    0,   -1,   -1, -128,    0, -123,    0, -118,    0,   -1,   -1,
+-113,    0, -108,    0, -103,    0,  -98,    0,  -89,    0,  -87,    0,  -81,    0,   -1,   -1,
+ -68,    0,  -63,    0,  -57,    0,  -51,    0,   -1,   -1,   -1,   -1,   -1,   -1,  -33,    0,
+  -1,   -1,   -1,   -1,   -1,   -1,    0,    1,   -1,   -1,    4,    1,   -1,   -1,   -1,   -1,
+  -1,   -1,    6,    1,   -1,   -1,   11,    1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  15,    1,   19,    1,   25,    1,   29,    1,   33,    1,   37,    1,   43,    1,   49,    1,
+  55,    1,   61,    1,   67,    1,   71,    1,   -1,   -1,   76,    1,   -1,   -1,   80,    1,
+  85,    1,   90,    1,   94,    1,  101,    1,   -1,   -1,  108,    1,  112,    1,  120,    1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, -128,    1,
+-119,    1, -110,    1, -101,    1,  -92,    1,  -83,    1,  -74,    1,  -65,    1,  -56,    1,
+ -47,    1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ -38,    1,  -35,    1,   -1,   -1,   -1,   -1,   16,    2,   19,    2,   30,    2,   33,    2,
+  35,    2,   38,    2,  116,    2,   -1,   -1,  119,    2,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,  121,    2,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+ 125,    2,   -1,   -1,  -78,    2,   -1,   -1,   -1,   -1,  -74,    2,  -68,    2,   -1,   -1,
+  -1,   -1,  -62,    2,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,  -58,    2,  -54,    2,   -1,   -1,  -50,    2,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  -45,    2,   -1,   -1,  -38,    2,
+ -33,    2,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  -26,    2,  -19,    2,  -12,    2,
+  -1,   -1,   -1,   -1,   -5,    2,   -1,   -1,    2,    3,   -1,   -1,   -1,   -1,   -1,   -1,
+   9,    3,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   16,    3,   22,    3,
+  28,    3,   35,    3,   42,    3,   49,    3,   56,    3,   64,    3,   72,    3,   80,    3,
+  88,    3,   96,    3,  104,    3,  112,    3,  120,    3,  127,    3, -122,    3, -115,    3,
+-108,    3, -100,    3,  -92,    3,  -84,    3,  -76,    3,  -68,    3,  -60,    3,  -52,    3,
+ -44,    3,  -37,    3,  -30,    3,  -23,    3,  -16,    3,   -8,    3,    0,    4,    8,    4,
+  16,    4,   24,    4,   32,    4,   40,    4,   48,    4,   55,    4,   62,    4,   69,    4,
+  76,    4,   84,    4,   92,    4,  100,    4,  108,    4,  116,    4,  124,    4, -124,    4,
+-116,    4, -109,    4, -102,    4,  -95,    4,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,  -90,    4,  -79,    4,  -74,    4,  -55,    4,  -51,    4,
+ -42,    4,  -35,    4,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   59,    5,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   64,    5,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+  -1,   -1,   70,    5,   -1,   -1,   -1,   -1,   -1,   -1,   74,    5, -119,    5,   27,   91,
+  90,    0,    7,    0,   13,    0,   27,   91,   37,  105,   37,  112,   49,   37,  100,   59,
+  37,  112,   50,   37,  100,  114,    0,   27,   91,   51,  103,    0,   27,   91,   72,   27,
+  91,   50,   74,    0,   27,   91,   75,    0,   27,   91,   74,    0,   27,   91,   37,  105,
+  37,  112,   49,   37,  100,   71,    0,   27,   91,   37,  105,   37,  112,   49,   37,  100,
+  59,   37,  112,   50,   37,  100,   72,    0,   10,    0,   27,   91,   72,    0,   27,   91,
+  63,   50,   53,  108,    0,    8,    0,   27,   91,   63,   50,   53,  104,    0,   27,   91,
+  67,    0,   27,   91,   65,    0,   27,   91,   80,    0,   27,   91,   77,    0,   14,    0,
+  27,   91,   49,  109,    0,   27,   55,   27,   91,   63,   52,   55,  104,    0,   27,   91,
+  50,  109,    0,   27,   91,   52,  104,    0,   27,   91,   56,  109,    0,   27,   91,   55,
+ 109,    0,   27,   91,   55,  109,    0,   27,   91,   52,  109,    0,   27,   91,   37,  112,
+  49,   37,  100,   88,    0,   15,    0,   27,   91,   48,  109,   15,    0,   27,   91,   50,
+  74,   27,   91,   63,   52,   55,  108,   27,   56,    0,   27,   91,   52,  108,    0,   27,
+  91,   50,   55,  109,    0,   27,   91,   50,   52,  109,    0,   27,   91,   63,   53,  104,
+  36,   60,   49,   48,   48,   47,   62,   27,   91,   63,   53,  108,    0,   27,   91,  109,
+  27,   91,   63,   55,  104,   27,   91,   52,  108,   27,   62,   27,   55,   27,   91,  114,
+  27,   91,   63,   49,   59,   51,   59,   52,   59,   54,  108,   27,   56,    0,   27,   91,
+  76,    0,  127,    0,   27,   91,   51,  126,    0,   27,   79,   66,    0,   27,   79,   80,
+   0,   27,   91,   50,   49,  126,    0,   27,   79,   81,    0,   27,   79,   82,    0,   27,
+  79,   83,    0,   27,   91,   49,   53,  126,    0,   27,   91,   49,   55,  126,    0,   27,
+  91,   49,   56,  126,    0,   27,   91,   49,   57,  126,    0,   27,   91,   50,   48,  126,
+   0,   27,   79,   72,    0,   27,   91,   50,  126,    0,   27,   79,   68,    0,   27,   91,
+  54,  126,    0,   27,   91,   53,  126,    0,   27,   79,   67,    0,   27,   91,   49,   59,
+  50,   66,    0,   27,   91,   49,   59,   50,   65,    0,   27,   79,   65,    0,   27,   91,
+  63,   49,  108,   27,   62,    0,   27,   91,   63,   49,  104,   27,   61,    0,   27,   91,
+  37,  112,   49,   37,  100,   80,    0,   27,   91,   37,  112,   49,   37,  100,   77,    0,
+  27,   91,   37,  112,   49,   37,  100,   66,    0,   27,   91,   37,  112,   49,   37,  100,
+  64,    0,   27,   91,   37,  112,   49,   37,  100,   83,    0,   27,   91,   37,  112,   49,
+  37,  100,   76,    0,   27,   91,   37,  112,   49,   37,  100,   68,    0,   27,   91,   37,
+ 112,   49,   37,  100,   67,    0,   27,   91,   37,  112,   49,   37,  100,   84,    0,   27,
+  91,   37,  112,   49,   37,  100,   65,    0,   27,   99,    0,   27,   55,   27,   91,  114,
+  27,   56,   27,   91,  109,   27,   91,   63,   55,  104,   27,   91,   33,  112,   27,   91,
+  63,   49,   59,   51,   59,   52,   59,   54,  108,   27,   91,   52,  108,   27,   62,   27,
+  91,   63,   49,   48,   48,   48,  108,   27,   91,   63,   50,   53,  104,    0,   27,   56,
+   0,   27,   91,   37,  105,   37,  112,   49,   37,  100,  100,    0,   27,   55,    0,   10,
+   0,   27,   77,    0,   27,   91,   48,   37,   63,   37,  112,   54,   37,  116,   59,   49,
+  37,   59,   37,   63,   37,  112,   50,   37,  116,   59,   52,   37,   59,   37,   63,   37,
+ 112,   53,   37,  116,   59,   50,   37,   59,   37,   63,   37,  112,   55,   37,  116,   59,
+  56,   37,   59,   37,   63,   37,  112,   49,   37,  112,   51,   37,  124,   37,  116,   59,
+  55,   37,   59,  109,   37,   63,   37,  112,   57,   37,  116,   14,   37,  101,   15,   37,
+  59,    0,   27,   72,    0,    9,    0,   27,   91,   69,    0,   96,   96,   97,   97,  102,
+ 102,  103,  103,  105,  105,  106,  106,  107,  107,  108,  108,  109,  109,  110,  110,  111,
+ 111,  112,  112,  113,  113,  114,  114,  115,  115,  116,  116,  117,  117,  118,  118,  119,
+ 119,  120,  120,  121,  121,  122,  122,  123,  123,  124,  124,  125,  125,  126,  126,    0,
+  27,   91,   90,    0,   27,   91,   63,   55,  104,    0,   27,   91,   63,   55,  108,    0,
+  27,   41,   48,    0,   27,   79,   70,    0,   27,   79,   77,    0,   27,   91,   49,  126,
+   0,   27,   91,   51,   59,   50,  126,    0,   27,   91,   52,  126,    0,   27,   91,   49,
+  59,   50,   70,    0,   27,   91,   49,   59,   50,   72,    0,   27,   91,   50,   59,   50,
+ 126,    0,   27,   91,   49,   59,   50,   68,    0,   27,   91,   54,   59,   50,  126,    0,
+  27,   91,   53,   59,   50,  126,    0,   27,   91,   49,   59,   50,   67,    0,   27,   91,
+  50,   51,  126,    0,   27,   91,   50,   52,  126,    0,   27,   91,   49,   59,   50,   80,
+   0,   27,   91,   49,   59,   50,   81,    0,   27,   91,   49,   59,   50,   82,    0,   27,
+  91,   49,   59,   50,   83,    0,   27,   91,   49,   53,   59,   50,  126,    0,   27,   91,
+  49,   55,   59,   50,  126,    0,   27,   91,   49,   56,   59,   50,  126,    0,   27,   91,
+  49,   57,   59,   50,  126,    0,   27,   91,   50,   48,   59,   50,  126,    0,   27,   91,
+  50,   49,   59,   50,  126,    0,   27,   91,   50,   51,   59,   50,  126,    0,   27,   91,
+  50,   52,   59,   50,  126,    0,   27,   91,   49,   59,   53,   80,    0,   27,   91,   49,
+  59,   53,   81,    0,   27,   91,   49,   59,   53,   82,    0,   27,   91,   49,   59,   53,
+  83,    0,   27,   91,   49,   53,   59,   53,  126,    0,   27,   91,   49,   55,   59,   53,
+ 126,    0,   27,   91,   49,   56,   59,   53,  126,    0,   27,   91,   49,   57,   59,   53,
+ 126,    0,   27,   91,   50,   48,   59,   53,  126,    0,   27,   91,   50,   49,   59,   53,
+ 126,    0,   27,   91,   50,   51,   59,   53,  126,    0,   27,   91,   50,   52,   59,   53,
+ 126,    0,   27,   91,   49,   59,   54,   80,    0,   27,   91,   49,   59,   54,   81,    0,
+  27,   91,   49,   59,   54,   82,    0,   27,   91,   49,   59,   54,   83,    0,   27,   91,
+  49,   53,   59,   54,  126,    0,   27,   91,   49,   55,   59,   54,  126,    0,   27,   91,
+  49,   56,   59,   54,  126,    0,   27,   91,   49,   57,   59,   54,  126,    0,   27,   91,
+  50,   48,   59,   54,  126,    0,   27,   91,   50,   49,   59,   54,  126,    0,   27,   91,
+  50,   51,   59,   54,  126,    0,   27,   91,   50,   52,   59,   54,  126,    0,   27,   91,
+  49,   59,   51,   80,    0,   27,   91,   49,   59,   51,   81,    0,   27,   91,   49,   59,
+  51,   82,    0,   27,   91,   49,   59,   51,   83,    0,   27,   91,   49,   53,   59,   51,
+ 126,    0,   27,   91,   49,   55,   59,   51,  126,    0,   27,   91,   49,   56,   59,   51,
+ 126,    0,   27,   91,   49,   57,   59,   51,  126,    0,   27,   91,   50,   48,   59,   51,
+ 126,    0,   27,   91,   50,   49,   59,   51,  126,    0,   27,   91,   50,   51,   59,   51,
+ 126,    0,   27,   91,   50,   52,   59,   51,  126,    0,   27,   91,   49,   59,   52,   80,
+   0,   27,   91,   49,   59,   52,   81,    0,   27,   91,   49,   59,   52,   82,    0,   27,
+  91,   49,   75,    0,   27,   91,   37,  105,   37,  100,   59,   37,  100,   82,    0,   27,
+  91,   54,  110,    0,   27,   91,   63,   37,   91,   59,   48,   49,   50,   51,   52,   53,
+  54,   55,   56,   57,   93,   99,    0,   27,   91,   99,    0,   27,   91,   51,   57,   59,
+  52,   57,  109,    0,   27,   93,   49,   48,   52,    7,    0,   27,   93,   52,   59,   37,
+ 112,   49,   37,  100,   59,  114,  103,   98,   58,   37,  112,   50,   37,  123,   50,   53,
+  53,  125,   37,   42,   37,  123,   49,   48,   48,   48,  125,   37,   47,   37,   50,   46,
+  50,   88,   47,   37,  112,   51,   37,  123,   50,   53,   53,  125,   37,   42,   37,  123,
+  49,   48,   48,   48,  125,   37,   47,   37,   50,   46,   50,   88,   47,   37,  112,   52,
+  37,  123,   50,   53,   53,  125,   37,   42,   37,  123,   49,   48,   48,   48,  125,   37,
+  47,   37,   50,   46,   50,   88,   27,   92,    0,   27,   91,   51,  109,    0,   27,   91,
+  50,   51,  109,    0,   27,   91,   77,    0,   27,   91,   37,   63,   37,  112,   49,   37,
+ 123,   56,  125,   37,   60,   37,  116,   51,   37,  112,   49,   37,  100,   37,  101,   37,
+ 112,   49,   37,  123,   49,   54,  125,   37,   60,   37,  116,   57,   37,  112,   49,   37,
+ 123,   56,  125,   37,   45,   37,  100,   37,  101,   51,   56,   59,   53,   59,   37,  112,
+  49,   37,  100,   37,   59,  109,    0,   27,   91,   37,   63,   37,  112,   49,   37,  123,
+  56,  125,   37,   60,   37,  116,   52,   37,  112,   49,   37,  100,   37,  101,   37,  112,
+  49,   37,  123,   49,   54,  125,   37,   60,   37,  116,   49,   48,   37,  112,   49,   37,
+ 123,   56,  125,   37,   45,   37,  100,   37,  101,   52,   56,   59,   53,   59,   37,  112,
+  49,   37,  100,   37,   59,  109,    0
+};
+// Taken from Dickey ncurses terminfo.src dated 2017-04-22.
 static const char ansi_terminfo[] = {
   26,   1,  40,   0,  23,   0,  16,   0, 125,   1,  68,   2,  97, 110, 115, 105,
  124,  97, 110, 115, 105,  47, 112,  99,  45, 116, 101, 114, 109,  32,  99, 111,
@@ -2370,6 +2521,8 @@ static unibi_term *load_builtin_terminfo(const char * term)
     return unibi_from_mem(iterm_256colour_terminfo, sizeof iterm_256colour_terminfo);
   } else if (TERMINAL_FAMILY(term, "st")) {
     return unibi_from_mem(st_256colour_terminfo, sizeof st_256colour_terminfo);
+  } else if (TERMINAL_FAMILY(term, "gnome") || TERMINAL_FAMILY(term, "vte")) {
+    return unibi_from_mem(vte_256colour_terminfo, sizeof vte_256colour_terminfo);
   } else {
     return unibi_from_mem(ansi_terminfo, sizeof ansi_terminfo);
   }
@@ -2384,18 +2537,20 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     const char *colorterm, long vte_version, bool konsole, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  bool true_xterm = !!os_getenv("XTERM_VERSION");
+  const char * xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = TERMINAL_FAMILY(term, "xterm");
-  bool mate = colorterm && strstr(colorterm, "mate-terminal");
-  bool gnome = colorterm && strstr(colorterm, "gnome-terminal");
   bool linuxvt = TERMINAL_FAMILY(term, "linux");
   bool rxvt = TERMINAL_FAMILY(term, "rxvt");
   bool teraterm = TERMINAL_FAMILY(term, "teraterm");
   bool putty = TERMINAL_FAMILY(term, "putty");
   bool screen = TERMINAL_FAMILY(term, "screen");
   bool st = TERMINAL_FAMILY(term, "st");
+  bool gnome = TERMINAL_FAMILY(term, "gnome") || TERMINAL_FAMILY(term, "vte");
   bool iterm = TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app");
   bool iterm_pretending_xterm = xterm && iterm_env;
+  bool gnome_pretending_xterm = xterm && colorterm && strstr(colorterm, "gnome-terminal");
+  bool mate_pretending_xterm = xterm && colorterm && strstr(colorterm, "mate-terminal");
+  bool true_xterm = xterm && !!xterm_version;
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -2449,13 +2604,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (TERMINAL_FAMILY(term, "interix")) {
     unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   } else if (linuxvt) {
-    // No deviations from the vanilla terminfo.
+    // No bugs in the vanilla terminfo for our purposes.
   } else if (putty) {
-    // No deviations from the vanilla terminfo.
+    // No bugs in the vanilla terminfo for our purposes.
   } else if (iterm) {
-    // No deviations from the vanilla terminfo.
+    unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
   } else if (st) {
-    // No deviations from the vanilla terminfo.
+    // No bugs in the vanilla terminfo for our purposes.
   }
 
 #define XTERM_SETAF_256 \
@@ -2477,12 +2632,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals for
     // more on this.
-    if (xterm && true_xterm) {
+    if (true_xterm) {
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
-    } else if (konsole || mate || xterm || gnome || rxvt || st
+    } else if (konsole || iterm || xterm || gnome || rxvt || st
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
+        || mate_pretending_xterm || gnome_pretending_xterm
         || (colorterm && strstr(colorterm, "256"))
         || (term && strstr(term, "256"))
         ) {
@@ -2520,7 +2676,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         // Allows forcing the use of DECSCUSR on linux type terminals, such as
         // console-terminal-emulator from the nosh toolset, which does indeed
         // implement the xterm extension:
-        || (linuxvt && (true_xterm || (vte_version > 0) || colorterm))) {
+        || (linuxvt && (xterm_version || (vte_version > 0) || colorterm))) {
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           "\x1b[%p1%d q");
       if (-1 == data->unibi_ext.reset_cursor_style) {
@@ -2598,7 +2754,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     const char *colorterm, long vte_version, bool konsole, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  bool true_xterm = !!os_getenv("XTERM_VERSION");
+  const char * xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = TERMINAL_FAMILY(term, "xterm");
   bool dtterm = TERMINAL_FAMILY(term, "dtterm");
   bool linuxvt = TERMINAL_FAMILY(term, "linux");
@@ -2609,6 +2765,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool st = TERMINAL_FAMILY(term, "st");
   bool iterm = TERMINAL_FAMILY(term, "iterm") || TERMINAL_FAMILY(term, "iTerm.app");
   bool iterm_pretending_xterm = xterm && iterm_env;
+  bool true_xterm = xterm && !!xterm_version;
   bool tmux_wrap = screen && !!os_getenv("TMUX");
   bool truecolor = colorterm
     && (0 == strcmp(colorterm, "truecolor") || 0 == strcmp(colorterm, "24bit"));
