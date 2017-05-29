@@ -141,7 +141,9 @@ void mch_exit(int r) FUNC_ATTR_NORETURN
   ui_flush();
   ml_close_all(true);           // remove all memfiles
 
-  event_teardown();
+  if (!event_teardown() && r == 0) {
+    r = 1;  // Exit with error if main_loop did not teardown gracefully.
+  }
   stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
 
 #ifdef EXITFREE

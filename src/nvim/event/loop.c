@@ -8,6 +8,7 @@
 
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
+#include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.c.generated.h"
@@ -78,20 +79,34 @@ void loop_on_put(MultiQueue *queue, void *data)
   uv_stop(&loop->uv);
 }
 
-void loop_close(Loop *loop, bool wait)
+/// @returns false if the loop could not be closed gracefully
+bool loop_close(Loop *loop, bool wait)
 {
+  bool rv = true;
   uv_mutex_destroy(&loop->mutex);
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
   uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
   uv_close((uv_handle_t *)&loop->poll_timer, NULL);
   uv_close((uv_handle_t *)&loop->async, NULL);
-  do {
+  uint64_t start = wait ? os_hrtime() : 0;
+  while (true) {
     uv_run(&loop->uv, wait ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
-  } while (uv_loop_close(&loop->uv) && wait);
+    if (!uv_loop_close(&loop->uv) || !wait) {
+      break;
+    }
+    if (os_hrtime() - start >= 2 * 1000000000) {
+      // Some libuv resource was not correctly deref'd. Log and bail.
+      rv = false;
+      ELOG("uv_loop_close() hang?");
+      log_uv_handles(&loop->uv);
+      break;
+    }
+  }
   multiqueue_free(loop->fast_events);
   multiqueue_free(loop->thread_events);
   multiqueue_free(loop->events);
   kl_destroy(WatcherPtr, loop->children);
+  return rv;
 }
 
 void loop_purge(Loop *loop)
