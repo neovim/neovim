@@ -15,6 +15,7 @@
 #include "nvim/vim.h"
 #include "nvim/strings.h"
 #include "nvim/path.h"
+#include "nvim/main.h"
 #include "nvim/memory.h"
 #include "nvim/macros.h"
 #include "nvim/charset.h"
@@ -188,4 +189,77 @@ static void close_cb(uv_handle_t *handle)
   if (watcher->close_cb) {
     watcher->close_cb(watcher, watcher->data);
   }
+}
+
+static void connect_cb(uv_connect_t *req, int status)
+{
+  int *ret_status = req->data;
+  *ret_status = status;
+  if (status != 0) {
+    uv_close((uv_handle_t *)req->handle, NULL);
+  }
+}
+
+bool socket_connect(Loop *loop, Stream *stream,
+                    bool is_tcp, const char *address,
+                    int timeout, const char **error)
+{
+  bool success = false;
+  int status;
+  uv_connect_t req;
+  req.data = &status;
+  uv_stream_t *uv_stream;
+
+  uv_tcp_t *tcp = &stream->uv.tcp;
+  uv_getaddrinfo_t addr_req;
+  addr_req.addrinfo = NULL;
+  const struct addrinfo *addrinfo = NULL;
+  char *addr = NULL;
+  if (is_tcp) {
+    addr = xstrdup(address);
+    char *host_end = strrchr(addr, ':');
+    if (!host_end) {
+      *error = _("tcp address must be host:port");
+      goto cleanup;
+    }
+    *host_end = NUL;
+
+    const struct addrinfo hints = { .ai_family = AF_UNSPEC,
+                                    .ai_socktype = SOCK_STREAM,
+                                    .ai_flags  = AI_NUMERICSERV };
+    int retval = uv_getaddrinfo(&loop->uv, &addr_req, NULL,
+                                addr, host_end+1, &hints);
+    if (retval != 0) {
+      *error = _("failed to lookup host or port");
+      goto cleanup;
+    }
+    addrinfo = addr_req.addrinfo;
+
+tcp_retry:
+    uv_tcp_init(&loop->uv, tcp);
+    uv_tcp_connect(&req,  tcp, addrinfo->ai_addr, connect_cb);
+    uv_stream = (uv_stream_t *)tcp;
+
+  } else {
+    uv_pipe_t *pipe = &stream->uv.pipe;
+    uv_pipe_init(&loop->uv, pipe, 0);
+    uv_pipe_connect(&req,  pipe, address, connect_cb);
+    uv_stream = (uv_stream_t *)pipe;
+  }
+  status = 1;
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, timeout, status != 1);
+  if (status == 0) {
+    stream_init(NULL, stream, -1, uv_stream);
+    success = true;
+  } else if (is_tcp && addrinfo->ai_next) {
+    addrinfo = addrinfo->ai_next;
+    goto tcp_retry;
+  } else {
+    *error = _("connection refused");
+  }
+
+cleanup:
+  xfree(addr);
+  uv_freeaddrinfo(addr_req.addrinfo);
+  return success;
 }

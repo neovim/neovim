@@ -15058,6 +15058,54 @@ static void f_simplify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
 }
 
+/// "sockconnect()" function
+static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (argvars[0].v_type != VAR_STRING || argvars[1].v_type != VAR_STRING) {
+    EMSG(_(e_invarg));
+    return;
+  }
+  if (argvars[2].v_type != VAR_DICT && argvars[2].v_type != VAR_UNKNOWN) {
+    // Wrong argument types
+    EMSG2(_(e_invarg2), "expected dictionary");
+    return;
+  }
+
+  const char *mode = tv_get_string(&argvars[0]);
+  const char *address = tv_get_string(&argvars[1]);
+
+  bool tcp;
+  if (strcmp(mode, "tcp") == 0) {
+    tcp = true;
+  } else if (strcmp(mode, "pipe") == 0) {
+    tcp = false;
+  } else {
+    EMSG2(_(e_invarg2), "invalid mode");
+    return;
+  }
+
+  bool rpc = false;
+  if (argvars[2].v_type == VAR_DICT) {
+    dict_T *opts = argvars[2].vval.v_dict;
+    rpc = tv_dict_get_number(opts, "rpc") != 0;
+  }
+
+  if (!rpc) {
+    EMSG2(_(e_invarg2), "rpc option must be true");
+    return;
+  }
+
+  const char *error = NULL;
+  uint64_t id = channel_connect(tcp, address, 50, &error);
+
+  if (error) {
+    EMSG2(_("connection failed: %s"), error);
+  }
+
+  rettv->vval.v_number = (varnumber_T)id;
+  rettv->v_type = VAR_NUMBER;
+}
+
 /// struct used in the array that's given to qsort()
 typedef struct {
   listitem_T *item;

@@ -268,6 +268,7 @@ return {
     simplify={args=1},
     sin={args=1, func="float_op_wrapper", data="&sin"},
     sinh={args=1, func="float_op_wrapper", data="&sinh"},
+    sockconnect={args={2,3}},
     sort={args={1, 3}},
     soundfold={args=1},
     spellbadword={args={0, 1}},

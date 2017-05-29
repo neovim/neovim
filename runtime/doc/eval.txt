@@ -6863,6 +6863,21 @@ sinh({expr})						*sinh()*
 			:echo sinh(-0.9)
 <			-1.026517
 
+sockconnect({mode}, {address}, {opts})			 *sockconnect()*
+		Connect a socket to an address. If {mode} is "pipe" then
+		{address} should be the path of a named pipe. If {mode} is
+		"tcp" then {address} should be of the form "host:port" where
+		the host should be an ip adderess or host name, and port the
+		port number. Currently only rpc sockets are supported, so
+		{opts} must be passed with "rpc" set to |TRUE|.
+
+		{opts} is a dictionary with these keys:
+		  rpc      : If set, |msgpack-rpc| will be used to communicate
+			     over the socket.
+		Returns:
+		  - The channel ID on success, which is used by
+		    |rpcnotify()| and |rpcrequest()| and |rpcstop()|.
+		  - 0 on invalid arguments or connection failure.
 
 sort({list} [, {func} [, {dict}]])			*sort()* *E702*
 		Sort the items in {list} in-place.  Returns {list}.

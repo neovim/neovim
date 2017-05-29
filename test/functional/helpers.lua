@@ -76,8 +76,8 @@ end
 
 local session, loop_running, last_error
 
-local function set_session(s)
-  if session then
+local function set_session(s, keep)
+  if session and not keep then
     session:close()
   end
   session = s
@@ -609,6 +609,7 @@ local module = {
   nvim = nvim,
   nvim_async = nvim_async,
   nvim_prog = nvim_prog,
+  nvim_argv = nvim_argv,
   nvim_set = nvim_set,
   nvim_dir = nvim_dir,
   buffer = buffer,
