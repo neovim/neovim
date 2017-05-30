@@ -24,6 +24,17 @@ the pc terminal, for Unix an ansi terminal.
 On Unix the terminfo database is used.  There is no access to the terminfo
 settings with |:set|.
 
+The Unibilium library (used by Nvim to read terminfo) allows you to override
+an out-of-date system terminfo database with one in your $HOME/.terminfo/
+directory, in part or in whole.
+
+Building your own up-to-date terminfo database is usually as simple as running
+this as a non-superuser:
+>
+  wget http://invisible-island.net/datafiles/current/terminfo.src.gz
+  gunzip terminfo.src.gz
+  tic terminfo.src
+<
 								*TERM*
 If you experience terminal difficulties, first ensure that you have set the
 correct terminal type in your $TERM environment variable so that Nvim is
@@ -50,9 +61,7 @@ such as $COLORTERM, $XTERM_VERSION, $VTE_VERSION, $KONSOLE_PROFILE_NAME, and
 $TERM_PROGRAM to the server end, whereas it does send the $TERM environment
 variable.
 
-Note that the Unibilium library (used by Nvim to read terminfo) allows you to
-override an out-of-date system terminfo database with one in your
-$HOME/.terminfo/ directory, in part or in whole.
+See |terminfo| for dealing with out of date terminfo databases.
 
 					*builtin-terms* *builtin_terms*
 If a |terminfo| database is not available, or no entry for the terminal type is
