@@ -182,12 +182,12 @@ static void terminfo_start(UI *ui)
   const char *termprg = os_getenv("TERM_PROGRAM");
   const char *vte_version_env = os_getenv("VTE_VERSION");
   long vte_version = vte_version_env ? strtol(vte_version_env, NULL, 10) : 0;
-  bool iterm = termprg && strstr(termprg, "iTerm.app");
+  bool iterm_env = termprg && strstr(termprg, "iTerm.app");
   bool konsole = os_getenv("KONSOLE_PROFILE_NAME")
     || os_getenv("KONSOLE_DBUS_SESSION");
 
-  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm);
-  augment_terminfo(data, term, colorterm, vte_version, konsole, iterm);
+  patch_terminfo_bugs(data, term, colorterm, vte_version, konsole, iterm_env);
+  augment_terminfo(data, term, colorterm, vte_version, konsole, iterm_env);
   data->can_change_scroll_region =
     !!unibi_get_str(data->ut, unibi_change_scroll_region);
   data->can_set_lr_margin =
@@ -196,7 +196,9 @@ static void terminfo_start(UI *ui)
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
   data->immediate_wrap_after_last_column =
-    TERMINAL_FAMILY(term, "interix");
+    TERMINAL_FAMILY(term, "iterm")
+    || TERMINAL_FAMILY(term, "interix")
+    || (TERMINAL_FAMILY(term, "xterm") && iterm_env);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
