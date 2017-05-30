@@ -414,8 +414,18 @@ static void update_attrs(UI *ui, HlAttrs attrs)
 
 static void print_cell(UI *ui, UCell *ptr)
 {
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  if (data->immediate_wrap_after_last_column
+      && grid->row >= ui->height - 1
+      && grid->col >= ui->width - 1) {
+    // This (rare) kind of terminal simply cannot print in this corner without
+    // scrolling the entire screen up a line, which we do not want to happen.
+    return;
+  }
   update_attrs(ui, ptr->attrs);
   out(ui, ptr->data, strlen(ptr->data));
+  ++grid->col;
 }
 
 static bool cheap_to_print(UI *ui, int row, int col, int next)
@@ -451,7 +461,9 @@ static void check_final_column_wrap(UI *ui)
   UGrid *grid = &data->grid;
   if (grid->col == ui->width) {
     grid->col = 0;
-    ++grid->row;
+    if (grid->row < ui->height) {
+      ++grid->row;
+    }
   }
 }
 
@@ -491,7 +503,6 @@ static void cursor_goto(UI *ui, int row, int col)
         UGRID_FOREACH_CELL(grid, grid->row, grid->row,
           grid->col, col - 1, {
           print_cell(ui, cell);
-          ++grid->col;
           check_final_column_wrap(ui);
         });
       }
@@ -600,7 +611,6 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
     UGRID_FOREACH_CELL(grid, top, bot, left, right, {
       cursor_goto(ui, row, col);
       print_cell(ui, cell);
-      ++grid->col;
       check_final_column_wrap(ui);
     });
   }
@@ -915,7 +925,15 @@ static void tui_highlight_set(UI *ui, HlAttrs attrs)
 static void tui_put(UI *ui, String text)
 {
   TUIData *data = ui->data;
-  print_cell(ui, ugrid_put(&data->grid, (uint8_t *)text.data, text.size));
+  UGrid *grid = &data->grid;
+  UCell *cell;
+
+  cell = ugrid_put(&data->grid, (uint8_t *)text.data, text.size);
+  // ugrid_put does not advance the cursor correctly, as the actual terminal
+  // will when we print.  Its cursor motion model is simplistic and wrong.  So
+  // we have to undo what it has just done before doing it right.
+  --grid->col;
+  print_cell(ui, cell);
   check_final_column_wrap(ui);
 }
 
@@ -969,7 +987,6 @@ static void tui_flush(UI *ui)
     UGRID_FOREACH_CELL(grid, r.top, r.bot, r.left, r.right, {
       cursor_goto(ui, row, col);
       print_cell(ui, cell);
-      ++grid->col;
       check_final_column_wrap(ui);
     });
   }
