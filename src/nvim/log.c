@@ -76,6 +76,10 @@ void log_unlock(void)
 bool do_log(int log_level, const char *func_name, int line_num, bool eol,
             const char* fmt, ...) FUNC_ATTR_UNUSED
 {
+  if (log_level < MIN_LOG_LEVEL) {
+    return false;
+  }
+
   log_lock();
   bool ret = false;
   FILE *log_file = open_log_file();
@@ -124,11 +128,10 @@ end:
 FILE *open_log_file(void)
 {
   static bool opening_log_file = false;
-
   // check if it's a recursive call
   if (opening_log_file) {
     do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__, true,
-                   "Trying to LOG() recursively! Please fix it.");
+                   "Cannot LOG() recursively.");
     return stderr;
   }
 
@@ -145,9 +148,8 @@ FILE *open_log_file(void)
   }
 
   do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__, true,
-                 "Couldn't open USR_LOG_FILE, logging to stderr! This may be "
-                 "caused by attempting to LOG() before initialization "
-                 "functions are called (e.g. init_homedir()).");
+                 "Cannot open " USR_LOG_FILE ", logging to stderr. Was LOG()"
+                 " called before early_init()?");
   return stderr;
 }
 
@@ -172,7 +174,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
     [DEBUG_LOG_LEVEL]   = "DEBUG",
     [INFO_LOG_LEVEL]    = "INFO ",
     [WARNING_LOG_LEVEL] = "WARN ",
-    [ERROR_LOG_LEVEL]   = "ERROR"
+    [ERROR_LOG_LEVEL]   = "ERROR",
   };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 

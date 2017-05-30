@@ -370,7 +370,7 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
     char buf[256];
     snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
              channel->id);
-    call_set_error(channel, buf);
+    call_set_error(channel, buf, WARNING_LOG_LEVEL);
     goto end;
   }
 
@@ -409,7 +409,7 @@ static void parse_msgpack(Channel *channel)
                  "ch %" PRIu64 " returned a response with an unknown request "
                  "id. Ensure the client is properly synchronized",
                  channel->id);
-        call_set_error(channel, buf);
+        call_set_error(channel, buf, ERROR_LOG_LEVEL);
       }
       msgpack_unpacked_destroy(&unpacked);
       // Bail out from this event loop iteration
@@ -459,7 +459,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
       snprintf(buf, sizeof(buf),
                "ch %" PRIu64 " sent an invalid message, closed.",
                channel->id);
-      call_set_error(channel, buf);
+      call_set_error(channel, buf, ERROR_LOG_LEVEL);
     }
     api_clear_error(&error);
     return;
@@ -564,7 +564,7 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
              "Before returning from a RPC call, ch %" PRIu64 " was "
              "closed due to a failed write",
              channel->id);
-    call_set_error(channel, buf);
+    call_set_error(channel, buf, ERROR_LOG_LEVEL);
   }
 
   return success;
@@ -795,9 +795,9 @@ static void complete_call(msgpack_object *obj, Channel *channel)
   }
 }
 
-static void call_set_error(Channel *channel, char *msg)
+static void call_set_error(Channel *channel, char *msg, int loglevel)
 {
-  ELOG("RPC: %s", msg);
+  LOG(loglevel, "RPC: %s", msg);
   for (size_t i = 0; i < kv_size(channel->call_stack); i++) {
     ChannelCallFrame *frame = kv_A(channel->call_stack, i);
     frame->returned = true;

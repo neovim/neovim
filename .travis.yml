@@ -27,8 +27,7 @@ env:
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
                    -DBUSTED_OUTPUT_TYPE=nvim
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
-                   -DMIN_LOG_LEVEL=3
-                   -DDISABLE_LOG=1"
+                   -DMIN_LOG_LEVEL=3"
     - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
     # Additional CMake flags for 32-bit builds.
     - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
