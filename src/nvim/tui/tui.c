@@ -2566,7 +2566,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_str(ut, unibi_cursor_normal, fix_normal);
     }
     if (linuxvt
-        && (strlen(fix_normal) + 1) >= (sizeof LINUXRESETC - 1)
+        && strlen(fix_normal) >= (sizeof LINUXRESETC - 1)
         && !memcmp(strchr(fix_normal,0) - (sizeof LINUXRESETC - 1), LINUXRESETC, sizeof LINUXRESETC - 1)) {
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
       // cursor shape reset in cnorm, which similarly interferes with
