@@ -21,6 +21,8 @@ env:
     - INSTALL_PREFIX="$HOME/nvim-install"
     # Log directory for Clang sanitizers and Valgrind.
     - LOG_DIR="$BUILD_DIR/log"
+    # Nvim log file.
+    - NVIM_LOG_FILE="$BUILD_DIR/.nvimlog"
     # Default CMake flags.
     - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
                    -DCMAKE_BUILD_TYPE=Debug
