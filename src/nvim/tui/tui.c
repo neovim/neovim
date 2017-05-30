@@ -2600,7 +2600,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
   } else if (screen) {
     // per the screen manual; 2017-04 terminfo.src lacks these.
-    unibi_set_if_empty(ut, unibi_to_status_line, "\x1bk");
+    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   } else if (TERMINAL_FAMILY(term, "tmux")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
