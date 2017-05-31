@@ -431,7 +431,7 @@ static void print_cell(UI *ui, UCell *ptr)
   }
   update_attrs(ui, ptr->attrs);
   out(ui, ptr->data, strlen(ptr->data));
-  ++grid->col;
+  grid->col++;
 }
 
 static bool cheap_to_print(UI *ui, int row, int col, int next)
@@ -440,7 +440,7 @@ static bool cheap_to_print(UI *ui, int row, int col, int next)
   UGrid *grid = &data->grid;
   UCell *cell = grid->cells[row] + col;
   while (next) {
-    --next;
+    next--;
     if (attrs_differ(cell->attrs, data->print_attrs)) {
       if (data->default_attr) {
         return false;
@@ -449,7 +449,7 @@ static bool cheap_to_print(UI *ui, int row, int col, int next)
     if (strlen(cell->data) > 1) {
       return false;
     }
-    ++cell;
+    cell++;
   }
   return true;
 }
@@ -468,7 +468,7 @@ static void check_final_column_wrap(UI *ui)
   if (grid->col == ui->width) {
     grid->col = 0;
     if (grid->row < ui->height) {
-      ++grid->row;
+      grid->row++;
     }
   }
 }
@@ -522,7 +522,7 @@ static void cursor_goto(UI *ui, int row, int col)
         }
       } else {
         if (!data->immediate_wrap_after_last_column && grid->col >= ui->width) {
-          --n;  // We have calculated one too many columns because of delayed wrap.
+          n--;  // We have calculated one too many columns because of delayed wrap.
         }
         data->params[0].i = n;
         unibi_out(ui, unibi_parm_left_cursor);
@@ -938,7 +938,7 @@ static void tui_put(UI *ui, String text)
   // ugrid_put does not advance the cursor correctly, as the actual terminal
   // will when we print.  Its cursor motion model is simplistic and wrong.  So
   // we have to undo what it has just done before doing it right.
-  --grid->col;
+  grid->col--;
   print_cell(ui, cell);
   check_final_column_wrap(ui);
 }
