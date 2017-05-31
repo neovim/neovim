@@ -8,6 +8,8 @@ local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
 local neq = helpers.neq
+local mkdir = helpers.mkdir
+local rmdir = helpers.rmdir
 
 local function init_session(...)
   local args = { helpers.nvim_prog, '-i', 'NONE', '--embed',
@@ -123,32 +125,52 @@ describe('startup defaults', function()
   end)
 
   describe('$NVIM_LOG_FILE', function()
+    -- TODO(jkeyes): use stdpath('data') instead.
+    local datasubdir = helpers.iswin() and 'nvim-data' or 'nvim'
+    local xdgdir = 'Xtest-startup-xdg-logpath'
+    local xdgdatadir = xdgdir..'/'..datasubdir
     after_each(function()
       os.remove('Xtest-logpath')
+      rmdir(xdgdir)
     end)
+
     it('is used if expansion succeeds', function()
       clear({env={
         NVIM_LOG_FILE='Xtest-logpath',
       }})
       eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
     end)
-    it('defaults to stdpath("data")/log', function()
+    it('defaults to stdpath("data")/log if empty', function()
+      eq(true, mkdir(xdgdir) and mkdir(xdgdatadir))
       clear({env={
-        XDG_DATA_HOME='Xtest-startup-logpath',
-        NVIM_LOG_FILE='',  -- Empty value is considered invalid.
+        XDG_DATA_HOME=xdgdir,
+        NVIM_LOG_FILE='',  -- Empty is invalid.
       }})
-      -- TODO(jkeyes): use stdpath('data') instead.
-      local dir = helpers.iswin() and 'nvim-data' or 'nvim'
-      eq('Xtest-startup-logpath/'..dir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+      -- server_start() calls ELOG, which tickles log_path_init().
+      pcall(command, 'call serverstart(serverlist()[0])')
+
+      eq(xdgdir..'/'..datasubdir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
     end)
-    it('if invalid, falls back to default', function()
+    it('defaults to stdpath("data")/log if invalid', function()
+      eq(true, mkdir(xdgdir) and mkdir(xdgdatadir))
       clear({env={
-        XDG_DATA_HOME='Xtest-startup-logpath',
-        NVIM_LOG_FILE='.',  -- Directory is considered invalid.
+        XDG_DATA_HOME=xdgdir,
+        NVIM_LOG_FILE='.',  -- Any directory is invalid.
       }})
-      -- TODO(jkeyes): use stdpath('data') instead.
-      local dir = helpers.iswin() and 'nvim-data' or 'nvim'
-      eq('Xtest-startup-logpath/'..dir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+      -- server_start() calls ELOG, which tickles log_path_init().
+      pcall(command, 'call serverstart(serverlist()[0])')
+
+      eq(xdgdir..'/'..datasubdir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+    end)
+    it('defaults to .nvimlog if stdpath("data") is invalid', function()
+      clear({env={
+        XDG_DATA_HOME='Xtest-missing-xdg-dir',
+        NVIM_LOG_FILE='.',  -- Any directory is invalid.
+      }})
+      -- server_start() calls ELOG, which tickles log_path_init().
+      pcall(command, 'call serverstart(serverlist()[0])')
+
+      eq('.nvimlog', eval('$NVIM_LOG_FILE'))
     end)
   end)
 end)

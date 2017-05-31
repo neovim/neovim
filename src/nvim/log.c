@@ -25,6 +25,19 @@ static uv_mutex_t mutex;
 # include "log.c.generated.h"
 #endif
 
+static bool log_try_create(char *fname)
+{
+  if (fname == NULL || fname[0] == '\0') {
+    return false;
+  }
+  FILE *log_file = fopen(fname, "a");
+  if (log_file == NULL) {
+    return false;
+  }
+  fclose(log_file);
+  return true;
+}
+
 /// Initializes path to log file. Sets $NVIM_LOG_FILE if empty.
 ///
 /// Tries $NVIM_LOG_FILE, or falls back to $XDG_DATA_HOME/nvim/log. Path to log
@@ -43,17 +56,22 @@ static bool log_path_init(void)
              (int)size - 1);
   if (strequal("$" LOG_FILE_ENV, log_file_path)
       || log_file_path[0] == '\0'
-      || os_isdir((char_u *)log_file_path)) {
+      || os_isdir((char_u *)log_file_path)
+      || !log_try_create(log_file_path)) {
     // Invalid $NVIM_LOG_FILE or failed to expand; fall back to default.
-    memset(log_file_path, 0, size);
     char *defaultpath = stdpaths_user_data_subpath("log", 0, true);
     size_t len = xstrlcpy(log_file_path, defaultpath, size);
-    if (len >= size) {  // Fall back to stderr.
-      memset(log_file_path, 0, size);
+    xfree(defaultpath);
+    // Fall back to .nvimlog
+    if (len >= size || !log_try_create(log_file_path)) {
+      len = xstrlcpy(log_file_path, ".nvimlog", size);
+    }
+    // Fall back to stderr
+    if (len >= size || !log_try_create(log_file_path)) {
+      log_file_path[0] = '\0';
       return false;
     }
     os_setenv(LOG_FILE_ENV, log_file_path, true);
-    xfree(defaultpath);
   }
   return true;
 }
