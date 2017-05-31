@@ -532,7 +532,7 @@ static void on_request_event(void **argv)
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
 {
-  bool success;
+  bool success = false;
 
   if (channel->closed) {
     wstream_release_wbuffer(buffer);
