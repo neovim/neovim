@@ -370,13 +370,16 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   int fg = attrs.foreground != -1 ? attrs.foreground : grid->fg;
   int bg = attrs.background != -1 ? attrs.background : grid->bg;
 
+  data->default_attr = fg == -1 && bg == -1
+    && !attrs.bold && !attrs.italic && !attrs.underline && !attrs.undercurl
+    && !attrs.reverse;
+
   if (ui->rgb) {
     if (fg != -1) {
       data->params[0].i = (fg >> 16) & 0xff;  // red
       data->params[1].i = (fg >> 8) & 0xff;   // green
       data->params[2].i = fg & 0xff;          // blue
       unibi_out(ui, data->unibi_ext.set_rgb_foreground);
-      data->default_attr = false;
     }
 
     if (bg != -1) {
@@ -384,37 +387,30 @@ static void update_attrs(UI *ui, HlAttrs attrs)
       data->params[1].i = (bg >> 8) & 0xff;   // green
       data->params[2].i = bg & 0xff;          // blue
       unibi_out(ui, data->unibi_ext.set_rgb_background);
-      data->default_attr = false;
     }
   } else {
     if (fg != -1) {
       data->params[0].i = fg;
       unibi_out(ui, unibi_set_a_foreground);
-      data->default_attr = false;
     }
 
     if (bg != -1) {
       data->params[0].i = bg;
       unibi_out(ui, unibi_set_a_background);
-      data->default_attr = false;
     }
   }
 
   if (attrs.bold) {
     unibi_out(ui, unibi_enter_bold_mode);
-    data->default_attr = false;
   }
   if (attrs.italic) {
     unibi_out(ui, unibi_enter_italics_mode);
-    data->default_attr = false;
   }
   if (attrs.underline || attrs.undercurl) {
     unibi_out(ui, unibi_enter_underline_mode);
-    data->default_attr = false;
   }
   if (attrs.reverse) {
     unibi_out(ui, unibi_enter_reverse_mode);
-    data->default_attr = false;
   }
 }
 
@@ -491,17 +487,18 @@ static void cursor_goto(UI *ui, int row, int col)
   }
   if (0 == row && 0 == col) {
     unibi_out(ui, unibi_cursor_home);
-    ugrid_goto(&data->grid, row, col);
+    ugrid_goto(grid, row, col);
     return;
   }
   if (0 == col ? col != grid->col :
+      row != grid->row ? false :
       1 == col ? 2 < grid->col && cheap_to_print(ui, grid->row, 0, col) :
       2 == col ? 5 < grid->col && cheap_to_print(ui, grid->row, 0, col) :
       false) {
     // Motion to left margin from anywhere else, or CR + printing chars is
     // even less expensive than using BSes or CUB.
     unibi_out(ui, unibi_carriage_return);
-    ugrid_goto(&data->grid, grid->row, 0);
+    ugrid_goto(grid, grid->row, 0);
   } else if (col > grid->col) {
       int n = col - grid->col;
       if (n <= (row == grid->row ? 4 : 2)
@@ -527,7 +524,7 @@ static void cursor_goto(UI *ui, int row, int col)
         data->params[0].i = n;
         unibi_out(ui, unibi_parm_left_cursor);
       }
-      ugrid_goto(&data->grid, row, col);
+      ugrid_goto(grid, row, col);
       return;
     } else if (col > grid->col) {
       int n = col - grid->col;
@@ -539,7 +536,7 @@ static void cursor_goto(UI *ui, int row, int col)
         data->params[0].i = n;
         unibi_out(ui, unibi_parm_right_cursor);
       }
-      ugrid_goto(&data->grid, row, col);
+      ugrid_goto(grid, row, col);
       return;
     }
   }
@@ -554,7 +551,7 @@ static void cursor_goto(UI *ui, int row, int col)
         data->params[0].i = n;
         unibi_out(ui, unibi_parm_down_cursor);
       }
-      ugrid_goto(&data->grid, row, col);
+      ugrid_goto(grid, row, col);
       return;
     } else if (row < grid->row) {
       int n = grid->row - row;
@@ -566,12 +563,12 @@ static void cursor_goto(UI *ui, int row, int col)
         data->params[0].i = n;
         unibi_out(ui, unibi_parm_up_cursor);
       }
-      ugrid_goto(&data->grid, row, col);
+      ugrid_goto(grid, row, col);
       return;
     }
   }
   unibi_goto(ui, row, col);
-  ugrid_goto(&data->grid, row, col);
+  ugrid_goto(grid, row, col);
 }
 
 static void clear_region(UI *ui, int top, int bot, int left, int right)
@@ -1315,7 +1312,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
-    } else if (konsole || xterm || gnome || rxvt || st
+    } else if (konsole || xterm || gnome || rxvt || st || putty
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || mate_pretending_xterm || gnome_pretending_xterm
         || (colorterm && strstr(colorterm, "256"))
