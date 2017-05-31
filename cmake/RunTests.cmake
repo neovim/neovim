@@ -3,6 +3,10 @@ set(ENV{NVIM_RPLUGIN_MANIFEST} ${WORKING_DIR}/Xtest_rplugin_manifest)
 set(ENV{XDG_CONFIG_HOME} ${WORKING_DIR}/Xtest_xdg/config)
 set(ENV{XDG_DATA_HOME} ${WORKING_DIR}/Xtest_xdg/share)
 
+if(NOT DEFINED ENV{NVIM_LOG_FILE})
+  set(ENV{NVIM_LOG_FILE} ${WORKING_DIR}/.nvimlog)
+endif()
+
 if(NVIM_PRG)
   set(ENV{NVIM_PRG} "${NVIM_PRG}")
 endif()
