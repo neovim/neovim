@@ -6719,6 +6719,8 @@ setreg({regname}, {value} [, {options}])
 		used as the width of the selection - if it is not specified
 		then the width of the block is set to the number of characters
 		in the longest line (counting a <Tab> as 1 character).
+		If {options} contains "u" or '"', then the unnamed register is
+		set to point to register {regname}.
 
 		If {options} contains no register settings, then the default
 		is to use character mode unless {value} ends in a <NL> for 

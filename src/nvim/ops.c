@@ -5780,7 +5780,7 @@ static inline bool reg_empty(const yankreg_T *const reg)
 /// @return Pointer that needs to be passed to next `op_register_iter` call or
 ///         NULL if iteration is over.
 const void *op_register_iter(const void *const iter, char *const name,
-                             yankreg_T *const reg)
+                             yankreg_T *const reg, bool *is_unnamed)
   FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *name = NUL;
@@ -5796,6 +5796,7 @@ const void *op_register_iter(const void *const iter, char *const name,
   int iter_off = (int)(iter_reg - &(y_regs[0]));
   *name = (char)get_register_name(iter_off);
   *reg = *iter_reg;
+  *is_unnamed = (iter_reg == y_previous);
   while (++iter_reg - &(y_regs[0]) < NUM_SAVED_REGISTERS) {
     if (!reg_empty(iter_reg)) {
       return (void *) iter_reg;
@@ -5820,10 +5821,11 @@ size_t op_register_amount(void)
 /// Set register to a given value
 ///
 /// @param[in]  name  Register name.
-/// @param[in]  reg   Register value.
+/// @param[in]  reg  Register value.
+/// @param[in]  is_unnamed  Whether to set the unnamed regiseter to reg
 ///
 /// @return true on success, false on failure.
-bool op_register_set(const char name, const yankreg_T reg)
+bool op_register_set(const char name, const yankreg_T reg, bool is_unnamed)
 {
   int i = op_reg_index(name);
   if (i == -1) {
@@ -5831,6 +5833,10 @@ bool op_register_set(const char name, const yankreg_T reg)
   }
   free_register(&y_regs[i]);
   y_regs[i] = reg;
+
+  if (is_unnamed) {
+    y_previous = &y_regs[i];
+  }
   return true;
 }
 
@@ -5846,4 +5852,21 @@ const yankreg_T *op_register_get(const char name)
     return NULL;
   }
   return &y_regs[i];
+}
+
+/// Set the previous yank register
+///
+/// @param[in]  name  Register name.
+///
+/// @return true on success, false on failure.
+bool op_register_set_previous(const char name)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int i = op_reg_index(name);
+  if (i == -1) {
+    return false;
+  }
+
+  y_previous = &y_regs[i];
+  return true;
 }

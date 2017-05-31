@@ -98,6 +98,7 @@ KHASH_SET_INIT_STR(strset)
 #define REG_KEY_TYPE "rt"
 #define REG_KEY_WIDTH "rw"
 #define REG_KEY_CONTENTS "rc"
+#define REG_KEY_UNNAMED "ru"
 
 #define KEY_LNUM "l"
 #define KEY_COL "c"
@@ -284,6 +285,7 @@ typedef struct {
       char name;
       MotionType type;
       char **contents;
+      bool is_unnamed;
       size_t contents_size;
       size_t width;
       dict_T *additional_data;
@@ -473,6 +475,7 @@ static const ShadaEntry sd_default_values[] = {
           .type = kMTCharWise,
           .contents = NULL,
           .contents_size = 0,
+          .is_unnamed = false,
           .width = 0,
           .additional_data = NULL),
   DEF_SDE(Variable, global_var,
@@ -1335,7 +1338,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           .y_width = (colnr_T) cur_entry.data.reg.width,
           .timestamp = cur_entry.timestamp,
           .additional_data = cur_entry.data.reg.additional_data,
-        })) {
+        }, cur_entry.data.reg.is_unnamed)) {
           shada_free_shada_entry(&cur_entry);
         }
         // Do not free shada entry: its allocated memory was saved above.
@@ -1780,6 +1783,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
           2  // Register contents and name
           + ONE_IF_NOT_DEFAULT(entry, reg.type)
           + ONE_IF_NOT_DEFAULT(entry, reg.width)
+          + ONE_IF_NOT_DEFAULT(entry, reg.is_unnamed)
           // Additional entries, if any:
           + (size_t) (entry.data.reg.additional_data == NULL
                       ? 0
@@ -1799,6 +1803,14 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       if (!CHECK_DEFAULT(entry, reg.width)) {
         PACK_STATIC_STR(REG_KEY_WIDTH);
         msgpack_pack_uint64(spacker, (uint64_t) entry.data.reg.width);
+      }
+      if (!CHECK_DEFAULT(entry, reg.is_unnamed)) {
+        PACK_STATIC_STR(REG_KEY_UNNAMED);
+        if (entry.data.reg.is_unnamed) {
+          msgpack_pack_true(spacker);
+        } else {
+          msgpack_pack_false(spacker);
+        }
       }
       DUMP_ADDITIONAL_DATA(entry.data.reg.additional_data, "register item");
       break;
@@ -2318,6 +2330,48 @@ static inline void add_search_pattern(PossiblyFreedShadaEntry *const ret_pse,
   }
 }
 
+/// Initialize registers for writing to the ShaDa file
+///
+/// @param[in]  wms  The WriteMergerState used when writing.
+/// @param[in]  max_reg_lines  The maximum number of register lines.
+static inline void shada_initialize_registers(WriteMergerState *const wms,
+                                              int max_reg_lines)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  const void *reg_iter = NULL;
+  const bool limit_reg_lines = max_reg_lines >= 0;
+  do {
+    yankreg_T reg;
+    char name = NUL;
+    bool is_unnamed = false;
+    reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
+    if (name == NUL) {
+      break;
+    }
+    if (limit_reg_lines && reg.y_size > (size_t)max_reg_lines) {
+      continue;
+    }
+    wms->registers[op_reg_index(name)] = (PossiblyFreedShadaEntry) {
+      .can_free_entry = false,
+      .data = {
+        .type = kSDItemRegister,
+        .timestamp = reg.timestamp,
+        .data = {
+          .reg = {
+            .contents = (char **)reg.y_array,
+            .contents_size = (size_t)reg.y_size,
+            .type = reg.y_type,
+            .width = (size_t)(reg.y_type == kMTBlockWise ? reg.y_width : 0),
+            .additional_data = reg.additional_data,
+            .name = name,
+            .is_unnamed = is_unnamed,
+          }
+        }
+      }
+    };
+  } while (reg_iter != NULL);
+}
+
 /// Write ShaDa file
 ///
 /// @param[in]  sd_writer  Structure containing file writer definition.
@@ -2344,7 +2398,6 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   if (max_reg_lines < 0) {
     max_reg_lines = get_shada_parameter('"');
   }
-  const bool limit_reg_lines = max_reg_lines >= 0;
   const bool dump_registers = (max_reg_lines != 0);
   khash_t(bufset) removable_bufs = KHASH_EMPTY_TABLE(bufset);
   const size_t max_kbyte = (size_t) max_kbyte_i;
@@ -2587,35 +2640,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
 
   // Initialize registers
   if (dump_registers) {
-    const void *reg_iter = NULL;
-    do {
-      yankreg_T reg;
-      char name = NUL;
-      reg_iter = op_register_iter(reg_iter, &name, &reg);
-      if (name == NUL) {
-        break;
-      }
-      if (limit_reg_lines && reg.y_size > (size_t)max_reg_lines) {
-        continue;
-      }
-      wms->registers[op_reg_index(name)] = (PossiblyFreedShadaEntry) {
-        .can_free_entry = false,
-        .data = {
-          .type = kSDItemRegister,
-          .timestamp = reg.timestamp,
-          .data = {
-            .reg = {
-              .contents = (char **) reg.y_array,
-              .contents_size = (size_t) reg.y_size,
-              .type = reg.y_type,
-              .width = (size_t) (reg.y_type == kMTBlockWise ? reg.y_width : 0),
-              .additional_data = reg.additional_data,
-              .name = name,
-            }
-          }
-        }
-      };
-    } while (reg_iter != NULL);
+    shada_initialize_registers(wms, max_reg_lines);
   }
 
   // Initialize buffers
@@ -3594,6 +3619,7 @@ shada_read_next_item_start:
             entry->data.reg.contents[i] = BIN_CONVERTED(arr.ptr[i].via.bin);
           }
         }
+        BOOLEAN_KEY("register", REG_KEY_UNNAMED, entry->data.reg.is_unnamed)
         TYPED_KEY("register", REG_KEY_TYPE, "an unsigned integer",
                   entry->data.reg.type, POSITIVE_INTEGER, u64, TOU8)
         TYPED_KEY("register", KEY_NAME_CHAR, "an unsigned integer",

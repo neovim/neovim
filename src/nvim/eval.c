@@ -5100,7 +5100,8 @@ bool garbage_collect(bool testing)
     do {
       yankreg_T reg;
       char name = NUL;
-      reg_iter = op_register_iter(reg_iter, &name, &reg);
+      bool is_unnamed = false;
+      reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
       if (name != NUL) {
         ABORTING(set_ref_dict)(reg.additional_data, copyID);
       }
@@ -14834,6 +14835,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     regname = '"';
   }
 
+  bool set_unnamed = false;
   if (argvars[2].v_type != VAR_UNKNOWN) {
     const char *stropt = tv_get_string_chk(&argvars[2]);
     if (stropt == NULL) {
@@ -14860,6 +14862,10 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
             block_len = getdigits_long((char_u **)&stropt) - 1;
             stropt--;
           }
+          break;
+        }
+        case 'u': case '"': {  // unnamed register
+          set_unnamed = true;
           break;
         }
       }
@@ -14914,6 +14920,11 @@ free_lstval:
                           append, yank_type, block_len);
   }
   rettv->vval.v_number = 0;
+
+  if (set_unnamed) {
+    // Discard the result. We already handle the error case.
+    if (op_register_set_previous(regname)) { }
+  }
 }
 
 /*
