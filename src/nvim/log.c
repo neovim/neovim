@@ -14,14 +14,10 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-/// First location of the log file used by log_path_init()
-#define USR_LOG_FILE "$NVIM_LOG_FILE"
+#define LOG_FILE_ENV "NVIM_LOG_FILE"
 
-/// Fall back location of the log file used by log_path_init()
-#define USR_LOG_FILE_2 "$HOME" _PATHSEPSTR ".nvimlog"
-
-/// Cached location of the log file set by log_path_init()
-static char expanded_log_file_path[MAXPATHL + 1] = { 0 };
+/// Cached location of the expanded log file path decided by log_path_init().
+static char log_file_path[MAXPATHL + 1] = { 0 };
 
 static uv_mutex_t mutex;
 
@@ -29,31 +25,35 @@ static uv_mutex_t mutex;
 # include "log.c.generated.h"
 #endif
 
-/// Initialize path to log file
+/// Initializes path to log file. Sets $NVIM_LOG_FILE if empty.
 ///
-/// Tries to use #USR_LOG_FILE, then falls back #USR_LOG_FILE_2. Path to log
+/// Tries $NVIM_LOG_FILE, or falls back to $XDG_DATA_HOME/nvim/log. Path to log
 /// file is cached, so only the first call has effect, unless first call was not
-/// successful. To make initialization not succeed either a bug in expand_env()
-/// is needed or both `$NVIM_LOG_FILE` and `$HOME` environment variables
-/// undefined.
+/// successful. Failed initialization indicates either a bug in expand_env()
+/// or both $NVIM_LOG_FILE and $HOME environment variables are undefined.
 ///
 /// @return true if path was initialized, false otherwise.
 static bool log_path_init(void)
 {
-  if (expanded_log_file_path[0]) {
+  if (log_file_path[0]) {
     return true;
   }
-  expand_env((char_u *)USR_LOG_FILE, (char_u *)expanded_log_file_path,
-             sizeof(expanded_log_file_path) - 1);
-  // if the log file path expansion failed then fall back to stderr
-  if (strcmp(USR_LOG_FILE, expanded_log_file_path) == 0) {
-    memset(expanded_log_file_path, 0, sizeof(expanded_log_file_path));
-    expand_env((char_u *)USR_LOG_FILE_2, (char_u *)expanded_log_file_path,
-               sizeof(expanded_log_file_path) - 1);
-    if (strcmp(USR_LOG_FILE_2, expanded_log_file_path) == 0) {
-      memset(expanded_log_file_path, 0, sizeof(expanded_log_file_path));
+  size_t size = sizeof(log_file_path);
+  expand_env((char_u *)"$" LOG_FILE_ENV, (char_u *)log_file_path,
+             (int)size - 1);
+  if (strequal("$" LOG_FILE_ENV, log_file_path)
+      || log_file_path[0] == '\0'
+      || os_isdir((char_u *)log_file_path)) {
+    // Invalid $NVIM_LOG_FILE or failed to expand; fall back to default.
+    memset(log_file_path, 0, size);
+    char *defaultpath = stdpaths_user_data_subpath("log", 0, true);
+    size_t len = xstrlcpy(log_file_path, defaultpath, size);
+    if (len >= size) {  // Fall back to stderr.
+      memset(log_file_path, 0, size);
       return false;
     }
+    os_setenv(LOG_FILE_ENV, log_file_path, true);
+    xfree(defaultpath);
   }
   return true;
 }
@@ -123,8 +123,7 @@ end:
 
 /// Open the log file for appending.
 ///
-/// @return The FILE* specified by the USR_LOG_FILE path or stderr in case of
-///         error
+/// @return FILE* decided by log_path_init() or stderr in case of error
 FILE *open_log_file(void)
 {
   static bool opening_log_file = false;
@@ -135,11 +134,10 @@ FILE *open_log_file(void)
     return stderr;
   }
 
-  // expand USR_LOG_FILE if needed and open the file
   FILE *log_file = NULL;
   opening_log_file = true;
   if (log_path_init()) {
-    log_file = fopen(expanded_log_file_path, "a");
+    log_file = fopen(log_file_path, "a");
   }
   opening_log_file = false;
 
@@ -147,9 +145,13 @@ FILE *open_log_file(void)
     return log_file;
   }
 
+  // May happen if:
+  //  - LOG() is called before early_init()
+  //  - Directory does not exist
+  //  - File is not writable
   do_log_to_file(stderr, ERROR_LOG_LEVEL, __func__, __LINE__, true,
-                 "Cannot open " USR_LOG_FILE ", logging to stderr. Was LOG()"
-                 " called before early_init()?");
+                 "Logging to stderr, failed to open $" LOG_FILE_ENV ": %s",
+                 log_file_path);
   return stderr;
 }
 

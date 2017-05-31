@@ -121,6 +121,36 @@ describe('startup defaults', function()
   it('v:progpath is set to the absolute path', function()
     eq(eval("fnamemodify(v:progpath, ':p')"), eval('v:progpath'))
   end)
+
+  describe('$NVIM_LOG_FILE', function()
+    after_each(function()
+      os.remove('Xtest-logpath')
+    end)
+    it('is used if expansion succeeds', function()
+      clear({env={
+        NVIM_LOG_FILE='Xtest-logpath',
+      }})
+      eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
+    end)
+    it('defaults to stdpath("data")/log', function()
+      clear({env={
+        XDG_DATA_HOME='Xtest-startup-logpath',
+        NVIM_LOG_FILE='',  -- Empty value is considered invalid.
+      }})
+      -- TODO(jkeyes): use stdpath('data') instead.
+      local dir = helpers.iswin() and 'nvim-data' or 'nvim'
+      eq('Xtest-startup-logpath/'..dir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+    end)
+    it('if invalid, falls back to default', function()
+      clear({env={
+        XDG_DATA_HOME='Xtest-startup-logpath',
+        NVIM_LOG_FILE='.',  -- Directory is considered invalid.
+      }})
+      -- TODO(jkeyes): use stdpath('data') instead.
+      local dir = helpers.iswin() and 'nvim-data' or 'nvim'
+      eq('Xtest-startup-logpath/'..dir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+    end)
+  end)
 end)
 
 describe('XDG-based defaults', function()
