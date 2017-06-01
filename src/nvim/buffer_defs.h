@@ -335,6 +335,7 @@ struct mapblock {
   char m_silent;                /* <silent> used, don't echo commands */
   char m_nowait;                /* <nowait> used */
   char m_expr;                  /* <expr> used, m_str is an expression */
+  char m_norecord;              /* <norecord> used */
   scid_T m_script_ID;           /* ID of script where map was defined */
 };
 

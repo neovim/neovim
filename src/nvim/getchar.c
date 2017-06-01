@@ -1783,6 +1783,8 @@ static int vgetorpeek(int advance)
                * Skip ":lmap" mappings if keys were mapped.
                */
               if (mp->m_keys[0] == c1
+                  && (!mp->m_norecord
+                      || (!Recording && !Exec_reg))
                   && (mp->m_mode & local_State)
                   && ((mp->m_mode & LANGMAP) == 0
                       || typebuf.tb_maplen == 0)) {
@@ -2507,7 +2509,7 @@ int fix_input_buffer(char_u *buf, int len)
  *	  4 for out of mem (deprecated, WON'T HAPPEN)
  *	  5 for entry not unique
  */
-int 
+int
 do_map (
     int maptype,
     char_u *arg,
@@ -2539,6 +2541,7 @@ do_map (
   bool silent = false;
   bool special = false;
   bool expr = false;
+  bool norecord = false;
   int noremap;
   char_u      *orig_rhs;
 
@@ -2552,8 +2555,7 @@ do_map (
   else
     noremap = REMAP_YES;
 
-  /* Accept <buffer>, <nowait>, <silent>, <expr> <script> and <unique> in
-   * any order. */
+  /* Accept arguments in any order */
   for (;; ) {
     /*
      * Check for "<buffer>": mapping local to buffer.
@@ -2616,6 +2618,15 @@ do_map (
       keys = skipwhite(keys + 8);
       unique = true;
       continue;
+    }
+
+    /*
+     * Check for "<norecord>": don't apply mapping while recording or
+     * executing a register.
+     */
+    if (STRNCMP(keys, "<norecord>", 10) == 0) {
+      keys = skipwhite(keys + 10);
+      norecord = true;
     }
     break;
   }
@@ -2875,6 +2886,7 @@ do_map (
                 mp->m_silent = silent;
                 mp->m_mode = mode;
                 mp->m_expr = expr;
+                mp->m_norecord = norecord;
                 mp->m_script_ID = current_SID;
                 did_it = TRUE;
               }
@@ -2954,6 +2966,7 @@ do_map (
   mp->m_silent = silent;
   mp->m_mode = mode;
   mp->m_expr = expr;
+  mp->m_norecord = norecord;
   mp->m_script_ID = current_SID;
 
   /* add the new entry in front of the abbrlist or maphash[] list */
@@ -3382,6 +3395,10 @@ set_context_in_map_cmd (
         arg = skipwhite(arg + 6);
         continue;
       }
+      if (STRNCMP(arg, "<norecord>", 10) == 0) {
+        arg = skipwhite(arg + 10);
+        continue;
+      }
       break;
     }
     xp->xp_pattern = arg;
@@ -3416,7 +3433,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
   for (round = 1; round <= 2; ++round) {
     count = 0;
 
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i < 7; ++i) {
       if (i == 0)
         p = (char_u *)"<silent>";
       else if (i == 1)
@@ -3429,6 +3446,8 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
         p = (char_u *)"<buffer>";
       else if (i == 5)
         p = (char_u *)"<nowait>";
+      else if (i == 6)
+        p = (char_u *)"<norecord>";
       else
         continue;
 
@@ -3783,7 +3802,7 @@ void vim_unescape_csi(char_u *p)
  * Write map commands for the current mappings to an .exrc file.
  * Return FAIL on error, OK otherwise.
  */
-int 
+int
 makemap (
     FILE *fd,
     buf_T *buf           /* buffer for local mappings or NULL */
@@ -3951,6 +3970,8 @@ makemap (
           if (mp->m_nowait && fputs(" <nowait>", fd) < 0)
             return FAIL;
           if (mp->m_silent && fputs(" <silent>", fd) < 0)
+            return FAIL;
+          if (mp->m_norecord && fputs(" <norecord", fd) < 0)
             return FAIL;
           if (mp->m_noremap == REMAP_SCRIPT
               && fputs("<script>", fd) < 0)
