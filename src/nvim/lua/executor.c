@@ -382,7 +382,7 @@ static int nlua_eval_lua_string(lua_State *const lstate)
 /// and locations where result and error are saved, respectively. Always
 /// returns nothing (from the lua point of view).
 static int nlua_exec_lua_string_api(lua_State *const lstate)
-    FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   const String *str = (const String *)lua_touserdata(lstate, 1);
   const Array *args = (const Array *)lua_touserdata(lstate, 2);

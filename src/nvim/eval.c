@@ -12130,7 +12130,7 @@ void mapblock_fill_dict(dict_T *const dict,
                         const mapblock_T *const mp,
                         long buffer_value,
                         bool compatible)
-    FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u *lhs = str2special_save(mp->m_keys, true);
   char *const mapmode = map_mode_to_chars(mp->m_mode);

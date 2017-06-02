@@ -173,7 +173,7 @@ void mch_exit(int r) FUNC_ATTR_NORETURN
 /// @returns             OK for success or FAIL for error.
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file, int flags) FUNC_ATTR_NONNULL_ARG(3)
-    FUNC_ATTR_NONNULL_ARG(4)
+  FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
   size_t len;
