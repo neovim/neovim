@@ -4236,7 +4236,6 @@ win_line (
          * (regardless of the xn,am settings).
          * Only do this if the cursor is on the current line
          * (something has been written in it).
-         * Don't do this for the GUI.
          * Don't do this for double-width characters.
          * Don't do this for a window not at the right screen border.
          */
