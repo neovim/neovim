@@ -42,7 +42,7 @@ Install from package
 Pre-built packages for Windows, macOS, and Linux are found at the
 [Releases](https://github.com/neovim/neovim/releases/) page.
 
-Managed packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux],
+Managed packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Gentoo],
 and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 
 Project layout
@@ -110,5 +110,6 @@ See `LICENSE` for details.
 [Ubuntu]: http://packages.ubuntu.com/search?keywords=neovim
 [Fedora]: https://admin.fedoraproject.org/pkgdb/package/rpms/neovim
 [Arch Linux]: https://www.archlinux.org/packages/?q=neovim
+[Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
 
 <!-- vim: set tw=80: -->
