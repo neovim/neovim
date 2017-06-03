@@ -1214,6 +1214,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 {
   unibi_term *ut = data->ut;
   const char * xterm_version = os_getenv("XTERM_VERSION");
+#if 0   // We don't need to identify this specifically, for now.
+  bool roxterm = !!os_getenv("ROXTERM_ID");
+#endif
   bool xterm = terminfo_is_term_family(term, "xterm");
   bool linuxvt = terminfo_is_term_family(term, "linux");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
@@ -1227,6 +1230,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
+  bool konsole_pretending_xterm = xterm && konsole;
   bool gnome_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "gnome-terminal");
   bool mate_pretending_xterm = xterm && colorterm
@@ -1260,25 +1264,37 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // their own terminal types and terminfo entries, like PuTTY does, and not
     // claim to be xterm.  Or they would mimic xterm properly enough to be
     // treatable as xterm.
-#if 0   // We don't need to identify this specifically, for now.
-    bool roxterm = !!os_getenv("ROXTERM_ID");
-#endif
+
+    // 2017-04 terminfo.src lacks these.  genuine Xterm has them, as have
+    // the false claimants.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]0;");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
+
     if (true_xterm) {
+      // 2017-04 terminfo.src lacks these.  genuine Xterm has them.
       unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
       unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
       unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
     }
-    if (iterm_pretending_xterm) {
+    if (true_xterm
+        || iterm_pretending_xterm
+        || gnome_pretending_xterm
+        || konsole_pretending_xterm) {
+      // Apple's outdated copy of terminfo.src for MacOS lacks these.
+      // genuine Xterm and three false claimants have them.
       unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
+      unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
     }
   } else if (rxvt) {
+    // 2017-04 terminfo.src lacks these.  Unicode rxvt has them.
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
+    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
-    unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
+    // 2017-04 terminfo.src has older control sequences.
+    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
+    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
   } else if (screen) {
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
@@ -1287,14 +1303,21 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   } else if (terminfo_is_term_family(term, "interix")) {
+    // 2017-04 terminfo.src lacks this.
     unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   } else if (linuxvt) {
-    // No bugs in the vanilla terminfo for our purposes.
+    // Apple's outdated copy of terminfo.src for MacOS lacks these.
+    unibi_set_if_empty(ut, unibi_parm_up_cursor, "\x1b[%p1%dA");
+    unibi_set_if_empty(ut, unibi_parm_down_cursor, "\x1b[%p1%dB");
+    unibi_set_if_empty(ut, unibi_parm_right_cursor, "\x1b[%p1%dC");
+    unibi_set_if_empty(ut, unibi_parm_left_cursor, "\x1b[%p1%dD");
   } else if (putty) {
     // No bugs in the vanilla terminfo for our purposes.
   } else if (iterm) {
+    // 2017-04 terminfo.src has older control sequences.
     unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
     unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
+    // 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_orig_pair, "\x1b[39;49m");
     unibi_set_if_empty(ut, unibi_enter_dim_mode, "\x1b[2m");
