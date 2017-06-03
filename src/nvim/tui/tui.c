@@ -206,7 +206,8 @@ static void terminfo_start(UI *ui)
     terminfo_is_term_family(term, "iterm")
     || (terminfo_is_term_family(term, "xterm") && iterm_env);
   data->immediate_wrap_after_last_column =
-    terminfo_is_term_family(term, "interix");
+    terminfo_is_term_family(term, "cygwin")
+    || terminfo_is_term_family(term, "interix");
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
