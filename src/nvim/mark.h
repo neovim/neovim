@@ -81,7 +81,8 @@ static inline bool equalpos(pos_T, pos_T)
   REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
 static inline bool ltoreq(pos_T, pos_T)
   REAL_FATTR_CONST REAL_FATTR_ALWAYS_INLINE;
-static inline void clearpos(pos_T *) REAL_FATTR_ALWAYS_INLINE;
+static inline void clearpos(pos_T *)
+  REAL_FATTR_ALWAYS_INLINE;
 
 /// Return true if position a is before (less than) position b.
 static inline bool lt(pos_T a, pos_T b)

@@ -2600,16 +2600,23 @@ def CheckBraces(filename, clean_lines, linenum, error):
         else:
             func_start_linenum = end_linenum + 1
             while not clean_lines.lines[func_start_linenum] == '{':
-                if not Match(r'^(?:\s*\b(?:FUNC_ATTR|REAL_FATTR)_\w+\b(?:\(\d+(, \d+)*\))?)+$',
-                             clean_lines.lines[func_start_linenum]):
+                attrline = Match(r'^((?!# *define).*?)(?:FUNC_ATTR|FUNC_API|REAL_FATTR)_\w+(?:\(\d+(, \d+)*\))?',
+                                 clean_lines.lines[func_start_linenum])
+                if attrline:
+                    if len(attrline.group(1)) != 2:
+                        error(filename, func_start_linenum,
+                              'whitespace/indent', 5,
+                              'Function attribute line should have 2-space '
+                              'indent')
+
+                    func_start_linenum += 1
+                else:
                     if clean_lines.lines[func_start_linenum].endswith('{'):
                         error(filename, func_start_linenum,
                               'readability/braces', 5,
                               'Brace starting function body must be placed '
                               'after the function signature')
                     break
-                else:
-                    func_start_linenum += 1
 
     # An else clause should be on the same line as the preceding closing brace.
     # If there is no preceding closing brace, there should be one.

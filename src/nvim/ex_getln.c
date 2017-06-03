@@ -4073,7 +4073,7 @@ void ExpandGeneric(
 /// @param      flagsarg is a combination of EW_* flags.
 static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
                             int flagsarg)
-    FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u      *pat;
   int i;

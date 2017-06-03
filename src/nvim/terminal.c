@@ -637,7 +637,7 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
 }
 
 static void buf_set_term_title(buf_T *buf, char *title)
-    FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   Error err = ERROR_INIT;
   dict_set_var(buf->b_vars,
