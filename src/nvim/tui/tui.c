@@ -91,6 +91,7 @@ typedef struct {
   bool can_set_lr_margin;
   bool can_set_left_right_margin;
   bool immediate_wrap_after_last_column;
+  bool no_bottom_right_corner;
   bool mouse_enabled;
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
@@ -201,10 +202,11 @@ static void terminfo_start(UI *ui)
   data->can_set_left_right_margin =
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
-  data->immediate_wrap_after_last_column =
+  data->no_bottom_right_corner =
     terminfo_is_term_family(term, "iterm")
-    || terminfo_is_term_family(term, "interix")
     || (terminfo_is_term_family(term, "xterm") && iterm_env);
+  data->immediate_wrap_after_last_column =
+    terminfo_is_term_family(term, "interix");
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
@@ -414,20 +416,43 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 }
 
+static void final_column_wrap(UI *ui)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  if (grid->col == ui->width) {
+    grid->col = 0;
+    if (grid->row < ui->height) {
+      grid->row++;
+    }
+  }
+}
+
+/// It is undocumented, but in the majority of terminals and terminal emulators
+/// printing at the right margin does not cause an automatic wrap until the
+/// next character is printed, holding the cursor in place until then.
 static void print_cell(UI *ui, UCell *ptr)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
-  if (data->immediate_wrap_after_last_column
+  if (data->no_bottom_right_corner
       && grid->row >= ui->height - 1
       && grid->col >= ui->width - 1) {
     // This (rare) kind of terminal simply cannot print in this corner without
     // scrolling the entire screen up a line, which we do not want to happen.
     return;
   }
+  if (!data->immediate_wrap_after_last_column) {
+    // Printing the next character finally advances the cursor.
+    final_column_wrap(ui);
+  }
   update_attrs(ui, ptr->attrs);
   out(ui, ptr->data, strlen(ptr->data));
   grid->col++;
+  if (data->immediate_wrap_after_last_column) {
+    // Printing at the right margin immediately advances the cursor.
+    final_column_wrap(ui);
+  }
 }
 
 static bool cheap_to_print(UI *ui, int row, int col, int next)
@@ -448,25 +473,6 @@ static bool cheap_to_print(UI *ui, int row, int col, int next)
     cell++;
   }
   return true;
-}
-
-/// The behaviour that this is checking for the absence of is undocumented,
-/// but is implemented in the majority of terminals and terminal emulators.
-/// Printing at the right margin does not cause an automatic wrap until the
-/// next character is printed, holding the cursor in place until then.
-static void check_final_column_wrap(UI *ui)
-{
-  TUIData *data = ui->data;
-  if (!data->immediate_wrap_after_last_column) {
-    return;
-  }
-  UGrid *grid = &data->grid;
-  if (grid->col == ui->width) {
-    grid->col = 0;
-    if (grid->row < ui->height) {
-      grid->row++;
-    }
-  }
 }
 
 /// This optimizes several cases where it is cheaper to do something other
@@ -506,7 +512,6 @@ static void cursor_goto(UI *ui, int row, int col)
         UGRID_FOREACH_CELL(grid, grid->row, grid->row,
           grid->col, col - 1, {
           print_cell(ui, cell);
-          check_final_column_wrap(ui);
         });
       }
   }
@@ -614,7 +619,6 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
     UGRID_FOREACH_CELL(grid, top, bot, left, right, {
       cursor_goto(ui, row, col);
       print_cell(ui, cell);
-      check_final_column_wrap(ui);
     });
   }
 
@@ -937,7 +941,6 @@ static void tui_put(UI *ui, String text)
   // we have to undo what it has just done before doing it right.
   grid->col--;
   print_cell(ui, cell);
-  check_final_column_wrap(ui);
 }
 
 static void tui_bell(UI *ui)
@@ -990,7 +993,6 @@ static void tui_flush(UI *ui)
     UGRID_FOREACH_CELL(grid, r.top, r.bot, r.left, r.right, {
       cursor_goto(ui, row, col);
       print_cell(ui, cell);
-      check_final_column_wrap(ui);
     });
   }
 
@@ -1265,6 +1267,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
       unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
     }
+    if (iterm_pretending_xterm) {
+      unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
+    }
   } else if (rxvt) {
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
@@ -1284,7 +1289,15 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   } else if (putty) {
     // No bugs in the vanilla terminfo for our purposes.
   } else if (iterm) {
+    unibi_set_str(ut, unibi_enter_ca_mode, "\x1b[?1049h");
+    unibi_set_str(ut, unibi_exit_ca_mode, "\x1b[?1049l");
+    unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
+    unibi_set_if_empty(ut, unibi_orig_pair, "\x1b[39;49m");
+    unibi_set_if_empty(ut, unibi_enter_dim_mode, "\x1b[2m");
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
+    unibi_set_if_empty(ut, unibi_exit_italics_mode, "\x1b[23m");
+    unibi_set_if_empty(ut, unibi_exit_underline_mode, "\x1b[24m");
+    unibi_set_if_empty(ut, unibi_exit_standout_mode, "\x1b[27m");
   } else if (st) {
     // No bugs in the vanilla terminfo for our purposes.
   }
