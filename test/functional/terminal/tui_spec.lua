@@ -403,7 +403,7 @@ describe("tui 't_Co' (terminal colors)", function()
     assert_term_colors("linux-256color", nil, 256)
   end)
 
-  -- screen and tmux:
+  -- screen:
   --
   -- FreeBSD falls back to the built-in screen-256colour entry.
   -- Linux and MacOS have a screen entry in external terminfo with 8 colours,
@@ -432,6 +432,12 @@ describe("tui 't_Co' (terminal colors)", function()
   it("TERM=screen-256color no COLORTERM uses 256 colors", function()
     assert_term_colors("screen-256color", nil, 256)
   end)
+
+  -- tmux:
+  --
+  -- FreeBSD and MacOS fall back to the built-in tmux-256colour entry.
+  -- Linux has a tmux entry in external terminfo with 8 colours,
+  -- which is raised to 256.
 
   it("TERM=tmux no COLORTERM uses 256 colors", function()
     assert_term_colors("tmux", nil, 256)
