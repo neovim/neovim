@@ -1221,12 +1221,16 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
   bool st = terminfo_is_term_family(term, "st");
-  bool gnome = terminfo_is_term_family(term, "gnome") || terminfo_is_term_family(term, "vte");
-  bool iterm = terminfo_is_term_family(term, "iterm") || terminfo_is_term_family(term, "iTerm.app");
+  bool gnome = terminfo_is_term_family(term, "gnome")
+    || terminfo_is_term_family(term, "vte");
+  bool iterm = terminfo_is_term_family(term, "iterm")
+    || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool gnome_pretending_xterm = xterm && colorterm && strstr(colorterm, "gnome-terminal");
-  bool mate_pretending_xterm = xterm && colorterm && strstr(colorterm, "mate-terminal");
+  bool gnome_pretending_xterm = xterm && colorterm
+    && strstr(colorterm, "gnome-terminal");
+  bool mate_pretending_xterm = xterm && colorterm
+    && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version;
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
@@ -1453,7 +1457,8 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
   bool st = terminfo_is_term_family(term, "st");
-  bool iterm = terminfo_is_term_family(term, "iterm") || terminfo_is_term_family(term, "iTerm.app");
+  bool iterm = terminfo_is_term_family(term, "iterm")
+    || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool true_xterm = xterm && !!xterm_version;
