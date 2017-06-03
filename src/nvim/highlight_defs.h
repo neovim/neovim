@@ -7,13 +7,11 @@
 
 typedef int32_t RgbValue;
 
-/*
- * Values for index in highlight_attr[].
- * When making changes, also update hlf_names below!
- */
+/// Values for index in highlight_attr[].
+/// When making changes, also update hlf_names below!
 typedef enum {
-  HLF_8 = 0         /* Meta & special keys listed with ":map", text that is
-                       displayed different from what it is */
+  HLF_8 = 0         // Meta & special keys listed with ":map", text that is
+                    // displayed different from what it is
   , HLF_EOB         // after the last line in the buffer
   , HLF_TERM        // terminal cursor focused
   , HLF_TERMNC      // terminal cursor unfocused
@@ -115,9 +113,9 @@ EXTERN const char *hlf_names[] INIT(= {
 });
 
 
-EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
-EXTERN int highlight_user[9];                   /* User[1-9] attributes */
-EXTERN int highlight_stlnc[9];                  /* On top of user */
+EXTERN int highlight_attr[HLF_COUNT];       // Highl. attr for each context.
+EXTERN int highlight_user[9];                   // User[1-9] attributes
+EXTERN int highlight_stlnc[9];                  // On top of user
 EXTERN int cterm_normal_fg_color INIT(= 0);
 EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);
@@ -125,4 +123,4 @@ EXTERN RgbValue normal_fg INIT(= -1);
 EXTERN RgbValue normal_bg INIT(= -1);
 EXTERN RgbValue normal_sp INIT(= -1);
 
-#endif /* NVIM_HIGHLIGHT_DEFS_H */
+#endif  // NVIM_HIGHLIGHT_DEFS_H

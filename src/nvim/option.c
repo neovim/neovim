@@ -3580,7 +3580,7 @@ static char_u *compile_cap_prog(synblock_T *synblock)
 static bool parse_winhl_opt(win_T *wp)
 {
   int w_hl_id_normal = 0;
-  int w_hl_ids[HLF_COUNT] = {0};
+  int w_hl_ids[HLF_COUNT] = { 0 };
   int hlf;
 
   const char *p = (const char *)wp->w_p_winhl;
@@ -3597,7 +3597,7 @@ static bool parse_winhl_opt(win_T *wp)
     if (strncmp("Normal", p, nlen) == 0) {
       w_hl_id_normal = hl_id;
     } else {
-      for (hlf = 0; hlf < (int)HLF_COUNT; ++hlf) {
+      for (hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
         if (strncmp(hlf_names[hlf], p, nlen) == 0) {
           w_hl_ids[hlf] = hl_id;
           break;
