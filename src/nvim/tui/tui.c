@@ -91,7 +91,6 @@ typedef struct {
   bool can_set_lr_margin;
   bool can_set_left_right_margin;
   bool immediate_wrap_after_last_column;
-  bool no_bottom_right_corner;
   bool mouse_enabled;
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
@@ -202,9 +201,6 @@ static void terminfo_start(UI *ui)
   data->can_set_left_right_margin =
     !!unibi_get_str(data->ut, unibi_set_left_margin_parm)
     && !!unibi_get_str(data->ut, unibi_set_right_margin_parm);
-  data->no_bottom_right_corner =
-    terminfo_is_term_family(term, "iterm")
-    || (terminfo_is_term_family(term, "xterm") && iterm_env);
   data->immediate_wrap_after_last_column =
     terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "interix");
@@ -436,13 +432,6 @@ static void print_cell(UI *ui, UCell *ptr)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
-  if (data->no_bottom_right_corner
-      && grid->row >= ui->height - 1
-      && grid->col >= ui->width - 1) {
-    // This (rare) kind of terminal simply cannot print in this corner without
-    // scrolling the entire screen up a line, which we do not want to happen.
-    return;
-  }
   if (!data->immediate_wrap_after_last_column) {
     // Printing the next character finally advances the cursor.
     final_column_wrap(ui);
