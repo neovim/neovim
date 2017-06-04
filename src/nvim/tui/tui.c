@@ -517,16 +517,19 @@ static void cursor_goto(UI *ui, int row, int col)
       }
   }
   if (row == grid->row) {
-    if (col < grid->col) {
+    if (col < grid->col
+        // Deferred right margin wrap terminals have inconsistent ideas about
+        // where the cursor actually is during a deferred wrap.  Relative
+        // motion calculations have OBOEs that cannot be compensated for,
+        // because two terminals that claim to be the same will implement
+        // different cursor positioning rules.
+        && (data->immediate_wrap_after_last_column || grid->col < ui->width)) {
       int n = grid->col - col;
       if (n <= 4) { // This might be just BS, so it is considered really cheap.
         while (n--) {
           unibi_out(ui, unibi_cursor_left);
         }
       } else {
-        if (!data->immediate_wrap_after_last_column && grid->col >= ui->width) {
-          n--;  // We have calculated one too many columns because of delayed wrap.
-        }
         data->params[0].i = n;
         unibi_out(ui, unibi_parm_left_cursor);
       }
