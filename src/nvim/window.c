@@ -3472,6 +3472,10 @@ void win_goto(win_T *wp)
     update_single_line(owp, owp->w_cursor.lnum);
   if (curwin->w_p_cole > 0 && !msg_scrolled)
     need_cursor_line_redraw = TRUE;
+
+  if (mode_displayed) {
+    unshowmode(false);
+  }
 }
 
 
