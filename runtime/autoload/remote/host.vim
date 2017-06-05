@@ -130,7 +130,7 @@ function! s:RegistrationCommands(host) abort
   for path in paths
     unlet! specs
     let specs = rpcrequest(channel, 'specs', path)
-    if type(specs) != type([])
+    if type(specs) != type([]) || empty(specs)
       " host didn't return a spec list, indicates a failure while loading a
       " plugin
       continue
