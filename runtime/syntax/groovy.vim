@@ -2,9 +2,9 @@
 " Language:	Groovy
 " Original Author:	Alessio Pace <billy.corgan@tiscali.it>
 " Maintainer:	Tobias Rapp <yahuxo@gmx.de>
-" Version: 	0.1.16
+" Version: 	0.1.17
 " URL:	  http://www.vim.org/scripts/script.php?script_id=945
-" Last Change:	2016 May 23
+" Last Change:	2017 March 10
 
 " THE ORIGINAL AUTHOR'S NOTES:
 "
@@ -51,6 +51,7 @@ if !exists("main_syntax")
   endif
   " we define it here so that included files can test for it
   let main_syntax='groovy'
+  syn region groovyFold start="{" end="}" transparent fold
 endif
 
 let s:cpo_save = &cpo
