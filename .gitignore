@@ -3,6 +3,20 @@
 /dist/
 /.deps/
 /tmp/
+/include/
+/bin/
+auto/
+
+# CMake generated files
+/CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+/.ninja_log
+/build.ninja
+/.ninja_deps
+/rules.ninja
 
 *.orig
 *.mo
