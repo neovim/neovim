@@ -162,7 +162,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
-  if (!buf) {
+  if (!buf || start >= buf->b_ml.ml_line_count) {
     return rv;
   }
 
