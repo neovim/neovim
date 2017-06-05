@@ -1,6 +1,7 @@
 filter-false = $(strip $(filter-out 0 off OFF false FALSE,$1))
 filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
+
 # See contrib/local.mk.example
 -include local.mk
 
