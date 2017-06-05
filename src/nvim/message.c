@@ -1221,22 +1221,6 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
   return retval;
 }
 
-void msg_make(char_u *arg)
-{
-  int i;
-  static char_u *str = (char_u *)"eeffoc", *rs = (char_u *)"Plon#dqg#vxjduB";
-
-  arg = skipwhite(arg);
-  for (i = 5; *arg && i >= 0; --i)
-    if (*arg++ != str[i])
-      break;
-  if (i < 0) {
-    msg_putchar('\n');
-    for (i = 0; rs[i]; ++i)
-      msg_putchar(rs[i] - 3);
-  }
-}
-
 /*
  * Output the string 'str' upto a NUL character.
  * Return the number of characters it takes on the screen.

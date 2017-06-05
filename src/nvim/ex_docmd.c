@@ -3985,7 +3985,6 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
       STRCAT(new_cmdline, " ");
       STRCAT(new_cmdline, p);
     }
-    msg_make(p);
 
     /* 'eap->cmd' is not set here, because it is not used at CMD_make */
     xfree(*cmdlinep);
