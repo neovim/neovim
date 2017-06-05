@@ -33,6 +33,8 @@
 // We have our own RGB macro in macros.h.
 #undef RGB
 
+#define USE_CRNL
+
 #ifdef _MSC_VER
 # ifndef inline
 #  define inline __inline
