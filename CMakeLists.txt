@@ -24,6 +24,11 @@ endif()
 # used for check_c_compiler_flag
 include(CheckCCompilerFlag)
 
+# GCC 5 is currently not supported, see https://github.com/neovim/neovim/issues/2090.
+if(CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_C_COMPILER_VERSION VERSION_LESS "5.0")
+  message(FATAL_ERROR "GCC 5 is currently not supported. Please export CC=.. to use another compiler, for example clang.")
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   # CMake tries to treat /sw and /opt/local as extension of the system path, but
   # that doesn't really work out very well.  Once you have a dependency that
