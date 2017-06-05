@@ -1798,6 +1798,9 @@ au BufNewFile,BufRead *.sa			setf sather
 " Scala
 au BufNewFile,BufRead *.scala			setf scala
 
+" SBT
+au BufNewFile,BufRead *.sbt			setf sbt
+
 " Scilab
 au BufNewFile,BufRead *.sci,*.sce		setf scilab
 
