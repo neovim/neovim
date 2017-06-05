@@ -1074,6 +1074,9 @@ static void fix_terminfo(TUIData *data)
   } else if (STARTS_WITH(term, "screen") || STARTS_WITH(term, "tmux")) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
+  } else if (STARTS_WITH(term, "tmux")) {
+    unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
+    unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   }
 
   if (data->term == kTermXTerm || data->term == kTermRxvt) {
