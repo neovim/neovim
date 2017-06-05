@@ -2232,8 +2232,10 @@ winframe_remove (
         }
       }
     }
-    frame_new_height(frp2, frp2->fr_height + frp_close->fr_height,
-        frp2 == frp_close->fr_next ? TRUE : FALSE, FALSE);
+    frame_new_height(frp2,
+                     frp2->fr_height + frp_close->fr_height + (
+                         (!win->w_status_height) ? STATUS_HEIGHT : 0),
+                     frp2 == frp_close->fr_next, false);
     *dirp = 'v';
   } else {
     /* When 'winfixwidth' is set, try to find another frame in the column
