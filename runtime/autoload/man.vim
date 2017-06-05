@@ -326,7 +326,6 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
       " cursor (|) is at ':Man pri|'
       if a:arg_lead =~# '\/'
         " if the name is a path, complete files
-        " TODO(nhooyr) why does this complete the last one automatically
         return glob(a:arg_lead.'*', 0, 1)
       endif
       let name = a:arg_lead
