@@ -194,6 +194,10 @@ Object nvim_eval(String expr, Error *err)
     api_set_error(err, kErrorTypeException, "Failed to evaluate expression");
   }
 
+  if (!expr_result) {
+    set_api_error("Failed to eval expression", err);
+  }
+
   if (!try_end(err)) {
     // No errors, convert the result
     rv = vim_to_object(&rettv);
