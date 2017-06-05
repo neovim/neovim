@@ -12813,16 +12813,12 @@ static void f_nr2char(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   bool error = false;
   const varnumber_T num = tv_get_number_chk(&argvars[0], &error);
+  STATIC_ASSERT(sizeof(varnumber_T) <= sizeof(int), "check (num <= INT_MAX)");
   if (error) {
     return;
   }
   if (num < 0) {
     emsgf(_("E5070: Character number must not be less than zero"));
-    return;
-  }
-  if (num > INT_MAX) {
-    emsgf(_("E5071: Character number must not be greater than INT_MAX (%i)"),
-          INT_MAX);
     return;
   }
 
