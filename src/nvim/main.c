@@ -103,7 +103,6 @@ typedef struct {
   bool input_isatty;                    // stdin is a terminal
   bool output_isatty;                   // stdout is a terminal
   bool err_isatty;                      // stderr is a terminal
-  bool headless;                        // Do not start the builtin UI.
   int no_swap_file;                     // "-n" argument used
   int use_debug_break_level;
   int window_count;                     /* number of windows to use */
@@ -299,7 +298,7 @@ int main(int argc, char **argv)
   cmdline_row = (int)(Rows - p_ch);
   msg_row = cmdline_row;
   screenalloc(false);           /* allocate screen buffers */
-  set_init_2(params.headless);
+  set_init_2(headless_mode);
   TIME_MSG("inits 2");
 
   msg_scroll = TRUE;
@@ -311,7 +310,7 @@ int main(int argc, char **argv)
   /* Set the break level after the terminal is initialized. */
   debug_break_level = params.use_debug_break_level;
 
-  bool reading_input = !params.headless && (params.input_isatty
+  bool reading_input = !headless_mode && (params.input_isatty
       || params.output_isatty || params.err_isatty);
 
   if (reading_input) {
@@ -448,7 +447,7 @@ int main(int argc, char **argv)
     wait_return(TRUE);
   }
 
-  if (!params.headless) {
+  if (!headless_mode) {
     // Stop reading from input stream, the UI layer will take over now.
     input_stop();
     ui_builtin_start();
@@ -809,11 +808,14 @@ static void command_line_scan(mparm_T *parmp)
             }
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
-            parmp->headless = true;
+            headless_mode = true;
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
-            parmp->headless = true;
-            channel_from_stdio();
+            headless_mode = true;
+            const char *err;
+            if (!channel_from_stdio(true, CALLBACK_READER_INIT, &err)) {
+              abort();
+            }
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
             parmp->literal = TRUE;
@@ -1216,7 +1218,6 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   memset(paramp, 0, sizeof(*paramp));
   paramp->argc = argc;
   paramp->argv = argv;
-  paramp->headless = false;
   paramp->want_full_screen = true;
   paramp->use_debug_break_level = -1;
   paramp->window_count = -1;
@@ -1387,7 +1388,7 @@ static void handle_tag(char_u *tagname)
 // When starting in Ex mode and commands come from a file, set Silent mode.
 static void check_tty(mparm_T *parmp)
 {
-  if (parmp->headless) {
+  if (headless_mode) {
     return;
   }
 

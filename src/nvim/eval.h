@@ -7,6 +7,9 @@
 #include "nvim/eval/typval.h"
 #include "nvim/profile.h"
 #include "nvim/garray.h"
+#include "nvim/event/rstream.h"
+#include "nvim/event/wstream.h"
+#include "nvim/channel.h"
 
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)

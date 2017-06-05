@@ -1080,6 +1080,8 @@ EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
 EXTERN char_u e_jobspawn[] INIT(= N_(
     "E903: Process failed to start: %s: \"%s\""));
 EXTERN char_u e_channotpty[] INIT(= N_("E904: channel is not a pty"));
+EXTERN char_u e_stdiochan2[] INIT(= N_(
+    "E905: Couldn't open stdio channel: %s"));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
@@ -1190,9 +1192,13 @@ EXTERN char *ignoredp;
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
+// Dont try to start an user interface
+// or read/write to stdio (unless embedding)
+EXTERN bool headless_mode INIT(= false);
 
 /// next free id for a job or rpc channel
-EXTERN uint64_t next_chan_id INIT(= 1);
+/// 1 is reserved for stdio channel
+EXTERN uint64_t next_chan_id INIT(= 2);
 
 /// Used to track the status of external functions.
 /// Currently only used for iconv().

@@ -121,7 +121,7 @@ char *rbuffer_read_ptr(RBuffer *buf, size_t *read_count) FUNC_ATTR_NONNULL_ALL
 {
   if (!buf->size) {
     *read_count = 0;
-    return NULL;
+    return buf->read_ptr;
   }
 
   if (buf->read_ptr < buf->write_ptr) {

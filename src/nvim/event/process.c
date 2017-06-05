@@ -92,7 +92,6 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   if (in) {
     stream_init(NULL, &proc->in, -1,
                 STRUCT_CAST(uv_stream_t, &proc->in.uv.pipe));
-    proc->in.events = proc->events;
     proc->in.internal_data = proc;
     proc->in.internal_close_cb = on_process_stream_close;
     proc->refcount++;
@@ -101,7 +100,6 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   if (out) {
     stream_init(NULL, &proc->out, -1,
                 STRUCT_CAST(uv_stream_t, &proc->out.uv.pipe));
-    proc->out.events = proc->events;
     proc->out.internal_data = proc;
     proc->out.internal_close_cb = on_process_stream_close;
     proc->refcount++;
@@ -110,7 +108,6 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   if (err) {
     stream_init(NULL, &proc->err, -1,
                 STRUCT_CAST(uv_stream_t, &proc->err.uv.pipe));
-    proc->err.events = proc->events;
     proc->err.internal_data = proc;
     proc->err.internal_close_cb = on_process_stream_close;
     proc->refcount++;
@@ -382,15 +379,15 @@ static void flush_stream(Process *proc, Stream *stream)
 
     // Poll for data and process the generated events.
     loop_poll_events(proc->loop, 0);
-    if (proc->events) {
-        multiqueue_process_events(proc->events);
+    if (stream->events) {
+        multiqueue_process_events(stream->events);
     }
 
     // Stream can be closed if it is empty.
     if (num_bytes == stream->num_bytes) {
-      if (stream->read_cb) {
+      if (stream->read_cb && !stream->did_eof) {
         // Stream callback could miss EOF handling if a child keeps the stream
-        // open.
+        // open. But only send EOF if we haven't already.
         stream->read_cb(stream, stream->buffer, 0, stream->cb_data, true);
       }
       break;

@@ -14,10 +14,7 @@ typedef struct stream Stream;
 ///
 /// @param stream The Stream instance
 /// @param rbuffer The associated RBuffer instance
-/// @param count Number of bytes to read. This must be respected if keeping
-///              the order of events is a requirement. This is because events
-///              may be queued and only processed later when more data is copied
-///              into to the buffer, so one read may starve another.
+/// @param count Number of bytes that was read.
 /// @param data User-defined data
 /// @param eof If the stream reached EOF.
 typedef void (*stream_read_cb)(Stream *stream, RBuffer *buf, size_t count,
@@ -34,6 +31,7 @@ typedef void (*stream_close_cb)(Stream *stream, void *data);
 
 struct stream {
   bool closed;
+  bool did_eof;
   union {
     uv_pipe_t pipe;
     uv_tcp_t tcp;

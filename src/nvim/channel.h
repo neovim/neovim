@@ -21,14 +21,19 @@ typedef struct {
   Stream out;
 } StdioPair;
 
-// typedef struct {
-//   Callback on_out;
-//   Callback on_close;
-//   Garray buffer;
-//   bool buffering;
-// } CallbackReader
+typedef struct {
+  Callback cb;
+  garray_T buffer;
+  bool buffered;
+} CallbackReader;
 
-#define CallbackReader Callback
+#define CALLBACK_READER_INIT ((CallbackReader){ .cb = CALLBACK_NONE, \
+                                                .buffer = GA_EMPTY_INIT_VALUE, \
+                                                .buffered = false })
+static inline bool callback_reader_set(CallbackReader reader)
+{
+  return reader.cb.type != kCallbackNone;
+}
 
 struct Channel {
   uint64_t id;
@@ -61,17 +66,6 @@ EXTERN PMap(uint64_t) *channels;
 # include "channel.h.generated.h"
 #endif
 
-static inline Channel *channel_alloc(ChannelStreamType type)
-{
-  Channel *chan = xcalloc(1, sizeof(*chan));
-  chan->id = next_chan_id++;
-  chan->events = multiqueue_new_child(main_loop.events);
-  chan->refcount = 1;
-  chan->streamtype = type;
-  pmap_put(uint64_t)(channels, chan->id, chan);
-  return chan;
-}
-
 /// @returns Channel with the id or NULL if not found
 static inline Channel *find_channel(uint64_t id)
 {
@@ -89,7 +83,7 @@ static inline Stream *channel_instream(Channel *chan)
       return &chan->stream.socket;
 
     case kChannelStreamStdio:
-      return &chan->stream.stdio.in;
+      return &chan->stream.stdio.out;
 
     case kChannelStreamInternal:
       abort();
@@ -108,7 +102,7 @@ static inline Stream *channel_outstream(Channel *chan)
       return &chan->stream.socket;
 
     case kChannelStreamStdio:
-      return &chan->stream.stdio.out;
+      return &chan->stream.stdio.in;
 
     case kChannelStreamInternal:
       abort();

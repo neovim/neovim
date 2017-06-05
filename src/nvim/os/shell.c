@@ -227,18 +227,15 @@ static int do_os_system(char **argv,
     return -1;
   }
 
-  // We want to deal with stream events as fast a possible while queueing
-  // process events, so reset everything to NULL. It prevents closing the
+  // Note: unlike process events, stream events are not queued, as we want to
+  // deal with stream events as fast a possible.  It prevents closing the
   // streams while there's still data in the OS buffer (due to the process
   // exiting before all data is read).
   if (input != NULL) {
-    proc->in.events = NULL;
     wstream_init(&proc->in, 0);
   }
-  proc->out.events = NULL;
   rstream_init(&proc->out, 0);
   rstream_start(&proc->out, data_cb, &buf);
-  proc->err.events = NULL;
   rstream_init(&proc->err, 0);
   rstream_start(&proc->err, data_cb, &buf);
 

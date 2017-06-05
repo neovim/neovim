@@ -13,7 +13,6 @@
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
 #include "nvim/msgpack_rpc/channel.h"
-#include "nvim/msgpack_rpc/server.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/libuv_process.h"
 #include "nvim/event/rstream.h"
@@ -30,11 +29,8 @@
 #include "nvim/map.h"
 #include "nvim/log.h"
 #include "nvim/misc1.h"
-#include "nvim/path.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/os/input.h"
-
-#define CHANNEL_BUFFER_SIZE 0xffff
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 #define log_client_msg(...)
@@ -66,56 +62,17 @@ void rpc_start(Channel *channel)
   rpc->next_request_id = 1;
   kv_init(rpc->call_stack);
 
-  Stream *in = channel_instream(channel);
-  Stream *out = channel_outstream(channel);
+  if (channel->streamtype != kChannelStreamInternal) {
+    Stream *out = channel_outstream(channel);
+#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
+    Stream *in = channel_instream(channel);
+    DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id, in, out);
+#endif
 
-  DLOG("rpc ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id, in, out);
-
-  wstream_init(in, 0);
-  rstream_init(out, CHANNEL_BUFFER_SIZE);
-  rstream_start(out, receive_msgpack, channel);
-}
-
-/// Creates an API channel from a tcp/pipe socket connection
-///
-/// @param watcher The SocketWatcher ready to accept the connection
-void channel_from_connection(SocketWatcher *watcher)
-{
-  Channel *channel = channel_alloc(kChannelStreamSocket);
-  socket_watcher_accept(watcher, &channel->stream.socket);
-  channel_incref(channel);  // close channel only after the stream is closed
-  channel->stream.socket.internal_close_cb = close_cb;
-  channel->stream.socket.internal_data = channel;
-  rpc_start(channel);
-}
-
-/// TODO: move to eval.c, also support bytes
-uint64_t channel_connect(bool tcp, const char *address,
-                         int timeout, const char **error)
-{
-  if (!tcp) {
-    char *path = fix_fname(address);
-    if (server_owns_pipe_address(path)) {
-      // avoid deadlock
-      xfree(path);
-      return channel_create_internal();
-    }
-    xfree(path);
+    rstream_start(out, receive_msgpack, channel);
   }
-
-  Channel *channel = channel_alloc(kChannelStreamSocket);
-  if (!socket_connect(&main_loop, &channel->stream.socket,
-                      tcp, address, timeout, error)) {
-    channel_decref(channel);
-    return 0;
-  }
-
-  channel_incref(channel);  // close channel only after the stream is closed
-  channel->stream.socket.internal_close_cb = close_cb;
-  channel->stream.socket.internal_data = channel;
-  rpc_start(channel);
-  return channel->id;
 }
+
 
 static Channel *find_rpc_channel(uint64_t id)
 {
@@ -261,29 +218,6 @@ bool channel_close(uint64_t id)
 
   close_channel(channel);
   return true;
-}
-
-/// Creates an API channel from stdin/stdout. This is used when embedding
-/// Neovim
-void channel_from_stdio(void)
-{
-  Channel *channel = channel_alloc(kChannelStreamStdio);
-  channel_incref(channel);  // stdio channels are only closed on exit
-  // read stream
-  rstream_init_fd(&main_loop, &channel->stream.stdio.in, 0, CHANNEL_BUFFER_SIZE);
-  wstream_init_fd(&main_loop, &channel->stream.stdio.out, 1, 0);
-
-  rpc_start(channel);
-}
-
-/// Creates a loopback channel. This is used to avoid deadlock
-/// when an instance connects to its own named pipe.
-uint64_t channel_create_internal(void)
-{
-  Channel *channel = channel_alloc(kChannelStreamInternal);
-  channel_incref(channel);  // internal channel lives until process exit
-  rpc_start(channel);
-  return channel->id;
 }
 
 void channel_process_exit(uint64_t id, int status)
@@ -661,11 +595,6 @@ void rpc_free(Channel *channel)
 
   pmap_free(cstr_t)(channel->rpc.subscribed_events);
   kv_destroy(channel->rpc.call_stack);
-}
-
-static void close_cb(Stream *stream, void *data)
-{
-  channel_decref(data);
 }
 
 static bool is_rpc_response(msgpack_object *obj)

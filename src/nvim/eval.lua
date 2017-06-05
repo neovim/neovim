@@ -273,6 +273,7 @@ return {
     sockconnect={args={2,3}},
     sort={args={1, 3}},
     soundfold={args=1},
+    stdioopen={args=1},
     spellbadword={args={0, 1}},
     spellsuggest={args={1, 3}},
     split={args={1, 3}},
