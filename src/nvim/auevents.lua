@@ -82,6 +82,7 @@ return {
     'TermClose',              -- after the processs exits
     'TermOpen',               -- after opening a terminal buffer
     'TermResponse',           -- after setting "v:termresponse"
+    'TermRedraw',             -- after redrawing contents of terminal buffer
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode
     'TextYankPost',           -- after a yank or delete was done (y, d, c)
