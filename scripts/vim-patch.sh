@@ -94,9 +94,8 @@ commit_message() {
     "${vim_message}" "${vim_commit_url}"
 }
 
-find_git_remote() {
-  git remote -v \
-    | awk '$2 ~ /github.com[:\/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}'
+get_git_remote() {
+  git config branch.master.remote
 }
 
 assign_commit_details() {
@@ -188,7 +187,7 @@ stage_patch() {
   get_vim_patch "$1"
 
   local git_remote
-  git_remote="$(find_git_remote)"
+  git_remote="$(get_git_remote)"
   local checked_out_branch
   checked_out_branch="$(git rev-parse --abbrev-ref HEAD)"
 
@@ -264,7 +263,7 @@ submit_pr() {
   fi
 
   local git_remote
-  git_remote="$(find_git_remote)"
+  git_remote="$(get_git_remote)"
   local pr_body
   pr_body="$(git log --reverse --format='#### %s%n%n%b%n' "${git_remote}"/master..HEAD)"
   local patches
