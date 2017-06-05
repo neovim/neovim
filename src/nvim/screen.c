@@ -1790,7 +1790,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           /* 'number' + 'relativenumber': cursor line shows absolute
            * line number */
           num = lnum;
-          fmt = "%-*ld ";
+          fmt = "%*ld ";
         }
       }
 
@@ -2756,7 +2756,7 @@ win_line (
               if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
                 /* 'number' + 'relativenumber' */
                 num = lnum;
-                fmt = "%-*ld ";
+                fmt = "%*ld ";
               }
             }
 
