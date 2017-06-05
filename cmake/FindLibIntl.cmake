@@ -27,7 +27,7 @@ find_path(LibIntl_INCLUDE_DIR
 )
 
 find_library(LibIntl_LIBRARY
-    NAMES intl libintl.a
+    NAMES intl libintl.a libintl
 )
 
 if (LibIntl_INCLUDE_DIR)
@@ -39,6 +39,16 @@ endif()
 # if one was actually found.
 if (LibIntl_LIBRARY)
   set(CMAKE_REQUIRED_LIBRARIES "${LibIntl_LIBRARY}")
+endif()
+
+# For Mingw link against iconv too
+if (MINGW)
+  find_library(LibIconv_LIBRARY
+      NAMES iconv libiconv.a
+  )
+  if (${LibIconv_LIBRARY})
+    list(APPEND CMAKE_REQUIRED_LIBRARIES "${LibIconv_LIBRARY}")
+  endif()
 endif()
 
 check_c_source_compiles("
@@ -56,5 +66,9 @@ if (HAVE_WORKING_LIBINTL)
 endif()
 
 set(LibIntl_PROCESS_INCLUDES LibIntl_INCLUDE_DIR)
-set(LibIntl_PROCESS_LIBS LibIntl_LIBRARY)
+if(MINGW)
+  set(LibIntl_PROCESS_LIBS LibIntl_LIBRARY LibIconv_LIBRARY)
+else()
+  set(LibIntl_PROCESS_LIBS LibIntl_LIBRARY)
+endif()
 libfind_process(LibIntl)
