@@ -136,8 +136,8 @@ endif
 " Names of flaky tests.
 let s:flaky = [
       \ 'Test_with_partial_callback()',
-      \ 'Test_oneshot()'
-      \ 'Test_lambda_with_timer()'
+      \ 'Test_oneshot()',
+      \ 'Test_lambda_with_timer()',
       \ ]
 
 " Locate Test_ functions and execute them.
