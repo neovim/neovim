@@ -226,6 +226,7 @@ int main(int argc, char **argv)
                           // main() and other functions.
   char_u *cwd = NULL;     // current workding dir on startup
   time_init();
+  stream_disable_stdio_inheritance();
 
   /* Many variables are in "params" so that we can pass them to invoked
    * functions without a lot of arguments.  "argc" and "argv" are also

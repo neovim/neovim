@@ -50,7 +50,6 @@ int pty_process_spawn(PtyProcess *ptyproc)
   assert(!proc->err);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
-  uv_disable_stdio_inheritance();
   int master;
   int pid = forkpty(&master, NULL, &termios, &ptyproc->winsize);
 
