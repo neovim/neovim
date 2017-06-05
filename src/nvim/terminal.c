@@ -90,7 +90,7 @@ typedef struct terminal_state {
 
 // Delay for refreshing the terminal buffer after receiving updates from
 // libvterm. Improves performance when receiving large bursts of data.
-#define REFRESH_DELAY 10
+#define REFRESH_DELAY 15
 
 static TimeWatcher refresh_timer;
 static bool refresh_pending = false;
