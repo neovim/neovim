@@ -286,9 +286,7 @@ submit_pr() {
   fi
 
   echo "Creating pull request."
-  output="$(${submit_fn} "${pr_message}" 2>&1)" &&
-    echo "✔ ${output}" ||
-    (echo "✘ ${output}"; false)
+  ${submit_fn} "${pr_message}"
 
   echo
   echo "Cleaning up files."
