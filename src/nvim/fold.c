@@ -802,6 +802,7 @@ void foldUpdateAfterInsert(void)
   }
 
   foldUpdateAll(curwin);
+  redraw_win_later(curwin, CLEAR);
   foldOpenCursor();
 }
 
