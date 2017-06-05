@@ -5,6 +5,7 @@ endif
 
 let s:loaded_pythonx_provider = 1
 
+let s:channel_id = {}
 let s:stderr = {}
 let s:job_opts = {'rpc': v:true}
 
@@ -17,21 +18,40 @@ function! s:job_opts.on_stderr(chan_id, data, event)
   let s:stderr[a:chan_id] = stderr
 endfunction
 
-function! provider#pythonx#Require(host) abort
-  let ver = (a:host.orig_name ==# 'python') ? 2 : 3
+function! provider#pythonx#Init(ver) abort
+  if has_key(s:channel_id, a:ver)
+    return s:channel_id[a:ver]
+  endif
 
   " Python host arguments
-  let prog = (ver == '2' ?  provider#python#Prog() : provider#python3#Prog())
+  let prog = (a:ver == '2') ?  provider#python#Prog() : provider#python3#Prog()
   let args = [prog, '-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
 
   " Collect registered Python plugins into args
-  let python_plugins = remote#host#PluginsForHost(a:host.name)
+  let host_name = (a:ver == '2') ? 'python' : 'python3'
+  let python_plugins = remote#host#PluginsForHost(host_name)
   for plugin in python_plugins
     call add(args, plugin.path)
   endfor
 
   try
-    let channel_id = jobstart(args, s:job_opts)
+    let s:channel_id[a:ver] = jobstart(args, s:job_opts)
+    return s:channel_id[a:ver]
+  catch
+    echomsg v:throwpoint
+    echomsg v:exception
+  endtry
+  throw remote#host#LoadErrorForHost(a:host.orig_name,
+        \ '$NVIM_PYTHON_LOG_FILE')
+endfunction
+
+function! provider#pythonx#Require(host) abort
+  let ver = (a:host.orig_name ==# 'python') ? 2 : 3
+
+  let channel_id = has_key(s:channel_id, ver) ?
+        \ s:channel_id[ver] : provider#pythonx#Init(ver)
+
+  try
     if rpcrequest(channel_id, 'poll') ==# 'ok'
       return channel_id
     endif
