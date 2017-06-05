@@ -19,7 +19,7 @@ syn match straceNumber "\W[+-]\=\(\d\+\)\=\.\=\d\+\([eE][+-]\=\d\+\)\="lc=1
 syn match straceNumber "\W0x\x\+"lc=1
 syn match straceNumberRHS "\W\(0x\x\+\|-\=\d\+\)"lc=1 contained
 syn match straceOtherRHS "?" contained
-syn match straceConstant "[A-Z_]\{2,}"
+syn match straceConstant "[A-Z_][A-Z0-9_]\+"
 syn region straceVerbosed start="(" end=")" matchgroup=Normal contained oneline
 syn region straceReturned start="\s=\s" end="$" contains=StraceEquals,straceNumberRHS,straceOtherRHS,straceConstant,straceVerbosed oneline transparent
 syn match straceEquals "\s=\s"ms=s+1,me=e-1
