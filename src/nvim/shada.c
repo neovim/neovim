@@ -706,7 +706,9 @@ static ptrdiff_t write_file(ShaDaWriteDef *const sd_writer,
 static void close_sd_reader(ShaDaReadDef *const sd_reader)
   FUNC_ATTR_NONNULL_ALL
 {
-  close_file(sd_reader->cookie);
+  if (sd_reader->cookie != NULL) {
+    close_file(sd_reader->cookie);
+  }
 }
 
 /// Wrapper for closing file descriptors opened for writing
