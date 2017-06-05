@@ -602,7 +602,11 @@ int os_fsync(int fd)
 static int os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ALL
 {
-  uv_fs_t request;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+  uv_fs_t request = {0};
+#pragma clang diagnostic pop
+
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
   *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
