@@ -95,6 +95,7 @@ endif
 syn keyword pythonStatement	False None True
 syn keyword pythonStatement	as assert break continue del exec global
 syn keyword pythonStatement	lambda nonlocal pass print return with yield
+syn keyword pythonStatement	async await
 syn keyword pythonStatement	class def nextgroup=pythonFunction skipwhite
 syn keyword pythonConditional	elif else if
 syn keyword pythonRepeat	for while
