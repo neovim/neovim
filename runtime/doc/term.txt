@@ -134,11 +134,25 @@ support it.  It uses the same |terminfo| extensions that were proposed by
 Rüdiger Sonderfeld in 2013 for this: "setrgbf" and "setrgbb".  If your
 terminfo definition specifies these, then nothing more is required.
 
-If your terminfo definition is missing them, then Nvim will on a wide range of
-terminals resort to using the ISO 8613-6:1994/ITU T.416:1993 control sequences
-for setting RGB colours.  This includes the "rxvt", "linux", "st", and "iterm"
-terminal types, or when Konsole, genuine Xterm, or a terminal emulator that
-sets the COLORTERM environment variable to "truecolor" is detected.
+If your terminfo definition is missing them, then Nvim will decide whether to
+add them to your terminfo definition, using the ISO 8613-6:1994/ITU T.416:1993
+control sequences for setting RGB colours, but modified to use semicolons
+instead of colons unless the terminal is known to follow the standard.
+(Semicolons cause ambiguities that the standard avoided by specifying colons
+as a sub-parameter delimiter.  A historical misunderstanding meant that many
+terminal emulators ended up using semicolons for many years, though.)
+
+A new convention, pioneered in 2016 by tmux, is the "Tc" terminfo extension.
+If your terminal's terminfo definition has this flag, Nvim will add
+constructed "setrgbf" and "setrgbb" capabilities as if they had been in the
+terminfo definition.
+
+If your terminal's terminfo definition does not (yet) have this flag, Nvim
+will fall back to looking at the TERM and other environment variables.  For
+the "rxvt", "linux", "st", and "iterm" terminal types, or when Konsole,
+genuine Xterm, or a terminal emulator that sets the COLORTERM environment
+variable to "truecolor" is detected, it will also add constructed "setrgbf"
+and "setrgbb" capabilities.
 
 							*xterm-resize*
 Nvim can resize the terminal display on some terminals that implement an

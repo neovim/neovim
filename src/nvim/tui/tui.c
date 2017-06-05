@@ -1212,6 +1212,18 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
   return -1;
 }
 
+static int unibi_find_ext_bool(unibi_term *ut, const char *name)
+ {
+  size_t max = unibi_count_ext_bool(ut);
+   for (size_t i = 0; i < max; ++i) {
+    const char * n = unibi_get_ext_bool_name(ut, i);
+    if (n && 0 == strcmp(n, name)) {
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
 /// Several entries in terminfo are known to be deficient or outright wrong,
 /// unfortunately; and several terminal emulators falsely announce incorrect
 /// terminal types.  So patch the terminfo records after loading from an
@@ -1497,7 +1509,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool true_xterm = xterm && !!xterm_version;
   bool tmux_wrap = screen && !!os_getenv("TMUX");
-  bool truecolor = colorterm
+  bool old_truecolor_env = colorterm
     && (0 == strcmp(colorterm, "truecolor") || 0 == strcmp(colorterm, "24bit"));
 
   // Only define this capability for terminal types that we know understand it.
@@ -1519,17 +1531,20 @@ static void augment_terminfo(TUIData *data, const char *term,
   // them to terminal types, that do actually have such control sequences but
   // lack the correct definitions in terminfo, is an augmentation, not a
   // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
+  int Tc = unibi_find_ext_bool(ut, "Tc");
+  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
   bool has_standard_rgb = vte_version >= 3600  // per GNOME bug #685759
     || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
     || true_xterm;
-  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_non_standard_rgb =
-    linuxvt     // Linux 4.8+ supports true-colour SGR.
+  bool has_non_standard_rgb = -1 != Tc
+    // terminfo is definitive if it says something.
+    ? unibi_get_ext_bool(ut, (size_t)Tc)
+    : linuxvt   // Linux 4.8+ supports true-colour SGR.
     || konsole  // per commentary in VT102Emulation.cpp
     // per http://lists.schmorp.de/pipermail/rxvt-unicode/2016q2/002261.html
     || rxvt
     || st       // per experimentation
-    || truecolor;
+    || old_truecolor_env;
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
   if (-1 == data->unibi_ext.set_rgb_foreground) {
     if (has_standard_rgb) {
