@@ -360,19 +360,43 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 
   data->print_attrs = attrs;
-  if (!data->default_attr) {
-    data->default_attr = true;
-    unibi_out(ui, unibi_exit_attribute_mode);
-  }
   UGrid *grid = &data->grid;
 
   int fg = attrs.foreground != -1 ? attrs.foreground : grid->fg;
   int bg = attrs.background != -1 ? attrs.background : grid->bg;
 
-  data->default_attr = fg == -1 && bg == -1
-    && !attrs.bold && !attrs.italic && !attrs.underline && !attrs.undercurl
-    && !attrs.reverse;
-
+  if (unibi_get_str(data->ut, unibi_set_attributes)) {
+    if (attrs.bold || attrs.reverse || attrs.underline || attrs.undercurl) {
+      data->params[0].i = 0;   // standout
+      data->params[1].i = attrs.underline || attrs.undercurl;
+      data->params[2].i = attrs.reverse;
+      data->params[3].i = 0;   // blink
+      data->params[4].i = 0;   // dim
+      data->params[5].i = attrs.bold;
+      data->params[6].i = 0;   // blank
+      data->params[7].i = 0;   // protect
+      data->params[8].i = 0;   // alternate character set
+      unibi_out(ui, unibi_set_attributes);
+    } else if (!data->default_attr) {
+      unibi_out(ui, unibi_exit_attribute_mode);
+    }
+  } else {
+    if (!data->default_attr) {
+      unibi_out(ui, unibi_exit_attribute_mode);
+    }
+    if (attrs.bold) {
+      unibi_out(ui, unibi_enter_bold_mode);
+    }
+    if (attrs.underline || attrs.undercurl) {
+      unibi_out(ui, unibi_enter_underline_mode);
+    }
+    if (attrs.reverse) {
+      unibi_out(ui, unibi_enter_reverse_mode);
+    }
+  }
+  if (attrs.italic) {
+    unibi_out(ui, unibi_enter_italics_mode);
+  }
   if (ui->rgb) {
     if (fg != -1) {
       data->params[0].i = (fg >> 16) & 0xff;  // red
@@ -399,18 +423,9 @@ static void update_attrs(UI *ui, HlAttrs attrs)
     }
   }
 
-  if (attrs.bold) {
-    unibi_out(ui, unibi_enter_bold_mode);
-  }
-  if (attrs.italic) {
-    unibi_out(ui, unibi_enter_italics_mode);
-  }
-  if (attrs.underline || attrs.undercurl) {
-    unibi_out(ui, unibi_enter_underline_mode);
-  }
-  if (attrs.reverse) {
-    unibi_out(ui, unibi_enter_reverse_mode);
-  }
+  data->default_attr = fg == -1 && bg == -1
+    && !attrs.bold && !attrs.italic && !attrs.underline && !attrs.undercurl
+    && !attrs.reverse;
 }
 
 static void final_column_wrap(UI *ui)
