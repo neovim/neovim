@@ -2385,6 +2385,9 @@ void buflist_list(exarg_T *eap)
         !MODIFIABLE(buf) ? '-' : (buf->b_p_ro ? '=' : ' '),
         (buf->b_flags & BF_READERR) ? 'x' : (bufIsChanged(buf) ? '+' : ' '),
         NameBuff);
+    if (len > IOSIZE - 20) {
+        len = IOSIZE - 20;
+    }
 
     if (len > IOSIZE - 20) {
         len = IOSIZE - 20;
