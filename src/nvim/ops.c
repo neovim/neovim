@@ -1207,7 +1207,7 @@ int get_spec_reg(
   case '%':                     /* file name */
     if (errmsg)
       check_fname();            /* will give emsg if not set */
-    *argp = curbuf->b_fname;
+    *argp = curbuf->b_ffname;
     return TRUE;
 
   case '#':                     /* alternate file name */
