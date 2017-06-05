@@ -1,0 +1,117 @@
+*pi_logipat.txt*	Logical Patterns				Mar 13, 2013
+
+Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
+Copyright: (c) 2004-2013 by Charles E. Campbell	*logipat-copyright*
+           The VIM LICENSE applies to LogiPat.vim and LogiPat.txt
+           (see |copyright|) except use "LogiPat" instead of "Vim"
+	   No warranty, express or implied.  Use At-Your-Own-Risk.
+
+==============================================================================
+1. Contents					*logipat* *logipat-contents*
+
+	1. Contents.................: |logipat-contents|
+	2. LogiPat Manual...........: |logipat-manual|
+	3. LogiPat Examples.........: |logipat-examples|
+	4. Caveat...................: |logipat-caveat|
+	5. LogiPat History..........: |logipat-history|
+
+==============================================================================
+2. LogiPat Manual			*logipat-manual* *logipat-man*
+
+
+	*logipat-arg* *logipat-input* *logipat-pattern* *logipat-operators*
+	Boolean logic patterns are composed of
+
+			operators  ! = not
+			           | = logical-or
+			           & = logical-and
+			grouping   ( ... )
+			patterns   "pattern"
+
+	:LogiPat {boolean-logic pattern}		*:LogiPat*
+		:LogiPat is a command which takes a boolean-logic
+		argument (|logipat-arg|).
+
+	:LP {boolean-logic pattern}			*:LP*
+		:LP is a shorthand command version of :LogiPat
+		(|:LogiPat|).
+
+	:ELP {boolean-logic pattern}			*:ELP*
+		No search is done, but the conversion from the
+		boolean logic pattern to the regular expression
+		is performed and echoed onto the display.
+
+	:LogiPatFlags {search flags}			*LogiPat-flags*
+		:LogiPatFlags {search flags}
+		LogiPat uses the |search()| command.  The flags
+		passed to that call to search() may be specified
+		by the :LogiPatFlags command.
+
+	:LPF {search flags}				*:LPF*
+		:LPF is a shorthand version of :LogiPatFlags.
+
+	:let pat=LogiPat({boolean-logic pattern})	*LogiPat()*
+		If one calls LogiPat() directly, no search
+		is done, but the transformation from the boolean
+		logic pattern into a regular expression pattern
+		is performed and returned.
+
+	To get a " inside a pattern, as opposed to having it delimit
+	the pattern, double it.
+
+==============================================================================
+3. LogiPat Examples					*logipat-examples*
+
+	LogiPat takes Boolean logic arguments and produces a regular
+	expression which implements the choices.  A series of examples
+	follows:
+>
+	:LogiPat "abc"
+<		will search for lines containing the string  :abc:
+>
+	:LogiPat "ab""cd"
+<		will search for lines containing the string  :ab"c:
+>
+	:LogiPat !"abc"
+<		will search for lines which don't contain the string  :abc:
+>
+	:LogiPat "abc"|"def"
+<		will search for lines which contain either the string
+		:abc:  or the string  :def:
+>
+	:LogiPat !("abc"|"def")
+<		will search for lines which don't contain either
+		of the strings  :abc:  or  :def:
+>
+	:LogiPat "abc"&"def"
+<		will search for lines which contain both of the strings
+		:abc:  and  :def:
+>
+	:let pat= LogiPat('!"abc"')
+<		will return the regular expression which will match
+		all lines not containing  :abc: .  The double quotes
+		are needed to pass normal patterns to LogiPat, and
+		differentiate such patterns from boolean logic
+		operators.
+
+
+==============================================================================
+4. Caveat						*logipat-caveat*
+
+	The "not" operator may be fragile; ie. it may not always play well
+	with the & (logical-and) and | (logical-or) operators.  Please try out
+	your patterns, possibly with :set hls, to insure that what is matching
+	is what you want.
+
+==============================================================================
+3. LogiPat History					*logipat-history*
+
+	v3 Sep 25, 2006 * LP_Or() fixed; it now encapsulates its output
+	                  in \%(...\) parentheses
+	   Dec 12, 2011 * |:ELP| added
+			* "" is mapped to a single " and left inside patterns
+	v2 May 31, 2005	* LPF and LogiPatFlags commands weren't working
+	v1 May 23, 2005	* initial release
+
+==============================================================================
+vim:tw=78:ts=8:ft=help

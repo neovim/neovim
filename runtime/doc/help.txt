@@ -161,6 +161,7 @@ Versions ~
 						*standard-plugin-list*
 Standard plugins ~
 |pi_gzip.txt|      Reading and writing compressed files
+|pi_logipat.txt|   Logical operators on patterns
 |pi_netrw.txt|     Reading and writing files over a network
 |pi_paren.txt|     Highlight matching parens
 |pi_tar.txt|       Tar file explorer
