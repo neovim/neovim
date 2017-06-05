@@ -149,7 +149,7 @@ MARK_AS_ADVANCED(
 
 # Enable -Wconversion.
 if(NOT MSVC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion -Wimplicit-function-declaration")
 endif()
 
 # gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
