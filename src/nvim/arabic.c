@@ -250,50 +250,9 @@
 #endif
 
 // Returns true if c is an ISO-8859-6 shaped ARABIC letter (user entered).
-static bool A_is_a(int cur_c)
+static inline bool A_is_a(int cur_c)
 {
-  switch (cur_c) {
-    case a_HAMZA:
-    case a_ALEF_MADDA:
-    case a_ALEF_HAMZA_ABOVE:
-    case a_WAW_HAMZA:
-    case a_ALEF_HAMZA_BELOW:
-    case a_YEH_HAMZA:
-    case a_ALEF:
-    case a_BEH:
-    case a_TEH_MARBUTA:
-    case a_TEH:
-    case a_THEH:
-    case a_JEEM:
-    case a_HAH:
-    case a_KHAH:
-    case a_DAL:
-    case a_THAL:
-    case a_REH:
-    case a_ZAIN:
-    case a_SEEN:
-    case a_SHEEN:
-    case a_SAD:
-    case a_DAD:
-    case a_TAH:
-    case a_ZAH:
-    case a_AIN:
-    case a_GHAIN:
-    case a_TATWEEL:
-    case a_FEH:
-    case a_QAF:
-    case a_KAF:
-    case a_LAM:
-    case a_MEEM:
-    case a_NOON:
-    case a_HEH:
-    case a_WAW:
-    case a_ALEF_MAKSURA:
-    case a_YEH:
-      return true;
-  }
-
-  return false;
+  return (cur_c >= a_HAMZA && cur_c <= a_GHAIN) || (cur_c >= a_TATWEEL && cur_c <= a_YEH);
 }
 
 // Returns true if c is an Isolated Form-B ARABIC letter
@@ -1448,14 +1407,14 @@ static int A_firstc_laa(int c, int c1)
 
 // A_is_harakat returns true if 'c' is an Arabic Harakat character.
 //     (harakat/tanween)
-static bool A_is_harakat(int c)
+static inline bool A_is_harakat(int c)
 {
   return c >= a_FATHATAN && c <= a_SUKUN;
 }
 
 // A_is_iso returns true if 'c' is an Arabic ISO-8859-6 character.
 //     (alphabet/number/punctuation)
-static bool A_is_iso(int c)
+static inline bool A_is_iso(int c)
 {
   return ((c >= a_HAMZA && c <= a_GHAIN)
           || (c >= a_TATWEEL && c <= a_HAMZA_BELOW)
@@ -1464,7 +1423,7 @@ static bool A_is_iso(int c)
 
 // A_is_formb returns true if 'c' is an Arabic 10646-1 FormB character.
 //     (alphabet/number/punctuation)
-static bool A_is_formb(int c)
+static inline bool A_is_formb(int c)
 {
   return ((c >= a_s_FATHATAN && c <= a_s_DAMMATAN)
           || c == a_s_KASRATAN
@@ -1473,21 +1432,21 @@ static bool A_is_formb(int c)
 }
 
 // A_is_ok returns true if 'c' is an Arabic 10646 (8859-6 or Form-B).
-static bool A_is_ok(int c)
+static inline bool A_is_ok(int c)
 {
   return A_is_iso(c) || A_is_formb(c);
 }
 
 // A_is_valid returns true if 'c' is an Arabic 10646 (8859-6 or Form-B),
 // with some exceptions/exclusions.
-static bool A_is_valid(int c)
+static inline bool A_is_valid(int c)
 {
   return A_is_ok(c) && !A_is_special(c);
 }
 
 // A_is_special returns true if 'c' is not a special Arabic character.
 // Specials don't adhere to most of the rules.
-static bool A_is_special(int c)
+static inline bool A_is_special(int c)
 {
   return c == a_HAMZA || c == a_s_HAMZA;
 }
