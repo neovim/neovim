@@ -604,6 +604,7 @@ static void read_input(DynamicBuffer *buf)
               curbuf->b_ml.ml_line_count
               || curbuf->b_p_eol))) {
         dynamic_buffer_ensure(buf, buf->len + 1);
+        assert(buf->data != NULL);
         buf->data[buf->len++] = NL;
       }
       ++lnum;
