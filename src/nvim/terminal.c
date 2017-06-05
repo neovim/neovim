@@ -793,6 +793,7 @@ static VTermKey convert_key(int key, VTermModifier *statep)
 
   switch (key) {
     case K_BS:        return VTERM_KEY_BACKSPACE;
+    case K_S_TAB:     *statep |= VTERM_MOD_SHIFT;  // FALLTHROUGH
     case TAB:         return VTERM_KEY_TAB;
     case Ctrl_M:      return VTERM_KEY_ENTER;
     case ESC:         return VTERM_KEY_ESCAPE;
