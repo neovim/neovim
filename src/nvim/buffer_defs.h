@@ -189,6 +189,10 @@ typedef struct {
 #define w_p_nu w_onebuf_opt.wo_nu       /* 'number' */
   int wo_rnu;
 #define w_p_rnu w_onebuf_opt.wo_rnu     /* 'relativenumber' */
+  int wo_ra;
+#define w_p_ra w_onebuf_opt.wo_ra     /* 'ralign' */
+  int wo_la;
+#define w_p_la w_onebuf_opt.wo_la     /* 'lalign' */
   long wo_nuw;
 # define w_p_nuw w_onebuf_opt.wo_nuw    /* 'numberwidth' */
   int wo_wfh;

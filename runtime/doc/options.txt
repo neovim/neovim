@@ -3570,6 +3570,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+                                                *'lalign'* *'la'*
+'lalign' 'la'   string  boolean (default off)
+                        local to window
+                        {not in Vi}
+        Left aligns the line numbers when |number| or |relativenumber| are
+        set. By default, |number| and |relativenumber| together will left
+        align the current line number only; see |ralign| for alternative
+        alignment options.
+
 					*'langmap'* *'lmap'* *E357* *E358*
 'langmap' 'lmap'	string	(default "")
 			global
@@ -4572,6 +4581,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When one of the characters in this option is found inside a string,
 	the following character will be skipped.  The default value makes the
 	text "foo\"bar\\" considered to be one string.
+
+                                                *'ralign'* *'ra'*
+'ralign' 'ra'   string  boolean (default off)
+                        local to window
+                        {not in Vi}
+        Right aligns the current line number when |number| and |relativenumber|
+        are both set. Doesn't do anything otherwise; see |lalign| for
+        alternative alignment of line numbers.
 
 				   *'readonly'* *'ro'* *'noreadonly'* *'noro'*
 'readonly' 'ro'		boolean	(default off)

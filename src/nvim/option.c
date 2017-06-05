@@ -5432,6 +5432,8 @@ static char_u *get_varp(vimoption_T *p)
   case PV_FMR:    return (char_u *)&(curwin->w_p_fmr);
   case PV_NU:     return (char_u *)&(curwin->w_p_nu);
   case PV_RNU:    return (char_u *)&(curwin->w_p_rnu);
+	case PV_RA:     return (char_u *)&(curwin->w_p_ra);
+	case PV_LA:     return (char_u *)&(curwin->w_p_la);
   case PV_NUW:    return (char_u *)&(curwin->w_p_nuw);
   case PV_WFH:    return (char_u *)&(curwin->w_p_wfh);
   case PV_WFW:    return (char_u *)&(curwin->w_p_wfw);
@@ -5547,6 +5549,8 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_list = from->wo_list;
   to->wo_nu = from->wo_nu;
   to->wo_rnu = from->wo_rnu;
+	to->wo_ra = from->wo_ra;
+	to->wo_la = from->wo_la;
   to->wo_nuw = from->wo_nuw;
   to->wo_rl  = from->wo_rl;
   to->wo_rlc = vim_strsave(from->wo_rlc);

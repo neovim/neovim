@@ -1775,7 +1775,11 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     if (len > 0) {
       int w = number_width(wp);
       long num;
-      char *fmt = "%*ld ";
+			char *fmt;
+			if(wp->w_p_la)
+      	fmt = "%-*ld ";
+			else
+				fmt = "%*ld ";
 
       if (len > w + 1)
         len = w + 1;
@@ -1790,7 +1794,10 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           /* 'number' + 'relativenumber': cursor line shows absolute
            * line number */
           num = lnum;
-          fmt = "%-*ld ";
+					if(wp->w_p_ra)
+						fmt = "%*ld ";
+					else
+						fmt = "%-*ld ";
         }
       }
 
@@ -2745,7 +2752,11 @@ win_line (
               + filler_lines
               ) {
             long num;
-            char *fmt = "%*ld ";
+						char *fmt;
+						if(wp->w_p_la)
+							fmt = "%-*ld ";
+            else
+							fmt = "%*ld ";
 
             if (wp->w_p_nu && !wp->w_p_rnu)
               /* 'number' + 'norelativenumber' */
@@ -2756,7 +2767,10 @@ win_line (
               if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
                 /* 'number' + 'relativenumber' */
                 num = lnum;
-                fmt = "%-*ld ";
+								if(wp->w_p_ra)
+									fmt = "%*ld ";
+								else
+                	fmt = "%-*ld ";
               }
             }
 
