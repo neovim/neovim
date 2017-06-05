@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Given a GitHub username as first argument,
+# get corresponding full name and email
+# and output them in the format "Full Name <email@address>".
+#
+# A cache of previous results is maintained.
+# If found in cache, result is returned from there.
+# If not, GitHub API is used to get data from there.
+# If data complete, result is returned at this point.
+# Some users don't have an email in their GitHub profile.
+# If at least fullname was available from GitHub,
+# try to find corresponding email looking at local repo log.
+# If some of the above succeeded, output result with exit status 0.
+# If non succeeded, exit with status 1.
+
+users_api="https://api.github.com/users"
+cache_file="$HOME/.github_user_info_cache"
+username="$1"
+fullname=
+email=
+result=
+
+get_from_cache()
+{
+    [ ! -f "$cache_file" ] && return 1
+    result=$(grep "^$username|" "$cache_file" | sed "s/^$username|//")
+    [ "$result" ] && { >&2 echo "Found at cache."; return 0; }
+    return 1
+}
+
+get_from_github()
+{
+    IFS='|' read fullname email < <(curl -s "$users_api/$username" |
+                                    jq -r '.name + "|" + .email')
+    [ "$fullname" ] && [ "$email" ] && {
+        result="$fullname <$email>"
+        echo "$username|$result" >> "$cache_file"
+        >&2 echo "Found at GitHub."
+        return 0
+    }
+    return 1
+}
+
+get_from_log()
+{
+    result=$(git log --author="$fullname" -1 |
+             grep "^Author" | sed "s/^Author: //")
+    [ "$result" ] && {
+        echo "$username|$result" >> "$cache_file"
+        >&2 echo "Found at local repo log."
+        return 0
+    }
+    return 1
+}
+
+get_from_cache && { echo "$result"; exit 0; }
+get_from_github && { echo "$result"; exit 0; }
+[ "$fullname" ] && get_from_log && { echo "$result"; exit 0; }
+>&2 echo "Not found."
+exit 1

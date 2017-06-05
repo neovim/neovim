@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# After rebase, detect review commits fixedup/squashed into others,
+# and add appropiate "Helped-by" trailers.
+#
+# Review commits must be titled "Review: <github-username>: ..."
+# for this to work.
+
+set -e -o pipefail
+
+# Avoid executing hook recursively.
+if [[ "$GITHOOK_POST_REWRITE_RUNNING" == "1" ]]; then
+    exit 0
+fi
+export GITHOOK_POST_REWRITE_RUNNING=1
+
+# Only run for "rebase" command (not for "amend").
+if [[ "$1" != "rebase" ]]; then
+    exit 0
+fi
+
+commit_title()
+{
+    echo $(git show --format="%s" --no-patch $1)
+}
+
+review_commit_pattern="^Review: *(.+):.*"
+
+is_review_commit()
+{
+    if [[ "$(commit_title $1)" =~ $review_commit_pattern ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+add_trailer()
+{
+    local trailer=$(github_user_info "$1" 2> /dev/null)
+    if [ "$trailer" ]; then
+        git commit -q --amend -m "$(git log --format="%B" -1 |
+            git interpret-trailers --trailer "Helped-by: $trailer")"
+        return 0
+    else
+        return 1
+    fi
+}
+    
+# Detect review commits fixedup/squashed into others,
+# and build a list of pending amend operations.
+# Also compute final commits list (can be needed later).
+declare -a final_commits
+declare -a pending_amendments
+while read source_sha target_sha
+do
+    if [[ "$target_sha" != "$prev_target_sha" ]]; then
+        final_commits+=("$target_sha")
+    elif is_review_commit $source_sha; then
+        reviewer="${BASH_REMATCH[1]}"
+        pending_amendments+=("$target_sha $reviewer")
+    fi
+    prev_target_sha=$target_sha
+done
+
+# If there are pending amendments:
+# - Checkout detached HEAD at previous rebase upstream point.
+# - Replay final commits, making corresponding amendments after each of them.
+# - Checkout previous branch at the new tip.
+pending_amendments_index=0
+if [[ "${#pending_amendments[@]}" != "0" ]]; then
+    echo "Automatic trailer addition:"
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    git checkout -q HEAD~${#final_commits[@]}
+    for final_commit in "${final_commits[@]}"
+    do
+        git cherry-pick $final_commit > /dev/null 2>&1
+        read target_sha reviewer <<< "${pending_amendments[$pending_amendments_index]}"
+        while [[ "$target_sha" == "$final_commit" ]]
+        do
+            if add_trailer $reviewer; then
+                echo "Trailer added into $(git rev-parse HEAD)."
+            else
+                echo "Failed to add trailer into $(git rev-parse HEAD) for $reviewer."
+            fi
+            ((pending_amendments_index++))
+            read target_sha reviewer <<< "${pending_amendments[$pending_amendments_index]}"
+        done
+    done
+    git checkout -q --no-track -B $branch
+fi
