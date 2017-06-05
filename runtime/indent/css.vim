@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	    CSS
 " Maintainer:	    Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2012-05-30
+" Latest Revision:  2017-02-26
 
 if exists("b:did_indent")
   finish
@@ -19,6 +19,15 @@ if exists("*GetCSSIndent")
 endif
 let s:keepcpo= &cpo
 set cpo&vim
+
+" shiftwidth() exists since patch 7.3.694
+if exists('*shiftwidth')
+  let s:ShiftWidth = function('shiftwidth')
+else
+  func! s:ShiftWidth()
+    return &shiftwidth
+  endfunc
+endif
 
 function s:prevnonblanknoncomment(lnum)
   let lnum = a:lnum
@@ -75,8 +84,8 @@ function GetCSSIndent()
     return 0
   endif
 
-  return indent(pnum) + s:count_braces(pnum, 1) * &sw
-        \ - s:count_braces(v:lnum, 0) * &sw
+  return indent(pnum) + s:count_braces(pnum, 1) * s:ShiftWidth()
+        \ - s:count_braces(v:lnum, 0) * s:ShiftWidth()
 endfunction
 
 let &cpo = s:keepcpo
