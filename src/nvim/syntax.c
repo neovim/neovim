@@ -4672,19 +4672,105 @@ static int syn_compare_stub(const void *v1, const void *v2)
   return *s1 > *s2 ? 1 : *s1 < *s2 ? -1 : 0;
 }
 
+/// Count how many elements will be necessary for the list resulting from the
+/// list_op operation on the two lists.
+///
+/// @param g1 The first sorted zero-terminated list
+/// @param g2 The second sorted zero-terminated list
+/// @param list_op The operation that will be performed on the two lists
+/// @return The count of elemnts of the list resulting from the list_op
+/// operation on the two lists
+static size_t syn_combine_list_count(const short *g1, const short *g2, int list_op)
+{
+  size_t count = 0;
+
+  // Loop through the lists until one of them is empty.
+  while (*g1 && *g2) {
+    // Always add from the first list.
+    if (*g1 < *g2) {
+      count++;
+      g1++;
+    } else {
+      // Only add from the second list if we're adding the lists.
+      if (list_op == CLUSTER_ADD) {
+        count++;
+      }
+
+      // Count only unique elements and elements that are not removed
+      // (list_op == CLUSTER_SUBTRACT) from the result list.
+      if (*g1 == *g2) {
+        g1++;
+      }
+      g2++;
+    }
+  }
+
+  // Now add the leftovers from whichever list didn't get finished first.
+  for (; *g1; g1++) {
+    count++;
+  }
+  // As before, only add from the second list if we're adding the lists.
+  if (list_op == CLUSTER_ADD) {
+    for (; *g2; g2++) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+/// Combines two lists according to list_op using a merge algorithm.
+///
+/// @param g1 The first sorted zero-terminated list
+/// @param g2 The second sorted zero-terminated list
+/// @param list_op The type of combination (operation) that should be performed
+/// on the two lists
+/// @param[out] clstr Pointer to the resulting list
+static void syn_combine_list_merge(const short *g1, const short *g2, int list_op, short *clstr)
+{
+  size_t i = 0;
+
+  // Loop through the lists until one of them is empty.
+  while (*g1 && *g2) {
+    // Always add from the first list.
+    if (*g1 < *g2) {
+      clstr[i++] = *g1;
+      g1++;
+    } else {
+      // Only add from the second list if we're adding the lists.
+      if (list_op == CLUSTER_ADD) {
+        clstr[i++] = *g2;
+      }
+
+      // Add only unique elements and elements that are not removed
+      // (list_op == CLUSTER_SUBTRACT) from the result list.
+      if (*g1 == *g2) {
+        g1++;
+      }
+      g2++;
+    }
+  }
+
+  // Now add the leftovers from whichever list didn't get finished first.
+  for (; *g1; g1++) {
+    clstr[i++] = *g1;
+  }
+  // As before, only add from the second list if we're adding the lists.
+  if (list_op == CLUSTER_ADD) {
+    for (; *g2; g2++) {
+      clstr[i++] = *g2;
+    }
+  }
+}
+
 /*
  * Combines lists of syntax clusters.
  * *clstr1 and *clstr2 must both be allocated memory; they will be consumed.
  */
 static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
 {
-  int count1 = 0;
-  int count2 = 0;
   short       *g1;
   short       *g2;
-  short       *clstr = NULL;
-  int count;
-  int round;
 
   /*
    * Handle degenerate cases.
@@ -4701,81 +4787,31 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
     return;
   }
 
-  for (g1 = *clstr1; *g1; g1++)
+  size_t count1 = 0;
+  for (g1 = *clstr1; *g1; g1++) {
     ++count1;
-  for (g2 = *clstr2; *g2; g2++)
+  }
+  size_t count2 = 0;
+  for (g2 = *clstr2; *g2; g2++) {
     ++count2;
+  }
 
   /*
    * For speed purposes, sort both lists.
    */
-  qsort(*clstr1, (size_t)count1, sizeof(short), syn_compare_stub);
-  qsort(*clstr2, (size_t)count2, sizeof(short), syn_compare_stub);
+  qsort(*clstr1, count1, sizeof(short), syn_compare_stub);
+  qsort(*clstr2, count2, sizeof(short), syn_compare_stub);
 
-  /*
-   * We proceed in two passes; in round 1, we count the elements to place
-   * in the new list, and in round 2, we allocate and populate the new
-   * list.  For speed, we use a mergesort-like method, adding the smaller
-   * of the current elements in each list to the new list.
-   */
-  for (round = 1; round <= 2; round++) {
-    g1 = *clstr1;
-    g2 = *clstr2;
-    count = 0;
+  //  Count the elements to place in the new list
+  size_t count = syn_combine_list_count(*clstr1, *clstr2, list_op);
 
-    /*
-     * First, loop through the lists until one of them is empty.
-     */
-    while (*g1 && *g2) {
-      /*
-       * We always want to add from the first list.
-       */
-      if (*g1 < *g2) {
-        if (round == 2)
-          clstr[count] = *g1;
-        count++;
-        g1++;
-        continue;
-      }
-      /*
-       * We only want to add from the second list if we're adding the
-       * lists.
-       */
-      if (list_op == CLUSTER_ADD) {
-        if (round == 2)
-          clstr[count] = *g2;
-        count++;
-      }
-      if (*g1 == *g2)
-        g1++;
-      g2++;
-    }
-
-    /*
-     * Now add the leftovers from whichever list didn't get finished
-     * first.  As before, we only want to add from the second list if
-     * we're adding the lists.
-     */
-    for (; *g1; g1++, count++)
-      if (round == 2)
-        clstr[count] = *g1;
-    if (list_op == CLUSTER_ADD)
-      for (; *g2; g2++, count++)
-        if (round == 2)
-          clstr[count] = *g2;
-
-    if (round == 1) {
-      /*
-       * If the group ended up empty, we don't need to allocate any
-       * space for it.
-       */
-      if (count == 0) {
-        clstr = NULL;
-        break;
-      }
-      clstr = xmalloc((count + 1) * sizeof(short));
-      clstr[count] = 0;
-    }
+  // If the group ended up empty, we don't need to allocate any space for it.
+  short *clstr = NULL;
+  if (count) {
+    // Allocate and populate the new list
+    clstr = xmalloc((count + 1) * sizeof(short));
+    clstr[count] = 0;
+    syn_combine_list_merge(*clstr1, *clstr2, list_op, clstr);
   }
 
   /*
