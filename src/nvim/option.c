@@ -1477,7 +1477,7 @@ do_set (
             if (removing) {
               value = *(long *)varp - value;
             }
-            errmsg = (char_u *)set_num_option(opt_idx, varp, value,
+            errmsg = (char_u *)set_num_option(opt_idx, varp, (long)value,
                                               errbuf, sizeof(errbuf),
                                               opt_flags);
           } else if (opt_idx >= 0) {  // String.

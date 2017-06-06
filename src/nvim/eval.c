@@ -6691,7 +6691,7 @@ static void f_argv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int idx;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
-    idx = tv_get_number_chk(&argvars[0], NULL);
+    idx = (int)tv_get_number_chk(&argvars[0], NULL);
     if (idx >= 0 && idx < ARGCOUNT) {
       rettv->vval.v_string = (char_u *)xstrdup(
           (const char *)alist_name(&ARGLIST[idx]));
@@ -7427,7 +7427,7 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  const int startcol = tv_get_number_chk(&argvars[0], NULL);
+  const colnr_T startcol = tv_get_number_chk(&argvars[0], NULL);
   if (startcol <= 0) {
     return;
   }
