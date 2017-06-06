@@ -533,7 +533,7 @@ func Test_completion_comment_formatting()
   %d
   try
     call feedkeys("o/*\<cr>\<cr>\<c-x>\<c-u>/\<esc>", 'tx')
-    call assert_false(1, 'completefunc not set, should have failed')
+    call assert_report('completefunc not set, should have failed')
   catch
     call assert_exception('E764:')
   endtry

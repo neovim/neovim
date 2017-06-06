@@ -1936,16 +1936,23 @@ argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
 argv({nr})			String	{nr} entry of the argument list
 argv()				List	the argument list
-assert_equal({exp}, {act} [, {msg}]) none  assert {exp} is equal to {act}
-assert_exception( {error} [, {msg}]) none  assert {error} is in v:exception
-assert_fails( {cmd} [, {error}])     none  assert {cmd} fails
-assert_false({actual} [, {msg}])     none  assert {actual} is false
+assert_equal({exp}, {act} [, {msg}])
+				none	assert {exp} is equal to {act}
+assert_exception({error} [, {msg}])
+				none	assert {error} is in v:exception
+assert_fails({cmd} [, {error}])	none	assert {cmd} fails
+assert_false({actual} [, {msg}])
+				none	assert {actual} is false
 assert_inrange({lower}, {upper}, {actual} [, {msg}])
 				none	assert {actual} is inside the range
-assert_match( {pat}, {text} [, {msg}]) none  assert {pat} matches {text}
-assert_notequal( {exp}, {act} [, {msg}]) none  assert {exp} is not equal {act}
-assert_notmatch( {pat}, {text} [, {msg}]) none  assert {pat} not matches {text}
-assert_true({actual} [, {msg}])      none  assert {actual} is true
+assert_match({pat}, {text} [, {msg}])
+				none	assert {pat} matches {text}
+assert_notequal({exp}, {act} [, {msg}])
+				none	assert {exp} is not equal {act}
+assert_notmatch({pat}, {text} [, {msg}])
+				none	assert {pat} not matches {text}
+assert_report({msg})		none	report a test failure
+assert_true({actual} [, {msg}])	none	assert {actual} is true
 asin({expr})			Float	arc sine of {expr}
 atan({expr})			Float	arc tangent of {expr}
 atan2({expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
@@ -2500,6 +2507,9 @@ assert_notequal({expected}, {actual} [, {msg}])
 assert_notmatch({pattern}, {actual} [, {msg}])
 		The opposite of `assert_match()`: add an error message to
 		|v:errors| when {pattern} matches {actual}.
+
+assert_report({msg})					*assert_report()*
+		Report a test failure directly, using {msg}.
 
 assert_true({actual} [, {msg}])					*assert_true()*
 		When {actual} is not true an error message is added to
@@ -3632,11 +3642,14 @@ foldtext()	Returns a String, to be displayed for a closed fold.  This is
 		|v:foldstart|, |v:foldend| and |v:folddashes| variables.
 		The returned string looks like this: >
 			+-- 45 lines: abcdef
-<		The number of dashes depends on the foldlevel.	The "45" is
-		the number of lines in the fold.  "abcdef" is the text in the
-		first non-blank line of the fold.  Leading white space, "//"
-		or "/*" and the text from the 'foldmarker' and 'commentstring'
-		options is removed.
+<		The number of leading dashes depends on the foldlevel. The
+		"45" is the number of lines in the fold.  "abcdef" is the text
+		in the first non-blank line of the fold.  Leading white space,
+		"//" or "/*" and the text from the 'foldmarker' and
+		'commentstring' options is removed.
+		When used to draw the actual foldtext, the rest of the line
+		will be filled with the fold char from the 'fillchars'
+		setting.
 		{not available when compiled without the |+folding| feature}
 
 foldtextresult({lnum})					*foldtextresult()*

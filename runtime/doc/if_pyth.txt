@@ -679,7 +679,7 @@ vim.Function object				*python-Function*
 8. pyeval() and py3eval() Vim functions			*python-pyeval*
 
 To facilitate bi-directional interface, you can use |pyeval()| and |py3eval()| 
-functions to evaluate Python expressions and pass their values to VimL.
+functions to evaluate Python expressions and pass their values to Vim script.
 
 ==============================================================================
 9. Python 3						*python3*

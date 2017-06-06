@@ -1189,7 +1189,7 @@ int get_spellword(list_T *list, const char **pp)
 }
 
 
-// Call some vimL function and return the result in "*rettv".
+// Call some vim script function and return the result in "*rettv".
 // Uses argv[argc] for the function arguments.  Only Number and String
 // arguments are currently supported.
 //
@@ -1256,18 +1256,16 @@ int call_vim_function(
   return ret;
 }
 
-/*
- * Call vimL function "func" and return the result as a number.
- * Returns -1 when calling the function fails.
- * Uses argv[argc] for the function arguments.
- */
-long 
-call_func_retnr (
-    char_u *func,
-    int argc,
-    const char_u *const *const argv,
-    int safe                       // use the sandbox
-)
+/// Call Vim script function and return the result as a number
+///
+/// @param[in]  func  Function name.
+/// @param[in]  argc  Number of arguments.
+/// @param[in]  argv  Array with string arguments.
+/// @param[in]  safe  Use with sandbox.
+///
+/// @return -1 when calling function fails, result of function otherwise.
+long call_func_retnr(char_u *func, int argc, const char_u *const *const argv,
+                     int safe)
 {
   typval_T rettv;
   long retval;
@@ -1281,14 +1279,14 @@ call_func_retnr (
   return retval;
 }
 
-/// Call VimL function and return the result as a string
+/// Call Vim script function and return the result as a string
 ///
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
 /// @param[in]  argv  Array with string arguments.
 /// @param[in]  safe  Use the sandbox.
 ///
-/// @return [allocated] NULL when calling function failes, allocated string
+/// @return [allocated] NULL when calling function fails, allocated string
 ///                     otherwise.
 char *call_func_retstr(const char *const func, const int argc,
                        const char_u *const *const argv,
@@ -1307,18 +1305,17 @@ char *call_func_retstr(const char *const func, const int argc,
   return retval;
 }
 
-/*
- * Call vimL function "func" and return the result as a List.
- * Uses argv[argc] for the function arguments.
- * Returns NULL when there is something wrong.
- */
-void *
-call_func_retlist (
-    char_u *func,
-    int argc,
-    const char_u *const *const argv,
-    int safe                       // use the sandbox
-)
+/// Call Vim script function and return the result as a List
+///
+/// @param[in]  func  Function name.
+/// @param[in]  argc  Number of arguments.
+/// @param[in]  argv  Array with string arguments.
+/// @param[in]  safe  Use the sandbox.
+///
+/// @return [allocated] NULL when calling function fails or return tv is not a
+///                     List, allocated List otherwise.
+void *call_func_retlist(char_u *func, int argc, const char_u *const *const argv,
+                        int safe)
 {
   typval_T rettv;
 
@@ -5898,6 +5895,19 @@ size_t string2float(const char *const text, float_T *const ret_value)
 {
   char *s = NULL;
 
+  // MS-Windows does not deal with "inf" and "nan" properly
+  if (STRNICMP(text, "inf", 3) == 0) {
+    *ret_value = INFINITY;
+    return 3;
+  }
+  if (STRNICMP(text, "-inf", 3) == 0) {
+    *ret_value = -INFINITY;
+    return 4;
+  }
+  if (STRNICMP(text, "nan", 3) == 0) {
+    *ret_value = NAN;
+    return 3;
+  }
   *ret_value = strtod(text, &s);
   return (size_t) (s - text);
 }
@@ -6792,6 +6802,17 @@ static void f_assert_equal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_assert_notequal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   assert_equal_common(argvars, ASSERT_NOTEQUAL);
+}
+
+/// "assert_report(msg)
+static void f_assert_report(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+    garray_T ga;
+
+    prepare_assert_error(&ga);
+    ga_concat(&ga, (const char_u *)tv_get_string(&argvars[0]));
+    assert_error(&ga);
+    ga_clear(&ga);
 }
 
 /// "assert_exception(string[, msg])" function
@@ -15685,11 +15706,15 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_str2float(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u *p = skipwhite((const char_u *)tv_get_string(&argvars[0]));
+  bool isneg = (*p == '-');
 
-  if (*p == '+') {
+  if (*p == '+' || *p == '-') {
     p = skipwhite(p + 1);
   }
   (void)string2float((char *)p, &rettv->vval.v_float);
+  if (isneg) {
+    rettv->vval.v_float *= -1;
+  }
   rettv->v_type = VAR_FLOAT;
 }
 
@@ -15709,7 +15734,8 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   char_u *p = skipwhite((const char_u *)tv_get_string(&argvars[0]));
-  if (*p == '+') {
+  bool isneg = (*p == '-');
+  if (*p == '+' || *p == '-') {
     p = skipwhite(p + 1);
   }
   switch (base) {
@@ -15730,7 +15756,11 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
   vim_str2nr(p, NULL, NULL, what, &n, NULL, 0);
-  rettv->vval.v_number = n;
+  if (isneg) {
+    rettv->vval.v_number = -n;
+  } else {
+    rettv->vval.v_number = n;
+  }
 }
 
 /*
@@ -19839,9 +19869,15 @@ void ex_function(exarg_T *eap)
         }
       }
 
-      /* Check for ":append" or ":insert". */
+      // Check for ":append", ":change", ":insert".
       p = skip_range(p, NULL);
       if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
+          || (p[0] == 'c'
+              && (!ASCII_ISALPHA(p[1])
+                  || (p[1] == 'h' && (!ASCII_ISALPHA(p[2])
+                                      || (p[2] == 'a'
+                                          && (STRNCMP(&p[3], "nge", 3) != 0
+                                              || !ASCII_ISALPHA(p[6])))))))
           || (p[0] == 'i'
               && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
                                            && (!ASCII_ISALPHA(p[2])
