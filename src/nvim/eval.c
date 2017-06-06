@@ -19872,9 +19872,15 @@ void ex_function(exarg_T *eap)
         }
       }
 
-      /* Check for ":append" or ":insert". */
+      // Check for ":append", ":change", ":insert".
       p = skip_range(p, NULL);
       if ((p[0] == 'a' && (!ASCII_ISALPHA(p[1]) || p[1] == 'p'))
+          || (p[0] == 'c'
+              && (!ASCII_ISALPHA(p[1])
+                  || (p[1] == 'h' && (!ASCII_ISALPHA(p[2])
+                                      || (p[2] == 'a'
+                                          && (STRNCMP(&p[3], "nge", 3) != 0
+                                              || !ASCII_ISALPHA(p[6])))))))
           || (p[0] == 'i'
               && (!ASCII_ISALPHA(p[1]) || (p[1] == 'n'
                                            && (!ASCII_ISALPHA(p[2])
