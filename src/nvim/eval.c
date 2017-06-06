@@ -5898,6 +5898,19 @@ size_t string2float(const char *const text, float_T *const ret_value)
 {
   char *s = NULL;
 
+  // MS-Windows does not deal with "inf" and "nan" properly
+  if (STRNICMP(text, "inf", 3) == 0) {
+    *ret_value = INFINITY;
+    return 3;
+  }
+  if (STRNICMP(text, "-inf", 3) == 0) {
+    *ret_value = -INFINITY;
+    return 4;
+  }
+  if (STRNICMP(text, "nan", 3) == 0) {
+    *ret_value = NAN;
+    return 3;
+  }
   *ret_value = strtod(text, &s);
   return (size_t) (s - text);
 }
