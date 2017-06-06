@@ -1136,6 +1136,17 @@ func Test_script_lines()
 endfunc
 
 "-------------------------------------------------------------------------------
+" Test 96:  line continuation						    {{{1
+"
+"           Undefined behavior was detected by ubsan with line continuation
+"           after an empty line.
+"-------------------------------------------------------------------------------
+func Test_script_emty_line_continuation()
+
+    \
+endfunc
+
+"-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
 " vim: fdt=substitute(substitute(foldtext(),\ '\\%(^+--\\)\\@<=\\(\\s*\\)\\(.\\{-}\\)\:\ \\%(\"\ \\)\\=\\(Test\ \\d*\\)\:\\s*',\ '\\3\ (\\2)\:\ \\1',\ \"\"),\ '\\(Test\\s*\\)\\(\\d\\)\\D\\@=',\ '\\1\ \\2',\ "")
