@@ -8,7 +8,8 @@ low-risk/isolated tasks:
 
 - Merge a [Vim patch].
 - Try a [complexity:low] issue.
-- Fix bugs found by [clang-scan], [coverity](#coverity), and [PVS](#pvs-studio).
+- Fix bugs found by [clang scan-build](#clang-scan-build),
+  [coverity](#coverity), and [PVS](#pvs-studio).
 
 Developer guidelines
 --------------------
@@ -111,6 +112,15 @@ QuickBuild uses this invocation:
     -DTRAVIS_CI_BUILD=ON ../.. && ${node.getAttribute("make", "make")}
     VERBOSE=1 nvim unittest-prereqs functionaltest-prereqs
 
+
+### Clang scan-build
+
+The auto-generated [clang-scan] report presents walk-throughs of bugs found by
+Clang's [scan-build](https://clang-analyzer.llvm.org/scan-build.html) static
+analyzer. To verify a fix locally, run `scan-build` like this:
+
+    rm -rf build/
+    scan-build --use-analyzer=/usr/bin/clang make
 
 ### Coverity
 

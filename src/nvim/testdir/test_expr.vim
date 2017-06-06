@@ -78,7 +78,7 @@ endfunc
 func Test_loop_over_null_list()
   let null_list = submatch(1, 1)
   for i in null_list
-    call assert_true(0, 'should not get here')
+    call assert_report('should not get here')
   endfor
 endfunc
 

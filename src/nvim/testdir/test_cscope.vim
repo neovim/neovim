@@ -28,7 +28,7 @@ func Test_cscopeWithCscopeConnections()
       cscope add Xcscope.out
       set cscopeverbose
     catch
-      call assert_true(0)
+      call assert_report('exception thrown')
     endtry
     call assert_fails('cscope add', 'E560')
     call assert_fails('cscope add Xcscope.out', 'E568')

@@ -4174,10 +4174,8 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
   }
 }
 
-/*
- * Call "user_expand_func()" to invoke a user defined VimL function and return
- * the result (either a string or a List).
- */
+/// Call "user_expand_func()" to invoke a user defined Vim script function and
+/// return the result (either a string or a List).
 static void * call_user_expand_func(user_expand_func_T user_expand_func,
                                     expand_T *xp, int *num_file, char_u ***file)
 {
