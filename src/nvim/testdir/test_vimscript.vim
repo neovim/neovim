@@ -1173,6 +1173,49 @@ func Test_script_emty_line_continuation()
 endfunc
 
 "-------------------------------------------------------------------------------
+" Test 97:  bitwise functions						    {{{1
+"-------------------------------------------------------------------------------
+func Test_bitwise_functions()
+    " and
+    call assert_equal(127, and(127, 127))
+    call assert_equal(16, and(127, 16))
+    call assert_equal(0, and(127, 128))
+    call assert_fails("call and(1.0, 1)", 'E805:')
+    call assert_fails("call and([], 1)", 'E745:')
+    call assert_fails("call and({}, 1)", 'E728:')
+    call assert_fails("call and(1, 1.0)", 'E805:')
+    call assert_fails("call and(1, [])", 'E745:')
+    call assert_fails("call and(1, {})", 'E728:')
+    " or
+    call assert_equal(23, or(16, 7))
+    call assert_equal(15, or(8, 7))
+    call assert_equal(123, or(0, 123))
+    call assert_fails("call or(1.0, 1)", 'E805:')
+    call assert_fails("call or([], 1)", 'E745:')
+    call assert_fails("call or({}, 1)", 'E728:')
+    call assert_fails("call or(1, 1.0)", 'E805:')
+    call assert_fails("call or(1, [])", 'E745:')
+    call assert_fails("call or(1, {})", 'E728:')
+    " xor
+    call assert_equal(0, xor(127, 127))
+    call assert_equal(111, xor(127, 16))
+    call assert_equal(255, xor(127, 128))
+    call assert_fails("call xor(1.0, 1)", 'E805:')
+    call assert_fails("call xor([], 1)", 'E745:')
+    call assert_fails("call xor({}, 1)", 'E728:')
+    call assert_fails("call xor(1, 1.0)", 'E805:')
+    call assert_fails("call xor(1, [])", 'E745:')
+    call assert_fails("call xor(1, {})", 'E728:')
+    " invert
+    call assert_equal(65408, and(invert(127), 65535))
+    call assert_equal(65519, and(invert(16), 65535))
+    call assert_equal(65407, and(invert(128), 65535))
+    call assert_fails("call invert(1.0)", 'E805:')
+    call assert_fails("call invert([])", 'E745:')
+    call assert_fails("call invert({})", 'E728:')
+endfunc
+
+"-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
 " vim: fdt=substitute(substitute(foldtext(),\ '\\%(^+--\\)\\@<=\\(\\s*\\)\\(.\\{-}\\)\:\ \\%(\"\ \\)\\=\\(Test\ \\d*\\)\:\\s*',\ '\\3\ (\\2)\:\ \\1',\ \"\"),\ '\\(Test\\s*\\)\\(\\d\\)\\D\\@=',\ '\\1\ \\2',\ "")
