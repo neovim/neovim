@@ -6807,6 +6807,17 @@ static void f_assert_notequal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   assert_equal_common(argvars, ASSERT_NOTEQUAL);
 }
 
+/// "assert_report(msg)
+static void f_assert_report(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+    garray_T ga;
+
+    prepare_assert_error(&ga);
+    ga_concat(&ga, (const char_u *)tv_get_string(&argvars[0]));
+    assert_error(&ga);
+    ga_clear(&ga);
+}
+
 /// "assert_exception(string[, msg])" function
 static void f_assert_exception(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
