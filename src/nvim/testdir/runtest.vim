@@ -121,7 +121,7 @@ let s:fail = 0
 let s:errors = []
 let s:messages = []
 let s:skipped = []
-if expand('%') =~ 'test_viml.vim'
+if expand('%') =~ 'test_vimscript.vim'
   " this test has intentional s:errors, don't use try/catch.
   source %
 else

@@ -1189,7 +1189,7 @@ int get_spellword(list_T *list, const char **pp)
 }
 
 
-// Call some vimL function and return the result in "*rettv".
+// Call some vim script function and return the result in "*rettv".
 // Uses argv[argc] for the function arguments.  Only Number and String
 // arguments are currently supported.
 //
@@ -1257,7 +1257,7 @@ int call_vim_function(
 }
 
 /*
- * Call vimL function "func" and return the result as a number.
+ * Call vim script function "func" and return the result as a number.
  * Returns -1 when calling the function fails.
  * Uses argv[argc] for the function arguments.
  */
@@ -1281,7 +1281,7 @@ call_func_retnr (
   return retval;
 }
 
-/// Call VimL function and return the result as a string
+/// Call Vim script function and return the result as a string
 ///
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
@@ -1308,7 +1308,7 @@ char *call_func_retstr(const char *const func, const int argc,
 }
 
 /*
- * Call vimL function "func" and return the result as a List.
+ * Call Vim script function "func" and return the result as a List.
  * Uses argv[argc] for the function arguments.
  * Returns NULL when there is something wrong.
  */

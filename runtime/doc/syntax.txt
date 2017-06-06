@@ -3285,8 +3285,8 @@ Some folding is now supported with syntax/vim.vim: >
    g:vimsyn_folding =~ 'P' : fold python   script
 <
 							*g:vimsyn_noerror*
-Not all error highlighting that syntax/vim.vim does may be correct; VimL is a
-difficult language to highlight correctly.  A way to suppress error
+Not all error highlighting that syntax/vim.vim does may be correct; Vim script
+is a difficult language to highlight correctly.  A way to suppress error
 highlighting is to put the following line in your |vimrc|: >
 
 	let g:vimsyn_noerror = 1
