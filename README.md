@@ -31,6 +31,7 @@ for more information.
 Install from source
 -------------------
 
+    sudo apt-get install autoconf m4 libtool libtool-bin pkg-config luarocks
     make CMAKE_BUILD_TYPE=RelWithDebInfo
     sudo make install
 
