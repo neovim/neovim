@@ -1256,18 +1256,16 @@ int call_vim_function(
   return ret;
 }
 
-/*
- * Call vim script function "func" and return the result as a number.
- * Returns -1 when calling the function fails.
- * Uses argv[argc] for the function arguments.
- */
-long 
-call_func_retnr (
-    char_u *func,
-    int argc,
-    const char_u *const *const argv,
-    int safe                       // use the sandbox
-)
+/// Call Vim script function and return the result as a number
+///
+/// @param[in]  func  Function name.
+/// @param[in]  argc  Number of arguments.
+/// @param[in]  argv  Array with string arguments.
+/// @param[in]  safe  Use with sandbox.
+///
+/// @return -1 when calling function fails, result of function otherwise.
+long call_func_retnr(char_u *func, int argc, const char_u *const *const argv,
+                     int safe)
 {
   typval_T rettv;
   long retval;
@@ -1288,7 +1286,7 @@ call_func_retnr (
 /// @param[in]  argv  Array with string arguments.
 /// @param[in]  safe  Use the sandbox.
 ///
-/// @return [allocated] NULL when calling function failes, allocated string
+/// @return [allocated] NULL when calling function fails, allocated string
 ///                     otherwise.
 char *call_func_retstr(const char *const func, const int argc,
                        const char_u *const *const argv,
@@ -1307,18 +1305,17 @@ char *call_func_retstr(const char *const func, const int argc,
   return retval;
 }
 
-/*
- * Call Vim script function "func" and return the result as a List.
- * Uses argv[argc] for the function arguments.
- * Returns NULL when there is something wrong.
- */
-void *
-call_func_retlist (
-    char_u *func,
-    int argc,
-    const char_u *const *const argv,
-    int safe                       // use the sandbox
-)
+/// Call Vim script function and return the result as a List
+///
+/// @param[in]  func  Function name.
+/// @param[in]  argc  Number of arguments.
+/// @param[in]  argv  Array with string arguments.
+/// @param[in]  safe  Use the sandbox.
+///
+/// @return [allocated] NULL when calling function fails or return tv is not a
+///                     List, allocated List otherwise.
+void *call_func_retlist(char_u *func, int argc, const char_u *const *const argv,
+                        int safe)
 {
   typval_T rettv;
 
