@@ -165,9 +165,22 @@ endfunc
 
 func Test_str2float()
   call assert_equal('1.0', string(str2float('1')))
+  call assert_equal('1.0', string(str2float(' 1 ')))
+  call assert_equal('1.0', string(str2float(' 1.0 ')))
   call assert_equal('1.23', string(str2float('1.23')))
   call assert_equal('1.23', string(str2float('1.23abc')))
   call assert_equal('1.0e40', string(str2float('1e40')))
+
+  call assert_equal('1.0', string(str2float('+1')))
+  call assert_equal('1.0', string(str2float('+1')))
+  call assert_equal('1.0', string(str2float(' +1 ')))
+  call assert_equal('1.0', string(str2float(' + 1 ')))
+
+  call assert_equal('-1.0', string(str2float('-1')))
+  call assert_equal('-1.0', string(str2float('-1')))
+  call assert_equal('-1.0', string(str2float(' -1 ')))
+  call assert_equal('-1.0', string(str2float(' - 1 ')))
+
   call assert_equal("str2float('inf')", string(str2float('1e1000')))
   call assert_equal("str2float('inf')", string(str2float('inf')))
   call assert_equal("-str2float('inf')", string(str2float('-inf')))

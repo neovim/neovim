@@ -15698,11 +15698,15 @@ static void f_split(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_str2float(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u *p = skipwhite((const char_u *)tv_get_string(&argvars[0]));
+  bool isneg = (*p == '-');
 
-  if (*p == '+') {
+  if (*p == '+' || *p == '-') {
     p = skipwhite(p + 1);
   }
   (void)string2float((char *)p, &rettv->vval.v_float);
+  if (isneg) {
+    rettv->vval.v_float *= -1;
+  }
   rettv->v_type = VAR_FLOAT;
 }
 
@@ -15722,7 +15726,8 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   char_u *p = skipwhite((const char_u *)tv_get_string(&argvars[0]));
-  if (*p == '+') {
+  bool isneg = (*p == '-');
+  if (*p == '+' || *p == '-') {
     p = skipwhite(p + 1);
   }
   switch (base) {
@@ -15743,7 +15748,11 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
   vim_str2nr(p, NULL, NULL, what, &n, NULL, 0);
-  rettv->vval.v_number = n;
+  if (isneg) {
+    rettv->vval.v_number = -n;
+  } else {
+    rettv->vval.v_number = n;
+  }
 }
 
 /*
