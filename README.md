@@ -113,3 +113,4 @@ See `LICENSE` for details.
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
 
 <!-- vim: set tw=80: -->
+foo
