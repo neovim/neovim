@@ -51,6 +51,10 @@ ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
   $(shell [ -x .deps/usr/bin/lua ] || rm build/.ran-*)
 endif
 
+ifneq (,$(PREFIX))
+	CMAKE_EXTRA_FLAGS += "-DCMAKE_INSTALL_PREFIX=$(PREFIX)"
+endif
+
 # For use where we want to make sure only a single job is run.  This does issue 
 # a warning, but we need to keep SCRIPTS argument.
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
