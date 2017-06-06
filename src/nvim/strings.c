@@ -653,7 +653,7 @@ static float_T tv_float(typval_T *const tvs, int *const idxp)
     if (tvs[idx].v_type == VAR_FLOAT) {
       f = tvs[idx].vval.v_float;
     } else if (tvs[idx].v_type == VAR_NUMBER) {
-      f = tvs[idx].vval.v_number;
+      f = (float_T)tvs[idx].vval.v_number;
     } else {
       EMSG(_("E807: Expected Float argument for printf()"));
     }
