@@ -13,6 +13,10 @@ func Test_abs()
   call assert_equal("str2float('inf')", string(abs(1.0/0.0)))
   call assert_equal("str2float('inf')", string(abs(-1.0/0.0)))
   call assert_equal("str2float('nan')", string(abs(0.0/0.0)))
+  call assert_equal('12', string(abs('-12abc')))
+  call assert_fails("call abs([])", 'E745:')
+  call assert_fails("call abs({})", 'E728:')
+  call assert_fails("call abs(function('string'))", 'E703:')
 endfunc
 
 func Test_sqrt()
@@ -21,6 +25,7 @@ func Test_sqrt()
   call assert_equal("str2float('inf')", string(sqrt(1.0/0.0)))
   call assert_equal("str2float('nan')", string(sqrt(-1.0)))
   call assert_equal("str2float('nan')", string(sqrt(0.0/0.0)))
+  call assert_fails('call sqrt("")', 'E808:')
 endfunc
 
 func Test_log()
@@ -30,6 +35,7 @@ func Test_log()
   call assert_equal("str2float('nan')", string(log(-1.0)))
   call assert_equal("str2float('inf')", string(log(1.0/0.0)))
   call assert_equal("str2float('nan')", string(log(0.0/0.0)))
+  call assert_fails('call log("")', 'E808:')
 endfunc
 
 func Test_log10()
@@ -40,6 +46,7 @@ func Test_log10()
   call assert_equal("str2float('nan')", string(log10(-1.0)))
   call assert_equal("str2float('inf')", string(log10(1.0/0.0)))
   call assert_equal("str2float('nan')", string(log10(0.0/0.0)))
+  call assert_fails('call log10("")', 'E808:')
 endfunc
 
 func Test_exp()
@@ -49,6 +56,7 @@ func Test_exp()
   call assert_equal("str2float('inf')", string(exp(1.0/0.0)))
   call assert_equal('0.0', string(exp(-1.0/0.0)))
   call assert_equal("str2float('nan')", string(exp(0.0/0.0)))
+  call assert_fails('call exp("")', 'E808:')
 endfunc
 
 func Test_sin()
@@ -59,6 +67,7 @@ func Test_sin()
   call assert_equal("str2float('nan')", string(sin(1.0/0.0)))
   call assert_equal('0.0', string(sin(1.0/(1.0/0.0))))
   call assert_equal('-0.0', string(sin(-1.0/(1.0/0.0))))
+  call assert_fails('call sin("")', 'E808:')
 endfunc
 
 func Test_asin()
@@ -68,6 +77,7 @@ func Test_asin()
   call assert_equal("str2float('nan')", string(asin(1.1)))
   call assert_equal("str2float('nan')", string(asin(1.0/0.0)))
   call assert_equal("str2float('nan')", string(asin(0.0/0.0)))
+  call assert_fails('call asin("")', 'E808:')
 endfunc
 
 func Test_sinh()
@@ -77,6 +87,7 @@ func Test_sinh()
   call assert_equal("str2float('inf')", string(sinh(1.0/0.0)))
   call assert_equal("-str2float('inf')", string(sinh(-1.0/0.0)))
   call assert_equal("str2float('nan')", string(sinh(0.0/0.0)))
+  call assert_fails('call sinh("")', 'E808:')
 endfunc
 
 func Test_cos()
@@ -85,6 +96,7 @@ func Test_cos()
   call assert_equal('0.877583', string(cos(-0.5)))
   call assert_equal("str2float('nan')", string(cos(0.0/0.0)))
   call assert_equal("str2float('nan')", string(cos(1.0/0.0)))
+  call assert_fails('call cos("")', 'E808:')
 endfunc
 
 func Test_acos()
@@ -95,6 +107,7 @@ func Test_acos()
   call assert_equal("str2float('nan')", string(acos(1.1)))
   call assert_equal("str2float('nan')", string(acos(1.0/0.0)))
   call assert_equal("str2float('nan')", string(acos(0.0/0.0)))
+  call assert_fails('call acos("")', 'E808:')
 endfunc
 
 func Test_cosh()
@@ -103,6 +116,7 @@ func Test_cosh()
   call assert_equal("str2float('inf')", string(cosh(1.0/0.0)))
   call assert_equal("str2float('inf')", string(cosh(-1.0/0.0)))
   call assert_equal("str2float('nan')", string(cosh(0.0/0.0)))
+  call assert_fails('call cosh("")', 'E808:')
 endfunc
 
 func Test_tan()
@@ -113,6 +127,7 @@ func Test_tan()
   call assert_equal("str2float('nan')", string(cos(0.0/0.0)))
   call assert_equal('0.0', string(tan(1.0/(1.0/0.0))))
   call assert_equal('-0.0', string(tan(-1.0/(1.0/0.0))))
+  call assert_fails('call tan("")', 'E808:')
 endfunc
 
 func Test_atan()
@@ -122,6 +137,7 @@ func Test_atan()
   call assert_equal('1.570796', string(atan(1.0/0.0)))
   call assert_equal('-1.570796', string(atan(-1.0/0.0)))
   call assert_equal("str2float('nan')", string(atan(0.0/0.0)))
+  call assert_fails('call atan("")', 'E808:')
 endfunc
 
 func Test_atan2()
@@ -130,6 +146,8 @@ func Test_atan2()
   call assert_equal('0.0', string(atan2(1.0, 1.0/0.0)))
   call assert_equal('1.570796', string(atan2(1.0/0.0, 1.0)))
   call assert_equal("str2float('nan')", string(atan2(0.0/0.0, 1.0)))
+  call assert_fails('call atan2("", -1)', 'E808:')
+  call assert_fails('call atan2(-1, "")', 'E808:')
 endfunc
 
 func Test_tanh()
@@ -139,6 +157,7 @@ func Test_tanh()
   call assert_equal('1.0', string(tanh(1.0/0.0)))
   call assert_equal('-1.0', string(tanh(-1.0/0.0)))
   call assert_equal("str2float('nan')", string(tanh(0.0/0.0)))
+  call assert_fails('call tanh("")', 'E808:')
 endfunc
 
 func Test_fmod()
@@ -151,6 +170,8 @@ func Test_fmod()
     call assert_equal('1.0', res)
   endif
   call assert_equal("str2float('nan')", string(fmod(1.0, 0.0)))
+  call assert_fails("call fmod('', 1.22)", 'E808:')
+  call assert_fails("call fmod(12.33, '')", 'E808:')
 endfunc
 
 func Test_pow()
@@ -161,6 +182,8 @@ func Test_pow()
   call assert_equal("str2float('nan')", string(pow(0.0/0.0, 3.0)))
   call assert_equal("str2float('inf')", string(pow(2.0, 1.0/0.0)))
   call assert_equal("str2float('inf')", string(pow(1.0/0.0, 3.0)))
+  call assert_fails("call pow('', 2.0)", 'E808:')
+  call assert_fails("call pow(2.0, '')", 'E808:')
 endfunc
 
 func Test_str2float()
@@ -170,6 +193,8 @@ func Test_str2float()
   call assert_equal('1.23', string(str2float('1.23')))
   call assert_equal('1.23', string(str2float('1.23abc')))
   call assert_equal('1.0e40', string(str2float('1e40')))
+  call assert_equal('-1.23', string(str2float('-1.23')))
+  call assert_equal('1.23', string(str2float(' + 1.23 ')))
 
   call assert_equal('1.0', string(str2float('+1')))
   call assert_equal('1.0', string(str2float('+1')))
@@ -181,12 +206,22 @@ func Test_str2float()
   call assert_equal('-1.0', string(str2float(' -1 ')))
   call assert_equal('-1.0', string(str2float(' - 1 ')))
 
+  call assert_equal('0.0', string(str2float('+0.0')))
+  call assert_equal('-0.0', string(str2float('-0.0')))
   call assert_equal("str2float('inf')", string(str2float('1e1000')))
   call assert_equal("str2float('inf')", string(str2float('inf')))
   call assert_equal("-str2float('inf')", string(str2float('-inf')))
+  call assert_equal("str2float('inf')", string(str2float('+inf')))
   call assert_equal("str2float('inf')", string(str2float('Inf')))
+  call assert_equal("str2float('inf')", string(str2float('  +inf  ')))
   call assert_equal("str2float('nan')", string(str2float('nan')))
   call assert_equal("str2float('nan')", string(str2float('NaN')))
+  call assert_equal("str2float('nan')", string(str2float('  nan  ')))
+
+  call assert_fails("call str2float(1.2)", 'E806:')
+  call assert_fails("call str2float([])", 'E730:')
+  call assert_fails("call str2float({})", 'E731:')
+  call assert_fails("call str2float(function('string'))", 'E729:')
 endfunc
 
 func Test_floor()
@@ -198,6 +233,7 @@ func Test_floor()
   call assert_equal("str2float('nan')", string(floor(0.0/0.0)))
   call assert_equal("str2float('inf')", string(floor(1.0/0.0)))
   call assert_equal("-str2float('inf')", string(floor(-1.0/0.0)))
+  call assert_fails("call floor('')", 'E808:')
 endfunc
 
 func Test_ceil()
@@ -209,6 +245,7 @@ func Test_ceil()
   call assert_equal("str2float('nan')", string(ceil(0.0/0.0)))
   call assert_equal("str2float('inf')", string(ceil(1.0/0.0)))
   call assert_equal("-str2float('inf')", string(ceil(-1.0/0.0)))
+  call assert_fails("call ceil('')", 'E808:')
 endfunc
 
 func Test_round()
@@ -221,6 +258,7 @@ func Test_round()
   call assert_equal("str2float('nan')", string(round(0.0/0.0)))
   call assert_equal("str2float('inf')", string(round(1.0/0.0)))
   call assert_equal("-str2float('inf')", string(round(-1.0/0.0)))
+  call assert_fails("call round('')", 'E808:')
 endfunc
 
 func Test_trunc()
@@ -233,6 +271,7 @@ func Test_trunc()
   call assert_equal("str2float('nan')", string(trunc(0.0/0.0)))
   call assert_equal("str2float('inf')", string(trunc(1.0/0.0)))
   call assert_equal("-str2float('inf')", string(trunc(-1.0/0.0)))
+  call assert_fails("call trunc('')", 'E808:')
 endfunc
 
 func Test_isnan()
@@ -242,4 +281,5 @@ func Test_isnan()
   call assert_equal(0, isnan(1.0/0.0))
   call assert_equal(0, isnan('a'))
   call assert_equal(0, isnan([]))
+  call assert_equal(0, isnan({}))
 endfunc
