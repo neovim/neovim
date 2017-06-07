@@ -171,6 +171,10 @@ int os_nodetype(const char *name)
                    | O_NONBLOCK
 #endif
                    , 0);
+  if (fd == -1) {
+    return NODE_OTHER;  // open() failed.
+  }
+
   switch (uv_guess_handle(fd)) {
     case UV_TTY:         // FILE_TYPE_CHAR
       nodetype = NODE_WRITABLE;
