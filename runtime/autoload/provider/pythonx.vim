@@ -7,6 +7,7 @@ let s:loaded_pythonx_provider = 1
 
 let s:stderr = {}
 let s:job_opts = {'rpc': v:true}
+let s:job_chan_ids = []
 
 " TODO(bfredl): this logic is common and should be builtin
 function! s:job_opts.on_stderr(chan_id, data, event)
@@ -15,6 +16,10 @@ function! s:job_opts.on_stderr(chan_id, data, event)
   let a:data[0] = last.a:data[0]
   call extend(stderr, a:data)
   let s:stderr[a:chan_id] = stderr
+endfunction
+
+function! s:job_opts.on_exit(chan_id, data, event)
+  call filter(s:job_chan_ids, 'v:val !=# '.a:chan_id)
 endfunction
 
 function! provider#pythonx#Require(host) abort
@@ -32,17 +37,36 @@ function! provider#pythonx#Require(host) abort
 
   try
     let channel_id = jobstart(args, s:job_opts)
-    if rpcrequest(channel_id, 'poll') ==# 'ok'
-      return channel_id
-    endif
+    let s:job_chan_ids += [channel_id]
+    call timer_start(0, function('s:checkStatus', [channel_id, a:host.orig_name]))
+    return channel_id
   catch
     echomsg v:throwpoint
     echomsg v:exception
-    for row in get(s:stderr, channel_id, [])
-      echomsg row
-    endfor
+    call s:echoErrMessage(channel_id)
   endtry
   throw remote#host#LoadErrorForHost(a:host.orig_name,
+        \ '$NVIM_PYTHON_LOG_FILE')
+endfunction
+
+function! s:echoErrMessage(channel_id)
+  for row in get(s:stderr, a:channel_id, [])
+    echomsg row
+  endfor
+endfunction
+
+function! s:checkStatus(channel_id, host_name, id)
+  " not check if job exit
+  if index(s:job_chan_ids, a:channel_id) == -1 | return | endif
+  let res = jobwait([a:channel_id], 0)[0]
+  " It could be invalid because UpdateRemotePlugin would close this channel
+  if res == -3 | return s:echoErrMessage(a:channel_id) | endif
+  if res == -1 && rpcrequest(a:channel_id, 'poll') ==# 'ok'
+    return
+  endif
+
+  call s:echoErrMessage(a:channel_id)
+  throw remote#host#LoadErrorForHost(a:host_name,
         \ '$NVIM_PYTHON_LOG_FILE')
 endfunction
 
