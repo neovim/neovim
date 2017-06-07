@@ -224,6 +224,20 @@ func Test_str2float()
   call assert_fails("call str2float(function('string'))", 'E729:')
 endfunc
 
+func Test_float2nr()
+  call assert_equal(1, float2nr(1.234))
+  call assert_equal(123, float2nr(1.234e2))
+  call assert_equal(12, float2nr(123.4e-1))
+  let max_number = 1/0
+  let min_number = -max_number
+  call assert_equal(max_number/2+1, float2nr(pow(2, 62)))
+  call assert_equal(max_number, float2nr(pow(2, 63)))
+  call assert_equal(max_number, float2nr(pow(2, 64)))
+  call assert_equal(min_number/2-1, float2nr(-pow(2, 62)))
+  call assert_equal(min_number, float2nr(-pow(2, 63)))
+  call assert_equal(min_number, float2nr(-pow(2, 64)))
+endfunc
+
 func Test_floor()
   call assert_equal('2.0', string(floor(2.0)))
   call assert_equal('2.0', string(floor(2.11)))
@@ -283,3 +297,36 @@ func Test_isnan()
   call assert_equal(0, isnan([]))
   call assert_equal(0, isnan({}))
 endfunc
+
+" This was converted from test65
+func Test_float_misc()
+  call assert_equal('123.456000', printf('%f', 123.456))
+  call assert_equal('1.234560e+02', printf('%e', 123.456))
+  call assert_equal('123.456', printf('%g', 123.456))
+  " +=
+  let v = 1.234
+  let v += 6.543
+  call assert_equal('7.777', printf('%g', v))
+  let v = 1.234
+  let v += 5
+  call assert_equal('6.234', printf('%g', v))
+  let v = 5
+  let v += 3.333
+  call assert_equal('8.333', string(v))
+  " ==
+  let v = 1.234
+  call assert_true(v == 1.234)
+  call assert_false(v == 1.2341)
+  " add-subtract
+  call assert_equal('5.234', printf('%g', 4 + 1.234))
+  call assert_equal('-6.766', printf('%g', 1.234 - 8))
+  " mult-div
+  call assert_equal('4.936', printf('%g', 4 * 1.234))
+  call assert_equal('0.003241', printf('%g', 4.0 / 1234))
+  " dict
+  call assert_equal("{'x': 1.234, 'y': -2.0e20}", string({'x': 1.234, 'y': -2.0e20}))
+  " list
+  call assert_equal('[-123.4, 2.0e-20]', string([-123.4, 2.0e-20]))
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

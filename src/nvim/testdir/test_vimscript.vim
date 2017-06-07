@@ -1062,6 +1062,32 @@ func Test_echo_and_string()
     call assert_equal(["{'a': [], 'b': []}",
 		     \ "{'a': [], 'b': []}"], l)
 
+"-------------------------------------------------------------------------------
+" Test 94:  64-bit Numbers					    {{{1
+"-------------------------------------------------------------------------------
+
+func Test_num64()
+    if !has('num64')
+	return
+    endif
+
+    call assert_notequal( 4294967296, 0)
+    call assert_notequal(-4294967296, 0)
+    call assert_equal( 4294967296,  0xFFFFffff + 1)
+    call assert_equal(-4294967296, -0xFFFFffff - 1)
+
+    call assert_equal( 9223372036854775807,  1 / 0)
+    call assert_equal(-9223372036854775807, -1 / 0)
+    call assert_equal(-9223372036854775807 - 1,  0 / 0)
+
+    call assert_equal( 0x7FFFffffFFFFffff, float2nr( 1.0e150))
+    call assert_equal(-0x7FFFffffFFFFffff, float2nr(-1.0e150))
+
+    let rng = range(0xFFFFffff, 0x100000001)
+    call assert_equal([0xFFFFffff, 0x100000000, 0x100000001], rng)
+    call assert_equal(0x100000001, max(rng))
+    call assert_equal(0xFFFFffff, min(rng))
+    call assert_equal(rng, sort(range(0x100000001, 0xFFFFffff, -1), 'N'))
 endfunc
 
 "-------------------------------------------------------------------------------
@@ -1144,6 +1170,49 @@ endfunc
 func Test_script_emty_line_continuation()
 
     \
+endfunc
+
+"-------------------------------------------------------------------------------
+" Test 97:  bitwise functions						    {{{1
+"-------------------------------------------------------------------------------
+func Test_bitwise_functions()
+    " and
+    call assert_equal(127, and(127, 127))
+    call assert_equal(16, and(127, 16))
+    call assert_equal(0, and(127, 128))
+    call assert_fails("call and(1.0, 1)", 'E805:')
+    call assert_fails("call and([], 1)", 'E745:')
+    call assert_fails("call and({}, 1)", 'E728:')
+    call assert_fails("call and(1, 1.0)", 'E805:')
+    call assert_fails("call and(1, [])", 'E745:')
+    call assert_fails("call and(1, {})", 'E728:')
+    " or
+    call assert_equal(23, or(16, 7))
+    call assert_equal(15, or(8, 7))
+    call assert_equal(123, or(0, 123))
+    call assert_fails("call or(1.0, 1)", 'E805:')
+    call assert_fails("call or([], 1)", 'E745:')
+    call assert_fails("call or({}, 1)", 'E728:')
+    call assert_fails("call or(1, 1.0)", 'E805:')
+    call assert_fails("call or(1, [])", 'E745:')
+    call assert_fails("call or(1, {})", 'E728:')
+    " xor
+    call assert_equal(0, xor(127, 127))
+    call assert_equal(111, xor(127, 16))
+    call assert_equal(255, xor(127, 128))
+    call assert_fails("call xor(1.0, 1)", 'E805:')
+    call assert_fails("call xor([], 1)", 'E745:')
+    call assert_fails("call xor({}, 1)", 'E728:')
+    call assert_fails("call xor(1, 1.0)", 'E805:')
+    call assert_fails("call xor(1, [])", 'E745:')
+    call assert_fails("call xor(1, {})", 'E728:')
+    " invert
+    call assert_equal(65408, and(invert(127), 65535))
+    call assert_equal(65519, and(invert(16), 65535))
+    call assert_equal(65407, and(invert(128), 65535))
+    call assert_fails("call invert(1.0)", 'E805:')
+    call assert_fails("call invert([])", 'E745:')
+    call assert_fails("call invert({})", 'E728:')
 endfunc
 
 "-------------------------------------------------------------------------------

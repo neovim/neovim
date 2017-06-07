@@ -653,7 +653,7 @@ static float_T tv_float(typval_T *const tvs, int *const idxp)
     if (tvs[idx].v_type == VAR_FLOAT) {
       f = tvs[idx].vval.v_float;
     } else if (tvs[idx].v_type == VAR_NUMBER) {
-      f = tvs[idx].vval.v_number;
+      f = (float_T)tvs[idx].vval.v_number;
     } else {
       EMSG(_("E807: Expected Float argument for printf()"));
     }
@@ -908,6 +908,13 @@ int vim_vsnprintf(char *str, size_t str_m, const char *fmt, va_list ap,
         case 'U': fmt_spec = 'u'; length_modifier = 'l'; break;
         case 'O': fmt_spec = 'o'; length_modifier = 'l'; break;
         default: break;
+      }
+
+      switch (fmt_spec) {
+        case 'd': case 'u': case 'o': case 'x': case 'X':
+          if (tvs && length_modifier == '\0') {
+            length_modifier = '2';
+          }
       }
 
       // get parameter value, do initial processing

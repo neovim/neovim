@@ -1144,7 +1144,7 @@ do_set (
   int afterchar;                    /* character just after option name */
   int len;
   int i;
-  long value;
+  varnumber_T value;
   int key;
   uint32_t flags;                   /* flags for current option */
   char_u      *varp = NULL;         /* pointer to variable for current option */
@@ -1477,7 +1477,7 @@ do_set (
             if (removing) {
               value = *(long *)varp - value;
             }
-            errmsg = (char_u *)set_num_option(opt_idx, varp, value,
+            errmsg = (char_u *)set_num_option(opt_idx, varp, (long)value,
                                               errbuf, sizeof(errbuf),
                                               opt_flags);
           } else if (opt_idx >= 0) {  // String.
@@ -4630,7 +4630,7 @@ get_option_value (
     if ((int *)varp == &curbuf->b_changed) {
       *numval = curbufIsChanged();
     } else {
-      *numval = *(int *)varp;
+      *numval = (long) *(int *)varp;  // NOLINT(whitespace/cast)
     }
   }
   return 1;

@@ -471,7 +471,7 @@ int get_breakindent_win(win_T *wp, char_u *line) {
       || prev_tick != wp->w_buffer->b_changedtick) {
     prev_line = line;
     prev_ts = wp->w_buffer->b_p_ts;
-    prev_tick = wp->w_buffer->b_changedtick;
+    prev_tick = (int)wp->w_buffer->b_changedtick;
     prev_indent = get_indent_str(line,
             (int)wp->w_buffer->b_p_ts, wp->w_p_list);
   }
@@ -538,7 +538,7 @@ int get_expr_indent(void)
     sandbox++;
   }
   textlock++;
-  indent = eval_to_number(curbuf->b_p_inde);
+  indent = (int)eval_to_number(curbuf->b_p_inde);
 
   if (use_sandbox) {
     sandbox--;

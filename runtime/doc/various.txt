@@ -352,6 +352,7 @@ N  *+mouseshape*	|'mouseshape'|
 N  *+multi_byte*	16 and 32 bit characters |multibyte|
    *+multi_byte_ime*	Win32 input method for multibyte chars |multibyte-ime|
 N  *+multi_lang*	non-English language support |multi-lang|
+   *+num64*		64-bit Number support |Number|
 N  *+path_extra*	Up/downwards search in 'path' and 'tags'
 N  *+persistent_undo*	Persistent undo |undo-persistence|
    *+postscript*	|:hardcopy| writes a PostScript file

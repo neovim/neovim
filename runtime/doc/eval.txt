@@ -22,6 +22,8 @@ done, the features in this document are not available.	See |+eval| and
 There are six types of variables:
 
 Number		A 32 or 64 bit signed number.  |expr-number| *Number*
+		64-bit Number is available only when compiled with the
+		|+num64| feature.
 		Examples:  -123  0x10  0177  0b1011
 
 Float		A floating point number. |floating-point-format| *Float*
@@ -886,6 +888,11 @@ When dividing a Number by zero the result depends on the value:
 	 >0 / 0  =  0x7fffffff	(like positive infinity)
 	 <0 / 0  = -0x7fffffff	(like negative infinity)
 	(before Vim 7.2 it was always 0x7fffffff)
+
+When 64-bit Number support is enabled:
+	  0 / 0  = -0x8000000000000000	(like NaN for Float)
+	 >0 / 0  =  0x7fffffffffffffff	(like positive infinity)
+	 <0 / 0  = -0x7fffffffffffffff	(like negative infinity)
 
 When the righthand side of '%' is zero, the result is 0.
 
@@ -3546,17 +3553,19 @@ float2nr({expr})					*float2nr()*
 		decimal point.
 		{expr} must evaluate to a |Float| or a Number.
 		When the value of {expr} is out of range for a |Number| the
-		result is truncated to 0x7fffffff or -0x7fffffff.  NaN results
-		in -0x80000000.
+		result is truncated to 0x7fffffff or -0x7fffffff (or when
+		64-bit Number support is enabled, 0x7fffffffffffffff or
+		-0x7fffffffffffffff.  NaN results in -0x80000000 (or when
+		64-bit Number support is enabled, -0x8000000000000000).
 		Examples: >
 			echo float2nr(3.95)
 <			3  >
 			echo float2nr(-23.45)
 <			-23  >
 			echo float2nr(1.0e100)
-<			2147483647  >
+<			2147483647  (or 9223372036854775807) >
 			echo float2nr(-1.0e150)
-<			-2147483647  >
+<			-2147483647 (or -9223372036854775807) >
 			echo float2nr(1.0e-100)
 <			0
 
@@ -7996,7 +8005,10 @@ winwidth({nr})						*winwidth()*
   :if winwidth(0) <= 50
   :  exe "normal 50\<C-W>|"
   :endif
-<
+<               For getting the terminal or screen size, see the 'columns'
+               option.
+
+
 wordcount()						*wordcount()*
 		The result is a dictionary of byte/chars/word statistics for
 		the current buffer.  This is the same info as provided by
@@ -8150,6 +8162,7 @@ mouseshape		Compiled with support for 'mouseshape'.
 multi_byte		Compiled with support for 'encoding'
 multi_byte_encoding	'encoding' is set to a multi-byte encoding.
 multi_lang		Compiled with support for multiple languages.
+num64			Compiled with 64-bit |Number| support.
 nvim			This is Nvim. |has-patch|
 path_extra		Compiled with up/downwards search in 'path' and 'tags'
 persistent_undo		Compiled with support for persistent undo history.

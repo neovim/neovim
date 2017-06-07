@@ -2405,9 +2405,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
     case VAR_STRING: {
       varnumber_T n = 0;
       if (tv->vval.v_string != NULL) {
-        long nr;
-        vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &nr, NULL, 0);
-        n = (varnumber_T)nr;
+        vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0);
       }
       return n;
     }
@@ -2444,7 +2442,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
 linenr_T tv_get_lnum(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  linenr_T lnum = tv_get_number_chk(tv, NULL);
+  linenr_T lnum = (linenr_T)tv_get_number_chk(tv, NULL);
   if (lnum == 0) {  // No valid number, try using same function as line() does.
     int fnum;
     pos_T *const fp = var2fpos(tv, true, &fnum);

@@ -435,8 +435,8 @@ static inline int parse_json_string(const char *const buf, const size_t buf_len,
         case 'u': {
           const char ubuf[] = { t[1], t[2], t[3], t[4] };
           t += 4;
-          unsigned long ch;
-          vim_str2nr((char_u *) ubuf, NULL, NULL,
+          uvarnumber_T ch;
+          vim_str2nr((char_u *)ubuf, NULL, NULL,
                      STR2NR_HEX | STR2NR_FORCE, NULL, &ch, 4);
           if (ch == 0) {
             hasnul = true;
@@ -609,7 +609,7 @@ parse_json_number_check:
     tv.v_type = VAR_FLOAT;
   } else {
     // Convert integer
-    long nr;
+    varnumber_T nr;
     int num_len;
     vim_str2nr((char_u *) s, NULL, &num_len, 0, &nr, NULL, (int) (p - s));
     if ((int) exp_num_len != num_len) {
@@ -617,7 +617,7 @@ parse_json_number_check:
               "to integer vim_str2nr consumed %i bytes in place of %zu"),
             (int) exp_num_len, s, num_len, exp_num_len);
     }
-    tv.vval.v_number = (varnumber_T) nr;
+    tv.vval.v_number = nr;
   }
   if (json_decoder_pop(OBJ(tv, false, *didcomma, *didcolon),
                        stack, container_stack,

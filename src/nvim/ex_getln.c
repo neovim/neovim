@@ -5002,7 +5002,7 @@ int get_list_range(char_u **str, int *num1, int *num2)
 {
   int len;
   int first = false;
-  long num;
+  varnumber_T num;
 
   *str = skipwhite(*str);
   if (**str == '-' || ascii_isdigit(**str)) {  // parse "from" part of range

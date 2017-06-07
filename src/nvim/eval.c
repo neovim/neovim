@@ -6,6 +6,7 @@
  */
 
 #include <assert.h>
+#include <float.h>
 #include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>
@@ -446,7 +447,7 @@ typedef struct {
   bool rpc;
   int refcount;
   Callback on_stdout, on_stderr, on_exit;
-  int *status_ptr;
+  varnumber_T *status_ptr;
   uint64_t id;
   MultiQueue *events;
 } TerminalJobData;
@@ -1081,10 +1082,10 @@ char_u *eval_to_string_safe(char_u *arg, char_u **nextcmd, int use_sandbox)
  * Evaluates "expr" silently.
  * Returns -1 for an error.
  */
-int eval_to_number(char_u *expr)
+varnumber_T eval_to_number(char_u *expr)
 {
   typval_T rettv;
-  int retval;
+  varnumber_T retval;
   char_u      *p = skipwhite(expr);
 
   ++emsg_off;
@@ -1203,7 +1204,7 @@ int call_vim_function(
     typval_T *rettv
 )
 {
-  long n;
+  varnumber_T n;
   int len;
   int doesrange;
   void        *save_funccalp = NULL;
@@ -1264,11 +1265,11 @@ int call_vim_function(
 /// @param[in]  safe  Use with sandbox.
 ///
 /// @return -1 when calling function fails, result of function otherwise.
-long call_func_retnr(char_u *func, int argc, const char_u *const *const argv,
-                     int safe)
+varnumber_T call_func_retnr(char_u *func, int argc,
+                            const char_u *const *const argv, int safe)
 {
   typval_T rettv;
-  long retval;
+  varnumber_T retval;
 
   /* All arguments are passed as strings, no conversion to number. */
   if (call_vim_function(func, argc, argv, safe, TRUE, &rettv) == FAIL)
@@ -1396,7 +1397,7 @@ void prof_child_exit(proftime_T *tm /* where waittime was stored */
 int eval_foldexpr(char_u *arg, int *cp)
 {
   typval_T tv;
-  int retval;
+  varnumber_T retval;
   char_u      *s;
   int use_sandbox = was_set_insecurely((char_u *)"foldexpr",
       OPT_LOCAL);
@@ -1429,7 +1430,7 @@ int eval_foldexpr(char_u *arg, int *cp)
     --sandbox;
   --textlock;
 
-  return retval;
+  return (int)retval;
 }
 
 /*
@@ -2283,7 +2284,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
       if (empty1) {
         lp->ll_n1 = 0;
       } else {
-        lp->ll_n1 = tv_get_number(&var1);  // Is number or string.
+        lp->ll_n1 = (long)tv_get_number(&var1);  // Is number or string.
         tv_clear(&var1);
       }
       lp->ll_dict = NULL;
@@ -2312,7 +2313,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
        * Otherwise "lp->ll_n2" is set to the second index.
        */
       if (lp->ll_range && !lp->ll_empty2) {
-        lp->ll_n2 = tv_get_number(&var2);  // Is number or string.
+        lp->ll_n2 = (long)tv_get_number(&var2);  // Is number or string.
         tv_clear(&var2);
         if (lp->ll_n2 < 0) {
           ni = tv_list_find(lp->ll_list, lp->ll_n2);
@@ -3522,7 +3523,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
   exptype_T type = TYPE_UNKNOWN;
   int type_is = FALSE;              /* TRUE for "is" and "isnot" */
   int len = 2;
-  long n1, n2;
+  varnumber_T n1, n2;
   int ic;
 
   /*
@@ -3784,7 +3785,7 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
   typval_T var2;
   typval_T var3;
   int op;
-  long n1, n2;
+  varnumber_T n1, n2;
   float_T f1 = 0, f2 = 0;
   char_u      *p;
 
@@ -3914,29 +3915,26 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
 
 // TODO(ZyX-I): move to eval/expressions
 
-/*
- * Handle fifth level expression:
- *	*	number multiplication
- *	/	number division
- *	%	number modulo
- *
- * "arg" must point to the first non-white of the expression.
- * "arg" is advanced to the next non-white after the recognized expression.
- *
- * Return OK or FAIL.
- */
-static int 
-eval6 (
-    char_u **arg,
-    typval_T *rettv,
-    int evaluate,
-    int want_string              /* after "." operator */
-)
+/// Handle fifth level expression:
+///  - *  number multiplication
+///  - /  number division
+///  - %  number modulo
+///
+/// @param[in,out]  arg  Points to the first non-whitespace character of the
+///                      expression.  Is advanced to the next non-whitespace
+///                      character after the recognized expression.
+/// @param[out]  rettv  Location where result is saved.
+/// @param[in]  evaluate  If not true, rettv is not populated.
+/// @param[in]  want_string  True if "." is string_concatenation, otherwise
+///                          float
+/// @return  OK or FAIL.
+static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
+  FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   typval_T var2;
   int op;
-  long n1, n2;
-  int use_float = FALSE;
+  varnumber_T n1, n2;
+  bool use_float = false;
   float_T f1 = 0, f2;
   bool error = false;
 
@@ -3957,7 +3955,7 @@ eval6 (
     if (evaluate) {
       if (rettv->v_type == VAR_FLOAT) {
         f1 = rettv->vval.v_float;
-        use_float = TRUE;
+        use_float = true;
         n1 = 0;
       } else {
         n1 = tv_get_number_chk(rettv, &error);
@@ -3981,7 +3979,7 @@ eval6 (
       if (var2.v_type == VAR_FLOAT) {
         if (!use_float) {
           f1 = n1;
-          use_float = TRUE;
+          use_float = true;
         }
         f2 = var2.vval.v_float;
         n2 = 0;
@@ -4024,18 +4022,20 @@ eval6 (
         rettv->v_type = VAR_FLOAT;
         rettv->vval.v_float = f1;
       } else {
-        if (op == '*')
+        if (op == '*') {
           n1 = n1 * n2;
-        else if (op == '/') {
-          if (n2 == 0) {                /* give an error message? */
-            if (n1 == 0)
-              n1 = -0x7fffffffL - 1L;                   /* similar to NaN */
-            else if (n1 < 0)
-              n1 = -0x7fffffffL;
-            else
-              n1 = 0x7fffffffL;
-          } else
+        } else if (op == '/') {
+          if (n2 == 0) {                // give an error message?
+            if (n1 == 0) {
+              n1 = VARNUMBER_MIN;  // similar to NaN
+            } else if (n1 < 0) {
+              n1 = -VARNUMBER_MAX;
+            } else {
+              n1 = VARNUMBER_MAX;
+            }
+          } else {
             n1 = n1 / n2;
+          }
         } else {
           if (n2 == 0)                  /* give an error message? */
             n1 = 0;
@@ -4084,7 +4084,7 @@ static int eval7(
     int want_string                 // after "." operator
 )
 {
-  long n;
+  varnumber_T n;
   int len;
   char_u      *s;
   char_u      *start_leader, *end_leader;
@@ -4282,7 +4282,7 @@ static int eval7(
   // Apply logical NOT and unary '-', from right to left, ignore '+'.
   if (ret == OK && evaluate && end_leader > start_leader) {
     bool error = false;
-    int val = 0;
+    varnumber_T val = 0;
     float_T f = 0.0;
 
     if (rettv->v_type == VAR_FLOAT) {
@@ -6688,7 +6688,7 @@ static void f_argv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int idx;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
-    idx = tv_get_number_chk(&argvars[0], NULL);
+    idx = (int)tv_get_number_chk(&argvars[0], NULL);
     if (idx >= 0 && idx < ARGCOUNT) {
       rettv->vval.v_string = (char_u *)xstrdup(
           (const char *)alist_name(&ARGLIST[idx]));
@@ -7424,7 +7424,7 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  const int startcol = tv_get_number_chk(&argvars[0], NULL);
+  const colnr_T startcol = tv_get_number_chk(&argvars[0], NULL);
   if (startcol <= 0) {
     return;
   }
@@ -7635,9 +7635,9 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   } else {
     line = tv_get_lnum(argvars);
-    col = tv_get_number_chk(&argvars[1], NULL);
+    col = (long)tv_get_number_chk(&argvars[1], NULL);
     if (argvars[2].v_type != VAR_UNKNOWN) {
-      coladd = tv_get_number_chk(&argvars[2], NULL);
+      coladd = (long)tv_get_number_chk(&argvars[2], NULL);
     }
   }
   if (line < 0 || col < 0
@@ -8191,7 +8191,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else if (!tv_check_lock(l1->lv_lock, arg_errmsg, TV_TRANSLATE)) {
       listitem_T *item;
       if (argvars[2].v_type != VAR_UNKNOWN) {
-        before = tv_get_number_chk(&argvars[2], &error);
+        before = (long)tv_get_number_chk(&argvars[2], &error);
         if (error) {
           return;  // Type error; errmsg already given.
         }
@@ -8560,9 +8560,9 @@ static void f_float2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   float_T f;
 
   if (tv_get_float_chk(argvars, &f)) {
-    if (f < VARNUMBER_MIN) {
-      rettv->vval.v_number = VARNUMBER_MIN;
-    } else if (f > VARNUMBER_MAX) {
+    if (f <= -VARNUMBER_MAX + DBL_EPSILON) {
+      rettv->vval.v_number = -VARNUMBER_MAX;
+    } else if (f >= VARNUMBER_MAX - DBL_EPSILON) {
       rettv->vval.v_number = VARNUMBER_MAX;
     } else {
       rettv->vval.v_number = (varnumber_T)f;
@@ -10537,6 +10537,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "mouse",
     "multi_byte",
     "multi_lang",
+    "num64",
     "packages",
     "path_extra",
     "persistent_undo",
@@ -12966,7 +12967,7 @@ static void f_range(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   varnumber_T start;
   varnumber_T end;
   varnumber_T stride = 1;
-  long i;
+  varnumber_T i;
   bool error = false;
 
   start = tv_get_number_chk(&argvars[0], &error);
@@ -13184,7 +13185,7 @@ static int list2proftime(typval_T *arg, proftime_T *tm) FUNC_ATTR_NONNULL_ALL
   // in f_reltime() we split up the 64-bit proftime_T into two 32-bit
   // values, now we combine them again.
   union {
-    struct { varnumber_T low, high; } split;
+    struct { int32_t low, high; } split;
     proftime_T prof;
   } u = { .split.high = n1, .split.low = n2 };
 
@@ -13225,7 +13226,7 @@ static void f_reltime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // (varnumber_T is defined as int). For all our supported platforms, int's
   // are at least 32-bits wide. So we'll use two 32-bit values to store it.
   union {
-    struct { varnumber_T low, high; } split;
+    struct { int32_t low, high; } split;
     proftime_T prof;
   } u = { .prof = res };
 
@@ -15173,8 +15174,8 @@ static int item_compare(const void *s1, const void *s2, bool keep_zero)
   int res;
 
   if (sortinfo->item_compare_numbers) {
-    const long v1 = tv_get_number(tv1);
-    const long v2 = tv_get_number(tv2);
+    const varnumber_T v1 = tv_get_number(tv1);
+    const varnumber_T v2 = tv_get_number(tv2);
 
     res = v1 == v2 ? 0 : v1 > v2 ? 1 : -1;
     goto item_compare_end;
@@ -15722,7 +15723,7 @@ static void f_str2float(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_str2nr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int base = 10;
-  long n;
+  varnumber_T n;
   int what;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
@@ -18138,7 +18139,7 @@ static int eval_isnamec1(int c)
 /*
  * Get number v: variable value.
  */
-long get_vim_var_nr(int idx) FUNC_ATTR_PURE
+varnumber_T get_vim_var_nr(int idx) FUNC_ATTR_PURE
 {
   return vimvars[idx].vv_nr;
 }

@@ -98,6 +98,35 @@ func Test_special_char()
   call assert_fails('echo "\<C-">')
 endfunc
 
+func Test_option_value()
+  " boolean
+  set bri
+  call assert_equal(1, &bri)
+  set nobri
+  call assert_equal(0, &bri)
+
+  " number
+  set ts=1
+  call assert_equal(1, &ts)
+  set ts=8
+  call assert_equal(8, &ts)
+
+  " string
+  exe "set cedit=\<Esc>"
+  call assert_equal("\<Esc>", &cedit)
+  set cpo=
+  call assert_equal("", &cpo)
+  set cpo=abcdefi
+  call assert_equal("abcdefi", &cpo)
+  set cpo&vim
+endfunc
+
+function Test_printf_64bit()
+  if has('num64')
+    call assert_equal("123456789012345", printf('%d', 123456789012345))
+  endif
+endfunc
+
 func Test_setmatches()
   hi def link 1 Comment
   hi def link 2 PreProc
