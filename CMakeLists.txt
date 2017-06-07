@@ -416,28 +416,25 @@ endforeach()
 
 # Find Lua interpreter
 include(LuaHelpers)
-set(LUA_DEPENDENCIES lpeg mpack bit)
 if(NOT LUA_PRG)
   foreach(CURRENT_LUA_PRG luajit lua5.1 lua5.2 lua)
     # If LUA_PRG is set find_program() will not search
     unset(LUA_PRG CACHE)
-    unset(LUA_PRG_WORKS)
     find_program(LUA_PRG ${CURRENT_LUA_PRG})
 
     if(LUA_PRG)
-      check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
-      if(LUA_PRG_WORKS)
-        break()
-      endif()
+      break()
     endif()
   endforeach()
-else()
-  check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
 endif()
 
-if(NOT LUA_PRG_WORKS)
+if(NOT LUA_PRG)
   message(FATAL_ERROR "A suitable Lua interpreter was not found.")
 endif()
+
+set(LUA_DEPENDENCIES lpeg mpack bit)
+
+check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}")
 
 message(STATUS "Using the Lua interpreter ${LUA_PRG}.")
 
