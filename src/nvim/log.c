@@ -26,6 +26,13 @@
 
 #define LOG_FILE_ENV "NVIM_LOG_FILE"
 
+static const char *log_levels[] = {
+  [DEBUG_LOG_LEVEL]   = "DEBUG",
+  [INFO_LOG_LEVEL]    = "INFO",
+  [WARN_LOG_LEVEL]    = "WARN",
+  [ERROR_LOG_LEVEL]   = "ERROR",
+};
+
 /// Cached location of the expanded log file path decided by log_path_init().
 static char log_file_path[MAXPATHL + 1] = { 0 };
 
@@ -104,6 +111,17 @@ void log_lock(void)
 void log_unlock(void)
 {
   uv_mutex_unlock(&mutex);
+}
+
+int log_level_from_name(char *name)
+{
+  for (size_t i = 0; i < sizeof(log_levels); i++) {
+    if (striequal(name, log_levels[i])) {
+      assert(i <= INT_MAX);
+      return (int)i;
+    }
+  }
+  return -1;
 }
 
 /// Logs a message to $NVIM_LOG_FILE.
@@ -280,12 +298,6 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
                              size_t trunc, bool eol, const char *fmt,
                              va_list args)
 {
-  static const char *log_levels[] = {
-    [DEBUG_LOG_LEVEL]   = "DEBUG",
-    [INFO_LOG_LEVEL]    = "INFO ",
-    [WARN_LOG_LEVEL]    = "WARN ",
-    [ERROR_LOG_LEVEL]   = "ERROR",
-  };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 
   // Format the timestamp.
@@ -311,11 +323,11 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
   int64_t pid = os_get_pid();
   // Format the log-message "prefix".
   int prefixlen = (line_num == -1 || func_name == NULL)
-    ? snprintf(os_buf, sizeof(os_buf), "%s %s.%03d %-5" PRId64 " %s",
-               log_levels[log_level], date_time, millis, pid,
+    ? snprintf(os_buf, sizeof(os_buf), "%-*.*s %s.%03d %-5" PRId64 " %s",
+               5, 5, log_levels[log_level], date_time, millis, pid,
                (context == NULL ? "?:" : context))
-    : snprintf(os_buf, sizeof(os_buf), "%s %s.%03d %-5" PRId64 " %s%s:%d: ",
-               log_levels[log_level], date_time, millis, pid,
+    : snprintf(os_buf, sizeof(os_buf), "%-*.*s %s.%03d %-5" PRId64 " %s%s:%d: ",
+               5, 5, log_levels[log_level], date_time, millis, pid,
                (context == NULL ? "" : context),
                func_name, line_num);
 

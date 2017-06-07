@@ -73,6 +73,70 @@ void api_vim_free_all_mem(void)
   map_free(String, handle_T)(namespace_ids);
 }
 
+/// Logs a message to the global logger.
+///
+/// Global logger by default synchronously writes to |$NVIM_LOG_FILE|.
+///
+/// Produced log message looks like:
+///
+/// <pre>
+///   ERROR 2020-01-12T01:56:19.484 93296 pynvim:remote: connected…
+///   ^level ^timestamp             ^pid  ^category      ^message
+/// </pre>
+///
+/// @see |nvim_get_chan_info()|
+/// @see |nvim_set_client_info()|
+///
+/// @param channel_id Channel id (implicit dispatcher arg)
+/// @param level  Logging depth: "error", "warn", "info", "debug"
+/// @param msg  Message body
+/// @param opt  Map of optional parameters:
+///   - type: String name of the subsystem or grouping (e.g. "UI", "RPC",
+///     "MyPlugin", …). For API clients this defaults to the `client.name`
+///     field of |nvim_get_chan_info()|.
+///   - join: (boolean, default=false)
+///   - trunc: (integer, default=0) Constrain the message body to this size.
+void nvim_log(uint64_t channel_id, String level, String msg, Dictionary opt,
+              Error *err)
+  FUNC_API_SINCE(7)
+{
+  int loglevel = log_level_from_name(level.data);
+  if (loglevel == -1) {
+    api_set_error(err, kErrorTypeValidation, "invalid level: %s", level.data);
+    return;
+  }
+  Object rv = OBJECT_INIT;
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, DICTIONARY_OBJ(opt));
+  rv = nvim_exec_lua(STATIC_CSTR_AS_STRING(
+    "local o = ...\n"
+    "vim.validate{trunc={o.trunc,'n',true},join={o.join,'b',true}}\n"
+    "return {(o.join and true or false), (o.trunc and o.trunc or 0),\n"
+    "  (o.type and o.type or '')}\n"),
+    args, err);
+  if (ERROR_SET(err)) {
+    goto theend;
+  }
+  assert(rv.type == kObjectTypeArray);
+  Object *items = rv.data.array.items;
+  bool join = items[0].data.boolean;
+  int64_t trunc = items[1].data.integer >= 0 ? items[1].data.integer : 0;
+  char *prefix = items[2].data.string.data;
+
+  char p[32];  // Formatted prefix.
+  if (prefix[0] == '\0') {
+    // Generate a default category/group/prefix.
+    rpc_chan_desc(channel_id, p, sizeof(p) - 2);
+    strcat(p, ": ");
+  } else {
+    snprintf(p, sizeof(p), "%s: ", prefix);
+  }
+  logmsg(loglevel, p, NULL, -1, join, (size_t)trunc, true, "%s", msg.data);
+
+theend:
+  api_free_object(rv);
+}
+
 /// Executes Vimscript (multiline block of Ex-commands), like anonymous
 /// |:source|.
 ///
@@ -1423,7 +1487,7 @@ cleanup:
 
 /// Subscribes to event broadcasts.
 ///
-/// @param channel_id Channel id (passed automatically by the dispatcher)
+/// @param channel_id Channel id (implicit dispatcher arg)
 /// @param event      Event type string
 void nvim_subscribe(uint64_t channel_id, String event)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
@@ -1437,7 +1501,7 @@ void nvim_subscribe(uint64_t channel_id, String event)
 
 /// Unsubscribes to event broadcasts.
 ///
-/// @param channel_id Channel id (passed automatically by the dispatcher)
+/// @param channel_id Channel id (implicit dispatcher arg)
 /// @param event      Event type string
 void nvim_unsubscribe(uint64_t channel_id, String event)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
