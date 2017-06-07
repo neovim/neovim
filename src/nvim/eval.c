@@ -3915,24 +3915,21 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
 
 // TODO(ZyX-I): move to eval/expressions
 
-/*
- * Handle fifth level expression:
- *	*	number multiplication
- *	/	number division
- *	%	number modulo
- *
- * "arg" must point to the first non-white of the expression.
- * "arg" is advanced to the next non-white after the recognized expression.
- *
- * Return OK or FAIL.
- */
-static int 
-eval6 (
-    char_u **arg,
-    typval_T *rettv,
-    int evaluate,
-    int want_string              /* after "." operator */
-) FUNC_ATTR_NO_SANITIZE_UNDEFINED
+/// Handle fifth level expression:
+///  - *  number multiplication
+///  - /  number division
+///  - %  number modulo
+///
+/// @param[in,out]  arg  Points to the first non-whitespace character of the
+///                      expression.  Is advanced to the next non-whitespace
+///                      character after the recognized expression.
+/// @param[out]  rettv  Location where result is saved.
+/// @param[in]  evaluate  If not true, rettv is not populated.
+/// @param[in]  want_string  True if "." is string_concatenation, otherwise
+///                          float
+/// @return  OK or FAIL.
+static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
+  FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   typval_T var2;
   int op;

@@ -128,9 +128,11 @@
 #  endif
 
 #  if NVIM_HAS_ATTRIBUTE(no_sanitize_undefined)
-#   define REAL_FATTR_NO_SANITIZE_UNDEFINED __attribute__((no_sanitize_undefined))
+#   define REAL_FATTR_NO_SANITIZE_UNDEFINED \
+      __attribute__((no_sanitize_undefined))
 #  elif NVIM_HAS_ATTRIBUTE(no_sanitize)
-#   define REAL_FATTR_NO_SANITIZE_UNDEFINED __attribute__((no_sanitize("undefined")))
+#   define REAL_FATTR_NO_SANITIZE_UNDEFINED \
+      __attribute__((no_sanitize("undefined")))
 #  endif
 # endif
 
