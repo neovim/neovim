@@ -32,17 +32,17 @@
 
 #define CSTR_TO_OBJ(s) STRING_OBJ(cstr_to_string(s))
 
-#define BUFFER_OBJ(s) ((Object) { \
+#define BUFFER_OBJ(o) ((Object) { \
     .type = kObjectTypeBuffer, \
-    .data.integer = s })
+    .data.integer = (o) })
 
-#define WINDOW_OBJ(s) ((Object) { \
+#define WINDOW_OBJ(o) ((Object) { \
     .type = kObjectTypeWindow, \
-    .data.integer = s })
+    .data.integer = (o) })
 
-#define TABPAGE_OBJ(s) ((Object) { \
+#define TABPAGE_OBJ(o) ((Object) { \
     .type = kObjectTypeTabpage, \
-    .data.integer = s })
+    .data.integer = (o) })
 
 #define ARRAY_OBJ(a) ((Object) { \
     .type = kObjectTypeArray, \
