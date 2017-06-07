@@ -158,7 +158,10 @@ passed to the function.  Example: >
 This will invoke the function as if using: >
 	call myDict.Callback('foo')
 
-Note that binding a function to a Dictionary also happens when the function is
+Note the arguments passed to Funcref would prepend(not append) to the argument
+list.
+
+Also note that binding a function to a Dictionary also happens when the function is
 a member of the Dictionary: >
 
 	let myDict.myFunction = MyFunction
