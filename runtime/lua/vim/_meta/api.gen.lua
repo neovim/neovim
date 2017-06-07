@@ -1665,6 +1665,30 @@ function vim.api.nvim_list_wins() end
 --- @return any
 function vim.api.nvim_load_context(dict) end
 
+--- Posts a message to the global logger (which by default synchronously writes to `$NVIM_LOG_FILE`
+--- using a best-effort, naive implementation).
+---
+--- Message is skipped (not logged) if `level` is not "error", unless 'verbose' is set.
+---
+--- Example log message:
+--- ```
+--- ERROR 2020-01-12T01:56:19.484 93296 pynvim:remote: connected…
+--- ^level ^timestamp             ^pid  ^category      ^message
+--- ```
+---
+---
+--- @see vim.api.nvim_get_chan_info
+--- @see vim.api.nvim_set_client_info
+--- @param level string Log level (from highest to lowest: "error", "warn", "info", "debug").  If
+--- 'verbose' is not set, only "error" messages are written to `$NVIM_LOG_FILE`.
+--- @param msg string Message body
+--- @param opts vim.api.keyset.log Optional parameters:
+--- - `join`: (boolean, default false) Replace embedded line endings with SPACE, to keep the message on one log-line.
+--- - `trunc`: (integer, default 0) Constrain the message body to this size.
+--- - `type`: (string) Name of the subsystem or grouping (e.g. "UI", "RPC", "MyPlugin", …). For
+---   API clients this defaults to the `client.name` field of `nvim_get_chan_info()`.
+function vim.api.nvim_log(level, msg, opts) end
+
 --- @deprecated
 --- @param msg string
 --- @param log_level integer

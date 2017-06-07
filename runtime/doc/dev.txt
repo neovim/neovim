@@ -718,7 +718,13 @@ API CLIENT IMPLEMENTATION
 
 
 ------------------------------------------------------------------------------
-External UI                                                           *dev-ui*
+LOGGING                                                          *dev-logging*
+
+- Use |nvim_log()|.  Avoid separate log files for plugins/clients/UIs.
+
+
+------------------------------------------------------------------------------
+EXTERNAL UI                                                           *dev-ui*
 
 External UIs should be aware of the |api-contract|. In particular, future
 versions of Nvim may add new items to existing events. The API is strongly
