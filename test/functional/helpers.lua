@@ -174,7 +174,7 @@ local os_name = (function()
 end)()
 
 local function iswin()
-  return os_name() == 'windows'
+  return package.config:sub(1,1) == '\\'
 end
 
 -- Executes a VimL function.

@@ -125,7 +125,7 @@ bool server_owns_pipe_address(const char *path)
 int server_start(const char *endpoint)
 {
   if (endpoint == NULL || endpoint[0] == '\0') {
-    ELOG("Empty or NULL endpoint");
+    WLOG("Empty or NULL endpoint");
     return 1;
   }
 
@@ -151,7 +151,7 @@ int server_start(const char *endpoint)
 
   result = socket_watcher_start(watcher, MAX_CONNECTIONS, connection_cb);
   if (result < 0) {
-    ELOG("Failed to start server: %s", uv_strerror(result));
+    WLOG("Failed to start server: %s", uv_strerror(result));
     socket_watcher_close(watcher, free_server);
     return result;
   }

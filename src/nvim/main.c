@@ -153,10 +153,11 @@ void event_init(void)
   terminal_init();
 }
 
-void event_teardown(void)
+/// @returns false if main_loop could not be closed gracefully
+bool event_teardown(void)
 {
   if (!main_loop.events) {
-    return;
+    return true;
   }
 
   multiqueue_process_events(main_loop.events);
@@ -168,7 +169,7 @@ void event_teardown(void)
   signal_teardown();
   terminal_teardown();
 
-  loop_close(&main_loop, true);
+  return loop_close(&main_loop, true);
 }
 
 /// Performs early initialization.

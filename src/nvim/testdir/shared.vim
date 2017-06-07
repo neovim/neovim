@@ -187,7 +187,7 @@ func RunVim(before, after, arguments)
 endfunc
 
 func RunVimPiped(before, after, arguments, pipecmd)
-  let $NVIM_LOG_FILE='Xnvim.log'
+  let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
   let cmd = GetVimCommand()
   if cmd == ''
     return 0

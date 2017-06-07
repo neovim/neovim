@@ -14362,7 +14362,7 @@ static void f_serverstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (result != 0) {
     EMSG2("Failed to start server: %s",
-          result > 0 ? "Unknonwn system error" : uv_strerror(result));
+          result > 0 ? "Unknown system error" : uv_strerror(result));
     return;
   }
 

@@ -6,7 +6,7 @@ Getting started
 If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
-- Merge a [Vim patch].
+- [Merge a Vim patch].
 - Try a [complexity:low] issue.
 - Fix bugs found by [clang scan-build](#clang-scan-build),
   [coverity](#coverity), and [PVS](#pvs-studio).
@@ -23,18 +23,16 @@ Reporting problems
 - Check the [**FAQ**][wiki-faq].
 - Search [existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
-- If you're using a plugin manager, comment out your plugins, then add them back
-  in one by one, to narrow down the cause of the issue.
-- Crash reports which include a stacktrace are 10x more valuable.
-- [Bisecting][git-bisect] to the cause of a regression often leads to an
-  immediate fix.
+- Disable plugins incrementally, to narrow down the cause of the issue.
+- When reporting a crash, include a stacktrace.
+- [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
+- Check `$NVIM_LOG_FILE`, if it exists.
 
 Pull requests ("PRs")
 ---------------------
 
 - To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
-- Avoid cosmetic changes to unrelated files in the same commit: noise makes
-  reviews take longer.
+- Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
 - Use a **rebase workflow** for small PRs.
   - After addressing review comments, it's fine to rebase and force-push.
@@ -87,10 +85,11 @@ the VCS/git logs more valuable.
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds ([travis CI] and [quickbuild]).
+Each pull request must pass the automated builds on [travis CI], [quickbuild]
+and [AppVeyor].
 
-- CI builds are compiled with [`-Werror`][gcc-warnings], so if your PR
-  introduces any compiler warnings, the build will fail.
+- CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
+  will fail the build.
 - If any tests fail, the build will fail.
   See [Building Neovim#running-tests][wiki-run-tests] to run tests locally.
   Passing locally doesn't guarantee passing the CI build, because of the
@@ -173,6 +172,7 @@ as context, use the `-W` argument as well.
 [3174]: https://github.com/neovim/neovim/issues/3174
 [travis CI]: https://travis-ci.org/neovim/neovim
 [quickbuild]: http://neovim-qb.szakmeister.net/dashboard
-[Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
+[AppVeyor]: https://ci.appveyor.com/project/neovim/neovim
+[Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
 [clang-scan]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow

@@ -1366,39 +1366,38 @@ file when reading and include:
   complete MessagePack object.
 
 ==============================================================================
-9. Base Directories				*base-directories* *xdg*
+9. Standard Paths
 
-Nvim conforms to the XDG Base Directory Specification for application
-configuration and data file locations. This just means Nvim looks for some
-optional settings and uses them if they exist, otherwise defaults are chosen.
+Nvim stores configuration and data in standard locations. Plugins are strongly
+encouraged to follow this pattern also.
+
+						      *base-directories* *xdg*
+The "base" (root) directories conform to the XDG Base Directory Specification.
 https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+The $XDG_CONFIG_HOME and $XDG_DATA_HOME environment variables are used if they
+exist, otherwise default values (listed below) are used.
 
-CONFIGURATION DIRECTORY				*$XDG_CONFIG_HOME*
+Note: Throughout the user manual these defaults are used as placeholders, e.g.
+"~/.config" is understood to mean "$XDG_CONFIG_HOME or ~/.config".
 
-    Base directory default:
-        Unix:     ~/.config
-        Windows:  ~/AppData/Local
+CONFIG DIRECTORY					*$XDG_CONFIG_HOME*
+          Base                Nvim ~
+Unix:     ~/.config           ~/.config/nvim
+Windows:  ~/AppData/Local     ~/AppData/Local/nvim
 
-    Nvim directory:
-        Unix:     ~/.config/nvim/
-        Windows:  ~/AppData/Local/nvim/
+DATA DIRECTORY						*$XDG_DATA_HOME*
+          Base                Nvim ~
+Unix:     ~/.local/share      ~/.local/share/nvim
+Windows:  ~/AppData/Local     ~/AppData/Local/nvim-data
 
-DATA DIRECTORY					*$XDG_DATA_HOME*
+STANDARD PATHS						*standard-path*
 
-    Base directory default:
-        Unix:     ~/.local/share
-        Windows:  ~/AppData/Local
-
-    Nvim directory:
-        Unix:     ~/.local/share/nvim/
-        Windows:  ~/AppData/Local/nvim-data/
-
-Note on Windows the configuration and data directory defaults are the same
-(for lack of an alternative), but the sub-directory for data is named
-"nvim-data" to separate it from the configuration sub-directory "nvim".
-
-Throughout other sections of the user manual, the defaults are used as generic
-placeholders, e.g. where "~/.config" is mentioned it should be understood to
-mean "$XDG_CONFIG_HOME or ~/.config".
+							      *$NVIM_LOG_FILE*
+Besides 'debug' and 'verbose', Nvim has a low-level "log of last resort" that
+is written directly to the filesystem. This log may also be used by plugins or
+RPC clients for debugging. $NVIM_LOG_FILE contains the log file path: >
+	:echo $NVIM_LOG_FILE
+Usually the file is ~/.local/share/nvim/log unless that path is inaccessible
+or if $NVIM_LOG_FILE was set before |startup|.
 
  vim:tw=78:ts=8:ft=help:norl:

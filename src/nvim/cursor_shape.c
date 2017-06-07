@@ -260,7 +260,7 @@ int cursor_mode_str2int(const char *mode)
       return current_mode;
     }
   }
-  ELOG("Unknown mode %s", mode);
+  WLOG("Unknown mode %s", mode);
   return -1;
 }
 
