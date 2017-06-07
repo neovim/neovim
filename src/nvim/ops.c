@@ -3644,6 +3644,10 @@ int do_join(size_t count,
    */
   for (t = (linenr_T)count - 1;; t--) {
     cend -= currsize;
+	if(cend == NULL || curr == NULL){
+		ret = FAIL;
+		goto theend;
+	}
     memmove(cend, curr, (size_t)currsize);
     if (spaces[t] > 0) {
       cend -= spaces[t];
