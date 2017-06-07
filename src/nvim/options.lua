@@ -10046,17 +10046,17 @@ local options = {
 
         Level   Messages ~
         ----------------------------------------------------------------------
-        1	Enables Lua tracing (see above). Does not produce messages.
-        2	When a file is ":source"'ed, or |shada| file is read or written.
+        1	|nvim_log()| messages, regardless of level.
+        2	|shada|, |swap-file|, |spell|, 'undofile', |:source|.
         3	UI info, terminal capabilities.
         4	Shell commands.
-        5	Every searched tags file and include file.
-        8	Files for which a group of autocommands is executed.
-        9	Executed autocommands.
+        5	'tags', 'include' activity
+        8	Filenames where autocommands executed.
+        9	Event handler (autocommands) execution.
         11	Finding items in a path.
-        12	Vimscript function calls.
-        13	When an exception is thrown, caught, finished, or discarded.
-        14	Anything pending in a ":finally" clause.
+        12	Vimscript function execution.
+        13	Exceptions thrown, caught, finished, or discarded.
+        14	Pending ":finally" clauses.
         15	Ex commands from a script (truncated at 200 characters).
         16	Ex commands.
 

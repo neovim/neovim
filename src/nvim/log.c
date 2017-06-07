@@ -29,7 +29,15 @@
 #include "nvim/os/stdpaths_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/path.h"
+#include "nvim/strings.h"
 #include "nvim/ui_client.h"
+
+static const char *log_levels[] = {
+  [LOGLVL_DBG] = "DBG",
+  [LOGLVL_INF] = "INF",
+  [LOGLVL_WRN] = "WRN",
+  [LOGLVL_ERR] = "ERR",
+};
 
 /// Cached location of the expanded log file path decided by log_path_init().
 static char log_file_path[MAXPATHL + 1] = { 0 };
@@ -125,6 +133,17 @@ void log_lock(void)
 void log_unlock(void)
 {
   uv_mutex_unlock(&mutex);
+}
+
+int log_level_from_name(char *name)
+{
+  for (size_t i = 0; i < sizeof(log_levels); i++) {
+    if (striequal(name, log_levels[i])) {
+      assert(i <= INT_MAX);
+      return (int)i;
+    }
+  }
+  return -1;
 }
 
 /// Logs a message to $NVIM_LOG_FILE.
@@ -308,17 +327,11 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
                              const char *func_name, int line_num, bool join,
                              size_t trunc, bool eol, const char *fmt,
                              va_list args)
-  FUNC_ATTR_PRINTF(7, 0)
+  FUNC_ATTR_PRINTF(9, 0)
 {
   // Name of the Nvim instance that produced the log.
   static char name[32] = { 0 };
 
-  static const char *log_levels[] = {
-    [LOGLVL_DBG] = "DBG",
-    [LOGLVL_INF] = "INF",
-    [LOGLVL_WRN] = "WRN",
-    [LOGLVL_ERR] = "ERR",
-  };
   assert(log_level >= LOGLVL_DBG && log_level <= LOGLVL_ERR);
 
   // Format the timestamp.
@@ -366,11 +379,11 @@ static bool v_do_log_to_file(FILE *log_file, int log_level, const char *context,
   int len = 0;  // Total length.
   // Format the log-message "prefix".
   int prefixlen = (line_num == -1 || func_name == NULL)
-           ? snprintf(os_buf, sizeof(os_buf), "%s %s.%03d %-10s %s",
-                     log_levels[log_level], date_time, millis, name,
+           ? snprintf(os_buf, sizeof(os_buf), "%-*.*s %s.%03d %-10s %s",
+                     5, 5, log_levels[log_level], date_time, millis, name,
                      (context == NULL ? "?:" : context))
-           : snprintf(os_buf, sizeof(os_buf), "%s %s.%03d %-10s %s%s:%d: ",
-                     log_levels[log_level], date_time, millis, name,
+           : snprintf(os_buf, sizeof(os_buf), "%-*.*s %s.%03d %-10s %s%s:%d: ",
+                     5, 5, log_levels[log_level], date_time, millis, name,
                      (context == NULL ? "" : context),
                      func_name, line_num);
 

@@ -29,6 +29,7 @@
 #include "nvim/msgpack_rpc/packer_defs.h"
 #include "nvim/msgpack_rpc/unpacker.h"
 #include "nvim/os/input.h"
+#include "nvim/terminal.h"
 #include "nvim/types_defs.h"
 #include "nvim/ui.h"
 #include "nvim/ui_client.h"
@@ -680,6 +681,47 @@ void rpc_set_client_info(uint64_t id, Dict info)
 Dict rpc_client_info(Channel *chan)
 {
   return copy_dict(chan->rpc.info, NULL);
+}
+
+/// Describes a channel, for use in log messages etc.
+///
+/// @param chan_id  Channel id
+/// @param desc[out]  Description result
+/// @param desc_len  Size of `desc` storage
+void rpc_chan_desc(uint64_t chan_id, char *desc, size_t desc_len)
+{
+  Channel *chan = find_rpc_channel(chan_id);
+  char *type = NULL;
+  char *ch_type = NULL;
+  if (chan && chan->is_rpc) {
+    for (size_t i = 0; i < chan->rpc.info.size; i++) {
+      String k = chan->rpc.info.items[i].key;
+      Object v = chan->rpc.info.items[i].value;
+      if (strequal("name", k.data)
+          && v.data.string.data
+          && v.data.string.data[0] != '\0') {
+        type = v.data.string.data;
+      } else if (strequal("type", k.data)
+          && v.data.string.data
+          && v.data.string.data[0] != '\0') {
+        ch_type = v.data.string.data;
+      }
+    }
+    if (type && ch_type) {
+      snprintf(desc, desc_len, "%s:%s", type, ch_type);
+    } else if (type) {
+      snprintf(desc, desc_len, "%s", type);
+    } else {
+      snprintf(desc, desc_len, "%s", "?_?");
+    }
+    snprintf(desc, desc_len, "%s:%s", type, ch_type);
+  } else if (chan && chan->term) {
+    snprintf(desc, desc_len, "term:%" PRId64, (int64_t)terminal_buf(chan->term));
+  } else if (chan) {
+    snprintf(desc, desc_len, "chan:%" PRId64, chan_id);
+  } else {
+    snprintf(desc, desc_len, "%s", "?_?");
+  }
 }
 
 const char *get_client_info(Channel *chan, const char *key)

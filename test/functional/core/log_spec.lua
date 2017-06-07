@@ -122,14 +122,14 @@ describe('log', function()
 end)
 
 describe('logging', function()
-  describe('$NVIM_LOG_FILE', function()
-    local xdgdir = 'Xtest-startup-xdg-logpath'
-    local xdgstatedir = is_os('win') and xdgdir .. '/nvim-data' or xdgdir .. '/nvim'
-    after_each(function()
-      os.remove('Xtest-logpath')
-      rmdir(xdgdir)
-    end)
+  local xdgdir = 'Xtest-startup-xdg-logpath'
+  local xdgstatedir = is_os('win') and xdgdir .. '/nvim-data' or xdgdir .. '/nvim'
+  after_each(function()
+    os.remove('Xtest-logpath')
+    rmdir(xdgdir)
+  end)
 
+  describe('$NVIM_LOG_FILE', function()
     it('is used if expansion succeeds', function()
       clear({ env = {
         NVIM_LOG_FILE = 'Xtest-logpath',
@@ -159,6 +159,26 @@ describe('logging', function()
       eq(xdgstatedir .. '/nvim.log', t.fix_slashes(eval('$NVIM_LOG_FILE')))
       -- Avoid "failed to open $NVIM_LOG_FILE" noise in test output.
       expect_exit(command, 'qall!')
+    end)
+  end)
+
+  describe('nvim_log()', function()
+    it('acceptance', function()
+      clear({env={
+        NVIM_LOG_FILE='Xtest-logpath',
+      }})
+
+      -- TODO
+      -- meths.log('debug', 'low-level log message...', {})
+      -- meths.log('info', 'you did it! :D', {})
+      -- meths.log('warn', 'beware of dragons ノ( º _ ºノ)', {})
+      meths.log('error', 'problem (╯°□°)╯︵ ┻━┻', {})
+
+      local loglines = funcs.readfile(eval('$NVIM_LOG_FILE'))
+      -- ERROR 2020-01-12T01:56:19.484 93296 (null):(null): test log message :D
+      t.matches(
+        'ERROR [^ ]+ %d+ testclient:remote: problem %(╯°□°%)╯︵ ┻━┻',
+        loglines[2])
     end)
   end)
 end)

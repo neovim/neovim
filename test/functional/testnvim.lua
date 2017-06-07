@@ -525,6 +525,9 @@ function M.new_session(keep, ...)
   local new_session = Session.new(proc)
   -- Make it possible to check whether two sessions are from the same test.
   new_session.data = { test_id = test_id }
+
+  M.request('nvim_set_client_info', 'testclient', {}, 'remote', {}, {})
+
   return new_session
 end
 
