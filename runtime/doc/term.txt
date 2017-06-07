@@ -40,20 +40,23 @@ If you experience terminal difficulties, first ensure that you have set the
 correct terminal type in your $TERM environment variable so that Nvim is
 pulling the correct entry from the terminfo database in the first place.
 
-As noted in the commentary in the terminfo source file:
- - The correct $TERM for GNOME Terminal has been "gnome" since 1999, or
-   "gnome-256color" since 2006.  "vte" and "vte-256color" are equivalents.
-   "xterm" and "xterm-256color" are incorrect.
- - The correct $TERM for iTerm.app is "iterm" or "iTerm.app".  "xterm" and
-   "xterm-256color" are incorrect; for starters they do not include
-   iTerm.app's status line capability.
- - The correct $TERM for Terminal.app is "nsterm".  "vt100", "xterm", and
-   "xterm-256color" are incorrect; for starters they do not include
-   Terminal.app's status line capability or correctly describe its
-   cursor-addressed mode.
- - The correct $TERM for tmux is "tmux" or "tmux-256color".  "screen" is
-   incorrect; for starters it does not include tmux's italics and status line
-   capabilities or correctly describe how to set inverse video.
+Per the terminfo source file from ncurses:
+
+ For these terminals          Set $TERM to                |builtin-terms|?
+
+  iTerm.app                "iterm" or "iTerm.app"                Y
+  anything libvte based    "vte" or "vte-256color"               Y
+   (e.g. GNOME Terminal)   ("gnome" and "gnome-256color" are
+                            available as aliases for these)
+  tmux                     "tmux" or "tmux-256color"             Y
+  screen                   "screen" or "screen-256color"         Y
+  PuTTY                    "putty" or "putty-256color"           Y
+  Terminal.app             "nsterm"                              N
+  Linux virtual terminal   "linux" or "linux-256color"           Y
+
+Describing any of these as "xterm" or "xterm-256colour" will not describe the
+terminal correctly to Nvim, and will cause various kinds of problematic
+behaviours.
 
 Setting your $TERM environment variable to the correct value also avoids the
 problem that SSH does not mirror arbitrary client-end environment variables
@@ -167,24 +170,26 @@ it.  It uses the same |terminfo| extensions that were pioneered by tmux for
 this: "Ss" and "Se".  If your terminfo definition specifies these, as some
 (such as those based upon "xterm+tmux") do, then nothing more is required.
 
-If your terminfo definition is missing them, then Nvim will on a wide range of
-terminals resort to using the conventional DECSUSR control sequence for
-adjusting the cursor shape.  If Konsole is detected, Nvim will use the
-idiosyncratic Konsole terminal control sequences for this.  Similarly if the
-Linux kernel's built-in terminal emulator is detected, with its idiosyncratic
-control sequence.
+If your terminfo definition is missing them, then Nvim will decide whether to
+add them to your terminfo definition, by looking at the TERM and other
+environment variables.  For the "rxvt", "putty", "linux", "screen",
+"teraterm", and "iterm" terminal types, or when Konsole, a libvte-based
+terminal emulator, or genuine Xterm are detected, it will add constructed
+"Ss" and "Se" capabilities.
 
-Note: tmux itself accepts the conventional DECSUSR control sequence, the same
-as many other terminals do.  It has to translate this into whatever control
-sequence is appropriate for the terminal that it is outputting to.  Like Nvim,
-it will use the "Ss" and "Se" capabilities from terminfo if they are present.
+Note: Sometimes it will appear that Nvim when run within tmux is not changing
+the cursor, but in fact it is tmux receiving instructions from Nvim to change
+the cursor and not knowing what to do in turn.  tmux has to translate what it
+receives from Nvim into whatever control sequence is appropriate for the
+terminal that it is outputting to.  It shares a common mechanism with Nvim, of
+using the "Ss" and "Se" capabilities from terminfo (for the output terminal)
+if they are present.  Unlike Nvim, if they are not present in terminfo you
+will have to add them by setting the tmux "terminal-overrides" setting in
+$HOME/.tmux.conf .
 
-Unlike Nvim, if they are not present in terminfo you will have to add them by
-setting the tmux "terminal-overrides" setting in $HOME/.tmux.conf .  It will
-appear that Nvim is not changing the cursor, but in fact it is tmux receiving
-instructions from Nvim to change the cursor and not knowing what to do.  See
-the tmux(1) manual page for the details of how and what to do in the tmux
+See the tmux(1) manual page for the details of how and what to do in the tmux
 configuration file.  It will look something like: >
+
 		set -ga terminal-overrides '*:Ss=\E[%p1%d q:Se=\E[ q'
 <or (alas!) for Konsole specifically, something more complex like: >
 	set -ga terminal-overrides \
