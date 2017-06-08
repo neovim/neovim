@@ -1327,7 +1327,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Number of screen lines to use for the command-line.  Helps avoiding
 	|hit-enter| prompts.
 	The value of this option is stored with the tab page, so that each tab
-	page can have a different value.
+	page can have a different value. Setting it to '0' hides cmdline and is
+  appropriate for windows that user is not supposed to use cmdline in.
+  If you use cmdline while 'cmdheight' is set to '0' it'll behave
+  strangely specially when it interacts with statusline.
 
 						*'cmdwinheight'* *'cwh'*
 'cmdwinheight' 'cwh'	number	(default 7)
