@@ -56,6 +56,7 @@ typedef enum TermType {
   kTermDTTerm,
   kTermXTerm,
   kTermTeraTerm,
+  kTermPuTTY,
 } TermType;
 
 typedef struct {
@@ -90,6 +91,7 @@ typedef struct {
   bool busy;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
+  bool default_attr;
   ModeShape showing_mode;
   TermType term;
   struct {
@@ -155,6 +157,7 @@ static void terminfo_start(UI *ui)
   data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
   data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
+  data->default_attr = false;
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
@@ -197,7 +200,11 @@ static void terminfo_start(UI *ui)
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
+#ifdef WIN32
     uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_RAW);
+#else
+    uv_tty_set_mode(&data->output_handle.tty, UV_TTY_MODE_IO);
+#endif
   } else {
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
@@ -336,7 +343,10 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
 
   data->print_attrs = attrs;
-  unibi_out(ui, unibi_exit_attribute_mode);
+  if (!data->default_attr) {
+    data->default_attr = true;
+    unibi_out(ui, unibi_exit_attribute_mode);
+  }
   UGrid *grid = &data->grid;
 
   int fg = attrs.foreground != -1 ? attrs.foreground : grid->fg;
@@ -348,6 +358,7 @@ static void update_attrs(UI *ui, HlAttrs attrs)
       data->params[1].i = (fg >> 8) & 0xff;   // green
       data->params[2].i = fg & 0xff;          // blue
       unibi_out(ui, data->unibi_ext.set_rgb_foreground);
+      data->default_attr = false;
     }
 
     if (bg != -1) {
@@ -355,30 +366,37 @@ static void update_attrs(UI *ui, HlAttrs attrs)
       data->params[1].i = (bg >> 8) & 0xff;   // green
       data->params[2].i = bg & 0xff;          // blue
       unibi_out(ui, data->unibi_ext.set_rgb_background);
+      data->default_attr = false;
     }
   } else {
     if (fg != -1) {
       data->params[0].i = fg;
       unibi_out(ui, unibi_set_a_foreground);
+      data->default_attr = false;
     }
 
     if (bg != -1) {
       data->params[0].i = bg;
       unibi_out(ui, unibi_set_a_background);
+      data->default_attr = false;
     }
   }
 
   if (attrs.bold) {
     unibi_out(ui, unibi_enter_bold_mode);
+    data->default_attr = false;
   }
   if (attrs.italic) {
     unibi_out(ui, unibi_enter_italics_mode);
+    data->default_attr = false;
   }
   if (attrs.underline || attrs.undercurl) {
     unibi_out(ui, unibi_enter_underline_mode);
+    data->default_attr = false;
   }
   if (attrs.reverse) {
     unibi_out(ui, unibi_enter_reverse_mode);
+    data->default_attr = false;
   }
 }
 
@@ -388,10 +406,130 @@ static void print_cell(UI *ui, UCell *ptr)
   out(ui, ptr->data, strlen(ptr->data));
 }
 
+static bool cheap_to_print(UI *ui, int row, int col, int next)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  UCell *cell = grid->cells[row] + col;
+  while (next) {
+    --next;
+    if (attrs_differ(cell->attrs, data->print_attrs)) {
+      if (data->default_attr) {
+        return false;
+      }
+    }
+    if (strlen(cell->data) > 1) {
+      return false;
+    }
+    ++cell;
+  }
+  return true;
+}
+
+/// This optimizes several cases where it is cheaper to do something other
+/// than send a full cursor positioning control sequence.  However, there are
+/// some further optimizations that may seem obvious but that will not work.
+///
+/// We cannot use VT (ASCII 0/11) for moving the cursor up, because VT means
+/// move the cursor down on a DEC terminal.  Similarly, on a DEC terminal FF
+/// (ASCII 0/12) means the same thing and does not mean home.  VT, CVT, and
+/// TAB also stop at software-defined tabulation stops, not at a fixed set
+/// of row/column positions.
+static void cursor_goto(UI *ui, int row, int col)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+  if (row == grid->row && col == grid->col) {
+    return;
+  }
+  if (0 == row && 0 == col) {
+    unibi_out(ui, unibi_cursor_home);
+    ugrid_goto(&data->grid, row, col);
+    return;
+  }
+  if (0 == col ? col != grid->col :
+      1 == col ? 2 < grid->col && cheap_to_print(ui, grid->row, 0, col) :
+      2 == col ? 5 < grid->col && cheap_to_print(ui, grid->row, 0, col) :
+      false) {
+    // Motion to left margin from anywhere else, or CR + printing chars is
+    // even less expensive than using BSes or CUB.
+    unibi_out(ui, unibi_carriage_return);
+    ugrid_goto(&data->grid, grid->row, 0);
+  } else if (col > grid->col) {
+      int n = col - grid->col;
+      if (n <= (row == grid->row ? 4 : 2)
+          && cheap_to_print(ui, grid->row, grid->col, n)) {
+        UGRID_FOREACH_CELL(grid, grid->row, grid->row,
+          grid->col, col - 1, {
+          print_cell(ui, cell);
+          ++grid->col;
+        });
+      }
+  }
+  if (row == grid->row) {
+    if (col < grid->col) {
+      int n = grid->col - col;
+      if (n <= 4) { // This might be just BS, so it is considered really cheap.
+        while (n--) {
+          unibi_out(ui, unibi_cursor_left);
+	}
+      } else {
+        data->params[0].i = n;
+        unibi_out(ui, unibi_parm_left_cursor);
+      }
+      ugrid_goto(&data->grid, row, col);
+      return;
+    } else if (col > grid->col) {
+      int n = col - grid->col;
+      if (n <= 2) {
+        while (n--) {
+          unibi_out(ui, unibi_cursor_right);
+	}
+      } else {
+        data->params[0].i = n;
+        unibi_out(ui, unibi_parm_right_cursor);
+      }
+      ugrid_goto(&data->grid, row, col);
+      return;
+    }
+  }
+  if (col == grid->col) {
+    if (row > grid->row) {
+      int n = row - grid->row;
+      if (n <= 4) { // This might be just LF, so it is considered really cheap.
+        while (n--) {
+          unibi_out(ui, unibi_cursor_down);
+	}
+      } else {
+        data->params[0].i = n;
+        unibi_out(ui, unibi_parm_down_cursor);
+      }
+      ugrid_goto(&data->grid, row, col);
+      return;
+    } else if (row < grid->row) {
+      int n = grid->row - row;
+      if (n <= 2) {
+        while (n--) {
+          unibi_out(ui, unibi_cursor_up);
+	}
+      } else {
+        data->params[0].i = n;
+        unibi_out(ui, unibi_parm_up_cursor);
+      }
+      ugrid_goto(&data->grid, row, col);
+      return;
+    }
+  }
+  unibi_goto(ui, row, col);
+  ugrid_goto(&data->grid, row, col);
+}
+
 static void clear_region(UI *ui, int top, int bot, int left, int right)
 {
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
+  int saved_row = grid->row;
+  int saved_col = grid->col;
 
   bool cleared = false;
   if (grid->bg == -1 && right == ui->width -1) {
@@ -405,8 +543,9 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
       if (bot == ui->height - 1) {
         if (top == 0) {
           unibi_out(ui, unibi_clear_screen);
+          ugrid_goto(&data->grid, top, left);
         } else {
-          unibi_goto(ui, top, 0);
+          cursor_goto(ui, top, 0);
           unibi_out(ui, unibi_clr_eos);
         }
         cleared = true;
@@ -416,7 +555,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
     if (!cleared) {
       // iterate through each line and clear with clr_eol
       for (int row = top; row <= bot; ++row) {
-        unibi_goto(ui, row, left);
+        cursor_goto(ui, row, left);
         unibi_out(ui, unibi_clr_eol);
       }
       cleared = true;
@@ -425,17 +564,80 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
 
   if (!cleared) {
     // could not clear using faster terminal codes, refresh the whole region
-    int currow = -1;
     UGRID_FOREACH_CELL(grid, top, bot, left, right, {
-      if (currow != row) {
-        unibi_goto(ui, row, col);
-        currow = row;
-      }
+      cursor_goto(ui, row, col);
       print_cell(ui, cell);
+      ++grid->col;
     });
   }
 
   // restore cursor
+  cursor_goto(ui, saved_row, saved_col);
+}
+
+static bool can_use_scroll(UI * ui)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+
+  return data->scroll_region_is_full_screen ||
+    (data->can_change_scroll_region &&
+     ( (grid->left == 0 && grid->right == ui->width - 1) ||
+        data->can_set_lr_margin ||
+        data->can_set_left_right_margin
+     )
+    );
+}
+
+static void set_scroll_region(UI *ui)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+
+  data->params[0].i = grid->top;
+  data->params[1].i = grid->bot;
+  unibi_out(ui, unibi_change_scroll_region);
+  if (grid->left != 0 || grid->right != ui->width - 1) {
+    unibi_out(ui, data->unibi_ext.enable_lr_margin);
+    if (data->can_set_lr_margin) {
+      data->params[0].i = grid->left;
+      data->params[1].i = grid->right;
+      unibi_out(ui, unibi_set_lr_margin);
+    } else {
+      data->params[0].i = grid->left;
+      unibi_out(ui, unibi_set_left_margin_parm);
+      data->params[0].i = grid->right;
+      unibi_out(ui, unibi_set_right_margin_parm);
+    }
+  }
+  unibi_goto(ui, grid->row, grid->col);
+}
+
+static void reset_scroll_region(UI *ui)
+{
+  TUIData *data = ui->data;
+  UGrid *grid = &data->grid;
+
+  if (0 <= data->unibi_ext.reset_scroll_region) {
+    unibi_out(ui, data->unibi_ext.reset_scroll_region);
+  } else {
+    data->params[0].i = 0;
+    data->params[1].i = ui->height - 1;
+    unibi_out(ui, unibi_change_scroll_region);
+  }
+  if (grid->left != 0 || grid->right != ui->width - 1) {
+    if (data->can_set_lr_margin) {
+      data->params[0].i = 0;
+      data->params[1].i = ui->width - 1;
+      unibi_out(ui, unibi_set_lr_margin);
+    } else {
+      data->params[0].i = 0;
+      unibi_out(ui, unibi_set_left_margin_parm);
+      data->params[0].i = ui->width - 1;
+      unibi_out(ui, unibi_set_right_margin_parm);
+    }
+    unibi_out(ui, data->unibi_ext.disable_lr_margin);
+  }
   unibi_goto(ui, grid->row, grid->col);
 }
 
@@ -539,9 +741,7 @@ static void tui_eol_clear(UI *ui)
 
 static void tui_cursor_goto(UI *ui, Integer row, Integer col)
 {
-  TUIData *data = ui->data;
-  ugrid_goto(&data->grid, (int)row, (int)col);
-  unibi_goto(ui, (int)row, (int)col);
+  cursor_goto(ui, (int)row, (int)col);
 }
 
 CursorShape tui_cursor_decode_shape(const char *shape_str)
@@ -715,6 +915,8 @@ static void tui_scroll(UI *ui, Integer count)
   ugrid_scroll(grid, (int)count, &clear_top, &clear_bot);
 
   if (can_use_scroll(ui)) {
+    int saved_row = grid->row;
+    int saved_col = grid->col;
     bool scroll_clears_to_current_colour =
       unibi_get_bool(data->ut, unibi_back_color_erase);
 
@@ -722,7 +924,7 @@ static void tui_scroll(UI *ui, Integer count)
     if (!data->scroll_region_is_full_screen) {
       set_scroll_region(ui);
     }
-    unibi_goto(ui, grid->top, grid->left);
+    cursor_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
     if (scroll_clears_to_current_colour) {
       HlAttrs clear_attrs = EMPTY_ATTRS;
@@ -751,7 +953,7 @@ static void tui_scroll(UI *ui, Integer count)
     if (!data->scroll_region_is_full_screen) {
       reset_scroll_region(ui);
     }
-    unibi_goto(ui, grid->row, grid->col);
+    cursor_goto(ui, saved_row, saved_col);
 
     if (!scroll_clears_to_current_colour) {
       // This is required because scrolling will leave wrong background in the
@@ -817,19 +1019,19 @@ static void tui_flush(UI *ui)
     tui_busy_stop(ui);  // avoid hidden cursor
   }
 
+  int saved_row = grid->row;
+  int saved_col = grid->col;
+
   while (kv_size(data->invalid_regions)) {
     Rect r = kv_pop(data->invalid_regions);
-    int currow = -1;
     UGRID_FOREACH_CELL(grid, r.top, r.bot, r.left, r.right, {
-      if (currow != row) {
-        unibi_goto(ui, row, col);
-        currow = row;
-      }
+      cursor_goto(ui, row, col);
       print_cell(ui, cell);
+      ++grid->col;
     });
   }
 
-  unibi_goto(ui, grid->row, grid->col);
+  cursor_goto(ui, saved_row, saved_col);
 
   flush_buf(ui, true);
 }
@@ -1049,9 +1251,20 @@ static TermType detect_term(const char *term, const char *colorterm)
   if (STARTS_WITH(term, "teraterm")) {
     return kTermTeraTerm;
   }
+  if (STARTS_WITH(term, "putty")) {
+    return kTermPuTTY;
+  }
   return kTermUnknown;
 }
 
+/// This has three tasks.
+/// 1. On termcap-only systems, it reads $TERM and fills in all of the things
+/// that unibilium (which uses terminfo) will not have.
+/// 2. It fills in extra capabilities that unibilium and terminfo do not know
+/// anything about, such as bracketed paste control.  Some of these are
+/// (wrongly) assumed to be universal.  Others are dependent from $TERM .
+/// 3. It fills in capabilities that might have been missing from the termcap
+/// entry that we nonetheless need, which are also worked out from $TERM .
 static void fix_terminfo(TUIData *data)
 {
   unibi_term *ut = data->ut;
@@ -1065,7 +1278,6 @@ static void fix_terminfo(TUIData *data)
   data->term = detect_term(term, colorterm);
 
   if (data->term == kTermRxvt) {
-    unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[m\x1b(B");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<20/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b]2");
@@ -1090,13 +1302,16 @@ static void fix_terminfo(TUIData *data)
     unibi_set_if_empty(ut, unibi_cursor_invisible, "\x1b[?25l");
     unibi_set_if_empty(ut, unibi_flash_screen, "\x1b[?5h$<100/>\x1b[?5l");
     unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b(B\x1b[m");
+    unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_if_empty(ut, unibi_set_tb_margin, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_set_lr_margin, "\x1b[%i%p1%d;%p2%ds");
     unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
     unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
+  }
+  if (data->term == kTermXTerm || data->term == kTermRxvt
+      || data->term == kTermPuTTY) {
     unibi_set_if_empty(ut, unibi_change_scroll_region, "\x1b[%i%p1%d;%p2%dr");
     unibi_set_if_empty(ut, unibi_clear_screen, "\x1b[H\x1b[2J");
-    unibi_set_if_empty(ut, unibi_from_status_line, "\x07");
     unibi_set_bool(ut, unibi_back_color_erase, true);
   }
 
@@ -1115,9 +1330,9 @@ static void fix_terminfo(TUIData *data)
   data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1004l");
 
-#define XTERM_SETAF \
+#define XTERM_SETAF_256 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
-#define XTERM_SETAB \
+#define XTERM_SETAB_256 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 
   if ((colorterm && strstr(colorterm, "256"))
@@ -1127,8 +1342,24 @@ static void fix_terminfo(TUIData *data)
     // Linux 4.8+ supports 256-color SGR, but terminfo has 8-color setaf/setab.
     // Assume TERM=~xterm|linux or COLORTERM=~256 supports 256 colors.
     unibi_set_num(ut, unibi_max_colors, 256);
-    unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF);
-    unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB);
+    unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
+    unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
+  }
+
+  // Only define this capability for terminal types that we know understand it.
+  if (data->term == kTermDTTerm      // originated this extension
+      || data->term == kTermXTerm    // per xterm ctlseqs doco
+      || data->term == kTermKonsole  // per commentary in VT102Emulation.cpp
+      || data->term == kTermTeraTerm // per TeraTerm "Supported Control Functions" doco
+      || data->term == kTermRxvt) {  // per command.C
+    data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut, NULL,
+        "\x1b[8;%p1%d;%p2%dt");
+  }
+
+  if (data->term == kTermXTerm || data->term == kTermRxvt
+      || data->term == kTermPuTTY) {
+    data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[r");
   }
 
   // Only define this capability for terminal types that we know understand it.
@@ -1147,6 +1378,12 @@ static void fix_terminfo(TUIData *data)
   }
 
 end:
+
+#define XTERM_SETAF_16 \
+  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
+#define XTERM_SETAB_16 \
+  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
+
   // Fill some empty slots with common terminal strings
   if (data->term == kTermiTerm) {
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
@@ -1164,15 +1401,31 @@ end:
   data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
   unibi_set_if_empty(ut, unibi_cursor_address, "\x1b[%i%p1%d;%p2%dH");
+  unibi_set_if_empty(ut, unibi_cursor_home, "\x1b[H");
+  unibi_set_if_empty(ut, unibi_parm_left_cursor, "\x1b[%p1%dD");
+  unibi_set_if_empty(ut, unibi_parm_right_cursor, "\x1b[%p1%dC");
+  unibi_set_if_empty(ut, unibi_parm_down_cursor, "\x1b[%p1%dB");
+  unibi_set_if_empty(ut, unibi_parm_up_cursor, "\x1b[%p1%dA");
+  unibi_set_if_empty(ut, unibi_cursor_left, "\x08");
+  unibi_set_if_empty(ut, unibi_cursor_right, "\x1b[C");
+#if defined(WIN32)
+  unibi_set_if_empty(ut, unibi_cursor_down, "\x1b[B");
+#else
+  // N.B. This relies upon the terminal really being in cfmakeraw() mode,
+  // which libuv's RAW mode is in fact not.
+  unibi_set_if_empty(ut, unibi_cursor_down, "\x0a");
+#endif
+  unibi_set_if_empty(ut, unibi_cursor_up, "\x1b[A");
+  unibi_set_if_empty(ut, unibi_carriage_return, "\x0d");
   unibi_set_if_empty(ut, unibi_exit_attribute_mode, "\x1b[0;10m");
-  unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF);
-  unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB);
+  unibi_set_if_empty(ut, unibi_set_a_foreground, XTERM_SETAF_16);
+  unibi_set_if_empty(ut, unibi_set_a_background, XTERM_SETAB_16);
   unibi_set_if_empty(ut, unibi_enter_bold_mode, "\x1b[1m");
   unibi_set_if_empty(ut, unibi_enter_underline_mode, "\x1b[4m");
   unibi_set_if_empty(ut, unibi_enter_reverse_mode, "\x1b[7m");
   unibi_set_if_empty(ut, unibi_bell, "\x07");
-  unibi_set_if_empty(data->ut, unibi_enter_ca_mode, "\x1b[?1049h");
-  unibi_set_if_empty(data->ut, unibi_exit_ca_mode, "\x1b[?1049l");
+  unibi_set_if_empty(ut, unibi_enter_ca_mode, "\x1b[?1049h");
+  unibi_set_if_empty(ut, unibi_exit_ca_mode, "\x1b[?1049l");
   unibi_set_if_empty(ut, unibi_delete_line, "\x1b[M");
   unibi_set_if_empty(ut, unibi_parm_delete_line, "\x1b[%p1%dM");
   unibi_set_if_empty(ut, unibi_insert_line, "\x1b[L");
