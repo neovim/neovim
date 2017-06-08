@@ -234,6 +234,18 @@ local function connect(file_or_address)
   return Session.new(stream)
 end
 
+-- sleeps the test runner (_not_ the nvim instance)
+local function sleep(ms)
+  local function notification_cb(method, _)
+    if method == "redraw" then
+      error("Screen is attached; use screen:sleep() instead.")
+    end
+    return true
+  end
+
+  run(nil, notification_cb, nil, ms)
+end
+
 -- Calls fn() until it succeeds, up to `max` times or until `max_ms`
 -- milliseconds have passed.
 local function retry(max, max_ms, fn)
@@ -252,6 +264,7 @@ local function retry(max, max_ms, fn)
       error(result)
     end
     tries = tries + 1
+    sleep(1)
   end
 end
 
@@ -388,18 +401,6 @@ local function wait()
   -- Execute 'nvim_eval' (a deferred function) to block
   -- until all pending input is processed.
   session:request('nvim_eval', '1')
-end
-
--- sleeps the test runner (_not_ the nvim instance)
-local function sleep(ms)
-  local function notification_cb(method, _)
-    if method == "redraw" then
-      error("Screen is attached; use screen:sleep() instead.")
-    end
-    return true
-  end
-
-  run(nil, notification_cb, nil, ms)
 end
 
 local function curbuf_contents()
