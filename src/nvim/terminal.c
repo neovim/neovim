@@ -324,6 +324,7 @@ void terminal_close(Terminal *term, char *msg)
       term->opts.close_cb(term->opts.data);
     }
   } else {
+    refresh_terminal(term);
     terminal_receive(term, msg, strlen(msg));
   }
 
