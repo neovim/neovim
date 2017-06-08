@@ -822,21 +822,22 @@ cin_isterminated (
   return found_start;
 }
 
-/*
- * Recognize the basic picture of a function declaration -- it needs to
- * have an open paren somewhere and a close paren at the end of the line and
- * no semicolons anywhere.
- * When a line ends in a comma we continue looking in the next line.
- * "sp" points to a string with the line.  When looking at other lines it must
- * be restored to the line.  When it's NULL fetch lines here.
- * "lnum" is where we start looking.
- * "min_lnum" is the line before which we will not be looking.
- */
+/// Recognizes the basic picture of a function declaration -- it needs to
+/// have an open paren somewhere and a close paren at the end of the line and
+/// no semicolons anywhere.
+/// When a line ends in a comma we continue looking in the next line.
+///
+/// @param[in]  sp  Points to a string with the line. When looking at other
+///                 lines it must be restored to the line. When it's NULL fetch
+///                 lines here.
+/// @param[in]  first_lnum Where to start looking.
+/// @param[in]  min_lnum The line before which we will not be looking.
 static int cin_isfuncdecl(char_u **sp, linenr_T first_lnum, linenr_T min_lnum)
 {
   char_u      *s;
   linenr_T lnum = first_lnum;
-  int retval = FALSE;
+  linenr_T save_lnum = curwin->w_cursor.lnum;
+  int retval = false;
   pos_T       *trypos;
   int just_started = TRUE;
 
@@ -845,18 +846,22 @@ static int cin_isfuncdecl(char_u **sp, linenr_T first_lnum, linenr_T min_lnum)
   else
     s = *sp;
 
+  curwin->w_cursor.lnum = lnum;
   if (find_last_paren(s, '(', ')')
       && (trypos = find_match_paren(curbuf->b_ind_maxparen)) != NULL) {
     lnum = trypos->lnum;
-    if (lnum < min_lnum)
-      return FALSE;
-
+    if (lnum < min_lnum) {
+      curwin->w_cursor.lnum = save_lnum;
+      return false;
+    }
     s = ml_get(lnum);
   }
 
-  /* Ignore line starting with #. */
-  if (cin_ispreproc(s))
-    return FALSE;
+  curwin->w_cursor.lnum = save_lnum;
+  // Ignore line starting with #.
+  if (cin_ispreproc(s)) {
+    return false;
+  }
 
   while (*s && *s != '(' && *s != ';' && *s != '\'' && *s != '"') {
     // ignore comments
