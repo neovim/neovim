@@ -1399,15 +1399,13 @@ int op_delete(oparg_T *oap)
       op_yank_reg(oap, false, reg, false);
     }
 
-    /* Yank into small delete register when no named register specified
-     * and the delete is within one line. */
-    if (oap->regname == 0 && oap->motion_type != kMTLineWise
-        && oap->line_count == 1) {
-      reg = get_yank_register('-', YREG_YANK);
-      op_yank_reg(oap, false, reg, false);
-    }
-
     if (oap->regname == 0) {
+      if (oap->motion_type != kMTLineWise && oap->line_count == 1) {
+        // Yank into small delete register when no named register specified
+        // and the delete is within one line.
+        reg = get_yank_register('-', YREG_YANK);
+        op_yank_reg(oap, false, reg, false);
+      }
       set_clipboard(0, reg);
       do_autocmd_textyankpost(oap, reg);
     }
