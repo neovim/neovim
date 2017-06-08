@@ -496,8 +496,12 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
 
-  if (ptr != NULL && cnt > 0
-      && out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
+  if (ptr == NULL || cnt == 0) {
+    // Nothing to read;
+    return;
+  }
+
+  if (out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, cnt);
   } else {
