@@ -428,17 +428,6 @@ describe('systemlist()', function()
     end)
   end)
 
-  describe('passing a lot of input', function()
-    it('returns the program output', function()
-      local input = {}
-      for _ = 1, 0xffff do
-        input[#input + 1] = '01234567890ABCDEFabcdef'
-      end
-      nvim('set_var', 'input', input)
-      eq(input, eval('systemlist("cat -", g:input)'))
-    end)
-  end)
-
   describe('with output containing NULs', function()
     local fname = 'Xtest'
 
