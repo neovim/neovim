@@ -35,8 +35,97 @@ void channel_teardown(void)
   Channel *channel;
 
   map_foreach_value(channels, channel, {
-    (void)channel;  // close_channel(channel);
+    channel_close(channel->id, kChannelPartAll, NULL);
   });
+}
+
+/// Closes a channel
+///
+/// @param id The channel id
+/// @return true if successful, false otherwise
+bool channel_close(uint64_t id, ChannelPart part, const char **error)
+{
+  Channel *chan;
+  Process *proc;
+
+  const char *dummy;
+  if (!error) {
+    error = &dummy;
+  }
+
+  if (!(chan = find_channel(id))) {
+    if (id < next_chan_id) {
+      // allow double close, even though we can't say what parts was valid.
+      return true;
+    }
+    *error = (const char *)e_invchan;
+    return false;
+  }
+
+  bool close_main = false;
+  if (part == kChannelPartRpc || part == kChannelPartAll) {
+    close_main = true;
+    if (chan->is_rpc) {
+       rpc_close(chan);
+    } else if (part == kChannelPartRpc) {
+      *error = (const char *)e_invstream;
+      return false;
+    }
+  } else if ((part == kChannelPartStdin || part == kChannelPartStdout)
+             && chan->is_rpc) {
+        // EMSG(_("Invalid stream on rpc job, use jobclose(id, 'rpc')"));
+    *error = (const char *)e_invstreamrpc;
+    return false;
+  }
+
+  switch (chan->streamtype) {
+    case kChannelStreamSocket:
+      if (!close_main) {
+        *error = (const char *)e_invstream;
+        return false;
+      }
+      stream_may_close(&chan->stream.socket);
+      break;
+
+    case kChannelStreamProc:
+      proc = (Process *)&chan->stream.proc;
+      if (part == kChannelPartStdin || close_main) {
+        stream_may_close(&proc->in);
+      }
+      if (part == kChannelPartStdout || close_main) {
+        stream_may_close(&proc->out);
+      }
+      if (part == kChannelPartStderr || part == kChannelPartAll) {
+        stream_may_close(&proc->err);
+      }
+      if (proc->type == kProcessTypePty && part == kChannelPartAll) {
+        pty_process_close_master(&chan->stream.pty);
+      }
+
+      break;
+
+    case kChannelStreamStdio:
+      if (part == kChannelPartStdin || close_main) {
+        stream_may_close(&chan->stream.stdio.in);
+      }
+      if (part == kChannelPartStdout || close_main) {
+        stream_may_close(&chan->stream.stdio.out);
+      }
+      if (part == kChannelPartStderr) {
+        *error = (const char *)e_invstream;
+        return false;
+      }
+      break;
+
+    case kChannelStreamInternal:
+      if (!close_main) {
+        *error = (const char *)e_invstream;
+        return false;
+      }
+      break;
+  }
+
+  return true;
 }
 
 /// Initializes the module
@@ -239,7 +328,6 @@ uint64_t channel_connect(bool tcp, const char *address,
     return 0;
   }
 
-  channel_incref(channel);  // close channel only after the stream is closed
   channel->stream.socket.internal_close_cb = close_cb;
   channel->stream.socket.internal_data = channel;
   wstream_init(&channel->stream.socket, 0);
@@ -264,7 +352,6 @@ void channel_from_connection(SocketWatcher *watcher)
 {
   Channel *channel = channel_alloc(kChannelStreamSocket);
   socket_watcher_accept(watcher, &channel->stream.socket);
-  channel_incref(channel);  // close channel only after the stream is closed
   channel->stream.socket.internal_close_cb = close_cb;
   channel->stream.socket.internal_data = channel;
   wstream_init(&channel->stream.socket, 0);
@@ -277,7 +364,6 @@ void channel_from_connection(SocketWatcher *watcher)
 static uint64_t channel_create_internal_rpc(void)
 {
   Channel *channel = channel_alloc(kChannelStreamInternal);
-  channel_incref(channel);  // internal channel lives until process exit
   rpc_start(channel);
   return channel->id;
 }
@@ -425,10 +511,6 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
     char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
     terminal_close(chan->term, msg);
-  }
-
-  if (chan->is_rpc) {
-    channel_process_exit(chan->id, status);
   }
 
   if (chan->status_ptr) {

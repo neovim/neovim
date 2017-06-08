@@ -677,10 +677,6 @@ static void shell_write_cb(Stream *stream, void *data, int status)
     msg_schedule_emsgf(_("E5677: Error writing input to shell-command: %s"),
                        uv_err_name(status));
   }
-  if (stream->closed) {  // Process may have exited before this write.
-    WLOG("stream was already closed");
-    return;
-  }
   stream_close(stream, NULL, NULL);
 }
 

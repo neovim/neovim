@@ -7322,6 +7322,45 @@ static void f_changenr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = curbuf->b_u_seq_cur;
 }
 
+// "chanclose(id[, stream])" function
+static void f_chanclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || (argvars[1].v_type != VAR_STRING
+        && argvars[1].v_type != VAR_UNKNOWN)) {
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  ChannelPart part = kChannelPartAll;
+  if (argvars[1].v_type == VAR_STRING) {
+    char *stream = (char *)argvars[1].vval.v_string;
+    if (!strcmp(stream, "stdin")) {
+      part = kChannelPartStdin;
+    } else if (!strcmp(stream, "stdout")) {
+      part = kChannelPartStdout;
+    } else if (!strcmp(stream, "stderr")) {
+      part = kChannelPartStderr;
+    } else if (!strcmp(stream, "rpc")) {
+      part = kChannelPartRpc;
+    } else {
+      EMSG2(_("Invalid channel stream \"%s\""), stream);
+      return;
+    }
+  }
+  const char *error;
+  rettv->vval.v_number = channel_close(argvars[0].vval.v_number, part, &error);
+  if (!rettv->vval.v_number) {
+    EMSG(error);
+  }
+}
+
 /*
  * "char2nr(string)" function
  */
@@ -11391,67 +11430,6 @@ static void f_items(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dict_list(argvars, rettv, 2);
 }
 
-// "jobclose(id[, stream])" function
-static void f_jobclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || (argvars[1].v_type != VAR_STRING
-        && argvars[1].v_type != VAR_UNKNOWN)) {
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  Channel *data = find_job(argvars[0].vval.v_number, true);
-  if (!data) {
-    return;
-  }
-
-  Process *proc = (Process *)&data->stream.proc;
-
-  if (argvars[1].v_type == VAR_STRING) {
-    char *stream = (char *)argvars[1].vval.v_string;
-    if (!strcmp(stream, "stdin")) {
-      if (data->is_rpc) {
-        EMSG(_("Invalid stream on rpc job, use jobclose(id, 'rpc')"));
-      } else {
-        process_close_in(proc);
-      }
-    } else if (!strcmp(stream, "stdout")) {
-      if (data->is_rpc) {
-        EMSG(_("Invalid stream on rpc job, use jobclose(id, 'rpc')"));
-      } else {
-        process_close_out(proc);
-      }
-    } else if (!strcmp(stream, "stderr")) {
-      process_close_err(proc);
-    } else if (!strcmp(stream, "rpc")) {
-      if (data->is_rpc) {
-        channel_close(data->id);
-      } else {
-        EMSG(_("Invalid job stream: Not an rpc job"));
-      }
-    } else {
-      EMSG2(_("Invalid job stream \"%s\""), stream);
-    }
-  } else {
-    if (data->is_rpc) {
-      channel_close(data->id);
-      process_close_err(proc);
-    } else {
-      process_close_streams(proc);
-      if (proc->type == kProcessTypePty) {
-        pty_process_close_master(&data->stream.pty);
-      }
-    }
-  }
-}
-
 // "jobpid(id)" function
 static void f_jobpid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
@@ -13933,7 +13911,12 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (find_job(id, false)) {
     f_jobstop(argvars, rettv, NULL);
   } else {
-    rettv->vval.v_number = channel_close(id);
+    const char *error;
+    rettv->vval.v_number = channel_close(argvars[0].vval.v_number,
+                                         kChannelPartRpc, &error);
+    if (!rettv->vval.v_number) {
+      EMSG(error);
+    }
   }
 }
 

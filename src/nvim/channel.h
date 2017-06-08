@@ -16,6 +16,15 @@ typedef enum {
   kChannelStreamInternal
 } ChannelStreamType;
 
+typedef enum {
+  kChannelPartStdin,
+  kChannelPartStdout,
+  kChannelPartStderr,
+  kChannelPartRpc,
+  kChannelPartAll
+} ChannelPart;
+
+
 typedef struct {
   Stream in;
   Stream out;

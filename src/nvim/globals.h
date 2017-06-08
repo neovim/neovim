@@ -1082,6 +1082,9 @@ EXTERN char_u e_jobspawn[] INIT(= N_(
 EXTERN char_u e_channotpty[] INIT(= N_("E904: channel is not a pty"));
 EXTERN char_u e_stdiochan2[] INIT(= N_(
     "E905: Couldn't open stdio channel: %s"));
+EXTERN char_u e_invstream[] INIT(= N_("E906: invalid stream for channel"));
+EXTERN char_u e_invstreamrpc[] INIT(= N_(
+    "E906: invalid stream for rpc channel, use 'rpc'"));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));

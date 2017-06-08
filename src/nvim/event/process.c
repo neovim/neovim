@@ -25,13 +25,6 @@
 // For pty processes SIGTERM is sent first (in case SIGHUP was not enough).
 #define KILL_TIMEOUT_MS 2000
 
-#define CLOSE_PROC_STREAM(proc, stream) \
-  do { \
-    if (!proc->stream.closed) { \
-      stream_close(&proc->stream, NULL, NULL); \
-    } \
-  } while (0)
-
 static bool process_is_tearing_down = false;
 
 /// @returns zero on success, or negative error code
@@ -140,27 +133,11 @@ void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
   pty_process_teardown(loop);
 }
 
-// Wrappers around `stream_close` that protect against double-closing.
 void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 {
-  process_close_in(proc);
-  process_close_out(proc);
-  process_close_err(proc);
-}
-
-void process_close_in(Process *proc) FUNC_ATTR_NONNULL_ALL
-{
-  CLOSE_PROC_STREAM(proc, in);
-}
-
-void process_close_out(Process *proc) FUNC_ATTR_NONNULL_ALL
-{
-  CLOSE_PROC_STREAM(proc, out);
-}
-
-void process_close_err(Process *proc) FUNC_ATTR_NONNULL_ALL
-{
-  CLOSE_PROC_STREAM(proc, err);
+  stream_may_close(&proc->in);
+  stream_may_close(&proc->out);
+  stream_may_close(&proc->err);
 }
 
 /// Synchronously wait for a process to finish
@@ -237,8 +214,9 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   switch (proc->type) {
     case kProcessTypeUv:
       // Close the process's stdin. If the process doesn't close its own
-      // stdout/stderr, they will be closed when it exits (voluntarily or not).
-      process_close_in(proc);
+      // stdout/stderr, they will be closed when it exits(possibly due to being
+      // terminated after a timeout)
+      stream_may_close(&proc->in);
       ILOG("Sending SIGTERM to pid %d", proc->pid);
       uv_kill(proc->pid, SIGTERM);
       break;
