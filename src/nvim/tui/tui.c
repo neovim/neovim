@@ -39,8 +39,8 @@
 #include "nvim/syntax.h"
 #include "nvim/macros.h"
 
-// Space reserved in the output buffer to restore the cursor to normal when
-// flushing. No existing terminal will require 32 bytes to do that.
+// Space reserved in two output buffers to make the cursor normal or invisible
+// when flushing. No existing terminal will require 32 bytes to do that.
 #define CNORM_COMMAND_MAX_SIZE 32
 #define OUTBUF_SIZE 0xffff
 
@@ -73,7 +73,10 @@ typedef struct {
   bool stop;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
-  size_t bufpos, bufsize;
+  size_t bufpos;
+  char norm[CNORM_COMMAND_MAX_SIZE];
+  char invis[CNORM_COMMAND_MAX_SIZE];
+  size_t normlen, invislen;
   TermInput input;
   uv_loop_t write_loop;
   unibi_term *ut;
@@ -155,12 +158,20 @@ UI *tui_start(void)
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
 
+static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index, char * buf, size_t len)
+{
+  const char *str = unibi_get_str(data->ut, unibi_index);
+  if (!str) {
+    return 0U;
+  }
+  return unibi_run(str, data->params, buf, len);
+}
+
 static void terminfo_start(UI *ui)
 {
   TUIData *data = ui->data;
   data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
-  data->bufsize = sizeof(data->buf) - CNORM_COMMAND_MAX_SIZE;
   data->default_attr = false;
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
@@ -205,6 +216,8 @@ static void terminfo_start(UI *ui)
   data->immediate_wrap_after_last_column =
     terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "interix");
+  data->normlen = unibi_pre_fmt_str(data, unibi_cursor_normal, data->norm, sizeof data->norm);
+  data->invislen = unibi_pre_fmt_str(data, unibi_cursor_invisible, data->invis, sizeof data->invis);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
@@ -1183,7 +1196,7 @@ static void out(void *ctx, const char *str, size_t len)
 {
   UI *ui = ctx;
   TUIData *data = ui->data;
-  size_t available = data->bufsize - data->bufpos;
+  size_t available = sizeof(data->buf) - data->bufpos;
 
   if (len > available) {
     flush_buf(ui, false);
@@ -1613,28 +1626,37 @@ static void augment_terminfo(TUIData *data, const char *term,
 static void flush_buf(UI *ui, bool toggle_cursor)
 {
   uv_write_t req;
-  uv_buf_t buf;
+  uv_buf_t bufs[3];
+  uv_buf_t *bufp = bufs;
   TUIData *data = ui->data;
 
-  if (toggle_cursor && !data->busy) {
-    // not busy and the cursor is invisible(see below). Append a "cursor
-    // normal" command to the end of the buffer.
-    data->bufsize += CNORM_COMMAND_MAX_SIZE;
-    unibi_out(ui, unibi_cursor_normal);
-    data->bufsize -= CNORM_COMMAND_MAX_SIZE;
+  if (data->bufpos <= 0) {
+    return;
   }
 
-  buf.base = data->buf;
-  buf.len = data->bufpos;
-  uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle), &buf, 1, NULL);
+  if (toggle_cursor && !data->busy) {
+    // not busy and cursor is visible, write a "cursor invisible" command
+    // before writing the buffer.
+    bufp->base = data->invis;
+    bufp->len = data->invislen;
+    bufp++;
+  }
+
+  bufp->base = data->buf;
+  bufp->len = data->bufpos;
+  bufp++;
+
+  if (toggle_cursor && !data->busy) {
+    // not busy and the cursor is invisible. Write a "cursor normal" command
+    // after writing the buffer.
+    bufp->base = data->norm;
+    bufp->len = data->normlen;
+    bufp++;
+  }
+
+  uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle), bufs, (unsigned)(bufp - bufs), NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
-
-  if (toggle_cursor && !data->busy) {
-    // not busy and cursor is visible(see above), append a "cursor invisible"
-    // command to the beginning of the buffer for the next flush
-    unibi_out(ui, unibi_cursor_invisible);
-  }
 }
 
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
