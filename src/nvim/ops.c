@@ -3642,12 +3642,9 @@ int do_join(size_t count,
    * column.  This is not Vi compatible, but Vi deletes the marks, thus that
    * should not really be a problem.
    */
+  assert(count >= 2);
   for (t = (linenr_T)count - 1;; t--) {
     cend -= currsize;
-	if(cend == NULL || curr == NULL){
-		ret = FAIL;
-		goto theend;
-	}
     memmove(cend, curr, (size_t)currsize);
     if (spaces[t] > 0) {
       cend -= spaces[t];
