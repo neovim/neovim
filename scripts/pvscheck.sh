@@ -369,7 +369,7 @@ do_check() {
 
 do_recheck() {
   local tgt="$1" ; shift
-  local deps="$2" ; shift
+  local deps="$1" ; shift
 
   create_compile_commands "$tgt" "$deps"
 
