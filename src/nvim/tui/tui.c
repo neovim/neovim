@@ -48,7 +48,8 @@
 #define STARTS_WITH(str, prefix) (strlen(term) >= (sizeof(prefix) - 1) \
     && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
 #define TMUX_WRAP(is_tmux,seq) ((is_tmux) ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
-#define LINUXRESETC "\x1b[?0c"
+#define LINUXSET0C "\x1b[?0c"
+#define LINUXSET1C "\x1b[?1c"
 
 // Per the commentary in terminfo, only a minus sign is a true suffix
 // separator.
@@ -1270,12 +1271,23 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_str(ut, unibi_cursor_normal, fix_normal);
     }
     if (linuxvt
-        && strlen(fix_normal) >= (sizeof LINUXRESETC - 1)
-        && !memcmp(strchr(fix_normal,0) - (sizeof LINUXRESETC - 1), LINUXRESETC, sizeof LINUXRESETC - 1)) {
+        && strlen(fix_normal) >= (sizeof LINUXSET0C - 1)
+        && !memcmp(strchr(fix_normal,0) - (sizeof LINUXSET0C - 1), LINUXSET0C, sizeof LINUXSET0C - 1)) {
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
       // cursor shape reset in cnorm, which similarly interferes with
       // set_cursor_style.
-      fix_normal[strlen(fix_normal) - (sizeof LINUXRESETC - 1)] = 0;
+      fix_normal[strlen(fix_normal) - (sizeof LINUXSET0C - 1)] = 0;
+    }
+  }
+  char *fix_invisible = (char *)unibi_get_str(ut, unibi_cursor_invisible);
+  if (fix_invisible) {
+    if (linuxvt
+        && strlen(fix_invisible) >= (sizeof LINUXSET1C - 1)
+        && !memcmp(strchr(fix_invisible,0) - (sizeof LINUXSET1C - 1), LINUXSET1C, sizeof LINUXSET1C - 1)) {
+      // The Linux terminfo entry similarly includes a Linux-idiosyncractic
+      // cursor shape reset in cinvis, which similarly interferes with
+      // set_cursor_style.
+      fix_invisible[strlen(fix_invisible) - (sizeof LINUXSET1C - 1)] = 0;
     }
   }
 
