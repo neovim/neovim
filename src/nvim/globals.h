@@ -1199,10 +1199,6 @@ EXTERN bool embedded_mode INIT(= false);
 // or read/write to stdio (unless embedding)
 EXTERN bool headless_mode INIT(= false);
 
-/// next free id for a job or rpc channel
-/// 1 is reserved for stdio channel
-EXTERN uint64_t next_chan_id INIT(= 2);
-
 /// Used to track the status of external functions.
 /// Currently only used for iconv().
 typedef enum {

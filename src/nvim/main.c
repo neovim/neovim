@@ -297,7 +297,7 @@ int main(int argc, char **argv)
   assert(p_ch >= 0 && Rows >= p_ch && Rows - p_ch <= INT_MAX);
   cmdline_row = (int)(Rows - p_ch);
   msg_row = cmdline_row;
-  screenalloc(false);           /* allocate screen buffers */
+  screenalloc(false);  // allocate screen buffers
   set_init_2(headless_mode);
   TIME_MSG("inits 2");
 
@@ -310,8 +310,9 @@ int main(int argc, char **argv)
   /* Set the break level after the terminal is initialized. */
   debug_break_level = params.use_debug_break_level;
 
-  bool reading_input = !headless_mode && (params.input_isatty
-      || params.output_isatty || params.err_isatty);
+  bool reading_input = !headless_mode
+                       && (params.input_isatty || params.output_isatty
+                           || params.err_isatty);
 
   if (reading_input) {
     // One of the startup commands (arguments, sourced scripts or plugins) may

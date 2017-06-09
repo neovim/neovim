@@ -56,6 +56,7 @@ typedef enum {
     VV_DYING,
     VV_EXCEPTION,
     VV_THROWPOINT,
+    VV_STDERR,
     VV_REG,
     VV_CMDBANG,
     VV_INSERTMODE,

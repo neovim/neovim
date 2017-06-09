@@ -9,10 +9,14 @@
 #include "nvim/eval/typval.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
 
+#define CHAN_STDIO 1
+#define CHAN_STDERR 2
+
 typedef enum {
   kChannelStreamProc,
   kChannelStreamSocket,
   kChannelStreamStdio,
+  kChannelStreamStderr,
   kChannelStreamInternal
 } ChannelStreamType;
 
@@ -29,6 +33,10 @@ typedef struct {
   Stream in;
   Stream out;
 } StdioPair;
+
+typedef struct {
+  bool closed;
+} StderrState;
 
 typedef struct {
   Callback cb;
@@ -56,6 +64,7 @@ struct Channel {
     PtyProcess pty;
     Stream socket;
     StdioPair stdio;
+    StderrState err;
   } stream;
 
   bool is_rpc;
@@ -95,6 +104,7 @@ static inline Stream *channel_instream(Channel *chan)
       return &chan->stream.stdio.out;
 
     case kChannelStreamInternal:
+    case kChannelStreamStderr:
       abort();
   }
   abort();
@@ -114,6 +124,7 @@ static inline Stream *channel_outstream(Channel *chan)
       return &chan->stream.stdio.in;
 
     case kChannelStreamInternal:
+    case kChannelStreamStderr:
       abort();
   }
   abort();

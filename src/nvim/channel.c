@@ -14,6 +14,12 @@
 static bool did_stdio = false;
 PMap(uint64_t) *channels = NULL;
 
+/// next free id for a job or rpc channel
+/// 1 is reserved for stdio channel
+/// 2 is reserved for stderr channel
+static uint64_t next_chan_id = CHAN_STDERR+1;
+
+
 typedef struct {
   Channel *data;
   Callback *callback;
@@ -73,7 +79,6 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
     }
   } else if ((part == kChannelPartStdin || part == kChannelPartStdout)
              && chan->is_rpc) {
-        // EMSG(_("Invalid stream on rpc job, use jobclose(id, 'rpc')"));
     *error = (const char *)e_invstreamrpc;
     return false;
   }
@@ -117,6 +122,21 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
       }
       break;
 
+    case kChannelStreamStderr:
+      if (part != kChannelPartAll && part != kChannelPartStderr) {
+        *error = (const char *)e_invstream;
+        return false;
+      }
+      if (!chan->stream.err.closed) {
+        chan->stream.err.closed = true;
+        // Don't close on exit, in case late error messages
+        if (!exiting) {
+          fclose(stderr);
+        }
+        channel_decref(chan);
+      }
+      break;
+
     case kChannelStreamInternal:
       if (!close_main) {
         *error = (const char *)e_invstream;
@@ -132,6 +152,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
 void channel_init(void)
 {
   channels = pmap_new(uint64_t)();
+  channel_alloc(kChannelStreamStderr);
   rpc_init();
   remote_ui_init();
 }
@@ -143,7 +164,13 @@ void channel_init(void)
 static Channel *channel_alloc(ChannelStreamType type)
 {
   Channel *chan = xcalloc(1, sizeof(*chan));
-  chan->id = type == kChannelStreamStdio ? 1 : next_chan_id++;
+  if (type == kChannelStreamStdio) {
+    chan->id = CHAN_STDIO;
+  } else if (type == kChannelStreamStderr) {
+    chan->id = CHAN_STDERR;
+  } else {
+    chan->id = next_chan_id++;
+  }
   chan->events = multiqueue_new_child(main_loop.events);
   chan->refcount = 1;
   chan->streamtype = type;
@@ -401,6 +428,46 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
   }
 
   return channel->id;
+}
+
+/// @param data will be consumed
+size_t channel_send(uint64_t id, char *data, size_t len, const char **error)
+{
+  Channel *chan = find_channel(id);
+  if (!chan) {
+    EMSG(_(e_invchan));
+    goto err;
+  }
+
+  if (chan->streamtype == kChannelStreamStderr) {
+    if (chan->stream.err.closed) {
+      *error = _("Can't send data to closed stream");
+      goto err;
+    }
+    // unbuffered write
+    size_t written = fwrite(data, len, 1, stderr);
+    xfree(data);
+    return len * written;
+  }
+
+
+  Stream *in = channel_instream(chan);
+  if (in->closed) {
+    *error = _("Can't send data to closed stream");
+    goto err;
+  }
+
+  if (chan->is_rpc) {
+    *error = _("Can't send raw data to rpc channel");
+    goto err;
+  }
+
+  WBuffer *buf = wstream_new_buffer(data, len, 1, xfree);
+  return wstream_write(in, buf) ? len : 0;
+
+err:
+  xfree(data);
+  return 0;
 }
 
 // vimscript job callbacks must be executed on Nvim main loop

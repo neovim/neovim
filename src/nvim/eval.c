@@ -366,6 +366,7 @@ static struct vimvar {
   VV(VV_DYING,          "dying",            VAR_NUMBER, VV_RO),
   VV(VV_EXCEPTION,      "exception",        VAR_STRING, VV_RO),
   VV(VV_THROWPOINT,     "throwpoint",       VAR_STRING, VV_RO),
+  VV(VV_STDERR,         "stderr",           VAR_NUMBER, VV_RO),
   VV(VV_REG,            "register",         VAR_STRING, VV_RO),
   VV(VV_CMDBANG,        "cmdbang",          VAR_NUMBER, VV_RO),
   VV(VV_INSERTMODE,     "insertmode",       VAR_STRING, VV_RO),
@@ -586,6 +587,7 @@ void eval_init(void)
   v_event->dv_lock = VAR_FIXED;
   set_vim_var_dict(VV_EVENT, v_event);
   set_vim_var_list(VV_ERRORS, tv_list_alloc());
+  set_vim_var_nr(VV_STDERR,   CHAN_STDERR);
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
   set_vim_var_nr(VV_COUNT1, 1);
@@ -7361,6 +7363,37 @@ static void f_chanclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "chansend(id, data)" function
+static void f_chansend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type == VAR_UNKNOWN) {
+    // First argument is the channel id and second is the data to write
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  ptrdiff_t input_len = 0;
+  char *input = save_tv_as_string(&argvars[1], &input_len, false);
+  if (!input) {
+    // Either the error has been handled by save_tv_as_string(),
+    // or there is no input to send.
+    return;
+  }
+  uint64_t id = argvars[0].vval.v_number;
+  const char *error = NULL;
+  rettv->vval.v_number = channel_send(id, input, input_len, &error);
+  if (error) {
+    EMSG(error);
+  }
+}
+
 /*
  * "char2nr(string)" function
  */
@@ -11452,52 +11485,6 @@ static void f_jobpid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Process *proc = (Process *)&data->stream.proc;
   rettv->vval.v_number = proc->pid;
-}
-
-// "jobsend()" function
-static void f_jobsend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type == VAR_UNKNOWN) {
-    // First argument is the job id and second is the string or list to write
-    // to the job's stdin
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  Channel *data = find_channel(argvars[0].vval.v_number);
-  if (!data) {
-    EMSG(_(e_invchan));
-    return;
-  }
-
-  Stream *in = channel_instream(data);
-  if (in->closed) {
-    EMSG(_("Can't send data to the job: stdin is closed"));
-    return;
-  }
-
-  if (data->is_rpc) {
-    EMSG(_("Can't send raw data to rpc channel"));
-    return;
-  }
-
-  ptrdiff_t input_len = 0;
-  char *input = save_tv_as_string(&argvars[1], &input_len, false);
-  if (!input) {
-    // Either the error has been handled by save_tv_as_string(), or there is no
-    // input to send.
-    return;
-  }
-
-  WBuffer *buf = wstream_new_buffer(input, input_len, 1, xfree);
-  rettv->vval.v_number = wstream_write(in, buf);
 }
 
 // "jobresize(job, width, height)" function
