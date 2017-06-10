@@ -280,7 +280,7 @@ submit_pr() {
     echo "Pushing to 'origin/${checked_out_branch}'."
     output="$(git push origin "${checked_out_branch}" 2>&1)" &&
       echo "✔ ${output}" ||
-      (echo "✘ ${output}"; git reset --soft HEAD^1; false)
+      (echo "✘ ${output}"; false)
 
     echo
   fi
