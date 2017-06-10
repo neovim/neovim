@@ -96,7 +96,7 @@ typedef struct {
   bool can_set_left_right_margin;
   bool immediate_wrap_after_last_column;
   bool mouse_enabled;
-  bool busy;
+  bool busy, is_invisible;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
   bool default_attr;
@@ -173,6 +173,8 @@ static void terminfo_start(UI *ui)
   data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
   data->default_attr = false;
+  data->is_invisible = true;
+  data->busy = false;
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
@@ -1630,28 +1632,32 @@ static void flush_buf(UI *ui, bool toggle_cursor)
   uv_buf_t *bufp = bufs;
   TUIData *data = ui->data;
 
-  if (data->bufpos <= 0) {
+  if (data->bufpos <= 0 && data->busy == data->is_invisible) {
     return;
   }
 
-  if (toggle_cursor && !data->busy) {
-    // not busy and cursor is visible, write a "cursor invisible" command
-    // before writing the buffer.
+  if (toggle_cursor && !data->is_invisible) {
+    // cursor is visible. Write a "cursor invisible" command before writing the
+    // buffer.
     bufp->base = data->invis;
     bufp->len = data->invislen;
     bufp++;
+    data->is_invisible = true;
   }
 
-  bufp->base = data->buf;
-  bufp->len = data->bufpos;
-  bufp++;
+  if (data->bufpos > 0) {
+    bufp->base = data->buf;
+    bufp->len = data->bufpos;
+    bufp++;
+  }
 
-  if (toggle_cursor && !data->busy) {
+  if (toggle_cursor && !data->busy && data->is_invisible) {
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
     bufp->base = data->norm;
     bufp->len = data->normlen;
     bufp++;
+    data->is_invisible = data->busy;
   }
 
   uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle), bufs, (unsigned)(bufp - bufs), NULL);
