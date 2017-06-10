@@ -330,7 +330,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   }
 
   try_start();
-  bufref_T save_curbuf = { NULL, 0 };
+  bufref_T save_curbuf = { NULL, 0, 0 };
   switch_to_win_for_buf(buf, &save_curwin, &save_curtab, &save_curbuf);
 
   if (u_save((linenr_T)(start - 1), (linenr_T)end) == FAIL) {
