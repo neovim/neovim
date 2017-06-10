@@ -115,7 +115,7 @@ static inline void buf_set_changedtick(buf_T *const buf,
   do { \
     win_T *save_curwin = NULL; \
     tabpage_T *save_curtab = NULL; \
-    bufref_T save_curbuf = { NULL, 0 }; \
+    bufref_T save_curbuf = { NULL, 0, 0 }; \
     switch_to_win_for_buf(b, &save_curwin, &save_curtab, &save_curbuf); \
     code; \
     restore_win_for_buf(save_curwin, save_curtab, &save_curbuf); \
