@@ -1818,6 +1818,13 @@ v:shell_error	Result of the last shell command.  When non-zero, the last
 					*v:statusmsg* *statusmsg-variable*
 v:statusmsg	Last given status message.  It's allowed to set this variable.
 
+					*v:stderr* *stderr-variable*
+v:stderr	Channel id for stderr. Unlike stdin and stdout (see
+		|stdioopen()|), stderr is always open for writing. This channel
+		ID is always 2, but this variable can be used to be explicit.
+		Example: >
+	:call chansend(v:stderr, "something bad happened\n")
+<
 					*v:swapname* *swapname-variable*
 v:swapname	Only valid when executing |SwapExists| autocommands: Name of
 		the swap file found.  Read-only.
@@ -1989,6 +1996,8 @@ call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
 ceil({expr})			Float	round {expr} up
 changenr()			Number	current change number
+chanclose({id}[, {stream}])	Number	Closes a channel or one of its streams
+chansend({id}, {data})		Number	Writes {data} to channel
 char2nr({expr}[, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
 cindent({lnum})		Number	C indent for line {lnum}
 clearmatches()			none	clear all matches
@@ -2137,13 +2146,11 @@ isdirectory({directory})	Number	|TRUE| if {directory} is a directory
 islocked({expr})		Number	|TRUE| if {expr} is locked
 id({expr})			String	identifier of the container
 items({dict})			List	key-value pairs in {dict}
-jobclose({job}[, {stream}])	Number	Closes a job stream(s)
-jobpid({job})			Number	Returns pid of a job.
-jobresize({job}, {width}, {height})
-				Number	Resize {job}'s pseudo terminal window
-jobsend({job}, {data})		Number	Writes {data} to {job}'s stdin
+jobpid({id})			Number	Returns pid of a job.
+jobresize({id}, {width}, {height})
+				Number	Resize pseudo terminal window of a job
 jobstart({cmd}[, {opts}])	Number	Spawns {cmd} as a job
-jobstop({job})			Number	Stops a job
+jobstop({id})			Number	Stops a job
 jobwait({ids}[, {timeout}])	Number	Wait for a set of jobs
 join({list} [, {sep}])		String	join {list} items into one String
 json_decode({expr})		any	Convert {expr} from JSON
@@ -2226,7 +2233,6 @@ rpcnotify({channel}, {event}[, {args}...])
 				Sends an |RPC| notification to {channel}
 rpcrequest({channel}, {method}[, {args}...])
 				Sends an |RPC| request to {channel}
-rpcstop({channel})		Closes an |RPC| {channel}
 screenattr({row}, {col})	Number	attribute at screen position
 screenchar({row}, {col})	Number	character at screen position
 screencol()			Number	current cursor column
@@ -2268,6 +2274,8 @@ shiftwidth()			Number	effective value of 'shiftwidth'
 simplify({filename})		String	simplify filename as much as possible
 sin({expr})			Float	sine of {expr}
 sinh({expr})			Float	hyperbolic sine of {expr}
+sockconnect({mode}, {address} [, {opts}])
+				Number	Connects to socket
 sort({list} [, {func} [, {dict}]])
 				List	sort {list}, using {func} to compare
 soundfold({word})		String	sound-fold {word}
@@ -2277,6 +2285,7 @@ spellsuggest({word} [, {max} [, {capital}]])
 split({expr} [, {pat} [, {keepempty}]])
 				List	make |List| from {pat} separated {expr}
 sqrt({expr})			Float	square root of {expr}
+stdioopen({dict})		Number	open stdio in a headless instance.
 str2float({expr})		Float	convert String to Float
 str2nr({expr} [, {base}])	Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
@@ -2760,6 +2769,35 @@ changenr()						*changenr()*
 		When a change was made it is the number of that change.  After
 		redo it is the number of the redone change.  After undo it is
 		one less than the number of the undone change.
+
+chanclose({id}[, {stream}])				{Nvim} *chanclose()*
+		Close a channel or a specific stream associated with it.
+		For a job, {stream} can be one of "stdin", "stdout",
+		"stderr" or "rpc" (closes stdin/stdout for a job started
+		with `"rpc":v:true`) If {stream} is omitted, all streams
+		are closed. If the channel is a pty, this will then close the
+		pty master, sending SIGHUP to the job process.
+		For a socket, there is only one stream, and {stream} should be
+		ommited.
+
+chansend({id}, {data})					{Nvim} *chansend()*
+		Send data to channel {id}. For a job, it writes it to the
+		stdin of the process. For the stdio channel |channel-stdio|,
+		it writes to Nvim's stdout.  Returns the number of bytes
+		written if the write succeeded, 0 otherwise.
+		See |channel-bytes| for more information.
+
+		{data} may be a string, string convertible, or a list.  If
+		{data} is a list, the items will be joined by newlines; any
+		newlines in an item will be sent as NUL. To send a final
+		newline, include a final empty string. Example: >
+			:call chansend(id, ["abc", "123\n456", ""])
+< 		will send "abc<NL>123<NUL>456<NL>".
+
+		chansend() writes raw data, not RPC messages.  If the channel
+		was created with `"rpc":v:true` then the channel expects RPC
+		messages, use |rpcnotify()| and |rpcrequest()| instead.
+
 
 char2nr({expr} [, {utf8}])					*char2nr()*
 		Return number value of the first char in {expr}.  Examples: >
@@ -4931,12 +4969,6 @@ items({dict})						*items()*
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
 
-jobclose({job}[, {stream}])				*jobclose()*
-		Close {stream} of |job-id| {job}, where {stream} is one of:
-		"stdin", "stdout", "stderr", "rpc" (RPC channel of a job
-		started with `"rpc":v:true`). If {stream} is omitted, all
-		streams are closed. If the job is a pty job, this will close
-		the pty master, sending SIGHUP to the job process.
 
 jobpid({job})						*jobpid()*
 		Return the PID (process id) of |job-id| {job}.
@@ -4945,22 +4977,6 @@ jobresize({job}, {width}, {height})			*jobresize()*
 		Resize the pseudo terminal window of |job-id| {job} to {width}
 		columns and {height} rows.
 		Fails if the job was not started with `"pty":v:true`.
-
-jobsend({job}, {data})					*jobsend()*
-		Writes to stdin of the process associated with |job-id| {job}.
-		Returns 1 if the write succeeded, 0 otherwise.
-		See |job-control|.
-
-		{data} may be a string, string convertible, or a list.  If
-		{data} is a list, the items will be joined by newlines; any
-		newlines in an item will be sent as NUL. To send a final
-		newline, include a final empty string. Example: >
-			:call jobsend(j, ["abc", "123\n456", ""])
-< 		will send "abc<NL>123<NUL>456<NL>".
-
-		jobsend() writes raw data, not RPC messages.  If the job was
-		created with `"rpc":v:true` then the channel expects RPC
-		messages, use |rpcnotify()| and |rpcrequest()| instead.
 
 jobstart({cmd}[, {opts}])				*jobstart()*
 		Spawns {cmd} as a job.
@@ -4971,6 +4987,11 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 
 		Returns |job-id| on success, 0 on invalid arguments (or job
 		table is full), -1 if {cmd}[0] or 'shell' is not executable.
+		For communication over the job's stdio, it is represented as a
+		|channel|, and a channel ID is returned on success. Use
+		|chansend()| (or |rpcnotify()| and |rpcrequest()| if "rpc" option
+		was used) to send data to stdin and |chanclose()| to close stdio
+		streams without stopping the job explicitly.
 
 		See |job-control| and |rpc|.
 
@@ -4987,7 +5008,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 							*jobstart-options*
 		{opts} is a dictionary with these keys:
 		  |on_stdout|: stdout event handler (function name or |Funcref|)
+		  stdout_buffered : read stdout in |buffered| mode.
 		  |on_stderr|: stderr event handler (function name or |Funcref|)
+		  stderr_buffered : read stderr in |buffered| mode.
 		  |on_exit|  : exit event handler (function name or |Funcref|)
 		  cwd      : Working directory of the job; defaults to
 		             |current-directory|.
@@ -5009,9 +5032,14 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 
 		{opts} is passed as |self| dictionary to the callback; the
 		caller may set other keys to pass application-specific data.
+		Returns:
+		  - The channel ID on success
+		  - 0 on invalid arguments
+		  - -1 if {cmd}[0] is not executable.
+		See |job-control|, |channels|, and |msgpack-rpc| for more information.
 
-jobstop({job})						*jobstop()*
-		Stop |job-id| {job} by sending SIGTERM to the job process. If
+jobstop({id})						*jobstop()*
+		Stop |job-id| {id} by sending SIGTERM to the job process. If
 		the process does not terminate after a timeout then SIGKILL
 		will be sent. When the job terminates its |on_exit| handler
 		(if any) will be invoked.
@@ -6328,13 +6356,11 @@ rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
 			:let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
-		Closes an |RPC| {channel}.  If the channel is a job
-		started with |jobstart()|  the job is killed.
-		It is better to use |jobstop()| in this case, or use
-		|jobclose|(id, "rpc") to only close the channel without
-		killing the job.
-		Closes the socket connection if the channel was opened by
-		connecting to |v:servername|.
+		Deprecated. This function was used to stop a job with |rpc|
+		channel, and additionally closed rpc sockets.  Instead use
+		|jobstop()| to stop any job, and |chanclose|(id, "rpc") to close
+		rpc communication without stopping the job. Use |chanclose|(id)
+		to close any socket.
 
 screenattr({row}, {col})					*screenattr()*
 		Like |screenchar()|, but return the attribute.  This is a rather
@@ -7034,15 +7060,20 @@ sockconnect({mode}, {address}, {opts})			 *sockconnect()*
 		{address} should be the path of a named pipe. If {mode} is
 		"tcp" then {address} should be of the form "host:port" where
 		the host should be an ip adderess or host name, and port the
-		port number. Currently only rpc sockets are supported, so
-		{opts} must be passed with "rpc" set to |TRUE|.
+		port number.
+
+		Returns a |channel| ID. Close the socket with |chanclose()|.
+		Use |chansend()| to send data over a bytes socket, and
+		|rpcrequest()| and |rpcnotify()| to communicate with a RPC
+		socket.
 
 		{opts} is a dictionary with these keys:
-		  rpc      : If set, |msgpack-rpc| will be used to communicate
-			     over the socket.
+		  |on_data| : callback invoked when data was read from socket
+		  data_buffered : read data from socket in |buffered| mode.
+		  rpc     : If set, |msgpack-rpc| will be used to communicate
+			    over the socket.
 		Returns:
-		  - The channel ID on success, which is used by
-		    |rpcnotify()| and |rpcrequest()| and |rpcstop()|.
+		  - The channel ID on success (greater than zero)
 		  - 0 on invalid arguments or connection failure.
 
 sort({list} [, {func} [, {dict}]])			*sort()* *E702*
@@ -7192,6 +7223,27 @@ sqrt({expr})						*sqrt()*
 			:echo sqrt(-4.01)
 <			nan
 		"nan" may be different, it depends on system libraries.
+
+
+stdioopen({opts})			 *stdioopen()*
+		In a nvim launched with the |--headless| option, this opens
+		stdin and stdout as a |channel|. This function can only be
+		invoked once per instance. See |channel-stdio| for more
+		information and examples. Note that stderr is not handled by
+		this function, see |v:stderr|.
+
+		Returns a |channel| ID. Close the stdio descriptors with |chanclose()|.
+		Use |chansend()| to send data to stdout, and
+		|rpcrequest()| and |rpcnotify()| to communicate over RPC.
+
+		{opts} is a dictionary with these keys:
+		  |on_stdin| : callback invoked when stdin is written to.
+		  stdin_buffered : read stdin in |buffered| mode.
+		  rpc      : If set, |msgpack-rpc| will be used to communicate
+			     over stdio
+		Returns:
+		  - The channel ID on success (this is always 1)
+		  - 0 on invalid arguments
 
 
 str2float({expr})					*str2float()*
