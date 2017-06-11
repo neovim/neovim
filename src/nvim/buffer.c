@@ -281,19 +281,22 @@ open_buffer (
 void set_bufref(bufref_T *bufref, buf_T *buf)
 {
   bufref->br_buf = buf;
+  bufref->br_fnum = buf->b_fnum;
   bufref->br_buf_free_count = buf_free_count;
 }
 
-/// Check if "bufref" points to a valid buffer.
-///
+/// Return true if "bufref->br_buf" points to the same buffer as when
+/// set_bufref() was called and it is a valid buffer.
 /// Only goes through the buffer list if buf_free_count changed.
+/// Also checks if b_fnum is still the same, a :bwipe followed by :new might get
+/// the same allocated memory, but it's a different buffer.
 ///
 /// @param bufref Buffer reference to check for.
 bool bufref_valid(bufref_T *bufref)
 {
   return bufref->br_buf_free_count == buf_free_count
     ? true
-    : buf_valid(bufref->br_buf);
+    : buf_valid(bufref->br_buf) && bufref->br_fnum == bufref->br_buf->b_fnum;
 }
 
 /// Check that "buf" points to a valid buffer in the buffer list.
@@ -1753,16 +1756,15 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_bkc);
 }
 
-/*
- * get alternate file n
- * set linenr to lnum or altfpos.lnum if lnum == 0
- *	also set cursor column to altfpos.col if 'startofline' is not set.
- * if (options & GETF_SETMARK) call setpcmark()
- * if (options & GETF_ALT) we are jumping to an alternate file.
- * if (options & GETF_SWITCH) respect 'switchbuf' settings when jumping
- *
- * return FAIL for failure, OK for success
- */
+
+/// Get alternate file "n".
+/// Set linenr to "lnum" or altfpos.lnum if "lnum" == 0.
+/// Also set cursor column to altfpos.col if 'startofline' is not set.
+/// if (options & GETF_SETMARK) call setpcmark()
+/// if (options & GETF_ALT) we are jumping to an alternate file.
+/// if (options & GETF_SWITCH) respect 'switchbuf' settings when jumping
+///
+/// Return FAIL for failure, OK for success.
 int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 {
   buf_T       *buf;
