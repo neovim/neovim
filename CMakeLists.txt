@@ -1,9 +1,5 @@
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.12)
 project(nvim)
-
-if(POLICY CMP0059)
-  cmake_policy(SET CMP0059 OLD)  # Needed until cmake 2.8.12. #4389
-endif()
 
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
