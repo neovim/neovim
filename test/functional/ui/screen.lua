@@ -259,7 +259,8 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
 end
 
 function Screen:wait(check, timeout)
-  local err, checked = false
+  local err = check()
+  local checked = false
   local success_seen = false
   local failure_after_success = false
   local function notification_cb(method, args)
@@ -277,7 +278,9 @@ function Screen:wait(check, timeout)
 
     return true
   end
-  run(nil, notification_cb, nil, timeout or self.timeout)
+  if err then
+    run(nil, notification_cb, nil, timeout or self.timeout)
+  end
   if not checked then
     err = check()
   end
