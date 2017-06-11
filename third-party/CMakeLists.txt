@@ -93,7 +93,7 @@ set(LIBUV_SHA256 41ce914a88da21d3b07a76023beca57576ca5b376c6ac440c80bc581cbca125
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-2.1.2.tar.gz)
 set(MSGPACK_SHA256 2a70c1687b51f0097939d12d57f722f28ff1af394bc4e6769d069bdf3e4a5a0a)
 
-set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.5.tar.gz)
+set(LUAJIT_URL https://luajit.org/download/LuaJIT-2.0.5.tar.gz)
 set(LUAJIT_SHA256 874b1f8297c697821f561f9b73b57ffd419ed8f4278c82e05b48806d30c1e979)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
@@ -123,7 +123,7 @@ set(JEMALLOC_SHA256 9409d85664b4f135b77518b0b118c549009dc10f6cba14557d170476611f
 set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-1.tar.gz)
 set(LUV_SHA256 562b9efaad30aa051a40eac9ade0c3df48bb8186763769abe47ec3fb3edb1268)
 
-set(GPERF_URL http://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz)
+set(GPERF_URL https://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz)
 set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2)
 
 # 7za.exe cat.exe curl.exe ca-bundle.crt diff.exe tee.exe tidy.exe xxd.exe
