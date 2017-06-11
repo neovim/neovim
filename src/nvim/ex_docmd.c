@@ -8847,15 +8847,16 @@ makeopens (
    */
   tab_firstwin = firstwin;      /* first window in tab page "tabnr" */
   tab_topframe = topframe;
-  for (tabnr = 1;; ++tabnr) {
+  for (tabnr = 1;; tabnr++) {
+    tabpage_T *tp = find_tabpage(tabnr);  // The tab page of the loop
+    if (tp == NULL) {
+      break;  // done all tab pages
+    }
+
     int need_tabnew = false;
     int cnr = 1;
 
     if ((ssop_flags & SSOP_TABPAGES)) {
-      tabpage_T *tp = find_tabpage(tabnr);
-
-      if (tp == NULL)
-        break;                  /* done all tab pages */
       if (tp == curtab) {
         tab_firstwin = firstwin;
         tab_topframe = topframe;
@@ -8967,6 +8968,16 @@ makeopens (
      */
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL)
       return FAIL;
+
+    // Take care of tab-local working directories if applicable
+    if (tp->tp_localdir) {
+      if (fputs("if has('nvim') | tcd ", fd) < 0
+          || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
+          || fputs(" | endif", fd) < 0
+          || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+    }
 
     /* Don't continue in another tab page when doing only the current one
      * or when at the last tab page. */
