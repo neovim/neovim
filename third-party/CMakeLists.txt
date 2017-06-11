@@ -123,8 +123,8 @@ set(JEMALLOC_SHA256 9409d85664b4f135b77518b0b118c549009dc10f6cba14557d170476611f
 set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-1.tar.gz)
 set(LUV_SHA256 562b9efaad30aa051a40eac9ade0c3df48bb8186763769abe47ec3fb3edb1268)
 
-set(GPERF_URL http://ftp.gnu.org/pub/gnu/gperf/gperf-3.0.4.tar.gz)
-set(GPERF_SHA256 767112a204407e62dbc3106647cf839ed544f3cf5d0f0523aaa2508623aad63e)
+set(GPERF_URL http://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz)
+set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2)
 
 # 7za.exe cat.exe curl.exe ca-bundle.crt diff.exe tee.exe tidy.exe xxd.exe
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
