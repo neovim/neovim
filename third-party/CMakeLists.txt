@@ -120,8 +120,8 @@ set(LIBVTERM_SHA256 1a4272be91d9614dc183a503786df83b6584e4afaab7feaaa5409f841afb
 set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/4.5.0/jemalloc-4.5.0.tar.bz2)
 set(JEMALLOC_SHA256 9409d85664b4f135b77518b0b118c549009dc10f6cba14557d170476611f6780)
 
-set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-0.tar.gz)
-set(LUV_SHA256 86a199403856018cd8e5529c8527450c83664a3d36f52d5253cbe909ea6c5a06)
+set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-1.tar.gz)
+set(LUV_SHA256 562b9efaad30aa051a40eac9ade0c3df48bb8186763769abe47ec3fb3edb1268)
 
 set(GPERF_URL http://ftp.gnu.org/pub/gnu/gperf/gperf-3.0.4.tar.gz)
 set(GPERF_SHA256 767112a204407e62dbc3106647cf839ed544f3cf5d0f0523aaa2508623aad63e)
