@@ -83,7 +83,7 @@ func Test_help_arg()
 	call add(found, "--version")
       endif
     endfor
-    call assert_equal(['--version'], found)
+    call assert_equal(['Readonly mode', '--version'], found)
   endif
   call delete('Xtestout')
 endfunc
