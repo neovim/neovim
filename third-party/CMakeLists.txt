@@ -93,8 +93,8 @@ set(LIBUV_SHA256 41ce914a88da21d3b07a76023beca57576ca5b376c6ac440c80bc581cbca125
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-2.1.2.tar.gz)
 set(MSGPACK_SHA256 2a70c1687b51f0097939d12d57f722f28ff1af394bc4e6769d069bdf3e4a5a0a)
 
-set(LUAJIT_URL https://luajit.org/download/LuaJIT-2.0.5.tar.gz)
-set(LUAJIT_SHA256 874b1f8297c697821f561f9b73b57ffd419ed8f4278c82e05b48806d30c1e979)
+set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/82151a4514e6538086f3f5e01cb8d4b22287b14f.tar.gz)
+set(LUAJIT_SHA256 8bc4e96ebab74e12ab84e751360e864714289bb089b51b6f396fa9a97df69798)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
