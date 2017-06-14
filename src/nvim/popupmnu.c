@@ -307,10 +307,10 @@ void pum_redraw(void)
 {
   int row = pum_row;
   int col;
-  int attr_norm = highlight_attr[HLF_PNI];
-  int attr_select = highlight_attr[HLF_PSI];
-  int attr_scroll = highlight_attr[HLF_PSB];
-  int attr_thumb = highlight_attr[HLF_PST];
+  int attr_norm = win_hl_attr(curwin, HLF_PNI);
+  int attr_select = win_hl_attr(curwin, HLF_PSI);
+  int attr_scroll = win_hl_attr(curwin, HLF_PSB);
+  int attr_thumb = win_hl_attr(curwin, HLF_PST);
   int attr;
   int i;
   int idx;

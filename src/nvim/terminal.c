@@ -601,8 +601,10 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 
     if (term->cursor.visible && term->cursor.row == row
         && term->cursor.col == col) {
-      attr_id = hl_combine_attr(attr_id, is_focused(term) && wp == curwin ?
-          hl_attr(HLF_TERM) : hl_attr(HLF_TERMNC));
+      attr_id = hl_combine_attr(attr_id,
+                                is_focused(term) && wp == curwin
+                                ? win_hl_attr(wp, HLF_TERM)
+                                : win_hl_attr(wp, HLF_TERMNC));
     }
 
     term_attrs[col] = attr_id;

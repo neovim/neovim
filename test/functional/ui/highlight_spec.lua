@@ -5,6 +5,7 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command = helpers.command
 local eval, exc_exec = helpers.eval, helpers.exc_exec
 local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
+local curbufmeths = helpers.curbufmeths
 
 describe('colorscheme compatibility', function()
   before_each(function()
@@ -670,12 +671,26 @@ describe("'winhighlight' highlight", function()
       [8] = {background = Screen.colors.DarkMagenta, bold = true, foreground = Screen.colors.Blue1},
       [9] = {foreground = Screen.colors.Brown},
       [10] = {foreground = Screen.colors.Brown, background = Screen.colors.DarkBlue},
+      [11] = {background = Screen.colors.DarkBlue, bold = true, reverse = true},
+      [12] = {background = Screen.colors.DarkGreen, reverse = true},
+      [13] = {background = Screen.colors.Magenta4, reverse = true},
+      [14] = {background = Screen.colors.DarkBlue, reverse = true},
+      [15] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [16] = {foreground = Screen.colors.Blue1},
+      [17] = {background = Screen.colors.LightRed},
+      [18] = {background = Screen.colors.Gray90},
+      [19] = {foreground = Screen.colors.LightGrey, background = Screen.colors.DarkGray},
+      [20] = {background = Screen.colors.LightGrey, underline = true},
+      [21] = {bold = true},
+      [22] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [23] = {background = Screen.colors.LightMagenta},
+      [24] = {background = Screen.colors.WebGray},
     })
     command("hi Background1 guibg=DarkBlue")
     command("hi Background2 guibg=DarkGreen")
   end)
 
-  it('works', function()
+  it('works for background color', function()
     insert("aa")
     command("split")
     command("set winhl=Normal:Background1")
@@ -683,7 +698,7 @@ describe("'winhighlight' highlight", function()
       {1:a^a                  }|
       {2:~                   }|
       {2:~                   }|
-      {3:[No Name] [+]       }|
+      {11:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
@@ -695,7 +710,7 @@ describe("'winhighlight' highlight", function()
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
-      {3:[No Name]           }|
+      {11:[No Name]           }|
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
@@ -740,7 +755,7 @@ describe("'winhighlight' highlight", function()
       {1:a^a                  }|
       {2:~                   }|
       {2:~                   }|
-      {3:[No Name] [+]       }|
+      {11:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
@@ -764,16 +779,15 @@ describe("'winhighlight' highlight", function()
       {1:^aa                  }|
       {2:~                   }|
       {2:~                   }|
-      {3:[No Name] [+]       }|
+      {11:[No Name] [+]       }|
       aa                  |
       {0:~                   }|
       {4:[No Name] [+]       }|
       <f 1 --100%-- col 1 |
     ]])
-
   end)
 
-  it('for inactive window works', function()
+  it('for inactive window background works', function()
     command("set winhl=Normal:Background1,NormalNC:Background2")
     -- tests global value is copied across split
     command("split")
@@ -781,10 +795,10 @@ describe("'winhighlight' highlight", function()
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
-      {3:[No Name]           }|
+      {11:[No Name]           }|
       {5:                    }|
       {6:~                   }|
-      {4:[No Name]           }|
+      {12:[No Name]           }|
                           |
     ]])
 
@@ -793,10 +807,10 @@ describe("'winhighlight' highlight", function()
       {5:                    }|
       {6:~                   }|
       {6:~                   }|
-      {4:[No Name]           }|
+      {12:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
-      {3:[No Name]           }|
+      {11:[No Name]           }|
                           |
     ]])
 
@@ -805,13 +819,12 @@ describe("'winhighlight' highlight", function()
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
-      {3:[No Name]           }|
+      {11:[No Name]           }|
       {5:                    }|
       {6:~                   }|
-      {4:[No Name]           }|
+      {12:[No Name]           }|
                           |
     ]])
-
   end)
 
   it('works with NormalNC', function()
@@ -825,7 +838,7 @@ describe("'winhighlight' highlight", function()
       {3:[No Name]           }|
       {7:                    }|
       {8:~                   }|
-      {4:[No Name]           }|
+      {13:[No Name]           }|
                           |
     ]])
 
@@ -834,7 +847,7 @@ describe("'winhighlight' highlight", function()
       {7:                    }|
       {8:~                   }|
       {8:~                   }|
-      {4:[No Name]           }|
+      {13:[No Name]           }|
       ^                    |
       {0:~                   }|
       {3:[No Name]           }|
@@ -848,10 +861,10 @@ describe("'winhighlight' highlight", function()
       {7:                    }|
       {8:~                   }|
       {8:~                   }|
-      {4:[No Name]           }|
+      {13:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
-      {3:[No Name]           }|
+      {11:[No Name]           }|
                           |
     ]])
 
@@ -863,7 +876,7 @@ describe("'winhighlight' highlight", function()
       {3:[No Name]           }|
       {1:                    }|
       {2:~                   }|
-      {4:[No Name]           }|
+      {14:[No Name]           }|
                           |
     ]])
 
@@ -873,10 +886,10 @@ describe("'winhighlight' highlight", function()
       {7:                    }|
       {8:~                   }|
       {8:~                   }|
-      {4:[No Name]           }|
+      {13:[No Name]           }|
       {1:^                    }|
       {2:~                   }|
-      {3:[No Name]           }|
+      {11:[No Name]           }|
                           |
     ]])
 
@@ -888,13 +901,12 @@ describe("'winhighlight' highlight", function()
       {3:[No Name]           }|
       {5:                    }|
       {6:~                   }|
-      {4:[No Name]           }|
+      {12:[No Name]           }|
                           |
     ]])
-
   end)
 
-  it('applies also to non-text', function()
+  it('background applies also to non-text', function()
     insert('Lorem ipsum dolor sit amet ')
     command('set shiftwidth=2')
     feed('>>')
@@ -940,6 +952,114 @@ describe("'winhighlight' highlight", function()
                           |
     ]])
   end)
+
+  it('can override NonText, Conceal and EndOfBuffer', function()
+    curbufmeths.set_lines(0,-1,true, {"raa\000"})
+    command('call matchaddpos("Conceal", [[1,2]], 0, -1, {"conceal": "#"})')
+    command('set cole=2 cocu=nvic')
+    command('split')
+    command('call matchaddpos("Conceal", [[1,2]], 0, -1, {"conceal": "#"})')
+    command('set winhl=SpecialKey:ErrorMsg,EndOfBuffer:Background1,'
+            ..'Conceal:Background2')
+
+    screen:expect([[
+      ^r{5:#}a{15:^@}               |
+      {1:~                   }|
+      {1:~                   }|
+      {3:[No Name] [+]       }|
+      r{19:#}a{16:^@}               |
+      {0:~                   }|
+      {4:[No Name] [+]       }|
+                          |
+    ]])
+  end)
+
+  it('can override LineNr, CursorColumn and ColorColumn', function()
+    insert('very text\nmore text')
+    command('set number')
+    command('set colorcolumn=2')
+    command('set cursorcolumn')
+
+    command('split')
+    command('set winhl=LineNr:Background1,CursorColumn:Background2,'
+            ..'ColorColumn:ErrorMsg')
+    screen:expect([[
+      {1:  1 }v{15:e}ry tex{5:t}       |
+      {1:  2 }m{15:o}re tex^t       |
+      {0:~                   }|
+      {3:[No Name] [+]       }|
+      {9:  1 }v{17:e}ry tex{18:t}       |
+      {9:  2 }m{17:o}re text       |
+      {4:[No Name] [+]       }|
+                          |
+    ]])
+  end)
+
+  it('can override Tabline', function()
+    command('tabnew')
+    command('set winhl=TabLine:Background1,TabLineSel:ErrorMsg')
+
+    screen:expect([[
+      {20: No Name] }{15: No Name]}{20:X}|
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+    command("tabnext")
+    screen:expect([[
+      {21: No Name] }{1: No Name]}{20:X}|
+      ^                    |
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+      {0:~                   }|
+                          |
+    ]])
+  end)
+
+  it('can override popupmenu', function()
+    insert('word wording wordy')
+    command('split')
+    command('set winhl=Pmenu:Background1,PmenuSel:Background2,'
+            ..'PmenuSbar:ErrorMsg,PmenuThumb:Normal')
+    screen:expect([[
+      word wording word^y  |
+      {0:~                   }|
+      {0:~                   }|
+      {3:[No Name] [+]       }|
+      word wording wordy  |
+      {0:~                   }|
+      {4:[No Name] [+]       }|
+                          |
+    ]])
+
+    feed('oword<c-x><c-p>')
+    screen:expect([[
+      word wording wordy  |
+      wordy^               |
+      {1:word           }{0:     }|
+      {1:wording        }{3:     }|
+      {5:wordy          }rdy  |
+      wordy               |
+      {4:[No Name] [+]       }|
+      {21:-- }{22:match 1 of 3}     |
+    ]])
+
+    feed('<esc>u<c-w><c-w>oword<c-x><c-p>')
+    screen:expect([[
+      word wording wordy  |
+      wordy               |
+      {23:word           }{0:     }|
+      {23:wording        }{4:     }|
+      {24:wordy          }rdy  |
+      wordy^               |
+      {3:[No Name] [+]       }|
+      {21:-- }{22:match 1 of 3}     |
+    ]])
+  end)
 end)
-
-
