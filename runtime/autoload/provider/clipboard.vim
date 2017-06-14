@@ -84,6 +84,12 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
+  elseif exists('$TMUX') && executable('tmux')
+    let s:copy['+'] = 'tmux load-buffer -'
+    let s:paste['+'] = 'tmux save-buffer -'
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'tmux'
   endif
 
   let s:err = 'clipboard: No clipboard tool available. :help clipboard'
