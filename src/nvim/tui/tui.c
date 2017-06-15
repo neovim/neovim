@@ -55,7 +55,9 @@
 // separator.
 bool terminfo_is_term_family(const char *term, const char *family)
 {
-  if (!term) return false;
+  if (!term) {
+    return false;
+  }
   size_t tlen = strlen(term);
   size_t flen = strlen(family);
   return tlen >= flen
@@ -158,7 +160,8 @@ UI *tui_start(void)
   return ui_bridge_attach(ui, tui_main, tui_scheduler);
 }
 
-static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index, char * buf, size_t len)
+static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
+    char * buf, size_t len)
 {
   const char *str = unibi_get_str(data->ut, unibi_index);
   if (!str) {
@@ -218,8 +221,10 @@ static void terminfo_start(UI *ui)
   data->immediate_wrap_after_last_column =
     terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "interix");
-  data->normlen = unibi_pre_fmt_str(data, unibi_cursor_normal, data->norm, sizeof data->norm);
-  data->invislen = unibi_pre_fmt_str(data, unibi_cursor_invisible, data->invis, sizeof data->invis);
+  data->normlen = unibi_pre_fmt_str(data, unibi_cursor_normal,
+      data->norm, sizeof data->norm);
+  data->invislen = unibi_pre_fmt_str(data, unibi_cursor_invisible,
+      data->invis, sizeof data->invis);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
@@ -630,7 +635,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
 
     if (!cleared) {
       // iterate through each line and clear with clr_eol
-      for (int row = top; row <= bot; ++row) {
+      for (int row = top; row <= bot; row++) {
         cursor_goto(ui, row, left);
         unibi_out(ui, unibi_clr_eol);
       }
@@ -1219,7 +1224,7 @@ static void unibi_set_if_empty(unibi_term *ut, enum unibi_string str,
 static int unibi_find_ext_str(unibi_term *ut, const char *name)
 {
   size_t max = unibi_count_ext_str(ut);
-  for (size_t i = 0; i < max; ++i) {
+  for (size_t i = 0; i < max; i++) {
     const char * n = unibi_get_ext_str_name(ut, i);
     if (n && 0 == strcmp(n, name)) {
       return (int)i;
@@ -1229,9 +1234,9 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
 }
 
 static int unibi_find_ext_bool(unibi_term *ut, const char *name)
- {
+{
   size_t max = unibi_count_ext_bool(ut);
-   for (size_t i = 0; i < max; ++i) {
+  for (size_t i = 0; i < max; i++) {
     const char * n = unibi_get_ext_bool_name(ut, i);
     if (n && 0 == strcmp(n, name)) {
       return (int)i;
@@ -1287,7 +1292,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     }
     if (linuxvt
         && strlen(fix_normal) >= (sizeof LINUXSET0C - 1)
-        && !memcmp(strchr(fix_normal,0) - (sizeof LINUXSET0C - 1), LINUXSET0C, sizeof LINUXSET0C - 1)) {
+        && !memcmp(strchr(fix_normal, 0) - (sizeof LINUXSET0C - 1),
+          LINUXSET0C, sizeof LINUXSET0C - 1)) {
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
       // cursor shape reset in cnorm, which similarly interferes with
       // set_cursor_style.
@@ -1298,7 +1304,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (fix_invisible) {
     if (linuxvt
         && strlen(fix_invisible) >= (sizeof LINUXSET1C - 1)
-        && !memcmp(strchr(fix_invisible,0) - (sizeof LINUXSET1C - 1), LINUXSET1C, sizeof LINUXSET1C - 1)) {
+        && !memcmp(strchr(fix_invisible, 0) - (sizeof LINUXSET1C - 1),
+          LINUXSET1C, sizeof LINUXSET1C - 1)) {
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
       // cursor shape reset in cinvis, which similarly interferes with
       // set_cursor_style.
@@ -1401,7 +1408,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
-    } else if (konsole || xterm || gnome || rxvt || st || putty
+    } else
+    if (konsole || xterm || gnome || rxvt || st || putty
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || mate_pretending_xterm || gnome_pretending_xterm
         || tmux || tmux_pretending_screen
@@ -1450,8 +1458,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
               "");
       }
-      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[ q");
-    } else if (putty   // per MinTTY 0.4.3-1 release notes from 2009
+      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
+          "\x1b[ q");
+    } else
+    if (putty   // per MinTTY 0.4.3-1 release notes from 2009
         // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
         || (vte_version >= 3900)
         // per tmux manual page and per
@@ -1468,7 +1478,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
               "");
       }
-      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[ q");
+      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
+          "\x1b[ q");
     } else if (linuxvt) {
       // Linux uses an idiosyncratic escape code to set the cursor shape and does
       // not support DECSCUSR.
@@ -1490,7 +1501,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
               "");
       }
-      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style, "\x1b[?c");
+      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
+          "\x1b[?c");
     } else if (konsole) {
       // Konsole uses an idiosyncratic escape code to set the cursor shape and
       // does not support DECSCUSR.  This makes Konsole set up and apply a
@@ -1660,7 +1672,8 @@ static void flush_buf(UI *ui, bool toggle_cursor)
     data->is_invisible = data->busy;
   }
 
-  uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle), bufs, (unsigned)(bufp - bufs), NULL);
+  uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
+      bufs, (unsigned)(bufp - bufs), NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 }
