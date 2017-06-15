@@ -96,8 +96,8 @@ local function request(method, ...)
   return rv
 end
 
-local function next_message()
-  return session:next_message()
+local function next_message(...)
+  return session:next_message(...)
 end
 
 local function call_and_stop_on_error(...)

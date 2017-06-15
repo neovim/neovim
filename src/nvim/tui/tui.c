@@ -90,15 +90,17 @@ typedef struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
     int set_rgb_foreground, set_rgb_background;
-    int set_cursor_bg_color;
+    int set_cursor_bg_color, set_cursor_fg_color;
     int enable_focus_reporting, disable_focus_reporting;
+    int reset_cursor;
   } unibi_ext;
 } TUIData;
 
 static bool volatile got_winch = false;
 static bool cursor_style_enabled = false;
 static bool is_tmux = false;
-static int cursor_bg = -1;
+// cursorentry_T
+static int cursor_attr = -1;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -185,6 +187,20 @@ static void terminfo_start(UI *ui)
   }
 }
 
+static void tui_restore_cursor(UI *ui)
+{
+  TUIData *data = ui->data;
+  // unibi_out(ui, unibi_cursor_normal);
+  const char *vte_version = os_getenv("VTE_VERSION");
+  // unibi_out(ui, unibi_restore_cursor); // just saves cursor position ?
+  if (vte_version && atoi(vte_version) >= 3900) {
+    ILOG("VTE=%s", vte_version);
+    unibi_out(ui, data->unibi_ext.reset_cursor);
+    // printf("\e[0 q"); // restore only the shape for now
+    // printf("\033]112\007"); // reset cursor foreground color
+  }
+}
+
 static void terminfo_stop(UI *ui)
 {
   TUIData *data = ui->data;
@@ -192,8 +208,6 @@ static void terminfo_stop(UI *ui)
   tui_mode_change(ui, (String)STRING_INIT, SHAPE_IDX_N);
   tui_mouse_off(ui);
   unibi_out(ui, unibi_exit_attribute_mode);
-  // cursor should be set to normal before exiting alternate screen
-  unibi_out(ui, unibi_cursor_normal);
   unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
   unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
@@ -232,6 +246,7 @@ static void tui_terminal_stop(UI *ui)
   signal_watcher_stop(&data->winch_handle);
   terminfo_stop(ui);
   ugrid_free(&data->grid);
+  tui_restore_cursor(ui);
 }
 
 static void tui_stop(UI *ui)
@@ -319,11 +334,11 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   unibi_out(ui, unibi_exit_attribute_mode);
   UGrid *grid = &data->grid;
 
-  int fg = attrs.foreground != -1 ? attrs.foreground : grid->fg;
-  int bg = attrs.background != -1 ? attrs.background : grid->bg;
+  int fg = attrs.foreground != kColorInvalid ? attrs.foreground : grid->fg;
+  int bg = attrs.background != kColorInvalid ? attrs.background : grid->bg;
 
   if (p_tgc) {
-    if (fg != -1) {
+    if (fg != kColorInvalid) {
       data->params[0].i = (fg >> 16) & 0xff;  // red
       data->params[1].i = (fg >> 8) & 0xff;   // green
       data->params[2].i = fg & 0xff;          // blue
@@ -374,7 +389,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
   UGrid *grid = &data->grid;
 
   bool cleared = false;
-  if (grid->bg == -1 && right == ui->width -1) {
+  if (grid->bg == kColorInvalid && right == ui->width -1) {
     // Background is set to the default color and the right edge matches the
     // screen end, try to use terminal codes for clearing the requested area.
     HlAttrs clear_attrs = EMPTY_ATTRS;
@@ -474,7 +489,7 @@ CursorShape tui_cursor_decode_shape(const char *shape_str)
 // if the cursor should be visible according to guicursor
 static bool cursor_visible(void)
 {
-  return cursor_bg != -2;
+  return cursor_attr != kColorNone;
 }
 
 static cursorentry_T decode_cursor_entry(Dictionary args)
@@ -580,32 +595,48 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     bool res = attr2hlattr(attr, p_tgc, &hl);
     assert(res);
     ILOG("valid cursor hl %d with attr %d", c.id, attr);
-    if (attr >= 0) {
-      // attrentry_T *aep = syn_cterm_attr2entry(attr);
-      // bool res = attrentry2hlattr(aep, p_tgc, attr);
-      // assert(res);
-      if (p_tgc) {
-        // cursor_bg = aep->rgb_bg_color;
-        cursor_bg = hl.background;
-        ILOG("TERMGUICOLORS cursor=%d", cursor_bg);
-      } else {
-        // const char *name = cterm_int2name(aep->cterm_bg_color - 1);
-        // // ILOG("Translates to name %s", name);
-        // if (name) {
-        //   cursor_bg = (int)name_to_color((uint8_t *)name);
-        // }
-      }
-    } else {
-      cursor_bg = -1;
-    }
+    // if (attr >= 0) {
+    //   // attrentry_T *aep = syn_cterm_attr2entry(attr);
+    //   bool res = attrentry2hlattr(aep, p_tgc, attr);
+    //   assert(res);
+    //   // if (p_tgc) {
+    //   //   // cursor_bg = aep->rgb_bg_color;
+    //   //   cursor_bg = hl.background;
+    //   //   ILOG("TERMGUICOLORS cursor=%d", cursor_bg);
+    //   // } else {
+    //   //   // const char *name = cterm_int2name(aep->cterm_bg_color - 1);
+    //   //   // // ILOG("Translates to name %s", name);
+    //   //   // if (name) {
+    //   //   //   cursor_bg = (int)name_to_color((uint8_t *)name);
+    //   //   // }
+    //   // }
+    // // } else {
+    //   // cursor_bg = -1;
+    // }
+    // if reverse for VTE, just set to empty color when setting cursor bg or fg color
 
-    if (cursor_bg == kColorNone) {
+    if (hl.reverse) {
+      // on vte
+      unibi_out(ui, data->unibi_ext.reset_cursor);  // display if previously invisible
+      // setting either fg or bg to an invalid color resets to video mode in vte
+      // data->params[0].i = 0;
+      // ILOG("setting reverse");
+      // unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
+      // data->params[0].i = attr.;
+    } else if (hl.background == kColorNone) {
+      // should work also if guibg=fg/guifg=bg ?
       unibi_out(ui, unibi_cursor_invisible);
     } else {
       unibi_out(ui, unibi_cursor_normal);  // display if previously invisible
-      data->params[0].i = cursor_bg;
-      ILOG("setting cursor color");
-      unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
+      if (hl.background != kColorInvalid) {
+        data->params[0].i = hl.background;
+        ILOG("setting cursor color");
+        unibi_out(ui, data->unibi_ext.set_cursor_bg_color);
+      }
+      // if (hl.foreground != kColorInvalid) {
+      //   data->params[0].i = hl.foreground;
+      //   unibi_out(ui, data->unibi_ext.set_cursor_fg_color);
+      // }
     }
   } else {
     ILOG("invalid cursor hl %d", c.id);
@@ -1091,7 +1122,12 @@ end:
   } else {
     data->unibi_ext.set_cursor_bg_color = (int)unibi_add_ext_str(
         ut, NULL, "\033]12;#%p1%06x\007");
+    data->unibi_ext.set_cursor_fg_color = (int)unibi_add_ext_str(
+        ut, NULL, "\033]20;#%p1%06x\007");
   }
+  // that's for VTE [0 q resets shape, 112
+  data->unibi_ext.reset_cursor = (int)unibi_add_ext_str(ut, NULL,
+      "\x1b[0 q\033]112\007");
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
