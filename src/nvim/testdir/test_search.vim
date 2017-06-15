@@ -1,6 +1,7 @@
 " Test for the search command
 
 func Test_search_cmdline()
+  " See test/functional/legacy/search_spec.lua
   throw 'skipped: Nvim does not support test_disable_char_avail()'
   if !exists('+incsearch')
     return
@@ -197,6 +198,7 @@ func Test_search_cmdline()
 endfunc
 
 func Test_search_cmdline2()
+  " See test/functional/legacy/search_spec.lua
   throw 'skipped: Nvim does not support test_disable_char_avail()'
   if !exists('+incsearch')
     return
