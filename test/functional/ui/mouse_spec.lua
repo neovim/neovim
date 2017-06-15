@@ -119,7 +119,7 @@ describe('ui/mouse/input', function()
         sel  = { bold=true },
         fill = { reverse=true }
       })
-      screen.timeout = 15000
+      screen.timeout = 6000
     end)
 
     it('in tabline on filler space moves tab to the end', function()
