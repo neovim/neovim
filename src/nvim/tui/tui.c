@@ -47,7 +47,8 @@
 #define TOO_MANY_EVENTS 1000000
 #define STARTS_WITH(str, prefix) (strlen(term) >= (sizeof(prefix) - 1) \
     && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
-#define TMUX_WRAP(is_tmux,seq) ((is_tmux) ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
+#define TMUX_WRAP(is_tmux, seq) ((is_tmux) \
+    ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
 
@@ -552,7 +553,7 @@ static void cursor_goto(UI *ui, int row, int col)
         // different cursor positioning rules.
         && (data->immediate_wrap_after_last_column || grid->col < ui->width)) {
       int n = grid->col - col;
-      if (n <= 4) { // This might be just BS, so it is considered really cheap.
+      if (n <= 4) {  // This might be just BS, so it is considered really cheap.
         while (n--) {
           unibi_out(ui, unibi_cursor_left);
         }
@@ -579,7 +580,7 @@ static void cursor_goto(UI *ui, int row, int col)
   if (col == grid->col) {
     if (row > grid->row) {
       int n = row - grid->row;
-      if (n <= 4) { // This might be just LF, so it is considered really cheap.
+      if (n <= 4) {  // This might be just LF, so it is considered really cheap.
         while (n--) {
           unibi_out(ui, unibi_cursor_down);
         }
@@ -1483,21 +1484,21 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
           "\x1b[ q");
     } else if (linuxvt) {
-      // Linux uses an idiosyncratic escape code to set the cursor shape and does
-      // not support DECSCUSR.
+      // Linux uses an idiosyncratic escape code to set the cursor shape and
+      // does not support DECSCUSR.
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           "\x1b[?"
           "%?"
           // The parameter passed to Ss is the DECSCUSR parameter, so the
           // terminal capability has to translate into the Linux idiosyncratic
           // parameter.
-          "%p1%{2}%<" "%t%{8}"  // blink block
-          "%p1%{2}%=" "%t%{24}" // steady block
-          "%p1%{3}%=" "%t%{1}"  // blink underline
-          "%p1%{4}%=" "%t%{17}" // steady underline
-          "%p1%{5}%=" "%t%{1}"  // blink bar
-          "%p1%{6}%=" "%t%{17}" // steady bar
-          "%e%{0}"              // anything else
+          "%p1%{2}%<" "%t%{8}"    // blink block
+          "%p1%{2}%=" "%t%{24}"   // steady block
+          "%p1%{3}%=" "%t%{1}"    // blink underline
+          "%p1%{4}%=" "%t%{17}"   // steady underline
+          "%p1%{5}%=" "%t%{1}"    // blink bar
+          "%p1%{6}%=" "%t%{17}"   // steady bar
+          "%e%{0}"                // anything else
           "%;" "%dc");
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
