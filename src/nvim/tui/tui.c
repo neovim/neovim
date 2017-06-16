@@ -230,6 +230,7 @@ static void terminfo_start(UI *ui)
   // Enter alternate screen and clear
   // NOTE: Do this *before* changing terminal settings. #6433
   unibi_out(ui, unibi_enter_ca_mode);
+  unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
   unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
@@ -258,6 +259,7 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, unibi_exit_attribute_mode);
   // cursor should be set to normal before exiting alternate screen
   unibi_out(ui, unibi_cursor_normal);
+  unibi_out(ui, unibi_keypad_local);
   unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
   unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
