@@ -87,14 +87,14 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.9.1.tar.gz)
-set(LIBUV_SHA256 a6ca9f0648973d1463f46b495ce546ddcbe7cce2f04b32e802a15539e46c57ad)
+set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.12.0.tar.gz)
+set(LIBUV_SHA256 41ce914a88da21d3b07a76023beca57576ca5b376c6ac440c80bc581cbca1250)
 
-set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-2.1.1.tar.gz)
-set(MSGPACK_SHA256 d6bef12d959816a39c7a6972f3f16c0724e4c7ff0927eb59a35247dc8267b609)
+set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/cpp-2.1.3.tar.gz)
+set(MSGPACK_SHA256 42ff5c213fd24bd4388c45c1f21d84b476678ce6366ea4d4f4086618a1d2cd23)
 
-set(LUAJIT_URL https://github.com/neovim/deps/raw/master/opt/LuaJIT-2.0.4.tar.gz)
-set(LUAJIT_SHA256 620fa4eb12375021bef6e4f237cbd2dd5d49e56beb414bee052c746beef1807d)
+set(LUAJIT_URL https://github.com/LuaJIT/LuaJIT/archive/82151a4514e6538086f3f5e01cb8d4b22287b14f.tar.gz)
+set(LUAJIT_SHA256 8bc4e96ebab74e12ab84e751360e864714289bb089b51b6f396fa9a97df69798)
 
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
@@ -117,14 +117,14 @@ endif()
 set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/a9c7c6fd20fa35e0ad3e0e98901ca12dfca9c25c.tar.gz)
 set(LIBVTERM_SHA256 1a4272be91d9614dc183a503786df83b6584e4afaab7feaaa5409f841afbd796)
 
-set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/4.3.1/jemalloc-4.3.1.tar.bz2)
-set(JEMALLOC_SHA256 f7bb183ad8056941791e0f075b802e8ff10bd6e2d904e682f87c8f6a510c278b)
+set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/4.5.0/jemalloc-4.5.0.tar.bz2)
+set(JEMALLOC_SHA256 9409d85664b4f135b77518b0b118c549009dc10f6cba14557d170476611f6780)
 
-set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-0.tar.gz)
-set(LUV_SHA256 86a199403856018cd8e5529c8527450c83664a3d36f52d5253cbe909ea6c5a06)
+set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-1.tar.gz)
+set(LUV_SHA256 562b9efaad30aa051a40eac9ade0c3df48bb8186763769abe47ec3fb3edb1268)
 
-set(GPERF_URL http://ftp.gnu.org/pub/gnu/gperf/gperf-3.0.4.tar.gz)
-set(GPERF_SHA256 767112a204407e62dbc3106647cf839ed544f3cf5d0f0523aaa2508623aad63e)
+set(GPERF_URL https://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz)
+set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2)
 
 # 7za.exe cat.exe curl.exe ca-bundle.crt diff.exe tee.exe tidy.exe xxd.exe
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
