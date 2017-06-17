@@ -1,5 +1,5 @@
 # This is not meant to be included by the top-level.
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required (VERSION 2.8.7)
 project(NVIM_DEPS)
 
 # Point CMake at any custom modules we may ship
