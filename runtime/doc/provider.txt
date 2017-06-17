@@ -99,6 +99,19 @@ RUBY PROVIDER CONFIGURATION ~
 						*g:loaded_ruby_provider*
 To disable Ruby support: >
     let g:loaded_ruby_provider = 1
+<
+						*g:ruby_host_prog*
+Command to start the Ruby host. By default this is `neovim-ruby-host`. For users
+who use per-project Ruby versions with tools like RVM or rbenv, setting this can
+prevent the need to install the `neovim` gem in every project.
+
+To use an absolute path (e.g. to an rbenv installation): >
+    let g:ruby_host_prog = '~/.rbenv/versions/2.4.1/bin/neovim-ruby-host'
+<
+
+To use the RVM "system" Ruby installation: >
+    let g:ruby_host_prog = 'rvm system do neovim-ruby-host'
+<
 
 ==============================================================================
 Clipboard integration 			      *provider-clipboard* *clipboard*
