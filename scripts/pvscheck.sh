@@ -1,14 +1,15 @@
 #!/bin/sh
+
+# Assume that "local" is available.
+# shellcheck disable=SC2039
+
 set -e
 # Note: -u causes problems with posh, it barks at “undefined” $@ when no
 # arguments provided.
 test -z "$POSH_VERSION" && set -u
 
-get_jobs_num() {
-  local num="$(cat /proc/cpuinfo | grep -c "^processor")"
-  num="$(echo $(( num + 1 )))"
-  num="${num:-1}"
-  echo $num
+echo_jobs_num() {
+  echo $(( $(grep -c "^processor" /proc/cpuinfo) + 1 ))
 }
 
 help() {
@@ -21,7 +22,7 @@ help() {
   echo '    --pvs: Use the specified URL as a path to pvs-studio archive.'
   echo '           By default latest tested version is used.'
   echo
-  echo '           May use `--pvs detect` to try detecting latest version.'
+  echo '           May use "--pvs detect" to try detecting latest version.'
   echo '           That assumes certain viva64.com site properties and'
   echo '           may be broken by the site update.'
   echo
@@ -261,15 +262,6 @@ install_pvs() {(
   rmdir "$pvsdir"
 )}
 
-adjust_path() {
-  if test -d "$tgt/pvs-studio" ; then
-    local saved_pwd="$PWD"
-    cd "$tgt/pvs-studio"
-    export PATH="$PWD/bin${PATH+:}${PATH}"
-    cd "$saved_pwd"
-  fi
-}
-
 create_compile_commands() {(
   local tgt="$1" ; shift
   local deps="$1" ; shift
@@ -283,13 +275,13 @@ create_compile_commands() {(
       cd "$tgt/build"
 
       cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
-      make -j"$(get_jobs_num)"
+      make -j"$(echo_jobs_num)"
     )
   else
     (
       cd "$tgt"
 
-      make -j"$(get_jobs_num)" CMAKE_EXTRA_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
+      make -j"$(echo_jobs_num)" CMAKE_EXTRA_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
     )
   fi
   find "$tgt/build/src/nvim/auto" -name '*.test-include.c' -delete
@@ -379,7 +371,12 @@ do_recheck() {
 do_analysis() {
   local tgt="$1" ; shift
 
-  adjust_path "$tgt"
+  if test -d "$tgt/pvs-studio" ; then
+    local saved_pwd="$PWD"
+    cd "$tgt/pvs-studio"
+    export PATH="$PWD/bin${PATH+:}${PATH}"
+    cd "$saved_pwd"
+  fi
 
   run_analysis "$tgt"
 }
