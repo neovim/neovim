@@ -7,12 +7,22 @@ let g:loaded_ruby_provider = 1
 let s:stderr = {}
 let s:job_opts = {'rpc': v:true}
 
-function! s:job_opts.on_stderr(chan_id, data, event)
+function! s:job_opts.on_stderr(chan_id, data, event) dict
   let stderr = get(s:stderr, a:chan_id, [''])
   let last = remove(stderr, -1)
   let a:data[0] = last.a:data[0]
   call extend(stderr, a:data)
   let s:stderr[a:chan_id] = stderr
+endfunction
+
+function! s:job_opts.on_exit(chan_id, code, event) dict abort
+  if a:code == 0 | return | endif
+  echoerr 'Ruby provider exited with code '.a:code
+  for row in get(s:stderr, a:chan_id, [])
+    echoerr row
+  endfor
+  unlet s:stderr[a:chan_id]
+  "throw remote#host#LoadErrorForHost('ruby', '$NVIM_RUBY_LOG_FILE')
 endfunction
 
 function! provider#ruby#Detect() abort
@@ -31,19 +41,13 @@ function! provider#ruby#Require(host) abort
     call add(args, plugin.path)
   endfor
 
-  try
-    let channel_id = jobstart(args, s:job_opts)
-    if rpcrequest(channel_id, 'poll') ==# 'ok'
-      return channel_id
-    endif
-  catch
-    echomsg v:throwpoint
-    echomsg v:exception
-    for row in get(s:stderr, channel_id, [])
-      echomsg row
-    endfor
-  endtry
-  throw remote#host#LoadErrorForHost(a:host.orig_name, '$NVIM_RUBY_LOG_FILE')
+  let channel_id = jobstart(args, s:job_opts)
+
+  if channel_id == -1
+    echoerr args[0] . ' is not executable. Try :CheckHealth'
+  endif
+
+  return channel_id
 endfunction
 
 function! provider#ruby#Call(method, args)

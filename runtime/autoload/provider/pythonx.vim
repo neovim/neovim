@@ -9,7 +9,7 @@ let s:stderr = {}
 let s:job_opts = {'rpc': v:true}
 
 " TODO(bfredl): this logic is common and should be builtin
-function! s:job_opts.on_stderr(chan_id, data, event)
+function! s:job_opts.on_stderr(chan_id, data, event) dict
   let stderr = get(s:stderr, a:chan_id, [''])
   let last = remove(stderr, -1)
   let a:data[0] = last.a:data[0]
@@ -17,11 +17,23 @@ function! s:job_opts.on_stderr(chan_id, data, event)
   let s:stderr[a:chan_id] = stderr
 endfunction
 
+function! s:job_opts.on_exit(chan_id, code, event) dict abort
+  " UpdateRemotePlugin have it's own handler
+  if a:code == 0 | return | endif
+  echoerr self.orig_name.' provider exited with code '.a:code
+  for row in get(s:stderr, a:chan_id, [])
+    echoerr row
+  endfor
+  unlet s:stderr[a:chan_id]
+  "throw remote#host#LoadErrorForHost(self.orig_name,
+  "      \ '$NVIM_PYTHON_LOG_FILE')
+endfunction
+
 function! provider#pythonx#Require(host) abort
   let ver = (a:host.orig_name ==# 'python') ? 2 : 3
 
   " Python host arguments
-  let prog = (ver == '2' ?  provider#python#Prog() : provider#python3#Prog())
+  let prog = (ver ==# '2' ?  provider#python#Prog() : provider#python3#Prog())
   let args = [prog, '-c', 'import sys; sys.path.remove(""); import neovim; neovim.start_host()']
 
   " Collect registered Python plugins into args
@@ -30,20 +42,15 @@ function! provider#pythonx#Require(host) abort
     call add(args, plugin.path)
   endfor
 
-  try
-    let channel_id = jobstart(args, s:job_opts)
-    if rpcrequest(channel_id, 'poll') ==# 'ok'
-      return channel_id
-    endif
-  catch
-    echomsg v:throwpoint
-    echomsg v:exception
-    for row in get(s:stderr, channel_id, [])
-      echomsg row
-    endfor
-  endtry
-  throw remote#host#LoadErrorForHost(a:host.orig_name,
-        \ '$NVIM_PYTHON_LOG_FILE')
+  let opts = deepcopy(s:job_opts)
+  let opts.orig_name = a:host.orig_name
+  let channel_id = jobstart(args, opts)
+
+  if channel_id == -1
+    echoerr prog . ' is not executable. Try :CheckHealth'
+  endif
+
+  return channel_id
 endfunction
 
 function! provider#pythonx#Detect(major_ver) abort
