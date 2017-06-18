@@ -19842,8 +19842,16 @@ void ex_function(exarg_T *eap)
 
       /* Check for "endfunction". */
       if (checkforcmd(&p, "endfunction", 4) && nesting-- == 0) {
-        if (line_arg == NULL)
+        if (*p == '!') {
+          p++;
+        }
+        p += strspn((const char *)p, " \t\r\n");
+        if (*p != NUL && *p != '"') {
+          emsgf(_(e_trailing2), p);
+        }
+        if (line_arg == NULL) {
           xfree(theline);
+        }
         break;
       }
 
