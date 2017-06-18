@@ -18,23 +18,22 @@ ROOT_DIR="$(git rev-parse --show-toplevel)"
 APP_BUILD_DIR="$ROOT_DIR/build"
 APP_DIR="$APP.AppDir"
 
-# App version, used by generate_appimage.
-VERSION=$("$ROOT_DIR"/build/bin/nvim --version | head -n 1 | grep -o 'v.*')
-
 ########################################################################
 # Compile nvim and install it into AppDir
 ########################################################################
 
 # Build and install nvim into the AppImage
-make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${APP_DIR}/usr"
+make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=${APP_DIR}/usr -DCMAKE_INSTALL_MANDIR=man"
 make install
 
 ########################################################################
 # Get helper functions and move to AppDir
 ########################################################################
 
+# App version, used by generate_appimage.
+VERSION=$("$ROOT_DIR"/build/bin/nvim --version | head -n 1 | grep -o 'v.*')
+
 cd "$APP_BUILD_DIR"
-mkdir "$APP_DIR"
 
 curl -Lo "$APP_BUILD_DIR"/appimage_functions.sh https://github.com/probonopd/AppImages/raw/master/functions.sh
 . ./appimage_functions.sh
@@ -80,3 +79,5 @@ generate_appimage
 mv "$ROOT_DIR"/out/*.AppImage "$ROOT_DIR"/build/bin
 # Remove the (now empty) folder the AppImage was built in
 rmdir "$ROOT_DIR"/out
+
+echo 'genappimage.sh: finished'
