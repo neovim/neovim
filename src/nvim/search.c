@@ -1005,14 +1005,13 @@ int do_search(
     dircp = NULL;
     /* use previous pattern */
     if (pat == NULL || *pat == NUL || *pat == dirc) {
-      if (spats[RE_SEARCH].pat == NULL) {           /* no previous pattern */
-        pat = spats[RE_SUBST].pat;
-        if (pat == NULL) {
+      if (spats[RE_SEARCH].pat == NULL) {           // no previous pattern
+        searchstr = spats[RE_SUBST].pat;
+        if (searchstr == NULL) {
           EMSG(_(e_noprevre));
           retval = 0;
           goto end_do_search;
         }
-        searchstr = pat;
       } else {
         /* make search_regcomp() use spats[RE_SEARCH].pat */
         searchstr = (char_u *)"";
