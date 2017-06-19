@@ -1408,6 +1408,7 @@ int op_delete(oparg_T *oap)
     }
 
     if (oap->regname == 0) {
+      assert(reg!=NULL);
       set_clipboard(0, reg);
       do_autocmd_textyankpost(oap, reg);
     }
@@ -3640,6 +3641,7 @@ int do_join(size_t count,
    * column.  This is not Vi compatible, but Vi deletes the marks, thus that
    * should not really be a problem.
    */
+  assert(count >= 2);
   for (t = (linenr_T)count - 1;; t--) {
     cend -= currsize;
     memmove(cend, curr, (size_t)currsize);
