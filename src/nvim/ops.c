@@ -1408,6 +1408,9 @@ int op_delete(oparg_T *oap)
     }
 
     if (oap->regname == 0) {
+      if (reg == NULL) {
+        abort();
+      }
       set_clipboard(0, reg);
       do_autocmd_textyankpost(oap, reg);
     }
