@@ -12,7 +12,7 @@ local function check_nofunc(fname)
   eq(0, funcs.exists('*' .. fname))
 end
 
-local function check_func(fname, body)
+local function check_func(fname, body, indent)
   if type(body) == 'number' then
     body = ('return %i'):format(body)
   end
@@ -20,7 +20,9 @@ local function check_func(fname, body)
 
       function %s()%s
       endfunction]]
-    ), 3):format(fname, body and ('\n1          ' .. body) or ''),
+    ), 3):format(
+      fname,
+      body and ('\n1' .. (' '):rep(2 + (indent or 8)) .. body) or ''),
   redir_exec('function ' .. fname))
 end
 
@@ -171,6 +173,49 @@ describe(':endfunction', function()
     check_func('F2', 'echo 2')
     check_func('F3', 'echo 3')
     check_func('F4', 'echo 4')
+  end)
+  it('allows running multiple commands with only one character in between',
+  function()
+    eq('\n3', redir_exec(dedent([[
+      function! F1()
+        echo 3
+      endfunction!
+      call F1()]])))
+    check_func('F1', 'echo 3', 2)
+    eq('\n4', redir_exec(dedent([[
+      function F5()
+        echo 4
+      endfunction
+      call F5()]])))
+    check_func('F5', 'echo 4', 2)
+    eq('\n5', redir_exec(dedent([[
+      function F6()
+        echo 5
+      endfunction " TEST
+      call F6()]])))
+    check_func('F6', 'echo 5', 2)
+    eq('\n6', redir_exec(dedent([[
+      function F7()
+        echo 6
+      endfunction F7
+      call F7()]])))
+    check_func('F7', 'echo 6', 2)
+    eq('\n2\n3\n4', redir_exec(dedent([[
+      function F2()
+        echo 2
+      endfunction F2
+      function F3()
+        echo 3
+      endfunction " F3
+      function! F4()
+        echo 4
+      endfunction!
+      call F2()
+      call F3()
+      call F4()]])))
+    check_func('F2', 'echo 2', 2)
+    check_func('F3', 'echo 3', 2)
+    check_func('F4', 'echo 4', 2)
   end)
 end)
 -- vim: foldmarker=▶,▲
