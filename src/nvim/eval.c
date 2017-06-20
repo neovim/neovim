@@ -19765,10 +19765,12 @@ void ex_function(exarg_T *eap)
 
   /* When there is a line break use what follows for the function body.
    * Makes 'exe "func Test()\n...\nendfunc"' work. */
-  if (*p == '\n')
+  const char *const end = (const char *)p + STRLEN(p);
+  if (*p == '\n') {
     line_arg = p + 1;
-  else if (*p != NUL && *p != '"' && !eap->skip && !did_emsg)
-    EMSG(_(e_trailing));
+  } else if (*p != NUL && *p != '"' && !eap->skip && !did_emsg) {
+    emsgf(_(e_trailing));
+  }
 
   /*
    * Read the body of the function, until ":endfunction" is found.
@@ -19845,12 +19847,26 @@ void ex_function(exarg_T *eap)
         if (*p == '!') {
           p++;
         }
-        p += strspn((const char *)p, " \t\r\n");
-        if (*p != NUL && *p != '"') {
+        const char *const comment_start = strchr((const char *)p, '"');
+        const char *const endfunc_end = (comment_start
+                                         ? strchr(comment_start, '\n')
+                                         : strpbrk((const char *)p, "\n|"));
+        p = (endfunc_end
+             ? (char_u *)endfunc_end
+             : p + STRLEN(p));
+        if (*p == '|') {
           emsgf(_(e_trailing2), p);
+          if (line_arg == NULL) {
+            xfree(theline);
+          }
+          goto erret;
         }
         if (line_arg == NULL) {
           xfree(theline);
+        } else {
+          if ((const char *)p < end) {
+            eap->nextcmd = p + 1;
+          }
         }
         break;
       }
