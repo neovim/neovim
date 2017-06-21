@@ -19,6 +19,8 @@
 #include "nvim/highlight.h"
 #include "nvim/screen.h"
 #include "nvim/window.h"
+#include "nvim/fileio.h"
+#include "nvim/eval.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -169,6 +171,12 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
 
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
   ui_attach_impl(ui);
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  tv_dict_add_nr(dict, S_LEN("chan"), (long)channel_id);
+  tv_dict_set_keys_readonly(dict);
+  apply_autocmds(EVENT_UIATTACH, NULL, NULL, false, curbuf);
+  tv_dict_clear(dict);
 }
 
 /// @deprecated
@@ -196,6 +204,12 @@ void nvim_ui_detach(uint64_t channel_id, Error *err)
     return;
   }
   remote_ui_disconnect(channel_id);
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  tv_dict_add_nr(dict, S_LEN("chan"), (long)channel_id);
+  tv_dict_set_keys_readonly(dict);
+  apply_autocmds(EVENT_UIDETACH, NULL, NULL, false, curbuf);
+  tv_dict_clear(dict);
 }
 
 

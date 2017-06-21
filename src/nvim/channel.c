@@ -172,6 +172,7 @@ static Channel *channel_alloc(ChannelStreamType type)
   chan->refcount = 1;
   chan->exit_status = -1;
   chan->streamtype = type;
+  assert(chan->id <= VARNUMBER_MAX);
   pmap_put(uint64_t)(channels, chan->id, chan);
   return chan;
 }
@@ -190,6 +191,7 @@ void channel_create_event(Channel *chan, const char *ext_source)
     source = (const char *)IObuff;
   }
 
+  assert(chan->id <= VARNUMBER_MAX);
   Dictionary info = channel_info(chan->id);
   typval_T tv = TV_INITIAL_VALUE;
   // TODO(bfredl): do the conversion in one step. Also would be nice

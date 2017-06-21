@@ -17,6 +17,8 @@
 #include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/fileio.h"
+#include "nvim/eval.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ui_bridge.c.generated.h"
@@ -86,6 +88,13 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   uv_mutex_unlock(&rv->mutex);
 
   ui_attach_impl(&rv->bridge);
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  tv_dict_add_nr(dict, S_LEN("chan"), 0);
+  tv_dict_set_keys_readonly(dict);
+  apply_autocmds(EVENT_UIATTACH, NULL, NULL, false, curbuf);
+  tv_dict_clear(dict);
+
   return &rv->bridge;
 }
 
@@ -107,6 +116,13 @@ static void ui_bridge_stop(UI *b)
   // Detach bridge first, so that "stop" is the last event the TUI loop
   // receives from the main thread. #8041
   ui_detach_impl(b);
+
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  tv_dict_add_nr(dict, S_LEN("chan"), 0);
+  tv_dict_set_keys_readonly(dict);
+  apply_autocmds(EVENT_UIDETACH, NULL, NULL, false, curbuf);
+  tv_dict_clear(dict);
+
   UIBridgeData *bridge = (UIBridgeData *)b;
   bool stopped = bridge->stopped = false;
   UI_BRIDGE_CALL(b, stop, 1, b);

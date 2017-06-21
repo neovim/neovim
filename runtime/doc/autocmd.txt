@@ -280,8 +280,8 @@ Name			triggered by ~
 
 	Startup and exit
 |VimEnter|		after doing all the startup stuff
-|GUIEnter|		after starting the GUI successfully
-|GUIFailed|		after starting the GUI failed
+|UIAttach|		after a new UI attaches
+|UIDetach|		after a UI detaches
 |TermResponse|		after the terminal response to t_RV is received
 |QuitPre|		when using `:quit`, before deciding whether to exit
 |ExitPre|		when using a command that may make Vim exit
@@ -805,19 +805,14 @@ FuncUndefined			When a user function is used but it isn't
 				NOTE: When writing Vim scripts a better
 				alternative is to use an autoloaded function.
 				See |autoload-functions|.
-							*GUIEnter*
-GUIEnter			After starting the GUI successfully, and after
-				opening the window.  It is triggered before
-				VimEnter when using gvim.  Can be used to
-				position the window from a gvimrc file: >
-	:autocmd GUIEnter * winpos 100 50
-<							*GUIFailed*
-GUIFailed			After starting the GUI failed.  Vim may
-				continue to run in the terminal, if possible
-				(only on Unix and alikes, when connecting the
-				X server fails).  You may want to quit Vim: >
-	:autocmd GUIFailed * qall
-<							*InsertChange*
+							{Nvim} *UIAttach*
+UIAttach			After a new UI connects to nvim and successfully
+				calls |nvim_ui_attach|. Sets chan in |v:event| with
+				the channel id or 0 if using the internal UI.
+							{Nvim} *UIDetach*
+UIDetach			After a UI detaches from nvim. Sets chan in |v:event|
+				with the channel id or 0 if using the internal UI.
+							*InsertChange*
 InsertChange			When typing <Insert> while in Insert or
 				Replace mode.  The |v:insertmode| variable
 				indicates the new mode.

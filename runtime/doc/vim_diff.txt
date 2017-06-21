@@ -154,6 +154,8 @@ Events:
   |TermClose|
   |TermOpen|
   |TextYankPost|
+  |UIAttach|
+  |UIDetach|
   |VimResume|
   |VimSuspend|
 
