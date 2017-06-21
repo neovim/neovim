@@ -198,8 +198,9 @@ function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
     condition = expected
     expected = nil
   else
-    -- Remove the last line and dedent.
-    expected = dedent(expected:gsub('\n[ ]+$', ''))
+    -- Remove the last line and dedent. Note that gsub returns more then one
+    -- value.
+    expected = dedent(expected:gsub('\n[ ]+$', ''), 0)
     for row in expected:gmatch('[^\n]+') do
       row = row:sub(1, #row - 1) -- Last char must be the screen delimiter.
       table.insert(expected_rows, row)

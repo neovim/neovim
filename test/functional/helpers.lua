@@ -492,17 +492,6 @@ local exc_exec = function(cmd)
   return ret
 end
 
-local function redir_exec(cmd)
-  nvim_command(([[
-    redir => g:__output
-      silent! execute "%s"
-    redir END
-  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
-  local ret = nvim_eval('get(g:, "__output", 0)')
-  nvim_command('unlet! g:__output')
-  return ret
-end
-
 local function create_callindex(func)
   local table = {}
   setmetatable(table, {
@@ -561,6 +550,19 @@ local tabmeths = create_callindex(tabpage)
 local curbufmeths = create_callindex(curbuf)
 local curwinmeths = create_callindex(curwin)
 local curtabmeths = create_callindex(curtab)
+
+local function redir_exec(cmd)
+  meths.set_var('__redir_exec_cmd', cmd)
+  nvim_command([[
+    redir => g:__redir_exec_output
+      silent! execute g:__redir_exec_cmd
+    redir END
+  ]])
+  local ret = meths.get_var('__redir_exec_output')
+  meths.del_var('__redir_exec_output')
+  meths.del_var('__redir_exec_cmd')
+  return ret
+end
 
 local function get_pathsep()
   return funcs.fnamemodify('.', ':p'):sub(-1)
