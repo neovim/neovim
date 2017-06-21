@@ -66,6 +66,7 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher,
     watcher->uv.tcp.addrinfo = request.addrinfo;
 
     uv_tcp_init(&loop->uv, &watcher->uv.tcp.handle);
+    uv_tcp_nodelay(&watcher->uv.tcp.handle, 1);
     watcher->stream = STRUCT_CAST(uv_stream_t, &watcher->uv.tcp.handle);
   } else {
     uv_pipe_init(&loop->uv, &watcher->uv.pipe.handle, 0);
@@ -146,6 +147,7 @@ int socket_watcher_accept(SocketWatcher *watcher, Stream *stream)
   if (watcher->stream->type == UV_TCP) {
     client = STRUCT_CAST(uv_stream_t, &stream->uv.tcp);
     uv_tcp_init(watcher->uv.tcp.handle.loop, (uv_tcp_t *)client);
+    uv_tcp_nodelay((uv_tcp_t *)client, 1);
   } else {
     client = STRUCT_CAST(uv_stream_t, &stream->uv.pipe);
     uv_pipe_init(watcher->uv.pipe.handle.loop, (uv_pipe_t *)client, 0);
@@ -237,6 +239,7 @@ bool socket_connect(Loop *loop, Stream *stream,
 
 tcp_retry:
     uv_tcp_init(&loop->uv, tcp);
+    uv_tcp_nodelay(tcp, 1);
     uv_tcp_connect(&req,  tcp, addrinfo->ai_addr, connect_cb);
     uv_stream = (uv_stream_t *)tcp;
 
