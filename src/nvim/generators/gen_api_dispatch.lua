@@ -135,8 +135,8 @@ for _,f in ipairs(shallowcopy(functions)) do
 end
 
 -- don't expose internal attributes like "impl_name" in public metadata
-exported_attributes = {'name', 'return_type', 'method',
-                       'since', 'deprecated_since'}
+local exported_attributes = {'name', 'return_type', 'method',
+                             'since', 'deprecated_since'}
 local exported_functions = {}
 for _,f in ipairs(functions) do
   if not startswith(f.name, "nvim__") then
@@ -324,10 +324,10 @@ local mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.pack(functions))
 mpack_output:close()
 
-local function include_headers(arg_output, arg_headers)
-  for i = 1, #arg_headers do
-    if arg_headers[i]:sub(-12) ~= '.generated.h' then
-      arg_output:write('\n#include "nvim/'..arg_headers[i]..'"')
+local function include_headers(output_handle, headers_to_include)
+  for i = 1, #headers_to_include do
+    if headers_to_include[i]:sub(-12) ~= '.generated.h' then
+      output_handle:write('\n#include "nvim/'..headers_to_include[i]..'"')
     end
   end
 end
