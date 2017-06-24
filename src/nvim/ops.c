@@ -3182,7 +3182,7 @@ error:
       if (curbuf->b_op_start.lnum + (y_type == kMTCharWise) - 1 + nr_lines
           < curbuf->b_ml.ml_line_count) {
         mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
-                    (linenr_T)MAXLNUM, nr_lines, 0L);
+                    (linenr_T)MAXLNUM, nr_lines, 0L, false);
       }
 
       // note changed text for displaying and folding

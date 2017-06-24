@@ -13,6 +13,7 @@
 #include "nvim/ascii.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/dispatch.h"
 #include "nvim/api/buffer.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/lua/executor.h"

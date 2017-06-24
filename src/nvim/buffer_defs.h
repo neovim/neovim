@@ -106,8 +106,6 @@ typedef struct frame_S frame_T;
 // for bufhl_*_T
 #include "nvim/bufhl_defs.h"
 
-typedef Map(linenr_T, bufhl_vec_T) bufhl_info_T;
-
 #include "nvim/os/fs_defs.h"    // for FileID
 #include "nvim/terminal.h"      // for Terminal
 
@@ -762,7 +760,9 @@ struct file_buffer {
 
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 
-  bufhl_info_T *b_bufhl_info;   // buffer stored highlights
+  BufhlInfo b_bufhl_info;       // buffer stored highlights
+
+  kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
 };
 
 /*

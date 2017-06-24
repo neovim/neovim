@@ -74,6 +74,12 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 
+typedef enum {
+  kBLSUnchanged = 0,
+  kBLSChanged = 1,
+  kBLSDeleted = 2,
+} BufhlLineStatus;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.c.generated.h"
 #endif
@@ -5138,6 +5144,30 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
 
 // bufhl: plugin highlights associated with a buffer
 
+/// Get reference to line in kbtree_t
+///
+/// @param b the three
+/// @param line the linenumber to lookup
+/// @param put if true, put a new line when not found
+///            if false, return NULL when not found
+BufhlLine *bufhl_tree_ref(BufhlInfo *b, linenr_T line, bool put)
+{
+  BufhlLine t = BUFHLLINE_INIT(line);
+
+  // kp_put() only works if key is absent, try get first
+  BufhlLine **pp = kb_get(bufhl, b, &t);
+  if (pp) {
+    return *pp;
+  } else if (!put) {
+    return NULL;
+  }
+
+  BufhlLine *p = xmalloc(sizeof(*p));
+  *p = (BufhlLine)BUFHLLINE_INIT(line);
+  kb_put(bufhl, b, p);
+  return p;
+}
+
 /// Adds a highlight to buffer.
 ///
 /// Unlike matchaddpos() highlights follow changes to line numbering (as lines
@@ -5175,13 +5205,10 @@ int bufhl_add_hl(buf_T *buf,
       // no highlight group or invalid line, just return src_id
       return src_id;
   }
-  if (!buf->b_bufhl_info) {
-    buf->b_bufhl_info = map_new(linenr_T, bufhl_vec_T)();
-  }
-  bufhl_vec_T* lineinfo = map_ref(linenr_T, bufhl_vec_T)(buf->b_bufhl_info,
-                                                         lnum, true);
 
-  bufhl_hl_item_T *hlentry = kv_pushp(*lineinfo);
+  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, true);
+
+  BufhlItem *hlentry = kv_pushp(lineinfo->items);
   hlentry->src_id = src_id;
   hlentry->hl_id = hl_id;
   hlentry->start = col_start;
@@ -5203,20 +5230,24 @@ int bufhl_add_hl(buf_T *buf,
 void bufhl_clear_line_range(buf_T *buf,
                             int src_id,
                             linenr_T line_start,
-                            linenr_T line_end) {
-  if (!buf->b_bufhl_info) {
-    return;
-  }
-  linenr_T line;
+                            linenr_T line_end)
+{
   linenr_T first_changed = MAXLNUM, last_changed = -1;
-  // In the case line_start - line_end << bufhl_info->size
-  // it might be better to reverse this, i e loop over the lines
-  // to clear on.
-  bufhl_vec_T unused;
-  map_foreach(buf->b_bufhl_info, line, unused, {
-    (void)unused;
+
+  kbitr_t(bufhl) itr;
+  BufhlLine *l, t = BUFHLLINE_INIT(line_start);
+  if (!kb_itr_get(bufhl, &buf->b_bufhl_info, &t, &itr)) {
+    kb_itr_next(bufhl, &buf->b_bufhl_info, &itr);
+  }
+  for (; kb_itr_valid(&itr); kb_itr_next(bufhl, &buf->b_bufhl_info, &itr)) {
+    l = kb_itr_key(&itr);
+    linenr_T line = l->line;
+    if (line > line_end) {
+      break;
+    }
     if (line_start <= line && line <= line_end) {
-      if (bufhl_clear_line(buf->b_bufhl_info, src_id, line)) {
+      BufhlLineStatus status = bufhl_clear_line(l, src_id, line);
+      if (status != kBLSUnchanged) {
         if (line > last_changed) {
           last_changed = line;
         }
@@ -5224,8 +5255,12 @@ void bufhl_clear_line_range(buf_T *buf,
           first_changed = line;
         }
       }
+      if (status == kBLSDeleted) {
+        kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
+        xfree(l);
+      }
     }
-  })
+  }
 
   if (last_changed != -1) {
     changed_lines_buf(buf, first_changed, last_changed+1, 0);
@@ -5238,42 +5273,40 @@ void bufhl_clear_line_range(buf_T *buf,
 /// @param bufhl_info The highlight info for the buffer
 /// @param src_id Highlight source group to clear, or -1 to clear all groups.
 /// @param lnum Linenr where the highlight should be cleared
-static bool bufhl_clear_line(bufhl_info_T *bufhl_info, int src_id,
-                             linenr_T lnum)
+static BufhlLineStatus bufhl_clear_line(BufhlLine *lineinfo, int src_id,
+                                        linenr_T lnum)
 {
-  bufhl_vec_T *lineinfo = map_ref(linenr_T, bufhl_vec_T)(bufhl_info,
-                                                         lnum, false);
-  size_t oldsize = kv_size(*lineinfo);
+  size_t oldsize = kv_size(lineinfo->items);
   if (src_id < 0) {
-    kv_size(*lineinfo) = 0;
+    kv_size(lineinfo->items) = 0;
   } else {
-    size_t newind = 0;
-    for (size_t i = 0; i < kv_size(*lineinfo); i++) {
-      if (kv_A(*lineinfo, i).src_id != src_id) {
-        if (i != newind) {
-          kv_A(*lineinfo, newind) = kv_A(*lineinfo, i);
+    size_t newidx = 0;
+    for (size_t i = 0; i < kv_size(lineinfo->items); i++) {
+      if (kv_A(lineinfo->items, i).src_id != src_id) {
+        if (i != newidx) {
+          kv_A(lineinfo->items, newidx) = kv_A(lineinfo->items, i);
         }
-        newind++;
+        newidx++;
       }
     }
-    kv_size(*lineinfo) = newind;
+    kv_size(lineinfo->items) = newidx;
   }
 
-  if (kv_size(*lineinfo) == 0) {
-    kv_destroy(*lineinfo);
-    map_del(linenr_T, bufhl_vec_T)(bufhl_info, lnum);
+  if (kv_size(lineinfo->items) == 0) {
+    kv_destroy(lineinfo->items);
+    return kBLSDeleted;
   }
-  return kv_size(*lineinfo) != oldsize;
+  return kv_size(lineinfo->items) != oldsize ? kBLSChanged : kBLSUnchanged;
 }
 
 /// Remove all highlights and free the highlight data
-void bufhl_clear_all(buf_T* buf) {
-  if (!buf->b_bufhl_info) {
-    return;
-  }
+void bufhl_clear_all(buf_T *buf)
+{
   bufhl_clear_line_range(buf, -1, 1, MAXLNUM);
-  map_free(linenr_T, bufhl_vec_T)(buf->b_bufhl_info);
-  buf->b_bufhl_info = NULL;
+  kb_destroy(bufhl, (&buf->b_bufhl_info));
+  kb_init(&buf->b_bufhl_info);
+  kv_destroy(buf->b_bufhl_move_space);
+  kv_init(buf->b_bufhl_move_space);
 }
 
 /// Adjust a placed highlight for inserted/deleted lines.
@@ -5281,29 +5314,49 @@ void bufhl_mark_adjust(buf_T* buf,
                        linenr_T line1,
                        linenr_T line2,
                        long amount,
-                       long amount_after) {
-  if (!buf->b_bufhl_info) {
+                       long amount_after,
+                       bool end_temp)
+{
+  kbitr_t(bufhl) itr;
+  BufhlLine *l, t = BUFHLLINE_INIT(line1);
+  if (end_temp && amount < 0) {
+    // Move all items from b_bufhl_move_space to the btree.
+    for (size_t i = 0; i < kv_size(buf->b_bufhl_move_space); i++) {
+      l = kv_A(buf->b_bufhl_move_space, i);
+      l->line += amount;
+      kb_put(bufhl, &buf->b_bufhl_info, l);
+    }
+    kv_size(buf->b_bufhl_move_space) = 0;
     return;
   }
 
-  bufhl_info_T *newmap = map_new(linenr_T, bufhl_vec_T)();
-  linenr_T line;
-  bufhl_vec_T lineinfo;
-  map_foreach(buf->b_bufhl_info, line, lineinfo, {
-    if (line >= line1 && line <= line2) {
-      if (amount == MAXLNUM) {
-        bufhl_clear_line(buf->b_bufhl_info, -1, line);
-        continue;
-      } else {
-        line += amount;
+  if (!kb_itr_get(bufhl, &buf->b_bufhl_info, &t, &itr)) {
+    kb_itr_next(bufhl, &buf->b_bufhl_info, &itr);
+  }
+  for (; kb_itr_valid(&itr); kb_itr_next(bufhl, &buf->b_bufhl_info, &itr)) {
+    l = kb_itr_key(&itr);
+    if (l->line >= line1 && l->line <= line2) {
+      if (end_temp && amount > 0) {
+        kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
+        kv_push(buf->b_bufhl_move_space, l);
       }
-    } else if (line > line2) {
-      line += amount_after;
+      if (amount == MAXLNUM) {
+        if (bufhl_clear_line(l, -1, l->line) == kBLSDeleted) {
+          kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
+          xfree(l);
+        } else {
+          assert(false);
+        }
+      } else {
+        l->line += amount;
+      }
+    } else if (l->line > line2) {
+      if (amount_after == 0) {
+        break;
+      }
+      l->line += amount_after;
     }
-    map_put(linenr_T, bufhl_vec_T)(newmap, line, lineinfo);
-  });
-  map_free(linenr_T, bufhl_vec_T)(buf->b_bufhl_info);
-  buf->b_bufhl_info = newmap;
+  }
 }
 
 
@@ -5313,13 +5366,14 @@ void bufhl_mark_adjust(buf_T* buf,
 /// @param lnum The line number
 /// @param[out] info The highligts for the line
 /// @return true if there was highlights to display
-bool bufhl_start_line(buf_T *buf, linenr_T lnum, bufhl_lineinfo_T *info) {
-  if (!buf->b_bufhl_info) {
+bool bufhl_start_line(buf_T *buf, linenr_T lnum, BufhlLineInfo *info)
+{
+  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, false);
+  if (!lineinfo) {
     return false;
   }
-
   info->valid_to = -1;
-  info->entries = map_get(linenr_T, bufhl_vec_T)(buf->b_bufhl_info, lnum);
+  info->entries = lineinfo->items;
   return kv_size(info->entries) > 0;
 }
 
@@ -5333,14 +5387,15 @@ bool bufhl_start_line(buf_T *buf, linenr_T lnum, bufhl_lineinfo_T *info) {
 /// @param info The info returned by bufhl_start_line
 /// @param col The column to get the attr for
 /// @return The highilight attr to display at the column
-int bufhl_get_attr(bufhl_lineinfo_T *info, colnr_T col) {
+int bufhl_get_attr(BufhlLineInfo *info, colnr_T col)
+{
   if (col <= info->valid_to) {
     return info->current;
   }
   int attr = 0;
   info->valid_to = MAXCOL;
   for (size_t i = 0; i < kv_size(info->entries); i++) {
-    bufhl_hl_item_T entry = kv_A(info->entries, i);
+    BufhlItem entry = kv_A(info->entries, i);
     if (entry.start <= col && col <= entry.stop) {
       int entry_attr = syn_id2attr(entry.hl_id);
       attr = hl_combine_attr(attr, entry_attr);

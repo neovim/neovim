@@ -2232,11 +2232,13 @@ static void u_undoredo(int undo)
     /* adjust marks */
     if (oldsize != newsize) {
       mark_adjust(top + 1, top + oldsize, (long)MAXLNUM,
-          (long)newsize - (long)oldsize);
-      if (curbuf->b_op_start.lnum > top + oldsize)
+                  (long)newsize - (long)oldsize, false);
+      if (curbuf->b_op_start.lnum > top + oldsize) {
         curbuf->b_op_start.lnum += newsize - oldsize;
-      if (curbuf->b_op_end.lnum > top + oldsize)
+      }
+      if (curbuf->b_op_end.lnum > top + oldsize) {
         curbuf->b_op_end.lnum += newsize - oldsize;
+      }
     }
 
     changed_lines(top + 1, 0, bot, newsize - oldsize);

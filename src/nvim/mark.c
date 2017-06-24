@@ -888,9 +888,13 @@ void ex_changes(exarg_T *eap)
  * Example: Insert two lines below 55: mark_adjust(56, MAXLNUM, 2, 0);
  *				   or: mark_adjust(56, 55, MAXLNUM, 2);
  */
-void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
+void mark_adjust(linenr_T line1,
+                 linenr_T line2,
+                 long amount,
+                 long amount_after,
+                 bool end_temp)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, true);
+  mark_adjust_internal(line1, line2, amount, amount_after, true, end_temp);
 }
 
 // mark_adjust_nofold() does the same as mark_adjust() but without adjusting
@@ -899,13 +903,14 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
 // calling foldMarkAdjust() with arguments line1, line2, amount, amount_after,
 // for an example of why this may be necessary, see do_move().
 void mark_adjust_nofold(linenr_T line1, linenr_T line2, long amount,
-                        long amount_after)
+                        long amount_after, bool end_temp)
 {
-  mark_adjust_internal(line1, line2, amount, amount_after, false);
+  mark_adjust_internal(line1, line2, amount, amount_after, false, end_temp);
 }
 
-static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount,
-                                 long amount_after, bool adjust_folds)
+static void mark_adjust_internal(linenr_T line1, linenr_T line2,
+                                 long amount, long amount_after,
+                                 bool adjust_folds, bool end_temp)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -954,7 +959,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2, long amount,
     }
 
     sign_mark_adjust(line1, line2, amount, amount_after);
-    bufhl_mark_adjust(curbuf, line1, line2, amount, amount_after);
+    bufhl_mark_adjust(curbuf, line1, line2, amount, amount_after, end_temp);
   }
 
   /* previous context mark */
