@@ -8,7 +8,7 @@ set -e
 # arguments provided.
 test -z "$POSH_VERSION" && set -u
 
-echo_jobs_num() {
+get_jobs_num() {
   if [ -n "${TRAVIS:-}" ] ; then
     # HACK: /proc/cpuinfo on Travis CI is misleading, so hardcode 1.
     echo 1
@@ -280,13 +280,13 @@ create_compile_commands() {(
       cd "$tgt/build"
 
       cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="$PWD/root"
-      make -j"$(echo_jobs_num)"
+      make -j"$(get_jobs_num)"
     )
   else
     (
       cd "$tgt"
 
-      make -j"$(echo_jobs_num)" CMAKE_EXTRA_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
+      make -j"$(get_jobs_num)" CMAKE_EXTRA_FLAGS=" -DCMAKE_INSTALL_PREFIX=$PWD/root -DCMAKE_BUILD_TYPE=Debug "
     )
   fi
   find "$tgt/build/src/nvim/auto" -name '*.test-include.c' -delete
