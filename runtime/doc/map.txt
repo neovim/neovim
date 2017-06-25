@@ -319,7 +319,6 @@ Overview of which map command works in which mode.  More details below.
 :vmap  :vnoremap  :vunmap  :vmapclear	  -	    yes		    -
 :omap  :onoremap  :ounmap  :omapclear	  -	     -		   yes
 
-:nunmap can also be used outside of a monastery.
 						*mapmode-x* *mapmode-s*
 Some commands work both in Visual and Select mode, some in only one.  Note
 that quite often "Visual" is mentioned where both Visual and Select mode
