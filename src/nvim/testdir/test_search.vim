@@ -33,6 +33,7 @@ func Test_search_cmdline()
   " second match
   call feedkeys("/the\<C-G>\<cr>", 'tx')
   call assert_equal('  3 the', getline('.'))
+  call assert_equal([0, 0, 0, 0], getpos('"'))
   :1
   " third match
   call feedkeys("/the".repeat("\<C-G>", 2)."\<cr>", 'tx')
@@ -61,6 +62,7 @@ func Test_search_cmdline()
   " no further match
   call feedkeys("/the".repeat("\<C-G>", 8)."\<cr>", 'tx')
   call assert_equal('  9 these', getline('.'))
+  call assert_equal([0, 0, 0, 0], getpos('"'))
 
   " Test 3
   " Ctrl-G goes from one match to the next
@@ -182,11 +184,11 @@ func Test_search_cmdline()
   1
   " delete one char, add another
   call feedkeys("/thei\<bs>s\<cr>", 'tx')
-  call assert_equal('  9 these', getline('.'))
+  call assert_equal('  2 these', getline('.'))
   1
   " delete one char, add another,  go to previous match, add one char
   call feedkeys("/thei\<bs>s\<bs>\<C-T>\<c-l>\<cr>", 'tx')
-  call assert_equal('  8 them', getline('.'))
+  call assert_equal('  9 these', getline('.'))
   1
   " delete all chars, start from the beginning again
   call feedkeys("/them". repeat("\<bs>",4).'the\>'."\<cr>", 'tx')
@@ -240,7 +242,33 @@ func Test_search_cmdline2()
   call feedkeys("/the\<C-G>\<C-G>\<C-G>\<C-T>\<C-T>\<C-T>\<cr>", 'tx')
   call assert_equal('  2 these', getline('.'))
 
+  " Test 2: keep the view,
+  " after deleting a character from the search cmd
+  call setline(1, ['  1', '  2 these', '  3 the', '  4 their', '  5 there', '  6 their', '  7 the', '  8 them', '  9 these', ' 10 foobar'])
+  resize 5
+  1
+  call feedkeys("/foo\<bs>\<cr>", 'tx')
+  redraw
+  call assert_equal({'lnum': 10, 'leftcol': 0, 'col': 4, 'topfill': 0, 'topline': 6, 'coladd': 0, 'skipcol': 0, 'curswant': 4}, winsaveview())
+
+  " remove all history entries
+  for i in range(10)
+      call histdel('/')
+  endfor
+
+  " Test 3: reset the view,
+  " after deleting all characters from the search cmd
+  norm! 1gg0
+  " unfortunately, neither "/foo\<c-w>\<cr>", nor "/foo\<bs>\<bs>\<bs>\<cr>",
+  " nor "/foo\<c-u>\<cr>" works to delete the commandline.
+  " In that case Vim should return "E35 no previous regular expression",
+  " but it looks like Vim still sees /foo and therefore the test fails.
+  " Therefore, disableing this test
+  "call assert_fails(feedkeys("/foo\<c-w>\<cr>", 'tx'), 'E35')
+  "call assert_equal({'lnum': 1, 'leftcol': 0, 'col': 0, 'topfill': 0, 'topline': 1, 'coladd': 0, 'skipcol': 0, 'curswant': 0}, winsaveview())
+
   " clean up
+  set noincsearch
   call test_disable_char_avail(0)
   bw!
 endfunc

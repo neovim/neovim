@@ -100,13 +100,18 @@ typedef struct command_line_state {
   char_u *lookfor;                      // string to match
   int hiscnt;                           // current history line in use
   int histype;                          // history type to be used
-  pos_T     old_cursor;
+  pos_T     search_start;               // where 'incsearch' starts searching
+  pos_T     save_cursor;
   colnr_T   old_curswant;
+  colnr_T   init_curswant;
   colnr_T   old_leftcol;
+  colnr_T   init_leftcol;
   linenr_T  old_topline;
+  linenr_T  init_topline;
   int       old_topfill;
+  int       init_topfill;
   linenr_T  old_botline;
-  pos_T     cursor_start;
+  linenr_T  init_botline;
   pos_T     match_start;
   pos_T     match_end;
   int did_incsearch;
@@ -171,6 +176,11 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   s->save_p_icm = vim_strsave(p_icm);
   s->ignore_drag_release = true;
   s->match_start = curwin->w_cursor;
+  s->init_curswant = curwin->w_curswant;
+  s->init_leftcol = curwin->w_leftcol;
+  s->init_topline = curwin->w_topline;
+  s->init_topfill = curwin->w_topfill;
+  s->init_botline = curwin->w_botline;
 
   if (s->firstc == -1) {
     s->firstc = NUL;
@@ -184,8 +194,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   ccline.overstrike = false;                // always start in insert mode
   clearpos(&s->match_end);
-  s->old_cursor = curwin->w_cursor;         // needs to be restored later
-  s->cursor_start = s->old_cursor;
+  s->save_cursor = curwin->w_cursor;        // may be restored later
+  s->search_start = curwin->w_cursor;
   s->old_curswant = curwin->w_curswant;
   s->old_leftcol = curwin->w_leftcol;
   s->old_topline = curwin->w_topline;
@@ -288,9 +298,15 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   ccline.xpc = NULL;
 
   if (s->did_incsearch) {
-    curwin->w_cursor = s->old_cursor;
     if (s->gotesc) {
-      curwin->w_cursor = s->cursor_start;
+      curwin->w_cursor = s->save_cursor;
+    } else {
+      if (!equalpos(s->save_cursor, s->search_start)) {
+        // put the '" mark at the original position
+        curwin->w_cursor = s->save_cursor;
+        setpcmark();
+      }
+      curwin->w_cursor = s->search_start;
     }
     curwin->w_curswant = s->old_curswant;
     curwin->w_leftcol = s->old_leftcol;
@@ -939,10 +955,14 @@ static int command_line_handle_key(CommandLineState *s)
       // Truncate at the end, required for multi-byte chars.
       ccline.cmdbuff[ccline.cmdlen] = NUL;
       if (ccline.cmdlen == 0) {
-        s->old_cursor = s->cursor_start;
-      } else {
-        s->old_cursor = s->match_start;
-        decl(&s->old_cursor);
+        s->search_start = s->save_cursor;
+        // save view settings, so that the screen won't be restored at the
+        // wrong position
+        s->old_curswant = s->init_curswant;
+        s->old_leftcol = s->init_leftcol;
+        s->old_topline = s->init_topline;
+        s->old_topfill = s->init_topfill;
+        s->old_botline = s->init_botline;
       }
       redrawcmd();
     } else if (ccline.cmdlen == 0 && s->c != Ctrl_W
@@ -962,6 +982,7 @@ static int command_line_handle_key(CommandLineState *s)
         }
         msg_putchar(' ');                             // delete ':'
       }
+      s->search_start = s->save_cursor;
       redraw_cmdline = true;
       return 0;                           // back to cmd mode
     }
@@ -1017,7 +1038,7 @@ static int command_line_handle_key(CommandLineState *s)
     // Truncate at the end, required for multi-byte chars.
     ccline.cmdbuff[ccline.cmdlen] = NUL;
     if (ccline.cmdlen == 0) {
-      s->old_cursor = s->cursor_start;
+      s->search_start = s->save_cursor;
     }
     redrawcmd();
     return command_line_changed(s);
@@ -1250,7 +1271,7 @@ static int command_line_handle_key(CommandLineState *s)
       // Add a character from under the cursor for 'incsearch'
       if (s->did_incsearch) {
         curwin->w_cursor = s->match_end;
-        if (!equalpos(curwin->w_cursor, s->old_cursor)) {
+        if (!equalpos(curwin->w_cursor, s->search_start)) {
           s->c = gchar_cursor();
           // If 'ignorecase' and 'smartcase' are set and the
           // command line has no uppercase characters, convert
@@ -1453,23 +1474,23 @@ static int command_line_handle_key(CommandLineState *s)
       emsg_off--;
       ui_busy_stop();
       if (s->i) {
-        s->old_cursor = s->match_start;
+        s->search_start = s->match_start;
         s->match_end = t;
         s->match_start = t;
         if (s->c == Ctrl_T && s->firstc == '/') {
           // move just before the current match, so that
           // when nv_search finishes the cursor will be
           // put back on the match
-          s->old_cursor = t;
-          (void)decl(&s->old_cursor);
+          s->search_start = t;
+          (void)decl(&s->search_start);
         }
-        if (lt(t, s->old_cursor) && s->c == Ctrl_G) {
+        if (lt(t, s->search_start) && s->c == Ctrl_G) {
           // wrap around
-          s->old_cursor = t;
+          s->search_start = t;
           if (s->firstc == '?') {
-            (void)incl(&s->old_cursor);
+            (void)incl(&s->search_start);
           } else {
-            (void)decl(&s->old_cursor);
+            (void)decl(&s->search_start);
           }
         }
 
@@ -1607,7 +1628,7 @@ static int command_line_changed(CommandLineState *s)
       return 1;
     }
     s->incsearch_postponed = false;
-    curwin->w_cursor = s->old_cursor;        // start at old position
+    curwin->w_cursor = s->search_start;  // start at old position
 
     // If there is no command line, don't do anything
     if (ccline.cmdlen == 0) {
@@ -1698,7 +1719,7 @@ static int command_line_changed(CommandLineState *s)
     emsg_silent--;  // Unblock error reporting
 
     // Restore the window "view".
-    curwin->w_cursor   = s->old_cursor;
+    curwin->w_cursor   = s->save_cursor;
     curwin->w_curswant = s->old_curswant;
     curwin->w_leftcol  = s->old_leftcol;
     curwin->w_topline  = s->old_topline;

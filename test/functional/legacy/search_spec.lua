@@ -54,6 +54,7 @@ describe('search cmdline', function()
           3 {inc:the}             |
         /the^                |
       ]])
+      eq({0, 0, 0, 0}, funcs.getpos('"'))
       feed('<C-G>')
       screen:expect([[
           3 the             |
@@ -103,6 +104,8 @@ describe('search cmdline', function()
             9 {inc:the}se           |
           /the^                |
         ]])
+        feed('<CR>')
+        eq({0, 0, 0, 0}, funcs.getpos('"'))
       end
     end
 
@@ -276,40 +279,40 @@ describe('search cmdline', function()
         5 there           |
       /thei^               |
     ]])
-    -- Stay on this match when deleting a character
+    -- Match from initial cursor position when modifying search
     feed('<BS>')
     screen:expect([[
-        4 {inc:the}ir           |
-        5 there           |
+        1                 |
+        2 {inc:the}se           |
       /the^                |
     ]])
     -- New text advances to next match
     feed('s')
     screen:expect([[
-        9 {inc:thes}e           |
-       10 foobar          |
+        1                 |
+        2 {inc:thes}e           |
       /thes^               |
     ]])
     -- Stay on this match when deleting a character
     feed('<BS>')
     screen:expect([[
-        9 {inc:the}se           |
-       10 foobar          |
+        1                 |
+        2 {inc:the}se           |
       /the^                |
     ]])
     -- Advance to previous match
     feed('<C-T>')
     screen:expect([[
-        8 {inc:the}m            |
-        9 these           |
+        9 {inc:the}se           |
+       10 foobar          |
       /the^                |
     ]])
     -- Extend search to include next character
     feed('<C-L>')
     screen:expect([[
-        8 {inc:them}            |
-        9 these           |
-      /them^               |
+        9 {inc:thes}e           |
+       10 foobar          |
+      /thes^               |
     ]])
     -- Deleting all characters resets the cursor position
     feed('<BS><BS><BS><BS>')
@@ -320,14 +323,14 @@ describe('search cmdline', function()
     ]])
     feed('the')
     screen:expect([[
+        1                 |
         2 {inc:the}se           |
-        3 the             |
       /the^                |
     ]])
     feed('\\>')
     screen:expect([[
+        2 these           |
         3 {inc:the}             |
-        4 their           |
       /the\>^              |
     ]])
   end)
@@ -388,5 +391,84 @@ describe('search cmdline', function()
         3 the theother    |
       /the^                |
     ]])
+  end)
+
+  it('keeps the view after deleting a char from the search', function()
+    screen:detach()
+    screen = Screen.new(20, 6)
+    screen:attach()
+    screen:set_default_attr_ids({
+      inc = {reverse = true}
+    })
+    screen:set_default_attr_ignore({
+      {bold=true, reverse=true}, {bold=true, foreground=Screen.colors.Blue1}
+    })
+    tenlines()
+
+    feed('/foo')
+    screen:expect([[
+        6 their           |
+        7 the             |
+        8 them            |
+        9 these           |
+       10 {inc:foo}bar          |
+      /foo^                |
+    ]])
+    feed('<BS>')
+    screen:expect([[
+        6 their           |
+        7 the             |
+        8 them            |
+        9 these           |
+       10 {inc:fo}obar          |
+      /fo^                 |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+        6 their           |
+        7 the             |
+        8 them            |
+        9 these           |
+       10 ^foobar          |
+      /fo                 |
+    ]])
+    eq({lnum = 10, leftcol = 0, col = 4, topfill = 0, topline = 6,
+        coladd = 0, skipcol = 0, curswant = 4},
+       funcs.winsaveview())
+  end)
+
+  it('restores original view after failed search', function()
+    screen:detach()
+    screen = Screen.new(40, 3)
+    screen:attach()
+    screen:set_default_attr_ids({
+      inc = {reverse = true},
+      err = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      more = { bold = true, foreground = Screen.colors.SeaGreen4 },
+    })
+    tenlines()
+    feed('0')
+    feed('/foo')
+    screen:expect([[
+        9 these                               |
+       10 {inc:foo}bar                              |
+      /foo^                                    |
+    ]])
+    feed('<C-W>')
+    screen:expect([[
+        1                                     |
+        2 these                               |
+      /^                                       |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      /                                       |
+      {err:E35: No previous regular expression}     |
+      {more:Press ENTER or type command to continue}^ |
+    ]])
+    feed('<CR>')
+    eq({lnum = 1, leftcol = 0, col = 0, topfill = 0, topline = 1,
+        coladd = 0, skipcol = 0, curswant = 0},
+       funcs.winsaveview())
   end)
 end)
