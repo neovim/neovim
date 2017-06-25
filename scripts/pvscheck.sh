@@ -9,7 +9,9 @@ set -e
 test -z "$POSH_VERSION" && set -u
 
 echo_jobs_num() {
-  echo $(( $(grep -c "^processor" /proc/cpuinfo) + 1 ))
+  [ -n "$TRAVIS_CI_BUILD" ] \
+    && echo 1 \
+    || echo $(( $(grep -c "^processor" /proc/cpuinfo) + 1 ))
 }
 
 help() {
