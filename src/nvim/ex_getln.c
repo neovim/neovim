@@ -1489,8 +1489,9 @@ static int command_line_handle_key(CommandLineState *s)
       } else {
         vim_beep(BO_ERROR);
       }
+      return command_line_not_changed(s);
     }
-    return command_line_not_changed(s);
+    break;
 
   case Ctrl_V:
   case Ctrl_Q:
