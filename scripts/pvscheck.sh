@@ -9,9 +9,12 @@ set -e
 test -z "$POSH_VERSION" && set -u
 
 echo_jobs_num() {
-  [ -n "$TRAVIS_CI_BUILD" ] \
-    && echo 1 \
-    || echo $(( $(grep -c "^processor" /proc/cpuinfo) + 1 ))
+  if [ -n "${TRAVIS:-}" ] ; then
+    # HACK: /proc/cpuinfo on Travis CI is misleading, so hardcode 1.
+    echo 1
+  else
+    echo $(( $(grep -c "^processor" /proc/cpuinfo) + 1 ))
+  fi
 }
 
 help() {
