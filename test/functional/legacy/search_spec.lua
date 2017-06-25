@@ -48,49 +48,49 @@ describe('search cmdline', function()
           2 {inc:the}se           |
         /the^                |
       ]])
-      feed('<C-N>')
+      feed('<C-G>')
       screen:expect([[
           2 these           |
           3 {inc:the}             |
         /the^                |
       ]])
-      feed('<C-N>')
+      feed('<C-G>')
       screen:expect([[
           3 the             |
           4 {inc:the}ir           |
         /the^                |
       ]])
-      feed('<C-N>')
+      feed('<C-G>')
       screen:expect([[
           4 their           |
           5 {inc:the}re           |
         /the^                |
       ]])
-      feed('<C-N>')
+      feed('<C-G>')
       screen:expect([[
           5 there           |
           6 {inc:the}ir           |
         /the^                |
       ]])
-      feed('<C-N>')
+      feed('<C-G>')
       screen:expect([[
           6 their           |
           7 {inc:the}             |
         /the^                |
       ]])
-      feed('<C-N>')
+      feed('<C-G>')
       screen:expect([[
           7 the             |
           8 {inc:the}m            |
         /the^                |
       ]])
-      feed('<C-N>')
+      feed('<C-G>')
       screen:expect([[
           8 them            |
           9 {inc:the}se           |
         /the^                |
       ]])
-      feed('<C-N>')
+      feed('<C-G>')
       if wrapscan == 'wrapscan' then
         screen:expect([[
             2 {inc:the}se           |
@@ -117,7 +117,7 @@ describe('search cmdline', function()
         ?the^                |
       ]])
       if wrapscan == 'wrapscan' then
-        feed('<C-N>')
+        feed('<C-G>')
         screen:expect([[
             2 {inc:the}se           |
             3 the             |
@@ -130,7 +130,7 @@ describe('search cmdline', function()
           ?the                |
         ]])
       else
-        feed('<C-N>')
+        feed('<C-G>')
         screen:expect([[
             9 {inc:the}se           |
            10 foobar          |
@@ -150,14 +150,14 @@ describe('search cmdline', function()
          10 foobar          |
         ?the^                |
       ]])
-      feed('<C-P>')
+      feed('<C-T>')
       screen:expect([[
           8 {inc:the}m            |
           9 these           |
         ?the^                |
       ]])
       for i = 1, 6 do
-        feed('<C-P>')
+        feed('<C-T>')
         -- Avoid sleep just before expect, otherwise expect will take the full
         -- timeout
         if i ~= 6 then
@@ -169,7 +169,7 @@ describe('search cmdline', function()
           3 the             |
         ?the^                |
       ]])
-      feed('<C-P>')
+      feed('<C-T>')
       if wrapscan == 'wrapscan' then
         screen:expect([[
             9 {inc:the}se           |
@@ -185,19 +185,19 @@ describe('search cmdline', function()
       end
     end
 
-    it("using <C-N> and 'nowrapscan'", function()
+    it("using <C-G> and 'nowrapscan'", function()
       forwarditer('nowrapscan')
     end)
 
-    it("using <C-N> and 'wrapscan'", function()
+    it("using <C-G> and 'wrapscan'", function()
       forwarditer('wrapscan')
     end)
 
-    it("using <C-P> and 'nowrapscan'", function()
+    it("using <C-T> and 'nowrapscan'", function()
       backiter('nowrapscan')
     end)
 
-    it("using <C-P> and 'wrapscan'", function()
+    it("using <C-T> and 'wrapscan'", function()
       backiter('wrapscan')
     end)
   end)
@@ -218,13 +218,13 @@ describe('search cmdline', function()
         2 {inc:thes}e           |
       /thes^               |
     ]])
-    feed('<C-N>')
+    feed('<C-G>')
     screen:expect([[
         9 {inc:thes}e           |
        10 foobar          |
       /thes^               |
     ]])
-    feed('<C-N>')
+    feed('<C-G>')
     screen:expect([[
         2 {inc:thes}e           |
         3 the             |
@@ -251,13 +251,13 @@ describe('search cmdline', function()
         2 {inc:thes}e           |
       /thes^               |
     ]])
-    feed('<C-N>')
+    feed('<C-G>')
     screen:expect([[
         9 {inc:thes}e           |
        10 foobar          |
       /thes^               |
     ]])
-    feed('<C-N><CR>')
+    feed('<C-G><CR>')
     screen:expect([[
         9 ^these           |
        10 foobar          |
@@ -298,7 +298,7 @@ describe('search cmdline', function()
       /the^                |
     ]])
     -- Advance to previous match
-    feed('<C-P>')
+    feed('<C-T>')
     screen:expect([[
         8 {inc:the}m            |
         9 these           |
@@ -332,7 +332,7 @@ describe('search cmdline', function()
     ]])
   end)
 
-  it('can traverse matches in the same line with <C-N>/<C-P>', function()
+  it('can traverse matches in the same line with <C-G>/<C-T>', function()
     funcs.setline(1, { '  1', '  2 these', '  3 the theother' })
     command('1')
     command('set incsearch')
@@ -346,7 +346,7 @@ describe('search cmdline', function()
     ]])
 
     -- Next match, different line
-    feed('<C-N>')
+    feed('<C-G>')
     screen:expect([[
         2 these           |
         3 {inc:the} theother    |
@@ -354,13 +354,13 @@ describe('search cmdline', function()
     ]])
 
     -- Next match, same line
-    feed('<C-N>')
+    feed('<C-G>')
     screen:expect([[
         2 these           |
         3 the {inc:the}other    |
       /the^                |
     ]])
-    feed('<C-N>')
+    feed('<C-G>')
     screen:expect([[
         2 these           |
         3 the theo{inc:the}r    |
@@ -368,13 +368,13 @@ describe('search cmdline', function()
     ]])
 
     -- Previous match, same line
-    feed('<C-P>')
+    feed('<C-T>')
     screen:expect([[
         2 these           |
         3 the {inc:the}other    |
       /the^                |
     ]])
-    feed('<C-P>')
+    feed('<C-T>')
     screen:expect([[
         2 these           |
         3 {inc:the} theother    |
@@ -382,7 +382,7 @@ describe('search cmdline', function()
     ]])
 
     -- Previous match, different line
-    feed('<C-P>')
+    feed('<C-T>')
     screen:expect([[
         2 {inc:the}se           |
         3 the theother    |
