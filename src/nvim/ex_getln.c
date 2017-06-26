@@ -882,6 +882,118 @@ static int command_line_execute(VimState *state, int key)
   return command_line_handle_key(s);
 }
 
+static void command_line_next_incsearch(CommandLineState *s, bool next_match)
+{
+  ui_busy_start();
+  ui_flush();
+
+  pos_T  t;
+  int search_flags = SEARCH_KEEP + SEARCH_NOOF + SEARCH_PEEK;
+  if (next_match) {
+    t = s->match_end;
+    search_flags += SEARCH_COL;
+  } else {
+    t = s->match_start;
+  }
+  emsg_off++;
+  s->i = searchit(curwin, curbuf, &t,
+                  next_match ? FORWARD : BACKWARD,
+                  ccline.cmdbuff, s->count, search_flags,
+                  RE_SEARCH, 0, NULL);
+  emsg_off--;
+  ui_busy_stop();
+  if (s->i) {
+    s->search_start = s->match_start;
+    s->match_end = t;
+    s->match_start = t;
+    if (!next_match && s->firstc == '/') {
+      // move just before the current match, so that
+      // when nv_search finishes the cursor will be
+      // put back on the match
+      s->search_start = t;
+      (void)decl(&s->search_start);
+    }
+    if (lt(t, s->search_start) && next_match) {
+      // wrap around
+      s->search_start = t;
+      if (s->firstc == '?') {
+        (void)incl(&s->search_start);
+      } else {
+        (void)decl(&s->search_start);
+      }
+    }
+
+    set_search_match(&s->match_end);
+    curwin->w_cursor = s->match_start;
+    changed_cline_bef_curs();
+    update_topline();
+    validate_cursor();
+    highlight_match = true;
+    s->old_curswant = curwin->w_curswant;
+    s->old_leftcol = curwin->w_leftcol;
+    s->old_topline = curwin->w_topline;
+    s->old_topfill = curwin->w_topfill;
+    s->old_botline = curwin->w_botline;
+    update_screen(NOT_VALID);
+    redrawcmdline();
+  } else {
+    vim_beep(BO_ERROR);
+  }
+  return;
+}
+
+static void command_line_next_histidx(CommandLineState *s, bool next_match)
+{
+  s->j = (int)STRLEN(s->lookfor);
+  for (;; ) {
+    // one step backwards
+    if (!next_match) {
+      if (s->hiscnt == hislen) {
+        // first time
+        s->hiscnt = hisidx[s->histype];
+      } else if (s->hiscnt == 0 && hisidx[s->histype] != hislen - 1) {
+        s->hiscnt = hislen - 1;
+      } else if (s->hiscnt != hisidx[s->histype] + 1) {
+        s->hiscnt--;
+      } else {
+        // at top of list
+        s->hiscnt = s->i;
+        break;
+      }
+    } else {          // one step forwards
+      // on last entry, clear the line
+      if (s->hiscnt == hisidx[s->histype]) {
+        s->hiscnt = hislen;
+        break;
+      }
+
+      // not on a history line, nothing to do
+      if (s->hiscnt == hislen) {
+        break;
+      }
+
+      if (s->hiscnt == hislen - 1) {
+        // wrap around
+        s->hiscnt = 0;
+      } else {
+        s->hiscnt++;
+      }
+    }
+
+    if (s->hiscnt < 0 || history[s->histype][s->hiscnt].hisstr == NULL) {
+      s->hiscnt = s->i;
+      break;
+    }
+
+    if ((s->c != K_UP && s->c != K_DOWN)
+        || s->hiscnt == s->i
+        || STRNCMP(history[s->histype][s->hiscnt].hisstr,
+                   s->lookfor, (size_t)s->j) == 0) {
+      break;
+    }
+  }
+}
+
 static int command_line_handle_key(CommandLineState *s)
 {
   // Big switch for a typed command line character.
@@ -1333,55 +1445,9 @@ static int command_line_handle_key(CommandLineState *s)
       s->lookfor[ccline.cmdpos] = NUL;
     }
 
-    s->j = (int)STRLEN(s->lookfor);
-    for (;; ) {
-      // one step backwards
-      if (s->c == K_UP|| s->c == K_S_UP || s->c == Ctrl_P
-          || s->c == K_PAGEUP || s->c == K_KPAGEUP) {
-        if (s->hiscnt == hislen) {
-          // first time
-          s->hiscnt = hisidx[s->histype];
-        } else if (s->hiscnt == 0 && hisidx[s->histype] != hislen - 1) {
-          s->hiscnt = hislen - 1;
-        } else if (s->hiscnt != hisidx[s->histype] + 1) {
-          --s->hiscnt;
-        } else {
-          // at top of list
-          s->hiscnt = s->i;
-          break;
-        }
-      } else {          // one step forwards
-        // on last entry, clear the line
-        if (s->hiscnt == hisidx[s->histype]) {
-          s->hiscnt = hislen;
-          break;
-        }
-
-        // not on a history line, nothing to do
-        if (s->hiscnt == hislen) {
-          break;
-        }
-
-        if (s->hiscnt == hislen - 1) {
-          // wrap around
-          s->hiscnt = 0;
-        } else {
-          ++s->hiscnt;
-        }
-      }
-
-      if (s->hiscnt < 0 || history[s->histype][s->hiscnt].hisstr == NULL) {
-        s->hiscnt = s->i;
-        break;
-      }
-
-      if ((s->c != K_UP && s->c != K_DOWN)
-          || s->hiscnt == s->i
-          || STRNCMP(history[s->histype][s->hiscnt].hisstr,
-              s->lookfor, (size_t)s->j) == 0) {
-        break;
-      }
-    }
+    bool next_match = (s->c == K_DOWN || s->c == K_S_DOWN || s->c == Ctrl_N
+                       || s->c == K_PAGEDOWN || s->c == K_KPAGEDOWN);
+    command_line_next_histidx(s, next_match);
 
     if (s->hiscnt != s->i) {
       // jumped to other entry
@@ -1452,64 +1518,10 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_G:  // next match
   case Ctrl_T:  // previous match
     if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
-      pos_T  t;
-      int search_flags = SEARCH_KEEP + SEARCH_NOOF + SEARCH_PEEK;
-
       if (char_avail()) {
         return 1;
       }
-      ui_busy_start();
-      ui_flush();
-      if (s->c == Ctrl_G) {
-        t = s->match_end;
-        search_flags += SEARCH_COL;
-      } else {
-        t = s->match_start;
-      }
-      emsg_off++;
-      s->i = searchit(curwin, curbuf, &t,
-                      s->c == Ctrl_G ? FORWARD : BACKWARD,
-                      ccline.cmdbuff, s->count, search_flags,
-                      RE_SEARCH, 0, NULL);
-      emsg_off--;
-      ui_busy_stop();
-      if (s->i) {
-        s->search_start = s->match_start;
-        s->match_end = t;
-        s->match_start = t;
-        if (s->c == Ctrl_T && s->firstc == '/') {
-          // move just before the current match, so that
-          // when nv_search finishes the cursor will be
-          // put back on the match
-          s->search_start = t;
-          (void)decl(&s->search_start);
-        }
-        if (lt(t, s->search_start) && s->c == Ctrl_G) {
-          // wrap around
-          s->search_start = t;
-          if (s->firstc == '?') {
-            (void)incl(&s->search_start);
-          } else {
-            (void)decl(&s->search_start);
-          }
-        }
-
-        set_search_match(&s->match_end);
-        curwin->w_cursor = s->match_start;
-        changed_cline_bef_curs();
-        update_topline();
-        validate_cursor();
-        highlight_match = true;
-        s->old_curswant = curwin->w_curswant;
-        s->old_leftcol = curwin->w_leftcol;
-        s->old_topline = curwin->w_topline;
-        s->old_topfill = curwin->w_topfill;
-        s->old_botline = curwin->w_botline;
-        update_screen(NOT_VALID);
-        redrawcmdline();
-      } else {
-        vim_beep(BO_ERROR);
-      }
+      command_line_next_incsearch(s, s->c == Ctrl_G);
       return command_line_not_changed(s);
     }
     break;
