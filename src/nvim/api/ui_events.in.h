@@ -75,5 +75,9 @@ void cmdline_char(String c, Integer shift, Integer level)
     FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_hide(Integer level)
     FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_function_show(void)
+    FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_function_hide(void)
+    FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 #endif  // NVIM_API_UI_EVENTS_IN_H
