@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -490,17 +493,19 @@ char_u *get_special_key_name(int c, int modifiers)
 /// @param[out]  dst  Location where translation result will be kept. Must have
 ///                   at least six bytes.
 /// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
+/// @param[in]  in_string  Inside a double quoted string
 ///
 /// @return Number of characters added to dst, zero for no match.
 unsigned int trans_special(const char_u **srcp, const size_t src_len,
-                           char_u *const dst, const bool keycode)
+                           char_u *const dst, const bool keycode,
+                           const bool in_string)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
   int key;
   unsigned int dlen = 0;
 
-  key = find_special_key(srcp, src_len, &modifiers, keycode, false);
+  key = find_special_key(srcp, src_len, &modifiers, keycode, false, in_string);
   if (key == 0) {
     return 0;
   }
@@ -536,10 +541,12 @@ unsigned int trans_special(const char_u **srcp, const size_t src_len,
 /// @param[out]  modp  Location where information about modifiers is saved.
 /// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
 /// @param[in]  keep_x_key  Don’t translate xHome to Home key.
+/// @param[in]  in_string  In string, double quote is escaped
 ///
 /// @return Key and modifiers or 0 if there is no match.
 int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
-                     const bool keycode, const bool keep_x_key)
+                     const bool keycode, const bool keep_x_key,
+                     const bool in_string)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   const char_u *last_dash;
@@ -550,7 +557,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
   int modifiers;
   int bit;
   int key;
-  unsigned long n;
+  uvarnumber_T n;
   int l;
 
   if (src_len == 0) {
@@ -573,10 +580,14 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         } else {
           l = 1;
         }
-        if (end - bp > l && bp[l] != '"' && bp[l + 1] == '>') {
-          // Anything accepted, like <C-?>, except <C-">, because the "
-          // ends the string.
+        // Anything accepted, like <C-?>.
+        // <C-"> or <M-"> are not special in strings as " is
+        // the string delimiter. With a backslash it works: <M-\">
+        if (end - bp > l && !(in_string && bp[1] == '"') && bp[2] == '>') {
           bp += l;
+        } else if (end - bp > 2 && in_string && bp[1] == '\\'
+                   && bp[2] == '"' && bp[3] == '>') {
+          bp += 2;
         }
       }
     }
@@ -612,18 +623,17 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         vim_str2nr(last_dash + 6, NULL, NULL, STR2NR_ALL, NULL, &n, 0);
         key = (int)n;
       } else {
-        /*
-         * Modifier with single letter, or special key name.
-         */
-        if (has_mbyte) {
-          l = mb_ptr2len(last_dash + 1);
-        } else {
-          l = 1;
+        int off = 1;
+
+        // Modifier with single letter, or special key name.
+        if (in_string && last_dash[1] == '\\' && last_dash[2] == '"') {
+          off = 2;
         }
+        l = mb_ptr2len(last_dash + 1);
         if (modifiers != 0 && last_dash[l + 1] == '>') {
-          key = PTR2CHAR(last_dash + 1);
+          key = PTR2CHAR(last_dash + off);
         } else {
-          key = get_special_key_code(last_dash + 1);
+          key = get_special_key_code(last_dash + off);
           if (!keep_x_key) {
             key = handle_x_keys(key);
           }
@@ -828,7 +838,8 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
         }
       }
 
-      slen = trans_special(&src, (size_t) (end - src) + 1, result + dlen, true);
+      slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen, true,
+                           true);
       if (slen) {
         dlen += slen;
         continue;
@@ -843,10 +854,10 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
       // If "mapleader" or "maplocalleader" isn't set use a backslash.
       if (end - src >= 7 && STRNICMP(src, "<Leader>", 8) == 0) {
         len = 8;
-        p = get_var_value((char_u *)"g:mapleader");
+        p = get_var_value("g:mapleader");
       } else if (end - src >= 12 && STRNICMP(src, "<LocalLeader>", 13) == 0) {
         len = 13;
-        p = get_var_value((char_u *)"g:maplocalleader");
+        p = get_var_value("g:maplocalleader");
       } else {
         len = 0;
         p = NULL;

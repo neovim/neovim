@@ -109,7 +109,7 @@ assign_commit_details() {
     local strip_commit_line=true
   else
     # Interpret parameter as commit hash.
-    vim_version="${1:0:7}"
+    vim_version="${1:0:12}"
     vim_commit=$(cd "${VIM_SOURCE_DIR}" \
       && git log -1 --format="%H" "${vim_version}")
     local strip_commit_line=false
@@ -136,16 +136,19 @@ preprocess_patch() {
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%('${na_src}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove channel.txt, netbeans.txt, os_*.txt, todo.txt, version*.txt, tags
-  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|todo\.txt\|version\d\.txt\|tags'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\%('${na_doc}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+  local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|tags'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('${na_doc}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove "Last change ..." changes in doc files.
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
   # Remove some testdir/Make_*.mak files
   local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\%('${na_src_testdir}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('${na_src_testdir}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove some *.po files. #5622
   local na_po='sjiscorr.c\|ja.sjis.po\|ko.po\|pl.cp1250.po\|pl.po\|ru.cp1251.po\|uk.cp1251.po\|zh_CN.cp936.po\|zh_CN.po\|zh_TW.po'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\%('${na_po}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/po/\<\%('${na_po}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Rename src/ paths to src/nvim/
   LC_ALL=C sed -e 's/\( [ab]\/src\)/\1\/nvim/g' \
@@ -277,7 +280,7 @@ submit_pr() {
     echo "Pushing to 'origin/${checked_out_branch}'."
     output="$(git push origin "${checked_out_branch}" 2>&1)" &&
       echo "✔ ${output}" ||
-      (echo "✘ ${output}"; git reset --soft HEAD^1; false)
+      (echo "✘ ${output}"; false)
 
     echo
   fi
@@ -305,9 +308,9 @@ list_vim_patches() {
 
   printf "\nVim patches missing from Neovim:\n"
 
-  # Get commits since 7.4.602.
+  # Get missing Vim commits
   local vim_commits
-  vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v7.4.602..HEAD)"
+  vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v7.4.1979..HEAD)"
 
   local vim_commit
   for vim_commit in ${vim_commits}; do
@@ -318,7 +321,7 @@ list_vim_patches() {
     if [[ -n "${vim_tag}" ]]; then
       local patch_number="${vim_tag:5}" # Remove prefix like "v7.4."
       # Tagged Vim patch, check version.c:
-      is_missing="$(sed -n '/static int included_patches/,/}/p' "${NVIM_SOURCE_DIR}/src/nvim/version.c" |
+      is_missing="$(sed -n '/static const int included_patches/,/}/p' "${NVIM_SOURCE_DIR}/src/nvim/version.c" |
         grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
       vim_commit="${vim_tag#v}"
       if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
@@ -379,8 +382,6 @@ review_commit() {
 
   assign_commit_details "${vim_version}"
 
-  local vim_patch_url="${vim_commit_url}.patch"
-
   local expected_commit_message
   expected_commit_message="$(commit_message)"
   local message_length
@@ -403,8 +404,7 @@ review_commit() {
   echo "✔ Saved pull request diff to '${NVIM_SOURCE_DIR}/n${patch_file}'."
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/n${patch_file}")
 
-  curl -Ssfo "${NVIM_SOURCE_DIR}/${patch_file}" "${vim_patch_url}"
-  echo "✔ Saved Vim diff to '${NVIM_SOURCE_DIR}/${patch_file}'."
+  get_vim_patch "${vim_version}"
   CREATED_FILES+=("${NVIM_SOURCE_DIR}/${patch_file}")
 
   echo

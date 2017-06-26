@@ -3,7 +3,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect, eq, eval = helpers.execute, helpers.expect, helpers.eq, helpers.eval
+local feed_command, expect, eq, eval = helpers.feed_command, helpers.expect, helpers.eq, helpers.eval
 
 local function basic_register_test(noblock)
   insert("some words")
@@ -89,10 +89,13 @@ describe('the unnamed register', function()
 end)
 
 describe('clipboard usage', function()
+  local function reset(...)
+    clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp', ...)
+  end
+
   before_each(function()
-    clear()
-    execute('let &rtp = "test/functional/fixtures,".&rtp')
-    execute('call getreg("*")') -- force load of provider
+    reset()
+    feed_command('call getreg("*")') -- force load of provider
   end)
 
    it('has independent "* and unnamed registers per default', function()
@@ -137,8 +140,8 @@ describe('clipboard usage', function()
   end)
 
   it('support autodectection of regtype', function()
-    execute("let g:test_clip['*'] = ['linewise stuff','']")
-    execute("let g:test_clip['+'] = ['charwise','stuff']")
+    feed_command("let g:test_clip['*'] = ['linewise stuff','']")
+    feed_command("let g:test_clip['+'] = ['charwise','stuff']")
     eq("V", eval("getregtype('*')"))
     eq("v", eval("getregtype('+')"))
     insert("just some text")
@@ -153,7 +156,7 @@ describe('clipboard usage', function()
     insert([[
       much
       text]])
-    execute("let g:test_clip['*'] = [['very','block'],'b']")
+    feed_command("let g:test_clip['*'] = [['very','block'],'b']")
     feed('gg"*P')
     expect([[
       very much
@@ -167,15 +170,15 @@ describe('clipboard usage', function()
   end)
 
   it('supports setreg', function()
-    execute('call setreg("*", "setted\\ntext", "c")')
-    execute('call setreg("+", "explicitly\\nlines", "l")')
+    feed_command('call setreg("*", "setted\\ntext", "c")')
+    feed_command('call setreg("+", "explicitly\\nlines", "l")')
     feed('"+P"*p')
     expect([[
         esetted
         textxplicitly
         lines
         ]])
-    execute('call setreg("+", "blocky\\nindeed", "b")')
+    feed_command('call setreg("+", "blocky\\nindeed", "b")')
     feed('"+p')
     expect([[
         esblockyetted
@@ -185,13 +188,13 @@ describe('clipboard usage', function()
   end)
 
   it('supports let @+ (issue #1427)', function()
-    execute("let @+ = 'some'")
-    execute("let @* = ' other stuff'")
+    feed_command("let @+ = 'some'")
+    feed_command("let @* = ' other stuff'")
     eq({{'some'}, 'v'}, eval("g:test_clip['+']"))
     eq({{' other stuff'}, 'v'}, eval("g:test_clip['*']"))
     feed('"+p"*p')
     expect('some other stuff')
-    execute("let @+ .= ' more'")
+    feed_command("let @+ .= ' more'")
     feed('dd"+p')
     expect('some more')
   end)
@@ -199,7 +202,7 @@ describe('clipboard usage', function()
   it('pastes unnamed register if the provider fails', function()
     insert('the text')
     feed('yy')
-    execute("let g:cliperror = 1")
+    feed_command("let g:cliperror = 1")
     feed('"*p')
     expect([[
       the text
@@ -211,7 +214,7 @@ describe('clipboard usage', function()
     -- the basic behavior of unnamed register should be the same
     -- even when handled by clipboard provider
     before_each(function()
-      execute('set clipboard=unnamed')
+      feed_command('set clipboard=unnamed')
     end)
 
     it('works', function()
@@ -219,7 +222,7 @@ describe('clipboard usage', function()
     end)
 
     it('works with pure text clipboard', function()
-      execute("let g:cliplossy = 1")
+      feed_command("let g:cliplossy = 1")
       -- expect failure for block mode
       basic_register_test(true)
     end)
@@ -234,7 +237,7 @@ describe('clipboard usage', function()
       -- "+ shouldn't have changed
       eq({''}, eval("g:test_clip['+']"))
 
-      execute("let g:test_clip['*'] = ['linewise stuff','']")
+      feed_command("let g:test_clip['*'] = ['linewise stuff','']")
       feed('p')
       expect([[
         words
@@ -244,7 +247,7 @@ describe('clipboard usage', function()
     it('does not clobber "0 when pasting', function()
       insert('a line')
       feed('yy')
-      execute("let g:test_clip['*'] = ['b line','']")
+      feed_command("let g:test_clip['*'] = ['b line','']")
       feed('"0pp"0p')
       expect([[
         a line
@@ -255,20 +258,20 @@ describe('clipboard usage', function()
 
     it('supports v:register and getreg() without parameters', function()
       eq('*', eval('v:register'))
-      execute("let g:test_clip['*'] = [['some block',''], 'b']")
+      feed_command("let g:test_clip['*'] = [['some block',''], 'b']")
       eq('some block', eval('getreg()'))
       eq('\02210', eval('getregtype()'))
     end)
 
     it('yanks visual selection when pasting', function()
       insert("indeed visual")
-      execute("let g:test_clip['*'] = [['clipboard'], 'c']")
+      feed_command("let g:test_clip['*'] = [['clipboard'], 'c']")
       feed("viwp")
       eq({{'visual'}, 'v'}, eval("g:test_clip['*']"))
       expect("indeed clipboard")
 
       -- explicit "* should do the same
-      execute("let g:test_clip['*'] = [['star'], 'c']")
+      feed_command("let g:test_clip['*'] = [['star'], 'c']")
       feed('viw"*p')
       eq({{'clipboard'}, 'v'}, eval("g:test_clip['*']"))
       expect("indeed star")
@@ -277,7 +280,7 @@ describe('clipboard usage', function()
     it('unamed operations work even if the provider fails', function()
       insert('the text')
       feed('yy')
-      execute("let g:cliperror = 1")
+      feed_command("let g:cliperror = 1")
       feed('p')
       expect([[
         the text
@@ -291,11 +294,11 @@ describe('clipboard usage', function()
 	match
 	text
       ]])
-      execute('g/match/d')
+      feed_command('g/match/d')
       eq('match\n', eval('getreg("*")'))
       feed('u')
       eval('setreg("*", "---")')
-      execute('g/test/')
+      feed_command('g/test/')
       feed('<esc>')
       eq('---', eval('getreg("*")'))
     end)
@@ -304,7 +307,7 @@ describe('clipboard usage', function()
 
   describe('with clipboard=unnamedplus', function()
     before_each(function()
-      execute('set clipboard=unnamedplus')
+      feed_command('set clipboard=unnamedplus')
     end)
 
     it('links the "+ and unnamed registers', function()
@@ -317,13 +320,13 @@ describe('clipboard usage', function()
       -- "* shouldn't have changed
       eq({''}, eval("g:test_clip['*']"))
 
-      execute("let g:test_clip['+'] = ['three']")
+      feed_command("let g:test_clip['+'] = ['three']")
       feed('p')
       expect('twothree')
     end)
 
     it('and unnamed, yanks to both', function()
-      execute('set clipboard=unnamedplus,unnamed')
+      feed_command('set clipboard=unnamedplus,unnamed')
       insert([[
         really unnamed
         text]])
@@ -337,8 +340,8 @@ describe('clipboard usage', function()
 
       -- unnamedplus takes predecence when pasting
       eq('+', eval('v:register'))
-      execute("let g:test_clip['+'] = ['the plus','']")
-      execute("let g:test_clip['*'] = ['the star','']")
+      feed_command("let g:test_clip['+'] = ['the plus','']")
+      feed_command("let g:test_clip['*'] = ['the star','']")
       feed("p")
       expect([[
         text
@@ -353,25 +356,32 @@ describe('clipboard usage', function()
 	match
 	text
       ]])
-      execute('g/match/d')
+      feed_command('g/match/d')
       eq('match\n', eval('getreg("+")'))
       feed('u')
       eval('setreg("+", "---")')
-      execute('g/test/')
+      feed_command('g/test/')
       feed('<esc>')
       eq('---', eval('getreg("+")'))
     end)
   end)
 
+  it('sets v:register after startup', function()
+    reset()
+    eq('"', eval('v:register'))
+    reset('--cmd', 'set clipboard=unnamed')
+    eq('*', eval('v:register'))
+  end)
+
   it('supports :put', function()
     insert("a line")
-    execute("let g:test_clip['*'] = ['some text']")
-    execute("let g:test_clip['+'] = ['more', 'text', '']")
-    execute(":put *")
+    feed_command("let g:test_clip['*'] = ['some text']")
+    feed_command("let g:test_clip['+'] = ['more', 'text', '']")
+    feed_command(":put *")
     expect([[
     a line
     some text]])
-    execute(":put +")
+    feed_command(":put +")
     expect([[
     a line
     some text
@@ -382,9 +392,9 @@ describe('clipboard usage', function()
   it('supports "+ and "* in registers', function()
     local screen = Screen.new(60, 10)
     screen:attach()
-    execute("let g:test_clip['*'] = ['some', 'star data','']")
-    execute("let g:test_clip['+'] = ['such', 'plus', 'stuff']")
-    execute("registers")
+    feed_command("let g:test_clip['*'] = ['some', 'star data','']")
+    feed_command("let g:test_clip['+'] = ['such', 'plus', 'stuff']")
+    feed_command("registers")
     screen:expect([[
       ~                                                           |
       ~                                                           |
@@ -408,17 +418,17 @@ describe('clipboard usage', function()
     insert('s/s/t/')
     feed('gg"*y$:<c-r>*<cr>')
     expect('t/s/t/')
-    execute("let g:test_clip['*'] = ['s/s/u']")
+    feed_command("let g:test_clip['*'] = ['s/s/u']")
     feed(':<c-r>*<cr>')
     expect('t/u/t/')
   end)
 
   it('supports :redir @*>', function()
-    execute("let g:test_clip['*'] = ['stuff']")
-    execute('redir @*>')
+    feed_command("let g:test_clip['*'] = ['stuff']")
+    feed_command('redir @*>')
     -- it is made empty
     eq({{''}, 'v'}, eval("g:test_clip['*']"))
-    execute('let g:test = doesnotexist')
+    feed_command('let g:test = doesnotexist')
     feed('<cr>')
     eq({{
       '',
@@ -426,7 +436,7 @@ describe('clipboard usage', function()
       'E121: Undefined variable: doesnotexist',
       'E15: Invalid expression: doesnotexist',
     }, 'v'}, eval("g:test_clip['*']"))
-    execute(':echo "Howdy!"')
+    feed_command(':echo "Howdy!"')
     eq({{
       '',
       '',
@@ -438,7 +448,7 @@ describe('clipboard usage', function()
   end)
 
   it('handles middleclick correctly', function()
-    execute('set mouse=a')
+    feed_command('set mouse=a')
 
     local screen = Screen.new(30, 5)
     screen:attach()
@@ -461,7 +471,7 @@ describe('clipboard usage', function()
       the a target]])
 
     -- on error, fall back to unnamed register
-    execute("let g:cliperror = 1")
+    feed_command("let g:cliperror = 1")
     feed('<MiddleMouse><6,1>')
     expect([[
       the source

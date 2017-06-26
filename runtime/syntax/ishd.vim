@@ -3,11 +3,8 @@
 " Maintainer:	Robert M. Cortopassi <cortopar@mindspring.com>
 " Last Change:	2001 May 09
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -387,35 +384,25 @@ syn cluster	ishdPreProcGroup	contains=ishdPreCondit,ishdIncluded,ishdInclude,ish
 syn region	ishdDefine		start="^\s*#\s*\(define\|undef\)\>" end="$" contains=ALLBUT,@ishdPreProcGroup
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_is_syntax_inits")
-  if version < 508
-    let did_is_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink ishdNumber	    Number
-  HiLink ishdError	    Error
-  HiLink ishdStatement	    Statement
-  HiLink ishdString	    String
-  HiLink ishdComment	    Comment
-  HiLink ishdTodo	    Todo
-  HiLink ishdFunction	    Identifier
-  HiLink ishdConstant	    PreProc
-  HiLink ishdType	    Type
-  HiLink ishdInclude	    Include
-  HiLink ishdDefine	    Macro
-  HiLink ishdIncluded	    String
-  HiLink ishdPreCondit	    PreCondit
-  HiLink ishdHashIf0Skip   ishdHashIf0
-  HiLink ishdHashIf0End    ishdHashIf0
-  HiLink ishdHashIf0	    Comment
+hi def link ishdNumber	    Number
+hi def link ishdError	    Error
+hi def link ishdStatement	    Statement
+hi def link ishdString	    String
+hi def link ishdComment	    Comment
+hi def link ishdTodo	    Todo
+hi def link ishdFunction	    Identifier
+hi def link ishdConstant	    PreProc
+hi def link ishdType	    Type
+hi def link ishdInclude	    Include
+hi def link ishdDefine	    Macro
+hi def link ishdIncluded	    String
+hi def link ishdPreCondit	    PreCondit
+hi def link ishdHashIf0Skip   ishdHashIf0
+hi def link ishdHashIf0End    ishdHashIf0
+hi def link ishdHashIf0	    Comment
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "ishd"
 

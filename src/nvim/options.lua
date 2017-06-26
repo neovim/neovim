@@ -34,6 +34,11 @@ local macros=function(s)
     return s
   end
 end
+local imacros=function(s)
+  return function()
+    return '(intptr_t)' .. s
+  end
+end
 local N_=function(s)
   return function()
     return 'N_(' .. cstr(s) .. ')'
@@ -190,7 +195,7 @@ return {
       type='string', list='comma', scope={'global'},
       vi_def=true,
       varname='p_bo',
-      defaults={if_true={vi=""}}
+      defaults={if_true={vi="all"}}
     },
     {
       full_name='binary', abbreviation='bin',
@@ -711,13 +716,6 @@ return {
       defaults={if_true={vi=macros('DFLT_EFM')}}
     },
     {
-      full_name='esckeys', abbreviation='ek',
-      type='bool', scope={'global'},
-      vim=true,
-      varname='p_ek',
-      defaults={if_true={vi=false, vim=true}}
-    },
-    {
       full_name='eventignore', abbreviation='ei',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
@@ -955,7 +953,7 @@ return {
     },
     {
       full_name='formatprg', abbreviation='fp',
-      type='string', scope={'global'},
+      type='string', scope={'global', 'buffer'},
       secure=true,
       vi_def=true,
       expand=true,
@@ -1007,7 +1005,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_guicursor',
-      defaults={if_true={vi="n-v-c:block,o:hor50,i-ci:hor15,r-cr:hor30,sm:block"}}
+      defaults={if_true={vi="n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"}}
     },
     {
       full_name='guifont', abbreviation='gfn',
@@ -1031,13 +1029,6 @@ return {
       vi_def=true,
       redraw={'everything'},
       enable_if=false,
-    },
-    {
-      full_name='guiheadroom', abbreviation='ghr',
-      type='number', scope={'global'},
-      vi_def=true,
-      enable_if=false,
-      defaults={if_true={vi=50}}
     },
     {
       full_name='guioptions', abbreviation='go',
@@ -1352,6 +1343,12 @@ return {
       type='bool', scope={'global'},
       varname='p_lnr',
       defaults={if_true={vi=false, vim=true}}
+    },
+    {
+      full_name='langremap', abbreviation='lrm',
+      type='bool', scope={'global'},
+      varname='p_lrm',
+      defaults={if_true={vi=true, vim=false}}
     },
     {
       full_name='laststatus', abbreviation='ls',
@@ -1890,7 +1887,7 @@ return {
       vim=true,
       redraw={'statuslines'},
       varname='p_ru',
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi=true}}
     },
     {
       full_name='rulerformat', abbreviation='ruf',
@@ -1918,6 +1915,14 @@ return {
       vi_def=true,
       pv_name='p_scroll',
       defaults={if_true={vi=12}}
+    },
+    {
+      full_name='scrollback', abbreviation='scbk',
+      type='number', scope={'buffer'},
+      vi_def=true,
+      varname='p_scbk',
+      redraw={'current_buffer'},
+      defaults={if_true={vi=1000}}
     },
     {
       full_name='scrollbind', abbreviation='scb',
@@ -2051,7 +2056,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_srr',
-      defaults={if_true={vi=">"}}
+      defaults={
+        condition='WIN32',
+        if_true={vi=">%s 2>&1"},
+        if_false={vi=">"}
+      }
     },
     {
       full_name='shellslash', abbreviation='ssl',
@@ -2118,11 +2127,7 @@ return {
       type='bool', scope={'global'},
       vim=true,
       varname='p_sc',
-      defaults={
-        condition='UNIX',
-        if_true={vi=false, vim=false},
-        if_false={vi=false, vim=true},
-      }
+      defaults={if_true={vi=false, vim=true}}
     },
     {
       full_name='showfulltag', abbreviation='sft',
@@ -2648,7 +2653,7 @@ return {
       type='number', scope={'global'},
       vim=true,
       varname='p_wc',
-      defaults={if_true={vi=macros('Ctrl_E'), vim=macros('TAB')}}
+      defaults={if_true={vi=imacros('Ctrl_E'), vim=imacros('TAB')}}
     },
     {
       full_name='wildcharm', abbreviation='wcm',
@@ -2700,6 +2705,14 @@ return {
       vi_def=true,
       varname='p_wak',
       defaults={if_true={vi="menu"}}
+    },
+    {
+      full_name='winhighlight', abbreviation='winhl',
+      type='string', scope={'window'},
+      vi_def=true,
+      alloced=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='window', abbreviation='wi',

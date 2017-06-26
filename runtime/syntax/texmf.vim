@@ -6,12 +6,9 @@
 " URL: http://physics.muni.cz/~yeti/download/syntax/texmf.vim
 
 " Setup
-if version >= 600
-  if exists("b:current_syntax")
-    finish
-  endif
-else
-  syntax clear
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
+  finish
 endif
 
 syn case match
@@ -45,42 +42,33 @@ syn region texmfBrace matchgroup=texmfBraceBrace start="{" end="}" contains=ALLB
 syn match texmfBraceError "}"
 
 " Define the default highlighting
-if version >= 508 || !exists("did_texmf_syntax_inits")
-  if version < 508
-    let did_texmf_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
 
-  HiLink texmfComment Comment
-  HiLink texmfTodo Todo
+hi def link texmfComment Comment
+hi def link texmfTodo Todo
 
-  HiLink texmfPassedParameter texmfVariable
-  HiLink texmfVariable Identifier
+hi def link texmfPassedParameter texmfVariable
+hi def link texmfVariable Identifier
 
-  HiLink texmfNumber Number
-  HiLink texmfString String
+hi def link texmfNumber Number
+hi def link texmfString String
 
-  HiLink texmfLHSStart texmfLHS
-  HiLink texmfLHSVariable texmfLHS
-  HiLink texmfLHSDot texmfLHS
-  HiLink texmfLHS Type
+hi def link texmfLHSStart texmfLHS
+hi def link texmfLHSVariable texmfLHS
+hi def link texmfLHSDot texmfLHS
+hi def link texmfLHS Type
 
-  HiLink texmfEquals Normal
+hi def link texmfEquals Normal
 
-  HiLink texmfBraceBrace texmfDelimiter
-  HiLink texmfComma texmfDelimiter
-  HiLink texmfColons texmfDelimiter
-  HiLink texmfDelimiter Preproc
+hi def link texmfBraceBrace texmfDelimiter
+hi def link texmfComma texmfDelimiter
+hi def link texmfColons texmfDelimiter
+hi def link texmfDelimiter Preproc
 
-  HiLink texmfDoubleExclam Statement
-  HiLink texmfSpecial Special
+hi def link texmfDoubleExclam Statement
+hi def link texmfSpecial Special
 
-  HiLink texmfBraceError texmfError
-  HiLink texmfError Error
+hi def link texmfBraceError texmfError
+hi def link texmfError Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "texmf"

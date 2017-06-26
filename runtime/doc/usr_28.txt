@@ -1,4 +1,4 @@
-*usr_28.txt*	For Vim version 7.4.  Last change: 2008 Jun 14
+*usr_28.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 

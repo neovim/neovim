@@ -198,6 +198,16 @@ func Test_matchaddpos()
   call assert_equal(screenattr(2,2), screenattr(1,10))
   call assert_notequal(screenattr(2,2), screenattr(1,11))
 
+  " Check overlapping pos
+  call clearmatches()
+  call setline(1, ['1234567890', 'NH'])
+  call matchaddpos('Error', [[1,1,5], [1,3,5], [2,2]])
+  redraw!
+  call assert_notequal(screenattr(2,2), 0)
+  call assert_equal(screenattr(2,2), screenattr(1,5))
+  call assert_equal(screenattr(2,2), screenattr(1,7))
+  call assert_notequal(screenattr(2,2), screenattr(1,8))
+
   nohl
   call clearmatches()
   syntax off
@@ -231,4 +241,4 @@ func Test_matchaddpos_using_negative_priority()
   set hlsearch&
 endfunc
 
-" vim: et ts=2 sw=2
+" vim: shiftwidth=2 sts=2 expandtab

@@ -8,6 +8,11 @@ function! s:trim(s) abort
   return substitute(a:s, '^\_s*\|\_s*$', '', 'g')
 endfunction
 
+" Convert '\' to '/'. Collapse '//' and '/./'.
+function! s:normalize_path(s) abort
+  return substitute(substitute(a:s, '\', '/', 'g'), '/\./\|/\+', '/', 'g')
+endfunction
+
 " Simple version comparison.
 function! s:version_cmp(a, b) abort
   let a = split(a:a, '\.', 0)
@@ -26,11 +31,21 @@ endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
-  if a:event == 'stdout' || a:event == 'stderr'
+  if a:event ==# 'stdout' || a:event ==# 'stderr'
     let self.output .= join(a:data, '')
-  elseif a:event == 'exit'
+  elseif a:event ==# 'exit'
     let s:shell_error = a:data
   endif
+endfunction
+
+" Attempts to construct a shell command from an args list.
+" Only for display, to help users debug a failed command.
+function! s:shellify(cmd) abort
+  if type(a:cmd) != type([])
+    return a:cmd
+  endif
+  return join(map(copy(a:cmd),
+    \'v:val =~# ''\m[\-.a-zA-Z_/]'' ? shellescape(v:val) : v:val'), ' ')
 endfunction
 
 " Run a system command and timeout after 30 seconds.
@@ -49,8 +64,7 @@ function! s:system(cmd, ...) abort
   let jobid = jobstart(a:cmd, opts)
 
   if jobid < 1
-    call health#report_error(printf('Command error %d: %s', jobid,
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)))
+    call health#report_error(printf('Command error (job=%d): %s', jobid, s:shellify(a:cmd)))
     let s:shell_error = 1
     return opts.output
   endif
@@ -61,13 +75,11 @@ function! s:system(cmd, ...) abort
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
-    call health#report_error(printf('Command timed out: %s',
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd))
+    call health#report_error(printf('Command timed out: %s', s:shellify(a:cmd)))
     call jobstop(jobid)
   elseif s:shell_error != 0 && !ignore_error
-    call health#report_error(printf("Command error (%d) %s: %s", jobid,
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd,
-          \ opts.output))
+    call health#report_error(printf("Command error (job=%d): %s\nOutput: %s", jobid,
+          \ s:shellify(a:cmd), opts.output))
   endif
 
   return opts.output
@@ -106,13 +118,13 @@ endfunction
 
 " Check for clipboard tools.
 function! s:check_clipboard() abort
-  call health#report_start('Clipboard')
+  call health#report_start('Clipboard (optional)')
 
   let clipboard_tool = provider#clipboard#Executable()
   if empty(clipboard_tool)
     call health#report_warn(
-          \ "No clipboard tool found. Clipboard registers will not work.",
-          \ ['See ":help clipboard".'])
+          \ 'No clipboard tool found. Clipboard registers will not work.',
+          \ [':help clipboard'])
   else
     call health#report_ok('Clipboard tool found: '. clipboard_tool)
   endif
@@ -152,7 +164,7 @@ function! s:version_info(python) abort
         \ ]))
 
   if empty(python_version)
-    let python_version = 'unable to parse python response'
+    let python_version = 'unable to parse '.a:python.' response'
   endif
 
   let nvim_path = s:trim(s:system([
@@ -164,14 +176,14 @@ function! s:version_info(python) abort
 
   " Assuming that multiple versions of a package are installed, sort them
   " numerically in descending order.
-  function! s:compare(metapath1, metapath2)
+  function! s:compare(metapath1, metapath2) abort
     let a = matchstr(fnamemodify(a:metapath1, ':p:h:t'), '[0-9.]\+')
     let b = matchstr(fnamemodify(a:metapath2, ':p:h:t'), '[0-9.]\+')
     return a == b ? 0 : a > b ? 1 : -1
   endfunction
 
   " Try to get neovim.VERSION (added in 0.1.11dev).
-  let nvim_version = s:system(['python', '-c',
+  let nvim_version = s:system([a:python, '-c',
         \ 'from neovim import VERSION as v; '.
         \ 'print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))'],
         \ '', 1, 1)
@@ -208,7 +220,7 @@ endfunction
 
 " Check the Python interpreter's usability.
 function! s:check_bin(bin) abort
-  if !filereadable(a:bin)
+  if !filereadable(a:bin) && (!has('win32') || !filereadable(a:bin.'.exe'))
     call health#report_error(printf('"%s" was not found.', a:bin))
     return 0
   elseif executable(a:bin) != 1
@@ -219,22 +231,28 @@ function! s:check_bin(bin) abort
 endfunction
 
 function! s:check_python(version) abort
-  call health#report_start('Python ' . a:version . ' provider')
+  call health#report_start('Python ' . a:version . ' provider (optional)')
 
-  let python_bin_name = 'python'.(a:version == 2 ? '' : '3')
+  let pyname = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
-  let host_prog_var = python_bin_name.'_host_prog'
+  let host_prog_var = pyname.'_host_prog'
+  let loaded_var = 'g:loaded_'.pyname.'_provider'
   let python_bin = ''
   let python_multiple = []
+
+  if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
+    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
+    return
+  endif
 
   if exists('g:'.host_prog_var)
     call health#report_info(printf('Using: g:%s = "%s"', host_prog_var, get(g:, host_prog_var)))
   endif
 
-  let [python_bin_name, pythonx_errs] = provider#pythonx#Detect(a:version)
-  if empty(python_bin_name)
+  let [pyname, pythonx_errs] = provider#pythonx#Detect(a:version)
+  if empty(pyname)
     call health#report_warn('No Python interpreter was found with the neovim '
             \ . 'module.  Using the first available for diagnostics.')
     if !empty(pythonx_errs)
@@ -242,21 +260,21 @@ function! s:check_python(version) abort
     endif
   endif
 
-  if !empty(python_bin_name)
+  if !empty(pyname)
     if exists('g:'.host_prog_var)
-      let python_bin = exepath(python_bin_name)
+      let python_bin = exepath(pyname)
     endif
-    let python_bin_name = fnamemodify(python_bin_name, ':t')
+    let pyname = fnamemodify(pyname, ':t')
   endif
 
   if !empty(pythonx_errs)
     call health#report_error('Python provider error', pythonx_errs)
   endif
 
-  if !empty(python_bin_name) && empty(python_bin) && empty(pythonx_errs)
+  if !empty(pyname) && empty(python_bin) && empty(pythonx_errs)
     if !exists('g:'.host_prog_var)
       call health#report_info(printf('`g:%s` is not set.  Searching for '
-            \ . '%s in the environment.', host_prog_var, python_bin_name))
+            \ . '%s in the environment.', host_prog_var, pyname))
     endif
 
     if !empty(pyenv)
@@ -269,20 +287,21 @@ function! s:check_python(version) abort
         call health#report_ok(printf('pyenv found: "%s"', pyenv))
       endif
 
-      let python_bin = s:trim(s:system([pyenv, 'which', python_bin_name], '', 1))
+      let python_bin = s:trim(s:system([pyenv, 'which', pyname], '', 1))
 
       if empty(python_bin)
-        call health#report_warn(printf('pyenv could not find %s.', python_bin_name))
+        call health#report_warn(printf('pyenv could not find %s.', pyname))
       endif
     endif
 
     if empty(python_bin)
-      let python_bin = exepath(python_bin_name)
+      let python_bin = exepath(pyname)
 
       if exists('$PATH')
-        for path in split($PATH, ':')
-          let path_bin = path.'/'.python_bin_name
-          if path_bin != python_bin && index(python_multiple, path_bin) == -1
+        for path in split($PATH, has('win32') ? ';' : ':')
+          let path_bin = s:normalize_path(path.'/'.pyname)
+          if path_bin != s:normalize_path(python_bin)
+                \ && index(python_multiple, path_bin) == -1
                 \ && executable(path_bin)
             call add(python_multiple, path_bin)
           endif
@@ -292,7 +311,7 @@ function! s:check_python(version) abort
           " This is worth noting since the user may install something
           " that changes $PATH, like homebrew.
           call health#report_info(printf('Multiple %s executables found.  '
-                \ . 'Set `g:%s` to avoid surprises.', python_bin_name, host_prog_var))
+                \ . 'Set `g:%s` to avoid surprises.', pyname, host_prog_var))
         endif
 
         if python_bin =~# '\<shims\>'
@@ -333,9 +352,9 @@ function! s:check_python(version) abort
     endif
   endif
 
-  if empty(python_bin) && !empty(python_bin_name)
+  if empty(python_bin) && !empty(pyname)
     " An error message should have already printed.
-    call health#report_error(printf('`%s` was not found.', python_bin_name))
+    call health#report_error(printf('`%s` was not found.', pyname))
   elseif !empty(python_bin) && !s:check_bin(python_bin)
     let python_bin = ''
   endif
@@ -349,7 +368,7 @@ function! s:check_python(version) abort
       if $VIRTUAL_ENV != pyenv_prefix
         let virtualenv_inactive = 1
       endif
-    elseif !empty(python_bin_name) && exepath(python_bin_name) !~# '^'.$VIRTUAL_ENV.'/'
+    elseif !empty(pyname) && exepath(pyname) !~# '^'.$VIRTUAL_ENV.'/'
       let virtualenv_inactive = 1
     endif
   endif
@@ -381,9 +400,9 @@ function! s:check_python(version) abort
 
     call health#report_info('Python'.a:version.' version: ' . pyversion)
     if s:is_bad_response(status)
-      call health#report_info(printf('%s-neovim version: %s (%s)', python_bin_name, current, status))
+      call health#report_info(printf('%s-neovim version: %s (%s)', pyname, current, status))
     else
-      call health#report_info(printf('%s-neovim version: %s', python_bin_name, current))
+      call health#report_info(printf('%s-neovim version: %s', pyname, current))
     endif
 
     if s:is_bad_response(current)
@@ -397,22 +416,28 @@ function! s:check_python(version) abort
       call health#report_error('HTTP request failed: '.latest)
     elseif s:is_bad_response(status)
       call health#report_warn(printf('Latest %s-neovim is NOT installed: %s',
-            \ python_bin_name, latest))
+            \ pyname, latest))
     elseif !s:is_bad_response(current)
       call health#report_ok(printf('Latest %s-neovim is installed: %s',
-            \ python_bin_name, latest))
+            \ pyname, latest))
     endif
   endif
 
 endfunction
 
 function! s:check_ruby() abort
-  call health#report_start('Ruby provider')
+  call health#report_start('Ruby provider (optional)')
+
+  let loaded_var = 'g:loaded_ruby_provider'
+  if exists(loaded_var) && !exists('*provider#ruby#Call')
+    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
+    return
+  endif
 
   if !executable('ruby') || !executable('gem')
     call health#report_warn(
-          \ "`ruby` and `gem` must be in $PATH.",
-          \ ["Install Ruby and verify that `ruby` and `gem` commands work."])
+          \ '`ruby` and `gem` must be in $PATH.',
+          \ ['Install Ruby and verify that `ruby` and `gem` commands work.'])
     return
   endif
   call health#report_info('Ruby: '. s:system('ruby -v'))
@@ -420,26 +445,28 @@ function! s:check_ruby() abort
   let host = provider#ruby#Detect()
   if empty(host)
     call health#report_warn('Missing "neovim" gem.',
-          \ ['Run in shell: gem install neovim'])
+          \ ['Run in shell: gem install neovim',
+          \  'Is the gem bin directory in $PATH? Check `gem environment`.',
+          \  'If you are using rvm/rbenv/chruby, try "rehashing".'])
     return
   endif
   call health#report_info('Host: '. host)
 
-  let latest_gem_cmd = 'gem list -ra ^neovim$'
+  let latest_gem_cmd = has('win32') ? 'cmd /c gem list -ra ^^neovim$' : 'gem list -ra ^neovim$'
   let latest_gem = s:system(split(latest_gem_cmd))
   if s:shell_error || empty(latest_gem)
     call health#report_error('Failed to run: '. latest_gem_cmd,
           \ ["Make sure you're connected to the internet.",
-          \  "Are you behind a firewall or proxy?"])
+          \  'Are you behind a firewall or proxy?'])
     return
   endif
-  let latest_gem = get(split(latest_gem, ' (\|, \|)$' ), 1, 'not found')
+  let latest_gem = get(split(latest_gem, 'neovim (\|, \|)$' ), 1, 'not found')
 
   let current_gem_cmd = host .' --version'
   let current_gem = s:system(current_gem_cmd)
   if s:shell_error
     call health#report_error('Failed to run: '. current_gem_cmd,
-          \ ["Report this issue with the output of: ", current_gem_cmd])
+          \ ['Report this issue with the output of: ', current_gem_cmd])
     return
   endif
 
@@ -449,7 +476,7 @@ function! s:check_ruby() abort
           \ current_gem, latest_gem),
           \ ['Run in shell: gem update neovim'])
   else
-    call health#report_ok('Gem "neovim" is up-to-date: '. current_gem)
+    call health#report_ok('Latest "neovim" gem is installed: '. current_gem)
   endif
 endfunction
 

@@ -3,7 +3,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('increment and decrement commands', function()
   setup(clear)
@@ -19,25 +19,25 @@ describe('increment and decrement commands', function()
 
     -- Increment and decrement numbers in the first row, interpreting the
     -- numbers as decimal, octal or hexadecimal.
-    execute('set nrformats=bin,octal,hex', '1')
+    feed_command('set nrformats=bin,octal,hex', '1')
     feed('63l102ll64128$')
 
     -- For the second row, treat the numbers as decimal or octal.
     -- 0x100 should be interpreted as decimal 0, the character x, and decimal 100.
-    execute('set nrformats=octal', '2')
+    feed_command('set nrformats=octal', '2')
     feed('0w102l2w65129blx6lD')
 
     -- For the third row, treat the numbers as decimal or hexadecimal.
     -- 077 should be interpreted as decimal 77.
-    execute('set nrformats=hex', '3')
+    feed_command('set nrformats=hex', '3')
     feed('0101l257Txldt   ')
 
     -- For the fourth row, interpret all numbers as decimal.
-    execute('set nrformats=', '4')
+    feed_command('set nrformats=', '4')
     feed('0200l100w78')
 
     -- For the last row, interpret as binary and hexadecimal.
-    execute('set nrformats=bin,hex', '5')
+    feed_command('set nrformats=bin,hex', '5')
     feed('010065l6432')
 
     expect([[

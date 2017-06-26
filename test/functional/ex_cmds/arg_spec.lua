@@ -1,5 +1,5 @@
 local helpers = require("test.functional.helpers")(after_each)
-local eq, execute, funcs = helpers.eq, helpers.execute, helpers.funcs
+local eq, command, funcs = helpers.eq, helpers.command, helpers.funcs
 local ok = helpers.ok
 local clear = helpers.clear
 
@@ -9,15 +9,15 @@ describe(":argument", function()
   end)
 
   it("does not restart :terminal buffer", function()
-      execute("terminal")
+      command("terminal")
       helpers.feed([[<C-\><C-N>]])
-      execute("argadd")
+      command("argadd")
       helpers.feed([[<C-\><C-N>]])
       local bufname_before = funcs.bufname("%")
       local bufnr_before = funcs.bufnr("%")
       helpers.ok(nil ~= string.find(bufname_before, "^term://"))  -- sanity
 
-      execute("argument 1")
+      command("argument 1")
       helpers.feed([[<C-\><C-N>]])
 
       local bufname_after = funcs.bufname("%")

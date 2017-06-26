@@ -12,10 +12,7 @@
 #include "nvim/syntax_defs.h"
 #include "nvim/types.h"
 #include "nvim/event/loop.h"
-
-/*
- * definition of global variables
- */
+#include "nvim/os/os_defs.h"
 
 #define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
 
@@ -24,19 +21,6 @@
 # define MSG_BUF_LEN 480                 // length of buffer for small messages
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
-
-/*
- * Maximum length of a path (for non-unix systems) Make it a bit long, to stay
- * on the safe side.  But not too long to put on the stack.
- * TODO(metrix78): Move this to os_defs.h
- */
-#ifndef MAXPATHL
-# ifdef MAXPATHLEN
-#  define MAXPATHL  MAXPATHLEN
-# else
-#  define MAXPATHL  256
-# endif
-#endif
 
 #ifdef WIN32
 # define _PATHSEPSTR "\\"
@@ -108,13 +92,38 @@ typedef enum {
  * They may have different values when the screen wasn't (re)allocated yet
  * after setting Rows or Columns (e.g., when starting up).
  */
-
-#define DFLT_COLS       80              /* default value for 'columns' */
-#define DFLT_ROWS       24              /* default value for 'lines' */
-
+#define DFLT_COLS       80              // default value for 'columns'
+#define DFLT_ROWS       24              // default value for 'lines'
 EXTERN long Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
-
 EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
+
+// We use 64-bit file functions here, if available.  E.g. ftello() returns
+// off_t instead of long, which helps if long is 32 bit and off_t is 64 bit.
+// We assume that when fseeko() is available then ftello() is too.
+// Note that Windows has different function names.
+#if (defined(_MSC_VER) && (_MSC_VER >= 1300)) || defined(__MINGW32__)
+typedef __int64 off_T;
+# ifdef __MINGW32__
+#  define vim_lseek lseek64
+#  define vim_fseek fseeko64
+#  define vim_ftell ftello64
+# else
+#  define vim_lseek _lseeki64
+#  define vim_fseek _fseeki64
+#  define vim_ftell _ftelli64
+# endif
+#else
+typedef off_t off_T;
+# ifdef HAVE_FSEEKO
+#  define vim_lseek lseek
+#  define vim_ftell ftello
+#  define vim_fseek fseeko
+# else
+#  define vim_lseek lseek
+#  define vim_ftell ftell
+#  define vim_fseek(a, b, c) fseek(a, (long)b, c)
+# endif
+#endif
 
 /*
  * The characters and attributes cached for the screen.
@@ -430,79 +439,6 @@ EXTERN int did_check_timestamps INIT(= FALSE);      /* did check timestamps
                                                        recently */
 EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
 
-/*
- * Values for index in highlight_attr[].
- * When making changes, also update HL_FLAGS below!  And update the default
- * value of 'highlight' in option.c.
- */
-typedef enum {
-  HLF_8 = 0         /* Meta & special keys listed with ":map", text that is
-                       displayed different from what it is */
-  , HLF_EOB         // after the last line in the buffer
-  , HLF_TERM        // terminal cursor focused
-  , HLF_TERMNC      // terminal cursor unfocused
-  , HLF_AT          // @ characters at end of screen, characters that
-                    // don't really exist in the text
-  , HLF_D           // directories in CTRL-D listing
-  , HLF_E           // error messages
-  , HLF_I           // incremental search
-  , HLF_L           // last search string
-  , HLF_M           // "--More--" message
-  , HLF_CM          // Mode (e.g., "-- INSERT --")
-  , HLF_N           // line number for ":number" and ":#" commands
-  , HLF_CLN         // current line number
-  , HLF_R           // return to continue message and yes/no questions
-  , HLF_S           // status lines
-  , HLF_SNC         // status lines of not-current windows
-  , HLF_C           // column to separate vertically split windows
-  , HLF_T           // Titles for output from ":set all", ":autocmd" etc.
-  , HLF_V           // Visual mode
-  , HLF_VNC         // Visual mode, autoselecting and not clipboard owner
-  , HLF_W           // warning messages
-  , HLF_WM          // Wildmenu highlight
-  , HLF_FL          // Folded line
-  , HLF_FC          // Fold column
-  , HLF_ADD         // Added diff line
-  , HLF_CHD         // Changed diff line
-  , HLF_DED         // Deleted diff line
-  , HLF_TXD         // Text Changed in diff line
-  , HLF_CONCEAL     // Concealed text
-  , HLF_SC          // Sign column
-  , HLF_SPB         // SpellBad
-  , HLF_SPC         // SpellCap
-  , HLF_SPR         // SpellRare
-  , HLF_SPL         // SpellLocal
-  , HLF_PNI         // popup menu normal item
-  , HLF_PSI         // popup menu selected item
-  , HLF_PSB         // popup menu scrollbar
-  , HLF_PST         // popup menu scrollbar thumb
-  , HLF_TP          // tabpage line
-  , HLF_TPS         // tabpage line selected
-  , HLF_TPF         // tabpage line filler
-  , HLF_CUC         // 'cursurcolumn'
-  , HLF_CUL         // 'cursurline'
-  , HLF_MC          // 'colorcolumn'
-  , HLF_QFL         // selected quickfix line
-  , HLF_COUNT       // MUST be the last one
-} hlf_T;
-
-/* The HL_FLAGS must be in the same order as the HLF_ enums!
- * When changing this also adjust the default for 'highlight'. */
-#define HL_FLAGS { '8', '~', 'z', 'Z', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', \
-                   'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', \
-                   'A', 'C', 'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', \
-                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q' }
-
-EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
-EXTERN int highlight_user[9];                   /* User[1-9] attributes */
-EXTERN int highlight_stlnc[9];                  /* On top of user */
-EXTERN int cterm_normal_fg_color INIT(= 0);
-EXTERN int cterm_normal_fg_bold INIT(= 0);
-EXTERN int cterm_normal_bg_color INIT(= 0);
-EXTERN RgbValue normal_fg INIT(= -1);
-EXTERN RgbValue normal_bg INIT(= -1);
-EXTERN RgbValue normal_sp INIT(= -1);
-
 EXTERN int autocmd_busy INIT(= FALSE);          /* Is apply_autocmds() busy? */
 EXTERN int autocmd_no_enter INIT(= FALSE);      /* *Enter autocmds disabled */
 EXTERN int autocmd_no_leave INIT(= FALSE);      /* *Leave autocmds disabled */
@@ -512,9 +448,9 @@ EXTERN int keep_filetype INIT(= FALSE);         /* value for did_filetype when
                                                    starting to execute
                                                    autocommands */
 
-/* When deleting the current buffer, another one must be loaded.  If we know
- * which one is preferred, au_new_curbuf is set to it */
-EXTERN buf_T    *au_new_curbuf INIT(= NULL);
+// When deleting the current buffer, another one must be loaded.
+// If we know which one is preferred, au_new_curbuf is set to it.
+EXTERN bufref_T au_new_curbuf INIT(= { NULL, 0, 0 });
 
 // When deleting a buffer/window and autocmd_busy is TRUE, do not free the
 // buffer/window. but link it in the list starting with
@@ -566,7 +502,7 @@ EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
   FOR_ALL_TABS(tp) \
     FOR_ALL_WINDOWS_IN_TAB(wp, tp)
 
-# define FOR_ALL_WINDOWS(wp) for (wp = firstwin; wp != NULL; wp = wp->w_next)
+// -V:FOR_ALL_WINDOWS_IN_TAB:501
 # define FOR_ALL_WINDOWS_IN_TAB(wp, tp) \
   for (win_T *wp = ((tp) == curtab) \
               ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)
@@ -602,7 +538,10 @@ EXTERN buf_T    *lastbuf INIT(= NULL);   // last buffer
 EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
 
 // Iterates over all buffers in the buffer list.
-# define FOR_ALL_BUFFERS(buf) for (buf_T *buf = firstbuf; buf != NULL; buf = buf->b_next)
+#define FOR_ALL_BUFFERS(buf) \
+  for (buf_T *buf = firstbuf; buf != NULL; buf = buf->b_next)
+#define FOR_ALL_BUFFERS_BACKWARDS(buf) \
+  for (buf_T *buf = lastbuf; buf != NULL; buf = buf->b_prev)
 
 /* Flag that is set when switching off 'swapfile'.  It means that all blocks
  * are to be loaded into memory.  Shouldn't be global... */
@@ -840,13 +779,11 @@ EXTERN int ex_no_reprint INIT(= FALSE); /* no need to print after z or p */
 EXTERN int Recording INIT(= FALSE);     /* TRUE when recording into a reg. */
 EXTERN int Exec_reg INIT(= FALSE);      /* TRUE when executing a register */
 
-EXTERN int no_mapping INIT(= FALSE);    /* currently no mapping allowed */
-EXTERN int no_zero_mapping INIT(= 0);   /* mapping zero not allowed */
-EXTERN int allow_keys INIT(= FALSE);    /* allow key codes when no_mapping
-                                         * is set */
-EXTERN int no_u_sync INIT(= 0);         /* Don't call u_sync() */
-EXTERN int u_sync_once INIT(= 0);       /* Call u_sync() once when evaluating
-                                           an expression. */
+EXTERN int no_mapping INIT(= false);    // currently no mapping allowed
+EXTERN int no_zero_mapping INIT(= 0);   // mapping zero not allowed
+EXTERN int no_u_sync INIT(= 0);         // Don't call u_sync()
+EXTERN int u_sync_once INIT(= 0);       // Call u_sync() once when evaluating
+                                        // an expression.
 
 EXTERN bool force_restart_edit INIT(= false);  // force restart_edit after
                                                // ex_normal returns
@@ -886,9 +823,16 @@ EXTERN int swap_exists_action INIT(= SEA_NONE);
 EXTERN int swap_exists_did_quit INIT(= FALSE);
 /* Selected "quit" at the dialog. */
 
-EXTERN char_u IObuff[IOSIZE];       /* sprintf's are done in this buffer */
-EXTERN char_u NameBuff[MAXPATHL];   /* buffer for expanding file names */
-EXTERN char_u msg_buf[MSG_BUF_LEN]; /* small buffer for messages */
+EXTERN char_u IObuff[IOSIZE];               ///< Buffer for sprintf, I/O, etc.
+EXTERN char_u NameBuff[MAXPATHL];           ///< Buffer for expanding file names
+EXTERN char_u msg_buf[MSG_BUF_LEN];         ///< Small buffer for messages
+EXTERN char os_buf[                         ///< Buffer for the os/ layer
+#if MAXPATHL > IOSIZE
+MAXPATHL
+#else
+IOSIZE
+#endif
+];
 
 /* When non-zero, postpone redrawing. */
 EXTERN int RedrawingDisabled INIT(= 0);
@@ -953,7 +897,7 @@ EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
 // for CursorMoved event
 EXTERN pos_T last_cursormoved INIT(= INIT_POS_T(0, 0, 0));
 
-EXTERN int last_changedtick INIT(= 0);  // for TextChanged event
+EXTERN varnumber_T last_changedtick INIT(= 0);  // for TextChanged event
 EXTERN buf_T    *last_changedtick_buf INIT(= NULL);
 
 EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
@@ -1124,7 +1068,7 @@ EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
 EXTERN char_u e_jobspawn[] INIT(= N_(
-      "E903: Process for command \"%s\" could not be spawned"));
+        "E903: Process failed to start: %s: \"%s\""));
 EXTERN char_u e_jobnotpty[] INIT(= N_("E904: Job is not connected to a pty"));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
@@ -1150,7 +1094,6 @@ EXTERN char_u e_noprev[] INIT(= N_("E34: No previous command"));
 EXTERN char_u e_noprevre[] INIT(= N_("E35: No previous regular expression"));
 EXTERN char_u e_norange[] INIT(= N_("E481: No range allowed"));
 EXTERN char_u e_noroom[] INIT(= N_("E36: Not enough room"));
-EXTERN char_u e_notcreate[] INIT(= N_("E482: Can't create file %s"));
 EXTERN char_u e_notmp[] INIT(= N_("E483: Can't get temp file name"));
 EXTERN char_u e_notopen[] INIT(= N_("E484: Can't open file %s"));
 EXTERN char_u e_notread[] INIT(= N_("E485: Can't read file %s"));
@@ -1172,11 +1115,7 @@ EXTERN char_u e_loclist[] INIT(= N_("E776: No location list"));
 EXTERN char_u e_re_damg[] INIT(= N_("E43: Damaged match string"));
 EXTERN char_u e_re_corr[] INIT(= N_("E44: Corrupted regexp program"));
 EXTERN char_u e_readonly[] INIT(= N_(
-        "E45: 'readonly' option is set (add ! to override)"));
-EXTERN char_u e_readonlyvar[] INIT(= N_(
-        "E46: Cannot change read-only variable \"%s\""));
-EXTERN char_u e_readonlysbx[] INIT(= N_(
-        "E794: Cannot set variable in the sandbox: \"%s\""));
+    "E45: 'readonly' option is set (add ! to override)"));
 EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));
@@ -1192,6 +1131,7 @@ EXTERN char_u e_longname[] INIT(= N_("E75: Name too long"));
 EXTERN char_u e_toomsbra[] INIT(= N_("E76: Too many ["));
 EXTERN char_u e_toomany[] INIT(= N_("E77: Too many file names"));
 EXTERN char_u e_trailing[] INIT(= N_("E488: Trailing characters"));
+EXTERN char_u e_trailing2[] INIT(= N_("E488: Trailing characters: %s"));
 EXTERN char_u e_umark[] INIT(= N_("E78: Unknown mark"));
 EXTERN char_u e_wildexpand[] INIT(= N_("E79: Cannot expand wildcards"));
 EXTERN char_u e_winheight[] INIT(= N_(
@@ -1216,6 +1156,7 @@ EXTERN char_u e_dirnotf[] INIT(= N_(
     "E919: Directory not found in '%s': \"%s\""));
 EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
+EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
@@ -1233,8 +1174,6 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
  */
 EXTERN int ignored;
 EXTERN char *ignoredp;
-
-EXTERN bool in_free_unref_items INIT(= false);
 
 // If a msgpack-rpc channel should be started over stdin/stdout
 EXTERN bool embedded_mode INIT(= false);
@@ -1260,7 +1199,7 @@ typedef enum {
   kCdScopeInvalid = -1,
   kCdScopeWindow,  ///< Affects one window.
   kCdScopeTab,     ///< Affects one tab page.
-  kCdScopeGlobal,  ///< Affects the entire instance of Neovim.
+  kCdScopeGlobal,  ///< Affects the entire Nvim instance.
 } CdScope;
 
 #define MIN_CD_SCOPE  kCdScopeWindow

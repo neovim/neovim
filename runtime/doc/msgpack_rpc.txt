@@ -1,4 +1,4 @@
-*msgpack_rpc.txt*							{Nvim}
+*msgpack_rpc.txt*	Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
@@ -6,12 +6,7 @@
 
 RPC API for Nvim				     *RPC* *rpc* *msgpack-rpc*
 
-1. Introduction			|rpc-intro|
-2. API mapping			|rpc-api|
-3. Connecting			|rpc-connecting|
-4. Clients			|rpc-api-client|
-5. Types			|rpc-types|
-6. Remote UIs			|rpc-remote-ui|
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						            *rpc-intro*
@@ -33,7 +28,7 @@ programs can:
 The RPC API is like a more powerful version of Vim's `clientserver` feature.
 
 ==============================================================================
- 2. API mapping							    *rpc-api*
+2. API mapping							    *rpc-api*
 
 The Nvim C |API| is automatically exposed to the RPC API by the build system,
 which parses headers at src/nvim/api/*. A dispatch function is generated which
@@ -197,7 +192,7 @@ prefix is stripped off.
 5. Types							    *rpc-types*
 
 The Nvim C API uses custom types for all functions. |api-types|
-For the purpose of mapping to msgpack, the types can be split into two groups:
+At the RPC layer, the types can be split into two groups:
 
   - Basic types that map natively to msgpack (and probably have a default
     representation in msgpack-supported programming languages)
@@ -219,15 +214,16 @@ Special types (msgpack EXT) ~
   Window                            -> enum value kObjectTypeWindow
   Tabpage                           -> enum value kObjectTypeTabpage
 
-An API method expecting one of these types may be passed an integer instead,
-although they are not interchangeable. For example, a Buffer may be passed as
-an integer, but not a Window or Tabpage.
+API functions expecting one of the special EXT types may be passed an integer
+instead, but not another EXT type. E.g. Buffer may be passed as an integer but
+not as a Window or Tabpage. The EXT object data is the object id encoded as
+a msgpack integer: For buffers this is the |bufnr()| and for windows the
+|window-ID|. For tabpages the id is an internal handle, not the tabpage
+number.
 
-The most reliable way of determining the type codes for the special Nvim types
-is to inspect the `types` key of metadata dictionary returned by the
-`nvim_get_api_info` method at runtime. Here's a sample JSON representation of
-the `types` object:
->
+To determine the type codes of the special EXT types, inspect the `types` key
+of the |api-metadata| at runtime. Example JSON representation: >
+
   "types": {
     "Buffer": {
       "id": 0,
@@ -242,7 +238,7 @@ the `types` object:
       "prefix": "nvim_tabpage_"
     }
   }
-<
+
 Even for statically compiled clients it is good practice to avoid hardcoding
 the type codes, because a client may be built against one Nvim version but
 connect to another with different type codes.
@@ -250,35 +246,38 @@ connect to another with different type codes.
 ==============================================================================
 6. Remote UIs					           *rpc-remote-ui*
 
-Nvim allows Graphical user interfaces to be implemented by separate processes
-communicating with Nvim over the RPC API. Currently the ui model conists of a
-terminal-like grid with one single, monospace font size, with a few elements
-that could be drawn separately from the grid (for the momemnt only the popup
-menu)
+GUIs can be implemented as external processes communicating with Nvim over the
+RPC API. The UI model consists of a terminal-like grid with a single,
+monospace font size. Some elements (UI "widgets") can be drawn separately from
+the grid ("externalized").
 
-After connecting to a nvim instance (typically a spawned, embedded instance)
-use the |nvim_ui_attach|(width, height, options) API method to tell nvim that your
-program wants to draw the nvim screen on a grid with "width" times
-"height" cells. "options" should be a dictionary with the following (all
-optional) keys:
-	`rgb`:			Controls what color format to use.
+After connecting to Nvim (usually a spawned, embedded instance) use the
+|nvim_ui_attach| API method to tell Nvim that your program wants to draw the
+Nvim screen on a grid of width × height cells. `options` must be
+a dictionary with these (optional) keys:
+	`rgb`			Controls what color format to use.
 				Set to true (default) to use 24-bit rgb
 				colors.
 				Set to false to use terminal color codes (at
 				most 256 different colors).
-	`popupmenu_external`:	Instead of drawing the completion popupmenu on
-				the grid, Nvim will send higher-level events to
-				the ui and let it draw the popupmenu.
-				Defaults to false.
+	`ext_popupmenu`		Externalize the popupmenu. |ui-ext-popupmenu|
+	`ext_tabline`		Externalize the tabline. |ui-ext-tabline|
+				Externalized widgets will not be drawn by
+				Nvim; only high-level data will be published
+				in new UI event kinds.
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
-and a single argument, an array of screen updates (described below).
-These should be processed in order. Preferably the user should only be able to
-see the screen state after all updates are processed (not any intermediate
-state after processing only a part of the array).
+and a single argument, an array of screen updates (described below).  These
+should be processed in order. Preferably the user should only be able to see
+the screen state after all updates in the same "redraw" event are processed
+(not any intermediate state after processing only a part of the array).
 
-Screen updates are arrays. The first element a string describing the kind
-of update.
+Future versions of Nvim may add new update kinds and may append new parameters
+to existing update kinds. Clients must be prepared to ignore such extensions
+to be forward-compatible. |api-contract|
+
+Screen updates are tuples whose first element is the string name of the update
+kind.
 
 ["resize", width, height]
 	The grid is resized to `width` and `height` cells.
@@ -389,11 +388,33 @@ of update.
 ["update_menu"]
 	The menu mappings changed.
 
-["mode_change", mode]
-	The mode changed. Currently sent when "insert", "replace", "cmdline" and
-	"normal" modes are entered. A client could for instance change the cursor
-	shape.
+["mode_info_set", cursor_style_enabled, mode_info]
+`cursor_style_enabled` is a boolean indicating if the UI should set the cursor
+style. `mode_info` is a list of mode property maps. The current mode is given
+by the `mode_idx` field of the `mode_change` event.
 
+Each mode property map may contain these keys:
+	KEY		DESCRIPTION ~
+	`cursor_shape`:	"block", "horizontal", "vertical"
+	`cell_percentage`: Cell % occupied by the cursor.
+	`blinkwait`, `blinkon`, `blinkoff`: See |cursor-blinking|.
+	`hl_id`:	Cursor highlight group.
+	`hl_lm`:	Cursor highlight group if 'langmap' is active.
+	`short_name`:	Mode code name, see 'guicursor'.
+	`name`:		Mode descriptive name.
+	`mouse_shape`:	(To be implemented.)
+
+Some keys are missing in some modes.
+
+["mode_change", mode, mode_idx]
+The mode changed.  The first parameter `mode` is a string representing the
+current mode. `mode_idx` is an index into the array received in the
+`mode_info_set` event. UIs should change the cursor style according to the
+properties specified in the corresponding item. The set of modes reported will
+change in new versions of Nvim, for instance more submodes and temporary
+states might be represented as separate modes.
+
+							*ui-ext-popupmenu*
 ["popupmenu_show", items, selected, row, col]
 	When `popupmenu_external` is set to true, nvim will not draw the
 	popupmenu on the grid, instead when the popupmenu is to be displayed
@@ -412,6 +433,13 @@ of update.
 
 ["popupmenu_hide"]
 	The popupmenu is hidden.
+
+							*ui-ext-tabline*
+["tabline_update", curtab, tabs]
+	Tabline was updated. UIs should present this data in a custom tabline
+	widget.
+	curtab:	  Current Tabpage
+	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

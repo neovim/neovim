@@ -1,4 +1,4 @@
-*repeat.txt*    For Vim version 7.4.  Last change: 2016 Jul 21
+*repeat.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -8,14 +8,7 @@ Repeating commands, Vim scripts and debugging			*repeating*
 
 Chapter 26 of the user manual introduces repeating |usr_26.txt|.
 
-1. Single repeats		|single-repeat|
-2. Multiple repeats		|multi-repeat|
-3. Complex repeats		|complex-repeat|
-4. Using Vim scripts		|using-scripts|
-5. Using Vim packages		|packages|
-6. Creating Vim packages	|package-create|
-7. Debugging scripts		|debug-scripts|
-8. Profiling			|profiling|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Single repeats					*single-repeat*
@@ -152,7 +145,7 @@ q			Stops recording.
 :[addr]@:		Repeat last command-line.  First set cursor at line
 			[addr] (default is current line).
 
-							*:@@*
+:[addr]@							*:@@*
 :[addr]@@		Repeat the previous :@{0-9a-z"}.  First set cursor at
 			line [addr] (default is current line).
 
@@ -357,8 +350,7 @@ terminal-independent two character codes.  This means that they can be used
 in the same way on different kinds of terminals.  The first character of a
 key code is 0x80 or 128, shown on the screen as "~@".  The second one can be
 found in the list |key-notation|.  Any of these codes can also be entered
-with CTRL-V followed by the three digit decimal code.  This does NOT work for
-the <t_xx> termcap codes, these can only be used in mappings.
+with CTRL-V followed by the three digit decimal code.
 
 							*:source_crnl* *W15*
 Windows: Files that are read with ":source" normally have <CR><NL> <EOL>s.
@@ -368,12 +360,6 @@ the first line does not end in a <CR>.  This fails if the first line has
 something like ":map <F1> :help^M", where "^M" is a <CR>.  If the first line
 ends in a <CR>, but following ones don't, you will get an error message,
 because the <CR> from the first lines will be lost.
-
-Mac Classic: Files that are read with ":source" normally have <CR> <EOL>s.
-These always work.  If you are using a file with <NL> <EOL>s (for example, a
-file made on Unix), this will be recognized if 'fileformats' is not empty and
-the first line does not end in a <CR>.  Be careful not to use a file with <NL>
-linebreaks which has a <CR> in first line.
 
 On other systems, Vim expects ":source"ed files to end in a <NL>.  These
 always work.  If you are using a file with <CR><NL> <EOL>s (for example, a

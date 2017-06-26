@@ -1,9 +1,9 @@
 " Vim indent file
 " Language:	Tera Term Language (TTL)
-"		Based on Tera Term Version 4.86
+"		Based on Tera Term Version 4.92
 " Maintainer:	Ken Takata
 " URL:		https://github.com/k-takata/vim-teraterm
-" Last Change:	2015 Jun 4
+" Last Change:	2016 Aug 17
 " Filenames:	*.ttl
 " License:	VIM License
 
@@ -25,9 +25,7 @@ endif
 " The shiftwidth() function is relatively new.
 " Don't require it to exist.
 if exists('*shiftwidth')
-  function s:sw() abort
-    return shiftwidth()
-  endfunction
+  let s:sw = function('shiftwidth')
 else
   function s:sw() abort
     return &shiftwidth
@@ -48,7 +46,7 @@ function! GetTeraTermIndent(lnum)
 
   let l:ind = l:previ
 
-  if l:prevl =~ '^\s*if\>.*\<then\s*$'
+  if l:prevl =~ '^\s*if\>.*\<then\>'
     " previous line opened a block
     let l:ind += s:sw()
   endif

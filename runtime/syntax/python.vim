@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Python
 " Maintainer:	Zvezdan Petkovic <zpetkovic@acm.org>
-" Last Change:	2016 Jul 21
+" Last Change:	2016 Oct 29
 " Credits:	Neil Schemenauer <nas@python.ca>
 "		Dmitry Vasiliev
 "
@@ -36,11 +36,8 @@
 "   let python_highlight_all = 1
 "
 
-" For version 5.x: Clear all syntax items.
-" For version 6.x: Quit when a syntax file was already loaded.
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded.
+if exists("b:current_syntax")
   finish
 endif
 
@@ -48,6 +45,29 @@ endif
 " Original setting will be restored.
 let s:cpo_save = &cpo
 set cpo&vim
+
+if exists("python_no_doctest_highlight")
+  let python_no_doctest_code_highlight = 1
+endif
+
+if exists("python_highlight_all")
+  if exists("python_no_builtin_highlight")
+    unlet python_no_builtin_highlight
+  endif
+  if exists("python_no_doctest_code_highlight")
+    unlet python_no_doctest_code_highlight
+  endif
+  if exists("python_no_doctest_highlight")
+    unlet python_no_doctest_highlight
+  endif
+  if exists("python_no_exception_highlight")
+    unlet python_no_exception_highlight
+  endif
+  if exists("python_no_number_highlight")
+    unlet python_no_number_highlight
+  endif
+  let python_space_error_highlight = 1
+endif
 
 " Keep Python keywords in alphabetical order inside groups for easy
 " comparison with the table in the 'Python Language Reference'
@@ -84,14 +104,31 @@ syn keyword pythonInclude	from import
 syn keyword pythonAsync		async await
 
 " Decorators (new in Python 2.4)
-syn match   pythonDecorator	"@" display nextgroup=pythonFunction skipwhite
-" The zero-length non-grouping match before the function name is
-" extremely important in pythonFunction.  Without it, everything is
-" interpreted as a function inside the contained environment of
-" doctests.
 " A dot must be allowed because of @MyClass.myfunc decorators.
-syn match   pythonFunction
-      \ "\%(\%(def\s\|class\s\|@\)\s*\)\@<=\h\%(\w\|\.\)*" contained
+syn match   pythonDecorator	"@" display contained
+syn match   pythonDecoratorName	"@\s*\h\%(\w\|\.\)*" display contains=pythonDecorator
+
+" Python 3.5 introduced the use of the same symbol for matrix multiplication:
+" https://www.python.org/dev/peps/pep-0465/.  We now have to exclude the
+" symbol from highlighting when used in that context.
+" Single line multiplication.
+syn match   pythonMatrixMultiply
+      \ "\%(\w\|[])]\)\s*@"
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ transparent
+" Multiplication continued on the next line after backslash.
+syn match   pythonMatrixMultiply
+      \ "[^\\]\\\s*\n\%(\s*\.\.\.\s\)\=\s\+@"
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ transparent
+" Multiplication in a parenthesized expression over multiple lines with @ at
+" the start of each continued line; very similar to decorators and complex.
+syn match   pythonMatrixMultiply
+      \ "^\s*\%(\%(>>>\|\.\.\.\)\s\+\)\=\zs\%(\h\|\%(\h\|[[(]\).\{-}\%(\w\|[])]\)\)\s*\n\%(\s*\.\.\.\s\)\=\s\+@\%(.\{-}\n\%(\s*\.\.\.\s\)\=\s\+@\)*"
+      \ contains=ALLBUT,pythonDecoratorName,pythonDecorator,pythonFunction,pythonDoctestValue
+      \ transparent
+
+syn match   pythonFunction	"\h\w*" display contained
 
 syn match   pythonComment	"#.*$" contains=pythonTodo,@Spell
 syn keyword pythonTodo		FIXME NOTE NOTES TODO XXX contained
@@ -117,25 +154,6 @@ syn match   pythonEscape	"\%(\\u\x\{4}\|\\U\x\{8}\)" contained
 " Python allows case-insensitive Unicode IDs: http://www.unicode.org/charts/
 syn match   pythonEscape	"\\N{\a\+\%(\s\a\+\)*}" contained
 syn match   pythonEscape	"\\$"
-
-if exists("python_highlight_all")
-  if exists("python_no_builtin_highlight")
-    unlet python_no_builtin_highlight
-  endif
-  if exists("python_no_doctest_code_highlight")
-    unlet python_no_doctest_code_highlight
-  endif
-  if exists("python_no_doctest_highlight")
-    unlet python_no_doctest_highlight
-  endif
-  if exists("python_no_exception_highlight")
-    unlet python_no_exception_highlight
-  endif
-  if exists("python_no_number_highlight")
-    unlet python_no_number_highlight
-  endif
-  let python_space_error_highlight = 1
-endif
 
 " It is very important to understand all details before changing the
 " regular expressions below or their order.
@@ -200,7 +218,9 @@ if !exists("python_no_builtin_highlight")
   " non-essential built-in functions; Python 2 only
   syn keyword pythonBuiltin	apply buffer coerce intern
   " avoid highlighting attributes as builtins
-  syn match   pythonAttribute	/\.\h\w*/hs=s+1 contains=ALLBUT,pythonBuiltin transparent
+  syn match   pythonAttribute	/\.\h\w*/hs=s+1
+	\ contains=ALLBUT,pythonBuiltin,pythonFunction,pythonAsync
+	\ transparent
 endif
 
 " From the 'Python Library Reference' class hierarchy at the bottom.
@@ -262,7 +282,7 @@ if !exists("python_no_doctest_highlight")
   if !exists("python_no_doctest_code_highlight")
     syn region pythonDoctest
 	  \ start="^\s*>>>\s" end="^\s*$"
-	  \ contained contains=ALLBUT,pythonDoctest,@Spell
+	  \ contained contains=ALLBUT,pythonDoctest,pythonFunction,@Spell
     syn region pythonDoctestValue
 	  \ start=+^\s*\%(>>>\s\|\.\.\.\s\|"""\|'''\)\@!\S\++ end="$"
 	  \ contained
@@ -274,51 +294,41 @@ if !exists("python_no_doctest_highlight")
 endif
 
 " Sync at the beginning of class, function, or method definition.
-syn sync match pythonSync grouphere NONE "^\s*\%(def\|class\)\s\+\h\w*\s*("
+syn sync match pythonSync grouphere NONE "^\%(def\|class\)\s\+\h\w*\s*[(:]"
 
-if version >= 508 || !exists("did_python_syn_inits")
-  if version <= 508
-    let did_python_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-
-  " The default highlight links.  Can be overridden later.
-  HiLink pythonStatement	Statement
-  HiLink pythonConditional	Conditional
-  HiLink pythonRepeat		Repeat
-  HiLink pythonOperator		Operator
-  HiLink pythonException	Exception
-  HiLink pythonInclude		Include
-  HiLink pythonAsync		Statement
-  HiLink pythonDecorator	Define
-  HiLink pythonFunction		Function
-  HiLink pythonComment		Comment
-  HiLink pythonTodo		Todo
-  HiLink pythonString		String
-  HiLink pythonRawString	String
-  HiLink pythonQuotes		String
-  HiLink pythonTripleQuotes	pythonQuotes
-  HiLink pythonEscape		Special
-  if !exists("python_no_number_highlight")
-    HiLink pythonNumber		Number
-  endif
-  if !exists("python_no_builtin_highlight")
-    HiLink pythonBuiltin	Function
-  endif
-  if !exists("python_no_exception_highlight")
-    HiLink pythonExceptions	Structure
-  endif
-  if exists("python_space_error_highlight")
-    HiLink pythonSpaceError	Error
-  endif
-  if !exists("python_no_doctest_highlight")
-    HiLink pythonDoctest	Special
-    HiLink pythonDoctestValue	Define
-  endif
-
-  delcommand HiLink
+" The default highlight links.  Can be overridden later.
+hi def link pythonStatement		Statement
+hi def link pythonConditional		Conditional
+hi def link pythonRepeat		Repeat
+hi def link pythonOperator		Operator
+hi def link pythonException		Exception
+hi def link pythonInclude		Include
+hi def link pythonAsync			Statement
+hi def link pythonDecorator		Define
+hi def link pythonDecoratorName		Function
+hi def link pythonFunction		Function
+hi def link pythonComment		Comment
+hi def link pythonTodo			Todo
+hi def link pythonString		String
+hi def link pythonRawString		String
+hi def link pythonQuotes		String
+hi def link pythonTripleQuotes		pythonQuotes
+hi def link pythonEscape		Special
+if !exists("python_no_number_highlight")
+  hi def link pythonNumber		Number
+endif
+if !exists("python_no_builtin_highlight")
+  hi def link pythonBuiltin		Function
+endif
+if !exists("python_no_exception_highlight")
+  hi def link pythonExceptions		Structure
+endif
+if exists("python_space_error_highlight")
+  hi def link pythonSpaceError		Error
+endif
+if !exists("python_no_doctest_highlight")
+  hi def link pythonDoctest		Special
+  hi def link pythonDoctestValue	Define
 endif
 
 let b:current_syntax = "python"

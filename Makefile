@@ -4,6 +4,7 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 # See contrib/local.mk.example
 -include local.mk
 
+CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
 
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
@@ -15,7 +16,7 @@ BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
 
 ifeq (,$(BUILD_TOOL))
   ifeq (Ninja,$(BUILD_TYPE))
-    ifneq ($(shell cmake --help 2>/dev/null | grep Ninja),)
+    ifneq ($(shell $(CMAKE_PRG) --help 2>/dev/null | grep Ninja),)
       BUILD_TOOL := ninja
     else
       # User's version of CMake doesn't support Ninja
@@ -67,7 +68,7 @@ cmake:
 	$(MAKE) build/.ran-cmake
 
 build/.ran-cmake: | deps
-	cd build && cmake -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ..
+	cd build && $(CMAKE_PRG) -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ..
 	touch $@
 
 deps: | build/.ran-third-party-cmake
@@ -79,14 +80,20 @@ build/.ran-third-party-cmake:
 ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
 	mkdir -p .deps
 	cd .deps && \
-		cmake -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
+		$(CMAKE_PRG) -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
 		$(DEPS_CMAKE_FLAGS) ../third-party
 endif
 	mkdir -p build
 	touch $@
 
+# TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
 oldtest: | nvim helptags
-	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
+	+$(SINGLE_MAKE) -C src/nvim/testdir clean
+ifeq ($(strip $(TEST_FILE)),)
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES)
+else
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" NEW_TESTS=$(TEST_FILE) SCRIPTS= $(MAKEOVERRIDES)
+endif
 
 helptags: | nvim
 	+$(BUILD_CMD) -C build helptags
@@ -119,12 +126,18 @@ distclean: clean
 install: | nvim
 	+$(BUILD_CMD) -C build install
 
-clint:
-	cmake -DLINT_PRG=./src/clint.py \
-		-DLINT_DIR=src \
-		-DLINT_SUPPRESS_URL="$(DOC_DOWNLOAD_URL_BASE)$(CLINT_ERRORS_FILE_PATH)" \
-		-P cmake/RunLint.cmake
+clint: build/.ran-cmake
+	+$(BUILD_CMD) -C build clint
 
-lint: clint testlint
+clint-full: build/.ran-cmake
+	+$(BUILD_CMD) -C build clint-full
 
-.PHONY: test testlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install
+check-single-includes: build/.ran-cmake
+	+$(BUILD_CMD) -C build check-single-includes
+
+appimage:
+	bash scripts/genappimage.sh
+
+lint: check-single-includes clint testlint
+
+.PHONY: test testlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage

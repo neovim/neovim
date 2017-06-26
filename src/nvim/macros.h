@@ -19,24 +19,14 @@
 # define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 #endif
 
-/*
- * Position comparisons
- */
-# define lt(a, b) (((a).lnum != (b).lnum) \
-                   ? (a).lnum < (b).lnum \
-                   : (a).col != (b).col \
-                   ? (a).col < (b).col \
-                   : (a).coladd < (b).coladd)
-# define ltp(a, b) (((a)->lnum != (b)->lnum) \
-                    ? (a)->lnum < (b)->lnum \
-                    : (a)->col != (b)->col \
-                    ? (a)->col < (b)->col \
-                    : (a)->coladd < (b)->coladd)
-# define equalpos(a, b) (((a).lnum == (b).lnum) && ((a).col == (b).col) && \
-                         ((a).coladd == (b).coladd))
-# define clearpos(a) {(a)->lnum = 0; (a)->col = 0; (a)->coladd = 0; }
-
-#define ltoreq(a, b) (lt(a, b) || equalpos(a, b))
+/// String with length
+///
+/// For use in functions which accept (char *s, size_t len) pair in arguments.
+///
+/// @param[in]  s  Static string.
+///
+/// @return `s, sizeof(s) - 1`
+#define S_LEN(s) (s), (sizeof(s) - 1)
 
 /*
  * lineempty() - return TRUE if the line is empty
@@ -53,7 +43,7 @@
  * toupper() and tolower() that use the current locale.
  * Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
  * range 0 - 255.  toupper()/tolower() on some systems can't handle others.
- * Note: It is often better to use vim_tolower() and vim_toupper(), because many
+ * Note: It is often better to use mb_tolower() and mb_toupper(), because many
  * toupper() and tolower() implementations only work for ASCII.
  */
 #define TOUPPER_LOC toupper
@@ -85,7 +75,7 @@
   do { \
     if (*p_langmap \
         && (condition) \
-        && (!p_lnr || (p_lnr && typebuf_maplen() == 0)) \
+        && (p_lrm || KeyTyped) \
         && !KeyStuffed \
         && (c) >= 0) \
     { \
@@ -111,8 +101,10 @@
 /* mch_open_rw(): invoke os_open() with third argument for user R/W. */
 #if defined(UNIX)  /* open in rw------- mode */
 # define mch_open_rw(n, f)      os_open((n), (f), (mode_t)0600)
+#elif defined(WIN32)
+# define mch_open_rw(n, f)      os_open((n), (f), S_IREAD | S_IWRITE)
 #else
-#  define mch_open_rw(n, f)     os_open((n), (f), 0)
+# define mch_open_rw(n, f)      os_open((n), (f), 0)
 #endif
 
 # define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
@@ -138,7 +130,7 @@
 // Backup multi-byte pointer. Only use with "p" > "s" !
 # define mb_ptr_back(s, p)  (p -= mb_head_off((char_u *)s, (char_u *)p - 1) + 1)
 // get length of multi-byte char, not including composing chars
-# define mb_cptr2len(p)     utf_ptr2len(p)
+# define MB_CPTR2LEN(p)     utf_ptr2len(p)
 
 # define MB_COPY_CHAR(f, t) mb_copy_char((const char_u **)(&f), &t);
 
@@ -160,5 +152,35 @@
 
 #define STR_(x) #x
 #define STR(x) STR_(x)
+
+#ifndef __has_attribute
+# define NVIM_HAS_ATTRIBUTE(x) 0
+#elif defined(__clang__) && __clang__ == 1 \
+    && (__clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ <= 5))
+// Starting in Clang 3.6, __has_attribute was fixed to only report true for
+// GNU-style attributes.  Prior to that, it reported true if _any_ backend
+// supported the attribute.
+# define NVIM_HAS_ATTRIBUTE(x) 0
+#else
+# define NVIM_HAS_ATTRIBUTE __has_attribute
+#endif
+
+#if NVIM_HAS_ATTRIBUTE(fallthrough)
+# define FALLTHROUGH __attribute__((fallthrough))
+#else
+# define FALLTHROUGH
+#endif
+
+// -V:STRUCT_CAST:641
+
+/// Change type of structure pointers: cast `struct a *` to `struct b *`
+///
+/// Used to silence PVS errors.
+///
+/// @param  Type  Structure to cast to.
+/// @param  obj  Object to cast.
+///
+/// @return ((Type *)obj).
+#define STRUCT_CAST(Type, obj) ((Type *)(obj))
 
 #endif  // NVIM_MACROS_H

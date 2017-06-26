@@ -2,16 +2,12 @@
 " Language:	Mutt setup files
 " Original:	Preben 'Peppe' Guldberg <peppe-vim@wielders.org>
 " Maintainer:	Kyle Wheeler <kyle-muttrc.vim@memoryhole.net>
-" Last Change:	2 Feb 2012
+" Last Change:	18 August 2016
 
-" This file covers mutt version 1.5.21 (and most of the mercurial tip)
-" Included are also a few features from 1.4.2.1
+" This file covers mutt version 1.7.0
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -19,11 +15,7 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 " Set the keyword characters
-if version < 600
-  set isk=@,48-57,_,-
-else
-  setlocal isk=@,48-57,_,-
-endif
+setlocal isk=@,48-57,_,-
 
 " handling optional variables
 if !exists("use_mutt_sidebar")
@@ -98,7 +90,7 @@ syn match muttrcSetNumAssignment contained skipwhite /=\s*'\d\+'/hs=s+1 nextgrou
 
 " Now catch some email addresses and headers (purified version from mail.vim)
 syn match muttrcEmail		"[a-zA-Z0-9._-]\+@[a-zA-Z0-9./-]\+"
-syn match muttrcHeader		"\<\%(From\|To\|C[Cc]\|B[Cc][Cc]\|Reply-To\|Subject\|Return-Path\|Received\|Date\|Replied\|Attach\)\>:\="
+syn match muttrcHeader		"\<\c\%(From\|To\|C[Cc]\|B[Cc][Cc]\|Reply-To\|Subject\|Return-Path\|Received\|Date\|Replied\|Attach\)\>:\="
 
 syn match   muttrcKeySpecial	contained +\%(\\[Cc'"]\|\^\|\\[01]\d\{2}\)+
 syn match   muttrcKey		contained "\S\+"			contains=muttrcKeySpecial,muttrcKeyName
@@ -109,143 +101,146 @@ syn match   muttrcKeyName	contained "\\[trne]"
 syn match   muttrcKeyName	contained "\c<\%(BackSpace\|BackTab\|Delete\|Down\|End\|Enter\|Esc\|Home\|Insert\|Left\|PageDown\|PageUp\|Return\|Right\|Space\|Tab\|Up\)>"
 syn match   muttrcKeyName	contained "<F[0-9]\+>"
 
-syn keyword muttrcVarBool	skipwhite contained allow_8bit allow_ansi arrow_cursor ascii_chars askbcc askcc attach_split auto_tag autoedit beep beep_new nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained bounce_delivered braille_friendly check_new check_mbox_size nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained collapse_unread confirmappend confirmcreate crypt_autoencrypt nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained crypt_autopgp crypt_autosign crypt_autosmime crypt_replyencrypt nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained crypt_replysign crypt_replysignencrypted crypt_timestamp nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained crypt_use_gpgme crypt_use_pka delete_untag digest_collapse duplicate_threads nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained edit_hdrs edit_headers encode_from envelope_from fast_reply nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained fcc_clear followup_to force_name forw_decode nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained forw_decrypt forw_quote forward_decode forward_decrypt nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained forward_quote hdrs header help hidden_host hide_limited nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained hide_missing hide_thread_subject hide_top_limited nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained hide_top_missing honor_disposition ignore_linear_white_space ignore_list_reply_to imap_check_subscribed nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained imap_list_subscribed imap_passive imap_peek imap_servernoise nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained implicit_autoview include_onlyfirst keep_flagged nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained mailcap_sanitize maildir_header_cache_verify maildir_trash nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained mark_old markers menu_move_off menu_scroll message_cache_clean meta_key nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained metoo mh_purge mime_forward_decode narrow_tree pager_stop nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained pgp_auto_decode pgp_auto_traditional pgp_autoencrypt nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained pgp_autoinline pgp_autosign pgp_check_exit nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained pgp_create_traditional pgp_ignore_subkeys pgp_long_ids nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained pgp_replyencrypt pgp_replyinline pgp_replysign nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained pgp_replysignencrypted pgp_retainable_sigs pgp_show_unusable nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained pgp_strict_enc pgp_use_gpg_agent pipe_decode pipe_split nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained pop_auth_try_all pop_last print_decode print_split nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained prompt_after read_only reply_self resolve reverse_alias nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained reverse_name reverse_realname rfc2047_parameters save_address nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained save_empty save_name score sig_dashes sig_on_top nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained smart_wrap smime_ask_cert_label smime_decrypt_use_default_key nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained smime_is_default sort_re ssl_force_tls ssl_use_sslv2 nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained ssl_use_sslv3 ssl_use_tlsv1 ssl_usesystemcerts ssl_verify_dates ssl_verify_host status_on_top nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained strict_mime strict_threads suspend text_flowed thorough_search nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained thread_received tilde uncollapse_jump use_8bitmime nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained use_domain use_envelope_from use_from use_idn use_ipv6 nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained user_agent wait_key weed wrap_search write_bcc nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
+syn keyword muttrcVarBool	skipwhite contained 
+			\ allow_8bit allow_ansi arrow_cursor ascii_chars askbcc askcc attach_split
+			\ auto_tag autoedit beep beep_new bounce_delivered braille_friendly
+			\ check_mbox_size check_new collapse_unread confirmappend confirmcreate
+			\ crypt_autoencrypt crypt_autopgp crypt_autosign crypt_autosmime
+			\ crypt_confirmhook crypt_opportunistic_encrypt crypt_replyencrypt
+			\ crypt_replysign crypt_replysignencrypted crypt_timestamp crypt_use_gpgme
+			\ crypt_use_pka delete_untag digest_collapse duplicate_threads edit_hdrs
+			\ edit_headers encode_from envelope_from fast_reply fcc_clear followup_to
+			\ force_name forw_decode forw_decrypt forw_quote forward_decode forward_decrypt
+			\ forward_quote hdrs header help hidden_host hide_limited hide_missing
+			\ hide_thread_subject hide_top_limited hide_top_missing honor_disposition
+			\ idn_decode idn_encode ignore_linear_white_space ignore_list_reply_to
+			\ imap_check_subscribed imap_list_subscribed imap_passive imap_peek
+			\ imap_servernoise implicit_autoview include_onlyfirst keep_flagged
+			\ mail_check_recent mail_check_stats mailcap_sanitize maildir_check_cur
+			\ maildir_header_cache_verify maildir_trash mark_old markers menu_move_off
+			\ menu_scroll message_cache_clean meta_key metoo mh_purge mime_forward_decode
+			\ narrow_tree pager_stop pgp_auto_decode pgp_auto_traditional pgp_autoencrypt
+			\ pgp_autoinline pgp_autosign pgp_check_exit pgp_create_traditional
+			\ pgp_ignore_subkeys pgp_long_ids pgp_replyencrypt pgp_replyinline pgp_replysign
+			\ pgp_replysignencrypted pgp_retainable_sigs pgp_show_unusable pgp_strict_enc
+			\ pgp_use_gpg_agent pipe_decode pipe_split pop_auth_try_all pop_last
+			\ postpone_encrypt postpone_encrypt_as print_decode print_split prompt_after
+			\ read_only reflow_space_quotes reflow_text reflow_wrap reply_self resolve
+			\ resume_draft_files resume_edited_draft_files reverse_alias reverse_name
+			\ reverse_realname rfc2047_parameters save_address save_empty save_name score
+			\ sidebar_folder_indent sidebar_new_mail_only sidebar_next_new_wrap
+			\ sidebar_short_path sidebar_sort sidebar_visible sig_dashes sig_on_top
+			\ smart_wrap smime_ask_cert_label smime_decrypt_use_default_key smime_is_default
+			\ sort_re ssl_force_tls ssl_use_sslv2 ssl_use_sslv3 ssl_use_tlsv1
+			\ ssl_usesystemcerts ssl_verify_dates ssl_verify_host status_on_top strict_mime
+			\ strict_threads suspend text_flowed thorough_search thread_received tilde
+			\ ts_enabled uncollapse_jump use_8bitmime use_domain use_envelope_from use_from
+			\ use_idn use_ipv6 user_agent wait_key weed wrap_search write_bcc
+			\ nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
-syn keyword muttrcVarBool	skipwhite contained noallow_8bit noallow_ansi noarrow_cursor noascii_chars noaskbcc nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noaskcc noattach_split noauto_tag noautoedit nobeep nobeep_new nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nobounce_delivered nobraille_friendly nocheck_new nocollapse_unread nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noconfirmappend noconfirmcreate nocrypt_autoencrypt nocrypt_autopgp nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nocrypt_autosign nocrypt_autosmime nocrypt_replyencrypt nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nocrypt_replysign nocrypt_replysignencrypted nocrypt_timestamp nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nocrypt_use_gpgme nodelete_untag nodigest_collapse noduplicate_threads nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noedit_hdrs noedit_headers noencode_from noenvelope_from nofast_reply nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nofcc_clear nofollowup_to noforce_name noforw_decode nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noforw_decrypt noforw_quote noforward_decode noforward_decrypt nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noforward_quote nohdrs noheader nohelp nohidden_host nohide_limited nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nohide_missing nohide_thread_subject nohide_top_limited nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nohide_top_missing nohonor_disposition noignore_list_reply_to noimap_check_subscribed nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noimap_list_subscribed noimap_passive noimap_peek noimap_servernoise nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noimplicit_autoview noinclude_onlyfirst nokeep_flagged nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nomailcap_sanitize nomaildir_header_cache_verify nomaildir_trash nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nomark_old nomarkers nomenu_move_off nomenu_scroll nometa_key nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nometoo nomh_purge nomime_forward_decode nonarrow_tree nopager_stop nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nopgp_auto_decode nopgp_auto_traditional nopgp_autoencrypt nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nopgp_autoinline nopgp_autosign nopgp_check_exit nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nopgp_create_traditional nopgp_ignore_subkeys nopgp_long_ids nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nopgp_replyencrypt nopgp_replyinline nopgp_replysign nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nopgp_replysignencrypted nopgp_retainable_sigs nopgp_show_unusable nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nopgp_strict_enc nopgp_use_gpg_agent nopipe_decode nopipe_split nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nopop_auth_try_all nopop_last noprint_decode noprint_split nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noprompt_after noread_only noreply_self noresolve noreverse_alias nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained noreverse_name noreverse_realname norfc2047_parameters nosave_address nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nosave_empty nosave_name noscore nosig_dashes nosig_on_top nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nosmart_wrap nosmime_ask_cert_label nosmime_decrypt_use_default_key nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nosmime_is_default nosort_re nossl_force_tls nossl_use_sslv2 nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nossl_use_sslv3 nossl_use_tlsv1 nossl_usesystemcerts nostatus_on_top nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nostrict_threads nosuspend notext_flowed nothorough_search nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nothread_received notilde nouncollapse_jump nouse_8bitmime nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nouse_domain nouse_envelope_from nouse_from nouse_idn nouse_ipv6 nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained nouser_agent nowait_key noweed nowrap_search nowrite_bcc nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
+syn keyword muttrcVarBool	skipwhite contained 
+			\ noallow_8bit noallow_ansi noarrow_cursor noascii_chars noaskbcc noaskcc noattach_split
+			\ noauto_tag noautoedit nobeep nobeep_new nobounce_delivered nobraille_friendly
+			\ nocheck_mbox_size nocheck_new nocollapse_unread noconfirmappend noconfirmcreate
+			\ nocrypt_autoencrypt nocrypt_autopgp nocrypt_autosign nocrypt_autosmime
+			\ nocrypt_confirmhook nocrypt_opportunistic_encrypt nocrypt_replyencrypt
+			\ nocrypt_replysign nocrypt_replysignencrypted nocrypt_timestamp nocrypt_use_gpgme
+			\ nocrypt_use_pka nodelete_untag nodigest_collapse noduplicate_threads noedit_hdrs
+			\ noedit_headers noencode_from noenvelope_from nofast_reply nofcc_clear nofollowup_to
+			\ noforce_name noforw_decode noforw_decrypt noforw_quote noforward_decode noforward_decrypt
+			\ noforward_quote nohdrs noheader nohelp nohidden_host nohide_limited nohide_missing
+			\ nohide_thread_subject nohide_top_limited nohide_top_missing nohonor_disposition
+			\ noidn_decode noidn_encode noignore_linear_white_space noignore_list_reply_to
+			\ noimap_check_subscribed noimap_list_subscribed noimap_passive noimap_peek
+			\ noimap_servernoise noimplicit_autoview noinclude_onlyfirst nokeep_flagged
+			\ nomail_check_recent nomail_check_stats nomailcap_sanitize nomaildir_check_cur
+			\ nomaildir_header_cache_verify nomaildir_trash nomark_old nomarkers nomenu_move_off
+			\ nomenu_scroll nomessage_cache_clean nometa_key nometoo nomh_purge nomime_forward_decode
+			\ nonarrow_tree nopager_stop nopgp_auto_decode nopgp_auto_traditional nopgp_autoencrypt
+			\ nopgp_autoinline nopgp_autosign nopgp_check_exit nopgp_create_traditional
+			\ nopgp_ignore_subkeys nopgp_long_ids nopgp_replyencrypt nopgp_replyinline nopgp_replysign
+			\ nopgp_replysignencrypted nopgp_retainable_sigs nopgp_show_unusable nopgp_strict_enc
+			\ nopgp_use_gpg_agent nopipe_decode nopipe_split nopop_auth_try_all nopop_last
+			\ nopostpone_encrypt nopostpone_encrypt_as noprint_decode noprint_split noprompt_after
+			\ noread_only noreflow_space_quotes noreflow_text noreflow_wrap noreply_self noresolve
+			\ noresume_draft_files noresume_edited_draft_files noreverse_alias noreverse_name
+			\ noreverse_realname norfc2047_parameters nosave_address nosave_empty nosave_name noscore
+			\ nosidebar_folder_indent nosidebar_new_mail_only nosidebar_next_new_wrap
+			\ nosidebar_short_path nosidebar_sort nosidebar_visible nosig_dashes nosig_on_top
+			\ nosmart_wrap nosmime_ask_cert_label nosmime_decrypt_use_default_key nosmime_is_default
+			\ nosort_re nossl_force_tls nossl_use_sslv2 nossl_use_sslv3 nossl_use_tlsv1
+			\ nossl_usesystemcerts nossl_verify_dates nossl_verify_host nostatus_on_top nostrict_mime
+			\ nostrict_threads nosuspend notext_flowed nothorough_search nothread_received notilde
+			\ nots_enabled nouncollapse_jump nouse_8bitmime nouse_domain nouse_envelope_from nouse_from
+			\ nouse_idn nouse_ipv6 nouser_agent nowait_key noweed nowrap_search nowrite_bcc
+			\ nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
-syn keyword muttrcVarBool	skipwhite contained invallow_8bit invallow_ansi invarrow_cursor invascii_chars invaskbcc nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invaskcc invattach_split invauto_tag invautoedit invbeep invbeep_new nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invbounce_delivered invbraille_friendly invcheck_new invcollapse_unread nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invconfirmappend invconfirmcreate invcrypt_autoencrypt invcrypt_autopgp nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invcrypt_autosign invcrypt_autosmime invcrypt_replyencrypt nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invcrypt_replysign invcrypt_replysignencrypted invcrypt_timestamp nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invcrypt_use_gpgme invdelete_untag invdigest_collapse invduplicate_threads nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invedit_hdrs invedit_headers invencode_from invenvelope_from invfast_reply nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invfcc_clear invfollowup_to invforce_name invforw_decode nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invforw_decrypt invforw_quote invforward_decode invforward_decrypt nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invforward_quote invhdrs invheader invhelp invhidden_host invhide_limited nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invhide_missing invhide_thread_subject invhide_top_limited nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invhide_top_missing invhonor_disposition invignore_list_reply_to invimap_check_subscribed nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invimap_list_subscribed invimap_passive invimap_peek invimap_servernoise nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invimplicit_autoview invinclude_onlyfirst invkeep_flagged nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invmailcap_sanitize invmaildir_header_cache_verify invmaildir_trash nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invmark_old invmarkers invmenu_move_off invmenu_scroll invmeta_key nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invmetoo invmh_purge invmime_forward_decode invnarrow_tree invpager_stop nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invpgp_auto_decode invpgp_auto_traditional invpgp_autoencrypt nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invpgp_autoinline invpgp_autosign invpgp_check_exit nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invpgp_create_traditional invpgp_ignore_subkeys invpgp_long_ids nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invpgp_replyencrypt invpgp_replyinline invpgp_replysign nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invpgp_replysignencrypted invpgp_retainable_sigs invpgp_show_unusable nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invpgp_strict_enc invpgp_use_gpg_agent invpipe_decode invpipe_split nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invpop_auth_try_all invpop_last invprint_decode invprint_split nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invprompt_after invread_only invreply_self invresolve invreverse_alias nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invreverse_name invreverse_realname invrfc2047_parameters invsave_address nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invsave_empty invsave_name invscore invsig_dashes invsig_on_top nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invsmart_wrap invsmime_ask_cert_label invsmime_decrypt_use_default_key nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invsmime_is_default invsort_re invssl_force_tls invssl_use_sslv2 nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invssl_use_sslv3 invssl_use_tlsv1 invssl_usesystemcerts invstatus_on_top nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invstrict_threads invsuspend invtext_flowed invthorough_search nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invthread_received invtilde invuncollapse_jump invuse_8bitmime nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invuse_domain invuse_envelope_from invuse_from invuse_idn invuse_ipv6 nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarBool	skipwhite contained invuser_agent invwait_key invweed invwrap_search invwrite_bcc nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-if use_mutt_sidebar == 1
-    syn keyword muttrcVarBool skipwhite contained sidebar_visible sidebar_sort nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-endif
+syn keyword muttrcVarBool	skipwhite contained
+			\ invallow_8bit invallow_ansi invarrow_cursor invascii_chars invaskbcc invaskcc invattach_split
+			\ invauto_tag invautoedit invbeep invbeep_new invbounce_delivered invbraille_friendly
+			\ invcheck_mbox_size invcheck_new invcollapse_unread invconfirmappend invconfirmcreate
+			\ invcrypt_autoencrypt invcrypt_autopgp invcrypt_autosign invcrypt_autosmime
+			\ invcrypt_confirmhook invcrypt_opportunistic_encrypt invcrypt_replyencrypt
+			\ invcrypt_replysign invcrypt_replysignencrypted invcrypt_timestamp invcrypt_use_gpgme
+			\ invcrypt_use_pka invdelete_untag invdigest_collapse invduplicate_threads invedit_hdrs
+			\ invedit_headers invencode_from invenvelope_from invfast_reply invfcc_clear invfollowup_to
+			\ invforce_name invforw_decode invforw_decrypt invforw_quote invforward_decode invforward_decrypt
+			\ invforward_quote invhdrs invheader invhelp invhidden_host invhide_limited invhide_missing
+			\ invhide_thread_subject invhide_top_limited invhide_top_missing invhonor_disposition
+			\ invidn_decode invidn_encode invignore_linear_white_space invignore_list_reply_to
+			\ invimap_check_subscribed invimap_list_subscribed invimap_passive invimap_peek
+			\ invimap_servernoise invimplicit_autoview invinclude_onlyfirst invkeep_flagged
+			\ invmail_check_recent invmail_check_stats invmailcap_sanitize invmaildir_check_cur
+			\ invmaildir_header_cache_verify invmaildir_trash invmark_old invmarkers invmenu_move_off
+			\ invmenu_scroll invmessage_cache_clean invmeta_key invmetoo invmh_purge invmime_forward_decode
+			\ invnarrow_tree invpager_stop invpgp_auto_decode invpgp_auto_traditional invpgp_autoencrypt
+			\ invpgp_autoinline invpgp_autosign invpgp_check_exit invpgp_create_traditional
+			\ invpgp_ignore_subkeys invpgp_long_ids invpgp_replyencrypt invpgp_replyinline invpgp_replysign
+			\ invpgp_replysignencrypted invpgp_retainable_sigs invpgp_show_unusable invpgp_strict_enc
+			\ invpgp_use_gpg_agent invpipe_decode invpipe_split invpop_auth_try_all invpop_last
+			\ invpostpone_encrypt invpostpone_encrypt_as invprint_decode invprint_split invprompt_after
+			\ invread_only invreflow_space_quotes invreflow_text invreflow_wrap invreply_self invresolve
+			\ invresume_draft_files invresume_edited_draft_files invreverse_alias invreverse_name
+			\ invreverse_realname invrfc2047_parameters invsave_address invsave_empty invsave_name invscore
+			\ invsidebar_folder_indent invsidebar_new_mail_only invsidebar_next_new_wrap
+			\ invsidebar_short_path invsidebar_sort invsidebar_visible invsig_dashes invsig_on_top
+			\ invsmart_wrap invsmime_ask_cert_label invsmime_decrypt_use_default_key invsmime_is_default
+			\ invsort_re invssl_force_tls invssl_use_sslv2 invssl_use_sslv3 invssl_use_tlsv1
+			\ invssl_usesystemcerts invssl_verify_dates invssl_verify_host invstatus_on_top invstrict_mime
+			\ invstrict_threads invsuspend invtext_flowed invthorough_search invthread_received invtilde
+			\ invts_enabled invuncollapse_jump invuse_8bitmime invuse_domain invuse_envelope_from invuse_from
+			\ invuse_idn invuse_ipv6 invuser_agent invwait_key invweed invwrap_search invwrite_bcc
+			\ nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
-syn keyword muttrcVarQuad	skipwhite contained abort_nosubject abort_unmodified bounce copy nextgroup=muttrcSetQuadAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained crypt_verify_sig delete fcc_attach forward_edit honor_followup_to nextgroup=muttrcSetQuadAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained include mime_forward mime_forward_rest mime_fwd move nextgroup=muttrcSetQuadAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained pgp_mime_auto pgp_verify_sig pop_delete pop_reconnect nextgroup=muttrcSetQuadAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained postpone print quit recall reply_to ssl_starttls nextgroup=muttrcSetQuadAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
+syn keyword muttrcVarQuad	skipwhite contained
+			\ abort_nosubject abort_unmodified bounce copy crypt_verify_sig delete
+			\ fcc_attach forward_edit honor_followup_to include mime_forward
+			\ mime_forward_rest mime_fwd move pgp_mime_auto pgp_verify_sig pop_delete
+			\ pop_reconnect postpone print quit recall reply_to ssl_starttls
+			\ nextgroup=muttrcSetQuadAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
-syn keyword muttrcVarQuad	skipwhite contained noabort_nosubject noabort_unmodified nobounce nocopy nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained nocrypt_verify_sig nodelete nofcc_attach noforward_edit nohonor_followup_to nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained noinclude nomime_forward nomime_forward_rest nomime_fwd nomove nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained nopgp_mime_auto nopgp_verify_sig nopop_delete nopop_reconnect nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained nopostpone noprint noquit norecall noreply_to nossl_starttls nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
+syn keyword muttrcVarQuad	skipwhite contained
+			\ noabort_nosubject noabort_unmodified nobounce nocopy nocrypt_verify_sig nodelete
+			\ nofcc_attach noforward_edit nohonor_followup_to noinclude nomime_forward
+			\ nomime_forward_rest nomime_fwd nomove nopgp_mime_auto nopgp_verify_sig nopop_delete
+			\ nopop_reconnect nopostpone noprint noquit norecall noreply_to nossl_starttls
+			\ nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
-syn keyword muttrcVarQuad	skipwhite contained invabort_nosubject invabort_unmodified invbounce invcopy nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained invcrypt_verify_sig invdelete invfcc_attach invforward_edit invhonor_followup_to nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained invinclude invmime_forward invmime_forward_rest invmime_fwd invmove nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained invpgp_mime_auto invpgp_verify_sig invpop_delete invpop_reconnect nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarQuad	skipwhite contained invpostpone invprint invquit invrecall invreply_to invssl_starttls nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
+syn keyword muttrcVarQuad	skipwhite contained
+			\ invabort_nosubject invabort_unmodified invbounce invcopy invcrypt_verify_sig invdelete
+			\ invfcc_attach invforward_edit invhonor_followup_to invinclude invmime_forward
+			\ invmime_forward_rest invmime_fwd invmove invpgp_mime_auto invpgp_verify_sig invpop_delete
+			\ invpop_reconnect invpostpone invprint invquit invrecall invreply_to invssl_starttls
+			\ nextgroup=muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
-syn keyword muttrcVarNum	skipwhite contained connect_timeout history imap_keepalive imap_pipeline_depth mail_check nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarNum	skipwhite contained menu_context net_inc pager_context pager_index_lines pgp_timeout nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarNum	skipwhite contained pop_checkinterval read_inc save_history score_threshold_delete nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarNum	skipwhite contained score_threshold_flag score_threshold_read search_context sendmail_wait sleep_time nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarNum	skipwhite contained smime_timeout ssl_min_dh_prime_bits timeout time_inc wrap wrapmargin nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarNum	skipwhite contained write_inc nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-if use_mutt_sidebar == 1
-    syn keyword muttrcVarNum skipwhite contained sidebar_width nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-endif
+syn keyword muttrcVarNum	skipwhite contained
+			\ connect_timeout history imap_keepalive imap_pipeline_depth mail_check
+			\ mail_check_stats_interval menu_context net_inc pager_context pager_index_lines
+			\ pgp_timeout pop_checkinterval read_inc save_history score_threshold_delete
+			\ score_threshold_flag score_threshold_read search_context sendmail_wait
+			\ sidebar_width sleep_time smime_timeout ssl_min_dh_prime_bits time_inc timeout
+			\ wrap wrap_headers wrapmargin write_inc
+			\ nextgroup=muttrcSetNumAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn match muttrcFormatErrors contained /%./
 
@@ -349,7 +344,7 @@ syn keyword muttrcVarStr	contained skipwhite query_format nextgroup=muttrcVarEqu
 syn match muttrcVarEqualsQueryFmt contained skipwhite "=" nextgroup=muttrcQueryFormatStr
 syn keyword muttrcVarStr	contained skipwhite pgp_decode_command pgp_verify_command pgp_decrypt_command pgp_clearsign_command pgp_sign_command pgp_encrypt_sign_command pgp_encrypt_only_command pgp_import_command pgp_export_command pgp_verify_key_command pgp_list_secring_command pgp_list_pubring_command nextgroup=muttrcVarEqualsPGPCmdFmt
 syn match muttrcVarEqualsPGPCmdFmt contained skipwhite "=" nextgroup=muttrcPGPCmdFormatStr
-syn keyword muttrcVarStr	contained skipwhite status_format nextgroup=muttrcVarEqualsStatusFmt
+syn keyword muttrcVarStr	contained skipwhite ts_icon_format ts_status_format status_format nextgroup=muttrcVarEqualsStatusFmt
 syn match muttrcVarEqualsStatusFmt contained skipwhite "=" nextgroup=muttrcStatusFormatStr
 syn keyword muttrcVarStr	contained skipwhite pgp_getkeys_command nextgroup=muttrcVarEqualsPGPGetKeysFmt
 syn match muttrcVarEqualsPGPGetKeysFmt contained skipwhite "=" nextgroup=muttrcPGPGetKeysFormatStr
@@ -361,34 +356,29 @@ syn match muttrcVarEqualsStrftimeFmt contained skipwhite "=" nextgroup=muttrcStr
 syn match muttrcVPrefix		contained /[?&]/ nextgroup=muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 syn match muttrcVarStr		contained skipwhite 'my_[a-zA-Z0-9_]\+' nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite alias_file assumed_charset attach_charset attach_sep nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite certificate_file charset config_charset content_type nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite default_hook display_filter dotlock_program dsn_notify nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite dsn_return editor entropy_file envelope_from_address escape folder nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite forw_format forward_format from gecos_mask hdr_format nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite header_cache header_cache_compress header_cache_pagesize nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite history_file hostname imap_authenticators nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite imap_delim_chars imap_headers imap_idle imap_login imap_pass nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite imap_user indent_str indent_string ispell locale mailcap_path nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite mask mbox mbox_type message_cachedir mh_seq_flagged mh_seq_replied nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite mh_seq_unseen mixmaster msg_format pager nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite pgp_good_sign  nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite pgp_mime_signature_filename nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite pgp_mime_signature_description pgp_sign_as nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite pgp_sort_keys nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite pipe_sep pop_authenticators pop_host pop_pass pop_user post_indent_str nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite post_indent_string postponed preconnect print_cmd print_command nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite query_command quote_regexp realname record reply_regexp send_charset nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite sendmail shell signature simple_search smileys smime_ca_location nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite smime_certificates smime_default_key nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite smime_encrypt_with nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite smime_keys smime_sign_as nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite smtp_url smtp_authenticators smtp_pass sort sort_alias sort_aux nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite sort_browser spam_separator spoolfile ssl_ca_certificates_file ssl_client_cert nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-syn keyword muttrcVarStr	contained skipwhite status_chars tmpdir to_chars tunnel visual nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-if use_mutt_sidebar == 1
-    syn keyword muttrcVarStr skipwhite contained sidebar_delim nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
-endif
+syn keyword muttrcVarStr	contained skipwhite
+			\ alias_file assumed_charset attach_charset attach_sep certificate_file charset
+			\ config_charset content_type default_hook display_filter dotlock_program
+			\ dsn_notify dsn_return editor entropy_file envelope_from_address escape folder
+			\ forw_format forward_format from gecos_mask hdr_format header_cache
+			\ header_cache_compress header_cache_pagesize history_file hostname
+			\ imap_authenticators imap_delim_chars imap_headers imap_idle imap_login
+			\ imap_pass imap_user indent_str indent_string ispell locale mailcap_path mask
+			\ mbox mbox_type message_cachedir mh_seq_flagged mh_seq_replied mh_seq_unseen
+			\ mixmaster msg_format pager pgp_decryption_okay pgp_good_sign
+			\ pgp_mime_signature_description pgp_mime_signature_filename pgp_sign_as
+			\ pgp_sort_keys pipe_sep pop_authenticators pop_host pop_pass pop_user
+			\ post_indent_str post_indent_string postpone_encrypt_as postponed preconnect
+			\ print_cmd print_command query_command quote_regexp realname record
+			\ reply_regexp send_charset sendmail shell sidebar_delim sidebar_delim_chars
+			\ sidebar_divider_char sidebar_format sidebar_indent_string sidebar_sort_method
+			\ signature simple_search smileys smime_ca_location smime_certificates
+			\ smime_default_key smime_encrypt_with smime_keys smime_sign_as
+			\ smime_sign_digest_alg smtp_authenticators smtp_pass smtp_url sort sort_alias
+			\ sort_aux sort_browser spam_separator spoolfile ssl_ca_certificates_file
+			\ ssl_ciphers ssl_client_cert status_chars tmpdir to_chars trash ts_icon_format
+			\ ts_status_format tunnel visual
+			\ nextgroup=muttrcSetStrAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
 
 " Present in 1.4.2.1 (pgp_create_traditional was a bool then)
 syn keyword muttrcVarBool	contained skipwhite imap_force_ssl noimap_force_ssl invimap_force_ssl nextgroup=muttrcSetBoolAssignment,muttrcVPrefix,muttrcVarBool,muttrcVarQuad,muttrcVarNum,muttrcVarStr
@@ -401,12 +391,11 @@ syn match muttrcMenuCommas /,/ contained
 
 syn keyword muttrcHooks		contained skipwhite account-hook charset-hook iconv-hook message-hook folder-hook mbox-hook save-hook fcc-hook fcc-save-hook send-hook send2-hook reply-hook crypt-hook
 
-syn keyword muttrcCommand	auto_view alternative_order exec unalternative_order
-syn keyword muttrcCommand	hdr_order iconv-hook ignore mailboxes my_hdr unmailboxes
-syn keyword muttrcCommand	pgp-hook push score source unauto_view unhdr_order
-syn keyword muttrcCommand	unignore unmono unmy_hdr unscore
-syn keyword muttrcCommand	mime_lookup unmime_lookup ungroup
-syn keyword muttrcCommand	unalternative_order
+syn keyword muttrcCommand	skipwhite
+			\ alternative_order auto_view exec hdr_order iconv-hook ignore mailboxes
+			\ mailto_allow mime_lookup my_hdr pgp-hook push score sidebar_whitelist source
+			\ unalternative_order unalternative_order unauto_view ungroup unhdr_order
+			\ unignore unmailboxes unmailto_allow unmime_lookup unmono unmy_hdr unscore
 syn keyword muttrcCommand	skipwhite charset-hook nextgroup=muttrcRXString
 syn keyword muttrcCommand	skipwhite unhook nextgroup=muttrcHooks
 
@@ -441,7 +430,7 @@ syn match muttrcVariableInner	contained "\$[a-zA-Z_-]\+"
 syn match muttrcEscapedVariable	contained "\\\$[a-zA-Z_-]\+"
 
 syn match muttrcBadAction	contained "[^<>]\+" contains=muttrcEmail
-syn match muttrcFunction	contained "\<\%(attach\|bounce\|copy\|delete\|display\|flag\|forward\|parent\|pipe\|postpone\|print\|recall\|resend\|save\|send\|tag\|undelete\)-message\>"
+syn match muttrcFunction	contained "\<\%(attach\|bounce\|copy\|delete\|display\|flag\|forward\|parent\|pipe\|postpone\|print\|purge\|recall\|resend\|save\|send\|tag\|undelete\)-message\>"
 syn match muttrcFunction	contained "\<\%(delete\|next\|previous\|read\|tag\|break\|undelete\)-thread\>"
 syn match muttrcFunction	contained "\<link-threads\>"
 syn match muttrcFunction	contained "\<\%(backward\|capitalize\|downcase\|forward\|kill\|upcase\)-word\>"
@@ -465,11 +454,13 @@ syn match muttrcFunction	contained "\<show-\%(limit\|version\)\>"
 syn match muttrcFunction	contained "\<sort-\%(mailbox\|reverse\)\>"
 syn match muttrcFunction	contained "\<tag-\%(pattern\|\%(sub\)\?thread\|prefix\%(-cond\)\?\)\>"
 syn match muttrcFunction	contained "\<end-cond\>"
+syn match muttrcFunction	contained "\<sidebar-\%(next\|next-new\|open\|page-down\|page-up\|prev\|prev-new\|toggle-visible\)\>"
 syn match muttrcFunction	contained "\<toggle-\%(mailboxes\|new\|quoted\|subscribed\|unlink\|write\)\>"
 syn match muttrcFunction	contained "\<undelete-\%(pattern\|subthread\)\>"
 syn match muttrcFunction	contained "\<collapse-\%(parts\|thread\|all\)\>"
 syn match muttrcFunction	contained "\<view-\%(attach\|attachments\|file\|mailcap\|name\|text\)\>"
 syn match muttrcFunction	contained "\<\%(backspace\|backward-char\|bol\|bottom\|bottom-page\|buffy-cycle\|clear-flag\|complete\%(-query\)\?\|copy-file\|create-alias\|detach-file\|eol\|exit\|extract-keys\|\%(imap-\)\?fetch-mail\|forget-passphrase\|forward-char\|group-reply\|help\|ispell\|jump\|limit\|list-reply\|mail\|mail-key\|mark-as-new\|middle-page\|new-mime\|noop\|pgp-menu\|query\|query-append\|quit\|quote-char\|read-subthread\|redraw-screen\|refresh\|rename-file\|reply\|select-new\|set-flag\|shell-escape\|skip-quoted\|sort\|subscribe\|sync-mailbox\|top\|top-page\|transpose-chars\|unsubscribe\|untag-pattern\|verify-key\|what-key\|write-fcc\)\>"
+syn keyword muttrcFunction	contained imap-logout-all
 if use_mutt_sidebar == 1
     syn match muttrcFunction    contained "\<sidebar-\%(prev\|next\|open\|scroll-up\|scroll-down\)"
 endif
@@ -578,7 +569,11 @@ syn match muttrcColorMatchCount	contained "[0-9]\+"
 syn match muttrcColorMatchCountNL contained skipwhite skipnl "\s*\\$" nextgroup=muttrcColorMatchCount,muttrcColorMatchCountNL
 syn region muttrcColorRXPat	contained start=+\s*'+ skip=+\\'+ end=+'\s*+ keepend skipwhite contains=muttrcRXString2 nextgroup=muttrcColorMatchCount,muttrcColorMatchCountNL
 syn region muttrcColorRXPat	contained start=+\s*"+ skip=+\\"+ end=+"\s*+ keepend skipwhite contains=muttrcRXString2 nextgroup=muttrcColorMatchCount,muttrcColorMatchCountNL
-syn keyword muttrcColorField	contained attachment body bold error hdrdefault header index indicator markers message normal quoted search signature status tilde tree underline
+syn keyword muttrcColorField	skipwhite contained
+			\ attachment body bold error hdrdefault header index indicator markers message
+			\ normal prompt quoted search sidebar-divider sidebar-flagged sidebar-highlight
+			\ sidebar-indicator sidebar-new sidebar-spoolfile signature status tilde tree
+			\ underline
 syn match   muttrcColorField	contained "\<quoted\d\=\>"
 if use_mutt_sidebar == 1
     syn keyword muttrcColorField contained sidebar_new
@@ -634,160 +629,150 @@ syn keyword muttrcMono		contained mono		skipwhite nextgroup=muttrcColorField
 syn match   muttrcMonoLine	"^\s*mono\s\+\S\+"	skipwhite nextgroup=muttrcMonoAttrib contains=muttrcMono
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_muttrc_syntax_inits")
-  if version < 508
-    let did_muttrc_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink muttrcComment		Comment
-  HiLink muttrcEscape		SpecialChar
-  HiLink muttrcRXChars		SpecialChar
-  HiLink muttrcString		String
-  HiLink muttrcRXString		String
-  HiLink muttrcRXString2	String
-  HiLink muttrcSpecial		Special
-  HiLink muttrcHooks		Type
-  HiLink muttrcGroupFlag	Type
-  HiLink muttrcGroupDef		Macro
-  HiLink muttrcAddrDef		muttrcGroupFlag
-  HiLink muttrcRXDef		muttrcGroupFlag
-  HiLink muttrcRXPat		String
-  HiLink muttrcAliasGroupName	Macro
-  HiLink muttrcAliasKey	        Identifier
-  HiLink muttrcUnAliasKey	Identifier
-  HiLink muttrcAliasEncEmail	Identifier
-  HiLink muttrcAliasParens	Type
-  HiLink muttrcSetNumAssignment	Number
-  HiLink muttrcSetBoolAssignment	Boolean
-  HiLink muttrcSetQuadAssignment	Boolean
-  HiLink muttrcSetStrAssignment	String
-  HiLink muttrcEmail		Special
-  HiLink muttrcVariableInner	Special
-  HiLink muttrcEscapedVariable	String
-  HiLink muttrcHeader		Type
-  HiLink muttrcKeySpecial	SpecialChar
-  HiLink muttrcKey		Type
-  HiLink muttrcKeyName		SpecialChar
-  HiLink muttrcVarBool		Identifier
-  HiLink muttrcVarQuad		Identifier
-  HiLink muttrcVarNum		Identifier
-  HiLink muttrcVarStr		Identifier
-  HiLink muttrcMenu		Identifier
-  HiLink muttrcCommand		Keyword
-  HiLink muttrcMacroDescr	String
-  HiLink muttrcAction		Macro
-  HiLink muttrcBadAction	Error
-  HiLink muttrcBindFunction	Error
-  HiLink muttrcBindMenuList	Error
-  HiLink muttrcFunction		Macro
-  HiLink muttrcGroupKeyword	muttrcCommand
-  HiLink muttrcGroupLine	Error
-  HiLink muttrcSubscribeKeyword	muttrcCommand
-  HiLink muttrcSubscribeLine	Error
-  HiLink muttrcListsKeyword	muttrcCommand
-  HiLink muttrcListsLine	Error
-  HiLink muttrcAlternateKeyword	muttrcCommand
-  HiLink muttrcAlternatesLine	Error
-  HiLink muttrcAttachmentsLine	muttrcCommand
-  HiLink muttrcAttachmentsFlag	Type
-  HiLink muttrcAttachmentsMimeType	String
-  HiLink muttrcColorLine	Error
-  HiLink muttrcColorContext	Error
-  HiLink muttrcColorContextI	Identifier
-  HiLink muttrcColorContextH	Identifier
-  HiLink muttrcColorKeyword	muttrcCommand
-  HiLink muttrcColorKeywordI	muttrcColorKeyword
-  HiLink muttrcColorKeywordH	muttrcColorKeyword
-  HiLink muttrcColorField	Identifier
-  HiLink muttrcColor		Type
-  HiLink muttrcColorFG		Error
-  HiLink muttrcColorFGI		Error
-  HiLink muttrcColorFGH		Error
-  HiLink muttrcColorBG		Error
-  HiLink muttrcColorBGI		Error
-  HiLink muttrcColorBGH		Error
-  HiLink muttrcMonoAttrib	muttrcColor
-  HiLink muttrcMono		muttrcCommand
-  HiLink muttrcSimplePat	Identifier
-  HiLink muttrcSimplePatString	Macro
-  HiLink muttrcSimplePatMetas	Special
-  HiLink muttrcPattern		Error
-  HiLink muttrcUnColorLine	Error
-  HiLink muttrcUnColorKeyword	muttrcCommand
-  HiLink muttrcUnColorIndex	Identifier
-  HiLink muttrcShellString	muttrcEscape
-  HiLink muttrcRXHooks		muttrcCommand
-  HiLink muttrcRXHookNot	Type
-  HiLink muttrcPatHooks		muttrcCommand
-  HiLink muttrcPatHookNot	Type
-  HiLink muttrcFormatConditionals2 Type
-  HiLink muttrcIndexFormatStr	muttrcString
-  HiLink muttrcIndexFormatEscapes muttrcEscape
-  HiLink muttrcIndexFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcAliasFormatStr	muttrcString
-  HiLink muttrcAliasFormatEscapes muttrcEscape
-  HiLink muttrcAttachFormatStr	muttrcString
-  HiLink muttrcAttachFormatEscapes muttrcEscape
-  HiLink muttrcAttachFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcComposeFormatStr	muttrcString
-  HiLink muttrcComposeFormatEscapes muttrcEscape
-  HiLink muttrcFolderFormatStr	muttrcString
-  HiLink muttrcFolderFormatEscapes muttrcEscape
-  HiLink muttrcFolderFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcMixFormatStr	muttrcString
-  HiLink muttrcMixFormatEscapes muttrcEscape
-  HiLink muttrcMixFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcPGPFormatStr	muttrcString
-  HiLink muttrcPGPFormatEscapes muttrcEscape
-  HiLink muttrcPGPFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcPGPCmdFormatStr	muttrcString
-  HiLink muttrcPGPCmdFormatEscapes muttrcEscape
-  HiLink muttrcPGPCmdFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcStatusFormatStr	muttrcString
-  HiLink muttrcStatusFormatEscapes muttrcEscape
-  HiLink muttrcStatusFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcPGPGetKeysFormatStr	muttrcString
-  HiLink muttrcPGPGetKeysFormatEscapes muttrcEscape
-  HiLink muttrcSmimeFormatStr	muttrcString
-  HiLink muttrcSmimeFormatEscapes muttrcEscape
-  HiLink muttrcSmimeFormatConditionals muttrcFormatConditionals2
-  HiLink muttrcTimeEscapes	muttrcEscape
-  HiLink muttrcPGPTimeEscapes	muttrcEscape
-  HiLink muttrcStrftimeEscapes	Type
-  HiLink muttrcStrftimeFormatStr muttrcString
-  HiLink muttrcFormatErrors Error
+hi def link muttrcComment		Comment
+hi def link muttrcEscape		SpecialChar
+hi def link muttrcRXChars		SpecialChar
+hi def link muttrcString		String
+hi def link muttrcRXString		String
+hi def link muttrcRXString2	String
+hi def link muttrcSpecial		Special
+hi def link muttrcHooks		Type
+hi def link muttrcGroupFlag	Type
+hi def link muttrcGroupDef		Macro
+hi def link muttrcAddrDef		muttrcGroupFlag
+hi def link muttrcRXDef		muttrcGroupFlag
+hi def link muttrcRXPat		String
+hi def link muttrcAliasGroupName	Macro
+hi def link muttrcAliasKey	        Identifier
+hi def link muttrcUnAliasKey	Identifier
+hi def link muttrcAliasEncEmail	Identifier
+hi def link muttrcAliasParens	Type
+hi def link muttrcSetNumAssignment	Number
+hi def link muttrcSetBoolAssignment	Boolean
+hi def link muttrcSetQuadAssignment	Boolean
+hi def link muttrcSetStrAssignment	String
+hi def link muttrcEmail		Special
+hi def link muttrcVariableInner	Special
+hi def link muttrcEscapedVariable	String
+hi def link muttrcHeader		Type
+hi def link muttrcKeySpecial	SpecialChar
+hi def link muttrcKey		Type
+hi def link muttrcKeyName		SpecialChar
+hi def link muttrcVarBool		Identifier
+hi def link muttrcVarQuad		Identifier
+hi def link muttrcVarNum		Identifier
+hi def link muttrcVarStr		Identifier
+hi def link muttrcMenu		Identifier
+hi def link muttrcCommand		Keyword
+hi def link muttrcMacroDescr	String
+hi def link muttrcAction		Macro
+hi def link muttrcBadAction	Error
+hi def link muttrcBindFunction	Error
+hi def link muttrcBindMenuList	Error
+hi def link muttrcFunction		Macro
+hi def link muttrcGroupKeyword	muttrcCommand
+hi def link muttrcGroupLine	Error
+hi def link muttrcSubscribeKeyword	muttrcCommand
+hi def link muttrcSubscribeLine	Error
+hi def link muttrcListsKeyword	muttrcCommand
+hi def link muttrcListsLine	Error
+hi def link muttrcAlternateKeyword	muttrcCommand
+hi def link muttrcAlternatesLine	Error
+hi def link muttrcAttachmentsLine	muttrcCommand
+hi def link muttrcAttachmentsFlag	Type
+hi def link muttrcAttachmentsMimeType	String
+hi def link muttrcColorLine	Error
+hi def link muttrcColorContext	Error
+hi def link muttrcColorContextI	Identifier
+hi def link muttrcColorContextH	Identifier
+hi def link muttrcColorKeyword	muttrcCommand
+hi def link muttrcColorKeywordI	muttrcColorKeyword
+hi def link muttrcColorKeywordH	muttrcColorKeyword
+hi def link muttrcColorField	Identifier
+hi def link muttrcColor		Type
+hi def link muttrcColorFG		Error
+hi def link muttrcColorFGI		Error
+hi def link muttrcColorFGH		Error
+hi def link muttrcColorBG		Error
+hi def link muttrcColorBGI		Error
+hi def link muttrcColorBGH		Error
+hi def link muttrcMonoAttrib	muttrcColor
+hi def link muttrcMono		muttrcCommand
+hi def link muttrcSimplePat	Identifier
+hi def link muttrcSimplePatString	Macro
+hi def link muttrcSimplePatMetas	Special
+hi def link muttrcPattern		Error
+hi def link muttrcUnColorLine	Error
+hi def link muttrcUnColorKeyword	muttrcCommand
+hi def link muttrcUnColorIndex	Identifier
+hi def link muttrcShellString	muttrcEscape
+hi def link muttrcRXHooks		muttrcCommand
+hi def link muttrcRXHookNot	Type
+hi def link muttrcPatHooks		muttrcCommand
+hi def link muttrcPatHookNot	Type
+hi def link muttrcFormatConditionals2 Type
+hi def link muttrcIndexFormatStr	muttrcString
+hi def link muttrcIndexFormatEscapes muttrcEscape
+hi def link muttrcIndexFormatConditionals muttrcFormatConditionals2
+hi def link muttrcAliasFormatStr	muttrcString
+hi def link muttrcAliasFormatEscapes muttrcEscape
+hi def link muttrcAttachFormatStr	muttrcString
+hi def link muttrcAttachFormatEscapes muttrcEscape
+hi def link muttrcAttachFormatConditionals muttrcFormatConditionals2
+hi def link muttrcComposeFormatStr	muttrcString
+hi def link muttrcComposeFormatEscapes muttrcEscape
+hi def link muttrcFolderFormatStr	muttrcString
+hi def link muttrcFolderFormatEscapes muttrcEscape
+hi def link muttrcFolderFormatConditionals muttrcFormatConditionals2
+hi def link muttrcMixFormatStr	muttrcString
+hi def link muttrcMixFormatEscapes muttrcEscape
+hi def link muttrcMixFormatConditionals muttrcFormatConditionals2
+hi def link muttrcPGPFormatStr	muttrcString
+hi def link muttrcPGPFormatEscapes muttrcEscape
+hi def link muttrcPGPFormatConditionals muttrcFormatConditionals2
+hi def link muttrcPGPCmdFormatStr	muttrcString
+hi def link muttrcPGPCmdFormatEscapes muttrcEscape
+hi def link muttrcPGPCmdFormatConditionals muttrcFormatConditionals2
+hi def link muttrcStatusFormatStr	muttrcString
+hi def link muttrcStatusFormatEscapes muttrcEscape
+hi def link muttrcStatusFormatConditionals muttrcFormatConditionals2
+hi def link muttrcPGPGetKeysFormatStr	muttrcString
+hi def link muttrcPGPGetKeysFormatEscapes muttrcEscape
+hi def link muttrcSmimeFormatStr	muttrcString
+hi def link muttrcSmimeFormatEscapes muttrcEscape
+hi def link muttrcSmimeFormatConditionals muttrcFormatConditionals2
+hi def link muttrcTimeEscapes	muttrcEscape
+hi def link muttrcPGPTimeEscapes	muttrcEscape
+hi def link muttrcStrftimeEscapes	Type
+hi def link muttrcStrftimeFormatStr muttrcString
+hi def link muttrcFormatErrors Error
 
-  HiLink muttrcBindFunctionNL	SpecialChar
-  HiLink muttrcBindKeyNL	SpecialChar
-  HiLink muttrcBindMenuListNL	SpecialChar
-  HiLink muttrcMacroDescrNL	SpecialChar
-  HiLink muttrcMacroBodyNL	SpecialChar
-  HiLink muttrcMacroKeyNL	SpecialChar
-  HiLink muttrcMacroMenuListNL	SpecialChar
-  HiLink muttrcColorMatchCountNL SpecialChar
-  HiLink muttrcColorNL		SpecialChar
-  HiLink muttrcColorRXNL	SpecialChar
-  HiLink muttrcColorBGNL	SpecialChar
-  HiLink muttrcColorFGNL	SpecialChar
-  HiLink muttrcAliasNameNL	SpecialChar
-  HiLink muttrcAliasENNL	SpecialChar
-  HiLink muttrcAliasNL		SpecialChar
-  HiLink muttrcUnAliasNL	SpecialChar
-  HiLink muttrcAliasGroupDefNL	SpecialChar
-  HiLink muttrcAliasEncEmailNL	SpecialChar
-  HiLink muttrcPatternNL	SpecialChar
-  HiLink muttrcUnColorPatNL	SpecialChar
-  HiLink muttrcUnColorAPNL	SpecialChar
-  HiLink muttrcUnColorIndexNL	SpecialChar
-  HiLink muttrcStringNL		SpecialChar
+hi def link muttrcBindFunctionNL	SpecialChar
+hi def link muttrcBindKeyNL	SpecialChar
+hi def link muttrcBindMenuListNL	SpecialChar
+hi def link muttrcMacroDescrNL	SpecialChar
+hi def link muttrcMacroBodyNL	SpecialChar
+hi def link muttrcMacroKeyNL	SpecialChar
+hi def link muttrcMacroMenuListNL	SpecialChar
+hi def link muttrcColorMatchCountNL SpecialChar
+hi def link muttrcColorNL		SpecialChar
+hi def link muttrcColorRXNL	SpecialChar
+hi def link muttrcColorBGNL	SpecialChar
+hi def link muttrcColorFGNL	SpecialChar
+hi def link muttrcAliasNameNL	SpecialChar
+hi def link muttrcAliasENNL	SpecialChar
+hi def link muttrcAliasNL		SpecialChar
+hi def link muttrcUnAliasNL	SpecialChar
+hi def link muttrcAliasGroupDefNL	SpecialChar
+hi def link muttrcAliasEncEmailNL	SpecialChar
+hi def link muttrcPatternNL	SpecialChar
+hi def link muttrcUnColorPatNL	SpecialChar
+hi def link muttrcUnColorAPNL	SpecialChar
+hi def link muttrcUnColorIndexNL	SpecialChar
+hi def link muttrcStringNL		SpecialChar
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "muttrc"
 

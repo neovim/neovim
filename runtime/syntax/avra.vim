@@ -2,14 +2,12 @@
 " Language:     AVR Assembler (AVRA)
 " AVRA Home:    http://avra.sourceforge.net/index.html
 " AVRA Version: 1.3.0
+" Last Update:	2016 Oct 7
 " Maintainer:	  Marius Ghita <mhitza@gmail.com>
 
 let s:cpo_save = &cpo
 set cpo&vim
 
-setlocal iskeyword=a-z,A-Z,48-57,.,_
-" 'isident' is a global option, better not set it
-" setlocal isident=a-z,A-Z,48-57,.,_
 syn case ignore
 
 syn keyword avraRegister r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14

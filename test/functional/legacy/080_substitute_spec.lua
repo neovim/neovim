@@ -1,10 +1,10 @@
--- Test for *sub-replace-special* and *sub-replace-expression* on substitue().
--- Test for submatch() on substitue().
+-- Test for *sub-replace-special* and *sub-replace-expression* on substitute().
+-- Test for submatch() on substitute().
 -- Test for *:s%* on :substitute.
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
 
 describe('substitue()', function()
@@ -46,17 +46,17 @@ describe('substitue()', function()
   end
 
   it('with "set magic" (TEST_1)', function()
-    execute('set magic')
+    feed_command('set magic')
     test_1_and_2()
   end)
 
   it('with "set nomagic" (TEST_2)', function()
-    execute('set nomagic')
+    feed_command('set nomagic')
     test_1_and_2()
   end)
 
   it('with sub-replace-expression (TEST_3)', function()
-    execute('set magic&')
+    feed_command('set magic&')
     eq('a\\a', eval([[substitute('aAa', 'A', '\="\\"', '')]]))
     eq('b\\\\b', eval([[substitute('bBb', 'B', '\="\\\\"', '')]]))
     eq('c\rc', eval([[substitute('cCc', 'C', '\="]]..'\r'..[["', '')]]))
@@ -70,7 +70,7 @@ describe('substitue()', function()
   end)
 
   it('with submatch() (TEST_4)', function()
-    execute('set magic&')
+    feed_command('set magic&')
     eq('a\\a', eval([[substitute('aAa', 'A', ]] ..
       [['\=substitute(submatch(0), ".", "\\", "")', '')]]))
     eq('b\\b', eval([[substitute('bBb', 'B', ]] ..
@@ -92,7 +92,7 @@ describe('substitue()', function()
   end)
 
   it('with submatch() (TEST_5)', function()
-    execute('set magic&')
+    feed_command('set magic&')
     eq('A123456789987654321', eval([[substitute('A123456789', ]] ..
       [['A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', ]] ..
       [['\=submatch(0) . submatch(9) . submatch(8) . submatch(7) . ]] ..
@@ -110,7 +110,7 @@ describe('substitue()', function()
   -- #2943.
 
   it('with submatch or \\ze (TEST_7)', function()
-    execute('set magic&')
+    feed_command('set magic&')
     eq('A\rA', eval("substitute('A\rA', 'A.', '\\=submatch(0)', '')"))
     eq('B\nB', eval([[substitute("B\nB", 'B.', '\=submatch(0)', '')]]))
     eq("['B\n']B",
@@ -120,7 +120,7 @@ describe('substitue()', function()
   end)
 
   it('with \\zs and \\ze (TEST_10)', function()
-    execute('set magic&')
+    feed_command('set magic&')
     eq('a1a2a3a', eval([[substitute('123', '\zs', 'a', 'g')]]))
     eq('aaa', eval([[substitute('123', '\zs.', 'a', 'g')]]))
     eq('1a2a3a', eval([[substitute('123', '.\zs', 'a', 'g')]]))
@@ -140,11 +140,11 @@ describe(':substitue', function()
       ,,X
       ,,Y
       ,,Z]])
-    execute('set magic&')
-    execute([[1s/\(^\|,\)\ze\(,\|X\)/\1N/g]])
-    execute([[2s/\(^\|,\)\ze\(,\|Y\)/\1N/gc]])
+    feed_command('set magic&')
+    feed_command([[1s/\(^\|,\)\ze\(,\|X\)/\1N/g]])
+    feed_command([[2s/\(^\|,\)\ze\(,\|Y\)/\1N/gc]])
     feed('a')  -- For the dialog of the previous :s command.
-    execute([[3s/\(^\|,\)\ze\(,\|Z\)/\1N/gc]])
+    feed_command([[3s/\(^\|,\)\ze\(,\|Z\)/\1N/gc]])
     feed('yy')  -- For the dialog of the previous :s command.
     expect([[
       N,,NX
@@ -154,8 +154,8 @@ describe(':substitue', function()
 
   it('with confirmation dialog (TEST_9)', function()
     insert('xxx')
-    execute('set magic&')
-    execute('s/x/X/gc')
+    feed_command('set magic&')
+    feed_command('s/x/X/gc')
     feed('yyq')  -- For the dialog of the previous :s command.
     expect('XXx')
   end)

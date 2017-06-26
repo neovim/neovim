@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /* for debugging */
 /* #define CHECK(c, s)	if (c) EMSG(s) */
 #define CHECK(c, s)
@@ -439,14 +442,7 @@ void ml_setname(buf_T *buf)
       EMSG(_("E301: Oops, lost the swap file!!!"));
       return;
     }
-#ifdef HAVE_FD_CLOEXEC
-    {
-      int fdflags = fcntl(mfp->mf_fd, F_GETFD);
-      if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0) {
-        (void)fcntl(mfp->mf_fd, F_SETFD, fdflags | FD_CLOEXEC);
-      }
-    }
-#endif
+    (void)os_set_cloexec(mfp->mf_fd);
   }
   if (!success)
     EMSG(_("E302: Could not rename swap file"));
@@ -623,7 +619,7 @@ static bool ml_check_b0_strings(ZERO_BL *b0p)
   return (memchr(b0p->b0_version, NUL, 10)
           && memchr(b0p->b0_uname, NUL, B0_UNAME_SIZE)
           && memchr(b0p->b0_hname, NUL, B0_HNAME_SIZE)
-          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));
+          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));  // -V512
 }
 
 /*
@@ -767,7 +763,7 @@ void ml_recover(void)
   int idx;
   int top;
   int txt_start;
-  off_t size;
+  off_T size;
   int called_from_main;
   int serious_error = TRUE;
   long mtime;
@@ -918,10 +914,11 @@ void ml_recover(void)
       msg_end();
       goto theend;
     }
-    if ((size = lseek(mfp->mf_fd, (off_t)0L, SEEK_END)) <= 0)
-      mfp->mf_blocknr_max = 0;              /* no file or empty file */
-    else
+    if ((size = vim_lseek(mfp->mf_fd, (off_T)0L, SEEK_END)) <= 0) {
+      mfp->mf_blocknr_max = 0;              // no file or empty file
+    } else {
       mfp->mf_blocknr_max = size / mfp->mf_page_size;
+    }
     mfp->mf_infile_count = mfp->mf_blocknr_max;
 
     /* need to reallocate the memory used to store the data */
@@ -999,7 +996,7 @@ void ml_recover(void)
   if (b0_ff != 0)
     set_fileformat(b0_ff - 1, OPT_LOCAL);
   if (b0_fenc != NULL) {
-    set_option_value((char_u *)"fenc", 0L, b0_fenc, OPT_LOCAL);
+    set_option_value("fenc", 0L, (char *)b0_fenc, OPT_LOCAL);
     xfree(b0_fenc);
   }
   unchanged(curbuf, TRUE);
@@ -1180,7 +1177,7 @@ void ml_recover(void)
      * empty.  Don't set the modified flag then. */
     if (!(curbuf->b_ml.ml_line_count == 2 && *ml_get(1) == NUL)) {
       changed_int();
-      ++curbuf->b_changedtick;
+      buf_set_changedtick(curbuf, curbuf->b_changedtick + 1);
     }
   } else {
     for (idx = 1; idx <= lnum; ++idx) {
@@ -1190,7 +1187,7 @@ void ml_recover(void)
       xfree(p);
       if (i != 0) {
         changed_int();
-        ++curbuf->b_changedtick;
+        buf_set_changedtick(curbuf, curbuf->b_changedtick + 1);
         break;
       }
     }
@@ -1410,8 +1407,8 @@ recover_names (
         for (int i = 0; i < num_files; ++i) {
           /* print the swap file name */
           msg_outnum((long)++file_count);
-          MSG_PUTS(".    ");
-          msg_puts(path_tail(files[i]));
+          msg_puts(".    ");
+          msg_puts((const char *)path_tail(files[i]));
           msg_putchar('\n');
           (void)swapfile_info(files[i]);
         }
@@ -2318,7 +2315,7 @@ ml_append_int (
  *
  * return FAIL for failure, OK otherwise
  */
-int ml_replace(linenr_T lnum, char_u *line, int copy)
+int ml_replace(linenr_T lnum, char_u *line, bool copy)
 {
   if (line == NULL)             /* just checking... */
     return FAIL;
@@ -3369,29 +3366,32 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
           }
 
           if (swap_exists_action != SEA_NONE && choice == 0) {
-            char *name;
+            const char *const sw_msg_1 = _("Swap file \"");
+            const char *const sw_msg_2 = _("\" already exists!");
 
             const size_t fname_len = strlen(fname);
-            name = xmalloc(fname_len
-                           + strlen(_("Swap file \""))
-                           + strlen(_("\" already exists!")) + 5);
-            STRCPY(name, _("Swap file \""));
-            home_replace(NULL, (char_u *) fname, (char_u *)&name[strlen(name)],
-                fname_len, true);
-            STRCAT(name, _("\" already exists!"));
-            choice = do_dialog(VIM_WARNING,
-                (char_u *)_("VIM - ATTENTION"),
-                (char_u *)(name == NULL
-                           ? _("Swap file already exists!")
-                           : name),
+            const size_t sw_msg_1_len = strlen(sw_msg_1);
+            const size_t sw_msg_2_len = strlen(sw_msg_2);
+
+            const size_t name_len = sw_msg_1_len + fname_len + sw_msg_2_len + 5;
+
+            char *const name = xmalloc(name_len);
+            memcpy(name, sw_msg_1, sw_msg_1_len + 1);
+            home_replace(NULL, (char_u *)fname, (char_u *)&name[sw_msg_1_len],
+                         fname_len, true);
+            xstrlcat(name, sw_msg_2, name_len);
+            choice = do_dialog(VIM_WARNING, (char_u *)_("VIM - ATTENTION"),
+                               (char_u *)name,
 # if defined(UNIX)
-                process_still_running
-                ? (char_u *)_(
-                    "&Open Read-Only\n&Edit anyway\n&Recover\n&Quit\n&Abort") :
+                               process_still_running
+                               ? (char_u *)_(
+                                   "&Open Read-Only\n&Edit anyway\n&Recover"
+                                   "\n&Quit\n&Abort") :
 # endif
-                (char_u *)_(
-                    "&Open Read-Only\n&Edit anyway\n&Recover\n&Delete it\n&Quit\n&Abort"),
-                1, NULL, FALSE);
+                               (char_u *)_(
+                                   "&Open Read-Only\n&Edit anyway\n&Recover"
+                                   "\n&Delete it\n&Quit\n&Abort"),
+                               1, NULL, false);
 
 # if defined(UNIX)
             if (process_still_running && choice >= 4)

@@ -16,9 +16,9 @@
 #define SOPT_UNSET 0x40    // Option does not have local value set
 
 // Option types for various functions in option.c
-#define SREQ_GLOBAL 0 // Request global option
-#define SREQ_WIN 1    // Request window-local option
-#define SREQ_BUF 2    // Request buffer-local option
+#define SREQ_GLOBAL 0  // Request global option value
+#define SREQ_WIN 1     // Request window-local option value
+#define SREQ_BUF 2     // Request buffer-local option value
 
 /*
  * Default values for 'errorformat'.
@@ -129,9 +129,10 @@
 #define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
 #define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
                                  * cursor would not move */
-/* default values for Vim and Vi */
-#define CPO_VIM         "aABceFs"
-#define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;"
+#define CPO_CHANGEW     '_'     // "cw" special-case
+// default values for Vim and Vi
+#define CPO_VIM         "aABceFs_"
+#define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;_"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
@@ -411,7 +412,6 @@ EXTERN char_u   *p_efm;         // 'errorformat'
 EXTERN char_u   *p_gefm;        // 'grepformat'
 EXTERN char_u   *p_gp;          // 'grepprg'
 EXTERN char_u   *p_ei;          // 'eventignore'
-EXTERN int p_ek;                // 'esckeys'
 EXTERN int p_exrc;              // 'exrc'
 EXTERN char_u   *p_fencs;       // 'fileencodings'
 EXTERN char_u   *p_ffs;         // 'fileformats'
@@ -476,8 +476,9 @@ EXTERN char_u   *p_isp;         // 'isprint'
 EXTERN int p_js;                // 'joinspaces'
 EXTERN char_u   *p_kp;          // 'keywordprg'
 EXTERN char_u   *p_km;          // 'keymodel'
-EXTERN char_u   *p_langmap;     // 'langmap'*/
-EXTERN int p_lnr;               // 'langnoremap'*/
+EXTERN char_u   *p_langmap;     // 'langmap'
+EXTERN int p_lnr;               // 'langnoremap'
+EXTERN int p_lrm;               // 'langremap'
 EXTERN char_u   *p_lm;          // 'langmenu'
 EXTERN char_u   *p_lispwords;   // 'lispwords'
 EXTERN long p_ls;               // 'laststatus'
@@ -524,6 +525,7 @@ EXTERN int p_ru;                // 'ruler'
 EXTERN char_u   *p_ruf;         // 'rulerformat'
 EXTERN char_u   *p_pp;          // 'packpath'
 EXTERN char_u   *p_rtp;         // 'runtimepath'
+EXTERN long p_scbk;             // 'scrollback'
 EXTERN long p_sj;               // 'scrolljump'
 EXTERN long p_so;               // 'scrolloff'
 EXTERN char_u   *p_sbo;         // 'scrollopt'
@@ -602,11 +604,14 @@ EXTERN int p_tbs;               ///< 'tagbsearch'
 EXTERN char_u *p_tc;            ///< 'tagcase'
 EXTERN unsigned tc_flags;       ///< flags from 'tagcase'
 #ifdef IN_OPTION_C
-static char *(p_tc_values[]) = { "followic", "ignore", "match", NULL };
+static char *(p_tc_values[]) =
+  { "followic", "ignore", "match", "followscs", "smart", NULL };
 #endif
 #define TC_FOLLOWIC             0x01
 #define TC_IGNORE               0x02
 #define TC_MATCH                0x04
+#define TC_FOLLOWSCS            0x08
+#define TC_SMART                0x10
 EXTERN long p_tl;               ///< 'taglength'
 EXTERN int p_tr;                ///< 'tagrelative'
 EXTERN char_u *p_tags;          ///< 'tags'
@@ -710,6 +715,7 @@ enum {
   , BV_EP
   , BV_ET
   , BV_FENC
+  , BV_FP
   , BV_BEXPR
   , BV_FEX
   , BV_FF
@@ -737,6 +743,7 @@ enum {
   , BV_PI
   , BV_QE
   , BV_RO
+  , BV_SCBK
   , BV_SI
   , BV_SMC
   , BV_SYN
@@ -800,10 +807,13 @@ enum {
   , WV_WFW
   , WV_WRAP
   , WV_SCL
+  , WV_WINHL
   , WV_COUNT        // must be the last one
 };
 
 /* Value for b_p_ul indicating the global value must be used. */
 #define NO_LOCAL_UNDOLEVEL -123456
+
+#define SB_MAX 100000  // Maximum 'scrollback' value.
 
 #endif // NVIM_OPTION_DEFS_H

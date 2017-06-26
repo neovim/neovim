@@ -2,8 +2,11 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 local eq, eval, write_file = helpers.eq, helpers.eval, helpers.write_file
+local wait = helpers.wait
+local exc_exec = helpers.exc_exec
+local dedent = helpers.dedent
 
 describe('eval', function()
   setup(function()
@@ -37,17 +40,17 @@ describe('eval', function()
   end)
 
   it(':let', function()
-    execute('so test_eval_setup.vim')
-    execute([[let @" = 'abc']])
-    execute('AR "')
-    execute([[let @" = "abc\n"]])
+    command('so test_eval_setup.vim')
+    command([[let @" = 'abc']])
+    command('AR "')
+    command([[let @" = "abc\n"]])
     source('AR "')
-    execute([[let @" = "abc\<C-m>"]])
-    execute('AR "')
-    execute([[let @= = '"abc"']])
-    execute('AR =')
+    command([[let @" = "abc\<C-m>"]])
+    command('AR "')
+    command([[let @= = '"abc"']])
+    command('AR =')
     expect([[
-      
+
       ": type v; value: abc (['abc']), expr: abc (['abc'])
       ": type V; value: abc]].."\000 (['abc']), expr: abc\000"..[[ (['abc'])
       ": type V; value: abc]].."\r\000 (['abc\r']), expr: abc\r\000 (['abc\r"..[['])
@@ -55,32 +58,33 @@ describe('eval', function()
   end)
 
   it('basic setreg() tests', function()
-    execute('so test_eval_setup.vim')
+    command('so test_eval_setup.vim')
     insert('{{{1 Basic setreg tests')
-    execute([[call SetReg('a', 'abcA', 'c')]])
-    execute([[call SetReg('b', 'abcB', 'v')]])
-    execute([[call SetReg('c', 'abcC', 'l')]])
-    execute([[call SetReg('d', 'abcD', 'V')]])
-    execute([[call SetReg('e', 'abcE', 'b')]])
-    execute([[call SetReg('f', 'abcF', "\<C-v>")]])
-    execute([[call SetReg('g', 'abcG', 'b10')]])
-    execute([[call SetReg('h', 'abcH', "\<C-v>10")]])
-    execute([[call SetReg('I', 'abcI')]])
+    command([[call SetReg('a', 'abcA', 'c')]])
+    command([[call SetReg('b', 'abcB', 'v')]])
+    command([[call SetReg('c', 'abcC', 'l')]])
+    command([[call SetReg('d', 'abcD', 'V')]])
+    command([[call SetReg('e', 'abcE', 'b')]])
+    command([[call SetReg('f', 'abcF', "\<C-v>")]])
+    command([[call SetReg('g', 'abcG', 'b10')]])
+    command([[call SetReg('h', 'abcH', "\<C-v>10")]])
+    command([[call SetReg('I', 'abcI')]])
 
     feed('Go{{{1 Appending single lines with setreg()<esc>')
-    execute([[call SetReg('A', 'abcAc', 'c')]])
-    execute([[call SetReg('A', 'abcAl', 'l')]])
-    execute([[call SetReg('A', 'abcAc2','c')]])
-    execute([[call SetReg('b', 'abcBc', 'ca')]])
-    execute([[call SetReg('b', 'abcBb', 'ba')]])
-    execute([[call SetReg('b', 'abcBc2','ca')]])
-    execute([[call SetReg('b', 'abcBb2','b50a')]])
-    execute([[call SetReg('C', 'abcCl', 'l')]])
-    execute([[call SetReg('C', 'abcCc', 'c')]])
-    execute([[call SetReg('D', 'abcDb', 'b')]])
-    execute([[call SetReg('E', 'abcEb', 'b')]])
-    execute([[call SetReg('E', 'abcEl', 'l')]])
-    execute([[call SetReg('F', 'abcFc', 'c')]])
+    wait()
+    command([[call SetReg('A', 'abcAc', 'c')]])
+    command([[call SetReg('A', 'abcAl', 'l')]])
+    command([[call SetReg('A', 'abcAc2','c')]])
+    command([[call SetReg('b', 'abcBc', 'ca')]])
+    command([[call SetReg('b', 'abcBb', 'ba')]])
+    command([[call SetReg('b', 'abcBc2','ca')]])
+    command([[call SetReg('b', 'abcBb2','b50a')]])
+    command([[call SetReg('C', 'abcCl', 'l')]])
+    command([[call SetReg('C', 'abcCc', 'c')]])
+    command([[call SetReg('D', 'abcDb', 'b')]])
+    command([[call SetReg('E', 'abcEb', 'b')]])
+    command([[call SetReg('E', 'abcEl', 'l')]])
+    command([[call SetReg('F', 'abcFc', 'c')]])
     expect([[
       {{{1 Basic setreg tests
       {{{2 setreg('a', 'abcA', 'c')
@@ -191,14 +195,14 @@ describe('eval', function()
   end)
 
   it('appending NL with setreg()', function()
-    execute('so test_eval_setup.vim')
+    command('so test_eval_setup.vim')
 
-    execute([[call setreg('a', 'abcA2', 'c')]])
-    execute([[call setreg('b', 'abcB2', 'v')]])
-    execute([[call setreg('c', 'abcC2', 'l')]])
-    execute([[call setreg('d', 'abcD2', 'V')]])
-    execute([[call setreg('e', 'abcE2', 'b')]])
-    execute([[call setreg('f', 'abcF2', "\<C-v>")]])
+    command([[call setreg('a', 'abcA2', 'c')]])
+    command([[call setreg('b', 'abcB2', 'v')]])
+    command([[call setreg('c', 'abcC2', 'l')]])
+    command([[call setreg('d', 'abcD2', 'V')]])
+    command([[call setreg('e', 'abcE2', 'b')]])
+    command([[call setreg('f', 'abcF2', "\<C-v>")]])
     -- These registers where set like this in the old test_eval.in but never
     -- copied to the output buffer with SetReg().  They do not appear in
     -- test_eval.ok.  Therefore they are commented out.
@@ -206,14 +210,14 @@ describe('eval', function()
     --execute([[call setreg('h', 'abcH2', "\<C-v>10")]])
     --execute([[call setreg('I', 'abcI2')]])
 
-    execute([[call SetReg('A', "\n")]])
-    execute([[call SetReg('B', "\n", 'c')]])
-    execute([[call SetReg('C', "\n")]])
-    execute([[call SetReg('D', "\n", 'l')]])
-    execute([[call SetReg('E', "\n")]])
-    execute([[call SetReg('F', "\n", 'b')]])
+    command([[call SetReg('A', "\n")]])
+    command([[call SetReg('B', "\n", 'c')]])
+    command([[call SetReg('C', "\n")]])
+    command([[call SetReg('D', "\n", 'l')]])
+    command([[call SetReg('E', "\n")]])
+    command([[call SetReg('F', "\n", 'b')]])
     expect([[
-      
+
       {{{2 setreg('A', ']]..'\000'..[[')
       A: type V; value: abcA2]].."\000 (['abcA2']), expr: abcA2\000"..[[ (['abcA2'])
       ==
@@ -228,19 +232,19 @@ describe('eval', function()
       C: type V; value: abcC2]].."\000\000 (['abcC2', '']), expr: abcC2\000\000"..[[ (['abcC2', ''])
       ==
       abcC2
-      
+
       ==
       {{{2 setreg('D', ']]..'\000'..[[', 'l')
       D: type V; value: abcD2]].."\000\000 (['abcD2', '']), expr: abcD2\000\000"..[[ (['abcD2', ''])
       ==
       abcD2
-      
+
       ==
       {{{2 setreg('E', ']]..'\000'..[[')
       E: type V; value: abcE2]].."\000\000 (['abcE2', '']), expr: abcE2\000\000"..[[ (['abcE2', ''])
       ==
       abcE2
-      
+
       ==
       {{{2 setreg('F', ']]..'\000'..[[', 'b')
       F: type ]].."\0220; value: abcF2\000 (['abcF2', '']), expr: abcF2\000"..[[ (['abcF2', ''])
@@ -250,27 +254,27 @@ describe('eval', function()
   end)
 
   it('setting and appending list with setreg()', function()
-    execute('so test_eval_setup.vim')
+    command('so test_eval_setup.vim')
 
-    execute([[$put ='{{{1 Setting lists with setreg()']])
-    execute([=[call SetReg('a', ['abcA3'], 'c')]=])
-    execute([=[call SetReg('b', ['abcB3'], 'l')]=])
-    execute([=[call SetReg('c', ['abcC3'], 'b')]=])
-    execute([=[call SetReg('d', ['abcD3'])]=])
-    execute([=[call SetReg('e', [1, 2, 'abc', 3])]=])
-    execute([=[call SetReg('f', [1, 2, 3])]=])
+    command([[$put ='{{{1 Setting lists with setreg()']])
+    command([=[call SetReg('a', ['abcA3'], 'c')]=])
+    command([=[call SetReg('b', ['abcB3'], 'l')]=])
+    command([=[call SetReg('c', ['abcC3'], 'b')]=])
+    command([=[call SetReg('d', ['abcD3'])]=])
+    command([=[call SetReg('e', [1, 2, 'abc', 3])]=])
+    command([=[call SetReg('f', [1, 2, 3])]=])
 
-    execute([[$put ='{{{1 Appending lists with setreg()']])
-    execute([=[call SetReg('A', ['abcA3c'], 'c')]=])
-    execute([=[call SetReg('b', ['abcB3l'], 'la')]=])
-    execute([=[call SetReg('C', ['abcC3b'], 'lb')]=])
-    execute([=[call SetReg('D', ['abcD32'])]=])
-    execute([=[call SetReg('A', ['abcA32'])]=])
-    execute([=[call SetReg('B', ['abcB3c'], 'c')]=])
-    execute([=[call SetReg('C', ['abcC3l'], 'l')]=])
-    execute([=[call SetReg('D', ['abcD3b'], 'b')]=])
+    command([[$put ='{{{1 Appending lists with setreg()']])
+    command([=[call SetReg('A', ['abcA3c'], 'c')]=])
+    command([=[call SetReg('b', ['abcB3l'], 'la')]=])
+    command([=[call SetReg('C', ['abcC3b'], 'lb')]=])
+    command([=[call SetReg('D', ['abcD32'])]=])
+    command([=[call SetReg('A', ['abcA32'])]=])
+    command([=[call SetReg('B', ['abcB3c'], 'c')]=])
+    command([=[call SetReg('C', ['abcC3l'], 'l')]=])
+    command([=[call SetReg('D', ['abcD3b'], 'b')]=])
     expect([[
-      
+
       {{{1 Setting lists with setreg()
       {{{2 setreg('a', ['abcA3'], 'c')
       a: type v; value: abcA3 (['abcA3']), expr: abcA3 (['abcA3'])
@@ -359,9 +363,9 @@ describe('eval', function()
     -- the next expect() easier to write.  This is neccessary because null
     -- bytes on a line by itself don't play well together with the dedent
     -- function used in expect().
-    execute('%delete')
-    execute([[$put ='{{{1 Appending lists with NL with setreg()']])
-    execute([=[call SetReg('A', ["\n", 'abcA3l2'], 'l')]=])
+    command('%delete')
+    command([[$put ='{{{1 Appending lists with NL with setreg()']])
+    command([=[call SetReg('A', ["\n", 'abcA3l2'], 'l')]=])
     expect(
       '\n'..
       '{{{1 Appending lists with NL with setreg()\n'..
@@ -374,8 +378,8 @@ describe('eval', function()
       '\000\n'..
       'abcA3l2\n'..
       '==')
-    execute('%delete')
-    execute([=[call SetReg('B', ["\n", 'abcB3c2'], 'c')]=])
+    command('%delete')
+    command([=[call SetReg('B', ["\n", 'abcB3c2'], 'c')]=])
     expect(
       '\n'..
       "{{{2 setreg('B', ['\000', 'abcB3c2'], 'c')\n"..
@@ -386,8 +390,8 @@ describe('eval', function()
       'abcB3c\n'..
       '\000\n'..
       'abcB3c2=')
-    execute('%delete')
-    execute([=[call SetReg('C', ["\n", 'abcC3b2'], 'b')]=])
+    command('%delete')
+    command([=[call SetReg('C', ["\n", 'abcC3b2'], 'b')]=])
     expect(
       '\n'..
       "{{{2 setreg('C', ['\000', 'abcC3b2'], 'b')\n"..
@@ -398,8 +402,8 @@ describe('eval', function()
       ' abcC3l\n'..
       ' \000\n'..
       ' abcC3b2')
-    execute('%delete')
-    execute([=[call SetReg('D', ["\n", 'abcD3b50'],'b50')]=])
+    command('%delete')
+    command([=[call SetReg('D', ["\n", 'abcD3b50'],'b50')]=])
     expect(
       '\n'..
       "{{{2 setreg('D', ['\000', 'abcD3b50'], 'b50')\n"..
@@ -416,8 +420,8 @@ describe('eval', function()
   -- to make the expect() calls easier to write.  Otherwise the null byte can
   -- make trouble on a line on its own.
   it('setting lists with NLs with setreg(), part 1', function()
-    execute('so test_eval_setup.vim')
-    execute([=[call SetReg('a', ['abcA4-0', "\n", "abcA4-2\n", "\nabcA4-3", "abcA4-4\nabcA4-4-2"])]=])
+    command('so test_eval_setup.vim')
+    command([=[call SetReg('a', ['abcA4-0', "\n", "abcA4-2\n", "\nabcA4-3", "abcA4-4\nabcA4-4-2"])]=])
     expect(
      '\n'..
       "{{{2 setreg('a', ['abcA4-0', '\000', 'abcA4-2\000', '\000abcA4-3', 'abcA4-4\000abcA4-4-2'])\n"..
@@ -432,8 +436,8 @@ describe('eval', function()
   end)
 
   it('setting lists with NLs with setreg(), part 2', function()
-    execute('so test_eval_setup.vim')
-    execute([=[call SetReg('b', ['abcB4c-0', "\n", "abcB4c-2\n", "\nabcB4c-3", "abcB4c-4\nabcB4c-4-2"], 'c')]=])
+    command('so test_eval_setup.vim')
+    command([=[call SetReg('b', ['abcB4c-0', "\n", "abcB4c-2\n", "\nabcB4c-3", "abcB4c-4\nabcB4c-4-2"], 'c')]=])
     expect(
       '\n'..
       "{{{2 setreg('b', ['abcB4c-0', '\000', 'abcB4c-2\000', '\000abcB4c-3', 'abcB4c-4\000abcB4c-4-2'], 'c')\n"..
@@ -447,8 +451,8 @@ describe('eval', function()
   end)
 
   it('setting lists with NLs with setreg(), part 3', function()
-    execute('so test_eval_setup.vim')
-    execute([=[call SetReg('c', ['abcC4l-0', "\n", "abcC4l-2\n", "\nabcC4l-3", "abcC4l-4\nabcC4l-4-2"], 'l')]=])
+    command('so test_eval_setup.vim')
+    command([=[call SetReg('c', ['abcC4l-0', "\n", "abcC4l-2\n", "\nabcC4l-3", "abcC4l-4\nabcC4l-4-2"], 'l')]=])
     expect(
       '\n'..
       "{{{2 setreg('c', ['abcC4l-0', '\000', 'abcC4l-2\000', '\000abcC4l-3', 'abcC4l-4\000abcC4l-4-2'], 'l')\n"..
@@ -462,8 +466,8 @@ describe('eval', function()
       '==')
   end)
   it('setting lists with NLs with setreg(), part 4', function()
-    execute('so test_eval_setup.vim')
-    execute([=[call SetReg('d', ['abcD4b-0', "\n", "abcD4b-2\n", "\nabcD4b-3", "abcD4b-4\nabcD4b-4-2"], 'b')]=])
+    command('so test_eval_setup.vim')
+    command([=[call SetReg('d', ['abcD4b-0', "\n", "abcD4b-2\n", "\nabcD4b-3", "abcD4b-4\nabcD4b-4-2"], 'b')]=])
     expect(
       '\n'..
       "{{{2 setreg('d', ['abcD4b-0', '\000', 'abcD4b-2\000', '\000abcD4b-3', 'abcD4b-4\000abcD4b-4-2'], 'b')\n"..
@@ -476,8 +480,8 @@ describe('eval', function()
       ' abcD4b-4\000abcD4b-4-2')
   end)
   it('setting lists with NLs with setreg(), part 5', function()
-    execute('so test_eval_setup.vim')
-    execute([=[call SetReg('e', ['abcE4b10-0', "\n", "abcE4b10-2\n", "\nabcE4b10-3", "abcE4b10-4\nabcE4b10-4-2"], 'b10')]=])
+    command('so test_eval_setup.vim')
+    command([=[call SetReg('e', ['abcE4b10-0', "\n", "abcE4b10-2\n", "\nabcE4b10-3", "abcE4b10-4\nabcE4b10-4-2"], 'b10')]=])
     expect(
       '\n'..
       "{{{2 setreg('e', ['abcE4b10-0', '\000', 'abcE4b10-2\000', '\000abcE4b10-3', 'abcE4b10-4\000abcE4b10-4-2'], 'b10')\n"..
@@ -494,32 +498,41 @@ describe('eval', function()
     -- Precondition: "a is actually unset and "0 is nonempty
     eq('', eval("getregtype('a')"))
     eq('', eval("getreg('a')"))
-    execute("call setreg('0','text')")
+    command("call setreg('0','text')")
 
     -- This used to return a NULL list
     -- which setreg didn't handle
-    execute("let x = getreg('a',1,1)")
-    execute("call setreg('0',x)")
+    command("let x = getreg('a',1,1)")
+    command("call setreg('0',x)")
 
     -- nvim didn't crash and "0 was emptied
     eq(2, eval("1+1"))
     eq({}, eval("getreg('0',1,1)"))
 
     -- x is a mutable list
-    execute("let y = x")
+    command("let y = x")
     eq({}, eval("y"))
-    execute("call add(x, 'item')")
+    command("call add(x, 'item')")
     eq({'item'}, eval("y"))
   end)
 
+  it('sets the unnamed register when the "u" option is passed to setreg', function()
+    command("call setreg('a','a reg', 'cu')")
+    eq("a reg", eval('@"'))
+    command("call setreg('b','b reg', 'cu')")
+    eq("b reg", eval('@"'))
+    command("call setreg('c','c reg', 'c')")
+    eq("b reg", eval('@"'))
+  end)
+
   it('search and expressions', function()
-    execute('so test_eval_setup.vim')
-    execute([=[call SetReg('/', ['abc/'])]=])
-    execute([=[call SetReg('/', ["abc/\n"])]=])
-    execute([=[call SetReg('=', ['"abc/"'])]=])
-    execute([=[call SetReg('=', ["\"abc/\n\""])]=])
+    command('so test_eval_setup.vim')
+    command([=[call SetReg('/', ['abc/'])]=])
+    command([=[call SetReg('/', ["abc/\n"])]=])
+    command([=[call SetReg('=', ['"abc/"'])]=])
+    command([=[call SetReg('=', ["\"abc/\n\""])]=])
     expect([[
-      
+
       {{{2 setreg('/', ['abc/'])
       /: type v; value: abc/ (['abc/']), expr: abc/ (['abc/'])
       ==
@@ -536,35 +549,35 @@ describe('eval', function()
 
   describe('system clipboard', function()
     before_each(function()
-      execute('let &runtimepath = "test/functional/fixtures,".&runtimepath')
-      execute('call getreg("*")') -- force load of provider
+      command('let &runtimepath = "test/functional/fixtures,".&runtimepath')
+      command('call getreg("*")') -- force load of provider
     end)
 
     it('works', function()
       insert([[
 	Some first line (this text was at the top of the old test_eval.in).
-	
+
 	Note: system clipboard is saved, changed and restored.
-	
+
 	clipboard contents
 	something else]])
-      execute('so test_eval_setup.vim')
+      command('so test_eval_setup.vim')
       -- Save and restore system clipboard.
-      execute("let _clipreg = ['*', getreg('*'), getregtype('*')]")
-      execute('let _clipopt = &cb')
-      execute("let &cb='unnamed'")
-      execute('5y')
-      execute('AR *')
-      execute('tabdo :windo :echo "hi"')
-      execute('6y')
-      execute('AR *')
-      execute('let &cb=_clipopt')
-      execute("call call('setreg', _clipreg)")
+      command("let _clipreg = ['*', getreg('*'), getregtype('*')]")
+      command('let _clipopt = &cb')
+      command("let &cb='unnamed'")
+      command('5y')
+      command('AR *')
+      command('tabdo :windo :echo "hi"')
+      command('6y')
+      command('AR *')
+      command('let &cb=_clipopt')
+      command("call call('setreg', _clipreg)")
       expect([[
 	Some first line (this text was at the top of the old test_eval.in).
-	
+
 	Note: system clipboard is saved, changed and restored.
-	
+
 	clipboard contents
 	something else
 	*: type V; value: clipboard contents]]..'\00'..[[ (['clipboard contents']), expr: clipboard contents]]..'\00'..[[ (['clipboard contents'])
@@ -582,17 +595,17 @@ describe('eval', function()
 	  $put =v:exception
 	endtry
       endfun]])
-    execute([[call ErrExe('call setreg()')]])
-    execute([[call ErrExe('call setreg(1)')]])
-    execute([[call ErrExe('call setreg(1, 2, 3, 4)')]])
-    execute([=[call ErrExe('call setreg([], 2)')]=])
-    execute([[call ErrExe('call setreg(1, {})')]])
-    execute([=[call ErrExe('call setreg(1, 2, [])')]=])
-    execute([=[call ErrExe('call setreg("/", ["1", "2"])')]=])
-    execute([=[call ErrExe('call setreg("=", ["1", "2"])')]=])
-    execute([=[call ErrExe('call setreg(1, ["", "", [], ""])')]=])
+    command([[call ErrExe('call setreg()')]])
+    command([[call ErrExe('call setreg(1)')]])
+    command([[call ErrExe('call setreg(1, 2, 3, 4)')]])
+    command([=[call ErrExe('call setreg([], 2)')]=])
+    command([[call ErrExe('call setreg(1, {})')]])
+    command([=[call ErrExe('call setreg(1, 2, [])')]=])
+    command([=[call ErrExe('call setreg("/", ["1", "2"])')]=])
+    command([=[call ErrExe('call setreg("=", ["1", "2"])')]=])
+    command([=[call ErrExe('call setreg(1, ["", "", [], ""])')]=])
     expect([[
-      
+
       Executing call setreg()
       Vim(call):E119: Not enough arguments for function: setreg
       Executing call setreg(1)
@@ -614,48 +627,38 @@ describe('eval', function()
   end)
 
   it('function name not starting with a capital', function()
-    execute('try')
-    execute('  func! g:test()')
-    execute('    echo "test"')
-    execute('  endfunc')
-    execute('catch')
-    execute('  let tmp = v:exception')
-    execute('endtry')
-    eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()', eval('tmp'))
+    eq('Vim(function):E128: Function name must start with a capital or "s:": g:test()\\nendfunction',
+       exc_exec(dedent([[
+        function! g:test()
+        endfunction]])))
   end)
 
   it('Function name followed by #', function()
-    execute('try')
-    execute('  func! test2() "#')
-    execute('    echo "test2"')
-    execute('  endfunc')
-    execute('catch')
-    execute('  let tmp = v:exception')
-    execute('endtry')
-    eq('Vim(function):E128: Function name must start with a capital or "s:": test2() "#', eval('tmp'))
+    eq('Vim(function):E128: Function name must start with a capital or "s:": test2() "#\\nendfunction',
+       exc_exec(dedent([[
+        function! test2() "#
+        endfunction]])))
   end)
 
   it('function name includes a colon', function()
-    execute('try')
-    execute('  func! b:test()')
-    execute('    echo "test"')
-    execute('  endfunc')
-    execute('catch')
-    execute('  let tmp = v:exception')
-    execute('endtry')
-    eq('Vim(function):E128: Function name must start with a capital or "s:": b:test()', eval('tmp'))
+    eq('Vim(function):E128: Function name must start with a capital or "s:": b:test()\\nendfunction',
+       exc_exec(dedent([[
+        function! b:test()
+        endfunction]])))
   end)
 
   it('function name starting with/without "g:", buffer-local funcref', function()
-    execute('function! g:Foo(n)')
-    execute("  $put ='called Foo(' . a:n . ')'")
-    execute('endfunction')
-    execute("let b:my_func = function('Foo')")
-    execute('call b:my_func(1)')
-    execute('echo g:Foo(2)')
-    execute('echo Foo(3)')
+    command([[
+      function! g:Foo(n)
+        $put ='called Foo(' . a:n . ')'
+      endfunction
+    ]])
+    command("let b:my_func = function('Foo')")
+    command('call b:my_func(1)')
+    command('echo g:Foo(2)')
+    command('echo Foo(3)')
     expect([[
-      
+
       called Foo(1)
       called Foo(2)
       called Foo(3)]])
@@ -664,20 +667,20 @@ describe('eval', function()
   it('script-local function used in Funcref must exist', function()
     source([[
       " Vim script used in test_eval.in.  Needed for script-local function.
-      
+
       func! s:Testje()
         return "foo"
       endfunc
-      
+
       let Bar = function('s:Testje')
-      
+
       $put ='s:Testje exists: ' . exists('s:Testje')
       $put ='func s:Testje exists: ' . exists('*s:Testje')
       $put ='Bar exists: ' . exists('Bar')
       $put ='func Bar exists: ' . exists('*Bar')
       ]])
     expect([[
-      
+
       s:Testje exists: 0
       func s:Testje exists: 1
       Bar exists: 1
@@ -685,12 +688,8 @@ describe('eval', function()
   end)
 
   it("using $ instead of '$' must give an error", function()
-    execute('try')
-    execute("  call append($, 'foobar')")
-    execute('catch')
-    execute('  let tmp = v:exception')
-    execute('endtry')
-    eq('Vim(call):E116: Invalid arguments for function append', eval('tmp'))
+    eq('Vim(call):E116: Invalid arguments for function append',
+       exc_exec('call append($, "foobar")'))
   end)
 
   it('getcurpos/setpos', function()
@@ -699,13 +698,16 @@ describe('eval', function()
       012345678
 
       start:]])
-    execute('/^012345678')
+    command('/^012345678')
     feed('6l')
-    execute('let sp = getcurpos()')
+    wait()
+    command('let sp = getcurpos()')
     feed('0')
-    execute("call setpos('.', sp)")
+    wait()
+    command("call setpos('.', sp)")
     feed('jyl')
-    execute('$put')
+    wait()
+    command('$put')
     expect([[
       012345678
       012345678
@@ -715,18 +717,18 @@ describe('eval', function()
   end)
 
   it('substring and variable name', function()
-    execute("let str = 'abcdef'")
-    execute('let n = 3')
+    command("let str = 'abcdef'")
+    command('let n = 3')
     eq('def', eval('str[n:]'))
     eq('abcd', eval('str[:n]'))
     eq('d', eval('str[n:n]'))
-    execute('unlet n')
-    execute('let nn = 3')
+    command('unlet n')
+    command('let nn = 3')
     eq('def', eval('str[nn:]'))
     eq('abcd', eval('str[:nn]'))
     eq('d', eval('str[nn:nn]'))
-    execute('unlet nn')
-    execute('let b:nn = 4')
+    command('unlet nn')
+    command('let b:nn = 4')
     eq('ef', eval('str[b:nn:]'))
     eq('abcde', eval('str[:b:nn]'))
     eq('e', eval('str[b:nn:b:nn]'))

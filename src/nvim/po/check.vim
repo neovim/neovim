@@ -33,36 +33,66 @@ func! GetMline()
   return substitute(idline, '[^%]*\(%[-+ #''.0-9*]*l\=[dsuxXpoc%]\)\=', '\1', 'g')
 endfunc
 
-" This only works when 'wrapscan' is set.
+" This only works when 'wrapscan' is not set.
 let s:save_wrapscan = &wrapscan
-set wrapscan
+set nowrapscan
 
 " Start at the first "msgid" line.
 1
-/^msgid
-let startline = line('.')
+/^msgid\>
+
+" When an error is detected this is set to the line number.
+" Note: this is used in the Makefile.
 let error = 0
 
 while 1
   if getline(line('.') - 1) !~ "no-c-format"
-    let fromline = GetMline()
+    " go over the "msgid" and "msgid_plural" lines
+    let prevfromline = 'foobar'
+    while 1
+      let fromline = GetMline()
+      if prevfromline != 'foobar' && prevfromline != fromline
+	echomsg 'Mismatching % in line ' . (line('.') - 1)
+	echomsg 'msgid: ' . prevfromline
+	echomsg 'msgid ' . fromline
+	if error == 0
+	  let error = line('.')
+	endif
+      endif
+      if getline('.') !~ 'msgid_plural'
+	break
+      endif
+      let prevfromline = fromline
+    endwhile
+
     if getline('.') !~ '^msgstr'
-      echo 'Missing "msgstr" in line ' . line('.')
-      let error = 1
+      echomsg 'Missing "msgstr" in line ' . line('.')
+      if error == 0
+	let error = line('.')
+      endif
     endif
-    let toline = GetMline()
-    if fromline != toline
-      echo 'Mismatching % in line ' . (line('.') - 1)
-      echo 'msgid: ' . fromline
-      echo 'msgstr: ' . toline
-      let error = 1
-    endif
+
+    " check all the 'msgstr' lines
+    while getline('.') =~ '^msgstr'
+      let toline = GetMline()
+      if fromline != toline
+	echomsg 'Mismatching % in line ' . (line('.') - 1)
+	echomsg 'msgid: ' . fromline
+	echomsg 'msgstr: ' . toline
+	if error == 0
+	  let error = line('.')
+	endif
+      endif
+      if line('.') == line('$')
+	break
+      endif
+    endwhile
   endif
 
-  " Find next msgid.
-  " Wrap around at the end of the file, quit when back at the first one.
-  /^msgid
-  if line('.') == startline
+  " Find next msgid.  Quit when there is no more.
+  let lnum = line('.')
+  silent! /^msgid\>
+  if line('.') == lnum
     break
   endif
 endwhile
@@ -77,12 +107,16 @@ endwhile
 "
 1
 if search('msgid "\("\n"\)\?\([EW][0-9]\+:\).*\nmsgstr "\("\n"\)\?[^"]\@=\2\@!') > 0
-  echo 'Mismatching error/warning code in line ' . line('.')
-  let error = 1
+  echomsg 'Mismatching error/warning code in line ' . line('.')
+  if error == 0
+    let error = line('.')
+  endif
 endif
 
 if error == 0
-  echo "OK"
+  echomsg "OK"
+else
+  exe error
 endif
 
 redir END

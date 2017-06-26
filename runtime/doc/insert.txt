@@ -1,4 +1,4 @@
-*insert.txt*    For Vim version 7.4.  Last change: 2016 Jan 31
+*insert.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -13,19 +13,10 @@ commands for inserting text in other ways.
 An overview of the most often used commands can be found in chapter 24 of the
 user manual |usr_24.txt|.
 
-1. Special keys						|ins-special-keys|
-2. Special special keys					|ins-special-special|
-3. 'textwidth' and 'wrapmargin' options			|ins-textwidth|
-4. 'expandtab', 'smarttab' and 'softtabstop'  options	|ins-expandtab|
-5. Replace mode						|Replace-mode|
-6. Virtual Replace mode					|Virtual-Replace-mode|
-7. Insert mode completion				|ins-completion|
-8. Insert mode commands					|inserting|
-9. Ex insert commands					|inserting-ex|
-10. Inserting a file					|inserting-file|
-
 Also see 'virtualedit', for moving the cursor to positions where there is no
 character.  Useful for editing a table.
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Special keys						*ins-special-keys*
@@ -369,9 +360,6 @@ CTRL-G U	don't break undo with next left/right cursor *i_CTRL-G_U*
 		movement (but only if the cursor stays
 		within same the line)
 -----------------------------------------------------------------------
-
-Note: If the cursor keys take you out of Insert mode, check the 'noesckeys'
-option.
 
 The CTRL-O command sometimes has a side effect: If the cursor was beyond the
 end of the line, it will be put on the last character in the line.  In

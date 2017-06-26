@@ -1,4 +1,4 @@
-*pi_spec.txt*   For Vim version 7.4.  Last change: 2006 Apr 24
+*pi_spec.txt*   Nvim
 
 by Gustavo Niemeyer ~
 

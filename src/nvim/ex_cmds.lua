@@ -34,7 +34,8 @@ local ADDR_ARGUMENTS        =  2
 local ADDR_LOADED_BUFFERS   =  3
 local ADDR_BUFFERS          =  4
 local ADDR_TABS             =  5
-local ADDR_QUICKFIX         =  6
+local ADDR_TABS_RELATIVE    =  6
+local ADDR_QUICKFIX         =  7
 local ADDR_OTHER            =  99
 
 -- The following table is described in ex_cmds_defs.h file.
@@ -930,6 +931,12 @@ return {
     func='ex_filetype',
   },
   {
+    command='filter',
+    flags=bit.bor(BANG, NEEDARG, EXTRA, NOTRLCOM),
+    addr_type=ADDR_LINES,
+    func='ex_wrongmodifier',
+  },
+  {
     command='find',
     flags=bit.bor(RANGE, NOTADR, BANG, FILE1, EDITCMD, ARGOPT, TRLBAR),
     addr_type=ADDR_LINES,
@@ -1541,19 +1548,19 @@ return {
     command='lua',
     flags=bit.bor(RANGE, EXTRA, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_script_ni',
+    func='ex_lua',
   },
   {
     command='luado',
     flags=bit.bor(RANGE, DFLALL, EXTRA, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_luado',
   },
   {
     command='luafile',
     flags=bit.bor(RANGE, FILE1, NEEDARG, CMDWIN),
     addr_type=ADDR_LINES,
-    func='ex_ni',
+    func='ex_luafile',
   },
   {
     command='lvimgrep',
@@ -2650,12 +2657,12 @@ return {
   {
     command='tab',
     flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
+    addr_type=ADDR_TABS,
     func='ex_wrongmodifier',
   },
   {
     command='tabclose',
-    flags=bit.bor(RANGE, NOTADR, COUNT, BANG, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, RANGE, NOTADR, ZEROR, EXTRA, NOSPC, TRLBAR, CMDWIN),
     addr_type=ADDR_TABS,
     func='ex_tabclose',
   },
@@ -2680,7 +2687,7 @@ return {
   {
     command='tabfirst',
     flags=bit.bor(TRLBAR),
-    addr_type=ADDR_LINES,
+    addr_type=ADDR_TABS,
     func='ex_tabnext',
   },
   {
@@ -2692,13 +2699,13 @@ return {
   {
     command='tablast',
     flags=bit.bor(TRLBAR),
-    addr_type=ADDR_LINES,
+    addr_type=ADDR_TABS,
     func='ex_tabnext',
   },
   {
     command='tabnext',
-    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(RANGE, NOTADR, ZEROR, EXTRA, NOSPC, TRLBAR),
+    addr_type=ADDR_TABS,
     func='ex_tabnext',
   },
   {
@@ -2709,32 +2716,32 @@ return {
   },
   {
     command='tabonly',
-    flags=bit.bor(BANG, RANGE, NOTADR, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, RANGE, NOTADR, ZEROR, EXTRA, NOSPC, TRLBAR, CMDWIN),
     addr_type=ADDR_TABS,
     func='ex_tabonly',
   },
   {
     command='tabprevious',
-    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(RANGE, NOTADR, ZEROR, EXTRA, NOSPC, TRLBAR),
+    addr_type=ADDR_TABS_RELATIVE,
     func='ex_tabnext',
   },
   {
     command='tabNext',
-    flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
-    addr_type=ADDR_LINES,
+    flags=bit.bor(RANGE, NOTADR, ZEROR, EXTRA, NOSPC, TRLBAR),
+    addr_type=ADDR_TABS_RELATIVE,
     func='ex_tabnext',
   },
   {
     command='tabrewind',
     flags=bit.bor(TRLBAR),
-    addr_type=ADDR_LINES,
+    addr_type=ADDR_TABS,
     func='ex_tabnext',
   },
   {
     command='tabs',
     flags=bit.bor(TRLBAR, CMDWIN),
-    addr_type=ADDR_LINES,
+    addr_type=ADDR_TABS,
     func='ex_tabs',
   },
   {

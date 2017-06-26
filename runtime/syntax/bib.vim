@@ -2,17 +2,14 @@
 " Language:	BibTeX (bibliographic database format for (La)TeX)
 " Maintainer:	Bernd Feige <Bernd.Feige@gmx.net>
 " Filenames:	*.bib
-" Last Change:	2016 May 31
+" Last Change:	2016 Sep 12
 
 " Thanks to those who pointed out problems with this file or supplied fixes!
 
 " Initialization
 " ==============
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -74,7 +71,7 @@ syn keyword bibNSEntryKw contained	mrclass mrnumber mrreviewer fjournal coden
 
 " Clusters
 " ========
-syn cluster bibVarContents	contains=bibUnescapedSpecial,bibBrace,bibParen
+syn cluster bibVarContents	contains=bibUnescapedSpecial,bibBrace,bibParen,bibMath
 " This cluster is empty but things can be added externally:
 "syn cluster bibCommentContents
 
@@ -84,6 +81,7 @@ syn match bibUnescapedSpecial contained /[^\\][%&]/hs=s+1
 syn match bibKey contained /\s*[^ \t}="]\+,/hs=s,he=e-1 nextgroup=bibField
 syn match bibVariable contained /[^{}," \t=]/
 syn region bibComment start=/./ end=/^\s*@/me=e-1 contains=@bibCommentContents nextgroup=bibEntry
+syn region bibMath contained start=/\$/ end=/\$/ skip=/\(\\\$\)/
 syn region bibQuote contained start=/"/ end=/"/ skip=/\(\\"\)/ contains=@bibVarContents
 syn region bibBrace contained start=/{/ end=/}/ skip=/\(\\[{}]\)/ contains=@bibVarContents
 syn region bibParen contained start=/(/ end=/)/ skip=/\(\\[()]\)/ contains=@bibVarContents
@@ -91,11 +89,7 @@ syn region bibField contained start="\S\+\s*=\s*" end=/[}),]/me=e-1 contains=bib
 syn region bibEntryData contained start=/[{(]/ms=e+1 end=/[})]/me=e-1 contains=bibKey,bibField
 " Actually, 5.8 <= Vim < 6.0 would ignore the `fold' keyword anyway, but Vim<5.8 would produce
 " an error, so we explicitly distinguish versions with and without folding functionality:
-if version < 600
-  syn region bibEntry start=/@\S\+\s*[{(]/ end=/^\s*[})]/ transparent contains=bibType,bibEntryData nextgroup=bibComment
-else
-  syn region bibEntry start=/@\S\+\s*[{(]/ end=/^\s*[})]/ transparent fold contains=bibType,bibEntryData nextgroup=bibComment
-endif
+syn region bibEntry start=/@\S\+\s*[{(]/ end=/^\s*[})]/ transparent fold contains=bibType,bibEntryData nextgroup=bibComment
 syn region bibComment2 start=/@Comment\s*[{(]/ end=/^\s*[})]/me=e-1 contains=@bibCommentContents nextgroup=bibEntry
 
 " Synchronization
@@ -107,25 +101,16 @@ syn sync minlines=50
 " Highlighting defaults
 " =====================
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_bib_syn_inits")
-  if version < 508
-    let did_bib_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink bibType	Identifier
-  HiLink bibEntryKw	Statement
-  HiLink bibNSEntryKw	PreProc
-  HiLink bibKey		Special
-  HiLink bibVariable	Constant
-  HiLink bibUnescapedSpecial	Error
-  HiLink bibComment	Comment
-  HiLink bibComment2	Comment
-  delcommand HiLink
-endif
+" Only when an item doesn't have highlighting yet
+
+hi def link bibType	Identifier
+hi def link bibEntryKw	Statement
+hi def link bibNSEntryKw	PreProc
+hi def link bibKey		Special
+hi def link bibVariable	Constant
+hi def link bibUnescapedSpecial	Error
+hi def link bibComment	Comment
+hi def link bibComment2	Comment
 
 let b:current_syntax = "bib"
 

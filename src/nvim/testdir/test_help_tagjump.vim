@@ -162,4 +162,36 @@ func Test_help_complete()
   endtry
 endfunc
 
-" vim: et sw=2:
+func Test_help_respect_current_file_lang()
+  try
+    let list = []
+    call s:doc_config_setup()
+
+    if has('multi_lang')
+      function s:check_help_file_ext(help_keyword, ext)
+        exec 'help ' . a:help_keyword
+        call assert_equal(a:ext, expand('%:e'))
+        call feedkeys("\<C-]>", 'tx')
+        call assert_equal(a:ext, expand('%:e'))
+        pop
+        helpclose
+      endfunc
+
+      set rtp+=Xdir1/doc-ab
+      set rtp+=Xdir1/doc-ja
+
+      set helplang=ab
+      call s:check_help_file_ext('test-char', 'abx')
+      call s:check_help_file_ext('test-char@ja', 'jax')
+      set helplang=ab,ja
+      call s:check_help_file_ext('test-char@ja', 'jax')
+      call s:check_help_file_ext('test-char@en', 'txt')
+    endif
+  catch
+    call assert_exception('X')
+  finally
+    call s:doc_config_teardown()
+  endtry
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

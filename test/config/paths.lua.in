@@ -5,9 +5,19 @@ for p in ("${TEST_INCLUDE_DIRS}" .. ";"):gmatch("[^;]+") do
   table.insert(module.include_paths, p)
 end
 
-module.test_include_path = "${CMAKE_BINARY_DIR}/test/includes/post"
+module.test_build_dir = "${CMAKE_BINARY_DIR}"
+module.test_include_path = module.test_build_dir .. "/test/includes/post"
 module.test_libnvim_path = "${TEST_LIBNVIM_PATH}"
 module.test_source_path = "${CMAKE_SOURCE_DIR}"
+module.test_lua_prg = "${LUA_PRG}"
+module.test_luajit_prg = ""
+if module.test_luajit_prg == '' then
+  if module.test_lua_prg:sub(-6) == 'luajit' then
+    module.test_luajit_prg = module.test_lua_prg
+  else
+    module.test_luajit_prg = nil
+  end
+end
 table.insert(module.include_paths, "${CMAKE_BINARY_DIR}/include")
 
 return module

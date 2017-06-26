@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file charset.c
 ///
 /// Code related to character sets.
@@ -15,6 +18,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -41,8 +45,10 @@ static bool chartab_initialized = false;
     (buf)->b_chartab[(unsigned)(c) >> 6] |= (1ull << ((c) & 0x3f))
 #define RESET_CHARTAB(buf, c) \
     (buf)->b_chartab[(unsigned)(c) >> 6] &= ~(1ull << ((c) & 0x3f))
+#define GET_CHARTAB_TAB(chartab, c) \
+    ((chartab)[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
 #define GET_CHARTAB(buf, c) \
-    ((buf)->b_chartab[(unsigned)(c) >> 6] & (1ull << ((c) & 0x3f)))
+    GET_CHARTAB_TAB((buf)->b_chartab, c)
 
 // Table used below, see init_chartab() for an explanation
 static char_u g_chartab[256];
@@ -88,7 +94,6 @@ int buf_init_chartab(buf_T *buf, int global)
 {
   int c;
   int c2;
-  char_u *p;
   int i;
   bool tilde;
   bool do_isalpha;
@@ -142,7 +147,8 @@ int buf_init_chartab(buf_T *buf, int global)
   // Walk through the 'isident', 'iskeyword', 'isfname' and 'isprint'
   // options Each option is a list of characters, character numbers or
   // ranges, separated by commas, e.g.: "200-210,x,#-178,-"
-  for (i = global ? 0 : 3; i <= 3; ++i) {
+  for (i = global ? 0 : 3; i <= 3; i++) {
+    const char_u *p;
     if (i == 0) {
       // first round: 'isident'
       p = p_isi;
@@ -167,7 +173,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (ascii_isdigit(*p)) {
-        c = getdigits_int(&p);
+        c = getdigits_int((char_u **)&p);
       } else {
         c = mb_ptr2char_adv(&p);
       }
@@ -177,7 +183,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (ascii_isdigit(*p)) {
-          c2 = getdigits_int(&p);
+          c2 = getdigits_int((char_u **)&p);
         } else {
           c2 = mb_ptr2char_adv(&p);
         }
@@ -210,8 +216,8 @@ int buf_init_chartab(buf_T *buf, int global)
         // work properly when 'encoding' is "latin1" and the locale is
         // "C".
         if (!do_isalpha
-            || vim_islower(c)
-            || vim_isupper(c)
+            || mb_islower(c)
+            || mb_isupper(c)
             || (p_altkeymap && (F_isalpha(c) || F_isdigit(c)))) {
           if (i == 0) {
             // (re)set ID flag
@@ -415,11 +421,11 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   while (STR_CHAR(i) != NUL) {
     int c = utf_ptr2char(STR_PTR(i));
     int olen = utf_ptr2len(STR_PTR(i));
-    int lc = utf_tolower(c);
+    int lc = mb_tolower(c);
 
     // Only replace the character when it is not an invalid
     // sequence (ASCII character or more than one byte) and
-    // utf_tolower() doesn't return the original character.
+    // mb_tolower() doesn't return the original character.
     if (((c < 0x80) || (olen > 1)) && (c != lc)) {
       int nlen = utf_char2len(lc);
 
@@ -486,7 +492,8 @@ char_u* transchar(int c)
     c = K_SECOND(c);
   }
 
-  if ((!chartab_initialized && (((c >= ' ') && (c <= '~')) || F_ischar(c)))
+  if ((!chartab_initialized && (((c >= ' ') && (c <= '~'))
+                                || (p_altkeymap && F_ischar(c))))
       || ((c < 256) && vim_isprintc_strict(c))) {
     // printable character
     transchar_buf[i] = (char_u)c;
@@ -538,18 +545,8 @@ void transchar_nonprint(char_u *buf, int c)
     buf[1] = (char_u)(c ^ 0x40);
 
     buf[2] = NUL;
-  } else if (c >= 0x80) {
-    transchar_hex(buf, c);
-  } else if ((c >= ' ' + 0x80) && (c <= '~' + 0x80)) {
-    // 0xa0 - 0xfe
-    buf[0] = '|';
-    buf[1] = (char_u)(c - 0x80);
-    buf[2] = NUL;
   } else {
-    // 0x80 - 0x9f and 0xff
-    buf[0] = '~';
-    buf[1] = (char_u)((c - 0x80) ^ 0x40);
-    buf[2] = NUL;
+    transchar_hex(buf, c);
   }
 }
 
@@ -633,7 +630,7 @@ int char2cells(int c)
 /// @param p
 ///
 /// @return number of display cells.
-int ptr2cells(char_u *p)
+int ptr2cells(const char_u *p)
 {
   // For UTF-8 we need to look at more bytes if the first byte is >= 0x80.
   if (*p >= 0x80) {
@@ -775,6 +772,20 @@ bool vim_iswordc(int c)
   return vim_iswordc_buf(c, curbuf);
 }
 
+/// Check that "c" is a keyword character
+/// Letters and characters from 'iskeyword' option for given buffer.
+/// For multi-byte characters mb_get_class() is used (builtin rules).
+///
+/// @param[in]  c  Character to check.
+/// @param[in]  chartab  Buffer chartab.
+bool vim_iswordc_tab(const int c, const uint64_t *const chartab)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+{
+  return (c >= 0x100
+          ? (utf_class(c) >= 2)
+          : (c > 0 && GET_CHARTAB_TAB(chartab, c) != 0));
+}
+
 /// Check that "c" is a keyword character:
 /// Letters and characters from 'iskeyword' option for given buffer.
 /// For multi-byte characters mb_get_class() is used (builtin rules).
@@ -784,10 +795,7 @@ bool vim_iswordc(int c)
 bool vim_iswordc_buf(int c, buf_T *buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2)
 {
-  if (c >= 0x100) {
-    return utf_class(c) >= 2;
-  }
-  return c > 0 && c < 0x100 && GET_CHARTAB(buf, c) != 0;
+  return vim_iswordc_tab(c, buf->b_chartab);
 }
 
 /// Just like vim_iswordc() but uses a pointer to the (multi-byte) character.
@@ -1159,7 +1167,13 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
     // continue until the NUL
     posptr = NULL;
   } else {
+    // Special check for an empty line, which can happen on exit, when
+    // ml_get_buf() always returns an empty string.
+    if (*ptr == NUL) {
+      pos->col = 0;
+    }
     posptr = ptr + pos->col;
+    posptr -= utf_head_off(line, posptr);
   }
 
   // This function is used very often, do some speed optimizations.
@@ -1346,7 +1360,7 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
   colnr_T to1;
   colnr_T to2;
 
-  if (ltp(pos1, pos2)) {
+  if (lt(*pos1, *pos2)) {
     getvvcol(wp, pos1, &from1, NULL, &to1);
     getvvcol(wp, pos2, &from2, NULL, &to2);
   } else {
@@ -1373,32 +1387,35 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
 
 /// skipwhite: skip over ' ' and '\t'.
 ///
-/// @param q
+/// @param[in]  q  String to skip in.
 ///
 /// @return Pointer to character after the skipped whitespace.
-char_u* skipwhite(char_u *q)
+char_u *skipwhite(const char_u *q)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
-  char_u *p = q;
+  const char_u *p = q;
   while (ascii_iswhite(*p)) {
-    // skip to next non-white
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
-/// skip over digits
+/// Skip over digits
 ///
-/// @param q
+/// @param[in]  q  String to skip digits in.
 ///
 /// @return Pointer to the character after the skipped digits.
-char_u* skipdigits(char_u *q)
+char_u *skipdigits(const char_u *q)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_RET
 {
-  char_u *p = q;
+  const char_u *p = q;
   while (ascii_isdigit(*p)) {
     // skip to next non-digit
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// skip over binary digits
@@ -1483,78 +1500,17 @@ char_u* skiptohex(char_u *q)
   return p;
 }
 
-// Vim's own character class functions.  These exist because many library
-// islower()/toupper() etc. do not work properly: they crash when used with
-// invalid values or can't handle latin1 when the locale is C.
-// Speed is most important here.
-
-/// Check that the character is lower-case
+/// Skip over text until ' ' or '\t' or NUL
 ///
-/// @param  c  character to check
-bool vim_islower(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (c <= '@') {
-    return false;
-  }
-
-  if (c >= 0x80) {
-    return utf_islower(c);
-  }
-  return islower(c);
-}
-
-/// Check that the character is upper-case
-///
-/// @param  c  character to check
-bool vim_isupper(int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  if (c <= '@') {
-    return false;
-  }
-
-  if (c >= 0x80) {
-      return utf_isupper(c);
-  }
-  return isupper(c);
-}
-
-int vim_toupper(int c)
-{
-  if (c <= '@') {
-    return c;
-  }
-
-  if (c >= 0x80) {
-    return utf_toupper(c);
-  }
-  return TOUPPER_LOC(c);
-}
-
-int vim_tolower(int c)
-{
-  if (c <= '@') {
-    return c;
-  }
-
-  if (c >= 0x80) {
-    return utf_tolower(c);
-  }
-  return TOLOWER_LOC(c);
-}
-
-/// skiptowhite: skip over text until ' ' or '\t' or NUL.
-///
-/// @param p
+/// @param[in]  p  Text to skip over.
 ///
 /// @return Pointer to the next whitespace or NUL character.
-char_u* skiptowhite(char_u *p)
+char_u *skiptowhite(const char_u *p)
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     p++;
   }
-  return p;
+  return (char_u *)p;
 }
 
 /// skiptowhite_esc: Like skiptowhite(), but also skip escaped chars
@@ -1665,13 +1621,13 @@ bool vim_isblankline(char_u *lbuf)
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
 void vim_str2nr(const char_u *const start, int *const prep, int *const len,
-                const int what, long *const nptr, unsigned long *const unptr,
-                const int maxlen)
+                const int what, varnumber_T *const nptr,
+                uvarnumber_T *const unptr, const int maxlen)
 {
   const char_u *ptr = start;
   int pre = 0;  // default is decimal
   bool negative = false;
-  unsigned long un = 0;
+  uvarnumber_T un = 0;
 
   if (ptr[0] == '-') {
     negative = true;
@@ -1727,7 +1683,12 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       n += 2;  // skip over "0b"
     }
     while ('0' <= *ptr && *ptr <= '1') {
-      un = 2 * un + (unsigned long)(*ptr - '0');
+      // avoid ubsan error for overflow
+      if (un < UVARNUMBER_MAX / 2) {
+        un = 2 * un + (uvarnumber_T)(*ptr - '0');
+      } else {
+        un = UVARNUMBER_MAX;
+      }
       ptr++;
       if (n++ == maxlen) {
         break;
@@ -1736,7 +1697,12 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   } else if ((pre == '0') || what == STR2NR_OCT + STR2NR_FORCE) {
     // octal
     while ('0' <= *ptr && *ptr <= '7') {
-      un = 8 * un + (unsigned long)(*ptr - '0');
+      // avoid ubsan error for overflow
+      if (un < UVARNUMBER_MAX / 8) {
+        un = 8 * un + (uvarnumber_T)(*ptr - '0');
+      } else {
+        un = UVARNUMBER_MAX;
+      }
       ptr++;
       if (n++ == maxlen) {
         break;
@@ -1749,7 +1715,12 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       n += 2;  // skip over "0x"
     }
     while (ascii_isxdigit(*ptr)) {
-      un = 16 * un + (unsigned long)hex2nr(*ptr);
+      // avoid ubsan error for overflow
+      if (un < UVARNUMBER_MAX / 16) {
+        un = 16 * un + (uvarnumber_T)hex2nr(*ptr);
+      } else {
+        un = UVARNUMBER_MAX;
+      }
       ptr++;
       if (n++ == maxlen) {
         break;
@@ -1758,7 +1729,12 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   } else {
     // decimal
     while (ascii_isdigit(*ptr)) {
-      un = 10 * un + (unsigned long)(*ptr - '0');
+      // avoid ubsan error for overflow
+      if (un < UVARNUMBER_MAX / 10) {
+        un = 10 * un + (uvarnumber_T)(*ptr - '0');
+      } else {
+        un = UVARNUMBER_MAX;
+      }
       ptr++;
       if (n++ == maxlen) {
         break;
@@ -1775,11 +1751,18 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   }
 
   if (nptr != NULL) {
-    if (negative) {
-      // account for leading '-' for decimal numbers
-      *nptr = -(long)un;
+    if (negative) {  // account for leading '-' for decimal numbers
+      // avoid ubsan error for overflow
+      if (un > VARNUMBER_MAX) {
+        *nptr = VARNUMBER_MIN;
+      } else {
+        *nptr = -(varnumber_T)un;
+      }
     } else {
-      *nptr = (long)un;
+      if (un > VARNUMBER_MAX) {
+        un = VARNUMBER_MAX;
+      }
+      *nptr = (varnumber_T)un;
     }
   }
 

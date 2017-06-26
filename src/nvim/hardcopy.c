@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * hardcopy.c: printing to paper
  */
@@ -369,7 +372,6 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
 {
   int colorindex;
   uint32_t fg_color;
-  char    *color;
 
   pattr->bold = (highlight_has_attr(hl_id, HL_BOLD, modec) != NULL);
   pattr->italic = (highlight_has_attr(hl_id, HL_ITALIC, modec) != NULL);
@@ -377,11 +379,12 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
   pattr->undercurl = (highlight_has_attr(hl_id, HL_UNDERCURL, modec) != NULL);
 
   {
-    color = (char *)highlight_color(hl_id, (char_u *)"fg", modec);
-    if (color == NULL)
+    const char *color = highlight_color(hl_id, "fg", modec);
+    if (color == NULL) {
       colorindex = 0;
-    else
+    } else {
       colorindex = atoi(color);
+    }
 
     if (colorindex >= 0 && colorindex < t_colors)
       fg_color = prt_get_term_color(colorindex);
@@ -845,12 +848,10 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
    * Loop over the columns until the end of the file line or right margin.
    */
   for (col = ppos->column; line[col] != NUL && !need_break; col += outputlen) {
-    outputlen = 1;
-    if (has_mbyte && (outputlen = (*mb_ptr2len)(line + col)) < 1)
+    if ((outputlen = (*mb_ptr2len)(line + col)) < 1) {
       outputlen = 1;
-    /*
-     * syntax highlighting stuff.
-     */
+    }
+    // syntax highlighting stuff.
     if (psettings->do_syntax) {
       id = syn_get_id(curwin, ppos->file_line, col, 1, NULL, FALSE);
       if (id > 0)
@@ -2578,13 +2579,12 @@ int mch_print_begin(prt_settings_T *psettings)
 
   prt_conv.vc_type = CONV_NONE;
   if (!(enc_canon_props(p_enc) & enc_canon_props(p_encoding) & ENC_8BIT)) {
-    /* Set up encoding conversion if required */
-    if (FAIL == convert_setup(&prt_conv, p_enc, p_encoding)) {
-      EMSG2(_("E620: Unable to convert to print encoding \"%s\""),
-          p_encoding);
-      return FALSE;
+    // Set up encoding conversion if required
+    if (convert_setup(&prt_conv, p_enc, p_encoding) == FAIL) {
+      emsgf(_("E620: Unable to convert to print encoding \"%s\""),
+            p_encoding);
+      return false;
     }
-    prt_do_conv = TRUE;
   }
   prt_do_conv = prt_conv.vc_type != CONV_NONE;
 

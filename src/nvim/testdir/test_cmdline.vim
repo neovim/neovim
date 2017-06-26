@@ -85,6 +85,11 @@ func Test_getcompletion()
   let l = getcompletion('paint', 'function')
   call assert_equal([], l)
 
+  let Flambda = {-> 'hello'}
+  let l = getcompletion('', 'function')
+  let l = filter(l, {i, v -> v =~ 'lambda'})
+  call assert_equal(0, len(l))
+
   let l = getcompletion('run', 'file')
   call assert_true(index(l, 'runtest.vim') >= 0)
   let l = getcompletion('walk', 'file')
@@ -151,6 +156,20 @@ func Test_getcompletion()
     call assert_equal(['Testing'], l)
   endif
 
+  " Command line completion tests
+  let l = getcompletion('cd ', 'cmdline')
+  call assert_true(index(l, 'sautest/') >= 0)
+  let l = getcompletion('cd NoMatch', 'cmdline')
+  call assert_equal([], l)
+  let l = getcompletion('let v:n', 'cmdline')
+  call assert_true(index(l, 'v:null') >= 0)
+  let l = getcompletion('let v:notexists', 'cmdline')
+  call assert_equal([], l)
+  let l = getcompletion('call tag', 'cmdline')
+  call assert_true(index(l, 'taglist(') >= 0)
+  let l = getcompletion('call paint', 'cmdline')
+  call assert_equal([], l)
+
   " For others test if the name is recognized.
   let names = ['buffer', 'environment', 'file_in_path',
 	\ 'mapping', 'shellcmd', 'tag', 'tag_listfiles', 'user']
@@ -182,5 +201,6 @@ func Test_expand_star_star()
   call writefile(['asdfasdf'], 'a/b/fileXname')
   call feedkeys(":find **/fileXname\<Tab>\<CR>", 'xt')
   call assert_equal('find a/b/fileXname', getreg(':'))
+  bwipe!
   call delete('a', 'rf')
 endfunc

@@ -1,4 +1,4 @@
-*remote.txt*    For Vim version 7.4.  Last change: 2015 Mar 01
+*remote.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,9 +6,7 @@
 
 Vim client-server communication				*client-server*
 
-1. Common functionality		|clientserver|
-2. X11 specific items		|x11-clientserver|
-3. MS-Windows specific items	|w32-clientserver|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Common functionality					*clientserver*

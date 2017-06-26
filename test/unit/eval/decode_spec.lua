@@ -1,35 +1,21 @@
-local helpers = require('test.unit.helpers')
+local helpers = require('test.unit.helpers')(after_each)
+local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
 
-local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval_defs.h',
+local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval/typval.h',
                        './src/nvim/globals.h', './src/nvim/memory.h',
                        './src/nvim/message.h')
 
 describe('json_decode_string()', function()
-  local saved_p_enc = nil
-
-  before_each(function()
-    saved_p_enc = decode.p_enc
-  end)
-
-  after_each(function()
-    decode.emsg_silent = 0
-    decode.p_enc = saved_p_enc
-    while decode.delete_first_msg() == 1 do
-      -- Delete all messages
-    end
-  end)
-
   local char = function(c)
     return ffi.gc(decode.xmemdup(c, 1), decode.xfree)
   end
 
-  it('does not overflow when running with `n…`, `t…`, `f…`', function()
+  itp('does not overflow when running with `n…`, `t…`, `f…`', function()
     local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
     decode.emsg_silent = 1
     -- This will not crash, but if `len` argument will be ignored it will parse
@@ -56,7 +42,7 @@ describe('json_decode_string()', function()
     eq(decode.VAR_UNKNOWN, rettv.v_type)
   end)
 
-  it('does not overflow and crash when running with `n`, `t`, `f`', function()
+  itp('does not overflow and crash when running with `n`, `t`, `f`', function()
     local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
     decode.emsg_silent = 1
     eq(0, decode.json_decode_string(char('n'), 1, rettv))
@@ -67,7 +53,7 @@ describe('json_decode_string()', function()
     eq(decode.VAR_UNKNOWN, rettv.v_type)
   end)
 
-  it('does not overflow when running with `"…`', function()
+  itp('does not overflow when running with `"…`', function()
     local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
     decode.emsg_silent = 1
     eq(0, decode.json_decode_string('"t"', 2, rettv))
@@ -84,7 +70,8 @@ describe('json_decode_string()', function()
     eq(msg, ffi.string(decode.last_msg_hist.msg))
   end
 
-  it('does not overflow in error messages', function()
+  itp('does not overflow in error messages', function()
+    collectgarbage('restart')
     check_failure(']test', 1, 'E474: No container to close: ]')
     check_failure('[}test', 2, 'E474: Closing list with curly bracket: }')
     check_failure('{]test', 2,
@@ -117,10 +104,6 @@ describe('json_decode_string()', function()
     check_failure('"\194"test', 3, 'E474: Only UTF-8 strings allowed: \194"')
     check_failure('"\252\144\128\128\128\128"test', 8, 'E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"')
     check_failure('"test', 1, 'E474: Expected string end: "')
-    decode.p_enc = to_cstr('latin1')
-    check_failure('"\\uABCD"test', 8,
-                  'E474: Failed to convert string "ꯍ" from UTF-8')
-    decode.p_enc = saved_p_enc
     check_failure('-test', 1, 'E474: Missing number after minus sign: -')
     check_failure('-1.test', 3, 'E474: Missing number after decimal dot: -1.')
     check_failure('-1.0etest', 5, 'E474: Missing exponent: -1.0e')
@@ -129,11 +112,11 @@ describe('json_decode_string()', function()
     check_failure('[1test', 2, 'E474: Unexpected end of input: [1')
   end)
 
-  it('does not overflow with `-`', function()
+  itp('does not overflow with `-`', function()
     check_failure('-0', 1, 'E474: Missing number after minus sign: -')
   end)
 
-  it('does not overflow and crash when running with `"`', function()
+  itp('does not overflow and crash when running with `"`', function()
     local rettv = ffi.new('typval_T', {v_type=decode.VAR_UNKNOWN})
     decode.emsg_silent = 1
     eq(0, decode.json_decode_string(char('"'), 1, rettv))

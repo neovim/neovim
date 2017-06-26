@@ -11,7 +11,7 @@
 #include <assert.h>
 
 #include "nvim/lib/kvec.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/func_attr.h"
 
 /// Type of the stack entry
@@ -34,6 +34,7 @@ typedef enum {
 typedef struct {
   MPConvStackValType type;  ///< Type of the stack entry.
   typval_T *tv;  ///< Currently converted typval_T.
+  int saved_copyID;  ///< copyID item used to have.
   union {
     struct {
       dict_T *dict;    ///< Currently converted dictionary.

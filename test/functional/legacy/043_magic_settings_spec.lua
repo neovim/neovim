@@ -1,9 +1,8 @@
--- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Tests for regexp with various magic settings.
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('regexp with magic settings', function()
   setup(clear)
@@ -21,27 +20,27 @@ describe('regexp with magic settings', function()
       9 foobar
       ]])
 
-    execute('/^1')
-    execute([[/a*b\{2}c\+/e]])
+    feed_command('/^1')
+    feed_command([[/a*b\{2}c\+/e]])
     feed([[x/\Md\*e\{2}f\+/e<cr>]])
     feed('x:set nomagic<cr>')
-    execute([[/g\*h\{2}i\+/e]])
+    feed_command([[/g\*h\{2}i\+/e]])
     feed([[x/\mj*k\{2}l\+/e<cr>]])
     feed([[x/\vm*n{2}o+/e<cr>]])
     feed([[x/\V^aa$<cr>]])
     feed('x:set magic<cr>')
-    execute([[/\v(a)(b)\2\1\1/e]])
+    feed_command([[/\v(a)(b)\2\1\1/e]])
     feed([[x/\V[ab]\(\[xy]\)\1<cr>]])
     feed('x:$<cr>')
-    execute('set undolevels=100')
+    feed_command('set undolevels=100')
     feed('dv?bar?<cr>')
     feed('Yup:<cr>')
-    execute('?^1?,$yank A')
+    feed_command('?^1?,$yank A')
 
     -- Put @a and clean empty line
-    execute('%d')
-    execute('0put a')
-    execute('$d')
+    feed_command('%d')
+    feed_command('0put a')
+    feed_command('$d')
 
     -- Assert buffer contents.
     expect([[

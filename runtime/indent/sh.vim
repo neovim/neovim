@@ -3,9 +3,15 @@
 " Maintainer:          Christian Brabandt <cb@256bit.org>
 " Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
-" Latest Revision:     2016-02-15
+" Latest Revision:     2016-06-27
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
+" Changelog:
+"          20160627: - detect heredocs correctly
+"          20160213: - detect function definition correctly
+"          20160202: - use shiftwidth() function
+"          20151215: - set b:undo_indent variable
+"          20150728: - add foreach detection for zsh
 
 if exists("b:did_indent")
   finish
@@ -102,6 +108,8 @@ function! GetShIndent()
     endif
   elseif s:is_case_break(line)
     let ind -= s:indent_value('case-breaks')
+  elseif s:is_here_doc(line)
+    let ind = 0
   endif
 
   return ind
@@ -160,6 +168,14 @@ function! s:is_case_break(line)
   return a:line =~ '^\s*;[;&]'
 endfunction
 
+function! s:is_here_doc(line)
+    if a:line =~ '^\w\+$'
+	let here_pat = '<<-\?'. s:escape(a:line). '\$'
+	return search(here_pat, 'bnW') > 0
+    endif
+    return 0
+endfunction
+
 function! s:is_case_ended(line)
   return s:is_case_break(a:line) || a:line =~ ';[;&]\s*\%(#.*\)\=$'
 endfunction
@@ -170,6 +186,10 @@ function! s:is_case_empty(line)
   else
     return a:line =~ '^\s*case\>'
   endif
+endfunction
+
+function! s:escape(pattern)
+    return '\V'. escape(a:pattern, '\\')
 endfunction
 
 let &cpo = s:cpo_save

@@ -7,11 +7,8 @@
 "               2001 Apr 26 - Upgraded for new Vim version
 "               2000 Jun  5 - Initial release
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -96,41 +93,31 @@ syn sync maxlines=500
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_lprolog_syntax_inits")
-  if version < 508
-    let did_lprolog_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink lprologComment     Comment
-  HiLink lprologTodo	    Todo
+hi def link lprologComment     Comment
+hi def link lprologTodo	    Todo
 
-  HiLink lprologKeyword     Keyword
-  HiLink lprologSpecial     Special
-  HiLink lprologOperator    Operator
-  HiLink lprologIdentifier  Normal
+hi def link lprologKeyword     Keyword
+hi def link lprologSpecial     Special
+hi def link lprologOperator    Operator
+hi def link lprologIdentifier  Normal
 
-  HiLink lprologInteger     Number
-  HiLink lprologReal	    Number
-  HiLink lprologString	    String
+hi def link lprologInteger     Number
+hi def link lprologReal	    Number
+hi def link lprologString	    String
 
-  HiLink lprologCommentErr  Error
-  HiLink lprologBrackErr    Error
-  HiLink lprologParenErr    Error
+hi def link lprologCommentErr  Error
+hi def link lprologBrackErr    Error
+hi def link lprologParenErr    Error
 
-  HiLink lprologModuleName  Special
-  HiLink lprologTypeName    Identifier
+hi def link lprologModuleName  Special
+hi def link lprologTypeName    Identifier
 
-  HiLink lprologVariable    Keyword
-  HiLink lprologAtom	    Normal
-  HiLink lprologClause	    Type
+hi def link lprologVariable    Keyword
+hi def link lprologAtom	    Normal
+hi def link lprologClause	    Type
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "lprolog"
 

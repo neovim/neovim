@@ -19,12 +19,12 @@
  * not the current buffer.
  */
 typedef struct {
-  buf_T       *save_curbuf;     /* saved curbuf */
-  int use_aucmd_win;            /* using aucmd_win */
-  win_T       *save_curwin;     /* saved curwin */
-  win_T       *new_curwin;      /* new curwin */
-  buf_T       *new_curbuf;      /* new curbuf */
-  char_u      *globaldir;       /* saved value of globaldir */
+  buf_T       *save_curbuf;     ///< saved curbuf
+  int use_aucmd_win;            ///< using aucmd_win
+  win_T       *save_curwin;     ///< saved curwin
+  win_T       *new_curwin;      ///< new curwin
+  bufref_T     new_curbuf;      ///< new curbuf
+  char_u      *globaldir;       ///< saved value of globaldir
 } aco_save_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

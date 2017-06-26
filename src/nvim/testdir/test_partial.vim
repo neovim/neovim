@@ -14,6 +14,14 @@ func MySort(up, one, two)
   return a:one < a:two ? 1 : -1
 endfunc
 
+func MyMap(sub, index, val)
+  return a:val - a:sub
+endfunc
+
+func MyFilter(threshold, index, val)
+  return a:val > a:threshold
+endfunc
+
 func Test_partial_args()
   let Cb = function('MyFunc', ["foo", "bar"])
 
@@ -36,6 +44,16 @@ func Test_partial_args()
   call assert_equal([1, 2, 3], sort([3, 1, 2], Sort))
   let Sort = function('MySort', [0])
   call assert_equal([3, 2, 1], sort([3, 1, 2], Sort))
+
+  let Map = function('MyMap', [2])
+  call assert_equal([-1, 0, 1], map([1, 2, 3], Map))
+  let Map = function('MyMap', [3])
+  call assert_equal([-2, -1, 0], map([1, 2, 3], Map))
+
+  let Filter = function('MyFilter', [1])
+  call assert_equal([2, 3], filter([1, 2, 3], Filter))
+  let Filter = function('MyFilter', [2])
+  call assert_equal([3], filter([1, 2, 3], Filter))
 endfunc
 
 func MyDictFunc(arg1, arg2) dict
@@ -58,6 +76,9 @@ func Test_partial_dict()
   let Cb = function('MyDictFunc', dict)
   call assert_equal("hello/xxx/yyy", Cb("xxx", "yyy"))
   call assert_fails('Cb("fff")', 'E492:')
+
+  let Cb = function('MyDictFunc', dict)
+  call assert_equal({"foo": "hello/foo/1", "bar": "hello/bar/2"}, map({"foo": 1, "bar": 2}, Cb))
 
   let dict = {"tr": function('tr', ['hello', 'h', 'H'])}
   call assert_equal("Hello", dict.tr())

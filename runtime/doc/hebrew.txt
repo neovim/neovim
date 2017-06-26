@@ -1,4 +1,4 @@
-*hebrew.txt*    For Vim version 7.4.  Last change: 2007 Jun 14
+*hebrew.txt*    Nvim
 
 
 	   VIM REFERENCE MANUAL    by Ron Aaron (and Avner Lottem)

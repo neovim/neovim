@@ -1,4 +1,4 @@
-*digraph.txt*   For Vim version 7.4.  Last change: 2014 Jun 19
+*digraph.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -14,9 +14,7 @@ with CTRL-V (see |i_CTRL-V|).
 There is a brief introduction on digraphs in the user manual: |24.9|
 An alternative is using the 'keymap' option.
 
-1. Defining digraphs	|digraphs-define|
-2. Using digraphs	|digraphs-use|
-3. Default digraphs	|digraphs-default|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Defining digraphs					*digraphs-define*

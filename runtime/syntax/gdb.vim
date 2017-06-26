@@ -4,11 +4,8 @@
 " URL:		http://www.fleiner.com/vim/syntax/gdb.vim
 " Last Change:	2012 Oct 05
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -87,27 +84,17 @@ endif
 exec "syn sync ccomment gdbComment minlines=" . gdb_minlines
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_gdb_syn_inits")
-  if version < 508
-    let did_gdb_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink gdbFuncDef	Function
-  HiLink gdbComment	Comment
-  HiLink gdbStatement	Statement
-  HiLink gdbString	String
-  HiLink gdbCharacter	Character
-  HiLink gdbVariable	Identifier
-  HiLink gdbSet		Constant
-  HiLink gdbInfo	Type
-  HiLink gdbDocument	Special
-  HiLink gdbNumber	Number
-  delcommand HiLink
-endif
+" Only when an item doesn't have highlighting yet
+hi def link gdbFuncDef	Function
+hi def link gdbComment	Comment
+hi def link gdbStatement	Statement
+hi def link gdbString	String
+hi def link gdbCharacter	Character
+hi def link gdbVariable	Identifier
+hi def link gdbSet		Constant
+hi def link gdbInfo	Type
+hi def link gdbDocument	Special
+hi def link gdbNumber	Number
 
 let b:current_syntax = "gdb"
 

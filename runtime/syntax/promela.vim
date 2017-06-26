@@ -5,11 +5,8 @@
 " Last Change:		Thu Aug 7 21:22:48 CEST 2008
 " Version:			0.5
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 

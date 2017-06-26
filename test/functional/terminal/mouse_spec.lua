@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
-local clear = helpers.clear
+local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
 local feed, nvim = helpers.feed, helpers.nvim
 local feed_data = thelpers.feed_data
 
@@ -38,31 +38,17 @@ describe('terminal mouse', function()
   end)
 
   describe('when the terminal has focus', function()
-    it('will exit focus when scrolled', function()
-      feed('<MouseDown><0,0>')
-      screen:expect([[
-        line23                                            |
-        line24                                            |
-        line25                                            |
-        line26                                            |
-        line27                                            |
-        ^line28                                            |
-                                                          |
-      ]])
+    it('will exit focus on mouse-scroll', function()
+      eq('t', eval('mode()'))
+      feed('<ScrollWheelUp><0,0>')
+      eq('n', eval('mode()'))
     end)
 
-    it('will exit focus after <C-\\>, then scrolled', function()
+    it('will exit focus on <C-\\> + mouse-scroll', function()
+      eq('t', eval('mode()'))
       feed('<C-\\>')
-      feed('<MouseDown><0,0>')
-      screen:expect([[
-        line23                                            |
-        line24                                            |
-        line25                                            |
-        line26                                            |
-        line27                                            |
-        ^line28                                            |
-                                                          |
-      ]])
+      feed('<ScrollWheelUp><0,0>')
+      eq('n', eval('mode()'))
     end)
 
     describe('with mouse events enabled by the program', function()
@@ -94,7 +80,7 @@ describe('terminal mouse', function()
       end)
 
       it('will forward mouse scroll to the program', function()
-        feed('<MouseDown><0,0>')
+        feed('<ScrollWheelUp><0,0>')
         screen:expect([[
           line27                                            |
           line28                                            |
@@ -117,7 +103,7 @@ describe('terminal mouse', function()
           rows: 5, cols: 25        |rows: 5, cols: 25       |
           {2:^ }                        |{2: }                       |
           ==========                ==========              |
-                                                            |
+          :vsp                                              |
         ]])
         feed(':enew | set number<cr>')
         screen:expect([[
@@ -164,7 +150,7 @@ describe('terminal mouse', function()
       end)
 
       it('wont lose focus if another window is scrolled', function()
-        feed('<MouseDown><0,0><MouseDown><0,0>')
+        feed('<ScrollWheelUp><0,0><ScrollWheelUp><0,0>')
         screen:expect([[
           {7: 21 }line                 |line30                  |
           {7: 22 }line                 |rows: 5, cols: 25       |
@@ -174,7 +160,7 @@ describe('terminal mouse', function()
           ==========                ==========              |
           {3:-- TERMINAL --}                                    |
         ]])
-        feed('<S-MouseUp><0,0>')
+        feed('<S-ScrollWheelDown><0,0>')
         screen:expect([[
           {7: 26 }line                 |line30                  |
           {7: 27 }line                 |rows: 5, cols: 25       |

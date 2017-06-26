@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file farsi.c
 ///
 /// Functions for Farsi language
@@ -131,7 +134,7 @@ static char_u toF_Xor_X_(int c)
 /// @param c The character to convert.
 ///
 /// @return Character converted to the Farsi capital leter.
-char_u toF_TyA(char_u c)
+static char_u toF_TyA(char_u c)
 {
   char_u tempc;
 
@@ -321,7 +324,7 @@ static void put_curr_and_l_to_X(char_u c)
   }
 
   if ((curwin->w_cursor.col < (colnr_T)STRLEN(get_cursor_line_ptr()))) {
-    if ((p_ri && curwin->w_cursor.col) || !p_ri) {
+    if (!p_ri || curwin->w_cursor.col) {
       if (p_ri) {
         dec_cursor();
       } else {
@@ -1557,7 +1560,7 @@ static char_u toF_ending(char_u c)
 }
 
 /// Convert the Farsi 3342 standard into Farsi VIM.
-void conv_to_pvim(void)
+static void conv_to_pvim(void)
 {
   char_u *ptr;
   int lnum, llen, i;
@@ -1588,23 +1591,23 @@ void conv_to_pvim(void)
   }
 
   // Following lines contains Farsi encoded character.
-  do_cmdline_cmd("%s/\202\231/\232/g");
-  do_cmdline_cmd("%s/\201\231/\370\334/g");
+  do_cmdline_cmd("%s/\202\231/\232/ge");
+  do_cmdline_cmd("%s/\201\231/\370\334/ge");
 
   // Assume the screen has been messed up: clear it and redraw.
   redraw_later(CLEAR);
-  MSG_ATTR(farsi_text_1, hl_attr(HLF_S));
+  MSG_ATTR((const char *)farsi_text_1, hl_attr(HLF_S));
 }
 
 /// Convert the Farsi VIM into Farsi 3342 standard.
-void conv_to_pstd(void)
+static void conv_to_pstd(void)
 {
   char_u *ptr;
   int lnum, llen, i;
 
   // Following line contains Farsi encoded character.
-  do_cmdline_cmd("%s/\232/\202\231/g");
-  for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
+  do_cmdline_cmd("%s/\232/\202\231/ge");
+  for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
     ptr = ml_get((linenr_T)lnum);
     llen = (int)STRLEN(ptr);
     for (i = 0; i < llen; i++) {
@@ -1614,7 +1617,7 @@ void conv_to_pstd(void)
 
   // Assume the screen has been messed up: clear it and redraw.
   redraw_later(CLEAR);
-  MSG_ATTR(farsi_text_2, hl_attr(HLF_S));
+  msg_attr((const char *)farsi_text_2, hl_attr(HLF_S));
 }
 
 /// left-right swap the characters in buf[len].
@@ -2036,34 +2039,31 @@ bool F_ischar(int c)
   return c >= TEE_ && c <= YE_;
 }
 
-void farsi_fkey(cmdarg_T *cap)
+void farsi_f8(cmdarg_T *cap FUNC_ATTR_UNUSED)
 {
-  int c = cap->cmdchar;
-
-  if (c == K_F8) {
-    if (p_altkeymap) {
-      if (curwin->w_farsi & W_R_L) {
-        p_fkmap = 0;
-        do_cmdline_cmd("set norl");
-        MSG("");
-      } else {
-        p_fkmap = 1;
-        do_cmdline_cmd("set rl");
-        MSG("");
-      }
-
-      curwin->w_farsi = curwin->w_farsi ^ W_R_L;
+  if (p_altkeymap) {
+    if (curwin->w_farsi & W_R_L) {
+      p_fkmap = 0;
+      do_cmdline_cmd("set norl");
+      MSG("");
+    } else {
+      p_fkmap = 1;
+      do_cmdline_cmd("set rl");
+      MSG("");
     }
-  }
 
-  if (c == K_F9) {
-    if (p_altkeymap && curwin->w_p_rl) {
-      curwin->w_farsi = curwin->w_farsi ^ W_CONV;
-      if (curwin->w_farsi & W_CONV) {
-        conv_to_pvim();
-      } else {
-        conv_to_pstd();
-      }
+    curwin->w_farsi = curwin->w_farsi ^ W_R_L;
+  }
+}
+
+void farsi_f9(cmdarg_T *cap FUNC_ATTR_UNUSED)
+{
+  if (p_altkeymap && curwin->w_p_rl) {
+    curwin->w_farsi = curwin->w_farsi ^ W_CONV;
+    if (curwin->w_farsi & W_CONV) {
+      conv_to_pvim();
+    } else {
+      conv_to_pstd();
     }
   }
 }

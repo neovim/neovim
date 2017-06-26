@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jul 07
+*quickfix.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,15 +6,7 @@
 
 This subject is introduced in section |30.1| of the user manual.
 
-1. Using QuickFix commands		|quickfix|
-2. The error window			|quickfix-window|
-3. Using more than one list of errors	|quickfix-error-lists|
-4. Using :make				|:make_makeprg|
-5. Using :grep				|grep|
-6. Selecting a compiler			|compiler-select|
-7. The error format			|error-file-format|
-8. The directory stack			|quickfix-directory-stack|
-9. Specific error file formats		|errorformats|
+                                      Type <M-]> to see the table of contents.
 
 =============================================================================
 1. Using QuickFix commands			*quickfix* *Quickfix* *E42*
@@ -30,10 +22,14 @@ positions in files.  For example, |:vimgrep| finds pattern matches.  You can
 use the positions in a script with the |getqflist()| function.  Thus you can
 do a lot more than the edit/compile/fix cycle!
 
-You should save your compiler's error messages to a file and start vim with
-"vim -q filename".  An easy way to do this is with the |:make| command (see
-below).  The 'errorformat' option should be set to match the error messages
-from your compiler (see |errorformat| below).
+If you have the error messages in a file you can start Vim with: >
+	vim -q filename
+
+From inside Vim an easy way to run a command and handle the output is with the
+|:make| command (see below).
+
+The 'errorformat' option should be set to match the error messages from your
+compiler (see |errorformat| below).
 
 						*location-list* *E776*
 A location list is similar to a quickfix list and contains a list of positions
@@ -42,8 +38,8 @@ have a separate location list.  A location list can be associated with only
 one window.  The location list is independent of the quickfix list.
 
 When a window with a location list is split, the new window gets a copy of the
-location list.  When there are no references to a location list, the location
-list is destroyed.
+location list.  When there are no longer any references to a location list,
+the location list is destroyed.
 
 The following quickfix commands can be used.  The location list commands are
 similar to the quickfix commands, replacing the 'c' prefix in the quickfix
@@ -521,7 +517,7 @@ lists.  They set one of the existing error lists as the current one.
 			list, an error message is given.
 
 						*:lolder* *:lol*
-:lol[der] [count]	Same as ":colder", except use the location list for
+:lol[der] [count]	Same as `:colder`, except use the location list for
 			the current window instead of the quickfix list.
 
 						*:cnewer* *:cnew* *E381*
@@ -530,8 +526,19 @@ lists.  They set one of the existing error lists as the current one.
 			list, an error message is given.
 
 						*:lnewer* *:lnew*
-:lnew[er] [count]	Same as ":cnewer", except use the location list for
+:lnew[er] [count]	Same as `:cnewer`, except use the location list for
 			the current window instead of the quickfix list.
+
+						*:chistory* *:chi*
+:chi[story]		Show the list of error lists.  The current list is
+			marked with ">".  The output looks like:
+				  error list 1 of 3; 43 errors ~
+				> error list 2 of 3; 0 errors ~
+				  error list 3 of 3; 15 errors ~
+
+						*:lhistory* *:lhi*
+:lhi[story]		Show the list of location lists, otherwise like
+			`:chistory`.
 
 When adding a new error list, it becomes the current list.
 
@@ -857,7 +864,7 @@ need to write down a "todo" list.
 
 
 The Vim plugins in the "compiler" directory will set options to use the
-selected compiler.  For ":compiler" local options are set, for ":compiler!"
+selected compiler.  For `:compiler` local options are set, for `:compiler!`
 global options.
 							*current_compiler*
 To support older Vim versions, the plugins always use "current_compiler" and

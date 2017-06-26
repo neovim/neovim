@@ -181,6 +181,7 @@ end
 -- expected:    Expected screen state (string). Each line represents a screen
 --              row. Last character of each row (typically "|") is stripped.
 --              Common indentation is stripped.
+--              Used as `condition` if NOT a string; must be the ONLY arg then.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
 --              characters having the same attributes will be substituted by
@@ -191,18 +192,24 @@ end
 -- any:         true: Succeed if `expected` matches ANY screen line(s).
 --              false (default): `expected` must match screen exactly.
 function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
-  -- remove the last line and dedent
-  expected = dedent(expected:gsub('\n[ ]+$', ''))
   local expected_rows = {}
-  for row in expected:gmatch('[^\n]+') do
-    -- the last character should be the screen delimiter
-    row = row:sub(1, #row - 1)
-    table.insert(expected_rows, row)
-  end
-  if not any then
-    assert(self._height == #expected_rows,
-      "Expected screen state's row count(" .. #expected_rows
-      .. ') differs from configured height(' .. self._height .. ') of Screen.')
+  if type(expected) ~= "string" then
+    assert(not (attr_ids or attr_ignore or condition or any))
+    condition = expected
+    expected = nil
+  else
+    -- Remove the last line and dedent. Note that gsub returns more then one
+    -- value.
+    expected = dedent(expected:gsub('\n[ ]+$', ''), 0)
+    for row in expected:gmatch('[^\n]+') do
+      row = row:sub(1, #row - 1) -- Last char must be the screen delimiter.
+      table.insert(expected_rows, row)
+    end
+    if not any then
+      assert(self._height == #expected_rows,
+        "Expected screen state's row count(" .. #expected_rows
+        .. ') differs from configured height(' .. self._height .. ') of Screen.')
+    end
   end
   local ids = attr_ids or self._default_attr_ids
   local ignore = attr_ignore or self._default_attr_ignore
@@ -218,7 +225,9 @@ function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
       actual_rows[i] = self:_row_repr(self._rows[i], ids, ignore)
     end
 
-    if any then
+    if expected == nil then
+      return
+    elseif any then
       -- Search for `expected` anywhere in the screen lines.
       local actual_screen_str = table.concat(actual_rows, '\n')
       if nil == string.find(actual_screen_str, expected) then
@@ -276,18 +285,13 @@ function Screen:wait(check, timeout)
 
   if failure_after_success then
     print([[
-Warning: Screen changes have been received after the expected state was seen.
-This is probably due to an indeterminism in the test. Try adding
-`wait()` (or even a separate `screen:expect(...)`) at a point of possible
-indeterminism, typically in between a `feed()` or `execute()` which is non-
-synchronous, and a synchronous api call.
 
-Note that sometimes a `wait` can trigger redraws and consequently generate more
-indeterminism. If adding `wait` calls seems to increase the frequency of these
-messages, try removing every `wait` call in the test.
-
-If everything else fails, use Screen:redraw_debug to help investigate what is
-  causing the problem.
+Warning: Screen changes were received after the expected state. This indicates
+indeterminism in the test. Try adding wait() (or screen:expect(...)) between
+asynchronous (feed(), nvim_input()) and synchronous API calls.
+  - Use Screen:redraw_debug() to investigate the problem.
+  - wait() can trigger redraws and consequently generate more indeterminism.
+    In that case try removing every wait().
       ]])
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
@@ -309,10 +313,13 @@ function Screen:_redraw(updates)
     -- print(require('inspect')(update))
     local method = update[1]
     for i = 2, #update do
-      local handler = self['_handle_'..method]
+      local handler_name = '_handle_'..method
+      local handler = self[handler_name]
       if handler ~= nil then
         handler(self, unpack(update[i]))
       else
+        assert(self._on_event,
+          "Add Screen:"..handler_name.." or call Screen:set_on_event_handler")
         self._on_event(method, update[i])
       end
     end
@@ -341,6 +348,11 @@ function Screen:_handle_resize(width, height)
   self._scroll_region = {
     top = 1, bot = height, left = 1, right = width
   }
+end
+
+function Screen:_handle_mode_info_set(cursor_style_enabled, mode_info)
+  self._cursor_style_enabled = cursor_style_enabled
+  self._mode_info = mode_info
 end
 
 function Screen:_handle_clear()
@@ -374,9 +386,8 @@ function Screen:_handle_mouse_off()
   self._mouse_enabled = false
 end
 
-function Screen:_handle_mode_change(mode)
-  assert(mode == 'insert' or mode == 'replace'
-        or mode == 'normal' or mode == 'cmdline')
+function Screen:_handle_mode_change(mode, idx)
+  assert(mode == self._mode_info[idx+1].name)
   self.mode = mode
 end
 

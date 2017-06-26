@@ -2,8 +2,9 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local wait = helpers.wait
-local eval, execute, source = helpers.eval, helpers.execute, helpers.source
+local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.source
 local eq, neq = helpers.eq, helpers.neq
+local write_file = helpers.write_file
 
 if helpers.pending_win32(pending) then return end
 
@@ -12,7 +13,7 @@ describe('terminal buffer', function()
 
   before_each(function()
     clear()
-    execute('set modifiable swapfile undolevels=20')
+    feed_command('set modifiable swapfile undolevels=20')
     wait()
     screen = thelpers.screen_setup()
   end)
@@ -50,11 +51,11 @@ describe('terminal buffer', function()
       feed('<c-\\><c-n>')
       screen:expect([[
         tty ready                                         |
-        {2: }                                                 |
+        {2:^ }                                                 |
                                                           |
                                                           |
                                                           |
-        ^                                                  |
+                                                          |
                                                           |
       ]])
     end)
@@ -74,18 +75,18 @@ describe('terminal buffer', function()
     feed('<c-\\><c-n>dd')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
+                                                        |
       {8:E21: Cannot make changes, 'modifiable' is off}     |
     ]])
   end)
 
   it('sends data to the terminal when the "put" operator is used', function()
     feed('<c-\\><c-n>gg"ayj')
-    execute('let @a = "appended " . @a')
+    feed_command('let @a = "appended " . @a')
     feed('"ap"ap')
     screen:expect([[
       ^tty ready                                         |
@@ -111,8 +112,8 @@ describe('terminal buffer', function()
 
   it('sends data to the terminal when the ":put" command is used', function()
     feed('<c-\\><c-n>gg"ayj')
-    execute('let @a = "appended " . @a')
-    execute('put a')
+    feed_command('let @a = "appended " . @a')
+    feed_command('put a')
     screen:expect([[
       ^tty ready                                         |
       appended tty ready                                |
@@ -123,7 +124,7 @@ describe('terminal buffer', function()
       :put a                                            |
     ]])
     -- line argument is only used to move the cursor
-    execute('6put a')
+    feed_command('6put a')
     screen:expect([[
       tty ready                                         |
       appended tty ready                                |
@@ -146,7 +147,7 @@ describe('terminal buffer', function()
       {4:~                                                 }|
       :bd!                                              |
     ]])
-    execute('bnext')
+    feed_command('bnext')
     screen:expect([[
       ^                                                  |
       {4:~                                                 }|
@@ -161,7 +162,7 @@ describe('terminal buffer', function()
   it('handles loss of focus gracefully', function()
     -- Change the statusline to avoid printing the file name, which varies.
     nvim('set_option', 'statusline', '==========')
-    execute('set laststatus=0')
+    feed_command('set laststatus=0')
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
@@ -190,20 +191,38 @@ describe('terminal buffer', function()
     ]])
 
     neq(tbuf, eval('bufnr("%")'))
-    execute('quit!')  -- Should exit the new window, not the terminal.
+    feed_command('quit!')  -- Should exit the new window, not the terminal.
     eq(tbuf, eval('bufnr("%")'))
 
-    execute('set laststatus=1')  -- Restore laststatus to the default.
+    feed_command('set laststatus=1')  -- Restore laststatus to the default.
   end)
 
   it('term_close() use-after-free #4393', function()
-    if eval("executable('yes')") == 0 then
-      pending('missing "yes" command')
-      return
-    end
-    execute('terminal yes')
+    feed_command('terminal yes')
     feed([[<C-\><C-n>]])
-    execute('bdelete!')
+    feed_command('bdelete!')
   end)
 end)
 
+describe('No heap-buffer-overflow when using', function()
+
+  local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
+
+  before_each(function()
+    write_file(testfilename, "aaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+  end)
+
+  after_each(function()
+    os.remove(testfilename)
+  end)
+
+  it('termopen(echo) #3161', function()
+    feed_command('edit ' .. testfilename)
+    -- Move cursor away from the beginning of the line
+    feed('$')
+    -- Let termopen() modify the buffer
+    feed_command('call termopen("echo")')
+    wait()
+    feed_command('bdelete!')
+  end)
+end)

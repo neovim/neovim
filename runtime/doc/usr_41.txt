@@ -1,4 +1,4 @@
-*usr_41.txt*	For Vim version 7.4.  Last change: 2016 Aug 07
+*usr_41.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -611,6 +611,7 @@ String manipulation:					*string-functions*
 	byteidxcomp()		like byteidx() but count composing characters
 	repeat()		repeat a string multiple times
 	eval()			evaluate a string expression
+	execute()		execute an Ex command and get the output
 
 List manipulation:					*list-functions*
 	get()			get an item without error for wrong index
@@ -944,12 +945,15 @@ Various:					*various-functions*
 
 	shiftwidth()		effective value of 'shiftwidth'
 
+	wordcount()		get byte/word/char count of buffer
+
 	taglist()		get list of matching tags
 	tagfiles()		get a list of tags files
 
+	luaeval()		evaluate Lua expression
 	py3eval()		evaluate Python expression (|+python3|)
 	pyeval()		evaluate Python expression (|+python|)
-	wordcount()		get byte/word/char count of buffer
+	pyxeval()		evaluate |python_x| expression
 
 ==============================================================================
 *41.7*	Defining a function

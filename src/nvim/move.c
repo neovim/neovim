@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * move.c: Functions for moving the cursor and scrolling text.
  *
@@ -1878,8 +1881,10 @@ int onepage(int dir, long count)
   }
   foldAdjustCursor();
   cursor_correct();
-  if (retval == OK)
+  check_cursor_col();
+  if (retval == OK) {
     beginline(BL_SOL | BL_FIX);
+  }
   curwin->w_valid &= ~(VALID_WCOL|VALID_WROW|VALID_VIRTCOL);
 
   /*
@@ -2137,7 +2142,8 @@ void do_check_cursorbind(void)
    * loop through the cursorbound windows
    */
   VIsual_select = VIsual_active = 0;
-  for (curwin = firstwin; curwin; curwin = curwin->w_next) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    curwin = wp;
     curbuf = curwin->w_buffer;
     /* skip original window  and windows with 'noscrollbind' */
     if (curwin != old_curwin && curwin->w_p_crb) {

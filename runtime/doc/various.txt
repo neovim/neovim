@@ -1,4 +1,4 @@
-*various.txt*   For Vim version 7.4.  Last change: 2016 Mar 20
+*various.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,8 +6,7 @@
 
 Various commands					*various*
 
-1. Various commands		|various-cmds|
-2. Using Vim like less or more	|less|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Various commands					*various-cmds*
@@ -85,6 +84,8 @@ g8			Print the hex values of the bytes used in the
 			on paper see |:hardcopy|.  In the GUI you can use the
 			File.Print menu entry.
 			See |ex-flags| for [flags].
+			The |:filter| command can be used to only show lines
+			matching a pattern.
 
 :[range]p[rint] {count} [flags]
 			Print {count} lines, starting with [range] (default
@@ -207,24 +208,22 @@ g8			Print the hex values of the bytes used in the
 :sh[ell]		Removed. |vim-differences| {Nvim}
 
 						  *:terminal* *:te*
-:te[rminal][!] {cmd}	Spawns {cmd} using the current value of 'shell' and
-			'shellcmdflag' in a new terminal buffer.  This is
-			equivalent to: >
-
+:te[rminal][!] [{cmd}]	Execute {cmd} with 'shell' in a new |terminal| buffer.
+			Equivalent to: >
 			      :enew
 			      :call termopen('{cmd}')
 			      :startinsert
 <
-			If no {cmd} is given, 'shellcmdflag' will not be sent
-			to |termopen()|.
+			See |termopen()|.
 
-			Like |:enew|, it will fail if the current buffer is
-			modified, but can be forced with "!".  See |termopen()|
-			and |terminal-emulator|.
+			Without {cmd}, start an interactive shell.
 
-			To switch to terminal mode automatically:
->
+			Creating the terminal buffer fails when changes have been
+			made to the current buffer, unless 'hidden' is set.
+
+			To enter |Terminal-mode| automatically: >
 			      autocmd BufEnter term://* startinsert
+			      autocmd BufLeave term://* stopinsert
 <
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
@@ -318,7 +317,6 @@ N  *+comments*		|'comments'| support
 B  *+conceal*		"conceal" support, see |conceal| |:syn-conceal| etc.
 B  *+cscope*		|cscope| support
 m  *+cursorbind*	|'cursorbind'| support
-m  *+cursorshape*	|termcap-cursor-shape| support
 m  *+debug*		Compiled for debugging.
 N  *+dialog_gui*	Support for |:confirm| with GUI dialog.
 N  *+dialog_con*	Support for |:confirm| with console dialog.
@@ -338,6 +336,7 @@ N  *+gettext*		message translations |multi-lang|
 N  *+insert_expand*	|insert_expand| Insert mode completion
 N  *+jumplist*		|jumplist|
 B  *+keymap*		|'keymap'|
+N  *+lambda*		|lambda| and |closure|
 B  *+langmap*		|'langmap'|
 N  *+libcall*		|libcall()|
 N  *+linebreak*		|'linebreak'|, |'breakat'| and |'showbreak'|
@@ -353,6 +352,7 @@ N  *+mouseshape*	|'mouseshape'|
 N  *+multi_byte*	16 and 32 bit characters |multibyte|
    *+multi_byte_ime*	Win32 input method for multibyte chars |multibyte-ime|
 N  *+multi_lang*	non-English language support |multi-lang|
+   *+num64*		64-bit Number support |Number|
 N  *+path_extra*	Up/downwards search in 'path' and 'tags'
 N  *+persistent_undo*	Persistent undo |undo-persistence|
    *+postscript*	|:hardcopy| writes a PostScript file
@@ -373,14 +373,12 @@ N  *+statusline*	Options 'statusline', 'rulerformat' and special
 			formats of 'titlestring' and 'iconstring'
 N  *+syntax*		Syntax highlighting |syntax|
 N  *+tablineat*		'tabline' option recognizing %@Func@ items.
-N  *+tag_binary*	binary searching in tags file |tag-binary-search|
+T  *+tag_binary*	binary searching in tags file |tag-binary-search|
 N  *+tag_old_static*	old method for static tags |tag-old-static|
 m  *+tag_any_white*	any white space allowed in tags file |tag-any-white|
 B  *+termguicolors*	24-bit color in xterm-compatible terminals support
-   *+terminfo*		uses |terminfo| instead of termcap
 N  *+termresponse*	support for |t_RV| and |v:termresponse|
 N  *+textobjects*	|text-objects| selection
-   *+tgetent*		non-Unix only: able to use external termcap
 N  *+timers*		the |timer_start()| function
 N  *+title*		Setting the window 'title' and 'icon'
 N  *+toolbar*		|gui-toolbar|
@@ -416,9 +414,12 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			shown on the screen.  When [!] is included, an
 			existing file is overwritten.  When [!] is omitted,
 			and {file} exists, this command fails.
+
 			Only one ":redir" can be active at a time.  Calls to
 			":redir" will close any active redirection before
-			starting redirection to the new target.
+			starting redirection to the new target.  For recursive
+			use check out |execute()|.
+
 			To stop the messages and commands from being echoed to
 			the screen, put the commands in a function and call it
 			with ":silent call Function()".
@@ -456,11 +457,36 @@ m  *+xpm_w32*		Win32 GUI only: pixmap support |w32-xpm-support|
 			redirection starts, if the variable is removed or
 			locked or the variable type is changed, then further
 			command output messages will cause errors.
+			To get the output of one command the |execute()|
+			function can be used.
 
 :redi[r] =>> {var}	Append messages to an existing variable.  Only string
 			variables can be used.
 
 :redi[r] END		End redirecting messages.
+
+							*:filt* *:filter*
+:filt[er][!] {pat} {command}
+:filt[er][!] /{pat}/ {command}
+			Restrict the output of {command} to lines matching
+			with {pat}.  For example, to list only xml files: >
+				:filter /\.xml$/ oldfiles
+<			If the [!] is given, restrict the output of {command}
+			to lines that do NOT match {pat}.
+
+			{pat} is a Vim search pattern.  Instead of enclosing
+			it in / any non-ID character (see |'isident'|) can be
+			used, so long as it does not appear in {pat}.  Without
+			the enclosing character the pattern cannot include the
+			bar character.
+
+			The pattern is matched against the relevant part of
+			the output, not necessarily the whole line. Only some
+			commands support filtering, try it out to check if it
+			works.
+
+			Only normal messages are filtered, error messages are
+			not.
 
 						*:sil* *:silent* *:silent!*
 :sil[ent][!] {command}	Execute {command} silently.  Normal messages will not

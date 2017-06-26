@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * syntax.c: code for syntax highlighting
  */
@@ -42,34 +45,38 @@
 
 static bool did_syntax_onoff = false;
 
-// Structure that stores information about a highlight group.
-// The ID of a highlight group is also called group ID.  It is the index in
-// the highlight_ga array PLUS ONE.
+/// Structure that stores information about a highlight group.
+/// The ID of a highlight group is also called group ID.  It is the index in
+/// the highlight_ga array PLUS ONE.
 struct hl_group {
-  char_u      *sg_name;         // highlight group name
-  char_u      *sg_name_u;       // uppercase of sg_name
-  int sg_attr;                  // Screen attr
-  int sg_link;                  // link to this highlight group ID
-  int sg_set;                   // combination of SG_* flags
-  scid_T sg_scriptID;           // script in which the group was last set
+  char_u      *sg_name;         ///< highlight group name
+  char_u      *sg_name_u;       ///< uppercase of sg_name
+  int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
+  int sg_link;                  ///< link to this highlight group ID
+  int sg_set;                   ///< combination of flags in \ref SG_SET
+  scid_T sg_scriptID;           ///< script in which the group was last set
   // for terminal UIs
-  int sg_cterm;                 // "cterm=" highlighting attr
-  int sg_cterm_fg;              // terminal fg color number + 1
-  int sg_cterm_bg;              // terminal bg color number + 1
-  int sg_cterm_bold;            // bold attr was set for light color
+  int sg_cterm;                 ///< "cterm=" highlighting attr
+  int sg_cterm_fg;              ///< terminal fg color number + 1
+  int sg_cterm_bg;              ///< terminal bg color number + 1
+  int sg_cterm_bold;            ///< bold attr was set for light color
   // for RGB UIs
-  int sg_gui;                   // "gui=" highlighting attributes
-  RgbValue sg_rgb_fg;           // RGB foreground color
-  RgbValue sg_rgb_bg;           // RGB background color
-  RgbValue sg_rgb_sp;           // RGB special color
-  uint8_t *sg_rgb_fg_name;      // RGB foreground color name
-  uint8_t *sg_rgb_bg_name;      // RGB background color name
-  uint8_t *sg_rgb_sp_name;      // RGB special color name
+  int sg_gui;                   ///< "gui=" highlighting attributes
+                                ///< (combination of \ref HL_ATTRIBUTES)
+  RgbValue sg_rgb_fg;           ///< RGB foreground color
+  RgbValue sg_rgb_bg;           ///< RGB background color
+  RgbValue sg_rgb_sp;           ///< RGB special color
+  uint8_t *sg_rgb_fg_name;      ///< RGB foreground color name
+  uint8_t *sg_rgb_bg_name;      ///< RGB background color name
+  uint8_t *sg_rgb_sp_name;      ///< RGB special color name
 };
 
+/// \addtogroup SG_SET
+/// @{
 #define SG_CTERM        2       // cterm has been set
 #define SG_GUI          4       // gui has been set
 #define SG_LINK         8       // link has been set
+/// @}
 
 // highlight groups for 'highlight' option
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
@@ -301,6 +308,8 @@ static keyentry_T dumkey;
 #define KE2HIKEY(kp)  ((kp)->keyword)
 #define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char_u *)&dumkey)))
 #define HI2KE(hi)      HIKEY2KE((hi)->hi_key)
+
+// -V:HI2KE:782
 
 /*
  * To reduce the time spent in keepend(), remember at which level in the state
@@ -1406,14 +1415,14 @@ static int syn_stack_equal(synstate_T *sp)
         /* If the pointer is different it can still be the
          * same text.  Compare the strings, ignore case when
          * the start item has the sp_ic flag set. */
-        if (bsx->matches[j] == NULL
-            || six->matches[j] == NULL)
+        if (bsx->matches[j] == NULL || six->matches[j] == NULL) {
           break;
-        if ((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic
-            ? mb_stricmp(bsx->matches[j],
-                six->matches[j]) != 0
-            : STRCMP(bsx->matches[j], six->matches[j]) != 0)
+        }
+        if (mb_strcmp_ic((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic,
+                         (const char *)bsx->matches[j],
+                         (const char *)six->matches[j]) != 0) {
           break;
+        }
       }
     }
     if (j != NSUBEXP)
@@ -3259,9 +3268,10 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
       syntax_sync_clear();
     else {
       syntax_clear(curwin->w_s);
-      if (curwin->w_s == &curwin->w_buffer->b_s)
-        do_unlet((char_u *)"b:current_syntax", TRUE);
-      do_unlet((char_u *)"w:current_syntax", TRUE);
+      if (curwin->w_s == &curwin->w_buffer->b_s) {
+        do_unlet(S_LEN("b:current_syntax"), true);
+      }
+      do_unlet(S_LEN("w:current_syntax"), true);
     }
   } else {
     /*
@@ -3337,7 +3347,7 @@ static void syn_cmd_enable(exarg_T *eap, int syncing)
 {
   set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"enable");
   syn_cmd_onoff(eap, "syntax");
-  do_unlet((char_u *)"g:syntax_cmd", TRUE);
+  do_unlet(S_LEN("g:syntax_cmd"), true);
 }
 
 /*
@@ -3350,7 +3360,7 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
   if (!eap->skip) {
     set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"reset");
     do_cmdline_cmd("runtime! syntax/syncolor.vim");
-    do_unlet((char_u *)"g:syntax_cmd", TRUE);
+    do_unlet(S_LEN("g:syntax_cmd"), true);
   }
 }
 
@@ -3576,22 +3586,24 @@ syn_list_one (
     }
     syn_list_flags(namelist1, spp->sp_flags, attr);
 
-    if (spp->sp_cont_list != NULL)
-      put_id_list((char_u *)"contains", spp->sp_cont_list, attr);
+    if (spp->sp_cont_list != NULL) {
+      put_id_list("contains", spp->sp_cont_list, attr);
+    }
 
-    if (spp->sp_syn.cont_in_list != NULL)
-      put_id_list((char_u *)"containedin",
-          spp->sp_syn.cont_in_list, attr);
+    if (spp->sp_syn.cont_in_list != NULL) {
+      put_id_list("containedin", spp->sp_syn.cont_in_list, attr);
+    }
 
     if (spp->sp_next_list != NULL) {
-      put_id_list((char_u *)"nextgroup", spp->sp_next_list, attr);
+      put_id_list("nextgroup", spp->sp_next_list, attr);
       syn_list_flags(namelist2, spp->sp_flags, attr);
     }
     if (spp->sp_flags & (HL_SYNC_HERE|HL_SYNC_THERE)) {
-      if (spp->sp_flags & HL_SYNC_HERE)
-        msg_puts_attr((char_u *)"grouphere", attr);
-      else
-        msg_puts_attr((char_u *)"groupthere", attr);
+      if (spp->sp_flags & HL_SYNC_HERE) {
+        msg_puts_attr("grouphere", attr);
+      } else {
+        msg_puts_attr("groupthere", attr);
+      }
       msg_putchar(' ');
       if (spp->sp_sync_idx >= 0)
         msg_outtrans(HL_TABLE()[SYN_ITEMS(curwin->w_s)
@@ -3605,7 +3617,7 @@ syn_list_one (
   /* list the link, if there is one */
   if (HL_TABLE()[id - 1].sg_link && (did_header || link_only) && !got_int) {
     (void)syn_list_header(did_header, 999, id);
-    msg_puts_attr((char_u *)"links to", attr);
+    msg_puts_attr("links to", attr);
     msg_putchar(' ');
     msg_outtrans(HL_TABLE()[HL_TABLE()[id - 1].sg_link - 1].sg_name);
   }
@@ -3617,7 +3629,7 @@ static void syn_list_flags(struct name_list *nlist, int flags, int attr)
 
   for (i = 0; nlist[i].flag != 0; ++i)
     if (flags & nlist[i].flag) {
-      msg_puts_attr((char_u *)nlist[i].name, attr);
+      msg_puts_attr(nlist[i].name, attr);
       msg_putchar(' ');
     }
 }
@@ -3640,15 +3652,16 @@ static void syn_list_cluster(int id)
 
   msg_advance(endcol);
   if (SYN_CLSTR(curwin->w_s)[id].scl_list != NULL) {
-    put_id_list((char_u *)"cluster", SYN_CLSTR(curwin->w_s)[id].scl_list,
-        hl_attr(HLF_D));
+    put_id_list("cluster", SYN_CLSTR(curwin->w_s)[id].scl_list, hl_attr(HLF_D));
   } else {
-    msg_puts_attr((char_u *)"cluster", hl_attr(HLF_D));
-    msg_puts((char_u *)"=NONE");
+    msg_puts_attr("cluster", hl_attr(HLF_D));
+    msg_puts("=NONE");
   }
 }
 
-static void put_id_list(char_u *name, short *list, int attr)
+static void put_id_list(const char *name,
+                        short *list,  // NOLINT(runtime/int)
+                        int attr)
 {
   short               *p;
 
@@ -3656,14 +3669,15 @@ static void put_id_list(char_u *name, short *list, int attr)
   msg_putchar('=');
   for (p = list; *p; ++p) {
     if (*p >= SYNID_ALLBUT && *p < SYNID_TOP) {
-      if (p[1])
-        MSG_PUTS("ALLBUT");
-      else
-        MSG_PUTS("ALL");
+      if (p[1]) {
+        msg_puts("ALLBUT");
+      } else {
+        msg_puts("ALL");
+      }
     } else if (*p >= SYNID_TOP && *p < SYNID_CONTAINED)   {
-      MSG_PUTS("TOP");
+      msg_puts("TOP");
     } else if (*p >= SYNID_CONTAINED && *p < SYNID_CLUSTER)   {
-      MSG_PUTS("CONTAINED");
+      msg_puts("CONTAINED");
     } else if (*p >= SYNID_CLUSTER)   {
       short scl_id = *p - SYNID_CLUSTER;
 
@@ -3688,7 +3702,7 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
   /* May have to write "matchgroup=group" */
   if (last_matchgroup != spp->sp_syn_match_id) {
     last_matchgroup = spp->sp_syn_match_id;
-    msg_puts_attr((char_u *)"matchgroup", attr);
+    msg_puts_attr("matchgroup", attr);
     msg_putchar('=');
     if (last_matchgroup == 0)
       msg_outtrans((char_u *)"NONE");
@@ -3697,8 +3711,8 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
     msg_putchar(' ');
   }
 
-  /* output the name of the pattern and an '=' or ' ' */
-  msg_puts_attr((char_u *)s, attr);
+  // Output the name of the pattern and an '=' or ' '.
+  msg_puts_attr(s, attr);
   msg_putchar(c);
 
   /* output the pattern, in between a char that is not in the pattern */
@@ -3718,9 +3732,10 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
     if (!(spp->sp_off_flags & (mask + (mask << SPO_COUNT)))) {
       continue;
     }
-    if (!first)
-      msg_putchar(',');               /* separate with commas */
-    msg_puts((char_u *)spo_name_tab[i]);
+    if (!first) {
+      msg_putchar(',');  // Separate with commas.
+    }
+    msg_puts(spo_name_tab[i]);
     n = spp->sp_offsets[i];
     if (i != SPO_LC_OFF) {
       if (spp->sp_off_flags & mask)
@@ -3792,32 +3807,31 @@ syn_list_keywords (
         }
         did_header = TRUE;
         if (prev_contained != (kp->flags & HL_CONTAINED)) {
-          msg_puts_attr((char_u *)"contained", attr);
+          msg_puts_attr("contained", attr);
           msg_putchar(' ');
           prev_contained = (kp->flags & HL_CONTAINED);
         }
         if (kp->k_syn.cont_in_list != prev_cont_in_list) {
-          put_id_list((char_u *)"containedin",
-              kp->k_syn.cont_in_list, attr);
+          put_id_list("containedin", kp->k_syn.cont_in_list, attr);
           msg_putchar(' ');
           prev_cont_in_list = kp->k_syn.cont_in_list;
         }
         if (kp->next_list != prev_next_list) {
-          put_id_list((char_u *)"nextgroup", kp->next_list, attr);
+          put_id_list("nextgroup", kp->next_list, attr);
           msg_putchar(' ');
           prev_next_list = kp->next_list;
           if (kp->flags & HL_SKIPNL) {
-            msg_puts_attr((char_u *)"skipnl", attr);
+            msg_puts_attr("skipnl", attr);
             msg_putchar(' ');
             prev_skipnl = (kp->flags & HL_SKIPNL);
           }
           if (kp->flags & HL_SKIPWHITE) {
-            msg_puts_attr((char_u *)"skipwhite", attr);
+            msg_puts_attr("skipwhite", attr);
             msg_putchar(' ');
             prev_skipwhite = (kp->flags & HL_SKIPWHITE);
           }
           if (kp->flags & HL_SKIPEMPTY) {
-            msg_puts_attr((char_u *)"skipempty", attr);
+            msg_puts_attr("skipempty", attr);
             msg_putchar(' ');
             prev_skipempty = (kp->flags & HL_SKIPEMPTY);
           }
@@ -3929,7 +3943,8 @@ static void add_keyword(char_u *name,
   hash_T hash = hash_hash(kp->keyword);
   hashtab_T *ht = (curwin->w_s->b_syn_ic) ? &curwin->w_s->b_keywtab_ic
                                           : &curwin->w_s->b_keywtab;
-  hashitem_T *hi = hash_lookup(ht, kp->keyword, hash);
+  hashitem_T *hi = hash_lookup(ht, (const char *)kp->keyword,
+                               STRLEN(kp->keyword), hash);
 
   // even though it looks like only the kp->keyword member is
   // being used here, vim uses some pointer trickery to get the orignal
@@ -4236,83 +4251,81 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
 
   if (rest != NULL) {
     syn_id = syn_check_group(arg, (int)(group_name_end - arg));
-    if (syn_id != 0)
-      /* allocate a buffer, for removing backslashes in the keyword */
+    if (syn_id != 0) {
+      // Allocate a buffer, for removing backslashes in the keyword.
       keyword_copy = xmalloc(STRLEN(rest) + 1);
-    syn_opt_arg.flags = 0;
-    syn_opt_arg.keyword = TRUE;
-    syn_opt_arg.sync_idx = NULL;
-    syn_opt_arg.has_cont_list = FALSE;
-    syn_opt_arg.cont_in_list = NULL;
-    syn_opt_arg.next_list = NULL;
-
-    /*
-     * The options given apply to ALL keywords, so all options must be
-     * found before keywords can be created.
-     * 1: collect the options and copy the keywords to keyword_copy.
-     */
-    cnt = 0;
-    p = keyword_copy;
-    for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
-      rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
-      if (rest == NULL || ends_excmd(*rest))
-        break;
-      /* Copy the keyword, removing backslashes, and add a NUL. */
-      while (*rest != NUL && !ascii_iswhite(*rest)) {
-        if (*rest == '\\' && rest[1] != NUL)
-          ++rest;
-        *p++ = *rest++;
-      }
-      *p++ = NUL;
-      ++cnt;
     }
+    if (keyword_copy != NULL) {
+      syn_opt_arg.flags = 0;
+      syn_opt_arg.keyword = true;
+      syn_opt_arg.sync_idx = NULL;
+      syn_opt_arg.has_cont_list = false;
+      syn_opt_arg.cont_in_list = NULL;
+      syn_opt_arg.next_list = NULL;
 
-    if (!eap->skip) {
-      /* Adjust flags for use of ":syn include". */
-      syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
-
-      /*
-       * 2: Add an entry for each keyword.
-       */
-      for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
-        for (p = vim_strchr(kw, '[');; ) {
-          if (p != NULL)
-            *p = NUL;
-          add_keyword(kw, syn_id, syn_opt_arg.flags,
-              syn_opt_arg.cont_in_list,
-              syn_opt_arg.next_list, conceal_char);
-          if (p == NULL)
-            break;
-          if (p[1] == NUL) {
-            EMSG2(_("E789: Missing ']': %s"), kw);
-            goto error;
+      // The options given apply to ALL keywords, so all options must be
+      // found before keywords can be created.
+      // 1: collect the options and copy the keywords to keyword_copy.
+      cnt = 0;
+      p = keyword_copy;
+      for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
+        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+        if (rest == NULL || ends_excmd(*rest)) {
+          break;
+        }
+        // Copy the keyword, removing backslashes, and add a NUL.
+        while (*rest != NUL && !ascii_iswhite(*rest)) {
+          if (*rest == '\\' && rest[1] != NUL) {
+            rest++;
           }
-          if (p[1] == ']') {
-            if (p[2] != NUL) {
-              EMSG3(_("E890: trailing char after ']': %s]%s"),
-                    kw, &p[2]);
+          *p++ = *rest++;
+        }
+        *p++ = NUL;
+        cnt++;
+      }
+
+      if (!eap->skip) {
+        // Adjust flags for use of ":syn include".
+        syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
+
+        // 2: Add an entry for each keyword.
+        for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
+          for (p = vim_strchr(kw, '[');; ) {
+            if (p != NULL) {
+              *p = NUL;
+            }
+            add_keyword(kw, syn_id, syn_opt_arg.flags,
+                        syn_opt_arg.cont_in_list,
+                        syn_opt_arg.next_list, conceal_char);
+            if (p == NULL) {
+              break;
+            }
+            if (p[1] == NUL) {
+              emsgf(_("E789: Missing ']': %s"), kw);
               goto error;
             }
-            kw = p + 1;
-            break;   // skip over the "]"
-          }
-          if (has_mbyte) {
-            int l = (*mb_ptr2len)(p + 1);
+            if (p[1] == ']') {
+              if (p[2] != NUL) {
+                emsgf(_("E890: trailing char after ']': %s]%s"),
+                      kw, &p[2]);
+                goto error;
+              }
+              kw = p + 1;
+              break;   // skip over the "]"
+            }
+            const int l = (*mb_ptr2len)(p + 1);
 
             memmove(p, p + 1, l);
             p += l;
-          } else {
-            p[0] = p[1];
-            ++p;
           }
         }
       }
-    }
 
 error:
-    xfree(keyword_copy);
-    xfree(syn_opt_arg.cont_in_list);
-    xfree(syn_opt_arg.next_list);
+      xfree(keyword_copy);
+      xfree(syn_opt_arg.cont_in_list);
+      xfree(syn_opt_arg.next_list);
+    }
   }
 
   if (rest != NULL)
@@ -5516,24 +5529,26 @@ void ex_ownsyntax(exarg_T *eap)
     clear_string_option(&curwin->w_s->b_syn_isk);
   }
 
-  /* save value of b:current_syntax */
-  old_value = get_var_value((char_u *)"b:current_syntax");
-  if (old_value != NULL)
+  // Save value of b:current_syntax.
+  old_value = get_var_value("b:current_syntax");
+  if (old_value != NULL) {
     old_value = vim_strsave(old_value);
+  }
 
   /* Apply the "syntax" autocommand event, this finds and loads the syntax
    * file. */
   apply_autocmds(EVENT_SYNTAX, eap->arg, curbuf->b_fname, TRUE, curbuf);
 
-  /* move value of b:current_syntax to w:current_syntax */
-  new_value = get_var_value((char_u *)"b:current_syntax");
-  if (new_value != NULL)
+  // Move value of b:current_syntax to w:current_syntax.
+  new_value = get_var_value("b:current_syntax");
+  if (new_value != NULL) {
     set_internal_string_var((char_u *)"w:current_syntax", new_value);
+  }
 
-  /* restore value of b:current_syntax */
-  if (old_value == NULL)
-    do_unlet((char_u *)"b:current_syntax", TRUE);
-  else {
+  // Restore value of b:current_syntax.
+  if (old_value == NULL) {
+    do_unlet(S_LEN("b:current_syntax"), true);
+  } else {
     set_internal_string_var((char_u *)"b:current_syntax", old_value);
     xfree(old_value);
   }
@@ -5566,43 +5581,42 @@ void reset_expand_highlight(void)
  * Handle command line completion for :match and :echohl command: Add "None"
  * as highlight group.
  */
-void set_context_in_echohl_cmd(expand_T *xp, char_u *arg)
+void set_context_in_echohl_cmd(expand_T *xp, const char *arg)
 {
   xp->xp_context = EXPAND_HIGHLIGHT;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_none = 1;
 }
 
 /*
  * Handle command line completion for :syntax command.
  */
-void set_context_in_syntax_cmd(expand_T *xp, char_u *arg)
+void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *p;
-
-  /* Default: expand subcommands */
+  // Default: expand subcommands.
   xp->xp_context = EXPAND_SYNTAX;
   expand_what = EXP_SUBCMD;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_link = 0;
   include_default = 0;
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                /* past first word */
-      xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != NUL)
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past first word.
+      xp->xp_pattern = skipwhite((const char_u *)p);
+      if (*skiptowhite(xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-      else if (STRNICMP(arg, "case", p - arg) == 0)
+      } else if (STRNICMP(arg, "case", p - arg) == 0) {
         expand_what = EXP_CASE;
-      else if (  STRNICMP(arg, "keyword", p - arg) == 0
+      } else if (STRNICMP(arg, "keyword", p - arg) == 0
                  || STRNICMP(arg, "region", p - arg) == 0
                  || STRNICMP(arg, "match", p - arg) == 0
-                 || STRNICMP(arg, "list", p - arg) == 0)
+                 || STRNICMP(arg, "list", p - arg) == 0) {
         xp->xp_context = EXPAND_HIGHLIGHT;
-      else
+      } else {
         xp->xp_context = EXPAND_NOTHING;
+      }
     }
   }
 }
@@ -5889,6 +5903,8 @@ static void syntime_report(void)
 static char *highlight_init_both[] =
 {
   "Conceal      ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
+  "Cursor       guibg=fg guifg=bg",
+  "lCursor      guibg=fg guifg=bg",
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
   "ErrorMsg     ctermbg=DarkRed ctermfg=White guibg=Red guifg=White",
   "IncSearch    cterm=reverse gui=reverse",
@@ -5905,6 +5921,7 @@ static char *highlight_init_both[] =
   "default link EndOfBuffer NonText",
   "default link QuickFixLine Search",
   "default link Substitute Search",
+  "default link Whitespace NonText",
   NULL
 };
 
@@ -5988,7 +6005,7 @@ init_highlight (
    * Try finding the color scheme file.  Used when a color file was loaded
    * and 'background' or 't_Co' is changed.
    */
-  char_u *p = get_var_value((char_u *)"g:colors_name");
+  char_u *p = get_var_value("g:colors_name");
   if (p != NULL) {
     // Value of g:colors_name could be freed in load_colors() and make
     // p invalid, so copy it.
@@ -6042,7 +6059,7 @@ init_highlight (
   /*
    * If syntax highlighting is enabled load the highlighting for it.
    */
-  if (get_var_value((char_u *)"g:syntax_on") != NULL) {
+  if (get_var_value("g:syntax_on") != NULL) {
     static int recursive = 0;
 
     if (recursive >= 5) {
@@ -6086,16 +6103,16 @@ int load_colors(char_u *name)
   return retval;
 }
 
-/*
- * Handle the ":highlight .." command.
- * When using ":hi clear" this is called recursively for each group with
- * "forceit" and "init" both TRUE.
- */
-void 
-do_highlight (
+
+/// Handle the ":highlight .." command.
+/// When using ":hi clear" this is called recursively for each group with
+/// "forceit" and "init" both TRUE.
+/// @param init TRUE when called for initializing
+void
+do_highlight(
     char_u *line,
     int forceit,
-    int init                   /* TRUE when called for initializing */
+    int init
 )
 {
   char_u      *name_end;
@@ -6224,7 +6241,7 @@ do_highlight (
      */
     line = linep;
     if (ends_excmd(*line)) {
-      do_unlet((char_u *)"colors_name", TRUE);
+      do_unlet(S_LEN("colors_name"), true);
       restore_cterm_colors();
 
       /*
@@ -6503,16 +6520,16 @@ do_highlight (
               if (!ui_rgb_attached()) {
                 must_redraw = CLEAR;
                 if (color >= 0) {
-                  if (t_colors < 16)
+                  if (t_colors < 16) {
                     i = (color == 0 || color == 4);
-                  else
+                  } else {
                     i = (color < 7 || color == 8);
-                  /* Set the 'background' option if the value is
-                   * wrong. */
-                  if (i != (*p_bg == 'd'))
-                    set_option_value((char_u *)"bg", 0L,
-                        i ?  (char_u *)"dark"
-                        : (char_u *)"light", 0);
+                  }
+                  // Set the 'background' option if the value is
+                  // wrong.
+                  if (i != (*p_bg == 'd')) {
+                    set_option_value("bg", 0L, (i ? "dark" : "light"), 0);
+                  }
                 }
               }
             }
@@ -6697,12 +6714,10 @@ static garray_T attr_table = GA_EMPTY_INIT_VALUE;
 #define ATTR_ENTRY(idx) ((attrentry_T *)attr_table.ga_data)[idx]
 
 
-/*
- * Return the attr number for a set of colors and font.
- * Add a new entry to the term_attr_table, attr_table or gui_attr_table
- * if the combination is new.
- * Return 0 for error.
- */
+/// Return the attr number for a set of colors and font.
+/// Add a new entry to the term_attr_table, attr_table or gui_attr_table
+/// if the combination is new.
+/// @return 0 for error.
 int get_attr_entry(attrentry_T *aep)
 {
   garray_T *table = &attr_table;
@@ -6871,8 +6886,8 @@ static void highlight_list_one(int id)
 
   if (sgp->sg_link && !got_int) {
     (void)syn_list_header(didh, 9999, id);
-    didh = TRUE;
-    msg_puts_attr((char_u *)"links to", hl_attr(HLF_D));
+    didh = true;
+    msg_puts_attr("links to", hl_attr(HLF_D));
     msg_putchar(' ');
     msg_outtrans(HL_TABLE()[HL_TABLE()[id - 1].sg_link - 1].sg_name);
   }
@@ -6923,21 +6938,21 @@ static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg
   return didh;
 }
 
-/*
- * Return "1" if highlight group "id" has attribute "flag".
- * Return NULL otherwise.
- */
-char_u *
-highlight_has_attr (
-    int id,
-    int flag,
-    int modec              // 'g' for GUI, 'c' for cterm
-)
+/// Check whether highlight group has attribute
+///
+/// @param[in]  id  Highlight group to check.
+/// @param[in]  flag  Attribute to check.
+/// @param[in]  modec  'g' for GUI, 'c' for term.
+///
+/// @return "1" if highlight group has attribute, NULL otherwise.
+const char *highlight_has_attr(const int id, const int flag, const int modec)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   int attr;
 
-  if (id <= 0 || id > highlight_ga.ga_len)
+  if (id <= 0 || id > highlight_ga.ga_len) {
     return NULL;
+  }
 
   if (modec == 'g') {
     attr = HL_TABLE()[id - 1].sg_gui;
@@ -6945,39 +6960,42 @@ highlight_has_attr (
     attr = HL_TABLE()[id - 1].sg_cterm;
   }
 
-  if (attr & flag)
-    return (char_u *)"1";
-  return NULL;
+  return (attr & flag) ? "1" : NULL;
 }
 
-/*
- * Return color name of highlight group "id".
- */
-char_u *
-highlight_color (
-    int id,
-    char_u *what,      /* "font", "fg", "bg", "sp", "fg#", "bg#" or "sp#" */
-    int modec              /* 'g' for GUI, 'c' for cterm, 't' for term */
-)
+/// Return color name of the given highlight group
+///
+/// @param[in]  id  Highlight group to work with.
+/// @param[in]  what  What to return: one of "font", "fg", "bg", "sp", "fg#",
+///                   "bg#" or "sp#".
+/// @param[in]  modec  'g' for GUI, 'c' for cterm and 't' for term.
+///
+/// @return color name, possibly in a static buffer. Buffer will be overwritten
+///         on next highlight_color() call. May return NULL.
+const char *highlight_color(const int id, const char *const what,
+                            const int modec)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  static char_u name[20];
+  static char name[20];
   int n;
-  int fg = FALSE;
-  int sp = FALSE;
-  int font = FALSE;
+  bool fg = false;
+  bool sp = false;
+  bool font = false;
 
-  if (id <= 0 || id > highlight_ga.ga_len)
+  if (id <= 0 || id > highlight_ga.ga_len) {
     return NULL;
+  }
 
-  if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'g')
-    fg = TRUE;
-  else if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'o'
-           && TOLOWER_ASC(what[2]) == 'n' && TOLOWER_ASC(what[3]) == 't')
-    font = TRUE;
-  else if (TOLOWER_ASC(what[0]) == 's' && TOLOWER_ASC(what[1]) == 'p')
-    sp = TRUE;
-  else if (!(TOLOWER_ASC(what[0]) == 'b' && TOLOWER_ASC(what[1]) == 'g'))
+  if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'g') {
+    fg = true;
+  } else if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'o'
+             && TOLOWER_ASC(what[2]) == 'n' && TOLOWER_ASC(what[3]) == 't') {
+    font = true;
+  } else if (TOLOWER_ASC(what[0]) == 's' && TOLOWER_ASC(what[1]) == 'p') {
+    sp = true;
+  } else if (!(TOLOWER_ASC(what[0]) == 'b' && TOLOWER_ASC(what[1]) == 'g')) {
     return NULL;
+  }
   if (modec == 'g') {
     if (what[2] == '#' && ui_rgb_attached()) {
       if (fg) {
@@ -6990,19 +7008,20 @@ highlight_color (
       if (n < 0 || n > 0xffffff) {
         return NULL;
       }
-      snprintf((char *)name, sizeof(name), "#%06x", n);
+      snprintf(name, sizeof(name), "#%06x", n);
       return name;
     }
     if (fg) {
-      return HL_TABLE()[id - 1].sg_rgb_fg_name;
+      return (const char *)HL_TABLE()[id - 1].sg_rgb_fg_name;
     }
     if (sp) {
-      return HL_TABLE()[id - 1].sg_rgb_sp_name;
+      return (const char *)HL_TABLE()[id - 1].sg_rgb_sp_name;
     }
-    return HL_TABLE()[id - 1].sg_rgb_bg_name;
+    return (const char *)HL_TABLE()[id - 1].sg_rgb_bg_name;
   }
-  if (font || sp)
+  if (font || sp) {
     return NULL;
+  }
   if (modec == 'c') {
     if (fg) {
       n = HL_TABLE()[id - 1].sg_cterm_fg - 1;
@@ -7012,10 +7031,10 @@ highlight_color (
     if (n < 0) {
       return NULL;
     }
-    snprintf((char *)name, sizeof(name), "%d", n);
+    snprintf(name, sizeof(name), "%d", n);
     return name;
   }
-  /* term doesn't have color */
+  // term doesn't have color.
   return NULL;
 }
 
@@ -7057,7 +7076,7 @@ syn_list_header (
 
   /* Show "xxx" with the attributes. */
   if (!did_header) {
-    msg_puts_attr((char_u *)"xxx", syn_id2attr(id));
+    msg_puts_attr("xxx", syn_id2attr(id));
     msg_putchar(' ');
   }
 
@@ -7106,7 +7125,7 @@ set_hl_attr (
  * Lookup a highlight group name and return it's ID.
  * If it is not found, 0 is returned.
  */
-int syn_name2id(char_u *name)
+int syn_name2id(const char_u *name)
 {
   int i;
   char_u name_u[200];
@@ -7126,7 +7145,7 @@ int syn_name2id(char_u *name)
 /*
  * Return TRUE if highlight group "name" exists.
  */
-int highlight_exists(char_u *name)
+int highlight_exists(const char_u *name)
 {
   return syn_name2id(name) > 0;
 }
@@ -7154,12 +7173,13 @@ int syn_namen2id(char_u *linep, int len)
   return id;
 }
 
-/*
- * Find highlight group name in the table and return it's ID.
- * The argument is a pointer to the name and the length of the name.
- * If it doesn't exist yet, a new entry is created.
- * Return 0 for failure.
- */
+/// Find highlight group name in the table and return it's ID.
+/// If it doesn't exist yet, a new entry is created.
+///
+/// @param pp Highlight group name
+/// @param len length of \p pp
+///
+/// @return 0 for failure else the id of the group
 int syn_check_group(char_u *pp, int len)
 {
   char_u  *name = vim_strnsave(pp, len);
@@ -7286,110 +7306,34 @@ static void highlight_attr_set_all(void)
   }
 }
 
-/*
- * Translate the 'highlight' option into attributes in highlight_attr[] and
- * set up the user highlights User1..9. A set of
- * corresponding highlights to use on top of HLF_SNC is computed.
- * Called only when the 'highlight' option has been changed and upon first
- * screen redraw after any :highlight command.
- * Return FAIL when an invalid flag is found in 'highlight'.  OK otherwise.
- */
-int highlight_changed(void)
+/// Tranlate highlight groups into attributes in highlight_attr[] and set up
+/// the user highlights User1..9. A set of corresponding highlights to use on
+/// top of HLF_SNC is computed.  Called only when nvim starts and upon first
+/// screen redraw after any :highlight command.
+void highlight_changed(void)
 {
-  int hlf;
-  int i;
-  char_u      *p;
   int attr;
-  char_u      *end;
   int id;
   char_u userhl[10];
   int id_SNC = -1;
   int id_S = -1;
   int hlcnt;
-  static int hl_flags[HLF_COUNT] = HL_FLAGS;
 
   need_highlight_changed = FALSE;
 
-  /*
-   * Clear all attributes.
-   */
-  for (hlf = 0; hlf < (int)HLF_COUNT; ++hlf)
-    highlight_attr[hlf] = 0;
-
-  /*
-   * First set all attributes to their default value.
-   * Then use the attributes from the 'highlight' option.
-   */
-  for (i = 0; i < 2; ++i) {
-    if (i)
-      p = p_hl;
-    else
-      p = get_highlight_default();
-    if (p == NULL)          /* just in case */
-      continue;
-
-    while (*p) {
-      for (hlf = 0; hlf < (int)HLF_COUNT; ++hlf)
-        if (hl_flags[hlf] == *p)
-          break;
-      ++p;
-      if (hlf == (int)HLF_COUNT || *p == NUL)
-        return FAIL;
-
-      /*
-       * Allow several hl_flags to be combined, like "bu" for
-       * bold-underlined.
-       */
-      attr = 0;
-      bool colon = false;
-      for (; *p && *p != ','; ++p) {  // parse upto comma
-        if (ascii_iswhite(*p)) {  // ignore white space
-          continue;
-        }
-
-        if (colon)          /* Combination with ':' is not allowed. */
-          return FAIL;
-
-        switch (*p) {
-        case 'b':   attr |= HL_BOLD;
-          break;
-        case 'i':   attr |= HL_ITALIC;
-          break;
-        case '-':
-        case 'n':                                   /* no highlighting */
-          break;
-        case 'r':   attr |= HL_INVERSE;
-          break;
-        case 's':   attr |= HL_STANDOUT;
-          break;
-        case 'u':   attr |= HL_UNDERLINE;
-          break;
-        case 'c':   attr |= HL_UNDERCURL;
-          break;
-        case ':':   ++p;                            /* highlight group name */
-          if (attr || *p == NUL)                         /* no combinations */
-            return FAIL;
-          colon = true;
-          end = vim_strchr(p, ',');
-          if (end == NULL)
-            end = p + STRLEN(p);
-          id = syn_check_group(p, (int)(end - p));
-          if (id == 0)
-            return FAIL;
-          attr = syn_id2attr(id);
-          p = end - 1;
-          if (hlf == (int)HLF_SNC)
-            id_SNC = syn_get_final_id(id);
-          else if (hlf == (int)HLF_S)
-            id_S = syn_get_final_id(id);
-          break;
-        default:    return FAIL;
-        }
-      }
-      highlight_attr[hlf] = attr;
-
-      p = skip_to_option_part(p);           /* skip comma and spaces */
+  /// Translate builtin highlight groups into attributes for quick lookup.
+  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+    id = syn_check_group((char_u *)hlf_names[hlf], STRLEN(hlf_names[hlf]));
+    if (id == 0) {
+      abort();
     }
+    attr = syn_id2attr(id);
+    if (hlf == (int)HLF_SNC) {
+      id_SNC = syn_get_final_id(id);
+    } else if (hlf == (int)HLF_S) {
+      id_S = syn_get_final_id(id);
+    }
+    highlight_attr[hlf] = attr;
   }
 
   /* Setup the user highlights
@@ -7454,49 +7398,47 @@ int highlight_changed(void)
     }
   }
   highlight_ga.ga_len = hlcnt;
-
-  return OK;
 }
 
 
 /*
  * Handle command line completion for :highlight command.
  */
-void set_context_in_highlight_cmd(expand_T *xp, char_u *arg)
+void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *p;
-
-  /* Default: expand group names */
+  // Default: expand group names.
   xp->xp_context = EXPAND_HIGHLIGHT;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_link = 2;
   include_default = 1;
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                    /* past "default" or group name */
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past "default" or group name.
       include_default = 0;
-      if (STRNCMP("default", arg, p - arg) == 0) {
-        arg = skipwhite(p);
-        xp->xp_pattern = arg;
-        p = skiptowhite(arg);
+      if (strncmp("default", arg, p - arg) == 0) {
+        arg = (const char *)skipwhite((const char_u *)p);
+        xp->xp_pattern = (char_u *)arg;
+        p = (const char *)skiptowhite((const char_u *)arg);
       }
       if (*p != NUL) {                          /* past group name */
         include_link = 0;
-        if (arg[1] == 'i' && arg[0] == 'N')
+        if (arg[1] == 'i' && arg[0] == 'N') {
           highlight_list();
-        if (STRNCMP("link", arg, p - arg) == 0
-            || STRNCMP("clear", arg, p - arg) == 0) {
-          xp->xp_pattern = skipwhite(p);
-          p = skiptowhite(xp->xp_pattern);
-          if (*p != NUL) {                      /* past first group name */
-            xp->xp_pattern = skipwhite(p);
-            p = skiptowhite(xp->xp_pattern);
+        }
+        if (strncmp("link", arg, p - arg) == 0
+            || strncmp("clear", arg, p - arg) == 0) {
+          xp->xp_pattern = skipwhite((const char_u *)p);
+          p = (const char *)skiptowhite(xp->xp_pattern);
+          if (*p != NUL) {  // Past first group name.
+            xp->xp_pattern = skipwhite((const char_u *)p);
+            p = (const char *)skiptowhite(xp->xp_pattern);
           }
         }
-        if (*p != NUL)                          /* past group name(s) */
+        if (*p != NUL) {  // Past group name(s).
           xp->xp_context = EXPAND_NOTHING;
+        }
       }
     }
   }
@@ -7517,7 +7459,7 @@ static void highlight_list(void)
 
 static void highlight_list_two(int cnt, int attr)
 {
-  msg_puts_attr((char_u *)&("N \bI \b!  \b"[cnt / 11]), attr);
+  msg_puts_attr(&("N \bI \b!  \b"[cnt / 11]), attr);
   msg_clr_eos();
   ui_flush();
   os_delay(cnt == 99 ? 40L : (long)cnt * 50L, false);
@@ -7528,22 +7470,25 @@ static void highlight_list_two(int cnt, int attr)
  * Function given to ExpandGeneric() to obtain the list of group names.
  * Also used for synIDattr() function.
  */
-char_u *get_highlight_name(expand_T *xp, int idx)
+const char *get_highlight_name(expand_T *const xp, const int idx)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  //TODO: 'xp' is unused
-  if (idx == highlight_ga.ga_len && include_none != 0)
-    return (char_u *)"none";
-  if (idx == highlight_ga.ga_len + include_none && include_default != 0)
-    return (char_u *)"default";
-  if (idx == highlight_ga.ga_len + include_none + include_default
-      && include_link != 0)
-    return (char_u *)"link";
-  if (idx == highlight_ga.ga_len + include_none + include_default + 1
-      && include_link != 0)
-    return (char_u *)"clear";
-  if (idx < 0 || idx >= highlight_ga.ga_len)
+  // TODO(justinmk): 'xp' is unused
+  if (idx == highlight_ga.ga_len && include_none != 0) {
+    return "none";
+  } else if (idx == highlight_ga.ga_len + include_none
+             && include_default != 0) {
+    return "default";
+  } else if (idx == highlight_ga.ga_len + include_none + include_default
+             && include_link != 0) {
+    return "link";
+  } else if (idx == highlight_ga.ga_len + include_none + include_default + 1
+             && include_link != 0) {
+    return "clear";
+  } else if (idx < 0 || idx >= highlight_ga.ga_len) {
     return NULL;
-  return HL_TABLE()[idx].sg_name;
+  }
+  return (const char *)HL_TABLE()[idx].sg_name;
 }
 
 color_name_table_T color_name_table[] = {
@@ -8230,7 +8175,14 @@ color_name_table_T color_name_table[] = {
   { NULL, 0 },
 };
 
-RgbValue name_to_color(uint8_t *name)
+
+/// Translate to RgbValue if \p name is an hex value (e.g. #XXXXXX),
+/// else look into color_name_table to translate a color name to  its
+/// hex value
+///
+/// @param[in] name string value to convert to RGB
+/// return the hex value or -1 if could not find a correct value
+RgbValue name_to_color(const uint8_t *name)
 {
 
   if (name[0] == '#' && isxdigit(name[1]) && isxdigit(name[2])

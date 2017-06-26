@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * getchar.c
  *
@@ -15,6 +18,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/getchar.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
@@ -44,6 +48,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/api/private/handle.h"
 
 /*
  * These buffers are used for storing:
@@ -99,11 +104,10 @@ static int block_redo = FALSE;
                        (NORMAL + VISUAL + SELECTMODE + \
                         OP_PENDING)) ? (c1) : ((c1) ^ 0x80))
 
-/*
- * Each mapping is put in one of the 256 hash lists, to speed up finding it.
- */
-static mapblock_T       *(maphash[256]);
-static int maphash_valid = FALSE;
+// Each mapping is put in one of the MAX_MAPHASH hash lists,
+// to speed up finding it.
+static mapblock_T *(maphash[MAX_MAPHASH]);
+static bool maphash_valid = false;
 
 /*
  * List used for abbreviations.
@@ -235,19 +239,18 @@ char_u *get_inserted(void)
   return get_buffcont(&redobuff, FALSE);
 }
 
-/*
- * Add string "s" after the current block of buffer "buf".
- * K_SPECIAL and CSI should have been escaped already.
- */
-static void 
-add_buff (
-    buffheader_T *buf,
-    char_u *s,
-    ssize_t slen                      // length of "s" or -1
-)
+/// Add string after the current block of the given buffer
+///
+/// K_SPECIAL and CSI should have been escaped already.
+///
+/// @param[out]  buf  Buffer to add to.
+/// @param[in]  s  String to add.
+/// @param[in]  slen  String length or -1 for NUL-terminated string.
+static void add_buff(buffheader_T *const buf, const char *const s,
+                     ptrdiff_t slen)
 {
   if (slen < 0) {
-    slen = (ssize_t)STRLEN(s);
+    slen = (ptrdiff_t)strlen(s);
   }
   if (slen == 0) {                              // don't add empty strings
     return;
@@ -292,9 +295,8 @@ add_buff (
  */
 static void add_num_buff(buffheader_T *buf, long n)
 {
-  char_u number[32];
-
-  sprintf((char *)number, "%" PRId64, (int64_t)n);
+  char number[32];
+  snprintf(number, sizeof(number), "%ld", n);
   add_buff(buf, number, -1L);
 }
 
@@ -304,27 +306,29 @@ static void add_num_buff(buffheader_T *buf, long n)
  */
 static void add_char_buff(buffheader_T *buf, int c)
 {
-  char_u bytes[MB_MAXBYTES + 1];
+  uint8_t bytes[MB_MAXBYTES + 1];
+
   int len;
-  int i;
-  char_u temp[4];
-
-  if (IS_SPECIAL(c))
+  if (IS_SPECIAL(c)) {
     len = 1;
-  else
-    len = (*mb_char2bytes)(c, bytes);
-  for (i = 0; i < len; ++i) {
-    if (!IS_SPECIAL(c))
-      c = bytes[i];
+  } else {
+    len = mb_char2bytes(c, bytes);
+  }
 
+  for (int i = 0; i < len; i++) {
+    if (!IS_SPECIAL(c)) {
+      c = bytes[i];
+    }
+
+    char temp[4];
     if (IS_SPECIAL(c) || c == K_SPECIAL || c == NUL) {
-      /* translate special key code into three byte sequence */
-      temp[0] = K_SPECIAL;
-      temp[1] = (char_u)K_SECOND(c);
-      temp[2] = (char_u)K_THIRD(c);
+      // Translate special key code into three byte sequence.
+      temp[0] = (char)K_SPECIAL;
+      temp[1] = (char)K_SECOND(c);
+      temp[2] = (char)K_THIRD(c);
       temp[3] = NUL;
     } else {
-      temp[0] = (char_u)c;
+      temp[0] = (char)c;
       temp[1] = NUL;
     }
     add_buff(buf, temp, -1L);
@@ -479,16 +483,14 @@ static int save_level = 0;
 
 void saveRedobuff(void)
 {
-  char_u      *s;
-
   if (save_level++ == 0) {
     save_redobuff = redobuff;
     redobuff.bh_first.b_next = NULL;
     save_old_redobuff = old_redobuff;
     old_redobuff.bh_first.b_next = NULL;
 
-    /* Make a copy, so that ":normal ." in a function works. */
-    s = get_buffcont(&save_redobuff, FALSE);
+    // Make a copy, so that ":normal ." in a function works.
+    char *const s = (char *)get_buffcont(&save_redobuff, false);
     if (s != NULL) {
       add_buff(&redobuff, s, -1L);
       xfree(s);
@@ -514,10 +516,11 @@ void restoreRedobuff(void)
  * Append "s" to the redo buffer.
  * K_SPECIAL and CSI should already have been escaped.
  */
-void AppendToRedobuff(char_u *s)
+void AppendToRedobuff(const char *s)
 {
-  if (!block_redo)
-    add_buff(&redobuff, s, -1L);
+  if (!block_redo) {
+    add_buff(&redobuff, (const char *)s, -1L);
+  }
 }
 
 /*
@@ -530,44 +533,47 @@ AppendToRedobuffLit (
     int len                    /* length of "str" or -1 for up to the NUL */
 )
 {
-  char_u      *s = str;
-  int c;
-  char_u      *start;
-
-  if (block_redo)
+  if (block_redo) {
     return;
+  }
 
-  while (len < 0 ? *s != NUL : s - str < len) {
-    /* Put a string of normal characters in the redo buffer (that's
-     * faster). */
-    start = s;
-    while (*s >= ' ' && *s < DEL && (len < 0 || s - str < len))
-      ++s;
+  const char *s = (const char *)str;
+  while (len < 0 ? *s != NUL : s - (const char *)str < len) {
+    // Put a string of normal characters in the redo buffer (that's
+    // faster).
+    const char *start = s;
+    while (*s >= ' ' && *s < DEL && (len < 0 || s - (const char *)str < len)) {
+      s++;
+    }
 
-    /* Don't put '0' or '^' as last character, just in case a CTRL-D is
-     * typed next. */
-    if (*s == NUL && (s[-1] == '0' || s[-1] == '^'))
-      --s;
-    if (s > start)
+    // Don't put '0' or '^' as last character, just in case a CTRL-D is
+    // typed next.
+    if (*s == NUL && (s[-1] == '0' || s[-1] == '^')) {
+      s--;
+    }
+    if (s > start) {
       add_buff(&redobuff, start, (long)(s - start));
+    }
 
-    if (*s == NUL || (len >= 0 && s - str >= len))
+    if (*s == NUL || (len >= 0 && s - (const char *)str >= len)) {
       break;
+    }
 
-    /* Handle a special or multibyte character. */
-    if (has_mbyte)
-      /* Handle composing chars separately. */
-      c = mb_cptr2char_adv(&s);
-    else
-      c = *s++;
-    if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^')))
+    // Handle a special or multibyte character.
+    // Composing chars separately are handled separately.
+    const int c = (has_mbyte
+                   ? mb_cptr2char_adv((const char_u **)&s)
+                   : (uint8_t)(*s++));
+    if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^'))) {
       add_char_buff(&redobuff, Ctrl_V);
+    }
 
-    /* CTRL-V '0' must be inserted as CTRL-V 048 */
-    if (*s == NUL && c == '0')
-      add_buff(&redobuff, (char_u *)"048", 3L);
-    else
+    // CTRL-V '0' must be inserted as CTRL-V 048.
+    if (*s == NUL && c == '0') {
+      add_buff(&redobuff, "048", 3L);
+    } else {
       add_char_buff(&redobuff, c);
+    }
   }
 }
 
@@ -594,19 +600,19 @@ void AppendNumberToRedobuff(long n)
  * Append string "s" to the stuff buffer.
  * CSI and K_SPECIAL must already have been escaped.
  */
-void stuffReadbuff(char_u *s)
+void stuffReadbuff(const char *s)
 {
   add_buff(&readbuf1, s, -1L);
 }
 
 /// Append string "s" to the redo stuff buffer.
 /// @remark CSI and K_SPECIAL must already have been escaped.
-void stuffRedoReadbuff(char_u *s)
+void stuffRedoReadbuff(const char *s)
 {
   add_buff(&readbuf2, s, -1L);
 }
 
-void stuffReadbuffLen(char_u *s, long len)
+void stuffReadbuffLen(const char *s, long len)
 {
   add_buff(&readbuf1, s, len);
 }
@@ -616,19 +622,18 @@ void stuffReadbuffLen(char_u *s, long len)
  * escaping other K_SPECIAL and CSI bytes.
  * Change CR, LF and ESC into a space.
  */
-void stuffReadbuffSpec(char_u *s)
+void stuffReadbuffSpec(const char *s)
 {
-  int c;
-
   while (*s != NUL) {
-    if (*s == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
-      /* Insert special key literally. */
-      stuffReadbuffLen(s, 3L);
+    if ((uint8_t)(*s) == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+      // Insert special key literally.
+      stuffReadbuffLen(s, 3);
       s += 3;
     } else {
-      c = mb_ptr2char_adv(&s);
-      if (c == CAR || c == NL || c == ESC)
+      int c = mb_ptr2char_adv((const char_u **)&s);
+      if (c == CAR || c == NL || c == ESC) {
         c = ' ';
+      }
       stuffcharReadbuff(c);
     }
   }
@@ -747,8 +752,8 @@ int start_redo(long count, int old_redo)
 
   /* copy the buffer name, if present */
   if (c == '"') {
-    add_buff(&readbuf2, (char_u *)"\"", 1L);
-    c = read_redo(FALSE, old_redo);
+    add_buff(&readbuf2, "\"", 1L);
+    c = read_redo(false, old_redo);
 
     /* if a numbered buffer is used, increment the number */
     if (c >= '1' && c < '9')
@@ -1091,21 +1096,19 @@ static void gotchars(char_u *chars, size_t len)
 {
   char_u      *s = chars;
   int c;
-  char_u buf[2];
 
   // remember how many chars were last recorded
   if (Recording) {
     last_recorded_len += len;
   }
 
-  buf[1] = NUL;
   while (len--) {
     // Handle one byte at a time; no translation to be done.
     c = *s++;
     updatescript(c);
 
     if (Recording) {
-      buf[0] = (char_u)c;
+      char buf[2] = { (char)c, NUL };
       add_buff(&recordbuff, buf, 1L);
     }
   }
@@ -1327,8 +1330,9 @@ int using_script(void)
 void before_blocking(void)
 {
   updatescript(0);
-  if (may_garbage_collect)
-    garbage_collect();
+  if (may_garbage_collect) {
+    garbage_collect(false);
+  }
 }
 
 /*
@@ -1366,10 +1370,11 @@ int vgetc(void)
   char_u buf[MB_MAXBYTES + 1];
   int i;
 
-  /* Do garbage collection when garbagecollect() was called previously and
-   * we are now at the toplevel. */
-  if (may_garbage_collect && want_garbage_collect)
-    garbage_collect();
+  // Do garbage collection when garbagecollect() was called previously and
+  // we are now at the toplevel.
+  if (may_garbage_collect && want_garbage_collect) {
+    garbage_collect(false);
+  }
 
   /*
    * If a character was put back with vungetc, it was already processed.
@@ -1387,27 +1392,20 @@ int vgetc(void)
     for (;; ) {                 // this is done twice if there are modifiers
       bool did_inc = false;
       if (mod_mask) {           // no mapping after modifier has been read
-        ++no_mapping;
-        ++allow_keys;
+        no_mapping++;
         did_inc = true;         // mod_mask may change value
       }
       c = vgetorpeek(true);
       if (did_inc) {
-        --no_mapping;
-        --allow_keys;
+        no_mapping--;
       }
 
-      /* Get two extra bytes for special keys */
-      if (c == K_SPECIAL
-          ) {
-        int save_allow_keys = allow_keys;
-
-        ++no_mapping;
-        allow_keys = 0;                 /* make sure BS is not found */
-        c2 = vgetorpeek(TRUE);          /* no mapping for these chars */
-        c = vgetorpeek(TRUE);
-        --no_mapping;
-        allow_keys = save_allow_keys;
+      // Get two extra bytes for special keys
+      if (c == K_SPECIAL) {
+        no_mapping++;
+        c2 = vgetorpeek(true);          // no mapping for these chars
+        c = vgetorpeek(true);
+        no_mapping--;
         if (c2 == KS_MODIFIER) {
           mod_mask = c;
           continue;
@@ -1485,7 +1483,7 @@ int vgetc(void)
               buf[i] = CSI;
           }
         }
-        --no_mapping;
+        no_mapping--;
         c = (*mb_ptr2char)(buf);
       }
 
@@ -1568,7 +1566,7 @@ int char_avail(void)
 
   no_mapping++;
   retval = vpeekc();
-  --no_mapping;
+  no_mapping--;
   return retval != NUL;
 }
 
@@ -1595,7 +1593,7 @@ vungetc ( /* unget one character (can only be done once!) */
 ///    This may do a blocking wait if "advance" is TRUE.
 ///
 /// if "advance" is TRUE (vgetc()):
-///    really get the character.
+///    Really get the character.
 ///    KeyTyped is set to TRUE in the case the user typed the key.
 ///    KeyStuffed is TRUE if the character comes from the stuff buffer.
 /// if "advance" is FALSE (vpeekc()):
@@ -1855,11 +1853,12 @@ static int vgetorpeek(int advance)
                     mp_match = mp;
                     mp_match_len = keylen;
                   }
-                } else
-                /* No match; may have to check for
-                 * termcode at next character. */
-                if (max_mlen < mlen)
-                  max_mlen = mlen;
+                } else {
+                  // No match; may have to check for termcode at next character.
+                  if (max_mlen < mlen) {
+                    max_mlen = mlen;
+                  }
+                }
               }
             }
 
@@ -1886,9 +1885,8 @@ static int vgetorpeek(int advance)
                          (size_t)(mlen - typebuf.tb_maplen));
               }
 
-              del_typebuf(mlen, 0);               /* remove the chars */
-              set_option_value((char_u *)"paste",
-                  (long)!p_paste, NULL, 0);
+              del_typebuf(mlen, 0);  // Remove the chars.
+              set_option_value("paste", !p_paste, NULL, 0);
               if (!(State & INSERT)) {
                 msg_col = 0;
                 msg_row = (int)Rows - 1;
@@ -1911,63 +1909,30 @@ static int vgetorpeek(int advance)
 
           if ((mp == NULL || max_mlen >= mp_match_len)
               && keylen != KEYLEN_PART_MAP) {
-            /*
-             * When no matching mapping found or found a
-             * non-matching mapping that matches at least what the
-             * matching mapping matched:
-             * Check if we have a terminal code, when:
-             *  mapping is allowed,
-             *  keys have not been mapped,
-             *  and not an ESC sequence, not in insert mode or
-             *	p_ek is on,
-             *  and when not timed out,
-             */
-            if ((no_mapping == 0 || allow_keys != 0)
-                && (typebuf.tb_maplen == 0
-                    || (p_remap && typebuf.tb_noremap[
-                          typebuf.tb_off] == RM_YES))
-                && !timedout) {
-              keylen = 0;
-            } else
-              keylen = 0;
-            if (keylen == 0) {                  /* no matching terminal code */
-              /* When there was a matching mapping and no
-               * termcode could be replaced after another one,
-               * use that mapping (loop around). If there was
-               * no mapping use the character from the
-               * typeahead buffer right here. */
-              if (mp == NULL) {
-                /*
-                 * get a character: 2. from the typeahead buffer
-                 */
-                c = typebuf.tb_buf[typebuf.tb_off] & 255;
-                if (advance) {                  /* remove chars from tb_buf */
-                  cmd_silent = (typebuf.tb_silent > 0);
-                  if (typebuf.tb_maplen > 0)
-                    KeyTyped = FALSE;
-                  else {
-                    KeyTyped = TRUE;
-                    /* write char to script file(s) */
-                    gotchars(typebuf.tb_buf
-                        + typebuf.tb_off, 1);
-                  }
-                  KeyNoremap = typebuf.tb_noremap[
-                    typebuf.tb_off];
-                  del_typebuf(1, 0);
+            // No matching mapping found or found a non-matching mapping that
+            // matches at least what the matching mapping matched
+            keylen = 0;
+            // If there was no mapping, use the character from the typeahead
+            // buffer right here. Otherwise, use the mapping (loop around).
+            if (mp == NULL) {
+              // get a character: 2. from the typeahead buffer
+              c = typebuf.tb_buf[typebuf.tb_off] & 255;
+              if (advance) {                  // remove chars from tb_buf
+                cmd_silent = (typebuf.tb_silent > 0);
+                if (typebuf.tb_maplen > 0) {
+                  KeyTyped = false;
+                } else {
+                  KeyTyped = true;
+                  // write char to script file(s)
+                  gotchars(typebuf.tb_buf + typebuf.tb_off, 1);
                 }
-                break;                      /* got character, break for loop */
+                KeyNoremap = typebuf.tb_noremap[typebuf.tb_off];
+                del_typebuf(1, 0);
               }
-            }
-            if (keylen > 0) {               /* full matching terminal code */
-              continue;                 /* try mapping again */
-            }
-
-            /* Partial match: get some more characters.  When a
-             * matching mapping was found use that one. */
-            if (mp == NULL || keylen < 0)
-              keylen = KEYLEN_PART_KEY;
-            else
+              break;  // got character, break for loop
+            } else {
               keylen = mp_match_len;
+            }
           }
 
           /* complete match */
@@ -2462,7 +2427,7 @@ inchar (
   if (typebuf_changed(tb_change_cnt))
     return 0;
 
-  return fix_input_buffer(buf, len, script_char >= 0);
+  return fix_input_buffer(buf, len);
 }
 
 /*
@@ -2470,12 +2435,7 @@ inchar (
  * buf[] must have room to triple the number of bytes!
  * Returns the new length.
  */
-int 
-fix_input_buffer (
-    char_u *buf,
-    int len,
-    int script                     /* TRUE when reading from a script */
-)
+int fix_input_buffer(char_u *buf, int len)
 {
   if (!using_script()) {
     // Should not escape K_SPECIAL/CSI reading input from the user because vim
@@ -2492,12 +2452,10 @@ fix_input_buffer (
   // Replace	     NUL by K_SPECIAL KS_ZERO	 KE_FILLER
   // Replace K_SPECIAL by K_SPECIAL KS_SPECIAL KE_FILLER
   // Replace       CSI by K_SPECIAL KS_EXTRA   KE_CSI
-  // Don't replace K_SPECIAL when reading a script file.
   for (i = len; --i >= 0; ++p) {
     if (p[0] == NUL
         || (p[0] == K_SPECIAL
-          && !script
-          && (i < 2 || p[1] != KS_EXTRA))) {
+            && (i < 2 || p[1] != KS_EXTRA))) {
       memmove(p + 3, p + 1, (size_t)i);
       p[2] = (char_u)K_THIRD(p[0]);
       p[1] = (char_u)K_SECOND(p[0]);
@@ -3163,11 +3121,11 @@ map_clear_int (
   }
 }
 
-/*
- * Return characters to represent the map mode in an allocated string.
- * Returns NULL when out of memory.
- */
-char_u *map_mode_to_chars(int mode)
+/// Return characters to represent the map mode in an allocated string
+///
+/// @return [allocated] NUL-terminated string with characters.
+char *map_mode_to_chars(int mode)
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET
 {
   garray_T mapmode;
 
@@ -3200,7 +3158,7 @@ char_u *map_mode_to_chars(int mode)
   }
 
   ga_append(&mapmode, NUL);
-  return (char_u *)mapmode.ga_data;
+  return (char *)mapmode.ga_data;
 }
 
 static void 
@@ -3209,8 +3167,11 @@ showmap (
     int local                  /* TRUE for buffer-local map */
 )
 {
-  int len = 1;
-  char_u      *mapchars;
+  size_t len = 1;
+
+  if (message_filtered(mp->m_keys) && message_filtered(mp->m_str)) {
+    return;
+  }
 
   if (msg_didout || msg_silent != 0) {
     msg_putchar('\n');
@@ -3218,29 +3179,30 @@ showmap (
       return;
   }
 
-  mapchars = map_mode_to_chars(mp->m_mode);
-  if (mapchars != NULL) {
+  {
+    char *const mapchars = map_mode_to_chars(mp->m_mode);
     msg_puts(mapchars);
-    len = (int)STRLEN(mapchars);
+    len = strlen(mapchars);
     xfree(mapchars);
   }
 
   while (++len <= 3)
     msg_putchar(' ');
 
-  /* Display the LHS.  Get length of what we write. */
-  len = msg_outtrans_special(mp->m_keys, TRUE);
+  // Display the LHS.  Get length of what we write.
+  len = (size_t)msg_outtrans_special(mp->m_keys, true);
   do {
     msg_putchar(' ');                   /* padd with blanks */
     ++len;
   } while (len < 12);
 
-  if (mp->m_noremap == REMAP_NONE)
-    msg_puts_attr((char_u *)"*", hl_attr(HLF_8));
-  else if (mp->m_noremap == REMAP_SCRIPT)
-    msg_puts_attr((char_u *)"&", hl_attr(HLF_8));
-  else
+  if (mp->m_noremap == REMAP_NONE) {
+    msg_puts_attr("*", hl_attr(HLF_8));
+  } else if (mp->m_noremap == REMAP_SCRIPT) {
+    msg_puts_attr("&", hl_attr(HLF_8));
+  } else {
     msg_putchar(' ');
+  }
 
   if (local)
     msg_putchar('@');
@@ -3249,11 +3211,11 @@ showmap (
 
   /* Use FALSE below if we only want things like <Up> to show up as such on
    * the rhs, and not M-x etc, TRUE gets both -- webb */
-  if (*mp->m_str == NUL)
-    msg_puts_attr((char_u *)"<Nop>", hl_attr(HLF_8));
-  else {
-    /* Remove escaping of CSI, because "m_str" is in a format to be used
-     * as typeahead. */
+  if (*mp->m_str == NUL) {
+    msg_puts_attr("<Nop>", hl_attr(HLF_8));
+  } else {
+    // Remove escaping of CSI, because "m_str" is in a format to be used
+    // as typeahead.
     char_u *s = vim_strsave(mp->m_str);
     vim_unescape_csi(s);
     msg_outtrans_special(s, FALSE);
@@ -3264,82 +3226,99 @@ showmap (
   ui_flush();                          /* show one line at a time */
 }
 
-/*
- * Return TRUE if a map exists that has "str" in the rhs for mode "modechars".
- * Recognize termcap codes in "str".
- * Also checks mappings local to the current buffer.
- */
-int map_to_exists(char_u *str, char_u *modechars, int abbr)
+/// Check if a map exists that has given string in the rhs
+///
+/// Also checks mappings local to the current buffer.
+///
+/// @param[in]  str  String which mapping must have in the rhs. Termcap codes
+///                  are recognized in this argument.
+/// @param[in]  modechars  Mode(s) in which mappings are checked.
+/// @param[in]  abbr  true if checking abbreviations in place of mappings.
+///
+/// @return true if there is at least one mapping with given parameters.
+bool map_to_exists(const char *const str, const char *const modechars,
+                   const bool abbr)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   int mode = 0;
-  char_u      *rhs;
-  char_u      *buf;
   int retval;
 
-  rhs = replace_termcodes(str, STRLEN(str), &buf, false, true, false,
-                          CPO_TO_CPO_FLAGS);
+  char_u *buf;
+  char_u *const rhs = replace_termcodes((const char_u *)str, strlen(str), &buf,
+                                        false, true, false,
+                                        CPO_TO_CPO_FLAGS);
 
-  if (vim_strchr(modechars, 'n') != NULL)
-    mode |= NORMAL;
-  if (vim_strchr(modechars, 'v') != NULL)
-    mode |= VISUAL + SELECTMODE;
-  if (vim_strchr(modechars, 'x') != NULL)
-    mode |= VISUAL;
-  if (vim_strchr(modechars, 's') != NULL)
-    mode |= SELECTMODE;
-  if (vim_strchr(modechars, 'o') != NULL)
-    mode |= OP_PENDING;
-  if (vim_strchr(modechars, 'i') != NULL)
-    mode |= INSERT;
-  if (vim_strchr(modechars, 'l') != NULL)
-    mode |= LANGMAP;
-  if (vim_strchr(modechars, 'c') != NULL)
-    mode |= CMDLINE;
+#define MAPMODE(mode, modechars, chr, modeflags) \
+  do { \
+    if (strchr(modechars, chr) != NULL) { \
+      mode |= modeflags; \
+    } \
+  } while (0)
+  MAPMODE(mode, modechars, 'n', NORMAL);
+  MAPMODE(mode, modechars, 'v', VISUAL|SELECTMODE);
+  MAPMODE(mode, modechars, 'x', VISUAL);
+  MAPMODE(mode, modechars, 's', SELECTMODE);
+  MAPMODE(mode, modechars, 'o', OP_PENDING);
+  MAPMODE(mode, modechars, 'i', INSERT);
+  MAPMODE(mode, modechars, 'l', LANGMAP);
+  MAPMODE(mode, modechars, 'c', CMDLINE);
+#undef MAPMODE
 
-  retval = map_to_exists_mode(rhs, mode, abbr);
+  retval = map_to_exists_mode((const char *)rhs, mode, abbr);
   xfree(buf);
 
   return retval;
 }
 
-/*
- * Return TRUE if a map exists that has "str" in the rhs for mode "mode".
- * Also checks mappings local to the current buffer.
- */
-int map_to_exists_mode(char_u *rhs, int mode, int abbr)
+/// Check if a map exists that has given string in the rhs
+///
+/// Also checks mappings local to the current buffer.
+///
+/// @param[in]  rhs  String which mapping must have in the rhs. Termcap codes
+///                  are recognized in this argument.
+/// @param[in]  mode  Mode(s) in which mappings are checked.
+/// @param[in]  abbr  true if checking abbreviations in place of mappings.
+///
+/// @return true if there is at least one mapping with given parameters.
+int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
 {
   mapblock_T  *mp;
   int hash;
-  int expand_buffer = FALSE;
+  bool expand_buffer = false;
 
   validate_maphash();
 
-  /* Do it twice: once for global maps and once for local maps. */
-  for (;; ) {
-    for (hash = 0; hash < 256; ++hash) {
+  // Do it twice: once for global maps and once for local maps.
+  for (;;) {
+    for (hash = 0; hash < 256; hash++) {
       if (abbr) {
-        if (hash > 0)                   /* there is only one abbr list */
+        if (hash > 0) {  // There is only one abbr list.
           break;
-        if (expand_buffer)
+        }
+        if (expand_buffer) {
           mp = curbuf->b_first_abbr;
-        else
+        } else {
           mp = first_abbr;
-      } else if (expand_buffer)
+        }
+      } else if (expand_buffer) {
         mp = curbuf->b_maphash[hash];
-      else
+      } else {
         mp = maphash[hash];
+      }
       for (; mp; mp = mp->m_next) {
         if ((mp->m_mode & mode)
-            && strstr((char *)mp->m_str, (char *)rhs) != NULL)
-          return TRUE;
+            && strstr((char *)mp->m_str, rhs) != NULL) {
+          return true;
+        }
       }
     }
-    if (expand_buffer)
+    if (expand_buffer) {
       break;
-    expand_buffer = TRUE;
+    }
+    expand_buffer = true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /*
@@ -3618,8 +3597,8 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
       char_u *q = mp->m_keys;
       int match;
 
-      if (vim_strbyte(mp->m_keys, K_SPECIAL) != NULL) {
-        /* might have CSI escaped mp->m_keys */
+      if (strchr((const char *)mp->m_keys, K_SPECIAL) != NULL) {
+        // Might have CSI escaped mp->m_keys.
         q = vim_strsave(mp->m_keys);
         vim_unescape_csi(q);
         qlen = (int)STRLEN(q);
@@ -3755,8 +3734,10 @@ eval_map_expr (
  */
 char_u *vim_strsave_escape_csi(char_u *p)
 {
-  /* Need a buffer to hold up to three times as much. */
-  char_u *res = xmalloc(STRLEN(p) * 3 + 1);
+  // Need a buffer to hold up to three times as much.  Four in case of an
+  // illegal utf-8 byte:
+  // 0xc0 -> 0xc3 - 0x80 -> 0xc3 K_SPECIAL KS_SPECIAL KE_FILLER
+  char_u *res = xmalloc(STRLEN(p) * 4 + 1);
   char_u *d = res;
   for (char_u *s = p; *s != NUL; ) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
@@ -3765,17 +3746,10 @@ char_u *vim_strsave_escape_csi(char_u *p)
       *d++ = *s++;
       *d++ = *s++;
     } else {
-      int len  = mb_char2len(PTR2CHAR(s));
-      int len2 = mb_ptr2len(s);
-      /* Add character, possibly multi-byte to destination, escaping
-       * CSI and K_SPECIAL. */
+      // Add character, possibly multi-byte to destination, escaping
+      // CSI and K_SPECIAL. Be careful, it can be an illegal byte!
       d = add_char2buf(PTR2CHAR(s), d);
-      while (len < len2) {
-        /* add following combining char */
-        d = add_char2buf(PTR2CHAR(s + len), d);
-        len += mb_char2len(PTR2CHAR(s + len));
-      }
-      mb_ptr_adv(s);
+      s += MB_CPTR2LEN(s);
     }
   }
   *d = NUL;
@@ -3821,8 +3795,7 @@ makemap (
   char        *cmd;
   int abbr;
   int hash;
-  int did_cpo = FALSE;
-  int i;
+  bool did_cpo = false;
 
   validate_maphash();
 
@@ -3950,13 +3923,15 @@ makemap (
           /* When outputting <> form, need to make sure that 'cpo'
            * is set to the Vim default. */
           if (!did_cpo) {
-            if (*mp->m_str == NUL)                      /* will use <Nop> */
-              did_cpo = TRUE;
-            else
-              for (i = 0; i < 2; ++i)
-                for (p = (i ? mp->m_str : mp->m_keys); *p; ++p)
-                  if (*p == K_SPECIAL || *p == NL)
-                    did_cpo = TRUE;
+            if (*mp->m_str == NUL) {  // Will use <Nop>.
+              did_cpo = true;
+            } else {
+              const char specials[] = { (char)(uint8_t)K_SPECIAL, NL, NUL };
+              if (strpbrk((const char *)mp->m_str, specials) != NULL
+                  || strpbrk((const char *)mp->m_keys, specials) != NULL) {
+                did_cpo = true;
+              }
+            }
             if (did_cpo) {
               if (fprintf(fd, "let s:cpo_save=&cpo") < 0
                   || put_eol(fd) < 0
@@ -4262,4 +4237,18 @@ static bool typebuf_match_len(const uint8_t *str, int *mlen)
   }
   *mlen = i;
   return str[i] == NUL;  // matched the whole string
+}
+
+/// Retrieve the mapblock at the index either globally or for a certain buffer
+///
+/// @param  index  The index in the maphash[]
+/// @param  buf  The buffer to get the maphash from. NULL for global
+mapblock_T *get_maphash(int index, buf_T *buf)
+    FUNC_ATTR_PURE
+{
+  if (index > MAX_MAPHASH) {
+    return NULL;
+  }
+
+  return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
 }

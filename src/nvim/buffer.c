@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * buffer.c: functions for dealing with the buffer structure
  */
@@ -21,6 +24,7 @@
 #include <inttypes.h>
 
 #include "nvim/api/private/handle.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/vim.h"
@@ -70,6 +74,12 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 
+typedef enum {
+  kBLSUnchanged = 0,
+  kBLSChanged = 1,
+  kBLSDeleted = 2,
+} BufhlLineStatus;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.c.generated.h"
 #endif
@@ -77,6 +87,9 @@
 static char *msg_loclist = N_("[Location List]");
 static char *msg_qflist = N_("[Quickfix List]");
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
+
+// Number of times free_buffer() was called.
+static int buf_free_count = 0;
 
 /*
  * Open current buffer, that is: open the memfile and read the file into
@@ -91,7 +104,7 @@ open_buffer (
 )
 {
   int retval = OK;
-  buf_T       *old_curbuf;
+  bufref_T       old_curbuf;
   long old_tw = curbuf->b_p_tw;
 
   /*
@@ -133,10 +146,10 @@ open_buffer (
     return FAIL;
   }
 
-  /* The autocommands in readfile() may change the buffer, but only AFTER
-   * reading the file. */
-  old_curbuf = curbuf;
-  modified_was_set = FALSE;
+  // The autocommands in readfile() may change the buffer, but only AFTER
+  // reading the file.
+  set_bufref(&old_curbuf, curbuf);
+  modified_was_set = false;
 
   /* mark cursor position as being invalid */
   curwin->w_valid = 0;
@@ -249,11 +262,11 @@ open_buffer (
    * The autocommands may have changed the current buffer.  Apply the
    * modelines to the correct buffer, if it still exists and is loaded.
    */
-  if (buf_valid(old_curbuf) && old_curbuf->b_ml.ml_mfp != NULL) {
+  if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->b_ml.ml_mfp != NULL) {
     aco_save_T aco;
 
-    /* Go to the buffer that was opened. */
-    aucmd_prepbuf(&aco, old_curbuf);
+    // Go to the buffer that was opened.
+    aucmd_prepbuf(&aco, old_curbuf.br_buf);
     do_modelines(0);
     curbuf->b_flags &= ~(BF_CHECK_RO | BF_NEVERLOADED);
 
@@ -267,40 +280,50 @@ open_buffer (
   return retval;
 }
 
-/// Check that "buf" points to a valid buffer (in the buffer list).
+/// Store "buf" in "bufref" and set the free count.
+///
+/// @param bufref Reference to be used for the buffer.
+/// @param buf    The buffer to reference.
+void set_bufref(bufref_T *bufref, buf_T *buf)
+{
+  bufref->br_buf = buf;
+  bufref->br_fnum = buf->b_fnum;
+  bufref->br_buf_free_count = buf_free_count;
+}
+
+/// Return true if "bufref->br_buf" points to the same buffer as when
+/// set_bufref() was called and it is a valid buffer.
+/// Only goes through the buffer list if buf_free_count changed.
+/// Also checks if b_fnum is still the same, a :bwipe followed by :new might get
+/// the same allocated memory, but it's a different buffer.
+///
+/// @param bufref Buffer reference to check for.
+bool bufref_valid(bufref_T *bufref)
+{
+  return bufref->br_buf_free_count == buf_free_count
+    ? true
+    : buf_valid(bufref->br_buf) && bufref->br_fnum == bufref->br_buf->b_fnum;
+}
+
+/// Check that "buf" points to a valid buffer in the buffer list.
+///
+/// Can be slow if there are many buffers, prefer using bufref_valid().
+///
+/// @param buf The buffer to check for.
 bool buf_valid(buf_T *buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (buf == NULL) {
     return false;
   }
-  FOR_ALL_BUFFERS(bp) {
+  // Assume that we more often have a recent buffer,
+  // start with the last one.
+  for (buf_T *bp = lastbuf; bp != NULL; bp = bp->b_prev) {
     if (bp == buf) {
       return true;
     }
   }
   return false;
-}
-
-// Map used to quickly lookup a buffer by its number.
-static PMap(handle_T) *buf_map = NULL;
-
-static void buf_hashtab_add(buf_T *buf)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (pmap_has(handle_T)(buf_map, buf->handle)) {
-    EMSG(_("E931: Buffer cannot be registered"));
-  } else {
-    pmap_put(handle_T)(buf_map, buf->handle, buf);
-  }
-}
-
-static void buf_hashtab_remove(buf_T *buf)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (pmap_has(handle_T)(buf_map, buf->handle)) {
-    pmap_del(handle_T)(buf_map, buf->handle);
-  }
 }
 
 /// Close the link to a buffer.
@@ -327,6 +350,10 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
   bool wipe_buf = (action == DOBUF_WIPE);
 
+  bool is_curwin = (curwin != NULL && curwin->w_buffer == buf);
+  win_T *the_curwin = curwin;
+  tabpage_T *the_curtab = curtab;
+
   // Force unloading or deleting when 'bufhidden' says so, but not for terminal
   // buffers.
   // The caller must take care of NOT deleting/freeing when 'bufhidden' is
@@ -350,6 +377,13 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     wipe_buf = true;
   }
 
+  // Disallow deleting the buffer when it is locked (already being closed or
+  // halfway a command that relies on it). Unloading is allowed.
+  if (buf->b_locked > 0 && (del_buf || wipe_buf)) {
+    EMSG(_("E937: Attempt to delete a buffer that is in use"));
+    return;
+  }
+
   if (win_valid_any_tab(win)) {
     // Set b_last_cursor when closing the last window for the buffer.
     // Remember the last cursor position and window options of the buffer.
@@ -363,17 +397,19 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
         win->w_cursor.col, TRUE);
   }
 
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
-    buf->b_closing = true;
-    apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname,
-        FALSE, buf);
-    if (!buf_valid(buf)) {
-      /* Autocommands deleted the buffer. */
+    buf->b_locked++;
+    if (apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, false,
+                       buf) && !bufref_valid(&bufref)) {
+      // Autocommands deleted the buffer.
       EMSG(_(e_auabort));
       return;
     }
-    buf->b_closing = false;
+    buf->b_locked--;
     if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */
       EMSG(_(e_auabort));
@@ -383,15 +419,14 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
     if (!unload_buf) {
-      buf->b_closing = true;
-      apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname,
-          FALSE, buf);
-      if (!buf_valid(buf)) {
-        /* Autocommands deleted the buffer. */
+      buf->b_locked++;
+      if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,
+                         buf) && !bufref_valid(&bufref)) {
+        // Autocommands deleted the buffer.
         EMSG(_(e_auabort));
         return;
       }
-      buf->b_closing = false;
+      buf->b_locked--;
       if (abort_if_last && one_window()) {
         /* Autocommands made this the only window. */
         EMSG(_(e_auabort));
@@ -401,6 +436,16 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     if (aborting())         /* autocmds may abort script processing */
       return;
   }
+
+  // If the buffer was in curwin and the window has changed, go back to that
+  // window, if it still exists.  This avoids that ":edit x" triggering a
+  // "tabnext" BufUnload autocmd leaves a window behind without a buffer.
+  if (is_curwin && curwin != the_curwin &&  win_valid_any_tab(the_curwin)) {
+    block_autocmds();
+    goto_tabpage_win(the_curtab, the_curwin);
+    unblock_autocmds();
+  }
+
   int nwindows = buf->b_nwindows;
 
   /* decrease the link count from windows (unless not in any window) */
@@ -414,7 +459,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
 
   if (buf->terminal) {
     terminal_close(buf->terminal, NULL);
-  } 
+  }
 
   /* Always remove the buffer when there is no file name. */
   if (buf->b_ffname == NULL)
@@ -427,15 +472,29 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   /* Remember if we are closing the current buffer.  Restore the number of
    * windows, so that autocommands in buf_freeall() don't get confused. */
   bool is_curbuf = (buf == curbuf);
+
+  // When closing the current buffer stop Visual mode before freeing
+  // anything.
+  if (is_curbuf && VIsual_active
+#if defined(EXITFREE)
+      && !entered_free_all_mem
+#endif
+      ) {
+    end_visual_mode();
+  }
+
   buf->b_nwindows = nwindows;
 
   buf_freeall(buf, (del_buf ? BFA_DEL : 0) + (wipe_buf ? BFA_WIPE : 0));
 
-  /* Autocommands may have deleted the buffer. */
-  if (!buf_valid(buf))
+  if (!bufref_valid(&bufref)) {
+    // Autocommands may have deleted the buffer.
     return;
-  if (aborting())           /* autocmds may abort script processing */
+  }
+  if (aborting()) {
+    // Autocmds may abort script processing.
     return;
+  }
 
   /*
    * It's possible that autocommands change curbuf to the one being deleted.
@@ -534,25 +593,32 @@ void buf_freeall(buf_T *buf, int flags)
   tabpage_T *the_curtab = curtab;
 
   // Make sure the buffer isn't closed by autocommands.
-  buf->b_closing = true;
-  if (buf->b_ml.ml_mfp != NULL) {
-      apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf);
-      if (!buf_valid(buf)) {    // autocommands may delete the buffer
-          return;
-      }
+  buf->b_locked++;
+
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
+  if ((buf->b_ml.ml_mfp != NULL)
+      && apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf)
+      && !bufref_valid(&bufref)) {
+    // Autocommands deleted the buffer.
+    return;
   }
-  if ((flags & BFA_DEL) && buf->b_p_bl) {
-    apply_autocmds(EVENT_BUFDELETE, buf->b_fname, buf->b_fname, FALSE, buf);
-    if (!buf_valid(buf))            /* autocommands may delete the buffer */
-      return;
+  if ((flags & BFA_DEL)
+      && buf->b_p_bl
+      && apply_autocmds(EVENT_BUFDELETE, buf->b_fname, buf->b_fname, false, buf)
+      && !bufref_valid(&bufref)) {
+    // Autocommands may delete the buffer.
+    return;
   }
-  if (flags & BFA_WIPE) {
-    apply_autocmds(EVENT_BUFWIPEOUT, buf->b_fname, buf->b_fname,
-        FALSE, buf);
-    if (!buf_valid(buf))            /* autocommands may delete the buffer */
-      return;
+  if ((flags & BFA_WIPE)
+      && apply_autocmds(EVENT_BUFWIPEOUT, buf->b_fname, buf->b_fname, false,
+                        buf)
+      && !bufref_valid(&bufref)) {
+    // Autocommands may delete the buffer.
+    return;
   }
-  buf->b_closing = false;
+  buf->b_locked--;
 
   // If the buffer was in curwin and the window has changed, go back to that
   // window, if it still exists.  This avoids that ":edit x" triggering a
@@ -574,10 +640,11 @@ void buf_freeall(buf_T *buf, int flags)
    */
   if (buf == curbuf && !is_curbuf)
     return;
-  diff_buf_delete(buf);             /* Can't use 'diff' for unloaded buffer. */
-  /* Remove any ownsyntax, unless exiting. */
-  if (firstwin != NULL && curwin->w_buffer == buf)
+  diff_buf_delete(buf);             // Can't use 'diff' for unloaded buffer.
+  // Remove any ownsyntax, unless exiting.
+  if (curwin != NULL && curwin->w_buffer == buf) {
     reset_synblock(curwin);
+  }
 
   /* No folds in an empty buffer. */
   FOR_ALL_TAB_WINDOWS(tp, win) {
@@ -603,11 +670,11 @@ void buf_freeall(buf_T *buf, int flags)
 static void free_buffer(buf_T *buf)
 {
   handle_unregister_buffer(buf);
-  free_buffer_stuff(buf, TRUE);
+  buf_free_count++;
+  free_buffer_stuff(buf, true);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
-  buf_hashtab_remove(buf);
-  dict_unref(buf->additional_data);
+  tv_dict_unref(buf->additional_data);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
   clear_fmark(&buf->b_last_change);
@@ -643,8 +710,18 @@ free_buffer_stuff (
     free_buf_options(buf, true);
     ga_clear(&buf->b_s.b_langp);
   }
+  {
+    // Avoid loosing b:changedtick when deleting buffer: clearing variables
+    // implies using clear_tv() on b:changedtick and that sets changedtick to
+    // zero.
+    hashitem_T *const changedtick_hi = hash_find(
+        &buf->b_vars->dv_hashtab, (const char_u *)"changedtick");
+    assert(changedtick_hi != NULL);
+    hash_remove(&buf->b_vars->dv_hashtab, changedtick_hi);
+  }
   vars_clear(&buf->b_vars->dv_hashtab);   // free all internal variables
   hash_init(&buf->b_vars->dv_hashtab);
+  buf_init_changedtick(buf);
   uc_clear(&buf->b_ucmds);              // clear local user commands
   buf_delete_signs(buf);                // delete any signs
   bufhl_clear_all(buf);                // delete any highligts
@@ -677,10 +754,12 @@ static void clear_wininfo(buf_T *buf)
  */
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
-  (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
-      start, dir, count, eap->forceit);
-  buf_T *old_curbuf = curbuf;
+  bufref_T old_curbuf;
+  set_bufref(&old_curbuf, curbuf);
   swap_exists_action = SEA_DIALOG;
+
+  (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
+                  start, dir, count, eap->forceit);
 
   if (swap_exists_action == SEA_QUIT && *eap->cmd == 's') {
     cleanup_T cs;
@@ -698,18 +777,20 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
      * new aborting error, interrupt, or uncaught exception. */
     leave_cleanup(&cs);
   } else {
-    handle_swap_exists(old_curbuf);
+    handle_swap_exists(&old_curbuf);
   }
 }
 
-/*
- * Handle the situation of swap_exists_action being set.
- * It is allowed for "old_curbuf" to be NULL or invalid.
- */
-void handle_swap_exists(buf_T *old_curbuf)
+/// Handle the situation of swap_exists_action being set.
+///
+/// It is allowed for "old_curbuf" to be NULL or invalid.
+///
+/// @param old_curbuf The buffer to check for.
+void handle_swap_exists(bufref_T *old_curbuf)
 {
   cleanup_T cs;
   long old_tw = curbuf->b_p_tw;
+  buf_T *buf;
 
   if (swap_exists_action == SEA_QUIT) {
     /* Reset the error/interrupt/exception state here so that
@@ -722,13 +803,18 @@ void handle_swap_exists(buf_T *old_curbuf)
     swap_exists_action = SEA_NONE;      // don't want it again
     swap_exists_did_quit = true;
     close_buffer(curwin, curbuf, DOBUF_UNLOAD, false);
-    if (!buf_valid(old_curbuf) || old_curbuf == curbuf) {
-      old_curbuf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+    if (old_curbuf == NULL
+        || !bufref_valid(old_curbuf)
+        || old_curbuf->br_buf == curbuf) {
+      buf = buflist_new(NULL, NULL, 1L, BLN_CURBUF | BLN_LISTED);
+    } else {
+      buf = old_curbuf->br_buf;
     }
-    if (old_curbuf != NULL) {
-      enter_buffer(old_curbuf);
-      if (old_tw != curbuf->b_p_tw)
+    if (buf != NULL) {
+      enter_buffer(buf);
+      if (old_tw != curbuf->b_p_tw) {
         check_colorcolumn(curwin);
+      }
     }
     /* If "old_curbuf" is NULL we are in big trouble here... */
 
@@ -751,7 +837,7 @@ void handle_swap_exists(buf_T *old_curbuf)
      * new aborting error, interrupt, or uncaught exception. */
     leave_cleanup(&cs);
   }
-  swap_exists_action = SEA_NONE;
+  swap_exists_action = SEA_NONE;  // -V519
 }
 
 /*
@@ -879,6 +965,9 @@ static int empty_curbuf(int close_others, int forceit, int action)
     return FAIL;
   }
 
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
+
   if (close_others) {
     /* Close any other windows on this buffer, then make it empty. */
     close_windows(buf, TRUE);
@@ -888,15 +977,17 @@ static int empty_curbuf(int close_others, int forceit, int action)
   retval = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE,
       forceit ? ECMD_FORCEIT : 0, curwin);
 
-  /*
-   * do_ecmd() may create a new buffer, then we have to delete
-   * the old one.  But do_ecmd() may have done that already, check
-   * if the buffer still exists.
-   */
-  if (buf != curbuf && buf_valid(buf) && buf->b_nwindows == 0)
-    close_buffer(NULL, buf, action, FALSE);
-  if (!close_others)
-    need_fileinfo = FALSE;
+  // do_ecmd() may create a new buffer, then we have to delete
+  // the old one.  But do_ecmd() may have done that already, check
+  // if the buffer still exists.
+  if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows == 0) {
+    close_buffer(NULL, buf, action, false);
+  }
+
+  if (!close_others) {
+    need_fileinfo = false;
+  }
+
   return retval;
 }
 /*
@@ -998,6 +1089,8 @@ do_buffer (
    */
   if (unload) {
     int forward;
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
 
     /* When unloading or deleting a buffer that's already unloaded and
      * unlisted: fail silently. */
@@ -1006,15 +1099,16 @@ do_buffer (
 
     if (!forceit && (buf->terminal || bufIsChanged(buf))) {
       if ((p_confirm || cmdmod.confirm) && p_write && !buf->terminal) {
-        dialog_changed(buf, FALSE);
-        if (!buf_valid(buf))
-          /* Autocommand deleted buffer, oops!  It's not changed
-           * now. */
+        dialog_changed(buf, false);
+        if (!bufref_valid(&bufref)) {
+          // Autocommand deleted buffer, oops! It's not changed now.
           return FAIL;
-        /* If it's still changed fail silently, the dialog already
-         * mentioned why it fails. */
-        if (bufIsChanged(buf))
+        }
+        // If it's still changed fail silently, the dialog already
+        // mentioned why it fails.
+        if (bufIsChanged(buf)) {
           return FAIL;
+        }
       } else {
         if (buf->terminal) {
           EMSG2(_("E89: %s will be killed(add ! to override)"),
@@ -1026,6 +1120,11 @@ do_buffer (
         }
         return FAIL;
       }
+    }
+
+    // When closing the current buffer stop Visual mode.
+    if (buf == curbuf && VIsual_active) {
+      end_visual_mode();
     }
 
     /*
@@ -1048,7 +1147,7 @@ do_buffer (
      * a window with this buffer.
      */
     while (buf == curbuf
-           && !(curwin->w_closing || curwin->w_buffer->b_closing)
+           && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
            && (firstwin != lastwin || first_tabpage->tp_next != NULL)) {
       if (win_close(curwin, FALSE) == FAIL)
         break;
@@ -1058,27 +1157,26 @@ do_buffer (
      * If the buffer to be deleted is not the current one, delete it here.
      */
     if (buf != curbuf) {
-      close_windows(buf, FALSE);
-      if (buf != curbuf && buf_valid(buf) && buf->b_nwindows <= 0)
-        close_buffer(NULL, buf, action, FALSE);
+      close_windows(buf, false);
+      if (buf != curbuf && bufref_valid(&bufref) && buf->b_nwindows <= 0) {
+        close_buffer(NULL, buf, action, false);
+      }
       return OK;
     }
 
-    /*
-     * Deleting the current buffer: Need to find another buffer to go to.
-     * There should be another, otherwise it would have been handled
-     * above.  However, autocommands may have deleted all buffers.
-     * First use au_new_curbuf, if it is valid.
-     * Then prefer the buffer we most recently visited.
-     * Else try to find one that is loaded, after the current buffer,
-     * then before the current buffer.
-     * Finally use any buffer.
-     */
-    buf = NULL;         /* selected buffer */
-    bp = NULL;          /* used when no loaded buffer found */
-    if (au_new_curbuf != NULL && buf_valid(au_new_curbuf))
-      buf = au_new_curbuf;
-    else if (curwin->w_jumplistlen > 0) {
+    // Deleting the current buffer: Need to find another buffer to go to.
+    // There should be another, otherwise it would have been handled
+    // above.  However, autocommands may have deleted all buffers.
+    // First use au_new_curbuf.br_buf, if it is valid.
+    // Then prefer the buffer we most recently visited.
+    // Else try to find one that is loaded, after the current buffer,
+    // then before the current buffer.
+    // Finally use any buffer.
+    buf = NULL;  // Selected buffer.
+    bp = NULL;   // Used when no loaded buffer found.
+    if (au_new_curbuf.br_buf != NULL && bufref_valid(&au_new_curbuf)) {
+      buf = au_new_curbuf.br_buf;
+    } else if (curwin->w_jumplistlen > 0) {
       int jumpidx;
 
       jumpidx = curwin->w_jumplistidx - 1;
@@ -1183,10 +1281,13 @@ do_buffer (
    */
   if (action == DOBUF_GOTO && !can_abandon(curbuf, forceit)) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
-      dialog_changed(curbuf, FALSE);
-      if (!buf_valid(buf))
-        /* Autocommand deleted buffer, oops! */
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
+      dialog_changed(curbuf, false);
+      if (!bufref_valid(&bufref)) {
+        // Autocommand deleted buffer, oops!
         return FAIL;
+      }
     }
     if (bufIsChanged(curbuf)) {
       EMSG(_(e_nowrtmsg));
@@ -1234,14 +1335,18 @@ void set_curbuf(buf_T *buf, int action)
 
   /* close_windows() or apply_autocmds() may change curbuf */
   prevbuf = curbuf;
+  bufref_T bufref;
+  set_bufref(&bufref, prevbuf);
 
-  apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, FALSE, curbuf);
-  if (buf_valid(prevbuf) && !aborting()) {
-    if (prevbuf == curwin->w_buffer)
+  if (!apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, false, curbuf)
+      || (bufref_valid(&bufref) && !aborting())) {
+    if (prevbuf == curwin->w_buffer) {
       reset_synblock(curwin);
-    if (unload)
-      close_windows(prevbuf, FALSE);
-    if (buf_valid(prevbuf) && !aborting()) {
+    }
+    if (unload) {
+      close_windows(prevbuf, false);
+    }
+    if (bufref_valid(&bufref) && !aborting()) {
       win_T  *previouswin = curwin;
       if (prevbuf == curbuf)
         u_sync(FALSE);
@@ -1305,7 +1410,9 @@ void enter_buffer(buf_T *buf)
   curwin->w_valid = 0;
 
   if (buf->terminal) {
-    terminal_resize(buf->terminal, curwin->w_width, curwin->w_height);
+    terminal_resize(buf->terminal,
+                    (uint16_t)curwin->w_width,
+                    (uint16_t)curwin->w_height);
   }
 
   /* Make sure the buffer is loaded. */
@@ -1371,6 +1478,26 @@ void do_autochdir(void)
 
 static int top_file_num = 1;            ///< highest file number
 
+/// Initialize b:changedtick and changedtick_val attribute
+///
+/// @param[out]  buf  Buffer to intialize for.
+static inline void buf_init_changedtick(buf_T *const buf)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ALL
+{
+  STATIC_ASSERT(sizeof("changedtick") <= sizeof(buf->changedtick_di.di_key),
+                "buf->changedtick_di cannot hold large enough keys");
+  buf->changedtick_di = (ChangedtickDictItem) {
+    .di_flags = DI_FLAGS_RO|DI_FLAGS_FIX,  // Must not include DI_FLAGS_ALLOC.
+    .di_tv = (typval_T) {
+      .v_type = VAR_NUMBER,
+      .v_lock = VAR_FIXED,
+      .vval.v_number = buf->b_changedtick,
+    },
+    .di_key = "changedtick",
+  };
+  tv_dict_add(buf->b_vars, (dictitem_T *)&buf->changedtick_di);
+}
+
 /// Add a file name to the buffer list.
 /// If the same file name already exists return a pointer to that buffer.
 /// If it does not exist, or if fname == NULL, a new entry is created.
@@ -1378,6 +1505,8 @@ static int top_file_num = 1;            ///< highest file number
 /// If (flags & BLN_LISTED) is TRUE, add new buffer to buffer list.
 /// If (flags & BLN_DUMMY) is TRUE, don't count it as a real buffer.
 /// If (flags & BLN_NEW) is TRUE, don't use an existing buffer.
+/// If (flags & BLN_NOOPT) is TRUE, don't copy options from the current buffer
+///                                 if the buffer already exists.
 /// This is the ONLY way to create a new buffer.
 ///
 /// @param ffname full path of fname or relative
@@ -1391,9 +1520,6 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
 {
   buf_T       *buf;
 
-  if (top_file_num == 1) {
-    buf_map = pmap_new(handle_T)();
-  }
   fname_expand(curbuf, &ffname, &sfname);       // will allocate ffname
 
   /*
@@ -1408,16 +1534,20 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       && (buf = buflist_findname_file_id(ffname, &file_id,
                                          file_id_valid)) != NULL) {
     xfree(ffname);
-    if (lnum != 0)
-      buflist_setfpos(buf, curwin, lnum, (colnr_T)0, FALSE);
-    /* copy the options now, if 'cpo' doesn't have 's' and not done
-     * already */
-    buf_copy_options(buf, 0);
+    if (lnum != 0) {
+      buflist_setfpos(buf, curwin, lnum, (colnr_T)0, false);
+    }
+    if ((flags & BLN_NOOPT) == 0) {
+      // Copy the options now, if 'cpo' doesn't have 's' and not done already.
+      buf_copy_options(buf, 0);
+    }
     if ((flags & BLN_LISTED) && !buf->b_p_bl) {
-      buf->b_p_bl = TRUE;
+      buf->b_p_bl = true;
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
       if (!(flags & BLN_DUMMY)) {
-        apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, buf);
-        if (!buf_valid(buf)) {
+        if (apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+            && !bufref_valid(&bufref)) {
           return NULL;
         }
       }
@@ -1457,8 +1587,9 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   if (buf != curbuf || curbuf == NULL) {
     buf = xcalloc(1, sizeof(buf_T));
     // init b: variables
-    buf->b_vars = dict_alloc();
+    buf->b_vars = tv_dict_alloc();
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
+    buf_init_changedtick(buf);
   }
 
   if (ffname != NULL) {
@@ -1518,7 +1649,6 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       }
       top_file_num = 1;
     }
-    buf_hashtab_add(buf);
 
     /*
      * Always copy the options from the current buffer.
@@ -1551,18 +1681,21 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
     // Tricky: these autocommands may change the buffer list.  They could also
     // split the window with re-using the one empty buffer. This may result in
     // unexpectedly losing the empty buffer.
-    apply_autocmds(EVENT_BUFNEW, NULL, NULL, FALSE, buf);
-    if (!buf_valid(buf)) {
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
+    if (apply_autocmds(EVENT_BUFNEW, NULL, NULL, false, buf)
+        && !bufref_valid(&bufref)) {
       return NULL;
     }
-    if (flags & BLN_LISTED) {
-      apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, buf);
-      if (!buf_valid(buf)) {
-        return NULL;
-      }
-    }
-    if (aborting())             /* autocmds may abort script processing */
+    if ((flags & BLN_LISTED)
+        && apply_autocmds(EVENT_BUFADD, NULL, NULL, false, buf)
+        && !bufref_valid(&bufref)) {
       return NULL;
+    }
+    if (aborting()) {
+      // Autocmds may abort script processing.
+      return NULL;
+    }
   }
 
   return buf;
@@ -1586,6 +1719,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_inex);
   clear_string_option(&buf->b_p_inde);
   clear_string_option(&buf->b_p_indk);
+  clear_string_option(&buf->b_p_fp);
   clear_string_option(&buf->b_p_fex);
   clear_string_option(&buf->b_p_kp);
   clear_string_option(&buf->b_p_mps);
@@ -1628,16 +1762,15 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_bkc);
 }
 
-/*
- * get alternate file n
- * set linenr to lnum or altfpos.lnum if lnum == 0
- *	also set cursor column to altfpos.col if 'startofline' is not set.
- * if (options & GETF_SETMARK) call setpcmark()
- * if (options & GETF_ALT) we are jumping to an alternate file.
- * if (options & GETF_SWITCH) respect 'switchbuf' settings when jumping
- *
- * return FAIL for failure, OK for success
- */
+
+/// Get alternate file "n".
+/// Set linenr to "lnum" or altfpos.lnum if "lnum" == 0.
+/// Also set cursor column to altfpos.col if 'startofline' is not set.
+/// if (options & GETF_SETMARK) call setpcmark()
+/// if (options & GETF_ALT) we are jumping to an alternate file.
+/// if (options & GETF_SWITCH) respect 'switchbuf' settings when jumping
+///
+/// Return FAIL for failure, OK for success.
 int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 {
   buf_T       *buf;
@@ -1718,9 +1851,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   return FAIL;
 }
 
-/*
- * go to the last know line number for the current buffer
- */
+// Go to the last known line number for the current buffer.
 void buflist_getfpos(void)
 {
   pos_T       *fpos;
@@ -1785,7 +1916,8 @@ buf_T *buflist_findname(char_u *ffname)
 static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id,
                                        bool file_id_valid)
 {
-  FOR_ALL_BUFFERS(buf) {
+  // Start at the last buffer, expect to find a match sooner.
+  FOR_ALL_BUFFERS_BACKWARDS(buf) {
     if ((buf->b_flags & BF_DUMMY) == 0
         && !otherfile_buf(buf, ffname, file_id, file_id_valid)) {
       return buf;
@@ -1859,7 +1991,7 @@ int buflist_findpat(
           return -1;
         }
 
-        FOR_ALL_BUFFERS(buf) {
+        FOR_ALL_BUFFERS_BACKWARDS(buf) {
           if (buf->b_p_bl == find_listed
               && (!diffmode || diff_mode_buf(buf))
               && buflist_match(&regmatch, buf, false) != NULL) {
@@ -1973,7 +2105,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
       if (count == 0)           /* no match found, break here */
         break;
       if (round == 1) {
-        *file = xmalloc(count * sizeof(**file));
+        *file = xmalloc((size_t)count * sizeof(**file));
       }
     }
     vim_regfree(regmatch.regprog);
@@ -2035,10 +2167,7 @@ buf_T *buflist_findnr(int nr)
     nr = curwin->w_alt_fnum;
   }
 
-  if (pmap_has(handle_T)(buf_map, (handle_T)nr)) {
-    return pmap_get(handle_T)(buf_map, (handle_T)nr);
-  }
-  return NULL;
+  return handle_get_buffer((handle_T)nr);
 }
 
 /*
@@ -2196,7 +2325,7 @@ void get_winopts(buf_T *buf)
   /* Set 'foldlevel' to 'foldlevelstart' if it's not negative. */
   if (p_fdls >= 0)
     curwin->w_p_fdl = p_fdls;
-  check_colorcolumn(curwin);
+  didset_window_options(curwin);
 }
 
 /*
@@ -2220,9 +2349,7 @@ linenr_T buflist_findlnum(buf_T *buf)
   return buflist_findfpos(buf)->lnum;
 }
 
-/*
- * List all know file names (for :files and :buffers command).
- */
+// List all known file names (for :files and :buffers command).
 void buflist_list(exarg_T *eap)
 {
   buf_T       *buf;
@@ -2247,12 +2374,17 @@ void buflist_list(exarg_T *eap)
             && (buf == curbuf || curwin->w_alt_fnum != buf->b_fnum))) {
       continue;
     }
-    msg_putchar('\n');
-    if (buf_spname(buf) != NULL)
+    if (buf_spname(buf) != NULL) {
       STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
-    else
-      home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, TRUE);
+    } else {
+      home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, true);
+    }
 
+    if (message_filtered(NameBuff)) {
+      continue;
+    }
+
+    msg_putchar('\n');
     len = vim_snprintf((char *)IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
         buf->b_fnum,
         buf->b_p_bl ? ' ' : 'u',
@@ -2606,7 +2738,7 @@ fileinfo (
     else
       name = curbuf->b_ffname;
     home_replace(shorthelp ? curbuf : NULL, name, p,
-        (int)(IOSIZE - (p - buffer)), TRUE);
+                 (size_t)(IOSIZE - (p - buffer)), true);
   }
 
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
@@ -2716,9 +2848,10 @@ void maketitle(void)
 
   if (p_title) {
     if (p_titlelen > 0) {
-      maxlen = p_titlelen * Columns / 100;
-      if (maxlen < 10)
+      maxlen = (int)(p_titlelen * Columns / 100);
+      if (maxlen < 10) {
         maxlen = 10;
+      }
     }
 
     t_str = buf;
@@ -2770,7 +2903,7 @@ void maketitle(void)
         buf[off++] = ' ';
         buf[off++] = '(';
         home_replace(curbuf, curbuf->b_ffname,
-            buf + off, SPACE_FOR_DIR - off, TRUE);
+                     buf + off, (size_t)(SPACE_FOR_DIR - off), true);
 #ifdef BACKSLASH_IN_FILENAME
         /* avoid "c:/name" to be reduced to "c" */
         if (isalpha(buf[off]) && buf[off + 1] == ':')
@@ -2877,13 +3010,13 @@ static bool ti_change(char_u *str, char_u **last)
   return false;
 }
 
-/*
- * Put current window title back (used after calling a shell)
- */
+
+/// Set current window title
 void resettitle(void)
 {
-  ui_set_title((char *)lasttitle);
-  ui_set_icon((char *)lasticon);
+  ui_call_set_title(cstr_as_string((char *)lasttitle));
+  ui_call_set_icon(cstr_as_string((char *)lasticon));
+  ui_flush();
 }
 
 # if defined(EXITFREE)
@@ -2935,13 +3068,13 @@ int build_stl_str_hl(
     size_t outlen,
     char_u *fmt,
     int use_sandbox,
-    int fillchar,
+    char_u fillchar,
     int maxwidth,
     struct stl_hlrec *hltab,
     StlClickRecord *tabtab
 )
 {
-  int groupitem[STL_MAX_ITEM];
+  int groupitems[STL_MAX_ITEM];
   struct stl_item {
     // Where the item starts in the status line output buffer
     char_u *start;
@@ -2961,7 +3094,7 @@ int build_stl_str_hl(
       ClickFunc,
       Trunc
     } type;
-  } item[STL_MAX_ITEM];
+  } items[STL_MAX_ITEM];
 #define TMPLEN 70
   char_u tmp[TMPLEN];
   char_u      *usefmt = fmt;
@@ -3063,16 +3196,16 @@ int build_stl_str_hl(
       if (groupdepth > 0) {
         continue;
       }
-      item[curitem].type = Separate;
-      item[curitem++].start = out_p;
+      items[curitem].type = Separate;
+      items[curitem++].start = out_p;
       continue;
     }
 
     // STL_TRUNCMARK: Where to begin truncating if the statusline is too long.
     if (*fmt_p == STL_TRUNCMARK) {
       fmt_p++;
-      item[curitem].type = Trunc;
-      item[curitem++].start = out_p;
+      items[curitem].type = Trunc;
+      items[curitem++].start = out_p;
       continue;
     }
 
@@ -3088,7 +3221,7 @@ int build_stl_str_hl(
       // Determine how long the group is.
       // Note: We set the current output position to null
       //       so `vim_strsize` will work.
-      char_u *t = item[groupitem[groupdepth]].start;
+      char_u *t = items[groupitems[groupdepth]].start;
       *out_p = NUL;
       long group_len = vim_strsize(t);
 
@@ -3098,11 +3231,11 @@ int build_stl_str_hl(
       // move the output pointer back to where the group started.
       // Note: This erases any non-item characters that were in the group.
       //       Otherwise there would be no reason to do this step.
-      if (curitem > groupitem[groupdepth] + 1
-          && item[groupitem[groupdepth]].minwid == 0) {
+      if (curitem > groupitems[groupdepth] + 1
+          && items[groupitems[groupdepth]].minwid == 0) {
         bool has_normal_items = false;
-        for (long n = groupitem[groupdepth] + 1; n < curitem; n++) {
-          if (item[n].type == Normal || item[n].type == Highlight) {
+        for (long n = groupitems[groupdepth] + 1; n < curitem; n++) {
+          if (items[n].type == Normal || items[n].type == Highlight) {
             has_normal_items = true;
             break;
           }
@@ -3116,18 +3249,18 @@ int build_stl_str_hl(
 
       // If the group is longer than it is allowed to be
       // truncate by removing bytes from the start of the group text.
-      if (group_len > item[groupitem[groupdepth]].maxwid) {
+      if (group_len > items[groupitems[groupdepth]].maxwid) {
         // { Determine the number of bytes to remove
         long n;
         if (has_mbyte) {
           /* Find the first character that should be included. */
           n = 0;
-          while (group_len >= item[groupitem[groupdepth]].maxwid) {
+          while (group_len >= items[groupitems[groupdepth]].maxwid) {
             group_len -= ptr2cells(t + n);
             n += (*mb_ptr2len)(t + n);
           }
         } else {
-          n = (long)(out_p - t) - item[groupitem[groupdepth]].maxwid + 1;
+          n = (long)(out_p - t) - items[groupitems[groupdepth]].maxwid + 1;
         }
         // }
 
@@ -3137,25 +3270,26 @@ int build_stl_str_hl(
         // { Move the truncated output
         memmove(t + 1, t + n, (size_t)(out_p - (t + n)));
         out_p = out_p - n + 1;
-        /* Fill up space left over by half a double-wide char. */
-        while (++group_len < item[groupitem[groupdepth]].minwid)
+        // Fill up space left over by half a double-wide char.
+        while (++group_len < items[groupitems[groupdepth]].minwid) {
           *out_p++ = fillchar;
+        }
         // }
 
-        /* correct the start of the items for the truncation */
-        for (int idx = groupitem[groupdepth] + 1; idx < curitem; idx++) {
+        // correct the start of the items for the truncation
+        for (int idx = groupitems[groupdepth] + 1; idx < curitem; idx++) {
           // Shift everything back by the number of removed bytes
-          item[idx].start -= n;
+          items[idx].start -= n;
 
           // If the item was partially or completely truncated, set its
           // start to the start of the group
-          if (item[idx].start < t) {
-            item[idx].start = t;
+          if (items[idx].start < t) {
+            items[idx].start = t;
           }
         }
       // If the group is shorter than the minimum width, add padding characters.
-      } else if (abs(item[groupitem[groupdepth]].minwid) > group_len) {
-        long min_group_width = item[groupitem[groupdepth]].minwid;
+      } else if (abs(items[groupitems[groupdepth]].minwid) > group_len) {
+        long min_group_width = items[groupitems[groupdepth]].minwid;
         // If the group is left-aligned, add characters to the right.
         if (min_group_width < 0) {
           min_group_width = 0 - min_group_width;
@@ -3174,8 +3308,8 @@ int build_stl_str_hl(
           // }
 
           // Adjust item start positions
-          for (int n = groupitem[groupdepth] + 1; n < curitem; n++) {
-            item[n].start += group_len;
+          for (int n = groupitems[groupdepth] + 1; n < curitem; n++) {
+            items[n].start += group_len;
           }
 
           // Prepend the fill characters
@@ -3213,9 +3347,9 @@ int build_stl_str_hl(
     // User highlight groups override the min width field
     // to denote the styling to use.
     if (*fmt_p == STL_USER_HL) {
-      item[curitem].type = Highlight;
-      item[curitem].start = out_p;
-      item[curitem].minwid = minwid > 9 ? 1 : minwid;
+      items[curitem].type = Highlight;
+      items[curitem].start = out_p;
+      items[curitem].minwid = minwid > 9 ? 1 : minwid;
       fmt_p++;
       curitem++;
       continue;
@@ -3247,20 +3381,21 @@ int build_stl_str_hl(
     if (*fmt_p == STL_TABPAGENR || *fmt_p == STL_TABCLOSENR) {
       if (*fmt_p == STL_TABCLOSENR) {
         if (minwid == 0) {
-          /* %X ends the close label, go back to the previously
-           * define tab label nr. */
-          for (long n = curitem - 1; n >= 0; --n)
-            if (item[n].type == TabPage && item[n].minwid >= 0) {
-              minwid = item[n].minwid;
+          // %X ends the close label, go back to the previous tab label nr.
+          for (long n = curitem - 1; n >= 0; n--) {
+            if (items[n].type == TabPage && items[n].minwid >= 0) {
+              minwid = items[n].minwid;
               break;
             }
-        } else
-          /* close nrs are stored as negative values */
+          }
+        } else {
+          // close nrs are stored as negative values
           minwid = -minwid;
+        }
       }
-      item[curitem].type = TabPage;
-      item[curitem].start = out_p;
-      item[curitem].minwid = minwid;
+      items[curitem].type = TabPage;
+      items[curitem].start = out_p;
+      items[curitem].minwid = minwid;
       fmt_p++;
       curitem++;
       continue;
@@ -3275,10 +3410,10 @@ int build_stl_str_hl(
       if (*fmt_p != STL_CLICK_FUNC) {
         break;
       }
-      item[curitem].type = ClickFunc;
-      item[curitem].start = out_p;
-      item[curitem].cmd = xmemdupz(t, (size_t) (((char *) fmt_p - t)));
-      item[curitem].minwid = minwid;
+      items[curitem].type = ClickFunc;
+      items[curitem].start = out_p;
+      items[curitem].cmd = xmemdupz(t, (size_t)(((char *)fmt_p - t)));
+      items[curitem].minwid = minwid;
       fmt_p++;
       curitem++;
       continue;
@@ -3301,11 +3436,11 @@ int build_stl_str_hl(
 
     // Denotes the start of a new group
     if (*fmt_p == '(') {
-      groupitem[groupdepth++] = curitem;
-      item[curitem].type = Group;
-      item[curitem].start = out_p;
-      item[curitem].minwid = minwid;
-      item[curitem].maxwid = maxwid;
+      groupitems[groupdepth++] = curitem;
+      items[curitem].type = Group;
+      items[curitem].start = out_p;
+      items[curitem].minwid = minwid;
+      items[curitem].maxwid = maxwid;
       fmt_p++;
       curitem++;
       continue;
@@ -3332,7 +3467,7 @@ int build_stl_str_hl(
     case STL_FULLPATH:
     case STL_FILENAME:
     {
-      // Set fillable to false to that ' ' in the filename will not
+      // Set fillable to false so that ' ' in the filename will not
       // get replaced with the fillchar
       fillable = false;
       if (buf_spname(wp->w_buffer) != NULL) {
@@ -3385,7 +3520,7 @@ int build_stl_str_hl(
       curbuf = o_curbuf;
 
       // Remove the variable we just stored
-      do_unlet((char_u *)"g:actual_curbuf", true);
+      do_unlet(S_LEN("g:actual_curbuf"), true);
 
       // }
 
@@ -3480,6 +3615,7 @@ int build_stl_str_hl(
 
     case STL_OFFSET_X:
       base = kNumBaseHexadecimal;
+      // fallthrough
     case STL_OFFSET:
     {
       long l = ml_find_line_or_offset(wp->w_buffer, wp->w_cursor.lnum, NULL);
@@ -3490,6 +3626,7 @@ int build_stl_str_hl(
     }
     case STL_BYTEVAL_X:
       base = kNumBaseHexadecimal;
+      // fallthrough
     case STL_BYTEVAL:
       num = byteval;
       if (num == NL)
@@ -3537,7 +3674,7 @@ int build_stl_str_hl(
             wp->w_buffer->b_p_ft);
         // Uppercase the file extension
         for (char_u *t = tmp; *t != 0; t++) {
-          *t = TOUPPER_LOC(*t);
+          *t = (char_u)TOUPPER_LOC(*t);
         }
         str = tmp;
       }
@@ -3584,9 +3721,9 @@ int build_stl_str_hl(
 
       // Create a highlight item based on the name
       if (*fmt_p == '#') {
-        item[curitem].type = Highlight;
-        item[curitem].start = out_p;
-        item[curitem].minwid = -syn_namen2id(t, (int)(fmt_p - t));
+        items[curitem].type = Highlight;
+        items[curitem].start = out_p;
+        items[curitem].minwid = -syn_namen2id(t, (int)(fmt_p - t));
         curitem++;
         fmt_p++;
       }
@@ -3597,8 +3734,8 @@ int build_stl_str_hl(
     // If we made it this far, the item is normal and starts at
     // our current position in the output buffer.
     // Non-normal items would have `continued`.
-    item[curitem].start = out_p;
-    item[curitem].type = Normal;
+    items[curitem].start = out_p;
+    items[curitem].type = Normal;
 
     // Copy the item string into the output buffer
     if (str != NULL && *str) {
@@ -3714,7 +3851,8 @@ int build_stl_str_hl(
       }
       // }
 
-      size_t remaining_buf_len = (out_end_p - out_p) + 1;
+      assert(out_end_p >= out_p);
+      size_t remaining_buf_len = (size_t)(out_end_p - out_p) + 1;
 
       // If the number is going to take up too much room
       // Figure out the approximate number in "scientific" type notation.
@@ -3729,7 +3867,7 @@ int build_stl_str_hl(
 
         // { Reduce the number by base^n
         while (num_chars-- > maxwid) {
-          num /= base;
+          num /= (long)base;
         }
         // }
 
@@ -3754,7 +3892,7 @@ int build_stl_str_hl(
 
     // Otherwise, there was nothing to print so mark the item as empty
     } else {
-      item[curitem].type = Empty;
+      items[curitem].type = Empty;
     }
 
     // Only free the string buffer if we allocated it.
@@ -3779,8 +3917,7 @@ int build_stl_str_hl(
   }
 
   // We have now processed the entire statusline format string.
-  // What follows is post-processing to handle alignment and
-  // highlighting factors.
+  // What follows is post-processing to handle alignment and highlighting.
 
   int width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth) {
@@ -3795,16 +3932,17 @@ int build_stl_str_hl(
     // Otherwise, look for the truncation item
     } else {
       // Default to truncating at the first item
-      trunc_p = item[0].start;
+      trunc_p = items[0].start;
       item_idx = 0;
 
-      for (int i = 0; i < itemcnt; i++)
-        if (item[i].type == Trunc) {
-          // Truncate at %< item.
-          trunc_p = item[i].start;
+      for (int i = 0; i < itemcnt; i++) {
+        if (items[i].type == Trunc) {
+          // Truncate at %< items.
+          trunc_p = items[i].start;
           item_idx = i;
           break;
         }
+      }
     }
 
     // If the truncation point we found is beyond the maximum
@@ -3834,7 +3972,7 @@ int build_stl_str_hl(
       // Ignore any items in the statusline that occur after
       // the truncation point
       for (int i = 0; i < itemcnt; i++) {
-        if (item[i].start > trunc_p) {
+        if (items[i].start > trunc_p) {
           itemcnt = i;
           break;
         }
@@ -3889,12 +4027,12 @@ int build_stl_str_hl(
       for (int i = item_idx; i < itemcnt; i++) {
         // Items starting at or after the end of the truncated section need
         // to be moved backwards.
-        if (item[i].start >= trunc_end_p) {
-          item[i].start -= item_offset;
+        if (items[i].start >= trunc_end_p) {
+          items[i].start -= item_offset;
         // Anything inside the truncated area is set to start
         // at the `<` truncation character.
         } else {
-          item[i].start = trunc_p;
+          items[i].start = trunc_p;
         }
       }
       // }
@@ -3905,12 +4043,12 @@ int build_stl_str_hl(
   // add characters at the separate marker (if there is one) to
   // fill up the available space.
   } else if (width < maxwidth
-             && STRLEN(out) + maxwidth - width + 1 < outlen) {
+             && STRLEN(out) + (size_t)(maxwidth - width) + 1 < outlen) {
     // Find how many separators there are, which we will use when
     // figuring out how many groups there are.
     int num_separators = 0;
     for (int i = 0; i < itemcnt; i++) {
-      if (item[i].type == Separate) {
+      if (items[i].type == Separate) {
         num_separators++;
       }
     }
@@ -3922,7 +4060,7 @@ int build_stl_str_hl(
       int separator_locations[STL_MAX_ITEM];
       int index = 0;
       for (int i = 0; i < itemcnt; i++) {
-        if (item[i].type == Separate) {
+        if (items[i].type == Separate) {
           separator_locations[index] = i;
           index++;
         }
@@ -3933,18 +4071,18 @@ int build_stl_str_hl(
         standard_spaces * (num_separators - 1);
 
       for (int i = 0; i < num_separators; i++) {
-        int dislocation = (i == (num_separators - 1)) ?
-          final_spaces : standard_spaces;
-        char_u *sep_loc = item[separator_locations[i]].start + dislocation;
-        STRMOVE(sep_loc, item[separator_locations[i]].start);
-        for (char_u *s = item[separator_locations[i]].start; s < sep_loc; s++) {
+        int dislocation = (i == (num_separators - 1))
+                          ? final_spaces : standard_spaces;
+        char_u *seploc = items[separator_locations[i]].start + dislocation;
+        STRMOVE(seploc, items[separator_locations[i]].start);
+        for (char_u *s = items[separator_locations[i]].start; s < seploc; s++) {
           *s = fillchar;
         }
 
         for (int item_idx = separator_locations[i] + 1;
              item_idx < itemcnt;
              item_idx++) {
-          item[item_idx].start += dislocation;
+          items[item_idx].start += dislocation;
         }
       }
 
@@ -3956,9 +4094,9 @@ int build_stl_str_hl(
   if (hltab != NULL) {
     struct stl_hlrec *sp = hltab;
     for (long l = 0; l < itemcnt; l++) {
-      if (item[l].type == Highlight) {
-        sp->start = item[l].start;
-        sp->userhl = item[l].minwid;
+      if (items[l].type == Highlight) {
+        sp->start = items[l].start;
+        sp->userhl = items[l].minwid;
         sp++;
       }
     }
@@ -3970,14 +4108,14 @@ int build_stl_str_hl(
   if (tabtab != NULL) {
     StlClickRecord *cur_tab_rec = tabtab;
     for (long l = 0; l < itemcnt; l++) {
-      if (item[l].type == TabPage) {
-        cur_tab_rec->start = (char *) item[l].start;
-        if (item[l].minwid == 0) {
+      if (items[l].type == TabPage) {
+        cur_tab_rec->start = (char *)items[l].start;
+        if (items[l].minwid == 0) {
           cur_tab_rec->def.type = kStlClickDisabled;
           cur_tab_rec->def.tabnr = 0;
         } else {
-          int tabnr = item[l].minwid;
-          if (item[l].minwid > 0) {
+          int tabnr = items[l].minwid;
+          if (items[l].minwid > 0) {
             cur_tab_rec->def.type = kStlClickTabSwitch;
           } else {
             cur_tab_rec->def.type = kStlClickTabClose;
@@ -3987,11 +4125,11 @@ int build_stl_str_hl(
         }
         cur_tab_rec->def.func = NULL;
         cur_tab_rec++;
-      } else if (item[l].type == ClickFunc) {
-        cur_tab_rec->start = (char *) item[l].start;
+      } else if (items[l].type == ClickFunc) {
+        cur_tab_rec->start = (char *)items[l].start;
         cur_tab_rec->def.type = kStlClickFuncRun;
-        cur_tab_rec->def.tabnr = item[l].minwid;
-        cur_tab_rec->def.func = item[l].cmd;
+        cur_tab_rec->def.tabnr = items[l].minwid;
+        cur_tab_rec->def.func = items[l].cmd;
         cur_tab_rec++;
       }
     }
@@ -4086,14 +4224,12 @@ void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname)
 
 #ifdef WIN32
   if (!buf->b_p_bin) {
-    char_u  *rfname;
-
     // If the file name is a shortcut file, use the file it links to.
-    rfname = os_resolve_shortcut(*ffname);
+    char *rfname = os_resolve_shortcut((const char *)(*ffname));
     if (rfname != NULL) {
       xfree(*ffname);
-      *ffname = rfname;
-      *sfname = rfname;
+      *ffname = (char_u *)rfname;
+      *sfname = (char_u *)rfname;
     }
   }
 #endif
@@ -4143,6 +4279,8 @@ do_arg_all (
   win_T       *new_curwin = NULL;
   tabpage_T   *new_curtab = NULL;
 
+  assert(firstwin != NULL);  // satisfy coverity
+
   if (ARGCOUNT <= 0) {
     /* Don't give an error message.  We don't want it when the ":all"
      * command is in the .vimrc. */
@@ -4151,7 +4289,7 @@ do_arg_all (
   setpcmark();
 
   opened_len = ARGCOUNT;
-  opened = xcalloc(opened_len, 1);
+  opened = xcalloc((size_t)opened_len, 1);
 
   /* Autocommands may do anything to the argument list.  Make sure it's not
    * freed while we are working here by "locking" it.  We still have to
@@ -4225,12 +4363,13 @@ do_arg_all (
             || !bufIsChanged(buf)) {
           /* If the buffer was changed, and we would like to hide it,
            * try autowriting. */
-          if (!P_HID(buf) && buf->b_nwindows <= 1
-              && bufIsChanged(buf)) {
-            (void)autowrite(buf, FALSE);
-            /* check if autocommands removed the window */
-            if (!win_valid(wp) || !buf_valid(buf)) {
-              wpnext = firstwin;                /* start all over... */
+          if (!P_HID(buf) && buf->b_nwindows <= 1 && bufIsChanged(buf)) {
+            bufref_T bufref;
+            set_bufref(&bufref, buf);
+            (void)autowrite(buf, false);
+            // Check if autocommands removed the window.
+            if (!win_valid(wp) || !bufref_valid(&bufref)) {
+              wpnext = firstwin;  // Start all over...
               continue;
             }
           }
@@ -4333,19 +4472,23 @@ do_arg_all (
   /* Remove the "lock" on the argument list. */
   alist_unlink(alist);
 
-  --autocmd_no_enter;
-  /* restore last referenced tabpage's curwin */
+  autocmd_no_enter--;
+  // restore last referenced tabpage's curwin
   if (last_curtab != new_curtab) {
-    if (valid_tabpage(last_curtab))
-      goto_tabpage_tp(last_curtab, TRUE, TRUE);
-    if (win_valid(last_curwin))
+    if (valid_tabpage(last_curtab)) {
+      goto_tabpage_tp(last_curtab, true, true);
+    }
+    if (win_valid(last_curwin)) {
       win_enter(last_curwin, false);
+    }
   }
-  /* to window with first arg */
-  if (valid_tabpage(new_curtab))
-    goto_tabpage_tp(new_curtab, TRUE, TRUE);
-  if (win_valid(new_curwin))
+  // to window with first arg
+  if (valid_tabpage(new_curtab)) {
+    goto_tabpage_tp(new_curtab, true, true);
+  }
+  if (win_valid(new_curwin)) {
     win_enter(new_curwin, false);
+  }
 
   --autocmd_no_leave;
   xfree(opened);
@@ -4362,8 +4505,8 @@ void ex_buffer_all(exarg_T *eap)
   bool p_ea_save;
   int open_wins = 0;
   int r;
-  int count;                    /* Maximum number of windows to open. */
-  int all;                      /* When TRUE also load inactive buffers. */
+  long count;                   // Maximum number of windows to open.
+  int all;                      // When TRUE also load inactive buffers.
   int had_tab = cmdmod.tab;
   tabpage_T   *tpnext;
 
@@ -4394,9 +4537,9 @@ void ex_buffer_all(exarg_T *eap)
                ? wp->w_height + wp->w_status_height < Rows - p_ch
                - tabline_height()
                : wp->w_width != Columns)
-           || (had_tab > 0 && wp != firstwin)
-           ) && firstwin != lastwin
-          && !(wp->w_closing || wp->w_buffer->b_closing)
+           || (had_tab > 0 && wp != firstwin))
+          && firstwin != lastwin
+          && !(wp->w_closing || wp->w_buffer->b_locked > 0)
           ) {
         win_close(wp, FALSE);
         wpnext = firstwin;              /* just in case an autocommand does
@@ -4444,7 +4587,9 @@ void ex_buffer_all(exarg_T *eap)
     }
 
     if (wp == NULL && split_ret == OK) {
-      /* Split the window and put the buffer in it */
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
+      // Split the window and put the buffer in it.
       p_ea_save = p_ea;
       p_ea = true;                      /* use space from all windows */
       split_ret = win_split(0, WSP_ROOM | WSP_BELOW);
@@ -4456,7 +4601,8 @@ void ex_buffer_all(exarg_T *eap)
       /* Open the buffer in this window. */
       swap_exists_action = SEA_DIALOG;
       set_curbuf(buf, DOBUF_GOTO);
-      if (!buf_valid(buf)) {            /* autocommands deleted the buffer!!! */
+      if (!bufref_valid(&bufref)) {
+        // Autocommands deleted the buffer.
         swap_exists_action = SEA_NONE;
         break;
       }
@@ -4884,7 +5030,7 @@ int buf_findsign(
 
     for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
         if (sign->id == id) {
-            return sign->lnum;
+            return (int)sign->lnum;
         }
     }
 
@@ -4998,6 +5144,30 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
 
 // bufhl: plugin highlights associated with a buffer
 
+/// Get reference to line in kbtree_t
+///
+/// @param b the three
+/// @param line the linenumber to lookup
+/// @param put if true, put a new line when not found
+///            if false, return NULL when not found
+BufhlLine *bufhl_tree_ref(BufhlInfo *b, linenr_T line, bool put)
+{
+  BufhlLine t = BUFHLLINE_INIT(line);
+
+  // kp_put() only works if key is absent, try get first
+  BufhlLine **pp = kb_get(bufhl, b, &t);
+  if (pp) {
+    return *pp;
+  } else if (!put) {
+    return NULL;
+  }
+
+  BufhlLine *p = xmalloc(sizeof(*p));
+  *p = (BufhlLine)BUFHLLINE_INIT(line);
+  kb_put(bufhl, b, p);
+  return p;
+}
+
 /// Adds a highlight to buffer.
 ///
 /// Unlike matchaddpos() highlights follow changes to line numbering (as lines
@@ -5035,13 +5205,10 @@ int bufhl_add_hl(buf_T *buf,
       // no highlight group or invalid line, just return src_id
       return src_id;
   }
-  if (!buf->b_bufhl_info) {
-    buf->b_bufhl_info = map_new(linenr_T, bufhl_vec_T)();
-  }
-  bufhl_vec_T* lineinfo = map_ref(linenr_T, bufhl_vec_T)(buf->b_bufhl_info,
-                                                         lnum, true);
 
-  bufhl_hl_item_T *hlentry = kv_pushp(*lineinfo);
+  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, true);
+
+  BufhlItem *hlentry = kv_pushp(lineinfo->items);
   hlentry->src_id = src_id;
   hlentry->hl_id = hl_id;
   hlentry->start = col_start;
@@ -5063,20 +5230,24 @@ int bufhl_add_hl(buf_T *buf,
 void bufhl_clear_line_range(buf_T *buf,
                             int src_id,
                             linenr_T line_start,
-                            linenr_T line_end) {
-  if (!buf->b_bufhl_info) {
-    return;
-  }
-  linenr_T line;
+                            linenr_T line_end)
+{
   linenr_T first_changed = MAXLNUM, last_changed = -1;
-  // In the case line_start - line_end << bufhl_info->size
-  // it might be better to reverse this, i e loop over the lines
-  // to clear on.
-  bufhl_vec_T unused;
-  map_foreach(buf->b_bufhl_info, line, unused, {
-    (void)unused;
+
+  kbitr_t(bufhl) itr;
+  BufhlLine *l, t = BUFHLLINE_INIT(line_start);
+  if (!kb_itr_get(bufhl, &buf->b_bufhl_info, &t, &itr)) {
+    kb_itr_next(bufhl, &buf->b_bufhl_info, &itr);
+  }
+  for (; kb_itr_valid(&itr); kb_itr_next(bufhl, &buf->b_bufhl_info, &itr)) {
+    l = kb_itr_key(&itr);
+    linenr_T line = l->line;
+    if (line > line_end) {
+      break;
+    }
     if (line_start <= line && line <= line_end) {
-      if (bufhl_clear_line(buf->b_bufhl_info, src_id, line)) {
+      BufhlLineStatus status = bufhl_clear_line(l, src_id, line);
+      if (status != kBLSUnchanged) {
         if (line > last_changed) {
           last_changed = line;
         }
@@ -5084,8 +5255,12 @@ void bufhl_clear_line_range(buf_T *buf,
           first_changed = line;
         }
       }
+      if (status == kBLSDeleted) {
+        kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
+        xfree(l);
+      }
     }
-  })
+  }
 
   if (last_changed != -1) {
     changed_lines_buf(buf, first_changed, last_changed+1, 0);
@@ -5098,40 +5273,40 @@ void bufhl_clear_line_range(buf_T *buf,
 /// @param bufhl_info The highlight info for the buffer
 /// @param src_id Highlight source group to clear, or -1 to clear all groups.
 /// @param lnum Linenr where the highlight should be cleared
-static bool bufhl_clear_line(bufhl_info_T *bufhl_info, int src_id, int lnum) {
-  bufhl_vec_T* lineinfo = map_ref(linenr_T, bufhl_vec_T)(bufhl_info,
-                                                         lnum, false);
-  size_t oldsize = kv_size(*lineinfo);
+static BufhlLineStatus bufhl_clear_line(BufhlLine *lineinfo, int src_id,
+                                        linenr_T lnum)
+{
+  size_t oldsize = kv_size(lineinfo->items);
   if (src_id < 0) {
-    kv_size(*lineinfo) = 0;
+    kv_size(lineinfo->items) = 0;
   } else {
-    size_t newind = 0;
-    for (size_t i = 0; i < kv_size(*lineinfo); i++) {
-      if (kv_A(*lineinfo, i).src_id != src_id) {
-        if (i != newind) {
-          kv_A(*lineinfo, newind) = kv_A(*lineinfo, i);
+    size_t newidx = 0;
+    for (size_t i = 0; i < kv_size(lineinfo->items); i++) {
+      if (kv_A(lineinfo->items, i).src_id != src_id) {
+        if (i != newidx) {
+          kv_A(lineinfo->items, newidx) = kv_A(lineinfo->items, i);
         }
-        newind++;
+        newidx++;
       }
     }
-    kv_size(*lineinfo) = newind;
+    kv_size(lineinfo->items) = newidx;
   }
 
-  if (kv_size(*lineinfo) == 0) {
-    kv_destroy(*lineinfo);
-    map_del(linenr_T, bufhl_vec_T)(bufhl_info, lnum);
+  if (kv_size(lineinfo->items) == 0) {
+    kv_destroy(lineinfo->items);
+    return kBLSDeleted;
   }
-  return kv_size(*lineinfo) != oldsize;
+  return kv_size(lineinfo->items) != oldsize ? kBLSChanged : kBLSUnchanged;
 }
 
 /// Remove all highlights and free the highlight data
-void bufhl_clear_all(buf_T* buf) {
-  if (!buf->b_bufhl_info) {
-    return;
-  }
+void bufhl_clear_all(buf_T *buf)
+{
   bufhl_clear_line_range(buf, -1, 1, MAXLNUM);
-  map_free(linenr_T, bufhl_vec_T)(buf->b_bufhl_info);
-  buf->b_bufhl_info = NULL;
+  kb_destroy(bufhl, (&buf->b_bufhl_info));
+  kb_init(&buf->b_bufhl_info);
+  kv_destroy(buf->b_bufhl_move_space);
+  kv_init(buf->b_bufhl_move_space);
 }
 
 /// Adjust a placed highlight for inserted/deleted lines.
@@ -5139,29 +5314,49 @@ void bufhl_mark_adjust(buf_T* buf,
                        linenr_T line1,
                        linenr_T line2,
                        long amount,
-                       long amount_after) {
-  if (!buf->b_bufhl_info) {
+                       long amount_after,
+                       bool end_temp)
+{
+  kbitr_t(bufhl) itr;
+  BufhlLine *l, t = BUFHLLINE_INIT(line1);
+  if (end_temp && amount < 0) {
+    // Move all items from b_bufhl_move_space to the btree.
+    for (size_t i = 0; i < kv_size(buf->b_bufhl_move_space); i++) {
+      l = kv_A(buf->b_bufhl_move_space, i);
+      l->line += amount;
+      kb_put(bufhl, &buf->b_bufhl_info, l);
+    }
+    kv_size(buf->b_bufhl_move_space) = 0;
     return;
   }
 
-  bufhl_info_T *newmap = map_new(linenr_T, bufhl_vec_T)();
-  linenr_T line;
-  bufhl_vec_T lineinfo;
-  map_foreach(buf->b_bufhl_info, line, lineinfo, {
-    if (line >= line1 && line <= line2) {
-      if (amount == MAXLNUM) {
-        bufhl_clear_line(buf->b_bufhl_info, -1, line);
-        continue;
-      } else {
-        line += amount;
+  if (!kb_itr_get(bufhl, &buf->b_bufhl_info, &t, &itr)) {
+    kb_itr_next(bufhl, &buf->b_bufhl_info, &itr);
+  }
+  for (; kb_itr_valid(&itr); kb_itr_next(bufhl, &buf->b_bufhl_info, &itr)) {
+    l = kb_itr_key(&itr);
+    if (l->line >= line1 && l->line <= line2) {
+      if (end_temp && amount > 0) {
+        kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
+        kv_push(buf->b_bufhl_move_space, l);
       }
-    } else if (line > line2) {
-      line += amount_after;
+      if (amount == MAXLNUM) {
+        if (bufhl_clear_line(l, -1, l->line) == kBLSDeleted) {
+          kb_del_itr(bufhl, &buf->b_bufhl_info, &itr);
+          xfree(l);
+        } else {
+          assert(false);
+        }
+      } else {
+        l->line += amount;
+      }
+    } else if (l->line > line2) {
+      if (amount_after == 0) {
+        break;
+      }
+      l->line += amount_after;
     }
-    map_put(linenr_T, bufhl_vec_T)(newmap, line, lineinfo);
-  });
-  map_free(linenr_T, bufhl_vec_T)(buf->b_bufhl_info);
-  buf->b_bufhl_info = newmap;
+  }
 }
 
 
@@ -5171,13 +5366,14 @@ void bufhl_mark_adjust(buf_T* buf,
 /// @param lnum The line number
 /// @param[out] info The highligts for the line
 /// @return true if there was highlights to display
-bool bufhl_start_line(buf_T *buf, linenr_T lnum, bufhl_lineinfo_T *info) {
-  if (!buf->b_bufhl_info) {
+bool bufhl_start_line(buf_T *buf, linenr_T lnum, BufhlLineInfo *info)
+{
+  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, false);
+  if (!lineinfo) {
     return false;
   }
-
   info->valid_to = -1;
-  info->entries = map_get(linenr_T, bufhl_vec_T)(buf->b_bufhl_info, lnum);
+  info->entries = lineinfo->items;
   return kv_size(info->entries) > 0;
 }
 
@@ -5191,14 +5387,15 @@ bool bufhl_start_line(buf_T *buf, linenr_T lnum, bufhl_lineinfo_T *info) {
 /// @param info The info returned by bufhl_start_line
 /// @param col The column to get the attr for
 /// @return The highilight attr to display at the column
-int bufhl_get_attr(bufhl_lineinfo_T *info, colnr_T col) {
+int bufhl_get_attr(BufhlLineInfo *info, colnr_T col)
+{
   if (col <= info->valid_to) {
     return info->current;
   }
   int attr = 0;
   info->valid_to = MAXCOL;
   for (size_t i = 0; i < kv_size(info->entries); i++) {
-    bufhl_hl_item_T entry = kv_A(info->entries, i);
+    BufhlItem entry = kv_A(info->entries, i);
     if (entry.start <= col && col <= entry.stop) {
       int entry_attr = syn_id2attr(entry.hl_id);
       attr = hl_combine_attr(attr, entry_attr);
@@ -5313,8 +5510,8 @@ void buf_open_scratch(handle_T bufnr, char *bufname)
 {
   (void)do_ecmd((int)bufnr, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
   (void)setfname(curbuf, (char_u *)bufname, NULL, true);
-  set_option_value((char_u *)"bh", 0L, (char_u *)"hide", OPT_LOCAL);
-  set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
-  set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+  set_option_value("bh", 0L, "hide", OPT_LOCAL);
+  set_option_value("bt", 0L, "nofile", OPT_LOCAL);
+  set_option_value("swf", 0L, NULL, OPT_LOCAL);
   RESET_BINDING(curwin);
 }

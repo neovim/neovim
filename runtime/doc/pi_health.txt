@@ -2,10 +2,7 @@
 
 Author: TJ DeVries <devries.timothyj@gmail.com>
 
-==============================================================================
-1. Introduction				|health.vim-intro|
-2. Commands and functions		|health.vim-manual|
-3. Create a healthcheck			|health.vim-dev|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 Introduction				*healthcheck* *health.vim-intro*
@@ -100,15 +97,12 @@ health#{plugin}#check() function in autoload/health/{plugin}.vim.
 |:CheckHealth| automatically finds and invokes such functions.
 
 If your plugin is named "jslint", then its healthcheck function must be >
-
         health#jslint#check()
-<
+
 defined in this file on 'runtimepath': >
-
         autoload/health/jslint.vim
-<
-Here's a sample to get started: >
 
+Here's a sample to get started: >
         function! health#jslint#check() abort
           call health#report_start('sanity checks')
           " perform arbitrary checks
@@ -121,7 +115,7 @@ Here's a sample to get started: >
               \ ['npm install --save jslint'])
           endif
         endfunction
-<
+
 ==============================================================================
 
 vim:tw=78:ts=8:ft=help:fdm=marker

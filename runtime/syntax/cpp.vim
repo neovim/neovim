@@ -2,23 +2,16 @@
 " Language:	C++
 " Current Maintainer:	vim-jp (https://github.com/vim-jp/vim-cpp)
 " Previous Maintainer:	Ken Shan <ccshan@post.harvard.edu>
-" Last Change:	2015 Nov 10
+" Last Change:	2016 Oct 28
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " Read the C syntax to start with
-if version < 600
-  so <sfile>:p:h/c.vim
-else
-  runtime! syntax/c.vim
-  unlet b:current_syntax
-endif
+runtime! syntax/c.vim
+unlet b:current_syntax
 
 " C++ extensions
 syn keyword cppStatement	new delete this friend using
@@ -38,7 +31,7 @@ syn keyword cppConstant		__cplusplus
 " C++ 11 extensions
 if !exists("cpp_no_cpp11")
   syn keyword cppModifier	override final
-  syn keyword cppType		nullptr_t
+  syn keyword cppType		nullptr_t auto
   syn keyword cppExceptions	noexcept
   syn keyword cppStorageClass	constexpr decltype thread_local
   syn keyword cppConstant	nullptr
@@ -53,35 +46,31 @@ endif
 
 " C++ 14 extensions
 if !exists("cpp_no_cpp14")
-  syn match cppNumber		display "\<0b[01]\+\(u\=l\{0,2}\|ll\=u\)\>"
+  syn case ignore
+  syn match cppNumber		display "\<0b[01]\('\=[01]\+\)*\(u\=l\{0,2}\|ll\=u\)\>"
+  syn match cppNumber		display "\<[1-9]\('\=\d\+\)*\(u\=l\{0,2}\|ll\=u\)\>"
+  syn match cppNumber		display "\<0x\x\('\=\x\+\)*\(u\=l\{0,2}\|ll\=u\)\>"
+  syn case match
 endif
 
 " The minimum and maximum operators in GNU C++
 syn match cppMinMax "[<>]?"
 
 " Default highlighting
-if version >= 508 || !exists("did_cpp_syntax_inits")
-  if version < 508
-    let did_cpp_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink cppAccess		cppStatement
-  HiLink cppCast		cppStatement
-  HiLink cppExceptions		Exception
-  HiLink cppOperator		Operator
-  HiLink cppStatement		Statement
-  HiLink cppModifier		Type
-  HiLink cppType		Type
-  HiLink cppStorageClass	StorageClass
-  HiLink cppStructure		Structure
-  HiLink cppBoolean		Boolean
-  HiLink cppConstant		Constant
-  HiLink cppRawStringDelimiter	Delimiter
-  HiLink cppRawString		String
-  delcommand HiLink
-endif
+hi def link cppAccess		cppStatement
+hi def link cppCast		cppStatement
+hi def link cppExceptions		Exception
+hi def link cppOperator		Operator
+hi def link cppStatement		Statement
+hi def link cppModifier		Type
+hi def link cppType		Type
+hi def link cppStorageClass	StorageClass
+hi def link cppStructure		Structure
+hi def link cppBoolean		Boolean
+hi def link cppConstant		Constant
+hi def link cppRawStringDelimiter	Delimiter
+hi def link cppRawString		String
+hi def link cppNumber		Number
 
 let b:current_syntax = "cpp"
 

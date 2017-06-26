@@ -1,4 +1,4 @@
-*pi_gzip.txt*   For Vim version 7.4.  Last change: 2012 Jul 19
+*pi_gzip.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -25,6 +25,8 @@ with these extensions:
 	*.bz2		bzip2
 	*.lzma		lzma
 	*.xz		xz
+	*.lz		lzip
+	*.zst		zstd
 
 That's actually the only thing you need to know.  There are no options.
 

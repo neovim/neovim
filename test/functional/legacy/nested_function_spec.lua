@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, insert = helpers.clear, helpers.insert
-local execute, expect, source = helpers.execute, helpers.expect, helpers.source
+local command, expect, source = helpers.command, helpers.expect, helpers.source
 
 describe('test_nested_function', function()
   setup(clear)
@@ -36,7 +36,7 @@ describe('test_nested_function', function()
       :  endfunction
       :  call s:{fn}()
       :endfunction]])
-    execute('call NestedFunc()')
+    command('call NestedFunc()')
 
     -- Assert buffer contents.
     expect([[

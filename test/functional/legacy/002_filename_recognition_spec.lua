@@ -3,7 +3,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('filename recognition', function()
   setup(clear)
@@ -17,17 +17,17 @@ describe('filename recognition', function()
       fourth test for URL:\\machine.name\tmp\vimtest2d, and other text]])
 
     -- Go to the first URL and append it to the beginning
-    execute('/^first', '/tmp', 'call append(0, expand("<cfile>"))')
+    feed_command('/^first', '/tmp', 'call append(0, expand("<cfile>"))')
 
     -- Repeat for the second URL
     -- this time, navigate to the word "URL" instead of "tmp"
-    execute('/^second', '/URL', 'call append(1, expand("<cfile>"))')
+    feed_command('/^second', '/URL', 'call append(1, expand("<cfile>"))')
 
     -- Repeat for the remaining URLs. This time, the 'isfname' option must be
     -- set to allow '\' in filenames
-    execute('set isf=@,48-57,/,.,-,_,+,,,$,:,~,\\')
-    execute('/^third', '/name', 'call append(2, expand("<cfile>"))')
-    execute('/^fourth', '/URL', 'call append(3, expand("<cfile>"))')
+    feed_command('set isf=@,48-57,/,.,-,_,+,,,$,:,~,\\')
+    feed_command('/^third', '/name', 'call append(2, expand("<cfile>"))')
+    feed_command('/^fourth', '/URL', 'call append(3, expand("<cfile>"))')
 
     -- Delete the initial text, which now starts at line 5
     feed('5GdG')

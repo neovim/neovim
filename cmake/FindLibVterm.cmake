@@ -4,7 +4,7 @@
 #  LIBVTERM_INCLUDE_DIRS - The libvterm include directories
 #  LIBVTERM_LIBRARIES - The libraries needed to use libvterm
 
-if(NOT LIBVTERM_USE_BUNDLED)
+if(NOT USE_BUNDLED_LIBVTERM)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
     pkg_check_modules(PC_LIBVTERM QUIET vterm)

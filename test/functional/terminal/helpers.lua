@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local nvim_dir = helpers.nvim_dir
-local execute, nvim, wait = helpers.execute, helpers.nvim, helpers.wait
+local feed_command, nvim = helpers.feed_command, helpers.nvim
 
 local function feed_data(data)
   nvim('set_var', 'term_data', data)
@@ -34,13 +34,15 @@ local function disable_mouse() feed_termcode('[?1002l') end
 local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 
 
-local function screen_setup(extra_height, command)
+local function screen_setup(extra_rows, command, cols)
+  extra_rows = extra_rows and extra_rows or 0
+  command = command and command or default_command
+  cols = cols and cols or 50
+
   nvim('command', 'highlight TermCursor cterm=reverse')
   nvim('command', 'highlight TermCursorNC ctermbg=11')
-  nvim('set_var', 'terminal_scrollback_buffer_size', 10)
-  if not extra_height then extra_height = 0 end
-  if not command then command = default_command end
-  local screen = Screen.new(50, 7 + extra_height)
+
+  local screen = Screen.new(cols, 7 + extra_rows)
   screen:set_default_attr_ids({
     [1] = {reverse = true},   -- focused cursor
     [2] = {background = 11},  -- unfocused cursor
@@ -55,31 +57,42 @@ local function screen_setup(extra_height, command)
   })
 
   screen:attach({rgb=false})
-  -- tty-test puts the terminal into raw mode and echoes all input. tests are
-  -- done by feeding it with terminfo codes to control the display and
-  -- verifying output with screen:expect.
-  execute('enew | call termopen('..command..') | startinsert')
+
+  feed_command('enew | call termopen('..command..')')
+  nvim('input', '<CR>')
+  local vim_errmsg = nvim('eval', 'v:errmsg')
+  if vim_errmsg and "" ~= vim_errmsg then
+    error(vim_errmsg)
+  end
+
+  feed_command('setlocal scrollback=10')
+  feed_command('startinsert')
+
+  -- tty-test puts the terminal into raw mode and echoes input. Tests work by
+  -- feeding termcodes to control the display and asserting by screen:expect.
   if command == default_command then
-    -- wait for "tty ready" to be printed before each test or the terminal may
-    -- still be in canonical mode(will echo characters for example)
-    --
-    local empty_line =  '                                                   '
+    -- Wait for "tty ready" to be printed before each test or the terminal may
+    -- still be in canonical mode (will echo characters for example).
+    local empty_line = (' '):rep(cols + 1)
     local expected = {
-      'tty ready                                          ',
-      '{1: }                                                  ',
+      'tty ready'..(' '):rep(cols - 8),
+      '{1: }'    ..(' '):rep(cols),
       empty_line,
       empty_line,
       empty_line,
       empty_line,
     }
-    for _ = 1, extra_height do
+    for _ = 1, extra_rows do
       table.insert(expected, empty_line)
     end
 
-    table.insert(expected, '{3:-- TERMINAL --}                                     ')
+    table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 13)))
     screen:expect(table.concat(expected, '\n'))
   else
-    wait()
+    -- This eval also acts as a wait().
+    if 0 == nvim('eval', "exists('b:terminal_job_id')") then
+      error("terminal job failed to start")
+    end
   end
   return screen
 end

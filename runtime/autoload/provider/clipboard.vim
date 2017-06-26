@@ -125,6 +125,19 @@ let s:providers = [
       \   'cache_enabled': 1,
       \   'check': 'executable("win32yank")',
       \ },
+      \ {
+      \   'name': 'tmux',
+      \   'copy': {
+      \      '+': 'tmux load-buffer -',
+      \      '*': 'tmux load-buffer -',
+      \    },
+      \   'paste': {
+      \      '+': 'tmux save-buffer -',
+      \      '*': 'tmux save-buffer -',
+      \   },
+      \   'cache_enabled': 1,
+      \   'check': 'exists("$TMUX") && executable("tmux")',
+      \ },
       \ ]
 
 function! s:set_provider(p) abort

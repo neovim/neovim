@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file diff.c
 ///
 /// Code for diff'ing two, three or four buffers.
@@ -129,7 +132,7 @@ void diff_buf_add(buf_T *buf)
     }
   }
 
-  EMSGN(_("E96: Can not diff more than %" PRId64 " buffers"), DB_COUNT);
+  EMSGN(_("E96: Cannot diff more than %" PRId64 " buffers"), DB_COUNT);
 }
 
 /// Find buffer "buf" in the list of diff buffers for the current tab page.
@@ -1004,7 +1007,12 @@ theend:
 void ex_diffsplit(exarg_T *eap)
 {
   win_T *old_curwin = curwin;
-  buf_T *old_curbuf = curbuf;
+  bufref_T old_curbuf;
+  set_bufref(&old_curbuf, curbuf);
+
+  // Need to compute w_fraction when no redraw happened yet.
+  validate_cursor();
+  set_fraction(curwin);
 
   // don't use a new tab page, each tab page has its own diffs
   cmdmod.tab = 0;
@@ -1022,15 +1030,18 @@ void ex_diffsplit(exarg_T *eap)
       if (win_valid(old_curwin)) {
         diff_win_options(old_curwin, true);
 
-        if (buf_valid(old_curbuf)) {
+        if (bufref_valid(&old_curbuf)) {
           // Move the cursor position to that of the old window.
           curwin->w_cursor.lnum = diff_get_corresponding_line(
-              old_curbuf,
+              old_curbuf.br_buf,
               old_curwin->w_cursor.lnum,
               curbuf,
               curwin->w_cursor.lnum);
         }
       }
+      // Now that lines are folded scroll to show the cursor at the same
+      // relative position.
+      scroll_to_fraction(curwin, curwin->w_height);
     }
   }
 }
@@ -1068,8 +1079,8 @@ void diff_win_options(win_T *wp, int addbuf)
   if (!wp->w_p_diff) {
     wp->w_p_wrap_save = wp->w_p_wrap;
   }
-  wp->w_p_wrap = FALSE;
-  curwin = wp;
+  wp->w_p_wrap = false;
+  curwin = wp;  // -V519
   curbuf = curwin->w_buffer;
 
   if (!wp->w_p_diff) {
@@ -1153,10 +1164,13 @@ void ex_diffoff(exarg_T *eap)
         }
 
         foldUpdateAll(wp);
-
-        // make sure topline is not halfway through a fold
-        changed_window_setting_win(wp);
       }
+      // remove filler lines
+      wp->w_topfill = 0;
+
+      // make sure topline is not halfway a fold and cursor is
+      // invalidated
+      changed_window_setting_win(wp);
 
       // Note: 'sbo' is not restored, it's a global option.
       diff_buf_adjust(wp);
@@ -1575,7 +1589,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
   }
 
   if ((diff_flags & DIFF_ICASE) && !(diff_flags & DIFF_IWHITE)) {
-    return mb_stricmp(s1, s2);
+    return mb_stricmp((const char *)s1, (const char *)s2);
   }
 
   // Ignore white space changes and possibly ignore case.
@@ -2297,7 +2311,7 @@ void ex_diffgetput(exarg_T *eap)
 
       // Adjust marks.  This will change the following entries!
       if (added != 0) {
-        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added);
+        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added, false);
         if (curwin->w_cursor.lnum >= lnum) {
           // Adjust the cursor position if it's in/after the changed
           // lines.

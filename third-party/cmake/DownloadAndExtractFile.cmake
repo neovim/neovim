@@ -39,7 +39,7 @@ if(TIMEOUT)
   set(timeout_args TIMEOUT ${timeout})
   set(timeout_msg "${timeout} seconds")
 else()
-  set(timeout_args "# no TIMEOUT")
+  set(timeout_args "")
   set(timeout_msg "none")
 endif()
 

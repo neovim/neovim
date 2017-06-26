@@ -1,17 +1,18 @@
 -- Tests for tab pages
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, source, clear, execute, expect, eval, eq =
+local feed, insert, source, clear, command, expect, eval, eq =
   helpers.feed, helpers.insert, helpers.source, helpers.clear,
-  helpers.execute, helpers.expect, helpers.eval, helpers.eq
+  helpers.command, helpers.expect, helpers.eval, helpers.eq
+local exc_exec = helpers.exc_exec
 
 describe('tab pages', function()
   before_each(clear)
 
   it('can be opened and closed', function()
-    execute('tabnew')
+    command('tabnew')
     eq(2, eval('tabpagenr()'))
-    execute('quit')
+    command('quit')
     eq(1, eval('tabpagenr()'))
   end)
 
@@ -25,7 +26,7 @@ describe('tab pages', function()
       tabrewind
     ]])
     eq('this is tab page 1', eval("getline('$')"))
-    execute('tablast')
+    command('tablast')
     eq('this is tab page 4', eval("getline('$')"))
   end)
 
@@ -44,7 +45,7 @@ describe('tab pages', function()
     eq(100, eval('gettabvar(2, "val_num")'))
     eq('SetTabVar test', eval('gettabvar(2, "val_str")'))
     eq({'red', 'blue', 'green'}, eval('gettabvar(2, "val_list")'))
-    execute('tabnext 2')
+    command('tabnext 2')
     eq(100, eval('t:val_num'))
     eq('SetTabVar test', eval('t:val_str'))
     eq({'red', 'blue', 'green'}, eval('t:val_list'))
@@ -52,8 +53,8 @@ describe('tab pages', function()
 
   it('work together with the drop feature and loaded buffers', function()
     -- Test for ":tab drop exist-file" to keep current window.
-    execute('sp test1')
-    execute('tab drop test1')
+    command('sp test1')
+    command('tab drop test1')
     eq(1, eval('tabpagenr("$")'))
     eq(2, eval('winnr("$")'))
     eq(1, eval('winnr()'))
@@ -61,8 +62,8 @@ describe('tab pages', function()
 
   it('work together with the drop feature and new files', function()
     -- Test for ":tab drop new-file" to keep current window of tabpage 1.
-    execute('split')
-    execute('tab drop newfile')
+    command('split')
+    command('tab drop newfile')
     eq(2, eval('tabpagenr("$")'))
     eq(2, eval('tabpagewinnr(1, "$")'))
     eq(1, eval('tabpagewinnr(1)'))
@@ -71,57 +72,49 @@ describe('tab pages', function()
   it('work together with the drop feature and multi loaded buffers', function()
     -- Test for ":tab drop multi-opend-file" to keep current tabpage and
     -- window.
-    execute('new test1')
-    execute('tabnew')
-    execute('new test1')
-    execute('tab drop test1')
+    command('new test1')
+    command('tabnew')
+    command('new test1')
+    command('tab drop test1')
     eq(2, eval('tabpagenr()'))
     eq(2, eval('tabpagewinnr(2, "$")'))
     eq(1, eval('tabpagewinnr(2)'))
   end)
 
   it('can be navigated with :tabmove', function()
-    execute('lang C')
-    execute('for i in range(9) | tabnew | endfor')
+    command('lang C')
+    command('for i in range(9) | tabnew | endfor')
     feed('1gt')
     eq(1, eval('tabpagenr()'))
-    execute('tabmove 5')
+    command('tabmove 5')
     eq(5, eval('tabpagenr()'))
-    execute('.tabmove')
+    command('.tabmove')
     eq(5, eval('tabpagenr()'))
-    execute('tabmove -')
+    command('tabmove -')
     eq(4, eval('tabpagenr()'))
-    execute('tabmove +')
+    command('tabmove +')
     eq(5, eval('tabpagenr()'))
-    execute('tabmove -2')
+    command('tabmove -2')
     eq(3, eval('tabpagenr()'))
-    execute('tabmove +4')
+    command('tabmove +4')
     eq(7, eval('tabpagenr()'))
-    execute('tabmove')
+    command('tabmove')
     eq(10, eval('tabpagenr()'))
-    execute('tabmove -20')
+    command('0tabmove')
     eq(1, eval('tabpagenr()'))
-    execute('tabmove +20')
+    command('$tabmove')
     eq(10, eval('tabpagenr()'))
-    execute('0tabmove')
+    command('tabmove 0')
     eq(1, eval('tabpagenr()'))
-    execute('$tabmove')
+    command('tabmove $')
     eq(10, eval('tabpagenr()'))
-    execute('tabmove 0')
-    eq(1, eval('tabpagenr()'))
-    execute('tabmove $')
-    eq(10, eval('tabpagenr()'))
-    execute('3tabmove')
+    command('3tabmove')
     eq(4, eval('tabpagenr()'))
-    execute('7tabmove 5')
+    command('7tabmove 5')
     eq(5, eval('tabpagenr()'))
-    execute('let a="No error caught."')
-    execute('try')
-    execute('tabmove foo')
-    execute('catch E474')
-    execute('let a="E474 caught."')
-    execute('endtry')
-    eq('E474 caught.', eval('a'))
+    command('let a="No error caught."')
+    eq('Vim(tabmove):E474: Invalid argument: tabmove foo',
+       exc_exec('tabmove foo'))
   end)
 
   it('can trigger certain autocommands', function()
@@ -172,7 +165,7 @@ describe('tab pages', function()
 	  C tabnext 1
 	  autocmd TabDestructive TabEnter * nested
 	    \ :C tabnext 2 | C tabclose 3
-	  C tabnext 3
+	  C tabnext 2
 	  let g:r+=[tabpagenr().'/'.tabpagenr('$')]
       endfunction
       call Test()
@@ -233,22 +226,14 @@ describe('tab pages', function()
       WinEnter
       TabEnter
       BufEnter
-      === tabnext 3 ===
-      BufLeave
+      === tabnext 2 ===
       WinLeave
       TabLeave
       WinEnter
       TabEnter
       === tabnext 2 ===
-      BufLeave
-      WinLeave
-      TabLeave
-      WinEnter
-      TabEnter
-      === tabnext 2 ===
-      === tabclose 3 ===
-      BufEnter
       === tabclose 3 ===
       2/2]])
+      eq(2, eval("tabpagenr('$')"))
   end)
 end)

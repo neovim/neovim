@@ -2,7 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
-local execute, eval = helpers.execute, helpers.eval
+local feed_command, eval = helpers.feed_command, helpers.eval
 
 if helpers.pending_win32(pending) then return end
 
@@ -20,24 +20,32 @@ describe(':terminal', function()
     source([[
       echomsg "msg1"
       echomsg "msg2"
+      echomsg "msg3"
     ]])
     -- Invoke a command that emits frequent terminal activity.
-    execute([[terminal while true; do echo X; done]])
+    feed_command([[terminal while true; do echo X; done]])
     helpers.feed([[<C-\><C-N>]])
+    wait()
+    screen:sleep(10)  -- Let some terminal activity happen.
+    feed_command("messages")
     screen:expect([[
-      X                                                 |
-      X                                                 |
-      ^X                                                 |
-                                                        |
-    ]])
-    helpers.sleep(10)  -- Let some terminal activity happen.
-    execute("messages")
-    screen:expect([[
-      X                                                 |
       msg1                                              |
       msg2                                              |
+      msg3                                              |
       Press ENTER or type command to continue^           |
     ]])
+  end)
+
+  it("in normal-mode :split does not move cursor", function()
+    feed_command([[terminal while true; do echo foo; sleep .1; done]])
+    helpers.feed([[<C-\><C-N>M]])  -- move cursor away from last line
+    wait()
+    eq(3, eval("line('$')"))  -- window height
+    eq(2, eval("line('.')"))  -- cursor is in the middle
+    feed_command('vsplit')
+    eq(2, eval("line('.')"))  -- cursor stays where we put it
+    feed_command('split')
+    eq(2, eval("line('.')"))  -- cursor stays where we put it
   end)
 
 end)
@@ -57,7 +65,7 @@ describe(':terminal (with fake shell)', function()
   -- Invokes `:terminal {cmd}` using a fake shell (shell-test.c) which prints
   -- the {cmd} and exits immediately .
   local function terminal_with_fake_shell(cmd)
-    execute("terminal "..(cmd and cmd or ""))
+    feed_command("terminal "..(cmd and cmd or ""))
   end
 
   it('with no argument, acts like termopen()', function()
@@ -71,11 +79,47 @@ describe(':terminal (with fake shell)', function()
     ]])
   end)
 
+  it("with no argument, and 'shell' is set to empty string", function()
+    nvim('set_option', 'shell', '')
+    terminal_with_fake_shell()
+    wait()
+    screen:expect([[
+      ^                                                  |
+      ~                                                 |
+      ~                                                 |
+      E91: 'shell' option is empty                      |
+    ]])
+  end)
+
+  it("with no argument, but 'shell' has arguments, acts like termopen()", function()
+    nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
+    terminal_with_fake_shell()
+    wait()
+    screen:expect([[
+      jeff $                                            |
+      [Process exited 0]                                |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
   it('executes a given command through the shell', function()
     terminal_with_fake_shell('echo hi')
     wait()
     screen:expect([[
       ready $ echo hi                                   |
+                                                        |
+      [Process exited 0]                                |
+      -- TERMINAL --                                    |
+    ]])
+  end)
+
+  it("executes a given command through the shell, when 'shell' has arguments", function()
+    nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
+    terminal_with_fake_shell('echo hi')
+    wait()
+    screen:expect([[
+      jeff $ echo hi                                    |
                                                         |
       [Process exited 0]                                |
       -- TERMINAL --                                    |
@@ -110,6 +154,42 @@ describe(':terminal (with fake shell)', function()
       -- This write should be ignored (not crash, #5445).
       helpers.feed('iiYYYYYYY')
       eq(2, eval("1+1"))  -- Still alive?
+  end)
+
+  it('works with findfile()', function()
+    feed_command('terminal')
+    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    eq('scripts/shadacat.py', eval('findfile("scripts/shadacat.py", ".")'))
+  end)
+
+  it('works with :find', function()
+    terminal_with_fake_shell()
+    wait()
+    screen:expect([[
+      ready $                                           |
+      [Process exited 0]                                |
+                                                        |
+      -- TERMINAL --                                    |
+    ]])
+    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    helpers.feed([[<C-\><C-N>]])
+    feed_command([[find */shadacat.py]])
+    eq('scripts/shadacat.py', eval('bufname("%")'))
+  end)
+
+  it('works with gf', function()
+    terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
+    wait()
+    screen:expect([[
+      ready $ echo "scripts/shadacat.py"                |
+                                                        |
+      [Process exited 0]                                |
+      -- TERMINAL --                                    |
+    ]])
+    helpers.feed([[<C-\><C-N>]])
+    eq('term://', string.match(eval('bufname("%")'), "^term://"))
+    helpers.feed([[ggf"lgf]])
+    eq('scripts/shadacat.py', eval('bufname("%")'))
   end)
 
 end)

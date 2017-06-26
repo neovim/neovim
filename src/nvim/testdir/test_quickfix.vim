@@ -389,6 +389,7 @@ endfunction
 
 function Test_helpgrep()
   call s:test_xhelpgrep('c')
+  helpclose
   call s:test_xhelpgrep('l')
 endfunc
 
@@ -596,6 +597,22 @@ function Test_locationlist_curwin_was_closed()
     call assert_fails('lrewind', 'E924:')
 
     augroup! testgroup
+endfunction
+
+function Test_locationlist_cross_tab_jump()
+  call writefile(['loclistfoo'], 'loclistfoo')
+  call writefile(['loclistbar'], 'loclistbar')
+  set switchbuf=usetab
+
+  edit loclistfoo
+  tabedit loclistbar
+  silent lgrep loclistfoo loclist*
+  call assert_equal(1, tabpagenr())
+
+  enew | only | tabonly
+  set switchbuf&vim
+  call delete('loclistfoo')
+  call delete('loclistbar')
 endfunction
 
 " More tests for 'errorformat'
@@ -903,6 +920,30 @@ function! Test_efm2()
   call assert_equal(147, l[0].lnum)
   call assert_equal('E', l[0].type)
   call assert_equal("\nunknown variable 'i'", l[0].text)
+
+  " Test for %A, %C and other formats
+  let lines = [
+	  \"==============================================================",
+	  \"FAIL: testGetTypeIdCachesResult (dbfacadeTest.DjsDBFacadeTest)",
+	  \"--------------------------------------------------------------",
+	  \"Traceback (most recent call last):",
+	  \'  File "unittests/dbfacadeTest.py", line 89, in testFoo',
+	  \"    self.assertEquals(34, dtid)",
+	  \'  File "/usr/lib/python2.2/unittest.py", line 286, in',
+	  \" failUnlessEqual",
+	  \"    raise self.failureException, \\",
+	  \"AssertionError: 34 != 33",
+	  \"",
+	  \"--------------------------------------------------------------",
+	  \"Ran 27 tests in 0.063s"
+	  \]
+  set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
+  cgetexpr lines
+  let l = getqflist()
+  call assert_equal(8, len(l))
+  call assert_equal(89, l[4].lnum)
+  call assert_equal(1, l[4].valid)
+  call assert_equal('unittests/dbfacadeTest.py', bufname(l[4].bufnr))
 
   let &efm = save_efm
 endfunction
@@ -1462,3 +1503,104 @@ func Test_duplicate_buf()
 
   call delete('Xgrepthis')
 endfunc
+
+" Quickfix/Location list set/get properties tests
+function Xproperty_tests(cchar)
+    call s:setup_commands(a:cchar)
+
+    " Error cases
+    call assert_fails('call g:Xgetlist(99)', 'E715:')
+    call assert_fails('call g:Xsetlist(99)', 'E714:')
+    call assert_fails('call g:Xsetlist([], "a", [])', 'E715:')
+
+    " Set and get the title
+    Xopen
+    wincmd p
+    call g:Xsetlist([{'filename':'foo', 'lnum':27}])
+    call g:Xsetlist([], 'a', {'title' : 'Sample'})
+    let d = g:Xgetlist({"title":1})
+    call assert_equal('Sample', d.title)
+
+    Xopen
+    call assert_equal('Sample', w:quickfix_title)
+    Xclose
+
+    " Tests for action argument
+    silent! Xolder 999
+    let qfnr = g:Xgetlist({'all':1}).nr
+    call g:Xsetlist([], 'r', {'title' : 'N1'})
+    call assert_equal('N1', g:Xgetlist({'all':1}).title)
+    call g:Xsetlist([], ' ', {'title' : 'N2'})
+    call assert_equal(qfnr + 1, g:Xgetlist({'all':1}).nr)
+    call g:Xsetlist([], ' ', {'title' : 'N3'})
+    call assert_equal('N2', g:Xgetlist({'nr':2, 'title':1}).title)
+
+    " Invalid arguments
+    call assert_fails('call g:Xgetlist([])', 'E715')
+    call assert_fails('call g:Xsetlist([], "a", [])', 'E715')
+    let s = g:Xsetlist([], 'a', {'abc':1})
+    call assert_equal(-1, s)
+
+    call assert_equal({}, g:Xgetlist({'abc':1}))
+
+    if a:cchar == 'l'
+	call assert_equal({}, getloclist(99, ['title']))
+    endif
+endfunction
+
+function Test_qf_property()
+    call Xproperty_tests('c')
+    call Xproperty_tests('l')
+endfunction
+
+" Tests for the QuickFixCmdPre/QuickFixCmdPost autocommands
+function QfAutoCmdHandler(loc, cmd)
+  call add(g:acmds, a:loc . a:cmd)
+endfunction
+
+function Test_Autocmd()
+  autocmd QuickFixCmdPre * call QfAutoCmdHandler('pre', expand('<amatch>'))
+  autocmd QuickFixCmdPost * call QfAutoCmdHandler('post', expand('<amatch>'))
+
+  let g:acmds = []
+  cexpr "F1:10:Line 10"
+  caddexpr "F1:20:Line 20"
+  cgetexpr "F1:30:Line 30"
+  enew! | call append(0, "F2:10:Line 10")
+  cbuffer!
+  enew! | call append(0, "F2:20:Line 20")
+  cgetbuffer
+  enew! | call append(0, "F2:30:Line 30")
+  caddbuffer
+
+  let l = ['precexpr',
+      \ 'postcexpr',
+      \ 'precaddexpr',
+      \ 'postcaddexpr',
+      \ 'precgetexpr',
+      \ 'postcgetexpr',
+      \ 'precbuffer',
+      \ 'postcbuffer',
+      \ 'precgetbuffer',
+      \ 'postcgetbuffer',
+      \ 'precaddbuffer',
+      \ 'postcaddbuffer']
+  call assert_equal(l, g:acmds)
+endfunction
+
+function! Test_Autocmd_Exception()
+  set efm=%m
+  lgetexpr '?'
+
+  try
+    call DoesNotExit()
+  catch
+    lgetexpr '1'
+  finally
+    lgetexpr '1'
+  endtry
+
+  call assert_equal('1', getloclist(0)[0].text)
+
+  set efm&vim
+endfunction

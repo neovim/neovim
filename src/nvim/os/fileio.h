@@ -30,6 +30,8 @@ typedef enum {
   kFileTruncate = 32,  ///< Truncate the file if it exists.
                        ///< Implies kFileWriteOnly. Cannot be used with
                        ///< kFileCreateOnly.
+  kFileAppend = 64,  ///< Append to the file. Implies kFileWriteOnly. Cannot
+                     ///< be used with kFileCreateOnly.
 } FileOpenFlags;
 
 static inline bool file_eof(const FileDescriptor *const fp)

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * misc1.c: functions that didn't seem to fit elsewhere
  */
@@ -51,6 +54,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 #include "nvim/event/stream.h"
+#include "nvim/buffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
@@ -747,7 +751,7 @@ open_line (
     // Skip mark_adjust when adding a line after the last one, there can't
     // be marks there.
     if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count) {
-      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
+      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
     }
     did_append = true;
   } else {
@@ -1405,7 +1409,6 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     coladvance_force(getviscol());
   }
 
-  int c = buf[0];
   size_t col = (size_t)curwin->w_cursor.col;
   linenr_T lnum = curwin->w_cursor.lnum;
   char_u *oldp = ml_get(lnum);
@@ -1498,10 +1501,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
       && msg_silent == 0
       && !ins_compl_active()
       ) {
-    if (has_mbyte)
-      showmatch(mb_ptr2char(buf));
-    else
-      showmatch(c);
+    showmatch(mb_ptr2char(buf));
   }
 
   if (!p_ri || (State & REPLACE_FLAG)) {
@@ -1788,7 +1788,7 @@ void changed(void)
     }
     changed_int();
   }
-  ++curbuf->b_changedtick;
+  buf_set_changedtick(curbuf, curbuf->b_changedtick + 1);
 }
 
 /*
@@ -1866,7 +1866,7 @@ void appended_lines_mark(linenr_T lnum, long count)
   // Skip mark_adjust when adding a line after the last one, there can't
   // be marks there.
   if (lnum + count < curbuf->b_ml.ml_line_count) {
-    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L);
+    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
   }
   changed_lines(lnum + 1, 0, lnum + 1, count);
 }
@@ -1888,7 +1888,7 @@ void deleted_lines(linenr_T lnum, long count)
  */
 void deleted_lines_mark(linenr_T lnum, long count)
 {
-  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count);
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false);
   changed_lines(lnum, 0, lnum + count, -count);
 }
 
@@ -2147,7 +2147,7 @@ unchanged (
     redraw_tabline = TRUE;
     need_maketitle = TRUE;          /* set window title later */
   }
-  ++buf->b_changedtick;
+  buf_set_changedtick(buf, buf->b_changedtick + 1);
 }
 
 /*
@@ -2214,44 +2214,47 @@ change_warning (
   }
 }
 
-/*
- * Ask for a reply from the user, a 'y' or a 'n'.
- * No other characters are accepted, the message is repeated until a valid
- * reply is entered or CTRL-C is hit.
- * If direct is TRUE, don't use vgetc() but ui_inchar(), don't get characters
- * from any buffers but directly from the user.
- *
- * return the 'y' or 'n'
- */
-int ask_yesno(char_u *str, int direct)
+/// Ask for a reply from the user, 'y' or 'n'
+///
+/// No other characters are accepted, the message is repeated until a valid
+/// reply is entered or <C-c> is hit.
+///
+/// @param[in]  str  Prompt: question to ask user. Is always followed by
+///                  " (y/n)?".
+/// @param[in]  direct  Determines what function to use to get user input. If
+///                     true then ui_inchar() will be used, otherwise vgetc().
+///                     I.e. when direct is true then characters are obtained
+///                     directly from the user without buffers involved.
+///
+/// @return 'y' or 'n'. Last is also what will be returned in case of interrupt.
+int ask_yesno(const char *const str, const bool direct)
 {
+  const int save_State = State;
+
+  no_wait_return++;
+  State = CONFIRM;  // Mouse behaves like with :confirm.
+  setmouse();  // Disable mouse in xterm.
+  no_mapping++;
+
   int r = ' ';
-  int save_State = State;
-
-  ++no_wait_return;
-  State = CONFIRM;              /* mouse behaves like with :confirm */
-  setmouse();                   /* disables mouse for xterm */
-  ++no_mapping;
-  ++allow_keys;                 /* no mapping here, but recognize keys */
-
   while (r != 'y' && r != 'n') {
-    /* same highlighting as for wait_return */
-    smsg_attr(hl_attr(HLF_R),
-              "%s (y/n)?", str);
-    if (direct)
+    // Same highlighting as for wait_return.
+    smsg_attr(hl_attr(HLF_R), "%s (y/n)?", str);
+    if (direct) {
       r = get_keystroke();
-    else
+    } else {
       r = plain_vgetc();
-    if (r == Ctrl_C || r == ESC)
+    }
+    if (r == Ctrl_C || r == ESC) {
       r = 'n';
-    msg_putchar(r);         /* show what you typed */
+    }
+    msg_putchar(r);  // Show what you typed.
     ui_flush();
   }
-  --no_wait_return;
+  no_wait_return--;
   State = save_State;
   setmouse();
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
 
   return r;
 }
@@ -2324,8 +2327,8 @@ int get_keystroke(void)
      * terminal code to complete. */
     n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
     if (n > 0) {
-      /* Replace zero and CSI by a special key code. */
-      n = fix_input_buffer(buf + len, n, FALSE);
+      // Replace zero and CSI by a special key code.
+      n = fix_input_buffer(buf + len, n);
       len += n;
       waited = 0;
     } else if (len > 0)
@@ -2401,8 +2404,7 @@ get_number (
   if (msg_silent != 0)
     return 0;
 
-  ++no_mapping;
-  ++allow_keys;                 /* no mapping here, but recognize keys */
+  no_mapping++;
   for (;; ) {
     ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
@@ -2430,8 +2432,7 @@ get_number (
     } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC)
       break;
   }
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
   return n;
 }
 
@@ -2535,9 +2536,9 @@ void vim_beep(unsigned val)
   if (emsg_silent == 0) {
     if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
       if (p_vb) {
-        ui_visual_bell();
+        ui_call_visual_bell();
       } else {
-        ui_putc(BELL);
+        ui_call_bell();
       }
     }
 
@@ -2545,7 +2546,7 @@ void vim_beep(unsigned val)
      * function give the user a hint where the beep comes from. */
     if (vim_strchr(p_debug, 'e') != NULL) {
       msg_source(hl_attr(HLF_W));
-      msg_attr((char_u *)_("Beep!"), hl_attr(HLF_W));
+      msg_attr(_("Beep!"), hl_attr(HLF_W));
     }
   }
 }
@@ -2680,7 +2681,8 @@ void fast_breakcheck(void)
   }
 }
 
-// Call shell. Calls os_call_shell, with 'shellxquote' added.
+// os_call_shell wrapper. Handles 'verbose', :profile, and v:shell_error.
+// Invalidates cached tags.
 int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   int retval;
@@ -2688,9 +2690,8 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 
   if (p_verbose > 3) {
     verbose_enter();
-    smsg(_("Calling shell to execute: \"%s\""),
-         cmd == NULL ? p_sh : cmd);
-    ui_putc('\n');
+    smsg(_("Calling shell to execute: \"%s\""), cmd == NULL ? p_sh : cmd);
+    ui_linefeed();
     verbose_leave();
   }
 

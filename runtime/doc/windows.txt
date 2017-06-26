@@ -1,4 +1,4 @@
-*windows.txt*   For Vim version 7.4.  Last change: 2016 Jun 10
+*windows.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -13,18 +13,7 @@ differently when used in combination with more than one window.
 The basics are explained in chapter 7 and 8 of the user manual |usr_07.txt|
 |usr_08.txt|.
 
-1.  Introduction				|windows-intro|
-2.  Starting Vim				|windows-starting|
-3.  Opening and closing a window		|opening-window|
-4.  Moving cursor to other windows		|window-move-cursor|
-5.  Moving windows around			|window-moving|
-6.  Window resizing				|window-resize|
-7.  Argument and buffer list commands		|buffer-list|
-8.  Do a command in all buffers or windows	|list-repeat|
-9.  Tag or file name under the cursor		|window-tag|
-10. The preview window				|preview-window|
-11. Using hidden buffers			|buffer-hidden|
-12. Special kinds of buffers			|special-buffers|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction					*windows-intro* *window*
@@ -69,7 +58,7 @@ places where a Normal mode command can't be used or is inconvenient.
 
 The main Vim window can hold several split windows.  There are also tab pages
 |tab-page|, each of which can hold multiple windows.
-
+					*window-ID* *winid* *windowid*
 Each window has a unique identifier called the window ID.  This identifier
 will not change within a Vim session. The |win_getid()| and |win_id2tabwin()|
 functions can be used to convert between the window/tab number and the
@@ -249,7 +238,7 @@ window will appear.
 		far left and occupies the full height of the Vim window.
 		Doesn't work for |:execute| and |:normal|.
 
-						*:botright*
+						*:bo* *:botright*
 :bo[tright] {cmd}
 		Execute {cmd}.  If it contains a command that splits a window,
 		it will appear at the bottom and occupy the full width of the
@@ -287,7 +276,7 @@ CTRL-W CTRL-Q						*CTRL-W_CTRL-Q*
 		    :1quit  " quit the first window
 		    :$quit  " quit the last window
 		    :9quit  " quit the last window
-			    " if there are less than 9 windows opened
+			    " if there are fewer than 9 windows opened
 		    :-quit  " quit the previous window
 		    :+quit  " quit the next window
 		    :+2quit " quit the second next window
@@ -1026,6 +1015,10 @@ list of buffers. |unlisted-buffer|
 			h+	hidden buffers which are modified
 			a+	active buffers which are modified
 
+		When using |:filter| the pattern is matched against the
+		displayed buffer name, e.g.: >
+			filter /\.vim/ ls
+<
 						*:bad* *:badd*
 :bad[d]	[+lnum] {fname}
 		Add file name {fname} to the buffer list, without loading it.

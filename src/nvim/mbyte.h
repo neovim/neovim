@@ -2,6 +2,12 @@
 #define NVIM_MBYTE_H
 
 #include <stdbool.h>
+#include <string.h>
+
+#include "nvim/iconv.h"
+#include "nvim/func_attr.h"
+#include "nvim/os/os_defs.h"  // For WCHAR, indirect
+#include "nvim/types.h" // for char_u
 
 /*
  * Return byte length of character that starts with byte "b".
@@ -40,7 +46,41 @@
 #define mb_ptr2char utf_ptr2char
 #define mb_head_off utf_head_off
 
+/// Flags for vimconv_T
+typedef enum {
+  CONV_NONE      = 0,
+  CONV_TO_UTF8   = 1,
+  CONV_9_TO_UTF8 = 2,
+  CONV_TO_LATIN1 = 3,
+  CONV_TO_LATIN9 = 4,
+  CONV_ICONV     = 5,
+} ConvFlags;
+
+/// Structure used for string conversions
+typedef struct {
+  int vc_type;  ///< Zero or more ConvFlags.
+  int vc_factor;  ///< Maximal expansion factor.
+# ifdef USE_ICONV
+  iconv_t vc_fd;  ///< Value for CONV_ICONV.
+# endif
+  bool vc_fail;  ///< What to do with invalid characters: if true, fail,
+                 ///< otherwise use '?'.
+} vimconv_T;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"
 #endif
+
+static inline int mb_strcmp_ic(bool ic, const char *s1, const char *s2)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Compare strings
+///
+/// @param[in]  ic  True if case is to be ignored.
+///
+/// @return 0 if s1 == s2, <0 if s1 < s2, >0 if s1 > s2.
+static inline int mb_strcmp_ic(bool ic, const char *s1, const char *s2)
+{
+  return (ic ? mb_stricmp(s1, s2) : strcmp(s1, s2));
+}
 #endif  // NVIM_MBYTE_H

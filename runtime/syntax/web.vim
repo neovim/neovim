@@ -8,11 +8,8 @@
 " the standard WEB distribution, available for anonymous ftp at
 " ftp://labrea.stanford.edu/pub/tex/web/.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -20,12 +17,8 @@ endif
 " we base this syntax file on the modern superset, CWEB.  Note: This shortcut
 " may introduce some illegal constructs, e.g., CWEB's "@c" does _not_ start a
 " code section in WEB.  Anyway, I'm not a WEB programmer.
-if version < 600
-  source <sfile>:p:h/cweb.vim
-else
-  runtime! syntax/cweb.vim
-  unlet b:current_syntax
-endif
+runtime! syntax/cweb.vim
+unlet b:current_syntax
 
 " Replace C/C++ syntax by Pascal syntax.
 syntax include @webIncludedC <sfile>:p:h/pascal.vim

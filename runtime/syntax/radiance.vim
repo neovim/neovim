@@ -18,20 +18,13 @@
 " comments, external command names and the null-modifier "void".
 
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " all printing characters except '#' and '!' are valid in names.
-if version >= 600
-  setlocal iskeyword=\",$-~
-else
-  set iskeyword=\",$-~
-endif
+setlocal iskeyword=\",$-~
 
 " The null-modifier
 syn keyword radianceKeyword void
@@ -130,29 +123,19 @@ syn keyword radianceTodo contained TODO XXX
 syn match radianceComment "#.*$" contains=radianceTodo
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_radiance_syn_inits")
-  if version < 508
-    let did_radiance_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink radianceKeyword	Keyword
-  HiLink radianceExtraType	Type
-  HiLink radianceSurfType	Type
-  HiLink radianceLightType	Type
-  HiLink radianceMatType	Type
-  HiLink radiancePatType	Type
-  HiLink radianceTexType	Type
-  HiLink radianceMixType	Type
-  HiLink radianceComment	Comment
-  HiLink radianceCommand	Function
-  HiLink radianceID		String
-  HiLink radianceTodo		Todo
-  delcommand HiLink
-endif
+" Only when an item doesn't have highlighting yet
+hi def link radianceKeyword	Keyword
+hi def link radianceExtraType	Type
+hi def link radianceSurfType	Type
+hi def link radianceLightType	Type
+hi def link radianceMatType	Type
+hi def link radiancePatType	Type
+hi def link radianceTexType	Type
+hi def link radianceMixType	Type
+hi def link radianceComment	Comment
+hi def link radianceCommand	Function
+hi def link radianceID		String
+hi def link radianceTodo		Todo
 
 let b:current_syntax = "radiance"
 

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // fs.c -- filesystem access
 #include <stdbool.h>
 #include <stddef.h>
@@ -58,9 +61,9 @@ void fs_init(void)
 }
 
 
-/// Change to the given directory.
+/// Changes the current directory to `path`.
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or negative error code.
 int os_chdir(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -91,11 +94,11 @@ int os_dirname(char_u *buf, size_t len)
 /// Check if the given path is a directory and not a symlink to a directory.
 /// @return `true` if `name` is a directory and NOT a symlink to a directory.
 ///         `false` if `name` is not a directory or if an error occurred.
-bool os_isrealdir(const char_u *name)
+bool os_isrealdir(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
-  if (uv_fs_lstat(&fs_loop, &request, (char *)name, NULL) != kLibuvSuccess) {
+  if (uv_fs_lstat(&fs_loop, &request, name, NULL) != kLibuvSuccess) {
     return false;
   }
   if (S_ISLNK(request.statbuf.st_mode)) {
@@ -111,7 +114,7 @@ bool os_isrealdir(const char_u *name)
 bool os_isdir(const char_u *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm(name);
+  int32_t mode = os_getperm((const char *)name);
   if (mode < 0) {
     return false;
   }
@@ -168,6 +171,10 @@ int os_nodetype(const char *name)
                    | O_NONBLOCK
 #endif
                    , 0);
+  if (fd == -1) {
+    return NODE_OTHER;  // open() failed.
+  }
+
   switch (uv_guess_handle(fd)) {
     case UV_TTY:         // FILE_TYPE_CHAR
       nodetype = NODE_WRITABLE;
@@ -193,11 +200,13 @@ int os_nodetype(const char *name)
 }
 
 /// Gets the absolute path of the currently running executable.
+/// May fail if procfs is missing. #6734
+/// @see path_exepath
 ///
-/// @param[out] buffer Returns the path string.
+/// @param[out] buffer Full path to the executable.
 /// @param[in]  size   Size of `buffer`.
 ///
-/// @return `0` on success, or libuv error code on failure.
+/// @return 0 on success, or libuv error code.
 int os_exepath(char *buffer, size_t *size)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -219,49 +228,87 @@ int os_exepath(char *buffer, size_t *size)
 bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  // when use_path is false or if it's an absolute or relative path don't
-  // need to use $PATH.
-  if (!use_path || path_is_absolute_path(name)
-      || (name[0] == '.'
-          && (name[1] == '/'
-              || (name[1] == '.' && name[2] == '/')))) {
-    // There must be a path separator, files in the current directory
-    // can't be executed
-    if (gettail_dir(name) != name && is_executable(name)) {
+  bool no_path = !use_path || path_is_absolute_path(name);
+#ifndef WIN32
+  // If the filename is "qualified" (relative or absolute) do not check $PATH.
+  no_path |= (name[0] == '.'
+              && (name[1] == '/' || (name[1] == '.' && name[2] == '/')));
+#endif
+
+  if (no_path) {
+#ifdef WIN32
+    const char *pathext = os_getenv("PATHEXT");
+    if (!pathext) {
+      pathext = ".com;.exe;.bat;.cmd";
+    }
+    bool ok = is_executable((char *)name) || is_executable_ext((char *)name,
+                                                               pathext);
+#else
+    // Must have path separator, cannot execute files in the current directory.
+    const bool ok = ((const char_u *)gettail_dir((const char *)name) != name
+                     && is_executable((char *)name));
+#endif
+    if (ok) {
       if (abspath != NULL) {
         *abspath = save_absolute_path(name);
       }
-
       return true;
     }
-
     return false;
   }
 
   return is_executable_in_path(name, abspath);
 }
 
-// Return true if "name" is an executable file, false if not or it doesn't
-// exist.
-static bool is_executable(const char_u *name)
+/// Returns true if `name` is an executable file.
+static bool is_executable(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-  int32_t mode = os_getperm(name);
+  int32_t mode = os_getperm((const char *)name);
 
   if (mode < 0) {
     return false;
   }
 
-#if WIN32
+#ifdef WIN32
   // Windows does not have exec bit; just check if the file exists and is not
   // a directory.
   return (S_ISREG(mode));
 #else
   return (S_ISREG(mode) && (S_IXUSR & mode));
 #endif
+}
 
+#ifdef WIN32
+/// Appends file extensions from `pathext` to `name` and returns true if any
+/// such combination is executable.
+static bool is_executable_ext(char *name, const char *pathext)
+  FUNC_ATTR_NONNULL_ALL
+{
+  xstrlcpy(os_buf, name, sizeof(os_buf));
+  char *buf_end = xstrchrnul(os_buf, '\0');
+  for (const char *ext = pathext; *ext; ext++) {
+    // Skip the extension if there is no suffix after a '.'.
+    if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
+      ext++;
+      continue;
+    }
+
+    const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
+    STRLCPY(buf_end, ext, ext_end - ext + 1);
+
+    if (is_executable(os_buf)) {
+      return true;
+    }
+
+    if (*ext_end != ENV_SEPCHAR) {
+      break;
+    }
+    ext = ext_end;
+  }
   return false;
 }
+#endif
 
 /// Checks if a file is inside the `$PATH` and is executable.
 ///
@@ -272,89 +319,69 @@ static bool is_executable(const char_u *name)
 static bool is_executable_in_path(const char_u *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  const char *path = os_getenv("PATH");
-  if (path == NULL) {
+  const char *path_env = os_getenv("PATH");
+  if (path_env == NULL) {
     return false;
   }
 
-  size_t buf_len = STRLEN(name) + STRLEN(path) + 2;
+#ifdef WIN32
+  // Prepend ".;" to $PATH.
+  size_t pathlen = strlen(path_env);
+  char *path = memcpy(xmallocz(pathlen + 3), "." ENV_SEPSTR, 2);
+  memcpy(path + 2, path_env, pathlen);
+#else
+  char *path = xstrdup(path_env);
+#endif
+
+  size_t buf_len = STRLEN(name) + strlen(path) + 2;
 
 #ifdef WIN32
   const char *pathext = os_getenv("PATHEXT");
   if (!pathext) {
     pathext = ".com;.exe;.bat;.cmd";
   }
-
-  buf_len += STRLEN(pathext);
+  buf_len += strlen(pathext);
 #endif
 
-  char_u *buf = xmalloc(buf_len);
+  char *buf = xmalloc(buf_len);
 
   // Walk through all entries in $PATH to check if "name" exists there and
   // is an executable file.
+  char *p = path;
+  bool rv = false;
   for (;; ) {
-    const char *e = xstrchrnul(path, ENV_SEPCHAR);
+    char *e = xstrchrnul(p, ENV_SEPCHAR);
 
-    // Glue together the given directory from $PATH with name and save into
-    // buf.
-    STRLCPY(buf, path, e - path + 1);
-    append_path((char *) buf, (const char *) name, buf_len);
-
-    if (is_executable(buf)) {
-      // Check if the caller asked for a copy of the path.
-      if (abspath != NULL) {
-        *abspath = save_absolute_path(buf);
-      }
-
-      xfree(buf);
-
-      return true;
-    }
+    // Combine the $PATH segment with `name`.
+    STRLCPY(buf, p, e - p + 1);
+    append_path(buf, (char *)name, buf_len);
 
 #ifdef WIN32
-    // Try appending file extensions from $PATHEXT to the name.
-    char *buf_end = xstrchrnul((char *)buf, '\0');
-    for (const char *ext = pathext; *ext; ext++) {
-      // Skip the extension if there is no suffix after a '.'.
-      if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ';')) {
-        *ext++;
-
-        continue;
-      }
-
-      const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
-      STRLCPY(buf_end, ext, ext_end - ext + 1);
-
-      if (is_executable(buf)) {
-        // Check if the caller asked for a copy of the path.
-        if (abspath != NULL) {
-          *abspath = save_absolute_path(buf);
-        }
-
-        xfree(buf);
-
-        return true;
-      }
-
-      if (*ext_end != ENV_SEPCHAR) {
-        break;
-      }
-      ext = ext_end;
-    }
+    bool ok = is_executable(buf) || is_executable_ext(buf, pathext);
+#else
+    bool ok = is_executable(buf);
 #endif
+    if (ok) {
+      if (abspath != NULL) {  // Caller asked for a copy of the path.
+        *abspath = save_absolute_path((char_u *)buf);
+      }
+
+      rv = true;
+      goto end;
+    }
 
     if (*e != ENV_SEPCHAR) {
       // End of $PATH without finding any executable called name.
-      xfree(buf);
-      return false;
+      goto end;
     }
 
-    path = e + 1;
+    p = e + 1;
   }
 
-  // We should never get to this point.
-  assert(false);
-  return false;
+end:
+  xfree(buf);
+  xfree(path);
+  return rv;
 }
 
 /// Opens or creates a file and returns a non-negative integer representing
@@ -372,6 +399,35 @@ int os_open(const char* path, int flags, int mode)
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;
+}
+
+/// Sets file descriptor `fd` to close-on-exec.
+//
+// @return -1 if failed to set, 0 otherwise.
+int os_set_cloexec(const int fd)
+{
+#ifdef HAVE_FD_CLOEXEC
+  int e;
+  int fdflags = fcntl(fd, F_GETFD);
+  if (fdflags < 0) {
+    e = errno;
+    ELOG("Failed to get flags on descriptor %d: %s", fd, strerror(e));
+    errno = e;
+    return -1;
+  }
+  if ((fdflags & FD_CLOEXEC) == 0
+      && fcntl(fd, F_SETFD, fdflags | FD_CLOEXEC) == -1) {
+    e = errno;
+    ELOG("Failed to set CLOEXEC on descriptor %d: %s", fd, strerror(e));
+    errno = e;
+    return -1;
+  }
+  return 0;
+#endif
+
+  // No FD_CLOEXEC flag. On Windows, the file should have been opened with
+  // O_NOINHERIT anyway.
+  return -1;
 }
 
 /// Close a file
@@ -407,11 +463,11 @@ ptrdiff_t os_read(const int fd, bool *ret_eof, char *const ret_buf,
   size_t read_bytes = 0;
   bool did_try_to_free = false;
   while (read_bytes != size) {
+    assert(size >= read_bytes);
     const ptrdiff_t cur_read_bytes = read(fd, ret_buf + read_bytes,
                                           size - read_bytes);
     if (cur_read_bytes > 0) {
       read_bytes += (size_t)cur_read_bytes;
-      assert(read_bytes <= size);
     }
     if (cur_read_bytes < 0) {
       const int error = os_translate_sys_error(errno);
@@ -510,6 +566,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size)
   }
   size_t written_bytes = 0;
   while (written_bytes != size) {
+    assert(size >= written_bytes);
     const ptrdiff_t cur_written_bytes = write(fd, buf + written_bytes,
                                               size - written_bytes);
     if (cur_written_bytes > 0) {
@@ -559,11 +616,11 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
 /// Get the file permissions for a given file.
 ///
 /// @return libuv error code on error.
-int32_t os_getperm(const char_u *name)
+int32_t os_getperm(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
-  int stat_result = os_stat((char *)name, &statbuf);
+  int stat_result = os_stat(name, &statbuf);
   if (stat_result == kLibuvSuccess) {
     return (int32_t)statbuf.st_mode;
   } else {
@@ -574,11 +631,11 @@ int32_t os_getperm(const char_u *name)
 /// Set the permission of a file.
 ///
 /// @return `OK` for success, `FAIL` for failure.
-int os_setperm(const char_u *name, int perm)
+int os_setperm(const char *const name, int perm)
   FUNC_ATTR_NONNULL_ALL
 {
   int r;
-  RUN_UV_FS_FUNC(r, uv_fs_chmod, (const char *)name, perm, NULL);
+  RUN_UV_FS_FUNC(r, uv_fs_chmod, name, perm, NULL);
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
@@ -932,13 +989,13 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
 /// When "fname" is the name of a shortcut (*.lnk) resolve the file it points
 /// to and return that name in allocated memory.
 /// Otherwise NULL is returned.
-char_u * os_resolve_shortcut(char_u *fname)
+char *os_resolve_shortcut(const char *fname)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   HRESULT hr;
   IPersistFile *ppf = NULL;
   OLECHAR wsz[MAX_PATH];
-  char_u *rfname = NULL;
-  int len;
+  char *rfname = NULL;
   IShellLinkW *pslw = NULL;
   WIN32_FIND_DATAW ffdw;
 
@@ -947,7 +1004,7 @@ char_u * os_resolve_shortcut(char_u *fname)
   if (fname == NULL) {
     return rfname;
   }
-  len = (int)STRLEN(fname);
+  const size_t len = strlen(fname);
   if (len <= 4 || STRNICMP(fname + len - 4, ".lnk", 4) != 0) {
     return rfname;
   }
@@ -959,9 +1016,9 @@ char_u * os_resolve_shortcut(char_u *fname)
                         &IID_IShellLinkW, (void **)&pslw);
   if (hr == S_OK) {
     WCHAR *p;
-    int conversion_result = utf8_to_utf16((char *)fname, &p);
+    const int conversion_result = utf8_to_utf16(fname, &p);
     if (conversion_result != 0) {
-      EMSG2("utf8_to_utf16 failed: %s", uv_strerror(conversion_result));
+      EMSG2("utf8_to_utf16 failed: %d", conversion_result);
     }
 
     if (p != NULL) {
@@ -989,7 +1046,7 @@ char_u * os_resolve_shortcut(char_u *fname)
       ZeroMemory(wsz, MAX_PATH * sizeof(WCHAR));
       hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
       if (hr == S_OK && wsz[0] != NUL) {
-        int conversion_result = utf16_to_utf8(wsz, &rfname);
+        const int conversion_result = utf16_to_utf8(wsz, &rfname);
         if (conversion_result != 0) {
           EMSG2("utf16_to_utf8 failed: %s", uv_strerror(conversion_result));
         }
@@ -1019,7 +1076,7 @@ shortcut_end:
 int os_translate_sys_error(int sys_errno) {
 #ifdef HAVE_UV_TRANSLATE_SYS_ERROR
   return uv_translate_sys_error(sys_errno);
-#elif WIN32
+#elif defined(WIN32)
   // TODO(equalsraf): libuv does not yet expose uv_translate_sys_error()
   // in its public API, include a version here until it can be used.
   // See https://github.com/libuv/libuv/issues/79

@@ -4,7 +4,7 @@
 #  UNIBILIUM_INCLUDE_DIRS - The unibilium include directories
 #  UNIBILIUM_LIBRARIES - The libraries needed to use unibilium
 
-if(NOT UNIBILIUM_USE_BUNDLED)
+if(NOT USE_BUNDLED_UNIBILIUM)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
     pkg_check_modules(PC_UNIBILIUM QUIET unibilium)

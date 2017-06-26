@@ -1,6 +1,10 @@
 #ifndef NVIM_OS_WIN_DEFS_H
 #define NVIM_OS_WIN_DEFS_H
 
+#ifndef WIN32
+# error Header must be included only when compiling for Windows.
+#endif
+
 // winsock2.h must be first to avoid incompatibilities
 // with winsock.h (included by windows.h)
 #include <winsock2.h>
@@ -15,13 +19,14 @@
 
 #define NAME_MAX _MAX_PATH
 
-#define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
+#define TEMP_DIR_NAMES { "$TMPDIR", "$TMP", "$TEMP", "$USERPROFILE", "" }
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 
 #define FNAME_ILLEGAL "\"*?><|"
 
-// Separator character for environment variables.
+// Character that separates entries in $PATH.
 #define ENV_SEPCHAR ';'
+#define ENV_SEPSTR  ";"
 
 #define USE_CRNL
 

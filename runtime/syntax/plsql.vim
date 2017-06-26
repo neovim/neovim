@@ -9,11 +9,8 @@
 "	   Austin Ziegler (austin at halostatue dot ca)
 "		Added 8i+ features.
 "
-" For version 5.x, clear all syntax items.
-" For version 6.x, quit when a syntax file was already loaded.
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -223,54 +220,44 @@ endif
 syn sync minlines=10 maxlines=100
 
 " Define the default highlighting.
-" For version 5.x and earlier, only when not done already.
-" For version 5.8 and later, only when an item doesn't have highlighting yet.
-if version >= 508 || !exists("did_plsql_syn_inits")
-  if version < 508
-    let did_plsql_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet.
 
-  HiLink plsqlAttribute		Macro
-  HiLink plsqlBlockError	Error
-  HiLink plsqlBooleanLiteral	Boolean
-  HiLink plsqlCharLiteral	Character
-  HiLink plsqlComment		Comment
-  HiLink plsqlCommentL		Comment
-  HiLink plsqlConditional	Conditional
-  HiLink plsqlError		Error
-  HiLink plsqlErrInBracket	Error
-  HiLink plsqlErrInBlock	Error
-  HiLink plsqlErrInParen	Error
-  HiLink plsqlException		Function
-  HiLink plsqlFloatLiteral	Float
-  HiLink plsqlFunction		Function
-  HiLink plsqlGarbage		Error
-  HiLink plsqlHostIdentifier	Label
-  HiLink plsqlIdentifier	Normal
-  HiLink plsqlIntLiteral	Number
-  HiLink plsqlOperator		Operator
-  HiLink plsqlParen		Normal
-  HiLink plsqlParenError	Error
-  HiLink plsqlSpaceError	Error
-  HiLink plsqlPseudo		PreProc
-  HiLink plsqlKeyword		Keyword
-  HiLink plsqlRepeat		Repeat
-  HiLink plsqlStorage		StorageClass
-  HiLink plsqlSQLKeyword	Function
-  HiLink plsqlStringError	Error
-  HiLink plsqlStringLiteral	String
-  HiLink plsqlCommentString	String
-  HiLink plsqlComment2String	String
-  HiLink plsqlSymbol		Normal
-  HiLink plsqlTrigger		Function
-  HiLink plsqlTypeAttribute	StorageClass
-  HiLink plsqlTodo		Todo
+hi def link plsqlAttribute		Macro
+hi def link plsqlBlockError	Error
+hi def link plsqlBooleanLiteral	Boolean
+hi def link plsqlCharLiteral	Character
+hi def link plsqlComment		Comment
+hi def link plsqlCommentL		Comment
+hi def link plsqlConditional	Conditional
+hi def link plsqlError		Error
+hi def link plsqlErrInBracket	Error
+hi def link plsqlErrInBlock	Error
+hi def link plsqlErrInParen	Error
+hi def link plsqlException		Function
+hi def link plsqlFloatLiteral	Float
+hi def link plsqlFunction		Function
+hi def link plsqlGarbage		Error
+hi def link plsqlHostIdentifier	Label
+hi def link plsqlIdentifier	Normal
+hi def link plsqlIntLiteral	Number
+hi def link plsqlOperator		Operator
+hi def link plsqlParen		Normal
+hi def link plsqlParenError	Error
+hi def link plsqlSpaceError	Error
+hi def link plsqlPseudo		PreProc
+hi def link plsqlKeyword		Keyword
+hi def link plsqlRepeat		Repeat
+hi def link plsqlStorage		StorageClass
+hi def link plsqlSQLKeyword	Function
+hi def link plsqlStringError	Error
+hi def link plsqlStringLiteral	String
+hi def link plsqlCommentString	String
+hi def link plsqlComment2String	String
+hi def link plsqlSymbol		Normal
+hi def link plsqlTrigger		Function
+hi def link plsqlTypeAttribute	StorageClass
+hi def link plsqlTodo		Todo
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "plsql"
 

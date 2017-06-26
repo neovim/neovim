@@ -11,11 +11,8 @@
 " VIM and VIM-DEV mailing lists.  It is by no means complete.
 " Send comments, suggestions and requests to the maintainer.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
@@ -338,40 +335,30 @@ syn match   vbTypeSpecifier  "[a-zA-Z0-9][\$%&!#]"ms=s+1
 syn match   vbTypeSpecifier  "#[a-zA-Z0-9]"me=e-1
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_vb_syntax_inits")
-	if version < 508
-		let did_vb_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	HiLink vbBoolean		Boolean
-	HiLink vbLineNumber		Comment
-	HiLink vbComment		Comment
-	HiLink vbConditional	Conditional
-	HiLink vbConst			Constant
-	HiLink vbDefine			Constant
-	HiLink vbError			Error
-	HiLink vbFunction		Identifier
-	HiLink vbIdentifier		Identifier
-	HiLink vbNumber			Number
-	HiLink vbFloat			Float
-	HiLink vbMethods		PreProc
-	HiLink vbOperator		Operator
-	HiLink vbRepeat			Repeat
-	HiLink vbString			String
-	HiLink vbStatement		Statement
-	HiLink vbKeyword		Statement
-	HiLink vbEvents			Special
-	HiLink vbTodo			Todo
-	HiLink vbTypes			Type
-	HiLink vbTypeSpecifier	Type
+hi def link vbBoolean		Boolean
+hi def link vbLineNumber		Comment
+hi def link vbComment		Comment
+hi def link vbConditional	Conditional
+hi def link vbConst			Constant
+hi def link vbDefine			Constant
+hi def link vbError			Error
+hi def link vbFunction		Identifier
+hi def link vbIdentifier		Identifier
+hi def link vbNumber			Number
+hi def link vbFloat			Float
+hi def link vbMethods		PreProc
+hi def link vbOperator		Operator
+hi def link vbRepeat			Repeat
+hi def link vbString			String
+hi def link vbStatement		Statement
+hi def link vbKeyword		Statement
+hi def link vbEvents			Special
+hi def link vbTodo			Todo
+hi def link vbTypes			Type
+hi def link vbTypeSpecifier	Type
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "vb"
 

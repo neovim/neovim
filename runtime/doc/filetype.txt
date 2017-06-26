@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.4.  Last change: 2015 Dec 06
+*filetype.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,11 +6,9 @@
 
 Filetypes						*filetype* *file-type*
 
-1. Filetypes					|filetypes|
-2. Filetype plugin				|filetype-plugins|
-3. Docs for the default filetype plugins.	|ftplugin-docs|
-
 Also see |autocmd.txt|.
+
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Filetypes					*filetypes* *file-types*
@@ -542,6 +540,7 @@ K or CTRL-]               Jump to the manpage for the <cWORD> under the
                           cursor. Takes a count for the section.
 CTRL-T                    Jump back to the location that the manpage was
                           opened from.
+META-]                    Show the manpage outline in the |location-list|.
 q                         :quit if invoked as $MANPAGER, otherwise :close.
 
 Variables:
@@ -564,6 +563,17 @@ the PDF.  The following are treated as tags:
 These maps can be disabled with >
 	:let g:no_pdf_maps = 1
 <
+
+PYTHON						*ft-python-plugin* *PEP8*
+
+By default the following options are set, in accordance with PEP8: >
+
+	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
+
+To disable this behaviour, set the following variable in your vimrc: >
+	
+	let g:python_recommended_style = 0
+
 
 RPM SPEC						*ft-spec-plugin*
 

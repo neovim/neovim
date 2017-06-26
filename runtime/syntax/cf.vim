@@ -379,61 +379,58 @@ syn region	cfqueryTag	contained start=+<cfquery+ end=+>+ keepend contains=cfTagN
 syn region	cfSqlregion	start=+<cfquery\_[^>]*>+ keepend end=+</cfquery>+me=s-1 matchgroup=NONE contains=@cfSql,cfComment,@htmlTagNameCluster,cfqueryTag,cfHashRegion
 
 " Define the highlighting.
-command -nargs=+ CfHiLink hi def link <args>
 
 if exists("d_noinclude_html")
   " The default html-style highlighting copied from html.vim.
-  CfHiLink htmlTag		Function
-  CfHiLink htmlEndTag		Identifier
-  CfHiLink htmlArg		Type
-  CfHiLink htmlTagName		htmlStatement
-  CfHiLink htmlValue		String
-  CfHiLink htmlPreProc		PreProc
-  CfHiLink htmlString		String
-  CfHiLink htmlStatement	Statement
-  CfHiLink htmlValue		String
-  CfHiLink htmlTagError		htmlError
-  CfHiLink htmlError		Error
+  hi def link htmlTag		Function
+  hi def link htmlEndTag		Identifier
+  hi def link htmlArg		Type
+  hi def link htmlTagName		htmlStatement
+  hi def link htmlValue		String
+  hi def link htmlPreProc		PreProc
+  hi def link htmlString		String
+  hi def link htmlStatement	Statement
+  hi def link htmlValue		String
+  hi def link htmlTagError		htmlError
+  hi def link htmlError		Error
 endif
 
-CfHiLink cfTagName		Statement
-CfHiLink cfCustomTagName	Statement
-CfHiLink cfArg			Type
-CfHiLink cfFunctionName		Function
-CfHiLink cfHashRegion		PreProc
-CfHiLink cfComment		Comment
-CfHiLink cfCommentTodo		Todo
-CfHiLink cfOperator		Operator
-CfHiLink cfOperatorMatch	Operator
-CfHiLink cfScope		Title
-CfHiLink cfBool			Constant
+hi def link cfTagName		Statement
+hi def link cfCustomTagName	Statement
+hi def link cfArg			Type
+hi def link cfFunctionName		Function
+hi def link cfHashRegion		PreProc
+hi def link cfComment		Comment
+hi def link cfCommentTodo		Todo
+hi def link cfOperator		Operator
+hi def link cfOperatorMatch	Operator
+hi def link cfScope		Title
+hi def link cfBool			Constant
 
-CfHiLink cfscriptBlock		Special
-CfHiLink cfscriptTag		htmlTag
-CfHiLink cfSetRegion		PreProc
-CfHiLink cfSetLHSRegion		htmlTag
-CfHiLink cfSetTagEnd		htmlTag
+hi def link cfscriptBlock		Special
+hi def link cfscriptTag		htmlTag
+hi def link cfSetRegion		PreProc
+hi def link cfSetLHSRegion		htmlTag
+hi def link cfSetTagEnd		htmlTag
 
-CfHiLink cfScriptLineComment	Comment
-CfHiLink cfScriptComment	Comment
-CfHiLink cfScriptStringS	String
-CfHiLink cfScriptStringD	String
-CfHiLink cfScriptNumber		cfScriptValue
-CfHiLink cfScriptConditional	Conditional
-CfHiLink cfScriptRepeat		Repeat
-CfHiLink cfScriptBranch		Conditional
-CfHiLink cfScriptSpecial	Type
-CfHiLink cfScriptStatement	Statement
-CfHiLink cfScriptBraces		Function
-CfHiLink cfScriptKeyword	Function
-CfHiLink cfScriptError		Error
-CfHiLink cfDeprecatedTag	Error
-CfHiLink cfDeprecatedFunction	Error
-CfHiLink cfScrParenError	cfScriptError
+hi def link cfScriptLineComment	Comment
+hi def link cfScriptComment	Comment
+hi def link cfScriptStringS	String
+hi def link cfScriptStringD	String
+hi def link cfScriptNumber		cfScriptValue
+hi def link cfScriptConditional	Conditional
+hi def link cfScriptRepeat		Repeat
+hi def link cfScriptBranch		Conditional
+hi def link cfScriptSpecial	Type
+hi def link cfScriptStatement	Statement
+hi def link cfScriptBraces		Function
+hi def link cfScriptKeyword	Function
+hi def link cfScriptError		Error
+hi def link cfDeprecatedTag	Error
+hi def link cfDeprecatedFunction	Error
+hi def link cfScrParenError	cfScriptError
 
-CfHiLink cfqueryTag		htmlTag
-
-delcommand CfHiLink
+hi def link cfqueryTag		htmlTag
 
 let b:current_syntax = "cf"
 

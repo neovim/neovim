@@ -5,7 +5,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('user functions, expr-mappings, overwrite protected builtin functions and regression on calling expressions', function()
   setup(clear)
@@ -72,19 +72,19 @@ describe('user functions, expr-mappings, overwrite protected builtin functions a
     feed('(one<cr>')
     feed('(two<cr>')
     feed('[(one again<esc>')
-    execute('call append(line("$"), max([1, 2, 3]))')
-    execute('call extend(g:, {"max": function("min")})')
-    execute('call append(line("$"), max([1, 2, 3]))')
-    execute('try')
+    feed_command('call append(line("$"), max([1, 2, 3]))')
+    feed_command('call extend(g:, {"max": function("min")})')
+    feed_command('call append(line("$"), max([1, 2, 3]))')
+    feed_command('try')
     -- Regression: the first line below used to throw "E110: Missing ')'"
     -- Second is here just to prove that this line is correct when not
     -- skipping rhs of &&.
-    execute([[    $put =(0&&(function('tr'))(1, 2, 3))]])
-    execute([[    $put =(1&&(function('tr'))(1, 2, 3))]])
-    execute('catch')
-    execute([[    $put ='!!! Unexpected exception:']])
-    execute('    $put =v:exception')
-    execute('endtry')
+    feed_command([[    $put =(0&&(function('tr'))(1, 2, 3))]])
+    feed_command([[    $put =(1&&(function('tr'))(1, 2, 3))]])
+    feed_command('catch')
+    feed_command([[    $put ='!!! Unexpected exception:']])
+    feed_command('    $put =v:exception')
+    feed_command('endtry')
 
     -- Assert buffer contents.
     expect([[

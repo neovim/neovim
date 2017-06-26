@@ -2,7 +2,7 @@
 " Language:	Sass
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
 " Filenames:	*.sass
-" Last Change:	2013 May 30
+" Last Change:	2016 Aug 29
 
 if exists("b:current_syntax")
   finish
@@ -13,7 +13,7 @@ runtime! syntax/css.vim
 syn case ignore
 
 syn cluster sassCssProperties contains=cssFontProp,cssFontDescriptorProp,cssColorProp,cssTextProp,cssBoxProp,cssGeneratedContentProp,cssPagingProp,cssUIProp,cssRenderProp,cssAuralProp,cssTableProp
-syn cluster sassCssAttributes contains=css.*Attr,scssComment,cssValue.*,cssColor,cssURL,sassDefault,cssImportant,cssError,cssStringQ,cssStringQQ,cssFunction,cssUnicodeEscape,cssRenderProp
+syn cluster sassCssAttributes contains=css.*Attr,sassEndOfLineComment,scssComment,cssValue.*,cssColor,cssURL,sassDefault,cssImportant,cssError,cssStringQ,cssStringQQ,cssFunction,cssUnicodeEscape,cssRenderProp
 
 syn region sassDefinition matchgroup=cssBraces start="{" end="}" contains=TOP
 
@@ -58,6 +58,9 @@ syn match sassAmpersand  "&"
 " TODO: Attribute namespaces
 " TODO: Arithmetic (including strings and concatenation)
 
+syn region sassMediaQuery matchgroup=sassMedia start="@media" end="[{};]\@=\|$" contains=sassMediaOperators
+syn keyword sassMediaOperators and not only contained
+syn region sassCharset start="@charset" end=";\|$" contains=scssComment,cssStringQ,cssStringQQ,cssURL,cssUnicodeEscape,cssMediaType
 syn region sassInclude start="@import" end=";\|$" contains=scssComment,cssStringQ,cssStringQQ,cssURL,cssUnicodeEscape,cssMediaType
 syn region sassDebugLine end=";\|$" matchgroup=sassDebug start="@debug\>" contains=@sassCssAttributes,sassVariable,sassFunction
 syn region sassWarnLine end=";\|$" matchgroup=sassWarn start="@warn\>" contains=@sassCssAttributes,sassVariable,sassFunction
@@ -67,7 +70,9 @@ syn keyword sassFor from to through in contained
 syn keyword sassTodo        FIXME NOTE TODO OPTIMIZE XXX contained
 syn region  sassComment     start="^\z(\s*\)//"  end="^\%(\z1 \)\@!" contains=sassTodo,@Spell
 syn region  sassCssComment  start="^\z(\s*\)/\*" end="^\%(\z1 \)\@!" contains=sassTodo,@Spell
+syn match   sassEndOfLineComment "//.*" contains=sassComment,sassTodo,@Spell
 
+hi def link sassEndOfLineComment        sassComment
 hi def link sassCssComment              sassComment
 hi def link sassComment                 Comment
 hi def link sassDefault                 cssImportant
@@ -80,6 +85,9 @@ hi def link sassExtend                  PreProc
 hi def link sassFunctionDecl            PreProc
 hi def link sassReturn                  PreProc
 hi def link sassTodo                    Todo
+hi def link sassCharset                 PreProc
+hi def link sassMedia                   PreProc
+hi def link sassMediaOperators          PreProc
 hi def link sassInclude                 Include
 hi def link sassDebug                   sassControl
 hi def link sassWarn                    sassControl

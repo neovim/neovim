@@ -1,4 +1,4 @@
-*howto.txt*	For Vim version 7.4.  Last change: 2006 Apr 02
+*howto.txt*	Nvim
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar

@@ -1,13 +1,14 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, eval, execute, feed, insert, neq, next_msg, nvim,
+local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
   nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
-  helpers.eq, helpers.eval, helpers.execute, helpers.feed,
+  helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
 local command = helpers.command
 local wait = helpers.wait
 local iswin = helpers.iswin
+local get_pathsep = helpers.get_pathsep
 local Screen = require('test.functional.ui.screen')
 
 describe('jobs', function()
@@ -65,7 +66,7 @@ describe('jobs', function()
   end)
 
   it('changes to given `cwd` directory', function()
-    local dir = eval('resolve(tempname())')
+    local dir = eval("resolve(tempname())"):gsub("/", get_pathsep())
     mkdir(dir)
     nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
     if iswin() then
@@ -93,7 +94,7 @@ describe('jobs', function()
 
   it('returns 0 when it fails to start', function()
     eq("", eval("v:errmsg"))
-    execute("let g:test_jobid = jobstart([])")
+    feed_command("let g:test_jobid = jobstart([])")
     eq(0, eval("g:test_jobid"))
     eq("E474:", string.match(eval("v:errmsg"), "E%d*:"))
   end)
@@ -391,6 +392,27 @@ describe('jobs', function()
     eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
   end)
 
+  it('jobstart() works with closures', function()
+    source([[
+      fun! MkFun()
+          let a1 = 'foo'
+          let a2 = 'bar'
+          return {id, data, event -> rpcnotify(g:channel, '1', a1, a2, Normalize(data), event)}
+      endfun
+      let g:job_opts = {'on_stdout': MkFun()}
+      call jobstart('echo "some text"', g:job_opts)
+    ]])
+    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+  end)
+
+  it('jobstart() works when closure passed directly to `jobstart`', function()
+    source([[
+      let g:job_opts = {'on_stdout': {id, data, event -> rpcnotify(g:channel, '1', 'foo', 'bar', Normalize(data), event)}}
+      call jobstart('echo "some text"', g:job_opts)
+    ]])
+    eq({'notification', '1', {'foo', 'bar', {'some text', ''}, 'stdout'}}, next_msg())
+  end)
+
   describe('jobwait', function()
     it('returns a list of status codes', function()
       source([[
@@ -448,7 +470,7 @@ describe('jobs', function()
     end)
 
     it('will return -2 when interrupted', function()
-      execute('call rpcnotify(g:channel, "ready") | '..
+      feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
               'jobwait([jobstart("sleep 10; exit 55")]))')
       eq({'notification', 'ready', {}}, next_msg())
@@ -492,7 +514,7 @@ describe('jobs', function()
         \ ])
       endfunction
       ]])
-      execute('call Run()')
+      feed_command('call Run()')
       local r
       for i = 10, 1, -1 do
         r = next_msg()
@@ -601,6 +623,26 @@ describe('jobs', function()
       msg = (msg[2] == 'stdout') and next_msg() or msg  -- Skip stdout, if any.
       eq({'notification', 'exit', {0, 42}}, msg)
     end)
+
+    it('jobstart() does not keep ptmx file descriptor open', function()
+      -- Start another job (using libuv)
+      command('let g:job_opts.pty = 0')
+      local other_jobid = eval("jobstart(['cat', '-'], g:job_opts)")
+      local other_pid = eval('jobpid(' .. other_jobid .. ')')
+
+      -- Other job doesn't block first job from recieving SIGHUP on jobclose()
+      command('call jobclose(j)')
+      -- Have to wait so that the SIGHUP can be processed by tty-test on time.
+      -- Can't wait for the next message in case this test fails, if it fails
+      -- there won't be any more messages, and the test would hang.
+      helpers.sleep(100)
+      local err = exc_exec('call jobpid(j)')
+      eq('Vim(call):E900: Invalid job id', err)
+
+      -- cleanup
+      eq(other_pid, eval('jobpid(' .. other_jobid .. ')'))
+      command('call jobstop(' .. other_jobid .. ')')
+    end)
   end)
 end)
 
@@ -626,7 +668,7 @@ describe("pty process teardown", function()
   it("does not prevent/delay exit. #4798 #4900", function()
     if helpers.pending_win32(pending) then return end
     -- Use a nested nvim (in :term) to test without --headless.
-    execute(":terminal '"..helpers.nvim_prog
+    feed_command(":terminal '"..helpers.nvim_prog
       -- Use :term again in the _nested_ nvim to get a PTY process.
       -- Use `sleep` to simulate a long-running child of the PTY.
       .."' +terminal +'!(sleep 300 &)' +qa")

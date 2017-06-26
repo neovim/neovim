@@ -14,7 +14,7 @@ typedef struct {
   uint64_t device_id;  ///< @private The id of the device containing the file
 } FileID;
 
-#define FILE_ID_EMPTY (FileID) {.inode = 0, .device_id = 0}
+#define FILE_ID_EMPTY (FileID) { .inode = 0, .device_id = 0 }
 
 typedef struct {
   uv_fs_t request;  ///< @private The request to uv for the directory.

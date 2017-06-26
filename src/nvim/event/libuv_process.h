@@ -14,8 +14,9 @@ typedef struct libuv_process {
 
 static inline LibuvProcess libuv_process_init(Loop *loop, void *data)
 {
-  LibuvProcess rv;
-  rv.process = process_init(loop, kProcessTypeUv, data);
+  LibuvProcess rv = {
+    .process = process_init(loop, kProcessTypeUv, data)
+  };
   return rv;
 }
 

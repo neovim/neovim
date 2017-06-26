@@ -1,18 +1,16 @@
 " Vim syntax file
-" Language:	HTML
-" Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:		http://www.fleiner.com/vim/syntax/html.vim
-" Last Change:	2015 Jan 07
-"		included patch from David Felix
+" Language:             HTML
+" Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
+" Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
+" Repository:           https://notabug.org/jorgesumle/vim-html-syntax
+" Last Change:          2017 Jan 21
+"                       included patch from Jorge Maldonado Ventura
 
 " Please check :help html.vim for some comments and a description of the options
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
+" quit when a syntax file was already loaded
 if !exists("main_syntax")
-  if version < 600
-    syntax clear
-  elseif exists("b:current_syntax")
+  if exists("b:current_syntax")
     finish
   endif
   let main_syntax = 'html'
@@ -20,13 +18,6 @@ endif
 
 let s:cpo_save = &cpo
 set cpo&vim
-
-" don't use standard HiLink, it will not work with included syntax files
-if version < 508
-  command! -nargs=+ HtmlHiLink hi link <args>
-else
-  command! -nargs=+ HtmlHiLink hi def link <args>
-endif
 
 syntax spell toplevel
 
@@ -63,6 +54,14 @@ syn keyword htmlTagName contained abbr acronym bdo button col label
 syn keyword htmlTagName contained colgroup del fieldset iframe ins legend
 syn keyword htmlTagName contained object optgroup q s tbody tfoot thead
 
+" new html 5 tags
+syn keyword htmlTagName contained article aside audio bdi canvas data
+syn keyword htmlTagName contained datalist details embed figcaption figure
+syn keyword htmlTagName contained footer header hgroup keygen main mark
+syn keyword htmlTagName contained menuitem meter nav output picture
+syn keyword htmlTagName contained progress rb rp rt rtc ruby section
+syn keyword htmlTagName contained slot source template time track video wbr
+
 " legal arg names
 syn keyword htmlArg contained action
 syn keyword htmlArg contained align alink alt archive background bgcolor
@@ -96,6 +95,19 @@ syn keyword htmlArg contained headers hreflang lang language longdesc
 syn keyword htmlArg contained multiple nohref nowrap object profile readonly
 syn keyword htmlArg contained rules scheme scope span standby style
 syn keyword htmlArg contained summary tabindex valuetype version
+
+" html 5 arg names
+syn keyword htmlArg contained allowfullscreen async autocomplete autofocus
+syn keyword htmlArg contained autoplay challenge contenteditable contextmenu
+syn keyword htmlArg contained controls crossorigin default dirname download
+syn keyword htmlArg contained draggable dropzone form formaction formenctype
+syn keyword htmlArg contained formmethod formnovalidate formtarget hidden
+syn keyword htmlArg contained high icon inputmode keytype kind list loop low
+syn keyword htmlArg contained max min minlength muted nonce novalidate open
+syn keyword htmlArg contained optimum pattern placeholder poster preload
+syn keyword htmlArg contained radiogroup required reversed sandbox spellcheck
+syn keyword htmlArg contained sizes srcset srcdoc srclang step title translate
+syn keyword htmlArg contained typemustmatch
 
 " special characters
 syn match htmlSpecialChar "&#\=[0-9A-Za-z]\{1,8};"
@@ -171,7 +183,7 @@ if main_syntax != 'java' || exists("java_javascript")
   unlet b:current_syntax
   syn region  javaScript start=+<script\_[^>]*>+ keepend end=+</script\_[^>]*>+me=s-1 contains=@htmlJavaScript,htmlCssStyleComment,htmlScriptTag,@htmlPreproc
   syn region  htmlScriptTag     contained start=+<script+ end=+>+ fold contains=htmlTagN,htmlString,htmlArg,htmlValue,htmlTagError,htmlEvent
-  HtmlHiLink htmlScriptTag htmlTag
+  hi def link htmlScriptTag htmlTag
 
   " html events (i.e. arguments that include javascript commands)
   if exists("html_extended_events")
@@ -183,8 +195,8 @@ if main_syntax != 'java' || exists("java_javascript")
   endif
   syn region htmlEventSQ        contained start=+'+ms=s+1 end=+'+me=s-1 contains=@htmlJavaScript
   syn region htmlEventDQ        contained start=+"+ms=s+1 end=+"+me=s-1 contains=@htmlJavaScript
-  HtmlHiLink htmlEventSQ htmlEvent
-  HtmlHiLink htmlEventDQ htmlEvent
+  hi def link htmlEventSQ htmlEvent
+  hi def link htmlEventDQ htmlEvent
 
   " a javascript expression is used as an arg value
   syn region  javaScriptExpression contained start=+&{+ keepend end=+};+ contains=@htmlJavaScript,@htmlPreproc
@@ -207,7 +219,7 @@ if main_syntax != 'java' || exists("java_css")
   syn region cssStyle start=+<style+ keepend end=+</style>+ contains=@htmlCss,htmlTag,htmlEndTag,htmlCssStyleComment,@htmlPreproc
   syn match htmlCssStyleComment contained "\(<!--\|-->\)"
   syn region htmlCssDefinition matchgroup=htmlArg start='style="' keepend matchgroup=htmlString end='"' contains=css.*Attr,css.*Prop,cssComment,cssLength,cssColor,cssURL,cssImportant,cssError,cssString,@htmlPreproc
-  HtmlHiLink htmlStyleArg htmlString
+  hi def link htmlStyleArg htmlString
 endif
 
 if main_syntax == "html"
@@ -221,73 +233,66 @@ if main_syntax == "html"
 endif
 
 " The default highlighting.
-if version >= 508 || !exists("did_html_syn_inits")
-  if version < 508
-    let did_html_syn_inits = 1
+hi def link htmlTag                     Function
+hi def link htmlEndTag                  Identifier
+hi def link htmlArg                     Type
+hi def link htmlTagName                 htmlStatement
+hi def link htmlSpecialTagName          Exception
+hi def link htmlValue                     String
+hi def link htmlSpecialChar             Special
+
+if !exists("html_no_rendering")
+  hi def link htmlH1                      Title
+  hi def link htmlH2                      htmlH1
+  hi def link htmlH3                      htmlH2
+  hi def link htmlH4                      htmlH3
+  hi def link htmlH5                      htmlH4
+  hi def link htmlH6                      htmlH5
+  hi def link htmlHead                    PreProc
+  hi def link htmlTitle                   Title
+  hi def link htmlBoldItalicUnderline     htmlBoldUnderlineItalic
+  hi def link htmlUnderlineBold           htmlBoldUnderline
+  hi def link htmlUnderlineItalicBold     htmlBoldUnderlineItalic
+  hi def link htmlUnderlineBoldItalic     htmlBoldUnderlineItalic
+  hi def link htmlItalicUnderline         htmlUnderlineItalic
+  hi def link htmlItalicBold              htmlBoldItalic
+  hi def link htmlItalicBoldUnderline     htmlBoldUnderlineItalic
+  hi def link htmlItalicUnderlineBold     htmlBoldUnderlineItalic
+  hi def link htmlLink                    Underlined
+  hi def link htmlLeadingSpace            None
+  if !exists("html_my_rendering")
+    hi def htmlBold                term=bold cterm=bold gui=bold
+    hi def htmlBoldUnderline       term=bold,underline cterm=bold,underline gui=bold,underline
+    hi def htmlBoldItalic          term=bold,italic cterm=bold,italic gui=bold,italic
+    hi def htmlBoldUnderlineItalic term=bold,italic,underline cterm=bold,italic,underline gui=bold,italic,underline
+    hi def htmlUnderline           term=underline cterm=underline gui=underline
+    hi def htmlUnderlineItalic     term=italic,underline cterm=italic,underline gui=italic,underline
+    hi def htmlItalic              term=italic cterm=italic gui=italic
   endif
-  HtmlHiLink htmlTag                     Function
-  HtmlHiLink htmlEndTag                  Identifier
-  HtmlHiLink htmlArg                     Type
-  HtmlHiLink htmlTagName                 htmlStatement
-  HtmlHiLink htmlSpecialTagName          Exception
-  HtmlHiLink htmlValue                     String
-  HtmlHiLink htmlSpecialChar             Special
-  
-  if !exists("html_no_rendering")
-    HtmlHiLink htmlH1                      Title
-    HtmlHiLink htmlH2                      htmlH1
-    HtmlHiLink htmlH3                      htmlH2
-    HtmlHiLink htmlH4                      htmlH3
-    HtmlHiLink htmlH5                      htmlH4
-    HtmlHiLink htmlH6                      htmlH5
-    HtmlHiLink htmlHead                    PreProc
-    HtmlHiLink htmlTitle                   Title
-    HtmlHiLink htmlBoldItalicUnderline     htmlBoldUnderlineItalic
-    HtmlHiLink htmlUnderlineBold           htmlBoldUnderline
-    HtmlHiLink htmlUnderlineItalicBold     htmlBoldUnderlineItalic
-    HtmlHiLink htmlUnderlineBoldItalic     htmlBoldUnderlineItalic
-    HtmlHiLink htmlItalicUnderline         htmlUnderlineItalic
-    HtmlHiLink htmlItalicBold              htmlBoldItalic
-    HtmlHiLink htmlItalicBoldUnderline     htmlBoldUnderlineItalic
-    HtmlHiLink htmlItalicUnderlineBold     htmlBoldUnderlineItalic
-    HtmlHiLink htmlLink                    Underlined
-    HtmlHiLink htmlLeadingSpace            None
-    if !exists("html_my_rendering")
-      hi def htmlBold                term=bold cterm=bold gui=bold
-      hi def htmlBoldUnderline       term=bold,underline cterm=bold,underline gui=bold,underline
-      hi def htmlBoldItalic          term=bold,italic cterm=bold,italic gui=bold,italic
-      hi def htmlBoldUnderlineItalic term=bold,italic,underline cterm=bold,italic,underline gui=bold,italic,underline
-      hi def htmlUnderline           term=underline cterm=underline gui=underline
-      hi def htmlUnderlineItalic     term=italic,underline cterm=italic,underline gui=italic,underline
-      hi def htmlItalic              term=italic cterm=italic gui=italic
-    endif
-  endif
-  
-  HtmlHiLink htmlPreStmt            PreProc
-  HtmlHiLink htmlPreError           Error
-  HtmlHiLink htmlPreProc            PreProc
-  HtmlHiLink htmlPreAttr            String
-  HtmlHiLink htmlPreProcAttrName    PreProc
-  HtmlHiLink htmlPreProcAttrError   Error
-  HtmlHiLink htmlSpecial            Special
-  HtmlHiLink htmlSpecialChar        Special
-  HtmlHiLink htmlString             String
-  HtmlHiLink htmlStatement          Statement
-  HtmlHiLink htmlComment            Comment
-  HtmlHiLink htmlCommentPart        Comment
-  HtmlHiLink htmlValue              String
-  HtmlHiLink htmlCommentError       htmlError
-  HtmlHiLink htmlTagError           htmlError
-  HtmlHiLink htmlEvent              javaScript
-  HtmlHiLink htmlError              Error
-  
-  HtmlHiLink javaScript             Special
-  HtmlHiLink javaScriptExpression   javaScript
-  HtmlHiLink htmlCssStyleComment    Comment
-  HtmlHiLink htmlCssDefinition      Special
 endif
 
-delcommand HtmlHiLink
+hi def link htmlPreStmt            PreProc
+hi def link htmlPreError           Error
+hi def link htmlPreProc            PreProc
+hi def link htmlPreAttr            String
+hi def link htmlPreProcAttrName    PreProc
+hi def link htmlPreProcAttrError   Error
+hi def link htmlSpecial            Special
+hi def link htmlSpecialChar        Special
+hi def link htmlString             String
+hi def link htmlStatement          Statement
+hi def link htmlComment            Comment
+hi def link htmlCommentPart        Comment
+hi def link htmlValue              String
+hi def link htmlCommentError       htmlError
+hi def link htmlTagError           htmlError
+hi def link htmlEvent              javaScript
+hi def link htmlError              Error
+
+hi def link javaScript             Special
+hi def link javaScriptExpression   javaScript
+hi def link htmlCssStyleComment    Comment
+hi def link htmlCssDefinition      Special
 
 let b:current_syntax = "html"
 

@@ -1,4 +1,4 @@
-*mlang.txt*     For Vim version 7.4.  Last change: 2016 Jan 16
+*mlang.txt*     Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -11,11 +11,7 @@ multi-byte text see |multibyte|.
 
 The basics are explained in the user manual: |usr_45.txt|.
 
-1. Messages			|multilang-messages|
-2. Menus			|multilang-menus|
-3. Scripts			|multilang-scripts|
-
-Also see |help-translated| for multi-language help.
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Messages						*multilang-messages*

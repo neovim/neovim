@@ -1,13 +1,7 @@
 " Tests for cursor().
 
 func Test_wrong_arguments()
-  try
-    call cursor(1. 3)
-    " not reached
-    call assert_false(1)
-  catch
-    call assert_exception('E474:')
-  endtry
+  call assert_fails('call cursor(1. 3)', 'E474:')
 endfunc
 
 func Test_move_cursor()

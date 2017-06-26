@@ -5,7 +5,8 @@
 
 #include <msgpack.h>
 
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
+#include "nvim/globals.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "eval/decode.h.generated.h"

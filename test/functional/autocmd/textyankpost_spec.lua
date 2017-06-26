@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear, eval, eq = helpers.clear, helpers.eval, helpers.eq
-local feed, execute, expect, command = helpers.feed, helpers.execute, helpers.expect, helpers.command
+local feed, command, expect = helpers.feed, helpers.command, helpers.expect
 local curbufmeths, funcs, neq = helpers.curbufmeths, helpers.funcs, helpers.neq
 
 describe('TextYankPost', function()
@@ -8,11 +8,11 @@ describe('TextYankPost', function()
     clear()
 
     -- emulate the clipboard so system clipboard isn't affected
-    execute('let &rtp = "test/functional/fixtures,".&rtp')
+    command('let &rtp = "test/functional/fixtures,".&rtp')
 
-    execute('let g:count = 0')
-    execute('autocmd TextYankPost * let g:event = copy(v:event)')
-    execute('autocmd TextYankPost * let g:count += 1')
+    command('let g:count = 0')
+    command('autocmd TextYankPost * let g:event = copy(v:event)')
+    command('autocmd TextYankPost * let g:count += 1')
 
     curbufmeths.set_lines(0, -1, true, {
       'foo\0bar',
@@ -61,27 +61,27 @@ describe('TextYankPost', function()
       regtype = 'V'
     }, eval('g:event'))
 
-    execute('set debug=msg')
+    command('set debug=msg')
     -- the regcontents should not be changed without copy.
     local status, err = pcall(command,'call extend(g:event.regcontents, ["more text"])')
     eq(status,false)
     neq(nil, string.find(err, ':E742:'))
 
     -- can't mutate keys inside the autocommand
-    execute('autocmd! TextYankPost * let v:event.regcontents = 0')
+    command('autocmd! TextYankPost * let v:event.regcontents = 0')
     status, err = pcall(command,'normal yy')
     eq(status,false)
     neq(nil, string.find(err, ':E46:'))
 
     -- can't add keys inside the autocommand
-    execute('autocmd! TextYankPost * let v:event.mykey = 0')
+    command('autocmd! TextYankPost * let v:event.mykey = 0')
     status, err = pcall(command,'normal yy')
     eq(status,false)
     neq(nil, string.find(err, ':E742:'))
   end)
 
   it('is not invoked recursively', function()
-    execute('autocmd TextYankPost * normal "+yy')
+    command('autocmd TextYankPost * normal "+yy')
     feed('yy')
     eq({
       operator = 'y',
@@ -134,7 +134,7 @@ describe('TextYankPost', function()
     feed('"_yy')
     eq(0, eval('g:count'))
 
-    execute('delete _')
+    command('delete _')
     eq(0, eval('g:count'))
   end)
 
@@ -155,7 +155,7 @@ describe('TextYankPost', function()
       regtype = 'V'
     }, eval('g:event'))
 
-    execute("set clipboard=unnamed")
+    command("set clipboard=unnamed")
 
     -- regname still shows the name the user requested
     feed('yy')
@@ -176,7 +176,7 @@ describe('TextYankPost', function()
   end)
 
   it('works with Ex commands', function()
-    execute('1delete +')
+    command('1delete +')
     eq({
       operator = 'd',
       regcontents = { 'foo\nbar' },
@@ -185,7 +185,7 @@ describe('TextYankPost', function()
     }, eval('g:event'))
     eq(1, eval('g:count'))
 
-    execute('yank')
+    command('yank')
     eq({
       operator = 'y',
       regcontents = { 'baz text' },
@@ -194,7 +194,7 @@ describe('TextYankPost', function()
     }, eval('g:event'))
     eq(2, eval('g:count'))
 
-    execute('normal yw')
+    command('normal yw')
     eq({
       operator = 'y',
       regcontents = { 'baz ' },
@@ -203,7 +203,7 @@ describe('TextYankPost', function()
     }, eval('g:event'))
     eq(3, eval('g:count'))
 
-    execute('normal! dd')
+    command('normal! dd')
     eq({
       operator = 'd',
       regcontents = { 'baz text' },

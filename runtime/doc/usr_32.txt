@@ -1,4 +1,4 @@
-*usr_32.txt*	For Vim version 7.4.  Last change: 2010 Jul 20
+*usr_32.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 

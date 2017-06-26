@@ -2,13 +2,13 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
-local execute, expect = helpers.execute, helpers.expect
+local command, expect = helpers.command, helpers.expect
 
 describe(':let', function()
   setup(clear)
 
   it('is working', function()
-    execute('set runtimepath+=test/functional/fixtures')
+    command('set runtimepath+=test/functional/fixtures')
 
     -- Test to not autoload when assigning.  It causes internal error.
     source([[
@@ -34,7 +34,7 @@ describe(':let', function()
       endfor]])
 
     -- Remove empty line
-    execute('1d')
+    command('1d')
 
     -- Assert buffer contents.
     expect([[

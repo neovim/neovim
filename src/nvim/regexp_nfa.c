@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * NFA regular expression implementation.
  *
@@ -631,6 +634,7 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
           config |= CLASS_o7;
           break;
         }
+        return FAIL;
       case 'a':
         if (*(p + 2) == 'z') {
           config |= CLASS_az;
@@ -639,6 +643,7 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
           config |= CLASS_af;
           break;
         }
+        return FAIL;
       case 'A':
         if (*(p + 2) == 'Z') {
           config |= CLASS_AZ;
@@ -647,7 +652,7 @@ static int nfa_recognize_char_class(char_u *start, char_u *end, int extra_newl)
           config |= CLASS_AF;
           break;
         }
-      /* FALLTHROUGH */
+        return FAIL;
       default:
         return FAIL;
       }
@@ -2772,15 +2777,10 @@ static int nfa_max_width(nfa_state_T *startstate, int depth)
     case NFA_ANY:
     case NFA_START_COLL:
     case NFA_START_NEG_COLL:
-      /* matches some character, including composing chars */
-      if (enc_utf8)
-        len += MB_MAXBYTES;
-      else if (has_mbyte)
-        len += 2;
-      else
-        ++len;
+      // Matches some character, including composing chars.
+      len += MB_MAXBYTES;
       if (state->c != NFA_ANY) {
-        /* skip over the characters */
+        // Skip over the characters.
         state = state->out1->out;
         continue;
       }
@@ -3893,21 +3893,25 @@ state_in_list (
   return FALSE;
 }
 
-/*
- * Add "state" and possibly what follows to state list ".".
- * Returns "subs_arg", possibly copied into temp_subs.
- */
+// Offset used for "off" by addstate_here().
+#define ADDSTATE_HERE_OFFSET 10
 
+// Add "state" and possibly what follows to state list ".".
+// Returns "subs_arg", possibly copied into temp_subs.
 static regsubs_T *
 addstate (
     nfa_list_T *l,             /* runtime state list */
     nfa_state_T *state,         /* state to update */
     regsubs_T *subs_arg,      /* pointers to subexpressions */
     nfa_pim_T *pim,           /* postponed look-behind match */
-    int off                            /* byte offset, when -1 go to next line */
-)
+    int off_arg)    /* byte offset, when -1 go to next line */
 {
   int subidx;
+  int off = off_arg;
+  int add_here = FALSE;
+  int listindex = 0;
+  int k;
+  int found = FALSE;
   nfa_thread_T        *thread;
   lpos_T save_lpos;
   int save_in_use;
@@ -3919,6 +3923,12 @@ addstate (
 #ifdef REGEXP_DEBUG
   int did_print = FALSE;
 #endif
+
+  if (off_arg <= -ADDSTATE_HERE_OFFSET) {
+    add_here = true;
+    off = 0;
+    listindex = -(off_arg + ADDSTATE_HERE_OFFSET);
+  }
 
   switch (state->c) {
   case NFA_NCLOSE:
@@ -3996,13 +4006,28 @@ addstate (
        * lower position is preferred. */
       if (!nfa_has_backref && pim == NULL && !l->has_pim
           && state->c != NFA_MATCH) {
+
+        /* When called from addstate_here() do insert before
+         * existing states. */
+        if (add_here) {
+          for (k = 0; k < l->n && k < listindex; ++k) {
+            if (l->t[k].state->id == state->id) {
+              found = TRUE;
+              break;
+            }
+          }
+        }
+
+        if (!add_here || found) {
 skip_add:
 #ifdef REGEXP_DEBUG
-        nfa_set_code(state->c);
-        fprintf(log_fd, "> Not adding state %d to list %d. char %d: %s\n",
-            abs(state->id), l->id, state->c, code);
+          nfa_set_code(state->c);
+          fprintf(log_fd, "> Not adding state %d to list %d. char %d: %s pim: %s has_pim: %d found: %d\n",
+                  abs(state->id), l->id, state->c, code,
+                  pim == NULL ? "NULL" : "yes", l->has_pim, found);
 #endif
         return subs;
+        }
       }
 
       /* Do not add the state again when it exists with the same
@@ -4058,14 +4083,14 @@ skip_add:
 
   case NFA_SPLIT:
     /* order matters here */
-    subs = addstate(l, state->out, subs, pim, off);
-    subs = addstate(l, state->out1, subs, pim, off);
+    subs = addstate(l, state->out, subs, pim, off_arg);
+    subs = addstate(l, state->out1, subs, pim, off_arg);
     break;
 
   case NFA_EMPTY:
   case NFA_NOPEN:
   case NFA_NCLOSE:
-    subs = addstate(l, state->out, subs, pim, off);
+    subs = addstate(l, state->out, subs, pim, off_arg);
     break;
 
   case NFA_MOPEN:
@@ -4145,7 +4170,7 @@ skip_add:
       sub->list.line[subidx].start = reginput + off;
     }
 
-    subs = addstate(l, state->out, subs, pim, off);
+    subs = addstate(l, state->out, subs, pim, off_arg);
     /* "subs" may have changed, need to set "sub" again */
     if (state->c >= NFA_ZOPEN && state->c <= NFA_ZOPEN9)
       sub = &subs->synt;
@@ -4168,9 +4193,10 @@ skip_add:
                          ? subs->norm.list.multi[0].end_lnum >= 0
                          : subs->norm.list.line[0].end != NULL)) {
       /* Do not overwrite the position set by \ze. */
-      subs = addstate(l, state->out, subs, pim, off);
+      subs = addstate(l, state->out, subs, pim, off_arg);
       break;
     }
+    // fallthrough
   case NFA_MCLOSE1:
   case NFA_MCLOSE2:
   case NFA_MCLOSE3:
@@ -4228,7 +4254,7 @@ skip_add:
       save_lpos.col = 0;
     }
 
-    subs = addstate(l, state->out, subs, pim, off);
+    subs = addstate(l, state->out, subs, pim, off_arg);
     /* "subs" may have changed, need to set "sub" again */
     if (state->c >= NFA_ZCLOSE && state->c <= NFA_ZCLOSE9)
       sub = &subs->synt;
@@ -4266,8 +4292,10 @@ addstate_here (
   int count;
   int listidx = *ip;
 
-  /* first add the state(s) at the end, so that we know how many there are */
-  addstate(l, state, subs, pim, 0);
+  /* First add the state(s) at the end, so that we know how many there are.
+   * Pass the listidx as offset (avoids adding another argument to
+   * addstate(). */
+  addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
 
   /* when "*ip" was at the end of the list, nothing to do */
   if (listidx + 1 == tlen)
@@ -4346,7 +4374,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_LOWER:
-    if (vim_islower(c) && c != 170 && c != 186) {
+    if (mb_islower(c) && c != 170 && c != 186) {
       return OK;
     }
     break;
@@ -4364,8 +4392,9 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_UPPER:
-    if (vim_isupper(c))
+    if (mb_isupper(c)) {
       return OK;
+    }
     break;
   case NFA_CLASS_XDIGIT:
     if (ascii_isxdigit(c))
@@ -4384,8 +4413,9 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_ESCAPE:
-    if (c == '\033')
+    if (c == ESC) {
       return OK;
+    }
     break;
 
   default:
@@ -4828,17 +4858,10 @@ static int failure_chance(nfa_state_T *state, int depth)
  */
 static int skip_to_start(int c, colnr_T *colp)
 {
-  char_u *s;
-
-  /* Used often, do some work to avoid call overhead. */
-  if (!ireg_ic
-      && !has_mbyte
-      )
-    s = vim_strbyte(regline + *colp, c);
-  else
-    s = cstrchr(regline + *colp, c);
-  if (s == NULL)
+  const char_u *const s = cstrchr(regline + *colp, c);
+  if (s == NULL) {
     return FAIL;
+  }
   *colp = (int)(s - regline);
   return OK;
 }
@@ -4865,7 +4888,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
       int c2_len = PTR2LEN(s2);
       int c2 = PTR2CHAR(s2);
 
-      if ((c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2)))
+      if ((c1 != c2 && (!ireg_ic || mb_tolower(c1) != mb_tolower(c2)))
           || c1_len != c2_len) {
         match = false;
         break;
@@ -5383,7 +5406,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           int this_class;
 
           // Get class of current and previous char (if it exists).
-          this_class = mb_get_class_buf(reginput, reg_buf);
+          this_class = mb_get_class_tab(reginput, reg_buf->b_chartab);
           if (this_class <= 1) {
             result = false;
           } else if (reg_prev_class() == this_class) {
@@ -5408,7 +5431,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           int this_class, prev_class;
 
           // Get class of current and previous char (if it exists).
-          this_class = mb_get_class_buf(reginput, reg_buf);
+          this_class = mb_get_class_tab(reginput, reg_buf->b_chartab);
           prev_class = reg_prev_class();
           if (this_class == prev_class
               || prev_class == 0 || prev_class == 1) {
@@ -5558,22 +5581,24 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
               break;
             }
             if (ireg_ic) {
-              int curc_low = vim_tolower(curc);
-              int done = FALSE;
+              int curc_low = mb_tolower(curc);
+              int done = false;
 
-              for (; c1 <= c2; ++c1)
-                if (vim_tolower(c1) == curc_low) {
+              for (; c1 <= c2; c1++) {
+                if (mb_tolower(c1) == curc_low) {
                   result = result_if_matched;
                   done = TRUE;
                   break;
                 }
-              if (done)
+              }
+              if (done) {
                 break;
+              }
             }
           } else if (state->c < 0 ? check_char_class(state->c, curc)
                      : (curc == state->c
-                        || (ireg_ic && vim_tolower(curc)
-                            == vim_tolower(state->c)))) {
+                        || (ireg_ic && mb_tolower(curc)
+                            == mb_tolower(state->c)))) {
             result = result_if_matched;
             break;
           }
@@ -5976,8 +6001,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 #endif
         result = (c == curc);
 
-        if (!result && ireg_ic)
-          result = vim_tolower(c) == vim_tolower(curc);
+        if (!result && ireg_ic) {
+          result = mb_tolower(c) == mb_tolower(curc);
+        }
 
         // If ireg_icombine is not set only skip over the character
         // itself.  When it is set skip over composing characters.
@@ -6125,8 +6151,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
             // Checking if the required start character matches is
             // cheaper than adding a state that won't match.
             c = PTR2CHAR(reginput + clen);
-            if (c != prog->regstart && (!ireg_ic || vim_tolower(c)
-                                        != vim_tolower(prog->regstart))) {
+            if (c != prog->regstart && (!ireg_ic || mb_tolower(c)
+                                        != mb_tolower(prog->regstart))) {
 #ifdef REGEXP_DEBUG
               fprintf(log_fd,
                   "  Skipping start state, regstart does not match\n");

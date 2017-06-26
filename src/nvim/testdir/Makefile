@@ -1,14 +1,14 @@
-#
+# vim: noet ts=8
 # Makefile to run all tests for Vim
 #
 
-export SHELL := sh
-
-VIMPROG := ../../../build/bin/nvim
+NVIM_PRG ?= ../../../build/bin/nvim
 SCRIPTSOURCE := ../../../runtime
 
-SCRIPTS := \
-           test8.out              \
+export SHELL := sh
+export NVIM_PRG := $(NVIM_PRG)
+
+SCRIPTS ?= \
            test13.out             \
            test14.out             \
            test17.out             \
@@ -22,33 +22,57 @@ SCRIPTS := \
            test52.out             \
            test53.out             \
            test64.out             \
-           test69.out             \
            test73.out             \
            test79.out             \
-           test_marks.out         \
 
-# Tests using runtest.vim.vim.
+# Tests using runtest.vim.
 # Keep test_alot*.res as the last one, sort the others.
-NEW_TESTS = \
+NEW_TESTS ?= \
+	    test_autocmd.res \
 	    test_bufwintabinfo.res \
+	    test_charsearch.res \
 	    test_cmdline.res \
+	    test_command_count.res \
 	    test_cscope.res \
+	    test_digraph.res \
 	    test_diffmode.res \
+	    test_farsi.res \
+	    test_filter_map.res \
+	    test_fnameescape.res \
+	    test_fold.res \
+	    test_glob2regpat.res \
+	    test_gf.res \
 	    test_gn.res \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \
 	    test_history.res \
+	    test_hlsearch.res \
+	    test_increment.res \
+	    test_increment_dbcs.res \
+	    test_lambda.res \
 	    test_langmap.res \
+	    test_marks.res \
 	    test_match.res \
 	    test_matchadd_conceal.res \
+	    test_matchadd_conceal_utf8.res \
+	    test_nested_function.res \
+	    test_normal.res \
 	    test_quickfix.res \
+	    test_search.res \
 	    test_signs.res \
+	    test_smartindent.res \
+	    test_stat.res \
+	    test_substitute.res \
 	    test_syntax.res \
+	    test_tabpage.res \
+	    test_textobjects.res \
 	    test_timers.res \
+	    test_undo.res \
 	    test_usercommands.res \
-	    test_viml.res \
+	    test_vimscript.res \
 	    test_visual.res \
 	    test_window_id.res \
+	    test_writefile.res \
 	    test_alot.res
 
 SCRIPTS_GUI := test16.out
@@ -100,13 +124,13 @@ report:
 	                 echo ALL DONE;        \
 	             fi"
 
-test1.out: $(VIMPROG)
+test1.out: $(NVIM_PRG)
 
-$(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG) test1.out
+$(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
-RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(VIMPROG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
+RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
 
 clean:
 	-rm -rf *.out          \
@@ -175,7 +199,7 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(VIMPROG) -u unix.vim -U NONE --noplugin
+RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(NVIM_PRG) -u unix.vim -U NONE --noplugin
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \

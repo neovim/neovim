@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -12,8 +15,12 @@ static void help(void)
   puts("  shell-test");
   puts("  shell-test EXE");
   puts("    Prints \"ready $ \" to stderr.");
+  puts("  shell-test -t {prompt text}");
+  puts("    Prints \"{prompt text} $ \" to stderr.");
   puts("  shell-test EXE \"prog args...\"");
   puts("    Prints \"ready $ prog args...\\n\" to stderr.");
+  puts("  shell-test -t {prompt text} EXE \"prog args...\"");
+  puts("    Prints \"{prompt text} $ progs args...\" to stderr.");
   puts("  shell-test REP {byte} \"line line line\"");
   puts("    Prints \"{lnr}: line line line\\n\" to stdout {byte} times.");
   puts("    I.e. for `shell-test REP ab \"test\"'");
@@ -30,7 +37,17 @@ int main(int argc, char **argv)
   }
 
   if (argc >= 2) {
-    if (strcmp(argv[1], "EXE") == 0) {
+    if (strcmp(argv[1], "-t") == 0) {
+      if (argc < 3) {
+        fprintf(stderr,"Missing prompt text for -t option\n");
+        return 5;
+      } else {
+        fprintf(stderr, "%s $ ", argv[2]);
+        if (argc >= 5 && (strcmp(argv[3], "EXE") == 0)) {
+          fprintf(stderr, "%s\n", argv[4]);
+        }
+      }
+    } else if (strcmp(argv[1], "EXE") == 0) {
       fprintf(stderr, "ready $ ");
       if (argc >= 3) {
         fprintf(stderr, "%s\n", argv[2]);

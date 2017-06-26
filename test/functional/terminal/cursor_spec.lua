@@ -2,7 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local nvim_dir, execute = helpers.nvim_dir, helpers.execute
+local nvim_dir, command = helpers.nvim_dir, helpers.command
+local feed_command = helpers.feed_command
 local hide_cursor = thelpers.hide_cursor
 local show_cursor = thelpers.show_cursor
 
@@ -34,11 +35,11 @@ describe('terminal cursor', function()
     feed('<c-\\><c-n>')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
+                                                        |
                                                         |
     ]])
   end)
@@ -51,25 +52,26 @@ describe('terminal cursor', function()
     it('is positioned correctly when unfocused', function()
       screen:expect([[
         {7:  1 }tty ready                                     |
-        {7:  2 }{2: }                                             |
+        {7:  2 }{2:^ }                                             |
         {7:  3 }                                              |
         {7:  4 }                                              |
         {7:  5 }                                              |
-        {7:  6 }^                                              |
+        {7:  6 }                                              |
         :set number                                       |
       ]])
     end)
 
-    pending('is positioned correctly when focused', function()
+    it('is positioned correctly when focused', function()
       feed('i')
+      helpers.wait()
       screen:expect([[
-          1 tty ready                                     |
-          2 {1: }                                             |
-          3                                               |
-          4                                               |
-          5                                               |
-          6                                               |
-        -- TERMINAL --                                    |
+        {7:  1 }tty ready                                     |
+        {7:  2 }{1: }                                             |
+        {7:  3 }                                              |
+        {7:  4 }                                              |
+        {7:  5 }                                              |
+        {7:  6 }                                              |
+        {3:-- TERMINAL --}                                    |
       ]])
     end)
   end)
@@ -101,21 +103,21 @@ describe('terminal cursor', function()
       hide_cursor()
       screen:expect([[
         tty ready                                         |
-                                                          |
-                                                          |
-                                                          |
-                                                          |
         ^                                                  |
+                                                          |
+                                                          |
+                                                          |
+                                                          |
                                                           |
       ]])
       show_cursor()
       screen:expect([[
         tty ready                                         |
-        {2: }                                                 |
+        {2:^ }                                                 |
                                                           |
                                                           |
                                                           |
-        ^                                                  |
+                                                          |
                                                           |
       ]])
     end)
@@ -137,7 +139,8 @@ describe('cursor with customized highlighting', function()
       [3] = {bold = true},
     })
     screen:attach({rgb=false})
-    execute('call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
+    command('call termopen(["'..nvim_dir..'/tty-test"])')
+    feed_command('startinsert')
   end)
 
   it('overrides the default highlighting', function()
@@ -153,11 +156,11 @@ describe('cursor with customized highlighting', function()
     feed('<c-\\><c-n>')
     screen:expect([[
       tty ready                                         |
-      {2: }                                                 |
+      {2:^ }                                                 |
                                                         |
                                                         |
                                                         |
-      ^                                                  |
+                                                        |
                                                         |
     ]])
   end)

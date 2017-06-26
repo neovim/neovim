@@ -456,7 +456,7 @@ function! ExtraVim(...)
     " messing up the user's viminfo file.
     let redirect = a:0 ?
 	\ " -c 'au VimLeave * redir END' -c 'redir\\! >" . a:1 . "'" : ""
-    exec "!echo '" . debug_quits . "q' | ../../../build/bin/nvim -u NONE -N -es" . redirect .
+    exec "!echo '" . debug_quits . "q' | $NVIM_PRG -u NONE -N -es" . redirect .
 	\ " -c 'debuggreedy|set viminfo+=nviminfo'" .
 	\ " -c 'let ExtraVimBegin = " . extra_begin . "'" .
 	\ " -c 'let ExtraVimResult = \"" . resultfile . "\"'" . breakpoints .
@@ -608,7 +608,7 @@ com! -nargs=1 -bar ExecAsScript call ExecAsScript(<f-args>)
 " END_OF_TEST_ENVIRONMENT - do not change or remove this line.
 
 
-" Tests 1 to 15 were moved to test_viml.vim
+" Tests 1 to 15 were moved to test_vimscript.vim
 let Xtest = 16
 
 "-------------------------------------------------------------------------------

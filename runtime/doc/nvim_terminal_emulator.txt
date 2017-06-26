@@ -1,31 +1,24 @@
-*terminal_emulator.txt*    						{Nvim}
+*terminal_emulator.txt*   Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Embedded terminal emulator				   *terminal-emulator*
+Terminal emulator				*terminal* *terminal-emulator*
 
-1. Introduction			|terminal-emulator-intro|
-2. Spawning			|terminal-emulator-spawning|
-3. Input			|terminal-emulator-input|
-4. Configuration		|terminal-emulator-configuration|
-5. Status Variables		|terminal-emulator-status|
+Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
+presented as a special buffer type, asynchronously updated from the virtual
+terminal as data is received from the program connected to it.
 
-==============================================================================
-1. Introduction					     *terminal-emulator-intro*
+Terminal buffers behave mostly like normal 'nomodifiable' buffers, except:
+- Plugins can set 'modifiable' to modify text, but lines cannot be deleted.
+- 'scrollback' controls how many off-screen lines are kept.
+- Terminal output is followed if the cursor is on the last line.
 
-Nvim offers a mostly complete VT220/xterm terminal emulator. The terminal is
-presented as a special buffer type, asynchronously updated to mirror the
-virtual terminal display as data is received from the program connected to it.
-For most purposes, terminal buffers behave a lot like normal buffers with
-'nomodifiable' set.
-
-The implementation is powered by libvterm, a powerful abstract terminal
-emulation library. http://www.leonerd.org.uk/code/libvterm/
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
-2. Spawning					  *terminal-emulator-spawning*
+Spawning					  *terminal-emulator-spawning*
 
 There are 3 ways to create a terminal buffer:
 
@@ -40,48 +33,45 @@ There are 3 ways to create a terminal buffer:
     Note: The "term://" pattern is handled by a BufReadCmd handler, so the
     |autocmd-nested| modifier is required to use it in an autocmd. >
         autocmd VimEnter * nested split term://sh
-<    This is only mentioned for reference; you should use the |:terminal|
-    command instead.
+<    This is only mentioned for reference; use |:terminal| instead.
 
 When the terminal spawns the program, the buffer will start to mirror the
-terminal display and change its name to `term://$CWD//$PID:$COMMAND`.
-Note that |:mksession| will "save" the terminal buffers by restarting all
-programs when the session is restored.
+terminal display and change its name to `term://{cwd}//{pid}:{cmd}`.
+The "term://..." scheme enables |:mksession| to "restore" a terminal buffer by
+restarting the {cmd} when the session is loaded.
 
 ==============================================================================
-3. Input					     *terminal-emulator-input*
+Input						     *terminal-emulator-input*
 
-Sending input is possible by entering terminal mode, which is achieved by
-pressing any key that would enter insert mode in a normal buffer (|i| or |a|
-for example). The |:terminal| ex command will automatically enter terminal
-mode once it's spawned. While in terminal mode, Nvim will forward all keys to
-the underlying program. The only exception is the <C-\><C-n> key combo,
-which will exit back to normal mode.
+To send input, enter |Terminal-mode| using any command that would enter "insert
+mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
+except <C-\><C-N> are sent to the underlying program. Use <C-\><C-N> to return
+to normal-mode. |CTRL-\_CTRL-N|
 
-Terminal mode has its own namespace for mappings, which is accessed with the
-"t" prefix. It's possible to use terminal mappings to customize interaction
-with the terminal. For example, here's how to map <Esc> to exit terminal mode:
->
+Terminal-mode has its own |:tnoremap| namespace for mappings, this can be used
+to automate any terminal interaction.
+
+To map <Esc> to exit terminal-mode: >
     :tnoremap <Esc> <C-\><C-n>
-<
-Navigating to other windows is only possible by exiting to normal mode, which
-can be cumbersome with <C-\><C-n> keys. To improve the navigation experience,
-you could use the following mappings:
->
-    :tnoremap <A-h> <C-\><C-n><C-w>h
-    :tnoremap <A-j> <C-\><C-n><C-w>j
-    :tnoremap <A-k> <C-\><C-n><C-w>k
-    :tnoremap <A-l> <C-\><C-n><C-w>l
+
+To simulate |i_CTRL-R| in terminal-mode: >
+    :tnoremap <expr> <C-R> '<C-\><C-N>"'.nr2char(getchar()).'pi'
+
+To use `ALT+{h,j,k,l}` to navigate windows from any mode: >
+    :tnoremap <A-h> <C-\><C-N><C-w>h
+    :tnoremap <A-j> <C-\><C-N><C-w>j
+    :tnoremap <A-k> <C-\><C-N><C-w>k
+    :tnoremap <A-l> <C-\><C-N><C-w>l
+    :inoremap <A-h> <C-\><C-N><C-w>h
+    :inoremap <A-j> <C-\><C-N><C-w>j
+    :inoremap <A-k> <C-\><C-N><C-w>k
+    :inoremap <A-l> <C-\><C-N><C-w>l
     :nnoremap <A-h> <C-w>h
     :nnoremap <A-j> <C-w>j
     :nnoremap <A-k> <C-w>k
     :nnoremap <A-l> <C-w>l
-<
-This configuration allows using `Alt+{h,j,k,l}` to navigate between windows no
-matter if they are displaying a normal buffer or a terminal buffer in terminal
-mode.
 
-Mouse input is also fully supported, and has the following behavior:
+Mouse input has the following behavior:
 
 - If the program has enabled mouse events, the corresponding events will be
   forwarded to the program.
@@ -93,28 +83,33 @@ Mouse input is also fully supported, and has the following behavior:
   the terminal wont lose focus and the hovered window will be scrolled.
 
 ==============================================================================
-4. Configuration			     *terminal-emulator-configuration*
+Configuration				     *terminal-emulator-configuration*
 
-Terminal buffers can be customized through the following global/buffer-local
-variables (set via the |TermOpen| autocmd):
+Options:		'scrollback'
+Events:			|TermOpen|, |TermClose|
+Highlight groups:	|hl-TermCursor|, |hl-TermCursorNC|
 
-- `{g,b}:terminal_scrollback_buffer_size`: Scrollback buffer size, between 1
-  and 100000 inclusive. The default is 1000.
+Terminal sets local defaults for some options, which may differ from your
+global configuration.
+
+- 'list' is disabled
+- 'wrap' is disabled
+- 'relativenumber' is disabled in |Terminal-mode| (and cannot be enabled)
+
+You can change the defaults with a TermOpen autocommand: >
+	au TermOpen * setlocal list
+
+Terminal colors can be customized with these variables:
+
 - `{g,b}:terminal_color_$NUM`: The terminal color palette, where `$NUM` is the
   color index, between 0 and 255 inclusive. This setting only affects UIs with
   RGB capabilities; for normal terminals the color index is simply forwarded.
 
-The configuration variables are only processed when the terminal starts, which
-is why it needs to be done with the |TermOpen| autocmd or setting global
-variables before the terminal is started.
-
-There is also a corresponding |TermClose| event.
-
-The terminal cursor can be highlighted via |hl-TermCursor| and
-|hl-TermCursorNC|.
+The `{g,b}:terminal_color_$NUM` variables are processed only when the terminal
+starts (after |TermOpen|).
 
 ==============================================================================
-5. Status Variables				    *terminal-emulator-status*
+Status Variables				    *terminal-emulator-status*
 
 Terminal buffers maintain some information about the terminal in buffer-local
 variables:
@@ -127,11 +122,8 @@ variables:
 - *b:terminal_job_pid* The PID of the top-level process running in the
   terminal.
 
-These variables will have a value by the time the TermOpen autocmd runs, and
-will continue to have a value for the lifetime of the terminal buffer, making
-them suitable for use in 'statusline'. For example, to show the terminal title
-as the status line:
->
+These variables are initialized before TermOpen, so you can use them in
+a local 'statusline'. Example: >
     :autocmd TermOpen * setlocal statusline=%{b:term_title}
 <
 ==============================================================================

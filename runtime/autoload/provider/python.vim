@@ -1,5 +1,5 @@
 " The Python provider uses a Python host to emulate an environment for running
-" python-vim plugins. See ":help provider".
+" python-vim plugins. :help provider
 "
 " Associating the plugin with the Python host is the first step because plugins
 " will be passed as command-line arguments

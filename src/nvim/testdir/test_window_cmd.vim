@@ -67,4 +67,316 @@ function Test_window_cmd_wincmd_gf()
   augroup! test_window_cmd_wincmd_gf
 endfunc
 
-" vim: sw=2 et
+func Test_next_split_all()
+  " This was causing an illegal memory access.
+  n x
+  norm axxx
+  split
+  split
+  s/x
+  s/x
+  all
+  bwipe!
+endfunc
+
+func Test_window_quit()
+  e Xa
+  split Xb
+  call assert_equal(2, winnr('$'))
+  call assert_equal('Xb', bufname(winbufnr(1)))
+  call assert_equal('Xa', bufname(winbufnr(2)))
+
+  wincmd q
+  call assert_equal(1, winnr('$'))
+  call assert_equal('Xa', bufname(winbufnr(1)))
+
+  bw Xa Xb
+endfunc
+
+func Test_window_horizontal_split()
+  call assert_equal(1, winnr('$'))
+  3wincmd s
+  call assert_equal(2, winnr('$'))
+  call assert_equal(3, winheight(0))
+  call assert_equal(winwidth(1), winwidth(2))
+
+  call assert_fails('botright topleft wincmd s', 'E442:')
+  bw
+endfunc
+
+func Test_window_vertical_split()
+  call assert_equal(1, winnr('$'))
+  3wincmd v
+  call assert_equal(2, winnr('$'))
+  call assert_equal(3, winwidth(0))
+  call assert_equal(winheight(1), winheight(2))
+
+  call assert_fails('botright topleft wincmd v', 'E442:')
+  bw
+endfunc
+
+func Test_window_split_edit_alternate()
+  e Xa
+  e Xb
+
+  wincmd ^
+  call assert_equal('Xa', bufname(winbufnr(1)))
+  call assert_equal('Xb', bufname(winbufnr(2)))
+
+  bw Xa Xb
+endfunc
+
+func Test_window_preview()
+  " Open a preview window
+  pedit Xa
+  call assert_equal(2, winnr('$'))
+  call assert_equal(0, &previewwindow)
+
+  " Go to the preview window
+  wincmd P
+  call assert_equal(1, &previewwindow)
+
+  " Close preview window
+  wincmd z
+  call assert_equal(1, winnr('$'))
+  call assert_equal(0, &previewwindow)
+
+  call assert_fails('wincmd P', 'E441:')
+endfunc
+
+func Test_window_exchange()
+  e Xa
+
+  " Nothing happens with window exchange when there is 1 window
+  wincmd x
+  call assert_equal(1, winnr('$'))
+
+  split Xb
+  split Xc
+
+  call assert_equal('Xc', bufname(winbufnr(1)))
+  call assert_equal('Xb', bufname(winbufnr(2)))
+  call assert_equal('Xa', bufname(winbufnr(3)))
+
+  " Exchange current window 1 with window 3
+  3wincmd x
+  call assert_equal('Xa', bufname(winbufnr(1)))
+  call assert_equal('Xb', bufname(winbufnr(2)))
+  call assert_equal('Xc', bufname(winbufnr(3)))
+
+  " Exchange window with next when at the top window
+  wincmd x
+  call assert_equal('Xb', bufname(winbufnr(1)))
+  call assert_equal('Xa', bufname(winbufnr(2)))
+  call assert_equal('Xc', bufname(winbufnr(3)))
+
+  " Exchange window with next when at the middle window
+  wincmd j
+  wincmd x
+  call assert_equal('Xb', bufname(winbufnr(1)))
+  call assert_equal('Xc', bufname(winbufnr(2)))
+  call assert_equal('Xa', bufname(winbufnr(3)))
+
+  " Exchange window with next when at the bottom window.
+  " When there is no next window, it exchanges with the previous window.
+  wincmd j
+  wincmd x
+  call assert_equal('Xb', bufname(winbufnr(1)))
+  call assert_equal('Xa', bufname(winbufnr(2)))
+  call assert_equal('Xc', bufname(winbufnr(3)))
+
+  bw Xa Xb Xc
+endfunc
+
+func Test_window_rotate()
+  e Xa
+  split Xb
+  split Xc
+  call assert_equal('Xc', bufname(winbufnr(1)))
+  call assert_equal('Xb', bufname(winbufnr(2)))
+  call assert_equal('Xa', bufname(winbufnr(3)))
+
+  " Rotate downwards
+  wincmd r
+  call assert_equal('Xa', bufname(winbufnr(1)))
+  call assert_equal('Xc', bufname(winbufnr(2)))
+  call assert_equal('Xb', bufname(winbufnr(3)))
+
+  2wincmd r
+  call assert_equal('Xc', bufname(winbufnr(1)))
+  call assert_equal('Xb', bufname(winbufnr(2)))
+  call assert_equal('Xa', bufname(winbufnr(3)))
+
+  " Rotate upwards
+  wincmd R
+  call assert_equal('Xb', bufname(winbufnr(1)))
+  call assert_equal('Xa', bufname(winbufnr(2)))
+  call assert_equal('Xc', bufname(winbufnr(3)))
+
+  2wincmd R
+  call assert_equal('Xc', bufname(winbufnr(1)))
+  call assert_equal('Xb', bufname(winbufnr(2)))
+  call assert_equal('Xa', bufname(winbufnr(3)))
+
+  bot vsplit
+  call assert_fails('wincmd R', 'E443:')
+
+  bw Xa Xb Xc
+endfunc
+
+func Test_window_height()
+  e Xa
+  split Xb
+
+  let [wh1, wh2] = [winheight(1), winheight(2)]
+  " Active window (1) should have the same height or 1 more
+  " than the other window.
+  call assert_inrange(wh2, wh2 + 1, wh1)
+
+  wincmd -
+  call assert_equal(wh1 - 1, winheight(1))
+  call assert_equal(wh2 + 1, winheight(2))
+
+  wincmd +
+  call assert_equal(wh1, winheight(1))
+  call assert_equal(wh2, winheight(2))
+
+  2wincmd _
+  call assert_equal(2, winheight(1))
+  call assert_equal(wh1 + wh2 - 2, winheight(2))
+
+  wincmd =
+  call assert_equal(wh1, winheight(1))
+  call assert_equal(wh2, winheight(2))
+
+  2wincmd _
+  set winfixheight
+  split Xc
+  let [wh1, wh2, wh3] = [winheight(1), winheight(2), winheight(3)]
+  call assert_equal(2, winheight(2))
+  call assert_inrange(wh3, wh3 + 1, wh1)
+  3wincmd +
+  call assert_equal(2,       winheight(2))
+  call assert_equal(wh1 + 3, winheight(1))
+  call assert_equal(wh3 - 3, winheight(3))
+  wincmd =
+  call assert_equal(2,   winheight(2))
+  call assert_equal(wh1, winheight(1))
+  call assert_equal(wh3, winheight(3))
+
+  wincmd j
+  set winfixheight&
+
+  wincmd =
+  let [wh1, wh2, wh3] = [winheight(1), winheight(2), winheight(3)]
+  " Current window (2) should have the same height or 1 more
+  " than the other windows.
+  call assert_inrange(wh1, wh1 + 1, wh2)
+  call assert_inrange(wh3, wh3 + 1, wh2)
+
+  bw Xa Xb Xc
+endfunc
+
+func Test_window_width()
+  e Xa
+  vsplit Xb
+
+  let [ww1, ww2] = [winwidth(1), winwidth(2)]
+  " Active window (1) should have the same width or 1 more
+  " than the other window.
+  call assert_inrange(ww2, ww2 + 1, ww1)
+
+  wincmd <
+  call assert_equal(ww1 - 1, winwidth(1))
+  call assert_equal(ww2 + 1, winwidth(2))
+
+  wincmd >
+  call assert_equal(ww1, winwidth(1))
+  call assert_equal(ww2, winwidth(2))
+
+  2wincmd |
+  call assert_equal(2, winwidth(1))
+  call assert_equal(ww1 + ww2 - 2, winwidth(2))
+
+  wincmd =
+  call assert_equal(ww1, winwidth(1))
+  call assert_equal(ww2, winwidth(2))
+
+  2wincmd |
+  set winfixwidth
+  vsplit Xc
+  let [ww1, ww2, ww3] = [winwidth(1), winwidth(2), winwidth(3)]
+  " FIXME: commented out: I would expect the width of 2nd window to 
+  " remain 2 but it's actually 1?!
+  "call assert_equal(2, winwidth(2))
+  call assert_inrange(ww3, ww3 + 1, ww1)
+  3wincmd >
+  " FIXME: commented out: I would expect the width of 2nd window to 
+  " remain 2 but it's actually 1?!
+  "call assert_equal(2,       winwidth(2))
+  call assert_equal(ww1 + 3, winwidth(1))
+  call assert_equal(ww3 - 3, winwidth(3))
+  wincmd =
+  " FIXME: commented out: I would expect the width of 2nd window to 
+  " remain 2 but it's actually 1?!
+  "call assert_equal(2,   winwidth(2))
+  call assert_equal(ww1, winwidth(1))
+  call assert_equal(ww3, winwidth(3))
+
+  wincmd l
+  set winfixwidth&
+
+  wincmd =
+  let [ww1, ww2, ww3] = [winwidth(1), winwidth(2), winwidth(3)]
+  " Current window (2) should have the same width or 1 more
+  " than the other windows.
+  call assert_inrange(ww1, ww1 + 1, ww2)
+  call assert_inrange(ww3, ww3 + 1, ww2)
+
+  bw Xa Xb Xc
+endfunc
+
+func Test_window_jump_tag()
+  help
+  /iccf
+  call assert_match('^|iccf|',  getline('.'))
+  call assert_equal(2, winnr('$'))
+  2wincmd }
+  call assert_equal(3, winnr('$'))
+  call assert_match('^|iccf|',  getline('.'))
+  wincmd k
+  call assert_match('\*iccf\*',  getline('.'))
+  call assert_equal(2, winheight(0))
+
+  wincmd z
+  set previewheight=4
+  help
+  /bugs
+  wincmd }
+  wincmd k
+  call assert_match('\*bugs\*',  getline('.'))
+  call assert_equal(4, winheight(0))
+  set previewheight&
+
+  %bw!
+endfunc
+
+func Test_window_newtab()
+  e Xa
+
+  call assert_equal(1, tabpagenr('$'))
+  call assert_equal("\nAlready only one window", execute('wincmd T'))
+
+  split Xb
+  split Xc
+
+  wincmd T
+  call assert_equal(2, tabpagenr('$'))
+  call assert_equal(['Xb', 'Xa'], map(tabpagebuflist(1), 'bufname(v:val)'))
+  call assert_equal(['Xc'      ], map(tabpagebuflist(2), 'bufname(v:val)'))
+
+  %bw!
+endfunc
+
+
+" vim: shiftwidth=2 sts=2 expandtab

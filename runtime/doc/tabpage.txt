@@ -1,4 +1,4 @@
-*tabpage.txt*   For Vim version 7.4.  Last change: 2015 Apr 18
+*tabpage.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -10,11 +10,7 @@ The commands which have been added to use multiple tab pages are explained
 here.  Additionally, there are explanations for commands that work differently
 when used in combination with more than one tab page.
 
-1. Introduction			|tab-page-intro|
-2. Commands			|tab-page-commands|
-3. Other items			|tab-page-other|
-4. Setting 'tabline'		|setting-tabline|
-5. Setting 'guitablabel'	|setting-guitablabel|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						*tab-page-intro*
@@ -53,6 +49,8 @@ right of the labels.
 
 In the GUI tab pages line you can use the right mouse button to open menu.
 |tabline-menu|.
+
+For the related autocommands see |tabnew-autocmd|.
 
 :[count]tabe[dit]				*:tabe* *:tabedit* *:tabnew*
 :[count]tabnew
@@ -129,10 +127,14 @@ something else.
 :tabc[lose][!] {count}
 		Close tab page {count}.  Fails in the same way as `:tabclose`
 		above. >
-		    :-tabclose      " close the previous tab page
-		    :+tabclose      " close the next tab page
-		    :1tabclose      " close the first tab page
-		    :$tabclose      " close the last tab page
+		    :-tabclose	    " close the previous tab page
+		    :+tabclose	    " close the next tab page
+		    :1tabclose	    " close the first tab page
+		    :$tabclose	    " close the last tab page
+		    :tabclose -2    " close the two previous tab page
+		    :tabclose +	    " close the next tab page
+		    :tabclose 3	    " close the third tab page
+		    :tabclose $	    " close the last tab page
 <
 							*:tabo* *:tabonly*
 :tabo[nly][!]	Close all other tab pages.
@@ -145,13 +147,20 @@ something else.
 		never abandoned, so changes cannot get lost. >
 		    :tabonly " close all tab pages except the current one
 
-:{count}tabo[nly][!]
-		Close all tab pages except the {count}th one. >
-		    :.tabonly " as above
-		    :-tabonly " close all tab pages except the previous one
-		    :+tabonly " close all tab pages except the next one
-		    :1tabonly " close all tab pages except the first one
-		    :$tabonly " close all tab pages except the last one.
+:tabo[nly][!] {count}
+		Close all tab pages except {count} one. >
+		    :.tabonly	    " as above
+		    :-tabonly	    " close all tab pages except the previous
+				    " one
+		    :+tabonly	    " close all tab pages except the next one
+		    :1tabonly	    " close all tab pages except the first one
+		    :$tabonly	    " close all tab pages except the last one
+		    :tabonly -	    " close all tab pages except the previous
+				    " one
+		    :tabonly +2     " close all tab pages except the two next
+				    " one
+		    :tabonly 1	    " close all tab pages except the first one
+		    :tabonly $	    " close all tab pages except the last one
 
 
 SWITCHING TO ANOTHER TAB PAGE:
@@ -166,7 +175,20 @@ gt					*i_CTRL-<PageDown>* *i_<C-PageDown>*
 		Go to the next tab page.  Wraps around from the last to the
 		first one.
 
+:{count}tabn[ext]
 :tabn[ext] {count}
+		Go to tab page {count}.  The first tab page has number one. >
+		    :-tabnext	" go to the previous tab page
+		    :+tabnext	" go to the next tab page
+		    :+2tabnext	" go to the two next tab page
+		    :1tabnext	" go to the first tab page
+		    :$tabnext	" go to the last tab page
+		    :tabnext $	" as above
+		    :tabnext -	" go to the previous tab page
+		    :tabnext -1	" as above
+		    :tabnext +	" go to the next tab page
+		    :tabnext +1	" as above
+
 {count}<C-PageDown>
 {count}gt	Go to tab page {count}.  The first tab page has number one.
 
@@ -195,6 +217,12 @@ Other commands:
 :tabs		List the tab pages and the windows they contain.
 		Shows a ">" for the current window.
 		Shows a "+" for modified buffers.
+		For example:
+			Tab page 1 ~
+			  + tabpage.txt ~
+			    ex_docmd.c ~
+			Tab page 2 ~
+			>   main.c ~
 
 
 REORDERING TAB PAGES:
@@ -273,6 +301,7 @@ Variables local to a tab page start with "t:". |tabpage-variable|
 
 Currently there is only one option local to a tab page: 'cmdheight'.
 
+						*tabnew-autocmd*
 The TabLeave and TabEnter autocommand events can be used to do something when
 switching from one tab page to another.  The exact order depends on what you
 are doing.  When creating a new tab page this works as if you create a new

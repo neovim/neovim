@@ -5,11 +5,8 @@
 " Former Maintainer:    Gregory Seidman <gsslist+vim@anthropohedron.net>
 " Last change:	   2006 May 03
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -168,11 +165,9 @@ syn keyword VRMLProtos	       contained EXTERNPROTO PROTO IS
 
 syn keyword VRMLRoutes	       contained ROUTE TO
 
-if version >= 502
 "containment!
-  syn include @jscript $VIMRUNTIME/syntax/javascript.vim
-  syn region VRMLjScriptString contained start=+"\(\(javascript\)\|\(vrmlscript\)\|\(ecmascript\)\):+ms=e+1 skip=+\\\\\|\\"+ end=+"+me=e-1 contains=@jscript
-endif
+syn include @jscript $VIMRUNTIME/syntax/javascript.vim
+syn region VRMLjScriptString contained start=+"\(\(javascript\)\|\(vrmlscript\)\|\(ecmascript\)\):+ms=e+1 skip=+\\\\\|\\"+ end=+"+me=e-1 contains=@jscript
 
 " match definitions.
 syn match   VRMLSpecial		  contained "\\[0-9][0-9][0-9]\|\\."
@@ -192,47 +187,35 @@ syn region  VRMLInstName	  start="USE\>"hs=e+1 skip="USE\(,\|\s\)*" end="[A-Za-z
 syn keyword VRMLInstances      contained DEF USE
 syn sync minlines=1
 
-if version >= 600
 "FOLDS!
-  syn sync fromstart
-  "setlocal foldmethod=syntax
-  syn region braceFold start="{" end="}" transparent fold contains=TOP
-  syn region bracketFold start="\[" end="]" transparent fold contains=TOP
-  syn region VRMLString start=+"+ skip=+\\\\\|\\"+ end=+"+ fold contains=VRMLSpecial,VRMLjScriptString
-endif
+syn sync fromstart
+"setlocal foldmethod=syntax
+syn region braceFold start="{" end="}" transparent fold contains=TOP
+syn region bracketFold start="\[" end="]" transparent fold contains=TOP
+syn region VRMLString start=+"+ skip=+\\\\\|\\"+ end=+"+ fold contains=VRMLSpecial,VRMLjScriptString
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_VRML_syntax_inits")
-  if version < 508
-    let did_VRML_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink VRMLCharacter  VRMLString
-  HiLink VRMLSpecialCharacter VRMLSpecial
-  HiLink VRMLNumber     VRMLString
-  HiLink VRMLValues     VRMLString
-  HiLink VRMLString     String
-  HiLink VRMLSpecial    Special
-  HiLink VRMLComment    Comment
-  HiLink VRMLNodes      Statement
-  HiLink VRMLFields     Type
-  HiLink VRMLEvents     Type
-  HiLink VRMLfTypes     LineNr
+hi def link VRMLCharacter  VRMLString
+hi def link VRMLSpecialCharacter VRMLSpecial
+hi def link VRMLNumber     VRMLString
+hi def link VRMLValues     VRMLString
+hi def link VRMLString     String
+hi def link VRMLSpecial    Special
+hi def link VRMLComment    Comment
+hi def link VRMLNodes      Statement
+hi def link VRMLFields     Type
+hi def link VRMLEvents     Type
+hi def link VRMLfTypes     LineNr
 "  hi     VRMLfTypes     ctermfg=6 guifg=Brown
-  HiLink VRMLInstances  PreCondit
-  HiLink VRMLRoutes     PreCondit
-  HiLink VRMLProtos     PreProc
-  HiLink VRMLRouteNode  Identifier
-  HiLink VRMLInstName   Identifier
-  HiLink VRMLTypes      Identifier
+hi def link VRMLInstances  PreCondit
+hi def link VRMLRoutes     PreCondit
+hi def link VRMLProtos     PreProc
+hi def link VRMLRouteNode  Identifier
+hi def link VRMLInstName   Identifier
+hi def link VRMLTypes      Identifier
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "vrml"
 

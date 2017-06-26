@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local lfs = require('lfs')
-local neq, eq, execute = helpers.neq, helpers.eq, helpers.execute
+local neq, eq, command = helpers.neq, helpers.eq, helpers.command
 local clear, curbufmeths = helpers.clear, helpers.curbufmeths
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
 local insert = helpers.insert
@@ -10,17 +10,17 @@ describe('api functions', function()
   before_each(clear)
 
   it("work", function()
-    execute("call nvim_command('let g:test = 1')")
+    command("call nvim_command('let g:test = 1')")
     eq(1, eval("nvim_get_var('test')"))
 
     local buf = eval("nvim_get_current_buf()")
-    execute("call nvim_buf_set_lines("..buf..", 0, -1, v:true, ['aa', 'bb'])")
+    command("call nvim_buf_set_lines("..buf..", 0, -1, v:true, ['aa', 'bb'])")
     expect([[
       aa
       bb]])
 
-    execute("call nvim_win_set_cursor(0, [1, 1])")
-    execute("call nvim_input('ax<esc>')")
+    command("call nvim_win_set_cursor(0, [1, 1])")
+    command("call nvim_input('ax<esc>')")
     expect([[
       aax
       bb]])
@@ -57,7 +57,7 @@ describe('api functions', function()
     eq(bnr, bhnd)
     eq(wid, whnd)
 
-    execute("new") -- creates new buffer and new window
+    command("new") -- creates new buffer and new window
     local bnr2 = eval("bufnr('')")
     local bhnd2 = eval("nvim_get_current_buf()")
     local wid2 = eval("win_getid()")
@@ -69,7 +69,7 @@ describe('api functions', function()
     -- 0 is synonymous to the current buffer
     eq(bnr2, eval("nvim_buf_get_number(0)"))
 
-    execute("bn") -- show old buffer in new window
+    command("bn") -- show old buffer in new window
     eq(bnr, eval("nvim_get_current_buf()"))
     eq(bnr, eval("bufnr('')"))
     eq(bnr, eval("nvim_buf_get_number(0)"))
@@ -81,7 +81,7 @@ describe('api functions', function()
     curbufmeths.set_lines(0, -1, true, {"aa\0", "b\0b"})
     eq({'aa\n', 'b\nb'}, eval("nvim_buf_get_lines(0, 0, -1, 1)"))
 
-    execute('call nvim_buf_set_lines(0, 1, 2, v:true, ["xx", "\\nyy"])')
+    command('call nvim_buf_set_lines(0, 1, 2, v:true, ["xx", "\\nyy"])')
     eq({'aa\0', 'xx', '\0yy'}, curbufmeths.get_lines(0, -1, 1))
   end)
 
@@ -106,7 +106,7 @@ describe('api functions', function()
 
   it('have metadata accessible with api_info()', function()
     local api_keys = eval("sort(keys(api_info()))")
-    eq({'error_types', 'functions', 'types', 'version'}, api_keys)
+    eq({'error_types', 'functions', 'types', 'ui_events', 'version'}, api_keys)
   end)
 
   it('are highlighted by vim.vim syntax file', function()
@@ -124,9 +124,9 @@ describe('api functions', function()
       [5] = {bold = true, foreground = Screen.colors.Blue},
     })
 
-    execute("set ft=vim")
-    execute("let &rtp='build/runtime/,'.&rtp")
-    execute("syntax on")
+    command("set ft=vim")
+    command("let &rtp='build/runtime/,'.&rtp")
+    command("syntax on")
     insert([[
       call bufnr('%')
       call nvim_input('typing...')

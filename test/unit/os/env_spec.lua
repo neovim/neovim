@@ -1,4 +1,5 @@
-local helpers = require('test.unit.helpers')
+local helpers = require('test.unit.helpers')(after_each)
+local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
 local eq = helpers.eq
@@ -12,17 +13,17 @@ require('lfs')
 
 local cimp = cimport('./src/nvim/os/os.h')
 
-describe('env function', function()
+describe('env.c', function()
   local function os_setenv(name, value, override)
-    return cimp.os_setenv((to_cstr(name)), (to_cstr(value)), override)
+    return cimp.os_setenv(to_cstr(name), to_cstr(value), override)
   end
 
   local function os_unsetenv(name, _, _)
-    return cimp.os_unsetenv((to_cstr(name)))
+    return cimp.os_unsetenv(to_cstr(name))
   end
 
   local function os_getenv(name)
-    local rval = cimp.os_getenv((to_cstr(name)))
+    local rval = cimp.os_getenv(to_cstr(name))
     if rval ~= NULL then
       return ffi.string(rval)
     else
@@ -33,18 +34,18 @@ describe('env function', function()
   describe('os_setenv', function()
     local OK = 0
 
-    it('sets an env variable and returns OK', function()
-      local name = 'NEOVIM_UNIT_TEST_SETENV_1N'
-      local value = 'NEOVIM_UNIT_TEST_SETENV_1V'
+    itp('sets an env variable and returns OK', function()
+      local name = 'NVIM_UNIT_TEST_SETENV_1N'
+      local value = 'NVIM_UNIT_TEST_SETENV_1V'
       eq(nil, os.getenv(name))
       eq(OK, (os_setenv(name, value, 1)))
       eq(value, os.getenv(name))
     end)
 
-    it("dosn't overwrite an env variable if overwrite is 0", function()
-      local name = 'NEOVIM_UNIT_TEST_SETENV_2N'
-      local value = 'NEOVIM_UNIT_TEST_SETENV_2V'
-      local value_updated = 'NEOVIM_UNIT_TEST_SETENV_2V_UPDATED'
+    itp("dosn't overwrite an env variable if overwrite is 0", function()
+      local name = 'NVIM_UNIT_TEST_SETENV_2N'
+      local value = 'NVIM_UNIT_TEST_SETENV_2V'
+      local value_updated = 'NVIM_UNIT_TEST_SETENV_2V_UPDATED'
       eq(OK, (os_setenv(name, value, 0)))
       eq(value, os.getenv(name))
       eq(OK, (os_setenv(name, value_updated, 0)))
@@ -52,24 +53,63 @@ describe('env function', function()
     end)
   end)
 
+  describe('os_setenv_append_path', function()
+    itp('appends /foo/bar to $PATH', function()
+      local original_path = os.getenv('PATH')
+      eq(true, cimp.os_setenv_append_path(to_cstr('/foo/bar/baz')))
+      eq(original_path..':/foo/bar', os.getenv('PATH'))
+    end)
+
+    itp('returns false if `fname` is not absolute', function()
+      local original_path = os.getenv('PATH')
+      eq(false, cimp.os_setenv_append_path(to_cstr('foo/bar/baz')))
+      eq(original_path, os.getenv('PATH'))
+    end)
+  end)
+
+  describe('os_shell_is_cmdexe', function()
+    itp('returns true for expected names', function()
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('cmd.exe')))
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('cmd')))
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('CMD.EXE')))
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('CMD')))
+
+      os_setenv('COMSPEC', '/foo/bar/cmd.exe', 0)
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('$COMSPEC')))
+      os_setenv('COMSPEC', [[C:\system32\cmd.exe]], 0)
+      eq(true, cimp.os_shell_is_cmdexe(to_cstr('$COMSPEC')))
+    end)
+    itp('returns false for unexpected names', function()
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('powershell')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr(' cmd.exe ')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('cm')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('md')))
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('cmd.ex')))
+
+      os_setenv('COMSPEC', '/foo/bar/cmd', 0)
+      eq(false, cimp.os_shell_is_cmdexe(to_cstr('$COMSPEC')))
+    end)
+  end)
+
   describe('os_getenv', function()
-    it('reads an env variable', function()
-      local name = 'NEOVIM_UNIT_TEST_GETENV_1N'
-      local value = 'NEOVIM_UNIT_TEST_GETENV_1V'
+    itp('reads an env variable', function()
+      local name = 'NVIM_UNIT_TEST_GETENV_1N'
+      local value = 'NVIM_UNIT_TEST_GETENV_1V'
       eq(NULL, os_getenv(name))
-      -- need to use os_setenv, because lua dosn't have a setenv function
+      -- Use os_setenv because Lua dosen't have setenv.
       os_setenv(name, value, 1)
       eq(value, os_getenv(name))
     end)
 
-    it('returns NULL if the env variable is not found', function()
-      local name = 'NEOVIM_UNIT_TEST_GETENV_NOTFOUND'
+    itp('returns NULL if the env variable is not found', function()
+      local name = 'NVIM_UNIT_TEST_GETENV_NOTFOUND'
       return eq(NULL, os_getenv(name))
     end)
   end)
 
   describe('os_unsetenv', function()
-    it('unsets environment variable', function()
+    itp('unsets environment variable', function()
       local name = 'TEST_UNSETENV'
       local value = 'TESTVALUE'
       os_setenv(name, value, 1)
@@ -81,9 +121,9 @@ describe('env function', function()
   end)
 
   describe('os_getenvname_at_index', function()
-    it('returns names of environment variables', function()
-      local test_name = 'NEOVIM_UNIT_TEST_GETENVNAME_AT_INDEX_1N'
-      local test_value = 'NEOVIM_UNIT_TEST_GETENVNAME_AT_INDEX_1V'
+    itp('returns names of environment variables', function()
+      local test_name = 'NVIM_UNIT_TEST_GETENVNAME_AT_INDEX_1N'
+      local test_value = 'NVIM_UNIT_TEST_GETENVNAME_AT_INDEX_1V'
       os_setenv(test_name, test_value, 1)
       local i = 0
       local names = { }
@@ -101,7 +141,7 @@ describe('env function', function()
       eq(true, found_name)
     end)
 
-    it('returns NULL if the index is out of bounds', function()
+    itp('returns NULL if the index is out of bounds', function()
       local huge = ffi.new('size_t', 10000)
       local maxuint32 = ffi.new('size_t', 4294967295)
       eq(NULL, cimp.os_getenvname_at_index(huge))
@@ -118,7 +158,7 @@ describe('env function', function()
   end)
 
   describe('os_get_pid', function()
-    it('returns the process ID', function()
+    itp('returns the process ID', function()
       local stat_file = io.open('/proc/self/stat')
       if stat_file then
         local stat_str = stat_file:read('*l')
@@ -133,7 +173,7 @@ describe('env function', function()
   end)
 
   describe('os_get_hostname', function()
-    it('returns the hostname', function()
+    itp('returns the hostname', function()
       local handle = io.popen('hostname')
       local hostname = handle:read('*l')
       handle:close()
@@ -144,24 +184,24 @@ describe('env function', function()
   end)
 
   describe('expand_env_esc', function()
-    it('expands environment variables', function()
-      local name = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN'
-      local value = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCV'
+    itp('expands environment variables', function()
+      local name = 'NVIM_UNIT_TEST_EXPAND_ENV_ESCN'
+      local value = 'NVIM_UNIT_TEST_EXPAND_ENV_ESCV'
       os_setenv(name, value, 1)
       -- TODO(bobtwinkles) This only tests Unix expansions. There should be a
       -- test for Windows as well
-      local input1 = to_cstr('$NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN/test')
-      local input2 = to_cstr('${NEOVIM_UNIT_TEST_EXPAND_ENV_ESCN}/test')
+      local input1 = to_cstr('$NVIM_UNIT_TEST_EXPAND_ENV_ESCN/test')
+      local input2 = to_cstr('${NVIM_UNIT_TEST_EXPAND_ENV_ESCN}/test')
       local output_buff1 = cstr(255, '')
       local output_buff2 = cstr(255, '')
-      local output_expected = 'NEOVIM_UNIT_TEST_EXPAND_ENV_ESCV/test'
+      local output_expected = 'NVIM_UNIT_TEST_EXPAND_ENV_ESCV/test'
       cimp.expand_env_esc(input1, output_buff1, 255, false, true, NULL)
       cimp.expand_env_esc(input2, output_buff2, 255, false, true, NULL)
       eq(output_expected, ffi.string(output_buff1))
       eq(output_expected, ffi.string(output_buff2))
     end)
 
-    it('expands ~ once when `one` is true', function()
+    itp('expands ~ once when `one` is true', function()
       local input = '~/foo ~ foo'
       local homedir = cstr(255, '')
       cimp.expand_env_esc(to_cstr('~'), homedir, 255, false, true, NULL)
@@ -171,7 +211,7 @@ describe('env function', function()
       eq(ffi.string(output), ffi.string(output_expected))
     end)
 
-    it('expands ~ every time when `one` is false', function()
+    itp('expands ~ every time when `one` is false', function()
       local input = to_cstr('~/foo ~ foo')
       local dst = cstr(255, '')
       cimp.expand_env_esc(to_cstr('~'), dst, 255, false, true, NULL)
@@ -182,7 +222,7 @@ describe('env function', function()
       eq(output_expected, ffi.string(output))
     end)
 
-    it('does not crash #3725', function()
+    itp('does not crash #3725', function()
       local name_out = ffi.new('char[100]')
       cimp.os_get_user_name(name_out, 100)
       local curuser = ffi.string(name_out)
@@ -195,7 +235,7 @@ describe('env function', function()
       assert.True(len < 99)
     end)
 
-    it('respects `dstlen` without expansion', function()
+    itp('respects `dstlen` without expansion', function()
       local input = to_cstr('this is a very long thing that will not fit')
       -- The buffer is long enough to actually contain the full input in case the
       -- test fails, but we don't tell expand_env_esc that
@@ -209,7 +249,7 @@ describe('env function', function()
       eq(0, output[4])
     end)
 
-    it('respects `dstlen` with expansion', function()
+    itp('respects `dstlen` with expansion', function()
       local varname = to_cstr('NVIM_UNIT_TEST_EXPAND_ENV_ESC_DSTLENN')
       local varval = to_cstr('NVIM_UNIT_TEST_EXPAND_ENV_ESC_DSTLENV')
       cimp.os_setenv(varname, varval, 1)

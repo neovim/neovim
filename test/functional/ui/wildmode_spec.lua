@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
+local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local funcs = helpers.funcs
 
 if helpers.pending_win32(pending) then return end
@@ -20,8 +20,8 @@ describe("'wildmode'", function()
 
   describe("'wildmenu'", function()
     it(':sign <tab> shows wildmenu completions', function()
-      execute('set wildmode=full')
-      execute('set wildmenu')
+      command('set wildmode=full')
+      command('set wildmenu')
       feed(':sign <tab>')
       screen:expect([[
                                  |
@@ -29,6 +29,27 @@ describe("'wildmode'", function()
         ~                        |
         define  jump  list  >    |
         :sign define^             |
+      ]])
+    end)
+
+    it('does not crash after cycling back to original text', function()
+      command('set wildmode=full')
+      feed(':j<Tab><Tab><Tab>')
+      screen:expect([[
+                                 |
+        ~                        |
+        ~                        |
+        join  jumps              |
+        :j^                       |
+      ]])
+      -- This would cause nvim to crash before #6650
+      feed('<BS><Tab>')
+      screen:expect([[
+                                 |
+        ~                        |
+        ~                        |
+        !  #  &  <  =  >  @  >   |
+        :!^                       |
       ]])
     end)
   end)
@@ -50,10 +71,10 @@ describe('command line completion', function()
 
   it('lists directories with empty PATH', function()
     local tmp = funcs.tempname()
-    execute('e '.. tmp)
-    execute('cd %:h')
-    execute("call mkdir('Xtest-functional-viml-compl-dir')")
-    execute('let $PATH=""')
+    command('e '.. tmp)
+    command('cd %:h')
+    command("call mkdir('Xtest-functional-viml-compl-dir')")
+    command('let $PATH=""')
     feed(':!<tab><bs>')
     screen:expect([[
                                               |

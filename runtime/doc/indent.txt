@@ -1,4 +1,4 @@
-*indent.txt*    For Vim version 7.4.  Last change: 2014 Dec 06
+*indent.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,8 +6,7 @@
 
 This file is about indenting C programs and other files.
 
-1. Indenting C style programs	|C-indenting|
-2. Indenting by expression	|indent-expression|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Indenting C style programs				*C-indenting*
@@ -810,7 +809,7 @@ PHP indenting can be altered in several ways by modifying the values of some
 global variables:
 
 					*php-comment* *PHP_autoformatcomment*
-To not enable auto-formating of comments by default (if you want to use your
+To not enable auto-formatting of comments by default (if you want to use your
 own 'formatoptions'): >
     :let g:PHP_autoformatcomment = 0
 

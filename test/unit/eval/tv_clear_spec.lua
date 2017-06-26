@@ -1,4 +1,5 @@
-local helpers = require('test.unit.helpers')
+local helpers = require('test.unit.helpers')(after_each)
+local itp = helpers.gen_itp(it)
 local eval_helpers = require('test.unit.eval.helpers')
 
 local alloc_log_new = helpers.alloc_log_new
@@ -13,7 +14,7 @@ local list_items = eval_helpers.list_items
 local dict_items = eval_helpers.dict_items
 local lua2typvalt = eval_helpers.lua2typvalt
 
-local lib = cimport('./src/nvim/eval_defs.h', './src/nvim/eval.h')
+local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/eval.h')
 
 local alloc_log = alloc_log_new()
 
@@ -25,8 +26,8 @@ after_each(function()
   alloc_log:after_each()
 end)
 
-describe('clear_tv()', function()
-  it('successfully frees all lists in [&l [1], *l, *l]', function()
+describe('tv_clear()', function()
+  itp('successfully frees all lists in [&l [1], *l, *l]', function()
     local l_inner = {1}
     local list = {l_inner, l_inner, l_inner}
     local list_tv = ffi.gc(lua2typvalt(list), nil)
@@ -43,7 +44,7 @@ describe('clear_tv()', function()
       a.li(lis[3]),
     })
     eq(3, list_inner_p.lv_refcount)
-    lib.clear_tv(list_tv)
+    lib.tv_clear(list_tv)
     alloc_log:check({
       a.freed(lis_inner[1]),
       a.freed(list_inner_p),
@@ -53,7 +54,7 @@ describe('clear_tv()', function()
       a.freed(list_p),
     })
   end)
-  it('successfully frees all lists in [&l [], *l, *l]', function()
+  itp('successfully frees all lists in [&l [], *l, *l]', function()
     local l_inner = {[type_key]=list_type}
     local list = {l_inner, l_inner, l_inner}
     local list_tv = ffi.gc(lua2typvalt(list), nil)
@@ -68,7 +69,7 @@ describe('clear_tv()', function()
       a.li(lis[3]),
     })
     eq(3, list_inner_p.lv_refcount)
-    lib.clear_tv(list_tv)
+    lib.tv_clear(list_tv)
     alloc_log:check({
       a.freed(list_inner_p),
       a.freed(lis[1]),
@@ -77,7 +78,7 @@ describe('clear_tv()', function()
       a.freed(list_p),
     })
   end)
-  it('successfully frees all dictionaries in [&d {}, *d]', function()
+  itp('successfully frees all dictionaries in [&d {}, *d]', function()
     local d_inner = {}
     local list = {d_inner, d_inner}
     local list_tv = ffi.gc(lua2typvalt(list), nil)
@@ -91,7 +92,7 @@ describe('clear_tv()', function()
       a.li(lis[2]),
     })
     eq(2, dict_inner_p.dv_refcount)
-    lib.clear_tv(list_tv)
+    lib.tv_clear(list_tv)
     alloc_log:check({
       a.freed(dict_inner_p),
       a.freed(lis[1]),
@@ -99,7 +100,7 @@ describe('clear_tv()', function()
       a.freed(list_p),
     })
   end)
-  it('successfully frees all dictionaries in [&d {a: 1}, *d]', function()
+  itp('successfully frees all dictionaries in [&d {a: 1}, *d]', function()
     local d_inner = {a=1}
     local list = {d_inner, d_inner}
     local list_tv = ffi.gc(lua2typvalt(list), nil)
@@ -115,7 +116,7 @@ describe('clear_tv()', function()
       a.li(lis[2]),
     })
     eq(2, dict_inner_p.dv_refcount)
-    lib.clear_tv(list_tv)
+    lib.tv_clear(list_tv)
     alloc_log:check({
       a.freed(dis.a),
       a.freed(dict_inner_p),

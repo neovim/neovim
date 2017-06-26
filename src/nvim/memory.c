@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
  // Various routines dealing with allocation and deallocation of memory.
 
 #include <assert.h>
@@ -342,10 +345,6 @@ char *xstpcpy(char *restrict dst, const char *restrict src)
 /// WARNING: xstpncpy will ALWAYS write maxlen bytes. If src is shorter than
 /// maxlen, zeroes will be written to the remaining bytes.
 ///
-/// TODO(aktau): I don't see a good reason to have this last behaviour, and
-/// it is potentially wasteful. Could we perhaps deviate from the standard
-/// and not zero the rest of the buffer?
-///
 /// @param dst
 /// @param src
 /// @param maxlen
@@ -372,15 +371,15 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 ///
 /// @param dst    Buffer to store the result
 /// @param src    String to be copied
-/// @param size   Size of `dst`
+/// @param dsize  Size of `dst`
 /// @return       strlen(src). If retval >= dstsize, truncation occurs.
-size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
+size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t dsize)
   FUNC_ATTR_NONNULL_ALL
 {
   size_t slen = strlen(src);
 
-  if (size) {
-    size_t len = MIN(slen, size - 1);
+  if (dsize) {
+    size_t len = MIN(slen, dsize - 1);
     memcpy(dst, src, len);
     dst[len] = '\0';
   }
@@ -388,31 +387,34 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
   return slen;  // Does not include NUL.
 }
 
-/// xstrlcat - Appends string src to the end of dst.
+/// Appends `src` to string `dst` of size `dsize` (unlike strncat, dsize is the
+/// full size of `dst`, not space left).  At most dsize-1 characters
+/// will be copied.  Always NUL terminates. `src` and `dst` may overlap.
 ///
-/// Compatible with *BSD strlcat: Appends at most (dstsize - strlen(dst) - 1)
-/// characters. dst will be NUL-terminated.
+/// @see vim_strcat from Vim.
+/// @see strlcat from OpenBSD.
 ///
-/// Note: Replaces `vim_strcat`.
-///
-/// @param dst      Buffer to store the string
-/// @param src      String to be copied
-/// @param dstsize  Size of destination buffer, must be greater than 0
-/// @return         strlen(src) + MIN(dstsize, strlen(initial dst)).
-///                 If retval >= dstsize, truncation occurs.
-size_t xstrlcat(char *restrict dst, const char *restrict src, size_t dstsize)
+/// @param dst      Buffer to be appended-to. Must have a NUL byte.
+/// @param src      String to put at the end of `dst`
+/// @param dsize    Size of `dst` including NUL byte. Must be greater than 0.
+/// @return         strlen(src) + strlen(initial dst)
+///                 If retval >= dsize, truncation occurs.
+size_t xstrlcat(char *const dst, const char *const src, const size_t dsize)
   FUNC_ATTR_NONNULL_ALL
 {
-  assert(dstsize > 0);
-  size_t srclen = strlen(src);
-  size_t dstlen = strlen(dst);
-  size_t ret = srclen + dstlen;  // Total string length (excludes NUL)
-  if (srclen) {
-    size_t len = (ret >= dstsize) ? dstsize - 1 : ret;
-    memcpy(dst + dstlen, src, len - dstlen);
-    dst[len] = '\0';
+  assert(dsize > 0);
+  const size_t dlen = strlen(dst);
+  assert(dlen < dsize);
+  const size_t slen = strlen(src);
+
+  if (slen > dsize - dlen - 1) {
+    memmove(dst + dlen, src, dsize - dlen - 1);
+    dst[dsize - 1] = '\0';
+  } else {
+    memmove(dst + dlen, src, slen + 1);
   }
-  return ret;  // Does not include NUL.
+
+  return slen + dlen;  // Does not include NUL.
 }
 
 /// strdup() wrapper
@@ -425,6 +427,19 @@ char *xstrdup(const char *str)
   FUNC_ATTR_NONNULL_ALL
 {
   return xmemdupz(str, strlen(str));
+}
+
+/// strdup() wrapper
+///
+/// Unlike xstrdup() allocates a new empty string if it receives NULL.
+char *xstrdupnul(const char *const str)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+{
+  if (str == NULL) {
+    return xmallocz(0);
+  } else {
+    return xstrdup(str);
+  }
 }
 
 /// A version of memchr that starts the search at `src + len`.
@@ -470,6 +485,20 @@ void *xmemdup(const void *data, size_t len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   return memcpy(xmalloc(len), data, len);
+}
+
+/// Returns true if strings `a` and `b` are equal. Arguments may be NULL.
+bool strequal(const char *a, const char *b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a == NULL && b == NULL) || (a && b && strcmp(a, b) == 0);
+}
+
+/// Case-insensitive `strequal`.
+bool striequal(const char *a, const char *b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a == NULL && b == NULL) || (a && b && STRICMP(a, b) == 0);
 }
 
 /*
@@ -622,18 +651,6 @@ void free_all_mem(void)
   /* Destroy all windows.  Must come before freeing buffers. */
   win_free_all();
 
-  /* Free all buffers.  Reset 'autochdir' to avoid accessing things that
-   * were freed already. */
-  p_acd = false;
-  for (buf = firstbuf; buf != NULL; ) {
-    nextbuf = buf->b_next;
-    close_buffer(NULL, buf, DOBUF_WIPE, false);
-    if (buf_valid(buf))
-      buf = nextbuf;            /* didn't work, try next one */
-    else
-      buf = firstbuf;
-  }
-
   free_cmdline_buf();
 
   /* Clear registers. */
@@ -656,6 +673,20 @@ void free_all_mem(void)
       break;
 
   eval_clear();
+
+  // Free all buffers.  Reset 'autochdir' to avoid accessing things that
+  // were freed already.
+  // Must be after eval_clear to avoid it trying to access b:changedtick after
+  // freeing it.
+  p_acd = false;
+  for (buf = firstbuf; buf != NULL; ) {
+    bufref_T bufref;
+    set_bufref(&bufref, buf);
+    nextbuf = buf->b_next;
+    close_buffer(NULL, buf, DOBUF_WIPE, false);
+    // Didn't work, try next one.
+    buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
+  }
 
   /* screenlines (can't display anything now!) */
   free_screenlines();

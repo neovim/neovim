@@ -8,6 +8,9 @@ local curwinmeths = helpers.curwinmeths
 local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
+local meth_pcall = helpers.meth_pcall
+local meths = helpers.meths
+local command = helpers.command
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -51,6 +54,12 @@ describe('api/win', function()
       curwin('set_cursor', {2, 6})
       nvim('command', 'normal i dumb')
       eq('typing\n  some dumb text', curbuf_contents())
+    end)
+
+    it('does not leak memory when using invalid window ID with invalid pos',
+    function()
+      eq({false, 'Invalid window id'},
+         meth_pcall(meths.win_set_cursor, 1, {"b\na"}))
     end)
 
     it('updates the screen, and also when the window is unfocused', function()
@@ -137,6 +146,11 @@ describe('api/win', function()
       eq(1, funcs.exists('w:lua'))
       curwinmeths.del_var('lua')
       eq(0, funcs.exists('w:lua'))
+      eq({false, 'Key does not exist: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
+      curwinmeths.set_var('lua', 1)
+      command('lockvar w:lua')
+      eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
+      eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.set_var, 'lua', 1))
     end)
 
     it('window_set_var returns the old value', function()

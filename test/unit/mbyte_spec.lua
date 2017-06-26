@@ -1,4 +1,5 @@
-local helpers = require("test.unit.helpers")
+local helpers = require("test.unit.helpers")(after_each)
+local itp = helpers.gen_itp(it)
 
 local ffi     = helpers.ffi
 local eq      = helpers.eq
@@ -26,7 +27,7 @@ describe('mbyte', function()
   before_each(function()
   end)
 
-  it('utf_ptr2char', function()
+  itp('utf_ptr2char', function()
     -- For strings with length 1 the first byte is returned.
     for c = 0, 255 do
       eq(c, mbyte.utf_ptr2char(to_string({c, 0})))
@@ -44,7 +45,7 @@ describe('mbyte', function()
 
   describe('utfc_ptr2char_len', function()
 
-    it('1-byte sequences', function()
+    itp('1-byte sequences', function()
       local pcc = to_intp()
       for c = 0, 255 do
         eq(c, mbyte.utfc_ptr2char_len(to_string({c}), pcc, 1))
@@ -52,7 +53,7 @@ describe('mbyte', function()
       end
     end)
 
-    it('2-byte sequences', function()
+    itp('2-byte sequences', function()
       local pcc = to_intp()
       -- No combining characters
       eq(0x007f, mbyte.utfc_ptr2char_len(to_string({0x7f, 0x7f}), pcc, 2))
@@ -76,7 +77,7 @@ describe('mbyte', function()
       eq(0, pcc[0])
     end)
 
-    it('3-byte sequences', function()
+    itp('3-byte sequences', function()
       local pcc = to_intp()
 
       -- No second UTF-8 character
@@ -108,7 +109,7 @@ describe('mbyte', function()
       eq(0, pcc[0])
     end)
 
-    it('4-byte sequences', function()
+    itp('4-byte sequences', function()
       local pcc = to_intp()
 
       -- No following combining character
@@ -145,7 +146,7 @@ describe('mbyte', function()
       eq(0, pcc[0])
     end)
 
-    it('5+-byte sequences', function()
+    itp('5+-byte sequences', function()
       local pcc = to_intp()
 
       -- No following combining character

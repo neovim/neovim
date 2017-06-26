@@ -1,4 +1,4 @@
-*visual.txt*    For Vim version 7.4.  Last change: 2014 Mar 23
+*visual.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -11,14 +11,7 @@ operator.  It is the only way to select a block of text.
 
 This is introduced in section |04.4| of the user manual.
 
-1. Using Visual mode			|visual-use|
-2. Starting and stopping Visual mode	|visual-start|
-3. Changing the Visual area		|visual-change|
-4. Operating on the Visual area		|visual-operators|
-5. Blockwise operators			|blockwise-operators|
-6. Repeating				|visual-repeat|
-7. Examples				|visual-examples|
-8. Select mode				|Select-mode|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Using Visual mode					*visual-use*

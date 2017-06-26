@@ -1,4 +1,4 @@
-*autocmd.txt*   For Vim version 7.4.  Last change: 2016 Jun 09
+*autocmd.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -8,17 +8,7 @@ Automatic commands					*autocommand*
 
 For a basic explanation, see section |40.3| in the user manual.
 
-1.  Introduction		|autocmd-intro|
-2.  Defining autocommands	|autocmd-define|
-3.  Removing autocommands	|autocmd-remove|
-4.  Listing autocommands	|autocmd-list|
-5.  Events			|autocmd-events|
-6.  Patterns			|autocmd-patterns|
-7.  Buffer-local autocommands	|autocmd-buflocal|
-8.  Groups			|autocmd-groups|
-9.  Executing autocommands	|autocmd-execute|
-10. Using autocommands		|autocmd-use|
-11. Disabling autocommands	|autocmd-disable|
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Introduction						*autocmd-intro*
@@ -30,7 +20,7 @@ files matching *.c.  You can also use autocommands to implement advanced
 features, such as editing compressed files (see |gzip-example|).  The usual
 place to put autocommands is in your vimrc file.
 
-						*E203* *E204* *E143* *E855*
+					*E203* *E204* *E143* *E855* *E937*
 WARNING: Using autocommands is very powerful, and may lead to unexpected side
 effects.  Be careful not to destroy your text.
 - It's a good idea to do some testing on an expendable copy of a file first.
@@ -76,11 +66,15 @@ exception is that "<sfile>" is expanded when the autocmd is defined.  Example:
 
 Here Vim expands <sfile> to the name of the file containing this line.
 
-When your vimrc file is sourced twice, the autocommands will appear twice.
-To avoid this, put this command in your vimrc file, before defining
-autocommands: >
+`:autocmd` adds to the list of autocommands regardless of whether they are
+already present.  When your .vimrc file is sourced twice, the autocommands
+will appear twice.  To avoid this, define your autocommands in a group, so
+that you can easily clear them: >
 
-	:autocmd!	" Remove ALL autocommands for the current group.
+	augroup vimrc
+	  autocmd!	" Remove all vimrc autocommands
+	  au BufNewFile,BufRead *.html so <sfile>:h/html.vim
+	augroup END
 
 If you don't want to remove all autocommands, you can instead use a variable
 to ensure that Vim includes the autocommands only once: >
@@ -127,8 +121,13 @@ prompt.  When one command outputs two messages this can happen anyway.
 
 :au[tocmd]! [group] {event}
 			Remove ALL autocommands for {event}.
+			Warning: You should not do this without a group for
+			|BufRead| and other common events, it can break
+			plugins, syntax highlighting, etc.
 
 :au[tocmd]! [group]	Remove ALL autocommands.
+			Warning: You should normally not do this without a
+			group, it breaks plugins, syntax highlighting, etc.
 
 When the [group] argument is not given, Vim uses the current group (as defined
 with ":augroup"); otherwise, Vim uses the group defined with [group].
@@ -422,8 +421,8 @@ BufUnload			Before unloading a buffer.  This is when the
 				NOTE: When this autocommand is executed, the
 				current buffer "%" may be different from the
 				buffer being unloaded "<afile>".
-				Don't change to another buffer, it will cause
-				problems.
+				Don't change to another buffer or window, it
+				will cause problems!
 				When exiting and v:dying is 2 or more this
 				event is not triggered.
 							*BufWinEnter*
@@ -794,7 +793,9 @@ QuickFixCmdPre			Before a quickfix command is run (|:make|,
 				|:vimgrepadd|, |:lvimgrepadd|, |:cscope|,
 				|:cfile|, |:cgetfile|, |:caddfile|, |:lfile|,
 				|:lgetfile|, |:laddfile|, |:helpgrep|,
-				|:lhelpgrep|).
+				|:lhelpgrep|, |:cexpr|, |:cgetexpr|,
+				|:caddexpr|, |:cbuffer|, |:cgetbuffer|,
+				|:caddbuffer|).
 				The pattern is matched against the command
 				being run.  When |:grep| is used but 'grepprg'
 				is set to "internal" it still matches "grep".
@@ -1002,7 +1003,7 @@ WinLeave			Before leaving a window.  If the window to be
 
 							*WinNew*
 WinNew				When a new window was created.  Not done for
-				the fist window, when Vim has just started.
+				the first window, when Vim has just started.
 				Before a WinEnter event.
 
 ==============================================================================
@@ -1085,6 +1086,9 @@ The pattern is interpreted like mostly used in file names:
 Note that for all systems the '/' character is used for path separator (even
 Windows). This was done because the backslash is difficult to use in a pattern
 and to make the autocommands portable across different systems.
+
+It is possible to use |pattern| items, but they may not work as expected,
+because of the translation done for the above.
 
 							*autocmd-changes*
 Matching with the pattern is done when an event is triggered.  Changing the
@@ -1184,10 +1188,12 @@ name!
 				different from existing {event} names, as this
 				most likely will not do what you intended.
 
-						*:augroup-delete* *E367*
+					*:augroup-delete* *E367* *W19* *E936*
 :aug[roup]! {name}		Delete the autocmd group {name}.  Don't use
 				this if there is still an autocommand using
-				this group!  This is not checked.
+				this group!  You will get a warning if doing
+				it anyway. when the group is the current group
+				you will get error E936.
 
 To enter autocommands for a specific group, use this method:
 1. Select the group with ":augroup {name}".

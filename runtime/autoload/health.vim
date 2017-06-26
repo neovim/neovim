@@ -9,17 +9,9 @@ function! s:enhance_syntax() abort
         \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthWarning WarningMsg
 
-  syntax keyword healthInfo INFO
-        \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight link healthInfo ModeMsg
-
   syntax keyword healthSuccess SUCCESS
         \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight link healthSuccess ModeMsg
-
-  syntax keyword healthSuggestion SUGGESTIONS
-        \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight link healthSuggestion String
+  highlight healthSuccess guibg=#5fff00 guifg=#080808 ctermbg=82 ctermfg=232
 
   syntax match healthHelp "|.\{-}|" contains=healthBar
         \ containedin=markdownCodeBlock,mkdListItemLine
@@ -41,7 +33,7 @@ function! health#check(plugin_names) abort
   setlocal wrap breakindent
   setlocal filetype=markdown
   setlocal conceallevel=2 concealcursor=nc
-  setlocal keywordprg=:help
+  setlocal keywordprg=:help iskeyword=@,48-57,_,192-255,-,#
   call s:enhance_syntax()
 
   if empty(healthchecks)
@@ -74,6 +66,7 @@ function! health#check(plugin_names) abort
   " needed for plasticboy/vim-markdown, because it uses fdm=expr
   normal! zR
   setlocal nomodified
+  setlocal bufhidden=hide
   redraw|echo ''
 endfunction
 
@@ -96,7 +89,7 @@ endfunction
 
 " Changes ':h clipboard' to ':help |clipboard|'.
 function! s:help_to_link(s) abort
-  return substitute(a:s, '\v[''"]?:h%[elp] ([^''"]+)[''"]?', '":help |\1|"', 'g')
+  return substitute(a:s, '\v:h%[elp] ([^|][^"\r\n]+)', ':help |\1|', 'g')
 endfunction
 
 " Format a message for a specific report item

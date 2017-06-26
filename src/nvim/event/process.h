@@ -21,7 +21,7 @@ struct process {
   int pid, status, refcount;
   // set to the hrtime of when process_stop was called for the process.
   uint64_t stopped_time;
-  char *cwd;
+  const char *cwd;
   char **argv;
   Stream *in, *out, *err;
   process_exit_cb cb;

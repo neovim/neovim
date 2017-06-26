@@ -1,10 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear = helpers.clear
+
 local eq = helpers.eq
-local eval = helpers.eval
-local execute = helpers.execute
-local exc_exec = helpers.exc_exec
 local neq = helpers.neq
+local eval = helpers.eval
+local clear = helpers.clear
+local source = helpers.source
+local exc_exec = helpers.exc_exec
 
 describe('sort', function()
   before_each(clear)
@@ -31,14 +32,17 @@ describe('sort', function()
   end)
 
   it('ability to call sort() from a compare function', function()
-    execute('func Compare1(a, b) abort')
-    execute([[call sort(range(3), 'Compare2')]])
-    execute('return a:a - a:b')
-    execute('endfunc')
+    source([[
+      function Compare1(a, b) abort
+        call sort(range(3), 'Compare2')
+        return a:a - a:b
+      endfunc
 
-    execute('func Compare2(a, b) abort')
-    execute('return a:a - a:b')
-    execute('endfunc')
+      function Compare2(a, b) abort
+        return a:a - a:b
+      endfunc
+    ]])
+
     eq({1, 3, 5}, eval("sort([3, 1, 5], 'Compare1')"))
   end)
 

@@ -1,33 +1,37 @@
 -- Some tests for buffer-local autocommands
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, eq = helpers.clear, helpers.execute, helpers.eq
-local curbuf_contents = helpers.curbuf_contents
+
+local clear = helpers.clear
+local expect = helpers.expect
+local command = helpers.command
+
+local fname = 'Xtest-functional-legacy-054'
 
 describe('BufLeave <buffer>', function()
   setup(clear)
 
   it('is working', function()
-    execute('w! xx')
-    execute('au BufLeave <buffer> norm Ibuffer-local autocommand')
-    execute('au BufLeave <buffer> update')
-    
+    command('write! ' .. fname)
+    command('autocmd BufLeave <buffer> normal! Ibuffer-local autocommand')
+    command('autocmd BufLeave <buffer> update')
+
     -- Here, autocommand for xx shall append a line
-    -- But autocommand shall not apply to buffer named <buffer> 
-    execute('e somefile')
+    -- But autocommand shall not apply to buffer named <buffer>
+    command('edit somefile')
 
     -- Here, autocommand shall be auto-deleted
-    execute('bwipe xx')
-    
-    -- Nothing shall be written
-    execute('e xx')
-    execute('e somefile')
-    execute('e xx')
+    command('bwipeout ' .. fname)
 
-    eq('buffer-local autocommand', curbuf_contents())
+    -- Nothing shall be written
+    command('edit ' .. fname)
+    command('edit somefile')
+    command('edit ' .. fname)
+
+    expect('buffer-local autocommand')
   end)
 
   teardown(function()
-    os.remove('xx')
+    os.remove(fname)
   end)
 end)

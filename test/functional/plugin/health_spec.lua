@@ -1,6 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local plugin_helpers = require('test.functional.plugin.helpers')
 
+local command = helpers.command
+
 describe('health.vim', function()
   before_each(function()
     plugin_helpers.reset()
@@ -8,7 +10,7 @@ describe('health.vim', function()
     --    health#broken#check()
     --    health#success1#check()
     --    health#success2#check()
-    helpers.execute("set runtimepath+=test/functional/fixtures")
+    command("set runtimepath+=test/functional/fixtures")
   end)
 
   it("reports", function()
@@ -43,7 +45,7 @@ describe('health.vim', function()
 
   describe(":CheckHealth", function()
     it("concatenates multiple reports", function()
-      helpers.execute("CheckHealth success1 success2")
+      command("CheckHealth success1 success2")
       helpers.expect([[
 
         health#success1#check
@@ -62,7 +64,7 @@ describe('health.vim', function()
     end)
 
     it("gracefully handles broken healthcheck", function()
-      helpers.execute("CheckHealth broken")
+      command("CheckHealth broken")
       helpers.expect([[
 
         health#broken#check
@@ -74,7 +76,7 @@ describe('health.vim', function()
     end)
 
     it("gracefully handles invalid healthcheck", function()
-      helpers.execute("CheckHealth non_existent_healthcheck")
+      command("CheckHealth non_existent_healthcheck")
       helpers.expect([[
 
         health#non_existent_healthcheck#check

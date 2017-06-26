@@ -6,8 +6,10 @@
 #include "nvim/macros.h"
 #include "nvim/ascii.h"
 #include "nvim/types.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/os/time.h"
+#include "nvim/normal.h" // for MotionType and oparg_T
+#include "nvim/ex_cmds_defs.h" // for exarg_T
 
 typedef int (*Indenter)(void);
 

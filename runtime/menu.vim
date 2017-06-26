@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 May 22
+" Last Change:	2017 Feb 09
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
 " in all modes and avoid side effects from mappings defined by the user.
@@ -188,7 +188,7 @@ an 20.435	 &Edit.Startup\ &Settings		:call <SID>EditVimrc()<CR>
 fun! s:EditVimrc()
   if $MYVIMRC != ''
     let fname = $MYVIMRC
-  elseif has("win32") || has("dos32") || has("dos16")
+  elseif has("win32")
     if $HOME != ''
       let fname = $HOME . "/_vimrc"
     else
@@ -475,7 +475,7 @@ if has("folding")
   an 40.340.130 &Tools.&Folding.C&lose\ more\ folds<Tab>zm		zm
   an 40.340.140 &Tools.&Folding.&Close\ all\ folds<Tab>zM		zM
   an 40.340.150 &Tools.&Folding.O&pen\ more\ folds<Tab>zr		zr
-  an 40.340.160 &Tools.&Folding.&Open\ all\ folds<Tab>zR		zR
+  an 40.340.160 &Tools.&Folding.&Open\ All\ Folds<Tab>zR		zR
   " fold method
   an 40.340.200 &Tools.&Folding.-SEP1-			<Nop>
   an 40.340.210 &Tools.&Folding.Fold\ Met&hod.M&anual	:set fdm=manual<CR>
@@ -552,7 +552,7 @@ endfun
 func! s:XxdFind()
   if !exists("g:xxdprogram")
     " On the PC xxd may not be in the path but in the install directory
-    if (has("win32") || has("dos32")) && !executable("xxd")
+    if has("win32") && !executable("xxd")
       let g:xxdprogram = $VIMRUNTIME . (&shellslash ? '/' : '\') . "xxd.exe"
     else
       let g:xxdprogram = "xxd"

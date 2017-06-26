@@ -41,9 +41,7 @@
 // $ gcc -E -dM - </dev/null
 // $ echo | clang -dM -E -
 
-#ifndef NVIM_FUNC_ATTR_H
-#define NVIM_FUNC_ATTR_H
-#undef NVIM_FUNC_ATTR_H
+#include "nvim/macros.h"
 
 #ifdef FUNC_ATTR_MALLOC
 # undef FUNC_ATTR_MALLOC
@@ -93,11 +91,18 @@
 # undef FUNC_ATTR_NONNULL_RET
 #endif
 
+#ifdef FUNC_ATTR_NORETURN
+# undef FUNC_ATTR_NORETURN
+#endif
+
+#ifdef FUNC_ATTR_NO_SANITIZE_UNDEFINED
+# undef FUNC_ATTR_NO_SANITIZE_UNDEFINED
+#endif
+
 #ifndef DID_REAL_ATTR
 # define DID_REAL_ATTR
 # ifdef __GNUC__
-// place defines for all gnulikes here, for now that's gcc, clang and
-// intel.
+// For all gnulikes: gcc, clang, intel.
 
 // place these after the argument list of the function declaration
 // (not definition), like so:
@@ -111,27 +116,27 @@
 #  define REAL_FATTR_UNUSED __attribute__((unused))
 #  define REAL_FATTR_NONNULL_ALL __attribute__((nonnull))
 #  define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
+#  define REAL_FATTR_NORETURN __attribute__((noreturn))
 
-#  ifdef __clang__
-// clang only
-#  elif defined(__INTEL_COMPILER)
-// intel only
-#  else
-#   define GCC_VERSION \
-            (__GNUC__ * 10000 + \
-             __GNUC_MINOR__ * 100 + \
-             __GNUC_PATCHLEVEL__)
-// gcc only
+#  if NVIM_HAS_ATTRIBUTE(returns_nonnull)
+#   define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))
+#  endif
+
+#  if NVIM_HAS_ATTRIBUTE(alloc_size)
 #   define REAL_FATTR_ALLOC_SIZE(x) __attribute__((alloc_size(x)))
 #   define REAL_FATTR_ALLOC_SIZE_PROD(x, y) __attribute__((alloc_size(x, y)))
-#   if GCC_VERSION >= 40900
-#    define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))
-#   endif
+#  endif
+
+#  if NVIM_HAS_ATTRIBUTE(no_sanitize_undefined)
+#   define REAL_FATTR_NO_SANITIZE_UNDEFINED \
+      __attribute__((no_sanitize_undefined))
+#  elif NVIM_HAS_ATTRIBUTE(no_sanitize)
+#   define REAL_FATTR_NO_SANITIZE_UNDEFINED \
+      __attribute__((no_sanitize("undefined")))
 #  endif
 # endif
 
-// define function attributes that haven't been defined for this specific
-// compiler.
+// Define attributes that are not defined for this compiler.
 
 # ifndef REAL_FATTR_MALLOC
 #  define REAL_FATTR_MALLOC
@@ -180,12 +185,22 @@
 # ifndef REAL_FATTR_NONNULL_RET
 #  define REAL_FATTR_NONNULL_RET
 # endif
+
+# ifndef REAL_FATTR_NORETURN
+#  define REAL_FATTR_NORETURN
+# endif
+
+# ifndef REAL_FATTR_NO_SANITIZE_UNDEFINED
+#  define REAL_FATTR_NO_SANITIZE_UNDEFINED
+# endif
 #endif
 
 #ifdef DEFINE_FUNC_ATTRIBUTES
 # define FUNC_API_ASYNC
 # define FUNC_API_NOEXPORT
-# define FUNC_API_NOEVAL
+# define FUNC_API_REMOTE_ONLY
+# define FUNC_API_SINCE(X)
+# define FUNC_API_DEPRECATED_SINCE(X)
 # define FUNC_ATTR_MALLOC REAL_FATTR_MALLOC
 # define FUNC_ATTR_ALLOC_SIZE(x) REAL_FATTR_ALLOC_SIZE(x)
 # define FUNC_ATTR_ALLOC_SIZE_PROD(x, y) REAL_FATTR_ALLOC_SIZE_PROD(x, y)
@@ -198,6 +213,8 @@
 # define FUNC_ATTR_NONNULL_ALL REAL_FATTR_NONNULL_ALL
 # define FUNC_ATTR_NONNULL_ARG(...) REAL_FATTR_NONNULL_ARG(__VA_ARGS__)
 # define FUNC_ATTR_NONNULL_RET REAL_FATTR_NONNULL_RET
+# define FUNC_ATTR_NORETURN REAL_FATTR_NORETURN
+# define FUNC_ATTR_NO_SANITIZE_UNDEFINED REAL_FATTR_NO_SANITIZE_UNDEFINED
 #elif !defined(DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
 # define FUNC_ATTR_MALLOC
 # define FUNC_ATTR_ALLOC_SIZE(x)
@@ -211,5 +228,6 @@
 # define FUNC_ATTR_NONNULL_ALL
 # define FUNC_ATTR_NONNULL_ARG(...)
 # define FUNC_ATTR_NONNULL_RET
+# define FUNC_ATTR_NORETURN
+# define FUNC_ATTR_NO_SANITIZE_UNDEFINED
 #endif
-#endif  // NVIM_FUNC_ATTR_H

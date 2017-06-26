@@ -1,9 +1,12 @@
-local helpers = require 'test.unit.helpers'
+local helpers = require('test.unit.helpers')(after_each)
+local itp = helpers.gen_itp(it)
 
-local prof = helpers.cimport './src/nvim/profile.h'
+local cimport = helpers.cimport
 local ffi = helpers.ffi
 local eq = helpers.eq
 local neq = helpers.neq
+
+local prof = cimport('./src/nvim/profile.h')
 
 local function split(inputstr, sep)
   if sep == nil then
@@ -78,7 +81,7 @@ describe('profiling related functions', function()
   end
 
   describe('profile_equal', function()
-    it('times are equal to themselves', function()
+    itp('times are equal to themselves', function()
       local start = profile_start()
       assert.is_true(profile_equal(start, start))
 
@@ -86,7 +89,7 @@ describe('profiling related functions', function()
       assert.is_true(profile_equal(e, e))
     end)
 
-    it('times are unequal to others', function()
+    itp('times are unequal to others', function()
       assert.is_false(profile_equal(profile_start(), profile_start()))
     end)
   end)
@@ -95,24 +98,24 @@ describe('profiling related functions', function()
   -- the profiling package. Those functions in turn will probably be tested
   -- using profile_cmp... circular reasoning.
   describe('profile_cmp', function()
-    it('can compare subsequent starts', function()
+    itp('can compare subsequent starts', function()
       local s1, s2 = profile_start(), profile_start()
       assert.is_true(profile_cmp(s1, s2) > 0)
       assert.is_true(profile_cmp(s2, s1) < 0)
     end)
 
-    it('can compare the zero element', function()
+    itp('can compare the zero element', function()
       assert.is_true(profile_cmp(profile_zero(), profile_zero()) == 0)
     end)
 
-    it('correctly orders divisions', function()
+    itp('correctly orders divisions', function()
       local start = profile_start()
       assert.is_true(profile_cmp(start, profile_divide(start, 10)) <= 0)
     end)
   end)
 
   describe('profile_divide', function()
-    it('actually performs division', function()
+    itp('actually performs division', function()
       -- note: the routine actually performs floating-point division to get
       -- better rounding behaviour, we have to take that into account when
       -- checking. (check range, not exact number).
@@ -134,14 +137,14 @@ describe('profiling related functions', function()
   end)
 
   describe('profile_zero', function()
-    it('returns the same value on each call', function()
+    itp('returns the same value on each call', function()
       eq(0, profile_zero())
       assert.is_true(profile_equal(profile_zero(), profile_zero()))
     end)
   end)
 
   describe('profile_start', function()
-    it('increases', function()
+    itp('increases', function()
       local last = profile_start()
       for _ = 1, 100 do
         local curr = profile_start()
@@ -152,11 +155,11 @@ describe('profiling related functions', function()
   end)
 
   describe('profile_end', function()
-    it('the elapsed time cannot be zero', function()
+    itp('the elapsed time cannot be zero', function()
       neq(profile_zero(), profile_end(profile_start()))
     end)
 
-    it('outer elapsed >= inner elapsed', function()
+    itp('outer elapsed >= inner elapsed', function()
       for _ = 1, 100 do
         local start_outer = profile_start()
         local start_inner = profile_start()
@@ -169,11 +172,11 @@ describe('profiling related functions', function()
   end)
 
   describe('profile_setlimit', function()
-    it('sets no limit when 0 is passed', function()
+    itp('sets no limit when 0 is passed', function()
       eq(true, profile_equal(profile_setlimit(0), profile_zero()))
     end)
 
-    it('sets a limit in the future otherwise', function()
+    itp('sets a limit in the future otherwise', function()
       local future = profile_setlimit(1000)
       local now = profile_start()
       assert.is_true(profile_cmp(future, now) < 0)
@@ -181,12 +184,12 @@ describe('profiling related functions', function()
   end)
 
   describe('profile_passed_limit', function()
-    it('start is in the past', function()
+    itp('start is in the past', function()
       local start = profile_start()
       eq(true, profile_passed_limit(start))
     end)
 
-    it('start + start is in the future', function()
+    itp('start + start is in the future', function()
       local start = profile_start()
       local future = profile_add(start, start)
       eq(false, profile_passed_limit(future))
@@ -194,12 +197,12 @@ describe('profiling related functions', function()
   end)
 
   describe('profile_msg', function()
-    it('prints the zero time as 0.00000', function()
+    itp('prints the zero time as 0.00000', function()
       local str = trim(profile_msg(profile_zero()))
       eq(str, "0.000000")
     end)
 
-    it('prints the time passed, in seconds.microsends', function()
+    itp('prints the time passed, in seconds.microsends', function()
       local start = profile_start()
       local endt = profile_end(start)
       local str = trim(profile_msg(endt))
@@ -221,14 +224,14 @@ describe('profiling related functions', function()
   end)
 
   describe('profile_add', function()
-    it('adds profiling times', function()
+    itp('adds profiling times', function()
       local start = profile_start()
       assert.equals(start, profile_add(profile_zero(), start))
     end)
   end)
 
   describe('profile_sub', function()
-    it('subtracts profiling times', function()
+    itp('subtracts profiling times', function()
       -- subtracting zero does nothing
       local start = profile_start()
       assert.equals(start, profile_sub(start, profile_zero()))

@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:	git rebase --interactive
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2010 May 21
+" Last Change:	2016 Aug 29
 
 " Only do this when not done yet for this buffer
 if (exists("b:did_ftplugin"))
@@ -12,10 +12,11 @@ runtime! ftplugin/git.vim
 let b:did_ftplugin = 1
 
 setlocal comments=:# commentstring=#\ %s formatoptions-=t
+setlocal nomodeline
 if !exists("b:undo_ftplugin")
   let b:undo_ftplugin = ""
 endif
-let b:undo_ftplugin = b:undo_ftplugin."|setl com< cms< fo<"
+let b:undo_ftplugin = b:undo_ftplugin."|setl com< cms< fo< ml<"
 
 function! s:choose(word)
   s/^\(\w\+\>\)\=\(\s*\)\ze\x\{4,40\}\>/\=(strlen(submatch(1)) == 1 ? a:word[0] : a:word) . substitute(submatch(2),'^$',' ','')/e

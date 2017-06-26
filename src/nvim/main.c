@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #define EXTERN
 #include <assert.h>
 #include <stdint.h>
@@ -121,7 +124,7 @@ typedef struct {
 
 Loop main_loop;
 
-static char *argv0;
+static char *argv0 = NULL;
 
 // Error messages
 static const char *err_arg_missing = N_("Argument missing after");
@@ -150,10 +153,11 @@ void event_init(void)
   terminal_init();
 }
 
-void event_teardown(void)
+/// @returns false if main_loop could not be closed gracefully
+bool event_teardown(void)
 {
   if (!main_loop.events) {
-    return;
+    return true;
   }
 
   multiqueue_process_events(main_loop.events);
@@ -165,7 +169,7 @@ void event_teardown(void)
   signal_teardown();
   terminal_teardown();
 
-  loop_close(&main_loop, true);
+  return loop_close(&main_loop, true);
 }
 
 /// Performs early initialization.
@@ -176,11 +180,9 @@ void early_init(void)
   log_init();
   fs_init();
   handle_init();
-
   eval_init();          // init global variables
-
-  // Init the table of Normal mode commands.
-  init_normal_cmds();
+  init_path(argv0 ? argv0 : "nvim");
+  init_normal_cmds();   // Init the table of Normal mode commands.
 
 #if defined(HAVE_LOCALE_H)
   // Setup to use the current locale (for ctype() and many other things).
@@ -218,7 +220,7 @@ int nvim_main(int argc, char **argv)
 int main(int argc, char **argv)
 #endif
 {
-  argv0 = (char *)path_tail((char_u *)argv[0]);
+  argv0 = argv[0];
 
   char_u *fname = NULL;   // file name from command line
   mparm_T params;         // various parameters passed between
@@ -237,10 +239,6 @@ int main(int argc, char **argv)
 
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
-
-  // Get the name with which Nvim was invoked, with and without path.
-  set_vim_var_string(VV_PROGPATH, argv[0], -1);
-  set_vim_var_string(VV_PROGNAME, (char *) path_tail((char_u *) argv[0]), -1);
 
   event_init();
   /*
@@ -285,7 +283,7 @@ int main(int argc, char **argv)
   cmdline_row = (int)(Rows - p_ch);
   msg_row = cmdline_row;
   screenalloc(false);           /* allocate screen buffers */
-  set_init_2();
+  set_init_2(params.headless);
   TIME_MSG("inits 2");
 
   msg_scroll = TRUE;
@@ -327,6 +325,12 @@ int main(int argc, char **argv)
                  "|endif");
   do_cmdline_cmd("augroup END");
 #undef PROTO
+
+  // Reset 'loadplugins' for "-u NONE" before "--cmd" arguments.
+  // Allows for setting 'loadplugins' there.
+  if (params.use_vimrc != NULL && strcmp(params.use_vimrc, "NONE") == 0) {
+    p_lpl = false;
+  }
 
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
@@ -387,9 +391,10 @@ int main(int argc, char **argv)
     shada_read_everything(NULL, false, true);
     TIME_MSG("reading ShaDa");
   }
-  /* It's better to make v:oldfiles an empty list than NULL. */
-  if (get_vim_var_list(VV_OLDFILES) == NULL)
-    set_vim_var_list(VV_OLDFILES, list_alloc());
+  // It's better to make v:oldfiles an empty list than NULL.
+  if (get_vim_var_list(VV_OLDFILES) == NULL) {
+    set_vim_var_list(VV_OLDFILES, tv_list_alloc());
+  }
 
   /*
    * "-q errorfile": Load the error file now.
@@ -515,6 +520,12 @@ int main(int argc, char **argv)
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
 
+  // Adjust default register name for "unnamed" in 'clipboard'. Can only be
+  // done after the clipboard is available and all initial commands that may
+  // modify the 'clipboard' setting have run; i.e. just before entering the
+  // main loop.
+  set_reg_var(get_default_register_name());
+
   /* When a startup script or session file setup for diff'ing and
    * scrollbind, sync the scrollbind now. */
   if (curwin->w_p_diff && curwin->w_p_scb) {
@@ -578,9 +589,9 @@ void getout(int exitval)
         buf_T *buf = wp->w_buffer;
         if (buf->b_changedtick != -1) {
           apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname,
-              buf->b_fname, FALSE, buf);
-          buf->b_changedtick = -1;            /* note that we did it already */
-          /* start all over, autocommands may mess up the lists */
+                         buf->b_fname, false, buf);
+          buf_set_changedtick(buf, -1);  // note that we did it already
+          // start all over, autocommands may mess up the lists
           next_tp = first_tabpage;
           break;
         }
@@ -590,10 +601,13 @@ void getout(int exitval)
     /* Trigger BufUnload for buffers that are loaded */
     FOR_ALL_BUFFERS(buf) {
       if (buf->b_ml.ml_mfp != NULL) {
-        apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname,
-            FALSE, buf);
-        if (!buf_valid(buf))            /* autocmd may delete the buffer */
+        bufref_T bufref;
+        set_bufref(&bufref, buf);
+        apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, false, buf);
+        if (!bufref_valid(&bufref)) {
+          // Autocmd deleted the buffer.
           break;
+        }
       }
     }
     apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, FALSE, curbuf);
@@ -623,8 +637,9 @@ void getout(int exitval)
   iconv_end();
 #endif
   cs_end();
-  if (garbage_collect_at_exit)
-    garbage_collect();
+  if (garbage_collect_at_exit) {
+    garbage_collect(false);
+  }
 
   mch_exit(exitval);
 }
@@ -642,8 +657,9 @@ void getout(int exitval)
 ///
 /// @return argument's numeric value otherwise
 static int get_number_arg(const char *p, int *idx, int def)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (ascii_isdigit(p[*idx])) {
+  if (ascii_isdigit(p[*idx])) {  // -V522
     def = atoi(&(p[*idx]));
     while (ascii_isdigit(p[*idx])) {
       *idx = *idx + 1;
@@ -788,17 +804,18 @@ static void command_line_scan(mparm_T *parmp)
             argv_idx = -1;                /* skip to next argument */
           break;
 
-        case 'A':                 /* "-A" start in Arabic mode */
-          set_option_value((char_u *)"arabic", 1L, NULL, 0);
+        case 'A': {  // "-A" start in Arabic mode.
+          set_option_value("arabic", 1L, NULL, 0);
           break;
-
-        case 'b':                 /* "-b" binary mode */
-          /* Needs to be effective before expanding file names, because
-           * for Win32 this makes us edit a shortcut file itself,
-           * instead of the file it links to. */
+        }
+        case 'b': {  // "-b" binary mode.
+          // Needs to be effective before expanding file names, because
+          // for Win32 this makes us edit a shortcut file itself,
+          // instead of the file it links to.
           set_options_bin(curbuf->b_p_bin, 1, 0);
-          curbuf->b_p_bin = 1;                /* binary file I/O */
+          curbuf->b_p_bin = 1;  // Binary file I/O.
           break;
+        }
 
         case 'e':                 /* "-e" Ex mode */
           exmode_active = EXMODE_NORMAL;
@@ -815,24 +832,27 @@ static void command_line_scan(mparm_T *parmp)
           main_start_gui();
           break;
 
-        case 'F':                 /* "-F" start in Farsi mode: rl + fkmap set */
-          p_fkmap = TRUE;
-          set_option_value((char_u *)"rl", 1L, NULL, 0);
+        case 'F': {  // "-F" start in Farsi mode: rl + fkmap set.
+          p_fkmap = true;
+          set_option_value("rl", 1L, NULL, 0);
           break;
+        }
 
         case 'h':                 /* "-h" give help message */
           usage();
           mch_exit(0);
 
-        case 'H':                 /* "-H" start in Hebrew mode: rl + hkmap set */
-          p_hkmap = TRUE;
-          set_option_value((char_u *)"rl", 1L, NULL, 0);
+        case 'H': {  // "-H" start in Hebrew mode: rl + hkmap set.
+          p_hkmap = true;
+          set_option_value("rl", 1L, NULL, 0);
           break;
+        }
 
-        case 'l':                 /* "-l" lisp mode, 'lisp' and 'showmatch' on */
-          set_option_value((char_u *)"lisp", 1L, NULL, 0);
-          p_sm = TRUE;
+        case 'l': {  // "-l" lisp mode, 'lisp' and 'showmatch' on.
+          set_option_value("lisp", 1L, NULL, 0);
+          p_sm = true;
           break;
+        }
 
         case 'M':                 /* "-M"  no changes or writing of files */
           reset_modifiable();
@@ -931,8 +951,7 @@ static void command_line_scan(mparm_T *parmp)
           /* default is 10: a little bit verbose */
           p_verbose = get_number_arg(argv[0], &argv_idx, 10);
           if (argv[0][argv_idx] != NUL) {
-            set_option_value((char_u *)"verbosefile", 0L,
-                (char_u *)argv[0] + argv_idx, 0);
+            set_option_value("verbosefile", 0L, argv[0] + argv_idx, 0);
             argv_idx = (int)STRLEN(argv[0]);
           }
           break;
@@ -941,7 +960,7 @@ static void command_line_scan(mparm_T *parmp)
           /* "-w {scriptout}"	write to script */
           if (ascii_isdigit(((char_u *)argv[0])[argv_idx])) {
             n = get_number_arg(argv[0], &argv_idx, 10);
-            set_option_value((char_u *)"window", n, NULL, 0);
+            set_option_value("window", n, NULL, 0);
             break;
           }
           want_argument = TRUE;
@@ -1073,7 +1092,7 @@ scripterror:
             if (ascii_isdigit(*((char_u *)argv[0]))) {
               argv_idx = 0;
               n = get_number_arg(argv[0], &argv_idx, 10);
-              set_option_value((char_u *)"window", n, NULL, 0);
+              set_option_value("window", n, NULL, 0);
               argv_idx = -1;
               break;
             }
@@ -1194,9 +1213,29 @@ static void check_and_set_isatty(mparm_T *paramp)
   paramp->err_isatty = os_isatty(fileno(stderr));
   TIME_MSG("window checked");
 }
-/*
- * Get filename from command line, given that there is one.
- */
+
+// Sets v:progname and v:progpath. Also modifies $PATH on Windows.
+static void init_path(const char *exename)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char exepath[MAXPATHL] = { 0 };
+  size_t exepathlen = MAXPATHL;
+  // Make v:progpath absolute.
+  if (os_exepath(exepath, &exepathlen) != 0) {
+    // Fall back to argv[0]. Missing procfs? #6734
+    path_guess_exepath(exename, exepath, sizeof(exepath));
+  }
+  set_vim_var_string(VV_PROGPATH, exepath, -1);
+  set_vim_var_string(VV_PROGNAME, (char *)path_tail((char_u *)exename), -1);
+
+#ifdef WIN32
+  // Append the process start directory to $PATH, so that ":!foo" finds tools
+  // shipped with Windows package. This also mimics SearchPath().
+  os_setenv_append_path(exepath);
+#endif
+}
+
+/// Get filename from command line, if any.
 static char_u *get_fname(mparm_T *parmp, char_u *cwd)
 {
 #if !defined(UNIX)
@@ -1242,11 +1281,14 @@ static void set_window_layout(mparm_T *paramp)
 static void load_plugins(void)
 {
   if (p_lpl) {
-    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL);  // NOLINT
+    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL | DIP_NOAFTER);  // NOLINT
     TIME_MSG("loading plugins");
 
     ex_packloadall(NULL);
     TIME_MSG("loading packages");
+
+    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL | DIP_AFTER);
+    TIME_MSG("loading after plugins");
   }
 }
 
@@ -1261,8 +1303,8 @@ static void handle_quickfix(mparm_T *paramp)
       set_string_option_direct((char_u *)"ef", -1,
           paramp->use_ef, OPT_FREE, SID_CARG);
     vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
-    if (qf_init(NULL, p_ef, p_efm, TRUE, IObuff) < 0) {
-      ui_putc('\n');
+    if (qf_init(NULL, p_ef, p_efm, true, IObuff) < 0) {
+      ui_linefeed();
       mch_exit(3);
     }
     TIME_MSG("reading errorfile");
@@ -1642,7 +1684,7 @@ static bool do_user_initialization(void)
     do {
       const char *dir;
       size_t dir_len;
-      iter = vim_colon_env_iter(config_dirs, iter, &dir, &dir_len);
+      iter = vim_env_iter(':', config_dirs, iter, &dir, &dir_len);
       if (dir == NULL || dir_len == 0) {
         break;
       }
@@ -1682,8 +1724,6 @@ static void source_startup_scripts(const mparm_T *const parmp)
   if (parmp->use_vimrc != NULL) {
     if (strcmp(parmp->use_vimrc, "NONE") == 0
         || strcmp(parmp->use_vimrc, "NORC") == 0) {
-      if (parmp->use_vimrc[2] == 'N')
-        p_lpl = false;  // don't load plugins either
     } else {
       if (do_source((char_u *)parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
@@ -1793,9 +1833,11 @@ static bool file_owned(const char *fname)
 /// @param str     string to append to the primary error message, or NULL
 static void mainerr(const char *errstr, const char *str)
 {
+  char *prgname = (char *)path_tail((char_u *)argv0);
+
   signal_stop();              // kill us with CTRL-C here, if you like
 
-  mch_errmsg(argv0);
+  mch_errmsg(prgname);
   mch_errmsg(": ");
   mch_errmsg(_(errstr));
   if (str != NULL) {
@@ -1804,7 +1846,7 @@ static void mainerr(const char *errstr, const char *str)
     mch_errmsg("\"");
   }
   mch_errmsg(_("\nMore info with \""));
-  mch_errmsg(argv0);
+  mch_errmsg(prgname);
   mch_errmsg(" -h\"\n");
 
   mch_exit(1);

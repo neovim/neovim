@@ -1,9 +1,8 @@
 #ifndef NVIM_SYNTAX_DEFS_H
 #define NVIM_SYNTAX_DEFS_H
 
+#include "nvim/highlight_defs.h"
 #include "nvim/regexp_defs.h"
-
-typedef int32_t RgbValue;
 
 # define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
 # define SST_MAX_ENTRIES 1000   /* maximal size for state stack array */

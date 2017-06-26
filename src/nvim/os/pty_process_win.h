@@ -12,8 +12,9 @@ typedef struct pty_process {
 #define pty_process_spawn(job) libuv_process_spawn((LibuvProcess *)job)
 #define pty_process_close(job) libuv_process_close((LibuvProcess *)job)
 #define pty_process_close_master(job) libuv_process_close((LibuvProcess *)job)
-#define pty_process_resize(job, width, height)
-#define pty_process_teardown(loop)
+#define pty_process_resize(job, width, height) ( \
+    (void)job, (void)width, (void)height, 0)
+#define pty_process_teardown(loop) ((void)loop, 0)
 
 static inline PtyProcess pty_process_init(Loop *loop, void *data)
 {

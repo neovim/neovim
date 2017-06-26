@@ -16,7 +16,7 @@ if exists("*CdlGetIndent")
     "finish
 endif
 
-" find out if an "...=..." expresion its an asignment (or a conditional)
+" find out if an "...=..." expresion is an assignment (or a conditional)
 " it scans 'line' first, and then the previos lines
 fun! CdlAsignment(lnum, line)
   let f = -1

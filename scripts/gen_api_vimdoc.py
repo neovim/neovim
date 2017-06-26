@@ -38,12 +38,9 @@ import subprocess
 
 from xml.dom import minidom
 
-# Text at the top of the doc file.
-preamble = '''
-Note: This documentation is generated from Neovim's API source code.
-'''
-
-doc_filename = 'api-funcs.txt'
+doc_filename = 'api.txt'
+# String used to find the start of the generated part of the doc.
+section_start_token = '*api-global*'
 
 # Section name overrides.
 section_name = {
@@ -62,6 +59,11 @@ section_order = (
 param_exclude = (
     'channel_id',
 )
+
+# Annotations are displayed as line items after API function descriptions.
+annotation_map = {
+    'FUNC_API_ASYNC': '{async}',
+}
 
 text_width = 78
 script_path = os.path.abspath(__file__)
@@ -278,6 +280,12 @@ def parse_source_xml(filename):
             parts = return_type.strip('_').split('_')
             return_type = '%s(%s)' % (parts[0], ', '.join(parts[1:]))
 
+        annotations = get_text(get_child(member, 'argsstring'))
+        if annotations and ')' in annotations:
+            annotations = annotations.rsplit(')', 1)[-1].strip()
+        annotations = filter(None, map(lambda x: annotation_map.get(x),
+                                       annotations.split()))
+
         name = get_text(get_child(member, 'name'))
 
         vimtag = '*%s()*' % name
@@ -336,6 +344,16 @@ def parse_source_xml(filename):
         if not doc:
             doc = 'TODO: Documentation'
 
+        annotations = '\n'.join(annotations)
+        if annotations:
+            annotations = ('\n\nAttributes:~\n' +
+                           textwrap.indent(annotations, '    '))
+            i = doc.rfind('Parameters:~')
+            if i == -1:
+                doc += annotations
+            else:
+                doc = doc[:i] + annotations + '\n\n' + doc[i:]
+
         if 'INCLUDE_C_DECL' in os.environ:
             doc += '\n\nC Declaration:~\n>\n'
             doc += c_decl
@@ -355,6 +373,19 @@ def parse_source_xml(filename):
     return '\n\n'.join(functions), '\n\n'.join(deprecated_functions)
 
 
+def delete_lines_below(filename, tokenstr):
+    """Deletes all lines below the line containing `tokenstr`, the line itself,
+    and one line above it.
+    """
+    lines = open(filename).readlines()
+    i = 0
+    for i, line in enumerate(lines, 1):
+        if tokenstr in line:
+            break
+    i = max(0, i - 2)
+    with open(filename, 'wt') as fp:
+        fp.writelines(lines[0:i])
+
 def gen_docs(config):
     """Generate documentation.
 
@@ -366,7 +397,6 @@ def gen_docs(config):
     if p.returncode:
         sys.exit(p.returncode)
 
-    title_length = 0
     sections = {}
     sep = '=' * text_width
 
@@ -404,26 +434,13 @@ def gen_docs(config):
                     name = section_name.get(filename, name)
                     title = '%s Functions' % name
                     helptag = '*api-%s*' % name.lower()
-                    title_length = max(title_length, len(title))
                     sections[filename] = (title, helptag, doc)
 
     if not sections:
         return
 
-    title_left = '*%s*' % doc_filename
-    title_center = 'Neovim API Function Reference'
-    title_right = '{Nvim}'
-    margin = max(len(title_left), len(title_right))
-    head = (title_left.ljust(margin) +
-            title_center.center(text_width - margin * 2) +
-            title_right.rjust(margin)) + '\n'
-
-    head += '\n%s\n\n' % doc_wrap(preamble, width=text_width)
-    head += 'Contents:\n\n'
-
     docs = ''
 
-    title_length += len(str(len(section_order))) + 2
     i = 0
     for filename in section_order:
         if filename not in sections:
@@ -432,9 +449,6 @@ def gen_docs(config):
 
         i += 1
         docs += sep
-        title = '%d. %s' % (i, title)
-        head += (title.ljust(title_length) + '  ' +
-                 helptag.replace('*', '|') + '\n')
         docs += '\n%s%s' % (title, helptag.rjust(text_width - len(title)))
         docs += section_doc
         docs += '\n\n\n'
@@ -444,21 +458,17 @@ def gen_docs(config):
         for title, helptag, section_doc in sections.values():
             i += 1
             docs += sep
-            title = '%d. %s' % (i, title)
-            head += (title.ljust(title_length) + '  ' +
-                     helptag.replace('*', '|') + '\n')
             docs += '\n%s%s' % (title, helptag.rjust(text_width - len(title)))
             docs += section_doc
             docs += '\n\n\n'
 
-    docs = '%s\n%s' % (head, docs)
     docs = docs.rstrip() + '\n\n'
     docs += ' vim:tw=78:ts=8:ft=help:norl:'
 
     doc_file = os.path.join(base_dir, 'runtime/doc', doc_filename)
-    with open(doc_file, 'wb') as fp:
+    delete_lines_below(doc_file, section_start_token)
+    with open(doc_file, 'ab') as fp:
         fp.write(docs.encode('utf8'))
-
     shutil.rmtree(out_dir)
 
 

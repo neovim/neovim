@@ -2,9 +2,10 @@
 -- as a simple way to send keys and assert screen state.
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
-local feed = thelpers.feed_data
-local execute = helpers.execute
+local feed_data = thelpers.feed_data
+local feed_command = helpers.feed_command
 local nvim_dir = helpers.nvim_dir
+local retry = helpers.retry
 
 if helpers.pending_win32(pending) then return end
 
@@ -13,7 +14,8 @@ describe('tui', function()
 
   before_each(function()
     helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
+    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
     -- right now pasting can be really slow in the TUI, especially in ASAN.
     -- this will be fixed later but for now we require a high timeout.
     screen.timeout = 60000
@@ -33,7 +35,7 @@ describe('tui', function()
   end)
 
   it('accepts basic utf-8 input', function()
-    feed('iabc\ntest1\ntest2')
+    feed_data('iabc\ntest1\ntest2')
     screen:expect([[
       abc                                               |
       test1                                             |
@@ -43,7 +45,7 @@ describe('tui', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed('\027')
+    feed_data('\027')
     screen:expect([[
       abc                                               |
       test1                                             |
@@ -58,8 +60,8 @@ describe('tui', function()
   it('interprets leading <Esc> byte as ALT modifier in normal-mode', function()
     local keys = 'dfghjkl'
     for c in keys:gmatch('.') do
-      execute('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
-      feed('\027'..c)
+      feed_command('nnoremap <a-'..c..'> ialt-'..c..'<cr><esc>')
+      feed_data('\027'..c)
     end
     screen:expect([[
       alt-j                                             |
@@ -70,7 +72,7 @@ describe('tui', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed('gg')
+    feed_data('gg')
     screen:expect([[
       {1:a}lt-d                                             |
       alt-f                                             |
@@ -89,7 +91,7 @@ describe('tui', function()
     -- Example: for input ALT+j:
     --    * Vim (Nvim prior to #3982) sets high-bit, inserts "ê".
     --    * Nvim (after #3982) inserts "j".
-    feed('i\027j')
+    feed_data('i\027j')
     screen:expect([[
       j{1: }                                                |
       {4:~                                                 }|
@@ -102,10 +104,10 @@ describe('tui', function()
   end)
 
   it('accepts ascii control sequences', function()
-    feed('i')
-    feed('\022\007') -- ctrl+g
-    feed('\022\022') -- ctrl+v
-    feed('\022\013') -- ctrl+m
+    feed_data('i')
+    feed_data('\022\007') -- ctrl+g
+    feed_data('\022\022') -- ctrl+v
+    feed_data('\022\013') -- ctrl+m
     screen:expect([[
     {9:^G^V^M}{1: }                                           |
     {4:~                                                 }|
@@ -118,7 +120,7 @@ describe('tui', function()
   end)
 
   it('automatically sends <Paste> for bracketed paste sequences', function()
-    feed('i\027[200~')
+    feed_data('i\027[200~')
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -128,7 +130,7 @@ describe('tui', function()
       {3:-- INSERT (paste) --}                              |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed('pasted from terminal')
+    feed_data('pasted from terminal')
     screen:expect([[
       pasted from terminal{1: }                             |
       {4:~                                                 }|
@@ -138,7 +140,7 @@ describe('tui', function()
       {3:-- INSERT (paste) --}                              |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed('\027[201~')
+    feed_data('\027[201~')
     screen:expect([[
       pasted from terminal{1: }                             |
       {4:~                                                 }|
@@ -151,12 +153,12 @@ describe('tui', function()
   end)
 
   it('can handle arbitrarily long bursts of input', function()
-    execute('set ruler')
+    feed_command('set ruler')
     local t = {}
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
     end
-    feed('i\027[200~'..table.concat(t, '\n')..'\027[201~')
+    feed_data('i\027[200~'..table.concat(t, '\n')..'\027[201~')
     screen:expect([[
       item 2997                                         |
       item 2998                                         |
@@ -177,8 +179,9 @@ describe('tui with non-tty file descriptors', function()
   end)
 
   it('can handle pipes as stdout and stderr', function()
-    local screen = thelpers.screen_setup(0, '"'..helpers.nvim_prog..' -u NONE -i NONE --cmd \'set noswapfile\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
-    feed(':w testF\n:q\n')
+    local screen = thelpers.screen_setup(0, '"'..helpers.nvim_prog
+      ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
+    feed_data(':w testF\n:q\n')
     screen:expect([[
       :w testF                                          |
       :q                                                |
@@ -196,13 +199,15 @@ describe('tui focus event handling', function()
 
   before_each(function()
     helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
-    execute('autocmd FocusGained * echo "gained"')
-    execute('autocmd FocusLost * echo "lost"')
+    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
+    feed_data(":autocmd FocusGained * echo 'gained'\n")
+    feed_data(":autocmd FocusLost * echo 'lost'\n")
+    feed_data("\034\016")  -- CTRL-\ CTRL-N
   end)
 
   it('can handle focus events in normal mode', function()
-    feed('\027[I')
+    feed_data('\027[I')
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -213,7 +218,7 @@ describe('tui focus event handling', function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    feed('\027[O')
+    feed_data('\027[O')
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -226,9 +231,9 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in insert mode', function()
-    execute('set noshowmode')
-    feed('i')
-    feed('\027[I')
+    feed_command('set noshowmode')
+    feed_data('i')
+    feed_data('\027[I')
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -238,7 +243,7 @@ describe('tui focus event handling', function()
       gained                                            |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed('\027[O')
+    feed_data('\027[O')
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -251,8 +256,8 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in cmdline mode', function()
-    feed(':')
-    feed('\027[I')
+    feed_data(':')
+    feed_data('\027[I')
     screen:expect([[
                                                         |
       {4:~                                                 }|
@@ -262,7 +267,7 @@ describe('tui focus event handling', function()
       g{1:a}ined                                            |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed('\027[O')
+    feed_data('\027[O')
     screen:expect([[
                                                         |
       {4:~                                                 }|
@@ -275,30 +280,36 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in terminal mode', function()
-    execute('set shell='..nvim_dir..'/shell-test')
-    execute('set laststatus=0')
-    execute('set noshowmode')
-    execute('terminal')
-    feed('\027[I')
-    screen:expect([[
-      ready $                                           |
-      [Process exited 0]{1: }                               |
-                                                        |
-                                                        |
-                                                        |
-      gained                                            |
-      {3:-- TERMINAL --}                                    |
-    ]])
-   feed('\027[O')
-    screen:expect([[
-      ready $                                           |
-      [Process exited 0]{1: }                               |
-                                                        |
-                                                        |
-                                                        |
-      lost                                              |
-      {3:-- TERMINAL --}                                    |
-    ]])
+    feed_data(':set shell='..nvim_dir..'/shell-test\n')
+    feed_data(':set noshowmode laststatus=0\n')
+
+    retry(2, 3 * screen.timeout, function()
+      feed_data(':terminal\n')
+      feed_data('\027[I')
+      screen:expect([[
+        ready $                                           |
+        [Process exited 0]{1: }                               |
+                                                          |
+                                                          |
+                                                          |
+        gained                                            |
+        {3:-- TERMINAL --}                                    |
+      ]])
+      feed_data('\027[O')
+      screen:expect([[
+        ready $                                           |
+        [Process exited 0]{1: }                               |
+                                                          |
+                                                          |
+                                                          |
+        lost                                              |
+        {3:-- TERMINAL --}                                    |
+      ]])
+
+      -- If retry is needed...
+      feed_data("\034\016")  -- CTRL-\ CTRL-N
+      feed_data(':bwipeout!\n')
+    end)
   end)
 end)
 
@@ -313,12 +324,13 @@ describe("tui 't_Co' (terminal colors)", function()
     -- This is ugly because :term/termopen() forces TERM=xterm-256color.
     -- TODO: Revisit this after jobstart/termopen accept `env` dict.
     screen = thelpers.screen_setup(0, string.format(
-      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "silent set noswapfile"']]=],
+      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "silent set noswapfile noshowcmd noruler"']]=],
       term,
       (colorterm ~= nil and "COLORTERM="..colorterm or ""),
       helpers.nvim_prog))
 
     thelpers.feed_data(":echo &t_Co\n")
+    helpers.wait()
     local tline
     if maxcolors == 8 then
       tline = "~                                                 "
@@ -344,9 +356,17 @@ describe("tui 't_Co' (terminal colors)", function()
     assert_term_colors("yet-another-term", "screen-256color", 256)
   end)
 
-  it("TERM=linux uses 8 colors", function()
+  it("TERM=linux uses 256 colors", function()
     if is_linux then
-      assert_term_colors("linux", nil, 8)
+      assert_term_colors("linux", nil, 256)
+    else
+      pending()
+    end
+  end)
+
+  it("TERM=linux-16color uses 256 colors", function()
+    if is_linux then
+      assert_term_colors("linux-16color", nil, 256)
     else
       pending()
     end

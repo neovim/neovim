@@ -1,17 +1,18 @@
-local helpers = require('test.unit.helpers')
+local helpers = require('test.unit.helpers')(nil)
 
 local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
 local eq = helpers.eq
 
-local eval = cimport('./src/nvim/eval.h', './src/nvim/eval_defs.h',
+local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h',
                      './src/nvim/hashtab.h')
 
 local null_string = {[true]='NULL string'}
 local null_list = {[true]='NULL list'}
 local null_dict = {[true]='NULL dict'}
 local type_key = {[true]='type key'}
+local locks_key = {[true]='locks key'}
 local list_type = {[true]='list type'}
 local dict_type = {[true]='dict type'}
 local func_type = {[true]='func type'}
@@ -23,34 +24,72 @@ local nil_value = {[true]='nil'}
 local lua2typvalt
 
 local function li_alloc(nogc)
-  local gcfunc = eval.listitem_free
+  local gcfunc = eval.tv_list_item_free
   if nogc then gcfunc = nil end
-  local li = ffi.gc(eval.listitem_alloc(), gcfunc)
+  local li = ffi.gc(eval.tv_list_item_alloc(), gcfunc)
   li.li_next = nil
   li.li_prev = nil
   li.li_tv = {v_type=eval.VAR_UNKNOWN, v_lock=eval.VAR_UNLOCKED}
   return li
 end
 
-local function list(...)
-  local ret = ffi.gc(eval.list_alloc(), eval.list_unref)
-  eq(0, ret.lv_refcount)
-  ret.lv_refcount = 1
-  for i = 1, select('#', ...) do
-    local val = select(i, ...)
-    local li_tv = ffi.gc(lua2typvalt(val), nil)
-    local li = li_alloc(true)
-    li.li_tv = li_tv
-    eval.tv_list_append(ret, li)
+local function populate_list(l, lua_l, processed)
+  processed = processed or {}
+  eq(0, l.lv_refcount)
+  l.lv_refcount = 1
+  processed[lua_l] = l
+  for i = 1, #lua_l do
+    local item_tv = ffi.gc(lua2typvalt(lua_l[i], processed), nil)
+    local item_li = eval.tv_list_item_alloc()
+    item_li.li_tv = item_tv
+    eval.tv_list_append(l, item_li)
   end
-  return ret
+  return l
 end
 
-local special_tab = {
-  [eval.kSpecialVarFalse] = false,
-  [eval.kSpecialVarNull] = nil_value,
-  [eval.kSpecialVarTrue] = true,
-}
+local function populate_dict(d, lua_d, processed)
+  processed = processed or {}
+  eq(0, d.dv_refcount)
+  d.dv_refcount = 1
+  processed[lua_d] = d
+  for k, v in pairs(lua_d) do
+    if type(k) == 'string' then
+      local di = eval.tv_dict_item_alloc(to_cstr(k))
+      local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
+      eval.tv_copy(val_tv, di.di_tv)
+      eval.tv_clear(val_tv)
+      eval.tv_dict_add(d, di)
+    end
+  end
+  return d
+end
+
+local function populate_partial(pt, lua_pt, processed)
+  processed = processed or {}
+  eq(0, pt.pt_refcount)
+  processed[lua_pt] = pt
+  local argv = nil
+  if lua_pt.args and #lua_pt.args > 0 then
+    argv = ffi.gc(ffi.cast('typval_T*', eval.xmalloc(ffi.sizeof('typval_T') * #lua_pt.args)), nil)
+    for i, arg in ipairs(lua_pt.args) do
+      local arg_tv = ffi.gc(lua2typvalt(arg, processed), nil)
+      argv[i - 1] = arg_tv
+    end
+  end
+  local dict = nil
+  if lua_pt.dict then
+    local dict_tv = ffi.gc(lua2typvalt(lua_pt.dict, processed), nil)
+    assert(dict_tv.v_type == eval.VAR_DICT)
+    dict = dict_tv.vval.v_dict
+  end
+  pt.pt_refcount = 1
+  pt.pt_name = eval.xmemdupz(to_cstr(lua_pt.value), #lua_pt.value)
+  pt.pt_auto = not not lua_pt.auto
+  pt.pt_argc = lua_pt.args and #lua_pt.args or 0
+  pt.pt_argv = argv
+  pt.pt_dict = dict
+  return pt
+end
 
 local ptr2key = function(ptr)
   return tostring(ptr)
@@ -60,64 +99,79 @@ local lst2tbl
 local dct2tbl
 
 local typvalt2lua
-local typvalt2lua_tab
 
-typvalt2lua_tab = {
-  [tonumber(eval.VAR_SPECIAL)] = function(t)
-    return special_tab[t.vval.v_special]
-  end,
-  [tonumber(eval.VAR_NUMBER)] = function(t)
-    return {[type_key]=int_type, value=tonumber(t.vval.v_number)}
-  end,
-  [tonumber(eval.VAR_FLOAT)] = function(t)
-    return tonumber(t.vval.v_float)
-  end,
-  [tonumber(eval.VAR_STRING)] = function(t)
-    local str = t.vval.v_string
-    if str == nil then
-      return null_string
-    else
-      return ffi.string(str)
+local function partial2lua(pt, processed)
+  processed = processed or {}
+  local value, auto, dict, argv = nil, nil, nil, nil
+  if pt ~= nil then
+    value = ffi.string(pt.pt_name)
+    auto = pt.pt_auto and true or nil
+    argv = {}
+    for i = 1, pt.pt_argc do
+      argv[i] = typvalt2lua(pt.pt_argv[i - 1], processed)
     end
-  end,
-  [tonumber(eval.VAR_LIST)] = function(t, processed)
-    return lst2tbl(t.vval.v_list, processed)
-  end,
-  [tonumber(eval.VAR_DICT)] = function(t, processed)
-    return dct2tbl(t.vval.v_dict, processed)
-  end,
-  [tonumber(eval.VAR_FUNC)] = function(t, processed)
-    return {[type_key]=func_type, value=typvalt2lua_tab[eval.VAR_STRING](t, processed or {})}
-  end,
-  [tonumber(eval.VAR_PARTIAL)] = function(t, processed)
-    local p_key = ptr2key(t)
-    if processed[p_key] then
-      return processed[p_key]
+    if pt.pt_dict ~= nil then
+      dict = dct2tbl(pt.pt_dict)
     end
-    local pt = t.vval.v_partial
-    local value, auto, dict, argv = nil, nil, nil, nil
-    if pt ~= nil then
-      value = ffi.string(pt.pt_name)
-      auto = pt.pt_auto and true or nil
-      argv = {}
-      for i = 1, pt.pt_argc do
-        argv[i] = typvalt2lua(pt.pt_argv[i - 1], processed)
+  end
+  return {
+    [type_key]=func_type,
+    value=value,
+    auto=auto,
+    args=argv,
+    dict=dict,
+  }
+end
+
+local typvalt2lua_tab = nil
+
+local function typvalt2lua_tab_init()
+  if typvalt2lua_tab then
+    return
+  end
+  typvalt2lua_tab = {
+    [tonumber(eval.VAR_SPECIAL)] = function(t)
+      return ({
+        [tonumber(eval.kSpecialVarFalse)] = false,
+        [tonumber(eval.kSpecialVarNull)] = nil_value,
+        [tonumber(eval.kSpecialVarTrue)] = true,
+      })[tonumber(t.vval.v_special)]
+    end,
+    [tonumber(eval.VAR_NUMBER)] = function(t)
+      return {[type_key]=int_type, value=tonumber(t.vval.v_number)}
+    end,
+    [tonumber(eval.VAR_FLOAT)] = function(t)
+      return tonumber(t.vval.v_float)
+    end,
+    [tonumber(eval.VAR_STRING)] = function(t)
+      local str = t.vval.v_string
+      if str == nil then
+        return null_string
+      else
+        return ffi.string(str)
       end
-      if pt.pt_dict ~= nil then
-        dict = dct2tbl(pt.pt_dict)
+    end,
+    [tonumber(eval.VAR_LIST)] = function(t, processed)
+      return lst2tbl(t.vval.v_list, processed)
+    end,
+    [tonumber(eval.VAR_DICT)] = function(t, processed)
+      return dct2tbl(t.vval.v_dict, processed)
+    end,
+    [tonumber(eval.VAR_FUNC)] = function(t, processed)
+      return {[type_key]=func_type, value=typvalt2lua_tab[eval.VAR_STRING](t, processed or {})}
+    end,
+    [tonumber(eval.VAR_PARTIAL)] = function(t, processed)
+      local p_key = ptr2key(t)
+      if processed[p_key] then
+        return processed[p_key]
       end
-    end
-    return {
-      [type_key]=func_type,
-      value=value,
-      auto=auto,
-      args=argv,
-      dict=dict,
-    }
-  end,
-}
+      return partial2lua(t.vval.v_partial, processed)
+    end,
+  }
+end
 
 typvalt2lua = function(t, processed)
+  typvalt2lua_tab_init()
   return ((typvalt2lua_tab[tonumber(t.v_type)] or function(t_inner)
     assert(false, 'Converting ' .. tonumber(t_inner.v_type) .. ' was not implemented yet')
   end)(t, processed or {}))
@@ -169,9 +223,10 @@ lst2tbl = function(l, processed)
   return ret
 end
 
-local hi_key_removed = eval._hash_key_removed()
+local hi_key_removed = nil
 
 local function dict_iter(d, return_hi)
+  hi_key_removed = hi_key_removed or eval._hash_key_removed()
   local init_s = {
     todo=d.dv_hashtab.ht_used,
     hi=d.dv_hashtab.ht_array,
@@ -236,7 +291,7 @@ local typvalt = function(typ, vval)
   elseif type(typ) == 'string' then
     typ = eval[typ]
   end
-  return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.clear_tv)
+  return ffi.gc(ffi.new('typval_T', {v_type=typ, vval=vval}), eval.tv_clear)
 end
 
 local lua2typvalt_type_tab = {
@@ -251,36 +306,16 @@ local lua2typvalt_type_tab = {
       processed[l].lv_refcount = processed[l].lv_refcount + 1
       return typvalt(eval.VAR_LIST, {v_list=processed[l]})
     end
-    local lst = eval.list_alloc()
-    lst.lv_refcount = 1
-    processed[l] = lst
-    local ret = typvalt(eval.VAR_LIST, {v_list=lst})
-    for i = 1, #l do
-      local item_tv = ffi.gc(lua2typvalt(l[i], processed), nil)
-      eval.list_append_tv(lst, item_tv)
-      eval.clear_tv(item_tv)
-    end
-    return ret
+    local lst = populate_list(eval.tv_list_alloc(), l, processed)
+    return typvalt(eval.VAR_LIST, {v_list=lst})
   end,
   [dict_type] = function(l, processed)
     if processed[l] then
       processed[l].dv_refcount = processed[l].dv_refcount + 1
       return typvalt(eval.VAR_DICT, {v_dict=processed[l]})
     end
-    local dct = eval.dict_alloc()
-    dct.dv_refcount = 1
-    processed[l] = dct
-    local ret = typvalt(eval.VAR_DICT, {v_dict=dct})
-    for k, v in pairs(l) do
-      if type(k) == 'string' then
-        local di = eval.dictitem_alloc(to_cstr(k))
-        local val_tv = ffi.gc(lua2typvalt(v, processed), nil)
-        eval.copy_tv(val_tv, di.di_tv)
-        eval.clear_tv(val_tv)
-        eval.dict_add(dct, di)
-      end
-    end
-    return ret
+    local dct = populate_dict(eval.tv_dict_alloc(), l, processed)
+    return typvalt(eval.VAR_DICT, {v_dict=dct})
   end,
   [func_type] = function(l, processed)
     if processed[l] then
@@ -288,29 +323,8 @@ local lua2typvalt_type_tab = {
       return typvalt(eval.VAR_PARTIAL, {v_partial=processed[l]})
     end
     if l.args or l.dict then
-      local pt = ffi.gc(ffi.cast('partial_T*', eval.xmalloc(ffi.sizeof('partial_T'))), nil)
-      processed[l] = pt
-      local argv = nil
-      if l.args and #l.args > 0 then
-        argv = ffi.gc(ffi.cast('typval_T*', eval.xmalloc(ffi.sizeof('typval_T') * #l.args)), nil)
-        for i, arg in ipairs(l.args) do
-          local arg_tv = ffi.gc(lua2typvalt(arg, processed), nil)
-          eval.copy_tv(arg_tv, argv[i - 1])
-          eval.clear_tv(arg_tv)
-        end
-      end
-      local dict = nil
-      if l.dict then
-        local dict_tv = ffi.gc(lua2typvalt(l.dict, processed), nil)
-        assert(dict_tv.v_type == eval.VAR_DICT)
-        dict = dict_tv.vval.v_dict
-      end
-      pt.pt_refcount = 1
-      pt.pt_name = eval.xmemdupz(to_cstr(l.value), #l.value)
-      pt.pt_auto = not not l.auto
-      pt.pt_argc = l.args and #l.args or 0
-      pt.pt_argv = argv
-      pt.pt_dict = dict
+      local pt = populate_partial(ffi.gc(ffi.cast('partial_T*',
+          eval.xcalloc(1, ffi.sizeof('partial_T'))), nil), l, processed)
       return typvalt(eval.VAR_PARTIAL, {v_partial=pt})
     else
       return typvalt(eval.VAR_FUNC, {
@@ -320,25 +334,28 @@ local lua2typvalt_type_tab = {
   end,
 }
 
-local special_vals = {
-  [null_string] = {eval.VAR_STRING, {v_string=ffi.cast('char_u*', nil)}},
-  [null_list] = {eval.VAR_LIST, {v_list=ffi.cast('list_T*', nil)}},
-  [null_dict] = {eval.VAR_DICT, {v_dict=ffi.cast('dict_T*', nil)}},
-  [nil_value] = {eval.VAR_SPECIAL, {v_special=eval.kSpecialVarNull}},
-  [true] = {eval.VAR_SPECIAL, {v_special=eval.kSpecialVarTrue}},
-  [false] = {eval.VAR_SPECIAL, {v_special=eval.kSpecialVarFalse}},
-}
-
-for k, v in pairs(special_vals) do
-  local tmp = function(typ, vval)
-    special_vals[k] = function()
-      return typvalt(typ, vval)
-    end
-  end
-  tmp(v[1], v[2])
-end
+local special_vals = nil
 
 lua2typvalt = function(l, processed)
+  if not special_vals then
+    special_vals = {
+      [null_string] = {'VAR_STRING', {v_string=ffi.cast('char_u*', nil)}},
+      [null_list] = {'VAR_LIST', {v_list=ffi.cast('list_T*', nil)}},
+      [null_dict] = {'VAR_DICT', {v_dict=ffi.cast('dict_T*', nil)}},
+      [nil_value] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarNull}},
+      [true] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarTrue}},
+      [false] = {'VAR_SPECIAL', {v_special=eval.kSpecialVarFalse}},
+    }
+
+    for k, v in pairs(special_vals) do
+      local tmp = function(typ, vval)
+        special_vals[k] = function()
+          return typvalt(eval[typ], vval)
+        end
+      end
+      tmp(v[1], v[2])
+    end
+  end
   processed = processed or {}
   if l == nil or l == nil_value then
     return special_vals[nil_value]()
@@ -365,8 +382,19 @@ lua2typvalt = function(l, processed)
   end
 end
 
+local void_ptr = ffi.typeof('void *')
 local function void(ptr)
-  return ffi.cast('void*', ptr)
+  return ffi.cast(void_ptr, ptr)
+end
+
+local function alloc_len(len, get_ptr)
+  if type(len) == 'string' or type(len) == 'table' then
+    return #len
+  elseif len == nil then
+    return eval.strlen(get_ptr())
+  else
+    return len
+  end
 end
 
 local alloc_logging_helpers = {
@@ -374,14 +402,115 @@ local alloc_logging_helpers = {
   li = function(li) return {func='malloc', args={ffi.sizeof('listitem_T')}, ret=void(li)} end,
   dict = function(d) return {func='malloc', args={ffi.sizeof('dict_T')}, ret=void(d)} end,
   di = function(di, size)
+    size = alloc_len(size, function() return di.di_key end)
     return {func='malloc', args={ffi.offsetof('dictitem_T', 'di_key') + size + 1}, ret=void(di)}
   end,
-  str = function(s, size) return {func='malloc', args={size + 1}, ret=void(s)} end,
+  str = function(s, size)
+    size = alloc_len(size, function() return s end)
+    return {func='malloc', args={size + 1}, ret=void(s)}
+  end,
 
-  freed = function(p) return {func='free', args={p and void(p)}} end,
+  dwatcher = function(w) return {func='malloc', args={ffi.sizeof('DictWatcher')}, ret=void(w)} end,
+
+  freed = function(p) return {func='free', args={type(p) == 'table' and p or void(p)}} end,
+
+  -- lua_…: allocated by this file, not by some Neovim function
+  lua_pt = function(pt) return {func='calloc', args={1, ffi.sizeof('partial_T')}, ret=void(pt)} end,
+  lua_tvs = function(argv, argc)
+    argc = alloc_len(argc)
+    return {func='malloc', args={ffi.sizeof('typval_T')*argc}, ret=void(argv)}
+  end,
 }
 
+local function int(n)
+  return {[type_key]=int_type, value=n}
+end
+
+local function list(...)
+  return populate_list(ffi.gc(eval.tv_list_alloc(), eval.tv_list_unref),
+                       {...}, {})
+end
+
+local function dict(d)
+  return populate_dict(ffi.gc(eval.tv_dict_alloc(), eval.tv_dict_free),
+                       d or {}, {})
+end
+
+local callback2tbl_type_tab = nil
+
+local function init_callback2tbl_type_tab()
+  if callback2tbl_type_tab then
+    return
+  end
+  callback2tbl_type_tab = {
+    [tonumber(eval.kCallbackNone)] = function(_) return {type='none'} end,
+    [tonumber(eval.kCallbackFuncref)] = function(cb)
+      return {type='fref', fref=ffi.string(cb.data.funcref)}
+    end,
+    [tonumber(eval.kCallbackPartial)] = function(cb)
+      local lua_pt = partial2lua(cb.data.partial)
+      return {type='pt', fref=ffi.string(lua_pt.value), pt=lua_pt}
+    end
+  }
+end
+
+local function callback2tbl(cb)
+  init_callback2tbl_type_tab()
+  return callback2tbl_type_tab[tonumber(cb.type)](cb)
+end
+
+local function tbl2callback(tbl)
+  local ret = nil
+  if tbl.type == 'none' then
+    ret = ffi.new('Callback[1]', {{type=eval.kCallbackNone}})
+  elseif tbl.type == 'fref' then
+    ret = ffi.new('Callback[1]', {{type=eval.kCallbackFuncref,
+                                   data={funcref=eval.xstrdup(tbl.fref)}}})
+  elseif tbl.type == 'pt' then
+    local pt = ffi.gc(ffi.cast('partial_T*',
+        eval.xcalloc(1, ffi.sizeof('partial_T'))), nil)
+    ret = ffi.new('Callback[1]', {{type=eval.kCallbackPartial,
+                                   data={partial=populate_partial(pt, tbl.pt, {})}}})
+  else
+    assert(false)
+  end
+  return ffi.gc(ffi.cast('Callback*', ret), helpers.callback_free)
+end
+
+local function dict_watchers(d)
+  local ret = {}
+  local h = d.watchers
+  local q = h.next
+  local qs = {}
+  local key_patterns = {}
+  while q ~= h do
+    local qitem = ffi.cast('DictWatcher *',
+        ffi.cast('char *', q) - ffi.offsetof('DictWatcher', 'node'))
+    ret[#ret + 1] = {
+      cb=callback2tbl(qitem.callback),
+      pat=ffi.string(qitem.key_pattern, qitem.key_pattern_len),
+      busy=qitem.busy,
+    }
+    qs[#qs + 1] = qitem
+    key_patterns[#key_patterns + 1] = {qitem.key_pattern, qitem.key_pattern_len}
+    q = q.next
+  end
+  return ret, qs, key_patterns
+end
+
+local function eval0(expr)
+  local tv = ffi.gc(ffi.new('typval_T', {v_type=eval.VAR_UNKNOWN}),
+                    eval.tv_clear)
+  if eval.eval0(to_cstr(expr), tv, nil, true) == 0 then
+    return nil
+  else
+    return tv
+  end
+end
+
 return {
+  int=int,
+
   null_string=null_string,
   null_list=null_list,
   null_dict=null_dict,
@@ -394,8 +523,10 @@ return {
   nil_value=nil_value,
 
   type_key=type_key,
+  locks_key=locks_key,
 
   list=list,
+  dict=dict,
   lst2tbl=lst2tbl,
   dct2tbl=dct2tbl,
 
@@ -414,4 +545,12 @@ return {
 
   list_items=list_items,
   dict_items=dict_items,
+
+  dict_watchers=dict_watchers,
+  tbl2callback=tbl2callback,
+  callback2tbl=callback2tbl,
+
+  eval0=eval0,
+
+  empty_list = {[type_key]=list_type},
 }

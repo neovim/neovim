@@ -7,11 +7,8 @@
 " Add to filetype.vim the following line (without quote sign):
 " au BufNewFile,BufRead *.plp setf plp
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -19,14 +16,9 @@ if !exists("main_syntax")
   let main_syntax = 'perlscript'
 endif
 
-if version < 600
-  so <sfile>:p:h/html.vim
-  syn include @PLPperl <sfile>:p:h/perl.vim
-else
-  runtime! syntax/html.vim
-  unlet b:current_syntax
-  syn include @PLPperl syntax/perl.vim
-endif
+runtime! syntax/html.vim
+unlet b:current_syntax
+syn include @PLPperl syntax/perl.vim
 
 syn cluster htmlPreproc add=PLPperlblock
 

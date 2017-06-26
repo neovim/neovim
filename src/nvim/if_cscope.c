@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * CSCOPE support for Vim added by Andy Kahn <kahn@zk3.dec.com>
  * Ported to Win32 by Sergey Khorev <sergey.khorev@gmail.com>
@@ -140,31 +143,30 @@ char_u *get_cscope_name(expand_T *xp, int idx)
 /*
  * Handle command line completion for :cscope command.
  */
-void set_context_in_cscope_cmd(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
+void set_context_in_cscope_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
 {
-  char_u      *p;
-
-  /* Default: expand subcommands */
+  // Default: expand subcommands.
   xp->xp_context = EXPAND_CSCOPE;
-  xp->xp_pattern = arg;
-  expand_what = (cmdidx == CMD_scscope)
-                ? EXP_SCSCOPE_SUBCMD : EXP_CSCOPE_SUBCMD;
+  xp->xp_pattern = (char_u *)arg;
+  expand_what = ((cmdidx == CMD_scscope)
+                 ? EXP_SCSCOPE_SUBCMD : EXP_CSCOPE_SUBCMD);
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                /* past first word */
-      xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != NUL)
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past first word.
+      xp->xp_pattern = skipwhite((const char_u *)p);
+      if (*skiptowhite(xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-      else if (STRNICMP(arg, "add", p - arg) == 0)
+      } else if (STRNICMP(arg, "add", p - arg) == 0) {
         xp->xp_context = EXPAND_FILES;
-      else if (STRNICMP(arg, "kill", p - arg) == 0)
+      } else if (STRNICMP(arg, "kill", p - arg) == 0) {
         expand_what = EXP_CSCOPE_KILL;
-      else if (STRNICMP(arg, "find", p - arg) == 0)
+      } else if (STRNICMP(arg, "find", p - arg) == 0) {
         expand_what = EXP_CSCOPE_FIND;
-      else
+      } else {
         xp->xp_context = EXPAND_NOTHING;
+      }
     }
   }
 }
@@ -994,11 +996,12 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
       return FALSE;
     }
 
-    if (*qfpos != '0') {
-      apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)"cscope",
-          curbuf->b_fname, TRUE, curbuf);
-      if (did_throw || force_abort)
-        return FALSE;
+    if (*qfpos != '0'
+        && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)"cscope",
+                          curbuf->b_fname, true, curbuf)) {
+      if (aborting()) {
+        return false;
+      }
     }
   }
 
@@ -1294,9 +1297,10 @@ static int cs_kill(exarg_T *eap)
     }
   }
 
-  if (i >= csinfo_size || csinfo[i].fname == NULL) {
-    if (p_csverbose)
+  if (!killall && (i >= csinfo_size || csinfo[i].fname == NULL)) {
+    if (p_csverbose) {
       (void)EMSG2(_("E261: cscope connection %s not found"), stok);
+    }
     return CSCOPE_FAILURE;
   } else {
     if (killall) {
@@ -1968,7 +1972,7 @@ static void cs_release_csp(size_t i, int freefnpp)
 static int cs_reset(exarg_T *eap)
 {
   char        **dblist = NULL, **pplist = NULL, **fllist = NULL;
-  char buf[20];   /* for snprintf " (#%zu)" */
+  char buf[25];  // for snprintf " (#%zu)"
 
   if (csinfo_size == 0)
     return CSCOPE_SUCCESS;
@@ -2007,8 +2011,9 @@ static int cs_reset(exarg_T *eap)
   xfree(pplist);
   xfree(fllist);
 
-  if (p_csverbose)
-    MSG_ATTR(_("All cscope databases reset"), hl_attr(HLF_R) | MSG_HIST);
+  if (p_csverbose) {
+    msg_attr(_("All cscope databases reset"), hl_attr(HLF_R) | MSG_HIST);
+  }
   return CSCOPE_SUCCESS;
 } /* cs_reset */
 

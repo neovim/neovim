@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // Some of the code came from pangoterm and libuv
 #include <stdbool.h>
 #include <stdlib.h>
@@ -9,7 +12,7 @@
 #include <sys/ioctl.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined (__DragonFly__)
 # include <libutil.h>
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 # include <util.h>
@@ -33,7 +36,8 @@
 # include "os/pty_process_unix.c.generated.h"
 #endif
 
-bool pty_process_spawn(PtyProcess *ptyproc)
+/// @returns zero on success, or negative error code
+int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
   static struct termios termios;
@@ -41,6 +45,7 @@ bool pty_process_spawn(PtyProcess *ptyproc)
     init_termios(&termios);
   }
 
+  int status = 0;  // zero or negative error code (libuv convention)
   Process *proc = (Process *)ptyproc;
   assert(!proc->err);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
@@ -50,8 +55,9 @@ bool pty_process_spawn(PtyProcess *ptyproc)
   int pid = forkpty(&master, NULL, &termios, &ptyproc->winsize);
 
   if (pid < 0) {
+    status = -errno;
     ELOG("forkpty failed: %s", strerror(errno));
-    return false;
+    return status;
   } else if (pid == 0) {
     init_child(ptyproc);
     abort();
@@ -60,30 +66,41 @@ bool pty_process_spawn(PtyProcess *ptyproc)
   // make sure the master file descriptor is non blocking
   int master_status_flags = fcntl(master, F_GETFL);
   if (master_status_flags == -1) {
+    status = -errno;
     ELOG("Failed to get master descriptor status flags: %s", strerror(errno));
     goto error;
   }
   if (fcntl(master, F_SETFL, master_status_flags | O_NONBLOCK) == -1) {
+    status = -errno;
     ELOG("Failed to make master descriptor non-blocking: %s", strerror(errno));
     goto error;
   }
 
-  if (proc->in && !set_duplicating_descriptor(master, &proc->in->uv.pipe)) {
+  // Other jobs and providers should not get a copy of this file descriptor.
+  if (os_set_cloexec(master) == -1) {
+    status = -errno;
+    ELOG("Failed to set CLOEXEC on ptmx file descriptor");
     goto error;
   }
-  if (proc->out && !set_duplicating_descriptor(master, &proc->out->uv.pipe)) {
+
+  if (proc->in
+      && (status = set_duplicating_descriptor(master, &proc->in->uv.pipe))) {
+    goto error;
+  }
+  if (proc->out
+      && (status = set_duplicating_descriptor(master, &proc->out->uv.pipe))) {
     goto error;
   }
 
   ptyproc->tty_fd = master;
   proc->pid = pid;
-  return true;
+  return 0;
 
 error:
   close(master);
   kill(pid, SIGKILL);
   waitpid(pid, NULL, 0);
-  return false;
+  return status;
 }
 
 void pty_process_resize(PtyProcess *ptyproc, uint16_t width, uint16_t height)
@@ -137,9 +154,10 @@ static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
     return;
   }
 
+  char *prog = ptyproc->process.argv[0];
   setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
-  execvp(ptyproc->process.argv[0], ptyproc->process.argv);
-  fprintf(stderr, "execvp failed: %s\n", strerror(errno));
+  execvp(prog, ptyproc->process.argv);
+  fprintf(stderr, "execvp failed: %s: %s\n", strerror(errno), prog);
 }
 
 static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
@@ -197,22 +215,34 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_cc[VTIME]    = 0;
 }
 
-static bool set_duplicating_descriptor(int fd, uv_pipe_t *pipe)
+static int set_duplicating_descriptor(int fd, uv_pipe_t *pipe)
   FUNC_ATTR_NONNULL_ALL
 {
+  int status = 0;  // zero or negative error code (libuv convention)
   int fd_dup = dup(fd);
   if (fd_dup < 0) {
+    status = -errno;
     ELOG("Failed to dup descriptor %d: %s", fd, strerror(errno));
-    return false;
+    return status;
   }
-  int uv_result = uv_pipe_open(pipe, fd_dup);
-  if (uv_result) {
+
+  if (os_set_cloexec(fd_dup) == -1) {
+    status = -errno;
+    ELOG("Failed to set CLOEXEC on duplicate fd");
+    goto error;
+  }
+
+  status = uv_pipe_open(pipe, fd_dup);
+  if (status) {
     ELOG("Failed to set pipe to descriptor %d: %s",
-         fd_dup, uv_strerror(uv_result));
-    close(fd_dup);
-    return false;
+         fd_dup, uv_strerror(status));
+    goto error;
   }
-  return true;
+  return status;
+
+error:
+  close(fd_dup);
+  return status;
 }
 
 static void chld_handler(uv_signal_t *handle, int signum)

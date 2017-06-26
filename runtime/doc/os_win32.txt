@@ -1,38 +1,11 @@
-*os_win32.txt*  For Vim version 7.4.  Last change: 2016 Mar 05
+*os_win32.txt*  Nvim
 
 
-		  VIM REFERENCE MANUAL    by George Reilly
+                            NVIM REFERENCE MANUAL
 
 
 						*win32* *Win32* *MS-Windows*
-This file documents the idiosyncrasies of the Win32 version of Vim.
-
-The Win32 version of Vim works on Windows XP, Vista and Windows 7.
-There are both console and GUI versions.
-
-The 32 bit version also runs on 64 bit MS-Windows systems.
-
-1. Known problems		|win32-problems|
-2. Startup			|win32-startup|
-3. Using the mouse		|win32-mouse|
-4. Win32 mini FAQ	        |win32-faq|
-
-Additionally, there are a number of common Win32 and DOS items:
-File locations			|dos-locations|
-Using backslashes		|dos-backslash|
-Standard mappings		|dos-standard-mappings|
-Screen output and colors	|dos-colors|
-File formats			|dos-file-formats|
-:cd command			|dos-:cd|
-Interrupting			|dos-CTRL-Break|
-Temp files			|dos-temp-files|
-Shell option default		|dos-shell|
-
-Win32 GUI			|gui-w32|
-
-Credits:
-The Win32 version was written by George V. Reilly <george@reilly.org>.
-The GUI version was made by George V. Reilly and Robert Webb.
+This file documents the Win32 version of Nvim.
 
 ==============================================================================
 1. Known problems					*win32-problems*

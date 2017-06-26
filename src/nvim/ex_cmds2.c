@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file ex_cmds2.c
 ///
 /// Some more functions for command line commands
@@ -957,23 +960,21 @@ char_u *get_profile_name(expand_T *xp, int idx)
 }
 
 /// Handle command line completion for :profile command.
-void set_context_in_profile_cmd(expand_T *xp, char_u *arg)
+void set_context_in_profile_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *end_subcmd;
-
   // Default: expand subcommands.
   xp->xp_context = EXPAND_PROFILE;
   pexpand_what = PEXP_SUBCMD;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
 
-  end_subcmd = skiptowhite(arg);
+  char_u *const end_subcmd = skiptowhite((const char_u *)arg);
   if (*end_subcmd == NUL) {
     return;
   }
 
-  if (end_subcmd - arg == 5 && STRNCMP(arg, "start", 5) == 0) {
+  if ((const char *)end_subcmd - arg == 5 && strncmp(arg, "start", 5) == 0) {
     xp->xp_context = EXPAND_FILES;
-    xp->xp_pattern = skipwhite(end_subcmd);
+    xp->xp_pattern = skipwhite((const char_u *)end_subcmd);
     return;
   }
 
@@ -1181,6 +1182,7 @@ bool prof_def_func(void)
 int autowrite(buf_T *buf, int forceit)
 {
   int r;
+  bufref_T bufref;
 
   if (!(p_aw || p_awa) || !p_write
       // never autowrite a "nofile" or "nowrite" buffer
@@ -1188,11 +1190,12 @@ int autowrite(buf_T *buf, int forceit)
       || (!forceit && buf->b_p_ro) || buf->b_ffname == NULL) {
     return FAIL;
   }
+  set_bufref(&bufref, buf);
   r = buf_write_all(buf, forceit);
 
   // Writing may succeed but the buffer still changed, e.g., when there is a
   // conversion error.  We do want to return FAIL then.
-  if (buf_valid(buf) && bufIsChanged(buf)) {
+  if (bufref_valid(&bufref) && bufIsChanged(buf)) {
     r = FAIL;
   }
   return r;
@@ -1207,9 +1210,11 @@ void autowrite_all(void)
 
   FOR_ALL_BUFFERS(buf) {
     if (bufIsChanged(buf) && !buf->b_p_ro) {
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
       (void)buf_write_all(buf, false);
       // an autocommand may have deleted the buffer
-      if (!buf_valid(buf)) {
+      if (!bufref_valid(&bufref)) {
         buf = firstbuf;
       }
     }
@@ -1221,6 +1226,8 @@ void autowrite_all(void)
 bool check_changed(buf_T *buf, int flags)
 {
   int forceit = (flags & CCGD_FORCEIT);
+  bufref_T bufref;
+  set_bufref(&bufref, buf);
 
   if (!forceit
       && bufIsChanged(buf)
@@ -1236,12 +1243,12 @@ bool check_changed(buf_T *buf, int flags)
           }
         }
       }
-      if (!buf_valid(buf)) {
+      if (!bufref_valid(&bufref)) {
         // Autocommand deleted buffer, oops!  It's not changed now.
         return false;
       }
       dialog_changed(buf, count > 1);
-      if (!buf_valid(buf)) {
+      if (!bufref_valid(&bufref)) {
         // Autocommand deleted buffer, oops!  It's not changed now.
         return false;
       }
@@ -1300,9 +1307,10 @@ void dialog_changed(buf_T *buf, int checkall)
     // Skip readonly buffers, these need to be confirmed
     // individually.
     FOR_ALL_BUFFERS(buf2) {
-      if (bufIsChanged(buf2)
-          && (buf2->b_ffname != NULL)
-          && !buf2->b_p_ro) {
+      if (bufIsChanged(buf2) && (buf2->b_ffname != NULL) && !buf2->b_p_ro) {
+        bufref_T bufref;
+        set_bufref(&bufref, buf2);
+
         if (buf2->b_fname != NULL
             && check_overwrite(&ea, buf2, buf2->b_fname,
                                buf2->b_ffname, false) == OK) {
@@ -1310,7 +1318,7 @@ void dialog_changed(buf_T *buf, int checkall)
           (void)buf_write_all(buf2, false);
         }
         // an autocommand may have deleted the buffer
-        if (!buf_valid(buf2)) {
+        if (!bufref_valid(&bufref)) {
           buf2 = firstbuf;
         }
       }
@@ -1407,11 +1415,14 @@ bool check_changed_any(bool hidden, bool unload)
       continue;
     }
     if ((!hidden || buf->b_nwindows == 0) && bufIsChanged(buf)) {
+      bufref_T bufref;
+      set_bufref(&bufref, buf);
+
       // Try auto-writing the buffer.  If this fails but the buffer no
       // longer exists it's not changed, that's OK.
       if (check_changed(buf, (p_awa ? CCGD_AW : 0)
                         | CCGD_MULTWIN
-                        | CCGD_ALLBUF) && buf_valid(buf)) {
+                        | CCGD_ALLBUF) && bufref_valid(&bufref)) {
         break;    // didn't save - still changes
       }
     }
@@ -1447,9 +1458,11 @@ bool check_changed_any(bool hidden, bool unload)
   if (buf != curbuf) {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       if (wp->w_buffer == buf) {
+        bufref_T bufref;
+        set_bufref(&bufref, buf);
         goto_tabpage_win(tp, wp);
         // Paranoia: did autocmds wipe out the buffer with changes?
-        if (!buf_valid(buf)) {
+        if (!bufref_valid(&bufref)) {
           goto theend;
         }
         goto buf_found;
@@ -2061,9 +2074,9 @@ void ex_listdo(exarg_T *eap)
           // Clear 'shm' to avoid that the file message overwrites
           // any output from the command.
           p_shm_save = vim_strsave(p_shm);
-          set_option_value((char_u *)"shm", 0L, (char_u *)"", 0);
+          set_option_value("shm", 0L, "", 0);
           do_argfile(eap, i);
-          set_option_value((char_u *)"shm", 0L, p_shm_save, 0);
+          set_option_value("shm", 0L, (char *)p_shm_save, 0);
           xfree(p_shm_save);
         }
         if (curwin->w_arg_idx != i) {
@@ -2126,9 +2139,9 @@ void ex_listdo(exarg_T *eap)
         // Go to the next buffer.  Clear 'shm' to avoid that the file
         // message overwrites any output from the command.
         p_shm_save = vim_strsave(p_shm);
-        set_option_value((char_u *)"shm", 0L, (char_u *)"", 0);
+        set_option_value("shm", 0L, "", 0);
         goto_buffer(eap, DOBUF_FIRST, FORWARD, next_fnum);
-        set_option_value((char_u *)"shm", 0L, p_shm_save, 0);
+        set_option_value("shm", 0L, (char *)p_shm_save, 0);
         xfree(p_shm_save);
 
         // If autocommands took us elsewhere, quit here.
@@ -2238,14 +2251,14 @@ void ex_compiler(exarg_T *eap)
       // plugin will then skip the settings.  Afterwards set
       // "b:current_compiler" and restore "current_compiler".
       // Explicitly prepend "g:" to make it work in a function.
-      old_cur_comp = get_var_value((char_u *)"g:current_compiler");
+      old_cur_comp = get_var_value("g:current_compiler");
       if (old_cur_comp != NULL) {
         old_cur_comp = vim_strsave(old_cur_comp);
       }
       do_cmdline_cmd("command -nargs=* CompilerSet setlocal <args>");
     }
-    do_unlet((char_u *)"g:current_compiler", true);
-    do_unlet((char_u *)"b:current_compiler", true);
+    do_unlet(S_LEN("g:current_compiler"), true);
+    do_unlet(S_LEN("b:current_compiler"), true);
 
     snprintf((char *)buf, bufsize, "compiler/%s.vim", eap->arg);
     if (source_runtime(buf, DIP_ALL) == FAIL) {
@@ -2256,7 +2269,7 @@ void ex_compiler(exarg_T *eap)
     do_cmdline_cmd(":delcommand CompilerSet");
 
     // Set "b:current_compiler" from "current_compiler".
-    p = get_var_value((char_u *)"g:current_compiler");
+    p = get_var_value("g:current_compiler");
     if (p != NULL) {
       set_internal_string_var((char_u *)"b:current_compiler", p);
     }
@@ -2268,7 +2281,7 @@ void ex_compiler(exarg_T *eap)
                                 old_cur_comp);
         xfree(old_cur_comp);
       } else {
-        do_unlet((char_u *)"g:current_compiler", true);
+        do_unlet(S_LEN("g:current_compiler"), true);
       }
     }
   }
@@ -2349,12 +2362,25 @@ int do_in_path(char_u *path, char_u *name, int flags,
     while (*rtp != NUL && ((flags & DIP_ALL) || !did_one)) {
       // Copy the path from 'runtimepath' to buf[].
       copy_option_part(&rtp, buf, MAXPATHL, ",");
+      size_t buflen = STRLEN(buf);
+
+      // Skip after or non-after directories.
+      if (flags & (DIP_NOAFTER | DIP_AFTER)) {
+        bool is_after = buflen >= 5
+          && STRCMP(buf + buflen - 5, "after") == 0;
+
+        if ((is_after && (flags & DIP_NOAFTER))
+            || (!is_after && (flags & DIP_AFTER))) {
+          continue;
+        }
+      }
+
       if (name == NULL) {
         (*callback)(buf, (void *)&cookie);
         if (!did_one) {
           did_one = (cookie == NULL);
         }
-      } else if (STRLEN(buf) + STRLEN(name) + 2 < MAXPATHL) {
+      } else if (buflen + STRLEN(name) + 2 < MAXPATHL) {
         add_pathsep((char *)buf);
         tail = buf + STRLEN(buf);
 
@@ -2471,16 +2497,16 @@ static int APP_BOTH;
 static void add_pack_plugin(char_u *fname, void *cookie)
 {
   char_u *p4, *p3, *p2, *p1, *p;
-  char_u *new_rtp;
-  char_u *ffname = (char_u *)fix_fname((char *)fname);
+
+  char *const ffname = fix_fname((char *)fname);
 
   if (ffname == NULL) {
     return;
   }
 
-  if (cookie != &APP_LOAD && strstr((char *)p_rtp, (char *)ffname) == NULL) {
+  if (cookie != &APP_LOAD && strstr((char *)p_rtp, ffname) == NULL) {
     // directory is not yet in 'runtimepath', add it
-    p4 = p3 = p2 = p1 = get_past_head(ffname);
+    p4 = p3 = p2 = p1 = get_past_head((char_u *)ffname);
     for (p = p1; *p; mb_ptr_adv(p)) {
       if (vim_ispathsep_nocolon(*p)) {
         p4 = p3; p3 = p2; p2 = p1; p1 = p;
@@ -2496,13 +2522,13 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     *p4 = NUL;
 
     // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
-    size_t fname_len = STRLEN(ffname);
-    char_u *insp = p_rtp;
+    size_t fname_len = strlen(ffname);
+    const char *insp = (const char *)p_rtp;
     for (;;) {
-      if (vim_fnamencmp(insp, ffname, fname_len) == 0) {
+      if (path_fnamencmp(insp, ffname, fname_len) == 0) {
         break;
       }
-      insp = vim_strchr(insp, ',');
+      insp = strchr(insp, ',');
       if (insp == NULL) {
         break;
       }
@@ -2511,10 +2537,10 @@ static void add_pack_plugin(char_u *fname, void *cookie)
 
     if (insp == NULL) {
       // not found, append at the end
-      insp = p_rtp + STRLEN(p_rtp);
+      insp = (const char *)p_rtp + STRLEN(p_rtp);
     } else {
       // append after the matching directory.
-      insp += STRLEN(ffname);
+      insp += strlen(ffname);
       while (*insp != NUL && *insp != ',') {
         insp++;
       }
@@ -2522,31 +2548,40 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     *p4 = c;
 
     // check if rtp/pack/name/start/name/after exists
-    char *afterdir = concat_fnames((char *)ffname, "after", true);
+    char *afterdir = concat_fnames(ffname, "after", true);
     size_t afterlen = 0;
     if (os_isdir((char_u *)afterdir)) {
-      afterlen = STRLEN(afterdir) + 1;  // add one for comma
+      afterlen = strlen(afterdir) + 1;  // add one for comma
     }
 
-    size_t oldlen = STRLEN(p_rtp);
-    size_t addlen = STRLEN(ffname) + 1;  // add one for comma
-    new_rtp = try_malloc(oldlen + addlen + afterlen + 1);  // add one for NUL
+    const size_t oldlen = STRLEN(p_rtp);
+    const size_t addlen = strlen(ffname) + 1;  // add one for comma
+    const size_t new_rtp_len = oldlen + addlen + afterlen + 1;
+    // add one for NUL -------------------------------------^
+    char *const new_rtp = try_malloc(new_rtp_len);
     if (new_rtp == NULL) {
       goto theend;
     }
-    uintptr_t keep = (uintptr_t)(insp - p_rtp);
+    const size_t keep = (size_t)(insp - (const char *)p_rtp);
+    size_t new_rtp_fill = 0;
     memmove(new_rtp, p_rtp, keep);
-    new_rtp[keep] = ',';
-    memmove(new_rtp + keep + 1, ffname, addlen);
+    new_rtp_fill += keep;
+    new_rtp[new_rtp_fill++] = ',';
+    memmove(new_rtp + new_rtp_fill, ffname, addlen);
+    new_rtp_fill += addlen - 1;
+    assert(new_rtp[new_rtp_fill] == NUL || new_rtp[new_rtp_fill] == ',');
     if (p_rtp[keep] != NUL) {
-      memmove(new_rtp + keep + addlen, p_rtp + keep,
-              oldlen - keep + 1);
+      memmove(new_rtp + new_rtp_fill, p_rtp + keep, oldlen - keep + 1);
+      new_rtp_fill += oldlen - keep;
     }
     if (afterlen > 0) {
-      STRCAT(new_rtp, ",");
-      STRCAT(new_rtp, afterdir);
+      assert(new_rtp[new_rtp_fill] == NUL);
+      new_rtp[new_rtp_fill++] = ',';
+      memmove(new_rtp + new_rtp_fill, afterdir, afterlen - 1);
+      new_rtp_fill += afterlen - 1;
     }
-    set_option_value((char_u *)"rtp", 0L, new_rtp, 0);
+    new_rtp[new_rtp_fill] = NUL;
+    set_option_value("rtp", 0L, new_rtp, 0);
     xfree(new_rtp);
     xfree(afterdir);
   }
@@ -2555,7 +2590,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
     static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
 
-    size_t len = STRLEN(ffname) + STRLEN(ftpat);
+    size_t len = strlen(ffname) + STRLEN(ftpat);
     char_u *pat = try_malloc(len + 1);
     if (pat == NULL) {
       goto theend;
@@ -2585,6 +2620,7 @@ static bool did_source_packages = false;
 
 // ":packloadall"
 // Find plugins in the package directories and source them.
+// "eap" is NULL when invoked during startup.
 void ex_packloadall(exarg_T *eap)
 {
   if (!did_source_packages || (eap != NULL && eap->forceit)) {
@@ -2680,14 +2716,7 @@ static FILE *fopen_noinh_readbin(char *filename)
     return NULL;
   }
 
-#ifdef HAVE_FD_CLOEXEC
-  {
-    int fdflags = fcntl(fd_tmp, F_GETFD);
-    if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0) {
-      (void)fcntl(fd_tmp, F_SETFD, fdflags | FD_CLOEXEC);
-    }
-  }
-#endif
+  (void)os_set_cloexec(fd_tmp);
 
   return fdopen(fd_tmp, READBIN);
 }
@@ -3676,19 +3705,18 @@ char_u *get_locales(expand_T *xp, int idx)
 
 static void script_host_execute(char *name, exarg_T *eap)
 {
-  uint8_t *script = script_get(eap, eap->arg);
+  size_t len;
+  char *const script = script_get(eap, &len);
 
-  if (!eap->skip) {
-    list_T *args = list_alloc();
+  if (script != NULL) {
+    list_T *const args = tv_list_alloc();
     // script
-    list_append_string(args, script ? script : eap->arg, -1);
+    tv_list_append_allocated_string(args, script);
     // current range
-    list_append_number(args, (int)eap->line1);
-    list_append_number(args, (int)eap->line2);
+    tv_list_append_number(args, (int)eap->line1);
+    tv_list_append_number(args, (int)eap->line2);
     (void)eval_call_provider(name, "execute", args);
   }
-
-  xfree(script);
 }
 
 static void script_host_execute_file(char *name, exarg_T *eap)
@@ -3696,21 +3724,21 @@ static void script_host_execute_file(char *name, exarg_T *eap)
   uint8_t buffer[MAXPATHL];
   vim_FullName((char *)eap->arg, (char *)buffer, sizeof(buffer), false);
 
-  list_T *args = list_alloc();
+  list_T *args = tv_list_alloc();
   // filename
-  list_append_string(args, buffer, -1);
+  tv_list_append_string(args, (const char *)buffer, -1);
   // current range
-  list_append_number(args, (int)eap->line1);
-  list_append_number(args, (int)eap->line2);
+  tv_list_append_number(args, (int)eap->line1);
+  tv_list_append_number(args, (int)eap->line2);
   (void)eval_call_provider(name, "execute_file", args);
 }
 
 static void script_host_do_range(char *name, exarg_T *eap)
 {
-  list_T *args = list_alloc();
-  list_append_number(args, (int)eap->line1);
-  list_append_number(args, (int)eap->line2);
-  list_append_string(args, eap->arg, -1);
+  list_T *args = tv_list_alloc();
+  tv_list_append_number(args, (int)eap->line1);
+  tv_list_append_number(args, (int)eap->line2);
+  tv_list_append_string(args, (const char *)eap->arg, -1);
   (void)eval_call_provider(name, "do_range", args);
 }
 
