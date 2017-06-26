@@ -113,11 +113,18 @@ before_each(function()
   })
 end)
 
+local function set_color_cb(funcname)
+  meths.set_var('Nvim_color_cmdline', funcname)
+end
+local function start_prompt(text)
+  feed(':' .. (text or ''))
+end
+
 describe('Command-line coloring', function()
   it('works', function()
-    meths.set_var('Nvim_color_cmdline', 'RainBowParens')
+    set_color_cb('RainBowParens')
     meths.set_option('more', false)
-    feed(':')
+    start_prompt()
     screen:expect([[
                                               |
       {EOB:~                                       }|
@@ -219,8 +226,8 @@ describe('Command-line coloring', function()
   end)
   for _, func_part in ipairs({'', 'n', 'msg'}) do
     it('disables :echo' .. func_part .. ' messages', function()
-      meths.set_var('Nvim_color_cmdline', 'Echo' .. func_part .. 'ing')
-      feed(':echo')
+      set_color_cb('Echo' .. func_part .. 'ing')
+      start_prompt('echo')
       screen:expect([[
                                                 |
         {EOB:~                                       }|
@@ -235,8 +242,8 @@ describe('Command-line coloring', function()
   end
   it('does the right thing when hl start appears to split multibyte char',
   function()
-    meths.set_var('Nvim_color_cmdline', 'SplittedMultibyteStart')
-    feed(':echo "«')
+    set_color_cb('SplittedMultibyteStart')
+    start_prompt('echo "«')
     screen:expect([[
       {EOB:~                                       }|
       {EOB:~                                       }|
@@ -261,8 +268,8 @@ describe('Command-line coloring', function()
   end)
   it('does the right thing when hl end appears to split multibyte char',
   function()
-    meths.set_var('Nvim_color_cmdline', 'SplittedMultibyteEnd')
-    feed(':echo "«')
+    set_color_cb('SplittedMultibyteEnd')
+    start_prompt('echo "«')
     screen:expect([[
       {EOB:~                                       }|
       {EOB:~                                       }|
@@ -276,34 +283,34 @@ describe('Command-line coloring', function()
   end)
   it('does the right thing when errorring', function()
     if true then return pending('echoerr does not work well now') end
-    meths.set_var('Nvim_color_cmdline', 'Echoerring')
-    feed(':e')
+    set_color_cb('Echoerring')
+    start_prompt('e')
     -- FIXME Does not work well with :echoerr: error message overwrites cmdline.
   end)
   it('does the right thing when throwing', function()
     if true then return pending('Throwing does not work well now') end
-    meths.set_var('Nvim_color_cmdline', 'Throwing')
-    feed(':e')
+    set_color_cb('Throwing')
+    start_prompt('e')
     -- FIXME Does not work well with :throw: error message overwrites cmdline.
   end)
   it('still executes command-line even if errored out', function()
-    meths.set_var('Nvim_color_cmdline', 'SplittedMultibyteStart')
-    feed(':let x = "«"\n')
+    set_color_cb('SplittedMultibyteStart')
+    start_prompt('let x = "«"\n')
     eq('«', meths.get_var('x'))
     local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
     eq('\n'..msg, funcs.execute('messages'))
   end)
   it('stops executing callback after a number of errors', function()
-    meths.set_var('Nvim_color_cmdline', 'SplittedMultibyteStart')
-    feed(':let x = "«»«»«»«»«»"\n')
+    set_color_cb('SplittedMultibyteStart')
+    start_prompt('let x = "«»«»«»«»«»"\n')
     eq('«»«»«»«»«»', meths.get_var('x'))
     local msg = '\nE5405: Chunk 0 start 10 splits multibyte character'
     eq(msg:rep(1), funcs.execute('messages'))
   end)
   it('allows interrupting callback with <C-c>', function()
     if true then return pending('<C-c> does not work well enough now') end
-    meths.set_var('Nvim_color_cmdline', 'Halting')
-    feed(':echo 42')
+    set_color_cb('Halting')
+    start_prompt('echo 42')
     for i = 1, 6 do
       screen:expect([[
         ^                                        |
@@ -327,7 +334,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       Type  :quit<Enter>  to exit Nvim        |
     ]])
-    feed(':echo 42<CR>')
+    start_prompt('echo 42<CR>')
     screen:expect([[
       ^                                        |
       {EOB:~                                       }|
@@ -340,8 +347,8 @@ describe('Command-line coloring', function()
     ]])
   end)
   it('works fine with NUL, NL, CR', function()
-    meths.set_var('Nvim_color_cmdline', 'RainBowParens')
-    feed(':echo ("<C-v><CR><C-v><Nul><C-v><NL>")')
+    set_color_cb('RainBowParens')
+    start_prompt('echo ("<C-v><CR><C-v><Nul><C-v><NL>")')
     screen:expect([[
                                               |
       {EOB:~                                       }|
