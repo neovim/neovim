@@ -2286,7 +2286,11 @@ void ui_ext_cmdline_show(void)
   ADD(text, STRING_OBJ(cstr_to_string("Normal")));
   ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
   ADD(content, ARRAY_OBJ(text));
-  ui_call_cmdline_show(content, ccline.cmdpos, cchar_to_string((char)ccline.cmdfirstc), cstr_to_string((char *)(ccline.cmdprompt)), ccline.level);
+  ui_call_cmdline_show(content, ccline.cmdpos,
+                       cchar_to_string((char)ccline.cmdfirstc),
+                       cstr_to_string((char *)(ccline.cmdprompt)),
+                       ccline.cmdindent,
+                       ccline.level);
 }
 
 /*

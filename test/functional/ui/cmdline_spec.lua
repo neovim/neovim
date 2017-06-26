@@ -7,7 +7,7 @@ if helpers.pending_win32(pending) then return end
 describe('External command line completion', function()
   local screen
   local shown = false
-  local firstc, prompt, content, pos, char, shift, level, current_hide_level, in_function
+  local firstc, prompt, content, pos, char, shift, indent, level, current_hide_level, in_function
 
   before_each(function()
     clear()
@@ -19,7 +19,7 @@ describe('External command line completion', function()
         current_hide_level = data[1]
       elseif name == "cmdline_show" then
         shown = true
-        content, pos, firstc, prompt, level = unpack(data)
+        content, pos, firstc, prompt, indent, level = unpack(data)
       elseif name == "cmdline_char" then
         char, shift = unpack(data)
       elseif name == "cmdline_pos" then
@@ -190,6 +190,17 @@ describe('External command line completion', function()
         ~                        |
         ~                        |
         ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq(false, in_function)
+      end)
+
+      feed(':sign<c-f>')
+      screen:expect([[
+                                 |
+        [No Name]                |
+        :sign^                    |
+        [Command Line]           |
                                  |
       ]], nil, nil, function()
         eq(false, in_function)
