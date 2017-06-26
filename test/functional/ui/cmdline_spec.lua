@@ -171,6 +171,7 @@ describe('External command line completion', function()
                                  |
       ]], nil, nil, function()
         eq(true, in_function)
+        eq(2, indent)
       end)
 
       feed('line1<cr>')
@@ -182,6 +183,7 @@ describe('External command line completion', function()
                                  |
       ]], nil, nil, function()
         eq(true, in_function)
+        eq(2, indent)
       end)
 
       feed('endfunction<cr>')
