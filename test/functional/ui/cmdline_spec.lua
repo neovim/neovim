@@ -7,7 +7,7 @@ if helpers.pending_win32(pending) then return end
 describe('External command line completion', function()
   local screen
   local shown = false
-  local firstc, prompt, content, pos, char, shift, level, current_hide_level
+  local firstc, prompt, content, pos, char, shift, level, current_hide_level, in_function
 
   before_each(function()
     clear()
@@ -24,6 +24,10 @@ describe('External command line completion', function()
         char, shift = unpack(data)
       elseif name == "cmdline_pos" then
         pos = data[1]
+      elseif name == "cmdline_function_show" then
+        in_function = true
+      elseif name == "cmdline_function_hide" then
+        in_function = false
       end
     end)
   end)
@@ -156,6 +160,39 @@ describe('External command line completion', function()
                                  |
       ]], nil, nil, function()
         eq(1, current_hide_level)
+      end)
+
+      feed(':function Foo()<cr>')
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq(true, in_function)
+      end)
+
+      feed('line1<cr>')
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq(true, in_function)
+      end)
+
+      feed('endfunction<cr>')
+      screen:expect([[
+        ^                         |
+        ~                        |
+        ~                        |
+        ~                        |
+                                 |
+      ]], nil, nil, function()
+        eq(false, in_function)
       end)
 
     end)
