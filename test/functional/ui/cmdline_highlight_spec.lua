@@ -25,6 +25,7 @@ before_each(function()
       return ''
     endfunction
     cnoremap <expr> {REDRAW} Redraw()
+    nnoremap <expr> {PROMPT} input({"prompt": ":", "highlight": g:Nvim_color_input})[1:0]
     function RainBowParens(cmdline)
       let ret = []
       let i = 0
@@ -114,10 +115,10 @@ before_each(function()
 end)
 
 local function set_color_cb(funcname)
-  meths.set_var('Nvim_color_cmdline', funcname)
+  meths.set_var('Nvim_color_input', funcname)
 end
 local function start_prompt(text)
-  feed(':' .. (text or ''))
+  feed('{PROMPT}' .. (text or ''))
 end
 
 describe('Command-line coloring', function()
@@ -294,20 +295,13 @@ describe('Command-line coloring', function()
     start_prompt('e')
     -- FIXME Does not work well with :throw: error message overwrites cmdline.
   end)
-  it('still executes command-line even if errored out', function()
-    set_color_cb('SplittedMultibyteStart')
-    start_prompt('let x = "«"\n')
-    eq('«', meths.get_var('x'))
-    local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
-    eq('\n'..msg, funcs.execute('messages'))
-  end)
-  it('stops executing callback after a number of errors', function()
+  pending('stops executing callback after a number of errors'--[[, function()
     set_color_cb('SplittedMultibyteStart')
     start_prompt('let x = "«»«»«»«»«»"\n')
     eq('«»«»«»«»«»', meths.get_var('x'))
     local msg = '\nE5405: Chunk 0 start 10 splits multibyte character'
     eq(msg:rep(1), funcs.execute('messages'))
-  end)
+  end]])
   it('allows interrupting callback with <C-c>', function()
     if true then return pending('<C-c> does not work well enough now') end
     set_color_cb('Halting')
@@ -363,3 +357,14 @@ describe('Command-line coloring', function()
   end)
   -- TODO Check for all other errors
 end)
+describe('Ex commands coloring support', function()
+  it('still executes command-line even if errored out', function()
+    meths.set_var('Nvim_color_cmdline', 'SplittedMultibyteStart')
+    feed(':let x = "«"\n')
+    eq('«', meths.get_var('x'))
+    local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
+    eq('\n'..msg, funcs.execute('messages'))
+  end)
+end)
+
+-- TODO Specifically test for coloring in cmdline and expr modes
