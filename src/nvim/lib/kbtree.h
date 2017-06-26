@@ -390,7 +390,7 @@
 #define KBTREE_INIT(name, key_t, __cmp, T) \
   KBTREE_INIT_IMPL(name, key_t, kbnode_##name##_t, __cmp, T, (sizeof(kbnode_##name##_t)+(2*T)*sizeof(void *)))
 
-#if (!defined(__clang__) && !defined(__INTEL_COMPILER)) &&  (__GNUC__ >= 4 )
+#if 1
 
 // The index trickery shouldn't be UB anymore,
 // still it is to much for gcc:s -Werror=array-bounds
