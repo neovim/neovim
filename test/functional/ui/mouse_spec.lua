@@ -168,13 +168,13 @@ describe('ui/mouse/input', function()
                                  |
       ]])
       feed('<LeftMouse><11,0>')
-      screen:expect([[
+      screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r              |
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]])
+      ]], unchanged=true}
       feed('<LeftDrag><6,0>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
@@ -236,13 +236,13 @@ describe('ui/mouse/input', function()
                                  |
       ]])
       feed('<LeftDrag><4,1>')
-      screen:expect([[
+      screen:expect{grid=[[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]])
+      ]], unchanged=true}
       feed('<LeftDrag><14,1>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|
@@ -254,13 +254,6 @@ describe('ui/mouse/input', function()
     end)
 
     it('out of tabline to the left moves tab left', function()
-      if helpers.skip_fragile(pending,
-        os.getenv("TRAVIS") and (helpers.os_name() == "osx"
-          or os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN"))  -- #4874
-      then
-        return
-      end
-
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
@@ -273,21 +266,21 @@ describe('ui/mouse/input', function()
                                  |
       ]])
       feed('<LeftMouse><11,0>')
-      screen:expect([[
+      screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r              |
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]])
+      ]], unchanged=true}
       feed('<LeftDrag><11,1>')
-      screen:expect([[
+      screen:expect{grid=[[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
         this is ba^r              |
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]])
+      ]], unchanged=true}
       feed('<LeftDrag><6,1>')
       screen:expect([[
         {sel: + bar }{tab: + foo }{fill:          }{tab:X}|
@@ -319,13 +312,13 @@ describe('ui/mouse/input', function()
                                  |
       ]])
       feed('<LeftDrag><4,1>')
-      screen:expect([[
+      screen:expect{grid=[[
         {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
         this is fo^o              |
         {0:~                        }|
         {0:~                        }|
                                  |
-      ]])
+      ]], unchanged=true}
       feed('<LeftDrag><7,1>')
       screen:expect([[
         {tab: + bar }{sel: + foo }{fill:          }{tab:X}|

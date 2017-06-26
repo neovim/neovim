@@ -324,7 +324,17 @@ describe('search highlighting', function()
     ]])
 
     -- same, for C-t
-    feed('<ESC>/<C-t>')
+    feed('<ESC>')
+    screen:expect([[
+        the first line                        |
+        in a ^little file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+    feed('/<C-t>')
     screen:expect([[
         the first line                        |
         in a little file                      |

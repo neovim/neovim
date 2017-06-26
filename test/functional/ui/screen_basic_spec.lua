@@ -394,7 +394,7 @@ local function screen_tests(linegrid)
     end)
 
     it('redraws properly with :tab split right after scroll', function()
-      feed('30Ofoo<esc>gg')
+      feed('15Ofoo<esc>15Obar<esc>gg')
 
       command('vsplit')
       screen:expect([[
@@ -420,18 +420,17 @@ local function screen_tests(linegrid)
         foo                       {3:│}foo                       |
         foo                       {3:│}foo                       |
         foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
         {1:[No Name] [+]              }{3:[No Name] [+]             }|
                                                              |
       ]])
-
       command('tab split')
       screen:expect([[
         {4: }{5:2}{4:+ [No Name] }{2: + [No Name] }{3:                         }{4:X}|
@@ -439,14 +438,14 @@ local function screen_tests(linegrid)
         foo                                                  |
         foo                                                  |
         foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
                                                              |
       ]])
     end)

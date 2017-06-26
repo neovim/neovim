@@ -150,13 +150,13 @@ describe('input()', function()
       {T:Foo>}Bar^                  |
     ]])
     command('redraw!')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
       {T:Foo>}Bar^                  |
-    ]])
+    ]], reset=true}
     feed('<BS>')
     screen:expect([[
                                |
@@ -166,13 +166,13 @@ describe('input()', function()
       {T:Foo>}Ba^                   |
     ]])
     command('redraw!')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
       {T:Foo>}Ba^                   |
-    ]])
+    ]], reset=true}
   end)
   it('allows omitting everything with dictionary argument', function()
     command('echohl Test')
@@ -348,13 +348,13 @@ describe('inputdialog()', function()
       {T:Foo>}Bar^                  |
     ]])
     command('redraw!')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
       {T:Foo>}Bar^                  |
-    ]])
+    ]], reset=true}
     feed('<BS>')
     screen:expect([[
                                |
@@ -364,13 +364,13 @@ describe('inputdialog()', function()
       {T:Foo>}Ba^                   |
     ]])
     command('redraw!')
-    screen:expect([[
+    screen:expect{grid=[[
                                |
       {EOB:~                        }|
       {EOB:~                        }|
       {EOB:~                        }|
       {T:Foo>}Ba^                   |
-    ]])
+    ]], reset=true}
   end)
   it('allows omitting everything with dictionary argument', function()
     command('echohl Test')

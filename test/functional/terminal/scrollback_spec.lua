@@ -426,9 +426,8 @@ describe("'scrollback' option", function()
     curbufmeths.set_option('scrollback', 200)
 
     -- Wait for prompt.
-    screen:expect{any='$'}
+    screen:expect{any='%$'}
 
-    wait()
     if iswin() then
       feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
     else

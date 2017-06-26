@@ -113,7 +113,6 @@ describe('timers', function()
       ^                                        |
     ]])
 
-    screen:sleep(200)
     screen:expect([[
       ITEM 1                                  |
       ITEM 2                                  |
@@ -200,13 +199,14 @@ describe('timers', function()
     screen:attach()
     screen:set_default_attr_ids( {[0] = {bold=true, foreground=255}} )
     source([[
+      let g:val = 0
       func! MyHandler(timer)
         echo "evil"
+        let g:val = 1
       endfunc
     ]])
     command("call timer_start(100,  'MyHandler', {'repeat': 1})")
     feed(":good")
-    screen:sleep(200)
     screen:expect([[
                                               |
       {0:~                                       }|
@@ -215,6 +215,17 @@ describe('timers', function()
       {0:~                                       }|
       :good^                                   |
     ]])
+
+    screen:expect{grid=[[
+                                              |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      :good^                                   |
+    ]], intermediate=true, timeout=200}
+
+    eq(1, eval('g:val'))
   end)
 
 end)

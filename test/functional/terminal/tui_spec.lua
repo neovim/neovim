@@ -370,7 +370,7 @@ describe('tui FocusGained/FocusLost', function()
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027[O')
-    screen:expect([[
+    screen:expect{grid=[[
                                                         |
       {4:~                                                 }|
       {4:~                                                 }|
@@ -378,7 +378,7 @@ describe('tui FocusGained/FocusLost', function()
       {5:[No Name]                                         }|
       :{1: }                                                |
       {3:-- TERMINAL --}                                    |
-    ]])
+    ]], unchanged=true}
   end)
 
   it('in cmdline-mode', function()

@@ -870,7 +870,7 @@ describe("'winhighlight' highlight", function()
     eq('Vim(set):E474: Invalid argument: winhl=xxx:yyy',
        exc_exec("set winhl=xxx:yyy"))
     eq('Normal:Background1', eval('&winhl'))
-    screen:expect([[
+    screen:expect{grid=[[
       {1:^                    }|
       {2:~                   }|
       {2:~                   }|
@@ -879,7 +879,7 @@ describe("'winhighlight' highlight", function()
       {2:~                   }|
       {2:~                   }|
                           |
-    ]])
+    ]], unchanged=true}
   end)
 
 

@@ -495,6 +495,18 @@ describe(":substitute, 'inccommand' preserves undo", function()
     for _, case in pairs(cases) do
       clear()
       common_setup(screen, case, default_text)
+      screen:expect([[
+        Inc substitution on |
+        two lines           |
+        ^                    |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+                            |
+      ]])
       feed_command("set undolevels=1")
 
       feed("1G0")
@@ -757,8 +769,23 @@ describe(":substitute, inccommand=split", function()
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
-    screen:expect{any=[[two lines]]}
-    feed('<Esc>')
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      :silent tabedit %s/tw/to^      |
+    ]])
   end)
 
   it('shows split window when typing the pattern', function()
@@ -866,7 +893,6 @@ describe(":substitute, inccommand=split", function()
   it('does not show split window for :s/', function()
     feed("2gg")
     feed(":s/tw")
-    screen:sleep(1)
     screen:expect([[
       Inc substitution on           |
       {12:tw}o lines                     |
@@ -1234,8 +1260,18 @@ describe("inccommand=nosplit", function()
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
-    screen:expect{any=[[two lines]]}
-    feed('<Esc>')
+    screen:expect([[
+      two lines           |
+      Inc substitution on |
+      two lines           |
+                          |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :silent tabedit %s/t|
+      w/to^                |
+    ]])
   end)
 
   it("does not show window after toggling :set inccommand", function()

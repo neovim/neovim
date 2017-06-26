@@ -267,7 +267,7 @@ describe('Command-line coloring', function()
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
     ]])
     redraw_input()
-    screen:expect([[
+    screen:expect{grid=[[
                                               |
       {EOB:~                                       }|
       {EOB:~                                       }|
@@ -276,7 +276,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
-    ]])
+    ]], reset=true}
   end)
   for _, func_part in ipairs({'', 'n', 'msg'}) do
     it('disables :echo' .. func_part .. ' messages', function()
@@ -843,17 +843,6 @@ describe('Ex commands coloring support', function()
       {ERR:Error detected while processing :}       |
       {ERR:E605: Exception not caught: 42}          |
       :#^                                      |
-    ]])
-    feed('<CR>')
-    screen:expect([[
-      ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-                                              |
     ]])
     feed('<CR>')
     screen:expect([[
