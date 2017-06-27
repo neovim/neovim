@@ -47,11 +47,11 @@ function! provider#clipboard#Error() abort
 endfunction
 
 function! provider#clipboard#Executable() abort
-  if exists('g:clipboard_provider')
-    let s:copy = g:clipboard_provider.copy
-    let s:paste = g:clipboard_provider.paste
-    let s:cache_enabled = g:clipboard_provider.cache_enabled
-    return g:clipboard_provider.name
+  if exists('g:clipboard_prog')
+    let s:copy = g:clipboard_prog.copy
+    let s:paste = g:clipboard_prog.paste
+    let s:cache_enabled = g:clipboard_prog.cache_enabled
+    return g:clipboard_prog.name
   elseif has('mac') && executable('pbcopy')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'

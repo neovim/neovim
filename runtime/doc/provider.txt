@@ -130,7 +130,7 @@ are found in your `$PATH`.
   - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
 
 If you would like to configure the provider: >
-    let g:clipboard_provider = {
+    let g:clipboard_prog = {
           \   'name': 'myProvider',
           \   'copy': {
           \      '+': 'copyCommand',
