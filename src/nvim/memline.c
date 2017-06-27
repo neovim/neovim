@@ -140,9 +140,9 @@ struct data_block {
 #define INDEX_SIZE  (sizeof(unsigned))      /* size of one db_index entry */
 #define HEADER_SIZE (sizeof(DATA_BL) - INDEX_SIZE)  /* size of data block header */
 
-#define B0_FNAME_SIZE_ORG       900     /* what it was in older versions */
-#define B0_FNAME_SIZE_NOCRYPT   898     /* 2 bytes used for other things */
-#define B0_FNAME_SIZE_CRYPT     890     /* 10 bytes used for other things */
+#define B0_FNAME_SIZE_ORG       900   /* what it was in older versions (required for
+                                         backward compatibility) */
+#define B0_FNAME_SIZE           898   /* 2 bytes used for b0_dirty and b0_flags (defined below) */
 #define B0_UNAME_SIZE           40
 #define B0_HNAME_SIZE           40
 /*
@@ -666,14 +666,14 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
      * Then insert the user name to get "~user/".
      */
     home_replace(NULL, buf->b_ffname, b0p->b0_fname,
-        B0_FNAME_SIZE_CRYPT, TRUE);
+        B0_FNAME_SIZE, TRUE);
     if (b0p->b0_fname[0] == '~') {
       /* If there is no user name or it is too long, don't use "~/" */
       int retval = os_get_user_name(uname, B0_UNAME_SIZE);
       size_t ulen = STRLEN(uname);
       size_t flen = STRLEN(b0p->b0_fname);
-      if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
-        STRLCPY(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
+      if (retval == FAIL || ulen + flen > B0_FNAME_SIZE- 1) {
+        STRLCPY(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE);
       } else {
         memmove(b0p->b0_fname + ulen + 1, b0p->b0_fname + 1, flen);
         memmove(b0p->b0_fname + 1, uname, ulen);
@@ -719,7 +719,7 @@ static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf)
 static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
 {
   int n;
-  int size = B0_FNAME_SIZE_NOCRYPT;
+  int size = B0_FNAME_SIZE;
 
   n = (int)STRLEN(buf->b_p_fenc);
   if ((int)STRLEN(b0p->b0_fname) + n + 1 > size)
@@ -967,7 +967,7 @@ void ml_recover(void)
   /* Get the 'fileformat' and 'fileencoding' from block zero. */
   b0_ff = (b0p->b0_flags & B0_FF_MASK);
   if (b0p->b0_flags & B0_HAS_FENC) {
-    int fnsize = B0_FNAME_SIZE_NOCRYPT;
+    int fnsize = B0_FNAME_SIZE;
 
     for (p = b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; --p)
       ;
