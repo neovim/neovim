@@ -46,117 +46,58 @@ function! provider#clipboard#Error() abort
   return s:err
 endfunction
 
-let s:providers = [
-      \ {
-      \   'name': 'pbcopy/pbpaste',
-      \   'copy': {
-      \      '+': 'pbcopy',
-      \      '*': 'pbcopy',
-      \    },
-      \   'paste': {
-      \      '+': 'pbpaste',
-      \      '*': 'pbpaste',
-      \   },
-      \   'cache_enabled': 0,
-      \   'check': 'executable("pbcopy")',
-      \ },
-      \ {
-      \   'name': 'xsel',
-      \   'copy': {
-      \      '+': 'xsel --nodetach -i -b',
-      \      '*': 'xsel --nodetach -i -p',
-      \    },
-      \   'paste': {
-      \      '+': 'xsel -o -b',
-      \      '*': 'xsel -o -p',
-      \   },
-      \   'cache_enabled': 1,
-      \   'check': 'exists("$DISPLAY") && executable("xsel") && s:cmd_ok("xsel -o -b")',
-      \ },
-      \ {
-      \   'name': 'xclip',
-      \   'copy': {
-      \      '+': 'xclip -quiet -i -selection clipboard',
-      \      '*': 'xclip -quiet -i -selection primary',
-      \    },
-      \   'paste': {
-      \      '+': 'xclip -o -selection clipboard',
-      \      '*': 'xclip -o -selection primary',
-      \   },
-      \   'cache_enabled': 1,
-      \   'check': 'exists("$DISPLAY") && executable("xclip")',
-      \ },
-      \ {
-      \   'name': 'lemonade',
-      \   'copy': {
-      \      '+': 'lemonade copy',
-      \      '*': 'lemonade copy',
-      \    },
-      \   'paste': {
-      \      '+': 'lemonade paste',
-      \      '*': 'lemonade paste',
-      \   },
-      \   'cache_enabled': 1,
-      \   'check': 'executable("lemonade")',
-      \ },
-      \ {
-      \   'name': 'doitclient',
-      \   'copy': {
-      \      '+': 'doitclient wclip',
-      \      '*': 'doitclient wclip',
-      \    },
-      \   'paste': {
-      \      '+': 'doitclient wclip -r',
-      \      '*': 'doitclient wclip -r',
-      \   },
-      \   'cache_enabled': 1,
-      \   'check': 'executable("doitclient")',
-      \ },
-      \ {
-      \   'name': 'win32yank',
-      \   'copy': {
-      \      '+': 'win32yank -i --crlf',
-      \      '*': 'win32yank -i --crlf',
-      \    },
-      \   'paste': {
-      \      '+': 'win32yank -i --lf',
-      \      '*': 'win32yank -i --lf',
-      \   },
-      \   'cache_enabled': 1,
-      \   'check': 'executable("win32yank")',
-      \ },
-      \ {
-      \   'name': 'tmux',
-      \   'copy': {
-      \      '+': 'tmux load-buffer -',
-      \      '*': 'tmux load-buffer -',
-      \    },
-      \   'paste': {
-      \      '+': 'tmux save-buffer -',
-      \      '*': 'tmux save-buffer -',
-      \   },
-      \   'cache_enabled': 1,
-      \   'check': 'exists("$TMUX") && executable("tmux")',
-      \ },
-      \ ]
-
-function! s:set_provider(p) abort
-    let s:copy = a:p.copy
-    let s:paste = a:p.paste
-    let s:cache_enabled = a:p.cache_enabled
-    return a:p.name
-endfunction
-
 function! provider#clipboard#Executable() abort
   if exists('g:clipboard_provider')
-    return s:set_provider(g:clipboard_provider)
+    let s:copy = g:clipboard_provider.copy
+    let s:paste = g:clipboard_provider.paste
+    let s:cache_enabled = g:clipboard_provider.cache_enabled
+    return g:clipboard_provider.name
+  elseif has('mac') && executable('pbcopy')
+    let s:copy['+'] = 'pbcopy'
+    let s:paste['+'] = 'pbpaste'
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    let s:cache_enabled = 0
+    return 'pbcopy'
+  elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
+    let s:copy['+'] = 'xsel --nodetach -i -b'
+    let s:paste['+'] = 'xsel -o -b'
+    let s:copy['*'] = 'xsel --nodetach -i -p'
+    let s:paste['*'] = 'xsel -o -p'
+    return 'xsel'
+  elseif exists('$DISPLAY') && executable('xclip')
+    let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
+    let s:paste['+'] = 'xclip -o -selection clipboard'
+    let s:copy['*'] = 'xclip -quiet -i -selection primary'
+    let s:paste['*'] = 'xclip -o -selection primary'
+    return 'xclip'
+  elseif executable('lemonade')
+    let s:copy['+'] = 'lemonade copy'
+    let s:paste['+'] = 'lemonade paste'
+    let s:copy['*'] = 'lemonade copy'
+    let s:paste['*'] = 'lemonade paste'
+    return 'lemonade'
+  elseif executable('doitclient')
+    let s:copy['+'] = 'doitclient wclip'
+    let s:paste['+'] = 'doitclient wclip -r'
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'doitclient'
+  elseif executable('win32yank')
+    let s:copy['+'] = 'win32yank -i --crlf'
+    let s:paste['+'] = 'win32yank -o --lf'
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'win32yank'
+  elseif exists('$TMUX') && executable('tmux')
+    let s:copy['+'] = 'tmux load-buffer -'
+    let s:paste['+'] = 'tmux save-buffer -'
+    let s:copy['*'] = s:copy['+']
+    let s:paste['*'] = s:paste['+']
+    return 'tmux'
   endif
-  for p in s:providers
-    if eval(p.check)
-      return s:set_provider(p)
-    endif
-  endfor
-  let s:err = 'clipboard: No clipboard tool available. See :help clipboard'
+
+  let s:err = 'clipboard: No clipboard tool available. :help clipboard'
   return ''
 endfunction
 
