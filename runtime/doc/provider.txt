@@ -129,6 +129,25 @@ are found in your `$PATH`.
   - lemonade (for SSH) https://github.com/pocke/lemonade
   - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
 
+If you would like to configure the provider: >
+    let g:clipboard = {
+          \   'name': 'myClipboard',
+          \   'copy': {
+          \      '+': 'copyCommand',
+          \      '*': 'copyCommand',
+          \    },
+          \   'paste': {
+          \      '+': 'pasteCommand',
+          \      '*': 'pasteCommand',
+          \   },
+          \   'cache_enabled': 1,
+          \ }
+
+If the cache is enabled, then when a selection is copied and the copy command
+is executed, neovim will cache this selection until the copy command process
+dies. Then, when pasting, if the copy command process has not died, the cached
+selection is returned instead of executing the paste command.
+
 The presence of a suitable clipboard tool implicitly enables the '+' and '*'
 registers.
 
