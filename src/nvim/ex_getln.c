@@ -85,7 +85,7 @@ struct cmdline_info {
                                    may point into cmdbuff */
   int xp_context;               /* type of expansion */
   char_u      *xp_arg;          /* user-defined expansion arg */
-  int input_fn;                 /* when TRUE Invoked for input() function */
+  int input_fn;                 // when TRUE Invoked for input() function
   int level;                    // current cmdline level
 };
 
@@ -2304,11 +2304,12 @@ void putcmdline(int c, int shift)
     return;
   }
   if (!ui_is_external(kUICmdline)) {
-    msg_no_more = TRUE;
+    msg_no_more = true;
     msg_putchar(c);
-    if (shift)
+    if (shift) {
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
-    msg_no_more = FALSE;
+    }
+    msg_no_more = false;
   } else {
     ui_call_cmdline_char(cchar_to_string((char)(c)), shift, ccline.level);
   }
