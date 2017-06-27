@@ -600,9 +600,26 @@ if(LUACHECK_PRG)
   add_custom_target(testlint
     COMMAND ${CMAKE_COMMAND}
       -DLUACHECK_PRG=${LUACHECK_PRG}
-      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DIGNORE_PATTERN="*/preload.lua"
       -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTestsLint.cmake)
+      -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake)
+
+  add_custom_target(
+    blobcodelint
+    COMMAND
+      ${CMAKE_COMMAND}
+        -DLUACHECK_PRG=${LUACHECK_PRG}
+        -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/lua
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DREAD_GLOBALS=vim
+        -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
+  )
+  # TODO(ZyX-I): Run linter for all lua code in src
+  add_custom_target(
+    lualint
+    DEPENDS blobcodelint
+  )
 endif()
 
 set(CPACK_PACKAGE_NAME "Neovim")

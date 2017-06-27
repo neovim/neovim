@@ -581,6 +581,24 @@ local function missing_provider(provider)
   end
 end
 
+local function alter_slashes(obj)
+  if not iswin() then
+    return obj
+  end
+  if type(obj) == 'string' then
+    local ret = obj:gsub('/', '\\')
+    return ret
+  elseif type(obj) == 'table' then
+    local ret = {}
+    for k, v in pairs(obj) do
+      ret[k] = alter_slashes(v)
+    end
+    return ret
+  else
+    assert(false, 'Could only alter slashes for tables of strings and strings')
+  end
+end
+
 local module = {
   prepend_argv = prepend_argv,
   clear = clear,
@@ -649,6 +667,7 @@ local module = {
   NIL = mpack.NIL,
   get_pathsep = get_pathsep,
   missing_provider = missing_provider,
+  alter_slashes = alter_slashes,
 }
 
 return function(after_each)
