@@ -2744,11 +2744,12 @@ void putcmdline(int c, int shift)
     return;
   }
   if (!ui_is_external(kUICmdline)) {
-    msg_no_more = TRUE;
+    msg_no_more = true;
     msg_putchar(c);
-    if (shift)
+    if (shift) {
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
-    msg_no_more = FALSE;
+    }
+    msg_no_more = false;
   } else {
     ui_call_cmdline_char(cchar_to_string((char)(c)), shift, ccline.level);
   }

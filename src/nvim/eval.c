@@ -19873,7 +19873,7 @@ void ex_function(exarg_T *eap)
       goto erret;
 
     if (!ui_is_external(kUICmdline)) {
-      msg_putchar('\n');              /* don't overwrite the function name */
+      msg_putchar('\n');              // don't overwrite the function name
     }
     cmdline_row = msg_row;
   }
