@@ -10,6 +10,13 @@ local source = helpers.source
 
 local screen
 
+-- Bug in input() handling: {REDRAW} will erase the whole prompt up until
+-- user types something. It exists in Vim as well, so using `h<BS>` as
+-- a workaround.
+local function redraw_input()
+  feed('{REDRAW}h<BS>')
+end
+
 before_each(function()
   clear()
   screen = Screen.new(40, 8)
@@ -214,10 +221,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
     ]])
-    -- Bug in input() handling: {REDRAW} will erase the whole prompt up until
-    -- user types something. It exists in Vim as well, so using `h<BS>` as
-    -- a workaround.
-    feed('{REDRAW}h<BS>')
+    redraw_input()
     screen:expect([[
                                               |
       {EOB:~                                       }|
@@ -364,13 +368,33 @@ describe('Command-line coloring', function()
       :                                       |
       {ERR:E5407: Callback has thrown an exception:}|
       {ERR: Keyboard interrupt}                     |
-      ^                                        |
+      :echo 42^                                |
     ]])
-    if true then return pending('<C-c> should only cancel callback, not input()') end
-    feed('{REDRAW}')
-    screen:snapshot_util()
-    feed('<CR>')
+    redraw_input()
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :echo 42^                                |
+    ]])
+    feed('\n')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      ^:echo 42                                |
+    ]])
+    feed('\n')
     eq('echo 42', meths.get_var('out'))
+    feed('<C-c>')
     screen:expect([[
       ^                                        |
       {EOB:~                                       }|
@@ -380,17 +404,6 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       Type  :quit<Enter>  to exit Nvim        |
-    ]])
-    start_prompt('echo 42<CR>')
-    screen:expect([[
-      ^                                        |
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      {EOB:~                                       }|
-      42                                      |
     ]])
   end)
   it('works fine with NUL, NL, CR', function()
@@ -420,3 +433,4 @@ describe('Ex commands coloring support', function()
 end)
 
 -- TODO Specifically test for coloring in cmdline and expr modes
+-- TODO Check using highlighted input() from inside highlighted input()

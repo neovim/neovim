@@ -166,6 +166,12 @@ static int hisnum[HIST_COUNT] = {0, 0, 0, 0, 0};
 /* identifying (unique) number of newest history entry */
 static int hislen = 0;                  /* actual length of history tables */
 
+/// Flag for command_line_handle_key to ignore <C-c>
+///
+/// Used if it was received while processing highlight function in order for
+/// user interrupting highlight function to not interrupt command-line.
+static bool getln_interrupted_highlight = false;
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
@@ -1026,8 +1032,11 @@ static int command_line_handle_key(CommandLineState *s)
   case ESC:           // get here if p_wc != ESC or when ESC typed twice
   case Ctrl_C:
     // In exmode it doesn't make sense to return.  Except when
-    // ":normal" runs out of characters.
-    if (exmode_active && (ex_normal_busy == 0 || typebuf.tb_len > 0)) {
+    // ":normal" runs out of characters. Also when highlight callback is active
+    // <C-c> should interrupt only it.
+    if ((exmode_active && (ex_normal_busy == 0 || typebuf.tb_len > 0))
+        || (getln_interrupted_highlight && s->c == Ctrl_C)) {
+      getln_interrupted_highlight = false;
       return command_line_not_changed(s);
     }
 
@@ -2278,6 +2287,7 @@ static bool color_cmdline(void)
   //
   // Also using try_start() because error messages may overwrite typed 
   // command-line which is not expected.
+  getln_interrupted_highlight = false;
   try_start();
   err_errmsg = N_("E5407: Callback has thrown an exception: %s");
   const int saved_msg_col = msg_col;
@@ -2285,6 +2295,9 @@ static bool color_cmdline(void)
   const bool cbcall_ret = callback_call(&color_cb, 1, &arg, &tv);
   msg_silent--;
   msg_col = saved_msg_col;
+  if (got_int) {
+    getln_interrupted_highlight = true;
+  }
   if (try_end(&err) || !cbcall_ret) {
     goto color_cmdline_error;
   }
