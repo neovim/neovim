@@ -2227,23 +2227,29 @@ static bool color_cmdline(void)
   Callback color_cb = { .type = kCallbackNone };
   bool can_free_cb = false;
   Error err = ERROR_INIT;
+  const char *err_errmsg = (const char *)e_intern2;
+  bool dgc_ret = true;
 
+  try_start();
   if (ccline.input_fn) {
       color_cb = getln_input_callback;
   } else if (ccline.cmdfirstc == ':') {
-    if (!tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
-                              &color_cb)) {
-      goto color_cmdline_error;
-    }
+    err_errmsg = N_(
+        "E5408: Unable to get Nvim_color_cmdline callback from g:: %s");
+    dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
+                                   &color_cb);
     can_free_cb = true;
   } else if (ccline.cmdfirstc == '=') {
-    if (!tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_expr"),
-                              &color_cb)) {
-      goto color_cmdline_error;
-    }
+    err_errmsg = N_(
+        "E5409: Unable to get Nvim_color_expr callback from g:: %s");
+    dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_expr"),
+                                   &color_cb);
     can_free_cb = true;
   } else {
     goto color_cmdline_end;
+  }
+  if (try_end(&err) || !dgc_ret) {
+    goto color_cmdline_error;
   }
 
   if (color_cb.type == kCallbackNone) {
@@ -2273,6 +2279,7 @@ static bool color_cmdline(void)
   // Also using try_start() because error messages may overwrite typed 
   // command-line which is not expected.
   try_start();
+  err_errmsg = N_("E5407: Callback has thrown an exception: %s");
   const int saved_msg_col = msg_col;
   msg_silent++;
   const bool cbcall_ret = callback_call(&color_cb, 1, &arg, &tv);
@@ -2372,7 +2379,7 @@ color_cmdline_end:
   return ret;
 color_cmdline_error:
   if (ERROR_SET(&err)) {
-    PRINT_ERRMSG(_("E5407: Callback has thrown an exception: %s"), err.msg);
+    PRINT_ERRMSG(_(err_errmsg), err.msg);
     api_clear_error(&err);
   }
   assert(printed_errmsg);
