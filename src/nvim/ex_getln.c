@@ -64,6 +64,7 @@
 #include "nvim/os/time.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/highlight_defs.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -2202,6 +2203,13 @@ enum { MAX_CB_ERRORS = 1 };
 ///         to do.
 static bool color_cmdline(void)
 {
+  bool printed_errmsg = false;
+#define PRINT_ERRMSG(...) \
+  do { \
+    msg_putchar('\n'); \
+    msg_printf_attr(hl_attr(HLF_E)|MSG_HIST, __VA_ARGS__); \
+    printed_errmsg = true; \
+  } while (0)
   bool ret = true;
   kv_size(ccline_colors) = 0;
 
@@ -2274,7 +2282,7 @@ static bool color_cmdline(void)
     goto color_cmdline_error;
   }
   if (tv.v_type != VAR_LIST) {
-    emsgf(_("E5400: Callback should return list"));
+    PRINT_ERRMSG(_("E5400: Callback should return list"));
     goto color_cmdline_error;
   }
   if (tv.vval.v_list == NULL) {
@@ -2285,13 +2293,13 @@ static bool color_cmdline(void)
   for (const listitem_T *li = tv.vval.v_list->lv_first;
        li != NULL; li = li->li_next, i++) {
     if (li->li_tv.v_type != VAR_LIST) {
-      emsgf(_("E5401: List item %i is not a List"), i);
+      PRINT_ERRMSG(_("E5401: List item %i is not a List"), i);
       goto color_cmdline_error;
     }
     const list_T *const l = li->li_tv.vval.v_list;
     if (tv_list_len(l) != 3) {
-      emsgf(_("E5402: List item %i has incorrect length: %li /= 3"),
-            i, tv_list_len(l));
+      PRINT_ERRMSG(_("E5402: List item %i has incorrect length: %li /= 3"),
+                   i, tv_list_len(l));
       goto color_cmdline_error;
     }
     bool error = false;
@@ -2299,13 +2307,13 @@ static bool color_cmdline(void)
     if (error) {
       goto color_cmdline_error;
     } else if (!(prev_end <= start && start < ccline.cmdlen)) {
-      emsgf(_("E5403: Chunk %i start %" PRIdVARNUMBER " not in range "
-              "[%" PRIdVARNUMBER ", %i)"),
-            i, start, prev_end, ccline.cmdlen);
+      PRINT_ERRMSG(_("E5403: Chunk %i start %" PRIdVARNUMBER " not in range "
+                     "[%" PRIdVARNUMBER ", %i)"),
+                   i, start, prev_end, ccline.cmdlen);
       goto color_cmdline_error;
     } else if (utf8len_tab_zero[(uint8_t)ccline.cmdbuff[start]] == 0) {
-      emsgf(_("E5405: Chunk %i start %" PRIdVARNUMBER " splits multibyte "
-              "character"), i, start);
+      PRINT_ERRMSG(_("E5405: Chunk %i start %" PRIdVARNUMBER " splits "
+                     "multibyte character"), i, start);
       goto color_cmdline_error;
     }
     if (start != prev_end) {
@@ -2320,14 +2328,14 @@ static bool color_cmdline(void)
     if (error) {
       goto color_cmdline_error;
     } else if (!(start < end && end <= ccline.cmdlen)) {
-      emsgf(_("E5404: Chunk %i end %" PRIdVARNUMBER " not in range "
-              "(%" PRIdVARNUMBER ", %i]"),
-            i, end, start, ccline.cmdlen);
+      PRINT_ERRMSG(_("E5404: Chunk %i end %" PRIdVARNUMBER " not in range "
+                     "(%" PRIdVARNUMBER ", %i]"),
+                   i, end, start, ccline.cmdlen);
       goto color_cmdline_error;
     } else if (end < ccline.cmdlen
                && utf8len_tab_zero[(uint8_t)ccline.cmdbuff[end]] == 0) {
-      emsgf(_("E5406: Chunk %i end %" PRIdVARNUMBER " splits multibyte "
-              "character"), i, end);
+      PRINT_ERRMSG(_("E5406: Chunk %i end %" PRIdVARNUMBER " splits multibyte "
+                     "character"), i, end);
       goto color_cmdline_error;
     }
     prev_end = end;
@@ -2364,19 +2372,19 @@ color_cmdline_end:
   return ret;
 color_cmdline_error:
   if (ERROR_SET(&err)) {
-    emsgf(_("E5407: Callback has thrown an exception: %s"), err.msg);
+    PRINT_ERRMSG(_("E5407: Callback has thrown an exception: %s"), err.msg);
     api_clear_error(&err);
   }
+  assert(printed_errmsg);
+
   prev_prompt_errors++;
   kv_size(ccline_colors) = 0;
-  if (did_emsg) {
-    did_emsg = false;
-    prev_prompt_errors += MAX_CB_ERRORS;
-    redrawcmdline();
-    prev_prompt_errors -= MAX_CB_ERRORS;
-    ret = false;
-  }
+  prev_prompt_errors += MAX_CB_ERRORS;
+  redrawcmdline();
+  prev_prompt_errors -= MAX_CB_ERRORS;
+  ret = false;
   goto color_cmdline_end;
+#undef PRINT_ERRMSG
 }
 
 /*

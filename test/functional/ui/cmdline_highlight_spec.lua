@@ -289,7 +289,16 @@ describe('Command-line coloring', function()
   it('does the right thing when errorring', function()
     set_color_cb('Echoerring')
     start_prompt('e')
-    -- FIXME Does not work well with :echoerr: error message not shown.
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :                                       |
+      {ERR:E5407: Callback has thrown an exception:}|
+      {ERR: Vim(echoerr):HERE}                      |
+      :e^                                      |
+    ]])
   end)
   it('does the right thing when throwing', function()
     set_color_cb('Throwing')

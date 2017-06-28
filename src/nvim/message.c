@@ -1611,6 +1611,27 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
   }
 }
 
+/// Print a formatted message
+///
+/// Message printed is limited by #IOSIZE. Must not be used from inside
+/// msg_puts_attr().
+///
+/// @param[in]  attr  Highlight attributes.
+/// @param[in]  fmt  Format string.
+void msg_printf_attr(const int attr, const char *const fmt, ...)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static char msgbuf[IOSIZE];
+
+  va_list ap;
+  va_start(ap, fmt);
+  const size_t len = vim_vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap, NULL);
+  va_end(ap);
+
+  msg_scroll = true;
+  msg_puts_attr_len(msgbuf, (ptrdiff_t)len, attr);
+}
+
 /*
  * The display part of msg_puts_attr_len().
  * May be called recursively to display scroll-back text.
