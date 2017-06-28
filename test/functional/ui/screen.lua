@@ -251,7 +251,7 @@ function Screen:expect(expected, attr_ids, attr_ignore, condition, any)
             ..'Expected:\n  |'..table.concat(msg_expected_rows, '|\n  |')..'|\n'
             ..'Actual:\n  |'..table.concat(actual_rows, '|\n  |')..'|\n\n'..[[
 To print the expect() call that would assert the current screen state, use
-screen:snaphot_util(). In case of non-deterministic failures, use
+screen:snapshot_util(). In case of non-deterministic failures, use
 screen:redraw_debug() to show all intermediate screen states.  ]])
         end
       end
