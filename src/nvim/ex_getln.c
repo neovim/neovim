@@ -63,6 +63,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -2217,6 +2218,7 @@ static bool color_cmdline(void)
   static int prev_prompt_errors = 0;
   Callback color_cb = { .type = kCallbackNone };
   bool can_free_cb = false;
+  Error err = ERROR_INIT;
 
   if (ccline.input_fn) {
       color_cb = getln_input_callback;
@@ -2259,16 +2261,16 @@ static bool color_cmdline(void)
   // appears shifted one character to the right and cursor position is no longer
   // correct, with msg_col it just misses leading `:`. Since `redraw!` in
   // callback lags this is least of the user problems.
+  //
+  // Also using try_start() because error messages may overwrite typed 
+  // command-line which is not expected.
+  try_start();
   const int saved_msg_col = msg_col;
   msg_silent++;
-  if (!callback_call(&color_cb, 1, &arg, &tv)) {
-    msg_silent--;
-    msg_col = saved_msg_col;
-    goto color_cmdline_error;
-  }
+  const bool cbcall_ret = callback_call(&color_cb, 1, &arg, &tv);
   msg_silent--;
   msg_col = saved_msg_col;
-  if (got_int || did_emsg) {
+  if (try_end(&err) || !cbcall_ret) {
     goto color_cmdline_error;
   }
   if (tv.v_type != VAR_LIST) {
@@ -2350,6 +2352,7 @@ static bool color_cmdline(void)
   }
   prev_prompt_errors = 0;
 color_cmdline_end:
+  assert(!ERROR_SET(&err));
   if (can_free_cb) {
     callback_free(&color_cb);
   }
@@ -2360,18 +2363,14 @@ color_cmdline_end:
   tv_clear(&tv);
   return ret;
 color_cmdline_error:
+  if (ERROR_SET(&err)) {
+    emsgf(_("E5407: Callback has thrown an exception: %s"), err.msg);
+    api_clear_error(&err);
+  }
   prev_prompt_errors++;
-  const bool do_redraw = (did_emsg || got_int);
-  got_int = false;
-  did_emsg = false;
-  if (did_throw) {
-    discard_current_exception();
-  }
-  if (msg_list != NULL && *msg_list != NULL) {
-    free_global_msglist();
-  }
   kv_size(ccline_colors) = 0;
-  if (do_redraw) {
+  if (did_emsg) {
+    did_emsg = false;
     prev_prompt_errors += MAX_CB_ERRORS;
     redrawcmdline();
     prev_prompt_errors -= MAX_CB_ERRORS;

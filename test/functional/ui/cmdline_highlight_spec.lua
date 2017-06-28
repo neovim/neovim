@@ -285,16 +285,23 @@ describe('Command-line coloring', function()
     ]])
   end)
   it('does the right thing when errorring', function()
-    if true then return pending('echoerr does not work well now') end
     set_color_cb('Echoerring')
     start_prompt('e')
-    -- FIXME Does not work well with :echoerr: error message overwrites cmdline.
+    -- FIXME Does not work well with :echoerr: error message not shown.
   end)
   it('does the right thing when throwing', function()
-    if true then return pending('Throwing does not work well now') end
     set_color_cb('Throwing')
     start_prompt('e')
-    -- FIXME Does not work well with :throw: error message overwrites cmdline.
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :                                       |
+      {ERR:E5407: Callback has thrown an exception:}|
+      {ERR: ABC}                                    |
+      :e^                                      |
+    ]])
   end)
   it('stops executing callback after a number of errors', function()
     set_color_cb('SplittedMultibyteStart')
