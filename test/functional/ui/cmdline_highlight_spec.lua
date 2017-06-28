@@ -24,8 +24,9 @@ before_each(function()
       redraw!
       return ''
     endfunction
+    let g:EMPTY = ''
     cnoremap <expr> {REDRAW} Redraw()
-    nnoremap <expr> {PROMPT} input({"prompt": ":", "highlight": g:Nvim_color_input})[1:0]
+    nnoremap <expr> {PROMPT} extend(g:, {"out": input({"prompt": ":", "highlight": g:Nvim_color_input})}).EMPTY
     function RainBowParens(cmdline)
       let ret = []
       let i = 0
@@ -295,13 +296,34 @@ describe('Command-line coloring', function()
     start_prompt('e')
     -- FIXME Does not work well with :throw: error message overwrites cmdline.
   end)
-  pending('stops executing callback after a number of errors'--[[, function()
+  it('stops executing callback after a number of errors', function()
     set_color_cb('SplittedMultibyteStart')
     start_prompt('let x = "«»«»«»«»«»"\n')
-    eq('«»«»«»«»«»', meths.get_var('x'))
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :let x = "                              |
+      {ERR:E5405: Chunk 0 start 10 splits multibyte}|
+      {ERR: character}                              |
+      ^:let x = "«»«»«»«»«»"                   |
+    ]])
+    feed('\n')
+    screen:expect([[
+      ^                                        |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+                                              |
+    ]])
+    eq('let x = "«»«»«»«»«»"', meths.get_var('out'))
     local msg = '\nE5405: Chunk 0 start 10 splits multibyte character'
     eq(msg:rep(1), funcs.execute('messages'))
-  end]])
+  end)
   it('allows interrupting callback with <C-c>', function()
     if true then return pending('<C-c> does not work well enough now') end
     set_color_cb('Halting')
