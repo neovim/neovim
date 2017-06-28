@@ -188,6 +188,11 @@ typedef struct {
  */
 #define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? wp->w_llist_ref : wp->w_llist)
 
+// Looking up a buffer can be slow if there are many.  Remember the last one
+// to make this a lot faster if there are multiple matches in the same file.
+static char_u *qf_last_bufname = NULL;
+static bufref_T  qf_last_bufref = { NULL, 0, 0 };
+
 /*
  * Read the errorfile "efile" into memory, line by line, building the error
  * list. Set the error list's title to qf_title.
@@ -968,6 +973,10 @@ qf_init_ext(
   int retval = -1;                      // default: return error flag
   int status;
 
+  // Do not used the cached buffer, it may have been wiped out.
+  xfree(qf_last_bufname);
+  qf_last_bufname = NULL;
+
   fields.namebuf = xmalloc(CMDBUFFSIZE + 1);
   fields.errmsglen = CMDBUFFSIZE + 1;
   fields.errmsg = xmalloc(fields.errmsglen);
@@ -1398,11 +1407,6 @@ void copy_loclist(win_T *from, win_T *to)
 
   to->w_llist->qf_curlist = qi->qf_curlist;     /* current list */
 }
-
-// Looking up a buffer can be slow if there are many. Remember the last one to
-// make this a lot faster if there are multiple matches in the same file.
-static char_u *qf_last_bufname = NULL;
-static bufref_T qf_last_bufref = { NULL, 0 };
 
 // Get buffer number for file "directory.fname".
 // Also sets the b_has_qf_entry flag.
@@ -2326,9 +2330,7 @@ void qf_history(exarg_T *eap)
   }
 }
 
-/*
- * Free error list "idx".
- */
+/// Free all the entries in the error list "idx".
 static void qf_free(qf_info_T *qi, int idx)
 {
   qfline_T    *qfp;
@@ -3766,52 +3768,6 @@ theend:
 }
 
 /*
- * Skip over the pattern argument of ":vimgrep /pat/[g][j]".
- * Put the start of the pattern in "*s", unless "s" is NULL.
- * If "flags" is not NULL put the flags in it: VGR_GLOBAL, VGR_NOJUMP.
- * If "s" is not NULL terminate the pattern with a NUL.
- * Return a pointer to the char just past the pattern plus flags.
- */
-char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
-{
-  int c;
-
-  if (vim_isIDc(*p)) {
-    /* ":vimgrep pattern fname" */
-    if (s != NULL)
-      *s = p;
-    p = skiptowhite(p);
-    if (s != NULL && *p != NUL)
-      *p++ = NUL;
-  } else {
-    /* ":vimgrep /pattern/[g][j] fname" */
-    if (s != NULL)
-      *s = p + 1;
-    c = *p;
-    p = skip_regexp(p + 1, c, TRUE, NULL);
-    if (*p != c)
-      return NULL;
-
-    /* Truncate the pattern. */
-    if (s != NULL)
-      *p = NUL;
-    ++p;
-
-    /* Find the flags */
-    while (*p == 'g' || *p == 'j') {
-      if (flags != NULL) {
-        if (*p == 'g')
-          *flags |= VGR_GLOBAL;
-        else
-          *flags |= VGR_NOJUMP;
-      }
-      ++p;
-    }
-  }
-  return p;
-}
-
-/*
  * Restore current working directory to "dirname_start" if they differ, taking
  * into account whether it is set locally or globally.
  */
@@ -4069,7 +4025,7 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
-      qf_idx = di->di_tv.vval.v_number - 1;
+      qf_idx = (int)di->di_tv.vval.v_number - 1;
       if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return FAIL;
       }
@@ -4143,7 +4099,7 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
 
     char *const filename = tv_dict_get_string(d, "filename", true);
     int bufnum = (int)tv_dict_get_number(d, "bufnr");
-    long lnum = tv_dict_get_number(d, "lnum");
+    long lnum = (long)tv_dict_get_number(d, "lnum");
     int col = (int)tv_dict_get_number(d, "col");
     char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
     int nr = (int)tv_dict_get_number(d, "nr");
@@ -4225,7 +4181,7 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
   if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
-      qf_idx = di->di_tv.vval.v_number - 1;
+      qf_idx = (int)di->di_tv.vval.v_number - 1;
       if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return FAIL;
       }

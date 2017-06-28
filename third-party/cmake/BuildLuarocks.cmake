@@ -41,6 +41,9 @@ endfunction()
 # The luarocks binary location
 set(LUAROCKS_BINARY ${HOSTDEPS_BIN_DIR}/luarocks)
 
+# NOTE: Version must match version of LuaRocks in third-party/CMakeLists.txt
+set(LUAROCKS_VERSION 2.4)
+
 # Arguments for calls to 'luarocks build'
 if(NOT MSVC)
   # In MSVC don't pass the compiler/linker to luarocks, the bundled
@@ -73,13 +76,13 @@ elseif(MSVC OR MINGW)
     /LIB ${DEPS_LIB_DIR}
     /BIN ${DEPS_BIN_DIR}
     /INC ${DEPS_INSTALL_DIR}/include/luajit-2.0/
-    /P ${DEPS_INSTALL_DIR} /TREE ${DEPS_INSTALL_DIR}
+    /P ${DEPS_INSTALL_DIR}/${LUAROCKS_VERSION} /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
     /CMOD ${DEPS_BIN_DIR}
     ${MINGW_FLAG}
     /LUAMOD ${DEPS_BIN_DIR}/lua)
 
-  set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/2.2/luarocks.bat)
+  set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/${LUAROCKS_VERSION}/luarocks.bat)
 else()
   message(FATAL_ERROR "Trying to build luarocks in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
@@ -167,7 +170,7 @@ if(USE_BUNDLED_BUSTED)
 
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-25/nvim-client-0.0.1-25.rockspec ${LUAROCKS_BUILDARGS}
+    ARGS build https://raw.githubusercontent.com/neovim/lua-client/0.0.1-26/nvim-client-0.0.1-26.rockspec ${LUAROCKS_BUILDARGS}
     DEPENDS luv)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)

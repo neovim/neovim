@@ -2,6 +2,8 @@
 
 Tests are run by `/cmake/RunTests.cmake` file, using busted.
 
+For some failures, `.nvimlog` (or `$NVIM_LOG_FILE`) may provide insight.
+
 ## Directory structure
 
 Directories with tests: `/test/benchmark` for benchmarks, `/test/functional` for 

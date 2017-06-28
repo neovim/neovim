@@ -263,6 +263,14 @@ local function which(exe)
   end
 end
 
+local function shallowcopy(orig)
+  local copy = {}
+  for orig_key, orig_value in pairs(orig) do
+    copy[orig_key] = orig_value
+  end
+  return copy
+end
+
 local function concat_tables(...)
   local ret = {}
   for i = 1, select('#', ...) do
@@ -276,7 +284,7 @@ local function concat_tables(...)
   return ret
 end
 
-local function dedent(str)
+local function dedent(str, leave_indent)
   -- find minimum common indent across lines
   local indent = nil
   for line in str:gmatch('[^\n]+') do
@@ -289,12 +297,13 @@ local function dedent(str)
     -- no minimum common indent
     return str
   end
+  local left_indent = (' '):rep(leave_indent or 0)
   -- create a pattern for the indent
   indent = indent:gsub('%s', '[ \t]')
   -- strip it from the first line
-  str = str:gsub('^'..indent, '')
+  str = str:gsub('^'..indent, left_indent)
   -- strip it from the remaining lines
-  str = str:gsub('[\n]'..indent, '\n')
+  str = str:gsub('[\n]'..indent, '\n' .. left_indent)
   return str
 end
 
@@ -311,6 +320,7 @@ return {
   check_cores = check_cores,
   hasenv = hasenv,
   which = which,
+  shallowcopy = shallowcopy,
   concat_tables = concat_tables,
   dedent = dedent,
 }

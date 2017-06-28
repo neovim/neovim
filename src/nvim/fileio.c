@@ -281,8 +281,8 @@ readfile (
   colnr_T len;
   long size = 0;
   char_u      *p = NULL;
-  off_t filesize = 0;
-  int skip_read = FALSE;
+  off_T filesize = 0;
+  int skip_read = false;
   context_sha256_T sha_ctx;
   int read_undo_file = FALSE;
   int split = 0;                        /* number of split lines */
@@ -777,9 +777,9 @@ retry:
     if (read_buffer) {
       read_buf_lnum = 1;
       read_buf_col = 0;
-    } else if (read_stdin || lseek(fd, (off_t)0L, SEEK_SET) != 0) {
-      /* Can't rewind the file, give up. */
-      error = TRUE;
+    } else if (read_stdin || vim_lseek(fd, (off_T)0L, SEEK_SET) != 0) {
+      // Can't rewind the file, give up.
+      error = true;
       goto failed;
     }
     /* Delete the previously read lines. */
@@ -1614,19 +1614,16 @@ rewind_retry:
             if (fileformat == EOL_DOS) {
               if (ptr[-1] == CAR) {             /* remove CR */
                 ptr[-1] = NUL;
-                --len;
-              }
-              /*
-               * Reading in Dos format, but no CR-LF found!
-               * When 'fileformats' includes "unix", delete all
-               * the lines read so far and start all over again.
-               * Otherwise give an error message later.
-               */
-              else if (ff_error != EOL_DOS) {
-                if (   try_unix
-                       && !read_stdin
-                       && (read_buffer
-                           || lseek(fd, (off_t)0L, SEEK_SET) == 0)) {
+                len--;
+              } else if (ff_error != EOL_DOS) {
+                // Reading in Dos format, but no CR-LF found!
+                // When 'fileformats' includes "unix", delete all
+                // the lines read so far and start all over again.
+                // Otherwise give an error message later.
+                if (try_unix
+                    && !read_stdin
+                    && (read_buffer
+                        || vim_lseek(fd, (off_T)0L, SEEK_SET) == 0)) {
                   fileformat = EOL_UNIX;
                   if (set_options)
                     set_fileformat(EOL_UNIX, OPT_LOCAL);
@@ -3833,7 +3830,7 @@ static bool msg_add_fileformat(int eol_type)
 /*
  * Append line and character count to IObuff.
  */
-void msg_add_lines(int insert_space, long lnum, off_t nchars)
+void msg_add_lines(int insert_space, long lnum, off_T nchars)
 {
   char_u  *p;
 
@@ -4659,7 +4656,7 @@ int vim_rename(const char_u *from, const char_u *to)
     return -1;
   }
 
-  // Avoid xmalloc() here as vim_rename() is called by buf_write() when neovim
+  // Avoid xmalloc() here as vim_rename() is called by buf_write() when nvim
   // is `preserve_exit()`ing.
   buffer = try_malloc(BUFSIZE);
   if (buffer == NULL) {
@@ -6870,8 +6867,8 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     patcmd.next = active_apc_list;
     active_apc_list = &patcmd;
 
-    /* set v:cmdarg (only when there is a matching pattern) */
-    save_cmdbang = get_vim_var_nr(VV_CMDBANG);
+    // set v:cmdarg (only when there is a matching pattern)
+    save_cmdbang = (long)get_vim_var_nr(VV_CMDBANG);
     if (eap != NULL) {
       save_cmdarg = set_cmdarg(eap, NULL);
       set_vim_var_nr(VV_CMDBANG, (long)eap->forceit);

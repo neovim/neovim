@@ -81,6 +81,36 @@ describe('api', function()
     end)
   end)
 
+  describe('nvim_execute_lua', function()
+    it('works', function()
+      meths.execute_lua('vim.api.nvim_set_var("test", 3)', {})
+      eq(3, meths.get_var('test'))
+
+      eq(17, meths.execute_lua('a, b = ...\nreturn a + b', {10,7}))
+
+      eq(NIL, meths.execute_lua('function xx(a,b)\nreturn a..b\nend',{}))
+      eq("xy", meths.execute_lua('return xx(...)', {'x','y'}))
+    end)
+
+    it('reports errors', function()
+      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
+                 "'=' expected near '+'"},
+         meth_pcall(meths.execute_lua, 'a+*b', {}))
+
+      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
+                 "unexpected symbol near '1'"},
+         meth_pcall(meths.execute_lua, '1+2', {}))
+
+      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
+                 "unexpected symbol"},
+         meth_pcall(meths.execute_lua, 'aa=bb\0', {}))
+
+      eq({false, 'Error executing lua: [string "<nvim>"]:1: '..
+                 "attempt to call global 'bork' (a nil value)"},
+         meth_pcall(meths.execute_lua, 'bork()', {}))
+    end)
+  end)
+
   describe('nvim_input', function()
     it("VimL error: does NOT fail, updates v:errmsg", function()
       local status, _ = pcall(nvim, "input", ":call bogus_fn()<CR>")
@@ -221,6 +251,102 @@ describe('api', function()
     end)
   end)
 
+  describe('nvim_get_mode', function()
+    it("during normal-mode `g` returns blocking=true", function()
+      nvim("input", "o")                -- add a line
+      eq({mode='i', blocking=false}, nvim("get_mode"))
+      nvim("input", [[<C-\><C-N>]])
+      eq(2, nvim("eval", "line('.')"))
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+
+      nvim("input", "g")
+      eq({mode='n', blocking=true}, nvim("get_mode"))
+
+      nvim("input", "k")                -- complete the operator
+      eq(1, nvim("eval", "line('.')"))  -- verify the completed operator
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it("returns the correct result multiple consecutive times", function()
+      for _ = 1,5 do
+        eq({mode='n', blocking=false}, nvim("get_mode"))
+      end
+      nvim("input", "g")
+      for _ = 1,4 do
+        eq({mode='n', blocking=true}, nvim("get_mode"))
+      end
+      nvim("input", "g")
+      for _ = 1,7 do
+        eq({mode='n', blocking=false}, nvim("get_mode"))
+      end
+    end)
+
+    it("during normal-mode CTRL-W, returns blocking=true", function()
+      nvim("input", "<C-W>")
+      eq({mode='n', blocking=true}, nvim("get_mode"))
+
+      nvim("input", "s")                  -- complete the operator
+      eq(2, nvim("eval", "winnr('$')"))   -- verify the completed operator
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    it("during press-enter prompt returns blocking=true", function()
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      command("echom 'msg1'")
+      command("echom 'msg2'")
+      command("echom 'msg3'")
+      command("echom 'msg4'")
+      command("echom 'msg5'")
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      nvim("input", ":messages<CR>")
+      eq({mode='r', blocking=true}, nvim("get_mode"))
+    end)
+
+    it("during getchar() returns blocking=false", function()
+      nvim("input", ":let g:test_input = nr2char(getchar())<CR>")
+      -- Events are enabled during getchar(), RPC calls are *not* blocked. #5384
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq(0, nvim("eval", "exists('g:test_input')"))
+      nvim("input", "J")
+      eq("J", nvim("eval", "g:test_input"))
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+    end)
+
+    -- TODO: bug #6247#issuecomment-286403810
+    it("batched with input", function()
+      eq({mode='n', blocking=false}, nvim("get_mode"))
+      command("echom 'msg1'")
+      command("echom 'msg2'")
+      command("echom 'msg3'")
+      command("echom 'msg4'")
+      command("echom 'msg5'")
+
+      local req = {
+        {'nvim_get_mode', {}},
+        {'nvim_input',    {':messages<CR>'}},
+        {'nvim_get_mode', {}},
+        {'nvim_eval',     {'1'}},
+      }
+      eq({ { {mode='n', blocking=false},
+             13,
+             {mode='n', blocking=false},  -- TODO: should be blocked=true
+             1 },
+           NIL}, meths.call_atomic(req))
+      eq({mode='r', blocking=true}, nvim("get_mode"))
+    end)
+    -- TODO: bug #6166
+    it("during insert-mode map-pending, returns blocking=true #6166", function()
+      command("inoremap xx foo")
+      nvim("input", "ix")
+      eq({mode='i', blocking=true}, nvim("get_mode"))
+    end)
+    -- TODO: bug #6166
+    it("during normal-mode gU, returns blocking=false #6166", function()
+      nvim("input", "gu")
+      eq({mode='no', blocking=false}, nvim("get_mode"))
+    end)
+  end)
+
   describe('nvim_replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
       eq('\128\254X', helpers.nvim('replace_termcodes', '\128', true, true, true))
@@ -240,6 +366,22 @@ describe('api', function()
       -- 128       253      44
       eq('\128\253\44', helpers.nvim('replace_termcodes',
                                      '<LeftMouse>', true, true, true))
+    end)
+
+    it('converts keycodes', function()
+      eq('\nx\27x\rx<x', helpers.nvim('replace_termcodes',
+         '<NL>x<Esc>x<CR>x<lt>x', true, true, true))
+    end)
+
+    it('does not crash when transforming an empty string', function()
+      -- Actually does not test anything, because current code will use NULL for
+      -- an empty string.
+      --
+      -- Problem here is that if String argument has .data in allocated memory
+      -- then `return str` in vim_replace_termcodes body will make Neovim free
+      -- `str.data` twice: once when freeing arguments, then when freeing return
+      -- value.
+      eq('', meths.replace_termcodes('', true, true, true))
     end)
   end)
 
@@ -446,6 +588,36 @@ describe('api', function()
     end)
   end)
 
+  describe('list_runtime_paths', function()
+    it('returns nothing with empty &runtimepath', function()
+      meths.set_option('runtimepath', '')
+      eq({}, meths.list_runtime_paths())
+    end)
+    it('returns single runtimepath', function()
+      meths.set_option('runtimepath', 'a')
+      eq({'a'}, meths.list_runtime_paths())
+    end)
+    it('returns two runtimepaths', function()
+      meths.set_option('runtimepath', 'a,b')
+      eq({'a', 'b'}, meths.list_runtime_paths())
+    end)
+    it('returns empty strings when appropriate', function()
+      meths.set_option('runtimepath', 'a,,b')
+      eq({'a', '', 'b'}, meths.list_runtime_paths())
+      meths.set_option('runtimepath', ',a,b')
+      eq({'', 'a', 'b'}, meths.list_runtime_paths())
+      meths.set_option('runtimepath', 'a,b,')
+      eq({'a', 'b', ''}, meths.list_runtime_paths())
+    end)
+    it('truncates too long paths', function()
+      local long_path = ('/a'):rep(8192)
+      meths.set_option('runtimepath', long_path)
+      local paths_list = meths.list_runtime_paths()
+      neq({long_path}, paths_list)
+      eq({long_path:sub(1, #(paths_list[1]))}, paths_list)
+    end)
+  end)
+
   it('can throw exceptions', function()
     local status, err = pcall(nvim, 'get_option', 'invalid-option')
     eq(false, status)
@@ -459,7 +631,7 @@ describe('api', function()
     eq(very_long_name, err:match('Ax+Z?'))
   end)
 
-  it("doesn't leak memory on incorrect argument types", function()
+  it("does not leak memory on incorrect argument types", function()
     local status, err = pcall(nvim, 'set_current_dir',{'not', 'a', 'dir'})
     eq(false, status)
     ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)

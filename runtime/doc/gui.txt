@@ -6,25 +6,10 @@
 
 Vim's Graphical User Interface				*gui* *GUI*
 
-1. Starting the GUI		|gui-start|
-2. Scrollbars			|gui-scrollbars|
-3. Mouse Control		|gui-mouse|
-4. Making GUI Selections	|gui-selections|
-5. Menus			|menus|
-6. Extras			|gui-extras|
-
-Other GUI documentation:
-|gui_w32.txt|	For specific items of the Win32 GUI.
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Starting the GUI				*gui-start* *E229* *E233*
-
-First you must make sure you actually have a version of Vim with the GUI code
-included.
-
-How to start the GUI depends on the system used.  Mostly you can run the
-GUI version of Vim with:
-    gvim [options] [files...]
 
 				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
 The gvimrc file is where GUI-specific startup commands should be placed.  It
@@ -32,8 +17,6 @@ is always sourced after the |init.vim| file.  If you have one then the
 $MYGVIMRC environment variable has its name.
 
 When the GUI starts up initializations are carried out, in this order:
-- The 'term' option is set to "builtin_gui" and terminal options are reset to
-  their default value for the GUI |terminal-options|.
 - If the system menu file exists, it is sourced.  The name of this file is
   normally "$VIMRUNTIME/menu.vim".  You can check this with ":version".  Also
   see |$VIMRUNTIME|.  To skip loading the system menu include 'M' in
@@ -92,8 +75,7 @@ and only the first one that is found is read.
 :winp[os] {X} {Y}							*E466*
 		Put the GUI vim window at the given {X} and {Y} coordinates.
 		The coordinates should specify the position in pixels of the
-		top left corner of the window.  Does not work in all versions.
-		Does work in an (new) xterm |xterm-color|.
+		top left corner of the window.
 		When the GUI window has not been opened yet, the values are
 		remembered until the window is opened.  The position is
 		adjusted to make the window fit on the screen (if possible).
@@ -871,31 +853,5 @@ This section describes other features which are related to the GUI.
 
 - In the GUI, several normal keys may have modifiers in mappings etc, these
   are <Space>, <Tab>, <NL>, <CR>, <Esc>.
-
-- To check in a Vim script if the GUI is being used, you can use something
-  like this: >
-
-	if has("gui_running")
-	   echo "yes, we have a GUI"
-	else
-	   echo "Boring old console"
-	endif
-<							*setting-guifont*
-- When you use the same vimrc file on various systems, you can use something
-  like this to set options specifically for each type of GUI: >
-
-	if has("gui_running")
-	    if has("gui_gtk2")
-		:set guifont=Luxi\ Mono\ 12
-	    elseif has("x11")
-		" Also for GTK 1
-		:set guifont=*-lucidatypewriter-medium-r-normal-*-*-180-*-*-m-*-*
-	    elseif has("gui_win32")
-		:set guifont=Luxi_Mono:h12:cANSI
-	    endif
-	endif
-
-A recommended Japanese font is MS Mincho.  You can find info here:
-http://www.lexikan.com/mincho.htm
 
  vim:tw=78:sw=4:ts=8:ft=help:norl:

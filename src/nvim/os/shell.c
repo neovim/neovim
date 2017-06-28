@@ -464,9 +464,10 @@ static void out_data_append_to_screen(char *output, size_t remaining,
       continue;
     }
 
-    // Translate NUL to SOH
-    if (output[off] == NUL) {
-      output[off] = 1;
+    // TODO(bfredl): using msg_puts would be better until
+    // terminal emulation is implemented.
+    if (output[off] < 0x20) {
+      output[off] = ' ';
     }
 
     off++;
@@ -495,8 +496,12 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
 
-  if (ptr != NULL && cnt > 0
-      && out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
+  if (ptr == NULL || cnt == 0) {
+    // Nothing to read;
+    return;
+  }
+
+  if (out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, cnt);
   } else {
@@ -684,7 +689,7 @@ static void shell_write_cb(Stream *stream, void *data, int status)
                        uv_err_name(status));
   }
   if (stream->closed) {  // Process may have exited before this write.
-    ELOG("stream was already closed");
+    WLOG("stream was already closed");
     return;
   }
   stream_close(stream, NULL, NULL);

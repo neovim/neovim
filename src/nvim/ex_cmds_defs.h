@@ -6,6 +6,7 @@
 
 #include "nvim/pos.h"      // for linenr_T
 #include "nvim/normal.h"
+#include "nvim/regexp_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds_enum.generated.h"
@@ -163,18 +164,20 @@ struct expand {
 /// flag.  This needs to be saved for recursive commands, put them in a
 /// structure for easy manipulation.
 typedef struct {
-  int split;          ///< flags for win_split()
-  int tab;            ///< > 0 when ":tab" was used
-  bool browse;        ///< true to invoke file dialog
-  bool confirm;       ///< true to invoke yes/no dialog
-  bool hide;          ///< true when ":hide" was used
-  bool keepalt;       ///< true when ":keepalt" was used
-  bool keepjumps;     ///< true when ":keepjumps" was used
-  bool keepmarks;     ///< true when ":keepmarks" was used
-  bool keeppatterns;  ///< true when ":keeppatterns" was used
-  bool lockmarks;     ///< true when ":lockmarks" was used
-  bool noswapfile;    ///< true when ":noswapfile" was used
-  char_u *save_ei;    ///< saved value of 'eventignore'
+  int split;                   ///< flags for win_split()
+  int tab;                     ///< > 0 when ":tab" was used
+  bool browse;                 ///< true to invoke file dialog
+  bool confirm;                ///< true to invoke yes/no dialog
+  bool hide;                   ///< true when ":hide" was used
+  bool keepalt;                ///< true when ":keepalt" was used
+  bool keepjumps;              ///< true when ":keepjumps" was used
+  bool keepmarks;              ///< true when ":keepmarks" was used
+  bool keeppatterns;           ///< true when ":keeppatterns" was used
+  bool lockmarks;              ///< true when ":lockmarks" was used
+  bool noswapfile;             ///< true when ":noswapfile" was used
+  char_u *save_ei;             ///< saved value of 'eventignore'
+  regmatch_T filter_regmatch;  ///< set by :filter /pat/
+  bool filter_force;           ///< set for :filter!
 } cmdmod_T;
 
 #endif  // NVIM_EX_CMDS_DEFS_H

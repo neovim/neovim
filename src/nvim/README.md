@@ -1,22 +1,27 @@
 ## Source code overview
 
-Since Neovim has inherited most code from Vim, some information in [its
-README](https://raw.githubusercontent.com/vim/vim/master/src/README.txt) still
-applies.
+This document is an overview of how Nvim works internally, focusing on parts
+that are different from Vim. Since Nvim inherited from Vim, some information in
+[its README](https://raw.githubusercontent.com/vim/vim/master/src/README.txt)
+still applies.
 
-This document aims to give a high level overview of how Neovim works internally,
-focusing on parts that are different from Vim. Currently this is still a work in
-progress, especially because I have avoided adding too many details about parts
-that are constantly changing. As the code becomes more organized and stable,
-this document will be updated to reflect the changes.
+For module-specific details, read the source code. Some files are extensively
+commented at the top (e.g. terminal.c, screen.c).
 
-If you are looking for module-specific details, it is best to read the source
-code. Some files are extensively commented at the top (e.g. terminal.c,
-screen.c).
+### Source file name conventions
+
+The source files use extensions to hint about their purpose.
+
+- `*.c`, `*.generated.c` - full C files, with all includes, etc.
+- `*.c.h` - parametrized C files, contain all necessary includes, but require
+  defining macros before actually using. Example: `typval_encode.c.h`
+- `*.h` - full headers, with all includes. Does *not* apply to `*.generated.h`.
+- `*.h.generated.h` - exported functions’ declarations.
+- `*.c.generated.h` - static functions’ declarations.
 
 ### Top-level program loops
 
-First let's understand what a Vim-like program does by analyzing the workflow of
+Let's understand what a Vim-like program does by analyzing the workflow of
 a typical editing session:
 
 01. Vim dispays the welcome screen
@@ -41,16 +46,14 @@ a typical editing session:
 21. User types: `word<ESC>`
 22. Vim inserts "word" at the beginning and returns to normal mode
 
-Note that we have split user actions into sequences of inputs that change the
-state of the editor. While there's no documentation about a "g command
-mode" (step 16), internally it is implemented similarly to "operator-pending
-mode".
+Note that we split user actions into sequences of inputs that change the state
+of the editor. While there's no documentation about a "g command mode" (step
+16), internally it is implemented similarly to "operator-pending mode".
 
-From this we can see that Vim has the behavior of a input-driven state
-machine (more specifically, a pushdown automaton since it requires a stack for
+From this we can see that Vim has the behavior of an input-driven state machine
+(more specifically, a pushdown automaton since it requires a stack for
 transitioning back from states). Assuming each state has a callback responsible
-for handling keys, this pseudocode (a python-like language) shows a good
-representation of the main program loop:
+for handling keys, this pseudocode represents the main program loop:
 
 ```py
 def state_enter(state_callback, data):
@@ -126,12 +129,11 @@ def insert_state(data, key):
   return true
 ```
 
-While the actual code is much more complicated, the above gives an idea of how
-Neovim is organized internally. Some states like the `g_command_state` or
-`get_operator_count_state` do not have a dedicated `state_enter` callback, but
-are implicitly embedded into other states (this will change later as we continue
-the refactoring effort). To start reading the actual code, here's the
-recommended order:
+The above gives an idea of how Nvim is organized internally. Some states like
+the `g_command_state` or `get_operator_count_state` do not have a dedicated
+`state_enter` callback, but are implicitly embedded into other states (this
+will change later as we continue the refactoring effort). To start reading the
+actual code, here's the recommended order:
 
 1. `state_enter()` function (state.c). This is the actual program loop,
    note that a `VimState` structure is used, which contains function pointers
@@ -154,14 +156,14 @@ modes managed by the `state_enter` loop:
 
 ### Async event support
 
-One of the features Neovim added is the support for handling arbitrary
+One of the features Nvim added is the support for handling arbitrary
 asynchronous events, which can include:
 
-- msgpack-rpc requests
+- RPC requests
 - job control callbacks
-- timers (not implemented yet but the support code is already there)
+- timers
 
-Neovim implements this functionality by entering another event loop while
+Nvim implements this functionality by entering another event loop while
 waiting for characters, so instead of:
 
 ```py
@@ -171,7 +173,7 @@ def state_enter(state_callback, data):
   while state_callback(data, key)   # invoke the callback for the current state
 ```
 
-Neovim program loop is more like:
+Nvim program loop is more like:
 
 ```py
 def state_enter(state_callback, data):
@@ -182,9 +184,9 @@ def state_enter(state_callback, data):
 
 where `event` is something the operating system delivers to us, including (but
 not limited to) user input. The `read_next_event()` part is internally
-implemented by libuv, the platform layer used by Neovim.
+implemented by libuv, the platform layer used by Nvim.
 
-Since Neovim inherited its code from Vim, the states are not prepared to receive
+Since Nvim inherited its code from Vim, the states are not prepared to receive
 "arbitrary events", so we use a special key to represent those (When a state
 receives an "arbitrary event", it normally doesn't do anything other update the
 screen).

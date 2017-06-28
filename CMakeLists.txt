@@ -64,11 +64,11 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 2)
-set(NVIM_VERSION_PATCH 0)
+set(NVIM_VERSION_PATCH 1)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 2)         # Bump this after any API change.
+set(NVIM_API_LEVEL 3)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
@@ -96,15 +96,15 @@ if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
   string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
-# Disable logging for release-type builds.
-if(NOT CMAKE_C_FLAGS_RELEASE MATCHES DDISABLE_LOG)
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DDISABLE_LOG")
+# Minimize logging for release-type builds.
+if(NOT CMAKE_C_FLAGS_RELEASE MATCHES DMIN_LOG_LEVEL)
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMIN_LOG_LEVEL=3")
 endif()
-if(NOT CMAKE_C_FLAGS_MINSIZEREL MATCHES DDISABLE_LOG)
-  set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -DDISABLE_LOG")
+if(NOT CMAKE_C_FLAGS_MINSIZEREL MATCHES DMIN_LOG_LEVEL)
+  set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -DMIN_LOG_LEVEL=3")
 endif()
-if(NOT CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DDISABLE_LOG)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -DDISABLE_LOG")
+if(NOT CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DMIN_LOG_LEVEL)
+  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -DMIN_LOG_LEVEL=3")
 endif()
 
 # Enable assertions for RelWithDebInfo.
@@ -221,9 +221,14 @@ else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
 
+  check_c_compiler_flag(-Wimplicit-fallthrough HAS_WIMPLICIT_FALLTHROUGH_FLAG)
+  if(HAS_WIMPLICIT_FALLTHROUGH_FLAG)
+    add_definitions(-Wimplicit-fallthrough)
+  endif()
+
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
   # 3.4.1 used there.
-  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+  if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND CMAKE_C_COMPILER_ID MATCHES "Clang")
     add_definitions(-Wno-c11-extensions)
   endif()
 endif()
@@ -309,6 +314,20 @@ include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 find_package(Msgpack 1.0.0 REQUIRED)
 include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
+# Note: The test lib requires LuaJIT; it will be skipped if LuaJIT is missing.
+option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
+
+if(PREFER_LUA)
+  find_package(Lua REQUIRED)
+  set(LUA_PREFERRED_INCLUDE_DIRS ${LUA_INCLUDE_DIR})
+  set(LUA_PREFERRED_LIBRARIES ${LUA_LIBRARIES})
+  find_package(LuaJit)
+else()
+  find_package(LuaJit REQUIRED)
+  set(LUA_PREFERRED_INCLUDE_DIRS ${LUAJIT_INCLUDE_DIRS})
+  set(LUA_PREFERRED_LIBRARIES ${LUAJIT_LIBRARIES})
+endif()
+
 list(APPEND CMAKE_REQUIRED_INCLUDES "${MSGPACK_INCLUDE_DIRS}")
 check_c_source_compiles("
 #include <msgpack.h>
@@ -324,11 +343,7 @@ if(MSGPACK_HAS_FLOAT32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_MSGPACK_HAS_FLOAT32")
 endif()
 
-if(UNIX)
-  option(FEAT_TUI "Enable the Terminal UI" ON)
-else()
-  option(FEAT_TUI "Enable the Terminal UI" OFF)
-endif()
+option(FEAT_TUI "Enable the Terminal UI" ON)
 
 if(FEAT_TUI)
   find_package(Unibilium REQUIRED)
@@ -430,11 +445,7 @@ message(STATUS "Using the Lua interpreter ${LUA_PRG}.")
 find_program(BUSTED_PRG NAMES busted busted.bat)
 find_program(BUSTED_LUA_PRG busted-lua)
 if(NOT BUSTED_OUTPUT_TYPE)
-  if(WIN32)
-    set(BUSTED_OUTPUT_TYPE "plainTerminal")
-  else()
-    set(BUSTED_OUTPUT_TYPE "utfTerminal")
-  endif()
+  set(BUSTED_OUTPUT_TYPE "nvim")
 endif()
 
 find_program(LUACHECK_PRG luacheck)
@@ -445,7 +456,6 @@ include(InstallHelpers)
 file(GLOB MANPAGES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   man/nvim.1)
-
 install_helper(
   FILES ${MANPAGES}
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
@@ -453,11 +463,11 @@ install_helper(
 # MIN_LOG_LEVEL for log.h
 if(DEFINED MIN_LOG_LEVEL)
   if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "MIN_LOG_LEVEL must be a number 0-3")
+    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
   endif()
   message(STATUS "MIN_LOG_LEVEL set to ${MIN_LOG_LEVEL}")
 else()
-  message(STATUS "MIN_LOG_LEVEL not specified, defaulting to INFO(1)")
+  message(STATUS "MIN_LOG_LEVEL not specified, defaulting to 1 (INFO)")
 endif()
 
 # Go down the tree.
@@ -590,9 +600,26 @@ if(LUACHECK_PRG)
   add_custom_target(testlint
     COMMAND ${CMAKE_COMMAND}
       -DLUACHECK_PRG=${LUACHECK_PRG}
-      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DIGNORE_PATTERN="*/preload.lua"
       -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTestsLint.cmake)
+      -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake)
+
+  add_custom_target(
+    blobcodelint
+    COMMAND
+      ${CMAKE_COMMAND}
+        -DLUACHECK_PRG=${LUACHECK_PRG}
+        -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/lua
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DREAD_GLOBALS=vim
+        -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
+  )
+  # TODO(ZyX-I): Run linter for all lua code in src
+  add_custom_target(
+    lualint
+    DEPENDS blobcodelint
+  )
 endif()
 
 set(CPACK_PACKAGE_NAME "Neovim")

@@ -31,11 +31,21 @@ endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
-  if a:event == 'stdout' || a:event == 'stderr'
+  if a:event ==# 'stdout' || a:event ==# 'stderr'
     let self.output .= join(a:data, '')
-  elseif a:event == 'exit'
+  elseif a:event ==# 'exit'
     let s:shell_error = a:data
   endif
+endfunction
+
+" Attempts to construct a shell command from an args list.
+" Only for display, to help users debug a failed command.
+function! s:shellify(cmd) abort
+  if type(a:cmd) != type([])
+    return a:cmd
+  endif
+  return join(map(copy(a:cmd),
+    \'v:val =~# ''\m[\-.a-zA-Z_/]'' ? shellescape(v:val) : v:val'), ' ')
 endfunction
 
 " Run a system command and timeout after 30 seconds.
@@ -54,8 +64,7 @@ function! s:system(cmd, ...) abort
   let jobid = jobstart(a:cmd, opts)
 
   if jobid < 1
-    call health#report_error(printf('Command error %d: %s', jobid,
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd)))
+    call health#report_error(printf('Command error (job=%d): %s', jobid, s:shellify(a:cmd)))
     let s:shell_error = 1
     return opts.output
   endif
@@ -66,13 +75,11 @@ function! s:system(cmd, ...) abort
 
   let res = jobwait([jobid], 30000)
   if res[0] == -1
-    call health#report_error(printf('Command timed out: %s',
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd))
+    call health#report_error(printf('Command timed out: %s', s:shellify(a:cmd)))
     call jobstop(jobid)
   elseif s:shell_error != 0 && !ignore_error
-    call health#report_error(printf("Command error (%d) %s: %s", jobid,
-          \ type(a:cmd) == type([]) ? join(a:cmd) : a:cmd,
-          \ opts.output))
+    call health#report_error(printf("Command error (job=%d): %s\nOutput: %s", jobid,
+          \ s:shellify(a:cmd), opts.output))
   endif
 
   return opts.output
@@ -116,7 +123,7 @@ function! s:check_clipboard() abort
   let clipboard_tool = provider#clipboard#Executable()
   if empty(clipboard_tool)
     call health#report_warn(
-          \ "No clipboard tool found. Clipboard registers will not work.",
+          \ 'No clipboard tool found. Clipboard registers will not work.',
           \ [':help clipboard'])
   else
     call health#report_ok('Clipboard tool found: '. clipboard_tool)
@@ -157,7 +164,7 @@ function! s:version_info(python) abort
         \ ]))
 
   if empty(python_version)
-    let python_version = 'unable to parse python response'
+    let python_version = 'unable to parse '.a:python.' response'
   endif
 
   let nvim_path = s:trim(s:system([
@@ -169,14 +176,14 @@ function! s:version_info(python) abort
 
   " Assuming that multiple versions of a package are installed, sort them
   " numerically in descending order.
-  function! s:compare(metapath1, metapath2)
+  function! s:compare(metapath1, metapath2) abort
     let a = matchstr(fnamemodify(a:metapath1, ':p:h:t'), '[0-9.]\+')
     let b = matchstr(fnamemodify(a:metapath2, ':p:h:t'), '[0-9.]\+')
     return a == b ? 0 : a > b ? 1 : -1
   endfunction
 
   " Try to get neovim.VERSION (added in 0.1.11dev).
-  let nvim_version = s:system(['python', '-c',
+  let nvim_version = s:system([a:python, '-c',
         \ 'from neovim import VERSION as v; '.
         \ 'print("{}.{}.{}{}".format(v.major, v.minor, v.patch, v.prerelease))'],
         \ '', 1, 1)
@@ -429,8 +436,8 @@ function! s:check_ruby() abort
 
   if !executable('ruby') || !executable('gem')
     call health#report_warn(
-          \ "`ruby` and `gem` must be in $PATH.",
-          \ ["Install Ruby and verify that `ruby` and `gem` commands work."])
+          \ '`ruby` and `gem` must be in $PATH.',
+          \ ['Install Ruby and verify that `ruby` and `gem` commands work.'])
     return
   endif
   call health#report_info('Ruby: '. s:system('ruby -v'))
@@ -445,21 +452,21 @@ function! s:check_ruby() abort
   endif
   call health#report_info('Host: '. host)
 
-  let latest_gem_cmd = 'gem list -ra ^neovim$'
+  let latest_gem_cmd = has('win32') ? 'cmd /c gem list -ra ^^neovim$' : 'gem list -ra ^neovim$'
   let latest_gem = s:system(split(latest_gem_cmd))
   if s:shell_error || empty(latest_gem)
     call health#report_error('Failed to run: '. latest_gem_cmd,
           \ ["Make sure you're connected to the internet.",
-          \  "Are you behind a firewall or proxy?"])
+          \  'Are you behind a firewall or proxy?'])
     return
   endif
-  let latest_gem = get(split(latest_gem, ' (\|, \|)$' ), 1, 'not found')
+  let latest_gem = get(split(latest_gem, 'neovim (\|, \|)$' ), 1, 'not found')
 
   let current_gem_cmd = host .' --version'
   let current_gem = s:system(current_gem_cmd)
   if s:shell_error
     call health#report_error('Failed to run: '. current_gem_cmd,
-          \ ["Report this issue with the output of: ", current_gem_cmd])
+          \ ['Report this issue with the output of: ', current_gem_cmd])
     return
   endif
 

@@ -868,13 +868,13 @@ describe('completion', function()
   end)
 end)
 
-describe('External completion popupmenu', function()
+describe('ui/externalized/popupmenu', function()
   local screen
   local items, selected, anchor
   before_each(function()
     clear()
     screen = Screen.new(60, 8)
-    screen:attach({rgb=true, popupmenu_external=true})
+    screen:attach({rgb=true, ext_popupmenu=true})
     screen:set_default_attr_ids({
       [1] = {bold=true, foreground=Screen.colors.Blue},
       [2] = {bold = true},

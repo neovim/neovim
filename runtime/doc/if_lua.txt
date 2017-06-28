@@ -1,0 +1,311 @@
+*if_lua.txt*    Nvim
+
+
+		  VIM REFERENCE MANUAL    by Luis Carvalho
+
+
+Lua Interface to Nvim					*lua* *Lua*
+
+                                      Type <M-]> to see the table of contents.
+
+==============================================================================
+1. Importing modules					*lua-require*
+
+Neovim lua interface automatically adjusts `package.path` and `package.cpath` 
+according to effective &runtimepath value.  Adjustment happens after 
+'runtimepath' is changed. `package.path` is adjusted by simply appending 
+`/lua/?.lua` and `/lua/?/init.lua` to each directory from 'runtimepath' (`/` 
+is actually the first character of `package.config`).
+
+Similarly to `package.path`, modified directories from `runtimepath` are also 
+added to `package.cpath`.  In this case, instead of appending `/lua/?.lua` and 
+`/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of 
+the existing `package.cpath` are used.  Here is an example:
+
+1. Given that
+   - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
+   - initial (defined at compile time or derived from 
+     `$LUA_CPATH`/`$LUA_INIT`) `package.cpath` contains 
+     `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
+2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in 
+   order: parts of the path starting from the first path component containing 
+   question mark and preceding path separator.
+3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same 
+   as the suffix of the first path from `package.path` (i.e. `./?.so`).  Which 
+   leaves `/?.so` and `/a?d/j/g.elf`, in this order.
+4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`.  The 
+   second one contains semicolon which is a paths separator so it is out, 
+   leaving only `/foo/bar` and `/abc`, in order.
+5. The cartesian product of paths from 4. and suffixes from 3. is taken, 
+   giving four variants. In each variant `/lua` path segment is inserted 
+   between path and suffix, leaving
+
+   - `/foo/bar/lua/?.so`
+   - `/foo/bar/lua/a?d/j/g.elf`
+   - `/abc/lua/?.so`
+   - `/abc/lua/a?d/j/g.elf`
+
+6. New paths are prepended to the original `package.cpath`.
+
+The result will look like this:
+
+    `/foo/bar,/xxx;yyy/baz,/abc` ('runtimepath')
+    × `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so` (`package.cpath`)
+
+    = `/foo/bar/lua/?.so;/foo/bar/lua/a?d/j/g.elf;/abc/lua/?.so;/abc/lua/a?d/j/g.elf;./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`
+
+Note: to keep up with 'runtimepath' updates paths added at previous update are 
+remembered and removed at the next update, while all paths derived from the 
+new 'runtimepath' are prepended as described above.  This allows removing 
+paths when path is removed from 'runtimepath', adding paths when they are 
+added and reordering `package.path`/`package.cpath` content if 'runtimepath' 
+was reordered.
+
+Note 2: even though adjustments happens automatically Neovim does not track 
+current values of `package.path` or `package.cpath`.  If you happened to 
+delete some paths from there you need to reset 'runtimepath' to make them 
+readded.  Just running `let &runtimepath = &runtimepath` should work.
+
+Note 3: skipping paths from 'runtimepath' which contain semicolons applies 
+both to `package.path` and `package.cpath`.  Given that there is a number of 
+badly written plugins using shell which will not work with paths containing 
+semicolons it is better to not have them in 'runtimepath' at all.
+
+------------------------------------------------------------------------------
+1.1. Example of the plugin which uses lua modules:	*lua-require-example*
+
+The following example plugin adds a command `:MakeCharBlob` which transforms 
+current buffer into a long `unsigned char` array.  Lua contains transformation 
+function in a module `lua/charblob.lua` which is imported in 
+`autoload/charblob.vim` (`require("charblob")`).  Example plugin is supposed 
+to be put into any directory from 'runtimepath', e.g. `~/.config/nvim` (in 
+this case `lua/charblob.lua` means `~/.config/nvim/lua/charblob.lua`).
+
+autoload/charblob.vim: >
+
+	function charblob#encode_buffer()
+	  call setline(1, luaeval(
+	  \    'require("charblob").encode(unpack(_A))',
+	  \    [getline(1, '$'), &textwidth, '  ']))
+	endfunction
+
+plugin/charblob.vim: >
+
+	if exists('g:charblob_loaded')
+	  finish
+	endif
+	let g:charblob_loaded = 1
+
+	command MakeCharBlob :call charblob#encode_buffer()
+
+lua/charblob.lua: >
+
+	local function charblob_bytes_iter(lines)
+	  local init_s = {
+	    next_line_idx = 1,
+	    next_byte_idx = 1,
+	    lines = lines,
+	  }
+	  local function next(s, _)
+	    if lines[s.next_line_idx] == nil then
+	      return nil
+	    end
+	    if s.next_byte_idx > #(lines[s.next_line_idx]) then
+	      s.next_line_idx = s.next_line_idx + 1
+	      s.next_byte_idx = 1
+	      return ('\n'):byte()
+	    end
+	    local ret = lines[s.next_line_idx]:byte(s.next_byte_idx)
+	    if ret == ('\n'):byte() then
+	      ret = 0  -- See :h NL-used-for-NUL.
+	    end
+	    s.next_byte_idx = s.next_byte_idx + 1
+	    return ret
+	  end
+	  return next, init_s, nil
+	end
+
+	local function charblob_encode(lines, textwidth, indent)
+	  local ret = {
+	    'const unsigned char blob[] = {',
+	    indent,
+	  }
+	  for byte in charblob_bytes_iter(lines) do
+	    --                .- space + number (width 3) + comma
+	    if #(ret[#ret]) + 5 > textwidth then
+	      ret[#ret + 1] = indent
+	    else
+	      ret[#ret] = ret[#ret] .. ' '
+	    end
+	    ret[#ret] = ret[#ret] .. (('%3u,'):format(byte))
+	  end
+	  ret[#ret + 1] = '};'
+	  return ret
+	end
+
+	return {
+	  bytes_iter = charblob_bytes_iter,
+	  encode = charblob_encode,
+	}
+
+==============================================================================
+2. Commands						*lua-commands*
+
+							*:lua*
+:[range]lua {chunk}
+			Execute Lua chunk {chunk}.
+
+Examples:
+>
+	:lua vim.api.nvim_command('echo "Hello, Neovim!"')
+<
+
+:[range]lua << {endmarker}
+{script}
+{endmarker}
+			Execute Lua script {script}.
+			Note: This command doesn't work when the Lua
+			feature wasn't compiled in.  To avoid errors, see
+			|script-here|.
+
+{endmarker} must NOT be preceded by any white space.  If {endmarker} is
+omitted from after the "<<", a dot '.' must be used after {script}, like
+for the |:append| and |:insert| commands.
+This form of the |:lua| command is mainly useful for including Lua code
+in Vim scripts.
+
+Example:
+>
+	function! CurrentLineInfo()
+	lua << EOF
+	local linenr = vim.api.nvim_win_get_cursor(0)[1]
+	local curline = vim.api.nvim_buf_get_lines(
+		0, linenr, linenr + 1, false)[1]
+	print(string.format("Current line [%d] has %d bytes",
+		linenr, #curline))
+	EOF
+	endfunction
+
+Note that the variables are prefixed with `local`: they will disappear when
+block finishes. This is not the case for globals.
+
+To see what version of Lua you have: >
+	:lua print(_VERSION)
+
+If you use LuaJIT you can also use this: >
+	:lua print(jit.version)
+<
+
+							*:luado*
+:[range]luado {body}	Execute Lua function "function (line, linenr) {body}
+			end" for each line in the [range], with the function
+			argument being set to the text of each line in turn,
+			without a trailing <EOL>, and the current line number.
+			If the value returned by the function is a string it
+			becomes the text of the line in the current turn. The
+			default for [range] is the whole file: "1,$".
+
+Examples:
+>
+	:luado return string.format("%s\t%d", line:reverse(), #line)
+
+	:lua require"lpeg"
+	:lua -- balanced parenthesis grammar:
+	:lua bp = lpeg.P{ "(" * ((1 - lpeg.S"()") + lpeg.V(1))^0 * ")" }
+	:luado if bp:match(line) then return "-->\t" .. line end
+<
+
+							*:luafile*
+:[range]luafile {file}
+			Execute Lua script in {file}.
+			The whole argument is used as a single file name.
+
+Examples:
+>
+	:luafile script.lua
+	:luafile %
+<
+
+All these commands execute a Lua chunk from either the command line (:lua and
+:luado) or a file (:luafile) with the given line [range]. Similarly to the Lua
+interpreter, each chunk has its own scope and so only global variables are
+shared between command calls. All Lua default libraries are available. In
+addition, Lua "print" function has its output redirected to the Vim message
+area, with arguments separated by a white space instead of a tab.
+
+Lua uses the "vim" module (see |lua-vim|) to issue commands to Neovim
+and manage buffers (|lua-buffer|) and windows (|lua-window|). However,
+procedures that alter buffer content, open new buffers, and change cursor
+position are restricted when the command is executed in the |sandbox|.
+
+
+==============================================================================
+2. The vim module					*lua-vim*
+
+Lua interfaces Vim through the "vim" module. Currently it only has `api` 
+submodule which is a table with all API functions. Descriptions of these 
+functions may be found in |api.txt|.
+
+==============================================================================
+3. The luaeval function					*lua-luaeval* *lua-eval*
+							*luaeval()*
+
+The (dual) equivalent of "vim.eval" for passing Lua values to Vim is
+"luaeval". "luaeval" takes an expression string and an optional argument used 
+for _A inside expression and returns the result of the expression. It is 
+semantically equivalent in Lua to:
+>
+	local chunkheader = "local _A = select(1, ...) return "
+	function luaeval (expstr, arg)
+	    local chunk = assert(loadstring(chunkheader .. expstr, "luaeval"))
+	    return chunk(arg) -- return typval
+	end
+
+Note that "_A" receives the argument to "luaeval". Lua nils, numbers, strings, 
+tables and booleans are converted to their Vim respective types. An error is 
+thrown if conversion of any of the remaining Lua types is attempted.
+
+Note 2: lua tables are used as both dictionaries and lists, thus making it 
+impossible to determine whether empty table is meant to be empty list or empty 
+dictionary. Additionally lua does not have integer numbers. To distinguish 
+between these cases there is the following agreement:
+
+0. Empty table is empty list.
+1. Table with N incrementally growing integral numbers, starting from 1 and 
+   ending with N is considered to be a list.
+2. Table with string keys, none of which contains NUL byte, is considered to 
+   be a dictionary.
+3. Table with string keys, at least one of which contains NUL byte, is also 
+   considered to be a dictionary, but this time it is converted to 
+   a |msgpack-special-map|.
+4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point 
+   value:
+   - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to 
+     a floating-point 1.0. Note that by default integral lua numbers are 
+     converted to |Number|s, non-integral are converted to |Float|s. This 
+     variant allows integral |Float|s.
+   - `{[vim.type_idx]=vim.types.dictionary}` is converted to an empty 
+     dictionary, `{[vim.type_idx]=vim.types.dictionary, [42]=1, a=2}` is 
+     converted to a dictionary `{'a': 42}`: non-string keys are ignored. 
+     Without `vim.type_idx` key tables with keys not fitting in 1., 2. or 3. 
+     are errors.
+   - `{[vim.type_idx]=vim.types.list}` is converted to an empty list. As well 
+     as `{[vim.type_idx]=vim.types.list, [42]=1}`: integral keys that do not 
+     form a 1-step sequence from 1 to N are ignored, as well as all 
+     non-integral keys.
+
+Examples: >
+
+	:echo luaeval('math.pi')
+	:function Rand(x,y) " random uniform between x and y
+	:  return luaeval('(_A.y-_A.x)*math.random()+_A.x', {'x':a:x,'y':a:y})
+	:  endfunction
+	:echo Rand(1,10)
+
+Note that currently second argument to `luaeval` undergoes VimL to lua 
+conversion, so changing containers in lua do not affect values in VimL. Return 
+value is also always converted. When converting, |msgpack-special-dict|s are 
+treated specially.
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

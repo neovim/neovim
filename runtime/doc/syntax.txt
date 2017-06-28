@@ -20,24 +20,7 @@ In the User Manual:
 |usr_06.txt| introduces syntax highlighting.
 |usr_44.txt| introduces writing a syntax file.
 
-1.  Quick start			|:syn-qstart|
-2.  Syntax files		|:syn-files|
-3.  Syntax loading procedure	|syntax-loading|
-4.  Syntax file remarks		|:syn-file-remarks|
-5.  Defining a syntax		|:syn-define|
-6.  :syntax arguments		|:syn-arguments|
-7.  Syntax patterns		|:syn-pattern|
-8.  Syntax clusters		|:syn-cluster|
-9.  Including syntax files	|:syn-include|
-10. Synchronizing		|:syn-sync|
-11. Listing syntax items	|:syntax|
-12. Highlight command		|:highlight|
-13. Linking groups		|:highlight-link|
-14. Cleaning up			|:syn-clear|
-15. Highlighting tags		|tag-highlight|
-16. Window-local syntax		|:ownsyntax|
-17. Color xterms		|xterm-color|
-18. When syntax is slow		|:syntime|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Quick start						*:syn-qstart*
@@ -1472,7 +1455,7 @@ algorithm should work in the vast majority of cases.  In some cases, such as a
 file that begins with 500 or more full-line comments, the script may
 incorrectly decide that the fortran code is in fixed form.  If that happens,
 just add a non-comment statement beginning anywhere in the first five columns
-of the first twenty five lines, save (:w) and then reload (:e!) the file.
+of the first twenty-five lines, save (:w) and then reload (:e!) the file.
 
 Tabs in fortran files ~
 Tabs are not recognized by the Fortran standards.  Tabs are not a good idea in
@@ -2656,7 +2639,75 @@ your vimrc:							*g:filetype_r*
 
 RUBY						*ruby.vim* *ft-ruby-syntax*
 
-There are a number of options to the Ruby syntax highlighting.
+    Ruby: Operator highlighting		|ruby_operators|
+    Ruby: Whitespace errors		|ruby_space_errors|
+    Ruby: Folding			|ruby_fold| |ruby_foldable_groups|
+    Ruby: Reducing expensive operations	|ruby_no_expensive| |ruby_minlines|
+    Ruby: Spellchecking strings		|ruby_spellcheck_strings|
+
+						*ruby_operators*
+ Ruby: Operator highlighting ~
+
+Operators can be highlighted by defining "ruby_operators": >
+
+	:let ruby_operators = 1
+<
+						*ruby_space_errors*
+ Ruby: Whitespace errors ~
+
+Whitespace errors can be highlighted by defining "ruby_space_errors": >
+
+	:let ruby_space_errors = 1
+<
+This will highlight trailing whitespace and tabs preceded by a space character
+as errors.  This can be refined by defining "ruby_no_trail_space_error" and
+"ruby_no_tab_space_error" which will ignore trailing whitespace and tabs after
+spaces respectively.
+
+					*ruby_fold* *ruby_foldable_groups*
+ Ruby: Folding ~
+
+Folding can be enabled by defining "ruby_fold": >
+
+	:let ruby_fold = 1
+<
+This will set the value of 'foldmethod' to "syntax" locally to the current
+buffer or window, which will enable syntax-based folding when editing Ruby
+filetypes.
+
+Default folding is rather detailed, i.e., small syntax units like "if", "do",
+"%w[]" may create corresponding fold levels.
+
+You can set "ruby_foldable_groups" to restrict which groups are foldable: >
+
+        :let ruby_foldable_groups = 'if case %'
+<
+The value is a space-separated list of keywords:
+
+    keyword       meaning ~
+    --------  ------------------------------------- ~
+    ALL        Most block syntax (default)
+    NONE       Nothing
+    if         "if" or "unless" block
+    def        "def" block
+    class      "class" block
+    module     "module" block
+    do         "do" block
+    begin      "begin" block
+    case       "case" block
+    for        "for", "while", "until" loops
+    {          Curly bracket block or hash literal
+    [          Array literal
+    %          Literal with "%" notation, e.g.: %w(STRING), %!STRING!
+    /          Regexp
+    string     String and shell command output (surrounded by ', ", `)
+    :          Symbol
+    #          Multiline comment
+    <<         Here documents
+    __END__    Source code after "__END__" directive
+
+						*ruby_no_expensive*
+ Ruby: Reducing expensive operations ~
 
 By default, the "end" keyword is colorized according to the opening statement
 of the block it closes.  While useful, this feature can be expensive; if you
@@ -2667,6 +2718,8 @@ you may want to turn it off by defining the "ruby_no_expensive" variable: >
 <
 In this case the same color will be used for all control keywords.
 
+						*ruby_minlines*
+
 If you do want this feature enabled, but notice highlighting errors while
 scrolling backwards, which are fixed when redrawing with CTRL-L, try setting
 the "ruby_minlines" variable to a value larger than 50: >
@@ -2676,48 +2729,13 @@ the "ruby_minlines" variable to a value larger than 50: >
 Ideally, this value should be a number of lines large enough to embrace your
 largest class or module.
 
-Highlighting of special identifiers can be disabled by removing the
-rubyIdentifier highlighting: >
+						*ruby_spellcheck_strings*
+ Ruby: Spellchecking strings ~
 
-	:hi link rubyIdentifier NONE
-<
-This will prevent highlighting of special identifiers like "ConstantName",
-"$global_var", "@@class_var", "@instance_var", "| block_param |", and
-":symbol".
+Ruby syntax will perform spellchecking of strings if you define
+"ruby_spellcheck_strings": >
 
-Significant methods of Kernel, Module and Object are highlighted by default.
-This can be disabled by defining "ruby_no_special_methods": >
-
-	:let ruby_no_special_methods = 1
-<
-This will prevent highlighting of important methods such as "require", "attr",
-"private", "raise" and "proc".
-
-Ruby operators can be highlighted. This is enabled by defining
-"ruby_operators": >
-
-	:let ruby_operators = 1
-<
-Whitespace errors can be highlighted by defining "ruby_space_errors": >
-
-	:let ruby_space_errors = 1
-<
-This will highlight trailing whitespace and tabs preceded by a space character
-as errors.  This can be refined by defining "ruby_no_trail_space_error" and
-"ruby_no_tab_space_error" which will ignore trailing whitespace and tabs after
-spaces respectively.
-
-Folding can be enabled by defining "ruby_fold": >
-
-	:let ruby_fold = 1
-<
-This will set the 'foldmethod' option to "syntax" and allow folding of
-classes, modules, methods, code blocks, heredocs and comments.
-
-Folding of multiline comments can be disabled by defining
-"ruby_no_comment_fold": >
-
-	:let ruby_no_comment_fold = 1
+	:let ruby_spellcheck_strings = 1
 <
 
 SCHEME						*scheme.vim* *ft-scheme-syntax*
@@ -2815,9 +2833,11 @@ vimrc file: >
 (Adapted from the html.vim help text by Claudio Fleiner <claudio@fleiner.com>)
 
 
-SH		*sh.vim* *ft-sh-syntax* *ft-bash-syntax* *ft-ksh-syntax*
+		*ft-posix-synax* *ft-dash-syntax*
+SH		*sh.vim*  *ft-sh-syntax*  *ft-bash-syntax*  *ft-ksh-syntax*
 
-This covers the "normal" Unix (Bourne) sh, bash and the Korn shell.
+This covers syntax highlighting for the older Unix (Bourne) sh, and newer
+shells such as bash, dash, posix, and the Korn shells.
 
 Vim attempts to determine which shell type is in use by specifying that
 various filenames are of specific types: >
@@ -2826,28 +2846,31 @@ various filenames are of specific types: >
     bash: .bashrc* bashrc bash.bashrc .bash_profile* *.bash
 <
 If none of these cases pertain, then the first line of the file is examined
-(ex. /bin/sh  /bin/ksh	/bin/bash).  If the first line specifies a shelltype,
-then that shelltype is used.  However some files (ex. .profile) are known to
-be shell files but the type is not apparent.  Furthermore, on many systems
-sh is symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh" (Posix).
+(ex. looking for /bin/sh  /bin/ksh  /bin/bash).  If the first line specifies a
+shelltype, then that shelltype is used.  However some files (ex. .profile) are
+known to be shell files but the type is not apparent.  Furthermore, on many
+systems sh is symbolically linked to "bash" (Linux, Windows+cygwin) or "ksh"
+(Posix).
 
-One may specify a global default by instantiating one of the following three
+One may specify a global default by instantiating one of the following
 variables in your vimrc:
 
-    ksh: >
+   ksh: >
 	let g:is_kornshell = 1
-<   posix: (using this is the same as setting is_kornshell to 1) >
+<   posix:  (using this is the nearly the same as setting g:is_kornshell to 1) >
 	let g:is_posix     = 1
 <   bash: >
 	let g:is_bash	   = 1
 <   sh: (default) Bourne shell >
 	let g:is_sh	   = 1
 
+<   (dash users should use posix)
+
 If there's no "#! ..." line, and the user hasn't availed himself/herself of a
 default sh.vim syntax setting as just shown, then syntax/sh.vim will assume
 the Bourne shell syntax.  No need to quote RFCs or market penetration
 statistics in error reports, please -- just select the default version of the
-sh your system uses in your vimrc.
+sh your system uses and install the associated "let..." in your <.vimrc>.
 
 The syntax/sh.vim file provides several levels of syntax-based folding: >
 
@@ -2856,7 +2879,7 @@ The syntax/sh.vim file provides several levels of syntax-based folding: >
 	let g:sh_fold_enabled= 2     (enable heredoc folding)
 	let g:sh_fold_enabled= 4     (enable if/do/for folding)
 >
-then various syntax items (HereDocuments and function bodies) become
+then various syntax items (ie. HereDocuments and function bodies) become
 syntax-foldable (see |:syn-fold|).  You also may add these together
 to get multiple types of folding: >
 
@@ -2880,14 +2903,14 @@ reduce this, the "sh_maxlines" internal variable can be set.  Example: >
 The default is to use the twice sh_minlines.  Set it to a smaller number to
 speed up displaying.  The disadvantage is that highlight errors may appear.
 
-						*g:sh_isk* *g:sh_noisk*
-The shell languages appear to let "." be part of words, commands, etc;
-consequently it should be in the isk for sh.vim.  As of v116 of syntax/sh.vim,
-syntax/sh.vim will append the "." to |'iskeyword'| by default; you may control
-this behavior with: >
-	let g:sh_isk  = '..whatever characters you want as part of iskeyword'
-	let g:sh_noisk= 1  " otherwise, if this exists, the isk will NOT chg
+syntax/sh.vim tries to flag certain problems as errors; usually things like
+extra ']'s, 'done's, 'fi's, etc.  If you find the error handling problematic
+for your purposes, you may suppress such error highlighting by putting
+the following line in your .vimrc: >
+
+	let g:sh_no_error= 1
 <
+
 						*sh-embed*  *sh-awk*
  Sh: EMBEDDING LANGUAGES~
 
@@ -3189,11 +3212,11 @@ syntax highlighting script handles this with the following logic:
 	* If g:tex_stylish exists and is 1
 		then the file will be treated as a "sty" file, so the "_"
 		will be allowed as part of keywords
-		(irregardless of g:tex_isk)
+		(regardless of g:tex_isk)
 	* Else if the file's suffix is sty, cls, clo, dtx, or ltx,
 		then the file will be treated as a "sty" file, so the "_"
 		will be allowed as part of keywords
-		(irregardless of g:tex_isk)
+		(regardless of g:tex_isk)
 
 	* If g:tex_isk exists, then it will be used for the local 'iskeyword'
 	* Else the local 'iskeyword' will be set to 48-57,a-z,A-Z,192-255
@@ -3262,8 +3285,8 @@ Some folding is now supported with syntax/vim.vim: >
    g:vimsyn_folding =~ 'P' : fold python   script
 <
 							*g:vimsyn_noerror*
-Not all error highlighting that syntax/vim.vim does may be correct; VimL is a
-difficult language to highlight correctly.  A way to suppress error
+Not all error highlighting that syntax/vim.vim does may be correct; Vim script
+is a difficult language to highlight correctly.  A way to suppress error
 highlighting is to put the following line in your |vimrc|: >
 
 	let g:vimsyn_noerror = 1
@@ -3421,6 +3444,8 @@ DEFINING CASE						*:syn-case* *E390*
 	"ignore".  Note that any items before this are not affected, and all
 	items until the next ":syntax case" command are affected.
 
+:sy[ntax] case
+	Show either "syntax case match" or "syntax case ignore" (translated).
 
 SPELL CHECKING						*:syn-spell*
 
@@ -3437,6 +3462,11 @@ SPELL CHECKING						*:syn-spell*
 	spell checking is done for "default" and "toplevel".
 
 	To activate spell checking the 'spell' option must be set.
+
+:sy[ntax] spell
+	Show either "syntax spell toplevel", "syntax spell notoplevel" or
+	"syntax spell default" (translated).
+
 
 SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 
@@ -3461,8 +3491,8 @@ SYNTAX ISKEYWORD SETTING				*:syn-iskeyword*
 	and also determines where |:syn-keyword| will be checked for a new
 	match.
 
-	It is recommended when writing syntax files, to use this command
-	to the correct value for the specific syntax language and not change
+	It is recommended when writing syntax files, to use this command to
+	set the correct value for the specific syntax language and not change
 	the 'iskeyword' option.
 
 DEFINING KEYWORDS					*:syn-keyword*
@@ -3520,7 +3550,11 @@ DEFINING KEYWORDS					*:syn-keyword*
 
 DEFINING MATCHES					*:syn-match*
 
-:sy[ntax] match {group-name} [{options}] [excludenl] {pattern} [{options}]
+:sy[ntax] match {group-name} [{options}]
+		[excludenl]
+		[keepend]
+		{pattern}
+		[{options}]
 
 	This defines one match.
 
@@ -3529,6 +3563,9 @@ DEFINING MATCHES					*:syn-match*
 	[excludenl]		Don't make a pattern with the end-of-line "$"
 				extend a containing match or region.  Must be
 				given before the pattern. |:syn-excludenl|
+	keepend			Don't allow contained matches to go past a
+				match with the end pattern.  See
+				|:syn-keepend|.
 	{pattern}		The search pattern that defines the match.
 				See |:syn-pattern| below.
 				Note that the pattern may match more than one
@@ -4023,6 +4060,9 @@ IMPLICIT CONCEAL					*:syn-conceal-implicit*
 	defined will have the "conceal" flag set implicitly. ":syn conceal
 	off" returns to the normal state where the "conceal" flag must be
 	given explicitly.
+
+:sy[ntax] conceal
+	Show either "syntax conceal on" or "syntax conceal off" (translated).
 
 ==============================================================================
 7. Syntax patterns				*:syn-pattern* *E401* *E402*
@@ -4532,7 +4572,14 @@ in their own color.
 
 			Doesn't work recursively, thus you can't use
 			":colorscheme" in a color scheme script.
-			After the color scheme has been loaded the
+
+			To customize a colorscheme use another name, e.g.
+			"~/.vim/colors/mine.vim", and use `:runtime` to load
+			the original colorscheme: >
+				runtime colors/evening.vim
+				hi Statement ctermfg=Blue guifg=Blue
+
+<			After the color scheme has been loaded the
 			|ColorScheme| autocommand event is triggered.
 			For info about writing a colorscheme file: >
 				:edit $VIMRUNTIME/colors/README.txt
@@ -4589,8 +4636,7 @@ mentioned for the default values. See |:verbose-cmd| for more information.
 					*highlight-args* *E416* *E417* *E423*
 There are three types of terminals for highlighting:
 term	a normal terminal (vt100, xterm)
-cterm	a color terminal (Windows console, color-xterm, these have the "Co"
-	termcap entry)
+cterm	a color terminal (Windows console, color-xterm)
 gui	the GUI
 
 For each type the highlighting can be given.  This makes it possible to use
@@ -4630,20 +4676,11 @@ stop={term-list}				*term-list* *highlight-stop*
 	highlighted area.  This should undo the "start" argument.
 	Otherwise the screen will look messed up.
 
-	The {term-list} can have two forms:
-
-	1. A string with escape sequences.
-	   This is any string of characters, except that it can't start with
-	   "t_" and blanks are not allowed.  The <> notation is recognized
-	   here, so you can use things like "<Esc>" and "<Space>".  Example:
+        {term-list} is a a string with escape sequences. This is any string of
+        characters, except that it can't start with "t_" and blanks are not
+        allowed.  The <> notation is recognized here, so you can use things
+        like "<Esc>" and "<Space>".  Example:
 		start=<Esc>[27h;<Esc>[<Space>r;
-
-	2. A list of terminal codes.
-	   Each terminal code has the form "t_xx", where "xx" is the name of
-	   the termcap entry.  The codes have to be separated with commas.
-	   White space is not allowed.	Example:
-		start=t_C1,t_BL
-	   The terminal codes must exist for this to work.
 
 
 2. highlight arguments for color terminals
@@ -4669,7 +4706,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	unpredictable.	See your xterm documentation for the defaults.	The
 	colors for a color-xterm can be changed from the .Xdefaults file.
 	Unfortunately this means that it's not possible to get the same colors
-	for each user.	See |xterm-color| for info about color xterms.
+	for each user.
 
 	The MSDOS standard colors are fixed (in a console window), so these
 	have been used for the names.  But the meaning of color names in X11
@@ -4812,10 +4849,9 @@ guisp={color-name}					*highlight-guisp*
   :highlight Comment guifg=#11f0c3 guibg=#ff00ff
 <
 					*highlight-groups* *highlight-default*
-These are the default highlighting groups.  These groups are used by the
-'highlight' option default.  Note that the highlighting depends on the value
-of 'background'.  You can see the current settings with the ":highlight"
-command.
+These are the builtin highlighting groups.  Note that the highlighting depends
+on the value of 'background'.  You can see the current settings with the
+":highlight" command.
 							*hl-ColorColumn*
 ColorColumn	used for the columns set with 'colorcolumn'
 							*hl-Conceal*
@@ -4885,6 +4921,8 @@ NonText		'@' at the end of the window, characters from 'showbreak'
 		fit at the end of the line). See also |hl-EndOfBuffer|.
 							*hl-Normal*
 Normal		normal text
+							*hl-NormalNC*
+NormalNC	normal text in non-current window
 							*hl-Pmenu*
 Pmenu		Popup menu: normal item.
 							*hl-PmenuSel*
@@ -4934,6 +4972,8 @@ TabLineSel	tab pages line, active tab page label
 Title		titles for output from ":set all", ":autocmd" etc.
 							*hl-Visual*
 Visual		Visual mode selection
+ 							*hl-VisualNOS*
+VisualNOS	Visual mode selection when vim is "Not Owning the Selection".
 							*hl-WarningMsg*
 WarningMsg	warning messages
 							*hl-Whitespace*
@@ -5162,32 +5202,6 @@ When splitting the window, the new window will use the original syntax.
 ==============================================================================
 17. Color xterms				*xterm-color* *color-xterm*
 
-Most color xterms have only eight colors.  If you don't get colors with the
-default setup, it should work with these lines in your vimrc: >
-   :if &term =~ "xterm"
-   :  if has("terminfo")
-   :	set t_Co=8
-   :	set t_Sf=<Esc>[3%p1%dm
-   :	set t_Sb=<Esc>[4%p1%dm
-   :  else
-   :	set t_Co=8
-   :	set t_Sf=<Esc>[3%dm
-   :	set t_Sb=<Esc>[4%dm
-   :  endif
-   :endif
-<	[<Esc> is a real escape, type CTRL-V <Esc>]
-
-You might want to change the first "if" to match the name of your terminal,
-e.g. "dtterm" instead of "xterm".
-
-Note: Do these settings BEFORE doing ":syntax on".  Otherwise the colors may
-be wrong.
-							*xiterm* *rxvt*
-The above settings have been mentioned to work for xiterm and rxvt too.
-But for using 16 colors in an rxvt these should work with terminfo: >
-	:set t_AB=<Esc>[%?%p1%{8}%<%t25;%p1%{40}%+%e5;%p1%{32}%+%;%dm
-	:set t_AF=<Esc>[%?%p1%{8}%<%t22;%p1%{30}%+%e1;%p1%{22}%+%;%dm
-<
 							*colortest.vim*
 To test your color setup, a file has been included in the Vim distribution.
 To use it, execute this command: >
@@ -5197,111 +5211,6 @@ Some versions of xterm (and other terminals, like the Linux console) can
 output lighter foreground colors, even though the number of colors is defined
 at 8.  Therefore Vim sets the "cterm=bold" attribute for light foreground
 colors, when 't_Co' is 8.
-
-							*xfree-xterm*
-To get 16 colors or more, get the newest xterm version (which should be
-included with XFree86 3.3 and later).  You can also find the latest version
-at: >
-	http://invisible-island.net/xterm/xterm.html
-Here is a good way to configure it.  This uses 88 colors and enables the
-termcap-query feature, which allows Vim to ask the xterm how many colors it
-supports. >
-	./configure --disable-bold-color --enable-88-color --enable-tcap-query
-If you only get 8 colors, check the xterm compilation settings.
-(Also see |UTF8-xterm| for using this xterm with UTF-8 character encoding).
-
-This xterm should work with these lines in your vimrc (for 16 colors): >
-   :if has("terminfo")
-   :  set t_Co=16
-   :  set t_AB=<Esc>[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{92}%+%;%dm
-   :  set t_AF=<Esc>[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{82}%+%;%dm
-   :else
-   :  set t_Co=16
-   :  set t_Sf=<Esc>[3%dm
-   :  set t_Sb=<Esc>[4%dm
-   :endif
-<	[<Esc> is a real escape, type CTRL-V <Esc>]
-
-Without |+terminfo|, Vim will recognize these settings, and automatically
-translate cterm colors of 8 and above to "<Esc>[9%dm" and "<Esc>[10%dm".
-Colors above 16 are also translated automatically.
-
-For 256 colors this has been reported to work: >
-
-   :set t_AB=<Esc>[48;5;%dm
-   :set t_AF=<Esc>[38;5;%dm
-
-Or just set the TERM environment variable to "xterm-color" or "xterm-16color"
-and try if that works.
-
-You probably want to use these X resources (in your ~/.Xdefaults file):
-	XTerm*color0:			#000000
-	XTerm*color1:			#c00000
-	XTerm*color2:			#008000
-	XTerm*color3:			#808000
-	XTerm*color4:			#0000c0
-	XTerm*color5:			#c000c0
-	XTerm*color6:			#008080
-	XTerm*color7:			#c0c0c0
-	XTerm*color8:			#808080
-	XTerm*color9:			#ff6060
-	XTerm*color10:			#00ff00
-	XTerm*color11:			#ffff00
-	XTerm*color12:			#8080ff
-	XTerm*color13:			#ff40ff
-	XTerm*color14:			#00ffff
-	XTerm*color15:			#ffffff
-	Xterm*cursorColor:		Black
-
-[Note: The cursorColor is required to work around a bug, which changes the
-cursor color to the color of the last drawn text.  This has been fixed by a
-newer version of xterm, but not everybody is using it yet.]
-
-To get these right away, reload the .Xdefaults file to the X Option database
-Manager (you only need to do this when you just changed the .Xdefaults file): >
-  xrdb -merge ~/.Xdefaults
-<
-					*xterm-blink* *xterm-blinking-cursor*
-To make the cursor blink in an xterm, see tools/blink.c.  Or use Thomas
-Dickey's xterm above patchlevel 107 (see above for where to get it), with
-these resources:
-	XTerm*cursorBlink:	on
-	XTerm*cursorOnTime:	400
-	XTerm*cursorOffTime:	250
-	XTerm*cursorColor:	White
-
-							*hpterm-color*
-These settings work (more or less) for an hpterm, which only supports 8
-foreground colors: >
-   :if has("terminfo")
-   :  set t_Co=8
-   :  set t_Sf=<Esc>[&v%p1%dS
-   :  set t_Sb=<Esc>[&v7S
-   :else
-   :  set t_Co=8
-   :  set t_Sf=<Esc>[&v%dS
-   :  set t_Sb=<Esc>[&v7S
-   :endif
-<	[<Esc> is a real escape, type CTRL-V <Esc>]
-
-						*Eterm* *enlightened-terminal*
-These settings have been reported to work for the Enlightened terminal
-emulator, or Eterm.  They might work for all xterm-like terminals that use the
-bold attribute to get bright colors.  Add an ":if" like above when needed. >
-       :set t_Co=16
-       :set t_AF=^[[%?%p1%{8}%<%t3%p1%d%e%p1%{22}%+%d;1%;m
-       :set t_AB=^[[%?%p1%{8}%<%t4%p1%d%e%p1%{32}%+%d;1%;m
-<
-						*TTpro-telnet*
-These settings should work for TTpro telnet.  Tera Term Pro is a freeware /
-open-source program for MS-Windows. >
-	set t_Co=16
-	set t_AB=^[[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{32}%+5;%;%dm
-	set t_AF=^[[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{22}%+1;%;%dm
-Also make sure TTpro's Setup / Window / Full Color is enabled, and make sure
-that Setup / Font / Enable Bold is NOT enabled.
-(info provided by John Love-Jensen <eljay@Adobe.COM>)
-
 
 ==============================================================================
 18. When syntax is slow						*:syntime*

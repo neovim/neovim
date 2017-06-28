@@ -54,6 +54,7 @@
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/assert.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 
@@ -108,23 +109,24 @@ memfile_T *mf_open(char_u *fname, int flags)
   if (mfp->mf_fd >= 0 && os_fileinfo_fd(mfp->mf_fd, &file_info)) {
     uint64_t blocksize = os_fileinfo_blocksize(&file_info);
     if (blocksize >= MIN_SWAP_PAGE_SIZE && blocksize <= MAX_SWAP_PAGE_SIZE) {
-      assert(blocksize <= UINT_MAX);
+      STATIC_ASSERT(MAX_SWAP_PAGE_SIZE <= UINT_MAX,
+                    "MAX_SWAP_PAGE_SIZE must fit into an unsigned");
       mfp->mf_page_size = (unsigned)blocksize;
     }
   }
 
-  off_t size;
+  off_T size;
 
   // When recovering, the actual block size will be retrieved from block 0
   // in ml_recover(). The size used here may be wrong, therefore mf_blocknr_max
   // must be rounded up.
   if (mfp->mf_fd < 0
       || (flags & (O_TRUNC|O_EXCL))
-      || (size = lseek(mfp->mf_fd, (off_t)0L, SEEK_END)) <= 0) {
+      || (size = vim_lseek(mfp->mf_fd, 0L, SEEK_END)) <= 0) {
     // no file or empty file
     mfp->mf_blocknr_max = 0;
   } else {
-    assert(sizeof(off_t) <= sizeof(blocknr_T)
+    assert(sizeof(off_T) <= sizeof(blocknr_T)
            && mfp->mf_page_size > 0
            && mfp->mf_page_size - 1 <= INT64_MAX - size);
     mfp->mf_blocknr_max = (((blocknr_T)size + mfp->mf_page_size - 1)
@@ -687,9 +689,9 @@ static int mf_read(memfile_T *mfp, bhdr_T *hp)
     return FAIL;
 
   unsigned page_size = mfp->mf_page_size;
-  // TODO(elmart): Check (page_size * hp->bh_bnum) within off_t bounds.
-  off_t offset = (off_t)(page_size * hp->bh_bnum);
-  if (lseek(mfp->mf_fd, offset, SEEK_SET) != offset) {
+  // TODO(elmart): Check (page_size * hp->bh_bnum) within off_T bounds.
+  off_T offset = (off_T)(page_size * hp->bh_bnum);
+  if (vim_lseek(mfp->mf_fd, offset, SEEK_SET) != offset) {
     PERROR(_("E294: Seek error in swap file read"));
     return FAIL;
   }
@@ -714,7 +716,7 @@ static int mf_read(memfile_T *mfp, bhdr_T *hp)
 ///                - Write error in swap file.
 static int mf_write(memfile_T *mfp, bhdr_T *hp)
 {
-  off_t offset;             // offset in the file
+  off_T offset;             // offset in the file
   blocknr_T nr;             // block nr which is being written
   bhdr_T *hp2;
   unsigned page_size;       // number of bytes in a page
@@ -743,9 +745,9 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
       hp2 = hp;
     }
 
-    // TODO(elmart): Check (page_size * nr) within off_t bounds.
-    offset = (off_t)(page_size * nr);
-    if (lseek(mfp->mf_fd, offset, SEEK_SET) != offset) {
+    // TODO(elmart): Check (page_size * nr) within off_T bounds.
+    offset = (off_T)(page_size * nr);
+    if (vim_lseek(mfp->mf_fd, offset, SEEK_SET) != offset) {
       PERROR(_("E296: Seek error in swap file write"));
       return FAIL;
     }

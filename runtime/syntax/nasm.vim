@@ -1,18 +1,17 @@
 " Vim syntax file
 " Language:	NASM - The Netwide Assembler (v0.98)
-" Maintainer:	Andriy Sokolov	<andriy145@gmail.com>
+" Maintainer:	Andrii Sokolov	<andriy145@gmail.com>
 " Original Author:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
 " Former Maintainer:	Manuel M.H. Stol	<Manuel.Stol@allieddata.nl>
-" Last Change:	2012 Feb 7
+" Contributors: Leonard König <leonard.r.koenig@gmail.com> (C string highlighting)
+" Last Change:	2017 Jan 23
 " NASM Home:	http://www.nasm.us/
 
 
 
 " Setup Syntax:
-"  Clear old syntax settings
-if version < 600
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 "  Assembler syntax is case insensetive
@@ -21,18 +20,10 @@ syn case ignore
 
 
 " Vim search and movement commands on identifers
-if version < 600
-  "  Comments at start of a line inside which to skip search for indentifiers
-  set comments=:;
-  "  Identifier Keyword characters (defines \k)
-  set iskeyword=@,48-57,#,$,.,?,@-@,_,~
-else
-  "  Comments at start of a line inside which to skip search for indentifiers
-  setlocal comments=:;
-  "  Identifier Keyword characters (defines \k)
-  setlocal iskeyword=@,48-57,#,$,.,?,@-@,_,~
-endif
-
+"  Comments at start of a line inside which to skip search for indentifiers
+setlocal comments=:;
+"  Identifier Keyword characters (defines \k)
+setlocal iskeyword=@,48-57,#,$,.,?,@-@,_,~
 
 
 " Comments:
@@ -77,8 +68,23 @@ syn match   nasmLabelError	"\<\~\s*\(\k*\s*:\|\$\=\.\k*\)"
 
 
 " Constants:
-syn match   nasmStringError	+["']+
+syn match   nasmStringError	+["'`]+
+" NASM is case sensitive here: eg. u-prefix allows for 4-digit, U-prefix for
+" 8-digit Unicode characters
+syn case match
+" one-char escape-sequences
+syn match   nasmCStringEscape  display contained "\\[’"‘\\\?abtnvfre]"
+" hex and octal numbers
+syn match   nasmCStringEscape  display contained "\\\(x\x\{2}\|\o\{1,3}\)"
+" Unicode characters
+syn match   nasmCStringEscape	display contained "\\\(u\x\{4}\|U\x\{8}\)"
+" ISO C99 format strings (copied from cFormat in runtime/syntax/c.vim)
+syn match   nasmCStringFormat	display "%\(\d\+\$\)\=[-+' #0*]*\(\d*\|\*\|\*\d\+\$\)\(\.\(\d*\|\*\|\*\d\+\$\)\)\=\([hlLjzt]\|ll\|hh\)\=\([aAbdiuoxXDOUfFeEgGcCsSpn]\|\[\^\=.[^]]*\]\)" contained
+syn match   nasmCStringFormat	display "%%" contained
 syn match   nasmString		+\("[^"]\{-}"\|'[^']\{-}'\)+
+" Highlight C escape- and format-sequences within ``-strings
+syn match   nasmCString	+\(`[^`]\{-}`\)+ contains=nasmCStringEscape,nasmCStringFormat extend
+syn case ignore
 syn match   nasmBinNumber	"\<[0-1]\+b\>"
 syn match   nasmBinNumber	"\<\~[0-1]\+b\>"lc=1
 syn match   nasmOctNumber	"\<\o\+q\>"
@@ -431,96 +437,89 @@ syn sync match	nasmSync	grouphere NONE	       "^\s*%endmacro\>"
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later  : only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_nasm_syntax_inits")
-  if version < 508
-    let did_nasm_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  " Sub Links:
-  HiLink nasmInMacDirective	nasmDirective
-  HiLink nasmInMacLabel		nasmLocalLabel
-  HiLink nasmInMacLblWarn	nasmLabelWarn
-  HiLink nasmInMacMacro		nasmMacro
-  HiLink nasmInMacParam		nasmMacro
-  HiLink nasmInMacParamNum	nasmDecNumber
-  HiLink nasmInMacPreCondit	nasmPreCondit
-  HiLink nasmInMacPreProc	nasmPreProc
-  HiLink nasmInPreCondit	nasmPreCondit
-  HiLink nasmInStructure	nasmStructure
-  HiLink nasmStructureLabel	nasmStructure
+" Sub Links:
+hi def link nasmInMacDirective	nasmDirective
+hi def link nasmInMacLabel		nasmLocalLabel
+hi def link nasmInMacLblWarn	nasmLabelWarn
+hi def link nasmInMacMacro		nasmMacro
+hi def link nasmInMacParam		nasmMacro
+hi def link nasmInMacParamNum	nasmDecNumber
+hi def link nasmInMacPreCondit	nasmPreCondit
+hi def link nasmInMacPreProc	nasmPreProc
+hi def link nasmInPreCondit	nasmPreCondit
+hi def link nasmInStructure	nasmStructure
+hi def link nasmStructureLabel	nasmStructure
 
-  " Comment Group:
-  HiLink nasmComment		Comment
-  HiLink nasmSpecialComment	SpecialComment
-  HiLink nasmInCommentTodo	Todo
+" Comment Group:
+hi def link nasmComment		Comment
+hi def link nasmSpecialComment	SpecialComment
+hi def link nasmInCommentTodo	Todo
 
-  " Constant Group:
-  HiLink nasmString		String
-  HiLink nasmStringError	Error
-  HiLink nasmBinNumber		Number
-  HiLink nasmOctNumber		Number
-  HiLink nasmDecNumber		Number
-  HiLink nasmHexNumber		Number
-  HiLink nasmFltNumber		Float
-  HiLink nasmNumberError	Error
+" Constant Group:
+hi def link nasmString		String
+hi def link nasmCString	String
+hi def link nasmStringError	Error
+hi def link nasmCStringEscape	SpecialChar
+hi def link nasmCStringFormat	SpecialChar
+hi def link nasmBinNumber		Number
+hi def link nasmOctNumber		Number
+hi def link nasmDecNumber		Number
+hi def link nasmHexNumber		Number
+hi def link nasmFltNumber		Float
+hi def link nasmNumberError	Error
 
-  " Identifier Group:
-  HiLink nasmLabel		Identifier
-  HiLink nasmLocalLabel		Identifier
-  HiLink nasmSpecialLabel	Special
-  HiLink nasmLabelError		Error
-  HiLink nasmLabelWarn		Todo
+" Identifier Group:
+hi def link nasmLabel		Identifier
+hi def link nasmLocalLabel		Identifier
+hi def link nasmSpecialLabel	Special
+hi def link nasmLabelError		Error
+hi def link nasmLabelWarn		Todo
 
-  " PreProc Group:
-  HiLink nasmPreProc		PreProc
-  HiLink nasmDefine		Define
-  HiLink nasmInclude		Include
-  HiLink nasmMacro		Macro
-  HiLink nasmPreCondit		PreCondit
-  HiLink nasmPreProcError	Error
-  HiLink nasmPreProcWarn	Todo
+" PreProc Group:
+hi def link nasmPreProc		PreProc
+hi def link nasmDefine		Define
+hi def link nasmInclude		Include
+hi def link nasmMacro		Macro
+hi def link nasmPreCondit		PreCondit
+hi def link nasmPreProcError	Error
+hi def link nasmPreProcWarn	Todo
 
-  " Type Group:
-  HiLink nasmType		Type
-  HiLink nasmStorage		StorageClass
-  HiLink nasmStructure		Structure
-  HiLink nasmTypeError		Error
+" Type Group:
+hi def link nasmType		Type
+hi def link nasmStorage		StorageClass
+hi def link nasmStructure		Structure
+hi def link nasmTypeError		Error
 
-  " Directive Group:
-  HiLink nasmConstant		Constant
-  HiLink nasmInstrModifier	Operator
-  HiLink nasmRepeat		Repeat
-  HiLink nasmDirective		Keyword
-  HiLink nasmStdDirective	Operator
-  HiLink nasmFmtDirective	Keyword
+" Directive Group:
+hi def link nasmConstant		Constant
+hi def link nasmInstrModifier	Operator
+hi def link nasmRepeat		Repeat
+hi def link nasmDirective		Keyword
+hi def link nasmStdDirective	Operator
+hi def link nasmFmtDirective	Keyword
 
-  " Register Group:
-  HiLink nasmCtrlRegister	Special
-  HiLink nasmDebugRegister	Debug
-  HiLink nasmTestRegister	Special
-  HiLink nasmRegisterError	Error
-  HiLink nasmMemRefError	Error
+" Register Group:
+hi def link nasmCtrlRegister	Special
+hi def link nasmDebugRegister	Debug
+hi def link nasmTestRegister	Special
+hi def link nasmRegisterError	Error
+hi def link nasmMemRefError	Error
 
-  " Instruction Group:
-  HiLink nasmStdInstruction	Statement
-  HiLink nasmSysInstruction	Statement
-  HiLink nasmDbgInstruction	Debug
-  HiLink nasmFpuInstruction	Statement
-  HiLink nasmMmxInstruction	Statement
-  HiLink nasmSseInstruction	Statement
-  HiLink nasmNowInstruction	Statement
-  HiLink nasmAmdInstruction	Special
-  HiLink nasmCrxInstruction	Special
-  HiLink nasmUndInstruction	Todo
-  HiLink nasmInstructnError	Error
+" Instruction Group:
+hi def link nasmStdInstruction	Statement
+hi def link nasmSysInstruction	Statement
+hi def link nasmDbgInstruction	Debug
+hi def link nasmFpuInstruction	Statement
+hi def link nasmMmxInstruction	Statement
+hi def link nasmSseInstruction	Statement
+hi def link nasmNowInstruction	Statement
+hi def link nasmAmdInstruction	Special
+hi def link nasmCrxInstruction	Special
+hi def link nasmUndInstruction	Todo
+hi def link nasmInstructnError	Error
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "nasm"
 

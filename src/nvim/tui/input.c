@@ -47,7 +47,13 @@ void term_input_init(TermInput *input, Loop *loop)
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
+#ifdef WIN32
+  uv_tty_init(loop, &input->tty_in, 0, 1);
+  uv_tty_set_mode(&input->tty_in, UV_TTY_MODE_RAW);
+  rstream_init_stream(&input->read_stream, &input->tty_in, 0xfff);
+#else
   rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff);
+#endif
   // initialize a timer handle for handling ESC with libtermkey
   time_watcher_init(loop, &input->timer_handle, input);
 }
@@ -102,7 +108,7 @@ static void flush_input(TermInput *input, bool wait_until_empty)
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
     uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule(&main_loop, event_create(1, wait_input_enqueue, 1, input));
+    loop_schedule(&main_loop, event_create(wait_input_enqueue, 1, input));
     input->waiting = true;
     while (input->waiting) {
       uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
@@ -352,7 +358,7 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       stream_close(&input->read_stream, NULL, NULL);
       multiqueue_put(input->loop->fast_events, restart_reading, 1, input);
     } else {
-      loop_schedule(&main_loop, event_create(1, input_done_event, 0));
+      loop_schedule(&main_loop, event_create(input_done_event, 0));
     }
     return;
   }

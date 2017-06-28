@@ -1210,7 +1210,8 @@ char *tv_dict_get_string(const dict_T *const d, const char *const key,
 ///
 /// @param[in]  d  Dictionary to get item from.
 /// @param[in]  key  Dictionary key.
-/// @param[in]  numbuf  Numbuf for.
+/// @param[in]  numbuf  Buffer for non-string items converted to strings, at
+///                     least of #NUMBUFLEN length.
 ///
 /// @return NULL if key does not exist, empty string in case of type error,
 ///         string item value otherwise.
@@ -1223,6 +1224,32 @@ const char *tv_dict_get_string_buf(const dict_T *const d, const char *const key,
     return NULL;
   }
   return tv_get_string_buf(&di->di_tv, numbuf);
+}
+
+/// Get a string item from a dictionary
+///
+/// @param[in]  d  Dictionary to get item from.
+/// @param[in]  key  Dictionary key.
+/// @param[in]  key_len  Key length.
+/// @param[in]  numbuf  Buffer for non-string items converted to strings, at
+///                     least of #NUMBUFLEN length.
+/// @param[in]  def  Default return when key does not exist.
+///
+/// @return `def` when key does not exist,
+///         NULL in case of type error,
+///         string item value in case of success.
+const char *tv_dict_get_string_buf_chk(const dict_T *const d,
+                                       const char *const key,
+                                       const ptrdiff_t key_len,
+                                       char *const numbuf,
+                                       const char *const def)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const dictitem_T *const di = tv_dict_find(d, key, key_len);
+  if (di == NULL) {
+    return def;
+  }
+  return tv_get_string_buf_chk(&di->di_tv, numbuf);
 }
 
 /// Get a function from a dictionary
@@ -1869,7 +1896,7 @@ void tv_free(typval_T *tv)
       }
       case VAR_FUNC: {
         func_unref(tv->vval.v_string);
-        // FALLTHROUGH
+        FALLTHROUGH;
       }
       case VAR_STRING: {
         xfree(tv->vval.v_string);
@@ -2378,9 +2405,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
     case VAR_STRING: {
       varnumber_T n = 0;
       if (tv->vval.v_string != NULL) {
-        long nr;
-        vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &nr, NULL, 0);
-        n = (varnumber_T)nr;
+        vim_str2nr(tv->vval.v_string, NULL, NULL, STR2NR_ALL, &n, NULL, 0);
       }
       return n;
     }
@@ -2417,7 +2442,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
 linenr_T tv_get_lnum(const typval_T *const tv)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  linenr_T lnum = tv_get_number_chk(tv, NULL);
+  linenr_T lnum = (linenr_T)tv_get_number_chk(tv, NULL);
   if (lnum == 0) {  // No valid number, try using same function as line() does.
     int fnum;
     pos_T *const fp = var2fpos(tv, true, &fnum);

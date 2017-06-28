@@ -359,10 +359,10 @@ int bomb_size(void)
  */
 void remove_bom(char_u *s)
 {
-  char_u *p = s;
+  char *p = (char *)s;
 
-  while ((p = vim_strbyte(p, 0xef)) != NULL) {
-    if (p[1] == 0xbb && p[2] == 0xbf) {
+  while ((p = strchr(p, 0xef)) != NULL) {
+    if ((uint8_t)p[1] == 0xbb && (uint8_t)p[2] == 0xbf) {
       STRMOVE(p, p + 3);
     } else {
       p++;
@@ -1367,7 +1367,7 @@ int utf16_to_utf8(const WCHAR *strw, char **str)
     return GetLastError();
   }
 
-  *str = xmalloc(utf8_len);
+  *str = xmallocz(utf8_len);
 
   // Convert to UTF-8.
   utf8_len = WideCharToMultiByte(CP_UTF8,

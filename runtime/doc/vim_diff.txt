@@ -10,13 +10,7 @@ Throughout the help files, differences between Nvim and Vim are indicated via
 the "{Nvim}" tag.  This document is a complete and centralized list of all
 these differences.
 
-1. Configuration		|nvim-configuration|
-2. Defaults			|nvim-defaults|
-3. New features			|nvim-features|
-4. Changed features		|nvim-features-changed|
-5. Missing legacy features	|nvim-features-missing|
-6. Removed features		|nvim-features-removed|
-
+				      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Configuration					    *nvim-configuration*
@@ -65,7 +59,6 @@ these differences.
 ==============================================================================
 3. New Features						       *nvim-features*
 
-
 MAJOR COMPONENTS ~
 
 Embedded terminal emulator	|terminal-emulator|
@@ -76,7 +69,6 @@ Job control			|job-control|
 Remote plugins			|remote-plugin|
 Python plugins			|provider-python|
 Clipboard integration		|provider-clipboard|
-
 
 USER EXPERIENCE  ~
 
@@ -93,14 +85,14 @@ Working intuitively and consistently is a major goal of Nvim. Examples:
 ARCHITECTURE ~
 
 External plugins run in separate processes. |remote-plugin| This improves
-stability and allows those plugins to perform tasks without blocking the
-editor. Even "legacy" Python and Ruby plugins which use the old Vim interfaces
-(|if_py| and |if_ruby|) run out-of-process.
+stability and allows those plugins to work without blocking the editor. Even
+"legacy" Python and Ruby plugins which use the old Vim interfaces (|if_py| and
+|if_ruby|) run out-of-process.
 
 
 FEATURES ~
 
-|bracketed-paste-mode| is built-in and enabled by default.
+"Outline": Type <M-]> in |:Man| and |:help| pages to see a document outline.
 
 |META| (ALT) chords are recognized, even in the terminal. Any |<M-| mapping
 will work. Some examples: <M-1>, <M-2>, <M-BS>, <M-Del>, <M-Ins>, <M-/>,
@@ -115,8 +107,10 @@ Options:
   'cpoptions' flags: |cpo-_|
   'guicursor' works in the terminal
   'inccommand' shows interactive results for |:substitute|-like commands
+  'scrollback'
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
+  'winhighlight' window-local highlights
 
 Variables:
   |v:event|
@@ -222,22 +216,15 @@ Additional differences:
 
 - |shada-c| has no effect.
 - |shada-s| now limits size of every item and not just registers.
-- When reading ShaDa files items are merged according to the timestamp.
-  |shada-merging|
 - 'viminfo' option got renamed to 'shada'. Old option is kept as an alias for
   compatibility reasons.
 - |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|.  Old
   commands are still kept.
-- When writing (|:wshada| without bang or at exit) it merges much more data,
-  and does this according to the timestamp.  Vim merges only marks.
-  |shada-merging|
 - ShaDa file format was designed with forward and backward compatibility in
   mind. |shada-compatibility|
 - Some errors make ShaDa code keep temporary file in-place for user to decide
   what to do with it.  Vim deletes temporary file in these cases.
   |shada-error-handling|
-- Vim keeps no timestamps at all, neither in viminfo file nor in the instance
-  itself.
 - ShaDa file keeps search direction (|v:searchforward|), viminfo does not.
 
 |printf()| returns something meaningful when used with `%p` argument: in Vim 
@@ -248,18 +235,33 @@ coerced to strings. See |id()| for more details, currently it uses
 
 |c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.
 
+Lua interface (|if_lua.txt|):
+
+- `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim 
+  that prints `a` and `b` on separate lines, exactly like
+  `:lua print("a\nb")` .
+- `:lua error('TEST')` will print “TEST” as the error in Vim and “E5105: Error 
+  while calling lua chunk: [string "<VimL compiled string>"]:1: TEST” in 
+  Neovim.
+- Lua has direct access to Nvim |API| via `vim.api`.
+- Lua package.path and package.cpath are automatically updated according to
+  'runtimepath': |lua-require|.
+- Currently, most legacy Vim features are missing.
+
+|input()| and |inputdialog()| gained support for each other’s features (return 
+on cancel and completion respectively) via dictionary argument (replaces all 
+other arguments if used).
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
-				     *if_lua* *if_perl* *if_mzscheme* *if_tcl*
 
-These legacy Vim features may be implemented in the future, but they are not
-planned for the current milestone.
+Some legacy Vim features are not implemented:
 
 - |if_py|: vim.bindeval() and vim.Function() are not supported
-- |if_lua|
-- |if_perl|
-- |if_mzscheme|
-- |if_tcl|
+- |if_lua|: the `vim` object currently only supports `vim.api`
+- *if_perl*
+- *if_mzscheme*
+- *if_tcl*
 
 ==============================================================================
 6. Removed features					 *nvim-features-removed*
@@ -276,6 +278,11 @@ Ed-compatible mode:
   ":set noedcompatible" is ignored
   ":set edcompatible" is an error
 
+	*t_xx* *:set-termcap* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
+Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
+terminal capabilities. Instead Nvim treats the terminal as any other UI. For
+example, 'guicursor' sets the terminal cursor style if possible.
+
 'ttyfast':
   ":set ttyfast" is ignored
   ":set nottyfast" is an error
@@ -287,9 +294,6 @@ Encryption support:
 MS-DOS support:
   'bioskey'
   'conskey'
-
-Highlight groups:
-  |hl-VisualNOS|
 
 Test functions:
   test_alloc_fail()
@@ -311,6 +315,7 @@ Other options:
   'esckeys'
   'guioptions' "t" flag was removed
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
+  'highlight' (the builtin |highlight-groups| cannot be changed)
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*

@@ -18,6 +18,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/getchar.h"
+#include "nvim/buffer_defs.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
@@ -47,6 +48,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/api/private/handle.h"
 
 /*
  * These buffers are used for storing:
@@ -102,11 +104,10 @@ static int block_redo = FALSE;
                        (NORMAL + VISUAL + SELECTMODE + \
                         OP_PENDING)) ? (c1) : ((c1) ^ 0x80))
 
-/*
- * Each mapping is put in one of the 256 hash lists, to speed up finding it.
- */
-static mapblock_T       *(maphash[256]);
-static int maphash_valid = FALSE;
+// Each mapping is put in one of the MAX_MAPHASH hash lists,
+// to speed up finding it.
+static mapblock_T *(maphash[MAX_MAPHASH]);
+static bool maphash_valid = false;
 
 /*
  * List used for abbreviations.
@@ -1592,7 +1593,7 @@ vungetc ( /* unget one character (can only be done once!) */
 ///    This may do a blocking wait if "advance" is TRUE.
 ///
 /// if "advance" is TRUE (vgetc()):
-///    really get the character.
+///    Really get the character.
 ///    KeyTyped is set to TRUE in the case the user typed the key.
 ///    KeyStuffed is TRUE if the character comes from the stuff buffer.
 /// if "advance" is FALSE (vpeekc()):
@@ -1907,7 +1908,7 @@ static int vgetorpeek(int advance)
           }
 
           if ((mp == NULL || max_mlen >= mp_match_len)
-              && keylen != KEYLEN_PART_MAP && keylen != KEYLEN_PART_KEY) {
+              && keylen != KEYLEN_PART_MAP) {
             // No matching mapping found or found a non-matching mapping that
             // matches at least what the matching mapping matched
             keylen = 0;
@@ -3168,6 +3169,10 @@ showmap (
 {
   size_t len = 1;
 
+  if (message_filtered(mp->m_keys) && message_filtered(mp->m_str)) {
+    return;
+  }
+
   if (msg_didout || msg_silent != 0) {
     msg_putchar('\n');
     if (got_int)            /* 'q' typed at MORE prompt */
@@ -3592,8 +3597,8 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
       char_u *q = mp->m_keys;
       int match;
 
-      if (vim_strbyte(mp->m_keys, K_SPECIAL) != NULL) {
-        /* might have CSI escaped mp->m_keys */
+      if (strchr((const char *)mp->m_keys, K_SPECIAL) != NULL) {
+        // Might have CSI escaped mp->m_keys.
         q = vim_strsave(mp->m_keys);
         vim_unescape_csi(q);
         qlen = (int)STRLEN(q);
@@ -3790,8 +3795,7 @@ makemap (
   char        *cmd;
   int abbr;
   int hash;
-  int did_cpo = FALSE;
-  int i;
+  bool did_cpo = false;
 
   validate_maphash();
 
@@ -3919,13 +3923,15 @@ makemap (
           /* When outputting <> form, need to make sure that 'cpo'
            * is set to the Vim default. */
           if (!did_cpo) {
-            if (*mp->m_str == NUL)                      /* will use <Nop> */
-              did_cpo = TRUE;
-            else
-              for (i = 0; i < 2; ++i)
-                for (p = (i ? mp->m_str : mp->m_keys); *p; ++p)
-                  if (*p == K_SPECIAL || *p == NL)
-                    did_cpo = TRUE;
+            if (*mp->m_str == NUL) {  // Will use <Nop>.
+              did_cpo = true;
+            } else {
+              const char specials[] = { (char)(uint8_t)K_SPECIAL, NL, NUL };
+              if (strpbrk((const char *)mp->m_str, specials) != NULL
+                  || strpbrk((const char *)mp->m_keys, specials) != NULL) {
+                did_cpo = true;
+              }
+            }
             if (did_cpo) {
               if (fprintf(fd, "let s:cpo_save=&cpo") < 0
                   || put_eol(fd) < 0
@@ -4231,4 +4237,18 @@ static bool typebuf_match_len(const uint8_t *str, int *mlen)
   }
   *mlen = i;
   return str[i] == NUL;  // matched the whole string
+}
+
+/// Retrieve the mapblock at the index either globally or for a certain buffer
+///
+/// @param  index  The index in the maphash[]
+/// @param  buf  The buffer to get the maphash from. NULL for global
+mapblock_T *get_maphash(int index, buf_T *buf)
+    FUNC_ATTR_PURE
+{
+  if (index > MAX_MAPHASH) {
+    return NULL;
+  }
+
+  return (buf == NULL) ? maphash[index] : buf->b_maphash[index];
 }

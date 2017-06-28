@@ -479,9 +479,9 @@ void setmouse(void)
     checkfor = MOUSE_NORMAL;        /* assume normal mode */
 
   if (mouse_has(checkfor)) {
-    ui_mouse_on();
+    ui_call_mouse_on();
   } else {
-    ui_mouse_off();
+    ui_call_mouse_off();
   }
 }
 

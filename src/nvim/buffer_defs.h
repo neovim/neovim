@@ -12,11 +12,14 @@ typedef struct file_buffer buf_T; // Forward declaration
 // bufref_valid() only needs to check "buf" when the count differs.
 typedef struct {
   buf_T *br_buf;
+  int    br_fnum;
   int    br_buf_free_count;
 } bufref_T;
 
 // for garray_T
 #include "nvim/garray.h"
+// for HLF_COUNT
+#include "nvim/highlight_defs.h"
 // for pos_T, lpos_T and linenr_T
 #include "nvim/pos.h"
 // for the number window-local and buffer-local options
@@ -102,8 +105,6 @@ typedef struct frame_S frame_T;
 #include "nvim/sign_defs.h"
 // for bufhl_*_T
 #include "nvim/bufhl_defs.h"
-
-typedef Map(linenr_T, bufhl_vec_T) bufhl_info_T;
 
 #include "nvim/os/fs_defs.h"    // for FileID
 #include "nvim/terminal.h"      // for Terminal
@@ -233,6 +234,8 @@ typedef struct {
 # define w_p_crb_save w_onebuf_opt.wo_crb_save
   char_u *wo_scl;
 # define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
+  char_u *wo_winhl;
+# define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
 
   int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
@@ -436,6 +439,9 @@ typedef TV_DICTITEM_STRUCT(sizeof("changedtick")) ChangedtickDictItem;
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2
 
+// Maximum number of maphash blocks we will have
+#define MAX_MAPHASH 256
+
 /*
  * buffer: structure that holds information about one file
  *
@@ -524,8 +530,8 @@ struct file_buffer {
    */
   uint64_t b_chartab[4];
 
-  /* Table used for mappings local to a buffer. */
-  mapblock_T  *(b_maphash[256]);
+  // Table used for mappings local to a buffer.
+  mapblock_T  *(b_maphash[MAX_MAPHASH]);
 
   /* First abbreviation local to a buffer. */
   mapblock_T  *b_first_abbr;
@@ -754,7 +760,9 @@ struct file_buffer {
 
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 
-  bufhl_info_T *b_bufhl_info;   // buffer stored highlights
+  BufhlInfo b_bufhl_info;       // buffer stored highlights
+
+  kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
 };
 
 /*
@@ -929,6 +937,14 @@ struct window_S {
                                     ///< often, keep it the first item!)
 
   synblock_T  *w_s;                 /* for :ownsyntax */
+
+  int w_hl_id_normal;               ///< 'winhighlight' normal id
+  int w_hl_attr_normal;             ///< 'winhighlight' normal final attrs
+
+  int w_hl_ids[HLF_COUNT];          ///< 'winhighlight' id
+  int w_hl_attrs[HLF_COUNT];        ///< 'winhighlight' final attrs
+
+  int w_hl_needs_update;            ///< attrs need to be recalculated
 
   win_T       *w_prev;              /* link to previous window */
   win_T       *w_next;              /* link to next window */
@@ -1158,5 +1174,10 @@ struct window_S {
    */
   qf_info_T   *w_llist_ref;
 };
+
+static inline int win_hl_attr(win_T *wp, int hlf)
+{
+  return wp->w_hl_attrs[hlf];
+}
 
 #endif // NVIM_BUFFER_DEFS_H

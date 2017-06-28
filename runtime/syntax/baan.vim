@@ -4,15 +4,8 @@
 " Originally owned by: Erwin Smit / Her van de Vliert
 " Last change:  v1.17 2006/04/26 10:40:18
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-"
-if version < 600
-  syntax clear
-  if exists("baan_fold")
-	  unlet baan_fold
-  endif
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -1894,40 +1887,30 @@ syn keyword baanBshell bclm.productidlicensed
 syn keyword baanBshell bclm.set.desktop
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_baan_syn_inits")
-  if version < 508
-    let did_baan_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink baanConditional	Conditional
-  HiLink baan3gl		Statement
-  HiLink baan3glpre		PreProc
-  HiLink baan4gl		Statement
-  HiLink baan4glh		Statement
-  HiLink baansql		Statement
-  HiLink baansqlh		Statement
-  HiLink baanDalHook		Statement
-  HiLink baanNumber		Number
-  HiLink baanString		String
-  HiLink baanOpenStringError	Error
-  HiLink baanConstant		Constant
-  HiLink baanComment		Comment
-  HiLink baanCommenth		Comment
-  HiLink baanUncommented	Comment
-  HiLink baanDLLUsage		Comment
-  HiLink baanFunUsage		Comment
-  HiLink baanIdentifier		Normal
-  HiLink baanBshell		Function
-  HiLink baanType		Type
-  HiLink baanStorageClass	StorageClass
+hi def link baanConditional	Conditional
+hi def link baan3gl		Statement
+hi def link baan3glpre		PreProc
+hi def link baan4gl		Statement
+hi def link baan4glh		Statement
+hi def link baansql		Statement
+hi def link baansqlh		Statement
+hi def link baanDalHook		Statement
+hi def link baanNumber		Number
+hi def link baanString		String
+hi def link baanOpenStringError	Error
+hi def link baanConstant		Constant
+hi def link baanComment		Comment
+hi def link baanCommenth		Comment
+hi def link baanUncommented	Comment
+hi def link baanDLLUsage		Comment
+hi def link baanFunUsage		Comment
+hi def link baanIdentifier		Normal
+hi def link baanBshell		Function
+hi def link baanType		Type
+hi def link baanStorageClass	StorageClass
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "baan"
 

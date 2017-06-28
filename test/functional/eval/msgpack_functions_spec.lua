@@ -337,7 +337,8 @@ describe('msgpack*() functions', function()
     eq(1, eval('type(parsed[0]) == type(0) ' ..
                '|| parsed[0]._TYPE is v:msgpack_types.integer'))
     if eval('type(parsed[0]) == type(0)') == 1 then
-      eq(1, eval('0xFFFFFFFFFFFFFFFF == parsed[0]'))
+      command('call assert_equal(0xFFFFFFFFFFFFFFFF, parsed[0])')
+      eq({}, eval('v:errors'))
     else
       eq({_TYPE={}, _VAL={1, 3, 0x7FFFFFFF, 0x7FFFFFFF}}, eval('parsed[0]'))
     end
@@ -351,7 +352,8 @@ describe('msgpack*() functions', function()
     eq(1, eval('type(parsed[0]) == type(0) ' ..
                '|| parsed[0]._TYPE is v:msgpack_types.integer'))
     if eval('type(parsed[0]) == type(0)') == 1 then
-      eq(1, eval('-0x8000000000000000 == parsed[0]'))
+      command('call assert_equal(-0x7fffffffffffffff - 1, parsed[0])')
+      eq({}, eval('v:errors'))
     else
       eq({_TYPE={}, _VAL={-1, 2, 0, 0}}, eval('parsed[0]'))
     end
@@ -461,7 +463,7 @@ describe('msgpackparse() function', function()
     eval(cmd)
     eval(cmd)  -- do it again (try to force segfault)
     local api_info = eval(cmd)  -- do it again
-    eq({'error_types', 'functions', 'types', 'version'}, api_info)
+    eq({'error_types', 'functions', 'types', 'ui_events', 'version'}, api_info)
   end)
 
   it('fails when called with no arguments', function()

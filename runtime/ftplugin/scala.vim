@@ -32,6 +32,4 @@ setlocal includeexpr='substitute(v:fname,"\\.","/","g")'
 setlocal path+=src/main/scala,src/test/scala
 setlocal suffixesadd=.scala
 
-compiler sbt
-
 " vim:set sw=2 sts=2 ts=8 et:

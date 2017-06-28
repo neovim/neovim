@@ -4,11 +4,8 @@
 " Last Change:	May 27 1999
 " Based on:	Bram Moolenaar <Bram@vim.org> C syntax file
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -77,45 +74,35 @@ endif
 exec "sy sync ccomment melComment minlines=" . mel_minlines
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_mel_syntax_inits")
-  if version < 508
-    let did_mel_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink melBoolean	Boolean
-  HiLink melFunction	Function
-  HiLink melIdentifier	Identifier
-  HiLink melStatement	Statement
-  HiLink melConditional Conditional
-  HiLink melRepeat	Repeat
-  HiLink melLabel	Label
-  HiLink melOperator	Operator
-  HiLink melKeyword	Keyword
-  HiLink melException	Exception
-  HiLink melInclude	Include
-  HiLink melType	Type
-  HiLink melStorageClass StorageClass
-  HiLink melDebug	Debug
-  HiLink melTodo	Todo
-  HiLink melCharSpecial SpecialChar
-  HiLink melString	String
-  HiLink melInteger	Number
-  HiLink melFloat	Float
-  HiLink melMatrixVector Float
-  HiLink melComment	Comment
-  HiLink melError	Error
-  HiLink melSpaceError	melError
-  HiLink melCharError	melError
-  HiLink melParenError	melError
-  HiLink melInParen	melError
-  HiLink melCommentError melError
+hi def link melBoolean	Boolean
+hi def link melFunction	Function
+hi def link melIdentifier	Identifier
+hi def link melStatement	Statement
+hi def link melConditional Conditional
+hi def link melRepeat	Repeat
+hi def link melLabel	Label
+hi def link melOperator	Operator
+hi def link melKeyword	Keyword
+hi def link melException	Exception
+hi def link melInclude	Include
+hi def link melType	Type
+hi def link melStorageClass StorageClass
+hi def link melDebug	Debug
+hi def link melTodo	Todo
+hi def link melCharSpecial SpecialChar
+hi def link melString	String
+hi def link melInteger	Number
+hi def link melFloat	Float
+hi def link melMatrixVector Float
+hi def link melComment	Comment
+hi def link melError	Error
+hi def link melSpaceError	melError
+hi def link melCharError	melError
+hi def link melParenError	melError
+hi def link melInParen	melError
+hi def link melCommentError melError
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "mel"

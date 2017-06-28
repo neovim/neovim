@@ -9,21 +9,7 @@ Key mapping, abbreviations and user-defined commands.
 This subject is introduced in sections |05.3|, |24.7| and |40.1| of the user
 manual.
 
-1. Key mapping			|key-mapping|
-   1.1 MAP COMMANDS			|:map-commands|
-   1.2 Special arguments		|:map-arguments|
-   1.3 Mapping and modes		|:map-modes|
-   1.4 Listing mappings			|map-listing|
-   1.5 Mapping special keys		|:map-special-keys|
-   1.6 Special characters		|:map-special-chars|
-   1.7 What keys to map			|map-which-keys|
-   1.8 Examples				|map-examples|
-   1.9 Using mappings			|map-typing|
-   1.10 Mapping alt-keys		|:map-alt-keys|
-   1.11 Mapping an operator		|:map-operator|
-2. Abbreviations		|abbreviations|
-3. Local mappings and functions	|script-local|
-4. User-defined commands	|user-commands|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Key mapping				*key-mapping* *mapping* *macro*
@@ -437,6 +423,9 @@ with a space.
 Note: When using mappings for Visual mode, you can use the "'<" mark, which
 is the start of the last selected Visual area in the current buffer |'<|.
 
+The |:filter| command can be used to select what mappings to list.  The
+pattern is matched against the {lhs} and {rhs} in the raw form.
+
 							*:map-verbose*
 When 'verbose' is non-zero, listing a key map will also display where it was
 last defined.  Example: >
@@ -450,42 +439,30 @@ See |:verbose-cmd| for more information.
 
 1.5 MAPPING SPECIAL KEYS				*:map-special-keys*
 
-There are three ways to map a special key:
+There are two ways to map a special key:
 1. The Vi-compatible method: Map the key code.  Often this is a sequence that
    starts with <Esc>.  To enter a mapping like this you type ":map " and then
    you have to type CTRL-V before hitting the function key.  Note that when
-   the key code for the key is in the termcap (the t_ options), it will
-   automatically be translated into the internal code and become the second
-   way of mapping (unless the 'k' flag is included in 'cpoptions').
+   the key code for the key is in the termcap, it will automatically be
+   translated into the internal code and become the second way of mapping
+   (unless the 'k' flag is included in 'cpoptions').
 2. The second method is to use the internal code for the function key.  To
    enter such a mapping type CTRL-K and then hit the function key, or use
    the form "#1", "#2", .. "#9", "#0", "<Up>", "<S-Down>", "<S-F7>", etc.
    (see table of keys |key-notation|, all keys from <Up> can be used).  The
    first ten function keys can be defined in two ways: Just the number, like
    "#2", and with "<F>", like "<F2>".  Both stand for function key 2.  "#0"
-   refers to function key 10, defined with option 't_f10', which may be
-   function key zero on some keyboards.  The <> form cannot be used when
-   'cpoptions' includes the '<' flag.
-3. Use the termcap entry, with the form <t_xx>, where "xx" is the name of the
-   termcap entry.  Any string entry can be used.  For example: >
-     :map <t_F3> G
-<  Maps function key 13 to "G".  This does not work if 'cpoptions' includes
-   the '<' flag.
-
-The advantage of the second and third method is that the mapping will work on
-different terminals without modification (the function key will be
-translated into the same internal code or the actual key code, no matter what
-terminal you are using.  The termcap must be correct for this to work, and you
-must use the same mappings).
+   refers to function key 10.  The <> form cannot be used when 'cpoptions'
+   includes the '<' flag.
 
 DETAIL: Vim first checks if a sequence from the keyboard is mapped.  If it
-isn't the terminal key codes are tried (see |terminal-options|).  If a
-terminal code is found it is replaced with the internal code.  Then the check
-for a mapping is done again (so you can map an internal code to something
-else).  What is written into the script file depends on what is recognized.
-If the terminal key code was recognized as a mapping the key code itself is
-written to the script file.  If it was recognized as a terminal code the
-internal code is written to the script file.
+isn't the terminal key codes are tried.  If a terminal code is found it is
+replaced with the internal code.  Then the check for a mapping is done again
+(so you can map an internal code to something else).  What is written into the
+script file depends on what is recognized. If the terminal key code was
+recognized as a mapping the key code itself is written to the script file.  If
+it was recognized as a terminal code the internal code is written to the
+script file.
 
 
 1.6 SPECIAL CHARACTERS					*:map-special-chars*
@@ -1136,6 +1113,10 @@ scripts.
 			    "	Command has the -register attribute
 			    b	Command is local to current buffer
 			(see below for details on attributes)
+			The list can be filtered on command name with
+			|:filter|, e.g., to list all commands with "Pyth" in
+			the name: >
+				filter Pyth command
 
 :com[mand] {cmd}	List the user-defined commands that start with {cmd}
 

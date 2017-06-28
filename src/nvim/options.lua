@@ -34,6 +34,11 @@ local macros=function(s)
     return s
   end
 end
+local imacros=function(s)
+  return function()
+    return '(intptr_t)' .. s
+  end
+end
 local N_=function(s)
   return function()
     return 'N_(' .. cstr(s) .. ')'
@@ -1000,7 +1005,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_guicursor',
-      defaults={if_true={vi="n-v-c:block-Cursor/lCursor,ve:ver35-Cursor,o:hor50-Cursor,i-ci:ver25-Cursor/lCursor,r-cr:hor20-Cursor/lCursor,sm:block-Cursor-blinkwait175-blinkoff150-blinkon175"}}
+      defaults={if_true={vi="n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20"}}
     },
     {
       full_name='guifont', abbreviation='gfn',
@@ -2648,7 +2653,7 @@ return {
       type='number', scope={'global'},
       vim=true,
       varname='p_wc',
-      defaults={if_true={vi=macros('Ctrl_E'), vim=macros('TAB')}}
+      defaults={if_true={vi=imacros('Ctrl_E'), vim=imacros('TAB')}}
     },
     {
       full_name='wildcharm', abbreviation='wcm',
@@ -2700,6 +2705,14 @@ return {
       vi_def=true,
       varname='p_wak',
       defaults={if_true={vi="menu"}}
+    },
+    {
+      full_name='winhighlight', abbreviation='winhl',
+      type='string', scope={'window'},
+      vi_def=true,
+      alloced=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='window', abbreviation='wi',

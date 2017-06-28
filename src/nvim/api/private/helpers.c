@@ -24,6 +24,7 @@
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/getchar.h"
 
 /// Helper structure for vim_to_object
 typedef struct {
@@ -33,6 +34,7 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.c.generated.h"
 # include "api/private/funcs_metadata.generated.h"
+# include "api/private/ui_events_metadata.generated.h"
 #endif
 
 /// Start block that may cause vimscript exceptions
@@ -353,7 +355,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    kv_push(edata->stack, FLOATING_OBJ((Float)(flt)))
+    kv_push(edata->stack, FLOAT_OBJ((Float)(flt)))
 
 #define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
     do { \
@@ -820,6 +822,7 @@ Dictionary api_metadata(void)
   if (!metadata.size) {
     PUT(metadata, "version", DICTIONARY_OBJ(version_dict()));
     init_function_metadata(&metadata);
+    init_ui_event_metadata(&metadata);
     init_error_type_metadata(&metadata);
     init_type_metadata(&metadata);
   }
@@ -843,6 +846,22 @@ static void init_function_metadata(Dictionary *metadata)
   PUT(*metadata, "functions", functions);
 }
 
+static void init_ui_event_metadata(Dictionary *metadata)
+{
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  if (msgpack_unpack_next(&unpacked,
+                          (const char *)ui_events_metadata,
+                          sizeof(ui_events_metadata),
+                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+    abort();
+  }
+  Object ui_events;
+  msgpack_rpc_to_object(&unpacked.data, &ui_events);
+  msgpack_unpacked_destroy(&unpacked);
+  PUT(*metadata, "ui_events", ui_events);
+}
+
 static void init_error_type_metadata(Dictionary *metadata)
 {
   Dictionary types = ARRAY_DICT_INIT;
@@ -864,15 +883,18 @@ static void init_type_metadata(Dictionary *metadata)
   Dictionary types = ARRAY_DICT_INIT;
 
   Dictionary buffer_metadata = ARRAY_DICT_INIT;
-  PUT(buffer_metadata, "id", INTEGER_OBJ(kObjectTypeBuffer));
+  PUT(buffer_metadata, "id",
+      INTEGER_OBJ(kObjectTypeBuffer - EXT_OBJECT_TYPE_SHIFT));
   PUT(buffer_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_buf_")));
 
   Dictionary window_metadata = ARRAY_DICT_INIT;
-  PUT(window_metadata, "id", INTEGER_OBJ(kObjectTypeWindow));
+  PUT(window_metadata, "id",
+      INTEGER_OBJ(kObjectTypeWindow - EXT_OBJECT_TYPE_SHIFT));
   PUT(window_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_win_")));
 
   Dictionary tabpage_metadata = ARRAY_DICT_INIT;
-  PUT(tabpage_metadata, "id", INTEGER_OBJ(kObjectTypeTabpage));
+  PUT(tabpage_metadata, "id",
+      INTEGER_OBJ(kObjectTypeTabpage - EXT_OBJECT_TYPE_SHIFT));
   PUT(tabpage_metadata, "prefix", STRING_OBJ(cstr_to_string("nvim_tabpage_")));
 
   PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
@@ -880,6 +902,24 @@ static void init_type_metadata(Dictionary *metadata)
   PUT(types, "Tabpage", DICTIONARY_OBJ(tabpage_metadata));
 
   PUT(*metadata, "types", DICTIONARY_OBJ(types));
+}
+
+String copy_string(String str)
+{
+  if (str.data != NULL) {
+    return (String){ .data = xmemdupz(str.data, str.size), .size = str.size };
+  } else {
+    return (String)STRING_INIT;
+  }
+}
+
+Array copy_array(Array array)
+{
+  Array rv = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < array.size; i++) {
+    ADD(rv, copy_object(array.items[i]));
+  }
+  return rv;
 }
 
 /// Creates a deep clone of an object
@@ -893,15 +933,10 @@ Object copy_object(Object obj)
       return obj;
 
     case kObjectTypeString:
-      return STRING_OBJ(cstr_to_string(obj.data.string.data));
+      return STRING_OBJ(copy_string(obj.data.string));
 
-    case kObjectTypeArray: {
-      Array rv = ARRAY_DICT_INIT;
-      for (size_t i = 0; i < obj.data.array.size; i++) {
-        ADD(rv, copy_object(obj.data.array.items[i]));
-      }
-      return ARRAY_OBJ(rv);
-    }
+    case kObjectTypeArray:
+      return ARRAY_OBJ(copy_array(obj.data.array));
 
     case kObjectTypeDictionary: {
       Dictionary rv = ARRAY_DICT_INIT;
@@ -926,7 +961,7 @@ static void set_option_value_for(char *key,
 {
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
-  bufref_T save_curbuf =  { NULL, 0 };
+  bufref_T save_curbuf =  { NULL, 0, 0 };
 
   try_start();
   switch (opt_type)
@@ -999,4 +1034,42 @@ void api_set_error(Error *err, ErrorType errType, const char *format, ...)
   va_end(args2);
 
   err->type = errType;
+}
+
+/// Get an array containing dictionaries describing mappings
+/// based on mode and buffer id
+///
+/// @param  mode  The abbreviation for the mode
+/// @param  buf  The buffer to get the mapping array. NULL for global
+/// @returns An array of maparg() like dictionaries describing mappings
+ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
+{
+  Array mappings = ARRAY_DICT_INIT;
+  dict_T *const dict = tv_dict_alloc();
+
+  // Convert the string mode to the integer mode
+  // that is stored within each mapblock
+  char_u *p = (char_u *)mode.data;
+  int int_mode = get_map_mode(&p, 0);
+
+  // Determine the desired buffer value
+  long buffer_value = (buf == NULL) ? 0 : buf->handle;
+
+  for (int i = 0; i < MAX_MAPHASH; i++) {
+    for (const mapblock_T *current_maphash = get_maphash(i, buf);
+         current_maphash;
+         current_maphash = current_maphash->m_next) {
+      // Check for correct mode
+      if (int_mode & current_maphash->m_mode) {
+        mapblock_fill_dict(dict, current_maphash, buffer_value, false);
+        ADD(mappings, vim_to_object(
+            (typval_T[]) { { .v_type = VAR_DICT, .vval.v_dict = dict } }));
+
+        tv_dict_clear(dict);
+      }
+    }
+  }
+  tv_dict_free(dict);
+
+  return mappings;
 }

@@ -1972,7 +1972,7 @@ static void cs_release_csp(size_t i, int freefnpp)
 static int cs_reset(exarg_T *eap)
 {
   char        **dblist = NULL, **pplist = NULL, **fllist = NULL;
-  char buf[20];   /* for snprintf " (#%zu)" */
+  char buf[25];  // for snprintf " (#%zu)"
 
   if (csinfo_size == 0)
     return CSCOPE_SUCCESS;

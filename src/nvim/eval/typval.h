@@ -1,7 +1,7 @@
 #ifndef NVIM_EVAL_TYPVAL_H
 #define NVIM_EVAL_TYPVAL_H
 
-#include <limits.h>
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -20,20 +20,21 @@
 #include "nvim/macros.h"
 
 /// Type used for VimL VAR_NUMBER values
-typedef int varnumber_T;
+typedef int64_t varnumber_T;
+typedef uint64_t uvarnumber_T;
 
 /// Type used for VimL VAR_FLOAT values
 typedef double float_T;
 
 /// Maximal possible value of varnumber_T variable
-#define VARNUMBER_MAX INT_MAX
+#define VARNUMBER_MAX INT64_MAX
+#define UVARNUMBER_MAX UINT64_MAX
 
 /// Mimimal possible value of varnumber_T variable
-#define VARNUMBER_MIN INT_MIN
-#define PRIdVARNUMBER "d"
+#define VARNUMBER_MIN INT64_MIN
 
 /// %d printf format specifier for varnumber_T
-#define PRIdVARNUMBER "d"
+#define PRIdVARNUMBER PRId64
 
 typedef struct listvar_S list_T;
 typedef struct dictvar_S dict_T;

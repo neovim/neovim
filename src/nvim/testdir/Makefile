@@ -58,8 +58,10 @@ NEW_TESTS ?= \
 	    test_nested_function.res \
 	    test_normal.res \
 	    test_quickfix.res \
+	    test_search.res \
 	    test_signs.res \
 	    test_smartindent.res \
+	    test_stat.res \
 	    test_substitute.res \
 	    test_syntax.res \
 	    test_tabpage.res \
@@ -67,7 +69,7 @@ NEW_TESTS ?= \
 	    test_timers.res \
 	    test_undo.res \
 	    test_usercommands.res \
-	    test_viml.res \
+	    test_vimscript.res \
 	    test_visual.res \
 	    test_window_id.res \
 	    test_writefile.res \

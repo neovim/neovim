@@ -6,20 +6,13 @@
 "               James Mitchell <james_mitchell@acm.org>)
 " Last Change:  2015 Feb 13
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
 " MOST important - else most of the keywords wont work!
-if version < 600
-  set isk=@,48-57,-
-else
-  setlocal isk=@,48-57,-
-endif
+setlocal isk=@,48-57,-
 
 syn case ignore
 
@@ -157,52 +150,42 @@ else
 endif
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_cobol_syntax_inits")
-  if version < 508
-    let did_cobol_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink cobolBAD      Error
-  HiLink cobolBadID    Error
-  HiLink cobolBadLine  Error
-  if exists("g:cobol_legacy_code")
-      HiLink cobolMarker   Comment
-  else
-      HiLink cobolMarker   Error
-  endif
-  HiLink cobolCALLs    Function
-  HiLink cobolComment  Comment
-  HiLink cobolKeys     Comment
-  HiLink cobolAreaB    Special
-  HiLink cobolCompiler PreProc
-  HiLink cobolCondFlow Special
-  HiLink cobolCopy     PreProc
-  HiLink cobolDeclA    cobolDecl
-  HiLink cobolDecl     Type
-  HiLink cobolExtras   Special
-  HiLink cobolGoTo     Special
-  HiLink cobolConstant Constant
-  HiLink cobolNumber   Constant
-  HiLink cobolPic      Constant
-  HiLink cobolReserved Statement
-  HiLink cobolDivision Label
-  HiLink cobolSection  Label
-  HiLink cobolParagraph Label
-  HiLink cobolDivisionName  Keyword
-  HiLink cobolSectionName   Keyword
-  HiLink cobolParagraphName Keyword
-  HiLink cobolString   Constant
-  HiLink cobolTodo     Todo
-  HiLink cobolWatch    Special
-  HiLink cobolIndicator Special
-
-  delcommand HiLink
+hi def link cobolBAD      Error
+hi def link cobolBadID    Error
+hi def link cobolBadLine  Error
+if exists("g:cobol_legacy_code")
+    hi def link cobolMarker   Comment
+else
+    hi def link cobolMarker   Error
 endif
+hi def link cobolCALLs    Function
+hi def link cobolComment  Comment
+hi def link cobolKeys     Comment
+hi def link cobolAreaB    Special
+hi def link cobolCompiler PreProc
+hi def link cobolCondFlow Special
+hi def link cobolCopy     PreProc
+hi def link cobolDeclA    cobolDecl
+hi def link cobolDecl     Type
+hi def link cobolExtras   Special
+hi def link cobolGoTo     Special
+hi def link cobolConstant Constant
+hi def link cobolNumber   Constant
+hi def link cobolPic      Constant
+hi def link cobolReserved Statement
+hi def link cobolDivision Label
+hi def link cobolSection  Label
+hi def link cobolParagraph Label
+hi def link cobolDivisionName  Keyword
+hi def link cobolSectionName   Keyword
+hi def link cobolParagraphName Keyword
+hi def link cobolString   Constant
+hi def link cobolTodo     Todo
+hi def link cobolWatch    Special
+hi def link cobolIndicator Special
+
 
 let b:current_syntax = "cobol"
 

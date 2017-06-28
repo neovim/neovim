@@ -1751,6 +1751,55 @@ describe('typval.c', function()
           eq('2', s)
         end)
       end)
+      describe('get_string_buf_chk()', function()
+        local function tv_dict_get_string_buf_chk(d, key, len, buf, def, emsg)
+          buf = buf or ffi.gc(lib.xmalloc(lib.NUMBUFLEN), lib.xfree)
+          def = def or ffi.gc(lib.xstrdup('DEFAULT'), lib.xfree)
+          len = len or #key
+          alloc_log:clear()
+          local ret = check_emsg(function() return lib.tv_dict_get_string_buf_chk(d, key, len, buf, def) end,
+                                 emsg)
+          local s_ret = (ret ~= nil) and ffi.string(ret) or nil
+          if not emsg then
+            alloc_log:check({})
+          end
+          return s_ret, ret, buf, def
+        end
+        itp('works with NULL dict', function()
+          eq('DEFAULT', tv_dict_get_string_buf_chk(nil, 'test'))
+        end)
+        itp('works', function()
+          local lua_d = {
+            ['']={},
+            t=1,
+            te=int(2),
+            tes=empty_list,
+            test='tset',
+            testt=5,
+          }
+          local d = dict(lua_d)
+          alloc_log:clear()
+          eq(lua_d, dct2tbl(d))
+          alloc_log:check({})
+          local s, r, b, def
+          s, r, b, def = tv_dict_get_string_buf_chk(d, 'test')
+          neq(r, b)
+          neq(r, def)
+          eq('tset', s)
+          s, r, b, def = tv_dict_get_string_buf_chk(d, 'test', 1, nil, nil, 'E806: using Float as a String')
+          neq(r, b)
+          neq(r, def)
+          eq(nil, s)
+          s, r, b, def = tv_dict_get_string_buf_chk(d, 'te')
+          eq(r, b)
+          neq(r, def)
+          eq('2', s)
+          s, r, b, def = tv_dict_get_string_buf_chk(d, 'TEST')
+          eq(r, def)
+          neq(r, b)
+          eq('DEFAULT', s)
+        end)
+      end)
       describe('get_callback()', function()
         local function tv_dict_get_callback(d, key, key_len, emsg)
           key_len = key_len or #key

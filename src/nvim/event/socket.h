@@ -20,7 +20,7 @@ struct socket_watcher {
   union {
     struct {
       uv_tcp_t handle;
-      struct sockaddr_in addr;
+      struct addrinfo *addrinfo;
     } tcp;
     struct {
       uv_pipe_t handle;

@@ -8,9 +8,7 @@ This file contains an alphabetical list of messages and error messages that
 Vim produces.  You can use this if you don't understand what the message
 means.  It is not complete though.
 
-1. Old messages		|:messages|
-2. Error messages	|error-messages|
-3. Messages		|messages|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Old messages			*:messages* *:mes* *message-history*
@@ -39,10 +37,7 @@ back.
 Note: If the output has been stopped with "q" at the more prompt, it will only
 be displayed up to this point.
 The previous command output is cleared when another command produces output.
-
-If you are using translated messages, the first printed line tells who
-maintains the messages or the translations.  You can use this to contact the
-maintainer when you spot a mistake.
+The "g<" output is not redirected.
 
 If you want to find help on a specific (error) message, use the ID at the
 start of the message.  For example, to get help on the message: >
@@ -127,8 +122,9 @@ closed properly.  Mostly harmless.
   Command too recursive
 
 This happens when an Ex command executes an Ex command that executes an Ex
-command, etc.  This is only allowed 200 times.  When it's more there probably
-is an endless loop.  Probably a |:execute| or |:source| command is involved.
+command, etc.  The limit is 200 or the value of 'maxfuncdepth', whatever is
+larger.  When it's more there probably is an endless loop.  Probably a
+|:execute| or |:source| command is involved.
 
 							*E254*  >
   Cannot allocate color {name}

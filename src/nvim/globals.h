@@ -97,6 +97,34 @@ typedef enum {
 EXTERN long Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
 EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
 
+// We use 64-bit file functions here, if available.  E.g. ftello() returns
+// off_t instead of long, which helps if long is 32 bit and off_t is 64 bit.
+// We assume that when fseeko() is available then ftello() is too.
+// Note that Windows has different function names.
+#if (defined(_MSC_VER) && (_MSC_VER >= 1300)) || defined(__MINGW32__)
+typedef __int64 off_T;
+# ifdef __MINGW32__
+#  define vim_lseek lseek64
+#  define vim_fseek fseeko64
+#  define vim_ftell ftello64
+# else
+#  define vim_lseek _lseeki64
+#  define vim_fseek _fseeki64
+#  define vim_ftell _ftelli64
+# endif
+#else
+typedef off_t off_T;
+# ifdef HAVE_FSEEKO
+#  define vim_lseek lseek
+#  define vim_ftell ftello
+#  define vim_fseek fseeko
+# else
+#  define vim_lseek lseek
+#  define vim_ftell ftell
+#  define vim_fseek(a, b, c) fseek(a, (long)b, c)
+# endif
+#endif
+
 /*
  * The characters and attributes cached for the screen.
  */
@@ -411,80 +439,6 @@ EXTERN int did_check_timestamps INIT(= FALSE);      /* did check timestamps
                                                        recently */
 EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
 
-/*
- * Values for index in highlight_attr[].
- * When making changes, also update HL_FLAGS below!  And update the default
- * value of 'highlight' in option.c.
- */
-typedef enum {
-  HLF_8 = 0         /* Meta & special keys listed with ":map", text that is
-                       displayed different from what it is */
-  , HLF_EOB         // after the last line in the buffer
-  , HLF_TERM        // terminal cursor focused
-  , HLF_TERMNC      // terminal cursor unfocused
-  , HLF_AT          // @ characters at end of screen, characters that
-                    // don't really exist in the text
-  , HLF_D           // directories in CTRL-D listing
-  , HLF_E           // error messages
-  , HLF_I           // incremental search
-  , HLF_L           // last search string
-  , HLF_M           // "--More--" message
-  , HLF_CM          // Mode (e.g., "-- INSERT --")
-  , HLF_N           // line number for ":number" and ":#" commands
-  , HLF_CLN         // current line number
-  , HLF_R           // return to continue message and yes/no questions
-  , HLF_S           // status lines
-  , HLF_SNC         // status lines of not-current windows
-  , HLF_C           // column to separate vertically split windows
-  , HLF_T           // Titles for output from ":set all", ":autocmd" etc.
-  , HLF_V           // Visual mode
-  , HLF_VNC         // Visual mode, autoselecting and not clipboard owner
-  , HLF_W           // warning messages
-  , HLF_WM          // Wildmenu highlight
-  , HLF_FL          // Folded line
-  , HLF_FC          // Fold column
-  , HLF_ADD         // Added diff line
-  , HLF_CHD         // Changed diff line
-  , HLF_DED         // Deleted diff line
-  , HLF_TXD         // Text Changed in diff line
-  , HLF_CONCEAL     // Concealed text
-  , HLF_SC          // Sign column
-  , HLF_SPB         // SpellBad
-  , HLF_SPC         // SpellCap
-  , HLF_SPR         // SpellRare
-  , HLF_SPL         // SpellLocal
-  , HLF_PNI         // popup menu normal item
-  , HLF_PSI         // popup menu selected item
-  , HLF_PSB         // popup menu scrollbar
-  , HLF_PST         // popup menu scrollbar thumb
-  , HLF_TP          // tabpage line
-  , HLF_TPS         // tabpage line selected
-  , HLF_TPF         // tabpage line filler
-  , HLF_CUC         // 'cursurcolumn'
-  , HLF_CUL         // 'cursurline'
-  , HLF_MC          // 'colorcolumn'
-  , HLF_QFL         // selected quickfix line
-  , HLF_0           // Whitespace
-  , HLF_COUNT       // MUST be the last one
-} hlf_T;
-
-/* The HL_FLAGS must be in the same order as the HLF_ enums!
- * When changing this also adjust the default for 'highlight'. */
-#define HL_FLAGS { '8', '~', 'z', 'Z', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', \
-                   'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', \
-                   'A', 'C', 'D', 'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', \
-                   'x', 'X', '*', '#', '_', '!', '.', 'o', 'q', '0' }
-
-EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
-EXTERN int highlight_user[9];                   /* User[1-9] attributes */
-EXTERN int highlight_stlnc[9];                  /* On top of user */
-EXTERN int cterm_normal_fg_color INIT(= 0);
-EXTERN int cterm_normal_fg_bold INIT(= 0);
-EXTERN int cterm_normal_bg_color INIT(= 0);
-EXTERN RgbValue normal_fg INIT(= -1);
-EXTERN RgbValue normal_bg INIT(= -1);
-EXTERN RgbValue normal_sp INIT(= -1);
-
 EXTERN int autocmd_busy INIT(= FALSE);          /* Is apply_autocmds() busy? */
 EXTERN int autocmd_no_enter INIT(= FALSE);      /* *Enter autocmds disabled */
 EXTERN int autocmd_no_leave INIT(= FALSE);      /* *Leave autocmds disabled */
@@ -496,7 +450,7 @@ EXTERN int keep_filetype INIT(= FALSE);         /* value for did_filetype when
 
 // When deleting the current buffer, another one must be loaded.
 // If we know which one is preferred, au_new_curbuf is set to it.
-EXTERN bufref_T au_new_curbuf INIT(= { NULL, 0 });
+EXTERN bufref_T au_new_curbuf INIT(= { NULL, 0, 0 });
 
 // When deleting a buffer/window and autocmd_busy is TRUE, do not free the
 // buffer/window. but link it in the list starting with
@@ -943,7 +897,7 @@ EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
 // for CursorMoved event
 EXTERN pos_T last_cursormoved INIT(= INIT_POS_T(0, 0, 0));
 
-EXTERN int last_changedtick INIT(= 0);  // for TextChanged event
+EXTERN varnumber_T last_changedtick INIT(= 0);  // for TextChanged event
 EXTERN buf_T    *last_changedtick_buf INIT(= NULL);
 
 EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
@@ -1177,6 +1131,7 @@ EXTERN char_u e_longname[] INIT(= N_("E75: Name too long"));
 EXTERN char_u e_toomsbra[] INIT(= N_("E76: Too many ["));
 EXTERN char_u e_toomany[] INIT(= N_("E77: Too many file names"));
 EXTERN char_u e_trailing[] INIT(= N_("E488: Trailing characters"));
+EXTERN char_u e_trailing2[] INIT(= N_("E488: Trailing characters: %s"));
 EXTERN char_u e_umark[] INIT(= N_("E78: Unknown mark"));
 EXTERN char_u e_wildexpand[] INIT(= N_("E79: Cannot expand wildcards"));
 EXTERN char_u e_winheight[] INIT(= N_(

@@ -18,7 +18,7 @@
 /// @param[out] err Error details, if any
 /// @return List of windows in `tabpage`
 ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -48,7 +48,7 @@ ArrayOf(Window) nvim_tabpage_list_wins(Tabpage tabpage, Error *err)
 /// @param[out] err Error details, if any
 /// @return Variable value
 Object nvim_tabpage_get_var(Tabpage tabpage, String name, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -69,7 +69,7 @@ void nvim_tabpage_set_var(Tabpage tabpage,
                           String name,
                           Object value,
                           Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -86,7 +86,7 @@ void nvim_tabpage_set_var(Tabpage tabpage,
 /// @param name     Variable name
 /// @param[out] err Error details, if any
 void nvim_tabpage_del_var(Tabpage tabpage, String name, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
@@ -145,7 +145,7 @@ Object tabpage_del_var(Tabpage tabpage, String name, Error *err)
 /// @param[out] err Error details, if any
 /// @return Window handle
 Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   Window rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -173,7 +173,7 @@ Window nvim_tabpage_get_win(Tabpage tabpage, Error *err)
 /// @param[out] err Error details, if any
 /// @return Tabpage number
 Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   Integer rv = 0;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
@@ -190,7 +190,7 @@ Integer nvim_tabpage_get_number(Tabpage tabpage, Error *err)
 /// @param tabpage Tabpage handle
 /// @return true if the tabpage is valid, false otherwise
 Boolean nvim_tabpage_is_valid(Tabpage tabpage)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
   Boolean ret = find_tab_by_handle(tabpage, &stub) != NULL;

@@ -48,6 +48,7 @@
 #include "nvim/syntax.h"
 #include "nvim/terminal.h"
 #include "nvim/undo.h"
+#include "nvim/ui.h"
 #include "nvim/os/os.h"
 
 
@@ -1042,7 +1043,7 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
 
   win_init_some(newp, oldp);
 
-  check_colorcolumn(newp);
+  didset_window_options(newp);
 }
 
 /*
@@ -3721,6 +3722,12 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
   if (restart_edit)
     redraw_later(VALID);        /* causes status line redraw */
 
+  if (hl_attr(HLF_INACTIVE)
+      || (prevwin && prevwin->w_hl_ids[HLF_INACTIVE])
+      || curwin->w_hl_ids[HLF_INACTIVE]) {
+    redraw_all_later(NOT_VALID);
+  }
+
   /* set window height to desired minimal value */
   if (curwin->w_height < p_wh && !curwin->w_p_wfh)
     win_setheight((int)p_wh);
@@ -5223,6 +5230,9 @@ static void last_status_rec(frame_T *fr, int statusline)
  */
 int tabline_height(void)
 {
+  if (ui_is_external(kUITabline)) {
+    return 0;
+  }
   assert(first_tabpage);
   switch (p_stal) {
   case 0: return 0;

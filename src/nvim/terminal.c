@@ -237,8 +237,6 @@ Terminal *terminal_open(TerminalOptions opts)
   curbuf->b_p_scbk = p_scbk;  // 'scrollback'
   curbuf->b_p_tw = 0;         // 'textwidth'
   set_option_value("wrap", false, NULL, OPT_LOCAL);
-  set_option_value("number", false, NULL, OPT_LOCAL);
-  set_option_value("relativenumber", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
   RESET_BINDING(curwin);
@@ -302,8 +300,16 @@ void terminal_close(Terminal *term, char *msg)
   }
 
   term->forward_mouse = false;
-  term->closed = true;
+
+  // flush any pending changes to the buffer
+  if (!exiting) {
+    block_autocmds();
+    refresh_terminal(term);
+    unblock_autocmds();
+  }
+
   buf_T *buf = handle_get_buffer(term->buf_handle);
+  term->closed = true;
 
   if (!msg || exiting) {
     // If no msg was given, this was called by close_buffer(buffer.c).  Or if
@@ -595,8 +601,10 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 
     if (term->cursor.visible && term->cursor.row == row
         && term->cursor.col == col) {
-      attr_id = hl_combine_attr(attr_id, is_focused(term) && wp == curwin ?
-          hl_attr(HLF_TERM) : hl_attr(HLF_TERMNC));
+      attr_id = hl_combine_attr(attr_id,
+                                is_focused(term) && wp == curwin
+                                ? win_hl_attr(wp, HLF_TERM)
+                                : win_hl_attr(wp, HLF_TERMNC));
     }
 
     term_attrs[col] = attr_id;
@@ -631,7 +639,7 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
 }
 
 static void buf_set_term_title(buf_T *buf, char *title)
-    FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
   Error err = ERROR_INIT;
   dict_set_var(buf->b_vars,
@@ -675,7 +683,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
 static int term_bell(void *data)
 {
-  ui_putc('\x07');
+  ui_call_bell();
   return 1;
 }
 

@@ -5,9 +5,8 @@
 " Version:      0.12
 
 if !exists("main_syntax")
-  if version < 600
-    syntax clear
-  elseif exists("b:current_syntax")
+  " quit when a syntax file was already loaded
+  if exists("b:current_syntax")
     finish
   endif
   let main_syntax = 'json'
@@ -93,39 +92,29 @@ syn region  jsonFold matchgroup=jsonBraces start="{" end=/}\(\_s\+\ze\("\|{\)\)\
 syn region  jsonFold matchgroup=jsonBraces start="\[" end=/]\(\_s\+\ze"\)\@!/ transparent fold
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_json_syn_inits")
-  if version < 508
-    let did_json_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink jsonPadding         Operator
-  HiLink jsonString          String
-  HiLink jsonTest          Label
-  HiLink jsonEscape          Special
-  HiLink jsonNumber          Number
-  HiLink jsonBraces          Delimiter
-  HiLink jsonNull            Function
-  HiLink jsonBoolean         Boolean
-  HiLink jsonKeyword         Label
+" Only when an item doesn't have highlighting yet
+hi def link jsonPadding         Operator
+hi def link jsonString          String
+hi def link jsonTest          Label
+hi def link jsonEscape          Special
+hi def link jsonNumber          Number
+hi def link jsonBraces          Delimiter
+hi def link jsonNull            Function
+hi def link jsonBoolean         Boolean
+hi def link jsonKeyword         Label
 
-	if (!exists("g:vim_json_warnings") || g:vim_json_warnings==1)
-	  HiLink jsonNumError        Error
-	  HiLink jsonCommentError    Error
-	  HiLink jsonSemicolonError  Error
-	  HiLink jsonTrailingCommaError     Error
-	  HiLink jsonMissingCommaError      Error
-	  HiLink jsonStringSQError        	Error
-	  HiLink jsonNoQuotesError        	Error
-	  HiLink jsonTripleQuotesError     	Error
-  endif
-  HiLink jsonQuote           Quote
-  HiLink jsonNoise           Noise
-  delcommand HiLink
+if (!exists("g:vim_json_warnings") || g:vim_json_warnings==1)
+hi def link jsonNumError        Error
+hi def link jsonCommentError    Error
+hi def link jsonSemicolonError  Error
+hi def link jsonTrailingCommaError     Error
+hi def link jsonMissingCommaError      Error
+hi def link jsonStringSQError        	Error
+hi def link jsonNoQuotesError        	Error
+hi def link jsonTripleQuotesError     	Error
 endif
+hi def link jsonQuote           Quote
+hi def link jsonNoise           Noise
 
 let b:current_syntax = "json"
 if main_syntax == 'json'

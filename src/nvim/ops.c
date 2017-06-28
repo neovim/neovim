@@ -938,13 +938,11 @@ static int stuff_yank(int regname, char_u *p)
 
 static int execreg_lastc = NUL;
 
-/*
- * execute a yank register: copy it into the stuff buffer
- *
- * return FAIL for failure, OK otherwise
- */
-int 
-do_execreg (
+/// Execute a yank register: copy it into the stuff buffer
+///
+/// Return FAIL for failure, OK otherwise
+int
+do_execreg(
     int regname,
     int colon,                      /* insert ':' before each line */
     int addcr,                      /* always add '\n' to end of line */
@@ -1410,6 +1408,9 @@ int op_delete(oparg_T *oap)
     }
 
     if (oap->regname == 0) {
+      if (reg == NULL) {
+        abort();
+      }
       set_clipboard(0, reg);
       do_autocmd_textyankpost(oap, reg);
     }
@@ -3181,7 +3182,7 @@ error:
       if (curbuf->b_op_start.lnum + (y_type == kMTCharWise) - 1 + nr_lines
           < curbuf->b_ml.ml_line_count) {
         mark_adjust(curbuf->b_op_start.lnum + (y_type == kMTCharWise),
-                    (linenr_T)MAXLNUM, nr_lines, 0L);
+                    (linenr_T)MAXLNUM, nr_lines, 0L, false);
       }
 
       // note changed text for displaying and folding
@@ -4439,8 +4440,8 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   char_u buf2[NUMBUFLEN];
   int pre;  // 'X' or 'x': hex; '0': octal; 'B' or 'b': bin
   static bool hexupper = false;  // 0xABC
-  unsigned long n;
-  unsigned long oldn;
+  uvarnumber_T n;
+  uvarnumber_T oldn;
   char_u      *ptr;
   int c;
   int todel;
@@ -4635,20 +4636,20 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 
     oldn = n;
 
-    n = subtract ? n - (unsigned long) Prenum1
-                 : n + (unsigned long) Prenum1;
+    n = subtract ? n - (uvarnumber_T)Prenum1
+                 : n + (uvarnumber_T)Prenum1;
 
     // handle wraparound for decimal numbers
     if (!pre) {
       if (subtract) {
         if (n > oldn) {
-          n = 1 + (n ^ (unsigned long)-1);
+          n = 1 + (n ^ (uvarnumber_T)-1);
           negative ^= true;
         }
       } else {
         // add
         if (n < oldn) {
-          n = (n ^ (unsigned long)-1);
+          n = (n ^ (uvarnumber_T)-1);
           negative ^= true;
         }
       }
@@ -5238,11 +5239,13 @@ void clear_oparg(oparg_T *oap)
  *  case, eol_size will be added to the character count to account for
  *  the size of the EOL character.
  */
-static long line_count_info(char_u *line, long *wc, long *cc, long limit, int eol_size)
+static varnumber_T line_count_info(char_u *line, varnumber_T *wc,
+                                   varnumber_T *cc, varnumber_T limit,
+                                   int eol_size)
 {
-  long i;
-  long words = 0;
-  long chars = 0;
+  varnumber_T i;
+  varnumber_T words = 0;
+  varnumber_T chars = 0;
   int is_word = 0;
 
   for (i = 0; i < limit && line[i] != NUL; ) {
@@ -5280,15 +5283,15 @@ void cursor_pos_info(dict_T *dict)
   char_u buf1[50];
   char_u buf2[40];
   linenr_T lnum;
-  long byte_count = 0;
-  long bom_count = 0;
-  long byte_count_cursor = 0;
-  long char_count = 0;
-  long char_count_cursor = 0;
-  long word_count = 0;
-  long word_count_cursor = 0;
+  varnumber_T byte_count = 0;
+  varnumber_T bom_count = 0;
+  varnumber_T byte_count_cursor = 0;
+  varnumber_T char_count = 0;
+  varnumber_T char_count_cursor = 0;
+  varnumber_T word_count = 0;
+  varnumber_T word_count_cursor = 0;
   int eol_size;
-  long last_check = 100000L;
+  varnumber_T last_check = 100000L;
   long line_count_selected = 0;
   pos_T min_pos, max_pos;
   oparg_T oparg;
@@ -5395,15 +5398,16 @@ void cursor_pos_info(dict_T *dict)
         if (lnum == curwin->w_cursor.lnum) {
           word_count_cursor += word_count;
           char_count_cursor += char_count;
-          byte_count_cursor = byte_count +
-                              line_count_info(ml_get(lnum),
-              &word_count_cursor, &char_count_cursor,
-              (long)(curwin->w_cursor.col + 1), eol_size);
+          byte_count_cursor = byte_count
+            + line_count_info(ml_get(lnum), &word_count_cursor,
+                              &char_count_cursor,
+                              (varnumber_T)(curwin->w_cursor.col + 1),
+                              eol_size);
         }
       }
-      /* Add to the running totals */
-      byte_count += line_count_info(ml_get(lnum), &word_count,
-          &char_count, (long)MAXCOL, eol_size);
+      // Add to the running totals
+      byte_count += line_count_info(ml_get(lnum), &word_count, &char_count,
+                                    (varnumber_T)MAXCOL, eol_size);
     }
 
     // Correction for when last line doesn't have an EOL.
@@ -5780,7 +5784,7 @@ static inline bool reg_empty(const yankreg_T *const reg)
 /// @return Pointer that needs to be passed to next `op_register_iter` call or
 ///         NULL if iteration is over.
 const void *op_register_iter(const void *const iter, char *const name,
-                             yankreg_T *const reg)
+                             yankreg_T *const reg, bool *is_unnamed)
   FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *name = NUL;
@@ -5796,6 +5800,7 @@ const void *op_register_iter(const void *const iter, char *const name,
   int iter_off = (int)(iter_reg - &(y_regs[0]));
   *name = (char)get_register_name(iter_off);
   *reg = *iter_reg;
+  *is_unnamed = (iter_reg == y_previous);
   while (++iter_reg - &(y_regs[0]) < NUM_SAVED_REGISTERS) {
     if (!reg_empty(iter_reg)) {
       return (void *) iter_reg;
@@ -5820,10 +5825,11 @@ size_t op_register_amount(void)
 /// Set register to a given value
 ///
 /// @param[in]  name  Register name.
-/// @param[in]  reg   Register value.
+/// @param[in]  reg  Register value.
+/// @param[in]  is_unnamed  Whether to set the unnamed regiseter to reg
 ///
 /// @return true on success, false on failure.
-bool op_register_set(const char name, const yankreg_T reg)
+bool op_register_set(const char name, const yankreg_T reg, bool is_unnamed)
 {
   int i = op_reg_index(name);
   if (i == -1) {
@@ -5831,6 +5837,10 @@ bool op_register_set(const char name, const yankreg_T reg)
   }
   free_register(&y_regs[i]);
   y_regs[i] = reg;
+
+  if (is_unnamed) {
+    y_previous = &y_regs[i];
+  }
   return true;
 }
 
@@ -5846,4 +5856,21 @@ const yankreg_T *op_register_get(const char name)
     return NULL;
   }
   return &y_regs[i];
+}
+
+/// Set the previous yank register
+///
+/// @param[in]  name  Register name.
+///
+/// @return true on success, false on failure.
+bool op_register_set_previous(const char name)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  int i = op_reg_index(name);
+  if (i == -1) {
+    return false;
+  }
+
+  y_previous = &y_regs[i];
+  return true;
 }

@@ -7,11 +7,8 @@
 
 " Please check :help uc.vim for comments on some of the options available.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -110,64 +107,54 @@ endif
 exec "syn sync ccomment ucComment minlines=" . uc_minlines
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_uc_syntax_inits")
-  if version < 508
-    let did_uc_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink ucFuncDef			Conditional
-  HiLink ucEventDef			Conditional
-  HiLink ucBraces			Function
-  HiLink ucBranch			Conditional
-  HiLink ucLabel			Label
-  HiLink ucUserLabel			Label
-  HiLink ucConditional			Conditional
-  HiLink ucRepeat			Repeat
-  HiLink ucStorageClass			StorageClass
-  HiLink ucMethodDecl			ucStorageClass
-  HiLink ucClassDecl			ucStorageClass
-  HiLink ucScopeDecl			ucStorageClass
-  HiLink ucBoolean			Boolean
-  HiLink ucSpecial			Special
-  HiLink ucSpecialError			Error
-  HiLink ucSpecialCharError		Error
-  HiLink ucString			String
-  HiLink ucCharacter			Character
-  HiLink ucSpecialChar			SpecialChar
-  HiLink ucNumber			Number
-  HiLink ucError			Error
-  HiLink ucStringError			Error
-  HiLink ucStatement			Statement
-  HiLink ucOperator			Operator
-  HiLink ucOverLoaded			Operator
-  HiLink ucComment			Comment
-  HiLink ucDocComment			Comment
-  HiLink ucLineComment			Comment
-  HiLink ucConstant			ucBoolean
-  HiLink ucTypedef			Typedef
-  HiLink ucTodo				Todo
+hi def link ucFuncDef			Conditional
+hi def link ucEventDef			Conditional
+hi def link ucBraces			Function
+hi def link ucBranch			Conditional
+hi def link ucLabel			Label
+hi def link ucUserLabel			Label
+hi def link ucConditional			Conditional
+hi def link ucRepeat			Repeat
+hi def link ucStorageClass			StorageClass
+hi def link ucMethodDecl			ucStorageClass
+hi def link ucClassDecl			ucStorageClass
+hi def link ucScopeDecl			ucStorageClass
+hi def link ucBoolean			Boolean
+hi def link ucSpecial			Special
+hi def link ucSpecialError			Error
+hi def link ucSpecialCharError		Error
+hi def link ucString			String
+hi def link ucCharacter			Character
+hi def link ucSpecialChar			SpecialChar
+hi def link ucNumber			Number
+hi def link ucError			Error
+hi def link ucStringError			Error
+hi def link ucStatement			Statement
+hi def link ucOperator			Operator
+hi def link ucOverLoaded			Operator
+hi def link ucComment			Comment
+hi def link ucDocComment			Comment
+hi def link ucLineComment			Comment
+hi def link ucConstant			ucBoolean
+hi def link ucTypedef			Typedef
+hi def link ucTodo				Todo
 
-  HiLink ucCommentTitle			SpecialComment
-  HiLink ucDocTags			Special
-  HiLink ucDocParam			Function
-  HiLink ucCommentStar			ucComment
+hi def link ucCommentTitle			SpecialComment
+hi def link ucDocTags			Special
+hi def link ucDocParam			Function
+hi def link ucCommentStar			ucComment
 
-  HiLink ucType				Type
-  HiLink ucExternal			Include
+hi def link ucType				Type
+hi def link ucExternal			Include
 
-  HiLink ucClassKeys			Conditional
-  HiLink ucClassLabel			Conditional
+hi def link ucClassKeys			Conditional
+hi def link ucClassLabel			Conditional
 
-  HiLink htmlComment			Special
-  HiLink htmlCommentPart		Special
+hi def link htmlComment			Special
+hi def link htmlCommentPart		Special
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "uc"
 

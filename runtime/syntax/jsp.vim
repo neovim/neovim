@@ -6,11 +6,8 @@
 " Credits : Patch by Darren Greaves (recognizes <jsp:...> tags)
 "	    Patch by Thomas Kimpton (recognizes jspExpr inside HTML tags)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -19,11 +16,7 @@ if !exists("main_syntax")
 endif
 
 " Source HTML syntax
-if version < 600
-  source <sfile>:p:h/html.vim
-else
-  runtime! syntax/html.vim
-endif
+runtime! syntax/html.vim
 unlet b:current_syntax
 
 " Next syntax items are case-sensitive
@@ -52,29 +45,19 @@ syn clear htmlTag
 syn region htmlTag start=+<[^/%]+ end=+>+ contains=htmlTagN,htmlString,htmlArg,htmlValue,htmlTagError,htmlEvent,htmlCssDefinition,@htmlPreproc,@htmlArgCluster,jspExpr,javaScript
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_jsp_syn_inits")
-  if version < 508
-    let did_jsp_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  " java.vim has redefined htmlComment highlighting
-  HiLink htmlComment	 Comment
-  HiLink htmlCommentPart Comment
-  " Be consistent with html highlight settings
-  HiLink jspComment	 htmlComment
-  HiLink jspTag		 htmlTag
-  HiLink jspDirective	 jspTag
-  HiLink jspDirName	 htmlTagName
-  HiLink jspDirArg	 htmlArg
-  HiLink jspCommand	 jspTag
-  HiLink jspCommandName  htmlTagName
-  HiLink jspCommandArg	 htmlArg
-  delcommand HiLink
-endif
+" Only when an item doesn't have highlighting yet
+" java.vim has redefined htmlComment highlighting
+hi def link htmlComment	 Comment
+hi def link htmlCommentPart Comment
+" Be consistent with html highlight settings
+hi def link jspComment	 htmlComment
+hi def link jspTag		 htmlTag
+hi def link jspDirective	 jspTag
+hi def link jspDirName	 htmlTagName
+hi def link jspDirArg	 htmlArg
+hi def link jspCommand	 jspTag
+hi def link jspCommandName  htmlTagName
+hi def link jspCommandArg	 htmlArg
 
 if main_syntax == 'jsp'
   unlet main_syntax

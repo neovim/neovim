@@ -25,6 +25,8 @@ with these extensions:
 	*.bz2		bzip2
 	*.lzma		lzma
 	*.xz		xz
+	*.lz		lzip
+	*.zst		zstd
 
 That's actually the only thing you need to know.  There are no options.
 

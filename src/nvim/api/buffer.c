@@ -35,7 +35,7 @@
 /// @param[out] err Error details, if any
 /// @return Line count
 Integer nvim_buf_line_count(Buffer buffer, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -157,7 +157,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
                                    Integer end,
                                    Boolean strict_indexing,
                                    Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -195,7 +195,7 @@ ArrayOf(String) nvim_buf_get_lines(uint64_t channel_id,
     Object str = STRING_OBJ(cstr_to_string(bufstr));
 
     // Vim represents NULs as NLs, but this may confuse clients.
-    if (channel_id != INTERNAL_CALL) {
+    if (channel_id != VIML_INTERNAL_CALL) {
       strchrsub(str.data.string.data, '\n', '\0');
     }
 
@@ -270,7 +270,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
                         Boolean strict_indexing,
                         ArrayOf(String) replacement,  // NOLINT
                         Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -295,6 +295,24 @@ void nvim_buf_set_lines(uint64_t channel_id,
     return;
   }
 
+  for (size_t i = 0; i < replacement.size; i++) {
+    if (replacement.items[i].type != kObjectTypeString) {
+      api_set_error(err,
+                    kErrorTypeValidation,
+                    "All items in the replacement array must be strings");
+      return;
+    }
+    // Disallow newlines in the middle of the line.
+    if (channel_id != VIML_INTERNAL_CALL) {
+      const String l = replacement.items[i].data.string;
+      if (memchr(l.data, NL, l.size)) {
+        api_set_error(err, kErrorTypeValidation,
+                      "String cannot contain newlines");
+        return;
+      }
+    }
+  }
+
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
   size_t new_len = replacement.size;
@@ -303,31 +321,16 @@ void nvim_buf_set_lines(uint64_t channel_id,
   char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
 
   for (size_t i = 0; i < new_len; i++) {
-    if (replacement.items[i].type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "All items in the replacement array must be strings");
-      goto end;
-    }
+    const String l = replacement.items[i].data.string;
 
-    String l = replacement.items[i].data.string;
-
-    // Fill lines[i] with l's contents. Disallow newlines in the middle of a
-    // line and convert NULs to newlines to avoid truncation.
-    lines[i] = xmallocz(l.size);
-    for (size_t j = 0; j < l.size; j++) {
-      if (l.data[j] == '\n' && channel_id != INTERNAL_CALL) {
-        api_set_error(err, kErrorTypeException,
-                      "String cannot contain newlines");
-        new_len = i + 1;
-        goto end;
-      }
-      lines[i][j] = (char) (l.data[j] == '\0' ? '\n' : l.data[j]);
-    }
+    // Fill lines[i] with l's contents. Convert NULs to newlines as required by
+    // NL-used-for-NUL.
+    lines[i] = xmemdupz(l.data, l.size);
+    memchrsub(lines[i], NUL, NL, l.size);
   }
 
   try_start();
-  bufref_T save_curbuf = { NULL, 0 };
+  bufref_T save_curbuf = { NULL, 0, 0 };
   switch_to_win_for_buf(buf, &save_curwin, &save_curtab, &save_curbuf);
 
   if (u_save((linenr_T)(start - 1), (linenr_T)end) == FAIL) {
@@ -396,7 +399,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
   // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
   if (save_curbuf.br_buf == NULL) {
-    mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, extra);
+    mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, extra, false);
   }
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra);
@@ -422,7 +425,7 @@ end:
 /// @param[out] err   Error details, if any
 /// @return Variable value
 Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -439,7 +442,7 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 ///
 /// @return `b:changedtick` value.
 Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
-    FUNC_API_SINCE(2)
+  FUNC_API_SINCE(2)
 {
   const buf_T *const buf = find_buffer_by_handle(buffer, err);
 
@@ -450,6 +453,26 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
   return buf->b_changedtick;
 }
 
+/// Get a list of dictionaries describing buffer-local mappings
+/// Note that the buffer key in the dictionary will represent the buffer
+/// handle where the mapping is present
+///
+/// @param  mode  The abbreviation for the mode
+/// @param  buffer_id  Buffer handle
+/// @param[out]  err   Error details, if any
+/// @returns An array of maparg() like dictionaries describing mappings
+ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
+    FUNC_API_SINCE(3)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return (Array)ARRAY_DICT_INIT;
+  }
+
+  return keymap_array(mode, buf);
+}
+
 /// Sets a buffer-scoped (b:) variable
 ///
 /// @param buffer     Buffer handle
@@ -457,7 +480,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// @param value      Variable value
 /// @param[out] err   Error details, if any
 void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -474,7 +497,7 @@ void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
 /// @param name       Variable name
 /// @param[out] err   Error details, if any
 void nvim_buf_del_var(Buffer buffer, String name, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -535,7 +558,7 @@ Object buffer_del_var(Buffer buffer, String name, Error *err)
 /// @param[out] err   Error details, if any
 /// @return Option value
 Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -554,7 +577,7 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
 /// @param value      Option value
 /// @param[out] err   Error details, if any
 void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -567,11 +590,15 @@ void nvim_buf_set_option(Buffer buffer, String name, Object value, Error *err)
 
 /// Gets the buffer number
 ///
+/// @deprecated The buffer number now is equal to the object id,
+///             so there is no need to use this function.
+///
 /// @param buffer     Buffer handle
 /// @param[out] err   Error details, if any
 /// @return Buffer number
 Integer nvim_buf_get_number(Buffer buffer, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(2)
 {
   Integer rv = 0;
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -589,7 +616,7 @@ Integer nvim_buf_get_number(Buffer buffer, Error *err)
 /// @param[out] err   Error details, if any
 /// @return Buffer name
 String nvim_buf_get_name(Buffer buffer, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   String rv = STRING_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -607,7 +634,7 @@ String nvim_buf_get_name(Buffer buffer, Error *err)
 /// @param name       Buffer name
 /// @param[out] err   Error details, if any
 void nvim_buf_set_name(Buffer buffer, String name, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -637,7 +664,7 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
 /// @param buffer Buffer handle
 /// @return true if the buffer is valid, false otherwise
 Boolean nvim_buf_is_valid(Buffer buffer)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
   Boolean ret = find_buffer_by_handle(buffer, &stub) != NULL;
@@ -671,7 +698,7 @@ void buffer_insert(Buffer buffer,
 /// @param[out] err   Error details, if any
 /// @return (row, col) tuple
 ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -747,7 +774,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
                                Integer col_start,
                                Integer col_end,
                                Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {
@@ -788,7 +815,7 @@ void nvim_buf_clear_highlight(Buffer buffer,
                               Integer line_start,
                               Integer line_end,
                               Error *err)
-    FUNC_API_SINCE(1)
+  FUNC_API_SINCE(1)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
   if (!buf) {

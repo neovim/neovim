@@ -76,8 +76,8 @@ end
 
 local session, loop_running, last_error
 
-local function set_session(s)
-  if session then
+local function set_session(s, keep)
+  if session and not keep then
     session:close()
   end
   session = s
@@ -174,7 +174,7 @@ local os_name = (function()
 end)()
 
 local function iswin()
-  return os_name() == 'windows'
+  return package.config:sub(1,1) == '\\'
 end
 
 -- Executes a VimL function.
@@ -385,9 +385,9 @@ local function curbuf(method, ...)
 end
 
 local function wait()
-  -- Execute 'vim_eval' (a deferred function) to block
+  -- Execute 'nvim_eval' (a deferred function) to block
   -- until all pending input is processed.
-  session:request('vim_eval', '1')
+  session:request('nvim_eval', '1')
 end
 
 -- sleeps the test runner (_not_ the nvim instance)
@@ -492,17 +492,6 @@ local exc_exec = function(cmd)
   return ret
 end
 
-local function redir_exec(cmd)
-  nvim_command(([[
-    redir => g:__output
-      silent! execute "%s"
-    redir END
-  ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
-  local ret = nvim_eval('get(g:, "__output", 0)')
-  nvim_command('unlet! g:__output')
-  return ret
-end
-
 local function create_callindex(func)
   local table = {}
   setmetatable(table, {
@@ -562,11 +551,55 @@ local curbufmeths = create_callindex(curbuf)
 local curwinmeths = create_callindex(curwin)
 local curtabmeths = create_callindex(curtab)
 
+local function redir_exec(cmd)
+  meths.set_var('__redir_exec_cmd', cmd)
+  nvim_command([[
+    redir => g:__redir_exec_output
+      silent! execute g:__redir_exec_cmd
+    redir END
+  ]])
+  local ret = meths.get_var('__redir_exec_output')
+  meths.del_var('__redir_exec_output')
+  meths.del_var('__redir_exec_cmd')
+  return ret
+end
+
 local function get_pathsep()
   return funcs.fnamemodify('.', ':p'):sub(-1)
 end
 
-local M = {
+local function missing_provider(provider)
+  if provider == 'ruby' then
+    local prog = funcs['provider#' .. provider .. '#Detect']()
+    return prog == '' and (provider .. ' not detected') or false
+  elseif provider == 'python' or provider == 'python3' then
+    local py_major_version = (provider == 'python3' and 3 or 2)
+    local errors = funcs['provider#pythonx#Detect'](py_major_version)[2]
+    return errors ~= '' and errors or false
+  else
+    assert(false, 'Unknown provider: ' .. provider)
+  end
+end
+
+local function alter_slashes(obj)
+  if not iswin() then
+    return obj
+  end
+  if type(obj) == 'string' then
+    local ret = obj:gsub('/', '\\')
+    return ret
+  elseif type(obj) == 'table' then
+    local ret = {}
+    for k, v in pairs(obj) do
+      ret[k] = alter_slashes(v)
+    end
+    return ret
+  else
+    assert(false, 'Could only alter slashes for tables of strings and strings')
+  end
+end
+
+local module = {
   prepend_argv = prepend_argv,
   clear = clear,
   connect = connect,
@@ -596,6 +629,7 @@ local M = {
   nvim = nvim,
   nvim_async = nvim_async,
   nvim_prog = nvim_prog,
+  nvim_argv = nvim_argv,
   nvim_set = nvim_set,
   nvim_dir = nvim_dir,
   buffer = buffer,
@@ -632,6 +666,8 @@ local M = {
   meth_pcall = meth_pcall,
   NIL = mpack.NIL,
   get_pathsep = get_pathsep,
+  missing_provider = missing_provider,
+  alter_slashes = alter_slashes,
 }
 
 return function(after_each)
@@ -641,5 +677,5 @@ return function(after_each)
       check_cores('build/bin/nvim')
     end)
   end
-  return M
+  return module
 end

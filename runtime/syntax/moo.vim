@@ -4,8 +4,8 @@
 " Last Change:	2001 Oct 06
 " Note:		Requires Vim 6.0 or above
 
-" Quit when a syntax file was already loaded
-if version < 600 || exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 

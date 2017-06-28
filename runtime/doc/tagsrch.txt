@@ -8,12 +8,7 @@ Tags and special searches				*tags-and-searches*
 
 See section |29.1| of the user manual for an introduction.
 
-1. Jump to a tag		|tag-commands|
-2. Tag stack			|tag-stack|
-3. Tag match list		|tag-matchlist|
-4. Tags details			|tag-details|
-5. Tags file format		|tags-file-format|
-6. Include file searches	|include-search|
+                                      Type <M-]> to see the table of contents.
 
 ==============================================================================
 1. Jump to a tag					*tag-commands*

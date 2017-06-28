@@ -541,7 +541,7 @@ static bool normal_handle_special_visual_command(NormalState *s)
   return false;
 }
 
-static bool normal_need_aditional_char(NormalState *s)
+static bool normal_need_additional_char(NormalState *s)
 {
   int flags = nv_cmds[s->idx].cmd_flags;
   bool pending_op = s->oa.op_type != OP_NOP;
@@ -1083,7 +1083,7 @@ static int normal_execute(VimState *state, int key)
   }
 
   // Get an additional character if we need one.
-  if (normal_need_aditional_char(s)) {
+  if (normal_need_additional_char(s)) {
     normal_get_additional_char(s);
   }
 
@@ -1861,6 +1861,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       } else {
         bangredo = true;  // do_bang() will put cmd in redo buffer.
       }
+      // fallthrough
 
     case OP_INDENT:
     case OP_COLON:
@@ -5230,6 +5231,7 @@ static void nv_dollar(cmdarg_T *cap)
 static void nv_search(cmdarg_T *cap)
 {
   oparg_T     *oap = cap->oap;
+  pos_T save_cursor = curwin->w_cursor;
 
   if (cap->cmdchar == '?' && cap->oap->op_type == OP_ROT13) {
     /* Translate "g??" to "g?g?" */
@@ -5239,6 +5241,8 @@ static void nv_search(cmdarg_T *cap)
     return;
   }
 
+  // When using 'incsearch' the cursor may be moved to set a different search
+  // start position.
   cap->searchbuf = getcmdline(cap->cmdchar, cap->count1, 0);
 
   if (cap->searchbuf == NULL) {
@@ -5247,7 +5251,8 @@ static void nv_search(cmdarg_T *cap)
   }
 
   (void)normal_search(cap, cap->cmdchar, cap->searchbuf,
-      (cap->arg ? 0 : SEARCH_MARK));
+                      (cap->arg || !equalpos(save_cursor, curwin->w_cursor))
+                      ? 0 : SEARCH_MARK);
 }
 
 /*

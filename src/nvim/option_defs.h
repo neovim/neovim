@@ -807,6 +807,7 @@ enum {
   , WV_WFW
   , WV_WRAP
   , WV_SCL
+  , WV_WINHL
   , WV_COUNT        // must be the last one
 };
 

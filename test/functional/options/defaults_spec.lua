@@ -8,6 +8,8 @@ local clear = helpers.clear
 local eval = helpers.eval
 local eq = helpers.eq
 local neq = helpers.neq
+local mkdir = helpers.mkdir
+local rmdir = helpers.rmdir
 
 local function init_session(...)
   local args = { helpers.nvim_prog, '-i', 'NONE', '--embed',
@@ -23,13 +25,13 @@ describe('startup defaults', function()
     if helpers.pending_win32(pending) then return end
 
     local function expect_filetype(expected)
-      local screen = Screen.new(48, 4)
+      local screen = Screen.new(50, 4)
       screen:attach()
       command('filetype')
       screen:expect([[
-        ^                                                |
-        ~                                               |
-        ~                                               |
+        ^                                                  |
+        ~                                                 |
+        ~                                                 |
         ]]..expected
       )
     end
@@ -37,31 +39,49 @@ describe('startup defaults', function()
     it('enabled by `-u NORC`', function()
       init_session('-u', 'NORC')
       expect_filetype(
-        'filetype detection:ON  plugin:ON  indent:ON     |')
+        'filetype detection:ON  plugin:ON  indent:ON       |')
     end)
 
     it('disabled by `-u NONE`', function()
       init_session('-u', 'NONE')
       expect_filetype(
-        'filetype detection:OFF  plugin:OFF  indent:OFF  |')
+        'filetype detection:OFF  plugin:OFF  indent:OFF    |')
     end)
 
     it('overridden by early `filetype on`', function()
       init_session('-u', 'NORC', '--cmd', 'filetype on')
       expect_filetype(
-        'filetype detection:ON  plugin:OFF  indent:OFF   |')
+        'filetype detection:ON  plugin:OFF  indent:OFF     |')
     end)
 
     it('overridden by early `filetype plugin on`', function()
       init_session('-u', 'NORC', '--cmd', 'filetype plugin on')
       expect_filetype(
-        'filetype detection:ON  plugin:ON  indent:OFF    |')
+        'filetype detection:ON  plugin:ON  indent:OFF      |')
     end)
 
     it('overridden by early `filetype indent on`', function()
       init_session('-u', 'NORC', '--cmd', 'filetype indent on')
       expect_filetype(
-        'filetype detection:ON  plugin:OFF  indent:ON    |')
+        'filetype detection:ON  plugin:OFF  indent:ON      |')
+    end)
+
+    it('adjusted by late `filetype off`', function()
+      init_session('-u', 'NORC', '-c', 'filetype off')
+      expect_filetype(
+        'filetype detection:OFF  plugin:(on)  indent:(on)  |')
+    end)
+
+    it('adjusted by late `filetype plugin off`', function()
+      init_session('-u', 'NORC', '-c', 'filetype plugin off')
+      expect_filetype(
+        'filetype detection:ON  plugin:OFF  indent:ON      |')
+    end)
+
+    it('adjusted by late `filetype indent off`', function()
+      init_session('-u', 'NORC', '-c', 'filetype indent off')
+      expect_filetype(
+        'filetype detection:ON  plugin:ON  indent:OFF      |')
     end)
   end)
 
@@ -78,6 +98,11 @@ describe('startup defaults', function()
 
     it('overridden by early `syntax off`', function()
       init_session('-u', 'NORC', '--cmd', 'syntax off')
+      eq(0, eval('exists("g:syntax_on")'))
+    end)
+
+    it('adjusted by late `syntax off`', function()
+      init_session('-u', 'NORC', '-c', 'syntax off')
       eq(0, eval('exists("g:syntax_on")'))
     end)
   end)
@@ -97,6 +122,56 @@ describe('startup defaults', function()
 
   it('v:progpath is set to the absolute path', function()
     eq(eval("fnamemodify(v:progpath, ':p')"), eval('v:progpath'))
+  end)
+
+  describe('$NVIM_LOG_FILE', function()
+    -- TODO(jkeyes): use stdpath('data') instead.
+    local datasubdir = helpers.iswin() and 'nvim-data' or 'nvim'
+    local xdgdir = 'Xtest-startup-xdg-logpath'
+    local xdgdatadir = xdgdir..'/'..datasubdir
+    after_each(function()
+      os.remove('Xtest-logpath')
+      rmdir(xdgdir)
+    end)
+
+    it('is used if expansion succeeds', function()
+      clear({env={
+        NVIM_LOG_FILE='Xtest-logpath',
+      }})
+      eq('Xtest-logpath', eval('$NVIM_LOG_FILE'))
+    end)
+    it('defaults to stdpath("data")/log if empty', function()
+      eq(true, mkdir(xdgdir) and mkdir(xdgdatadir))
+      clear({env={
+        XDG_DATA_HOME=xdgdir,
+        NVIM_LOG_FILE='',  -- Empty is invalid.
+      }})
+      -- server_start() calls ELOG, which tickles log_path_init().
+      pcall(command, 'call serverstart(serverlist()[0])')
+
+      eq(xdgdir..'/'..datasubdir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+    end)
+    it('defaults to stdpath("data")/log if invalid', function()
+      eq(true, mkdir(xdgdir) and mkdir(xdgdatadir))
+      clear({env={
+        XDG_DATA_HOME=xdgdir,
+        NVIM_LOG_FILE='.',  -- Any directory is invalid.
+      }})
+      -- server_start() calls ELOG, which tickles log_path_init().
+      pcall(command, 'call serverstart(serverlist()[0])')
+
+      eq(xdgdir..'/'..datasubdir..'/log', string.gsub(eval('$NVIM_LOG_FILE'), '\\', '/'))
+    end)
+    it('defaults to .nvimlog if stdpath("data") is invalid', function()
+      clear({env={
+        XDG_DATA_HOME='Xtest-missing-xdg-dir',
+        NVIM_LOG_FILE='.',  -- Any directory is invalid.
+      }})
+      -- server_start() calls ELOG, which tickles log_path_init().
+      pcall(command, 'call serverstart(serverlist()[0])')
+
+      eq('.nvimlog', eval('$NVIM_LOG_FILE'))
+    end)
   end)
 end)
 

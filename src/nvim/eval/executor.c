@@ -25,7 +25,7 @@ char *e_listidx = N_("E684: list index out of range: %" PRId64);
 /// @return OK or FAIL.
 int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
                 const char *const op)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NO_SANITIZE_UNDEFINED
 {
   // Can't do anything with a Funcref, a Dict or special value on the right.
   if (tv2->v_type != VAR_FUNC && tv2->v_type != VAR_DICT) {
@@ -55,7 +55,7 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
           // nr += nr  or  nr -= nr
           varnumber_T n = tv_get_number(tv1);
           if (tv2->v_type == VAR_FLOAT) {
-            float_T f = n;
+            float_T f = (float_T)n;
 
             if (*op == '+') {
               f += tv2->vval.v_float;
@@ -99,7 +99,7 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
         }
         const float_T f = (tv2->v_type == VAR_FLOAT
                            ? tv2->vval.v_float
-                           : tv_get_number(tv2));
+                           : (float_T)tv_get_number(tv2));
         if (*op == '+') {
           tv1->vval.v_float += f;
         } else {

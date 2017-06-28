@@ -309,6 +309,8 @@ static keyentry_T dumkey;
 #define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char_u *)&dumkey)))
 #define HI2KE(hi)      HIKEY2KE((hi)->hi_key)
 
+// -V:HI2KE:782
+
 /*
  * To reduce the time spent in keepend(), remember at which level in the state
  * stack the first item with "keepend" is present.  When "-1", there is no
@@ -7304,110 +7306,34 @@ static void highlight_attr_set_all(void)
   }
 }
 
-/*
- * Translate the 'highlight' option into attributes in highlight_attr[] and
- * set up the user highlights User1..9. A set of
- * corresponding highlights to use on top of HLF_SNC is computed.
- * Called only when the 'highlight' option has been changed and upon first
- * screen redraw after any :highlight command.
- * Return FAIL when an invalid flag is found in 'highlight'.  OK otherwise.
- */
-int highlight_changed(void)
+/// Tranlate highlight groups into attributes in highlight_attr[] and set up
+/// the user highlights User1..9. A set of corresponding highlights to use on
+/// top of HLF_SNC is computed.  Called only when nvim starts and upon first
+/// screen redraw after any :highlight command.
+void highlight_changed(void)
 {
-  int hlf;
-  int i;
-  char_u      *p;
   int attr;
-  char_u      *end;
   int id;
   char_u userhl[10];
   int id_SNC = -1;
   int id_S = -1;
   int hlcnt;
-  static int hl_flags[HLF_COUNT] = HL_FLAGS;
 
   need_highlight_changed = FALSE;
 
-  /*
-   * Clear all attributes.
-   */
-  for (hlf = 0; hlf < (int)HLF_COUNT; ++hlf)
-    highlight_attr[hlf] = 0;
-
-  /*
-   * First set all attributes to their default value.
-   * Then use the attributes from the 'highlight' option.
-   */
-  for (i = 0; i < 2; ++i) {
-    if (i)
-      p = p_hl;
-    else
-      p = get_highlight_default();
-    if (p == NULL)          /* just in case */
-      continue;
-
-    while (*p) {
-      for (hlf = 0; hlf < (int)HLF_COUNT; ++hlf)
-        if (hl_flags[hlf] == *p)
-          break;
-      ++p;
-      if (hlf == (int)HLF_COUNT || *p == NUL)
-        return FAIL;
-
-      /*
-       * Allow several hl_flags to be combined, like "bu" for
-       * bold-underlined.
-       */
-      attr = 0;
-      bool colon = false;
-      for (; *p && *p != ','; ++p) {  // parse upto comma
-        if (ascii_iswhite(*p)) {  // ignore white space
-          continue;
-        }
-
-        if (colon)          /* Combination with ':' is not allowed. */
-          return FAIL;
-
-        switch (*p) {
-        case 'b':   attr |= HL_BOLD;
-          break;
-        case 'i':   attr |= HL_ITALIC;
-          break;
-        case '-':
-        case 'n':                                   /* no highlighting */
-          break;
-        case 'r':   attr |= HL_INVERSE;
-          break;
-        case 's':   attr |= HL_STANDOUT;
-          break;
-        case 'u':   attr |= HL_UNDERLINE;
-          break;
-        case 'c':   attr |= HL_UNDERCURL;
-          break;
-        case ':':   ++p;                            /* highlight group name */
-          if (attr || *p == NUL)                         /* no combinations */
-            return FAIL;
-          colon = true;
-          end = vim_strchr(p, ',');
-          if (end == NULL)
-            end = p + STRLEN(p);
-          id = syn_check_group(p, (int)(end - p));
-          if (id == 0)
-            return FAIL;
-          attr = syn_id2attr(id);
-          p = end - 1;
-          if (hlf == (int)HLF_SNC)
-            id_SNC = syn_get_final_id(id);
-          else if (hlf == (int)HLF_S)
-            id_S = syn_get_final_id(id);
-          break;
-        default:    return FAIL;
-        }
-      }
-      highlight_attr[hlf] = attr;
-
-      p = skip_to_option_part(p);           /* skip comma and spaces */
+  /// Translate builtin highlight groups into attributes for quick lookup.
+  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+    id = syn_check_group((char_u *)hlf_names[hlf], STRLEN(hlf_names[hlf]));
+    if (id == 0) {
+      abort();
     }
+    attr = syn_id2attr(id);
+    if (hlf == (int)HLF_SNC) {
+      id_SNC = syn_get_final_id(id);
+    } else if (hlf == (int)HLF_S) {
+      id_S = syn_get_final_id(id);
+    }
+    highlight_attr[hlf] = attr;
   }
 
   /* Setup the user highlights
@@ -7472,8 +7398,6 @@ int highlight_changed(void)
     }
   }
   highlight_ga.ga_len = hlcnt;
-
-  return OK;
 }
 
 

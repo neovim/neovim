@@ -70,6 +70,7 @@
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
 #include "nvim/shada.h"
+#include "nvim/lua/executor.h"
 #include "nvim/globals.h"
 
 static int quitmore = 0;
@@ -1350,6 +1351,31 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       cmdmod.keepjumps = true;
       continue;
 
+    case 'f': {  // only accept ":filter {pat} cmd"
+      char_u *reg_pat;
+
+      if (!checkforcmd(&p, "filter", 4) || *p == NUL || ends_excmd(*p)) {
+        break;
+      }
+      if (*p == '!') {
+        cmdmod.filter_force = true;
+        p = skipwhite(p + 1);
+        if (*p == NUL || ends_excmd(*p)) {
+          break;
+        }
+      }
+      p = skip_vimgrep_pat(p, &reg_pat, NULL);
+      if (p == NULL || *p == NUL) {
+        break;
+      }
+      cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
+      if (cmdmod.filter_regmatch.regprog == NULL) {
+        break;
+      }
+      ea.cmd = p;
+      continue;
+    }
+
     /* ":hide" and ":hide | cmd" are not modifiers */
     case 'h':   if (p != ea.cmd || !checkforcmd(&p, "hide", 3)
                     || *p == NUL || ends_excmd(*p))
@@ -1452,6 +1478,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
     break;
   }
+  char_u *after_modifier = ea.cmd;
 
   ea.skip = did_emsg || got_int || did_throw || (cstack->cs_idx >= 0
                                                  && !(cstack->cs_flags[cstack->
@@ -1734,7 +1761,13 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (!ea.skip) {
       STRCPY(IObuff, _("E492: Not an editor command"));
       if (!(flags & DOCMD_VERBOSE)) {
-        append_command(*cmdlinep);
+        // If the modifier was parsed OK the error must be in the following
+        // command
+        if (after_modifier != NULL) {
+          append_command(after_modifier);
+        } else {
+          append_command(*cmdlinep);
+        }
       }
       errormsg = IObuff;
       did_emsg_syntax = TRUE;
@@ -2104,6 +2137,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     case CMD_echomsg:
     case CMD_echon:
     case CMD_execute:
+    case CMD_filter:
     case CMD_help:
     case CMD_hide:
     case CMD_ijump:
@@ -2253,6 +2287,10 @@ doend:
     set_string_option_direct((char_u *)"ei", -1, cmdmod.save_ei,
         OPT_FREE, SID_NONE);
     free_string_option(cmdmod.save_ei);
+  }
+
+  if (cmdmod.filter_regmatch.regprog != NULL) {
+    vim_regfree(cmdmod.filter_regmatch.regprog);
   }
 
   cmdmod = save_cmdmod;
@@ -2540,28 +2578,29 @@ static struct cmdmod {
   int minlen;
   int has_count;            /* :123verbose  :3tab */
 } cmdmods[] = {
-  {"aboveleft", 3, FALSE},
-  {"belowright", 3, FALSE},
-  {"botright", 2, FALSE},
-  {"browse", 3, FALSE},
-  {"confirm", 4, FALSE},
-  {"hide", 3, FALSE},
-  {"keepalt", 5, FALSE},
-  {"keepjumps", 5, FALSE},
-  {"keepmarks", 3, FALSE},
-  {"keeppatterns", 5, FALSE},
-  {"leftabove", 5, FALSE},
-  {"lockmarks", 3, FALSE},
-  {"noautocmd", 3, FALSE},
-  {"noswapfile", 3, FALSE},
-  {"rightbelow", 6, FALSE},
-  {"sandbox", 3, FALSE},
-  {"silent", 3, FALSE},
-  {"tab", 3, TRUE},
-  {"topleft", 2, FALSE},
-  {"unsilent", 3, FALSE},
-  {"verbose", 4, TRUE},
-  {"vertical", 4, FALSE},
+  { "aboveleft", 3, false },
+  { "belowright", 3, false },
+  { "botright", 2, false },
+  { "browse", 3, false },
+  { "confirm", 4, false },
+  { "filter", 4, false },
+  { "hide", 3, false },
+  { "keepalt", 5, false },
+  { "keepjumps", 5, false },
+  { "keepmarks", 3, false },
+  { "keeppatterns", 5, false },
+  { "leftabove", 5, false },
+  { "lockmarks", 3, false },
+  { "noautocmd", 3, false },
+  { "noswapfile", 3, false },
+  { "rightbelow", 6, false },
+  { "sandbox", 3, false },
+  { "silent", 3, false },
+  { "tab", 3, true },
+  { "topleft", 2, false },
+  { "unsilent", 3, false },
+  { "verbose", 4, true },
+  { "vertical", 4, false },
 };
 
 /*
@@ -2649,7 +2688,7 @@ const char * set_one_cmd_context(
 
   // 2. skip comment lines and leading space, colons or bars
   const char *cmd;
-  for (cmd = buff; strchr(" \t:|", *cmd) != NULL; cmd++) {
+  for (cmd = buff; vim_strchr((const char_u *)" \t:|", *cmd) != NULL; cmd++) {
   }
   xp->xp_pattern = (char_u *)cmd;
 
@@ -2710,7 +2749,7 @@ const char * set_one_cmd_context(
       }
     }
     // check for non-alpha command
-    if (p == cmd && strchr("@*!=><&~#", *p) != NULL) {
+    if (p == cmd && vim_strchr((const char_u *)"@*!=><&~#", *p) != NULL) {
       p++;
     }
     len = (size_t)(p - cmd);
@@ -2741,7 +2780,7 @@ const char * set_one_cmd_context(
     return NULL;
 
   if (ea.cmdidx == CMD_SIZE) {
-    if (*cmd == 's' && strchr("cgriI", cmd[1]) != NULL) {
+    if (*cmd == 's' && vim_strchr((const char_u *)"cgriI", cmd[1]) != NULL) {
       ea.cmdidx = CMD_substitute;
       p = cmd + 1;
     } else if (cmd[0] >= 'A' && cmd[0] <= 'Z') {
@@ -3030,6 +3069,16 @@ const char * set_one_cmd_context(
   case CMD_vertical:
   case CMD_windo:
     return arg;
+
+  case CMD_filter:
+    if (*arg != NUL) {
+      arg = (const char *)skip_vimgrep_pat((char_u *)arg, NULL, NULL);
+    }
+    if (arg == NULL || *arg == NUL) {
+      xp->xp_context = EXPAND_NOTHING;
+      return NULL;
+    }
+    return (const char *)skipwhite((const char_u *)arg);
 
   case CMD_match:
     if (*arg == NUL || !ends_excmd(*arg)) {
@@ -3759,10 +3808,12 @@ void ex_ni(exarg_T *eap)
 /// Skips over ":perl <<EOF" constructs.
 static void ex_script_ni(exarg_T *eap)
 {
-  if (!eap->skip)
+  if (!eap->skip) {
     ex_ni(eap);
-  else
-    xfree(script_get(eap, eap->arg));
+  } else {
+    size_t len;
+    xfree(script_get(eap, &len));
+  }
 }
 
 /*
@@ -4851,9 +4902,12 @@ static void uc_list(char_u *name, size_t name_len)
       cmd = USER_CMD_GA(gap, i);
       a = cmd->uc_argt;
 
-      /* Skip commands which don't match the requested prefix */
-      if (STRNCMP(name, cmd->uc_name, name_len) != 0)
+      // Skip commands which don't match the requested prefix and
+      // commands filtered out.
+      if (STRNCMP(name, cmd->uc_name, name_len) != 0
+          || message_filtered(cmd->uc_name)) {
         continue;
+      }
 
       /* Put out the title first time */
       if (!found)
@@ -5765,10 +5819,10 @@ int parse_addr_type_arg(char_u *value, int vallen, uint32_t *argt,
  * copied to allocated memory and stored in "*compl_arg".
  * Returns FAIL if something is wrong.
  */
-int parse_compl_arg(char_u *value, int vallen, int *complp,
+int parse_compl_arg(const char_u *value, int vallen, int *complp,
                     uint32_t *argt, char_u **compl_arg)
 {
-  char_u      *arg = NULL;
+  const char_u *arg = NULL;
   size_t arglen = 0;
   int i;
   int valend = vallen;
@@ -6231,13 +6285,14 @@ static void ex_stop(exarg_T *eap)
       autowrite_all();
     }
     ui_cursor_goto((int)Rows - 1, 0);
-    ui_putc('\n');
+    ui_linefeed();
     ui_flush();
-    ui_suspend();               /* call machine specific function */
+    ui_call_suspend();  // call machine specific function
+    ui_flush();
     maketitle();
-    resettitle();               /* force updating the title */
+    resettitle();  // force updating the title
     redraw_later_clear();
-    ui_refresh();            /* may have resized window */
+    ui_refresh();  // may have resized window
   }
 }
 
@@ -8792,15 +8847,16 @@ makeopens (
    */
   tab_firstwin = firstwin;      /* first window in tab page "tabnr" */
   tab_topframe = topframe;
-  for (tabnr = 1;; ++tabnr) {
+  for (tabnr = 1;; tabnr++) {
+    tabpage_T *tp = find_tabpage(tabnr);
+    if (tp == NULL) {
+      break;  // done all tab pages
+    }
+
     int need_tabnew = false;
     int cnr = 1;
 
     if ((ssop_flags & SSOP_TABPAGES)) {
-      tabpage_T *tp = find_tabpage(tabnr);
-
-      if (tp == NULL)
-        break;                  /* done all tab pages */
       if (tp == curtab) {
         tab_firstwin = firstwin;
         tab_topframe = topframe;
@@ -8912,6 +8968,16 @@ makeopens (
      */
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL)
       return FAIL;
+
+    // Take care of tab-local working directories if applicable
+    if (tp->tp_localdir) {
+      if (fputs("if has('nvim') | tcd ", fd) < 0
+          || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
+          || fputs(" | endif", fd) < 0
+          || put_eol(fd) == FAIL) {
+        return FAIL;
+      }
+    }
 
     /* Don't continue in another tab page when doing only the current one
      * or when at the last tab page. */

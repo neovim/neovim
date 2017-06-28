@@ -1,15 +1,12 @@
 " Vim syntax file
 " Language:	DCL (Digital Command Language - vms)
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	May 02, 2016
-" Version:	9
+" Last Change:	Aug 31, 2016
+" Version:	11
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_DCL
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -111,49 +108,40 @@ syn region  dclFuncList	matchgroup=Delimiter start="(" matchgroup=Delimiter end=
 syn match   dclError	")"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_dcl_syntax_inits")
-  if version < 508
-    let did_dcl_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+if !exists("skip_dcl_syntax_inits")
 
- HiLink dclLogOper	dclError
- HiLink dclLogical	dclOper
- HiLink dclLogSep	dclSep
+ hi def link dclLogOper	dclError
+ hi def link dclLogical	dclOper
+ hi def link dclLogSep	dclSep
 
- HiLink dclAssign	Operator
- HiLink dclCmdProc	Special
- HiLink dclCmdProcStart	Operator
- HiLink dclComment	Comment
- HiLink dclContinue	Statement
- HiLink dclDevice	Identifier
- HiLink dclDirPath	Identifier
- HiLink dclDirPath	Identifier
- HiLink dclDirSep	Delimiter
- HiLink dclError	Error
- HiLink dclExe		Statement
- HiLink dclFilename	NONE
- HiLink dclGotoLabel	Label
- HiLink dclInstr	Statement
- HiLink dclLexical	Function
- HiLink dclMdfy	Type
- HiLink dclMdfyBrkt	Delimiter
- HiLink dclMdfySep	Delimiter
- HiLink dclMdfySet	Type
- HiLink dclMdfySetString	String
- HiLink dclNumber	Number
- HiLink dclOper	Operator
- HiLink dclParam	Special
- HiLink dclSep		Delimiter
- HiLink dclStart	Delimiter
- HiLink dclString	String
- HiLink dclTodo	Todo
+ hi def link dclAssign	Operator
+ hi def link dclCmdProc	Special
+ hi def link dclCmdProcStart	Operator
+ hi def link dclComment	Comment
+ hi def link dclContinue	Statement
+ hi def link dclDevice	Identifier
+ hi def link dclDirPath	Identifier
+ hi def link dclDirPath	Identifier
+ hi def link dclDirSep	Delimiter
+ hi def link dclError	Error
+ hi def link dclExe		Statement
+ hi def link dclFilename	NONE
+ hi def link dclGotoLabel	Label
+ hi def link dclInstr	Statement
+ hi def link dclLexical	Function
+ hi def link dclMdfy	Type
+ hi def link dclMdfyBrkt	Delimiter
+ hi def link dclMdfySep	Delimiter
+ hi def link dclMdfySet	Type
+ hi def link dclMdfySetString	String
+ hi def link dclNumber	Number
+ hi def link dclOper	Operator
+ hi def link dclParam	Special
+ hi def link dclSep		Delimiter
+ hi def link dclStart	Delimiter
+ hi def link dclString	String
+ hi def link dclTodo	Todo
 
- delcommand HiLink
 endif
 
 let b:current_syntax = "dcl"

@@ -6,11 +6,9 @@
 "      <http://git.sisudoc.org/gitweb/?p=code/sisu.git;a=blob_plain;f=data/sisu/conf/editor-syntax-etc/vim/syntax/sisu.vim;hb=HEAD>
 "(originally looked at Ruby Vim by Mirko Nasato)
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
-else
 endif
 let s:cpo_save = &cpo
 set cpo&vim

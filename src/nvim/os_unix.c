@@ -133,7 +133,7 @@ void mch_free_acl(vim_acl_T aclent)
 }
 #endif
 
-void mch_exit(int r)
+void mch_exit(int r) FUNC_ATTR_NORETURN
 {
   exiting = true;
 
@@ -141,7 +141,9 @@ void mch_exit(int r)
   ui_flush();
   ml_close_all(true);           // remove all memfiles
 
-  event_teardown();
+  if (!event_teardown() && r == 0) {
+    r = 1;  // Exit with error if main_loop did not teardown gracefully.
+  }
   stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
 
 #ifdef EXITFREE
@@ -173,7 +175,7 @@ void mch_exit(int r)
 /// @returns             OK for success or FAIL for error.
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file, int flags) FUNC_ATTR_NONNULL_ARG(3)
-    FUNC_ATTR_NONNULL_ARG(4)
+  FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
   size_t len;

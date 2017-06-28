@@ -6,9 +6,10 @@ Getting started
 If you want to help but don't know where to start, here are some
 low-risk/isolated tasks:
 
-- Merge a [Vim patch].
+- [Merge a Vim patch].
 - Try a [complexity:low] issue.
-- Fix [clang-scan], [coverity](#coverity), and [PVS](#pvs-studio) warnings.
+- Fix bugs found by [clang scan-build](#clang-scan-build),
+  [coverity](#coverity), and [PVS](#pvs-studio).
 
 Developer guidelines
 --------------------
@@ -22,18 +23,16 @@ Reporting problems
 - Check the [**FAQ**][wiki-faq].
 - Search [existing issues][github-issues] (including closed!)
 - Update Neovim to the latest version to see if your problem persists.
-- If you're using a plugin manager, comment out your plugins, then add them back
-  in one by one, to narrow down the cause of the issue.
-- Crash reports which include a stacktrace are 10x more valuable.
-- [Bisecting][git-bisect] to the cause of a regression often leads to an
-  immediate fix.
+- Disable plugins incrementally, to narrow down the cause of the issue.
+- When reporting a crash, include a stacktrace.
+- [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
+- Check `$NVIM_LOG_FILE`, if it exists.
 
 Pull requests ("PRs")
 ---------------------
 
 - To avoid duplicate work, create a `[WIP]` pull request as soon as possible.
-- Avoid cosmetic changes to unrelated files in the same commit: noise makes
-  reviews take longer.
+- Avoid cosmetic changes to unrelated files in the same commit.
 - Use a [feature branch][git-feature-branch] instead of the master branch.
 - Use a **rebase workflow** for small PRs.
   - After addressing review comments, it's fine to rebase and force-push.
@@ -43,7 +42,7 @@ Pull requests ("PRs")
   - Use the `ri` git alias:
     ```
     [alias]
-    ri = "!sh -c 't=\"${1:-master}\" ; s=\"${2:-HEAD}\" ; if git merge-base --is-ancestor \"$t\" \"$s\" ; then o=\"$t\" ; else mb=\"$(git merge-base \"$t\" \"$s\")\" ; if test \"x$mb\" = x ; then o=\"$t\" ; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\" ; if test \"x$lm\" = x ; then o=\"$mb\" ; else o=\"$lm\" ; fi ; fi ; fi ; [ $# -gt 0 ] && shift ; [ $# -gt 0 ] && shift ; git rebase --interactive \"$o\" \"$@\"' -"
+    ri = "!sh -c 't=\"${1:-master}\"; s=\"${2:-HEAD}\"; mb=\"$(git merge-base \"$t\" \"$s\")\"; if test \"x$mb\" = x ; then o=\"$t\"; else lm=\"$(git log -n1 --merges \"$t..$s\" --pretty=%H)\"; if test \"x$lm\" = x ; then o=\"$mb\"; else o=\"$lm\"; fi; fi; test $# -gt 0 && shift; test $# -gt 0 && shift; git rebase --interactive \"$o\" \"$@\"'"
     ```
     This avoids unnecessary rebases yet still allows you to combine related
     commits, separate monolithic commits, etc.
@@ -86,10 +85,11 @@ the VCS/git logs more valuable.
 
 ### Automated builds (CI)
 
-Each pull request must pass the automated builds ([travis CI] and [quickbuild]).
+Each pull request must pass the automated builds on [travis CI], [quickbuild]
+and [AppVeyor].
 
-- CI builds are compiled with [`-Werror`][gcc-warnings], so if your PR
-  introduces any compiler warnings, the build will fail.
+- CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
+  will fail the build.
 - If any tests fail, the build will fail.
   See [Building Neovim#running-tests][wiki-run-tests] to run tests locally.
   Passing locally doesn't guarantee passing the CI build, because of the
@@ -112,11 +112,19 @@ QuickBuild uses this invocation:
     VERBOSE=1 nvim unittest-prereqs functionaltest-prereqs
 
 
+### Clang scan-build
+
+The auto-generated [clang-scan] report presents walk-throughs of bugs found by
+Clang's [scan-build](https://clang-analyzer.llvm.org/scan-build.html) static
+analyzer. To verify a fix locally, run `scan-build` like this:
+
+    rm -rf build/
+    scan-build --use-analyzer=/usr/bin/clang make
+
 ### Coverity
 
 [Coverity](https://scan.coverity.com/projects/neovim-neovim) runs against the
-master build. If you want to view the defects, just request access at the
-_Contributor_ level. An Admin will grant you permission.
+master build. To view the defects, just request access; you will be approved.
 
 Use this commit-message format for coverity fixes:
 
@@ -126,8 +134,9 @@ where `<id>` is the Coverity ID (CID). For example see [#804](https://github.com
 
 ### PVS-Studio
 
-Run `scripts/pvscheck.sh` to check the codebase with [PVS
-Studio](https://www.viva64.com/en/pvs-studio/).
+View the [PVS analysis report](https://neovim.io/doc/reports/pvs/) to see bugs
+found by [PVS Studio](https://www.viva64.com/en/pvs-studio/).
+You can run `scripts/pvscheck.sh` locally to run PVS on your machine.
 
 Reviewing
 ---------
@@ -163,6 +172,7 @@ as context, use the `-W` argument as well.
 [3174]: https://github.com/neovim/neovim/issues/3174
 [travis CI]: https://travis-ci.org/neovim/neovim
 [quickbuild]: http://neovim-qb.szakmeister.net/dashboard
-[Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
+[AppVeyor]: https://ci.appveyor.com/project/neovim/neovim
+[Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
 [clang-scan]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow

@@ -6,11 +6,8 @@
 " Last Change:  2011 May 17 - improved identifier matching + two new keywords
 "               2001 May 04 - initial version
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -74,36 +71,26 @@ syn sync minlines=50
 syn sync maxlines=500
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_dot_syntax_inits")
-  if version < 508
-    let did_dot_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink dotParErr	 Error
-  HiLink dotBraceErr	 Error
-  HiLink dotBrackErr	 Error
+hi def link dotParErr	 Error
+hi def link dotBraceErr	 Error
+hi def link dotBrackErr	 Error
 
-  HiLink dotComment	 Comment
-  HiLink dotTodo	 Todo
+hi def link dotComment	 Comment
+hi def link dotTodo	 Todo
 
-  HiLink dotParEncl	 Keyword
-  HiLink dotBrackEncl	 Keyword
-  HiLink dotBraceEncl	 Keyword
+hi def link dotParEncl	 Keyword
+hi def link dotBrackEncl	 Keyword
+hi def link dotBraceEncl	 Keyword
 
-  HiLink dotKeyword	 Keyword
-  HiLink dotType	 Type
-  HiLink dotKeyChar	 Keyword
+hi def link dotKeyword	 Keyword
+hi def link dotType	 Type
+hi def link dotKeyChar	 Keyword
 
-  HiLink dotString	 String
-  HiLink dotIdentifier	 Identifier
+hi def link dotString	 String
+hi def link dotIdentifier	 Identifier
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "dot"
 

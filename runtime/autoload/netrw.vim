@@ -22,8 +22,8 @@
 if &cp || exists("g:loaded_netrw")
   finish
 endif
-" netrw requires vim having patch 213; netrw will benefit from vim's having patch#656, too
-if v:version < 704 || !has("patch213")
+" netrw requires vim having patch 7.4.213; netrw will benefit from vim's having patch#656, too
+if v:version < 704 || (v:version == 704 && !has("patch213"))
  if !exists("s:needpatch213")
   unsilent echomsg "***sorry*** this version of netrw requires vim v7.4 with patch 213"
  endif

@@ -10,6 +10,7 @@ local insert = helpers.insert
 local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
+local bufmeths = helpers.bufmeths
 
 describe('api/buf', function()
   before_each(clear)
@@ -120,6 +121,15 @@ describe('api/buf', function()
   describe('{get,set}_lines', function()
     local get_lines, set_lines = curbufmeths.get_lines, curbufmeths.set_lines
     local line_count = curbufmeths.line_count
+
+    it('fails correctly when input is not valid', function()
+      eq(1, curbufmeths.get_number())
+      local err, emsg = pcall(bufmeths.set_lines, 1, 1, 2, false, {'b\na'})
+      eq(false, err)
+      local exp_emsg = 'String cannot contain newlines'
+      -- Expected {filename}:{lnum}: {exp_emsg}
+      eq(': ' .. exp_emsg, emsg:sub(-#exp_emsg - 2))
+    end)
 
     it('has correct line_count when inserting and deleting', function()
       eq(1, line_count())

@@ -18,7 +18,7 @@
     .type = kObjectTypeInteger, \
     .data.integer = i })
 
-#define FLOATING_OBJ(f) ((Object) { \
+#define FLOAT_OBJ(f) ((Object) { \
     .type = kObjectTypeFloat, \
     .data.floating = f })
 

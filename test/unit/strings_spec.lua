@@ -99,3 +99,42 @@ describe('vim_strnsave_unquoted()', function()
     eq('/Program\\nFiles/sh', vim_strnsave_unquoted('/Program"\\n"Files/sh'))
   end)
 end)
+
+describe('vim_strchr()', function()
+  local vim_strchr = function(s, c)
+    local str = to_cstr(s)
+    local res = strings.vim_strchr(str, c)
+    if res == nil then
+      return nil
+    else
+      return res - str
+    end
+  end
+  itp('handles NUL and <0 correctly', function()
+    eq(nil, vim_strchr('abc', 0))
+    eq(nil, vim_strchr('abc', -1))
+  end)
+  itp('works', function()
+    eq(0, vim_strchr('abc', ('a'):byte()))
+    eq(1, vim_strchr('abc', ('b'):byte()))
+    eq(2, vim_strchr('abc', ('c'):byte()))
+    eq(0, vim_strchr('a«b»c', ('a'):byte()))
+    eq(3, vim_strchr('a«b»c', ('b'):byte()))
+    eq(6, vim_strchr('a«b»c', ('c'):byte()))
+
+    eq(nil, vim_strchr('«»', ('«'):byte()))
+    -- 0xAB == 171 == '«'
+    eq(nil, vim_strchr('\171', 0xAB))
+    eq(0, vim_strchr('«»', 0xAB))
+    eq(3, vim_strchr('„«»“', 0xAB))
+
+    eq(7, vim_strchr('„«»“', 0x201C))
+    eq(nil, vim_strchr('„«»“', 0x201D))
+    eq(0, vim_strchr('„«»“', 0x201E))
+
+    eq(0, vim_strchr('\244\143\188\128', 0x10FF00))
+    eq(2, vim_strchr('«\244\143\188\128»', 0x10FF00))
+    --                   |0xDBFF     |0xDF00  - surrogate pair for 0x10FF00
+    eq(nil, vim_strchr('«\237\175\191\237\188\128»', 0x10FF00))
+  end)
+end)

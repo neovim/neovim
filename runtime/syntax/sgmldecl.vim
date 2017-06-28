@@ -5,11 +5,8 @@
 " You can modify and maintain this file, in other case send comments
 " the maintainer email address.
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 let s:keepcpo= &cpo
@@ -52,30 +49,20 @@ syn sync lines=250
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sgmldecl_syntax_init")
-  if version < 508
-    let did_sgmldecl_syntax_init = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-      HiLink	sgmldeclDeclKeys	Keyword
-      HiLink	sgmldeclTypes		Type
-      HiLink	sgmldeclConst		Constant
-      HiLink	sgmldeclNConst		Constant
-      HiLink	sgmldeclString		String
-      HiLink	sgmldeclDeclBlock	Normal
-      HiLink	sgmldeclBool		Boolean
-      HiLink	sgmldeclSpecial		Special
-      HiLink	sgmldeclComment		Comment
-      HiLink	sgmldeclStatem		Statement
-	  HiLink	sgmldeclVariables	Type
+hi def link sgmldeclDeclKeys	Keyword
+hi def link sgmldeclTypes		Type
+hi def link sgmldeclConst		Constant
+hi def link sgmldeclNConst		Constant
+hi def link sgmldeclString		String
+hi def link sgmldeclDeclBlock	Normal
+hi def link sgmldeclBool		Boolean
+hi def link sgmldeclSpecial		Special
+hi def link sgmldeclComment		Comment
+hi def link sgmldeclStatem		Statement
+hi def link sgmldeclVariables	Type
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "sgmldecl"
 

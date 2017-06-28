@@ -1,15 +1,12 @@
 " Vim syntax file
 " Language:	Elm Filter rules
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Oct 23, 2014
-" Version:	6
+" Last Change:	Aug 31, 2016
+" Version:	8
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_ELMFILT
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -38,32 +35,23 @@ syn region	elmfiltString	contained	start="'" skip="'\(\\\\\)*\\['%]" end="'"	con
 syn match	elmfiltSpaceError	contained	"\s.*$"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_elmfilt_syntax_inits")
-  if version < 508
-    let did_elmfilt_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+if !exists("skip_elmfilt_syntax_inits")
 
-  HiLink elmfiltAction	Statement
-  HiLink elmfiltArg	Special
-  HiLink elmfiltComment	Comment
-  HiLink elmfiltCond	Statement
-  HiLink elmfiltIf	Statement
-  HiLink elmfiltMatch	Special
-  HiLink elmfiltMatchError	Error
-  HiLink elmfiltNumber	Number
-  HiLink elmfiltOper	Operator
-  HiLink elmfiltOperKey	Type
-  HiLink elmfiltParenError	Error
-  HiLink elmfiltSpaceError	Error
-  HiLink elmfiltString	String
-  HiLink elmfiltThenError	Error
+  hi def link elmfiltAction	Statement
+  hi def link elmfiltArg	Special
+  hi def link elmfiltComment	Comment
+  hi def link elmfiltCond	Statement
+  hi def link elmfiltIf	Statement
+  hi def link elmfiltMatch	Special
+  hi def link elmfiltMatchError	Error
+  hi def link elmfiltNumber	Number
+  hi def link elmfiltOper	Operator
+  hi def link elmfiltOperKey	Type
+  hi def link elmfiltParenError	Error
+  hi def link elmfiltSpaceError	Error
+  hi def link elmfiltString	String
+  hi def link elmfiltThenError	Error
 
-  delcommand HiLink
 endif
 
 let b:current_syntax = "elmfilt"

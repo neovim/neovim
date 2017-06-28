@@ -61,9 +61,9 @@ void fs_init(void)
 }
 
 
-/// Change to the given directory.
+/// Changes the current directory to `path`.
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or negative error code.
 int os_chdir(const char *path)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -171,6 +171,10 @@ int os_nodetype(const char *name)
                    | O_NONBLOCK
 #endif
                    , 0);
+  if (fd == -1) {
+    return NODE_OTHER;  // open() failed.
+  }
+
   switch (uv_guess_handle(fd)) {
     case UV_TTY:         // FILE_TYPE_CHAR
       nodetype = NODE_WRITABLE;
@@ -196,11 +200,13 @@ int os_nodetype(const char *name)
 }
 
 /// Gets the absolute path of the currently running executable.
+/// May fail if procfs is missing. #6734
+/// @see path_exepath
 ///
-/// @param[out] buffer Returns the path string.
+/// @param[out] buffer Full path to the executable.
 /// @param[in]  size   Size of `buffer`.
 ///
-/// @return `0` on success, or libuv error code on failure.
+/// @return 0 on success, or libuv error code.
 int os_exepath(char *buffer, size_t *size)
   FUNC_ATTR_NONNULL_ALL
 {

@@ -47,6 +47,7 @@
 #define MAX_UI_COUNT 16
 
 static UI *uis[MAX_UI_COUNT];
+static bool ui_ext[UI_WIDGETS] = { 0 };
 static size_t ui_count = 0;
 static int row = 0, col = 0;
 static struct {
@@ -88,6 +89,10 @@ static int old_mode_idx = -1;
 #define UI_CALL_MORE(method, ...) if (ui->method) ui->method(ui, __VA_ARGS__)
 #define UI_CALL_ZERO(method) if (ui->method) ui->method(ui)
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ui_events_call.generated.h"
+#endif
+
 void ui_builtin_start(void)
 {
 #ifdef FEAT_TUI
@@ -127,24 +132,6 @@ bool ui_active(void)
   return ui_count != 0;
 }
 
-void ui_suspend(void)
-{
-  UI_CALL(suspend);
-  UI_CALL(flush);
-}
-
-void ui_set_title(char *title)
-{
-  UI_CALL(set_title, title);
-  UI_CALL(flush);
-}
-
-void ui_set_icon(char *icon)
-{
-  UI_CALL(set_icon, icon);
-  UI_CALL(flush);
-}
-
 void ui_event(char *name, Array args)
 {
   bool args_consumed = false;
@@ -166,18 +153,25 @@ void ui_refresh(void)
   }
 
   int width = INT_MAX, height = INT_MAX;
-  bool pum_external = true;
+  bool ext_widgets[UI_WIDGETS];
+  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+    ext_widgets[i] = true;
+  }
 
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
-    pum_external &= ui->pum_external;
+    for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+      ext_widgets[i] &= ui->ui_ext[i];
+    }
   }
 
   row = col = 0;
   screen_resize(width, height);
-  pum_set_external(pum_external);
+  for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
+    ui_set_external(i, ext_widgets[i]);
+  }
   ui_mode_info_set();
   old_mode_idx = -1;
   ui_cursor_shape();
@@ -190,7 +184,7 @@ static void ui_refresh_event(void **argv)
 
 void ui_schedule_refresh(void)
 {
-  loop_schedule(&main_loop, event_create(1, ui_refresh_event, 0));
+  loop_schedule(&main_loop, event_create(ui_refresh_event, 0));
 }
 
 void ui_resize(int new_width, int new_height)
@@ -206,31 +200,21 @@ void ui_resize(int new_width, int new_height)
   sr.bot = height - 1;
   sr.left = 0;
   sr.right = width - 1;
-  UI_CALL(resize, width, height);
+  ui_call_resize(width, height);
 }
 
 void ui_busy_start(void)
 {
   if (!(busy++)) {
-    UI_CALL(busy_start);
+    ui_call_busy_start();
   }
 }
 
 void ui_busy_stop(void)
 {
   if (!(--busy)) {
-    UI_CALL(busy_stop);
+    ui_call_busy_stop();
   }
-}
-
-void ui_mouse_on(void)
-{
-  UI_CALL(mouse_on);
-}
-
-void ui_mouse_off(void)
-{
-  UI_CALL(mouse_off);
 }
 
 void ui_attach_impl(UI *ui)
@@ -273,11 +257,6 @@ void ui_detach_impl(UI *ui)
   }
 }
 
-void ui_clear(void)
-{
-  UI_CALL(clear);
-}
-
 // Set scrolling region for window 'wp'.
 // The region starts 'off' lines from the start of the window.
 // Also set the vertical scroll region for a vertically split window.  Always
@@ -292,7 +271,7 @@ void ui_set_scroll_region(win_T *wp, int off)
     sr.right = wp->w_wincol + wp->w_width - 1;
   }
 
-  UI_CALL(set_scroll_region, sr.top, sr.bot, sr.left, sr.right);
+  ui_call_set_scroll_region(sr.top, sr.bot, sr.left, sr.right);
 }
 
 // Reset scrolling region to the whole screen.
@@ -302,22 +281,7 @@ void ui_reset_scroll_region(void)
   sr.bot = (int)Rows - 1;
   sr.left = 0;
   sr.right = (int)Columns - 1;
-  UI_CALL(set_scroll_region, sr.top, sr.bot, sr.left, sr.right);
-}
-
-void ui_append_lines(int count)
-{
-  UI_CALL(scroll, -count);
-}
-
-void ui_delete_lines(int count)
-{
-  UI_CALL(scroll, count);
-}
-
-void ui_eol_clear(void)
-{
-  UI_CALL(eol_clear);
+  ui_call_set_scroll_region(sr.top, sr.bot, sr.left, sr.right);
 }
 
 void ui_start_highlight(int attr_code)
@@ -342,23 +306,31 @@ void ui_stop_highlight(void)
   set_highlight_args(current_attr_code);
 }
 
-void ui_visual_bell(void)
-{
-  UI_CALL(visual_bell);
-}
-
 void ui_puts(uint8_t *str)
 {
-  uint8_t *ptr = str;
+  uint8_t *p = str;
   uint8_t c;
 
-  while ((c = *ptr)) {
+  while ((c = *p)) {
     if (c < 0x20) {
-      parse_control_character(c);
-      ptr++;
-    } else {
-      send_output(&ptr);
+      abort();
     }
+
+    size_t clen = (size_t)mb_ptr2len(p);
+    ui_call_put((String){ .data = (char *)p, .size = clen });
+    col++;
+    if (mb_ptr2cells(p) > 1) {
+      // double cell character, blank the next cell
+      ui_call_put((String)STRING_INIT);
+      col++;
+    }
+    if (utf_ambiguous_width(utf_ptr2char(p))) {
+      pending_cursor_update = true;
+    }
+    if (col >= width) {
+      ui_linefeed();
+    }
+    p += clen;
   }
 }
 
@@ -382,13 +354,8 @@ void ui_mode_info_set(void)
 {
   Array style = mode_style_array();
   bool enabled = (*p_guicursor != NUL);
-  UI_CALL(mode_info_set, enabled, style);
+  ui_call_mode_info_set(enabled, style);
   api_free_array(style);
-}
-
-void ui_update_menu(void)
-{
-    UI_CALL(update_menu);
 }
 
 int ui_current_row(void)
@@ -403,47 +370,7 @@ int ui_current_col(void)
 
 void ui_flush(void)
 {
-  UI_CALL(flush);
-}
-
-static void send_output(uint8_t **ptr)
-{
-  uint8_t *p = *ptr;
-
-  while (*p >= 0x20) {
-    size_t clen = (size_t)mb_ptr2len(p);
-    UI_CALL(put, p, (size_t)clen);
-    col++;
-    if (mb_ptr2cells(p) > 1) {
-      // double cell character, blank the next cell
-      UI_CALL(put, NULL, 0);
-      col++;
-    }
-    if (utf_ambiguous_width(utf_ptr2char(p))) {
-      pending_cursor_update = true;
-    }
-    if (col >= width) {
-      ui_linefeed();
-    }
-    p += clen;
-  }
-
-  *ptr = p;
-}
-
-static void parse_control_character(uint8_t c)
-{
-  if (c == '\n') {
-    ui_linefeed();
-  } else if (c == '\r') {
-    ui_carriage_return();
-  } else if (c == '\b') {
-    ui_cursor_left();
-  } else if (c == Ctrl_L) {
-    ui_cursor_right();
-  } else if (c == Ctrl_G) {
-    UI_CALL(bell);
-  }
+  ui_call_flush();
 }
 
 static void set_highlight_args(int attr_code)
@@ -501,43 +428,23 @@ end:
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
 }
 
-static void ui_linefeed(void)
+void ui_linefeed(void)
 {
   int new_col = 0;
   int new_row = row;
   if (new_row < sr.bot) {
     new_row++;
   } else {
-    UI_CALL(scroll, 1);
+    ui_call_scroll(1);
   }
   ui_cursor_goto(new_row, new_col);
-}
-
-static void ui_carriage_return(void)
-{
-  int new_col = 0;
-  ui_cursor_goto(row, new_col);
-}
-
-static void ui_cursor_left(void)
-{
-  int new_col = col - 1;
-  assert(new_col >= 0);
-  ui_cursor_goto(row, new_col);
-}
-
-static void ui_cursor_right(void)
-{
-  int new_col = col + 1;
-  assert(new_col < width);
-  ui_cursor_goto(row, new_col);
 }
 
 static void flush_cursor_update(void)
 {
   if (pending_cursor_update) {
     pending_cursor_update = false;
-    UI_CALL(cursor_goto, row, col);
+    ui_call_cursor_goto(row, col);
   }
 }
 
@@ -552,8 +459,22 @@ void ui_cursor_shape(void)
 
   if (old_mode_idx != mode_idx) {
     old_mode_idx = mode_idx;
-    UI_CALL(mode_change, mode_idx);
+    char *full_name = shape_table[mode_idx].full_name;
+    ui_call_mode_change(cstr_as_string(full_name), mode_idx);
   }
   conceal_check_cursur_line();
 }
 
+/// Returns true if `widget` is externalized.
+bool ui_is_external(UIWidget widget)
+{
+  return ui_ext[widget];
+}
+
+/// Sets `widget` as "external".
+/// Such widgets are not drawn by Nvim; external UIs are expected to handle
+/// higher-level UI events and present the data.
+void ui_set_external(UIWidget widget, bool external)
+{
+  ui_ext[widget] = external;
+}
