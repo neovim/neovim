@@ -214,18 +214,20 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
       :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
     ]])
-    -- FIXME
-    -- feed('{REDRAW}')
-    -- screen:expect([[
-    --                                           |
-    --   {EOB:~                                       }|
-    --   {EOB:~                                       }|
-    --   {EOB:~                                       }|
-    --   {EOB:~                                       }|
-    --   {EOB:~                                       }|
-    --   {EOB:~                                       }|
-    --   :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
-    -- ]])
+    -- Bug in input() handling: {REDRAW} will erase the whole prompt up until
+    -- user types something. It exists in Vim as well, so using `h<BS>` as
+    -- a workaround.
+    feed('{REDRAW}h<BS>')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :echo {RBP1:(}{RBP2:(}42{RBP2:)}^                             |
+    ]])
   end)
   for _, func_part in ipairs({'', 'n', 'msg'}) do
     it('disables :echo' .. func_part .. ' messages', function()
