@@ -2232,7 +2232,7 @@ static bool color_cmdline(void)
 
   try_start();
   if (ccline.input_fn) {
-      color_cb = getln_input_callback;
+    color_cb = getln_input_callback;
   } else if (ccline.cmdfirstc == ':') {
     err_errmsg = N_(
         "E5408: Unable to get Nvim_color_cmdline callback from g:: %s");
