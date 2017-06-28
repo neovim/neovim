@@ -332,22 +332,34 @@ describe('Command-line coloring', function()
     eq(msg:rep(1), funcs.execute('messages'))
   end)
   it('allows interrupting callback with <C-c>', function()
-    if true then return pending('<C-c> does not work well enough now') end
     set_color_cb('Halting')
     start_prompt('echo 42')
-    for i = 1, 6 do
-      screen:expect([[
-        ^                                        |
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-        {EOB:~                                       }|
-                                                |
-      ]])
-      feed('<C-c>')
-    end
+    screen:expect([[
+      ^                                        |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+                                              |
+    ]])
+    feed('<C-c>')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :                                       |
+      {ERR:E5407: Callback has thrown an exception:}|
+      {ERR: Keyboard interrupt}                     |
+      ^                                        |
+    ]])
+    if true then return pending('<C-c> should only cancel callback, not input()') end
+    feed('{REDRAW}')
+    screen:snapshot_util()
+    feed('<CR>')
+    eq('echo 42', meths.get_var('out'))
     screen:expect([[
       ^                                        |
       {EOB:~                                       }|
