@@ -1,16 +1,16 @@
 -- Tests for :setlocal and :setglobal
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, eval, eq, meths =
-  helpers.clear, helpers.execute, helpers.eval, helpers.eq, helpers.meths
+local clear, feed_command, eval, eq, meths =
+  helpers.clear, helpers.feed_command, helpers.eval, helpers.eq, helpers.meths
 
 local function should_fail(opt, value, errmsg)
-  execute('setglobal ' .. opt .. '=' .. value)
+  feed_command('setglobal ' .. opt .. '=' .. value)
   eq(errmsg, eval("v:errmsg"):match("E%d*"))
-  execute('let v:errmsg = ""')
-  execute('setlocal ' .. opt .. '=' .. value)
+  feed_command('let v:errmsg = ""')
+  feed_command('setlocal ' .. opt .. '=' .. value)
   eq(errmsg, eval("v:errmsg"):match("E%d*"))
-  execute('let v:errmsg = ""')
+  feed_command('let v:errmsg = ""')
   local status, err = pcall(meths.set_option, opt, value)
   eq(status, false)
   eq(errmsg, err:match("E%d*"))
@@ -18,8 +18,8 @@ local function should_fail(opt, value, errmsg)
 end
 
 local function should_succeed(opt, value)
-  execute('setglobal ' .. opt .. '=' .. value)
-  execute('setlocal ' .. opt .. '=' .. value)
+  feed_command('setglobal ' .. opt .. '=' .. value)
+  feed_command('setlocal ' .. opt .. '=' .. value)
   meths.set_option(opt, value)
   eq(value, meths.get_option(opt))
   eq('', eval("v:errmsg"))
@@ -30,10 +30,10 @@ describe(':setlocal', function()
 
   it('setlocal sets only local value', function()
     eq(0, meths.get_option('iminsert'))
-    execute('setlocal iminsert=1')
+    feed_command('setlocal iminsert=1')
     eq(0, meths.get_option('iminsert'))
     eq(0, meths.get_option('imsearch'))
-    execute('setlocal imsearch=1')
+    feed_command('setlocal imsearch=1')
     eq(0, meths.get_option('imsearch'))
   end)
 end)
@@ -79,19 +79,19 @@ describe(':set validation', function()
     should_fail('numberwidth', 0, 'E487')
 
     -- If smaller than 1 this one is set to 'lines'-1
-    execute('setglobal window=-10')
+    feed_command('setglobal window=-10')
     meths.set_option('window', -10)
     eq(23, meths.get_option('window'))
     eq('', eval("v:errmsg"))
   end)
 
   it('set wmh/wh wmw/wiw checks', function()
-    execute('set winheight=2')
-    execute('set winminheight=3')
+    feed_command('set winheight=2')
+    feed_command('set winminheight=3')
     eq('E591', eval("v:errmsg"):match("E%d*"))
 
-    execute('set winwidth=2')
-    execute('set winminwidth=3')
+    feed_command('set winwidth=2')
+    feed_command('set winminwidth=3')
     eq('E592', eval("v:errmsg"):match("E%d*"))
   end)
 end)
