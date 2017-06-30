@@ -22,7 +22,7 @@ UNIDIR=${1:-$UNIDIR_DEFAULT}
 DOWNLOAD_URL_BASE=${2:-$DOWNLOAD_URL_BASE_DEFAULT}
 
 for filename in $data_files ; do
-  curl -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/UNIDATA/$filename"
+  curl -L -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/UNIDATA/$filename"
   (
     cd "$UNIDIR"
     git add $filename
@@ -30,7 +30,7 @@ for filename in $data_files ; do
 done
 
 for filename in $emoji_files ; do
-  curl -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/emoji/3.0/$filename"
+  curl -L -o "$UNIDIR/$filename" "$DOWNLOAD_URL_BASE/emoji/latest/$filename"
   (
     cd "$UNIDIR"
     git add $filename
