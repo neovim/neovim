@@ -37,6 +37,52 @@ typedef struct {
 # include "api/private/ui_events_metadata.generated.h"
 #endif
 
+/// Start block that may cause VimL exceptions while evaluating another code
+///
+/// Used when caller is supposed to be operating when other VimL code is being
+/// processed and that “other VimL code” must not be affected.
+///
+/// @param[out]  tstate  Location where try state should be saved.
+void try_enter(TryState *const tstate)
+{
+  *tstate = (TryState) {
+    .trylevel = trylevel,
+    .got_int = got_int,
+    .did_throw = did_throw,
+    .msg_list = (const struct msglist *const *)msg_list,
+    .private_msg_list = NULL,
+  };
+  trylevel = 1;
+  got_int = false;
+  did_throw = false;
+  msg_list = &tstate->private_msg_list;
+}
+
+/// End try block, set the error message if any and restore previous state
+///
+/// @warning Return is consistent with most functions (false on error), not with
+///          try_end (true on error).
+///
+/// @param[in]  tstate  Previous state to restore.
+/// @param[out]  err  Location where error should be saved.
+///
+/// @return false if error occurred, true otherwise.
+bool try_leave(const TryState *const tstate, Error *const err)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const bool ret = !try_end(err);
+  assert(trylevel == 0);
+  assert(!got_int);
+  assert(!did_throw);
+  assert(msg_list == &tstate->private_msg_list);
+  assert(*msg_list == NULL);
+  trylevel = tstate->trylevel;
+  got_int = tstate->got_int;
+  did_throw = tstate->did_throw;
+  msg_list = (struct msglist **)tstate->msg_list;
+  return ret;
+}
+
 /// Start block that may cause vimscript exceptions
 void try_start(void)
 {

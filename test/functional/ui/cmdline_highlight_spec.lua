@@ -7,6 +7,8 @@ local clear = helpers.clear
 local meths = helpers.meths
 local funcs = helpers.funcs
 local source = helpers.source
+local dedent = helpers.dedent
+local curbufmeths = helpers.curbufmeths
 
 local screen
 
@@ -421,6 +423,8 @@ describe('Command-line coloring', function()
     ]])
   end)
   -- TODO Check for all other errors
+  -- TODO Check for colored input() called in a cycle which previously errorred
+  -- out
 end)
 describe('Ex commands coloring support', function()
   it('still executes command-line even if errored out', function()
@@ -430,7 +434,27 @@ describe('Ex commands coloring support', function()
     local msg = 'E5405: Chunk 0 start 10 splits multibyte character'
     eq('\n'..msg, funcs.execute('messages'))
   end)
+  it('does not error out when called from a errorred out cycle', function()
+    -- Apparently when there is a cycle in which one of the commands errors out
+    -- this error may be caught by color_cmdline before it is presented to the
+    -- user.
+    feed(dedent([[
+      :set regexpengine=2
+      :for pat in [' \ze*', ' \zs*']
+      :  try
+      :    let l = matchlist('x x', pat)
+      :    $put ='E888 NOT detected for ' . pat
+      :  catch
+      :    $put ='E888 detected for ' . pat
+      :  endtry
+      :endfor
+    ]]))
+    eq({'', 'E888 detected for  \\ze*', 'E888 detected for  \\zs*'},
+       curbufmeths.get_lines(0, -1, false))
+    eq('', funcs.execute('messages'))
+  end)
 end)
 
 -- TODO Specifically test for coloring in cmdline and expr modes
+-- TODO Check for errors from tv_dict_get_callback()
 -- TODO Check using highlighted input() from inside highlighted input()

@@ -2222,6 +2222,11 @@ static bool color_cmdline(void)
   bool ret = true;
   kv_size(ccline_colors) = 0;
 
+  if (ccline.cmdbuff == NULL || *ccline.cmdbuff == NUL) {
+    // Nothing to do, exiting.
+    return ret;
+  }
+
   const int saved_force_abort = force_abort;
   force_abort = true;
   bool arg_allocated = false;
@@ -2235,11 +2240,12 @@ static bool color_cmdline(void)
   static int prev_prompt_errors = 0;
   Callback color_cb = { .type = kCallbackNone };
   bool can_free_cb = false;
+  TryState tstate;
   Error err = ERROR_INIT;
   const char *err_errmsg = (const char *)e_intern2;
   bool dgc_ret = true;
 
-  try_start();
+  try_enter(&tstate);
   if (ccline.input_fn) {
     color_cb = getln_input_callback;
   } else if (ccline.cmdfirstc == ':') {
@@ -2257,7 +2263,7 @@ static bool color_cmdline(void)
   } else {
     goto color_cmdline_end;
   }
-  if (try_end(&err) || !dgc_ret) {
+  if (!try_leave(&tstate, &err) || !dgc_ret) {
     goto color_cmdline_error;
   }
 
@@ -2285,10 +2291,10 @@ static bool color_cmdline(void)
   // correct, with msg_col it just misses leading `:`. Since `redraw!` in
   // callback lags this is least of the user problems.
   //
-  // Also using try_start() because error messages may overwrite typed 
+  // Also using try_enter() because error messages may overwrite typed
   // command-line which is not expected.
   getln_interrupted_highlight = false;
-  try_start();
+  try_enter(&tstate);
   err_errmsg = N_("E5407: Callback has thrown an exception: %s");
   const int saved_msg_col = msg_col;
   msg_silent++;
@@ -2298,7 +2304,7 @@ static bool color_cmdline(void)
   if (got_int) {
     getln_interrupted_highlight = true;
   }
-  if (try_end(&err) || !cbcall_ret) {
+  if (!try_leave(&tstate, &err) || !cbcall_ret) {
     goto color_cmdline_error;
   }
   if (tv.v_type != VAR_LIST) {

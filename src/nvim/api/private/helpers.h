@@ -82,6 +82,18 @@
 #define api_free_window(value)
 #define api_free_tabpage(value)
 
+/// Structure used for saving state for :try
+///
+/// Used when caller is supposed to be operating when other VimL code is being
+/// processed and that “other VimL code” must not be affected.
+typedef struct {
+  int trylevel;
+  int got_int;
+  int did_throw;
+  struct msglist *private_msg_list;
+  const struct msglist *const *msg_list;
+} TryState;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
 #endif
