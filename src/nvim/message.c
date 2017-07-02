@@ -1281,90 +1281,94 @@ msg_outtrans_special (
   return retval;
 }
 
-/*
- * Return the lhs or rhs of a mapping, with the key codes turned into printable
- * strings, in an allocated string.
- */
-char_u *
-str2special_save (
-    char_u *str,
-    int is_lhs          /* TRUE for lhs, FALSE for rhs */
-)
+/// Convert string, replacing key codes with printables
+///
+/// Used for lhs or rhs of mappings.
+///
+/// @param[in]  str  String to convert.
+/// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
+///                             lhs, but not rhs.
+///
+/// @return [allocated] Converted string.
+char *str2special_save(const char *const str, const bool replace_spaces)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   garray_T ga;
-  char_u      *p = str;
-
   ga_init(&ga, 1, 40);
-  while (*p != NUL)
-    ga_concat(&ga, str2special(&p, is_lhs));
+
+  const char *p = str;
+  while (*p != NUL) {
+    ga_concat(&ga, (const char_u *)str2special(&p, replace_spaces));
+  }
   ga_append(&ga, NUL);
-  return (char_u *)ga.ga_data;
+  return (char *)ga.ga_data;
 }
 
-/*
- * Return the printable string for the key codes at "*sp".
- * Used for translating the lhs or rhs of a mapping to printable chars.
- * Advances "sp" to the next code.
- */
-char_u *
-str2special (
-    char_u **sp,
-    int from               /* TRUE for lhs of mapping */
-)
+/// Convert character, replacing key one key code with printable representation
+///
+/// @param[in,out]  sp  String to convert. Is advanced to the next key code.
+/// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
+///                             lhs, but not rhs.
+///
+/// @return Converted key code, in a static buffer. Buffer is always one and the
+///         same, so save converted string somewhere before running str2special
+///         for the second time.
+const char *str2special(const char **const sp, const bool replace_spaces)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
-  int c;
-  static char_u buf[7];
-  char_u              *str = *sp;
-  int modifiers = 0;
-  int special = FALSE;
+  static char buf[7];
 
-  if (has_mbyte) {
-    char_u  *p;
-
-    /* Try to un-escape a multi-byte character.  Return the un-escaped
-     * string if it is a multi-byte character. */
-    p = mb_unescape(sp);
-    if (p != NULL)
-      return p;
+  // Try to un-escape a multi-byte character.  Return the un-escaped
+  // string if it is a multi-byte character.
+  const char *const p = mb_unescape(sp);
+  if (p != NULL) {
+    return p;
   }
 
-  c = *str;
+  const char *str = *sp;
+  int c = (uint8_t)(*str);
+  int modifiers = 0;
+  bool special = false;
   if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-    if (str[1] == KS_MODIFIER) {
-      modifiers = str[2];
+    if ((uint8_t)str[1] == KS_MODIFIER) {
+      modifiers = (uint8_t)str[2];
       str += 3;
-      c = *str;
+      c = (uint8_t)(*str);
     }
     if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-      c = TO_SPECIAL(str[1], str[2]);
+      c = TO_SPECIAL((uint8_t)str[1], (uint8_t)str[2]);
       str += 2;
-      if (c == KS_ZERO)         /* display <Nul> as ^@ or <Nul> */
+      if (c == KS_ZERO) {  // display <Nul> as ^@ or <Nul>
         c = NUL;
+      }
     }
-    if (IS_SPECIAL(c) || modifiers)     /* special key */
-      special = TRUE;
+    if (IS_SPECIAL(c) || modifiers) {  // Special key.
+      special = true;
+    }
   }
 
-  if (has_mbyte && !IS_SPECIAL(c)) {
-    int len = (*mb_ptr2len)(str);
+  if (!IS_SPECIAL(c)) {
+    const int len = utf_ptr2len((const char_u *)str);
 
-    /* For multi-byte characters check for an illegal byte. */
-    if (has_mbyte && MB_BYTE2LEN(*str) > len) {
-      transchar_nonprint(buf, c);
+    // Check for an illegal byte.
+    if (MB_BYTE2LEN((uint8_t)(*str)) > len) {
+      transchar_nonprint((char_u *)buf, c);
       *sp = str + 1;
       return buf;
     }
-    /* Since 'special' is TRUE the multi-byte character 'c' will be
-     * processed by get_special_key_name() */
-    c = (*mb_ptr2char)(str);
+    // Since 'special' is TRUE the multi-byte character 'c' will be
+    // processed by get_special_key_name().
+    c = utf_ptr2char((const char_u *)str);
     *sp = str + len;
-  } else
+  } else {
     *sp = str + 1;
+  }
 
-  /* Make unprintable characters in <> form, also <M-Space> and <Tab>.
-   * Use <Space> only for lhs of a mapping. */
-  if (special || char2cells(c) > 1 || (from && c == ' '))
-    return get_special_key_name(c, modifiers);
+  // Make unprintable characters in <> form, also <M-Space> and <Tab>.
+  if (special || char2cells(c) > 1 || (replace_spaces && c == ' ')) {
+    return (const char *)get_special_key_name(c, modifiers);
+  }
   buf[0] = c;
   buf[1] = NUL;
   return buf;
