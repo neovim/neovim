@@ -12170,7 +12170,7 @@ void mapblock_fill_dict(dict_T *const dict,
     noremap_value = mp->m_noremap == REMAP_SCRIPT ? 2 : !!mp->m_noremap;
   }
 
-  tv_dict_add_str(dict, S_LEN("lhs"), lhs);
+  tv_dict_add_allocated_str(dict, S_LEN("lhs"), lhs);
   tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
   tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
   tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
@@ -12178,10 +12178,7 @@ void mapblock_fill_dict(dict_T *const dict,
   tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ID);
   tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_value);
   tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
-  tv_dict_add_str(dict, S_LEN("mode"), mapmode);
-
-  xfree(lhs);
-  xfree(mapmode);
+  tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
 }
 
 /*
