@@ -153,7 +153,6 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   char *ptr = NULL;
   // Set 'cpoptions' the way we want it.
   //    FLAG_CPO_BSLASH  set - backslashes are *not* treated specially
-  //    FLAG_CPO_KEYCODE set - keycodes are *not* reverse-engineered
   //    FLAG_CPO_SPECI unset - <Key> sequences *are* interpreted
   //  The third from end parameter of replace_termcodes() is true so that the
   //  <lt> sequence is recognised - needed for a real backslash.

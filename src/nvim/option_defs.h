@@ -97,7 +97,6 @@
 #define CPO_INTMOD      'i'     /* interrupt a read makes buffer modified */
 #define CPO_INDENT      'I'     /* remove auto-indent more often */
 #define CPO_ENDOFSENT   'J'     /* need two spaces to detect end of sentence */
-#define CPO_KEYCODE     'k'     /* don't recognize raw key code in mappings */
 #define CPO_KOFFSET     'K'     /* don't wait for key code in mappings */
 #define CPO_LITERAL     'l'     /* take char after backslash in [] literal */
 #define CPO_LISTWM      'L'     /* 'list' changes wrapmargin */
@@ -132,7 +131,7 @@
 #define CPO_CHANGEW     '_'     // "cw" special-case
 // default values for Vim and Vi
 #define CPO_VIM         "aABceFs_"
-#define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;_"
+#define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;_"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"

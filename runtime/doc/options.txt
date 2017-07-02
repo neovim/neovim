@@ -1618,15 +1618,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		J	A |sentence| has to be followed by two spaces after
 			the '.', '!' or '?'.  A <Tab> is not recognized as
 			white space.
-								*cpo-k*
-		k	Disable the recognition of raw key codes in
-			mappings, abbreviations, and the "to" part of menu
-			commands.  For example, if <Key> sends ^[OA (where ^[
-			is <Esc>), the command ":map X ^[OA" results in X
-			being mapped to:
-				'k' included:	"^[OA"	 (3 characters)
-				'k' excluded:	"<Key>"  (one key code)
-			Also see the '<' flag below.
 								*cpo-K*
 		K	Don't wait for a key code to complete when it is
 			halfway through a mapping.  This breaks mapping

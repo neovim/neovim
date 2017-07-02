@@ -444,8 +444,7 @@ There are two ways to map a special key:
    starts with <Esc>.  To enter a mapping like this you type ":map " and then
    you have to type CTRL-V before hitting the function key.  Note that when
    the key code for the key is in the |terminfo| entry, it will automatically
-   be translated into the internal code and become the second way of mapping
-   (unless the 'k' flag is included in 'cpoptions').
+   be translated into the internal code and become the second way of mapping.
 2. The second method is to use the internal code for the function key.  To
    enter such a mapping type CTRL-K and then hit the function key, or use
    the form "#1", "#2", .. "#9", "#0", "<Up>", "<S-Down>", "<S-F7>", etc.
