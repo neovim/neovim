@@ -1963,6 +1963,38 @@ describe('typval.c', function()
           alloc_log:check({})
         end)
       end)
+      describe('allocated_str()', function()
+        itp('works', function()
+          local d = dict({test=10})
+          eq({test=10}, dct2tbl(d))
+          alloc_log:clear()
+          local s1 = lib.xstrdup('TEST')
+          local s2 = lib.xstrdup('TEST')
+          local s3 = lib.xstrdup('TEST')
+          alloc_log:check({
+            a.str(s1, 'TEST'),
+            a.str(s2, 'TEST'),
+            a.str(s3, 'TEST'),
+          })
+          eq(OK, lib.tv_dict_add_allocated_str(d, 'testt', 3, s1))
+          local dis = dict_items(d)
+          alloc_log:check({
+            a.di(dis.tes, 'tes'),
+          })
+          eq({test=10, tes='TEST'}, dct2tbl(d))
+          eq(FAIL, check_emsg(function() return lib.tv_dict_add_allocated_str(d, 'testt', 3, s2) end,
+                              'E685: Internal error: hash_add()'))
+          alloc_log:clear()
+          lib.emsg_skip = lib.emsg_skip + 1
+          eq(FAIL, check_emsg(function() return lib.tv_dict_add_allocated_str(d, 'testt', 3, s3) end,
+                              nil))
+          lib.emsg_skip = lib.emsg_skip - 1
+          alloc_log:clear_tmp_allocs()
+          alloc_log:check({
+            a.freed(s3),
+          })
+        end)
+      end)
     end)
     describe('clear()', function()
       itp('works', function()
