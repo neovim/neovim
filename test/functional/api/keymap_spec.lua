@@ -257,20 +257,20 @@ describe('get_keymap', function()
     end
 
     command('set cpo-=< cpo+=B')
-    command('nnoremap \\<C-a> \\<C-b>')
-    command('nnoremap <special> \\<C-c> \\<C-d>')
+    command('nnoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
+    command('nnoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
 
     command('set cpo+=B<')
-    command('xnoremap \\<C-a> \\<C-b>')
-    command('xnoremap <special> \\<C-c> \\<C-d>')
+    command('xnoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
+    command('xnoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
 
     command('set cpo-=B<')
-    command('snoremap \\<C-a> \\<C-b>')
-    command('snoremap <special> \\<C-c> \\<C-d>')
+    command('snoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
+    command('snoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
 
     command('set cpo-=B cpo+=<')
-    command('onoremap \\<C-a> \\<C-b>')
-    command('onoremap <special> \\<C-c> \\<C-d>')
+    command('onoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
+    command('onoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
 
     for _, cmd in ipairs({
       'set cpo-=B cpo+=<',
@@ -279,13 +279,17 @@ describe('get_keymap', function()
       'set cpo-=< cpo+=B',
     }) do
       command(cmd)
-      eq({cpomap('\\<C-C>', '\\<C-D>', 'n'), cpomap('\\<C-A>', '\\<C-B>', 'n')},
+      eq({cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'n'),
+          cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'n')},
          meths.get_keymap('n'))
-      eq({cpomap('\\<C-C>', '\\<C-D>', 'x'), cpomap('\\<lt>C-a>', '\\<lt>C-b>', 'x')},
+      eq({cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'x'),
+          cpomap('\\<lt>C-a><lt>C-a><lt>LT>C-a>\\', '\\<lt>C-b><lt>C-b><lt>LT>C-b>\\', 'x')},
          meths.get_keymap('x'))
-      eq({cpomap('<lt>C-c>', '<lt>C-d>', 's'), cpomap('<lt>C-a>', '<lt>C-b>', 's')},
+      eq({cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 's'),
+          cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 's')},
          meths.get_keymap('s'))
-      eq({cpomap('<lt>C-c>', '<lt>C-d>', 'o'), cpomap('<lt>C-a>', '<lt>C-b>', 'o')},
+      eq({cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 'o'),
+          cpomap('<lt>C-a><lt>C-a><lt>LT>C-a> ', '<lt>C-b><lt>C-b><lt>LT>C-b>', 'o')},
          meths.get_keymap('o'))
     end
   end)
