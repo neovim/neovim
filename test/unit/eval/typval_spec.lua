@@ -1948,8 +1948,8 @@ describe('typval.c', function()
           eq(OK, lib.tv_dict_add_str(d, 'testt', 3, 'TEST'))
           local dis = dict_items(d)
           alloc_log:check({
+            a.str(dis.tes.di_tv.vval.v_string, 'TEST'),
             a.di(dis.tes, 'tes'),
-            a.str(dis.tes.di_tv.vval.v_string, 'TEST')
           })
           eq({test=10, tes='TEST'}, dct2tbl(d))
           eq(FAIL, check_emsg(function() return lib.tv_dict_add_str(d, 'testt', 3, 'TEST') end,
@@ -2007,7 +2007,7 @@ describe('typval.c', function()
         local dis = dict_items(d)
         local di = dis.TES
         local di_s = di.di_tv.vval.v_string
-        alloc_log:check({a.di(di), a.str(di_s)})
+        alloc_log:check({a.str(di_s), a.di(di)})
         eq({TES='tEsT'}, dct2tbl(d))
         lib.tv_dict_clear(d)
         alloc_log:check({a.freed(di_s), a.freed(di)})
