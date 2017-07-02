@@ -21,7 +21,7 @@ syn keyword vimTodo contained	COMBAK	FIXME	TODO	XXX
 syn cluster vimCommentGroup	contains=vimTodo,@Spell
 
 " Special and plugin vim commands {{{2
-syn match   vimCommand contained	"\<z[-+^.=]\="
+syn match   vimCommand contained	"\<z[-+^.=]\=\>"
 syn keyword vimOnlyCommand contained	fix[del] op[en] sh[ell] P[rint]
 syn keyword vimStdPlugin contained	DiffOrig Man N[ext] S TOhtml XMLent XMLns
 
