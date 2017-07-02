@@ -293,4 +293,20 @@ describe('get_keymap', function()
          meths.get_keymap('o'))
     end
   end)
+
+  it('always uses space for space and bar for bar', function()
+    local space_table = {
+      lhs='|   |',
+      rhs='|    |',
+      mode='n',
+      silent=0,
+      expr=0,
+      sid=0,
+      buffer=0,
+      nowait=0,
+      noremap=1,
+    }
+    command('nnoremap \\|<Char-0x20><Char-32><Space><Bar> \\|<Char-0x20><Char-32><Space> <Bar>')
+    eq({space_table}, meths.get_keymap('n'))
+  end)
 end)
