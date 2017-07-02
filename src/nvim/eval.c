@@ -12156,7 +12156,8 @@ void mapblock_fill_dict(dict_T *const dict,
                         bool compatible)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *const lhs = str2special_save((const char *)mp->m_keys, true);
+  char *const lhs = str2special_save((const char *)mp->m_keys,
+                                     compatible ? true : false);
   char *const mapmode = map_mode_to_chars(mp->m_mode);
   varnumber_T noremap_value;
 
@@ -12170,8 +12171,13 @@ void mapblock_fill_dict(dict_T *const dict,
     noremap_value = mp->m_noremap == REMAP_SCRIPT ? 2 : !!mp->m_noremap;
   }
 
+  if (compatible) {
+    tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
+  } else {
+    tv_dict_add_allocated_str(dict, S_LEN("rhs"),
+                              str2special_save((const char *)mp->m_str, false));
+  }
   tv_dict_add_allocated_str(dict, S_LEN("lhs"), lhs);
-  tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
   tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
   tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
   tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
