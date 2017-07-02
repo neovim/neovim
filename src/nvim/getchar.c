@@ -3999,7 +3999,7 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
     return OK;
   }
 
-  for (; *str != NUL; ++str) {
+  for (; *str != NUL; str++) {
     // Check for a multi-byte character, which may contain escaped
     // K_SPECIAL and CSI bytes.
     const char *p = mb_unescape((const char **)&str);
