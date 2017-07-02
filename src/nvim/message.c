@@ -1374,19 +1374,25 @@ const char *str2special(const char **const sp, const bool replace_spaces)
   return buf;
 }
 
-/*
- * Translate a key sequence into special key names.
- */
-void str2specialbuf(char_u *sp, char_u *buf, int len)
+/// Convert string, replacing key codes with printables
+///
+/// @param[in]  str  String to convert.
+/// @param[out]  buf  Buffer to save results to.
+/// @param[in]  len  Buffer length.
+void str2specialbuf(const char *sp, char *buf, size_t len)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *s;
-
-  *buf = NUL;
   while (*sp) {
-    s = str2special(&sp, FALSE);
-    if ((int)(STRLEN(s) + STRLEN(buf)) < len)
-      STRCAT(buf, s);
+    const char *s = str2special(&sp, false);
+    const size_t s_len = strlen(s);
+    if (s_len <= len) {
+      break;
+    }
+    memcpy(buf, s, s_len);
+    buf += s_len;
+    len -= s_len;
   }
+  *buf = NUL;
 }
 
 /*
