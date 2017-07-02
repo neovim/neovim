@@ -17,16 +17,16 @@ describe('get_keymap', function()
   -- Basic mapping and table to be used to describe results
   local foo_bar_string = 'nnoremap foo bar'
   local foo_bar_map_table = {
-      lhs='foo',
-      silent=0,
-      rhs='bar',
-      expr=0,
-      sid=0,
-      buffer=0,
-      nowait=0,
-      mode='n',
-      noremap=1,
-    }
+    lhs='foo',
+    silent=0,
+    rhs='bar',
+    expr=0,
+    sid=0,
+    buffer=0,
+    nowait=0,
+    mode='n',
+    noremap=1,
+  }
 
   it('returns empty list when no map', function()
     eq({}, meths.get_keymap('n'))
@@ -237,5 +237,57 @@ describe('get_keymap', function()
     command('nnoremap <F12> :let g:maparg_test_var = 1<CR>')
     eq('<F12>', meths.get_keymap('n')[1]['lhs'])
     eq(':let g:maparg_test_var = 1<CR>', meths.get_keymap('n')[1]['rhs'])
+  end)
+
+  it('works correctly despite various &cpo settings', function()
+    local cpo_table = {
+      silent=0,
+      expr=0,
+      sid=0,
+      buffer=0,
+      nowait=0,
+      noremap=1,
+    }
+    local function cpomap(lhs, rhs, mode)
+      local ret = shallowcopy(cpo_table)
+      ret.lhs = lhs
+      ret.rhs = rhs
+      ret.mode = mode
+      return ret
+    end
+
+    command('set cpo-=< cpo+=B')
+    command('nnoremap \\<C-a> \\<C-b>')
+    command('nnoremap <special> \\<C-c> \\<C-d>')
+
+    command('set cpo+=B<')
+    command('xnoremap \\<C-a> \\<C-b>')
+    command('xnoremap <special> \\<C-c> \\<C-d>')
+
+    command('set cpo-=B<')
+    command('snoremap \\<C-a> \\<C-b>')
+    command('snoremap <special> \\<C-c> \\<C-d>')
+
+    command('set cpo-=B cpo+=<')
+    command('onoremap \\<C-a> \\<C-b>')
+    command('onoremap <special> \\<C-c> \\<C-d>')
+
+    for _, cmd in ipairs({
+      'set cpo-=B cpo+=<',
+      'set cpo-=B<',
+      'set cpo+=B<',
+      'set cpo-=< cpo+=B',
+    }) do
+      command(cmd)
+      eq({cpomap('\\<C-C>', '\\<C-D>', 'n'), cpomap('\\<C-A>', '\\<C-B>', 'n')},
+         meths.get_keymap('n'))
+      -- FIXME
+      -- eq({cpomap('\\<C-C>', '\\<C-D>', 'x'), cpomap('\\<LT>C-A>', '\\<LT>C-B>', 'x')},
+         -- meths.get_keymap('x'))
+      -- eq({cpomap('<LT>C-C>', '<LT>C-D>', 's'), cpomap('<LT>C-A>', '<LT>C-B>', 's')},
+         -- meths.get_keymap('x'))
+      -- eq({cpomap('<LT>C-C>', '<LT>C-D>', 'o'), cpomap('<LT>C-A>', '<LT>C-B>', 'o')},
+         -- meths.get_keymap('x'))
+    end
   end)
 end)
