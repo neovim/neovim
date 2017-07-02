@@ -282,8 +282,13 @@ describe('server -> client', function()
     end)
   end)
 
-  describe('when connecting to its own pipe adress', function()
-    it('it does not deadlock', function()
+  describe('connecting to its own pipe address', function()
+    it('does not deadlock', function()
+      if not os.getenv("TRAVIS") and helpers.os_name() == "osx" then
+        -- It does, in fact, deadlock on QuickBuild. #6851
+        pending("deadlocks on QuickBuild", function() end)
+        return
+      end
       local address = funcs.serverlist()[1]
       local first = string.sub(address,1,1)
       ok(first == '/' or first == '\\')
