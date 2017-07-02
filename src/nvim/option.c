@@ -5175,9 +5175,12 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
      * CTRL-V or backslash */
     if (valuep == &p_pt) {
       s = *valuep;
-      while (*s != NUL)
-        if (put_escstr(fd, str2special(&s, FALSE), 2) == FAIL)
+      while (*s != NUL) {
+        if (put_escstr(fd, (char_u *)str2special((const char **)&s, false), 2)
+            == FAIL) {
           return FAIL;
+        }
+      }
     } else if (expand) {
       buf = xmalloc(MAXPATHL);
       home_replace(NULL, *valuep, buf, MAXPATHL, FALSE);
@@ -6173,15 +6176,16 @@ option_value2string (
     }
   } else {  // P_STRING
     varp = *(char_u **)(varp);
-    if (varp == NULL)                       /* just in case */
+    if (varp == NULL) {  // Just in case.
       NameBuff[0] = NUL;
-    else if (opp->flags & P_EXPAND)
-      home_replace(NULL, varp, NameBuff, MAXPATHL, FALSE);
-    /* Translate 'pastetoggle' into special key names */
-    else if ((char_u **)opp->var == &p_pt)
-      str2specialbuf(p_pt, NameBuff, MAXPATHL);
-    else
+    } else if (opp->flags & P_EXPAND) {
+      home_replace(NULL, varp, NameBuff, MAXPATHL, false);
+    // Translate 'pastetoggle' into special key names.
+    } else if ((char_u **)opp->var == &p_pt) {
+      str2specialbuf((const char *)p_pt, (char *)NameBuff, MAXPATHL);
+    } else {
       STRLCPY(NameBuff, varp, MAXPATHL);
+    }
   }
 }
 

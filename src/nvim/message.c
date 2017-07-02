@@ -1269,7 +1269,7 @@ msg_outtrans_special (
       string = "<Space>";
       str++;
     } else {
-      string = (const char *)str2special((char_u **)&str, from);
+      string = str2special((const char **)&str, from);
     }
     const int len = vim_strsize((char_u *)string);
     // Highlight special keys

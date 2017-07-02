@@ -12117,9 +12117,11 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
   xfree(keys_buf);
 
   if (!get_dict) {
-    /* Return a string. */
-    if (rhs != NULL)
-      rettv->vval.v_string = str2special_save(rhs, FALSE);
+    // Return a string.
+    if (rhs != NULL) {
+      rettv->vval.v_string = (char_u *)str2special_save(
+          (const char *)rhs, false);
+    }
 
   } else {
     tv_dict_alloc_ret(rettv);
@@ -12154,7 +12156,7 @@ void mapblock_fill_dict(dict_T *const dict,
                         bool compatible)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u *lhs = str2special_save(mp->m_keys, true);
+  char *const lhs = str2special_save((const char *)mp->m_keys, true);
   char *const mapmode = map_mode_to_chars(mp->m_mode);
   varnumber_T noremap_value;
 
@@ -12168,7 +12170,7 @@ void mapblock_fill_dict(dict_T *const dict,
     noremap_value = mp->m_noremap == REMAP_SCRIPT ? 2 : !!mp->m_noremap;
   }
 
-  tv_dict_add_str(dict, S_LEN("lhs"), (const char *)lhs);
+  tv_dict_add_str(dict, S_LEN("lhs"), lhs);
   tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
   tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
   tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
