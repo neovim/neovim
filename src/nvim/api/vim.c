@@ -141,7 +141,7 @@ Integer nvim_input(String keys)
 ///
 /// @param str        String to be converted.
 /// @param from_part  Legacy Vim parameter. Usually true.
-/// @param do_lt      Also translate <lt>. Does nothing if `special` is false.
+/// @param do_lt      Also translate <lt>. Ignored if `special` is false.
 /// @param special    Replace |keycodes|, e.g. <CR> becomes a "\n" char.
 /// @see replace_termcodes
 /// @see cpoptions

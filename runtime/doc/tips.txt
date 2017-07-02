@@ -113,7 +113,6 @@ screen, you can use CTRL-X CTRL-E and CTRL-X CTRL-Y to scroll the screen.
 To make this easier, you could use these mappings: >
 	:inoremap <C-E> <C-X><C-E>
 	:inoremap <C-Y> <C-X><C-Y>
-(Type this literally, make sure the '<' flag is not in 'cpoptions').
 You then lose the ability to copy text from the line above/below the cursor
 |i_CTRL-E|.
 
@@ -128,8 +127,6 @@ Smooth scrolling					*scroll-smooth*
 If you like the scrolling to go a bit smoother, you can use these mappings: >
 	:map <C-U> <C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y>
 	:map <C-D> <C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E>
-
-(Type this literally, make sure the '<' flag is not in 'cpoptions').
 
 ==============================================================================
 Correcting common typing mistakes			*type-mistakes*

@@ -149,7 +149,7 @@ type "a", then "bar" will get inserted.
 
 1.2 SPECIAL ARGUMENTS					*:map-arguments*
 
-"<buffer>", "<nowait>", "<silent>", "<special>", "<script>", "<expr>" and
+"<buffer>", "<nowait>", "<silent>", "<script>", "<expr>" and
 "<unique>" can be used in any order.  They must appear right after the
 command, before any other arguments.
 
@@ -189,12 +189,6 @@ Prompts will still be given, e.g., for inputdialog().
 Using "<silent>" for an abbreviation is possible, but will cause redrawing of
 the command line to fail.
 
-						*:map-<special>* *:map-special*
-Define a mapping with <> notation for special keys, even though the "<" flag
-may appear in 'cpoptions'.  This is useful if the side effect of setting
-'cpoptions' is not desired.  Example: >
-	:map <special> <F12> /Header<CR>
-<
 						*:map-<script>* *:map-script*
 If the first argument to one of these commands is "<script>" and it is used to
 define a new mapping or abbreviation, the mapping will only remap characters
@@ -451,8 +445,7 @@ There are two ways to map a special key:
    (see table of keys |key-notation|, all keys from <Up> can be used).  The
    first ten function keys can be defined in two ways: Just the number, like
    "#2", and with "<F>", like "<F2>".  Both stand for function key 2.  "#0"
-   refers to function key 10.  The <> form cannot be used when 'cpoptions'
-   includes the '<' flag.
+   refers to function key 10.
 
 DETAIL: Vim first checks if a sequence from the keyboard is mapped.  If it
 isn't the terminal key codes are tried.  If a terminal code is found it is
@@ -1026,8 +1019,7 @@ functions used in one script use the same name as in other scripts.  To avoid
 this, they can be made local to the script.
 
 						*<SID>* *<SNR>* *E81*
-The string "<SID>" can be used in a mapping or menu.  This requires that the
-'<' flag is not present in 'cpoptions'.
+The string "<SID>" can be used in a mapping or menu.
    When executing the map command, Vim will replace "<SID>" with the special
 key code <SNR>, followed by a number that's unique for the script, and an
 underscore.  Example: >
