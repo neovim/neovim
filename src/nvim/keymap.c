@@ -756,9 +756,9 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 /// Replace any terminal code strings with the equivalent internal
 /// representation
 ///
-/// This is used for the "from" and "to" part of a mapping, and the "to" part of
+/// Used for the "from" and "to" part of a mapping, and the "to" part of
 /// a menu command. Any strings like "<C-UP>" are also replaced, unless
-/// 'cpoptions' contains '<'. K_SPECIAL by itself is replaced by K_SPECIAL
+/// `special` is false. K_SPECIAL by itself is replaced by K_SPECIAL
 /// KS_SPECIAL KE_FILLER.
 ///
 /// @param[in]  from  What characters to replace.
@@ -771,7 +771,7 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
 ///                        When cpo_flags contains #FLAG_CPO_BSLASH, a backslash
 ///                        can be used in place of <C-v>. All other <C-v>
 ///                        characters are removed.
-/// @param[in]  special  If true, always accept <key> notation.
+/// @param[in]  special    Replace keycodes, e.g. <CR> becomes a "\n" char.
 /// @param[in]  cpo_flags  Relevant flags derived from p_cpo, see
 ///                        #CPO_TO_CPO_FLAGS.
 ///
@@ -790,11 +790,9 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
   const char_u *src;
   const char_u *const end = from + from_len - 1;
   int do_backslash;             // backslash is a special character
-  int do_special;               // recognize <> key codes
   char_u      *result;          // buffer for resulting string
 
   do_backslash = !(cpo_flags&FLAG_CPO_BSLASH);
-  do_special = !(cpo_flags&FLAG_CPO_SPECI) || special;
 
   // Allocate space for the translation.  Worst case a single character is
   // replaced by 6 bytes (shifted special key), plus a NUL at the end.
@@ -817,9 +815,8 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
 
   // Copy each byte from *from to result[dlen]
   while (src <= end) {
-    // If 'cpoptions' does not contain '<', check for special key codes,
-    // like "<C-S-LeftMouse>"
-    if (do_special && (do_lt || ((end - src) >= 3
+    // Check for special <> keycodes, like "<C-S-LeftMouse>"
+    if (special && (do_lt || ((end - src) >= 3
                                  && STRNCMP(src, "<lt>", 4) != 0))) {
       // Replace <SID> by K_SNR <script-nr> _.
       // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
@@ -846,7 +843,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
       }
     }
 
-    if (do_special) {
+    if (special) {
       char_u  *p, *s, len;
 
       // Replace <Leader> by the value of "mapleader".

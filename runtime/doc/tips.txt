@@ -282,9 +282,7 @@ For Emacs-style editing on the command-line: >
 	:cnoremap <Esc><C-B>	<S-Left>
 	" forward one word
 	:cnoremap <Esc><C-F>	<S-Right>
-
-NOTE: This requires that the '<' flag is excluded from 'cpoptions'. |<>|
-
+<
 							*format-bullet-list*
 This mapping will format any bullet list.  It requires that there is an empty
 line above and below each list entry.  The expression commands are used to
@@ -300,8 +298,7 @@ be able to give comments to the parts of the mapping. >
 	:execute m			      |" define the mapping
 
 (<> notation |<>|.  Note that this is all typed literally.  ^W is "^" "W", not
-CTRL-W.  You can copy/paste this into Vim if '<' is not included in
-'cpoptions'.)
+CTRL-W.)
 
 Note that the last comment starts with |", because the ":execute" command
 doesn't accept a comment directly.

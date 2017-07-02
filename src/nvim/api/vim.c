@@ -136,9 +136,13 @@ Integer nvim_input(String keys)
   return (Integer)input_enqueue(keys);
 }
 
-/// Replaces terminal codes and key codes (<CR>, <Esc>, ...) in a string with
+/// Replaces terminal codes and |keycodes| (<CR>, <Esc>, ...) in a string with
 /// the internal representation.
 ///
+/// @param str        String to be converted.
+/// @param from_part  Legacy Vim parameter. Usually true.
+/// @param do_lt      Also translate <lt>. Does nothing if `special` is false.
+/// @param special    Replace |keycodes|, e.g. <CR> becomes a "\n" char.
 /// @see replace_termcodes
 /// @see cpoptions
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
@@ -151,11 +155,6 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   }
 
   char *ptr = NULL;
-  // Set 'cpoptions' the way we want it.
-  //    FLAG_CPO_BSLASH  set - backslashes are *not* treated specially
-  //    FLAG_CPO_SPECI unset - <Key> sequences *are* interpreted
-  //  The third from end parameter of replace_termcodes() is true so that the
-  //  <lt> sequence is recognised - needed for a real backslash.
   replace_termcodes((char_u *)str.data, str.size, (char_u **)&ptr,
                     from_part, do_lt, special, CPO_TO_CPO_FLAGS);
   return cstr_as_string(ptr);

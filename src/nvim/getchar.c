@@ -2537,7 +2537,6 @@ do_map (
   bool unique = false;
   bool nowait = false;
   bool silent = false;
-  bool special = false;
   bool expr = false;
   int noremap;
   char_u      *orig_rhs;
@@ -2583,12 +2582,9 @@ do_map (
       continue;
     }
 
-    /*
-     * Check for "<special>": accept special keys in <>
-     */
+    // Ignore obsolete "<special>" modifier.
     if (STRNCMP(keys, "<special>", 9) == 0) {
       keys = skipwhite(keys + 9);
-      special = true;
       continue;
     }
 
@@ -2657,7 +2653,7 @@ do_map (
   // needs to be freed later (*keys_buf and *arg_buf).
   // replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
   if (haskey) {
-    keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, special,
+    keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, true,
                              CPO_TO_CPO_FLAGS);
   }
   orig_rhs = rhs;
@@ -2665,7 +2661,7 @@ do_map (
     if (STRICMP(rhs, "<nop>") == 0) {  // "<Nop>" means nothing
       rhs = (char_u *)"";
     } else {
-      rhs = replace_termcodes(rhs, STRLEN(rhs), &arg_buf, false, true, special,
+      rhs = replace_termcodes(rhs, STRLEN(rhs), &arg_buf, false, true, true,
                               CPO_TO_CPO_FLAGS);
     }
   }
@@ -3245,7 +3241,7 @@ bool map_to_exists(const char *const str, const char *const modechars,
 
   char_u *buf;
   char_u *const rhs = replace_termcodes((const char_u *)str, strlen(str), &buf,
-                                        false, true, false,
+                                        false, true, true,
                                         CPO_TO_CPO_FLAGS);
 
 #define MAPMODE(mode, modechars, chr, modeflags) \
@@ -4158,8 +4154,7 @@ void add_map(char_u *map, int mode)
 }
 
 // Translate an internal mapping/abbreviation representation into the
-// corresponding external one recognized by :map/:abbrev commands;
-// respects the current B/k/< settings of 'cpoption'.
+// corresponding external one recognized by :map/:abbrev commands.
 //
 // This function is called when expanding mappings/abbreviations on the
 // command-line, and for building the "Ambiguous mapping..." error message.
@@ -4179,7 +4174,6 @@ static char_u * translate_mapping (
   ga_init(&ga, 1, 40);
 
   bool cpo_bslash = !(cpo_flags&FLAG_CPO_BSLASH);
-  bool cpo_special = !(cpo_flags&FLAG_CPO_SPECI);
 
   for (; *str; ++str) {
     int c = *str;
@@ -4192,7 +4186,7 @@ static char_u * translate_mapping (
       }
       
       if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-        if (expmap && cpo_special) {
+        if (expmap) {
           ga_clear(&ga);
           return NULL;
         }
@@ -4204,7 +4198,7 @@ static char_u * translate_mapping (
         str += 2;
       }
       if (IS_SPECIAL(c) || modifiers) {         /* special key */
-        if (expmap && cpo_special) {
+        if (expmap) {
           ga_clear(&ga);
           return NULL;
         }
@@ -4214,7 +4208,7 @@ static char_u * translate_mapping (
     }
 
     if (c == ' ' || c == '\t' || c == Ctrl_J || c == Ctrl_V
-        || (c == '<' && !cpo_special) || (c == '\\' && !cpo_bslash)) {
+        || (c == '\\' && !cpo_bslash)) {
       ga_append(&ga, cpo_bslash ? Ctrl_V : '\\');
     }
 

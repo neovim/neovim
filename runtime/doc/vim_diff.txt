@@ -332,7 +332,7 @@ Test functions:
 
 Other options:
   'antialias'
-  'cpoptions' (g j k H w * - and all POSIX flags were removed)
+  'cpoptions' (g j k H w < * - and all POSIX flags were removed)
   'encoding' ("utf-8" is always used)
   'esckeys'
   'guioptions' "t" flag was removed

@@ -570,9 +570,9 @@ Since the '|' character is used to separate a map command from the next
 command, you will have to do something special to include  a '|' in {rhs}.
 There are three methods:
    use	     works when			   example	~
-   <Bar>     '<' is not in 'cpoptions'	   :map _l :!ls <Bar> more^M
+   <Bar>     always			   :map _l :!ls <Bar> more^M
    \|	     'b' is not in 'cpoptions'	   :map _l :!ls \| more^M
-   ^V|	     always, in Vim and Vi	   :map _l :!ls ^V| more^M
+   ^V|	     always			   :map _l :!ls ^V| more^M
 
 (here ^V stands for CTRL-V; to get one CTRL-V you have to type it twice; you
 cannot use the <> notation "<C-V>" here).
@@ -627,8 +627,7 @@ out about, ^D is CTRL-D).
 
 1.8 EXAMPLES						*map-examples*
 
-A few examples (given as you type them, for "<CR>" you type four characters;
-the '<' flag must not be present in 'cpoptions' for this to work). >
+A few examples (as you type them: for "<CR>" you type four characters). >
 
    :map <F3>  o#include
    :map <M-g> /foo<CR>cwbar<Esc>
@@ -880,7 +879,6 @@ character is mostly ignored otherwise.
 
 It is possible to move the cursor after an abbreviation: >
    :iab if if ()<Left>
-This does not work if 'cpoptions' includes the '<' flag. |<>|
 
 You can even do more complicated things.  For example, to consume the space
 typed after an abbreviation: >

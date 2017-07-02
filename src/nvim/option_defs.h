@@ -123,15 +123,14 @@
 #define CPO_DOLLAR      '$'
 #define CPO_FILTER      '!'
 #define CPO_MATCH       '%'
-#define CPO_PLUS        '+'     /* ":write file" resets 'modified' */
-#define CPO_SPECI       '<'     /* don't recognize <> in mappings */
-#define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
-#define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
-                                 * cursor would not move */
+#define CPO_PLUS        '+'     // ":write file" resets 'modified'
+#define CPO_REGAPPEND   '>'     // insert NL when appending to a register
+#define CPO_SCOLON      ';'     // using "," and ";" will skip over char if
+                                // cursor would not move
 #define CPO_CHANGEW     '_'     // "cw" special-case
 // default values for Vim and Vi
 #define CPO_VIM         "aABceFs_"
-#define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;_"
+#define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+>;_"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"

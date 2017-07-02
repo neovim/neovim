@@ -4747,7 +4747,7 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
   char_u      *rep_buf = NULL;
   garray_T    *gap;
 
-  replace_termcodes(rep, STRLEN(rep), &rep_buf, false, false, false,
+  replace_termcodes(rep, STRLEN(rep), &rep_buf, false, false, true,
                     CPO_TO_CPO_FLAGS);
   if (rep_buf == NULL) {
     /* Can't replace termcodes - try using the string as is */

@@ -3034,7 +3034,7 @@ did_set_string_option (
   /* 'pastetoggle': translate key codes like in a mapping */
   else if (varp == &p_pt) {
     if (*p_pt) {
-      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, true, true, false,
+      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, true, true, true,
                               CPO_TO_CPO_FLAGS);
       if (p != NULL) {
         if (new_value_alloced)

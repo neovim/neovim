@@ -373,6 +373,11 @@ describe('api', function()
          '<NL>x<Esc>x<CR>x<lt>x', true, true, true))
     end)
 
+    it('does not convert keycodes if special=false', function()
+      eq('<NL>x<Esc>x<CR>x<lt>x', helpers.nvim('replace_termcodes',
+         '<NL>x<Esc>x<CR>x<lt>x', true, true, false))
+    end)
+
     it('does not crash when transforming an empty string', function()
       -- Actually does not test anything, because current code will use NULL for
       -- an empty string.
@@ -391,13 +396,13 @@ describe('api', function()
         -- notice the special char(…) \xe2\80\xa6
         nvim('feedkeys', ':let x1="…"\n', '', true)
 
-        -- Both replace_termcodes and feedkeys escape \x80
+        -- Both nvim_replace_termcodes and nvim_feedkeys escape \x80
         local inp = helpers.nvim('replace_termcodes', ':let x2="…"<CR>', true, true, true)
-        nvim('feedkeys', inp, '', true)
+        nvim('feedkeys', inp, '', true)   -- escape_csi=true
 
-        -- Disabling CSI escaping in feedkeys
+        -- nvim_feedkeys with CSI escaping disabled
         inp = helpers.nvim('replace_termcodes', ':let x3="…"<CR>', true, true, true)
-        nvim('feedkeys', inp, '', false)
+        nvim('feedkeys', inp, '', false)  -- escape_csi=false
 
         helpers.stop()
       end

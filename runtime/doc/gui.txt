@@ -490,9 +490,6 @@ expression register: >
 
    :amenu Insert.foobar   "='foobar'<CR>P
 
-Note that the '<' and 'k' flags in 'cpoptions' also apply here (when
-included they make the <> form and raw key codes not being recognized).
-
 Note that <Esc> in Cmdline mode executes the command, like in a mapping.  This
 is Vi compatible.  Use CTRL-C to quit Cmdline mode.
 
