@@ -281,13 +281,12 @@ describe('get_keymap', function()
       command(cmd)
       eq({cpomap('\\<C-C>', '\\<C-D>', 'n'), cpomap('\\<C-A>', '\\<C-B>', 'n')},
          meths.get_keymap('n'))
-      -- FIXME
-      -- eq({cpomap('\\<C-C>', '\\<C-D>', 'x'), cpomap('\\<LT>C-A>', '\\<LT>C-B>', 'x')},
-         -- meths.get_keymap('x'))
-      -- eq({cpomap('<LT>C-C>', '<LT>C-D>', 's'), cpomap('<LT>C-A>', '<LT>C-B>', 's')},
-         -- meths.get_keymap('x'))
-      -- eq({cpomap('<LT>C-C>', '<LT>C-D>', 'o'), cpomap('<LT>C-A>', '<LT>C-B>', 'o')},
-         -- meths.get_keymap('x'))
+      eq({cpomap('\\<C-C>', '\\<C-D>', 'x'), cpomap('\\<lt>C-a>', '\\<lt>C-b>', 'x')},
+         meths.get_keymap('x'))
+      eq({cpomap('<lt>C-c>', '<lt>C-d>', 's'), cpomap('<lt>C-a>', '<lt>C-b>', 's')},
+         meths.get_keymap('s'))
+      eq({cpomap('<lt>C-c>', '<lt>C-d>', 'o'), cpomap('<lt>C-a>', '<lt>C-b>', 'o')},
+         meths.get_keymap('o'))
     end
   end)
 end)

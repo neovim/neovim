@@ -1269,7 +1269,7 @@ msg_outtrans_special (
       string = "<Space>";
       str++;
     } else {
-      string = str2special((const char **)&str, from);
+      string = str2special((const char **)&str, from, false);
     }
     const int len = vim_strsize((char_u *)string);
     // Highlight special keys
@@ -1286,11 +1286,13 @@ msg_outtrans_special (
 /// Used for lhs or rhs of mappings.
 ///
 /// @param[in]  str  String to convert.
-/// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
+/// @param[in]  replace_spaces  Convert spaces into `<Space>`, normally used fo
 ///                             lhs, but not rhs.
+/// @param[in]  replace_lt  Convert `<` into `<lt>`.
 ///
 /// @return [allocated] Converted string.
-char *str2special_save(const char *const str, const bool replace_spaces)
+char *str2special_save(const char *const str, const bool replace_spaces,
+                       const bool replace_lt)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
   FUNC_ATTR_NONNULL_RET
 {
@@ -1299,7 +1301,7 @@ char *str2special_save(const char *const str, const bool replace_spaces)
 
   const char *p = str;
   while (*p != NUL) {
-    ga_concat(&ga, (const char_u *)str2special(&p, replace_spaces));
+    ga_concat(&ga, (const char_u *)str2special(&p, replace_spaces, replace_lt));
   }
   ga_append(&ga, NUL);
   return (char *)ga.ga_data;
@@ -1310,11 +1312,13 @@ char *str2special_save(const char *const str, const bool replace_spaces)
 /// @param[in,out]  sp  String to convert. Is advanced to the next key code.
 /// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
 ///                             lhs, but not rhs.
+/// @param[in]  replace_lt  Convert `<` into `<lt>`.
 ///
 /// @return Converted key code, in a static buffer. Buffer is always one and the
 ///         same, so save converted string somewhere before running str2special
 ///         for the second time.
-const char *str2special(const char **const sp, const bool replace_spaces)
+const char *str2special(const char **const sp, const bool replace_spaces,
+                        const bool replace_lt)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   static char buf[7];
@@ -1366,7 +1370,10 @@ const char *str2special(const char **const sp, const bool replace_spaces)
   }
 
   // Make unprintable characters in <> form, also <M-Space> and <Tab>.
-  if (special || char2cells(c) > 1 || (replace_spaces && c == ' ')) {
+  if (special
+      || char2cells(c) > 1
+      || (replace_spaces && c == ' ')
+      || (replace_lt && c == '<')) {
     return (const char *)get_special_key_name(c, modifiers);
   }
   buf[0] = c;
@@ -1383,7 +1390,7 @@ void str2specialbuf(const char *sp, char *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   while (*sp) {
-    const char *s = str2special(&sp, false);
+    const char *s = str2special(&sp, false, false);
     const size_t s_len = strlen(s);
     if (s_len <= len) {
       break;

@@ -5176,7 +5176,8 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
     if (valuep == &p_pt) {
       s = *valuep;
       while (*s != NUL) {
-        if (put_escstr(fd, (char_u *)str2special((const char **)&s, false), 2)
+        if (put_escstr(fd, (char_u *)str2special((const char **)&s, false,
+                                                 false), 2)
             == FAIL) {
           return FAIL;
         }
