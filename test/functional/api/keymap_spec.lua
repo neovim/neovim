@@ -1,5 +1,6 @@
-
 local helpers = require('test.functional.helpers')(after_each)
+local global_helpers = require('test.helpers')
+
 local clear = helpers.clear
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
@@ -8,13 +9,7 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local source = helpers.source
 
-local function local_copy(t)
-  local copy = {}
-  for k,v in pairs(t) do
-    copy[k] = v
-  end
-  return copy
-end
+local shallowcopy = global_helpers.shallowcopy
 
 describe('get_keymap', function()
   before_each(clear)
@@ -50,7 +45,7 @@ describe('get_keymap', function()
 
     -- Add another mapping
     command('nnoremap foo_longer bar_longer')
-    local foolong_bar_map_table = local_copy(foo_bar_map_table)
+    local foolong_bar_map_table = shallowcopy(foo_bar_map_table)
     foolong_bar_map_table['lhs'] = 'foo_longer'
     foolong_bar_map_table['rhs'] = 'bar_longer'
 
@@ -72,7 +67,7 @@ describe('get_keymap', function()
 
     command('inoremap foo bar')
     -- The table will be the same except for the mode
-    local insert_table = local_copy(foo_bar_map_table)
+    local insert_table = shallowcopy(foo_bar_map_table)
     insert_table['mode'] = 'i'
 
     eq({insert_table}, meths.get_keymap('i'))
@@ -81,11 +76,11 @@ describe('get_keymap', function()
   it('considers scope', function()
     -- change the map slightly
     command('nnoremap foo_longer bar_longer')
-    local foolong_bar_map_table = local_copy(foo_bar_map_table)
+    local foolong_bar_map_table = shallowcopy(foo_bar_map_table)
     foolong_bar_map_table['lhs'] = 'foo_longer'
     foolong_bar_map_table['rhs'] = 'bar_longer'
 
-    local buffer_table = local_copy(foo_bar_map_table)
+    local buffer_table = shallowcopy(foo_bar_map_table)
     buffer_table['buffer'] = 1
 
     command('nnoremap <buffer> foo bar')
@@ -98,7 +93,7 @@ describe('get_keymap', function()
   it('considers scope for overlapping maps', function()
     command('nnoremap foo bar')
 
-    local buffer_table = local_copy(foo_bar_map_table)
+    local buffer_table = shallowcopy(foo_bar_map_table)
     buffer_table['buffer'] = 1
 
     command('nnoremap <buffer> foo bar')
@@ -121,7 +116,7 @@ describe('get_keymap', function()
 
     command('nnoremap <buffer> foo bar')
     -- Final buffer will have buffer mappings
-    local buffer_table = local_copy(foo_bar_map_table)
+    local buffer_table = shallowcopy(foo_bar_map_table)
     buffer_table['buffer'] = final_buffer
     eq({buffer_table}, meths.buf_get_keymap(final_buffer, 'n'))
     eq({buffer_table}, meths.buf_get_keymap(0, 'n'))
