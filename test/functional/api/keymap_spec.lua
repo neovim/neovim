@@ -1,5 +1,6 @@
-
 local helpers = require('test.functional.helpers')(after_each)
+local global_helpers = require('test.helpers')
+
 local clear = helpers.clear
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
@@ -8,13 +9,7 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local source = helpers.source
 
-local function local_copy(t)
-  local copy = {}
-  for k,v in pairs(t) do
-    copy[k] = v
-  end
-  return copy
-end
+local shallowcopy = global_helpers.shallowcopy
 
 describe('get_keymap', function()
   before_each(clear)
@@ -22,16 +17,16 @@ describe('get_keymap', function()
   -- Basic mapping and table to be used to describe results
   local foo_bar_string = 'nnoremap foo bar'
   local foo_bar_map_table = {
-      lhs='foo',
-      silent=0,
-      rhs='bar',
-      expr=0,
-      sid=0,
-      buffer=0,
-      nowait=0,
-      mode='n',
-      noremap=1,
-    }
+    lhs='foo',
+    silent=0,
+    rhs='bar',
+    expr=0,
+    sid=0,
+    buffer=0,
+    nowait=0,
+    mode='n',
+    noremap=1,
+  }
 
   it('returns empty list when no map', function()
     eq({}, meths.get_keymap('n'))
@@ -50,7 +45,7 @@ describe('get_keymap', function()
 
     -- Add another mapping
     command('nnoremap foo_longer bar_longer')
-    local foolong_bar_map_table = local_copy(foo_bar_map_table)
+    local foolong_bar_map_table = shallowcopy(foo_bar_map_table)
     foolong_bar_map_table['lhs'] = 'foo_longer'
     foolong_bar_map_table['rhs'] = 'bar_longer'
 
@@ -72,7 +67,7 @@ describe('get_keymap', function()
 
     command('inoremap foo bar')
     -- The table will be the same except for the mode
-    local insert_table = local_copy(foo_bar_map_table)
+    local insert_table = shallowcopy(foo_bar_map_table)
     insert_table['mode'] = 'i'
 
     eq({insert_table}, meths.get_keymap('i'))
@@ -81,11 +76,11 @@ describe('get_keymap', function()
   it('considers scope', function()
     -- change the map slightly
     command('nnoremap foo_longer bar_longer')
-    local foolong_bar_map_table = local_copy(foo_bar_map_table)
+    local foolong_bar_map_table = shallowcopy(foo_bar_map_table)
     foolong_bar_map_table['lhs'] = 'foo_longer'
     foolong_bar_map_table['rhs'] = 'bar_longer'
 
-    local buffer_table = local_copy(foo_bar_map_table)
+    local buffer_table = shallowcopy(foo_bar_map_table)
     buffer_table['buffer'] = 1
 
     command('nnoremap <buffer> foo bar')
@@ -98,7 +93,7 @@ describe('get_keymap', function()
   it('considers scope for overlapping maps', function()
     command('nnoremap foo bar')
 
-    local buffer_table = local_copy(foo_bar_map_table)
+    local buffer_table = shallowcopy(foo_bar_map_table)
     buffer_table['buffer'] = 1
 
     command('nnoremap <buffer> foo bar')
@@ -121,7 +116,7 @@ describe('get_keymap', function()
 
     command('nnoremap <buffer> foo bar')
     -- Final buffer will have buffer mappings
-    local buffer_table = local_copy(foo_bar_map_table)
+    local buffer_table = shallowcopy(foo_bar_map_table)
     buffer_table['buffer'] = final_buffer
     eq({buffer_table}, meths.buf_get_keymap(final_buffer, 'n'))
     eq({buffer_table}, meths.buf_get_keymap(0, 'n'))
@@ -242,5 +237,76 @@ describe('get_keymap', function()
     command('nnoremap <F12> :let g:maparg_test_var = 1<CR>')
     eq('<F12>', meths.get_keymap('n')[1]['lhs'])
     eq(':let g:maparg_test_var = 1<CR>', meths.get_keymap('n')[1]['rhs'])
+  end)
+
+  it('works correctly despite various &cpo settings', function()
+    local cpo_table = {
+      silent=0,
+      expr=0,
+      sid=0,
+      buffer=0,
+      nowait=0,
+      noremap=1,
+    }
+    local function cpomap(lhs, rhs, mode)
+      local ret = shallowcopy(cpo_table)
+      ret.lhs = lhs
+      ret.rhs = rhs
+      ret.mode = mode
+      return ret
+    end
+
+    command('set cpo-=< cpo+=B')
+    command('nnoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
+    command('nnoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
+
+    command('set cpo+=B<')
+    command('xnoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
+    command('xnoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
+
+    command('set cpo-=B<')
+    command('snoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
+    command('snoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
+
+    command('set cpo-=B cpo+=<')
+    command('onoremap \\<C-a><C-a><LT>C-a>\\  \\<C-b><C-b><LT>C-b>\\')
+    command('onoremap <special> \\<C-c><C-c><LT>C-c>\\  \\<C-d><C-d><LT>C-d>\\')
+
+    for _, cmd in ipairs({
+      'set cpo-=B cpo+=<',
+      'set cpo-=B<',
+      'set cpo+=B<',
+      'set cpo-=< cpo+=B',
+    }) do
+      command(cmd)
+      eq({cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'n'),
+          cpomap('\\<C-A><C-A><lt>C-a>\\', '\\<C-B><C-B><lt>C-b>\\', 'n')},
+         meths.get_keymap('n'))
+      eq({cpomap('\\<C-C><C-C><lt>C-c>\\', '\\<C-D><C-D><lt>C-d>\\', 'x'),
+          cpomap('\\<lt>C-a><lt>C-a><lt>LT>C-a>\\', '\\<lt>C-b><lt>C-b><lt>LT>C-b>\\', 'x')},
+         meths.get_keymap('x'))
+      eq({cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 's'),
+          cpomap('<lt>C-a><C-A><lt>C-a> ', '<lt>C-b><C-B><lt>C-b>', 's')},
+         meths.get_keymap('s'))
+      eq({cpomap('<lt>C-c><C-C><lt>C-c> ', '<lt>C-d><C-D><lt>C-d>', 'o'),
+          cpomap('<lt>C-a><lt>C-a><lt>LT>C-a> ', '<lt>C-b><lt>C-b><lt>LT>C-b>', 'o')},
+         meths.get_keymap('o'))
+    end
+  end)
+
+  it('always uses space for space and bar for bar', function()
+    local space_table = {
+      lhs='|   |',
+      rhs='|    |',
+      mode='n',
+      silent=0,
+      expr=0,
+      sid=0,
+      buffer=0,
+      nowait=0,
+      noremap=1,
+    }
+    command('nnoremap \\|<Char-0x20><Char-32><Space><Bar> \\|<Char-0x20><Char-32><Space> <Bar>')
+    eq({space_table}, meths.get_keymap('n'))
   end)
 end)

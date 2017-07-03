@@ -1806,7 +1806,7 @@ static int vgetorpeek(int advance)
                  * <M-a> and then changing 'encoding'. Beware
                  * that 0x80 is escaped. */
                 char_u *p1 = mp->m_keys;
-                char_u *p2 = mb_unescape(&p1);
+                char_u *p2 = (char_u *)mb_unescape((const char **)&p1);
 
                 if (has_mbyte && p2 != NULL && MB_BYTE2LEN(c1) > MB_PTR2LEN(p2))
                   mlen = 0;
@@ -3999,12 +3999,10 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
     return OK;
   }
 
-  for (; *str != NUL; ++str) {
-    char_u  *p;
-
-    /* Check for a multi-byte character, which may contain escaped
-     * K_SPECIAL and CSI bytes */
-    p = mb_unescape(&str);
+  for (; *str != NUL; str++) {
+    // Check for a multi-byte character, which may contain escaped
+    // K_SPECIAL and CSI bytes.
+    const char *p = mb_unescape((const char **)&str);
     if (p != NULL) {
       while (*p != NUL)
         if (fputc(*p++, fd) < 0)
