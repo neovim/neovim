@@ -281,4 +281,41 @@ describe(':echo', function()
          redir_exec('echo String({"out": d})'))
     end)
   end)
+
+  describe('used to represent special values', function()
+    local function chr(n)
+      return ('%c'):format(n)
+    end
+    local function ctrl(c)
+      return ('%c'):format(c:upper():byte() - 0x40)
+    end
+    it('displays hex as hex', function()
+      -- Regression: due to missing (uint8_t) cast \x80 was represented as
+      -- ~@<80>.
+      eq('<80>', funcs.String(chr(0x80)))
+      eq('<81>', funcs.String(chr(0x81)))
+      eq('<8e>', funcs.String(chr(0x8e)))
+      eq('<c2>', funcs.String(('«'):sub(1, 1)))
+      eq('«', funcs.String(('«'):sub(1, 2)))
+    end)
+    it('displays ASCII control characters using ^X notation', function()
+      eq('^C', funcs.String(ctrl('c')))
+      eq('^A', funcs.String(ctrl('a')))
+      eq('^F', funcs.String(ctrl('f')))
+    end)
+    it('prints CR, NL and tab as-is', function()
+      eq('\n', funcs.String('\n'))
+      eq('\r', funcs.String('\r'))
+      eq('\t', funcs.String('\t'))
+    end)
+    it('prints non-printable UTF-8 in <> notation', function()
+      -- SINGLE SHIFT TWO, unicode control
+      eq('<8e>', funcs.String(funcs.nr2char(0x8E)))
+      -- Surrogate pair: U+1F0A0 PLAYING CARD BACK is represented in UTF-16 as
+      -- 0xD83C 0xDCA0. This is not valid in UTF-8.
+      eq('<d83c>', funcs.String(funcs.nr2char(0xD83C)))
+      eq('<dca0>', funcs.String(funcs.nr2char(0xDCA0)))
+      eq('<d83c><dca0>', funcs.String(funcs.nr2char(0xD83C) .. funcs.nr2char(0xDCA0)))
+    end)
+  end)
 end)
