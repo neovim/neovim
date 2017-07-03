@@ -149,9 +149,9 @@ type "a", then "bar" will get inserted.
 
 1.2 SPECIAL ARGUMENTS					*:map-arguments*
 
-"<buffer>", "<nowait>", "<silent>", "<special>", "<script>", "<expr>" and
-"<unique>" can be used in any order.  They must appear right after the
-command, before any other arguments.
+"<buffer>", "<nowait>", "<silent>", "<special>", "<script>", "<expr>",
+"<norecord>" and "<unique>" can be used in any order.  They must appear right
+after the command, before any other arguments.
 
 				*:map-local* *:map-<buffer>* *E224* *E225*
 If the first argument to one of these commands is "<buffer>" the mapping will
@@ -278,6 +278,10 @@ again for using <expr>.  This does work: >
 Using 0x80 as a single byte before other text does not work, it will be seen
 as a special key.
 
+						*:map-<norecord>* *:map-norecord*
+Define a mapping that is disabled while recording and executing registers
+(|complex-repeat|).  This is useful if the mapping is only used interactively
+or depends on timing information that is lost during the recording process.
 
 1.3 MAPPING AND MODES					*:map-modes*
 		*mapmode-nvo* *mapmode-n* *mapmode-v* *mapmode-o* *mapmode-t*

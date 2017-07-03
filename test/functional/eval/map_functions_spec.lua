@@ -36,6 +36,14 @@ describe('maparg()', function()
     eq(0, funcs.maparg('baz', 'n', false, true)['silent'])
   end)
 
+  it('returns 1 for norecord when <norecord> is used', function()
+    nvim('command', 'nnoremap <norecord> foo bar')
+    eq(1, funcs.maparg('foo', 'n', false, true)['norecord'])
+
+    nvim('command', 'nnoremap baz bat')
+    eq(0, funcs.maparg('baz', 'n', false, true)['norecord'])
+  end)
+
   it('returns an empty string when no map is present', function()
     eq('', funcs.maparg('not a mapping'))
   end)

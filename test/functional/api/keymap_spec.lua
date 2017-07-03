@@ -27,6 +27,7 @@ describe('get_keymap', function()
       rhs='bar',
       expr=0,
       sid=0,
+      norecord=0,
       buffer=0,
       nowait=0,
       mode='n',
@@ -202,6 +203,7 @@ describe('get_keymap', function()
     global_and_buffer_test(mode_list[mode], 'silent', '<silent>', 1, 1, 0, 0)
     global_and_buffer_test(mode_list[mode], 'nowait', '<nowait>', 1, 1, 0, 0)
     global_and_buffer_test(mode_list[mode], 'expr', '<expr>', 1, 1, 0, 0)
+    global_and_buffer_test(mode_list[mode], 'norecord', '<norecord>', 1, 1, 0, 0)
   end
 
   -- noremap will now be 2 if script was used, which is not the same as maparg()
