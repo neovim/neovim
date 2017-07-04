@@ -6,8 +6,10 @@ local itp = helpers.gen_itp(it)
 local eq = helpers.eq
 local ffi = helpers.ffi
 local cimport = helpers.cimport
+local cppimport = helpers.cppimport
 
-local m = cimport('./src/nvim/os/fileio.h')
+local m = cimport('./src/nvim/os/os.h', './src/nvim/os/fileio.h')
+cppimport('fcntl.h')
 
 local fcontents = ''
 for i = 0, 255 do
@@ -58,6 +60,18 @@ local function file_open_new(fname, flags, mode)
   return ret1[0], ret2
 end
 
+local function file_open_fd(fd, flags)
+  local ret2 = ffi.new('FileDescriptor')
+  local ret1 = m.file_open_fd(ret2, fd, flags)
+  return ret1, ret2
+end
+
+local function file_open_fd_new(fd, flags)
+  local ret1 = ffi.new('int[?]', 1, {0})
+  local ret2 = ffi.gc(m.file_open_fd_new(ret1, fd, flags), nil)
+  return ret1[0], ret2
+end
+
 local function file_write(fp, buf)
   return m.file_write(fp, buf, #buf)
 end
@@ -95,6 +109,46 @@ end
 local function file_skip(fp, size)
   return m.file_skip(fp, size)
 end
+
+describe('file_open_fd', function()
+  itp('can use file descriptor returned by os_open for reading', function()
+    local fd = m.os_open(file1, m.kO_RDONLY, 0)
+    local err, fp = file_open_fd(fd, false)
+    eq(0, err)
+    eq({#fcontents, fcontents}, {file_read(fp, #fcontents)})
+    eq(0, m.file_close(fp, false))
+  end)
+  itp('can use file descriptor returned by os_open for writing', function()
+    eq(nil, lfs.attributes(filec))
+    local fd = m.os_open(filec, m.kO_WRONLY + m.kO_CREAT, 384)
+    local err, fp = file_open_fd(fd, true)
+    eq(0, err)
+    eq(4, file_write(fp, 'test'))
+    eq(0, m.file_close(fp, false))
+    eq(4, lfs.attributes(filec).size)
+    eq('test', io.open(filec):read('*a'))
+  end)
+end)
+
+describe('file_open_fd_new', function()
+  itp('can use file descriptor returned by os_open for reading', function()
+    local fd = m.os_open(file1, m.kO_RDONLY, 0)
+    local err, fp = file_open_fd_new(fd, false)
+    eq(0, err)
+    eq({#fcontents, fcontents}, {file_read(fp, #fcontents)})
+    eq(0, m.file_free(fp, false))
+  end)
+  itp('can use file descriptor returned by os_open for writing', function()
+    eq(nil, lfs.attributes(filec))
+    local fd = m.os_open(filec, m.kO_WRONLY + m.kO_CREAT, 384)
+    local err, fp = file_open_fd_new(fd, true)
+    eq(0, err)
+    eq(4, file_write(fp, 'test'))
+    eq(0, m.file_free(fp, false))
+    eq(4, lfs.attributes(filec).size)
+    eq('test', io.open(filec):read('*a'))
+  end)
+end)
 
 describe('file_open', function()
   itp('can create a rwx------ file with kFileCreate', function()
