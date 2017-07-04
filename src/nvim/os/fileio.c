@@ -26,6 +26,7 @@
 #include "nvim/globals.h"
 #include "nvim/rbuffer.h"
 #include "nvim/macros.h"
+#include "nvim/message.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"
@@ -48,7 +49,6 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int os_open_flags = 0;
-  int fd;
   TriState wr = kNone;
   // -V:FLAG:501
 #define FLAG(flags, flag, fcntl_flags, wrval, cond) \
@@ -73,14 +73,35 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   FLAG(flags, kFileNoSymlink, O_NOFOLLOW, kNone, true);
 #endif
 #undef FLAG
+  // wr is used for kFileReadOnly flag, but on
+  // QB:neovim-qb-slave-ubuntu-12-04-64bit it still errors out with
+  // `error: variable ‘wr’ set but not used [-Werror=unused-but-set-variable]`
+  (void)wr;
 
-  fd = os_open(fname, os_open_flags, mode);
+  const int fd = os_open(fname, os_open_flags, mode);
 
   if (fd < 0) {
     return fd;
   }
+  return file_open_fd(ret_fp, fd, (wr == kTrue));
+}
 
-  ret_fp->wr = (wr == kTrue);
+/// Wrap file descriptor with FileDescriptor structure
+///
+/// @warning File descriptor wrapped like this must not be accessed by other
+///          means.
+///
+/// @param[out]  ret_fp  Address where information needed for reading from or
+///                      writing to a file is saved
+/// @param[in]  fd  File descriptor to wrap.
+/// @param[in]  wr  True if fd is opened for writing only, false if it is read
+///                 only.
+///
+/// @return Error code (@see os_strerror()) or 0. Currently always returns 0.
+int file_open_fd(FileDescriptor *const ret_fp, const int fd, const bool wr)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  ret_fp->wr = wr;
   ret_fp->fd = fd;
   ret_fp->eof = false;
   ret_fp->rv = rbuffer_new(kRWBufferSize);
@@ -108,6 +129,26 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
   if ((*error = file_open(fp, fname, flags, mode)) != 0) {
+    xfree(fp);
+    return NULL;
+  }
+  return fp;
+}
+
+/// Like file_open_fd(), but allocate and return ret_fp
+///
+/// @param[out]  error  Error code, @see os_strerror(). Is set to zero on
+///                     success.
+/// @param[in]  fd  File descriptor to wrap.
+/// @param[in]  wr  True if fd is opened for writing only, false if it is read
+///                 only.
+///
+/// @return [allocated] Opened file or NULL in case of error.
+FileDescriptor *file_open_fd_new(int *const error, const int fd, const bool wr)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  FileDescriptor *const fp = xmalloc(sizeof(*fp));
+  if ((*error = file_open_fd(fp, fd, wr)) != 0) {
     xfree(fp);
     return NULL;
   }
@@ -344,4 +385,33 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
   } while (read_bytes < size && !file_eof(fp));
 
   return (ptrdiff_t)read_bytes;
+}
+
+/// Msgpack callback for writing to a file
+///
+/// @param  data  File to write to.
+/// @param[in]  buf  Data to write.
+/// @param[in]  len  Length of the data to write.
+///
+/// @return 0 in case of success, -1 in case of error.
+int msgpack_file_write(void *data, const char *buf, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  assert(len < PTRDIFF_MAX);
+  const ptrdiff_t written_bytes = file_write((FileDescriptor *)data, buf, len);
+  if (written_bytes < 0) {
+    return msgpack_file_write_error((int)written_bytes);
+  }
+  return 0;
+}
+
+/// Print error which occurs when failing to write msgpack data
+///
+/// @param[in]  error  Error code of the error to print.
+///
+/// @return -1 (error return for msgpack_packer callbacks).
+int msgpack_file_write_error(const int error)
+{
+  emsgf(_("E5420: Failed to write to file: %s"), os_strerror(error));
+  return -1;
 }

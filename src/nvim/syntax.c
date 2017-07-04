@@ -1666,8 +1666,9 @@ syn_current_attr (
      * If we found a match after the last column, use it.
      */
     if (next_match_idx >= 0 && next_match_col >= (int)current_col
-        && next_match_col != MAXCOL)
-      (void)push_next_match(NULL);
+        && next_match_col != MAXCOL) {
+      (void)push_next_match();
+    }
 
     current_finished = TRUE;
     current_state_stored = FALSE;
@@ -1985,9 +1986,10 @@ syn_current_attr (
              * endless loop). */
             GA_APPEND(int, &zero_width_next_ga, next_match_idx);
             next_match_idx = -1;
-          } else
-            cur_si = push_next_match(cur_si);
-          found_match = TRUE;
+          } else {
+            cur_si = push_next_match();
+          }
+          found_match = true;
         }
       }
     }
@@ -2167,9 +2169,10 @@ static int did_match_already(int idx, garray_T *gap)
 /*
  * Push the next match onto the stack.
  */
-static stateitem_T *push_next_match(stateitem_T *cur_si)
+static stateitem_T *push_next_match(void)
 {
-  synpat_T    *spp;
+  stateitem_T *cur_si;
+  synpat_T *spp;
   int save_flags;
 
   spp = &(SYN_ITEMS(syn_block)[next_match_idx]);

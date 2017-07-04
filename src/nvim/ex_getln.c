@@ -306,7 +306,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
         curwin->w_cursor = s->save_cursor;
         setpcmark();
       }
-      curwin->w_cursor = s->search_start;
+      curwin->w_cursor = s->search_start;  // -V519
     }
     curwin->w_curswant = s->old_curswant;
     curwin->w_leftcol = s->old_leftcol;

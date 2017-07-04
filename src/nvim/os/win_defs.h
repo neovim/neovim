@@ -91,4 +91,14 @@ typedef SSIZE_T ssize_t;
 # define S_ISCHR(m) (((m) & S_IFMT) == S_IFCHR)
 #endif
 
+#ifndef STDIN_FILENO
+# define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+# define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+# define STDERR_FILENO 2
+#endif
+
 #endif  // NVIM_OS_WIN_DEFS_H
