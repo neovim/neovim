@@ -981,10 +981,8 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       mb_ptr_adv(s);
       c = *s;
 
-      if (!((c != NUL)
-            && (vim_isbreak(c)
-                || (!vim_isbreak(c)
-                    && ((col2 == col) || !vim_isbreak(*ps)))))) {
+      if (!(c != NUL
+            && (vim_isbreak(c) || col2 == col || !vim_isbreak(*ps)))) {
         break;
       }
 
