@@ -1433,12 +1433,10 @@ spell_move_to (
           // the cursor.
           if (dir == BACKWARD
               || lnum != wp->w_cursor.lnum
-              || (lnum == wp->w_cursor.lnum
-                  && (wrapped
-                      || ((colnr_T)(curline
-                                    ? p - buf + (ptrdiff_t)len
-                                    : p - buf)
-                          > wp->w_cursor.col)))) {
+              || wrapped
+              || ((colnr_T)(curline
+                            ? p - buf + (ptrdiff_t)len
+                            : p - buf) > wp->w_cursor.col)) {
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
