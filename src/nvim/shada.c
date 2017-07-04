@@ -3422,7 +3422,7 @@ shada_read_next_item_start:
   }
 
   const size_t length = (size_t)length_u64;
-  entry->timestamp = (Timestamp) timestamp_u64;
+  entry->timestamp = (Timestamp)timestamp_u64;
 
   if (type_u64 == 0) {
     // kSDItemUnknown cannot possibly pass that far because it is -1 and that
