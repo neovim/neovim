@@ -62,6 +62,10 @@ local function file_write(fp, buf)
   return m.file_write(fp, buf, #buf)
 end
 
+local function msgpack_file_write(fp, buf)
+  return m.msgpack_file_write(fp, buf, #buf)
+end
+
 local function file_read(fp, size)
   local buf = nil
   if size == nil then
@@ -389,6 +393,18 @@ describe('file_write', function()
     end
     eq(0, m.file_close(fp, false))
     eq(#fcontents, lfs.attributes(filec).size)
+    eq(fcontents, io.open(filec):read('*a'))
+  end)
+end)
+
+describe('msgpack_file_write', function()
+  itp('can write the whole file at once', function()
+    local err, fp = file_open(filec, m.kFileCreateOnly, 384)
+    eq(0, err)
+    eq(true, fp.wr)
+    local wr = msgpack_file_write(fp, fcontents)
+    eq(0, wr)
+    eq(0, m.file_close(fp, false))
     eq(fcontents, io.open(filec):read('*a'))
   end)
 end)

@@ -26,6 +26,7 @@
 #include "nvim/globals.h"
 #include "nvim/rbuffer.h"
 #include "nvim/macros.h"
+#include "nvim/message.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"
@@ -344,4 +345,24 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
   } while (read_bytes < size && !file_eof(fp));
 
   return (ptrdiff_t)read_bytes;
+}
+
+/// Msgpack callback for writing to a file
+///
+/// @param  data  File to write to.
+/// @param[in]  buf  Data to write.
+/// @param[in]  len  Length of the data to write.
+///
+/// @return 0 in case of success, -1 in case of error.
+int msgpack_file_write(void *data, const char *buf, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  assert(len < PTRDIFF_MAX);
+  const ptrdiff_t written_bytes = file_write((FileDescriptor *)data, buf, len);
+  if (written_bytes < 0) {
+    emsgf(_("E5420: Failed to write to file: %s"),
+          os_strerror((int)written_bytes));
+    return -1;
+  }
+  return 0;
 }
