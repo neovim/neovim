@@ -3633,7 +3633,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
   // word).
   depth = 0;
   sp = &stack[0];
-  memset(sp, 0, sizeof(trystate_T));
+  memset(sp, 0, sizeof(trystate_T));  // -V512
   sp->ts_curi = 1;
 
   if (soundfold) {
