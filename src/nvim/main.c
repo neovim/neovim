@@ -57,6 +57,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/os/fileio.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/signal.h"
 #include "nvim/event/process.h"
@@ -766,8 +767,13 @@ static void command_line_scan(mparm_T *parmp)
             version();
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
-            msgpack_packer *p = msgpack_packer_new(stdout,
-                                                   msgpack_fbuffer_write);
+            FileDescriptor fp;
+            const int fof_ret = file_open_fd(&fp, OS_STDOUT_FILENO, true);
+            msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
+
+            if (fof_ret != 0) {
+              emsgf(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
+            }
 
             if (p == NULL) {
               emsgf(_(e_outofmem));
