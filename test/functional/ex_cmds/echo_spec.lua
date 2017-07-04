@@ -137,7 +137,7 @@ describe(':echo', function()
     end)
 
     it('dumps references to script functions', function()
-      eq('<SNR>1_Test2', eval('String(Test2_f)'))
+      eq('<SNR>2_Test2', eval('String(Test2_f)'))
     end)
 
     it('dumps partials with self referencing a partial', function()
@@ -156,9 +156,9 @@ describe(':echo', function()
     end)
 
     it('dumps automatically created partials', function()
-      eq('function(\'<SNR>1_Test2\', {\'f\': function(\'<SNR>1_Test2\')})',
+      eq('function(\'<SNR>2_Test2\', {\'f\': function(\'<SNR>2_Test2\')})',
          eval('String({"f": Test2_f}.f)'))
-      eq('function(\'<SNR>1_Test2\', [1], {\'f\': function(\'<SNR>1_Test2\', [1])})',
+      eq('function(\'<SNR>2_Test2\', [1], {\'f\': function(\'<SNR>2_Test2\', [1])})',
          eval('String({"f": function(Test2_f, [1])}.f)'))
     end)
 
@@ -176,8 +176,8 @@ describe(':echo', function()
       meths.set_var('d', {v=true})
       eq(dedent([[
 
-          {'p': function('<SNR>1_Test2', {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}
-          {'p': function('<SNR>1_Test2', {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]]),
+          {'p': function('<SNR>2_Test2', {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}
+          {'p': function('<SNR>2_Test2', {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}]]),
         redir_exec('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": g:d.f}))'))
     end)
 
@@ -217,8 +217,8 @@ describe(':echo', function()
       eval('add(l, function("Test1", d))')
       eq(dedent([=[
 
-          {'p': function('<SNR>1_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}
-          {'p': function('<SNR>1_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>1_Test2'), 'v': v:true}]=]),
+          {'p': function('<SNR>2_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}
+          {'p': function('<SNR>2_Test2', [[[...@3], function('Test1', [[...@3]]), function('Test1', {...@0})], function('Test1', [[[...@5], function('Test1', [[...@5]]), function('Test1', {...@0})]]), function('Test1', {...@0})], {...@0}), 'f': function('<SNR>2_Test2'), 'v': v:true}]=]),
         redir_exec('echo String(extend(extend(g:d, {"f": g:Test2_f}), {"p": function(g:d.f, l)}))'))
     end)
   end)
