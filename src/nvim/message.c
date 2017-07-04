@@ -1196,7 +1196,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
       len -= mb_l - 1;
       str += mb_l;
     } else {
-      s = transchar_byte(*str);
+      s = transchar_byte((uint8_t)(*str));
       if (s[1] != NUL) {
         // Unprintable char: print the printable chars so far and the
         // translation of the unprintable char.
