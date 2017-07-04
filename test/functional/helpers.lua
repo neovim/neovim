@@ -319,7 +319,14 @@ end
 -- Dedent the given text and write it to the file name.
 local function write_file(name, text, dont_dedent)
   local file = io.open(name, 'w')
-  if not dont_dedent then
+  if type(text) == 'table' then
+    -- Byte blob
+    local bytes = text
+    text = ''
+    for _, char in ipairs(bytes) do
+      text = ('%s%c'):format(text, char)
+    end
+  elseif not dont_dedent then
     text = dedent(text)
   end
   file:write(text)
