@@ -783,7 +783,10 @@ static void command_line_scan(mparm_T *parmp)
             msgpack_rpc_from_object(md, p);
 
             msgpack_packer_free(p);
-            file_close(&fp, false);
+            const int ff_ret = file_flush(&fp);
+            if (ff_ret < 0) {
+              msgpack_file_write_error(ff_ret);
+            }
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
             parmp->headless = true;

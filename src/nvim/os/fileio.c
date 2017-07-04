@@ -400,9 +400,18 @@ int msgpack_file_write(void *data, const char *buf, size_t len)
   assert(len < PTRDIFF_MAX);
   const ptrdiff_t written_bytes = file_write((FileDescriptor *)data, buf, len);
   if (written_bytes < 0) {
-    emsgf(_("E5420: Failed to write to file: %s"),
-          os_strerror((int)written_bytes));
-    return -1;
+    return msgpack_file_write_error((int)written_bytes);
   }
   return 0;
+}
+
+/// Print error which occurs when failing to write msgpack data
+///
+/// @param[in]  error  Error code of the error to print.
+///
+/// @return -1 (error return for msgpack_packer callbacks).
+int msgpack_file_write_error(const int error)
+{
+  emsgf(_("E5420: Failed to write to file: %s"), os_strerror(error));
+  return -1;
 }
