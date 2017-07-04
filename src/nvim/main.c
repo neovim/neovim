@@ -766,16 +766,18 @@ static void command_line_scan(mparm_T *parmp)
             version();
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
-            msgpack_sbuffer* b = msgpack_sbuffer_new();
-            msgpack_packer* p = msgpack_packer_new(b, msgpack_sbuffer_write);
+            msgpack_packer *p = msgpack_packer_new(stdout,
+                                                   msgpack_fbuffer_write);
+
+            if (p == NULL) {
+              emsgf(_(e_outofmem));
+            }
+
             Object md = DICTIONARY_OBJ(api_metadata());
             msgpack_rpc_from_object(md, p);
 
-            for (size_t i = 0; i < b->size; i++) {
-              putchar(b->data[i]);
-            }
-
             msgpack_packer_free(p);
+            file_close(&fp, false);
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
             parmp->headless = true;
