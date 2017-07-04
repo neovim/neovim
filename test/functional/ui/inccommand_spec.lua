@@ -986,7 +986,7 @@ describe(":substitute, inccommand=split", function()
     -- Set 'redrawtime' to minimal value, to ensure timeout is triggered.
     feed_command("set redrawtime=1 nowrap")
     -- Load a big file.
-    feed_command("silent edit! test/functional/fixtures/bigfile.txt")
+    feed_command("silent edit! test/functional/fixtures/bigfile_oneline.txt")
     -- Start :substitute with a slow pattern.
     feed([[:%s/B.*N/x]])
     wait()
@@ -996,19 +996,19 @@ describe(":substitute, inccommand=split", function()
     -- Assert that preview cleared (or never manifested).
     screen:expect([[
       0000;<control>;Cc;0;BN;;;;;N;N|
-      0001;<control>;Cc;0;BN;;;;;N;S|
-      0002;<control>;Cc;0;BN;;;;;N;S|
-      0003;<control>;Cc;0;BN;;;;;N;E|
-      0004;<control>;Cc;0;BN;;;;;N;E|
-      0005;<control>;Cc;0;BN;;;;;N;E|
-      0006;<control>;Cc;0;BN;;;;;N;A|
-      0007;<control>;Cc;0;BN;;;;;N;B|
-      0008;<control>;Cc;0;BN;;;;;N;B|
-      0009;<control>;Cc;0;S;;;;;N;CH|
-      000A;<control>;Cc;0;B;;;;;N;LI|
-      000B;<control>;Cc;0;S;;;;;N;LI|
-      000C;<control>;Cc;0;WS;;;;;N;F|
-      000D;<control>;Cc;0;B;;;;;N;CA|
+      2F923;CJK COMPATIBILITY IDEOGR|
+      2F924;CJK COMPATIBILITY IDEOGR|
+      2F925;CJK COMPATIBILITY IDEOGR|
+      2F926;CJK COMPATIBILITY IDEOGR|
+      2F927;CJK COMPATIBILITY IDEOGR|
+      2F928;CJK COMPATIBILITY IDEOGR|
+      2F929;CJK COMPATIBILITY IDEOGR|
+      2F92A;CJK COMPATIBILITY IDEOGR|
+      2F92B;CJK COMPATIBILITY IDEOGR|
+      2F92C;CJK COMPATIBILITY IDEOGR|
+      2F92D;CJK COMPATIBILITY IDEOGR|
+      2F92E;CJK COMPATIBILITY IDEOGR|
+      2F92F;CJK COMPATIBILITY IDEOGR|
       :%s/B.*N/x^                    |
     ]])
 
