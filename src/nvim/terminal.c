@@ -229,7 +229,7 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->invalid_start = 0;
   rv->invalid_end = opts.height;
   refresh_screen(rv, curbuf);
-  set_option_value("buftype", 0, "terminal", OPT_LOCAL);
+  set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
 
   // Default settings for terminal buffers
   curbuf->b_p_ma = false;     // 'nomodifiable'

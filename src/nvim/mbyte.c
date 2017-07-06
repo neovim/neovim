@@ -1739,52 +1739,55 @@ int mb_charlen_len(char_u *str, int len)
   return count;
 }
 
-/*
- * Try to un-escape a multi-byte character.
- * Used for the "to" and "from" part of a mapping.
- * Return the un-escaped string if it is a multi-byte character, and advance
- * "pp" to just after the bytes that formed it.
- * Return NULL if no multi-byte char was found.
- */
-char_u * mb_unescape(char_u **pp)
+/// Try to unescape a multibyte character
+///
+/// Used for the rhs and lhs of the mappings.
+///
+/// @param[in,out]  pp  String to unescape. Is advanced to just after the bytes
+///                     that form a multibyte character.
+///
+/// @return Unescaped string if it is a multibyte character, NULL if no
+///         multibyte character was found. Returns a static buffer, always one
+///         and the same.
+const char *mb_unescape(const char **const pp)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  static char_u buf[6];
-  int n;
-  int m = 0;
-  char_u              *str = *pp;
+  static char buf[6];
+  size_t buf_idx = 0;
+  uint8_t *str = (uint8_t *)(*pp);
 
-  /* Must translate K_SPECIAL KS_SPECIAL KE_FILLER to K_SPECIAL and CSI
-   * KS_EXTRA KE_CSI to CSI.
-   * Maximum length of a utf-8 character is 4 bytes. */
-  for (n = 0; str[n] != NUL && m < 4; ++n) {
-    if (str[n] == K_SPECIAL
-        && str[n + 1] == KS_SPECIAL
-        && str[n + 2] == KE_FILLER) {
-      buf[m++] = K_SPECIAL;
-      n += 2;
-    } else if ((str[n] == K_SPECIAL
-          )
-        && str[n + 1] == KS_EXTRA
-        && str[n + 2] == (int)KE_CSI) {
-      buf[m++] = CSI;
-      n += 2;
-    } else if (str[n] == K_SPECIAL
-        )
-      break;                    /* a special key can't be a multibyte char */
-    else
-      buf[m++] = str[n];
-    buf[m] = NUL;
+  // Must translate K_SPECIAL KS_SPECIAL KE_FILLER to K_SPECIAL and CSI
+  // KS_EXTRA KE_CSI to CSI.
+  // Maximum length of a utf-8 character is 4 bytes.
+  for (size_t str_idx = 0; str[str_idx] != NUL && buf_idx < 4; str_idx++) {
+    if (str[str_idx] == K_SPECIAL
+        && str[str_idx + 1] == KS_SPECIAL
+        && str[str_idx + 2] == KE_FILLER) {
+      buf[buf_idx++] = (char)K_SPECIAL;
+      str_idx += 2;
+    } else if ((str[str_idx] == K_SPECIAL)
+               && str[str_idx + 1] == KS_EXTRA
+               && str[str_idx + 2] == KE_CSI) {
+      buf[buf_idx++] = (char)CSI;
+      str_idx += 2;
+    } else if (str[str_idx] == K_SPECIAL) {
+      break;  // A special key can't be a multibyte char.
+    } else {
+      buf[buf_idx++] = (char)str[str_idx];
+    }
+    buf[buf_idx] = NUL;
 
-    /* Return a multi-byte character if it's found.  An illegal sequence
-     * will result in a 1 here. */
-    if ((*mb_ptr2len)(buf) > 1) {
-      *pp = str + n + 1;
+    // Return a multi-byte character if it's found.  An illegal sequence
+    // will result in a 1 here.
+    if (utf_ptr2len((const char_u *)buf) > 1) {
+      *pp = (const char *)str + buf_idx + 1;
       return buf;
     }
 
-    /* Bail out quickly for ASCII. */
-    if (buf[0] < 128)
+    // Bail out quickly for ASCII.
+    if ((uint8_t)buf[0] < 128) {
       break;
+    }
   }
   return NULL;
 }
