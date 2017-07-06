@@ -443,8 +443,8 @@ There are two ways to map a special key:
 1. The Vi-compatible method: Map the key code.  Often this is a sequence that
    starts with <Esc>.  To enter a mapping like this you type ":map " and then
    you have to type CTRL-V before hitting the function key.  Note that when
-   the key code for the key is in the termcap, it will automatically be
-   translated into the internal code and become the second way of mapping
+   the key code for the key is in the |terminfo| entry, it will automatically
+   be translated into the internal code and become the second way of mapping
    (unless the 'k' flag is included in 'cpoptions').
 2. The second method is to use the internal code for the function key.  To
    enter such a mapping type CTRL-K and then hit the function key, or use

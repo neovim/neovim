@@ -119,7 +119,7 @@ describe('ui/mouse/input', function()
         sel  = { bold=true },
         fill = { reverse=true }
       })
-      screen.timeout = 15000
+      screen.timeout = 6000
     end)
 
     it('in tabline on filler space moves tab to the end', function()
@@ -154,6 +154,7 @@ describe('ui/mouse/input', function()
 
     it('in tabline to the left moves tab left', function()
       if helpers.skip_fragile(pending,
+        true or -- #6851
         os.getenv("TRAVIS") and (helpers.os_name() == "osx"
           or os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN"))  -- #4874
       then
@@ -259,6 +260,7 @@ describe('ui/mouse/input', function()
 
     it('out of tabline to the left moves tab left', function()
       if helpers.skip_fragile(pending,
+        true or -- #6851
         os.getenv("TRAVIS") and (helpers.os_name() == "osx"
           or os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN"))  -- #4874
       then

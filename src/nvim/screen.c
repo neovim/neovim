@@ -4230,7 +4230,6 @@ win_line (
          * (regardless of the xn,am settings).
          * Only do this if the cursor is on the current line
          * (something has been written in it).
-         * Don't do this for the GUI.
          * Don't do this for double-width characters.
          * Don't do this for a window not at the right screen border.
          */
@@ -5847,7 +5846,8 @@ static void screen_char(unsigned off, int row, int col)
     return;
 
   /* Outputting the last character on the screen may scrollup the screen.
-   * Don't to it!  Mark the character invalid (update it when scrolled up) */
+   * Don't to it!  Mark the character invalid (update it when scrolled up)
+   * FIXME: The premise here is not actually true. c.f. deferred wrap */
   if (row == screen_Rows - 1 && col == screen_Columns - 1
       /* account for first command-line character in rightleft mode */
       && !cmdmsg_rl
