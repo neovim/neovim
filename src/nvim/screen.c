@@ -5824,13 +5824,12 @@ static void screen_char(unsigned off, int row, int col)
   if (row >= screen_Rows || col >= screen_Columns)
     return;
 
-  /* Outputting the last character on the screen may scrollup the screen.
-   * Don't to it!  Mark the character invalid (update it when scrolled up)
-   * FIXME: The premise here is not actually true. c.f. deferred wrap */
+  // Outputting the last character on the screen may scrollup the screen.
+  // Don't to it!  Mark the character invalid (update it when scrolled up)
+  // FIXME: The premise here is not actually true (cf. deferred wrap).
   if (row == screen_Rows - 1 && col == screen_Columns - 1
-      /* account for first command-line character in rightleft mode */
-      && !cmdmsg_rl
-      ) {
+      // account for first command-line character in rightleft mode
+      && !cmdmsg_rl) {
     ScreenAttrs[off] = (sattr_T)-1;
     return;
   }

@@ -162,7 +162,7 @@ UI *tui_start(void)
 }
 
 static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
-    char * buf, size_t len)
+                                char * buf, size_t len)
 {
   const char *str = unibi_get_str(data->ut, unibi_index);
   if (!str) {
@@ -223,9 +223,9 @@ static void terminfo_start(UI *ui)
     terminfo_is_term_family(term, "cygwin")
     || terminfo_is_term_family(term, "interix");
   data->normlen = unibi_pre_fmt_str(data, unibi_cursor_normal,
-      data->norm, sizeof data->norm);
+                                    data->norm, sizeof data->norm);
   data->invislen = unibi_pre_fmt_str(data, unibi_cursor_invisible,
-      data->invis, sizeof data->invis);
+                                     data->invis, sizeof data->invis);
   // Set 't_Co' from the result of unibilium & fix_terminfo.
   t_colors = unibi_get_num(data->ut, unibi_max_colors);
   // Enter alternate screen and clear
@@ -539,7 +539,7 @@ static void cursor_goto(UI *ui, int row, int col)
       if (n <= (row == grid->row ? 4 : 2)
           && cheap_to_print(ui, grid->row, grid->col, n)) {
         UGRID_FOREACH_CELL(grid, grid->row, grid->row,
-          grid->col, col - 1, {
+                           grid->col, col - 1, {
           print_cell(ui, cell);
         });
       }
@@ -1254,7 +1254,8 @@ static int unibi_find_ext_bool(unibi_term *ut, const char *name)
 /// external or a built-in database.  In an ideal world, the real terminfo data
 /// would be correct and complete, and this function would be almost empty.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
-    const char *colorterm, long vte_version, bool konsole, bool iterm_env)
+                                const char *colorterm, long vte_version,
+                                bool konsole, bool iterm_env)
 {
   unibi_term *ut = data->ut;
   const char * xterm_version = os_getenv("XTERM_VERSION");
@@ -1296,7 +1297,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     if (linuxvt
         && strlen(fix_normal) >= (sizeof LINUXSET0C - 1)
         && !memcmp(strchr(fix_normal, 0) - (sizeof LINUXSET0C - 1),
-          LINUXSET0C, sizeof LINUXSET0C - 1)) {
+                   LINUXSET0C, sizeof LINUXSET0C - 1)) {
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
       // cursor shape reset in cnorm, which similarly interferes with
       // set_cursor_style.
@@ -1308,7 +1309,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     if (linuxvt
         && strlen(fix_invisible) >= (sizeof LINUXSET1C - 1)
         && !memcmp(strchr(fix_invisible, 0) - (sizeof LINUXSET1C - 1),
-          LINUXSET1C, sizeof LINUXSET1C - 1)) {
+                   LINUXSET1C, sizeof LINUXSET1C - 1)) {
       // The Linux terminfo entry similarly includes a Linux-idiosyncractic
       // cursor shape reset in cinvis, which similarly interferes with
       // set_cursor_style.
@@ -1411,8 +1412,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
-    } else
-    if (konsole || xterm || gnome || rxvt || st || putty
+    } else if (konsole || xterm || gnome || rxvt || st || putty
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || mate_pretending_xterm || gnome_pretending_xterm
         || tmux || tmux_pretending_screen
@@ -1455,23 +1455,23 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         // console-terminal-emulator from the nosh toolset, which does indeed
         // implement the xterm extension:
         || (linuxvt && (xterm_version || (vte_version > 0) || colorterm))) {
-      data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-          "\x1b[%p1%d q");
+      data->unibi_ext.set_cursor_style =
+        (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
               "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-          "\x1b[ q");
-    } else
-    if (putty   // per MinTTY 0.4.3-1 release notes from 2009
+                        "\x1b[ q");
+    } else if (
+        // per MinTTY 0.4.3-1 release notes from 2009
+        putty
         // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
         || (vte_version >= 3900)
         // per tmux manual page and per
         // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
         || screen) {
-      // Since we use the xterm extension, we have to map it to the unextended
-      // form.
+      // Since we use the xterm extension, we must map it to the unextended form
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           "\x1b[%?"
           "%p1%{4}%>" "%t%p1%{2}%-"     // a bit of a bodge for extension values
@@ -1676,7 +1676,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
   }
 
   uv_write(&req, STRUCT_CAST(uv_stream_t, &data->output_handle),
-      bufs, (unsigned)(bufp - bufs), NULL);
+           bufs, (unsigned)(bufp - bufs), NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
 }

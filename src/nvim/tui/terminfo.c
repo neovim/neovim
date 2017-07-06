@@ -84,37 +84,38 @@ unibi_term *load_builtin_terminfo(const char * term)
 {
   if (terminfo_is_term_family(term, "xterm")) {
     return unibi_from_mem((const char *)xterm_256colour_terminfo,
-        sizeof xterm_256colour_terminfo);
+                          sizeof xterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "screen")) {
     return unibi_from_mem((const char *)screen_256colour_terminfo,
-        sizeof screen_256colour_terminfo);
+                          sizeof screen_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "tmux")) {
     return unibi_from_mem((const char *)tmux_256colour_terminfo,
-        sizeof tmux_256colour_terminfo);
+                          sizeof tmux_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "rxvt")) {
     return unibi_from_mem((const char *)rxvt_256colour_terminfo,
-        sizeof rxvt_256colour_terminfo);
+                          sizeof rxvt_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "putty")) {
     return unibi_from_mem((const char *)putty_256colour_terminfo,
-        sizeof putty_256colour_terminfo);
+                          sizeof putty_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "linux")) {
     return unibi_from_mem((const char *)linux_16colour_terminfo,
-        sizeof linux_16colour_terminfo);
+                          sizeof linux_16colour_terminfo);
   } else if (terminfo_is_term_family(term, "interix")) {
     return unibi_from_mem((const char *)interix_8colour_terminfo,
-        sizeof interix_8colour_terminfo);
+                          sizeof interix_8colour_terminfo);
   } else if (terminfo_is_term_family(term, "iterm")
-      || terminfo_is_term_family(term, "iTerm.app")) {
+             || terminfo_is_term_family(term, "iTerm.app")) {
     return unibi_from_mem((const char *)iterm_256colour_terminfo,
-        sizeof iterm_256colour_terminfo);
+                          sizeof iterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "st")) {
     return unibi_from_mem((const char *)st_256colour_terminfo,
-        sizeof st_256colour_terminfo);
+                          sizeof st_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "gnome")
-      || terminfo_is_term_family(term, "vte")) {
+             || terminfo_is_term_family(term, "vte")) {
     return unibi_from_mem((const char *)vte_256colour_terminfo,
-        sizeof vte_256colour_terminfo);
+                          sizeof vte_256colour_terminfo);
   } else {
-    return unibi_from_mem((const char *)ansi_terminfo, sizeof ansi_terminfo);
+    return unibi_from_mem((const char *)ansi_terminfo,
+                          sizeof ansi_terminfo);
   }
 }
