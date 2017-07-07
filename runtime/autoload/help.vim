@@ -12,7 +12,7 @@ function! s:synnames(...) abort
   return reverse(map(synstack(line, col), 'synIDattr(v:val,"name")'))
 endfunction
 
-function! HelpTopic()
+function! help#topic() abort
   let col = col('.') - 1
   while col && getline('.')[col] =~# '\k'
     let col -= 1

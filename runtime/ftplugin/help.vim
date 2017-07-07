@@ -94,4 +94,4 @@ let &cpo = s:cpo_save
 unlet s:cpo_save
 
 " Open the help file when pressing 'K'.
-nnoremap <silent><buffer> K :exe 'help '.HelpTopic()<CR>
+nnoremap <silent><buffer> K :execute 'help' help#topic()<CR>
