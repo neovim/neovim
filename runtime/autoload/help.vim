@@ -1,3 +1,8 @@
+if exists("g:loaded_help")
+  finish
+endif
+let g:loaded_help = 1
+
 function! s:synnames(...) abort
   if a:0
     let [line, col] = [a:1, a:2]
