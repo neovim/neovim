@@ -62,6 +62,8 @@ NEW_TESTS ?= \
 	    test_signs.res \
 	    test_smartindent.res \
 	    test_stat.res \
+	    test_startup.res \
+	    test_startup_utf8.res \
 	    test_substitute.res \
 	    test_syntax.res \
 	    test_tabpage.res \

@@ -247,6 +247,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
  *		stdin)
  * READ_DUMMY	read into a dummy buffer (to check if file contents changed)
  * READ_KEEP_UNDO  don't clear undo info or read it from a file
+ * READ_FIFO	read from fifo/socket instead of a file
  *
  * return FAIL for failure, NOTDONE for directory (failure), or OK
  */
@@ -267,6 +268,7 @@ readfile (
   int filtering = (flags & READ_FILTER);
   int read_stdin = (flags & READ_STDIN);
   int read_buffer = (flags & READ_BUFFER);
+  int	read_fifo = (flags & READ_FIFO);
   int set_options = newfile || read_buffer
                     || (eap != NULL && eap->read_edit);
   linenr_T read_buf_lnum = 1;           /* next line to read from curbuf */
@@ -426,7 +428,7 @@ readfile (
     }
   }
 
-  if (!read_buffer && !read_stdin) {
+  if (!read_buffer && !read_stdin && !read_fifo) {
     perm = os_getperm((const char *)fname);
 #ifdef UNIX
     // On Unix it is possible to read a directory, so we have to
@@ -468,7 +470,7 @@ readfile (
   if (check_readonly && !readonlymode)
     curbuf->b_p_ro = FALSE;
 
-  if (newfile && !read_stdin && !read_buffer) {
+  if (newfile && !read_stdin && !read_buffer && !read_fifo) {
     /* Remember time of file. */
     FileInfo file_info;
     if (os_fileinfo((char *)fname, &file_info)) {
@@ -895,6 +897,7 @@ retry:
      * and we can't do it internally or with iconv().
      */
     if (fio_flags == 0 && !read_stdin && !read_buffer && *p_ccv != NUL
+        && !read_fifo
 #  ifdef USE_ICONV
         && iconv_fd == (iconv_t)-1
 #  endif
@@ -935,7 +938,7 @@ retry:
   /* Set "can_retry" when it's possible to rewind the file and try with
    * another "fenc" value.  It's FALSE when no other "fenc" to try, reading
    * stdin or fixed at a specific encoding. */
-  can_retry = (*fenc != NUL && !read_stdin && !keep_dest_enc);
+  can_retry = (*fenc != NUL && !read_stdin && !keep_dest_enc && !read_fifo);
 
   if (!skip_read) {
     linerest = 0;
@@ -947,6 +950,7 @@ retry:
                       && curbuf->b_ffname != NULL
                       && curbuf->b_p_udf
                       && !filtering
+                      && !read_fifo
                       && !read_stdin
                       && !read_buffer);
     if (read_undo_file)
@@ -1919,7 +1923,7 @@ failed:
     u_read_undo(NULL, hash, fname);
   }
 
-  if (!read_stdin && !read_buffer) {
+  if (!read_stdin && !read_fifo && (!read_buffer || sfname != NULL)) {
     int m = msg_scroll;
     int n = msg_scrolled;
 
@@ -1937,7 +1941,7 @@ failed:
     if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPOST, NULL, sfname,
                            false, curbuf, eap);
-    } else if (newfile) {
+    } else if (newfile || (read_buffer && sfname != NULL)) {
       apply_autocmds_exarg(EVENT_BUFREADPOST, NULL, sfname,
                            false, curbuf, eap);
       if (!au_did_filetype && *curbuf->b_p_ft != NUL) {
