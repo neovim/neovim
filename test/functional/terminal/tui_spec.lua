@@ -317,7 +317,6 @@ end)
 -- does not initialize the TUI.
 describe("tui 't_Co' (terminal colors)", function()
   local screen
-  local is_linux = (helpers.eval("system('uname') =~? 'linux'") == 1)
   local is_freebsd = (helpers.eval("system('uname') =~? 'FreeBSD'") == 1)
 
   local function assert_term_colors(term, colorterm, maxcolors)
