@@ -1568,7 +1568,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			results in X being mapped to:
 				'B' included:	"\^["	 (^[ is a real <Esc>)
 				'B' excluded:	"<Esc>"  (5 characters)
-				('<' excluded in both cases)
 								*cpo-c*
 		c	Searching continues at the end of any match at the
 			cursor position, but not further than the start of the
@@ -1618,15 +1617,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		J	A |sentence| has to be followed by two spaces after
 			the '.', '!' or '?'.  A <Tab> is not recognized as
 			white space.
-								*cpo-k*
-		k	Disable the recognition of raw key codes in
-			mappings, abbreviations, and the "to" part of menu
-			commands.  For example, if <Key> sends ^[OA (where ^[
-			is <Esc>), the command ":map X ^[OA" results in X
-			being mapped to:
-				'k' included:	"^[OA"	 (3 characters)
-				'k' excluded:	"<Key>"  (one key code)
-			Also see the '<' flag below.
 								*cpo-K*
 		K	Don't wait for a key code to complete when it is
 			halfway through a mapping.  This breaks mapping
@@ -1760,14 +1750,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		+	When included, a ":write file" command will reset the
 			'modified' flag of the buffer, even though the buffer
 			itself may still be different from its file.
-								*cpo-<*
-		<	Disable the recognition of special key codes in |<>|
-			form in mappings, abbreviations, and the "to" part of
-			menu commands.  For example, the command
-			":map X <Tab>" results in X being mapped to:
-				'<' included:	"<Tab>"  (5 characters)
-				'<' excluded:	"^I"	 (^I is a real <Tab>)
-			Also see the 'k' flag above.
 								*cpo->*
 		>	When appending to a register, put a line break before
 			the appended text.

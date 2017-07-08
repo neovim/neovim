@@ -490,9 +490,6 @@ expression register: >
 
    :amenu Insert.foobar   "='foobar'<CR>P
 
-Note that the '<' and 'k' flags in 'cpoptions' also apply here (when
-included they make the <> form and raw key codes not being recognized).
-
 Note that <Esc> in Cmdline mode executes the command, like in a mapping.  This
 is Vi compatible.  Use CTRL-C to quit Cmdline mode.
 
@@ -504,21 +501,13 @@ The ":set ic" will not be echoed when using this menu.  Messages from the
 executed command are still given though.  To shut them up too, add a ":silent"
 in the executed command: >
 	:menu <silent> Search.Header :exe ":silent normal /Header\r"<CR>
-"<silent>" may also appear just after "<special>" or "<script>".
-
-					*:menu-<special>* *:menu-special*
-Define a menu with <> notation for special keys, even though the "<" flag
-may appear in 'cpoptions'.  This is useful if the side effect of setting
-'cpoptions' is not desired.  Example: >
-	:menu <special> Search.Header /Header<CR>
-"<special>" must appear as the very first argument to the ":menu" command or
-just after "<silent>" or "<script>".
+"<silent>" may also appear just after "<script>".
 
 						*:menu-<script>* *:menu-script*
 The "to" part of the menu will be inspected for mappings.  If you don't want
 this, use the ":noremenu" command (or the similar one for a specific mode).
 If you do want to use script-local mappings, add "<script>" as the very first
-argument to the ":menu" command or just after "<silent>" or "<special>".
+argument to the ":menu" command or just after "<silent>".
 
 							*menu-priority*
 You can give a priority to a menu.  Menus with a higher priority go more to
