@@ -249,8 +249,7 @@ Vi	"the original".  Without further remarks this is the version
 	of Vi that appeared in Sun OS 4.x.  ":version" returns
 	"Version 3.7, 6/7/85".  Sometimes other versions are referred
 	to.  Only runs under Unix.  Source code only available with a
-	license.  More information on Vi can be found through:
-		http://vi-editor.org	[doesn't currently work...]
+	license.
 							*Nvi*
 Nvi	The "New" Vi.  The version of Vi that comes with BSD 4.4 and FreeBSD.
 	Very good compatibility with the original Vi, with a few extensions.

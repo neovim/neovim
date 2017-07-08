@@ -6,6 +6,8 @@
 
 Nvim							   *nvim* *nvim-intro*
 
+Nvim is based on Vim by Bram Moolenaar.
+
 If you are new to Vim see |help.txt|, or type ":Tutor".
 If you already use Vim see |nvim-from-vim| for a quickstart.
 
