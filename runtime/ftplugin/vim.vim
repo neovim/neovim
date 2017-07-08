@@ -75,3 +75,6 @@ unlet s:cpo_save
 
 " removed this, because 'cpoptions' is a global option.
 " setlocal cpo+=M		" makes \%( match \)
+
+" Open the help file when pressing 'K'.
+nnoremap <silent><buffer> K :execute 'help' help#topic()<CR>
