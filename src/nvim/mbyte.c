@@ -1780,7 +1780,7 @@ const char *mb_unescape(const char **const pp)
     // Return a multi-byte character if it's found.  An illegal sequence
     // will result in a 1 here.
     if (utf_ptr2len((const char_u *)buf) > 1) {
-      *pp = (const char *)str + buf_idx + 1;
+      *pp = (const char *)str + str_idx + 1;
       return buf;
     }
 
