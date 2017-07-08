@@ -4197,7 +4197,7 @@ static char_u * translate_mapping (
         }
         str += 2;
       }
-      if (IS_SPECIAL(c) || modifiers) {         /* special key */
+      if (IS_SPECIAL(c) || modifiers) {         // special key
         if (expmap) {
           ga_clear(&ga);
           return NULL;

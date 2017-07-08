@@ -817,7 +817,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
   while (src <= end) {
     // Check for special <> keycodes, like "<C-S-LeftMouse>"
     if (special && (do_lt || ((end - src) >= 3
-                                 && STRNCMP(src, "<lt>", 4) != 0))) {
+                              && STRNCMP(src, "<lt>", 4) != 0))) {
       // Replace <SID> by K_SNR <script-nr> _.
       // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
       if (end - src >= 4 && STRNICMP(src, "<SID>", 5) == 0) {
