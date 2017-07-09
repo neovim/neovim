@@ -73,6 +73,9 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
+#ifndef WIN32
+# include "nvim/os/pty_process_unix.h"
+#endif
 
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10
@@ -1247,6 +1250,14 @@ static void check_and_set_isatty(mparm_T *paramp)
   stdout_isatty
     = paramp->output_isatty = os_isatty(fileno(stdout));
   paramp->err_isatty = os_isatty(fileno(stderr));
+  int tty_fd = paramp->input_isatty
+    ? OS_STDIN_FILENO
+    : (paramp->output_isatty
+       ? OS_STDOUT_FILENO
+       : (paramp->err_isatty ? OS_STDERR_FILENO : -1));
+#ifndef WIN32
+  pty_process_save_termios(tty_fd);
+#endif
   TIME_MSG("window checked");
 }
 
