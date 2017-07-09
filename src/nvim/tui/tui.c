@@ -1591,7 +1591,6 @@ static void augment_terminfo(TUIData *data, const char *term,
     || konsole  // per commentary in VT102Emulation.cpp
     // per http://lists.schmorp.de/pipermail/rxvt-unicode/2016q2/002261.html
     || rxvt
-    || iterm    // per https://gitlab.com/gnachman/iterm2/issues/218
     || tmux     // per experimentation
     || st       // per experimentation
     || old_truecolor_env;
