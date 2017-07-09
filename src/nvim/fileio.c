@@ -1974,7 +1974,7 @@ failed:
 /// Do not accept "/dev/fd/[012]", opening these may hang Vim.
 ///
 /// @param fname file name to check
-static bool is_dev_fd_file(char_u *fname)
+bool is_dev_fd_file(char_u *fname)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return STRNCMP(fname, "/dev/fd/", 8) == 0

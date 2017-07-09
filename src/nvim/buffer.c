@@ -217,6 +217,9 @@ open_buffer (
 # ifdef S_ISSOCK
           || S_ISSOCK(perm)
 # endif
+# ifdef OPEN_CHR_FILES
+          || (S_ISCHR(perm) && is_dev_fd_file(curbuf->b_ffname))
+# endif
         ))
         read_fifo = TRUE;
     if (read_fifo)
