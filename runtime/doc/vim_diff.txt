@@ -292,6 +292,12 @@ Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
 terminal capabilities. Instead Nvim treats the terminal as any other UI. For
 example, 'guicursor' sets the terminal cursor style if possible.
 
+						  *'term'* *E529* *E530* *E531*
+The 'term' option has a fixed value, present only for script compatibility and
+intentionally not the same as any known terminal type name.  It should be a
+rare case in Nvim where one needs |term-dependent-settings|, for which use the
+|TERM| environment variable.
+
 								*termcap*
 Nvim never uses the termcap database and only uses |terminfo|.  See
 |builtin-terms| for what happens on operating systems without a terminfo
@@ -346,7 +352,6 @@ Other options:
   'shelltype'
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
   *'swapsync'* *'sws'*
-  *'term'* *E529* *E530* *E531*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'
