@@ -1544,7 +1544,10 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
+  bool tmux = terminfo_is_term_family(term, "tmux");
   bool st = terminfo_is_term_family(term, "st");
+  bool gnome = terminfo_is_term_family(term, "gnome")
+    || terminfo_is_term_family(term, "vte");
   bool iterm = terminfo_is_term_family(term, "iterm")
     || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
@@ -1575,8 +1578,11 @@ static void augment_terminfo(TUIData *data, const char *term,
   // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
   int Tc = unibi_find_ext_bool(ut, "Tc");
   // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_standard_rgb = vte_version >= 3600  // per GNOME bug #685759
+  bool has_standard_rgb = false
+    // per GNOME bug #685759 and bug #704449
+    || ((gnome || xterm) && (vte_version >= 3600))
     || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
+    // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
     || true_xterm;
   bool has_non_standard_rgb = -1 != Tc
     // terminfo is definitive if it says something.
@@ -1585,6 +1591,8 @@ static void augment_terminfo(TUIData *data, const char *term,
     || konsole  // per commentary in VT102Emulation.cpp
     // per http://lists.schmorp.de/pipermail/rxvt-unicode/2016q2/002261.html
     || rxvt
+    || iterm    // per https://gitlab.com/gnachman/iterm2/issues/218
+    || tmux     // per experimentation
     || st       // per experimentation
     || old_truecolor_env;
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
