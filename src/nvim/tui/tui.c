@@ -1544,8 +1544,6 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux");
-  bool st = terminfo_is_term_family(term, "st");
   bool gnome = terminfo_is_term_family(term, "gnome")
     || terminfo_is_term_family(term, "vte");
   bool iterm = terminfo_is_term_family(term, "iterm")
@@ -1554,8 +1552,6 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool true_xterm = xterm && !!xterm_version;
   bool tmux_wrap = screen && !!os_getenv("TMUX");
-  bool old_truecolor_env = colorterm
-    && (0 == strcmp(colorterm, "truecolor") || 0 == strcmp(colorterm, "24bit"));
 
   // Only define this capability for terminal types that we know understand it.
   if (dtterm         // originated this extension
@@ -1577,39 +1573,30 @@ static void augment_terminfo(TUIData *data, const char *term,
   // lack the correct definitions in terminfo, is an augmentation, not a
   // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
   int Tc = unibi_find_ext_bool(ut, "Tc");
-  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_standard_rgb = false
+  // means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
+  bool has_colon_rgb = false
     // per GNOME bug #685759 and bug #704449
     || ((gnome || xterm) && (vte_version >= 3600))
     || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
     // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
     || true_xterm;
-  bool has_non_standard_rgb = -1 != Tc
-    // terminfo is definitive if it says something.
-    ? unibi_get_ext_bool(ut, (size_t)Tc)
-    : linuxvt   // Linux 4.8+ supports true-colour SGR.
-    || konsole  // per commentary in VT102Emulation.cpp
-    // per http://lists.schmorp.de/pipermail/rxvt-unicode/2016q2/002261.html
-    || rxvt
-    || tmux     // per experimentation
-    || st       // per experimentation
-    || old_truecolor_env;
+
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
   if (-1 == data->unibi_ext.set_rgb_foreground) {
-    if (has_standard_rgb) {
+    if (has_colon_rgb) {
       data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
           "\x1b[38:2:%p1%d:%p2%d:%p3%dm");
-    } else if (has_non_standard_rgb) {
+    } else {
       data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
           "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
     }
   }
   data->unibi_ext.set_rgb_background = unibi_find_ext_str(ut, "setrgbb");
   if (-1 == data->unibi_ext.set_rgb_background) {
-    if (has_standard_rgb) {
+    if (has_colon_rgb) {
       data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
           "\x1b[48:2:%p1%d:%p2%d:%p3%dm");
-    } else if (has_non_standard_rgb) {
+    } else {
       data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
           "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
     }
