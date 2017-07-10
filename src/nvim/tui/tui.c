@@ -1447,6 +1447,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // https://github.com/gnachman/iTerm2/pull/92 for more.
     // xterm even has an extended version that has a vertical bar.
     if (true_xterm    // per xterm ctlseqs doco (since version 282)
+        // per MinTTY 0.4.3-1 release notes from 2009
+        || putty
+        // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
+        || (vte_version >= 3900)
+        // per tmux manual page and per
+        // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
+        || screen
         || rxvt       // per command.C
         // per analysis of VT100Terminal.m
         || iterm || iterm_pretending_xterm
@@ -1463,26 +1470,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
                         "\x1b[ q");
-    } else if (
-        // per MinTTY 0.4.3-1 release notes from 2009
-        putty
-        // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
-        || (vte_version >= 3900)
-        // per tmux manual page and per
-        // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
-        || screen) {
-      // Since we use the xterm extension, we must map it to the unextended form
-      data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-          "\x1b[%?"
-          "%p1%{4}%>" "%t%p1%{2}%-"     // a bit of a bodge for extension values
-          "%e%p1"              // the conventional codes are just passed through
-          "%;%d q");
-      if (-1 == data->unibi_ext.reset_cursor_style) {
-          data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
-              "");
-      }
-      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-          "\x1b[ q");
     } else if (linuxvt) {
       // Linux uses an idiosyncratic escape code to set the cursor shape and
       // does not support DECSCUSR.
