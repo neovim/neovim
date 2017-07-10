@@ -165,7 +165,16 @@ nvim_input({keys})                                              *nvim_input()*
 
                                                     *nvim_replace_termcodes()*
 nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
-                Replaces any terminal codes with the internal representation
+                Replaces terminal codes and |keycodes| (<CR>, <Esc>, ...) in a
+                string with the internal representation.
+
+                Parameters:~
+                    {str}        String to be converted.
+                    {from_part}  Legacy Vim parameter. Usually true.
+                    {do_lt}      Also translate <lt>. Does nothing if
+                                 `special` is false.
+                    {special}    Replace |keycodes|, e.g. <CR> becomes a "\n"
+                                 char.
 
 nvim_command_output({str})                             *nvim_command_output()*
                 TODO: Documentation
@@ -182,8 +191,10 @@ nvim_eval({expr})                                                *nvim_eval()*
                     Evaluation result or expanded object
 
 nvim_call_function({fname}, {args})                     *nvim_call_function()*
-                Calls a VimL function with the given arguments. On VimL error:
-                Returns a generic error; v:errmsg is not updated.
+                Calls a VimL function with the given arguments
+
+                On VimL error: Returns a generic error; v:errmsg is not
+                updated.
 
                 Parameters:~
                     {fname}  Function to call
@@ -191,6 +202,23 @@ nvim_call_function({fname}, {args})                     *nvim_call_function()*
 
                 Return:~
                     Result of the function call
+
+nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
+                Execute lua code. Parameters might be passed, they are
+                available inside the chunk as `...`. The chunk can return a
+                value.
+
+                To evaluate an expression, it must be prefixed with "return ".
+                For instance, to call a lua function with arguments sent in
+                and get its return value back, use the code "return
+                my_function(...)".
+
+                Parameters:~
+                    {code}  lua code to execute
+                    {args}  Arguments to the code
+
+                Return:~
+                    Return value of lua code if present or NIL.
 
 nvim_strwidth({str})                                         *nvim_strwidth()*
                 Calculates the number of display cells occupied by `text`.
@@ -382,6 +410,17 @@ nvim_get_mode()                                              *nvim_get_mode()*
                 Return:~
                     Dictionary { "mode": String, "blocking": Boolean }
 
+nvim_get_keymap({mode})                                    *nvim_get_keymap()*
+                Get a list of dictionaries describing global (i.e. non-buffer)
+                mappings Note that the "buffer" key will be 0 to represent
+                false.
+
+                Parameters:~
+                    {mode}  The abbreviation for the mode
+
+                Return:~
+                    An array of maparg() like dictionaries describing mappings
+
 nvim_get_api_info()                                      *nvim_get_api_info()*
                 TODO: Documentation
 
@@ -413,6 +452,54 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                     in an error, the error type and the error message. If an
                     error ocurred, the values from all preceding calls will
                     still be returned.
+
+nvim__id({obj})                                                   *nvim__id()*
+                Returns object given as argument
+
+                This API function is used for testing. One should not rely on
+                its presence in plugins.
+
+                Parameters:~
+                    {obj}  Object to return.
+
+                Return:~
+                    its argument.
+
+nvim__id_array({arr})                                       *nvim__id_array()*
+                Returns array given as argument
+
+                This API function is used for testing. One should not rely on
+                its presence in plugins.
+
+                Parameters:~
+                    {arr}  Array to return.
+
+                Return:~
+                    its argument.
+
+nvim__id_dictionary({dct})                             *nvim__id_dictionary()*
+                Returns dictionary given as argument
+
+                This API function is used for testing. One should not rely on
+                its presence in plugins.
+
+                Parameters:~
+                    {dct}  Dictionary to return.
+
+                Return:~
+                    its argument.
+
+nvim__id_float({flt})                                       *nvim__id_float()*
+                Returns floating-point value given as argument
+
+                This API function is used for testing. One should not rely on
+                its presence in plugins.
+
+                Parameters:~
+                    {flt}  Value to return.
+
+                Return:~
+                    its argument.
 
 
 ==============================================================================
@@ -491,6 +578,18 @@ nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
 
                 Return:~
                     b:changedtickvalue.
+
+nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
+                Get a list of dictionaries describing buffer-local mappings
+                Note that the buffer key in the dictionary will represent the
+                buffer handle where the mapping is present
+
+                Parameters:~
+                    {mode}       The abbreviation for the mode
+                    {buffer_id}  Buffer handle
+
+                Return:~
+                    An array of maparg() like dictionaries describing mappings
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable

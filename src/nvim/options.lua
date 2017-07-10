@@ -2513,14 +2513,14 @@ return {
       vi_def=true,
       vim=true,
       varname='p_ttimeout',
-      defaults={if_true={vi=false}}
+      defaults={if_true={vi=true}}
     },
     {
       full_name='ttimeoutlen', abbreviation='ttm',
       type='number', scope={'global'},
       vi_def=true,
       varname='p_ttm',
-      defaults={if_true={vi=-1}}
+      defaults={if_true={vi=50}}
     },
     {
       full_name='ttyfast', abbreviation='tf',

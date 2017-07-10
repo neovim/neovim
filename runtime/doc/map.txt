@@ -149,7 +149,7 @@ type "a", then "bar" will get inserted.
 
 1.2 SPECIAL ARGUMENTS					*:map-arguments*
 
-"<buffer>", "<nowait>", "<silent>", "<special>", "<script>", "<expr>" and
+"<buffer>", "<nowait>", "<silent>", "<script>", "<expr>" and
 "<unique>" can be used in any order.  They must appear right after the
 command, before any other arguments.
 
@@ -189,12 +189,6 @@ Prompts will still be given, e.g., for inputdialog().
 Using "<silent>" for an abbreviation is possible, but will cause redrawing of
 the command line to fail.
 
-						*:map-<special>* *:map-special*
-Define a mapping with <> notation for special keys, even though the "<" flag
-may appear in 'cpoptions'.  This is useful if the side effect of setting
-'cpoptions' is not desired.  Example: >
-	:map <special> <F12> /Header<CR>
-<
 						*:map-<script>* *:map-script*
 If the first argument to one of these commands is "<script>" and it is used to
 define a new mapping or abbreviation, the mapping will only remap characters
@@ -443,17 +437,15 @@ There are two ways to map a special key:
 1. The Vi-compatible method: Map the key code.  Often this is a sequence that
    starts with <Esc>.  To enter a mapping like this you type ":map " and then
    you have to type CTRL-V before hitting the function key.  Note that when
-   the key code for the key is in the termcap, it will automatically be
-   translated into the internal code and become the second way of mapping
-   (unless the 'k' flag is included in 'cpoptions').
+   the key code for the key is in the |terminfo| entry, it will automatically
+   be translated into the internal code and become the second way of mapping.
 2. The second method is to use the internal code for the function key.  To
    enter such a mapping type CTRL-K and then hit the function key, or use
    the form "#1", "#2", .. "#9", "#0", "<Up>", "<S-Down>", "<S-F7>", etc.
    (see table of keys |key-notation|, all keys from <Up> can be used).  The
    first ten function keys can be defined in two ways: Just the number, like
    "#2", and with "<F>", like "<F2>".  Both stand for function key 2.  "#0"
-   refers to function key 10.  The <> form cannot be used when 'cpoptions'
-   includes the '<' flag.
+   refers to function key 10.
 
 DETAIL: Vim first checks if a sequence from the keyboard is mapped.  If it
 isn't the terminal key codes are tried.  If a terminal code is found it is
@@ -571,9 +563,9 @@ Since the '|' character is used to separate a map command from the next
 command, you will have to do something special to include  a '|' in {rhs}.
 There are three methods:
    use	     works when			   example	~
-   <Bar>     '<' is not in 'cpoptions'	   :map _l :!ls <Bar> more^M
+   <Bar>     always			   :map _l :!ls <Bar> more^M
    \|	     'b' is not in 'cpoptions'	   :map _l :!ls \| more^M
-   ^V|	     always, in Vim and Vi	   :map _l :!ls ^V| more^M
+   ^V|	     always			   :map _l :!ls ^V| more^M
 
 (here ^V stands for CTRL-V; to get one CTRL-V you have to type it twice; you
 cannot use the <> notation "<C-V>" here).
@@ -628,8 +620,7 @@ out about, ^D is CTRL-D).
 
 1.8 EXAMPLES						*map-examples*
 
-A few examples (given as you type them, for "<CR>" you type four characters;
-the '<' flag must not be present in 'cpoptions' for this to work). >
+A few examples (as you type them: for "<CR>" you type four characters). >
 
    :map <F3>  o#include
    :map <M-g> /foo<CR>cwbar<Esc>
@@ -881,7 +872,6 @@ character is mostly ignored otherwise.
 
 It is possible to move the cursor after an abbreviation: >
    :iab if if ()<Left>
-This does not work if 'cpoptions' includes the '<' flag. |<>|
 
 You can even do more complicated things.  For example, to consume the space
 typed after an abbreviation: >
@@ -1029,8 +1019,7 @@ functions used in one script use the same name as in other scripts.  To avoid
 this, they can be made local to the script.
 
 						*<SID>* *<SNR>* *E81*
-The string "<SID>" can be used in a mapping or menu.  This requires that the
-'<' flag is not present in 'cpoptions'.
+The string "<SID>" can be used in a mapping or menu.
    When executing the map command, Vim will replace "<SID>" with the special
 key code <SNR>, followed by a number that's unique for the script, and an
 underscore.  Example: >

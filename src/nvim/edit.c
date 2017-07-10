@@ -462,7 +462,7 @@ static void insert_enter(InsertState *s)
 
   // Always update o_lnum, so that a "CTRL-O ." that adds a line
   // still puts the cursor back after the inserted text.
-  if (ins_at_eol && gchar_cursor() == NUL) {
+  if (ins_at_eol) {
     o_lnum = curwin->w_cursor.lnum;
   }
 

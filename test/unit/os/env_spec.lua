@@ -229,10 +229,10 @@ describe('env.c', function()
 
       local src = to_cstr("~"..curuser.."/Vcs/django-rest-framework/rest_framework/renderers.py")
       local dst = cstr(256, "~"..curuser)
-      cimp.expand_env_esc(src, dst, 1024, false, false, NULL)
+      cimp.expand_env_esc(src, dst, 256, false, false, NULL)
       local len = string.len(ffi.string(dst))
       assert.True(len > 56)
-      assert.True(len < 99)
+      assert.True(len < 256)
     end)
 
     itp('respects `dstlen` without expansion', function()

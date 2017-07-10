@@ -1387,11 +1387,32 @@ int tv_dict_add_str(dict_T *const d,
                     const char *const val)
   FUNC_ATTR_NONNULL_ALL
 {
+  return tv_dict_add_allocated_str(d, key, key_len, xstrdup(val));
+}
+
+/// Add a string entry to dictionary
+///
+/// Unlike tv_dict_add_str() saves val to the new dictionary item in place of
+/// creating a new copy.
+///
+/// @warning String will be freed even in case addition fails.
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  val  String to add.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_allocated_str(dict_T *const d,
+                              const char *const key, const size_t key_len,
+                              char *const val)
+  FUNC_ATTR_NONNULL_ALL
+{
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
   item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_STRING;
-  item->di_tv.vval.v_string = (char_u *)xstrdup(val);
+  item->di_tv.vval.v_string = (char_u *)val;
   if (tv_dict_add(d, item) == FAIL) {
     tv_dict_item_free(item);
     return FAIL;

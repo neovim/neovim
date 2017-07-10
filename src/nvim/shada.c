@@ -3413,8 +3413,16 @@ shada_read_next_item_start:
     return mru_ret;
   }
 
-  const size_t length = (size_t) length_u64;
-  entry->timestamp = (Timestamp) timestamp_u64;
+  if (length_u64 > PTRDIFF_MAX) {
+    emsgf(_(RCERR "Error while reading ShaDa file: "
+            "there is an item at position %" PRIu64 " "
+            "that is stated to be too long"),
+          initial_fpos);
+    return kSDReadStatusNotShaDa;
+  }
+
+  const size_t length = (size_t)length_u64;
+  entry->timestamp = (Timestamp)timestamp_u64;
 
   if (type_u64 == 0) {
     // kSDItemUnknown cannot possibly pass that far because it is -1 and that

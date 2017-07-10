@@ -6928,9 +6928,10 @@ char_u *reg_submatch(int no)
           STRNCPY(retval + len, reg_getline_submatch(lnum),
               submatch_mmatch->endpos[no].col);
         len += submatch_mmatch->endpos[no].col;
-        if (round == 2)
-          retval[len] = NUL;
-        ++len;
+        if (round == 2) {
+          retval[len] = NUL;  // -V595
+        }
+        len++;
       }
 
       if (retval == NULL) {

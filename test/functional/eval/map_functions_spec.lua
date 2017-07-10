@@ -1,11 +1,12 @@
-
 local helpers = require('test.functional.helpers')(after_each)
+
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local funcs = helpers.funcs
 local nvim = helpers.nvim
 local source = helpers.source
+local command = helpers.command
 
 describe('maparg()', function()
   before_each(clear)
@@ -116,5 +117,43 @@ describe('maparg()', function()
     local map_dict = funcs.maparg('<C-L>', 'i', false, true)
     eq(1, map_dict['expr'])
     eq('i', map_dict['mode'])
+  end)
+
+  it('works with combining characters', function()
+    -- Using addacutes to make combining character better visible
+    local function ac(s)
+      local acute = '\204\129'  -- U+0301 COMBINING ACUTE ACCENT
+      local ret = s:gsub('`', acute)
+      return ret
+    end
+    command(ac([[
+      nnoremap a  b`
+      nnoremap c` d
+      nnoremap e` f`
+    ]]))
+    eq(ac('b`'), funcs.maparg(ac('a')))
+    eq(ac(''),   funcs.maparg(ac('c')))
+    eq(ac('d'),  funcs.maparg(ac('c`')))
+    eq(ac('f`'), funcs.maparg(ac('e`')))
+
+    local function acmap(lhs, rhs)
+      return {
+        lhs = ac(lhs),
+        rhs = ac(rhs),
+
+        buffer = 0,
+        expr = 0,
+        mode = 'n',
+        noremap = 1,
+        nowait = 0,
+        sid = 0,
+        silent = 0,
+      }
+    end
+
+    eq({}, funcs.maparg(ac('c'),  'n', 0, 1))
+    eq(acmap('a',  'b`'), funcs.maparg(ac('a'),  'n', 0, 1))
+    eq(acmap('c`', 'd'),  funcs.maparg(ac('c`'), 'n', 0, 1))
+    eq(acmap('e`', 'f`'), funcs.maparg(ac('e`'), 'n', 0, 1))
   end)
 end)

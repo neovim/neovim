@@ -57,6 +57,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/os/fileio.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/signal.h"
 #include "nvim/event/process.h"
@@ -766,16 +767,26 @@ static void command_line_scan(mparm_T *parmp)
             version();
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
-            msgpack_sbuffer* b = msgpack_sbuffer_new();
-            msgpack_packer* p = msgpack_packer_new(b, msgpack_sbuffer_write);
+            FileDescriptor fp;
+            const int fof_ret = file_open_fd(&fp, OS_STDOUT_FILENO, true);
+            msgpack_packer *p = msgpack_packer_new(&fp, msgpack_file_write);
+
+            if (fof_ret != 0) {
+              emsgf(_("E5421: Failed to open stdin: %s"), os_strerror(fof_ret));
+            }
+
+            if (p == NULL) {
+              emsgf(_(e_outofmem));
+            }
+
             Object md = DICTIONARY_OBJ(api_metadata());
             msgpack_rpc_from_object(md, p);
 
-            for (size_t i = 0; i < b->size; i++) {
-              putchar(b->data[i]);
-            }
-
             msgpack_packer_free(p);
+            const int ff_ret = file_flush(&fp);
+            if (ff_ret < 0) {
+              msgpack_file_write_error(ff_ret);
+            }
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "headless") == 0) {
             parmp->headless = true;

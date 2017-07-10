@@ -81,58 +81,56 @@
 #define DFLT_FO_VIM     "tcqj"
 #define FO_ALL          "tcroq2vlb1mMBn,awj"    /* for do_set() */
 
-/* characters for the p_cpo option: */
-#define CPO_ALTREAD     'a'     /* ":read" sets alternate file name */
-#define CPO_ALTWRITE    'A'     /* ":write" sets alternate file name */
-#define CPO_BAR         'b'     /* "\|" ends a mapping */
-#define CPO_BSLASH      'B'     /* backslash in mapping is not special */
+// characters for the p_cpo option:
+#define CPO_ALTREAD     'a'     // ":read" sets alternate file name
+#define CPO_ALTWRITE    'A'     // ":write" sets alternate file name
+#define CPO_BAR         'b'     // "\|" ends a mapping
+#define CPO_BSLASH      'B'     // backslash in mapping is not special
 #define CPO_SEARCH      'c'
-#define CPO_CONCAT      'C'     /* Don't concatenate sourced lines */
-#define CPO_DOTTAG      'd'     /* "./tags" in 'tags' is in current dir */
-#define CPO_DIGRAPH     'D'     /* No digraph after "r", "f", etc. */
+#define CPO_CONCAT      'C'     // Don't concatenate sourced lines
+#define CPO_DOTTAG      'd'     // "./tags" in 'tags' is in current dir
+#define CPO_DIGRAPH     'D'     // No digraph after "r", "f", etc.
 #define CPO_EXECBUF     'e'
-#define CPO_EMPTYREGION 'E'     /* operating on empty region is an error */
-#define CPO_FNAMER      'f'     /* set file name for ":r file" */
-#define CPO_FNAMEW      'F'     /* set file name for ":w file" */
-#define CPO_INTMOD      'i'     /* interrupt a read makes buffer modified */
-#define CPO_INDENT      'I'     /* remove auto-indent more often */
-#define CPO_ENDOFSENT   'J'     /* need two spaces to detect end of sentence */
-#define CPO_KEYCODE     'k'     /* don't recognize raw key code in mappings */
-#define CPO_KOFFSET     'K'     /* don't wait for key code in mappings */
-#define CPO_LITERAL     'l'     /* take char after backslash in [] literal */
-#define CPO_LISTWM      'L'     /* 'list' changes wrapmargin */
+#define CPO_EMPTYREGION 'E'     // operating on empty region is an error
+#define CPO_FNAMER      'f'     // set file name for ":r file"
+#define CPO_FNAMEW      'F'     // set file name for ":w file"
+#define CPO_INTMOD      'i'     // interrupt a read makes buffer modified
+#define CPO_INDENT      'I'     // remove auto-indent more often
+#define CPO_ENDOFSENT   'J'     // need two spaces to detect end of sentence
+#define CPO_KOFFSET     'K'     // don't wait for key code in mappings
+#define CPO_LITERAL     'l'     // take char after backslash in [] literal
+#define CPO_LISTWM      'L'     // 'list' changes wrapmargin
 #define CPO_SHOWMATCH   'm'
-#define CPO_MATCHBSL    'M'     /* "%" ignores use of backslashes */
-#define CPO_NUMCOL      'n'     /* 'number' column also used for text */
+#define CPO_MATCHBSL    'M'     // "%" ignores use of backslashes
+#define CPO_NUMCOL      'n'     // 'number' column also used for text
 #define CPO_LINEOFF     'o'
-#define CPO_OVERNEW     'O'     /* silently overwrite new file */
-#define CPO_LISP        'p'     /* 'lisp' indenting */
-#define CPO_FNAMEAPP    'P'     /* set file name for ":w >>file" */
-#define CPO_JOINCOL     'q'     /* with "3J" use column after first join */
+#define CPO_OVERNEW     'O'     // silently overwrite new file
+#define CPO_LISP        'p'     // 'lisp' indenting
+#define CPO_FNAMEAPP    'P'     // set file name for ":w >>file"
+#define CPO_JOINCOL     'q'     // with "3J" use column after first join
 #define CPO_REDO        'r'
-#define CPO_REMMARK     'R'     /* remove marks when filtering */
+#define CPO_REMMARK     'R'     // remove marks when filtering
 #define CPO_BUFOPT      's'
 #define CPO_BUFOPTGLOB  'S'
 #define CPO_TAGPAT      't'
-#define CPO_UNDO        'u'     /* "u" undoes itself */
-#define CPO_BACKSPACE   'v'     /* "v" keep deleted text */
-#define CPO_FWRITE      'W'     /* "w!" doesn't overwrite readonly files */
+#define CPO_UNDO        'u'     // "u" undoes itself
+#define CPO_BACKSPACE   'v'     // "v" keep deleted text
+#define CPO_FWRITE      'W'     // "w!" doesn't overwrite readonly files
 #define CPO_ESC         'x'
-#define CPO_REPLCNT     'X'     /* "R" with a count only deletes chars once */
+#define CPO_REPLCNT     'X'     // "R" with a count only deletes chars once
 #define CPO_YANK        'y'
-#define CPO_KEEPRO      'Z'     /* don't reset 'readonly' on ":w!" */
+#define CPO_KEEPRO      'Z'     // don't reset 'readonly' on ":w!"
 #define CPO_DOLLAR      '$'
 #define CPO_FILTER      '!'
 #define CPO_MATCH       '%'
-#define CPO_PLUS        '+'     /* ":write file" resets 'modified' */
-#define CPO_SPECI       '<'     /* don't recognize <> in mappings */
-#define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
-#define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
-                                 * cursor would not move */
+#define CPO_PLUS        '+'     // ":write file" resets 'modified'
+#define CPO_REGAPPEND   '>'     // insert NL when appending to a register
+#define CPO_SCOLON      ';'     // using "," and ";" will skip over char if
+                                // cursor would not move
 #define CPO_CHANGEW     '_'     // "cw" special-case
 // default values for Vim and Vi
 #define CPO_VIM         "aABceFs_"
-#define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;_"
+#define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+>;_"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"

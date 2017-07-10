@@ -271,7 +271,7 @@ mode.  For example, if you would like the "/" command not to extend the Visual
 area, but instead take the highlighted text and search for that: >
 	:vmap / y/<C-R>"<CR>
 (In the <> notation |<>|, when typing it you should type it literally; you
-need to remove the 'B' and '<' flags from 'cpoptions'.)
+need to remove the 'B' flag from 'cpoptions'.)
 
 If you want to give a register name using the """ command, do this just before
 typing the operator character: "v{move-around}"xd".
@@ -375,7 +375,7 @@ Here is an example, to replace the selected text with the output of "date": >
 	:vmap _a <Esc>`>a<CR><Esc>`<i<CR><Esc>!!date<CR>kJJ
 
 (In the <> notation |<>|, when typing it you should type it literally; you
-need to remove the 'B' and '<' flags from 'cpoptions')
+need to remove the 'B' flag from 'cpoptions')
 
 What this does is:
 <Esc>		stop Visual mode
@@ -392,7 +392,7 @@ selected text: >
 	:vmap X y/<C-R>"<CR>
 
 (In the <> notation |<>|, when typing it you should type it literally; you
-need to remove the 'B' and '<' flags from 'cpoptions')
+need to remove the 'B' flag from 'cpoptions')
 
 Note that special characters (like '.' and '*') will cause problems.
 

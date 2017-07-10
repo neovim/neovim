@@ -319,7 +319,14 @@ end
 -- Dedent the given text and write it to the file name.
 local function write_file(name, text, dont_dedent)
   local file = io.open(name, 'w')
-  if not dont_dedent then
+  if type(text) == 'table' then
+    -- Byte blob
+    local bytes = text
+    text = ''
+    for _, char in ipairs(bytes) do
+      text = ('%s%c'):format(text, char)
+    end
+  elseif not dont_dedent then
     text = dedent(text)
   end
   file:write(text)
@@ -337,11 +344,23 @@ local function read_file(name)
   return ret
 end
 
+local sourced_fnames = {}
 local function source(code)
   local fname = tmpname()
   write_file(fname, code)
   nvim_command('source '..fname)
-  os.remove(fname)
+  -- DO NOT REMOVE FILE HERE.
+  -- do_source() has a habit of checking whether files are “same” by using inode
+  -- and device IDs. If you run two source() calls in quick succession there is
+  -- a good chance that underlying filesystem will reuse the inode, making files
+  -- appear as “symlinks” to do_source when it checks FileIDs. With current
+  -- setup linux machines (both QB, travis and mine(ZyX-I) with XFS) do reuse
+  -- inodes, Mac OS machines (again, both QB and travis) do not.
+  --
+  -- Files appearing as “symlinks” mean that both the first and the second
+  -- source() calls will use same SID, which may fail some tests which check for
+  -- exact numbers after `<SNR>` in e.g. function names.
+  sourced_fnames[#sourced_fnames + 1] = fname
   return fname
 end
 
@@ -673,6 +692,9 @@ local module = {
 return function(after_each)
   if after_each then
     after_each(function()
+      for _, fname in ipairs(sourced_fnames) do
+        os.remove(fname)
+      end
       check_logs()
       check_cores('build/bin/nvim')
     end)

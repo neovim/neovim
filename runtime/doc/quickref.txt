@@ -571,8 +571,8 @@ In Insert or Command-line mode:
 *Q_op*		Options
 
 |:set|		:se[t]			  show all modified options
-|:set|		:se[t] all		  show all non-termcap options
-|:set|		:se[t] termcap		  show all termcap options
+|:set|		:se[t] all		  show all options
+|:set|		:se[t] termcap		  Do nothing. (|terminfo|)
 |:set|		:se[t] {option}		  set boolean option (switch it on),
 					  show string or number option
 |:set|		:se[t] no{option}	  reset boolean option (switch it off)

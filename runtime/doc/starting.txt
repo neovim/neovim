@@ -214,7 +214,7 @@ argument.
 			:set      to display option values.
 		When 'verbose' is non-zero messages are printed (for
 		debugging, to stderr).
-		$TERM is not used.
+		$TERM (see |TERM|) is not used.
 		If Vim appears to be stuck try typing "qa!<Enter>".  You don't
 		get a prompt thus you can't see Vim is waiting for you to type
 		something.
@@ -355,7 +355,7 @@ argument.
 At startup, Vim checks environment variables and files and sets values
 accordingly.  Vim proceeds in this order:
 
-1. Set the 'shell' option		*SHELL* *COMSPEC* *TERM*
+1. Set the 'shell' option			*SHELL* *COMSPEC*
 	The environment variable SHELL, if it exists, is used to set the
 	'shell' option.  On Windows, the COMSPEC variable is used
 	if SHELL is not set.
