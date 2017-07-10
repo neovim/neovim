@@ -1473,18 +1473,22 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     } else if (linuxvt) {
       // Linux uses an idiosyncratic escape code to set the cursor shape and
       // does not support DECSCUSR.
+      // See http://linuxgazette.net/137/anonymous.html for more info
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           "\x1b[?"
           "%?"
           // The parameter passed to Ss is the DECSCUSR parameter, so the
           // terminal capability has to translate into the Linux idiosyncratic
           // parameter.
+          //
+          // linuxvt only supports block and underline. It is also only
+          // possible to have a steady block (no steady underline)
           "%p1%{2}%<" "%t%{8}"    // blink block
-          "%p1%{2}%=" "%t%{24}"   // steady block
-          "%p1%{3}%=" "%t%{1}"    // blink underline
-          "%p1%{4}%=" "%t%{17}"   // steady underline
-          "%p1%{5}%=" "%t%{1}"    // blink bar
-          "%p1%{6}%=" "%t%{17}"   // steady bar
+          "%e%p1%{2}%=" "%t%{112}"   // steady block
+          "%e%p1%{3}%=" "%t%{4}"    // blink underline
+          "%e%p1%{4}%=" "%t%{4}"   // steady underline
+          "%e%p1%{5}%=" "%t%{2}"    // blink bar (there is no bar cursor shape)
+          "%e%p1%{6}%=" "%t%{2}"   // steady bar
           "%e%{0}"                // anything else
           "%;" "%dc");
       if (-1 == data->unibi_ext.reset_cursor_style) {
