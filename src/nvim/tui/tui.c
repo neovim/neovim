@@ -1440,7 +1440,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   // terminfo, is a fixup, not an augmentation.
   data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
   data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
-  if (-1 == data->unibi_ext.set_cursor_style) {
+  if (-1 == data->unibi_ext.set_cursor_style || konsole) {
     // The DECSCUSR sequence to change the cursor shape is widely
     // supported by several terminal types and should be in many
     // teminfo entries.  See
@@ -1503,14 +1503,14 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       // nonce profile, which has side-effects on temporary font resizing.
       // In an ideal world, Konsole would just support DECSCUSR.
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-          "\x1b]50;CursorShape=%?"
+          TMUX_WRAP(tmux, "\x1b]50;CursorShape=%?"
           "%p1%{3}%<" "%t%{0}"    // block
           "%e%p1%{4}%<" "%t%{2}"  // underline
           "%e%{1}"                // everything else is bar
           "%;%d;BlinkingCursorEnabled=%?"
           "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
           "%e%p1%{1}%&"  // in all other cases we can treat bit #0 as a flag.
-          "%;%d\x07");
+          "%;%d\x07"));
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
               "");
