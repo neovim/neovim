@@ -1390,13 +1390,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   }
 
 #define XTERM_SETAF_256 \
-  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38:5:%p1%d%;m"
-#define XTERM_SETAB_256 \
-  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48:5:%p1%d%;m"
-  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-#define XTERM_SETAF_256_NONSTANDARD \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
-#define XTERM_SETAB_256_NONSTANDARD \
+#define XTERM_SETAB_256 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 #define XTERM_SETAF_16 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
@@ -1408,11 +1403,15 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals for
     // more on this.
-    if (true_xterm || iterm || iterm_pretending_xterm) {
-      unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
-    } else if (konsole || xterm || gnome || rxvt || st || putty
+    if (true_xterm
+        || iterm
+        || iterm_pretending_xterm
+        || konsole
+        || xterm
+        || gnome
+        || rxvt
+        || st
+        || putty
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || mate_pretending_xterm || gnome_pretending_xterm
         || tmux || tmux_pretending_screen
@@ -1420,8 +1419,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         || (term && strstr(term, "256"))
         ) {
       unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_NONSTANDARD);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_NONSTANDARD);
+      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
+      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
     }
   }
   // Terminals where there is actually 16-colour SGR support despite what
@@ -1572,31 +1571,22 @@ static void augment_terminfo(TUIData *data, const char *term,
   // them to terminal types, that do actually have such control sequences but
   // lack the correct definitions in terminfo, is an augmentation, not a
   // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
-  int Tc = unibi_find_ext_bool(ut, "Tc");
-  // means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_colon_rgb = false
+
+  // Black list for known terminals that do not support rbg codes
+  bool has_no_rgb = false
     // per GNOME bug #685759 and bug #704449
-    || ((gnome || xterm) && (vte_version >= 3600))
-    || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
-    // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
-    || true_xterm;
+    || ((vte_version != 0) && (vte_version < 3600));
 
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
   if (-1 == data->unibi_ext.set_rgb_foreground) {
-    if (has_colon_rgb) {
-      data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
-          "\x1b[38:2:%p1%d:%p2%d:%p3%dm");
-    } else {
+    if (!has_no_rgb) {
       data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
           "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
     }
   }
   data->unibi_ext.set_rgb_background = unibi_find_ext_str(ut, "setrgbb");
   if (-1 == data->unibi_ext.set_rgb_background) {
-    if (has_colon_rgb) {
-      data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
-          "\x1b[48:2:%p1%d:%p2%d:%p3%dm");
-    } else {
+    if (!has_no_rgb) {
       data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
           "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
     }
