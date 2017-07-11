@@ -5533,7 +5533,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
   }
   if (id < -1 || id == 0) {
     EMSGN(_("E799: Invalid ID: %" PRId64
-          " (must be greater than or equal to 1)"),
+            " (must be greater than or equal to 1)"),
           id);
     return -1;
   }
@@ -5705,10 +5705,11 @@ int match_delete(win_T *wp, int id, int perr)
   int rtype = SOME_VALID;
 
   if (id < 1) {
-    if (perr == TRUE)
+    if (perr) {
       EMSGN(_("E802: Invalid ID: %" PRId64
-            " (must be greater than or equal to 1)"),
+              " (must be greater than or equal to 1)"),
             id);
+    }
     return -1;
   }
   while (cur != NULL && cur->id != id) {
@@ -5716,8 +5717,9 @@ int match_delete(win_T *wp, int id, int perr)
     cur = cur->next;
   }
   if (cur == NULL) {
-    if (perr == TRUE)
+    if (perr) {
       EMSGN(_("E803: ID not found: %" PRId64), id);
+    }
     return -1;
   }
   if (cur == prev)

@@ -5023,8 +5023,9 @@ static void helptags_one(char_u *dir, char_u *ext, char_u *tagfname,
   if (gen_expand_wildcards(1, buff_list, &filecount, &files,
           EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {
-    if (!got_int)
+    if (!got_int) {
       EMSG2(_("E151: No match: %s"), NameBuff);
+    }
     return;
   }
 
