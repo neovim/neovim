@@ -91,21 +91,21 @@ static char *e_auabort = N_("E855: Autocommands caused command to abort");
 // Number of times free_buffer() was called.
 static int buf_free_count = 0;
 
-/* Read data from buffer for retrying. */
+// Read data from buffer for retrying.
 static int
 read_buffer(
-    int     read_stdin,     /* read file from stdin, otherwise fifo */
-    exarg_T *eap,           /* for forced 'ff' and 'fenc' or NULL */
-    int     flags)          /* extra flags for readfile() */
+    int     read_stdin,     // read file from stdin, otherwise fifo
+    exarg_T *eap,           // for forced 'ff' and 'fenc' or NULL
+    int     flags)          // extra flags for readfile()
 {
   int       retval = OK;
   linenr_T  line_count;
 
-  /*
-   * Read from the buffer which the text is already filled in and append at
-   * the end.  This makes it possible to retry when 'fileformat' or
-   * 'fileencoding' was guessed wrong.
-   */
+  //
+  // Read from the buffer which the text is already filled in and append at
+  // the end.  This makes it possible to retry when 'fileformat' or
+  // 'fileencoding' was guessed wrong.
+  //
   line_count = curbuf->b_ml.ml_line_count;
   retval = readfile(
       read_stdin ? NULL : curbuf->b_ffname,
@@ -113,27 +113,30 @@ read_buffer(
       (linenr_T)line_count, (linenr_T)0, (linenr_T)MAXLNUM, eap,
       flags | READ_BUFFER);
   if (retval == OK) {
-    /* Delete the binary lines. */
-    while (--line_count >= 0)
-      ml_delete((linenr_T)1, FALSE);
+    // Delete the binary lines.
+    while (--line_count >= 0) {
+      ml_delete((linenr_T)1, false);
+    }
   } else {
-    /* Delete the converted lines. */
-    while (curbuf->b_ml.ml_line_count > line_count)
-      ml_delete(line_count, FALSE);
+    // Delete the converted lines.
+    while (curbuf->b_ml.ml_line_count > line_count) {
+      ml_delete(line_count, false);
+    }
   }
-  /* Put the cursor on the first line. */
+  // Put the cursor on the first line.
   curwin->w_cursor.lnum = 1;
   curwin->w_cursor.col = 0;
 
   if (read_stdin) {
-    /* Set or reset 'modified' before executing autocommands, so that
-     * it can be changed there. */
-    if (!readonlymode && !bufempty())
+    // Set or reset 'modified' before executing autocommands, so that
+    // it can be changed there.
+    if (!readonlymode && !bufempty()) {
       changed();
-    else if (retval != FAIL)
-      unchanged(curbuf, FALSE);
+    } else if (retval != FAIL) {
+      unchanged(curbuf, false);
+    }
 
-    apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, FALSE,
+    apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, false,
                           curbuf, &retval);
   }
   return retval;
@@ -154,7 +157,7 @@ open_buffer (
   int retval = OK;
   bufref_T       old_curbuf;
   long old_tw = curbuf->b_p_tw;
-  int read_fifo = FALSE;
+  int read_fifo = false;
 
   /*
    * The 'readonly' flag is only set when BF_NEVERLOADED is being reset.
@@ -212,18 +215,22 @@ open_buffer (
     perm = os_getperm((const char *)curbuf->b_ffname);
     if (perm >= 0 && (0
 # ifdef S_ISFIFO
-          || S_ISFIFO(perm)
+                      || S_ISFIFO(perm)
 # endif
 # ifdef S_ISSOCK
-          || S_ISSOCK(perm)
+                      || S_ISSOCK(perm)
 # endif
 # ifdef OPEN_CHR_FILES
-          || (S_ISCHR(perm) && is_dev_fd_file(curbuf->b_ffname))
+                      || (S_ISCHR(perm)
+                          && is_dev_fd_file(curbuf->b_ffname))
 # endif
-        ))
-        read_fifo = TRUE;
-    if (read_fifo)
-        curbuf->b_p_bin = TRUE;
+                      )
+        ) {
+      read_fifo = true;
+    }
+    if (read_fifo) {
+      curbuf->b_p_bin = true;
+    }
 #endif
     if (shortmess(SHM_FILEINFO)) {
       msg_silent = 1;
@@ -235,8 +242,9 @@ open_buffer (
 #ifdef UNIX
     if (read_fifo) {
       curbuf->b_p_bin = save_bin;
-      if (retval == OK)
-      retval = read_buffer(FALSE, eap, flags);
+      if (retval == OK) {
+        retval = read_buffer(false, eap, flags);
+      }
     }
 #endif
     msg_silent = old_msg_silent;
@@ -246,7 +254,7 @@ open_buffer (
       fix_help_buffer();
     }
   } else if (read_stdin) {
-    int	save_bin = curbuf->b_p_bin;
+    int save_bin = curbuf->b_p_bin;
 
     /*
      * First read the text in binary mode into the buffer.
@@ -259,14 +267,14 @@ open_buffer (
         (linenr_T)0, (linenr_T)MAXLNUM, NULL,
         flags | (READ_NEW + READ_STDIN));
     curbuf->b_p_bin = save_bin;
-    if (retval == OK)
-	    retval = read_buffer(TRUE, eap, flags);
-    
+    if (retval == OK) {
+      retval = read_buffer(true, eap, flags);
+    }
   }
 
   /* if first time loading this buffer, init b_chartab[] */
   if (curbuf->b_flags & BF_NEVERLOADED) {
-    (void)buf_init_chartab(curbuf, FALSE);
+    (void)buf_init_chartab(curbuf, false);
     parse_cino(curbuf);
   }
 
@@ -463,8 +471,8 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
       return;
     }
 
-    /* When the buffer becomes hidden, but is not unloaded, trigger
-     * BufHidden */
+    // When the buffer becomes hidden, but is not unloaded, trigger
+    // BufHidden
     if (!unload_buf) {
       buf->b_locked++;
       if (apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, false,

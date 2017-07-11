@@ -268,7 +268,7 @@ readfile (
   int filtering = (flags & READ_FILTER);
   int read_stdin = (flags & READ_STDIN);
   int read_buffer = (flags & READ_BUFFER);
-  int	read_fifo = (flags & READ_FIFO);
+  int read_fifo = (flags & READ_FIFO);
   int set_options = newfile || read_buffer
                     || (eap != NULL && eap->read_edit);
   linenr_T read_buf_lnum = 1;           /* next line to read from curbuf */
@@ -471,7 +471,7 @@ readfile (
     curbuf->b_p_ro = FALSE;
 
   if (newfile && !read_stdin && !read_buffer && !read_fifo) {
-    /* Remember time of file. */
+    // Remember time of file.
     FileInfo file_info;
     if (os_fileinfo((char *)fname, &file_info)) {
       buf_store_file_info(curbuf, &file_info);
