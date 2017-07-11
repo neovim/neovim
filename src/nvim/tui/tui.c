@@ -1538,18 +1538,14 @@ static void augment_terminfo(TUIData *data, const char *term,
   const char * xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm");
   bool dtterm = terminfo_is_term_family(term, "dtterm");
-  bool linuxvt = terminfo_is_term_family(term, "linux");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool gnome = terminfo_is_term_family(term, "gnome")
-    || terminfo_is_term_family(term, "vte");
   bool iterm = terminfo_is_term_family(term, "iterm")
     || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool true_xterm = xterm && !!xterm_version;
   bool tmux_wrap = screen && !!os_getenv("TMUX");
 
   // Only define this capability for terminal types that we know understand it.
@@ -1598,7 +1594,9 @@ static void augment_terminfo(TUIData *data, const char *term,
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP(tmux_wrap, "\033]Pl%p1%06x\033\\"));
-  } else if (xterm) {
+  } else if (xterm || (vte_version != 0) || rxvt) {
+    // This seems to be supported for a long time in VTE
+    // urxvt also supports this
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, "\033]12;#%p1%06x\007");
   }
