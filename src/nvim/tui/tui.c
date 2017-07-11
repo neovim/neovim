@@ -1236,18 +1236,6 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
   return -1;
 }
 
-static int unibi_find_ext_bool(unibi_term *ut, const char *name)
-{
-  size_t max = unibi_count_ext_bool(ut);
-  for (size_t i = 0; i < max; i++) {
-    const char * n = unibi_get_ext_bool_name(ut, i);
-    if (n && 0 == strcmp(n, name)) {
-      return (int)i;
-    }
-  }
-  return -1;
-}
-
 /// Several entries in terminfo are known to be deficient or outright wrong,
 /// unfortunately; and several terminal emulators falsely announce incorrect
 /// terminal types.  So patch the terminfo records after loading from an
