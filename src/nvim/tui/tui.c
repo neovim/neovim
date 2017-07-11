@@ -1535,7 +1535,6 @@ static void augment_terminfo(TUIData *data, const char *term,
     const char *colorterm, long vte_version, bool konsole, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  const char * xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm");
   bool dtterm = terminfo_is_term_family(term, "dtterm");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
