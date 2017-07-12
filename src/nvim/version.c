@@ -77,10 +77,10 @@ static char *features[] = {
 
 // clang-format off
 static const int included_patches[] = {
-  // 2367,NA
+  // 2367 NA
   // 2366 NA
   // 2365 NA
-  // 2364,NA
+  // 2364 NA
   // 2363 NA
   2362,
   // 2361 NA
