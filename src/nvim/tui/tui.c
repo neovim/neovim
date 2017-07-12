@@ -1377,14 +1377,21 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // No bugs in the vanilla terminfo for our purposes.
   }
 
-#define XTERM_SETAF_256 \
+// At this time (2017-07-12) it seems like all terminals that support 256
+// color codes can use semicolons in the terminal code and be fine.
+// However, this is not correct according to the spec. So to reward those
+// terminals that also support colons, we output the code that way on these
+// specific ones.
+
+// using colons like ISO 8613-6:1994/ITU T.416:1993 says.
+#define XTERM_SETAF_256_COLON \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38:5:%p1%d%;m"
-#define XTERM_SETAB_256 \
+#define XTERM_SETAB_256_COLON \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48:5:%p1%d%;m"
-  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-#define XTERM_SETAF_256_NONSTANDARD \
+
+#define XTERM_SETAF_256 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
-#define XTERM_SETAB_256_NONSTANDARD \
+#define XTERM_SETAB_256 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 #define XTERM_SETAF_16 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
@@ -1398,8 +1405,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // more on this.
     if (true_xterm || iterm || iterm_pretending_xterm) {
       unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
+      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
+      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
     } else if (konsole || xterm || gnome || rxvt || st || putty
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || mate_pretending_xterm || gnome_pretending_xterm
@@ -1408,8 +1415,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         || (term && strstr(term, "256"))
         ) {
       unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_NONSTANDARD);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_NONSTANDARD);
+      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
+      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
     }
   }
   // Terminals where there is actually 16-colour SGR support despite what
@@ -1555,8 +1562,14 @@ static void augment_terminfo(TUIData *data, const char *term,
   // them to terminal types, that do actually have such control sequences but
   // lack the correct definitions in terminfo, is an augmentation, not a
   // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
-  int Tc = unibi_find_ext_bool(ut, "Tc");
-  // means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
+
+  // At this time (2017-07-12) it seems like all terminals that support rgb
+  // color codes can use semicolons in the terminal code and be fine.
+  // However, this is not correct according to the spec. So to reward those
+  // terminals that also support colons, we output the code that way on these
+  // specific ones.
+
+  // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
   bool has_colon_rgb = false
     // per GNOME bug #685759 and bug #704449
     || ((gnome || xterm) && (vte_version >= 3600))
