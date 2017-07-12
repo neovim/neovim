@@ -826,8 +826,13 @@ char_u *vim_findfile(void *search_ctx_arg)
                 stackp->ffs_filearray_cur = (char_u)(i + 1);
                 ff_push(search_ctx, stackp);
 
-                if (!path_with_url((char *)file_path))
-                  simplify_filename(file_path);
+                if (path_with_url((char *)file_path)) {
+                  *file_path = NUL;
+                  return file_path;
+                }
+
+                simplify_filename(file_path);
+
                 if (os_dirname(ff_expand_buffer, MAXPATHL)
                     == OK) {
                   p = path_shorten_fname(file_path,
