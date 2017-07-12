@@ -6,6 +6,12 @@ local feed_data = thelpers.feed_data
 local feed_command = helpers.feed_command
 local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
+local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
+  nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
+  helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
+  helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
+  helpers.nvim_dir, helpers.ok, helpers.source,
+  helpers.write_file, helpers.mkdir, helpers.rmdir
 
 if helpers.pending_win32(pending) then return end
 
@@ -571,5 +577,157 @@ describe("tui 't_Co' (terminal colors)", function()
   it("TERM=iterm uses 256 colors", function()
     assert_term_colors("iterm", nil, 256)
   end)
+end)
 
+describe('tui guicursor handling', function()
+  -- poor man test for guicursor (mostly VTE)
+  -- setup the guicursor
+  -- then check that some sequences are sent
+
+  -- local screen
+  local vte_cursor = function (shape, blink)
+    local x = ""
+    -- also called beam
+    if shape == "ver" then
+      x = 5
+    elseif shape == "block" then
+      x = 1
+    elseif shape == "under" then
+      x = 3
+    else
+      assert (0, "invalid shape")
+    end
+
+    if not blink then
+      x = x + 1
+    end
+    -- escape the magic character '[' with '%' hence the '%['
+    -- prepend %\27 ?
+    -- "%["..
+    return "%["..x.." q"
+  end
+
+
+  -- local osc_reset = "\x1b]112"
+  -- local beam_cursor = "\x1b["..x.."q"
+  -- local block = "\x1b[1 q"
+  -- local = "\x1b[1 q"
+  -- "\27[1 q"
+  -- local shape_block = vte_cursor('block')
+  -- local shape_hor = "\27[3 q"
+  -- local shape_ver = "\27%[5 q"
+
+  before_each(function()
+    helpers.clear()
+    local channel = nvim('get_api_info')[1]
+    nvim('set_var', 'channel', channel)
+    -- Use a nested nvim (in :term) to test without --headless.
+    -- feed_command(":terminal '"..helpers.nvim_prog)
+    -- screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
+      -- ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
+    helpers.source([[
+    function! s:OnOut(id, data, event) dict
+      let userdata = get(self, 'user')
+      let data     = a:data
+
+      " userdata
+      call rpcnotify(g:channel, "onout", data)
+    endfunction
+
+    function! s:OnEvent(id, data, event) dict
+      let userdata = get(self, 'user')
+      let data     = a:data
+      call rpcnotify(g:channel, a:event, userdata, data)
+    endfunction
+    let g:job_opts = {
+    \ 'on_stdout': function('s:OnOut'),
+    \ 'on_stderr': function('s:OnEvent'),
+    \ 'on_exit': function('s:OnEvent'),
+    \ 'pty': 1,
+    \ 'user': 0
+    \ }
+    ]])
+    -- luaeval
+    -- \ 'TERM': 1,
+
+  end)
+
+
+  local gen = function(startup_options, input, pattern)
+    -- make sure your pattern has escaped characters such as [,] else
+    -- lua may return some errors
+    print("nvim prog: " .. helpers.nvim_prog)
+    if helpers.iswin() then
+      pending()
+    else
+      --star[tinsert][!]
+
+      -- look for examples in gdb printer or terminal/helpers.lua
+      -- cf feed_termcode etc
+      -- '--cmd', 'call feedkeys(\"itoto\")'
+      local cmds= ""
+      for _, cmd in ipairs(startup_options)
+      do
+        cmds = cmds..', "--cmd", "'..cmd..'"'
+      end
+
+      print("commands=", cmds)
+      nvim('command', "let j = jobstart([ '".. helpers.nvim_prog.."', '-u', 'NONE', '-i', 'NONE', '--cmd', 'set noswapfile noshowcmd noruler shortmess=I'"..cmds.."  ], g:job_opts)")
+      -- to send data to the job
+      -- for i in ipairs(startup_options):
+      nvim('command', 'call jobsend(j, "'..input..'\\x1b:q!\n")')
+    end
+
+    -- todo set guicursor to interesting value
+    -- print("matches =", nvim('get_option', 'guicursor'))
+    -- print("matches =", nvim('get_var', 'nb_match'))
+
+    local buffer = ""
+    for i=10,1,-1
+    do
+      local msg = next_msg(50)
+      local pp = require('pl.pretty')
+      pp.dump(msg)
+      if msg ~= nil  then
+        if msg[2] ~= "exit" then
+          local args = msg[3]
+          local line = (args[1])[1]
+          buffer = buffer..line
+        end
+      end
+    end
+
+    print(buffer)
+    print("pattern = "..pattern)
+    ok(buffer:find(pattern) ~= nil)
+
+  end -- end of gen
+
+  it('VTE guicursor', function()
+    local shape_ver_noblink = vte_cursor('ver', false)
+    local shape_block_noblink = vte_cursor('block', false)
+    local pattern = shape_ver_noblink.."(.*)toto(.*)"..shape_block_noblink
+    -- :append (line("."), "zaza")
+    -- :append (line(\".\"), \"zaza\")
+    -- \x1b\x1b:q!
+    gen( {'set guicursor=n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20'}, [[itoto\x1b\x1b:q!\n]], pattern)
+  end)
+
+  -- it('VTE invisible cursor ', function()
+  --
+  --   -- local shape_ver_noblink = vte_cursor('ver', false)
+  --   -- local shape_block_noblink = vte_cursor('block', false)
+  --   local pattern = "\x1b%[?25l"
+  --   -- :append (line("."), "zaza")
+  --   -- :append (line(\".\"), \"zaza\")
+  --   -- \x1b\x1b:q!
+  --   -- TODO set tgc
+  --   local cmds = {
+  --     'set termguicolors',
+  --     'set guicursor=n-v-c:block-Cursor/lCursor,ve:ver35-Cursor,o:hor50-Cursor,i-ci:ver25-Cursor/lCursor,r-cr:hor20-Cursor/lCursor',
+  --     'hi Cursor guibg=NONE'
+  --   }
+  --   gen(cmds, [[itoto\x1b\x1b:q!\n]], pattern)
+  --   -- eq({'notification', 'exit', {0, 0}}, next_msg())
+  -- end)
 end)
