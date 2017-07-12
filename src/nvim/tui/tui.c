@@ -1543,6 +1543,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool tmux_wrap = screen && !!os_getenv("TMUX");
 
+  const char * xterm_version = os_getenv("XTERM_VERSION");
+  bool true_xterm = xterm && !!xterm_version;
+
   // Only define this capability for terminal types that we know understand it.
   if (dtterm         // originated this extension
       || xterm       // per xterm ctlseqs doco
@@ -1572,7 +1575,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
   bool has_colon_rgb = false
     // per GNOME bug #685759 and bug #704449
-    || ((gnome || xterm) && (vte_version >= 3600))
+    || (vte_version >= 3600)
     || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
     // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
     || true_xterm;
