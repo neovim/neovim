@@ -1493,9 +1493,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
           // possible to have a steady block (no steady underline)
           "%p1%{2}%<" "%t%{8}"    // blink block
           "%e%p1%{2}%=" "%t%{112}"   // steady block
-          "%e%p1%{3}%=" "%t%{4}"    // blink underline
+          "%e%p1%{3}%=" "%t%{4}"    // blink underline (set to half block)
           "%e%p1%{4}%=" "%t%{4}"   // steady underline
-          "%e%p1%{5}%=" "%t%{2}"    // blink bar (there is no bar cursor shape)
+          "%e%p1%{5}%=" "%t%{2}"    // blink bar (set to underline)
           "%e%p1%{6}%=" "%t%{2}"   // steady bar
           "%e%{0}"                // anything else
           "%;" "%dc");
@@ -1513,7 +1513,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           TMUX_WRAP(tmux, "\x1b]50;CursorShape=%?"
           "%p1%{3}%<" "%t%{0}"    // block
-          "%e%p1%{4}%<" "%t%{2}"  // underline
+          "%e%p1%{5}%<" "%t%{2}"  // underline
           "%e%{1}"                // everything else is bar
           "%;%d;BlinkingCursorEnabled=%?"
           "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
