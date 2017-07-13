@@ -36,9 +36,7 @@ endif
 " Mappings: {{{1
 
 call tutor#SetNormalMappings()
-if exists('b:tutor_metadata') && b:tutor_metadata['settings']['use_maps'] == 1
-    call tutor#SetSampleTextMappings()
-endif
+" call tutor#SetSampleTextMappings()
 
 " Checks: {{{1
 
@@ -46,11 +44,6 @@ sign define tutorok text=✓ texthl=tutorOK
 sign define tutorbad text=✗ texthl=tutorX
 
 if !exists('g:tutor_debug') || g:tutor_debug == 0
-    if !(exists('b:tutor_metadata') && b:tutor_metadata['settings']['check_internal_expects'] == '0')
-	call tutor#PlaceXMarks()
-	autocmd! TextChanged,TextChangedI <buffer> call tutor#XmarksOnTextChanged()
-    else
-	call tutor#ApplyMarks()
-	autocmd! TextChanged,TextChangedI <buffer> call tutor#ApplyMarksOnChanged()
-    endif
+    call tutor#ApplyMarks()
+    autocmd! TextChanged,TextChangedI <buffer> call tutor#ApplyMarksOnChanged()
 endif

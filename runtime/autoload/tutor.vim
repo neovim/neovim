@@ -17,30 +17,6 @@ endfunction
 
 " Mappings: {{{1
 
-function! s:CheckMaps()
-    nmap
-endfunction
-
-function! s:MapKeyWithRedirect(key, cmd)
-    if maparg(a:key) !=# ''
-        redir => l:keys
-        silent call s:CheckMaps()
-        redir END
-        let l:key_list = split(l:keys, '\n')
-
-        let l:raw_map = filter(copy(l:key_list), "v:val =~# '\\* ".a:key."'")
-        if len(l:raw_map) == 0
-            exe "nnoremap <buffer> <expr> ".a:key." ".a:cmd
-            return
-        endif
-        let l:map_data = split(l:raw_map[0], '\s*')
-
-        exe "nnoremap <buffer> <expr> ".l:map_data[0]." ".a:cmd
-    else
-        exe "nnoremap <buffer> <expr> ".a:key." ".a:cmd
-    endif
-endfunction
-
 function! tutor#MouseDoubleClick()
     if foldclosed(line('.')) > -1
         normal! zo
@@ -60,109 +36,9 @@ function! tutor#InjectCommand()
 endfunction
 
 function! tutor#SetNormalMappings()
-    call s:MapKeyWithRedirect('l', 'tutor#ForwardSkipConceal(v:count1)')
-    call s:MapKeyWithRedirect('h', 'tutor#BackwardSkipConceal(v:count1)')
-    call s:MapKeyWithRedirect('<right>', 'tutor#ForwardSkipConceal(v:count1)')
-    call s:MapKeyWithRedirect('<left>', 'tutor#BackwardSkipConceal(v:count1)')
-
     nnoremap <silent> <buffer> <CR> :call tutor#FollowLink(0)<cr>
     nnoremap <silent> <buffer> <2-LeftMouse> :call tutor#MouseDoubleClick()<cr>
     nnoremap <buffer> >> :call tutor#InjectCommand()<cr>
-endfunction
-
-function! tutor#SetSampleTextMappings()
-    noremap <silent> <buffer> A :if match(getline('.'), '^--->') > -1 \| call search('\s{\@=', 'Wc') \| startinsert \| else \| startinsert! \| endif<cr>
-    noremap <silent> <buffer> $ :if match(getline('.'), '^--->') > -1 \| call search('.\s{\@=', 'Wc') \| else \| call search('$', 'Wc') \| endif<cr>
-    onoremap <silent> <buffer> $ :if match(getline('.'), '^--->') > -1 \| call search('.\s{\@=', 'Wc') \| else \| call search('$', 'Wc') \| endif<cr>
-    noremap <silent> <buffer> ^ :if match(getline('.'), '^--->') > -1 \| call search('\(--->\s\)\@<=.', 'bcW') \| else \| call search('^', 'bcW') \|endif<cr>
-    onoremap <silent> <buffer> ^ :if match(getline('.'), '^--->') > -1 \| call search('\(--->\s\)\@<=.', 'bcW') \| else \| call search('^', 'bcW') \|endif<cr>
-    nmap <silent> <buffer> 0 ^<esc>
-    nmap <silent> <buffer> <Home> ^<esc>
-    nmap <silent> <buffer> <End> $
-    imap <silent> <buffer> <Home> <esc>^<esc>:startinsert<cr>
-    imap <silent> <buffer> <End> <esc>$:startinsert<cr>
-    noremap <silent> <buffer> I :exe "normal! 0" \| startinsert<cr>
-endfunction
-
-" Navigation: {{{1
-
-" taken from http://stackoverflow.com/a/24224578
-
-function! tutor#ForwardSkipConceal(count)
-    let cnt=a:count
-    let mvcnt=0
-    let c=col('.')
-    let l=line('.')
-    let lc=col('$')
-    let line=getline('.')
-    while cnt
-        if c>=lc
-            let mvcnt+=cnt
-            break
-        endif
-        if stridx(&concealcursor, 'n')==-1
-            let isconcealed=0
-        else
-            let [isconcealed, cchar, group] = synconcealed(l, c)
-        endif
-        if isconcealed
-            let cnt-=strchars(cchar)
-            let oldc=c
-            let c+=1
-            while c < lc
-              let [isconcealed2, cchar2, group2] = synconcealed(l, c)
-              if !isconcealed2 || cchar2 != cchar
-                  break
-              endif
-              let c+= 1
-            endwhile
-            let mvcnt+=strchars(line[oldc-1:c-2])
-        else
-            let cnt-=1
-            let mvcnt+=1
-            let c+=len(matchstr(line[c-1:], '.'))
-        endif
-    endwhile
-    return mvcnt.'l'
-endfunction
-
-function! tutor#BackwardSkipConceal(count)
-    let cnt=a:count
-    let mvcnt=0
-    let c=col('.')
-    let l=line('.')
-    let lc=0
-    let line=getline('.')
-    while cnt
-        if c<=1
-            let mvcnt+=cnt
-            break
-        endif
-        if stridx(&concealcursor, 'n')==-1 || c == 0
-            let isconcealed=0
-        else
-            let [isconcealed, cchar, group]=synconcealed(l, c-1)
-        endif
-        if isconcealed
-            let cnt-=strchars(cchar)
-            let oldc=c
-            let c-=1
-            while c>1
-              let [isconcealed2, cchar2, group2] = synconcealed(l, c-1)
-              if !isconcealed2 || cchar2 != cchar
-                  break
-              endif
-              let c-=1
-            endwhile
-            let c = max([c, 1])
-            let mvcnt+=strchars(line[c-1:oldc-2])
-        else
-            let cnt-=1
-            let mvcnt+=1
-            let c-=len(matchstr(line[:c-2], '.$'))
-        endif
-    endwhile
-    return mvcnt.'h'
 endfunction
 
 " Hypertext: {{{1
@@ -217,46 +93,7 @@ function! tutor#LoadMetadata()
 endfunction
 
 " Marks: {{{1
-" Internal: {{{2
-function! tutor#PlaceXMarks()
-    call cursor(1, 1)
-    let b:tutor_sign_id = 1
-    while search('^--->', 'W') > 0
-        call tutor#CheckText(getline('.'))
-        let b:tutor_sign_id+=1
-    endwhile
-    call cursor(1, 1)
-endfunction
 
-function! tutor#CheckText(text)
-    if match(a:text, '{expect:ANYTHING}\s*$') == -1
-        if match(getline('.'), '^--->\s*$') > -1
-            exe "sign place ".b:tutor_sign_id." line=".line('.')." name=tutorbad buffer=".bufnr('%')
-        else
-            if match(getline('.'), '|expect:.\+|') == -1
-                let l:cur_text = matchstr(a:text, '---> \zs.\{-}\ze {expect:')
-                let l:expected_text = matchstr(a:text, '{expect:\zs.*\ze}\s*$')
-            else
-                let l:cur_text = matchstr(a:text, '---> \zs.\{-}\ze |expect:')
-                let l:expected_text = matchstr(a:text, '|expect:\zs.*\ze|\s*$')
-            endif
-            if l:cur_text ==# l:expected_text
-                exe "sign place ".b:tutor_sign_id." line=".line('.')." name=tutorok buffer=".bufnr('%')
-            else
-                exe "sign place ".b:tutor_sign_id." line=".line('.')." name=tutorbad buffer=".bufnr('%')
-            endif
-        endif
-    endif
-endfunction
-
-function! tutor#XmarksOnTextChanged()
-    let l:text = getline('.')
-    if match(l:text, '^--->') > -1
-        call tutor#CheckText(l:text)
-    endif
-endfunction
-
-" External: {{{2
 function! tutor#ApplyMarks()
     if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
         let b:tutor_sign_id = 1
