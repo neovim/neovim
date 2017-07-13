@@ -60,11 +60,10 @@ function! tutor#InjectCommand()
 endfunction
 
 function! tutor#SetNormalMappings()
-    call s:MapKeyWithRedirect('l', 'tutor#ForwardSkipConceal(v:count1)')
-    call s:MapKeyWithRedirect('h', 'tutor#BackwardSkipConceal(v:count1)')
-    call s:MapKeyWithRedirect('<right>', 'tutor#ForwardSkipConceal(v:count1)')
-    call s:MapKeyWithRedirect('<left>', 'tutor#BackwardSkipConceal(v:count1)')
-
+    "call s:MapKeyWithRedirect('l', 'tutor#ForwardSkipConceal(v:count1)')
+    "call s:MapKeyWithRedirect('h', 'tutor#BackwardSkipConceal(v:count1)')
+    "call s:MapKeyWithRedirect('<right>', 'tutor#ForwardSkipConceal(v:count1)')
+    "call s:MapKeyWithRedirect('<left>', 'tutor#BackwardSkipConceal(v:count1)')
     nnoremap <silent> <buffer> <CR> :call tutor#FollowLink(0)<cr>
     nnoremap <silent> <buffer> <2-LeftMouse> :call tutor#MouseDoubleClick()<cr>
     nnoremap <buffer> >> :call tutor#InjectCommand()<cr>
