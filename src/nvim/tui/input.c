@@ -3,6 +3,7 @@
 
 
 #include "nvim/tui/input.h"
+#include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
@@ -71,12 +72,16 @@ void term_input_destroy(TermInput *input)
 void term_input_start(TermInput *input)
 {
   rstream_start(&input->read_stream, read_cb, input);
+  if (!termkey_start(input->tk)) {
+    ELOG("termkey_start() failed");
+  }
 }
 
 void term_input_stop(TermInput *input)
 {
   rstream_stop(&input->read_stream);
   time_watcher_stop(&input->timer_handle);
+  termkey_stop(input->tk);  // Restore termios.
 }
 
 static void input_done_event(void **argv)
