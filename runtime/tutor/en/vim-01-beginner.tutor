@@ -21,7 +21,7 @@ This tutorial is interactive, and there are a few things you should know.
 Pressing [<Enter>](<Enter>) over text highlighted [like this](holy-grail) will take you to some relevant
 help (hopefully), and pressing K over any word will try to do so too. Sometimes
 you will be required to modify text like
---->  this here {expect:this here}
+this here
 Once you have done the changes correctly, the ✗ sign at the left will change
 to ✓. I imagine you can already see how neat Vim can be ;)
 Other times, you'll be prompted to run a command (I'll explain this later):
@@ -99,7 +99,7 @@ NOTE:  [:q!](:q) <Enter>  discards any changes you made.  In a few lessons you
 
 4. Repeat steps 2 through 4 until the sentence is correct.
 
----> The ccow jumpedd ovverr thhe mooon. {expect:The cow jumped over the moon.}
+The ccow jumpedd ovverr thhe mooon.
 
 5. Now that the line is correct, go on to Lesson 1.4.
 
@@ -119,8 +119,8 @@ NOTE: As you go through this tutor, do not try to memorize, learn by usage.
   4. As each error is fixed press <Esc> to return to Normal mode.
      Repeat steps 2 through 4 to correct the sentence.
 
----> There is text misng this . {expect:There is some text missing from this line.}
----> There is some text missing from this line. {expect:There is some text missing from this line.}
+There is text misng this .
+There is some text missing from this line.
 
   5. When you are comfortable inserting text move to lesson 1.5.
 
@@ -138,10 +138,10 @@ NOTE: As you go through this tutor, do not try to memorize, learn by usage.
   4. Move the cursor to the second line marked ---> and repeat
      steps 2 and 3 to correct this sentence.
 
----> There is some text missing from th {expect:There is some text missing from this line.}
----> There is some text missing from this line. {expect:There is some text missing from this line.}
----> There is also some text miss {expect:There is also some text missing here.}
----> There is also some text missing here. {expect:There is also some text missing here.}
+There is some text missing from th
+There is some text missing from this line.
+There is also some text miss
+There is also some text missing here.
 
   5. When you are comfortable appending text move to lesson 1.6.
 
@@ -212,7 +212,7 @@ Now continue with Lesson 2.
 
   4. Type [d](d)[w](w)   to make the word disappear.
 
----> There are a some words fun that don't belong paper in this sentence. {expect:There are some words that don't belong in this sentence.}
+There are a some words fun that don't belong paper in this sentence.
 
   5. Repeat steps 3 and 4 until the sentence is correct and go to Lesson 2.2.
 
@@ -228,7 +228,7 @@ Now continue with Lesson 2.
 
   4. Type `d$`{normal} to delete to the end of the line.
 
----> Somebody typed the end of this line twice. end of this line twice. {expect:ANYTHING}
+Somebody typed the end of this line twice. end of this line twice.
 
   5. Move on to Lesson 2.3 to understand what is happening.
 
@@ -268,7 +268,7 @@ NOTE:  Pressing just the motion while in Normal mode without an operator will
 
   5. Repeat steps 2 and 3 with different numbers.
 
----> This is just a line with words you can move around in. {expect:ANYTHING}
+This is just a line with words you can move around in.
 
   6. Move on to Lesson 2.5.
 
@@ -287,7 +287,7 @@ insert a count before the motion to delete more:
   3. Repeat steps 1 and 2 with a different count to delete the consecutive
      UPPER CASE words with one command
 
----> this ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up. {expect:this line of words is cleaned up.}
+this ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up.
 
 # Lesson 2.6: OPERATING ON LINES
 
@@ -301,13 +301,13 @@ insert a count before the motion to delete more:
   3. Now move to the fourth line.
   4. Type `2dd`{normal} to delete two lines.
 
---->  1)  Roses are red, {expect:ANYTHING}
---->  2)  Mud is fun, {expect:ANYTHING}
---->  3)  Violets are blue, {expect:ANYTHING}
---->  4)  I have a car, {expect:ANYTHING}
---->  5)  Clocks tell time, {expect:ANYTHING}
---->  6)  Sugar is sweet {expect:ANYTHING}
---->  7)  And so are you. {expect:ANYTHING}
+1)  Roses are red,
+2)  Mud is fun,
+3)  Violets are blue,
+4)  I have a car,
+5)  Clocks tell time,
+6)  Sugar is sweet
+7)  And so are you.
 
 # Lesson 2.7: THE UNDO COMMAND
 
@@ -322,7 +322,7 @@ insert a count before the motion to delete more:
   6. Now type  `u`{normal}  a few times to undo the  U  and preceding commands.
   7. Now type  `<Ctrl-r>`{normal}  a few times to redo the commands (undo the undo's).
 
----> Fiix the errors oon thhis line and reeplace them witth undo. {expect:Fix the errors on this line and replace them with undo.}
+Fiix the errors oon thhis line and reeplace them witth undo.
 
   8. These are very useful commands.  Now move on to the Lesson 2 Summary.
 
@@ -362,10 +362,10 @@ insert a count before the motion to delete more:
 
   5. Repeat steps 2 through 4 to put all the lines in correct order.
 
----> d) Can you learn too? {expect:ANYTHING}
----> b) Violets are blue, {expect:ANYTHING}
----> c) Intelligence is learned, {expect:ANYTHING}
----> a) Roses are red, {expect:ANYTHING}
+d) Can you learn too?
+b) Violets are blue,
+c) Intelligence is learned,
+a) Roses are red,
 
 # Lesson 3.2: THE REPLACE COMMAND
 
@@ -379,8 +379,8 @@ insert a count before the motion to delete more:
 
   4. Repeat steps 2 and 3 until the first line is equal to the second one.
 
----> Whan this lime was tuoed in, someone presswd some wrojg keys! {expect:When this line was typed in, someone pressed some wrong keys!}
----> When this line was typed in, someone pressed some wrong keys! {expect:When this line was typed in, someone pressed some wrong keys!}
+Whan this lime was tuoed in, someone presswd some wrojg keys!
+When this line was typed in, someone pressed some wrong keys!
 
   5. Now move on to Lesson 3.3.
 
@@ -400,8 +400,8 @@ NOTE: Remember that you should be learning by doing, not memorization.
 
   5. Repeat steps 3 and 4 until the first sentence is the same as the second.
 
----> This lubw has a few wptfd that mrrf changing usf the change operator. {expect:This line has a few words that need changing using the change operator.}
----> This line has a few words that need changing using the change operator. {expect:This line has a few words that need changing using the change operator.}
+This lubw has a few wptfd that mrrf changing usf the change operator.
+This line has a few words that need changing using the change operator.
 
 Notice that [c](c)e deletes the word and places you in Insert mode.
 
@@ -421,8 +421,8 @@ Notice that [c](c)e deletes the word and places you in Insert mode.
 
   5. Type `c$`{normal} and type the rest of the line like the second and press `<Esc>`{normal}.
 
----> The end of this line needs some help to make it like the second. {expect:The end of this line needs to be corrected using the  c$  command.}
----> The end of this line needs to be corrected using the  c$  command. {expect:The end of this line needs to be corrected using the  c$  command.}
+The end of this line needs some help to make it like the second.
+The end of this line needs to be corrected using the  c$  command.
 
 NOTE:  You can use the Backspace key to correct mistakes while typing.
 
@@ -484,7 +484,7 @@ NOTE:  You may see the cursor position in the lower right corner of the screen
   5. To go back to where you came from press  `<Ctrl-o>`{normal}  (Keep Ctrl down while
      pressing the letter o).  Repeat to go back further.  `<Ctrl-i>`{normal} goes forward.
 
---->  "errroor" is not the way to spell error;  errroor is an error. {expect:ANYTHING}
+"errroor" is not the way to spell error;  errroor is an error.
 
 NOTE: When the search reaches the end of the file it will continue at the
       start, unless the ['wrapscan']('wrapscan') option has been reset.
@@ -503,7 +503,7 @@ NOTE: When the search reaches the end of the file it will continue at the
 
   5. Move the cursor to another (,),[,],{ or } and see what `%`{normal} does.
 
----> This ( is a test line with ('s, ['s ] and {'s } in it. )) {expect:ANYTHING}
+This ( is a test line with ('s, ['s ] and {'s } in it. ))
 
 NOTE: This is very useful in debugging a program with unmatched parentheses!
 
@@ -528,7 +528,7 @@ NOTE: This is very useful in debugging a program with unmatched parentheses!
      Adding the g [flag](:s_flags) means to substitute globally in the line, change
      all occurrences of "thee" in the line.
 
----> thee best time to see thee flowers is in thee spring. {expect:the best time to see the flowers is in the spring.}
+thee best time to see thee flowers is in thee spring.
 
   4. To change every occurrence of a character string between two lines, type
 ~~~ cmd
@@ -719,12 +719,12 @@ NOTE:  You can also read the output of an external command.  For example,
 
   3. Now type some text and press `<Esc>`{normal} to exit Insert mode.
 
----> After typing  o  the cursor is placed on the open line in Insert mode. {expect:ANYTHING}
+After typing  o  the cursor is placed on the open line in Insert mode.
 
   4. To open up a line ABOVE the cursor, simply type a [capital O](O), rather
      than a lowercase `o`{normal}.  Try this on the line below.
 
----> Open up a line above this by typing O while the cursor is on this line. {expect:ANYTHING}
+Open up a line above this by typing O while the cursor is on this line.
 
 # Lesson 6.2: THE APPEND COMMAND
 
@@ -741,8 +741,8 @@ NOTE:  You can also read the output of an external command.  For example,
 
   5. Use `e`{normal} to move to the next incomplete word and repeat steps 3 and 4.
 
----> This li will allow you to pract appendi text to a line. {expect:This line will allow you to practice appending text to a line.}
----> This line will allow you to practice appending text to a line. {expect:This line will allow you to practice appending text to a line.}
+This li will allow you to pract appendi text to a line.
+This line will allow you to practice appending text to a line.
 
 NOTE:  [a](a), [i](i) and [A](A) all go to the same Insert mode, the only difference is where
        the characters are inserted.
@@ -762,8 +762,8 @@ NOTE:  [a](a), [i](i) and [A](A) all go to the same Insert mode, the only differ
 
   4. Repeat the steps to replace the remaining "xxx".
 
----> Adding 123 to xxx gives you xxx. {expect:Adding 123 to 456 gives you 579.}
----> Adding 123 to 456 gives you 579. {expect:Adding 123 to 456 gives you 579.}
+Adding 123 to xxx gives you xxx.
+Adding 123 to 456 gives you 579.
 
 NOTE:  Replace mode is like Insert mode, but every typed character deletes an
        existing character.
@@ -785,8 +785,8 @@ NOTE:  Replace mode is like Insert mode, but every typed character deletes an
   6. Use Visual mode to select " item.", yank it with `y`{normal}, move to the end of
      the next line with `j$`{normal} and put the text there with `p`{normal}.
 
----> a) this is the first item.
---->     b)  {expect:    b) this is the second item}
+a) this is the first item.
+    b) 
 
   NOTE: you can also use `y`{normal} as an operator; `yw`{normal} yanks one word.
 
