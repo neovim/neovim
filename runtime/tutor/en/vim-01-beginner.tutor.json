@@ -1,8 +1,4 @@
 {
-    "settings" : {
-	"use_maps": 0,
-	"check_internal_expects": 0
-    },
     "expect": {
 	"24": -1,
 	"102": "The cow jumped over the moon.",
