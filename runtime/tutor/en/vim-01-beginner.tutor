@@ -948,7 +948,8 @@ There are many resources online to learn more about vim. Here's a bunch of them:
 - *Learn Vimscript the Hard Way*: http://learnvimscriptthehardway.stevelosh.com/
 - *7 Habits of Effective Text Editing*: http://www.moolenaar.net/habits.html
 
-If you prefer a book, *Practival Vim* by Drew Neil is recommended often.
+If you prefer a book, *Practival Vim* by Drew Neil is recommended often (and the forthcoming
+version will include material specific to nvim!).
 
 This tutorial was written by Michael C. Pierce and Robert K. Ware, Colorado
 School of Mines using ideas supplied by Charles Smith, Colorado State
