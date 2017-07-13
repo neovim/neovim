@@ -209,7 +209,15 @@ function! tutor#InfoText()
     return join(l:info_parts, " ")
 endfunction
 
-" Marks {{{1
+function! tutor#LoadMetadata()
+    try
+        let b:tutor_metadata = json_decode(join(readfile(expand('%').'.json'), "\n"))
+    catch
+    endtry
+endfunction
+
+" Marks: {{{1
+" Internal: {{{2
 function! tutor#PlaceXMarks()
     call cursor(1, 1)
     let b:tutor_sign_id = 1
@@ -241,10 +249,44 @@ function! tutor#CheckText(text)
     endif
 endfunction
 
-function! tutor#OnTextChanged()
+function! tutor#XmarksOnTextChanged()
     let l:text = getline('.')
     if match(l:text, '^--->') > -1
         call tutor#CheckText(l:text)
+    endif
+endfunction
+
+" External: {{{2
+function! tutor#ApplyMarks()
+    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
+        let b:tutor_sign_id = 1
+        for expct in keys(b:tutor_metadata['expect'])
+            let lnum = eval(expct)
+            call matchaddpos('tutorSampleText', [lnum])
+            call tutor#CheckLine(lnum)
+        endfor
+    endif
+endfunction
+
+function! tutor#ApplyMarksOnChanged()
+    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
+        let lnum = line('.')
+        if index(keys(b:tutor_metadata['expect']), string(lnum)) > -1
+            call tutor#CheckLine(lnum)
+        endif
+    endif
+endfunction
+
+function! tutor#CheckLine(line)
+    if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
+        let bufn = bufnr('%')
+        let ctext = getline(a:line)
+        if b:tutor_metadata['expect'][string(a:line)] == -1 || ctext ==# b:tutor_metadata['expect'][string(a:line)]
+            exe "sign place ".b:tutor_sign_id." line=".a:line." name=tutorok buffer=".bufn
+        else
+            exe "sign place ".b:tutor_sign_id." line=".a:line." name=tutorbad buffer=".bufn
+        endif
+        let b:tutor_sign_id+=1
     endif
 endfunction
 
