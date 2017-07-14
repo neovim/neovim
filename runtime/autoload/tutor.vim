@@ -216,46 +216,7 @@ function! tutor#LoadMetadata()
 endfunction
 
 " Marks: {{{1
-" Internal: {{{2
-function! tutor#PlaceXMarks()
-    call cursor(1, 1)
-    let b:tutor_sign_id = 1
-    while search('^--->', 'W') > 0
-        call tutor#CheckText(getline('.'))
-        let b:tutor_sign_id+=1
-    endwhile
-    call cursor(1, 1)
-endfunction
 
-function! tutor#CheckText(text)
-    if match(a:text, '{expect:ANYTHING}\s*$') == -1
-        if match(getline('.'), '^--->\s*$') > -1
-            exe "sign place ".b:tutor_sign_id." line=".line('.')." name=tutorbad buffer=".bufnr('%')
-        else
-            if match(getline('.'), '|expect:.\+|') == -1
-                let l:cur_text = matchstr(a:text, '---> \zs.\{-}\ze {expect:')
-                let l:expected_text = matchstr(a:text, '{expect:\zs.*\ze}\s*$')
-            else
-                let l:cur_text = matchstr(a:text, '---> \zs.\{-}\ze |expect:')
-                let l:expected_text = matchstr(a:text, '|expect:\zs.*\ze|\s*$')
-            endif
-            if l:cur_text ==# l:expected_text
-                exe "sign place ".b:tutor_sign_id." line=".line('.')." name=tutorok buffer=".bufnr('%')
-            else
-                exe "sign place ".b:tutor_sign_id." line=".line('.')." name=tutorbad buffer=".bufnr('%')
-            endif
-        endif
-    endif
-endfunction
-
-function! tutor#XmarksOnTextChanged()
-    let l:text = getline('.')
-    if match(l:text, '^--->') > -1
-        call tutor#CheckText(l:text)
-    endif
-endfunction
-
-" External: {{{2
 function! tutor#ApplyMarks()
     if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
         let b:tutor_sign_id = 1
