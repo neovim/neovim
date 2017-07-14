@@ -99,7 +99,7 @@ function! tutor#ApplyMarks()
         let b:tutor_sign_id = 1
         for expct in keys(b:tutor_metadata['expect'])
             let lnum = eval(expct)
-            call matchaddpos('tutorSampleText', [lnum])
+            call matchaddpos('tutorExpect', [lnum])
             call tutor#CheckLine(lnum)
         endfor
     endif

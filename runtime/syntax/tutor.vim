@@ -31,12 +31,6 @@ syn keyword tutorMarks TODO NOTE IMPORTANT TIP ATTENTION EXERCISE
 syn keyword tutorMarks todo note tip attention exercise
 syn keyword tutorMarks Todo Note Tip Excersise
 
-syn match tutorTextMark /\\\@<!--->/ conceal cchar=→
-syn region tutorSampleText start=/^\(--->\)\@=/ end=/$/ keepend contains=@SPELL
-syn match tutorSampleTextMark /^--->/ contained containedin=tutorSampleText conceal cchar=→
-syn match tutorSampleTextExpect /\}\@<! {expect:.\+}\s*$/ contained containedin=tutorSampleText conceal
-syn match tutorSampleTextExpect /|\@<! |expect:.\+|\s*$/ contained containedin=tutorSampleText conceal
-
 syn region tutorCodeblock matchgroup=Delimiter start=/^\~\{3}.*$/ end=/^\~\{3}/
 
 syn region tutorShell matchgroup=Delimiter start=/^\~\{3} sh\s*$/ end=/^\~\{3}/ keepend contains=@TUTORSHELL concealends
@@ -72,7 +66,7 @@ hi! tutorMarks cterm=bold gui=bold
 hi! tutorEmphasis gui=italic cterm=italic
 hi! tutorBold gui=bold cterm=bold
 
-hi! link tutorSampleText Special
+hi! link tutorExpect Special
 hi! tutorOK ctermfg=green guifg=#00ff88 cterm=bold gui=bold
 hi! tutorX ctermfg=red guifg=#ff2000  cterm=bold gui=bold
 hi! link tutorInlineOK tutorOK
