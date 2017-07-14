@@ -36,9 +36,7 @@ endif
 " Mappings: {{{1
 
 call tutor#SetNormalMappings()
-if exists('b:tutor_metadata') && b:tutor_metadata['settings']['use_maps'] == 1
-    call tutor#SetSampleTextMappings()
-endif
+" call tutor#SetSampleTextMappings()
 
 " Checks: {{{1
 
