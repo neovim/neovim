@@ -60,27 +60,27 @@ is displayed like
 
 1. Format the line below so it becomes a lesson description:
 
----> This is text with important information {expect:This is text with **important information**}
----> This is text with **important information** {expect:This is text with **important information**}
+This is text with important information
+This is text with **important information**
 
 Note: Some words (e.g., NOTE, IMPORTANT, tip, ATTENTION, etc.) will also be
 highlighted. You don't need to mark them specially.
 
 2. Turn the line below into a TODO item:
 
----> Document '&variable' {expect:TODO: Document '&variable'}
----> TODO: Document '&variable' {expect:TODO: Document '&variable'}
+Document '&variable'
+TODO: Document '&variable'
 
 ### Headers *headers*
 
 3. Practice fixing the lines below:
 
----> This is a level 1 header {expect:# This is a level 1 header}
----> # This is a level 1 header {expect:# This is a level 1 header}
----> This is a level 3 header {expect:### This is a level 3 header}
----> ### This is a level 3 header {expect:### This is a level 3 header}
----> This is a header with a label {expect:# This is a header with a label {*label*}}
----> # This is a header with a label {*label*} {expect:# This is a header with a label {*label*}}
+This is a level 1 header
+# This is a level 1 header
+This is a level 3 header
+### This is a level 3 header
+This is a header with a label
+# This is a header with a label {*label*}
 
 4. Now, create a 4th level section here, and add a label like in the previous
 exercise:
@@ -105,8 +105,8 @@ If the target of a link matches a help topic, opening it will open it.
 
 5. Fix the following line:
 
----> A link to help for the 'breakindent' option {expect:A link to help for the ['breakindent']('breakindent') option}
----> A link to help for the ['breakindent']('breakindent') option {expect:A link to help for the ['breakindent']('breakindent') option}
+A link to help for the 'breakindent' option
+A link to help for the ['breakindent']('breakindent') option
 
 #### Anchor links
 
@@ -120,8 +120,8 @@ and are hidden by default. Links to them look like
 
 6. Add the appropiate link:
 
----> A link to the Links section {expect:A link to the [Links](*links*) section}
----> A link to the [Links](*links*) section {expect:A link to the [Links](*links*) section}
+A link to the Links section
+A link to the [Links](*links*) section
 
 7. Now, create a link to the section you created on exercise 4
    above.
@@ -136,8 +136,8 @@ You can also have links to other tutorials. For this, you'll write the anchor in
 
 7. Create a link to this tutorial:
 
----> A link to the vim-tutor-mode tutorial {expect:A link to [the vim-tutor-mode tutorial](@tutor:tutor)}
----> A link to [the vim-tutor-mode tutorial](@tutor:tutor) {expect:A link to [the vim-tutor-mode tutorial](@tutor:tutor)}
+A link to the vim-tutor-mode tutorial
+A link to [the vim-tutor-mode tutorial](@tutor:tutor)
 
 ### Codeblocks *codeblocks*
 
@@ -154,13 +154,13 @@ echom "hello"
 
 8. Copy the viml section below
 
---->  {expect:~~~ viml}
---->  {expect:echom "the value of &number is".string(&number)}
---->  {expect:~~~}
 
----> ~~~ viml {expect:~~~ viml}
----> echom "the value of &number is".string(&number) {expect:echom "the value of &number is".string(&number)}
----> ~~~ {expect:~~~}
+
+
+
+~~~ viml
+echom 'the value of &number is'.string(&number)
+~~~
 
 You can inline viml code using "\`" and "\`{vim}":
 
@@ -185,13 +185,13 @@ Note: you can also write `norm` or `normal`.
 
 9. Copy the normal section below
 
---->  {expect:~~~ normal}
---->  {expect:d2w}
---->  {expect:~~~}
 
----> ~~~ normal {expect:~~~ normal}
----> d2w {expect:d2w}
----> ~~~ {expect:~~~}
+
+
+
+~~~ normal
+d2w
+~~~
 
 You can also inline normal commands by using "\`" and "\`{normal}":
 
@@ -203,10 +203,11 @@ is displayed:
 
 10. Complete the line as shown
 
----> d {expect:«d2w»}
----> «d2w» {expect:«d2w»}
+d
+`d2w`{normal}
 
-Commands to run in the system shell can be highlighted by indenting a line starting with "$".
+Commands to run in the system shell can be highlighted by indenting a line
+starting with "$".
 
 ~~~ sh
     $ vim --version
@@ -215,45 +216,32 @@ Commands to run in the system shell can be highlighted by indenting a line start
 ## INTERACTIVE ELEMENTS *interactive*
 
 As visible in this very document, vim-tutor-mode includes some interactive
-elements, to provide feedback to the user about his progress. These elements
-all have the syntax
-
-    \---> TEXT {CLAUSE}
-
-where \---> must start at the beginning of the line. If TEXT satisfies CLAUSE,
-a ✓ sign will appear to the left. A ✗ sign is displayed otherwise. The CLAUSE
-itself is hidden unless debug mode is set or ['conceallevel']('conceallevel')
-is 2.
+elements to provide feedback to the user about his progress. If the text in
+these elements satisfies some set condition, a ✓ sign will appear in the gutter
+to the left. Otherwise, a ✗ sign is displayed.
 
 ### expect *expect*
 
-The basic clause is "expect", which is satisfied if TEXT is the same as the
-content of the clause. For example
+"expect" lines check that the contents of the line are identical to some preset text
+(like in the exercises above).
 
-    \---> TEXT {expect:TEXT}
+These elements are specified in separate JSON files like this
 
-is satisfied, but
+~~~ json
+{
+    "expect": {
+	"1": "This is how this line should look.",
+	"2": "This is how this line should look.",
+	"3": -1
+    }
+}
+~~~
 
-    \---> OTHER TEXT {expect:TEXT}
+These files contain an "expect" dictionary, for which the keys are line numbers and 
+the values are the expected text. A value of -1 means that the condition for the line
+will always be satisfied, no matter what (this is useful for letting the user play a bit).
 
-is not.
+This is an "expect" line that is always satisfied. Try changing it.
 
-13. Make both lines the same:
-
----> this is not right {expect:---> this is right} |expect:---> this is right {expect:---> this is right}|
----> ---> this is right {expect:---> this is right} |expect:---> this is right {expect:---> this is right}|
-
-
-If the content of a expect clause is ANYTHING, no checks will be performed. This is
-useful to create a line that is highlighted you want the user to play with.
-
-    \---> TEXT {expect:ANYTHING}
-
-is displayed
-
----> this is free text {expect:ANYTHING}
-
-14. Turn the line below into free text:
-
----> this is some text |expect:---> this is some text {expect:ANYTHING}|
----> ---> this is some text {expect:ANYTHING} |expect:---> this is some text {expect:ANYTHING}|
+These files conventionally have the same name as the tutorial document with the `.json`
+extension appended (for a full example, see the file that corresponds to this tutorial).
