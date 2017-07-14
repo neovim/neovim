@@ -19,11 +19,11 @@ setlocal noundofile
 setlocal keywordprg=:help
 setlocal iskeyword=@,-,_
 
-setlocal foldmethod=expr
+" The user will have to enable the folds himself, but we provide the foldexpr
+" function.
+setlocal foldmethod=manual
 setlocal foldexpr=tutor#TutorFolds()
-setlocal foldcolumn=1
 setlocal foldlevel=4
-setlocal nowrap
 
 setlocal statusline=%{toupper(expand('%:t:r'))}\ tutorial%=
 setlocal statusline+=%{tutor#InfoText()}
