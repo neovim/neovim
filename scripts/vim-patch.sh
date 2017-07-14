@@ -310,7 +310,7 @@ list_vim_patches() {
 
   # Get missing Vim commits
   local vim_commits
-  vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v7.4.1979..HEAD)"
+  vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD)"
 
   local vim_commit
   for vim_commit in ${vim_commits}; do
