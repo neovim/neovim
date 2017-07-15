@@ -1434,19 +1434,16 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     }
   }
 
-  // Dickey ncurses terminfo has included the Ss and Se capabilities, pioneered
-  // by tmux, since 2011-07-14.  So adding them to terminal types, that do
-  // actually have such control sequences but lack the correct definitions in
-  // terminfo, is a fixup, not an augmentation.
-  data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
-  data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
-
   // Some terminals can not currently be trusted to report if they support
   // DECSCUSR or not. So we need to have a blacklist for when we should not
   // trust the reported features.
   if( (vte_version != 0 && vte_version < 3900) || konsole ) {
-    data->unibi_ext.reset_cursor_style = -1;
-    data->unibi_ext.set_cursor_style = -1;
+    // Dickey ncurses terminfo has included the Ss and Se capabilities,
+    // pioneered by tmux, since 2011-07-14. So adding them to terminal types,
+    // that do actually have such control sequences but lack the correct
+    // definitions in terminfo, is a fixup, not an augmentation.
+    data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
+    data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
   }
   if (-1 == data->unibi_ext.set_cursor_style) {
     // The DECSCUSR sequence to change the cursor shape is widely
