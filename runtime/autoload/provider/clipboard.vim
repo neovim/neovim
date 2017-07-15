@@ -142,7 +142,7 @@ function! s:clipboard.set(lines, regtype, reg) abort
   \ 'on_stderr': function('s:set_errhandler'),
   \ })
   let jobid = jobstart(argv, selection)
-  if jobid >= 0
+  if jobid > 0
     call jobsend(jobid, a:lines)
     call jobclose(jobid, 'stdin')
     let selection.owner = jobid
@@ -150,7 +150,7 @@ function! s:clipboard.set(lines, regtype, reg) abort
 endfunction
 
 function! s:set_errhandler(job_id, data, event) abort
-  if a:job_id < 0
+  if a:job_id <= 0
     echohl WarningMsg
     echo 'clipboard: error when invoking provider: ' . join(a:data)
     echohl None
