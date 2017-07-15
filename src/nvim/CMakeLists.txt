@@ -541,7 +541,6 @@ endfunction()
 set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
   os/pty_process_win.h
-  syntax_defs.h
   undo.h
   undo_defs.h
 )
