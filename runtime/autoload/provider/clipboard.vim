@@ -8,7 +8,7 @@ let s:paste = {}
 " ownership of the selection, so we know how long the cache is valid.
 let s:selection = { 'owner': 0, 'data': [] }
 
-let s:win_wsl = (system(['uname', '-a']) =~? 'Windows')
+let s:win_wsl = (system(['uname', '-a']) =~? 'Microsoft')
 
 function! s:selection.on_exit(jobid, data, event) abort
   " At this point this nvim instance might already have launched
