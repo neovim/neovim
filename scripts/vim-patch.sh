@@ -320,6 +320,7 @@ list_vim_patches() {
     vim_tag="$(cd "${VIM_SOURCE_DIR}" && git describe --tags --exact-match "${vim_commit}" 2>/dev/null)" || true
     if [[ -n "${vim_tag}" ]]; then
       local patch_number="${vim_tag:5}" # Remove prefix like "v7.4."
+      patch_number="$(echo ${patch_number} | sed 's/^0*//g')" # Remove prefix "0"
       # Tagged Vim patch, check version.c:
       is_missing="$(sed -n '/static const int included_patches/,/}/p' "${NVIM_SOURCE_DIR}/src/nvim/version.c" |
         grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
