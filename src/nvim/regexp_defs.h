@@ -46,20 +46,18 @@ typedef struct regengine regengine_T;
 typedef struct regprog regprog_T;
 typedef struct reg_extmatch reg_extmatch_T;
 
-/*
- * Structure to be used for multi-line matching.
- * Sub-match "no" starts in line "startpos[no].lnum" column "startpos[no].col"
- * and ends in line "endpos[no].lnum" just before column "endpos[no].col".
- * The line numbers are relative to the first line, thus startpos[0].lnum is
- * always 0.
- * When there is no match, the line number is -1.
- */
+/// Structure to be used for multi-line matching.
+/// Sub-match "no" starts in line "startpos[no].lnum" column "startpos[no].col"
+/// and ends in line "endpos[no].lnum" just before column "endpos[no].col".
+/// The line numbers are relative to the first line, thus startpos[0].lnum is
+/// always 0.
+/// When there is no match, the line number is -1.
 typedef struct {
   regprog_T           *regprog;
   lpos_T startpos[NSUBEXP];
   lpos_T endpos[NSUBEXP];
   int rmm_ic;
-  colnr_T rmm_maxcol;                   /* when not zero: maximum column */
+  colnr_T rmm_maxcol;  /// when not zero: maximum column
 } regmmatch_T;
 
 #include "nvim/buffer_defs.h"
@@ -153,7 +151,7 @@ typedef struct {
  * from 1 to zero the matches need to be freed.
  */
 struct reg_extmatch {
-  short refcnt;
+  int16_t refcnt;
   char_u              *matches[NSUBEXP];
 };
 
