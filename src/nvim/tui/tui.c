@@ -1437,7 +1437,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   // Some terminals can not currently be trusted to report if they support
   // DECSCUSR or not. So we need to have a blacklist for when we should not
   // trust the reported features.
-  if( (vte_version != 0 && vte_version < 3900) || konsole ) {
+  if( !((vte_version != 0 && vte_version < 3900) || konsole ) ) {
     // Dickey ncurses terminfo has included the Ss and Se capabilities,
     // pioneered by tmux, since 2011-07-14. So adding them to terminal types,
     // that do actually have such control sequences but lack the correct
