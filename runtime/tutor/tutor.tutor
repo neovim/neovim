@@ -159,7 +159,7 @@ echom "hello"
 
 
 ~~~ viml
-echom "the value of &number is".string(&number)
+echom 'the value of &number is'.string(&number)
 ~~~
 
 You can inline viml code using "\`" and "\`{vim}":
@@ -220,7 +220,7 @@ elements to provide feedback to the user about his progress. If the text in
 these elements satisfies some set condition, a ✓ sign will appear in the gutter
 to the left. Otherwise, a ✗ sign is displayed.
 
-### expect {*expect*}
+### expect *expect*
 
 "expect" lines check that the contents of the line are identical to some preset text
 (like in the exercises above).
