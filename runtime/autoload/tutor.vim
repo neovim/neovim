@@ -95,6 +95,7 @@ endfunction
 " Marks: {{{1
 
 function! tutor#ApplyMarks()
+    hi! link tutorExpect Special
     if exists('b:tutor_metadata') && has_key(b:tutor_metadata, 'expect')
         let b:tutor_sign_id = 1
         for expct in keys(b:tutor_metadata['expect'])
