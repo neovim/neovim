@@ -15,14 +15,28 @@ function! tutor#SetupVim()
     endif
 endfunction
 
+" Loads metadata file, if available
+function! tutor#LoadMetadata()
+    try
+        let b:tutor_metadata = json_decode(join(readfile(expand('%').'.json'), "\n"))
+    catch
+    endtry
+endfunction
+
 " Mappings: {{{1
+
+function! tutor#SetNormalMappings()
+    nnoremap <silent> <buffer> <CR> :call tutor#FollowLink(0)<cr>
+    nnoremap <silent> <buffer> <2-LeftMouse> :call tutor#MouseDoubleClick()<cr>
+    nnoremap <buffer> >> :call tutor#InjectCommand()<cr>
+endfunction
 
 function! tutor#MouseDoubleClick()
     if foldclosed(line('.')) > -1
         normal! zo
     else
         if match(getline('.'), '^#\{1,} ') > -1
-            normal! zc
+            silent normal! zc
         else
             call tutor#FollowLink(0)
         endif
@@ -34,14 +48,6 @@ function! tutor#InjectCommand()
     exe l:cmd
     redraw | echohl WarningMsg | echon  "tutor: ran" | echohl None | echon " " | echohl Statement | echon l:cmd
 endfunction
-
-function! tutor#SetNormalMappings()
-    nnoremap <silent> <buffer> <CR> :call tutor#FollowLink(0)<cr>
-    nnoremap <silent> <buffer> <2-LeftMouse> :call tutor#MouseDoubleClick()<cr>
-    nnoremap <buffer> >> :call tutor#InjectCommand()<cr>
-endfunction
-
-" Hypertext: {{{1
 
 function! tutor#FollowLink(force)
     let l:stack_s = join(map(synstack(line('.'), col('.')), 'synIDattr(v:val, "name")'), '')
@@ -85,12 +91,6 @@ function! tutor#InfoText()
     return join(l:info_parts, " ")
 endfunction
 
-function! tutor#LoadMetadata()
-    try
-        let b:tutor_metadata = json_decode(join(readfile(expand('%').'.json'), "\n"))
-    catch
-    endtry
-endfunction
 
 " Marks: {{{1
 
