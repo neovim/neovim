@@ -141,7 +141,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   dictitem_T *const di = tv_dict_find(dict, key.data, (ptrdiff_t)key.size);
 
   if (di == NULL) {
-    api_set_error(err, kErrorTypeValidation, "Key not found");
+    api_set_error(err, kErrorTypeValidation, "Key '%s' not found", key.data);
     return (Object)OBJECT_INIT;
   }
 

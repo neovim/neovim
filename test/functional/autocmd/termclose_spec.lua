@@ -14,11 +14,50 @@ describe('TermClose event', function()
     nvim('set_option', 'shellcmdflag', 'EXE')
   end)
 
-  it('triggers when terminal job ends', function()
+  it('triggers when fast-exiting terminal job stops', function()
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
     command('call jobstop(b:terminal_job_id)')
     retry(nil, nil, function() eq(23, eval('g:test_termclose')) end)
+  end)
+
+  it('triggers when long-running terminal job gets stopped', function()
+    nvim('set_option', 'shell', 'sh')
+    command('autocmd TermClose * let g:test_termclose = 23')
+    command('terminal')
+    command('call jobstop(b:terminal_job_id)')
+    retry(nil, nil, function() eq(23, eval('g:test_termclose')) end)
+  end)
+
+  it('kills job trapping SIGTERM', function()
+    nvim('set_option', 'shell', 'sh')
+    nvim('set_option', 'shellcmdflag', '-c')
+    command([[ let g:test_job = jobstart('trap "" TERM && echo 1 && sleep 60', { ]]
+      .. [[ 'on_stdout': {-> execute('let g:test_job_started = 1')}, ]]
+      .. [[ 'on_exit': {-> execute('let g:test_job_exited = 1')}}) ]])
+    retry(nil, nil, function() eq(1, eval('get(g:, "test_job_started", 0)')) end)
+
+    local start = os.time()
+    command('call jobstop(g:test_job)')
+    retry(nil, nil, function() eq(1, eval('get(g:, "test_job_exited", 0)')) end)
+    local duration = os.time() - start
+    eq(2, duration)
+  end)
+
+  it('kills pty job trapping SIGHUP and SIGTERM', function()
+    nvim('set_option', 'shell', 'sh')
+    nvim('set_option', 'shellcmdflag', '-c')
+    command([[ let g:test_job = jobstart('trap "" HUP TERM && echo 1 && sleep 60', { ]]
+      .. [[ 'pty': 1,]]
+      .. [[ 'on_stdout': {-> execute('let g:test_job_started = 1')}, ]]
+      .. [[ 'on_exit': {-> execute('let g:test_job_exited = 1')}}) ]])
+    retry(nil, nil, function() eq(1, eval('get(g:, "test_job_started", 0)')) end)
+
+    local start = os.time()
+    command('call jobstop(g:test_job)')
+    retry(nil, nil, function() eq(1, eval('get(g:, "test_job_exited", 0)')) end)
+    local duration = os.time() - start
+    eq(4, duration)
   end)
 
   it('reports the correct <abuf>', function()

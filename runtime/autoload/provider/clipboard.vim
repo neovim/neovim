@@ -8,7 +8,7 @@ let s:paste = {}
 " ownership of the selection, so we know how long the cache is valid.
 let s:selection = { 'owner': 0, 'data': [] }
 
-function! s:selection.on_exit(jobid, data, event)
+function! s:selection.on_exit(jobid, data, event) abort
   " At this point this nvim instance might already have launched
   " a new provider instance. Don't drop ownership in this case.
   if self.owner == a:jobid
@@ -18,7 +18,7 @@ endfunction
 
 let s:selections = { '*': s:selection, '+': copy(s:selection)}
 
-function! s:try_cmd(cmd, ...)
+function! s:try_cmd(cmd, ...) abort
   let argv = split(a:cmd, " ")
   let out = a:0 ? systemlist(argv, a:1, 1) : systemlist(argv, [''], 1)
   if v:shell_error
@@ -34,7 +34,7 @@ function! s:try_cmd(cmd, ...)
 endfunction
 
 " Returns TRUE if `cmd` exits with success, else FALSE.
-function! s:cmd_ok(cmd)
+function! s:cmd_ok(cmd) abort
   call system(a:cmd)
   return v:shell_error == 0
 endfunction
@@ -47,7 +47,12 @@ function! provider#clipboard#Error() abort
 endfunction
 
 function! provider#clipboard#Executable() abort
-  if has('mac') && executable('pbcopy')
+  if exists('g:clipboard')
+    let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
+    let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
+    let s:cache_enabled = get(g:clipboard, 'cache_enabled', 1)
+    return get(g:clipboard, 'name', 'g:clipboard')
+  elseif has('mac') && executable('pbcopy')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'
     let s:copy['*'] = s:copy['+']
@@ -102,14 +107,14 @@ endif
 
 let s:clipboard = {}
 
-function! s:clipboard.get(reg)
+function! s:clipboard.get(reg) abort
   if s:selections[a:reg].owner > 0
     return s:selections[a:reg].data
   end
   return s:try_cmd(s:paste[a:reg])
 endfunction
 
-function! s:clipboard.set(lines, regtype, reg)
+function! s:clipboard.set(lines, regtype, reg) abort
   if a:reg == '"'
     call s:clipboard.set(a:lines,a:regtype,'+')
     if s:copy['*'] != s:copy['+']
@@ -144,6 +149,6 @@ function! s:clipboard.set(lines, regtype, reg)
   let selection.owner = jobid
 endfunction
 
-function! provider#clipboard#Call(method, args)
+function! provider#clipboard#Call(method, args) abort
   return call(s:clipboard[a:method],a:args,s:clipboard)
 endfunction

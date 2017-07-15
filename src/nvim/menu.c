@@ -60,7 +60,6 @@ ex_menu (
   char_u      *map_to;
   int noremap;
   bool silent = false;
-  bool special = false;
   int unmenu;
   char_u      *map_buf;
   char_u      *arg;
@@ -86,7 +85,7 @@ ex_menu (
       continue;
     }
     if (STRNCMP(arg, "<special>", 9) == 0) {
-      special = true;
+      // Ignore obsolete "<special>" modifier.
       arg = skipwhite(arg + 9);
       continue;
     }
@@ -222,7 +221,7 @@ ex_menu (
       map_buf = NULL;  // Menu tips are plain text.
     } else {
       map_to = replace_termcodes(map_to, STRLEN(map_to), &map_buf, false, true,
-                                 special, CPO_TO_CPO_FLAGS);
+                                 true, CPO_TO_CPO_FLAGS);
     }
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;

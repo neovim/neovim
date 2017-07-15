@@ -136,9 +136,13 @@ Integer nvim_input(String keys)
   return (Integer)input_enqueue(keys);
 }
 
-/// Replaces terminal codes and key codes (<CR>, <Esc>, ...) in a string with
+/// Replaces terminal codes and |keycodes| (<CR>, <Esc>, ...) in a string with
 /// the internal representation.
 ///
+/// @param str        String to be converted.
+/// @param from_part  Legacy Vim parameter. Usually true.
+/// @param do_lt      Also translate <lt>. Ignored if `special` is false.
+/// @param special    Replace |keycodes|, e.g. <CR> becomes a "\n" char.
 /// @see replace_termcodes
 /// @see cpoptions
 String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
@@ -151,12 +155,6 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   }
 
   char *ptr = NULL;
-  // Set 'cpoptions' the way we want it.
-  //    FLAG_CPO_BSLASH  set - backslashes are *not* treated specially
-  //    FLAG_CPO_KEYCODE set - keycodes are *not* reverse-engineered
-  //    FLAG_CPO_SPECI unset - <Key> sequences *are* interpreted
-  //  The third from end parameter of replace_termcodes() is true so that the
-  //  <lt> sequence is recognised - needed for a real backslash.
   replace_termcodes((char_u *)str.data, str.size, (char_u **)&ptr,
                     from_part, do_lt, special, CPO_TO_CPO_FLAGS);
   return cstr_as_string(ptr);
@@ -300,7 +298,7 @@ ArrayOf(String) nvim_list_runtime_paths(void)
   FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
-  uint8_t *rtp = p_rtp;
+  char_u *rtp = p_rtp;
 
   if (*rtp == NUL) {
     // No paths
@@ -314,13 +312,14 @@ ArrayOf(String) nvim_list_runtime_paths(void)
     }
     rtp++;
   }
+  rv.size++;
 
   // Allocate memory for the copies
-  rv.items = xmalloc(sizeof(Object) * rv.size);
+  rv.items = xmalloc(sizeof(*rv.items) * rv.size);
   // Reset the position
   rtp = p_rtp;
   // Start copying
-  for (size_t i = 0; i < rv.size && *rtp != NUL; i++) {
+  for (size_t i = 0; i < rv.size; i++) {
     rv.items[i].type = kObjectTypeString;
     rv.items[i].data.string.data = xmalloc(MAXPATHL);
     // Copy the path from 'runtimepath' to rv.items[i]
@@ -709,7 +708,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 Integer nvim_get_color_by_name(String name)
   FUNC_API_SINCE(1)
 {
-  return name_to_color((uint8_t *)name.data);
+  return name_to_color((char_u *)name.data);
 }
 
 Dictionary nvim_get_color_map(void)
@@ -871,7 +870,7 @@ static void write_msg(String message, bool to_err)
 #define PUSH_CHAR(i, pos, line_buf, msg) \
   if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) { \
     line_buf[pos] = NUL; \
-    msg((uint8_t *)line_buf); \
+    msg((char_u *)line_buf); \
     pos = 0; \
     continue; \
   } \

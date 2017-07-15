@@ -33,7 +33,8 @@ function! health#check(plugin_names) abort
   setlocal wrap breakindent
   setlocal filetype=markdown
   setlocal conceallevel=2 concealcursor=nc
-  setlocal keywordprg=:help iskeyword=@,48-57,_,192-255,-,#
+  setlocal keywordprg=:help
+  let &l:iskeyword='!-~,^*,^|,^",192-255'
   call s:enhance_syntax()
 
   if empty(healthchecks)

@@ -51,14 +51,14 @@ endif()
 
 # Set default build type.
 if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "CMAKE_BUILD_TYPE not given, defaulting to 'Dev'.")
-  set(CMAKE_BUILD_TYPE "Dev" CACHE STRING "Choose the type of build." FORCE)
+  message(STATUS "CMAKE_BUILD_TYPE not given, defaulting to 'Debug'.")
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
 # Set available build types for CMake GUIs.
 # A different build type can still be set by -DCMAKE_BUILD_TYPE=...
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
-  STRINGS "Debug" "Dev" "Release" "MinSizeRel" "RelWithDebInfo")
+  STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
@@ -107,45 +107,23 @@ if(NOT CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DMIN_LOG_LEVEL)
   set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -DMIN_LOG_LEVEL=3")
 endif()
 
-# Enable assertions for RelWithDebInfo.
-if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
+if(CMAKE_COMPILER_IS_GNUCC)
+  check_c_compiler_flag(-Og HAS_OG_FLAG)
+else()
+  set(HAS_OG_FLAG 0)
+endif()
+
+# Set custom build flags for RelWithDebInfo.
+# -DNDEBUG purposely omitted because we want assertions.
+if(HAS_OG_FLAG)
+  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Og -g"
+    CACHE STRING "Flags used by the compiler during release-with-debug builds." FORCE)
+elseif(NOT MSVC)
+  set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g"
+    CACHE STRING "Flags used by the compiler during release-with-debug builds." FORCE)
+elseif(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 endif()
-
-# Set build flags for custom Dev build type.
-# -DNDEBUG purposely omitted because we want assertions.
-if(MSVC)
-  SET(CMAKE_C_FLAGS_DEV ""
-      CACHE STRING "Flags used by the compiler during development (optimized, but with debug info and logging) builds."
-      FORCE)
-else()
-  if(CMAKE_COMPILER_IS_GNUCC)
-    check_c_compiler_flag(-Og HAS_OG_FLAG)
-  else()
-    set(HAS_OG_FLAG 0)
-  endif()
-
-  if(HAS_OG_FLAG)
-    set(CMAKE_C_FLAGS_DEV "-Og -g"
-        CACHE STRING "Flags used by the compiler during development (optimized, but with debug info and logging) builds."
-        FORCE)
-  else()
-    set(CMAKE_C_FLAGS_DEV "-O2 -g"
-        CACHE STRING "Flags used by the compiler during development (optimized, but with debug info and logging) builds."
-        FORCE)
-  endif()
-endif()
-SET(CMAKE_EXE_LINKER_FLAGS_DEV ""
-    CACHE STRING "Flags used for linking binaries during development (optimized, but with debug info and logging) builds."
-    FORCE)
-SET(CMAKE_SHARED_LINKER_FLAGS_DEV ""
-    CACHE STRING "Flags used by the shared libraries linker during development (optimized, but with debug info and logging) builds."
-    FORCE)
-
-MARK_AS_ADVANCED(
-  CMAKE_C_FLAGS_DEV
-  CMAKE_EXE_LINKER_FLAGS_DEV
-  CMAKE_SHARED_LINKER_FLAGS_DEV)
 
 # Enable -Wconversion.
 if(NOT MSVC)
@@ -600,9 +578,26 @@ if(LUACHECK_PRG)
   add_custom_target(testlint
     COMMAND ${CMAKE_COMMAND}
       -DLUACHECK_PRG=${LUACHECK_PRG}
-      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DIGNORE_PATTERN="*/preload.lua"
       -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunTestsLint.cmake)
+      -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake)
+
+  add_custom_target(
+    blobcodelint
+    COMMAND
+      ${CMAKE_COMMAND}
+        -DLUACHECK_PRG=${LUACHECK_PRG}
+        -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/lua
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DREAD_GLOBALS=vim
+        -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
+  )
+  # TODO(ZyX-I): Run linter for all lua code in src
+  add_custom_target(
+    lualint
+    DEPENDS blobcodelint
+  )
 endif()
 
 set(CPACK_PACKAGE_NAME "Neovim")

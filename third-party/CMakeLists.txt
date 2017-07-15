@@ -110,8 +110,8 @@ if(WIN32)
 set(LIBTERMKEY_URL https://github.com/equalsraf/libtermkey/archive/tb-windows.zip)
 set(LIBTERMKEY_SHA256 c81e33e38662b151a49847ff4feef4f8c4b2a66f3e159a28b575cbc9bcd8ffea)
 else()
-set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.19.tar.gz)
-set(LIBTERMKEY_SHA256 c505aa4cb48c8fa59c526265576b97a19e6ebe7b7da20f4ecaae898b727b48b7)
+set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.20.tar.gz)
+set(LIBTERMKEY_SHA256 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5)
 endif()
 
 set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/a9c7c6fd20fa35e0ad3e0e98901ca12dfca9c25c.tar.gz)
@@ -133,8 +133,11 @@ set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300
 set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.7/neovim-qt.zip)
 set(WINGUI_SHA256 b548f6e4045f16a10163b0e433f05b115b2f877cb47c4eacbf80eaad1a8429ab)
 
-set(WIN32YANK_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.3/win32yank.zip)
-set(WIN32YANK_SHA256 b474439ed2854a9a24941d66970c7fcfece219401eaaa5ebc0ffcc962e69887a)
+set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
+set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)
+
+set(WIN32YANK_X86_64_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip)
+set(WIN32YANK_X86_64_SHA256 33a747a92da60fb65e668edbf7661d3d902411a2d545fe9dc08623cecd142a20)
 
 set(WINPTY_URL https://github.com/rprichard/winpty/releases/download/0.4.2/winpty-0.4.2-msvc2015.zip)
 set(WINPTY_SHA256 b465f2584ff394b3fe27c01aa1dcfc679583c1ee951d0e83de3f859d8b8305b8)
@@ -189,18 +192,19 @@ if(WIN32)
   GetBinaryDep(TARGET wintools
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_INSTALL_DIR}/bin)
 
-  GetBinaryDep(TARGET win32yank
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
-
   GetBinaryDep(TARGET wingui
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory bin ${DEPS_INSTALL_DIR}/bin)
 
   include(TargetArch)
+  GetBinaryDep(TARGET "win32yank_${TARGET_ARCH}"
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy win32yank.exe ${DEPS_INSTALL_DIR}/bin)
+
   if("${TARGET_ARCH}" STREQUAL "X86_64")
     set(TARGET_ARCH x64)
   elseif(TARGET_ARCH STREQUAL "X86")
     set(TARGET_ARCH ia32)
   endif()
+
   GetBinaryDep(TARGET winpty
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
       COMMAND ${CMAKE_COMMAND} -DFROM_GLOB=${DEPS_BUILD_DIR}/src/winpty/${TARGET_ARCH}/bin/*

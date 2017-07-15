@@ -1451,9 +1451,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
     /* Never redo "zf" (define fold). */
     if ((vim_strchr(p_cpo, CPO_YANK) != NULL || oap->op_type != OP_YANK)
         && ((!VIsual_active || oap->motion_force)
-            /* Also redo Operator-pending Visual mode mappings */
-            || (VIsual_active && cap->cmdchar == ':'
-                && oap->op_type != OP_COLON))
+            // Also redo Operator-pending Visual mode mappings.
+            || (cap->cmdchar == ':' && oap->op_type != OP_COLON))
         && cap->cmdchar != 'D'
         && oap->op_type != OP_FOLD
         && oap->op_type != OP_FOLDOPEN
@@ -5231,6 +5230,7 @@ static void nv_dollar(cmdarg_T *cap)
 static void nv_search(cmdarg_T *cap)
 {
   oparg_T     *oap = cap->oap;
+  pos_T save_cursor = curwin->w_cursor;
 
   if (cap->cmdchar == '?' && cap->oap->op_type == OP_ROT13) {
     /* Translate "g??" to "g?g?" */
@@ -5240,6 +5240,8 @@ static void nv_search(cmdarg_T *cap)
     return;
   }
 
+  // When using 'incsearch' the cursor may be moved to set a different search
+  // start position.
   cap->searchbuf = getcmdline(cap->cmdchar, cap->count1, 0);
 
   if (cap->searchbuf == NULL) {
@@ -5248,7 +5250,8 @@ static void nv_search(cmdarg_T *cap)
   }
 
   (void)normal_search(cap, cap->cmdchar, cap->searchbuf,
-      (cap->arg ? 0 : SEARCH_MARK));
+                      (cap->arg || !equalpos(save_cursor, curwin->w_cursor))
+                      ? 0 : SEARCH_MARK);
 }
 
 /*

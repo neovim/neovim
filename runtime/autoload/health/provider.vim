@@ -125,6 +125,10 @@ function! s:check_clipboard() abort
     call health#report_warn(
           \ 'No clipboard tool found. Clipboard registers will not work.',
           \ [':help clipboard'])
+  elseif exists('g:clipboard') && (type({}) != type(g:clipboard)
+        \ || !has_key(g:clipboard, 'copy') || !has_key(g:clipboard, 'paste'))
+    call health#report_error(
+          \ 'g:clipboard exists but is malformed. It must be a dictionary with the keys documented at :help g:clipboard')
   else
     call health#report_ok('Clipboard tool found: '. clipboard_tool)
   endif

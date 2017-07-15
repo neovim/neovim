@@ -156,6 +156,15 @@ are always available and may be used simultaneously in separate plugins.  The
 `neovim` pip package must be installed to use Python plugins in Nvim (see
 |provider-python|).
 
+Because of general |256-color| usage whereever possible, Nvim will even use
+256-colour capability on Linux virtual terminals.  Vim uses only 8 colours
+plus bright foreground on Linux VTs.
+
+Vim combines what is in its |builtin-terms| with what it reads from termcap,
+and has a |ttybuiltin| setting to control how that combination works.  Nvim
+uses either one or the other of an external |terminfo| entry or the built-in
+one.  It does not attempt to mix data from the two.
+
 |:!| does not support "interactive" commands. Use |:terminal| instead.
 (GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
 
@@ -244,6 +253,8 @@ Lua interface (|if_lua.txt|):
   while calling lua chunk: [string "<VimL compiled string>"]:1: TEST” in 
   Neovim.
 - Lua has direct access to Nvim |API| via `vim.api`.
+- Lua package.path and package.cpath are automatically updated according to
+  'runtimepath': |lua-require|.
 - Currently, most legacy Vim features are missing.
 
 |input()| and |inputdialog()| gained support for each other’s features (return 
@@ -281,6 +292,25 @@ Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
 terminal capabilities. Instead Nvim treats the terminal as any other UI. For
 example, 'guicursor' sets the terminal cursor style if possible.
 
+						  *'term'* *E529* *E530* *E531*
+The 'term' option has a fixed value, present only for script compatibility and
+intentionally not the same as any known terminal type name.  It should be a
+rare case in Nvim where one needs |term-dependent-settings|, for which use the
+|TERM| environment variable.
+
+								*termcap*
+Nvim never uses the termcap database and only uses |terminfo|.  See
+|builtin-terms| for what happens on operating systems without a terminfo
+database.
+
+						*xterm-8bit* *xterm-8-bit*
+Xterm can be run in a mode where it uses true 8-bit CSI.  Supporting this
+requires autodetection of whether the terminal is in UTF-8 mode or non-UTF-8
+mode, as the 8-bit CSI character has to be written differently in each case.
+Vim issues a "request version" sequence to the terminal at startup and looks
+at how the terminal is sending CSI.  Nvim does not issue such a sequence and
+always uses 7-bit control sequences.
+
 'ttyfast':
   ":set ttyfast" is ignored
   ":set nottyfast" is an error
@@ -308,7 +338,7 @@ Test functions:
 
 Other options:
   'antialias'
-  'cpoptions' ("g", "w", "H", "*", "-", "j", and all POSIX flags were removed)
+  'cpoptions' (g j k H w < * - and all POSIX flags were removed)
   'encoding' ("utf-8" is always used)
   'esckeys'
   'guioptions' "t" flag was removed
@@ -322,7 +352,6 @@ Other options:
   'shelltype'
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
   *'swapsync'* *'sws'*
-  *'term'* *E529* *E530* *E531*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'

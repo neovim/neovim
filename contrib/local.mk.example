@@ -13,26 +13,21 @@
 
 # Sets the build type; defaults to Debug. Valid values:
 #
-# - Debug:          Disables optimizations (-O0), enables debug information and logging.
+# - Debug:          Disables optimizations (-O0), enables debug information.
 #
-# - Dev:            Enables all optimizations that do not interfere with
-#                   debugging (-Og if available, -O2 and -g if not).
-#                   Enables debug information and logging.
-#
-# - RelWithDebInfo: Enables optimizations (-O2) and debug information.
-#                   Disables logging.
+# - RelWithDebInfo: Enables optimizations (-Og or -O2) with debug information.
 #
 # - MinSizeRel:     Enables all -O2 optimization that do not typically
 #                   increase code size, and performs further optimizations
 #                   designed to reduce code size (-Os).
-#                   Disables debug information and logging.
+#                   Disables debug information.
 #
 # - Release:        Same as RelWithDebInfo, but disables debug information.
 #
 # CMAKE_BUILD_TYPE := Debug
 
-# The default log level is 1 (INFO) (unless CMAKE_BUILD_TYPE is "Release").
 # Log levels: 0 (DEBUG), 1 (INFO), 2 (WARNING), 3 (ERROR)
+# Default is 1 (INFO) unless CMAKE_BUILD_TYPE is Release or RelWithDebInfo.
 # CMAKE_EXTRA_FLAGS += -DMIN_LOG_LEVEL=1
 
 # By default, nvim uses bundled versions of its required third-party

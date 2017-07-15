@@ -106,12 +106,20 @@ typedef struct command_line_state {
   char_u *lookfor;                      // string to match
   int hiscnt;                           // current history line in use
   int histype;                          // history type to be used
-  pos_T     old_cursor;
+  pos_T     search_start;               // where 'incsearch' starts searching
+  pos_T     save_cursor;
   colnr_T   old_curswant;
+  colnr_T   init_curswant;
   colnr_T   old_leftcol;
+  colnr_T   init_leftcol;
   linenr_T  old_topline;
+  linenr_T  init_topline;
   int       old_topfill;
+  int       init_topfill;
   linenr_T  old_botline;
+  linenr_T  init_botline;
+  pos_T     match_start;
+  pos_T     match_end;
   int did_incsearch;
   int incsearch_postponed;
   int did_wild_list;                    // did wild_list() recently
@@ -191,6 +199,12 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   s->save_State = State;
   s->save_p_icm = vim_strsave(p_icm);
   s->ignore_drag_release = true;
+  s->match_start = curwin->w_cursor;
+  s->init_curswant = curwin->w_curswant;
+  s->init_leftcol = curwin->w_leftcol;
+  s->init_topline = curwin->w_topline;
+  s->init_topfill = curwin->w_topfill;
+  s->init_botline = curwin->w_botline;
 
   if (s->firstc == -1) {
     s->firstc = NUL;
@@ -204,7 +218,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   ccline.prompt_id = last_prompt_id++;
   ccline.overstrike = false;                // always start in insert mode
-  s->old_cursor = curwin->w_cursor;         // needs to be restored later
+  clearpos(&s->match_end);
+  s->save_cursor = curwin->w_cursor;        // may be restored later
+  s->search_start = curwin->w_cursor;
   s->old_curswant = curwin->w_curswant;
   s->old_leftcol = curwin->w_leftcol;
   s->old_topline = curwin->w_topline;
@@ -307,7 +323,16 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   ccline.xpc = NULL;
 
   if (s->did_incsearch) {
-    curwin->w_cursor = s->old_cursor;
+    if (s->gotesc) {
+      curwin->w_cursor = s->save_cursor;
+    } else {
+      if (!equalpos(s->save_cursor, s->search_start)) {
+        // put the '" mark at the original position
+        curwin->w_cursor = s->save_cursor;
+        setpcmark();
+      }
+      curwin->w_cursor = s->search_start;  // -V519
+    }
     curwin->w_curswant = s->old_curswant;
     curwin->w_leftcol = s->old_leftcol;
     curwin->w_topline = s->old_topline;
@@ -882,6 +907,118 @@ static int command_line_execute(VimState *state, int key)
   return command_line_handle_key(s);
 }
 
+static void command_line_next_incsearch(CommandLineState *s, bool next_match)
+{
+  ui_busy_start();
+  ui_flush();
+
+  pos_T  t;
+  int search_flags = SEARCH_KEEP + SEARCH_NOOF + SEARCH_PEEK;
+  if (next_match) {
+    t = s->match_end;
+    search_flags += SEARCH_COL;
+  } else {
+    t = s->match_start;
+  }
+  emsg_off++;
+  s->i = searchit(curwin, curbuf, &t,
+                  next_match ? FORWARD : BACKWARD,
+                  ccline.cmdbuff, s->count, search_flags,
+                  RE_SEARCH, 0, NULL);
+  emsg_off--;
+  ui_busy_stop();
+  if (s->i) {
+    s->search_start = s->match_start;
+    s->match_end = t;
+    s->match_start = t;
+    if (!next_match && s->firstc == '/') {
+      // move just before the current match, so that
+      // when nv_search finishes the cursor will be
+      // put back on the match
+      s->search_start = t;
+      (void)decl(&s->search_start);
+    }
+    if (lt(t, s->search_start) && next_match) {
+      // wrap around
+      s->search_start = t;
+      if (s->firstc == '?') {
+        (void)incl(&s->search_start);
+      } else {
+        (void)decl(&s->search_start);
+      }
+    }
+
+    set_search_match(&s->match_end);
+    curwin->w_cursor = s->match_start;
+    changed_cline_bef_curs();
+    update_topline();
+    validate_cursor();
+    highlight_match = true;
+    s->old_curswant = curwin->w_curswant;
+    s->old_leftcol = curwin->w_leftcol;
+    s->old_topline = curwin->w_topline;
+    s->old_topfill = curwin->w_topfill;
+    s->old_botline = curwin->w_botline;
+    update_screen(NOT_VALID);
+    redrawcmdline();
+  } else {
+    vim_beep(BO_ERROR);
+  }
+  return;
+}
+
+static void command_line_next_histidx(CommandLineState *s, bool next_match)
+{
+  s->j = (int)STRLEN(s->lookfor);
+  for (;; ) {
+    // one step backwards
+    if (!next_match) {
+      if (s->hiscnt == hislen) {
+        // first time
+        s->hiscnt = hisidx[s->histype];
+      } else if (s->hiscnt == 0 && hisidx[s->histype] != hislen - 1) {
+        s->hiscnt = hislen - 1;
+      } else if (s->hiscnt != hisidx[s->histype] + 1) {
+        s->hiscnt--;
+      } else {
+        // at top of list
+        s->hiscnt = s->i;
+        break;
+      }
+    } else {          // one step forwards
+      // on last entry, clear the line
+      if (s->hiscnt == hisidx[s->histype]) {
+        s->hiscnt = hislen;
+        break;
+      }
+
+      // not on a history line, nothing to do
+      if (s->hiscnt == hislen) {
+        break;
+      }
+
+      if (s->hiscnt == hislen - 1) {
+        // wrap around
+        s->hiscnt = 0;
+      } else {
+        s->hiscnt++;
+      }
+    }
+
+    if (s->hiscnt < 0 || history[s->histype][s->hiscnt].hisstr == NULL) {
+      s->hiscnt = s->i;
+      break;
+    }
+
+    if ((s->c != K_UP && s->c != K_DOWN)
+        || s->hiscnt == s->i
+        || STRNCMP(history[s->histype][s->hiscnt].hisstr,
+                   s->lookfor, (size_t)s->j) == 0) {
+      break;
+    }
+  }
+}
+
 static int command_line_handle_key(CommandLineState *s)
 {
   // Big switch for a typed command line character.
@@ -954,6 +1091,16 @@ static int command_line_handle_key(CommandLineState *s)
 
       // Truncate at the end, required for multi-byte chars.
       ccline.cmdbuff[ccline.cmdlen] = NUL;
+      if (ccline.cmdlen == 0) {
+        s->search_start = s->save_cursor;
+        // save view settings, so that the screen won't be restored at the
+        // wrong position
+        s->old_curswant = s->init_curswant;
+        s->old_leftcol = s->init_leftcol;
+        s->old_topline = s->init_topline;
+        s->old_topfill = s->init_topfill;
+        s->old_botline = s->init_botline;
+      }
       redrawcmd();
     } else if (ccline.cmdlen == 0 && s->c != Ctrl_W
                && ccline.cmdprompt == NULL && s->indent == 0) {
@@ -972,6 +1119,7 @@ static int command_line_handle_key(CommandLineState *s)
         }
         msg_putchar(' ');                             // delete ':'
       }
+      s->search_start = s->save_cursor;
       redraw_cmdline = true;
       return 0;                           // back to cmd mode
     }
@@ -1026,6 +1174,9 @@ static int command_line_handle_key(CommandLineState *s)
 
     // Truncate at the end, required for multi-byte chars.
     ccline.cmdbuff[ccline.cmdlen] = NUL;
+    if (ccline.cmdlen == 0) {
+      s->search_start = s->save_cursor;
+    }
     redrawcmd();
     return command_line_changed(s);
 
@@ -1258,24 +1409,27 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_L:
     if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
       // Add a character from under the cursor for 'incsearch'
-      if (s->did_incsearch && !equalpos(curwin->w_cursor, s->old_cursor)) {
-        s->c = gchar_cursor();
-        // If 'ignorecase' and 'smartcase' are set and the
-        // command line has no uppercase characters, convert
-        // the character to lowercase
-        if (p_ic && p_scs && !pat_has_uppercase(ccline.cmdbuff)) {
-          s->c = mb_tolower(s->c);
-        }
-
-        if (s->c != NUL) {
-          if (s->c == s->firstc
-              || vim_strchr((char_u *)(p_magic ? "\\^$.*[" : "\\^$"), s->c)
-              != NULL) {
-            // put a backslash before special characters
-            stuffcharReadbuff(s->c);
-            s->c = '\\';
+      if (s->did_incsearch) {
+        curwin->w_cursor = s->match_end;
+        if (!equalpos(curwin->w_cursor, s->search_start)) {
+          s->c = gchar_cursor();
+          // If 'ignorecase' and 'smartcase' are set and the
+          // command line has no uppercase characters, convert
+          // the character to lowercase
+          if (p_ic && p_scs
+              && !pat_has_uppercase(ccline.cmdbuff)) {
+            s->c = mb_tolower(s->c);
           }
-          break;
+          if (s->c != NUL) {
+            if (s->c == s->firstc
+                || vim_strchr((char_u *)(p_magic ? "\\^$.*[" : "\\^$"), s->c)
+                != NULL) {
+              // put a backslash before special characters
+              stuffcharReadbuff(s->c);
+              s->c = '\\';
+            }
+            break;
+          }
         }
       }
       return command_line_not_changed(s);
@@ -1294,7 +1448,7 @@ static int command_line_handle_key(CommandLineState *s)
               0, s->firstc != '@') == FAIL) {
         break;
       }
-      return command_line_changed(s);
+      return command_line_not_changed(s);
     }
     // fallthrough
 
@@ -1319,55 +1473,9 @@ static int command_line_handle_key(CommandLineState *s)
       s->lookfor[ccline.cmdpos] = NUL;
     }
 
-    s->j = (int)STRLEN(s->lookfor);
-    for (;; ) {
-      // one step backwards
-      if (s->c == K_UP|| s->c == K_S_UP || s->c == Ctrl_P
-          || s->c == K_PAGEUP || s->c == K_KPAGEUP) {
-        if (s->hiscnt == hislen) {
-          // first time
-          s->hiscnt = hisidx[s->histype];
-        } else if (s->hiscnt == 0 && hisidx[s->histype] != hislen - 1) {
-          s->hiscnt = hislen - 1;
-        } else if (s->hiscnt != hisidx[s->histype] + 1) {
-          --s->hiscnt;
-        } else {
-          // at top of list
-          s->hiscnt = s->i;
-          break;
-        }
-      } else {          // one step forwards
-        // on last entry, clear the line
-        if (s->hiscnt == hisidx[s->histype]) {
-          s->hiscnt = hislen;
-          break;
-        }
-
-        // not on a history line, nothing to do
-        if (s->hiscnt == hislen) {
-          break;
-        }
-
-        if (s->hiscnt == hislen - 1) {
-          // wrap around
-          s->hiscnt = 0;
-        } else {
-          ++s->hiscnt;
-        }
-      }
-
-      if (s->hiscnt < 0 || history[s->histype][s->hiscnt].hisstr == NULL) {
-        s->hiscnt = s->i;
-        break;
-      }
-
-      if ((s->c != K_UP && s->c != K_DOWN)
-          || s->hiscnt == s->i
-          || STRNCMP(history[s->histype][s->hiscnt].hisstr,
-              s->lookfor, (size_t)s->j) == 0) {
-        break;
-      }
-    }
+    bool next_match = (s->c == K_DOWN || s->c == K_S_DOWN || s->c == Ctrl_N
+                       || s->c == K_PAGEDOWN || s->c == K_KPAGEDOWN);
+    command_line_next_histidx(s, next_match);
 
     if (s->hiscnt != s->i) {
       // jumped to other entry
@@ -1434,6 +1542,17 @@ static int command_line_handle_key(CommandLineState *s)
     }
     beep_flush();
     return command_line_not_changed(s);
+
+  case Ctrl_G:  // next match
+  case Ctrl_T:  // previous match
+    if (p_is && !cmd_silent && (s->firstc == '/' || s->firstc == '?')) {
+      if (char_avail()) {
+        return 1;
+      }
+      command_line_next_incsearch(s, s->c == Ctrl_G);
+      return command_line_not_changed(s);
+    }
+    break;
 
   case Ctrl_V:
   case Ctrl_Q:
@@ -1549,7 +1668,7 @@ static int command_line_changed(CommandLineState *s)
       return 1;
     }
     s->incsearch_postponed = false;
-    curwin->w_cursor = s->old_cursor;        // start at old position
+    curwin->w_cursor = s->search_start;  // start at old position
 
     // If there is no command line, don't do anything
     if (ccline.cmdlen == 0) {
@@ -1594,16 +1713,11 @@ static int command_line_changed(CommandLineState *s)
     if (s->i != 0) {
       pos_T save_pos = curwin->w_cursor;
 
-      // First move cursor to end of match, then to the start.  This
-      // moves the whole match onto the screen when 'nowrap' is set.
-      curwin->w_cursor.lnum += search_match_lines;
-      curwin->w_cursor.col = search_match_endcol;
-      if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
-        curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-        coladvance((colnr_T)MAXCOL);
-      }
+      s->match_start = curwin->w_cursor;
+      set_search_match(&curwin->w_cursor);
       validate_cursor();
       end_pos = curwin->w_cursor;
+      s->match_end = end_pos;
       curwin->w_cursor = save_pos;
     } else {
       end_pos = curwin->w_cursor;         // shutup gcc 4
@@ -1645,7 +1759,7 @@ static int command_line_changed(CommandLineState *s)
     emsg_silent--;  // Unblock error reporting
 
     // Restore the window "view".
-    curwin->w_cursor   = s->old_cursor;
+    curwin->w_cursor   = s->save_cursor;
     curwin->w_curswant = s->old_curswant;
     curwin->w_leftcol  = s->old_leftcol;
     curwin->w_topline  = s->old_topline;
@@ -5792,4 +5906,16 @@ histentry_T *hist_get_array(const uint8_t history_type, int **const new_hisidx,
   *new_hisidx = &(hisidx[history_type]);
   *new_hisnum = &(hisnum[history_type]);
   return history[history_type];
+}
+
+static void set_search_match(pos_T *t)
+{
+  // First move cursor to end of match, then to the start.  This
+  // moves the whole match onto the screen when 'nowrap' is set.
+  t->lnum += search_match_lines;
+  t->col = search_match_endcol;
+  if (t->lnum > curbuf->b_ml.ml_line_count) {
+    t->lnum = curbuf->b_ml.ml_line_count;
+    coladvance((colnr_T)MAXCOL);
+  }
 }

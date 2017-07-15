@@ -8,7 +8,7 @@ describe('hostname()', function()
 
   it('returns hostname string', function()
     local actual = call('hostname')
-    ok(string.len(actual) > 1)
+    ok(string.len(actual) > 0)
     if call('executable', 'hostname') == 1 then
       local expected = string.gsub(call('system', 'hostname'), '[\n\r]', '')
       helpers.eq(expected, actual)

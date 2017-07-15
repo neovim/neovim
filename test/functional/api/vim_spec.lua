@@ -327,11 +327,11 @@ describe('api', function()
         {'nvim_get_mode', {}},
         {'nvim_eval',     {'1'}},
       }
-      eq({{{mode='n', blocking=false},
-          13,
-          {mode='n', blocking=false},  -- TODO: should be blocked=true
-          1},
-        NIL}, meths.call_atomic(req))
+      eq({ { {mode='n', blocking=false},
+             13,
+             {mode='n', blocking=false},  -- TODO: should be blocked=true
+             1 },
+           NIL}, meths.call_atomic(req))
       eq({mode='r', blocking=true}, nvim("get_mode"))
     end)
     -- TODO: bug #6166
@@ -373,6 +373,11 @@ describe('api', function()
          '<NL>x<Esc>x<CR>x<lt>x', true, true, true))
     end)
 
+    it('does not convert keycodes if special=false', function()
+      eq('<NL>x<Esc>x<CR>x<lt>x', helpers.nvim('replace_termcodes',
+         '<NL>x<Esc>x<CR>x<lt>x', true, true, false))
+    end)
+
     it('does not crash when transforming an empty string', function()
       -- Actually does not test anything, because current code will use NULL for
       -- an empty string.
@@ -391,13 +396,13 @@ describe('api', function()
         -- notice the special char(…) \xe2\80\xa6
         nvim('feedkeys', ':let x1="…"\n', '', true)
 
-        -- Both replace_termcodes and feedkeys escape \x80
+        -- Both nvim_replace_termcodes and nvim_feedkeys escape \x80
         local inp = helpers.nvim('replace_termcodes', ':let x2="…"<CR>', true, true, true)
-        nvim('feedkeys', inp, '', true)
+        nvim('feedkeys', inp, '', true)   -- escape_csi=true
 
-        -- Disabling CSI escaping in feedkeys
+        -- nvim_feedkeys with CSI escaping disabled
         inp = helpers.nvim('replace_termcodes', ':let x3="…"<CR>', true, true, true)
-        nvim('feedkeys', inp, '', false)
+        nvim('feedkeys', inp, '', false)  -- escape_csi=false
 
         helpers.stop()
       end
@@ -585,6 +590,36 @@ describe('api', function()
       -- call before was done, but not after
       eq(1, meths.get_var('avar'))
       eq({''}, meths.buf_get_lines(0, 0, -1, true))
+    end)
+  end)
+
+  describe('list_runtime_paths', function()
+    it('returns nothing with empty &runtimepath', function()
+      meths.set_option('runtimepath', '')
+      eq({}, meths.list_runtime_paths())
+    end)
+    it('returns single runtimepath', function()
+      meths.set_option('runtimepath', 'a')
+      eq({'a'}, meths.list_runtime_paths())
+    end)
+    it('returns two runtimepaths', function()
+      meths.set_option('runtimepath', 'a,b')
+      eq({'a', 'b'}, meths.list_runtime_paths())
+    end)
+    it('returns empty strings when appropriate', function()
+      meths.set_option('runtimepath', 'a,,b')
+      eq({'a', '', 'b'}, meths.list_runtime_paths())
+      meths.set_option('runtimepath', ',a,b')
+      eq({'', 'a', 'b'}, meths.list_runtime_paths())
+      meths.set_option('runtimepath', 'a,b,')
+      eq({'a', 'b', ''}, meths.list_runtime_paths())
+    end)
+    it('truncates too long paths', function()
+      local long_path = ('/a'):rep(8192)
+      meths.set_option('runtimepath', long_path)
+      local paths_list = meths.list_runtime_paths()
+      neq({long_path}, paths_list)
+      eq({long_path:sub(1, #(paths_list[1]))}, paths_list)
     end)
   end)
 

@@ -1433,12 +1433,10 @@ spell_move_to (
           // the cursor.
           if (dir == BACKWARD
               || lnum != wp->w_cursor.lnum
-              || (lnum == wp->w_cursor.lnum
-                  && (wrapped
-                      || ((colnr_T)(curline
-                                    ? p - buf + (ptrdiff_t)len
-                                    : p - buf)
-                          > wp->w_cursor.col)))) {
+              || wrapped
+              || ((colnr_T)(curline
+                            ? p - buf + (ptrdiff_t)len
+                            : p - buf) > wp->w_cursor.col)) {
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
@@ -2070,7 +2068,7 @@ char_u *did_set_spelllang(win_T *wp)
         // destroying the buffer we are using...
         if (!bufref_valid(&bufref)) {
           ret_msg =
-            (char_u *)"E797: SpellFileMissing autocommand deleted buffer";
+            (char_u *)N_("E797: SpellFileMissing autocommand deleted buffer");
           goto theend;
         }
       }
@@ -3635,7 +3633,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
   // word).
   depth = 0;
   sp = &stack[0];
-  memset(sp, 0, sizeof(trystate_T));
+  memset(sp, 0, sizeof(trystate_T));  // -V512
   sp->ts_curi = 1;
 
   if (soundfold) {

@@ -969,10 +969,13 @@ void set_init_2(bool headless)
     p_window = Rows - 1;
   }
   set_number_default("window", Rows - 1);
+#if 0
+  // This bodges around problems that should be fixed in the TUI layer.
   if (!headless && !os_term_is_nice()) {
     set_string_option_direct((char_u *)"guicursor", -1, (char_u *)"",
                              OPT_GLOBAL, SID_NONE);
   }
+#endif
   parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
   (void)parse_printoptions();      // parse 'printoptions' default value
 }
@@ -3031,7 +3034,7 @@ did_set_string_option (
   /* 'pastetoggle': translate key codes like in a mapping */
   else if (varp == &p_pt) {
     if (*p_pt) {
-      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, true, true, false,
+      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, true, true, true,
                               CPO_TO_CPO_FLAGS);
       if (p != NULL) {
         if (new_value_alloced)
@@ -5175,9 +5178,13 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
      * CTRL-V or backslash */
     if (valuep == &p_pt) {
       s = *valuep;
-      while (*s != NUL)
-        if (put_escstr(fd, str2special(&s, FALSE), 2) == FAIL)
+      while (*s != NUL) {
+        if (put_escstr(fd, (char_u *)str2special((const char **)&s, false,
+                                                 false), 2)
+            == FAIL) {
           return FAIL;
+        }
+      }
     } else if (expand) {
       buf = xmalloc(MAXPATHL);
       home_replace(NULL, *valuep, buf, MAXPATHL, FALSE);
@@ -6173,15 +6180,16 @@ option_value2string (
     }
   } else {  // P_STRING
     varp = *(char_u **)(varp);
-    if (varp == NULL)                       /* just in case */
+    if (varp == NULL) {  // Just in case.
       NameBuff[0] = NUL;
-    else if (opp->flags & P_EXPAND)
-      home_replace(NULL, varp, NameBuff, MAXPATHL, FALSE);
-    /* Translate 'pastetoggle' into special key names */
-    else if ((char_u **)opp->var == &p_pt)
-      str2specialbuf(p_pt, NameBuff, MAXPATHL);
-    else
+    } else if (opp->flags & P_EXPAND) {
+      home_replace(NULL, varp, NameBuff, MAXPATHL, false);
+    // Translate 'pastetoggle' into special key names.
+    } else if ((char_u **)opp->var == &p_pt) {
+      str2specialbuf((const char *)p_pt, (char *)NameBuff, MAXPATHL);
+    } else {
       STRLCPY(NameBuff, varp, MAXPATHL);
+    }
   }
 }
 

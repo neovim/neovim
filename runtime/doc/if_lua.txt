@@ -9,7 +9,147 @@ Lua Interface to Nvim					*lua* *Lua*
                                       Type <M-]> to see the table of contents.
 
 ==============================================================================
-1. Commands						*lua-commands*
+1. Importing modules					*lua-require*
+
+Neovim lua interface automatically adjusts `package.path` and `package.cpath` 
+according to effective &runtimepath value.  Adjustment happens after 
+'runtimepath' is changed. `package.path` is adjusted by simply appending 
+`/lua/?.lua` and `/lua/?/init.lua` to each directory from 'runtimepath' (`/` 
+is actually the first character of `package.config`).
+
+Similarly to `package.path`, modified directories from `runtimepath` are also 
+added to `package.cpath`.  In this case, instead of appending `/lua/?.lua` and 
+`/lua/?/init.lua` to each runtimepath, all unique `?`-containing suffixes of 
+the existing `package.cpath` are used.  Here is an example:
+
+1. Given that
+   - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
+   - initial (defined at compile time or derived from 
+     `$LUA_CPATH`/`$LUA_INIT`) `package.cpath` contains 
+     `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
+2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in 
+   order: parts of the path starting from the first path component containing 
+   question mark and preceding path separator.
+3. The suffix of `/def/?.so`, namely `/?.so` is not unique, as it’s the same 
+   as the suffix of the first path from `package.path` (i.e. `./?.so`).  Which 
+   leaves `/?.so` and `/a?d/j/g.elf`, in this order.
+4. 'runtimepath' has three paths: `/foo/bar`, `/xxx;yyy/baz` and `/abc`.  The 
+   second one contains semicolon which is a paths separator so it is out, 
+   leaving only `/foo/bar` and `/abc`, in order.
+5. The cartesian product of paths from 4. and suffixes from 3. is taken, 
+   giving four variants. In each variant `/lua` path segment is inserted 
+   between path and suffix, leaving
+
+   - `/foo/bar/lua/?.so`
+   - `/foo/bar/lua/a?d/j/g.elf`
+   - `/abc/lua/?.so`
+   - `/abc/lua/a?d/j/g.elf`
+
+6. New paths are prepended to the original `package.cpath`.
+
+The result will look like this:
+
+    `/foo/bar,/xxx;yyy/baz,/abc` ('runtimepath')
+    × `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so` (`package.cpath`)
+
+    = `/foo/bar/lua/?.so;/foo/bar/lua/a?d/j/g.elf;/abc/lua/?.so;/abc/lua/a?d/j/g.elf;./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`
+
+Note: to keep up with 'runtimepath' updates paths added at previous update are 
+remembered and removed at the next update, while all paths derived from the 
+new 'runtimepath' are prepended as described above.  This allows removing 
+paths when path is removed from 'runtimepath', adding paths when they are 
+added and reordering `package.path`/`package.cpath` content if 'runtimepath' 
+was reordered.
+
+Note 2: even though adjustments happens automatically Neovim does not track 
+current values of `package.path` or `package.cpath`.  If you happened to 
+delete some paths from there you need to reset 'runtimepath' to make them 
+readded.  Just running `let &runtimepath = &runtimepath` should work.
+
+Note 3: skipping paths from 'runtimepath' which contain semicolons applies 
+both to `package.path` and `package.cpath`.  Given that there is a number of 
+badly written plugins using shell which will not work with paths containing 
+semicolons it is better to not have them in 'runtimepath' at all.
+
+------------------------------------------------------------------------------
+1.1. Example of the plugin which uses lua modules:	*lua-require-example*
+
+The following example plugin adds a command `:MakeCharBlob` which transforms 
+current buffer into a long `unsigned char` array.  Lua contains transformation 
+function in a module `lua/charblob.lua` which is imported in 
+`autoload/charblob.vim` (`require("charblob")`).  Example plugin is supposed 
+to be put into any directory from 'runtimepath', e.g. `~/.config/nvim` (in 
+this case `lua/charblob.lua` means `~/.config/nvim/lua/charblob.lua`).
+
+autoload/charblob.vim: >
+
+	function charblob#encode_buffer()
+	  call setline(1, luaeval(
+	  \    'require("charblob").encode(unpack(_A))',
+	  \    [getline(1, '$'), &textwidth, '  ']))
+	endfunction
+
+plugin/charblob.vim: >
+
+	if exists('g:charblob_loaded')
+	  finish
+	endif
+	let g:charblob_loaded = 1
+
+	command MakeCharBlob :call charblob#encode_buffer()
+
+lua/charblob.lua: >
+
+	local function charblob_bytes_iter(lines)
+	  local init_s = {
+	    next_line_idx = 1,
+	    next_byte_idx = 1,
+	    lines = lines,
+	  }
+	  local function next(s, _)
+	    if lines[s.next_line_idx] == nil then
+	      return nil
+	    end
+	    if s.next_byte_idx > #(lines[s.next_line_idx]) then
+	      s.next_line_idx = s.next_line_idx + 1
+	      s.next_byte_idx = 1
+	      return ('\n'):byte()
+	    end
+	    local ret = lines[s.next_line_idx]:byte(s.next_byte_idx)
+	    if ret == ('\n'):byte() then
+	      ret = 0  -- See :h NL-used-for-NUL.
+	    end
+	    s.next_byte_idx = s.next_byte_idx + 1
+	    return ret
+	  end
+	  return next, init_s, nil
+	end
+
+	local function charblob_encode(lines, textwidth, indent)
+	  local ret = {
+	    'const unsigned char blob[] = {',
+	    indent,
+	  }
+	  for byte in charblob_bytes_iter(lines) do
+	    --                .- space + number (width 3) + comma
+	    if #(ret[#ret]) + 5 > textwidth then
+	      ret[#ret + 1] = indent
+	    else
+	      ret[#ret] = ret[#ret] .. ' '
+	    end
+	    ret[#ret] = ret[#ret] .. (('%3u,'):format(byte))
+	  end
+	  ret[#ret + 1] = '};'
+	  return ret
+	end
+
+	return {
+	  bytes_iter = charblob_bytes_iter,
+	  encode = charblob_encode,
+	}
+
+==============================================================================
+2. Commands						*lua-commands*
 
 							*:lua*
 :[range]lua {chunk}

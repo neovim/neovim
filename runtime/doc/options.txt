@@ -24,10 +24,7 @@ achieve special effects.  These options come in three forms:
 
 :se[t] all		Show all but terminal options.
 
-:se[t] termcap		Show all terminal options.  Note that in the GUI the
-			key codes are not shown, because they are generated
-			internally and can't be changed.  Changing the terminal
-			codes in the GUI is not useful either...
+:se[t] termcap		Do nothing.  Nvim uses |terminfo|.
 
 								*E518* *E519*
 :se[t] {option}?	Show value of {option}.
@@ -1571,7 +1568,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			results in X being mapped to:
 				'B' included:	"\^["	 (^[ is a real <Esc>)
 				'B' excluded:	"<Esc>"  (5 characters)
-				('<' excluded in both cases)
 								*cpo-c*
 		c	Searching continues at the end of any match at the
 			cursor position, but not further than the start of the
@@ -1621,15 +1617,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		J	A |sentence| has to be followed by two spaces after
 			the '.', '!' or '?'.  A <Tab> is not recognized as
 			white space.
-								*cpo-k*
-		k	Disable the recognition of raw key codes in
-			mappings, abbreviations, and the "to" part of menu
-			commands.  For example, if <Key> sends ^[OA (where ^[
-			is <Esc>), the command ":map X ^[OA" results in X
-			being mapped to:
-				'k' included:	"^[OA"	 (3 characters)
-				'k' excluded:	"<Key>"  (one key code)
-			Also see the '<' flag below.
 								*cpo-K*
 		K	Don't wait for a key code to complete when it is
 			halfway through a mapping.  This breaks mapping
@@ -1763,14 +1750,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 		+	When included, a ":write file" command will reset the
 			'modified' flag of the buffer, even though the buffer
 			itself may still be different from its file.
-								*cpo-<*
-		<	Disable the recognition of special key codes in |<>|
-			form in mappings, abbreviations, and the "to" part of
-			menu commands.  For example, the command
-			":map X <Tab>" results in X being mapped to:
-				'<' included:	"<Tab>"  (5 characters)
-				'<' excluded:	"^I"	 (^I is a real <Tab>)
-			Also see the 'k' flag above.
 								*cpo->*
 		>	When appending to a register, put a line break before
 			the appended text.
@@ -2756,14 +2735,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			*'guicursor'* *'gcr'* *E545* *E546* *E548* *E549*
 'guicursor' 'gcr'	string	(default "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20")
 			global
-	Configures the cursor style for each mode. Works in the GUI and some
-	terminals.
+	Configures the cursor style for each mode. Works in the GUI and many
+	terminals.  See |cursor-shape| for details.
 
-	With tmux you might need this in ~/.tmux.conf (see terminal-overrides
-	in the tmux(1) manual page): >
-		set -ga terminal-overrides ',*:Ss=\E[%p1%d q:Se=\E[2 q'
-
-<	To disable cursor-styling, reset the option: >
+	To disable cursor-styling, reset the option: >
 		:set guicursor=
 
 <	To enable mode shapes, "Cursor" highlight, and blinking: >
@@ -6272,7 +6247,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	for any key that can follow <c-f> in a mapping.
 
 						*'ttimeout'* *'nottimeout'*
-'ttimeout'		boolean (default off)
+'ttimeout'		boolean (default on)
 			global
 	This option and 'ttimeoutlen' determine the behavior when part of a
 	key code sequence has been received by the terminal UI. For example,
@@ -6287,7 +6262,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	complete.
 
 						*'ttimeoutlen'* *'ttm'*
-'ttimeoutlen' 'ttm'	number	(default -1)
+'ttimeoutlen' 'ttm'	number	(default 50)
 			global
 	The time in milliseconds that is waited for a key code
 	sequence to complete. Also used for CTRL-\ CTRL-N and CTRL-\ CTRL-G

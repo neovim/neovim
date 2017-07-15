@@ -12119,15 +12119,17 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 
   mode = get_map_mode((char_u **)&which, 0);
 
-  keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, false,
+  keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, true,
                            CPO_TO_CPO_FLAGS);
   rhs = check_map(keys, mode, exact, false, abbr, &mp, &buffer_local);
   xfree(keys_buf);
 
   if (!get_dict) {
-    /* Return a string. */
-    if (rhs != NULL)
-      rettv->vval.v_string = str2special_save(rhs, FALSE);
+    // Return a string.
+    if (rhs != NULL) {
+      rettv->vval.v_string = (char_u *)str2special_save(
+          (const char *)rhs, false, false);
+    }
 
   } else {
     tv_dict_alloc_ret(rettv);
@@ -12162,7 +12164,8 @@ void mapblock_fill_dict(dict_T *const dict,
                         bool compatible)
   FUNC_ATTR_NONNULL_ALL
 {
-  char_u *lhs = str2special_save(mp->m_keys, true);
+  char *const lhs = str2special_save((const char *)mp->m_keys,
+                                     compatible, !compatible);
   char *const mapmode = map_mode_to_chars(mp->m_mode);
   varnumber_T noremap_value;
 
@@ -12176,18 +12179,21 @@ void mapblock_fill_dict(dict_T *const dict,
     noremap_value = mp->m_noremap == REMAP_SCRIPT ? 2 : !!mp->m_noremap;
   }
 
-  tv_dict_add_str(dict, S_LEN("lhs"), (const char *)lhs);
-  tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
+  if (compatible) {
+    tv_dict_add_str(dict, S_LEN("rhs"), (const char *)mp->m_orig_str);
+  } else {
+    tv_dict_add_allocated_str(dict, S_LEN("rhs"),
+                              str2special_save((const char *)mp->m_str, false,
+                                               true));
+  }
+  tv_dict_add_allocated_str(dict, S_LEN("lhs"), lhs);
   tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
   tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
   tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
   tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ID);
   tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_value);
   tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
-  tv_dict_add_str(dict, S_LEN("mode"), mapmode);
-
-  xfree(lhs);
-  xfree(mapmode);
+  tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
 }
 
 /*
@@ -12453,7 +12459,7 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   if (id >= 1 && id <= 3) {
-    EMSGN("E798: ID is reserved for \":match\": %" PRId64, id);
+    EMSGN(_("E798: ID is reserved for \":match\": %" PRId64), id);
     return;
   }
 
@@ -12510,7 +12516,7 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     // id == 3 is ok because matchaddpos() is supposed to substitute :3match 
     if (id == 1 || id == 2) {
-        EMSGN("E798: ID is reserved for \"match\": %" PRId64, id);
+        EMSGN(_("E798: ID is reserved for \"match\": %" PRId64), id);
         return;
     }
 
