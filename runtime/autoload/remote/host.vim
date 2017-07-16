@@ -125,6 +125,13 @@ function! s:RegistrationCommands(host) abort
     call remote#host#RegisterPlugin(host_id, path, [])
   endfor
   let channel = remote#host#Require(host_id)
+  " check the process started correctly
+  if rpcrequest(channel, 'poll') !=# 'ok'
+    " there could be host that not response for poll request
+    echoerr 'rpcrequest of 'a:host . ' host failed'
+  endif
+
+
   let lines = []
   let registered = []
   for path in paths

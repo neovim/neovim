@@ -169,13 +169,26 @@ function! remote#define#FunctionOnChannel(channel, method, sync, name, opts)
 endfunction
 
 
+function! remote#define#SafeRPCNofity(...) abort
+  if !exists('s:poll')
+    let s:poll = {}
+  endif
+  " check the process started correctly
+  if !get(s:poll, a:1, 0)
+    if rpcrequest(a:1, 'poll') ==# 'ok'
+      let s:poll[a:1] = 1
+    endif
+  endif
+  return call('rpcnotify', a:000)
+endfunction
+
+
 function! s:GetRpcFunction(sync)
   if a:sync
     return 'rpcrequest'
   endif
-  return 'rpcnotify'
+  return 'remote#define#SafeRPCNofity'
 endfunction
-
 
 function! s:GetCommandPrefix(name, opts)
   return 'command!'.s:StringifyOpts(a:opts, ['nargs', 'complete', 'range',
