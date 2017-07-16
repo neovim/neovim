@@ -972,6 +972,7 @@ qf_init_ext(
                       NULL, 0, 0 };
   qffields_T fields = { NULL, NULL, 0, 0L, 0, false, NULL, 0, 0, 0 };
   qfline_T        *old_last = NULL;
+  bool adding = false;
   static efm_T    *fmt_first = NULL;
   char_u          *efm;
   static char_u   *last_efm = NULL;
@@ -997,6 +998,7 @@ qf_init_ext(
     qf_new_list(qi, qf_title);
   } else if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
     // Adding to existing list, use last entry.
+    adding = true;
     old_last = qi->qf_lists[qi->qf_curlist].qf_last;
   }
 
@@ -1113,10 +1115,12 @@ qf_init_ext(
   }
   EMSG(_(e_readerrf));
 error2:
-  qf_free(qi, qi->qf_curlist);
-  qi->qf_listcount--;
-  if (qi->qf_curlist > 0) {
-    qi->qf_curlist--;
+  if (!adding) {
+    qf_free(qi, qi->qf_curlist);
+    qi->qf_listcount--;
+    if (qi->qf_curlist > 0) {
+      qi->qf_curlist--;
+    }
   }
 qf_init_end:
   if (state.fd != NULL) {

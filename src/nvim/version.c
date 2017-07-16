@@ -650,7 +650,7 @@ static const int included_patches[] = {
   // 82 NA
   // 81,
   // 80 NA
-  // 79,
+  79,
   78,
   // 77 NA
   // 76 NA
