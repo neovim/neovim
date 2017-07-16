@@ -24,30 +24,10 @@
 
 #define UI(b) (((UIBridgeData *)b)->ui)
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-static size_t        uilog_seen = 0;
-static argv_callback uilog_event = NULL;
-#define UI_CALL(ui, name, argc, ...) \
-  do { \
-    if (uilog_event == ui_bridge_##name##_event) { \
-      uilog_seen++; \
-    } else { \
-      if (uilog_seen > 0) { \
-        DLOG("UI bridge: ...%zu times", uilog_seen); \
-      } \
-      DLOG("UI bridge: " STR(name)); \
-      uilog_seen = 0; \
-      uilog_event = ui_bridge_##name##_event; \
-    } \
-    ((UIBridgeData *)ui)->scheduler( \
-        event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui)); \
-  } while (0)
-#else
 // Schedule a function call on the UI bridge thread.
-#define UI_CALL(ui, name, argc, ...) \
+#define UI_BRIDGE_CALL(ui, name, argc, ...) \
   ((UIBridgeData *)ui)->scheduler( \
       event_create(ui_bridge_##name##_event, argc, __VA_ARGS__), UI(ui))
-#endif
 
 #define INT2PTR(i) ((void *)(intptr_t)i)
 #define PTR2INT(p) ((Integer)(intptr_t)p)
@@ -128,7 +108,7 @@ static void ui_bridge_stop(UI *b)
 {
   UIBridgeData *bridge = (UIBridgeData *)b;
   bool stopped = bridge->stopped = false;
-  UI_CALL(b, stop, 1, b);
+  UI_BRIDGE_CALL(b, stop, 1, b);
   for (;;) {
     uv_mutex_lock(&bridge->mutex);
     stopped = bridge->stopped;
@@ -154,7 +134,7 @@ static void ui_bridge_highlight_set(UI *b, HlAttrs attrs)
 {
   HlAttrs *a = xmalloc(sizeof(HlAttrs));
   *a = attrs;
-  UI_CALL(b, highlight_set, 2, b, a);
+  UI_BRIDGE_CALL(b, highlight_set, 2, b, a);
 }
 static void ui_bridge_highlight_set_event(void **argv)
 {
@@ -167,7 +147,7 @@ static void ui_bridge_suspend(UI *b)
 {
   UIBridgeData *data = (UIBridgeData *)b;
   uv_mutex_lock(&data->mutex);
-  UI_CALL(b, suspend, 1, b);
+  UI_BRIDGE_CALL(b, suspend, 1, b);
   data->ready = false;
   // suspend the main thread until CONTINUE is called by the UI thread
   while (!data->ready) {
