@@ -11108,13 +11108,10 @@ void get_user_input(const typval_T *const argvars,
   stuffReadbuffSpec(defstr);
 
   const int save_ex_normal_busy = ex_normal_busy;
-  const Callback save_getln_input_callback = getln_input_callback;
   ex_normal_busy = 0;
-  getln_input_callback = input_callback;
   rettv->vval.v_string =
-    getcmdline_prompt(inputsecret_flag ? NUL : '@', (char_u *)p, echo_attr,
-                      xp_type, (char_u *)xp_arg);
-  getln_input_callback = save_getln_input_callback;
+    (char_u *)getcmdline_prompt(inputsecret_flag ? NUL : '@', p, echo_attr,
+                                xp_type, xp_arg, input_callback);
   ex_normal_busy = save_ex_normal_busy;
   callback_free(&input_callback);
 

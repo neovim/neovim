@@ -43,7 +43,7 @@ typedef struct partial_S partial_T;
 typedef struct ufunc ufunc_T;
 
 typedef enum {
-  kCallbackNone,
+  kCallbackNone = 0,
   kCallbackFuncref,
   kCallbackPartial,
 } CallbackType;

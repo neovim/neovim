@@ -89,6 +89,7 @@ struct cmdline_info {
   char_u      *xp_arg;          // user-defined expansion arg
   int input_fn;                 // when TRUE Invoked for input() function
   unsigned prompt_id;  ///< Prompt number, used to disable coloring on errors.
+  Callback highlight_callback;  ///< Callback used for coloring user input.
 };
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
@@ -147,9 +148,6 @@ typedef struct {
   int end;  ///< Colored chunk end (exclusive, > start).
   int attr;  ///< Highlight attr.
 } ColoredCmdlineChunk;
-
-/// Callback used for coloring input() prompts
-Callback getln_input_callback = { .type = kCallbackNone };
 
 kvec_t(ColoredCmdlineChunk) ccline_colors;
 
@@ -1815,42 +1813,50 @@ getcmdline (
   return command_line_enter(firstc, count, indent);
 }
 
-/*
- * Get a command line with a prompt.
- * This is prepared to be called recursively from getcmdline() (e.g. by
- * f_input() when evaluating an expression from CTRL-R =).
- * Returns the command line in allocated memory, or NULL.
- */
-char_u *
-getcmdline_prompt (
-    int firstc,
-    char_u *prompt,            /* command line prompt */
-    int attr,                       /* attributes for prompt */
-    int xp_context,                 /* type of expansion */
-    char_u *xp_arg            /* user-defined expansion argument */
-)
+/// Get a command line with a prompt
+///
+/// This is prepared to be called recursively from getcmdline() (e.g. by
+/// f_input() when evaluating an expression from `<C-r>=`).
+///
+/// @param[in]  firstc  Prompt type: e.g. '@' for input(), '>' for debug.
+/// @param[in]  prompt  Prompt string: what is displayed before the user text.
+/// @param[in]  attr  Prompt highlighting.
+/// @param[in]  xp_context  Type of expansion.
+/// @param[in]  xp_arg  User-defined expansion argument.
+/// @param[in]  highlight_callback  Callback used for highlighting user input.
+///
+/// @return [allocated] Command line or NULL.
+char *getcmdline_prompt(const char firstc, const char *const prompt,
+                        const int attr, const int xp_context,
+                        const char *const xp_arg,
+                        const Callback highlight_callback)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
-  char_u              *s;
-  struct cmdline_info save_ccline;
-  int msg_col_save = msg_col;
+  const int msg_col_save = msg_col;
 
+  struct cmdline_info save_ccline;
   save_cmdline(&save_ccline);
+
   ccline.prompt_id = last_prompt_id++;
-  ccline.cmdprompt = prompt;
+  ccline.cmdprompt = (char_u *)prompt;
   ccline.cmdattr = attr;
   ccline.xp_context = xp_context;
-  ccline.xp_arg = xp_arg;
+  ccline.xp_arg = (char_u *)xp_arg;
   ccline.input_fn = (firstc == '@');
-  s = getcmdline(firstc, 1L, 0);
-  restore_cmdline(&save_ccline);
-  /* Restore msg_col, the prompt from input() may have changed it.
-   * But only if called recursively and the commandline is therefore being
-   * restored to an old one; if not, the input() prompt stays on the screen,
-   * so we need its modified msg_col left intact. */
-  if (ccline.cmdbuff != NULL)
-    msg_col = msg_col_save;
+  ccline.highlight_callback = highlight_callback;
 
-  return s;
+  char *const ret = (char *)getcmdline(firstc, 1L, 0);
+
+  restore_cmdline(&save_ccline);
+  // Restore msg_col, the prompt from input() may have changed it.
+  // But only if called recursively and the commandline is therefore being
+  // restored to an old one; if not, the input() prompt stays on the screen,
+  // so we need its modified msg_col left intact.
+  if (ccline.cmdbuff != NULL) {
+    msg_col = msg_col_save;
+  }
+
+  return ret;
 }
 
 /*
@@ -2358,8 +2364,10 @@ static bool color_cmdline(void)
   bool dgc_ret = true;
   bool tl_ret = true;
 
-  if (ccline.input_fn) {
-    color_cb = getln_input_callback;
+  if (ccline.highlight_callback.type != kCallbackNone) {
+    // Currently this should only happen while processing input() prompts.
+    assert(ccline.input_fn);
+    color_cb = ccline.highlight_callback;
   } else if (ccline.cmdfirstc == ':') {
     try_enter(&tstate);
     err_errmsg = N_(
