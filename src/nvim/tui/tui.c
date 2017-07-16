@@ -1537,6 +1537,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
+  bool tmux = terminfo_is_term_family(term, "tmux");
   bool iterm = terminfo_is_term_family(term, "iterm")
     || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
@@ -1575,7 +1576,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
   bool has_colon_rgb = false
     // per GNOME bug #685759 and bug #704449
-    || (vte_version >= 3600)
+    || (vte_version >= 3600 && !tmux && !screen)
     || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
     // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
     || true_xterm;
