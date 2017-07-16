@@ -1651,3 +1651,25 @@ func Test_caddexpr_wrong()
   call assert_fails('caddexpr ""', 'E376:')
   let &efm = save_efm
 endfunc
+
+func Test_dirstack_cleanup()
+  " This used to cause a memory access in freed memory.
+  let save_efm = &efm
+  lexpr '0'
+  lopen
+  fun X(c)
+    let save_efm=&efm
+    set efm=%D%f
+    if a:c == 'c'
+      caddexpr '::'
+    else
+      laddexpr ':0:0'
+    endif
+    let &efm=save_efm
+  endfun
+  call X('c')
+  call X('l')
+  call setqflist([], 'r')
+  caddbuffer
+  let &efm = save_efm
+endfunc
