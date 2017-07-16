@@ -2076,13 +2076,14 @@ describe('In autoload/shada.vim', function()
     end
 
     it('works', function()
+      local version = nvim('get_vvar', 'version')
       getbstrings_eq({{timestamp='current', type=1, value={
         generator='shada.vim',
-        version=704,
+        version=version,
       }}}, {})
       getbstrings_eq({
         {timestamp='current', type=1, value={
-          generator='shada.vim', version=704
+          generator='shada.vim', version=version
         }},
         {timestamp=0, type=1, value={generator='test'}}
       }, {
@@ -2093,11 +2094,11 @@ describe('In autoload/shada.vim', function()
       nvim('set_var', 'shada#add_own_header', 1)
       getbstrings_eq({{timestamp='current', type=1, value={
         generator='shada.vim',
-        version=704,
+        version=version,
       }}}, {})
       getbstrings_eq({
         {timestamp='current', type=1, value={
-          generator='shada.vim', version=704
+          generator='shada.vim', version=version
         }},
         {timestamp=0, type=1, value={generator='test'}}
       }, {

@@ -1236,18 +1236,6 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
   return -1;
 }
 
-static int unibi_find_ext_bool(unibi_term *ut, const char *name)
-{
-  size_t max = unibi_count_ext_bool(ut);
-  for (size_t i = 0; i < max; i++) {
-    const char * n = unibi_get_ext_bool_name(ut, i);
-    if (n && 0 == strcmp(n, name)) {
-      return (int)i;
-    }
-  }
-  return -1;
-}
-
 /// Several entries in terminfo are known to be deficient or outright wrong,
 /// unfortunately; and several terminal emulators falsely announce incorrect
 /// terminal types.  So patch the terminfo records after loading from an
@@ -1389,14 +1377,21 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // No bugs in the vanilla terminfo for our purposes.
   }
 
-#define XTERM_SETAF_256 \
+// At this time (2017-07-12) it seems like all terminals that support 256
+// color codes can use semicolons in the terminal code and be fine.
+// However, this is not correct according to the spec. So to reward those
+// terminals that also support colons, we output the code that way on these
+// specific ones.
+
+// using colons like ISO 8613-6:1994/ITU T.416:1993 says.
+#define XTERM_SETAF_256_COLON \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38:5:%p1%d%;m"
-#define XTERM_SETAB_256 \
+#define XTERM_SETAB_256_COLON \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48:5:%p1%d%;m"
-  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-#define XTERM_SETAF_256_NONSTANDARD \
+
+#define XTERM_SETAF_256 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
-#define XTERM_SETAB_256_NONSTANDARD \
+#define XTERM_SETAB_256 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m"
 #define XTERM_SETAF_16 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e39%;m"
@@ -1410,8 +1405,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // more on this.
     if (true_xterm || iterm || iterm_pretending_xterm) {
       unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
+      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
+      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
     } else if (konsole || xterm || gnome || rxvt || st || putty
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || mate_pretending_xterm || gnome_pretending_xterm
@@ -1420,8 +1415,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         || (term && strstr(term, "256"))
         ) {
       unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_NONSTANDARD);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_NONSTANDARD);
+      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
+      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
     }
   }
   // Terminals where there is actually 16-colour SGR support despite what
@@ -1536,26 +1531,20 @@ static void augment_terminfo(TUIData *data, const char *term,
     const char *colorterm, long vte_version, bool konsole, bool iterm_env)
 {
   unibi_term *ut = data->ut;
-  const char * xterm_version = os_getenv("XTERM_VERSION");
   bool xterm = terminfo_is_term_family(term, "xterm");
   bool dtterm = terminfo_is_term_family(term, "dtterm");
-  bool linuxvt = terminfo_is_term_family(term, "linux");
   bool rxvt = terminfo_is_term_family(term, "rxvt");
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux");
-  bool st = terminfo_is_term_family(term, "st");
-  bool gnome = terminfo_is_term_family(term, "gnome")
-    || terminfo_is_term_family(term, "vte");
   bool iterm = terminfo_is_term_family(term, "iterm")
     || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool true_xterm = xterm && !!xterm_version;
   bool tmux_wrap = screen && !!os_getenv("TMUX");
-  bool old_truecolor_env = colorterm
-    && (0 == strcmp(colorterm, "truecolor") || 0 == strcmp(colorterm, "24bit"));
+
+  const char * xterm_version = os_getenv("XTERM_VERSION");
+  bool true_xterm = xterm && !!xterm_version;
 
   // Only define this capability for terminal types that we know understand it.
   if (dtterm         // originated this extension
@@ -1576,40 +1565,37 @@ static void augment_terminfo(TUIData *data, const char *term,
   // them to terminal types, that do actually have such control sequences but
   // lack the correct definitions in terminfo, is an augmentation, not a
   // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
-  int Tc = unibi_find_ext_bool(ut, "Tc");
-  // "standard" means using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_standard_rgb = false
+
+  // At this time (2017-07-12) it seems like all terminals that support rgb
+  // color codes can use semicolons in the terminal code and be fine.
+  // However, this is not correct according to the spec. So to reward those
+  // terminals that also support colons, we output the code that way on these
+  // specific ones.
+
+  // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
+  bool has_colon_rgb = false
     // per GNOME bug #685759 and bug #704449
-    || ((gnome || xterm) && (vte_version >= 3600))
+    || (vte_version >= 3600)
     || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
     // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
     || true_xterm;
-  bool has_non_standard_rgb = -1 != Tc
-    // terminfo is definitive if it says something.
-    ? unibi_get_ext_bool(ut, (size_t)Tc)
-    : linuxvt   // Linux 4.8+ supports true-colour SGR.
-    || konsole  // per commentary in VT102Emulation.cpp
-    // per http://lists.schmorp.de/pipermail/rxvt-unicode/2016q2/002261.html
-    || rxvt
-    || tmux     // per experimentation
-    || st       // per experimentation
-    || old_truecolor_env;
+
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
   if (-1 == data->unibi_ext.set_rgb_foreground) {
-    if (has_standard_rgb) {
+    if (has_colon_rgb) {
       data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
           "\x1b[38:2:%p1%d:%p2%d:%p3%dm");
-    } else if (has_non_standard_rgb) {
+    } else {
       data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
           "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
     }
   }
   data->unibi_ext.set_rgb_background = unibi_find_ext_str(ut, "setrgbb");
   if (-1 == data->unibi_ext.set_rgb_background) {
-    if (has_standard_rgb) {
+    if (has_colon_rgb) {
       data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
           "\x1b[48:2:%p1%d:%p2%d:%p3%dm");
-    } else if (has_non_standard_rgb) {
+    } else {
       data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
           "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
     }
@@ -1621,7 +1607,9 @@ static void augment_terminfo(TUIData *data, const char *term,
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, TMUX_WRAP(tmux_wrap, "\033]Pl%p1%06x\033\\"));
-  } else if (xterm) {
+  } else if (xterm || (vte_version != 0) || rxvt) {
+    // This seems to be supported for a long time in VTE
+    // urxvt also supports this
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
         ut, NULL, "\033]12;#%p1%06x\007");
   }

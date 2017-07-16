@@ -102,36 +102,30 @@ function. Here's a more object-oriented version of the above:
 >
     let Shell = {}
 
-    function Shell.on_stdout(job_id, data) dict
-      call append(line('$'), self.get_name().' stdout: '.join(a:data))
+    function Shell.on_stdout(_job_id, data, event)
+      call append(line('$'),
+            \ printf('[%s] %s: %s', a:event, self.name, join(a:data[:-2])))
     endfunction
 
-    function Shell.on_stderr(job_id, data) dict
-      call append(line('$'), self.get_name().' stderr: '.join(a:data))
+    let Shell.on_stderr = function(Shell.on_stdout)
+
+    function Shell.on_exit(job_id, _data, event)
+      let msg = printf('job %d ("%s") finished', a:job_id, self.name)
+      call append(line('$'), printf('[%s] BOOM!', a:event))
+      call append(line('$'), printf('[%s] %s!', a:event, msg))
     endfunction
 
-    function Shell.on_exit(job_id, data) dict
-      call append(line('$'), self.get_name().' exited')
+    function Shell.new(name, cmd)
+      let object = extend(copy(g:Shell), {'name': a:name})
+      let object.cmd = ['sh', '-c', a:cmd]
+      let object.id = jobstart(object.cmd, object)
+      $
+      return object
     endfunction
 
-    function Shell.get_name() dict
-      return 'shell '.self.name
-    endfunction
-
-    function Shell.new(name, ...) dict
-      let instance = extend(copy(g:Shell), {'name': a:name})
-      let argv = ['bash']
-      if a:0 > 0
-        let argv += ['-c', a:1]
-      endif
-      let instance.id = jobstart(argv, instance)
-      return instance
-    endfunction
-
-    let s1 = Shell.new('1')
-    let s2 = Shell.new('2', 'for i in {1..10}; do echo hello $i!; sleep 1; done')
-
-
+    let instance = Shell.new('bomb',
+          \ 'for i in $(seq 9 -1 1); do echo $i 1>&$((i % 2 + 1)); sleep 1; done')
+<
 To send data to the job's stdin, one can use the |jobsend()| function, like
 this:
 >

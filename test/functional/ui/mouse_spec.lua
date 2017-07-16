@@ -13,9 +13,6 @@ describe('ui/mouse/input', function()
     clear()
     meths.set_option('mouse', 'a')
     meths.set_option('listchars', 'eol:$')
-    -- set mousetime to very high value to ensure that even in valgrind/travis,
-    -- nvim will still pick multiple clicks
-    meths.set_option('mousetime', 5000)
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
@@ -119,7 +116,6 @@ describe('ui/mouse/input', function()
         sel  = { bold=true },
         fill = { reverse=true }
       })
-      screen.timeout = 15000
     end)
 
     it('in tabline on filler space moves tab to the end', function()

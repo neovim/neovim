@@ -75,7 +75,7 @@ func Test_help_arg()
     " check if  couple of lines are there
     let found = []
     for line in lines
-      if line =~ '-R.*Readonly mode'
+      if line =~ '-R.*Read-only mode'
 	call add(found, 'Readonly mode')
       endif
       " Watch out for a second --version line in the Gnome version.
