@@ -145,6 +145,10 @@ function! s:clipboard.set(lines, regtype, reg) abort
     call jobsend(jobid, a:lines)
     call jobclose(jobid, 'stdin')
     let selection.owner = jobid
+  else
+    echohl WarningMsg
+    echo 'clipboard: could not execute provider'
+    echohl None
   endif
 endfunction
 
