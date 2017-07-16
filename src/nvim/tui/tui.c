@@ -1537,12 +1537,11 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux");
+  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool iterm = terminfo_is_term_family(term, "iterm")
     || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool tmux_wrap = screen && !!os_getenv("TMUX");
 
   const char * xterm_version = os_getenv("XTERM_VERSION");
   bool true_xterm = xterm && !!xterm_version;
@@ -1574,12 +1573,12 @@ static void augment_terminfo(TUIData *data, const char *term,
   // specific ones.
 
   // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_colon_rgb = false
+  bool has_colon_rgb = !tmux && !screen
     // per GNOME bug #685759 and bug #704449
-    || (vte_version >= 3600 && !tmux && !screen)
-    || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
-    // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
-    || true_xterm;
+&& ((vte_version >= 3600)
+        || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
+        // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
+        || true_xterm);
 
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
   if (-1 == data->unibi_ext.set_rgb_foreground) {
@@ -1607,7 +1606,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     // all panes, which is not particularly desirable.  A better approach
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
-        ut, NULL, TMUX_WRAP(tmux_wrap, "\033]Pl%p1%06x\033\\"));
+        ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
   } else if (xterm || (vte_version != 0) || rxvt) {
     // This seems to be supported for a long time in VTE
     // urxvt also supports this
