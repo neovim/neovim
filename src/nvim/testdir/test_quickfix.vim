@@ -1630,3 +1630,13 @@ function! Test_Autocmd_Exception()
 
   set efm&vim
 endfunction
+
+function Test_caddbuffer()
+  " This used to cause a memory access in freed memory
+  let save_efm = &efm
+  set efm=%EEEE%m,%WWWW,%+CCCC%>%#,%GGGG%.#
+  cgetexpr ['WWWW', 'EEEE', 'CCCC']
+  let &efm = save_efm
+  cad
+  bwipe!
+endfunc

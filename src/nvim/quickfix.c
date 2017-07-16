@@ -383,6 +383,8 @@ static int efm_to_regpat(char_u *efm, int len, efm_T *fmt_ptr,
   return 0;
 }
 
+static efm_T *fmt_start = NULL;  // cached across qf_parse_line() calls
+
 static void free_efm_list(efm_T **efm_first)
 {
   for (efm_T *efm_ptr = *efm_first; efm_ptr != NULL; efm_ptr = *efm_first) {
@@ -390,6 +392,8 @@ static void free_efm_list(efm_T **efm_first)
     vim_regfree(efm_ptr->prog);
     xfree(efm_ptr);
   }
+
+  fmt_start = NULL;
 }
 
 // Parse 'errorformat' option
@@ -671,7 +675,6 @@ static int qf_parse_line(qf_info_T *qi, char_u *linebuf, size_t linelen,
                          efm_T *fmt_first, qffields_T *fields)
 {
   efm_T *fmt_ptr;
-  static efm_T *fmt_start = NULL;  // cached across calls
   size_t len;
   int    i;
   int    idx = 0;
