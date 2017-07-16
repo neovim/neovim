@@ -87,9 +87,17 @@ function Test_get_buf_options()
 endfunc
 
 function Test_get_win_options()
+  if has('folding')
+    set foldlevel=999
+  endif
+  set list
   let opts = getwinvar(1, '&')
   call assert_equal(v:t_dict, type(opts))
   call assert_equal(0, opts.linebreak)
+  call assert_equal(1, opts.list)
+  if has('folding')
+    call assert_equal(999, opts.foldlevel)
+  endif
   if has('signs')
     call assert_equal('auto', opts.signcolumn)
   endif
@@ -97,7 +105,12 @@ function Test_get_win_options()
   let opts = gettabwinvar(1, 1, '&')
   call assert_equal(v:t_dict, type(opts))
   call assert_equal(0, opts.linebreak)
+  call assert_equal(1, opts.list)
   if has('signs')
     call assert_equal('auto', opts.signcolumn)
+  endif
+  set list&
+  if has('folding')
+    set foldlevel=0
   endif
 endfunc
