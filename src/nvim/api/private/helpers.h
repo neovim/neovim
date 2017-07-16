@@ -6,6 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
+#include "nvim/ex_eval.h"
 #include "nvim/lib/kvec.h"
 
 #define OBJECT_OBJ(o) o
@@ -90,6 +91,8 @@ typedef struct {
   int trylevel;
   int got_int;
   int did_throw;
+  int need_rethrow;
+  except_T *current_exception;
   struct msglist *private_msg_list;
   const struct msglist *const *msg_list;
 } TryState;

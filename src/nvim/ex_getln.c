@@ -2341,8 +2341,6 @@ static bool color_cmdline(void)
     return ret;
   }
 
-  const int saved_force_abort = force_abort;
-  force_abort = true;
   bool arg_allocated = false;
   typval_T arg = {
     .v_type = VAR_STRING,
@@ -2504,7 +2502,6 @@ color_cmdline_end:
   if (can_free_cb) {
     callback_free(&color_cb);
   }
-  force_abort = saved_force_abort;
   if (arg_allocated) {
     tv_clear(&arg);
   }

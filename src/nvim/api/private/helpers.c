@@ -49,13 +49,17 @@ void try_enter(TryState *const tstate)
     .trylevel = trylevel,
     .got_int = got_int,
     .did_throw = did_throw,
+    .need_rethrow = need_rethrow,
+    .current_exception = current_exception,
     .msg_list = (const struct msglist *const *)msg_list,
     .private_msg_list = NULL,
   };
   trylevel = 1;
   got_int = false;
   did_throw = false;
+  need_rethrow = false;
   msg_list = &tstate->private_msg_list;
+  current_exception = NULL;
 }
 
 /// End try block, set the error message if any and restore previous state
@@ -72,14 +76,17 @@ bool try_leave(const TryState *const tstate, Error *const err)
 {
   const bool ret = !try_end(err);
   assert(trylevel == 0);
+  assert(!need_rethrow);
   assert(!got_int);
   assert(!did_throw);
   assert(msg_list == &tstate->private_msg_list);
   assert(*msg_list == NULL);
+  assert(current_exception == NULL);
   trylevel = tstate->trylevel;
   got_int = tstate->got_int;
   did_throw = tstate->did_throw;
   msg_list = (struct msglist **)tstate->msg_list;
+  current_exception = tstate->current_exception;
   return ret;
 }
 
@@ -96,6 +103,8 @@ void try_start(void)
 /// @return true if an error occurred
 bool try_end(Error *err)
 {
+  // Note: all globals manipulated here should be saved/restored in
+  // try_enter/try_leave.
   --trylevel;
 
   // Without this it stops processing all subsequent VimL commands and
