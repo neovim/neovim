@@ -1268,7 +1268,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux");
+  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool st = terminfo_is_term_family(term, "st");
   bool gnome = terminfo_is_term_family(term, "gnome")
     || terminfo_is_term_family(term, "vte");
@@ -1282,7 +1282,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool mate_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version;
-  bool tmux_pretending_screen = screen && !!os_getenv("TMUX");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1359,7 +1358,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
-  } else if (terminfo_is_term_family(term, "tmux")) {
+  } else if (tmux) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   } else if (terminfo_is_term_family(term, "interix")) {
@@ -1415,7 +1414,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     } else if (konsole || xterm || gnome || rxvt || st || putty
         || linuxvt  // Linux 4.8+ supports 256-colour SGR.
         || mate_pretending_xterm || gnome_pretending_xterm
-        || tmux || tmux_pretending_screen
+        || tmux
         || (colorterm && strstr(colorterm, "256"))
         || (term && strstr(term, "256"))
         ) {
@@ -1458,6 +1457,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         || (vte_version >= 3900)
         // per tmux manual page and per
         // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
+        || tmux
         || screen
         || rxvt       // per command.C
         // per analysis of VT100Terminal.m
