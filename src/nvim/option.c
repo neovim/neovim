@@ -7040,7 +7040,8 @@ dict_T *get_winbuf_options(const int bufopt)
           tv_dict_add_str(d, opt->fullname, strlen(opt->fullname),
                           *(const char **)varp);
         } else if (opt->flags & P_NUM) {
-          tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname), *(varnumber_T *)varp);
+          tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname),
+                         *(varnumber_T *)varp);
         } else {
           tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname), *varp);
         }
