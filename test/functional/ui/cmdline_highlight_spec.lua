@@ -121,6 +121,7 @@ before_each(function()
     EOB={bold = true, foreground = Screen.colors.Blue1},
     ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
     SK={foreground = Screen.colors.Blue},
+    PE={bold = true, foreground = Screen.colors.SeaGreen4}
   })
 end)
 
@@ -452,6 +453,41 @@ describe('Ex commands coloring support', function()
     eq({'', 'E888 detected for  \\ze*', 'E888 detected for  \\zs*'},
        curbufmeths.get_lines(0, -1, false))
     eq('', funcs.execute('messages'))
+  end)
+  it('does not crash when using `n` in debug mode', function()
+    feed(':debug execute "echo 1"\n')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      Entering Debug mode.  Type "cont" to con|
+      tinue.                                  |
+      cmd: execute "echo 1"                   |
+      >^                                       |
+    ]])
+    feed('n\n')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      Entering Debug mode.  Type "cont" to con|
+      tinue.                                  |
+      cmd: execute "echo 1"                   |
+      >n                                      |
+      1                                       |
+      {PE:Press ENTER or type command to continue}^ |
+    ]])
+    feed('\n')
+    screen:expect([[
+      ^                                        |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+                                              |
+    ]])
   end)
 end)
 

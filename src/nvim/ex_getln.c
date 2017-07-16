@@ -2372,8 +2372,6 @@ static bool color_cmdline(void)
     dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_expr"),
                                    &color_cb);
     can_free_cb = true;
-  } else {
-    goto color_cmdline_end;
   }
   if (!try_leave(&tstate, &err) || !dgc_ret) {
     goto color_cmdline_error;
