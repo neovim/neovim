@@ -875,36 +875,38 @@ restofline:
       qi->qf_multiignore = false;  // reset continuation
     } else if (vim_strchr((char_u *)"CZ", idx)
                != NULL) {  // continuation of multi-line msg
-      qfline_T *qfprev = qi->qf_lists[qi->qf_curlist].qf_last;
-      if (qfprev == NULL) {
-        return QF_FAIL;
-      }
-      if (*fields->errmsg && !qi->qf_multiignore) {
-        size_t len = STRLEN(qfprev->qf_text);
-        qfprev->qf_text = xrealloc(qfprev->qf_text,
-                                   len + STRLEN(fields->errmsg) + 2);
-        qfprev->qf_text[len] = '\n';
-        STRCPY(qfprev->qf_text + len + 1, fields->errmsg);
-      }
-      if (qfprev->qf_nr == -1) {
-        qfprev->qf_nr = fields->enr;
-      }
-      if (vim_isprintc(fields->type) && !qfprev->qf_type) {
-        qfprev->qf_type = fields->type;          // only printable chars allowed
-      }
-      if (!qfprev->qf_lnum) {
-        qfprev->qf_lnum = fields->lnum;
-      }
-      if (!qfprev->qf_col) {
-        qfprev->qf_col = fields->col;
-      }
-      qfprev->qf_viscol = fields->use_viscol;
-      if (!qfprev->qf_fnum) {
-        qfprev->qf_fnum = qf_get_fnum(qi, qi->qf_directory,
-                                      *fields->namebuf || qi->qf_directory
-                                      ? fields->namebuf
-                                      : qi->qf_currfile && fields->valid
-                                      ? qi->qf_currfile : 0);
+      if (!qi->qf_multiignore) {
+        qfline_T *qfprev = qi->qf_lists[qi->qf_curlist].qf_last;
+        if (qfprev == NULL) {
+          return QF_FAIL;
+        }
+        if (*fields->errmsg && !qi->qf_multiignore) {
+          size_t len = STRLEN(qfprev->qf_text);
+          qfprev->qf_text = xrealloc(qfprev->qf_text,
+                                     len + STRLEN(fields->errmsg) + 2);
+          qfprev->qf_text[len] = '\n';
+          STRCPY(qfprev->qf_text + len + 1, fields->errmsg);
+        }
+        if (qfprev->qf_nr == -1) {
+          qfprev->qf_nr = fields->enr;
+        }
+        if (vim_isprintc(fields->type) && !qfprev->qf_type) {
+          qfprev->qf_type = fields->type;  // only printable chars allowed
+        }
+        if (!qfprev->qf_lnum) {
+          qfprev->qf_lnum = fields->lnum;
+        }
+        if (!qfprev->qf_col) {
+          qfprev->qf_col = fields->col;
+        }
+        qfprev->qf_viscol = fields->use_viscol;
+        if (!qfprev->qf_fnum) {
+          qfprev->qf_fnum = qf_get_fnum(qi, qi->qf_directory,
+                                        *fields->namebuf || qi->qf_directory
+                                        ? fields->namebuf
+                                        : qi->qf_currfile && fields->valid
+                                        ? qi->qf_currfile : 0);
+        }
       }
       if (idx == 'Z') {
         qi->qf_multiline = qi->qf_multiignore = false;
