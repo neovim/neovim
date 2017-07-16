@@ -2356,24 +2356,28 @@ static bool color_cmdline(void)
   Error err = ERROR_INIT;
   const char *err_errmsg = (const char *)e_intern2;
   bool dgc_ret = true;
+  bool tl_ret = true;
 
-  try_enter(&tstate);
   if (ccline.input_fn) {
     color_cb = getln_input_callback;
   } else if (ccline.cmdfirstc == ':') {
+    try_enter(&tstate);
     err_errmsg = N_(
         "E5408: Unable to get Nvim_color_cmdline callback from g:: %s");
     dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
                                    &color_cb);
+    tl_ret = try_leave(&tstate, &err);
     can_free_cb = true;
   } else if (ccline.cmdfirstc == '=') {
+    try_enter(&tstate);
     err_errmsg = N_(
         "E5409: Unable to get Nvim_color_expr callback from g:: %s");
     dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_expr"),
                                    &color_cb);
+    tl_ret = try_leave(&tstate, &err);
     can_free_cb = true;
   }
-  if (!try_leave(&tstate, &err) || !dgc_ret) {
+  if (!tl_ret || !dgc_ret) {
     goto color_cmdline_error;
   }
 
