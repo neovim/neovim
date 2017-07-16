@@ -115,6 +115,7 @@ static int p_bomb;
 static char_u   *p_bh;
 static char_u   *p_bt;
 static int p_bl;
+static long p_channel;
 static int p_ci;
 static int p_cin;
 static char_u   *p_cink;
@@ -4193,6 +4194,9 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       curbuf->b_p_imsearch = B_IMODE_NONE;
     }
     p_imsearch = curbuf->b_p_imsearch;
+  } else if (pp == &p_channel || pp == &curbuf->b_p_channel) {
+    errmsg = e_invarg;
+    *pp = old_value;
   }
   /* if 'titlelen' has changed, redraw the title */
   else if (pp == &p_titlelen) {
@@ -5472,6 +5476,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_BH:     return (char_u *)&(curbuf->b_p_bh);
   case PV_BT:     return (char_u *)&(curbuf->b_p_bt);
   case PV_BL:     return (char_u *)&(curbuf->b_p_bl);
+  case PV_CHANNEL:return (char_u *)&(curbuf->b_p_channel);
   case PV_CI:     return (char_u *)&(curbuf->b_p_ci);
   case PV_CIN:    return (char_u *)&(curbuf->b_p_cin);
   case PV_CINK:   return (char_u *)&(curbuf->b_p_cink);
@@ -5773,6 +5778,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_nf = vim_strsave(p_nf);
       buf->b_p_mps = vim_strsave(p_mps);
       buf->b_p_si = p_si;
+      buf->b_p_channel = 0;
       buf->b_p_ci = p_ci;
       buf->b_p_cin = p_cin;
       buf->b_p_cink = vim_strsave(p_cink);

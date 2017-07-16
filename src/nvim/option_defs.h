@@ -695,6 +695,7 @@ enum {
   , BV_BIN
   , BV_BL
   , BV_BOMB
+  , BV_CHANNEL
   , BV_CI
   , BV_CIN
   , BV_CINK

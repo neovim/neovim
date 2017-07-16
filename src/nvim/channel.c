@@ -421,12 +421,12 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
 static void channel_process_exit_cb(Process *proc, int status, void *data)
 {
   Channel *chan = data;
-  if (chan->term && !chan->stream.proc.exited) {
-    chan->stream.proc.exited = true;
+  if (chan->term) {
     char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
     terminal_close(chan->term, msg);
   }
+
   if (chan->is_rpc) {
     channel_process_exit(chan->id, status);
   }
@@ -470,5 +470,64 @@ static void on_channel_event(ChannelEvent *ev)
   typval_T rettv = TV_INITIAL_VALUE;
   callback_call(ev->callback, 3, argv, &rettv);
   tv_clear(&rettv);
+}
+
+
+/// Open terminal for channel
+///
+/// Channel `chan` is assumed to be an open pty channel,
+/// and curbuf is assumed to be a new, unmodified buffer.
+void channel_terminal_open(Channel *chan)
+{
+  TerminalOptions topts;
+  topts.data = chan;
+  topts.width = chan->stream.pty.width;
+  topts.height = chan->stream.pty.height;
+  topts.write_cb = term_write;
+  topts.resize_cb = term_resize;
+  topts.close_cb = term_close;
+  curbuf->b_p_channel = (long)chan->id;  // 'channel' option
+  Terminal *term = terminal_open(topts);
+  chan->term = term;
+  channel_incref(chan);
+}
+
+static void term_write(char *buf, size_t size, void *data)
+{
+  Channel *chan = data;
+  if (chan->stream.proc.in.closed) {
+    // If the backing stream was closed abruptly, there may be write events
+    // ahead of the terminal close event. Just ignore the writes.
+    ILOG("write failed: stream is closed");
+    return;
+  }
+  WBuffer *wbuf = wstream_new_buffer(xmemdup(buf, size), size, 1, xfree);
+  wstream_write(&chan->stream.proc.in, wbuf);
+}
+
+static void term_resize(uint16_t width, uint16_t height, void *data)
+{
+  Channel *chan = data;
+  pty_process_resize(&chan->stream.pty, width, height);
+}
+
+static inline void term_delayed_free(void **argv)
+{
+  Channel *chan = argv[0];
+  if (chan->stream.proc.in.pending_reqs || chan->stream.proc.out.pending_reqs) {
+    multiqueue_put(chan->events, term_delayed_free, 1, chan);
+    return;
+  }
+
+  terminal_destroy(chan->term);
+  chan->term = NULL;
+  channel_decref(chan);
+}
+
+static void term_close(void *data)
+{
+  Channel *chan = data;
+  process_stop(&chan->stream.proc);
+  multiqueue_put(chan->events, term_delayed_free, 1, data);
 }
 

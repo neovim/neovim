@@ -11550,7 +11550,8 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  pty_process_resize(&data->stream.pty, argvars[1].vval.v_number, argvars[2].vval.v_number);
+  pty_process_resize(&data->stream.pty, argvars[1].vval.v_number,
+                     argvars[2].vval.v_number);
   rettv->vval.v_number = 1;
 }
 
@@ -16680,13 +16681,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (rettv->vval.v_number <= 0) {
     return;
   }
-  TerminalOptions topts;
-  topts.data = chan;
-  topts.width = term_width;
-  topts.height = curwin->w_height;
-  topts.write_cb = term_write;
-  topts.resize_cb = term_resize;
-  topts.close_cb = term_close;
 
   int pid = chan->stream.pty.process.pid;
 
@@ -16699,9 +16693,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   (void)setfname(curbuf, (char_u *)buf, NULL, true);
   // Save the job id and pid in b:terminal_job_{id,pid}
   Error err = ERROR_INIT;
-  dict_set_var(curbuf->b_vars, cstr_as_string("terminal_channel_id"),
-               INTEGER_OBJ(chan->id), false, false, &err);
-  // deprecated name:
+  // deprecated: use 'channel' buffer option
   dict_set_var(curbuf->b_vars, cstr_as_string("terminal_job_id"),
                INTEGER_OBJ(chan->id), false, false, &err);
   api_clear_error(&err);
@@ -16709,11 +16701,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                INTEGER_OBJ(pid), false, false, &err);
   api_clear_error(&err);
 
-  Terminal *term = terminal_open(topts);
-  chan->term = term;
-  channel_incref(chan);
-
-  return;
+  channel_terminal_open(chan);
 }
 
 // "test_garbagecollect_now()" function
@@ -22394,47 +22382,6 @@ static inline bool common_job_callbacks(dict_T *vopts,
   return false;
 }
 
-
-static void term_write(char *buf, size_t size, void *d)
-{
-  Channel *job = d;
-  if (job->stream.proc.in.closed) {
-    // If the backing stream was closed abruptly, there may be write events
-    // ahead of the terminal close event. Just ignore the writes.
-    ILOG("write failed: stream is closed");
-    return;
-  }
-  WBuffer *wbuf = wstream_new_buffer(xmemdup(buf, size), size, 1, xfree);
-  wstream_write(&job->stream.proc.in, wbuf);
-}
-
-static void term_resize(uint16_t width, uint16_t height, void *d)
-{
-  Channel *data = d;
-  pty_process_resize(&data->stream.pty, width, height);
-}
-
-static inline void term_delayed_free(void **argv)
-{
-  Channel *j = argv[0];
-  if (j->stream.proc.in.pending_reqs || j->stream.proc.out.pending_reqs) {
-    multiqueue_put(j->events, term_delayed_free, 1, j);
-    return;
-  }
-
-  terminal_destroy(j->term);
-  channel_decref(j);
-}
-
-static void term_close(void *d)
-{
-  Channel *data = d;
-  if (!data->stream.proc.exited) {
-    data->stream.proc.exited = true;
-    process_stop((Process *)&data->stream.proc);
-  }
-  multiqueue_put(data->events, term_delayed_free, 1, data);
-}
 
 static Channel *find_job(uint64_t id, bool show_error)
 {
