@@ -4025,9 +4025,12 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
-      qf_idx = (int)di->di_tv.vval.v_number - 1;
-      if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
-        return FAIL;
+      // for zero use the current list
+      if (di->di_tv.vval.v_number != 0) {
+        qf_idx = (int)di->di_tv.vval.v_number - 1;
+        if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
+          return FAIL;
+        }
       }
       flags |= QF_GETLIST_NR;
     } else {
