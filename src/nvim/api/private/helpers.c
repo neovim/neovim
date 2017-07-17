@@ -46,20 +46,22 @@ typedef struct {
 void try_enter(TryState *const tstate)
 {
   *tstate = (TryState) {
+    .current_exception = current_exception,
+    .msg_list = (const struct msglist *const *)msg_list,
+    .private_msg_list = NULL,
     .trylevel = trylevel,
     .got_int = got_int,
     .did_throw = did_throw,
     .need_rethrow = need_rethrow,
-    .current_exception = current_exception,
-    .msg_list = (const struct msglist *const *)msg_list,
-    .private_msg_list = NULL,
+    .did_emsg = did_emsg,
   };
+  msg_list = &tstate->private_msg_list;
+  current_exception = NULL;
   trylevel = 1;
   got_int = false;
   did_throw = false;
   need_rethrow = false;
-  msg_list = &tstate->private_msg_list;
-  current_exception = NULL;
+  did_emsg = false;
 }
 
 /// End try block, set the error message if any and restore previous state
@@ -79,14 +81,17 @@ bool try_leave(const TryState *const tstate, Error *const err)
   assert(!need_rethrow);
   assert(!got_int);
   assert(!did_throw);
+  assert(!did_emsg);
   assert(msg_list == &tstate->private_msg_list);
   assert(*msg_list == NULL);
   assert(current_exception == NULL);
+  msg_list = (struct msglist **)tstate->msg_list;
+  current_exception = tstate->current_exception;
   trylevel = tstate->trylevel;
   got_int = tstate->got_int;
   did_throw = tstate->did_throw;
-  msg_list = (struct msglist **)tstate->msg_list;
-  current_exception = tstate->current_exception;
+  need_rethrow = tstate->need_rethrow;
+  did_emsg = tstate->did_emsg;
   return ret;
 }
 

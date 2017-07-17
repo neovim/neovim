@@ -88,13 +88,14 @@
 /// Used when caller is supposed to be operating when other VimL code is being
 /// processed and that “other VimL code” must not be affected.
 typedef struct {
+  except_T *current_exception;
+  struct msglist *private_msg_list;
+  const struct msglist *const *msg_list;
   int trylevel;
   int got_int;
   int did_throw;
   int need_rethrow;
-  except_T *current_exception;
-  struct msglist *private_msg_list;
-  const struct msglist *const *msg_list;
+  int did_emsg;
 } TryState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

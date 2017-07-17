@@ -489,6 +489,44 @@ describe('Ex commands coloring support', function()
                                               |
     ]])
   end)
+  it('does not prevent mapping error from cancelling prompt', function()
+    meths.command("cnoremap <expr> x execute('throw 42')[-1]")
+    feed(':#x')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :#                                      |
+      {ERR:Error detected while processing :}       |
+      {ERR:E605: Exception not caught: 42}          |
+      :#^                                      |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^                                        |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+                                              |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+      ^                                        |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+                                              |
+    ]])
+    eq('\nError detected while processing :\nE605: Exception not caught: 42',
+       meths.command_output('messages'))
+  end)
 end)
 
 -- TODO Specifically test for coloring in cmdline and expr modes
