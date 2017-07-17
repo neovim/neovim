@@ -1,32 +1,42 @@
 "Tests for nested functions
 "
-function! NestedFunc()
-  fu! Func1()
+func NestedFunc()
+  func! Func1()
     let g:text .= 'Func1 '
-  endfunction
+  endfunc
   call Func1()
-  fu! s:func2()
+  func! s:func2()
     let g:text .= 's:func2 '
-  endfunction
+  endfunc
   call s:func2()
-  fu! s:_func3()
+  func! s:_func3()
     let g:text .= 's:_func3 '
-  endfunction
+  endfunc
   call s:_func3()
   let fn = 'Func4'
-  fu! {fn}()
+  func! {fn}()
     let g:text .= 'Func4 '
-  endfunction
+  endfunc
   call {fn}()
   let fn = 'func5'
-  fu! s:{fn}()
+  func! s:{fn}()
     let g:text .= 's:func5'
-  endfunction
+  endfunc
   call s:{fn}()
-endfunction
+endfunc
 
-function! Test_nested_functions()
+func Test_nested_functions()
   let g:text = ''
   call NestedFunc()
   call assert_equal('Func1 s:func2 s:_func3 Func4 s:func5', g:text)
 endfunction
+
+func Test_nested_argument()
+  func g:X()
+    let g:Y = function('sort')
+  endfunc
+  let g:Y = function('sort')
+  echo g:Y([], g:X())
+  delfunc g:X
+  unlet g:Y
+endfunc
