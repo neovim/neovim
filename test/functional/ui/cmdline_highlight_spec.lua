@@ -34,9 +34,17 @@ before_each(function()
       redraw!
       return ''
     endfunction
-    let g:EMPTY = ''
+    let g:id = ''
     cnoremap <expr> {REDRAW} Redraw()
-    nnoremap <expr> {PROMPT} extend(g:, {"out": input({"prompt": ":", "highlight": g:Nvim_color_input})}).EMPTY
+    function DoPrompt(do_return) abort
+      let id = g:id
+      let Cb = g:Nvim_color_input{g:id}
+      let out = input({'prompt': ':', 'highlight': Cb})
+      let g:out{id} = out
+      return (a:do_return ? out : '')
+    endfunction
+    nnoremap <expr> {PROMPT} DoPrompt(0)
+    cnoremap <expr> {PROMPT} DoPrompt(1)
     function RainBowParens(cmdline)
       let ret = []
       let i = 0
@@ -119,6 +127,9 @@ before_each(function()
     function ReturningGlobal2(cmdline)
       return g:callback_return[:len(a:cmdline)-1]
     endfunction
+    function ReturningGlobalN(n, cmdline)
+      return g:callback_return{a:n}
+    endfunction
   ]])
   screen:set_default_attr_ids({
     RBP1={background = Screen.colors.Red},
@@ -132,10 +143,19 @@ before_each(function()
   })
 end)
 
-local function set_color_cb(funcname, callback_return)
-  meths.set_var('Nvim_color_input', funcname)
-  if callback_return then
-    meths.set_var('callback_return', callback_return)
+local function set_color_cb(funcname, callback_return, id)
+  meths.set_var('id', id or '')
+  if id and id ~= '' and funcs.exists('*' .. funcname .. 'N') then
+    command(('let g:Nvim_color_input%s = {cmdline -> %sN(%s, cmdline)}'):format(
+      id, funcname, id))
+    if callback_return then
+      meths.set_var('callback_return' .. id, callback_return)
+    end
+  else
+    meths.set_var('Nvim_color_input', funcname)
+    if callback_return then
+      meths.set_var('callback_return', callback_return)
+    end
   end
 end
 local function start_prompt(text)
@@ -504,10 +524,152 @@ describe('Command-line coloring', function()
       :++^                                     |
     ]])
   end)
-  -- TODO Check for colored input() called in a cycle which previously errorred
-  -- out
+  it('does not error out when called from a errorred out cycle', function()
+    set_color_cb('ReturningGlobal', {{0, 1, 'Normal'}})
+    feed(dedent([[
+      :set regexpengine=2
+      :for pat in [' \ze*', ' \zs*']
+      :  try
+      :    let l = matchlist('x x', pat)
+      :    $put =input({'prompt':'>','highlight':'ReturningGlobal'})
+      :
+      :    $put ='E888 NOT detected for ' . pat
+      :  catch
+      :    $put =input({'prompt':'>','highlight':'ReturningGlobal'})
+      :
+      :    $put ='E888 detected for ' . pat
+      :  endtry
+      :endfor
+      :
+      :
+      :
+      :
+      :
+      :
+    ]]))
+    eq({'', ':', 'E888 detected for  \\ze*', ':', 'E888 detected for  \\zs*'},
+       curbufmeths.get_lines(0, -1, false))
+    eq('', funcs.execute('messages'))
+  end)
+  it('allows nesting input()s', function()
+    set_color_cb('ReturningGlobal', {{0, 1, 'RBP1'}}, '')
+    start_prompt('1')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :{RBP1:1}^                                      |
+    ]])
+
+    set_color_cb('ReturningGlobal', {{0, 1, 'RBP2'}}, '1')
+    start_prompt('2')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :{RBP2:2}^                                      |
+    ]])
+
+    set_color_cb('ReturningGlobal', {{0, 1, 'RBP3'}}, '2')
+    start_prompt('3')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :{RBP3:3}^                                      |
+    ]])
+
+    set_color_cb('ReturningGlobal', {{0, 1, 'RBP4'}}, '3')
+    start_prompt('4')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :{RBP4:4}^                                      |
+    ]])
+
+    feed('<CR>')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :{RBP3:3}4^                                     |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :{RBP2:2}34^                                    |
+    ]])
+    feed('<CR>')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :{RBP1:1}234^                                   |
+    ]])
+    feed('<CR><CR><C-l>')
+    screen:expect([[
+      ^                                        |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+                                              |
+    ]])
+    eq('1234', meths.get_var('out'))
+    eq('234', meths.get_var('out1'))
+    eq('34', meths.get_var('out2'))
+    eq('4', meths.get_var('out3'))
+    eq(0, funcs.exists('g:out4'))
+  end)
 end)
 describe('Ex commands coloring support', function()
+  it('works', function()
+    meths.set_var('Nvim_color_cmdline', 'RainBowParens')
+    feed(':echo (((1)))')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :echo {RBP1:(}{RBP2:(}{RBP3:(}1{RBP3:)}{RBP2:)}{RBP1:)}^                           |
+    ]])
+  end)
   it('still executes command-line even if errored out', function()
     meths.set_var('Nvim_color_cmdline', 'SplittedMultibyteStart')
     feed(':let x = "«"\n')
@@ -623,6 +785,20 @@ describe('Ex commands coloring support', function()
   end)
 end)
 describe('Expressions coloring support', function()
+  it('works', function()
+    meths.set_var('Nvim_color_expr', 'RainBowParens')
+    feed(':echo <C-r>=(((1)))')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      ={RBP1:(}{RBP2:(}{RBP3:(}1{RBP3:)}{RBP2:)}{RBP1:)}^                                |
+    ]])
+  end)
   it('errors out when failing to get callback', function()
     meths.set_var('Nvim_color_expr', 42)
     feed(':<C-r>=1')
@@ -638,7 +814,3 @@ describe('Expressions coloring support', function()
     ]])
   end)
 end)
-
--- TODO Specifically test for coloring in cmdline and expr modes
--- TODO Check for errors from tv_dict_get_callback()
--- TODO Check using highlighted input() from inside highlighted input()
