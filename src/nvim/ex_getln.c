@@ -2321,7 +2321,7 @@ enum { MAX_CB_ERRORS = 1 };
 
 /// Color command-line
 ///
-/// Should use built-in command parser or user-specified one. Currently only the 
+/// Should use built-in command parser or user-specified one. Currently only the
 /// latter is supported.
 ///
 /// Operates on ccline, saving results to ccline_colors.

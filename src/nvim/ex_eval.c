@@ -564,7 +564,7 @@ static void discard_exception(except_T *excp, int was_finished)
  */
 void discard_current_exception(void)
 {
-  discard_exception(current_exception, FALSE);
+  discard_exception(current_exception, false);
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
   current_exception = NULL;

@@ -110,7 +110,7 @@ bool try_end(Error *err)
 {
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
-  --trylevel;
+  trylevel--;
 
   // Without this it stops processing all subsequent VimL commands and
   // generates strange error messages if I e.g. try calling Test() in a
