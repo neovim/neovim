@@ -8,6 +8,7 @@ local meths = helpers.meths
 local funcs = helpers.funcs
 local source = helpers.source
 local dedent = helpers.dedent
+local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 
 local screen
@@ -112,6 +113,12 @@ before_each(function()
       while 1
       endwhile
     endfunction
+    function ReturningGlobal(cmdline)
+      return g:callback_return
+    endfunction
+    function ReturningGlobal2(cmdline)
+      return g:callback_return[:len(a:cmdline)-1]
+    endfunction
   ]])
   screen:set_default_attr_ids({
     RBP1={background = Screen.colors.Red},
@@ -125,8 +132,11 @@ before_each(function()
   })
 end)
 
-local function set_color_cb(funcname)
+local function set_color_cb(funcname, callback_return)
   meths.set_var('Nvim_color_input', funcname)
+  if callback_return then
+    meths.set_var('callback_return', callback_return)
+  end
 end
 local function start_prompt(text)
   feed('{PROMPT}' .. (text or ''))
@@ -423,7 +433,77 @@ describe('Command-line coloring', function()
       :echo {RBP1:(}"{SK:^M^@^@}"{RBP1:)}^                        |
     ]])
   end)
-  -- TODO Check for all other errors
+  it('errors out when callback returns something wrong', function()
+    command('cnoremap + ++')
+    set_color_cb('ReturningGlobal', '')
+    start_prompt('#')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :                                       |
+      {ERR:E5400: Callback should return list}      |
+      :#^                                      |
+    ]])
+
+    feed('<CR><CR><CR>')
+    set_color_cb('ReturningGlobal', {{0, 1, 'Normal'}, 42})
+    start_prompt('#')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :                                       |
+      {ERR:E5401: List item 1 is not a List}        |
+      :#^                                      |
+    ]])
+
+    feed('<CR><CR><CR>')
+    set_color_cb('ReturningGlobal2', {{0, 1, 'Normal'}, {1}})
+    start_prompt('+')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :+                                      |
+      {ERR:E5402: List item 1 has incorrect length:}|
+      {ERR: 1 /= 3}                                 |
+      :++^                                     |
+    ]])
+
+    feed('<CR><CR><CR>')
+    set_color_cb('ReturningGlobal2', {{0, 1, 'Normal'}, {2, 3, 'Normal'}})
+    start_prompt('+')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :+                                      |
+      {ERR:E5403: Chunk 1 start 2 not in range [1, }|
+      {ERR:2)}                                      |
+      :++^                                     |
+    ]])
+
+    feed('<CR><CR><CR>')
+    set_color_cb('ReturningGlobal2', {{0, 1, 'Normal'}, {1, 3, 'Normal'}})
+    start_prompt('+')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :+                                      |
+      {ERR:E5404: Chunk 1 end 3 not in range (1, 2]}|
+                                              |
+      :++^                                     |
+    ]])
+  end)
   -- TODO Check for colored input() called in a cycle which previously errorred
   -- out
 end)
@@ -490,7 +570,7 @@ describe('Ex commands coloring support', function()
     ]])
   end)
   it('does not prevent mapping error from cancelling prompt', function()
-    meths.command("cnoremap <expr> x execute('throw 42')[-1]")
+    command("cnoremap <expr> x execute('throw 42')[-1]")
     feed(':#x')
     screen:expect([[
       {EOB:~                                       }|
@@ -543,6 +623,20 @@ describe('Ex commands coloring support', function()
   end)
 end)
 describe('Expressions coloring support', function()
+  it('errors out when failing to get callback', function()
+    meths.set_var('Nvim_color_expr', 42)
+    feed(':<C-r>=1')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      =                                       |
+      {ERR:E5409: Unable to get Nvim_color_expr cal}|
+      {ERR:lback from g:: Vim:E6000: Argument is no}|
+      {ERR:t a function or function name}           |
+      =1^                                      |
+    ]])
+  end)
 end)
 
 -- TODO Specifically test for coloring in cmdline and expr modes
