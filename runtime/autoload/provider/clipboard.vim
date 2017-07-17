@@ -138,23 +138,24 @@ function! s:clipboard.set(lines, regtype, reg) abort
   let selection.detach = s:cache_enabled
   let selection.cwd = "/"
   call extend(selection, {
-  \ 'on_stdout': function('s:set_errhandler'),
-  \ 'on_stderr': function('s:set_errhandler'),
+  \ 'on_stderr': function('s:print_provider_error'),
   \ })
   let jobid = jobstart(argv, selection)
   if jobid > 0
     call jobsend(jobid, a:lines)
     call jobclose(jobid, 'stdin')
     let selection.owner = jobid
+  else
+    echohl WarningMsg
+    echo 'clipboard: could not execute provider'
+    echohl None
   endif
 endfunction
 
-function! s:set_errhandler(job_id, data, event) abort
-  if a:job_id <= 0
-    echohl WarningMsg
-    echo 'clipboard: error when invoking provider: ' . join(a:data)
-    echohl None
-  endif
+function! s:print_provider_error(job_id, data, event) abort
+  echohl WarningMsg
+  echo 'clipboard: error when invoking provider: ' . join(a:data)
+  echohl None
 endfunction
 
 function! provider#clipboard#Call(method, args) abort
