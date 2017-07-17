@@ -392,6 +392,7 @@ describe('Command-line coloring', function()
       {EOB:~                                       }|
                                               |
     ]])
+    screen:sleep(500)
     feed('<C-c>')
     screen:expect([[
       {EOB:~                                       }|
