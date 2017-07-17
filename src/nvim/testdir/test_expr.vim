@@ -418,6 +418,9 @@ func Test_function_with_funcref()
   let s:fref = function(s:f)
   call assert_equal(v:t_string, s:fref('x'))
   call assert_fails("call function('s:f')", 'E700:')
+
+  call assert_fails("call function('foo()')", 'E475:')
+  call assert_fails("call function('foo()')", 'foo()')
 endfunc
 
 func Test_funcref()
