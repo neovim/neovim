@@ -2523,6 +2523,7 @@ color_cmdline_error:
     api_clear_error(&err);
   }
   assert(printed_errmsg);
+  (void)printed_errmsg;
 
   prev_prompt_errors++;
   kv_size(ccline_colors) = 0;
