@@ -2364,6 +2364,12 @@ static bool color_cmdline(void)
   bool dgc_ret = true;
   bool tl_ret = true;
 
+  if (ccline.prompt_id != prev_prompt_id) {
+    prev_prompt_errors = 0;
+    prev_prompt_id = ccline.prompt_id;
+  } else if (prev_prompt_errors >= MAX_CB_ERRORS) {
+    goto color_cmdline_end;
+  }
   if (ccline.highlight_callback.type != kCallbackNone) {
     // Currently this should only happen while processing input() prompts.
     assert(ccline.input_fn);
@@ -2390,12 +2396,6 @@ static bool color_cmdline(void)
   }
 
   if (color_cb.type == kCallbackNone) {
-    goto color_cmdline_end;
-  }
-  if (ccline.prompt_id != prev_prompt_id) {
-    prev_prompt_errors = 0;
-    prev_prompt_id = ccline.prompt_id;
-  } else if (prev_prompt_errors >= MAX_CB_ERRORS) {
     goto color_cmdline_end;
   }
   if (ccline.cmdbuff[ccline.cmdlen] != NUL) {

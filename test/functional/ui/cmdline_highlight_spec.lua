@@ -527,6 +527,22 @@ describe('Ex commands coloring support', function()
     eq('\nError detected while processing :\nE605: Exception not caught: 42',
        meths.command_output('messages'))
   end)
+  it('errors out when failing to get callback', function()
+    meths.set_var('Nvim_color_cmdline', 42)
+    feed(':#')
+    screen:expect([[
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :                                       |
+      {ERR:E5408: Unable to get Nvim_color_cmdline }|
+      {ERR:callback from g:: Vim:E6000: Argument is}|
+      {ERR: not a function or function name}        |
+      :#^                                      |
+    ]])
+  end)
+end)
+describe('Expressions coloring support', function()
 end)
 
 -- TODO Specifically test for coloring in cmdline and expr modes
