@@ -117,11 +117,15 @@ void channel_teardown(void)
 /// Creates an API channel by starting a process and connecting to its
 /// stdin/stdout. stderr is handled by the job infrastructure.
 ///
+/// @param proc   process object
+/// @param id     (optional) channel id
+/// @param source description of source function, rplugin name, TCP addr, etc
+///
 /// @return Channel id (> 0), on success. 0, on error.
-uint64_t channel_from_process(Process *proc, uint64_t id)
+uint64_t channel_from_process(Process *proc, uint64_t id, char *source)
 {
   Channel *channel = register_channel(kChannelTypeProc, id, proc->events,
-                                      proc->argv);
+                                      source);
   incref(channel);  // process channels are only closed by the exit_cb
   channel->data.proc = proc;
 
@@ -137,7 +141,8 @@ uint64_t channel_from_process(Process *proc, uint64_t id)
 /// @param watcher The SocketWatcher ready to accept the connection
 void channel_from_connection(SocketWatcher *watcher)
 {
-  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL, NULL);
+  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL,
+                                      watcher->addr);
   socket_watcher_accept(watcher, &channel->data.stream);
   incref(channel);  // close channel only after the stream is closed
   channel->data.stream.internal_close_cb = close_cb;
@@ -147,8 +152,9 @@ void channel_from_connection(SocketWatcher *watcher)
   rstream_start(&channel->data.stream, receive_msgpack, channel);
 }
 
-uint64_t channel_connect(bool tcp, const char *address,
-                         int timeout, const char **error)
+/// @param source description of source function, rplugin name, TCP addr, etc
+uint64_t channel_connect(bool tcp, const char *address, int timeout,
+                         char *source, const char **error)
 {
   if (!tcp) {
     char *path = fix_fname(address);
@@ -160,7 +166,7 @@ uint64_t channel_connect(bool tcp, const char *address,
     xfree(path);
   }
 
-  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL, NULL);
+  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL, source);
   if (!socket_connect(&main_loop, &channel->data.stream,
                       tcp, address, timeout, error)) {
     decref(channel);
@@ -328,8 +334,7 @@ bool channel_close(uint64_t id)
   return true;
 }
 
-/// Creates an API channel from stdin/stdout. This is used when embedding
-/// Neovim
+/// Creates an API channel from stdin/stdout. Used to embed Nvim.
 void channel_from_stdio(void)
 {
   Channel *channel = register_channel(kChannelTypeStdio, 0, NULL, NULL);
@@ -744,9 +749,12 @@ static void close_cb(Stream *stream, void *data)
   decref(data);
 }
 
+/// @param source description of source function, rplugin name, TCP addr, etc
 static Channel *register_channel(ChannelType type, uint64_t id,
-                                 MultiQueue *events, char **argv)
+                                 MultiQueue *events, char *source)
 {
+  // Jobs and channels share the same id namespace.
+  assert(id == 0 || !pmap_get(uint64_t)(channels, id));
   Channel *rv = xmalloc(sizeof(Channel));
   rv->events = events ? events : multiqueue_new_child(main_loop.events);
   rv->type = type;
@@ -761,31 +769,12 @@ static Channel *register_channel(ChannelType type, uint64_t id,
   kv_init(rv->delayed_notifications);
   pmap_put(uint64_t)(channels, rv->id, rv);
 
-#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-  switch(type) {
-    case kChannelTypeSocket:
-      DLOG("register ch %" PRIu64 " type=socket", rv->id);
-      break;
-    case kChannelTypeProc: {
-      char buf[IOSIZE];
-      buf[0] = '\0';
-      char **p = argv;
-      while (p != NULL && *p != NULL) {
-        xstrlcat(buf, *p, sizeof(buf));
-        xstrlcat(buf, " ", sizeof(buf));
-        p++;
-      }
-      DLOG("register ch %" PRIu64 " type=proc argv=%s", rv->id, buf);
-      }
-      break;
-    case kChannelTypeStdio:
-      DLOG("register ch %" PRIu64 " type=stdio", rv->id);
-      break;
-    case kChannelTypeInternal:
-      DLOG("register ch %" PRIu64 " type=internal", rv->id);
-      break;
-  }
-#endif
+  ILOG("new channel %" PRIu64 " (%s): %s", rv->id,
+       (type == kChannelTypeProc ? "proc"
+        : (type == kChannelTypeSocket ? "socket"
+           : (type == kChannelTypeStdio ? "stdio"
+              : (type == kChannelTypeInternal ? "internal" : "?")))),
+       (source ? source : "?"));
 
   return rv;
 }
