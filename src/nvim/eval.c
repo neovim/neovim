@@ -4239,10 +4239,16 @@ static int eval7(
         // use its contents.
         s = deref_func_name((const char *)s, &len, &partial, !evaluate);
 
+        // Need to make a copy, in case evaluating the arguments makes
+        // the name invalid.
+        s = xmemdupz(s, len);
+
         // Invoke the function.
         ret = get_func_tv(s, len, rettv, arg,
                           curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                           &len, evaluate, partial, NULL);
+
+        xfree(s);
 
         // If evaluate is false rettv->v_type was not set in
         // get_func_tv, but it's needed in handle_subscript() to parse
