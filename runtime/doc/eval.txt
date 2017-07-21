@@ -4273,7 +4273,8 @@ getqflist([{what}])					*getqflist()*
 		If the optional {what} dictionary argument is supplied, then
 		returns only the items listed in {what} as a dictionary. The
 		following string items are supported in {what}:
-			nr	get information for this quickfix list
+			nr	get information for this quickfix list; zero
+				means the current quickfix list
 			title	get the list title
 			winid	get the |window-ID| (if opened)
 			all	all of the above quickfix properties

@@ -16,6 +16,12 @@ function! s:selection.on_exit(jobid, data, event) abort
   endif
 endfunction
 
+function! s:selection.on_stderr(jobid, data, event) abort
+  echohl WarningMsg
+  echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(a:data)
+  echohl None
+endfunction
+
 let s:selections = { '*': s:selection, '+': copy(s:selection)}
 
 function! s:try_cmd(cmd, ...) abort
@@ -135,24 +141,17 @@ function! s:clipboard.set(lines, regtype, reg) abort
   end
   let selection.data = [a:lines, a:regtype]
   let argv = split(s:copy[a:reg], " ")
+  let selection.argv = argv
   let selection.detach = s:cache_enabled
   let selection.cwd = "/"
-  call extend(selection, {
-  \ 'on_stdout': function('s:set_errhandler'),
-  \ 'on_stderr': function('s:set_errhandler'),
-  \ })
   let jobid = jobstart(argv, selection)
   if jobid > 0
     call jobsend(jobid, a:lines)
     call jobclose(jobid, 'stdin')
     let selection.owner = jobid
-  endif
-endfunction
-
-function! s:set_errhandler(job_id, data, event) abort
-  if a:job_id <= 0
+  else
     echohl WarningMsg
-    echo 'clipboard: error when invoking provider: ' . join(a:data)
+    echomsg 'clipboard: failed to execute: '.(s:copy[a:reg])
     echohl None
   endif
 endfunction
