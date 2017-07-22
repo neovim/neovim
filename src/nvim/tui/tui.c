@@ -1007,7 +1007,7 @@ static void tui_flush(UI *ui)
 
   size_t nrevents = loop_size(data->loop);
   if (nrevents > TOO_MANY_EVENTS) {
-    ILOG("TUI event-queue flooded (thread_events=%zu); purging", nrevents);
+    WLOG("TUI event-queue flooded (thread_events=%zu); purging", nrevents);
     // Back-pressure: UI events may accumulate much faster than the terminal
     // device can serve them. Even if SIGINT/CTRL-C is received, user must still
     // wait for the TUI event-queue to drain, and if there are ~millions of
@@ -1690,7 +1690,7 @@ static const char *tui_get_stty_erase(void)
   if (tcgetattr(input_global_fd(), &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
     stty_erase[1] = '\0';
-    ILOG("stty/termios:erase=%s", stty_erase);
+    DLOG("stty/termios:erase=%s", stty_erase);
   }
 #endif
   return stty_erase;
@@ -1707,12 +1707,12 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
   }
 
   if (strequal(name, "key_backspace")) {
-    ILOG("libtermkey:kbs=%s", value);
+    DLOG("libtermkey:kbs=%s", value);
     if (stty_erase[0] != 0) {
       return stty_erase;
     }
   } else if (strequal(name, "key_dc")) {
-    ILOG("libtermkey:kdch1=%s", value);
+    DLOG("libtermkey:kdch1=%s", value);
     // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
     if (value != NULL && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;
