@@ -115,15 +115,12 @@ void channel_teardown(void)
 /// Creates an API channel by starting a process and connecting to its
 /// stdin/stdout. stderr is handled by the job infrastructure.
 ///
-/// @param proc   process object
-/// @param id     (optional) channel id
-/// @param source description of source function, rplugin name, TCP addr, etc
-///
-/// @return Channel id (> 0), on success. 0, on error.
-uint64_t channel_from_process(Process *proc, uint64_t id, char *source)
+/// @param argv The argument vector for the process. [consumed]
+/// @return The channel id (> 0), on success.
+///         0, on error.
+uint64_t channel_from_process(Process *proc, uint64_t id)
 {
-  Channel *channel = register_channel(kChannelTypeProc, id, proc->events,
-                                      source);
+  Channel *channel = register_channel(kChannelTypeProc, id, proc->events);
   incref(channel);  // process channels are only closed by the exit_cb
   channel->data.proc = proc;
 
@@ -142,8 +139,7 @@ uint64_t channel_from_process(Process *proc, uint64_t id, char *source)
 /// @param watcher The SocketWatcher ready to accept the connection
 void channel_from_connection(SocketWatcher *watcher)
 {
-  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL,
-                                      watcher->addr);
+  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL);
   socket_watcher_accept(watcher, &channel->data.stream);
   incref(channel);  // close channel only after the stream is closed
   channel->data.stream.internal_close_cb = close_cb;
@@ -156,9 +152,8 @@ void channel_from_connection(SocketWatcher *watcher)
        &channel->data.stream);
 }
 
-/// @param source description of source function, rplugin name, TCP addr, etc
-uint64_t channel_connect(bool tcp, const char *address, int timeout,
-                         char *source, const char **error)
+uint64_t channel_connect(bool tcp, const char *address,
+                         int timeout, const char **error)
 {
   if (!tcp) {
     char *path = fix_fname(address);
@@ -170,7 +165,7 @@ uint64_t channel_connect(bool tcp, const char *address, int timeout,
     xfree(path);
   }
 
-  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL, source);
+  Channel *channel = register_channel(kChannelTypeSocket, 0, NULL);
   if (!socket_connect(&main_loop, &channel->data.stream,
                       tcp, address, timeout, error)) {
     decref(channel);
@@ -323,10 +318,11 @@ bool channel_close(uint64_t id)
   return true;
 }
 
-/// Creates an API channel from stdin/stdout. Used to embed Nvim.
+/// Creates an API channel from stdin/stdout. This is used when embedding
+/// Neovim
 void channel_from_stdio(void)
 {
-  Channel *channel = register_channel(kChannelTypeStdio, 0, NULL, NULL);
+  Channel *channel = register_channel(kChannelTypeStdio, 0, NULL);
   incref(channel);  // stdio channels are only closed on exit
   // read stream
   rstream_init_fd(&main_loop, &channel->data.std.in, 0, CHANNEL_BUFFER_SIZE);
@@ -342,7 +338,7 @@ void channel_from_stdio(void)
 /// when an instance connects to its own named pipe.
 uint64_t channel_create_internal(void)
 {
-  Channel *channel = register_channel(kChannelTypeInternal, 0, NULL, NULL);
+  Channel *channel = register_channel(kChannelTypeInternal, 0, NULL);
   incref(channel);  // internal channel lives until process exit
   return channel->id;
 }
@@ -778,12 +774,9 @@ static void close_cb(Stream *stream, void *data)
   decref(data);
 }
 
-/// @param source description of source function, rplugin name, TCP addr, etc
 static Channel *register_channel(ChannelType type, uint64_t id,
-                                 MultiQueue *events, char *source)
+                                 MultiQueue *events)
 {
-  // Jobs and channels share the same id namespace.
-  assert(id == 0 || !pmap_get(uint64_t)(channels, id));
   Channel *rv = xmalloc(sizeof(Channel));
   rv->events = events ? events : multiqueue_new_child(main_loop.events);
   rv->type = type;
@@ -795,14 +788,6 @@ static Channel *register_channel(ChannelType type, uint64_t id,
   rv->next_request_id = 1;
   kv_init(rv->call_stack);
   pmap_put(uint64_t)(channels, rv->id, rv);
-
-  ILOG("new channel %" PRIu64 " (%s): %s", rv->id,
-       (type == kChannelTypeProc ? "proc"
-        : (type == kChannelTypeSocket ? "socket"
-           : (type == kChannelTypeStdio ? "stdio"
-              : (type == kChannelTypeInternal ? "internal" : "?")))),
-       (source ? source : "?"));
-
   return rv;
 }
 

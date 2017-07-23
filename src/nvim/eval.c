@@ -15168,8 +15168,7 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   const char *error = NULL;
-  eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
-  uint64_t id = channel_connect(tcp, address, 50, (char *)IObuff, &error);
+  uint64_t id = channel_connect(tcp, address, 50, &error);
 
   if (error) {
     EMSG2(_("connection failed: %s"), error);
@@ -22488,9 +22487,8 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
 
 
   if (data->rpc) {
-    eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
-    // RPC channel takes over the in/out streams.
-    channel_from_process(proc, data->id, (char *)IObuff);
+    // the rpc channel takes over the in and out streams
+    channel_from_process(proc, data->id);
   } else {
     wstream_init(proc->in, 0);
     if (proc->out) {
@@ -22855,4 +22853,3 @@ void ex_checkhealth(exarg_T *eap)
 
   xfree(buf);
 }
-
