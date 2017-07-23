@@ -1203,7 +1203,7 @@ do_buffer (
      */
     while (buf == curbuf
            && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
-           && (firstwin != lastwin || first_tabpage->tp_next != NULL)) {
+           && (!ONE_WINDOW || first_tabpage->tp_next != NULL)) {
       if (win_close(curwin, FALSE) == FAIL)
         break;
     }
@@ -4593,7 +4593,7 @@ void ex_buffer_all(exarg_T *eap)
                - tabline_height()
                : wp->w_width != Columns)
            || (had_tab > 0 && wp != firstwin))
-          && firstwin != lastwin
+          && !ONE_WINDOW
           && !(wp->w_closing || wp->w_buffer->b_locked > 0)
           ) {
         win_close(wp, FALSE);

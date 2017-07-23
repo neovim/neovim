@@ -4078,7 +4078,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
 
     /* Change window height NOW */
-    if (lastwin != firstwin) {
+    if (!ONE_WINDOW) {
       if (pp == &p_wh && curwin->w_height < p_wh)
         win_setheight((int)p_wh);
       if (pp == &p_hh && curbuf->b_help && curwin->w_height < p_hh)
@@ -4107,7 +4107,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
 
     /* Change window width NOW */
-    if (lastwin != firstwin && curwin->w_width < p_wiw)
+    if (!ONE_WINDOW && curwin->w_width < p_wiw)
       win_setwidth((int)p_wiw);
   }
   /* 'winminwidth' */
@@ -5239,7 +5239,7 @@ static int put_setbool(FILE *fd, char *cmd, char *name, int value)
 
 void comp_col(void)
 {
-  int last_has_status = (p_ls == 2 || (p_ls == 1 && firstwin != lastwin));
+  int last_has_status = (p_ls == 2 || (p_ls == 1 && !ONE_WINDOW));
 
   sc_col = 0;
   ru_col = 0;

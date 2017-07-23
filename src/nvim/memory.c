@@ -585,7 +585,7 @@ void free_all_mem(void)
   p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
-  if (firstwin != lastwin)
+  if (!ONE_WINDOW)
     do_cmdline_cmd("only!");
 
   /* Free all spell info. */
