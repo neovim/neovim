@@ -1878,7 +1878,7 @@ win_found:
      * If there is only one window and it is the quickfix window, create a
      * new one above the quickfix window.
      */
-    if (((firstwin == lastwin) && bt_quickfix(curbuf)) || !usable_win) {
+    if ((ONE_WINDOW && bt_quickfix(curbuf)) || !usable_win) {
       flags = WSP_ABOVE;
       if (ll_ref != NULL)
         flags |= WSP_NEWLOC;

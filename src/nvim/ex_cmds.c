@@ -2806,7 +2806,7 @@ void ex_z(exarg_T *eap)
    * 'scroll' */
   if (eap->forceit)
     bigness = curwin->w_height;
-  else if (firstwin == lastwin)
+  else if (ONE_WINDOW)
     bigness = curwin->w_p_scr * 2;
   else
     bigness = curwin->w_height - 3;

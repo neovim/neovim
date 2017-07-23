@@ -4429,7 +4429,7 @@ do_arg_all (
             }
           }
           /* don't close last window */
-          if (firstwin == lastwin
+          if (ONE_WINDOW
               && (first_tabpage->tp_next == NULL || !had_tab))
             use_firstwin = TRUE;
           else {
