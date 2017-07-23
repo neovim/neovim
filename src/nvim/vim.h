@@ -319,7 +319,7 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 // Lowest number used for window ID. Cannot have this many windows per tab.
 #define LOWEST_WIN_ID 1000
 
-#if defined(__FreeBSD__) && defined(S_ISCHR)
+#if (defined(__FreeBSD__) || defined(__FreeBSD_kernel__)) && defined(S_ISCHR)
 # define OPEN_CHR_FILES
 #endif
 
