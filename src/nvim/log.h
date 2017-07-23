@@ -62,27 +62,7 @@
 #endif
 
 #if defined(__linux__)
-# include <execinfo.h>
-# define LOG_CALLSTACK(prefix) \
-  do { \
-    void *trace[100]; \
-    int trace_size = backtrace(trace, 100); \
-    \
-    char exe[1024]; \
-    ssize_t elen = readlink("/proc/self/exe", exe, sizeof(exe) - 1); \
-    exe[elen] = 0; \
-    \
-    for (int i = 1; i < trace_size; i++) { \
-      char buf[256]; \
-      snprintf(buf, sizeof(buf), "addr2line -e %s -f -p %p", exe, trace[i]); \
-      FILE *fp = popen(buf, "r"); \
-      while (fgets(buf, sizeof(buf) - 1, fp) != NULL) { \
-        buf[strlen(buf)-1] = 0; \
-        do_log(DEBUG_LOG_LEVEL, __func__, __LINE__, true, prefix "%s", buf); \
-      } \
-      fclose(fp); \
-    } \
-  } while (0)
+# define LOG_CALLSTACK() log_callstack(__func__, __LINE__)
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
