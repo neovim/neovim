@@ -61,6 +61,10 @@
                            __VA_ARGS__)
 #endif
 
+#if defined(__linux__)
+# define LOG_CALLSTACK() log_callstack(__func__, __LINE__)
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "log.h.generated.h"
 #endif

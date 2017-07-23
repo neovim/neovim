@@ -1,13 +1,20 @@
+Nvim core source
+================
 
-Module-specific details are documented at the top of each module (e.g.
-terminal.c, screen.c).
+Module-specific details are documented at the top of each module (`terminal.c`,
+`screen.c`, ...).
 
-See also `:help development`.
+See `:help development` for more guidelines.
 
-UI Debugging
-------------
+Logs
+----
 
-At `DEBUG_LOG_LEVEL`, all UI events are logged.
+Low-level log messages sink to `$NVIM_LOG_FILE`.
+
+You can use `LOG_CALLSTACK()` anywhere in the source to log the current
+stacktrace. (Currently Linux-only.)
+
+UI events are logged at level 0 (`DEBUG_LOG_LEVEL`).
 
     rm -rf build/
     make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
