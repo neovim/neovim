@@ -15141,7 +15141,8 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   const char *error = NULL;
-  uint64_t id = channel_connect(tcp, address, 50, &error);
+  eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
+  uint64_t id = channel_connect(tcp, address, 50, (char *)IObuff, &error);
 
   if (error) {
     EMSG2(_("connection failed: %s"), error);
@@ -22449,8 +22450,9 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
 
 
   if (data->rpc) {
-    // the rpc channel takes over the in and out streams
-    channel_from_process(proc, data->id);
+    eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
+    // RPC channel takes over the in/out streams.
+    channel_from_process(proc, data->id, (char *)IObuff);
   } else {
     wstream_init(proc->in, 0);
     if (proc->out) {
@@ -22774,4 +22776,12 @@ bool eval_has_provider(const char *name)
   }
 
   return false;
+}
+
+/// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
+void eval_format_source_name_line(char *buf, size_t bufsize)
+{
+  snprintf(buf, bufsize, "%s:%" PRIdLINENR,
+           (sourcing_name ? sourcing_name : (char_u *)"?"),
+           (sourcing_name ? sourcing_lnum : 0));
 }

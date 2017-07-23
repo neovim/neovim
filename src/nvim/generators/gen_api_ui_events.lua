@@ -119,7 +119,7 @@ for i = 1, #events do
       write_signature(bridge_output, ev, 'UI *ui')
       bridge_output:write('\n{\n')
       bridge_output:write(send)
-      bridge_output:write('  UI_CALL(ui, '..ev.name..', '..argc..', ui'..argv..');\n}\n')
+      bridge_output:write('  UI_BRIDGE_CALL(ui, '..ev.name..', '..argc..', ui'..argv..');\n}\n')
     end
   end
 
@@ -128,6 +128,7 @@ for i = 1, #events do
   call_output:write('\n{\n')
   if ev.remote_only then
     write_arglist(call_output, ev, false)
+    call_output:write('  UI_LOG('..ev.name..', 0);\n')
     call_output:write('  ui_event("'..ev.name..'", args);\n')
   else
     call_output:write('  UI_CALL')
