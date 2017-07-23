@@ -6174,12 +6174,14 @@ static void ex_tabonly(exarg_T *eap)
  */
 void tabpage_close(int forceit)
 {
-  /* First close all the windows but the current one.  If that worked then
-   * close the last window in this tab, that will close it. */
-  if (!ONE_WINDOW)
-    close_others(TRUE, forceit);
-  if (ONE_WINDOW)
+  // First close all the windows but the current one.  If that worked then
+  // close the last window in this tab, that will close it.
+  if (!ONE_WINDOW) {
+    close_others(true, forceit);
+  }
+  if (ONE_WINDOW) {
     ex_win_close(forceit, curwin, NULL);
+  }
 }
 
 /*

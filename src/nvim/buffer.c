@@ -1204,7 +1204,7 @@ do_buffer (
     while (buf == curbuf
            && !(curwin->w_closing || curwin->w_buffer->b_locked > 0)
            && (!ONE_WINDOW || first_tabpage->tp_next != NULL)) {
-      if (win_close(curwin, FALSE) == FAIL)
+      if (win_close(curwin, false) == FAIL)
         break;
     }
 
@@ -4428,15 +4428,17 @@ do_arg_all (
               continue;
             }
           }
-          /* don't close last window */
+          // don't close last window
           if (ONE_WINDOW
-              && (first_tabpage->tp_next == NULL || !had_tab))
-            use_firstwin = TRUE;
-          else {
+              && (first_tabpage->tp_next == NULL || !had_tab)) {
+            use_firstwin = true;
+          } else {
             win_close(wp, !P_HID(buf) && !bufIsChanged(buf));
-            /* check if autocommands removed the next window */
-            if (!win_valid(wpnext))
-              wpnext = firstwin;                /* start all over... */
+            // check if autocommands removed the next window
+            if (!win_valid(wpnext)) {
+              // start all over...
+              wpnext = firstwin;                
+            }
           }
         }
       }
