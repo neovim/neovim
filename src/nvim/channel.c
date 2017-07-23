@@ -178,6 +178,62 @@ static Channel *channel_alloc(ChannelStreamType type)
   return chan;
 }
 
+/// Not implemented, only logging for now
+void channel_create_event(Channel *chan, char *ext_source)
+{
+#if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
+  char *stream_desc, *mode_desc, *source;
+
+  switch (chan->streamtype) {
+    case kChannelStreamProc:
+      if (chan->stream.proc.type == kProcessTypePty) {
+          stream_desc = "pty job";
+      } else {
+          stream_desc = "job";
+      }
+      break;
+
+    case kChannelStreamStdio:
+       stream_desc = "stdio";
+       break;
+
+    case kChannelStreamSocket:
+      stream_desc = "socket";
+      break;
+
+    case kChannelStreamInternal:
+      stream_desc = "socket (internal)";
+      break;
+
+    default:
+      stream_desc = "?";
+  }
+
+  if (chan->is_rpc) {
+    mode_desc = ", rpc";
+  } else if (chan->term) {
+    mode_desc = ", terminal";
+  } else {
+    mode_desc = "";
+  }
+
+  if (ext_source) {
+    // TODO(bfredl): in a future improved traceback solution,
+    // external events should be included.
+    source = ext_source;
+  } else {
+    eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
+    source = (char *)IObuff;
+  }
+
+  ILOG("new channel %" PRIu64 " (%s%s): %s", chan->id, stream_desc,
+       mode_desc, source);
+#else
+  (void)chan;
+  (void)ext_source;
+#endif
+}
+
 void channel_incref(Channel *channel)
 {
   channel->refcount++;
@@ -329,6 +385,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     rstream_init(&proc->err, 0);
     rstream_start(&proc->err, on_job_stderr, chan);
   }
+
   *status_out = (varnumber_T)chan->id;
   return chan;
 }
@@ -369,6 +426,7 @@ uint64_t channel_connect(bool tcp, const char *address,
     rstream_start(&channel->stream.socket, on_socket_output, channel);
   }
 
+  channel_create_event(channel, NULL);
   return channel->id;
 }
 
@@ -384,6 +442,7 @@ void channel_from_connection(SocketWatcher *watcher)
   wstream_init(&channel->stream.socket, 0);
   rstream_init(&channel->stream.socket, 0);
   rpc_start(channel);
+  channel_create_event(channel, watcher->addr);
 }
 
 /// Creates a loopback channel. This is used to avoid deadlock

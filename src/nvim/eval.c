@@ -11643,8 +11643,12 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     term_name = tv_dict_get_string(job_opts, "TERM", true);
   }
 
-  channel_job_start(argv, on_stdout, on_stderr, on_exit, pty, rpc, detach,
-                    cwd, width, height, term_name, &rettv->vval.v_number);
+  Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
+                                    rpc, detach, cwd, width, height, term_name,
+                                    &rettv->vval.v_number);
+  if (chan) {
+    channel_create_event(chan, NULL);
+  }
 }
 
 // "jobstop()" function
@@ -13872,9 +13876,13 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // The last item of argv must be NULL
   argv[i] = NULL;
 
-  channel_job_start(argv, CALLBACK_READER_INIT, CALLBACK_READER_INIT,
-                    CALLBACK_NONE, false, true, false, NULL, 0, 0, NULL,
-                    &rettv->vval.v_number);
+  Channel *chan = channel_job_start(argv, CALLBACK_READER_INIT,
+                                    CALLBACK_READER_INIT, CALLBACK_NONE,
+                                    false, true, false, NULL, 0, 0, NULL,
+                                    &rettv->vval.v_number);
+  if (chan) {
+    channel_create_event(chan, NULL);
+  }
 }
 
 // "rpcstop()" function
@@ -16672,6 +16680,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   api_clear_error(&err);
 
   channel_terminal_open(chan);
+  channel_create_event(chan, NULL);
 }
 
 // "test_garbagecollect_now()" function
