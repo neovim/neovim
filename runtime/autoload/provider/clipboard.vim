@@ -6,7 +6,7 @@ let s:paste = {}
 
 " When caching is enabled, store the jobid of the xclip/xsel process keeping
 " ownership of the selection, so we know how long the cache is valid.
-let s:selection = { 'owner': 0, 'data': [] }
+let s:selection = { 'owner': 0, 'data': [], 'on_stderr': function('provider#stderr_collector') }
 
 function! s:selection.on_exit(jobid, data, event) abort
   " At this point this nvim instance might already have launched
@@ -14,12 +14,13 @@ function! s:selection.on_exit(jobid, data, event) abort
   if self.owner == a:jobid
     let self.owner = 0
   endif
-endfunction
-
-function! s:selection.on_stderr(jobid, data, event) abort
-  echohl WarningMsg
-  echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(a:data)
-  echohl None
+  if a:data != 0
+    let stderr = provider#get_stderr(a:jobid)
+    echohl WarningMsg
+    echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(stderr)
+    echohl None
+  endif
+  call provider#clear_stderr(a:jobid)
 endfunction
 
 let s:selections = { '*': s:selection, '+': copy(s:selection)}
