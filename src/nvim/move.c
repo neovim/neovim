@@ -1763,7 +1763,7 @@ int onepage(int dir, long count)
 
     loff.fill = 0;
     if (dir == FORWARD) {
-      if (firstwin == lastwin && p_window > 0 && p_window < Rows - 1) {
+      if (ONE_WINDOW && p_window > 0 && p_window < Rows - 1) {
         /* Vi compatible scrolling */
         if (p_window <= 2)
           ++curwin->w_topline;
@@ -1797,7 +1797,7 @@ int onepage(int dir, long count)
         max_topfill();
         continue;
       }
-      if (firstwin == lastwin && p_window > 0 && p_window < Rows - 1) {
+      if (ONE_WINDOW && p_window > 0 && p_window < Rows - 1) {
         /* Vi compatible scrolling (sort of) */
         if (p_window <= 2)
           --curwin->w_topline;

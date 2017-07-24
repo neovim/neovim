@@ -2802,16 +2802,18 @@ void ex_z(exarg_T *eap)
   int j;
   linenr_T lnum = eap->line2;
 
-  /* Vi compatible: ":z!" uses display height, without a count uses
-   * 'scroll' */
-  if (eap->forceit)
+  // Vi compatible: ":z!" uses display height, without a count uses
+  // 'scroll'
+  if (eap->forceit) {
     bigness = curwin->w_height;
-  else if (firstwin == lastwin)
+  } else if (ONE_WINDOW) {
     bigness = curwin->w_p_scr * 2;
-  else
+  } else {
     bigness = curwin->w_height - 3;
-  if (bigness < 1)
+  }
+  if (bigness < 1) {
     bigness = 1;
+  }
 
   x = eap->arg;
   kind = x;
