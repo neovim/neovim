@@ -11693,28 +11693,31 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+
   list_T *args = argvars[0].vval.v_list;
-  list_T *rv = tv_list_alloc();
+  Channel **jobs = xcalloc(args->lv_len, sizeof(*jobs));
 
   ui_busy_start();
   MultiQueue *waiting_jobs = multiqueue_new_parent(loop_on_put, &main_loop);
   // For each item in the input list append an integer to the output list. -3
   // is used to represent an invalid job id, -2 is for a interrupted job and
   // -1 for jobs that were skipped or timed out.
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    Channel *data = NULL;
+
+  int i = 0;
+  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next, i++) {
+    Channel *chan = NULL;
     if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number, false))) {
-      tv_list_append_number(rv, -3);
+        || !(chan = find_job(arg->li_tv.vval.v_number, false))) {
+      jobs[i] = NULL;
     } else {
-      // append the list item and set the status pointer so we'll collect the
-      // status code when the job exits
-      tv_list_append_number(rv, -1);
-      data->status_ptr = &rv->lv_last->li_tv.vval.v_number;
-      // Process any pending events for the job because we'll temporarily
-      // replace the parent queue
-      multiqueue_process_events(data->events);
-      multiqueue_replace_parent(data->events, waiting_jobs);
+      jobs[i] = chan;
+      channel_incref(chan);
+      if (chan->stream.proc.status < 0) {
+        // Process any pending events for the job because we'll temporarily
+        // replace the parent queue
+        multiqueue_process_events(chan->events);
+        multiqueue_replace_parent(chan->events, waiting_jobs);
+      }
     }
   }
 
@@ -11725,25 +11728,21 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     before = os_hrtime();
   }
 
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    Channel *data = NULL;
+  for (i = 0; i < args->lv_len; i++) {
     if (remaining == 0) {
       // timed out
       break;
     }
-    if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number, false))) {
+
+    // if the job already exited, but wasn't freed yet
+    if (jobs[i] == NULL || jobs[i]->stream.proc.status >= 0) {
       continue;
     }
-    int status = process_wait((Process *)&data->stream.proc, remaining,
+
+    int status = process_wait(&jobs[i]->stream.proc, remaining,
                               waiting_jobs);
     if (status < 0) {
       // interrupted or timed out, skip remaining jobs.
-      if (status == -2) {
-        // set the status so the user can distinguish between interrupted and
-        // skipped/timeout jobs.
-        *data->status_ptr = -2;
-      }
       break;
     }
     if (remaining > 0) {
@@ -11756,30 +11755,24 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    Channel *data = NULL;
-    if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number, false))) {
-      continue;
-    }
-    // remove the status pointer because the list may be freed before the
-    // job exits
-    data->status_ptr = NULL;
-  }
+  list_T *rv = tv_list_alloc();
 
   // restore the parent queue for any jobs still alive
-  for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    Channel *data = NULL;
-    if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number, false))) {
+  for (i = 0; i < args->lv_len; i++) {
+    if (jobs[i] == NULL) {
+      tv_list_append_number(rv, -3);
       continue;
     }
     // restore the parent queue for the job
-    multiqueue_process_events(data->events);
-    multiqueue_replace_parent(data->events, main_loop.events);
+    multiqueue_process_events(jobs[i]->events);
+    multiqueue_replace_parent(jobs[i]->events, main_loop.events);
+
+    tv_list_append_number(rv, jobs[i]->stream.proc.status);
+    channel_decref(jobs[i]);
   }
 
   multiqueue_free(waiting_jobs);
+  xfree(jobs);
   ui_busy_stop();
   rv->lv_refcount++;
   rettv->v_type = VAR_LIST;

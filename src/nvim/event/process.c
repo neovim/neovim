@@ -145,16 +145,15 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 /// @param process  Process instance
 /// @param ms       Time in milliseconds to wait for the process.
 ///                 0 for no wait. -1 to wait until the process quits.
-/// @return Exit code of the process.
+/// @return Exit code of the process. proc->status will have the same value.
 ///         -1 if the timeout expired while the process is still running.
 ///         -2 if the user interruped the wait.
 int process_wait(Process *proc, int ms, MultiQueue *events)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  int status = -1;  // default
   bool interrupted = false;
   if (!proc->refcount) {
-    status = proc->status;
+    int status = proc->status;
     LOOP_PROCESS_EVENTS(proc->loop, proc->events, 0);
     return status;
   }
@@ -190,7 +189,9 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   if (proc->refcount == 1) {
     // Job exited, collect status and manually invoke close_cb to free the job
     // resources
-    status = interrupted ? -2 : proc->status;
+    if (interrupted) {
+      proc->status = -2;
+    }
     decref(proc);
     if (events) {
       // the decref call created an exit event, process it now
@@ -200,7 +201,7 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
     proc->refcount--;
   }
 
-  return status;
+  return proc->status;
 }
 
 /// Ask a process to terminate and eventually kill if it doesn't respond

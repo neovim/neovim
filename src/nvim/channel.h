@@ -74,8 +74,6 @@ struct Channel {
   CallbackReader on_stdout;
   CallbackReader on_stderr;
   Callback on_exit;
-
-  varnumber_T *status_ptr; // TODO: refactor?
 };
 
 EXTERN PMap(uint64_t) *channels;

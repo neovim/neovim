@@ -639,11 +639,11 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
     terminal_close(chan->term, msg);
   }
 
-  if (chan->status_ptr) {
-    *chan->status_ptr = status;
+  // if status is -1 the process did not really exit,
+  // we just closed the handle onto a detached process
+  if (status >= 0) {
+    process_channel_event(chan, &chan->on_exit, "exit", NULL, 0, status);
   }
-
-  process_channel_event(chan, &chan->on_exit, "exit", NULL, 0, status);
 
   channel_decref(chan);
 }
