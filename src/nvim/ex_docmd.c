@@ -844,8 +844,6 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
         break;
       case ET_INTERRUPT:
         break;
-      default:
-        p = vim_strsave((char_u *)_(e_internal));
       }
 
       saved_sourcing_name = sourcing_name;

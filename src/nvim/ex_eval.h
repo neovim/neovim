@@ -89,26 +89,27 @@ struct msglist {
   struct msglist      *next;            /* next of several messages in a row */
 };
 
+// The exception types.
+typedef enum
+{
+  ET_USER,       // exception caused by ":throw" command
+  ET_ERROR,      // error exception
+  ET_INTERRUPT   // interrupt exception triggered by Ctrl-C
+} except_type_T;
+
 /*
  * Structure describing an exception.
  * (don't use "struct exception", it's used by the math library).
  */
 typedef struct vim_exception except_T;
 struct vim_exception {
-  int type;                             /* exception type */
-  char_u              *value;           /* exception value */
-  struct msglist      *messages;        /* message(s) causing error exception */
-  char_u              *throw_name;      /* name of the throw point */
-  linenr_T throw_lnum;                  /* line number of the throw point */
-  except_T            *caught;          /* next exception on the caught stack */
+  except_type_T type;                   // exception type
+  char_u              *value;           // exception value
+  struct msglist      *messages;        // message(s) causing error exception
+  char_u              *throw_name;      // name of the throw point
+  linenr_T throw_lnum;                  // line number of the throw point
+  except_T            *caught;          // next exception on the caught stack
 };
-
-/*
- * The exception types.
- */
-#define ET_USER         0       /* exception caused by ":throw" command */
-#define ET_ERROR        1       /* error exception */
-#define ET_INTERRUPT    2       /* interrupt exception triggered by Ctrl-C */
 
 /*
  * Structure to save the error/interrupt/exception state between calls to
