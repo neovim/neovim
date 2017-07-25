@@ -384,9 +384,10 @@ func Test_substitute_expr()
 	\ {-> submatch(2) . submatch(3) . submatch(1)}, ''))
 
   func Recurse()
-    return substitute('yyy', 'y*', {-> g:val}, '')
+    return substitute('yyy', 'y\(.\)y', {-> submatch(1)}, '')
   endfunc
-  call assert_equal('--', substitute('xxx', 'x*', {-> '-' . Recurse() . '-'}, ''))
+  " recursive call works
+  call assert_equal('-y-x-', substitute('xxx', 'x\(.\)x', {-> '-' . Recurse() . '-' . submatch(1) . '-'}, ''))
 endfunc
 
 func Test_invalid_submatch()

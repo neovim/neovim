@@ -6011,9 +6011,9 @@ range({expr} [, {max} [, {stride}]])				*range()*
 							*readfile()*
 readfile({fname} [, {binary} [, {max}]])
 		Read file {fname} and return a |List|, each line of the file
-		as an item.  Lines broken at NL characters.  Macintosh files
-		separated with CR will result in a single long line (unless a
-		NL appears somewhere).
+		as an item.  Lines are broken at NL characters.  Macintosh
+		files separated with CR will result in a single long line
+		(unless a NL appears somewhere).
 		All NUL characters are replaced with a NL character.
 		When {binary} contains "b" binary mode is used:
 		- When the last line ends in a NL an extra empty list item is
@@ -7329,6 +7329,9 @@ submatch({nr}[, {list}])			*submatch()* *E935*
 		Only returns more than one item for |:substitute|, inside
 		|substitute()| this list will always contain one or zero
 		items, since there are no real line breaks.
+
+		When substitute() is used recursively only the submatches in
+		the current (deepest) call can be obtained.
 
 		Example: >
 			:s/\d\+/\=submatch(0) + 1/
