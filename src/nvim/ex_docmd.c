@@ -3440,6 +3440,11 @@ const char * set_one_cmd_context(
     xp->xp_pattern = (char_u *)arg;
     break;
 
+  case CMD_messages:
+    xp->xp_context = EXPAND_MESSAGES;
+    xp->xp_pattern = (char_u *)arg;
+    break;
+
   case CMD_history:
     xp->xp_context = EXPAND_HISTORY;
     xp->xp_pattern = (char_u *)arg;
@@ -4874,6 +4879,7 @@ static struct {
 #endif
   { EXPAND_MAPPINGS, "mapping" },
   { EXPAND_MENUS, "menu" },
+  { EXPAND_MESSAGES, "messages" },
   { EXPAND_OWNSYNTAX, "syntax" },
   { EXPAND_SYNTIME, "syntime" },
   { EXPAND_SETTINGS, "option" },
@@ -9592,6 +9598,16 @@ char_u *get_behave_arg(expand_T *xp, int idx)
     return (char_u *)"mswin";
   if (idx == 1)
     return (char_u *)"xterm";
+  return NULL;
+}
+
+// Function given to ExpandGeneric() to obtain the possible arguments of the
+// ":messages {clear}" command.
+char_u *get_messages_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx == 0) {
+    return (char_u *)"clear";
+  }
   return NULL;
 }
 
