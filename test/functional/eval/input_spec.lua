@@ -2,13 +2,13 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
-local wait = helpers.wait
 local feed = helpers.feed
 local meths = helpers.meths
 local clear = helpers.clear
 local source = helpers.source
 local command = helpers.command
 local exc_exec = helpers.exc_exec
+local nvim_async = helpers.nvim_async
 
 local screen
 
@@ -229,16 +229,16 @@ describe('input()', function()
        exc_exec('call input("prompt> ", "default", "file", "extra")'))
   end)
   it('supports highlighting', function()
-    feed([[:call input({"highlight": "RainBowParens"})<CR>]])
-    wait()
+    nvim_async('command', 'call input({"highlight": "RainBowParens"})')
     feed('(())')
     screen:expect([[
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
                                |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
+    feed('<CR>')
   end)
 end)
 describe('inputdialog()', function()
@@ -408,15 +408,15 @@ describe('inputdialog()', function()
        exc_exec('call inputdialog("prompt> ", "default", "file", "extra")'))
   end)
   it('supports highlighting', function()
-    feed([[:call inputdialog({"highlight": "RainBowParens"})<CR>]])
-    wait()
+    nvim_async('command', 'call inputdialog({"highlight": "RainBowParens"})')
     feed('(())')
     screen:expect([[
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
                                |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
+    feed('<CR>')
   end)
 end)
