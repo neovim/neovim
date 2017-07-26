@@ -133,6 +133,9 @@ uint64_t channel_from_process(Process *proc, uint64_t id, char *source)
   rstream_init(proc->out, 0);
   rstream_start(proc->out, receive_msgpack, channel);
 
+  DLOG("ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id, proc->in,
+       proc->out);
+
   return channel->id;
 }
 
@@ -150,6 +153,8 @@ void channel_from_connection(SocketWatcher *watcher)
   wstream_init(&channel->data.stream, 0);
   rstream_init(&channel->data.stream, CHANNEL_BUFFER_SIZE);
   rstream_start(&channel->data.stream, receive_msgpack, channel);
+
+  DLOG("ch %" PRIu64 " in/out-stream=%p", &channel->data.stream);
 }
 
 /// @param source description of source function, rplugin name, TCP addr, etc
@@ -344,6 +349,9 @@ void channel_from_stdio(void)
   rstream_start(&channel->data.std.in, receive_msgpack, channel);
   // write stream
   wstream_init_fd(&main_loop, &channel->data.std.out, 1, 0);
+
+  DLOG("ch %" PRIu64 " in-stream=%p out-stream=%p", channel->id,
+       &channel->data.std.in, &channel->data.std.out);
 }
 
 /// Creates a loopback channel. This is used to avoid deadlock
@@ -363,6 +371,7 @@ void channel_process_exit(uint64_t id, int status)
   decref(channel);
 }
 
+// rstream.c:read_event() invokes this as stream->read_cb().
 static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
                             void *data, bool eof)
 {
@@ -379,7 +388,8 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
   }
 
   size_t count = rbuffer_size(rbuf);
-  DLOG("parsing %u bytes of msgpack data from Stream(%p)", count, stream);
+  DLOG("ch %" PRIu64 ": parsing %u bytes from msgpack Stream: %p",
+       channel->id, count, stream);
 
   // Feed the unpacker with data
   msgpack_unpacker_reserve_buffer(channel->unpacker, count);
@@ -565,8 +575,8 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
     char buf[256];
     snprintf(buf,
              sizeof(buf),
-             "Before returning from a RPC call, ch %" PRIu64 " was "
-             "closed due to a failed write",
+             "ch %" PRIu64 ": stream write failed. "
+             "RPC canceled; closing channel",
              channel->id);
     call_set_error(channel, buf, ERROR_LOG_LEVEL);
   }
