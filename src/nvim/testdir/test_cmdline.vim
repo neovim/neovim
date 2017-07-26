@@ -130,6 +130,11 @@ func Test_getcompletion()
   let l = getcompletion('dark', 'highlight')
   call assert_equal([], l)
 
+  let l = getcompletion('', 'messages')
+  call assert_true(index(l, 'clear') >= 0)
+  let l = getcompletion('not', 'messages')
+  call assert_equal([], l)
+
   if has('cscope')
     let l = getcompletion('', 'cscope')
     let cmds = ['add', 'find', 'help', 'kill', 'reset', 'show']

@@ -4046,7 +4046,9 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 		locale		locale names (as output of locale -a)
 		mapping		mapping name
 		menu		menus
+		messages	|:messages| suboptions
 		option		options
+		packadd		optional package |pack-add| names
 		shellcmd	Shell command
 		sign		|:sign| suboptions
 		syntax		syntax file names |'syntax'|
