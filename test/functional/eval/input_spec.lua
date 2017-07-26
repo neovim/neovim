@@ -232,7 +232,6 @@ describe('input()', function()
     feed([[:call input({"highlight": "RainBowParens"})<CR>]])
     wait()
     feed('(())')
-    wait()
     screen:expect([[
       {EOB:~                        }|
       {EOB:~                        }|
@@ -412,7 +411,6 @@ describe('inputdialog()', function()
     feed([[:call inputdialog({"highlight": "RainBowParens"})<CR>]])
     wait()
     feed('(())')
-    wait()
     screen:expect([[
       {EOB:~                        }|
       {EOB:~                        }|
