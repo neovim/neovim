@@ -130,6 +130,11 @@ before_each(function()
     function ReturningGlobalN(n, cmdline)
       return g:callback_return{a:n}
     endfunction
+    let g:recording_calls = []
+    function Recording(cmdline)
+      call add(g:recording_calls, a:cmdline)
+      return []
+    endfunction
   ]])
   screen:set_default_attr_ids({
     RBP1={background = Screen.colors.Red},
@@ -654,6 +659,32 @@ describe('Command-line coloring', function()
     eq('34', meths.get_var('out2'))
     eq('4', meths.get_var('out3'))
     eq(0, funcs.exists('g:out4'))
+  end)
+  it('runs callback with the same data only once', function()
+    local function new_recording_calls(...)
+      eq({...}, meths.get_var('recording_calls'))
+      meths.set_var('recording_calls', {})
+    end
+    set_color_cb('Recording')
+    start_prompt('')
+    -- Regression test. Disambiguation:
+    --
+    --     new_recording_calls(expected_result) -- (actual_before_fix)
+    --
+    feed('a')
+    new_recording_calls('a')  -- ('a', 'a')
+    feed('b')
+    new_recording_calls('ab') -- ('a', 'ab', 'ab')
+    feed('c')
+    new_recording_calls('abc')  -- ('ab', 'abc', 'abc')
+    feed('<BS>')
+    new_recording_calls('ab')  -- ('abc', 'ab', 'ab')
+    feed('<BS>')
+    new_recording_calls('a')  -- ('ab', 'a', 'a')
+    feed('<BS>')
+    new_recording_calls()  -- ('a')
+    feed('<CR><CR>')
+    eq('', meths.get_var('out'))
   end)
 end)
 describe('Ex commands coloring support', function()
