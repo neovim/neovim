@@ -4723,23 +4723,26 @@ input({opts})
 		"-complete=" argument.	Refer to |:command-completion| for
 		more information.  Example: >
 			let fname = input("File: ", "", "file")
-<
+<							*E5400* *E5402*
 		The optional highlight key allows specifying function which 
 		will be used for highlighting user input.  This function 
 		receives user input as its only argument and must return 
-		a list of 3-tuples [hl_start_byte, hl_end_byte + 1, hl_group] 
+		a list of 3-tuples [hl_start_col, hl_end_col + 1, hl_group] 
 		where
-			hl_start_byte is the first highlighted byte,
-			hl_end_byte is the last highlighted byte (+ 1!),
+			hl_start_col is the first highlighted column,
+			hl_end_col is the last highlighted column (+ 1!),
 			hl_group is |:hl| group used for highlighting.
 					      *E5403* *E5404* *E5405* *E5406*
-		Both hl_start_byte and hl_end_byte + 1 must point to the start 
+		Both hl_start_col and hl_end_col + 1 must point to the start 
 		of the multibyte character (highlighting must not break 
-		multibyte characters), hl_end_byte + 1 may be equal to the 
+		multibyte characters), hl_end_col + 1 may be equal to the 
 		input length.  Start column must be in range [0, len(input)), 
-		end column must be in range (hl_start_byte, len(input)], 
-		sections must be ordered so that next hl_start_byte is greater 
-		then or equal to previous hl_end_byte.
+		end column must be in range (hl_start_col, len(input)], 
+		sections must be ordered so that next hl_start_col is greater 
+		then or equal to previous hl_end_col.
+
+		Currently coloring is disabled when command-line contains 
+		arabic characters.
 
 		NOTE: This function must not be used in a startup file, for
 		the versions that only run in GUI mode (e.g., the Win32 GUI).

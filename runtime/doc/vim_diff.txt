@@ -126,7 +126,6 @@ Commands:
 Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified
   |dictwatcherdel()|
-  |execute()| works with |:redir|
   |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
 
 Events:
@@ -142,6 +141,15 @@ Highlight groups:
   |hl-TermCursor|
   |hl-TermCursorNC|
   |hl-Whitespace| highlights 'listchars' whitespace
+
+UI:
+		*E5408* *E5409* *g:Nvim_color_expr* *g:Nvim_color_cmdline*
+  UI now supports command-line coloring. Officially only |input()| and 
+  |inputdialog()| may be colored, temporary for testing purposes expressions 
+  (e.g. |i_CTRL-R_=|) and regular command-line (|:|) are colored by callbacks 
+  defined in `g:Nvim_color_expr` and `g:Nvim_color_cmdline` respectively. 
+  Callbacks are to be replaced by parser implemented in C which will also do 
+  the coloring.
 
 ==============================================================================
 4. Changed features					 *nvim-features-changed*
@@ -260,6 +268,8 @@ Lua interface (|if_lua.txt|):
 |input()| and |inputdialog()| gained support for each other’s features (return 
 on cancel and completion respectively) via dictionary argument (replaces all 
 other arguments if used).
+
+|input()| and |inputdialog()| now support user-defined cmdline highlighting.
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
