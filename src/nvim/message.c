@@ -1636,7 +1636,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
 /// @param[in]  attr  Highlight attributes.
 /// @param[in]  fmt  Format string.
 void msg_printf_attr(const int attr, const char *const fmt, ...)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   static char msgbuf[IOSIZE];
 
