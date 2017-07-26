@@ -361,7 +361,7 @@ typedef struct {
   size_t idx;
 } APIToMPObjectStackItem;
 
-/// Convert type used by Neovim API to msgpack
+/// Convert type used by Nvim API to msgpack type.
 ///
 /// @param[in]  result  Object to convert.
 /// @param[out]  res  Structure that defines where conversion results are saved.
