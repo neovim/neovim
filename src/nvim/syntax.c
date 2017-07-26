@@ -42,6 +42,7 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 static bool did_syntax_onoff = false;
 
@@ -6622,7 +6623,6 @@ do_highlight(char_u *line, int forceit, int init) {
     syn_unadd_group();
   } else {
     if (is_normal_group) {
-      HL_TABLE()[idx].sg_attr = 0;
       // Need to update all groups, because they might be using "bg" and/or
       // "fg", which have been changed now.
       highlight_attr_set_all();
@@ -6826,7 +6826,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
     // Copy all attributes from char_aep to the new entry
     new_en = *char_aep;
   } else {
-    memset(&new_en, 0, sizeof(new_en));
+    new_en = (attrentry_T)ATTRENTRY_INIT;
   }
 
   spell_aep = syn_cterm_attr2entry(prim_attr);
@@ -6859,6 +6859,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
 /// \note this function does not apply exclusively to cterm attr contrary
 /// to what its name implies
+/// \warn don't call it with attr 0 (i.e., the null attribute)
 attrentry_T *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
@@ -7103,22 +7104,15 @@ syn_list_header(int did_header, int outlen, int id)
   return newline;
 }
 
-/*
- * Set the attribute numbers for a highlight group.
- * Called after one of the attributes has changed.
- */
-static void 
-set_hl_attr (
-    int idx                    /* index in array */
-)
+/// Set the attribute numbers for a highlight group.
+/// Called after one of the attributes has changed.
+/// @param idx corrected highlight index
+static void
+set_hl_attr(int idx)
 {
   attrentry_T at_en = ATTRENTRY_INIT;
   struct hl_group     *sgp = HL_TABLE() + idx;
 
-  // The "Normal" group doesn't need an attribute number
-  if (sgp->sg_name_u != NULL && STRCMP(sgp->sg_name_u, "NORMAL") == 0) {
-    return;
-  }
 
   at_en.cterm_ae_attr = sgp->sg_cterm;
   at_en.cterm_fg_color = sgp->sg_cterm_fg;
