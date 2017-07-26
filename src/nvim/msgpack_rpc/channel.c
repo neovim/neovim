@@ -62,7 +62,7 @@ typedef struct {
   ChannelType type;
   msgpack_unpacker *unpacker;
   union {
-    Stream stream;
+    Stream stream;  // bidirectional (socket)
     Process *proc;
     struct {
       Stream in;
@@ -154,7 +154,8 @@ void channel_from_connection(SocketWatcher *watcher)
   rstream_init(&channel->data.stream, CHANNEL_BUFFER_SIZE);
   rstream_start(&channel->data.stream, receive_msgpack, channel);
 
-  DLOG("ch %" PRIu64 " in/out-stream=%p", &channel->data.stream);
+  DLOG("ch %" PRIu64 " in/out-stream=%p", channel->id,
+       &channel->data.stream);
 }
 
 /// @param source description of source function, rplugin name, TCP addr, etc
@@ -383,7 +384,18 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
     char buf[256];
     snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
              channel->id);
-    call_set_error(channel, buf, WARNING_LOG_LEVEL);
+    call_set_error(channel, buf, WARN_LOG_LEVEL);
+    goto end;
+  }
+
+  if ((chan_wstream(channel) != NULL && chan_wstream(channel)->closed)
+      || (chan_rstream(channel) != NULL && chan_rstream(channel)->closed)) {
+    char buf[256];
+    snprintf(buf, sizeof(buf),
+             "ch %" PRIu64 ": stream closed unexpectedly. "
+             "closing channel",
+             channel->id);
+    call_set_error(channel, buf, WARN_LOG_LEVEL);
     goto end;
   }
 
@@ -445,8 +457,8 @@ static void parse_msgpack(Channel *channel)
     // causes for this error(search for 'goto _failed')
     //
     // A not so uncommon cause for this might be deserializing objects with
-    // a high nesting level: msgpack will break when it's internal parse stack
-    // size exceeds MSGPACK_EMBED_STACK_SIZE(defined as 32 by default)
+    // a high nesting level: msgpack will break when its internal parse stack
+    // size exceeds MSGPACK_EMBED_STACK_SIZE (defined as 32 by default)
     send_error(channel, 0, "Invalid msgpack payload. "
                            "This error can also happen when deserializing "
                            "an object with high level of nesting");
@@ -544,6 +556,39 @@ static void on_request_event(void **argv)
   api_clear_error(&error);
 }
 
+/// Returns the Stream that a Channel writes to.
+static Stream *chan_wstream(Channel *chan)
+{
+  switch (chan->type) {
+    case kChannelTypeSocket:
+      return &chan->data.stream;
+    case kChannelTypeProc:
+      return chan->data.proc->in;
+    case kChannelTypeStdio:
+      return &chan->data.std.out;
+    case kChannelTypeInternal:
+      return NULL;
+  }
+  abort();
+}
+
+/// Returns the Stream that a Channel reads from.
+static Stream *chan_rstream(Channel *chan)
+{
+  switch (chan->type) {
+    case kChannelTypeSocket:
+      return &chan->data.stream;
+    case kChannelTypeProc:
+      return chan->data.proc->out;
+    case kChannelTypeStdio:
+      return &chan->data.std.in;
+    case kChannelTypeInternal:
+      return NULL;
+  }
+  abort();
+}
+
+
 static bool channel_write(Channel *channel, WBuffer *buffer)
 {
   bool success = false;
@@ -555,13 +600,9 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
 
   switch (channel->type) {
     case kChannelTypeSocket:
-      success = wstream_write(&channel->data.stream, buffer);
-      break;
     case kChannelTypeProc:
-      success = wstream_write(channel->data.proc->in, buffer);
-      break;
     case kChannelTypeStdio:
-      success = wstream_write(&channel->data.std.out, buffer);
+      success = wstream_write(chan_wstream(channel), buffer);
       break;
     case kChannelTypeInternal:
       incref(channel);

@@ -20,6 +20,22 @@ describe('server -> client', function()
     cid = nvim('get_api_info')[1]
   end)
 
+  it('handles unexpected closed stream while preparing RPC response', function()
+    source([[
+      let g:_nvim_args = [v:progpath, '--embed', '-n', '-u', 'NONE', '-i', 'NONE', ]
+      let ch1 = jobstart(g:_nvim_args, {'rpc': v:true})
+      let child1_ch = rpcrequest(ch1, "nvim_get_api_info")[0]
+      call rpcnotify(ch1, 'nvim_eval', 'rpcrequest('.child1_ch.', "nvim_get_api_info")')
+
+      let ch2 = jobstart(g:_nvim_args, {'rpc': v:true})
+      let child2_ch = rpcrequest(ch2, "nvim_get_api_info")[0]
+      call rpcnotify(ch2, 'nvim_eval', 'rpcrequest('.child2_ch.', "nvim_get_api_info")')
+
+      call jobstop(ch1)
+    ]])
+    eq(2, eval("1+1"))  -- Still alive?
+  end)
+
   describe('simple call', function()
     it('works', function()
       local function on_setup()
@@ -141,7 +157,7 @@ describe('server -> client', function()
     end)
   end)
 
-  describe('when the client is a recursive vim instance', function()
+  describe('recursive (child) nvim client', function()
     if os.getenv("TRAVIS") and helpers.os_name() == "osx" then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
       pending("[Hangs on Travis macOS. #5002]", function() end)
@@ -155,7 +171,7 @@ describe('server -> client', function()
 
     after_each(function() command('call rpcstop(vim)') end)
 
-    it('can send/recieve notifications and make requests', function()
+    it('can send/receive notifications and make requests', function()
       nvim('command', "call rpcnotify(vim, 'vim_set_current_line', 'SOME TEXT')")
 
       -- Wait for the notification to complete.
@@ -188,7 +204,7 @@ describe('server -> client', function()
     end)
   end)
 
-  describe('when using jobstart', function()
+  describe('jobstart()', function()
     local jobid
     before_each(function()
       local channel = nvim('get_api_info')[1]
@@ -227,7 +243,7 @@ describe('server -> client', function()
     end)
   end)
 
-  describe('when connecting to another nvim instance', function()
+  describe('connecting to another (peer) nvim', function()
     local function connect_test(server, mode, address)
       local serverpid = funcs.getpid()
       local client = spawn(nvim_argv)
@@ -256,7 +272,7 @@ describe('server -> client', function()
       client:close()
     end
 
-    it('over a named pipe', function()
+    it('via named pipe', function()
       local server = spawn(nvim_argv)
       set_session(server)
       local address = funcs.serverlist()[1]
@@ -265,7 +281,7 @@ describe('server -> client', function()
       connect_test(server, 'pipe', address)
     end)
 
-    it('to an ip adress', function()
+    it('via ip address', function()
       local server = spawn(nvim_argv)
       set_session(server)
       local address = funcs.serverstart("127.0.0.1:")
@@ -273,7 +289,7 @@ describe('server -> client', function()
       connect_test(server, 'tcp', address)
     end)
 
-    it('to a hostname', function()
+    it('via hostname', function()
       local server = spawn(nvim_argv)
       set_session(server)
       local address = funcs.serverstart("localhost:")
