@@ -240,6 +240,16 @@ if(HAS_DIAG_COLOR_FLAG)
   add_definitions(-fdiagnostics-color=auto)
 endif()
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8.5")
+    # The array-bounds testing is broken in some versions of GCC, so we disable
+    # it in everything prior to 4.8.5.
+    # See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273 for details about
+    # the bug.
+    add_definitions(-Wno-array-bounds)
+  endif()
+endif()
+
 option(TRAVIS_CI_BUILD "Travis/QuickBuild CI. Extra flags will be set." OFF)
 
 if(TRAVIS_CI_BUILD)
