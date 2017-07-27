@@ -79,7 +79,11 @@ let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 func RunTheTest(test)
   echo 'Executing ' . a:test
   if exists("*SetUp")
-    call SetUp()
+    try
+      call SetUp()
+    catch
+      call add(v:errors, 'Caught exception in SetUp() before ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
+    endtry
   endif
 
   call add(s:messages, 'Executing ' . a:test)
@@ -94,7 +98,11 @@ func RunTheTest(test)
   endtry
 
   if exists("*TearDown")
-    call TearDown()
+    try
+      call TearDown()
+    catch
+      call add(v:errors, 'Caught exception in TearDown() after ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
+    endtry
   endif
 
   " Close any extra windows and make the current one not modified.
