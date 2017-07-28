@@ -102,14 +102,19 @@ typedef struct {
 } ScrollbackLine;
 
 struct terminal {
+
   TerminalOptions opts;  // options passed to terminal_open
-  VTerm *vt;
-  VTermScreen *vts;
+  // buf_T instance that acts as a "drawing surface" for libvterm
+  // we can't store a direct reference to the buffer because the
+  // refresh_timer_cb may be called after the buffer was freed, and there's
+  // no way to know if the memory was reused.
+  handle_T buf_handle;
   // buffer used to:
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
   char textbuf[0x1fff];
-
+  unsigned refcount; // reference count
+  bool exited;
   ScrollbackLine **sb_buffer;       // Scrollback buffer storage for libvterm
   size_t sb_current;                // number of rows pushed to sb_buffer
   size_t sb_size;                   // sb_buffer size
@@ -119,15 +124,9 @@ struct terminal {
   // window height has increased) and must be deleted from the terminal buffer
   int sb_pending;
 
-  // buf_T instance that acts as a "drawing surface" for libvterm
-  // we can't store a direct reference to the buffer because the
-  // refresh_timer_cb may be called after the buffer was freed, and there's
-  // no way to know if the memory was reused.
-  handle_T buf_handle;
-  // program exited
-  bool closed, destroy;
-
-  // some vterm properties
+  // VTerm related fields
+  VTerm *vt;
+  VTermScreen *vts;
   bool forward_mouse;
   int invalid_start, invalid_end;   // invalid rows in libvterm screen
   struct {
@@ -136,8 +135,6 @@ struct terminal {
   } cursor;
   int pressed_button;               // which mouse button is pressed
   bool pending_resize;              // pending width/height
-
-  size_t refcount;                  // reference count
 };
 
 static VTermScreenCallbacks vterm_screen_callbacks = {
@@ -154,6 +151,8 @@ static PMap(ptr_t) *invalidated_terminals;
 static Map(int, int) *color_indexes;
 static int default_vt_fg, default_vt_bg;
 static VTermColor default_vt_bg_rgb;
+
+// init/teardown {{{
 
 void terminal_init(void)
 {
@@ -201,38 +200,49 @@ void terminal_teardown(void)
   map_free(int, int)(color_indexes);
 }
 
+// }}}
 // public API {{{
 
 Terminal *terminal_open(TerminalOptions opts)
 {
   bool true_color = ui_rgb_attached();
-  // Create a new terminal instance and configure it
-  Terminal *rv = xcalloc(1, sizeof(Terminal));
-  rv->opts = opts;
-  rv->cursor.visible = true;
-  // Associate the terminal instance with the new buffer
+
+  Terminal *rv   = (Terminal *) xmalloc(sizeof(Terminal));
+  rv->opts       = opts;
   rv->buf_handle = curbuf->handle;
-  curbuf->terminal = rv;
-  // Create VTerm
+  rv->refcount   = 0;
+  rv->exited     = false;
+  // Configure the scrollback buffer.
+  rv->sb_current = 0;
+  rv->sb_pending = 0;
+  rv->sb_size    = curbuf->b_p_scbk < 0 ? SB_MAX
+      : (size_t) MAX(1, curbuf->b_p_scbk);
+  rv->sb_buffer  = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
+
+  // Setup vterm
   rv->vt = vterm_new(opts.height, opts.width);
   vterm_set_utf8(rv->vt, 1);
-  // Setup state
   VTermState *state = vterm_obtain_state(rv->vt);
-  // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
+  rv->forward_mouse = 0;
+  rv->invalid_start = 0;
+  rv->invalid_end   = opts.height;
   vterm_screen_enable_altscreen(rv->vts, true);
-  // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
+  // delete empty lines at the end of the buffer
   vterm_screen_reset(rv->vts, 1);
+  rv->cursor.row = rv->cursor.col = 0;
+  rv->cursor.visible = true;
+  rv->pressed_button = 0;
+  rv->pending_resize = false;
   // force a initial refresh of the screen to ensure the buffer will always
   // have as many lines as screen rows when refresh_scrollback is called
-  rv->invalid_start = 0;
-  rv->invalid_end = opts.height;
   refresh_screen(rv, curbuf);
-  set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
 
   // Default settings for terminal buffers
+  set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
+  curbuf->terminal = rv;
   curbuf->b_p_ma = false;     // 'nomodifiable'
   curbuf->b_p_ul = -1;        // 'undolevels'
   curbuf->b_p_scbk = p_scbk;  // 'scrollback'
@@ -246,11 +256,6 @@ Terminal *terminal_open(TerminalOptions opts)
 
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
-
-  // Configure the scrollback buffer.
-  rv->sb_size = curbuf->b_p_scbk < 0
-                ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
-  rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
     // Change the first 16 colors so we can easily get the correct color
