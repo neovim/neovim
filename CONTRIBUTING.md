@@ -27,6 +27,7 @@ Reporting problems
 - When reporting a crash, include a stacktrace.
 - [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
 - Check `$NVIM_LOG_FILE`, if it exists.
+- Include `cmake --system-information` for **build** issues.
 
 Pull requests ("PRs")
 ---------------------
