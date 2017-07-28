@@ -2195,7 +2195,7 @@ win_line (
   int change_start = MAXCOL;            /* first col of changed area */
   int change_end = -1;                  /* last col of changed area */
   colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
-  int need_showbreak = FALSE;
+  int need_showbreak = false;           // overlong line, skip first x chars
   int line_attr = 0;                    /* attribute for the whole line */
   matchitem_T *cur;                     /* points to the match list */
   match_T     *shl;                     /* points to search_hl or a match */
@@ -2805,8 +2805,10 @@ win_line (
       // draw 'breakindent': indent wrapped text accodringly
       if (draw_state == WL_BRI - 1 && n_extra == 0) {
         draw_state = WL_BRI;
-        if (wp->w_p_bri && row != startrow && filler_lines == 0) {
-          char_attr = wp->w_hl_attr_normal;  // was: hl_attr(HLF_AT);
+        // if need_showbreak is set, breakindent also applies
+        if (wp->w_p_bri && (row != startrow || need_showbreak)
+            && filler_lines == 0) {
+          char_attr = wp->w_hl_attr_normal;
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = win_hl_attr(wp, diff_hlf);
