@@ -991,7 +991,7 @@ static void win_update(win_T *wp)
      * first. */
     if (mid_start == 0) {
       mid_end = wp->w_height;
-      if (lastwin == firstwin) {
+      if (ONE_WINDOW) {
         /* Clear the screen when it was not done by win_del_lines() or
          * win_ins_lines() above, "screen_cleared" is FALSE or MAYBE
          * then. */
@@ -7160,7 +7160,7 @@ static int fillchar_status(int *attr, win_T *wp)
    * window differs, or the fillchars differ, or this is not the
    * current window */
   if (*attr != 0 && ((win_hl_attr(wp, HLF_S) != win_hl_attr(wp, HLF_SNC)
-                      || !is_curwin || firstwin == lastwin)
+                      || !is_curwin || ONE_WINDOW)
                      || (fill_stl != fill_stlnc))) {
     return fill;
   }

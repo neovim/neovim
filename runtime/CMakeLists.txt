@@ -100,20 +100,6 @@ add_custom_target(
     ${GENERATED_PACKAGE_TAGS}
 )
 
-# Optional targets for nvim.desktop file and icon.
-find_program(XDG_MENU_PRG xdg-desktop-menu)
-find_program(XDG_ICON_PRG xdg-icon-resource)
-if(XDG_MENU_PRG)
-  add_custom_target(desktop-file
-    COMMAND xdg-desktop-menu install --novendor ${PROJECT_SOURCE_DIR}/runtime/nvim.desktop)
-  # add_dependencies(runtime desktop-file)
-endif()
-if(XDG_ICON_PRG)
-  add_custom_target(desktop-icon
-    COMMAND xdg-icon-resource install --novendor --size 128 ${PROJECT_SOURCE_DIR}/runtime/nvim.png)
-  # add_dependencies(runtime desktop-icon)
-endif()
-
 # CMake is painful here.  It will create the destination using the user's
 # current umask, and we don't want that.  And we don't just want to install
 # the target directory, as it will mess with existing permissions.  So this
@@ -127,6 +113,16 @@ install_helper(
 install_helper(
   FILES ${GENERATED_SYN_VIM}
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/nvim/runtime/syntax/vim)
+
+if(NOT APPLE)
+  install_helper(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.desktop
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+
+  install_helper(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/nvim.png
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pixmaps)
+endif()
 
 file(GLOB_RECURSE RUNTIME_PROGRAMS
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}

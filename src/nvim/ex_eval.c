@@ -374,10 +374,9 @@ int do_intthrow(struct condstack *cstack)
   return TRUE;
 }
 
-/*
- * Get an exception message that is to be stored in current_exception->value.
- */
-char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should_free)
+// Get an exception message that is to be stored in current_exception->value.
+char_u *get_exception_string(void *value, except_type_T type, char_u *cmdname,
+                             int *should_free)
 {
   char_u      *ret, *mesg;
   char_u      *p, *val;
@@ -435,13 +434,11 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
 }
 
 
-/*
- * Throw a new exception.  Return FAIL when out of memory or it was tried to
- * throw an illegal user exception.  "value" is the exception string for a
- * user or interrupt exception, or points to a message list in case of an
- * error exception.
- */
-static int throw_exception(void *value, int type, char_u *cmdname)
+// Throw a new exception.  Return FAIL when out of memory or it was tried to
+// throw an illegal user exception.  "value" is the exception string for a
+// user or interrupt exception, or points to a message list in case of an
+// error exception.
+static int throw_exception(void *value, except_type_T type, char_u *cmdname)
 {
   except_T    *excp;
   int should_free;

@@ -844,8 +844,6 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
         break;
       case ET_INTERRUPT:
         break;
-      default:
-        p = vim_strsave((char_u *)_(e_internal));
       }
 
       saved_sourcing_name = sourcing_name;
@@ -3440,6 +3438,11 @@ const char * set_one_cmd_context(
     xp->xp_pattern = (char_u *)arg;
     break;
 
+  case CMD_messages:
+    xp->xp_context = EXPAND_MESSAGES;
+    xp->xp_pattern = (char_u *)arg;
+    break;
+
   case CMD_history:
     xp->xp_context = EXPAND_HISTORY;
     xp->xp_pattern = (char_u *)arg;
@@ -4874,6 +4877,7 @@ static struct {
 #endif
   { EXPAND_MAPPINGS, "mapping" },
   { EXPAND_MENUS, "menu" },
+  { EXPAND_MESSAGES, "messages" },
   { EXPAND_OWNSYNTAX, "syntax" },
   { EXPAND_SYNTIME, "syntime" },
   { EXPAND_SETTINGS, "option" },
@@ -5976,7 +5980,7 @@ static void ex_quit(exarg_T *eap)
     // specified. Example:
     // :h|wincmd w|1q     - don't quit
     // :h|wincmd w|q      - quit
-    if (only_one_window() && (firstwin == lastwin || eap->addr_count == 0)) {
+    if (only_one_window() && (ONE_WINDOW || eap->addr_count == 0)) {
       getout(0);
     }
     /* close window; may free buffer */
@@ -6174,12 +6178,14 @@ static void ex_tabonly(exarg_T *eap)
  */
 void tabpage_close(int forceit)
 {
-  /* First close all the windows but the current one.  If that worked then
-   * close the last window in this tab, that will close it. */
-  if (lastwin != firstwin)
-    close_others(TRUE, forceit);
-  if (lastwin == firstwin)
+  // First close all the windows but the current one.  If that worked then
+  // close the last window in this tab, that will close it.
+  if (!ONE_WINDOW) {
+    close_others(true, forceit);
+  }
+  if (ONE_WINDOW) {
     ex_win_close(forceit, curwin, NULL);
+  }
 }
 
 /*
@@ -9590,6 +9596,16 @@ char_u *get_behave_arg(expand_T *xp, int idx)
     return (char_u *)"mswin";
   if (idx == 1)
     return (char_u *)"xterm";
+  return NULL;
+}
+
+// Function given to ExpandGeneric() to obtain the possible arguments of the
+// ":messages {clear}" command.
+char_u *get_messages_arg(expand_T *xp FUNC_ATTR_UNUSED, int idx)
+{
+  if (idx == 0) {
+    return (char_u *)"clear";
+  }
   return NULL;
 }
 

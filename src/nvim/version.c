@@ -641,7 +641,7 @@ static const int included_patches[] = {
   // 91,
   // 90,
   // 89 NA
-  // 88,
+  88,
   // 87 NA
   // 86,
   85,
@@ -654,20 +654,20 @@ static const int included_patches[] = {
   78,
   // 77 NA
   // 76 NA
-  // 75,
+  75,
   // 74,
-  // 73,
+  73,
   // 72 NA
   // 71 NA
   // 70 NA
-  // 69,
+  69,
   68,
   // 67 NA
   66,
   // 65 NA
   64,
   // 63,
-  // 62,
+  62,
   // 61 NA
   60,
   // 59 NA
@@ -695,7 +695,7 @@ static const int included_patches[] = {
   37,
   // 36 NA
   35,
-  // 34,
+  34,
   33,
   32,
   31,
@@ -704,9 +704,9 @@ static const int included_patches[] = {
   // 28 NA
   // 27 NA
   26,
-  // 25,
+  25,
   // 24 NA
-  // 23,
+  23,
   // 22 NA
   // 21,
   // 20,
