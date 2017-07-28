@@ -1924,10 +1924,14 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       if (fill_fold >= 0x80) {
         ScreenLinesUC[off + col] = fill_fold;
         ScreenLinesC[0][off + col] = 0;
-      } else
+        ScreenLines[off + col] = 0x80;  // avoid storing zero
+      } else {
         ScreenLinesUC[off + col] = 0;
+      }
+      col++;
+    } else {
+      ScreenLines[off + col++] = fill_fold;
     }
-    ScreenLines[off + col++] = fill_fold;
   }
 
   if (text != buf)
