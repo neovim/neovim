@@ -78,12 +78,10 @@ describe('menu_get', function()
     command('cnoremenu Edit.Paste <C-R>"')
   end)
 
-  it('no path, all modes', function()
+  it("path='', modes='a'", function()
     local m = funcs.menu_get("","a");
-    -- You can use the following to print the expected table
-    -- and regenerate the tests:
-    -- local pretty = require('pl.pretty');
-    -- print(pretty.dump(m))
+    -- HINT: To print the expected table and regenerate the tests:
+    -- print(require('pl.pretty').dump(m))
     local expected = {
       {
         shortcut = "T",

@@ -91,11 +91,9 @@ ex_menu(exarg_T *eap)
 
 
   // Locate an optional "icon=filename" argument
-  // Kept just the command parsing  from vim for compativility but no further
-  // processing is done
+  // TODO(nvim): Currently this is only parsed. Should expose it to UIs.
   if (STRNCMP(arg, "icon=", 5) == 0) {
     arg += 5;
-    // icon = arg;
     while (*arg != NUL && *arg != ' ') {
       if (*arg == '\\')
         STRMOVE(arg, arg + 1);
@@ -1138,15 +1136,15 @@ static bool menu_namecmp(const char_u *const name, const char_u *const mname)
 }
 
 
-/// converts a string into a combination of \ref MENU_MODES
+/// Returns the \ref MENU_MODES specified by menu command `cmd`.
 ///  (eg :menu! returns MENU_CMDLINE_MODE | MENU_INSERT_MODE)
 ///
-/// @param[in] cmd a string like 'n' (normal) or 'a' (all)
-/// @param[in] forceit Was there a "!" after the command?
-/// @param[out] If "noremap" is not NULL, then the flag it points to is set
-/// according to whether the command is a "nore" command.
-/// @param[out] unmenu is not NULL, then the flag it points to is set according
-/// to whether the command is an "unmenu" command.
+/// @param[in] cmd      string like "nmenu", "vmenu", etc.
+/// @param[in] forceit  bang (!) was given after the command
+/// @param[out] noremap If not NULL, the flag it points to is set according
+///                     to whether the command is a "nore" command.
+/// @param[out] unmenu  If not NULL, the flag it points to is set according
+///                     to whether the command is an "unmenu" command.
 int
 get_menu_cmd_modes(
     const char_u * cmd,
