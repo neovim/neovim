@@ -858,8 +858,8 @@ describe("pty process teardown", function()
 
     -- Exiting should terminate all descendants (PTY, its children, ...).
     screen:expect([[
-      ^                              |
-      [Process exited 0]            |
+                                    |
+      [Process exited 0^]            |
                                     |
                                     |
                                     |
