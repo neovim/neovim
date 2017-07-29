@@ -628,7 +628,7 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
   if (chan->term) {
     char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
-    terminal_close(chan->term, msg);
+    terminal_exit(chan->term, msg);
   }
 
   // If process did not exit, we only closed the handle of a detached process.
@@ -730,7 +730,8 @@ static void term_close(void *data)
 {
   Channel *chan = data;
   process_stop(&chan->stream.proc);
-  multiqueue_put(chan->events, term_delayed_free, 1, data);
+  //FROM PR:
+  //multiqueue_put(chan->events, term_delayed_free, 1, data);
 }
 
 void channel_info_changed(Channel *chan, bool new)
