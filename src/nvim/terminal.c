@@ -209,12 +209,6 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->opts       = opts;
   rv->buf_handle = curbuf->handle;
   rv->exited     = false;
-  // Configure the scrollback buffer.
-  rv->sb_current = 0;
-  rv->sb_pending = 0;
-  rv->sb_size    = curbuf->b_p_scbk < 0 ? SB_MAX
-      : (size_t) MAX(1, curbuf->b_p_scbk);
-  rv->sb_buffer  = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   // Setup vterm
   rv->vt = vterm_new(opts.height, opts.width);
@@ -253,6 +247,13 @@ Terminal *terminal_open(TerminalOptions opts)
 
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
+
+  // Configure the scrollback buffer.
+  rv->sb_current = 0;
+  rv->sb_pending = 0;
+  rv->sb_size    = curbuf->b_p_scbk < 0 ? SB_MAX
+      : (size_t) MAX(1, curbuf->b_p_scbk);
+  rv->sb_buffer  = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
     // Change the first 16 colors so we can easily get the correct color
@@ -302,7 +303,9 @@ void terminal_exit(Terminal *term, char *msg)
   assert(!term->exited);
   term->exited = true;
   term->forward_mouse = false;
-  terminal_receive(term, msg, strlen(msg));
+  if (msg) {
+    terminal_receive(term, msg, strlen(msg));
+  }
 
   if (!exiting) {
     // flush any pending changes to the buffer
@@ -322,6 +325,7 @@ void terminal_exit(Terminal *term, char *msg)
 void terminal_close(Terminal *term) {
   if (!term->exited) {
     term->opts.close_cb(term->opts.data);
+    terminal_exit(term, NULL);
   }
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
