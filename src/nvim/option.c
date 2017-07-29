@@ -2457,12 +2457,11 @@ did_set_string_option (
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
     errmsg = e_secure;
-  }
-  /* Check for a "normal" file name in some options.  Disallow a path
-   * separator (slash and/or backslash), wildcards and characters that are
-   * often illegal in a file name. */
-  else if ((options[opt_idx].flags & P_NFNAME)
-           && vim_strpbrk(*varp, (char_u *)"/\\*?[|<>") != NULL) {
+  } else if ((options[opt_idx].flags & P_NFNAME)
+             && vim_strpbrk(*varp, (char_u *)"/\\*?[|;&<>\r\n") != NULL) {
+    // Check for a "normal" file name in some options.  Disallow a path
+    // separator (slash and/or backslash), wildcards and characters that are
+    // often illegal in a file name.
     errmsg = e_invarg;
   }
   /* 'backupcopy' */

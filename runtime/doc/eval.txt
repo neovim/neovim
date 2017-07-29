@@ -5508,6 +5508,51 @@ max({expr})	Return the maximum value of all items in {expr}.
 		items in {expr} cannot be used as a Number this results in
                 an error.  An empty |List| or |Dictionary| results in zero.
 
+menu_get({path}, {modes})				*menu_get()*
+		Returns a |List| of |Dictionaries| describing |menus| (defined
+		by |:menu|, |:amenu|, etc.).
+		{path} limits the result to a subtree of the menu hierarchy
+		(empty string matches all menus). E.g. to get items in the
+		"File" menu subtree: >
+			:echo menu_get('File','')
+<
+		{modes} is a string of zero or more modes (see |maparg()| or
+		|creating-menus| for the list of modes). "a" means "all".
+
+		For example: >
+			nnoremenu &Test.Test inormal
+			inoremenu Test.Test insert
+			vnoremenu Test.Test x
+			echo menu_get("")
+<
+		returns something like this:
+>
+			[ {
+			  "hidden": 0,
+			  "name": "Test",
+			  "priority": 500,
+			  "shortcut": 84,
+			  "submenus": [ {
+			    "hidden": 0,
+			    "mappings": {
+			      i": {
+				"enabled": 1,
+				"noremap": 1,
+				"rhs": "insert",
+				"sid": 1,
+				"silent": 0
+			      },
+			      n": { ... },
+			      s": { ... },
+			      v": { ... }
+			    },
+			    "name": "Test",
+			    "priority": 500,
+			    "shortcut": 0
+			  } ]
+			} ]
+<
+
 							*min()*
 min({expr})	Return the minimum value of all items in {expr}.
 		{expr} can be a list or a dictionary.  For a dictionary,

@@ -2,10 +2,10 @@
 --
 -- Keys:
 --
--- args  Number of arguments, list with maximum and minimum number of arguments 
---       or list with a minimum number of arguments only. Defaults to zero 
+-- args  Number of arguments, list with maximum and minimum number of arguments
+--       or list with a minimum number of arguments only. Defaults to zero
 --       arguments.
--- func  Name of the C function which implements the VimL function. Defaults to 
+-- func  Name of the C function which implements the VimL function. Defaults to
 --       `f_{funcname}`.
 
 local varargs = function(nr)
@@ -208,6 +208,7 @@ return {
     matchstr={args={2, 4}},
     matchstrpos={args={2,4}},
     max={args=1},
+    menu_get={args={1, 2}},
     min={args=1},
     mkdir={args={1, 3}},
     mode={args={0, 1}},

@@ -127,6 +127,7 @@ Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified
   |dictwatcherdel()|
   |execute()| works with |:redir|
+  |menu_get()|
   |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
 
 Events:
