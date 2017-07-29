@@ -16697,12 +16697,13 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   TerminalOptions topts;
-  topts.data = data;
-  topts.width = curwin->w_width;
-  topts.height = curwin->w_height;
-  topts.write_cb = term_write;
+  topts.data      = data;
+  topts.width     = curwin->w_width;
+  topts.height    = curwin->w_height;
+  topts.write_cb  = term_write;
   topts.resize_cb = term_resize;
-  topts.close_cb = term_close;
+  topts.close_cb  = term_close;
+  topts.free_cb   = term_delayed_free;
 
   int pid = data->proc.pty.process.pid;
 
@@ -22603,7 +22604,7 @@ static void eval_job_process_exit_cb(Process *proc, int status, void *d)
     data->exited = true;
     char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
-    terminal_close(data->term, msg);
+    terminal_exit(data->term, msg);
   }
   if (data->rpc) {
     channel_process_exit(data->id, status);
@@ -22637,7 +22638,7 @@ static void term_resize(uint16_t width, uint16_t height, void *d)
   pty_process_resize(&data->proc.pty, width, height);
 }
 
-static inline void term_delayed_free(void **argv)
+static void term_delayed_free(void **argv)
 {
   TerminalJobData *j = argv[0];
   if (j->in.pending_reqs || j->out.pending_reqs || j->err.pending_reqs) {
@@ -22656,7 +22657,6 @@ static void term_close(void *d)
     data->exited = true;
     process_stop((Process *)&data->proc);
   }
-  multiqueue_put(data->events, term_delayed_free, 1, data);
 }
 
 static void term_job_data_decref(TerminalJobData *data)

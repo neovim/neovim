@@ -513,7 +513,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
     return;
 
   if (buf->terminal) {
-    terminal_close(buf->terminal, NULL);
+    terminal_close(buf->terminal);
   }
 
   /* Always remove the buffer when there is no file name. */
@@ -1166,7 +1166,7 @@ do_buffer (
         }
       } else {
         if (buf->terminal) {
-          EMSG2(_("E89: %s will be killed(add ! to override)"),
+          EMSG2(_("E89: %s will be killed (add ! to override)"),
               (char *)buf->b_fname);
         } else {
           EMSGN(_("E89: No write since last change for buffer %" PRId64

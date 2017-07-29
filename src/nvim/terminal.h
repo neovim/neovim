@@ -9,13 +9,15 @@ typedef struct terminal Terminal;
 typedef void (*terminal_write_cb)(char *buffer, size_t size, void *data);
 typedef void (*terminal_resize_cb)(uint16_t width, uint16_t height, void *data);
 typedef void (*terminal_close_cb)(void *data);
+typedef void (*terminal_free_cb)(void **data);
 
 typedef struct {
   void *data;
   uint16_t width, height;
-  terminal_write_cb write_cb;
+  terminal_write_cb  write_cb;
   terminal_resize_cb resize_cb;
-  terminal_close_cb close_cb;
+  terminal_close_cb  close_cb;
+  terminal_free_cb   free_cb;
 } TerminalOptions;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

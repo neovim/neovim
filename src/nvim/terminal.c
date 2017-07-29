@@ -81,7 +81,6 @@ typedef struct terminal_state {
   VimState state;
   Terminal *term;
   int save_rd;              // saved value of RedrawingDisabled
-  bool close;
   bool got_bsl;             // if the last input was <C-\>
 } TerminalState;
 
@@ -113,7 +112,6 @@ struct terminal {
   //  - convert VTermScreen cell arrays into utf8 strings
   //  - receive data from libvterm as a result of key presses.
   char textbuf[0x1fff];
-  unsigned refcount; // reference count
   bool exited;
   ScrollbackLine **sb_buffer;       // Scrollback buffer storage for libvterm
   size_t sb_current;                // number of rows pushed to sb_buffer
@@ -210,7 +208,6 @@ Terminal *terminal_open(TerminalOptions opts)
   Terminal *rv   = (Terminal *) xmalloc(sizeof(Terminal));
   rv->opts       = opts;
   rv->buf_handle = curbuf->handle;
-  rv->refcount   = 0;
   rv->exited     = false;
   // Configure the scrollback buffer.
   rv->sb_current = 0;
@@ -299,48 +296,42 @@ Terminal *terminal_open(TerminalOptions opts)
   return rv;
 }
 
-void terminal_close(Terminal *term, char *msg)
+// Job exited
+void terminal_exit(Terminal *term, char *msg)
 {
-  if (term->closed) {
-    return;
-  }
-
+  assert(!term->exited);
+  term->exited = true;
   term->forward_mouse = false;
+  terminal_receive(term, msg, strlen(msg));
 
-  // flush any pending changes to the buffer
   if (!exiting) {
+    // flush any pending changes to the buffer
     block_autocmds();
     refresh_terminal(term);
     unblock_autocmds();
   }
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  term->closed = true;
+  assert(buf);
+  apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
+}
 
-  if (!msg || exiting) {
-    // If no msg was given, this was called by close_buffer(buffer.c).  Or if
-    // exiting, we must inform the buffer the terminal no longer exists so that
-    // close_buffer() doesn't call this again.
-    term->buf_handle = 0;
-    if (buf) {
-      buf->terminal = NULL;
-    }
-    if (!term->refcount) {
-      // We should not wait for the user to press a key.
-      term->opts.close_cb(term->opts.data);
-    }
-  } else {
-    terminal_receive(term, msg, strlen(msg));
+// Buffer deleted
+void terminal_close(Terminal *term) {
+  if (!term->exited) {
+    term->opts.close_cb(term->opts.data);
   }
 
-  if (buf) {
-    apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
-  }
+  buf_T *buf = handle_get_buffer(term->buf_handle);
+  assert(buf);
+  buf->terminal = NULL;
+
+  term->opts.free_cb(&term->opts.data);
 }
 
 void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
 {
-  if (term->closed) {
+  if (term->exited) {
     // If two windows display the same terminal and one is closed by keypress.
     return;
   }
@@ -374,6 +365,10 @@ void terminal_enter(void)
 {
   buf_T *buf = curbuf;
   assert(buf->terminal);  // Should only be called when curbuf has a terminal.
+
+  // Do not allow 'TERMINAL' mode if the process already exited
+  if (buf->terminal->exited) return;
+
   TerminalState state, *s = &state;
   memset(s, 0, sizeof(TerminalState));
   s->term = buf->terminal;
@@ -423,18 +418,11 @@ void terminal_enter(void)
   unshowmode(true);
   redraw(curbuf->handle != s->term->buf_handle);
   ui_busy_stop();
-  if (s->close) {
-    bool wipe = s->term->buf_handle != 0;
-    s->term->opts.close_cb(s->term->opts.data);
-    if (wipe) {
-      do_cmdline_cmd("bwipeout!");
-    }
-  }
 }
 
 static int terminal_execute(VimState *state, int key)
 {
-  TerminalState *s = (TerminalState *)state;
+  TerminalState *s = (TerminalState *) state;
 
   switch (key) {
     case K_FOCUSGAINED:  // nvim has been given focus
@@ -466,12 +454,8 @@ static int terminal_execute(VimState *state, int key)
       break;
 
     case K_EVENT:
-      // We cannot let an event free the terminal yet. It is still needed.
-      s->term->refcount++;
       multiqueue_process_events(main_loop.events);
-      s->term->refcount--;
-      if (s->term->buf_handle == 0) {
-        s->close = true;
+      if (s->term->exited) {
         return 0;
       }
       break;
@@ -487,8 +471,7 @@ static int terminal_execute(VimState *state, int key)
         s->got_bsl = true;
         break;
       }
-      if (s->term->closed) {
-        s->close = true;
+      if (s->term->exited) {
         return 0;
       }
 
@@ -507,26 +490,24 @@ void terminal_destroy(Terminal *term)
     buf->terminal = NULL;
   }
 
-  if (!term->refcount) {
-    if (pmap_has(ptr_t)(invalidated_terminals, term)) {
-      // flush any pending changes to the buffer
-      block_autocmds();
-      refresh_terminal(term);
-      unblock_autocmds();
-      pmap_del(ptr_t)(invalidated_terminals, term);
-    }
-    for (size_t i = 0; i < term->sb_current; i++) {
-      xfree(term->sb_buffer[i]);
-    }
-    xfree(term->sb_buffer);
-    vterm_free(term->vt);
-    xfree(term);
+  if (pmap_has(ptr_t)(invalidated_terminals, term)) {
+    // flush any pending changes to the buffer
+    block_autocmds();
+    refresh_terminal(term);
+    unblock_autocmds();
+    pmap_del(ptr_t)(invalidated_terminals, term);
   }
+  for (size_t i = 0; i < term->sb_current; i++) {
+    xfree(term->sb_buffer[i]);
+  }
+  xfree(term->sb_buffer);
+  vterm_free(term->vt);
+  xfree(term);
 }
 
 void terminal_send(Terminal *term, char *data, size_t size)
 {
-  if (term->closed) {
+  if (term->exited) {
     return;
   }
   term->opts.write_cb(data, size, term->opts.data);
@@ -923,7 +904,6 @@ static bool send_mouse_event(Terminal *term, int c)
 // }}}
 // terminal buffer refresh & misc {{{
 
-
 static void fetch_row(Terminal *term, int row, int end_col)
 {
   int col = 0;
@@ -1041,7 +1021,7 @@ end:
 
 static void refresh_size(Terminal *term, buf_T *buf)
 {
-  if (!term->pending_resize || term->closed) {
+  if (!term->pending_resize || term->exited) {
     return;
   }
 
@@ -1262,4 +1242,4 @@ static char *get_config_string(char *key)
 
 // }}}
 
-// vim: foldmethod=marker
+// vim: foldmethod=marker sw=2
