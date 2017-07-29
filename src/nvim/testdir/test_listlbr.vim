@@ -217,3 +217,19 @@ func Test_list_with_listchars()
   call s:compare_lines(expect, lines)
   call s:close_windows()
 endfunc
+
+func Test_list_with_tab_and_skipping_first_chars()
+  call s:test_windows('setl list listchars=tab:>- ts=70 nowrap')
+  call setline(1, ["iiiiiiiiiiiiiiii\taaaaaaaaaaaaaaaaaa", "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii\taaaaaaaaaaaaaaaaaa", "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii\taaaaaaaaaaaaaaaaaa", "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii\taaaaaaaaaaaaaaaaaa"])
+  call cursor(4,64)
+  norm! 2zl
+  let lines = s:screen_lines([1, 4], winwidth(0))
+  let expect = [
+\ "---------------aaaaa",
+\ "---------------aaaaa",
+\ "---------------aaaaa",
+\ "iiiiiiiii>-----aaaaa",
+\ ]
+  call s:compare_lines(expect, lines)
+  call s:close_windows()
+endfu
