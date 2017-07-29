@@ -447,7 +447,7 @@ static void out_data_append_to_screen(char *output, size_t remaining,
   size_t off = 0;
   int last_row = (int)Rows - 1;
 
-  while (off < remaining) {
+  while (output != NULL && off < remaining) {
     // Found end of line?
     if (output[off] == NL) {
       // Can we start a new line or do we need to continue the last one?
@@ -473,7 +473,7 @@ static void out_data_append_to_screen(char *output, size_t remaining,
     off++;
   }
 
-  if (remaining) {
+  if (output != NULL && remaining) {
     if (last_col == 0) {
       screen_del_lines(0, 0, 1, (int)Rows, NULL);
     }
@@ -496,12 +496,8 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
 
-  if (ptr == NULL || cnt == 0) {
-    // Nothing to read;
-    return;
-  }
-
-  if (out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
+  if (ptr != NULL && cnt > 0
+      && out_data_decide_throttle(cnt)) {  // Skip output above a threshold.
     // Save the skipped output. If it is the final chunk, we display it later.
     out_data_ring(ptr, cnt);
   } else {
