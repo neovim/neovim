@@ -2112,16 +2112,16 @@ win_line (
     bool nochange                    /* not updating for changed text */
 )
 {
-  int col;                              /* visual column on screen */
-  unsigned off;                         /* offset in ScreenLines/ScreenAttrs */
-  int c = 0;                            /* init for GCC */
-  long vcol = 0;                        /* virtual column (for tabs) */
+  int col = 0;                          // visual column on screen
+  unsigned off;                         // offset in ScreenLines/ScreenAttrs
+  int c = 0;                            // init for GCC
+  long vcol = 0;                        // virtual column (for tabs)
   long vcol_sbr = -1;                   // virtual column after showbreak
-  long vcol_prev = -1;                  /* "vcol" of previous character */
-  char_u      *line;                    /* current line */
-  char_u      *ptr;                     /* current position in "line" */
-  int row;                              /* row in the window, excl w_winrow */
-  int screen_row;                       /* row on the screen, incl w_winrow */
+  long vcol_prev = -1;                  // "vcol" of previous character
+  char_u      *line;                    // current line
+  char_u      *ptr;                     // current position in "line"
+  int row;                              // row in the window, excl w_winrow
+  int screen_row;                       // row on the screen, incl w_winrow
 
   char_u extra[18];                     /* line number and 'fdc' must fit in here */
   int n_extra = 0;                      /* number of extra chars */
@@ -2522,7 +2522,11 @@ win_line (
     if (vcol > v) {
       vcol -= c;
       ptr = prev_ptr;
-      n_skip = v - vcol;
+      // If the character fits on the screen, don't need to skip it.
+      // Except for a TAB.
+      if (((*mb_ptr2cells)(ptr) >= c || *ptr == TAB) && col == 0) {
+        n_skip = v - vcol;
+      }
     }
 
     /*

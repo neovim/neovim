@@ -274,7 +274,6 @@ endfunction
 
 function Test_breakindent16()
   " Check that overlong lines are indented correctly.
-  " TODO: currently it does not fail even when the bug is not fixed.
   let s:input=""
   call s:test_windows('setl breakindent briopt=min:0 ts=4')
   call setline(1, "\t".repeat("1234567890", 10))
@@ -283,16 +282,16 @@ function Test_breakindent16()
   redraw!
   let lines=s:screen_lines(1,10)
   let expect=[
-\ "    123456",
 \ "    789012",
 \ "    345678",
+\ "    901234",
 \ ]
   call s:compare_lines(expect, lines)
   let lines=s:screen_lines(4,10)
   let expect=[
-\ "    901234",
 \ "    567890",
 \ "    123456",
+\ "    7890  ",
 \ ]
   call s:compare_lines(expect, lines)
   call s:close_windows()

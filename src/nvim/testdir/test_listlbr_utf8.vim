@@ -193,3 +193,37 @@ func Test_multibyte_sign_and_colorcolumn()
   call s:compare_lines(expect, lines)
   call s:close_windows()
 endfunc
+
+func Test_chinese_char_on_wrap_column()
+  call s:test_windows("setl nolbr wrap sbr=")
+  syntax off
+  call setline(1, [
+\ 'aaaaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'aaaaaaaaaaaaaaaaa中'.
+\ 'hello'])
+  call cursor(1,1)
+  norm! $
+  redraw!
+  let expect=[
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中aaaaaaaaaaaaaaaaa>',
+\ '中hello             ']
+  let lines = s:screen_lines([1, 10], winwidth(0))
+  call s:compare_lines(expect, lines)
+  call s:close_windows()
+endfu
