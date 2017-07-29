@@ -253,6 +253,11 @@ describe('assert function:', function()
         "Expected range 5 - 7, but got 8",
       })
     end)
+
+    it('assert_inrange(1, 1) returns E119', function()
+      eq('Vim(call):E119: Not enough arguments for function: assert_inrange',
+         exc_exec("call assert_inrange(1, 1)"))
+    end)
   end)
 
   -- assert_report({msg})
