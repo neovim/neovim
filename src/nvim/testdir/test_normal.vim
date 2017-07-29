@@ -1255,21 +1255,27 @@ func! Test_normal22_zet()
   " Test for ZZ
   " let shell = &shell
   " let &shell = 'sh'
-  call writefile(['1', '2'], 'Xfile')
-  let args = ' --headless -u NONE -N -U NONE -i NONE --noplugins'
-  call system(v:progpath . args . ' -c "%d" -c ":norm! ZZ" Xfile')
-  let a = readfile('Xfile')
-  call assert_equal([], a)
-  " Test for ZQ
-  call writefile(['1', '2'], 'Xfile')
-  call system(v:progpath . args . ' -c "%d" -c ":norm! ZQ" Xfile')
-  let a = readfile('Xfile')
-  call assert_equal(['1', '2'], a)
 
-  " clean up
-  for file in ['Xfile']
+  " Remove any stale test files from previous run.
+  for file in ['Xfile_Test_normal22_zet']
     call delete(file)
   endfor
+
+  call writefile(['1', '2'], 'Xfile_Test_normal22_zet')
+  let args = ' --headless -u NONE -N -U NONE -i NONE --noplugins'
+  call system(v:progpath . args . ' -c "%d" -c ":norm! ZZ" Xfile_Test_normal22_zet')
+  let a = readfile('Xfile_Test_normal22_zet')
+  call assert_equal([], a)
+  " Test for ZQ
+  call writefile(['1', '2'], 'Xfile_Test_normal22_zet')
+  call system(v:progpath . args . ' -c "%d" -c ":norm! ZQ" Xfile_Test_normal22_zet')
+  let a = readfile('Xfile_Test_normal22_zet')
+  call assert_equal(['1', '2'], a)
+
+  " Nvim: This sometimes hangs the TSAN build.
+  " for file in ['Xfile_Test_normal22_zet']
+  "   call delete(file)
+  " endfor
   " let &shell = shell
 endfunc
 
