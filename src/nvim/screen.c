@@ -1927,6 +1927,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
         ScreenLines[off + col] = 0x80;  // avoid storing zero
       } else {
         ScreenLinesUC[off + col] = 0;
+        ScreenLines[off + col] = fill_fold;
       }
       col++;
     } else {

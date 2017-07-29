@@ -54,6 +54,16 @@ func! Test_display_foldtext_mbyte()
         \ "  14                                    \u2502",
         \ ]
   call assert_equal(expect, lines)
+
+  set fillchars=fold:-,vert:\|
+  let lines=ScreenLines([1,3], winwidth(0)+1)
+  let expect=[
+        \ "  1                                     |",
+        \ "+ +-- 12 lines: 2". repeat("-", 23). "|",
+        \ "  14                                    |",
+        \ ]
+  call assert_equal(expect, lines)
+
   set foldtext& fillchars& foldmethod& fdc&
   bw!
 endfunc
