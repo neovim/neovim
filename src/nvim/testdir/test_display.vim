@@ -18,6 +18,8 @@ function! Test_display_foldcolumn()
   new
   vnew
   vert resize 25
+  call assert_equal(25, winwidth(winnr()))
+  set isprint=@
 
   1put='e more noise blah blah more stuff here'
 
