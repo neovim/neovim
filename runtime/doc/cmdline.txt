@@ -327,8 +327,11 @@ terminals)
 		List entries 6 to 12 from the search history: >
 			:history / 6,12
 <
-		List the recent five entries from all histories: >
-			:history all -5,
+		List the penultimate entry from all histories: >
+			:history all -2
+<
+		List the most recent two entries from all histories: >
+			:history all -2,
 
 :keepp[atterns] {command}			*:keepp* *:keeppatterns*
 		Execute {command}, without adding anything to the search
