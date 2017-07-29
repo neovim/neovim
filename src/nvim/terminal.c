@@ -314,6 +314,8 @@ void terminal_exit(Terminal *term, char *msg)
   buf_T *buf = handle_get_buffer(term->buf_handle);
   assert(buf);
   apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
+
+  term->opts.free_cb(&term->opts.data);
 }
 
 // Buffer deleted
@@ -326,7 +328,12 @@ void terminal_close(Terminal *term) {
   assert(buf);
   buf->terminal = NULL;
 
-  term->opts.free_cb(&term->opts.data);
+  for (size_t i = 0; i < term->sb_current; i++) {
+    xfree(term->sb_buffer[i]);
+  }
+  xfree(term->sb_buffer);
+  vterm_free(term->vt);
+  xfree(term);
 }
 
 void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
@@ -485,24 +492,18 @@ static int terminal_execute(VimState *state, int key)
 void terminal_destroy(Terminal *term)
 {
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  if (buf) {
-    term->buf_handle = 0;
-    buf->terminal = NULL;
-  }
+  // Buf handle still needed by upcoming terminal_close
+  assert(buf);
 
   if (pmap_has(ptr_t)(invalidated_terminals, term)) {
-    // flush any pending changes to the buffer
-    block_autocmds();
-    refresh_terminal(term);
-    unblock_autocmds();
+    if (!exiting) {
+      // flush any pending changes to the buffer
+      block_autocmds();
+      refresh_terminal(term);
+      unblock_autocmds();
+    }
     pmap_del(ptr_t)(invalidated_terminals, term);
   }
-  for (size_t i = 0; i < term->sb_current; i++) {
-    xfree(term->sb_buffer[i]);
-  }
-  xfree(term->sb_buffer);
-  vterm_free(term->vt);
-  xfree(term);
 }
 
 void terminal_send(Terminal *term, char *data, size_t size)
