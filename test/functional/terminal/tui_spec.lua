@@ -187,9 +187,9 @@ describe('tui with non-tty file descriptors', function()
       :q                                                |
       abc                                               |
                                                         |
-      [Process exited 0]{1: }                               |
+      [Process exited 0^]{2: }                               |
                                                         |
-      {3:-- TERMINAL --}                                    |
+                                                        |
     ]])
   end)
 end)
@@ -280,36 +280,30 @@ describe('tui focus event handling', function()
   end)
 
   it('can handle focus events in terminal mode', function()
-    feed_data(':set shell='..nvim_dir..'/shell-test\n')
-    feed_data(':set noshowmode laststatus=0\n')
+    feed_command('set shell='..nvim_dir..'/tty-test')
+    feed_command('set noshowmode laststatus=0')
+    feed_command('terminal')
 
-    retry(2, 3 * screen.timeout, function()
-      feed_data(':terminal\n')
-      feed_data('\027[I')
-      screen:expect([[
-        ready $                                           |
-        [Process exited 0]{1: }                               |
-                                                          |
-                                                          |
-                                                          |
-        gained                                            |
-        {3:-- TERMINAL --}                                    |
-      ]])
-      feed_data('\027[O')
-      screen:expect([[
-        ready $                                           |
-        [Process exited 0]{1: }                               |
-                                                          |
-                                                          |
-                                                          |
-        lost                                              |
-        {3:-- TERMINAL --}                                    |
-      ]])
-
-      -- If retry is needed...
-      feed_data("\034\016")  -- CTRL-\ CTRL-N
-      feed_data(':bwipeout!\n')
-    end)
+    feed_data('\027[I')
+    screen:expect([[
+      tty ready                                         |
+      {1: }                                                 |
+                                                        |
+                                                        |
+                                                        |
+      gained                                            |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027[O')
+    screen:expect([[
+      tty ready                                         |
+      {1: }                                                 |
+                                                        |
+                                                        |
+                                                        |
+      lost                                              |
+      {3:-- TERMINAL --}                                    |
+    ]])
   end)
 end)
 
