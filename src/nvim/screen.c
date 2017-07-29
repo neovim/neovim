@@ -2705,13 +2705,18 @@ win_line (
 
         draw_state = WL_FOLD;
         if (fdc > 0) {
-          // Draw the 'foldcolumn'.
-          fill_foldcolumn(extra, wp, false, lnum);
-          n_extra = fdc;
-          p_extra = extra;
-          p_extra[n_extra] = NUL;
-          c_extra = NUL;
-          char_attr = win_hl_attr(wp, HLF_FC);
+          // Draw the 'foldcolumn'.  Allocate a buffer, "extra" may
+          // already be in used.
+          p_extra_free = xmalloc(12 + 1);
+
+          if (p_extra_free != NULL) {
+            fill_foldcolumn(p_extra_free, wp, false, lnum);
+            n_extra = fdc;
+            p_extra_free[n_extra] = NUL;
+            p_extra = p_extra_free;
+            c_extra = NUL;
+            char_attr = win_hl_attr(wp, HLF_FC);
+          }
         }
       }
 
