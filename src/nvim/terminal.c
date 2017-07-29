@@ -205,7 +205,7 @@ Terminal *terminal_open(TerminalOptions opts)
 {
   bool true_color = ui_rgb_attached();
 
-  Terminal *rv   = (Terminal *) xmalloc(sizeof(Terminal));
+  Terminal *rv   = (Terminal *) xcalloc(1, sizeof(Terminal));
   rv->opts       = opts;
   rv->buf_handle = curbuf->handle;
   rv->exited     = false;
@@ -333,7 +333,12 @@ void terminal_close(Terminal *term) {
   }
   xfree(term->sb_buffer);
   vterm_free(term->vt);
-  xfree(term);
+
+  // It's possible that the buffer gets wiped before the job exits.
+  // If so, let terminal_destroy() free this.
+  if (term->exited) {
+    xfree(term);
+  }
 }
 
 void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
@@ -503,6 +508,12 @@ void terminal_destroy(Terminal *term)
       unblock_autocmds();
     }
     pmap_del(ptr_t)(invalidated_terminals, term);
+  }
+
+  // It's possible that the job exits before the buffer gets wiped.
+  // If so, let terminal_close() free this.
+  if (!buf->terminal) {
+    xfree(term);
   }
 }
 
