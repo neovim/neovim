@@ -150,8 +150,6 @@ static Map(int, int) *color_indexes;
 static int default_vt_fg, default_vt_bg;
 static VTermColor default_vt_bg_rgb;
 
-// init/teardown {{{
-
 void terminal_init(void)
 {
   invalidated_terminals = pmap_new(ptr_t)();
@@ -198,14 +196,11 @@ void terminal_teardown(void)
   map_free(int, int)(color_indexes);
 }
 
-// }}}
-// public API {{{
-
 Terminal *terminal_open(TerminalOptions opts)
 {
   bool true_color = ui_rgb_attached();
 
-  Terminal *rv   = (Terminal *) xcalloc(1, sizeof(Terminal));
+  Terminal *rv   = xcalloc(1, sizeof(Terminal));
   rv->opts       = opts;
   rv->buf_handle = curbuf->handle;
   rv->exited     = false;
@@ -383,7 +378,9 @@ void terminal_enter(void)
   assert(buf->terminal);  // Should only be called when curbuf has a terminal.
 
   // Do not allow 'TERMINAL' mode if the process already exited
-  if (buf->terminal->exited) return;
+  if (buf->terminal->exited) {
+    return;
+  }
 
   TerminalState state, *s = &state;
   memset(s, 0, sizeof(TerminalState));
@@ -438,7 +435,7 @@ void terminal_enter(void)
 
 static int terminal_execute(VimState *state, int key)
 {
-  TerminalState *s = (TerminalState *) state;
+  TerminalState *s = (TerminalState *)state;
 
   switch (key) {
     case K_FOCUSGAINED:  // nvim has been given focus
@@ -614,9 +611,6 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
   }
 }
 
-// }}}
-// libvterm callbacks {{{
-
 static int term_damage(VTermRect rect, void *data)
 {
   invalidate_terminal(data, rect.start_row, rect.end_row);
@@ -782,9 +776,6 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
   return 1;
 }
 
-// }}}
-// input handling {{{
-
 static void convert_modifiers(VTermModifier *statep)
 {
   if (mod_mask & MOD_MASK_SHIFT) { *statep |= VTERM_MOD_SHIFT; }
@@ -916,9 +907,6 @@ static bool send_mouse_event(Terminal *term, int c)
   ins_char_typebuf(c);
   return true;
 }
-
-// }}}
-// terminal buffer refresh & misc {{{
 
 static void fetch_row(Terminal *term, int row, int end_col)
 {
@@ -1255,7 +1243,5 @@ static char *get_config_string(char *key)
   api_free_object(obj);
   return NULL;
 }
-
-// }}}
 
 // vim: foldmethod=marker sw=2
