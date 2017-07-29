@@ -829,6 +829,7 @@ Short explanation of each option:		*option-list*
 'rulerformat'	  'ruf'     custom format for the ruler
 'runtimepath'	  'rtp'     list of directories used for runtime files
 'scroll'	  'scr'     lines to scroll with CTRL-U and CTRL-D
+'scrollback'	  'scbk'    scrollback buffer size for terminal buffers
 'scrollbind'	  'scb'     scroll in window as other windows scroll
 'scrolljump'	  'sj'	    minimum number of lines to scroll
 'scrolloff'	  'so'	    minimum nr. of lines above and below cursor

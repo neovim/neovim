@@ -253,7 +253,7 @@ Name			triggered by ~
 
 |SwapExists|		detected an existing swap file
 |TermOpen|		when a terminal buffer is starting
-|TermClose|		when a terminal buffer ends
+|TermClose|		when a terminal process exits
 
 	Options
 |FileType|		when the 'filetype' option has been set
@@ -916,11 +916,11 @@ TermChanged			After the value of 'term' has changed.  Useful
 				colors, fonts and other terminal-dependent
 				settings.  Executed for all loaded buffers.
 						 {Nvim} *TermClose*
-TermClose			When a terminal buffer ends.
+TermClose			When a |terminal| process exits.
 						 {Nvim} *TermOpen*
-TermOpen			When a terminal buffer is starting.  This can
-				be used to configure the terminal emulator by
-				setting buffer variables. |terminal|
+TermOpen			When a |terminal| buffer starts. This can be
+				used to configure the terminal emulator by
+				setting buffer variables.
 							*TermResponse*
 TermResponse			After the response to |t_RV| is received from
 				the terminal.  The value of |v:termresponse|

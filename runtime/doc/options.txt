@@ -1108,7 +1108,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  nofile	buffer is not related to a file, will not be written
 	  nowrite	buffer will not be written
 	  quickfix	list of errors |:cwindow| or locations |:lwindow|
-	  terminal	|terminal-emulator| buffer
+	  terminal	|terminal| buffer
 
 	This option is used together with 'bufhidden' and 'swapfile' to
 	specify special kinds of buffers.   See |special-buffers|.
