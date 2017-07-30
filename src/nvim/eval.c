@@ -22650,6 +22650,7 @@ static void term_delayed_free(void **argv)
   term_job_data_decref(j);
 }
 
+/// Called when the terminal buffer gets wiped while the job is still running
 static void term_close(void *d)
 {
   TerminalJobData *data = d;
@@ -22657,6 +22658,7 @@ static void term_close(void *d)
     data->exited = true;
     process_stop((Process *)&data->proc);
   }
+  data->term = NULL; // Terminal no longer exists
 }
 
 static void term_job_data_decref(TerminalJobData *data)

@@ -193,6 +193,7 @@ void terminal_teardown(void)
   multiqueue_free(refresh_timer.events);
   time_watcher_close(&refresh_timer, NULL);
   pmap_free(ptr_t)(invalidated_terminals);
+  invalidated_terminals = NULL;
   map_free(int, int)(color_indexes);
 }
 
@@ -292,11 +293,11 @@ Terminal *terminal_open(TerminalOptions opts)
   return rv;
 }
 
-// Job exited
+/// Called when the terminal job dies
 void terminal_exit(Terminal *term, char *msg)
 {
   assert(!term->exited);
-  term->exited = true;
+
   term->forward_mouse = false;
   if (msg) {
     terminal_receive(term, msg, strlen(msg));
@@ -309,18 +310,15 @@ void terminal_exit(Terminal *term, char *msg)
     unblock_autocmds();
   }
 
-  buf_T *buf = handle_get_buffer(term->buf_handle);
-  assert(buf);
-  apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
-
   term->opts.free_cb(&term->opts.data);
 }
 
-// Buffer deleted
-void terminal_close(Terminal *term) {
+/// Called when the terminal buffer get's wiped
+void terminal_close(Terminal *term)
+{
   if (!term->exited) {
     term->opts.close_cb(term->opts.data);
-    terminal_exit(term, NULL);
+    terminal_destroy(term);
   }
 
   buf_T *buf = handle_get_buffer(term->buf_handle);
@@ -332,12 +330,7 @@ void terminal_close(Terminal *term) {
   }
   xfree(term->sb_buffer);
   vterm_free(term->vt);
-
-  // It's possible that the buffer gets wiped before the job exits.
-  // If so, let terminal_destroy() free this.
-  if (term->exited) {
-    xfree(term);
-  }
+  xfree(term);
 }
 
 void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
@@ -498,8 +491,12 @@ static int terminal_execute(VimState *state, int key)
 void terminal_destroy(Terminal *term)
 {
   buf_T *buf = handle_get_buffer(term->buf_handle);
-  // Buf handle still needed by upcoming terminal_close
   assert(buf);
+  apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
+
+  assert(invalidated_terminals);
+  assert(!term->exited);
+  term->exited = true;
 
   if (pmap_has(ptr_t)(invalidated_terminals, term)) {
     if (!exiting) {
@@ -509,12 +506,6 @@ void terminal_destroy(Terminal *term)
       unblock_autocmds();
     }
     pmap_del(ptr_t)(invalidated_terminals, term);
-  }
-
-  // It's possible that the job exits before the buffer gets wiped.
-  // If so, let terminal_close() free this.
-  if (!buf->terminal) {
-    xfree(term);
   }
 }
 
@@ -526,7 +517,7 @@ void terminal_send(Terminal *term, char *data, size_t size)
   term->opts.write_cb(data, size, term->opts.data);
 }
 
-void terminal_send_key(Terminal *term, int c)
+static void terminal_send_key(Terminal *term, int c)
 {
   VTermModifier mod = VTERM_MOD_NONE;
   VTermKey key = convert_key(c, &mod);
@@ -547,6 +538,8 @@ void terminal_receive(Terminal *term, char *data, size_t len)
   if (!data) {
     return;
   }
+
+  assert(!term->exited);
 
   vterm_input_write(term->vt, data, len);
   vterm_screen_flush_damage(term->vts);
