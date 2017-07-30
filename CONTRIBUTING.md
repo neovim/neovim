@@ -27,6 +27,7 @@ Reporting problems
 - When reporting a crash, include a stacktrace.
 - [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
 - Check `$NVIM_LOG_FILE`, if it exists.
+- Include `cmake --system-information` for **build** issues.
 
 Pull requests ("PRs")
 ---------------------
@@ -94,8 +95,9 @@ and [AppVeyor].
   See [Building Neovim#running-tests][wiki-run-tests] to run tests locally.
   Passing locally doesn't guarantee passing the CI build, because of the
   different compilers and platforms tested against.
-- CI runs [ASan] and other analyzers. To run valgrind locally:
-  `VALGRIND=1 make test`
+- CI runs [ASan] and other analyzers.
+    - To run valgrind locally: `VALGRIND=1 make test`
+    - To run Clang ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DCLANG_ASAN_UBSAN=ON"`
 - The `lint` build ([#3174][3174]) checks modified lines _and their immediate
   neighbors_. This is to encourage incrementally updating the legacy style to
   meet our style guidelines.
