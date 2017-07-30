@@ -61,7 +61,7 @@ entries for "xterm", "putty", "screen", "tmux", "rxvt", "iterm", "interix",
 The lookup matches the initial portion of the terminal type, so (for example)
 "putty-256color" and "putty" will both be mapped to the built-in "putty"
 entry.  The built-in terminfo entries describe the terminal as 256-colour
-capable if possible.  See |termcap-colors|.
+capable if possible.  See |tui-colors|.
 
 If no built-in terminfo record matches the terminal type, the built-in "ansi"
 terminfo record is used as a final fallback.
@@ -112,7 +112,7 @@ genuine Xterm will not work over an SSH connection, because the environment
 variable, set by genuine Xterm, that it looks for is not automatically
 replicated over an SSH login session.
 
-					*256-color* *terminfo-colors* *termcap-colors*
+							*tui-colors*
 Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
 including "linux" (whose virtual terminals have had 256-colour support since
 4.8) and anything claiming to be "xterm".  Also when $COLORTERM or $TERM
@@ -148,7 +148,7 @@ extension pioneered by dtterm.  |terminfo| does not have a flag for this
 extension.  So Nvim simply assumes that (all) "dtterm", "xterm", "teraterm",
 "rxvt" terminal types, and Konsole, are capable of this.
 
-			                                  *tui-cursor-shape* 
+							*tui-cursor-shape* 
 Nvim will adjust the shape of the cursor from a block to a line when in insert
 mode (or as specified by the 'guicursor' option), on terminals that support
 it.  It uses the same |terminfo| extensions that were pioneered by tmux for
