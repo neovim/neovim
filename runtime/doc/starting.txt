@@ -349,6 +349,9 @@ argument.
 							*--api-info*
 --api-info 	Print msgpack-encoded |api-metadata| and exit.
 
+							*--headless*
+--headless 	Do not start the built-in UI.
+
 ==============================================================================
 2. Initialization				*initialization* *startup*
 
