@@ -25,6 +25,10 @@ static uv_mutex_t mutex;
 # include "log.c.generated.h"
 #endif
 
+#ifdef HAVE_EXECINFO_BACKTRACE
+# include <execinfo.h>
+#endif
+
 static bool log_try_create(char *fname)
 {
   if (fname == NULL || fname[0] == '\0') {
@@ -173,8 +177,7 @@ FILE *open_log_file(void)
   return stderr;
 }
 
-#if defined(__linux__)
-# include <execinfo.h>
+#ifdef HAVE_EXECINFO_BACKTRACE
 void log_callstack(const char *const func_name, const int line_num)
 {
   void *trace[100];
