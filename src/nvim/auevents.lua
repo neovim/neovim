@@ -79,7 +79,7 @@ return {
     'TabNew',                 -- when creating a new tab
     'TabNewEntered',          -- after entering a new tab
     'TermChanged',            -- after changing 'term'
-    'TermClose',              -- after the processs exits
+    'TermClose',              -- when the process exits
     'TermOpen',               -- after opening a terminal buffer
     'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
