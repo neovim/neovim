@@ -79,8 +79,8 @@ Working intuitively and consistently is a major goal of Nvim. Examples:
   avoids features that cannot be provided on all platforms--instead that is
   delegated to external plugins/extensions.
 
-- Test-only globals and functions such as test_autochdir(), test_settime(),
-  etc., are not exposed (because they don't exist).
+- Vim's internal test functions (test_autochdir(), test_settime(), etc.) are
+  not exposed (nor implemented); instead Nvim has a robust API.
 
 ARCHITECTURE ~
 
@@ -89,6 +89,9 @@ stability and allows those plugins to work without blocking the editor. Even
 "legacy" Python and Ruby plugins which use the old Vim interfaces (|if_py| and
 |if_ruby|) run out-of-process.
 
+Platform and I/O facilities are built upon libuv. Nvim benefits from libuv
+features and bug fixes, and other projects benefit from improvements to libuv
+by Nvim developers.
 
 FEATURES ~
 
