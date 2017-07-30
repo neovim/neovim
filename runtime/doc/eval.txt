@@ -6011,9 +6011,9 @@ range({expr} [, {max} [, {stride}]])				*range()*
 							*readfile()*
 readfile({fname} [, {binary} [, {max}]])
 		Read file {fname} and return a |List|, each line of the file
-		as an item.  Lines broken at NL characters.  Macintosh files
-		separated with CR will result in a single long line (unless a
-		NL appears somewhere).
+		as an item.  Lines are broken at NL characters.  Macintosh
+		files separated with CR will result in a single long line
+		(unless a NL appears somewhere).
 		All NUL characters are replaced with a NL character.
 		When {binary} contains "b" binary mode is used:
 		- When the last line ends in a NL an extra empty list item is
@@ -6531,15 +6531,27 @@ serverlist()						*serverlist()*
 			nvim --cmd "echo serverlist()" --cmd "q"
 <
 serverstart([{address}])				*serverstart()*
-		Opens a TCP socket (IPv4/IPv6), Unix domain socket (Unix),
-		or named pipe (Windows) at {address} for clients to connect
-		to and returns {address}.
+		Opens a socket or named pipe at {address} and listens for
+		|RPC| messages. Clients can send |API| commands to the address
+		to control Nvim. Returns the address string.
 
-		If {address} contains `:`, a TCP socket is used. Everything in
-		front of the last occurrence of `:` is the IP or hostname,
-		everything after it the port. If the port is empty or `0`,
-		a random port will be assigned.
+		If {address} does not contain a colon ":" it is interpreted as
+		a named pipe or Unix domain socket path.
 
+		Example: >
+			if has('win32')
+			  call serverstart('\\.\pipe\nvim-pipe-1234')
+			else
+			  call serverstart('nvim.sock')
+			endif
+<
+		If {address} contains a colon ":" it is interpreted as a TCP
+		address where the last ":" separates the host and port.
+		Assigns a random port if it is empty or 0. Supports IPv4/IPv6.
+
+		Example: >
+			:call serverstart('::1:12345')
+<
 		If no address is given, it is equivalent to: >
 			:call serverstart(tempname())
 
@@ -7317,6 +7329,9 @@ submatch({nr}[, {list}])			*submatch()* *E935*
 		Only returns more than one item for |:substitute|, inside
 		|substitute()| this list will always contain one or zero
 		items, since there are no real line breaks.
+
+		When substitute() is used recursively only the submatches in
+		the current (deepest) call can be obtained.
 
 		Example: >
 			:s/\d\+/\=submatch(0) + 1/
