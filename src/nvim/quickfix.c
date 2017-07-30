@@ -3127,7 +3127,7 @@ static char_u *get_mef_name(void)
     STRCPY(name, p_mef);
     sprintf((char *)name + (p - p_mef), "%d%d", start, off);
     STRCAT(name, p + 2);
-    // Don't accept a symbolic link, its a security risk.
+    // Don't accept a symbolic link, it's a security risk.
     FileInfo file_info;
     bool file_or_link_found = os_fileinfo_link((char *)name, &file_info);
     if (!file_or_link_found) {
