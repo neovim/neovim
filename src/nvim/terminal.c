@@ -313,7 +313,7 @@ void terminal_exit(Terminal *term, char *msg)
   term->opts.free_cb(&term->opts.data);
 }
 
-/// Called when the terminal buffer get's wiped
+/// Called when the terminal buffer gets wiped
 void terminal_close(Terminal *term)
 {
   if (!term->exited) {
