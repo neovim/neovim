@@ -25,6 +25,10 @@ static uv_mutex_t mutex;
 # include "log.c.generated.h"
 #endif
 
+#ifdef HAVE_EXECINFO_BACKTRACE
+# include <execinfo.h>
+#endif
+
 static bool log_try_create(char *fname)
 {
   if (fname == NULL || fname[0] == '\0') {
@@ -172,6 +176,52 @@ FILE *open_log_file(void)
                  log_file_path);
   return stderr;
 }
+
+#ifdef HAVE_EXECINFO_BACKTRACE
+void log_callstack(const char *const func_name, const int line_num)
+{
+  void *trace[100];
+  int trace_size = backtrace(trace, ARRAY_SIZE(trace));
+
+  char exepath[MAXPATHL] = { 0 };
+  size_t exepathlen = MAXPATHL;
+  if (os_exepath(exepath, &exepathlen) != 0) {
+    abort();
+  }
+  assert(24 + exepathlen < IOSIZE);  // Must fit in `cmdbuf` below.
+
+  do_log(DEBUG_LOG_LEVEL, func_name, line_num, true, "trace:");
+
+  char cmdbuf[IOSIZE + (20 * ARRAY_SIZE(trace))];
+  snprintf(cmdbuf, sizeof(cmdbuf), "addr2line -e %s -f -p", exepath);
+  for (int i = 1; i < trace_size; i++) {
+    char buf[20];  // 64-bit pointer 0xNNNNNNNNNNNNNNNN with leading space.
+    snprintf(buf, sizeof(buf), " %p", trace[i]);
+    xstrlcat(cmdbuf, buf, sizeof(cmdbuf));
+  }
+  // Now we have a command string like:
+  //    addr2line -e /path/to/exe -f -p 0x123 0x456 ...
+
+  log_lock();
+  FILE *log_file = open_log_file();
+  if (log_file == NULL) {
+    goto end;
+  }
+
+  FILE *fp = popen(cmdbuf, "r");
+  char linebuf[IOSIZE];
+  while (fgets(linebuf, sizeof(linebuf) - 1, fp) != NULL) {
+    fprintf(log_file, "  %s", linebuf);
+  }
+  pclose(fp);
+
+  if (log_file != stderr && log_file != stdout) {
+    fclose(log_file);
+  }
+end:
+  log_unlock();
+}
+#endif
 
 static bool do_log_to_file(FILE *log_file, int log_level,
                            const char *func_name, int line_num, bool eol,

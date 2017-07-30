@@ -6,7 +6,7 @@ let s:paste = {}
 
 " When caching is enabled, store the jobid of the xclip/xsel process keeping
 " ownership of the selection, so we know how long the cache is valid.
-let s:selection = { 'owner': 0, 'data': [] }
+let s:selection = { 'owner': 0, 'data': [], 'on_stderr': function('provider#stderr_collector') }
 
 function! s:selection.on_exit(jobid, data, event) abort
   " At this point this nvim instance might already have launched
@@ -14,6 +14,13 @@ function! s:selection.on_exit(jobid, data, event) abort
   if self.owner == a:jobid
     let self.owner = 0
   endif
+  if a:data != 0
+    let stderr = provider#get_stderr(a:jobid)
+    echohl WarningMsg
+    echomsg 'clipboard: error invoking '.get(self.argv, 0, '?').': '.join(stderr)
+    echohl None
+  endif
+  call provider#clear_stderr(a:jobid)
 endfunction
 
 let s:selections = { '*': s:selection, '+': copy(s:selection)}
@@ -135,18 +142,19 @@ function! s:clipboard.set(lines, regtype, reg) abort
   end
   let selection.data = [a:lines, a:regtype]
   let argv = split(s:copy[a:reg], " ")
+  let selection.argv = argv
   let selection.detach = s:cache_enabled
   let selection.cwd = "/"
   let jobid = jobstart(argv, selection)
-  if jobid <= 0
+  if jobid > 0
+    call jobsend(jobid, a:lines)
+    call jobclose(jobid, 'stdin')
+    let selection.owner = jobid
+  else
     echohl WarningMsg
-    echo "clipboard: error when invoking provider"
+    echomsg 'clipboard: failed to execute: '.(s:copy[a:reg])
     echohl None
-    return 0
   endif
-  call jobsend(jobid, a:lines)
-  call jobclose(jobid, 'stdin')
-  let selection.owner = jobid
 endfunction
 
 function! provider#clipboard#Call(method, args) abort

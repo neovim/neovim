@@ -1202,6 +1202,7 @@ completion can be enabled:
 	-complete=locale	locale names (as output of locale -a)
 	-complete=mapping	mapping name
 	-complete=menu		menus
+	-complete=messages	|:messages| suboptions
 	-complete=option	options
 	-complete=packadd	optional package |pack-add| names
 	-complete=shellcmd	Shell command

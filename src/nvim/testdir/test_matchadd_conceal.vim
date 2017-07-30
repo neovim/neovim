@@ -277,6 +277,7 @@ function! Test_matchadd_and_syn_conceal()
   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
   call assert_equal(screenattr(1, 11) , screenattr(1, 32))
   call matchadd('CheckedByCoq', '\%<2l\%>9c\%<16c')
+  redraw!
   call assert_equal(expect, s:screenline(1))
   call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))

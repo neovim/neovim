@@ -14,6 +14,7 @@ source test_float_func.vim
 source test_functions.vim
 source test_goto.vim
 source test_jumps.vim
+source test_fileformat.vim
 source test_lambda.vim
 source test_menu.vim
 source test_mapping.vim

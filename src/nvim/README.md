@@ -1,14 +1,26 @@
-## Source code overview
+Nvim core source
+================
 
-This document is an overview of how Nvim works internally, focusing on parts
-that are different from Vim. Since Nvim inherited from Vim, some information in
-[its README](https://raw.githubusercontent.com/vim/vim/master/src/README.txt)
-still applies.
+Module-specific details are documented at the top of each module (`terminal.c`,
+`screen.c`, ...).
 
-For module-specific details, read the source code. Some files are extensively
-commented at the top (e.g. terminal.c, screen.c).
+See `:help development` for more guidelines.
 
-### Source file name conventions
+Logs
+----
+
+Low-level log messages sink to `$NVIM_LOG_FILE`.
+
+You can use `LOG_CALLSTACK()` anywhere in the source to log the current
+stacktrace. (Currently Linux-only.)
+
+UI events are logged at level 0 (`DEBUG_LOG_LEVEL`).
+
+    rm -rf build/
+    make CMAKE_EXTRA_FLAGS="-DMIN_LOG_LEVEL=0"
+
+Filename conventions
+--------------------
 
 The source files use extensions to hint about their purpose.
 
@@ -19,10 +31,12 @@ The source files use extensions to hint about their purpose.
 - `*.h.generated.h` - exported functions’ declarations.
 - `*.c.generated.h` - static functions’ declarations.
 
-### Top-level program loops
+Nvim lifecycle
+--------------
 
-Let's understand what a Vim-like program does by analyzing the workflow of
-a typical editing session:
+Following describes how Nvim processes input.
+
+Consider a typical Vim-like editing session:
 
 01. Vim dispays the welcome screen
 02. User types: `:`
@@ -154,7 +168,8 @@ modes managed by the `state_enter` loop:
 - insert mode: `insert_{enter,check,execute}()`(`edit.c`)
 - terminal mode: `terminal_{enter,execute}()`(`terminal.c`)
 
-### Async event support
+Async event support
+-------------------
 
 One of the features Nvim added is the support for handling arbitrary
 asynchronous events, which can include:

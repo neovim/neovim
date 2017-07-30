@@ -130,6 +130,11 @@ func Test_getcompletion()
   let l = getcompletion('dark', 'highlight')
   call assert_equal([], l)
 
+  let l = getcompletion('', 'messages')
+  call assert_true(index(l, 'clear') >= 0)
+  let l = getcompletion('not', 'messages')
+  call assert_equal([], l)
+
   if has('cscope')
     let l = getcompletion('', 'cscope')
     let cmds = ['add', 'find', 'help', 'kill', 'reset', 'show']
@@ -203,4 +208,27 @@ func Test_expand_star_star()
   call assert_equal('find a/b/fileXname', getreg(':'))
   bwipe!
   call delete('a', 'rf')
+endfunc
+
+func Test_paste_in_cmdline()
+  let @a = "def"
+  call feedkeys(":abc \<C-R>a ghi\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"abc def ghi', @:)
+
+  new
+  call setline(1, 'asdf.x /tmp/some verylongword a;b-c*d ')
+
+  call feedkeys(":aaa \<C-R>\<C-W> bbb\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"aaa asdf bbb', @:)
+
+  call feedkeys("ft:aaa \<C-R>\<C-F> bbb\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"aaa /tmp/some bbb', @:)
+
+  set incsearch
+  call feedkeys("fy:aaa veryl\<C-R>\<C-W> bbb\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"aaa verylongword bbb', @:)
+
+  call feedkeys("f;:aaa \<C-R>\<C-A> bbb\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"aaa a;b-c*d bbb', @:)
+  bwipe!
 endfunc

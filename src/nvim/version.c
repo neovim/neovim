@@ -605,12 +605,12 @@ static const int included_patches[] = {
   127,
   // 126,
   // 125,
-  // 124,
+  124,
   // 123 NA
   // 122 NA
   121,
   // 120 NA
-  // 119,
+  119,
   // 118,
   // 117 NA
   116,
@@ -629,7 +629,7 @@ static const int included_patches[] = {
   // 103 NA
   // 102,
   // 101,
-  // 100,
+  100,
   99,
   // 98 NA
   // 97 NA
@@ -641,33 +641,33 @@ static const int included_patches[] = {
   // 91,
   // 90,
   // 89 NA
-  // 88,
+  88,
   // 87 NA
   // 86,
-  // 85,
-  // 84,
+  85,
+  84,
   83,
   // 82 NA
   // 81,
   // 80 NA
-  // 79,
-  // 78,
+  79,
+  78,
   // 77 NA
   // 76 NA
-  // 75,
+  75,
   // 74,
-  // 73,
+  73,
   // 72 NA
   // 71 NA
   // 70 NA
-  // 69,
+  69,
   68,
   // 67 NA
   66,
   // 65 NA
   64,
-  // 63,
-  // 62,
+  // 63 NA
+  62,
   // 61 NA
   60,
   // 59 NA
@@ -677,13 +677,13 @@ static const int included_patches[] = {
   // 55 NA
   // 54 NA
   53,
-  // 52,
+  52,
   // 51 NA
   // 50 NA
   49,
   // 48 NA
   47,
-  // 46,
+  46,
   // 45 NA
   // 44,
   43,
@@ -691,33 +691,33 @@ static const int included_patches[] = {
   41,
   40,
   // 39 NA
-  // 38,
+  38,
   37,
   // 36 NA
   35,
-  // 34,
+  34,
   33,
   32,
-  // 31,
+  31,
   // 30 NA
   // 29 NA
   // 28 NA
   // 27 NA
-  // 26,
-  // 25,
+  26,
+  25,
   // 24 NA
-  // 23,
+  23,
   // 22 NA
   // 21,
-  // 20,
+  20,
   19,
   // 18,
-  // 17,
+  17,
   // 16 NA
   // 15 NA
   // 14 NA
   // 13 NA
-  // 12,
+  12,
   // 11 NA
   // 10 NA
   // 9 NA
@@ -725,8 +725,8 @@ static const int included_patches[] = {
   // 7 NA
   6,
   // 5 NA
-  // 4,
-  // 3,
+  4,
+  3,
   2,
   1,
   0
@@ -993,7 +993,7 @@ void intro_message(int colon)
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
     "",
-    N_("by Bram Moolenaar et al."),
+    N_("by al."),
     N_("Nvim is open source and freely distributable"),
     N_("https://neovim.io/community"),
     "",

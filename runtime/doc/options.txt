@@ -2736,7 +2736,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'guicursor' 'gcr'	string	(default "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20")
 			global
 	Configures the cursor style for each mode. Works in the GUI and many
-	terminals.  See |cursor-shape| for details.
+	terminals.  See |tui-cursor-shape|.
 
 	To disable cursor-styling, reset the option: >
 		:set guicursor=

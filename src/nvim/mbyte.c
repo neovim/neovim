@@ -932,12 +932,12 @@ int utf_char2len(int c)
   return 6;
 }
 
-/*
- * Convert Unicode character "c" to UTF-8 string in "buf[]".
- * Returns the number of bytes.
- * This does not include composing characters.
- */
-int utf_char2bytes(int c, char_u *buf)
+/// Convert Unicode character to UTF-8 string
+///
+/// @param c character to convert to \p buf
+/// @param[out] buf UTF-8 string generated from \p c, does not add \0
+/// @return Number of bytes (1-6). Does not include composing characters.
+int utf_char2bytes(int c, char_u *const buf)
 {
   if (c < 0x80) {               /* 7 bits */
     buf[0] = c;

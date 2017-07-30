@@ -1,76 +1,62 @@
 *term.txt*      Nvim
 
 
-		  VIM REFERENCE MANUAL    by Bram Moolenaar
+                            NVIM REFERENCE MANUAL
 
 
 Terminal information
 
-Vim uses information about the terminal you are using to fill the screen and
-recognize what keys you hit.  If this information is not correct, the screen
-may be messed up or keys may not be recognized.  The actions which have to be
-performed on the screen are accomplished by outputting a string of
-characters.
+Nvim (except in |--headless| mode) uses information about the terminal you are
+using to present a built-in UI.  If that information is not correct, the
+screen may be messed up or keys may not be recognized.
 
                                       Type <M-]> to see the table of contents.
 
 ==============================================================================
 Startup						*startup-terminal*
 
-When Vim is started a default terminal type is assumed.  for MS-DOS this is
-the pc terminal, for Unix an ansi terminal.
+Nvim (except in |--headless| mode) guesses a terminal type when it starts.
+|$TERM| is the primary hint that determines the terminal type.
 
 					*terminfo* *E557* *E558* *E559*
-On Unix the terminfo database is used.  There is no access to the terminfo
-settings with |:set|.
+The terminfo database is used if available.
 
 The Unibilium library (used by Nvim to read terminfo) allows you to override
-an out-of-date system terminfo database with one in your $HOME/.terminfo/
-directory, in part or in whole.
+the system terminfo with one in $HOME/.terminfo/ directory, in part or in
+whole.
 
-Building your own up-to-date terminfo database is usually as simple as running
-this as a non-superuser:
+Building your own terminfo is usually as simple as running this as
+a non-superuser:
 >
-  wget http://invisible-island.net/datafiles/current/terminfo.src.gz
+  curl -LO http://invisible-island.net/datafiles/current/terminfo.src.gz
   gunzip terminfo.src.gz
   tic terminfo.src
 <
-								*TERM*
-If you experience terminal difficulties, first ensure that you have set the
-correct terminal type in your $TERM environment variable so that Nvim is
-pulling the correct entry from the terminfo database in the first place.
+								*$TERM*
+The $TERM environment variable must match the terminal you are using!
+Otherwise Nvim cannot know what sequences your terminal expects, and weird
+or sub-optimal behavior will result (scrolling quirks, wrong colors, etc.).
 
-Per the terminfo source file from ncurses:
+$TERM is also important because it is mirrored by SSH to the remote session,
+unlike other common client-end environment variables ($COLORTERM,
+$XTERM_VERSION, $VTE_VERSION, $KONSOLE_PROFILE_NAME, $TERM_PROGRAM, ...).
 
- For these terminals          Set $TERM to                |builtin-terms|?
+ For this terminal            Set $TERM to                |builtin-terms|?
 
   iTerm.app                "iterm" or "iTerm.app"                Y
   anything libvte based    "vte" or "vte-256color"               Y
-   (e.g. GNOME Terminal)   ("gnome" and "gnome-256color" are
-                            available as aliases for these)
+   (e.g. GNOME Terminal)   (aliases: "gnome", "gnome-256color")
   tmux                     "tmux" or "tmux-256color"             Y
   screen                   "screen" or "screen-256color"         Y
   PuTTY                    "putty" or "putty-256color"           Y
   Terminal.app             "nsterm"                              N
   Linux virtual terminal   "linux" or "linux-256color"           Y
 
-Describing any of these as "xterm" or "xterm-256colour" will not describe the
-terminal correctly to Nvim, and will cause various kinds of problematic
-behaviours.
-
-Setting your $TERM environment variable to the correct value also avoids the
-problem that SSH does not mirror arbitrary client-end environment variables
-such as $COLORTERM, $XTERM_VERSION, $VTE_VERSION, $KONSOLE_PROFILE_NAME, and
-$TERM_PROGRAM to the server end, whereas it does send the $TERM environment
-variable.
-
-See |terminfo| for dealing with out of date terminfo databases.
-
 					*builtin-terms* *builtin_terms*
 If a |terminfo| database is not available, or no entry for the terminal type is
-found in that database, Nvim will look up the terminal type in a compiled-in
-mini-database of terminfo entries for "xterm", "putty", "screen", "tmux",
-"rxvt", "iterm", "interix", "linux", "st", "vte", "gnome", and "ansi".
+found in that database, Nvim will use a compiled-in mini-database of terminfo
+entries for "xterm", "putty", "screen", "tmux", "rxvt", "iterm", "interix",
+"linux", "st", "vte", "gnome", and "ansi".
 
 The lookup matches the initial portion of the terminal type, so (for example)
 "putty-256color" and "putty" will both be mapped to the built-in "putty"
@@ -87,8 +73,8 @@ supplying an external one with entries for the terminal type.
 
 Settings depending on terminal			*term-dependent-settings*
 
-If you want to set options or mappings, depending on the terminal name, you
-can do this best in your init.vim.  Example: >
+If you want to set terminal-dependent options or mappings, you can do this in
+your init.vim.  Example: >
 
     if $TERM =~ '^\(rxvt\|screen\|interix\|putty\)\(-.*\)\?$'
         set notermguicolors
@@ -127,62 +113,49 @@ variable, set by genuine Xterm, that it looks for is not automatically
 replicated over an SSH login session.
 
 					*256-color* *terminfo-colors* *termcap-colors*
-Nvim can make use of 256-colour terminals and tries to do so whereever it can.
+Nvim uses 256 colours by default, ignoring |terminfo| for most terminal types,
+including "linux" (whose virtual terminals have had 256-colour support since
+4.8) and anything claiming to be "xterm".  Also when $COLORTERM or $TERM
+contain the string "256".
 
-If the |terminfo| description of the terminal says that it supports fewer
-colours, Nvim will override this for many terminal types, including "linux"
-(whose virtual terminals have had 256-colour support since version 4.8) and
-anything (even if falsely) claiming to be "xterm".  It will also set 256
-colours when the COLORTERM or TERM environment variables contain the string
-"256" somewhere.
-
-Nvim similarly assumes that any terminal emulator that sets the COLORTERM
-environment variable at all, to anything, is capable of at least 16-colour
-operation; and it will override |terminfo| saying that it has fewer colours
-available.
+Nvim similarly assumes that any terminal emulator that sets $COLORTERM to any
+value, is capable of at least 16-colour operation.
 
 						*true-color* *xterm-true-color*
-Nvim supports using true (24-bit) colours in the terminal, on terminals that
-support it.  It uses the same |terminfo| extensions that were proposed by
-Rüdiger Sonderfeld in 2013 for this: "setrgbf" and "setrgbb".  If your
-terminfo definition specifies these, then nothing more is required.
+Nvim emits true (24-bit) colours in the terminal, if 'termguicolors' is set.
 
-If your terminfo definition is missing them, then Nvim will decide whether to
-add them to your terminfo definition, using the ISO 8613-6:1994/ITU T.416:1993
-control sequences for setting RGB colours, but modified to use semicolons
-instead of colons unless the terminal is known to follow the standard.
-(Semicolons cause ambiguities that the standard avoided by specifying colons
-as a sub-parameter delimiter.  A historical misunderstanding meant that many
-terminal emulators ended up using semicolons for many years, though.)
+It uses the "setrgbf" and "setrgbb" |terminfo| extensions (proposed by Rüdiger
+Sonderfeld in 2013). If your terminfo definition is missing them, then Nvim
+will decide whether to add them to your terminfo definition, using the ISO
+8613-6:1994/ITU T.416:1993 control sequences for setting RGB colours (but
+modified to use semicolons instead of colons unless the terminal is known to
+follow the standard).
 
-A new convention, pioneered in 2016 by tmux, is the "Tc" terminfo extension.
-If your terminal's terminfo definition has this flag, Nvim will add
-constructed "setrgbf" and "setrgbb" capabilities as if they had been in the
-terminfo definition.
+Another convention, pioneered in 2016 by tmux, is the "Tc" terminfo extension.
+If terminfo has this flag, Nvim will add constructed "setrgbf" and "setrgbb"
+capabilities as if they had been in the terminfo definition.
 
-If your terminal's terminfo definition does not (yet) have this flag, Nvim
-will fall back to looking at the TERM and other environment variables.  It
-will add constructed "setrgbf" and "setrgbb" capabilities in the case of the
-the "rxvt", "linux", "st", "tmux", and "iterm" terminal types, or when
-Konsole, genuine Xterm, a libvte terminal emulator version 0.36 or later, or a
-terminal emulator that sets the COLORTERM environment variable to "truecolor"
-is detected.
+If terminfo does not (yet) have this flag, Nvim will fall back to $TERM and
+other environment variables.  It will add constructed "setrgbf" and "setrgbb"
+capabilities in the case of the the "rxvt", "linux", "st", "tmux", and "iterm"
+terminal types, or when Konsole, genuine Xterm, a libvte terminal emulator
+version 0.36 or later, or a terminal emulator that sets the COLORTERM
+environment variable to "truecolor" is detected.
 
 							*xterm-resize*
 Nvim can resize the terminal display on some terminals that implement an
-extension pioneered by the dtterm program.  |terminfo| does not have a flag
-for this extension.  So Nvim simply assumes that (all) "dtterm", "xterm",
-"teraterm", "rxvt" terminal types, and Konsole, are capable of this.
+extension pioneered by dtterm.  |terminfo| does not have a flag for this
+extension.  So Nvim simply assumes that (all) "dtterm", "xterm", "teraterm",
+"rxvt" terminal types, and Konsole, are capable of this.
 
-			*cursor-shape* *terminfo-cursor-shape* *termcap-cursor-shape*
+			                                  *tui-cursor-shape* 
 Nvim will adjust the shape of the cursor from a block to a line when in insert
 mode (or as specified by the 'guicursor' option), on terminals that support
 it.  It uses the same |terminfo| extensions that were pioneered by tmux for
-this: "Ss" and "Se".  If your terminfo definition specifies these, as some
-(such as those based upon "xterm+tmux") do, then nothing more is required.
+this: "Ss" and "Se".
 
 If your terminfo definition is missing them, then Nvim will decide whether to
-add them to your terminfo definition, by looking at the TERM and other
+add them to your terminfo definition, by looking at $TERM and other
 environment variables.  For the "rxvt", "putty", "linux", "screen",
 "teraterm", and "iterm" terminal types, or when Konsole, a libvte-based
 terminal emulator, or genuine Xterm are detected, it will add constructed
@@ -195,19 +168,14 @@ receives from Nvim into whatever control sequence is appropriate for the
 terminal that it is outputting to.  It shares a common mechanism with Nvim, of
 using the "Ss" and "Se" capabilities from terminfo (for the output terminal)
 if they are present.  Unlike Nvim, if they are not present in terminfo you
-will have to add them by setting the tmux "terminal-overrides" setting in
-$HOME/.tmux.conf .
+must add them by setting "terminal-overrides" in ~/.tmux.conf .
 
 See the tmux(1) manual page for the details of how and what to do in the tmux
 configuration file.  It will look something like: >
-
-		set -ga terminal-overrides '*:Ss=\E[%p1%d q:Se=\E[ q'
+	set -ga terminal-overrides '*:Ss=\E[%p1%d q:Se=\E[ q'
 <or (alas!) for Konsole specifically, something more complex like: >
-	set -ga terminal-overrides \
-        'xterm*:\E]50;CursorShape=%?%p1%{3}%<%t%{0}%e%{1}%;%d\007'
-<but these are only rough examples that do not include all of the other stuff
-that occurs in that setting.
-
+	set -ga terminal-overrides 'xterm*:\E]50;CursorShape=%?%p1%{3}%<%t%{0}%e%{1}%;%d\007'
+<
 							*cs7-problem*
 Note: If the terminal settings are changed after running Vim, you might have
 an illegal combination of settings.  This has been reported on Solaris 2.5

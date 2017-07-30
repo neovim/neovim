@@ -47,6 +47,7 @@
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
+#include "nvim/menu.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/keymap.h"
@@ -4239,10 +4240,16 @@ static int eval7(
         // use its contents.
         s = deref_func_name((const char *)s, &len, &partial, !evaluate);
 
+        // Need to make a copy, in case evaluating the arguments makes
+        // the name invalid.
+        s = xmemdupz(s, len);
+
         // Invoke the function.
         ret = get_func_tv(s, len, rettv, arg,
                           curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                           &len, evaluate, partial, NULL);
+
+        xfree(s);
 
         // If evaluate is false rettv->v_type was not set in
         // get_func_tv, but it's needed in handle_subscript() to parse
@@ -8165,6 +8172,19 @@ static void f_expand(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       rettv->vval.v_string = NULL;
     }
   }
+}
+
+
+/// "menu_get(path [, modes])" function
+static void f_menu_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv);
+  int modes = MENU_ALL_MODES;
+  if (argvars[1].v_type == VAR_STRING) {
+    const char_u *const strmodes = (char_u *)tv_get_string(&argvars[1]);
+    modes = get_menu_cmd_modes(strmodes, false, NULL, NULL);
+  }
+  menu_get((char_u *)tv_get_string(&argvars[0]), modes, rettv->vval.v_list);
 }
 
 /*
@@ -15140,7 +15160,8 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   const char *error = NULL;
-  uint64_t id = channel_connect(tcp, address, 50, &error);
+  eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
+  uint64_t id = channel_connect(tcp, address, 50, (char *)IObuff, &error);
 
   if (error) {
     EMSG2(_("connection failed: %s"), error);
@@ -22448,8 +22469,9 @@ static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
 
 
   if (data->rpc) {
-    // the rpc channel takes over the in and out streams
-    channel_from_process(proc, data->id);
+    eval_format_source_name_line((char *)IObuff, sizeof(IObuff));
+    // RPC channel takes over the in/out streams.
+    channel_from_process(proc, data->id, (char *)IObuff);
   } else {
     wstream_init(proc->in, 0);
     if (proc->out) {
@@ -22773,4 +22795,12 @@ bool eval_has_provider(const char *name)
   }
 
   return false;
+}
+
+/// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
+void eval_format_source_name_line(char *buf, size_t bufsize)
+{
+  snprintf(buf, bufsize, "%s:%" PRIdLINENR,
+           (sourcing_name ? sourcing_name : (char_u *)"?"),
+           (sourcing_name ? sourcing_lnum : 0));
 }

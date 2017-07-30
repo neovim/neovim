@@ -192,6 +192,16 @@ if(CMAKE_EXE_LINKER_FLAGS MATCHES "--sort-common" OR
   string(REGEX REPLACE "-Wl($| )" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
 endif()
 
+check_c_source_compiles("
+#include <execinfo.h>
+int main(void)
+{
+  void *trace[1];
+  int trace_size = backtrace(trace, 1);
+  return 0;
+}
+" HAVE_EXECINFO_BACKTRACE)
+
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
@@ -238,6 +248,14 @@ endif()
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
 if(HAS_DIAG_COLOR_FLAG)
   add_definitions(-fdiagnostics-color=auto)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8.5")
+    # Array-bounds testing is broken in some GCC versions before 4.8.5.
+    # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
+    add_definitions(-Wno-array-bounds)
+  endif()
 endif()
 
 option(TRAVIS_CI_BUILD "Travis/QuickBuild CI. Extra flags will be set." OFF)
@@ -316,7 +334,6 @@ main(void)
   return MSGPACK_OBJECT_FLOAT32;
 }
 " MSGPACK_HAS_FLOAT32)
-
 if(MSGPACK_HAS_FLOAT32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_MSGPACK_HAS_FLOAT32")
 endif()

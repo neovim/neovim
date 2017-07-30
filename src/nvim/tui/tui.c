@@ -1007,7 +1007,7 @@ static void tui_flush(UI *ui)
 
   size_t nrevents = loop_size(data->loop);
   if (nrevents > TOO_MANY_EVENTS) {
-    ILOG("TUI event-queue flooded (thread_events=%zu); purging", nrevents);
+    WLOG("TUI event-queue flooded (thread_events=%zu); purging", nrevents);
     // Back-pressure: UI events may accumulate much faster than the terminal
     // device can serve them. Even if SIGINT/CTRL-C is received, user must still
     // wait for the TUI event-queue to drain, and if there are ~millions of
@@ -1537,11 +1537,11 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
+  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool iterm = terminfo_is_term_family(term, "iterm")
     || terminfo_is_term_family(term, "iTerm.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
-  bool tmux_wrap = screen && !!os_getenv("TMUX");
 
   const char * xterm_version = os_getenv("XTERM_VERSION");
   bool true_xterm = xterm && !!xterm_version;
@@ -1573,12 +1573,11 @@ static void augment_terminfo(TUIData *data, const char *term,
   // specific ones.
 
   // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_colon_rgb = false
-    // per GNOME bug #685759 and bug #704449
-    || (vte_version >= 3600)
-    || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
-    // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
-    || true_xterm;
+  bool has_colon_rgb = !tmux && !screen
+    && ((vte_version >= 3600)  // per GNOME bug #685759, #704449
+        || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
+        // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
+        || true_xterm);
 
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
   if (-1 == data->unibi_ext.set_rgb_foreground) {
@@ -1606,7 +1605,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     // all panes, which is not particularly desirable.  A better approach
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
-        ut, NULL, TMUX_WRAP(tmux_wrap, "\033]Pl%p1%06x\033\\"));
+        ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
   } else if (xterm || (vte_version != 0) || rxvt) {
     // This seems to be supported for a long time in VTE
     // urxvt also supports this
@@ -1690,7 +1689,7 @@ static const char *tui_get_stty_erase(void)
   if (tcgetattr(input_global_fd(), &t) != -1) {
     stty_erase[0] = (char)t.c_cc[VERASE];
     stty_erase[1] = '\0';
-    ILOG("stty/termios:erase=%s", stty_erase);
+    DLOG("stty/termios:erase=%s", stty_erase);
   }
 #endif
   return stty_erase;
@@ -1707,12 +1706,12 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
   }
 
   if (strequal(name, "key_backspace")) {
-    ILOG("libtermkey:kbs=%s", value);
+    DLOG("libtermkey:kbs=%s", value);
     if (stty_erase[0] != 0) {
       return stty_erase;
     }
   } else if (strequal(name, "key_dc")) {
-    ILOG("libtermkey:kdch1=%s", value);
+    DLOG("libtermkey:kdch1=%s", value);
     // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
     if (value != NULL && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;

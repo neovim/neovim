@@ -2457,12 +2457,11 @@ did_set_string_option (
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
     errmsg = e_secure;
-  }
-  /* Check for a "normal" file name in some options.  Disallow a path
-   * separator (slash and/or backslash), wildcards and characters that are
-   * often illegal in a file name. */
-  else if ((options[opt_idx].flags & P_NFNAME)
-           && vim_strpbrk(*varp, (char_u *)"/\\*?[|<>") != NULL) {
+  } else if ((options[opt_idx].flags & P_NFNAME)
+             && vim_strpbrk(*varp, (char_u *)"/\\*?[|;&<>\r\n") != NULL) {
+    // Check for a "normal" file name in some options.  Disallow a path
+    // separator (slash and/or backslash), wildcards and characters that are
+    // often illegal in a file name.
     errmsg = e_invarg;
   }
   /* 'backupcopy' */
@@ -4078,7 +4077,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
 
     /* Change window height NOW */
-    if (lastwin != firstwin) {
+    if (!ONE_WINDOW) {
       if (pp == &p_wh && curwin->w_height < p_wh)
         win_setheight((int)p_wh);
       if (pp == &p_hh && curbuf->b_help && curwin->w_height < p_hh)
@@ -4107,7 +4106,7 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
 
     /* Change window width NOW */
-    if (lastwin != firstwin && curwin->w_width < p_wiw)
+    if (!ONE_WINDOW && curwin->w_width < p_wiw)
       win_setwidth((int)p_wiw);
   }
   /* 'winminwidth' */
@@ -5239,7 +5238,7 @@ static int put_setbool(FILE *fd, char *cmd, char *name, int value)
 
 void comp_col(void)
 {
-  int last_has_status = (p_ls == 2 || (p_ls == 1 && firstwin != lastwin));
+  int last_has_status = (p_ls == 2 || (p_ls == 1 && !ONE_WINDOW));
 
   sc_col = 0;
   ru_col = 0;
@@ -5718,7 +5717,22 @@ void buf_copy_options(buf_T *buf, int flags)
         free_buf_options(buf, TRUE);
         buf->b_p_ro = FALSE;                    /* don't copy readonly */
         buf->b_p_fenc = vim_strsave(p_fenc);
-        buf->b_p_ff = vim_strsave(p_ff);
+        switch (*p_ffs) {
+        case 'm':
+          buf->b_p_ff = vim_strsave((char_u *)FF_MAC);
+          break;
+        case 'd':
+          buf->b_p_ff = vim_strsave((char_u *)FF_DOS);
+          break;
+        case 'u':
+          buf->b_p_ff = vim_strsave((char_u *)FF_UNIX);
+          break;
+        default:
+          buf->b_p_ff = vim_strsave(p_ff);
+        }
+        if (buf->b_p_ff != NULL) {
+          buf->b_start_ffc = *buf->b_p_ff;
+        }
         buf->b_p_bh = empty_option;
         buf->b_p_bt = empty_option;
       } else
@@ -7039,8 +7053,11 @@ dict_T *get_winbuf_options(const int bufopt)
         if (opt->flags & P_STRING) {
           tv_dict_add_str(d, opt->fullname, strlen(opt->fullname),
                           *(const char **)varp);
+        } else if (opt->flags & P_NUM) {
+          tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname),
+                         *(long *)varp);
         } else {
-          tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname), *varp);
+          tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname), *(int *)varp);
         }
       }
     }

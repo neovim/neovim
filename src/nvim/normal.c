@@ -3657,6 +3657,39 @@ nv_gd (
   }
 }
 
+// Return true if line[offset] is not inside a C-style comment or string, false
+// otherwise.
+static bool is_ident(char_u *line, int offset)
+{
+  bool incomment = false;
+  int instring = 0;
+  int prev = 0;
+
+  for (int i = 0; i < offset && line[i] != NUL; i++) {
+    if (instring != 0) {
+      if (prev != '\\' && line[i] == instring) {
+        instring = 0;
+      }
+    } else if ((line[i] == '"' || line[i] == '\'') && !incomment) {
+      instring = line[i];
+    } else {
+      if (incomment) {
+        if (prev == '*' && line[i] == '/') {
+          incomment = false;
+        }
+      } else if (prev == '/' && line[i] == '*') {
+        incomment = true;
+      } else if (prev == '/' && line[i] == '/') {
+        return false;
+      }
+    }
+
+    prev = line[i];
+  }
+
+  return incomment == false && instring == 0;
+}
+
 /*
  * Search for variable declaration of "ptr[len]".
  * When "locally" is true in the current function ("gd"), otherwise in the
@@ -3683,6 +3716,7 @@ find_decl (
   bool retval = true;
   bool incll;
   int searchflags = flags_arg;
+  bool valid;
 
   pat = xmalloc(len + 7);
 
@@ -3717,6 +3751,7 @@ find_decl (
   /* Search forward for the identifier, ignore comment lines. */
   clearpos(&found_pos);
   for (;; ) {
+    valid = false;
     t = searchit(curwin, curbuf, &curwin->w_cursor, FORWARD,
         pat, 1L, searchflags, RE_LAST, (linenr_T)0, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum)
@@ -3747,20 +3782,35 @@ find_decl (
       curwin->w_cursor.col = 0;
       continue;
     }
-    if (!locally)       /* global search: use first match found */
+    valid = is_ident(get_cursor_line_ptr(), curwin->w_cursor.col);
+
+    // If the current position is not a valid identifier and a previous match is
+    // present, favor that one instead.
+    if (!valid && found_pos.lnum != 0) {
+      curwin->w_cursor = found_pos;
       break;
-    if (curwin->w_cursor.lnum >= par_pos.lnum) {
-      /* If we previously found a valid position, use it. */
-      if (found_pos.lnum != 0)
+    }
+    // global search: use first match found
+    if (valid && !locally) {
+      break;
+    }
+    if (valid && curwin->w_cursor.lnum >= par_pos.lnum) {
+      // If we previously found a valid position, use it.
+      if (found_pos.lnum != 0) {
         curwin->w_cursor = found_pos;
+      }
       break;
     }
 
-    // For finding a local variable and the match is before the "{" search
-    // to find a later match.  For K&R style function declarations this
-    // skips the function header without types.  Remove SEARCH_START from
-    // flags to avoid getting stuck at one position.
-    found_pos = curwin->w_cursor;
+    // For finding a local variable and the match is before the "{" or
+    // inside a comment, continue searching.  For K&R style function
+    // declarations this skips the function header without types.
+    if (!valid) {
+      clearpos(&found_pos);
+    } else {
+      found_pos = curwin->w_cursor;
+    }
+    // Remove SEARCH_START from flags to avoid getting stuck at one position.
     searchflags &= ~SEARCH_START;
   }
 
