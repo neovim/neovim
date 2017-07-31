@@ -53,7 +53,6 @@
 :  scriptnames
 :endif
 :set all
-:set termcap
 :if has("autocmd")
 :  au
 :endif

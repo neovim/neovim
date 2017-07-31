@@ -19546,18 +19546,22 @@ static const char *find_option_end(const char **const arg, int *const opt_flags)
   } else if (*p == 'l' && p[1] == ':') {
     *opt_flags = OPT_LOCAL;
     p += 2;
-  } else
+  } else {
     *opt_flags = 0;
+  }
 
-  if (!ASCII_ISALPHA(*p))
+  if (!ASCII_ISALPHA(*p)) {
     return NULL;
+  }
   *arg = p;
 
-  if (p[0] == 't' && p[1] == '_' && p[2] != NUL && p[3] != NUL)
-    p += 4;         /* termcap option */
-  else
-    while (ASCII_ISALPHA(*p))
-      ++p;
+  if (p[0] == 't' && p[1] == '_' && p[2] != NUL && p[3] != NUL) {
+    p += 4;  // t_xx/termcap option
+  } else {
+    while (ASCII_ISALPHA(*p)) {
+      p++;
+    }
+  }
   return p;
 }
 

@@ -4696,7 +4696,7 @@ cterm={attr-list}					*highlight-cterm*
 ctermfg={color-nr}				*highlight-ctermfg* *E421*
 ctermbg={color-nr}				*highlight-ctermbg*
 	The {color-nr} argument is a color number.  Its range is zero to
-	(not including) the number of |terminfo-colors| available.
+	(not including) the number of |tui-colors| available.
 	The actual color with this number depends on the type of terminal
 	and its settings.  Sometimes the color also depends on the settings of
 	"cterm".  For example, on some systems "cterm=bold ctermfg=3" gives

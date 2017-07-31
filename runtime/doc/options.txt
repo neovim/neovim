@@ -22,9 +22,7 @@ achieve special effects.  These options come in three forms:
 							*:se* *:set*
 :se[t]			Show all options that differ from their default value.
 
-:se[t] all		Show all but terminal options.
-
-:se[t] termcap		Do nothing.  Nvim uses |terminfo|.
+:se[t] all		Show all options.
 
 								*E518* *E519*
 :se[t] {option}?	Show value of {option}.
