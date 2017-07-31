@@ -132,7 +132,7 @@ $(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
-RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --noplugin -s dotest.in
+RUN_VIM     := VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
 
 clean:
 	-rm -rf *.out          \
@@ -201,7 +201,7 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(NVIM_PRG) -u unix.vim -U NONE --noplugin
+RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
