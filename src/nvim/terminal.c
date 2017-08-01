@@ -82,6 +82,7 @@ typedef struct terminal_state {
   Terminal *term;
   int save_rd;              // saved value of RedrawingDisabled
   bool got_bsl;             // if the last input was <C-\>
+  bool exited;
 } TerminalState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -378,6 +379,7 @@ void terminal_enter(void)
   TerminalState state, *s = &state;
   memset(s, 0, sizeof(TerminalState));
   s->term = buf->terminal;
+  s->exited = false;
 
   // Ensure the terminal is properly sized.
   terminal_resize(s->term, 0, 0);
@@ -420,7 +422,9 @@ void terminal_enter(void)
   }
 
   // draw the unfocused cursor
-  invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
+  if (!s->term->exited) {
+    invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
+  }
   unshowmode(true);
   redraw(curbuf->handle != s->term->buf_handle);
   ui_busy_stop();
@@ -462,6 +466,7 @@ static int terminal_execute(VimState *state, int key)
     case K_EVENT:
       multiqueue_process_events(main_loop.events);
       if (s->term->exited) {
+        s->exited = true;
         return 0;
       }
       break;
@@ -478,6 +483,7 @@ static int terminal_execute(VimState *state, int key)
         break;
       }
       if (s->term->exited) {
+        s->exited = true;
         return 0;
       }
 
