@@ -17,7 +17,6 @@ describe('TermClose event', function()
   it('triggers when fast-exiting terminal job stops', function()
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
-    command('call jobstop(b:terminal_job_id)')
     retry(nil, nil, function() eq(23, eval('g:test_termclose')) end)
   end)
 
