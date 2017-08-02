@@ -29,7 +29,7 @@ return {
     assert_exception={args={1, 2}},
     assert_fails={args={1, 2}},
     assert_false={args={1, 2}},
-    assert_inrange={args={2, 3}},
+    assert_inrange={args={3, 4}},
     assert_match={args={2, 3}},
     assert_notequal={args={2, 3}},
     assert_notmatch={args={2, 3}},

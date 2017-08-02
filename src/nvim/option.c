@@ -1185,10 +1185,6 @@ do_set (
         showoptions(1, opt_flags);
         did_show = TRUE;
       }
-    } else if (STRNCMP(arg, "termcap",
-                   7) == 0 && !(opt_flags & OPT_MODELINE)) {
-      did_show = TRUE;
-      arg += 7;
     } else {
       prefix = 1;
       if (STRNCMP(arg, "no", 2) == 0) {
@@ -6070,8 +6066,8 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
   int count = 0;
   char_u      *str;
   int loop;
-  static char *(names[]) = {"all", "termcap"};
-  int ic = regmatch->rm_ic;             /* remember the ignore-case flag */
+  static char *(names[]) = { "all" };
+  int ic = regmatch->rm_ic;  // remember the ignore-case flag
 
   /* do this loop twice:
    * loop == 0: count the number of matching options
