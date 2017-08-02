@@ -5,7 +5,6 @@ local thelpers = require('test.functional.terminal.helpers')
 local feed_data = thelpers.feed_data
 local feed_command = helpers.feed_command
 local nvim_dir = helpers.nvim_dir
-local retry = helpers.retry
 
 if helpers.pending_win32(pending) then return end
 

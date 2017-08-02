@@ -22658,7 +22658,7 @@ static void term_close(void *d)
     data->exited = true;
     process_stop((Process *)&data->proc);
   }
-  data->term = NULL; // Terminal no longer exists
+  data->term = NULL;  // Terminal no longer exists
 }
 
 static void term_job_data_decref(TerminalJobData *data)

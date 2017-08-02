@@ -102,7 +102,6 @@ typedef struct {
 } ScrollbackLine;
 
 struct terminal {
-
   TerminalOptions opts;  // options passed to terminal_open
   // buf_T instance that acts as a "drawing surface" for libvterm
   // we can't store a direct reference to the buffer because the
@@ -249,7 +248,7 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->sb_current = 0;
   rv->sb_pending = 0;
   rv->sb_size    = curbuf->b_p_scbk < 0 ? SB_MAX
-      : (size_t) MAX(1, curbuf->b_p_scbk);
+      : (size_t)MAX(1, curbuf->b_p_scbk);
   rv->sb_buffer  = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
