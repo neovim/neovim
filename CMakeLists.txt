@@ -192,6 +192,16 @@ if(CMAKE_EXE_LINKER_FLAGS MATCHES "--sort-common" OR
   string(REGEX REPLACE "-Wl($| )" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
 endif()
 
+check_c_source_compiles("
+#include <execinfo.h>
+int main(void)
+{
+  void *trace[1];
+  int trace_size = backtrace(trace, 1);
+  return 0;
+}
+" HAVE_EXECINFO_BACKTRACE)
+
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
@@ -324,7 +334,6 @@ main(void)
   return MSGPACK_OBJECT_FLOAT32;
 }
 " MSGPACK_HAS_FLOAT32)
-
 if(MSGPACK_HAS_FLOAT32)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_MSGPACK_HAS_FLOAT32")
 endif()

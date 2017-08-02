@@ -214,7 +214,7 @@ argument.
 			:set      to display option values.
 		When 'verbose' is non-zero messages are printed (for
 		debugging, to stderr).
-		$TERM (see |TERM|) is not used.
+		|$TERM| is not used.
 		If Vim appears to be stuck try typing "qa!<Enter>".  You don't
 		get a prompt thus you can't see Vim is waiting for you to type
 		something.
@@ -348,6 +348,9 @@ argument.
 
 							*--api-info*
 --api-info 	Print msgpack-encoded |api-metadata| and exit.
+
+							*--headless*
+--headless 	Do not start the built-in UI.
 
 ==============================================================================
 2. Initialization				*initialization* *startup*

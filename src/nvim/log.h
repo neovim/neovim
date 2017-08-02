@@ -61,7 +61,7 @@
                            __VA_ARGS__)
 #endif
 
-#if defined(__linux__)
+#ifdef HAVE_EXECINFO_BACKTRACE
 # define LOG_CALLSTACK() log_callstack(__func__, __LINE__)
 #endif
 
