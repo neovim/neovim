@@ -1665,15 +1665,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ea.addr_count++;
 
     if (*ea.cmd == ';') {
-      if (!ea.skip) {
+      if (!ea.skip)
         curwin->w_cursor.lnum = ea.line2;
-        // Don't leave the cursor on an illegal line (caused by ';')
-        check_cursor_lnum();
-      }
-    } else if (*ea.cmd != ',') {
+    } else if (*ea.cmd != ',')
       break;
-    }
-    ea.cmd++;
+    ++ea.cmd;
   }
 
   /* One address given: set start and end lines */
@@ -1683,6 +1679,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (lnum == MAXLNUM)
       ea.addr_count = 0;
   }
+
+  /* Don't leave the cursor on an illegal line (caused by ';') */
+  check_cursor_lnum();
 
   /*
    * 5. Parse the command.
