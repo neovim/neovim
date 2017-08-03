@@ -4840,17 +4840,15 @@ buf_check_timestamp (
   bufref_T bufref;
   set_bufref(&bufref, buf);
 
-  // If its a terminal, there is no file name, the buffer is not loaded,
-  // 'buftype' is set, we are in the middle of a save or being called
-  // recursively: ignore this buffer.
-  if (buf->terminal
-      || buf->b_ffname == NULL
+  // If there is no filename, the buffer is not loaded, 'buftype' is set, we are
+  // in the middle of a save or being called recursively: ignore this buffer.
+  if (buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
       || *buf->b_p_bt != NUL
       || buf->b_saving
-      || busy
-      )
+      || busy) {
     return 0;
+  }
 
   FileInfo file_info;
   bool file_info_ok;
@@ -6969,30 +6967,18 @@ BYPASS_AU:
   return retval;
 }
 
-static char_u   *old_termresponse = NULL;
-
 /*
  * Block triggering autocommands until unblock_autocmd() is called.
  * Can be used recursively, so long as it's symmetric.
  */
 void block_autocmds(void)
 {
-  /* Remember the value of v:termresponse. */
-  if (autocmd_blocked == 0)
-    old_termresponse = get_vim_var_str(VV_TERMRESPONSE);
   ++autocmd_blocked;
 }
 
 void unblock_autocmds(void)
 {
   --autocmd_blocked;
-
-  /* When v:termresponse was set while autocommands were blocked, trigger
-   * the autocommands now.  Esp. useful when executing a shell command
-   * during startup (nvim -d). */
-  if (autocmd_blocked == 0
-      && get_vim_var_str(VV_TERMRESPONSE) != old_termresponse)
-    apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, FALSE, curbuf);
 }
 
 /*

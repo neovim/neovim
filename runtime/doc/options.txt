@@ -587,10 +587,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	set to one of CJK locales.
 	See Unicode Standard Annex #11 (http://www.unicode.org/reports/tr11).
 
-	Vim may set this option automatically at startup time when Vim is
-	compiled with the |+termresponse| feature and if t_u7 is set to the
-	escape sequence to request cursor position report.
-
 			*'autochdir'* *'acd'* *'noautochdir'* *'noacd'*
 'autochdir' 'acd'	boolean (default off)
 			global

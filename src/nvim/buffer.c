@@ -409,27 +409,18 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   win_T *the_curwin = curwin;
   tabpage_T *the_curtab = curtab;
 
-  // Force unloading or deleting when 'bufhidden' says so, but not for terminal
-  // buffers.
+  // Force unloading or deleting when 'bufhidden' says so.
   // The caller must take care of NOT deleting/freeing when 'bufhidden' is
   // "hide" (otherwise we could never free or delete a buffer).
-  if (!buf->terminal) {
-    if (buf->b_p_bh[0] == 'd') {         // 'bufhidden' == "delete"
-      del_buf = true;
-      unload_buf = true;
-    } else if (buf->b_p_bh[0] == 'w') {  // 'bufhidden' == "wipe"
-      del_buf = true;
-      unload_buf = true;
-      wipe_buf = true;
-    } else if (buf->b_p_bh[0] == 'u')    // 'bufhidden' == "unload"
-      unload_buf = true;
-  }
-
-  if (buf->terminal && (unload_buf || del_buf || wipe_buf)) {
-    // terminal buffers can only be wiped
-    unload_buf = true;
+  if (buf->b_p_bh[0] == 'd') {         // 'bufhidden' == "delete"
     del_buf = true;
+    unload_buf = true;
+  } else if (buf->b_p_bh[0] == 'w') {  // 'bufhidden' == "wipe"
+    del_buf = true;
+    unload_buf = true;
     wipe_buf = true;
+  } else if (buf->b_p_bh[0] == 'u') {  // 'bufhidden' == "unload"
+    unload_buf = true;
   }
 
   // Disallow deleting the buffer when it is locked (already being closed or
@@ -512,7 +503,7 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   if (buf->b_nwindows > 0 || !unload_buf)
     return;
 
-  if (buf->terminal) {
+  if (buf->terminal && (unload_buf || del_buf || wipe_buf)) {
     terminal_close(buf->terminal, NULL);
   }
 
@@ -1152,8 +1143,8 @@ do_buffer (
     if (action != DOBUF_WIPE && buf->b_ml.ml_mfp == NULL && !buf->b_p_bl)
       return FAIL;
 
-    if (!forceit && (buf->terminal || bufIsChanged(buf))) {
-      if ((p_confirm || cmdmod.confirm) && p_write && !buf->terminal) {
+    if (!forceit && bufIsChanged(buf)) {
+      if ((p_confirm || cmdmod.confirm) && p_write) {
         dialog_changed(buf, false);
         if (!bufref_valid(&bufref)) {
           // Autocommand deleted buffer, oops! It's not changed now.
@@ -1166,7 +1157,7 @@ do_buffer (
         }
       } else {
         if (buf->terminal) {
-          EMSG2(_("E89: %s will be killed(add ! to override)"),
+          EMSG2(_("E89: %s is running (add ! to override)"),
               (char *)buf->b_fname);
         } else {
           EMSGN(_("E89: No write since last change for buffer %" PRId64
@@ -2797,20 +2788,17 @@ fileinfo (
   }
 
   vim_snprintf_add((char *)buffer, IOSIZE, "\"%s%s%s%s%s%s",
-      curbufIsChanged() ? (shortmess(SHM_MOD)
-                           ?  " [+]" : _(" [Modified]")) : " ",
-      (curbuf->b_flags & BF_NOTEDITED)
-      && !bt_dontwrite(curbuf)
-      ? _("[Not edited]") : "",
-      (curbuf->b_flags & BF_NEW)
-      && !bt_dontwrite(curbuf)
-      ? _("[New file]") : "",
+      (curbufIsChanged() && !curbuf->terminal)
+        ? (shortmess(SHM_MOD) ?  " [+]" : _(" [Modified]")) : " ",
+      (curbuf->b_flags & BF_NOTEDITED) && !bt_dontwrite(curbuf)
+        ? _("[Not edited]") : "",
+      (curbuf->b_flags & BF_NEW) && !bt_dontwrite(curbuf)
+        ? _("[New file]") : "",
       (curbuf->b_flags & BF_READERR) ? _("[Read errors]") : "",
-      curbuf->b_p_ro ? (shortmess(SHM_RO) ? _("[RO]")
-                        : _("[readonly]")) : "",
-      (curbufIsChanged() || (curbuf->b_flags & BF_WRITE_MASK)
-       || curbuf->b_p_ro) ?
-      " " : "");
+      curbuf->b_p_ro
+        ? (shortmess(SHM_RO) ? _("[RO]") : _("[readonly]")) : "",
+      (curbufIsChanged() || (curbuf->b_flags & BF_WRITE_MASK) || curbuf->b_p_ro)
+        ? " " : "");
   /* With 32 bit longs and more than 21,474,836 lines multiplying by 100
    * causes an overflow, thus for large numbers divide instead. */
   if (curwin->w_cursor.lnum > 1000000L)

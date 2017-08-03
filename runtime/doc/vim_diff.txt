@@ -324,6 +324,16 @@ MS-DOS support:
   'bioskey'
   'conskey'
 
+Events:
+  TermChanged
+  TermResponse
+
+Highlight groups:
+  |hl-VisualNOS|
+
+Variables:
+  v:termresponse
+
 Test functions:
   test_alloc_fail()
   test_autochdir()

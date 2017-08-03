@@ -236,6 +236,8 @@ Terminal *terminal_open(TerminalOptions opts)
   curbuf->b_p_ul = -1;        // 'undolevels'
   curbuf->b_p_scbk = p_scbk;  // 'scrollback'
   curbuf->b_p_tw = 0;         // 'textwidth'
+  curbuf->b_changed = true;   // 'modified'
+  set_option_value("bufhidden", 0L, "hide", OPT_LOCAL);
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
@@ -1134,7 +1136,9 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 
   int change_start = row_to_linenr(term, term->invalid_start);
   int change_end = change_start + changed;
+  int save_b_changed = curbuf->b_changed;
   changed_lines(change_start, 0, change_end, added);
+  curbuf->b_changed = save_b_changed;  // Preserve user 'modified' preference.
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
 }

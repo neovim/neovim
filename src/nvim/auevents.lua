@@ -78,10 +78,8 @@ return {
     'TabLeave',               -- before leaving a tab page
     'TabNew',                 -- when creating a new tab
     'TabNewEntered',          -- after entering a new tab
-    'TermChanged',            -- after changing 'term'
     'TermClose',              -- after the processs exits
     'TermOpen',               -- after opening a terminal buffer
-    'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
     'TextChangedI',           -- text was modified in Insert mode
     'TextYankPost',           -- after a yank or delete was done (y, d, c)

@@ -32,7 +32,6 @@ typedef enum {
     VV_THIS_SESSION,
     VV_VERSION,
     VV_LNUM,
-    VV_TERMRESPONSE,
     VV_FNAME,
     VV_LANG,
     VV_LC_TIME,
