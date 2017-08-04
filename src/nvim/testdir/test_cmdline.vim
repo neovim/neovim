@@ -232,3 +232,10 @@ func Test_paste_in_cmdline()
   call assert_equal('"aaa a;b-c*d bbb', @:)
   bwipe!
 endfunc
+
+func Test_illegal_address()
+  new
+  2;'(
+  2;')
+  quit
+endfunc
