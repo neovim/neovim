@@ -53,23 +53,23 @@ set cpo&vim
 
 nnoremap <silent> %  :<C-U>call <SID>Match_wrapper('',1,'n') <CR>
 nnoremap <silent> g% :<C-U>call <SID>Match_wrapper('',0,'n') <CR>
-vnoremap <silent> %  :<C-U>call <SID>Match_wrapper('',1,'v') <CR>m'gv``
-vnoremap <silent> g% :<C-U>call <SID>Match_wrapper('',0,'v') <CR>m'gv``
+xnoremap <silent> %  :<C-U>call <SID>Match_wrapper('',1,'v') <CR>m'gv``
+xnoremap <silent> g% :<C-U>call <SID>Match_wrapper('',0,'v') <CR>m'gv``
 onoremap <silent> %  v:<C-U>call <SID>Match_wrapper('',1,'o') <CR>
 onoremap <silent> g% v:<C-U>call <SID>Match_wrapper('',0,'o') <CR>
 
 " Analogues of [{ and ]} using matching patterns:
 nnoremap <silent> [% :<C-U>call <SID>MultiMatch("bW", "n") <CR>
 nnoremap <silent> ]% :<C-U>call <SID>MultiMatch("W",  "n") <CR>
-vmap [% <Esc>[%m'gv``
-vmap ]% <Esc>]%m'gv``
-" vnoremap <silent> [% :<C-U>call <SID>MultiMatch("bW", "v") <CR>m'gv``
-" vnoremap <silent> ]% :<C-U>call <SID>MultiMatch("W",  "v") <CR>m'gv``
+xmap [% <Esc>[%m'gv``
+xmap ]% <Esc>]%m'gv``
+" xnoremap <silent> [% :<C-U>call <SID>MultiMatch("bW", "v") <CR>m'gv``
+" xnoremap <silent> ]% :<C-U>call <SID>MultiMatch("W",  "v") <CR>m'gv``
 onoremap <silent> [% v:<C-U>call <SID>MultiMatch("bW", "o") <CR>
 onoremap <silent> ]% v:<C-U>call <SID>MultiMatch("W",  "o") <CR>
 
 " text object:
-vmap a% <Esc>[%v]%
+xmap a% <Esc>[%v]%
 
 " Auto-complete mappings:  (not yet "ready for prime time")
 " TODO Read :help write-plugin for the "right" way to let the user
