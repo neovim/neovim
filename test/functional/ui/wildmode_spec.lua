@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local iswin, set_shell_powershell = helpers.iswin, helpers.set_shell_powershell
-local nvim_dir = helpers.nvim_dir
 local funcs = helpers.funcs
 local eq = helpers.eq
 local eval = helpers.eval
