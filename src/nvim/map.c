@@ -123,29 +123,8 @@
     kh_clear(T##_##U##_map, map->table); \
   }
 
-static inline khint_t String_hash(String s)
-{
-  khint_t h = 0;
-  for (size_t i = 0; i < s.size && s.data[i]; i++) {
-    h = (h << 5) - h + (uint8_t)s.data[i];
-  }
-  return h;
-}
-
-static inline bool String_eq(String a, String b)
-{
-  if (a.size != b.size) {
-    return false;
-  }
-  return memcmp(a.data, b.data, a.size) == 0;
-}
-
-
 MAP_IMPL(int, int, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(handle_T, ptr_t, DEFAULT_INITIALIZER)
-#define MSGPACK_HANDLER_INITIALIZER { .fn = NULL, .async = false }
-MAP_IMPL(String, MsgpackRpcRequestHandler, MSGPACK_HANDLER_INITIALIZER)
-#define KVEC_INITIALIZER { .size = 0, .capacity = 0, .items = NULL }

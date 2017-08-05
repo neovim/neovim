@@ -14,7 +14,8 @@ assert(#arg >= 4)
 functions = {}
 
 local nvimdir = arg[1]
-package.path = nvimdir .. '/?.lua;' .. package.path
+package.path = nvimdir .. '/?/init.lua;' .. nvimdir .. '/?.lua;' .. package.path
+package.path = nvimdir .. '/../../?.lua;' .. package.path
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
@@ -32,6 +33,11 @@ lua_c_bindings_outputf = arg[5]
 function_names = {}
 
 c_grammar = require('generators.c_grammar')
+local lust = require('generators.lust')
+local global_test_helpers = require('test.helpers')
+
+local dedent = global_test_helpers.dedent
+local shallowcopy = global_test_helpers.shallowcopy
 
 -- read each input file, parse and append to the api metadata
 for i = 6, #arg do
@@ -180,125 +186,113 @@ local function attr_name(rt)
   end
 end
 
--- start the handler functions. Visit each function metadata to build the
--- handler function with code generated for validating arguments and calling to
--- the real API.
-for i = 1, #functions do
-  local fn = functions[i]
-  if fn.impl_name == nil then
-    local args = {}
-
-    output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
-    output:write('\n{')
-    output:write('\n  Object ret = NIL;')
-    -- Declare/initialize variables that will hold converted arguments
-    for j = 1, #fn.parameters do
-      local param = fn.parameters[j]
-      local converted = 'arg_'..j
-      output:write('\n  '..param[1]..' '..converted..';')
-    end
-    output:write('\n')
-    output:write('\n  if (args.size != '..#fn.parameters..') {')
-    output:write('\n    api_set_error(error, kErrorTypeException, "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
-    output:write('\n    goto cleanup;')
-    output:write('\n  }\n')
-
-    -- Validation/conversion for each argument
-    for j = 1, #fn.parameters do
-      local converted, convert_arg, param, arg
-      param = fn.parameters[j]
-      converted = 'arg_'..j
-      local rt = real_type(param[1])
-      if rt ~= 'Object' then
-        if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') then
-          -- Buffer, Window, and Tabpage have a specific type, but are stored in integer
-          output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..' && args.items['..(j - 1)..'].data.integer >= 0) {')
-          output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
-        else
-          output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
-          output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..attr_name(rt)..';')
-        end
-        if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
-          -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
-          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
-          output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
-        end
-        output:write('\n  } else {')
-        output:write('\n    api_set_error(error, kErrorTypeException, "Wrong type for argument '..j..', expecting '..param[1]..'");')
-        output:write('\n    goto cleanup;')
-        output:write('\n  }\n')
-      else
-        output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
-      end
-
-      args[#args + 1] = converted
-    end
-
-    -- function call
-    local call_args = table.concat(args, ', ')
-    output:write('\n  ')
-    if fn.return_type ~= 'void' then
-      -- has a return value, prefix the call with a declaration
-      output:write(fn.return_type..' rv = ')
-    end
-
-    -- write the function name and the opening parenthesis
-    output:write(fn.name..'(')
-
-    if fn.receives_channel_id then
-      -- if the function receives the channel id, pass it as first argument
-      if #args > 0 or fn.can_fail then
-        output:write('channel_id, '..call_args)
-      else
-        output:write('channel_id')
-      end
-    else
-      output:write(call_args)
-    end
-
-    if fn.can_fail then
-      -- if the function can fail, also pass a pointer to the local error object
-      if #args > 0 then
-        output:write(', error);\n')
-      else
-        output:write('error);\n')
-      end
-      -- and check for the error
-      output:write('\n  if (ERROR_SET(error)) {')
-      output:write('\n    goto cleanup;')
-      output:write('\n  }\n')
-    else
-      output:write(');\n')
-    end
-
-    if fn.return_type ~= 'void' then
-      output:write('\n  ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
-    end
-    output:write('\n\ncleanup:');
-
-    output:write('\n  return ret;\n}\n\n');
-  end
+local function nl(s)
+  local ret = s:gsub('\\n', '\n')
+  return ret
 end
 
--- Generate a function that initializes method names with handler functions
-output:write([[
-void msgpack_rpc_init_method_table(void)
-{
-  methods = map_new(String, MsgpackRpcRequestHandler)();
+handlers_template = lust({
+  nl(dedent([[
+    @map{fn = functions, _separator="\n\n"}:{{@if(not fn.impl_name)<handle_function>}}
+    void msgpack_rpc_init_method_table(void)
+    {
+      @map{fn = functions, _separator="\n"}:add_method_handler
+    }\n]])),
+  add_method_handler = dedent([[
+    msgpack_rpc_add_method_handler(
+      (String) { .data = "$fn.name", .size = sizeof("$fn.name") - 1 },
+      (MsgpackRpcRequestHandler) {
+        .fn = handle_@if(fn.impl_name)<{{$fn.impl_name}}>else<{{$fn.name}}>,
+        .async = $async,
+      });]]),
+  handle_function = nl(dedent([[
+    Object handle_$fn.name(uint64_t channel_id, Array args, Error *error)
+    {
+      Object ret = NIL;
+      if (args.size != $#fn.parameters) {
+        api_set_error(
+          error, kErrorTypeException,
+          "Wrong number of arguments: expecting $#fn.parameters but got %zu",
+          args.size);
+        goto cleanup;
+      }
 
-]])
+      @map{param = fn.parameters, _separator="\n\n"}:{{@process_arg}}
 
-for i = 1, #functions do
-  local fn = functions[i]
-  output:write('  msgpack_rpc_add_method_handler('..
-               '(String) {.data = "'..fn.name..'", '..
-               '.size = sizeof("'..fn.name..'") - 1}, '..
-               '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-               ', .async = '..tostring(fn.async)..'});\n')
+      @fcallstart$fn.name(@fcallargs);
+      @if(fn.can_fail)<error_cleanup>
+      @if(fn.return_type ~= "void")<{{ret = @<fn_rt_upper>_OBJ(rv);}}>
 
-end
+    cleanup:
+      return ret;
+    }]])),
+  error_cleanup = dedent([[
+    if (ERROR_SET(error)) {
+      goto cleanup;
+    }]]),
+  process_arg = dedent([[
+    $param.1 arg_$i0;
+    @if(rt == "Object")<assign_object>else<check_and_assign_arg>]]),
+  assign_object = '$converted = args.items[$i0];',
+  check_and_assign_arg = dedent([[
+    if (@arg_cond) {
+      @arg_assignment
+    } else {
+      api_set_error(error, kErrorTypeException,
+                    "Wrong type for argument $i0, expecting $param.1");
+      goto cleanup;
+    }]]),
+  arg_cond = (
+    '@if(rt_is_handle)<handle_cond>'
+    .. 'else<{{args.items[$i0].type == kObjectType$rt}}>'
+  ),
+  arg_assignment = (
+    '$converted = @if(rt_is_handle)<{{'
+      .. '(handle_T)args.items[$i0].data.integer'
+    .. '}}>else<{{'
+      .. 'args.items[$i0].data.$rt_attr'
+    .. '}}>;'
+  ),
+  handle_cond = dedent([[
 
-output:write('\n}\n\n')
+    (args.items[$i0].type == kObjectType$rt
+     || args.items[$i0].type == kObjectTypeInteger)
+    && args.items[$i0].data.integer >= 0
+  ]]),
+  fcallstart = '@if(fn.return_type ~= "void")<{{$fn.return_type rv = }}>',
+  fcallargs = (
+    '@if(fn.receives_channel_id)<{{'
+      .. 'channel_id@if(#fn.parameters > "0" or fn.can_fail)<{{, }}>'
+    .. '}}>'
+    .. '@map{ param = fn.parameters, _separator=", "}:{{arg_$i0}}'
+    .. '@if(fn.can_fail)<{{'
+      .. '@if(#fn.parameters > "0")<{{, }}>error'
+    .. '}}>'
+  ),
+  fn_rt_upper = '$fn_rt_upper',
+})
+handlers_template:register('fn_rt_upper', function(env)
+  return { fn_rt_upper = real_type(env.fn.return_type):upper() }
+end)
+handlers_template:register('process_arg', function(env)
+  local ret = shallowcopy(env)
+  ret.rt = real_type(env.param[1])
+  ret.rt_attr = attr_name(ret.rt)
+  ret.rt_is_handle = (ret.rt == "Buffer"
+                      or ret.rt == "Window"
+                      or ret.rt == "Tabpage")
+  ret.converted = 'arg_' .. env.i0
+  return ret
+end)
+handlers_template:register('add_method_handler', function(env)
+  local ret = shallowcopy(env)
+  ret.async = tostring(env.fn.async)
+  return ret
+end)
+local handlers = handlers_template:gen({
+  functions=functions
+}):gsub('\n%s*\n', '\n\n'):gsub('\n\n+', '\n\n')
+output:write(handlers)
 output:close()
 
 mpack_output = io.open(mpack_outputf, 'wb')
