@@ -236,7 +236,7 @@ handlers_template = lust({
   assign_object = '$converted = args.items[$i0];',
   check_and_assign_arg = dedent([[
     if (@arg_cond) {
-      @arg_assignment
+      $converted = @arg_value;
     } else {
       api_set_error(error, kErrorTypeException,
                     "Wrong type for argument $i1, expecting $param.1");
@@ -244,20 +244,37 @@ handlers_template = lust({
     }]]),
   arg_cond = (
     '@if(rt_is_handle)<handle_cond>'
-    .. 'else<{{args.items[$i0].type == kObjectType$rt}}>'
+    .. 'else<{{'
+      .. '@if(rt == "Boolean")<boolean_cond>'
+      .. 'else<{{args.items[$i0].type == kObjectType$rt}}>'
+    .. '}}>'
   ),
-  arg_assignment = (
-    '$converted = @if(rt_is_handle)<{{'
+  arg_value = (
+    '@if(rt_is_handle)<{{'
       .. '(handle_T)args.items[$i0].data.integer'
     .. '}}>else<{{'
-      .. 'args.items[$i0].data.$rt_attr'
-    .. '}}>;'
+      .. '@if(rt == "Boolean")<{{'
+        .. dedent([[
+          (
+                args.items[$i0].type == kObjectTypeInteger
+                ? args.items[$i0].data.integer
+                : args.items[$i0].data.$rt_attr)]])
+      .. '}}>else<{{'
+        .. 'args.items[$i0].data.$rt_attr'
+      .. '}}>'
+    .. '}}>'
   ),
   handle_cond = dedent([[
 
     (args.items[$i0].type == kObjectType$rt
      || args.items[$i0].type == kObjectTypeInteger)
     && args.items[$i0].data.integer >= 0
+  ]]),
+  boolean_cond = dedent([[
+
+    args.items[$i0].type == kObjectTypeBoolean
+    || (args.items[$i0].type == kObjectTypeInteger
+        && args.items[$i0].data.integer >= 0)
   ]]),
   fcallstart = '@if(fn.return_type ~= "void")<{{$fn.return_type rv = }}>',
   fcallargs = (
