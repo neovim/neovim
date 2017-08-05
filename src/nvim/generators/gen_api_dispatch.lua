@@ -239,7 +239,7 @@ handlers_template = lust({
       @arg_assignment
     } else {
       api_set_error(error, kErrorTypeException,
-                    "Wrong type for argument $i0, expecting $param.1");
+                    "Wrong type for argument $i1, expecting $param.1");
       goto cleanup;
     }]]),
   arg_cond = (
