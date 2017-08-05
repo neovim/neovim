@@ -145,8 +145,7 @@ clean:
 	        $(RM_ON_RUN)   \
 	        $(RM_ON_START) \
 	        valgrind.*     \
-	        .*.swp         \
-	        .*.swo         \
+	        .*sw?          \
 	        .gdbinit       \
 	        del
 
