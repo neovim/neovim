@@ -4794,7 +4794,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			local to buffer
 	Maximum number of lines kept beyond the visible screen. Lines at the
 	top are deleted if new lines exceed this limit.
-	Only in |terminal-emulator| buffers. 'buftype'
+	Only in |terminal| buffers.
 	-1 means "unlimited" for normal buffers, 100000 otherwise.
 	Minimum is 1.
 

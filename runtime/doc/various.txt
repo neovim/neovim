@@ -276,6 +276,21 @@ g8			Print the hex values of the bytes used in the
 <			The screen is not redrawn then, thus you have to use
 			CTRL-L or ":redraw!" if the command did display
 			something.
+							*:!start*
+:!start	{cmd}		(Windows only). Special-case of |:!| which works
+			asynchronously, for running a program that does not
+			affect the files you are editing.
+			Optional arguments (can only use one at a time):
+				/min  window will be minimized
+				/b    no console window will be opened
+			Note: If the process requires input, /b will get an
+			EOF error because its input stream (stdin) would be
+			redirected to \\.\NUL (stdout and stderr too).
+
+			Programs begun with :!start do not get passed Vim's
+			open file handles, which means they do not have to be
+			closed before Vim. To avoid this special treatment,
+			use ":! start".
 
 							*:!!*
 :!!			Repeat last ":!{cmd}".

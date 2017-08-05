@@ -8322,7 +8322,7 @@ static void ex_tag_cmd(exarg_T *eap, char_u *name)
     break;
   default:                              /* ":tag" */
     if (p_cst && *eap->arg != NUL) {
-      do_cstag(eap);
+      ex_cstag(eap);
       return;
     }
     cmd = DT_TAG;
