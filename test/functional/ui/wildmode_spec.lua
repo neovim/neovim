@@ -66,16 +66,38 @@ describe("'wildmenu'", function()
     else
       feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
     end
-    screen:sleep(50)        -- Allow some output.
+
     feed([[<C-\><C-N>gg]])
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
-    screen:sleep(50)        -- Allow some output.
+    screen:sleep(50)        -- Allow some terminal output.
     screen:expect([[
       foo                      |
       foo                      |
       foo                      |
       define  jump  list  >    |
       :sign define^             |
+    ]])
+
+    -- cmdline CTRL-D display should also be preserved.
+    feed([[<C-\><C-N>]])
+    feed([[:sign <C-D>]])   -- Invoke cmdline CTRL-D.
+    screen:sleep(50)        -- Allow some terminal output.
+    screen:expect([[
+      :sign                    |
+      define    place          |
+      jump      undefine       |
+      list      unplace        |
+      :sign ^                   |
+    ]])
+
+    -- Exiting cmdline should show the buffer.
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      ^foo                      |
+      foo                      |
+      foo                      |
+      foo                      |
+                               |
     ]])
   end)
 
