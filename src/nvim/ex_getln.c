@@ -1455,7 +1455,7 @@ static int command_line_handle_key(CommandLineState *s)
     if (s->hiscnt != s->i) {
       // jumped to other entry
       char_u      *p;
-      int len;
+      int len = 0;
       int old_firstc;
 
       xfree(ccline.cmdbuff);
