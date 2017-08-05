@@ -7641,7 +7641,7 @@ termopen({cmd}[, {opts}])			{Nvim} *termopen()*
 		and `$TERM` is set to "xterm-256color".
 		Returns the same values as |jobstart()|.
 
-		See |terminal-emulator| for more information.
+		See |terminal| for more information.
 
 test_garbagecollect_now()			 *test_garbagecollect_now()*
 		Like garbagecollect(), but executed right away.  This must

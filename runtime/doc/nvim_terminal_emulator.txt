@@ -10,15 +10,18 @@ Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
 presented as a special buffer type, asynchronously updated from the virtual
 terminal as data is received from the program connected to it.
 
-Terminal buffers behave mostly like normal 'nomodifiable' buffers, except:
-- Plugins can set 'modifiable' to modify text, but lines cannot be deleted.
-- 'scrollback' controls how many off-screen lines are kept.
-- Terminal output is followed if the cursor is on the last line.
+Terminal buffers behave like normal buffers, except:
+- With 'modifiable', lines can be edited but not deleted.
+- 'scrollback' controls how many lines are kept.
+- Output is followed if the cursor is on the last line.
+- 'modified' is the default. You can set 'nomodified' to avoid a warning when
+  closing the terminal buffer.
+- 'bufhidden' defaults to "hide".
 
 				      Type <M-]> to see the table of contents.
 
 ==============================================================================
-Spawning					  *terminal-emulator-spawning*
+Start						*terminal-start*
 
 There are 3 ways to create a terminal buffer:
 
@@ -35,13 +38,12 @@ There are 3 ways to create a terminal buffer:
         autocmd VimEnter * nested split term://sh
 <    This is only mentioned for reference; use |:terminal| instead.
 
-When the terminal spawns the program, the buffer will start to mirror the
-terminal display and change its name to `term://{cwd}//{pid}:{cmd}`.
-The "term://..." scheme enables |:mksession| to "restore" a terminal buffer by
-restarting the {cmd} when the session is loaded.
+When the terminal starts, the buffer contents are updated and the buffer is
+named in the form of `term://{cwd}//{pid}:{cmd}`. This naming scheme is used
+by |:mksession| to restore a terminal buffer (by restarting the {cmd}).
 
 ==============================================================================
-Input						     *terminal-emulator-input*
+Input						*terminal-input*
 
 To send input, enter |Terminal-mode| using any command that would enter "insert
 mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
@@ -83,9 +85,9 @@ Mouse input has the following behavior:
   the terminal wont lose focus and the hovered window will be scrolled.
 
 ==============================================================================
-Configuration				     *terminal-emulator-configuration*
+Configuration					*terminal-configuration*
 
-Options:		'scrollback'
+Options:		'modified', 'scrollback'
 Events:			|TermOpen|, |TermClose|
 Highlight groups:	|hl-TermCursor|, |hl-TermCursorNC|
 
@@ -99,17 +101,15 @@ global configuration.
 You can change the defaults with a TermOpen autocommand: >
 	au TermOpen * setlocal list
 
-Terminal colors can be customized with these variables:
+TERMINAL COLORS ~
 
-- `{g,b}:terminal_color_$NUM`: The terminal color palette, where `$NUM` is the
-  color index, between 0 and 255 inclusive. This setting only affects UIs with
-  RGB capabilities; for normal terminals the color index is simply forwarded.
-
-The `{g,b}:terminal_color_$NUM` variables are processed only when the terminal
-starts (after |TermOpen|).
+The `{g,b}:terminal_color_$NUM` variables control the terminal color palette,
+where `$NUM` is the color index between 0 and 255 inclusive. This setting only
+affects UIs with RGB capabilities; for normal terminals the color index is
+just forwarded. The variables are read only during |TermOpen|.
 
 ==============================================================================
-Status Variables				    *terminal-emulator-status*
+Status Variables				*terminal-status*
 
 Terminal buffers maintain some information about the terminal in buffer-local
 variables:
