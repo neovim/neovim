@@ -14,6 +14,7 @@
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/main.h"
 #include "nvim/ascii.h"
