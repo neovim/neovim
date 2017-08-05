@@ -336,9 +336,6 @@ int main(int argc, char **argv)
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
 
-  /* Source startup scripts. */
-  source_startup_scripts(&params);
-
   // If using the runtime (-u is not NONE), enable syntax & filetype plugins.
   if (params.use_vimrc == NULL || strcmp(params.use_vimrc, "NONE") != 0) {
     // Does ":filetype plugin indent on".
@@ -346,6 +343,9 @@ int main(int argc, char **argv)
     // Sources syntax/syntax.vim, which calls `:filetype on`.
     syn_maybe_on();
   }
+
+  // Source startup scripts.
+  source_startup_scripts(&params);
 
   /*
    * Read all the plugin files.
