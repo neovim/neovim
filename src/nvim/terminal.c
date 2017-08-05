@@ -310,7 +310,8 @@ void terminal_exit(Terminal *term, char *msg)
     unblock_autocmds();
   }
 
-  term->opts.free_cb(&term->opts.data);
+  term->opts.free_cb(term->opts.data);
+  terminal_destroy(term);
 }
 
 /// Called when the terminal buffer gets wiped
@@ -318,6 +319,7 @@ void terminal_close(Terminal *term)
 {
   if (!term->exited) {
     term->opts.close_cb(term->opts.data);
+    term->opts.free_cb(term->opts.data);
     terminal_destroy(term);
   }
 

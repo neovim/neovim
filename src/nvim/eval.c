@@ -16703,7 +16703,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   topts.write_cb  = term_write;
   topts.resize_cb = term_resize;
   topts.close_cb  = term_close;
-  topts.free_cb   = term_delayed_free;
+  topts.free_cb   = term_free;
 
   int pid = data->proc.pty.process.pid;
 
@@ -22638,16 +22638,10 @@ static void term_resize(uint16_t width, uint16_t height, void *d)
   pty_process_resize(&data->proc.pty, width, height);
 }
 
-static void term_delayed_free(void **argv)
+static void term_free(void *d)
 {
-  TerminalJobData *j = argv[0];
-  if (j->in.pending_reqs || j->out.pending_reqs || j->err.pending_reqs) {
-    multiqueue_put(j->events, term_delayed_free, 1, j);
-    return;
-  }
-
-  terminal_destroy(j->term);
-  term_job_data_decref(j);
+  TerminalJobData *data = d;
+  term_job_data_decref(data);
 }
 
 /// Called when the terminal buffer gets wiped while the job is still running
