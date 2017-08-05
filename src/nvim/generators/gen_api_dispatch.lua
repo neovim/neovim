@@ -193,7 +193,7 @@ end
 
 handlers_template = lust({
   nl(dedent([[
-    @map{fn = functions, _separator="\n\n"}:{{@if(not fn.impl_name)<handle_function>}}
+    @map{fn = functions, _="\n\n"}:{{@if(not fn.impl_name)<handle_function>}}
     void msgpack_rpc_init_method_table(void)
     {
       @map{fn = functions, _separator="\n"}:add_method_handler
