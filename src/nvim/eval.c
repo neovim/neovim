@@ -16703,7 +16703,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   topts.write_cb  = term_write;
   topts.resize_cb = term_resize;
   topts.close_cb  = term_close;
-  topts.free_cb   = term_free;
 
   int pid = data->proc.pty.process.pid;
 
@@ -16725,7 +16724,6 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Terminal *term = terminal_open(topts);
   data->term = term;
-  data->refcount++;
 
   return;
 }
@@ -22636,12 +22634,6 @@ static void term_resize(uint16_t width, uint16_t height, void *d)
 {
   TerminalJobData *data = d;
   pty_process_resize(&data->proc.pty, width, height);
-}
-
-static void term_free(void *d)
-{
-  TerminalJobData *data = d;
-  term_job_data_decref(data);
 }
 
 /// Called when the terminal buffer gets wiped while the job is still running
