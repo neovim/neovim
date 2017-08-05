@@ -628,13 +628,13 @@ return {
     command='cscope',
     flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
     addr_type=ADDR_LINES,
-    func='do_cscope',
+    func='ex_cscope',
   },
   {
     command='cstag',
     flags=bit.bor(BANG, TRLBAR, WORD1),
     addr_type=ADDR_LINES,
-    func='do_cstag',
+    func='ex_cstag',
   },
   {
     command='cunmap',
@@ -1324,7 +1324,7 @@ return {
     command='lcscope',
     flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
     addr_type=ADDR_LINES,
-    func='do_cscope',
+    func='ex_cscope',
   },
   {
     command='ldo',
@@ -2334,7 +2334,7 @@ return {
     command='scscope',
     flags=bit.bor(EXTRA, NOTRLCOM),
     addr_type=ADDR_LINES,
-    func='do_scscope',
+    func='ex_scscope',
   },
   {
     command='set',
