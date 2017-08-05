@@ -9079,7 +9079,8 @@ static dict_T *get_buffer_info(buf_T *buf)
   tv_dict_add_nr(dict, S_LEN("bufnr"), buf->b_fnum);
   tv_dict_add_str(dict, S_LEN("name"),
                   buf->b_ffname != NULL ? (const char *)buf->b_ffname : "");
-  tv_dict_add_nr(dict, S_LEN("lnum"), buflist_findlnum(buf));
+  tv_dict_add_nr(dict, S_LEN("lnum"),
+                 buf == curbuf ? curwin->w_cursor.lnum : buflist_findlnum(buf));
   tv_dict_add_nr(dict, S_LEN("loaded"), buf->b_ml.ml_mfp != NULL);
   tv_dict_add_nr(dict, S_LEN("listed"), buf->b_p_bl);
   tv_dict_add_nr(dict, S_LEN("changed"), bufIsChanged(buf));
