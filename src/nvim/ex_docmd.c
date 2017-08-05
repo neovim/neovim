@@ -4674,18 +4674,17 @@ char_u *find_nextcmd(const char_u *p)
   return (char_u *)p + 1;
 }
 
-/*
- * Check if *p is a separator between Ex commands, skipping over white space.
- * Return NULL if it isn't, the following character if it is.
- */
+/// Check if *p is a separator between Ex commands, skipping over white space.
+/// Return NULL if it isn't, the following character if it is.
 char_u *check_nextcmd(char_u *p)
 {
     char_u *s = skipwhite(p);
 
-    if (*s == '|' || *s == '\n')
+    if (*s == '|' || *s == '\n') {
         return (s + 1);
-    else
+    } else {
         return NULL;
+    }
 }
 
 /*
@@ -6255,11 +6254,11 @@ void ex_all(exarg_T *eap)
 
 static void ex_hide(exarg_T *eap)
 {
-    /* ":hide" or ":hide | cmd": hide current window */
+    // ":hide" or ":hide | cmd": hide current window
     if (!eap->skip) {
-        if (eap->addr_count == 0)
-            win_close(curwin, FALSE); /* don't free buffer */
-        else {
+        if (eap->addr_count == 0) {
+            win_close(curwin, false);  // don't free buffer
+        } else {
             int winnr = 0;
             win_T *win = NULL;
 
@@ -6270,9 +6269,10 @@ static void ex_hide(exarg_T *eap)
                     break;
                 }
             }
-            if (win == NULL)
+            if (win == NULL) {
                 win = lastwin;
-            win_close(win, FALSE);
+            }
+            win_close(win, false);
         }
     }
 }
