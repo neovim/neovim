@@ -97,7 +97,7 @@ bool try_leave(const TryState *const tstate, Error *const err)
 
 /// Start block that may cause vimscript exceptions
 ///
-/// Each try_start() call should be mirrorred by try_end() call.
+/// Each try_start() call should be mirrored by try_end() call.
 ///
 /// To be used as a replacement of `:try … catch … endtry` in C code, in cases
 /// when error flag could not already be set. If there may be pending error
