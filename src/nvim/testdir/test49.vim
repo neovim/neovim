@@ -481,12 +481,9 @@ function! ExtraVim(...)
     bwipeout
     let g:Xpath = g:Xpath + sum
 
-    " FIXME(nvim): delete() of a file used by a subprocess hangs TSAN build on travis CI.
-    if !empty($TRAVIS)
     " Delete the extra script and the resultfile.
     call delete(extra_script)
     call delete(resultfile)
-    endif
 
     " Switch back to the buffer that was active when this function was entered.
     exec "buffer" current_buffnr
@@ -596,12 +593,18 @@ function! ExecAsScript(funcname)
 	    endif
 	endwhile
 	bwipeout!
+	" FIXME(nvim): delete() may hang TSAN build on travis CI.
+	if !empty($TRAVIS)
 	call delete(bplist)
+	endif
     endif
 
     " Source and delete the script.
     exec "source" script
+    " FIXME(nvim): delete() may hang TSAN build on travis CI.
+    if !empty($TRAVIS)
     call delete(script)
+    endif
 endfunction
 
 com! -nargs=1 -bar ExecAsScript call ExecAsScript(<f-args>)
@@ -1543,9 +1546,12 @@ finally
 endtry
 Xpath 1048576					" X: 1048576
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(scriptF)
 call delete(scriptG)
 call delete(scriptH)
+endif
 unlet scriptF scriptG scriptH
 delfunction F
 delfunction G
@@ -2355,7 +2361,10 @@ if ExtraVim()
     endtry
     unlet g:jump
 
+    " FIXME(nvim): delete() may hang TSAN build on travis CI.
+    if !empty($TRAVIS)
     call delete(scriptF)
+    endif
     unlet scriptF
 
 endif
@@ -3438,9 +3447,12 @@ catch /.*/
 endtry
 Xpath 268435456					" X: 268435456
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(scriptC)
 call delete(scriptT1)
 call delete(scriptT2)
+endif
 unlet scriptC scriptT1 scriptT2
 delfunction F
 
@@ -3725,7 +3737,10 @@ if !MESSAGES('E108', "No such variable", 'E488', "Trailing characters")
     let Xpath = Xpath + 2147483648		" X: 0
 endif
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(msgfile)
+endif
 unlet msgfile
 
 Xcheck 1247112011
@@ -3905,7 +3920,10 @@ if MESSAGES('E584', ":elseif after :else")
     Xpath 65536					" X: 65536
 endif
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(msgfile)
+endif
 unlet msgfile
 
 Xcheck 131071
@@ -4039,7 +4057,10 @@ if MESSAGES('E588', ":endwhile without :while")
 endif
 
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(msgfile)
+endif
 unlet msgfile
 
 Xcheck 2047
@@ -4153,7 +4174,10 @@ if MESSAGES('E587', ":break without :while")
     Xpath 512					" X: 512
 endif
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(msgfile)
+endif
 unlet msgfile
 
 Xcheck 1023
@@ -4260,7 +4284,10 @@ if MESSAGES('E170', "Missing :endwhile")
     Xpath 256					" X: 256
 endif
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(msgfile)
+endif
 unlet msgfile
 
 delfunction MESSAGES
@@ -4436,17 +4463,23 @@ Xpath 1073741824				" X: 1073741824
 unlet exception throwpoint
 delfunction FuncException
 delfunction FuncThrowpoint
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(scriptException)
 call delete(scriptThrowPoint)
+endif
 unlet scriptException scriptThrowPoint
 delcommand CmdException
 delcommand CmdThrowpoint
 delfunction T
 delfunction G
 delfunction F
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(scriptT)
 call delete(scriptG)
 call delete(scriptF)
+endif
 unlet scriptT scriptG scriptF
 
 Xcheck 2147450880
@@ -5825,7 +5858,10 @@ line 3
 	    endif
 	    try
 		bwipeout!
+		" FIXME(nvim): delete() may hang TSAN build on travis CI.
+		if !empty($TRAVIS)
 		call delete(file)
+		endif
 		asdf
 	    endtry
 	endif
@@ -6910,7 +6946,10 @@ end
 	Xout "searchpair:" v:exception "in" v:throwpoint
     finally
 	bwipeout!
+	" FIXME(nvim): delete() may hang TSAN build on travis CI.
+	if !empty($TRAVIS)
 	call delete(file)
+	endif
     endtry
 
     try
@@ -6953,7 +6992,10 @@ subst 6
 	Xpath 2097152				" X: 2097152
     finally
 	bwipeout!
+	" FIXME(nvim): delete() may hang TSAN build on travis CI.
+	if !empty($TRAVIS)
 	call delete(file)
+	endif
     endtry
 
     try
@@ -7438,9 +7480,12 @@ if ExtraVim()
     endif
 
     unlet! v var saved_errmsg taken expected
+    " FIXME(nvim): delete() may hang TSAN build on travis CI.
+    if !empty($TRAVIS)
     call delete(WA_t5)
     call delete(WA_t14)
     call delete(WA_t23)
+    endif
     unlet! WA_t5 WA_t14 WA_t23
     delfunction WA_t5
     delfunction WA_t14
@@ -7747,7 +7792,10 @@ if ExtraVim()
     endif
 
     unlet! var caught taken expected
+    " FIXME(nvim): delete() may hang TSAN build on travis CI.
+    if !empty($TRAVIS)
     call delete(WA_t5)
+    endif
     unlet! WA_t5
     delfunction WA_t5
 
@@ -8574,7 +8622,10 @@ function! Delete_autocommands(...)
 	catch /.*/
 	finally
 	    bwipeout!
+	    " FIXME(nvim): delete() may hang TSAN build on travis CI.
+	    if !empty($TRAVIS)
 	    call delete(augfile)
+	    endif
 	    break		" discard errors for $VIMNOERRTHROW
 	endtry
     endwhile
@@ -8661,7 +8712,10 @@ while 1
     endtry
 endwhile
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(tmpfile)
+endif
 
 call Delete_autocommands("BufWritePre", "BufWritePost",
     \ "BufReadPre", "BufReadPost", "FileReadPre", "FileReadPost")
@@ -8755,8 +8809,11 @@ while 1
     endtry
 endwhile
 
+" FIXME(nvim): delete() may hang TSAN build on travis CI.
+if !empty($TRAVIS)
 call delete(infile)
 call delete(tmpfile)
+endif
 unlet! caught post infile tmpfile
 delfunction MSG
 delfunction Delete_autocommands

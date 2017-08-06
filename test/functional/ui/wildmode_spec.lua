@@ -1,57 +1,151 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
+local iswin, set_shell_powershell = helpers.iswin, helpers.set_shell_powershell
 local funcs = helpers.funcs
+local eq = helpers.eq
+local eval = helpers.eval
+local retry = helpers.retry
 
-if helpers.pending_win32(pending) then return end
-
-describe("'wildmode'", function()
+describe("'wildmenu'", function()
   local screen
-
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach()
   end)
-
   after_each(function()
     screen:detach()
   end)
 
-  describe("'wildmenu'", function()
-    it(':sign <tab> shows wildmenu completions', function()
-      command('set wildmode=full')
-      command('set wildmenu')
-      feed(':sign <tab>')
-      screen:expect([[
-                                 |
-        ~                        |
-        ~                        |
-        define  jump  list  >    |
-        :sign define^             |
-      ]])
+  it(':sign <tab> shows wildmenu completions', function()
+    command('set wildmode=full')
+    command('set wildmenu')
+    feed(':sign <tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+  end)
+
+  it('does not crash after cycling back to original text', function()
+    command('set wildmode=full')
+    feed(':j<Tab><Tab><Tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      join  jumps              |
+      :j^                       |
+    ]])
+    -- This would cause nvim to crash before #6650
+    feed('<BS><Tab>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      !  #  &  <  =  >  @  >   |
+      :!^                       |
+    ]])
+  end)
+
+  it('is preserved during :terminal activity', function()
+    -- Because this test verifies a _lack_ of activity after screen:sleep(), we
+    -- must wait the full timeout. So make it reasonable.
+    screen.timeout = 1000
+
+    command('set wildmenu wildmode=full')
+    command('set scrollback=4')
+    if iswin() then
+      if helpers.pending_win32(pending) then return end
+      -- feed([[:terminal 1,2,3,4,5 | foreach-object -process {echo $_; sleep 0.1}]])
+    else
+      feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
+    end
+
+    feed([[<C-\><C-N>gg]])
+    feed([[:sign <Tab>]])   -- Invoke wildmenu.
+    screen:sleep(50)        -- Allow some terminal output.
+    screen:expect([[
+      foo                      |
+      foo                      |
+      foo                      |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+
+    -- cmdline CTRL-D display should also be preserved.
+    feed([[<C-\><C-N>]])
+    feed([[:sign <C-D>]])   -- Invoke cmdline CTRL-D.
+    screen:sleep(50)        -- Allow some terminal output.
+    screen:expect([[
+      :sign                    |
+      define    place          |
+      jump      undefine       |
+      list      unplace        |
+      :sign ^                   |
+    ]])
+
+    -- Exiting cmdline should show the buffer.
+    feed([[<C-\><C-N>]])
+    screen:expect([[
+      ^foo                      |
+      foo                      |
+      foo                      |
+      foo                      |
+                               |
+    ]])
+  end)
+
+  it('ignores :redrawstatus called from a timer #7108', function()
+    -- Because this test verifies a _lack_ of activity after screen:sleep(), we
+    -- must wait the full timeout. So make it reasonable.
+    screen.timeout = 1000
+
+    command('set wildmenu wildmode=full')
+    command([[call timer_start(10, {->execute('redrawstatus')}, {'repeat':-1})]])
+    feed([[<C-\><C-N>]])
+    feed([[:sign <Tab>]])   -- Invoke wildmenu.
+    screen:sleep(30)        -- Allow some timer activity.
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      define  jump  list  >    |
+      :sign define^             |
+    ]])
+  end)
+
+  it('with laststatus=0, :vsplit, :term #2255', function()
+    -- Because this test verifies a _lack_ of activity after screen:sleep(), we
+    -- must wait the full timeout. So make it reasonable.
+    screen.timeout = 1000
+
+    if not iswin() then
+      command('set shell=sh')  -- Need a predictable "$" prompt.
+    end
+    command('set laststatus=0')
+    command('vsplit')
+    command('term')
+
+    -- Check for a shell prompt to verify that the terminal loaded.
+    retry(nil, nil, function()
+      if iswin() then
+        eq('Microsoft', eval("matchstr(join(getline(1, '$')), 'Microsoft')"))
+      else
+        eq('$', eval([[matchstr(getline(1), '\$')]]))
+      end
     end)
 
-    it('does not crash after cycling back to original text', function()
-      command('set wildmode=full')
-      feed(':j<Tab><Tab><Tab>')
-      screen:expect([[
-                                 |
-        ~                        |
-        ~                        |
-        join  jumps              |
-        :j^                       |
-      ]])
-      -- This would cause nvim to crash before #6650
-      feed('<BS><Tab>')
-      screen:expect([[
-                                 |
-        ~                        |
-        ~                        |
-        !  #  &  <  =  >  @  >   |
-        :!^                       |
-      ]])
-    end)
+    feed([[<C-\><C-N>]])
+    feed([[:<Tab>]])      -- Invoke wildmenu.
+    screen:sleep(10)      -- Flush
+    -- Check only the last 2 lines, because the shell output is
+    -- system-dependent.
+    screen:expect('!  #  &  <  =  >  @  >   \n:!^', nil, nil, nil, true)
   end)
 end)
 

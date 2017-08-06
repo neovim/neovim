@@ -98,10 +98,8 @@ typedef struct {
   bool input_isatty;                    // stdin is a terminal
   bool output_isatty;                   // stdout is a terminal
   bool err_isatty;                      // stderr is a terminal
-  bool headless;                        // Dont try to start an user interface
-                                        // or read/write to stdio(unless
-                                        // embedding)
-  int no_swap_file;                     /* "-n" argument used */
+  bool headless;                        // Do not start the builtin UI.
+  int no_swap_file;                     // "-n" argument used
   int use_debug_break_level;
   int window_count;                     /* number of windows to use */
   int window_layout;                    /* 0, WIN_HOR, WIN_VER or WIN_TABS */
@@ -932,10 +930,11 @@ static void command_line_scan(mparm_T *parmp)
           break;
 
         case 's':
-          if (exmode_active)              /* "-s" silent (batch) mode */
-            silent_mode = TRUE;
-          else                    /* "-s {scriptin}" read from script file */
-            want_argument = TRUE;
+          if (exmode_active) {    // "-es" silent (batch) mode
+            silent_mode = true;
+          } else {                // "-s {scriptin}" read from script file
+            want_argument = true;
+          }
           break;
 
         case 't':                 /* "-t {tag}" or "-t{tag}" jump to tag */
