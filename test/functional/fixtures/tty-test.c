@@ -4,10 +4,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <uv.h>
 #ifdef _WIN32
-#include <windows.h>
+# include <windows.h>
+#else
+# include <unistd.h>
 #endif
 
 // -V:STRUCT_CAST:641
@@ -15,39 +16,31 @@
 #define is_terminal(stream) (uv_guess_handle(fileno(stream)) == UV_TTY)
 #define BUF_SIZE 0xfff
 #define CTRL_C 0x03
-#ifdef _WIN32
 #define CTRL_Q 0x11
-#endif
+
+uv_tty_t tty;
 
 #ifdef _WIN32
 typedef struct screen_size {
   int width;
   int height;
 } ScreenSize;
-#endif
-
-uv_tty_t tty;
-#ifdef _WIN32
 ScreenSize screen_rect;
 #endif
 
-#ifdef _WIN32
 bool owns_tty(void)
 {
+#ifdef _WIN32
   // XXX: We need to make proper detect owns tty
   // HWND consoleWnd = GetConsoleWindow();
   // DWORD dwProcessId;
   // GetWindowThreadProcessId(consoleWnd, &dwProcessId);
   // return GetCurrentProcessId() == dwProcessId;
   return true;
-}
 #else
-#include <unistd.h>
-bool owns_tty(void)
-{
   return getsid(0) == getpid();
-}
 #endif
+}
 
 static void walk_cb(uv_handle_t *handle, void *arg)
 {
@@ -56,7 +49,6 @@ static void walk_cb(uv_handle_t *handle, void *arg)
   }
 }
 
-#ifndef WIN32
 static void sig_handler(int signum)
 {
   switch (signum) {
@@ -73,17 +65,6 @@ static void sig_handler(int signum)
     return;
   }
 }
-#else
-// static void sigwinch_cb(uv_signal_t *handle, int signum)
-// {
-//   int width, height;
-//   uv_tty_t out;
-//   uv_tty_init(uv_default_loop(), &out, fileno(stdout), 0);
-//   uv_tty_get_winsize(&out, &width, &height);
-//   fprintf(stderr, "rows: %d, cols: %d\n", height, width);
-//   uv_close((uv_handle_t *)&out, NULL);
-// }
-#endif
 
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
@@ -100,9 +81,9 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 
   int *interrupted = stream->data;
 #ifdef _WIN32
-  bool prsz = false;
-  int width;
-  int height;
+  // HACK: Special-case to avoid relying on SIGWINCH on Windows.
+  //       See note at Screen:try_resize().
+  bool invoke_sigwinch_handler = false;
 #endif
 
   for (int i = 0; i < cnt; i++) {
@@ -110,7 +91,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
       (*interrupted)++;
 #ifdef _WIN32
     } else if (buf->base[i] == CTRL_Q) {
-      prsz = true;
+      invoke_sigwinch_handler = true;
 #endif
     }
   }
@@ -121,12 +102,15 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   uv_tty_init(&write_loop, &out, fileno(stdout), 0);
 
 #ifdef _WIN32
-  if (prsz) {
+  if (invoke_sigwinch_handler) {
+    int width, height;
     uv_tty_get_winsize(&out, &width, &height);
     if (screen_rect.width != width || screen_rect.height != height) {
       screen_rect.width = width;
       screen_rect.height = height;
-      fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+      // HACK: Invoke directly. See note at Screen:try_resize().
+      sig_handler(SIGWINCH);
+      uv_run(&write_loop, UV_RUN_NOWAIT);
     }
   } else {
 #endif
