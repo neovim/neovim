@@ -118,10 +118,6 @@ endforeach()
 
 list(REMOVE_ITEM NVIM_SOURCES ${to_remove})
 
-if (NOT WIN32)
-  list(REMOVE_ITEM NVIM_HEADERS "${PROJECT_SOURCE_DIR}/src/nvim/os/pty_process_win.h")
-endif()
-
 # Legacy files that do not yet pass -Wconversion.
 set(CONV_SOURCES
   diff.c
