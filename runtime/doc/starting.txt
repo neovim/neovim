@@ -53,7 +53,7 @@ filename	One or more file names.  The first one will be the current
 <		Starting in Ex mode: >
 			nvim -e -
 			nvim -E
-<		Start editing in silent mode.  See |-s-ex|.
+<		Start editing in |silent-mode|.
 
 							*-t* *-tag*
 -t {tag}	A tag.  "tag" is looked up in the tags file, the associated
@@ -200,7 +200,7 @@ argument.
 							*-E*
 -E		Start Vim in improved Ex mode |gQ|.
 
-							*-s-ex*
+							*-s-ex* *silent-mode*
 -s		Silent or batch mode.  Only when "-s" is preceded by the "-e"
 		argument.  Otherwise see |-s|, which does take an argument
 		while this use of "-s" doesn't.  To be used when Vim is used
@@ -221,7 +221,7 @@ argument.
 		Initializations are skipped (except the ones given with the
 		"-u" argument).
 		Example: >
-			vim -e -s  < thefilter  thefile
+			vim -es < thefilter  thefile
 <
 							*-b*
 -b		Binary mode.  File I/O will only recognize <NL> to separate
@@ -351,6 +351,7 @@ argument.
 
 							*--headless*
 --headless 	Do not start the built-in UI.
+		See also |silent-mode|, which does start a (limited) UI.
 
 ==============================================================================
 2. Initialization				*initialization* *startup*

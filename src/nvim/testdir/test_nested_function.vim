@@ -40,3 +40,24 @@ func Test_nested_argument()
   delfunc g:X
   unlet g:Y
 endfunc
+
+func Recurse(count)
+  if a:count > 0
+    call Recurse(a:count - 1)
+  endif
+endfunc
+
+func Test_max_nesting()
+  let call_depth_here = 2
+  let ex_depth_here = 5
+  set mfd&
+
+  call Recurse(99 - call_depth_here)
+  call assert_fails('call Recurse(' . (100 - call_depth_here) . ')', 'E132:')
+
+  set mfd=210
+  call Recurse(209 - ex_depth_here)
+  call assert_fails('call Recurse(' . (210 - ex_depth_here) . ')', 'E169:')
+
+  set mfd&
+endfunc
