@@ -353,11 +353,6 @@ The back reference '\'.d refers to the same thing as '\'.b:match_table[d] in
 ==============================================================================
 5. Known Bugs and Limitations				*matchit-bugs*
 
-The various |:vmap|s defined in the script (%, |g%|, |[%|, |]%|, |a%|) may
-have undesired effects in Select mode |Select-mode-mapping|.  At least, if you
-want to replace the selection with any character in "ag%[]" there will be a
-pause of |'updatetime'| first.
-
 It would be nice if "\0" were recognized as the entire pattern.  That is, it
 would be nice if "foo:\end\0" had the same effect as "\(foo\):\end\1".
 
