@@ -45,6 +45,7 @@ NEW_TESTS ?= \
 	    test_gn.res \
 	    test_hardcopy.res \
 	    test_help_tagjump.res \
+	    test_hide.res \
 	    test_history.res \
 	    test_hlsearch.res \
 	    test_increment.res \
