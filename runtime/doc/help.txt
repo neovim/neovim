@@ -96,7 +96,7 @@ General subjects ~
 |howto.txt|	how to do the most common editing tasks
 |tips.txt|	various tips on using Vim
 |message.txt|	(error) messages and explanations
-|develop.txt|	development of Vim
+|develop.txt|	development of Nvim
 |debug.txt|	debugging Vim itself
 |uganda.txt|	Vim distribution conditions and what to do with your money
 
@@ -134,7 +134,6 @@ Advanced editing ~
 Special issues ~
 |print.txt|	printing
 |remote.txt|	using Vim as a server or client
-|term.txt|	using different terminals and mice
 |digraph.txt|	list of available digraphs
 |mbyte.txt|	multi-byte text support
 |mlang.txt|	non-English language support

@@ -86,6 +86,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"
@@ -4874,11 +4875,14 @@ void win_redr_status(win_T *wp)
   int this_ru_col;
   static int busy = FALSE;
 
-  /* It's possible to get here recursively when 'statusline' (indirectly)
-   * invokes ":redrawstatus".  Simply ignore the call then. */
-  if (busy)
+  // May get here recursively when 'statusline' (indirectly)
+  // invokes ":redrawstatus".  Simply ignore the call then.
+  if (busy
+      // Also ignore if wildmenu is showing.
+      || (wild_menu_showing != 0 && !ui_is_external(kUIWildmenu))) {
     return;
-  busy = TRUE;
+  }
+  busy = true;
 
   wp->w_redr_status = FALSE;
   if (wp->w_status_height == 0) {
@@ -6441,13 +6445,11 @@ void setcursor(void)
   }
 }
 
-/*
- * insert 'line_count' lines at 'row' in window 'wp'
- * if 'invalid' is TRUE the wp->w_lines[].wl_lnum is invalidated.
- * if 'mayclear' is TRUE the screen will be cleared if it is faster than
- * scrolling.
- * Returns FAIL if the lines are not inserted, OK for success.
- */
+/// Insert 'line_count' lines at 'row' in window 'wp'.
+/// If 'invalid' is TRUE the wp->w_lines[].wl_lnum is invalidated.
+/// If 'mayclear' is TRUE the screen will be cleared if it is faster than
+/// scrolling.
+/// Returns FAIL if the lines are not inserted, OK for success.
 int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
   int did_delete;
@@ -6510,13 +6512,11 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   return OK;
 }
 
-/*
- * delete "line_count" window lines at "row" in window "wp"
- * If "invalid" is TRUE curwin->w_lines[] is invalidated.
- * If "mayclear" is TRUE the screen will be cleared if it is faster than
- * scrolling
- * Return OK for success, FAIL if the lines are not deleted.
- */
+/// Delete "line_count" window lines at "row" in window "wp".
+/// If "invalid" is TRUE curwin->w_lines[] is invalidated.
+/// If "mayclear" is TRUE the screen will be cleared if it is faster than
+/// scrolling
+/// Return OK for success, FAIL if the lines are not deleted.
 int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
   int retval;

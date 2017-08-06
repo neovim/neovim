@@ -2203,7 +2203,7 @@ change_warning (
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     (void)msg_end();
-    if (msg_silent == 0 && !silent_mode) {
+    if (msg_silent == 0 && !silent_mode && ui_active()) {
       ui_flush();
       os_delay(1000L, true);       /* give the user time to think about it */
     }

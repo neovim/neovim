@@ -12,6 +12,7 @@
 #include <inttypes.h>
 
 #include "nvim/assert.h"
+#include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"
@@ -518,11 +519,12 @@ static int command_line_execute(VimState *state, int key)
   }
 
   // free expanded names when finished walking through matches
-  if (s->xpc.xp_numfiles != -1
-      && !(s->c == p_wc && KeyTyped) && s->c != p_wcm
+  if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
-    (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
+    if (s->xpc.xp_numfiles != -1) {
+      (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
+    }
     s->did_wild_list = false;
     if (!p_wmnu || (s->c != K_UP && s->c != K_DOWN)) {
       s->xpc.xp_context = EXPAND_NOTHING;
@@ -1271,6 +1273,7 @@ static int command_line_handle_key(CommandLineState *s)
       break;                  // Use ^D as normal char instead
     }
 
+    wild_menu_showing = WM_LIST;
     redrawcmd();
     return 1;                 // don't do incremental search now
 
@@ -1501,7 +1504,7 @@ static int command_line_handle_key(CommandLineState *s)
     if (s->hiscnt != s->i) {
       // jumped to other entry
       char_u      *p;
-      int len;
+      int len = 0;
       int old_firstc;
 
       xfree(ccline.cmdbuff);

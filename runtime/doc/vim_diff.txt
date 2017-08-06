@@ -61,7 +61,7 @@ these differences.
 
 MAJOR COMPONENTS ~
 
-Embedded terminal emulator	|terminal-emulator|
+Embedded terminal emulator	|terminal|
 RPC API				|RPC|
 Shared data			|shada|
 XDG base directories		|xdg|

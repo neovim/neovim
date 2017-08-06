@@ -1665,11 +1665,15 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ea.addr_count++;
 
     if (*ea.cmd == ';') {
-      if (!ea.skip)
+      if (!ea.skip) {
         curwin->w_cursor.lnum = ea.line2;
-    } else if (*ea.cmd != ',')
+        // Don't leave the cursor on an illegal line (caused by ';')
+        check_cursor_lnum();
+      }
+    } else if (*ea.cmd != ',') {
       break;
-    ++ea.cmd;
+    }
+    ea.cmd++;
   }
 
   /* One address given: set start and end lines */
@@ -1679,9 +1683,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (lnum == MAXLNUM)
       ea.addr_count = 0;
   }
-
-  /* Don't leave the cursor on an illegal line (caused by ';') */
-  check_cursor_lnum();
 
   /*
    * 5. Parse the command.
@@ -8321,7 +8322,7 @@ static void ex_tag_cmd(exarg_T *eap, char_u *name)
     break;
   default:                              /* ":tag" */
     if (p_cst && *eap->arg != NUL) {
-      do_cstag(eap);
+      ex_cstag(eap);
       return;
     }
     cmd = DT_TAG;

@@ -4,7 +4,7 @@
                             NVIM REFERENCE MANUAL
 
 
-Terminal information
+Terminal UI						*tui*
 
 Nvim (except in |--headless| mode) uses information about the terminal you are
 using to present a built-in UI.  If that information is not correct, the
@@ -225,14 +225,7 @@ On Unix systems, three methods are tried to get the window size:
 If everything fails a default size of 24 lines and 80 columns is assumed.  If
 a window-resize signal is received the size will be set again.  If the window
 size is wrong you can use the 'lines' and 'columns' options to set the
-correct values.
-
-One command can be used to set the screen size:
-
-						*:mod* *:mode*
-:mod[e]
-
-Detects the screen size and redraws the screen.
+correct values. See |:mode|.
 
 ==============================================================================
 Slow and fast terminals				*slow-fast-terminal*
@@ -343,13 +336,12 @@ before using the mouse:
 	"g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
 
 							*bracketed-paste-mode*
-Bracketed paste mode allows terminal emulators to distinguish between typed
-text and pasted text.
+Bracketed paste mode allows terminal applications to distinguish between typed
+text and pasted text. Thus you can paste text without Nvim trying to format or
+indent the text. See also https://cirw.in/blog/bracketed-paste
 
-For terminal emulators that support it, this mode is enabled by default. Thus
-you can paste text without Nvim giving any special meaning to it, e.g. it will
-not auto-indent the pasted text. See https://cirw.in/blog/bracketed-paste for
-technical details.
+Nvim enables bracketed paste by default. If it does not work in your terminal,
+try the 'paste' option instead.
 
 					*mouse-mode-table* *mouse-overview*
 A short overview of what the mouse buttons do, when 'mousemodel' is "extend":
