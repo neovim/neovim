@@ -718,7 +718,12 @@ typedef const char *kh_cstr_t;
   @param  name  Name of the hash table [symbol]
  */
 #define KHASH_EMPTY_TABLE(name) \
-  ((kh_##name##_t) { \
+  ((kh_##name##_t) KHASH_EMPTY_INIT)
+
+/*! @function
+  @abstract     Return a literal for an empty hash table for static initializer.
+ */
+#define KHASH_EMPTY_INIT { \
     .n_buckets = 0, \
     .size = 0, \
     .n_occupied = 0, \
@@ -726,5 +731,6 @@ typedef const char *kh_cstr_t;
     .flags = NULL, \
     .keys = NULL, \
     .vals = NULL, \
-  })
+  }
+
 #endif  // NVIM_LIB_KHASH_H

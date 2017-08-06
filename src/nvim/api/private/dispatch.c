@@ -58,8 +58,7 @@ static inline bool string_eq(const String a, const String b)
 KHASH_INIT(RpcRequestHandlersMap, String, MsgpackRpcRequestHandler,
            1, string_hash, string_eq)
 
-khash_t(RpcRequestHandlersMap) methods = (
-    KHASH_EMPTY_TABLE(RpcRequestHandlersMap));
+khash_t(RpcRequestHandlersMap) methods = KHASH_EMPTY_INIT;
 
 static void msgpack_rpc_add_method_handler(String method,
                                            MsgpackRpcRequestHandler handler)
