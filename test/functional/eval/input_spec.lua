@@ -2,7 +2,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
-local wait = helpers.wait
 local feed = helpers.feed
 local meths = helpers.meths
 local clear = helpers.clear
@@ -229,14 +228,14 @@ describe('input()', function()
        exc_exec('call input("prompt> ", "default", "file", "extra")'))
   end)
   it('supports highlighting', function()
-    feed([[:call input({"highlight": "RainBowParens"})<CR>]])
-    wait()
+    command('nnoremap <expr> X input({"highlight": "RainBowParens"})[-1]')
+    feed([[X]])
     feed('(())')
     screen:expect([[
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
                                |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
   end)
@@ -408,14 +407,14 @@ describe('inputdialog()', function()
        exc_exec('call inputdialog("prompt> ", "default", "file", "extra")'))
   end)
   it('supports highlighting', function()
-    feed([[:call inputdialog({"highlight": "RainBowParens"})<CR>]])
-    wait()
+    command('nnoremap <expr> X inputdialog({"highlight": "RainBowParens"})[-1]')
+    feed([[X]])
     feed('(())')
     screen:expect([[
-      {EOB:~                        }|
-      {EOB:~                        }|
-      {EOB:~                        }|
                                |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
   end)
