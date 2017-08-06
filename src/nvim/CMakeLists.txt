@@ -535,6 +535,7 @@ endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
+  os/pty_process_win.h
   regexp_defs.h
   syntax_defs.h
   terminal.h
