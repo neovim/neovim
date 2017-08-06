@@ -2613,7 +2613,8 @@ def CheckBraces(filename, clean_lines, linenum, error):
 
                     func_start_linenum += 1
                 else:
-                    if clean_lines.lines[func_start_linenum].endswith('{'):
+                    func_start = clean_lines.lines[func_start_linenum]
+                    if not func_start.startswith('enum ') and func_start.endswith('{'):
                         error(filename, func_start_linenum,
                               'readability/braces', 5,
                               'Brace starting function body must be placed '

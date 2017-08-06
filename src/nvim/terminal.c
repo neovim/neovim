@@ -43,6 +43,7 @@
 
 #include <vterm.h>
 
+#include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/terminal.h"
 #include "nvim/message.h"
@@ -1010,7 +1011,10 @@ static void refresh_terminal(Terminal *term)
 // Calls refresh_terminal() on all invalidated_terminals.
 static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
-  if (exiting) {  // Cannot redraw (requires event loop) during teardown/exit.
+  if (exiting  // Cannot redraw (requires event loop) during teardown/exit.
+      // WM_LIST (^D) is not redrawn, unlike the normal wildmenu. So we must
+      // skip redraws to keep it visible.
+      || wild_menu_showing == WM_LIST) {
     goto end;
   }
   Terminal *term;
