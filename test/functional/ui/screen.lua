@@ -73,8 +73,6 @@
 
 local helpers = require('test.functional.helpers')(nil)
 local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
-local iswin, nvim, retry = helpers.iswin, helpers.nvim, helpers.retry
-
 local dedent = helpers.dedent
 
 local Screen = {}
@@ -176,16 +174,6 @@ function Screen:try_resize(columns, rows)
   -- Give ourselves a chance to _handle_resize, which requires using
   -- self.sleep() (for the resize notification) rather than run()
   self:sleep(0.1)
-
-  -- XXX: On Windows we don't bother to handle SIGWINCH.
-  --      CTRL-Q invokes the handler in tty-test.c directly.
-  --      uv_tty_update_virtual_window() _does_ emit SIGWINCH, but:
-  --      "SIGWINCH may not always be delivered in a timely manner; libuv
-  --      will only detect size changes when the cursor is being moved."
-  --      http://docs.libuv.org/en/v1.x/signal.html
-  if iswin() and 0 ~= nvim('eval', "exists('b:terminal_job_id')") then
-    nvim('command', [[call jobsend(b:terminal_job_id, "\<C-Q>")]])
-  end
 end
 
 -- Asserts that `expected` eventually matches the screen state.
