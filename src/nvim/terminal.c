@@ -847,6 +847,10 @@ static void mouse_action(Terminal *term, int button, int row, int col,
 // terminal should lose focus
 static bool send_mouse_event(Terminal *term, int c)
 {
+  if (term->exited) {
+    return true;
+  }
+
   int row = mouse_row, col = mouse_col;
   win_T *mouse_win = mouse_find_win(&row, &col);
 
