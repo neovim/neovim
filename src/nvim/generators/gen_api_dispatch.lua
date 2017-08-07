@@ -379,10 +379,12 @@ lua_bindings_template = lust({
   lua_c_function_name = 'nlua_msgpack_$fn.name',
   binding_function = nl(dedent([[
     static int @lua_c_function_name(lua_State *lstate)
+      FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
     {
       Error err = ERROR_INIT;
       if (lua_gettop(lstate) != $#fn.parameters) {
-        api_set_error(&err, kErrorTypeValidation, "Expected $#fn.parameters argument@param_s");
+        api_set_error(&err, kErrorTypeValidation,
+                      "Expected $#fn.parameters argument@param_s");
         goto exit_0;
       }
 
@@ -407,19 +409,19 @@ lua_bindings_template = lust({
     }]])),
   param_s = '@if(#fn.parameters ~= "1")<{{s}}>else<{{}}>',
   process_arg = dedent([[
-    const $param.1 arg$rev_i0 = nlua_pop_$rt(lstate, &err);
+    const $param.1 arg_$rev_i1 = nlua_pop_$rt(lstate, &err);
     if (ERROR_SET(&err)) {
       goto exit_$i0;
     }]]),
   cleanup_arg = dedent([[
     @if(i0 ~= "0")<{{exit_$rev_i0:}}>
-      api_free_$rt_lower(arg$i1);]]),
+      api_free_$rt_lower(arg_$i0);]]),
   fcallstart = '@if(fn.return_type ~= "void")<{{const $fn.return_type rv = }}>',
   fcallargs = (
     '@if(fn.receives_channel_id)<{{'
       .. 'LUA_INTERNAL_CALL@if(#fn.parameters > "0" or fn.can_fail)<{{, }}>'
     .. '}}>'
-    .. '@map{ param = fn.parameters, _separator=", "}:{{arg$i1}}'
+    .. '@map{ param = fn.parameters, _separator=", "}:{{arg_$i0}}'
     .. '@if(fn.can_fail)<{{'
       .. '@if(#fn.parameters > "0")<{{, }}>&err'
     .. '}}>'
@@ -431,8 +433,7 @@ lua_bindings_template = lust({
 lua_bindings_template:register('process_arg', function(env)
   local ret = shallowcopy(env)
   ret.rev_i1 = #env.fn.parameters - env.i1
-  ret.rev_i0 = #env.fn.parameters - env.i0
-  ret.param = env.fn.parameters[ret.rev_i0]
+  ret.param = env.fn.parameters[ret.rev_i1 + 1]
   ret.rt = real_type(ret.param[1])
   ret.rt_lower = ret.rt:lower()
   return ret
