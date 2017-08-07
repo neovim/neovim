@@ -82,7 +82,6 @@ typedef struct terminal_state {
   Terminal *term;
   int save_rd;              // saved value of RedrawingDisabled
   bool got_bsl;             // if the last input was <C-\>
-  bool exited;
 } TerminalState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -201,35 +200,35 @@ Terminal *terminal_open(TerminalOptions opts)
 {
   bool true_color = ui_rgb_attached();
 
-  Terminal *rv   = xcalloc(1, sizeof(Terminal));
-  rv->opts       = opts;
+  // Create a new terminal instance and configure it
+  Terminal *rv = xcalloc(1, sizeof(Terminal));
+  rv->opts = opts;
+  rv->cursor.visible = true;
+  rv->exited = false;
+  // Associate the terminal instance with the new buffer
   rv->buf_handle = curbuf->handle;
-  rv->exited     = false;
+  curbuf->terminal = rv;
 
-  // Setup vterm
+  // Create VTerm
   rv->vt = vterm_new(opts.height, opts.width);
   vterm_set_utf8(rv->vt, 1);
+  // Setup state
   VTermState *state = vterm_obtain_state(rv->vt);
+  // Set up screen
   rv->vts = vterm_obtain_screen(rv->vt);
-  rv->forward_mouse = 0;
-  rv->invalid_start = 0;
-  rv->invalid_end   = opts.height;
   vterm_screen_enable_altscreen(rv->vts, true);
+  // delete empty lines at the end of the buffer
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
-  // delete empty lines at the end of the buffer
   vterm_screen_reset(rv->vts, 1);
-  rv->cursor.row = rv->cursor.col = 0;
-  rv->cursor.visible = true;
-  rv->pressed_button = 0;
-  rv->pending_resize = false;
   // force a initial refresh of the screen to ensure the buffer will always
   // have as many lines as screen rows when refresh_scrollback is called
+  rv->invalid_start = 0;
+  rv->invalid_end = opts.height;
   refresh_screen(rv, curbuf);
+  set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
 
   // Default settings for terminal buffers
-  set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
-  curbuf->terminal = rv;
   curbuf->b_p_ma = false;     // 'nomodifiable'
   curbuf->b_p_ul = -1;        // 'undolevels'
   curbuf->b_p_scbk = p_scbk;  // 'scrollback'
@@ -245,11 +244,9 @@ Terminal *terminal_open(TerminalOptions opts)
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
   // Configure the scrollback buffer.
-  rv->sb_current = 0;
-  rv->sb_pending = 0;
-  rv->sb_size    = curbuf->b_p_scbk < 0 ? SB_MAX
-      : (size_t)MAX(1, curbuf->b_p_scbk);
-  rv->sb_buffer  = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
+  rv->sb_size = curbuf->b_p_scbk < 0
+                ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
+  rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
     // Change the first 16 colors so we can easily get the correct color
@@ -378,7 +375,6 @@ void terminal_enter(void)
   TerminalState state, *s = &state;
   memset(s, 0, sizeof(TerminalState));
   s->term = buf->terminal;
-  s->exited = false;
 
   // Ensure the terminal is properly sized.
   terminal_resize(s->term, 0, 0);
@@ -465,7 +461,6 @@ static int terminal_execute(VimState *state, int key)
     case K_EVENT:
       multiqueue_process_events(main_loop.events);
       if (s->term->exited) {
-        s->exited = true;
         return 0;
       }
       break;
@@ -482,7 +477,6 @@ static int terminal_execute(VimState *state, int key)
         break;
       }
       if (s->term->exited) {
-        s->exited = true;
         return 0;
       }
 
