@@ -199,6 +199,7 @@ end
 
 handlers_template = lust({
   nl(dedent([[
+    #include "nvim/func_attr.h"
     #include "nvim/api/private/dispatch.h"
     #include "nvim/api/private/helpers.h"
     #include "nvim/api/private/defs.h"
@@ -219,6 +220,7 @@ handlers_template = lust({
       });]]),
   handle_function = nl(dedent([[
     Object handle_$fn.name(uint64_t channel_id, Array args, Error *error)
+      FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
     {
       Object ret = NIL;
       if (args.size != $#fn.parameters) {
