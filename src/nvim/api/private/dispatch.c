@@ -12,12 +12,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/lib/khash.h"
 
-#include "nvim/api/buffer.h"
-#include "nvim/api/tabpage.h"
-#include "nvim/api/ui.h"
-#include "nvim/api/vim.h"
-#include "nvim/api/window.h"
-
 /// Hash implementation for API String type
 ///
 /// @param[in]  s  String to compute hash of.
@@ -54,10 +48,15 @@ static inline bool string_eq(const String a, const String b)
 KHASH_INIT(RpcRequestHandlersMap, String, MsgpackRpcRequestHandler,
            1, string_hash, string_eq)
 
+/// Hash containing all supported RPC methods
 khash_t(RpcRequestHandlersMap) methods = KHASH_EMPTY_INIT;
 
-static void msgpack_rpc_add_method_handler(String method,
-                                           MsgpackRpcRequestHandler handler)
+/// Store method handler in methods hash
+///
+/// @param[in]  method  Method name.
+/// @param[in]  handler  Handler definition.
+void msgpack_rpc_add_method_handler(String method,
+                                    MsgpackRpcRequestHandler handler)
 {
   int ret;
   const khiter_t k = kh_put(RpcRequestHandlersMap, &methods, method, &ret);
@@ -65,8 +64,16 @@ static void msgpack_rpc_add_method_handler(String method,
   kh_val(&methods, k) = handler;
 }
 
-MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
-                                                     size_t name_len)
+/// Get handler for the given method name
+///
+/// @param[in]  name  Method name.
+/// @param[in]  name_len  Method name length.
+///
+/// @return Handler stored in `methods` hash or
+///         msgpack_rpc_handle_missing_method() handler.
+MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *const name,
+                                                     const size_t name_len)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const String m = { .data = (char *)name, .size = name_len };
   const khiter_t k = kh_get(RpcRequestHandlersMap, &methods, m);
@@ -77,7 +84,3 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
   }
   return kh_val(&methods, k);
 }
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/dispatch_wrappers.generated.h"
-#endif

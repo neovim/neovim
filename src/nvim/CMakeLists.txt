@@ -20,7 +20,7 @@ set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.generated.c)
 set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
-set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
+set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.c)
 set(GENERATED_FUNCS_METADATA ${GENERATED_DIR}/api/private/funcs_metadata.generated.h)
 set(GENERATED_UI_EVENTS ${GENERATED_DIR}/ui_events.generated.h)
 set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
@@ -193,7 +193,7 @@ endfunction()
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
               "${CMAKE_CURRENT_LIST_DIR}/regexp_nfa.c"
-              ${GENERATED_API_DISPATCH}
+              "${GENERATED_API_DISPATCH}"
               "${GENERATED_UI_EVENTS_CALL}"
               "${GENERATED_UI_EVENTS_REMOTE}"
               "${GENERATED_UI_EVENTS_BRIDGE}"
@@ -289,7 +289,6 @@ list(APPEND NVIM_GENERATED_FOR_HEADERS
 )
 
 list(APPEND NVIM_GENERATED_FOR_SOURCES
-  "${GENERATED_API_DISPATCH}"
   "${GENERATED_EX_CMDS_DEFS}"
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
@@ -298,6 +297,7 @@ list(APPEND NVIM_GENERATED_FOR_SOURCES
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
+  "${GENERATED_API_DISPATCH}"
   "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
 )
 

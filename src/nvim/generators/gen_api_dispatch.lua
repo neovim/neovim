@@ -20,6 +20,8 @@ package.path = nvimdir .. '/../../?.lua;' .. package.path
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 headers = {}
+-- Like `headers`, but without headers ending with .generated.h
+local written_headers = {}
 
 -- output h file with generated dispatch functions
 dispatch_outputf = arg[2]
@@ -46,7 +48,11 @@ for i = 6, #arg do
   for part in string.gmatch(full_path, '[^/]+') do
     parts[#parts + 1] = part
   end
-  headers[#headers + 1] = parts[#parts - 1]..'/'..parts[#parts]
+  local header = parts[#parts - 1]..'/'..parts[#parts]
+  headers[#headers + 1] = header
+  if header:sub(-12) ~= '.generated.h' then
+    written_headers[#written_headers + 1] = header
+  end
 
   local input = io.open(full_path, 'rb')
 
@@ -193,6 +199,12 @@ end
 
 handlers_template = lust({
   nl(dedent([[
+    #include "nvim/api/private/dispatch.h"
+    #include "nvim/api/private/helpers.h"
+    #include "nvim/api/private/defs.h"
+
+    @map{h = written_headers, _="\n"}:{{#include "nvim/$h"}}
+
     @map{fn = functions, _="\n\n"}:{{@if(not fn.impl_name)<handle_function>}}
     void msgpack_rpc_init_method_table(void)
     {
@@ -307,6 +319,7 @@ handlers_template:register('add_method_handler', function(env)
   return ret
 end)
 local handlers = handlers_template:gen({
+  written_headers=written_headers,
   functions=functions
 }):gsub('\n%s*\n', '\n\n'):gsub('\n\n+', '\n\n')
 output:write(handlers)
@@ -317,10 +330,8 @@ mpack_output:write(mpack.pack(functions))
 mpack_output:close()
 
 local function include_headers(output, headers)
-  for i = 1, #headers do
-    if headers[i]:sub(-12) ~= '.generated.h' then
-      output:write('\n#include "nvim/'..headers[i]..'"')
-    end
+  for i = 1, #written_headers do
+    output:write('\n#include "nvim/'..written_headers[i]..'"')
   end
 end
 
