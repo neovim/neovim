@@ -254,8 +254,8 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${VIM_MODULE_FILE}
-  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_SOURCE}
-                     ${VIM_MODULE_FILE} vim_module
+  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                     ${VIM_MODULE_SOURCE} ${VIM_MODULE_FILE} vim_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${VIM_MODULE_SOURCE}
