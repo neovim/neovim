@@ -33,7 +33,6 @@ local function disable_mouse() feed_termcode('[?1002l') end
 
 local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 
-
 local function screen_setup(extra_rows, command, cols)
   extra_rows = extra_rows and extra_rows or 0
   command = command and command or default_command

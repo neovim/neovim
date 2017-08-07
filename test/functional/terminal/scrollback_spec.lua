@@ -3,6 +3,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.feed_command
+local iswin = helpers.iswin
 local eval = helpers.eval
 local command = helpers.command
 local wait = helpers.wait
@@ -10,8 +11,6 @@ local retry = helpers.retry
 local curbufmeths = helpers.curbufmeths
 local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
-
-if helpers.pending_win32(pending) then return end
 
 describe('terminal scrollback', function()
   local screen
@@ -142,7 +141,7 @@ describe('terminal scrollback', function()
     describe('and the height is decreased by 1', function()
       local function will_hide_top_line()
         screen:try_resize(screen._width, screen._height - 1)
-        screen:expect([[
+        screen:expect_after_resize([[
           line2                         |
           line3                         |
           line4                         |
@@ -161,7 +160,7 @@ describe('terminal scrollback', function()
         end)
 
         it('will hide the top 3 lines', function()
-          screen:expect([[
+          screen:expect_after_resize([[
             rows: 5, cols: 30             |
             rows: 3, cols: 30             |
             {1: }                             |
@@ -187,6 +186,7 @@ describe('terminal scrollback', function()
       end)
 
       local function will_delete_last_two_lines()
+        if helpers.pending_win32(pending) then return end
         screen:expect([[
           tty ready                     |
           rows: 4, cols: 30             |
@@ -200,6 +200,7 @@ describe('terminal scrollback', function()
       it('will delete the last two empty lines', will_delete_last_two_lines)
 
       describe('and then decreased by 1', function()
+        if helpers.pending_win32(pending) then return end
         before_each(function()
           will_delete_last_two_lines()
           screen:try_resize(screen._width, screen._height - 1)
@@ -245,7 +246,7 @@ describe('terminal scrollback', function()
         {3:-- TERMINAL --}                |
       ]])
       screen:try_resize(screen._width, screen._height - 3)
-      screen:expect([[
+      screen:expect_after_resize([[
         line4                         |
         rows: 3, cols: 30             |
         {1: }                             |
@@ -257,7 +258,7 @@ describe('terminal scrollback', function()
     describe('and the height is increased by 1', function()
       local function pop_then_push()
         screen:try_resize(screen._width, screen._height + 1)
-        screen:expect([[
+        screen:expect_after_resize([[
           line4                         |
           rows: 3, cols: 30             |
           rows: 4, cols: 30             |
@@ -276,7 +277,7 @@ describe('terminal scrollback', function()
         end)
 
         local function pop3_then_push1()
-          screen:expect([[
+          screen:expect_after_resize([[
             line2                         |
             line3                         |
             line4                         |
@@ -303,6 +304,7 @@ describe('terminal scrollback', function()
         it('will pop 3 lines and then push one back', pop3_then_push1)
 
         describe('and then by 4', function()
+          if helpers.pending_win32(pending) then return end
           before_each(function()
             pop3_then_push1()
             feed('Gi')
@@ -384,10 +386,20 @@ describe("'scrollback' option", function()
   end
 
   it('set to 0 behaves as 1', function()
-    local screen = thelpers.screen_setup(nil, "['sh']", 30)
+    local screen
+    if iswin() then
+      screen = thelpers.screen_setup(nil,
+      "['powershell.exe', '-NoLogo', '-NoProfile', '-NoExit', '-Command', 'function global:prompt {return "..'"$"'.."}']", 30)
+    else
+      screen = thelpers.screen_setup(nil, "['sh']", 30)
+    end
 
     curbufmeths.set_option('scrollback', 0)
-    feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
+    if iswin() then
+      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
+    else
+      feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
+    end
     screen:expect('line30                        ', nil, nil, nil, true)
     retry(nil, nil, function() expect_lines(7) end)
 
@@ -395,7 +407,13 @@ describe("'scrollback' option", function()
   end)
 
   it('deletes lines (only) if necessary', function()
-    local screen = thelpers.screen_setup(nil, "['sh']", 30)
+    local screen
+    if iswin() then
+      screen = thelpers.screen_setup(nil,
+      "['powershell.exe', '-NoLogo', '-NoProfile', '-NoExit', '-Command', 'function global:prompt {return "..'"$"'.."}']", 30)
+    else
+      screen = thelpers.screen_setup(nil, "['sh']", 30)
+    end
 
     curbufmeths.set_option('scrollback', 200)
 
@@ -403,7 +421,11 @@ describe("'scrollback' option", function()
     screen:expect('$', nil, nil, nil, true)
 
     wait()
-    feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
+    if iswin() then
+      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
+    else
+      feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
+    end
 
     screen:expect('line30                        ', nil, nil, nil, true)
 
@@ -416,7 +438,11 @@ describe("'scrollback' option", function()
     -- Terminal job data is received asynchronously, may happen before the
     -- 'scrollback' option is synchronized with the internal sb_buffer.
     command('sleep 100m')
-    feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
+    if iswin() then
+      feed_data('for($i=1;$i -le 40;$i++){Write-Host \"line$i\"}\r')
+    else
+      feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
+    end
 
     screen:expect('line40                        ', nil, nil, nil, true)
 
