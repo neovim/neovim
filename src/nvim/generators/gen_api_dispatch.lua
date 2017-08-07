@@ -330,19 +330,6 @@ mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.pack(functions))
 mpack_output:close()
 
-local function include_headers(output, headers)
-  for i = 1, #written_headers do
-    output:write('\n#include "nvim/'..written_headers[i]..'"')
-  end
-end
-
-local function write_shifted_output(output, str)
-  str = str:gsub('\n  ', '\n')
-  str = str:gsub('^  ', '')
-  str = str:gsub(' +$', '')
-  output:write(str)
-end
-
 -- start building lua output
 local lua_functions = {}
 for _, fn in ipairs(functions) do
