@@ -204,7 +204,7 @@ handlers_template = lust({
     #include "nvim/api/private/helpers.h"
     #include "nvim/api/private/defs.h"
 
-    @map{h = written_headers, _="\n"}:{{#include "nvim/$h"}}
+    @map{h = written_headers, _separator="\n"}:{{#include "nvim/$h"}}
 
     @map{fn = functions, _="\n\n"}:{{@if(not fn.impl_name)<handle_function>}}
     void msgpack_rpc_init_method_table(void)
@@ -247,10 +247,10 @@ handlers_template = lust({
   process_arg = dedent([[
     $param.1 arg_$i0;
     @if(rt == "Object")<assign_object>else<check_and_assign_arg>]]),
-  assign_object = '$converted = args.items[$i0];',
+  assign_object = 'arg_$i0 = args.items[$i0];',
   check_and_assign_arg = dedent([[
     if (@arg_cond) {
-      $converted = @arg_value;
+      arg_$i0 = @arg_value;
     } else {
       api_set_error(error, kErrorTypeException,
                     "Wrong type for argument $i1, expecting $param.1");
@@ -312,7 +312,6 @@ handlers_template:register('process_arg', function(env)
   ret.rt_is_handle = (ret.rt == "Buffer"
                       or ret.rt == "Window"
                       or ret.rt == "Tabpage")
-  ret.converted = 'arg_' .. env.i0
   return ret
 end)
 handlers_template:register('add_method_handler', function(env)
@@ -322,7 +321,7 @@ handlers_template:register('add_method_handler', function(env)
 end)
 local handlers = handlers_template:gen({
   written_headers=written_headers,
-  functions=functions
+  functions=functions,
 }):gsub('\n%s*\n', '\n\n'):gsub('\n\n+', '\n\n')
 output:write(handlers)
 output:close()
@@ -345,138 +344,115 @@ local function write_shifted_output(output, str)
 end
 
 -- start building lua output
-output = io.open(lua_c_bindings_outputf, 'wb')
-
-output:write([[
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
-#include "nvim/func_attr.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/lua/converter.h"
-]])
-include_headers(output, headers)
-output:write('\n')
-
-lua_c_functions = {}
-
-local function process_function(fn)
-  lua_c_function_name = ('nlua_msgpack_%s'):format(fn.name)
-  write_shifted_output(output, string.format([[
-
-  static int %s(lua_State *lstate)
-  {
-    Error err = ERROR_INIT;
-    if (lua_gettop(lstate) != %i) {
-      api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
-      goto exit_0;
-    }
-  ]], lua_c_function_name, #fn.parameters, #fn.parameters,
-      (#fn.parameters == 1) and '' or 's'))
-  lua_c_functions[#lua_c_functions + 1] = {
-    binding=lua_c_function_name,
-    api=fn.name
-  }
-  local cparams = ''
-  local free_code = {}
-  for j = #fn.parameters,1,-1 do
-    param = fn.parameters[j]
-    cparam = string.format('arg%u', j)
-    param_type = real_type(param[1])
-    lc_param_type = param_type:lower()
-    write_shifted_output(output, string.format([[
-    const %s %s = nlua_pop_%s(lstate, &err);
-
-    if (ERROR_SET(&err)) {
-      goto exit_%u;
-    }
-    ]], param[1], cparam, param_type, #fn.parameters - j))
-    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(
-      lc_param_type, cparam)
-    cparams = cparam .. ', ' .. cparams
-  end
-  if fn.receives_channel_id then
-    cparams = 'LUA_INTERNAL_CALL, ' .. cparams
-  end
-  if fn.can_fail then
-    cparams = cparams .. '&err'
-  else
-    cparams = cparams:gsub(', $', '')
-  end
-  local free_at_exit_code = ''
-  for i = 1, #free_code do
-    local rev_i = #free_code - i + 1
-    local code = free_code[rev_i]
-    if i == 1 then
-      free_at_exit_code = free_at_exit_code .. ('\n    %s'):format(code)
-    else
-      free_at_exit_code = free_at_exit_code .. ('\n  exit_%u:\n    %s'):format(
-        rev_i, code)
-    end
-  end
-  local err_throw_code = [[
-
-  exit_0:
-    if (ERROR_SET(&err)) {
-      luaL_where(lstate, 1);
-      lua_pushstring(lstate, err.msg);
-      api_clear_error(&err);
-      lua_concat(lstate, 2);
-      return lua_error(lstate);
-    }
-  ]]
-  if fn.return_type ~= 'void' then
-    if fn.return_type:match('^ArrayOf') then
-      return_type = 'Array'
-    else
-      return_type = fn.return_type
-    end
-    write_shifted_output(output, string.format([[
-    const %s ret = %s(%s);
-    nlua_push_%s(lstate, ret);
-    api_free_%s(ret);
-  %s
-  %s
-    return 1;
-    ]], fn.return_type, fn.name, cparams, return_type, return_type:lower(),
-        free_at_exit_code, err_throw_code))
-  else
-    write_shifted_output(output, string.format([[
-    %s(%s);
-  %s
-  %s
-    return 0;
-    ]], fn.name, cparams, free_at_exit_code, err_throw_code))
-  end
-  write_shifted_output(output, [[
-  }
-  ]])
-end
-
+local lua_functions = {}
 for _, fn in ipairs(functions) do
-  if not fn.remote_only or fn.name:sub(1, 4) == '_vim' then
-    process_function(fn)
+  if not fn.remote_only then
+    lua_functions[#lua_functions + 1] = fn
   end
 end
+lua_bindings_template = lust({
+  nl(dedent([[
+    #include <lua.h>
+    #include <lualib.h>
+    #include <lauxlib.h>
 
-output:write(string.format([[
-void nlua_add_api_functions(lua_State *lstate)
-  FUNC_ATTR_NONNULL_ALL
-{
-  lua_createtable(lstate, 0, %u);
-]], #lua_c_functions))
-for _, func in ipairs(lua_c_functions) do
-  output:write(string.format([[
+    #include "nvim/func_attr.h"
+    #include "nvim/api/private/defs.h"
+    #include "nvim/api/private/helpers.h"
+    #include "nvim/lua/converter.h"
 
-  lua_pushcfunction(lstate, &%s);
-  lua_setfield(lstate, -2, "%s");]], func.binding, func.api))
-end
-output:write([[
+    @map{h = written_headers, _separator="\n"}:{{#include "nvim/$h"}}
 
-  lua_setfield(lstate, -2, "api");
-}
-]])
+    @map{fn = lua_functions, _separator="\n\n"}:binding_function
+    void nlua_add_api_functions(lua_State *lstate)
+      FUNC_ATTR_NONNULL_ALL
+    {
+      lua_createtable(lstate, 0, $#lua_functions);
 
-output:close()
+      @map{fn = lua_functions, _separator="\n\n"}:add_binding_function
+    }\n]])),
+  add_binding_function = dedent([[
+    lua_pushcfunction(lstate, &@lua_c_function_name);
+    lua_setfield(lstate, -2, "$fn.name");]]),
+  lua_c_function_name = 'nlua_msgpack_$fn.name',
+  binding_function = nl(dedent([[
+    static int @lua_c_function_name(lua_State *lstate)
+      FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    {
+      Error err = ERROR_INIT;
+      if (lua_gettop(lstate) != $#fn.parameters) {
+        api_set_error(&err, kErrorTypeValidation,
+                      "Expected $#fn.parameters argument@param_s");
+        goto exit_0;
+      }
+
+      @iter{fn.parameters, _separator="\n\n"}:process_arg
+
+      @fcallstart$fn.name(@fcallargs);
+
+      @if(fn.return_type ~= "void")<push_return>
+
+    @map{param = fn.parameters, _separator="\n"}:cleanup_arg
+
+    exit_0:
+      if (ERROR_SET(&err)) {
+        luaL_where(lstate, 1);
+        lua_pushstring(lstate, err.msg);
+        api_clear_error(&err);
+        lua_concat(lstate, 2);
+        return lua_error(lstate);
+      }
+
+      return @if(fn.return_type == "void")<{{0}}>else<{{1}}>;
+    }]])),
+  param_s = '@if(#fn.parameters > "1")<{{s}}>else<{{}}>',
+  process_arg = dedent([[
+    const $param.1 arg_$rev_i1 = nlua_pop_$rt(lstate, &err);
+    if (ERROR_SET(&err)) {
+      goto exit_$i0;
+    }]]),
+  cleanup_arg = dedent([[
+    @if(i0 ~= "0")<{{exit_$i0:}}>
+      api_free_$rt_lower(arg_$i0);]]),
+  fcallstart = '@if(fn.return_type ~= "void")<{{const $fn.return_type rv = }}>',
+  fcallargs = (
+    '@if(fn.receives_channel_id)<{{'
+      .. 'LUA_INTERNAL_CALL@if(#fn.parameters > "0" or fn.can_fail)<{{, }}>'
+    .. '}}>'
+    .. '@map{ param = fn.parameters, _separator=", "}:{{arg_$i0}}'
+    .. '@if(fn.can_fail)<{{'
+      .. '@if(#fn.parameters > "0")<{{, }}>&err'
+    .. '}}>'
+  ),
+  push_return = dedent([[
+    nlua_push_$returntype(lstate, rv);
+    api_free_$returntype_lower(rv);]]),
+})
+lua_bindings_template:register('process_arg', function(env)
+  local ret = shallowcopy(env)
+  ret.rev_i1 = #env.fn.parameters - env.i1
+  ret.param = env.fn.parameters[ret.rev_i1 + 1]
+  ret.rt = real_type(ret.param[1])
+  ret.rt_lower = ret.rt:lower()
+  return ret
+end)
+lua_bindings_template:register('cleanup_arg', function(env)
+  local ret = shallowcopy(env)
+  ret.rt = real_type(env.param[1])
+  ret.rt_lower = ret.rt:lower()
+  return ret
+end)
+lua_bindings_template:register('push_return', function(env)
+  local returntype = real_type(env.fn.return_type)
+  return {
+    returntype = returntype,
+    returntype_lower = returntype:lower()
+  }
+end)
+local lua_bindings_output = io.open(lua_c_bindings_outputf, 'wb')
+local handlers = lua_bindings_template:gen({
+  written_headers=written_headers,
+  lua_functions=lua_functions,
+}):gsub('\n%s*\n', '\n\n'):gsub('\n\n+', '\n\n')
+lua_bindings_output:write(handlers)
+lua_bindings_output:close()
