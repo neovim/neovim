@@ -4,8 +4,6 @@ local clear = helpers.clear
 local feed, nvim = helpers.feed, helpers.nvim
 local feed_command = helpers.feed_command
 
-if helpers.pending_win32(pending) then return end
-
 describe('terminal', function()
   local screen
 
@@ -25,6 +23,7 @@ describe('terminal', function()
   end)
 
   it('resets its size when entering terminal window', function()
+    if helpers.pending_win32(pending) then return end
     feed('<c-\\><c-n>')
     feed_command('2split')
     screen:expect([[
@@ -69,31 +68,26 @@ describe('terminal', function()
 
   describe('when the screen is resized', function()
     it('will forward a resize request to the program', function()
-      screen:try_resize(screen._width + 3, screen._height + 5)
-      screen:expect([[
-        tty ready                                            |
-        rows: 14, cols: 53                                   |
-        {1: }                                                    |
-                                                             |
-                                                             |
-                                                             |
-                                                             |
-                                                             |
-                                                             |
-                                                             |
-                                                             |
-                                                             |
-                                                             |
-                                                             |
-        {3:-- TERMINAL --}                                       |
-      ]])
-      screen:try_resize(screen._width - 6, screen._height - 10)
+      if helpers.pending_win32(pending) then return end
+      feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
+      screen:try_resize(screen._width - 3, screen._height - 2)
       screen:expect([[
         tty ready                                      |
-        rows: 14, cols: 53                             |
-        rows: 4, cols: 47                              |
-        {1: }                                              |
-        {3:-- TERMINAL --}                                 |
+        rows: 7, cols: 47                              |
+        {2: }                                              |
+                                                       |
+                                                       |
+                                                       |
+                                                       |
+        :^                                              |
+      ]])
+      screen:try_resize(screen._width - 6, screen._height - 3)
+      screen:expect([[
+        tty ready                                |
+        rows: 7, cols: 47                        |
+        rows: 4, cols: 41                        |
+        {2: }                                        |
+        :^                                        |
       ]])
     end)
   end)

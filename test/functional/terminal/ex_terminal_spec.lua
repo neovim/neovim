@@ -182,9 +182,7 @@ describe(':terminal (with fake shell)', function()
   end)
 
   it('works with gf', function()
-    if helpers.pending_win32(pending) then return end
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
-    wait()
     screen:expect([[
       ready $ echo "scripts/shadacat.py"                |
                                                         |

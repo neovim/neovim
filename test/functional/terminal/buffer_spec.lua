@@ -70,7 +70,6 @@ describe('terminal buffer', function()
   end)
 
   it('cannot be modified directly', function()
-    if helpers.pending_win32(pending) then return end
     feed('<c-\\><c-n>dd')
     screen:expect([[
       tty ready                                         |
@@ -205,7 +204,6 @@ describe('terminal buffer', function()
 end)
 
 describe('No heap-buffer-overflow when using', function()
-  if helpers.pending_win32(pending) then return end
   local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
 
   before_each(function()
