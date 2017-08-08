@@ -3162,8 +3162,8 @@ nobackup:
 #ifdef UNIX
       FileInfo file_info;
 
-      /* Don't delete the file when it's a hard or symbolic link. */
-      if ((!newfile && os_fileinfo_hardlinks(&file_info) > 1)
+      // Don't delete the file when it's a hard or symbolic link.
+      if ((!newfile && os_fileinfo_hardlinks(&file_info_old) > 1)
           || (os_fileinfo_link((char *)fname, &file_info)
               && !os_fileinfo_id_equal(&file_info, &file_info_old))) {
         SET_ERRMSG(_("E166: Can't open linked file for writing"));
@@ -4547,6 +4547,7 @@ int put_time(FILE *fd, time_t time_)
 ///
 /// @return -1 for failure, 0 for success
 int vim_rename(const char_u *from, const char_u *to)
+  FUNC_ATTR_NONNULL_ALL
 {
   int fd_in;
   int fd_out;
@@ -4822,6 +4823,7 @@ buf_check_timestamp (
     buf_T *buf,
     int focus               /* called for GUI focus event */
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   int retval = 0;
   char_u      *path;
