@@ -2,7 +2,7 @@
 
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
-  call feedkeys(":e Xtest\t\r", "tx")
+  call feedkeys(":e Xtestf\t\r", "tx")
   call assert_equal('testfile', getline(1))
   call delete('Xtestfile')
 endfunc
@@ -17,7 +17,7 @@ func Test_complete_wildmenu()
   call writefile(['testfile1'], 'Xtestfile1')
   call writefile(['testfile2'], 'Xtestfile2')
   set wildmenu
-  call feedkeys(":e Xtest\t\t\r", "tx")
+  call feedkeys(":e Xtestf\t\t\r", "tx")
   call assert_equal('testfile2', getline(1))
 
   call delete('Xtestfile1')
