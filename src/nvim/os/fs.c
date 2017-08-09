@@ -131,6 +131,7 @@ bool os_isdir(const char_u *name)
 ///         NODE_WRITABLE: writable device, socket, fifo, etc.
 ///         NODE_OTHER: non-writable things
 int os_nodetype(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
 #ifdef WIN32
   // Edge case from Vim os_win32.c:
