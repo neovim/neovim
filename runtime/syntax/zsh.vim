@@ -303,7 +303,7 @@ syn keyword zshOptions          noaliases no_aliases noallexport no_allexport no
                                 \ noverbose no_verbose novi no_vi nowarncreateglobal no_warncreateglobal nowarn_create_global no_warn_create_global noxtrace no_xtrace nozle no_zle
 syn case match
 
-syn keyword zshTypes            float integer local typeset declare private
+syn keyword zshTypes            float integer local typeset declare private readonly
 
 " XXX: this may be too much
 " syn match   zshSwitches         '\s\zs--\=[a-zA-Z0-9-]\+'
