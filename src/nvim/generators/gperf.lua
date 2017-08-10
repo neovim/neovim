@@ -52,6 +52,8 @@ local function generate(opts)
     .. '%define hash-function-name ' .. opts.hash_function_name .. '\n'
     .. '%define lookup-function-name ' .. opts.lookup_function_name .. '\n'
     .. '%omit-struct-type\n'
+    .. '%compare-lengths\n'
+    .. '%compare-strncmp\n'
     .. '%struct-type\n'
     .. opts.struct_type .. '\n'
     .. '%%\n'))

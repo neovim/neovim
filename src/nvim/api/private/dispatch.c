@@ -28,7 +28,7 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *const name,
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const MsgpackRpcRequestHandlerMapItem *const ret = gperf_dispatch_find(
-      name, (unsigned)name_len);
+      name, name_len);
   if (ret == NULL) {
     return (MsgpackRpcRequestHandler) {
       .fn = msgpack_rpc_handle_missing_method,
