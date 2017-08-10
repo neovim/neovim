@@ -169,9 +169,6 @@ dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
 
--- start building the dispatch wrapper output
-output = io.open(dispatch_outputf, 'wb')
-
 local function real_type(type)
   local rv = type
   if c_grammar.typed_container:match(rv) then
@@ -323,8 +320,9 @@ local handlers = handlers_template:gen({
   written_headers=written_headers,
   functions=functions,
 }):gsub('\n%s*\n', '\n\n'):gsub('\n\n+', '\n\n')
-output:write(handlers)
-output:close()
+dispatch_output = io.open(dispatch_outputf, 'wb')
+dispatch_output:write(handlers)
+dispatch_output:close()
 
 mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.pack(functions))
