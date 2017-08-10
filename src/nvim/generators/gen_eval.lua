@@ -18,9 +18,7 @@ end
 
 package.path = nvimsrcdir .. '/?.lua;' .. package.path
 
-local funcsfname = autodir .. '/funcs.generated.h'
-
-local gperfpipe = io.open(funcsfname .. '.gperf', 'wb')
+local gperf = require('generators.gperf')
 
 local funcs = require('eval').funcs
 local metadata = mpack.unpack(io.open(arg[3], 'rb'):read("*all"))
@@ -38,30 +36,23 @@ local funcsdata = io.open(funcs_file, 'w')
 funcsdata:write(mpack.pack(funcs))
 funcsdata:close()
 
-gperfpipe:write([[
-%language=ANSI-C
-%global-table
-%readonly-tables
-%define initializer-suffix ,0,0,NULL,NULL
-%define word-array-name functions
-%define hash-function-name hash_internal_func_gperf
-%define lookup-function-name find_internal_func_gperf
-%omit-struct-type
-%struct-type
-VimLFuncDef;
-%%
-]])
-
-for name, def in pairs(funcs) do
-  args = def.args or 0
-  if type(args) == 'number' then
-    args = {args, args}
-  elseif #args == 1 then
-    args[2] = 'MAX_FUNC_ARGS'
-  end
-  func = def.func or ('f_' .. name)
-  data = def.data or "NULL"
-  gperfpipe:write(('%s,  %s, %s, &%s, (FunPtr)%s\n')
-                  :format(name, args[1], args[2], func, data))
-end
-gperfpipe:close()
+gperf.generate({
+  outputf_base = autodir .. '/funcs.generated.h',
+  word_array_name = 'functions',
+  lookup_function_name = 'find_internal_func_gperf',
+  struct_type = 'VimLFuncDef',
+  initializer_suffix = ',0,0,NULL,NULL',
+  item_callback = function(self, name, def)
+    args = def.args or 0
+    if type(args) == 'number' then
+      args = {args, args}
+    elseif #args == 1 then
+      args[2] = 'MAX_FUNC_ARGS'
+    end
+    func = def.func or ('f_' .. name)
+    data = def.data or 'NULL'
+    return (('%s, %s, %s, &%s, (FunPtr)%s'):format(
+      name, args[1], args[2], func, data))
+  end,
+  data = funcs,
+})
