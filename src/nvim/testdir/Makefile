@@ -3,10 +3,12 @@
 #
 
 NVIM_PRG ?= ../../../build/bin/nvim
+TMPDIR ?= Xtest-tmpdir
 SCRIPTSOURCE := ../../../runtime
 
 export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
+export TMPDIR
 
 SCRIPTS ?= \
            test13.out             \
@@ -149,10 +151,12 @@ clean:
 	        .*.swp         \
 	        .*.swo         \
 	        .gdbinit       \
+	        $(TMPDIR)      \
 	        del
 
 test1.out: .gdbinit test1.in
 	-rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
+	mkdir -p $(TMPDIR)
 	$(RUN_VIM) $*.in
 	@/bin/sh -c "if test -e wrongtermsize; then                                 \
 	                 echo;                                                      \
@@ -170,6 +174,7 @@ test1.out: .gdbinit test1.in
 
 %.out: %.in .gdbinit
 	-rm -rf $*.failed test.ok $(RM_ON_RUN)
+	mkdir -p $(TMPDIR)
 	cp $*.ok test.ok
 	# Sleep a moment to avoid that the xterm title is messed up.
 	# 200 msec is sufficient, but only modern sleep supports a fraction of
@@ -212,4 +217,5 @@ newtests: newtestssilent
 newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
+	mkdir -p $(TMPDIR)
 	$(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
