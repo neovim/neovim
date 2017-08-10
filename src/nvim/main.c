@@ -140,7 +140,6 @@ void event_init(void)
 {
   loop_init(&main_loop, NULL);
   // early msgpack-rpc initialization
-  msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
   // Initialize input events
   input_init();

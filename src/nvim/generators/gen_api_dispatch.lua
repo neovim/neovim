@@ -4,13 +4,14 @@ mpack = require('mpack')
 if arg[1] == '--help' then
   print('Usage: genmsgpack.lua args')
   print('Args: 1: source directory')
-  print('      2: dispatch output file (dispatch_wrappers.generated.h)')
-  print('      3: functions metadata output file (funcs_metadata.generated.h)')
-  print('      4: API metadata output file (api_metadata.mpack)')
-  print('      5: lua C bindings output file (msgpack_lua_c_bindings.generated.c)')
+  print('      2: dispatch output file (dispatch_wrappers.generated.c)')
+  print('      3: dispatch table output file (dispatch_table.generated.h)')
+  print('      4: functions metadata output file (funcs_metadata.generated.h)')
+  print('      5: API metadata output file (api_metadata.mpack)')
+  print('      6: lua C bindings output file (msgpack_lua_c_bindings.generated.c)')
   print('      rest: C files where API functions are defined')
 end
-assert(#arg >= 4)
+assert(#arg >= 6)
 functions = {}
 
 local nvimdir = arg[1]
@@ -23,31 +24,40 @@ headers = {}
 -- Like `headers`, but without headers ending with .generated.h
 local written_headers = {}
 
--- output h file with generated dispatch functions
-dispatch_outputf = arg[2]
+-- output c file with generated dispatch functions
+local dispatch_outputf = arg[2]
+-- output h file with generated dispatch table
+local dispatch_table_outputf = arg[3]
 -- output h file with packed metadata
-funcs_metadata_outputf = arg[3]
+local funcs_metadata_outputf = arg[4]
 -- output metadata mpack file, for use by other build scripts
-mpack_outputf = arg[4]
-lua_c_bindings_outputf = arg[5]
+local mpack_outputf = arg[5]
+-- output c file with lua bindings
+local lua_c_bindings_outputf = arg[6]
 
 -- set of function names, used to detect duplicates
 function_names = {}
 
 c_grammar = require('generators.c_grammar')
 local lust = require('generators.lust')
+local gperf = require('generators.gperf')
 local global_test_helpers = require('test.helpers')
 
 local dedent = global_test_helpers.dedent
 local shallowcopy = global_test_helpers.shallowcopy
 
--- read each input file, parse and append to the api metadata
-for i = 6, #arg do
-  local full_path = arg[i]
+local function path_split(full_path)
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
     parts[#parts + 1] = part
   end
+  return parts
+end
+
+-- read each input file, parse and append to the api metadata
+for i = 7, #arg do
+  local full_path = arg[i]
+  local parts = path_split(full_path)
   local header = parts[#parts - 1]..'/'..parts[#parts]
   headers[#headers + 1] = header
   if header:sub(-12) ~= '.generated.h' then
@@ -160,7 +170,6 @@ for _,f in ipairs(functions) do
   end
 end
 
-
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
 funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
@@ -204,10 +213,7 @@ handlers_template = lust({
     @map{h = written_headers, _separator="\n"}:{{#include "nvim/$h"}}
 
     @map{fn = functions, _="\n\n"}:{{@if(not fn.impl_name)<handle_function>}}
-    void msgpack_rpc_init_method_table(void)
-    {
-      @map{fn = functions, _separator="\n"}:add_method_handler
-    }\n]])),
+    ]])),
   add_method_handler = dedent([[
     msgpack_rpc_add_method_handler(
       (String) { .data = "$fn.name", .size = sizeof("$fn.name") - 1 },
@@ -311,11 +317,7 @@ handlers_template:register('process_arg', function(env)
                       or ret.rt == "Tabpage")
   return ret
 end)
-handlers_template:register('add_method_handler', function(env)
-  local ret = shallowcopy(env)
-  ret.async = tostring(env.fn.async)
-  return ret
-end)
+local dispatch_table_input_parts = path_split(dispatch_table_outputf)
 local handlers = handlers_template:gen({
   written_headers=written_headers,
   functions=functions,
@@ -323,6 +325,17 @@ local handlers = handlers_template:gen({
 dispatch_output = io.open(dispatch_outputf, 'wb')
 dispatch_output:write(handlers)
 dispatch_output:close()
+
+gperf.generate({
+  outputf_base = dispatch_outputf,
+  struct_type = 'MsgpackRpcRequestHandlerMapItem',
+  initializer_suffix = ',{NULL,0}',
+  item_callback = function(self, _, fn)
+    return ('%s, {&handle_%s, %s}'):format(
+      fn.name, fn.impl_name or fn.name, async and '1' or '0')
+  end,
+  data = functions,
+})
 
 mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.pack(functions))
