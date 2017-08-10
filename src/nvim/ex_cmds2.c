@@ -3610,18 +3610,11 @@ void ex_language(exarg_T *eap)
 
 
 static char_u **locales = NULL;       // Array of all available locales
+
+#ifndef WIN32
 static bool did_init_locales = false;
 
-/// Lazy initialization of all available locales.
-static void init_locales(void)
-{
-  if (!did_init_locales) {
-    did_init_locales = true;
-    locales = find_locales();
-  }
-}
-
-// Return an array of strings for all available locales + NULL for the
+/// Return an array of strings for all available locales + NULL for the
 /// last element.  Return NULL in case of error.
 static char_u **find_locales(void)
 {
@@ -3652,6 +3645,18 @@ static char_u **find_locales(void)
   ga_grow(&locales_ga, 1);
   ((char_u **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
   return (char_u **)locales_ga.ga_data;
+}
+#endif
+
+/// Lazy initialization of all available locales.
+static void init_locales(void)
+{
+#ifndef WIN32
+  if (!did_init_locales) {
+    did_init_locales = true;
+    locales = find_locales();
+  }
+#endif
 }
 
 #  if defined(EXITFREE)
