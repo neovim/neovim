@@ -1,7 +1,9 @@
 " Test for displaying stuff
-if !has('gui_running') && has('unix')
-  set term=ansi
-endif
+
+" Nvim: `:set term` is not supported.
+" if !has('gui_running') && has('unix')
+"   set term=ansi
+" endif
 
 source view_util.vim
 
