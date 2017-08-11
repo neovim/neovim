@@ -332,7 +332,7 @@ gperf.generate({
   initializer_suffix = ',{NULL,0}',
   item_callback = function(self, _, fn)
     return ('%s, {&handle_%s, %s}'):format(
-      fn.name, fn.impl_name or fn.name, async and '1' or '0')
+      fn.name, fn.impl_name or fn.name, fn.async and '1' or '0')
   end,
   data = functions,
 })
