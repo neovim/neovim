@@ -131,6 +131,7 @@ int main() {
 #include <stdint.h>
 
 #include "nvim/memory.h"
+#include "nvim/api/private/defs.h"
 
 #include "nvim/func_attr.h"
 
@@ -714,6 +715,22 @@ typedef const char *kh_cstr_t;
   KHASH_INIT(name, kh_cstr_t, khval_t, 1, kh_str_hash_func, kh_str_hash_equal)
 
 /*! @function
+  @abstract     Instantiate a hash map containing String keys
+  @param  name  Name of the hash table [symbol]
+ */
+#define KHASH_SET_INIT_BIN_STR(name) \
+  KHASH_INIT(name, String, char, 0, kh_bin_str_hash_func, kh_bin_str_hash_equal)
+
+/*! @function
+  @abstract     Instantiate a hash map containing String keys
+  @param  name  Name of the hash table [symbol]
+  @param  khval_t  Type of values [type]
+ */
+#define KHASH_MAP_INIT_BIN_STR(name, khval_t) \
+  KHASH_INIT(name, String, khval_t, 1, kh_bin_str_hash_func, \
+             kh_bin_str_hash_equal)
+
+/*! @function
   @abstract     Return a literal for an empty hash table.
   @param  name  Name of the hash table [symbol]
  */
@@ -732,5 +749,29 @@ typedef const char *kh_cstr_t;
     .keys = NULL, \
     .vals = NULL, \
   }
+
+/*! @function
+  @abstract Return a hash of the binary string
+  @param  s  String to take hash from.
+ */
+static inline khint_t kh_bin_str_hash_func(const String s)
+  FUNC_ATTR_PURE FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  khint_t h = 0;
+  for (size_t i = 0; i < s.size; i++) {
+    h = (h << 5) - h + (uint8_t)s.data[i];
+  }
+  return h;
+}
+
+/*! @function
+  @abstract Check whether two binary strings are equal
+  @param  s  String to take hash from.
+ */
+static inline bool kh_bin_str_hash_equal(const String a, const String b)
+  FUNC_ATTR_PURE FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a.size == b.size && memcmp(a.data, b.data, a.size) == 0);
+}
 
 #endif  // NVIM_LIB_KHASH_H
