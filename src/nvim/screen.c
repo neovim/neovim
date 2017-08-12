@@ -2715,17 +2715,15 @@ win_line (
         draw_state = WL_FOLD;
         if (fdc > 0) {
           // Draw the 'foldcolumn'.  Allocate a buffer, "extra" may
-          // already be in used.
+          // already be in use.
+          xfree(p_extra_free);
           p_extra_free = xmalloc(12 + 1);
-
-          if (p_extra_free != NULL) {
-            fill_foldcolumn(p_extra_free, wp, false, lnum);
-            n_extra = fdc;
-            p_extra_free[n_extra] = NUL;
-            p_extra = p_extra_free;
-            c_extra = NUL;
-            char_attr = win_hl_attr(wp, HLF_FC);
-          }
+          fill_foldcolumn(p_extra_free, wp, false, lnum);
+          n_extra = fdc;
+          p_extra_free[n_extra] = NUL;
+          p_extra = p_extra_free;
+          c_extra = NUL;
+          char_attr = win_hl_attr(wp, HLF_FC);
         }
       }
 
@@ -3526,6 +3524,7 @@ win_line (
             p = xmalloc(len + 1);
             memset(p, ' ', len);
             p[len] = NUL;
+            xfree(p_extra_free);
             p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
               mb_char2bytes(lcs_tab2, p);
@@ -3641,6 +3640,7 @@ win_line (
             memset(p, ' ', n_extra);
             STRNCPY(p, p_extra + 1, STRLEN(p_extra) - 1);
             p[n_extra] = NUL;
+            xfree(p_extra_free);
             p_extra_free = p_extra = p;
           } else {
             n_extra = byte2cells(c) - 1;
@@ -4314,6 +4314,7 @@ win_line (
     cap_col = 0;
   }
 
+  xfree(p_extra_free);
   return row;
 }
 
