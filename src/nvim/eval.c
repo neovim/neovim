@@ -6747,6 +6747,8 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
   } else {
     if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
       ga_concat(gap, (char_u *)"Pattern ");
+    } else if (atype == ASSERT_NOTEQUAL) {
+      ga_concat(gap, (char_u *)"Expected not equal to ");
     } else {
       ga_concat(gap, (char_u *)"Expected ");
     }
@@ -6757,18 +6759,18 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
     } else {
       ga_concat(gap, exp_str);
     }
-    tofree = (char_u *)encode_tv2string(got_tv, NULL);
-    if (atype == ASSERT_MATCH) {
-      ga_concat(gap, (char_u *)" does not match ");
-    } else if (atype == ASSERT_NOTMATCH) {
-      ga_concat(gap, (char_u *)" does match ");
-    } else if (atype == ASSERT_NOTEQUAL) {
-      ga_concat(gap, (char_u *)" differs from ");
-    } else {
-      ga_concat(gap, (char_u *)" but got ");
+    if (atype != ASSERT_NOTEQUAL) {
+      if (atype == ASSERT_MATCH) {
+        ga_concat(gap, (char_u *)" does not match ");
+      } else if (atype == ASSERT_NOTMATCH) {
+        ga_concat(gap, (char_u *)" does match ");
+      } else {
+        ga_concat(gap, (char_u *)" but got ");
+      }
+      tofree = (char_u *)encode_tv2string(got_tv, NULL);
+      ga_concat(gap, tofree);
+      xfree(tofree);
     }
-    ga_concat(gap, tofree);
-    xfree(tofree);
   }
 }
 
