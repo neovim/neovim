@@ -23,6 +23,8 @@
 #include "nvim/cursor.h"
 #include "nvim/undo.h"
 #include "nvim/ascii.h"
+#include "nvim/os/input.h"
+#include "nvim/option_defs.h"
 
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
@@ -120,6 +122,11 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
 /// NULL if lua is not running or if it was already interrupted.
 volatile lua_State *volatile running_lstate = NULL;
 
+/// Used lua interpreter state
+///
+/// NULL if lua was not initialized yet.
+static lua_State *global_lstate = NULL;
+
 /// Hook used to interrupt current lua code
 ///
 /// @param[in]  lstate  Lua state.
@@ -132,6 +139,21 @@ static void nlua_interrupt_hook(lua_State *const lstate, lua_Debug *const ar)
   luaL_error(lstate, "interrupted!");
 }
 
+/// Hook used to check whether lua code needs to be interrupted
+///
+/// @param[in]  lstate  Lua state.
+/// @param[in]  ar  Debugging information.
+static void nlua_check_interrupt_hook(lua_State *const lstate,
+                                      lua_Debug *const ar)
+  FUNC_ATTR_NONNULL_ALL
+{
+  os_breakcheck();
+  if (got_int) {
+    got_int = false;
+    nlua_interrupt_hook(lstate, ar);
+  }
+}
+
 /// Interrupt currently running lua interpreter
 ///
 /// To be used from interrupt handler. Code derived from lua signal handlers.
@@ -142,6 +164,24 @@ void nlua_interrupt(void)
   if (lstate != NULL) {
     lua_sethook(lstate, nlua_interrupt_hook,
                 LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, 1);
+  }
+}
+
+/// Set lua hook for running_lstate according to p_licf
+///
+/// @param[in]  lstate  State to set hook for. Uses global_lstate if NULL.
+void nlua_set_interrupt_hook(lua_State *lstate)
+{
+  if (lstate == NULL) {
+    lstate = global_lstate;
+  }
+  if (p_licf == 0) {
+    if (lua_gethook(lstate) == &nlua_check_interrupt_hook) {
+      lua_sethook(lstate, NULL, 0, 0);
+    }
+  } else {
+    lua_sethook(lstate, nlua_check_interrupt_hook,
+                LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, (int)p_licf);
   }
 }
 
@@ -158,6 +198,7 @@ static bool nlua_interruptible_call(lua_State *const lstate, const int nargs,
                                     const int nresults)
   FUNC_ATTR_NONNULL_ALL
 {
+  nlua_set_interrupt_hook(lstate);
   volatile lua_State *const saved_lstate = running_lstate;
   assert(saved_lstate == running_lstate || saved_lstate == NULL);
   running_lstate = lstate;
@@ -363,7 +404,6 @@ static lua_State *nlua_init(void)
 static lua_State *nlua_enter(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  static lua_State *global_lstate = NULL;
   if (global_lstate == NULL) {
     global_lstate = nlua_init();
   }
@@ -388,6 +428,7 @@ static lua_State *nlua_enter(void)
     // stack: (empty)
     last_p_rtp = (const void *)p_rtp;
   }
+  nlua_set_interrupt_hook(lstate);
   return lstate;
 }
 

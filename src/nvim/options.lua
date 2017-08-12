@@ -1428,6 +1428,14 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='luaintchkfreq', abbreviation='licf',
+      type='number', scope={'global'},
+      vi_def=true,
+      vim=true,
+      varname='p_licf',
+      defaults={if_true={vi=100}},
+    },
+    {
       full_name='magic',
       type='bool', scope={'global'},
       vi_def=true,

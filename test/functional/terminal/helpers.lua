@@ -1,7 +1,9 @@
 local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
+
 local nvim_dir = helpers.nvim_dir
 local feed_command, nvim = helpers.feed_command, helpers.nvim
+local meths = helpers.meths
 
 local function feed_data(data)
   nvim('set_var', 'term_data', data)
@@ -97,6 +99,15 @@ local function screen_setup(extra_rows, command, cols)
   return screen
 end
 
+local function tui_screen_setup(...)
+  meths.set_var('__tui_screen_args', {
+    helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE',
+    '--cmd', 'set noswapfile noshowcmd noruler',
+    ...
+  })
+  return screen_setup(0, 'g:__tui_screen_args')
+end
+
 return {
   feed_data = feed_data,
   feed_termcode = feed_termcode,
@@ -112,5 +123,6 @@ return {
   clear_attrs = clear_attrs,
   enable_mouse = enable_mouse,
   disable_mouse = disable_mouse,
-  screen_setup = screen_setup
+  screen_setup = screen_setup,
+  tui_screen_setup = tui_screen_setup,
 }

@@ -75,6 +75,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
+#include "nvim/lua/executor.h"
 
 /*
  * The options that are local to a window or buffer have "indir" set to one of
@@ -4158,6 +4159,14 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     if (pp == &curbuf->b_p_sw || curbuf->b_p_sw == 0) {
       parse_cino(curbuf);
     }
+  // 'luaintchkfreq'
+  } else if (pp == &p_licf) {
+    if (p_licf < 0) {
+      p_licf = 0;
+    } else if (p_licf > INT_MAX) {
+      p_licf = INT_MAX;
+    }
+    nlua_set_interrupt_hook(NULL);
   }
   /* 'maxcombine' */
   else if (pp == &p_mco) {

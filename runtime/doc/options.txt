@@ -3777,6 +3777,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that using the "-u NONE" and "--noplugin" command line arguments
 	reset this option. |-u| |--noplugin|
 
+						*'luaintchkfreq'* *'licf'*
+'luaintchkfreq' 'licf'	number	(default 100)
+			global
+	Determines how often (in lua opcodes) lua bindings should check for 
+	incoming interrupts: with default value 100 it will check for 
+	interrupt after running 100 opcodes.  The lesser the number, the 
+	slower lua code runs.  Special value zero prevents lua from checking 
+	for interrupts completely, but allows using `debug.sethook` for other 
+	purposes: with interrupts checking enabled it is being used for 
+	checking for interrupts.
+
 						*'magic'* *'nomagic'*
 'magic'			boolean	(default on)
 			global
