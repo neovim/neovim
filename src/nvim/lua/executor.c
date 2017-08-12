@@ -145,7 +145,7 @@ void nlua_interrupt(void)
   }
 }
 
-/// Like lua_pcall, but set running_lstate before entering and reset it at exit
+/// Like lua_pcall, but sets some things for interrupts to work
 ///
 /// Does not have errfunc argument because it is not used.
 ///
@@ -154,7 +154,8 @@ void nlua_interrupt(void)
 /// @param[in]  nresults  Number of expected results.
 ///
 /// @return true if errored out, false otherwise.
-bool nlua_pcall(lua_State *const lstate, const int nargs, const int nresults)
+static bool nlua_interruptible_call(lua_State *const lstate, const int nargs,
+                                    const int nresults)
   FUNC_ATTR_NONNULL_ALL
 {
   volatile lua_State *const saved_lstate = running_lstate;
@@ -197,7 +198,7 @@ static int nlua_exec_lua_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     nlua_error(lstate, _("E5104: Error while creating lua chunk: %.*s"));
     return 0;
   }
-  if (nlua_pcall(lstate, 0, 1)) {
+  if (nlua_interruptible_call(lstate, 0, 1)) {
     nlua_error(lstate, _("E5105: Error while calling lua chunk: %.*s"));
     return 0;
   }
@@ -244,7 +245,7 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   if (lcmd_len >= IOSIZE) {
     xfree(lcmd);
   }
-  if (nlua_pcall(lstate, 0, 1)) {
+  if (nlua_interruptible_call(lstate, 0, 1)) {
     nlua_error(lstate, _("E5110: Error while creating lua function: %.*s"));
     return 0;
   }
@@ -255,7 +256,7 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     lua_pushvalue(lstate, -1);
     lua_pushstring(lstate, (const char *)ml_get_buf(curbuf, l, false));
     lua_pushnumber(lstate, (lua_Number)l);
-    if (nlua_pcall(lstate, 2, 1)) {
+    if (nlua_interruptible_call(lstate, 2, 1)) {
       nlua_error(lstate, _("E5111: Error while calling lua function: %.*s"));
       break;
     }
@@ -292,7 +293,7 @@ static int nlua_exec_lua_file(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
     return 0;
   }
-  if (nlua_pcall(lstate, 0, 0)) {
+  if (nlua_interruptible_call(lstate, 0, 0)) {
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
     return 0;
   }
@@ -377,7 +378,7 @@ static lua_State *nlua_enter(void)
     // stack: vim
     lua_getfield(lstate, -1, "_update_package_paths");
     // stack: vim, vim._update_package_paths
-    if (nlua_pcall(lstate, 0, 0)) {
+    if (nlua_interruptible_call(lstate, 0, 0)) {
       // stack: vim, error
       nlua_error(lstate, _("E5117: Error while updating package paths: %.*s"));
       // stack: vim
@@ -451,7 +452,7 @@ static int nlua_eval_lua_string(lua_State *const lstate)
   } else {
     nlua_push_typval(lstate, arg);
   }
-  if (nlua_pcall(lstate, 1, 1)) {
+  if (nlua_interruptible_call(lstate, 1, 1)) {
     nlua_error(lstate,
                _("E5108: Error while calling lua chunk for luaeval(): %.*s"));
     return 0;
@@ -490,7 +491,7 @@ static int nlua_exec_lua_string_api(lua_State *const lstate)
     nlua_push_Object(lstate, args->items[i]);
   }
 
-  if (nlua_pcall(lstate, (int)args->size, 1)) {
+  if (nlua_interruptible_call(lstate, (int)args->size, 1)) {
     size_t len;
     const char *str = lua_tolstring(lstate, -1, &len);
     api_set_error(err, kErrorTypeException,
@@ -525,7 +526,7 @@ static int nlua_print(lua_State *const lstate)
   for (; curargidx <= nargs; curargidx++) {
     lua_pushvalue(lstate, -1);  // tostring
     lua_pushvalue(lstate, curargidx);  // arg
-    if (nlua_pcall(lstate, 1, 1)) {
+    if (nlua_interruptible_call(lstate, 1, 1)) {
       errmsg = lua_tolstring(lstate, -1, &errmsg_len);
       goto nlua_print_error;
     }
@@ -618,7 +619,7 @@ int nlua_debug(lua_State *lstate)
       nlua_error(lstate, _("E5115: Error while loading debug string: %.*s"));
     }
     tv_clear(&input);
-    if (nlua_pcall(lstate, 0, 0)) {
+    if (nlua_interruptible_call(lstate, 0, 0)) {
       nlua_error(lstate, _("E5116: Error while calling debug string: %.*s"));
     }
   }
