@@ -180,8 +180,7 @@ void nlua_set_interrupt_hook(lua_State *lstate)
       lua_sethook(lstate, NULL, 0, 0);
     }
   } else {
-    lua_sethook(lstate, nlua_check_interrupt_hook,
-                LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, (int)p_licf);
+    lua_sethook(lstate, nlua_check_interrupt_hook, LUA_MASKCOUNT, (int)p_licf);
   }
 }
 
