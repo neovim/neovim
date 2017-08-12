@@ -45,7 +45,7 @@
 #define OUTBUF_SIZE 0xffff
 
 #define TOO_MANY_EVENTS 1000000
-#define STARTS_WITH(str, prefix) (strlen(term) >= (sizeof(prefix) - 1) \
+#define STARTS_WITH(str, prefix) (strlen(str) >= (sizeof(prefix) - 1) \
     && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
 #define TMUX_WRAP(is_tmux, seq) ((is_tmux) \
     ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)

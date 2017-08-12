@@ -2570,11 +2570,9 @@ buf_write (
       perm = -1;
     }
   }
-#else /* win32 */
-      /*
-       * Check for a writable device name.
-       */
-  c = os_nodetype((char *)fname);
+#else  // win32
+  // Check for a writable device name.
+  c = fname == NULL ? NODE_OTHER : os_nodetype((char *)fname);
   if (c == NODE_OTHER) {
     SET_ERRMSG_NUM("E503", _("is not a file or writable device"));
     goto fail;
@@ -2594,9 +2592,8 @@ buf_write (
     if (overwriting) {
       os_fileinfo((char *)fname, &file_info_old);
     }
-
   }
-#endif /* !UNIX */
+#endif  // !UNIX
 
   if (!device && !newfile) {
     /*

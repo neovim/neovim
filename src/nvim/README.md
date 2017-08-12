@@ -11,8 +11,9 @@ Logs
 
 Low-level log messages sink to `$NVIM_LOG_FILE`.
 
-You can use `LOG_CALLSTACK()` anywhere in the source to log the current
-stacktrace. (Currently Linux-only.)
+You can use `LOG_CALLSTACK();` anywhere in the source to log the current
+stacktrace. To log in an alternate file, e.g. stderr, use
+`LOG_CALLSTACK_TO_FILE(FILE*)`. (Currently Linux-only.)
 
 UI events are logged at level 0 (`DEBUG_LOG_LEVEL`).
 
