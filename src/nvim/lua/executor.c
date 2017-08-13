@@ -174,6 +174,9 @@ void nlua_set_interrupt_hook(lua_State *lstate)
 {
   if (lstate == NULL) {
     lstate = global_lstate;
+    if (lstate == NULL) {
+      return;
+    }
   }
   if (p_licf == 0) {
     if (lua_gethook(lstate) == &nlua_check_interrupt_hook) {
