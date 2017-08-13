@@ -321,7 +321,50 @@ describe('luaintchkfreq option', function()
     meths.set_option('luaintchkfreq', 0)
     eq(0, meths.get_option('luaintchkfreq'))
   end)
-  it('specifies when lua code is interrupted', function()
-    -- TODO
+  local gethookstr = [[
+    (function(hook, flags, cnt)
+      if type(hook) == type(nil) then
+        hook = 'nil'
+      elseif type(hook) == type(function() end) then
+        hook = 'luafunc'
+      else
+        hook = 'cfunc'
+      end
+      return {hook, flags, cnt}
+    end)(debug.gethook())
+  ]]
+  it('specifies when lua code is interrupted, first set zero', function()
+    meths.set_option('luaintchkfreq', 0)
+    eq({'nil', '', 0}, funcs.luaeval(gethookstr))
+    meths.set_option('luaintchkfreq', 10)
+    eq({'cfunc', '', 10}, funcs.luaeval(gethookstr))
+  end)
+  it('specifies when lua code is interrupted, first set 10', function()
+    meths.set_option('luaintchkfreq', 10)
+    eq({'cfunc', '', 10}, funcs.luaeval(gethookstr))
+    meths.set_option('luaintchkfreq', 0)
+    eq({'nil', '', 0}, funcs.luaeval(gethookstr))
+  end)
+  it('specifies when lua code is interrupted, start from defaults', function()
+    eq({'cfunc', '', 100}, funcs.luaeval(gethookstr))
+    meths.set_option('luaintchkfreq', 10)
+    eq({'cfunc', '', 10}, funcs.luaeval(gethookstr))
+    meths.set_option('luaintchkfreq', 0)
+    eq({'nil', '', 0}, funcs.luaeval(gethookstr))
+  end)
+  it('overrides user hooks', function()
+    eq({'cfunc', '', 100}, funcs.luaeval(gethookstr))
+    eq({'luafunc', '', 5},
+       funcs.luaeval(('({debug.sethook(function() end, "", 5), %s})[2]'):format(
+         gethookstr)))
+    eq({'cfunc', '', 100}, funcs.luaeval(gethookstr))
+  end)
+  it('does not override user hooks when luaintchkfreq is zero', function()
+    meths.set_option('licf', 0)
+    eq({'nil', '', 0}, funcs.luaeval(gethookstr))
+    eq({'luafunc', '', 5},
+       funcs.luaeval(('({debug.sethook(function() end, "", 5), %s})[2]'):format(
+         gethookstr)))
+    eq({'luafunc', '', 5}, funcs.luaeval(gethookstr))
   end)
 end)
