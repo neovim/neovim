@@ -101,6 +101,14 @@ describe(':lua command', function()
     feed(':cq<CR>')
     screen_check_exit(screen)
   end)
+  it('may be interrupted with <C-c> without additional :terminal layer',
+  function()
+    feed(':lua while true do i = nil end<CR>')
+    sleep(100)
+    feed('<C-c>')
+    eq({blocking=false, mode='n'}, meths.get_mode())
+    eq('', funcs.getline(1))
+  end)
 end)
 
 describe(':luado command', function()
@@ -168,10 +176,10 @@ describe(':luado command', function()
     ]])
     feed('<Space>')
     screen:expect([[
+      2 false interrupted!                              |
+      started                                           |
       stopped                                           |
       2 false interrupted!                              |
-      {8:E5111: Error while calling lua function: [string "}|
-      {8:<VimL compiled string>"]:11: interrupted!}         |
       Type  :quit<Enter>  to exit Nvim                  |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
