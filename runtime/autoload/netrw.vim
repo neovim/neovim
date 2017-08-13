@@ -659,7 +659,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
   endif
 
   " save registers
-  if has("clipboard")
+  if has("clipboard") && !has('nvim')
    sil! let keepregstar = @*
    sil! let keepregplus = @+
   endif
@@ -886,7 +886,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
 "     call Decho("..case Nexplore with starpat=".starpat.": (indx=".indx.")",'~'.expand("<slnum>"))
      if !exists("w:netrw_explore_list") " sanity check
       NetrwKeepj call netrw#ErrorMsg(s:WARNING,"using Nexplore or <s-down> improperly; see help for netrw-starstar",40)
-      if has("clipboard")
+      if has("clipboard") && !has('nvim')
        sil! let @* = keepregstar
        sil! let @+ = keepregstar
       endif
@@ -911,7 +911,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
 "     call Decho("case Pexplore with starpat=".starpat.": (indx=".indx.")",'~'.expand("<slnum>"))
      if !exists("w:netrw_explore_list") " sanity check
       NetrwKeepj call netrw#ErrorMsg(s:WARNING,"using Pexplore or <s-up> improperly; see help for netrw-starstar",41)
-      if has("clipboard")
+      if has("clipboard") && !has('nvim')
        sil! let @* = keepregstar
        sil! let @+ = keepregstar
       endif
@@ -966,7 +966,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
       catch /^Vim\%((\a\+)\)\=:E480/
        keepalt call netrw#ErrorMsg(s:WARNING,'no files matched pattern<'.pattern.'>',45)
        if &hls | let keepregslash= s:ExplorePatHls(pattern) | endif
-       if has("clipboard")
+       if has("clipboard") && !has('nvim')
         sil! let @* = keepregstar
         sil! let @+ = keepregstar
        endif
@@ -1002,7 +1002,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
 
      if w:netrw_explore_listlen == 0 || (w:netrw_explore_listlen == 1 && w:netrw_explore_list[0] =~ '\*\*\/')
       keepalt NetrwKeepj call netrw#ErrorMsg(s:WARNING,"no files matched",42)
-      if has("clipboard")
+      if has("clipboard") && !has('nvim')
        sil! let @* = keepregstar
        sil! let @+ = keepregstar
       endif
@@ -1050,7 +1050,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
     if !exists("g:netrw_quiet")
      keepalt NetrwKeepj call netrw#ErrorMsg(s:WARNING,"your vim needs the +path_extra feature for Exploring with **!",44)
     endif
-    if has("clipboard")
+    if has("clipboard") && !has('nvim')
      sil! let @* = keepregstar
      sil! let @+ = keepregstar
     endif
@@ -1121,7 +1121,7 @@ fun! netrw#Explore(indx,dosplit,style,...)
   " there's no danger of a late FocusGained event on initialization.
   " Consequently, set s:netrw_events to 2.
   let s:netrw_events= 2
-  if has("clipboard")
+  if has("clipboard") && !has('nvim')
    sil! let @* = keepregstar
    sil! let @+ = keepregstar
   endif
@@ -1612,7 +1612,7 @@ fun! s:NetrwOptionRestore(vt)
   if exists("{a:vt}netrw_rokeep")   |let &l:ro     = {a:vt}netrw_rokeep      |unlet {a:vt}netrw_rokeep   |endif
   if exists("{a:vt}netrw_selkeep")  |let &l:sel    = {a:vt}netrw_selkeep     |unlet {a:vt}netrw_selkeep  |endif
   if exists("{a:vt}netrw_spellkeep")|let &l:spell  = {a:vt}netrw_spellkeep   |unlet {a:vt}netrw_spellkeep|endif
-  if has("clipboard")
+  if has("clipboard") && !has('nvim')
    if exists("{a:vt}netrw_starkeep") |let @*        = {a:vt}netrw_starkeep    |unlet {a:vt}netrw_starkeep |endif
   endif
   " Problem: start with liststyle=0; press <i> : result, following line resets l:ts.
@@ -1646,7 +1646,7 @@ fun! s:NetrwOptionRestore(vt)
     unlet {a:vt}netrw_dirkeep
    endif
   endif
-  if has("clipboard")
+  if has("clipboard") && !has('nvim')
    if exists("{a:vt}netrw_regstar") |sil! let @*= {a:vt}netrw_regstar |unlet {a:vt}netrw_regstar |endif
   endif
   if exists("{a:vt}netrw_regslash")|sil! let @/= {a:vt}netrw_regslash|unlet {a:vt}netrw_regslash|endif
@@ -1728,7 +1728,7 @@ fun! s:NetrwOptionSave(vt)
   if !g:netrw_use_noswf
    let {a:vt}netrw_swfkeep  = &l:swf
   endif
-  if has("clipboard")
+  if has("clipboard") && !has('nvim')
    let {a:vt}netrw_starkeep = @*
   endif
   let {a:vt}netrw_tskeep    = &l:ts
@@ -1742,7 +1742,7 @@ fun! s:NetrwOptionSave(vt)
   if g:netrw_keepdir
    let {a:vt}netrw_dirkeep  = getcwd()
   endif
-  if has("clipboard")
+  if has("clipboard") && !has('nvim')
    if &go =~# 'a' | sil! let {a:vt}netrw_regstar = @* | endif
   endif
   sil! let {a:vt}netrw_regslash= @/
@@ -9169,7 +9169,7 @@ fun! s:NetrwWideListing()
    let newcolstart = w:netrw_bannercnt + fpc
    let newcolend   = newcolstart + fpc - 1
 "   call Decho("bannercnt=".w:netrw_bannercnt." fpl=".w:netrw_fpl." fpc=".fpc." newcol[".newcolstart.",".newcolend."]",'~'.expand("<slnum>"))
-   if has("clipboard")
+   if has("clipboard") && !has('nvim')
     sil! let keepregstar = @*
     sil! let keepregplus = @+
    endif
@@ -9185,7 +9185,7 @@ fun! s:NetrwWideListing()
     exe "sil! NetrwKeepj ".newcolstart.','.newcolend.'d _'
     exe 'sil! NetrwKeepj '.w:netrw_bannercnt
    endwhile
-   if has("clipboard")
+   if has("clipboard") && !has('nvim')
     sil! let @*= keepregstar
     sil! let @+= keepregplus
    endif
