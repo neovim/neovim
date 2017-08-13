@@ -1460,6 +1460,7 @@ static int process_still_running;
  */
 static time_t swapfile_info(char_u *fname)
 {
+  assert(fname != NULL);
   int fd;
   struct block0 b0;
   time_t x = (time_t)0;
@@ -3135,6 +3136,7 @@ attention_message (
     char_u *fname         /* swap file name */
 )
 {
+  assert(buf->b_fname != NULL);
   time_t x, sx;
   char        *p;
 
