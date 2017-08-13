@@ -1825,6 +1825,7 @@ static int process_env(char *env, bool is_viminit)
 /// os_fileinfo_link() respectively for extra security.
 static bool file_owned(const char *fname)
 {
+  assert(fname != NULL);
   uid_t uid = getuid();
   FileInfo file_info;
   bool file_owned = os_fileinfo(fname, &file_info)
