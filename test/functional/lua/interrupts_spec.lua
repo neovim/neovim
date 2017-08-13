@@ -16,8 +16,11 @@ local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
 local curbufmeths = helpers.curbufmeths
+local get_pending_win32 = helpers.get_pending_win32
 
 local tui_screen_setup = thelpers.tui_screen_setup
+
+local pend_w32 = get_pending_win32(pending)
 
 before_each(clear)
 
@@ -75,6 +78,7 @@ end
 
 describe(':lua command', function()
   it('may be interrupted with <C-c>', function()
+    if pend_w32(':terminal nvim') then return end
     local screen = lua_screen_setup()
     feed(':lua test()<CR>')
     screen:expect([[
@@ -113,6 +117,7 @@ end)
 
 describe(':luado command', function()
   it('may be interrupted with <C-c>', function()
+    if pend_w32(':terminal nvim') then return end
     local screen = lua_screen_setup()
     feed('iabc\ndef\nghi<ESC>')
     screen:expect([[
@@ -197,6 +202,7 @@ describe(':luafile', function()
   end)
 
   it('may be interrupted with <C-c>', function()
+    if pend_w32(':terminal nvim') then return end
     write_file(fname, 'test()')
     local screen = lua_screen_setup()
     feed(':luafile ' .. fname .. '<CR>')
@@ -228,6 +234,7 @@ end)
 
 describe('luaeval()', function()
   it('may be interrupted with <C-c>', function()
+    if pend_w32(':terminal nvim') then return end
     local screen = lua_screen_setup()
     feed(':echomsg luaeval("test()")<CR>')
     screen:expect([[
@@ -268,6 +275,7 @@ describe('luaintchkfreq option', function()
     eq(100, meths.eval('&licf'))
   end)
   it('replaces values greater then INT_MAX with INT_MAX', function()
+    if pend_w32('sizeof(long/*numeric option*/) == sizeof(int)') then return end
     local err, msg = pcall(meths.set_option, 'luaintchkfreq', 4294967296)
     eq(false, err)
     msg = msg:gsub('^.*:', '')
