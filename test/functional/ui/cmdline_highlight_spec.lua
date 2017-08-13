@@ -13,7 +13,7 @@ local curbufmeths = helpers.curbufmeths
 
 local screen
 
--- Bug in input() handling: {REDRAW} will erase the whole prompt up until
+-- Bug in input() handling: :redraw! will erase the whole prompt up until
 -- user types something. It exists in Vim as well, so using `h<BS>` as
 -- a workaround.
 local function redraw_input()
