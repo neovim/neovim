@@ -854,9 +854,9 @@ describe('Ex commands coloring support', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       :                                       |
-      {ERR:E5408: Unable to get Nvim_color_cmdline }|
-      {ERR:callback from g:: Vim:E6000: Argument is}|
-      {ERR: not a function or function name}        |
+      {ERR:E5408: Unable to get g:Nvim_color_cmdlin}|
+      {ERR:e callback: Vim:E6000: Argument is not a}|
+      {ERR: function or function name}              |
       :#^                                      |
     ]])
   end)
@@ -884,9 +884,9 @@ describe('Expressions coloring support', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       =                                       |
-      {ERR:E5409: Unable to get Nvim_color_expr cal}|
-      {ERR:lback from g:: Vim:E6000: Argument is no}|
-      {ERR:t a function or function name}           |
+      {ERR:E5409: Unable to get g:Nvim_color_expr c}|
+      {ERR:allback: Vim:E6000: Argument is not a fu}|
+      {ERR:nction or function name}                 |
       =1^                                      |
     ]])
   end)

@@ -2420,7 +2420,7 @@ static bool color_cmdline(const CmdlineInfo *const colored_ccline,
   } else if (colored_ccline->cmdfirstc == ':') {
     try_enter(&tstate);
     err_errmsg = N_(
-        "E5408: Unable to get Nvim_color_cmdline callback from g:: %s");
+        "E5408: Unable to get g:Nvim_color_cmdline callback: %s");
     dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_cmdline"),
                                    &color_cb);
     tl_ret = try_leave(&tstate, &err);
@@ -2428,7 +2428,7 @@ static bool color_cmdline(const CmdlineInfo *const colored_ccline,
   } else if (colored_ccline->cmdfirstc == '=') {
     try_enter(&tstate);
     err_errmsg = N_(
-        "E5409: Unable to get Nvim_color_expr callback from g:: %s");
+        "E5409: Unable to get g:Nvim_color_expr callback: %s");
     dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_expr"),
                                    &color_cb);
     tl_ret = try_leave(&tstate, &err);
