@@ -1853,7 +1853,10 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   if (curbuf_locked())
     return FAIL;
 
-  /* altfpos may be changed by getfile(), get it now */
+  // viewport info
+  wininfo_T *wip = buflist_find_wininfo(buf);
+
+  // altfpos may be changed by getfile(), get it now
   if (lnum == 0) {
     fpos = buflist_findfpos(buf);
     lnum = fpos->lnum;
@@ -1899,6 +1902,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
       check_cursor_col();
       curwin->w_cursor.coladd = 0;
       curwin->w_set_curswant = TRUE;
+      win_set_viewport(curwin, wip);
     }
     return OK;
   }
@@ -1906,23 +1910,49 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   return FAIL;
 }
 
+void win_set_viewport(win_T *win, wininfo_T *wip)
+{
+  assert(win != NULL);
+  if (wip == NULL || wip->wi_topline == 0) {
+    return;
+  }
+  set_topline(win, wip->wi_topline);
+  win->w_topfill = wip->wi_topfill;
+  win->w_leftcol = wip->wi_leftcol;
+  win->w_skipcol = wip->wi_skipcol;
+
+  check_cursor();
+  win_new_height(win, win->w_height);
+  win_new_width(win, win->w_width);
+
+  if (win->w_topline <= 0) {
+    win->w_topline = 1;
+  }
+  if (win->w_topline > curbuf->b_ml.ml_line_count) {
+    win->w_topline = curbuf->b_ml.ml_line_count;
+  }
+  check_topfill(win, true);
+  changed_window_setting();
+}
+
 // Go to the last known line number for the current buffer.
 void buflist_getfpos(void)
 {
-  pos_T       *fpos;
-
-  fpos = buflist_findfpos(curbuf);
+  pos_T *fpos = buflist_findfpos(curbuf);
+  wininfo_T *wip = buflist_find_wininfo(curbuf);
 
   curwin->w_cursor.lnum = fpos->lnum;
   check_cursor_lnum();
 
-  if (p_sol)
+  if (p_sol) {
     curwin->w_cursor.col = 0;
-  else {
+  } else {
     curwin->w_cursor.col = fpos->col;
     check_cursor_col();
     curwin->w_cursor.coladd = 0;
-    curwin->w_set_curswant = TRUE;
+    curwin->w_set_curswant = true;
+
+    win_set_viewport(curwin, wip);
   }
 }
 
@@ -2254,7 +2284,7 @@ buflist_nr2name (
 /// @param[in]      lnum          Line number to be set. If it is zero then only
 ///                               options are touched.
 /// @param[in]      col           Column number to be set.
-/// @param[in]      copy_options  If true save the local window option values.
+/// @param[in]      copy_options  Save the local window viewport and options.
 void buflist_setfpos(buf_T *const buf, win_T *const win,
                      linenr_T lnum, colnr_T col,
                      bool copy_options)
@@ -2289,11 +2319,22 @@ void buflist_setfpos(buf_T *const buf, win_T *const win,
     wip->wi_fpos.col = col;
   }
   if (copy_options) {
-    /* Save the window-specific option values. */
+    // Save the window viewport.
+    wip->wi_topline = win->w_topline;
+    wip->wi_topfill = win->w_topfill;
+    wip->wi_leftcol = win->w_leftcol;
+    wip->wi_skipcol = win->w_skipcol;
+
+    // Save the window-specific option values.
     copy_winopt(&win->w_onebuf_opt, &wip->wi_opt);
     wip->wi_fold_manual = win->w_fold_manual;
     cloneFoldGrowArray(&win->w_folds, &wip->wi_folds);
     wip->wi_optset = true;
+  } else {
+    wip->wi_topline = 0;
+    wip->wi_topfill = 0;
+    wip->wi_leftcol = 0;
+    wip->wi_skipcol = 0;
   }
 
   /* insert the entry in front of the list */
@@ -2394,6 +2435,24 @@ pos_T *buflist_findfpos(buf_T *buf)
 
   wininfo_T *wip = find_wininfo(buf, FALSE);
   return (wip == NULL) ? &no_position : &(wip->wi_fpos);
+}
+
+wininfo_T *buflist_find_wininfo(buf_T *buf)
+{
+  static wininfo_T no_wininfo = {
+    .wi_next = NULL,
+    .wi_prev = NULL,
+    .wi_win = NULL,
+    .wi_fpos = INIT_POS_T(1, 0, 0),
+    // .wi_topline = 0,
+    // .wi_topfill = 0,
+    // .wi_leftcol = 0,
+    // .wi_skipcol = 0,
+
+  };
+
+  wininfo_T *wip = find_wininfo(buf, FALSE);
+  return (wip == NULL) ? &no_wininfo : wip;
 }
 
 /*
@@ -2669,10 +2728,8 @@ void buflist_slash_adjust(void)
 
 #endif
 
-/*
- * Set alternate cursor position for the current buffer and window "win".
- * Also save the local window option values.
- */
+/// Save viewport info for the current buffer and window "win".
+/// Also save the local window option values.
 void buflist_altfpos(win_T *win)
 {
   buflist_setfpos(curbuf, win, win->w_cursor.lnum, win->w_cursor.col, TRUE);

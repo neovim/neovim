@@ -17445,29 +17445,22 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       curwin->w_curswant = tv_get_number(&di->di_tv);
       curwin->w_set_curswant = false;
     }
+
+    wininfo_T wip = { 0 };
     if ((di = tv_dict_find(dict, S_LEN("topline"))) != NULL) {
-      set_topline(curwin, tv_get_number(&di->di_tv));
+      wip.wi_topline = tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("topfill"))) != NULL) {
-      curwin->w_topfill = tv_get_number(&di->di_tv);
+      wip.wi_topfill = tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("leftcol"))) != NULL) {
-      curwin->w_leftcol = tv_get_number(&di->di_tv);
+      wip.wi_leftcol= tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("skipcol"))) != NULL) {
-      curwin->w_skipcol = tv_get_number(&di->di_tv);
+      wip.wi_skipcol= tv_get_number(&di->di_tv);
     }
 
-    check_cursor();
-    win_new_height(curwin, curwin->w_height);
-    win_new_width(curwin, curwin->w_width);
-    changed_window_setting();
-
-    if (curwin->w_topline <= 0)
-      curwin->w_topline = 1;
-    if (curwin->w_topline > curbuf->b_ml.ml_line_count)
-      curwin->w_topline = curbuf->b_ml.ml_line_count;
-    check_topfill(curwin, true);
+    win_set_viewport(curwin, &wip);
   }
 }
 

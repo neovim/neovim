@@ -2096,7 +2096,7 @@ int do_ecmd(
   linenr_T topline = 0;
   int newcol = -1;
   int solcol = -1;
-  pos_T       *pos;
+  wininfo_T *wip = NULL;  // viewport info
   char_u      *command = NULL;
   int did_get_winopts = FALSE;
   int readfile_flags = 0;
@@ -2244,7 +2244,8 @@ int do_ecmd(
     /* May jump to last used line number for a loaded buffer or when asked
      * for explicitly */
     if ((oldbuf && newlnum == ECMD_LASTL) || newlnum == ECMD_LAST) {
-      pos = buflist_findfpos(buf);
+      pos_T *pos = buflist_findfpos(buf);
+      wip = buflist_find_wininfo(buf);
       newlnum = pos->lnum;
       solcol = pos->col;
     }
@@ -2542,11 +2543,12 @@ int do_ecmd(
       curwin->w_cursor.lnum = newlnum;
       check_cursor_lnum();
       if (solcol >= 0 && !p_sol) {
-        /* 'sol' is off: Use last known column. */
+        // 'sol' is off: Use last known column.
         curwin->w_cursor.col = solcol;
         check_cursor_col();
         curwin->w_cursor.coladd = 0;
         curwin->w_set_curswant = TRUE;
+        win_set_viewport(curwin, wip);
       } else
         beginline(BL_SOL | BL_FIX);
     } else {                  /* no line number, go to last line in Ex mode */

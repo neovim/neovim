@@ -241,25 +241,29 @@ typedef struct {
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
 } winopt_T;
 
-/*
- * Window info stored with a buffer.
- *
- * Two types of info are kept for a buffer which are associated with a
- * specific window:
- * 1. Each window can have a different line number associated with a buffer.
- * 2. The window-local options for a buffer work in a similar way.
- * The window-info is kept in a list at b_wininfo.  It is kept in
- * most-recently-used order.
- */
+/// Window-specific info stored with a buffer.
+///
+/// Types of info kept:
+/// 1. Viewport info (like winsaveview(): current line, topline, ...)
+/// 2. The window-local options for a buffer work in a similar way.
+///
+/// The window-info is kept in a `b_wininfo` linked list in MRU order.
 struct wininfo_S {
-  wininfo_T   *wi_next;         /* next entry or NULL for last entry */
-  wininfo_T   *wi_prev;         /* previous entry or NULL for first entry */
-  win_T       *wi_win;          /* pointer to window that did set wi_fpos */
-  pos_T wi_fpos;                /* last cursor position in the file */
-  bool wi_optset;               /* true when wi_opt has useful values */
-  winopt_T wi_opt;              /* local window options */
-  bool wi_fold_manual;          /* copy of w_fold_manual */
-  garray_T wi_folds;            /* clone of w_folds */
+  wininfo_T   *wi_next;         ///< next entry or NULL for last entry
+  wininfo_T   *wi_prev;         ///< previous entry or NULL for first entry
+  win_T       *wi_win;          ///< pointer to window that did set wi_fpos
+
+  // viewport info
+  pos_T wi_fpos;                ///< last cursor position in the file
+  linenr_T wi_topline;          ///< last w_topline
+  int wi_topfill;               ///< last w_topfill
+  colnr_T wi_leftcol;           ///< last w_leftcol
+  colnr_T wi_skipcol;           ///< last w_skipcol
+
+  bool wi_optset;               ///< true when wi_opt has useful values
+  winopt_T wi_opt;              ///< local window options
+  bool wi_fold_manual;          ///< copy of w_fold_manual
+  garray_T wi_folds;            ///< clone of w_folds
 };
 
 /*
