@@ -519,7 +519,7 @@ static int nlua_print(lua_State *const lstate)
       }
       msg((char_u *)str + start);
     }
-    if (str[len - 1] == NUL) {  // Last was newline
+    if (len && str[len - 1] == NUL) {  // Last was newline
       msg((char_u *)"");
     }
   }
