@@ -342,6 +342,51 @@ describe('Command-line coloring', function()
       :e^                                      |
     ]])
   end)
+  it('silences :echo', function()
+    set_color_cb('Echoing')
+    start_prompt('e')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :e^                                      |
+    ]])
+    eq('', meths.command_output('messages'))
+  end)
+  it('silences :echon', function()
+    set_color_cb('Echoning')
+    start_prompt('e')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :e^                                      |
+    ]])
+    eq('', meths.command_output('messages'))
+  end)
+  it('silences :echomsg', function()
+    set_color_cb('Echomsging')
+    start_prompt('e')
+    screen:expect([[
+                                              |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      :e^                                      |
+    ]])
+    eq('', meths.command_output('messages'))
+  end)
   it('does the right thing when throwing', function()
     set_color_cb('Throwing')
     start_prompt('e')
