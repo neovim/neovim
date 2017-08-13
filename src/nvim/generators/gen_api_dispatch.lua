@@ -16,7 +16,6 @@ functions = {}
 
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?/init.lua;' .. nvimdir .. '/?.lua;' .. package.path
-package.path = nvimdir .. '/../../?.lua;' .. package.path
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
@@ -41,10 +40,10 @@ function_names = {}
 c_grammar = require('generators.c_grammar')
 local lust = require('generators.lust')
 local gperf = require('generators.gperf')
-local global_test_helpers = require('test.helpers')
+local nvim_helpers = require('lib.helpers')
 
-local dedent = global_test_helpers.dedent
-local shallowcopy = global_test_helpers.shallowcopy
+local dedent = nvim_helpers.dedent
+local shallowcopy = nvim_helpers.shallowcopy
 
 local function path_split(full_path)
   local parts = {}
@@ -88,14 +87,6 @@ for i = 7, #arg do
     end
   end
   input:close()
-end
-
-local function shallowcopy(orig)
-  local copy = {}
-  for orig_key, orig_value in pairs(orig) do
-    copy[orig_key] = orig_value
-  end
-  return copy
 end
 
 local function startswith(String,Start)
