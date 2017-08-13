@@ -57,7 +57,7 @@ describe('terminal scrollback', function()
     end)
   end)
 
-  describe('with the cursor at the last row', function()
+  describe('with cursor at last row', function()
     before_each(function()
       feed_data({'line1', 'line2', 'line3', 'line4', ''})
       screen:expect([[
@@ -138,16 +138,17 @@ describe('terminal scrollback', function()
     end)
 
 
-    describe('and the height is decreased by 1', function()
+    describe('and height decreased by 1', function()
       local function will_hide_top_line()
-        screen:try_resize(screen._width, screen._height - 1)
+        feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
+        screen:try_resize(screen._width - 2, screen._height - 1)
         screen:expect([[
-          line2                         |
-          line3                         |
-          line4                         |
-          rows: 5, cols: 30             |
-          {1: }                             |
-          {3:-- TERMINAL --}                |
+          line2                       |
+          line3                       |
+          line4                       |
+          rows: 5, cols: 28           |
+          {2: }                           |
+          :^                           |
         ]])
       end
 
@@ -156,23 +157,23 @@ describe('terminal scrollback', function()
       describe('and then decreased by 2', function()
         before_each(function()
           will_hide_top_line()
-          screen:try_resize(screen._width, screen._height - 2)
+          screen:try_resize(screen._width - 2, screen._height - 2)
         end)
 
         it('will hide the top 3 lines', function()
           screen:expect([[
-            rows: 5, cols: 30             |
-            rows: 3, cols: 30             |
-            {1: }                             |
-            {3:-- TERMINAL --}                |
+            rows: 5, cols: 28         |
+            rows: 3, cols: 26         |
+            {2: }                         |
+            :^                         |
           ]])
           eq(8, curbuf('line_count'))
-          feed('<c-\\><c-n>3k')
+          feed([[<C-\><C-N>3k]])
           screen:expect([[
-            ^line4                         |
-            rows: 5, cols: 30             |
-            rows: 3, cols: 30             |
-                                          |
+            ^line4                     |
+            rows: 5, cols: 28         |
+            rows: 3, cols: 26         |
+                                      |
           ]])
         end)
       end)
