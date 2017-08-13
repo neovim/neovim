@@ -57,9 +57,6 @@ jobs:
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-    - os: linux
-      compiler: clang-4.0
-      env: CLANG_SANITIZER=TSAN
     - stage: normal builds
       os: linux
       compiler: gcc-5
@@ -79,12 +76,16 @@ jobs:
     - stage: lint
       os: linux
       env: CI_TARGET=lint
-    - stage: coverage
+    - stage: Flaky builds
       os: linux
       compiler: gcc-5
       env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - os: linux
+      compiler: clang-4.0
+      env: CLANG_SANITIZER=TSAN
   allow_failures:
     - env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - env: CLANG_SANITIZER=TSAN
   fast_finish: true
 
 before_install: ci/before_install.sh
