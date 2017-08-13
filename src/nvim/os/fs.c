@@ -859,8 +859,11 @@ bool os_fileinfo(const char *path, FileInfo *file_info)
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_fileinfo_link(const char *path, FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
+  if (path == NULL) {
+    return false;
+  }
   uv_fs_t request;
   int result = uv_fs_lstat(&fs_loop, &request, path, NULL);
   file_info->stat = request.statbuf;

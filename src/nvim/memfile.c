@@ -895,6 +895,7 @@ static bool mf_do_open(memfile_T *mfp, char_u *fname, int flags)
 {
   // fname cannot be NameBuff, because it must have been allocated.
   mf_set_fnames(mfp, fname);
+  assert(mfp->mf_fname != NULL);
 
   /// Extra security check: When creating a swap file it really shouldn't
   /// exist yet. If there is a symbolic link, this is most likely an attack.
