@@ -4744,6 +4744,14 @@ input({opts})
 		sections must be ordered so that next hl_start_col is greater 
 		then or equal to previous hl_end_col.
 
+		Highlight function is called at least once for each new input 
+		string, before command-line is redrawn.  It is expected that 
+		function is pure for the duration of one input() call, i.e. it 
+		produces the same output for the same input, so output may be 
+		memoized.  Function is run like under |:silent| modifier, 
+		additionally any errors from function cause it to be no longer 
+		executed for the duration of the current input() call.
+
 		Currently coloring is disabled when command-line contains 
 		arabic characters.
 
