@@ -275,12 +275,12 @@ describe('luaintchkfreq option', function()
     eq(100, meths.eval('&licf'))
   end)
   it('replaces values greater then INT_MAX with INT_MAX', function()
-    if pend_w32('sizeof(long/*numeric option*/) == sizeof(int)') then return end
     local err, msg = pcall(meths.set_option, 'luaintchkfreq', 4294967296)
     eq(false, err)
     msg = msg:gsub('^.*:', '')
     eq(' Value for option "luaintchkfreq" is outside range', msg)
     eq(100, meths.get_option('luaintchkfreq'))
+    if pend_w32('sizeof(long/*numeric option*/) == sizeof(int)') then return end
     local err, msg = pcall(meths.command, 'set luaintchkfreq=4294967296')
     eq(true, err)
     eq(2147483647, meths.get_option('luaintchkfreq'))
