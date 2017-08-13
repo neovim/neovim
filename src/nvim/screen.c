@@ -7440,11 +7440,7 @@ int number_width(win_T *wp)
   return n;
 }
 
-/// Set size of the Vim shell.
-/// If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
-/// window size (this is used for the :win command).
-/// If 'mustset' is FALSE, we may try to get the real window size and if
-/// it fails use 'width' and 'height'.
+/// Set dimensions of the Nvim application "shell".
 void screen_resize(int width, int height)
 {
   static int busy = FALSE;
@@ -7529,8 +7525,8 @@ void screen_resize(int width, int height)
   --busy;
 }
 
-// Check if the new shell size is valid, correct it if it's too small or way
-// too big.
+/// Check if the new Nvim application "shell" dimensions are valid.
+/// Correct it if it's too small or way too big.
 void check_shellsize(void)
 {
   if (Rows < min_rows()) {
