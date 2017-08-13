@@ -68,7 +68,6 @@ describe('terminal', function()
 
   describe('when the screen is resized', function()
     it('will forward a resize request to the program', function()
-      if helpers.pending_win32(pending) then return end
       feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
       screen:try_resize(screen._width - 3, screen._height - 2)
       screen:expect([[
