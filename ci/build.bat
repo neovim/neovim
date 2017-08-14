@@ -38,12 +38,16 @@ cd ..
 :: Build Neovim
 mkdir build
 cd build
-cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUSTED_OUTPUT_TYPE=nvim -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
+cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUSTED_OUTPUT_TYPE=nvim -DUSE_GCOV="%USE_GCOV%" -DGPERF_PRG="C:\msys64\usr\bin\gperf.exe" .. || goto :error
 mingw32-make VERBOSE=1 || goto :error
 bin\nvim --version || goto :error
 
 :: Functional tests
 mingw32-make functionaltest VERBOSE=1 || goto :error
+
+if "%USE_GCOV%" == "ON" (
+  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) || echo 'codecov upload failed.'"
+)
 
 :: Build artifacts
 cpack -G ZIP -C RelWithDebInfo
