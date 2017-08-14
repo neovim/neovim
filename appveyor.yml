@@ -2,14 +2,7 @@ version: '{build}'
 configuration:
 - MINGW_64
 - MINGW_32
-environment:
-  matrix:
-    - USE_GCOV: ON
-    - USE_GCOV: OFF
-matrix:
-  exclude:
-    - configuration: MINGW_32
-      USE_GCOV: ON
+- MINGW_64-gcov
 install: []
 build_script:
 - call ci\build.bat
