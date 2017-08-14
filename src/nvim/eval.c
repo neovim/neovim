@@ -17449,6 +17449,7 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     wininfo_T wi = INIT_WININFO_T;
     if ((di = tv_dict_find(dict, S_LEN("topline"))) != NULL) {
       wi.wi_topline = tv_get_number(&di->di_tv);
+      set_topline(curwin, wi.wi_topline);
     }
     if ((di = tv_dict_find(dict, S_LEN("topfill"))) != NULL) {
       wi.wi_topfill = tv_get_number(&di->di_tv);

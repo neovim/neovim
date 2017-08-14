@@ -1916,7 +1916,9 @@ void win_set_viewport(win_T *win, wininfo_T *wip)
   if (wip == NULL || wip->wi_topline == 0) {
     return;
   }
-  set_topline(win, wip->wi_topline);
+  // slow
+  // set_topline(win, wip->wi_topline);
+  win->w_topline = wip->wi_topline;
   win->w_topfill = wip->wi_topfill;
   win->w_leftcol = wip->wi_leftcol;
   win->w_skipcol = wip->wi_skipcol;
