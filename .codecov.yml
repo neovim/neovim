@@ -1,6 +1,10 @@
 codecov:
   notify:
     require_ci_to_pass: yes
+  ci:
+    - appveyor
+    - travis
+    - !neovim-qb.szakmeister.net
 
 coverage:
   precision: 2
