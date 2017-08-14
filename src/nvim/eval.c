@@ -17446,21 +17446,21 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       curwin->w_set_curswant = false;
     }
 
-    wininfo_T wip = { 0 };
+    wininfo_T wi = INIT_WININFO_T;
     if ((di = tv_dict_find(dict, S_LEN("topline"))) != NULL) {
-      wip.wi_topline = tv_get_number(&di->di_tv);
+      wi.wi_topline = tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("topfill"))) != NULL) {
-      wip.wi_topfill = tv_get_number(&di->di_tv);
+      wi.wi_topfill = tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("leftcol"))) != NULL) {
-      wip.wi_leftcol= tv_get_number(&di->di_tv);
+      wi.wi_leftcol= tv_get_number(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, S_LEN("skipcol"))) != NULL) {
-      wip.wi_skipcol= tv_get_number(&di->di_tv);
+      wi.wi_skipcol= tv_get_number(&di->di_tv);
     }
 
-    win_set_viewport(curwin, &wip);
+    win_set_viewport(curwin, &wi);
   }
 }
 

@@ -2439,18 +2439,7 @@ pos_T *buflist_findfpos(buf_T *buf)
 
 wininfo_T *buflist_find_wininfo(buf_T *buf)
 {
-  static wininfo_T no_wininfo = {
-    .wi_next = NULL,
-    .wi_prev = NULL,
-    .wi_win = NULL,
-    .wi_fpos = INIT_POS_T(1, 0, 0),
-    // .wi_topline = 0,
-    // .wi_topfill = 0,
-    // .wi_leftcol = 0,
-    // .wi_skipcol = 0,
-
-  };
-
+  static wininfo_T no_wininfo = INIT_WININFO_T;
   wininfo_T *wip = find_wininfo(buf, FALSE);
   return (wip == NULL) ? &no_wininfo : wip;
 }

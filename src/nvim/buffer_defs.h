@@ -265,6 +265,20 @@ struct wininfo_S {
   bool wi_fold_manual;          ///< copy of w_fold_manual
   garray_T wi_folds;            ///< clone of w_folds
 };
+#define INIT_WININFO_T { \
+  .wi_next = NULL, \
+  .wi_prev = NULL, \
+  .wi_win = NULL, \
+  .wi_fpos = INIT_POS_T(1, 0, 0), \
+  .wi_topline = 0, \
+  .wi_topfill = 0, \
+  .wi_leftcol = 0, \
+  .wi_skipcol = 0, \
+  .wi_optset = false, \
+  .wi_opt = { 0 }, \
+  .wi_fold_manual = false, \
+  .wi_folds = { 0 }, \
+  }
 
 /*
  * Argument list: Array of file names.
