@@ -12,6 +12,7 @@ local funcs = helpers.funcs
 local sleep = helpers.sleep
 local source = helpers.source
 local dedent = helpers.dedent
+local command = helpers.command
 local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
@@ -107,6 +108,16 @@ describe(':lua command', function()
   end)
   it('may be interrupted with <C-c> without additional :terminal layer',
   function()
+    feed(':lua while true do i = nil end<CR>')
+    sleep(100)
+    feed('<C-c>')
+    eq({blocking=false, mode='n'}, meths.get_mode())
+    eq('', funcs.getline(1))
+  end)
+  it('may be interrupted with <C-c> by a custom hook calling vim.breakcheck',
+  function()
+    meths.set_option('licf', 0)
+    command('lua debug.sethook(function() vim.breakcheck() end, "", 100)')
     feed(':lua while true do i = nil end<CR>')
     sleep(100)
     feed('<C-c>')

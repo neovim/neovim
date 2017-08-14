@@ -132,11 +132,27 @@ static lua_State *global_lstate = NULL;
 /// @param[in]  lstate  Lua state.
 /// @param[in]  ar  Debugging information, unused.
 static void nlua_interrupt_hook(lua_State *const lstate, lua_Debug *const ar)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   lua_sethook(lstate, NULL, 0, 0);
   running_lstate = lstate;
   luaL_error(lstate, "interrupted!");
+}
+
+/// Check for interrupts
+///
+/// Exported function, to be used in custom plugin hooks.
+///
+/// @param[in]  lstate  Lua state.
+static int nlua_breakcheck(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  os_breakcheck();
+  if (got_int) {
+    got_int = false;
+    nlua_interrupt_hook(lstate, NULL);
+  }
+  return 0;
 }
 
 /// Hook used to check whether lua code needs to be interrupted
@@ -145,13 +161,9 @@ static void nlua_interrupt_hook(lua_State *const lstate, lua_Debug *const ar)
 /// @param[in]  ar  Debugging information.
 static void nlua_check_interrupt_hook(lua_State *const lstate,
                                       lua_Debug *const ar)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  os_breakcheck();
-  if (got_int) {
-    got_int = false;
-    nlua_interrupt_hook(lstate, ar);
-  }
+  nlua_breakcheck(lstate);
 }
 
 /// Interrupt currently running lua interpreter
@@ -371,6 +383,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   nlua_add_api_functions(lstate);
   // vim.types, vim.type_idx, vim.val_idx
   nlua_init_types(lstate);
+  // breakcheck
+  lua_pushcfunction(lstate, &nlua_breakcheck);
+  lua_setfield(lstate, -2, "breakcheck");
+
   lua_setglobal(lstate, "vim");
   return 0;
 }

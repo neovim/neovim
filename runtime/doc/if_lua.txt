@@ -242,9 +242,15 @@ position are restricted when the command is executed in the |sandbox|.
 ==============================================================================
 2. The vim module					*lua-vim*
 
-Lua interfaces Vim through the "vim" module. Currently it only has `api` 
-submodule which is a table with all API functions. Descriptions of these 
-functions may be found in |api.txt|.
+Lua interfaces Vim through the "vim" module.  Currently it has `api` submodule 
+which is a table with all API functions and some Neovim-specific functions.  
+Descriptions of these functions may be found in |api.txt|.
+
+vim.breakcheck()					*lua-vim.breakcheck*
+	This function is intended to be used in custom hooks set via 
+	`debug.sethook`.  Function checks whether user issued `<C-c>` and if 
+	yes, throws `interrupted!` error, if no it just returns.  Function has 
+	neither arguments nor return values.
 
 ==============================================================================
 3. The luaeval function					*lua-luaeval* *lua-eval*
