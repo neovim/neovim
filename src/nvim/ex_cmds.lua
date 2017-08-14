@@ -1076,7 +1076,7 @@ return {
   },
   {
     command='hide',
-    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, EXTRA, NOTRLCOM),
+    flags=bit.bor(BANG, RANGE, NOTADR, COUNT, EXTRA, TRLBAR),
     addr_type=ADDR_WINDOWS,
     func='ex_hide',
   },

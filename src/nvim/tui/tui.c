@@ -45,7 +45,7 @@
 #define OUTBUF_SIZE 0xffff
 
 #define TOO_MANY_EVENTS 1000000
-#define STARTS_WITH(str, prefix) (strlen(term) >= (sizeof(prefix) - 1) \
+#define STARTS_WITH(str, prefix) (strlen(str) >= (sizeof(prefix) - 1) \
     && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
 #define TMUX_WRAP(is_tmux, seq) ((is_tmux) \
     ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
@@ -1256,7 +1256,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux");
+  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool st = terminfo_is_term_family(term, "st");
   bool gnome = terminfo_is_term_family(term, "gnome")
     || terminfo_is_term_family(term, "vte");
@@ -1270,7 +1270,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool mate_pretending_xterm = xterm && colorterm
     && strstr(colorterm, "mate-terminal");
   bool true_xterm = xterm && !!xterm_version;
-  bool tmux_pretending_screen = screen && !!os_getenv("TMUX");
 
   char *fix_normal = (char *)unibi_get_str(ut, unibi_cursor_normal);
   if (fix_normal) {
@@ -1347,7 +1346,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
-  } else if (terminfo_is_term_family(term, "tmux")) {
+  } else if (tmux) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
   } else if (terminfo_is_term_family(term, "interix")) {
@@ -1408,12 +1407,11 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
     } else if (konsole || xterm || gnome || rxvt || st || putty
-        || linuxvt  // Linux 4.8+ supports 256-colour SGR.
-        || mate_pretending_xterm || gnome_pretending_xterm
-        || tmux || tmux_pretending_screen
-        || (colorterm && strstr(colorterm, "256"))
-        || (term && strstr(term, "256"))
-        ) {
+               || linuxvt  // Linux 4.8+ supports 256-colour SGR.
+               || mate_pretending_xterm || gnome_pretending_xterm
+               || tmux
+               || (colorterm && strstr(colorterm, "256"))
+               || (term && strstr(term, "256"))) {
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256);
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
@@ -1429,12 +1427,17 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     }
   }
 
-  // Dickey ncurses terminfo has included the Ss and Se capabilities, pioneered
-  // by tmux, since 2011-07-14.  So adding them to terminal types, that do
-  // actually have such control sequences but lack the correct definitions in
-  // terminfo, is a fixup, not an augmentation.
-  data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
-  data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
+  // Some terminals can not currently be trusted to report if they support
+  // DECSCUSR or not. So we need to have a blacklist for when we should not
+  // trust the reported features.
+  if (!((vte_version != 0 && vte_version < 3900) || konsole)) {
+    // Dickey ncurses terminfo has included the Ss and Se capabilities,
+    // pioneered by tmux, since 2011-07-14. So adding them to terminal types,
+    // that do actually have such control sequences but lack the correct
+    // definitions in terminfo, is a fixup, not an augmentation.
+    data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
+    data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
+  }
   if (-1 == data->unibi_ext.set_cursor_style) {
     // The DECSCUSR sequence to change the cursor shape is widely
     // supported by several terminal types and should be in many
@@ -1442,6 +1445,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // https://github.com/gnachman/iTerm2/pull/92 for more.
     // xterm even has an extended version that has a vertical bar.
     if (true_xterm    // per xterm ctlseqs doco (since version 282)
+        // per MinTTY 0.4.3-1 release notes from 2009
+        || putty
+        // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
+        || (vte_version >= 3900)
+        || tmux       // per tmux manual page
+        // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
+        || screen
         || rxvt       // per command.C
         // per analysis of VT100Terminal.m
         || iterm || iterm_pretending_xterm
@@ -1454,50 +1464,34 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
-              "");
+                                                                      "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
                         "\x1b[ q");
-    } else if (
-        // per MinTTY 0.4.3-1 release notes from 2009
-        putty
-        // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
-        || (vte_version >= 3900)
-        // per tmux manual page and per
-        // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
-        || screen) {
-      // Since we use the xterm extension, we must map it to the unextended form
-      data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-          "\x1b[%?"
-          "%p1%{4}%>" "%t%p1%{2}%-"     // a bit of a bodge for extension values
-          "%e%p1"              // the conventional codes are just passed through
-          "%;%d q");
-      if (-1 == data->unibi_ext.reset_cursor_style) {
-          data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
-              "");
-      }
-      unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
-          "\x1b[ q");
     } else if (linuxvt) {
       // Linux uses an idiosyncratic escape code to set the cursor shape and
       // does not support DECSCUSR.
+      // See http://linuxgazette.net/137/anonymous.html for more info
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
           "\x1b[?"
           "%?"
           // The parameter passed to Ss is the DECSCUSR parameter, so the
           // terminal capability has to translate into the Linux idiosyncratic
           // parameter.
-          "%p1%{2}%<" "%t%{8}"    // blink block
-          "%p1%{2}%=" "%t%{24}"   // steady block
-          "%p1%{3}%=" "%t%{1}"    // blink underline
-          "%p1%{4}%=" "%t%{17}"   // steady underline
-          "%p1%{5}%=" "%t%{1}"    // blink bar
-          "%p1%{6}%=" "%t%{17}"   // steady bar
-          "%e%{0}"                // anything else
+          //
+          // linuxvt only supports block and underline. It is also only
+          // possible to have a steady block (no steady underline)
+          "%p1%{2}%<" "%t%{8}"       // blink block
+          "%e%p1%{2}%=" "%t%{112}"   // steady block
+          "%e%p1%{3}%=" "%t%{4}"     // blink underline (set to half block)
+          "%e%p1%{4}%=" "%t%{4}"     // steady underline
+          "%e%p1%{5}%=" "%t%{2}"     // blink bar (set to underline)
+          "%e%p1%{6}%=" "%t%{2}"     // steady bar
+          "%e%{0}"                   // anything else
           "%;" "%dc");
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
-              "");
+                                                                      "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
           "\x1b[?c");
@@ -1507,17 +1501,17 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       // nonce profile, which has side-effects on temporary font resizing.
       // In an ideal world, Konsole would just support DECSCUSR.
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-          "\x1b]50;CursorShape=%?"
+          TMUX_WRAP(tmux, "\x1b]50;CursorShape=%?"
           "%p1%{3}%<" "%t%{0}"    // block
-          "%e%p1%{4}%<" "%t%{2}"  // underline
+          "%e%p1%{5}%<" "%t%{2}"  // underline
           "%e%{1}"                // everything else is bar
           "%;%d;BlinkingCursorEnabled=%?"
           "%p1%{1}%<" "%t%{1}"  // Fortunately if we exclude zero as special,
           "%e%p1%{1}%&"  // in all other cases we can treat bit #0 as a flag.
-          "%;%d\x07");
+          "%;%d\x07"));
       if (-1 == data->unibi_ext.reset_cursor_style) {
           data->unibi_ext.reset_cursor_style = (int)unibi_add_ext_str(ut, "Se",
-              "");
+                                                                      "");
       }
       unibi_set_ext_str(ut, (size_t)data->unibi_ext.reset_cursor_style,
           "\x1b]50;\x07");

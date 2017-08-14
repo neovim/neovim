@@ -367,7 +367,7 @@ end
 local function set_shell_powershell()
   source([[
     set shell=powershell shellquote=\" shellpipe=\| shellredir=>
-    set shellcmdflag=\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
+    set shellcmdflag=\ -NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
     let &shellxquote=' '
   ]])
 end

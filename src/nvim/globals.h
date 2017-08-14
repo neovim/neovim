@@ -931,8 +931,11 @@ EXTERN char_u langmap_mapchar[256];     /* mapping for language keys */
 EXTERN int save_p_ls INIT(= -1);        /* Save 'laststatus' setting */
 EXTERN int save_p_wmh INIT(= -1);       /* Save 'winminheight' setting */
 EXTERN int wild_menu_showing INIT(= 0);
-# define WM_SHOWN       1               /* wildmenu showing */
-# define WM_SCROLLED    2               /* wildmenu showing with scroll */
+enum {
+  WM_SHOWN = 1,     ///< wildmenu showing
+  WM_SCROLLED = 2,  ///< wildmenu showing with scroll
+  WM_LIST = 3,      ///< cmdline CTRL-D
+};
 
 
 EXTERN char breakat_flags[256];         /* which characters are in 'breakat' */

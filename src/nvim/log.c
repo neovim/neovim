@@ -178,7 +178,8 @@ FILE *open_log_file(void)
 }
 
 #ifdef HAVE_EXECINFO_BACKTRACE
-void log_callstack(const char *const func_name, const int line_num)
+void log_callstack_to_file(FILE *log_file, const char *const func_name,
+                           const int line_num)
 {
   void *trace[100];
   int trace_size = backtrace(trace, ARRAY_SIZE(trace));
@@ -190,8 +191,6 @@ void log_callstack(const char *const func_name, const int line_num)
   }
   assert(24 + exepathlen < IOSIZE);  // Must fit in `cmdbuf` below.
 
-  do_log(DEBUG_LOG_LEVEL, func_name, line_num, true, "trace:");
-
   char cmdbuf[IOSIZE + (20 * ARRAY_SIZE(trace))];
   snprintf(cmdbuf, sizeof(cmdbuf), "addr2line -e %s -f -p", exepath);
   for (int i = 1; i < trace_size; i++) {
@@ -202,12 +201,8 @@ void log_callstack(const char *const func_name, const int line_num)
   // Now we have a command string like:
   //    addr2line -e /path/to/exe -f -p 0x123 0x456 ...
 
-  log_lock();
-  FILE *log_file = open_log_file();
-  if (log_file == NULL) {
-    goto end;
-  }
-
+  do_log_to_file(log_file, DEBUG_LOG_LEVEL, func_name, line_num, true,
+                 "trace:");
   FILE *fp = popen(cmdbuf, "r");
   char linebuf[IOSIZE];
   while (fgets(linebuf, sizeof(linebuf) - 1, fp) != NULL) {
@@ -218,6 +213,18 @@ void log_callstack(const char *const func_name, const int line_num)
   if (log_file != stderr && log_file != stdout) {
     fclose(log_file);
   }
+}
+
+void log_callstack(const char *const func_name, const int line_num)
+{
+  log_lock();
+  FILE *log_file = open_log_file();
+  if (log_file == NULL) {
+    goto end;
+  }
+
+  log_callstack_to_file(log_file, func_name, line_num);
+
 end:
   log_unlock();
 }

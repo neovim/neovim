@@ -2722,9 +2722,11 @@ do_dialog (
   int c;
   int i;
 
-  /* Don't output anything in silent mode ("ex -s") */
-  if (silent_mode)
-    return dfltbutton;       /* return default option */
+  if (silent_mode      // No dialogs in silent mode ("ex -s")
+      || !ui_active()  // Without a UI Nvim waits for input forever.
+      ) {
+    return dfltbutton;  // return default option
+  }
 
 
   oldState = State;

@@ -56,13 +56,13 @@ enum {
   NFA_RANGE_MIN,                    /* low end of a range  */
   NFA_RANGE_MAX,                    /* high end of a range  */
 
-  NFA_CONCAT,                       /* concatenate two previous items (postfix
-                                     * only) */
-  NFA_OR,                           /* \| (postfix only) */
-  NFA_STAR,                         /* greedy * (posfix only) */
-  NFA_STAR_NONGREEDY,               /* non-greedy * (postfix only) */
-  NFA_QUEST,                        /* greedy \? (postfix only) */
-  NFA_QUEST_NONGREEDY,              /* non-greedy \? (postfix only) */
+  NFA_CONCAT,                       // concatenate two previous items (postfix
+                                    // only)
+  NFA_OR,                           // \| (postfix only)
+  NFA_STAR,                         // greedy * (postfix only)
+  NFA_STAR_NONGREEDY,               // non-greedy * (postfix only)
+  NFA_QUEST,                        // greedy \? (postfix only)
+  NFA_QUEST_NONGREEDY,              // non-greedy \? (postfix only)
 
   NFA_BOL,                          /* ^    Begin line */
   NFA_EOL,                          /* $    End line */
@@ -1988,7 +1988,7 @@ static int nfa_regpiece(void)
     // The engine is very inefficient (uses too many states) when the maximum
     // is much larger than the minimum and when the maximum is large. Bail out
     // if we can use the other engine.
-    if ((nfa_re_flags & RE_AUTO) && (maxval > minval + 200 || maxval > 500)) {
+    if ((nfa_re_flags & RE_AUTO) && (maxval > 500 || maxval > minval + 200)) {
       return FAIL;
     }
 

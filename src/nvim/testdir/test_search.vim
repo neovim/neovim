@@ -283,3 +283,18 @@ func Test_use_sub_pat()
   call X()
   bwipe!
 endfunc
+
+func Test_searchpair()
+  new
+  call setline(1, ['other code here', '', '[', '" cursor here', ']'])
+  4
+  let a=searchpair('\[','',']','bW')
+  call assert_equal(3, a)
+  set nomagic
+  4
+  let a=searchpair('\[','',']','bW')
+  call assert_equal(3, a)
+  set magic
+  q!
+endfunc
+

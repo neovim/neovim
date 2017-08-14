@@ -131,6 +131,7 @@ bool os_isdir(const char_u *name)
 ///         NODE_WRITABLE: writable device, socket, fifo, etc.
 ///         NODE_OTHER: non-writable things
 int os_nodetype(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
 #ifdef WIN32
   // Edge case from Vim os_win32.c:
@@ -604,8 +605,11 @@ int os_fsync(int fd)
 ///
 /// @return libuv return code.
 static int os_stat(const char *name, uv_stat_t *statbuf)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
+  if (!name) {
+    return UV_ENOENT;
+  }
   uv_fs_t request;
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
   *statbuf = request.statbuf;
@@ -617,7 +621,6 @@ static int os_stat(const char *name, uv_stat_t *statbuf)
 ///
 /// @return libuv error code on error.
 int32_t os_getperm(const char *name)
-  FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
   int stat_result = os_stat(name, &statbuf);
@@ -656,7 +659,6 @@ int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
 ///
 /// @return `true` if `path` exists
 bool os_path_exists(const char_u *path)
-  FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
   return os_stat((char *)path, &statbuf) == kLibuvSuccess;
@@ -846,7 +848,7 @@ int os_remove(const char *path)
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_fileinfo(const char *path, FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   return os_stat(path, &(file_info->stat)) == kLibuvSuccess;
 }
@@ -857,8 +859,11 @@ bool os_fileinfo(const char *path, FileInfo *file_info)
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_fileinfo_link(const char *path, FileInfo *file_info)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(2)
 {
+  if (path == NULL) {
+    return false;
+  }
   uv_fs_t request;
   int result = uv_fs_lstat(&fs_loop, &request, path, NULL);
   file_info->stat = request.statbuf;

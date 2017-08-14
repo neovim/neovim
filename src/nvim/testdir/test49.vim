@@ -481,12 +481,9 @@ function! ExtraVim(...)
     bwipeout
     let g:Xpath = g:Xpath + sum
 
-    " FIXME(nvim): delete() of a file used by a subprocess hangs TSAN build on travis CI.
-    if !empty($TRAVIS)
     " Delete the extra script and the resultfile.
     call delete(extra_script)
     call delete(resultfile)
-    endif
 
     " Switch back to the buffer that was active when this function was entered.
     exec "buffer" current_buffnr
