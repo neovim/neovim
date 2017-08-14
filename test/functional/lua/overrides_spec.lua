@@ -69,6 +69,13 @@ describe('print', function()
     eq('\nT^@', redir_exec([[lua print("T\0")]]))
     eq('\nT\n', redir_exec([[lua print("T\n")]]))
   end)
+  it('prints empty strings correctly', function()
+    -- Regression: first test used to crash
+    eq('', redir_exec('lua print("")'))
+    eq('\n def', redir_exec('lua print("", "def")'))
+    eq('\nabc ', redir_exec('lua print("abc", "")'))
+    eq('\nabc  def', redir_exec('lua print("abc", "", "def")'))
+  end)
 end)
 
 describe('debug.debug', function()

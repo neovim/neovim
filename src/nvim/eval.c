@@ -9079,7 +9079,8 @@ static dict_T *get_buffer_info(buf_T *buf)
   tv_dict_add_nr(dict, S_LEN("bufnr"), buf->b_fnum);
   tv_dict_add_str(dict, S_LEN("name"),
                   buf->b_ffname != NULL ? (const char *)buf->b_ffname : "");
-  tv_dict_add_nr(dict, S_LEN("lnum"), buflist_findlnum(buf));
+  tv_dict_add_nr(dict, S_LEN("lnum"),
+                 buf == curbuf ? curwin->w_cursor.lnum : buflist_findlnum(buf));
   tv_dict_add_nr(dict, S_LEN("loaded"), buf->b_ml.ml_mfp != NULL);
   tv_dict_add_nr(dict, S_LEN("listed"), buf->b_p_bl);
   tv_dict_add_nr(dict, S_LEN("changed"), bufIsChanged(buf));
@@ -14202,6 +14203,8 @@ do_searchpair (
   int nest = 1;
   int options = SEARCH_KEEP;
   proftime_T tm;
+  size_t pat2_len;
+  size_t pat3_len;
 
   /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
   save_cpo = p_cpo;
@@ -14210,18 +14213,22 @@ do_searchpair (
   /* Set the time limit, if there is one. */
   tm = profile_setlimit(time_limit);
 
-  /* Make two search patterns: start/end (pat2, for in nested pairs) and
-   * start/middle/end (pat3, for the top pair). */
-  pat2 = xmalloc(STRLEN(spat) + STRLEN(epat) + 15);
-  pat3 = xmalloc(STRLEN(spat) + STRLEN(mpat) + STRLEN(epat) + 23);
-  sprintf((char *)pat2, "\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
-  if (*mpat == NUL)
+  // Make two search patterns: start/end (pat2, for in nested pairs) and
+  // start/middle/end (pat3, for the top pair).
+  pat2_len = STRLEN(spat) + STRLEN(epat) + 17;
+  pat2 = xmalloc(pat2_len);
+  pat3_len = STRLEN(spat) + STRLEN(mpat) + STRLEN(epat) + 25;
+  pat3 = xmalloc(pat3_len);
+  snprintf((char *)pat2, pat2_len, "\\m\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
+  if (*mpat == NUL) {
     STRCPY(pat3, pat2);
-  else
-    sprintf((char *)pat3, "\\(%s\\m\\)\\|\\(%s\\m\\)\\|\\(%s\\m\\)",
-        spat, epat, mpat);
-  if (flags & SP_START)
+  } else {
+    snprintf((char *)pat3, pat3_len,
+             "\\m\\(%s\\m\\)\\|\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat, mpat);
+  }
+  if (flags & SP_START) {
     options |= SEARCH_START;
+  }
 
   save_cursor = curwin->w_cursor;
   pos = curwin->w_cursor;

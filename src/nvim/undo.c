@@ -1838,11 +1838,9 @@ void undo_time(long step, int sec, int file, int absolute)
     }
     closest = -1;
   } else {
-    /* When doing computations with time_t subtract starttime, because
-     * time_t converted to a long may result in a wrong number. */
-    if (dosec)
-      target = (long)(curbuf->b_u_time_cur - starttime) + step;
-    else if (dofile) {
+    if (dosec) {
+      target = (long)(curbuf->b_u_time_cur) + step;
+    } else if (dofile) {
       if (step < 0) {
         /* Going back to a previous write. If there were changes after
          * the last write, count that as moving one file-write, so
@@ -1880,14 +1878,16 @@ void undo_time(long step, int sec, int file, int absolute)
         target = 0;
       closest = -1;
     } else {
-      if (dosec)
-        closest = (long)(time(NULL) - starttime + 1);
-      else if (dofile)
+      if (dosec) {
+        closest = (long)(os_time() + 1);
+      } else if (dofile) {
         closest = curbuf->b_u_save_nr_last + 2;
-      else
+      } else {
         closest = curbuf->b_u_seq_last + 2;
-      if (target >= closest)
+      }
+      if (target >= closest) {
         target = closest - 1;
+      }
     }
   }
   closest_start = closest;
@@ -1916,12 +1916,13 @@ void undo_time(long step, int sec, int file, int absolute)
 
     while (uhp != NULL) {
       uhp->uh_walk = mark;
-      if (dosec)
-        val = (long)(uhp->uh_time - starttime);
-      else if (dofile)
+      if (dosec) {
+        val = (long)(uhp->uh_time);
+      } else if (dofile) {
         val = uhp->uh_save_nr;
-      else
+      } else {
         val = uhp->uh_seq;
+      }
 
       if (round == 1 && !(dofile && val == 0)) {
         /* Remember the header that is closest to the target.

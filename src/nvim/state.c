@@ -6,6 +6,7 @@
 #include "nvim/lib/kvec.h"
 
 #include "nvim/ascii.h"
+#include "nvim/log.h"
 #include "nvim/state.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
