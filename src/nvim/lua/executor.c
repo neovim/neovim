@@ -281,10 +281,6 @@ static int nlua_exec_lua_file(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 /// Called by lua interpreter itself to initialize state.
 static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
-  // stricmp
-  lua_pushcfunction(lstate, &nlua_stricmp);
-  lua_setglobal(lstate, "stricmp");
-
   // print
   lua_pushcfunction(lstate, &nlua_print);
   lua_setglobal(lstate, "print");
@@ -304,6 +300,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   nlua_add_api_functions(lstate);
   // vim.types, vim.type_idx, vim.val_idx
   nlua_init_types(lstate);
+  // stricmp
+  lua_pushcfunction(lstate, &nlua_stricmp);
+  lua_setfield(lstate, -2, "stricmp");
+
   lua_setglobal(lstate, "vim");
   return 0;
 }

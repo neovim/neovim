@@ -246,6 +246,11 @@ Lua interfaces Vim through the "vim" module. Currently it only has `api`
 submodule which is a table with all API functions. Descriptions of these 
 functions may be found in |api.txt|.
 
+vim.stricmp(a, b)					*lua-vim.stricmp*
+	Function used for case-insensitive string comparison.  Takes two 
+	string arguments and returns 0, 1 or -1 if strings are equal, a is 
+	greater then b or a is lesser then b respectively.
+
 ==============================================================================
 3. The luaeval function					*lua-luaeval* *lua-eval*
 							*luaeval()*
