@@ -137,23 +137,28 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     nul1 = memchr(s1, NUL, s1_len);
     nul2 = memchr(s2, NUL, s2_len);
     ret = STRICMP(s1, s2);
-    // Compare "a\0" greater then "a".
-    if (ret == 0 && (nul1 == NULL) != (nul2 == NULL)) {
-      ret = ((nul1 != NULL) - (nul2 != NULL));
-      break;
-    }
-    if (nul1 != NULL) {
-      assert(nul2 != NULL);
-      // Due to lowercase letter having possibly different byte length then
-      // uppercase letter can’t shift both strings by the same amount of bytes.
-      s1_len -= (size_t)(nul1 - s1) + 1;
-      s2_len -= (size_t)(nul2 - s2) + 1;
-      s1 = nul1 + 1;
-      s2 = nul2 + 1;
+    if (ret == 0) {
+      // Compare "a\0" greater then "a".
+      if ((nul1 == NULL) != (nul2 == NULL)) {
+        ret = ((nul1 != NULL) - (nul2 != NULL));
+        break;
+      }
+      if (nul1 != NULL) {
+        assert(nul2 != NULL);
+        // Due to lowercase letter having possibly different byte length then
+        // uppercase letter can’t shift both strings by the same amount of
+        // bytes.
+        s1_len -= (size_t)(nul1 - s1) + 1;
+        s2_len -= (size_t)(nul2 - s2) + 1;
+        s1 = nul1 + 1;
+        s2 = nul2 + 1;
+      } else {
+        break;
+      }
     } else {
       break;
     }
-  } while (ret == 0);
+  } while (true);
   lua_pop(lstate, 2);
   lua_pushnumber(lstate, (lua_Number)((ret > 0) - (ret < 0)));
   return 1;

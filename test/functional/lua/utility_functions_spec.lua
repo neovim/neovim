@@ -89,6 +89,11 @@ describe('vim.stricmp', function()
     eq(1, funcs.luaeval('vim.stricmp("c\\0", "b\\0")'))
     eq(1, funcs.luaeval('vim.stricmp("C\\0", "B\\0")'))
 
+    eq(1, funcs.luaeval('vim.stricmp("c\\0", "B")'))
+    eq(1, funcs.luaeval('vim.stricmp("C\\0", "b")'))
+    eq(1, funcs.luaeval('vim.stricmp("c\\0", "b")'))
+    eq(1, funcs.luaeval('vim.stricmp("C\\0", "B")'))
+
     eq(1, funcs.luaeval('vim.stricmp("\\0c", "\\0B")'))
     eq(1, funcs.luaeval('vim.stricmp("\\0C", "\\0b")'))
     eq(1, funcs.luaeval('vim.stricmp("\\0c", "\\0b")'))
