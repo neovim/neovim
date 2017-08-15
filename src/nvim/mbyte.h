@@ -19,6 +19,9 @@
 #define MB_BYTE2LEN(b)         utf8len_tab[b]
 #define MB_BYTE2LEN_CHECK(b)   (((b) < 0 || (b) > 255) ? 1 : utf8len_tab[b])
 
+// max length of an unicode char
+#define MB_MAXCHAR     6
+
 /* properties used in enc_canon_table[] (first three mutually exclusive) */
 #define ENC_8BIT       0x01
 #define ENC_DBCS       0x02
