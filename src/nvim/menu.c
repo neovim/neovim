@@ -666,8 +666,6 @@ static void free_menu_string(vimmenu_T *menu, int idx)
 static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
 {
   dict_T *dict;
-  char buf[sizeof(menu->mnemonic)];
-  int mnemonic_len;
 
   if (!menu || (menu->modes & modes) == 0x0) {
     return NULL;
@@ -679,8 +677,8 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
   tv_dict_add_nr(dict, S_LEN("hidden"), menu_is_hidden(menu->dname));
 
   if (menu->mnemonic) {
-    mnemonic_len = utf_char2bytes(menu->mnemonic, (u_char *)buf);
-    buf[mnemonic_len] = '\0';
+    char buf[MB_MAXCHAR + 1] = { 0 };  // > max value of utf8_char2bytes
+    utf_char2bytes(menu->mnemonic, (char_u *)buf);
     tv_dict_add_str(dict, S_LEN("shortcut"), buf);
   }
 
@@ -717,7 +715,7 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
     list_T *children_list = tv_list_alloc();
     for (menu = menu->children; menu != NULL; menu = menu->next) {
         dict_T *dic = menu_get_recursive(menu, modes);
-        if (dict && tv_dict_len(dict) > 0) {
+        if (tv_dict_len(dict) > 0) {
           tv_list_append_dict(children_list, dic);
         }
     }
