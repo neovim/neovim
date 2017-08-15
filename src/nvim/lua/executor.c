@@ -124,9 +124,36 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
 /// omitted.
 static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
-  const char *s1 = luaL_checklstring(lstate, 1, NULL);
-  const char *s2 = luaL_checklstring(lstate, 2, NULL);
-  const int ret = STRICMP(s1, s2);
+  size_t s1_len;
+  size_t s2_len;
+  const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
+  const char *s2 = luaL_checklstring(lstate, 2, &s2_len);
+  char *nul1;
+  char *nul2;
+  int ret = 0;
+  assert(s1[s1_len] == NUL);
+  assert(s2[s2_len] == NUL);
+  do {
+    nul1 = memchr(s1, NUL, s1_len);
+    nul2 = memchr(s2, NUL, s2_len);
+    ret = STRICMP(s1, s2);
+    // Compare "a\0" greater then "a".
+    if (ret == 0 && (nul1 == NULL) != (nul2 == NULL)) {
+      ret = ((nul1 != NULL) - (nul2 != NULL));
+      break;
+    }
+    if (nul1 != NULL) {
+      assert(nul2 != NULL);
+      // Due to lowercase letter having possibly different byte length then
+      // uppercase letter can’t shift both strings by the same amount of bytes.
+      s1_len -= (size_t)(nul1 - s1) + 1;
+      s2_len -= (size_t)(nul2 - s2) + 1;
+      s1 = nul1 + 1;
+      s2 = nul2 + 1;
+    } else {
+      break;
+    }
+  } while (ret == 0);
   lua_pop(lstate, 2);
   lua_pushnumber(lstate, (lua_Number)((ret > 0) - (ret < 0)));
   return 1;
