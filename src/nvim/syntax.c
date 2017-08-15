@@ -81,7 +81,10 @@ struct hl_group {
 // highlight groups for 'highlight' option
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
-#define HL_TABLE() ((struct hl_group *)((highlight_ga.ga_data)))
+static inline struct hl_group * HL_TABLE(void)
+{
+  return ((struct hl_group *)((highlight_ga.ga_data)));
+}
 
 #define MAX_HL_ID       20000   /* maximum value for a highlight ID. */
 
@@ -5958,6 +5961,7 @@ static char *highlight_init_light[] =
   "Title        ctermfg=DarkMagenta gui=bold guifg=Magenta",
   "Visual       guibg=LightGrey",
   "WarningMsg   ctermfg=DarkRed guifg=Red",
+  "Normal       gui=NONE",
   NULL
 };
 
@@ -5991,6 +5995,7 @@ static char *highlight_init_dark[] =
   "Title        ctermfg=LightMagenta gui=bold guifg=Magenta",
   "Visual       guibg=DarkGrey",
   "WarningMsg   ctermfg=LightRed guifg=Red",
+  "Normal       gui=NONE",
   NULL
 };
 
@@ -6707,14 +6712,16 @@ static void highlight_clear(int idx)
 }
 
 
-/*
- * Table with the specifications for an attribute number.
- * Note that this table is used by ALL buffers.  This is required because the
- * GUI can redraw at any time for any buffer.
- */
+/// Table with the specifications for an attribute number.
+/// Note that this table is used by ALL buffers.  This is required because the
+/// GUI can redraw at any time for any buffer.
+/// The attributes table
 static garray_T attr_table = GA_EMPTY_INIT_VALUE;
 
-#define ATTR_ENTRY(idx) ((attrentry_T *)attr_table.ga_data)[idx]
+static inline attrentry_T * ATTR_ENTRY(int idx)
+{
+  return &((attrentry_T *)attr_table.ga_data)[idx];
+}
 
 
 /// Return the attr number for a set of colors and font.
@@ -6804,7 +6811,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
 {
   attrentry_T *char_aep = NULL;
   attrentry_T *spell_aep;
-  attrentry_T new_en;
+  attrentry_T new_en = ATTRENTRY_INIT;
 
   if (char_attr == 0) {
     return prim_attr;
@@ -6852,17 +6859,24 @@ int hl_combine_attr(int char_attr, int prim_attr)
   return get_attr_entry(&new_en);
 }
 
+/// \note this function does not apply exclusively to cterm attr contrary
+/// to what its name implies
 attrentry_T *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
-  if (attr >= attr_table.ga_len)          /* did ":syntax clear" */
+  if (attr >= attr_table.ga_len) {
+    // did ":syntax clear"
     return NULL;
-  return &(ATTR_ENTRY(attr));
+  }
+  return ATTR_ENTRY(attr);
 }
 
+/// \addtogroup LIST_XXX
+/// @{
 #define LIST_ATTR   1
 #define LIST_STRING 2
 #define LIST_INT    3
+/// @}
 
 static void highlight_list_one(int id)
 {
@@ -7095,12 +7109,13 @@ set_hl_attr (
     int idx                    /* index in array */
 )
 {
-  attrentry_T at_en;
+  attrentry_T at_en = ATTRENTRY_INIT;
   struct hl_group     *sgp = HL_TABLE() + idx;
 
-  /* The "Normal" group doesn't need an attribute number */
-  if (sgp->sg_name_u != NULL && STRCMP(sgp->sg_name_u, "NORMAL") == 0)
+  // The "Normal" group doesn't need an attribute number
+  if (sgp->sg_name_u != NULL && STRCMP(sgp->sg_name_u, "NORMAL") == 0) {
     return;
+  }
 
   at_en.cterm_ae_attr = sgp->sg_cterm;
   at_en.cterm_fg_color = sgp->sg_cterm_fg;
@@ -7237,6 +7252,9 @@ static int syn_add_group(char_u *name)
   struct hl_group* hlgp = GA_APPEND_VIA_PTR(struct hl_group, &highlight_ga);
   memset(hlgp, 0, sizeof(*hlgp));
   hlgp->sg_name = name;
+  hlgp->sg_rgb_bg = -1;
+  hlgp->sg_rgb_fg = -1;
+  hlgp->sg_rgb_sp = -1;
   hlgp->sg_name_u = vim_strsave_up(name);
 
   return highlight_ga.ga_len;               /* ID is index plus one */
