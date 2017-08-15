@@ -139,6 +139,7 @@ describe('terminal scrollback', function()
 
 
     describe('and height decreased by 1', function()
+      if helpers.pending_win32(pending) then return end
       local function will_hide_top_line()
         feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
         screen:try_resize(screen._width - 2, screen._height - 1)
