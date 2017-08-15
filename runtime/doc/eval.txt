@@ -1522,14 +1522,16 @@ v:errors	Errors found by assert functions, such as |assert_true()|.
 
 					*v:event* *event-variable*
 v:event		Dictionary of event data for the current |autocommand|.  Valid
-		only during the autocommand lifetime: storing or passing
-		`v:event` is invalid.  Copy it instead: >
+		only during the event lifetime; storing or passing v:event is
+		invalid!  Copy it instead: >
 			au TextYankPost * let g:foo = deepcopy(v:event)
 <		Keys vary by event; see the documentation for the specific
-		event, e.g. |TextYankPost|.
+		event, e.g. |DirChanged| or |TextYankPost|.
 			KEY		DESCRIPTION ~
-			operator	The current |operator|.  Also set for
-					Ex commands (unlike |v:operator|). For
+			cwd		Current working directory
+			scope		Event-specific scope name.
+			operator	Current |operator|.  Also set for Ex
+					commands (unlike |v:operator|). For
 					example if |TextYankPost| is triggered
 					by the |:yank| Ex command then
 					`v:event['operator']` is "y".
@@ -4726,7 +4728,8 @@ input({opts})
 		"-complete=" argument.	Refer to |:command-completion| for
 		more information.  Example: >
 			let fname = input("File: ", "", "file")
-<							*E5400* *E5402*
+
+<					*input()-highlight* *E5400* *E5402*
 		The optional `highlight` key allows specifying function which
 		will be used for highlighting user input.  This function
 		receives user input as its only argument and must return
@@ -4744,6 +4747,30 @@ input({opts})
 		sections must be ordered so that next hl_start_col is greater
 		then or equal to previous hl_end_col.
 
+		Example (try some input with parentheses): >
+			highlight RBP1 guibg=Red ctermbg=red
+			highlight RBP2 guibg=Yellow ctermbg=yellow
+			highlight RBP3 guibg=Green ctermbg=green
+			highlight RBP4 guibg=Blue ctermbg=blue
+			let g:rainbow_levels = 4
+			function! RainbowParens(cmdline)
+			  let ret = []
+			  let i = 0
+			  let lvl = 0
+			  while i < len(a:cmdline)
+			    if a:cmdline[i] is# '('
+			      call add(ret, [i, i + 1, 'RBP' . ((lvl % g:rainbow_levels) + 1)])
+			      let lvl += 1
+			    elseif a:cmdline[i] is# ')'
+			      let lvl -= 1
+			      call add(ret, [i, i + 1, 'RBP' . ((lvl % g:rainbow_levels) + 1)])
+			    endif
+			    let i += 1
+			  endwhile
+			  return ret
+			endfunction
+			call input({'prompt':'>','highlight':'RainbowParens'})
+<
 		Highlight function is called at least once for each new
 		displayed input string, before command-line is redrawn.  It is
 		expected that function is pure for the duration of one input()
