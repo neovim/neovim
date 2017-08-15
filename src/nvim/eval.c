@@ -11110,15 +11110,23 @@ void get_user_input(const typval_T *const argvars,
   // Only the part of the message after the last NL is considered as
   // prompt for the command line.
   const char *p = strrchr(prompt, '\n');
-  if (p == NULL) {
+  if (ui_is_external(kUICmdline)) {
     p = prompt;
   } else {
-    p++;
-    msg_start();
-    msg_clr_eos();
-    msg_puts_attr_len(prompt, p - prompt, echo_attr);
-    msg_didout = false;
-    msg_starthere();
+    if (p == NULL) {
+      p = prompt;
+    } else {
+      if (p == NULL) {
+        p = prompt;
+      } else {
+        p++;
+        msg_start();
+        msg_clr_eos();
+        msg_puts_attr_len(prompt, p - prompt, echo_attr);
+        msg_didout = false;
+        msg_starthere();
+      }
+    }
   }
   cmdline_row = msg_row;
 
@@ -19775,6 +19783,10 @@ void ex_function(exarg_T *eap)
     goto errret_2;
   }
 
+  if (ui_is_external(kUICmdline)) {
+    ui_call_cmdline_function_show();
+  }
+
   // find extra arguments "range", "dict", "abort" and "closure"
   for (;; ) {
     p = skipwhite(p);
@@ -19827,7 +19839,9 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && did_emsg)
       goto erret;
 
-    msg_putchar('\n');              /* don't overwrite the function name */
+    if (!ui_is_external(kUICmdline)) {
+      msg_putchar('\n');              // don't overwrite the function name
+    }
     cmdline_row = msg_row;
   }
 
@@ -20153,6 +20167,9 @@ ret_free:
   xfree(name);
   did_emsg |= saved_did_emsg;
   need_wait_return |= saved_wait_return;
+  if (ui_is_external(kUICmdline)) {
+    ui_call_cmdline_function_hide();
+  }
 }
 
 /// Get a function name, translating "<SID>" and "<SNR>".

@@ -63,6 +63,7 @@
 #include "nvim/os/os.h"
 #include "nvim/event/loop.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -70,22 +71,23 @@
  * structure.
  */
 struct cmdline_info {
-  char_u      *cmdbuff;         /* pointer to command line buffer */
-  int cmdbufflen;               /* length of cmdbuff */
-  int cmdlen;                   /* number of chars in command line */
-  int cmdpos;                   /* current cursor position */
-  int cmdspos;                  /* cursor column on screen */
-  int cmdfirstc;                /* ':', '/', '?', '=', '>' or NUL */
-  int cmdindent;                /* number of spaces before cmdline */
-  char_u      *cmdprompt;       /* message in front of cmdline */
-  int cmdattr;                  /* attributes for prompt */
-  int overstrike;               /* Typing mode on the command line.  Shared by
-                                   getcmdline() and put_on_cmdline(). */
-  expand_T    *xpc;             /* struct being used for expansion, xp_pattern
-                                   may point into cmdbuff */
-  int xp_context;               /* type of expansion */
-  char_u      *xp_arg;          /* user-defined expansion arg */
-  int input_fn;                 /* when TRUE Invoked for input() function */
+  char_u      *cmdbuff;         // pointer to command line buffer
+  int cmdbufflen;               // length of cmdbuff
+  int cmdlen;                   // number of chars in command line
+  int cmdpos;                   // current cursor position
+  int cmdspos;                  // cursor column on screen
+  int cmdfirstc;                // ':', '/', '?', '=', '>' or NUL
+  int cmdindent;                // number of spaces before cmdline
+  char_u      *cmdprompt;       // message in front of cmdline
+  int cmdattr;                  // attributes for prompt
+  int overstrike;               // Typing mode on the command line.  Shared by
+                                // getcmdline() and put_on_cmdline()
+  expand_T    *xpc;             // struct being used for expansion, xp_pattern
+                                // may point into cmdbuff
+  int xp_context;               // type of expansion
+  char_u      *xp_arg;          // user-defined expansion arg
+  int input_fn;                 // when TRUE Invoked for input() function
+  int level;                    // current cmdline level
 };
 
 typedef struct command_line_state {
@@ -193,6 +195,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     cmd_hkmap = 0;
   }
 
+  ccline.level++;
   ccline.overstrike = false;                // always start in insert mode
   clearpos(&s->match_end);
   s->save_cursor = curwin->w_cursor;        // may be restored later
@@ -368,6 +371,11 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
     // Make ccline empty, getcmdline() may try to use it.
     ccline.cmdbuff = NULL;
+
+    if (ui_is_external(kUICmdline)) {
+      ui_call_cmdline_hide(ccline.level);
+    }
+    ccline.level--;
     return p;
   }
 }
@@ -758,7 +766,9 @@ static int command_line_execute(VimState *state, int key)
       }
 
       if (!cmd_silent) {
-        ui_cursor_goto(msg_row, 0);
+        if (!ui_is_external(kUICmdline)) {
+          ui_cursor_goto(msg_row, 0);
+        }
         ui_flush();
       }
       return 0;
@@ -2293,6 +2303,11 @@ static void draw_cmdline(int start, int len)
 {
   int i;
 
+  if (ui_is_external(kUICmdline)) {
+    ui_ext_cmdline_show();
+    return;
+  }
+
   if (cmdline_star > 0)
     for (i = 0; i < len; ++i) {
       msg_putchar('*');
@@ -2381,6 +2396,20 @@ static void draw_cmdline(int start, int len)
     msg_outtrans_len(ccline.cmdbuff + start, len);
 }
 
+void ui_ext_cmdline_show(void)
+{
+  Array content = ARRAY_DICT_INIT;
+  Array text = ARRAY_DICT_INIT;
+  ADD(text, STRING_OBJ(cstr_to_string("Normal")));
+  ADD(text, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+  ADD(content, ARRAY_OBJ(text));
+  ui_call_cmdline_show(content, ccline.cmdpos,
+                       cchar_to_string((char)ccline.cmdfirstc),
+                       cstr_to_string((char *)(ccline.cmdprompt)),
+                       ccline.cmdindent,
+                       ccline.level);
+}
+
 /*
  * Put a character on the command line.  Shifts the following text to the
  * right when "shift" is TRUE.  Used for CTRL-V, CTRL-K, etc.
@@ -2388,13 +2417,19 @@ static void draw_cmdline(int start, int len)
  */
 void putcmdline(int c, int shift)
 {
-  if (cmd_silent)
+  if (cmd_silent) {
     return;
-  msg_no_more = TRUE;
-  msg_putchar(c);
-  if (shift)
-    draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
-  msg_no_more = FALSE;
+  }
+  if (!ui_is_external(kUICmdline)) {
+    msg_no_more = true;
+    msg_putchar(c);
+    if (shift) {
+      draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
+    }
+    msg_no_more = false;
+  } else {
+    ui_call_cmdline_char(cchar_to_string((char)(c)), shift, ccline.level);
+  }
   cursorcmd();
   ui_cursor_shape();
 }
@@ -2743,17 +2778,25 @@ static void redrawcmdprompt(void)
 
   if (cmd_silent)
     return;
-  if (ccline.cmdfirstc != NUL)
+  if (ui_is_external(kUICmdline)) {
+    ui_ext_cmdline_show();
+    return;
+  }
+  if (ccline.cmdfirstc != NUL) {
     msg_putchar(ccline.cmdfirstc);
+  }
   if (ccline.cmdprompt != NULL) {
     msg_puts_attr((const char *)ccline.cmdprompt, ccline.cmdattr);
     ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
-    /* do the reverse of set_cmdspos() */
-    if (ccline.cmdfirstc != NUL)
-      --ccline.cmdindent;
-  } else
-    for (i = ccline.cmdindent; i > 0; --i)
+    // do the reverse of set_cmdspos()
+    if (ccline.cmdfirstc != NUL) {
+      ccline.cmdindent--;
+    }
+  } else {
+    for (i = ccline.cmdindent; i > 0; i--) {
       msg_putchar(' ');
+    }
+  }
 }
 
 /*
@@ -2763,6 +2806,11 @@ void redrawcmd(void)
 {
   if (cmd_silent)
     return;
+
+  if (ui_is_external(kUICmdline)) {
+    draw_cmdline(0, ccline.cmdlen);
+    return;
+  }
 
   /* when 'incsearch' is set there may be no command line while redrawing */
   if (ccline.cmdbuff == NULL) {
@@ -2807,6 +2855,11 @@ static void cursorcmd(void)
   if (cmd_silent)
     return;
 
+  if (ui_is_external(kUICmdline)) {
+    ui_call_cmdline_pos(ccline.cmdpos, ccline.level);
+    return;
+  }
+
   if (cmdmsg_rl) {
     msg_row = cmdline_row  + (ccline.cmdspos / (int)(Columns - 1));
     msg_col = (int)Columns - (ccline.cmdspos % (int)(Columns - 1)) - 1;
@@ -2824,6 +2877,9 @@ static void cursorcmd(void)
 
 void gotocmdline(int clr)
 {
+  if (ui_is_external(kUICmdline)) {
+    return;
+  }
   msg_start();
   if (cmdmsg_rl)
     msg_col = Columns - 1;
