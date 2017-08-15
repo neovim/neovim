@@ -243,13 +243,49 @@ position are restricted when the command is executed in the |sandbox|.
 2. The vim module					*lua-vim*
 
 Lua interfaces Vim through the "vim" module. Currently it only has `api` 
-submodule which is a table with all API functions. Descriptions of these 
-functions may be found in |api.txt|.
+submodule and some Neovim-specific utility values which is a table with all 
+API functions. Descriptions of the API functions may be found in |api.txt|.  
+Description of other utilities is below:
 
 vim.stricmp(a, b)					*lua-vim.stricmp*
 	Function used for case-insensitive string comparison.  Takes two 
 	string arguments and returns 0, 1 or -1 if strings are equal, a is 
 	greater then b or a is lesser then b respectively.
+
+vim.type_idx						*lua-vim.type_idx*
+	Type index for use in |lua-special-tables|.  Specifying one of the 
+	values from |lua-vim.types| allows typing the empty table (it is 
+	unclear whether empty lua table represents empty list or empty array) 
+	and forcing integral numbers to be |Float|.  See |lua-special-tbl| for 
+	more details.
+
+vim.val_idx						*lua-vim.val_idx*
+	Value index for tables representing |Float|s.  A table representing 
+	floating-point value 1.0 looks like this: >
+		{
+			[vim.type_idx] = vim.types.float,
+			[vim.val_idx] = 1.0,
+		}
+<	See also |lua-vim.type_idx| and |lua-special-tbl|.
+
+vim.types						*lua-vim.types*
+	Table with possible values for |lua-vim.type_idx|.  Contains two sets 
+	of key-value pairs: first maps possible values for |lua-vim.type_idx| 
+	to human-readable strings, second maps human-readable type names to 
+	values for |lua-vim.type_idx|.  Currently contains pairs for `float`, 
+	`array` and `dictionary` types.
+
+	Note: one must expect that values corresponding to `vim.types.float`, 
+	`vim.types.array` and `vim.types.dictionary` fall under only two 
+	following assumptions:
+	1. Value may serve both as a key and as a value in a table.  Given the 
+	   properties of lua tables this basically means “value is not `nil`”.
+	2. For each value in `vim.types` table `vim.types[vim.types[value]]` 
+	   is the same as `value`.
+	No other restrictions are put on types, and it is not guaranteed that 
+	values corresponding to `vim.types.float`, `vim.types.array` and 
+	`vim.types.dictionary` will not change or that `vim.types` table will 
+	only contain values for these three types.
 
 ==============================================================================
 3. The luaeval function					*lua-luaeval* *lua-eval*
@@ -283,6 +319,7 @@ between these cases there is the following agreement:
 3. Table with string keys, at least one of which contains NUL byte, is also 
    considered to be a dictionary, but this time it is converted to 
    a |msgpack-special-map|.
+							*lua-special-tbl*
 4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point 
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to 
