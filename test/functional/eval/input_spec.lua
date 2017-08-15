@@ -23,10 +23,41 @@ before_each(function()
     function CustomListCompl(...)
       return ['FOO']
     endfunction
+
+    highlight RBP1 guibg=Red
+    highlight RBP2 guibg=Yellow
+    highlight RBP3 guibg=Green
+    highlight RBP4 guibg=Blue
+    let g:NUM_LVLS = 4
+    function Redraw()
+      redraw!
+      return ''
+    endfunction
+    cnoremap <expr> {REDRAW} Redraw()
+    function RainBowParens(cmdline)
+      let ret = []
+      let i = 0
+      let lvl = 0
+      while i < len(a:cmdline)
+        if a:cmdline[i] is# '('
+          call add(ret, [i, i + 1, 'RBP' . ((lvl % g:NUM_LVLS) + 1)])
+          let lvl += 1
+        elseif a:cmdline[i] is# ')'
+          let lvl -= 1
+          call add(ret, [i, i + 1, 'RBP' . ((lvl % g:NUM_LVLS) + 1)])
+        endif
+        let i += 1
+      endwhile
+      return ret
+    endfunction
   ]])
   screen:set_default_attr_ids({
     EOB={bold = true, foreground = Screen.colors.Blue1},
     T={foreground=Screen.colors.Red},
+    RBP1={background=Screen.colors.Red},
+    RBP2={background=Screen.colors.Yellow},
+    RBP3={background=Screen.colors.Green},
+    RBP4={background=Screen.colors.Blue},
   })
 end)
 
@@ -196,6 +227,18 @@ describe('input()', function()
     eq('Vim(call):E118: Too many arguments for function: input',
        exc_exec('call input("prompt> ", "default", "file", "extra")'))
   end)
+  it('supports highlighting', function()
+    command('nnoremap <expr> X input({"highlight": "RainBowParens"})[-1]')
+    feed([[X]])
+    feed('(())')
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {RBP1:(}{RBP2:()}{RBP1:)}^                     |
+    ]])
+  end)
 end)
 describe('inputdialog()', function()
   it('works with multiline prompts', function()
@@ -362,5 +405,17 @@ describe('inputdialog()', function()
        exc_exec('call inputdialog({}, "default")'))
     eq('Vim(call):E118: Too many arguments for function: inputdialog',
        exc_exec('call inputdialog("prompt> ", "default", "file", "extra")'))
+  end)
+  it('supports highlighting', function()
+    command('nnoremap <expr> X inputdialog({"highlight": "RainBowParens"})[-1]')
+    feed([[X]])
+    feed('(())')
+    screen:expect([[
+                               |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {RBP1:(}{RBP2:()}{RBP1:)}^                     |
+    ]])
   end)
 end)

@@ -11031,6 +11031,7 @@ void get_user_input(const typval_T *const argvars,
   const char *defstr = "";
   const char *cancelreturn = NULL;
   const char *xp_name = NULL;
+  Callback input_callback = { .type = kCallbackNone };
   char prompt_buf[NUMBUFLEN];
   char defstr_buf[NUMBUFLEN];
   char cancelreturn_buf[NUMBUFLEN];
@@ -11040,7 +11041,7 @@ void get_user_input(const typval_T *const argvars,
       emsgf(_("E5050: {opts} must be the only argument"));
       return;
     }
-    const dict_T *const dict = argvars[0].vval.v_dict;
+    dict_T *const dict = argvars[0].vval.v_dict;
     prompt = tv_dict_get_string_buf_chk(dict, S_LEN("prompt"), prompt_buf, "");
     if (prompt == NULL) {
       return;
@@ -11065,6 +11066,9 @@ void get_user_input(const typval_T *const argvars,
     }
     if (xp_name == def) {  // default to NULL
       xp_name = NULL;
+    }
+    if (!tv_dict_get_callback(dict, S_LEN("highlight"), &input_callback)) {
+      return;
     }
   } else {
     prompt = tv_get_string_buf_chk(&argvars[0], prompt_buf);
@@ -11124,12 +11128,13 @@ void get_user_input(const typval_T *const argvars,
 
   stuffReadbuffSpec(defstr);
 
-  int save_ex_normal_busy = ex_normal_busy;
+  const int save_ex_normal_busy = ex_normal_busy;
   ex_normal_busy = 0;
   rettv->vval.v_string =
-    getcmdline_prompt(inputsecret_flag ? NUL : '@', (char_u *)p, echo_attr,
-                      xp_type, (char_u *)xp_arg);
+    (char_u *)getcmdline_prompt(inputsecret_flag ? NUL : '@', p, echo_attr,
+                                xp_type, xp_arg, input_callback);
   ex_normal_busy = save_ex_normal_busy;
+  callback_free(&input_callback);
 
   if (rettv->vval.v_string == NULL && cancelreturn != NULL) {
     rettv->vval.v_string = (char_u *)xstrdup(cancelreturn);

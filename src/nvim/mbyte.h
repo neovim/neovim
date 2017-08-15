@@ -1,6 +1,7 @@
 #ifndef NVIM_MBYTE_H
 #define NVIM_MBYTE_H
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -66,6 +67,8 @@ typedef struct {
   bool vc_fail;  ///< What to do with invalid characters: if true, fail,
                  ///< otherwise use '?'.
 } vimconv_T;
+
+extern const uint8_t utf8len_tab_zero[256];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"

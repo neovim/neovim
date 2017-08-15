@@ -207,7 +207,7 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(VALGRIND) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
+RUN_VIMTEST = VIMRUNTIME=$(SCRIPTSOURCE); export VIMRUNTIME; $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
