@@ -8,7 +8,7 @@ if helpers.pending_win32(pending) then return end
 describe('External command line completion', function()
   local screen
   local shown = false
-  local firstc, prompt, content, pos, char, shift, indent, level, current_hide_level, in_function
+  local firstc, prompt, content, pos, char, shift, indent, level, current_hide_level, in_block
 
   before_each(function()
     clear()
@@ -25,10 +25,10 @@ describe('External command line completion', function()
         char, shift = unpack(data)
       elseif name == "cmdline_pos" then
         pos = data[1]
-      elseif name == "cmdline_function_show" then
-        in_function = true
-      elseif name == "cmdline_function_hide" then
-        in_function = false
+      elseif name == "cmdline_block_show" then
+        in_block = true
+      elseif name == "cmdline_block_hide" then
+        in_block = false
       end
     end)
   end)
@@ -187,7 +187,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq(true, in_function)
+        eq(true, in_block)
         eq(2, indent)
       end)
 
@@ -199,7 +199,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq(true, in_function)
+        eq(true, in_block)
         eq(2, indent)
       end)
 
@@ -211,7 +211,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq(false, in_function)
+        eq(false, in_block)
       end)
 
       feed(':sign<c-f>')
@@ -222,7 +222,7 @@ describe('External command line completion', function()
         [Command Line]           |
                                  |
       ]], nil, nil, function()
-        eq(false, in_function)
+        eq(false, in_block)
       end)
 
     end)

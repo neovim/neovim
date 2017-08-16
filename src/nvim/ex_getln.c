@@ -186,6 +186,8 @@ static int cmd_showtail;                /* Only show path tail in lists ? */
 
 static int new_cmdpos;          /* position set by set_cmdline_pos() */
 
+static Array cmdline_block;  ///< currently displayed block of context
+
 /*
  * Type used by call_user_expand_func
  */
@@ -2758,6 +2760,32 @@ void ui_ext_cmdline_show(void)
                        ccline.cmdindent,
                        ccline.level);
 }
+
+void ui_ext_cmdline_block_append(int indent, const char *line)
+{
+  char *buf = xmallocz(indent + strlen(line));
+  memset(buf, ' ', indent);
+  memcpy(buf+indent, line, strlen(line));
+
+  Array item = ARRAY_DICT_INIT;
+  ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
+  ADD(item, STRING_OBJ(cstr_as_string(buf)));
+  Array content = ARRAY_DICT_INIT;
+  ADD(content, ARRAY_OBJ(item));
+  ADD(cmdline_block, ARRAY_OBJ(content));
+  if (cmdline_block.size > 1) {
+    ui_call_cmdline_block_append(copy_array(content));
+  } else {
+    ui_call_cmdline_block_show(copy_array(cmdline_block));
+  }
+}
+
+void ui_ext_cmdline_block_leave(void)
+{
+  api_free_array(cmdline_block);
+  ui_call_cmdline_block_hide();
+}
+
 
 /*
  * Put a character on the command line.  Shifts the following text to the

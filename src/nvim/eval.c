@@ -19643,6 +19643,7 @@ void ex_function(exarg_T *eap)
   int todo;
   hashitem_T  *hi;
   int sourcing_lnum_off;
+  bool show_block = false;
 
   /*
    * ":function" without argument: list functions.
@@ -19816,8 +19817,9 @@ void ex_function(exarg_T *eap)
     goto errret_2;
   }
 
-  if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_function_show();
+  if (KeyTyped && ui_is_external(kUICmdline)) {
+    show_block = true;
+    ui_ext_cmdline_block_append(0, (const char *)eap->cmd);
   }
 
   // find extra arguments "range", "dict", "abort" and "closure"
@@ -19907,6 +19909,9 @@ void ex_function(exarg_T *eap)
     if (theline == NULL) {
       EMSG(_("E126: Missing :endfunction"));
       goto erret;
+    }
+    if (show_block) {
+      ui_ext_cmdline_block_append(indent, (const char *)theline);
     }
 
     /* Detect line continuation: sourcing_lnum increased more than one. */
@@ -20200,8 +20205,8 @@ ret_free:
   xfree(name);
   did_emsg |= saved_did_emsg;
   need_wait_return |= saved_wait_return;
-  if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_function_hide();
+  if (show_block) {
+    ui_ext_cmdline_block_leave();
   }
 }
 
