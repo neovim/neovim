@@ -302,6 +302,8 @@ kind.
 	Set the default foreground, background and special colors
 	respectively.
 
+
+							*ui-event-highlight_set*
 ["highlight_set", attrs]
 	Set the attributes that the next text put on the screen will have.
 	`attrs` is a dict with the keys below. Any absent key is reset
@@ -443,25 +445,57 @@ states might be represented as separate modes.
 	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
 
 							*ui-ext-cmdline*
-["cmdline_enter"]
-	Enter the cmdline.
+["cmdline_show", content, pos, firstc, prompt, indent, level]
+        content: List of [attrs, string]
+	         [[{}, "t"], [attrs, "est"], ...]
+	When cmdline_external is set to true, nvim will not draw the cmdline
+	on the grid, instead nvim will send ui events of the cmdline content
+	and cursor position to the remote ui. The `content` is the full content
+	that should be displayed in the cmdline, and the `pos` is the position
+	of the cursor that in the cmdline. This event will be triggered when
+	you type in the cmdline. The content is divided into chunks with
+	different highlight attributes represented as a dict, see
+	|ui-event-highlight_set|.
+
+	`firstc` and `prompt` are text, that if non-empty should be
+	displayed in front of the command line. `firstc` always indicates
+	built in command lines such as `:` (ex command) and `/` `?` (search),
+	while `prompt` is an |input()| prompt. `indent` tells how many spaces
+	the content should be indented
+
+	The command line in nvim can be invoked recursively, for instance by
+	typing `<c-r>=` at the command line prompt. The `level` field is used
+	to distinguish different command lines active at the same time. The
+	first invoked command line will always have level 1, and the next
+	recursively invoked prompt will have level 2. Also, a command line
+	invoked while in command line window will have a higher level than
+	than the edited command line.
+
+["cmdline_pos", pos, level]
+	Change the cursor position in the cmdline.
+
+["cmdline_special_char", c, shift, level]
+	Display a special char in the cmdline at the cursor position. This is
+	typically used to indicate a pending state, like right after Ctrl-V.
+	if shift is true the text after the cursor should be shifted,
+	otherwise it should overshadow the char at the cursor.
+	Should be hidden at next cmdline_char
+
 
 ["cmdline_hide"]
 	Hide the cmdline.
 
-["cmdline_show", content, pos, firstc, prompt]
-        content: List of [highlight group, string]
-	         [["Normal", "t"], ["Search", "est"], ...]
-	When cmdline_external is set to true, nvim will not draw the cmdline
-	on the grad, instead nvim will send ui events of the cmdline content
-	and cursor position to the remote ui. The content is the full content
-	that should be displayed in the cmdline, and the pos is the position
-	of the cursor that in the cmdline. This event will be triggered when
-	you type in the cmdline.
+["cmdline_block_show", lines]
+	Show a block of context to the current command line. This occurs for
+	instance if a function is interactively defined at the command line.
+	`lines` is a list of lines where each line is represented as a list of
+	highlighted chunks, just like `contents` of |ui-event-cmdline_show|.
 
-["cmdline_pos", pos]
-	When you move your cursor, nvim will send out this event which tells
-	you the current position of the cursor in the cmdline.
+["cmdline_block_append", line]
+	Append a line at the end of the currently shown block.
+
+["cmdline_block_hide"]
+	Hide the block.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
