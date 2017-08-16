@@ -336,6 +336,50 @@ func Test_window_width()
   bw Xa Xb Xc
 endfunc
 
+func Test_equalalways_on_close()
+  set equalalways
+  vsplit
+  windo split
+  split
+  wincmd J
+  " now we have a frame top-left with two windows, a frame top-right with two
+  " windows and a frame at the bottom, full-width.
+  let height_1 = winheight(1)
+  let height_2 = winheight(2)
+  let height_3 = winheight(3)
+  let height_4 = winheight(4)
+  " closing the bottom window causes all windows to be resized.
+  close
+  call assert_notequal(height_1, winheight(1))
+  call assert_notequal(height_2, winheight(2))
+  call assert_notequal(height_3, winheight(3))
+  call assert_notequal(height_4, winheight(4))
+  call assert_equal(winheight(1), winheight(3))
+  call assert_equal(winheight(2), winheight(4))
+
+  1wincmd w
+  split
+  4wincmd w
+  resize + 5
+  " left column has three windows, equalized heights.
+  " right column has two windows, top one a bit higher
+  let height_1 = winheight(1)
+  let height_2 = winheight(2)
+  let height_4 = winheight(4)
+  let height_5 = winheight(5)
+  3wincmd w
+  " closing window in left column equalizes heights in left column but not in
+  " the right column
+  close
+  call assert_notequal(height_1, winheight(1))
+  call assert_notequal(height_2, winheight(2))
+  call assert_equal(height_4, winheight(3))
+  call assert_equal(height_5, winheight(4))
+
+  only
+  set equalalways&
+endfunc
+
 func Test_window_jump_tag()
   help
   /iccf
