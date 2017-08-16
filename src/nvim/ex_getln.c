@@ -1144,7 +1144,7 @@ static int command_line_handle_key(CommandLineState *s)
 
       xfree(ccline.cmdbuff);               // no commandline to return
       ccline.cmdbuff = NULL;
-      if (!cmd_silent) {
+      if (!cmd_silent && !ui_is_external(kUICmdline)) {
         if (cmdmsg_rl) {
           msg_col = Columns;
         } else {
@@ -1596,9 +1596,14 @@ static int command_line_handle_key(CommandLineState *s)
     s->do_abbr = false;                   // don't do abbreviation now
     // may need to remove ^ when composing char was typed
     if (enc_utf8 && utf_iscomposing(s->c) && !cmd_silent) {
-      draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
-      msg_putchar(' ');
-      cursorcmd();
+      if (ui_is_external(kUICmdline)) {
+        // TODO(bfredl): why not make unputcmdline also work with true?
+        unputcmdline();
+      } else {
+        draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
+        msg_putchar(' ');
+        cursorcmd();
+      }
     }
     break;
 
@@ -2778,22 +2783,19 @@ void putcmdline(int c, int shift)
   ui_cursor_shape();
 }
 
-/*
- * Undo a putcmdline(c, FALSE).
- */
+/// Undo a putcmdline(c, FALSE).
 void unputcmdline(void)
 {
-  if (cmd_silent)
+  if (cmd_silent) {
     return;
-  msg_no_more = TRUE;
-  if (ccline.cmdlen == ccline.cmdpos)
+  }
+  msg_no_more = true;
+  if (ccline.cmdlen == ccline.cmdpos && !ui_is_external(kUICmdline)) {
     msg_putchar(' ');
-  else if (has_mbyte)
-    draw_cmdline(ccline.cmdpos,
-        (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos));
-  else
-    draw_cmdline(ccline.cmdpos, 1);
-  msg_no_more = FALSE;
+  } else {
+    draw_cmdline(ccline.cmdpos, mb_ptr2len(ccline.cmdbuff + ccline.cmdpos));
+  }
+  msg_no_more = false;
   cursorcmd();
   ui_cursor_shape();
 }
