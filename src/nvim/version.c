@@ -1216,7 +1216,6 @@ void intro_message(int colon)
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
     "",
-    N_("by al."),
     N_("Nvim is open source and freely distributable"),
     N_("https://neovim.io/community"),
     "",
