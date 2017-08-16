@@ -703,6 +703,23 @@ String cstr_to_string(const char *str)
     };
 }
 
+/// Copies buffer to an allocated String.
+/// The resulting string is also NUL-terminated, to facilitate interoperating
+/// with code using C strings.
+///
+/// @param buf the buffer to copy
+/// @param size length of the buffer
+/// @return the resulting String, if the input string was NULL, an
+///         empty String is returned
+String cbuf_to_string(const char *buf, size_t size)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (String) {
+    .data = xmemdupz(buf, size),
+    .size = size
+  };
+}
+
 /// Creates a String using the given C string. Unlike
 /// cstr_to_string this function DOES NOT copy the C string.
 ///

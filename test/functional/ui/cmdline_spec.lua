@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
+local source = helpers.source
 
 if helpers.pending_win32(pending) then return end
 
@@ -36,6 +37,22 @@ describe('External command line completion', function()
     screen:detach()
   end)
 
+  function expect_cmdline(expected)
+    local attr_ids = screen._default_attr_ids
+    local attr_ignore = screen._default_attr_ignore
+    local actual = ''
+    for _, chunk in ipairs(content or {}) do
+      local attrs, text = chunk[1], chunk[2]
+      if screen:_equal_attrs(attrs, {}) then
+        actual = actual..text
+      else
+        local attr_id = screen:_get_attr_id(attr_ids, attr_ignore, attrs)
+        actual =  actual..'{' .. attr_id .. ':' .. text .. '}'
+      end
+    end
+    eq(expected, actual)
+  end
+
   describe("'cmdline'", function()
     it(':sign', function()
       feed(':')
@@ -58,7 +75,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq({{'Normal', 'sign'}}, content)
+        eq({{{}, 'sign'}}, content)
         eq(4, pos)
       end)
 
@@ -70,7 +87,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq({{'Normal', 'sign'}}, content)
+        eq({{{}, 'sign'}}, content)
         eq(true, shown)
         eq(3, pos)
       end)
@@ -83,7 +100,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq({{'Normal', 'sin'}}, content)
+        eq({{{}, 'sin'}}, content)
         eq(true, shown)
         eq(2, pos)
       end)
@@ -109,7 +126,7 @@ describe('External command line completion', function()
       ]], nil, nil, function()
         eq(true, shown)
         eq("input", prompt)
-        eq({{'Normal', 'default'}}, content)
+        eq({{{}, 'default'}}, content)
       end)
       feed('<cr>')
 
@@ -132,7 +149,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq({{'Normal', '1+2'}}, content)
+        eq({{{}, '1+2'}}, content)
         eq("\"", char)
         eq(1, shift)
         eq(2, level)
@@ -146,7 +163,7 @@ describe('External command line completion', function()
         ~                        |
                                  |
       ]], nil, nil, function()
-        eq({{'Normal', '3'}}, content)
+        eq({{{}, '3'}}, content)
         eq(2, current_hide_level)
         eq(1, level)
       end)
@@ -209,5 +226,53 @@ describe('External command line completion', function()
       end)
 
     end)
+  end)
+
+  it('works with highlighted cmdline', function()
+      source([[
+        highlight RBP1 guibg=Red
+        highlight RBP2 guibg=Yellow
+        highlight RBP3 guibg=Green
+        highlight RBP4 guibg=Blue
+        let g:NUM_LVLS = 4
+        function RainBowParens(cmdline)
+          let ret = []
+          let i = 0
+          let lvl = 0
+          while i < len(a:cmdline)
+            if a:cmdline[i] is# '('
+              call add(ret, [i, i + 1, 'RBP' . ((lvl % g:NUM_LVLS) + 1)])
+              let lvl += 1
+            elseif a:cmdline[i] is# ')'
+              let lvl -= 1
+              call add(ret, [i, i + 1, 'RBP' . ((lvl % g:NUM_LVLS) + 1)])
+            endif
+            let i += 1
+          endwhile
+          return ret
+        endfunction
+        map <f5>  :let x = input({'prompt':'>','highlight':'RainBowParens'})<cr>
+        "map <f5>  :let x = input({'prompt':'>'})<cr>
+      ]])
+      screen:set_default_attr_ids({
+        RBP1={background = Screen.colors.Red},
+        RBP2={background = Screen.colors.Yellow},
+        RBP3={background = Screen.colors.Green},
+        RBP4={background = Screen.colors.Blue},
+        EOB={bold = true, foreground = Screen.colors.Blue1},
+        ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+        SK={foreground = Screen.colors.Blue},
+        PE={bold = true, foreground = Screen.colors.SeaGreen4}
+      })
+      feed('<f5>(a(b)a)')
+      screen:expect([[
+        ^                         |
+        {EOB:~                        }|
+        {EOB:~                        }|
+        {EOB:~                        }|
+                                 |
+      ]], nil, nil, function()
+        expect_cmdline('{RBP1:(}a{RBP2:(}b{RBP2:)}a{RBP1:)}')
+      end)
   end)
 end)
