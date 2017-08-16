@@ -2166,10 +2166,11 @@ void do_check_cursorbind(void)
         check_cursor();
         restart_edit = restart_edit_save;
       }
-      /* Correct cursor for multi-byte character. */
-      if (has_mbyte)
+      // Correct cursor for multi-byte character.
+      if (has_mbyte) {
         mb_adjust_cursor();
-      redraw_later(VALID);
+      }
+      redraw_later(curwin->w_p_cul ? NOT_VALID : VALID);
 
       /* Only scroll when 'scrollbind' hasn't done this. */
       if (!curwin->w_p_scb)
