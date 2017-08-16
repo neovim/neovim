@@ -2805,7 +2805,8 @@ void putcmdline(int c, int shift)
     }
     msg_no_more = false;
   } else {
-    ui_call_cmdline_char(cchar_to_string((char)(c)), shift, ccline.level);
+    ui_call_cmdline_special_char(cchar_to_string((char)(c)), shift,
+                                 ccline.level);
   }
   cursorcmd();
   ui_cursor_shape();

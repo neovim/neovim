@@ -21,7 +21,9 @@ describe('External command line completion', function()
       elseif name == "cmdline_show" then
         shown = true
         content, pos, firstc, prompt, indent, level = unpack(data)
-      elseif name == "cmdline_char" then
+        -- FIXME:
+        --char, shift = nil, nil
+      elseif name == "cmdline_special_char" then
         char, shift = unpack(data)
       elseif name == "cmdline_pos" then
         pos = data[1]
