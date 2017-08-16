@@ -1831,6 +1831,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   buf_T       *buf;
   win_T       *wp = NULL;
   pos_T       *fpos;
+  wininfo_T   *wip = NULL;  // viewport info
   colnr_T col;
 
   buf = buflist_findnr(n);
@@ -1853,11 +1854,9 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   if (curbuf_locked())
     return FAIL;
 
-  // viewport info
-  wininfo_T *wip = buflist_find_wininfo(buf);
-
   // altfpos may be changed by getfile(), get it now
   if (lnum == 0) {
+    wip = buflist_find_wininfo(buf);
     fpos = buflist_findfpos(buf);
     lnum = fpos->lnum;
     col = fpos->col;
@@ -1902,7 +1901,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
       check_cursor_col();
       curwin->w_cursor.coladd = 0;
       curwin->w_set_curswant = TRUE;
-      win_set_viewport(curwin, wip);
+      win_set_viewport(wip);
     }
     return OK;
   }
@@ -1910,29 +1909,28 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
   return FAIL;
 }
 
-void win_set_viewport(win_T *win, wininfo_T *wip)
+/// Sets viewport on the current window.
+void win_set_viewport(wininfo_T *wip)
 {
-  assert(win != NULL);
   if (wip == NULL || wip->wi_topline == 0) {
     return;
   }
-  set_topline(win, wip->wi_topline);
-  win->w_topfill = wip->wi_topfill;
-  win->w_leftcol = wip->wi_leftcol;
-  win->w_skipcol = wip->wi_skipcol;
+  // Don't use set_topline() here, it's slow because of hasFoldingWin().
+  // We don't care about folds: speed matters more than perfection here.
+  curwin->w_topline = wip->wi_topline;
+  curwin->w_topfill = wip->wi_topfill;
+  curwin->w_leftcol = wip->wi_leftcol;
+  curwin->w_skipcol = wip->wi_skipcol;
 
+  if (curwin->w_topline <= 0) {
+    curwin->w_topline = 1;
+  }
+  if (curwin->w_topline > curbuf->b_ml.ml_line_count) {
+    curwin->w_topline = curbuf->b_ml.ml_line_count;
+  }
   check_cursor();
-  win_new_height(win, win->w_height);
-  win_new_width(win, win->w_width);
-
-  if (win->w_topline <= 0) {
-    win->w_topline = 1;
-  }
-  if (win->w_topline > curbuf->b_ml.ml_line_count) {
-    win->w_topline = curbuf->b_ml.ml_line_count;
-  }
-  check_topfill(win, true);
-  changed_window_setting();
+  update_topline();  // ensure valid w_topline
+  check_topfill(curwin, true);
 }
 
 // Go to the last known line number for the current buffer.
@@ -1952,7 +1950,7 @@ void buflist_getfpos(void)
     curwin->w_cursor.coladd = 0;
     curwin->w_set_curswant = true;
 
-    win_set_viewport(curwin, wip);
+    win_set_viewport(wip);
   }
 }
 
@@ -2439,9 +2437,12 @@ pos_T *buflist_findfpos(buf_T *buf)
 
 wininfo_T *buflist_find_wininfo(buf_T *buf)
 {
-  static wininfo_T no_wininfo = INIT_WININFO_T;
+  static wininfo_T *no_wininfo = NULL;
+  if (no_wininfo == NULL) {
+    no_wininfo = xcalloc(1, sizeof(wininfo_T));
+  }
   wininfo_T *wip = find_wininfo(buf, FALSE);
-  return (wip == NULL) ? &no_wininfo : wip;
+  return (wip == NULL) ? no_wininfo : wip;
 }
 
 /*

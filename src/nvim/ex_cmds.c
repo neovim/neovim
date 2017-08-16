@@ -2548,7 +2548,7 @@ int do_ecmd(
         check_cursor_col();
         curwin->w_cursor.coladd = 0;
         curwin->w_set_curswant = TRUE;
-        win_set_viewport(curwin, wip);
+        win_set_viewport(wip);
       } else
         beginline(BL_SOL | BL_FIX);
     } else {                  /* no line number, go to last line in Ex mode */
