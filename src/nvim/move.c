@@ -2147,14 +2147,12 @@ void do_check_cursorbind(void)
     curbuf = curwin->w_buffer;
     /* skip original window  and windows with 'noscrollbind' */
     if (curwin != old_curwin && curwin->w_p_crb) {
-      if (curwin->w_p_diff)
-        curwin->w_cursor.lnum
-          = diff_get_corresponding_line(old_curbuf,
-            line,
-            curbuf,
-            curwin->w_cursor.lnum);
-      else
+      if (curwin->w_p_diff) {
+        curwin->w_cursor.lnum =
+          diff_get_corresponding_line(old_curbuf, line);
+      } else {
         curwin->w_cursor.lnum = line;
+      }
       curwin->w_cursor.col = col;
       curwin->w_cursor.coladd = coladd;
       curwin->w_curswant = curswant;

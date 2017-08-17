@@ -1924,10 +1924,15 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       if (fill_fold >= 0x80) {
         ScreenLinesUC[off + col] = fill_fold;
         ScreenLinesC[0][off + col] = 0;
-      } else
+        ScreenLines[off + col] = 0x80;  // avoid storing zero
+      } else {
         ScreenLinesUC[off + col] = 0;
+        ScreenLines[off + col] = fill_fold;
+      }
+      col++;
+    } else {
+      ScreenLines[off + col++] = fill_fold;
     }
-    ScreenLines[off + col++] = fill_fold;
   }
 
   if (text != buf)
@@ -2112,16 +2117,16 @@ win_line (
     bool nochange                    /* not updating for changed text */
 )
 {
-  int col;                              /* visual column on screen */
-  unsigned off;                         /* offset in ScreenLines/ScreenAttrs */
-  int c = 0;                            /* init for GCC */
-  long vcol = 0;                        /* virtual column (for tabs) */
+  int col = 0;                          // visual column on screen
+  unsigned off;                         // offset in ScreenLines/ScreenAttrs
+  int c = 0;                            // init for GCC
+  long vcol = 0;                        // virtual column (for tabs)
   long vcol_sbr = -1;                   // virtual column after showbreak
-  long vcol_prev = -1;                  /* "vcol" of previous character */
-  char_u      *line;                    /* current line */
-  char_u      *ptr;                     /* current position in "line" */
-  int row;                              /* row in the window, excl w_winrow */
-  int screen_row;                       /* row on the screen, incl w_winrow */
+  long vcol_prev = -1;                  // "vcol" of previous character
+  char_u      *line;                    // current line
+  char_u      *ptr;                     // current position in "line"
+  int row;                              // row in the window, excl w_winrow
+  int screen_row;                       // row on the screen, incl w_winrow
 
   char_u extra[18];                     /* line number and 'fdc' must fit in here */
   int n_extra = 0;                      /* number of extra chars */
@@ -2195,7 +2200,7 @@ win_line (
   int change_start = MAXCOL;            /* first col of changed area */
   int change_end = -1;                  /* last col of changed area */
   colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
-  int need_showbreak = FALSE;
+  int need_showbreak = false;           // overlong line, skip first x chars
   int line_attr = 0;                    /* attribute for the whole line */
   matchitem_T *cur;                     /* points to the match list */
   match_T     *shl;                     /* points to search_hl or a match */
@@ -2522,7 +2527,11 @@ win_line (
     if (vcol > v) {
       vcol -= c;
       ptr = prev_ptr;
-      n_skip = v - vcol;
+      // If the character fits on the screen, don't need to skip it.
+      // Except for a TAB.
+      if (((*mb_ptr2cells)(ptr) >= c || *ptr == TAB) && col == 0) {
+        n_skip = v - vcol;
+      }
     }
 
     /*
@@ -2705,11 +2714,14 @@ win_line (
 
         draw_state = WL_FOLD;
         if (fdc > 0) {
-          // Draw the 'foldcolumn'.
-          fill_foldcolumn(extra, wp, false, lnum);
+          // Draw the 'foldcolumn'.  Allocate a buffer, "extra" may
+          // already be in use.
+          xfree(p_extra_free);
+          p_extra_free = xmalloc(12 + 1);
+          fill_foldcolumn(p_extra_free, wp, false, lnum);
           n_extra = fdc;
-          p_extra = extra;
-          p_extra[n_extra] = NUL;
+          p_extra_free[n_extra] = NUL;
+          p_extra = p_extra_free;
           c_extra = NUL;
           char_attr = win_hl_attr(wp, HLF_FC);
         }
@@ -2805,8 +2817,10 @@ win_line (
       // draw 'breakindent': indent wrapped text accodringly
       if (draw_state == WL_BRI - 1 && n_extra == 0) {
         draw_state = WL_BRI;
-        if (wp->w_p_bri && row != startrow && filler_lines == 0) {
-          char_attr = wp->w_hl_attr_normal;  // was: hl_attr(HLF_AT);
+        // if need_showbreak is set, breakindent also applies
+        if (wp->w_p_bri && (row != startrow || need_showbreak)
+            && filler_lines == 0) {
+          char_attr = wp->w_hl_attr_normal;
 
           if (diff_hlf != (hlf_T)0) {
             char_attr = win_hl_attr(wp, diff_hlf);
@@ -3510,6 +3524,7 @@ win_line (
             p = xmalloc(len + 1);
             memset(p, ' ', len);
             p[len] = NUL;
+            xfree(p_extra_free);
             p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
               mb_char2bytes(lcs_tab2, p);
@@ -3625,6 +3640,7 @@ win_line (
             memset(p, ' ', n_extra);
             STRNCPY(p, p_extra + 1, STRLEN(p_extra) - 1);
             p[n_extra] = NUL;
+            xfree(p_extra_free);
             p_extra_free = p_extra = p;
           } else {
             n_extra = byte2cells(c) - 1;
@@ -4298,6 +4314,7 @@ win_line (
     cap_col = 0;
   }
 
+  xfree(p_extra_free);
   return row;
 }
 
@@ -7423,13 +7440,7 @@ int number_width(win_T *wp)
   return n;
 }
 
-/*
- * Set size of the Vim shell.
- * If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
- * window size (this is used for the :win command).
- * If 'mustset' is FALSE, we may try to get the real window size and if
- * it fails use 'width' and 'height'.
- */
+/// Set dimensions of the Nvim application "shell".
 void screen_resize(int width, int height)
 {
   static int busy = FALSE;
@@ -7514,8 +7525,8 @@ void screen_resize(int width, int height)
   --busy;
 }
 
-// Check if the new shell size is valid, correct it if it's too small or way
-// too big.
+/// Check if the new Nvim application "shell" dimensions are valid.
+/// Correct it if it's too small or way too big.
 void check_shellsize(void)
 {
   if (Rows < min_rows()) {

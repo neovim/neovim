@@ -218,3 +218,20 @@ func Test_diffoff()
   bwipe!
   bwipe!
 endfunc
+
+func Test_setting_cursor()
+  new Xtest1
+  put =range(1,90)
+  wq
+  new Xtest2
+  put =range(1,100)
+  wq
+  
+  tabe Xtest2
+  $
+  diffsp Xtest1
+  tabclose
+
+  call delete('Xtest1')
+  call delete('Xtest2')
+endfunc
