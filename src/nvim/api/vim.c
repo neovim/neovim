@@ -484,7 +484,8 @@ void nvim_set_option(String name, Object value, Error *err)
   set_option_to(NULL, SREQ_GLOBAL, name, value, err);
 }
 
-/// Writes a message to vim output buffer
+/// Writes a message to the Vim output buffer. Does not append "\n", the
+/// message is buffered (won't display) until a linefeed is written.
 ///
 /// @param str Message
 void nvim_out_write(String str)
@@ -493,7 +494,8 @@ void nvim_out_write(String str)
   write_msg(str, false);
 }
 
-/// Writes a message to vim error buffer
+/// Writes a message to the Vim error buffer. Does not append "\n", the
+/// message is buffered (won't display) until a linefeed is written.
 ///
 /// @param str Message
 void nvim_err_write(String str)
@@ -502,8 +504,8 @@ void nvim_err_write(String str)
   write_msg(str, true);
 }
 
-/// Writes a message to vim error buffer. Appends a linefeed to ensure all
-/// contents are written.
+/// Writes a message to the Vim error buffer. Appends "\n", so the buffer is
+/// flushed (and displayed).
 ///
 /// @param str Message
 /// @see nvim_err_write()
