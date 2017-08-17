@@ -2,35 +2,42 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
 local source = helpers.source
+local ok = helpers.ok
 
 if helpers.pending_win32(pending) then return end
 
-describe('External command line completion', function()
+describe('external cmdline', function()
   local screen
-  local shown = false
-  local firstc, prompt, content, pos, char, shift, indent, level, current_hide_level, in_block
+  local last_level = 0
+  local cmdline = {}
+  local block = nil
 
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, ext_cmdline=true})
     screen:set_on_event_handler(function(name, data)
-      if name == "cmdline_hide" then
-        shown = false
-        current_hide_level = data[1]
-      elseif name == "cmdline_show" then
-        shown = true
-        content, pos, firstc, prompt, indent, level = unpack(data)
-        -- FIXME:
-        --char, shift = nil, nil
+      if name == "cmdline_show" then
+        local content, pos, firstc, prompt, indent, level = unpack(data)
+        ok(level > 0)
+        cmdline[level] = {content=content, pos=pos, firstc=firstc,
+                          prompt=prompt, indent=indent}
+        last_level = level
+      elseif name == "cmdline_hide" then
+        local level = data[1]
+        cmdline[level] = nil
       elseif name == "cmdline_special_char" then
-        char, shift = unpack(data)
+        local char, shift, level = unpack(data)
+        cmdline[level].special = {char, shift}
       elseif name == "cmdline_pos" then
-        pos = data[1]
+        local pos, level = unpack(data)
+        cmdline[level].pos = pos
       elseif name == "cmdline_block_show" then
-        in_block = true
+        block = data[1]
+      elseif name == "cmdline_block_append" then
+        block[#block+1] = data[1]
       elseif name == "cmdline_block_hide" then
-        in_block = false
+        block = nil
       end
     end)
   end)
@@ -39,11 +46,11 @@ describe('External command line completion', function()
     screen:detach()
   end)
 
-  function expect_cmdline(expected)
+  local function expect_cmdline(level, expected)
     local attr_ids = screen._default_attr_ids
     local attr_ignore = screen._default_attr_ignore
     local actual = ''
-    for _, chunk in ipairs(content or {}) do
+    for _, chunk in ipairs(cmdline[level] and cmdline[level].content or {}) do
       local attrs, text = chunk[1], chunk[2]
       if screen:_equal_attrs(attrs, {}) then
         actual = actual..text
@@ -55,179 +62,270 @@ describe('External command line completion', function()
     eq(expected, actual)
   end
 
-  describe("'cmdline'", function()
-    it(':sign', function()
-      feed(':')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq(true, shown)
-        eq(':', firstc)
-      end)
-
-      feed('sign')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq({{{}, 'sign'}}, content)
-        eq(4, pos)
-      end)
-
-      feed('<Left>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq({{{}, 'sign'}}, content)
-        eq(true, shown)
-        eq(3, pos)
-      end)
-
-      feed('<bs>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq({{{}, 'sin'}}, content)
-        eq(true, shown)
-        eq(2, pos)
-      end)
-
-      feed('<Esc>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq(false, shown)
-      end)
-
-      feed(':call input("input", "default")<cr>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq(true, shown)
-        eq("input", prompt)
-        eq({{{}, 'default'}}, content)
-      end)
-      feed('<cr>')
-
-      feed(':')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq(1, level)
-      end)
-
-      feed('<C-R>=1+2')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq({{{}, '1+2'}}, content)
-        eq("\"", char)
-        eq(1, shift)
-        eq(2, level)
-      end)
-
-      feed('<cr>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq({{{}, '3'}}, content)
-        eq(2, current_hide_level)
-        eq(1, level)
-      end)
-
-      feed('<esc>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq(1, current_hide_level)
-      end)
-
-      feed(':function Foo()<cr>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq(true, in_block)
-        eq(2, indent)
-      end)
-
-      feed('line1<cr>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq(true, in_block)
-        eq(2, indent)
-      end)
-
-      feed('endfunction<cr>')
-      screen:expect([[
-        ^                         |
-        ~                        |
-        ~                        |
-        ~                        |
-                                 |
-      ]], nil, nil, function()
-        eq(false, in_block)
-      end)
-
-      feed(':sign<c-f>')
-      screen:expect([[
-                                 |
-        [No Name]                |
-        :sign^                    |
-        [Command Line]           |
-                                 |
-      ]], nil, nil, function()
-        eq(false, in_block)
-      end)
-
+  it('works', function()
+    feed(':')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq(1, last_level)
+      eq({{
+        content = { { {}, "" } },
+        firstc = ":",
+        indent = 0,
+        pos = 0,
+        prompt = ""
+      }}, cmdline)
     end)
+
+    feed('sign')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign" } },
+        firstc = ":",
+        indent = 0,
+        pos = 4,
+        prompt = ""
+      }}, cmdline)
+    end)
+
+    feed('<Left>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign" } },
+        firstc = ":",
+        indent = 0,
+        pos = 3,
+        prompt = ""
+      }}, cmdline)
+    end)
+
+    feed('<bs>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sin" } },
+        firstc = ":",
+        indent = 0,
+        pos = 2,
+        prompt = ""
+      }}, cmdline)
+    end)
+
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({}, cmdline)
+    end)
+  end)
+
+  it("works with input()", function()
+    feed(':call input("input", "default")<cr>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "default" } },
+        firstc = "",
+        indent = 0,
+        pos = 7,
+        prompt = "input"
+      }}, cmdline)
+    end)
+    feed('<cr>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({}, cmdline)
+    end)
+
+  end)
+
+  it("works with special chars and nested cmdline", function()
+    feed(':xx<c-r>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "xx" } },
+        firstc = ":",
+        indent = 0,
+        pos = 2,
+        prompt = "",
+        special = {'"', true},
+      }}, cmdline)
+    end)
+
+    feed('=')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "xx" } },
+        firstc = ":",
+        indent = 0,
+        pos = 2,
+        prompt = "",
+        special = {'"', true},
+      },{
+        content = { { {}, "" } },
+        firstc = "=",
+        indent = 0,
+        pos = 0,
+        prompt = "",
+      }}, cmdline)
+    end)
+
+    feed('1+2')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "xx" } },
+        firstc = ":",
+        indent = 0,
+        pos = 2,
+        prompt = "",
+        special = {'"', true},
+      },{
+        content = { { {}, "1+2" } },
+        firstc = "=",
+        indent = 0,
+        pos = 3,
+        prompt = "",
+      }}, cmdline)
+    end)
+
+    feed('<cr>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "xx3" } },
+        firstc = ":",
+        indent = 0,
+        pos = 3,
+        prompt = "",
+      }}, cmdline)
+    end)
+
+    feed('<esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({}, cmdline)
+    end)
+  end)
+
+  it("works with function definitions", function()
+    feed(':function Foo()<cr>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "" } },
+        firstc = ":",
+        indent = 2,
+        pos = 0,
+        prompt = "",
+      }}, cmdline)
+      eq({{{{}, 'function Foo()'}}}, block)
+    end)
+
+    feed('line1<cr>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{{{}, 'function Foo()'}},
+          {{{}, '  line1'}}}, block)
+    end)
+
+    feed('endfunction<cr>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq(nil, block)
+    end)
+  end)
+
+  pending("works with cmdline window", function()
+    feed(':sign<c-f>')
+    screen:expect([[
+                               |
+      [No Name]                |
+      :sign^                    |
+      [Command Line]           |
+                               |
+    ]], nil, nil, function()
+      eq({}, cmdline)
+    end)
+
+    feed(":blargh")
   end)
 
   it('works with highlighted cmdline', function()
@@ -274,7 +372,7 @@ describe('External command line completion', function()
         {EOB:~                        }|
                                  |
       ]], nil, nil, function()
-        expect_cmdline('{RBP1:(}a{RBP2:(}b{RBP2:)}a{RBP1:)}')
+        expect_cmdline(1, '{RBP1:(}a{RBP2:(}b{RBP2:)}a{RBP1:)}')
       end)
   end)
 end)
