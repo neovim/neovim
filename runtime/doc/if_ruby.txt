@@ -17,7 +17,7 @@ downloading Ruby there.
 
 							*:ruby* *:rub*
 :rub[y] {cmd}		Execute Ruby command {cmd}.  A command to try it out: >
-				:ruby print "Hello"
+				:ruby puts "Hello"
 
 :rub[y] << {endpattern}
 {script}
@@ -50,7 +50,7 @@ Example Vim script: >
 	endfunction
 <
 To see what version of Ruby you have: >
-	:ruby print RUBY_VERSION
+	:ruby puts RUBY_VERSION
 <
 
 						*:rubydo* *:rubyd* *E265*
