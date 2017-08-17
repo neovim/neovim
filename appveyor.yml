@@ -2,6 +2,10 @@ version: '{build}'
 configuration:
 - MINGW_64
 - MINGW_32
+- MINGW_64-gcov
+matrix:
+  allow_failures:
+    - configuration: MINGW_64-gcov
 install: []
 build_script:
 - call ci\build.bat

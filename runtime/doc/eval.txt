@@ -4703,6 +4703,7 @@ input({opts})
 		cancelreturn  ""       Same as {cancelreturn} from
 		                       |inputdialog()|. Also works with 
 		                       input().
+		highlight     nothing  Highlight handler: |Funcref|.
 
 		The highlighting set with |:echohl| is used for the prompt.
 		The input is entered just like a command-line, with the same
@@ -4725,7 +4726,35 @@ input({opts})
 		"-complete=" argument.	Refer to |:command-completion| for
 		more information.  Example: >
 			let fname = input("File: ", "", "file")
-<
+<							*E5400* *E5402*
+		The optional `highlight` key allows specifying function which
+		will be used for highlighting user input.  This function
+		receives user input as its only argument and must return
+		a list of 3-tuples [hl_start_col, hl_end_col + 1, hl_group]
+		where
+			hl_start_col is the first highlighted column,
+			hl_end_col is the last highlighted column (+ 1!),
+			hl_group is |:hl| group used for highlighting.
+					      *E5403* *E5404* *E5405* *E5406*
+		Both hl_start_col and hl_end_col + 1 must point to the start
+		of the multibyte character (highlighting must not break
+		multibyte characters), hl_end_col + 1 may be equal to the
+		input length.  Start column must be in range [0, len(input)),
+		end column must be in range (hl_start_col, len(input)],
+		sections must be ordered so that next hl_start_col is greater
+		then or equal to previous hl_end_col.
+
+		Highlight function is called at least once for each new
+		displayed input string, before command-line is redrawn.  It is
+		expected that function is pure for the duration of one input()
+		call, i.e. it produces the same output for the same input, so
+		output may be memoized.  Function is run like under |:silent|
+		modifier. If the function causes any errors, it will be
+		skipped for the duration of the current input() call.
+
+		Currently coloring is disabled when command-line contains
+		arabic characters.
+
 		NOTE: This function must not be used in a startup file, for
 		the versions that only run in GUI mode (e.g., the Win32 GUI).
 		Note: When input() is called from within a mapping it will

@@ -6,8 +6,6 @@ local eval, feed_command, source = helpers.eval, helpers.feed_command, helpers.s
 local eq, neq = helpers.eq, helpers.neq
 local write_file = helpers.write_file
 
-if helpers.pending_win32(pending) then return end
-
 describe('terminal buffer', function()
   local screen
 
@@ -160,6 +158,7 @@ describe('terminal buffer', function()
   end)
 
   it('handles loss of focus gracefully', function()
+    if helpers.pending_win32(pending) then return end
     -- Change the statusline to avoid printing the file name, which varies.
     nvim('set_option', 'statusline', '==========')
     feed_command('set laststatus=0')
@@ -205,7 +204,6 @@ describe('terminal buffer', function()
 end)
 
 describe('No heap-buffer-overflow when using', function()
-
   local testfilename = 'Xtestfile-functional-terminal-buffers_spec'
 
   before_each(function()
