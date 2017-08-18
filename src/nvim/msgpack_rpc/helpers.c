@@ -88,7 +88,12 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
 {
   bool ret = true;
   kvec_t(MPToAPIObjectStackItem) stack = KV_INITIAL_VALUE;
-  kv_push(stack, ((MPToAPIObjectStackItem) { obj, arg, false, 0 }));
+  kv_push(stack, ((MPToAPIObjectStackItem) {
+    .mobj = obj,
+    .aobj = arg,
+    .container = false,
+    .idx = 0,
+  }));
   while (ret && kv_size(stack)) {
     MPToAPIObjectStackItem cur = kv_last(stack);
     if (!cur.container) {

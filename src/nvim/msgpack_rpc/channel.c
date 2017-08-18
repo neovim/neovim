@@ -868,6 +868,7 @@ static void call_set_error(Channel *channel, char *msg, int loglevel)
     ChannelCallFrame *frame = kv_A(channel->call_stack, i);
     frame->returned = true;
     frame->errored = true;
+    api_free_object(frame->result);
     frame->result = STRING_OBJ(cstr_to_string(msg));
   }
 
