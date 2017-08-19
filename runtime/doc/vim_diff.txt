@@ -6,9 +6,8 @@
 
 Differences between Nvim and Vim			       *vim-differences*
 
-Throughout the help files, differences between Nvim and Vim are indicated via
-the "{Nvim}" tag.  This document is a complete and centralized list of all
-these differences.
+Nvim differs from Vim in many ways, big and small.  This document is
+a complete and centralized reference of those differences.
 
 				      Type <M-]> to see the table of contents.
 
@@ -72,12 +71,18 @@ Clipboard integration		|provider-clipboard|
 
 USER EXPERIENCE  ~
 
-Working intuitively and consistently is a major goal of Nvim. Examples:
+Working intuitively and consistently is a major goal of Nvim.
 
-- Nvim does not have `-X`, a platform-specific option "sometimes" available in
-  Vim (with potential surprises: http://stackoverflow.com/q/14635295). Nvim
-  avoids features that cannot be provided on all platforms--instead that is
-  delegated to external plugins/extensions.
+							*feature-compile*
+- Nvim always includes ALL features, in contrast to Vim (which ships with
+  various combinations of 100+ optional features). Think of it as a leaner
+  version of Vim's "HUGE" build. This reduces surface area for bugs, and
+  removes a common source of confusion and friction for users.
+
+- Nvim avoids features that cannot be provided on all platforms; instead that
+  is delegated to external plugins/extensions. E.g. the `-X` platform-specific
+  option is "sometimes" available in Vim (with potential surprises:
+  http://stackoverflow.com/q/14635295).
 
 - Vim's internal test functions (test_autochdir(), test_settime(), etc.) are
   not exposed (nor implemented); instead Nvim has a robust API.
@@ -268,13 +273,12 @@ Lua interface (|if_lua.txt|):
 - Lua has direct access to Nvim |API| via `vim.api`.
 - Lua package.path and package.cpath are automatically updated according to
   'runtimepath': |lua-require|.
-- Currently, most legacy Vim features are missing.
 
-|input()| and |inputdialog()| gained support for each other’s features (return 
-on cancel and completion respectively) via dictionary argument (replaces all 
+|input()| and |inputdialog()| support for each other’s features (return on
+cancel and completion respectively) via dictionary argument (replaces all
 other arguments if used).
 
-|input()| and |inputdialog()| now support user-defined cmdline highlighting.
+|input()| and |inputdialog()| support user-defined cmdline highlighting.
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
@@ -282,7 +286,7 @@ other arguments if used).
 Some legacy Vim features are not implemented:
 
 - |if_py|: vim.bindeval() and vim.Function() are not supported
-- |if_lua|: the `vim` object currently only supports `vim.api`
+- |if_lua|: the `vim` object is missing most legacy methods
 - *if_perl*
 - *if_mzscheme*
 - *if_tcl*
@@ -290,7 +294,7 @@ Some legacy Vim features are not implemented:
 ==============================================================================
 6. Removed features					 *nvim-features-removed*
 
-These features are in Vim, but have been intentionally removed from Nvim.
+These Vim features were intentionally removed from Nvim.
 
 			*'cp'* *'nocompatible'* *'nocp'* *'compatible'*
 Nvim is always "non-compatible" with Vi.

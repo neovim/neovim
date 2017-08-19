@@ -1089,13 +1089,7 @@ static void list_features(void)
           msg_putchar('\n');
         }
       } else {
-        while (msg_col % width) {
-          int old_msg_col = msg_col;
-          msg_putchar(' ');
-          if (old_msg_col == msg_col) {
-            break;  // XXX: Avoid infinite loop.
-          }
-        }
+        msg_putchar(' ');
       }
     } else {
       if (msg_col > 0) {
@@ -1103,7 +1097,7 @@ static void list_features(void)
       }
     }
   }
-  MSG_PUTS("For differences from Vim, see :help vim-differences\n\n");
+  MSG_PUTS("See \":help feature-compile\"\n\n");
 }
 
 void list_version(void)
@@ -1144,7 +1138,7 @@ void list_version(void)
   }
 #endif  // ifdef HAVE_PATHDEF
 
-  version_msg(_("\n\nOptional features included (+) or not (-): "));
+  version_msg(_("\n\nFeatures: "));
 
   list_features();
 
@@ -1216,7 +1210,6 @@ void intro_message(int colon)
   static char *(lines[]) = {
     N_(NVIM_VERSION_LONG),
     "",
-    N_("by al."),
     N_("Nvim is open source and freely distributable"),
     N_("https://neovim.io/community"),
     "",

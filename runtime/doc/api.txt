@@ -171,8 +171,8 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
                 Parameters:~
                     {str}        String to be converted.
                     {from_part}  Legacy Vim parameter. Usually true.
-                    {do_lt}      Also translate <lt>. Does nothing if
-                                 `special` is false.
+                    {do_lt}      Also translate <lt>. Ignored if `special` is
+                                 false.
                     {special}    Replace |keycodes|, e.g. <CR> becomes a "\n"
                                  char.
 
@@ -309,20 +309,24 @@ nvim_set_option({name}, {value})                           *nvim_set_option()*
                     {value}  New option value
 
 nvim_out_write({str})                                       *nvim_out_write()*
-                Writes a message to vim output buffer
+                Writes a message to the Vim output buffer. Does not append
+                "\n", the message is buffered (won't display) until a linefeed
+                is written.
 
                 Parameters:~
                     {str}  Message
 
 nvim_err_write({str})                                       *nvim_err_write()*
-                Writes a message to vim error buffer
+                Writes a message to the Vim error buffer. Does not append
+                "\n", the message is buffered (won't display) until a linefeed
+                is written.
 
                 Parameters:~
                     {str}  Message
 
 nvim_err_writeln({str})                                   *nvim_err_writeln()*
-                Writes a message to vim error buffer. Appends a linefeed to
-                ensure all contents are written.
+                Writes a message to the Vim error buffer. Appends "\n", so the
+                buffer is flushed (and displayed).
 
                 Parameters:~
                     {str}  Message
