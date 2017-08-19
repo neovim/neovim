@@ -166,7 +166,10 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 /// On VimL error: Does not fail, but updates v:errmsg.
 ///
 /// Unlike `nvim_feedkeys`, this uses a lower-level input buffer and the call
-/// is not deferred. This is the most reliable way to emulate real user input.
+/// is not deferred. This is the most reliable way to send real user input.
+///
+/// @note |keycodes| like <CR> are translated, so `<` is special.
+///       To input a literal `<`, send `<LT>`.
 ///
 /// @param keys to be typed
 /// @return Number of bytes actually written (can be fewer than

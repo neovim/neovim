@@ -6759,7 +6759,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	
 	Highlights of vertical separators are determined by the window to the
 	left of the separator.  The highlight of a tabpage in |tabline| is
-	determine by the last-focused window of the tabpage.  Highlights of
+	determined by the last-focused window of the tabpage.  Highlights of
 	the popupmenu are determined by the current window.  Highlights in the
 	message area cannot be overridden.
 

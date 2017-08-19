@@ -336,8 +336,8 @@ static lua_State *nlua_init(void)
 /// Calls nlua_init() if needed. Is responsible for pre-lua call initalization
 /// like updating `package.[c]path` with directories derived from &runtimepath.
 ///
-/// @return Interprter instance to use. Will either be initialized now or taken
-///         from previous initalization.
+/// @return Interpreter instance to use. Will either be initialized now or
+///         taken from previous initialization.
 static lua_State *nlua_enter(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {

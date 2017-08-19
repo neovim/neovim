@@ -7,7 +7,7 @@
 Nvim API							   *API* *api*
 
 Nvim exposes a powerful API that can be used by plugins and external processes
-via |msgpack-rpc|, Lua and VimL (|eval-api|).
+via |RPC|, |Lua| and VimL (|eval-api|).
 
 Applications can also embed libnvim to work with the C API directly.
 
