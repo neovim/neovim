@@ -22775,7 +22775,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 
 bool eval_has_provider(const char *name)
 {
-#define check_provider(name) \
+#define CHECK_PROVIDER(name) \
   if (has_##name == -1) { \
     has_##name = !!find_func((char_u *)"provider#" #name "#Call"); \
     if (!has_##name) { \
@@ -22791,17 +22791,17 @@ bool eval_has_provider(const char *name)
   static int has_python3 = -1;
   static int has_ruby = -1;
 
-  if (!strcmp(name, "clipboard")) {
-    check_provider(clipboard);
+  if (strequal(name, "clipboard")) {
+    CHECK_PROVIDER(clipboard);
     return has_clipboard;
-  } else if (!strcmp(name, "python3")) {
-    check_provider(python3);
+  } else if (strequal(name, "python3")) {
+    CHECK_PROVIDER(python3);
     return has_python3;
-  } else if (!strcmp(name, "python")) {
-    check_provider(python);
+  } else if (strequal(name, "python")) {
+    CHECK_PROVIDER(python);
     return has_python;
-  } else if (!strcmp(name, "ruby")) {
-    check_provider(ruby);
+  } else if (strequal(name, "ruby")) {
+    CHECK_PROVIDER(ruby);
     return has_ruby;
   }
 
