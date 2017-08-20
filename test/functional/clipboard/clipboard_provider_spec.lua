@@ -93,17 +93,16 @@ describe('clipboard', function()
     local screen = Screen.new(72, 8)
     screen:attach()
     command("let g:clipboard = 'bogus'")
-    feed_command('redir @+> | :call system("cat CONTRIBUTING.md") | redir END')
-    -- it is made empty
+    feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
     screen:expect([[
+      ^                                                                        |
       ~                                                                       |
       ~                                                                       |
       ~                                                                       |
-      Error detected while processing function provider#clipboard#Executable: |
-      line    5:                                                              |
-      clipboard: invalid g:clipboard                                          |
+      ~                                                                       |
+      ~                                                                       |
+      ~                                                                       |
       clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
-      Press ENTER or type command to continue^                                 |
     ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
   end)
 end)
@@ -118,7 +117,23 @@ describe('clipboard', function()
     feed_command('call getreg("*")') -- force load of provider
   end)
 
-   it('has independent "* and unnamed registers per default', function()
+  it('`:redir @+>` invokes clipboard once-per-message', function()
+    eq(0, eval("g:clip_called_set"))
+    feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
+    -- Assuming CONTRIBUTING.md has >100 lines.
+    assert(eval("g:clip_called_set") > 100)
+  end)
+
+  it('`:redir @">` does not invoke clipboard', function()
+    -- :redir to a non-clipboard register, with `:set clipboard=unnamed`.
+    -- Does _not_ propagate to the clipboard (complies with Vim behavior).
+    command("set clipboard=unnamedplus")
+    eq(0, eval("g:clip_called_set"))
+    feed_command('redir @"> | :silent echo system("cat CONTRIBUTING.md") | redir END')
+    eq(0, eval("g:clip_called_set"))
+  end)
+
+  it('has independent "* and unnamed registers per default', function()
     insert("some words")
     feed('^"*dwdw"*P')
     expect('some ')
@@ -325,7 +340,7 @@ describe('clipboard', function()
 
   end)
 
-  describe('with clipboard=unnamedplus', function()
+  describe('clipboard=unnamedplus', function()
     before_each(function()
       feed_command('set clipboard=unnamedplus')
     end)
@@ -369,6 +384,7 @@ describe('clipboard', function()
         really unnamed
         the plus]])
     end)
+
     it('is updated on global changes', function()
       insert([[
 	text
