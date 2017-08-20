@@ -7,11 +7,13 @@
 
 #include "nvim/lib/kvec.h"
 #include "nvim/func_attr.h"
+#include "nvim/mbyte.h"
 
 /// One parsed line
 typedef struct {
   const char *data;  ///< Parsed line pointer
   size_t size;  ///< Parsed line size
+  bool allocated;  ///< True if line may be freed.
 } ParserLine;
 
 /// Line getter type for parser
@@ -48,6 +50,8 @@ typedef struct {
   void *cookie;
   /// All lines obtained by get_line.
   kvec_withinit_t(ParserLine, 4) lines;
+  /// Conversion, for :scriptencoding.
+  vimconv_T conv;
 } ParserInputReader;
 
 /// Highlighted region definition
@@ -76,6 +80,33 @@ typedef struct {
   bool can_continuate;
 } ParserState;
 
+static inline void viml_preader_get_line(ParserInputReader *const preader,
+                                         ParserLine *const ret_pline)
+  REAL_FATTR_NONNULL_ALL;
+
+/// Get one line from ParserInputReader
+static inline void viml_preader_get_line(ParserInputReader *const preader,
+                                         ParserLine *const ret_pline)
+{
+  ParserLine pline;
+  preader->get_line(preader->cookie, &pline);
+  if (preader->conv.vc_type != CONV_NONE && pline.size) {
+    ParserLine cpline = {
+      .allocated = true,
+      .size = pline.size,
+    };
+    cpline.data = (char *)string_convert(&preader->conv,
+                                         (char_u *)pline.data,
+                                         &cpline.size);
+    if (pline.allocated) {
+      xfree((void *)pline.data);
+    }
+    pline = cpline;
+  }
+  kvi_push(preader->lines, pline);
+  *ret_pline = pline;
+}
+
 static inline bool viml_parser_get_remaining_line(ParserState *const pstate,
                                                   ParserLine *const ret_pline)
   REAL_FATTR_ALWAYS_INLINE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
@@ -90,8 +121,7 @@ static inline bool viml_parser_get_remaining_line(ParserState *const pstate,
 {
   const size_t num_lines = kv_size(pstate->reader.lines);
   if (pstate->pos.line == num_lines) {
-    pstate->reader.get_line(pstate->reader.cookie, ret_pline);
-    kvi_push(pstate->reader.lines, *ret_pline);
+    viml_preader_get_line(&pstate->reader, ret_pline);
   } else {
     *ret_pline = kv_last(pstate->reader.lines);
   }

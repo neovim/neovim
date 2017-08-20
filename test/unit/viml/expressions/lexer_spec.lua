@@ -110,15 +110,22 @@ local function new_pstate(strings)
     end
     ret_pline.data = data
     ret_pline.size = size
+    ret_pline.allocated = false
   end
   local pline_init = {
     data = nil,
     size = 0,
+    allocated = false,
   }
   local state = {
     reader = {
       get_line = get_line,
       cookie = nil,
+      conv = {
+        vc_type = 0,
+        vc_factor = 1,
+        vc_fail = false,
+      },
     },
     pos = { line = 0, col = 0 },
     colors = kvi_new('ParserHighlight'),

@@ -25,8 +25,13 @@
 #define AUTOLOAD_CHAR '#'
 
 /// Get next token for the VimL expression input
-LexExprToken viml_pexpr_next_token(ParserState *const pstate)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+///
+/// @param  pstate  Parser state.
+/// @param[in]  peek  If true, do not advance pstate cursor.
+///
+/// @return Next token.
+LexExprToken viml_pexpr_next_token(ParserState *const pstate, const bool peek)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   LexExprToken ret = {
     .type = kExprLexInvalid,
@@ -362,6 +367,8 @@ viml_pexpr_next_token_invalid_comparison:
   }
 #undef GET_CCS
 viml_pexpr_next_token_adv_return:
-  viml_parser_advance(pstate, ret.len);
+  if (!peek) {
+    viml_parser_advance(pstate, ret.len);
+  }
   return ret;
 }
