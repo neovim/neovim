@@ -5558,7 +5558,7 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
       msg((char_u *)MSG_NO_CLIP);
       clipboard_didwarn_unnamed = true;
     }
-    // ... else, be silent (avoid a flood of messages).
+    // ... else, be silent (don't flood during :while, :redir, etc.).
     goto end;
   }
 
@@ -5567,10 +5567,12 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
     goto end;
   } else {  // unnamed register: "implicit" clipboard
     if (writing && clipboard_delay_update) {
+      // For "set" (copy), defer the clipboard call.
       clipboard_needs_update = true;
       goto end;
     } else if (!writing && clipboard_needs_update) {
-      goto end;  // use the internal value
+      // For "get" (paste), use the internal value.
+      goto end;
     }
 
     if (cb_flags & CB_UNNAMEDPLUS) {
@@ -5772,6 +5774,7 @@ void end_batch_changes(void)
   }
   clipboard_delay_update = false;
   if (clipboard_needs_update) {
+    // unnamed ("implicit" clipboard)
     set_clipboard(NUL, y_previous);
     clipboard_needs_update = false;
   }
