@@ -92,6 +92,7 @@ struct cmdline_info {
   unsigned prompt_id;  ///< Prompt number, used to disable coloring on errors.
   Callback highlight_callback;  ///< Callback used for coloring user input.
   int level;                    // current cmdline level
+  struct cmdline_info *prev_ccline;  ///< pointer to saved cmdline state
 };
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
@@ -2958,9 +2959,6 @@ void put_on_cmdline(char_u *str, int len, int redraw)
     msg_check();
 }
 
-static struct cmdline_info prev_ccline;
-static int prev_ccline_used = FALSE;
-
 /*
  * Save ccline, because obtaining the "=" register may execute "normal :cmd"
  * and overwrite it.  But get_cmdline_str() may need it, thus make it
@@ -2968,12 +2966,8 @@ static int prev_ccline_used = FALSE;
  */
 static void save_cmdline(struct cmdline_info *ccp)
 {
-  if (!prev_ccline_used) {
-    memset(&prev_ccline, 0, sizeof(struct cmdline_info));
-    prev_ccline_used = TRUE;
-  }
-  *ccp = prev_ccline;
-  prev_ccline = ccline;
+  *ccp = ccline;
+  ccline.prev_ccline = ccp;
   ccline.cmdbuff = NULL;
   ccline.cmdprompt = NULL;
   ccline.xpc = NULL;
@@ -2984,8 +2978,7 @@ static void save_cmdline(struct cmdline_info *ccp)
  */
 static void restore_cmdline(struct cmdline_info *ccp)
 {
-  ccline = prev_ccline;
-  prev_ccline = *ccp;
+  ccline = *ccp;
 }
 
 /*
@@ -5312,13 +5305,15 @@ int get_history_idx(int histype)
  */
 static struct cmdline_info *get_ccline_ptr(void)
 {
-  if ((State & CMDLINE) == 0)
+  if ((State & CMDLINE) == 0) {
     return NULL;
-  if (ccline.cmdbuff != NULL)
+  } else if (ccline.cmdbuff != NULL) {
     return &ccline;
-  if (prev_ccline_used && prev_ccline.cmdbuff != NULL)
-    return &prev_ccline;
-  return NULL;
+  } else if (ccline.prev_ccline && ccline.prev_ccline->cmdbuff != NULL) {
+    return ccline.prev_ccline;
+  } else {
+    return NULL;
+  }
 }
 
 /*
