@@ -5,7 +5,13 @@ let s:methods = {}
 let g:cliplossy = 0
 let g:cliperror = 0
 
+" Count how many times the clipboard was invoked.
+let g:clip_called_get = 0
+let g:clip_called_set = 0
+
 function! s:methods.get(reg)
+  let g:clip_called_get += 1
+
   if g:cliperror
     return 0
   end
@@ -19,6 +25,8 @@ function! s:methods.get(reg)
 endfunction
 
 function! s:methods.set(lines, regtype, reg)
+  let g:clip_called_set += 1
+
   if a:reg == '"'
     call s:methods.set(a:lines,a:regtype,'+')
     call s:methods.set(a:lines,a:regtype,'*')

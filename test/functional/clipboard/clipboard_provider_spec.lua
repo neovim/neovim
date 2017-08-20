@@ -4,6 +4,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect, eq, eval = helpers.feed_command, helpers.expect, helpers.eq, helpers.eval
+local command = helpers.command
+local meths = helpers.meths
 
 local function basic_register_test(noblock)
   insert("some words")
@@ -80,15 +82,47 @@ local function basic_register_test(noblock)
   expect("two and three and one")
 end
 
-describe('the unnamed register', function()
+describe('clipboard', function()
   before_each(clear)
-  it('works without provider', function()
+
+  it('unnamed register works without provider', function()
     eq('"', eval('v:register'))
     basic_register_test()
   end)
+
+  it('`:redir @+>` with invalid g:clipboard shows error exactly once', function()
+    local screen = Screen.new(72, 5)
+    screen:attach()
+    command("let g:clipboard = 'bogus'")
+    feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
+    screen:expect([[
+      ^                                                                        |
+      ~                                                                       |
+      ~                                                                       |
+      ~                                                                       |
+      clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
+    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+  end)
+
+  it('invalid g:clipboard', function()
+    command("let g:clipboard = 'bogus'")
+    eq('', eval('provider#clipboard#Executable()'))
+    eq('clipboard: invalid g:clipboard', eval('provider#clipboard#Error()'))
+  end)
+
+  it('valid g:clipboard', function()
+    -- provider#clipboard#Executable() only checks the structure.
+    meths.set_var('clipboard', {
+      ['name'] = 'clippy!',
+      ['copy'] = { ['+'] = 'any command', ['*'] = 'some other' },
+      ['paste'] = { ['+'] = 'any command', ['*'] = 'some other' },
+    })
+    eq('clippy!', eval('provider#clipboard#Executable()'))
+    eq('', eval('provider#clipboard#Error()'))
+  end)
 end)
 
-describe('clipboard usage', function()
+describe('clipboard', function()
   local function reset(...)
     clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp', ...)
   end
@@ -98,7 +132,23 @@ describe('clipboard usage', function()
     feed_command('call getreg("*")') -- force load of provider
   end)
 
-   it('has independent "* and unnamed registers per default', function()
+  it('`:redir @+>` invokes clipboard once-per-message', function()
+    eq(0, eval("g:clip_called_set"))
+    feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
+    -- Assuming CONTRIBUTING.md has >100 lines.
+    assert(eval("g:clip_called_set") > 100)
+  end)
+
+  it('`:redir @">` does NOT invoke clipboard', function()
+    -- :redir to a non-clipboard register, with `:set clipboard=unnamed` does
+    -- NOT propagate to the clipboard. This is consistent with Vim.
+    command("set clipboard=unnamedplus")
+    eq(0, eval("g:clip_called_set"))
+    feed_command('redir @"> | :silent echo system("cat CONTRIBUTING.md") | redir END')
+    eq(0, eval("g:clip_called_set"))
+  end)
+
+  it('has independent "* and unnamed registers by default', function()
     insert("some words")
     feed('^"*dwdw"*P')
     expect('some ')
@@ -139,7 +189,7 @@ describe('clipboard usage', function()
     eq({'some\ntext', '\nvery binary\n'}, eval("getreg('*', 1, 1)"))
   end)
 
-  it('support autodectection of regtype', function()
+  it('autodetects regtype', function()
     feed_command("let g:test_clip['*'] = ['linewise stuff','']")
     feed_command("let g:test_clip['+'] = ['charwise','stuff']")
     eq("V", eval("getregtype('*')"))
@@ -169,7 +219,7 @@ describe('clipboard usage', function()
     eq({{' much', 'ktext', ''}, 'b'}, eval("g:test_clip['+']"))
   end)
 
-  it('supports setreg', function()
+  it('supports setreg()', function()
     feed_command('call setreg("*", "setted\\ntext", "c")')
     feed_command('call setreg("+", "explicitly\\nlines", "l")')
     feed('"+P"*p')
@@ -187,7 +237,7 @@ describe('clipboard usage', function()
         ]])
   end)
 
-  it('supports let @+ (issue #1427)', function()
+  it('supports :let @+ (issue #1427)', function()
     feed_command("let @+ = 'some'")
     feed_command("let @* = ' other stuff'")
     eq({{'some'}, 'v'}, eval("g:test_clip['+']"))
@@ -305,7 +355,7 @@ describe('clipboard usage', function()
 
   end)
 
-  describe('with clipboard=unnamedplus', function()
+  describe('clipboard=unnamedplus', function()
     before_each(function()
       feed_command('set clipboard=unnamedplus')
     end)
@@ -349,6 +399,7 @@ describe('clipboard usage', function()
         really unnamed
         the plus]])
     end)
+
     it('is updated on global changes', function()
       insert([[
 	text
