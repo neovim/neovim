@@ -67,6 +67,30 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/highlight_defs.h"
 
+/// Command-line colors: one chunk
+///
+/// Defines a region which has the same highlighting.
+typedef struct {
+  int start;  ///< Colored chunk start.
+  int end;  ///< Colored chunk end (exclusive, > start).
+  int attr;  ///< Highlight attr.
+} CmdlineColorChunk;
+
+/// Command-line colors
+///
+/// Holds data about all colors.
+typedef kvec_t(CmdlineColorChunk) CmdlineColors;
+
+/// Command-line coloring
+///
+/// Holds both what are the colors and what have been colored. Latter is used to
+/// suppress unnecessary calls to coloring callbacks.
+typedef struct {
+  unsigned prompt_id;  ///< ID of the prompt which was colored last.
+  char *cmdbuff;  ///< What exactly was colored last time or NULL.
+  CmdlineColors colors;  ///< Last colors.
+} ColoredCmdline;
+
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
  * These need to be saved when using CTRL-R |, that's why they are in a
@@ -91,8 +115,11 @@ struct cmdline_info {
   int input_fn;                 // when TRUE Invoked for input() function
   unsigned prompt_id;  ///< Prompt number, used to disable coloring on errors.
   Callback highlight_callback;  ///< Callback used for coloring user input.
+  ColoredCmdline last_colors;   ///< Last cmdline colors
   int level;                    // current cmdline level
   struct cmdline_info *prev_ccline;  ///< pointer to saved cmdline state
+  char special_char;            ///< last putcmdline char (used for redraws)
+  bool special_shift;           ///< shift of last putcmdline char
 };
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
@@ -144,36 +171,6 @@ typedef struct command_line_state {
   // custom status line may invoke ":normal".
   struct cmdline_info save_ccline;
 } CommandLineState;
-
-/// Command-line colors: one chunk
-///
-/// Defines a region which has the same highlighting.
-typedef struct {
-  int start;  ///< Colored chunk start.
-  int end;  ///< Colored chunk end (exclusive, > start).
-  int attr;  ///< Highlight attr.
-} CmdlineColorChunk;
-
-/// Command-line colors
-///
-/// Holds data about all colors.
-typedef kvec_t(CmdlineColorChunk) CmdlineColors;
-
-/// Command-line coloring
-///
-/// Holds both what are the colors and what have been colored. Latter is used to
-/// suppress unnecessary calls to coloring callbacks.
-typedef struct {
-  unsigned prompt_id;  ///< ID of the prompt which was colored last.
-  char *cmdbuff;  ///< What exactly was colored last time or NULL.
-  CmdlineColors colors;  ///< Last colors.
-} ColoredCmdline;
-
-/// Last command-line colors.
-ColoredCmdline last_ccline_colors = {
-  .cmdbuff = NULL,
-  .colors = KV_INITIAL_VALUE
-};
 
 typedef struct cmdline_info CmdlineInfo;
 
@@ -242,7 +239,6 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     cmd_hkmap = 0;
   }
 
-  // TODO(bfredl): can these be combined?
   ccline.prompt_id = last_prompt_id++;
   ccline.level++;
   ccline.overstrike = false;                // always start in insert mode
@@ -263,6 +259,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   alloc_cmdbuff(exmode_active ? 250 : s->indent + 1);
   ccline.cmdlen = ccline.cmdpos = 0;
   ccline.cmdbuff[0] = NUL;
+
+  ccline.last_colors = (ColoredCmdline){ .cmdbuff = NULL,
+                                         .colors = KV_INITIAL_VALUE };
 
   // autoindent for :insert and :append
   if (s->firstc <= 0) {
@@ -414,6 +413,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   setmouse();
   ui_cursor_shape();            // may show different cursor shape
   xfree(s->save_p_icm);
+  xfree(ccline.last_colors.cmdbuff);
+  kv_destroy(ccline.last_colors.colors);
 
   {
     char_u *p = ccline.cmdbuff;
@@ -2364,8 +2365,7 @@ enum { MAX_CB_ERRORS = 1 };
 /// Should use built-in command parser or user-specified one. Currently only the
 /// latter is supported.
 ///
-/// @param[in]  colored_ccline  Command-line to color.
-/// @param[out]  ret_ccline_colors  What should be colored. Also holds a cache:
+/// @param[in,out]  colored_ccline  Command-line to color. Also holds a cache:
 ///                                 if ->prompt_id and ->cmdbuff values happen
 ///                                 to be equal to those from colored_cmdline it
 ///                                 will just do nothing, assuming that ->colors
@@ -2375,8 +2375,7 @@ enum { MAX_CB_ERRORS = 1 };
 ///
 /// @return true if draw_cmdline may proceed, false if it does not need anything
 ///         to do.
-static bool color_cmdline(const CmdlineInfo *const colored_ccline,
-                          ColoredCmdline *const ret_ccline_colors)
+static bool color_cmdline(CmdlineInfo *colored_ccline)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool printed_errmsg = false;
@@ -2389,19 +2388,21 @@ static bool color_cmdline(const CmdlineInfo *const colored_ccline,
   } while (0)
   bool ret = true;
 
+  ColoredCmdline *ccline_colors = &colored_ccline->last_colors;
+
   // Check whether result of the previous call is still valid.
-  if (ret_ccline_colors->prompt_id == colored_ccline->prompt_id
-      && ret_ccline_colors->cmdbuff != NULL
-      && STRCMP(ret_ccline_colors->cmdbuff, colored_ccline->cmdbuff) == 0) {
+  if (ccline_colors->prompt_id == colored_ccline->prompt_id
+      && ccline_colors->cmdbuff != NULL
+      && STRCMP(ccline_colors->cmdbuff, colored_ccline->cmdbuff) == 0) {
     return ret;
   }
 
-  kv_size(ret_ccline_colors->colors) = 0;
+  kv_size(ccline_colors->colors) = 0;
 
   if (colored_ccline->cmdbuff == NULL || *colored_ccline->cmdbuff == NUL) {
     // Nothing to do, exiting.
-    xfree(ret_ccline_colors->cmdbuff);
-    ret_ccline_colors->cmdbuff = NULL;
+    xfree(ccline_colors->cmdbuff);
+    ccline_colors->cmdbuff = NULL;
     return ret;
   }
 
@@ -2523,7 +2524,7 @@ static bool color_cmdline(const CmdlineInfo *const colored_ccline,
       goto color_cmdline_error;
     }
     if (start != prev_end) {
-      kv_push(ret_ccline_colors->colors, ((CmdlineColorChunk) {
+      kv_push(ccline_colors->colors, ((CmdlineColorChunk) {
         .start = prev_end,
         .end = start,
         .attr = 0,
@@ -2552,14 +2553,14 @@ static bool color_cmdline(const CmdlineInfo *const colored_ccline,
     }
     const int id = syn_name2id((char_u *)group);
     const int attr = (id == 0 ? 0 : syn_id2attr(id));
-    kv_push(ret_ccline_colors->colors, ((CmdlineColorChunk) {
+    kv_push(ccline_colors->colors, ((CmdlineColorChunk) {
       .start = start,
       .end = end,
       .attr = attr,
     }));
   }
   if (prev_end < colored_ccline->cmdlen) {
-    kv_push(ret_ccline_colors->colors, ((CmdlineColorChunk) {
+    kv_push(ccline_colors->colors, ((CmdlineColorChunk) {
       .start = prev_end,
       .end = colored_ccline->cmdlen,
       .attr = 0,
@@ -2571,14 +2572,14 @@ color_cmdline_end:
   if (can_free_cb) {
     callback_free(&color_cb);
   }
-  xfree(ret_ccline_colors->cmdbuff);
+  xfree(ccline_colors->cmdbuff);
   // Note: errors “output” is cached just as well as regular results.
-  ret_ccline_colors->prompt_id = colored_ccline->prompt_id;
+  ccline_colors->prompt_id = colored_ccline->prompt_id;
   if (arg_allocated) {
-    ret_ccline_colors->cmdbuff = (char *)arg.vval.v_string;
+    ccline_colors->cmdbuff = (char *)arg.vval.v_string;
   } else {
-    ret_ccline_colors->cmdbuff = xmemdupz((const char *)colored_ccline->cmdbuff,
-                                          (size_t)colored_ccline->cmdlen);
+    ccline_colors->cmdbuff = xmemdupz((const char *)colored_ccline->cmdbuff,
+                                      (size_t)colored_ccline->cmdlen);
   }
   tv_clear(&tv);
   return ret;
@@ -2591,7 +2592,7 @@ color_cmdline_error:
   (void)printed_errmsg;
 
   prev_prompt_errors++;
-  kv_size(ret_ccline_colors->colors) = 0;
+  kv_size(ccline_colors->colors) = 0;
   redrawcmdline();
   ret = false;
   goto color_cmdline_end;
@@ -2604,12 +2605,13 @@ color_cmdline_error:
  */
 static void draw_cmdline(int start, int len)
 {
-  if (!color_cmdline(&ccline, &last_ccline_colors)) {
+  if (!color_cmdline(&ccline)) {
     return;
   }
 
   if (ui_is_external(kUICmdline)) {
-    ui_ext_cmdline_show();
+    ccline.special_char = NUL;
+    ui_ext_cmdline_show(&ccline);
     return;
   }
 
@@ -2711,9 +2713,9 @@ static void draw_cmdline(int start, int len)
     msg_outtrans_len(arshape_buf, newlen);
   } else {
 draw_cmdline_no_arabicshape:
-    if (kv_size(last_ccline_colors.colors)) {
-      for (size_t i = 0; i < kv_size(last_ccline_colors.colors); i++) {
-        CmdlineColorChunk chunk = kv_A(last_ccline_colors.colors, i);
+    if (kv_size(ccline.last_colors.colors)) {
+      for (size_t i = 0; i < kv_size(ccline.last_colors.colors); i++) {
+        CmdlineColorChunk chunk = kv_A(ccline.last_colors.colors, i);
         if (chunk.end <= start) {
           continue;
         }
@@ -2728,12 +2730,12 @@ draw_cmdline_no_arabicshape:
   }
 }
 
-void ui_ext_cmdline_show(void)
+static void ui_ext_cmdline_show(CmdlineInfo *line)
 {
   Array content = ARRAY_DICT_INIT;
-  if (kv_size(last_ccline_colors.colors)) {
-    for (size_t i = 0; i < kv_size(last_ccline_colors.colors); i++) {
-      CmdlineColorChunk chunk = kv_A(last_ccline_colors.colors, i);
+  if (kv_size(line->last_colors.colors)) {
+    for (size_t i = 0; i < kv_size(line->last_colors.colors); i++) {
+      CmdlineColorChunk chunk = kv_A(line->last_colors.colors, i);
       Array item = ARRAY_DICT_INIT;
 
       if (chunk.attr) {
@@ -2745,21 +2747,26 @@ void ui_ext_cmdline_show(void)
       } else {
         ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
       }
-      ADD(item, STRING_OBJ(cbuf_to_string((char *)ccline.cmdbuff + chunk.start,
+      ADD(item, STRING_OBJ(cbuf_to_string((char *)line->cmdbuff + chunk.start,
                                           chunk.end-chunk.start)));
       ADD(content, ARRAY_OBJ(item));
     }
   } else {
     Array item = ARRAY_DICT_INIT;
     ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
-    ADD(item, STRING_OBJ(cstr_to_string((char *)(ccline.cmdbuff))));
+    ADD(item, STRING_OBJ(cstr_to_string((char *)(line->cmdbuff))));
     ADD(content, ARRAY_OBJ(item));
   }
-  ui_call_cmdline_show(content, ccline.cmdpos,
-                       cchar_to_string((char)ccline.cmdfirstc),
-                       cstr_to_string((char *)(ccline.cmdprompt)),
-                       ccline.cmdindent,
-                       ccline.level);
+  ui_call_cmdline_show(content, line->cmdpos,
+                       cchar_to_string((char)line->cmdfirstc),
+                       cstr_to_string((char *)(line->cmdprompt)),
+                       line->cmdindent,
+                       line->level);
+  if (line->special_char) {
+    ui_call_cmdline_special_char(cchar_to_string((char)(line->special_char)),
+                                 line->special_shift,
+                                 line->level);
+  }
 }
 
 void ui_ext_cmdline_block_append(int indent, const char *line)
@@ -2787,6 +2794,28 @@ void ui_ext_cmdline_block_leave(void)
   ui_call_cmdline_block_hide();
 }
 
+/// Extra redrawing needed for redraw! and on ui_attach
+/// assumes "redrawcmdline()" will already be invoked
+void cmdline_screen_cleared(void)
+{
+  if (!ui_is_external(kUICmdline)) {
+    return;
+  }
+
+  if (cmdline_block.size) {
+    ui_call_cmdline_block_show(copy_array(cmdline_block));
+  }
+
+  int prev_level = ccline.level-1;
+  CmdlineInfo *prev_ccline = ccline.prev_ccline;
+  while (prev_level > 0 && prev_ccline) {
+    if (prev_ccline->level == prev_level) {
+      ui_ext_cmdline_show(prev_ccline);
+      prev_level--;
+    }
+    prev_ccline = prev_ccline->prev_ccline;
+  }
+}
 
 /*
  * Put a character on the command line.  Shifts the following text to the
@@ -2806,6 +2835,8 @@ void putcmdline(int c, int shift)
     }
     msg_no_more = false;
   } else {
+    ccline.special_char = c;
+    ccline.special_shift = shift;
     ui_call_cmdline_special_char(cchar_to_string((char)(c)), shift,
                                  ccline.level);
   }
@@ -2971,6 +3002,7 @@ static void save_cmdline(struct cmdline_info *ccp)
   ccline.cmdbuff = NULL;
   ccline.cmdprompt = NULL;
   ccline.xpc = NULL;
+  ccline.special_char = NUL;
 }
 
 /*
@@ -3147,7 +3179,7 @@ static void redrawcmdprompt(void)
   if (cmd_silent)
     return;
   if (ui_is_external(kUICmdline)) {
-    ui_ext_cmdline_show();
+    ui_ext_cmdline_show(&ccline);
     return;
   }
   if (ccline.cmdfirstc != NUL) {

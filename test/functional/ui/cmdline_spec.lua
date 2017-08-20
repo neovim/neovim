@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, eq = helpers.clear, helpers.feed, helpers.eq
 local source = helpers.source
 local ok = helpers.ok
+local command = helpers.command
 
 if helpers.pending_win32(pending) then return end
 
@@ -218,14 +219,7 @@ describe('external cmdline', function()
     end)
 
     feed('1+2')
-    screen:expect([[
-      ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
-                               |
-    ]], nil, nil, function()
-      eq({{
+    local expectation = {{
         content = { { {}, "xx" } },
         firstc = ":",
         indent = 0,
@@ -238,16 +232,40 @@ describe('external cmdline', function()
         indent = 0,
         pos = 3,
         prompt = "",
-      }}, cmdline)
-    end)
-
-    feed('<cr>')
+      }} 
     screen:expect([[
       ^                         |
       ~                        |
       ~                        |
       ~                        |
                                |
+    ]], nil, nil, function()
+      eq(expectation, cmdline)
+    end)
+
+    -- erase information, so we check if it is retransmitted
+    cmdline = {}
+    command("redraw!")
+    -- redraw! forgets cursor position. Be OK with that, as UI should indicate
+    -- focus is at external cmdline anyway.
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      ^                         |
+    ]], nil, nil, function()
+      eq(expectation, cmdline)
+    end)
+
+
+    feed('<cr>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      ^                         |
     ]], nil, nil, function()
       eq({{
         content = { { {}, "xx3" } },
@@ -300,6 +318,20 @@ describe('external cmdline', function()
       eq({{{{}, 'function Foo()'}},
           {{{}, '  line1'}}}, block)
     end)
+
+    block = {}
+    command("redraw!")
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      ^                         |
+    ]], nil, nil, function()
+      eq({{{{}, 'function Foo()'}},
+          {{{}, '  line1'}}}, block)
+    end)
+
 
     feed('endfunction<cr>')
     screen:expect([[
