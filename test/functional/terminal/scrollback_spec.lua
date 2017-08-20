@@ -3,7 +3,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local clear, eq, curbuf = helpers.clear, helpers.eq, helpers.curbuf
 local feed, nvim_dir, feed_command = helpers.feed, helpers.nvim_dir, helpers.feed_command
-local iswin = helpers.iswin
 local eval = helpers.eval
 local command = helpers.command
 local wait = helpers.wait
@@ -11,6 +10,8 @@ local retry = helpers.retry
 local curbufmeths = helpers.curbufmeths
 local nvim = helpers.nvim
 local feed_data = thelpers.feed_data
+
+if helpers.pending_win32(pending) then return end
 
 describe('terminal scrollback', function()
   local screen
@@ -57,7 +58,7 @@ describe('terminal scrollback', function()
     end)
   end)
 
-  describe('with cursor at last row', function()
+  describe('with the cursor at the last row', function()
     before_each(function()
       feed_data({'line1', 'line2', 'line3', 'line4', ''})
       screen:expect([[
@@ -138,18 +139,16 @@ describe('terminal scrollback', function()
     end)
 
 
-    describe('and height decreased by 1', function()
-      if helpers.pending_win32(pending) then return end
+    describe('and the height is decreased by 1', function()
       local function will_hide_top_line()
-        feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
-        screen:try_resize(screen._width - 2, screen._height - 1)
+        screen:try_resize(screen._width, screen._height - 1)
         screen:expect([[
-          line2                       |
-          line3                       |
-          line4                       |
-          rows: 5, cols: 28           |
-          {2: }                           |
-          :^                           |
+          line2                         |
+          line3                         |
+          line4                         |
+          rows: 5, cols: 30             |
+          {1: }                             |
+          {3:-- TERMINAL --}                |
         ]])
       end
 
@@ -158,23 +157,23 @@ describe('terminal scrollback', function()
       describe('and then decreased by 2', function()
         before_each(function()
           will_hide_top_line()
-          screen:try_resize(screen._width - 2, screen._height - 2)
+          screen:try_resize(screen._width, screen._height - 2)
         end)
 
         it('will hide the top 3 lines', function()
           screen:expect([[
-            rows: 5, cols: 28         |
-            rows: 3, cols: 26         |
-            {2: }                         |
-            :^                         |
+            rows: 5, cols: 30             |
+            rows: 3, cols: 30             |
+            {1: }                             |
+            {3:-- TERMINAL --}                |
           ]])
           eq(8, curbuf('line_count'))
-          feed([[<C-\><C-N>3k]])
+          feed('<c-\\><c-n>3k')
           screen:expect([[
-            ^line4                     |
-            rows: 5, cols: 28         |
-            rows: 3, cols: 26         |
-                                      |
+            ^line4                         |
+            rows: 5, cols: 30             |
+            rows: 3, cols: 30             |
+                                          |
           ]])
         end)
       end)
@@ -182,11 +181,6 @@ describe('terminal scrollback', function()
   end)
 
   describe('with empty lines after the cursor', function()
-    -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
-    --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
-    --      See also: https://github.com/rprichard/winpty/issues/110
-    if helpers.pending_win32(pending) then return end
-
     describe('and the height is decreased by 2', function()
       before_each(function()
         screen:try_resize(screen._width, screen._height - 2)
@@ -261,10 +255,6 @@ describe('terminal scrollback', function()
     end)
 
     describe('and the height is increased by 1', function()
-      -- XXX: Can't test this reliably on Windows unless the cursor is _moved_
-      --      by the resize. http://docs.libuv.org/en/v1.x/signal.html
-      --      See also: https://github.com/rprichard/winpty/issues/110
-      if helpers.pending_win32(pending) then return end
       local function pop_then_push()
         screen:try_resize(screen._width, screen._height + 1)
         screen:expect([[
@@ -394,20 +384,10 @@ describe("'scrollback' option", function()
   end
 
   it('set to 0 behaves as 1', function()
-    local screen
-    if iswin() then
-      screen = thelpers.screen_setup(nil,
-      "['powershell.exe', '-NoLogo', '-NoProfile', '-NoExit', '-Command', 'function global:prompt {return "..'"$"'.."}']", 30)
-    else
-      screen = thelpers.screen_setup(nil, "['sh']", 30)
-    end
+    local screen = thelpers.screen_setup(nil, "['sh']", 30)
 
     curbufmeths.set_option('scrollback', 0)
-    if iswin() then
-      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
-    else
-      feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
-    end
+    feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
     screen:expect('line30                        ', nil, nil, nil, true)
     retry(nil, nil, function() expect_lines(7) end)
 
@@ -415,13 +395,7 @@ describe("'scrollback' option", function()
   end)
 
   it('deletes lines (only) if necessary', function()
-    local screen
-    if iswin() then
-      screen = thelpers.screen_setup(nil,
-      "['powershell.exe', '-NoLogo', '-NoProfile', '-NoExit', '-Command', 'function global:prompt {return "..'"$"'.."}']", 30)
-    else
-      screen = thelpers.screen_setup(nil, "['sh']", 30)
-    end
+    local screen = thelpers.screen_setup(nil, "['sh']", 30)
 
     curbufmeths.set_option('scrollback', 200)
 
@@ -429,11 +403,7 @@ describe("'scrollback' option", function()
     screen:expect('$', nil, nil, nil, true)
 
     wait()
-    if iswin() then
-      feed_data('for($i=1;$i -le 30;$i++){Write-Host \"line$i\"}\r')
-    else
-      feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
-    end
+    feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
 
     screen:expect('line30                        ', nil, nil, nil, true)
 
@@ -446,11 +416,7 @@ describe("'scrollback' option", function()
     -- Terminal job data is received asynchronously, may happen before the
     -- 'scrollback' option is synchronized with the internal sb_buffer.
     command('sleep 100m')
-    if iswin() then
-      feed_data('for($i=1;$i -le 40;$i++){Write-Host \"line$i\"}\r')
-    else
-      feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
-    end
+    feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
 
     screen:expect('line40                        ', nil, nil, nil, true)
 
