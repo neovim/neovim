@@ -5,6 +5,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect, eq, eval = helpers.feed_command, helpers.expect, helpers.eq, helpers.eval
 local command = helpers.command
+local meths = helpers.meths
 
 local function basic_register_test(noblock)
   insert("some words")
@@ -90,7 +91,7 @@ describe('clipboard', function()
   end)
 
   it('`:redir @+>` with invalid g:clipboard shows error exactly once', function()
-    local screen = Screen.new(72, 8)
+    local screen = Screen.new(72, 5)
     screen:attach()
     command("let g:clipboard = 'bogus'")
     feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
@@ -99,11 +100,25 @@ describe('clipboard', function()
       ~                                                                       |
       ~                                                                       |
       ~                                                                       |
-      ~                                                                       |
-      ~                                                                       |
-      ~                                                                       |
       clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
     ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+  end)
+
+  it('invalid g:clipboard', function()
+    command("let g:clipboard = 'bogus'")
+    eq('', eval('provider#clipboard#Executable()'))
+    eq('clipboard: invalid g:clipboard', eval('provider#clipboard#Error()'))
+  end)
+
+  it('valid g:clipboard', function()
+    -- provider#clipboard#Executable() only checks the structure.
+    meths.set_var('clipboard', {
+      ['name'] = 'clippy!',
+      ['copy'] = { ['+'] = 'any command', ['*'] = 'some other' },
+      ['paste'] = { ['+'] = 'any command', ['*'] = 'some other' },
+    })
+    eq('clippy!', eval('provider#clipboard#Executable()'))
+    eq('', eval('provider#clipboard#Error()'))
   end)
 end)
 
@@ -124,16 +139,16 @@ describe('clipboard', function()
     assert(eval("g:clip_called_set") > 100)
   end)
 
-  it('`:redir @">` does not invoke clipboard', function()
-    -- :redir to a non-clipboard register, with `:set clipboard=unnamed`.
-    -- Does _not_ propagate to the clipboard (complies with Vim behavior).
+  it('`:redir @">` does NOT invoke clipboard', function()
+    -- :redir to a non-clipboard register, with `:set clipboard=unnamed` does
+    -- NOT propagate to the clipboard. This is consistent with Vim.
     command("set clipboard=unnamedplus")
     eq(0, eval("g:clip_called_set"))
     feed_command('redir @"> | :silent echo system("cat CONTRIBUTING.md") | redir END')
     eq(0, eval("g:clip_called_set"))
   end)
 
-  it('has independent "* and unnamed registers per default', function()
+  it('has independent "* and unnamed registers by default', function()
     insert("some words")
     feed('^"*dwdw"*P')
     expect('some ')

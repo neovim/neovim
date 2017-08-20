@@ -90,7 +90,7 @@ endfunction
 
 " Changes ':h clipboard' to ':help |clipboard|'.
 function! s:help_to_link(s) abort
-  return substitute(a:s, '\v:h%[elp] ([^|][^"\r\n]+)', ':help |\1|', 'g')
+  return substitute(a:s, '\v:h%[elp] ([^|][^"\r\n ]+)', ':help |\1|', 'g')
 endfunction
 
 " Format a message for a specific report item

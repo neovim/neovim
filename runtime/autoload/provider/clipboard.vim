@@ -57,14 +57,14 @@ endfunction
 function! provider#clipboard#Executable() abort
   if exists('g:clipboard')
     if type({}) isnot# type(g:clipboard)
-          \ || type({}) isnot# get(g:clipboard, 'copy', v:null)
-          \ || type({}) isnot# get(g:clipboard, 'paste', v:null)
+          \ || type({}) isnot# type(get(g:clipboard, 'copy', v:null))
+          \ || type({}) isnot# type(get(g:clipboard, 'paste', v:null))
       let s:err = 'clipboard: invalid g:clipboard'
       return ''
     endif
     let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
     let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
-    let s:cache_enabled = get(g:clipboard, 'cache_enabled', 1)
+    let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
     return get(g:clipboard, 'name', 'g:clipboard')
   elseif has('mac') && executable('pbcopy')
     let s:copy['+'] = 'pbcopy'
