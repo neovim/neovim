@@ -3915,6 +3915,26 @@ describe('cindent', function()
       {
         111111111111111111;
       }
+      namespace test::cpp17
+      {
+        111111111111111111;
+      }
+      namespace ::incorrectcpp17
+      {
+        111111111111111111;
+      }
+      namespace test::incorrectcpp17::
+      {
+        111111111111111111;
+      }
+      namespace test:incorrectcpp17
+      {
+        111111111111111111;
+      }
+      namespace test:::incorrectcpp17
+      {
+        111111111111111111;
+      }
       namespace{
         111111111111111111;
       }
@@ -3985,6 +4005,26 @@ describe('cindent', function()
       namespace test
       {
       111111111111111111;
+      }
+      namespace test::cpp17
+      {
+      111111111111111111;
+      }
+      namespace ::incorrectcpp17
+      {
+      	111111111111111111;
+      }
+      namespace test::incorrectcpp17::
+      {
+      	111111111111111111;
+      }
+      namespace test:incorrectcpp17
+      {
+      	111111111111111111;
+      }
+      namespace test:::incorrectcpp17
+      {
+      	111111111111111111;
       }
       namespace{
       111111111111111111;

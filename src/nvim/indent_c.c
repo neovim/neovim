@@ -515,34 +515,41 @@ int cin_isscopedecl(char_u *s)
 /* Maximum number of lines to search back for a "namespace" line. */
 #define FIND_NAMESPACE_LIM 20
 
-/*
- * Recognize a "namespace" scope declaration.
- */
-static int cin_is_cpp_namespace(char_u *s)
+// Recognize a "namespace" scope declaration.
+static bool cin_is_cpp_namespace(char_u *s)
 {
-  char_u      *p;
-  int has_name = FALSE;
+  char_u *p;
+  bool has_name = false;
+  bool has_name_start = false;
 
   s = cin_skipcomment(s);
   if (STRNCMP(s, "namespace", 9) == 0 && (s[9] == NUL || !vim_iswordc(s[9]))) {
     p = cin_skipcomment(skipwhite(s + 9));
     while (*p != NUL) {
       if (ascii_iswhite(*p)) {
-        has_name = TRUE;         /* found end of a name */
+        has_name = true;         // found end of a name
         p = cin_skipcomment(skipwhite(p));
       } else if (*p == '{') {
         break;
       } else if (vim_iswordc(*p)) {
-        if (has_name)
-          return FALSE;           /* word character after skipping past name */
-        ++p;
+        has_name_start = true;
+        if (has_name) {
+          return false;           // word character after skipping past name
+        }
+        p++;
+      } else if (p[0] == ':' && p[1] == ':' && vim_iswordc(p[2])) {
+        if (!has_name_start || has_name) {
+          return false;
+        }
+        // C++ 17 nested namespace
+        p += 3;
       } else {
-        return FALSE;
+        return false;
       }
     }
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
