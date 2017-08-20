@@ -2519,6 +2519,7 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
   if (redirecting()) {
     /* If the string doesn't start with CR or NL, go to msg_col */
     if (*s != '\n' && *s != '\r') {
+      start_batch_changes();
       while (cur_col < msg_col) {
         if (capture_ga) {
           ga_concat_len(capture_ga, " ", 1);
@@ -2535,6 +2536,7 @@ static void redir_write(const char *const str, const ptrdiff_t maxlen)
         }
         cur_col++;
       }
+      end_batch_changes();
     }
 
     size_t len = maxlen == -1 ? STRLEN(s) : (size_t)maxlen;

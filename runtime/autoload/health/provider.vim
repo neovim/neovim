@@ -121,14 +121,14 @@ function! s:check_clipboard() abort
   call health#report_start('Clipboard (optional)')
 
   let clipboard_tool = provider#clipboard#Executable()
-  if empty(clipboard_tool)
-    call health#report_warn(
-          \ 'No clipboard tool found. Clipboard registers will not work.',
-          \ [':help clipboard'])
-  elseif exists('g:clipboard') && (type({}) != type(g:clipboard)
-        \ || !has_key(g:clipboard, 'copy') || !has_key(g:clipboard, 'paste'))
+  if exists('g:clipboard') && empty(clipboard_tool)
     call health#report_error(
-          \ 'g:clipboard exists but is malformed. It must be a dictionary with the keys documented at :help g:clipboard')
+          \ provider#clipboard#Error(),
+          \ ["Use the example in :help g:clipboard as a template, or don't set g:clipboard at all."])
+  elseif empty(clipboard_tool)
+    call health#report_warn(
+          \ 'No clipboard tool found. Clipboard registers (`"+` and `"*`) will not work.',
+          \ [':help clipboard'])
   else
     call health#report_ok('Clipboard tool found: '. clipboard_tool)
   endif

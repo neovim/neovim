@@ -4,6 +4,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect, eq, eval = helpers.feed_command, helpers.expect, helpers.eq, helpers.eval
+local command = helpers.command
 
 local function basic_register_test(noblock)
   insert("some words")
@@ -80,15 +81,34 @@ local function basic_register_test(noblock)
   expect("two and three and one")
 end
 
-describe('the unnamed register', function()
+describe('clipboard', function()
   before_each(clear)
-  it('works without provider', function()
+
+  it('unnamed register works without provider', function()
     eq('"', eval('v:register'))
     basic_register_test()
   end)
+
+  it('`:redir @+>` with invalid g:clipboard shows error exactly once', function()
+    local screen = Screen.new(72, 8)
+    screen:attach()
+    command("let g:clipboard = 'bogus'")
+    feed_command('redir @+> | :call system("cat CONTRIBUTING.md") | redir END')
+    -- it is made empty
+    screen:expect([[
+      ~                                                                       |
+      ~                                                                       |
+      ~                                                                       |
+      Error detected while processing function provider#clipboard#Executable: |
+      line    5:                                                              |
+      clipboard: invalid g:clipboard                                          |
+      clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
+      Press ENTER or type command to continue^                                 |
+    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+  end)
 end)
 
-describe('clipboard usage', function()
+describe('clipboard', function()
   local function reset(...)
     clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp', ...)
   end
@@ -139,7 +159,7 @@ describe('clipboard usage', function()
     eq({'some\ntext', '\nvery binary\n'}, eval("getreg('*', 1, 1)"))
   end)
 
-  it('support autodectection of regtype', function()
+  it('autodetects regtype', function()
     feed_command("let g:test_clip['*'] = ['linewise stuff','']")
     feed_command("let g:test_clip['+'] = ['charwise','stuff']")
     eq("V", eval("getregtype('*')"))
@@ -169,7 +189,7 @@ describe('clipboard usage', function()
     eq({{' much', 'ktext', ''}, 'b'}, eval("g:test_clip['+']"))
   end)
 
-  it('supports setreg', function()
+  it('supports setreg()', function()
     feed_command('call setreg("*", "setted\\ntext", "c")')
     feed_command('call setreg("+", "explicitly\\nlines", "l")')
     feed('"+P"*p')
@@ -187,7 +207,7 @@ describe('clipboard usage', function()
         ]])
   end)
 
-  it('supports let @+ (issue #1427)', function()
+  it('supports :let @+ (issue #1427)', function()
     feed_command("let @+ = 'some'")
     feed_command("let @* = ' other stuff'")
     eq({{'some'}, 'v'}, eval("g:test_clip['+']"))

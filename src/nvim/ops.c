@@ -58,8 +58,8 @@ static yankreg_T *y_previous = NULL; /* ptr to last written yankreg */
 static bool clipboard_didwarn_unnamed = false;
 
 // for behavior between start_batch_changes() and end_batch_changes())
-static bool clipboard_delay_update = false;  // delay clipboard update
 static int batch_change_count = 0;           // inside a script
+static bool clipboard_delay_update = false;  // delay clipboard update
 static bool clipboard_needs_update = false;  // clipboard was updated
 
 /*
@@ -5524,7 +5524,7 @@ int get_default_register_name(void)
 }
 
 /// Determine if register `*name` should be used as a clipboard.
-/// In an unnammed operation, `*name` is `NUL` and will be adjusted to `'*'/'+'` if
+/// In an unnamed operation, `*name` is `NUL` and will be adjusted to */+ if
 /// `clipboard=unnamed[plus]` is set.
 ///
 /// @param name The name of register, or `NUL` if unnamed.
@@ -5535,33 +5535,44 @@ int get_default_register_name(void)
 /// if the register isn't a clipboard or provider isn't available.
 static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
 {
-  if (*name == '*' || *name == '+') {
-    if(!eval_has_provider("clipboard")) {
-      if (!quiet) {
-        EMSG("clipboard: No provider. Try \":CheckHealth\" or "
-             "\":h clipboard\".");
-      }
-      return NULL;
+#define MSG_NO_CLIP "clipboard: No provider. " \
+  "Try \":CheckHealth\" or \":h clipboard\"."
+
+  yankreg_T *target = NULL;
+  bool explicit_cb_reg = (*name == '*' || *name == '+');
+  bool implicit_cb_reg = (*name == NUL) && (cb_flags & CB_UNNAMEDMASK);
+  int save_redir_off = redir_off;
+  if (!explicit_cb_reg && !implicit_cb_reg) {
+    goto end;
+  }
+
+  if (!eval_has_provider("clipboard")) {
+    if (batch_change_count == 1 && explicit_cb_reg && !quiet) {
+      redir_off = true;   // Avoid recursion from :redir + emsg().
+      // Do NOT error (emsg()) here--if it interrupts :redir we get into
+      // a weird state, stuck in "redirect mode".
+      msg((char_u *)MSG_NO_CLIP);
+    } else if (batch_change_count == 1 && implicit_cb_reg
+               && !quiet && !clipboard_didwarn_unnamed) {
+      redir_off = true;  // Avoid recursion from :redir + emsg().
+      msg((char_u *)MSG_NO_CLIP);
+      clipboard_didwarn_unnamed = true;
     }
-    return &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
-  } else if ((*name == NUL) && (cb_flags & CB_UNNAMEDMASK)) {
-    if(!eval_has_provider("clipboard")) {
-      if (!quiet && !clipboard_didwarn_unnamed) {
-        msg((char_u *)"clipboard: No provider. Try \":CheckHealth\" or "
-            "\":h clipboard\".");
-        clipboard_didwarn_unnamed = true;
-      }
-      return NULL;
-    }
+    // ... else, be silent (avoid a flood of messages).
+    goto end;
+  }
+
+  if (explicit_cb_reg) {
+    target = &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
+    goto end;
+  } else {  // unnamed register: "implicit" clipboard
     if (writing && clipboard_delay_update) {
       clipboard_needs_update = true;
-      return NULL;
+      goto end;
     } else if (!writing && clipboard_needs_update) {
-      // use the internal value
-      return NULL;
+      goto end;  // use the internal value
     }
 
-    yankreg_T *target;
     if (cb_flags & CB_UNNAMEDPLUS) {
       *name = (cb_flags & CB_UNNAMED && writing) ? '"': '+';
       target = &y_regs[PLUS_REGISTER];
@@ -5569,10 +5580,12 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
       *name = '*';
       target = &y_regs[STAR_REGISTER];
     }
-    return target; // unnamed register
+    goto end;
   }
-  // don't do anything for other register names
-  return NULL;
+
+end:
+  redir_off = save_redir_off;
+  return target;
 }
 
 static bool get_clipboard(int name, yankreg_T **target, bool quiet)
@@ -5740,7 +5753,7 @@ static void set_clipboard(int name, yankreg_T *reg)
   (void)eval_call_provider("clipboard", "set", args);
 }
 
-/// Avoid clipboard (slow) during batch operations (i.e., a script).
+/// Avoid slow things (clipboard) during batch operations (while/for-loops).
 void start_batch_changes(void)
 {
   if (++batch_change_count > 1) {
@@ -5750,7 +5763,7 @@ void start_batch_changes(void)
   clipboard_needs_update = false;
 }
 
-/// Update the clipboard after batch changes finished.
+/// Counterpart to start_batch_changes().
 void end_batch_changes(void)
 {
   if (--batch_change_count > 0) {
