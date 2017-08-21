@@ -2319,16 +2319,6 @@ static void source_callback(char_u *fname, void *cookie)
   (void)do_source(fname, false, DOSO_NONE);
 }
 
-/// Source the file "name" from all directories in 'runtimepath'.
-/// "name" can contain wildcards.
-/// When "flags" has DIP_ALL: source all files, otherwise only the first one.
-///
-/// return FAIL when no file could be sourced, OK otherwise.
-int source_runtime(char_u *name, int flags)
-{
-  return do_in_runtimepath(name, flags, source_callback, NULL);
-}
-
 /// Find the file "name" in all directories in "path" and invoke
 /// "callback(fname, cookie)".
 /// "name" can contain wildcards.
@@ -2434,21 +2424,21 @@ int do_in_path(char_u *path, char_u *name, int flags,
   return did_one ? OK : FAIL;
 }
 
-/// Find "name" in 'runtimepath'.  When found, invoke the callback function for
+/// Find "name" in "path".  When found, invoke the callback function for
 /// it: callback(fname, "cookie")
 /// When "flags" has DIP_ALL repeat for all matches, otherwise only the first
 /// one is used.
 /// Returns OK when at least one match found, FAIL otherwise.
-/// If "name" is NULL calls callback for each entry in runtimepath. Cookie is
+/// If "name" is NULL calls callback for each entry in "path". Cookie is
 /// passed by reference in this case, setting it to NULL indicates that callback
 /// has done its job.
-int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
-                      void *cookie)
+int do_in_path_and_pp(char_u *path, char_u *name, int flags,
+                      DoInRuntimepathCB callback, void *cookie)
 {
   int done = FAIL;
 
   if ((flags & DIP_NORTP) == 0) {
-    done = do_in_path(p_rtp, name, flags, callback, cookie);
+    done = do_in_path(path, name, flags, callback, cookie);
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
@@ -2474,6 +2464,29 @@ int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
   }
 
   return done;
+}
+
+/// Just like do_in_path_and_pp(), using 'runtimepath' for "path".
+int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
+                      void *cookie)
+{
+  return do_in_path_and_pp(p_rtp, name, flags, callback, cookie);
+}
+
+/// Source the file "name" from all directories in 'runtimepath'.
+/// "name" can contain wildcards.
+/// When "flags" has DIP_ALL: source all files, otherwise only the first one.
+///
+/// return FAIL when no file could be sourced, OK otherwise.
+int source_runtime(char_u *name, int flags)
+{
+  return source_in_path(p_rtp, name, flags);
+}
+
+/// Just like source_runtime(), but use "path" instead of 'runtimepath'.
+int source_in_path(char_u *path, char_u *name, int flags)
+{
+  return do_in_path_and_pp(path, name, flags, source_callback, NULL);
 }
 
 // Expand wildcards in "pat" and invoke do_source() for each match.
