@@ -114,6 +114,7 @@ describe('packadd', function()
 
         set rtp&
         let rtp = &rtp
+        silent !rm top2_dir
       endfunc
 
       func Test_packloadall()
