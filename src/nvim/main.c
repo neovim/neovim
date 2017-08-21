@@ -1291,15 +1291,23 @@ static void set_window_layout(mparm_T *paramp)
 static void load_plugins(void)
 {
   if (p_lpl) {
+    char_u *rtp_copy = NULL;
+
     // First add all package directories to 'runtimepath', so that their
     // autoload directories can be found.  Only if not done already with a
     // :packloadall command.
+    // Make a copy of 'runtimepath', so that source_runtime does not use the
+    // pack directories.
     if (!did_source_packages) {
+      rtp_copy = vim_strsave(p_rtp);
       add_pack_start_dirs();
     }
 
-    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL | DIP_NOAFTER);  // NOLINT
+    source_in_path(rtp_copy == NULL ? p_rtp : rtp_copy,
+                   (char_u *)"plugin/**/*.vim",  // NOLINT
+                   DIP_ALL | DIP_NOAFTER);
     TIME_MSG("loading plugins");
+    xfree(rtp_copy);
 
     // Only source "start" packages if not done already with a :packloadall
     // command.

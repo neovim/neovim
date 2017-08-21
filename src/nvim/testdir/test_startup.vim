@@ -24,28 +24,34 @@ func Test_after_comes_later()
 	\ 'set guioptions+=M',
 	\ 'let $HOME = "/does/not/exist"',
 	\ 'set loadplugins',
-	\ 'set rtp=Xhere,Xafter',
+	\ 'set rtp=Xhere,Xafter,Xanother',
 	\ 'set packpath=Xhere,Xafter',
 	\ 'set nomore',
+	\ 'let g:sequence = ""',
 	\ ]
   let after = [
 	\ 'redir! > Xtestout',
 	\ 'scriptnames',
 	\ 'redir END',
+	\ 'redir! > Xsequence',
+	\ 'echo g:sequence',
+	\ 'redir END',
 	\ 'quit',
 	\ ]
   call mkdir('Xhere/plugin', 'p')
-  call writefile(['let done = 1'], 'Xhere/plugin/here.vim')
+  call writefile(['let g:sequence .= "here "'], 'Xhere/plugin/here.vim')
+  call mkdir('Xanother/plugin', 'p')
+  call writefile(['let g:sequence .= "another "'], 'Xanother/plugin/another.vim')
   call mkdir('Xhere/pack/foo/start/foobar/plugin', 'p')
-  call writefile(['let done = 1'], 'Xhere/pack/foo/start/foobar/plugin/foo.vim')
+  call writefile(['let g:sequence .= "pack "'], 'Xhere/pack/foo/start/foobar/plugin/foo.vim')
 
   call mkdir('Xafter/plugin', 'p')
-  call writefile(['let done = 1'], 'Xafter/plugin/later.vim')
+  call writefile(['let g:sequence .= "after "'], 'Xafter/plugin/later.vim')
 
   if RunVim(before, after, '')
 
     let lines = readfile('Xtestout')
-    let expected = ['Xbefore.vim', 'here.vim', 'foo.vim', 'later.vim', 'Xafter.vim']
+    let expected = ['Xbefore.vim', 'here.vim', 'another.vim', 'foo.vim', 'later.vim', 'Xafter.vim']
     let found = []
     for line in lines
       for one in expected
@@ -57,8 +63,12 @@ func Test_after_comes_later()
     call assert_equal(expected, found)
   endif
 
+  call assert_equal('here another pack after', substitute(join(readfile('Xsequence', 1), ''), '\s\+$', '', ''))
+
   call delete('Xtestout')
+  call delete('Xsequence')
   call delete('Xhere', 'rf')
+  call delete('Xanother', 'rf')
   call delete('Xafter', 'rf')
 endfunc
 
