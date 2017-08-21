@@ -76,11 +76,11 @@ func Test_help_arg()
     let found = []
     for line in lines
       if line =~ '-R.*Read-only mode'
-	call add(found, 'Readonly mode')
+        call add(found, 'Readonly mode')
       endif
       " Watch out for a second --version line in the Gnome version.
-      if line =~ '--version.*Print version information and exit'
-	call add(found, "--version")
+      if line =~ '--version.*Print version information'
+        call add(found, "--version")
       endif
     endfor
     call assert_equal(['Readonly mode', '--version'], found)
