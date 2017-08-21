@@ -62,6 +62,38 @@ func Test_after_comes_later()
   call delete('Xafter', 'rf')
 endfunc
 
+func Test_pack_in_rtp_when_plugins_run()
+  if !has('packages')
+    return
+  endif
+  let before = [
+	\ 'set nocp viminfo+=nviminfo',
+	\ 'set guioptions+=M',
+	\ 'let $HOME = "/does/not/exist"',
+	\ 'set loadplugins',
+	\ 'set rtp=Xhere',
+	\ 'set packpath=Xhere',
+	\ 'set nomore',
+	\ ]
+  let after = [
+	\ 'quit',
+	\ ]
+  call mkdir('Xhere/plugin', 'p')
+  call writefile(['redir! > Xtestout', 'silent set runtimepath?', 'silent! call foo#Trigger()', 'redir END'], 'Xhere/plugin/here.vim')
+  call mkdir('Xhere/pack/foo/start/foobar/autoload', 'p')
+  call writefile(['function! foo#Trigger()', 'echo "autoloaded foo"', 'endfunction'], 'Xhere/pack/foo/start/foobar/autoload/foo.vim')
+
+  if RunVim(before, after, '')
+
+    let lines = filter(readfile('Xtestout'), '!empty(v:val)')
+    call assert_match('Xhere[/\\]pack[/\\]foo[/\\]start[/\\]foobar', get(lines, 0))
+    call assert_match('autoloaded foo', get(lines, 1))
+  endif
+
+  call delete('Xtestout')
+  call delete('Xhere', 'rf')
+endfunc
+
 func Test_help_arg()
   if !has('unix') && has('gui')
     " this doesn't work with gvim on MS-Windows
