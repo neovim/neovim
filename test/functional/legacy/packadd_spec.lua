@@ -89,7 +89,7 @@ describe('packadd', function()
         endif
         let top2_dir = s:topdir . '/Xdir2'
         let real_dir = s:topdir . '/Xsym'
-        silent !ln -s real_dir top2_dir
+        exec "silent! !ln -s" real_dir top2_dir
         let &rtp = top2_dir . ',' . top2_dir . '/after'
         let &packpath = &rtp
 
@@ -114,7 +114,7 @@ describe('packadd', function()
 
         set rtp&
         let rtp = &rtp
-        silent !rm top2_dir
+        exec "silent !rm" top2_dir
       endfunc
 
       func Test_packloadall()
