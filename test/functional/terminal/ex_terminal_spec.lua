@@ -72,10 +72,10 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell()
     wait()
     screen:expect([[
-      ready $                                           |
+      ^ready $                                           |
       [Process exited 0]                                |
                                                         |
-      -- TERMINAL --                                    |
+      :terminal                                         |
     ]])
   end)
 
@@ -96,10 +96,10 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell()
     wait()
     screen:expect([[
-      jeff $                                            |
+      ^jeff $                                            |
       [Process exited 0]                                |
                                                         |
-      -- TERMINAL --                                    |
+      :terminal                                         |
     ]])
   end)
 
@@ -107,10 +107,10 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell('echo hi')
     wait()
     screen:expect([[
-      ready $ echo hi                                   |
+      ^ready $ echo hi                                   |
                                                         |
       [Process exited 0]                                |
-      -- TERMINAL --                                    |
+      :terminal echo hi                                 |
     ]])
   end)
 
@@ -119,10 +119,10 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell('echo hi')
     wait()
     screen:expect([[
-      jeff $ echo hi                                    |
+      ^jeff $ echo hi                                    |
                                                         |
       [Process exited 0]                                |
-      -- TERMINAL --                                    |
+      :terminal echo hi                                 |
     ]])
   end)
 
@@ -130,10 +130,10 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell([[echo 'hello' \ "world"]])
     wait()
     screen:expect([[
-      ready $ echo 'hello' \ "world"                    |
+      ^ready $ echo 'hello' \ "world"                    |
                                                         |
       [Process exited 0]                                |
-      -- TERMINAL --                                    |
+      :terminal echo 'hello' \ "world"                  |
     ]])
   end)
 
@@ -166,10 +166,10 @@ describe(':terminal (with fake shell)', function()
     terminal_with_fake_shell()
     wait()
     screen:expect([[
-      ready $                                           |
+      ^ready $                                           |
       [Process exited 0]                                |
                                                         |
-      -- TERMINAL --                                    |
+      :terminal                                         |
     ]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
     helpers.feed([[<C-\><C-N>]])
@@ -184,10 +184,10 @@ describe(':terminal (with fake shell)', function()
   it('works with gf', function()
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
     screen:expect([[
-      ready $ echo "scripts/shadacat.py"                |
+      ^ready $ echo "scripts/shadacat.py"                |
                                                         |
       [Process exited 0]                                |
-      -- TERMINAL --                                    |
+      :terminal echo "scripts/shadacat.py"              |
     ]])
     helpers.feed([[<C-\><C-N>]])
     eq('term://', string.match(eval('bufname("%")'), "^term://"))

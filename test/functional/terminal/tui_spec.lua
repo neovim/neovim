@@ -287,8 +287,8 @@ describe('tui focus event handling', function()
       feed_data(':terminal\n')
       feed_data('\027[I')
       screen:expect([[
-        ready $                                           |
-        [Process exited 0]{1: }                               |
+        {1:r}eady $                                           |
+        [Process exited 0]                                |
                                                           |
                                                           |
                                                           |
@@ -297,8 +297,8 @@ describe('tui focus event handling', function()
       ]])
       feed_data('\027[O')
       screen:expect([[
-        ready $                                           |
-        [Process exited 0]{1: }                               |
+        {1:r}eady $                                           |
+        [Process exited 0]                                |
                                                           |
                                                           |
                                                           |
