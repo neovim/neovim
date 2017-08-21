@@ -2498,6 +2498,7 @@ static int APP_BOTH;
 static void add_pack_plugin(char_u *fname, void *cookie)
 {
   char_u *p4, *p3, *p2, *p1, *p;
+  char_u *buf = NULL;
 
   char *const ffname = fix_fname((char *)fname);
 
@@ -2525,26 +2526,30 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
     size_t fname_len = strlen(ffname);
     const char *insp = (const char *)p_rtp;
-    for (;;) {
-      if (path_fnamencmp(insp, ffname, fname_len) == 0) {
+    buf = try_malloc(MAXPATHL);
+    if (buf == NULL) {
+      goto theend;
+    }
+    while (*insp != NUL) {
+      copy_option_part((char_u **)&insp, buf, MAXPATHL, ",");
+      add_pathsep((char *)buf);
+      char *const rtp_ffname = fix_fname((char *)buf);
+      if (rtp_ffname == NULL) {
+        goto theend;
+      }
+      bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
+      xfree(rtp_ffname);
+      if (match) {
         break;
       }
-      insp = strchr(insp, ',');
-      if (insp == NULL) {
-        break;
-      }
-      insp++;
     }
 
-    if (insp == NULL) {
+    if (*insp == NUL) {
       // not found, append at the end
       insp = (const char *)p_rtp + STRLEN(p_rtp);
     } else {
       // append after the matching directory.
-      insp += strlen(ffname);
-      while (*insp != NUL && *insp != ',') {
-        insp++;
-      }
+      insp--;
     }
     *p4 = c;
 
@@ -2614,6 +2619,7 @@ static void add_pack_plugin(char_u *fname, void *cookie)
   }
 
 theend:
+  xfree(buf);
   xfree(ffname);
 }
 
