@@ -234,9 +234,9 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
-  unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
+  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
   // Enable focus reporting
-  unibi_out(ui, data->unibi_ext.enable_focus_reporting);
+  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -263,9 +263,9 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, unibi_keypad_local);
   unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
-  unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
+  unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
-  unibi_out(ui, data->unibi_ext.disable_focus_reporting);
+  unibi_out_ext(ui, data->unibi_ext.disable_focus_reporting);
   flush_buf(ui, true);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
@@ -426,14 +426,14 @@ static void update_attrs(UI *ui, HlAttrs attrs)
       data->params[0].i = (fg >> 16) & 0xff;  // red
       data->params[1].i = (fg >> 8) & 0xff;   // green
       data->params[2].i = fg & 0xff;          // blue
-      unibi_out(ui, data->unibi_ext.set_rgb_foreground);
+      unibi_out_ext(ui, data->unibi_ext.set_rgb_foreground);
     }
 
     if (bg != -1) {
       data->params[0].i = (bg >> 16) & 0xff;  // red
       data->params[1].i = (bg >> 8) & 0xff;   // green
       data->params[2].i = bg & 0xff;          // blue
-      unibi_out(ui, data->unibi_ext.set_rgb_background);
+      unibi_out_ext(ui, data->unibi_ext.set_rgb_background);
     }
   } else {
     if (fg != -1) {
@@ -679,7 +679,7 @@ static void set_scroll_region(UI *ui)
   data->params[1].i = grid->bot;
   unibi_out(ui, unibi_change_scroll_region);
   if (grid->left != 0 || grid->right != ui->width - 1) {
-    unibi_out(ui, data->unibi_ext.enable_lr_margin);
+    unibi_out_ext(ui, data->unibi_ext.enable_lr_margin);
     if (data->can_set_lr_margin) {
       data->params[0].i = grid->left;
       data->params[1].i = grid->right;
@@ -700,7 +700,7 @@ static void reset_scroll_region(UI *ui)
   UGrid *grid = &data->grid;
 
   if (0 <= data->unibi_ext.reset_scroll_region) {
-    unibi_out(ui, data->unibi_ext.reset_scroll_region);
+    unibi_out_ext(ui, data->unibi_ext.reset_scroll_region);
   } else {
     data->params[0].i = 0;
     data->params[1].i = ui->height - 1;
@@ -717,7 +717,7 @@ static void reset_scroll_region(UI *ui)
       data->params[0].i = ui->width - 1;
       unibi_out(ui, unibi_set_right_margin_parm);
     }
-    unibi_out(ui, data->unibi_ext.disable_lr_margin);
+    unibi_out_ext(ui, data->unibi_ext.disable_lr_margin);
   }
   unibi_goto(ui, grid->row, grid->col);
 }
@@ -730,7 +730,7 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   if (!got_winch) {  // Try to resize the terminal window.
     data->params[0].i = (int)height;
     data->params[1].i = (int)width;
-    unibi_out(ui, data->unibi_ext.resize_screen);
+    unibi_out_ext(ui, data->unibi_ext.resize_screen);
     // DECSLPP does not reset the scroll region.
     if (data->scroll_region_is_full_screen) {
       reset_scroll_region(ui);
@@ -836,7 +836,7 @@ static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
   if (!data->mouse_enabled) {
-    unibi_out(ui, data->unibi_ext.enable_mouse);
+    unibi_out_ext(ui, data->unibi_ext.enable_mouse);
     data->mouse_enabled = true;
   }
 }
@@ -845,7 +845,7 @@ static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   if (data->mouse_enabled) {
-    unibi_out(ui, data->unibi_ext.disable_mouse);
+    unibi_out_ext(ui, data->unibi_ext.disable_mouse);
     data->mouse_enabled = false;
   }
 }
@@ -864,7 +864,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     if (attr > 0) {
       attrentry_T *aep = syn_cterm_attr2entry(attr);
       data->params[0].i = aep->rgb_bg_color;
-      unibi_out(ui, data->unibi_ext.set_cursor_color);
+      unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
     }
   }
 
@@ -875,7 +875,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     default: WLOG("Unknown shape value %d", shape); break;
   }
   data->params[0].i = shape + (int)(c.blinkon == 0);
-  unibi_out(ui, data->unibi_ext.set_cursor_style);
+  unibi_out_ext(ui, data->unibi_ext.set_cursor_style);
 }
 
 /// @param mode editor mode
@@ -1189,11 +1189,23 @@ static void unibi_out(UI *ui, int unibi_index)
   const char *str = NULL;
 
   if (unibi_index >= 0) {
-    if (unibi_index < unibi_string_begin_) {
-      str = unibi_get_ext_str(data->ut, (unsigned)unibi_index);
-    } else {
-      str = unibi_get_str(data->ut, (unsigned)unibi_index);
-    }
+    str = unibi_get_str(data->ut, (unsigned)unibi_index);
+  }
+
+  if (str) {
+    unibi_var_t vars[26 + 26] = {{0}};
+    unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL);
+  }
+}
+
+static void unibi_out_ext(UI *ui, int unibi_index)
+{
+  TUIData *data = ui->data;
+
+  const char *str = NULL;
+
+  if (unibi_index >= 0) {
+    str = unibi_get_ext_str(data->ut, (unsigned)unibi_index);
   }
 
   if (str) {
