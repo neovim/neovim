@@ -407,6 +407,9 @@ EXTERN int garbage_collect_at_exit INIT(= FALSE);
 
 /* ID of script being sourced or was sourced to define the current function. */
 EXTERN scid_T current_SID INIT(= 0);
+
+EXTERN bool did_source_packages INIT(= false);
+
 // Scope information for the code that indirectly triggered the current
 // provider function call
 EXTERN struct caller_scope {
