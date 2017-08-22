@@ -220,24 +220,18 @@ void early_init(void)
 
 #ifdef MAKE_LIB
 int nvim_main(int argc, char **argv)
-#elif defined WIN32
-// don't use codepage encoded arguments. see #7060
-int wmain(int argc, wchar_t **argv_w)
+#elif defined(WIN32)
+int wmain(int argc, wchar_t **argv_w)  // multibyte args on Windows. #7060
 #else
 int main(int argc, char **argv)
 #endif
 {
 #ifdef WIN32
   char *argv[argc];
-
-  for (size_t i = 0; i < (size_t)argc; i++) {
-    // get required buffer size
-    size_t dest_size = (size_t)WideCharToMultiByte(
-        CP_UTF8, 0, argv_w[i], -1, NULL, 0, NULL, NULL);
-    char *buf = (char *)xmallocz(dest_size);
-    // convert from utf16 (widechar) utf8 (multibyte)
-    WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, buf, (int)dest_size,
-                        NULL, NULL);
+  for (int i = 0; i < argc; i++) {
+    char *buf = NULL;
+    utf16_to_utf8(argv_w[i], &buf);
+    assert(buf);
     argv[i] = buf;
   }
 #endif
