@@ -226,7 +226,7 @@ int wmain(int argc, wchar_t **argv_w)  // multibyte args on Windows. #7060
 int main(int argc, char **argv)
 #endif
 {
-#ifdef WIN32
+#if defined(WIN32) && !defined(MAKE_LIB)
   char *argv[argc];
   for (int i = 0; i < argc; i++) {
     char *buf = NULL;
