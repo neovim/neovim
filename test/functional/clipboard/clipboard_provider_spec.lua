@@ -90,8 +90,9 @@ describe('clipboard', function()
     basic_register_test()
   end)
 
-  it('`:redir @+>` with invalid g:clipboard shows error exactly once', function()
-    local screen = Screen.new(72, 5)
+  it('`:redir @+>` with invalid g:clipboard shows exactly one error #7184',
+  function()
+    local screen = Screen.new(72, 4)
     screen:attach()
     command("let g:clipboard = 'bogus'")
     feed_command('redir @+> | :silent echo system("cat CONTRIBUTING.md") | redir END')
@@ -99,15 +100,40 @@ describe('clipboard', function()
       ^                                                                        |
       ~                                                                       |
       ~                                                                       |
-      ~                                                                       |
       clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
     ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
   end)
 
-  it('invalid g:clipboard', function()
+  it('`:redir @+>|bogus_cmd|redir END` + invalid g:clipboard must not recurse #7184',
+  function()
+    local screen = Screen.new(72, 4)
+    screen:attach()
+    command("let g:clipboard = 'bogus'")
+    feed_command('redir @+> | bogus_cmd | redir END')
+    screen:expect([[
+      ~                                                                       |
+      clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
+      E492: Not an editor command: bogus_cmd | redir END                      |
+      Press ENTER or type command to continue^                                 |
+    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
+  end)
+
+  it('invalid g:clipboard shows hint if :redir is not active', function()
     command("let g:clipboard = 'bogus'")
     eq('', eval('provider#clipboard#Executable()'))
     eq('clipboard: invalid g:clipboard', eval('provider#clipboard#Error()'))
+
+    local screen = Screen.new(72, 4)
+    screen:attach()
+    command("let g:clipboard = 'bogus'")
+    -- Explicit clipboard attempt, should show a hint message.
+    feed_command('let @+="foo"')
+    screen:expect([[
+      ^                                                                        |
+      ~                                                                       |
+      ~                                                                       |
+      clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
+    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
   end)
 
   it('valid g:clipboard', function()
@@ -146,6 +172,19 @@ describe('clipboard', function()
     eq(0, eval("g:clip_called_set"))
     feed_command('redir @"> | :silent echo system("cat CONTRIBUTING.md") | redir END')
     eq(0, eval("g:clip_called_set"))
+  end)
+
+  it('`:redir @+>|bogus_cmd|redir END` must not recurse #7184',
+  function()
+    local screen = Screen.new(72, 4)
+    screen:attach()
+    feed_command('redir @+> | bogus_cmd | redir END')
+    screen:expect([[
+      ^                                                                        |
+      ~                                                                       |
+      ~                                                                       |
+      E492: Not an editor command: bogus_cmd | redir END                      |
+    ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
   end)
 
   it('has independent "* and unnamed registers by default', function()

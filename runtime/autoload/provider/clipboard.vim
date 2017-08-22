@@ -32,7 +32,7 @@ function! s:try_cmd(cmd, ...) abort
   if v:shell_error
     if !exists('s:did_error_try_cmd')
       echohl WarningMsg
-      echomsg "clipboard: error: ".(len(out) ? out[0] : '')
+      echomsg "clipboard: error: ".(len(out) ? out[0] : v:shell_error)
       echohl None
       let s:did_error_try_cmd = 1
     endif
@@ -168,5 +168,13 @@ function! s:clipboard.set(lines, regtype, reg) abort
 endfunction
 
 function! provider#clipboard#Call(method, args) abort
-  return call(s:clipboard[a:method],a:args,s:clipboard)
+  if get(s:, 'here', v:false)  " Clipboard provider must not recurse. #7184
+    return 0
+  endif
+  let s:here = v:true
+  try
+    return call(s:clipboard[a:method],a:args,s:clipboard)
+  finally
+    let s:here = v:false
+  endtry
 endfunction
