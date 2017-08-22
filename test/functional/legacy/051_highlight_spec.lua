@@ -37,6 +37,7 @@ describe(':highlight', function()
     feed('q')
     wait() -- wait until we're back to normal
     command('hi Search')
+    command('hi Normal')
 
     -- Test setting colors.
     -- Test clearing one color and all doesn't generate error or warning

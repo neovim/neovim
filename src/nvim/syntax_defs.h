@@ -73,4 +73,14 @@ typedef struct attr_entry {
   int cterm_fg_color, cterm_bg_color;
 } attrentry_T;
 
+#define ATTRENTRY_INIT { \
+  .rgb_ae_attr = 0, \
+  .cterm_ae_attr = 0, \
+  .rgb_fg_color = -1, \
+  .rgb_bg_color = -1, \
+  .rgb_sp_color = -1, \
+  .cterm_fg_color = 0, \
+  .cterm_bg_color = 0, \
+}
+
 #endif // NVIM_SYNTAX_DEFS_H
