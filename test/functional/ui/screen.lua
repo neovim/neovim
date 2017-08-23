@@ -141,6 +141,7 @@ function Screen.new(width, height)
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
     _mouse_enabled = true,
+    _changed_highlight_ids = {},
     _attrs = {},
     _cursor = {
       row = 1, col = 1
@@ -434,6 +435,11 @@ function Screen:_handle_scroll(count)
   for i = stop + step, stop + count, step do
     self:_clear_row_section(i, left, right)
   end
+end
+
+function Screen:_handle_highlight_info_set(highlight_ids)
+  --
+  self._changed_highlight_ids = highlight_ids
 end
 
 function Screen:_handle_highlight_set(attrs)

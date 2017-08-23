@@ -45,6 +45,7 @@
 #include "nvim/api/private/helpers.h"
 
 static bool did_syntax_onoff = false;
+static Array changed_highlights = ARRAY_DICT_INIT;
 
 /// Structure that stores information about a highlight group.
 /// The ID of a highlight group is also called group ID.  It is the index in
@@ -6504,9 +6505,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       }
     }
 
-    // Only call highlight_changed() once, after sourcing a syntax file.
+    // Only call highlight_changed() once, after sourcing a syntax file
     need_highlight_changed = true;
-
+    ADD(changed_highlights, INTEGER_OBJ(from_id));
     return;
   }
 
@@ -6911,6 +6912,9 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   }
   xfree(key);
   xfree(arg);
+  if (!error) {
+    ADD(changed_highlights, INTEGER_OBJ(id));
+  }
 
   // Only call highlight_changed() once, after sourcing a syntax file
   need_highlight_changed = true;
@@ -7606,7 +7610,7 @@ void highlight_changed(void)
   int id_S = -1;
   int hlcnt;
 
-  need_highlight_changed = FALSE;
+  need_highlight_changed = false;
 
   /// Translate builtin highlight groups into attributes for quick lookup.
   for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
@@ -7685,6 +7689,10 @@ void highlight_changed(void)
     }
   }
   highlight_ga.ga_len = hlcnt;
+
+  ui_call_highlight_info_set(changed_highlights);
+  api_free_array(changed_highlights);
+  changed_highlights = (Array)ARRAY_DICT_INIT;
 }
 
 

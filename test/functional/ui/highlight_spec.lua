@@ -1062,3 +1062,29 @@ describe("'winhighlight' highlight", function()
     ]])
   end)
 end)
+
+
+describe("highlight", function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(20,5)
+    screen:attach()
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('notifies UI on update', function()
+    local normal_hl_id = eval("hlID('Normal')")
+    local cursorcolumn_hl_id = eval("hlID('CursorColumn')")
+    command("highlight Normal guibg=red|highlight CursorColumn guibg=red")
+    screen:expect(function()
+      eq(normal_hl_id, screen._changed_highlight_ids[1])
+      eq(cursorcolumn_hl_id, screen._changed_highlight_ids[2])
+    end)
+  end)
+
+end)

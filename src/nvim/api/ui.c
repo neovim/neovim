@@ -83,6 +83,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->set_scroll_region = remote_ui_set_scroll_region;
   ui->scroll = remote_ui_scroll;
   ui->highlight_set = remote_ui_highlight_set;
+  ui->highlight_info_set = remote_ui_highlight_info_set;
   ui->put = remote_ui_put;
   ui->bell = remote_ui_bell;
   ui->visual_bell = remote_ui_visual_bell;

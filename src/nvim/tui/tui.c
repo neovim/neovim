@@ -148,6 +148,7 @@ UI *tui_start(void)
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
   ui->option_set= tui_option_set;
+  ui->highlight_info_set = tui_highlight_info_set;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 
@@ -1167,6 +1168,14 @@ static void tui_option_set(UI *ui, String name, Object value)
     invalidate(ui, 0, data->grid.height-1, 0, data->grid.width-1);
   }
 }
+
+static void tui_highlight_info_set(UI *ui, Array highlights_changed)
+{
+  TUIData *data = ui->data;
+  // redraw the cursor just in case its hl changed
+  tui_set_mode(ui, data->showing_mode);
+}
+
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)
 {

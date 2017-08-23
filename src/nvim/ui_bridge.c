@@ -65,6 +65,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.set_title = ui_bridge_set_title;
   rv->bridge.set_icon = ui_bridge_set_icon;
   rv->bridge.option_set = ui_bridge_option_set;
+  rv->bridge.highlight_info_set = ui_bridge_highlight_info_set;
   rv->scheduler = scheduler;
 
   for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
