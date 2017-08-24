@@ -1263,7 +1263,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool gnome = terminfo_is_term_family(term, "gnome")
     || terminfo_is_term_family(term, "vte");
   bool iterm = terminfo_is_term_family(term, "iterm")
-    || terminfo_is_term_family(term, "iTerm.app");
+    || terminfo_is_term_family(term, "iterm2")
+    || terminfo_is_term_family(term, "iTerm.app")
+    || terminfo_is_term_family(term, "iTerm2.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool konsole_pretending_xterm = xterm && konsole;
@@ -1535,7 +1537,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool screen = terminfo_is_term_family(term, "screen");
   bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool iterm = terminfo_is_term_family(term, "iterm")
-    || terminfo_is_term_family(term, "iTerm.app");
+    || terminfo_is_term_family(term, "iterm2")
+    || terminfo_is_term_family(term, "iTerm.app")
+    || terminfo_is_term_family(term, "iTerm2.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
 
