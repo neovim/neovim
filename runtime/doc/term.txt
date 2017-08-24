@@ -41,16 +41,17 @@ $TERM is also important because it is mirrored by SSH to the remote session,
 unlike other common client-end environment variables ($COLORTERM,
 $XTERM_VERSION, $VTE_VERSION, $KONSOLE_PROFILE_NAME, $TERM_PROGRAM, ...).
 
- For this terminal            Set $TERM to                |builtin-terms|?
-
-  iTerm.app                "iterm" or "iTerm.app"                Y
-  anything libvte based    "vte" or "vte-256color"               Y
-   (e.g. GNOME Terminal)   (aliases: "gnome", "gnome-256color")
-  tmux                     "tmux" or "tmux-256color"             Y
-  screen                   "screen" or "screen-256color"         Y
-  PuTTY                    "putty" or "putty-256color"           Y
-  Terminal.app             "nsterm"                              N
-  Linux virtual terminal   "linux" or "linux-256color"           Y
+  For this terminal           Set $TERM to                  |builtin-terms|
+  -------------------------------------------------------------------------
+  iTerm (original)            iterm, iTerm.app                    N
+  iTerm2 (new capabilities)   iterm2, iTerm2.app                  Y
+  anything libvte-based       vte, vte-256color                   Y
+   (e.g. GNOME Terminal)      (aliases: gnome, gnome-256color)
+  tmux                        tmux, tmux-256color                 Y
+  screen                      screen, screen-256color             Y
+  PuTTY                       putty, putty-256color               Y
+  Terminal.app                nsterm                              N
+  Linux virtual terminal      linux, linux-256color               Y
 
 					*builtin-terms* *builtin_terms*
 If a |terminfo| database is not available, or no entry for the terminal type is
