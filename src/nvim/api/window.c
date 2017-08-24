@@ -46,7 +46,7 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 
   if (win) {
     ADD(rv, INTEGER_OBJ(win->w_cursor.lnum));
-    ADD(rv, INTEGER_OBJ(win->w_cursor.col));
+    ADD(rv, INTEGER_OBJ(win->w_virtcol));
   }
 
   return rv;
