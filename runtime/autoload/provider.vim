@@ -2,7 +2,7 @@
 
 let s:stderr = {}
 
-function! provider#stderr_collector(chan_id, data, event) dict
+function! provider#stderr_collector(chan_id, data, event)
    let stderr = get(s:stderr, a:chan_id, [''])
    let stderr[-1] .= a:data[0]
    call extend(stderr, a:data[1:])
