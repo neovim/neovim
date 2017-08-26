@@ -78,7 +78,7 @@ Dictionary nvim_get_hl_by_name(String name, Error *err)
 
 /// Retrieves highlight description from its id
 ///
-/// @param hl_id highlight id as returned by hlID()
+/// @param hl_id highlight id as returned by |hlID()|
 /// @see nvim_get_hl_by_name
 Dictionary nvim_get_hl_by_id(Integer hl_id, Error *err)
   FUNC_API_SINCE(3)
@@ -89,7 +89,7 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Error *err)
     return dic;
   }
   int attrcode = syn_id2attr((int)hl_id);
-  return get_attr_by_id(attrcode, err);
+  return hl_get_attr_by_id(attrcode, err);
 }
 
 /// Passes input keys to Nvim.

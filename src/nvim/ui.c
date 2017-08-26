@@ -166,31 +166,6 @@ void ui_event(char *name, Array args)
   }
 }
 
-/// Retrieves attribute description from its id
-///
-/// @param attr_id attribute id
-Dictionary get_attr_by_id(Integer attr_id, Error *err)
-{
-  HlAttrs attrs = HLATTRS_INIT;
-  Dictionary dic = ARRAY_DICT_INIT;
-
-  if (attr_id == 0) {
-    goto end;
-  }
-
-  attrentry_T *aep = syn_cterm_attr2entry((int)attr_id);
-  if (!aep) {
-    api_set_error(err, kErrorTypeException,
-                  "Invalid attribute id %d", attr_id);
-    return dic;
-  }
-
-  attrs = attrentry2hlattrs(aep, p_tgc);
-
-end:
-  return hlattrs2dict(attrs);
-}
-
 
 /// Converts an attrentry_T into an HlAttrs
 ///

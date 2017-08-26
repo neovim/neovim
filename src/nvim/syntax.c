@@ -8221,6 +8221,32 @@ RgbValue name_to_color(const uint8_t *name)
   return -1;
 }
 
+/// Retrieves attribute description from its id
+///
+/// @param attr_id attribute id
+Dictionary hl_get_attr_by_id(Integer attr_id, Error *err)
+{
+  HlAttrs attrs = HLATTRS_INIT;
+  Dictionary dic = ARRAY_DICT_INIT;
+
+  if (attr_id == 0) {
+    goto end;
+  }
+
+  attrentry_T *aep = syn_cterm_attr2entry((int)attr_id);
+  if (!aep) {
+    api_set_error(err, kErrorTypeException,
+                  "Invalid attribute id %d", attr_id);
+    return dic;
+  }
+
+  attrs = attrentry2hlattrs(aep, p_tgc);
+
+end:
+  return hlattrs2dict(attrs);
+}
+
+
 /**************************************
 *  End of Highlighting stuff	      *
 **************************************/
