@@ -4,6 +4,8 @@ local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
 local feed, nvim = helpers.feed, helpers.nvim
 local feed_data = thelpers.feed_data
 
+if helpers.pending_win32(pending) then return end
+
 describe('terminal mouse', function()
   local screen
 
@@ -65,7 +67,6 @@ describe('terminal mouse', function()
       end)
 
       it('will forward mouse clicks to the program', function()
-        if helpers.pending_win32(pending) then return end
         feed('<LeftMouse><1,2>')
         screen:expect([[
           line27                                            |
@@ -79,7 +80,6 @@ describe('terminal mouse', function()
       end)
 
       it('will forward mouse scroll to the program', function()
-        if helpers.pending_win32(pending) then return end
         feed('<ScrollWheelUp><0,0>')
         screen:expect([[
           line27                                            |
@@ -94,7 +94,6 @@ describe('terminal mouse', function()
     end)
 
     describe('with a split window and other buffer', function()
-      if helpers.pending_win32(pending) then return end
       before_each(function()
         feed('<c-\\><c-n>:vsp<cr>')
         screen:expect([[

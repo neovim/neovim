@@ -3,6 +3,8 @@ local thelpers = require('test.functional.terminal.helpers')
 local feed, clear = helpers.feed, helpers.clear
 local wait = helpers.wait
 
+if helpers.pending_win32(pending) then return end
+
 describe('terminal window', function()
   local screen
 

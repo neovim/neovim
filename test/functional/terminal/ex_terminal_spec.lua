@@ -3,10 +3,10 @@ local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
 local feed_command, eval = helpers.feed_command, helpers.eval
-local iswin = helpers.iswin
+
+if helpers.pending_win32(pending) then return end
 
 describe(':terminal', function()
-  if helpers.pending_win32(pending) then return end
   local screen
 
   before_each(function()
@@ -174,15 +174,12 @@ describe(':terminal (with fake shell)', function()
     eq('term://', string.match(eval('bufname("%")'), "^term://"))
     helpers.feed([[<C-\><C-N>]])
     feed_command([[find */shadacat.py]])
-    if iswin() then
-      eq('scripts\\shadacat.py', eval('bufname("%")'))
-    else
-      eq('scripts/shadacat.py', eval('bufname("%")'))
-    end
+    eq('scripts/shadacat.py', eval('bufname("%")'))
   end)
 
   it('works with gf', function()
     terminal_with_fake_shell([[echo "scripts/shadacat.py"]])
+    wait()
     screen:expect([[
       ^ready $ echo "scripts/shadacat.py"                |
                                                         |
