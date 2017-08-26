@@ -104,7 +104,9 @@ unibi_term *load_builtin_terminfo(const char * term)
     return unibi_from_mem((const char *)interix_8colour_terminfo,
                           sizeof interix_8colour_terminfo);
   } else if (terminfo_is_term_family(term, "iterm")
-             || terminfo_is_term_family(term, "iTerm.app")) {
+             || terminfo_is_term_family(term, "iterm2")
+             || terminfo_is_term_family(term, "iTerm.app")
+             || terminfo_is_term_family(term, "iTerm2.app")) {
     return unibi_from_mem((const char *)iterm_256colour_terminfo,
                           sizeof iterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "st")) {
