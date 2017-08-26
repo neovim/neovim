@@ -118,7 +118,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
         // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
         // won't be called)
         && cnt != 0) {
-      DLOG("Closing Stream (%p): %s (%s)", stream,
+      DLOG("closing Stream: %p: %s (%s)", stream,
            uv_err_name((int)cnt), os_strerror((int)cnt));
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true

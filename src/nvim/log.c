@@ -250,7 +250,7 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   static const char *log_levels[] = {
     [DEBUG_LOG_LEVEL]   = "DEBUG",
     [INFO_LOG_LEVEL]    = "INFO ",
-    [WARNING_LOG_LEVEL] = "WARN ",
+    [WARN_LOG_LEVEL]    = "WARN ",
     [ERROR_LOG_LEVEL]   = "ERROR",
   };
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
