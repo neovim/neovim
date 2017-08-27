@@ -345,8 +345,6 @@ static const struct nv_cmd {
   { K_F8,      farsi_f8,       0,                      0 },
   { K_F9,      farsi_f9,       0,                      0 },
   { K_EVENT,   nv_event,       NV_KEEPREG,             0 },
-  { K_FOCUSGAINED, nv_focusgained, NV_KEEPREG,         0 },
-  { K_FOCUSLOST,   nv_focuslost,   NV_KEEPREG,         0 },
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -7959,18 +7957,6 @@ static void nv_event(cmdarg_T *cap)
   multiqueue_process_events(main_loop.events);
   cap->retval |= CA_COMMAND_BUSY;       // don't call edit() now
   finish_op = false;
-}
-
-/// Trigger FocusGained event.
-static void nv_focusgained(cmdarg_T *cap)
-{
-  apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
-}
-
-/// Trigger FocusLost event.
-static void nv_focuslost(cmdarg_T *cap)
-{
-  apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
 }
 
 /*
