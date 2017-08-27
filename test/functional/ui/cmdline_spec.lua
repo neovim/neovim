@@ -232,7 +232,7 @@ describe('external cmdline', function()
         indent = 0,
         pos = 3,
         prompt = "",
-      }} 
+      }}
     screen:expect([[
       ^                         |
       ~                        |
@@ -345,19 +345,116 @@ describe('external cmdline', function()
     end)
   end)
 
-  pending("works with cmdline window", function()
-    feed(':sign<c-f>')
+  it("works with cmdline window", function()
+    feed(':make')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "make" } },
+        firstc = ":",
+        indent = 0,
+        pos = 4,
+        prompt = ""
+      }}, cmdline)
+    end)
+
+    feed('<c-f>')
     screen:expect([[
                                |
       [No Name]                |
-      :sign^                    |
+      :make^                    |
       [Command Line]           |
                                |
     ]], nil, nil, function()
       eq({}, cmdline)
     end)
 
-    feed(":blargh")
+    -- nested cmdline
+    feed(':yank')
+    screen:expect([[
+                               |
+      [No Name]                |
+      :make^                    |
+      [Command Line]           |
+                               |
+    ]], nil, nil, function()
+      eq({nil, {
+        content = { { {}, "yank" } },
+        firstc = ":",
+        indent = 0,
+        pos = 4,
+        prompt = ""
+      }}, cmdline)
+    end)
+
+    cmdline = {}
+    command("redraw!")
+    screen:expect([[
+                               |
+      [No Name]                |
+      :make                    |
+      [Command Line]           |
+      ^                         |
+    ]], nil, nil, function()
+      eq({nil, {
+        content = { { {}, "yank" } },
+        firstc = ":",
+        indent = 0,
+        pos = 4,
+        prompt = ""
+      }}, cmdline)
+    end)
+
+    feed("<c-c>")
+    screen:expect([[
+                               |
+      [No Name]                |
+      :make^                    |
+      [Command Line]           |
+                               |
+    ]], nil, nil, function()
+      eq({}, cmdline)
+    end)
+
+    feed("<c-c>")
+    screen:expect([[
+                               |
+      [No Name]                |
+      :make^                    |
+      [Command Line]           |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "make" } },
+        firstc = ":",
+        indent = 0,
+        pos = 4,
+        prompt = ""
+      }}, cmdline)
+    end)
+
+    cmdline = {}
+    command("redraw!")
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+      ~                        |
+      ^                         |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "make" } },
+        firstc = ":",
+        indent = 0,
+        pos = 4,
+        prompt = ""
+      }}, cmdline)
+    end)
   end)
 
   it('works with highlighted cmdline', function()

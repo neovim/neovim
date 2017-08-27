@@ -2810,7 +2810,10 @@ void cmdline_screen_cleared(void)
   CmdlineInfo *prev_ccline = ccline.prev_ccline;
   while (prev_level > 0 && prev_ccline) {
     if (prev_ccline->level == prev_level) {
-      ui_ext_cmdline_show(prev_ccline);
+      // don't redraw a cmdline already shown in the cmdline window
+      if (prev_level != cmdwin_level) {
+        ui_ext_cmdline_show(prev_ccline);
+      }
       prev_level--;
     }
     prev_ccline = prev_ccline->prev_ccline;
@@ -5781,6 +5784,7 @@ static int ex_window(void)
     return K_IGNORE;
   }
   cmdwin_type = get_cmdline_type();
+  cmdwin_level = ccline.level;
 
   // Create empty command-line buffer.
   buf_open_scratch(0, "[Command Line]");
@@ -5833,6 +5837,9 @@ static int ex_window(void)
   curwin->w_cursor.col = ccline.cmdpos;
   changed_line_abv_curs();
   invalidate_botline();
+  if (ui_is_external(kUICmdline)) {
+    ui_call_cmdline_hide(ccline.level);
+  }
   redraw_later(SOME_VALID);
 
   // Save the command line info, can be used recursively.
@@ -5875,6 +5882,7 @@ static int ex_window(void)
   // Restore the command line info.
   restore_cmdline(&save_ccline);
   cmdwin_type = 0;
+  cmdwin_level = 0;
 
   exmode_active = save_exmode;
 
