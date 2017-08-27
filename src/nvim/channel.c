@@ -21,7 +21,7 @@ static uint64_t next_chan_id = CHAN_STDERR+1;
 
 
 typedef struct {
-  Channel *data;
+  Channel *chan;
   Callback *callback;
   const char *type;
   list_T *received;
@@ -348,9 +348,6 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     has_err = callback_reader_set(chan->on_stderr);
   }
   int status = process_spawn(proc, true, has_out, has_err);
-  if (has_err) {
-    proc->err.events = chan->events;
-  }
   if (status) {
     EMSG3(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
@@ -372,10 +369,8 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     // the rpc takes over the in and out streams
     rpc_start(chan);
   } else {
-    proc->in.events = chan->events;
     if (has_out) {
       callback_reader_start(&chan->on_stdout);
-      proc->out.events = chan->events;
       rstream_start(&proc->out, on_job_stdout, chan);
     }
   }
@@ -422,7 +417,6 @@ uint64_t channel_connect(bool tcp, const char *address,
   } else {
     channel->on_stdout = on_output;
     callback_reader_start(&channel->on_stdout);
-    channel->stream.socket.events = channel->events;
     rstream_start(&channel->stream.socket, on_socket_output, channel);
   }
 
@@ -481,8 +475,6 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
   } else {
     channel->on_stdout = on_output;
     callback_reader_start(&channel->on_stdout);
-    channel->stream.stdio.in.events = channel->events;
-    channel->stream.stdio.out.events = channel->events;
     rstream_start(&channel->stream.stdio.in, on_stdio_input, channel);
   }
 
@@ -534,10 +526,11 @@ static inline void process_channel_event(Channel *chan, Callback *callback,
                                          const char *type, char *buf,
                                          size_t count, int status)
 {
-  ChannelEvent event_data;
-  event_data.received = NULL;
+  assert(callback);
+  ChannelEvent *event_data = xmalloc(sizeof(*event_data));
+  event_data->received = NULL;
   if (buf) {
-    event_data.received = tv_list_alloc();
+    event_data->received = tv_list_alloc();
     char *ptr = buf;
     size_t remaining = count;
     size_t off = 0;
@@ -545,7 +538,7 @@ static inline void process_channel_event(Channel *chan, Callback *callback,
     while (off < remaining) {
       // append the line
       if (ptr[off] == NL) {
-        tv_list_append_string(event_data.received, ptr, (ssize_t)off);
+        tv_list_append_string(event_data->received, ptr, (ssize_t)off);
         size_t skip = off + 1;
         ptr += skip;
         remaining -= skip;
@@ -558,14 +551,16 @@ static inline void process_channel_event(Channel *chan, Callback *callback,
       }
       off++;
     }
-    tv_list_append_string(event_data.received, ptr, (ssize_t)off);
+    tv_list_append_string(event_data->received, ptr, (ssize_t)off);
   } else {
-    event_data.status = status;
+    event_data->status = status;
   }
-  event_data.data = chan;
-  event_data.callback = callback;
-  event_data.type = type;
-  on_channel_event(&event_data);
+  channel_incref(chan);  // Hold on ref to callback
+  event_data->chan = chan;
+  event_data->callback = callback;
+  event_data->type = type;
+
+  multiqueue_put(chan->events, on_channel_event, 1, event_data);
 }
 
 void on_job_stdout(Stream *stream, RBuffer *buf, size_t count,
@@ -608,7 +603,7 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
   if (eof) {
     if (reader->buffered) {
       process_channel_event(chan, &reader->cb, type, reader->buffer.ga_data,
-                        (size_t)reader->buffer.ga_len, 0);
+                           (size_t)reader->buffer.ga_len, 0);
       ga_clear(&reader->buffer);
     } else if (callback_reader_set(*reader)) {
       process_channel_event(chan, &reader->cb, type, ptr, 0, 0);
@@ -648,17 +643,15 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
   channel_decref(chan);
 }
 
-static void on_channel_event(ChannelEvent *ev)
+static void on_channel_event(void **args)
 {
-  if (!ev->callback) {
-    return;
-  }
+  ChannelEvent *ev = (ChannelEvent *)args[0];
 
   typval_T argv[4];
 
   argv[0].v_type = VAR_NUMBER;
   argv[0].v_lock = VAR_UNLOCKED;
-  argv[0].vval.v_number = (varnumber_T)ev->data->id;
+  argv[0].vval.v_number = (varnumber_T)ev->chan->id;
 
   if (ev->received) {
     argv[1].v_type = VAR_LIST;
@@ -678,6 +671,8 @@ static void on_channel_event(ChannelEvent *ev)
   typval_T rettv = TV_INITIAL_VALUE;
   callback_call(ev->callback, 3, argv, &rettv);
   tv_clear(&rettv);
+  channel_decref(ev->chan);
+  xfree(ev);
 }
 
 
