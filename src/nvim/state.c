@@ -26,10 +26,11 @@ void state_enter(VimState *s)
     int check_result = s->check ? s->check(s) : 1;
 
     if (!check_result) {
-      break;
+      break;     // Terminate this state.
     } else if (check_result == -1) {
-      continue;
+      continue;  // check() again.
     }
+    // Execute this state.
 
     int key;
 
