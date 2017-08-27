@@ -27,26 +27,33 @@
 
 #define CLOSE_PROC_STREAM(proc, stream) \
   do { \
-    if (proc->stream && !proc->stream->closed) { \
-      stream_close(proc->stream, NULL, NULL); \
+    if (!proc->stream.closed) { \
+      stream_close(&proc->stream, NULL, NULL); \
     } \
   } while (0)
 
 static bool process_is_tearing_down = false;
 
 /// @returns zero on success, or negative error code
-int process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
+int process_spawn(Process *proc, bool in, bool out, bool err)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (proc->in) {
-    uv_pipe_init(&proc->loop->uv, &proc->in->uv.pipe, 0);
+  if (in) {
+    uv_pipe_init(&proc->loop->uv, &proc->in.uv.pipe, 0);
+  } else {
+    proc->in.closed = true;
   }
 
-  if (proc->out) {
-    uv_pipe_init(&proc->loop->uv, &proc->out->uv.pipe, 0);
+  if (out) {
+    uv_pipe_init(&proc->loop->uv, &proc->out.uv.pipe, 0);
+  } else {
+    proc->out.closed = true;
   }
 
-  if (proc->err) {
-    uv_pipe_init(&proc->loop->uv, &proc->err->uv.pipe, 0);
+  if (err) {
+    uv_pipe_init(&proc->loop->uv, &proc->err.uv.pipe, 0);
+  } else {
+    proc->err.closed = true;
   }
 
   int status;
@@ -62,14 +69,14 @@ int process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
   }
 
   if (status) {
-    if (proc->in) {
-      uv_close((uv_handle_t *)&proc->in->uv.pipe, NULL);
+    if (in) {
+      uv_close((uv_handle_t *)&proc->in.uv.pipe, NULL);
     }
-    if (proc->out) {
-      uv_close((uv_handle_t *)&proc->out->uv.pipe, NULL);
+    if (out) {
+      uv_close((uv_handle_t *)&proc->out.uv.pipe, NULL);
     }
-    if (proc->err) {
-      uv_close((uv_handle_t *)&proc->err->uv.pipe, NULL);
+    if (err) {
+      uv_close((uv_handle_t *)&proc->err.uv.pipe, NULL);
     }
 
     if (proc->type == kProcessTypeUv) {
@@ -82,30 +89,30 @@ int process_spawn(Process *proc) FUNC_ATTR_NONNULL_ALL
     return status;
   }
 
-  if (proc->in) {
-    stream_init(NULL, proc->in, -1,
-                STRUCT_CAST(uv_stream_t, &proc->in->uv.pipe));
-    proc->in->events = proc->events;
-    proc->in->internal_data = proc;
-    proc->in->internal_close_cb = on_process_stream_close;
+  if (in) {
+    stream_init(NULL, &proc->in, -1,
+                STRUCT_CAST(uv_stream_t, &proc->in.uv.pipe));
+    proc->in.events = proc->events;
+    proc->in.internal_data = proc;
+    proc->in.internal_close_cb = on_process_stream_close;
     proc->refcount++;
   }
 
-  if (proc->out) {
-    stream_init(NULL, proc->out, -1,
-                STRUCT_CAST(uv_stream_t, &proc->out->uv.pipe));
-    proc->out->events = proc->events;
-    proc->out->internal_data = proc;
-    proc->out->internal_close_cb = on_process_stream_close;
+  if (out) {
+    stream_init(NULL, &proc->out, -1,
+                STRUCT_CAST(uv_stream_t, &proc->out.uv.pipe));
+    proc->out.events = proc->events;
+    proc->out.internal_data = proc;
+    proc->out.internal_close_cb = on_process_stream_close;
     proc->refcount++;
   }
 
-  if (proc->err) {
-    stream_init(NULL, proc->err, -1,
-                STRUCT_CAST(uv_stream_t, &proc->err->uv.pipe));
-    proc->err->events = proc->events;
-    proc->err->internal_data = proc;
-    proc->err->internal_close_cb = on_process_stream_close;
+  if (err) {
+    stream_init(NULL, &proc->err, -1,
+                STRUCT_CAST(uv_stream_t, &proc->err.uv.pipe));
+    proc->err.events = proc->events;
+    proc->err.internal_data = proc;
+    proc->err.internal_close_cb = on_process_stream_close;
     proc->refcount++;
   }
 
@@ -395,8 +402,8 @@ static void process_close_handles(void **argv)
 {
   Process *proc = argv[0];
 
-  flush_stream(proc, proc->out);
-  flush_stream(proc, proc->err);
+  flush_stream(proc, &proc->out);
+  flush_stream(proc, &proc->err);
 
   process_close_streams(proc);
   process_close(proc);

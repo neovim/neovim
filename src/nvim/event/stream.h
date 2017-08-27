@@ -33,6 +33,7 @@ typedef void (*stream_write_cb)(Stream *stream, void *data, int status);
 typedef void (*stream_close_cb)(Stream *stream, void *data);
 
 struct stream {
+  bool closed;
   union {
     uv_pipe_t pipe;
     uv_tcp_t tcp;
@@ -52,7 +53,6 @@ struct stream {
   size_t maxmem;
   size_t pending_reqs;
   size_t num_bytes;
-  bool closed;
   MultiQueue *events;
 };
 

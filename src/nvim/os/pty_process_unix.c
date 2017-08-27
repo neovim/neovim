@@ -47,7 +47,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
 
   int status = 0;  // zero or negative error code (libuv convention)
   Process *proc = (Process *)ptyproc;
-  assert(!proc->err);
+  assert(proc->err.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
   uv_disable_stdio_inheritance();
@@ -83,12 +83,12 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto error;
   }
 
-  if (proc->in
-      && (status = set_duplicating_descriptor(master, &proc->in->uv.pipe))) {
+  if (!proc->in.closed
+      && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
     goto error;
   }
-  if (proc->out
-      && (status = set_duplicating_descriptor(master, &proc->out->uv.pipe))) {
+  if (!proc->out.closed
+      && (status = set_duplicating_descriptor(master, &proc->out.uv.pipe))) {
     goto error;
   }
 

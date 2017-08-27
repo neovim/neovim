@@ -847,6 +847,30 @@ bool tv_callback_equal(const Callback *const cb1, const Callback *const cb2)
   return false;
 }
 
+/// Unref/free callback
+void callback_free(Callback *const callback)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (callback->type) {
+    case kCallbackFuncref: {
+      func_unref(callback->data.funcref);
+      xfree(callback->data.funcref);
+      break;
+    }
+    case kCallbackPartial: {
+      partial_unref(callback->data.partial);
+      break;
+    }
+    case kCallbackNone: {
+      break;
+    }
+    default: {
+      abort();
+    }
+  }
+  callback->type = kCallbackNone;
+}
+
 /// Remove watcher from a dictionary
 ///
 /// @param  dict  Dictionary to remove watcher from.

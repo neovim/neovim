@@ -24,6 +24,7 @@
 #endif
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
+#include "nvim/channel.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
@@ -437,29 +438,12 @@ static ScopeDictDictItem vimvars_var;
 #define vimvarht  vimvardict.dv_hashtab
 
 typedef struct {
-  union {
-    LibuvProcess uv;
-    PtyProcess pty;
-  } proc;
-  Stream in, out, err;  // Initialized in common_job_start().
-  Terminal *term;
-  bool stopped;
-  bool exited;
-  bool rpc;
-  int refcount;
-  Callback on_stdout, on_stderr, on_exit;
-  varnumber_T *status_ptr;
-  uint64_t id;
-  MultiQueue *events;
-} TerminalJobData;
-
-typedef struct {
-  TerminalJobData *data;
+  Channel *data;
   Callback *callback;
   const char *type;
   list_T *received;
   int status;
-} JobEvent;
+} ChannelEvent;
 
 typedef struct {
   TimeWatcher tw;
@@ -513,7 +497,6 @@ typedef enum {
 #define FNE_INCL_BR     1       /* find_name_end(): include [] in name */
 #define FNE_CHECK_START 2       /* find_name_end(): check name starts with
                                    valid character */
-static PMap(uint64_t) *jobs = NULL;
 
 static uint64_t last_timer_id = 0;
 static PMap(uint64_t) *timers = NULL;
@@ -556,7 +539,6 @@ void eval_init(void)
 {
   vimvars[VV_VERSION].vv_nr = VIM_VERSION_100;
 
-  jobs = pmap_new(uint64_t)();
   timers = pmap_new(uint64_t)();
   struct vimvar   *p;
 
@@ -5141,8 +5123,8 @@ bool garbage_collect(bool testing)
 
   // Jobs
   {
-    TerminalJobData *data;
-    map_foreach_value(jobs, data, {
+    Channel *data;
+    map_foreach_value(channels, data, {
       set_ref_in_callback(&data->on_stdout, copyID, NULL, NULL);
       set_ref_in_callback(&data->on_stderr, copyID, NULL, NULL);
       set_ref_in_callback(&data->on_exit, copyID, NULL, NULL);
@@ -11433,24 +11415,23 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
+  Channel *data = find_job(argvars[0].vval.v_number, true);
   if (!data) {
-    EMSG(_(e_invjob));
     return;
   }
 
-  Process *proc = (Process *)&data->proc;
+  Process *proc = (Process *)&data->stream.proc;
 
   if (argvars[1].v_type == VAR_STRING) {
     char *stream = (char *)argvars[1].vval.v_string;
     if (!strcmp(stream, "stdin")) {
-      if (data->rpc) {
+      if (data->is_rpc) {
         EMSG(_("Invalid stream on rpc job, use jobclose(id, 'rpc')"));
       } else {
         process_close_in(proc);
       }
     } else if (!strcmp(stream, "stdout")) {
-      if (data->rpc) {
+      if (data->is_rpc) {
         EMSG(_("Invalid stream on rpc job, use jobclose(id, 'rpc')"));
       } else {
         process_close_out(proc);
@@ -11458,7 +11439,7 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else if (!strcmp(stream, "stderr")) {
       process_close_err(proc);
     } else if (!strcmp(stream, "rpc")) {
-      if (data->rpc) {
+      if (data->is_rpc) {
         channel_close(data->id);
       } else {
         EMSG(_("Invalid job stream: Not an rpc job"));
@@ -11467,13 +11448,13 @@ static void f_jobclose(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       EMSG2(_("Invalid job stream \"%s\""), stream);
     }
   } else {
-    if (data->rpc) {
+    if (data->is_rpc) {
       channel_close(data->id);
       process_close_err(proc);
     } else {
       process_close_streams(proc);
       if (proc->type == kProcessTypePty) {
-        pty_process_close_master(&data->proc.pty);
+        pty_process_close_master(&data->stream.pty);
       }
     }
   }
@@ -11494,13 +11475,12 @@ static void f_jobpid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
+  Channel *data = find_job(argvars[0].vval.v_number, true);
   if (!data) {
-    EMSG(_(e_invjob));
     return;
   }
 
-  Process *proc = (Process *)&data->proc;
+  Process *proc = (Process *)&data->stream.proc;
   rettv->vval.v_number = proc->pid;
 }
 
@@ -11521,18 +11501,19 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
+  Channel *data = find_channel(argvars[0].vval.v_number);
   if (!data) {
-    EMSG(_(e_invjob));
+    EMSG(_(e_invchan));
     return;
   }
 
-  if (((Process *)&data->proc)->in->closed) {
+  Stream *in = channel_instream(data);
+  if (in->closed) {
     EMSG(_("Can't send data to the job: stdin is closed"));
     return;
   }
 
-  if (data->rpc) {
+  if (data->is_rpc) {
     EMSG(_("Can't send raw data to rpc channel"));
     return;
   }
@@ -11546,7 +11527,7 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   WBuffer *buf = wstream_new_buffer(input, input_len, 1, xfree);
-  rettv->vval.v_number = wstream_write(data->proc.uv.process.in, buf);
+  rettv->vval.v_number = wstream_write(in, buf);
 }
 
 // "jobresize(job, width, height)" function
@@ -11567,19 +11548,17 @@ static void f_jobresize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
 
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
+  Channel *data = find_job(argvars[0].vval.v_number, true);
   if (!data) {
-    EMSG(_(e_invjob));
     return;
   }
 
-  if (data->proc.uv.process.type != kProcessTypePty) {
-    EMSG(_(e_jobnotpty));
+  if (data->stream.proc.type != kProcessTypePty) {
+    EMSG(_(e_channotpty));
     return;
   }
 
-  pty_process_resize(&data->proc.pty, argvars[1].vval.v_number,
-      argvars[2].vval.v_number);
+  pty_process_resize(&data->stream.pty, argvars[1].vval.v_number, argvars[2].vval.v_number);
   rettv->vval.v_number = 1;
 }
 
@@ -11697,31 +11676,25 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
+  Channel *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
                                           pty, rpc, detach, cwd);
-  Process *proc = (Process *)&data->proc;
 
   if (pty) {
+    PtyProcess *pty = &data->stream.pty;
     uint16_t width = (uint16_t)tv_dict_get_number(job_opts, "width");
     if (width > 0) {
-      data->proc.pty.width = width;
+      pty->width = width;
     }
     uint16_t height = (uint16_t)tv_dict_get_number(job_opts, "height");
     if (height > 0) {
-      data->proc.pty.height = height;
+      pty->height = height;
     }
     char *term = tv_dict_get_string(job_opts, "TERM", true);
     if (term) {
-      data->proc.pty.term_name = term;
+      pty->term_name = term;
     }
   }
 
-  if (!rpc && on_stdout.type == kCallbackNone) {
-    proc->out = NULL;
-  }
-  if (on_stderr.type == kCallbackNone) {
-    proc->err = NULL;
-  }
   common_job_start(data, rettv);
 }
 
@@ -11742,14 +11715,12 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
 
-  TerminalJobData *data = find_job(argvars[0].vval.v_number);
+  Channel *data = find_job(argvars[0].vval.v_number, true);
   if (!data) {
-    EMSG(_(e_invjob));
     return;
   }
 
-  process_stop((Process *)&data->proc);
-  data->stopped = true;
+  process_stop((Process *)&data->stream.proc);
   rettv->vval.v_number = 1;
 }
 
@@ -11778,9 +11749,9 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // is used to represent an invalid job id, -2 is for a interrupted job and
   // -1 for jobs that were skipped or timed out.
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    TerminalJobData *data = NULL;
+    Channel *data = NULL;
     if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number))) {
+        || !(data = find_job(arg->li_tv.vval.v_number, false))) {
       tv_list_append_number(rv, -3);
     } else {
       // append the list item and set the status pointer so we'll collect the
@@ -11802,16 +11773,16 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    TerminalJobData *data = NULL;
+    Channel *data = NULL;
     if (remaining == 0) {
       // timed out
       break;
     }
     if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number))) {
+        || !(data = find_job(arg->li_tv.vval.v_number, false))) {
       continue;
     }
-    int status = process_wait((Process *)&data->proc, remaining, waiting_jobs);
+    int status = process_wait((Process *)&data->stream.proc, remaining, waiting_jobs);
     if (status < 0) {
       // interrupted or timed out, skip remaining jobs.
       if (status == -2) {
@@ -11832,9 +11803,9 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    TerminalJobData *data = NULL;
+    Channel *data = NULL;
     if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = find_job(arg->li_tv.vval.v_number))) {
+        || !(data = find_job(arg->li_tv.vval.v_number, false))) {
       continue;
     }
     // remove the status pointer because the list may be freed before the
@@ -11844,9 +11815,9 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // restore the parent queue for any jobs still alive
   for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-    TerminalJobData *data = NULL;
+    Channel *data = NULL;
     if (arg->li_tv.v_type != VAR_NUMBER
-        || !(data = pmap_get(uint64_t)(jobs, arg->li_tv.vval.v_number))) {
+        || !(data = find_job(arg->li_tv.vval.v_number, false))) {
       continue;
     }
     // restore the parent queue for the job
@@ -13803,9 +13774,8 @@ static void f_rpcnotify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ADD(args, vim_to_object(tv));
   }
 
-  if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
-                          tv_get_string(&argvars[1]),
-                          args)) {
+  if (!rpc_send_event((uint64_t)argvars[0].vval.v_number,
+                      tv_get_string(&argvars[1]), args)) {
     EMSG2(_(e_invarg2), "Channel doesn't exist");
     return;
   }
@@ -13870,10 +13840,8 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 
   Error err = ERROR_INIT;
-  Object result = channel_send_call((uint64_t)argvars[0].vval.v_number,
-                                    tv_get_string(&argvars[1]),
-                                    args,
-                                    &err);
+  Object result = rpc_send_call((uint64_t)argvars[0].vval.v_number,
+                                tv_get_string(&argvars[1]), args, &err);
 
   if (l_provider_call_nesting) {
     current_SID = save_current_SID;
@@ -13954,7 +13922,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // The last item of argv must be NULL
   argv[i] = NULL;
 
-  TerminalJobData *data = common_job_init(argv, CALLBACK_NONE, CALLBACK_NONE,
+  Channel *data = common_job_init(argv, CALLBACK_NONE, CALLBACK_NONE,
                                           CALLBACK_NONE, false, true, false,
                                           NULL);
   common_job_start(data, rettv);
@@ -13977,10 +13945,11 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   // if called with a job, stop it, else closes the channel
-  if (pmap_get(uint64_t)(jobs, argvars[0].vval.v_number)) {
+  uint64_t id = argvars[0].vval.v_number;
+  if (find_job(id, false)) { // FIXME
     f_jobstop(argvars, rettv, NULL);
   } else {
-    rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
+    rettv->vval.v_number = channel_close(id);
   }
 }
 
@@ -16689,11 +16658,11 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   uint16_t term_width = MAX(0, curwin->w_width - win_col_off(curwin));
-  TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
+  Channel *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
                                           true, false, false, cwd);
-  data->proc.pty.width = term_width;
-  data->proc.pty.height = curwin->w_height;
-  data->proc.pty.term_name = xstrdup("xterm-256color");
+  data->stream.pty.width = term_width;
+  data->stream.pty.height = curwin->w_height;
+  data->stream.pty.term_name = xstrdup("xterm-256color");
   if (!common_job_start(data, rettv)) {
     return;
   }
@@ -16705,7 +16674,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   topts.resize_cb = term_resize;
   topts.close_cb = term_close;
 
-  int pid = data->proc.pty.process.pid;
+  int pid = data->stream.pty.process.pid;
 
   char buf[1024];
   // format the title with the pid to conform with the term:// URI
@@ -16725,7 +16694,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Terminal *term = terminal_open(topts);
   data->term = term;
-  data->refcount++;
+  channel_incref(data);
 
   return;
 }
@@ -16758,30 +16727,6 @@ bool callback_from_typval(Callback *const callback, typval_T *const arg)
     return false;
   }
   return true;
-}
-
-/// Unref/free callback
-void callback_free(Callback *const callback)
-  FUNC_ATTR_NONNULL_ALL
-{
-  switch (callback->type) {
-    case kCallbackFuncref: {
-      func_unref(callback->data.funcref);
-      xfree(callback->data.funcref);
-      break;
-    }
-    case kCallbackPartial: {
-      partial_unref(callback->data.partial);
-      break;
-    }
-    case kCallbackNone: {
-      break;
-    }
-    default: {
-      abort();
-    }
-  }
-  callback->type = kCallbackNone;
 }
 
 bool callback_call(Callback *const callback, const int argcount_in,
@@ -22402,7 +22347,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub,
   return ret;
 }
 
-static inline TerminalJobData *common_job_init(char **argv,
+static inline Channel *common_job_init(char **argv,
                                                Callback on_stdout,
                                                Callback on_stderr,
                                                Callback on_exit,
@@ -22411,25 +22356,18 @@ static inline TerminalJobData *common_job_init(char **argv,
                                                bool detach,
                                                const char *cwd)
 {
-  TerminalJobData *data = xcalloc(1, sizeof(TerminalJobData));
-  data->stopped = false;
+  Channel *data = channel_alloc(kChannelStreamProc);
   data->on_stdout = on_stdout;
   data->on_stderr = on_stderr;
   data->on_exit = on_exit;
-  data->events = multiqueue_new_child(main_loop.events);
-  data->rpc = rpc;
+  data->is_rpc = rpc;
   if (pty) {
-    data->proc.pty = pty_process_init(&main_loop, data);
+    data->stream.pty = pty_process_init(&main_loop, data);
   } else {
-    data->proc.uv = libuv_process_init(&main_loop, data);
+    data->stream.uv = libuv_process_init(&main_loop, data);
   }
-  Process *proc = (Process *)&data->proc;
+  Process *proc = (Process *)&data->stream.proc;
   proc->argv = argv;
-  proc->in = &data->in;
-  proc->out = &data->out;
-  if (!pty) {
-    proc->err = &data->err;
-  }
   proc->cb = eval_job_process_exit_cb;
   proc->events = data->events;
   proc->detach = detach;
@@ -22456,80 +22394,66 @@ static inline bool common_job_callbacks(dict_T *vopts, Callback *on_stdout,
   return false;
 }
 
-static inline bool common_job_start(TerminalJobData *data, typval_T *rettv)
+static inline bool common_job_start(Channel *data, typval_T *rettv)
 {
-  Process *proc = (Process *)&data->proc;
+  Process *proc = (Process *)&data->stream.proc;
   if (proc->type == kProcessTypePty && proc->detach) {
     EMSG2(_(e_invarg2), "terminal/pty job cannot be detached");
-    xfree(data->proc.pty.term_name);
+    xfree(data->stream.pty.term_name);
     shell_free_argv(proc->argv);
-    free_term_job_data_event((void **)&data);
+    channel_decref(data);
     return false;
   }
 
-  data->id = next_chan_id++;
-  pmap_put(uint64_t)(jobs, data->id, data);
-
   data->refcount++;
   char *cmd = xstrdup(proc->argv[0]);
-  int status = process_spawn(proc);
+  bool has_out, has_err;
+  if (proc->type == kProcessTypePty) {
+    has_out = true;
+    has_err = false;
+  } else {
+    has_out = data->is_rpc || data->on_stdout.type != kCallbackNone;
+    has_err = data->on_stderr.type != kCallbackNone;
+  }
+  int status = process_spawn(proc, true, has_out, has_err);
   if (status) {
     EMSG3(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
     if (proc->type == kProcessTypePty) {
-      xfree(data->proc.pty.term_name);
+      xfree(data->stream.pty.term_name);
     }
     rettv->vval.v_number = proc->status;
-    term_job_data_decref(data);
+    channel_decref(data);
     return false;
   }
   xfree(cmd);
 
 
-  if (data->rpc) {
-    // the rpc channel takes over the in and out streams
-    channel_from_process(proc, data->id);
+  if (data->is_rpc) {
+    // the rpc takes over the in and out streams
+    rpc_start(data);
   } else {
-    wstream_init(proc->in, 0);
-    if (proc->out) {
-      rstream_init(proc->out, 0);
-      rstream_start(proc->out, on_job_stdout, data);
+    wstream_init(&proc->in, 0);
+    if (has_out) {
+      rstream_init(&proc->out, 0);
+      rstream_start(&proc->out, on_job_stdout, data);
     }
   }
 
-  if (proc->err) {
-    rstream_init(proc->err, 0);
-    rstream_start(proc->err, on_job_stderr, data);
+  if (has_err) {
+    rstream_init(&proc->err, 0);
+    rstream_start(&proc->err, on_job_stderr, data);
   }
   rettv->vval.v_number = data->id;
   return true;
 }
 
-static inline void free_term_job_data_event(void **argv)
-{
-  TerminalJobData *data = argv[0];
-  callback_free(&data->on_stdout);
-  callback_free(&data->on_stderr);
-  callback_free(&data->on_exit);
-
-  multiqueue_free(data->events);
-  pmap_del(uint64_t)(jobs, data->id);
-  xfree(data);
-}
-
-static inline void free_term_job_data(TerminalJobData *data)
-{
-  // data->queue may still be used after this function returns(process_wait), so
-  // only free in the next event loop iteration
-  multiqueue_put(main_loop.fast_events, free_term_job_data_event, 1, data);
-}
-
 // vimscript job callbacks must be executed on Nvim main loop
-static inline void process_job_event(TerminalJobData *data, Callback *callback,
+static inline void process_job_event(Channel *data, Callback *callback,
                                      const char *type, char *buf, size_t count,
                                      int status)
 {
-  JobEvent event_data;
+  ChannelEvent event_data;
   event_data.received = NULL;
   if (buf) {
     event_data.received = tv_list_alloc();
@@ -22566,18 +22490,18 @@ static inline void process_job_event(TerminalJobData *data, Callback *callback,
 static void on_job_stdout(Stream *stream, RBuffer *buf, size_t count,
     void *job, bool eof)
 {
-  TerminalJobData *data = job;
+  Channel *data = job;
   on_job_output(stream, job, buf, count, eof, &data->on_stdout, "stdout");
 }
 
 static void on_job_stderr(Stream *stream, RBuffer *buf, size_t count,
     void *job, bool eof)
 {
-  TerminalJobData *data = job;
+  Channel *data = job;
   on_job_output(stream, job, buf, count, eof, &data->on_stderr, "stderr");
 }
 
-static void on_job_output(Stream *stream, TerminalJobData *data, RBuffer *buf,
+static void on_job_output(Stream *stream, Channel *data, RBuffer *buf,
                           size_t count, bool eof, Callback *callback,
                           const char *type)
 {
@@ -22604,14 +22528,14 @@ static void on_job_output(Stream *stream, TerminalJobData *data, RBuffer *buf,
 
 static void eval_job_process_exit_cb(Process *proc, int status, void *d)
 {
-  TerminalJobData *data = d;
-  if (data->term && !data->exited) {
-    data->exited = true;
+  Channel *data = d;
+  if (data->term && !data->stream.proc.exited) {
+    data->stream.proc.exited = true;
     char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
     snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
     terminal_close(data->term, msg);
   }
-  if (data->rpc) {
+  if (data->is_rpc) {
     channel_process_exit(data->id, status);
   }
 
@@ -22621,58 +22545,51 @@ static void eval_job_process_exit_cb(Process *proc, int status, void *d)
 
   process_job_event(data, &data->on_exit, "exit", NULL, 0, status);
 
-  term_job_data_decref(data);
+  channel_decref(data);
 }
 
 static void term_write(char *buf, size_t size, void *d)
 {
-  TerminalJobData *job = d;
-  if (job->in.closed) {
+  Channel *job = d;
+  if (job->stream.proc.in.closed) {
     // If the backing stream was closed abruptly, there may be write events
     // ahead of the terminal close event. Just ignore the writes.
     ILOG("write failed: stream is closed");
     return;
   }
   WBuffer *wbuf = wstream_new_buffer(xmemdup(buf, size), size, 1, xfree);
-  wstream_write(&job->in, wbuf);
+  wstream_write(&job->stream.proc.in, wbuf);
 }
 
 static void term_resize(uint16_t width, uint16_t height, void *d)
 {
-  TerminalJobData *data = d;
-  pty_process_resize(&data->proc.pty, width, height);
+  Channel *data = d;
+  pty_process_resize(&data->stream.pty, width, height);
 }
 
 static inline void term_delayed_free(void **argv)
 {
-  TerminalJobData *j = argv[0];
-  if (j->in.pending_reqs || j->out.pending_reqs || j->err.pending_reqs) {
+  Channel *j = argv[0];
+  if (j->stream.proc.in.pending_reqs || j->stream.proc.out.pending_reqs) {
     multiqueue_put(j->events, term_delayed_free, 1, j);
     return;
   }
 
   terminal_destroy(j->term);
-  term_job_data_decref(j);
+  channel_decref(j);
 }
 
 static void term_close(void *d)
 {
-  TerminalJobData *data = d;
-  if (!data->exited) {
-    data->exited = true;
-    process_stop((Process *)&data->proc);
+  Channel *data = d;
+  if (!data->stream.proc.exited) {
+    data->stream.proc.exited = true;
+    process_stop((Process *)&data->stream.proc);
   }
   multiqueue_put(data->events, term_delayed_free, 1, data);
 }
 
-static void term_job_data_decref(TerminalJobData *data)
-{
-  if (!(--data->refcount)) {
-    free_term_job_data(data);
-  }
-}
-
-static void on_job_event(JobEvent *ev)
+static void on_job_event(ChannelEvent *ev)
 {
   if (!ev->callback) {
     return;
@@ -22704,14 +22621,23 @@ static void on_job_event(JobEvent *ev)
   tv_clear(&rettv);
 }
 
-static TerminalJobData *find_job(uint64_t id)
+static Channel *find_job(uint64_t id, bool show_error)
 {
-  TerminalJobData *data = pmap_get(uint64_t)(jobs, id);
-  if (!data || data->stopped) {
+  Channel *data = find_channel(id);
+  if (!data || data->streamtype != kChannelStreamProc
+      || process_is_stopped(&data->stream.proc)) {
+    if (show_error) {
+      if (data && data->streamtype != kChannelStreamProc) {
+        EMSG(_(e_invchanjob));
+      } else {
+        EMSG(_(e_invchan));
+      }
+    }
     return NULL;
   }
   return data;
 }
+
 
 static void script_host_eval(char *name, typval_T *argvars, typval_T *rettv)
 {

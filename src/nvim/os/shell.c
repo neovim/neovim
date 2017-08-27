@@ -207,16 +207,12 @@ static int do_os_system(char **argv,
   char prog[MAXPATHL];
   xstrlcpy(prog, argv[0], MAXPATHL);
 
-  Stream in, out, err;
   LibuvProcess uvproc = libuv_process_init(&main_loop, &buf);
   Process *proc = &uvproc.process;
   MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
-  proc->in = input != NULL ? &in : NULL;
-  proc->out = &out;
-  proc->err = &err;
-  int status = process_spawn(proc);
+  int status = process_spawn(proc, input != NULL, true, true);
   if (status) {
     loop_poll_events(&main_loop, 0);
     // Failed, probably 'shell' is not executable.
@@ -236,27 +232,27 @@ static int do_os_system(char **argv,
   // streams while there's still data in the OS buffer (due to the process
   // exiting before all data is read).
   if (input != NULL) {
-    proc->in->events = NULL;
-    wstream_init(proc->in, 0);
+    proc->in.events = NULL;
+    wstream_init(&proc->in, 0);
   }
-  proc->out->events = NULL;
-  rstream_init(proc->out, 0);
-  rstream_start(proc->out, data_cb, &buf);
-  proc->err->events = NULL;
-  rstream_init(proc->err, 0);
-  rstream_start(proc->err, data_cb, &buf);
+  proc->out.events = NULL;
+  rstream_init(&proc->out, 0);
+  rstream_start(&proc->out, data_cb, &buf);
+  proc->err.events = NULL;
+  rstream_init(&proc->err, 0);
+  rstream_start(&proc->err, data_cb, &buf);
 
   // write the input, if any
   if (input) {
     WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
 
-    if (!wstream_write(&in, input_buffer)) {
+    if (!wstream_write(&proc->in, input_buffer)) {
       // couldn't write, stop the process and tell the user about it
       process_stop(proc);
       return -1;
     }
     // close the input stream after everything is written
-    wstream_set_write_cb(&in, shell_write_cb, NULL);
+    wstream_set_write_cb(&proc->in, shell_write_cb, NULL);
   }
 
   // Invoke busy_start here so LOOP_PROCESS_EVENTS_UNTIL will not change the
