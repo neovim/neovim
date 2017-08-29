@@ -3340,7 +3340,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
   //   curren window
   //     lnum <= curwin->w_botline
   for (linenr_T lnum = eap->line1;
-       lnum <= line2 && !(got_quit || aborting())
+       lnum <= line2 && !got_quit && !aborting()
        && (!preview || matched_lines.size < (size_t)p_cwh
            || lnum <= curwin->w_botline);
        lnum++) {
