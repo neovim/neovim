@@ -15,6 +15,7 @@ describe('external cmdline', function()
 
   before_each(function()
     clear()
+    cmdline, block = {}, nil
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, ext_cmdline=true})
     screen:set_on_event_handler(function(name, data)
@@ -453,6 +454,25 @@ describe('external cmdline', function()
         indent = 0,
         pos = 4,
         prompt = ""
+      }}, cmdline)
+    end)
+  end)
+
+  it('works with inputsecret()', function()
+    feed(":call inputsecret('secret:')<cr>abc123")
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "******" } },
+        firstc = "",
+        indent = 0,
+        pos = 6,
+        prompt = "secret:"
       }}, cmdline)
     end)
   end)

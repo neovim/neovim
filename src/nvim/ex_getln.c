@@ -2733,7 +2733,18 @@ draw_cmdline_no_arabicshape:
 static void ui_ext_cmdline_show(CmdlineInfo *line)
 {
   Array content = ARRAY_DICT_INIT;
-  if (kv_size(line->last_colors.colors)) {
+  if (cmdline_star) {
+    size_t len = 0;
+    for (char_u *p = ccline.cmdbuff; *p; mb_ptr_adv(p)) {
+      len++;
+    }
+    char *buf = xmallocz(len);
+    memset(buf, '*', len);
+    Array item = ARRAY_DICT_INIT;
+    ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
+    ADD(item, STRING_OBJ(((String) { .data = buf, .size = len })));
+    ADD(content, ARRAY_OBJ(item));
+  } else if (kv_size(line->last_colors.colors)) {
     for (size_t i = 0; i < kv_size(line->last_colors.colors); i++) {
       CmdlineColorChunk chunk = kv_A(line->last_colors.colors, i);
       Array item = ARRAY_DICT_INIT;
