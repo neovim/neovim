@@ -3500,6 +3500,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
           setmouse();                   /* disable mouse in xterm */
           curwin->w_cursor.col = regmatch.startpos[0].col;
 
+          if (curwin->w_p_crb) {
+            do_check_cursorbind();
+          }
+
           /* When 'cpoptions' contains "u" don't sync undo when
            * asking for confirmation. */
           if (vim_strchr(p_cpo, CPO_UNDO) != NULL)
