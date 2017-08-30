@@ -8,6 +8,7 @@
 
 #include <uv.h>
 
+#include "nvim/log.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/wstream.h"
 #include "nvim/vim.h"

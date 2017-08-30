@@ -2319,16 +2319,6 @@ static void source_callback(char_u *fname, void *cookie)
   (void)do_source(fname, false, DOSO_NONE);
 }
 
-/// Source the file "name" from all directories in 'runtimepath'.
-/// "name" can contain wildcards.
-/// When "flags" has DIP_ALL: source all files, otherwise only the first one.
-///
-/// return FAIL when no file could be sourced, OK otherwise.
-int source_runtime(char_u *name, int flags)
-{
-  return do_in_runtimepath(name, flags, source_callback, NULL);
-}
-
 /// Find the file "name" in all directories in "path" and invoke
 /// "callback(fname, cookie)".
 /// "name" can contain wildcards.
@@ -2434,21 +2424,21 @@ int do_in_path(char_u *path, char_u *name, int flags,
   return did_one ? OK : FAIL;
 }
 
-/// Find "name" in 'runtimepath'.  When found, invoke the callback function for
+/// Find "name" in "path".  When found, invoke the callback function for
 /// it: callback(fname, "cookie")
 /// When "flags" has DIP_ALL repeat for all matches, otherwise only the first
 /// one is used.
 /// Returns OK when at least one match found, FAIL otherwise.
-/// If "name" is NULL calls callback for each entry in runtimepath. Cookie is
+/// If "name" is NULL calls callback for each entry in "path". Cookie is
 /// passed by reference in this case, setting it to NULL indicates that callback
 /// has done its job.
-int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
-                      void *cookie)
+int do_in_path_and_pp(char_u *path, char_u *name, int flags,
+                      DoInRuntimepathCB callback, void *cookie)
 {
   int done = FAIL;
 
   if ((flags & DIP_NORTP) == 0) {
-    done = do_in_path(p_rtp, name, flags, callback, cookie);
+    done = do_in_path(path, name, flags, callback, cookie);
   }
 
   if ((done == FAIL || (flags & DIP_ALL)) && (flags & DIP_START)) {
@@ -2476,6 +2466,29 @@ int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
   return done;
 }
 
+/// Just like do_in_path_and_pp(), using 'runtimepath' for "path".
+int do_in_runtimepath(char_u *name, int flags, DoInRuntimepathCB callback,
+                      void *cookie)
+{
+  return do_in_path_and_pp(p_rtp, name, flags, callback, cookie);
+}
+
+/// Source the file "name" from all directories in 'runtimepath'.
+/// "name" can contain wildcards.
+/// When "flags" has DIP_ALL: source all files, otherwise only the first one.
+///
+/// return FAIL when no file could be sourced, OK otherwise.
+int source_runtime(char_u *name, int flags)
+{
+  return source_in_path(p_rtp, name, flags);
+}
+
+/// Just like source_runtime(), but use "path" instead of 'runtimepath'.
+int source_in_path(char_u *path, char_u *name, int flags)
+{
+  return do_in_path_and_pp(path, name, flags, source_callback, NULL);
+}
+
 // Expand wildcards in "pat" and invoke do_source() for each match.
 static void source_all_matches(char_u *pat)
 {
@@ -2498,6 +2511,7 @@ static int APP_BOTH;
 static void add_pack_plugin(char_u *fname, void *cookie)
 {
   char_u *p4, *p3, *p2, *p1, *p;
+  char_u *buf = NULL;
 
   char *const ffname = fix_fname((char *)fname);
 
@@ -2525,26 +2539,30 @@ static void add_pack_plugin(char_u *fname, void *cookie)
     // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
     size_t fname_len = strlen(ffname);
     const char *insp = (const char *)p_rtp;
-    for (;;) {
-      if (path_fnamencmp(insp, ffname, fname_len) == 0) {
+    buf = try_malloc(MAXPATHL);
+    if (buf == NULL) {
+      goto theend;
+    }
+    while (*insp != NUL) {
+      copy_option_part((char_u **)&insp, buf, MAXPATHL, ",");
+      add_pathsep((char *)buf);
+      char *const rtp_ffname = fix_fname((char *)buf);
+      if (rtp_ffname == NULL) {
+        goto theend;
+      }
+      bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
+      xfree(rtp_ffname);
+      if (match) {
         break;
       }
-      insp = strchr(insp, ',');
-      if (insp == NULL) {
-        break;
-      }
-      insp++;
     }
 
-    if (insp == NULL) {
+    if (*insp == NUL) {
       // not found, append at the end
       insp = (const char *)p_rtp + STRLEN(p_rtp);
     } else {
       // append after the matching directory.
-      insp += strlen(ffname);
-      while (*insp != NUL && *insp != ',') {
-        insp++;
-      }
+      insp--;
     }
     *p4 = c;
 
@@ -2614,26 +2632,35 @@ static void add_pack_plugin(char_u *fname, void *cookie)
   }
 
 theend:
+  xfree(buf);
   xfree(ffname);
 }
 
-static bool did_source_packages = false;
+/// Add all packages in the "start" directory to 'runtimepath'.
+void add_pack_start_dirs(void)
+{
+  do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
+             add_pack_plugin, &APP_ADD_DIR);
+}
+
+/// Load plugins from all packages in the "start" directory.
+void load_start_packages(void)
+{
+  did_source_packages = true;
+  do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
+             add_pack_plugin, &APP_LOAD);
+}
 
 // ":packloadall"
 // Find plugins in the package directories and source them.
-// "eap" is NULL when invoked during startup.
 void ex_packloadall(exarg_T *eap)
 {
-  if (!did_source_packages || (eap != NULL && eap->forceit)) {
-    did_source_packages = true;
-
+  if (!did_source_packages || eap->forceit) {
     // First do a round to add all directories to 'runtimepath', then load
     // the plugins. This allows for plugins to use an autoload directory
     // of another plugin.
-    do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
-               add_pack_plugin, &APP_ADD_DIR);
-    do_in_path(p_pp, (char_u *)"pack/*/start/*", DIP_ALL + DIP_DIR,  // NOLINT
-               add_pack_plugin, &APP_LOAD);
+    add_pack_start_dirs();
+    load_start_packages();
   }
 }
 

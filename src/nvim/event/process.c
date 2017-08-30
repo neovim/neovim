@@ -233,8 +233,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
   switch (proc->type) {
     case kProcessTypeUv:
       // Close the process's stdin. If the process doesn't close its own
-      // stdout/stderr, they will be closed when it exits(possibly due to being
-      // terminated after a timeout)
+      // stdout/stderr, they will be closed when it exits (voluntarily or not).
       process_close_in(proc);
       ILOG("Sending SIGTERM to pid %d", proc->pid);
       uv_kill(proc->pid, SIGTERM);

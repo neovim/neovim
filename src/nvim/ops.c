@@ -55,12 +55,11 @@ static yankreg_T y_regs[NUM_REGISTERS];
 
 static yankreg_T *y_previous = NULL; /* ptr to last written yankreg */
 
-static bool clipboard_didwarn_unnamed = false;
-
 // for behavior between start_batch_changes() and end_batch_changes())
 static int batch_change_count = 0;           // inside a script
 static bool clipboard_delay_update = false;  // delay clipboard update
 static bool clipboard_needs_update = false;  // clipboard was updated
+static bool clipboard_didwarn = false;
 
 /*
  * structure used by block_prep, op_delete and op_yank for blockwise operators
@@ -5541,22 +5540,17 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
   yankreg_T *target = NULL;
   bool explicit_cb_reg = (*name == '*' || *name == '+');
   bool implicit_cb_reg = (*name == NUL) && (cb_flags & CB_UNNAMEDMASK);
-  int save_redir_off = redir_off;
   if (!explicit_cb_reg && !implicit_cb_reg) {
     goto end;
   }
 
   if (!eval_has_provider("clipboard")) {
-    if (batch_change_count == 1 && explicit_cb_reg && !quiet) {
-      redir_off = true;   // Avoid recursion from :redir + emsg().
+    if (batch_change_count == 1 && !quiet
+        && (!clipboard_didwarn || (explicit_cb_reg && !redirecting()))) {
+      clipboard_didwarn = true;
       // Do NOT error (emsg()) here--if it interrupts :redir we get into
       // a weird state, stuck in "redirect mode".
       msg((char_u *)MSG_NO_CLIP);
-    } else if (batch_change_count == 1 && implicit_cb_reg
-               && !quiet && !clipboard_didwarn_unnamed) {
-      redir_off = true;  // Avoid recursion from :redir + emsg().
-      msg((char_u *)MSG_NO_CLIP);
-      clipboard_didwarn_unnamed = true;
     }
     // ... else, be silent (don't flood during :while, :redir, etc.).
     goto end;
@@ -5586,7 +5580,6 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
   }
 
 end:
-  redir_off = save_redir_off;
   return target;
 }
 

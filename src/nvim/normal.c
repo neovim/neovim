@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/normal.h"

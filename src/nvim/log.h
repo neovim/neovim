@@ -6,7 +6,7 @@
 
 #define DEBUG_LOG_LEVEL 0
 #define INFO_LOG_LEVEL 1
-#define WARNING_LOG_LEVEL 2
+#define WARN_LOG_LEVEL 2
 #define ERROR_LOG_LEVEL 3
 
 #define DLOG(...)
@@ -43,12 +43,12 @@
                            __VA_ARGS__)
 #endif
 
-#if MIN_LOG_LEVEL <= WARNING_LOG_LEVEL
+#if MIN_LOG_LEVEL <= WARN_LOG_LEVEL
 # undef WLOG
 # undef WLOGN
-# define WLOG(...) do_log(WARNING_LOG_LEVEL, __func__, __LINE__, true, \
+# define WLOG(...) do_log(WARN_LOG_LEVEL, __func__, __LINE__, true, \
                           __VA_ARGS__)
-# define WLOGN(...) do_log(WARNING_LOG_LEVEL, __func__, __LINE__, false, \
+# define WLOGN(...) do_log(WARN_LOG_LEVEL, __func__, __LINE__, false, \
                            __VA_ARGS__)
 #endif
 
