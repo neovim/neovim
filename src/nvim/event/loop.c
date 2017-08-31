@@ -59,7 +59,13 @@ void loop_poll_events(Loop *loop, int ms)
   multiqueue_process_events(loop->fast_events);
 }
 
-// Schedule an event from another thread
+/// Schedules an event from another thread.
+///
+/// @note Event is queued into `fast_events`, which is processed outside of the
+///       primary `events` queue by loop_poll_events(). For `main_loop`, that
+///       means `fast_events` is NOT processed in an "editor mode"
+///       (VimState.execute), so redraw and other side-effects are likely to be
+///       skipped.
 void loop_schedule(Loop *loop, Event event)
 {
   uv_mutex_lock(&loop->mutex);
