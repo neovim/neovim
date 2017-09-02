@@ -260,8 +260,8 @@ describe('tui FocusGained/FocusLost', function()
     end)
   end)
 
-  -- per 5cc87d4dabd02167117be7a978b5c8faaa975419 we decided to ignore :echo
-  -- invoked from timers/events while the user is in cmdline-mode.
+  -- During cmdline-mode we ignore :echo invoked by timers/events.
+  -- See commit: 5cc87d4dabd02167117be7a978b5c8faaa975419.
   it('in cmdline-mode does NOT :echo', function()
     feed_data(':')
     feed_data('\027[I')
@@ -286,7 +286,35 @@ describe('tui FocusGained/FocusLost', function()
     ]])
   end)
 
-  it('can handle focus events in terminal mode', function()
+  it('in cmdline-mode', function()
+    -- Set up autocmds that modify the buffer, instead of just calling :echo.
+    -- This is how we can test handling of focus gained/lost during cmdline-mode.
+    -- See commit: 5cc87d4dabd02167117be7a978b5c8faaa975419.
+    feed_data(":autocmd!\n")
+    feed_data(":autocmd FocusLost * call append(line('$'), 'lost')\n")
+    feed_data(":autocmd FocusGained * call append(line('$'), 'gained')\n")
+    -- Enter cmdline-mode.
+    feed_data(':')
+    screen:sleep(10)
+    -- Send focus lost/gained termcodes.
+    feed_data('\027[O')
+    feed_data('\027[I')
+    screen:sleep(10)
+    -- Exit cmdline-mode. Redraws from timers/events are blocked during
+    -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
+    feed_data('\n')
+    screen:expect([[
+      {1: }                                                 |
+      lost                                              |
+      gained                                            |
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      :                                                 |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('in terminal-mode', function()
     feed_data(':set shell='..nvim_dir..'/shell-test\n')
     feed_data(':set noshowmode laststatus=0\n')
 
