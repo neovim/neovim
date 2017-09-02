@@ -66,6 +66,7 @@ void loop_poll_events(Loop *loop, int ms)
 ///       means `fast_events` is NOT processed in an "editor mode"
 ///       (VimState.execute), so redraw and other side-effects are likely to be
 ///       skipped.
+/// @see loop_schedule_deferred
 void loop_schedule(Loop *loop, Event event)
 {
   uv_mutex_lock(&loop->mutex);
