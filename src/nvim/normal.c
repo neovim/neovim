@@ -7958,6 +7958,7 @@ static void nv_event(cmdarg_T *cap)
   may_garbage_collect = false;
   multiqueue_process_events(main_loop.events);
   cap->retval |= CA_COMMAND_BUSY;       // don't call edit() now
+  finish_op = false;
 }
 
 /// Trigger FocusGained event.

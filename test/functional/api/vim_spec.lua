@@ -329,21 +329,77 @@ describe('api', function()
       }
       eq({ { {mode='n', blocking=false},
              13,
-             {mode='n', blocking=false},  -- TODO: should be blocked=true
+             {mode='n', blocking=false},  -- TODO: should be blocked=true ?
              1 },
            NIL}, meths.call_atomic(req))
       eq({mode='r', blocking=true}, nvim("get_mode"))
     end)
-    -- TODO: bug #6166
     it("during insert-mode map-pending, returns blocking=true #6166", function()
       command("inoremap xx foo")
       nvim("input", "ix")
       eq({mode='i', blocking=true}, nvim("get_mode"))
     end)
-    -- TODO: bug #6166
     it("during normal-mode gU, returns blocking=false #6166", function()
       nvim("input", "gu")
       eq({mode='no', blocking=false}, nvim("get_mode"))
+    end)
+  end)
+
+  describe('RPC (K_EVENT) #6166', function()
+    it('does not complete/interrupt normal-mode operator', function()
+      helpers.insert([[
+        FIRST LINE
+        SECOND LINE]])
+      nvim('input', 'gg')
+      nvim('input', 'gu')
+      -- Make any non-async RPC request.
+      nvim('get_current_buf')
+      -- Buffer should not change.
+      helpers.expect([[
+        FIRST LINE
+        SECOND LINE]])
+      -- Now send input to complete the operator.
+      nvim("input", "j")
+      helpers.expect([[
+      first line
+      second line]])
+    end)
+    -- TODO: bug #6166
+    pending('does not complete/interrupt normal-mode mapping', function()
+      command("nnoremap dd :let g:foo='it worked...'<CR>")
+      helpers.insert([[
+        FIRST LINE
+        SECOND LINE]])
+      nvim('input', 'gg')
+      nvim('input', 'd')
+      helpers.expect([[
+        FIRST LINE
+        SECOND LINE]])
+      -- Make any non-async RPC request. (expect() does RPC, but be explicit)
+      nvim('get_current_buf')
+      -- Send input to complete the mapping.
+      nvim('input', 'd')
+      helpers.expect([[
+        FIRST LINE
+        SECOND LINE]])
+      eq('it worked...', eval('g:foo'))
+    end)
+    it('does not complete/interrupt insert-mode mapping', function()
+      command("inoremap xx foo")
+      helpers.insert([[
+        FIRST LINE
+        SECOND LINE]])
+      nvim('input', 'ix')
+      helpers.expect([[
+        FIRST LINE
+        SECOND LINxE]])
+      -- Make any non-async RPC request. (expect() does RPC, but be explicit)
+      nvim('get_current_buf')
+      -- Send input to complete the mapping.
+      nvim('input', 'x')
+      helpers.expect([[
+        FIRST LINE
+        SECOND LINxxE]])  -- TODO: should be "SECOND LINfooE" #6166
     end)
   end)
 
