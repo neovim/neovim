@@ -1,5 +1,5 @@
--- Acceptance tests for the TUI using the builtin terminal emulator as
--- a way to send keys and assert screen state.
+-- TUI acceptance tests.
+-- Uses :terminal as a way to send keys and assert screen state.
 local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
@@ -195,7 +195,7 @@ describe('tui with non-tty file descriptors', function()
   end)
 end)
 
-describe('tui focus event handling', function()
+describe('tui FocusGained/FocusLost', function()
   local screen
 
   before_each(function()
@@ -207,7 +207,8 @@ describe('tui focus event handling', function()
     feed_data("\034\016")  -- CTRL-\ CTRL-N
   end)
 
-  it('can handle focus events in normal mode', function()
+  it('in normal-mode', function()
+    retry(2, 3 * screen.timeout, function()
     feed_data('\027[I')
     screen:expect([[
       {1: }                                                 |
@@ -229,11 +230,13 @@ describe('tui focus event handling', function()
       lost                                              |
       {3:-- TERMINAL --}                                    |
     ]])
+    end)
   end)
 
-  it('can handle focus events in insert mode', function()
+  it('in insert-mode', function()
     feed_command('set noshowmode')
     feed_data('i')
+    retry(2, 3 * screen.timeout, function()
     feed_data('\027[I')
     screen:expect([[
       {1: }                                                 |
@@ -254,9 +257,12 @@ describe('tui focus event handling', function()
       lost                                              |
       {3:-- TERMINAL --}                                    |
     ]])
+    end)
   end)
 
-  it('can handle focus events in cmdline mode', function()
+  -- per 5cc87d4dabd02167117be7a978b5c8faaa975419 we decided to ignore :echo
+  -- invoked from timers/events while the user is in cmdline-mode.
+  it('in cmdline-mode does NOT :echo', function()
     feed_data(':')
     feed_data('\027[I')
     screen:expect([[
@@ -265,7 +271,7 @@ describe('tui focus event handling', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name]                                         }|
-      g{1:a}ined                                            |
+      :{1: }                                                |
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027[O')
@@ -275,7 +281,7 @@ describe('tui focus event handling', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name]                                         }|
-      l{1:o}st                                              |
+      :{1: }                                                |
       {3:-- TERMINAL --}                                    |
     ]])
   end)
