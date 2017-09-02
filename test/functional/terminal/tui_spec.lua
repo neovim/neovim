@@ -1,5 +1,6 @@
--- Some sanity checks for the TUI using the builtin terminal emulator
--- as a simple way to send keys and assert screen state.
+-- Acceptance tests for the TUI using the builtin terminal emulator as
+-- a way to send keys and assert screen state.
+local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed_data = thelpers.feed_data
@@ -317,7 +318,7 @@ end)
 -- does not initialize the TUI.
 describe("tui 't_Co' (terminal colors)", function()
   local screen
-  local is_freebsd = (helpers.eval("system('uname') =~? 'FreeBSD'") == 1)
+  local is_freebsd = (string.lower(global_helpers.uname()) == 'freebsd')
 
   local function assert_term_colors(term, colorterm, maxcolors)
     helpers.clear({env={TERM=term}, args={}})
