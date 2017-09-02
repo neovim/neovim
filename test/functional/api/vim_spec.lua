@@ -1308,4 +1308,41 @@ describe('API', function()
       eq({["ns-1"]=1, ["ns-2"]=2}, meths.get_namespaces())
     end)
   end)
+
+  describe('nvim_create_buf', function()
+    it('works', function()
+      eq({id=2}, meths.create_buf(true))
+      eq({id=3}, meths.create_buf(false))
+      eq('  1 %a   "[No Name]"                    line 1\n'..
+         '  2      "[No Name]"                    line 0',
+         meths.command_output("ls"))
+      -- current buffer didn't change
+      eq({id=1}, meths.get_current_buf())
+
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      meths.buf_set_lines(2, 0, -1, true, {"some text"})
+      meths.set_current_buf(2)
+      screen:expect([[
+        ^some text           |
+        {1:~                   }|
+        {1:~                   }|
+                            |
+      ]], {
+        [1] = {bold = true, foreground = Screen.colors.Blue1},
+      })
+    end)
+
+    it('can change buftype before visiting', function()
+      meths.set_option("hidden", false)
+      eq({id=2}, meths.create_buf(true))
+      meths.buf_set_option(2, "buftype", "nofile")
+      meths.buf_set_lines(2, 0, -1, true, {"test text"})
+      command("split | buffer 2")
+      eq({id=2}, meths.get_current_buf())
+      -- if the buf_set_option("buftype") didn't work, this would error out.
+      command("close")
+      eq({id=1}, meths.get_current_buf())
+    end)
+  end)
 end)

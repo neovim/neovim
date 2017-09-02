@@ -1629,7 +1629,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   FileID file_id;
   bool file_id_valid = (sfname != NULL
                         && os_fileid((char *)sfname, &file_id));
-  if (ffname != NULL && !(flags & BLN_DUMMY)
+  if (ffname != NULL && !(flags & (BLN_DUMMY | BLN_NEW))
       && (buf = buflist_findname_file_id(ffname, &file_id,
                                          file_id_valid)) != NULL) {
     xfree(ffname);
