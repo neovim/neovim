@@ -441,7 +441,8 @@ static int command_line_execute(VimState *state, int key)
 
   if (s->c == K_EVENT) {
     multiqueue_process_events(main_loop.events);
-    return command_line_not_changed(s);
+    redrawcmdline();
+    return 1;
   }
 
   if (KeyTyped) {
