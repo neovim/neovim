@@ -14,15 +14,20 @@
 
 static void focusgained_event(void **argv)
 {
-  bool *gained = argv[0];
-  do_autocmd_focusgained(*gained);
-  xfree(gained);
+  bool *gainedp = argv[0];
+  do_autocmd_focusgained(*gainedp);
+  xfree(gainedp);
+}
+static void schedule_event(void **argv)
+{
+  bool *gainedp = argv[0];
+  multiqueue_put(main_loop.events, focusgained_event, 1, gainedp);
 }
 void aucmd_schedule_focusgained(bool gained)
 {
   bool *gainedp = xmalloc(sizeof(*gainedp));
   *gainedp = gained;
-  loop_schedule(&main_loop, event_create(focusgained_event, 1, gainedp));
+  loop_schedule(&main_loop, event_create(schedule_event, 1, gainedp));
 }
 
 static void do_autocmd_focusgained(bool gained)
@@ -34,15 +39,8 @@ static void do_autocmd_focusgained(bool gained)
     return;  // disallow recursion
   }
   recursive = true;
-  bool has_any = has_event(EVENT_FOCUSGAINED) || has_event(EVENT_FOCUSLOST);
-  bool did_any = apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST),
-                                NULL, NULL, false, curbuf);
-  if (has_any && !did_any) {
-    // HACK: Reschedule, hoping that the next event-loop tick will pick this up
-    // during a "regular" state (as opposed to a weird implicit state, e.g.
-    // early_init()..win_alloc_first() which disables autocommands).
-    aucmd_schedule_focusgained(gained);
-  }
+  apply_autocmds((gained ? EVENT_FOCUSGAINED : EVENT_FOCUSLOST),
+                 NULL, NULL, false, curbuf);
   recursive = false;
 }
 
