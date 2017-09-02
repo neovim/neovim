@@ -188,12 +188,11 @@ uint64_t channel_connect(bool tcp, const char *address, int timeout,
   return channel->id;
 }
 
-/// Sends event/arguments to channel
+/// Publishes an event to a channel.
 ///
-/// @param id The channel id. If 0, the event will be sent to all
-///        channels that have subscribed to the event type
-/// @param name The event name, an arbitrary string
-/// @param args Array with event arguments
+/// @param id Channel id. 0 means "broadcast to all subscribed channels"
+/// @param name Event name (application-defined)
+/// @param args Array of event arguments
 /// @return True if the event was sent successfully, false otherwise.
 bool channel_send_event(uint64_t id, const char *name, Array args)
 {
@@ -215,7 +214,6 @@ bool channel_send_event(uint64_t id, const char *name, Array args)
       send_event(channel, name, args);
     }
   }  else {
-    // TODO(tarruda): Implement event broadcasting in vimscript
     broadcast_event(name, args);
   }
 

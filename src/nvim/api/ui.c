@@ -215,6 +215,7 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
 #undef UI_EXT_OPTION
 }
 
+/// Pushes data into UI.UIData, to be consumed later by remote_ui_flush().
 static void push_call(UI *ui, char *name, Array args)
 {
   Array call = ARRAY_DICT_INIT;
