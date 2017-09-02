@@ -99,7 +99,7 @@ void log_unlock(void)
 /// @param func_name  function name, or NULL
 /// @param line_num   source line number, or -1
 bool do_log(int log_level, const char *context, const char *func_name,
-            int line_num, bool eol, const char* fmt, ...)
+            int line_num, bool eol, const char *fmt, ...)
   FUNC_ATTR_UNUSED
 {
   if (log_level < MIN_LOG_LEVEL) {
@@ -249,7 +249,7 @@ static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
 
 static bool v_do_log_to_file(FILE *log_file, int log_level,
                              const char *context, const char *func_name,
-                             int line_num, bool eol, const char* fmt,
+                             int line_num, bool eol, const char *fmt,
                              va_list args)
 {
   static const char *log_levels[] = {
