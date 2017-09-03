@@ -334,16 +334,32 @@ describe('api', function()
            NIL}, meths.call_atomic(req))
       eq({mode='r', blocking=true}, nvim("get_mode"))
     end)
-    -- TODO: bug #6166
     it("during insert-mode map-pending, returns blocking=true #6166", function()
       command("inoremap xx foo")
       nvim("input", "ix")
       eq({mode='i', blocking=true}, nvim("get_mode"))
     end)
-    -- TODO: bug #6166
     it("during normal-mode gU, returns blocking=false #6166", function()
       nvim("input", "gu")
       eq({mode='no', blocking=false}, nvim("get_mode"))
+    end)
+  end)
+
+  describe('RPC during operator pending #6166', function()
+    it('does not complete a pending operator', function()
+      helpers.insert([[
+      FIRST LINE
+      SECOND LINE]])
+      nvim('input', 'gg')
+      nvim("input", "gu")
+      -- Make any plain RPC request, this should not complete operator pending mode.
+      helpers.expect([[
+      FIRST LINE
+      SECOND LINE]])
+      nvim("input", "j")
+      helpers.expect([[
+      first line
+      second line]])
     end)
   end)
 
