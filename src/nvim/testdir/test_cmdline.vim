@@ -230,7 +230,24 @@ func Test_paste_in_cmdline()
 
   call feedkeys("f;:aaa \<C-R>\<C-A> bbb\<C-B>\"\<CR>", 'tx')
   call assert_equal('"aaa a;b-c*d bbb', @:)
+
+  call feedkeys(":\<C-\>etoupper(getline(1))\<CR>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"ASDF.X /TMP/SOME VERYLONGWORD A;B-C*D ', @:)
   bwipe!
+endfunc
+
+func Test_remove_char_in_cmdline()
+    call feedkeys(":abc def\<S-Left>\<Del>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"abc ef', @:)
+
+    call feedkeys(":abc def\<S-Left>\<BS>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"abcdef', @:)
+
+    call feedkeys(":abc def ghi\<S-Left>\<C-W>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"abc ghi', @:)
+
+    call feedkeys(":abc def\<S-Left>\<C-U>\<C-B>\"\<CR>", 'tx')
+    call assert_equal('"def', @:)
 endfunc
 
 func Test_illegal_address()
