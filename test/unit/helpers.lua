@@ -760,6 +760,29 @@ end
 
 cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h')
 
+local function conv_enum(etab, eval)
+  local n = tonumber(eval)
+  return etab[n] or n
+end
+
+local function array_size(arr)
+  return ffi.sizeof(arr) / ffi.sizeof(arr[0])
+end
+
+local function kvi_size(kvi)
+  return array_size(kvi.init_array)
+end
+
+local function kvi_init(kvi)
+  kvi.capacity = kvi_size(kvi)
+  kvi.items = kvi.init_array
+  return kvi
+end
+
+local function kvi_new(ct)
+  return kvi_init(ffi.new(ct))
+end
+
 local module = {
   cimport = cimport,
   cppimport = cppimport,
@@ -780,6 +803,11 @@ local module = {
   child_call_once = child_call_once,
   child_cleanup_once = child_cleanup_once,
   sc = sc,
+  conv_enum = conv_enum,
+  array_size = array_sive,
+  kvi_size = kvi_size,
+  kvi_init = kvi_init,
+  kvi_new = kvi_new,
 }
 return function()
   return module

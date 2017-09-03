@@ -1,10 +1,17 @@
 local helpers = require('test.unit.helpers')(after_each)
+local viml_helpers = require('test.unit.viml.helpers')
 local itp = helpers.gen_itp(it)
 
 local child_call_once = helpers.child_call_once
+local conv_enum = helpers.conv_enum
 local cimport = helpers.cimport
 local ffi = helpers.ffi
 local eq = helpers.eq
+
+local pline2lua = viml_helpers.pline2lua
+local new_pstate = viml_helpers.new_pstate
+local intchar2lua = viml_helpers.intchar2lua
+local pstate_set_str = viml_helpers.pstate_set_str
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 
@@ -71,83 +78,8 @@ child_call_once(function()
   }
 end)
 
-local function array_size(arr)
-  return ffi.sizeof(arr) / ffi.sizeof(arr[0])
-end
-
-local function kvi_size(kvi)
-  return array_size(kvi.init_array)
-end
-
-local function kvi_init(kvi)
-  kvi.capacity = kvi_size(kvi)
-  kvi.items = kvi.init_array
-  return kvi
-end
-
-local function kvi_new(ct)
-  return kvi_init(ffi.new(ct))
-end
-
-local function new_pstate(strings)
-  local strings_idx = 0
-  local function get_line(_, ret_pline)
-    strings_idx = strings_idx + 1
-    local str = strings[strings_idx]
-    local data, size
-    if type(str) == 'string' then
-      data = str
-      size = #str
-    elseif type(str) == 'nil' then
-      data = nil
-      size = 0
-    elseif type(str) == 'table' then
-      data = str.data
-      size = str.size
-    elseif type(str) == 'function' then
-      data, size = str()
-      size = size or 0
-    end
-    ret_pline.data = data
-    ret_pline.size = size
-    ret_pline.allocated = false
-  end
-  local pline_init = {
-    data = nil,
-    size = 0,
-    allocated = false,
-  }
-  local state = {
-    reader = {
-      get_line = get_line,
-      cookie = nil,
-      conv = {
-        vc_type = 0,
-        vc_factor = 1,
-        vc_fail = false,
-      },
-    },
-    pos = { line = 0, col = 0 },
-    colors = kvi_new('ParserHighlight'),
-    can_continuate = false,
-  }
-  local ret = ffi.new('ParserState', state)
-  kvi_init(ret.reader.lines)
-  kvi_init(ret.stack)
-  return ret
-end
-
-local function conv_enum(etab, eval)
-  local n = tonumber(eval)
-  return etab[n] or n
-end
-
 local function conv_eltkn_type(typ)
   return conv_enum(eltkn_type_tab, typ)
-end
-
-local function pline2lua(pline)
-  return ffi.string(pline.data, pline.size)
 end
 
 local bracket_types = {
@@ -156,29 +88,13 @@ local bracket_types = {
   Parenthesis = true,
 }
 
-local function intchar2lua(ch)
-  ch = tonumber(ch)
-  return (20 <= ch and ch < 127) and ('%c'):format(ch) or ch
-end
-
 local function eltkn2lua(pstate, tkn)
   local ret = {
     type = conv_eltkn_type(tkn.type),
-    len = tonumber(tkn.len),
-    start = { line = tonumber(tkn.start.line), col = tonumber(tkn.start.col) },
   }
-  if ret.start.line < pstate.reader.lines.size then
-    local pstr = pline2lua(pstate.reader.lines.items[ret.start.line])
-    if ret.start.col >= #pstr then
-      ret.error = 'start.col >= #pstr'
-    else
-      ret.str = pstr:sub(ret.start.col + 1, ret.start.col + ret.len)
-      if #(ret.str) ~= ret.len then
-        ret.error = '#str /= len'
-      end
-    end
-  else
-    ret.error = 'start.line >= pstate.reader.lines.size'
+  pstate_set_str(pstate, tkn.start, tkn.len, ret)
+  if not ret.error and (#(ret.str) ~= ret.len) then
+    ret.error = '#str /= len'
   end
   if ret.type == 'Comparison' then
     ret.data = {
