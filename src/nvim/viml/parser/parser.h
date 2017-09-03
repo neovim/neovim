@@ -156,4 +156,33 @@ static inline void viml_parser_advance(ParserState *const pstate,
   }
 }
 
+static inline void viml_parser_highlight(ParserState *const pstate,
+                                         const ParserPosition start,
+                                         const size_t end_col,
+                                         const char *const group)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ALL;
+
+/// Record highlighting of some region of text
+///
+/// @param  pstate  Parser state to work with.
+/// @param[in]  start  Start position of the highlight.
+/// @param[in]  len  Highlighting chunk length.
+/// @param[in]  group  Highlight group.
+static inline void viml_parser_highlight(ParserState *const pstate,
+                                         const ParserPosition start,
+                                         const size_t len,
+                                         const char *const group)
+{
+  if (pstate->colors == NULL) {
+    return;
+  }
+  // TODO(ZyX-I): May do some assert() sanitizing here.
+  // TODO(ZyX-I): May join chunks.
+  kvi_push(*pstate->colors, ((ParserHighlightChunk) {
+      .start = start,
+      .end_col = start.col + len,
+      .group = group,
+  }));
+}
+
 #endif  // NVIM_VIML_PARSER_PARSER_H
