@@ -5,7 +5,6 @@
 #include "nvim/fileio.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
-#include "nvim/screen.h"
 #include "nvim/ui.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -18,16 +17,12 @@ static void focusgained_event(void **argv)
   do_autocmd_focusgained(*gainedp);
   xfree(gainedp);
 }
-static void schedule_event(void **argv)
-{
-  bool *gainedp = argv[0];
-  multiqueue_put(main_loop.events, focusgained_event, 1, gainedp);
-}
 void aucmd_schedule_focusgained(bool gained)
 {
   bool *gainedp = xmalloc(sizeof(*gainedp));
   *gainedp = gained;
-  loop_schedule(&main_loop, event_create(schedule_event, 1, gainedp));
+  loop_schedule_deferred(&main_loop,
+                         event_create(focusgained_event, 1, gainedp));
 }
 
 static void do_autocmd_focusgained(bool gained)

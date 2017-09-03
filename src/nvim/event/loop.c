@@ -74,6 +74,24 @@ void loop_schedule(Loop *loop, Event event)
   uv_mutex_unlock(&loop->mutex);
 }
 
+/// Schedules an event from another thread. Unlike loop_schedule(), the event
+/// is forwarded to `Loop.events`, instead of being processed immediately.
+///
+/// @see loop_schedule
+void loop_schedule_deferred(Loop *loop, Event event)
+{
+  Event *eventp = xmalloc(sizeof(*eventp));
+  *eventp = event;
+  loop_schedule(loop, event_create(loop_deferred_event, 2, loop, eventp));
+}
+static void loop_deferred_event(void **argv)
+{
+  Loop *loop = argv[0];
+  Event *eventp = argv[1];
+  multiqueue_put_event(loop->events, *eventp);
+  xfree(eventp);
+}
+
 void loop_on_put(MultiQueue *queue, void *data)
 {
   Loop *loop = data;
