@@ -345,6 +345,24 @@ describe('api', function()
     end)
   end)
 
+  describe('RPC during operator pending #6166', function()
+    it('does not complete a pending operator', function()
+      helpers.insert([[
+      FIRST LINE
+      SECOND LINE]])
+      nvim('input', 'gg')
+      nvim("input", "gu")
+      -- Make any plain RPC request, this should not complete operator pending mode.
+      helpers.expect([[
+      FIRST LINE
+      SECOND LINE]])
+      nvim("input", "j")
+      helpers.expect([[
+      first line
+      second line]])
+    end)
+  end)
+
   describe('nvim_replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
       eq('\128\254X', helpers.nvim('replace_termcodes', '\128', true, true, true))
