@@ -27,14 +27,13 @@ describe('highlight api',function()
   it("nvim_get_hl_by_id", function()
     local hl_id = eval("hlID('NewHighlight')")
 
-    eq(expected_cterm, nvim("get_hl_by_id", hl_id))
+    eq(expected_cterm, nvim("get_hl_by_id", hl_id, false))
 
-    command('set termguicolors')
     hl_id = eval("hlID('NewHighlight')")
-    eq(expected_rgb, nvim("get_hl_by_id", hl_id))
+    eq(expected_rgb, nvim("get_hl_by_id", hl_id, true))
 
-    -- assume there is no hl with id 30000
-    local err, emsg = pcall(meths.get_hl_by_id, 30000)
+    -- assume there is no hl with id = 30000
+    local err, emsg = pcall(meths.get_hl_by_id, 30000, false)
     eq(false, err)
     ok(string.find(emsg, 'Invalid highlight id') ~= nil)
   end)
@@ -44,16 +43,15 @@ describe('highlight api',function()
                           foreground = Screen.colors.Red }
 
     -- test "Normal" hl defaults
-    eq({}, nvim("get_hl_by_name", 'Normal'))
+    eq({}, nvim("get_hl_by_name", 'Normal', true))
 
-    eq(expected_cterm, nvim("get_hl_by_name", 'NewHighlight'))
-    command('set termguicolors')
-    eq(expected_rgb, nvim("get_hl_by_name", 'NewHighlight'))
+    eq(expected_cterm, nvim("get_hl_by_name", 'NewHighlight', false))
+    eq(expected_rgb, nvim("get_hl_by_name", 'NewHighlight', true))
 
     command('hi Normal guifg=red guibg=yellow')
-    eq(expected_normal, nvim("get_hl_by_name", 'Normal'))
+    eq(expected_normal, nvim("get_hl_by_name", 'Normal', true))
 
-    local err, emsg = pcall(meths.get_hl_by_name , 'unknown_highlight')
+    local err, emsg = pcall(meths.get_hl_by_name , 'unknown_highlight', false)
     eq(false, err)
     ok(string.find(emsg, 'Invalid highlight name') ~= nil)
   end)

@@ -8224,7 +8224,7 @@ RgbValue name_to_color(const uint8_t *name)
 /// Retrieves attribute description from its id
 ///
 /// @param attr_id attribute id
-Dictionary hl_get_attr_by_id(Integer attr_id, Error *err)
+Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
 {
   HlAttrs attrs = HLATTRS_INIT;
   Dictionary dic = ARRAY_DICT_INIT;
@@ -8240,7 +8240,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Error *err)
     return dic;
   }
 
-  attrs = attrentry2hlattrs(aep, p_tgc);
+  attrs = attrentry2hlattrs(aep, rgb);
 
 end:
   return hlattrs2dict(attrs);
