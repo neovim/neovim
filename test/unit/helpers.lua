@@ -783,6 +783,31 @@ local function kvi_new(ct)
   return kvi_init(ffi.new(ct))
 end
 
+local function make_enum_conv_tab(lib, values, skip_pref, set_cb)
+  child_call_once(function()
+    local ret = {}
+    for _, v in ipairs(values) do
+      local str_v = v
+      if v:sub(1, #skip_pref) == skip_pref then
+        str_v = v:sub(#skip_pref + 1)
+      end
+      ret[tonumber(lib[v])] = str_v
+    end
+    set_cb(ret)
+  end)
+end
+
+local function ptr2addr(ptr)
+  return tonumber(ffi.cast('intptr_t', ffi.cast('void *', ptr)))
+end
+
+local s = ffi.new('char[64]', {0})
+
+local function ptr2key(ptr)
+  ffi.C.snprintf(s, ffi.sizeof(s), '%p', ffi.cast('void *', ptr))
+  return ffi.string(s)
+end
+
 local module = {
   cimport = cimport,
   cppimport = cppimport,
@@ -808,6 +833,9 @@ local module = {
   kvi_size = kvi_size,
   kvi_init = kvi_init,
   kvi_new = kvi_new,
+  make_enum_conv_tab = make_enum_conv_tab,
+  ptr2addr = ptr2addr,
+  ptr2key = ptr2key,
 }
 return function()
   return module

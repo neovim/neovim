@@ -111,6 +111,80 @@ typedef struct {
   } data;  ///< Additional data, if needed.
 } LexExprToken;
 
+/// Expression AST node type
+typedef enum {
+  kExprNodeMissing = 'X',
+  kExprNodeOpMissing = '_',
+  kExprNodeTernary = '?',  ///< Ternary operator, valid one has three children.
+  kExprNodeRegister = '@',  ///< Register, no children.
+  kExprNodeSubscript = 's',  ///< Subscript, should have two or three children.
+  kExprNodeListLiteral = 'l',  ///< List literal, any number of children.
+  kExprNodeUnaryPlus = 'p',
+  kExprNodeBinaryPlus = '+',
+  kExprNodeNested = 'e',  ///< Nested parenthesised expression.
+  kExprNodeCall = 'c',  ///< Function call.
+  /// Plain identifier: simple variable/function name
+  ///
+  /// Looks like "string", "g:Foo", etc: consists from a single 
+  /// kExprLexPlainIdentifier token.
+  kExprNodePlainIdentifier = 'i',
+  /// Complex identifier: variable/function name with curly braces
+  kExprNodeComplexIdentifier = 'I',
+} ExprASTNodeType;
+
+typedef struct expr_ast_node ExprASTNode;
+
+/// Structure representing one AST node
+struct expr_ast_node {
+  ExprASTNodeType type;  ///< Node type.
+  /// Node children: e.g. for 1 + 2 nodes 1 and 2 will be children of +.
+  ExprASTNode *children;
+  /// Next node: e.g. for 1 + 2 child nodes 1 and 2 are put into a single-linked
+  /// list: `(+)->children` references only node 1, node 2 is in
+  /// `(+)->children->next`.
+  ExprASTNode *next;
+  ParserPosition start;
+  size_t len;
+  union {
+    struct {
+      int name;  ///< Register name, may be -1 if name not present.
+    } reg;  ///< For kExprNodeRegister.
+  } data;
+};
+
+enum {
+  /// Allow multiple expressions in a row: e.g. for :echo
+  ///
+  /// Parser will still parse only one of them though.
+  kExprFlagsMulti = (1 << 0),
+  /// Allow NL, NUL and bar to be EOC
+  ///
+  /// When parsing expressions input by user bar is assumed to be a binary
+  /// operator and other two are spacings.
+  kExprFlagsDisallowEOC = (1 << 1),
+  /// Print errors when encountered
+  ///
+  /// Without the flag they are only taken into account when parsing.
+  kExprFlagsPrintError = (1 << 2),
+} ExprParserFlags;
+
+/// Structure representing complety AST for one expression
+typedef struct {
+  /// True if represented AST is correct and can be executed. Incorrect ones may
+  /// still be used for completion, or in linters.
+  bool correct;
+  /// When AST is not correct this message will be printed.
+  ///
+  /// Uses `emsgf(msg, arg_len, arg);`, `msg` is assumed to contain only `%.*s`.
+  struct {
+    const char *msg;
+    int arg_len;
+    const char *arg;
+  } err;
+  /// Root node of the AST.
+  ExprASTNode *root;
+} ExprAST;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "viml/parser/expressions.h.generated.h"
 #endif
