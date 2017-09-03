@@ -320,6 +320,7 @@ describe('tui FocusGained/FocusLost', function()
 
     retry(2, 3 * screen.timeout, function()
       feed_data(':terminal\n')
+      screen:sleep(10)
       feed_data('\027[I')
       screen:expect([[
         {1:r}eady $                                           |
