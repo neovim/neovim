@@ -346,37 +346,33 @@ describe('api', function()
   end)
 
   describe('RPC (K_EVENT) #6166', function()
-    it('does not complete/interrupt normal-mode operator', function()
+    it('does not complete ("interrupt") normal-mode operator-pending', function()
       helpers.insert([[
         FIRST LINE
         SECOND LINE]])
       nvim('input', 'gg')
       nvim('input', 'gu')
-      -- Make any non-async RPC request.
+      -- Make any RPC request (can be non-async: op-pending does not block).
       nvim('get_current_buf')
       -- Buffer should not change.
       helpers.expect([[
         FIRST LINE
         SECOND LINE]])
       -- Now send input to complete the operator.
-      nvim("input", "j")
+      nvim('input', 'j')
       helpers.expect([[
-      first line
-      second line]])
+        first line
+        second line]])
     end)
-    -- TODO: bug #6166
-    pending('does not complete/interrupt normal-mode mapping', function()
+    it('does not complete ("interrupt") normal-mode map-pending', function()
       command("nnoremap dd :let g:foo='it worked...'<CR>")
       helpers.insert([[
         FIRST LINE
         SECOND LINE]])
       nvim('input', 'gg')
       nvim('input', 'd')
-      helpers.expect([[
-        FIRST LINE
-        SECOND LINE]])
-      -- Make any non-async RPC request. (expect() does RPC, but be explicit)
-      nvim('get_current_buf')
+      -- Make any RPC request (must be async, because map-pending blocks).
+      nvim('get_api_info')
       -- Send input to complete the mapping.
       nvim('input', 'd')
       helpers.expect([[
@@ -384,22 +380,20 @@ describe('api', function()
         SECOND LINE]])
       eq('it worked...', helpers.eval('g:foo'))
     end)
-    it('does not complete/interrupt insert-mode mapping', function()
-      command("inoremap xx foo")
+    it('does not complete ("interrupt") insert-mode map-pending', function()
+      command('inoremap xx foo')
+      command('set timeoutlen=9999')
       helpers.insert([[
         FIRST LINE
         SECOND LINE]])
       nvim('input', 'ix')
-      helpers.expect([[
-        FIRST LINE
-        SECOND LINxE]])
-      -- Make any non-async RPC request. (expect() does RPC, but be explicit)
-      nvim('get_current_buf')
+      -- Make any RPC request (must be async, because map-pending blocks).
+      nvim('get_api_info')
       -- Send input to complete the mapping.
       nvim('input', 'x')
       helpers.expect([[
         FIRST LINE
-        SECOND LINxxE]])  -- TODO: should be "SECOND LINfooE" #6166
+        SECOND LINfooE]])
     end)
   end)
 
