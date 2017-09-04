@@ -3333,12 +3333,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
 
   // Check for a match on each line.
   linenr_T line2 = eap->line2;
-  // Condition: If preview, then go on if one of the following holds:
-  // * EITHER we don't yet have enough matches for the preview window
-  //    matched_lines.size < (size_t)p_cwh
-  // * OR we're not yet done looking through the lines shown in the
-  //   curren window
-  //     lnum <= curwin->w_botline
+  // Last condition: If preview, go on if we don't have enough matches
+  // for the preview window or we did not yet check all lines shown
   for (linenr_T lnum = eap->line1;
        lnum <= line2 && !got_quit && !aborting()
        && (!preview || matched_lines.size < (size_t)p_cwh
