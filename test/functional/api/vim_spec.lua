@@ -382,7 +382,7 @@ describe('api', function()
       helpers.expect([[
         FIRST LINE
         SECOND LINE]])
-      eq('it worked...', eval('g:foo'))
+      eq('it worked...', helpers.eval('g:foo'))
     end)
     it('does not complete/interrupt insert-mode mapping', function()
       command("inoremap xx foo")
