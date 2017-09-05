@@ -295,11 +295,11 @@ describe('tui FocusGained/FocusLost', function()
     feed_data(":autocmd FocusGained * call append(line('$'), 'gained')\n")
     -- Enter cmdline-mode.
     feed_data(':')
-    screen:sleep(10)
+    screen:sleep(1)
     -- Send focus lost/gained termcodes.
     feed_data('\027[O')
     feed_data('\027[I')
-    screen:sleep(10)
+    screen:sleep(1)
     -- Exit cmdline-mode. Redraws from timers/events are blocked during
     -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
     feed_data('\n')
@@ -320,7 +320,7 @@ describe('tui FocusGained/FocusLost', function()
 
     retry(2, 3 * screen.timeout, function()
       feed_data(':terminal\n')
-      screen:sleep(10)
+      screen:sleep(1)
       feed_data('\027[I')
       screen:expect([[
         {1:r}eady $                                           |
@@ -346,6 +346,23 @@ describe('tui FocusGained/FocusLost', function()
       feed_data("\034\016")  -- CTRL-\ CTRL-N
       feed_data(':bwipeout!\n')
     end)
+  end)
+
+  it('in press-enter prompt', function()
+    feed_data(":echom 'msg1'|echom 'msg2'|echom 'msg3'|echom 'msg4'|echom 'msg5'\n")
+    -- Execute :messages to provoke the press-enter prompt.
+    feed_data(":messages\n")
+    feed_data('\027[I')
+    feed_data('\027[I')
+    screen:expect([[
+      msg1                                              |
+      msg2                                              |
+      msg3                                              |
+      msg4                                              |
+      msg5                                              |
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]])
   end)
 end)
 
