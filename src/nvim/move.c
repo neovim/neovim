@@ -2164,16 +2164,21 @@ void do_check_cursorbind(void)
         int restart_edit_save = restart_edit;
         restart_edit = true;
         check_cursor();
+        if (curwin->w_p_cul || curwin->w_p_cuc) {
+          validate_cursor();
+        }
         restart_edit = restart_edit_save;
       }
-      /* Correct cursor for multi-byte character. */
-      if (has_mbyte)
+      // Correct cursor for multi-byte character.
+      if (has_mbyte) {
         mb_adjust_cursor();
+      }
       redraw_later(VALID);
 
-      /* Only scroll when 'scrollbind' hasn't done this. */
-      if (!curwin->w_p_scb)
+      // Only scroll when 'scrollbind' hasn't done this.
+      if (!curwin->w_p_scb) {
         update_topline();
+      }
       curwin->w_redr_status = true;
     }
   }
