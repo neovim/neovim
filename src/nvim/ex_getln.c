@@ -1620,14 +1620,6 @@ static int command_line_handle_key(CommandLineState *s)
     }
     return command_line_not_changed(s);
 
-  case K_FOCUSGAINED:  // Neovim has been given focus
-    apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
-    return command_line_not_changed(s);
-
-  case K_FOCUSLOST:   // Neovim has lost focus
-    apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
-    return command_line_not_changed(s);
-
   default:
     // Normal character with no special meaning.  Just set mod_mask
     // to 0x0 so that typing Shift-Space in the GUI doesn't enter

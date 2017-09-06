@@ -59,13 +59,38 @@ void loop_poll_events(Loop *loop, int ms)
   multiqueue_process_events(loop->fast_events);
 }
 
-// Schedule an event from another thread
+/// Schedules an event from another thread.
+///
+/// @note Event is queued into `fast_events`, which is processed outside of the
+///       primary `events` queue by loop_poll_events(). For `main_loop`, that
+///       means `fast_events` is NOT processed in an "editor mode"
+///       (VimState.execute), so redraw and other side-effects are likely to be
+///       skipped.
+/// @see loop_schedule_deferred
 void loop_schedule(Loop *loop, Event event)
 {
   uv_mutex_lock(&loop->mutex);
   multiqueue_put_event(loop->thread_events, event);
   uv_async_send(&loop->async);
   uv_mutex_unlock(&loop->mutex);
+}
+
+/// Schedules an event from another thread. Unlike loop_schedule(), the event
+/// is forwarded to `Loop.events`, instead of being processed immediately.
+///
+/// @see loop_schedule
+void loop_schedule_deferred(Loop *loop, Event event)
+{
+  Event *eventp = xmalloc(sizeof(*eventp));
+  *eventp = event;
+  loop_schedule(loop, event_create(loop_deferred_event, 2, loop, eventp));
+}
+static void loop_deferred_event(void **argv)
+{
+  Loop *loop = argv[0];
+  Event *eventp = argv[1];
+  multiqueue_put_event(loop->events, *eventp);
+  xfree(eventp);
 }
 
 void loop_on_put(MultiQueue *queue, void *data)
