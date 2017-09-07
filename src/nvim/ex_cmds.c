@@ -3788,6 +3788,13 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
               p1 += (*mb_ptr2len)(p1) - 1;
             }
           }
+        } else {
+          // When the match included the "$" of the last line it may
+          // go beyond the last line of the buffer.
+          if (nmatch > curbuf->b_ml.ml_line_count - sub_firstlnum + 1) {
+            nmatch = curbuf->b_ml.ml_line_count - sub_firstlnum + 1;
+            skip_match = true;
+          }
         }
 
         // 4. If subflags.do_all is set, find next match.
