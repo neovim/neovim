@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local clear, wait, nvim = helpers.clear, helpers.wait, helpers.nvim
 local nvim_dir, source, eq = helpers.nvim_dir, helpers.source, helpers.eq
 local feed_command, eval = helpers.feed_command, helpers.eval
+local retry = helpers.retry
 local iswin = helpers.iswin
 
 describe(':terminal', function()
@@ -70,19 +71,19 @@ describe(':terminal (with fake shell)', function()
 
   it('with no argument, acts like termopen()', function()
     terminal_with_fake_shell()
-    wait()
+    retry(3, 4 * screen.timeout, function()
     screen:expect([[
       ^ready $                                           |
       [Process exited 0]                                |
                                                         |
       :terminal                                         |
     ]])
+    end)
   end)
 
   it("with no argument, and 'shell' is set to empty string", function()
     nvim('set_option', 'shell', '')
     terminal_with_fake_shell()
-    wait()
     screen:expect([[
       ^                                                  |
       ~                                                 |
@@ -94,7 +95,6 @@ describe(':terminal (with fake shell)', function()
   it("with no argument, but 'shell' has arguments, acts like termopen()", function()
     nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
     terminal_with_fake_shell()
-    wait()
     screen:expect([[
       ^jeff $                                            |
       [Process exited 0]                                |
@@ -105,7 +105,6 @@ describe(':terminal (with fake shell)', function()
 
   it('executes a given command through the shell', function()
     terminal_with_fake_shell('echo hi')
-    wait()
     screen:expect([[
       ^ready $ echo hi                                   |
                                                         |
@@ -117,7 +116,6 @@ describe(':terminal (with fake shell)', function()
   it("executes a given command through the shell, when 'shell' has arguments", function()
     nvim('set_option', 'shell', nvim_dir..'/shell-test -t jeff')
     terminal_with_fake_shell('echo hi')
-    wait()
     screen:expect([[
       ^jeff $ echo hi                                    |
                                                         |
@@ -128,7 +126,6 @@ describe(':terminal (with fake shell)', function()
 
   it('allows quotes and slashes', function()
     terminal_with_fake_shell([[echo 'hello' \ "world"]])
-    wait()
     screen:expect([[
       ^ready $ echo 'hello' \ "world"                    |
                                                         |
@@ -164,7 +161,6 @@ describe(':terminal (with fake shell)', function()
 
   it('works with :find', function()
     terminal_with_fake_shell()
-    wait()
     screen:expect([[
       ^ready $                                           |
       [Process exited 0]                                |
