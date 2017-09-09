@@ -293,25 +293,27 @@ describe('tui FocusGained/FocusLost', function()
     feed_data(":autocmd!\n")
     feed_data(":autocmd FocusLost * call append(line('$'), 'lost')\n")
     feed_data(":autocmd FocusGained * call append(line('$'), 'gained')\n")
-    -- Enter cmdline-mode.
-    feed_data(':')
-    screen:sleep(1)
-    -- Send focus lost/gained termcodes.
-    feed_data('\027[O')
-    feed_data('\027[I')
-    screen:sleep(1)
-    -- Exit cmdline-mode. Redraws from timers/events are blocked during
-    -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
-    feed_data('\n')
-    screen:expect([[
-      {1: }                                                 |
-      lost                                              |
-      gained                                            |
-      {4:~                                                 }|
-      {5:[No Name] [+]                                     }|
-      :                                                 |
-      {3:-- TERMINAL --}                                    |
-    ]])
+    retry(2, 3 * screen.timeout, function()
+      -- Enter cmdline-mode.
+      feed_data(':')
+      screen:sleep(1)
+      -- Send focus lost/gained termcodes.
+      feed_data('\027[O')
+      feed_data('\027[I')
+      screen:sleep(1)
+      -- Exit cmdline-mode. Redraws from timers/events are blocked during
+      -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
+      feed_data('\n')
+      screen:expect([[
+        {1: }                                                 |
+        lost                                              |
+        gained                                            |
+        {4:~                                                 }|
+        {5:[No Name] [+]                                     }|
+        :                                                 |
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end)
   end)
 
   it('in terminal-mode', function()
