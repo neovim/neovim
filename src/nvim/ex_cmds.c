@@ -3333,9 +3333,12 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
 
   // Check for a match on each line.
   linenr_T line2 = eap->line2;
+  // Last condition: If preview, go on if we don't have enough matches
+  // for the preview window or we did not yet check all lines shown
   for (linenr_T lnum = eap->line1;
-       lnum <= line2 && !(got_quit || aborting())
-       && (!preview || matched_lines.size <= (size_t)p_cwh);
+       lnum <= line2 && !got_quit && !aborting()
+       && (!preview || matched_lines.size < (size_t)p_cwh
+           || lnum <= curwin->w_botline);
        lnum++) {
     long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
                                     (colnr_T)0, NULL);
