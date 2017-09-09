@@ -782,7 +782,7 @@ if !exists("skip_vim_syntax_inits")
   hi def link vimBehaveError	vimError
   hi def link vimCollClassErr	vimError
   hi def link vimErrSetting	vimError
-  hi def link vimEmbedError	vimError
+  hi def link vimEmbedError	Normal
   hi def link vimFTError	vimError
   hi def link vimFunctionError	vimError
   hi def link vimFunc         	vimError
