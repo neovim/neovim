@@ -5847,7 +5847,7 @@ static void screen_start_highlight(int attr)
   ui_start_highlight(attr);
 }
 
-void screen_stop_highlight(void)
+static void screen_stop_highlight(void)
 {
   ui_stop_highlight();
   screen_attr = 0;
