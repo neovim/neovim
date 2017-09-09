@@ -1259,6 +1259,10 @@ static void redraw(bool restore_cursor)
     update_screen(0);
   }
 
+  if (need_maketitle) {  // Update title in terminal-mode. #7248
+    maketitle();
+  }
+
   if (restore_cursor) {
     ui_cursor_goto(save_row, save_col);
   } else if (term) {
