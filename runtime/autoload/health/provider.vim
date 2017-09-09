@@ -239,7 +239,7 @@ function! s:check_python(version) abort
 
   let pyname = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
-  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
+  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = pyname.'_host_prog'
   let loaded_var = 'g:loaded_'.pyname.'_provider'
@@ -249,6 +249,15 @@ function! s:check_python(version) abort
   if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
     call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
     return
+  endif
+
+  if !empty(pyenv) && empty(pyenv_root)
+    call health#report_warn(
+          \ 'pyenv was found, but $PYENV_ROOT is not set.',
+          \ ['Did you follow the final install instructions?']
+          \ )
+  else
+    call health#report_ok(printf('pyenv found: "%s"', pyenv))
   endif
 
   if exists('g:'.host_prog_var)
@@ -282,15 +291,6 @@ function! s:check_python(version) abort
     endif
 
     if !empty(pyenv)
-      if empty(pyenv_root)
-        call health#report_warn(
-              \ 'pyenv was found, but $PYENV_ROOT is not set.',
-              \ ['Did you follow the final install instructions?']
-              \ )
-      else
-        call health#report_ok(printf('pyenv found: "%s"', pyenv))
-      endif
-
       let python_bin = s:trim(s:system([pyenv, 'which', pyname], '', 1))
 
       if empty(python_bin)
