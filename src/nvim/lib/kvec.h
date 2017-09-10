@@ -64,6 +64,14 @@
 #define kv_max(v) ((v).capacity)
 #define kv_last(v) kv_A(v, kv_size(v) - 1)
 
+/// Drop last n items from kvec without resizing
+///
+/// Previously spelled as `(void)kv_pop(v)`, repeated n times.
+///
+/// @param[out]  v  Kvec to drop items from.
+/// @param[in]  n  Number of elements to drop.
+#define kv_drop(v, n) ((v).size -= (n))
+
 #define kv_resize(v, s) \
     ((v).capacity = (s), \
      (v).items = xrealloc((v).items, sizeof((v).items[0]) * (v).capacity))
