@@ -1942,8 +1942,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
          * the lines. */
         auto_format(false, true);
 
-        if (restart_edit == 0)
+        if (restart_edit == 0) {
           restart_edit = restart_edit_save;
+        } else {
+          cap->retval |= CA_COMMAND_BUSY;
+        }
       }
       break;
 
