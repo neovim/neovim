@@ -892,6 +892,31 @@ describe(":substitute, inccommand=split", function()
     ]])
   end)
 
+  it('previews correctly when previewhight is small', function()
+    feed_command('set cwh=3')
+    feed_command('set hls')
+    feed('ggdG')
+    insert(string.rep('abc abc abc\n', 20))
+    feed(':%s/abc/MMM/g')
+    screen:expect([[
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      {11:[No Name] [+]                 }|
+      | 1| {12:MMM} {12:MMM} {12:MMM}              |
+      | 2| {12:MMM} {12:MMM} {12:MMM}              |
+      | 3| {12:MMM} {12:MMM} {12:MMM}              |
+      {10:[Preview]                     }|
+      :%s/abc/MMM/g^                 |
+    ]])
+  end)
+
   it('actually replaces text', function()
     feed(":%s/tw/XX/g<Enter>")
 

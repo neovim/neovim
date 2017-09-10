@@ -329,21 +329,71 @@ describe('api', function()
       }
       eq({ { {mode='n', blocking=false},
              13,
-             {mode='n', blocking=false},  -- TODO: should be blocked=true
+             {mode='n', blocking=false},  -- TODO: should be blocked=true ?
              1 },
            NIL}, meths.call_atomic(req))
       eq({mode='r', blocking=true}, nvim("get_mode"))
     end)
-    -- TODO: bug #6166
     it("during insert-mode map-pending, returns blocking=true #6166", function()
       command("inoremap xx foo")
       nvim("input", "ix")
       eq({mode='i', blocking=true}, nvim("get_mode"))
     end)
-    -- TODO: bug #6166
     it("during normal-mode gU, returns blocking=false #6166", function()
       nvim("input", "gu")
       eq({mode='no', blocking=false}, nvim("get_mode"))
+    end)
+  end)
+
+  describe('RPC (K_EVENT) #6166', function()
+    it('does not complete ("interrupt") normal-mode operator-pending', function()
+      helpers.insert([[
+        FIRST LINE
+        SECOND LINE]])
+      nvim('input', 'gg')
+      nvim('input', 'gu')
+      -- Make any RPC request (can be non-async: op-pending does not block).
+      nvim('get_current_buf')
+      -- Buffer should not change.
+      helpers.expect([[
+        FIRST LINE
+        SECOND LINE]])
+      -- Now send input to complete the operator.
+      nvim('input', 'j')
+      helpers.expect([[
+        first line
+        second line]])
+    end)
+    it('does not complete ("interrupt") normal-mode map-pending', function()
+      command("nnoremap dd :let g:foo='it worked...'<CR>")
+      helpers.insert([[
+        FIRST LINE
+        SECOND LINE]])
+      nvim('input', 'gg')
+      nvim('input', 'd')
+      -- Make any RPC request (must be async, because map-pending blocks).
+      nvim('get_api_info')
+      -- Send input to complete the mapping.
+      nvim('input', 'd')
+      helpers.expect([[
+        FIRST LINE
+        SECOND LINE]])
+      eq('it worked...', helpers.eval('g:foo'))
+    end)
+    it('does not complete ("interrupt") insert-mode map-pending', function()
+      command('inoremap xx foo')
+      command('set timeoutlen=9999')
+      helpers.insert([[
+        FIRST LINE
+        SECOND LINE]])
+      nvim('input', 'ix')
+      -- Make any RPC request (must be async, because map-pending blocks).
+      nvim('get_api_info')
+      -- Send input to complete the mapping.
+      nvim('input', 'x')
+      helpers.expect([[
+        FIRST LINE
+        SECOND LINfooE]])
     end)
   end)
 

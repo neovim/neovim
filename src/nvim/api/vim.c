@@ -255,12 +255,11 @@ free_vim_args:
   return rv;
 }
 
-/// Execute lua code. Parameters might be passed, they are available inside
-/// the chunk as `...`. The chunk can return a value.
+/// Execute lua code. Parameters (if any) are available as `...` inside the
+/// chunk. The chunk can return a value.
 ///
-/// To evaluate an expression, it must be prefixed with "return ". For
-/// instance, to call a lua function with arguments sent in and get its
-/// return value back, use the code "return my_function(...)".
+/// Only statements are executed. To evaluate an expression, prefix it
+/// with `return`: return my_function(...)
 ///
 /// @param code       lua code to execute
 /// @param args       Arguments to the code
@@ -423,29 +422,18 @@ void nvim_del_var(String name, Error *err)
   dict_set_var(&globvardict, name, NIL, true, false, err);
 }
 
-/// Sets a global variable
-///
 /// @deprecated
-///
-/// @param name     Variable name
-/// @param value    Variable value
-/// @param[out] err Error details, if any
+/// @see nvim_set_var
 /// @return Old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
+/// @warning May return nil if there was no previous value
+///          OR if previous value was `v:null`.
 Object vim_set_var(String name, Object value, Error *err)
 {
   return dict_set_var(&globvardict, name, value, false, true, err);
 }
 
-/// Removes a global variable
-///
 /// @deprecated
-///
-/// @param name     Variable name
-/// @param[out] err Error details, if any
-/// @return Old value
+/// @see nvim_del_var
 Object vim_del_var(String name, Error *err)
 {
   return dict_set_var(&globvardict, name, NIL, true, true, err);

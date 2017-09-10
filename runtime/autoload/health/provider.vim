@@ -239,7 +239,7 @@ function! s:check_python(version) abort
 
   let pyname = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
-  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : 'n'
+  let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = pyname.'_host_prog'
   let loaded_var = 'g:loaded_'.pyname.'_provider'
@@ -249,6 +249,19 @@ function! s:check_python(version) abort
   if exists(loaded_var) && !exists('*provider#'.pyname.'#Call')
     call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
     return
+  endif
+
+  if !empty(pyenv)
+    if empty(pyenv_root)
+      call health#report_warn(
+            \ 'pyenv was found, but $PYENV_ROOT is not set.',
+            \ ['Did you follow the final install instructions?',
+            \  'If you use a shell "framework" like Prezto or Oh My Zsh, try without.',
+            \  'Try a different shell (bash).']
+            \ )
+    else
+      call health#report_ok(printf('pyenv found: "%s"', pyenv))
+    endif
   endif
 
   if exists('g:'.host_prog_var)
@@ -282,15 +295,6 @@ function! s:check_python(version) abort
     endif
 
     if !empty(pyenv)
-      if empty(pyenv_root)
-        call health#report_warn(
-              \ 'pyenv was found, but $PYENV_ROOT is not set.',
-              \ ['Did you follow the final install instructions?']
-              \ )
-      else
-        call health#report_ok(printf('pyenv found: "%s"', pyenv))
-      endif
-
       let python_bin = s:trim(s:system([pyenv, 'which', pyname], '', 1))
 
       if empty(python_bin)
@@ -320,9 +324,8 @@ function! s:check_python(version) abort
 
         if python_bin =~# '\<shims\>'
           call health#report_warn(printf('`%s` appears to be a pyenv shim.', python_bin), [
-                      \ 'The `pyenv` executable is not in $PATH,',
-                      \ 'Your pyenv installation is broken. You should set '
-                      \ . '`g:'.host_prog_var.'` to avoid surprises.',
+                      \ '`pyenv` is not in $PATH, your pyenv installation is broken. '
+                      \ .'Set `g:'.host_prog_var.'` to avoid surprises.',
                       \ ])
         endif
       endif
@@ -335,7 +338,7 @@ function! s:check_python(version) abort
       call health#report_warn('pyenv is not set up optimally.', [
             \ printf('Create a virtualenv specifically '
             \ . 'for Neovim using pyenv, and set `g:%s`.  This will avoid '
-            \ . 'the need to install Neovim''s Python module in each '
+            \ . 'the need to install the Neovim Python module in each '
             \ . 'version/virtualenv.', host_prog_var)
             \ ])
     elseif !empty(venv) && exists('g:'.host_prog_var)

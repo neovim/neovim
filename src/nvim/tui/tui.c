@@ -1448,7 +1448,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // teminfo entries.  See
     // https://github.com/gnachman/iTerm2/pull/92 for more.
     // xterm even has an extended version that has a vertical bar.
-    if (true_xterm    // per xterm ctlseqs doco (since version 282)
+    if (!konsole && (true_xterm    // per xterm ctlseqs doco (since version 282)
         // per MinTTY 0.4.3-1 release notes from 2009
         || putty
         // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
@@ -1463,7 +1463,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         // Allows forcing the use of DECSCUSR on linux type terminals, such as
         // console-terminal-emulator from the nosh toolset, which does indeed
         // implement the xterm extension:
-        || (linuxvt && (xterm_version || (vte_version > 0) || colorterm))) {
+        || (linuxvt && (xterm_version || (vte_version > 0) || colorterm)))) {
       data->unibi_ext.set_cursor_style =
         (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");
       if (-1 == data->unibi_ext.reset_cursor_style) {
