@@ -764,7 +764,7 @@ describe(":substitute, inccommand=split", function()
     feed("x")
     screen:expect([[
       Inc substitution on           |
-      xo lines                      |
+      {12:x}o lines                      |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -805,7 +805,7 @@ describe(":substitute, inccommand=split", function()
     feed(":%s/tw/XX")
     screen:expect([[
       Inc substitution on           |
-      XXo lines                     |
+      {12:XX}o lines                     |
                                     |
       {15:~                             }|
       {15:~                             }|
@@ -894,7 +894,7 @@ describe(":substitute, inccommand=split", function()
     feed('M     M       M<esc>')
     feed(':%s/M/123/g')
     screen:expect([[
-      123     123       123         |
+      {12:123}     {12:123}       {12:123}         |
       Inc substitution on           |
       two lines                     |
       Inc substitution on           |
@@ -919,15 +919,15 @@ describe(":substitute, inccommand=split", function()
     insert(string.rep('abc abc abc\n', 20))
     feed(':%s/abc/MMM/g')
     screen:expect([[
-      MMM MMM MMM                   |
-      MMM MMM MMM                   |
-      MMM MMM MMM                   |
-      MMM MMM MMM                   |
-      MMM MMM MMM                   |
-      MMM MMM MMM                   |
-      MMM MMM MMM                   |
-      MMM MMM MMM                   |
-      MMM MMM MMM                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
+      {12:MMM} {12:MMM} {12:MMM}                   |
       {11:[No Name] [+]                 }|
       | 1| {12:MMM} {12:MMM} {12:MMM}              |
       | 2| {12:MMM} {12:MMM} {12:MMM}              |
@@ -969,9 +969,9 @@ describe(":substitute, inccommand=split", function()
     screen:expect([[
       BBo lines                     |
       Inc substitution on           |
-      Xo lines                      |
+      {12:X}o lines                      |
       Inc substitution on           |
-      Xo lines                      |
+      {12:X}o lines                      |
       {11:[No Name] [+]                 }|
       |1001| {12:X}o lines               |
       |1003| {12:X}o lines               |
@@ -1069,8 +1069,8 @@ describe(":substitute, inccommand=split", function()
     feed(":1,2s/t/X")
 
     screen:expect([[
-      Inc subsXitution on           |
-      Xwo lines                     |
+      Inc subs{12:X}itution on           |
+      {12:X}wo lines                     |
       Inc substitution on           |
       two lines                     |
                                     |
@@ -1134,7 +1134,7 @@ describe("inccommand=nosplit", function()
       two lines           |
       Inc substitution on |
       two lines           |
-      Line *.X            |
+      Line *.{12:X}            |
       {15:~                   }|
       {15:~                   }|
       {15:~                   }|
@@ -1150,7 +1150,7 @@ describe("inccommand=nosplit", function()
       two lines           |
       Inc substitution on |
       two lines           |
-      Line *.X here       |
+      Line *.{12:X} here       |
       {15:~                   }|
       {15:~                   }|
       {15:~                   }|
@@ -1198,9 +1198,9 @@ describe("inccommand=nosplit", function()
     feed("/BM")
     screen:expect([[
       Inc substitution on |
-      BMo lines           |
+      {12:BM}o lines           |
       Inc substitution on |
-      BMo lines           |
+      {12:BM}o lines           |
                           |
       {15:~                   }|
       {15:~                   }|
@@ -1212,9 +1212,9 @@ describe("inccommand=nosplit", function()
     feed("/")
     screen:expect([[
       Inc substitution on |
-      BMo lines           |
+      {12:BM}o lines           |
       Inc substitution on |
-      BMo lines           |
+      {12:BM}o lines           |
                           |
       {15:~                   }|
       {15:~                   }|
@@ -1245,8 +1245,8 @@ describe("inccommand=nosplit", function()
     feed(":1,2s/t/X")
 
     screen:expect([[
-      Inc subsXitution on |
-      Xwo lines           |
+      Inc subs{12:X}itution on |
+      {12:X}wo lines           |
       Inc substitution on |
       two lines           |
                           |
