@@ -212,11 +212,48 @@ func Test_diffoff()
   call setline(1, ['One', '', 'Two', 'Three'])
   diffthis
   redraw
+  call assert_notequal(normattr, screenattr(1, 1))
   diffoff!
   redraw
   call assert_equal(normattr, screenattr(1, 1))
   bwipe!
   bwipe!
+endfunc
+
+func Test_diffoff_hidden()
+  set diffopt=filler,foldcolumn:0
+  e! one
+  call setline(1, ['Two', 'Three'])
+  let normattr = screenattr(1, 1)
+  diffthis
+  botright vert new two
+  call setline(1, ['One', 'Four'])
+  diffthis
+  redraw
+  call assert_notequal(normattr, screenattr(1, 1))
+  set hidden
+  close
+  redraw
+  " diffing with hidden buffer two
+  call assert_notequal(normattr, screenattr(1, 1))
+  diffoff
+  redraw
+  call assert_equal(normattr, screenattr(1, 1))
+  diffthis
+  redraw
+  " still diffing with hidden buffer two
+  call assert_notequal(normattr, screenattr(1, 1))
+  diffoff!
+  redraw
+  call assert_equal(normattr, screenattr(1, 1))
+  diffthis
+  redraw
+  " no longer diffing with hidden buffer two
+  call assert_equal(normattr, screenattr(1, 1))
+
+  bwipe!
+  bwipe!
+  set hidden& diffopt&
 endfunc
 
 func Test_setting_cursor()
