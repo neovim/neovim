@@ -135,6 +135,20 @@ void diff_buf_add(buf_T *buf)
   EMSGN(_("E96: Cannot diff more than %" PRId64 " buffers"), DB_COUNT);
 }
 
+///
+/// Remove all buffers to make diffs for.
+///
+static void diff_buf_clear(void)
+{
+  for (int i = 0; i < DB_COUNT; i++) {
+    if (curtab->tp_diffbuf[i] != NULL) {
+      curtab->tp_diffbuf[i] = NULL;
+      curtab->tp_diff_invalid = true;
+      diff_redraw(true);
+    }
+  }
+}
+
 /// Find buffer "buf" in the list of diff buffers for the current tab page.
 ///
 /// @param buf The buffer to find.
@@ -1173,6 +1187,11 @@ void ex_diffoff(exarg_T *eap)
       diff_buf_adjust(wp);
     }
     diffwin |= wp->w_p_diff;
+  }
+
+  // Also remove hidden buffers from the list.
+  if (eap->forceit) {
+    diff_buf_clear();
   }
 
   // Remove "hor" from from 'scrollopt' if there are no diff windows left.
