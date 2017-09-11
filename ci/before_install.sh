@@ -32,10 +32,8 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
   echo "Upgrade Python 3 pip."
   pip3 -q install --user --upgrade pip
 else
-  if command -v pip3 ; then
-    echo "Upgrade Python 3 pip."
-    pip3 -q install --user --upgrade pip
-  else
-    echo 'warning: missing pip3'
-  fi
+  echo "Upgrade Python 3 pip."
+  # Allow failure. pyenv pip3 on travis is broken:
+  # https://github.com/travis-ci/travis-ci/issues/8363
+  pip3 -q install --user --upgrade pip || true
 fi

@@ -89,7 +89,7 @@ describe('assert function:', function()
 
     it('should change v:errors when expected is equal to actual', function()
       call('assert_notequal', 'foo', 'foo')
-      expected_errors({"Expected 'foo' differs from 'foo'"})
+      expected_errors({"Expected not equal to 'foo'"})
     end)
   end)
 
