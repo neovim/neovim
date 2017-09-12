@@ -3665,9 +3665,38 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
          * use "\=col("."). */
         curwin->w_cursor.col = regmatch.startpos[0].col;
 
+        // When the match included the "$" of the last line it may
+        // go beyond the last line of the buffer.
+        if (nmatch > curbuf->b_ml.ml_line_count - sub_firstlnum + 1) {
+          nmatch = curbuf->b_ml.ml_line_count - sub_firstlnum + 1;
+          skip_match = true;
+        }
+
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
-        if (!preview || has_second_delim) {
+        if (preview && !has_second_delim) {
+          // For a multi-line match, make a copy of the last matched
+          // line and continue in that one.
+          if (nmatch > 1) {
+            sub_firstlnum += nmatch - 1;
+            xfree(sub_firstline);
+            sub_firstline = vim_strsave(ml_get(sub_firstlnum));
+            // When going beyond the last line, stop substituting.
+            if (sub_firstlnum <= line2) {
+              do_again = true;
+            } else {
+              subflags.do_all = false;
+            }
+          }
+
+          if (skip_match) {
+            // Already hit end of the buffer, sub_firstlnum is one
+            // less than what it ought to be.
+            xfree(sub_firstline);
+            sub_firstline = vim_strsave((char_u *)"");
+            copycol = 0;
+          }
+        } else if (!preview || has_second_delim) {
           if (subflags.do_count) {
             // prevent accidentally changing the buffer by a function
             save_ma = curbuf->b_p_ma;
@@ -3689,13 +3718,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
               sandbox--;
             }
             goto skip;
-          }
-
-          // When the match included the "$" of the last line it may
-          // go beyond the last line of the buffer.
-          if (nmatch > curbuf->b_ml.ml_line_count - sub_firstlnum + 1) {
-            nmatch = curbuf->b_ml.ml_line_count - sub_firstlnum + 1;
-            skip_match = true;
           }
 
           // Need room for:

@@ -14,6 +14,7 @@ local neq = helpers.neq
 local ok = helpers.ok
 local source = helpers.source
 local wait = helpers.wait
+local nvim = helpers.nvim
 
 local default_text = [[
   Inc substitution on
@@ -1646,4 +1647,32 @@ describe("'inccommand' split windows", function()
     end
   end)
 
+end)
+
+describe("Inccommand issue", function()
+  before_each(function()
+    clear()
+  end)
+
+  it("#7244: does not lock up with gdefault", function()
+    common_setup(nil, "nosplit", "{")
+    command("set gdefault")
+    feed(":s/{\\n")
+    eq({mode='c', blocking=false}, nvim("get_mode"))
+    feed("/A<Enter>")
+    expect("A")
+    -- In case the above succeeds due to some indeterminism when it shouldn't
+    eq({mode='n', blocking=false}, nvim("get_mode"))
+  end)
+
+  it("#7249: does not lock up with gdefault", function()
+    common_setup(nil, "nosplit", "{\n\n{")
+    command("set gdefault")
+    feed(":%s/{\\n")
+    eq({mode='c', blocking=false}, nvim("get_mode"))
+    feed("/A<Enter>")
+    expect("A\nA")
+    -- In case the above succeeds due to some indeterminism when it shouldn't
+    eq({mode='n', blocking=false}, nvim("get_mode"))
+  end)
 end)
