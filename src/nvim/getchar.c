@@ -92,17 +92,15 @@ static int typeahead_char = 0;          /* typeahead char that's not flushed */
  */
 static int block_redo = FALSE;
 
-/*
- * Make a hash value for a mapping.
- * "mode" is the lower 4 bits of the State for the mapping.
- * "c1" is the first character of the "lhs".
- * Returns a value between 0 and 255, index in maphash.
- * Put Normal/Visual mode mappings mostly separately from Insert/Cmdline mode.
- */
+// Make a hash value for a mapping.
+// "mode" is the lower 4 bits of the State for the mapping.
+// "c1" is the first character of the "lhs".
+// Returns a value between 0 and 255, index in maphash.
+// Put Normal/Visual mode mappings mostly separately from Insert/Cmdline mode.
 #define MAP_HASH(mode, \
                  c1) (((mode) & \
                        (NORMAL + VISUAL + SELECTMODE + \
-                        OP_PENDING)) ? (c1) : ((c1) ^ 0x80))
+                        OP_PENDING + TERM_FOCUS)) ? (c1) : ((c1) ^ 0x80))
 
 // Each mapping is put in one of the MAX_MAPHASH hash lists,
 // to speed up finding it.
