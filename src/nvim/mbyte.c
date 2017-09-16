@@ -1514,7 +1514,7 @@ int utf_head_off(const char_u *base, const char_u *p)
       --q;
     /* Check for illegal sequence. Do allow an illegal byte after where we
      * started. */
-    len = utf8len_tab[*q];
+    len = mb_ptr2len(q);
     if (len != (int)(s - q + 1) && len != (int)(p - q + 1))
       return 0;
 
@@ -1577,7 +1577,7 @@ int mb_off_next(char_u *base, char_u *p)
         break;
       }
     }
-    if (utf8len_tab[p[-j]] != i + j) {
+    if (mb_ptr2len(p-j) != i + j) {
       return 0;
     }
   }
@@ -1606,7 +1606,7 @@ int mb_tail_off(char_u *base, char_u *p)
     }
   }
 
-  if (utf8len_tab[p[-j]] != i + j + 1) {
+  if (mb_ptr2len(p-j) != i + j + 1) {
     return 0;
   }
   return i;
