@@ -9,9 +9,9 @@ matrix:
 install: []
 build_script:
 - call ci\build.bat
-cache:
-- C:\msys64\var\cache\pacman\pkg -> ci\build.bat
-- .deps -> third-party\**
+# cache:
+# - C:\msys64\var\cache\pacman\pkg -> ci\build.bat
+# - .deps -> third-party\**
 artifacts:
 - path: build/Neovim.zip
 - path: build/bin/nvim.exe
