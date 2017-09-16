@@ -364,6 +364,24 @@ describe('api', function()
         first line
         second line]])
     end)
+
+    it('does not complete ("interrupt") `d` #3732', function()
+      local screen = Screen.new(20, 4)
+      screen:attach()
+      command('set listchars=eol:$')
+      command('set list')
+      feed('ia<cr>b<cr>c<cr><Esc>kkk')
+      feed('d')
+      -- Make any RPC request (can be non-async: op-pending does not block).
+      nvim('get_current_buf')
+      screen:expect([[
+       ^a$                  |
+       b$                  |
+       c$                  |
+                           |
+      ]])
+    end)
+
     it('does not complete ("interrupt") normal-mode map-pending', function()
       command("nnoremap dd :let g:foo='it worked...'<CR>")
       helpers.insert([[
