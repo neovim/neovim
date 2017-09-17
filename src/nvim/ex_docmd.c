@@ -1668,8 +1668,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (*ea.cmd == ';') {
       if (!ea.skip) {
         curwin->w_cursor.lnum = ea.line2;
-        // Don't leave the cursor on an illegal line (caused by ';')
-        check_cursor_lnum();
+        // don't leave the cursor on an illegal line or column
+        check_cursor();
       }
     } else if (*ea.cmd != ',') {
       break;
