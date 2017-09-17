@@ -52,6 +52,15 @@
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
 
+#ifdef NVIM_UNIBI_HAS_VAR_FROM
+#define UNIBI_SET_NUM_VAR(var, num) \
+  do { \
+    (var) = unibi_var_from_num((num)); \
+  } while (0)
+#else
+#define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
+#endif
+
 // Per the commentary in terminfo, only a minus sign is a true suffix
 // separator.
 bool terminfo_is_term_family(const char *term, const char *family)
@@ -391,15 +400,15 @@ static void update_attrs(UI *ui, HlAttrs attrs)
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
     if (attrs.bold || attrs.reverse || attrs.underline || attrs.undercurl) {
-      data->params[0].i = 0;   // standout
-      data->params[1].i = attrs.underline || attrs.undercurl;
-      data->params[2].i = attrs.reverse;
-      data->params[3].i = 0;   // blink
-      data->params[4].i = 0;   // dim
-      data->params[5].i = attrs.bold;
-      data->params[6].i = 0;   // blank
-      data->params[7].i = 0;   // protect
-      data->params[8].i = 0;   // alternate character set
+      UNIBI_SET_NUM_VAR(data->params[0], 0);   // standout
+      UNIBI_SET_NUM_VAR(data->params[1], attrs.underline || attrs.undercurl);
+      UNIBI_SET_NUM_VAR(data->params[2], attrs.reverse);
+      UNIBI_SET_NUM_VAR(data->params[3], 0);   // blink
+      UNIBI_SET_NUM_VAR(data->params[4], 0);   // dim
+      UNIBI_SET_NUM_VAR(data->params[5], attrs.bold);
+      UNIBI_SET_NUM_VAR(data->params[6], 0);   // blank
+      UNIBI_SET_NUM_VAR(data->params[7], 0);   // protect
+      UNIBI_SET_NUM_VAR(data->params[8], 0);   // alternate character set
       unibi_out(ui, unibi_set_attributes);
     } else if (!data->default_attr) {
       unibi_out(ui, unibi_exit_attribute_mode);
@@ -423,26 +432,26 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
   if (ui->rgb) {
     if (fg != -1) {
-      data->params[0].i = (fg >> 16) & 0xff;  // red
-      data->params[1].i = (fg >> 8) & 0xff;   // green
-      data->params[2].i = fg & 0xff;          // blue
+      UNIBI_SET_NUM_VAR(data->params[0], (fg >> 16) & 0xff);  // red
+      UNIBI_SET_NUM_VAR(data->params[1], (fg >> 8) & 0xff);   // green
+      UNIBI_SET_NUM_VAR(data->params[2], fg & 0xff);          // blue
       unibi_out_ext(ui, data->unibi_ext.set_rgb_foreground);
     }
 
     if (bg != -1) {
-      data->params[0].i = (bg >> 16) & 0xff;  // red
-      data->params[1].i = (bg >> 8) & 0xff;   // green
-      data->params[2].i = bg & 0xff;          // blue
+      UNIBI_SET_NUM_VAR(data->params[0], (bg >> 16) & 0xff);  // red
+      UNIBI_SET_NUM_VAR(data->params[1], (bg >> 8) & 0xff);   // green
+      UNIBI_SET_NUM_VAR(data->params[2], bg & 0xff);          // blue
       unibi_out_ext(ui, data->unibi_ext.set_rgb_background);
     }
   } else {
     if (fg != -1) {
-      data->params[0].i = fg;
+      UNIBI_SET_NUM_VAR(data->params[0], fg);
       unibi_out(ui, unibi_set_a_foreground);
     }
 
     if (bg != -1) {
-      data->params[0].i = bg;
+      UNIBI_SET_NUM_VAR(data->params[0], bg);
       unibi_out(ui, unibi_set_a_background);
     }
   }
@@ -558,7 +567,7 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_left);
         }
       } else {
-        data->params[0].i = n;
+        UNIBI_SET_NUM_VAR(data->params[0], n);
         unibi_out(ui, unibi_parm_left_cursor);
       }
       ugrid_goto(grid, row, col);
@@ -570,7 +579,7 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_right);
         }
       } else {
-        data->params[0].i = n;
+        UNIBI_SET_NUM_VAR(data->params[0], n);
         unibi_out(ui, unibi_parm_right_cursor);
       }
       ugrid_goto(grid, row, col);
@@ -585,7 +594,7 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_down);
         }
       } else {
-        data->params[0].i = n;
+        UNIBI_SET_NUM_VAR(data->params[0], n);
         unibi_out(ui, unibi_parm_down_cursor);
       }
       ugrid_goto(grid, row, col);
@@ -597,7 +606,7 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_up);
         }
       } else {
-        data->params[0].i = n;
+        UNIBI_SET_NUM_VAR(data->params[0], n);
         unibi_out(ui, unibi_parm_up_cursor);
       }
       ugrid_goto(grid, row, col);
@@ -675,19 +684,19 @@ static void set_scroll_region(UI *ui)
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
 
-  data->params[0].i = grid->top;
-  data->params[1].i = grid->bot;
+  UNIBI_SET_NUM_VAR(data->params[0], grid->top);
+  UNIBI_SET_NUM_VAR(data->params[1], grid->bot);
   unibi_out(ui, unibi_change_scroll_region);
   if (grid->left != 0 || grid->right != ui->width - 1) {
     unibi_out_ext(ui, data->unibi_ext.enable_lr_margin);
     if (data->can_set_lr_margin) {
-      data->params[0].i = grid->left;
-      data->params[1].i = grid->right;
+      UNIBI_SET_NUM_VAR(data->params[0], grid->left);
+      UNIBI_SET_NUM_VAR(data->params[1], grid->right);
       unibi_out(ui, unibi_set_lr_margin);
     } else {
-      data->params[0].i = grid->left;
+      UNIBI_SET_NUM_VAR(data->params[0], grid->left);
       unibi_out(ui, unibi_set_left_margin_parm);
-      data->params[0].i = grid->right;
+      UNIBI_SET_NUM_VAR(data->params[0], grid->right);
       unibi_out(ui, unibi_set_right_margin_parm);
     }
   }
@@ -702,19 +711,19 @@ static void reset_scroll_region(UI *ui)
   if (0 <= data->unibi_ext.reset_scroll_region) {
     unibi_out_ext(ui, data->unibi_ext.reset_scroll_region);
   } else {
-    data->params[0].i = 0;
-    data->params[1].i = ui->height - 1;
+    UNIBI_SET_NUM_VAR(data->params[0], 0);
+    UNIBI_SET_NUM_VAR(data->params[1], ui->height - 1);
     unibi_out(ui, unibi_change_scroll_region);
   }
   if (grid->left != 0 || grid->right != ui->width - 1) {
     if (data->can_set_lr_margin) {
-      data->params[0].i = 0;
-      data->params[1].i = ui->width - 1;
+      UNIBI_SET_NUM_VAR(data->params[0], 0);
+      UNIBI_SET_NUM_VAR(data->params[1], ui->width - 1);
       unibi_out(ui, unibi_set_lr_margin);
     } else {
-      data->params[0].i = 0;
+      UNIBI_SET_NUM_VAR(data->params[0], 0);
       unibi_out(ui, unibi_set_left_margin_parm);
-      data->params[0].i = ui->width - 1;
+      UNIBI_SET_NUM_VAR(data->params[0], ui->width - 1);
       unibi_out(ui, unibi_set_right_margin_parm);
     }
     unibi_out_ext(ui, data->unibi_ext.disable_lr_margin);
@@ -728,8 +737,8 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   ugrid_resize(&data->grid, (int)width, (int)height);
 
   if (!got_winch) {  // Try to resize the terminal window.
-    data->params[0].i = (int)height;
-    data->params[1].i = (int)width;
+    UNIBI_SET_NUM_VAR(data->params[0], (int)height);
+    UNIBI_SET_NUM_VAR(data->params[1], (int)width);
     unibi_out_ext(ui, data->unibi_ext.resize_screen);
     // DECSLPP does not reset the scroll region.
     if (data->scroll_region_is_full_screen) {
@@ -863,7 +872,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     int attr = syn_id2attr(c.id);
     if (attr > 0) {
       attrentry_T *aep = syn_cterm_attr2entry(attr);
-      data->params[0].i = aep->rgb_bg_color;
+      UNIBI_SET_NUM_VAR(data->params[0], aep->rgb_bg_color);
       unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
     }
   }
@@ -874,7 +883,7 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     case SHAPE_VER:   shape = 5; break;
     default: WLOG("Unknown shape value %d", shape); break;
   }
-  data->params[0].i = shape + (int)(c.blinkon == 0);
+  UNIBI_SET_NUM_VAR(data->params[0], shape + (int)(c.blinkon == 0));
   unibi_out_ext(ui, data->unibi_ext.set_cursor_style);
 }
 
@@ -927,14 +936,14 @@ static void tui_scroll(UI *ui, Integer count)
       if (count == 1) {
         unibi_out(ui, unibi_delete_line);
       } else {
-        data->params[0].i = (int)count;
+        UNIBI_SET_NUM_VAR(data->params[0], (int)count);
         unibi_out(ui, unibi_parm_delete_line);
       }
     } else {
       if (count == -1) {
         unibi_out(ui, unibi_insert_line);
       } else {
-        data->params[0].i = -(int)count;
+        UNIBI_SET_NUM_VAR(data->params[0], -(int)count);
         unibi_out(ui, unibi_parm_insert_line);
       }
     }
@@ -1177,8 +1186,8 @@ end:
 static void unibi_goto(UI *ui, int row, int col)
 {
   TUIData *data = ui->data;
-  data->params[0].i = row;
-  data->params[1].i = col;
+  UNIBI_SET_NUM_VAR(data->params[0], row);
+  UNIBI_SET_NUM_VAR(data->params[1], col);
   unibi_out(ui, unibi_cursor_address);
 }
 
@@ -1190,7 +1199,8 @@ static void unibi_goto(UI *ui, int row, int col)
       str = fn(data->ut, (unsigned)unibi_index); \
     } \
     if (str) { \
-      unibi_var_t vars[26 + 26] = { { 0 } }; \
+      unibi_var_t vars[26 + 26]; \
+      memset(&vars, 0, sizeof(vars)); \
       unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL); \
     } \
   } while (0)
