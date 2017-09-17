@@ -250,9 +250,21 @@ func Test_remove_char_in_cmdline()
     call assert_equal('"def', @:)
 endfunc
 
-func Test_illegal_address()
+func Test_illegal_address1()
   new
   2;'(
   2;')
   quit
 endfunc
+
+func Test_illegal_address2()
+  call writefile(['c', 'x', '  x', '.', '1;y'], 'Xtest.vim')
+  new
+  source Xtest.vim
+  " Trigger calling validate_cursor()
+  diffsp Xtest.vim
+  quit!
+  bwipe!
+  call delete('Xtest.vim')
+endfunc
+
