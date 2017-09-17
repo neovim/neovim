@@ -2,6 +2,7 @@
 #define NVIM_VIML_PARSER_EXPRESSIONS_H
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 #include "nvim/types.h"
@@ -130,6 +131,17 @@ typedef enum {
   kExprNodePlainIdentifier = 'i',
   /// Complex identifier: variable/function name with curly braces
   kExprNodeComplexIdentifier = 'I',
+  /// Figure brace expression which is not yet known
+  ///
+  /// May resolve to any of kExprNodeDictLiteral, kExprNodeLambda or
+  /// kExprNodeCurlyBracesIdentifier.
+  kExprNodeUnknownFigure = '{',
+  kExprNodeLambda = '\\',  ///< Lambda.
+  kExprNodeDictLiteral = 'd',  ///< Dictionary literal.
+  kExprNodeCurlyBracesIdentifier= '}',  ///< Part of the curly braces name.
+  kExprNodeComma = ',',  ///< Comma “operator”.
+  kExprNodeColon = ':',  ///< Colon “operator”.
+  kExprNodeArrow = '>',  ///< Arrow “operator”.
 } ExprASTNodeType;
 
 typedef struct expr_ast_node ExprASTNode;
@@ -149,6 +161,27 @@ struct expr_ast_node {
     struct {
       int name;  ///< Register name, may be -1 if name not present.
     } reg;  ///< For kExprNodeRegister.
+    struct {
+      /// Which nodes UnknownFigure can’t possibly represent.
+      struct {
+        /// True if UnknownFigure may actually represent dictionary literal.
+        bool allow_dict;
+        /// True if UnknownFigure may actually represent lambda.
+        bool allow_lambda;
+        /// True if UnknownFigure may actually be part of curly braces name.
+        bool allow_ident;
+      } type_guesses;
+      /// Highlight chunk index, used for rehighlighting if needed
+      size_t opening_hl_idx;
+    } fig;  ///< For kExprNodeUnknownFigure.
+    struct {
+      int scope;  ///< Scope character or 0 if not present.
+      /// Actual identifier without scope.
+      ///
+      /// Points to inside parser reader state.
+      const char *ident;
+      size_t ident_len;  ///< Actual identifier length.
+    } var;
   } data;
 };
 
@@ -166,6 +199,8 @@ enum {
   ///
   /// Without the flag they are only taken into account when parsing.
   kExprFlagsPrintError = (1 << 2),
+  // WARNING: whenever you add a new flag, alter klee_assume() statement in
+  // viml_expressions_parser.c.
 } ExprParserFlags;
 
 /// Structure representing complety AST for one expression

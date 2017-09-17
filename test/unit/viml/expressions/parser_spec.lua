@@ -31,6 +31,13 @@ make_enum_conv_tab(lib, {
   'kExprNodeCall',
   'kExprNodePlainIdentifier',
   'kExprNodeComplexIdentifier',
+  'kExprNodeUnknownFigure',
+  'kExprNodeLambda',
+  'kExprNodeDictLiteral',
+  'kExprNodeCurlyBracesIdentifier',
+  'kExprNodeComma',
+  'kExprNodeColon',
+  'kExprNodeArrow',
 }, 'kExprNode', function(ret) east_node_type_tab = ret end)
 
 local function conv_east_node_type(typ)
@@ -59,6 +66,16 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
   if typ == 'Register' then
     typ = typ .. ('(name=%s)'):format(
       tostring(intchar2lua(eastnode.data.reg.name)))
+  elseif typ == 'PlainIdentifier' then
+    typ = typ .. ('(scope=%s,ident=%s)'):format(
+      tostring(intchar2lua(eastnode.data.var.scope)),
+      ffi.string(eastnode.data.var.ident, eastnode.data.var.ident_len))
+  elseif (typ == 'UnknownFigure' or typ == 'DictLiteral'
+          or typ == 'CurlyBracesIdentifier' or typ == 'Lambda') then
+    typ = typ .. ('(%s)'):format(
+      (eastnode.data.fig.type_guesses.allow_lambda and '\\' or '-')
+      .. (eastnode.data.fig.type_guesses.allow_dict and 'd' or '-')
+      .. (eastnode.data.fig.type_guesses.allow_ident and 'i' or '-'))
   end
   ret_str = typ .. ':' .. ret_str
   local can_simplify = true
@@ -90,8 +107,7 @@ local function east2lua(pstate, east)
   return {
     err = (not east.correct) and {
       msg = ffi.string(east.err.msg),
-      arg = ('%u:%s'):format(
-        tonumber(east.err.arg_len),
+      arg = ('%s'):format(
         ffi.string(east.err.arg, east.err.arg_len)),
     } or nil,
     ast = eastnodelist2lua(pstate, east.root, checked_nodes),
@@ -121,31 +137,31 @@ child_call_once(function()
 end)
 
 describe('Expressions parser', function()
-  itp('works', function()
-    local function check_parsing(str, flags, exp_ast, exp_highlighting_fs)
-      local pstate = new_pstate({str})
-      local east = lib.viml_pexpr_parse(pstate, flags)
-      local ast = east2lua(pstate, east)
-      eq(exp_ast, ast)
-      if exp_highlighting_fs then
-        local exp_highlighting = {}
-        local next_col = 0
-        for i, h in ipairs(exp_highlighting_fs) do
-          exp_highlighting[i], next_col = h(next_col)
-        end
-        eq(exp_highlighting, phl2lua(pstate))
+  local function check_parsing(str, flags, exp_ast, exp_highlighting_fs)
+    local pstate = new_pstate({str})
+    local east = lib.viml_pexpr_parse(pstate, flags)
+    local ast = east2lua(pstate, east)
+    eq(exp_ast, ast)
+    if exp_highlighting_fs then
+      local exp_highlighting = {}
+      local next_col = 0
+      for i, h in ipairs(exp_highlighting_fs) do
+        exp_highlighting[i], next_col = h(next_col)
       end
+      eq(exp_highlighting, phl2lua(pstate))
     end
-    local function hl(group, str, shift)
-      return function(next_col)
-        local col = next_col + (shift or 0)
-        return (('%s:%u:%u:%s'):format(
-          'NVim' .. group,
-          0,
-          col,
-          str)), (col + #str)
-      end
+  end
+  local function hl(group, str, shift)
+    return function(next_col)
+      local col = next_col + (shift or 0)
+      return (('%s:%u:%u:%s'):format(
+        'NVim' .. group,
+        0,
+        col,
+        str)), (col + #str)
     end
+  end
+  itp('works with + and @a', function()
     check_parsing('@a', 0, {
       ast = {
         'Register(name=a):0:0:@a',
@@ -263,7 +279,7 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '2:@b',
+        arg = '@b',
         msg = 'E15: Missing operator: %.*s',
       },
     }, {
@@ -281,7 +297,7 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '2:@b',
+        arg = '@b',
         msg = 'E15: Missing operator: %.*s',
       },
     }, {
@@ -294,8 +310,8 @@ describe('Expressions parser', function()
         'UnaryPlus:0:0:+',
       },
       err = {
-        arg = '0:',
-        msg = 'E15: Expected value: %.*s',
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
       hl('UnaryPlus', '+'),
@@ -305,8 +321,8 @@ describe('Expressions parser', function()
         'UnaryPlus:0:0: +',
       },
       err = {
-        arg = '0:',
-        msg = 'E15: Expected value: %.*s',
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
       hl('UnaryPlus', '+', 1),
@@ -321,13 +337,15 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '0:',
-        msg = 'E15: Expected value: %.*s',
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
       hl('Register', '@a'),
       hl('BinaryPlus', '+'),
     })
+  end)
+  itp('works with @a, + and parenthesis', function()
     check_parsing('(@a)', 0, {
       ast = {
         {
@@ -352,8 +370,8 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '1:)',
-        msg = 'E15: Expected value: %.*s',
+        arg = ')',
+        msg = 'E15: Expected value, got parenthesis: %.*s',
       },
     }, {
       hl('NestingParenthesis', '('),
@@ -369,8 +387,8 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '1:)',
-        msg = 'E15: Expected value: %.*s',
+        arg = ')',
+        msg = 'E15: Expected value, got parenthesis: %.*s',
       },
     }, {
       hl('InvalidNestingParenthesis', ')'),
@@ -390,8 +408,8 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '1:)',
-        msg = 'E15: Expected value: %.*s',
+        arg = ')',
+        msg = 'E15: Expected value, got parenthesis: %.*s',
       },
     }, {
       hl('UnaryPlus', '+'),
@@ -473,7 +491,7 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '2:()',
+        arg = '()',
         msg = 'E15: Missing operator: %.*s',
       },
     }, {
@@ -838,7 +856,7 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '1:)',
+        arg = ')',
         msg = 'E15: Unexpected closing parenthesis: %.*s',
       },
     }, {
@@ -856,7 +874,7 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '3:(@a',
+        arg = '(@a',
         msg = 'E110: Missing closing parenthesis for nested expression: %.*s',
       },
     }, {
@@ -875,7 +893,7 @@ describe('Expressions parser', function()
         },
       },
       err = {
-        arg = '3:(@b',
+        arg = '(@b',
         msg = 'E116: Missing closing parenthesis for function call: %.*s',
       },
     }, {
@@ -884,4 +902,920 @@ describe('Expressions parser', function()
       hl('Register', '@b'),
     })
   end)
+  itp('works with identifiers', function()
+    check_parsing('var', 0, {
+        ast = {
+          'PlainIdentifier(scope=0,ident=var):0:0:var',
+        },
+    }, {
+      hl('Identifier', 'var'),
+    })
+    check_parsing('g:var', 0, {
+        ast = {
+          'PlainIdentifier(scope=g,ident=var):0:0:g:var',
+        },
+    }, {
+      hl('IdentifierScope', 'g'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Identifier', 'var'),
+    })
+    check_parsing('g:', 0, {
+        ast = {
+          'PlainIdentifier(scope=g,ident=):0:0:g:',
+        },
+    }, {
+      hl('IdentifierScope', 'g'),
+      hl('IdentifierScopeDelimiter', ':'),
+    })
+  end)
+  itp('works with curly braces', function()
+    check_parsing('{}', 0, {
+      ast = {
+        'DictLiteral(-di):0:0:{',
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Dict', '}'),
+    })
+    check_parsing('{a}', 0, {
+      --           012
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:1:a',
+          },
+        },
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('Identifier', 'a'),
+      hl('Curly', '}'),
+    })
+    check_parsing('{a:b}', 0, {
+      --           012
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            'PlainIdentifier(scope=a,ident=b):0:1:a:b',
+          },
+        },
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('IdentifierScope', 'a'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Identifier', 'b'),
+      hl('Curly', '}'),
+    })
+    check_parsing('{a:@b}', 0, {
+      --           012345
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            {
+              'OpMissing:0:3:',
+              children={
+                'PlainIdentifier(scope=a,ident=):0:1:a:',
+                'Register(name=b):0:3:@b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '@b}',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('IdentifierScope', 'a'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('InvalidRegister', '@b'),
+      hl('Curly', '}'),
+    })
+    check_parsing('{@a}', 0, {
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            'Register(name=a):0:1:@a',
+          },
+        },
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+    })
+    check_parsing('{->@a}', 0, {
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Arrow:0:1:->',
+              children = {
+                'Register(name=a):0:3:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Arrow', '->'),
+      hl('Register', '@a'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{->@a+@b}', 0, {
+      --           012345678
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Arrow:0:1:->',
+              children = {
+                {
+                  'BinaryPlus:0:5:+',
+                  children = {
+                    'Register(name=a):0:3:@a',
+                    'Register(name=b):0:6:@b',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Arrow', '->'),
+      hl('Register', '@a'),
+      hl('BinaryPlus', '+'),
+      hl('Register', '@b'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{a->@a}', 0, {
+      --           012345678
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:1:a',
+            {
+              'Arrow:0:2:->',
+              children = {
+                'Register(name=a):0:4:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Arrow', '->'),
+      hl('Register', '@a'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{a,b->@a}', 0, {
+      --           012345678
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3:b',
+              },
+            },
+            {
+              'Arrow:0:4:->',
+              children = {
+                'Register(name=a):0:6:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('Arrow', '->'),
+      hl('Register', '@a'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{a,b,c->@a}', 0, {
+      --           01234567890
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                {
+                  'Comma:0:4:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:3:b',
+                    'PlainIdentifier(scope=0,ident=c):0:5:c',
+                  },
+                },
+              },
+            },
+            {
+              'Arrow:0:6:->',
+              children = {
+                'Register(name=a):0:8:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('Comma', ','),
+      hl('Identifier', 'c'),
+      hl('Arrow', '->'),
+      hl('Register', '@a'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{a,b,c,d->@a}', 0, {
+      --           0123456789012
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                {
+                  'Comma:0:4:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:3:b',
+                    {
+                      'Comma:0:6:,',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=c):0:5:c',
+                        'PlainIdentifier(scope=0,ident=d):0:7:d',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              'Arrow:0:8:->',
+              children = {
+                'Register(name=a):0:10:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('Comma', ','),
+      hl('Identifier', 'c'),
+      hl('Comma', ','),
+      hl('Identifier', 'd'),
+      hl('Arrow', '->'),
+      hl('Register', '@a'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{a,b,c,d,->@a}', 0, {
+      --           01234567890123
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                {
+                  'Comma:0:4:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:3:b',
+                    {
+                      'Comma:0:6:,',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=c):0:5:c',
+                        {
+                          'Comma:0:8:,',
+                          children = {
+                            'PlainIdentifier(scope=0,ident=d):0:7:d',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              'Arrow:0:9:->',
+              children = {
+                'Register(name=a):0:11:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('Comma', ','),
+      hl('Identifier', 'c'),
+      hl('Comma', ','),
+      hl('Identifier', 'd'),
+      hl('Comma', ','),
+      hl('Arrow', '->'),
+      hl('Register', '@a'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{a,b->{c,d->{e,f->@a}}}', 0, {
+      --           01234567890123456789012
+      --           0         1         2
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3:b',
+              },
+            },
+            {
+              'Arrow:0:4:->',
+              children = {
+                {
+                  'Lambda(\\di):0:6:{',
+                  children = {
+                    {
+                      'Comma:0:8:,',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=c):0:7:c',
+                        'PlainIdentifier(scope=0,ident=d):0:9:d',
+                      },
+                    },
+                    {
+                      'Arrow:0:10:->',
+                      children = {
+                        {
+                          'Lambda(\\di):0:12:{',
+                          children = {
+                            {
+                              'Comma:0:14:,',
+                              children = {
+                                'PlainIdentifier(scope=0,ident=e):0:13:e',
+                                'PlainIdentifier(scope=0,ident=f):0:15:f',
+                              },
+                            },
+                            {
+                              'Arrow:0:16:->',
+                              children = {
+                                'Register(name=a):0:18:@a',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('Arrow', '->'),
+      hl('Lambda', '{'),
+      hl('Identifier', 'c'),
+      hl('Comma', ','),
+      hl('Identifier', 'd'),
+      hl('Arrow', '->'),
+      hl('Lambda', '{'),
+      hl('Identifier', 'e'),
+      hl('Comma', ','),
+      hl('Identifier', 'f'),
+      hl('Arrow', '->'),
+      hl('Register', '@a'),
+      hl('Lambda', '}'),
+      hl('Lambda', '}'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{a,b->c,d}', 0, {
+      --           0123456789
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3:b',
+              },
+            },
+            {
+              'Arrow:0:4:->',
+              children = {
+                {
+                  'Comma:0:7:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=c):0:6:c',
+                    'PlainIdentifier(scope=0,ident=d):0:8:d',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',d}',
+        msg = 'E15: Comma outside of call, lambda or literal: %.*s',
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('Arrow', '->'),
+      hl('Identifier', 'c'),
+      hl('InvalidComma', ','),
+      hl('Identifier', 'd'),
+      hl('Lambda', '}'),
+    })
+    check_parsing('a,b,c,d', 0, {
+      --           0123456789
+      ast = {
+        {
+          'Comma:0:1:,',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Comma:0:3:,',
+              children = {
+              'PlainIdentifier(scope=0,ident=b):0:2:b',
+                {
+                  'Comma:0:5:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=c):0:4:c',
+                    'PlainIdentifier(scope=0,ident=d):0:6:d',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',b,c,d',
+        msg = 'E15: Comma outside of call, lambda or literal: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('InvalidComma', ','),
+      hl('Identifier', 'b'),
+      hl('InvalidComma', ','),
+      hl('Identifier', 'c'),
+      hl('InvalidComma', ','),
+      hl('Identifier', 'd'),
+    })
+    check_parsing('a,b,c,d,', 0, {
+      --           0123456789
+      ast = {
+        {
+          'Comma:0:1:,',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Comma:0:3:,',
+              children = {
+              'PlainIdentifier(scope=0,ident=b):0:2:b',
+                {
+                  'Comma:0:5:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=c):0:4:c',
+                    {
+                      'Comma:0:7:,',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=d):0:6:d',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',b,c,d,',
+        msg = 'E15: Comma outside of call, lambda or literal: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('InvalidComma', ','),
+      hl('Identifier', 'b'),
+      hl('InvalidComma', ','),
+      hl('Identifier', 'c'),
+      hl('InvalidComma', ','),
+      hl('Identifier', 'd'),
+      hl('InvalidComma', ','),
+    })
+    check_parsing(',', 0, {
+      --           0123456789
+      ast = {
+        {
+          'Comma:0:0:,',
+          children = {
+            'Missing:0:0:',
+          },
+        },
+      },
+      err = {
+        arg = ',',
+        msg = 'E15: Expected value, got comma: %.*s',
+      },
+    }, {
+      hl('InvalidComma', ','),
+    })
+    check_parsing('{,a->@a}', 0, {
+      --           0123456789
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            {
+              'Arrow:0:3:->',
+              children = {
+                {
+                  'Comma:0:1:,',
+                  children = {
+                    'Missing:0:1:',
+                    'PlainIdentifier(scope=0,ident=a):0:2:a',
+                  },
+                },
+                'Register(name=a):0:5:@a',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',a->@a}',
+        msg = 'E15: Expected value, got comma: %.*s',
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('InvalidComma', ','),
+      hl('Identifier', 'a'),
+      hl('InvalidArrow', '->'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+    })
+    check_parsing('}', 0, {
+      --           0123456789
+      ast = {
+        'UnknownFigure(---):0:0:',
+      },
+      err = {
+        arg = '}',
+        msg = 'E15: Unexpected closing figure brace: %.*s',
+      },
+    }, {
+      hl('InvalidFigureBrace', '}'),
+    })
+    check_parsing('{->}', 0, {
+      --           0123456789
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            'Arrow:0:1:->',
+          },
+        },
+      },
+      err = {
+        arg = '}',
+        msg = 'E15: Expected value, got closing figure brace: %.*s',
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Arrow', '->'),
+      hl('InvalidLambda', '}'),
+    })
+    check_parsing('{a,b}', 0, {
+      --           0123456789
+      ast = {
+        {
+          'Lambda(-di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3:b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '}',
+        msg = 'E15: Expected lambda arguments list or arrow: %.*s',
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('InvalidLambda', '}'),
+    })
+    check_parsing('{a,}', 0, {
+      --           0123456789
+      ast = {
+        {
+          'Lambda(-di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '}',
+        msg = 'E15: Expected lambda arguments list or arrow: %.*s',
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('InvalidLambda', '}'),
+    })
+    check_parsing('{@a:@b}', 0, {
+      --           0123456789
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Colon:0:3::',
+              children = {
+                'Register(name=a):0:1:@a',
+                'Register(name=b):0:4:@b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Register', '@a'),
+      hl('Colon', ':'),
+      hl('Register', '@b'),
+      hl('Dict', '}'),
+    })
+    check_parsing('{@a:@b,@c:@d}', 0, {
+      --           0123456789012
+      --           0         1
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Comma:0:6:,',
+              children = {
+                {
+                  'Colon:0:3::',
+                  children = {
+                    'Register(name=a):0:1:@a',
+                    'Register(name=b):0:4:@b',
+                  },
+                },
+                {
+                  'Colon:0:9::',
+                  children = {
+                    'Register(name=c):0:7:@c',
+                    'Register(name=d):0:10:@d',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Register', '@a'),
+      hl('Colon', ':'),
+      hl('Register', '@b'),
+      hl('Comma', ','),
+      hl('Register', '@c'),
+      hl('Colon', ':'),
+      hl('Register', '@d'),
+      hl('Dict', '}'),
+    })
+    check_parsing('{@a:@b,@c:@d,@e:@f,}', 0, {
+      --           01234567890123456789
+      --           0         1
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Comma:0:6:,',
+              children = {
+                {
+                  'Colon:0:3::',
+                  children = {
+                    'Register(name=a):0:1:@a',
+                    'Register(name=b):0:4:@b',
+                  },
+                },
+                {
+                  'Comma:0:12:,',
+                  children = {
+                    {
+                      'Colon:0:9::',
+                      children = {
+                        'Register(name=c):0:7:@c',
+                        'Register(name=d):0:10:@d',
+                      },
+                    },
+                    {
+                      'Comma:0:18:,',
+                      children = {
+                        {
+                          'Colon:0:15::',
+                          children = {
+                            'Register(name=e):0:13:@e',
+                            'Register(name=f):0:16:@f',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Register', '@a'),
+      hl('Colon', ':'),
+      hl('Register', '@b'),
+      hl('Comma', ','),
+      hl('Register', '@c'),
+      hl('Colon', ':'),
+      hl('Register', '@d'),
+      hl('Comma', ','),
+      hl('Register', '@e'),
+      hl('Colon', ':'),
+      hl('Register', '@f'),
+      hl('Comma', ','),
+      hl('Dict', '}'),
+    })
+    check_parsing('{@a:@b,@c:@d,@e:@f,@g:}', 0, {
+      --           01234567890123456789012
+      --           0         1         2
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Comma:0:6:,',
+              children = {
+                {
+                  'Colon:0:3::',
+                  children = {
+                    'Register(name=a):0:1:@a',
+                    'Register(name=b):0:4:@b',
+                  },
+                },
+                {
+                  'Comma:0:12:,',
+                  children = {
+                    {
+                      'Colon:0:9::',
+                      children = {
+                        'Register(name=c):0:7:@c',
+                        'Register(name=d):0:10:@d',
+                      },
+                    },
+                    {
+                      'Comma:0:18:,',
+                      children = {
+                        {
+                          'Colon:0:15::',
+                          children = {
+                            'Register(name=e):0:13:@e',
+                            'Register(name=f):0:16:@f',
+                          },
+                        },
+                        {
+                          'Colon:0:21::',
+                          children = {
+                            'Register(name=g):0:19:@g',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '}',
+        msg = 'E15: Expected value, got closing figure brace: %.*s',
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Register', '@a'),
+      hl('Colon', ':'),
+      hl('Register', '@b'),
+      hl('Comma', ','),
+      hl('Register', '@c'),
+      hl('Colon', ':'),
+      hl('Register', '@d'),
+      hl('Comma', ','),
+      hl('Register', '@e'),
+      hl('Colon', ':'),
+      hl('Register', '@f'),
+      hl('Comma', ','),
+      hl('Register', '@g'),
+      hl('Colon', ':'),
+      hl('InvalidDict', '}'),
+    })
+    check_parsing('{@a:@b,}', 0, {
+      --           01234567890123
+      --           0         1
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Comma:0:6:,',
+              children = {
+                {
+                  'Colon:0:3::',
+                  children = {
+                    'Register(name=a):0:1:@a',
+                    'Register(name=b):0:4:@b',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Register', '@a'),
+      hl('Colon', ':'),
+      hl('Register', '@b'),
+      hl('Comma', ','),
+      hl('Dict', '}'),
+    })
+  end)
+  -- FIXME: Test sequence of arrows inside and outside lambdas.
+  -- FIXME: Test multiple arguments calling.
+  -- FIXME: Test autoload character and scope in lambda arguments.
 end)
