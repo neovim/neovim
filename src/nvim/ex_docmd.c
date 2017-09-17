@@ -1813,7 +1813,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (text_locked() && !(ea.argt & CMDWIN)
         && !IS_USER_CMDIDX(ea.cmdidx)) {
       // Command not allowed when editing the command line.
-      errormsg = get_text_locked_msg();
+      errormsg = (char_u *)_(get_text_locked_msg());
       goto doend;
     }
     /* Disallow editing another buffer when "curbuf_lock" is set.
