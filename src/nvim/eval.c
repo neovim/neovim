@@ -15090,6 +15090,9 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
     on_data.buffered = tv_dict_get_number(opts, "data_buffered");
+    if (on_data.buffered && on_data.cb.type == kCallbackNone) {
+      on_data.self = opts;
+    }
   }
 
   const char *error = NULL;
@@ -15489,6 +15492,10 @@ static void f_stdioopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (!tv_dict_get_callback(opts, S_LEN("on_stdin"), &on_stdin.cb)) {
     return;
+  }
+  on_stdin.buffered = tv_dict_get_number(opts, "stdin_buffered");
+  if (on_stdin.buffered && on_stdin.cb.type == kCallbackNone) {
+    on_stdin.self = opts;
   }
 
   const char *error;
@@ -16764,7 +16771,17 @@ static bool set_ref_in_callback_reader(CallbackReader *reader, int copyID,
                                        ht_stack_T **ht_stack,
                                        list_stack_T **list_stack)
 {
-  return set_ref_in_callback(&reader->cb, copyID, ht_stack, list_stack);
+  if (set_ref_in_callback(&reader->cb, copyID, ht_stack, list_stack)) {
+    return true;
+  }
+
+  if (reader->self) {
+    typval_T tv;
+    tv.v_type = VAR_DICT;
+    tv.vval.v_dict = reader->self;
+    return set_ref_in_item(&tv, copyID, ht_stack, list_stack);
+  }
+  return false;
 }
 
 static void add_timer_info(typval_T *rettv, timer_T *timer)
@@ -22344,6 +22361,12 @@ static inline bool common_job_callbacks(dict_T *vopts,
       && tv_dict_get_callback(vopts, S_LEN("on_exit"), on_exit)) {
     on_stdout->buffered = tv_dict_get_number(vopts, "stdout_buffered");
     on_stderr->buffered = tv_dict_get_number(vopts, "stderr_buffered");
+    if (on_stdout->buffered && on_stdout->cb.type == kCallbackNone) {
+      on_stdout->self = vopts;
+    }
+    if (on_stderr->buffered && on_stderr->cb.type == kCallbackNone) {
+      on_stderr->self = vopts;
+    }
     vopts->dv_refcount++;
     return true;
   }

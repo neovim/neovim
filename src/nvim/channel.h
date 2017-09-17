@@ -40,16 +40,18 @@ typedef struct {
 
 typedef struct {
   Callback cb;
+  dict_T *self;
   garray_T buffer;
   bool buffered;
 } CallbackReader;
 
 #define CALLBACK_READER_INIT ((CallbackReader){ .cb = CALLBACK_NONE, \
+                                                .self = NULL, \
                                                 .buffer = GA_EMPTY_INIT_VALUE, \
                                                 .buffered = false })
 static inline bool callback_reader_set(CallbackReader reader)
 {
-  return reader.cb.type != kCallbackNone;
+  return reader.cb.type != kCallbackNone || reader.self;
 }
 
 struct Channel {
