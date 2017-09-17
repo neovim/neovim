@@ -3270,11 +3270,10 @@ improve screen updating rates (see |:syn-sync| for more on this). >
 The g:vimsyn_embed option allows users to select what, if any, types of
 embedded script highlighting they wish to have. >
 
-   g:vimsyn_embed == 0   : don't embed any scripts
-   g:vimsyn_embed =~ 'P' : support embedded python
+   g:vimsyn_embed == 0      : disable (don't embed any scripts)
+   g:vimsyn_embed == 'lPr'  : support embedded lua, python and ruby
 <
-By default, g:vimsyn_embed is a string supporting interpreters that your vim
-itself supports.
+This option is disabled by default.
 						*g:vimsyn_folding*
 
 Some folding is now supported with syntax/vim.vim: >
