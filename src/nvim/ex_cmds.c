@@ -100,9 +100,9 @@ typedef struct {
 
 // Collected results of a substitution for showing them in
 // the preview window
-typedef struct {    
+typedef struct {
   kvec_t(SubResult) subresults;
-  linenr_T lines_needed; // lines neede in the preview window
+  linenr_T lines_needed;  // lines neede in the preview window
 } PreviewLines;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -3434,9 +3434,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
         // lnum is where the match start, but maybe not the pattern match,
         // since we can have \n before \zs in the pattern
 
-        /* Advance "lnum" to the line where the match starts.  The
-         * match does not start in the first line when there is a line
-         * break before \zs. */
+        // Advance "lnum" to the line where the match starts.  The
+        // match does not start in the first line when there is a line
+        // break before \zs.
         if (regmatch.startpos[0].lnum > 0) {
           current_match.pre_match = lnum;
           lnum += regmatch.startpos[0].lnum;
@@ -3965,7 +3965,6 @@ skip:
           preview_lines.lines_needed += match_lines;
         }
         kv_push(preview_lines.subresults, current_match);
-
         line_breakcheck();
       }
 
@@ -4048,11 +4047,12 @@ skip:
 
   // Show 'inccommand' preview if there are matched lines.
   buf_T *preview_buf = NULL;
+  size_t subsize = preview_lines.subresults.size;
   if (preview && !aborting()) {
     if (got_quit) {  // Substitution is too slow, disable 'inccommand'.
       set_string_option_direct((char_u *)"icm", -1, (char_u *)"", OPT_FREE,
                                SID_NONE);
-    } else if (*p_icm != NUL && preview_lines.subresults.size != 0 && pat != NULL) {
+    } else if (*p_icm != NUL && subsize != 0 && pat != NULL) {
       if (pre_src_id == 0) {
         // Get a unique new src_id, saved in a static
         pre_src_id = bufhl_add_hl(NULL, 0, -1, 0, 0, 0);
