@@ -1690,6 +1690,9 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
 
   if (strlen(fname) > (len - 1)) {
     xstrlcpy(buf, fname, len);  // truncate
+#ifdef WIN32
+    slash_adjust(buf);
+#endif
     return FAIL;
   }
 
@@ -1702,6 +1705,9 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
+#ifdef WIN32
+  slash_adjust(buf);
+#endif
   return rv;
 }
 
