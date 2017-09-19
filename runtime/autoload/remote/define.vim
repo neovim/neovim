@@ -89,7 +89,8 @@ endfunction
 
 function! remote#define#AutocmdOnHost(host, method, sync, name, opts)
   let group = s:GetNextAutocmdGroup()
-  let forward = '"doau '.group.' '.a:name.' ".'.'expand("<amatch>")'
+  let forward = '"doau '.group.' '.a:name.' ".'
+        \ . 'fnameescape(expand("<amatch>"))'
   let a:opts.group = group
   let bootstrap_def = s:GetAutocmdPrefix(a:name, a:opts)
         \ .' call remote#define#AutocmdBootstrap("'.a:host.'"'
