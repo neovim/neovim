@@ -234,6 +234,7 @@ Somebody typed the end of this line twice. end of this line twice.
 
 # Lesson 2.3: ON OPERATORS AND MOTIONS
 
+
 Many commands that change text are made from an [operator](operator) and a [motion](navigation).
 The format for a delete command with the [d](d) delete operator is as follows:
 
