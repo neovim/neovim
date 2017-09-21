@@ -528,7 +528,7 @@ NOTE: This is very useful in debugging a program with unmatched parentheses!
      Adding the g [flag](:s_flags) means to substitute globally in the line, change
      all occurrences of "thee" in the line.
 
-thee best time to see thee flowers is in thee spring.
+Usually thee best time to see thee flowers is in thee spring.
 
   4. To change every occurrence of a character string between two lines, type
 ~~~ cmd
