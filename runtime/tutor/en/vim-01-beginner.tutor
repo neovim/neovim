@@ -785,7 +785,7 @@ NOTE:  Replace mode is like Insert mode, but every typed character deletes an
   6. Use Visual mode to select " item.", yank it with `y`{normal}, move to the end of
      the next line with `j$`{normal} and put the text there with `p`{normal}.
 
-a) this is the first item.
+a) This is the first item.
     b) 
 
   NOTE: you can also use `y`{normal} as an operator; `yw`{normal} yanks one word.
