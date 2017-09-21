@@ -90,18 +90,18 @@ NOTE:  [:q!](:q) <Enter>  discards any changes you made.  In a few lessons you
 
 ** Press `x`{normal} to delete the character under the cursor. **
 
-1. Move the cursor to the line below marked --->.
+  1. Move the cursor to the line below marked --->.
 
-2. To fix the errors, move the cursor until it is on top of the
-   character to be deleted.
+  2. To fix the errors, move the cursor until it is on top of the
+     character to be deleted.
 
-3. Press [the x key](x) to delete the unwanted character.
+  3. Press [the x key](x) to delete the unwanted character.
 
-4. Repeat steps 2 through 4 until the sentence is correct.
+  4. Repeat steps 2 through 4 until the sentence is correct.
 
 The ccow jumpedd ovverr thhe mooon.
 
-5. Now that the line is correct, go on to Lesson 1.4.
+  5. Now that the line is correct, go on to Lesson 1.4.
 
 NOTE: As you go through this tutor, do not try to memorize, learn by usage.
 
@@ -122,7 +122,7 @@ NOTE: As you go through this tutor, do not try to memorize, learn by usage.
 There is text misng this .
 There is some text missing from this line.
 
-  5. When you are comfortable inserting text move to lesson 1.5.
+  5. When you are comfortable inserting text move to Lesson 1.5.
 
 # Lesson 1.5: TEXT EDITING: APPENDING
 
@@ -143,7 +143,7 @@ There is some text missing from this line.
 There is also some text miss
 There is also some text missing here.
 
-  5. When you are comfortable appending text move to lesson 1.6.
+  5. When you are comfortable appending text move to Lesson 1.6.
 
 # Lesson 1.6: EDITING A FILE
 
@@ -151,7 +151,7 @@ There is also some text missing here.
 
 !! NOTE: Before executing any of the steps below, read this entire lesson !!
 
-  1. Exit this tutor as you did in lesson 1.2:  :q!
+  1. Exit this tutor as you did in Lesson 1.2:  :q!
      Or, if you have access to another terminal, do the following there.
 
   2. At the shell prompt type this command:
@@ -388,7 +388,7 @@ NOTE: Remember that you should be learning by doing, not memorization.
 
 # Lesson 3.3: THE CHANGE OPERATOR
 
-** To change until the end of a word, type `ce`{normal}  **
+** To change until the end of a word, type `ce`{normal}. **
 
   1. Move the cursor to the first line below marked --->.
 
@@ -632,7 +632,7 @@ NOTE: If you were to exit Vim and start it again with  vim TEST , the file
 
 # Lesson 5.3: SELECTING TEXT TO WRITE
 
-** To save part of the file, type `v`{normal} motion  `:w FILENAME`{vim} **
+** To save part of the file, type `v`{normal} motion  `:w FILENAME`{vim}. **
 
   1. Move the cursor to this line.
 
@@ -665,7 +665,7 @@ NOTE:  Pressing [v](v) starts [Visual selection](visual-mode). You can move
 
 # Lesson 5.4: RETRIEVING AND MERGING FILES
 
-** To insert the contents of a file, type `:r FILENAME`{vim}  **
+** To insert the contents of a file, type `:r FILENAME`{vim}. **
 
   1. Place the cursor just above this line.
 
@@ -734,7 +734,7 @@ Open up a line above this by typing O while the cursor is on this line.
 
   2. Press `e`{normal} until the cursor is on the end of "li".
 
-  3. Type an `a`{normal} (lowercase) to [append](a) text AFTER the cursor.
+  3. Type the lowercase letter `a`{normal} to [append](a) text AFTER the cursor.
 
   4. Complete the word like the line below it.  Press `<Esc>`{normal} to exit Insert
      mode.
@@ -794,7 +794,7 @@ a) This is the first item.
 
 # Lesson 6.5: SET OPTION
 
-** Set an option so a search or substitute ignores case **
+** Set an option so a search or substitute ignores case. **
 
   1. Search for 'ignore' by entering:   `/ignore`
      Repeat several times by pressing `n`{normal}.
@@ -860,7 +860,7 @@ NOTE:  If you want to ignore case for just one search command, use  [\c](/\c)
 
 # Lesson 7.1: GETTING HELP
 
-** Use the on-line help system **
+** Use the on-line help system. **
 
 Vim has a comprehensive on-line help system.  To get started, try one of
 these three:
@@ -883,7 +883,7 @@ You can find help on just about any subject, by giving an argument to the
 ~~~
 # Lesson 7.2: CREATE A STARTUP SCRIPT
 
-** Enable Vim features **
+** Enable Vim features. **
 
 Vim has many more features than Vi, but most of them are disabled by
 default.  To start using more features you have to create a "vimrc" file.
@@ -903,7 +903,7 @@ default.  To start using more features you have to create a "vimrc" file.
 
 # Lesson 7.3: COMPLETION
 
-** Command line completion with `<Ctrl-d>`{normal} and `<Tab>`{normal} **
+** Command line completion with `<Ctrl-d>`{normal} and `<Tab>`{normal}. **
 
   1. Look what files exist in the directory:  `:!ls`{vim}
 
