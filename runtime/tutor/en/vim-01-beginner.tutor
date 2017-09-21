@@ -770,7 +770,7 @@ NOTE:  Replace mode is like Insert mode, but every typed character deletes an
 
 # Lesson 6.4: COPY AND PASTE TEXT
 
-** Use the `y`{normal} operator to copy text and `p`{normal} to paste it **
+** Use the `y`{normal} operator to copy text and `p`{normal} to paste it. **
 
   1. Go to the line marked with ---> below and place the cursor after "a)".
 
@@ -780,9 +780,11 @@ NOTE:  Replace mode is like Insert mode, but every typed character deletes an
 
   4. Move the cursor to the end of the next line: `j$`{normal}
 
-  5. Type `p`{normal} to [put](put) (paste) the text.  Then type:  "a second"`<Esc>`{normal}.
+  5. Type `p`{normal} to [put](put) (paste) the text.
 
-  6. Use Visual mode to select " item.", yank it with `y`{normal}, move to the end of
+  6. Press `a`{normal} and then type "second".  Press `<Esc>`{normal} to leave Insert mode.
+
+  7. Use Visual mode to select " item.", yank it with `y`{normal}, move to the end of
      the next line with `j$`{normal} and put the text there with `p`{normal}.
 
 a) This is the first item.
