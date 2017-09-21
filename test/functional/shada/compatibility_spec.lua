@@ -10,6 +10,13 @@ local read_shada_file = shada_helpers.read_shada_file
 
 local wshada, sdrcmd, shada_fname = get_shada_rw('Xtest-functional-shada-compatibility.shada')
 
+local mock_file_path = '/a/b/'
+local mock_file_path2 = '/d/e/'
+if helpers.iswin() then
+  mock_file_path = 'C:/a/'
+  mock_file_path2 = 'C:/d/'
+end
+
 describe('ShaDa forward compatibility support code', function()
   before_each(reset)
   after_each(function()
@@ -114,14 +121,14 @@ describe('ShaDa forward compatibility support code', function()
     funcs.garbagecollect(1)
   end)
 
-  for _, v in ipairs({{name='global mark', mpack='\007\001\018\131\162mX\195\161f\196\006/a/b/c\161nA'},
-                      {name='jump', mpack='\008\001\018\131\162mX\195\161f\196\006/a/b/c\161l\002'},
-                      {name='local mark', mpack='\010\001\018\131\162mX\195\161f\196\006/a/b/c\161na'},
-                      {name='change', mpack='\011\001\015\130\162mX\195\161f\196\006/a/b/c'},
+  for _, v in ipairs({{name='global mark', mpack='\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161nA'},
+                      {name='jump', mpack='\008\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'},
+                      {name='local mark', mpack='\010\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161na'},
+                      {name='change', mpack='\011\001\015\130\162mX\195\161f\196\006' .. mock_file_path .. 'c'},
                      }) do
     it('works with ' .. v.name .. ' item with BOOL unknown (mX) key value', function()
-      nvim_command('silent noautocmd edit /a/b/c')
-      eq('/a/b/c', funcs.bufname('%'))
+      nvim_command('silent noautocmd edit ' .. mock_file_path .. 'c')
+      eq('' .. mock_file_path .. 'c', funcs.bufname('%'))
       funcs.setline('.', {'1', '2', '3'})
       wshada(v.mpack)
       eq(0, exc_exec(sdrcmd(true)))
@@ -159,12 +166,12 @@ describe('ShaDa forward compatibility support code', function()
 
     if v.name == 'global mark' or v.name == 'local mark' then
       it('works with ' .. v.name .. ' item with <C-a> name', function()
-        nvim_command('silent noautocmd edit /a/b/c')
-        eq('/a/b/c', funcs.bufname('%'))
+        nvim_command('silent noautocmd edit ' .. mock_file_path .. 'c')
+        eq('' .. mock_file_path .. 'c', funcs.bufname('%'))
         funcs.setline('.', {'1', '2', '3'})
         wshada(v.mpack:gsub('n.$', 'n\001')
                .. v.mpack:gsub('n.$', 'n\002')
-               .. v.mpack:gsub('n.$', 'n\003'):gsub('/a/b/c', '/d/e/f'))
+               .. v.mpack:gsub('n.$', 'n\003'):gsub('' .. mock_file_path .. 'c', '' .. mock_file_path2 .. 'f'))
         eq(0, exc_exec(sdrcmd(true)))
         nvim_command('wshada ' .. shada_fname)
         local found = 0
@@ -307,10 +314,10 @@ describe('ShaDa forward compatibility support code', function()
 
   it('works with buffer list item with BOOL unknown (bX) key', function()
     nvim_command('set shada+=%')
-    wshada('\009\000\016\145\130\161f\196\006/a/b/c\162bX\195')
+    wshada('\009\000\016\145\130\161f\196\006' .. mock_file_path .. 'c\162bX\195')
     eq(0, exc_exec(sdrcmd()))
     eq(2, funcs.bufnr('$'))
-    eq('/a/b/c', funcs.bufname(2))
+    eq('' .. mock_file_path .. 'c', funcs.bufname(2))
     os.remove(shada_fname)
     nvim_command('wshada ' .. shada_fname)
     local found = false
