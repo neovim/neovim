@@ -5,6 +5,7 @@ local feed, command = helpers.feed, helpers.command
 local insert = helpers.insert
 local eq = helpers.eq
 local eval = helpers.eval
+local iswin = helpers.iswin
 
 describe('screen', function()
   local screen
@@ -120,8 +121,15 @@ describe('Screen', function()
 
     it('has correct default title with named file', function()
       local expected = 'myfile (/mydir) - NVIM'
+      if iswin() then
+        expected = 'myfile (C:\\mydir) - NVIM'
+      end
       command('set title')
-      command('file /mydir/myfile')
+      if iswin() then
+        command('file C:\\mydir\\myfile')
+      else
+        command('file /mydir/myfile')
+      end
       screen:expect(function()
         eq(expected, screen.title)
       end)
