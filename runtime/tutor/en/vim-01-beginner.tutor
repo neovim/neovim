@@ -287,7 +287,7 @@ insert a count before the motion to delete more:
   3. Repeat steps 1 and 2 with a different count to delete the consecutive
      UPPER CASE words with one command
 
-this ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up.
+This ABC DE line FGHI JK LMN OP of words is Q RS TUV cleaned up.
 
 # Lesson 2.6: OPERATING ON LINES
 
