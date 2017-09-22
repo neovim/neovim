@@ -1271,7 +1271,7 @@ Commands for changing the working directory can be suffixed with a bang "!"
 
 							*:lcd-* 
 :lcd[!] -		Change to the previous current directory (before the
-			previous ":tcd {path}" command).
+			previous ":lcd {path}" command).
 
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
