@@ -4038,7 +4038,7 @@ win_line (
         char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUC));
       } else if (draw_color_col && VCOL_HLC == *color_cols) {
         vcol_save_attr = char_attr;
-        char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_MC));
+        char_attr = hl_combine_attr(win_hl_attr(wp, HLF_MC), char_attr);
       }
     }
 
