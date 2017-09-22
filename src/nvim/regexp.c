@@ -3316,6 +3316,47 @@ bt_regexec_nl (
   return (int)r;
 }
 
+/// Wrapper around strchr which accounts for case-insensitive searches and
+/// non-ASCII characters.
+///
+/// This function is used a lot for simple searches, keep it fast!
+///
+/// @param  s  string to search
+/// @param  c  character to find in @a s
+///
+/// @return  NULL if no match, otherwise pointer to the position in @a s
+static inline char_u *cstrchr(const char_u *const s, const int c)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  if (!rex.reg_ic) {
+    return vim_strchr(s, c);
+  }
+
+  // Use folded case for UTF-8, slow! For ASCII use libc strpbrk which is
+  // expected to be highly optimized.
+  if (c > 0x80) {
+    const int folded_c = utf_fold(c);
+    for (const char_u *p = s; *p != NUL; p += utfc_ptr2len(p)) {
+      if (utf_fold(utf_ptr2char(p)) == folded_c) {
+        return (char_u *)p;
+      }
+    }
+    return NULL;
+  }
+
+  int cc;
+  if (ASCII_ISUPPER(c)) {
+    cc = TOLOWER_ASC(c);
+  } else if (ASCII_ISLOWER(c)) {
+    cc = TOUPPER_ASC(c);
+  } else {
+    return vim_strchr(s, c);
+  }
+
+  char tofind[] = { (char)c, (char)cc, NUL };
+  return (char_u *)strpbrk((const char *)s, tofind);
+}
 
 /// Matches a regexp against multiple lines.
 /// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
@@ -6318,42 +6359,6 @@ static int cstrncmp(char_u *s1, char_u *s2, int *n)
   }
 
   return result;
-}
-
-/*
- * cstrchr: This function is used a lot for simple searches, keep it fast!
- */
-static inline char_u *cstrchr(const char_u *const s, const int c)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
-  FUNC_ATTR_ALWAYS_INLINE
-{
-  if (!rex.reg_ic) {
-    return vim_strchr(s, c);
-  }
-
-  // Use folded case for UTF-8, slow! For ASCII use libc strpbrk which is
-  // expected to be highly optimized.
-  if (c > 0x80) {
-    const int folded_c = utf_fold(c);
-    for (const char_u *p = s; *p != NUL; p += utfc_ptr2len(p)) {
-      if (utf_fold(utf_ptr2char(p)) == folded_c) {
-        return (char_u *)p;
-      }
-    }
-    return NULL;
-  }
-
-  int cc;
-  if (ASCII_ISUPPER(c)) {
-    cc = TOLOWER_ASC(c);
-  } else if (ASCII_ISLOWER(c)) {
-    cc = TOUPPER_ASC(c);
-  } else {
-    return vim_strchr(s, c);
-  }
-
-  char tofind[] = { (char)c, (char)cc, NUL };
-  return (char_u *)strpbrk((const char *)s, tofind);
 }
 
 /***************************************************************
