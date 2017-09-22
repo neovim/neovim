@@ -4061,8 +4061,8 @@ skip:
         pre_hl_id = syn_check_group((char_u *)"Substitute", 13);
       }
       curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
-      preview_buf = show_sub(eap, old_cursor, pat, sub, &preview_lines,
-                             has_second_delim, pre_hl_id, pre_src_id);
+      preview_buf = show_sub(eap, old_cursor, &preview_lines, has_second_delim,
+                             pre_hl_id, pre_src_id);
       bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
                              kv_last(preview_lines.subresults).end.lnum);
     }
@@ -6071,7 +6071,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 
 /// Shows the effects of the :substitute command being typed ('inccommand').
 /// If inccommand=split, shows a preview window and later restores the layout.
-static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
+static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
                        PreviewLines *preview_lines, bool show_hl, int hl_id,
                        int src_id)
   FUNC_ATTR_NONNULL_ALL
@@ -6081,8 +6081,6 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
   win_T *save_curwin = curwin;
   cmdmod_T save_cmdmod = cmdmod;
   char_u *save_shm_p = vim_strsave(p_shm);
-  size_t sub_size = mb_string2cells(sub);
-  size_t pat_size = mb_string2cells(pat);
   PreviewLines lines = *preview_lines;
   buf_T *orig_buf = curbuf;
 
@@ -6096,7 +6094,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr, char_u *pat, char_u *sub,
 
   bool outside_curline = (eap->line1 != old_cusr.lnum
                           || eap->line2 != old_cusr.lnum);
-  bool split = outside_curline && (*p_icm != 'n') && (sub_size || pat_size);
+  bool split = outside_curline && (*p_icm != 'n');
   if (preview_buf == curbuf) {  // Preview buffer cannot preview itself!
     split = false;
     preview_buf = NULL;
