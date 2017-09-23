@@ -7,6 +7,7 @@ local clear, expect = helpers.clear, helpers.expect
 describe('curswant', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start target options

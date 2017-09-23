@@ -191,6 +191,7 @@ describe('list and dictionary types', function()
       [3]]=])
   end)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('assignment to a list', function()
     source([[
       let l = [0, 1, 2, 3]

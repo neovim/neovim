@@ -7,6 +7,7 @@ local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers
 describe('Virtual replace mode', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     -- Make sure that backspace works, no matter what termcap is used.
     feed_command('set t_kD=x7f t_kb=x08')

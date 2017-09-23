@@ -53,11 +53,11 @@ describe("'tagcase' option", function()
     -- Verify that the correct number of matching tags is found for all values of
     -- 'ignorecase' and global and local values 'tagcase', in all combinations.
     insert([[
-      
+
       Foo
       Bar
       foo
-      
+
       end text]])
 
     source([[
@@ -70,7 +70,7 @@ describe("'tagcase' option", function()
           endfor
         endfor
       endfor
-      
+
       1,/^end text$/d]])
 
     expect([[

@@ -372,6 +372,7 @@ describe('Visual mode and operator', function()
     end)
   end)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('gv in exclusive select mode after operation', function()
     source([[
       $put ='zzz '

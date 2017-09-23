@@ -8,6 +8,7 @@ local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers
 describe([[performing "r<Tab>" with 'smarttab' and 'expandtab' set/not set, and "dv_"]], function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start text
