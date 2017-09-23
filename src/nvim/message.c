@@ -583,17 +583,58 @@ void emsg_invreg(int name)
 /// Print an error message with unknown number of arguments
 bool emsgf(const char *const fmt, ...)
 {
+  bool ret;
+
+  va_list ap;
+  va_start(ap, fmt);
+  ret = emsgfv(fmt, ap);
+  va_end(ap);
+
+  return ret;
+}
+
+/// Print an error message with unknown number of arguments
+static bool emsgfv(const char *fmt, va_list ap)
+{
   static char errbuf[IOSIZE];
   if (emsg_not_now()) {
     return true;
   }
 
-  va_list ap;
-  va_start(ap, fmt);
   vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
-  va_end(ap);
 
   return emsg((const char_u *)errbuf);
+}
+
+/// Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
+/// defined. It is used for internal errors only, so that they can be
+/// detected when fuzzing vim.
+void iemsg(const char *s)
+{
+    msg((char_u *)s);
+#ifdef ABORT_ON_INTERNAL_ERROR
+    abort();
+#endif
+}
+
+/// Same as emsgf(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
+/// defined. It is used for internal errors only, so that they can be
+/// detected when fuzzing vim.
+void iemsgf(const char *s, ...)
+{
+    va_list ap;
+    va_start(ap, s);
+    (void)emsgfv(s, ap);
+    va_end(ap);
+#ifdef ABORT_ON_INTERNAL_ERROR
+    abort();
+#endif
+}
+
+/// Give an "Internal error" message.
+void internal_error(char *where)
+{
+    IEMSG2(_(e_intern2), where);
 }
 
 static void msg_emsgf_event(void **argv)

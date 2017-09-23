@@ -340,7 +340,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
     do { \
       const char *const fun_ = (const char *)(fun); \
       if (fun_ == NULL) { \
-        EMSG2(_(e_intern2), "string(): NULL function name"); \
+        internal_error("string(): NULL function name"); \
         ga_concat(gap, "function(NULL"); \
       } else { \
         ga_concat(gap, "function("); \

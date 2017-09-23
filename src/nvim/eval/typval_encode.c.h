@@ -600,7 +600,7 @@ _convert_one_value_regular_dict: {}
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), STR(_TYPVAL_ENCODE_CONVERT_ONE_VALUE) "()");
+      internal_error(STR(_TYPVAL_ENCODE_CONVERT_ONE_VALUE) "()");
       return FAIL;
     }
   }
