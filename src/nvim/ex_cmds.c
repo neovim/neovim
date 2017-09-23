@@ -6177,7 +6177,11 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
         // Put "|lnum| line" into `str` and append it to the preview buffer.
         snprintf(str, line_size, "|%*ld| %s", col_width - 3,
                  next_linenr, line);
-        ml_append(linenr_preview, (char_u *)str, (colnr_T)line_size, false);
+        if (linenr_preview == 0) {
+          ml_replace(1, (char_u *)str, true);
+        } else {
+          ml_append(linenr_preview, (char_u *)str, (colnr_T)line_size, false);
+        }
         linenr_preview += 1;
       }
       linenr_origbuf = match.end.lnum;
