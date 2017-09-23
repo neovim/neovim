@@ -3683,6 +3683,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
         // go beyond the last line of the buffer.
         if (nmatch > curbuf->b_ml.ml_line_count - sub_firstlnum + 1) {
           nmatch = curbuf->b_ml.ml_line_count - sub_firstlnum + 1;
+          current_match.end.lnum = sub_firstlnum + nmatch;
           skip_match = true;
         }
 
@@ -3715,7 +3716,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
         // be shown also, but should not be highlighted. Intentional for now.
         if (preview && !has_second_delim) {
           current_match.start.col = regmatch.startpos[0].col;
-          current_match.end.lnum = sub_firstlnum + nmatch - 1;
+          if (current_match.end.lnum == 0) {
+            current_match.end.lnum = sub_firstlnum + nmatch - 1;
+          }
           current_match.end.col  = regmatch.endpos[0].col;
 
           ADJUST_SUB_FIRSTLNUM();
@@ -4061,7 +4064,7 @@ skip:
         pre_hl_id = syn_check_group((char_u *)"Substitute", 13);
       }
       curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
-      preview_buf = show_sub(eap, old_cursor, &preview_lines, has_second_delim,
+      preview_buf = show_sub(eap, old_cursor, &preview_lines, true,
                              pre_hl_id, pre_src_id);
       if (subsize > 0) {
         bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
@@ -6170,13 +6173,18 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
         if (next_linenr == match.end.lnum) {
           p_end.lnum = linenr_preview + 1;
         }
-        char_u *line = ml_get_buf(orig_buf, next_linenr, false);
-        line_size = STRLEN(line) + col_width + 1;
+        char_u *line;
+        if (next_linenr == orig_buf->b_ml.ml_line_count + 1) {
+          line = (char_u *)"";
+        } else {
+          line = ml_get_buf(orig_buf, next_linenr, false);
+          line_size = STRLEN(line) + col_width + 1;
 
-        // Reallocate if line not long enough
-        if (line_size > old_line_size) {
-          str = xrealloc(str, line_size * sizeof(char));
-          old_line_size = line_size;
+          // Reallocate if line not long enough
+          if (line_size > old_line_size) {
+            str = xrealloc(str, line_size * sizeof(char));
+            old_line_size = line_size;
+          }
         }
         // Put "|lnum| line" into `str` and append it to the preview buffer.
         snprintf(str, line_size, "|%*ld| %s", col_width - 3,
@@ -6250,7 +6258,11 @@ void ex_substitute(exarg_T *eap)
   curwin->w_p_cul = false;    // Disable 'cursorline'
   curwin->w_p_cuc = false;    // Disable 'cursorcolumn'
 
+  // Don't show search highlighting during live substitution
+  bool save_hls = p_hls;
+  p_hls = false;
   buf_T *preview_buf = do_sub(eap, profile_setlimit(p_rdt));
+  p_hls = save_hls;
 
   if (save_changedtick != curbuf->b_changedtick) {
     // Undo invisibly. This also moves the cursor!
