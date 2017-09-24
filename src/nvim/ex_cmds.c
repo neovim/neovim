@@ -4064,7 +4064,7 @@ skip:
         pre_hl_id = syn_check_group((char_u *)"Substitute", 13);
       }
       curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
-      preview_buf = show_sub(eap, old_cursor, &preview_lines, true,
+      preview_buf = show_sub(eap, old_cursor, &preview_lines,
                              pre_hl_id, pre_src_id);
       if (subsize > 0) {
         bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
@@ -6077,8 +6077,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 /// Shows the effects of the :substitute command being typed ('inccommand').
 /// If inccommand=split, shows a preview window and later restores the layout.
 static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
-                       PreviewLines *preview_lines, bool show_hl, int hl_id,
-                       int src_id)
+                       PreviewLines *preview_lines, int hl_id, int src_id)
   FUNC_ATTR_NONNULL_ALL
 {
   static handle_T bufnr = 0;  // special buffer, re-used on each visit
@@ -6198,15 +6197,11 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
       }
       linenr_origbuf = match.end.lnum;
 
-      if (show_hl) {
-        bufhl_add_hl_pos_offset(preview_buf, src_id, hl_id, p_start,
-                                p_end, col_width);
-      }
+      bufhl_add_hl_pos_offset(preview_buf, src_id, hl_id, p_start,
+                              p_end, col_width);
     }
-    if (show_hl) {
-      bufhl_add_hl_pos_offset(orig_buf, src_id, hl_id, match.start,
-                              match.end, 0);
-    }
+    bufhl_add_hl_pos_offset(orig_buf, src_id, hl_id, match.start,
+                            match.end, 0);
   }
   xfree(str);
 
