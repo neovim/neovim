@@ -1668,8 +1668,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (*ea.cmd == ';') {
       if (!ea.skip) {
         curwin->w_cursor.lnum = ea.line2;
-        // Don't leave the cursor on an illegal line (caused by ';')
-        check_cursor_lnum();
+        // don't leave the cursor on an illegal line or column
+        check_cursor();
       }
     } else if (*ea.cmd != ',') {
       break;
@@ -1813,7 +1813,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     if (text_locked() && !(ea.argt & CMDWIN)
         && !IS_USER_CMDIDX(ea.cmdidx)) {
       // Command not allowed when editing the command line.
-      errormsg = get_text_locked_msg();
+      errormsg = (char_u *)_(get_text_locked_msg());
       goto doend;
     }
     /* Disallow editing another buffer when "curbuf_lock" is set.
@@ -9378,7 +9378,7 @@ ses_arglist (
         (void)vim_FullName((char *)s, (char *)buf, MAXPATHL, FALSE);
         s = buf;
       }
-      if (fputs("argadd ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL
+      if (fputs("$argadd ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL
           || put_eol(fd) == FAIL) {
         xfree(buf);
         return FAIL;

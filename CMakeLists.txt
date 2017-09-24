@@ -254,7 +254,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8.5")
     # Array-bounds testing is broken in some GCC versions before 4.8.5.
     # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
-    add_definitions(-Wno-array-bounds)
+    check_c_compiler_flag(-Wno-array-bounds HAS_NO_ARRAY_BOUNDS_FLAG)
+    if(HAS_NO_ARRAY_BOUNDS_FLAG)
+      add_definitions(-Wno-array-bounds)
+    endif()
   endif()
 endif()
 
@@ -343,6 +346,21 @@ option(FEAT_TUI "Enable the Terminal UI" ON)
 if(FEAT_TUI)
   find_package(Unibilium REQUIRED)
   include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
+
+  list(APPEND CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
+  list(APPEND CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
+  check_c_source_compiles("
+  #include <unibilium.h>
+
+  int
+  main(void)
+  {
+    return unibi_num_from_var(unibi_var_from_num(0));
+  }
+  " UNIBI_HAS_VAR_FROM)
+  if(UNIBI_HAS_VAR_FROM)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNVIM_UNIBI_HAS_VAR_FROM")
+  endif()
 
   find_package(LibTermkey REQUIRED)
   include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})

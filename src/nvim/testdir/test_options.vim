@@ -13,6 +13,12 @@ function! Test_whichwrap()
   set whichwrap+=h,l
   call assert_equal('b,s,h,l', &whichwrap)
 
+  set whichwrap=h,h
+  call assert_equal('h', &whichwrap)
+
+  set whichwrap=h,h,h
+  call assert_equal('h', &whichwrap)
+
   set whichwrap&
 endfunction
 
