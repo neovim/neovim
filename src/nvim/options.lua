@@ -575,6 +575,7 @@ return {
       full_name='dictionary', abbreviation='dict',
       type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
+      normal_fname_chars=true,
       vi_def=true,
       expand=true,
       varname='p_dict',
@@ -1750,6 +1751,7 @@ return {
     {
       full_name='printexpr', abbreviation='pexpr',
       type='string', scope={'global'},
+      secure=true,
       vi_def=true,
       varname='p_pexpr',
       defaults={if_true={vi=""}}
