@@ -115,9 +115,9 @@ describe('case-insensitive string comparison in UTF-8', function()
     -- Assert buffer contents.
     expect([=[
       3732 checks passed
-      
+
       ABCD
-      
+
       defg]=])
   end)
 end)

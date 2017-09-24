@@ -12,6 +12,7 @@ end
 describe('cursor and column position with conceal and tabulators', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('are working', function()
     insert([[
       start:

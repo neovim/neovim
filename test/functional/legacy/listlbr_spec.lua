@@ -7,6 +7,9 @@ local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers
 describe('listlbr', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
+  -- luacheck: ignore 611 (Line contains only whitespaces)
+  -- luacheck: ignore 613 (Trailing whitespaces in a string)
   it('is working', function()
     insert([[
       dummy text]])
@@ -20,20 +23,20 @@ describe('listlbr', function()
     feed_command('set ts=4 sw=4 sts=4 linebreak sbr=+ wrap')
     source([[
       fu! ScreenChar(width)
-      	let c=''
-      	for j in range(1,4)
-	  for i in range(1,a:width)
-	    let c.=nr2char(screenchar(j, i))
-	  endfor
-	  let c.="\n"
-      	endfor
-      	return c
+        let c=''
+        for j in range(1,4)
+          for i in range(1,a:width)
+            let c.=nr2char(screenchar(j, i))
+          endfor
+          let c.="\n"
+        endfor
+        return c
       endfu
       fu! DoRecordScreen()
-      	wincmd l
-      	$put =printf(\"\n%s\", g:test)
-      	$put =g:line
-      	wincmd p
+        wincmd l
+        $put =printf(\"\n%s\", g:test)
+        $put =g:line
+        wincmd p
       endfu
     ]])
     feed_command('let g:test="Test 1: set linebreak"')

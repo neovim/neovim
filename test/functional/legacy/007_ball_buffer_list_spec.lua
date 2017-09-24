@@ -36,10 +36,10 @@ describe(':ball', function()
 
     -- Open window for all args, close Xxx2
     feed('$r4:ball<cr>')
-   
+
     -- Write contents of this file
     feed_command('%yank A')
-    
+
     -- Append contents of second window (Xxx1)
     feed('')
     feed_command('%yank A')

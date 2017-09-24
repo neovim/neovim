@@ -17,6 +17,7 @@ describe('store cursor position in session file in Latin-1', function()
     os.remove('test.out')
   end)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start:

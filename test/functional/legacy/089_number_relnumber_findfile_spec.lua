@@ -63,26 +63,26 @@ describe("setting 'number' and 'relativenumber'", function()
     -- Assert buffer contents.
     expect([[
       results:
-      
+
         number
         relativenumber
-      
+
         number
         relativenumber
       :setlocal must NOT reset the other global value
-      
+
         number
-      
+
         relativenumber
       :setglobal MUST reset the other global value
-      
+
         number
-      
+
         relativenumber
       :set MUST reset the other global value
-      
+
         number
-      
+
         relativenumber]])
   end)
 end)
@@ -108,7 +108,7 @@ describe('findfile', function()
 
     expect([[
       Testing findfile
-      
+
       src/nvim/api/vim.c
       api/vim.c
       api/vim.c]])

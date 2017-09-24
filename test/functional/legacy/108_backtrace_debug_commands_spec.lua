@@ -89,18 +89,18 @@ describe('108', function()
 
     -- Assert buffer contents.
     expect([=[
-      
-      
-      
+
+
+
       - show backtrace:
-      
+
         2 function Foo[2]
         1 Bar[2]
       ->0 Bazz
       line 2: let var3 = "another var"
-      
+
       show variables on different levels:
-      
+
       6
         2 function Foo[2]
       ->1 Bar[2]
@@ -112,9 +112,9 @@ describe('108', function()
         0 Bazz
       line 2: let var3 = "another var"
       1
-      
+
       - undefined vars:
-      
+
       undefined var3 on former level:
       Error detected while processing function Foo[2]..Bar[2]..Bazz:
       line    3:
@@ -122,7 +122,7 @@ describe('108', function()
       E15: Invalid expression: var3
       here var3 is defined with "another var":
       another var
-      
+
       undefined var2 on former level
       Error detected while processing function Foo[2]..Bar:
       line    3:
@@ -130,37 +130,37 @@ describe('108', function()
       E15: Invalid expression: var2
       here var2 is defined with 10:
       10
-      
+
       - backtrace movements:
-      
+
         1 function Foo[2]
       ->0 Bar
       line 3: End of function
-      
+
       next command cannot go down, we are on bottom
-      
+
       frame is zero
-      
+
       next command cannot go up, we are on top
-      
+
       frame at highest level: 1
       ->1 function Foo[2]
         0 Bar
       line 3: End of function
       fil is not frame or finish, it is file
       "[No Name]" --No lines in buffer--
-      
+
       - relative backtrace movement
-      
+
         1 function Foo[2]
       ->0 Bar
       line 3: End of function
       ->1 function Foo[2]
         0 Bar
       line 3: End of function
-      
+
       - go beyond limits does not crash
-      
+
       frame at highest level: 1
       ->1 function Foo[2]
         0 Bar
@@ -169,7 +169,7 @@ describe('108', function()
         1 function Foo[2]
       ->0 Bar
       line 3: End of function
-      
+
       - final result 19:
       19
       ]=])

@@ -4,12 +4,14 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
+-- luacheck: ignore 621 (Indentation)
 describe("'listchars'", function()
   before_each(function()
     clear()
     feed_command('set listchars&vi')
   end)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it("works with 'list'", function()
     source([[
       function GetScreenCharsForLine(lnum)

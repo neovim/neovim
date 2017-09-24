@@ -9,6 +9,7 @@ local wait = helpers.wait
 describe('lisp indent', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       (defun html-file (base)
@@ -22,7 +23,7 @@ describe('lisp indent', function()
       :if-exists :supersede)
       (let ((,ti ,title))
       (as title ,ti)
-      (with center 
+      (with center
       (as h2 (string-upcase ,ti)))
       (brs 3)
       ,@body))))
@@ -58,7 +59,7 @@ describe('lisp indent', function()
       		       :if-exists :supersede)
              (let ((,ti ,title))
       	 (as title ,ti)
-      	 (with center 
+      	 (with center
       	       (as h2 (string-upcase ,ti)))
       	 (brs 3)
       	 ,@body))))

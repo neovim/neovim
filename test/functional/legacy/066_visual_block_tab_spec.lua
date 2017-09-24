@@ -15,7 +15,7 @@ describe('visual block shift and tab characters', function()
       one two three
       one two three
       one two three
-      
+
       abcdefghijklmnopqrstuvwxyz
       abcdefghijklmnopqrstuvwxyz
       abcdefghijklmnopqrstuvwxyz
@@ -49,7 +49,7 @@ describe('visual block shift and tab characters', function()
       on1 two three
       on1 two three
       on1 two three
-      
+
           abcdefghijklmnopqrstuvwxyz
       abcdefghij
           abc	    defghijklmnopqrstuvwxyz
