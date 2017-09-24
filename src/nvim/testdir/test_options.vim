@@ -104,17 +104,25 @@ func Test_keymap_valid()
   call assert_fails(":set kmp=trunc\x00name", "trunc")
 endfunc
 
-func Test_dictionary()
+func Check_dir_option(name)
   " Check that it's possible to set the option.
-  set dictionary=/usr/share/dict/words
-  call assert_equal('/usr/share/dict/words', &dictionary)
-  set dictionary=/usr/share/dict/words,/and/there
-  call assert_equal('/usr/share/dict/words,/and/there', &dictionary)
-  set dictionary=/usr/share/dict\ words
-  call assert_equal('/usr/share/dict words', &dictionary)
+  exe 'set ' . a:name . '=/usr/share/dict/words'
+  call assert_equal('/usr/share/dict/words', eval('&' . a:name))
+  exe 'set ' . a:name . '=/usr/share/dict/words,/and/there'
+  call assert_equal('/usr/share/dict/words,/and/there', eval('&' . a:name))
+  exe 'set ' . a:name . '=/usr/share/dict\ words'
+  call assert_equal('/usr/share/dict words', eval('&' . a:name))
 
   " Check rejecting weird characters.
-  call assert_fails("set dictionary=/not&there", "E474:")
-  call assert_fails("set dictionary=/not>there", "E474:")
-  call assert_fails("set dictionary=/not.*there", "E474:")
+  call assert_fails("set " . a:name . "=/not&there", "E474:")
+  call assert_fails("set " . a:name . "=/not>there", "E474:")
+  call assert_fails("set " . a:name . "=/not.*there", "E474:")
+endfunc
+
+func Test_dictionary()
+  call Check_dir_option('dictionary')
+endfunc
+
+func Test_thesaurus()
+  call Check_dir_option('thesaurus')
 endfunc

@@ -2451,6 +2451,7 @@ return {
       full_name='thesaurus', abbreviation='tsr',
       type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
+      normal_dname_chars=true,
       vi_def=true,
       expand=true,
       varname='p_tsr',
