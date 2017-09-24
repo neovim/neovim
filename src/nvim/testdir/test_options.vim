@@ -103,3 +103,18 @@ func Test_keymap_valid()
   call assert_fails(":set kmp=trunc\x00name", "E544:")
   call assert_fails(":set kmp=trunc\x00name", "trunc")
 endfunc
+
+func Test_dictionary()
+  " Check that it's possible to set the option.
+  set dictionary=/usr/share/dict/words
+  call assert_equal('/usr/share/dict/words', &dictionary)
+  set dictionary=/usr/share/dict/words,/and/there
+  call assert_equal('/usr/share/dict/words,/and/there', &dictionary)
+  set dictionary=/usr/share/dict\ words
+  call assert_equal('/usr/share/dict words', &dictionary)
+
+  " Check rejecting weird characters.
+  call assert_fails("set dictionary=/not&there", "E474:")
+  call assert_fails("set dictionary=/not>there", "E474:")
+  call assert_fails("set dictionary=/not.*there", "E474:")
+endfunc
