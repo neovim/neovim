@@ -718,13 +718,13 @@ describe(":substitute, inccommand=split", function()
     feed(":%s/tw")
     screen:expect([[
       Inc substitution on           |
-      two lines                     |
+      {12:tw}o lines                     |
                                     |
       {15:~                             }|
       {15:~                             }|
       {11:[No Name]                     }|
-      |2| two lines                 |
-      |4| two lines                 |
+      |2| {12:tw}o lines                 |
+      |4| {12:tw}o lines                 |
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
@@ -760,13 +760,13 @@ describe(":substitute, inccommand=split", function()
     feed(":%s/tw")
     screen:expect([[
       Inc substitution on           |
-      two lines                     |
+      {12:tw}o lines                     |
                                     |
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
-      |2| two lines                 |
-      |4| two lines                 |
+      |2| {12:tw}o lines                 |
+      |4| {12:tw}o lines                 |
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
@@ -864,7 +864,7 @@ describe(":substitute, inccommand=split", function()
     screen:sleep(1)
     screen:expect([[
       Inc substitution on           |
-      two lines                     |
+      {12:tw}o lines                     |
       Inc substitution on           |
       two lines                     |
                                     |
@@ -908,13 +908,13 @@ describe(":substitute, inccommand=split", function()
     -- 'cursorline' is NOT active during preview.
     screen:expect([[
       Inc substitution on           |
-      {9:tw}o lines                     |
+      {12:tw}o lines                     |
       Inc substitution on           |
-      {9:tw}o lines                     |
+      {12:tw}o lines                     |
                                     |
       {11:[No Name] [+]                 }|
-      |2| {9:tw}o lines                 |
-      |4| {9:tw}o lines                 |
+      |2| {12:tw}o lines                 |
+      |4| {12:tw}o lines                 |
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
@@ -1264,9 +1264,9 @@ describe("inccommand=nosplit", function()
     feed(":%s/tw")
     screen:expect([[
       Inc substitution on |
-      {9:tw}o lines           |
+      {12:tw}o lines           |
       Inc substitution on |
-      {9:tw}o lines           |
+      {12:tw}o lines           |
                           |
       {15:~                   }|
       {15:~                   }|
@@ -1643,7 +1643,7 @@ describe("'inccommand' split windows", function()
     feed(":%s/tw")
     screen:expect([[
       Inc substitution on {10:|}Inc substitution on|
-      two lines           {10:|}two lines          |
+      {12:tw}o lines           {10:|}{12:tw}o lines          |
                           {10:|}                   |
       {15:~                   }{10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
@@ -1658,12 +1658,12 @@ describe("'inccommand' split windows", function()
       {15:~                   }{10:|}{15:~                  }|
       {11:[No Name] [+]       }{10:|}{15:~                  }|
       Inc substitution on {10:|}{15:~                  }|
-      two lines           {10:|}{15:~                  }|
+      {12:tw}o lines           {10:|}{15:~                  }|
                           {10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
       {10:[No Name] [+]        [No Name] [+]      }|
-      |2| two lines                           |
+      |2| {12:tw}o lines                           |
       {15:~                                       }|
       {15:~                                       }|
       {15:~                                       }|
@@ -1682,7 +1682,7 @@ describe("'inccommand' split windows", function()
     feed(":%s/tw")
     screen:expect([[
       Inc substitution on {10:|}Inc substitution on|
-      two lines           {10:|}two lines          |
+      {12:tw}o lines           {10:|}{12:tw}o lines          |
                           {10:|}                   |
       {15:~                   }{10:|}{15:~                  }|
       {15:~                   }{10:|}{15:~                  }|
@@ -1697,12 +1697,12 @@ describe("'inccommand' split windows", function()
       {15:~                   }{10:|}{15:~                  }|
       {11:[No Name] [+]        }{10:[No Name] [+]      }|
       Inc substitution on                     |
-      two lines                               |
+      {12:tw}o lines                               |
                                               |
       {15:~                                       }|
       {15:~                                       }|
       {10:[No Name] [+]                           }|
-      |2| two lines                           |
+      |2| {12:tw}o lines                           |
       {15:~                                       }|
       {15:~                                       }|
       {15:~                                       }|
@@ -1732,7 +1732,7 @@ describe("'inccommand' split windows", function()
 
       screen:expect([[
         Inc substitution on                     |
-        two lines                               |
+        {12:tw}o lines                               |
                                                 |
         {15:~                                       }|
         {15:~                                       }|
@@ -1752,7 +1752,7 @@ describe("'inccommand' split windows", function()
         {15:~                                       }|
         {15:~                                       }|
         {11:[No Name] [+]                           }|
-        |2| two lines                           |
+        |2| {12:tw}o lines                           |
         {15:~                                       }|
         {15:~                                       }|
         {15:~                                       }|
@@ -1804,7 +1804,26 @@ describe(":substitute", function()
     common_setup(screen, "split", multiline_text)
     feed("gg")
 
-    feed(":%s/2\\_.*X/MMM")
+    feed(":%s/2\\_.*X")
+    screen:expect([[
+      1 {12:2 3}                         |
+      {12:A B C}                         |
+      {12:4 5 6}                         |
+      {12:X} Y Z                         |
+      7 8 9                         |
+      {11:[No Name] [+]                 }|
+      |1| 1 {12:2 3}                     |
+      |2|{12: A B C}                     |
+      |3|{12: 4 5 6}                     |
+      |4|{12: X} Y Z                     |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :%s/2\_.*X^                    |
+    ]])
+
+    feed("/MMM")
     screen:expect([[
       1 {12:MMM} Y Z                     |
       7 8 9                         |
@@ -2043,15 +2062,15 @@ describe(":substitute", function()
     common_setup(screen, "split", text)
     feed(":%s/[QR]\\n")
     screen:expect([[
-      afa Q                         |
-      adf la;lkd R                  |
+      afa {12:Q}                         |
+      adf la;lkd {12:R}                  |
       alx                           |
                                     |
       {15:~                             }|
       {11:[No Name] [+]                 }|
-      |3| afa Q                     |
-      |4| adf la;lkd R              |
-      |5| alx                       |
+      |3| afa {12:Q}                     |
+      |4|{12: }adf la;lkd {12:R}              |
+      |5|{12: }alx                       |
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
@@ -2201,16 +2220,16 @@ describe(":substitute", function()
       X Y Z                         |
       7 8 9                         |
       K L M                         |
-      a b c                         |
-      d e f                         |
-      q r s                         |
-      x y z                         |
-      £ m n                         |
-      t œ ¥                         |
+      {12:a} b c                         |
+      {12:d} e f                         |
+      {12:q} r s                         |
+      {12:x} y z                         |
+      £ {12:m} n                         |
+      {12:t} œ ¥                         |
                                     |
       {11:[No Name] [+]                 }|
-      | 7| a b c                    |
-      | 8| d e f                    |
+      | 7| {12:a} b c                    |
+      | 8| {12:d} e f                    |
       {10:[Preview]                     }|
       :%s/[a-z]^                     |
     ]])
@@ -2260,19 +2279,19 @@ describe(":substitute", function()
 
     feed(":%s/. .$")
     screen:expect([[
-      t œ ¥                         |
+      t {12:œ ¥}                         |
       {11:[No Name] [+]                 }|
-      | 1| 1 2 3                    |
-      | 2| A B C                    |
-      | 3| 4 5 6                    |
-      | 4| X Y Z                    |
-      | 5| 7 8 9                    |
-      | 6| K L M                    |
-      | 7| a b c                    |
-      | 8| d e f                    |
-      | 9| q r s                    |
-      |10| x y z                    |
-      |11| £ m n                    |
+      | 1| 1 {12:2 3}                    |
+      | 2| A {12:B C}                    |
+      | 3| 4 {12:5 6}                    |
+      | 4| X {12:Y Z}                    |
+      | 5| 7 {12:8 9}                    |
+      | 6| K {12:L M}                    |
+      | 7| a {12:b c}                    |
+      | 8| d {12:e f}                    |
+      | 9| q {12:r s}                    |
+      |10| x {12:y z}                    |
+      |11| £ {12:m n}                    |
       {10:[Preview]                     }|
       :%s/. .$^                      |
     ]])
