@@ -16,5 +16,3 @@ ignore = {
   "631",  -- max_line_length
 }
 
--- Ignore whitespace issues in converted Vim legacy tests.
-files["functional/legacy"] = {ignore = { "611", "612", "613", "621" }}
