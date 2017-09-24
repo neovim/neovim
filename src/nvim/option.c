@@ -2455,13 +2455,14 @@ did_set_string_option (
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
     errmsg = e_secure;
-  } else if ((((options[opt_idx].flags & P_NFNAME)
-               && vim_strpbrk(*varp, (char_u *)"/\\*?[|;&<>\r\n") != NULL))
+  } else if (((options[opt_idx].flags & P_NFNAME)
+               && vim_strpbrk(*varp, (char_u *)(secure
+                              ? "/\\*?[|;&<>\r\n" : "/\\*?[<>\r\n")) != NULL)
              || ((options[opt_idx].flags & P_NDNAME)
                  && vim_strpbrk(*varp, (char_u *)"*?[|;&<>\r\n") != NULL)) {
     // Check for a "normal" directory or file name in some options.  Disallow a
     // path separator (slash and/or backslash), wildcards and characters that
-    // are often illegal in a file name.
+    // are often illegal in a file name. Be more permissive if "secure" is off.
     errmsg = e_invarg;
   }
   /* 'backupcopy' */
