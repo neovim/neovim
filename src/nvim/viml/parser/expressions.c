@@ -681,24 +681,22 @@ static void viml_pexpr_handle_bop(ExprASTStack *const ast_stack,
   ExprOpLvl top_node_lvl;
   ExprOpAssociativity top_node_ass;
   assert(kv_size(*ast_stack));
-#define NODE_LVL(typ) \
-  (bop_node->type == kExprNodeCall && typ == kExprNodeCall \
-   ? kEOpLvlSubscript \
-   : node_type_to_op_lvl[typ])
-#define NODE_ASS(typ) \
-  (bop_node->type == kExprNodeCall && typ == kExprNodeCall \
-   ? kEOpAssLeft \
-   : node_type_to_op_ass[typ])
-  const ExprOpLvl bop_node_lvl = NODE_LVL(bop_node->type);
+  const ExprOpLvl bop_node_lvl = (bop_node->type == kExprNodeCall
+                                  ? kEOpLvlSubscript
+                                  : node_type_to_op_lvl[bop_node->type]);
 #ifndef NDEBUG
-  const ExprOpAssociativity bop_node_ass = NODE_ASS(bop_node->type);
+  const ExprOpAssociativity bop_node_ass = (
+      bop_node->type == kExprNodeCall
+      ? kEOpAssLeft
+      : node_type_to_op_ass[bop_node->type]);
 #endif
   do {
     ExprASTNode **new_top_node_p = kv_last(*ast_stack);
     ExprASTNode *new_top_node = *new_top_node_p;
     assert(new_top_node != NULL);
-    const ExprOpLvl new_top_node_lvl = NODE_LVL(new_top_node->type);
-    const ExprOpAssociativity new_top_node_ass = NODE_ASS(new_top_node->type);
+    const ExprOpLvl new_top_node_lvl = node_type_to_op_lvl[new_top_node->type];
+    const ExprOpAssociativity new_top_node_ass = (
+        node_type_to_op_ass[new_top_node->type]);
     assert(bop_node_lvl != new_top_node_lvl
            || bop_node_ass == new_top_node_ass);
     if (top_node_p != NULL
@@ -751,8 +749,6 @@ static void viml_pexpr_handle_bop(ExprASTStack *const ast_stack,
   *want_node_p = (*want_node_p == kENodeArgumentSeparator
                   ? kENodeArgument
                   : kENodeValue);
-#undef NODE_ASS
-#undef NODE_LVL
 }
 
 /// ParserPosition literal based on ParserPosition pos with columns shifted

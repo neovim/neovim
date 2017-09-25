@@ -943,6 +943,121 @@ describe('Expressions parser', function()
       hl('Register', '@e', 1),
       hl('CallingParenthesis', ')'),
     })
+    check_parsing('@a(@b(@c))', 0, {
+      --           01234567890123456789012345678901234567
+      --           0         1         2         3
+      ast = {
+        {
+          'Call:0:2:(',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'Call:0:5:(',
+              children = {
+                'Register(name=b):0:3:@b',
+                'Register(name=c):0:6:@c',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@c'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('@a(@b(@c(@d(@e), @f(@g(@h), @i(@j)))))', 0, {
+      --           01234567890123456789012345678901234567
+      --           0         1         2         3
+      ast = {
+        {
+          'Call:0:2:(',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'Call:0:5:(',
+              children = {
+                'Register(name=b):0:3:@b',
+                {
+                  'Call:0:8:(',
+                  children = {
+                    'Register(name=c):0:6:@c',
+                    {
+                      'Comma:0:15:,',
+                      children = {
+                        {
+                          'Call:0:11:(',
+                          children = {
+                            'Register(name=d):0:9:@d',
+                            'Register(name=e):0:12:@e',
+                          },
+                        },
+                        {
+                          'Call:0:19:(',
+                          children = {
+                            'Register(name=f):0:16: @f',
+                            {
+                              'Comma:0:26:,',
+                              children = {
+                                {
+                                  'Call:0:22:(',
+                                  children = {
+                                    'Register(name=g):0:20:@g',
+                                    'Register(name=h):0:23:@h',
+                                  },
+                                },
+                                {
+                                  'Call:0:30:(',
+                                  children = {
+                                    'Register(name=i):0:27: @i',
+                                    'Register(name=j):0:31:@j',
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@c'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@d'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@e'),
+      hl('CallingParenthesis', ')'),
+      hl('Comma', ','),
+      hl('Register', '@f', 1),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@g'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@h'),
+      hl('CallingParenthesis', ')'),
+      hl('Comma', ','),
+      hl('Register', '@i', 1),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@j'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', ')'),
+    })
   end)
   itp('works with identifiers', function()
     check_parsing('var', 0, {
