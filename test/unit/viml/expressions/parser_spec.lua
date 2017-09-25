@@ -1059,7 +1059,7 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', ')'),
     })
   end)
-  itp('works with identifiers', function()
+  itp('works with variable names, including curly braces ones', function()
     check_parsing('var', 0, {
         ast = {
           'PlainIdentifier(scope=0,ident=var):0:0:var',
@@ -1083,16 +1083,6 @@ describe('Expressions parser', function()
     }, {
       hl('IdentifierScope', 'g'),
       hl('IdentifierScopeDelimiter', ':'),
-    })
-  end)
-  itp('works with curly braces', function()
-    check_parsing('{}', 0, {
-      ast = {
-        'DictLiteral(-di):0:0:{',
-      },
-    }, {
-      hl('Dict', '{'),
-      hl('Dict', '}'),
     })
     check_parsing('{a}', 0, {
       --           012
@@ -1166,6 +1156,209 @@ describe('Expressions parser', function()
       hl('Curly', '{'),
       hl('Register', '@a'),
       hl('Curly', '}'),
+    })
+    check_parsing('{@a}{@b}', 0, {
+      --           01234567
+      ast = {
+        {
+          'ComplexIdentifier:0:4:',
+          children = {
+            {
+              'CurlyBracesIdentifier(-di):0:0:{',
+              children = {
+                'Register(name=a):0:1:@a',
+              },
+            },
+            {
+              'CurlyBracesIdentifier(--i):0:4:{',
+              children = {
+                'Register(name=b):0:5:@b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+      hl('Curly', '{'),
+      hl('Register', '@b'),
+      hl('Curly', '}'),
+    })
+    check_parsing('g:{@a}', 0, {
+      --           01234567
+      ast = {
+        {
+          'ComplexIdentifier:0:2:',
+          children = {
+            'PlainIdentifier(scope=g,ident=):0:0:g:',
+            {
+              'CurlyBracesIdentifier(--i):0:2:{',
+              children = {
+                'Register(name=a):0:3:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierScope', 'g'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Curly', '{'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+    })
+    check_parsing('{@a}_test', 0, {
+      --           012345678
+      ast = {
+        {
+          'ComplexIdentifier:0:4:',
+          children = {
+            {
+              'CurlyBracesIdentifier(-di):0:0:{',
+              children = {
+                'Register(name=a):0:1:@a',
+              },
+            },
+            'PlainIdentifier(scope=0,ident=_test):0:4:_test',
+          },
+        },
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+      hl('Identifier', '_test'),
+    })
+    check_parsing('g:{@a}_test', 0, {
+      --           01234567890
+      ast = {
+        {
+          'ComplexIdentifier:0:2:',
+          children = {
+            'PlainIdentifier(scope=g,ident=):0:0:g:',
+            {
+              'ComplexIdentifier:0:6:',
+              children = {
+                {
+                  'CurlyBracesIdentifier(--i):0:2:{',
+                  children = {
+                    'Register(name=a):0:3:@a',
+                  },
+                },
+                'PlainIdentifier(scope=0,ident=_test):0:6:_test',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierScope', 'g'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Curly', '{'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+      hl('Identifier', '_test'),
+    })
+    check_parsing('g:{@a}_test()', 0, {
+      --           0123456789012
+      ast = {
+        {
+          'Call:0:11:(',
+          children = {
+            {
+              'ComplexIdentifier:0:2:',
+              children = {
+                'PlainIdentifier(scope=g,ident=):0:0:g:',
+                {
+                  'ComplexIdentifier:0:6:',
+                  children = {
+                    {
+                      'CurlyBracesIdentifier(--i):0:2:{',
+                      children = {
+                        'Register(name=a):0:3:@a',
+                      },
+                    },
+                    'PlainIdentifier(scope=0,ident=_test):0:6:_test',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierScope', 'g'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Curly', '{'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+      hl('Identifier', '_test'),
+      hl('CallingParenthesis', '('),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('{@a} ()', 0, {
+      --           0123456789012
+      ast = {
+        {
+          'Call:0:4: (',
+          children = {
+            {
+              'CurlyBracesIdentifier(-di):0:0:{',
+              children = {
+                'Register(name=a):0:1:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+      hl('CallingParenthesis', '(', 1),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('g:{@a} ()', 0, {
+      --           0123456789012
+      ast = {
+        {
+          'Call:0:6: (',
+          children = {
+            {
+              'ComplexIdentifier:0:2:',
+              children = {
+                'PlainIdentifier(scope=g,ident=):0:0:g:',
+                {
+                  'CurlyBracesIdentifier(--i):0:2:{',
+                  children = {
+                    'Register(name=a):0:3:@a',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierScope', 'g'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Curly', '{'),
+      hl('Register', '@a'),
+      hl('Curly', '}'),
+      hl('CallingParenthesis', '(', 1),
+      hl('CallingParenthesis', ')'),
+    })
+  end)
+  itp('works with lambdas and dictionaries', function()
+    check_parsing('{}', 0, {
+      ast = {
+        'DictLiteral(-di):0:0:{',
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Dict', '}'),
     })
     check_parsing('{->@a}', 0, {
       ast = {
@@ -1971,8 +2164,175 @@ describe('Expressions parser', function()
       hl('Comma', ','),
       hl('Dict', '}'),
     })
+    check_parsing('{({f -> g})(@h)(@i)}', 0, {
+      --           01234567890123456789
+      --           0         1
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            {
+              'Call:0:15:(',
+              children = {
+                {
+                  'Call:0:11:(',
+                  children = {
+                    {
+                      'Nested:0:1:(',
+                      children = {
+                        {
+                          'Lambda(\\di):0:2:{',
+                          children = {
+                            'PlainIdentifier(scope=0,ident=f):0:3:f',
+                            {
+                              'Arrow:0:4: ->',
+                              children = {
+                                'PlainIdentifier(scope=0,ident=g):0:7: g',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    'Register(name=h):0:12:@h',
+                  },
+                },
+                'Register(name=i):0:16:@i',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('NestingParenthesis', '('),
+      hl('Lambda', '{'),
+      hl('Identifier', 'f'),
+      hl('Arrow', '->', 1),
+      hl('Identifier', 'g', 1),
+      hl('Lambda', '}'),
+      hl('NestingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@h'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@i'),
+      hl('CallingParenthesis', ')'),
+      hl('Curly', '}'),
+    })
+    -- FIXME the below should not crash
+    check_parsing('a:{{b, c -> @d + @e + ({f -> g})(@h)}(@i)}j', 0, {
+      --           01234567890123456789012345678901234567890123456
+      --           0         1         2         3         4
+      ast = {
+        {
+          'ComplexIdentifier:0:2:',
+          children = {
+            'PlainIdentifier(scope=a,ident=):0:0:g:',
+            {
+              'ComplexIdentifier:0:6:',
+              children = {
+                {
+                  'CurlyBracesIdentifier(--i):0:2:{',
+                  children = {
+                    {
+                      'Call:0:37:(',
+                      children = {
+                        {
+                          'Lambda(\\di):0:3:{',
+                          children = {
+                            {
+                              'Comma:0:5:,',
+                              children = {
+                                'PlainIdentifier(scope=0,ident=b):0:4:b',
+                                'PlainIdentifier(scope=0,ident=c):0:6: c',
+                              },
+                            },
+                            {
+                              'Arrow:0:8: ->',
+                              children = {
+                                {
+                                  'BinaryPlus:0:19: +',
+                                  children = {
+                                    {
+                                      'BinaryPlus:0:14: +',
+                                      children = {
+                                        'Register(name=d):0:11: @d',
+                                        'Register(name=e):0:16: @e',
+                                      },
+                                    },
+                                    {
+                                      'Call:0:32:(',
+                                      children = {
+                                        {
+                                          'NestingParenthesis:0:21: (',
+                                          children = {
+                                            {
+                                              'Lambda(\\di):0:23:{',
+                                              children = {
+                                                'PlainIdentifier(scope=0,ident=f):0:24:f',
+                                                {
+                                                  'Arrow:0:25: ->',
+                                                  children = {
+                                                    'PlainIdentifier(scope=0,ident=g):0:28: g',
+                                                  },
+                                                },
+                                              },
+                                            },
+                                          },
+                                        },
+                                        'Register(name=h):0:33:@h',
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                        'Register(name=i):0:38:@i',
+                      },
+                    },
+                    'PlainIdentifier(scope=0,ident=j):0:42:j',
+                  },
+                },
+                'PlainIdentifier(scope=0,ident=_test):0:42:_test',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierScope', 'a'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Curly', '{'),
+      hl('Lambda', '{'),
+      hl('Identifier', 'b'),
+      hl('Comma', ','),
+      hl('Identifier', 'c', 1),
+      hl('Arrow', '->', 1),
+      hl('Register', '@d', 1),
+      hl('BinaryPlus', '+', 1),
+      hl('Register', '@e', 1),
+      hl('BinaryPlus', '+', 1),
+      hl('NestingParenthesis', '('),
+      hl('Lambda', '{'),
+      hl('Identifier', 'f'),
+      hl('Arrow', '->', 1),
+      hl('Identifier', 'g', 1),
+      hl('Lambda', '}'),
+      hl('NestingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@h'),
+      hl('CallingParenthesis', ')'),
+      hl('Lambda', '}'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@i'),
+      hl('CallingParenthesis', ')'),
+      hl('Curly', '}'),
+      hl('Identifier', 'j'),
+    })
   end)
   -- FIXME: Test sequence of arrows inside and outside lambdas.
-  -- FIXME: Test multiple arguments calling.
   -- FIXME: Test autoload character and scope in lambda arguments.
 end)

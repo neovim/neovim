@@ -909,6 +909,55 @@ static inline void east_set_error(ExprAST *const ret_ast,
       } \
     } while (0)
 
+/// Add identifier which should constitute complex identifier node
+///
+/// This one is to be called only in case want_node is kENodeOperator.
+///
+/// @param  new_ident_node_code  Code used to create a new identifier node and
+///                              update want_node and ast_stack, without
+///                              a trailing semicolon.
+/// @param  hl  Highlighting name to use, passed as an argument to #HL.
+#define ADD_IDENT(new_ident_node_code, hl) \
+    do { \
+      assert(want_node == kENodeOperator); \
+      /* Operator: may only be curly braces name, but only under certain */ \
+      /* conditions. */ \
+\
+      /* First condition is that there is no space before a part of complex */ \
+      /* identifier. */ \
+      if (prev_token.type == kExprLexSpacing) { \
+        OP_MISSING; \
+      } \
+      switch ((*top_node_p)->type) { \
+        /* Second is that previous node is one of the identifiers: */ \
+        /* complex, plain, curly braces. */ \
+\
+        /* TODO(ZyX-I): Extend syntax to allow ${expr}. This is needed to */ \
+        /* handle environment variables like those bash uses for */ \
+        /* `export -f`: their names consist not only of alphanumeric */ \
+        /* characetrs. */ \
+        case kExprNodeComplexIdentifier: \
+        case kExprNodePlainIdentifier: \
+        case kExprNodeCurlyBracesIdentifier: { \
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComplexIdentifier); \
+          cur_node->len = 0; \
+          cur_node->children = *top_node_p; \
+          *top_node_p = cur_node; \
+          kvi_push(ast_stack, &cur_node->children->next); \
+          ExprASTNode **const new_top_node_p = kv_last(ast_stack); \
+          assert(*new_top_node_p == NULL); \
+          new_ident_node_code; \
+          *new_top_node_p = cur_node; \
+          HL_CUR_TOKEN(hl); \
+          break; \
+        } \
+        default: { \
+          OP_MISSING; \
+          break; \
+        } \
+      } \
+    } while (0)
+
 /// Parse one VimL expression
 ///
 /// @param  pstate  Parser state.
@@ -1272,40 +1321,18 @@ viml_pexpr_parse_figure_brace_closing_error:
             want_node = kENodeArgument;
             lambda_node = cur_node;
           } else {
-            // Operator: may only be curly braces name, but only under certain
-            // conditions.
-
-            // First condition is that there is no space before {.
-            if (prev_token.type == kExprLexSpacing) {
-              OP_MISSING;
-            }
-            switch ((*top_node_p)->type) {
-              // Second is that previous node is one of the identifiers:
-              // complex, plain, curly braces.
-
-              // TODO(ZyX-I): Extend syntax to allow ${expr}. This is needed to
-              // handle environment variables like those bash uses for
-              // `export -f`: their names consist not only of alphanumeric
-              // characetrs.
-              case kExprNodeComplexIdentifier:
-              case kExprNodePlainIdentifier:
-              case kExprNodeCurlyBracesIdentifier: {
-                NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComplexIdentifier);
-                cur_node->len = 0;
-                viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
-                ExprASTNode *const new_top_node = *kv_last(ast_stack);
-                assert(new_top_node->next == NULL);
-                NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeCurlyBracesIdentifier);
-                new_top_node->next = cur_node;
-                kvi_push(ast_stack, &cur_node->children);
-                HL_CUR_TOKEN(Curly);
-                break;
-              }
-              default: {
-                OP_MISSING;
-                break;
-              }
-            }
+            ADD_IDENT(
+                do {
+                  NEW_NODE_WITH_CUR_POS(cur_node,
+                                        kExprNodeCurlyBracesIdentifier);
+                  cur_node->data.fig.opening_hl_idx = kv_size(*pstate->colors);
+                  cur_node->data.fig.type_guesses.allow_lambda = false;
+                  cur_node->data.fig.type_guesses.allow_dict = false;
+                  cur_node->data.fig.type_guesses.allow_ident = true;
+                  kvi_push(ast_stack, &cur_node->children);
+                  want_node = kENodeValue;
+                } while (0),
+                Curly);
           }
         }
         break;
@@ -1351,8 +1378,6 @@ viml_pexpr_parse_figure_brace_closing_error:
           want_node = (want_node == kENodeArgument
                        ? kENodeArgumentSeparator
                        : kENodeOperator);
-          // FIXME: It is not valid to have scope inside complex identifier,
-          //        check that.
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodePlainIdentifier);
           cur_node->data.var.scope = cur_token.data.var.scope;
           const size_t scope_shift = (cur_token.data.var.scope == 0
@@ -1374,8 +1399,22 @@ viml_pexpr_parse_figure_brace_closing_error:
                                   cur_token.len - scope_shift,
                                   HL(Identifier));
           }
+        // FIXME: Actually, g{foo}g:foo is valid: "1?g{foo}g:foo" is like
+        //        "g{foo}g" and not an error.
         } else {
-          OP_MISSING;
+          if (cur_token.data.var.scope == 0) {
+            ADD_IDENT(
+                do {
+                  NEW_NODE_WITH_CUR_POS(cur_node, kExprNodePlainIdentifier);
+                  cur_node->data.var.scope = cur_token.data.var.scope;
+                  cur_node->data.var.ident = pline.data + cur_token.start.col;
+                  cur_node->data.var.ident_len = cur_token.len;
+                  want_node = kENodeOperator;
+                } while (0),
+                Identifier);
+          } else {
+            OP_MISSING;
+          }
         }
         break;
       }
@@ -1453,7 +1492,8 @@ viml_pexpr_parse_no_paren_closing_error: {}
               // intentionally inconsistent and he is not very happy with the
               // situation himself.
               if ((*top_node_p)->type != kExprNodePlainIdentifier
-                  && (*top_node_p)->type != kExprNodeComplexIdentifier) {
+                  && (*top_node_p)->type != kExprNodeComplexIdentifier
+                  && (*top_node_p)->type != kExprNodeCurlyBracesIdentifier) {
                 OP_MISSING;
               }
             }
