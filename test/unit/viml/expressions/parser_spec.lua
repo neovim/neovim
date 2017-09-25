@@ -901,6 +901,48 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', '('),
       hl('Register', '@b'),
     })
+    check_parsing('@a(@b, @c, @d, @e)', 0, {
+      --           012345678901234567
+      --           0         1
+      ast = {
+        {
+          'Call:0:2:(',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'Comma:0:5:,',
+              children = {
+                'Register(name=b):0:3:@b',
+                {
+                  'Comma:0:9:,',
+                  children = {
+                    'Register(name=c):0:6: @c',
+                    {
+                      'Comma:0:13:,',
+                      children = {
+                        'Register(name=d):0:10: @d',
+                        'Register(name=e):0:14: @e',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('Comma', ','),
+      hl('Register', '@c', 1),
+      hl('Comma', ','),
+      hl('Register', '@d', 1),
+      hl('Comma', ','),
+      hl('Register', '@e', 1),
+      hl('CallingParenthesis', ')'),
+    })
   end)
   itp('works with identifiers', function()
     check_parsing('var', 0, {

@@ -395,6 +395,43 @@ viml_pexpr_next_token_adv_return:
   return ret;
 }
 
+#ifdef UNIT_TESTING
+#include <stdio.h>
+REAL_FATTR_UNUSED
+static inline void viml_pexpr_debug_print_ast_node(
+    const ExprASTNode *const *const eastnode_p,
+    const char *const prefix)
+{
+  if (*eastnode_p == NULL) {
+    fprintf(stderr, "%s %p : NULL\n", prefix, (void *)eastnode_p);
+  } else {
+    fprintf(stderr, "%s %p : %p : %c : %zu:%zu:%zu\n",
+            prefix, (void *)eastnode_p, (void *)(*eastnode_p),
+            (*eastnode_p)->type, (*eastnode_p)->start.line,
+            (*eastnode_p)->start.col, (*eastnode_p)->len);
+  }
+}
+REAL_FATTR_UNUSED
+static inline void viml_pexpr_debug_print_ast_stack(
+    const ExprASTStack *const ast_stack,
+    const char *const msg)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+{
+  fprintf(stderr, "\n%sstack: %zu:\n", msg, kv_size(*ast_stack));
+  for (size_t i = 0; i < kv_size(*ast_stack); i++) {
+    viml_pexpr_debug_print_ast_node(
+        (const ExprASTNode *const *)kv_A(*ast_stack, i),
+        "-");
+  }
+}
+#define PSTACK(msg) \
+    viml_pexpr_debug_print_ast_stack(&ast_stack, #msg)
+#define PSTACK_P(msg) \
+    viml_pexpr_debug_print_ast_stack(ast_stack, #msg)
+#define PNODE_P(eastnode_p, msg) \
+    viml_pexpr_debug_print_ast_node((const ExprASTNode *const *)ast_stack, #msg)
+#endif
+
 // start = s ternary_expr s EOC
 // ternary_expr = binop_expr
 //                ( s Question s ternary_expr s Colon s ternary_expr s )?
@@ -560,6 +597,9 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
   [kExprNodeOpMissing] = kEOpLvlMultiplication,
 
   [kExprNodeNested] = kEOpLvlParens,
+  // Note: it is kEOpLvlSubscript for “binary operator” itself, but
+  //       kEOpLvlParens when it comes to inside the parenthesis.
+  [kExprNodeCall] = kEOpLvlParens,
 
   [kExprNodeUnknownFigure] = kEOpLvlParens,
   [kExprNodeLambda] = kEOpLvlParens,
@@ -578,7 +618,6 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
   [kExprNodeUnaryPlus] = kEOpLvlUnary,
 
   [kExprNodeSubscript] = kEOpLvlSubscript,
-  [kExprNodeCall] = kEOpLvlSubscript,
 
   [kExprNodeComplexIdentifier] = kEOpLvlComplexIdentifier,
   [kExprNodePlainIdentifier] = kEOpLvlComplexIdentifier,
@@ -593,6 +632,7 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   [kExprNodeOpMissing] = kEOpAssNo,
 
   [kExprNodeNested] = kEOpAssNo,
+  [kExprNodeCall] = kEOpAssNo,
 
   [kExprNodeUnknownFigure] = kEOpAssLeft,
   [kExprNodeLambda] = kEOpAssNo,
@@ -619,7 +659,6 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   [kExprNodeUnaryPlus] = kEOpAssNo,
 
   [kExprNodeSubscript] = kEOpAssLeft,
-  [kExprNodeCall] = kEOpAssLeft,
 
   [kExprNodePlainIdentifier] = kEOpAssLeft,
   [kExprNodeComplexIdentifier] = kEOpAssLeft,
@@ -628,43 +667,6 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   [kExprNodeRegister] = kEOpAssNo,
   [kExprNodeListLiteral] = kEOpAssNo,
 };
-
-#ifdef UNIT_TESTING
-#include <stdio.h>
-REAL_FATTR_UNUSED
-static inline void viml_pexpr_debug_print_ast_node(
-    const ExprASTNode *const *const eastnode_p,
-    const char *const prefix)
-{
-  if (*eastnode_p == NULL) {
-    fprintf(stderr, "%s %p : NULL\n", prefix, (void *)eastnode_p);
-  } else {
-    fprintf(stderr, "%s %p : %p : %c : %zu:%zu:%zu\n",
-            prefix, (void *)eastnode_p, (void *)(*eastnode_p),
-            (*eastnode_p)->type, (*eastnode_p)->start.line,
-            (*eastnode_p)->start.col, (*eastnode_p)->len);
-  }
-}
-REAL_FATTR_UNUSED
-static inline void viml_pexpr_debug_print_ast_stack(
-    const ExprASTStack *const ast_stack,
-    const char *const msg)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
-{
-  fprintf(stderr, "\n%sstack: %zu:\n", msg, kv_size(*ast_stack));
-  for (size_t i = 0; i < kv_size(*ast_stack); i++) {
-    viml_pexpr_debug_print_ast_node(
-        (const ExprASTNode *const *)kv_A(*ast_stack, i),
-        "-");
-  }
-}
-#define PSTACK(msg) \
-    viml_pexpr_debug_print_ast_stack(&ast_stack, #msg)
-#define PSTACK_P(msg) \
-    viml_pexpr_debug_print_ast_stack(ast_stack, #msg)
-#define PNODE_P(eastnode_p, msg) \
-    viml_pexpr_debug_print_ast_node((const ExprASTNode *const *)ast_stack, #msg)
-#endif
 
 /// Handle binary operator
 ///
@@ -679,17 +681,24 @@ static void viml_pexpr_handle_bop(ExprASTStack *const ast_stack,
   ExprOpLvl top_node_lvl;
   ExprOpAssociativity top_node_ass;
   assert(kv_size(*ast_stack));
-  const ExprOpLvl bop_node_lvl = node_type_to_op_lvl[bop_node->type];
+#define NODE_LVL(typ) \
+  (bop_node->type == kExprNodeCall && typ == kExprNodeCall \
+   ? kEOpLvlSubscript \
+   : node_type_to_op_lvl[typ])
+#define NODE_ASS(typ) \
+  (bop_node->type == kExprNodeCall && typ == kExprNodeCall \
+   ? kEOpAssLeft \
+   : node_type_to_op_ass[typ])
+  const ExprOpLvl bop_node_lvl = NODE_LVL(bop_node->type);
 #ifndef NDEBUG
-  const ExprOpAssociativity bop_node_ass = node_type_to_op_ass[bop_node->type];
+  const ExprOpAssociativity bop_node_ass = NODE_ASS(bop_node->type);
 #endif
   do {
     ExprASTNode **new_top_node_p = kv_last(*ast_stack);
     ExprASTNode *new_top_node = *new_top_node_p;
     assert(new_top_node != NULL);
-    const ExprOpLvl new_top_node_lvl = node_type_to_op_lvl[new_top_node->type];
-    const ExprOpAssociativity new_top_node_ass = (
-        node_type_to_op_ass[new_top_node->type]);
+    const ExprOpLvl new_top_node_lvl = NODE_LVL(new_top_node->type);
+    const ExprOpAssociativity new_top_node_ass = NODE_ASS(new_top_node->type);
     assert(bop_node_lvl != new_top_node_lvl
            || bop_node_ass == new_top_node_ass);
     if (top_node_p != NULL
@@ -742,6 +751,8 @@ static void viml_pexpr_handle_bop(ExprASTStack *const ast_stack,
   *want_node_p = (*want_node_p == kENodeArgumentSeparator
                   ? kENodeArgument
                   : kENodeValue);
+#undef NODE_ASS
+#undef NODE_LVL
 }
 
 /// ParserPosition literal based on ParserPosition pos with columns shifted
