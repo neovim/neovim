@@ -21,7 +21,7 @@ func Test_mksession()
     \   'aä Ä  two multiByte characters',
     \   'Aäöü  three mulTibyte characters'
     \ ])
-  let tmpfile = tempname()
+  let tmpfile = 'Xtemp'
   exec 'w! ' . tmpfile
   /^start:
   set wrap
@@ -62,8 +62,8 @@ func Test_mksession()
   norm! j016|3zl
   split
   call wincol()
-  mksession! test_mks.out
-  let li = filter(readfile('test_mks.out'), 'v:val =~# "\\(^ *normal! 0\\|^ *exe ''normal!\\)"')
+  mksession! Xtest_mks.out
+  let li = filter(readfile('Xtest_mks.out'), 'v:val =~# "\\(^ *normal! 0\\|^ *exe ''normal!\\)"')
   let expected = [
     \   'normal! 016|',
     \   'normal! 016|',
@@ -95,7 +95,7 @@ func Test_mksession()
   call assert_equal(expected, li)
   tabclose!
 
-  call delete('test_mks.out')
+  call delete('Xtest_mks.out')
   call delete(tmpfile)
   let &wrap = wrap_save
 endfunc
@@ -103,10 +103,10 @@ endfunc
 func Test_mksession_winheight()
   new
   set winheight=10 winminheight=2
-  mksession! test_mks.out
-  source test_mks.out
+  mksession! Xtest_mks.out
+  source Xtest_mks.out
 
-  " call delete('test_mks.out')
+  call delete('Xtest_mks.out')
 endfunc
 
 " Verify that arglist is stored correctly to the session file.
