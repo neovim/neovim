@@ -110,3 +110,6 @@ disables tracing (the fastest, but you get no data if tests crash and there was
 no core dump generated), `1` or empty/undefined leaves only C function cals and 
 returns in the trace (faster then recording everything), `2` records all 
 function calls, returns and lua source lines exuecuted.
+
+`NVIM_TEST_TRACE_ON_ERROR` (U) (1): makes unit tests yield trace on error in 
+addition to regular error message.

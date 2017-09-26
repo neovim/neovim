@@ -698,7 +698,14 @@ local function check_child_err(rd)
   local len_s = sc.read(rd, 5)
   local len = tonumber(len_s)
   neq(0, len)
-  local err = sc.read(rd, len + 1)
+  local err = ''
+  if os.getenv('NVIM_TEST_TRACE_ON_ERROR') == '1' and #trace ~= 0 then
+    err = '\nTest failed, trace:\n' .. tracehelp
+    for _, traceline in ipairs(trace) do
+      err = err .. traceline
+    end
+  end
+  err = err .. sc.read(rd, len + 1)
   assert.just_fail(err)
 end
 
