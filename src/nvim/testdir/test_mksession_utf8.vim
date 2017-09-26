@@ -1,15 +1,16 @@
-" Test for :mksession, :mkview and :loadview in latin1 encoding
+" Test for :mksession, :mkview and :loadview in utf-8 encoding
 
-scriptencoding latin1
+set encoding=utf-8
+scriptencoding utf-8
 
 if !has('multi_byte') || !has('mksession')
   finish
 endif
 
-func Test_mksession()
+func Test_mksession_utf8()
   tabnew
   let wrap_save = &wrap
-  set sessionoptions=buffers splitbelow fileencoding=latin1
+  set sessionoptions=buffers splitbelow fileencoding=utf-8
   call setline(1, [
     \   'start:',
     \   'no multibyte chAracter',
@@ -17,9 +18,9 @@ func Test_mksession()
     \   '    four leadinG spaces',
     \   'two		consecutive tabs',
     \   'two	tabs	in one line',
-    \   'one ‰ multibyteCharacter',
-    \   'a‰ ƒ  two multiByte characters',
-    \   'A‰ˆ¸  three mulTibyte characters'
+    \   'one ‚Ä¶ multibyteCharacter',
+    \   'a ‚Äúb‚Äù two multiByte characters',
+    \   '‚Äúc‚Äù1‚Ç¨ three mulTibyte characters'
     \ ])
   let tmpfile = tempname()
   exec 'w! ' . tmpfile
@@ -98,18 +99,6 @@ func Test_mksession()
   call delete('test_mks.out')
   call delete(tmpfile)
   let &wrap = wrap_save
-endfunc
-
-" Verify that arglist is stored correctly to the session file.
-func Test_mksession_arglist()
-  argdel *
-  next file1 file2 file3 file4
-  mksession! Xtest_mks.out
-  source Xtest_mks.out
-  call assert_equal(['file1', 'file2', 'file3', 'file4'], argv())
-
-  call delete('Xtest_mks.out')
-  argdel *
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
