@@ -8810,11 +8810,12 @@ makeopens (
         && buf->b_fname != NULL
         && buf->b_p_bl) {
       if (fprintf(fd, "badd +%" PRId64 " ",
-                  buf->b_wininfo == NULL ?
-                    (int64_t)1L :
-                    (int64_t)buf->b_wininfo->wi_fpos.lnum) < 0
-          || ses_fname(fd, buf, &ssop_flags, true) == FAIL)
+                  buf->b_wininfo == NULL
+                  ? (int64_t)1L
+                  : (int64_t)buf->b_wininfo->wi_fpos.lnum) < 0
+          || ses_fname(fd, buf, &ssop_flags, true) == FAIL) {
         return FAIL;
+      }
     }
   }
 
@@ -8885,11 +8886,13 @@ makeopens (
           && !bt_nofile(wp->w_buffer)
           ) {
         if (fputs(need_tabnew ? "tabedit " : "edit ", fd) < 0
-            || ses_fname(fd, wp->w_buffer, &ssop_flags, true) == FAIL)
+            || ses_fname(fd, wp->w_buffer, &ssop_flags, true) == FAIL) {
           return FAIL;
-        need_tabnew = FALSE;
-        if (!wp->w_arg_idx_invalid)
+        }
+        need_tabnew = false;
+        if (!wp->w_arg_idx_invalid) {
           edited_win = wp;
+        }
         break;
       }
     }
@@ -9240,16 +9243,18 @@ put_view (
         return FAIL;
       }
     } else {
-      /* No file in this buffer, just make it empty. */
-      if (put_line(fd, "enew") == FAIL)
+      // No file in this buffer, just make it empty.
+      if (put_line(fd, "enew") == FAIL) {
         return FAIL;
+      }
       if (wp->w_buffer->b_ffname != NULL) {
         // The buffer does have a name, but it's not a file name.
         if (fputs("file ", fd) < 0
-            || ses_fname(fd, wp->w_buffer, flagp, true) == FAIL)
+            || ses_fname(fd, wp->w_buffer, flagp, true) == FAIL) {
           return FAIL;
+        }
       }
-      do_cursor = FALSE;
+      do_cursor = false;
     }
   }
 
