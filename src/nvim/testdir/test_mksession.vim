@@ -121,4 +121,36 @@ func Test_mksession_arglist()
   argdel *
 endfunc
 
+
+func Test_mksession_one_buffer_two_windows()
+  edit Xtest1
+  new Xtest2
+  split
+  mksession! Xtest_mks.out
+  let lines = readfile('Xtest_mks.out')
+  let count1 = 0
+  let count2 = 0
+  let count2buf = 0
+  for line in lines
+    if line =~ 'edit \f*Xtest1$'
+      let count1 += 1
+    endif
+    if line =~ 'edit \f\{-}Xtest2'
+      let count2 += 1
+    endif
+    if line =~ 'buffer \f\{-}Xtest2'
+      let count2buf += 1
+    endif
+  endfor
+  call assert_equal(1, count1, 'Xtest1 count')
+  call assert_equal(2, count2, 'Xtest2 count')
+  call assert_equal(2, count2buf, 'Xtest2 buffer count')
+
+  close
+  bwipe!
+  !cp Xtest_mks.out /tmp
+  call delete('Xtest_mks.out')
+endfunc
+
+
 " vim: shiftwidth=2 sts=2 expandtab
