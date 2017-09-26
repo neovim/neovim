@@ -100,6 +100,15 @@ func Test_mksession()
   let &wrap = wrap_save
 endfunc
 
+func Test_mksession_winheight()
+  new
+  set winheight=10 winminheight=2
+  mksession! test_mks.out
+  source test_mks.out
+
+  " call delete('test_mks.out')
+endfunc
+
 " Verify that arglist is stored correctly to the session file.
 func Test_mksession_arglist()
   argdel *
