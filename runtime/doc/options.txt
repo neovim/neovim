@@ -6760,7 +6760,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	determined by the last focused window in the tabpage.  Highlights of
 	the popupmenu are determined by the current window.  Highlights in the
 	message area are not overridable.  Example for overriding the
-	backgrond color: >
+	background color: >
 		set winhighlight=Normal:MyNormal,NormalNC:MyNormalNC
 <
 			*'winfixheight'* *'wfh'* *'nowinfixheight'* *'nowfh'*
