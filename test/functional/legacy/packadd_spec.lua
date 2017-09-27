@@ -172,9 +172,9 @@ describe('packadd', function()
 
         helptags ALL
 
-        let tags1 = readfile(docdir1 . '/tags') 
+        let tags1 = readfile(docdir1 . '/tags')
         call assert_true(tags1[0] =~ 'look-here')
-        let tags2 = readfile(docdir2 . '/tags') 
+        let tags2 = readfile(docdir2 . '/tags')
         call assert_true(tags2[0] =~ 'look-away')
       endfunc
 

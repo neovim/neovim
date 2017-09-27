@@ -8,6 +8,8 @@ local clear, expect = helpers.clear, helpers.expect
 describe('linebreak', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
+  -- luacheck: ignore 613 (Trailing whitespaces in a string)
   it('is working', function()
     source([[
       set wildchar=^E
@@ -18,20 +20,20 @@ describe('linebreak', function()
       norm! zt
       set ts=4 sw=4 sts=4 linebreak sbr=+ wrap
       fu! ScreenChar(width, lines)
-      	let c=''
-      	for j in range(1,a:lines)
-      	    for i in range(1,a:width)
-      	    	let c.=nr2char(screenchar(j, i))
-      	    endfor
+        let c=''
+        for j in range(1,a:lines)
+            for i in range(1,a:width)
+              let c.=nr2char(screenchar(j, i))
+            endfor
                  let c.="\n"
-      	endfor
-      	return c
+        endfor
+        return c
       endfu
       fu! DoRecordScreen()
-      	wincmd l
-      	$put =printf(\"\n%s\", g:test)
-      	$put =g:line
-      	wincmd p
+        wincmd l
+        $put =printf(\"\n%s\", g:test)
+        $put =g:line
+        wincmd p
       endfu
       "
       let g:test ="Test 1: set linebreak + set list + fancy listchars"
@@ -148,22 +150,22 @@ describe('linebreak', function()
 
     -- Assert buffer contents.
     expect([[
-      
+
       	abcdef hijklmn	pqrstuvwxyz 1060ABCDEFGHIJKLMNOP 
-      
+
       Test 1: set linebreak + set list + fancy listchars
       ▕———abcdef          
       +hijklmn▕———        
       +pqrstuvwxyz␣1060ABC
       +DEFGHIJKLMNOPˑ¶    
-      
+
       Test 2: set nolinebreak list
       ▕———abcdef hijklmn▕—
       +pqrstuvwxyz␣1060ABC
       +DEFGHIJKLMNOPˑ¶    
       ¶                   
       	*mask = nil;
-      
+
       Test 3: set linebreak nolist
           *mask = nil;    
       ~                   
@@ -177,7 +179,7 @@ describe('linebreak', function()
       #define MSG_MODE_CONSOLE		2
       #define MSG_MODE_FILE_AND_CONSOLE	3
       #define MSG_MODE_FILE_THEN_CONSOLE	4
-      
+
       Test 4: set linebreak list listchars and concealing
       #define ABCDE>-->---1                   
       #define >CDEF>-->---1                   
@@ -187,7 +189,7 @@ describe('linebreak', function()
       #define >_CONSOLE>---------->---2       
       #define >_FILE_AND_CONSOLE>---------3   
       bbeeeeee		;	some text
-      
+
       Test 5: set linebreak list listchars and concealing part2
       eeeeee>--->-;>some text                 
       Test 6: Screenattributes for comment
@@ -196,10 +198,10 @@ describe('linebreak', function()
       Attribut 0 and 1 and 3 and 5 are different!
       Test 8: set linebreak with visual block mode and v_b_A and selection=exclusive and multibyte char
       long line: foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar TARGETÃx' at end
-      
+
       a b c
       a b c
-      
+
       Test 9: a multibyte sign and colorcolumn
         ¶                                     
       ＋a b c¶                                

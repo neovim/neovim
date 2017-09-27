@@ -9,6 +9,7 @@ local wait = helpers.wait
 describe('test5', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start of test file Xxx

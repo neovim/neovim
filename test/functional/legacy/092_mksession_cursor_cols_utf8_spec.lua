@@ -15,6 +15,7 @@ describe('store cursor position in session file in UTF-8', function()
     os.remove('test.out')
   end)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start:
