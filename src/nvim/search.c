@@ -3557,11 +3557,15 @@ extend:
       --start_lnum;
 
   if (VIsual_active) {
-    /* Problem: when doing "Vipipip" nothing happens in a single white
-     * line, we get stuck there.  Trap this here. */
-    if (VIsual_mode == 'V' && start_lnum == curwin->w_cursor.lnum)
+    // Problem: when doing "Vipipip" nothing happens in a single white
+    // line, we get stuck there.  Trap this here.
+    if (VIsual_mode == 'V' && start_lnum == curwin->w_cursor.lnum) {
       goto extend;
-    VIsual.lnum = start_lnum;
+    }
+    if (VIsual.lnum != start_lnum) {
+        VIsual.lnum = start_lnum;
+        VIsual.col = 0;
+    }
     VIsual_mode = 'V';
     redraw_curbuf_later(INVERTED);      /* update the inversion */
     showmode();

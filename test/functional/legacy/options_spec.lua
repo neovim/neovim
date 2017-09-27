@@ -21,7 +21,7 @@ describe('set', function()
       $put =&path]])
 
     expect([[
-      
+
       foo,,bar]])
   end)
 end)

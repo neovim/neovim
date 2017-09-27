@@ -22,32 +22,32 @@ describe('78', function()
       let linecount = 10000
       while i <= linecount | call append(i - 1, i . text) | let i += 1 | endwhile
       preserve
-      
+
       " Get the name of the swap file, and clean up the :redir capture.
       redir => g:swapname | swapname | redir END
       let g:swapname = substitute(g:swapname, '[[:blank:][:cntrl:]]*\(.\{-}\)[[:blank:][:cntrl:]]*$', '\1', 'g')
       let g:swapname = fnameescape(g:swapname)
-      
+
       " Make a copy of the swap file in Xswap
       set bin
       exe 'sp ' . g:swapname
       w! Xswap
-      
+
       set nobin
       new
       only!
       bwipe! Xtest
       call rename('Xswap', g:swapname)
-      
+
       "TODO(jkeyes): without 'silent', this hangs the test " at message:
       "    'Recovery completed. You should check if everything is OK.'
       silent recover Xtest
-      
+
       call delete(g:swapname)
       new
       call append(0, 'recovery start')
       wincmd w
-      
+
       let g:linedollar = line('$')
       if g:linedollar < linecount
         wincmd w
@@ -56,7 +56,7 @@ describe('78', function()
         wincmd w
         let linecount = g:linedollar
       endif
-      
+
       let i = 1
       while i <= linecount
         if getline(i) != i . text
@@ -72,7 +72,7 @@ describe('78', function()
 
     expect([[
       recovery start
-      
+
       recovery end]])
   end)
 end)

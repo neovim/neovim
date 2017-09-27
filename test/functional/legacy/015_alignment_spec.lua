@@ -9,6 +9,7 @@ local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers
 describe('alignment', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       	test for :left
@@ -112,7 +113,7 @@ describe('alignment', function()
       	asxa;ofa		axxxoikey
       	asdfaqwer		axxxoikey
 
-      xxxxx xx xxxxxx 
+      xxxxx xx xxxxxx
       xxxxxxx xxxxxxxxx xxx xxxx xxxxx xxxxx xxx xx
       xxxxxxxxxxxxxxxxxx xxxxx xxxx, xxxx xxxx xxxx xxxx xxx xx xx
       xx xxxxxxx. xxxx xxxx.

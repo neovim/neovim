@@ -3001,9 +3001,10 @@ did_set_string_option (
         if (s[-1] == 'k' || s[-1] == 's') {
           /* skip optional filename after 'k' and 's' */
           while (*s && *s != ',' && *s != ' ') {
-            if (*s == '\\')
-              ++s;
-            ++s;
+            if (*s == '\\' && s[1] != NUL) {
+              s++;
+            }
+            s++;
           }
         } else {
           if (errbuf != NULL) {

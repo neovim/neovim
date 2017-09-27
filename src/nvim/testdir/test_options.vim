@@ -126,3 +126,13 @@ endfunc
 func Test_thesaurus()
   call Check_dir_option('thesaurus')
 endfunc
+
+func Test_complete()
+  " Trailing single backslash used to cause invalid memory access.
+  set complete=s\
+  new
+  call feedkeys("i\<C-N>\<Esc>", 'xt')
+  bwipe!
+  set complete&
+endfun
+

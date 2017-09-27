@@ -15,6 +15,8 @@ local function insert_(content)
   feed_command('1', 'set cin ts=4 sw=4')
 end
 
+-- luacheck: ignore 621 (Indentation)
+-- luacheck: ignore 613 (Trailing whitespace in a string)
 describe('cindent', function()
   before_each(clear)
 

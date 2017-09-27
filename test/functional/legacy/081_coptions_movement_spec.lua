@@ -7,6 +7,7 @@ local feed_command, expect = helpers.feed_command, helpers.expect
 describe('coptions', function()
   setup(clear)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('is working', function()
     insert([[
       aaa two three four
