@@ -109,8 +109,36 @@ typedef struct {
       LexExprTokenType type;  ///< Suggested type for parsing incorrect code.
       const char *msg;  ///< Error message.
     } err;  ///< For kExprLexInvalid
+
+    struct {
+      bool is_float;  ///< True if number is a floating-point.
+    } num;  ///< For kExprLexNumber
   } data;  ///< Additional data, if needed.
 } LexExprToken;
+
+typedef enum {
+  /// If set, “pointer” to the current byte in pstate will not be shifted
+  kELFlagPeek = (1 << 0),
+  /// Determines whether scope is allowed to come before the identifier
+  kELFlagForbidScope = (1 << 1),
+  /// Determines whether floating-point numbers are allowed
+  ///
+  /// I.e. whether dot is a decimal point separator or is not a part of
+  /// a number at all.
+  kELFlagAllowFloat = (1 << 2),
+  /// Determines whether `is` and `isnot` are seen as comparison operators
+  ///
+  /// If set they are supposed to be just regular identifiers.
+  kELFlagIsNotCmp = (1 << 3),
+  /// Determines whether EOC tokens are allowed
+  ///
+  /// If set then it will yield Invalid token with E15 in place of EOC one if
+  /// “EOC” is something like "|". It is fine with emitting EOC at the end of
+  /// string still, with or without this flag set.
+  kELFlagForbidEOC = (1 << 4),
+  // WARNING: whenever you add a new flag, alter klee_assume() statement in
+  // viml_expressions_lexer.c.
+} LexExprFlags;
 
 /// Expression AST node type
 typedef enum {

@@ -15,11 +15,16 @@ RINGBUF_INIT(AllocRecords, arecs, AllocRecord, RINGBUF_DUMMY_FREE)
 RINGBUF_STATIC(static, AllocRecords, AllocRecord, arecs, RB_SIZE)
 
 size_t allocated_memory = 0;
+size_t ever_allocated_memory = 0;
+
+size_t allocated_memory_limit = SIZE_MAX;
 
 void *xmalloc(const size_t size)
 {
   void *ret = malloc(size);
   allocated_memory += size;
+  ever_allocated_memory += size;
+  assert(allocated_memory <= allocated_memory_limit);
   assert(arecs_rb_length(&arecs) < RB_SIZE);
   arecs_rb_push(&arecs, (AllocRecord) {
     .ptr = ret,
@@ -47,6 +52,9 @@ void *xrealloc(void *const p, size_t new_size)
     if (arec->ptr == p) {
       allocated_memory -= arec->size;
       allocated_memory += new_size;
+      if (new_size > arec->size) {
+        ever_allocated_memory += (new_size - arec->size);
+      }
       arec->ptr = ret;
       arec->size = new_size;
       return ret;

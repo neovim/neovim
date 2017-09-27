@@ -47,10 +47,10 @@ typedef enum {
 /// Get next token for the VimL expression input
 ///
 /// @param  pstate  Parser state.
-/// @param[in]  peek  If true, do not advance pstate cursor.
+/// @param[in]  flags  Flags, @see LexExprFlags.
 ///
 /// @return Next token.
-LexExprToken viml_pexpr_next_token(ParserState *const pstate, const bool peek)
+LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   LexExprToken ret = {
@@ -153,12 +153,33 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const bool peek)
     }
 
     // Number.
-    // Note: determining whether dot is (not) a part of a float needs more
-    // context, so lexer does not do this.
-    // FIXME: Resolve ambiguity by additional argument.
     case '0': case '1': case '2': case '3': case '4': case '5': case '6':
     case '7': case '8': case '9': {
+      ret.data.num.is_float = false;
       CHARREG(kExprLexNumber, ascii_isdigit);
+      if (flags & kELFlagAllowFloat) {
+        if (pline.size > ret.len + 1
+            && pline.data[ret.len] == '.'
+            && ascii_isdigit(pline.data[ret.len + 1])) {
+          ret.len++;
+          ret.data.num.is_float = true;
+          CHARREG(kExprLexNumber, ascii_isdigit);
+          if (pline.size > ret.len + 1
+              && (pline.data[ret.len] == 'e'
+                  || pline.data[ret.len] == 'E')
+              && ((pline.size > ret.len + 2
+                   && (pline.data[ret.len + 1] == '+'
+                       || pline.data[ret.len + 1] == '-')
+                   && ascii_isdigit(pline.data[ret.len + 2]))
+                  || ascii_isdigit(pline.data[ret.len + 1]))) {
+            ret.len++;
+            if (pline.data[ret.len] == '+' || pline.data[ret.len] == '-') {
+              ret.len++;
+            }
+            CHARREG(kExprLexNumber, ascii_isdigit);
+          }
+        }
+      }
       break;
     }
 
@@ -187,8 +208,9 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const bool peek)
       ret.data.var.autoload = false;
       CHARREG(kExprLexPlainIdentifier, ISWORD);
       // "is" and "isnot" operators.
-      if ((ret.len == 2 && memcmp(pline.data, "is", 2) == 0)
-          || (ret.len == 5 && memcmp(pline.data, "isnot", 5) == 0)) {
+      if (!(flags & kELFlagIsNotCmp)
+          && ((ret.len == 2 && memcmp(pline.data, "is", 2) == 0)
+              || (ret.len == 5 && memcmp(pline.data, "isnot", 5) == 0))) {
         ret.type = kExprLexComparison;
         ret.data.cmp.type = kExprLexCmpIdentical;
         ret.data.cmp.inv = (ret.len == 5);
@@ -197,14 +219,14 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const bool peek)
       } else if (ret.len == 1
                  && pline.size > 1
                  && strchr("sgvbwtla", schar) != NULL
-                 && pline.data[ret.len] == ':') {
+                 && pline.data[ret.len] == ':'
+                 && !(flags & kELFlagForbidScope)) {
         ret.len++;
         ret.data.var.scope = schar;
         CHARREG(kExprLexPlainIdentifier, ISWORD_OR_AUTOLOAD);
         ret.data.var.autoload = (
             memchr(pline.data + 2, AUTOLOAD_CHAR, ret.len - 2)
             != NULL);
-      // FIXME: Resolve ambiguity with an argument to the lexer function.
       // Previous CHARREG stopped at autoload character in order to make it
       // possible to detect `is#`. Continue now with autoload characters
       // included.
@@ -373,7 +395,30 @@ viml_pexpr_next_token_invalid_comparison:
     // Expression end because Ex command ended.
     case NUL:
     case NL: {
-      ret.type = kExprLexEOC;
+      if (flags & kELFlagForbidEOC) {
+        ret.type = kExprLexInvalid;
+        ret.data.err.msg = _("E15: Unexpected EOC character: %.*s");
+        ret.data.err.type = kExprLexSpacing;
+      } else {
+        ret.type = kExprLexEOC;
+      }
+      break;
+    }
+
+    case '|': {
+      if (pline.size >= 2 && pline.data[ret.len] == '|') {
+        // "||" is or.
+        ret.len++;
+        ret.type = kExprLexOr;
+      } else if (flags & kELFlagForbidEOC) {
+        // Note: `<C-r>=1 | 2<CR>` actually yields 1 in Vim without any
+        //       errors. This will be changed here.
+        ret.type = kExprLexInvalid;
+        ret.data.err.msg = _("E15: Unexpected EOC character: %.*s");
+        ret.data.err.type = kExprLexOr;
+      } else {
+        ret.type = kExprLexEOC;
+      }
       break;
     }
 
@@ -389,7 +434,7 @@ viml_pexpr_next_token_invalid_comparison:
   }
 #undef GET_CCS
 viml_pexpr_next_token_adv_return:
-  if (!peek) {
+  if (!(flags & kELFlagPeek)) {
     viml_parser_advance(pstate, ret.len);
   }
   return ret;
@@ -990,34 +1035,28 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
   // Lambda node, valid when parsing lambda arguments only.
   ExprASTNode *lambda_node = NULL;
   do {
-    LexExprToken cur_token = viml_pexpr_next_token(pstate, true);
+    const int want_node_to_lexer_flags[] = {
+      [kENodeValue] = kELFlagIsNotCmp,
+      [kENodeOperator] = kELFlagForbidScope,
+      [kENodeArgument] = kELFlagIsNotCmp,
+      [kENodeArgumentSeparator] = kELFlagForbidScope,
+    };
+    // FIXME Determine when (not) to allow floating-point numbers.
+    const int lexer_additional_flags = (
+        kELFlagPeek
+        | ((flags & kExprFlagsDisallowEOC) ? kELFlagForbidEOC : 0));
+    LexExprToken cur_token = viml_pexpr_next_token(
+        pstate, want_node_to_lexer_flags[want_node] | lexer_additional_flags);
     if (cur_token.type == kExprLexEOC) {
-      if (flags & kExprFlagsDisallowEOC) {
-        if (cur_token.len == 0) {
-          // It is end of string, break.
-          break;
-        } else {
-          // It is NL, NUL or bar.
-          //
-          // Note: `<C-r>=1 | 2<CR>` actually yields 1 in Vim without any
-          //       errors. This will be changed here.
-          cur_token.type = kExprLexInvalid;
-          cur_token.data.err.msg = _("E15: Unexpected EOC character: %.*s");
-          const ParserLine pline = (
-              pstate->reader.lines.items[cur_token.start.line]);
-          const char eoc_char = pline.data[cur_token.start.col];
-          cur_token.data.err.type = ((eoc_char == NUL || eoc_char == NL)
-                                     ? kExprLexSpacing
-                                     : kExprLexOr);
-        }
-      } else {
-        break;
-      }
+      break;
     }
     LexExprTokenType tok_type = cur_token.type;
     const bool token_invalid = (tok_type == kExprLexInvalid);
     bool is_invalid = token_invalid;
 viml_pexpr_parse_process_token:
+    // May use different flags this time.
+    cur_token = viml_pexpr_next_token(
+        pstate, want_node_to_lexer_flags[want_node] | lexer_additional_flags);
     if (tok_type == kExprLexSpacing) {
       if (is_invalid) {
         HL_CUR_TOKEN(Spacing);

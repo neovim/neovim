@@ -34,13 +34,20 @@ int main(const int argc, const char *const *const argv,
 {
   char input[INPUT_SIZE];
   uint8_t shift;
-  const bool peek = false;
+  int flags;
   avoid_optimizing_out = argc;
+
+#ifndef USE_KLEE
+  sscanf(argv[2], "%d", &flags);
+#endif
 
 #ifdef USE_KLEE
   klee_make_symbolic(input, sizeof(input), "input");
   klee_make_symbolic(&shift, sizeof(shift), "shift");
+  klee_make_symbolic(&flags, sizeof(flags), "flags");
   klee_assume(shift < INPUT_SIZE);
+  klee_assume(flags <= (kELFlagPeek|kELFlagAllowFloat|kELFlagForbidEOC
+                        |kELFlagForbidScope|kELFlagIsNotCmp));
 #endif
 
   ParserLine plines[] = {
@@ -79,8 +86,15 @@ int main(const int argc, const char *const *const argv,
   };
   kvi_init(pstate.reader.lines);
 
-  LexExprToken token = viml_pexpr_next_token(&pstate, peek);
-  assert((pstate.pos.line == 0)
-         ? (pstate.pos.col > 0)
-         : (pstate.pos.line == 1 && pstate.pos.col == 0));
+  allocated_memory_limit = 0;
+  LexExprToken token = viml_pexpr_next_token(&pstate, flags);
+  if (flags & kELFlagPeek) {
+    assert(pstate.pos.line == 0 && pstate.pos.col == 0);
+  } else {
+    assert((pstate.pos.line == 0)
+           ? (pstate.pos.col > 0)
+           : (pstate.pos.line == 1 && pstate.pos.col == 0));
+  }
+  assert(allocated_memory == 0);
+  assert(ever_allocated_memory == 0);
 }
