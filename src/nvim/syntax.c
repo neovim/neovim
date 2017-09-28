@@ -6827,6 +6827,9 @@ int hl_combine_attr(int char_attr, int prim_attr)
     new_en = *char_aep;
   } else {
     memset(&new_en, 0, sizeof(new_en));
+    new_en.rgb_fg_color = -1;
+    new_en.rgb_bg_color = -1;
+    new_en.rgb_sp_color = -1;
   }
 
   spell_aep = syn_cterm_attr2entry(prim_attr);
