@@ -1,5 +1,6 @@
 local helpers = require('test.unit.helpers')(after_each)
 local viml_helpers = require('test.unit.viml.helpers')
+local global_helpers = require('test.helpers')
 local itp = helpers.gen_itp(it)
 
 local make_enum_conv_tab = helpers.make_enum_conv_tab
@@ -15,7 +16,50 @@ local new_pstate = viml_helpers.new_pstate
 local intchar2lua = viml_helpers.intchar2lua
 local pstate_set_str = viml_helpers.pstate_set_str
 
+local format_string = global_helpers.format_string
+local format_luav = global_helpers.format_luav
+
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
+
+local function format_check(expr, flags, ast, hls)
+  -- That forces specific order.
+  print(  format_string('\ncheck_parsing(%r, %u, {', expr, flags))
+  local digits = '  --           '
+  local digits2 = '  --  '
+  for i = 0, #expr - 1 do
+    if i % 10 == 0 then
+      digits2 = ('%s%10u'):format(digits2, i / 10)
+    end
+    digits = ('%s%u'):format(digits, i % 10)
+  end
+  print(digits)
+  if #expr > 10 then
+    print(digits2)
+  end
+  print('  ast = ' .. format_luav(ast.ast, '  ') .. ',')
+  if ast.err then
+    print('  err = {')
+    print('    arg = ' .. format_luav(ast.err.arg) .. ',')
+    print('    msg = ' .. format_luav(ast.err.msg) .. ',')
+    print('  },')
+  end
+  print('}, {')
+  local next_col = 0
+  for _, v in ipairs(hls) do
+    local group, line, col, str = v:match('NVim([a-zA-Z]+):(%d+):(%d+):(.*)')
+    col = tonumber(col)
+    line = tonumber(line)
+    assert(line == 0)
+    local col_shift = col - next_col
+    assert(col_shift >= 0)
+    next_col = col + #str
+    print(format_string('  hl(%r, %r%s),',
+                        group,
+                        str,
+                        (col_shift == 0 and '' or (', %u'):format(col_shift))))
+  end
+  print('})')
+end
 
 local east_node_type_tab
 make_enum_conv_tab(lib, {
@@ -137,10 +181,15 @@ child_call_once(function()
 end)
 
 describe('Expressions parser', function()
-  local function check_parsing(str, flags, exp_ast, exp_highlighting_fs)
+  local function check_parsing(str, flags, exp_ast, exp_highlighting_fs,
+                               print_exp)
     local pstate = new_pstate({str})
     local east = lib.viml_pexpr_parse(pstate, flags)
     local ast = east2lua(pstate, east)
+    local hls = phl2lua(pstate)
+    if print_exp then
+      format_check(str, flags, ast, hls)
+    end
     eq(exp_ast, ast)
     if exp_highlighting_fs then
       local exp_highlighting = {}
@@ -148,7 +197,7 @@ describe('Expressions parser', function()
       for i, h in ipairs(exp_highlighting_fs) do
         exp_highlighting[i], next_col = h(next_col)
       end
-      eq(exp_highlighting, phl2lua(pstate))
+      eq(exp_highlighting, hls)
     end
   end
   local function hl(group, str, shift)
