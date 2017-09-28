@@ -307,6 +307,83 @@ local function dedent(str, leave_indent)
   return str
 end
 
+local SUBTBL = {
+  '\\000', '\\001', '\\002', '\\003', '\\004',
+  '\\005', '\\006', '\\007', '\\008', '\\t',
+  '\\n',   '\\011', '\\012', '\\r',   '\\014',
+  '\\015', '\\016', '\\017', '\\018', '\\019',
+  '\\020', '\\021', '\\022', '\\023', '\\024',
+  '\\025', '\\026', '\\027', '\\028', '\\029',
+  '\\030', '\\031',
+}
+
+local format_luav
+
+format_luav = function(v, indent)
+  local linesep = '\n'
+  local next_indent = nil
+  if indent == nil then
+    indent = ''
+    linesep = ''
+  else
+    next_indent = indent .. '  '
+  end
+  local ret = ''
+  if type(v) == 'string' then
+    ret = '\'' .. tostring(v):gsub('[\'\\]', '\\%0'):gsub('[%z\1-\31]', function(match)
+      return SUBTBL[match:byte()]
+    end) .. '\''
+  elseif type(v) == 'table' then
+    local processed_keys = {}
+    ret = '{' .. linesep
+    for i, subv in ipairs(v) do
+      ret = ret .. (next_indent or '') .. format_luav(subv, next_indent) .. ',\n'
+      processed_keys[i] = true
+    end
+    for k, subv in pairs(v) do
+      if not processed_keys[k] then
+        if type(k) == 'string' and k:match('^[a-zA-Z_][a-zA-Z0-9_]*$') then
+          ret = ret .. next_indent .. k .. ' = '
+        else
+          ret = ret .. next_indent .. '[' .. format_luav(k) .. '] = '
+        end
+        ret = ret .. format_luav(subv, next_indent) .. ',\n'
+      end
+    end
+    ret = ret  .. indent .. '}'
+  else
+    -- Not implemented yet
+    assert(false)
+  end
+  return ret
+end
+
+local function format_string(fmt, ...)
+  local i = 0
+  local args = {...}
+  local function getarg()
+    i = i + 1
+    return args[i]
+  end
+  local ret = fmt:gsub('%%[0-9*]*%.?[0-9*]*[cdEefgGiouXxqsr%%]', function(match)
+    local subfmt = match:gsub('%*', function(match)
+      return getarg()
+    end)
+    local arg = nil
+    if subfmt:sub(-1) ~= '%' then
+      arg = getarg()
+    end
+    if subfmt:sub(-1) == 'r' then
+      -- %r is like %q, but it is supposed to single-quote strings and not
+      -- double-quote them, and also work not only for strings.
+      subfmt = subfmt:sub(1, -2) .. 's'
+      arg = format_luav(arg)
+    end
+    return subfmt:format(arg)
+  end)
+  return ret
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -323,4 +400,6 @@ return {
   shallowcopy = shallowcopy,
   concat_tables = concat_tables,
   dedent = dedent,
+  format_luav = format_luav,
+  format_string = format_string,
 }
