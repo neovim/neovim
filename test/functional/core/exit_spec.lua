@@ -43,4 +43,17 @@ describe('v:exiting', function()
     run(on_request, nil, on_setup)
   end)
 
+  it('is specified exit code after :cquit', function()
+    local function on_setup()
+      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
+      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
+      command('cquit 123')
+    end
+    local function on_request()
+      eq(123, eval('v:exiting'))
+      return ''
+    end
+    run(on_request, nil, on_setup)
+  end)
+
 end)
