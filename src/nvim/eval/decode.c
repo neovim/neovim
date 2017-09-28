@@ -266,7 +266,7 @@ typval_T decode_string(const char *const s, const size_t len,
 {
   assert(s != NULL || len == 0);
   const bool really_hasnul = (hasnul == kNone
-                              ? memchr(s, NUL, len) != NULL
+                              ? ((s != NULL) && (memchr(s, NUL, len) != NULL))
                               : (bool)hasnul);
   if (really_hasnul) {
     list_T *const list = tv_list_alloc();
