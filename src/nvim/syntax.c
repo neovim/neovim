@@ -6825,8 +6825,6 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_aep != NULL) {
     // Copy all attributes from char_aep to the new entry
     new_en = *char_aep;
-  } else {
-    memset(&new_en, 0, sizeof(new_en));
   }
 
   spell_aep = syn_cterm_attr2entry(prim_attr);
