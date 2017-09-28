@@ -5995,7 +5995,14 @@ static void ex_quit(exarg_T *eap)
  */
 static void ex_cquit(exarg_T *eap)
 {
-  getout(1);
+  int exitval = atoi((const char *) eap->arg);
+
+  /* Default to non-zero exit code */
+  if (exitval == 0) {
+      exitval = 1;
+  }
+
+  getout(exitval);
 }
 
 /*
