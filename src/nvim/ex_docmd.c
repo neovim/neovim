@@ -5995,11 +5995,11 @@ static void ex_quit(exarg_T *eap)
  */
 static void ex_cquit(exarg_T *eap)
 {
-  int exitval = atoi((const char *)eap->arg);
+  int exitval = eap->addr_count > 0 ? eap->line2 : 1;
 
-  // Default to non-zero exit code.
-  if (exitval == 0) {
-      exitval = 1;
+  // Exit status out of range.
+  if (exitval > 255) {
+      exitval = 255;
   }
 
   getout(exitval);
