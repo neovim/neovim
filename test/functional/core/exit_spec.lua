@@ -43,7 +43,7 @@ describe('v:exiting', function()
     run(on_request, nil, on_setup)
   end)
 
-  it('is specified exit code after :cquit', function()
+  it('is specified a non-zero exit code after :cquit', function()
     local function on_setup()
       command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
       command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
@@ -56,4 +56,16 @@ describe('v:exiting', function()
     run(on_request, nil, on_setup)
   end)
 
+  it('is specified a zero exit code after :cquit', function()
+    local function on_setup()
+      command('autocmd VimLeavePre * call rpcrequest('..cid..', "")')
+      command('autocmd VimLeave    * call rpcrequest('..cid..', "")')
+      command('cquit 0')
+    end
+    local function on_request()
+      eq(0, eval('v:exiting'))
+      return ''
+    end
+    run(on_request, nil, on_setup)
+  end)
 end)
