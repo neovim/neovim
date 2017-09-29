@@ -5999,7 +5999,7 @@ static void ex_cquit(exarg_T *eap)
 
   // Exit status out of range.
   if (exitval > 255) {
-      exitval = 255;
+    exitval = 255;
   }
 
   getout(exitval);
