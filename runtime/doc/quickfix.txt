@@ -138,13 +138,14 @@ processing a quickfix or location list command, it will be aborted.
 			current window is used instead of the quickfix list.
 
 							*:cq* *:cquit*
-:[count]cq[uit]		Quit Vim with an error code (When vim is called from 
-			another program, the caller might behave in a special way if the
-			error code is not 0; e.g. `git commit`, `fc` in bash, some
-			compilers.)
+:[count]cq[uit]		Quit Vim with an error code, or the code specified in
+			[count]. This may make a difference when Vim is called from
+			another program which needs editor: e.g. git commit will abort
+			the comitting process, fc (built-in from various shells including
+			bash and zsh) will not execute the command.
 			WARNING: All changes in files are lost, even when the [!] is not
 			used. It works like ":qall!" |:qall|, except that Vim returns a
-			non-zero exit code.
+			specific exit code.
 
 							*:cf* *:cfile*
 :cf[ile][!] [errorfile]	Read the error file and jump to the first error.
