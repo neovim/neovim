@@ -71,10 +71,6 @@ describe(':cquit', function()
     test_cq('0 cquit', 0, nil)
   end)
 
-  it('exits with an out of range exit code after :cquit 258', function()
-    test_cq('cquit 258', 2, nil)
-  end)
-
   it('exits with redir msg for non-number exit code after :cquit X', function()
     test_cq('cquit X', nil, 'E488: Trailing characters: cquit X')
   end)
