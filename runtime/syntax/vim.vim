@@ -939,6 +939,11 @@ if !exists("skip_vim_syntax_inits")
  hi def link vimUserFunc	Normal
  hi def link vimVar	Identifier
  hi def link vimWarn	WarningMsg
+
+ hi def link nvimAutoEvent	Type
+ hi def link nvimHLGroup	vimGroup
+ hi def link nvimMap	vimCommand
+ hi def link nvimUnmap	vimMap
 endif
 
 " Current Syntax Variable: {{{2
