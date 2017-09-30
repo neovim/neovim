@@ -107,7 +107,7 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "inormal\27",
+                rhs = "inormal<Esc>",
                 silent = 0
               },
               v = {
@@ -242,7 +242,7 @@ describe('menu_get', function()
                 sid = 1,
                 noremap = 1,
                 enabled = 1,
-                rhs = "\18\"",
+                rhs = "<C-R>\"",
                 silent = 0
               },
               n = {
@@ -380,4 +380,102 @@ describe('menu_get', function()
     eq(expected, m)
   end)
 
+  it('prettyprints special chars', function()
+    clear()
+    command('nnoremenu &Test.Test inormal<ESC>')
+    command('inoremenu &Test.Test2 <Tab><Esc>')
+    command('vnoremenu &Test.Test3 yA<C-R>0<Tab>xyz<Esc>')
+    command('inoremenu &Test.Test4 <c-r>*')
+    command('inoremenu &Test.Test5 <c-R>+')
+    local m = funcs.menu_get("","a");
+    local expected = {
+        {
+          shortcut = "T",
+          hidden = 0,
+          submenus = {
+            {
+              priority = 500,
+              mappings = {
+                n = {
+                  sid = 1,
+                  noremap = 1,
+                  enabled = 1,
+                  rhs = "inormal<Esc>",
+                  silent = 0
+                }
+              },
+              name = "Test",
+              hidden = 0
+            },
+            {
+              priority = 500,
+              mappings = {
+                i = {
+                  sid = 1,
+                  noremap = 1,
+                  enabled = 1,
+                  rhs = "<Tab><Esc>",
+                  silent = 0
+                }
+              },
+              name = "Test2",
+              hidden = 0
+            },
+            {
+              priority = 500,
+              mappings = {
+                s = {
+                  sid = 1,
+                  noremap = 1,
+                  enabled = 1,
+                  rhs = "yA<C-R>0<Tab>xyz<Esc>",
+                  silent = 0
+                },
+                v = {
+                  sid = 1,
+                  noremap = 1,
+                  enabled = 1,
+                  rhs = "yA<C-R>0<Tab>xyz<Esc>",
+                  silent = 0
+                }
+              },
+              name = "Test3",
+              hidden = 0
+            },
+            {
+              priority = 500,
+              mappings = {
+                i = {
+                  sid = 1,
+                  noremap = 1,
+                  enabled = 1,
+                  rhs = "<C-R>*",
+                  silent = 0
+                }
+              },
+              name = "Test4",
+              hidden = 0
+            },
+            {
+              priority = 500,
+              mappings = {
+                i = {
+                  sid = 1,
+                  noremap = 1,
+                  enabled = 1,
+                  rhs = "<C-R>+",
+                  silent = 0
+                }
+              },
+              name = "Test5",
+              hidden = 0
+            }
+          },
+          priority = 500,
+          name = "Test"
+        }
+      }
+
+    eq(m, expected)
+  end)
 end)
