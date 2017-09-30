@@ -71,6 +71,10 @@ describe(':cquit', function()
     test_cq('0 cquit', 0, nil)
   end)
 
+  it('exits with redir msg for multiple exit codes after :cquit 1 2', function()
+    test_cq('cquit 1 2', nil, 'E488: Trailing characters: cquit 1 2')
+  end)
+
   it('exits with redir msg for non-number exit code after :cquit X', function()
     test_cq('cquit X', nil, 'E488: Trailing characters: cquit X')
   end)
