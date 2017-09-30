@@ -373,8 +373,7 @@ CTRL-{char}	{char} typed as a control character; that is, typing {char}
 
 					*key-notation* *key-codes* *keycodes*
 These names for keys are used in the documentation.  They can also be used
-with the ":map" command (insert the key name by pressing CTRL-K and then the
-key you want the name for).
+with the ":map" command.
 
 notation	meaning		    equivalent	decimal value(s)	~
 -----------------------------------------------------------------------
