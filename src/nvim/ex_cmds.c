@@ -4052,7 +4052,7 @@ skip:
     if (got_quit) {  // Substitution is too slow, disable 'inccommand'.
       set_string_option_direct((char_u *)"icm", -1, (char_u *)"", OPT_FREE,
                                SID_NONE);
-    } else if (*p_icm != NUL && subsize != 0 && pat != NULL) {
+    } else if (*p_icm != NUL &&  pat != NULL) {
       if (pre_src_id == 0) {
         // Get a unique new src_id, saved in a static
         pre_src_id = bufhl_add_hl(NULL, 0, -1, 0, 0, 0);
@@ -4063,8 +4063,10 @@ skip:
       curbuf->b_changed = save_b_changed;  // preserve 'modified' during preview
       preview_buf = show_sub(eap, old_cursor, &preview_lines, has_second_delim,
                              pre_hl_id, pre_src_id);
-      bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
-                             kv_last(preview_lines.subresults).end.lnum);
+      if (subsize > 0) {
+        bufhl_clear_line_range(orig_buf, pre_src_id, eap->line1,
+                               kv_last(preview_lines.subresults).end.lnum);
+      }
     }
   }
 
@@ -6128,9 +6130,11 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
     curwin->w_p_spell = false;
     curwin->w_p_fen = false;
 
-    // Width of the "| lnum|..." column which displays the line numbers.
-    highest_num_line = kv_last(lines.subresults).end.lnum;
-    col_width = log10(highest_num_line) + 1 + 3;
+    if (lines.subresults.size > 0) {
+      // Width of the "| lnum|..." column which displays the line numbers.
+      highest_num_line = kv_last(lines.subresults).end.lnum;
+      col_width = log10(highest_num_line) + 1 + 3;
+    }
   }
 
   char *str = NULL;  // construct the line to show in here
