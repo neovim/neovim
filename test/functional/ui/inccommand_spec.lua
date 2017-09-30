@@ -929,6 +929,28 @@ describe(":substitute, inccommand=split", function()
     ]])
   end)
 
+  it('highlights nothing when there\'s no match', function()
+    feed('gg')
+    feed(':%s/Inx')
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :%s/Inx^                       |
+    ]])
+  end)
+
   it('previews correctly when previewhight is small', function()
     feed_command('set cwh=3')
     feed_command('set hls')
