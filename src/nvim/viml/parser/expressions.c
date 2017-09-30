@@ -441,6 +441,176 @@ viml_pexpr_next_token_adv_return:
 }
 
 #ifdef UNIT_TESTING
+static const char *const eltkn_type_tab[] = {
+  [kExprLexInvalid] = "Invalid",
+  [kExprLexMissing] = "Missing",
+  [kExprLexSpacing] = "Spacing",
+  [kExprLexEOC] = "EOC",
+
+  [kExprLexQuestion] = "Question",
+  [kExprLexColon] = "Colon",
+  [kExprLexOr] = "Or",
+  [kExprLexAnd] = "And",
+  [kExprLexComparison] = "Comparison",
+  [kExprLexPlus] = "Plus",
+  [kExprLexMinus] = "Minus",
+  [kExprLexDot] = "Dot",
+  [kExprLexMultiplication] = "Multiplication",
+
+  [kExprLexNot] = "Not",
+
+  [kExprLexNumber] = "Number",
+  [kExprLexSingleQuotedString] = "SingleQuotedString",
+  [kExprLexDoubleQuotedString] = "DoubleQuotedString",
+  [kExprLexOption] = "Option",
+  [kExprLexRegister] = "Register",
+  [kExprLexEnv] = "Env",
+  [kExprLexPlainIdentifier] = "PlainIdentifier",
+
+  [kExprLexBracket] = "Bracket",
+  [kExprLexFigureBrace] = "FigureBrace",
+  [kExprLexParenthesis] = "Parenthesis",
+  [kExprLexComma] = "Comma",
+  [kExprLexArrow] = "Arrow",
+};
+
+static const char *const eltkn_cmp_type_tab[] = {
+  [kExprLexCmpEqual] = "Equal",
+  [kExprLexCmpMatches] = "Matches",
+  [kExprLexCmpGreater] = "Greater",
+  [kExprLexCmpGreaterOrEqual] = "GreaterOrEqual",
+  [kExprLexCmpIdentical] = "Identical",
+};
+
+static const char *const ccs_tab[] = {
+  [kCCStrategyUseOption] = "UseOption",
+  [kCCStrategyMatchCase] = "MatchCase",
+  [kCCStrategyIgnoreCase] = "IgnoreCase",
+};
+
+static const char *const eltkn_mul_type_tab[] = {
+  [kExprLexMulMul] = "Mul",
+  [kExprLexMulDiv] = "Div",
+  [kExprLexMulMod] = "Mod",
+};
+
+static const char *const eltkn_opt_scope_tab[] = {
+  [kExprLexOptUnspecified] = "Unspecified",
+  [kExprLexOptGlobal] = "Global",
+  [kExprLexOptLocal] = "Local",
+};
+
+/// Represent `int` character as a string
+///
+/// Converts
+/// - ASCII digits into '{digit}'
+/// - ASCII printable characters into a single-character strings
+/// - everything else to numbers.
+///
+/// @param[in]  ch  Character to convert.
+///
+/// @return Converted string, stored in a static buffer (overriden after each
+///         call).
+static const char *intchar2str(const int ch)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static char buf[sizeof(int) * 3 + 1];
+  if (' ' <= ch && ch < 0x7f) {
+    if (ascii_isdigit(ch)) {
+      buf[0] = '\'';
+      buf[1] = (char)ch;
+      buf[2] = '\'';
+      buf[3] = NUL;
+    } else {
+      buf[0] = (char)ch;
+      buf[1] = NUL;
+    }
+  } else {
+    snprintf(buf, sizeof(buf), "%i", ch);
+  }
+  return buf;
+}
+
+/// Represent token as a string
+///
+/// Intended for testing and debugging purposes.
+///
+/// @param[in]  pstate  Parser state, needed to get token string from it. May be
+///                     NULL, in which case in place of obtaining part of the
+///                     string represented by token only token length is
+///                     returned.
+/// @param[in]  token  Token to represent.
+/// @param[out]  ret_size  Return string size, for cases like NULs inside
+///                        a string. May be NULL.
+///
+/// @return Token represented in a string form, in a static buffer (overwritten
+///         on each call).
+const char *viml_pexpr_repr_token(const ParserState *const pstate,
+                                  const LexExprToken token,
+                                  size_t *const ret_size)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static char ret[1024];
+  char *p = ret;
+  const char *const e = &ret[1024] - 1;
+#define ADDSTR(...) \
+  do { \
+    p += snprintf(p, (size_t)(sizeof(ret) - (size_t)(p - ret)), __VA_ARGS__); \
+    if (p >= e) { \
+      goto viml_pexpr_repr_token_end; \
+    } \
+  } while (0)
+  ADDSTR("%zu:%zu:%s", token.start.line, token.start.col,
+         eltkn_type_tab[token.type]);
+  switch (token.type) {
+#define TKNARGS(tkn_type, ...) \
+    case tkn_type: { \
+      ADDSTR(__VA_ARGS__); \
+      break; \
+    }
+    TKNARGS(kExprLexComparison, "(type=%s,ccs=%s,inv=%i)",
+            eltkn_cmp_type_tab[token.data.cmp.type],
+            ccs_tab[token.data.cmp.ccs],
+            (int)token.data.cmp.inv)
+    TKNARGS(kExprLexMultiplication, "(type=%s)",
+            eltkn_mul_type_tab[token.data.mul.type])
+    TKNARGS(kExprLexRegister, "(name=%s)", intchar2str(token.data.reg.name))
+    case kExprLexDoubleQuotedString:
+    TKNARGS(kExprLexSingleQuotedString, "(closed=%i)",
+            (int)token.data.str.closed)
+    TKNARGS(kExprLexOption, "(scope=%s,name=%.*s)",
+            eltkn_opt_scope_tab[token.data.opt.scope],
+            (int)token.data.opt.len, token.data.opt.name)
+    TKNARGS(kExprLexPlainIdentifier, "(scope=%s,autoload=%i)",
+            intchar2str(token.data.var.scope), (int)token.data.var.autoload)
+    TKNARGS(kExprLexNumber, "(is_float=%i)", (int)token.data.num.is_float)
+    TKNARGS(kExprLexInvalid, "(msg=%s)", token.data.err.msg)
+    default: {
+      // No additional arguments.
+      break;
+    }
+#undef TKNARGS
+  }
+  if (pstate == NULL) {
+    ADDSTR("::%zu", token.len);
+  } else {
+    *p++ = ':';
+    memmove(
+        p, &pstate->reader.lines.items[token.start.line].data[token.start.col],
+        token.len);
+    p += token.len;
+    *p = NUL;
+  }
+#undef ADDSTR
+viml_pexpr_repr_token_end:
+  if (ret_size != NULL) {
+    *ret_size = (size_t)(p - ret);
+  }
+  return ret;
+}
+#endif
+
+#ifdef UNIT_TESTING
 #include <stdio.h>
 REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_ast_node(
@@ -469,12 +639,21 @@ static inline void viml_pexpr_debug_print_ast_stack(
         "-");
   }
 }
+
+static inline void viml_pexpr_debug_print_token(
+    const ParserState *const pstate, const LexExprToken token)
+  FUNC_ATTR_ALWAYS_INLINE
+{
+  fprintf(stderr, "\ntkn: %s\n", viml_pexpr_repr_token(pstate, token, NULL));
+}
 #define PSTACK(msg) \
     viml_pexpr_debug_print_ast_stack(&ast_stack, #msg)
 #define PSTACK_P(msg) \
     viml_pexpr_debug_print_ast_stack(ast_stack, #msg)
 #define PNODE_P(eastnode_p, msg) \
     viml_pexpr_debug_print_ast_node((const ExprASTNode *const *)ast_stack, #msg)
+#define PTOKEN(tkn) \
+    viml_pexpr_debug_print_token(pstate, tkn)
 #endif
 
 // start = s ternary_expr s EOC
