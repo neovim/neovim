@@ -5160,10 +5160,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'shellcmdflag'* *'shcf'*
-'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/c")
+'shellcmdflag' 'shcf'	string	(default: "-c"; Windows: "/s /c")
 			global
 	Flag passed to the shell to execute "!" and ":!" commands; e.g.,
-	"bash.exe -c ls" or "cmd.exe /c dir".  For Windows
+	`bash.exe -c ls` or `cmd.exe /s /c "dir"`.  For Windows
 	systems, the default is set according to the value of 'shell', to
 	reduce the need to set this option by the user.
 	On Unix it can have more than one flag.  Each white space separated
@@ -5284,7 +5284,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	to execute most external commands with cmd.exe.
 
 						*'shellxquote'* *'sxq'*
-'shellxquote' 'sxq'	string	(default: "")
+'shellxquote' 'sxq'	string	(default: "", Windows: "\"")
 			global
 	Quoting character(s), put around the command passed to the shell, for
 	the "!" and ":!" commands.  Includes the redirection.  See
