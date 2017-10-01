@@ -145,6 +145,7 @@ typedef enum {
   kExprNodeMissing = 'X',
   kExprNodeOpMissing = '_',
   kExprNodeTernary = '?',  ///< Ternary operator.
+  kExprNodeTernaryValue = 'C',  ///< Ternary operator, colon.
   kExprNodeRegister = '@',  ///< Register.
   kExprNodeSubscript = 's',  ///< Subscript.
   kExprNodeListLiteral = 'l',  ///< List literal.
@@ -209,7 +210,10 @@ struct expr_ast_node {
       /// Points to inside parser reader state.
       const char *ident;
       size_t ident_len;  ///< Actual identifier length.
-    } var;
+    } var;  ///< For kExprNodePlainIdentifier.
+    struct {
+      bool got_colon;  ///< True if colon was seen.
+    } ter;  ///< For kExprNodeTernaryValue.
   } data;
 };
 

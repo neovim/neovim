@@ -46,6 +46,7 @@ typedef enum {
   kEOpLvlArrow,
   kEOpLvlComma,
   kEOpLvlColon,
+  kEOpLvlTernaryValue,
   kEOpLvlTernary,
   kEOpLvlOr,
   kEOpLvlAnd,
@@ -770,7 +771,8 @@ static inline void viml_pexpr_debug_print_token(
 // NVimUnaryOperator -> NVimOperator
 // NVimBinaryOperator -> NVimOperator
 // NVimComparisonOperator -> NVimOperator
-// NVimTernaryOperator -> NVimOperator
+// NVimTernary -> NVimOperator
+// NVimTernaryColon -> NVimTernary
 //
 // NVimParenthesis -> Delimiter
 //
@@ -790,7 +792,8 @@ static inline void viml_pexpr_debug_print_token(
 //
 // NVimInvalidComma -> NVimInvalidDelimiter
 // NVimInvalidSpacing -> NVimInvalid
-// NVimInvalidTernaryOperator -> NVimInvalidOperator
+// NVimInvalidTernary -> NVimInvalidOperator
+// NVimInvalidTernaryColon -> NVimInvalidTernary
 // NVimInvalidRegister -> NVimInvalidValue
 // NVimInvalidClosingBracket -> NVimInvalidDelimiter
 // NVimInvalidSpacing -> NVimInvalid
@@ -823,30 +826,6 @@ static inline ExprASTNode *viml_pexpr_new_node(const ExprASTNodeType type)
   return ret;
 }
 
-typedef enum {
-  kEOpLvlInvalid = 0,
-  kEOpLvlComplexIdentifier,
-  kEOpLvlParens,
-  kEOpLvlArrow,
-  kEOpLvlComma,
-  kEOpLvlColon,
-  kEOpLvlTernary,
-  kEOpLvlOr,
-  kEOpLvlAnd,
-  kEOpLvlComparison,
-  kEOpLvlAddition,  ///< Addition, subtraction and concatenation.
-  kEOpLvlMultiplication,  ///< Multiplication, division and modulo.
-  kEOpLvlUnary,  ///< Unary operations: not, minus, plus.
-  kEOpLvlSubscript,  ///< Subscripts.
-  kEOpLvlValue,  ///< Values: literals, variables, nested expressions, …
-} ExprOpLvl;
-
-typedef enum {
-  kEOpAssNo= 'n',  ///< Not associative / not applicable.
-  kEOpAssLeft = 'l',  ///< Left associativity.
-  kEOpAssRight = 'r',  ///< Right associativity.
-} ExprOpAssociativity;
-
 static const ExprOpLvl node_type_to_op_lvl[] = {
   [kExprNodeMissing] = kEOpLvlInvalid,
   [kExprNodeOpMissing] = kEOpLvlMultiplication,
@@ -867,6 +846,8 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
   [kExprNodeColon] = kEOpLvlColon,
 
   [kExprNodeTernary] = kEOpLvlTernary,
+
+  [kExprNodeTernaryValue] = kEOpLvlTernaryValue,
 
   [kExprNodeBinaryPlus] = kEOpLvlAddition,
 
@@ -907,7 +888,9 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   // about associativity, only about order of execution.
   [kExprNodeComma] = kEOpAssRight,
 
-  [kExprNodeTernary] = kEOpAssNo,
+  [kExprNodeTernary] = kEOpAssRight,
+
+  [kExprNodeTernaryValue] = kEOpAssRight,
 
   [kExprNodeBinaryPlus] = kEOpAssLeft,
 
@@ -1450,9 +1433,20 @@ viml_pexpr_parse_invalid_comma:
           const ExprOpLvl eastnode_lvl = node_lvl(**eastnode_p);
           STATIC_ASSERT(kEOpLvlTernary > kEOpLvlComma,
                         "Unexpected operator priorities");
-          if (can_be_ternary && eastnode_lvl == kEOpLvlTernary) {
-            assert(eastnode_type == kExprNodeTernary);
+          if (can_be_ternary && eastnode_type == kExprNodeTernaryValue
+              && !(*eastnode_p)->data.ter.got_colon) {
+            kv_drop(ast_stack, i);
+            (*eastnode_p)->start = cur_token.start;
+            (*eastnode_p)->len = cur_token.len;
+            if (prev_token.type == kExprLexSpacing) {
+              (*eastnode_p)->start = prev_token.start;
+              (*eastnode_p)->len += prev_token.len;
+            }
             is_ternary = true;
+            (*eastnode_p)->data.ter.got_colon = true;
+            assert((*eastnode_p)->children != NULL);
+            assert((*eastnode_p)->children->next == NULL);
+            kvi_push(ast_stack, &(*eastnode_p)->children->next);
             break;
           } else if (eastnode_type == kExprNodeUnknownFigure) {
             SELECT_FIGURE_BRACE_TYPE(*eastnode_p, DictLiteral, Dict);
@@ -1460,7 +1454,7 @@ viml_pexpr_parse_invalid_comma:
           } else if (eastnode_type == kExprNodeDictLiteral
                      || eastnode_type == kExprNodeComma) {
             break;
-          } else if (eastnode_lvl > kEOpLvlTernary) {
+          } else if (eastnode_lvl >= kEOpLvlTernaryValue) {
             // Do nothing
           } else if (eastnode_lvl > kEOpLvlComma) {
             can_be_ternary = false;
@@ -1476,11 +1470,11 @@ viml_pexpr_parse_invalid_colon:
             goto viml_pexpr_parse_invalid_colon;
           }
         }
-        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
-        viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
         if (is_ternary) {
           HL_CUR_TOKEN(TernaryColon);
         } else {
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
+          viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
           HL_CUR_TOKEN(Colon);
         }
         want_node = kENodeValue;
@@ -1683,8 +1677,6 @@ viml_pexpr_parse_figure_brace_closing_error:
                                   cur_token.len - scope_shift,
                                   HL(Identifier));
           }
-        // FIXME: Actually, g{foo}g:foo is valid: "1?g{foo}g:foo" is like
-        //        "g{foo}g" and not an error.
         } else {
           if (cur_token.data.var.scope == 0) {
             ADD_IDENT(
@@ -1792,6 +1784,21 @@ viml_pexpr_parse_no_paren_closing_error: {}
         }
         break;
       }
+      case kExprLexQuestion: {
+        ADD_VALUE_IF_MISSING(_("E15: Expected value, got question mark: %.*s"));
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeTernary);
+        viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
+        HL_CUR_TOKEN(Ternary);
+        ExprASTNode *ter_val_node;
+        NEW_NODE_WITH_CUR_POS(ter_val_node, kExprNodeTernaryValue);
+        ter_val_node->data.ter.got_colon = false;
+        assert(cur_node->children != NULL);
+        assert(cur_node->children->next == NULL);
+        assert(kv_last(ast_stack) == &cur_node->children->next);
+        *kv_last(ast_stack) = ter_val_node;
+        kvi_push(ast_stack, &ter_val_node->children);
+        break;
+      }
     }
 viml_pexpr_parse_cycle_end:
     prev_token = cur_token;
@@ -1815,6 +1822,7 @@ viml_pexpr_parse_end:
       const ExprASTNode *const cur_node = (*kv_pop(ast_stack));
       // This should only happen when want_node == kENodeValue.
       assert(cur_node != NULL);
+      // TODO(ZyX-I): Rehighlight as invalid?
       switch (cur_node->type) {
         case kExprNodeOpMissing:
         case kExprNodeMissing: {
@@ -1822,7 +1830,6 @@ viml_pexpr_parse_end:
           break;
         }
         case kExprNodeCall: {
-          // TODO(ZyX-I): Rehighlight as invalid?
           east_set_error(
               &ast, pstate,
               _("E116: Missing closing parenthesis for function call: %.*s"),
@@ -1830,7 +1837,6 @@ viml_pexpr_parse_end:
           break;
         }
         case kExprNodeNested: {
-          // TODO(ZyX-I): Rehighlight as invalid?
           east_set_error(
               &ast, pstate,
               _("E110: Missing closing parenthesis for nested expression"
@@ -1842,6 +1848,15 @@ viml_pexpr_parse_end:
         case kExprNodeUnaryPlus:
         case kExprNodeRegister: {
           // It is OK to see these in the stack.
+          break;
+        }
+        case kExprNodeTernaryValue: {
+          if (!cur_node->data.ter.got_colon) {
+            // Actually Vim throws E109 in more cases.
+            east_set_error(
+                &ast, pstate, _("E109: Missing ':' after '?': %.*s"),
+                cur_node->start);
+          }
           break;
         }
         // TODO(ZyX-I): handle other values

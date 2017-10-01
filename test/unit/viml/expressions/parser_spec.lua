@@ -66,6 +66,7 @@ make_enum_conv_tab(lib, {
   'kExprNodeMissing',
   'kExprNodeOpMissing',
   'kExprNodeTernary',
+  'kExprNodeTernaryValue',
   'kExprNodeRegister',
   'kExprNodeSubscript',
   'kExprNodeListLiteral',
@@ -2489,6 +2490,652 @@ describe('Expressions parser', function()
       hl('Dict', '}'),
     })
   end)
-  -- FIXME: Test sequence of arrows inside and outside lambdas.
-  -- FIXME: Test autoload character and scope in lambda arguments.
+  itp('works with ternary operator', function()
+    check_parsing('a ? b : c', 0, {
+      --           012345678
+      ast = {
+        {
+          'Ternary:0:1: ?',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'TernaryValue:0:5: :',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:3: b',
+                'PlainIdentifier(scope=0,ident=c):0:7: c',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Ternary', '?', 1),
+      hl('Identifier', 'b', 1),
+      hl('TernaryColon', ':', 1),
+      hl('Identifier', 'c', 1),
+    })
+    check_parsing('@a?@b?@c:@d:@e', 0, {
+      --           01234567890123
+      --           0         1
+      ast = {
+        {
+          'Ternary:0:2:?',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'TernaryValue:0:11::',
+              children = {
+                {
+                  'Ternary:0:5:?',
+                  children = {
+                    'Register(name=b):0:3:@b',
+                    {
+                      'TernaryValue:0:8::',
+                      children = {
+                        'Register(name=c):0:6:@c',
+                        'Register(name=d):0:9:@d',
+                      },
+                    },
+                  },
+                },
+                'Register(name=e):0:12:@e',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('Ternary', '?'),
+      hl('Register', '@b'),
+      hl('Ternary', '?'),
+      hl('Register', '@c'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@d'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@e'),
+    })
+    check_parsing('@a?@b:@c?@d:@e', 0, {
+      --           01234567890123
+      --           0         1
+      ast = {
+        {
+          'Ternary:0:2:?',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'TernaryValue:0:5::',
+              children = {
+                'Register(name=b):0:3:@b',
+                {
+                  'Ternary:0:8:?',
+                  children = {
+                    'Register(name=c):0:6:@c',
+                    {
+                      'TernaryValue:0:11::',
+                      children = {
+                        'Register(name=d):0:9:@d',
+                        'Register(name=e):0:12:@e',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('Ternary', '?'),
+      hl('Register', '@b'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@c'),
+      hl('Ternary', '?'),
+      hl('Register', '@d'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@e'),
+    })
+    check_parsing('@a?@b?@c?@d:@e?@f:@g:@h?@i:@j:@k', 0, {
+      --           01234567890123456789012345678901
+      --           0         1         2         3
+      ast = {
+        {
+          'Ternary:0:2:?',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'TernaryValue:0:29::',
+              children = {
+                {
+                  'Ternary:0:5:?',
+                  children = {
+                    'Register(name=b):0:3:@b',
+                    {
+                      'TernaryValue:0:20::',
+                      children = {
+                        {
+                          'Ternary:0:8:?',
+                          children = {
+                            'Register(name=c):0:6:@c',
+                            {
+                              'TernaryValue:0:11::',
+                              children = {
+                                'Register(name=d):0:9:@d',
+                                {
+                                  'Ternary:0:14:?',
+                                  children = {
+                                    'Register(name=e):0:12:@e',
+                                    {
+                                      'TernaryValue:0:17::',
+                                      children = {
+                                        'Register(name=f):0:15:@f',
+                                        'Register(name=g):0:18:@g',
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                        {
+                          'Ternary:0:23:?',
+                          children = {
+                            'Register(name=h):0:21:@h',
+                            {
+                              'TernaryValue:0:26::',
+                              children = {
+                                'Register(name=i):0:24:@i',
+                                'Register(name=j):0:27:@j',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                'Register(name=k):0:30:@k',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('Ternary', '?'),
+      hl('Register', '@b'),
+      hl('Ternary', '?'),
+      hl('Register', '@c'),
+      hl('Ternary', '?'),
+      hl('Register', '@d'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@e'),
+      hl('Ternary', '?'),
+      hl('Register', '@f'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@g'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@h'),
+      hl('Ternary', '?'),
+      hl('Register', '@i'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@j'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@k'),
+    })
+    check_parsing('?', 0, {
+      --           0
+      ast = {
+        {
+          'Ternary:0:0:?',
+          children = {
+            'Missing:0:0:',
+            'TernaryValue:0:0:?',
+          },
+        },
+      },
+      err = {
+        arg = '?',
+        msg = 'E15: Expected value, got question mark: %.*s',
+      },
+    }, {
+      hl('InvalidTernary', '?'),
+    })
+
+    check_parsing('?:', 0, {
+      --           01
+      ast = {
+        {
+          'Ternary:0:0:?',
+          children = {
+            'Missing:0:0:',
+            {
+              'TernaryValue:0:1::',
+              children = {
+                'Missing:0:1:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '?:',
+        msg = 'E15: Expected value, got question mark: %.*s',
+      },
+    }, {
+      hl('InvalidTernary', '?'),
+      hl('InvalidTernaryColon', ':'),
+    })
+
+    check_parsing('?::', 0, {
+      --           012
+      ast = {
+        {
+          'Colon:0:2::',
+          children = {
+            {
+              'Ternary:0:0:?',
+              children = {
+                'Missing:0:0:',
+                {
+                  'TernaryValue:0:1::',
+                  children = {
+                    'Missing:0:1:',
+                    'Missing:0:2:',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '?::',
+        msg = 'E15: Expected value, got question mark: %.*s',
+      },
+    }, {
+      hl('InvalidTernary', '?'),
+      hl('InvalidTernaryColon', ':'),
+      hl('InvalidColon', ':'),
+    })
+
+    check_parsing('a?b', 0, {
+      --           012
+      ast = {
+        {
+          'Ternary:0:1:?',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'TernaryValue:0:1:?',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:2:b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '?b',
+        msg = 'E109: Missing \':\' after \'?\': %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Ternary', '?'),
+      hl('Identifier', 'b'),
+    })
+    check_parsing('a?b:', 0, {
+      --           0123
+      ast = {
+        {
+          'Ternary:0:1:?',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'TernaryValue:0:1:?',
+              children = {
+                'PlainIdentifier(scope=b,ident=):0:2:b:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '?b:',
+        msg = 'E109: Missing \':\' after \'?\': %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Ternary', '?'),
+      hl('IdentifierScope', 'b'),
+      hl('IdentifierScopeDelimiter', ':'),
+    })
+
+    check_parsing('a?b::c', 0, {
+      --           012345
+      ast = {
+        {
+          'Ternary:0:1:?',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'TernaryValue:0:4::',
+              children = {
+                'PlainIdentifier(scope=b,ident=):0:2:b:',
+                'PlainIdentifier(scope=0,ident=c):0:5:c',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Ternary', '?'),
+      hl('IdentifierScope', 'b'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('TernaryColon', ':'),
+      hl('Identifier', 'c'),
+    })
+
+    check_parsing('a?b :', 0, {
+      --           01234
+      ast = {
+        {
+          'Ternary:0:1:?',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'TernaryValue:0:3: :',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:2:b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Ternary', '?'),
+      hl('Identifier', 'b'),
+      hl('TernaryColon', ':', 1),
+    })
+
+    check_parsing('(@a?@b:@c)?@d:@e', 0, {
+      --           0123456789012345
+      --           0         1
+      ast = {
+        {
+          'Ternary:0:10:?',
+          children = {
+            {
+              'Nested:0:0:(',
+              children = {
+                {
+                  'Ternary:0:3:?',
+                  children = {
+                    'Register(name=a):0:1:@a',
+                    {
+                      'TernaryValue:0:6::',
+                      children = {
+                        'Register(name=b):0:4:@b',
+                        'Register(name=c):0:7:@c',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              'TernaryValue:0:13::',
+              children = {
+                'Register(name=d):0:11:@d',
+                'Register(name=e):0:14:@e',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Register', '@a'),
+      hl('Ternary', '?'),
+      hl('Register', '@b'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@c'),
+      hl('NestingParenthesis', ')'),
+      hl('Ternary', '?'),
+      hl('Register', '@d'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@e'),
+    })
+
+    check_parsing('(@a?@b:@c)?(@d?@e:@f):(@g?@h:@i)', 0, {
+      --           01234567890123456789012345678901
+      --           0         1         2         3
+      ast = {
+        {
+          'Ternary:0:10:?',
+          children = {
+            {
+              'Nested:0:0:(',
+              children = {
+                {
+                  'Ternary:0:3:?',
+                  children = {
+                    'Register(name=a):0:1:@a',
+                    {
+                      'TernaryValue:0:6::',
+                      children = {
+                        'Register(name=b):0:4:@b',
+                        'Register(name=c):0:7:@c',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              'TernaryValue:0:21::',
+              children = {
+                {
+                  'Nested:0:11:(',
+                  children = {
+                    {
+                      'Ternary:0:14:?',
+                      children = {
+                        'Register(name=d):0:12:@d',
+                        {
+                          'TernaryValue:0:17::',
+                          children = {
+                            'Register(name=e):0:15:@e',
+                            'Register(name=f):0:18:@f',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  'Nested:0:22:(',
+                  children = {
+                    {
+                      'Ternary:0:25:?',
+                      children = {
+                        'Register(name=g):0:23:@g',
+                        {
+                          'TernaryValue:0:28::',
+                          children = {
+                            'Register(name=h):0:26:@h',
+                            'Register(name=i):0:29:@i',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Register', '@a'),
+      hl('Ternary', '?'),
+      hl('Register', '@b'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@c'),
+      hl('NestingParenthesis', ')'),
+      hl('Ternary', '?'),
+      hl('NestingParenthesis', '('),
+      hl('Register', '@d'),
+      hl('Ternary', '?'),
+      hl('Register', '@e'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@f'),
+      hl('NestingParenthesis', ')'),
+      hl('TernaryColon', ':'),
+      hl('NestingParenthesis', '('),
+      hl('Register', '@g'),
+      hl('Ternary', '?'),
+      hl('Register', '@h'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@i'),
+      hl('NestingParenthesis', ')'),
+    })
+
+    check_parsing('(@a?@b:@c)?@d?@e:@f:@g?@h:@i', 0, {
+      --           0123456789012345678901234567
+      --           0         1         2
+      ast = {
+        {
+          'Ternary:0:10:?',
+          children = {
+            {
+              'Nested:0:0:(',
+              children = {
+                {
+                  'Ternary:0:3:?',
+                  children = {
+                    'Register(name=a):0:1:@a',
+                    {
+                      'TernaryValue:0:6::',
+                      children = {
+                        'Register(name=b):0:4:@b',
+                        'Register(name=c):0:7:@c',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              'TernaryValue:0:19::',
+              children = {
+                {
+                  'Ternary:0:13:?',
+                  children = {
+                    'Register(name=d):0:11:@d',
+                    {
+                      'TernaryValue:0:16::',
+                      children = {
+                        'Register(name=e):0:14:@e',
+                        'Register(name=f):0:17:@f',
+                      },
+                    },
+                  },
+                },
+                {
+                  'Ternary:0:22:?',
+                  children = {
+                    'Register(name=g):0:20:@g',
+                    {
+                      'TernaryValue:0:25::',
+                      children = {
+                        'Register(name=h):0:23:@h',
+                        'Register(name=i):0:26:@i',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Register', '@a'),
+      hl('Ternary', '?'),
+      hl('Register', '@b'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@c'),
+      hl('NestingParenthesis', ')'),
+      hl('Ternary', '?'),
+      hl('Register', '@d'),
+      hl('Ternary', '?'),
+      hl('Register', '@e'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@f'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@g'),
+      hl('Ternary', '?'),
+      hl('Register', '@h'),
+      hl('TernaryColon', ':'),
+      hl('Register', '@i'),
+    })
+    check_parsing('a?b{cdef}g:h', 0, {
+      --           012345678901
+      --           0         1
+      ast = {
+        {
+          'Ternary:0:1:?',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'TernaryValue:0:10::',
+              children = {
+                {
+                  'ComplexIdentifier:0:3:',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:2:b',
+                    {
+                      'ComplexIdentifier:0:9:',
+                      children = {
+                        {
+                          'CurlyBracesIdentifier(--i):0:3:{',
+                          children = {
+                            'PlainIdentifier(scope=0,ident=cdef):0:4:cdef',
+                          },
+                        },
+                        'PlainIdentifier(scope=0,ident=g):0:9:g',
+                      },
+                    },
+                  },
+                },
+                'PlainIdentifier(scope=0,ident=h):0:11:h',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Ternary', '?'),
+      hl('Identifier', 'b'),
+      hl('Curly', '{'),
+      hl('Identifier', 'cdef'),
+      hl('Curly', '}'),
+      hl('Identifier', 'g'),
+      hl('TernaryColon', ':'),
+      hl('Identifier', 'h'),
+    })
+  end)
 end)
