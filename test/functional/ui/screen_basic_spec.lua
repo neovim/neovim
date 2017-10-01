@@ -120,16 +120,10 @@ describe('Screen', function()
     end)
 
     it('has correct default title with named file', function()
-      local expected = 'myfile (/mydir) - NVIM'
-      if iswin() then
-        expected = 'myfile (C:\\mydir) - NVIM'
-      end
+      local expected = (iswin() and 'myfile (C:\\mydir) - NVIM'
+                                 or 'myfile (/mydir) - NVIM')
       command('set title')
-      if iswin() then
-        command('file C:\\mydir\\myfile')
-      else
-        command('file /mydir/myfile')
-      end
+      command(iswin() and 'file C:\\mydir\\myfile' or 'file /mydir/myfile')
       screen:expect(function()
         eq(expected, screen.title)
       end)
