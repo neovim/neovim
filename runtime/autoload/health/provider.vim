@@ -265,7 +265,7 @@ function! s:check_python(version) abort
         call health#report_warn(
               \ 'pyenv was found, but $PYENV_ROOT is not set explicitly.'.
               \ 'The default value of `pyenv root` will be used.',
-              \ ['If this does not work for you,',
+              \ ['If this does not work for you,'.
               \  'Try set $PYENV_ROOT explicitly.']
               \ )
       endif
