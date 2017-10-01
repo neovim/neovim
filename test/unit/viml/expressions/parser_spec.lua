@@ -2489,6 +2489,196 @@ describe('Expressions parser', function()
       hl('Register', '@i', 1),
       hl('Dict', '}'),
     })
+    check_parsing('-> -> ->', 0, {
+      --           01234567
+      ast = {
+        {
+          'Arrow:0:0:->',
+          children = {
+            'Missing:0:0:',
+            {
+              'Arrow:0:2: ->',
+              children = {
+                'Missing:0:2:',
+                {
+                  'Arrow:0:5: ->',
+                  children = {
+                    'Missing:0:5:',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '-> -> ->',
+        msg = 'E15: Unexpected arrow: %.*s',
+      },
+    }, {
+      hl('InvalidArrow', '->'),
+      hl('InvalidArrow', '->', 1),
+      hl('InvalidArrow', '->', 1),
+    })
+    check_parsing('a -> b -> c -> d', 0, {
+      --           0123456789012345
+      --           0         1
+      ast = {
+        {
+          'Arrow:0:1: ->',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Arrow:0:6: ->',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:4: b',
+                {
+                  'Arrow:0:11: ->',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=c):0:9: c',
+                    'PlainIdentifier(scope=0,ident=d):0:14: d',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '-> b -> c -> d',
+        msg = 'E15: Arrow outside of lambda: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('InvalidArrow', '->', 1),
+      hl('Identifier', 'b', 1),
+      hl('InvalidArrow', '->', 1),
+      hl('Identifier', 'c', 1),
+      hl('InvalidArrow', '->', 1),
+      hl('Identifier', 'd', 1),
+    })
+    check_parsing('{a -> b -> c}', 0, {
+      --           0123456789012
+      --           0         1
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:1:a',
+            {
+              'Arrow:0:2: ->',
+              children = {
+                {
+                  'Arrow:0:7: ->',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:5: b',
+                    'PlainIdentifier(scope=0,ident=c):0:10: c',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '-> c}',
+        msg = 'E15: Arrow outside of lambda: %.*s',
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Arrow', '->', 1),
+      hl('Identifier', 'b', 1),
+      hl('InvalidArrow', '->', 1),
+      hl('Identifier', 'c', 1),
+      hl('Lambda', '}'),
+    })
+    check_parsing('{a: -> b}', 0, {
+      --           012345678
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            {
+              'Arrow:0:3: ->',
+              children = {
+                'PlainIdentifier(scope=a,ident=):0:1:a:',
+                'PlainIdentifier(scope=0,ident=b):0:6: b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '-> b}',
+        msg = 'E15: Arrow outside of lambda: %.*s',
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('IdentifierScope', 'a'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('InvalidArrow', '->', 1),
+      hl('Identifier', 'b', 1),
+      hl('Curly', '}'),
+    })
+
+    check_parsing('{a:b -> b}', 0, {
+      --           0123456789
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            {
+              'Arrow:0:4: ->',
+              children = {
+                'PlainIdentifier(scope=a,ident=b):0:1:a:b',
+                'PlainIdentifier(scope=0,ident=b):0:7: b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '-> b}',
+        msg = 'E15: Arrow outside of lambda: %.*s',
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('IdentifierScope', 'a'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Identifier', 'b'),
+      hl('InvalidArrow', '->', 1),
+      hl('Identifier', 'b', 1),
+      hl('Curly', '}'),
+    })
+
+    check_parsing('{a#b -> b}', 0, {
+      --           0123456789
+      ast = {
+        {
+          'CurlyBracesIdentifier(-di):0:0:{',
+          children = {
+            {
+              'Arrow:0:4: ->',
+              children = {
+                'PlainIdentifier(scope=0,ident=a#b):0:1:a#b',
+                'PlainIdentifier(scope=0,ident=b):0:7: b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '-> b}',
+        msg = 'E15: Arrow outside of lambda: %.*s',
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('Identifier', 'a#b'),
+      hl('InvalidArrow', '->', 1),
+      hl('Identifier', 'b', 1),
+      hl('Curly', '}'),
+    })
   end)
   itp('works with ternary operator', function()
     check_parsing('a ? b : c', 0, {

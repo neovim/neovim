@@ -1642,8 +1642,9 @@ viml_pexpr_parse_figure_brace_closing_error:
           lambda_node = NULL;
         } else {
           // Only first branch is valid.
-          is_invalid = true;
           ADD_VALUE_IF_MISSING(_("E15: Unexpected arrow: %.*s"));
+          ERROR_FROM_TOKEN_AND_MSG(
+              cur_token, _("E15: Arrow outside of lambda: %.*s"));
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeArrow);
           viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
         }
