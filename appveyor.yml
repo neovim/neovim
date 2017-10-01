@@ -2,9 +2,9 @@ version: '{build}'
 environment:
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: -t7z
 configuration:
-- MINGW_64
 - MINGW_32
-- MINGW_64-gcov
+# - MINGW_64
+# - MINGW_64-gcov
 matrix:
   allow_failures:
     - configuration: MINGW_64-gcov
