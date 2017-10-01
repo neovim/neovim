@@ -2269,7 +2269,43 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', ')'),
       hl('Curly', '}'),
     })
-    -- FIXME the below should not crash
+    check_parsing('a:{b()}c', 0, {
+      --           01234567
+      ast = {
+        {
+          'ComplexIdentifier:0:2:',
+          children = {
+            'PlainIdentifier(scope=a,ident=):0:0:a:',
+            {
+              'ComplexIdentifier:0:7:',
+              children = {
+                {
+                  'CurlyBracesIdentifier(--i):0:2:{',
+                  children = {
+                    {
+                      'Call:0:4:(',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=b):0:3:b',
+                      },
+                    },
+                  },
+                },
+                'PlainIdentifier(scope=0,ident=c):0:7:c',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierScope', 'a'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Curly', '{'),
+      hl('Identifier', 'b'),
+      hl('CallingParenthesis', '('),
+      hl('CallingParenthesis', ')'),
+      hl('Curly', '}'),
+      hl('Identifier', 'c'),
+    })
     check_parsing('a:{{b, c -> @d + @e + ({f -> g})(@h)}(@i)}j', 0, {
       --           01234567890123456789012345678901234567890123456
       --           0         1         2         3         4
@@ -2277,9 +2313,9 @@ describe('Expressions parser', function()
         {
           'ComplexIdentifier:0:2:',
           children = {
-            'PlainIdentifier(scope=a,ident=):0:0:g:',
+            'PlainIdentifier(scope=a,ident=):0:0:a:',
             {
-              'ComplexIdentifier:0:6:',
+              'ComplexIdentifier:0:42:',
               children = {
                 {
                   'CurlyBracesIdentifier(--i):0:2:{',
@@ -2314,7 +2350,7 @@ describe('Expressions parser', function()
                                       'Call:0:32:(',
                                       children = {
                                         {
-                                          'NestingParenthesis:0:21: (',
+                                          'Nested:0:21: (',
                                           children = {
                                             {
                                               'Lambda(\\di):0:23:{',
@@ -2342,10 +2378,9 @@ describe('Expressions parser', function()
                         'Register(name=i):0:38:@i',
                       },
                     },
-                    'PlainIdentifier(scope=0,ident=j):0:42:j',
                   },
                 },
-                'PlainIdentifier(scope=0,ident=_test):0:42:_test',
+                'PlainIdentifier(scope=0,ident=j):0:42:j',
               },
             },
           },
@@ -2364,7 +2399,7 @@ describe('Expressions parser', function()
       hl('BinaryPlus', '+', 1),
       hl('Register', '@e', 1),
       hl('BinaryPlus', '+', 1),
-      hl('NestingParenthesis', '('),
+      hl('NestingParenthesis', '(', 1),
       hl('Lambda', '{'),
       hl('Identifier', 'f'),
       hl('Arrow', '->', 1),

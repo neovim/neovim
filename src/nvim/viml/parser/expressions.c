@@ -612,6 +612,7 @@ viml_pexpr_repr_token_end:
 
 #ifdef UNIT_TESTING
 #include <stdio.h>
+
 REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_ast_node(
     const ExprASTNode *const *const eastnode_p,
@@ -626,6 +627,7 @@ static inline void viml_pexpr_debug_print_ast_node(
             (*eastnode_p)->start.col, (*eastnode_p)->len);
   }
 }
+
 REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_ast_stack(
     const ExprASTStack *const ast_stack,
@@ -640,6 +642,7 @@ static inline void viml_pexpr_debug_print_ast_stack(
   }
 }
 
+REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_token(
     const ParserState *const pstate, const LexExprToken token)
   FUNC_ATTR_ALWAYS_INLINE
@@ -794,6 +797,7 @@ static inline ExprASTNode *viml_pexpr_new_node(const ExprASTNodeType type)
 
 typedef enum {
   kEOpLvlInvalid = 0,
+  kEOpLvlComplexIdentifier,
   kEOpLvlParens,
   kEOpLvlArrow,
   kEOpLvlComma,
@@ -806,7 +810,6 @@ typedef enum {
   kEOpLvlMultiplication,  ///< Multiplication, division and modulo.
   kEOpLvlUnary,  ///< Unary operations: not, minus, plus.
   kEOpLvlSubscript,  ///< Subscripts.
-  kEOpLvlComplexIdentifier,  ///< Plain identifier, curly braces name.
   kEOpLvlValue,  ///< Values: literals, variables, nested expressions, …
 } ExprOpLvl;
 
@@ -843,10 +846,10 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
 
   [kExprNodeSubscript] = kEOpLvlSubscript,
 
-  [kExprNodeComplexIdentifier] = kEOpLvlComplexIdentifier,
-  [kExprNodePlainIdentifier] = kEOpLvlComplexIdentifier,
   [kExprNodeCurlyBracesIdentifier] = kEOpLvlComplexIdentifier,
 
+  [kExprNodeComplexIdentifier] = kEOpLvlValue,
+  [kExprNodePlainIdentifier] = kEOpLvlValue,
   [kExprNodeRegister] = kEOpLvlValue,
   [kExprNodeListLiteral] = kEOpLvlValue,
 };
@@ -884,10 +887,10 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
 
   [kExprNodeSubscript] = kEOpAssLeft,
 
-  [kExprNodePlainIdentifier] = kEOpAssLeft,
-  [kExprNodeComplexIdentifier] = kEOpAssLeft,
   [kExprNodeCurlyBracesIdentifier] = kEOpAssLeft,
 
+  [kExprNodeComplexIdentifier] = kEOpAssLeft,
+  [kExprNodePlainIdentifier] = kEOpAssNo,
   [kExprNodeRegister] = kEOpAssNo,
   [kExprNodeListLiteral] = kEOpAssNo,
 };
