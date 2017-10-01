@@ -144,10 +144,10 @@ typedef enum {
 typedef enum {
   kExprNodeMissing = 'X',
   kExprNodeOpMissing = '_',
-  kExprNodeTernary = '?',  ///< Ternary operator, valid one has three children.
-  kExprNodeRegister = '@',  ///< Register, no children.
-  kExprNodeSubscript = 's',  ///< Subscript, should have two or three children.
-  kExprNodeListLiteral = 'l',  ///< List literal, any number of children.
+  kExprNodeTernary = '?',  ///< Ternary operator.
+  kExprNodeRegister = '@',  ///< Register.
+  kExprNodeSubscript = 's',  ///< Subscript.
+  kExprNodeListLiteral = 'l',  ///< List literal.
   kExprNodeUnaryPlus = 'p',
   kExprNodeBinaryPlus = '+',
   kExprNodeNested = 'e',  ///< Nested parenthesised expression.

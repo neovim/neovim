@@ -13,6 +13,7 @@
 #include "nvim/types.h"
 #include "nvim/charset.h"
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
 #include "nvim/lib/kvec.h"
 
 #include "nvim/viml/parser/expressions.h"
@@ -36,6 +37,32 @@ typedef enum {
   /// Argument separator: only allows commas.
   kENodeArgumentSeparator,
 } ExprASTWantedNode;
+
+/// Operator priority level
+typedef enum {
+  kEOpLvlInvalid = 0,
+  kEOpLvlComplexIdentifier,
+  kEOpLvlParens,
+  kEOpLvlArrow,
+  kEOpLvlComma,
+  kEOpLvlColon,
+  kEOpLvlTernary,
+  kEOpLvlOr,
+  kEOpLvlAnd,
+  kEOpLvlComparison,
+  kEOpLvlAddition,  ///< Addition, subtraction and concatenation.
+  kEOpLvlMultiplication,  ///< Multiplication, division and modulo.
+  kEOpLvlUnary,  ///< Unary operations: not, minus, plus.
+  kEOpLvlSubscript,  ///< Subscripts.
+  kEOpLvlValue,  ///< Values: literals, variables, nested expressions, …
+} ExprOpLvl;
+
+/// Operator associativity
+typedef enum {
+  kEOpAssNo= 'n',  ///< Not associative / not applicable.
+  kEOpAssLeft = 'l',  ///< Left associativity.
+  kEOpAssRight = 'r',  ///< Right associativity.
+} ExprOpAssociativity;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "viml/parser/expressions.c.generated.h"
@@ -747,6 +774,7 @@ static inline void viml_pexpr_debug_print_token(
 //
 // NVimParenthesis -> Delimiter
 //
+// NVimColon -> Delimiter
 // NVimComma -> Delimiter
 // NVimArrow -> Delimiter
 //
@@ -895,6 +923,32 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   [kExprNodeListLiteral] = kEOpAssNo,
 };
 
+/// Get AST node priority level
+///
+/// Used primary to reduce line length, so keep the name short.
+///
+/// @param[in]  node  Node to get priority for.
+///
+/// @return Node priority level.
+static inline ExprOpLvl node_lvl(const ExprASTNode node)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return node_type_to_op_lvl[node.type];
+}
+
+/// Get AST node associativity, to be used for operator nodes primary
+///
+/// Used primary to reduce line length, so keep the name short.
+///
+/// @param[in]  node  Node to get priority for.
+///
+/// @return Node associativity.
+static inline ExprOpAssociativity node_ass(const ExprASTNode node)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return node_type_to_op_ass[node.type];
+}
+
 /// Handle binary operator
 ///
 /// This function is responsible for handling priority levels as well.
@@ -910,20 +964,19 @@ static void viml_pexpr_handle_bop(ExprASTStack *const ast_stack,
   assert(kv_size(*ast_stack));
   const ExprOpLvl bop_node_lvl = (bop_node->type == kExprNodeCall
                                   ? kEOpLvlSubscript
-                                  : node_type_to_op_lvl[bop_node->type]);
+                                  : node_lvl(*bop_node));
 #ifndef NDEBUG
   const ExprOpAssociativity bop_node_ass = (
       bop_node->type == kExprNodeCall
       ? kEOpAssLeft
-      : node_type_to_op_ass[bop_node->type]);
+      : node_ass(*bop_node));
 #endif
   do {
     ExprASTNode **new_top_node_p = kv_last(*ast_stack);
     ExprASTNode *new_top_node = *new_top_node_p;
     assert(new_top_node != NULL);
-    const ExprOpLvl new_top_node_lvl = node_type_to_op_lvl[new_top_node->type];
-    const ExprOpAssociativity new_top_node_ass = (
-        node_type_to_op_ass[new_top_node->type]);
+    const ExprOpLvl new_top_node_lvl = node_lvl(*new_top_node);
+    const ExprOpAssociativity new_top_node_ass = node_ass(*new_top_node);
     assert(bop_node_lvl != new_top_node_lvl
            || bop_node_ass == new_top_node_ass);
     if (top_node_p != NULL
@@ -1352,31 +1405,30 @@ viml_pexpr_parse_process_token:
           goto viml_pexpr_parse_invalid_comma;
         }
         for (size_t i = 1; i < kv_size(ast_stack); i++) {
-          const ExprASTNode *const *const eastnode_p =
-              (const ExprASTNode *const *)kv_Z(ast_stack, i);
-          if (!((*eastnode_p)->type == kExprNodeComma
-                || ((*eastnode_p)->type == kExprNodeColon
-                    && i == 1))
-              || i == kv_size(ast_stack) - 1) {
-            switch ((*eastnode_p)->type) {
-              case kExprNodeLambda: {
-                assert(want_node == kENodeArgumentSeparator);
-                break;
-              }
-              case kExprNodeDictLiteral:
-              case kExprNodeListLiteral:
-              case kExprNodeCall: {
-                break;
-              }
-              default: {
-viml_pexpr_parse_invalid_comma:
-                ERROR_FROM_TOKEN_AND_MSG(
-                    cur_token,
-                    _("E15: Comma outside of call, lambda or literal: %.*s"));
-                break;
-              }
-            }
+          ExprASTNode *const *const eastnode_p =
+              (ExprASTNode *const *)kv_Z(ast_stack, i);
+          const ExprASTNodeType eastnode_type = (*eastnode_p)->type;
+          const ExprOpLvl eastnode_lvl = node_lvl(**eastnode_p);
+          if (eastnode_type == kExprNodeLambda) {
+            assert(want_node == kENodeArgumentSeparator);
             break;
+          } else if (eastnode_type == kExprNodeDictLiteral
+                     || eastnode_type == kExprNodeListLiteral
+                     || eastnode_type == kExprNodeCall) {
+            break;
+          } else if (eastnode_type == kExprNodeComma
+                     || eastnode_type == kExprNodeColon
+                     || eastnode_lvl > kEOpLvlComma) {
+            // Do nothing
+          } else {
+viml_pexpr_parse_invalid_comma:
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token,
+                _("E15: Comma outside of call, lambda or literal: %.*s"));
+            break;
+          }
+          if (i == kv_size(ast_stack) - 1) {
+            goto viml_pexpr_parse_invalid_comma;
           }
         }
         NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComma);
@@ -1389,37 +1441,48 @@ viml_pexpr_parse_invalid_comma:
         if (kv_size(ast_stack) < 2) {
           goto viml_pexpr_parse_invalid_colon;
         }
+        bool is_ternary = false;
+        bool can_be_ternary = true;
         for (size_t i = 1; i < kv_size(ast_stack); i++) {
           ExprASTNode *const *const eastnode_p =
               (ExprASTNode *const *)kv_Z(ast_stack, i);
-          if ((*eastnode_p)->type != kExprNodeColon
-              || i == kv_size(ast_stack) - 1) {
-            switch ((*eastnode_p)->type) {
-              case kExprNodeUnknownFigure: {
-                SELECT_FIGURE_BRACE_TYPE((*eastnode_p), DictLiteral, Dict);
-                break;
-              }
-              case kExprNodeComma:
-              case kExprNodeDictLiteral:
-              case kExprNodeTernary: {
-                break;
-              }
-              default: {
-viml_pexpr_parse_invalid_colon:
-                ERROR_FROM_TOKEN_AND_MSG(
-                    cur_token,
-                    _("E15: Colon outside of dictionary or ternary operator: "
-                      "%.*s"));
-                break;
-              }
-            }
+          const ExprASTNodeType eastnode_type = (*eastnode_p)->type;
+          const ExprOpLvl eastnode_lvl = node_lvl(**eastnode_p);
+          STATIC_ASSERT(kEOpLvlTernary > kEOpLvlComma,
+                        "Unexpected operator priorities");
+          if (can_be_ternary && eastnode_lvl == kEOpLvlTernary) {
+            assert(eastnode_type == kExprNodeTernary);
+            is_ternary = true;
             break;
+          } else if (eastnode_type == kExprNodeUnknownFigure) {
+            SELECT_FIGURE_BRACE_TYPE(*eastnode_p, DictLiteral, Dict);
+            break;
+          } else if (eastnode_type == kExprNodeDictLiteral
+                     || eastnode_type == kExprNodeComma) {
+            break;
+          } else if (eastnode_lvl > kEOpLvlTernary) {
+            // Do nothing
+          } else if (eastnode_lvl > kEOpLvlComma) {
+            can_be_ternary = false;
+          } else {
+viml_pexpr_parse_invalid_colon:
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token,
+                _("E15: Colon outside of dictionary or ternary operator: "
+                  "%.*s"));
+            break;
+          }
+          if (i == kv_size(ast_stack) - 1) {
+            goto viml_pexpr_parse_invalid_colon;
           }
         }
         NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
         viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
-        // FIXME: Handle ternary operator.
-        HL_CUR_TOKEN(Colon);
+        if (is_ternary) {
+          HL_CUR_TOKEN(TernaryColon);
+        } else {
+          HL_CUR_TOKEN(Colon);
+        }
         want_node = kENodeValue;
         break;
       }

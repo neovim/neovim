@@ -181,14 +181,14 @@ child_call_once(function()
 end)
 
 describe('Expressions parser', function()
-  local function check_parsing(str, flags, exp_ast, exp_highlighting_fs,
-                               print_exp)
+  local function check_parsing(str, flags, exp_ast, exp_highlighting_fs)
     local pstate = new_pstate({str})
     local east = lib.viml_pexpr_parse(pstate, flags)
     local ast = east2lua(pstate, east)
     local hls = phl2lua(pstate)
-    if print_exp then
+    if exp_ast == nil then
       format_check(str, flags, ast, hls)
+      return
     end
     eq(exp_ast, ast)
     if exp_highlighting_fs then
@@ -2415,6 +2415,78 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', ')'),
       hl('Curly', '}'),
       hl('Identifier', 'j'),
+    })
+    check_parsing('{@a + @b : @c + @d, @e + @f : @g + @i}', 0, {
+      --           01234567890123456789012345678901234567
+      --           0         1         2         3
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Comma:0:18:,',
+              children = {
+                {
+                  'Colon:0:8: :',
+                  children = {
+                    {
+                      'BinaryPlus:0:3: +',
+                      children = {
+                        'Register(name=a):0:1:@a',
+                        'Register(name=b):0:5: @b',
+                      },
+                    },
+                    {
+                      'BinaryPlus:0:13: +',
+                      children = {
+                        'Register(name=c):0:10: @c',
+                        'Register(name=d):0:15: @d',
+                      },
+                    },
+                  },
+                },
+                {
+                  'Colon:0:27: :',
+                  children = {
+                    {
+                      'BinaryPlus:0:22: +',
+                      children = {
+                        'Register(name=e):0:19: @e',
+                        'Register(name=f):0:24: @f',
+                      },
+                    },
+                    {
+                      'BinaryPlus:0:32: +',
+                      children = {
+                        'Register(name=g):0:29: @g',
+                        'Register(name=i):0:34: @i',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Register', '@a'),
+      hl('BinaryPlus', '+', 1),
+      hl('Register', '@b', 1),
+      hl('Colon', ':', 1),
+      hl('Register', '@c', 1),
+      hl('BinaryPlus', '+', 1),
+      hl('Register', '@d', 1),
+      hl('Comma', ','),
+      hl('Register', '@e', 1),
+      hl('BinaryPlus', '+', 1),
+      hl('Register', '@f', 1),
+      hl('Colon', ':', 1),
+      hl('Register', '@g', 1),
+      hl('BinaryPlus', '+', 1),
+      hl('Register', '@i', 1),
+      hl('Dict', '}'),
     })
   end)
   -- FIXME: Test sequence of arrows inside and outside lambdas.
