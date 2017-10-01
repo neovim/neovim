@@ -1,7 +1,7 @@
 local helpers = require('test.unit.helpers')(after_each)
-local viml_helpers = require('test.unit.viml.helpers')
 local global_helpers = require('test.helpers')
 local itp = helpers.gen_itp(it)
+local viml_helpers = require('test.unit.viml.helpers')
 
 local child_call_once = helpers.child_call_once
 local conv_enum = helpers.conv_enum
@@ -9,17 +9,18 @@ local cimport = helpers.cimport
 local ffi = helpers.ffi
 local eq = helpers.eq
 
+local conv_ccs = viml_helpers.conv_ccs
 local pline2lua = viml_helpers.pline2lua
 local new_pstate = viml_helpers.new_pstate
 local intchar2lua = viml_helpers.intchar2lua
+local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
 
 local shallowcopy = global_helpers.shallowcopy
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 
-local eltkn_type_tab, eltkn_cmp_type_tab, ccs_tab, eltkn_mul_type_tab
-local eltkn_opt_scope_tab
+local eltkn_type_tab, eltkn_mul_type_tab, eltkn_opt_scope_tab
 child_call_once(function()
   eltkn_type_tab = {
     [tonumber(lib.kExprLexInvalid)] = 'Invalid',
@@ -52,20 +53,6 @@ child_call_once(function()
     [tonumber(lib.kExprLexParenthesis)] = 'Parenthesis',
     [tonumber(lib.kExprLexComma)] = 'Comma',
     [tonumber(lib.kExprLexArrow)] = 'Arrow',
-  }
-
-  eltkn_cmp_type_tab = {
-    [tonumber(lib.kExprLexCmpEqual)] = 'Equal',
-    [tonumber(lib.kExprLexCmpMatches)] = 'Matches',
-    [tonumber(lib.kExprLexCmpGreater)] = 'Greater',
-    [tonumber(lib.kExprLexCmpGreaterOrEqual)] = 'GreaterOrEqual',
-    [tonumber(lib.kExprLexCmpIdentical)] = 'Identical',
-  }
-
-  ccs_tab = {
-    [tonumber(lib.kCCStrategyUseOption)] = 'UseOption',
-    [tonumber(lib.kCCStrategyMatchCase)] = 'MatchCase',
-    [tonumber(lib.kCCStrategyIgnoreCase)] = 'IgnoreCase',
   }
 
   eltkn_mul_type_tab = {
@@ -101,8 +88,8 @@ local function eltkn2lua(pstate, tkn)
   end
   if ret.type == 'Comparison' then
     ret.data = {
-      type = conv_enum(eltkn_cmp_type_tab, tkn.data.cmp.type),
-      ccs = conv_enum(ccs_tab, tkn.data.cmp.ccs),
+      type = conv_cmp_type(tkn.data.cmp.type),
+      ccs = conv_ccs(tkn.data.cmp.ccs),
       inv = (not not tkn.data.cmp.inv),
     }
   elseif ret.type == 'Multiplication' then

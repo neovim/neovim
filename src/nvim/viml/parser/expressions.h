@@ -16,7 +16,7 @@ typedef enum {
   kCCStrategyUseOption = 0,  // 0 for xcalloc
   kCCStrategyMatchCase = '#',
   kCCStrategyIgnoreCase = '?',
-} CaseCompareStrategy;
+} ExprCaseCompareStrategy;
 
 /// Lexer token type
 typedef enum {
@@ -52,6 +52,14 @@ typedef enum {
   kExprLexArrow,  ///< Arrow, like from lambda expressions.
 } LexExprTokenType;
 
+typedef enum {
+  kExprCmpEqual,  ///< Equality, unequality.
+  kExprCmpMatches,  ///< Matches regex, not matches regex.
+  kExprCmpGreater,  ///< `>` or `<=`
+  kExprCmpGreaterOrEqual,  ///< `>=` or `<`.
+  kExprCmpIdentical,  ///< `is` or `isnot`
+} ExprComparisonType;
+
 /// Lexer token
 typedef struct {
   ParserPosition start;
@@ -59,14 +67,8 @@ typedef struct {
   LexExprTokenType type;
   union {
     struct {
-      enum {
-        kExprLexCmpEqual,  ///< Equality, unequality.
-        kExprLexCmpMatches,  ///< Matches regex, not matches regex.
-        kExprLexCmpGreater,  ///< `>` or `<=`
-        kExprLexCmpGreaterOrEqual,  ///< `>=` or `<`.
-        kExprLexCmpIdentical,  ///< `is` or `isnot`
-      } type;  ///< Comparison type.
-      CaseCompareStrategy ccs;  ///< Case comparison strategy.
+      ExprComparisonType type;  ///< Comparison type.
+      ExprCaseCompareStrategy ccs;  ///< Case comparison strategy.
       bool inv;  ///< True if comparison is to be inverted.
     } cmp;  ///< For kExprLexComparison.
 
@@ -171,6 +173,7 @@ typedef enum {
   kExprNodeComma = ',',  ///< Comma “operator”.
   kExprNodeColon = ':',  ///< Colon “operator”.
   kExprNodeArrow = '>',  ///< Arrow “operator”.
+  kExprNodeComparison = '=',  ///< Various comparison operators.
 } ExprASTNodeType;
 
 typedef struct expr_ast_node ExprASTNode;
@@ -214,6 +217,11 @@ struct expr_ast_node {
     struct {
       bool got_colon;  ///< True if colon was seen.
     } ter;  ///< For kExprNodeTernaryValue.
+    struct {
+      ExprComparisonType type;  ///< Comparison type.
+      ExprCaseCompareStrategy ccs;  ///< Case comparison strategy.
+      bool inv;  ///< True if comparison is to be inverted.
+    } cmp;  ///< For kExprNodeComparison.
   } data;
 };
 
@@ -235,19 +243,22 @@ enum {
   // viml_expressions_parser.c.
 } ExprParserFlags;
 
+/// AST error definition
+typedef struct {
+  /// Error message. Must contain a single printf format atom: %.*s.
+  const char *msg;
+  /// Error message argument: points to the location of the error.
+  const char *arg;
+  /// Message argument length: length till the end of string.
+  int arg_len;
+} ExprASTError;
+
 /// Structure representing complety AST for one expression
 typedef struct {
-  /// True if represented AST is correct and can be executed. Incorrect ones may
-  /// still be used for completion, or in linters.
-  bool correct;
   /// When AST is not correct this message will be printed.
   ///
   /// Uses `emsgf(msg, arg_len, arg);`, `msg` is assumed to contain only `%.*s`.
-  struct {
-    const char *msg;
-    int arg_len;
-    const char *arg;
-  } err;
+  ExprASTError err;
   /// Root node of the AST.
   ExprASTNode *root;
 } ExprAST;

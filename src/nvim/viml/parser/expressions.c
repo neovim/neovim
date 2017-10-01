@@ -102,7 +102,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     if (ret.len < pline.size \
         && strchr("?#", pline.data[ret.len]) != NULL) { \
       ret.data.cmp.ccs = \
-          (CaseCompareStrategy)pline.data[ret.len]; \
+          (ExprCaseCompareStrategy)pline.data[ret.len]; \
       ret.len++; \
     } else { \
       ret.data.cmp.ccs = kCCStrategyUseOption; \
@@ -240,7 +240,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
           && ((ret.len == 2 && memcmp(pline.data, "is", 2) == 0)
               || (ret.len == 5 && memcmp(pline.data, "isnot", 5) == 0))) {
         ret.type = kExprLexComparison;
-        ret.data.cmp.type = kExprLexCmpIdentical;
+        ret.data.cmp.type = kExprCmpIdentical;
         ret.data.cmp.inv = (ret.len == 5);
         GET_CCS(ret, pline);
       // Scope: `s:`, etc.
@@ -381,10 +381,10 @@ viml_pexpr_next_token_invalid_comparison:
       ret.type = kExprLexComparison;
       ret.data.cmp.inv = (schar == '!');
       if (pline.data[1] == '=') {
-        ret.data.cmp.type = kExprLexCmpEqual;
+        ret.data.cmp.type = kExprCmpEqual;
         ret.len++;
       } else if (pline.data[1] == '~') {
-        ret.data.cmp.type = kExprLexCmpMatches;
+        ret.data.cmp.type = kExprCmpMatches;
         ret.len++;
       } else {
         goto viml_pexpr_next_token_invalid_comparison;
@@ -404,8 +404,8 @@ viml_pexpr_next_token_invalid_comparison:
       GET_CCS(ret, pline);
       ret.data.cmp.inv = (schar == '<');
       ret.data.cmp.type = ((ret.data.cmp.inv ^ haseqsign)
-                           ? kExprLexCmpGreaterOrEqual
-                           : kExprLexCmpGreater);
+                           ? kExprCmpGreaterOrEqual
+                           : kExprCmpGreater);
       break;
     }
 
@@ -503,11 +503,11 @@ static const char *const eltkn_type_tab[] = {
 };
 
 static const char *const eltkn_cmp_type_tab[] = {
-  [kExprLexCmpEqual] = "Equal",
-  [kExprLexCmpMatches] = "Matches",
-  [kExprLexCmpGreater] = "Greater",
-  [kExprLexCmpGreaterOrEqual] = "GreaterOrEqual",
-  [kExprLexCmpIdentical] = "Identical",
+  [kExprCmpEqual] = "Equal",
+  [kExprCmpMatches] = "Matches",
+  [kExprCmpGreater] = "Greater",
+  [kExprCmpGreaterOrEqual] = "GreaterOrEqual",
+  [kExprCmpIdentical] = "Identical",
 };
 
 static const char *const ccs_tab[] = {
@@ -770,7 +770,8 @@ static inline void viml_pexpr_debug_print_token(
 // NVimOperator -> Operator
 // NVimUnaryOperator -> NVimOperator
 // NVimBinaryOperator -> NVimOperator
-// NVimComparisonOperator -> NVimOperator
+// NVimComparisonOperator -> NVimBinaryOperator
+// NVimComparisonOperatorModifier -> NVimComparisonOperator
 // NVimTernary -> NVimOperator
 // NVimTernaryColon -> NVimTernary
 //
@@ -805,6 +806,8 @@ static inline void viml_pexpr_debug_print_token(
 // NVimInvalidIdentifier -> NVimInvalidValue
 // NVimInvalidIdentifierScope -> NVimInvalidValue
 // NVimInvalidIdentifierScopeDelimiter -> NVimInvalidValue
+// NVimInvalidComparisonOperator -> NVimInvalidOperator
+// NVimInvalidComparisonOperatorModifier -> NVimInvalidComparisonOperator
 //
 // NVimUnaryPlus -> NVimUnaryOperator
 // NVimBinaryPlus -> NVimBinaryOperator
@@ -849,6 +852,8 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
 
   [kExprNodeTernaryValue] = kEOpLvlTernaryValue,
 
+  [kExprNodeComparison] = kEOpLvlComparison,
+
   [kExprNodeBinaryPlus] = kEOpLvlAddition,
 
   [kExprNodeUnaryPlus] = kEOpLvlUnary,
@@ -891,6 +896,8 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   [kExprNodeTernary] = kEOpAssRight,
 
   [kExprNodeTernaryValue] = kEOpAssRight,
+
+  [kExprNodeComparison] = kEOpAssRight,
 
   [kExprNodeBinaryPlus] = kEOpAssLeft,
 
@@ -935,11 +942,23 @@ static inline ExprOpAssociativity node_ass(const ExprASTNode node)
 /// Handle binary operator
 ///
 /// This function is responsible for handling priority levels as well.
-static void viml_pexpr_handle_bop(ExprASTStack *const ast_stack,
+///
+/// @param[in]  pstate  Parser state, used for error reporting.
+/// @param  ast_stack  AST stack. May be popped of some values and will
+///                    definitely receive new ones.
+/// @param  bop_node  New node to handle.
+/// @param[out]  want_node_p  New value of want_node.
+/// @param[out]  ast_err  Location where error is saved, if any.
+///
+/// @return True if no errors occurred, false otherwise.
+static bool viml_pexpr_handle_bop(const ParserState *const pstate,
+                                  ExprASTStack *const ast_stack,
                                   ExprASTNode *const bop_node,
-                                  ExprASTWantedNode *const want_node_p)
+                                  ExprASTWantedNode *const want_node_p,
+                                  ExprASTError *const ast_err)
   FUNC_ATTR_NONNULL_ALL
 {
+  bool ret = true;
   ExprASTNode **top_node_p = NULL;
   ExprASTNode *top_node;
   ExprOpLvl top_node_lvl;
@@ -977,7 +996,6 @@ static void viml_pexpr_handle_bop(ExprASTStack *const ast_stack,
       break;
     }
   } while (kv_size(*ast_stack));
-  // FIXME: Handle no associativity
   if (top_node_ass == kEOpAssLeft || top_node_lvl != bop_node_lvl) {
     // outer(op(x,y)) -> outer(new_op(op(x,y),*))
     //
@@ -1008,10 +1026,18 @@ static void viml_pexpr_handle_bop(ExprASTStack *const ast_stack,
     kvi_push(*ast_stack, top_node_p);
     kvi_push(*ast_stack, &top_node->children->next);
     kvi_push(*ast_stack, &bop_node->children->next);
+    // TODO(ZyX-I): Make this not error, but treat like Python does
+    if (bop_node->type == kExprNodeComparison) {
+      east_set_error(pstate, ast_err,
+                     _("E15: Operator is not associative: %.*s"),
+                     bop_node->start);
+      ret = false;
+    }
   }
   *want_node_p = (*want_node_p == kENodeArgumentSeparator
                   ? kENodeArgument
                   : kENodeValue);
+  return ret;
 }
 
 /// ParserPosition literal based on ParserPosition pos with columns shifted
@@ -1074,6 +1100,13 @@ static inline ParserPosition shifted_pos(const ParserPosition pos,
 #define MAY_HAVE_NEXT_EXPR \
     (kv_size(ast_stack) == 1)
 
+/// Add operator node
+///
+/// @param[in]  cur_node  Node to add.
+#define ADD_OP_NODE(cur_node) \
+    is_invalid |= !viml_pexpr_handle_bop(pstate, &ast_stack, cur_node, \
+                                         &want_node, &ast.err)
+
 /// Record missing operator: for things like
 ///
 ///     :echo @a @a
@@ -1094,7 +1127,7 @@ static inline ParserPosition shifted_pos(const ParserPosition pos,
         ERROR_FROM_TOKEN_AND_MSG(cur_token, _("E15: Missing operator: %.*s")); \
         NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeOpMissing); \
         cur_node->len = 0; \
-        viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node); \
+        ADD_OP_NODE(cur_node); \
         goto viml_pexpr_parse_process_token; \
       } \
     } while (0)
@@ -1120,34 +1153,33 @@ static inline ParserPosition shifted_pos(const ParserPosition pos,
 /// @param[in]  msg  Error message, assumed to be already translated and
 ///                  containing a single %token "%.*s".
 /// @param[in]  start  Position at which error occurred.
-static inline void east_set_error(ExprAST *const ret_ast,
-                                  const ParserState *const pstate,
+static inline void east_set_error(const ParserState *const pstate,
+                                  ExprASTError *const ret_ast_err,
                                   const char *const msg,
                                   const ParserPosition start)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
-  if (!ret_ast->correct) {
+  if (ret_ast_err->msg != NULL) {
     return;
   }
   const ParserLine pline = pstate->reader.lines.items[start.line];
-  ret_ast->correct = false;
-  ret_ast->err.msg = msg;
-  ret_ast->err.arg_len = (int)(pline.size - start.col);
-  ret_ast->err.arg = pline.data + start.col;
+  ret_ast_err->msg = msg;
+  ret_ast_err->arg_len = (int)(pline.size - start.col);
+  ret_ast_err->arg = pline.data + start.col;
 }
 
 /// Set error from the given token and given message
 #define ERROR_FROM_TOKEN_AND_MSG(cur_token, msg) \
     do { \
       is_invalid = true; \
-      east_set_error(&ast, pstate, msg, cur_token.start); \
+      east_set_error(pstate, &ast.err, msg, cur_token.start); \
     } while (0)
 
 /// Like #ERROR_FROM_TOKEN_AND_MSG, but gets position from a node
 #define ERROR_FROM_NODE_AND_MSG(node, msg) \
     do { \
       is_invalid = true; \
-      east_set_error(&ast, pstate, msg, node->start); \
+      east_set_error(pstate, &ast.err, msg, node->start); \
     } while (0)
 
 /// Set error from the given kExprLexInvalid token
@@ -1231,7 +1263,6 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   ExprAST ast = {
-    .correct = true,
     .err = {
       .msg = NULL,
       .arg_len = 0,
@@ -1359,8 +1390,34 @@ viml_pexpr_parse_process_token:
           HL_CUR_TOKEN(UnaryPlus);
         } else {
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinaryPlus);
-          viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
+          ADD_OP_NODE(cur_node);
           HL_CUR_TOKEN(BinaryPlus);
+        }
+        want_node = kENodeValue;
+        break;
+      }
+      case kExprLexComparison: {
+        ADD_VALUE_IF_MISSING(
+            _("E15: Expected value, got comparison operator: %.*s"));
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComparison);
+        if (cur_token.type == kExprLexInvalid) {
+          cur_node->data.cmp.ccs = kCCStrategyUseOption;
+          cur_node->data.cmp.type = kExprCmpEqual;
+          cur_node->data.cmp.inv = false;
+        } else {
+          cur_node->data.cmp.ccs = cur_token.data.cmp.ccs;
+          cur_node->data.cmp.type = cur_token.data.cmp.type;
+          cur_node->data.cmp.inv = cur_token.data.cmp.inv;
+        }
+        ADD_OP_NODE(cur_node);
+        if (cur_token.data.cmp.ccs != kCCStrategyUseOption) {
+          viml_parser_highlight(pstate, cur_token.start, cur_token.len - 1,
+                                HL(ComparisonOperator));
+          viml_parser_highlight(
+              pstate, shifted_pos(cur_token.start, cur_token.len - 1), 1,
+              HL(ComparisonOperatorModifier));
+        } else {
+          HL_CUR_TOKEN(ComparisonOperator);
         }
         want_node = kENodeValue;
         break;
@@ -1415,7 +1472,7 @@ viml_pexpr_parse_invalid_comma:
           }
         }
         NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComma);
-        viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
+        ADD_OP_NODE(cur_node);
         HL_CUR_TOKEN(Comma);
         break;
       }
@@ -1474,7 +1531,7 @@ viml_pexpr_parse_invalid_colon:
           HL_CUR_TOKEN(TernaryColon);
         } else {
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
-          viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
+          ADD_OP_NODE(cur_node);
           HL_CUR_TOKEN(Colon);
         }
         want_node = kENodeValue;
@@ -1646,7 +1703,7 @@ viml_pexpr_parse_figure_brace_closing_error:
           ERROR_FROM_TOKEN_AND_MSG(
               cur_token, _("E15: Arrow outside of lambda: %.*s"));
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeArrow);
-          viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
+          ADD_OP_NODE(cur_node);
         }
         want_node = kENodeValue;
         HL_CUR_TOKEN(Arrow);
@@ -1775,7 +1832,7 @@ viml_pexpr_parse_no_paren_closing_error: {}
               }
             }
             NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeCall);
-            viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
+            ADD_OP_NODE(cur_node);
             HL_CUR_TOKEN(CallingParenthesis);
           } else {
             // Currently it is impossible to reach this.
@@ -1788,7 +1845,7 @@ viml_pexpr_parse_no_paren_closing_error: {}
       case kExprLexQuestion: {
         ADD_VALUE_IF_MISSING(_("E15: Expected value, got question mark: %.*s"));
         NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeTernary);
-        viml_pexpr_handle_bop(&ast_stack, cur_node, &want_node);
+        ADD_OP_NODE(cur_node);
         HL_CUR_TOKEN(Ternary);
         ExprASTNode *ter_val_node;
         NEW_NODE_WITH_CUR_POS(ter_val_node, kExprNodeTernaryValue);
@@ -1808,7 +1865,7 @@ viml_pexpr_parse_cycle_end:
   } while (true);
 viml_pexpr_parse_end:
   if (want_node == kENodeValue) {
-    east_set_error(&ast, pstate, _("E15: Expected value, got EOC: %.*s"),
+    east_set_error(pstate, &ast.err, _("E15: Expected value, got EOC: %.*s"),
                    pstate->pos);
   } else if (kv_size(ast_stack) != 1) {
     // Something may be wrong, check whether it really is.
@@ -1819,7 +1876,7 @@ viml_pexpr_parse_end:
     // Topmost stack item must be a *finished* value, so it must not be
     // analyzed. E.g. it may contain an already finished nested expression.
     kv_drop(ast_stack, 1);
-    while (ast.correct && kv_size(ast_stack)) {
+    while (ast.err.msg == NULL && kv_size(ast_stack)) {
       const ExprASTNode *const cur_node = (*kv_pop(ast_stack));
       // This should only happen when want_node == kENodeValue.
       assert(cur_node != NULL);
@@ -1832,14 +1889,14 @@ viml_pexpr_parse_end:
         }
         case kExprNodeCall: {
           east_set_error(
-              &ast, pstate,
+              pstate, &ast.err,
               _("E116: Missing closing parenthesis for function call: %.*s"),
               cur_node->start);
           break;
         }
         case kExprNodeNested: {
           east_set_error(
-              &ast, pstate,
+              pstate, &ast.err,
               _("E110: Missing closing parenthesis for nested expression"
                 ": %.*s"),
               cur_node->start);
@@ -1855,7 +1912,7 @@ viml_pexpr_parse_end:
           if (!cur_node->data.ter.got_colon) {
             // Actually Vim throws E109 in more cases.
             east_set_error(
-                &ast, pstate, _("E109: Missing ':' after '?': %.*s"),
+                pstate, &ast.err, _("E109: Missing ':' after '?': %.*s"),
                 cur_node->start);
           }
           break;

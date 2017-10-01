@@ -91,12 +91,6 @@ int main(const int argc, const char *const *const argv,
   const ExprAST ast = viml_pexpr_parse(&pstate, flags);
   assert(ast.root != NULL
          || plines[0].size == 0);
-  assert(ast.root != NULL || !ast.correct);
-  assert(ast.correct
-         || (ast.err.msg != NULL
-             && ast.err.arg != NULL
-             && ast.err.arg >= plines[0].data
-             && ((size_t)(ast.err.arg - plines[0].data) + ast.err.arg_len
-                 <= plines[0].size)));
+  assert(ast.root != NULL || ast.err.msg);
   // FIXME: free memory and assert no memory leaks
 }

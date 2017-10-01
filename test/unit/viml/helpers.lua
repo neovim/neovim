@@ -1,8 +1,13 @@
 local helpers = require('test.unit.helpers')(nil)
 
 local ffi = helpers.ffi
+local cimport = helpers.cimport
 local kvi_new = helpers.kvi_new
 local kvi_init = helpers.kvi_init
+local conv_enum = helpers.conv_enum
+local make_enum_conv_tab = helpers.make_enum_conv_tab
+
+local lib = cimport('./src/nvim/viml/parser/expressions.h')
 
 local function new_pstate(strings)
   local strings_idx = 0
@@ -88,10 +93,36 @@ local function pstate_set_str(pstate, start, len, ret)
   return ret
 end
 
+local eltkn_cmp_type_tab
+make_enum_conv_tab(lib, {
+  'kExprCmpEqual',
+  'kExprCmpMatches',
+  'kExprCmpGreater',
+  'kExprCmpGreaterOrEqual',
+  'kExprCmpIdentical',
+}, 'kExprCmp', function(ret) eltkn_cmp_type_tab = ret end)
+
+local function conv_cmp_type(typ)
+  return conv_enum(eltkn_cmp_type_tab, typ)
+end
+
+local ccs_tab
+make_enum_conv_tab(lib, {
+  'kCCStrategyUseOption',
+  'kCCStrategyMatchCase',
+  'kCCStrategyIgnoreCase',
+}, 'kCCStrategy', function(ret) ccs_tab = ret end)
+
+local function conv_ccs(ccs)
+  return conv_enum(ccs_tab, ccs)
+end
+
 return {
+  conv_ccs = conv_ccs,
   pline2lua = pline2lua,
   pstate_str = pstate_str,
   new_pstate = new_pstate,
   intchar2lua = intchar2lua,
+  conv_cmp_type = conv_cmp_type,
   pstate_set_str = pstate_set_str,
 }

@@ -1,7 +1,7 @@
 local helpers = require('test.unit.helpers')(after_each)
-local viml_helpers = require('test.unit.viml.helpers')
 local global_helpers = require('test.helpers')
 local itp = helpers.gen_itp(it)
+local viml_helpers = require('test.unit.viml.helpers')
 
 local make_enum_conv_tab = helpers.make_enum_conv_tab
 local child_call_once = helpers.child_call_once
@@ -11,9 +11,11 @@ local cimport = helpers.cimport
 local ffi = helpers.ffi
 local eq = helpers.eq
 
+local conv_ccs = viml_helpers.conv_ccs
 local pline2lua = viml_helpers.pline2lua
 local new_pstate = viml_helpers.new_pstate
 local intchar2lua = viml_helpers.intchar2lua
+local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
 
 local format_string = global_helpers.format_string
@@ -83,6 +85,7 @@ make_enum_conv_tab(lib, {
   'kExprNodeComma',
   'kExprNodeColon',
   'kExprNodeArrow',
+  'kExprNodeComparison',
 }, 'kExprNode', function(ret) east_node_type_tab = ret end)
 
 local function conv_east_node_type(typ)
@@ -121,6 +124,10 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
       (eastnode.data.fig.type_guesses.allow_lambda and '\\' or '-')
       .. (eastnode.data.fig.type_guesses.allow_dict and 'd' or '-')
       .. (eastnode.data.fig.type_guesses.allow_ident and 'i' or '-'))
+  elseif typ == 'Comparison' then
+    typ = typ .. ('(type=%s,inv=%u,ccs=%s)'):format(
+      conv_cmp_type(eastnode.data.cmp.type), eastnode.data.cmp.inv and 1 or 0,
+      conv_ccs(eastnode.data.cmp.ccs))
   end
   ret_str = typ .. ':' .. ret_str
   local can_simplify = true
@@ -150,7 +157,7 @@ end
 local function east2lua(pstate, east)
   local checked_nodes = {}
   return {
-    err = (not east.correct) and {
+    err = east.err.msg ~= nil and {
       msg = ffi.string(east.err.msg),
       arg = ('%s'):format(
         ffi.string(east.err.arg, east.err.arg_len)),
@@ -3326,6 +3333,320 @@ describe('Expressions parser', function()
       hl('Identifier', 'g'),
       hl('TernaryColon', ':'),
       hl('Identifier', 'h'),
+    })
+  end)
+  itp('works with comparison operators', function()
+    check_parsing('a == b', 0, {
+      --           012345
+      ast = {
+        {
+          'Comparison(type=Equal,inv=0,ccs=UseOption):0:1: ==',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:4: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '==', 1),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a ==? b', 0, {
+      --           0123456
+      ast = {
+        {
+          'Comparison(type=Equal,inv=0,ccs=IgnoreCase):0:1: ==?',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:5: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '==', 1),
+      hl('ComparisonOperatorModifier', '?'),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a ==# b', 0, {
+      --           0123456
+      ast = {
+        {
+          'Comparison(type=Equal,inv=0,ccs=MatchCase):0:1: ==#',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:5: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '==', 1),
+      hl('ComparisonOperatorModifier', '#'),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a !=# b', 0, {
+      --           0123456
+      ast = {
+        {
+          'Comparison(type=Equal,inv=1,ccs=MatchCase):0:1: !=#',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:5: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '!=', 1),
+      hl('ComparisonOperatorModifier', '#'),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a <=# b', 0, {
+      --           0123456
+      ast = {
+        {
+          'Comparison(type=Greater,inv=1,ccs=MatchCase):0:1: <=#',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:5: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '<=', 1),
+      hl('ComparisonOperatorModifier', '#'),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a >=# b', 0, {
+      --           0123456
+      ast = {
+        {
+          'Comparison(type=GreaterOrEqual,inv=0,ccs=MatchCase):0:1: >=#',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:5: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '>=', 1),
+      hl('ComparisonOperatorModifier', '#'),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a ># b', 0, {
+      --           012345
+      ast = {
+        {
+          'Comparison(type=Greater,inv=0,ccs=MatchCase):0:1: >#',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:4: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '>', 1),
+      hl('ComparisonOperatorModifier', '#'),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a <# b', 0, {
+      --           012345
+      ast = {
+        {
+          'Comparison(type=GreaterOrEqual,inv=1,ccs=MatchCase):0:1: <#',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:4: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '<', 1),
+      hl('ComparisonOperatorModifier', '#'),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a is#b', 0, {
+      --           012345
+      ast = {
+        {
+          'Comparison(type=Identical,inv=0,ccs=MatchCase):0:1: is#',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:5:b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', 'is', 1),
+      hl('ComparisonOperatorModifier', '#'),
+      hl('Identifier', 'b'),
+    })
+
+    check_parsing('a is?b', 0, {
+      --           012345
+      ast = {
+        {
+          'Comparison(type=Identical,inv=0,ccs=IgnoreCase):0:1: is?',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:5:b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', 'is', 1),
+      hl('ComparisonOperatorModifier', '?'),
+      hl('Identifier', 'b'),
+    })
+
+    check_parsing('a isnot b', 0, {
+      --           012345678
+      ast = {
+        {
+          'Comparison(type=Identical,inv=1,ccs=UseOption):0:1: isnot',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:7: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', 'isnot', 1),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a < b < c', 0, {
+      --           012345678
+      ast = {
+        {
+          'Comparison(type=GreaterOrEqual,inv=1,ccs=UseOption):0:1: <',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Comparison(type=GreaterOrEqual,inv=1,ccs=UseOption):0:5: <',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:3: b',
+                'PlainIdentifier(scope=0,ident=c):0:7: c',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ' < c',
+        msg = 'E15: Operator is not associative: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ComparisonOperator', '<', 1),
+      hl('Identifier', 'b', 1),
+      hl('InvalidComparisonOperator', '<', 1),
+      hl('Identifier', 'c', 1),
+    })
+    check_parsing('a += b', 0, {
+      --           012345
+      ast = {
+        {
+          'Comparison(type=Equal,inv=0,ccs=UseOption):0:3:=',
+          children = {
+            {
+              'BinaryPlus:0:1: +',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                'Missing:0:3:',
+              },
+            },
+            'PlainIdentifier(scope=0,ident=b):0:4: b',
+          },
+        },
+      },
+      err = {
+        arg = '= b',
+        msg = 'E15: Expected == or =~: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('BinaryPlus', '+', 1),
+      hl('InvalidComparisonOperator', '='),
+      hl('Identifier', 'b', 1),
+    })
+    check_parsing('a + b == c + d', 0, {
+      --           01234567890123
+      --           0         1
+      ast = {
+        {
+          'Comparison(type=Equal,inv=0,ccs=UseOption):0:5: ==',
+          children = {
+            {
+              'BinaryPlus:0:1: +',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                'PlainIdentifier(scope=0,ident=b):0:3: b',
+              },
+            },
+            {
+              'BinaryPlus:0:10: +',
+              children = {
+                'PlainIdentifier(scope=0,ident=c):0:8: c',
+                'PlainIdentifier(scope=0,ident=d):0:12: d',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('BinaryPlus', '+', 1),
+      hl('Identifier', 'b', 1),
+      hl('ComparisonOperator', '==', 1),
+      hl('Identifier', 'c', 1),
+      hl('BinaryPlus', '+', 1),
+      hl('Identifier', 'd', 1),
+    })
+    check_parsing('+ a == + b', 0, {
+      --           0123456789
+      ast = {
+        {
+          'Comparison(type=Equal,inv=0,ccs=UseOption):0:3: ==',
+          children = {
+            {
+              'UnaryPlus:0:0:+',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1: a',
+              },
+            },
+            {
+              'UnaryPlus:0:6: +',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:8: b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('UnaryPlus', '+'),
+      hl('Identifier', 'a', 1),
+      hl('ComparisonOperator', '==', 1),
+      hl('UnaryPlus', '+', 1),
+      hl('Identifier', 'b', 1),
     })
   end)
 end)
