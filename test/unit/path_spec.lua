@@ -482,14 +482,14 @@ describe('path.c', function()
       eq(OK, result)
     end)
 
-    itp('works with a relative path with the current directory prefix #7117', function()
+    itp('expands "./" to the current directory #7117', function()
       local force_expansion = 1
       local result = vim_FullName('./unit-test-directory/test.file', buffer, length, force_expansion)
       eq(OK, result)
       eq(lfs.currentdir() .. '/unit-test-directory/test.file', (ffi.string(buffer)))
     end)
 
-    itp('works with a relative path with the directory name mentioned twice #7117', function()
+    itp('collapses "foo/../foo" to "foo" #7117', function()
       local force_expansion = 1
       local result = vim_FullName('unit-test-directory/../unit-test-directory/test.file', buffer, length, force_expansion)
       eq(OK, result)
