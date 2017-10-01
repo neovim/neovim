@@ -2048,7 +2048,7 @@ return {
       varname='p_shcf',
       defaults={
         condition='WIN32',
-        if_true={vi="/c"},
+        if_true={vi="/s /c"},
         if_false={vi="-c"}
       }
     },
@@ -2104,7 +2104,11 @@ return {
       secure=true,
       vi_def=true,
       varname='p_sxq',
-      defaults={if_true={vi=""}}
+      defaults={
+        condition='WIN32',
+        if_true={vi="\""},
+        if_false={vi=""},
+      }
     },
     {
       full_name='shellxescape', abbreviation='sxe',
