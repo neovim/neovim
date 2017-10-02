@@ -186,6 +186,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       ret.data.num.is_float = false;
       CHARREG(kExprLexNumber, ascii_isdigit);
       if (flags & kELFlagAllowFloat) {
+        const LexExprToken non_float_ret = ret;
         if (pline.size > ret.len + 1
             && pline.data[ret.len] == '.'
             && ascii_isdigit(pline.data[ret.len + 1])) {
@@ -206,6 +207,11 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
             }
             CHARREG(kExprLexNumber, ascii_isdigit);
           }
+        }
+        if (pline.size > ret.len
+            && (pline.data[ret.len] == '.'
+                || ASCII_ISALPHA(pline.data[ret.len]))) {
+          ret = non_float_ret;
         }
       }
       break;
