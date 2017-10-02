@@ -379,6 +379,13 @@ describe('menu_get', function()
     }
     eq(expected, m)
   end)
+end)
+
+describe('menu_get', function()
+
+  before_each(function()
+    clear()
+  end)
 
   it('prettyprints special chars', function()
     clear()
@@ -387,94 +394,237 @@ describe('menu_get', function()
     command('vnoremenu &Test.Test3 yA<C-R>0<Tab>xyz<Esc>')
     command('inoremenu &Test.Test4 <c-r>*')
     command('inoremenu &Test.Test5 <c-R>+')
-    local m = funcs.menu_get("","a");
+    command('nnoremenu &Test.Test6 <Nop>')
+    command('nnoremenu &Test.Test7 <NOP>')
+    command('nnoremenu &Test.Test8 <NoP>')
+    command('nnoremenu &Test.Test9 ""')
+
+    local m = funcs.menu_get("");
     local expected = {
-        {
-          shortcut = "T",
-          hidden = 0,
-          submenus = {
-            {
-              priority = 500,
-              mappings = {
-                n = {
-                  sid = 1,
-                  noremap = 1,
-                  enabled = 1,
-                  rhs = "inormal<Esc>",
-                  silent = 0
-                }
-              },
-              name = "Test",
-              hidden = 0
+      {
+        shortcut = "T",
+        hidden = 0,
+        submenus = {
+          {
+            priority = 500,
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "inormal<Esc>",
+                silent = 0
+              }
             },
-            {
-              priority = 500,
-              mappings = {
-                i = {
-                  sid = 1,
-                  noremap = 1,
-                  enabled = 1,
-                  rhs = "<Tab><Esc>",
-                  silent = 0
-                }
-              },
-              name = "Test2",
-              hidden = 0
-            },
-            {
-              priority = 500,
-              mappings = {
-                s = {
-                  sid = 1,
-                  noremap = 1,
-                  enabled = 1,
-                  rhs = "yA<C-R>0<Tab>xyz<Esc>",
-                  silent = 0
-                },
-                v = {
-                  sid = 1,
-                  noremap = 1,
-                  enabled = 1,
-                  rhs = "yA<C-R>0<Tab>xyz<Esc>",
-                  silent = 0
-                }
-              },
-              name = "Test3",
-              hidden = 0
-            },
-            {
-              priority = 500,
-              mappings = {
-                i = {
-                  sid = 1,
-                  noremap = 1,
-                  enabled = 1,
-                  rhs = "<C-R>*",
-                  silent = 0
-                }
-              },
-              name = "Test4",
-              hidden = 0
-            },
-            {
-              priority = 500,
-              mappings = {
-                i = {
-                  sid = 1,
-                  noremap = 1,
-                  enabled = 1,
-                  rhs = "<C-R>+",
-                  silent = 0
-                }
-              },
-              name = "Test5",
-              hidden = 0
-            }
+            name = "Test",
+            hidden = 0
           },
-          priority = 500,
-          name = "Test"
-        }
+          {
+            priority = 500,
+            mappings = {
+              i = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "<Tab><Esc>",
+                silent = 0
+              }
+            },
+            name = "Test2",
+            hidden = 0
+          },
+          {
+            priority = 500,
+            mappings = {
+              s = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "yA<C-R>0<Tab>xyz<Esc>",
+                silent = 0
+              },
+              v = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "yA<C-R>0<Tab>xyz<Esc>",
+                silent = 0
+              }
+            },
+            name = "Test3",
+            hidden = 0
+          },
+          {
+            priority = 500,
+            mappings = {
+              i = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "<C-R>*",
+                silent = 0
+              }
+            },
+            name = "Test4",
+            hidden = 0
+          },
+          {
+            priority = 500,
+            mappings = {
+              i = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "<C-R>+",
+                silent = 0
+              }
+            },
+            name = "Test5",
+            hidden = 0
+          },
+          {
+            priority = 500,
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "",
+                silent = 0
+              }
+            },
+            name = "Test6",
+            hidden = 0
+          },
+          {
+            priority = 500,
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "",
+                silent = 0
+              }
+            },
+            name = "Test7",
+            hidden = 0
+          },
+          {
+            priority = 500,
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "",
+                silent = 0
+              }
+            },
+            name = "Test8",
+            hidden = 0
+          },
+          {
+            priority = 500,
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "\"\"",
+                silent = 0
+              }
+            },
+            name = "Test9",
+            hidden = 0
+          }
+        },
+        priority = 500,
+        name = "Test"
       }
+    }
+
+    eq(m, expected)
+  end)
+
+  it('works with right-aligned text and spaces', function()
+    clear()
+    command('nnoremenu &Test<Tab>Y.Test<Tab>X\\ x inormal<Alt-j>')
+    command('nnoremenu &Test\\ 1.Test\\ 2 Wargl')
+    command('nnoremenu &Test4.Test<Tab>3 i space<Esc>')
+
+    local m = funcs.menu_get("");
+    local expected = {
+      {
+        shortcut = "T",
+        hidden = 0,
+        actext = "Y",
+        submenus = {
+          {
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "inormal<Alt-j>",
+                silent = 0
+              }
+            },
+            hidden = 0,
+            actext = "X x",
+            priority = 500,
+            name = "Test"
+          }
+        },
+        priority = 500,
+        name = "Test"
+      },
+      {
+        shortcut = "T",
+        hidden = 0,
+        submenus = {
+          {
+            priority = 500,
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "Wargl",
+                silent = 0
+              }
+            },
+            name = "Test 2",
+            hidden = 0
+          }
+        },
+        priority = 500,
+        name = "Test 1"
+      },
+      {
+        shortcut = "T",
+        hidden = 0,
+        submenus = {
+          {
+            mappings = {
+              n = {
+                sid = 1,
+                noremap = 1,
+                enabled = 1,
+                rhs = "i space<Esc>",
+                silent = 0
+              }
+            },
+            hidden = 0,
+            actext = "3",
+            priority = 500,
+            name = "Test"
+          }
+        },
+        priority = 500,
+        name = "Test4"
+      }
+    }
 
     eq(m, expected)
   end)
