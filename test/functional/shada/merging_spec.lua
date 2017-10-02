@@ -13,6 +13,11 @@ local read_shada_file = shada_helpers.read_shada_file
 local wshada, sdrcmd, shada_fname =
   get_shada_rw('Xtest-functional-shada-merging.shada')
 
+local mock_file_path = '/a/b/'
+if helpers.iswin() then
+  mock_file_path = 'C:/a/'
+end
+
 describe('ShaDa history merging code', function()
   before_each(reset)
   after_each(function()
@@ -512,9 +517,9 @@ describe('ShaDa marks support code', function()
 
   it('uses last A mark with gt timestamp from instance when reading',
   function()
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/-\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\007\000\018\131\162mX\195\161f\196\006/a/b/?\161nA')
+    wshada('\007\000\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
@@ -522,9 +527,9 @@ describe('ShaDa marks support code', function()
 
   it('uses last A mark with gt timestamp from file when reading with !',
   function()
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/-\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\007\000\018\131\162mX\195\161f\196\006/a/b/?\161nA')
+    wshada('\007\000\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
     eq(0, exc_exec(sdrcmd(true)))
     nvim_command('normal! `A')
     eq('?', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
@@ -532,9 +537,9 @@ describe('ShaDa marks support code', function()
 
   it('uses last A mark with eq timestamp from instance when reading',
   function()
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/-\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/?\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
@@ -542,9 +547,9 @@ describe('ShaDa marks support code', function()
 
   it('uses last A mark with gt timestamp from file when reading',
   function()
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/-\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\007\002\018\131\162mX\195\161f\196\006/a/b/?\161nA')
+    wshada('\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `A')
     eq('?', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
@@ -552,15 +557,15 @@ describe('ShaDa marks support code', function()
 
   it('uses last A mark with gt timestamp from instance when writing',
   function()
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/-\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\007\000\018\131\162mX\195\161f\196\006/a/b/?\161nA')
+    wshada('\007\000\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 7 and v.value.f == '/a/b/-' then
+      if v.type == 7 and v.value.f == '' .. mock_file_path .. '-' then
         found = found + 1
       end
     end
@@ -569,15 +574,15 @@ describe('ShaDa marks support code', function()
 
   it('uses last A mark with eq timestamp from instance when writing',
   function()
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/-\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/?\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 7 and v.value.f == '/a/b/-' then
+      if v.type == 7 and v.value.f == mock_file_path .. '-' then
         found = found + 1
       end
     end
@@ -586,15 +591,15 @@ describe('ShaDa marks support code', function()
 
   it('uses last A mark with gt timestamp from file when writing',
   function()
-    wshada('\007\001\018\131\162mX\195\161f\196\006/a/b/-\161nA')
+    wshada('\007\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. '-\161nA')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\007\002\018\131\162mX\195\161f\196\006/a/b/?\161nA')
+    wshada('\007\002\018\131\162mX\195\161f\196\006' .. mock_file_path .. '?\161nA')
     nvim_command('normal! `A')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 7 and v.value.f == '/a/b/?' then
+      if v.type == 7 and v.value.f == '' .. mock_file_path .. '?' then
         found = found + 1
       end
     end
@@ -603,11 +608,11 @@ describe('ShaDa marks support code', function()
 
   it('uses last a mark with gt timestamp from instance when reading',
   function()
-    nvim_command('edit /a/b/-')
+    nvim_command('edit ' .. mock_file_path .. '-')
     funcs.setline(1, {'-', '?'})
-    wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\001\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\010\000\017\131\161l\002\161f\196\006/a/b/-\161na')
+    wshada('\010\000\017\131\161l\002\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `a')
     eq('-', funcs.getline('.'))
@@ -615,11 +620,11 @@ describe('ShaDa marks support code', function()
 
   it('uses last a mark with gt timestamp from file when reading with !',
   function()
-    nvim_command('edit /a/b/-')
+    nvim_command('edit ' .. mock_file_path .. '-')
     funcs.setline(1, {'-', '?'})
-    wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\001\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\010\000\017\131\161l\002\161f\196\006/a/b/-\161na')
+    wshada('\010\000\017\131\161l\002\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd(true)))
     nvim_command('normal! `a')
     eq('?', funcs.getline('.'))
@@ -627,11 +632,11 @@ describe('ShaDa marks support code', function()
 
   it('uses last a mark with eq timestamp from instance when reading',
   function()
-    nvim_command('edit /a/b/-')
+    nvim_command('edit ' .. mock_file_path .. '-')
     funcs.setline(1, {'-', '?'})
-    wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\001\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\010\001\017\131\161l\002\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\002\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `a')
     eq('-', funcs.getline('.'))
@@ -639,11 +644,11 @@ describe('ShaDa marks support code', function()
 
   it('uses last a mark with gt timestamp from file when reading',
   function()
-    nvim_command('edit /a/b/-')
+    nvim_command('edit ' .. mock_file_path .. '-')
     funcs.setline(1, {'-', '?'})
-    wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\001\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\010\002\017\131\161l\002\161f\196\006/a/b/-\161na')
+    wshada('\010\002\017\131\161l\002\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
     nvim_command('normal! `a')
     eq('?', funcs.getline('.'))
@@ -651,17 +656,17 @@ describe('ShaDa marks support code', function()
 
   it('uses last a mark with gt timestamp from instance when writing',
   function()
-    nvim_command('edit /a/b/-')
+    nvim_command('edit ' .. mock_file_path .. '-')
     funcs.setline(1, {'-', '?'})
-    wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\001\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\010\000\017\131\161l\002\161f\196\006/a/b/-\161na')
+    wshada('\010\000\017\131\161l\002\161f\196\006' .. mock_file_path .. '-\161na')
     nvim_command('normal! `a')
     eq('-', funcs.getline('.'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 10 and v.value.f == '/a/b/-' and v.value.n == ('a'):byte() then
+      if v.type == 10 and v.value.f == '' .. mock_file_path .. '-' and v.value.n == ('a'):byte() then
         eq(true, v.value.l == 1 or v.value.l == nil)
         found = found + 1
       end
@@ -671,17 +676,17 @@ describe('ShaDa marks support code', function()
 
   it('uses last a mark with eq timestamp from instance when writing',
   function()
-    nvim_command('edit /a/b/-')
+    nvim_command('edit ' .. mock_file_path .. '-')
     funcs.setline(1, {'-', '?'})
-    wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\001\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\010\001\017\131\161l\002\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\002\161f\196\006' .. mock_file_path .. '-\161na')
     nvim_command('normal! `a')
     eq('-', funcs.getline('.'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 10 and v.value.f == '/a/b/-' and v.value.n == ('a'):byte() then
+      if v.type == 10 and v.value.f == '' .. mock_file_path .. '-' and v.value.n == ('a'):byte() then
         eq(true, v.value.l == 1 or v.value.l == nil)
         found = found + 1
       end
@@ -691,17 +696,17 @@ describe('ShaDa marks support code', function()
 
   it('uses last a mark with gt timestamp from file when writing',
   function()
-    nvim_command('edit /a/b/-')
+    nvim_command('edit ' .. mock_file_path .. '-')
     funcs.setline(1, {'-', '?'})
-    wshada('\010\001\017\131\161l\001\161f\196\006/a/b/-\161na')
+    wshada('\010\001\017\131\161l\001\161f\196\006' .. mock_file_path .. '-\161na')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\010\002\017\131\161l\002\161f\196\006/a/b/-\161na')
+    wshada('\010\002\017\131\161l\002\161f\196\006' .. mock_file_path .. '-\161na')
     nvim_command('normal! `a')
     eq('-', funcs.fnamemodify(curbufmeths.get_name(), ':t'))
     eq(0, exc_exec('wshada ' .. shada_fname))
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 10 and v.value.f == '/a/b/-' and v.value.n == ('a'):byte() then
+      if v.type == 10 and v.value.f == '' .. mock_file_path .. '-' and v.value.n == ('a'):byte() then
         eq(2, v.value.l)
         found = found + 1
       end
@@ -813,41 +818,41 @@ describe('ShaDa jumps support code', function()
   end)
 
   it('merges jumps when reading', function()
-    wshada('\008\001\018\131\162mX\195\161f\196\006/a/b/c\161l\002'
-           .. '\008\004\018\131\162mX\195\161f\196\006/a/b/d\161l\002'
-           .. '\008\007\018\131\162mX\195\161f\196\006/a/b/e\161l\002')
+    wshada('\008\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'
+           .. '\008\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'd\161l\002'
+           .. '\008\007\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'e\161l\002')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\008\001\018\131\162mX\195\161f\196\006/a/b/c\161l\002'
-           .. '\008\004\018\131\162mX\195\161f\196\006/a/b/d\161l\003'
-           .. '\008\007\018\131\162mX\195\161f\196\006/a/b/f\161l\002')
+    wshada('\008\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'
+           .. '\008\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'd\161l\003'
+           .. '\008\007\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'f\161l\002')
     eq(0, exc_exec(sdrcmd()))
     eq('', curbufmeths.get_name())
     eq('\n'
        .. ' jump line  col file/text\n'
-       .. '   6     2    0 /a/b/c\n'
-       .. '   5     2    0 /a/b/d\n'
-       .. '   4     3    0 /a/b/d\n'
-       .. '   3     2    0 /a/b/e\n'
-       .. '   2     2    0 /a/b/f\n'
+       .. '   6     2    0 ' .. mock_file_path .. 'c\n'
+       .. '   5     2    0 ' .. mock_file_path .. 'd\n'
+       .. '   4     3    0 ' .. mock_file_path .. 'd\n'
+       .. '   3     2    0 ' .. mock_file_path .. 'e\n'
+       .. '   2     2    0 ' .. mock_file_path .. 'f\n'
        .. '   1     1    0 \n'
        .. '>', redir_exec('jumps'))
   end)
 
   it('merges jumps when writing', function()
-    wshada('\008\001\018\131\162mX\195\161f\196\006/a/b/c\161l\002'
-           .. '\008\004\018\131\162mX\195\161f\196\006/a/b/d\161l\002'
-           .. '\008\007\018\131\162mX\195\161f\196\006/a/b/e\161l\002')
+    wshada('\008\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'
+           .. '\008\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'd\161l\002'
+           .. '\008\007\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'e\161l\002')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\008\001\018\131\162mX\195\161f\196\006/a/b/c\161l\002'
-           .. '\008\004\018\131\162mX\195\161f\196\006/a/b/d\161l\003'
-           .. '\008\007\018\131\162mX\195\161f\196\006/a/b/f\161l\002')
+    wshada('\008\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'
+           .. '\008\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'd\161l\003'
+           .. '\008\007\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'f\161l\002')
     eq(0, exc_exec('wshada ' .. shada_fname))
     local jumps = {
-      {file='/a/b/c', line=2},
-      {file='/a/b/d', line=2},
-      {file='/a/b/d', line=3},
-      {file='/a/b/e', line=2},
-      {file='/a/b/f', line=2},
+      {file='' .. mock_file_path .. 'c', line=2},
+      {file='' .. mock_file_path .. 'd', line=2},
+      {file='' .. mock_file_path .. 'd', line=3},
+      {file='' .. mock_file_path .. 'e', line=2},
+      {file='' .. mock_file_path .. 'f', line=2},
     }
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
@@ -864,9 +869,9 @@ describe('ShaDa jumps support code', function()
     local jumps = {}
     local shada = ''
     for i = 1,100 do
-      shada = shada .. ('\008%c\018\131\162mX\195\161f\196\006/a/b/c\161l%c'
+      shada = shada .. ('\008%c\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l%c'
                        ):format(i, i)
-      jumps[i] = {file='/a/b/c', line=i}
+      jumps[i] = {file='' .. mock_file_path .. 'c', line=i}
     end
     wshada(shada)
     eq(0, exc_exec(sdrcmd()))
@@ -874,9 +879,9 @@ describe('ShaDa jumps support code', function()
     for i = 1,101 do
       local t = i * 2
       shada = shada .. (
-          '\008\204%c\019\131\162mX\195\161f\196\006/a/b/c\161l\204%c'
+          '\008\204%c\019\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\204%c'
           ):format(t, t)
-      jumps[(t > #jumps + 1) and (#jumps + 1) or t] = {file='/a/b/c', line=t}
+      jumps[(t > #jumps + 1) and (#jumps + 1) or t] = {file='' .. mock_file_path .. 'c', line=t}
     end
     wshada(shada)
     eq(0, exc_exec('wshada ' .. shada_fname))
@@ -904,15 +909,15 @@ describe('ShaDa changes support code', function()
   end)
 
   it('merges changes when reading', function()
-    nvim_command('edit /a/b/c')
+    nvim_command('edit ' .. mock_file_path .. 'c')
     nvim_command('keepjumps call setline(1, range(7))')
-    wshada('\011\001\018\131\162mX\195\161f\196\006/a/b/c\161l\001'
-           .. '\011\004\018\131\162mX\195\161f\196\006/a/b/c\161l\002'
-           .. '\011\007\018\131\162mX\195\161f\196\006/a/b/c\161l\003')
+    wshada('\011\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\001'
+           .. '\011\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'
+           .. '\011\007\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\003')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\011\001\018\131\162mX\194\161f\196\006/a/b/c\161l\001'
-           .. '\011\004\018\131\162mX\195\161f\196\006/a/b/c\161l\005'
-           .. '\011\008\018\131\162mX\195\161f\196\006/a/b/c\161l\004')
+    wshada('\011\001\018\131\162mX\194\161f\196\006' .. mock_file_path .. 'c\161l\001'
+           .. '\011\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\005'
+           .. '\011\008\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\004')
     eq(0, exc_exec(sdrcmd()))
     eq('\n'
        .. 'change line  col text\n'
@@ -925,15 +930,15 @@ describe('ShaDa changes support code', function()
   end)
 
   it('merges changes when writing', function()
-    nvim_command('edit /a/b/c')
+    nvim_command('edit ' .. mock_file_path .. 'c')
     nvim_command('keepjumps call setline(1, range(7))')
-    wshada('\011\001\018\131\162mX\195\161f\196\006/a/b/c\161l\001'
-           .. '\011\004\018\131\162mX\195\161f\196\006/a/b/c\161l\002'
-           .. '\011\007\018\131\162mX\195\161f\196\006/a/b/c\161l\003')
+    wshada('\011\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\001'
+           .. '\011\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'
+           .. '\011\007\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\003')
     eq(0, exc_exec(sdrcmd()))
-    wshada('\011\001\018\131\162mX\194\161f\196\006/a/b/c\161l\001'
-           .. '\011\004\018\131\162mX\195\161f\196\006/a/b/c\161l\005'
-           .. '\011\008\018\131\162mX\195\161f\196\006/a/b/c\161l\004')
+    wshada('\011\001\018\131\162mX\194\161f\196\006' .. mock_file_path .. 'c\161l\001'
+           .. '\011\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\005'
+           .. '\011\008\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\004')
     eq(0, exc_exec('wshada ' .. shada_fname))
     local changes = {
       {line=1},
@@ -944,7 +949,7 @@ describe('ShaDa changes support code', function()
     }
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 11 and v.value.f == '/a/b/c' then
+      if v.type == 11 and v.value.f == '' .. mock_file_path .. 'c' then
         found = found + 1
         eq(changes[found].line, v.value.l or 1)
       end
@@ -953,12 +958,12 @@ describe('ShaDa changes support code', function()
   end)
 
   it('merges JUMPLISTSIZE changes when writing', function()
-    nvim_command('edit /a/b/c')
+    nvim_command('edit ' .. mock_file_path .. 'c')
     nvim_command('keepjumps call setline(1, range(202))')
     local changes = {}
     local shada = ''
     for i = 1,100 do
-      shada = shada .. ('\011%c\018\131\162mX\195\161f\196\006/a/b/c\161l%c'
+      shada = shada .. ('\011%c\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l%c'
                        ):format(i, i)
       changes[i] = {line=i}
     end
@@ -968,7 +973,7 @@ describe('ShaDa changes support code', function()
     for i = 1,101 do
       local t = i * 2
       shada = shada .. (
-          '\011\204%c\019\131\162mX\195\161f\196\006/a/b/c\161l\204%c'
+          '\011\204%c\019\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\204%c'
           ):format(t, t)
       changes[(t > #changes + 1) and (#changes + 1) or t] = {line=t}
     end
@@ -980,7 +985,7 @@ describe('ShaDa changes support code', function()
     end
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 11 and v.value.f == '/a/b/c' then
+      if v.type == 11 and v.value.f == '' .. mock_file_path .. 'c' then
         found = found + 1
         eq(changes[found].line, v.value.l)
       end
@@ -990,20 +995,20 @@ describe('ShaDa changes support code', function()
 
   it('merges JUMPLISTSIZE changes when writing, with new items between old',
   function()
-    nvim_command('edit /a/b/c')
+    nvim_command('edit ' .. mock_file_path .. 'c')
     nvim_command('keepjumps call setline(1, range(202))')
     local shada = ''
     for i = 1,101 do
       local t = i * 2
       shada = shada .. (
-          '\011\204%c\019\131\162mX\195\161f\196\006/a/b/c\161l\204%c'
+          '\011\204%c\019\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\204%c'
           ):format(t, t)
     end
     wshada(shada)
     eq(0, exc_exec(sdrcmd()))
     shada = ''
     for i = 1,100 do
-      shada = shada .. ('\011%c\018\131\162mX\195\161f\196\006/a/b/c\161l%c'
+      shada = shada .. ('\011%c\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l%c'
                        ):format(i, i)
     end
     local changes = {}
@@ -1022,7 +1027,7 @@ describe('ShaDa changes support code', function()
     end
     local found = 0
     for _, v in ipairs(read_shada_file(shada_fname)) do
-      if v.type == 11 and v.value.f == '/a/b/c' then
+      if v.type == 11 and v.value.f == '' .. mock_file_path .. 'c' then
         found = found + 1
         eq(changes[found].line, v.value.l)
       end
@@ -1030,3 +1035,5 @@ describe('ShaDa changes support code', function()
     eq(found, 100)
   end)
 end)
+
+-- vim: ts=2 sw=2
