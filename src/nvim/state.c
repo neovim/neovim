@@ -19,9 +19,53 @@
 # include "state.c.generated.h"
 #endif
 
+static const char* state_desc = NULL;
+
+/// TODO: allow to change modestr, like nx for normal additional
+int state_vgetc(const char* desc)
+{
+  if (char_avail() || using_script() || input_available()) {
+    // Don't block for events if there's a character already available for
+    // processing. Characters can come from mappings, scripts and other
+    // sources, so this scenario is very common.
+    return safe_vgetc();
+  } else if (!multiqueue_empty(main_loop.events)) {
+    // Event was made available after the last multiqueue_process_events call
+    return K_EVENT;
+  } else {
+    input_enable_events();
+    const char* save_desc = state_desc;
+    state_desc = desc;
+    // Flush screen updates before blocking
+    ui_flush();
+    // Call `os_inchar` directly to block for events or user input without
+    // consuming anything from `input_buffer`(os/input.c) or calling the
+    // mapping engine.
+    (void)os_inchar(NULL, 0, -1, 0);
+    state_desc = save_desc;
+    input_disable_events();
+    // If an event was put into the queue, we send K_EVENT directly.
+    return !multiqueue_empty(main_loop.events)
+           ? K_EVENT
+           : safe_vgetc();
+  }
+}
+
+void state_process_events(const char* desc)
+{
+  const char* save_desc = state_desc;
+  state_desc = desc;
+  multiqueue_process_events(main_loop.events);
+  state_desc = save_desc;
+}
+
 
 void state_enter(VimState *s)
 {
+  // TODO(bfredl): add test for recursively invoking input()
+  // in the middle of getchar(), which neeeds this logic
+  const char* save_desc = state_desc;
+  state_desc = NULL;
   for (;;) {
     int check_result = s->check ? s->check(s) : 1;
 
@@ -35,29 +79,7 @@ void state_enter(VimState *s)
     int key;
 
 getkey:
-    if (char_avail() || using_script() || input_available()) {
-      // Don't block for events if there's a character already available for
-      // processing. Characters can come from mappings, scripts and other
-      // sources, so this scenario is very common.
-      key = safe_vgetc();
-    } else if (!multiqueue_empty(main_loop.events)) {
-      // Event was made available after the last multiqueue_process_events call
-      key = K_EVENT;
-    } else {
-      input_enable_events();
-      // Flush screen updates before blocking
-      ui_flush();
-      // Call `os_inchar` directly to block for events or user input without
-      // consuming anything from `input_buffer`(os/input.c) or calling the
-      // mapping engine.
-      (void)os_inchar(NULL, 0, -1, 0);
-      input_disable_events();
-      // If an event was put into the queue, we send K_EVENT directly.
-      key = !multiqueue_empty(main_loop.events)
-            ? K_EVENT
-            : safe_vgetc();
-    }
-
+    key = state_vgetc(NULL);
     if (key == K_EVENT) {
       may_sync_undo();
     }
@@ -69,6 +91,7 @@ getkey:
       goto getkey;
     }
   }
+  state_desc = save_desc;
 }
 
 /// Return TRUE if in the current mode we need to use virtual.
@@ -105,6 +128,10 @@ int get_real_state(void)
 /// @returns[allocated] mode string
 char *get_mode(void)
 {
+  if (state_desc) {
+    return xstrdup(state_desc);
+  }
+
   char *buf = xcalloc(3, sizeof(char));
 
   if (VIsual_active) {

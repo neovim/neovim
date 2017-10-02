@@ -3,7 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local ok, feed, eq, eval = helpers.ok, helpers.feed, helpers.eq, helpers.eval
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
-local curbufmeths = helpers.curbufmeths
+local nvim, curbufmeths = helpers.nvim, helpers.curbufmeths
 
 describe('timers', function()
   before_each(function()
@@ -95,6 +95,7 @@ describe('timers', function()
     curbufmeths.set_lines(0, -1, true, {"ITEM 1", "ITEM 2"})
     source([[
       func! AddItem(timer)
+        let g:timer_mode = mode(1)
         call nvim_buf_set_lines(0, 2, 2, v:true, ['ITEM 3'])
         redraw
       endfunc
@@ -120,6 +121,8 @@ describe('timers', function()
       {1:~                                       }|
       ^                                        |
     ]])
+    print(require('inspect')(nvim('get_mode')))
+    print(eval('g:timer_mode'))
 
     feed("3")
     eq(51, eval("g:c2"))
