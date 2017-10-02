@@ -915,7 +915,8 @@ static inline void viml_pexpr_debug_print_token(
 //
 // NVimUnaryPlus -> NVimUnaryOperator
 // NVimBinaryPlus -> NVimBinaryOperator
-// NVimConcatOrSubscript -> NVimBinaryOperator
+// NVimConcat -> NVimBinaryOperator
+// NVimConcatOrSubscript -> NVimConcat
 //
 // NVimRegister -> SpecialChar
 // NVimNumber -> Number
@@ -971,6 +972,7 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
   [kExprNodeUnknownFigure] = kEOpLvlParens,
   [kExprNodeLambda] = kEOpLvlParens,
   [kExprNodeDictLiteral] = kEOpLvlParens,
+  [kExprNodeListLiteral] = kEOpLvlParens,
 
   [kExprNodeArrow] = kEOpLvlArrow,
 
@@ -985,17 +987,21 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
   [kExprNodeComparison] = kEOpLvlComparison,
 
   [kExprNodeBinaryPlus] = kEOpLvlAddition,
+  [kExprNodeConcat] = kEOpLvlAddition,
 
   [kExprNodeUnaryPlus] = kEOpLvlUnary,
 
+  [kExprNodeConcatOrSubscript] = kEOpLvlSubscript,
   [kExprNodeSubscript] = kEOpLvlSubscript,
 
   [kExprNodeCurlyBracesIdentifier] = kEOpLvlComplexIdentifier,
 
   [kExprNodeComplexIdentifier] = kEOpLvlValue,
   [kExprNodePlainIdentifier] = kEOpLvlValue,
+  [kExprNodePlainKey] = kEOpLvlValue,
   [kExprNodeRegister] = kEOpLvlValue,
-  [kExprNodeListLiteral] = kEOpLvlValue,
+  [kExprNodeInteger] = kEOpLvlValue,
+  [kExprNodeFloat] = kEOpLvlValue,
 };
 
 static const ExprOpAssociativity node_type_to_op_ass[] = {
@@ -1008,6 +1014,7 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   [kExprNodeUnknownFigure] = kEOpAssLeft,
   [kExprNodeLambda] = kEOpAssNo,
   [kExprNodeDictLiteral] = kEOpAssNo,
+  [kExprNodeListLiteral] = kEOpAssNo,
 
   // Does not really matter.
   [kExprNodeArrow] = kEOpAssNo,
@@ -1030,17 +1037,21 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   [kExprNodeComparison] = kEOpAssRight,
 
   [kExprNodeBinaryPlus] = kEOpAssLeft,
+  [kExprNodeConcat] = kEOpAssLeft,
 
   [kExprNodeUnaryPlus] = kEOpAssNo,
 
+  [kExprNodeConcatOrSubscript] = kEOpAssLeft,
   [kExprNodeSubscript] = kEOpAssLeft,
 
   [kExprNodeCurlyBracesIdentifier] = kEOpAssLeft,
 
   [kExprNodeComplexIdentifier] = kEOpAssLeft,
   [kExprNodePlainIdentifier] = kEOpAssNo,
+  [kExprNodePlainKey] = kEOpAssNo,
   [kExprNodeRegister] = kEOpAssNo,
-  [kExprNodeListLiteral] = kEOpAssNo,
+  [kExprNodeInteger] = kEOpAssNo,
+  [kExprNodeFloat] = kEOpAssNo,
 };
 
 /// Get AST node priority level
@@ -1420,10 +1431,20 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
       [kENodeArgument] = kELFlagIsNotCmp,
       [kENodeArgumentSeparator] = kELFlagForbidScope,
     };
-    // FIXME Determine when (not) to allow floating-point numbers.
+    const bool is_concat_or_subscript = (
+        want_node == kENodeValue
+        && kv_size(ast_stack) > 1
+        && (*kv_Z(ast_stack, 1))->type == kExprNodeConcatOrSubscript);
     const int lexer_additional_flags = (
         kELFlagPeek
-        | ((flags & kExprFlagsDisallowEOC) ? kELFlagForbidEOC : 0));
+        | ((flags & kExprFlagsDisallowEOC) ? kELFlagForbidEOC : 0)
+        | ((want_node == kENodeValue
+            && (kv_size(ast_stack) == 1
+                || ((*kv_Z(ast_stack, 1))->type != kExprNodeConcat
+                    && ((*kv_Z(ast_stack, 1))->type
+                        != kExprNodeConcatOrSubscript))))
+            ? kELFlagAllowFloat
+            : 0));
     LexExprToken cur_token = viml_pexpr_next_token(
         pstate, want_node_to_lexer_flags[want_node] | lexer_additional_flags);
     if (cur_token.type == kExprLexEOC) {
@@ -1456,11 +1477,42 @@ viml_pexpr_parse_process_token:
     ExprASTNode *cur_node = NULL;
     assert((want_node == kENodeValue || want_node == kENodeArgument)
            == (*top_node_p == NULL));
+    // Note: in Vim whether expression "cond?d.a:2" is valid depends both on
+    // "cond" and whether "d" is a dictionary: expression is valid if condition
+    // is true and "d" is a dictionary (with "a" key or it will complain about
+    // missing one, but this is not relevant); if any of the requirements is
+    // broken then this thing is parsed as "d . a:2" yielding missing colon
+    // error. This parser does not allow such ambiguity, especially because it
+    // simply can’t: whether "d" is a dictionary is not known at the parsing
+    // time.
+    //
+    // Here example will always contain a concat with "a:2" sucking colon,
+    // making expression invalid both because there is no longer a spare colon 
+    // for ternary and because concatenating dictionary with anything is not
+    // valid. There are more cases when this will make a difference though.
+    const bool node_is_key = (
+        is_concat_or_subscript
+        && (cur_token.type == kExprLexPlainIdentifier
+            ? (!cur_token.data.var.autoload
+               && cur_token.data.var.scope == 0)
+            : (cur_token.type == kExprLexNumber))
+        && prev_token.type != kExprLexSpacing);
+    if (is_concat_or_subscript && !node_is_key) {
+      // Note: in Vim "d. a" (this is the reason behind `prev_token.type !=
+      // kExprLexSpacing` part of the condition) as well as any other "d.{expr}"
+      // where "{expr}" does not look like a key is invalid whenever "d" happens
+      // to be a dictionary. Since parser has no idea whether preceding
+      // expression is actually a dictionary it can’t outright reject anything,
+      // so it turns kExprNodeConcatOrSubscript into kExprNodeConcat instead,
+      // which will yield different errors then Vim does in a number of
+      // circumstances, and in any case runtime and not parse time errors.
+      (*kv_Z(ast_stack, 1))->type = kExprNodeConcat;
+    }
     if ((want_node == kENodeArgumentSeparator
          && tok_type != kExprLexComma
          && tok_type != kExprLexArrow)
         || (want_node == kENodeArgument
-            && !(tok_type == kExprLexPlainIdentifier
+            && !(cur_token.type == kExprLexPlainIdentifier
                  && cur_token.data.var.scope == 0
                  && !cur_token.data.var.autoload)
             && tok_type != kExprLexArrow)) {
@@ -1844,7 +1896,10 @@ viml_pexpr_parse_figure_brace_closing_error:
           want_node = (want_node == kENodeArgument
                        ? kENodeArgumentSeparator
                        : kENodeOperator);
-          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodePlainIdentifier);
+          NEW_NODE_WITH_CUR_POS(cur_node,
+                                (node_is_key
+                                 ? kExprNodePlainKey
+                                 : kExprNodePlainIdentifier));
           cur_node->data.var.scope = cur_token.data.var.scope;
           const size_t scope_shift = (cur_token.data.var.scope == 0
                                       ? 0
@@ -1854,6 +1909,7 @@ viml_pexpr_parse_figure_brace_closing_error:
           cur_node->data.var.ident_len = cur_token.len - scope_shift;
           *top_node_p = cur_node;
           if (scope_shift) {
+            assert(!node_is_key);
             viml_parser_highlight(pstate, cur_token.start, 1,
                                   HL(IdentifierScope));
             viml_parser_highlight(pstate, shifted_pos(cur_token.start, 1), 1,
@@ -1863,7 +1919,9 @@ viml_pexpr_parse_figure_brace_closing_error:
             viml_parser_highlight(pstate, shifted_pos(cur_token.start,
                                                       scope_shift),
                                   cur_token.len - scope_shift,
-                                  HL(Identifier));
+                                  (node_is_key
+                                   ? HL(IdentifierKey)
+                                   : HL(Identifier)));
           }
         } else {
           if (cur_token.data.var.scope == 0) {
@@ -1880,6 +1938,40 @@ viml_pexpr_parse_figure_brace_closing_error:
             OP_MISSING;
           }
         }
+        break;
+      }
+      case kExprLexNumber: {
+        if (want_node != kENodeValue) {
+          OP_MISSING;
+        }
+        if (node_is_key) {
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodePlainKey);
+          cur_node->data.var.ident = pline.data + cur_token.start.col;
+          cur_node->data.var.ident_len = cur_token.len;
+          HL_CUR_TOKEN(IdentifierKey);
+        } else if (cur_token.data.num.is_float) {
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeFloat);
+          cur_node->data.flt.value = cur_token.data.num.val.floating;
+          HL_CUR_TOKEN(Float);
+        } else {
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeInteger);
+          cur_node->data.num.value = cur_token.data.num.val.integer;
+          HL_CUR_TOKEN(Number);
+        }
+        want_node = kENodeOperator;
+        *top_node_p = cur_node;
+        break;
+      }
+      case kExprLexDot: {
+        ADD_VALUE_IF_MISSING(_("E15: Unexpected dot: %.*s"));
+        if (prev_token.type == kExprLexSpacing) {
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeConcat);
+          HL_CUR_TOKEN(Concat);
+        } else {
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeConcatOrSubscript);
+          HL_CUR_TOKEN(ConcatOrSubscript);
+        }
+        ADD_OP_NODE(cur_node);
         break;
       }
       case kExprLexParenthesis: {

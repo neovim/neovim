@@ -166,6 +166,8 @@ typedef enum {
   /// Looks like "string", "g:Foo", etc: consists from a single 
   /// kExprLexPlainIdentifier token.
   kExprNodePlainIdentifier = 'i',
+  /// Plain dictionary key, for use with kExprNodeConcatOrSubscript
+  kExprNodePlainKey = 'k',
   /// Complex identifier: variable/function name with curly braces
   kExprNodeComplexIdentifier = 'I',
   /// Figure brace expression which is not yet known
@@ -180,6 +182,19 @@ typedef enum {
   kExprNodeColon = ':',  ///< Colon “operator”.
   kExprNodeArrow = '>',  ///< Arrow “operator”.
   kExprNodeComparison = '=',  ///< Various comparison operators.
+  /// Concat operator
+  ///
+  /// To be only used in cases when it is known for sure it is not a subscript.
+  kExprNodeConcat = '.',
+  /// Concat or subscript operator
+  ///
+  /// For cases when it is not obvious whether expression is a concat or
+  /// a subscript. May only have either number or plain identifier as the second
+  /// child. To make it easier to avoid curly braces in place of
+  /// kExprNodePlainIdentifier node kExprNodePlainKey is used.
+  kExprNodeConcatOrSubscript = 'S',
+  kExprNodeInteger = '0',  ///< Integral number.
+  kExprNodeFloat = '1',  ///< Floating-point number.
 } ExprASTNodeType;
 
 typedef struct expr_ast_node ExprASTNode;
@@ -219,7 +234,7 @@ struct expr_ast_node {
       /// Points to inside parser reader state.
       const char *ident;
       size_t ident_len;  ///< Actual identifier length.
-    } var;  ///< For kExprNodePlainIdentifier.
+    } var;  ///< For kExprNodePlainIdentifier and kExprNodePlainKey.
     struct {
       bool got_colon;  ///< True if colon was seen.
     } ter;  ///< For kExprNodeTernaryValue.
@@ -228,6 +243,12 @@ struct expr_ast_node {
       ExprCaseCompareStrategy ccs;  ///< Case comparison strategy.
       bool inv;  ///< True if comparison is to be inverted.
     } cmp;  ///< For kExprNodeComparison.
+    struct {
+      uvarnumber_T value;
+    } num;  ///< For kExprNodeInteger.
+    struct {
+      float_T value;
+    } flt;  ///< For kExprNodeFloat.
   } data;
 };
 
