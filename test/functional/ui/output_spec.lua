@@ -162,14 +162,19 @@ describe("shell command :!", function()
     end)
 
     it("doesn't truncate Last line of shell output #3269", function()
-      command([[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
+      command(helpers.iswin()
+        and [[nnoremap <silent>\l :!dir /b bang_filter_spec<cr>]]
+        or  [[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
+      local result = (helpers.iswin()
+        and [[:!dir /b bang_filter_spec]]
+        or  [[:!ls bang_filter_spec    ]])
       feed([[\l]])
       screen:expect([[
         {1:~                                                    }|
         {1:~                                                    }|
         {1:~                                                    }|
         {1:~                                                    }|
-        :!ls bang_filter_spec                                |
+        ]]..result..[[                            |
         f1                                                   |
         f2                                                   |
         f3                                                   |
