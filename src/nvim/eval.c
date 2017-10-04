@@ -6733,56 +6733,14 @@ static void prepare_assert_error(garray_T *gap)
   }
 }
 
-// Fill "gap" with information about an assert error.
-static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
-                              char_u *exp_str, typval_T *exp_tv,
-                              typval_T *got_tv, assert_type_T atype)
-{
-  char_u *tofree;
-
-  if (opt_msg_tv->v_type != VAR_UNKNOWN) {
-    tofree = (char_u *) encode_tv2string(opt_msg_tv, NULL);
-    ga_concat(gap, tofree);
-    xfree(tofree);
-  } else {
-    if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
-      ga_concat(gap, (char_u *)"Pattern ");
-    } else if (atype == ASSERT_NOTEQUAL) {
-      ga_concat(gap, (char_u *)"Expected not equal to ");
-    } else {
-      ga_concat(gap, (char_u *)"Expected ");
-    }
-    if (exp_str == NULL) {
-      tofree = (char_u *) encode_tv2string(exp_tv, NULL);
-      ga_concat(gap, tofree);
-      xfree(tofree);
-    } else {
-      ga_concat(gap, exp_str);
-    }
-    if (atype != ASSERT_NOTEQUAL) {
-      if (atype == ASSERT_MATCH) {
-        ga_concat(gap, (char_u *)" does not match ");
-      } else if (atype == ASSERT_NOTMATCH) {
-        ga_concat(gap, (char_u *)" does match ");
-      } else {
-        ga_concat(gap, (char_u *)" but got ");
-      }
-      tofree = (char_u *)encode_tv2string(got_tv, NULL);
-      ga_concat(gap, tofree);
-      xfree(tofree);
-    }
-  }
-}
-
 /*
  * Append "str" to "gap", escaping unprintable characters.
  * Changes NL to \n, CR to \r, etc.
  */
-    static void
-ga_concat_esc(garray_T *gap, char_u *str)
+static void ga_concat_esc(garray_T *gap, char_u *str)
 {
-    char_u  *p;
-    char_u  buf[NUMBUFLEN];
+    char_u *p;
+    char_u buf[NUMBUFLEN];
 
     if (str == NULL)
     {
@@ -6810,6 +6768,47 @@ ga_concat_esc(garray_T *gap, char_u *str)
 		    ga_append(gap, *p);
 		break;
 	}
+}
+
+// Fill "gap" with information about an assert error.
+static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
+                              char_u *exp_str, typval_T *exp_tv,
+                              typval_T *got_tv, assert_type_T atype)
+{
+  char_u *tofree;
+
+  if (opt_msg_tv->v_type != VAR_UNKNOWN) {
+    tofree = (char_u *) encode_tv2string(opt_msg_tv, NULL);
+    ga_concat(gap, tofree);
+    xfree(tofree);
+  } else {
+    if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
+      ga_concat(gap, (char_u *)"Pattern ");
+    } else if (atype == ASSERT_NOTEQUAL) {
+      ga_concat(gap, (char_u *)"Expected not equal to ");
+    } else {
+      ga_concat(gap, (char_u *)"Expected ");
+    }
+    if (exp_str == NULL) {
+      tofree = (char_u *) encode_tv2string(exp_tv, NULL);
+      ga_concat_esc(gap, tofree);
+      xfree(tofree);
+    } else {
+      ga_concat_esc(gap, exp_str);
+    }
+    if (atype != ASSERT_NOTEQUAL) {
+      if (atype == ASSERT_MATCH) {
+        ga_concat(gap, (char_u *)" does not match ");
+      } else if (atype == ASSERT_NOTMATCH) {
+        ga_concat(gap, (char_u *)" does match ");
+      } else {
+        ga_concat(gap, (char_u *)" but got ");
+      }
+      tofree = (char_u *)encode_tv2string(got_tv, NULL);
+      ga_concat_esc(gap, tofree);
+      xfree(tofree);
+    }
+  }
 }
 
 // Add an assert error to v:errors.
