@@ -138,10 +138,7 @@ void mch_exit(int r) FUNC_ATTR_NORETURN
 {
   exiting = true;
 
-  if ((p_title
-       || (did_enable_title
-           && (p_titlestring == NULL || STRLEN(p_titlestring) == 0)))
-      && p_titleold != NULL) {
+  if (p_title && *p_titleold != NUL) {
     ui_call_set_title(cstr_as_string((char *)p_titleold));
   }
   ui_builtin_stop();

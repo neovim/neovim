@@ -1953,7 +1953,6 @@ did_set_title (
   if (starting != NO_SCREEN) {
     maketitle();
     resettitle();
-    did_enable_title = true;
   }
 }
 
