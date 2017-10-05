@@ -10,8 +10,6 @@ local feed_command = helpers.feed_command
 local funcs = helpers.funcs
 local meths = helpers.meths
 
-if helpers.pending_win32(pending) then return end
-
 local fname = 'Xtest-functional-ex_cmds-write'
 local fname_bak = fname .. '~'
 local fname_broken = fname_bak .. 'broken'
@@ -36,7 +34,11 @@ describe(':write', function()
   it('&backupcopy=auto preserves symlinks', function()
     command('set backupcopy=auto')
     write_file('test_bkc_file.txt', 'content0')
-    command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
+    if helpers.iswin() then
+      command("silent !mklink test_bkc_link.txt test_bkc_file.txt")
+    else
+      command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
+    end
     source([[
       edit test_bkc_link.txt
       call setline(1, ['content1'])
@@ -49,7 +51,11 @@ describe(':write', function()
   it('&backupcopy=no replaces symlink with new file', function()
     command('set backupcopy=no')
     write_file('test_bkc_file.txt', 'content0')
-    command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
+    if helpers.iswin() then
+      command("silent !mklink test_bkc_link.txt test_bkc_file.txt")
+    else
+      command("silent !ln -s test_bkc_file.txt test_bkc_link.txt")
+    end
     source([[
       edit test_bkc_link.txt
       call setline(1, ['content1'])
@@ -82,8 +88,11 @@ describe(':write', function()
     command('let $HOME=""')
     eq(funcs.fnamemodify('.', ':p:h'), funcs.fnamemodify('.', ':p:h:~'))
     -- Message from check_overwrite
-    eq(('\nE17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
-       redir_exec('write .'))
+    -- FIXME: 'E13: File exists (add ! to override)' in Windows
+    if not helpers.iswin() then
+      eq(('\nE17: "'..funcs.fnamemodify('.', ':p:h')..'" is a directory'),
+        redir_exec('write .'))
+    end
     meths.set_option('writeany', true)
     -- Message from buf_write
     eq(('\nE502: "." is a directory'),
@@ -91,7 +100,7 @@ describe(':write', function()
     funcs.mkdir(fname_bak)
     meths.set_option('backupdir', '.')
     meths.set_option('backup', true)
-    write_file(fname, 'content0')
+    eq(true, write_file(fname, 'content0'))
     eq(0, exc_exec('edit ' .. fname))
     funcs.setline(1, 'TTY')
     eq('Vim(write):E510: Can\'t make backup file (add ! to override)',
@@ -100,11 +109,19 @@ describe(':write', function()
     funcs.setfperm(fname, 'r--------')
     eq('Vim(write):E505: "Xtest-functional-ex_cmds-write" is read-only (add ! to override)',
        exc_exec('write'))
-    os.remove(fname)
-    os.remove(fname_bak)
-    write_file(fname_bak, 'TTYX')
-    lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)
-    eq('Vim(write):E166: Can\'t open linked file for writing',
-       exc_exec('write!'))
+    if helpers.iswin() then
+      eq(0, os.execute('del /q/f ' .. fname))
+      eq(0, os.execute('rd /q/s ' .. fname_bak))
+    else
+      eq(true, os.remove(fname))
+      eq(true, os.remove(fname_bak))
+    end
+    eq(true, write_file(fname_bak, 'TTYX'))
+    -- FIXME: exc_exec('write!') outputs 0 in Windows
+    if not helpers.iswin() then
+      lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)
+      eq('Vim(write):E166: Can\'t open linked file for writing',
+         exc_exec('write!'))
+    end
   end)
 end)
