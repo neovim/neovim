@@ -6742,15 +6742,13 @@ static void ga_concat_esc(garray_T *gap, char_u *str)
     char_u *p;
     char_u buf[NUMBUFLEN];
 
-    if (str == NULL)
-    {
+    if (str == NULL) {
 	ga_concat(gap, (char_u *)"NULL");
 	return;
     }
 
     for (p = str; *p != NUL; ++p)
-	switch (*p)
-	{
+	switch (*p) {
 	    case BS: ga_concat(gap, (char_u *)"\\b"); break;
 	    case ESC: ga_concat(gap, (char_u *)"\\e"); break;
 	    case FF: ga_concat(gap, (char_u *)"\\f"); break;
@@ -6759,12 +6757,10 @@ static void ga_concat_esc(garray_T *gap, char_u *str)
 	    case CAR: ga_concat(gap, (char_u *)"\\r"); break;
 	    case '\\': ga_concat(gap, (char_u *)"\\\\"); break;
 	    default:
-		if (*p < ' ')
-		{
+		if (*p < ' ') {
 		    vim_snprintf((char *)buf, NUMBUFLEN, "\\x%02x", *p);
 		    ga_concat(gap, buf);
-		}
-		else
+		} else
 		    ga_append(gap, *p);
 		break;
 	}
