@@ -15,7 +15,6 @@
 #include <string.h>
 
 #include "nvim/api/private/handle.h"
-#include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/os_unix.h"
@@ -138,9 +137,6 @@ void mch_exit(int r) FUNC_ATTR_NORETURN
 {
   exiting = true;
 
-  if (p_title && *p_titleold != NUL) {
-    ui_call_set_title(cstr_as_string((char *)p_titleold));
-  }
   ui_builtin_stop();
   ui_flush();
   ml_close_all(true);           // remove all memfiles

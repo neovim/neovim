@@ -649,6 +649,11 @@ void getout(int exitval)
   /* Position the cursor again, the autocommands may have moved it */
   ui_cursor_goto((int)Rows - 1, 0);
 
+  // Apply 'titleold'.
+  if (p_title && *p_titleold != NUL) {
+    ui_call_set_title(cstr_as_string((char *)p_titleold));
+  }
+
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
   iconv_end();
 #endif
