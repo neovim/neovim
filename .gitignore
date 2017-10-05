@@ -1,5 +1,6 @@
 # Build/deps dir
 /build/
+/cmake-build-debug/
 /dist/
 /.deps/
 /tmp/
