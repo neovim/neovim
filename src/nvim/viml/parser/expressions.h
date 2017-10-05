@@ -7,6 +7,7 @@
 
 #include "nvim/types.h"
 #include "nvim/viml/parser/parser.h"
+#include "nvim/eval/typval.h"
 
 // Defines whether to ignore case:
 //    ==   kCCStrategyUseOption
@@ -113,6 +114,11 @@ typedef struct {
     } err;  ///< For kExprLexInvalid
 
     struct {
+      union {
+        float_T floating;
+        uvarnumber_T integer;
+      } val;  ///< Number value.
+      uint8_t base;  ///< Base: 2, 8, 10 or 16.
       bool is_float;  ///< True if number is a floating-point.
     } num;  ///< For kExprLexNumber
   } data;  ///< Additional data, if needed.

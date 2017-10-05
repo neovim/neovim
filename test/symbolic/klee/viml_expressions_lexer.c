@@ -2,6 +2,7 @@
 # include <klee/klee.h>
 #else
 # include <string.h>
+# include <stdio.h>
 #endif
 #include <stddef.h>
 #include <stdint.h>
@@ -56,7 +57,7 @@ int main(const int argc, const char *const *const argv,
       .data = &input[shift],
       .size = sizeof(input) - shift,
 #else
-      .data = (const char *)&argv[1],
+      .data = (const char *)argv[1],
       .size = strlen(argv[1]),
 #endif
       .allocated = false,
@@ -97,4 +98,7 @@ int main(const int argc, const char *const *const argv,
   }
   assert(allocated_memory == 0);
   assert(ever_allocated_memory == 0);
+#ifndef USE_KLEE
+  fprintf(stderr, "tkn: %s\n", viml_pexpr_repr_token(&pstate, token, NULL));
+#endif
 }

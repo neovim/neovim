@@ -15,9 +15,12 @@
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/lib/kvec.h"
+#include "nvim/eval/typval.h"
 
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
+
+#define vim_str2nr(s, ...) vim_str2nr((const char_u *)(s), __VA_ARGS__)
 
 typedef kvec_withinit_t(ExprASTNode **, 16) ExprASTStack;
 
@@ -71,6 +74,43 @@ typedef enum {
 
 /// Character used as a separator in autoload function/variable names.
 #define AUTOLOAD_CHAR '#'
+
+/// Scale number by a given factor
+///
+/// Used to apply exponent to a number. Idea taken from uClibc.
+///
+/// @param[in]  num  Number to scale. Does not bother doing anything if it is
+///                  zero.
+/// @param[in]  base  Base, should be 10 since non-decimal floating-point
+///                   numbers are not supported.
+/// @param[in]  exponent  Exponent to scale by.
+/// @param[in]  exponent_negative  True if exponent is negative.
+static inline float_T scale_number(const float_T num,
+                                   const uint8_t base,
+                                   const uvarnumber_T exponent,
+                                   const bool exponent_negative)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
+{
+  if (num == 0 || exponent == 0) {
+    return num;
+  }
+  assert(base);
+  uvarnumber_T exp = exponent;
+  float_T p_base = (float_T)base;
+  float_T ret = num;
+  while (exp) {
+    if (exp & 1) {
+      if (exponent_negative) {
+        ret /= p_base;
+      } else {
+        ret *= p_base;
+      }
+    }
+    exp >>= 1;
+    p_base *= p_base;
+  }
+  return ret;
+}
 
 /// Get next token for the VimL expression input
 ///
@@ -184,6 +224,11 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     case '0': case '1': case '2': case '3': case '4': case '5': case '6':
     case '7': case '8': case '9': {
       ret.data.num.is_float = false;
+      ret.data.num.base = 10;
+      size_t frac_start = 0;
+      size_t exp_start = 0;
+      size_t frac_end = 0;
+      bool exp_negative = false;
       CHARREG(kExprLexNumber, ascii_isdigit);
       if (flags & kELFlagAllowFloat) {
         const LexExprToken non_float_ret = ret;
@@ -191,8 +236,18 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
             && pline.data[ret.len] == '.'
             && ascii_isdigit(pline.data[ret.len + 1])) {
           ret.len++;
+          frac_start = ret.len;
+          frac_end = ret.len;
           ret.data.num.is_float = true;
-          CHARREG(kExprLexNumber, ascii_isdigit);
+          for (; ret.len < pline.size && ascii_isdigit(pline.data[ret.len])
+               ; ret.len++) {
+            // A small optimization: trailing zeroes in fractional part do not
+            // add anything to significand, so it is useless to include them in
+            // frac_end.
+            if (pline.data[ret.len] != '0') {
+              frac_end = ret.len + 1;
+            }
+          }
           if (pline.size > ret.len + 1
               && (pline.data[ret.len] == 'e'
                   || pline.data[ret.len] == 'E')
@@ -202,9 +257,11 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
                    && ascii_isdigit(pline.data[ret.len + 2]))
                   || ascii_isdigit(pline.data[ret.len + 1]))) {
             ret.len++;
-            if (pline.data[ret.len] == '+' || pline.data[ret.len] == '-') {
+            if (pline.data[ret.len] == '+'
+                || (exp_negative = (pline.data[ret.len] == '-'))) {
               ret.len++;
             }
+            exp_start = ret.len;
             CHARREG(kExprLexNumber, ascii_isdigit);
           }
         }
@@ -213,6 +270,58 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
                 || ASCII_ISALPHA(pline.data[ret.len]))) {
           ret = non_float_ret;
         }
+      }
+      // TODO(ZyX-I): detect overflows
+      if (ret.data.num.is_float) {
+        // Vim used to use string2float here which in turn uses strtod(). There
+        // are two problems with this approach:
+        // 1. strtod() is locale-dependent. Not sure how it is worked around so
+        //    that I do not see relevant bugs, but it still does not look like
+        //    a good idea.
+        // 2. strtod() does not accept length argument.
+        //
+        // The below variant of parsing floats was recognized as acceptable
+        // because it is basically how uClibc does the thing: it generates
+        // a number ignoring decimal point (but recording its position), then
+        // uses recorded position to scale number down when processing exponent.
+        float_T significand_part = 0;
+        uvarnumber_T exp_part = 0;
+        const size_t frac_size = (size_t)(frac_end - frac_start);
+        for (size_t i = 0; i < frac_end; i++) {
+          if (i == frac_start - 1) {
+            continue;
+          }
+          significand_part = significand_part * 10 + (pline.data[i] - '0');
+        }
+        if (exp_start) {
+          vim_str2nr(pline.data + exp_start, NULL, NULL, 0, NULL, &exp_part,
+                     (int)(ret.len - exp_start));
+        }
+        if (exp_negative) {
+          exp_part += frac_size;
+        } else {
+          if (exp_part < frac_size) {
+            exp_negative = true;
+            exp_part = frac_size - exp_part;
+          } else {
+            exp_part -= frac_size;
+          }
+        }
+        ret.data.num.val.floating = scale_number(significand_part, 10, exp_part,
+                                                 exp_negative);
+      } else {
+        int len;
+        int prep;
+        vim_str2nr(pline.data, &prep, &len, STR2NR_ALL, NULL,
+                   &ret.data.num.val.integer, (int)pline.size);
+        ret.len = (size_t)len;
+        const uint8_t bases[] = {
+          [0] = 10,
+          ['0'] = 8,
+          ['x'] = 16, ['X'] = 16,
+          ['b'] = 2, ['B'] = 2,
+        };
+        ret.data.num.base = bases[prep];
       }
       break;
     }
@@ -474,7 +583,6 @@ viml_pexpr_next_token_adv_return:
   return ret;
 }
 
-#ifdef UNIT_TESTING
 static const char *const eltkn_type_tab[] = {
   [kExprLexInvalid] = "Invalid",
   [kExprLexMissing] = "Missing",
@@ -617,7 +725,12 @@ const char *viml_pexpr_repr_token(const ParserState *const pstate,
             (int)token.data.opt.len, token.data.opt.name)
     TKNARGS(kExprLexPlainIdentifier, "(scope=%s,autoload=%i)",
             intchar2str(token.data.var.scope), (int)token.data.var.autoload)
-    TKNARGS(kExprLexNumber, "(is_float=%i)", (int)token.data.num.is_float)
+    TKNARGS(kExprLexNumber, "(is_float=%i,base=%i,val=%lg)",
+            (int)token.data.num.is_float,
+            (int)token.data.num.base,
+            (double)(token.data.num.is_float
+                     ? token.data.num.val.floating
+                     : token.data.num.val.integer))
     TKNARGS(kExprLexInvalid, "(msg=%s)", token.data.err.msg)
     default: {
       // No additional arguments.
@@ -642,7 +755,6 @@ viml_pexpr_repr_token_end:
   }
   return ret;
 }
-#endif
 
 #ifdef UNIT_TESTING
 #include <stdio.h>
@@ -776,8 +888,10 @@ static inline void viml_pexpr_debug_print_token(
 // NVimOperator -> Operator
 // NVimUnaryOperator -> NVimOperator
 // NVimBinaryOperator -> NVimOperator
+//
 // NVimComparisonOperator -> NVimBinaryOperator
 // NVimComparisonOperatorModifier -> NVimComparisonOperator
+//
 // NVimTernary -> NVimOperator
 // NVimTernaryColon -> NVimTernary
 //
@@ -795,7 +909,20 @@ static inline void viml_pexpr_debug_print_token(
 // NVimIdentifierScope -> NVimIdentifier
 // NVimIdentifierScopeDelimiter -> NVimIdentifier
 //
+// NVimIdentifierKey -> Identifier
+//
 // NVimFigureBrace -> NVimInternalError
+//
+// NVimUnaryPlus -> NVimUnaryOperator
+// NVimBinaryPlus -> NVimBinaryOperator
+// NVimConcatOrSubscript -> NVimBinaryOperator
+//
+// NVimRegister -> SpecialChar
+// NVimNumber -> Number
+// NVimFloat -> NVimNumber
+//
+// NVimNestingParenthesis -> NVimParenthesis
+// NVimCallingParenthesis -> NVimParenthesis
 //
 // NVimInvalidComma -> NVimInvalidDelimiter
 // NVimInvalidSpacing -> NVimInvalid
@@ -814,12 +941,9 @@ static inline void viml_pexpr_debug_print_token(
 // NVimInvalidIdentifierScopeDelimiter -> NVimInvalidValue
 // NVimInvalidComparisonOperator -> NVimInvalidOperator
 // NVimInvalidComparisonOperatorModifier -> NVimInvalidComparisonOperator
-//
-// NVimUnaryPlus -> NVimUnaryOperator
-// NVimBinaryPlus -> NVimBinaryOperator
-// NVimRegister -> SpecialChar
-// NVimNestingParenthesis -> NVimParenthesis
-// NVimCallingParenthesis -> NVimParenthesis
+// NVimInvalidNumber -> NVimInvalidValue
+// NVimInvalidFloat -> NVimInvalidValue
+// NVimInvalidIdentifierKey -> NVimInvalidIdentifier
 
 /// Allocate a new node and set some of the values
 ///
