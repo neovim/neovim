@@ -6733,19 +6733,19 @@ static void prepare_assert_error(garray_T *gap)
   }
 }
 
-//Append "str" to "gap", escaping unprintable characters.
-//Changes NL to \n, CR to \r, etc.
+// Append "str" to "gap", escaping unprintable characters.
+// Changes NL to \n, CR to \r, etc.
 static void ga_concat_esc(garray_T *gap, char_u *str)
 {
   char_u *p;
   char_u buf[NUMBUFLEN];
-  
+
   if (str == NULL) {
     ga_concat(gap, (char_u *)"NULL");
     return;
   }
 
-  for (p = str; *p != NUL; ++p) {
+  for (p = str; *p != NUL; p++) {
     switch (*p) {
       case BS: ga_concat(gap, (char_u *)"\\b"); break;
       case ESC: ga_concat(gap, (char_u *)"\\e"); break;
@@ -6771,8 +6771,8 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
                               char_u *exp_str, typval_T *exp_tv,
                               typval_T *got_tv, assert_type_T atype)
 {
-  char_u *tofree; 
-  
+  char_u *tofree;
+
   if (opt_msg_tv->v_type != VAR_UNKNOWN) {
     tofree = (char_u *) encode_tv2string(opt_msg_tv, NULL);
     ga_concat(gap, tofree);
