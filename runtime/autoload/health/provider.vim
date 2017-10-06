@@ -240,11 +240,6 @@ function! s:check_python(version) abort
   let pyname = 'python'.(a:version == 2 ? '' : '3')
   let pyenv = resolve(exepath('pyenv'))
   let pyenv_root = exists('$PYENV_ROOT') ? resolve($PYENV_ROOT) : ''
-  let pyenv_flag = 0
-  if empty(pyenv_root)
-    let pyenv_root = !empty(pyenv) ? s:trim(s:system([pyenv, 'root'])) : ''
-    let pyenv_flag = 1
-  endif
   let venv = exists('$VIRTUAL_ENV') ? resolve($VIRTUAL_ENV) : ''
   let host_prog_var = pyname.'_host_prog'
   let loaded_var = 'g:loaded_'.pyname.'_provider'
@@ -258,17 +253,19 @@ function! s:check_python(version) abort
 
   if !empty(pyenv)
     if empty(pyenv_root)
+      call health#report_warn(
+            \ 'pyenv was found, but $PYENV_ROOT is not set explicitly. '.
+            \ 'The default value of `pyenv root` will be used.',
+            \ ['If this does not work for you, '.
+            \  'try set $PYENV_ROOT explicitly.']
+            \ )
+      let pyenv_root = s:trim(s:system([pyenv, 'root']))
+    endif
+
+    if !isdirectory(pyenv_root)
       call health#report_error('`pyenv root` does not work as expect.'.
             \ 'Please check your pyenv configuration.')
     else
-      if pyenv_flag == 1
-        call health#report_warn(
-              \ 'pyenv was found, but $PYENV_ROOT is not set explicitly.'.
-              \ 'The default value of `pyenv root` will be used.',
-              \ ['If this does not work for you,'.
-              \  'Try set $PYENV_ROOT explicitly.']
-              \ )
-      endif
       call health#report_ok(printf('pyenv found: "%s"', pyenv))
     endif
   endif
