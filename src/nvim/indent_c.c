@@ -744,7 +744,7 @@ static int cin_ispreproc_cont(char_u **pp, linenr_T *lnump, int *amount)
 {
   char_u      *line = *pp;
   linenr_T lnum = *lnump;
-  int retval = FALSE;
+  int retval = false;
   int candidate_amount = *amount;
 
   if (*line != NUL && line[STRLEN(line) - 1] == '\\') {
