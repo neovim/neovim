@@ -101,13 +101,15 @@ describe('jobs', function()
   end)
 
   it('returns -1 when target is not executable #5465', function()
-    if helpers.pending_win32(pending) then return end
     local function new_job()
       return eval([[jobstart('')]])
     end
     local executable_jobid = new_job()
-    local nonexecutable_jobid = eval(
-      "jobstart(['./test/functional/fixtures/non_executable.txt'])")
+    local nonexecutable = './test/functional/fixtures'
+    if not iswin() then
+      nonexecutable = nonexecutable .. '/non_executable.txt'
+    end
+    local nonexecutable_jobid = eval("jobstart(['"..nonexecutable.."'])")
     eq(-1, nonexecutable_jobid)
     -- Should _not_ throw an error.
     eq("", eval("v:errmsg"))
@@ -116,9 +118,7 @@ describe('jobs', function()
   end)
 
   it('invokes callbacks when the job writes and exits', function()
-    -- TODO: hangs on Windows
-    if helpers.pending_win32(pending) then return end
-    nvim('command', "call jobstart('echo', g:job_opts)")
+    nvim('command', [[call jobstart('echo ""', g:job_opts)]])
     eq({'notification', 'stdout', {0, {'', ''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
@@ -229,7 +229,6 @@ describe('jobs', function()
   end)
 
   it('will not leak memory if we leave a job running', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "call jobstart(['cat', '-'], g:job_opts)")
   end)
 
@@ -274,10 +273,11 @@ describe('jobs', function()
   end)
 
   it('can omit options', function()
-    if helpers.pending_win32(pending) then return end
     neq(0, nvim('eval', 'delete(".Xtestjob")'))
-    nvim('command', "call jobstart(['touch', '.Xtestjob'])")
-    nvim('command', "sleep 100m")
+    local touch_cmd = iswin() and "'Out-File -encoding ASCII .Xtestjob'"
+                              or "['touch', '.Xtestjob']"
+    nvim('command', "call jobstart(" .. touch_cmd .. ")")
+    nvim('command', "sleep " .. (iswin() and "5" or "100m"))
     eq(0, nvim('eval', 'delete(".Xtestjob")'))
   end)
 
@@ -314,7 +314,6 @@ describe('jobs', function()
   end)
 
   it('can redefine callbacks being used by a job', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     local screen = Screen.new()
     screen:attach()
     screen:set_default_attr_ids({
@@ -329,7 +328,7 @@ describe('jobs', function()
       \ 'on_stderr': function('g:JobHandler'),
       \ 'on_exit': function('g:JobHandler')
       \ }
-      let job = jobstart('cat -', g:callbacks)
+      let job = jobstart(['cat', '-'], g:callbacks)
     ]])
     wait()
     source([[
