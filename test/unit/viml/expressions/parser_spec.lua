@@ -2700,6 +2700,42 @@ describe('Expressions parser', function()
       hl('Identifier', 'b', 1),
       hl('Curly', '}'),
     })
+    check_parsing('{a : b : c}', 0, {
+      --           01234567890
+      --           0         1
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Colon:0:2: :',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                {
+                  'Colon:0:6: :',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:4: b',
+                    'PlainIdentifier(scope=0,ident=c):0:8: c',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ': c}',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Identifier', 'a'),
+      hl('Colon', ':', 1),
+      hl('Identifier', 'b', 1),
+      hl('InvalidColon', ':', 1),
+      hl('Identifier', 'c', 1),
+      hl('Dict', '}'),
+    })
   end)
   itp('works with ternary operator', function()
     check_parsing('a ? b : c', 0, {
@@ -3347,6 +3383,43 @@ describe('Expressions parser', function()
       hl('Identifier', 'g'),
       hl('TernaryColon', ':'),
       hl('Identifier', 'h'),
+    })
+    check_parsing('a ? b : c : d', 0, {
+      --           0123456789012
+      --           0         1
+      ast = {
+        {
+          'Colon:0:9: :',
+          children = {
+            {
+              'Ternary:0:1: ?',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                {
+                  'TernaryValue:0:5: :',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:3: b',
+                    'PlainIdentifier(scope=0,ident=c):0:7: c',
+                  },
+                },
+              },
+            },
+            'PlainIdentifier(scope=0,ident=d):0:11: d',
+          },
+        },
+      },
+      err = {
+        arg = ': d',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Ternary', '?', 1),
+      hl('Identifier', 'b', 1),
+      hl('TernaryColon', ':', 1),
+      hl('Identifier', 'c', 1),
+      hl('InvalidColon', ':', 1),
+      hl('Identifier', 'd', 1),
     })
   end)
   itp('works with comparison operators', function()

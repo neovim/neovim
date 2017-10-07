@@ -1691,8 +1691,10 @@ viml_pexpr_parse_invalid_comma:
             SELECT_FIGURE_BRACE_TYPE(*eastnode_p, DictLiteral, Dict);
             break;
           } else if (eastnode_type == kExprNodeDictLiteral
-                     || eastnode_type == kExprNodeComma) {
+                     || eastnode_type == kExprNodeSubscript) {
             break;
+          } else if (eastnode_type == kExprNodeColon) {
+            goto viml_pexpr_parse_invalid_colon;
           } else if (eastnode_lvl >= kEOpLvlTernaryValue) {
             // Do nothing
           } else if (eastnode_lvl > kEOpLvlComma) {
