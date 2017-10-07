@@ -91,6 +91,8 @@ make_enum_conv_tab(lib, {
   'kExprNodeConcatOrSubscript',
   'kExprNodeInteger',
   'kExprNodeFloat',
+  'kExprNodeSingleQuotedString',
+  'kExprNodeDoubleQuotedString',
 }, 'kExprNode', function(ret) east_node_type_tab = ret end)
 
 local function conv_east_node_type(typ)
@@ -203,6 +205,10 @@ end)
 describe('Expressions parser', function()
   local function check_parsing(str, flags, exp_ast, exp_highlighting_fs)
     flags = flags or 0
+
+    if os.getenv('NVIM_TEST_PARSER_SPEC_PRINT_TEST_CASE') == '1' then
+      print(str, flags)
+    end
 
     local pstate = new_pstate({str})
     local east = lib.viml_pexpr_parse(pstate, flags)
@@ -4014,6 +4020,533 @@ describe('Expressions parser', function()
       hl('Concat', '.', 1),
       hl('UnaryPlus', '+', 1),
       hl('Identifier', 'b'),
+    })
+  end)
+  itp('works with bracket subscripts', function()
+    check_parsing(':', 0, {
+      --           0
+      ast = {
+        {
+          'Colon:0:0::',
+          children = {
+            'Missing:0:0:',
+          },
+        },
+      },
+      err = {
+        arg = ':',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('InvalidColon', ':'),
+    })
+    check_parsing('a[]', 0, {
+      --           012
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+          },
+        },
+      },
+      err = {
+        arg = ']',
+        msg = 'E15: Expected value, got closing bracket: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Subscript', '['),
+      hl('InvalidSubscript', ']'),
+    })
+    check_parsing('a[b:]', 0, {
+      --           01234
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=b,ident=):0:2:b:',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Subscript', '['),
+      hl('IdentifierScope', 'b'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Subscript', ']'),
+    })
+
+    check_parsing('a[b:c]', 0, {
+      --           012345
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=b,ident=c):0:2:b:c',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Subscript', '['),
+      hl('IdentifierScope', 'b'),
+      hl('IdentifierScopeDelimiter', ':'),
+      hl('Identifier', 'c'),
+      hl('Subscript', ']'),
+    })
+    check_parsing('a[b : c]', 0, {
+      --           01234567
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Colon:0:3: :',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:2:b',
+                'PlainIdentifier(scope=0,ident=c):0:5: c',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Subscript', '['),
+      hl('Identifier', 'b'),
+      hl('SubscriptColon', ':', 1),
+      hl('Identifier', 'c', 1),
+      hl('Subscript', ']'),
+    })
+
+    check_parsing('a[: b]', 0, {
+      --           012345
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Colon:0:2::',
+              children = {
+                'Missing:0:2:',
+                'PlainIdentifier(scope=0,ident=b):0:3: b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Subscript', '['),
+      hl('SubscriptColon', ':'),
+      hl('Identifier', 'b', 1),
+      hl('Subscript', ']'),
+    })
+
+    check_parsing('a[b :]', 0, {
+      --           012345
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Colon:0:3: :',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:2:b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Subscript', '['),
+      hl('Identifier', 'b'),
+      hl('SubscriptColon', ':', 1),
+      hl('Subscript', ']'),
+    })
+    check_parsing('a[b][c][d](e)(f)(g)', 0, {
+      --           0123456789012345678
+      --           0         1
+      ast = {
+        {
+          'Call:0:16:(',
+          children = {
+            {
+              'Call:0:13:(',
+              children = {
+                {
+                  'Call:0:10:(',
+                  children = {
+                    {
+                      'Subscript:0:7:[',
+                      children = {
+                        {
+                          'Subscript:0:4:[',
+                          children = {
+                            {
+                              'Subscript:0:1:[',
+                              children = {
+                                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                                'PlainIdentifier(scope=0,ident=b):0:2:b',
+                              },
+                            },
+                            'PlainIdentifier(scope=0,ident=c):0:5:c',
+                          },
+                        },
+                        'PlainIdentifier(scope=0,ident=d):0:8:d',
+                      },
+                    },
+                    'PlainIdentifier(scope=0,ident=e):0:11:e',
+                  },
+                },
+                'PlainIdentifier(scope=0,ident=f):0:14:f',
+              },
+            },
+            'PlainIdentifier(scope=0,ident=g):0:17:g',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Subscript', '['),
+      hl('Identifier', 'b'),
+      hl('Subscript', ']'),
+      hl('Subscript', '['),
+      hl('Identifier', 'c'),
+      hl('Subscript', ']'),
+      hl('Subscript', '['),
+      hl('Identifier', 'd'),
+      hl('Subscript', ']'),
+      hl('CallingParenthesis', '('),
+      hl('Identifier', 'e'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Identifier', 'f'),
+      hl('CallingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Identifier', 'g'),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('{a}{b}{c}[d][e][f]', 0, {
+      --           012345678901234567
+      --           0         1
+      ast = {
+        {
+          'Subscript:0:15:[',
+          children = {
+            {
+              'Subscript:0:12:[',
+              children = {
+                {
+                  'Subscript:0:9:[',
+                  children = {
+                    {
+                      'ComplexIdentifier:0:3:',
+                      children = {
+                        {
+                          'CurlyBracesIdentifier(-di):0:0:{',
+                          children = {
+                            'PlainIdentifier(scope=0,ident=a):0:1:a',
+                          },
+                        },
+                        {
+                          'ComplexIdentifier:0:6:',
+                          children = {
+                            {
+                              'CurlyBracesIdentifier(--i):0:3:{',
+                              children = {
+                                'PlainIdentifier(scope=0,ident=b):0:4:b',
+                              },
+                            },
+                            {
+                              'CurlyBracesIdentifier(--i):0:6:{',
+                              children = {
+                                'PlainIdentifier(scope=0,ident=c):0:7:c',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    'PlainIdentifier(scope=0,ident=d):0:10:d',
+                  },
+                },
+                'PlainIdentifier(scope=0,ident=e):0:13:e',
+              },
+            },
+            'PlainIdentifier(scope=0,ident=f):0:16:f',
+          },
+        },
+      },
+    }, {
+      hl('Curly', '{'),
+      hl('Identifier', 'a'),
+      hl('Curly', '}'),
+      hl('Curly', '{'),
+      hl('Identifier', 'b'),
+      hl('Curly', '}'),
+      hl('Curly', '{'),
+      hl('Identifier', 'c'),
+      hl('Curly', '}'),
+      hl('Subscript', '['),
+      hl('Identifier', 'd'),
+      hl('Subscript', ']'),
+      hl('Subscript', '['),
+      hl('Identifier', 'e'),
+      hl('Subscript', ']'),
+      hl('Subscript', '['),
+      hl('Identifier', 'f'),
+      hl('Subscript', ']'),
+    })
+  end)
+  itp('supports list literals', function()
+    check_parsing('[]', 0, {
+      --           01
+      ast = {
+        'ListLiteral:0:0:[',
+      },
+    }, {
+      hl('List', '['),
+      hl('List', ']'),
+    })
+
+    check_parsing('[a]', 0, {
+      --           012
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:1:a',
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('Identifier', 'a'),
+      hl('List', ']'),
+    })
+
+    check_parsing('[a, b]', 0, {
+      --           012345
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3: b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b', 1),
+      hl('List', ']'),
+    })
+
+    check_parsing('[a, b, c]', 0, {
+      --           012345678
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                {
+                  'Comma:0:5:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:3: b',
+                    'PlainIdentifier(scope=0,ident=c):0:6: c',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b', 1),
+      hl('Comma', ','),
+      hl('Identifier', 'c', 1),
+      hl('List', ']'),
+    })
+
+    check_parsing('[a, b, c, ]', 0, {
+      --           01234567890
+      --           0         1
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                {
+                  'Comma:0:5:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:3: b',
+                    {
+                      'Comma:0:8:,',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=c):0:6: c',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b', 1),
+      hl('Comma', ','),
+      hl('Identifier', 'c', 1),
+      hl('Comma', ','),
+      hl('List', ']', 1),
+    })
+
+    check_parsing('[a : b, c : d]', 0, {
+      --           01234567890123
+      --           0         1
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Comma:0:6:,',
+              children = {
+                {
+                  'Colon:0:2: :',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=a):0:1:a',
+                    'PlainIdentifier(scope=0,ident=b):0:4: b',
+                  },
+                },
+                {
+                  'Colon:0:9: :',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=c):0:7: c',
+                    'PlainIdentifier(scope=0,ident=d):0:11: d',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ': b, c : d]',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('Identifier', 'a'),
+      hl('InvalidColon', ':', 1),
+      hl('Identifier', 'b', 1),
+      hl('Comma', ','),
+      hl('Identifier', 'c', 1),
+      hl('InvalidColon', ':', 1),
+      hl('Identifier', 'd', 1),
+      hl('List', ']'),
+    })
+
+    check_parsing(']', 0, {
+      --           0
+      ast = {
+        'ListLiteral:0:0:',
+      },
+      err = {
+        arg = ']',
+        msg = 'E15: Unexpected closing figure brace: %.*s',
+      },
+    }, {
+      hl('InvalidList', ']'),
+    })
+
+    check_parsing('a]', 0, {
+      --           01
+      ast = {
+        {
+          'ListLiteral:0:1:',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+          },
+        },
+      },
+      err = {
+        arg = ']',
+        msg = 'E15: Unexpected closing figure brace: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('InvalidList', ']'),
+    })
+
+    check_parsing('[] []', 0, {
+      --           01234
+      ast = {
+        {
+          'OpMissing:0:2:',
+          children = {
+            'ListLiteral:0:0:[',
+            'ListLiteral:0:2: [',
+          },
+        },
+      },
+      err = {
+        arg = '[]',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('List', ']'),
+      hl('InvalidSpacing', ' '),
+      hl('List', '['),
+      hl('List', ']'),
+    })
+
+    check_parsing('[][]', 0, {
+      --           0123
+      ast = {
+        {
+          'Subscript:0:2:[',
+          children = {
+            'ListLiteral:0:0:[',
+          },
+        },
+      },
+      err = {
+        arg = ']',
+        msg = 'E15: Expected value, got closing bracket: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('List', ']'),
+      hl('Subscript', '['),
+      hl('InvalidSubscript', ']'),
     })
   end)
 end)

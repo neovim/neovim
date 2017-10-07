@@ -905,6 +905,10 @@ static inline void viml_pexpr_debug_print_token(
 // NVimDict -> Delimiter
 // NVimCurly -> Delimiter
 //
+// NVimList -> Delimiter
+// NVimSubscript -> Delimiter
+// NVimSubscriptColon -> NVimSubscript
+//
 // NVimIdentifier -> Identifier
 // NVimIdentifierScope -> NVimIdentifier
 // NVimIdentifierScopeDelimiter -> NVimIdentifier
@@ -945,6 +949,9 @@ static inline void viml_pexpr_debug_print_token(
 // NVimInvalidNumber -> NVimInvalidValue
 // NVimInvalidFloat -> NVimInvalidValue
 // NVimInvalidIdentifierKey -> NVimInvalidIdentifier
+// NVimInvalidList -> NVimInvalidDelimiter
+// NVimInvalidSubscript -> NVimInvalidDelimiter
+// NVimInvalidSubscriptColon -> NVimInvalidSubscript
 
 /// Allocate a new node and set some of the values
 ///
@@ -965,9 +972,10 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
   [kExprNodeOpMissing] = kEOpLvlMultiplication,
 
   [kExprNodeNested] = kEOpLvlParens,
-  // Note: it is kEOpLvlSubscript for “binary operator” itself, but
+  // Note: below nodes are kEOpLvlSubscript for “binary operator” itself, but
   //       kEOpLvlParens when it comes to inside the parenthesis.
   [kExprNodeCall] = kEOpLvlParens,
+  [kExprNodeSubscript] = kEOpLvlParens,
 
   [kExprNodeUnknownFigure] = kEOpLvlParens,
   [kExprNodeLambda] = kEOpLvlParens,
@@ -992,7 +1000,6 @@ static const ExprOpLvl node_type_to_op_lvl[] = {
   [kExprNodeUnaryPlus] = kEOpLvlUnary,
 
   [kExprNodeConcatOrSubscript] = kEOpLvlSubscript,
-  [kExprNodeSubscript] = kEOpLvlSubscript,
 
   [kExprNodeCurlyBracesIdentifier] = kEOpLvlComplexIdentifier,
 
@@ -1010,6 +1017,7 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
 
   [kExprNodeNested] = kEOpAssNo,
   [kExprNodeCall] = kEOpAssNo,
+  [kExprNodeSubscript] = kEOpAssNo,
 
   [kExprNodeUnknownFigure] = kEOpAssLeft,
   [kExprNodeLambda] = kEOpAssNo,
@@ -1042,7 +1050,6 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   [kExprNodeUnaryPlus] = kEOpAssNo,
 
   [kExprNodeConcatOrSubscript] = kEOpAssLeft,
-  [kExprNodeSubscript] = kEOpAssLeft,
 
   [kExprNodeCurlyBracesIdentifier] = kEOpAssLeft,
 
@@ -1105,12 +1112,14 @@ static bool viml_pexpr_handle_bop(const ParserState *const pstate,
   ExprOpLvl top_node_lvl;
   ExprOpAssociativity top_node_ass;
   assert(kv_size(*ast_stack));
-  const ExprOpLvl bop_node_lvl = (bop_node->type == kExprNodeCall
+  const ExprOpLvl bop_node_lvl = ((bop_node->type == kExprNodeCall
+                                   || bop_node->type == kExprNodeSubscript)
                                   ? kEOpLvlSubscript
                                   : node_lvl(*bop_node));
 #ifndef NDEBUG
   const ExprOpAssociativity bop_node_ass = (
-      bop_node->type == kExprNodeCall
+      (bop_node->type == kExprNodeCall
+       || bop_node->type == kExprNodeSubscript)
       ? kEOpAssLeft
       : node_ass(*bop_node));
 #endif
@@ -1214,8 +1223,8 @@ static inline ParserPosition shifted_pos(const ParserPosition pos,
 /// @param  cur_token  Token to set position from.
 #define POS_FROM_TOKEN(cur_node, cur_token) \
     do { \
-      cur_node->start = cur_token.start; \
-      cur_node->len = cur_token.len; \
+      (cur_node)->start = cur_token.start; \
+      (cur_node)->len = cur_token.len; \
     } while (0)
 
 /// Allocate new node and set its position from the current token
@@ -1226,11 +1235,11 @@ static inline ParserPosition shifted_pos(const ParserPosition pos,
 /// @param  typ  Node type.
 #define NEW_NODE_WITH_CUR_POS(cur_node, typ) \
     do { \
-      cur_node = NEW_NODE(typ); \
-      POS_FROM_TOKEN(cur_node, cur_token); \
+      (cur_node) = NEW_NODE(typ); \
+      POS_FROM_TOKEN((cur_node), cur_token); \
       if (prev_token.type == kExprLexSpacing) { \
-        cur_node->start = prev_token.start; \
-        cur_node->len += prev_token.len; \
+        (cur_node)->start = prev_token.start; \
+        (cur_node)->len += prev_token.len; \
       } \
     } while (0)
 
@@ -1280,9 +1289,8 @@ static inline ParserPosition shifted_pos(const ParserPosition pos,
         do { \
           if (want_node == kENodeValue) { \
             ERROR_FROM_TOKEN_AND_MSG(cur_token, (msg)); \
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeMissing); \
-            cur_node->len = 0; \
-            *top_node_p = cur_node; \
+            NEW_NODE_WITH_CUR_POS((*top_node_p), kExprNodeMissing); \
+            (*top_node_p)->len = 0; \
             want_node = kENodeOperator; \
           } \
         } while (0)
@@ -1658,13 +1666,14 @@ viml_pexpr_parse_invalid_comma:
         HL_CUR_TOKEN(Comma);
         break;
       }
+#define EXP_VAL_COLON "E15: Expected value, got colon: %.*s"
       case kExprLexColon: {
-        ADD_VALUE_IF_MISSING(_("E15: Expected value, got colon: %.*s"));
         if (kv_size(ast_stack) < 2) {
           goto viml_pexpr_parse_invalid_colon;
         }
         bool is_ternary = false;
         bool can_be_ternary = true;
+        bool is_subscript = false;
         for (size_t i = 1; i < kv_size(ast_stack); i++) {
           ExprASTNode *const *const eastnode_p =
               (ExprASTNode *const *)kv_Z(ast_stack, i);
@@ -1683,6 +1692,7 @@ viml_pexpr_parse_invalid_comma:
             }
             is_ternary = true;
             (*eastnode_p)->data.ter.got_colon = true;
+            ADD_VALUE_IF_MISSING(_(EXP_VAL_COLON));
             assert((*eastnode_p)->children != NULL);
             assert((*eastnode_p)->children->next == NULL);
             kvi_push(ast_stack, &(*eastnode_p)->children->next);
@@ -1690,14 +1700,18 @@ viml_pexpr_parse_invalid_comma:
           } else if (eastnode_type == kExprNodeUnknownFigure) {
             SELECT_FIGURE_BRACE_TYPE(*eastnode_p, DictLiteral, Dict);
             break;
-          } else if (eastnode_type == kExprNodeDictLiteral
-                     || eastnode_type == kExprNodeSubscript) {
+          } else if (eastnode_type == kExprNodeDictLiteral) {
+            break;
+          } else if (eastnode_type == kExprNodeSubscript) {
+            is_subscript = true;
+            can_be_ternary = false;
+            assert(!is_ternary);
             break;
           } else if (eastnode_type == kExprNodeColon) {
             goto viml_pexpr_parse_invalid_colon;
           } else if (eastnode_lvl >= kEOpLvlTernaryValue) {
             // Do nothing
-          } else if (eastnode_lvl > kEOpLvlComma) {
+          } else if (eastnode_lvl >= kEOpLvlComma) {
             can_be_ternary = false;
           } else {
 viml_pexpr_parse_invalid_colon:
@@ -1711,14 +1725,120 @@ viml_pexpr_parse_invalid_colon:
             goto viml_pexpr_parse_invalid_colon;
           }
         }
-        if (is_ternary) {
-          HL_CUR_TOKEN(TernaryColon);
-        } else {
+        if (is_subscript) {
+          assert(kv_size(ast_stack) > 1);
+          // Colon immediately following subscript start: it is empty subscript
+          // part like a[:2].
+          if (want_node == kENodeValue
+              && (*kv_Z(ast_stack, 1))->type == kExprNodeSubscript) {
+            NEW_NODE_WITH_CUR_POS(*top_node_p, kExprNodeMissing);
+            (*top_node_p)->len = 0;
+            want_node = kENodeOperator;
+          } else {
+            ADD_VALUE_IF_MISSING(_(EXP_VAL_COLON));
+          }
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
           ADD_OP_NODE(cur_node);
-          HL_CUR_TOKEN(Colon);
+          HL_CUR_TOKEN(SubscriptColon);
+        } else {
+          ADD_VALUE_IF_MISSING(_(EXP_VAL_COLON));
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
+          if (is_ternary) {
+            HL_CUR_TOKEN(TernaryColon);
+          } else {
+            ADD_OP_NODE(cur_node);
+            HL_CUR_TOKEN(Colon);
+          }
         }
         want_node = kENodeValue;
+        break;
+      }
+#undef EXP_VAL_COLON
+      case kExprLexBracket: {
+        if (cur_token.data.brc.closing) {
+          ExprASTNode **new_top_node_p = NULL;
+          // Always drop the topmost value:
+          //
+          // 1. When want_node != kENodeValue topmost item on stack is
+          //    a *finished* left operand, which may as well be "{@a}" which
+          //    needs not be finished again.
+          // 2. Otherwise it is pointing to NULL what nobody wants.
+          kv_drop(ast_stack, 1);
+          if (!kv_size(ast_stack)) {
+            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeListLiteral);
+            cur_node->len = 0;
+            if (want_node != kENodeValue) {
+              cur_node->children = *top_node_p;
+            }
+            *top_node_p = cur_node;
+            goto viml_pexpr_parse_bracket_closing_error;
+          }
+          if (want_node == kENodeValue) {
+            // It is OK to want value if
+            //
+            // 1. It is empty list literal, in which case top node will be
+            //    ListLiteral.
+            // 2. It is list literal with trailing comma, in which case top node
+            //    will be that comma.
+            // 3. It is subscript with colon, but without one of the values:
+            //    e.g. "a[:]", "a[1:]", top node will be colon in this case.
+            if ((*kv_last(ast_stack))->type != kExprNodeListLiteral
+                && (*kv_last(ast_stack))->type != kExprNodeComma
+                && (*kv_last(ast_stack))->type != kExprNodeColon) {
+              ERROR_FROM_TOKEN_AND_MSG(
+                  cur_token,
+                  _("E15: Expected value, got closing bracket: %.*s"));
+            }
+          } else {
+            if (!kv_size(ast_stack)) {
+              new_top_node_p = top_node_p;
+              goto viml_pexpr_parse_bracket_closing_error;
+            }
+          }
+          do {
+            new_top_node_p = kv_pop(ast_stack);
+          } while (kv_size(ast_stack)
+                   && (new_top_node_p == NULL
+                       || ((*new_top_node_p)->type != kExprNodeListLiteral
+                           && (*new_top_node_p)->type != kExprNodeSubscript)));
+          ExprASTNode *new_top_node = *new_top_node_p;
+          switch (new_top_node->type) {
+            case kExprNodeListLiteral: {
+              HL_CUR_TOKEN(List);
+              break;
+            }
+            case kExprNodeSubscript: {
+              HL_CUR_TOKEN(Subscript);
+              break;
+            }
+            default: {
+viml_pexpr_parse_bracket_closing_error:
+              assert(!kv_size(ast_stack));
+              ERROR_FROM_TOKEN_AND_MSG(
+                  cur_token, _("E15: Unexpected closing figure brace: %.*s"));
+              HL_CUR_TOKEN(List);
+              break;
+            }
+          }
+          kvi_push(ast_stack, new_top_node_p);
+          want_node = kENodeOperator;
+        } else {
+          if (want_node == kENodeValue) {
+            // Value means list literal.
+            HL_CUR_TOKEN(List);
+            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeListLiteral);
+            *top_node_p = cur_node;
+            kvi_push(ast_stack, &cur_node->children);
+            want_node = kENodeValue;
+          } else {
+            if (prev_token.type == kExprLexSpacing) {
+              OP_MISSING;
+            }
+            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeSubscript);
+            ADD_OP_NODE(cur_node);
+            HL_CUR_TOKEN(Subscript);
+          }
+        }
         break;
       }
       case kExprLexFigureBrace: {
