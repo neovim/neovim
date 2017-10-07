@@ -76,3 +76,11 @@ func Test_syntax_after_reload()
   call assert_true(exists('g:gotit'))
   call delete('Xsomefile')
 endfunc
+
+func Test_syntax_completion()
+  call feedkeys(":syn spell \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syn spell default notoplevel toplevel', @:)
+
+  call feedkeys(":syn sync \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syn sync ccomment clear fromstart linebreaks= linecont lines= match maxlines= minlines= region', @:)
+endfunc
