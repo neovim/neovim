@@ -6733,6 +6733,39 @@ static void prepare_assert_error(garray_T *gap)
   }
 }
 
+// Append "str" to "gap", escaping unprintable characters.
+// Changes NL to \n, CR to \r, etc.
+static void ga_concat_esc(garray_T *gap, char_u *str)
+{
+  char_u *p;
+  char_u buf[NUMBUFLEN];
+
+  if (str == NULL) {
+    ga_concat(gap, (char_u *)"NULL");
+    return;
+  }
+
+  for (p = str; *p != NUL; p++) {
+    switch (*p) {
+      case BS: ga_concat(gap, (char_u *)"\\b"); break;
+      case ESC: ga_concat(gap, (char_u *)"\\e"); break;
+      case FF: ga_concat(gap, (char_u *)"\\f"); break;
+      case NL: ga_concat(gap, (char_u *)"\\n"); break;
+      case TAB: ga_concat(gap, (char_u *)"\\t"); break;
+      case CAR: ga_concat(gap, (char_u *)"\\r"); break;
+      case '\\': ga_concat(gap, (char_u *)"\\\\"); break;
+      default:
+        if (*p < ' ') {
+          vim_snprintf((char *)buf, NUMBUFLEN, "\\x%02x", *p);
+          ga_concat(gap, buf);
+        } else {
+          ga_append(gap, *p);
+        }
+        break;
+    }
+  }
+}
+
 // Fill "gap" with information about an assert error.
 static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
                               char_u *exp_str, typval_T *exp_tv,
@@ -6753,11 +6786,11 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
       ga_concat(gap, (char_u *)"Expected ");
     }
     if (exp_str == NULL) {
-      tofree = (char_u *) encode_tv2string(exp_tv, NULL);
-      ga_concat(gap, tofree);
+      tofree = (char_u *)encode_tv2string(exp_tv, NULL);
+      ga_concat_esc(gap, tofree);
       xfree(tofree);
     } else {
-      ga_concat(gap, exp_str);
+      ga_concat_esc(gap, exp_str);
     }
     if (atype != ASSERT_NOTEQUAL) {
       if (atype == ASSERT_MATCH) {
@@ -6768,7 +6801,7 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
         ga_concat(gap, (char_u *)" but got ");
       }
       tofree = (char_u *)encode_tv2string(got_tv, NULL);
-      ga_concat(gap, tofree);
+      ga_concat_esc(gap, tofree);
       xfree(tofree);
     }
   }
