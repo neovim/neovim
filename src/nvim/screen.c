@@ -2201,16 +2201,16 @@ win_line (
   int change_end = -1;                  /* last col of changed area */
   colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
   int need_showbreak = false;           // overlong line, skip first x chars
-  int line_attr = 0;                    /* attribute for the whole line */
-  matchitem_T *cur;                     /* points to the match list */
-  match_T     *shl;                     /* points to search_hl or a match */
-  int shl_flag;                         /* flag to indicate whether search_hl
-                                           has been processed or not */
-  int prevcol_hl_flag;                  /* flag to indicate whether prevcol
-                                           equals startcol of search_hl or one
-                                           of the matches */
-  int prev_c = 0;                       /* previous Arabic character */
-  int prev_c1 = 0;                      /* first composing char for prev_c */
+  int line_attr = 0;                    // attribute for the whole line
+  matchitem_T *cur;                     // points to the match list
+  match_T     *shl;                     // points to search_hl or a match
+  int shl_flag;                         // flag to indicate whether search_hl
+                                        // has been processed or not
+  int prevcol_hl_flag;                  // flag to indicate whether prevcol
+                                        // equals startcol of search_hl or one
+                                        // of the matches
+  int prev_c = 0;                       // previous Arabic character
+  int prev_c1 = 0;                      // first composing char for prev_c
   int did_line_attr = 0;
 
   bool search_attr_from_match = false;  // if search_attr is from :match
@@ -3594,15 +3594,13 @@ win_line (
                    && lcs_eol_one > 0) {
           // Display a '$' after the line or highlight an extra
           // character if the line break is included.
-          // For a diff line the highlighting continues after the
-          // "$".
+          // For a diff line the highlighting continues after the "$".
           if (diff_hlf == (hlf_T)0 && line_attr == 0) {
-            /* In virtualedit, visual selections may extend
-             * beyond end of line. */
+            // In virtualedit, visual selections may extend beyond end of line.
             if (area_highlighting && virtual_active()
-                && tocol != MAXCOL && vcol < tocol)
+                && tocol != MAXCOL && vcol < tocol) {
               n_extra = 0;
-            else {
+            } else {
               p_extra = at_end_str;
               n_extra = 1;
               c_extra = NUL;
@@ -4035,10 +4033,10 @@ win_line (
       if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
           && lnum != wp->w_cursor.lnum) {
         vcol_save_attr = char_attr;
-        char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUC));
+        char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUC), char_attr);
       } else if (draw_color_col && VCOL_HLC == *color_cols) {
         vcol_save_attr = char_attr;
-        char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_MC));
+        char_attr = hl_combine_attr(win_hl_attr(wp, HLF_MC), char_attr);
       }
     }
 
