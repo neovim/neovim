@@ -2213,6 +2213,8 @@ win_line (
   int prev_c1 = 0;                      /* first composing char for prev_c */
   int did_line_attr = 0;
 
+  int line_attr_low_priority = 0;       // attribute for current line
+                                        // with very low priority
   bool search_attr_from_match = false;  // if search_attr is from :match
   bool has_bufhl = false;               // this buffer has highlight matches
   int bufhl_attr = 0;                   // attributes desired by bufhl
@@ -2427,10 +2429,18 @@ win_line (
     filler_lines = wp->w_topfill;
   filler_todo = filler_lines;
 
-  /* If this line has a sign with line highlighting set line_attr. */
+  // Cursor line highlighting for 'cursorline' in the current window.  Not
+  // when Visual mode is active, because it's not clear what is selected
+  // then.
+  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
+      && !(wp == curwin && VIsual_active)) {
+    line_attr_low_priority = win_hl_attr(wp, HLF_CUL);
+  }
+
   v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
-  if (v != 0)
-      line_attr = sign_get_attr((int)v, TRUE);
+  if (v != 0) {
+    line_attr = sign_get_attr((int)v, true);
+  }
 
   // Highlight the current line in the quickfix window.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
@@ -2441,7 +2451,7 @@ win_line (
     line_attr = hl_combine_attr(wp->w_hl_attr_normal, line_attr);
   }
 
-  if (line_attr != 0) {
+  if (line_attr_low_priority || line_attr) {
     area_highlighting = true;
   }
 
@@ -2661,20 +2671,6 @@ win_line (
     }
     if (shl != &search_hl && cur != NULL)
       cur = cur->next;
-  }
-
-  /* Cursor line highlighting for 'cursorline' in the current window.  Not
-   * when Visual mode is active, because it's not clear what is selected
-   * then. */
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-      && !(wp == curwin && VIsual_active)) {
-    if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
-        && qf_current_entry(wp) == lnum) {
-      line_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), line_attr);
-    } else {
-      line_attr = win_hl_attr(wp, HLF_CUL);
-    }
-    area_highlighting = true;
   }
 
   off = (unsigned)(current_ScreenLine - ScreenLines);
@@ -3596,13 +3592,14 @@ win_line (
           // character if the line break is included.
           // For a diff line the highlighting continues after the
           // "$".
-          if (diff_hlf == (hlf_T)0 && line_attr == 0) {
-            /* In virtualedit, visual selections may extend
-             * beyond end of line. */
+          if (diff_hlf == (hlf_T)0
+              && line_attr == 0
+              && line_attr_low_priority == 0) {
+            // In virtualedit, visual selections may extend beyond end of line
             if (area_highlighting && virtual_active()
-                && tocol != MAXCOL && vcol < tocol)
+                && tocol != MAXCOL && vcol < tocol) {
               n_extra = 0;
-            else {
+            } else {
               p_extra = at_end_str;
               n_extra = 1;
               c_extra = NUL;
@@ -3661,7 +3658,7 @@ win_line (
                      (col < wp->w_width))) {
           c = ' ';
           ptr--;  // put it back at the NUL
-        } else if ((diff_hlf != (hlf_T)0 || line_attr != 0)
+        } else if ((diff_hlf != (hlf_T)0 || line_attr_low_priority || line_attr)
                    && (wp->w_p_rl
                        ? (col >= 0)
                        : (col - boguscols < wp->w_width))) {
@@ -3673,7 +3670,8 @@ win_line (
           did_line_attr++;
 
           // don't do search HL for the rest of the line
-          if (line_attr != 0 && char_attr == search_attr && col > 0) {
+          if ((line_attr_low_priority || line_attr)
+              && char_attr == search_attr && col > 0) {
             char_attr = line_attr;
           }
           if (diff_hlf == HLF_TXD) {
@@ -4035,12 +4033,15 @@ win_line (
       if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
           && lnum != wp->w_cursor.lnum) {
         vcol_save_attr = char_attr;
-        char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUC));
+        char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUC), char_attr);
       } else if (draw_color_col && VCOL_HLC == *color_cols) {
         vcol_save_attr = char_attr;
-        char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_MC));
+        char_attr = hl_combine_attr(win_hl_attr(wp, HLF_MC), char_attr);
       }
     }
+
+    // apply line attr with lowest priority so that everthing can override it
+    char_attr = hl_combine_attr(line_attr_low_priority, char_attr);
 
     /*
      * Store character to be displayed.
