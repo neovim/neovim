@@ -6267,11 +6267,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	when part of a command has been typed.
 
 						*'title'* *'notitle'*
-'title'			boolean	(default off, on when title can be restored)
+'title'			boolean	(default off)
 			global
 	When on, the title of the window will be set to the value of
 	'titlestring' (if it is not empty), or to:
-		filename [+=-] (path) - VIM
+		filename [+=-] (path) - NVIM
 	Where:
 		filename	the name of the file being edited
 		-		indicates the file cannot be modified, 'ma' off
@@ -6279,7 +6279,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		=		indicates the file is read-only
 		=+		indicates the file is read-only and modified
 		(path)		is the path of the file being edited
-		- VIM		the server name |v:servername| or "VIM"
+		- NVIM		the server name |v:servername| or "NVIM"
 
 								*'titlelen'*
 'titlelen'		number	(default 85)
@@ -6295,11 +6295,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'titlelen' is also used for the 'titlestring' option.
 
 						*'titleold'*
-'titleold'		string	(default "Thanks for flying Vim")
+'titleold'		string	(default "")
 			global
-	This option will be used for the window title when exiting Vim if the
-	original title cannot be restored.  Only happens if 'title' is on or
-	'titlestring' is not empty.
+	If not empty, this option will be used to set the window title when
+	exiting.  Only if 'title' is enabled.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 						*'titlestring'*
