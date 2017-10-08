@@ -124,7 +124,6 @@ describe('jobs', function()
   end)
 
   it('allows interactive commands', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     nvim('command', 'call jobsend(j, "abc\\n")')
@@ -138,7 +137,9 @@ describe('jobs', function()
   end)
 
   it('preserves NULs', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    -- TODO: Windows: why is the data received on_stderr instead of on_stdout?
+    if helpers.pending_win32(pending) then return end
+
     -- Make a file with NULs in it.
     local filename = helpers.tmpname()
     write_file(filename, "abc\0def\n")
@@ -156,7 +157,6 @@ describe('jobs', function()
   end)
 
   it("will not buffer data if it doesn't end in newlines", function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     if os.getenv("TRAVIS") and os.getenv("CC") == "gcc-4.9"
       and helpers.os_name() == "osx" then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
@@ -172,7 +172,6 @@ describe('jobs', function()
   end)
 
   it('preserves newlines', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, "a\\n\\nc\\n\\n\\n\\nb\\n\\n")')
     eq({'notification', 'stdout',
@@ -180,7 +179,6 @@ describe('jobs', function()
   end)
 
   it('preserves NULs', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["\n123\n", "abc\\nxyz\n", ""])')
     eq({'notification', 'stdout', {0, {'\n123\n', 'abc\nxyz\n', ''}}},
@@ -190,7 +188,6 @@ describe('jobs', function()
   end)
 
   it('avoids sending final newline', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobsend(j, ["some data", "without\nfinal nl"])')
     eq({'notification', 'stdout', {0, {'some data', 'without\nfinal nl'}}},
@@ -200,14 +197,12 @@ describe('jobs', function()
   end)
 
   it('closes the job streams with jobclose', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
   it("disallows jobsend on a job that closed stdin", function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
     eq(false, pcall(function()
@@ -221,7 +216,6 @@ describe('jobs', function()
   end)
 
   it('disallows jobstop twice on the same job', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     neq(0, eval('j'))
     eq(true, pcall(eval, "jobstop(j)"))
@@ -229,12 +223,11 @@ describe('jobs', function()
   end)
 
   it('will not leak memory if we leave a job running', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "call jobstart(['cat', '-'], g:job_opts)")
   end)
 
   it('can get the pid value using getpid', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+    if helpers.pending_win32(pending) then return end  -- TODO: Need `ps`.
     nvim('command', "let j =  jobstart(['cat', '-'], g:job_opts)")
     local pid = eval('jobpid(j)')
     eq(0,os.execute('ps -p '..pid..' > /dev/null'))
@@ -314,7 +307,6 @@ describe('jobs', function()
   end)
 
   it('can redefine callbacks being used by a job', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     local screen = Screen.new()
     screen:attach()
     screen:set_default_attr_ids({
@@ -480,7 +472,7 @@ describe('jobs', function()
     end)
 
     it('can be called recursively', function()
-      if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
+      if helpers.pending_win32(pending) then return end
       source([[
       let g:opts = {}
       let g:counter = 0
@@ -561,7 +553,6 @@ describe('jobs', function()
   end)
 
   it('cannot have both rpc and pty options', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     command("let g:job_opts.pty = v:true")
     command("let g:job_opts.rpc = v:true")
     local _, err = pcall(command, "let j = jobstart(['cat', '-'], g:job_opts)")
