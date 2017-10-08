@@ -4718,4 +4718,38 @@ describe('cindent', function()
       JSEND
       ]=])
   end)
+
+  it('line continuations in macros / vim-patch 8.0.0148', function()
+    insert_([=[
+      /* start of define */
+      {
+      }
+      #define AAA \
+      BBB\
+      CCC
+
+      #define CNT \
+      1 + \
+      2 + \
+      4
+      /* end of define */]=])
+
+    feed_command('set cino&')
+    feed_command('/start of define')
+    feed('=/end of define<cr>')
+
+    expect([=[
+      /* start of define */
+      {
+      }
+      #define AAA \
+      	BBB\
+      	CCC
+
+      #define CNT \
+      	1 + \
+      	2 + \
+      	4
+      /* end of define */]=])
+  end)
 end)

@@ -146,6 +146,12 @@ func Test_syntax_completion()
   call feedkeys(":syn case \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"syn case ignore match', @:)
 
+  call feedkeys(":syn spell \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syn spell default notoplevel toplevel', @:)
+
+  call feedkeys(":syn sync \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syn sync ccomment clear fromstart linebreaks= linecont lines= match maxlines= minlines= region', @:)
+
   call feedkeys(":syn list \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^"syn list Boolean Character ', @:)
 
