@@ -18,6 +18,7 @@
 #include "nvim/garray.c"
 #include "nvim/gettext.c"
 #include "nvim/viml/parser/expressions.c"
+#include "nvim/keymap.c"
 
 #define INPUT_SIZE 50
 

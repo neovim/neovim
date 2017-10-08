@@ -73,6 +73,8 @@ typedef struct {
 
 extern const uint8_t utf8len_tab_zero[256];
 
+extern const uint8_t utf8len_tab[256];
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"
 #endif

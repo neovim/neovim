@@ -142,6 +142,13 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
     typ = typ .. ('(val=%u)'):format(tonumber(eastnode.data.num.value))
   elseif typ == 'Float' then
     typ = typ .. ('(val=%e)'):format(tonumber(eastnode.data.flt.value))
+  elseif typ == 'SingleQuotedString' or typ == 'DoubleQuotedString' then
+    if eastnode.data.str.value == nil then
+      typ = typ .. '(val=NULL)'
+    else
+      local s = ffi.string(eastnode.data.str.value, eastnode.data.str.size)
+      typ = format_string('%s(val=%q)', typ, s)
+    end
   end
   ret_str = typ .. ':' .. ret_str
   local can_simplify = true
@@ -4547,6 +4554,824 @@ describe('Expressions parser', function()
       hl('List', ']'),
       hl('Subscript', '['),
       hl('InvalidSubscript', ']'),
+    })
+  end)
+  itp('works with strings', function()
+    check_parsing('\'abc\'', 0, {
+      --           01234
+      ast = {
+        'SingleQuotedString(val="abc"):0:0:\'abc\'',
+      },
+    }, {
+      hl('SingleQuotedString', '\''),
+      hl('SingleQuotedBody', 'abc'),
+      hl('SingleQuotedString', '\''),
+    })
+    check_parsing('"abc"', 0, {
+      --           01234
+      ast = {
+        'DoubleQuotedString(val="abc"):0:0:"abc"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedBody', 'abc'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('\'\'', 0, {
+      --           01
+      ast = {
+        'SingleQuotedString(val=NULL):0:0:\'\'',
+      },
+    }, {
+      hl('SingleQuotedString', '\''),
+      hl('SingleQuotedString', '\''),
+    })
+    check_parsing('""', 0, {
+      --           01
+      ast = {
+        'DoubleQuotedString(val=NULL):0:0:""',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"', 0, {
+      --           0
+      ast = {
+        'DoubleQuotedString(val=NULL):0:0:"',
+      },
+      err = {
+        arg = '"',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+    })
+    check_parsing('\'', 0, {
+      --           0
+      ast = {
+        'SingleQuotedString(val=NULL):0:0:\'',
+      },
+      err = {
+        arg = '\'',
+        msg = 'E115: Missing single quote: %.*s',
+      },
+    }, {
+      hl('InvalidSingleQuotedString', '\''),
+    })
+    check_parsing('"a', 0, {
+      --           01
+      ast = {
+        'DoubleQuotedString(val="a"):0:0:"a',
+      },
+      err = {
+        arg = '"a',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedBody', 'a'),
+    })
+    check_parsing('\'a', 0, {
+      --           01
+      ast = {
+        'SingleQuotedString(val="a"):0:0:\'a',
+      },
+      err = {
+        arg = '\'a',
+        msg = 'E115: Missing single quote: %.*s',
+      },
+    }, {
+      hl('InvalidSingleQuotedString', '\''),
+      hl('InvalidSingleQuotedBody', 'a'),
+    })
+    check_parsing('\'abc\'\'def\'', 0, {
+      --           0123456789
+      ast = {
+        'SingleQuotedString(val="abc\'def"):0:0:\'abc\'\'def\'',
+      },
+    }, {
+      hl('SingleQuotedString', '\''),
+      hl('SingleQuotedBody', 'abc'),
+      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedBody', 'def'),
+      hl('SingleQuotedString', '\''),
+    })
+    check_parsing('\'abc\'\'', 0, {
+      --           012345
+      ast = {
+        'SingleQuotedString(val="abc\'"):0:0:\'abc\'\'',
+      },
+      err = {
+        arg = '\'abc\'\'',
+        msg = 'E115: Missing single quote: %.*s',
+      },
+    }, {
+      hl('InvalidSingleQuotedString', '\''),
+      hl('InvalidSingleQuotedBody', 'abc'),
+      hl('InvalidSingleQuotedQuote', '\'\''),
+    })
+    check_parsing('\'\'\'\'\'\'\'\'', 0, {
+      --           01234567
+      ast = {
+        'SingleQuotedString(val="\'\'\'"):0:0:\'\'\'\'\'\'\'\'',
+      },
+    }, {
+      hl('SingleQuotedString', '\''),
+      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedString', '\''),
+    })
+    check_parsing('\'\'\'a\'\'\'\'bc\'', 0, {
+      --           01234567890
+      --           0         1
+      ast = {
+        'SingleQuotedString(val="\'a\'\'bc"):0:0:\'\'\'a\'\'\'\'bc\'',
+      },
+    }, {
+      hl('SingleQuotedString', '\''),
+      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedBody', 'a'),
+      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedQuote', '\'\''),
+      hl('SingleQuotedBody', 'bc'),
+      hl('SingleQuotedString', '\''),
+    })
+    check_parsing('"\\"\\"\\"\\""', 0, {
+      --           0123456789
+      ast = {
+        'DoubleQuotedString(val="\\"\\"\\"\\""):0:0:"\\"\\"\\"\\""',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\"'),
+      hl('DoubleQuotedEscape', '\\"'),
+      hl('DoubleQuotedEscape', '\\"'),
+      hl('DoubleQuotedEscape', '\\"'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"abc\\"def\\"ghi\\"jkl\\"mno"', 0, {
+      --           0123456789012345678901234
+      --           0         1         2
+      ast = {
+        'DoubleQuotedString(val="abc\\"def\\"ghi\\"jkl\\"mno"):0:0:"abc\\"def\\"ghi\\"jkl\\"mno"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedBody', 'abc'),
+      hl('DoubleQuotedEscape', '\\"'),
+      hl('DoubleQuotedBody', 'def'),
+      hl('DoubleQuotedEscape', '\\"'),
+      hl('DoubleQuotedBody', 'ghi'),
+      hl('DoubleQuotedEscape', '\\"'),
+      hl('DoubleQuotedBody', 'jkl'),
+      hl('DoubleQuotedEscape', '\\"'),
+      hl('DoubleQuotedBody', 'mno'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"\\b\\e\\f\\r\\t\\\\"', 0, {
+      --           0123456789012345
+      --           0         1
+      ast = {
+        [[DoubleQuotedString(val="\8\27\12\13\9\\"):0:0:"\b\e\f\r\t\\"]],
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\b'),
+      hl('DoubleQuotedEscape', '\\e'),
+      hl('DoubleQuotedEscape', '\\f'),
+      hl('DoubleQuotedEscape', '\\r'),
+      hl('DoubleQuotedEscape', '\\t'),
+      hl('DoubleQuotedEscape', '\\\\'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"\\n\n"', 0, {
+      --           01234
+      ast = {
+        'DoubleQuotedString(val="\\\n\\\n"):0:0:"\\n\n"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\n'),
+      hl('DoubleQuotedBody', '\n'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"\\x00"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\0"):0:0:"\\x00"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\x00'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"\\xFF"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\255"):0:0:"\\xFF"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\xFF'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"\\xF"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\15"):0:0:"\\xF"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\xF'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"\\u00AB"', 0, {
+      --           01234567
+      ast = {
+        'DoubleQuotedString(val="«"):0:0:"\\u00AB"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\u00AB'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"\\U000000AB"', 0, {
+      --           01234567
+      ast = {
+        'DoubleQuotedString(val="«"):0:0:"\\U000000AB"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U000000AB'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('"\\x"', 0, {
+      --           0123
+      ast = {
+        'DoubleQuotedString(val="x"):0:0:"\\x"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\x'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\x', 0, {
+      --           012
+      ast = {
+        'DoubleQuotedString(val="x"):0:0:"\\x',
+      },
+      err = {
+        arg = '"\\x',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\x'),
+    })
+
+    check_parsing('"\\xF', 0, {
+      --           0123
+      ast = {
+        'DoubleQuotedString(val="\\15"):0:0:"\\xF',
+      },
+      err = {
+        arg = '"\\xF',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedEscape', '\\xF'),
+    })
+
+    check_parsing('"\\u"', 0, {
+      --           0123
+      ast = {
+        'DoubleQuotedString(val="u"):0:0:"\\u"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\u'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\u', 0, {
+      --           012
+      ast = {
+        'DoubleQuotedString(val="u"):0:0:"\\u',
+      },
+      err = {
+        arg = '"\\u',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\u'),
+    })
+
+    check_parsing('"\\U', 0, {
+      --           012
+      ast = {
+        'DoubleQuotedString(val="U"):0:0:"\\U',
+      },
+      err = {
+        arg = '"\\U',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
+    })
+
+    check_parsing('"\\U"', 0, {
+      --           0123
+      ast = {
+        'DoubleQuotedString(val="U"):0:0:"\\U"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\U'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\xFX"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\15X"):0:0:"\\xFX"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\xF'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\XFX"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\15X"):0:0:"\\XFX"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\XF'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\xX"', 0, {
+      --           01234
+      ast = {
+        'DoubleQuotedString(val="xX"):0:0:"\\xX"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\x'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\XX"', 0, {
+      --           01234
+      ast = {
+        'DoubleQuotedString(val="XX"):0:0:"\\XX"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\X'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\uX"', 0, {
+      --           01234
+      ast = {
+        'DoubleQuotedString(val="uX"):0:0:"\\uX"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\u'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\UX"', 0, {
+      --           01234
+      ast = {
+        'DoubleQuotedString(val="UX"):0:0:"\\UX"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\U'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\x0X"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\x0X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\x0'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\X0X"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\X0X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\X0'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\u0X"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\u0X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\u0'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U0X"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\U0X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U0'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\x00X"', 0, {
+      --           0123456
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\x00X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\x00'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\X00X"', 0, {
+      --           0123456
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\X00X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\X00'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\u00X"', 0, {
+      --           0123456
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\u00X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\u00'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U00X"', 0, {
+      --           0123456
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\U00X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U00'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\u000X"', 0, {
+      --           01234567
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\u000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\u000'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U000X"', 0, {
+      --           01234567
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\U000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U000'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\u0000X"', 0, {
+      --           012345678
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\u0000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\u0000'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U0000X"', 0, {
+      --           012345678
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\U0000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U0000'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U00000X"', 0, {
+      --           0123456789
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\U00000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U00000'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U000000X"', 0, {
+      --           01234567890
+      --           0         1
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\U000000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U000000'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U0000000X"', 0, {
+      --           012345678901
+      --           0         1
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\U0000000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U0000000'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U00000000X"', 0, {
+      --           0123456789012
+      --           0         1
+      ast = {
+        'DoubleQuotedString(val="\\0X"):0:0:"\\U00000000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U00000000'),
+      hl('DoubleQuotedBody', 'X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\x000X"', 0, {
+      --           01234567
+      ast = {
+        'DoubleQuotedString(val="\\0000X"):0:0:"\\x000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\x00'),
+      hl('DoubleQuotedBody', '0X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\X000X"', 0, {
+      --           01234567
+      ast = {
+        'DoubleQuotedString(val="\\0000X"):0:0:"\\X000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\X00'),
+      hl('DoubleQuotedBody', '0X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\u00000X"', 0, {
+      --           0123456789
+      ast = {
+        'DoubleQuotedString(val="\\0000X"):0:0:"\\u00000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\u0000'),
+      hl('DoubleQuotedBody', '0X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\U000000000X"', 0, {
+      --           01234567890123
+      --           0         1
+      ast = {
+        'DoubleQuotedString(val="\\0000X"):0:0:"\\U000000000X"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\U00000000'),
+      hl('DoubleQuotedBody', '0X'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\0"', 0, {
+      --           0123
+      ast = {
+        'DoubleQuotedString(val="\\0"):0:0:"\\0"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\0'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\00"', 0, {
+      --           01234
+      ast = {
+        'DoubleQuotedString(val="\\0"):0:0:"\\00"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\00'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\000"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\0"):0:0:"\\000"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\000'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\0000"', 0, {
+      --           0123456
+      ast = {
+        'DoubleQuotedString(val="\\0000"):0:0:"\\0000"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\000'),
+      hl('DoubleQuotedBody', '0'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\8"', 0, {
+      --           0123
+      ast = {
+        'DoubleQuotedString(val="8"):0:0:"\\8"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\8'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\08"', 0, {
+      --           01234
+      ast = {
+        'DoubleQuotedString(val="\\0008"):0:0:"\\08"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\0'),
+      hl('DoubleQuotedBody', '8'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\008"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\0008"):0:0:"\\008"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\00'),
+      hl('DoubleQuotedBody', '8'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\0008"', 0, {
+      --           0123456
+      ast = {
+        'DoubleQuotedString(val="\\0008"):0:0:"\\0008"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\000'),
+      hl('DoubleQuotedBody', '8'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\777"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\255"):0:0:"\\777"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\777'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\050"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\40"):0:0:"\\050"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\050'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\<C-u>"', 0, {
+      --           012345
+      ast = {
+        'DoubleQuotedString(val="\\21"):0:0:"\\<C-u>"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\<C-u>'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\<', 0, {
+      --           012
+      ast = {
+        'DoubleQuotedString(val="<"):0:0:"\\<',
+      },
+      err = {
+        arg = '"\\<',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+    })
+
+    check_parsing('"\\<"', 0, {
+      --           0123
+      ast = {
+        'DoubleQuotedString(val="<"):0:0:"\\<"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\<'),
+      hl('DoubleQuotedString', '"'),
+    })
+
+    check_parsing('"\\<C-u"', 0, {
+      --           0123456
+      ast = {
+        'DoubleQuotedString(val="<C-u"):0:0:"\\<C-u"',
+      },
+    }, {
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\<'),
+      hl('DoubleQuotedBody', 'C-u'),
+      hl('DoubleQuotedString', '"'),
     })
   end)
 end)

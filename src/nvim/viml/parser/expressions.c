@@ -915,8 +915,6 @@ static inline void viml_pexpr_debug_print_token(
 //
 // NVimIdentifierKey -> Identifier
 //
-// NVimFigureBrace -> NVimInternalError
-//
 // NVimUnaryPlus -> NVimUnaryOperator
 // NVimBinaryPlus -> NVimBinaryOperator
 // NVimConcat -> NVimBinaryOperator
@@ -928,6 +926,18 @@ static inline void viml_pexpr_debug_print_token(
 //
 // NVimNestingParenthesis -> NVimParenthesis
 // NVimCallingParenthesis -> NVimParenthesis
+//
+// NVimString -> String
+// NVimStringSpecial -> SpecialChar
+// NVimSingleQuote -> NVimString
+// NVimSingleQuotedBody -> NVimString
+// NVimSingleQuotedQuote -> NVimStringSpecial
+// NVimDoubleQuote -> NVimString
+// NVimDoubleQuotedBody -> NVimString
+// NVimDoubleQuotedEscape -> NVimStringSpecial
+// NVimDoubleQuotedUnknownEscape -> NVimInvalid
+//
+// " Note: NVimDoubleQuotedUnknownEscape is not actually invalid
 //
 // NVimInvalidComma -> NVimInvalidDelimiter
 // NVimInvalidSpacing -> NVimInvalid
@@ -952,6 +962,19 @@ static inline void viml_pexpr_debug_print_token(
 // NVimInvalidList -> NVimInvalidDelimiter
 // NVimInvalidSubscript -> NVimInvalidDelimiter
 // NVimInvalidSubscriptColon -> NVimInvalidSubscript
+// NVimInvalidString -> NVimInvalidValue
+// NVimInvalidStringSpecial -> NVimInvalidString
+// NVimInvalidSingleQuote -> NVimInvalidString
+// NVimInvalidSingleQuotedBody -> NVimInvalidString
+// NVimInvalidSingleQuotedQuote -> NVimInvalidStringSpecial
+// NVimInvalidDoubleQuote -> NVimInvalidString
+// NVimInvalidDoubleQuotedBody -> NVimInvalidString
+// NVimInvalidDoubleQuotedEscape -> NVimInvalidStringSpecial
+// NVimInvalidDoubleQuotedUnknownEscape -> NVimInvalid
+//
+// NVimFigureBrace -> NVimInternalError
+// NVimInvalidSingleQuotedUnknownEscape -> NVimInternalError
+// NVimSingleQuotedUnknownEscape -> NVimInternalError
 
 /// Allocate a new node and set some of the values
 ///
@@ -1402,6 +1425,318 @@ static inline void east_set_error(const ParserState *const pstate,
       } \
     } while (0)
 
+/// Structure used to define “string shifts” necessary to map string
+/// highlighting to actual strings.
+typedef struct {
+  size_t start;  ///< Where special character starts in original string.
+  size_t orig_len;  ///< Length of orininal string (e.g. 4 for "\x80").
+  size_t act_len;  ///< Length of resulting character(s) (e.g. 1 for "\x80").
+  bool escape_not_known;  ///< True if escape sequence in original is not known.
+} StringShift;
+
+/// Parse and highlight single- or double-quoted string
+///
+/// Function is supposed to detect and highlight regular expressions (but does
+/// not do now).
+///
+/// @param[out]  pstate  Parser state which also contains a place where
+///                      highlighting is saved.
+/// @param[out]  node  Node where string parsing results are saved.
+/// @param[in]  token  Token to highlight.
+/// @param[in]  ast_stack  Parser AST stack, used to detect whether current
+///                        string is a regex.
+/// @param[in]  is_invalid  Whether currently processed token is not valid.
+static void parse_quoted_string(ParserState *const pstate,
+                                ExprASTNode *const node,
+                                const LexExprToken token,
+                                const ExprASTStack ast_stack,
+                                const bool is_invalid)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const ParserLine pline = pstate->reader.lines.items[token.start.line];
+  const char *const s = pline.data + token.start.col;
+  const char *const e = s + token.len - token.data.str.closed;
+  const char *p = s + 1;
+  const bool is_double = (token.type == kExprLexDoubleQuotedString);
+  size_t size = token.len - token.data.str.closed - 1;
+  kvec_withinit_t(StringShift, 16) shifts;
+  kvi_init(shifts);
+  if (!is_double) {
+    viml_parser_highlight(pstate, token.start, 1, HL(SingleQuotedString));
+    while (p < e) {
+      const char *const chunk_e = memchr(p, '\'', (size_t)(e - p));
+      if (chunk_e == NULL) {
+        break;
+      }
+      size--;
+      p = chunk_e + 2;
+      if (pstate->colors) {
+        kvi_push(shifts, ((StringShift) {
+            .start = token.start.col + (size_t)(chunk_e - s),
+            .orig_len = 2,
+            .act_len = 1,
+            .escape_not_known = false,
+        }));
+      }
+    }
+    node->data.str.size = size;
+    if (size == 0) {
+      node->data.str.value = NULL;
+    } else {
+      char *v_p;
+      v_p = node->data.str.value = xmalloc(size);
+      p = s + 1;
+      while (p < e) {
+        const char *const chunk_e = memchr(p, '\'', (size_t)(e - p));
+        if (chunk_e == NULL) {
+          memcpy(v_p, p, (size_t)(e - p));
+          break;
+        }
+        memcpy(v_p, p, (size_t)(chunk_e - p));
+        v_p += (size_t)(chunk_e - p) + 1;
+        v_p[-1] = '\'';
+        p = chunk_e + 2;
+      }
+    }
+  } else {
+    viml_parser_highlight(pstate, token.start, 1, HL(DoubleQuotedString));
+    for (p = s + 1; p < e; p++) {
+      if (*p == '\\' && p + 1 < e) {
+        p++;
+        if (p + 1 == e) {
+          size--;
+          break;
+        }
+        switch (*p) {
+          // A "\<x>" form occupies at least 4 characters, and produces up to
+          // 6 characters: reserve space for 2 extra, but do not compute actual
+          // length just now, it would be costy.
+          case '<': {
+            size += 2;
+            break;
+          }
+          // Hexadecimal, always single byte, but at least three bytes each.
+          case 'x': case 'X': {
+            size--;
+            if (ascii_isxdigit(p[1])) {
+              size--;
+              if (p + 2 < e && ascii_isxdigit(p[2])) {
+                size--;
+              }
+            }
+            break;
+          }
+          // Unicode
+          //
+          // \uF takes 1 byte which is 2 bytes less then escape sequence.
+          // \uFF: 2 bytes, 2 bytes less.
+          // \uFFF: 3 bytes, 2 bytes less.
+          // \uFFFF: 3 bytes, 3 bytes less.
+          // \UFFFFF: 4 bytes, 3 bytes less.
+          // \UFFFFFF: 5 bytes, 3 bytes less.
+          // \UFFFFFFF: 6 bytes, 3 bytes less.
+          // \U7FFFFFFF: 6 bytes, 4 bytes less.
+          case 'u': case 'U': {
+            const char *const esc_start = p;
+            size_t n = (*p == 'u' ? 4 : 8);
+            int nr = 0;
+            p++;
+            while (n-- && ascii_isxdigit(p[1])) {
+              p++;
+              nr = (nr << 4) + hex2nr(*p);
+            }
+            // Escape length: (esc_start - 1) points to "\\", esc_start to "u"
+            // or "U", p to the byte after last byte. So escape sequence
+            // occupies p - (esc_start - 1), but it stands for a utf_char2len
+            // bytes.
+            size -= (size_t)((p - (esc_start - 1)) - utf_char2len(nr));
+            p--;
+            break;
+          }
+          // Octal, always single byte, but at least two bytes each.
+          case '0': case '1': case '2': case '3': case '4': case '5': case '6':
+          case '7': {
+            size--;
+            p++;
+            if (*p >= '0' && *p <= '7') {
+              size--;
+              p++;
+              if (*p >= '0' && *p <= '7') {
+                size--;
+                p++;
+              }
+            }
+            break;
+          }
+          default: {
+            size--;
+            break;
+          }
+        }
+      }
+    }
+    if (size == 0) {
+      node->data.str.value = NULL;
+      node->data.str.size = 0;
+    } else {
+      char *v_p;
+      v_p = node->data.str.value = xmalloc(size);
+      p = s + 1;
+      while (p < e) {
+        const char *const chunk_e = memchr(p, '\\', (size_t)(e - p));
+        if (chunk_e == NULL) {
+          memcpy(v_p, p, (size_t)(e - p));
+          v_p += e - p;
+          break;
+        }
+        memcpy(v_p, p, (size_t)(chunk_e - p));
+        v_p += (size_t)(chunk_e - p);
+        p = chunk_e + 1;
+        if (p == e) {
+          *v_p++ = '\\';
+          break;
+        }
+        bool is_unknown = false;
+        const char *const v_p_start = v_p;
+        switch (*p) {
+#define SINGLE_CHAR_ESC(ch, real_ch) \
+          case ch: { \
+            *v_p++ = real_ch; \
+            p++; \
+            break; \
+          }
+          SINGLE_CHAR_ESC('b', BS)
+          SINGLE_CHAR_ESC('e', ESC)
+          SINGLE_CHAR_ESC('f', FF)
+          SINGLE_CHAR_ESC('n', NL)
+          SINGLE_CHAR_ESC('r', CAR)
+          SINGLE_CHAR_ESC('t', TAB)
+          SINGLE_CHAR_ESC('"', '"')
+          SINGLE_CHAR_ESC('\\', '\\')
+#undef SINGLE_CHAR_ESC
+
+          // Hexadecimal or unicode.
+          case 'X': case 'x': case 'u': case 'U': {
+            if (ascii_isxdigit(p[1])) {
+              size_t n;
+              int nr;
+              bool is_hex = (*p == 'x' || *p == 'X');
+
+              if (is_hex) {
+                n = 2;
+              } else if (*p == 'u') {
+                n = 4;
+              } else {
+                n = 8;
+              }
+              nr = 0;
+              while (n-- && ascii_isxdigit(p[1])) {
+                p++;
+                nr = (nr << 4) + hex2nr(*p);
+              }
+              p++;
+              if (is_hex) {
+                *v_p++ = (char)nr;
+              } else {
+                v_p += utf_char2bytes(nr, (char_u *)v_p);
+              }
+            } else {
+              is_unknown = true;
+              *v_p++ = *p;
+              p++;
+            }
+            break;
+          }
+          // Octal: "\1", "\12", "\123".
+          case '0': case '1': case '2': case '3': case '4': case '5': case '6':
+          case '7': {
+            uint8_t ch = (uint8_t)(*p++ - '0');
+            if (*p >= '0' && *p <= '7') {
+              ch = (uint8_t)((ch << 3) + *p++ - '0');
+              if (*p >= '0' && *p <= '7') {
+                ch = (uint8_t)((ch << 3) + *p++ - '0');
+              }
+            }
+            *v_p++ = (char)ch;
+            break;
+          }
+          // Special key, e.g.: "\<C-W>"
+          case '<': {
+            const size_t special_len = (
+                trans_special((const char_u **)&p, (size_t)(e - p),
+                              (char_u *)v_p, true, true));
+            if (special_len != 0) {
+              v_p += special_len;
+            } else {
+              is_unknown = true;
+              mb_copy_char((const char_u **)&p, (char_u **)&v_p);
+            }
+            break;
+          }
+          default: {
+            is_unknown = true;
+            mb_copy_char((const char_u **)&p, (char_u **)&v_p);
+            break;
+          }
+        }
+        if (pstate->colors) {
+          kvi_push(shifts, ((StringShift) {
+              .start = token.start.col + (size_t)(chunk_e - s),
+              .orig_len = (size_t)(p - chunk_e),
+              .act_len = (size_t)(v_p - (char *)v_p_start),
+              .escape_not_known = is_unknown,
+          }));
+        }
+      }
+      node->data.str.size = (size_t)(v_p - node->data.str.value);
+    }
+  }
+  if (pstate->colors) {
+    // TODO(ZyX-I): use ast_stack to determine and highlight regular expressions
+    // TODO(ZyX-I): use ast_stack to determine and highlight printf format str
+    // TODO(ZyX-I): use ast_stack to determine and highlight expression strings
+    size_t next_col = 1;
+    const char *const body_str = (is_double
+                                  ? HL(DoubleQuotedBody)
+                                  : HL(SingleQuotedBody));
+    const char *const esc_str = (is_double
+                                 ? HL(DoubleQuotedEscape)
+                                 : HL(SingleQuotedQuote));
+    const char *const ukn_esc_str = (is_double
+                                     ? HL(DoubleQuotedUnknownEscape)
+                                     : HL(SingleQuotedUnknownEscape));
+    for (size_t i = 0; i < kv_size(shifts); i++) {
+      const StringShift cur_shift = kv_A(shifts, i);
+      if (cur_shift.start > next_col) {
+        viml_parser_highlight(pstate, shifted_pos(token.start, next_col),
+                              cur_shift.start - next_col,
+                              body_str);
+      }
+      viml_parser_highlight(pstate, shifted_pos(token.start, cur_shift.start),
+                            cur_shift.orig_len,
+                            (cur_shift.escape_not_known
+                             ? ukn_esc_str
+                             : esc_str));
+      next_col = cur_shift.start + cur_shift.orig_len;
+    }
+    if (next_col < token.len - token.data.str.closed) {
+      viml_parser_highlight(pstate, shifted_pos(token.start, next_col),
+                            token.len - token.data.str.closed - next_col,
+                            body_str);
+    }
+  }
+  if (token.data.str.closed) {
+    if (is_double) {
+      viml_parser_highlight(pstate, shifted_pos(token.start, token.len - 1),
+                            1, HL(DoubleQuotedString));
+    } else {
+      viml_parser_highlight(pstate, shifted_pos(token.start, token.len - 1),
+                            1, HL(SingleQuotedString));
+    }
+  }
+  kvi_destroy(shifts);
+}
+
 /// Parse one VimL expression
 ///
 /// @param  pstate  Parser state.
@@ -1714,12 +2049,7 @@ viml_pexpr_parse_invalid_comma:
           } else if (eastnode_lvl >= kEOpLvlComma) {
             can_be_ternary = false;
           } else {
-viml_pexpr_parse_invalid_colon:
-            ERROR_FROM_TOKEN_AND_MSG(
-                cur_token,
-                _("E15: Colon outside of dictionary or ternary operator: "
-                  "%.*s"));
-            break;
+            goto viml_pexpr_parse_invalid_colon;
           }
           if (i == kv_size(ast_stack) - 1) {
             goto viml_pexpr_parse_invalid_colon;
@@ -1741,6 +2071,12 @@ viml_pexpr_parse_invalid_colon:
           ADD_OP_NODE(cur_node);
           HL_CUR_TOKEN(SubscriptColon);
         } else {
+          goto viml_pexpr_parse_valid_colon;
+viml_pexpr_parse_invalid_colon:
+          ERROR_FROM_TOKEN_AND_MSG(
+              cur_token,
+              _("E15: Colon outside of dictionary or ternary operator: %.*s"));
+viml_pexpr_parse_valid_colon:
           ADD_VALUE_IF_MISSING(_(EXP_VAL_COLON));
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
           if (is_ternary) {
@@ -2199,6 +2535,30 @@ viml_pexpr_parse_no_paren_closing_error: {}
         assert(kv_last(ast_stack) == &cur_node->children->next);
         *kv_last(ast_stack) = ter_val_node;
         kvi_push(ast_stack, &ter_val_node->children);
+        break;
+      }
+      case kExprLexDoubleQuotedString:
+      case kExprLexSingleQuotedString: {
+        const bool is_double = (tok_type == kExprLexDoubleQuotedString);
+        if (!cur_token.data.str.closed) {
+          // It is weird, but Vim has two identical errors messages with
+          // different error numbers: "E114: Missing quote" and
+          // "E115: Missing quote".
+          ERROR_FROM_TOKEN_AND_MSG(
+              cur_token, (is_double
+                          ? _("E114: Missing double quote: %.*s")
+                          : _("E115: Missing single quote: %.*s")));
+        }
+        if (want_node == kENodeOperator) {
+          OP_MISSING;
+        }
+        NEW_NODE_WITH_CUR_POS(
+            cur_node, (is_double
+                       ? kExprNodeDoubleQuotedString
+                       : kExprNodeSingleQuotedString));
+        *top_node_p = cur_node;
+        parse_quoted_string(pstate, cur_node, cur_token, ast_stack, is_invalid);
+        want_node = kENodeOperator;
         break;
       }
     }

@@ -330,9 +330,10 @@ format_luav = function(v, indent)
   end
   local ret = ''
   if type(v) == 'string' then
-    ret = '\'' .. tostring(v):gsub('[\'\\]', '\\%0'):gsub('[%z\1-\31]', function(match)
-      return SUBTBL[match:byte()]
-    end) .. '\''
+    ret = tostring(v):gsub('[\'\\]', '\\%0'):gsub('[%z\1-\31]', function(match)
+      return SUBTBL[match:byte() + 1]
+    end)
+    ret = '\'' .. ret .. '\''
   elseif type(v) == 'table' then
     local processed_keys = {}
     ret = '{' .. linesep

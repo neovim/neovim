@@ -195,6 +195,8 @@ typedef enum {
   kExprNodeConcatOrSubscript = 'S',
   kExprNodeInteger = '0',  ///< Integral number.
   kExprNodeFloat = '1',  ///< Floating-point number.
+  kExprNodeSingleQuotedString = '\'',
+  kExprNodeDoubleQuotedString = '"',
 } ExprASTNodeType;
 
 typedef struct expr_ast_node ExprASTNode;
@@ -249,6 +251,11 @@ struct expr_ast_node {
     struct {
       float_T value;
     } flt;  ///< For kExprNodeFloat.
+    struct {
+      char *value;
+      size_t size;
+    } str;  ///< For kExprNodeSingleQuotedString and
+            ///< kExprNodeDoubleQuotedString.
   } data;
 };
 
