@@ -24,12 +24,11 @@
  * Some useful tables.
  */
 
-static struct modmasktable {
-  short mod_mask;               /* Bit-mask for particular key modifier */
-  short mod_flag;               /* Bit(s) for particular key modifier */
-  char_u name;                  /* Single letter name of modifier */
-} mod_mask_table[] =
-{
+static const struct modmasktable {
+  short mod_mask;  ///< Bit-mask for particular key modifier.
+  short mod_flag;  ///< Bit(s) for particular key modifier.
+  char_u name;  ///< Single letter name of modifier.
+} mod_mask_table[] = {
   {MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'M'},
   {MOD_MASK_META,             MOD_MASK_META,          (char_u)'T'},
   {MOD_MASK_CTRL,             MOD_MASK_CTRL,          (char_u)'C'},
@@ -139,155 +138,154 @@ static char_u modifier_keys_table[] =
   NUL
 };
 
-static struct key_name_entry {
-  int key;              /* Special key code or ascii value */
-  char_u  *name;        /* Name of key */
-} key_names_table[] =
-{
-  {' ',               (char_u *)"Space"},
-  {TAB,               (char_u *)"Tab"},
-  {K_TAB,             (char_u *)"Tab"},
-  {NL,                (char_u *)"NL"},
-  {NL,                (char_u *)"NewLine"},     /* Alternative name */
-  {NL,                (char_u *)"LineFeed"},    /* Alternative name */
-  {NL,                (char_u *)"LF"},          /* Alternative name */
-  {CAR,               (char_u *)"CR"},
-  {CAR,               (char_u *)"Return"},      /* Alternative name */
-  {CAR,               (char_u *)"Enter"},       /* Alternative name */
-  {K_BS,              (char_u *)"BS"},
-  {K_BS,              (char_u *)"BackSpace"},   /* Alternative name */
-  {ESC,               (char_u *)"Esc"},
-  {CSI,               (char_u *)"CSI"},
-  {K_CSI,             (char_u *)"xCSI"},
-  {'|',               (char_u *)"Bar"},
-  {'\\',              (char_u *)"Bslash"},
-  {K_DEL,             (char_u *)"Del"},
-  {K_DEL,             (char_u *)"Delete"},      /* Alternative name */
-  {K_KDEL,            (char_u *)"kDel"},
-  {K_UP,              (char_u *)"Up"},
-  {K_DOWN,            (char_u *)"Down"},
-  {K_LEFT,            (char_u *)"Left"},
-  {K_RIGHT,           (char_u *)"Right"},
-  {K_XUP,             (char_u *)"xUp"},
-  {K_XDOWN,           (char_u *)"xDown"},
-  {K_XLEFT,           (char_u *)"xLeft"},
-  {K_XRIGHT,          (char_u *)"xRight"},
+static const struct key_name_entry {
+  int key;  ///< Special key code or ASCII value.
+  const char *name;  ///< Name of the key
+} key_names_table[] = {
+  {' ',               "Space"},
+  {TAB,               "Tab"},
+  {K_TAB,             "Tab"},
+  {NL,                "NL"},
+  {NL,                "NewLine"},     // Alternative name
+  {NL,                "LineFeed"},    // Alternative name
+  {NL,                "LF"},          // Alternative name
+  {CAR,               "CR"},
+  {CAR,               "Return"},      // Alternative name
+  {CAR,               "Enter"},       // Alternative name
+  {K_BS,              "BS"},
+  {K_BS,              "BackSpace"},   // Alternative name
+  {ESC,               "Esc"},
+  {CSI,               "CSI"},
+  {K_CSI,             "xCSI"},
+  {'|',               "Bar"},
+  {'\\',              "Bslash"},
+  {K_DEL,             "Del"},
+  {K_DEL,             "Delete"},      // Alternative name
+  {K_KDEL,            "kDel"},
+  {K_UP,              "Up"},
+  {K_DOWN,            "Down"},
+  {K_LEFT,            "Left"},
+  {K_RIGHT,           "Right"},
+  {K_XUP,             "xUp"},
+  {K_XDOWN,           "xDown"},
+  {K_XLEFT,           "xLeft"},
+  {K_XRIGHT,          "xRight"},
 
-  {K_F1,              (char_u *)"F1"},
-  {K_F2,              (char_u *)"F2"},
-  {K_F3,              (char_u *)"F3"},
-  {K_F4,              (char_u *)"F4"},
-  {K_F5,              (char_u *)"F5"},
-  {K_F6,              (char_u *)"F6"},
-  {K_F7,              (char_u *)"F7"},
-  {K_F8,              (char_u *)"F8"},
-  {K_F9,              (char_u *)"F9"},
-  {K_F10,             (char_u *)"F10"},
+  {K_F1,              "F1"},
+  {K_F2,              "F2"},
+  {K_F3,              "F3"},
+  {K_F4,              "F4"},
+  {K_F5,              "F5"},
+  {K_F6,              "F6"},
+  {K_F7,              "F7"},
+  {K_F8,              "F8"},
+  {K_F9,              "F9"},
+  {K_F10,             "F10"},
 
-  {K_F11,             (char_u *)"F11"},
-  {K_F12,             (char_u *)"F12"},
-  {K_F13,             (char_u *)"F13"},
-  {K_F14,             (char_u *)"F14"},
-  {K_F15,             (char_u *)"F15"},
-  {K_F16,             (char_u *)"F16"},
-  {K_F17,             (char_u *)"F17"},
-  {K_F18,             (char_u *)"F18"},
-  {K_F19,             (char_u *)"F19"},
-  {K_F20,             (char_u *)"F20"},
+  {K_F11,             "F11"},
+  {K_F12,             "F12"},
+  {K_F13,             "F13"},
+  {K_F14,             "F14"},
+  {K_F15,             "F15"},
+  {K_F16,             "F16"},
+  {K_F17,             "F17"},
+  {K_F18,             "F18"},
+  {K_F19,             "F19"},
+  {K_F20,             "F20"},
 
-  {K_F21,             (char_u *)"F21"},
-  {K_F22,             (char_u *)"F22"},
-  {K_F23,             (char_u *)"F23"},
-  {K_F24,             (char_u *)"F24"},
-  {K_F25,             (char_u *)"F25"},
-  {K_F26,             (char_u *)"F26"},
-  {K_F27,             (char_u *)"F27"},
-  {K_F28,             (char_u *)"F28"},
-  {K_F29,             (char_u *)"F29"},
-  {K_F30,             (char_u *)"F30"},
+  {K_F21,             "F21"},
+  {K_F22,             "F22"},
+  {K_F23,             "F23"},
+  {K_F24,             "F24"},
+  {K_F25,             "F25"},
+  {K_F26,             "F26"},
+  {K_F27,             "F27"},
+  {K_F28,             "F28"},
+  {K_F29,             "F29"},
+  {K_F30,             "F30"},
 
-  {K_F31,             (char_u *)"F31"},
-  {K_F32,             (char_u *)"F32"},
-  {K_F33,             (char_u *)"F33"},
-  {K_F34,             (char_u *)"F34"},
-  {K_F35,             (char_u *)"F35"},
-  {K_F36,             (char_u *)"F36"},
-  {K_F37,             (char_u *)"F37"},
+  {K_F31,             "F31"},
+  {K_F32,             "F32"},
+  {K_F33,             "F33"},
+  {K_F34,             "F34"},
+  {K_F35,             "F35"},
+  {K_F36,             "F36"},
+  {K_F37,             "F37"},
 
-  {K_XF1,             (char_u *)"xF1"},
-  {K_XF2,             (char_u *)"xF2"},
-  {K_XF3,             (char_u *)"xF3"},
-  {K_XF4,             (char_u *)"xF4"},
+  {K_XF1,             "xF1"},
+  {K_XF2,             "xF2"},
+  {K_XF3,             "xF3"},
+  {K_XF4,             "xF4"},
 
-  {K_HELP,            (char_u *)"Help"},
-  {K_UNDO,            (char_u *)"Undo"},
-  {K_INS,             (char_u *)"Insert"},
-  {K_INS,             (char_u *)"Ins"},         /* Alternative name */
-  {K_KINS,            (char_u *)"kInsert"},
-  {K_HOME,            (char_u *)"Home"},
-  {K_KHOME,           (char_u *)"kHome"},
-  {K_XHOME,           (char_u *)"xHome"},
-  {K_ZHOME,           (char_u *)"zHome"},
-  {K_END,             (char_u *)"End"},
-  {K_KEND,            (char_u *)"kEnd"},
-  {K_XEND,            (char_u *)"xEnd"},
-  {K_ZEND,            (char_u *)"zEnd"},
-  {K_PAGEUP,          (char_u *)"PageUp"},
-  {K_PAGEDOWN,        (char_u *)"PageDown"},
-  {K_KPAGEUP,         (char_u *)"kPageUp"},
-  {K_KPAGEDOWN,       (char_u *)"kPageDown"},
+  {K_HELP,            "Help"},
+  {K_UNDO,            "Undo"},
+  {K_INS,             "Insert"},
+  {K_INS,             "Ins"},         // Alternative name
+  {K_KINS,            "kInsert"},
+  {K_HOME,            "Home"},
+  {K_KHOME,           "kHome"},
+  {K_XHOME,           "xHome"},
+  {K_ZHOME,           "zHome"},
+  {K_END,             "End"},
+  {K_KEND,            "kEnd"},
+  {K_XEND,            "xEnd"},
+  {K_ZEND,            "zEnd"},
+  {K_PAGEUP,          "PageUp"},
+  {K_PAGEDOWN,        "PageDown"},
+  {K_KPAGEUP,         "kPageUp"},
+  {K_KPAGEDOWN,       "kPageDown"},
 
-  {K_KPLUS,           (char_u *)"kPlus"},
-  {K_KMINUS,          (char_u *)"kMinus"},
-  {K_KDIVIDE,         (char_u *)"kDivide"},
-  {K_KMULTIPLY,       (char_u *)"kMultiply"},
-  {K_KENTER,          (char_u *)"kEnter"},
-  {K_KPOINT,          (char_u *)"kPoint"},
+  {K_KPLUS,           "kPlus"},
+  {K_KMINUS,          "kMinus"},
+  {K_KDIVIDE,         "kDivide"},
+  {K_KMULTIPLY,       "kMultiply"},
+  {K_KENTER,          "kEnter"},
+  {K_KPOINT,          "kPoint"},
 
-  {K_K0,              (char_u *)"k0"},
-  {K_K1,              (char_u *)"k1"},
-  {K_K2,              (char_u *)"k2"},
-  {K_K3,              (char_u *)"k3"},
-  {K_K4,              (char_u *)"k4"},
-  {K_K5,              (char_u *)"k5"},
-  {K_K6,              (char_u *)"k6"},
-  {K_K7,              (char_u *)"k7"},
-  {K_K8,              (char_u *)"k8"},
-  {K_K9,              (char_u *)"k9"},
+  {K_K0,              "k0"},
+  {K_K1,              "k1"},
+  {K_K2,              "k2"},
+  {K_K3,              "k3"},
+  {K_K4,              "k4"},
+  {K_K5,              "k5"},
+  {K_K6,              "k6"},
+  {K_K7,              "k7"},
+  {K_K8,              "k8"},
+  {K_K9,              "k9"},
 
-  {'<',               (char_u *)"lt"},
+  {'<',               "lt"},
 
-  {K_MOUSE,           (char_u *)"Mouse"},
-  {K_LEFTMOUSE,       (char_u *)"LeftMouse"},
-  {K_LEFTMOUSE_NM,    (char_u *)"LeftMouseNM"},
-  {K_LEFTDRAG,        (char_u *)"LeftDrag"},
-  {K_LEFTRELEASE,     (char_u *)"LeftRelease"},
-  {K_LEFTRELEASE_NM,  (char_u *)"LeftReleaseNM"},
-  {K_MIDDLEMOUSE,     (char_u *)"MiddleMouse"},
-  {K_MIDDLEDRAG,      (char_u *)"MiddleDrag"},
-  {K_MIDDLERELEASE,   (char_u *)"MiddleRelease"},
-  {K_RIGHTMOUSE,      (char_u *)"RightMouse"},
-  {K_RIGHTDRAG,       (char_u *)"RightDrag"},
-  {K_RIGHTRELEASE,    (char_u *)"RightRelease"},
-  {K_MOUSEDOWN,       (char_u *)"ScrollWheelUp"},
-  {K_MOUSEUP,         (char_u *)"ScrollWheelDown"},
-  {K_MOUSELEFT,       (char_u *)"ScrollWheelRight"},
-  {K_MOUSERIGHT,      (char_u *)"ScrollWheelLeft"},
-  {K_MOUSEDOWN,       (char_u *)"MouseDown"},   /* OBSOLETE: Use	  */
-  {K_MOUSEUP,         (char_u *)"MouseUp"},     /* ScrollWheelXXX instead */
-  {K_X1MOUSE,         (char_u *)"X1Mouse"},
-  {K_X1DRAG,          (char_u *)"X1Drag"},
-  {K_X1RELEASE,               (char_u *)"X1Release"},
-  {K_X2MOUSE,         (char_u *)"X2Mouse"},
-  {K_X2DRAG,          (char_u *)"X2Drag"},
-  {K_X2RELEASE,               (char_u *)"X2Release"},
-  {K_DROP,            (char_u *)"Drop"},
-  {K_ZERO,            (char_u *)"Nul"},
-  {K_SNR,             (char_u *)"SNR"},
-  {K_PLUG,            (char_u *)"Plug"},
-  {K_PASTE,           (char_u *)"Paste"},
-  {K_FOCUSGAINED,     (char_u *)"FocusGained"},
-  {K_FOCUSLOST,       (char_u *)"FocusLost"},
+  {K_MOUSE,           "Mouse"},
+  {K_LEFTMOUSE,       "LeftMouse"},
+  {K_LEFTMOUSE_NM,    "LeftMouseNM"},
+  {K_LEFTDRAG,        "LeftDrag"},
+  {K_LEFTRELEASE,     "LeftRelease"},
+  {K_LEFTRELEASE_NM,  "LeftReleaseNM"},
+  {K_MIDDLEMOUSE,     "MiddleMouse"},
+  {K_MIDDLEDRAG,      "MiddleDrag"},
+  {K_MIDDLERELEASE,   "MiddleRelease"},
+  {K_RIGHTMOUSE,      "RightMouse"},
+  {K_RIGHTDRAG,       "RightDrag"},
+  {K_RIGHTRELEASE,    "RightRelease"},
+  {K_MOUSEDOWN,       "ScrollWheelUp"},
+  {K_MOUSEUP,         "ScrollWheelDown"},
+  {K_MOUSELEFT,       "ScrollWheelRight"},
+  {K_MOUSERIGHT,      "ScrollWheelLeft"},
+  {K_MOUSEDOWN,       "MouseDown"},  // OBSOLETE: Use ScrollWheelXXX instead
+  {K_MOUSEUP,         "MouseUp"},    // Same
+  {K_X1MOUSE,         "X1Mouse"},
+  {K_X1DRAG,          "X1Drag"},
+  {K_X1RELEASE,       "X1Release"},
+  {K_X2MOUSE,         "X2Mouse"},
+  {K_X2DRAG,          "X2Drag"},
+  {K_X2RELEASE,       "X2Release"},
+  {K_DROP,            "Drop"},
+  {K_ZERO,            "Nul"},
+  {K_SNR,             "SNR"},
+  {K_PLUG,            "Plug"},
+  {K_PASTE,           "Paste"},
+  {K_FOCUSGAINED,     "FocusGained"},
+  {K_FOCUSLOST,       "FocusLost"},
   {0,                 NULL}
 };
 
@@ -320,73 +318,73 @@ static struct mousetable {
   {0,                         0,              0,      0},
 };
 
-/*
- * Return the modifier mask bit (MOD_MASK_*) which corresponds to the given
- * modifier name ('S' for Shift, 'C' for Ctrl etc).
- */
+/// Return the modifier mask bit (#MOD_MASK_*) corresponding to mod name
+///
+/// E.g. 'S' for shift, 'C' for ctrl.
 int name_to_mod_mask(int c)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int i;
-
   c = TOUPPER_ASC(c);
-  for (i = 0; mod_mask_table[i].mod_mask != 0; i++)
-    if (c == mod_mask_table[i].name)
+  for (size_t i = 0; mod_mask_table[i].mod_mask != 0; i++) {
+    if (c == mod_mask_table[i].name) {
       return mod_mask_table[i].mod_flag;
+    }
+  }
   return 0;
 }
 
-/*
- * Check if if there is a special key code for "key" that includes the
- * modifiers specified.
- */
-int simplify_key(int key, int *modifiers)
+/// Check if there is a special key code for "key" with specified modifiers
+///
+/// @param[in]  key  Initial key code.
+/// @param[in,out]  modifiers  Initial modifiers, is adjusted to have simplified
+///                            modifiers.
+///
+/// @return Simplified key code.
+int simplify_key(const int key, int *modifiers)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  int i;
-  int key0;
-  int key1;
-
   if (*modifiers & (MOD_MASK_SHIFT | MOD_MASK_CTRL | MOD_MASK_ALT)) {
-    /* TAB is a special case */
+    // TAB is a special case.
     if (key == TAB && (*modifiers & MOD_MASK_SHIFT)) {
       *modifiers &= ~MOD_MASK_SHIFT;
       return K_S_TAB;
     }
-    key0 = KEY2TERMCAP0(key);
-    key1 = KEY2TERMCAP1(key);
-    for (i = 0; modifier_keys_table[i] != NUL; i += MOD_KEYS_ENTRY_SIZE)
+    const int key0 = KEY2TERMCAP0(key);
+    const int key1 = KEY2TERMCAP1(key);
+    for (int i = 0; modifier_keys_table[i] != NUL; i += MOD_KEYS_ENTRY_SIZE) {
       if (key0 == modifier_keys_table[i + 3]
           && key1 == modifier_keys_table[i + 4]
           && (*modifiers & modifier_keys_table[i])) {
         *modifiers &= ~modifier_keys_table[i];
         return TERMCAP2KEY(modifier_keys_table[i + 1],
-            modifier_keys_table[i + 2]);
+                           modifier_keys_table[i + 2]);
       }
+    }
   }
   return key;
 }
 
-/*
- * Change <xHome> to <Home>, <xUp> to <Up>, etc.
- */
-int handle_x_keys(int key)
+/// Change <xKey> to <Key>
+int handle_x_keys(const int key)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (key) {
-  case K_XUP:     return K_UP;
-  case K_XDOWN:   return K_DOWN;
-  case K_XLEFT:   return K_LEFT;
-  case K_XRIGHT:  return K_RIGHT;
-  case K_XHOME:   return K_HOME;
-  case K_ZHOME:   return K_HOME;
-  case K_XEND:    return K_END;
-  case K_ZEND:    return K_END;
-  case K_XF1:     return K_F1;
-  case K_XF2:     return K_F2;
-  case K_XF3:     return K_F3;
-  case K_XF4:     return K_F4;
-  case K_S_XF1:   return K_S_F1;
-  case K_S_XF2:   return K_S_F2;
-  case K_S_XF3:   return K_S_F3;
-  case K_S_XF4:   return K_S_F4;
+    case K_XUP:     return K_UP;
+    case K_XDOWN:   return K_DOWN;
+    case K_XLEFT:   return K_LEFT;
+    case K_XRIGHT:  return K_RIGHT;
+    case K_XHOME:   return K_HOME;
+    case K_ZHOME:   return K_HOME;
+    case K_XEND:    return K_END;
+    case K_ZEND:    return K_END;
+    case K_XF1:     return K_F1;
+    case K_XF2:     return K_F2;
+    case K_XF3:     return K_F3;
+    case K_XF4:     return K_F4;
+    case K_S_XF1:   return K_S_F1;
+    case K_S_XF2:   return K_S_F2;
+    case K_S_XF3:   return K_S_F3;
+    case K_S_XF4:   return K_S_F4;
   }
   return key;
 }
@@ -510,7 +508,7 @@ unsigned int trans_special(const char_u **srcp, const size_t src_len,
     return 0;
   }
 
-  /* Put the appropriate modifier in a string */
+  // Put the appropriate modifier in a string.
   if (modifiers != 0) {
     dst[dlen++] = K_SPECIAL;
     dst[dlen++] = KS_MODIFIER;
@@ -575,11 +573,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
     if (*bp == '-') {
       last_dash = bp;
       if (bp + 1 <= end) {
-        if (has_mbyte) {
-          l = mb_ptr2len_len(bp + 1, (int) (end - bp) + 1);
-        } else {
-          l = 1;
-        }
+        l = utfc_ptr2len_len(bp + 1, (int)(end - bp) + 1);
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
@@ -705,32 +699,35 @@ int find_special_key_in_table(int c)
   int i;
 
   for (i = 0; key_names_table[i].name != NULL; i++)
-    if (c == key_names_table[i].key)
+    if (c == (uint8_t)key_names_table[i].key)
       break;
   if (key_names_table[i].name == NULL)
     i = -1;
   return i;
 }
 
-/*
- * Find the special key with the given name (the given string does not have to
- * end with NUL, the name is assumed to end before the first non-idchar).
- * If the name starts with "t_" the next two characters are interpreted as a
- * termcap name.
- * Return the key code, or 0 if not found.
- */
+/// Find the special key with the given name
+///
+/// @param[in]  name  Name of the special. Does not have to end with NUL, it is
+///                   assumed to end before the first non-idchar. If name starts
+///                   with "t_" the next two characters are interpreted as
+///                   a termcap name.
+///
+/// @return Key code or 0 if ton found.
 int get_special_key_code(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u  *table_name;
-  int i, j;
-
-  for (i = 0; key_names_table[i].name != NULL; i++) {
-    table_name = key_names_table[i].name;
-    for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++)
-      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j]))
+  for (int i = 0; key_names_table[i].name != NULL; i++) {
+    const char *const table_name = key_names_table[i].name;
+    int j;
+    for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++) {
+      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j])) {
         break;
-    if (!vim_isIDc(name[j]) && table_name[j] == NUL)
+      }
+    }
+    if (!vim_isIDc(name[j]) && table_name[j] == NUL) {
       return key_names_table[i].key;
+    }
   }
 
   return 0;
