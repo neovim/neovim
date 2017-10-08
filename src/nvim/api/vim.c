@@ -33,6 +33,7 @@
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
+#include "nvim/ui.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -53,6 +54,47 @@ void nvim_command(String command, Error *err)
   do_cmdline_cmd(command.data);
   update_screen(VALID);
   try_end(err);
+}
+
+/// Gets a highlight definition by name.
+///
+/// @param name Highlight group name
+/// @param rgb Export RGB colors
+/// @param[out] err Error details, if any
+/// @return Highlight definition map
+/// @see nvim_get_hl_by_id
+Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
+  FUNC_API_SINCE(3)
+{
+  Dictionary result = ARRAY_DICT_INIT;
+  int id = syn_name2id((const char_u *)name.data);
+
+  if (id == 0) {
+    api_set_error(err, kErrorTypeException, "Invalid highlight name: %s",
+                  name.data);
+    return result;
+  }
+  result = nvim_get_hl_by_id(id, rgb, err);
+  return result;
+}
+
+/// Gets a highlight definition by id. |hlID()|
+///
+/// @param hl_id Highlight id as returned by |hlID()|
+/// @param rgb Export RGB colors
+/// @param[out] err Error details, if any
+/// @return Highlight definition map
+/// @see nvim_get_hl_by_name
+Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
+  FUNC_API_SINCE(3)
+{
+  Dictionary dic = ARRAY_DICT_INIT;
+  if (syn_get_final_id((int)hl_id) == 0) {
+    api_set_error(err, kErrorTypeException, "Invalid highlight id: %d", hl_id);
+    return dic;
+  }
+  int attrcode = syn_id2attr((int)hl_id);
+  return hl_get_attr_by_id(attrcode, rgb, err);
 }
 
 /// Passes input keys to Nvim.

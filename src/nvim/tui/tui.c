@@ -288,7 +288,7 @@ static void terminfo_stop(UI *ui)
 static void tui_terminal_start(UI *ui)
 {
   TUIData *data = ui->data;
-  data->print_attrs = EMPTY_ATTRS;
+  data->print_attrs = HLATTRS_INIT;
   ugrid_init(&data->grid);
   terminfo_start(ui);
   update_size(ui);
@@ -628,7 +628,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
   if (grid->bg == -1 && right == ui->width -1) {
     // Background is set to the default color and the right edge matches the
     // screen end, try to use terminal codes for clearing the requested area.
-    HlAttrs clear_attrs = EMPTY_ATTRS;
+    HlAttrs clear_attrs = HLATTRS_INIT;
     clear_attrs.foreground = grid->fg;
     clear_attrs.background = grid->bg;
     update_attrs(ui, clear_attrs);
@@ -926,7 +926,7 @@ static void tui_scroll(UI *ui, Integer count)
     cursor_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
     if (scroll_clears_to_current_colour) {
-      HlAttrs clear_attrs = EMPTY_ATTRS;
+      HlAttrs clear_attrs = HLATTRS_INIT;
       clear_attrs.foreground = grid->fg;
       clear_attrs.background = grid->bg;
       update_attrs(ui, clear_attrs);
