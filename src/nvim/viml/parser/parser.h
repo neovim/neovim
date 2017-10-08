@@ -173,7 +173,7 @@ static inline void viml_parser_highlight(ParserState *const pstate,
                                          const size_t len,
                                          const char *const group)
 {
-  if (pstate->colors == NULL) {
+  if (pstate->colors == NULL || len == 0) {
     return;
   }
   // TODO(ZyX-I): May do some assert() sanitizing here.

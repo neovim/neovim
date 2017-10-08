@@ -61,6 +61,36 @@ typedef enum {
   kExprCmpIdentical,  ///< `is` or `isnot`
 } ExprComparisonType;
 
+/// All possible option scopes
+typedef enum {
+  kExprOptScopeUnspecified = 0,
+  kExprOptScopeGlobal = 'g',
+  kExprOptScopeLocal = 'l',
+} ExprOptScope;
+
+#define EXPR_OPT_SCOPE_LIST \
+    ((char *)(char[]){ kExprOptScopeGlobal, kExprOptScopeLocal })
+
+/// All possible variable scopes
+typedef enum {
+  kExprVarScopeMissing = 0,
+  kExprVarScopeScript = 's',
+  kExprVarScopeGlobal = 'g',
+  kExprVarScopeVim = 'v',
+  kExprVarScopeBuffer = 'b',
+  kExprVarScopeWindow = 'w',
+  kExprVarScopeTabpage = 't',
+  kExprVarScopeLocal = 'l',
+  kExprVarScopeArguments = 'a',
+} ExprVarScope;
+
+#define EXPR_VAR_SCOPE_LIST \
+    ((char[]) { \
+        kExprVarScopeScript, kExprVarScopeGlobal, kExprVarScopeVim, \
+        kExprVarScopeBuffer, kExprVarScopeWindow, kExprVarScopeTabpage, \
+        kExprVarScopeLocal, kExprVarScopeBuffer, kExprVarScopeArguments, \
+    })
+
 /// Lexer token
 typedef struct {
   ParserPosition start;
@@ -96,15 +126,11 @@ typedef struct {
     struct {
       const char *name;  ///< Option name start.
       size_t len;  ///< Option name length.
-      enum {
-        kExprLexOptUnspecified = 0,
-        kExprLexOptGlobal = 1,
-        kExprLexOptLocal = 2,
-      } scope;  ///< Option scope: &l:, &g: or not specified.
+      ExprOptScope scope;  ///< Option scope: &l:, &g: or not specified.
     } opt;  ///< Option properties.
 
     struct {
-      int scope;  ///< Scope character or 0 if not present.
+      ExprVarScope scope;  ///< Scope character or 0 if not present.
       bool autoload;  ///< Has autoload characters.
     } var;  ///< For kExprLexPlainIdentifier
 
@@ -150,53 +176,63 @@ typedef enum {
 
 /// Expression AST node type
 typedef enum {
-  kExprNodeMissing = 'X',
-  kExprNodeOpMissing = '_',
-  kExprNodeTernary = '?',  ///< Ternary operator.
-  kExprNodeTernaryValue = 'C',  ///< Ternary operator, colon.
-  kExprNodeRegister = '@',  ///< Register.
-  kExprNodeSubscript = 's',  ///< Subscript.
-  kExprNodeListLiteral = 'l',  ///< List literal.
-  kExprNodeUnaryPlus = 'p',
-  kExprNodeBinaryPlus = '+',
-  kExprNodeNested = 'e',  ///< Nested parenthesised expression.
-  kExprNodeCall = 'c',  ///< Function call.
+  kExprNodeMissing = 0,
+  kExprNodeOpMissing,
+  kExprNodeTernary,  ///< Ternary operator.
+  kExprNodeTernaryValue,  ///< Ternary operator, colon.
+  kExprNodeRegister,  ///< Register.
+  kExprNodeSubscript,  ///< Subscript.
+  kExprNodeListLiteral,  ///< List literal.
+  kExprNodeUnaryPlus,
+  kExprNodeBinaryPlus,
+  kExprNodeNested,  ///< Nested parenthesised expression.
+  kExprNodeCall,  ///< Function call.
   /// Plain identifier: simple variable/function name
   ///
   /// Looks like "string", "g:Foo", etc: consists from a single 
   /// kExprLexPlainIdentifier token.
-  kExprNodePlainIdentifier = 'i',
+  kExprNodePlainIdentifier,
   /// Plain dictionary key, for use with kExprNodeConcatOrSubscript
-  kExprNodePlainKey = 'k',
+  kExprNodePlainKey,
   /// Complex identifier: variable/function name with curly braces
-  kExprNodeComplexIdentifier = 'I',
+  kExprNodeComplexIdentifier,
   /// Figure brace expression which is not yet known
   ///
   /// May resolve to any of kExprNodeDictLiteral, kExprNodeLambda or
   /// kExprNodeCurlyBracesIdentifier.
-  kExprNodeUnknownFigure = '{',
-  kExprNodeLambda = '\\',  ///< Lambda.
-  kExprNodeDictLiteral = 'd',  ///< Dictionary literal.
-  kExprNodeCurlyBracesIdentifier= '}',  ///< Part of the curly braces name.
-  kExprNodeComma = ',',  ///< Comma “operator”.
-  kExprNodeColon = ':',  ///< Colon “operator”.
-  kExprNodeArrow = '>',  ///< Arrow “operator”.
-  kExprNodeComparison = '=',  ///< Various comparison operators.
+  kExprNodeUnknownFigure,
+  kExprNodeLambda,  ///< Lambda.
+  kExprNodeDictLiteral,  ///< Dictionary literal.
+  kExprNodeCurlyBracesIdentifier,  ///< Part of the curly braces name.
+  kExprNodeComma,  ///< Comma “operator”.
+  kExprNodeColon,  ///< Colon “operator”.
+  kExprNodeArrow,  ///< Arrow “operator”.
+  kExprNodeComparison,  ///< Various comparison operators.
   /// Concat operator
   ///
   /// To be only used in cases when it is known for sure it is not a subscript.
-  kExprNodeConcat = '.',
+  kExprNodeConcat,
   /// Concat or subscript operator
   ///
   /// For cases when it is not obvious whether expression is a concat or
   /// a subscript. May only have either number or plain identifier as the second
   /// child. To make it easier to avoid curly braces in place of
   /// kExprNodePlainIdentifier node kExprNodePlainKey is used.
-  kExprNodeConcatOrSubscript = 'S',
-  kExprNodeInteger = '0',  ///< Integral number.
-  kExprNodeFloat = '1',  ///< Floating-point number.
-  kExprNodeSingleQuotedString = '\'',
-  kExprNodeDoubleQuotedString = '"',
+  kExprNodeConcatOrSubscript,
+  kExprNodeInteger,  ///< Integral number.
+  kExprNodeFloat,  ///< Floating-point number.
+  kExprNodeSingleQuotedString,
+  kExprNodeDoubleQuotedString,
+  kExprNodeOr,
+  kExprNodeAnd,
+  kExprNodeUnaryMinus,
+  kExprNodeBinaryMinus,
+  kExprNodeNot,
+  kExprNodeMultiplication,
+  kExprNodeDivision,
+  kExprNodeMod,
+  kExprNodeOption,
+  kExprNodeEnvironment,
 } ExprASTNodeType;
 
 typedef struct expr_ast_node ExprASTNode;
@@ -230,7 +266,7 @@ struct expr_ast_node {
       size_t opening_hl_idx;
     } fig;  ///< For kExprNodeUnknownFigure.
     struct {
-      int scope;  ///< Scope character or 0 if not present.
+      ExprVarScope scope;  ///< Scope character or 0 if not present.
       /// Actual identifier without scope.
       ///
       /// Points to inside parser reader state.
@@ -256,6 +292,15 @@ struct expr_ast_node {
       size_t size;
     } str;  ///< For kExprNodeSingleQuotedString and
             ///< kExprNodeDoubleQuotedString.
+    struct {
+      const char *ident;  ///< Option name start.
+      size_t ident_len;  ///< Option name length.
+      ExprOptScope scope;  ///< Option scope: &l:, &g: or not specified.
+    } opt;  ///< For kExprNodeOption.
+    struct {
+      const char *ident;  ///< Environment variable name start.
+      size_t ident_len;  ///< Environment variable name length.
+    } env;  ///< For kExprNodeEnvironment.
   } data;
 };
 

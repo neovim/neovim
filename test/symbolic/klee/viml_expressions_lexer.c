@@ -17,6 +17,7 @@
 #include "nvim/charset.c"
 #include "nvim/garray.c"
 #include "nvim/gettext.c"
+#include "nvim/keymap.c"
 #include "nvim/viml/parser/expressions.c"
 
 #define INPUT_SIZE 7

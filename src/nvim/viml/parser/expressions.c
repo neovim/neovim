@@ -361,11 +361,12 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       // Scope: `s:`, etc.
       } else if (ret.len == 1
                  && pline.size > 1
-                 && strchr("sgvbwtla", schar) != NULL
+                 && memchr(EXPR_VAR_SCOPE_LIST, schar,
+                           sizeof(EXPR_VAR_SCOPE_LIST)) != NULL
                  && pline.data[ret.len] == ':'
                  && !(flags & kELFlagForbidScope)) {
         ret.len++;
-        ret.data.var.scope = schar;
+        ret.data.var.scope = (ExprVarScope)schar;
         CHARREG(kExprLexPlainIdentifier, ISWORD_OR_AUTOLOAD);
         ret.data.var.autoload = (
             memchr(pline.data + 2, AUTOLOAD_CHAR, ret.len - 2)
@@ -408,14 +409,13 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       ret.type = kExprLexOption;
       if (pline.size > 2
           && pline.data[2] == ':'
-          && strchr("gl", pline.data[1]) != NULL) {
+          && memchr(EXPR_OPT_SCOPE_LIST, pline.data[1],
+                    sizeof(EXPR_OPT_SCOPE_LIST)) != NULL) {
         ret.len += 2;
-        ret.data.opt.scope = (pline.data[1] == 'g'
-                              ? kExprLexOptGlobal
-                              : kExprLexOptLocal);
+        ret.data.opt.scope = (ExprOptScope)pline.data[1];
         ret.data.opt.name = pline.data + 3;
       } else {
-        ret.data.opt.scope = kExprLexOptUnspecified;
+        ret.data.opt.scope = kExprOptScopeUnspecified;
         ret.data.opt.name = pline.data + 1;
       }
       const char *p = ret.data.opt.name;
@@ -637,9 +637,9 @@ static const char *const eltkn_mul_type_tab[] = {
 };
 
 static const char *const eltkn_opt_scope_tab[] = {
-  [kExprLexOptUnspecified] = "Unspecified",
-  [kExprLexOptGlobal] = "Global",
-  [kExprLexOptLocal] = "Local",
+  [kExprOptScopeUnspecified] = "Unspecified",
+  [kExprOptScopeGlobal] = "Global",
+  [kExprOptScopeLocal] = "Local",
 };
 
 /// Represent `int` character as a string
@@ -990,67 +990,25 @@ static inline ExprASTNode *viml_pexpr_new_node(const ExprASTNodeType type)
   return ret;
 }
 
-static const ExprOpLvl node_type_to_op_lvl[] = {
-  [kExprNodeMissing] = kEOpLvlInvalid,
-  [kExprNodeOpMissing] = kEOpLvlMultiplication,
+static struct {
+  ExprOpLvl lvl;
+  ExprOpAssociativity ass;
+} node_type_to_node_props[] = {
+  [kExprNodeMissing] = { kEOpLvlInvalid, kEOpAssNo, },
+  [kExprNodeOpMissing] = { kEOpLvlMultiplication, kEOpAssNo },
 
-  [kExprNodeNested] = kEOpLvlParens,
+  [kExprNodeNested] = { kEOpLvlParens, kEOpAssNo },
   // Note: below nodes are kEOpLvlSubscript for “binary operator” itself, but
   //       kEOpLvlParens when it comes to inside the parenthesis.
-  [kExprNodeCall] = kEOpLvlParens,
-  [kExprNodeSubscript] = kEOpLvlParens,
+  [kExprNodeCall] = { kEOpLvlParens, kEOpAssNo },
+  [kExprNodeSubscript] = { kEOpLvlParens, kEOpAssNo },
 
-  [kExprNodeUnknownFigure] = kEOpLvlParens,
-  [kExprNodeLambda] = kEOpLvlParens,
-  [kExprNodeDictLiteral] = kEOpLvlParens,
-  [kExprNodeListLiteral] = kEOpLvlParens,
+  [kExprNodeUnknownFigure] = { kEOpLvlParens, kEOpAssLeft },
+  [kExprNodeLambda] = { kEOpLvlParens, kEOpAssNo },
+  [kExprNodeDictLiteral] = { kEOpLvlParens, kEOpAssNo },
+  [kExprNodeListLiteral] = { kEOpLvlParens, kEOpAssNo },
 
-  [kExprNodeArrow] = kEOpLvlArrow,
-
-  [kExprNodeComma] = kEOpLvlComma,
-
-  [kExprNodeColon] = kEOpLvlColon,
-
-  [kExprNodeTernary] = kEOpLvlTernary,
-
-  [kExprNodeTernaryValue] = kEOpLvlTernaryValue,
-
-  [kExprNodeComparison] = kEOpLvlComparison,
-
-  [kExprNodeBinaryPlus] = kEOpLvlAddition,
-  [kExprNodeConcat] = kEOpLvlAddition,
-
-  [kExprNodeUnaryPlus] = kEOpLvlUnary,
-
-  [kExprNodeConcatOrSubscript] = kEOpLvlSubscript,
-
-  [kExprNodeCurlyBracesIdentifier] = kEOpLvlComplexIdentifier,
-
-  [kExprNodeComplexIdentifier] = kEOpLvlValue,
-  [kExprNodePlainIdentifier] = kEOpLvlValue,
-  [kExprNodePlainKey] = kEOpLvlValue,
-  [kExprNodeRegister] = kEOpLvlValue,
-  [kExprNodeInteger] = kEOpLvlValue,
-  [kExprNodeFloat] = kEOpLvlValue,
-};
-
-static const ExprOpAssociativity node_type_to_op_ass[] = {
-  [kExprNodeMissing] = kEOpAssNo,
-  [kExprNodeOpMissing] = kEOpAssNo,
-
-  [kExprNodeNested] = kEOpAssNo,
-  [kExprNodeCall] = kEOpAssNo,
-  [kExprNodeSubscript] = kEOpAssNo,
-
-  [kExprNodeUnknownFigure] = kEOpAssLeft,
-  [kExprNodeLambda] = kEOpAssNo,
-  [kExprNodeDictLiteral] = kEOpAssNo,
-  [kExprNodeListLiteral] = kEOpAssNo,
-
-  // Does not really matter.
-  [kExprNodeArrow] = kEOpAssNo,
-
-  [kExprNodeColon] = kEOpAssNo,
+  [kExprNodeArrow] = { kEOpLvlArrow, kEOpAssNo },
 
   // Right associativity for comma because this means easier access to arguments
   // list, etc: for "[a, b, c, d]" you can access "a" in one step if it is
@@ -1059,29 +1017,48 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
   // traverse all three comma() structures. And with comma operator (including
   // actual comma operator from C which is not present in VimL) nobody cares
   // about associativity, only about order of execution.
-  [kExprNodeComma] = kEOpAssRight,
+  [kExprNodeComma] = { kEOpLvlComma, kEOpAssRight },
 
-  [kExprNodeTernary] = kEOpAssRight,
+  // Colons are not eligible for chaining, so nobody cares about associativity.
+  [kExprNodeColon] = { kEOpLvlColon, kEOpAssNo },
 
-  [kExprNodeTernaryValue] = kEOpAssRight,
+  [kExprNodeTernary] = { kEOpLvlTernary, kEOpAssRight },
 
-  [kExprNodeComparison] = kEOpAssRight,
+  [kExprNodeOr] = { kEOpLvlOr, kEOpAssLeft },
 
-  [kExprNodeBinaryPlus] = kEOpAssLeft,
-  [kExprNodeConcat] = kEOpAssLeft,
+  [kExprNodeAnd] = { kEOpLvlAnd, kEOpAssLeft },
 
-  [kExprNodeUnaryPlus] = kEOpAssNo,
+  [kExprNodeTernaryValue] = { kEOpLvlTernaryValue, kEOpAssRight },
 
-  [kExprNodeConcatOrSubscript] = kEOpAssLeft,
+  [kExprNodeComparison] = { kEOpLvlComparison, kEOpAssRight },
 
-  [kExprNodeCurlyBracesIdentifier] = kEOpAssLeft,
+  [kExprNodeBinaryPlus] = { kEOpLvlAddition, kEOpAssLeft },
+  [kExprNodeBinaryMinus] = { kEOpLvlAddition, kEOpAssLeft },
+  [kExprNodeConcat] = { kEOpLvlAddition, kEOpAssLeft },
 
-  [kExprNodeComplexIdentifier] = kEOpAssLeft,
-  [kExprNodePlainIdentifier] = kEOpAssNo,
-  [kExprNodePlainKey] = kEOpAssNo,
-  [kExprNodeRegister] = kEOpAssNo,
-  [kExprNodeInteger] = kEOpAssNo,
-  [kExprNodeFloat] = kEOpAssNo,
+  [kExprNodeMultiplication] = { kEOpLvlMultiplication, kEOpAssLeft },
+  [kExprNodeDivision] = { kEOpLvlMultiplication, kEOpAssLeft },
+  [kExprNodeMod] = { kEOpLvlMultiplication, kEOpAssLeft },
+
+  [kExprNodeUnaryPlus] = { kEOpLvlUnary, kEOpAssNo },
+  [kExprNodeUnaryMinus] = { kEOpLvlUnary, kEOpAssNo },
+  [kExprNodeNot] = { kEOpLvlUnary, kEOpAssNo },
+
+  [kExprNodeConcatOrSubscript] = { kEOpLvlSubscript, kEOpAssLeft },
+
+  [kExprNodeCurlyBracesIdentifier] = { kEOpLvlComplexIdentifier, kEOpAssLeft },
+
+  [kExprNodeComplexIdentifier] = { kEOpLvlValue, kEOpAssLeft },
+
+  [kExprNodePlainIdentifier] = { kEOpLvlValue, kEOpAssNo },
+  [kExprNodePlainKey] = { kEOpLvlValue, kEOpAssNo },
+  [kExprNodeRegister] = { kEOpLvlValue, kEOpAssNo },
+  [kExprNodeInteger] = { kEOpLvlValue, kEOpAssNo },
+  [kExprNodeFloat] = { kEOpLvlValue, kEOpAssNo },
+  [kExprNodeDoubleQuotedString] = { kEOpLvlValue, kEOpAssNo },
+  [kExprNodeSingleQuotedString] = { kEOpLvlValue, kEOpAssNo },
+  [kExprNodeOption] = { kEOpLvlValue, kEOpAssNo },
+  [kExprNodeEnvironment] = { kEOpLvlValue, kEOpAssNo },
 };
 
 /// Get AST node priority level
@@ -1094,7 +1071,7 @@ static const ExprOpAssociativity node_type_to_op_ass[] = {
 static inline ExprOpLvl node_lvl(const ExprASTNode node)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return node_type_to_op_lvl[node.type];
+  return node_type_to_node_props[node.type].lvl;
 }
 
 /// Get AST node associativity, to be used for operator nodes primary
@@ -1107,7 +1084,7 @@ static inline ExprOpLvl node_lvl(const ExprASTNode node)
 static inline ExprOpAssociativity node_ass(const ExprASTNode node)
   FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return node_type_to_op_ass[node.type];
+  return node_type_to_node_props[node.type].ass;
 }
 
 /// Handle binary operator
@@ -1837,7 +1814,7 @@ viml_pexpr_parse_process_token:
         is_concat_or_subscript
         && (cur_token.type == kExprLexPlainIdentifier
             ? (!cur_token.data.var.autoload
-               && cur_token.data.var.scope == 0)
+               && cur_token.data.var.scope == kExprVarScopeMissing)
             : (cur_token.type == kExprLexNumber))
         && prev_token.type != kExprLexSpacing);
     if (is_concat_or_subscript && !node_is_key) {
@@ -1856,7 +1833,7 @@ viml_pexpr_parse_process_token:
          && tok_type != kExprLexArrow)
         || (want_node == kENodeArgument
             && !(cur_token.type == kExprLexPlainIdentifier
-                 && cur_token.data.var.scope == 0
+                 && cur_token.data.var.scope == kExprVarScopeMissing
                  && !cur_token.data.var.autoload)
             && tok_type != kExprLexArrow)) {
       lambda_node->data.fig.type_guesses.allow_lambda = false;
@@ -1885,6 +1862,8 @@ viml_pexpr_parse_process_token:
            || want_node == kENodeArgumentSeparator
            || want_node == kENodeArgument);
     switch (tok_type) {
+      case kExprLexMissing:
+      case kExprLexSpacing:
       case kExprLexEOC: {
         assert(false);
       }
@@ -1894,31 +1873,111 @@ viml_pexpr_parse_process_token:
         goto viml_pexpr_parse_process_token;
       }
       case kExprLexRegister: {
-        if (want_node == kENodeValue) {
-          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeRegister);
-          cur_node->data.reg.name = cur_token.data.reg.name;
-          *top_node_p = cur_node;
-          want_node = kENodeOperator;
-          HL_CUR_TOKEN(Register);
-        } else {
+        if (want_node == kENodeOperator) {
           // Register in operator position: e.g. @a @a
           OP_MISSING;
         }
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeRegister);
+        cur_node->data.reg.name = cur_token.data.reg.name;
+        *top_node_p = cur_node;
+        want_node = kENodeOperator;
+        HL_CUR_TOKEN(Register);
         break;
       }
-      case kExprLexPlus: {
-        if (want_node == kENodeValue) {
-          // Value level: assume unary plus
-          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnaryPlus);
-          *top_node_p = cur_node;
-          kvi_push(ast_stack, &cur_node->children);
-          HL_CUR_TOKEN(UnaryPlus);
-        } else {
-          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinaryPlus);
-          ADD_OP_NODE(cur_node);
-          HL_CUR_TOKEN(BinaryPlus);
+#define SIMPLE_UB_OP(op) \
+      case kExprLex##op: { \
+        if (want_node == kENodeValue) { \
+          /* Value level: assume unary operator. */ \
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op); \
+          *top_node_p = cur_node; \
+          kvi_push(ast_stack, &cur_node->children); \
+          HL_CUR_TOKEN(Unary##op); \
+        } else { \
+          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op); \
+          ADD_OP_NODE(cur_node); \
+          HL_CUR_TOKEN(Binary##op); \
+        } \
+        want_node = kENodeValue; \
+        break; \
+      }
+      SIMPLE_UB_OP(Plus)
+      SIMPLE_UB_OP(Minus)
+#undef SIMPLE_UB_OP
+#define SIMPLE_B_OP(op, msg) \
+      case kExprLex##op: { \
+        ADD_VALUE_IF_MISSING(_("E15: Unexpected " msg ": %.*s")); \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##op); \
+        HL_CUR_TOKEN(op); \
+        ADD_OP_NODE(cur_node); \
+        break; \
+      }
+      SIMPLE_B_OP(Or, "or operator")
+      SIMPLE_B_OP(And, "and operator")
+#undef SIMPLE_B_OP
+      case kExprLexMultiplication: {
+        ADD_VALUE_IF_MISSING(
+            _("E15: Unexpected multiplication-like operator: %.*s"));
+        switch (cur_token.data.mul.type) {
+#define MUL_OP(lex_op_tail, node_op_tail) \
+          case kExprLexMul##lex_op_tail: { \
+            NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##node_op_tail); \
+            HL_CUR_TOKEN(node_op_tail); \
+            break; \
+          }
+          MUL_OP(Mul, Multiplication)
+          MUL_OP(Div, Division)
+          MUL_OP(Mod, Mod)
+#undef MUL_OP
         }
-        want_node = kENodeValue;
+        ADD_OP_NODE(cur_node);
+        break;
+      }
+      case kExprLexOption: {
+        if (want_node == kENodeOperator) {
+          OP_MISSING;
+        }
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeOption);
+        cur_node->data.opt.ident = cur_token.data.opt.name;
+        cur_node->data.opt.ident_len = cur_token.data.opt.len;
+        cur_node->data.opt.scope = cur_token.data.opt.scope;
+        *top_node_p = cur_node;
+        want_node = kENodeOperator;
+        viml_parser_highlight(pstate, cur_token.start, 1, HL(OptionSigil));
+        const size_t scope_shift = (
+            cur_token.data.opt.scope == kExprOptScopeUnspecified ? 0 : 2);
+        if (scope_shift) {
+          viml_parser_highlight(pstate, shifted_pos(cur_token.start, 1), 1,
+                                HL(OptionScope));
+          viml_parser_highlight(pstate, shifted_pos(cur_token.start, 2), 1,
+                                HL(OptionScopeDelimiter));
+        }
+        viml_parser_highlight(
+            pstate, shifted_pos(cur_token.start, scope_shift + 1),
+            cur_token.len - scope_shift + 1, HL(Option));
+        break;
+      }
+      case kExprLexEnv: {
+        if (want_node == kENodeOperator) {
+          OP_MISSING;
+        }
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeEnvironment);
+        cur_node->data.env.ident = pline.data + cur_token.start.col + 1;
+        cur_node->data.env.ident_len = cur_token.len - 1;
+        *top_node_p = cur_node;
+        want_node = kENodeOperator;
+        viml_parser_highlight(pstate, cur_token.start, 1, HL(EnvironmentSigil));
+        viml_parser_highlight(pstate, shifted_pos(cur_token.start, 1),
+                              cur_token.len - 1, HL(Environment));
+        break;
+      }
+      case kExprLexNot: {
+        if (want_node == kENodeOperator) {
+          OP_MISSING;
+        }
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeNot);
+        *top_node_p = cur_node;
+        kvi_push(ast_stack, &cur_node->children);
+        HL_CUR_TOKEN(Not);
         break;
       }
       case kExprLexComparison: {
@@ -2359,9 +2418,8 @@ viml_pexpr_parse_figure_brace_closing_error:
                                  ? kExprNodePlainKey
                                  : kExprNodePlainIdentifier));
           cur_node->data.var.scope = cur_token.data.var.scope;
-          const size_t scope_shift = (cur_token.data.var.scope == 0
-                                      ? 0
-                                      : 2);
+          const size_t scope_shift = (
+              cur_token.data.var.scope == kExprVarScopeMissing ? 0 : 2);
           cur_node->data.var.ident = (pline.data + cur_token.start.col
                                       + scope_shift);
           cur_node->data.var.ident_len = cur_token.len - scope_shift;
@@ -2373,16 +2431,14 @@ viml_pexpr_parse_figure_brace_closing_error:
             viml_parser_highlight(pstate, shifted_pos(cur_token.start, 1), 1,
                                   HL(IdentifierScopeDelimiter));
           }
-          if (scope_shift < cur_token.len) {
-            viml_parser_highlight(pstate, shifted_pos(cur_token.start,
-                                                      scope_shift),
-                                  cur_token.len - scope_shift,
-                                  (node_is_key
-                                   ? HL(IdentifierKey)
-                                   : HL(Identifier)));
-          }
+          viml_parser_highlight(pstate, shifted_pos(cur_token.start,
+                                                    scope_shift),
+                                cur_token.len - scope_shift,
+                                (node_is_key
+                                 ? HL(IdentifierKey)
+                                 : HL(Identifier)));
         } else {
-          if (cur_token.data.var.scope == 0) {
+          if (cur_token.data.var.scope == kExprVarScopeMissing) {
             ADD_IDENT(
                 do {
                   NEW_NODE_WITH_CUR_POS(cur_node, kExprNodePlainIdentifier);
@@ -2606,9 +2662,85 @@ viml_pexpr_parse_end:
               cur_node->start);
           break;
         }
-        case kExprNodeBinaryPlus:
+        case kExprNodeListLiteral: {
+          // For whatever reason "[1" yields "E696: Missing comma in list" error
+          // in Vim while "[1," yields E697.
+          east_set_error(
+              pstate, &ast.err,
+              _("E697: Missing end of List ']': %.*s"),
+              cur_node->start);
+          break;
+        }
+        case kExprNodeDictLiteral: {
+          // Same problem like with list literal with E722 (missing comma) vs
+          // E723, but additionally just "{" yields only E15.
+          east_set_error(
+              pstate, &ast.err,
+              _("E723: Missing end of Dictionary '}': %.*s"),
+              cur_node->start);
+          break;
+        }
+        case kExprNodeUnknownFigure: {
+          east_set_error(
+              pstate, &ast.err,
+              _("E15: Missing closing figure brace: %.*s"),
+              cur_node->start);
+          break;
+        }
+        case kExprNodeLambda: {
+          east_set_error(
+              pstate, &ast.err,
+              _("E15: Missing closing figure brace for lambda: %.*s"),
+              cur_node->start);
+          break;
+        }
+        case kExprNodeCurlyBracesIdentifier: {
+          // Until trailing "}" it is impossible to distinguish curly braces
+          // identifier and dictionary, so it must not appear in the stack like
+          // this.
+          assert(false);
+        }
+        case kExprNodeInteger:
+        case kExprNodeFloat:
+        case kExprNodeSingleQuotedString:
+        case kExprNodeDoubleQuotedString:
+        case kExprNodeOption:
+        case kExprNodeEnvironment:
+        case kExprNodeRegister:
+        case kExprNodePlainIdentifier:
+        case kExprNodePlainKey: {
+          // These are plain values and not containers, for them it should only
+          // be possible to show up in the topmost stack element, but it was
+          // unconditionally popped at the start.
+          assert(false);
+        }
+        case kExprNodeComma:
+        case kExprNodeColon:
+        case kExprNodeArrow: {
+          // It is actually only valid inside something else, but everything
+          // where one of the above is valid requires to be closed and thus is
+          // to be caught later.
+          break;
+        }
+        case kExprNodeConcatOrSubscript:
+        case kExprNodeComplexIdentifier:
+        case kExprNodeSubscript: {
+          // FIXME: Investigate whether above are OK to be present in the stack.
+          break;
+        }
+        case kExprNodeMod:
+        case kExprNodeDivision:
+        case kExprNodeMultiplication:
+        case kExprNodeNot:
+        case kExprNodeAnd:
+        case kExprNodeOr:
+        case kExprNodeConcat:
+        case kExprNodeComparison:
+        case kExprNodeUnaryMinus:
         case kExprNodeUnaryPlus:
-        case kExprNodeRegister: {
+        case kExprNodeBinaryMinus:
+        case kExprNodeTernary:
+        case kExprNodeBinaryPlus: {
           // It is OK to see these in the stack.
           break;
         }
@@ -2621,7 +2753,6 @@ viml_pexpr_parse_end:
           }
           break;
         }
-        // TODO(ZyX-I): handle other values
       }
     }
   }

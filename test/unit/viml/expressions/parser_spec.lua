@@ -93,6 +93,16 @@ make_enum_conv_tab(lib, {
   'kExprNodeFloat',
   'kExprNodeSingleQuotedString',
   'kExprNodeDoubleQuotedString',
+  'kExprNodeOr',
+  'kExprNodeAnd',
+  'kExprNodeUnaryMinus',
+  'kExprNodeBinaryMinus',
+  'kExprNodeNot',
+  'kExprNodeMultiplication',
+  'kExprNodeDivision',
+  'kExprNodeMod',
+  'kExprNodeOption',
+  'kExprNodeEnvironment',
 }, 'kExprNode', function(ret) east_node_type_tab = ret end)
 
 local function conv_east_node_type(typ)
@@ -149,6 +159,15 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
       local s = ffi.string(eastnode.data.str.value, eastnode.data.str.size)
       typ = format_string('%s(val=%q)', typ, s)
     end
+  elseif typ == 'Option' then
+    typ = ('%s(scope=%s,ident=%s)'):format(
+      typ,
+      tostring(intchar2lua(eastnode.data.opt.scope)),
+      ffi.string(eastnode.data.opt.ident, eastnode.data.opt.ident_len))
+  elseif typ == 'Environment' then
+    typ = ('%s(ident=%s)'):format(
+      typ,
+      ffi.string(eastnode.data.env.ident, eastnode.data.env.ident_len))
   end
   ret_str = typ .. ':' .. ret_str
   local can_simplify = true

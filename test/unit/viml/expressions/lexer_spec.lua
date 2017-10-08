@@ -62,9 +62,9 @@ child_call_once(function()
   }
 
   eltkn_opt_scope_tab = {
-    [tonumber(lib.kExprLexOptUnspecified)] = 'Unspecified',
-    [tonumber(lib.kExprLexOptGlobal)] = 'Global',
-    [tonumber(lib.kExprLexOptLocal)] = 'Local',
+    [tonumber(lib.kExprOptScopeUnspecified)] = 'Unspecified',
+    [tonumber(lib.kExprOptScopeGlobal)] = 'Global',
+    [tonumber(lib.kExprOptScopeLocal)] = 'Local',
   }
 end)
 
