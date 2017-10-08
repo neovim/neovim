@@ -33,7 +33,6 @@
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
-#include "nvim/ui.h"
 
 #define LINE_BUFFER_SIZE 4096
 

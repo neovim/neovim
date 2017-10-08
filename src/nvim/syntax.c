@@ -7127,8 +7127,7 @@ syn_list_header(int did_header, int outlen, int id)
 /// Set the attribute numbers for a highlight group.
 /// Called after one of the attributes has changed.
 /// @param idx corrected highlight index
-static void
-set_hl_attr(int idx)
+static void set_hl_attr(int idx)
 {
   attrentry_T at_en = ATTRENTRY_INIT;
   struct hl_group     *sgp = HL_TABLE() + idx;
@@ -8241,9 +8240,7 @@ RgbValue name_to_color(const uint8_t *name)
   return -1;
 }
 
-/// Retrieves attribute description from its id
-///
-/// @param attr_id attribute id
+/// Gets highlight description for id `attr_id` as a map.
 Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
 {
   HlAttrs attrs = HLATTRS_INIT;
@@ -8256,7 +8253,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
   attrentry_T *aep = syn_cterm_attr2entry((int)attr_id);
   if (!aep) {
     api_set_error(err, kErrorTypeException,
-                  "Invalid attribute id %d", attr_id);
+                  "Invalid attribute id: %d", attr_id);
     return dic;
   }
 
