@@ -3069,13 +3069,9 @@ static bool ti_change(char_u *str, char_u **last)
 /// Set current window title
 void resettitle(void)
 {
-  if (p_icon) {
-    ui_call_set_icon(cstr_as_string((char *)lasticon));
-  }
-  if (p_title || p_icon) {
-    ui_call_set_title(cstr_as_string((char *)lasttitle));
-    ui_flush();
-  }
+  ui_call_set_icon(cstr_as_string((char *)lasticon));
+  ui_call_set_title(cstr_as_string((char *)lasttitle));
+  ui_flush();
 }
 
 # if defined(EXITFREE)
