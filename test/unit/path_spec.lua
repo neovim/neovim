@@ -481,6 +481,20 @@ describe('path.c', function()
       eq('/tmp', ffi.string(buffer))
       eq(OK, result)
     end)
+
+    itp('expands "./" to the current directory #7117', function()
+      local force_expansion = 1
+      local result = vim_FullName('./unit-test-directory/test.file', buffer, length, force_expansion)
+      eq(OK, result)
+      eq(lfs.currentdir() .. '/unit-test-directory/test.file', (ffi.string(buffer)))
+    end)
+
+    itp('collapses "foo/../foo" to "foo" #7117', function()
+      local force_expansion = 1
+      local result = vim_FullName('unit-test-directory/../unit-test-directory/test.file', buffer, length, force_expansion)
+      eq(OK, result)
+      eq(lfs.currentdir() .. '/unit-test-directory/test.file', (ffi.string(buffer)))
+    end)
   end)
 
   describe('path_fix_case', function()

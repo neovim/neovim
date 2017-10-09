@@ -46,6 +46,7 @@ check_c_source_compiles("
 
 int main(int argc, char** argv) {
   gettext(\"foo\");
+  ngettext(\"foo\", \"bar\", 1);
   bindtextdomain(\"foo\", \"bar\");
   bind_textdomain_codeset(\"foo\", \"bar\");
   textdomain(\"foo\");

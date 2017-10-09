@@ -166,6 +166,90 @@ void ui_event(char *name, Array args)
   }
 }
 
+
+/// Converts an attrentry_T into an HlAttrs
+///
+/// @param[in] aep data to convert
+/// @param use_rgb use 'gui*' settings if true, else resorts to 'cterm*'
+HlAttrs attrentry2hlattrs(const attrentry_T *aep, bool use_rgb)
+{
+  assert(aep);
+
+  HlAttrs attrs = HLATTRS_INIT;
+  int mask = 0;
+
+  mask = use_rgb ? aep->rgb_ae_attr : aep->cterm_ae_attr;
+
+  attrs.bold = mask & HL_BOLD;
+  attrs.underline = mask & HL_UNDERLINE;
+  attrs.undercurl = mask & HL_UNDERCURL;
+  attrs.italic = mask & HL_ITALIC;
+  attrs.reverse = mask & (HL_INVERSE | HL_STANDOUT);
+
+  if (use_rgb) {
+    if (aep->rgb_fg_color != -1) {
+      attrs.foreground = aep->rgb_fg_color;
+    }
+
+    if (aep->rgb_bg_color != -1) {
+      attrs.background = aep->rgb_bg_color;
+    }
+
+    if (aep->rgb_sp_color != -1) {
+      attrs.special = aep->rgb_sp_color;
+    }
+  } else {
+    if (cterm_normal_fg_color != aep->cterm_fg_color) {
+      attrs.foreground = aep->cterm_fg_color - 1;
+    }
+
+    if (cterm_normal_bg_color != aep->cterm_bg_color) {
+        attrs.background = aep->cterm_bg_color - 1;
+    }
+  }
+
+  return attrs;
+}
+
+Dictionary hlattrs2dict(HlAttrs attrs)
+{
+  Dictionary hl = ARRAY_DICT_INIT;
+
+  if (attrs.bold) {
+    PUT(hl, "bold", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.underline) {
+    PUT(hl, "underline", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.undercurl) {
+    PUT(hl, "undercurl", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.italic) {
+    PUT(hl, "italic", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.reverse) {
+    PUT(hl, "reverse", BOOLEAN_OBJ(true));
+  }
+
+  if (attrs.foreground != -1) {
+    PUT(hl, "foreground", INTEGER_OBJ(attrs.foreground));
+  }
+
+  if (attrs.background != -1) {
+    PUT(hl, "background", INTEGER_OBJ(attrs.background));
+  }
+
+  if (attrs.special != -1) {
+    PUT(hl, "special", INTEGER_OBJ(attrs.special));
+  }
+
+  return hl;
+}
+
 void ui_refresh(void)
 {
   if (!ui_active()) {
@@ -405,54 +489,20 @@ void ui_flush(void)
 
 static void set_highlight_args(int attr_code)
 {
-  HlAttrs rgb_attrs = { false, false, false, false, false, -1, -1, -1 };
+  HlAttrs rgb_attrs = HLATTRS_INIT;
   HlAttrs cterm_attrs = rgb_attrs;
 
   if (attr_code == HL_NORMAL) {
     goto end;
   }
-
-  int rgb_mask = 0;
-  int cterm_mask = 0;
   attrentry_T *aep = syn_cterm_attr2entry(attr_code);
 
   if (!aep) {
     goto end;
   }
 
-  rgb_mask = aep->rgb_ae_attr;
-  cterm_mask = aep->cterm_ae_attr;
-
-  rgb_attrs.bold = rgb_mask & HL_BOLD;
-  rgb_attrs.underline = rgb_mask & HL_UNDERLINE;
-  rgb_attrs.undercurl = rgb_mask & HL_UNDERCURL;
-  rgb_attrs.italic = rgb_mask & HL_ITALIC;
-  rgb_attrs.reverse = rgb_mask & (HL_INVERSE | HL_STANDOUT);
-  cterm_attrs.bold = cterm_mask & HL_BOLD;
-  cterm_attrs.underline = cterm_mask & HL_UNDERLINE;
-  cterm_attrs.undercurl = cterm_mask & HL_UNDERCURL;
-  cterm_attrs.italic = cterm_mask & HL_ITALIC;
-  cterm_attrs.reverse = cterm_mask & (HL_INVERSE | HL_STANDOUT);
-
-  if (aep->rgb_fg_color != normal_fg) {
-    rgb_attrs.foreground = aep->rgb_fg_color;
-  }
-
-  if (aep->rgb_bg_color != normal_bg) {
-    rgb_attrs.background = aep->rgb_bg_color;
-  }
-
-  if (aep->rgb_sp_color != normal_sp) {
-    rgb_attrs.special = aep->rgb_sp_color;
-  }
-
-  if (cterm_normal_fg_color != aep->cterm_fg_color) {
-    cterm_attrs.foreground = aep->cterm_fg_color - 1;
-  }
-
-  if (cterm_normal_bg_color != aep->cterm_bg_color) {
-    cterm_attrs.background = aep->cterm_bg_color - 1;
-  }
+  rgb_attrs = attrentry2hlattrs(aep, true);
+  cterm_attrs = attrentry2hlattrs(aep, false);
 
 end:
   UI_CALL(highlight_set, (ui->rgb ? rgb_attrs : cterm_attrs));
