@@ -17528,7 +17528,7 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_dict_add_nr(dict, S_LEN("skipcol"), (varnumber_T)curwin->w_skipcol);
 }
 
-/// Writes list of strings to file
+/// Write "list" of strings to file "fd".
 ///
 /// @param  fp  File to write to.
 /// @param[in]  list  List to write.

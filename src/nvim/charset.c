@@ -762,7 +762,7 @@ bool vim_isIDc(int c)
 }
 
 /// Check that "c" is a keyword character:
-/// Letters and characters from 'iskeyword' option for current buffer.
+/// Letters and characters from 'iskeyword' option for the current buffer.
 /// For multi-byte characters mb_get_class() is used (builtin rules).
 ///
 /// @param  c  character to check
