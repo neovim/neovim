@@ -1690,6 +1690,9 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
 
   if (strlen(fname) > (len - 1)) {
     xstrlcpy(buf, fname, len);  // truncate
+#ifdef WIN32
+    slash_adjust(buf);
+#endif
     return FAIL;
   }
 
@@ -1702,6 +1705,9 @@ int vim_FullName(const char *fname, char *buf, size_t len, bool force)
   if (rv == FAIL) {
     xstrlcpy(buf, fname, len);  // something failed; use the filename
   }
+#ifdef WIN32
+  slash_adjust(buf);
+#endif
   return rv;
 }
 
@@ -2196,11 +2202,11 @@ static int path_get_absolute_path(const char_u *fname, char_u *buf,
 
   // expand it if forced or not an absolute path
   if (force || !path_is_absolute_path(fname)) {
-    if ((p = vim_strrchr(fname, '/')) != NULL) {
+    if ((p = vim_strrchr(fname, PATHSEP)) != NULL) {
       // relative to root
       if (p == fname) {
         // only one path component
-        relative_directory[0] = '/';
+        relative_directory[0] = PATHSEP;
         relative_directory[1] = NUL;
       } else {
         assert(p >= fname);

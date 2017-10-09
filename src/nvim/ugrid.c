@@ -16,7 +16,7 @@
 
 void ugrid_init(UGrid *grid)
 {
-  grid->attrs = EMPTY_ATTRS;
+  grid->attrs = HLATTRS_INIT;
   grid->fg = grid->bg = -1;
   grid->cells = NULL;
 }
@@ -118,7 +118,7 @@ UCell *ugrid_put(UGrid *grid, uint8_t *text, size_t size)
 
 static void clear_region(UGrid *grid, int top, int bot, int left, int right)
 {
-  HlAttrs clear_attrs = EMPTY_ATTRS;
+  HlAttrs clear_attrs = HLATTRS_INIT;
   clear_attrs.foreground = grid->fg;
   clear_attrs.background = grid->bg;
   UGRID_FOREACH_CELL(grid, top, bot, left, right, {

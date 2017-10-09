@@ -242,39 +242,7 @@ static void push_call(UI *ui, char *name, Array args)
 static void remote_ui_highlight_set(UI *ui, HlAttrs attrs)
 {
   Array args = ARRAY_DICT_INIT;
-  Dictionary hl = ARRAY_DICT_INIT;
-
-  if (attrs.bold) {
-    PUT(hl, "bold", BOOLEAN_OBJ(true));
-  }
-
-  if (attrs.underline) {
-    PUT(hl, "underline", BOOLEAN_OBJ(true));
-  }
-
-  if (attrs.undercurl) {
-    PUT(hl, "undercurl", BOOLEAN_OBJ(true));
-  }
-
-  if (attrs.italic) {
-    PUT(hl, "italic", BOOLEAN_OBJ(true));
-  }
-
-  if (attrs.reverse) {
-    PUT(hl, "reverse", BOOLEAN_OBJ(true));
-  }
-
-  if (attrs.foreground != -1) {
-    PUT(hl, "foreground", INTEGER_OBJ(attrs.foreground));
-  }
-
-  if (attrs.background != -1) {
-    PUT(hl, "background", INTEGER_OBJ(attrs.background));
-  }
-
-  if (attrs.special != -1) {
-    PUT(hl, "special", INTEGER_OBJ(attrs.special));
-  }
+  Dictionary hl = hlattrs2dict(attrs);
 
   ADD(args, DICTIONARY_OBJ(hl));
   push_call(ui, "highlight_set", args);

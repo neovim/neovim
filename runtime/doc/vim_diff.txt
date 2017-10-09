@@ -280,6 +280,10 @@ other arguments if used).
 
 |input()| and |inputdialog()| support user-defined cmdline highlighting.
 
+Highlight groups:
+  |hl-ColorColumn|, |hl-CursorColumn|, |hl-CursorLine| are lower priority than
+  (overridden by) most other highlight groups.
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 
