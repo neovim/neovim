@@ -725,9 +725,11 @@ Dictionary nvim_get_mode(void)
   Dictionary rv = ARRAY_DICT_INIT;
   char *modestr = get_mode();
   bool blocked = input_blocking();
+  bool incomplete_mapping = has_incomplete_mapping();
 
   PUT(rv, "mode", STRING_OBJ(cstr_as_string(modestr)));
   PUT(rv, "blocking", BOOLEAN_OBJ(blocked));
+  PUT(rv, "incomplete_mapping", BOOLEAN_OBJ(incomplete_mapping));
 
   return rv;
 }
