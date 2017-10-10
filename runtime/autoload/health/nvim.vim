@@ -10,6 +10,12 @@ function! s:check_config() abort
           \ [ "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
           \   'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402' ])
   endif
+  if &paste
+    let ok = v:false
+    call health#report_error("'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
+          \ [ 'Remove `set paste` from your init.vim, if applicable.',
+          \   'Check `:verbose set paste?` to see if a plugin or script set the option.', ])
+  endif
 
   if ok
     call health#report_ok('no issues found')
