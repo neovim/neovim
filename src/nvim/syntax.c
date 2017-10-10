@@ -5868,9 +5868,12 @@ static void syntime_report(void)
     }
   }
 
-  /* sort on total time */
-  qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(time_entry_T),
-      syn_compare_syntime);
+  // Sort on total time. Skip if there are no items to avoid passing NULL
+  // pointer to qsort().
+  if (ga.ga_len > 1) {
+    qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(time_entry_T),
+          syn_compare_syntime);
+  }
 
   MSG_PUTS_TITLE(_(
           "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"));
