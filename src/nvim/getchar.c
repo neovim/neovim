@@ -2271,6 +2271,11 @@ static int vgetorpeek(int advance)
             timedout = TRUE;
             continue;
           }
+        // TODO(bfredl): I think this should only ever happen if events_enabled is true
+        } else if(c == 3 && typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len] == K_SPECIAL
+                        && typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len+1] == KS_EXTRA
+                        && typebuf.tb_buf[typebuf.tb_off + typebuf.tb_len+2] == KE_EVENT) {
+            ins_char_typebuf(K_EVENT);
         } else {          /* allow mapping for just typed characters */
           while (typebuf.tb_buf[typebuf.tb_off
                                 + typebuf.tb_len] != NUL)

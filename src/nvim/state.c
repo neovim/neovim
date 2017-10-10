@@ -24,31 +24,33 @@ static const char* state_desc = NULL;
 /// TODO: allow to change modestr, like nx for normal additional
 int state_vgetc(const char* desc)
 {
+  input_enable_events();
+  const char* save_desc = state_desc;
+  state_desc = desc;
+  int key = 0;
   if (char_avail() || using_script() || input_available()) {
     // Don't block for events if there's a character already available for
     // processing. Characters can come from mappings, scripts and other
     // sources, so this scenario is very common.
-    return safe_vgetc();
+    key = safe_vgetc();
   } else if (!multiqueue_empty(main_loop.events)) {
     // Event was made available after the last multiqueue_process_events call
-    return K_EVENT;
+    key = K_EVENT;
   } else {
-    input_enable_events();
-    const char* save_desc = state_desc;
-    state_desc = desc;
     // Flush screen updates before blocking
     ui_flush();
     // Call `os_inchar` directly to block for events or user input without
     // consuming anything from `input_buffer`(os/input.c) or calling the
     // mapping engine.
     (void)os_inchar(NULL, 0, -1, 0);
-    state_desc = save_desc;
-    input_disable_events();
     // If an event was put into the queue, we send K_EVENT directly.
-    return !multiqueue_empty(main_loop.events)
+    key = !multiqueue_empty(main_loop.events)
            ? K_EVENT
            : safe_vgetc();
   }
+  state_desc = save_desc;
+  input_disable_events();
+  return key;
 }
 
 void state_process_events(const char* desc)
