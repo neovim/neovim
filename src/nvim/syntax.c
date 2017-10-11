@@ -42,6 +42,7 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 static bool did_syntax_onoff = false;
 
@@ -5567,8 +5568,10 @@ bool syntax_present(win_T *win)
 
 
 static enum {
-  EXP_SUBCMD,       /* expand ":syn" sub-commands */
-  EXP_CASE          /* expand ":syn case" arguments */
+  EXP_SUBCMD,       // expand ":syn" sub-commands
+  EXP_CASE,         // expand ":syn case" arguments
+  EXP_SPELL,        // expand ":syn spell" arguments
+  EXP_SYNC          // expand ":syn sync" arguments
 } expand_what;
 
 /*
@@ -5612,6 +5615,10 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
         xp->xp_context = EXPAND_NOTHING;
       } else if (STRNICMP(arg, "case", p - arg) == 0) {
         expand_what = EXP_CASE;
+      } else if (STRNICMP(arg, "spell", p - arg) == 0) {
+        expand_what = EXP_SPELL;
+      } else if (STRNICMP(arg, "sync", p - arg) == 0) {
+        expand_what = EXP_SYNC;
       } else if (STRNICMP(arg, "keyword", p - arg) == 0
                  || STRNICMP(arg, "region", p - arg) == 0
                  || STRNICMP(arg, "match", p - arg) == 0
@@ -5624,17 +5631,33 @@ void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
   }
 }
 
-static char *(case_args[]) = {"match", "ignore", NULL};
-
 /*
  * Function given to ExpandGeneric() to obtain the list syntax names for
  * expansion.
  */
 char_u *get_syntax_name(expand_T *xp, int idx)
 {
-  if (expand_what == EXP_SUBCMD)
-    return (char_u *)subcommands[idx].name;
-  return (char_u *)case_args[idx];
+  switch (expand_what) {
+    case EXP_SUBCMD:
+        return (char_u *)subcommands[idx].name;
+    case EXP_CASE: {
+        static char *case_args[] = { "match", "ignore", NULL };
+        return (char_u *)case_args[idx];
+    }
+    case EXP_SPELL: {
+        static char *spell_args[] =
+        { "toplevel", "notoplevel", "default", NULL };
+        return (char_u *)spell_args[idx];
+    }
+    case EXP_SYNC: {
+        static char *sync_args[] =
+        { "ccomment", "clear", "fromstart",
+         "linebreaks=", "linecont", "lines=", "match",
+         "maxlines=", "minlines=", "region", NULL };
+        return (char_u *)sync_args[idx];
+    }
+  }
+  return NULL;
 }
 
 
@@ -5845,9 +5868,12 @@ static void syntime_report(void)
     }
   }
 
-  /* sort on total time */
-  qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(time_entry_T),
-      syn_compare_syntime);
+  // Sort on total time. Skip if there are no items to avoid passing NULL
+  // pointer to qsort().
+  if (ga.ga_len > 1) {
+    qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(time_entry_T),
+          syn_compare_syntime);
+  }
 
   MSG_PUTS_TITLE(_(
           "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"));
@@ -6622,7 +6648,6 @@ do_highlight(char_u *line, int forceit, int init) {
     syn_unadd_group();
   } else {
     if (is_normal_group) {
-      HL_TABLE()[idx].sg_attr = 0;
       // Need to update all groups, because they might be using "bg" and/or
       // "fg", which have been changed now.
       highlight_attr_set_all();
@@ -6825,8 +6850,6 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_aep != NULL) {
     // Copy all attributes from char_aep to the new entry
     new_en = *char_aep;
-  } else {
-    memset(&new_en, 0, sizeof(new_en));
   }
 
   spell_aep = syn_cterm_attr2entry(prim_attr);
@@ -6859,6 +6882,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
 /// \note this function does not apply exclusively to cterm attr contrary
 /// to what its name implies
+/// \warn don't call it with attr 0 (i.e., the null attribute)
 attrentry_T *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
@@ -7103,22 +7127,14 @@ syn_list_header(int did_header, int outlen, int id)
   return newline;
 }
 
-/*
- * Set the attribute numbers for a highlight group.
- * Called after one of the attributes has changed.
- */
-static void 
-set_hl_attr (
-    int idx                    /* index in array */
-)
+/// Set the attribute numbers for a highlight group.
+/// Called after one of the attributes has changed.
+/// @param idx corrected highlight index
+static void set_hl_attr(int idx)
 {
   attrentry_T at_en = ATTRENTRY_INIT;
   struct hl_group     *sgp = HL_TABLE() + idx;
 
-  // The "Normal" group doesn't need an attribute number
-  if (sgp->sg_name_u != NULL && STRCMP(sgp->sg_name_u, "NORMAL") == 0) {
-    return;
-  }
 
   at_en.cterm_ae_attr = sgp->sg_cterm;
   at_en.cterm_fg_color = sgp->sg_cterm_fg;
@@ -8226,6 +8242,30 @@ RgbValue name_to_color(const uint8_t *name)
 
   return -1;
 }
+
+/// Gets highlight description for id `attr_id` as a map.
+Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
+{
+  HlAttrs attrs = HLATTRS_INIT;
+  Dictionary dic = ARRAY_DICT_INIT;
+
+  if (attr_id == 0) {
+    goto end;
+  }
+
+  attrentry_T *aep = syn_cterm_attr2entry((int)attr_id);
+  if (!aep) {
+    api_set_error(err, kErrorTypeException,
+                  "Invalid attribute id: %d", attr_id);
+    return dic;
+  }
+
+  attrs = attrentry2hlattrs(aep, rgb);
+
+end:
+  return hlattrs2dict(attrs);
+}
+
 
 /**************************************
 *  End of Highlighting stuff	      *
