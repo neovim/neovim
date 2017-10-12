@@ -136,7 +136,7 @@ end
 
 -- don't expose internal attributes like "impl_name" in public metadata
 exported_attributes = {'name', 'parameters', 'return_type', 'method',
-                       'since', 'deprecated_since'}
+                       'since', 'deprecated_since', 'async'}
 exported_functions = {}
 for _,f in ipairs(functions) do
   if not startswith(f.name, "nvim__") then
@@ -294,7 +294,8 @@ for i = 1, #functions do
                '(String) {.data = "'..fn.name..'", '..
                '.size = sizeof("'..fn.name..'") - 1}, '..
                '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-               ', .async = '..tostring(fn.async)..'});\n')
+               ', .async = '..tostring(fn.async)..
+               ', .undeferred = '..tostring(fn.undeferred)..'});\n')
 
 end
 

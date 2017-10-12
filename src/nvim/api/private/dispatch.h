@@ -11,8 +11,10 @@ typedef Object (*ApiDispatchWrapper)(uint64_t channel_id,
 /// functions of this type.
 typedef struct {
   ApiDispatchWrapper fn;
-  bool async;  // function is always safe to run immediately instead of being
-               // put in a request queue for handling when nvim waits for input.
+  bool undeferred;  // Function will run immediately instead of being put in a
+                    // request queue for handling when nvim waits for input.
+  bool async;       // When invoked over the rpc api, return immediately
+                    // before the the method handler is completed.
 } MsgpackRpcRequestHandler;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -172,7 +172,7 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 /// @return Number of bytes actually written (can be fewer than
 ///         requested if the buffer becomes full).
 Integer nvim_input(String keys)
-  FUNC_API_SINCE(1) FUNC_API_ASYNC
+  FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_UNDEFERRED
 {
   return (Integer)input_enqueue(keys);
 }
@@ -761,7 +761,7 @@ Dictionary nvim_get_color_map(void)
 ///
 /// @returns Dictionary { "mode": String, "blocking": Boolean }
 Dictionary nvim_get_mode(void)
-  FUNC_API_SINCE(2) FUNC_API_ASYNC
+  FUNC_API_SINCE(2) FUNC_API_UNDEFERRED
 {
   Dictionary rv = ARRAY_DICT_INIT;
   char *modestr = get_mode();
@@ -785,7 +785,7 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 }
 
 Array nvim_get_api_info(uint64_t channel_id)
-  FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(1) FUNC_API_UNDEFERRED FUNC_API_REMOTE_ONLY
 {
   Array rv = ARRAY_DICT_INIT;
 

@@ -16,6 +16,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/popupmnu.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/aucmd.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -213,6 +214,27 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
 
   api_set_error(error, kErrorTypeValidation, "No such ui option");
 #undef UI_EXT_OPTION
+}
+
+void nvim_ui_focusgained(uint64_t channel_id, Error *err)
+  FUNC_API_SINCE(3) FUNC_API_ASYNC FUNC_API_REMOTE_ONLY
+{
+  // FIXME: test
+  if (false && !pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(err, kErrorTypeException, "UI is not attached for channel");
+    return;
+  }
+  do_autocmd_focusgained(true);
+}
+
+void nvim_ui_focuslost(uint64_t channel_id, Error *err)
+  FUNC_API_SINCE(3) FUNC_API_ASYNC FUNC_API_REMOTE_ONLY
+{
+  if (false && !pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(err, kErrorTypeException, "UI is not attached for channel");
+    return;
+  }
+  do_autocmd_focusgained(false);
 }
 
 /// Pushes data into UI.UIData, to be consumed later by remote_ui_flush().

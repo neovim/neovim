@@ -497,13 +497,13 @@ static void handle_request(Channel *channel, msgpack_object *request)
                                           method->via.bin.size);
   } else {
     handler.fn = msgpack_rpc_handle_missing_method;
-    handler.async = true;
+    handler.undeferred = true;
   }
 
   Array args = ARRAY_DICT_INIT;
   if (!msgpack_rpc_to_array(msgpack_rpc_args(request), &args)) {
     handler.fn = msgpack_rpc_handle_invalid_arguments;
-    handler.async = true;
+    handler.undeferred = true;
   }
 
   RequestEvent *evdata = xmalloc(sizeof(RequestEvent));
@@ -512,7 +512,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   evdata->args = args;
   evdata->request_id = request_id;
   incref(channel);
-  if (handler.async) {
+  if (handler.undeferred) {
     bool is_get_mode = handler.fn == handle_nvim_get_mode;
 
     if (is_get_mode && !input_blocking()) {
@@ -523,7 +523,20 @@ static void handle_request(Channel *channel, msgpack_object *request)
       on_request_event((void **)&evdata);
     }
   } else {
-    multiqueue_put(channel->events, on_request_event, 1, evdata);
+    if (handler.async && request_id != NO_RESPONSE) {
+      msgpack_packer response;
+      msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
+      channel_write(channel, serialize_response(channel->id,
+                                                request_id,
+                                                &error,
+                                                NIL,
+                                                &out_buffer));
+
+    }
+    // As an effect of the async handler, requests might be made to the same
+    // channel, make sure response order is deterministic and correct
+    multiqueue_put(handler.async ? main_loop.events : channel->events,
+                   on_request_event, 1, evdata);
   }
 }
 
@@ -536,7 +549,7 @@ static void on_request_event(void **argv)
   uint64_t request_id = e->request_id;
   Error error = ERROR_INIT;
   Object result = handler.fn(channel->id, args, &error);
-  if (request_id != NO_RESPONSE) {
+  if ((handler.undeferred || !handler.async) && request_id != NO_RESPONSE) {
     // send the response
     msgpack_packer response;
     msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
