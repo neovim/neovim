@@ -1,5 +1,4 @@
 #ifdef USE_KLEE
-# error UNFINISHED
 # include <klee/klee.h>
 #else
 # include <string.h>
@@ -47,10 +46,10 @@ int main(const int argc, const char *const *const argv,
 #ifdef USE_KLEE
   klee_make_symbolic(input, sizeof(input), "input");
   klee_make_symbolic(&shift, sizeof(shift), "shift");
-  klee_make_symbolic(&flags, sizeof{flags}, "flags");
+  klee_make_symbolic(&flags, sizeof(flags), "flags");
   klee_assume(shift < INPUT_SIZE);
   klee_assume(
-      flags <= kExprFlagsMulti|kExprFlagsDisallowEOC|kExprFlagsPrintError);
+      flags <= (kExprFlagsMulti|kExprFlagsDisallowEOC|kExprFlagsPrintError));
 #endif
 
   ParserLine plines[] = {
@@ -93,5 +92,6 @@ int main(const int argc, const char *const *const argv,
   assert(ast.root != NULL
          || plines[0].size == 0);
   assert(ast.root != NULL || ast.err.msg);
+  // FIXME: check for AST recursiveness
   // FIXME: free memory and assert no memory leaks
 }
