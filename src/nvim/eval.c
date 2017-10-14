@@ -17671,7 +17671,11 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
       return NULL;
     }
 
+<<<<<<< HEAD
     char *ret = xmalloc(*len + 1);
+=======
+    char *ret = xmalloc(*len);
+>>>>>>> e42e0e7b3d8daa943732fe6514d6ddd5cb95566d
     char *end = ret;
     for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
       for (char_u *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
