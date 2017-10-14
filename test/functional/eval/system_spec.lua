@@ -273,7 +273,7 @@ describe('system()', function()
 
   describe('input passed as Number', function()
     it('stringifies the input', function()
-      eq('1', eval('system("cat", 1)'))
+      eq('\n', eval('system("cat", 1)'))
     end)
   end)
 
