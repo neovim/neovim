@@ -19,13 +19,21 @@ function! Test_System()
   call assert_equal('123',   system('cat', '123'))
   call assert_equal(['123'], systemlist('cat', '123'))
   call assert_equal(["as\<NL>df"], systemlist('cat', ["as\<NL>df"]))
+
   new Xdummy
   call setline(1, ['asdf', "pw\<NL>er", 'xxxx'])
-  call assert_equal("3\n",  system('wc -l', bufnr('%')))
+  let out = system('wc -l', bufnr('%'))
+  " On OS/X we get leading spaces
+  let out = substitute(out, '^ *', '', '')
+  call assert_equal("3\n", out)
 
   let out = systemlist('wc -l', bufnr('%'))
   " On Windows we may get a trailing CR.
   if out != ["3\r"]
+    " On OS/X we get leading spaces
+    if type(out) == v:t_list
+      let out[0] = substitute(out[0], '^ *', '', '')
+    endif
     call assert_equal(['3'],  out)
   endif
 
