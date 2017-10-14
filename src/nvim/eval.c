@@ -17663,6 +17663,7 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
         *len += 1;
       }
     } else {
+      EMSGN(_(e_nobufnr), tv->vval.v_number);
       *len = -1;
       return NULL;
     }
@@ -17683,8 +17684,8 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
     *len = end - ret;
     return ret;
   } else {
-    // For types other than list, let tv_get_string_buf_chk() get the value or
-    // print an error.
+    // For types other than list and number, let tv_get_string_buf_chk()
+    // get the value or print an error.
     const char *ret = tv_get_string_chk(tv);
     if (ret && (*len = strlen(ret))) {
       return xmemdupz(ret, (size_t)(*len));
