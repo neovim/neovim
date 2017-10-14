@@ -17615,6 +17615,7 @@ void init_static_list(staticList10_T *sl)
 /// Saves a typval_T as a string.
 ///
 /// For lists, replaces NLs with NUL and separates items with NLs.
+/// For numbers, replaces NLs with NUL and separates items with NLs.
 ///
 /// @param[in]  tv   A value to store as a string.
 /// @param[out] len  The length of the resulting string or -1 on error.
@@ -17624,14 +17625,65 @@ void init_static_list(staticList10_T *sl)
 static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
+  *len = 0;
   if (tv->v_type == VAR_UNKNOWN) {
-    *len = 0;
     return NULL;
   }
 
-  // For types other than list, let tv_get_string_buf_chk() get the value or
-  // print an error.
-  if (tv->v_type != VAR_LIST) {
+  if (tv->v_type == VAR_LIST) {
+    list_T *list = tv->vval.v_list;
+    for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+      *len += strlen(tv_get_string(&li->li_tv)) + 1;
+    }
+
+    if (*len == 0) {
+      return NULL;
+    }
+
+    char *ret = xmalloc(*len + endnl);
+    char *end = ret;
+    for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+      for (const char *s = tv_get_string(&li->li_tv); *s != NUL; s++) {
+        *end++ = (*s == '\n') ? NUL : *s;
+      }
+      if (endnl || li->li_next != NULL) {
+        *end++ = '\n';
+      }
+    }
+    *end = NUL;
+    *len = end - ret;
+    return ret;
+  } else if (tv->v_type == VAR_NUMBER) {
+    buf_T *buf = buflist_findnr(tv->vval.v_number);
+    if (buf) {
+      for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
+        for (char_u *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+          *len += 1;
+        }
+      }
+    } else {
+      *len = -1;
+      return NULL;
+    }
+
+    if (*len == 0) {
+      return NULL;
+    }
+
+    char *ret = xmalloc(*len);
+    char *end = ret;
+    for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; lnum++) {
+      for (char_u *p = ml_get_buf(buf, lnum, false); *p != NUL; p++) {
+        *end++ = (*p == '\n') ? NUL : *p;
+      }
+      *end++ = '\n';
+    }
+    *end = NUL;
+    *len = end - ret;
+    return ret;
+  } else {
+    // For types other than list, let tv_get_string_buf_chk() get the value or
+    // print an error.
     const char *ret = tv_get_string_chk(tv);
     if (ret && (*len = strlen(ret))) {
       return xmemdupz(ret, (size_t)(*len));
@@ -17641,30 +17693,7 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
     }
   }
 
-  // Pre-calculate the resulting length.
-  *len = 0;
-  list_T *list = tv->vval.v_list;
-  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    *len += strlen(tv_get_string(&li->li_tv)) + 1;
-  }
-
-  if (*len == 0) {
-    return NULL;
-  }
-
-  char *ret = xmalloc(*len + endnl);
-  char *end = ret;
-  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    for (const char *s = tv_get_string(&li->li_tv); *s != NUL; s++) {
-      *end++ = (*s == '\n') ? NUL : *s;
-    }
-    if (endnl || li->li_next != NULL) {
-      *end++ = '\n';
-    }
-  }
-  *end = NUL;
-  *len = end - ret;
-  return ret;
+  return NULL;
 }
 
 /*

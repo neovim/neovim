@@ -71,6 +71,7 @@ NEW_TESTS ?= \
 	    test_startup_utf8.res \
 	    test_substitute.res \
 	    test_syntax.res \
+	    test_system.res \
 	    test_tabpage.res \
 	    test_textobjects.res \
 	    test_timers.res \
