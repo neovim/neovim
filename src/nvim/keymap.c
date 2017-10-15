@@ -696,11 +696,14 @@ int find_special_key_in_table(int c)
 {
   int i;
 
-  for (i = 0; key_names_table[i].name != NULL; i++)
-    if (c == (uint8_t)key_names_table[i].key)
+  for (i = 0; key_names_table[i].name != NULL; i++) {
+    if (c == key_names_table[i].key) {
       break;
-  if (key_names_table[i].name == NULL)
+    }
+  }
+  if (key_names_table[i].name == NULL) {
     i = -1;
+  }
   return i;
 }
 
