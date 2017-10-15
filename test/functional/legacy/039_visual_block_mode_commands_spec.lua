@@ -43,6 +43,7 @@ describe('Visual block mode', function()
       abcdqqqqijklm]])
   end)
 
+  -- luacheck: ignore 611 (Line contains only whitespaces)
   it('should insert a block using cursor keys for movement', function()
     insert([[
       aaaaaa
@@ -104,6 +105,7 @@ describe('Visual block mode', function()
       456ab7]])
   end)
 
+  -- luacheck: ignore 621 (Indentation)
   it('should insert and append a block when virtualedit=all', function()
     insert([[
       		line1

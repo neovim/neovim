@@ -13,6 +13,12 @@ function! Test_whichwrap()
   set whichwrap+=h,l
   call assert_equal('b,s,h,l', &whichwrap)
 
+  set whichwrap=h,h
+  call assert_equal('h', &whichwrap)
+
+  set whichwrap=h,h,h
+  call assert_equal('h', &whichwrap)
+
   set whichwrap&
 endfunction
 
@@ -97,3 +103,13 @@ func Test_keymap_valid()
   call assert_fails(":set kmp=trunc\x00name", "E544:")
   call assert_fails(":set kmp=trunc\x00name", "trunc")
 endfunc
+
+func Test_complete()
+  " Trailing single backslash used to cause invalid memory access.
+  set complete=s\
+  new
+  call feedkeys("i\<C-N>\<Esc>", 'xt')
+  bwipe!
+  set complete&
+endfun
+

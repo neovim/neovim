@@ -14,6 +14,7 @@ local neq = helpers.neq
 local ok = helpers.ok
 local source = helpers.source
 local wait = helpers.wait
+local nvim = helpers.nvim
 
 local default_text = [[
   Inc substitution on
@@ -892,6 +893,31 @@ describe(":substitute, inccommand=split", function()
     ]])
   end)
 
+  it('previews correctly when previewhight is small', function()
+    feed_command('set cwh=3')
+    feed_command('set hls')
+    feed('ggdG')
+    insert(string.rep('abc abc abc\n', 20))
+    feed(':%s/abc/MMM/g')
+    screen:expect([[
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      MMM MMM MMM                   |
+      {11:[No Name] [+]                 }|
+      | 1| {12:MMM} {12:MMM} {12:MMM}              |
+      | 2| {12:MMM} {12:MMM} {12:MMM}              |
+      | 3| {12:MMM} {12:MMM} {12:MMM}              |
+      {10:[Preview]                     }|
+      :%s/abc/MMM/g^                 |
+    ]])
+  end)
+
   it('actually replaces text', function()
     feed(":%s/tw/XX/g<Enter>")
 
@@ -1621,4 +1647,30 @@ describe("'inccommand' split windows", function()
     end
   end)
 
+end)
+
+describe("'inccommand' with 'gdefault'", function()
+  before_each(function()
+    clear()
+  end)
+
+  it("does not lock up #7244", function()
+    common_setup(nil, "nosplit", "{")
+    command("set gdefault")
+    feed(":s/{\\n")
+    eq({mode='c', blocking=false}, nvim("get_mode"))
+    feed("/A<Enter>")
+    expect("A")
+    eq({mode='n', blocking=false}, nvim("get_mode"))
+  end)
+
+  it("with multiline text and range, does not lock up #7244", function()
+    common_setup(nil, "nosplit", "{\n\n{")
+    command("set gdefault")
+    feed(":%s/{\\n")
+    eq({mode='c', blocking=false}, nvim("get_mode"))
+    feed("/A<Enter>")
+    expect("A\nA")
+    eq({mode='n', blocking=false}, nvim("get_mode"))
+  end)
 end)

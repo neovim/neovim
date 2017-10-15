@@ -3,6 +3,7 @@
 " available.
 let s:copy = {}
 let s:paste = {}
+let s:clipboard = {}
 
 " When caching is enabled, store the jobid of the xclip/xsel process keeping
 " ownership of the selection, so we know how long the cache is valid.
@@ -23,7 +24,7 @@ function! s:selection.on_exit(jobid, data, event) abort
   call provider#clear_stderr(a:jobid)
 endfunction
 
-let s:selections = { '*': s:selection, '+': copy(s:selection)}
+let s:selections = { '*': s:selection, '+': copy(s:selection) }
 
 function! s:try_cmd(cmd, ...) abort
   let argv = split(a:cmd, " ")
@@ -31,7 +32,7 @@ function! s:try_cmd(cmd, ...) abort
   if v:shell_error
     if !exists('s:did_error_try_cmd')
       echohl WarningMsg
-      echomsg "clipboard: error: ".(len(out) ? out[0] : '')
+      echomsg "clipboard: error: ".(len(out) ? out[0] : v:shell_error)
       echohl None
       let s:did_error_try_cmd = 1
     endif
@@ -55,9 +56,15 @@ endfunction
 
 function! provider#clipboard#Executable() abort
   if exists('g:clipboard')
+    if type({}) isnot# type(g:clipboard)
+          \ || type({}) isnot# type(get(g:clipboard, 'copy', v:null))
+          \ || type({}) isnot# type(get(g:clipboard, 'paste', v:null))
+      let s:err = 'clipboard: invalid g:clipboard'
+      return ''
+    endif
     let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
     let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
-    let s:cache_enabled = get(g:clipboard, 'cache_enabled', 1)
+    let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
     return get(g:clipboard, 'name', 'g:clipboard')
   elseif has('mac') && executable('pbcopy')
     let s:copy['+'] = 'pbcopy'
@@ -104,15 +111,16 @@ function! provider#clipboard#Executable() abort
     return 'tmux'
   endif
 
-  let s:err = 'clipboard: No clipboard tool available. :help clipboard'
+  let s:err = 'clipboard: No clipboard tool. :help clipboard'
   return ''
 endfunction
 
 if empty(provider#clipboard#Executable())
+  " provider#clipboard#Call() *must not* be defined if the provider is broken.
+  " Otherwise eval_has_provider() thinks the clipboard provider is
+  " functioning, and eval_call_provider() will happily call it.
   finish
 endif
-
-let s:clipboard = {}
 
 function! s:clipboard.get(reg) abort
   if s:selections[a:reg].owner > 0
@@ -154,9 +162,19 @@ function! s:clipboard.set(lines, regtype, reg) abort
     echohl WarningMsg
     echomsg 'clipboard: failed to execute: '.(s:copy[a:reg])
     echohl None
+    return 0
   endif
+  return 1
 endfunction
 
 function! provider#clipboard#Call(method, args) abort
-  return call(s:clipboard[a:method],a:args,s:clipboard)
+  if get(s:, 'here', v:false)  " Clipboard provider must not recurse. #7184
+    return 0
+  endif
+  let s:here = v:true
+  try
+    return call(s:clipboard[a:method],a:args,s:clipboard)
+  finally
+    let s:here = v:false
+  endtry
 endfunction

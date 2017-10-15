@@ -52,6 +52,15 @@
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
 
+#ifdef NVIM_UNIBI_HAS_VAR_FROM
+#define UNIBI_SET_NUM_VAR(var, num) \
+  do { \
+    (var) = unibi_var_from_num((num)); \
+  } while (0)
+#else
+#define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
+#endif
+
 // Per the commentary in terminfo, only a minus sign is a true suffix
 // separator.
 bool terminfo_is_term_family(const char *term, const char *family)
@@ -234,9 +243,9 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
   // Enable bracketed paste
-  unibi_out(ui, data->unibi_ext.enable_bracketed_paste);
+  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
   // Enable focus reporting
-  unibi_out(ui, data->unibi_ext.enable_focus_reporting);
+  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -263,9 +272,9 @@ static void terminfo_stop(UI *ui)
   unibi_out(ui, unibi_keypad_local);
   unibi_out(ui, unibi_exit_ca_mode);
   // Disable bracketed paste
-  unibi_out(ui, data->unibi_ext.disable_bracketed_paste);
+  unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
-  unibi_out(ui, data->unibi_ext.disable_focus_reporting);
+  unibi_out_ext(ui, data->unibi_ext.disable_focus_reporting);
   flush_buf(ui, true);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
@@ -279,7 +288,7 @@ static void terminfo_stop(UI *ui)
 static void tui_terminal_start(UI *ui)
 {
   TUIData *data = ui->data;
-  data->print_attrs = EMPTY_ATTRS;
+  data->print_attrs = HLATTRS_INIT;
   ugrid_init(&data->grid);
   terminfo_start(ui);
   update_size(ui);
@@ -391,15 +400,15 @@ static void update_attrs(UI *ui, HlAttrs attrs)
 
   if (unibi_get_str(data->ut, unibi_set_attributes)) {
     if (attrs.bold || attrs.reverse || attrs.underline || attrs.undercurl) {
-      data->params[0].i = 0;   // standout
-      data->params[1].i = attrs.underline || attrs.undercurl;
-      data->params[2].i = attrs.reverse;
-      data->params[3].i = 0;   // blink
-      data->params[4].i = 0;   // dim
-      data->params[5].i = attrs.bold;
-      data->params[6].i = 0;   // blank
-      data->params[7].i = 0;   // protect
-      data->params[8].i = 0;   // alternate character set
+      UNIBI_SET_NUM_VAR(data->params[0], 0);   // standout
+      UNIBI_SET_NUM_VAR(data->params[1], attrs.underline || attrs.undercurl);
+      UNIBI_SET_NUM_VAR(data->params[2], attrs.reverse);
+      UNIBI_SET_NUM_VAR(data->params[3], 0);   // blink
+      UNIBI_SET_NUM_VAR(data->params[4], 0);   // dim
+      UNIBI_SET_NUM_VAR(data->params[5], attrs.bold);
+      UNIBI_SET_NUM_VAR(data->params[6], 0);   // blank
+      UNIBI_SET_NUM_VAR(data->params[7], 0);   // protect
+      UNIBI_SET_NUM_VAR(data->params[8], 0);   // alternate character set
       unibi_out(ui, unibi_set_attributes);
     } else if (!data->default_attr) {
       unibi_out(ui, unibi_exit_attribute_mode);
@@ -423,26 +432,26 @@ static void update_attrs(UI *ui, HlAttrs attrs)
   }
   if (ui->rgb) {
     if (fg != -1) {
-      data->params[0].i = (fg >> 16) & 0xff;  // red
-      data->params[1].i = (fg >> 8) & 0xff;   // green
-      data->params[2].i = fg & 0xff;          // blue
-      unibi_out(ui, data->unibi_ext.set_rgb_foreground);
+      UNIBI_SET_NUM_VAR(data->params[0], (fg >> 16) & 0xff);  // red
+      UNIBI_SET_NUM_VAR(data->params[1], (fg >> 8) & 0xff);   // green
+      UNIBI_SET_NUM_VAR(data->params[2], fg & 0xff);          // blue
+      unibi_out_ext(ui, data->unibi_ext.set_rgb_foreground);
     }
 
     if (bg != -1) {
-      data->params[0].i = (bg >> 16) & 0xff;  // red
-      data->params[1].i = (bg >> 8) & 0xff;   // green
-      data->params[2].i = bg & 0xff;          // blue
-      unibi_out(ui, data->unibi_ext.set_rgb_background);
+      UNIBI_SET_NUM_VAR(data->params[0], (bg >> 16) & 0xff);  // red
+      UNIBI_SET_NUM_VAR(data->params[1], (bg >> 8) & 0xff);   // green
+      UNIBI_SET_NUM_VAR(data->params[2], bg & 0xff);          // blue
+      unibi_out_ext(ui, data->unibi_ext.set_rgb_background);
     }
   } else {
     if (fg != -1) {
-      data->params[0].i = fg;
+      UNIBI_SET_NUM_VAR(data->params[0], fg);
       unibi_out(ui, unibi_set_a_foreground);
     }
 
     if (bg != -1) {
-      data->params[0].i = bg;
+      UNIBI_SET_NUM_VAR(data->params[0], bg);
       unibi_out(ui, unibi_set_a_background);
     }
   }
@@ -558,7 +567,7 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_left);
         }
       } else {
-        data->params[0].i = n;
+        UNIBI_SET_NUM_VAR(data->params[0], n);
         unibi_out(ui, unibi_parm_left_cursor);
       }
       ugrid_goto(grid, row, col);
@@ -570,7 +579,7 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_right);
         }
       } else {
-        data->params[0].i = n;
+        UNIBI_SET_NUM_VAR(data->params[0], n);
         unibi_out(ui, unibi_parm_right_cursor);
       }
       ugrid_goto(grid, row, col);
@@ -585,7 +594,7 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_down);
         }
       } else {
-        data->params[0].i = n;
+        UNIBI_SET_NUM_VAR(data->params[0], n);
         unibi_out(ui, unibi_parm_down_cursor);
       }
       ugrid_goto(grid, row, col);
@@ -597,7 +606,7 @@ static void cursor_goto(UI *ui, int row, int col)
           unibi_out(ui, unibi_cursor_up);
         }
       } else {
-        data->params[0].i = n;
+        UNIBI_SET_NUM_VAR(data->params[0], n);
         unibi_out(ui, unibi_parm_up_cursor);
       }
       ugrid_goto(grid, row, col);
@@ -619,7 +628,7 @@ static void clear_region(UI *ui, int top, int bot, int left, int right)
   if (grid->bg == -1 && right == ui->width -1) {
     // Background is set to the default color and the right edge matches the
     // screen end, try to use terminal codes for clearing the requested area.
-    HlAttrs clear_attrs = EMPTY_ATTRS;
+    HlAttrs clear_attrs = HLATTRS_INIT;
     clear_attrs.foreground = grid->fg;
     clear_attrs.background = grid->bg;
     update_attrs(ui, clear_attrs);
@@ -675,19 +684,19 @@ static void set_scroll_region(UI *ui)
   TUIData *data = ui->data;
   UGrid *grid = &data->grid;
 
-  data->params[0].i = grid->top;
-  data->params[1].i = grid->bot;
+  UNIBI_SET_NUM_VAR(data->params[0], grid->top);
+  UNIBI_SET_NUM_VAR(data->params[1], grid->bot);
   unibi_out(ui, unibi_change_scroll_region);
   if (grid->left != 0 || grid->right != ui->width - 1) {
-    unibi_out(ui, data->unibi_ext.enable_lr_margin);
+    unibi_out_ext(ui, data->unibi_ext.enable_lr_margin);
     if (data->can_set_lr_margin) {
-      data->params[0].i = grid->left;
-      data->params[1].i = grid->right;
+      UNIBI_SET_NUM_VAR(data->params[0], grid->left);
+      UNIBI_SET_NUM_VAR(data->params[1], grid->right);
       unibi_out(ui, unibi_set_lr_margin);
     } else {
-      data->params[0].i = grid->left;
+      UNIBI_SET_NUM_VAR(data->params[0], grid->left);
       unibi_out(ui, unibi_set_left_margin_parm);
-      data->params[0].i = grid->right;
+      UNIBI_SET_NUM_VAR(data->params[0], grid->right);
       unibi_out(ui, unibi_set_right_margin_parm);
     }
   }
@@ -700,24 +709,24 @@ static void reset_scroll_region(UI *ui)
   UGrid *grid = &data->grid;
 
   if (0 <= data->unibi_ext.reset_scroll_region) {
-    unibi_out(ui, data->unibi_ext.reset_scroll_region);
+    unibi_out_ext(ui, data->unibi_ext.reset_scroll_region);
   } else {
-    data->params[0].i = 0;
-    data->params[1].i = ui->height - 1;
+    UNIBI_SET_NUM_VAR(data->params[0], 0);
+    UNIBI_SET_NUM_VAR(data->params[1], ui->height - 1);
     unibi_out(ui, unibi_change_scroll_region);
   }
   if (grid->left != 0 || grid->right != ui->width - 1) {
     if (data->can_set_lr_margin) {
-      data->params[0].i = 0;
-      data->params[1].i = ui->width - 1;
+      UNIBI_SET_NUM_VAR(data->params[0], 0);
+      UNIBI_SET_NUM_VAR(data->params[1], ui->width - 1);
       unibi_out(ui, unibi_set_lr_margin);
     } else {
-      data->params[0].i = 0;
+      UNIBI_SET_NUM_VAR(data->params[0], 0);
       unibi_out(ui, unibi_set_left_margin_parm);
-      data->params[0].i = ui->width - 1;
+      UNIBI_SET_NUM_VAR(data->params[0], ui->width - 1);
       unibi_out(ui, unibi_set_right_margin_parm);
     }
-    unibi_out(ui, data->unibi_ext.disable_lr_margin);
+    unibi_out_ext(ui, data->unibi_ext.disable_lr_margin);
   }
   unibi_goto(ui, grid->row, grid->col);
 }
@@ -728,9 +737,9 @@ static void tui_resize(UI *ui, Integer width, Integer height)
   ugrid_resize(&data->grid, (int)width, (int)height);
 
   if (!got_winch) {  // Try to resize the terminal window.
-    data->params[0].i = (int)height;
-    data->params[1].i = (int)width;
-    unibi_out(ui, data->unibi_ext.resize_screen);
+    UNIBI_SET_NUM_VAR(data->params[0], (int)height);
+    UNIBI_SET_NUM_VAR(data->params[1], (int)width);
+    unibi_out_ext(ui, data->unibi_ext.resize_screen);
     // DECSLPP does not reset the scroll region.
     if (data->scroll_region_is_full_screen) {
       reset_scroll_region(ui);
@@ -836,7 +845,7 @@ static void tui_mouse_on(UI *ui)
 {
   TUIData *data = ui->data;
   if (!data->mouse_enabled) {
-    unibi_out(ui, data->unibi_ext.enable_mouse);
+    unibi_out_ext(ui, data->unibi_ext.enable_mouse);
     data->mouse_enabled = true;
   }
 }
@@ -845,7 +854,7 @@ static void tui_mouse_off(UI *ui)
 {
   TUIData *data = ui->data;
   if (data->mouse_enabled) {
-    unibi_out(ui, data->unibi_ext.disable_mouse);
+    unibi_out_ext(ui, data->unibi_ext.disable_mouse);
     data->mouse_enabled = false;
   }
 }
@@ -863,8 +872,8 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     int attr = syn_id2attr(c.id);
     if (attr > 0) {
       attrentry_T *aep = syn_cterm_attr2entry(attr);
-      data->params[0].i = aep->rgb_bg_color;
-      unibi_out(ui, data->unibi_ext.set_cursor_color);
+      UNIBI_SET_NUM_VAR(data->params[0], aep->rgb_bg_color);
+      unibi_out_ext(ui, data->unibi_ext.set_cursor_color);
     }
   }
 
@@ -874,8 +883,8 @@ static void tui_set_mode(UI *ui, ModeShape mode)
     case SHAPE_VER:   shape = 5; break;
     default: WLOG("Unknown shape value %d", shape); break;
   }
-  data->params[0].i = shape + (int)(c.blinkon == 0);
-  unibi_out(ui, data->unibi_ext.set_cursor_style);
+  UNIBI_SET_NUM_VAR(data->params[0], shape + (int)(c.blinkon == 0));
+  unibi_out_ext(ui, data->unibi_ext.set_cursor_style);
 }
 
 /// @param mode editor mode
@@ -917,7 +926,7 @@ static void tui_scroll(UI *ui, Integer count)
     cursor_goto(ui, grid->top, grid->left);
     // also set default color attributes or some terminals can become funny
     if (scroll_clears_to_current_colour) {
-      HlAttrs clear_attrs = EMPTY_ATTRS;
+      HlAttrs clear_attrs = HLATTRS_INIT;
       clear_attrs.foreground = grid->fg;
       clear_attrs.background = grid->bg;
       update_attrs(ui, clear_attrs);
@@ -927,14 +936,14 @@ static void tui_scroll(UI *ui, Integer count)
       if (count == 1) {
         unibi_out(ui, unibi_delete_line);
       } else {
-        data->params[0].i = (int)count;
+        UNIBI_SET_NUM_VAR(data->params[0], (int)count);
         unibi_out(ui, unibi_parm_delete_line);
       }
     } else {
       if (count == -1) {
         unibi_out(ui, unibi_insert_line);
       } else {
-        data->params[0].i = -(int)count;
+        UNIBI_SET_NUM_VAR(data->params[0], -(int)count);
         unibi_out(ui, unibi_parm_insert_line);
       }
     }
@@ -1177,30 +1186,33 @@ end:
 static void unibi_goto(UI *ui, int row, int col)
 {
   TUIData *data = ui->data;
-  data->params[0].i = row;
-  data->params[1].i = col;
+  UNIBI_SET_NUM_VAR(data->params[0], row);
+  UNIBI_SET_NUM_VAR(data->params[1], col);
   unibi_out(ui, unibi_cursor_address);
 }
 
+#define UNIBI_OUT(fn) \
+  do { \
+    TUIData *data = ui->data; \
+    const char *str = NULL; \
+    if (unibi_index >= 0) { \
+      str = fn(data->ut, (unsigned)unibi_index); \
+    } \
+    if (str) { \
+      unibi_var_t vars[26 + 26]; \
+      memset(&vars, 0, sizeof(vars)); \
+      unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL); \
+    } \
+  } while (0)
 static void unibi_out(UI *ui, int unibi_index)
 {
-  TUIData *data = ui->data;
-
-  const char *str = NULL;
-
-  if (unibi_index >= 0) {
-    if (unibi_index < unibi_string_begin_) {
-      str = unibi_get_ext_str(data->ut, (unsigned)unibi_index);
-    } else {
-      str = unibi_get_str(data->ut, (unsigned)unibi_index);
-    }
-  }
-
-  if (str) {
-    unibi_var_t vars[26 + 26] = {{0}};
-    unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL);
-  }
+  UNIBI_OUT(unibi_get_str);
 }
+static void unibi_out_ext(UI *ui, int unibi_index)
+{
+  UNIBI_OUT(unibi_get_ext_str);
+}
+#undef UNIBI_OUT
 
 static void out(void *ctx, const char *str, size_t len)
 {
@@ -1261,7 +1273,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool gnome = terminfo_is_term_family(term, "gnome")
     || terminfo_is_term_family(term, "vte");
   bool iterm = terminfo_is_term_family(term, "iterm")
-    || terminfo_is_term_family(term, "iTerm.app");
+    || terminfo_is_term_family(term, "iterm2")
+    || terminfo_is_term_family(term, "iTerm.app")
+    || terminfo_is_term_family(term, "iTerm2.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
   bool konsole_pretending_xterm = xterm && konsole;
@@ -1444,7 +1458,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // teminfo entries.  See
     // https://github.com/gnachman/iTerm2/pull/92 for more.
     // xterm even has an extended version that has a vertical bar.
-    if (true_xterm    // per xterm ctlseqs doco (since version 282)
+    if (!konsole && (true_xterm    // per xterm ctlseqs doco (since version 282)
         // per MinTTY 0.4.3-1 release notes from 2009
         || putty
         // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
@@ -1459,7 +1473,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         // Allows forcing the use of DECSCUSR on linux type terminals, such as
         // console-terminal-emulator from the nosh toolset, which does indeed
         // implement the xterm extension:
-        || (linuxvt && (xterm_version || (vte_version > 0) || colorterm))) {
+        || (linuxvt && (xterm_version || (vte_version > 0) || colorterm)))) {
       data->unibi_ext.set_cursor_style =
         (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");
       if (-1 == data->unibi_ext.reset_cursor_style) {
@@ -1533,7 +1547,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool screen = terminfo_is_term_family(term, "screen");
   bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool iterm = terminfo_is_term_family(term, "iterm")
-    || terminfo_is_term_family(term, "iTerm.app");
+    || terminfo_is_term_family(term, "iterm2")
+    || terminfo_is_term_family(term, "iTerm.app")
+    || terminfo_is_term_family(term, "iTerm2.app");
   // None of the following work over SSH; see :help TERM .
   bool iterm_pretending_xterm = xterm && iterm_env;
 

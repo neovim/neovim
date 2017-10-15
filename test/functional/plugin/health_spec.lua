@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local plugin_helpers = require('test.functional.plugin.helpers')
 
 local command = helpers.command
@@ -30,13 +31,13 @@ describe('health.vim', function()
 
 
       ## Check Bar
-        - SUCCESS: Bar status
-        - SUCCESS: Other Bar status
+        - OK: Bar status
+        - OK: Other Bar status
         - WARNING: Zub
 
       ## Baz
         - WARNING: Zim
-          - SUGGESTIONS:
+          - ADVICE:
             - suggestion 1
             - suggestion 2]]),
       result)
@@ -51,15 +52,15 @@ describe('health.vim', function()
         health#success1#check
         ========================================================================
         ## report 1
-          - SUCCESS: everything is fine
+          - OK: everything is fine
 
         ## report 2
-          - SUCCESS: nothing to see here
+          - OK: nothing to see here
 
         health#success2#check
         ========================================================================
         ## another 1
-          - SUCCESS: ok
+          - OK: ok
         ]])
     end)
 
@@ -73,6 +74,36 @@ describe('health.vim', function()
             function health#check[21]..health#broken#check, line 1
             caused an error
         ]])
+    end)
+
+    it("highlights OK, ERROR", function()
+      local screen = Screen.new(72, 10)
+      screen:attach()
+      screen:set_default_attr_ids({
+        Ok = { foreground = Screen.colors.Grey3, background = 6291200 },
+        Error = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
+      })
+      screen:set_default_attr_ignore({
+        Heading = { bold=true, foreground=Screen.colors.Magenta },
+        Heading2 = { foreground = Screen.colors.SlateBlue },
+        Bar = { foreground=Screen.colors.Purple },
+        Bullet = { bold=true, foreground=Screen.colors.Brown },
+      })
+      command("CheckHealth foo success1")
+      command("1tabclose")
+      command("set laststatus=0")
+      screen:expect([[
+        ^                                                                        |
+        health#foo#check                                                        |
+        ========================================================================|
+          - {Error:ERROR:} No healthcheck found for "foo" plugin.                       |
+                                                                                |
+        health#success1#check                                                   |
+        ========================================================================|
+        ## report 1                                                             |
+          - {Ok:OK:} everything is fine                                              |
+                                                                                |
+      ]])
     end)
 
     it("gracefully handles invalid healthcheck", function()

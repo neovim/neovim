@@ -432,14 +432,6 @@ static int terminal_execute(VimState *state, int key)
   TerminalState *s = (TerminalState *)state;
 
   switch (key) {
-    case K_FOCUSGAINED:  // nvim has been given focus
-      apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
-      break;
-
-    case K_FOCUSLOST:   // nvim has lost focus
-      apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
-      break;
-
     // Temporary fix until paste events gets implemented
     case K_PASTE:
       break;
@@ -530,6 +522,12 @@ void terminal_send(Terminal *term, char *data, size_t size)
 void terminal_send_key(Terminal *term, int c)
 {
   VTermModifier mod = VTERM_MOD_NONE;
+
+  // Convert K_ZERO back to ASCII
+  if (c == K_ZERO) {
+    c = Ctrl_AT;
+  }
+
   VTermKey key = convert_key(c, &mod);
 
   if (key) {
@@ -783,26 +781,60 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
 // }}}
 // input handling {{{
 
-static void convert_modifiers(VTermModifier *statep)
+static void convert_modifiers(int key, VTermModifier *statep)
 {
   if (mod_mask & MOD_MASK_SHIFT) { *statep |= VTERM_MOD_SHIFT; }
   if (mod_mask & MOD_MASK_CTRL)  { *statep |= VTERM_MOD_CTRL; }
   if (mod_mask & MOD_MASK_ALT)   { *statep |= VTERM_MOD_ALT; }
+
+  switch (key) {
+    case K_S_TAB:
+    case K_S_UP:
+    case K_S_DOWN:
+    case K_S_LEFT:
+    case K_S_RIGHT:
+    case K_S_F1:
+    case K_S_F2:
+    case K_S_F3:
+    case K_S_F4:
+    case K_S_F5:
+    case K_S_F6:
+    case K_S_F7:
+    case K_S_F8:
+    case K_S_F9:
+    case K_S_F10:
+    case K_S_F11:
+    case K_S_F12:
+      *statep |= VTERM_MOD_SHIFT;
+      break;
+
+    case K_C_LEFT:
+    case K_C_RIGHT:
+      *statep |= VTERM_MOD_CTRL;
+      break;
+  }
 }
 
 static VTermKey convert_key(int key, VTermModifier *statep)
 {
-  convert_modifiers(statep);
+  convert_modifiers(key, statep);
 
   switch (key) {
     case K_BS:        return VTERM_KEY_BACKSPACE;
+    case K_S_TAB:     // FALLTHROUGH
     case TAB:         return VTERM_KEY_TAB;
     case Ctrl_M:      return VTERM_KEY_ENTER;
     case ESC:         return VTERM_KEY_ESCAPE;
 
+    case K_S_UP:      // FALLTHROUGH
     case K_UP:        return VTERM_KEY_UP;
+    case K_S_DOWN:    // FALLTHROUGH
     case K_DOWN:      return VTERM_KEY_DOWN;
+    case K_S_LEFT:    // FALLTHROUGH
+    case K_C_LEFT:    // FALLTHROUGH
     case K_LEFT:      return VTERM_KEY_LEFT;
+    case K_S_RIGHT:   // FALLTHROUGH
+    case K_C_RIGHT:   // FALLTHROUGH
     case K_RIGHT:     return VTERM_KEY_RIGHT;
 
     case K_INS:       return VTERM_KEY_INS;
@@ -812,28 +844,79 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case K_PAGEUP:    return VTERM_KEY_PAGEUP;
     case K_PAGEDOWN:  return VTERM_KEY_PAGEDOWN;
 
-    case K_K0:
+    case K_K0:        // FALLTHROUGH
     case K_KINS:      return VTERM_KEY_KP_0;
-    case K_K1:
+    case K_K1:        // FALLTHROUGH
     case K_KEND:      return VTERM_KEY_KP_1;
     case K_K2:        return VTERM_KEY_KP_2;
-    case K_K3:
+    case K_K3:        // FALLTHROUGH
     case K_KPAGEDOWN: return VTERM_KEY_KP_3;
     case K_K4:        return VTERM_KEY_KP_4;
     case K_K5:        return VTERM_KEY_KP_5;
     case K_K6:        return VTERM_KEY_KP_6;
-    case K_K7:
+    case K_K7:        // FALLTHROUGH
     case K_KHOME:     return VTERM_KEY_KP_7;
     case K_K8:        return VTERM_KEY_KP_8;
-    case K_K9:
+    case K_K9:        // FALLTHROUGH
     case K_KPAGEUP:   return VTERM_KEY_KP_9;
-    case K_KDEL:
+    case K_KDEL:      // FALLTHROUGH
     case K_KPOINT:    return VTERM_KEY_KP_PERIOD;
     case K_KENTER:    return VTERM_KEY_KP_ENTER;
     case K_KPLUS:     return VTERM_KEY_KP_PLUS;
     case K_KMINUS:    return VTERM_KEY_KP_MINUS;
     case K_KMULTIPLY: return VTERM_KEY_KP_MULT;
     case K_KDIVIDE:   return VTERM_KEY_KP_DIVIDE;
+
+    case K_S_F1:      // FALLTHROUGH
+    case K_F1:        return VTERM_KEY_FUNCTION(1);
+    case K_S_F2:      // FALLTHROUGH
+    case K_F2:        return VTERM_KEY_FUNCTION(2);
+    case K_S_F3:      // FALLTHROUGH
+    case K_F3:        return VTERM_KEY_FUNCTION(3);
+    case K_S_F4:      // FALLTHROUGH
+    case K_F4:        return VTERM_KEY_FUNCTION(4);
+    case K_S_F5:      // FALLTHROUGH
+    case K_F5:        return VTERM_KEY_FUNCTION(5);
+    case K_S_F6:      // FALLTHROUGH
+    case K_F6:        return VTERM_KEY_FUNCTION(6);
+    case K_S_F7:      // FALLTHROUGH
+    case K_F7:        return VTERM_KEY_FUNCTION(7);
+    case K_S_F8:      // FALLTHROUGH
+    case K_F8:        return VTERM_KEY_FUNCTION(8);
+    case K_S_F9:      // FALLTHROUGH
+    case K_F9:        return VTERM_KEY_FUNCTION(9);
+    case K_S_F10:     // FALLTHROUGH
+    case K_F10:       return VTERM_KEY_FUNCTION(10);
+    case K_S_F11:     // FALLTHROUGH
+    case K_F11:       return VTERM_KEY_FUNCTION(11);
+    case K_S_F12:     // FALLTHROUGH
+    case K_F12:       return VTERM_KEY_FUNCTION(12);
+
+    case K_F13:       return VTERM_KEY_FUNCTION(13);
+    case K_F14:       return VTERM_KEY_FUNCTION(14);
+    case K_F15:       return VTERM_KEY_FUNCTION(15);
+    case K_F16:       return VTERM_KEY_FUNCTION(16);
+    case K_F17:       return VTERM_KEY_FUNCTION(17);
+    case K_F18:       return VTERM_KEY_FUNCTION(18);
+    case K_F19:       return VTERM_KEY_FUNCTION(19);
+    case K_F20:       return VTERM_KEY_FUNCTION(20);
+    case K_F21:       return VTERM_KEY_FUNCTION(21);
+    case K_F22:       return VTERM_KEY_FUNCTION(22);
+    case K_F23:       return VTERM_KEY_FUNCTION(23);
+    case K_F24:       return VTERM_KEY_FUNCTION(24);
+    case K_F25:       return VTERM_KEY_FUNCTION(25);
+    case K_F26:       return VTERM_KEY_FUNCTION(26);
+    case K_F27:       return VTERM_KEY_FUNCTION(27);
+    case K_F28:       return VTERM_KEY_FUNCTION(28);
+    case K_F29:       return VTERM_KEY_FUNCTION(29);
+    case K_F30:       return VTERM_KEY_FUNCTION(30);
+    case K_F31:       return VTERM_KEY_FUNCTION(31);
+    case K_F32:       return VTERM_KEY_FUNCTION(32);
+    case K_F33:       return VTERM_KEY_FUNCTION(33);
+    case K_F34:       return VTERM_KEY_FUNCTION(34);
+    case K_F35:       return VTERM_KEY_FUNCTION(35);
+    case K_F36:       return VTERM_KEY_FUNCTION(36);
+    case K_F37:       return VTERM_KEY_FUNCTION(37);
 
     default:          return VTERM_KEY_NONE;
   }
@@ -1174,6 +1257,10 @@ static void redraw(bool restore_cursor)
 
   if (must_redraw) {
     update_screen(0);
+  }
+
+  if (need_maketitle) {  // Update title in terminal-mode. #7248
+    maketitle();
   }
 
   if (restore_cursor) {

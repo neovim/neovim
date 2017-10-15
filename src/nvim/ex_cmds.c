@@ -3332,10 +3332,12 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
     sub = regtilde(sub, p_magic);
 
   // Check for a match on each line.
+  // If preview: limit to max('cmdwinheight', viewport).
   linenr_T line2 = eap->line2;
   for (linenr_T lnum = eap->line1;
-       lnum <= line2 && !(got_quit || aborting())
-       && (!preview || matched_lines.size <= (size_t)p_cwh);
+       lnum <= line2 && !got_quit && !aborting()
+       && (!preview || matched_lines.size < (size_t)p_cwh
+           || lnum <= curwin->w_botline);
        lnum++) {
     long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
                                     (colnr_T)0, NULL);
@@ -3500,6 +3502,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
           setmouse();                   /* disable mouse in xterm */
           curwin->w_cursor.col = regmatch.startpos[0].col;
 
+          if (curwin->w_p_crb) {
+            do_check_cursorbind();
+          }
+
           /* When 'cpoptions' contains "u" don't sync undo when
            * asking for confirmation. */
           if (vim_strchr(p_cpo, CPO_UNDO) != NULL)
@@ -3659,6 +3665,42 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
          * use "\=col("."). */
         curwin->w_cursor.col = regmatch.startpos[0].col;
 
+        // When the match included the "$" of the last line it may
+        // go beyond the last line of the buffer.
+        if (nmatch > curbuf->b_ml.ml_line_count - sub_firstlnum + 1) {
+          nmatch = curbuf->b_ml.ml_line_count - sub_firstlnum + 1;
+          skip_match = true;
+        }
+
+#define ADJUST_SUB_FIRSTLNUM() \
+        do { \
+          /* For a multi-line match, make a copy of the last matched */ \
+          /* line and continue in that one. */ \
+          if (nmatch > 1) { \
+            sub_firstlnum += nmatch - 1; \
+            xfree(sub_firstline); \
+            sub_firstline = vim_strsave(ml_get(sub_firstlnum)); \
+            /* When going beyond the last line, stop substituting. */ \
+            if (sub_firstlnum <= line2) { \
+              do_again = true; \
+            } else { \
+              subflags.do_all = false; \
+            } \
+          } \
+          if (skip_match) { \
+            /* Already hit end of the buffer, sub_firstlnum is one */ \
+            /* less than what it ought to be. */ \
+            xfree(sub_firstline); \
+            sub_firstline = vim_strsave((char_u *)""); \
+            copycol = 0; \
+          } \
+        } while (0)
+
+        if (preview && !has_second_delim) {
+          ADJUST_SUB_FIRSTLNUM();
+          goto skip;
+        }
+
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
         if (!preview || has_second_delim) {
@@ -3683,13 +3725,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
               sandbox--;
             }
             goto skip;
-          }
-
-          // When the match included the "$" of the last line it may
-          // go beyond the last line of the buffer.
-          if (nmatch > curbuf->b_ml.ml_line_count - sub_firstlnum + 1) {
-            nmatch = curbuf->b_ml.ml_line_count - sub_firstlnum + 1;
-            skip_match = true;
           }
 
           // Need room for:
@@ -3722,30 +3757,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
           // is beyond the end of the line after the substitution.
           curwin->w_cursor.col = 0;
 
-          // For a multi-line match, make a copy of the last matched
-          // line and continue in that one.
-          if (nmatch > 1) {
-            sub_firstlnum += nmatch - 1;
-            xfree(sub_firstline);
-            sub_firstline = vim_strsave(ml_get(sub_firstlnum));
-            // When going beyond the last line, stop substituting.
-            if (sub_firstlnum <= line2) {
-              do_again = true;
-            } else {
-              subflags.do_all = false;
-            }
-          }
-
           // Remember next character to be copied.
           copycol = regmatch.endpos[0].col;
 
-          if (skip_match) {
-            // Already hit end of the buffer, sub_firstlnum is one
-            // less than what it ought to be.
-            xfree(sub_firstline);
-            sub_firstline = vim_strsave((char_u *)"");
-            copycol = 0;
-          }
+          ADJUST_SUB_FIRSTLNUM();
 
           // Now the trick is to replace CTRL-M chars with a real line
           // break.  This would make it impossible to insert a CTRL-M in
@@ -4002,6 +4017,7 @@ skip:
   kv_destroy(matched_lines);
 
   return preview_buf;
+#undef ADJUST_SUB_FIRSTLNUM
 }  // NOLINT(readability/fn_size)
 
 /*

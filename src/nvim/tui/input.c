@@ -8,6 +8,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
 #include "nvim/main.h"
+#include "nvim/aucmd.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
@@ -280,9 +281,9 @@ static void timer_cb(TimeWatcher *watcher, void *data)
 
 /// Handle focus events.
 ///
-/// If the upcoming sequence of bytes in the input stream matches either the
-/// escape code for focus gained `<ESC>[I` or focus lost `<ESC>[O` then consume
-/// that sequence and push the appropriate event into the input queue
+/// If the upcoming sequence of bytes in the input stream matches the termcode
+/// for "focus gained" or "focus lost", consume that sequence and schedule an
+/// event on the main loop.
 ///
 /// @param input the input stream
 /// @return true iff handle_focus_event consumed some input
@@ -294,11 +295,7 @@ static bool handle_focus_event(TermInput *input)
     // Advance past the sequence
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
     rbuffer_consumed(input->read_stream.buffer, 3);
-    if (focus_gained) {
-      enqueue_input(input, FOCUSGAINED_KEY, sizeof(FOCUSGAINED_KEY) - 1);
-    } else {
-      enqueue_input(input, FOCUSLOST_KEY, sizeof(FOCUSLOST_KEY) - 1);
-    }
+    aucmd_schedule_focusgained(focus_gained);
     return true;
   }
   return false;

@@ -6733,6 +6733,39 @@ static void prepare_assert_error(garray_T *gap)
   }
 }
 
+// Append "str" to "gap", escaping unprintable characters.
+// Changes NL to \n, CR to \r, etc.
+static void ga_concat_esc(garray_T *gap, char_u *str)
+{
+  char_u *p;
+  char_u buf[NUMBUFLEN];
+
+  if (str == NULL) {
+    ga_concat(gap, (char_u *)"NULL");
+    return;
+  }
+
+  for (p = str; *p != NUL; p++) {
+    switch (*p) {
+      case BS: ga_concat(gap, (char_u *)"\\b"); break;
+      case ESC: ga_concat(gap, (char_u *)"\\e"); break;
+      case FF: ga_concat(gap, (char_u *)"\\f"); break;
+      case NL: ga_concat(gap, (char_u *)"\\n"); break;
+      case TAB: ga_concat(gap, (char_u *)"\\t"); break;
+      case CAR: ga_concat(gap, (char_u *)"\\r"); break;
+      case '\\': ga_concat(gap, (char_u *)"\\\\"); break;
+      default:
+        if (*p < ' ') {
+          vim_snprintf((char *)buf, NUMBUFLEN, "\\x%02x", *p);
+          ga_concat(gap, buf);
+        } else {
+          ga_append(gap, *p);
+        }
+        break;
+    }
+  }
+}
+
 // Fill "gap" with information about an assert error.
 static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
                               char_u *exp_str, typval_T *exp_tv,
@@ -6747,28 +6780,30 @@ static void fill_assert_error(garray_T *gap, typval_T *opt_msg_tv,
   } else {
     if (atype == ASSERT_MATCH || atype == ASSERT_NOTMATCH) {
       ga_concat(gap, (char_u *)"Pattern ");
+    } else if (atype == ASSERT_NOTEQUAL) {
+      ga_concat(gap, (char_u *)"Expected not equal to ");
     } else {
       ga_concat(gap, (char_u *)"Expected ");
     }
     if (exp_str == NULL) {
-      tofree = (char_u *) encode_tv2string(exp_tv, NULL);
-      ga_concat(gap, tofree);
+      tofree = (char_u *)encode_tv2string(exp_tv, NULL);
+      ga_concat_esc(gap, tofree);
       xfree(tofree);
     } else {
-      ga_concat(gap, exp_str);
+      ga_concat_esc(gap, exp_str);
     }
-    tofree = (char_u *)encode_tv2string(got_tv, NULL);
-    if (atype == ASSERT_MATCH) {
-      ga_concat(gap, (char_u *)" does not match ");
-    } else if (atype == ASSERT_NOTMATCH) {
-      ga_concat(gap, (char_u *)" does match ");
-    } else if (atype == ASSERT_NOTEQUAL) {
-      ga_concat(gap, (char_u *)" differs from ");
-    } else {
-      ga_concat(gap, (char_u *)" but got ");
+    if (atype != ASSERT_NOTEQUAL) {
+      if (atype == ASSERT_MATCH) {
+        ga_concat(gap, (char_u *)" does not match ");
+      } else if (atype == ASSERT_NOTMATCH) {
+        ga_concat(gap, (char_u *)" does match ");
+      } else {
+        ga_concat(gap, (char_u *)" but got ");
+      }
+      tofree = (char_u *)encode_tv2string(got_tv, NULL);
+      ga_concat_esc(gap, tofree);
+      xfree(tofree);
     }
-    ga_concat(gap, tofree);
-    xfree(tofree);
   }
 }
 
@@ -17493,7 +17528,7 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_dict_add_nr(dict, S_LEN("skipcol"), (varnumber_T)curwin->w_skipcol);
 }
 
-/// Writes list of strings to file
+/// Write "list" of strings to file "fd".
 ///
 /// @param  fp  File to write to.
 /// @param[in]  list  List to write.
@@ -22775,7 +22810,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
 
 bool eval_has_provider(const char *name)
 {
-#define check_provider(name) \
+#define CHECK_PROVIDER(name) \
   if (has_##name == -1) { \
     has_##name = !!find_func((char_u *)"provider#" #name "#Call"); \
     if (!has_##name) { \
@@ -22791,17 +22826,17 @@ bool eval_has_provider(const char *name)
   static int has_python3 = -1;
   static int has_ruby = -1;
 
-  if (!strcmp(name, "clipboard")) {
-    check_provider(clipboard);
+  if (strequal(name, "clipboard")) {
+    CHECK_PROVIDER(clipboard);
     return has_clipboard;
-  } else if (!strcmp(name, "python3")) {
-    check_provider(python3);
+  } else if (strequal(name, "python3")) {
+    CHECK_PROVIDER(python3);
     return has_python3;
-  } else if (!strcmp(name, "python")) {
-    check_provider(python);
+  } else if (strequal(name, "python")) {
+    CHECK_PROVIDER(python);
     return has_python;
-  } else if (!strcmp(name, "ruby")) {
-    check_provider(ruby);
+  } else if (strequal(name, "ruby")) {
+    CHECK_PROVIDER(ruby);
     return has_ruby;
   }
 

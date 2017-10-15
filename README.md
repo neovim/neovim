@@ -48,17 +48,24 @@ and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
 Project layout
 --------------
 
-    ├─ ci/            Build server scripts
-    ├─ cmake/         Build scripts
-    ├─ runtime/       User plugins/docs
-    ├─ src/           Source code
-    ├─ third-party/   CMake subproject to build dependencies 
-    └─ test/          Test code
+    ├─ ci/              build automation
+    ├─ cmake/           build scripts
+    ├─ runtime/         user plugins/docs
+    ├─ src/             application source code (see src/nvim/README.md)
+    │  ├─ api/          API subsystem
+    │  ├─ eval/         VimL subsystem
+    │  ├─ event/        event-loop subsystem
+    │  ├─ generators/   code generation (pre-compilation)
+    │  ├─ lib/          generic data structures
+    │  ├─ lua/          lua subsystem
+    │  ├─ msgpack_rpc/  RPC subsystem
+    │  ├─ os/           low-level platform code
+    │  └─ tui/          built-in UI
+    ├─ third-party/     cmake subproject to build dependencies
+    └─ test/            tests (see test/README.md)
 
-- `third-party/` is activated if `USE_BUNDLED_DEPS` is undefined or the
-  `USE_BUNDLED` CMake option is true.
-- [Source README](src/nvim/README.md)
-- [Test README](test/README.md)
+- To disable `third-party/` specify `USE_BUNDLED_DEPS=NO` or `USE_BUNDLED=NO`
+  (CMake option).
 
 Features
 --------

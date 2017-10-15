@@ -7,6 +7,11 @@
 #include <string.h>
 #include <stdbool.h>
 
+#ifdef WIN32
+# include <wchar.h>
+# include <winnls.h>
+#endif
+
 #include <msgpack.h>
 
 #include "nvim/ascii.h"
@@ -215,10 +220,22 @@ void early_init(void)
 
 #ifdef MAKE_LIB
 int nvim_main(int argc, char **argv)
+#elif defined(WIN32)
+int wmain(int argc, wchar_t **argv_w)  // multibyte args on Windows. #7060
 #else
 int main(int argc, char **argv)
 #endif
 {
+#if defined(WIN32) && !defined(MAKE_LIB)
+  char *argv[argc];
+  for (int i = 0; i < argc; i++) {
+    char *buf = NULL;
+    utf16_to_utf8(argv_w[i], &buf);
+    assert(buf);
+    argv[i] = buf;
+  }
+#endif
+
   argv0 = argv[0];
 
   char_u *fname = NULL;   // file name from command line
@@ -631,6 +648,11 @@ void getout(int exitval)
 
   /* Position the cursor again, the autocommands may have moved it */
   ui_cursor_goto((int)Rows - 1, 0);
+
+  // Apply 'titleold'.
+  if (p_title && *p_titleold != NUL) {
+    ui_call_set_title(cstr_as_string((char *)p_titleold));
+  }
 
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
   iconv_end();
@@ -1291,10 +1313,29 @@ static void set_window_layout(mparm_T *paramp)
 static void load_plugins(void)
 {
   if (p_lpl) {
-    source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL | DIP_NOAFTER);  // NOLINT
-    TIME_MSG("loading plugins");
+    char_u *rtp_copy = NULL;
 
-    ex_packloadall(NULL);
+    // First add all package directories to 'runtimepath', so that their
+    // autoload directories can be found.  Only if not done already with a
+    // :packloadall command.
+    // Make a copy of 'runtimepath', so that source_runtime does not use the
+    // pack directories.
+    if (!did_source_packages) {
+      rtp_copy = vim_strsave(p_rtp);
+      add_pack_start_dirs();
+    }
+
+    source_in_path(rtp_copy == NULL ? p_rtp : rtp_copy,
+                   (char_u *)"plugin/**/*.vim",  // NOLINT
+                   DIP_ALL | DIP_NOAFTER);
+    TIME_MSG("loading plugins");
+    xfree(rtp_copy);
+
+    // Only source "start" packages if not done already with a :packloadall
+    // command.
+    if (!did_source_packages) {
+      load_start_packages();
+    }
     TIME_MSG("loading packages");
 
     source_runtime((char_u *)"plugin/**/*.vim", DIP_ALL | DIP_AFTER);
@@ -1878,54 +1919,47 @@ static void usage(void)
   signal_stop();              // kill us with CTRL-C here, if you like
 
   mch_msg(_("Usage:\n"));
-  mch_msg(_("  nvim [arguments] [file ...]      Edit specified file(s)\n"));
-  mch_msg(_("  nvim [arguments] -               Read text from stdin\n"));
-  mch_msg(_("  nvim [arguments] -t <tag>        Edit file where tag is defined\n"));
-  mch_msg(_("  nvim [arguments] -q [errorfile]  Edit file with first error\n"));
-  mch_msg(_("\nArguments:\n"));
+  mch_msg(_("  nvim [options] [file ...]      Edit file(s)\n"));
+  mch_msg(_("  nvim [options] -               Read text from stdin\n"));
+  mch_msg(_("  nvim [options] -t <tag>        Edit file where tag is defined\n"));
+  mch_msg(_("  nvim [options] -q [errorfile]  Edit file with first error\n"));
+  mch_msg(_("\nOptions:\n"));
   mch_msg(_("  --                    Only file names after this\n"));
+  mch_msg(_("  +                     Start at end of file\n"));
+  mch_msg(_("  --cmd <cmd>           Execute <cmd> before any config\n"));
+  mch_msg(_("  +<cmd>, -c <cmd>      Execute <cmd> after config and first file\n"));
+  mch_msg("\n");
+  mch_msg(_("  -b                    Binary mode\n"));
+  mch_msg(_("  -d                    Diff mode\n"));
+  mch_msg(_("  -e, -E                Ex mode, Improved Ex mode\n"));
+  mch_msg(_("  -es                   Silent (batch) mode\n"));
+  mch_msg(_("  -h, --help            Print this help message\n"));
+  mch_msg(_("  -i <shada>            Use this shada file\n"));
+  mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));
+  mch_msg(_("  -M                    Modifications in text not allowed\n"));
+  mch_msg(_("  -n                    No swap file, use memory only\n"));
+  mch_msg(_("  -o[N]                 Open N windows (default: one per file)\n"));
+  mch_msg(_("  -O[N]                 Open N vertical windows (default: one per file)\n"));
+  mch_msg(_("  -p[N]                 Open N tab pages (default: one per file)\n"));
+  mch_msg(_("  -r, -L                List swap files\n"));
+  mch_msg(_("  -r <file>             Recover edit state for this file\n"));
+  mch_msg(_("  -R                    Read-only mode\n"));
+  mch_msg(_("  -S <session>          Source <session> after loading the first file\n"));
+  mch_msg(_("  -s <scriptin>         Read Normal mode commands from <scriptin>\n"));
+  mch_msg(_("  -u <config>           Use this config file\n"));
+  mch_msg(_("  -v, --version         Print version information\n"));
+  mch_msg(_("  -V[N][file]           Verbose [level][file]\n"));
+  mch_msg(_("  -Z                    Restricted mode\n"));
+  mch_msg("\n");
+  mch_msg(_("  --api-info            Write msgpack-encoded API metadata to stdout\n"));
+  mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
+  mch_msg(_("  --headless            Don't start a user interface\n"));
 #if !defined(UNIX)
   mch_msg(_("  --literal             Don't expand wildcards\n"));
 #endif
-  mch_msg(_("  -e                    Ex mode\n"));
-  mch_msg(_("  -E                    Improved Ex mode\n"));
-  mch_msg(_("  -s                    Silent (batch) mode (only for ex mode)\n"));
-  mch_msg(_("  -d                    Diff mode\n"));
-  mch_msg(_("  -R                    Read-only mode\n"));
-  mch_msg(_("  -Z                    Restricted mode\n"));
-  mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));
-  mch_msg(_("  -M                    Modifications in text not allowed\n"));
-  mch_msg(_("  -b                    Binary mode\n"));
-  mch_msg(_("  -l                    Lisp mode\n"));
-  mch_msg(_("  -A                    Arabic mode\n"));
-  mch_msg(_("  -F                    Farsi mode\n"));
-  mch_msg(_("  -H                    Hebrew mode\n"));
-  mch_msg(_("  -V[N][file]           Be verbose [level N][log messages to file]\n"));
-  mch_msg(_("  -D                    Debugging mode\n"));
-  mch_msg(_("  -n                    No swap file, use memory only\n"));
-  mch_msg(_("  -r, -L                List swap files and exit\n"));
-  mch_msg(_("  -r <file>             Recover crashed session\n"));
-  mch_msg(_("  -u <vimrc>            Use <vimrc> instead of the default\n"));
-  mch_msg(_("  -i <shada>            Use <shada> instead of the default\n"));
-  mch_msg(_("  --noplugin            Don't load plugin scripts\n"));
-  mch_msg(_("  -o[N]                 Open N windows (default: one for each file)\n"));
-  mch_msg(_("  -O[N]                 Like -o but split vertically\n"));
-  mch_msg(_("  -p[N]                 Open N tab pages (default: one for each file)\n"));
-  mch_msg(_("  +                     Start at end of file\n"));
-  mch_msg(_("  +<linenum>            Start at line <linenum>\n"));
-  mch_msg(_("  +/<pattern>           Start at first occurrence of <pattern>\n"));
-  mch_msg(_("  --cmd <command>       Execute <command> before loading any vimrc\n"));
-  mch_msg(_("  -c <command>          Execute <command> after loading the first file\n"));
-  mch_msg(_("  -S <session>          Source <session> after loading the first file\n"));
-  mch_msg(_("  -s <scriptin>         Read Normal mode commands from <scriptin>\n"));
-  mch_msg(_("  -w <scriptout>        Append all typed characters to <scriptout>\n"));
-  mch_msg(_("  -W <scriptout>        Write all typed characters to <scriptout>\n"));
+  mch_msg(_("  --noplugin            Don't load plugins\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
-  mch_msg(_("  --api-info            Dump API metadata serialized to msgpack and exit\n"));
-  mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
-  mch_msg(_("  --headless            Don't start a user interface\n"));
-  mch_msg(_("  -v, --version         Print version information and exit\n"));
-  mch_msg(_("  -h, --help            Print this help message and exit\n"));
+  mch_msg(_("\nSee \":help startup-options\" for all options.\n"));
 }
 
 

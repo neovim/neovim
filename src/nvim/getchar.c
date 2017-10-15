@@ -92,17 +92,15 @@ static int typeahead_char = 0;          /* typeahead char that's not flushed */
  */
 static int block_redo = FALSE;
 
-/*
- * Make a hash value for a mapping.
- * "mode" is the lower 4 bits of the State for the mapping.
- * "c1" is the first character of the "lhs".
- * Returns a value between 0 and 255, index in maphash.
- * Put Normal/Visual mode mappings mostly separately from Insert/Cmdline mode.
- */
+// Make a hash value for a mapping.
+// "mode" is the lower 4 bits of the State for the mapping.
+// "c1" is the first character of the "lhs".
+// Returns a value between 0 and 255, index in maphash.
+// Put Normal/Visual mode mappings mostly separately from Insert/Cmdline mode.
 #define MAP_HASH(mode, \
                  c1) (((mode) & \
                        (NORMAL + VISUAL + SELECTMODE + \
-                        OP_PENDING)) ? (c1) : ((c1) ^ 0x80))
+                        OP_PENDING + TERM_FOCUS)) ? (c1) : ((c1) ^ 0x80))
 
 // Each mapping is put in one of the MAX_MAPHASH hash lists,
 // to speed up finding it.
@@ -870,20 +868,15 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
 
   addlen = (int)STRLEN(str);
 
-  /*
-   * Easy case: there is room in front of typebuf.tb_buf[typebuf.tb_off]
-   */
   if (offset == 0 && addlen <= typebuf.tb_off) {
+    // Easy case: there is room in front of typebuf.tb_buf[typebuf.tb_off]
     typebuf.tb_off -= addlen;
     memmove(typebuf.tb_buf + typebuf.tb_off, str, (size_t)addlen);
-  }
-  /*
-   * Need to allocate a new buffer.
-   * In typebuf.tb_buf there must always be room for 3 * MAXMAPLEN + 4
-   * characters.  We add some extra room to avoid having to allocate too
-   * often.
-   */
-  else {
+  } else {
+    // Need to allocate a new buffer.
+    // In typebuf.tb_buf there must always be room for 3 * MAXMAPLEN + 4
+    // characters.  We add some extra room to avoid having to allocate too
+    // often.
     newoff = MAXMAPLEN + 4;
     newlen = typebuf.tb_len + addlen + newoff + 4 * (MAXMAPLEN + 4);
     if (newlen < 0) {               /* string is getting too long */
@@ -1665,10 +1658,10 @@ static int vgetorpeek(int advance)
     }
     if (c != NUL && !got_int) {
       if (advance) {
-        /* KeyTyped = FALSE;  When the command that stuffed something
-         * was typed, behave like the stuffed command was typed.
-         * needed for CTRL-W CTRl-] to open a fold, for example. */
-        KeyStuffed = TRUE;
+        // KeyTyped = FALSE;  When the command that stuffed something
+        // was typed, behave like the stuffed command was typed.
+        // needed for CTRL-W CTRL-] to open a fold, for example.
+        KeyStuffed = true;
       }
       if (typebuf.tb_no_abbr_cnt == 0)
         typebuf.tb_no_abbr_cnt = 1;             /* no abbreviations now */

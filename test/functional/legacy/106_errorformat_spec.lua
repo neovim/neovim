@@ -15,9 +15,9 @@ describe('errorformat', function()
     command("$put =strtrans(string(map(getqflist(), '[v:val.text, v:val.valid]')))")
     command("cgetexpr ['WWWW', 'GGGG', 'ZZZZ', 'EEEE', 'CCCC', 'YYYY']")
     command("$put =strtrans(string(map(getqflist(), '[v:val.text, v:val.valid]')))")
-    
+
     expect([=[
-      
+
       [['W', 1], ['E^@CCCC', 1]]
       [['W', 1], ['E^@CCCC', 1]]
       [['W', 1], ['ZZZZ', 0], ['E^@CCCC', 1], ['YYYY', 0]]]=])

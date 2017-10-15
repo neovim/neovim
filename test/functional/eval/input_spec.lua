@@ -239,6 +239,25 @@ describe('input()', function()
       {RBP1:(}{RBP2:()}{RBP1:)}^                     |
     ]])
   end)
+  it('is not hidden by :silent', function()
+    feed([[:silent call input('Foo: ')<CR>]])
+    screen:expect([[
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      Foo: ^                    |
+                               |
+    ]])
+    feed('Bar')
+    screen:expect([[
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+      Foo: Bar^                 |
+                               |
+    ]])
+    feed('<CR>')
+  end)
 end)
 describe('inputdialog()', function()
   it('works with multiline prompts', function()

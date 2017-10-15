@@ -974,14 +974,6 @@ static int insert_handle_key(InsertState *s)
     multiqueue_process_events(main_loop.events);
     break;
 
-  case K_FOCUSGAINED:  // Neovim has been given focus
-    apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
-    break;
-
-  case K_FOCUSLOST:   // Neovim has lost focus
-    apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
-    break;
-
   case K_HOME:        // <Home>
   case K_KHOME:
   case K_S_HOME:
@@ -2406,6 +2398,7 @@ void set_completion(colnr_T startcol, list_T *list)
     ins_compl_prep(' ');
   }
   ins_compl_clear();
+  ins_compl_free();
 
   compl_direction = FORWARD;
   if (startcol > curwin->w_cursor.col)
@@ -3166,8 +3159,7 @@ static bool ins_compl_prep(int c)
 
   /* Ignore end of Select mode mapping and mouse scroll buttons. */
   if (c == K_SELECT || c == K_MOUSEDOWN || c == K_MOUSEUP
-      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT
-      || c == K_FOCUSGAINED || c == K_FOCUSLOST) {
+      || c == K_MOUSELEFT || c == K_MOUSERIGHT || c == K_EVENT) {
     return retval;
   }
 

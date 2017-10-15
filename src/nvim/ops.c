@@ -55,12 +55,11 @@ static yankreg_T y_regs[NUM_REGISTERS];
 
 static yankreg_T *y_previous = NULL; /* ptr to last written yankreg */
 
-static bool clipboard_didwarn_unnamed = false;
-
 // for behavior between start_batch_changes() and end_batch_changes())
-static bool clipboard_delay_update = false;  // delay clipboard update
 static int batch_change_count = 0;           // inside a script
+static bool clipboard_delay_update = false;  // delay clipboard update
 static bool clipboard_needs_update = false;  // clipboard was updated
+static bool clipboard_didwarn = false;
 
 /*
  * structure used by block_prep, op_delete and op_yank for blockwise operators
@@ -2061,7 +2060,7 @@ void op_insert(oparg_T *oap, long count1)
   }
 
   t1 = oap->start;
-  edit(NUL, false, (linenr_T)count1);
+  (void)edit(NUL, false, (linenr_T)count1);
 
   // When a tab was inserted, and the characters in front of the tab
   // have been converted to a tab as well, the column of the cursor
@@ -5524,7 +5523,7 @@ int get_default_register_name(void)
 }
 
 /// Determine if register `*name` should be used as a clipboard.
-/// In an unnammed operation, `*name` is `NUL` and will be adjusted to `'*'/'+'` if
+/// In an unnamed operation, `*name` is `NUL` and will be adjusted to */+ if
 /// `clipboard=unnamed[plus]` is set.
 ///
 /// @param name The name of register, or `NUL` if unnamed.
@@ -5535,33 +5534,41 @@ int get_default_register_name(void)
 /// if the register isn't a clipboard or provider isn't available.
 static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
 {
-  if (*name == '*' || *name == '+') {
-    if(!eval_has_provider("clipboard")) {
-      if (!quiet) {
-        EMSG("clipboard: No provider. Try \":CheckHealth\" or "
-             "\":h clipboard\".");
-      }
-      return NULL;
+#define MSG_NO_CLIP "clipboard: No provider. " \
+  "Try \":CheckHealth\" or \":h clipboard\"."
+
+  yankreg_T *target = NULL;
+  bool explicit_cb_reg = (*name == '*' || *name == '+');
+  bool implicit_cb_reg = (*name == NUL) && (cb_flags & CB_UNNAMEDMASK);
+  if (!explicit_cb_reg && !implicit_cb_reg) {
+    goto end;
+  }
+
+  if (!eval_has_provider("clipboard")) {
+    if (batch_change_count == 1 && !quiet
+        && (!clipboard_didwarn || (explicit_cb_reg && !redirecting()))) {
+      clipboard_didwarn = true;
+      // Do NOT error (emsg()) here--if it interrupts :redir we get into
+      // a weird state, stuck in "redirect mode".
+      msg((char_u *)MSG_NO_CLIP);
     }
-    return &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
-  } else if ((*name == NUL) && (cb_flags & CB_UNNAMEDMASK)) {
-    if(!eval_has_provider("clipboard")) {
-      if (!quiet && !clipboard_didwarn_unnamed) {
-        msg((char_u *)"clipboard: No provider. Try \":CheckHealth\" or "
-            "\":h clipboard\".");
-        clipboard_didwarn_unnamed = true;
-      }
-      return NULL;
-    }
+    // ... else, be silent (don't flood during :while, :redir, etc.).
+    goto end;
+  }
+
+  if (explicit_cb_reg) {
+    target = &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
+    goto end;
+  } else {  // unnamed register: "implicit" clipboard
     if (writing && clipboard_delay_update) {
+      // For "set" (copy), defer the clipboard call.
       clipboard_needs_update = true;
-      return NULL;
+      goto end;
     } else if (!writing && clipboard_needs_update) {
-      // use the internal value
-      return NULL;
+      // For "get" (paste), use the internal value.
+      goto end;
     }
 
-    yankreg_T *target;
     if (cb_flags & CB_UNNAMEDPLUS) {
       *name = (cb_flags & CB_UNNAMED && writing) ? '"': '+';
       target = &y_regs[PLUS_REGISTER];
@@ -5569,10 +5576,11 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
       *name = '*';
       target = &y_regs[STAR_REGISTER];
     }
-    return target; // unnamed register
+    goto end;
   }
-  // don't do anything for other register names
-  return NULL;
+
+end:
+  return target;
 }
 
 static bool get_clipboard(int name, yankreg_T **target, bool quiet)
@@ -5740,17 +5748,16 @@ static void set_clipboard(int name, yankreg_T *reg)
   (void)eval_call_provider("clipboard", "set", args);
 }
 
-/// Avoid clipboard (slow) during batch operations (i.e., a script).
+/// Avoid slow things (clipboard) during batch operations (while/for-loops).
 void start_batch_changes(void)
 {
   if (++batch_change_count > 1) {
     return;
   }
   clipboard_delay_update = true;
-  clipboard_needs_update = false;
 }
 
-/// Update the clipboard after batch changes finished.
+/// Counterpart to start_batch_changes().
 void end_batch_changes(void)
 {
   if (--batch_change_count > 0) {
@@ -5759,10 +5766,36 @@ void end_batch_changes(void)
   }
   clipboard_delay_update = false;
   if (clipboard_needs_update) {
-    set_clipboard(NUL, y_previous);
+    // must be before, as set_clipboard will invoke
+    // start/end_batch_changes recursively
     clipboard_needs_update = false;
+    // unnamed ("implicit" clipboard)
+    set_clipboard(NUL, y_previous);
   }
 }
+
+int save_batch_count(void)
+{
+  int save_count = batch_change_count;
+  batch_change_count = 0;
+  clipboard_delay_update = false;
+  if (clipboard_needs_update) {
+    clipboard_needs_update = false;
+    // unnamed ("implicit" clipboard)
+    set_clipboard(NUL, y_previous);
+  }
+  return save_count;
+}
+
+void restore_batch_count(int save_count)
+{
+  assert(batch_change_count == 0);
+  batch_change_count = save_count;
+  if (batch_change_count > 0) {
+    clipboard_delay_update = true;
+  }
+}
+
 
 /// Check whether register is empty
 static inline bool reg_empty(const yankreg_T *const reg)

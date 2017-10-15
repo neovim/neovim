@@ -94,6 +94,8 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       eq(gzip_data, io.open('Xtestfile.gz'):read('*all'))
     end)
 
+    -- luacheck: ignore 621 (Indentation)
+    -- luacheck: ignore 611 (Line contains only whitespaces)
     it('FileReadPre, FileReadPost', function()
       prepare_gz_file('Xtestfile', text1)
       feed_command('au! FileReadPre    *.gz   exe "silent !gzip -d " . shellescape(expand("<afile>"))')

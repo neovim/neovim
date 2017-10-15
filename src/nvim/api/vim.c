@@ -55,6 +55,47 @@ void nvim_command(String command, Error *err)
   try_end(err);
 }
 
+/// Gets a highlight definition by name.
+///
+/// @param name Highlight group name
+/// @param rgb Export RGB colors
+/// @param[out] err Error details, if any
+/// @return Highlight definition map
+/// @see nvim_get_hl_by_id
+Dictionary nvim_get_hl_by_name(String name, Boolean rgb, Error *err)
+  FUNC_API_SINCE(3)
+{
+  Dictionary result = ARRAY_DICT_INIT;
+  int id = syn_name2id((const char_u *)name.data);
+
+  if (id == 0) {
+    api_set_error(err, kErrorTypeException, "Invalid highlight name: %s",
+                  name.data);
+    return result;
+  }
+  result = nvim_get_hl_by_id(id, rgb, err);
+  return result;
+}
+
+/// Gets a highlight definition by id. |hlID()|
+///
+/// @param hl_id Highlight id as returned by |hlID()|
+/// @param rgb Export RGB colors
+/// @param[out] err Error details, if any
+/// @return Highlight definition map
+/// @see nvim_get_hl_by_name
+Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
+  FUNC_API_SINCE(3)
+{
+  Dictionary dic = ARRAY_DICT_INIT;
+  if (syn_get_final_id((int)hl_id) == 0) {
+    api_set_error(err, kErrorTypeException, "Invalid highlight id: %d", hl_id);
+    return dic;
+  }
+  int attrcode = syn_id2attr((int)hl_id);
+  return hl_get_attr_by_id(attrcode, rgb, err);
+}
+
 /// Passes input keys to Nvim.
 /// On VimL error: Does not fail, but updates v:errmsg.
 ///
@@ -255,12 +296,11 @@ free_vim_args:
   return rv;
 }
 
-/// Execute lua code. Parameters might be passed, they are available inside
-/// the chunk as `...`. The chunk can return a value.
+/// Execute lua code. Parameters (if any) are available as `...` inside the
+/// chunk. The chunk can return a value.
 ///
-/// To evaluate an expression, it must be prefixed with "return ". For
-/// instance, to call a lua function with arguments sent in and get its
-/// return value back, use the code "return my_function(...)".
+/// Only statements are executed. To evaluate an expression, prefix it
+/// with `return`: return my_function(...)
 ///
 /// @param code       lua code to execute
 /// @param args       Arguments to the code
@@ -423,29 +463,18 @@ void nvim_del_var(String name, Error *err)
   dict_set_var(&globvardict, name, NIL, true, false, err);
 }
 
-/// Sets a global variable
-///
 /// @deprecated
-///
-/// @param name     Variable name
-/// @param value    Variable value
-/// @param[out] err Error details, if any
+/// @see nvim_set_var
 /// @return Old value or nil if there was no previous value.
-///
-///         @warning It may return nil if there was no previous value
-///                  or if previous value was `v:null`.
+/// @warning May return nil if there was no previous value
+///          OR if previous value was `v:null`.
 Object vim_set_var(String name, Object value, Error *err)
 {
   return dict_set_var(&globvardict, name, value, false, true, err);
 }
 
-/// Removes a global variable
-///
 /// @deprecated
-///
-/// @param name     Variable name
-/// @param[out] err Error details, if any
-/// @return Old value
+/// @see nvim_del_var
 Object vim_del_var(String name, Error *err)
 {
   return dict_set_var(&globvardict, name, NIL, true, true, err);
@@ -484,7 +513,8 @@ void nvim_set_option(String name, Object value, Error *err)
   set_option_to(NULL, SREQ_GLOBAL, name, value, err);
 }
 
-/// Writes a message to vim output buffer
+/// Writes a message to the Vim output buffer. Does not append "\n", the
+/// message is buffered (won't display) until a linefeed is written.
 ///
 /// @param str Message
 void nvim_out_write(String str)
@@ -493,7 +523,8 @@ void nvim_out_write(String str)
   write_msg(str, false);
 }
 
-/// Writes a message to vim error buffer
+/// Writes a message to the Vim error buffer. Does not append "\n", the
+/// message is buffered (won't display) until a linefeed is written.
 ///
 /// @param str Message
 void nvim_err_write(String str)
@@ -502,8 +533,8 @@ void nvim_err_write(String str)
   write_msg(str, true);
 }
 
-/// Writes a message to vim error buffer. Appends a linefeed to ensure all
-/// contents are written.
+/// Writes a message to the Vim error buffer. Appends "\n", so the buffer is
+/// flushed (and displayed).
 ///
 /// @param str Message
 /// @see nvim_err_write()

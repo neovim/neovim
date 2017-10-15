@@ -9,6 +9,7 @@ local expect = helpers.expect
 describe('text formatting', function()
   setup(clear)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('is working', function()
     -- The control character <C-A> (byte \x01) needs to be put in the buffer
     -- directly.  But the insert function sends the text to nvim in insert

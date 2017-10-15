@@ -1,5 +1,6 @@
--- Some sanity checks for the TUI using the builtin terminal emulator
--- as a simple way to send keys and assert screen state.
+-- TUI acceptance tests.
+-- Uses :terminal as a way to send keys and assert screen state.
+local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed_data = thelpers.feed_data
@@ -194,7 +195,7 @@ describe('tui with non-tty file descriptors', function()
   end)
 end)
 
-describe('tui focus event handling', function()
+describe('tui FocusGained/FocusLost', function()
   local screen
 
   before_each(function()
@@ -206,7 +207,8 @@ describe('tui focus event handling', function()
     feed_data("\034\016")  -- CTRL-\ CTRL-N
   end)
 
-  it('can handle focus events in normal mode', function()
+  it('in normal-mode', function()
+    retry(2, 3 * screen.timeout, function()
     feed_data('\027[I')
     screen:expect([[
       {1: }                                                 |
@@ -228,11 +230,13 @@ describe('tui focus event handling', function()
       lost                                              |
       {3:-- TERMINAL --}                                    |
     ]])
+    end)
   end)
 
-  it('can handle focus events in insert mode', function()
+  it('in insert-mode', function()
     feed_command('set noshowmode')
     feed_data('i')
+    retry(2, 3 * screen.timeout, function()
     feed_data('\027[I')
     screen:expect([[
       {1: }                                                 |
@@ -253,9 +257,12 @@ describe('tui focus event handling', function()
       lost                                              |
       {3:-- TERMINAL --}                                    |
     ]])
+    end)
   end)
 
-  it('can handle focus events in cmdline mode', function()
+  -- During cmdline-mode we ignore :echo invoked by timers/events.
+  -- See commit: 5cc87d4dabd02167117be7a978b5c8faaa975419.
+  it('in cmdline-mode does NOT :echo', function()
     feed_data(':')
     feed_data('\027[I')
     screen:expect([[
@@ -264,7 +271,7 @@ describe('tui focus event handling', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name]                                         }|
-      g{1:a}ined                                            |
+      :{1: }                                                |
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('\027[O')
@@ -274,21 +281,52 @@ describe('tui focus event handling', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name]                                         }|
-      l{1:o}st                                              |
+      :{1: }                                                |
       {3:-- TERMINAL --}                                    |
     ]])
   end)
 
-  it('can handle focus events in terminal mode', function()
+  it('in cmdline-mode', function()
+    -- Set up autocmds that modify the buffer, instead of just calling :echo.
+    -- This is how we can test handling of focus gained/lost during cmdline-mode.
+    -- See commit: 5cc87d4dabd02167117be7a978b5c8faaa975419.
+    feed_data(":autocmd!\n")
+    feed_data(":autocmd FocusLost * call append(line('$'), 'lost')\n")
+    feed_data(":autocmd FocusGained * call append(line('$'), 'gained')\n")
+    retry(2, 3 * screen.timeout, function()
+      -- Enter cmdline-mode.
+      feed_data(':')
+      screen:sleep(1)
+      -- Send focus lost/gained termcodes.
+      feed_data('\027[O')
+      feed_data('\027[I')
+      screen:sleep(1)
+      -- Exit cmdline-mode. Redraws from timers/events are blocked during
+      -- cmdline-mode, so the buffer won't be updated until we exit cmdline-mode.
+      feed_data('\n')
+      screen:expect([[
+        {1: }                                                 |
+        lost                                              |
+        gained                                            |
+        {4:~                                                 }|
+        {5:[No Name] [+]                                     }|
+        :                                                 |
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end)
+  end)
+
+  it('in terminal-mode', function()
     feed_data(':set shell='..nvim_dir..'/shell-test\n')
     feed_data(':set noshowmode laststatus=0\n')
 
     retry(2, 3 * screen.timeout, function()
       feed_data(':terminal\n')
+      screen:sleep(1)
       feed_data('\027[I')
       screen:expect([[
-        ready $                                           |
-        [Process exited 0]{1: }                               |
+        {1:r}eady $                                           |
+        [Process exited 0]                                |
                                                           |
                                                           |
                                                           |
@@ -297,8 +335,8 @@ describe('tui focus event handling', function()
       ]])
       feed_data('\027[O')
       screen:expect([[
-        ready $                                           |
-        [Process exited 0]{1: }                               |
+        {1:r}eady $                                           |
+        [Process exited 0]                                |
                                                           |
                                                           |
                                                           |
@@ -311,13 +349,30 @@ describe('tui focus event handling', function()
       feed_data(':bwipeout!\n')
     end)
   end)
+
+  it('in press-enter prompt', function()
+    feed_data(":echom 'msg1'|echom 'msg2'|echom 'msg3'|echom 'msg4'|echom 'msg5'\n")
+    -- Execute :messages to provoke the press-enter prompt.
+    feed_data(":messages\n")
+    feed_data('\027[I')
+    feed_data('\027[I')
+    screen:expect([[
+      msg1                                              |
+      msg2                                              |
+      msg3                                              |
+      msg4                                              |
+      msg5                                              |
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
 end)
 
 -- These tests require `thelpers` because --headless/--embed
 -- does not initialize the TUI.
 describe("tui 't_Co' (terminal colors)", function()
   local screen
-  local is_freebsd = (helpers.eval("system('uname') =~? 'FreeBSD'") == 1)
+  local is_freebsd = (string.lower(global_helpers.uname()) == 'freebsd')
 
   local function assert_term_colors(term, colorterm, maxcolors)
     helpers.clear({env={TERM=term}, args={}})

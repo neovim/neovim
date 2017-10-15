@@ -15,6 +15,8 @@ local function insert_(content)
   feed_command('1', 'set cin ts=4 sw=4')
 end
 
+-- luacheck: ignore 621 (Indentation)
+-- luacheck: ignore 613 (Trailing whitespace in a string)
 describe('cindent', function()
   before_each(clear)
 
@@ -3915,6 +3917,26 @@ describe('cindent', function()
       {
         111111111111111111;
       }
+      namespace test::cpp17
+      {
+        111111111111111111;
+      }
+      namespace ::incorrectcpp17
+      {
+        111111111111111111;
+      }
+      namespace test::incorrectcpp17::
+      {
+        111111111111111111;
+      }
+      namespace test:incorrectcpp17
+      {
+        111111111111111111;
+      }
+      namespace test:::incorrectcpp17
+      {
+        111111111111111111;
+      }
       namespace{
         111111111111111111;
       }
@@ -3985,6 +4007,26 @@ describe('cindent', function()
       namespace test
       {
       111111111111111111;
+      }
+      namespace test::cpp17
+      {
+      111111111111111111;
+      }
+      namespace ::incorrectcpp17
+      {
+      	111111111111111111;
+      }
+      namespace test::incorrectcpp17::
+      {
+      	111111111111111111;
+      }
+      namespace test:incorrectcpp17
+      {
+      	111111111111111111;
+      }
+      namespace test:::incorrectcpp17
+      {
+      	111111111111111111;
       }
       namespace{
       111111111111111111;
@@ -4675,5 +4717,39 @@ describe('cindent', function()
       	i;
       JSEND
       ]=])
+  end)
+
+  it('line continuations in macros / vim-patch 8.0.0148', function()
+    insert_([=[
+      /* start of define */
+      {
+      }
+      #define AAA \
+      BBB\
+      CCC
+
+      #define CNT \
+      1 + \
+      2 + \
+      4
+      /* end of define */]=])
+
+    feed_command('set cino&')
+    feed_command('/start of define')
+    feed('=/end of define<cr>')
+
+    expect([=[
+      /* start of define */
+      {
+      }
+      #define AAA \
+      	BBB\
+      	CCC
+
+      #define CNT \
+      	1 + \
+      	2 + \
+      	4
+      /* end of define */]=])
   end)
 end)

@@ -2,7 +2,7 @@
 
 let s:stderr = {}
 
-function! provider#stderr_collector(chan_id, data, event) dict
+function! provider#stderr_collector(chan_id, data, event)
    let stderr = get(s:stderr, a:chan_id, [''])
    let stderr[-1] .= a:data[0]
    call extend(stderr, a:data[1:])
@@ -10,7 +10,9 @@ function! provider#stderr_collector(chan_id, data, event) dict
 endfunction
 
 function! provider#clear_stderr(chan_id)
-   silent! call delete(s:stderr, a:chan_id)
+  if has_key(s:stderr, a:chan_id)
+    call remove(s:stderr, a:chan_id)
+  endif
 endfunction
 
 function! provider#get_stderr(chan_id)

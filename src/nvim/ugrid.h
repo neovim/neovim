@@ -21,8 +21,6 @@ struct ugrid {
   UCell **cells;
 };
 
-#define EMPTY_ATTRS ((HlAttrs){ false, false, false, false, false, -1, -1, -1 })
-
 #define UGRID_FOREACH_CELL(grid, top, bot, left, right, code) \
   do { \
     for (int row = top; row <= bot; row++) { \

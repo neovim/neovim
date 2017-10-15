@@ -407,6 +407,9 @@ EXTERN int garbage_collect_at_exit INIT(= FALSE);
 
 /* ID of script being sourced or was sourced to define the current function. */
 EXTERN scid_T current_SID INIT(= 0);
+
+EXTERN bool did_source_packages INIT(= false);
+
 // Scope information for the code that indirectly triggered the current
 // provider function call
 EXTERN struct caller_scope {
@@ -1120,8 +1123,9 @@ EXTERN char_u e_winheight[] INIT(= N_(
 EXTERN char_u e_winwidth[] INIT(= N_(
         "E592: 'winwidth' cannot be smaller than 'winminwidth'"));
 EXTERN char_u e_write[] INIT(= N_("E80: Error while writing"));
-EXTERN char_u e_zerocount[] INIT(= N_("Zero count"));
-EXTERN char_u e_usingsid[] INIT(= N_("E81: Using <SID> not in a script context"));
+EXTERN char_u e_zerocount[] INIT(= N_("E939: Positive count required"));
+EXTERN char_u e_usingsid[] INIT(= N_(
+    "E81: Using <SID> not in a script context"));
 EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_maxmempat[] INIT(= N_(
         "E363: pattern uses more memory than 'maxmempattern'"));

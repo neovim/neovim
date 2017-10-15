@@ -1,4 +1,6 @@
 version: '{build}'
+environment:
+  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma -mx=9"
 configuration:
 - MINGW_64
 - MINGW_32

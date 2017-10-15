@@ -10,6 +10,11 @@ if(USE_GCOV)
 endif()
 endif()
 
+if(WIN32)
+  # tell MinGW compiler to enable wmain
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -municode")
+endif()
+
 set(TOUCHES_DIR ${PROJECT_BINARY_DIR}/touches)
 set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)

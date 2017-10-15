@@ -7,6 +7,7 @@ describe('marks', function()
     clear()
   end)
 
+  -- luacheck: ignore 621 (Indentation)
   it('restores a deleted mark after delete-undo-redo-undo', function()
     insert([[
 
