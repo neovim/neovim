@@ -1042,6 +1042,7 @@ void viml_pexpr_free_ast(ExprAST ast)
 //
 // NVimRegister -> SpecialChar
 // NVimNumber -> Number
+// NVimNumberPrefix -> SpecialChar
 // NVimFloat -> NVimNumber
 //
 // NVimNestingParenthesis -> NVimParenthesis
@@ -1842,6 +1843,14 @@ static const int want_node_to_lexer_flags[] = {
   [kENodeArgumentSeparator] = kELFlagForbidScope,
 };
 
+/// Number of characters to highlight as NumberPrefix depending on the base
+static const uint8_t base_to_prefix_length[] = {
+  [2] = 2,
+  [8] = 1,
+  [10] = 0,
+  [16] = 2,
+};
+
 /// Parse one VimL expression
 ///
 /// @param  pstate  Parser state.
@@ -2632,7 +2641,13 @@ viml_pexpr_parse_figure_brace_closing_error:
         } else {
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeInteger);
           cur_node->data.num.value = cur_token.data.num.val.integer;
-          HL_CUR_TOKEN(Number);
+          const uint8_t prefix_length = base_to_prefix_length[
+              cur_token.data.num.base];
+          viml_parser_highlight(pstate, cur_token.start, prefix_length,
+                                HL(NumberPrefix));
+          viml_parser_highlight(
+              pstate, shifted_pos(cur_token.start, prefix_length),
+              cur_token.len - prefix_length, HL(Number));
         }
         want_node = kENodeOperator;
         *top_node_p = cur_node;

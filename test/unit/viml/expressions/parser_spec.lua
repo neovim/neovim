@@ -6858,6 +6858,116 @@ describe('Expressions parser', function()
       hl('Number', '2'),
     })
   end)
+  itp('highlights numbers with prefix', function()
+    check_parsing('0xABCDEF', 0, {
+      --           01234567
+      ast = {
+        'Integer(val=11259375):0:0:0xABCDEF',
+      },
+    }, {
+      hl('NumberPrefix', '0x'),
+      hl('Number', 'ABCDEF'),
+    })
+
+    check_parsing('0Xabcdef', 0, {
+      --           01234567
+      ast = {
+        'Integer(val=11259375):0:0:0Xabcdef',
+      },
+    }, {
+      hl('NumberPrefix', '0X'),
+      hl('Number', 'abcdef'),
+    })
+
+    check_parsing('0XABCDEF', 0, {
+      --           01234567
+      ast = {
+        'Integer(val=11259375):0:0:0XABCDEF',
+      },
+    }, {
+      hl('NumberPrefix', '0X'),
+      hl('Number', 'ABCDEF'),
+    })
+
+    check_parsing('0xabcdef', 0, {
+      --           01234567
+      ast = {
+        'Integer(val=11259375):0:0:0xabcdef',
+      },
+    }, {
+      hl('NumberPrefix', '0x'),
+      hl('Number', 'abcdef'),
+    })
+
+    check_parsing('0b001', 0, {
+      --           01234
+      ast = {
+        'Integer(val=1):0:0:0b001',
+      },
+    }, {
+      hl('NumberPrefix', '0b'),
+      hl('Number', '001'),
+    })
+
+    check_parsing('0B001', 0, {
+      --           01234
+      ast = {
+        'Integer(val=1):0:0:0B001',
+      },
+    }, {
+      hl('NumberPrefix', '0B'),
+      hl('Number', '001'),
+    })
+
+    check_parsing('0B00', 0, {
+      --           0123
+      ast = {
+        'Integer(val=0):0:0:0B00',
+      },
+    }, {
+      hl('NumberPrefix', '0B'),
+      hl('Number', '00'),
+    })
+
+    check_parsing('00', 0, {
+      --           01
+      ast = {
+        'Integer(val=0):0:0:00',
+      },
+    }, {
+      hl('NumberPrefix', '0'),
+      hl('Number', '0'),
+    })
+
+    check_parsing('001', 0, {
+      --           012
+      ast = {
+        'Integer(val=1):0:0:001',
+      },
+    }, {
+      hl('NumberPrefix', '0'),
+      hl('Number', '01'),
+    })
+
+    check_parsing('01', 0, {
+      --           01
+      ast = {
+        'Integer(val=1):0:0:01',
+      },
+    }, {
+      hl('NumberPrefix', '0'),
+      hl('Number', '1'),
+    })
+
+    check_parsing('1', 0, {
+      --           0
+      ast = {
+        'Integer(val=1):0:0:1',
+      },
+    }, {
+      hl('Number', '1'),
+    })
+  end)
   itp('works (KLEE tests)', function()
     check_parsing('\0002&A:\000', 0, {
       ast = nil,
@@ -6879,7 +6989,8 @@ describe('Expressions parser', function()
         'Integer(val=0):0:0:00',
       },
     }, {
-      hl('Number', '00'),
+      hl('NumberPrefix', '0'),
+      hl('Number', '0'),
     })
   end)
 end)
