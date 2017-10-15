@@ -22850,3 +22850,32 @@ void eval_format_source_name_line(char *buf, size_t bufsize)
            (sourcing_name ? sourcing_name : (char_u *)"?"),
            (sourcing_name ? sourcing_lnum : 0));
 }
+
+/// ":checkhealth [plugins]"
+void ex_checkhealth(exarg_T *eap)
+{
+  bool found = !!find_func((char_u *)"health#check");
+  if (!found
+      && script_autoload("health#check", sizeof("health#check") - 1, false)) {
+    found = !!find_func((char_u *)"health#check");
+  }
+  if (!found) {
+    const char *vimruntime_env = os_getenv("VIMRUNTIME");
+    if (vimruntime_env == NULL) {
+      EMSG(_("E5009: $VIMRUNTIME is empty or unset"));
+      return;
+    } else {
+      EMSG2(_("E5009: Invalid $VIMRUNTIME: %s"), os_getenv("VIMRUNTIME"));
+      return;
+    }
+  }
+
+  size_t bufsize = STRLEN(eap->arg) + strlen("CheckHealth ") + 1;
+  char *buf = xmalloc(bufsize);
+  snprintf(buf, bufsize, "CheckHealth %s", eap->arg);
+
+  do_cmdline_cmd(buf);
+
+  xfree(buf);
+}
+

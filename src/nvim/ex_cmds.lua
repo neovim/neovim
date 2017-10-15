@@ -451,6 +451,12 @@ return {
     func='ex_changes',
   },
   {
+    command='checkhealth',
+    flags=bit.bor(EXTRA, TRLBAR),
+    addr_type=ADDR_LINES,
+    func='ex_checkhealth',
+  },
+  {
     command='checkpath',
     flags=bit.bor(TRLBAR, BANG, CMDWIN),
     addr_type=ADDR_LINES,

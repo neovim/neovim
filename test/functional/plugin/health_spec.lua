@@ -2,7 +2,29 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local plugin_helpers = require('test.functional.plugin.helpers')
 
+local clear = helpers.clear
 local command = helpers.command
+local eq = helpers.eq
+
+describe(':checkhealth', function()
+  it("detects invalid $VIMRUNTIME", function()
+    clear({
+      env={ VIMRUNTIME='bogus', },
+    })
+    local status, err = pcall(command, 'checkhealth')
+    eq(false, status)
+    eq('Invalid $VIMRUNTIME: bogus', string.match(err, 'Invalid.*'))
+  end)
+  it("detects invalid $VIM", function()
+    clear({
+      env={ VIM='bogus', },
+    })
+    local status, err = pcall(command, 'checkhealth')
+    eq(false, status)
+    -- Invalid $VIM causes $VIMRUNTIME to be broken.
+    eq('Invalid $VIMRUNTIME: bogus', string.match(err, 'Invalid.*'))
+  end)
+end)
 
 describe('health.vim', function()
   before_each(function()
@@ -14,7 +36,7 @@ describe('health.vim', function()
     command("set runtimepath+=test/functional/fixtures")
   end)
 
-  it("reports", function()
+  it("health#report_*()", function()
     helpers.source([[
       let g:health_report = execute([
         \ "call health#report_start('Check Bar')",
@@ -44,7 +66,7 @@ describe('health.vim', function()
   end)
 
 
-  describe(":CheckHealth", function()
+  describe(":checkhealth", function()
     it("concatenates multiple reports", function()
       command("CheckHealth success1 success2")
       helpers.expect([[
