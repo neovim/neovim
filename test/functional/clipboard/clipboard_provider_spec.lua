@@ -392,6 +392,13 @@ describe('clipboard', function()
       eq('---', eval('getreg("*")'))
     end)
 
+    it('works in the cmdline window', function()
+      feed('q:itext<esc>yy')
+      eq({{'text', ''}, 'V'}, eval("g:test_clip['*']"))
+      command("let g:test_clip['*'] = [['star'], 'c']")
+      feed('p')
+      eq('textstar', meths.get_current_line())
+    end)
   end)
 
   describe('clipboard=unnamedplus', function()

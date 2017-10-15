@@ -5718,6 +5718,7 @@ static int ex_window(void)
 
   i = RedrawingDisabled;
   RedrawingDisabled = 0;
+  int save_count = save_batch_count();
 
   /*
    * Call the main loop until <CR> or CTRL-C is typed.
@@ -5726,6 +5727,7 @@ static int ex_window(void)
   normal_enter(true, false);
 
   RedrawingDisabled = i;
+  restore_batch_count(save_count);
 
   int save_KeyTyped = KeyTyped;
 

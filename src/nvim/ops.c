@@ -5755,7 +5755,6 @@ void start_batch_changes(void)
     return;
   }
   clipboard_delay_update = true;
-  clipboard_needs_update = false;
 }
 
 /// Counterpart to start_batch_changes().
@@ -5767,11 +5766,36 @@ void end_batch_changes(void)
   }
   clipboard_delay_update = false;
   if (clipboard_needs_update) {
+    // must be before, as set_clipboard will invoke
+    // start/end_batch_changes recursively
+    clipboard_needs_update = false;
     // unnamed ("implicit" clipboard)
     set_clipboard(NUL, y_previous);
-    clipboard_needs_update = false;
   }
 }
+
+int save_batch_count(void)
+{
+  int save_count = batch_change_count;
+  batch_change_count = 0;
+  clipboard_delay_update = false;
+  if (clipboard_needs_update) {
+    clipboard_needs_update = false;
+    // unnamed ("implicit" clipboard)
+    set_clipboard(NUL, y_previous);
+  }
+  return save_count;
+}
+
+void restore_batch_count(int save_count)
+{
+  assert(batch_change_count == 0);
+  batch_change_count = save_count;
+  if (batch_change_count > 0) {
+    clipboard_delay_update = true;
+  }
+}
+
 
 /// Check whether register is empty
 static inline bool reg_empty(const yankreg_T *const reg)
