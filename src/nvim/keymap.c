@@ -141,8 +141,7 @@ static char_u modifier_keys_table[] =
 static const struct key_name_entry {
   int key;              // Special key code or ascii value
   const char *name;           // Name of key
-} key_names_table[] =
-{
+} key_names_table[] = {
   { ' ',               "Space" },
   { TAB,               "Tab" },
   { K_TAB,             "Tab" },
