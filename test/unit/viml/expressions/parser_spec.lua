@@ -1453,6 +1453,24 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', '(', 1),
       hl('CallingParenthesis', ')'),
     })
+    check_parsing('{@a', 0, {
+      --           012
+      ast = {
+        {
+          'UnknownFigure(-di):0:0:{',
+          children = {
+            'Register(name=a):0:1:@a',
+          },
+        },
+      },
+      err = {
+        arg = '{@a',
+        msg = 'E15: Missing closing figure brace: %.*s',
+      },
+    }, {
+      hl('FigureBrace', '{'),
+      hl('Register', '@a'),
+    })
   end)
   itp('works with lambdas and dictionaries', function()
     check_parsing('{}', 0, {
@@ -2767,6 +2785,182 @@ describe('Expressions parser', function()
       hl('InvalidColon', ':', 1),
       hl('Identifier', 'c', 1),
       hl('Dict', '}'),
+    })
+    check_parsing('{', 0, {
+      --           0
+      ast = {
+        'UnknownFigure(\\di):0:0:{',
+      },
+      err = {
+        arg = '{',
+        msg = 'E15: Missing closing figure brace: %.*s',
+      },
+    }, {
+      hl('FigureBrace', '{'),
+    })
+    check_parsing('{a', 0, {
+      --           01
+      ast = {
+        {
+          'UnknownFigure(\\di):0:0:{',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:1:a',
+          },
+        },
+      },
+      err = {
+        arg = '{a',
+        msg = 'E15: Missing closing figure brace: %.*s',
+      },
+    }, {
+      hl('FigureBrace', '{'),
+      hl('Identifier', 'a'),
+    })
+    check_parsing('{a,b', 0, {
+      --           0123
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3:b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '{a,b',
+        msg = 'E15: Missing closing figure brace for lambda: %.*s',
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+    })
+    check_parsing('{a,b->', 0, {
+      --           012345
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3:b',
+              },
+            },
+            'Arrow:0:4:->',
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('Arrow', '->'),
+    })
+    check_parsing('{a,b->c', 0, {
+      --           0123456
+      ast = {
+        {
+          'Lambda(\\di):0:0:{',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3:b',
+              },
+            },
+            {
+              'Arrow:0:4:->',
+              children = {
+                'PlainIdentifier(scope=0,ident=c):0:6:c',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '{a,b->c',
+        msg = 'E15: Missing closing figure brace for lambda: %.*s',
+      },
+    }, {
+      hl('Lambda', '{'),
+      hl('Identifier', 'a'),
+      hl('Comma', ','),
+      hl('Identifier', 'b'),
+      hl('Arrow', '->'),
+      hl('Identifier', 'c'),
+    })
+    check_parsing('{a : b', 0, {
+      --           012345
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Colon:0:2: :',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:4: b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '{a : b',
+        msg = 'E723: Missing end of Dictionary \'}\': %.*s',
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Identifier', 'a'),
+      hl('Colon', ':', 1),
+      hl('Identifier', 'b', 1),
+    })
+    check_parsing('{a : b,', 0, {
+      --           0123456
+      ast = {
+        {
+          'DictLiteral(-di):0:0:{',
+          children = {
+            {
+              'Comma:0:6:,',
+              children = {
+                {
+                  'Colon:0:2: :',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=a):0:1:a',
+                    'PlainIdentifier(scope=0,ident=b):0:4: b',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Dict', '{'),
+      hl('Identifier', 'a'),
+      hl('Colon', ':', 1),
+      hl('Identifier', 'b', 1),
+      hl('Comma', ','),
     })
   end)
   itp('works with ternary operator', function()
@@ -4574,6 +4768,38 @@ describe('Expressions parser', function()
       hl('Subscript', '['),
       hl('InvalidSubscript', ']'),
     })
+
+    check_parsing('[', 0, {
+      --           0
+      ast = {
+        'ListLiteral:0:0:[',
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('List', '['),
+    })
+
+    check_parsing('[1', 0, {
+      --           01
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            'Integer(val=1):0:1:1',
+          },
+        },
+      },
+      err = {
+        arg = '[1',
+        msg = 'E697: Missing end of List \']\': %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('Number', '1'),
+    })
   end)
   itp('works with strings', function()
     check_parsing('\'abc\'', 0, {
@@ -5391,6 +5617,1210 @@ describe('Expressions parser', function()
       hl('DoubleQuotedUnknownEscape', '\\<'),
       hl('DoubleQuotedBody', 'C-u'),
       hl('DoubleQuotedString', '"'),
+    })
+  end)
+  itp('works with multiplication-like operators', function()
+    check_parsing('2+2*2', 0, {
+      --           01234
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Multiplication:0:3:*',
+              children = {
+                'Integer(val=2):0:2:2',
+                'Integer(val=2):0:4:2',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('Number', '2'),
+      hl('Multiplication', '*'),
+      hl('Number', '2'),
+    })
+
+    check_parsing('2+2*', 0, {
+      --           0123
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Multiplication:0:3:*',
+              children = {
+                'Integer(val=2):0:2:2',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('Number', '2'),
+      hl('Multiplication', '*'),
+    })
+
+    check_parsing('2+*2', 0, {
+      --           0123
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Multiplication:0:2:*',
+              children = {
+                'Missing:0:2:',
+                'Integer(val=2):0:3:2',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '*2',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('InvalidMultiplication', '*'),
+      hl('Number', '2'),
+    })
+
+    check_parsing('2+2/2', 0, {
+      --           01234
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Division:0:3:/',
+              children = {
+                'Integer(val=2):0:2:2',
+                'Integer(val=2):0:4:2',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('Number', '2'),
+      hl('Division', '/'),
+      hl('Number', '2'),
+    })
+
+    check_parsing('2+2/', 0, {
+      --           0123
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Division:0:3:/',
+              children = {
+                'Integer(val=2):0:2:2',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('Number', '2'),
+      hl('Division', '/'),
+    })
+
+    check_parsing('2+/2', 0, {
+      --           0123
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Division:0:2:/',
+              children = {
+                'Missing:0:2:',
+                'Integer(val=2):0:3:2',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '/2',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('InvalidDivision', '/'),
+      hl('Number', '2'),
+    })
+
+    check_parsing('2+2%2', 0, {
+      --           01234
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Mod:0:3:%',
+              children = {
+                'Integer(val=2):0:2:2',
+                'Integer(val=2):0:4:2',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('Number', '2'),
+      hl('Mod', '%'),
+      hl('Number', '2'),
+    })
+
+    check_parsing('2+2%', 0, {
+      --           0123
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Mod:0:3:%',
+              children = {
+                'Integer(val=2):0:2:2',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('Number', '2'),
+      hl('Mod', '%'),
+    })
+
+    check_parsing('2+%2', 0, {
+      --           0123
+      ast = {
+        {
+          'BinaryPlus:0:1:+',
+          children = {
+            'Integer(val=2):0:0:2',
+            {
+              'Mod:0:2:%',
+              children = {
+                'Missing:0:2:',
+                'Integer(val=2):0:3:2',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '%2',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('Number', '2'),
+      hl('BinaryPlus', '+'),
+      hl('InvalidMod', '%'),
+      hl('Number', '2'),
+    })
+  end)
+  itp('works with -', function()
+    check_parsing('@a', 0, {
+      ast = {
+        'Register(name=a):0:0:@a',
+      },
+    }, {
+      hl('Register', '@a'),
+    })
+    check_parsing('-@a', 0, {
+      ast = {
+        {
+          'UnaryMinus:0:0:-',
+          children = {
+            'Register(name=a):0:1:@a',
+          },
+        },
+      },
+    }, {
+      hl('UnaryMinus', '-'),
+      hl('Register', '@a'),
+    })
+    check_parsing('@a-@b', 0, {
+      ast = {
+        {
+          'BinaryMinus:0:2:-',
+          children = {
+            'Register(name=a):0:0:@a',
+            'Register(name=b):0:3:@b',
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('BinaryMinus', '-'),
+      hl('Register', '@b'),
+    })
+    check_parsing('@a-@b-@c', 0, {
+      ast = {
+        {
+          'BinaryMinus:0:5:-',
+          children = {
+            {
+              'BinaryMinus:0:2:-',
+              children = {
+                'Register(name=a):0:0:@a',
+                'Register(name=b):0:3:@b',
+              },
+            },
+            'Register(name=c):0:6:@c',
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('BinaryMinus', '-'),
+      hl('Register', '@b'),
+      hl('BinaryMinus', '-'),
+      hl('Register', '@c'),
+    })
+    check_parsing('-@a-@b', 0, {
+      ast = {
+        {
+          'BinaryMinus:0:3:-',
+          children = {
+            {
+              'UnaryMinus:0:0:-',
+              children = {
+                'Register(name=a):0:1:@a',
+              },
+            },
+            'Register(name=b):0:4:@b',
+          },
+        },
+      },
+    }, {
+      hl('UnaryMinus', '-'),
+      hl('Register', '@a'),
+      hl('BinaryMinus', '-'),
+      hl('Register', '@b'),
+    })
+    check_parsing('-@a--@b', 0, {
+      ast = {
+        {
+          'BinaryMinus:0:3:-',
+          children = {
+            {
+              'UnaryMinus:0:0:-',
+              children = {
+                'Register(name=a):0:1:@a',
+              },
+            },
+            {
+              'UnaryMinus:0:4:-',
+              children = {
+                'Register(name=b):0:5:@b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('UnaryMinus', '-'),
+      hl('Register', '@a'),
+      hl('BinaryMinus', '-'),
+      hl('UnaryMinus', '-'),
+      hl('Register', '@b'),
+    })
+    check_parsing('@a@b', 0, {
+      ast = {
+        {
+          'OpMissing:0:2:',
+          children = {
+            'Register(name=a):0:0:@a',
+            'Register(name=b):0:2:@b',
+          },
+        },
+      },
+      err = {
+        arg = '@b',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('InvalidRegister', '@b'),
+    })
+    check_parsing(' @a \t @b', 0, {
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            'Register(name=a):0:0: @a',
+            'Register(name=b):0:3: \t @b',
+          },
+        },
+      },
+      err = {
+        arg = '@b',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('Register', '@a', 1),
+      hl('InvalidSpacing', ' \t '),
+      hl('Register', '@b'),
+    })
+    check_parsing('-', 0, {
+      ast = {
+        'UnaryMinus:0:0:-',
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('UnaryMinus', '-'),
+    })
+    check_parsing(' -', 0, {
+      ast = {
+        'UnaryMinus:0:0: -',
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('UnaryMinus', '-', 1),
+    })
+    check_parsing('@a-  ', 0, {
+      ast = {
+        {
+          'BinaryMinus:0:2:-',
+          children = {
+            'Register(name=a):0:0:@a',
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('BinaryMinus', '-'),
+    })
+  end)
+  itp('works with logical operators', function()
+    check_parsing('a && b || c && d', 0, {
+      --           0123456789012345
+      --           0         1
+      ast = {
+        {
+          'Or:0:6: ||',
+          children = {
+            {
+              'And:0:1: &&',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                'PlainIdentifier(scope=0,ident=b):0:4: b',
+              },
+            },
+            {
+              'And:0:11: &&',
+              children = {
+                'PlainIdentifier(scope=0,ident=c):0:9: c',
+                'PlainIdentifier(scope=0,ident=d):0:14: d',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('And', '&&', 1),
+      hl('Identifier', 'b', 1),
+      hl('Or', '||', 1),
+      hl('Identifier', 'c', 1),
+      hl('And', '&&', 1),
+      hl('Identifier', 'd', 1),
+    })
+
+    check_parsing('&& a', 0, {
+      --           0123
+      ast = {
+        {
+          'And:0:0:&&',
+          children = {
+            'Missing:0:0:',
+            'PlainIdentifier(scope=0,ident=a):0:2: a',
+          },
+        },
+      },
+      err = {
+        arg = '&& a',
+        msg = 'E15: Unexpected and operator: %.*s',
+      },
+    }, {
+      hl('InvalidAnd', '&&'),
+      hl('Identifier', 'a', 1),
+    })
+
+    check_parsing('|| a', 0, {
+      --           0123
+      ast = {
+        {
+          'Or:0:0:||',
+          children = {
+            'Missing:0:0:',
+            'PlainIdentifier(scope=0,ident=a):0:2: a',
+          },
+        },
+      },
+      err = {
+        arg = '|| a',
+        msg = 'E15: Unexpected or operator: %.*s',
+      },
+    }, {
+      hl('InvalidOr', '||'),
+      hl('Identifier', 'a', 1),
+    })
+
+    check_parsing('a||', 0, {
+      --           012
+      ast = {
+        {
+          'Or:0:1:||',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('Or', '||'),
+    })
+
+    check_parsing('a&&', 0, {
+      --           012
+      ast = {
+        {
+          'And:0:1:&&',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('And', '&&'),
+    })
+
+    check_parsing('(&&)', 0, {
+      --           0123
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'And:0:1:&&',
+              children = {
+                'Missing:0:1:',
+                'Missing:0:3:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '&&)',
+        msg = 'E15: Unexpected and operator: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('InvalidAnd', '&&'),
+      hl('InvalidNestingParenthesis', ')'),
+    })
+
+    check_parsing('(||)', 0, {
+      --           0123
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'Or:0:1:||',
+              children = {
+                'Missing:0:1:',
+                'Missing:0:3:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '||)',
+        msg = 'E15: Unexpected or operator: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('InvalidOr', '||'),
+      hl('InvalidNestingParenthesis', ')'),
+    })
+
+    check_parsing('(a||)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'Or:0:2:||',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'Missing:0:4:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ')',
+        msg = 'E15: Expected value, got parenthesis: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Identifier', 'a'),
+      hl('Or', '||'),
+      hl('InvalidNestingParenthesis', ')'),
+    })
+
+    check_parsing('(a&&)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'And:0:2:&&',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'Missing:0:4:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ')',
+        msg = 'E15: Expected value, got parenthesis: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Identifier', 'a'),
+      hl('And', '&&'),
+      hl('InvalidNestingParenthesis', ')'),
+    })
+
+    check_parsing('(&&a)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'And:0:1:&&',
+              children = {
+                'Missing:0:1:',
+                'PlainIdentifier(scope=0,ident=a):0:3:a',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '&&a)',
+        msg = 'E15: Unexpected and operator: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('InvalidAnd', '&&'),
+      hl('Identifier', 'a'),
+      hl('NestingParenthesis', ')'),
+    })
+
+    check_parsing('(||a)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'Or:0:1:||',
+              children = {
+                'Missing:0:1:',
+                'PlainIdentifier(scope=0,ident=a):0:3:a',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '||a)',
+        msg = 'E15: Unexpected or operator: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('InvalidOr', '||'),
+      hl('Identifier', 'a'),
+      hl('NestingParenthesis', ')'),
+    })
+  end)
+  itp('works with &opt', function()
+    check_parsing('&', 0, {
+      --           0
+      ast = {
+        'Option(scope=0,ident=):0:0:&',
+      },
+      err = {
+        arg = '&',
+        msg = 'E112: Option name missing: %.*s',
+      },
+    }, {
+      hl('InvalidOptionSigil', '&'),
+    })
+
+    check_parsing('&opt', 0, {
+      --           0123
+      ast = {
+        'Option(scope=0,ident=opt):0:0:&opt',
+      },
+    }, {
+      hl('OptionSigil', '&'),
+      hl('Option', 'opt'),
+    })
+
+    check_parsing('&l:opt', 0, {
+      --           012345
+      ast = {
+        'Option(scope=l,ident=opt):0:0:&l:opt',
+      },
+    }, {
+      hl('OptionSigil', '&'),
+      hl('OptionScope', 'l'),
+      hl('OptionScopeDelimiter', ':'),
+      hl('Option', 'opt'),
+    })
+
+    check_parsing('&g:opt', 0, {
+      --           012345
+      ast = {
+        'Option(scope=g,ident=opt):0:0:&g:opt',
+      },
+    }, {
+      hl('OptionSigil', '&'),
+      hl('OptionScope', 'g'),
+      hl('OptionScopeDelimiter', ':'),
+      hl('Option', 'opt'),
+    })
+
+    check_parsing('&s:opt', 0, {
+      --           012345
+      ast = {
+        {
+          'Colon:0:2::',
+          children = {
+            'Option(scope=0,ident=s):0:0:&s',
+            'PlainIdentifier(scope=0,ident=opt):0:3:opt',
+          },
+        },
+      },
+      err = {
+        arg = ':opt',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('OptionSigil', '&'),
+      hl('Option', 's'),
+      hl('InvalidColon', ':'),
+      hl('Identifier', 'opt'),
+    })
+
+    check_parsing('& ', 0, {
+      --           01
+      ast = {
+        'Option(scope=0,ident=):0:0:&',
+      },
+      err = {
+        arg = '& ',
+        msg = 'E112: Option name missing: %.*s',
+      },
+    }, {
+      hl('InvalidOptionSigil', '&'),
+    })
+
+    check_parsing('&-', 0, {
+      --           01
+      ast = {
+        {
+          'BinaryMinus:0:1:-',
+          children = {
+            'Option(scope=0,ident=):0:0:&',
+          },
+        },
+      },
+      err = {
+        arg = '&-',
+        msg = 'E112: Option name missing: %.*s',
+      },
+    }, {
+      hl('InvalidOptionSigil', '&'),
+      hl('BinaryMinus', '-'),
+    })
+
+    check_parsing('&A', 0, {
+      --           01
+      ast = {
+        'Option(scope=0,ident=A):0:0:&A',
+      },
+    }, {
+      hl('OptionSigil', '&'),
+      hl('Option', 'A'),
+    })
+
+    check_parsing('&xxx_yyy', 0, {
+      --           01234567
+      ast = {
+        {
+          'OpMissing:0:4:',
+          children = {
+            'Option(scope=0,ident=xxx):0:0:&xxx',
+            'PlainIdentifier(scope=0,ident=_yyy):0:4:_yyy',
+          },
+        },
+      },
+      err = {
+        arg = '_yyy',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('OptionSigil', '&'),
+      hl('Option', 'xxx'),
+      hl('InvalidIdentifier', '_yyy'),
+    })
+
+    check_parsing('(1+&)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'BinaryPlus:0:2:+',
+              children = {
+                'Integer(val=1):0:1:1',
+                'Option(scope=0,ident=):0:3:&',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '&)',
+        msg = 'E112: Option name missing: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Number', '1'),
+      hl('BinaryPlus', '+'),
+      hl('InvalidOptionSigil', '&'),
+      hl('NestingParenthesis', ')'),
+    })
+
+    check_parsing('(&+1)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'BinaryPlus:0:2:+',
+              children = {
+                'Option(scope=0,ident=):0:1:&',
+                'Integer(val=1):0:3:1',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '&+1)',
+        msg = 'E112: Option name missing: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('InvalidOptionSigil', '&'),
+      hl('BinaryPlus', '+'),
+      hl('Number', '1'),
+      hl('NestingParenthesis', ')'),
+    })
+  end)
+  itp('works with $ENV', function()
+    check_parsing('$', 0, {
+      --           0
+      ast = {
+        'Environment(ident=):0:0:$',
+      },
+      err = {
+        arg = '$',
+        msg = 'E15: Environment variable name missing',
+      },
+    }, {
+      hl('InvalidEnvironmentSigil', '$'),
+    })
+
+    check_parsing('$g:A', 0, {
+      --           0123
+      ast = {
+        {
+          'Colon:0:2::',
+          children = {
+            'Environment(ident=g):0:0:$g',
+            'PlainIdentifier(scope=0,ident=A):0:3:A',
+          },
+        },
+      },
+      err = {
+        arg = ':A',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('EnvironmentSigil', '$'),
+      hl('Environment', 'g'),
+      hl('InvalidColon', ':'),
+      hl('Identifier', 'A'),
+    })
+
+    check_parsing('$A', 0, {
+      --           01
+      ast = {
+        'Environment(ident=A):0:0:$A',
+      },
+    }, {
+      hl('EnvironmentSigil', '$'),
+      hl('Environment', 'A'),
+    })
+
+    check_parsing('$ABC', 0, {
+      --           0123
+      ast = {
+        'Environment(ident=ABC):0:0:$ABC',
+      },
+    }, {
+      hl('EnvironmentSigil', '$'),
+      hl('Environment', 'ABC'),
+    })
+
+    check_parsing('(1+$)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'BinaryPlus:0:2:+',
+              children = {
+                'Integer(val=1):0:1:1',
+                'Environment(ident=):0:3:$',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '$)',
+        msg = 'E15: Environment variable name missing',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Number', '1'),
+      hl('BinaryPlus', '+'),
+      hl('InvalidEnvironmentSigil', '$'),
+      hl('NestingParenthesis', ')'),
+    })
+
+    check_parsing('($+1)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'BinaryPlus:0:2:+',
+              children = {
+                'Environment(ident=):0:1:$',
+                'Integer(val=1):0:3:1',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '$+1)',
+        msg = 'E15: Environment variable name missing',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('InvalidEnvironmentSigil', '$'),
+      hl('BinaryPlus', '+'),
+      hl('Number', '1'),
+      hl('NestingParenthesis', ')'),
+    })
+
+    check_parsing('$_ABC', 0, {
+      --           01234
+      ast = {
+        'Environment(ident=_ABC):0:0:$_ABC',
+      },
+    }, {
+      hl('EnvironmentSigil', '$'),
+      hl('Environment', '_ABC'),
+    })
+
+    check_parsing('$_', 0, {
+      --           01
+      ast = {
+        'Environment(ident=_):0:0:$_',
+      },
+    }, {
+      hl('EnvironmentSigil', '$'),
+      hl('Environment', '_'),
+    })
+
+    check_parsing('$ABC_DEF', 0, {
+      --           01234567
+      ast = {
+        'Environment(ident=ABC_DEF):0:0:$ABC_DEF',
+      },
+    }, {
+      hl('EnvironmentSigil', '$'),
+      hl('Environment', 'ABC_DEF'),
+    })
+  end)
+  itp('works with unary !', function()
+    check_parsing('!', 0, {
+      --           0
+      ast = {
+        'Not:0:0:!',
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Not', '!'),
+    })
+
+    check_parsing('!!', 0, {
+      --           01
+      ast = {
+        {
+          'Not:0:0:!',
+          children = {
+            'Not:0:1:!',
+          },
+        },
+      },
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
+      hl('Not', '!'),
+      hl('Not', '!'),
+    })
+
+    check_parsing('!!1', 0, {
+      --           012
+      ast = {
+        {
+          'Not:0:0:!',
+          children = {
+            {
+              'Not:0:1:!',
+              children = {
+                'Integer(val=1):0:2:1',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Not', '!'),
+      hl('Not', '!'),
+      hl('Number', '1'),
+    })
+
+    check_parsing('!1', 0, {
+      --           01
+      ast = {
+        {
+          'Not:0:0:!',
+          children = {
+            'Integer(val=1):0:1:1',
+          },
+        },
+      },
+    }, {
+      hl('Not', '!'),
+      hl('Number', '1'),
+    })
+
+    check_parsing('(!1)', 0, {
+      --           0123
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'Not:0:1:!',
+              children = {
+                'Integer(val=1):0:2:1',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Not', '!'),
+      hl('Number', '1'),
+      hl('NestingParenthesis', ')'),
+    })
+
+    check_parsing('(!)', 0, {
+      --           012
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'Not:0:1:!',
+              children = {
+                'Missing:0:2:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ')',
+        msg = 'E15: Expected value, got parenthesis: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Not', '!'),
+      hl('InvalidNestingParenthesis', ')'),
+    })
+
+    check_parsing('(1!2)', 0, {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'OpMissing:0:2:',
+              children = {
+                'Integer(val=1):0:1:1',
+                {
+                  'Not:0:2:!',
+                  children = {
+                    'Integer(val=2):0:3:2',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '!2)',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Number', '1'),
+      hl('InvalidNot', '!'),
+      hl('Number', '2'),
+      hl('NestingParenthesis', ')'),
+    })
+
+    check_parsing('1!2', 0, {
+      --           012
+      ast = {
+        {
+          'OpMissing:0:1:',
+          children = {
+            'Integer(val=1):0:0:1',
+            {
+              'Not:0:1:!',
+              children = {
+                'Integer(val=2):0:2:2',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '!2',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('Number', '1'),
+      hl('InvalidNot', '!'),
+      hl('Number', '2'),
     })
   end)
 end)

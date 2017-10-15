@@ -352,7 +352,14 @@ format_luav = function(v, indent)
       end
     end
     ret = ret  .. indent .. '}'
+  elseif type(v) == 'number' then
+    if v % 1 == 0 then
+      ret = ('%d'):format(v)
+    else
+      ret = ('%e'):format(v)
+    end
   else
+    print(type(v))
     -- Not implemented yet
     assert(false)
   end

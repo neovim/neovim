@@ -1937,9 +1937,22 @@ viml_pexpr_parse_process_token:
           OP_MISSING;
         }
         NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeOption);
-        cur_node->data.opt.ident = cur_token.data.opt.name;
-        cur_node->data.opt.ident_len = cur_token.data.opt.len;
-        cur_node->data.opt.scope = cur_token.data.opt.scope;
+        if (cur_token.type == kExprLexInvalid) {
+          assert(cur_token.len == 1
+                 || (cur_token.len == 3
+                     && pline.data[cur_token.start.col + 2] == ':'));
+          cur_node->data.opt.ident = (
+              pline.data + cur_token.start.col + cur_token.len);
+          cur_node->data.opt.ident_len = 0;
+          cur_node->data.opt.scope = (
+              cur_token.len == 3
+              ? (ExprOptScope)pline.data[cur_token.start.col + 1]
+              : kExprOptScopeUnspecified);
+        } else {
+          cur_node->data.opt.ident = cur_token.data.opt.name;
+          cur_node->data.opt.ident_len = cur_token.data.opt.len;
+          cur_node->data.opt.scope = cur_token.data.opt.scope;
+        }
         *top_node_p = cur_node;
         want_node = kENodeOperator;
         viml_parser_highlight(pstate, cur_token.start, 1, HL(OptionSigil));
@@ -1953,7 +1966,7 @@ viml_pexpr_parse_process_token:
         }
         viml_parser_highlight(
             pstate, shifted_pos(cur_token.start, scope_shift + 1),
-            cur_token.len - scope_shift + 1, HL(Option));
+            cur_token.len - (scope_shift + 1), HL(Option));
         break;
       }
       case kExprLexEnv: {
@@ -1963,6 +1976,10 @@ viml_pexpr_parse_process_token:
         NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeEnvironment);
         cur_node->data.env.ident = pline.data + cur_token.start.col + 1;
         cur_node->data.env.ident_len = cur_token.len - 1;
+        if (cur_node->data.env.ident_len == 0) {
+          ERROR_FROM_TOKEN_AND_MSG(cur_token,
+                                   _("E15: Environment variable name missing"));
+        }
         *top_node_p = cur_node;
         want_node = kENodeOperator;
         viml_parser_highlight(pstate, cur_token.start, 1, HL(EnvironmentSigil));

@@ -89,10 +89,69 @@ char_u *string_convert(const vimconv_T *conv, char_u *data, size_t *size)
   return NULL;
 }
 
+int utf_ptr2len_len(const char_u *p, int size)
+{
+  int len;
+  int i;
+  int m;
+
+  len = utf8len_tab[*p];
+  if (len == 1)
+    return 1;           /* NUL, ascii or illegal lead byte */
+  if (len > size)
+    m = size;           /* incomplete byte sequence. */
+  else
+    m = len;
+  for (i = 1; i < m; ++i)
+    if ((p[i] & 0xc0) != 0x80)
+      return 1;
+  return len;
+}
+
 int utfc_ptr2len_len(const char_u *p, int size)
 {
-  assert(false);
-  return 0;
+  int len;
+  int prevlen;
+
+  if (size < 1 || *p == NUL)
+    return 0;
+  if (p[0] < 0x80 && (size == 1 || p[1] < 0x80))   /* be quick for ASCII */
+    return 1;
+
+  /* Skip over first UTF-8 char, stopping at a NUL byte. */
+  len = utf_ptr2len_len(p, size);
+
+  /* Check for illegal byte and incomplete byte sequence. */
+  if ((len == 1 && p[0] >= 0x80) || len > size)
+    return 1;
+
+  /*
+   * Check for composing characters.  We can handle only the first six, but
+   * skip all of them (otherwise the cursor would get stuck).
+   */
+  prevlen = 0;
+  while (len < size) {
+    int len_next_char;
+
+    if (p[len] < 0x80)
+      break;
+
+    /*
+     * Next character length should not go beyond size to ensure that
+     * UTF_COMPOSINGLIKE(...) does not read beyond size.
+     */
+    len_next_char = utf_ptr2len_len(p + len, size - len);
+    if (len_next_char > size - len)
+      break;
+
+    if (!UTF_COMPOSINGLIKE(p + prevlen, p + len))
+      break;
+
+    /* Skip over composing char */
+    prevlen = len;
+    len += len_next_char;
+  }
+  return len;
 }
 
 int utf_char2len(const int c)
