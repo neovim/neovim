@@ -46,7 +46,7 @@ main() {
     line1="$line1 '--output-dir=$KLEE_OUT_DIR' '$KLEE_BIN_DIR/a.bc'"
     local line2="for t in '$KLEE_OUT_DIR'/*.err"
     line2="$line2 ; do ktest-tool --write-ints"
-    line2="$line2 \"\$(printf '%s' \"\$t\" | sed -e 's@.[^/]*\$@.out@')\""
+    line2="$line2 \"\$(printf '%s' \"\$t\" | sed -e 's@\\.[^/]*\$@.ktest@')\""
     line2="$line2 ; done"
     printf '%s\n%s\n' "$line1" "$line2" | \
       docker run \

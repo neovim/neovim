@@ -38,20 +38,21 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   }
 
   // Recognize hex, octal and bin.
-  if ((ptr[0] == '0') && (ptr[1] != '8') && (ptr[1] != '9')
-      && (maxlen == 0 || maxlen > 1)) {
+  if ((what & (STR2NR_HEX|STR2NR_OCT|STR2NR_BIN))
+      && (maxlen == 0 || maxlen > 1)
+      && (ptr[0] == '0') && (ptr[1] != '8') && (ptr[1] != '9')) {
     pre = ptr[1];
 
     if ((what & STR2NR_HEX)
+        && (maxlen == 0 || maxlen > 2)
         && ((pre == 'X') || (pre == 'x'))
-        && ascii_isxdigit(ptr[2])
-        && (maxlen == 0 || maxlen > 2)) {
+        && ascii_isxdigit(ptr[2])) {
       // hexadecimal
       ptr += 2;
     } else if ((what & STR2NR_BIN)
+               && (maxlen == 0 || maxlen > 2)
                && ((pre == 'B') || (pre == 'b'))
-               && ascii_isbdigit(ptr[2])
-               && (maxlen == 0 || maxlen > 2)) {
+               && ascii_isbdigit(ptr[2])) {
       // binary
       ptr += 2;
     } else {
@@ -80,7 +81,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
 
   // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
   int n = 1;
-  if ((pre == 'B') || (pre == 'b') || what == STR2NR_BIN + STR2NR_FORCE) {
+  if (pre == 'B' || pre == 'b' || what == (STR2NR_BIN|STR2NR_FORCE)) {
     // bin
     if (pre != 0) {
       n += 2;  // skip over "0b"
@@ -97,7 +98,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         break;
       }
     }
-  } else if ((pre == '0') || what == STR2NR_OCT + STR2NR_FORCE) {
+  } else if (pre == '0' || what == (STR2NR_OCT|STR2NR_FORCE)) {
     // octal
     while ('0' <= *ptr && *ptr <= '7') {
       // avoid ubsan error for overflow
@@ -111,8 +112,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
         break;
       }
     }
-  } else if ((pre == 'X') || (pre == 'x')
-             || what == STR2NR_HEX + STR2NR_FORCE) {
+  } else if (pre == 'X' || pre == 'x' || what == (STR2NR_HEX|STR2NR_FORCE)) {
     // hex
     if (pre != 0) {
       n += 2;  // skip over "0x"

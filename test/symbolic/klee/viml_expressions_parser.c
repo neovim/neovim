@@ -89,8 +89,6 @@ int main(const int argc, const char *const *const argv,
   kvi_init(pstate.reader.lines);
 
   const ExprAST ast = viml_pexpr_parse(&pstate, flags);
-  assert(ast.root != NULL
-         || plines[0].size == 0);
   assert(ast.root != NULL || ast.err.msg);
   viml_pexpr_free_ast(ast);
   assert(allocated_memory == 0);

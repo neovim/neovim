@@ -69,7 +69,7 @@ typedef enum {
 } ExprOptScope;
 
 #define EXPR_OPT_SCOPE_LIST \
-    ((char *)(char[]){ kExprOptScopeGlobal, kExprOptScopeLocal })
+    ((char[]){ kExprOptScopeGlobal, kExprOptScopeLocal })
 
 /// All possible variable scopes
 typedef enum {

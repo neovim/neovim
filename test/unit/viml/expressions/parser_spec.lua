@@ -6867,5 +6867,13 @@ describe('Expressions parser', function()
       },
     }, {
     })
+    check_parsing('0', 0, {
+      --           0
+      ast = {
+        'Integer(val=0):0:0:0',
+      },
+    }, {
+      hl('Number', '0'),
+    })
   end)
 end)
