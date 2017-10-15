@@ -976,59 +976,6 @@ void viml_pexpr_free_ast(ExprAST ast)
   kvi_destroy(ast_stack);
 }
 
-// start = s ternary_expr s EOC
-// ternary_expr = binop_expr
-//                ( s Question s ternary_expr s Colon s ternary_expr s )?
-// binop_expr = unaryop_expr ( binop unaryop_expr )?
-// unaryop_expr = ( unaryop )? subscript_expr
-// subscript_expr = subscript_expr subscript
-//                | value_expr
-// subscript = Bracket('[') s ternary_expr s Bracket(']')
-//           | s Parenthesis('(') call_args Parenthesis(')')
-//           | Dot ( PlainIdentifier | Number )+
-// # Note: `s` before Parenthesis('(') is only valid if preceding subscript_expr
-// #       is PlainIdentifier
-// value_expr = ( float | Number
-//              | DoubleQuotedString | SingleQuotedString
-//              | paren_expr
-//              | list_literal
-//              | lambda_literal
-//              | dict_literal
-//              | Environment
-//              | Option
-//              | Register
-//              | var )
-// float = Number Dot Number ( PlainIdentifier('e') ( Plus | Minus )? Number )?
-// # Note: `1.2.3` is concat and not float. `"abc".2.3` is also concat without
-// #       floats.
-// paren_expr = Parenthesis('(') s ternary_expr s Parenthesis(')')
-// list_literal = Bracket('[') s
-//                  ( ternary_expr s Comma s )*
-//                  ternary_expr? s
-//                Bracket(']')
-// dict_literal = FigureBrace('{') s
-//                  ( ternary_expr s Colon s ternary_expr s Comma s )*
-//                  ( ternary_expr s Colon s ternary_expr s )?
-//                FigureBrace('}')
-// lambda_literal = FigureBrace('{') s
-//                    ( PlainIdentifier s Comma s )*
-//                    PlainIdentifier s
-//                  Arrow s
-//                    ternary_expr s
-//                  FigureBrace('}')
-// var = varchunk+
-// varchunk = PlainIdentifier
-//          | Comparison("is" | "is#" | "isnot" | "isnot#")
-//          | FigureBrace('{') s ternary_expr s FigureBrace('}')
-// call_args = ( s ternary_expr s Comma s )* s ternary_expr? s
-// binop = s ( Plus | Minus | Dot
-//           | Comparison
-//           | Multiplication
-//           | Or
-//           | And ) s
-// unaryop = s ( Not | Plus | Minus ) s
-// s = Spacing?
-//
 // Binary operator precedence and associativity:
 //
 // Operator | Precedence | Associativity
@@ -1885,6 +1832,14 @@ static void parse_quoted_string(ParserState *const pstate,
   kvi_destroy(shifts);
 }
 
+/// Additional flags to pass to lexer depending on want_node
+static const int want_node_to_lexer_flags[] = {
+  [kENodeValue] = kELFlagIsNotCmp,
+  [kENodeOperator] = kELFlagForbidScope,
+  [kENodeArgument] = kELFlagIsNotCmp,
+  [kENodeArgumentSeparator] = kELFlagForbidScope,
+};
+
 /// Parse one VimL expression
 ///
 /// @param  pstate  Parser state.
@@ -1902,26 +1857,25 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
     },
     .root = NULL,
   };
+  // Expression stack contains current branch in AST tree: that is
+  // - Stack item 0 contains root of the tree, i.e. &ast->root.
+  // - Stack item i points to the previous stack items’ last child.
+  //
+  // When parser expects “value” node that is something like identifier or "["
+  // (list start) last stack item contains NULL. Otherwise last stack item is
+  // supposed to contain last “finished” value: e.g. "1" or "+(1, 1)" (node
+  // representing "1+1").
+  //
+  // Both kENodeValue and kENodeArgument stand for “value” nodes.
   ExprASTStack ast_stack;
   kvi_init(ast_stack);
   kvi_push(ast_stack, &ast.root);
-  // Expressions stack:
-  // 1. *last is NULL if want_node is kExprLexValue. Indicates where expression
-  //    is to be put.
-  // 2. *last is not NULL otherwise, indicates current expression to be used as
-  //    an operator argument.
   ExprASTWantedNode want_node = kENodeValue;
   LexExprToken prev_token = { .type = kExprLexMissing };
   bool highlighted_prev_spacing = false;
   // Lambda node, valid when parsing lambda arguments only.
   ExprASTNode *lambda_node = NULL;
   do {
-    const int want_node_to_lexer_flags[] = {
-      [kENodeValue] = kELFlagIsNotCmp,
-      [kENodeOperator] = kELFlagForbidScope,
-      [kENodeArgument] = kELFlagIsNotCmp,
-      [kENodeArgumentSeparator] = kELFlagForbidScope,
-    };
     const bool is_concat_or_subscript = (
         want_node == kENodeValue
         && kv_size(ast_stack) > 1
@@ -1965,9 +1919,27 @@ viml_pexpr_parse_process_token:
     }
     const ParserLine pline = pstate->reader.lines.items[cur_token.start.line];
     ExprASTNode **const top_node_p = kv_last(ast_stack);
+    assert(kv_size(ast_stack) >= 1);
     ExprASTNode *cur_node = NULL;
-    assert((want_node == kENodeValue || want_node == kENodeArgument)
-           == (*top_node_p == NULL));
+#ifndef NDEBUG
+    const bool want_value = (
+        want_node == kENodeValue || want_node == kENodeArgument);
+    assert(want_value == (*top_node_p == NULL));
+    assert(kv_A(ast_stack, 0) == &ast.root);
+    // Check that stack item i + 1 points to stack items’ i *last* child.
+    for (size_t i = 0; i + 1 < kv_size(ast_stack); i++) {
+      const bool item_null = (want_value && i + 2 == kv_size(ast_stack));
+      assert((&(*kv_A(ast_stack, i))->children == kv_A(ast_stack, i + 1)
+              && (item_null
+                  ? (*kv_A(ast_stack, i))->children == NULL
+                  : (*kv_A(ast_stack, i))->children->next == NULL))
+             || ((&(*kv_A(ast_stack, i))->children->next
+                  == kv_A(ast_stack, i + 1))
+                 && (item_null
+                     ? (*kv_A(ast_stack, i))->children->next == NULL
+                     : (*kv_A(ast_stack, i))->children->next->next == NULL)));
+    }
+#endif
     // Note: in Vim whether expression "cond?d.a:2" is valid depends both on
     // "cond" and whether "d" is a dictionary: expression is valid if condition
     // is true and "d" is a dictionary (with "a" key or it will complain about
