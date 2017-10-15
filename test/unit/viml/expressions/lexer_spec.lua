@@ -292,6 +292,9 @@ describe('Expressions lexer', function()
     simple_test({'0b102'}, 'Number', 4, {data={is_float=false, base=2, val=2}, str='0b10'})
     simple_test({'10F'}, 'Number', 2, {data={is_float=false, base=10, val=10}, str='10'})
     simple_test({'0x0123456789ABCDEFG'}, 'Number', 18, {data={is_float=false, base=16, val=81985529216486895}, str='0x0123456789ABCDEF'})
+    simple_test({{data='00', size=2}}, 'Number', 2, {data={is_float=false, base=8, val=0}, str='00'})
+    simple_test({{data='009', size=2}}, 'Number', 2, {data={is_float=false, base=8, val=0}, str='00'})
+    simple_test({{data='01', size=1}}, 'Number', 1, {data={is_float=false, base=10, val=0}, str='0'})
   end
 
   local function regular_scope_tests()

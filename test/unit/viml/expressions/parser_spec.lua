@@ -6867,13 +6867,19 @@ describe('Expressions parser', function()
       },
     }, {
     })
-    check_parsing('0', 0, {
-      --           0
+    check_parsing({data='01', size=1}, 0, {
       ast = {
         'Integer(val=0):0:0:0',
       },
     }, {
       hl('Number', '0'),
+    })
+    check_parsing({data='001', size=2}, 0, {
+      ast = {
+        'Integer(val=0):0:0:00',
+      },
+    }, {
+      hl('Number', '00'),
     })
   end)
 end)
