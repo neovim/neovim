@@ -4,8 +4,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, source = helpers.clear, helpers.source
 local call, eq, nvim = helpers.call, helpers.eq, helpers.meths
 
-if helpers.pending_win32(pending) then return end
-
 local function expected_empty()
   eq({}, nvim.get_vvar('errors'))
 end
@@ -16,17 +14,27 @@ describe('filename modifiers', function()
 
     source([=[
       func Test_fnamemodify()
-        let tmpdir = resolve('/tmp')
+        if has('win32')
+          let tmpdir = substitute($TMP, '\\', '/', 'g')
+          set shellslash
+        else
+          let tmpdir = resolve('/tmp')
+          set shell=sh
+        endif
         execute 'cd '. tmpdir
-        set shell=sh
-        set shellslash
         let $HOME=fnamemodify('.', ':p:h:h:h')
         call assert_equal('/', fnamemodify('.', ':p')[-1:])
-        call assert_equal('p', fnamemodify('.', ':p:h')[-1:])
+        if has('win32')
+          call assert_equal('p', fnamemodify('.', ':p:h:h')[-1:])
+        else
+          call assert_equal('p', fnamemodify('.', ':p:h')[-1:])
+        endif
         call assert_equal('t', fnamemodify('test.out', ':p')[-1:])
         call assert_equal('test.out', fnamemodify('test.out', ':.'))
         call assert_equal('../testdir/a', fnamemodify('../testdir/a', ':.'))
-        call assert_equal('test.out', fnamemodify('test.out', ':~'))
+        if !has('win32')
+          call assert_equal('test.out', fnamemodify('test.out', ':~'))
+        endif
         call assert_equal('../testdir/a', fnamemodify('../testdir/a', ':~'))
         call assert_equal('a', fnamemodify('../testdir/a', ':t'))
         call assert_equal('', fnamemodify('.', ':p:t'))
@@ -53,8 +61,10 @@ describe('filename modifiers', function()
         quit
 
         call assert_equal("'abc\ndef'", fnamemodify("abc\ndef", ':S'))
-        set shell=tcsh
-        call assert_equal("'abc\\\ndef'", fnamemodify("abc\ndef", ':S'))
+        if executable('tcsh')
+          set shell=tcsh
+          call assert_equal("'abc\\\ndef'", fnamemodify("abc\ndef", ':S'))
+        endif
       endfunc
 
       func Test_expand()
