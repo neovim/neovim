@@ -1620,14 +1620,12 @@ bool vim_isblankline(char_u *lbuf)
 /// @param maxlen Max length of string to check.
 void vim_str2nr(const char_u *const start, int *const prep, int *const len,
                 const int what, varnumber_T *const nptr,
-                uvarnumber_T *const unptr, int maxlen)
+                uvarnumber_T *const unptr, const int maxlen)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *ptr = (const char *)start;
-  if (maxlen == 0) {
-    maxlen = (int)strlen(ptr);
-  }
-  const char *const e = ptr + maxlen;
+#define STRING_ENDED(ptr) \
+    (!(maxlen == 0 || (int)((ptr) - (const char *)start) < maxlen))
   int pre = 0;  // default is decimal
   bool negative = false;
 
@@ -1638,18 +1636,18 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
 
   // Recognize hex, octal and bin.
   if ((what & (STR2NR_HEX|STR2NR_OCT|STR2NR_BIN))
-      && maxlen > 1
+      && !STRING_ENDED(ptr + 1)
       && ptr[0] == '0' && ptr[1] != '8' && ptr[1] != '9') {
     pre = ptr[1];
 
     if ((what & STR2NR_HEX)
-        && maxlen > 2
+        && !STRING_ENDED(ptr + 2)
         && (pre == 'X' || pre == 'x')
         && ascii_isxdigit(ptr[2])) {
       // hexadecimal
       ptr += 2;
     } else if ((what & STR2NR_BIN)
-               && maxlen > 2
+               && !STRING_ENDED(ptr + 2)
                && (pre == 'B' || pre == 'b')
                && ascii_isbdigit(ptr[2])) {
       // binary
@@ -1660,7 +1658,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
 
       if (what & STR2NR_OCT) {
         // Don't interpret "0", "08" or "0129" as octal.
-        for (int i = 1; i < maxlen && ascii_isdigit(ptr[i]); i++) {
+        for (int i = 1; !STRING_ENDED(ptr + i) && ascii_isdigit(ptr[i]); i++) {
           if (ptr[i] > '7') {
             // can't be octal
             pre = 0;
@@ -1679,7 +1677,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   uvarnumber_T un = 0;
   if (pre == 'B' || pre == 'b' || what == (STR2NR_BIN|STR2NR_FORCE)) {
     // bin
-    while (ptr < e && '0' <= *ptr && *ptr <= '1') {
+    while (!STRING_ENDED(ptr) && '0' <= *ptr && *ptr <= '1') {
       // avoid ubsan error for overflow
       if (un < UVARNUMBER_MAX / 2) {
         un = 2 * un + (uvarnumber_T)(*ptr - '0');
@@ -1690,7 +1688,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
     }
   } else if (pre == '0' || what == (STR2NR_OCT|STR2NR_FORCE)) {
     // octal
-    while (ptr < e && '0' <= *ptr && *ptr <= '7') {
+    while (!STRING_ENDED(ptr) && '0' <= *ptr && *ptr <= '7') {
       // avoid ubsan error for overflow
       if (un < UVARNUMBER_MAX / 8) {
         un = 8 * un + (uvarnumber_T)(*ptr - '0');
@@ -1701,7 +1699,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
     }
   } else if (pre == 'X' || pre == 'x' || what == (STR2NR_HEX|STR2NR_FORCE)) {
     // hex
-    while (ptr < e && ascii_isxdigit(*ptr)) {
+    while (!STRING_ENDED(ptr) && ascii_isxdigit(*ptr)) {
       // avoid ubsan error for overflow
       if (un < UVARNUMBER_MAX / 16) {
         un = 16 * un + (uvarnumber_T)hex2nr(*ptr);
@@ -1712,7 +1710,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
     }
   } else {
     // decimal
-    while (ptr < e && ascii_isdigit(*ptr)) {
+    while (!STRING_ENDED(ptr) && ascii_isdigit(*ptr)) {
       // avoid ubsan error for overflow
       if (un < UVARNUMBER_MAX / 10) {
         un = 10 * un + (uvarnumber_T)(*ptr - '0');
@@ -1750,6 +1748,7 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
   if (unptr != NULL) {
     *unptr = un;
   }
+#undef STRING_ENDED
 }
 
 /// Return the value of a single hex character.
