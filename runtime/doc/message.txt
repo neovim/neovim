@@ -449,12 +449,6 @@ changed.  To avoid the message reset the 'warn' option.
 Something inside Vim went wrong and resulted in a NULL pointer.  If you know
 how to reproduce this problem, please report it. |bugs|
 
-							*E172*  >
-  Only one file name allowed
-
-The ":edit" command only accepts one file name.  When you want to specify
-several files for editing use ":next" |:next|.
-
 						*E41* *E82* *E83* *E342*  >
   Out of memory!
   Out of memory!  (allocating {number} bytes)
