@@ -22870,9 +22870,9 @@ void ex_checkhealth(exarg_T *eap)
     }
   }
 
-  size_t bufsize = STRLEN(eap->arg) + strlen("CheckHealth ") + 1;
+  size_t bufsize = STRLEN(eap->arg) + sizeof("call health#check('')");
   char *buf = xmalloc(bufsize);
-  snprintf(buf, bufsize, "CheckHealth %s", eap->arg);
+  snprintf(buf, bufsize, "call health#check('%s')", eap->arg);
 
   do_cmdline_cmd(buf);
 
