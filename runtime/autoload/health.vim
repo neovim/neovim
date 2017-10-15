@@ -96,21 +96,21 @@ endfunction
 " Format a message for a specific report item
 function! s:format_report_message(status, msg, ...) abort " {{{
   let output = '  - ' . a:status . ': ' . s:indent_after_line1(a:msg, 4)
-  let suggestions = []
+  let advice = []
 
   " Optional parameters
   if a:0 > 0
-    let suggestions = type(a:1) == type("") ? [a:1] : a:1
-    if type(suggestions) != type([])
+    let advice = type(a:1) == type("") ? [a:1] : a:1
+    if type(advice) != type([])
       throw "Expected String or List"
     endif
   endif
 
   " Report each suggestion
-  if len(suggestions) > 0
+  if len(advice) > 0
     let output .= "\n    - ADVICE:"
   endif
-  for suggestion in suggestions
+  for suggestion in advice
     let output .= "\n      - " . s:indent_after_line1(suggestion, 10)
   endfor
 

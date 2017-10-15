@@ -64,11 +64,11 @@ health#report_info({msg})				*health#report_info*
 health#report_ok({msg})					*health#report_ok*
 	Displays a "success" message.
 
-health#report_warn({msg}, [{suggestions}])		*health#report_warn*
-        Displays a warning. {suggestions} is an optional List of suggestions.
+health#report_warn({msg}, [{advice}])			*health#report_warn*
+        Displays a warning. {advice} is an optional List of suggestions.
 
-health#report_error({msg}, [{suggestions}])		*health#report_error*
-        Displays an error. {suggestions} is an optional List of suggestions.
+health#report_error({msg}, [{advice}])			*health#report_error*
+        Displays an error. {advice} is an optional List of suggestions.
 
 health#{plugin}#check()					*health.user_checker*
         This is the form of a healthcheck definition. Call the above functions
