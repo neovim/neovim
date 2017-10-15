@@ -176,8 +176,9 @@ static inline void viml_parser_highlight(ParserState *const pstate,
   if (pstate->colors == NULL || len == 0) {
     return;
   }
-  // TODO(ZyX-I): May do some assert() sanitizing here.
-  // TODO(ZyX-I): May join chunks.
+  assert(kv_size(*pstate->colors) == 0
+         || kv_Z(*pstate->colors, 0).start.line < start.line
+         || kv_Z(*pstate->colors, 0).end_col <= start.col);
   kvi_push(*pstate->colors, ((ParserHighlightChunk) {
       .start = start,
       .end_col = start.col + len,

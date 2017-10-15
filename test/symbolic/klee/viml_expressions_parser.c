@@ -75,6 +75,9 @@ int main(const int argc, const char *const *const argv,
 #endif
   ParserLine *cur_pline = &plines[0];
 
+  ParserHighlight colors;
+  kvi_init(colors);
+
   ParserState pstate = {
     .reader = {
       .get_line = simple_get_line,
@@ -83,13 +86,18 @@ int main(const int argc, const char *const *const argv,
       .conv.vc_type = CONV_NONE,
     },
     .pos = { 0, 0 },
-    .colors = NULL,
+    .colors = &colors,
     .can_continuate = false,
   };
   kvi_init(pstate.reader.lines);
 
   const ExprAST ast = viml_pexpr_parse(&pstate, flags);
   assert(ast.root != NULL || ast.err.msg);
+  // Can’t possibly have more highlight tokens then there are bytes in string.
+  assert(kv_size(colors) <= INPUT_SIZE - shift);
+  kvi_destroy(colors);
+  // Not destroying pstate.reader.lines because there is no way it could exceed
+  // its limits in the current circumstances.
   viml_pexpr_free_ast(ast);
   assert(allocated_memory == 0);
 }
