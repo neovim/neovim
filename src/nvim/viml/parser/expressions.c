@@ -725,6 +725,7 @@ viml_pexpr_repr_token_end:
   return ret;
 }
 
+#ifdef UNIT_TESTING
 static const char *const east_node_type_tab[] = {
   [kExprNodeMissing] = "Missing",
   [kExprNodeOpMissing] = "OpMissing",
@@ -765,6 +766,7 @@ static const char *const east_node_type_tab[] = {
   [kExprNodeOption] = "Option",
   [kExprNodeEnvironment] = "Environment",
 };
+#endif
 
 /// Represent `int` character as a string
 ///
