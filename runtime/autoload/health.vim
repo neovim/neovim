@@ -1,15 +1,15 @@
 function! s:enhance_syntax() abort
   syntax case match
 
-  syntax keyword healthError ERROR
+  syntax keyword healthError ERROR[:]
         \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthError Error
 
-  syntax keyword healthWarning WARNING
+  syntax keyword healthWarning WARNING[:]
         \ containedin=markdownCodeBlock,mkdListItemLine
   highlight link healthWarning WarningMsg
 
-  syntax keyword healthSuccess SUCCESS
+  syntax keyword healthSuccess OK[:]
         \ containedin=markdownCodeBlock,mkdListItemLine
   highlight healthSuccess guibg=#5fff00 guifg=#080808 ctermbg=82 ctermfg=232
 
@@ -102,13 +102,13 @@ function! s:format_report_message(status, msg, ...) abort " {{{
   if a:0 > 0
     let suggestions = type(a:1) == type("") ? [a:1] : a:1
     if type(suggestions) != type([])
-      echoerr "Expected String or List"
+      throw "Expected String or List"
     endif
   endif
 
   " Report each suggestion
   if len(suggestions) > 0
-    let output .= "\n    - SUGGESTIONS:"
+    let output .= "\n    - ADVICE:"
   endif
   for suggestion in suggestions
     let output .= "\n      - " . s:indent_after_line1(suggestion, 10)
@@ -124,7 +124,7 @@ endfunction " }}}
 
 " Reports a successful healthcheck.
 function! health#report_ok(msg) abort " {{{
-  echo s:format_report_message('SUCCESS', a:msg)
+  echo s:format_report_message('OK', a:msg)
 endfunction " }}}
 
 " Reports a health warning.
