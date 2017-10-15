@@ -18,7 +18,7 @@ function! s:enhance_syntax() abort
   syntax match healthBar  "|" contained conceal
   highlight link healthHelp Identifier
 
-  " We do not care about markdown syntax errors in :CheckHealth output.
+  " We do not care about markdown syntax errors in :checkhealth output.
   highlight! link markdownError Normal
 endfunction
 

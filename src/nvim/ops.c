@@ -5535,7 +5535,7 @@ int get_default_register_name(void)
 static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
 {
 #define MSG_NO_CLIP "clipboard: No provider. " \
-  "Try \":CheckHealth\" or \":h clipboard\"."
+  "Try \":checkhealth\" or \":h clipboard\"."
 
   yankreg_T *target = NULL;
   bool explicit_cb_reg = (*name == '*' || *name == '+');
