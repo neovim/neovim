@@ -4241,6 +4241,40 @@ describe('Expressions parser', function()
       hl('UnaryPlus', '+', 1),
       hl('Identifier', 'b'),
     })
+
+    check_parsing('a. b', 0, {
+      --           0123
+      ast = {
+        {
+          'Concat:0:1:.',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:2: b',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ConcatOrSubscript', '.'),
+      hl('Identifier', 'b', 1),
+    })
+
+    check_parsing('a. 1', 0, {
+      --           0123
+      ast = {
+        {
+          'Concat:0:1:.',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'Integer(val=1):0:2: 1',
+          },
+        },
+      },
+    }, {
+      hl('Identifier', 'a'),
+      hl('ConcatOrSubscript', '.'),
+      hl('Number', '1', 1),
+    })
   end)
   itp('works with bracket subscripts', function()
     check_parsing(':', 0, {
@@ -6821,6 +6855,16 @@ describe('Expressions parser', function()
       hl('Number', '1'),
       hl('InvalidNot', '!'),
       hl('Number', '2'),
+    })
+  end)
+  itp('works (KLEE tests)', function()
+    check_parsing('\0002&A:\000', 0, {
+      ast = nil,
+      err = {
+        arg = '',
+        msg = 'E15: Expected value, got EOC: %.*s',
+      },
+    }, {
     })
   end)
 end)
