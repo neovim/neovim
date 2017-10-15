@@ -719,8 +719,8 @@ int get_special_key_code(const char_u *name)
   for (int i = 0; key_names_table[i].name != NULL; i++) {
     const char *const table_name = key_names_table[i].name;
     int j;
-    for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++)
-      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j]))
+    for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++) {
+      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j])) {
         break;
       }
     }
