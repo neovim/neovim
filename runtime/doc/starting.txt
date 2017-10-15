@@ -633,54 +633,40 @@ though.
 ==============================================================================
 3. $VIM and $VIMRUNTIME
 								*$VIM*
-The environment variable "$VIM" is used to locate various user files for Vim,
+The environment variable "$VIM" is used to locate various user files for Nvim,
 such as the user startup script |init.vim|.  This depends on the system, see
 |startup|.
 
-To avoid the need for every user to set the $VIM environment variable, Vim
-will try to get the value for $VIM in this order:
-1. The value defined by the $VIM environment variable.  You can use this to
-   make Vim look in a specific directory for its support files.  Example: >
-	setenv VIM /home/paul/vim
-2. The path from 'helpfile' is used, unless it contains some environment
-   variable too (the default is "$VIMRUNTIME/doc/help.txt": chicken-egg
-   problem).  The file name ("help.txt" or any other) is removed.  Then
-   trailing directory names are removed, in this order: "doc", "runtime" and
-   "vim{version}" (e.g., "vim54").
-3. For MSDOS and Win32 Vim tries to use the directory name of the
-   executable.  If it ends in "/src", this is removed.  This is useful if you
-   unpacked the .zip file in some directory, and adjusted the search path to
-   find the vim executable.  Trailing directory names are removed, in this
-   order: "runtime" and "vim{version}" (e.g., "vim54").
-4. For Unix the compile-time defined installation directory is used (see the
-   output of ":version").
+Nvim will try to get the value for $VIM in this order:
 
-Once Vim has done this once, it will set the $VIM environment variable.  To
-change it later, use a ":let" command like this: >
-	:let $VIM = "/home/paul/vim/"
-<
+1. Environment variable $VIM, if it is set.
+2. Path derived from the 'helpfile' option, unless it contains some
+   environment variable too (default is "$VIMRUNTIME/doc/help.txt").  File
+   name ("help.txt", etc.) is removed.  Trailing directory names are removed,
+   in this order: "doc", "runtime".
+3. Path derived from the location of the `nvim` executable.
+4. Compile-time defined installation directory (see output of ":version").
+
+After doing this once, Nvim sets the $VIM environment variable.
+
 								*$VIMRUNTIME*
 The environment variable "$VIMRUNTIME" is used to locate various support
-files, such as the on-line documentation and files used for syntax
-highlighting.  For example, the main help file is normally
-"$VIMRUNTIME/doc/help.txt".
-You don't normally set $VIMRUNTIME yourself, but let Vim figure it out.  This
-is the order used to find the value of $VIMRUNTIME:
-1. If the environment variable $VIMRUNTIME is set, it is used.  You can use
-   this when the runtime files are in an unusual location.
-2. If "$VIM/vim{version}" exists, it is used.  {version} is the version
-   number of Vim, without any '-' or '.'.  For example: "$VIM/vim54".  This is
-   the normal value for $VIMRUNTIME.
-3. If "$VIM/runtime" exists, it is used.
-4. The value of $VIM is used.  This is for backwards compatibility with older
-   versions.
-5. If "../share/nvim/runtime" exists relative to |v:progpath|, it is used.
-6. When the 'helpfile' option is set and doesn't contain a '$', its value is
-   used, with "doc/help.txt" removed from the end.
+files, such as the documentation and syntax-highlighting files.  For example,
+the main help file is normally "$VIMRUNTIME/doc/help.txt".
 
-Once Vim has done this once, it will set the $VIMRUNTIME environment variable.
-To change it later, use a ":let" command like this: >
-	:let $VIMRUNTIME = "/home/piet/vim/vim54"
+Nvim will try to get the value for $VIMRUNTIME in this order:
+
+1. Environment variable $VIMRUNTIME, if it is set.
+2. Directory path "$VIM/vim{version}", if it exists, where {version} is the
+   Vim version number without '-' or '.'.  For example: "$VIM/vim54".
+3. Directory path "$VIM/runtime", if it exists.
+4. Value of $VIM environment variable.  This is for backwards compatibility
+   with older Vim versions.
+5. If "../share/nvim/runtime" exists relative to |v:progpath|, it is used.
+6. Path derived from the 'helpfile' option (if it doesn't contain '$') with
+   "doc/help.txt" removed from the end.
+
+After doing this once, Nvim sets the $VIMRUNTIME environment variable.
 
 In case you need the value of $VIMRUNTIME in a shell (e.g., for a script that
 greps in the help files) you might be able to use this: >
