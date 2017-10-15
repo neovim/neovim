@@ -253,6 +253,7 @@ describe('Expressions parser', function()
       end
       eq(exp_highlighting, hls)
     end
+    lib.viml_pexpr_free_ast(east)
   end
   local function hl(group, str, shift)
     return function(next_col)

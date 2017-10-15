@@ -92,6 +92,6 @@ int main(const int argc, const char *const *const argv,
   assert(ast.root != NULL
          || plines[0].size == 0);
   assert(ast.root != NULL || ast.err.msg);
-  // FIXME: check for AST recursiveness
-  // FIXME: free memory and assert no memory leaks
+  viml_pexpr_free_ast(ast);
+  assert(allocated_memory == 0);
 }

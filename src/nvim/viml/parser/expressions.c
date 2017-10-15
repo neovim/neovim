@@ -642,37 +642,6 @@ static const char *const eltkn_opt_scope_tab[] = {
   [kExprOptScopeLocal] = "Local",
 };
 
-/// Represent `int` character as a string
-///
-/// Converts
-/// - ASCII digits into '{digit}'
-/// - ASCII printable characters into a single-character strings
-/// - everything else to numbers.
-///
-/// @param[in]  ch  Character to convert.
-///
-/// @return Converted string, stored in a static buffer (overriden after each
-///         call).
-static const char *intchar2str(const int ch)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  static char buf[sizeof(int) * 3 + 1];
-  if (' ' <= ch && ch < 0x7f) {
-    if (ascii_isdigit(ch)) {
-      buf[0] = '\'';
-      buf[1] = (char)ch;
-      buf[2] = '\'';
-      buf[3] = NUL;
-    } else {
-      buf[0] = (char)ch;
-      buf[1] = NUL;
-    }
-  } else {
-    snprintf(buf, sizeof(buf), "%i", ch);
-  }
-  return buf;
-}
-
 /// Represent token as a string
 ///
 /// Intended for testing and debugging purposes.
@@ -756,6 +725,78 @@ viml_pexpr_repr_token_end:
   return ret;
 }
 
+static const char *const east_node_type_tab[] = {
+  [kExprNodeMissing] = "Missing",
+  [kExprNodeOpMissing] = "OpMissing",
+  [kExprNodeTernary] = "Ternary",
+  [kExprNodeTernaryValue] = "TernaryValue",
+  [kExprNodeRegister] = "Register",
+  [kExprNodeSubscript] = "Subscript",
+  [kExprNodeListLiteral] = "ListLiteral",
+  [kExprNodeUnaryPlus] = "UnaryPlus",
+  [kExprNodeBinaryPlus] = "BinaryPlus",
+  [kExprNodeNested] = "Nested",
+  [kExprNodeCall] = "Call",
+  [kExprNodePlainIdentifier] = "PlainIdentifier",
+  [kExprNodePlainKey] = "PlainKey",
+  [kExprNodeComplexIdentifier] = "ComplexIdentifier",
+  [kExprNodeUnknownFigure] = "UnknownFigure",
+  [kExprNodeLambda] = "Lambda",
+  [kExprNodeDictLiteral] = "DictLiteral",
+  [kExprNodeCurlyBracesIdentifier] = "CurlyBracesIdentifier",
+  [kExprNodeComma] = "Comma",
+  [kExprNodeColon] = "Colon",
+  [kExprNodeArrow] = "Arrow",
+  [kExprNodeComparison] = "Comparison",
+  [kExprNodeConcat] = "Concat",
+  [kExprNodeConcatOrSubscript] = "ConcatOrSubscript",
+  [kExprNodeInteger] = "Integer",
+  [kExprNodeFloat] = "Float",
+  [kExprNodeSingleQuotedString] = "SingleQuotedString",
+  [kExprNodeDoubleQuotedString] = "DoubleQuotedString",
+  [kExprNodeOr] = "Or",
+  [kExprNodeAnd] = "And",
+  [kExprNodeUnaryMinus] = "UnaryMinus",
+  [kExprNodeBinaryMinus] = "BinaryMinus",
+  [kExprNodeNot] = "Not",
+  [kExprNodeMultiplication] = "Multiplication",
+  [kExprNodeDivision] = "Division",
+  [kExprNodeMod] = "Mod",
+  [kExprNodeOption] = "Option",
+  [kExprNodeEnvironment] = "Environment",
+};
+
+/// Represent `int` character as a string
+///
+/// Converts
+/// - ASCII digits into '{digit}'
+/// - ASCII printable characters into a single-character strings
+/// - everything else to numbers.
+///
+/// @param[in]  ch  Character to convert.
+///
+/// @return Converted string, stored in a static buffer (overriden after each
+///         call).
+static const char *intchar2str(const int ch)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  static char buf[sizeof(int) * 3 + 1];
+  if (' ' <= ch && ch < 0x7f) {
+    if (ascii_isdigit(ch)) {
+      buf[0] = '\'';
+      buf[1] = (char)ch;
+      buf[2] = '\'';
+      buf[3] = NUL;
+    } else {
+      buf[0] = (char)ch;
+      buf[1] = NUL;
+    }
+  } else {
+    snprintf(buf, sizeof(buf), "%i", ch);
+  }
+  return buf;
+}
+
 #ifdef UNIT_TESTING
 #include <stdio.h>
 
@@ -767,9 +808,9 @@ static inline void viml_pexpr_debug_print_ast_node(
   if (*eastnode_p == NULL) {
     fprintf(stderr, "%s %p : NULL\n", prefix, (void *)eastnode_p);
   } else {
-    fprintf(stderr, "%s %p : %p : %c : %zu:%zu:%zu\n",
+    fprintf(stderr, "%s %p : %p : %s : %zu:%zu:%zu\n",
             prefix, (void *)eastnode_p, (void *)(*eastnode_p),
-            (*eastnode_p)->type, (*eastnode_p)->start.line,
+            east_node_type_tab[(*eastnode_p)->type], (*eastnode_p)->start.line,
             (*eastnode_p)->start.col, (*eastnode_p)->len);
   }
 }
@@ -800,10 +841,140 @@ static inline void viml_pexpr_debug_print_token(
 #define PSTACK_P(msg) \
     viml_pexpr_debug_print_ast_stack(ast_stack, #msg)
 #define PNODE_P(eastnode_p, msg) \
-    viml_pexpr_debug_print_ast_node((const ExprASTNode *const *)ast_stack, #msg)
+    viml_pexpr_debug_print_ast_node((const ExprASTNode *const *)eastnode_p, \
+                                    (#msg))
 #define PTOKEN(tkn) \
     viml_pexpr_debug_print_token(pstate, tkn)
 #endif
+
+#ifndef NDEBUG
+static const uint8_t node_maxchildren[] = {
+  [kExprNodeMissing] = 0,
+  [kExprNodeOpMissing] = 2,
+  [kExprNodeTernary] = 2,
+  [kExprNodeTernaryValue] = 2,
+  [kExprNodeRegister] = 0,
+  [kExprNodeSubscript] = 2,
+  [kExprNodeListLiteral] = 1,
+  [kExprNodeUnaryPlus] = 1,
+  [kExprNodeBinaryPlus] = 2,
+  [kExprNodeNested] = 1,
+  [kExprNodeCall] = 2,
+  [kExprNodePlainIdentifier] = 0,
+  [kExprNodePlainKey] = 0,
+  [kExprNodeComplexIdentifier] = 2,
+  [kExprNodeUnknownFigure] = 1,
+  [kExprNodeLambda] = 2,
+  [kExprNodeDictLiteral] = 1,
+  [kExprNodeCurlyBracesIdentifier] = 1,
+  [kExprNodeComma] = 2,
+  [kExprNodeColon] = 2,
+  [kExprNodeArrow] = 2,
+  [kExprNodeComparison] = 2,
+  [kExprNodeConcat] = 2,
+  [kExprNodeConcatOrSubscript] = 2,
+  [kExprNodeInteger] = 0,
+  [kExprNodeFloat] = 0,
+  [kExprNodeSingleQuotedString] = 0,
+  [kExprNodeDoubleQuotedString] = 0,
+  [kExprNodeOr] = 2,
+  [kExprNodeAnd] = 2,
+  [kExprNodeUnaryMinus] = 1,
+  [kExprNodeBinaryMinus] = 2,
+  [kExprNodeNot] = 1,
+  [kExprNodeMultiplication] = 2,
+  [kExprNodeDivision] = 2,
+  [kExprNodeMod] = 2,
+  [kExprNodeOption] = 0,
+  [kExprNodeEnvironment] = 0,
+};
+#endif
+
+/// Free memory occupied by AST
+///
+/// @param  ast  AST stack to free.
+void viml_pexpr_free_ast(ExprAST ast)
+{
+  ExprASTStack ast_stack;
+  kvi_init(ast_stack);
+  kvi_push(ast_stack, &ast.root);
+  while (kv_size(ast_stack)) {
+    ExprASTNode **const cur_node = kv_last(ast_stack);
+#ifndef NDEBUG
+    // Explicitly check for AST recursiveness.
+    for (size_t i = 0 ; i < kv_size(ast_stack) - 1 ; i++) {
+      assert(*kv_A(ast_stack, i) != *cur_node);
+    }
+#endif
+    if (*cur_node == NULL) {
+      assert(kv_size(ast_stack) == 1);
+      kv_drop(ast_stack, 1);
+    } else if ((*cur_node)->children != NULL) {
+#ifndef NDEBUG
+      const uint8_t maxchildren = node_maxchildren[(*cur_node)->type];
+      assert(maxchildren > 0);
+      assert(maxchildren <= 2);
+      assert(maxchildren == 1
+             ? (*cur_node)->children->next == NULL
+             : ((*cur_node)->children->next == NULL
+                || (*cur_node)->children->next->next == NULL));
+#endif
+      kvi_push(ast_stack, &(*cur_node)->children);
+    } else if ((*cur_node)->next != NULL) {
+      kvi_push(ast_stack, &(*cur_node)->next);
+    } else if (*cur_node != NULL) {
+      kv_drop(ast_stack, 1);
+      switch ((*cur_node)->type) {
+        case kExprNodeDoubleQuotedString:
+        case kExprNodeSingleQuotedString: {
+          xfree((*cur_node)->data.str.value);
+          break;
+        }
+        case kExprNodeMissing:
+        case kExprNodeOpMissing:
+        case kExprNodeTernary:
+        case kExprNodeTernaryValue:
+        case kExprNodeRegister:
+        case kExprNodeSubscript:
+        case kExprNodeListLiteral:
+        case kExprNodeUnaryPlus:
+        case kExprNodeBinaryPlus:
+        case kExprNodeNested:
+        case kExprNodeCall:
+        case kExprNodePlainIdentifier:
+        case kExprNodePlainKey:
+        case kExprNodeComplexIdentifier:
+        case kExprNodeUnknownFigure:
+        case kExprNodeLambda:
+        case kExprNodeDictLiteral:
+        case kExprNodeCurlyBracesIdentifier:
+        case kExprNodeComma:
+        case kExprNodeColon:
+        case kExprNodeArrow:
+        case kExprNodeComparison:
+        case kExprNodeConcat:
+        case kExprNodeConcatOrSubscript:
+        case kExprNodeInteger:
+        case kExprNodeFloat:
+        case kExprNodeOr:
+        case kExprNodeAnd:
+        case kExprNodeUnaryMinus:
+        case kExprNodeBinaryMinus:
+        case kExprNodeNot:
+        case kExprNodeMultiplication:
+        case kExprNodeDivision:
+        case kExprNodeMod:
+        case kExprNodeOption:
+        case kExprNodeEnvironment: {
+          break;
+        }
+      }
+      xfree(*cur_node);
+      *cur_node = NULL;
+    }
+  }
+  kvi_destroy(ast_stack);
+}
 
 // start = s ternary_expr s EOC
 // ternary_expr = binop_expr

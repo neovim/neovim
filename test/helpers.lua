@@ -358,6 +358,8 @@ format_luav = function(v, indent)
     else
       ret = ('%e'):format(v)
     end
+  elseif type(v) == 'nil' then
+    ret = 'nil'
   else
     print(type(v))
     -- Not implemented yet
