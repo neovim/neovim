@@ -682,6 +682,10 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
     tv_dict_add_str(dict, S_LEN("shortcut"), buf);
   }
 
+  if (menu->actext) {
+    tv_dict_add_str(dict, S_LEN("actext"), (char *)menu->actext);
+  }
+
   if (menu->modes & MENU_TIP_MODE && menu->strings[MENU_INDEX_TIP]) {
     tv_dict_add_str(dict, S_LEN("tooltip"),
                     (char *)menu->strings[MENU_INDEX_TIP]);
@@ -695,11 +699,9 @@ static dict_T *menu_get_recursive(const vimmenu_T *menu, int modes)
     for (int bit = 0; bit < MENU_MODES; bit++) {
       if ((menu->modes & modes & (1 << bit)) != 0) {
         dict_T *impl = tv_dict_alloc();
-        if (*menu->strings[bit] == NUL) {
-          tv_dict_add_str(impl, S_LEN("rhs"), (char *)"<Nop>");
-        } else {
-          tv_dict_add_str(impl, S_LEN("rhs"), (char *)menu->strings[bit]);
-        }
+        tv_dict_add_allocated_str(impl, S_LEN("rhs"),
+                                  str2special_save((char *)menu->strings[bit],
+                                                   false, false));
         tv_dict_add_nr(impl, S_LEN("silent"), menu->silent[bit]);
         tv_dict_add_nr(impl, S_LEN("enabled"),
                        (menu->enabled & (1 << bit)) ? 1 : 0);
