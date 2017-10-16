@@ -698,8 +698,8 @@ const char *viml_pexpr_repr_token(const ParserState *const pstate,
             (int)token.data.num.is_float,
             (int)token.data.num.base,
             (double)(token.data.num.is_float
-                     ? token.data.num.val.floating
-                     : token.data.num.val.integer))
+                     ? (double)token.data.num.val.floating
+                     : (double)token.data.num.val.integer))
     TKNARGS(kExprLexInvalid, "(msg=%s)", token.data.err.msg)
     default: {
       // No additional arguments.
