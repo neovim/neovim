@@ -2377,7 +2377,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Only normal file name characters can be used, "/\*?[|<>" are illegal.
 
 						*'fillchars'* *'fcs'*
-'fillchars' 'fcs'	string	(default "vert:|,fold:-")
+'fillchars' 'fcs'	string	(default "vert:│,fold:·")
 			global
 			{not available when compiled without the |+windows|
 			and |+folding| features}
@@ -2387,8 +2387,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  item		default		Used for ~
 	  stl:c		' ' or '^'	statusline of the current window
 	  stlnc:c	' ' or '='	statusline of the non-current windows
-	  vert:c	'|'		vertical separators |:vsplit|
-	  fold:c	'-'		filling 'foldtext'
+	  vert:c	'│'		vertical separators |:vsplit|
+	  fold:c	'·'		filling 'foldtext'
 	  diff:c	'-'		deleted lines of the 'diff' option
 
 	Any one that is omitted will fall back to the default.  For "stl" and
@@ -2396,7 +2396,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	otherwise.
 
 	Example: >
-	    :set fillchars=stl:^,stlnc:=,vert:\|,fold:-,diff:-
+	    :set fillchars=stl:^,stlnc:=,vert:│,fold:·,diff:-
 <	This is similar to the default, except that these characters will also
 	be used when there is highlighting.
 

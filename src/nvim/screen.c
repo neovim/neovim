@@ -7171,7 +7171,7 @@ static int fillchar_vsep(win_T *wp, int *attr)
 {
   *attr = win_hl_attr(wp, HLF_C);
   if (*attr == 0 && fill_vert == ' ') {
-    return '|';
+    return 9474;  // default: "│"
   } else {
     return fill_vert;
   }
