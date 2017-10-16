@@ -3,6 +3,7 @@ local Screen = require('test.functional.ui.screen')
 local plugin_helpers = require('test.functional.plugin.helpers')
 
 local clear = helpers.clear
+local curbuf_contents = helpers.curbuf_contents
 local command = helpers.command
 local eq = helpers.eq
 
@@ -16,13 +17,12 @@ describe(':checkhealth', function()
     eq('Invalid $VIMRUNTIME: bogus', string.match(err, 'Invalid.*'))
   end)
   it("detects invalid $VIM", function()
-    clear({
-      env={ VIM='bogus', },
-    })
-    local status, err = pcall(command, 'checkhealth')
-    eq(false, status)
-    -- Invalid $VIM causes $VIMRUNTIME to be broken.
-    eq('Invalid $VIMRUNTIME: bogus', string.match(err, 'Invalid.*'))
+    clear()
+    -- Do this after startup, otherwise it just breaks $VIMRUNTIME.
+    command("let $VIM='zub'")
+    command("checkhealth nvim")
+    eq("ERROR: $VIM is invalid: zub",
+       string.match(curbuf_contents(), "ERROR: $VIM .* zub"))
   end)
 end)
 
