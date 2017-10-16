@@ -314,10 +314,6 @@ enum {
   /// When parsing expressions input by user bar is assumed to be a binary
   /// operator and other two are spacings.
   kExprFlagsDisallowEOC = (1 << 1),
-  /// Print errors when encountered
-  ///
-  /// Without the flag they are only taken into account when parsing.
-  kExprFlagsPrintError = (1 << 2),
   // WARNING: whenever you add a new flag, alter klee_assume() statement in
   // viml_expressions_parser.c.
 } ExprParserFlags;

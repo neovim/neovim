@@ -35,7 +35,7 @@ int main(const int argc, const char *const *const argv,
 {
   char input[INPUT_SIZE];
   uint8_t shift;
-  int flags;
+  unsigned flags;
   const bool peek = false;
   avoid_optimizing_out = argc;
 
@@ -48,8 +48,7 @@ int main(const int argc, const char *const *const argv,
   klee_make_symbolic(&shift, sizeof(shift), "shift");
   klee_make_symbolic(&flags, sizeof(flags), "flags");
   klee_assume(shift < INPUT_SIZE);
-  klee_assume(
-      flags <= (kExprFlagsMulti|kExprFlagsDisallowEOC|kExprFlagsPrintError));
+  klee_assume(flags <= (kExprFlagsMulti|kExprFlagsDisallowEOC));
 #endif
 
   ParserLine plines[] = {
@@ -91,7 +90,7 @@ int main(const int argc, const char *const *const argv,
   };
   kvi_init(pstate.reader.lines);
 
-  const ExprAST ast = viml_pexpr_parse(&pstate, flags);
+  const ExprAST ast = viml_pexpr_parse(&pstate, (int)flags);
   assert(ast.root != NULL || ast.err.msg);
   // Can’t possibly have more highlight tokens then there are bytes in string.
   assert(kv_size(colors) <= INPUT_SIZE - shift);
