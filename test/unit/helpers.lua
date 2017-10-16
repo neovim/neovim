@@ -315,7 +315,7 @@ local function alloc_log_new()
     eq(exp, self.log)
     self:clear()
   end
-  function log:clear_tmp_allocs()
+  function log:clear_tmp_allocs(clear_null_frees)
     local toremove = {}
     local allocs = {}
     for i, v in ipairs(self.log) do
@@ -327,6 +327,8 @@ local function alloc_log_new()
           if v.func == 'free' then
             toremove[#toremove + 1] = i
           end
+        elseif clear_null_frees and v.args[1] == self.null then
+          toremove[#toremove + 1] = i
         end
         if v.func == 'realloc' then
           allocs[tostring(v.ret)] = i
@@ -779,6 +781,12 @@ local function kvi_init(kvi)
   return kvi
 end
 
+local function kvi_destroy(kvi)
+  if kvi.items ~= kvi.init_array then
+    lib.xfree(kvi.items)
+  end
+end
+
 local function kvi_new(ct)
   return kvi_init(ffi.new(ct))
 end
@@ -830,6 +838,7 @@ local module = {
   sc = sc,
   conv_enum = conv_enum,
   array_size = array_sive,
+  kvi_destroy = kvi_destroy,
   kvi_size = kvi_size,
   kvi_init = kvi_init,
   kvi_new = kvi_new,

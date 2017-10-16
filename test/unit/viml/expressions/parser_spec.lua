@@ -5,6 +5,8 @@ local viml_helpers = require('test.unit.viml.helpers')
 
 local make_enum_conv_tab = helpers.make_enum_conv_tab
 local child_call_once = helpers.child_call_once
+local alloc_log_new = helpers.alloc_log_new
+local kvi_destroy = helpers.kvi_destroy
 local conv_enum = helpers.conv_enum
 local ptr2key = helpers.ptr2key
 local cimport = helpers.cimport
@@ -22,6 +24,8 @@ local format_string = global_helpers.format_string
 local format_luav = global_helpers.format_luav
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
+
+local alloc_log = alloc_log_new()
 
 local function format_check(expr, flags, ast, hls)
   -- That forces specific order.
@@ -230,30 +234,40 @@ end)
 
 describe('Expressions parser', function()
   local function check_parsing(str, flags, exp_ast, exp_highlighting_fs)
-    flags = flags or 0
+    local err, msg = pcall(function()
+      flags = flags or 0
 
-    if os.getenv('NVIM_TEST_PARSER_SPEC_PRINT_TEST_CASE') == '1' then
-      print(str, flags)
-    end
-
-    local pstate = new_pstate({str})
-    local east = lib.viml_pexpr_parse(pstate, flags)
-    local ast = east2lua(pstate, east)
-    local hls = phl2lua(pstate)
-    if exp_ast == nil then
-      format_check(str, flags, ast, hls)
-      return
-    end
-    eq(exp_ast, ast)
-    if exp_highlighting_fs then
-      local exp_highlighting = {}
-      local next_col = 0
-      for i, h in ipairs(exp_highlighting_fs) do
-        exp_highlighting[i], next_col = h(next_col)
+      if os.getenv('NVIM_TEST_PARSER_SPEC_PRINT_TEST_CASE') == '1' then
+        print(str, flags)
       end
-      eq(exp_highlighting, hls)
+      alloc_log:check({})
+
+      local pstate = new_pstate({str})
+      local east = lib.viml_pexpr_parse(pstate, flags)
+      local ast = east2lua(pstate, east)
+      local hls = phl2lua(pstate)
+      if exp_ast == nil then
+        format_check(str, flags, ast, hls)
+        return
+      end
+      eq(exp_ast, ast)
+      if exp_highlighting_fs then
+        local exp_highlighting = {}
+        local next_col = 0
+        for i, h in ipairs(exp_highlighting_fs) do
+          exp_highlighting[i], next_col = h(next_col)
+        end
+        eq(exp_highlighting, hls)
+      end
+      lib.viml_pexpr_free_ast(east)
+      kvi_destroy(pstate.colors)
+      alloc_log:clear_tmp_allocs(true)
+      alloc_log:check({})
+    end)
+    if not err then
+      msg = format_string('Error while processing test (%r, %u):\n%s', str, flags, msg)
+      error(msg)
     end
-    lib.viml_pexpr_free_ast(east)
   end
   local function hl(group, str, shift)
     return function(next_col)
