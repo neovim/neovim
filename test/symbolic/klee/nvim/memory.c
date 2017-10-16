@@ -35,6 +35,9 @@ void *xmalloc(const size_t size)
 
 void xfree(void *const p)
 {
+  if (p == NULL) {
+    return;
+  }
   RINGBUF_FORALL(&arecs, AllocRecord, arec) {
     if (arec->ptr == p) {
       allocated_memory -= arec->size;
