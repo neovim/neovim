@@ -973,8 +973,8 @@ EXTERN int lcs_conceal INIT(= ' ');
 /* Characters from 'fillchars' option */
 EXTERN int fill_stl INIT(= ' ');
 EXTERN int fill_stlnc INIT(= ' ');
-EXTERN int fill_vert INIT(= ' ');
-EXTERN int fill_fold INIT(= '-');
+EXTERN int fill_vert INIT(= 9474);  // │
+EXTERN int fill_fold INIT(= 183);   // ·
 EXTERN int fill_diff INIT(= '-');
 
 /* Whether 'keymodel' contains "stopsel" and "startsel". */
