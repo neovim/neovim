@@ -2308,10 +2308,10 @@ viml_pexpr_parse_invalid_colon:
               _("E15: Colon outside of dictionary or ternary operator: %.*s"));
 viml_pexpr_parse_valid_colon:
           ADD_VALUE_IF_MISSING(_(EXP_VAL_COLON));
-          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
           if (is_ternary) {
             HL_CUR_TOKEN(TernaryColon);
           } else {
+            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeColon);
             ADD_OP_NODE(cur_node);
             HL_CUR_TOKEN(Colon);
           }
