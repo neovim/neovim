@@ -13,7 +13,7 @@ Command-line mode is used to enter Ex commands (":"), search patterns
 Basic command line editing is explained in chapter 20 of the user manual
 |usr_20.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Command-line editing					*cmdline-editing*

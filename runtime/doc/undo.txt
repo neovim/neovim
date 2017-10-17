@@ -8,7 +8,7 @@ Undo and redo						*undo-redo*
 
 The basics are explained in section |02.5| of the user manual.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Undo and redo commands				*undo-commands*

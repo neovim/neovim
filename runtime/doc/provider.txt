@@ -8,7 +8,7 @@ Providers	 						    *provider*
 
 Nvim delegates some features to dynamic "providers".
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 Python integration		    	      *provider-python*

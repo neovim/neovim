@@ -16,7 +16,7 @@ upwards in the buffer, the text in the window moves downwards on your screen.
 
 See section |03.7| of the user manual for an introduction.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Scrolling downwards					*scroll-down*

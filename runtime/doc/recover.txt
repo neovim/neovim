@@ -15,7 +15,7 @@ You can recover most of your changes from the files that Vim uses to store
 the contents of the file.  Mostly you can recover your work with one command:
 	vim -r filename
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. The swap file					*swap-file*

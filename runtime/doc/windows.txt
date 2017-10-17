@@ -13,7 +13,7 @@ differently when used in combination with more than one window.
 The basics are explained in chapter 7 and 8 of the user manual |usr_07.txt|
 |usr_08.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction					*windows-intro* *window*

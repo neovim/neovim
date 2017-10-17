@@ -18,7 +18,7 @@ Terminal buffers behave like normal buffers, except:
   closing the terminal buffer.
 - 'bufhidden' defaults to "hide".
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 Start						*terminal-start*
