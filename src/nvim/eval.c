@@ -334,7 +334,7 @@ static struct vimvar {
   // VV_SEND_SERVER "servername"
   // VV_REG "register"
   // VV_OP "operator"
-  VV(VV_COUNT,          "count",            VAR_NUMBER, VV_COMPAT+VV_RO),
+  VV(VV_COUNT,          "count",            VAR_NUMBER, VV_RO),
   VV(VV_COUNT1,         "count1",           VAR_NUMBER, VV_RO),
   VV(VV_PREVCOUNT,      "prevcount",        VAR_NUMBER, VV_RO),
   VV(VV_ERRMSG,         "errmsg",           VAR_STRING, VV_COMPAT),

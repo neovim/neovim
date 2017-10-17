@@ -1474,7 +1474,6 @@ v:count		The count given for the last Normal mode command.  Can be used
 		When there are two counts, as in "3d2w", they are multiplied,
 		just like what happens in the command, "d6w" for the example.
 		Also used for evaluating the 'formatexpr' option.
-		"count" also works, for backwards compatibility.
 
 					*v:count1* *count1-variable*
 v:count1	Just like "v:count", but defaults to one when no count is
