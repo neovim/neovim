@@ -648,6 +648,7 @@ g&			Synonym for `:%s//~/&` (repeat last substitute with
 							*:s_flags*
 The flags that you can use for the substitute commands:
 
+							*:&&*
 [&]	Must be the first one: Keep the flags from the previous substitute
 	command.  Examples: >
 		:&&
