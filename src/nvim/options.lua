@@ -7,7 +7,7 @@
 --    enable_if=nil,
 --    defaults={condition=nil, if_true={vi=224, vim=0}, if_false=nil},
 --    secure=nil, gettext=nil, noglob=nil, normal_fname_chars=nil,
---    pri_mkrc=nil, deny_in_modelines=nil,
+--    pri_mkrc=nil, deny_in_modelines=nil, normal_dname_chars=nil,
 --    expand=nil, nodefault=nil, no_mkrc=nil, vi_def=true, vim=true,
 --    alloced=nil,
 --    save_pv_indir=nil,
@@ -575,6 +575,7 @@ return {
       full_name='dictionary', abbreviation='dict',
       type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
+      normal_dname_chars=true,
       vi_def=true,
       expand=true,
       varname='p_dict',
@@ -1750,6 +1751,7 @@ return {
     {
       full_name='printexpr', abbreviation='pexpr',
       type='string', scope={'global'},
+      secure=true,
       vi_def=true,
       varname='p_pexpr',
       defaults={if_true={vi=""}}
@@ -2449,6 +2451,7 @@ return {
       full_name='thesaurus', abbreviation='tsr',
       type='string', list='onecomma', scope={'global', 'buffer'},
       deny_duplicates=true,
+      normal_dname_chars=true,
       vi_def=true,
       expand=true,
       varname='p_tsr',
