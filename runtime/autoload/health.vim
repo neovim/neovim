@@ -18,7 +18,7 @@ function! s:enhance_syntax() abort
   syntax match healthBar  "|" contained conceal
   highlight link healthHelp Identifier
 
-  " We do not care about markdown syntax errors in :CheckHealth output.
+  " We do not care about markdown syntax errors in :checkhealth output.
   highlight! link markdownError Normal
 endfunction
 
@@ -159,7 +159,10 @@ endfunction
 " Translates a list of plugin names to healthcheck function names.
 function! s:to_fn_names(plugin_names) abort
   let healthchecks = []
-  for p in a:plugin_names
+  let plugin_names = type('') ==# type(a:plugin_names)
+        \ ? split(a:plugin_names, '', v:false)
+        \ : a:plugin_names
+  for p in plugin_names
     call add(healthchecks, 'health#'.p.'#check')
   endfor
   return healthchecks

@@ -75,7 +75,7 @@ let s:prog = provider#ruby#Detect()
 let s:plugin_path = expand('<sfile>:p:h') . '/script_host.rb'
 
 if empty(s:prog)
-  let s:err = 'Cannot find the neovim RubyGem. Try :CheckHealth'
+  let s:err = 'Cannot find the neovim RubyGem. Try :checkhealth'
 endif
 
 call remote#host#RegisterClone('legacy-ruby-provider', 'ruby')

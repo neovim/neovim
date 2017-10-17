@@ -1365,7 +1365,7 @@ void intro_message(int colon)
     N_("https://neovim.io/community"),
     "",
     N_("type  :help nvim<Enter>       if you are new! "),
-    N_("type  :CheckHealth<Enter>     to optimize Nvim"),
+    N_("type  :checkhealth<Enter>     to optimize Nvim"),
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>            for help        "),
     "",

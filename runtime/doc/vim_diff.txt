@@ -127,7 +127,7 @@ Variables:
   |v:windowid| is always available (for use by external UIs)
 
 Commands:
-  |:CheckHealth|
+  |:checkhealth|
   |:drop| is available on all platforms
   |:Man| is available by default, with many improvements such as completion
 
