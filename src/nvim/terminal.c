@@ -162,18 +162,17 @@ void terminal_init(void)
   // refresh_timer_cb will redraw the screen which can call vimscript
   refresh_timer.events = multiqueue_new_child(main_loop.events);
 
-  // initialize a rgb->color index map for cterm attributes(VTermScreenCell
-  // only has RGB information and we need color indexes for terminal UIs)
+  // Initialize rgb:color_index map for cterm attributes (VTermScreenCell
+  // only has RGB information and we need color indexes for non-RGB TUI).
   color_indexes = map_new(int, int)();
   VTerm *vt = vterm_new(24, 80);
   VTermState *state = vterm_obtain_state(vt);
 
   for (int color_index = 255; color_index >= 0; color_index--) {
     VTermColor color;
-    // Some of the default 16 colors has the same color as the later
-    // 240 colors. To avoid collisions, we will use the custom colors
-    // below in non true color mode.
     if (color_index < 16) {
+      // Some of the default 16 colors are the same as later 240 colors.
+      // To avoid collisions, we use these custom colors in non-RGB mode.
       color.red = 0;
       color.green = 0;
       color.blue = (uint8_t)(color_index + 1);
@@ -572,9 +571,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int vt_bg = RGB(cell.bg.red, cell.bg.green, cell.bg.blue);
     vt_fg = vt_fg != default_vt_fg ? vt_fg : - 1;
     vt_bg = vt_bg != default_vt_bg ? vt_bg : - 1;
-    // Since libvterm does not expose the color index used by the program, we
-    // use the rgb value to find the appropriate index in the cache computed by
-    // `terminal_init`.
+    // Since libvterm does not expose the color index, we use the RGB value to
+    // find the index in the cache computed by `terminal_init`.
     int vt_fg_idx = vt_fg != -1 ?
                     map_get(int, int)(color_indexes, vt_fg) : 0;
     int vt_bg_idx = vt_bg != -1 ?
@@ -596,6 +594,18 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
         .rgb_fg_color = vt_fg,
         .rgb_bg_color = vt_bg,
       });
+    }
+
+    // directory is usually color index 5, so for light blue directories:
+    //    :hi TermColor5 ctermfg=lightblue
+    assert(vt_bg_idx <= 255 && vt_fg_idx <= 255);
+    char hl_name[sizeof("TermColor") + 3];
+    snprintf(hl_name, sizeof(hl_name), "TermColor%d", vt_fg_idx);
+    int hl_id = syn_name2id((char_u *)hl_name);
+    // ILOG("vt_fg_idx=%d hl_name=%s hl_id=%d", vt_fg_idx, hl_name, hl_id);
+    if (hl_id != 0) {
+      const int attr = syn_id2attr(hl_id);
+      attr_id = hl_combine_attr(attr, win_hl_attr(wp, hl_id));
     }
 
     if (term->cursor.visible && term->cursor.row == row

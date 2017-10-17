@@ -6141,8 +6141,8 @@ int load_colors(char_u *name)
 /// When using ":hi clear" this is called recursively for each group with
 /// "forceit" and "init" both TRUE.
 /// @param init TRUE when called for initializing
-void
-do_highlight(char_u *line, int forceit, int init) {
+void do_highlight(char_u *line, int forceit, int init)
+{
   char_u      *name_end;
   char_u      *linep;
   char_u      *key_start;
