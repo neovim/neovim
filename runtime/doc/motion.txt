@@ -886,6 +886,7 @@ was made yet in the current file.
 			then the position can be near the end of what the
 			command changed.  For example when inserting a word,
 			the position will be on the last character.
+			To jump to older changes use |g;|.
 
 							*'(* *`(*
 '(  `(			To the start of the current sentence, like the |(|
