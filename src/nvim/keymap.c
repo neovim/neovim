@@ -834,7 +834,7 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
       }
 
       slen = trans_special(&src, (size_t)(end - src) + 1, result + dlen, true,
-                           true);
+                           false);
       if (slen) {
         dlen += slen;
         continue;
