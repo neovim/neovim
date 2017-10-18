@@ -100,7 +100,7 @@ describe('clipboard', function()
       ^                                                                        |
       ~                                                                       |
       ~                                                                       |
-      clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
+      clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
   end)
 
@@ -112,7 +112,7 @@ describe('clipboard', function()
     feed_command('redir @+> | bogus_cmd | redir END')
     screen:expect([[
       ~                                                                       |
-      clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
+      clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
       E492: Not an editor command: bogus_cmd | redir END                      |
       Press ENTER or type command to continue^                                 |
     ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
@@ -132,7 +132,7 @@ describe('clipboard', function()
       ^                                                                        |
       ~                                                                       |
       ~                                                                       |
-      clipboard: No provider. Try ":CheckHealth" or ":h clipboard".           |
+      clipboard: No provider. Try ":checkhealth" or ":h clipboard".           |
     ]], nil, {{bold = true, foreground = Screen.colors.Blue}})
   end)
 
@@ -392,6 +392,13 @@ describe('clipboard', function()
       eq('---', eval('getreg("*")'))
     end)
 
+    it('works in the cmdline window', function()
+      feed('q:itext<esc>yy')
+      eq({{'text', ''}, 'V'}, eval("g:test_clip['*']"))
+      command("let g:test_clip['*'] = [['star'], 'c']")
+      feed('p')
+      eq('textstar', meths.get_current_line())
+    end)
   end)
 
   describe('clipboard=unnamedplus', function()

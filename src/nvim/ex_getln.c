@@ -1863,9 +1863,13 @@ char *getcmdline_prompt(const char firstc, const char *const prompt,
   ccline.input_fn = (firstc == '@');
   ccline.highlight_callback = highlight_callback;
 
+  int msg_silent_saved = msg_silent;
+  msg_silent = 0;
+
   char *const ret = (char *)getcmdline(firstc, 1L, 0);
 
   restore_cmdline(&save_ccline);
+  msg_silent = msg_silent_saved;
   // Restore msg_col, the prompt from input() may have changed it.
   // But only if called recursively and the commandline is therefore being
   // restored to an old one; if not, the input() prompt stays on the screen,
@@ -5714,6 +5718,7 @@ static int ex_window(void)
 
   i = RedrawingDisabled;
   RedrawingDisabled = 0;
+  int save_count = save_batch_count();
 
   /*
    * Call the main loop until <CR> or CTRL-C is typed.
@@ -5722,6 +5727,7 @@ static int ex_window(void)
   normal_enter(true, false);
 
   RedrawingDisabled = i;
+  restore_batch_count(save_count);
 
   int save_KeyTyped = KeyTyped;
 

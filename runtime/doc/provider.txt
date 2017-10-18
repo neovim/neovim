@@ -20,7 +20,7 @@ Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
 PYTHON QUICKSTART ~
 
 If you used a package manager to install Nvim, you might already have the
-required `neovim` Python package. Run |:CheckHealth| to see if your system is
+required `neovim` Python package. Run |:checkhealth| to see if your system is
 up-to-date.
 
 Following are steps to install the package with Python's `pip` tool.
@@ -88,7 +88,7 @@ Ruby integration		    	      *provider-ruby*
 Nvim supports the Vim legacy |ruby-vim| interface via external Ruby
 interpreters connected via |RPC|.
 
-Run |:CheckHealth| to see if your system is up-to-date.
+Run |:checkhealth| to see if your system is up-to-date.
 
 RUBY QUICKSTART ~
 

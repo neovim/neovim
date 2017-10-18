@@ -920,7 +920,7 @@ static const int included_patches[] = {
   186,
   // 185,
   // 184,
-  // 183,
+  // 183 NA
   182,
   181,
   // 180,
@@ -997,12 +997,12 @@ static const int included_patches[] = {
   // 109 NA
   // 108 NA
   // 107 NA
-  // 106,
+  106,
   // 105 NA
-  // 104,
+  104,
   // 103 NA
-  // 102,
-  // 101,
+  102,
+  101,
   100,
   99,
   // 98 NA
@@ -1365,7 +1365,7 @@ void intro_message(int colon)
     N_("https://neovim.io/community"),
     "",
     N_("type  :help nvim<Enter>       if you are new! "),
-    N_("type  :CheckHealth<Enter>     to optimize Nvim"),
+    N_("type  :checkhealth<Enter>     to optimize Nvim"),
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>            for help        "),
     "",

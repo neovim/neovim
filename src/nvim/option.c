@@ -242,6 +242,7 @@ typedef struct vimoption {
 #define P_NO_DEF_EXP   0x8000000U  ///< Do not expand default value.
 
 #define P_RWINONLY     0x10000000U  ///< only redraw current window
+#define P_NDNAME       0x20000000U  ///< only normal dir name chars allowed
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -2454,11 +2455,14 @@ did_set_string_option (
   if ((secure || sandbox != 0)
       && (options[opt_idx].flags & P_SECURE)) {
     errmsg = e_secure;
-  } else if ((options[opt_idx].flags & P_NFNAME)
-             && vim_strpbrk(*varp, (char_u *)"/\\*?[|;&<>\r\n") != NULL) {
-    // Check for a "normal" file name in some options.  Disallow a path
-    // separator (slash and/or backslash), wildcards and characters that are
-    // often illegal in a file name.
+  } else if (((options[opt_idx].flags & P_NFNAME)
+              && vim_strpbrk(*varp, (char_u *)(secure ? "/\\*?[|;&<>\r\n"
+                                               : "/\\*?[<>\r\n")) != NULL)
+             || ((options[opt_idx].flags & P_NDNAME)
+                 && vim_strpbrk(*varp, (char_u *)"*?[|;&<>\r\n") != NULL)) {
+    // Check for a "normal" directory or file name in some options.  Disallow a
+    // path separator (slash and/or backslash), wildcards and characters that
+    // are often illegal in a file name. Be more permissive if "secure" is off.
     errmsg = e_invarg;
   }
   /* 'backupcopy' */
@@ -3173,17 +3177,18 @@ did_set_string_option (
   } else {
     // Options that are a list of flags.
     p = NULL;
-    if (varp == &p_ww)
+    if (varp == &p_ww) {  // 'whichwrap'
       p = (char_u *)WW_ALL;
-    if (varp == &p_shm)
+    }
+    if (varp == &p_shm) {  // 'shortmess'
       p = (char_u *)SHM_ALL;
-    else if (varp == &(p_cpo))
+    } else if (varp == &(p_cpo)) {  // 'cpoptions'
       p = (char_u *)CPO_VI;
-    else if (varp == &(curbuf->b_p_fo))
+    } else if (varp == &(curbuf->b_p_fo)) {  // 'formatoptions'
       p = (char_u *)FO_ALL;
-    else if (varp == &curwin->w_p_cocu)
+    } else if (varp == &curwin->w_p_cocu) {  // 'concealcursor'
       p = (char_u *)COCU_ALL;
-    else if (varp == &p_mouse) {
+    } else if (varp == &p_mouse) {  // 'mouse'
       p = (char_u *)MOUSE_ALL;
     }
     if (p != NULL) {

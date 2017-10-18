@@ -4,11 +4,24 @@ function! s:check_config() abort
   let ok = v:true
   call health#report_start('Configuration')
 
+  " If $VIM is empty we don't care. Else make sure it is valid.
+  if !empty($VIM) && !filereadable($VIM.'/runtime/doc/nvim.txt')
+    let ok = v:false
+    call health#report_error("$VIM is invalid: ".$VIM)
+  endif
+
   if exists('$NVIM_TUI_ENABLE_CURSOR_SHAPE')
     let ok = v:false
     call health#report_warn("$NVIM_TUI_ENABLE_CURSOR_SHAPE is ignored in Nvim 0.2+",
           \ [ "Use the 'guicursor' option to configure cursor shape. :help 'guicursor'",
           \   'https://github.com/neovim/neovim/wiki/Following-HEAD#20170402' ])
+  endif
+
+  if &paste
+    let ok = v:false
+    call health#report_error("'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
+          \ [ 'Remove `set paste` from your init.vim, if applicable.',
+          \   'Check `:verbose set paste?` to see if a plugin or script set the option.', ])
   endif
 
   if ok

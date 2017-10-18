@@ -127,7 +127,7 @@ Variables:
   |v:windowid| is always available (for use by external UIs)
 
 Commands:
-  |:CheckHealth|
+  |:checkhealth|
   |:drop| is available on all platforms
   |:Man| is available by default, with many improvements such as completion
 
@@ -281,8 +281,8 @@ other arguments if used).
 |input()| and |inputdialog()| support user-defined cmdline highlighting.
 
 Highlight groups:
-  |hl-ColorColumn|, |hl-CursorColumn|, |hl-CursorLine| are lower priority than
-  (overridden by) most other highlight groups.
+  |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
+  groups
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
