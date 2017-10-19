@@ -7006,5 +7006,144 @@ describe('Expressions parser', function()
       hl('NumberPrefix', '0'),
       hl('Number', '0'),
     })
+    check_parsing('"\\U\\', 0, {
+      --           0123
+      ast = {
+        [[DoubleQuotedString(val="U\\"):0:0:"\U\]],
+      },
+      err = {
+        arg = '"\\U\\',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
+      hl('InvalidDoubleQuotedBody', '\\'),
+    })
+    check_parsing('"\\U', 0, {
+      --           012
+      ast = {
+        'DoubleQuotedString(val="U"):0:0:"\\U',
+      },
+      err = {
+        arg = '"\\U',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
+    })
+    check_parsing('|"\\U\\', 2, {
+      --           01234
+      ast = {
+        {
+          'Or:0:0:|',
+          children = {
+            'Missing:0:0:',
+            'DoubleQuotedString(val="U\\\\"):0:1:"\\U\\',
+          },
+        },
+      },
+      err = {
+        arg = '|"\\U\\',
+        msg = 'E15: Unexpected EOC character: %.*s',
+      },
+    }, {
+      hl('InvalidOr', '|'),
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
+      hl('InvalidDoubleQuotedBody', '\\'),
+    })
+    check_parsing('|"\\e"', 2, {
+      --           01234
+      ast = {
+        {
+          'Or:0:0:|',
+          children = {
+            'Missing:0:0:',
+            'DoubleQuotedString(val="\\27"):0:1:"\\e"',
+          },
+        },
+      },
+      err = {
+        arg = '|"\\e"',
+        msg = 'E15: Unexpected EOC character: %.*s',
+      },
+    }, {
+      hl('InvalidOr', '|'),
+      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuotedEscape', '\\e'),
+      hl('DoubleQuotedString', '"'),
+    })
+    check_parsing('|\029', 2, {
+      --           01
+      ast = {
+        {
+          'Or:0:0:|',
+          children = {
+            'Missing:0:0:',
+            'PlainIdentifier(scope=0,ident=\029):0:1:\029',
+          },
+        },
+      },
+      err = {
+        arg = '|\029',
+        msg = 'E15: Unexpected EOC character: %.*s',
+      },
+    }, {
+      hl('InvalidOr', '|'),
+      hl('InvalidIdentifier', '\029'),
+    })
+    check_parsing('"\\<', 0, {
+      --           012
+      ast = {
+        'DoubleQuotedString(val="<"):0:0:"\\<',
+      },
+      err = {
+        arg = '"\\<',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+    })
+    check_parsing('"\\1', 0, {
+      --           012
+      ast = {
+        'DoubleQuotedString(val="\\1"):0:0:"\\1',
+      },
+      err = {
+        arg = '"\\1',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuotedEscape', '\\1'),
+    })
+    check_parsing('}l')
+    check_parsing(':?\000\000\000\000\000\000\000', 0, {
+      ast = {
+        {
+          'Colon:0:0::',
+          children = {
+            'Missing:0:0:',
+            {
+              'Ternary:0:1:?',
+              children = {
+                'Missing:0:1:',
+                'TernaryValue:0:1:?',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ':?',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('InvalidColon', ':'),
+      hl('InvalidTernary', '?'),
+    })
   end)
 end)

@@ -1091,7 +1091,7 @@ void viml_pexpr_free_ast(ExprAST ast)
 // NVimInvalidDoubleQuote -> NVimInvalidString
 // NVimInvalidDoubleQuotedBody -> NVimInvalidString
 // NVimInvalidDoubleQuotedEscape -> NVimInvalidStringSpecial
-// NVimInvalidDoubleQuotedUnknownEscape -> NVimInvalid
+// NVimInvalidDoubleQuotedUnknownEscape -> NVimInvalidDoubleQuotedEscape
 //
 // NVimFigureBrace -> NVimInternalError
 // NVimInvalidSingleQuotedUnknownEscape -> NVimInternalError
@@ -1313,7 +1313,7 @@ static bool viml_pexpr_handle_bop(const ParserState *const pstate,
 
 /// ParserPosition literal based on ParserPosition pos with columns shifted
 ///
-/// Function does not check whether remaining position is valid.
+/// Function does not check whether resulting position is valid.
 ///
 /// @param[in]  pos  Position to shift.
 /// @param[in]  shift  Number of bytes to shift.
@@ -1324,6 +1324,21 @@ static inline ParserPosition shifted_pos(const ParserPosition pos,
   FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (ParserPosition) { .line = pos.line, .col = pos.col + shift };
+}
+
+/// ParserPosition literal based on ParserPosition pos with specified column
+///
+/// Function does not check whether remaining position is valid.
+///
+/// @param[in]  pos  Position to adjust.
+/// @param[in]  new_col  New column.
+///
+/// @return Shifted position.
+static inline ParserPosition recol_pos(const ParserPosition pos,
+                                       const size_t new_col)
+  FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (ParserPosition) { .line = pos.line, .col = new_col };
 }
 
 /// Get highlight group name
@@ -1639,7 +1654,7 @@ static void parse_quoted_string(ParserState *const pstate,
             size_t n = (*p == 'u' ? 4 : 8);
             int nr = 0;
             p++;
-            while (n-- && ascii_isxdigit(p[1])) {
+            while (p + 1 < e && n-- && ascii_isxdigit(p[1])) {
               p++;
               nr = (nr << 4) + hex2nr(*p);
             }
@@ -1659,7 +1674,7 @@ static void parse_quoted_string(ParserState *const pstate,
             if (*p >= '0' && *p <= '7') {
               size--;
               p++;
-              if (*p >= '0' && *p <= '7') {
+              if (p < e && *p >= '0' && *p <= '7') {
                 size--;
                 p++;
               }
@@ -1715,7 +1730,7 @@ static void parse_quoted_string(ParserState *const pstate,
 
           // Hexadecimal or unicode.
           case 'X': case 'x': case 'u': case 'U': {
-            if (ascii_isxdigit(p[1])) {
+            if (p + 1 < e && ascii_isxdigit(p[1])) {
               size_t n;
               int nr;
               bool is_hex = (*p == 'x' || *p == 'X');
@@ -1728,7 +1743,7 @@ static void parse_quoted_string(ParserState *const pstate,
                 n = 8;
               }
               nr = 0;
-              while (n-- && ascii_isxdigit(p[1])) {
+              while (p + 1 < e && n-- && ascii_isxdigit(p[1])) {
                 p++;
                 nr = (nr << 4) + hex2nr(*p);
               }
@@ -1749,9 +1764,9 @@ static void parse_quoted_string(ParserState *const pstate,
           case '0': case '1': case '2': case '3': case '4': case '5': case '6':
           case '7': {
             uint8_t ch = (uint8_t)(*p++ - '0');
-            if (*p >= '0' && *p <= '7') {
+            if (p < e && *p >= '0' && *p <= '7') {
               ch = (uint8_t)((ch << 3) + *p++ - '0');
-              if (*p >= '0' && *p <= '7') {
+              if (p < e && *p >= '0' && *p <= '7') {
                 ch = (uint8_t)((ch << 3) + *p++ - '0');
               }
             }
@@ -1793,7 +1808,7 @@ static void parse_quoted_string(ParserState *const pstate,
     // TODO(ZyX-I): use ast_stack to determine and highlight regular expressions
     // TODO(ZyX-I): use ast_stack to determine and highlight printf format str
     // TODO(ZyX-I): use ast_stack to determine and highlight expression strings
-    size_t next_col = 1;
+    size_t next_col = token.start.col + 1;
     const char *const body_str = (is_double
                                   ? HL(DoubleQuotedBody)
                                   : HL(SingleQuotedBody));
@@ -1806,20 +1821,23 @@ static void parse_quoted_string(ParserState *const pstate,
     for (size_t i = 0; i < kv_size(shifts); i++) {
       const StringShift cur_shift = kv_A(shifts, i);
       if (cur_shift.start > next_col) {
-        viml_parser_highlight(pstate, shifted_pos(token.start, next_col),
+        viml_parser_highlight(pstate, recol_pos(token.start, next_col),
                               cur_shift.start - next_col,
                               body_str);
       }
-      viml_parser_highlight(pstate, shifted_pos(token.start, cur_shift.start),
+      viml_parser_highlight(pstate, recol_pos(token.start, cur_shift.start),
                             cur_shift.orig_len,
                             (cur_shift.escape_not_known
                              ? ukn_esc_str
                              : esc_str));
       next_col = cur_shift.start + cur_shift.orig_len;
     }
-    if (next_col < token.len - token.data.str.closed) {
-      viml_parser_highlight(pstate, shifted_pos(token.start, next_col),
-                            token.len - token.data.str.closed - next_col,
+    if (next_col - token.start.col < token.len - token.data.str.closed) {
+      viml_parser_highlight(pstate, recol_pos(token.start, next_col),
+                            (token.start.col
+                             + token.len
+                             - token.data.str.closed
+                             - next_col),
                             body_str);
     }
   }
@@ -2580,6 +2598,9 @@ viml_pexpr_parse_figure_brace_closing_error:
         break;
       }
       case kExprLexPlainIdentifier: {
+        const ExprVarScope scope = (cur_token.type == kExprLexInvalid
+                                    ? kExprVarScopeMissing
+                                    : cur_token.data.var.scope);
         if (want_node == kENodeValue || want_node == kENodeArgument) {
           want_node = (want_node == kENodeArgument
                        ? kENodeArgumentSeparator
@@ -2588,9 +2609,8 @@ viml_pexpr_parse_figure_brace_closing_error:
                                 (node_is_key
                                  ? kExprNodePlainKey
                                  : kExprNodePlainIdentifier));
-          cur_node->data.var.scope = cur_token.data.var.scope;
-          const size_t scope_shift = (
-              cur_token.data.var.scope == kExprVarScopeMissing ? 0 : 2);
+          cur_node->data.var.scope = scope;
+          const size_t scope_shift = (scope == kExprVarScopeMissing ? 0 : 2);
           cur_node->data.var.ident = (pline.data + cur_token.start.col
                                       + scope_shift);
           cur_node->data.var.ident_len = cur_token.len - scope_shift;
@@ -2609,11 +2629,11 @@ viml_pexpr_parse_figure_brace_closing_error:
                                  ? HL(IdentifierKey)
                                  : HL(Identifier)));
         } else {
-          if (cur_token.data.var.scope == kExprVarScopeMissing) {
+          if (scope == kExprVarScopeMissing) {
             ADD_IDENT(
                 do {
                   NEW_NODE_WITH_CUR_POS(cur_node, kExprNodePlainIdentifier);
-                  cur_node->data.var.scope = cur_token.data.var.scope;
+                  cur_node->data.var.scope = scope;
                   cur_node->data.var.ident = pline.data + cur_token.start.col;
                   cur_node->data.var.ident_len = cur_token.len;
                   want_node = kENodeOperator;
