@@ -4,6 +4,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed = helpers.feed
 local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
+if helpers.pending_win32(pending) then return end
+
 describe('fixeol', function()
   local function rmtestfiles()
     os.remove('test.out')
