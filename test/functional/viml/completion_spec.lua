@@ -5,8 +5,6 @@ local eval, eq, neq = helpers.eval, helpers.eq, helpers.neq
 local feed_command, source, expect = helpers.feed_command, helpers.source, helpers.expect
 local meths = helpers.meths
 
-if helpers.pending_win32(pending) then return end
-
 describe('completion', function()
   local screen
 
