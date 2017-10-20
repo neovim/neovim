@@ -4,8 +4,6 @@ local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
 local insert, feed_command = helpers.insert, helpers.feed_command
 local eq, funcs = helpers.eq, helpers.funcs
 
-if helpers.pending_win32(pending) then return end
-
 describe('ui/mouse/input', function()
   local screen
 
