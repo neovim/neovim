@@ -164,7 +164,7 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(DEFINED MIN_LOG_LEVEL)
+if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
   add_definitions(-DMIN_LOG_LEVEL=${MIN_LOG_LEVEL})
 endif()
 
