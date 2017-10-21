@@ -85,8 +85,6 @@ describe(":substitute, inccommand=split does not trigger preview", function()
 end)
 
 describe(":substitute, 'inccommand' preserves", function()
-   if helpers.pending_win32(pending) then return end
-
   before_each(clear)
 
   it('listed buffers (:ls)', function()
@@ -249,8 +247,6 @@ describe(":substitute, 'inccommand' preserves", function()
 end)
 
 describe(":substitute, 'inccommand' preserves undo", function()
-   if helpers.pending_win32(pending) then return end
-
   local cases = { "", "split", "nosplit" }
 
   local substrings = {
@@ -664,8 +660,6 @@ describe(":substitute, 'inccommand' preserves undo", function()
 end)
 
 describe(":substitute, inccommand=split", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen = Screen.new(30,15)
 
   before_each(function()
@@ -1092,8 +1086,6 @@ describe(":substitute, inccommand=split", function()
 end)
 
 describe("inccommand=nosplit", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen = Screen.new(20,10)
 
   before_each(function()
@@ -1238,8 +1230,6 @@ describe("inccommand=nosplit", function()
 end)
 
 describe(":substitute, 'inccommand' with a failing expression", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen = Screen.new(20,10)
   local cases = { "", "split", "nosplit" }
 
@@ -1503,8 +1493,6 @@ describe("'inccommand' autocommands", function()
 end)
 
 describe("'inccommand' split windows", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen
   local function refresh()
     clear()
