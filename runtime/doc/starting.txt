@@ -6,7 +6,7 @@
 
 Starting Vim						*starting*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Vim arguments					*vim-arguments*

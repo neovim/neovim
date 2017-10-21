@@ -16,7 +16,7 @@ user manual |usr_24.txt|.
 Also see 'virtualedit', for moving the cursor to positions where there is no
 character.  Useful for editing a table.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Special keys						*ins-special-keys*

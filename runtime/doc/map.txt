@@ -9,7 +9,7 @@ Key mapping, abbreviations and user-defined commands.
 This subject is introduced in sections |05.3|, |24.7| and |40.1| of the user
 manual.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Key mapping				*key-mapping* *mapping* *macro*

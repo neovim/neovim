@@ -12,7 +12,7 @@ a cscope query is just like jumping to any tag; it is saved on the tag stack
 so that with the right keyboard mappings, you can jump back and forth between
 functions as you normally would with |tags|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Cscope introduction					*cscope-intro*

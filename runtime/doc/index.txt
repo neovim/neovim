@@ -15,7 +15,7 @@ For an overview of built-in functions see |functions|.
 For a list of Vim variables see |vim-variable|.
 For a complete listing of all help items see |help-tags|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Insert mode						*insert-index*

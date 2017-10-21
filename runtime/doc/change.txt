@@ -11,7 +11,7 @@ commands with the "." command.
 
 For inserting text see |insert.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Deleting text					*deleting* *E470*

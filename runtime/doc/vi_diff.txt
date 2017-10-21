@@ -6,7 +6,7 @@
 
 Differences between Vim and Vi				*vi-differences*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Limits						*limits*

@@ -11,7 +11,7 @@ Nvim is open source software.  Everybody is encouraged to contribute.
 
 See src/nvim/README.md for an overview of the source code.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Design goals						*design-goals*
