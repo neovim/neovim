@@ -15,6 +15,8 @@
 #include <stdbool.h>
 
 #include "nvim/pos.h"
+#include "nvim/types.h"
+#include "nvim/profile.h"
 
 /*
  * The number of sub-matches is limited to 10.
@@ -41,18 +43,36 @@
 #define NFA_ENGINE          2
 
 typedef struct regengine regengine_T;
+typedef struct regprog regprog_T;
+typedef struct reg_extmatch reg_extmatch_T;
+
+/// Structure to be used for multi-line matching.
+/// Sub-match "no" starts in line "startpos[no].lnum" column "startpos[no].col"
+/// and ends in line "endpos[no].lnum" just before column "endpos[no].col".
+/// The line numbers are relative to the first line, thus startpos[0].lnum is
+/// always 0.
+/// When there is no match, the line number is -1.
+typedef struct {
+  regprog_T           *regprog;
+  lpos_T startpos[NSUBEXP];
+  lpos_T endpos[NSUBEXP];
+  int rmm_ic;
+  colnr_T rmm_maxcol;  /// when not zero: maximum column
+} regmmatch_T;
+
+#include "nvim/buffer_defs.h"
 
 /*
  * Structure returned by vim_regcomp() to pass on to vim_regexec().
  * This is the general structure. For the actual matcher, two specific
  * structures are used. See code below.
  */
-typedef struct regprog {
+struct regprog {
   regengine_T *engine;
   unsigned regflags;
   unsigned re_engine;  ///< Automatic, backtracking or NFA engine.
   unsigned re_flags;   ///< Second argument for vim_regcomp().
-} regprog_T;
+};
 
 /*
  * Structure used by the back track matcher.
@@ -126,30 +146,14 @@ typedef struct {
 } regmatch_T;
 
 /*
- * Structure to be used for multi-line matching.
- * Sub-match "no" starts in line "startpos[no].lnum" column "startpos[no].col"
- * and ends in line "endpos[no].lnum" just before column "endpos[no].col".
- * The line numbers are relative to the first line, thus startpos[0].lnum is
- * always 0.
- * When there is no match, the line number is -1.
- */
-typedef struct {
-  regprog_T           *regprog;
-  lpos_T startpos[NSUBEXP];
-  lpos_T endpos[NSUBEXP];
-  int rmm_ic;
-  colnr_T rmm_maxcol;                   /* when not zero: maximum column */
-} regmmatch_T;
-
-/*
  * Structure used to store external references: "\z\(\)" to "\z\1".
  * Use a reference count to avoid the need to copy this around.  When it goes
  * from 1 to zero the matches need to be freed.
  */
-typedef struct {
-  short refcnt;
+struct reg_extmatch {
+  int16_t refcnt;
   char_u              *matches[NSUBEXP];
-} reg_extmatch_T;
+};
 
 struct regengine {
   regprog_T   *(*regcomp)(char_u*, int);

@@ -552,7 +552,7 @@ void terminal_receive(Terminal *term, char *data, size_t len)
 }
 
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
-    int *term_attrs)
+                                  int *term_attrs)
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
