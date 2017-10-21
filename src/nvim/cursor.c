@@ -383,10 +383,13 @@ void check_cursor_col_win(win_T *win)
   } else if (ve_flags == VE_ALL) {
     if (oldcoladd > win->w_cursor.col) {
       win->w_cursor.coladd = oldcoladd - win->w_cursor.col;
-      if (win->w_cursor.col < len && win->w_cursor.coladd > 0) {
+
+      // Make sure that coladd is not more than the char width.
+      // Not for the last character, coladd is then used when the cursor
+      // is actually after the last character.
+      if (win->w_cursor.col + 1 < len && win->w_cursor.coladd > 0) {
         int cs, ce;
 
-        // check that coladd is not more than the char width
         getvcol(win, &win->w_cursor, &cs, NULL, &ce);
         if (win->w_cursor.coladd > ce - cs) {
           win->w_cursor.coladd = ce - cs;
