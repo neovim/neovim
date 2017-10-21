@@ -1548,8 +1548,10 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       }
 
       oap->start = VIsual;
-      if (VIsual_mode == 'V')
+      if (VIsual_mode == 'V') {
         oap->start.col = 0;
+        oap->start.coladd = 0;
+      }
     }
 
     /*
@@ -6260,15 +6262,18 @@ static void nv_gomark(cmdarg_T *cap)
   } else
     nv_cursormark(cap, cap->arg, pos);
 
-  /* May need to clear the coladd that a mark includes. */
-  if (!virtual_active())
+  // May need to clear the coladd that a mark includes.
+  if (!virtual_active()) {
     curwin->w_cursor.coladd = 0;
+  }
+  check_cursor_col();
   if (cap->oap->op_type == OP_NOP
       && pos != NULL
       && (pos == (pos_T *)-1 || !equalpos(old_cursor, *pos))
       && (fdo_flags & FDO_MARK)
-      && old_KeyTyped)
+      && old_KeyTyped) {
     foldOpenCursor();
+  }
 }
 
 /*
