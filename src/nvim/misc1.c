@@ -1274,7 +1274,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
    */
   width = wp->w_width - win_col_off(wp);
   if (width <= 0 || col > 32000) {
-    return 32000;  // bigger than the number of lines of the screen
+    return 32000;  // bigger than the number of screen columns
   }
   if (col <= (unsigned int)width) {
     return 1;
