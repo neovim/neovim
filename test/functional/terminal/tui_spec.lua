@@ -3,10 +3,14 @@
 local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
-local feed_data = thelpers.feed_data
+
 local feed_command = helpers.feed_command
 local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
+
+local feed_data = thelpers.feed_data
+local screen_setup = thelpers.screen_setup
+local tui_screen_setup = thelpers.tui_screen_setup
 
 if helpers.pending_win32(pending) then return end
 
@@ -15,8 +19,7 @@ describe('tui', function()
 
   before_each(function()
     helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
+    screen = tui_screen_setup()
     -- right now pasting can be really slow in the TUI, especially in ASAN.
     -- this will be fixed later but for now we require a high timeout.
     screen.timeout = 60000
@@ -200,8 +203,7 @@ describe('tui FocusGained/FocusLost', function()
 
   before_each(function()
     helpers.clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
+    screen = tui_screen_setup()
     feed_data(":autocmd FocusGained * echo 'gained'\n")
     feed_data(":autocmd FocusLost * echo 'lost'\n")
     feed_data("\034\016")  -- CTRL-\ CTRL-N

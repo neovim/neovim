@@ -525,14 +525,23 @@ end
 
 -- Helper to skip tests. Returns true in Windows systems.
 -- pending_fn is pending() from busted
-local function pending_win32(pending_fn)
+local function pending_win32(pending_fn, msg)
   if uname() == 'Windows' then
     if pending_fn ~= nil then
-      pending_fn('FIXME: Windows', function() end)
+      pending_fn('FIXME: Windows' .. (msg and (': ' .. msg) or ''),
+                 function() end)
     end
     return true
   else
     return false
+  end
+end
+
+-- Helper to generate pending_win32 variant which does not need to be passed an
+-- argument
+local function get_pending_win32(pending_fn)
+  return function(...)
+    return pending_win32(pending_fn, ...)
   end
 end
 
@@ -679,6 +688,7 @@ local module = {
   curwinmeths = curwinmeths,
   curtabmeths = curtabmeths,
   pending_win32 = pending_win32,
+  get_pending_win32 = get_pending_win32,
   skip_fragile = skip_fragile,
   set_shell_powershell = set_shell_powershell,
   tmpname = tmpname,

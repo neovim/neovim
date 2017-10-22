@@ -23,6 +23,8 @@
 #include "nvim/cursor.h"
 #include "nvim/undo.h"
 #include "nvim/ascii.h"
+#include "nvim/os/input.h"
+#include "nvim/option_defs.h"
 
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
@@ -115,6 +117,110 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
   lua_pop(lstate, 1);
 }
 
+/// Currently running lua interpreter state
+///
+/// NULL if lua is not running or if it was already interrupted.
+volatile lua_State *volatile running_lstate = NULL;
+
+/// Used lua interpreter state
+///
+/// NULL if lua was not initialized yet.
+static lua_State *global_lstate = NULL;
+
+/// Hook used to interrupt current lua code
+///
+/// @param[in]  lstate  Lua state.
+/// @param[in]  ar  Debugging information, unused.
+static void nlua_interrupt_hook(lua_State *const lstate, lua_Debug *const ar)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  lua_sethook(lstate, NULL, 0, 0);
+  running_lstate = lstate;
+  luaL_error(lstate, "interrupted!");
+}
+
+/// Check for interrupts
+///
+/// Exported function, to be used in custom plugin hooks.
+///
+/// @param[in]  lstate  Lua state.
+static int nlua_breakcheck(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  os_breakcheck();
+  if (got_int) {
+    got_int = false;
+    nlua_interrupt_hook(lstate, NULL);
+  }
+  return 0;
+}
+
+/// Hook used to check whether lua code needs to be interrupted
+///
+/// @param[in]  lstate  Lua state.
+/// @param[in]  ar  Debugging information.
+static void nlua_check_interrupt_hook(lua_State *const lstate,
+                                      lua_Debug *const ar)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  nlua_breakcheck(lstate);
+}
+
+/// Interrupt currently running lua interpreter
+///
+/// To be used from interrupt handler. Code derived from lua signal handlers.
+void nlua_interrupt(void)
+{
+  lua_State *const lstate = (lua_State *)running_lstate;
+  running_lstate = NULL;
+  if (lstate != NULL) {
+    lua_sethook(lstate, nlua_interrupt_hook,
+                LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT, 1);
+  }
+}
+
+/// Set lua hook for running_lstate according to p_licf
+///
+/// @param[in]  lstate  State to set hook for. Uses global_lstate if NULL.
+void nlua_set_interrupt_hook(lua_State *lstate)
+{
+  if (lstate == NULL) {
+    lstate = global_lstate;
+    if (lstate == NULL) {
+      return;
+    }
+  }
+  if (p_licf == 0) {
+    if (lua_gethook(lstate) == &nlua_check_interrupt_hook) {
+      lua_sethook(lstate, NULL, 0, 0);
+    }
+  } else {
+    lua_sethook(lstate, nlua_check_interrupt_hook, LUA_MASKCOUNT, (int)p_licf);
+  }
+}
+
+/// Like lua_pcall, but sets some things for interrupts to work
+///
+/// Does not have errfunc argument because it is not used.
+///
+/// @param  lstate  Lua interpreter state.
+/// @param[in]  nargs  Number of arguments to the called function.
+/// @param[in]  nresults  Number of expected results.
+///
+/// @return true if errored out, false otherwise.
+static bool nlua_interruptible_call(lua_State *const lstate, const int nargs,
+                                    const int nresults)
+  FUNC_ATTR_NONNULL_ALL
+{
+  nlua_set_interrupt_hook(lstate);
+  volatile lua_State *const saved_lstate = running_lstate;
+  assert(saved_lstate == running_lstate || saved_lstate == NULL);
+  running_lstate = lstate;
+  const bool ret = (bool)lua_pcall(lstate, nargs, nresults, 0);
+  running_lstate = saved_lstate;
+  return ret;
+}
+
 /// Compare two strings, ignoring case
 ///
 /// Expects two values on the stack: compared strings. Returns one of the
@@ -147,7 +253,7 @@ static int nlua_exec_lua_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     nlua_error(lstate, _("E5104: Error while creating lua chunk: %.*s"));
     return 0;
   }
-  if (lua_pcall(lstate, 0, 1, 0)) {
+  if (nlua_interruptible_call(lstate, 0, 1)) {
     nlua_error(lstate, _("E5105: Error while calling lua chunk: %.*s"));
     return 0;
   }
@@ -194,7 +300,7 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   if (lcmd_len >= IOSIZE) {
     xfree(lcmd);
   }
-  if (lua_pcall(lstate, 0, 1, 0)) {
+  if (nlua_interruptible_call(lstate, 0, 1)) {
     nlua_error(lstate, _("E5110: Error while creating lua function: %.*s"));
     return 0;
   }
@@ -205,7 +311,7 @@ static int nlua_exec_luado_string(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     lua_pushvalue(lstate, -1);
     lua_pushstring(lstate, (const char *)ml_get_buf(curbuf, l, false));
     lua_pushnumber(lstate, (lua_Number)l);
-    if (lua_pcall(lstate, 2, 1, 0)) {
+    if (nlua_interruptible_call(lstate, 2, 1)) {
       nlua_error(lstate, _("E5111: Error while calling lua function: %.*s"));
       break;
     }
@@ -242,7 +348,7 @@ static int nlua_exec_lua_file(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
     nlua_error(lstate, _("E5112: Error while creating lua chunk: %.*s"));
     return 0;
   }
-  if (lua_pcall(lstate, 0, 0, 0)) {
+  if (nlua_interruptible_call(lstate, 0, 0)) {
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
     return 0;
   }
@@ -277,6 +383,10 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   nlua_add_api_functions(lstate);
   // vim.types, vim.type_idx, vim.val_idx
   nlua_init_types(lstate);
+  // breakcheck
+  lua_pushcfunction(lstate, &nlua_breakcheck);
+  lua_setfield(lstate, -2, "breakcheck");
+
   lua_setglobal(lstate, "vim");
   return 0;
 }
@@ -295,8 +405,10 @@ static lua_State *nlua_init(void)
     EMSG(_("E970: Failed to initialize lua interpreter"));
     preserve_exit();
   }
+  running_lstate = lstate;
   luaL_openlibs(lstate);
   NLUA_CALL_C_FUNCTION_0(lstate, nlua_state_init, 0);
+  running_lstate = NULL;
   return lstate;
 }
 
@@ -310,7 +422,6 @@ static lua_State *nlua_init(void)
 static lua_State *nlua_enter(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  static lua_State *global_lstate = NULL;
   if (global_lstate == NULL) {
     global_lstate = nlua_init();
   }
@@ -325,7 +436,7 @@ static lua_State *nlua_enter(void)
     // stack: vim
     lua_getfield(lstate, -1, "_update_package_paths");
     // stack: vim, vim._update_package_paths
-    if (lua_pcall(lstate, 0, 0, 0)) {
+    if (nlua_interruptible_call(lstate, 0, 0)) {
       // stack: vim, error
       nlua_error(lstate, _("E5117: Error while updating package paths: %.*s"));
       // stack: vim
@@ -335,6 +446,7 @@ static lua_State *nlua_enter(void)
     // stack: (empty)
     last_p_rtp = (const void *)p_rtp;
   }
+  nlua_set_interrupt_hook(lstate);
   return lstate;
 }
 
@@ -399,7 +511,7 @@ static int nlua_eval_lua_string(lua_State *const lstate)
   } else {
     nlua_push_typval(lstate, arg);
   }
-  if (lua_pcall(lstate, 1, 1, 0)) {
+  if (nlua_interruptible_call(lstate, 1, 1)) {
     nlua_error(lstate,
                _("E5108: Error while calling lua chunk for luaeval(): %.*s"));
     return 0;
@@ -438,7 +550,7 @@ static int nlua_exec_lua_string_api(lua_State *const lstate)
     nlua_push_Object(lstate, args->items[i]);
   }
 
-  if (lua_pcall(lstate, (int)args->size, 1, 0)) {
+  if (nlua_interruptible_call(lstate, (int)args->size, 1)) {
     size_t len;
     const char *str = lua_tolstring(lstate, -1, &len);
     api_set_error(err, kErrorTypeException,
@@ -473,7 +585,7 @@ static int nlua_print(lua_State *const lstate)
   for (; curargidx <= nargs; curargidx++) {
     lua_pushvalue(lstate, -1);  // tostring
     lua_pushvalue(lstate, curargidx);  // arg
-    if (lua_pcall(lstate, 1, 1, 0)) {
+    if (nlua_interruptible_call(lstate, 1, 1)) {
       errmsg = lua_tolstring(lstate, -1, &errmsg_len);
       goto nlua_print_error;
     }
@@ -566,7 +678,7 @@ int nlua_debug(lua_State *lstate)
       nlua_error(lstate, _("E5115: Error while loading debug string: %.*s"));
     }
     tv_clear(&input);
-    if (lua_pcall(lstate, 0, 0, 0)) {
+    if (nlua_interruptible_call(lstate, 0, 0)) {
       nlua_error(lstate, _("E5116: Error while calling debug string: %.*s"));
     }
   }

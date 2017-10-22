@@ -17,6 +17,7 @@
 #include "nvim/memory.h"
 #include "nvim/keymap.h"
 #include "nvim/mbyte.h"
+#include "nvim/lua/executor.h"
 #include "nvim/fileio.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/getchar.h"
@@ -398,9 +399,10 @@ static void process_interrupts(void)
 
   size_t consume_count = 0;
   RBUFFER_EACH_REVERSE(input_buffer, c, i) {
-    if ((uint8_t)c == 3) {
+    if ((uint8_t)c == Ctrl_C) {
       got_int = true;
       consume_count = i;
+      nlua_interrupt();
       break;
     }
   }
