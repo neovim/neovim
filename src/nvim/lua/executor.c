@@ -124,9 +124,40 @@ static void nlua_error(lua_State *const lstate, const char *const msg)
 /// omitted.
 static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
-  const char *s1 = luaL_checklstring(lstate, 1, NULL);
-  const char *s2 = luaL_checklstring(lstate, 2, NULL);
-  const int ret = STRICMP(s1, s2);
+  size_t s1_len;
+  size_t s2_len;
+  const char *s1 = luaL_checklstring(lstate, 1, &s1_len);
+  const char *s2 = luaL_checklstring(lstate, 2, &s2_len);
+  char *nul1;
+  char *nul2;
+  int ret = 0;
+  assert(s1[s1_len] == NUL);
+  assert(s2[s2_len] == NUL);
+  do {
+    nul1 = memchr(s1, NUL, s1_len);
+    nul2 = memchr(s2, NUL, s2_len);
+    ret = STRICMP(s1, s2);
+    if (ret == 0) {
+      // Compare "a\0" greater then "a".
+      if ((nul1 == NULL) != (nul2 == NULL)) {
+        ret = ((nul1 != NULL) - (nul2 != NULL));
+        break;
+      }
+      if (nul1 != NULL) {
+        assert(nul2 != NULL);
+        // Can't shift both strings by the same amount of bytes: lowercase
+        // letter may have different byte-length than uppercase.
+        s1_len -= (size_t)(nul1 - s1) + 1;
+        s2_len -= (size_t)(nul2 - s2) + 1;
+        s1 = nul1 + 1;
+        s2 = nul2 + 1;
+      } else {
+        break;
+      }
+    } else {
+      break;
+    }
+  } while (true);
   lua_pop(lstate, 2);
   lua_pushnumber(lstate, (lua_Number)((ret > 0) - (ret < 0)));
   return 1;
@@ -254,10 +285,6 @@ static int nlua_exec_lua_file(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 /// Called by lua interpreter itself to initialize state.
 static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
-  // stricmp
-  lua_pushcfunction(lstate, &nlua_stricmp);
-  lua_setglobal(lstate, "stricmp");
-
   // print
   lua_pushcfunction(lstate, &nlua_print);
   lua_setglobal(lstate, "print");
@@ -277,13 +304,17 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   nlua_add_api_functions(lstate);
   // vim.types, vim.type_idx, vim.val_idx
   nlua_init_types(lstate);
+  // stricmp
+  lua_pushcfunction(lstate, &nlua_stricmp);
+  lua_setfield(lstate, -2, "stricmp");
+
   lua_setglobal(lstate, "vim");
   return 0;
 }
 
 /// Initialize lua interpreter
 ///
-/// Crashes NeoVim if initialization fails. Should be called once per lua
+/// Crashes Nvim if initialization fails. Should be called once per lua
 /// interpreter instance.
 ///
 /// @return New lua interpreter instance.
