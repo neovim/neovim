@@ -8317,6 +8317,8 @@ termresponse		Compiled with support for |t_RV| and |v:termresponse|.
 textobjects		Compiled with support for |text-objects|.
 timers			Compiled with |timer_start()| support.
 title			Compiled with window title support |'title'|.
+ttyin			input is a terminal (tty)
+ttyout			output is a terminal (tty)
 unix			Unix version of Vim.
 unnamedplus		Compiled with support for "unnamedplus" in 'clipboard'
 user_commands		User-defined commands.
