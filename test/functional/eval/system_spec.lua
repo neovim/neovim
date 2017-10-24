@@ -446,11 +446,8 @@ describe('systemlist()', function()
     after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
-      if iswin() then
-        eq({'part1\npart2\npart3\r'}, eval('systemlist("type '..fname..'")'))
-      else
-        eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
-      end
+      if helpers.pending_win32(pending) then return end
+      eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
     end)
   end)
 
