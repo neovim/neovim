@@ -105,11 +105,9 @@ describe('jobs', function()
       return eval([[jobstart('')]])
     end
     local executable_jobid = new_job()
-    local nonexecutable = './test/functional/fixtures'
-    if not iswin() then
-      nonexecutable = nonexecutable .. '/non_executable.txt'
-    end
-    local nonexecutable_jobid = eval("jobstart(['"..nonexecutable.."'])")
+    local nonexecutable_jobid = eval("jobstart(['"..(iswin()
+      and './test/functional/fixtures'
+      or  './test/functional/fixtures/non_executable.txt').."'])")
     eq(-1, nonexecutable_jobid)
     -- Should _not_ throw an error.
     eq("", eval("v:errmsg"))
@@ -273,12 +271,7 @@ describe('jobs', function()
   end)
 
   it('can omit options', function()
-    neq(0, nvim('eval', 'delete(".Xtestjob")'))
-    local touch_cmd = iswin() and "'Out-File -encoding ASCII .Xtestjob'"
-                              or "['touch', '.Xtestjob']"
-    nvim('command', "call jobstart(" .. touch_cmd .. ")")
-    nvim('command', "sleep " .. (iswin() and "5" or "100m"))
-    eq(0, nvim('eval', 'delete(".Xtestjob")'))
+    ok(eval([[jobstart('echo ""')]]) > 0)
   end)
 
   it('can omit data callbacks', function()
