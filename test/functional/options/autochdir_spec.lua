@@ -12,12 +12,8 @@ describe("'autochdir'", function()
     local rootdir = getcwd()
     local expected = rootdir .. '/' .. targetdir
 
-    if helpers.iswin() then
-      expected = expected:gsub('/', '\\')
-    end
-
     -- With 'autochdir' on, we should get the directory of tty-test.c.
     clear('--cmd', 'set autochdir', targetdir..'/tty-test.c')
-    eq(expected, getcwd())
+    eq(helpers.iswin() and expected:gsub('/', '\\') or expected, getcwd())
   end)
 end)
