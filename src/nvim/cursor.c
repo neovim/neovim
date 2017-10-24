@@ -375,17 +375,30 @@ void check_cursor_col_win(win_T *win)
     win->w_cursor.col = 0;
   }
 
-  /* If virtual editing is on, we can leave the cursor on the old position,
-   * only we must set it to virtual.  But don't do it when at the end of the
-   * line. */
-  if (oldcol == MAXCOL)
+  // If virtual editing is on, we can leave the cursor on the old position,
+  // only we must set it to virtual.  But don't do it when at the end of the
+  // line.
+  if (oldcol == MAXCOL) {
     win->w_cursor.coladd = 0;
-  else if (ve_flags == VE_ALL) {
-    if (oldcoladd > win->w_cursor.col)
+  } else if (ve_flags == VE_ALL) {
+    if (oldcoladd > win->w_cursor.col) {
       win->w_cursor.coladd = oldcoladd - win->w_cursor.col;
-    else
-      /* avoid weird number when there is a miscalculation or overflow */
+
+      // Make sure that coladd is not more than the char width.
+      // Not for the last character, coladd is then used when the cursor
+      // is actually after the last character.
+      if (win->w_cursor.col + 1 < len && win->w_cursor.coladd > 0) {
+        int cs, ce;
+
+        getvcol(win, &win->w_cursor, &cs, NULL, &ce);
+        if (win->w_cursor.coladd > ce - cs) {
+          win->w_cursor.coladd = ce - cs;
+        }
+      }
+    } else {
+      // avoid weird number when there is a miscalculation or overflow
       win->w_cursor.coladd = 0;
+    }
   }
 }
 

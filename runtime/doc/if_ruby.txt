@@ -10,7 +10,7 @@ The Ruby Interface to Vim				*ruby* *Ruby*
 The home page for ruby is http://www.ruby-lang.org/.  You can find links for
 downloading Ruby there.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Commands						*ruby-commands*

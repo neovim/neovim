@@ -13,7 +13,7 @@ http://www.vim.org
 Don't forget to browse the user manual, it also contains lots of useful tips
 |usr_toc.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Editing C programs					*C-editing*

@@ -6,7 +6,7 @@
 
 Various commands					*various*
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Various commands					*various-cmds*
@@ -608,6 +608,13 @@ which it was defined is reported.
 			the keyword.  Only works when the highlighted text is
 			not more than one line.
 
+							*gO*
+gO			Show a filetype-specific, navigable "outline" of the
+			current buffer. For example, in a |help| buffer this
+			shows the table of contents.
+
+			Currently works in |help| and |:Man| buffers.
+
 [N]gs							*gs* *:sl* *:sleep*
 :[N]sl[eep] [N]	[m]	Do nothing for [N] seconds.  When [m] is included,
 			sleep for [N] milliseconds.  The count for "gs" always
@@ -646,4 +653,4 @@ LessInitFunc in your vimrc, for example: >
 	endfunc
 <
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:noet:tw=78:ts=8:ft=help:norl:

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
@@ -5995,7 +5996,7 @@ static void ex_quit(exarg_T *eap)
  */
 static void ex_cquit(exarg_T *eap)
 {
-  getout(1);
+  getout(eap->addr_count > 0 ? (int)eap->line2 : EXIT_FAILURE);
 }
 
 /*

@@ -90,7 +90,7 @@ if !exists('g:no_plugin_maps')
     let w:qf_toc = bufname
   endfunction
 
-  nnoremap <silent><buffer> <M-]> :call <sid>show_toc()<cr>
+  nnoremap <silent><buffer> gO :call <sid>show_toc()<cr>
 endif
 
 let &cpo = s:cpo_save

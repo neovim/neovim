@@ -15,7 +15,7 @@ Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim is
 maintained where possible. See |vim_diff.txt| for the complete reference of
 differences from Vim.
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 Transitioning from Vim				*nvim-from-vim*

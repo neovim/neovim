@@ -164,7 +164,7 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(DEFINED MIN_LOG_LEVEL)
+if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
   add_definitions(-DMIN_LOG_LEVEL=${MIN_LOG_LEVEL})
 endif()
 
@@ -541,11 +541,6 @@ endfunction()
 set(NO_SINGLE_CHECK_HEADERS
   os/win_defs.h
   os/pty_process_win.h
-  regexp_defs.h
-  syntax_defs.h
-  terminal.h
-  undo.h
-  undo_defs.h
 )
 foreach(hfile ${NVIM_HEADERS})
   get_test_target(test-includes "${hfile}" relative_path texe)

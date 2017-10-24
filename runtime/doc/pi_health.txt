@@ -2,7 +2,7 @@
 
 Author: TJ DeVries <devries.timothyj@gmail.com>
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Introduction				*health*

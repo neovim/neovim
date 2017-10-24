@@ -13,7 +13,7 @@ differently when used in combination with more than one window.
 The basics are explained in chapter 7 and 8 of the user manual |usr_07.txt|
 |usr_08.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction					*windows-intro* *window*
@@ -677,6 +677,8 @@ can also get to them with the buffer list commands, like ":bnext".
 		- If the file is not open in a window edit the file in the
 		  current window.  If the current buffer can't be |abandon|ed,
 		  the window is split first.
+		- Windows that are not in the argument list or are not full
+		  width will be closed if possible.
 		The |argument-list| is set, like with the |:next| command.
 		The purpose of this command is that it can be used from a
 		program that wants Vim to edit another file, e.g., a debugger.
