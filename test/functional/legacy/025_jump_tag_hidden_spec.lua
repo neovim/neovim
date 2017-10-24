@@ -42,11 +42,12 @@ describe('jump to a tag with hidden set', function()
     -- space will then be eaten by hit-return, instead of moving the cursor to 'd'.
     feed_command('set tags=tags.test')
     feed('G<C-]> x:yank a<cr>')
+    feed_command("call delete('tags.test')")
+    feed_command("call delete('Xxx')")
     if helpers.iswin() then
-      feed_command('!del /q/f Xxx tags.test')
       feed_command('!rd /q test25.dir')
     else
-      feed_command('!rm -f Xxx test25.dir tags.test')
+      feed_command('!rm -f test25.dir')
     end
 
     -- Put @a and remove empty line
