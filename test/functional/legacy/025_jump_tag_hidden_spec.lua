@@ -23,11 +23,10 @@ describe('jump to a tag with hidden set', function()
     feed_command('set hidden')
 
     -- Create a link from test25.dir to the current directory.
+    helpers.rmdir('test25.dir')
     if helpers.iswin() then
-      feed_command('!rd /q/s test25.dir')
       feed_command('!mklink /j test25.dir .')
     else
-      feed_command('!rm -f test25.dir')
       feed_command('!ln -s . test25.dir')
     end
 
@@ -42,12 +41,9 @@ describe('jump to a tag with hidden set', function()
     -- space will then be eaten by hit-return, instead of moving the cursor to 'd'.
     feed_command('set tags=tags.test')
     feed('G<C-]> x:yank a<cr>')
-    if helpers.iswin() then
-      feed_command('!del /q/f Xxx tags.test')
-      feed_command('!rd /q test25.dir')
-    else
-      feed_command('!rm -f Xxx test25.dir tags.test')
-    end
+    helpers.rmdir('test25.dir')
+    feed_command('call delete("Xxx")')
+    feed_command('call delete("tags.test")')
 
     -- Put @a and remove empty line
     feed_command('%d')
