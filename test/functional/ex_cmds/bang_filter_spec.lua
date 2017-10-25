@@ -26,34 +26,30 @@ describe('issues', function()
   end)
 
   it('#3269 Last line of shell output is not truncated', function()
-    local map = [[nnoremap <silent>\l :!ls bang_filter_spec<cr>]]
-    local result = [[
-  :!ls bang_filter_spec                                |
-  ]]
-    if helpers.iswin() then
-      map = [[nnoremap <silent>\l :!dir /b bang_filter_spec<cr>]]
-      result = [[
-  :!dir /b bang_filter_spec                            |
-  ]]
-    end
-    command(map)
+    command(helpers.iswin()
+      and [[nnoremap <silent>\l :!dir /b bang_filter_spec<cr>]]
+      or  [[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
+    local result = (helpers.iswin()
+      and [[:!dir /b bang_filter_spec                            |]]
+      or  [[:!ls bang_filter_spec                                |]])
     feed([[\l]])
     screen:expect([[
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
     ]]
     .. result .. [[
+
                                                          |
-      f1                                                   |
-      f2                                                   |
-      f3                                                   |
-      Press ENTER or type command to continue^              |
+    f1                                                   |
+    f2                                                   |
+    f3                                                   |
+    Press ENTER or type command to continue^              |
     ]])
   end)
 
