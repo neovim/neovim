@@ -643,15 +643,15 @@ describe("pty process teardown", function()
   local screen
   before_each(function()
     clear()
-    screen = Screen.new(30, 6)
+    screen = Screen.new(50, 6)
     screen:attach()
     screen:expect([[
-      ^                              |
-      ~                             |
-      ~                             |
-      ~                             |
-      ~                             |
-                                    |
+      ^                                                  |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+      ~                                                 |
+                                                        |
     ]])
   end)
   after_each(function()
@@ -659,22 +659,38 @@ describe("pty process teardown", function()
   end)
 
   it("does not prevent/delay exit. #4798 #4900", function()
-    if helpers.pending_win32(pending) then return end
     -- Use a nested nvim (in :term) to test without --headless.
-    feed_command(":terminal '"..helpers.nvim_prog
-      .."' -u NONE -i NONE --cmd '"..nvim_set.."' "
-      -- Use :term again in the _nested_ nvim to get a PTY process.
-      -- Use `sleep` to simulate a long-running child of the PTY.
-      .."+terminal +'!(sleep 300 &)' +qa")
-
+    -- Use :term again in the _nested_ nvim to get a PTY process.
     -- Exiting should terminate all descendants (PTY, its children, ...).
-    screen:expect([[
-      ^                              |
-      [Process exited 0]            |
-                                    |
-                                    |
-                                    |
-                                    |
-    ]])
+    if helpers.iswin() then
+      command([[set shellcmdflag=/s/c shellxquote=\"]])
+      command('enew')
+      feed_command("call termopen(['"..helpers.nvim_prog
+        .."', '-u', 'NONE', '-i', 'NONE', '--cmd', '"..nvim_set
+        ..[[ shellcmdflag=/s/c shellxquote=\"]]
+        .."', '-c', 'terminal', '-c', '!start /b cmd /s/c \"ping 127.0.0.1 -n 301 > nul\"', '-c', 'qa'])")
+      feed('G')
+      screen:expect([[
+                                                          |
+                                                          |
+                                                          |
+                                                          |
+        ^[Process exited 0]                                |
+                                                          |
+      ]])
+    else
+      feed_command(":terminal '"..helpers.nvim_prog
+        .."' -u NONE -i NONE --cmd '"..nvim_set
+        -- Use `sleep` to simulate a long-running child of the PTY.
+        .."' +terminal +'!(sleep 300 &)' +qa")
+      screen:expect([[
+        ^                                                  |
+        [Process exited 0]                                |
+                                                          |
+                                                          |
+                                                          |
+                                                          |
+      ]])
+    end
   end)
 end)
