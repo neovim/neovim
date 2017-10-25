@@ -118,10 +118,9 @@ describe(':write', function()
     end
     eq(true, write_file(fname_bak, 'TTYX'))
     -- FIXME: exc_exec('write!') outputs 0 in Windows
-    if not helpers.iswin() then
-      lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)
-      eq('Vim(write):E166: Can\'t open linked file for writing',
-         exc_exec('write!'))
-    end
+    if helpers.iswin() then return end
+    lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)
+    eq('Vim(write):E166: Can\'t open linked file for writing',
+       exc_exec('write!'))
   end)
 end)
