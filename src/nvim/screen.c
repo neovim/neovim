@@ -692,6 +692,12 @@ static void win_update(win_T *wp)
   if (wp->w_nrwidth != i) {
     type = NOT_VALID;
     wp->w_nrwidth = i;
+
+    if (buf->terminal) {
+      terminal_resize(buf->terminal,
+                      (uint16_t)(MAX(0, curwin->w_width - win_col_off(curwin))),
+                      (uint16_t)curwin->w_height);
+    }
   } else if (buf->b_mod_set && buf->b_mod_xlines != 0 && wp->w_redraw_top != 0) {
     /*
      * When there are both inserted/deleted lines and specific lines to be
