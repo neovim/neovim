@@ -589,6 +589,10 @@ local function get_pathsep()
   return iswin() and '\\' or '/'
 end
 
+local function pathjoin(paths)
+  return table.concat(paths, get_pathsep())
+end
+
 local function missing_provider(provider)
   if provider == 'ruby' then
     local prog = funcs['provider#' .. provider .. '#Detect']()
@@ -689,6 +693,7 @@ local module = {
   get_pathsep = get_pathsep,
   missing_provider = missing_provider,
   alter_slashes = alter_slashes,
+  pathjoin = pathjoin,
 }
 
 return function(after_each)
