@@ -11,6 +11,34 @@ describe('terminal window', function()
     screen = thelpers.screen_setup()
   end)
 
+  describe('with number set', function()
+    before_each(function()
+      feed('<c-\\><c-n>:set number<cr>i')
+      screen:expect([[
+        {7:  1 }tty ready                                     |
+        {7:  2 }rows: 6, cols: 46                             |
+        {7:  3 }{1: }                                             |
+        {7:  4 }                                              |
+        {7:  5 }                                              |
+        {7:  6 }                                              |
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end)
+
+    it('wraps text correctly', function()
+      thelpers.feed_data({'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
+      screen:expect([[
+        {7:  1 }tty ready                                     |
+        {7:  2 }rows: 6, cols: 46                             |
+        {7:  3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST|
+        {7:  4 }UVWXYZ{1: }                                       |
+        {7:  5 }                                              |
+        {7:  6 }                                              |
+        {3:-- TERMINAL --}                                    |
+      ]])
+    end)
+  end)
+
   describe('with colorcolumn set', function()
     before_each(function()
       feed('<c-\\><c-n>')

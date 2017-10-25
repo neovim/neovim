@@ -1466,7 +1466,7 @@ void enter_buffer(buf_T *buf)
 
   if (buf->terminal) {
     terminal_resize(buf->terminal,
-                    (uint16_t)curwin->w_width,
+                    (uint16_t)(MAX(0, curwin->w_width - win_col_off(curwin))),
                     (uint16_t)curwin->w_height);
   }
 
