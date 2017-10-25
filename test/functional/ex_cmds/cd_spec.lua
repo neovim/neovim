@@ -30,7 +30,7 @@ local tlwd = function() return lwd(-1,  0) end  -- tab dir
 -- Test both the `cd` and `chdir` variants
 for _, cmd in ipairs {'cd', 'chdir'} do
   describe(':' .. cmd, function()
-    local pathsep = helpers.iswin() and '\\' or '/'
+    local pathsep = helpers.get_pathsep()
     before_each(function()
       clear()
       for _, d in pairs(directories) do
