@@ -208,7 +208,9 @@ local build_width_table = function(ut_fp, dataprops, widthprops, widths,
       -- But use all chars from a range.
       local dp = dataprops[dataidx]
       if (n_last > n) or (not (({Mn=true, Mc=true, Me=true})[dp[3]])) then
-        if not (start >= 0 and end_ + 1 == n) then
+        if start >= 0 and end_ + 1 == n then -- luacheck: ignore 542
+          -- Continue with the same range.
+        else
           if start >= 0 then
             ut_fp:write(make_range(start, end_))
             table.insert(ret, {start, end_})
