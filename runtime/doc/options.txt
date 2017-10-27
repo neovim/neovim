@@ -6453,7 +6453,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'viewoptions'* *'vop'*
-'viewoptions' 'vop'	string	(default: "folds,options,cursor")
+'viewoptions' 'vop'	string	(default: "folds,options,cursor,curdir")
 			global
 			{not available when compiled without the |+mksession|
 			feature}
@@ -6461,6 +6461,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	list of words.  Each word enables saving and restoring something:
 	   word		save and restore ~
 	   cursor	cursor position in file and in window
+	   curdir	local current directory, if set with |:lcd|
 	   folds	manually created folds, opened/closed folds and local
 			fold options
 	   options	options and mappings local to a window or buffer (not
