@@ -885,7 +885,7 @@ The output of ":mkview" contains these items:
 5. The scroll position and the cursor position in the file.  Doesn't work very
    well when there are closed folds.
 6. The local current directory, if it is different from the global current
-   directory.
+   directory and 'viewoptions' contains "curdir".
 
 Note that Views and Sessions are not perfect:
 - They don't restore everything.  For example, defined functions, autocommands

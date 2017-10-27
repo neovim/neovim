@@ -2610,7 +2610,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_vop',
-      defaults={if_true={vi="folds,options,cursor"}}
+      defaults={if_true={vi="folds,options,cursor,curdir"}}
     },
     {
       full_name='viminfo', abbreviation='vi',
