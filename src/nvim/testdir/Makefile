@@ -63,6 +63,7 @@ NEW_TESTS ?= \
 	    test_nested_function.res \
 	    test_normal.res \
 	    test_quickfix.res \
+	    test_retab.res \
 	    test_search.res \
 	    test_signs.res \
 	    test_smartindent.res \
