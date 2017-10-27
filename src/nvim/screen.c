@@ -698,18 +698,16 @@ static void win_update(win_T *wp)
                       (uint16_t)(MAX(0, curwin->w_width - win_col_off(curwin))),
                       (uint16_t)curwin->w_height);
     }
-  } else if (buf->b_mod_set && buf->b_mod_xlines != 0 && wp->w_redraw_top != 0) {
-    /*
-     * When there are both inserted/deleted lines and specific lines to be
-     * redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
-     * everything (only happens when redrawing is off for while).
-     */
+  } else if (buf->b_mod_set
+             && buf->b_mod_xlines != 0
+             && wp->w_redraw_top != 0) {
+    // When there are both inserted/deleted lines and specific lines to be
+    // redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
+    // everything (only happens when redrawing is off for while).
     type = NOT_VALID;
   } else {
-    /*
-     * Set mod_top to the first line that needs displaying because of
-     * changes.  Set mod_bot to the first line after the changes.
-     */
+    // Set mod_top to the first line that needs displaying because of
+    // changes.  Set mod_bot to the first line after the changes.
     mod_top = wp->w_redraw_top;
     if (wp->w_redraw_bot != 0)
       mod_bot = wp->w_redraw_bot + 1;
