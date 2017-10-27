@@ -133,7 +133,7 @@ endfunc
 
 func Test_profile_completion()
   call feedkeys(":profile \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"profile continue file func pause start', @:)
+  call assert_equal('"profile continue dump file func pause start stop', @:)
 
   call feedkeys(":profile start test_prof\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^"profile start.* test_profile\.vim', @:)
