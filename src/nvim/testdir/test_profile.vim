@@ -113,7 +113,8 @@ func Test_profile_file()
   call assert_equal('                              " a comment',      lines[9])
   call assert_match('^\s*20\s\+\d\+\.\d\+\s\+\d\+\.\d\+\s\+call Foo()$', lines[10])
   call assert_match('^\s*20\s\+\d\+\.\d\+\s\+endfor$',                lines[11])
-  call assert_match('^\s*2\s\+\d\+\.\d\+\s\+\d\+\.\d\+\s\+call Foo()$', lines[12])
+  " if self and total are equal we only get one number
+  call assert_match('^\s*2\s\+\(\d\+\.\d\+\s\+\)\=\d\+\.\d\+\s\+call Foo()$', lines[12])
   call assert_equal('',                                               lines[13])
 
   call delete('Xprofile_file.vim')
