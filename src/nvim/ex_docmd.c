@@ -9883,13 +9883,19 @@ static void ex_terminal(exarg_T *eap)
 
 /// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').
 ///
-/// @param[in] cmd Commandline to check. May start with a range.
+/// @param[in] cmd Commandline to check. May start with a range or modifier.
 ///
 /// @return true if `cmd` is previewable
 bool cmd_can_preview(char_u *cmd)
 {
   if (cmd == NULL) {
     return false;
+  }
+
+  // Ignore any leading modifiers (:keeppatterns, :verbose, etc.)
+  for (int len = modifier_len(cmd); len != 0; len = modifier_len(cmd)) {
+    cmd += len;
+    cmd = skipwhite(cmd);
   }
 
   exarg_T ea;
