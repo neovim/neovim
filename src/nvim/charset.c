@@ -1656,17 +1656,18 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
       // decimal or octal, default is decimal
       pre = 0;
 
-      if (what & STR2NR_OCT) {
-        // Don't interpret "0", "08" or "0129" as octal.
-        for (int i = 1; !STRING_ENDED(ptr + i) && ascii_isdigit(ptr[i]); i++) {
+      if (what & STR2NR_OCT
+          && !STRING_ENDED(ptr + 1)
+          && ('0' <= ptr[1] && ptr[1] <= '7')) {
+        // Assume octal now: what we already know is that string starts with
+        // zero and some octal digit.
+        pre = '0';
+        // Don’t interpret "0", "008" or "0129" as octal.
+        for (int i = 2; !STRING_ENDED(ptr + i) && ascii_isdigit(ptr[i]); i++) {
           if (ptr[i] > '7') {
-            // can't be octal
+            // Can’t be octal.
             pre = 0;
             break;
-          }
-          if (ptr[i] >= '0') {
-            // assume octal
-            pre = '0';
           }
         }
       }
@@ -1675,51 +1676,32 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
 
   // Do the string-to-numeric conversion "manually" to avoid sscanf quirks.
   uvarnumber_T un = 0;
+#define PARSE_NUMBER(base, cond, conv) \
+  do { \
+    while (!STRING_ENDED(ptr) && (cond)) { \
+      /* avoid ubsan error for overflow */ \
+      if (un < UVARNUMBER_MAX / base) { \
+        un = base * un + (uvarnumber_T)(conv); \
+      } else { \
+        un = UVARNUMBER_MAX; \
+      } \
+      ptr++; \
+    } \
+  } while (0)
   if (pre == 'B' || pre == 'b' || what == (STR2NR_BIN|STR2NR_FORCE)) {
-    // bin
-    while (!STRING_ENDED(ptr) && '0' <= *ptr && *ptr <= '1') {
-      // avoid ubsan error for overflow
-      if (un < UVARNUMBER_MAX / 2) {
-        un = 2 * un + (uvarnumber_T)(*ptr - '0');
-      } else {
-        un = UVARNUMBER_MAX;
-      }
-      ptr++;
-    }
+    // Binary number.
+    PARSE_NUMBER(2, (*ptr == '0' || *ptr == '1'), (*ptr - '0'));
   } else if (pre == '0' || what == (STR2NR_OCT|STR2NR_FORCE)) {
-    // octal
-    while (!STRING_ENDED(ptr) && '0' <= *ptr && *ptr <= '7') {
-      // avoid ubsan error for overflow
-      if (un < UVARNUMBER_MAX / 8) {
-        un = 8 * un + (uvarnumber_T)(*ptr - '0');
-      } else {
-        un = UVARNUMBER_MAX;
-      }
-      ptr++;
-    }
+    // Octal number.
+    PARSE_NUMBER(8, ('0' <= *ptr && *ptr <= '7'), (*ptr - '0'));
   } else if (pre == 'X' || pre == 'x' || what == (STR2NR_HEX|STR2NR_FORCE)) {
-    // hex
-    while (!STRING_ENDED(ptr) && ascii_isxdigit(*ptr)) {
-      // avoid ubsan error for overflow
-      if (un < UVARNUMBER_MAX / 16) {
-        un = 16 * un + (uvarnumber_T)hex2nr(*ptr);
-      } else {
-        un = UVARNUMBER_MAX;
-      }
-      ptr++;
-    }
+    // Hexadecimal number.
+    PARSE_NUMBER(16, (ascii_isxdigit(*ptr)), (hex2nr(*ptr)));
   } else {
-    // decimal
-    while (!STRING_ENDED(ptr) && ascii_isdigit(*ptr)) {
-      // avoid ubsan error for overflow
-      if (un < UVARNUMBER_MAX / 10) {
-        un = 10 * un + (uvarnumber_T)(*ptr - '0');
-      } else {
-        un = UVARNUMBER_MAX;
-      }
-      ptr++;
-    }
+    // Decimal number.
+    PARSE_NUMBER(10, (ascii_isdigit(*ptr)), (*ptr - '0'));
   }
+#undef PARSE_NUMBER
 
   if (prep != NULL) {
     *prep = pre;
