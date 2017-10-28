@@ -248,16 +248,16 @@ describe('Expressions parser', function()
       local hls = phl2lua(pstate)
       if exp_ast == nil then
         format_check(str, flags, ast, hls)
-        return
-      end
-      eq(exp_ast, ast)
-      if exp_highlighting_fs then
-        local exp_highlighting = {}
-        local next_col = 0
-        for i, h in ipairs(exp_highlighting_fs) do
-          exp_highlighting[i], next_col = h(next_col)
+      else
+        eq(exp_ast, ast)
+        if exp_highlighting_fs then
+          local exp_highlighting = {}
+          local next_col = 0
+          for i, h in ipairs(exp_highlighting_fs) do
+            exp_highlighting[i], next_col = h(next_col)
+          end
+          eq(exp_highlighting, hls)
         end
-        eq(exp_highlighting, hls)
       end
       lib.viml_pexpr_free_ast(east)
       kvi_destroy(pstate.colors)
