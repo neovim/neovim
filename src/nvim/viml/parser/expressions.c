@@ -2445,6 +2445,7 @@ viml_pexpr_parse_bracket_closing_error:
               cur_node->children = *top_node_p;
             }
             *top_node_p = cur_node;
+            new_top_node_p = top_node_p;
             goto viml_pexpr_parse_figure_brace_closing_error;
           }
           if (want_node == kENodeValue) {

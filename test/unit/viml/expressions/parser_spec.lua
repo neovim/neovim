@@ -7120,7 +7120,25 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuotedString', '"'),
       hl('InvalidDoubleQuotedEscape', '\\1'),
     })
-    check_parsing('}l')
+    check_parsing('}l', 0, {
+      --           01
+      ast = {
+        {
+          'OpMissing:0:1:',
+          children = {
+            'UnknownFigure(---):0:0:',
+            'PlainIdentifier(scope=0,ident=l):0:1:l',
+          },
+        },
+      },
+      err = {
+        arg = '}l',
+        msg = 'E15: Unexpected closing figure brace: %.*s',
+      },
+    }, {
+      hl('InvalidFigureBrace', '}'),
+      hl('InvalidIdentifier', 'l'),
+    })
     check_parsing(':?\000\000\000\000\000\000\000', 0, {
       ast = {
         {
