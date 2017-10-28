@@ -1,12 +1,12 @@
 *ui.txt*	Nvim
 
 
-		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+			    NVIM REFERENCE MANUAL
 
 
-UI protocol					     *ui*
+Nvim UI protocol							  *ui*
 
-				      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 Introduction							     *ui-intro*
@@ -16,34 +16,35 @@ RPC API. The UI model consists of a terminal-like grid with a single,
 monospace font size. Some elements (UI "widgets") can be drawn separately from
 the grid ("externalized").
 
-								    *ui-options*
+								  *ui-options*
 After connecting to Nvim (usually a spawned, embedded instance) use the
 |nvim_ui_attach| API method to tell Nvim that your program wants to draw the
 Nvim screen grid with a size of width × height cells. `options` must be
 a dictionary with these (optional) keys:
-	`rgb`			Controls what color format to use.
-				Set to true (default) to use 24-bit rgb
-				colors.
-				Set to false to use terminal color codes (at
-				most 256 different colors).
+	`rgb`			Decides the color format.
+				Set true (default) for 24-bit RGB colors.
+				Set false for terminal colors (max of 256).
+							      *ui-ext-options*
 	`ext_popupmenu`		Externalize the popupmenu. |ui-popupmenu|
 	`ext_tabline`		Externalize the tabline. |ui-tabline|
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
 and a single argument, an array of screen update events.
-Update events are tuples whose first element is the string name of the update
-kind. The rest are parameters for each update, described in the sections below.
-These should be processed in order. Preferably the user should only be able to
-see the screen state after all update events in the same "redraw" event are
-processed (not any intermediate state after processing only a part of the
-array).
+Update events are tuples whose first element is the event name and remaining
+elements the event parameters.
 
-Section 2 and 3 describes grid and mode events that are send unconditionally,
-and suffice to implement a terminal-like interface. Nvim also allows a number
-of screen elements to be sent as descriptive events for the GUI to draw
-itself, rather than Nvim drawing itself on the grid. This is controlled by the
-`ext_` options.
+Events must be handled in order. The user should only see the updated screen
+state after all events in the same "redraw" batch are processed (not any
+intermediate state after processing only part of the array).
+
+Nvim sends |ui-global| and |ui-grid| events unconditionally; these suffice to
+implement a terminal-like interface.
+
+Nvim optionally sends screen elements "semantically" as structured events
+instead of raw grid-lines. Then the UI must decide how to present those
+elements itself; Nvim will not draw those elements on the grid. This is
+controlled by the |ui-ext-options|.
 
 Future versions of Nvim may add new update kinds and may append new parameters
 to existing update kinds. Clients must be prepared to ignore such extensions
@@ -64,7 +65,8 @@ Global Events							    *ui-global*
 	current mode is given by the `mode_idx` field of the `mode_change`
 	event.
 
-Each mode property map may contain these keys:
+	Each mode property map may contain these keys:
+
 	KEY		DESCRIPTION ~
 	`cursor_shape`:	"block", "horizontal", "vertical"
 	`cell_percentage`: Cell % occupied by the cursor.
@@ -75,7 +77,7 @@ Each mode property map may contain these keys:
 	`name`:		Mode descriptive name.
 	`mouse_shape`:	(To be implemented.)
 
-Some keys are missing in some modes.
+	Some keys are missing in some modes.
 
 ["mode_change", mode, mode_idx]
 	The mode changed.  The first parameter `mode` is a string representing
@@ -85,7 +87,6 @@ Some keys are missing in some modes.
 	set of modes reported will change in new versions of Nvim, for
 	instance more submodes and temporary states might be represented as
 	separate modes.
-
 
 ["mouse_on"]
 ["mouse_off"]
@@ -97,8 +98,8 @@ Some keys are missing in some modes.
 
 ["busy_on"]
 ["busy_off"]
-	Nvim started or stopped being busy, and possibly not responsible to user
-	input. This could be indicated to the user by hiding the cursor.
+	Nvim started or stopped being busy, and possibly not responsive to
+	user input. This could be indicated to the user by hiding the cursor.
 
 ["suspend"]
 	|:suspend| command or |Ctrl-Z| mapping is used. A terminal client (or other
@@ -137,7 +138,7 @@ Grid Events							      *ui-grid*
 	Set the default foreground, background and special colors
 	respectively.
 
-							*ui-event-highlight_set*
+						      *ui-event-highlight_set*
 ["highlight_set", attrs]
 	Set the attributes that the next text put on the grid will have.
 	`attrs` is a dict with the keys below. Any absent key is reset
@@ -235,35 +236,36 @@ Only sent if `ext_cmdline` option is set in |ui-options|
 ["cmdline_show", content, pos, firstc, prompt, indent, level]
         content: List of [attrs, string]
 	         [[{}, "t"], [attrs, "est"], ...]
+
+	Triggered when the user types in the cmdline.
 	The `content` is the full content that should be displayed in the
 	cmdline, and the `pos` is the position of the cursor that in the
-	cmdline. This event will be triggered when you type in the cmdline.
-	The content is divided into chunks with different highlight attributes
-	represented as a dict, see |ui-event-highlight_set|.
+	cmdline. The content is divided into chunks with different highlight
+	attributes represented as a dict (see |ui-event-highlight_set|).
 
 	`firstc` and `prompt` are text, that if non-empty should be
 	displayed in front of the command line. `firstc` always indicates
-	built in command lines such as `:` (ex command) and `/` `?` (search),
+	built-in command lines such as `:` (ex command) and `/` `?` (search),
 	while `prompt` is an |input()| prompt. `indent` tells how many spaces
-	the content should be indented
+	the content should be indented.
 
-	The command line in nvim can be invoked recursively, for instance by
+	The Nvim command line can be invoked recursively, for instance by
 	typing `<c-r>=` at the command line prompt. The `level` field is used
 	to distinguish different command lines active at the same time. The
-	first invoked command line will always have level 1, and the next
-	recursively invoked prompt will have level 2. Also, a command line
-	invoked while in command line window will have a higher level than
-	than the edited command line.
+	first invoked command line has level 1, the next recursively-invoked
+	prompt has level 2. A command line invoked from the |cmd-line-window|
+	has a higher level than than the edited command line.
 
 ["cmdline_pos", pos, level]
 	Change the cursor position in the cmdline.
 
 ["cmdline_special_char", c, shift, level]
 	Display a special char in the cmdline at the cursor position. This is
-	typically used to indicate a pending state, like right after Ctrl-V.
-	if shift is true the text after the cursor should be shifted,
-	otherwise it should overshadow the char at the cursor.
-	Should be hidden at next cmdline_char
+	typically used to indicate a pending state, e.g. after |c_CTRL-V|. If
+	`shift` is true the text after the cursor should be shifted, otherwise
+	it should overwrite the char at the cursor.
+
+	Should be hidden at next cmdline_pos.
 
 ["cmdline_hide"]
 	Hide the cmdline.
