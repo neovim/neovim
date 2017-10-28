@@ -5,8 +5,6 @@ local source = helpers.source
 local ok = helpers.ok
 local command = helpers.command
 
-if helpers.pending_win32(pending) then return end
-
 describe('external cmdline', function()
   local screen
   local last_level = 0
