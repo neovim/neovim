@@ -672,7 +672,7 @@ describe("pty process teardown", function()
       -- Use `sleep` to simulate a long-running child of the PTY.
       .."', '-c', 'terminal', '-c', '"..(iswin()
         and "!start /b cmd /s/c \"ping 127.0.0.1 -n 301 > nul\""
-        or  "(sleep 300 &)")
+        or  "!(sleep 300 &)")
       .."', '-c', 'qa'])")
     -- Exiting should terminate all descendants (PTY, its children, ...).
     if iswin() then
