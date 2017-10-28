@@ -16723,9 +16723,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
+  uint16_t term_width = MAX(0, curwin->w_width - win_col_off(curwin));
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
                                           true, false, false, cwd);
-  data->proc.pty.width = curwin->w_width;
+  data->proc.pty.width = term_width;
   data->proc.pty.height = curwin->w_height;
   data->proc.pty.term_name = xstrdup("xterm-256color");
   if (!common_job_start(data, rettv)) {
@@ -16733,7 +16734,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   TerminalOptions topts;
   topts.data = data;
-  topts.width = curwin->w_width;
+  topts.width = term_width;
   topts.height = curwin->w_height;
   topts.write_cb = term_write;
   topts.resize_cb = term_resize;
