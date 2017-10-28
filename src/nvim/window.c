@@ -3747,7 +3747,9 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
   do_autochdir();
 
   if (curbuf->terminal) {
-    terminal_resize(curbuf->terminal, curwin->w_width, curwin->w_height);
+    terminal_resize(curbuf->terminal,
+                    (uint16_t)(MAX(0, curwin->w_width - win_col_off(curwin))),
+                    (uint16_t)curwin->w_height);
   }
 }
 
@@ -4946,7 +4948,9 @@ void win_new_width(win_T *wp, int width)
 
   if (wp->w_buffer->terminal) {
     if (wp->w_height != 0) {
-      terminal_resize(wp->w_buffer->terminal, wp->w_width, 0);
+      terminal_resize(wp->w_buffer->terminal,
+                      (uint16_t)(MAX(0, curwin->w_width - win_col_off(curwin))),
+                      0);
     }
   }
 }
