@@ -47,7 +47,7 @@ describe("CTRL-C (mapped)", function()
     end
 
     -- The test is time-sensitive. Try different sleep values.
-    local ms_values = {1, 10, 100, 1000, 10000}
+    local ms_values = {100, 1000, 10000}
     for i, ms in ipairs(ms_values) do
       if i < #ms_values then
         local status, _ = pcall(test_ctrl_c, ms)
