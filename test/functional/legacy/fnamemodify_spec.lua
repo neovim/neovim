@@ -32,7 +32,9 @@ describe('filename modifiers', function()
         call assert_equal('t', fnamemodify('test.out', ':p')[-1:])
         call assert_equal('test.out', fnamemodify('test.out', ':.'))
         call assert_equal('../testdir/a', fnamemodify('../testdir/a', ':.'))
-        if !has('win32')
+        if has('win32')
+          call assert_equal('test.out', fnamemodify('test.out', ':~:.'))
+        else
           call assert_equal('test.out', fnamemodify('test.out', ':~'))
         endif
         call assert_equal('../testdir/a', fnamemodify('../testdir/a', ':~'))
