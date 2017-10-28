@@ -68,4 +68,20 @@ void popupmenu_select(Integer selected)
 void tabline_update(Tabpage current, Array tabs)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
+void cmdline_show(Array content, Integer pos, String firstc, String prompt,
+                  Integer indent, Integer level)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_pos(Integer pos, Integer level)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_special_char(String c, Boolean shift, Integer level)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_hide(Integer level)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_block_show(Array lines)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_block_append(Array lines)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+void cmdline_block_hide(void)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+
 #endif  // NVIM_API_UI_EVENTS_IN_H

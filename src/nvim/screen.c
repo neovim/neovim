@@ -345,8 +345,9 @@ void update_screen(int type)
   if (need_highlight_changed)
     highlight_changed();
 
-  if (type == CLEAR) {          /* first clear screen */
-    screenclear();              /* will reset clear_cmdline */
+  if (type == CLEAR) {          // first clear screen
+    screenclear();              // will reset clear_cmdline
+    cmdline_screen_cleared();   // clear external cmdline state
     type = NOT_VALID;
   }
 
