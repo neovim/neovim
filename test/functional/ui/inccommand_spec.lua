@@ -740,13 +740,13 @@ describe(":substitute, inccommand=split", function()
   it("shows preview when cmd modifiers are present", function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect([[too lines]], nil, nil, nil, true)
+    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
     feed('<Esc>')
     screen:expect([[two lines]], nil, nil, nil, true)
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect([[too lines]], nil, nil, nil, true)
+    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
     feed('<Esc>')
     screen:expect([[two lines]], nil, nil, nil, true)
 
@@ -1219,13 +1219,13 @@ describe("inccommand=nosplit", function()
   it("shows preview when cmd modifiers are present", function()
     -- one modifier
     feed(':keeppatterns %s/tw/to')
-    screen:expect([[too lines]], nil, nil, nil, true)
+    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
     feed('<Esc>')
     screen:expect([[two lines]], nil, nil, nil, true)
 
     -- multiple modifiers
     feed(':keeppatterns silent %s/tw/to')
-    screen:expect([[too lines]], nil, nil, nil, true)
+    screen:expect([[{12:to}o lines]], nil, nil, nil, true)
     feed('<Esc>')
     screen:expect([[two lines]], nil, nil, nil, true)
 
