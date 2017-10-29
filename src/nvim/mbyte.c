@@ -2288,9 +2288,7 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8,
   if (vcp->vc_type == CONV_ICONV && vcp->vc_fd != (iconv_t)-1)
     iconv_close(vcp->vc_fd);
 # endif
-  vcp->vc_type = CONV_NONE;
-  vcp->vc_factor = 1;
-  vcp->vc_fail = false;
+  *vcp = (vimconv_T)MBYTE_NONE_CONV;
 
   /* No conversion when one of the names is empty or they are equal. */
   if (from == NULL || *from == NUL || to == NULL || *to == NUL

@@ -144,7 +144,9 @@ before_each(function()
     EOB={bold = true, foreground = Screen.colors.Blue1},
     ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
     SK={foreground = Screen.colors.Blue},
-    PE={bold = true, foreground = Screen.colors.SeaGreen4}
+    PE={bold = true, foreground = Screen.colors.SeaGreen4},
+    NUM={foreground = Screen.colors.Blue2},
+    NPAR={foreground = Screen.colors.Yellow},
   })
 end)
 
@@ -863,7 +865,10 @@ describe('Ex commands coloring support', function()
 end)
 describe('Expressions coloring support', function()
   it('works', function()
-    meths.set_var('Nvim_color_expr', 'RainBowParens')
+    meths.command('hi clear NVimNumber')
+    meths.command('hi clear NVimNestingParenthesis')
+    meths.command('hi NVimNumber guifg=Blue2')
+    meths.command('hi NVimNestingParenthesis guifg=Yellow')
     feed(':echo <C-r>=(((1)))')
     screen:expect([[
                                               |
@@ -873,21 +878,24 @@ describe('Expressions coloring support', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      ={RBP1:(}{RBP2:(}{RBP3:(}1{RBP3:)}{RBP2:)}{RBP1:)}^                                |
+      ={NPAR:(((}{NUM:1}{NPAR:)))}^                                |
     ]])
   end)
-  it('errors out when failing to get callback', function()
+  it('does not use Nvim_color_expr', function()
     meths.set_var('Nvim_color_expr', 42)
+    -- Used to error out due to failing to get callback.
+    meths.command('hi clear NVimNumber')
+    meths.command('hi NVimNumber guifg=Blue2')
     feed(':<C-r>=1')
     screen:expect([[
+                                              |
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      =                                       |
-      {ERR:E5409: Unable to get g:Nvim_color_expr c}|
-      {ERR:allback: Vim:E6000: Argument is not a fu}|
-      {ERR:nction or function name}                 |
-      =1^                                      |
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      {EOB:~                                       }|
+      ={NUM:1}^                                      |
     ]])
   end)
 end)

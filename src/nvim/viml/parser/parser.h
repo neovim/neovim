@@ -8,6 +8,7 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/func_attr.h"
 #include "nvim/mbyte.h"
+#include "nvim/memory.h"
 
 /// One parsed line
 typedef struct {
@@ -79,6 +80,56 @@ typedef struct {
   /// True if line continuation can be used.
   bool can_continuate;
 } ParserState;
+
+static inline void viml_parser_init(
+    ParserState *const ret_pstate,
+    const ParserLineGetter get_line, void *const cookie,
+    ParserHighlight *const colors)
+  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_NONNULL_ARG(1, 2);
+
+/// Initialize a new parser state instance
+///
+/// @param[out]  ret_pstate  Parser state to initialize.
+/// @param[in]  get_line  Line getter function.
+/// @param[in]  cookie  Argument for the get_line function.
+/// @param[in]  colors  Where to save highlighting. May be NULL if it is not
+///                     needed.
+static inline void viml_parser_init(
+    ParserState *const ret_pstate,
+    const ParserLineGetter get_line, void *const cookie,
+    ParserHighlight *const colors)
+{
+  *ret_pstate = (ParserState) {
+    .reader = {
+      .get_line = get_line,
+      .cookie = cookie,
+      .conv = MBYTE_NONE_CONV,
+    },
+    .pos = { 0, 0 },
+    .colors = colors,
+    .can_continuate = false,
+  };
+  kvi_init(ret_pstate->reader.lines);
+  kvi_init(ret_pstate->stack);
+}
+
+static inline void viml_parser_destroy(ParserState *const pstate)
+  REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
+
+/// Free all memory allocated by the parser on heap
+///
+/// @param  pstate  Parser state to free.
+static inline void viml_parser_destroy(ParserState *const pstate)
+{
+  for (size_t i = 0; i < kv_size(pstate->reader.lines); i++) {
+    ParserLine pline = kv_A(pstate->reader.lines, i);
+    if (pline.allocated) {
+      xfree((void *)pline.data);
+    }
+  }
+  kvi_destroy(pstate->reader.lines);
+  kvi_destroy(pstate->stack);
+}
 
 static inline void viml_preader_get_line(ParserInputReader *const preader,
                                          ParserLine *const ret_pline)
@@ -185,5 +236,9 @@ static inline void viml_parser_highlight(ParserState *const pstate,
       .group = group,
   }));
 }
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "viml/parser/parser.h.generated.h"
+#endif
 
 #endif  // NVIM_VIML_PARSER_PARSER_H
