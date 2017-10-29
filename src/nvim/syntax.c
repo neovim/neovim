@@ -6248,11 +6248,8 @@ init_highlight(int both, int reset)
       (void)source_runtime((char_u *)"syntax/syncolor.vim", DIP_ALL);
       recursive--;
     }
-    // Without syncolor.vim it is going to screw everything over by defining
-    // cleared highlight groups by creating links to non-existent groups. This
-    // effectively prevents ":highlight default" from working properly.
-    syn_init_cmdline_highlight(reset, true);
   }
+  syn_init_cmdline_highlight(false, false);
 }
 
 /*
