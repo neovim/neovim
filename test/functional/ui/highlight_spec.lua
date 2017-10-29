@@ -518,7 +518,7 @@ describe("'listchars' highlight", function()
     ]])
     feed_command('set cursorline')
     screen:expect([[
-      {2:^>-------.}{1:abcd}{2:.}{1:Lorem}{3:>}|
+      {2:^>-------.}{1:abcd}{2:.}{1:Lorem}{4:>}|
       {5:>-------.}abcd{5:*}{4:¬}     |
       {4:¬}                   |
       {4:~                   }|
@@ -526,7 +526,7 @@ describe("'listchars' highlight", function()
     ]])
     feed('$')
     screen:expect([[
-      {3:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
+      {4:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
       {4:<}                   |
       {4:<}                   |
       {4:~                   }|
@@ -607,7 +607,7 @@ describe("'listchars' highlight", function()
     feed('<esc>$')
     screen:expect([[
       {4:<}                   |
-      {3:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
+      {4:<}{1:r}{2:.}{1:sit}{2:.}{1:ame^t}{3:¬}{1:        }|
       {4:<}                   |
       {4:~                   }|
                           |

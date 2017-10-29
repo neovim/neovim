@@ -11147,17 +11147,18 @@ void get_user_input(const typval_T *const argvars,
 
   cmd_silent = false;  // Want to see the prompt.
   // Only the part of the message after the last NL is considered as
-  // prompt for the command line.
-  const char *p = strrchr(prompt, '\n');
-  if (p == NULL) {
-    p = prompt;
-  } else {
-    p++;
-    msg_start();
-    msg_clr_eos();
-    msg_puts_attr_len(prompt, p - prompt, echo_attr);
-    msg_didout = false;
-    msg_starthere();
+  // prompt for the command line, unlsess cmdline is externalized
+  const char *p = prompt;
+  if (!ui_is_external(kUICmdline)) {
+    const char *lastnl = strrchr(prompt, '\n');
+    if (lastnl != NULL) {
+      p = lastnl+1;
+      msg_start();
+      msg_clr_eos();
+      msg_puts_attr_len(prompt, p - prompt, echo_attr);
+      msg_didout = false;
+      msg_starthere();
+    }
   }
   cmdline_row = msg_row;
 
@@ -16723,9 +16724,10 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
+  uint16_t term_width = MAX(0, curwin->w_width - win_col_off(curwin));
   TerminalJobData *data = common_job_init(argv, on_stdout, on_stderr, on_exit,
                                           true, false, false, cwd);
-  data->proc.pty.width = curwin->w_width;
+  data->proc.pty.width = term_width;
   data->proc.pty.height = curwin->w_height;
   data->proc.pty.term_name = xstrdup("xterm-256color");
   if (!common_job_start(data, rettv)) {
@@ -16733,7 +16735,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   TerminalOptions topts;
   topts.data = data;
-  topts.width = curwin->w_width;
+  topts.width = term_width;
   topts.height = curwin->w_height;
   topts.write_cb = term_write;
   topts.resize_cb = term_resize;
@@ -19642,6 +19644,7 @@ void ex_function(exarg_T *eap)
   int todo;
   hashitem_T  *hi;
   int sourcing_lnum_off;
+  bool show_block = false;
 
   /*
    * ":function" without argument: list functions.
@@ -19815,6 +19818,11 @@ void ex_function(exarg_T *eap)
     goto errret_2;
   }
 
+  if (KeyTyped && ui_is_external(kUICmdline)) {
+    show_block = true;
+    ui_ext_cmdline_block_append(0, (const char *)eap->cmd);
+  }
+
   // find extra arguments "range", "dict", "abort" and "closure"
   for (;; ) {
     p = skipwhite(p);
@@ -19867,7 +19875,9 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && did_emsg)
       goto erret;
 
-    msg_putchar('\n');              /* don't overwrite the function name */
+    if (!ui_is_external(kUICmdline)) {
+      msg_putchar('\n');              // don't overwrite the function name
+    }
     cmdline_row = msg_row;
   }
 
@@ -19900,6 +19910,9 @@ void ex_function(exarg_T *eap)
     if (theline == NULL) {
       EMSG(_("E126: Missing :endfunction"));
       goto erret;
+    }
+    if (show_block) {
+      ui_ext_cmdline_block_append(indent, (const char *)theline);
     }
 
     /* Detect line continuation: sourcing_lnum increased more than one. */
@@ -20193,6 +20206,9 @@ ret_free:
   xfree(name);
   did_emsg |= saved_did_emsg;
   need_wait_return |= saved_wait_return;
+  if (show_block) {
+    ui_ext_cmdline_block_leave();
+  }
 }
 
 /// Get a function name, translating "<SID>" and "<SNR>".
@@ -22850,3 +22866,32 @@ void eval_format_source_name_line(char *buf, size_t bufsize)
            (sourcing_name ? sourcing_name : (char_u *)"?"),
            (sourcing_name ? sourcing_lnum : 0));
 }
+
+/// ":checkhealth [plugins]"
+void ex_checkhealth(exarg_T *eap)
+{
+  bool found = !!find_func((char_u *)"health#check");
+  if (!found
+      && script_autoload("health#check", sizeof("health#check") - 1, false)) {
+    found = !!find_func((char_u *)"health#check");
+  }
+  if (!found) {
+    const char *vimruntime_env = os_getenv("VIMRUNTIME");
+    if (vimruntime_env == NULL) {
+      EMSG(_("E5009: $VIMRUNTIME is empty or unset"));
+      return;
+    } else {
+      EMSG2(_("E5009: Invalid $VIMRUNTIME: %s"), os_getenv("VIMRUNTIME"));
+      return;
+    }
+  }
+
+  size_t bufsize = STRLEN(eap->arg) + sizeof("call health#check('')");
+  char *buf = xmalloc(bufsize);
+  snprintf(buf, bufsize, "call health#check('%s')", eap->arg);
+
+  do_cmdline_cmd(buf);
+
+  xfree(buf);
+}
+

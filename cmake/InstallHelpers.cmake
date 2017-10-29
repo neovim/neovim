@@ -2,8 +2,8 @@
 if(CMAKE_SYSTEM_NAME MATCHES "BSD" AND NOT DEFINED CMAKE_INSTALL_MANDIR)
   if(DEFINED ENV{MANPREFIX})
     set(CMAKE_INSTALL_MANDIR "$ENV{MANPREFIX}/man")
-  else()
-    set(CMAKE_INSTALL_MANDIR "/usr/local/man")
+  elseif(CMAKE_INSTALL_PREFIX MATCHES "^/usr/local$")
+    set(CMAKE_INSTALL_MANDIR "man")
   endif()
 endif()
 

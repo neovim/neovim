@@ -2,7 +2,29 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local plugin_helpers = require('test.functional.plugin.helpers')
 
+local clear = helpers.clear
+local curbuf_contents = helpers.curbuf_contents
 local command = helpers.command
+local eq = helpers.eq
+
+describe(':checkhealth', function()
+  it("detects invalid $VIMRUNTIME", function()
+    clear({
+      env={ VIMRUNTIME='bogus', },
+    })
+    local status, err = pcall(command, 'checkhealth')
+    eq(false, status)
+    eq('Invalid $VIMRUNTIME: bogus', string.match(err, 'Invalid.*'))
+  end)
+  it("detects invalid $VIM", function()
+    clear()
+    -- Do this after startup, otherwise it just breaks $VIMRUNTIME.
+    command("let $VIM='zub'")
+    command("checkhealth nvim")
+    eq("ERROR: $VIM is invalid: zub",
+       string.match(curbuf_contents(), "ERROR: $VIM .* zub"))
+  end)
+end)
 
 describe('health.vim', function()
   before_each(function()
@@ -14,7 +36,7 @@ describe('health.vim', function()
     command("set runtimepath+=test/functional/fixtures")
   end)
 
-  it("reports", function()
+  it("health#report_*()", function()
     helpers.source([[
       let g:health_report = execute([
         \ "call health#report_start('Check Bar')",
@@ -44,9 +66,9 @@ describe('health.vim', function()
   end)
 
 
-  describe(":CheckHealth", function()
+  describe(":checkhealth", function()
     it("concatenates multiple reports", function()
-      command("CheckHealth success1 success2")
+      command("checkhealth success1 success2")
       helpers.expect([[
 
         health#success1#check
@@ -65,7 +87,7 @@ describe('health.vim', function()
     end)
 
     it("gracefully handles broken healthcheck", function()
-      command("CheckHealth broken")
+      command("checkhealth broken")
       helpers.expect([[
 
         health#broken#check
@@ -89,7 +111,7 @@ describe('health.vim', function()
         Bar = { foreground=Screen.colors.Purple },
         Bullet = { bold=true, foreground=Screen.colors.Brown },
       })
-      command("CheckHealth foo success1")
+      command("checkhealth foo success1")
       command("1tabclose")
       command("set laststatus=0")
       screen:expect([[
@@ -107,7 +129,7 @@ describe('health.vim', function()
     end)
 
     it("gracefully handles invalid healthcheck", function()
-      command("CheckHealth non_existent_healthcheck")
+      command("checkhealth non_existent_healthcheck")
       helpers.expect([[
 
         health#non_existent_healthcheck#check

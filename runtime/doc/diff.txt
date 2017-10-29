@@ -10,7 +10,7 @@ eight versions of the same file.
 
 The basics are explained in section |08.7| of the user manual.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Starting diff mode

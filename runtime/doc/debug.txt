@@ -9,7 +9,7 @@ Debugging Vim						*debug-vim*
 This is for debugging Vim itself, when it doesn't work properly.
 For debugging Vim scripts, functions, etc. see |debug-scripts|
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 

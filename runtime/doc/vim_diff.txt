@@ -9,7 +9,7 @@ Differences between Nvim and Vim			       *vim-differences*
 Nvim differs from Vim in many ways, big and small.  This document is
 a complete and centralized reference of those differences.
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Configuration					    *nvim-configuration*
@@ -100,7 +100,7 @@ by Nvim developers.
 
 FEATURES ~
 
-"Outline": Type <M-]> in |:Man| and |:help| pages to see a document outline.
+"Outline": Type |gO| in |:Man| and |:help| pages to see a document outline.
 
 |META| (ALT) chords are recognized, even in the terminal. Any |<M-| mapping
 will work. Some examples: <M-1>, <M-2>, <M-BS>, <M-Del>, <M-Ins>, <M-/>,
@@ -127,7 +127,7 @@ Variables:
   |v:windowid| is always available (for use by external UIs)
 
 Commands:
-  |:CheckHealth|
+  |:checkhealth|
   |:drop| is available on all platforms
   |:Man| is available by default, with many improvements such as completion
 
@@ -281,8 +281,8 @@ other arguments if used).
 |input()| and |inputdialog()| support user-defined cmdline highlighting.
 
 Highlight groups:
-  |hl-ColorColumn|, |hl-CursorColumn|, |hl-CursorLine| are lower priority than
-  (overridden by) most other highlight groups.
+  |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
+  groups
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*

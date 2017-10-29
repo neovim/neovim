@@ -6,7 +6,7 @@
 
 This subject is introduced in section |30.1| of the user manual.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 =============================================================================
 1. Using QuickFix commands			*quickfix* *Quickfix* *E42*
@@ -138,11 +138,15 @@ processing a quickfix or location list command, it will be aborted.
 			current window is used instead of the quickfix list.
 
 							*:cq* *:cquit*
-:cq[uit][!]		Quit Vim with an error code, so that the compiler
-			will not compile the same file again.
-			WARNING: All changes in files are lost!  Also when the
-			[!] is not used.  It works like ":qall!" |:qall|,
-			except that Vim returns a non-zero exit code.
+:[count]cq[uit]		Quit Nvim with an error code, or the code specified in
+			[count].  Useful when Nvim is called from another
+			program: e.g. `git commit` will abort the comitting
+			process, `fc` (built-in for shells like bash and zsh)
+			will not execute the command.
+
+			WARNING: All changes in files are lost.  It works like
+			":qall!" |:qall|, except that Nvim exits non-zero or
+			[count].
 
 							*:cf* *:cfile*
 :cf[ile][!] [errorfile]	Read the error file and jump to the first error.
@@ -1534,4 +1538,4 @@ by Vim.
 
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:noet:tw=78:ts=8:ft=help:norl:

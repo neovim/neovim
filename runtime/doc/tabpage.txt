@@ -10,7 +10,7 @@ The commands which have been added to use multiple tab pages are explained
 here.  Additionally, there are explanations for commands that work differently
 when used in combination with more than one tab page.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction						*tab-page-intro*

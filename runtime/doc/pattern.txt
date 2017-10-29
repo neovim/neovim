@@ -9,7 +9,7 @@ Patterns and search commands				*pattern-searches*
 The very basics can be found in section |03.9| of the user manual.  A few more
 explanations are in chapter 27 |usr_27.txt|.
 
-                                      Type <M-]> to see the table of contents.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Search commands				*search-commands*

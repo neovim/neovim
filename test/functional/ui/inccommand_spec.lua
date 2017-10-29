@@ -701,6 +701,25 @@ describe(":substitute, inccommand=split", function()
     eq(0, eval("&modified"))
   end)
 
+  it("shows preview when cmd modifiers are present", function()
+    -- one modifier
+    feed(':keeppatterns %s/tw/to')
+    screen:expect([[too lines]], nil, nil, nil, true)
+    feed('<Esc>')
+    screen:expect([[two lines]], nil, nil, nil, true)
+
+    -- multiple modifiers
+    feed(':keeppatterns silent %s/tw/to')
+    screen:expect([[too lines]], nil, nil, nil, true)
+    feed('<Esc>')
+    screen:expect([[two lines]], nil, nil, nil, true)
+
+    -- non-modifier prefix
+    feed(':silent tabedit %s/tw/to')
+    screen:expect([[two lines]], nil, nil, nil, true)
+    feed('<Esc>')
+  end)
+
   it('shows split window when typing the pattern', function()
     feed(":%s/tw")
     screen:expect([[
@@ -1138,6 +1157,25 @@ describe("inccommand=nosplit", function()
       {15:~                   }|
       :%snomagic/3.*/X^    |
     ]])
+  end)
+
+  it("shows preview when cmd modifiers are present", function()
+    -- one modifier
+    feed(':keeppatterns %s/tw/to')
+    screen:expect([[too lines]], nil, nil, nil, true)
+    feed('<Esc>')
+    screen:expect([[two lines]], nil, nil, nil, true)
+
+    -- multiple modifiers
+    feed(':keeppatterns silent %s/tw/to')
+    screen:expect([[too lines]], nil, nil, nil, true)
+    feed('<Esc>')
+    screen:expect([[two lines]], nil, nil, nil, true)
+
+    -- non-modifier prefix
+    feed(':silent tabedit %s/tw/to')
+    screen:expect([[two lines]], nil, nil, nil, true)
+    feed('<Esc>')
   end)
 
   it('never shows preview buffer', function()

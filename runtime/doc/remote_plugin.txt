@@ -6,7 +6,7 @@
 
 Nvim support for remote plugins 		  *remote-plugin*
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction					    *remote-plugin-intro*

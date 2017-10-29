@@ -793,7 +793,11 @@ Integer nvim_buf_add_highlight(Buffer buffer,
     col_end = MAXCOL;
   }
 
-  int hlg_id = syn_name2id((char_u *)(hl_group.data ? hl_group.data : ""));
+  int hlg_id = 0;
+  if (hl_group.size > 0) {
+    hlg_id = syn_check_group((char_u *)hl_group.data, (int)hl_group.size);
+  }
+
   src_id = bufhl_add_hl(buf, (int)src_id, hlg_id, (linenr_T)line+1,
                         (colnr_T)col_start+1, (colnr_T)col_end);
   return src_id;

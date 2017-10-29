@@ -345,8 +345,9 @@ void update_screen(int type)
   if (need_highlight_changed)
     highlight_changed();
 
-  if (type == CLEAR) {          /* first clear screen */
-    screenclear();              /* will reset clear_cmdline */
+  if (type == CLEAR) {          // first clear screen
+    screenclear();              // will reset clear_cmdline
+    cmdline_screen_cleared();   // clear external cmdline state
     type = NOT_VALID;
   }
 
@@ -692,12 +693,18 @@ static void win_update(win_T *wp)
   if (wp->w_nrwidth != i) {
     type = NOT_VALID;
     wp->w_nrwidth = i;
-  } else if (buf->b_mod_set && buf->b_mod_xlines != 0 && wp->w_redraw_top != 0) {
-    /*
-     * When there are both inserted/deleted lines and specific lines to be
-     * redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
-     * everything (only happens when redrawing is off for while).
-     */
+
+    if (buf->terminal) {
+      terminal_resize(buf->terminal,
+                      (uint16_t)(MAX(0, curwin->w_width - win_col_off(curwin))),
+                      (uint16_t)curwin->w_height);
+    }
+  } else if (buf->b_mod_set
+             && buf->b_mod_xlines != 0
+             && wp->w_redraw_top != 0) {
+    // When there are both inserted/deleted lines and specific lines to be
+    // redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
+    // everything (only happens when redrawing is off for while).
     type = NOT_VALID;
   } else {
     /*
@@ -2202,7 +2209,6 @@ win_line (
   colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
   int need_showbreak = false;           // overlong line, skip first x chars
   int line_attr = 0;                    // attribute for the whole line
-  int line_attr_low_priority = 0;       // current line, lowest priority
   matchitem_T *cur;                     // points to the match list
   match_T     *shl;                     // points to search_hl or a match
   int shl_flag;                         // flag to indicate whether search_hl
@@ -2428,13 +2434,7 @@ win_line (
     filler_lines = wp->w_topfill;
   filler_todo = filler_lines;
 
-  // 'cursorline' highlighting for the current window.  Not when Visual mode is
-  // active, because it's not clear what is selected then.
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-      && !(wp == curwin && VIsual_active)) {
-    line_attr_low_priority = win_hl_attr(wp, HLF_CUL);
-  }
-
+  // If this line has a sign with line highlighting set line_attr.
   v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
   if (v != 0) {
     line_attr = sign_get_attr((int)v, true);
@@ -2449,7 +2449,7 @@ win_line (
     line_attr = hl_combine_attr(wp->w_hl_attr_normal, line_attr);
   }
 
-  if (line_attr_low_priority || line_attr) {
+  if (line_attr != 0) {
     area_highlighting = true;
   }
 
@@ -2669,6 +2669,20 @@ win_line (
     }
     if (shl != &search_hl && cur != NULL)
       cur = cur->next;
+  }
+
+  // Cursor line highlighting for 'cursorline' in the current window.  Not
+  // when Visual mode is active, because it's not clear what is selected
+  // then.
+  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
+      && !(wp == curwin && VIsual_active)) {
+    if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
+        && qf_current_entry(wp) == lnum) {
+      line_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), line_attr);
+    } else {
+      line_attr = win_hl_attr(wp, HLF_CUL);
+    }
+    area_highlighting = true;
   }
 
   off = (unsigned)(current_ScreenLine - ScreenLines);
@@ -3589,9 +3603,7 @@ win_line (
           // Display a '$' after the line or highlight an extra
           // character if the line break is included.
           // For a diff line the highlighting continues after the "$".
-          if (diff_hlf == (hlf_T)0
-              && line_attr == 0
-              && line_attr_low_priority == 0) {
+          if (diff_hlf == (hlf_T)0 && line_attr == 0) {
             // In virtualedit, visual selections may extend beyond end of line.
             if (area_highlighting && virtual_active()
                 && tocol != MAXCOL && vcol < tocol) {
@@ -3655,7 +3667,7 @@ win_line (
                      (col < wp->w_width))) {
           c = ' ';
           ptr--;  // put it back at the NUL
-        } else if ((diff_hlf != (hlf_T)0 || line_attr_low_priority || line_attr)
+        } else if ((diff_hlf != (hlf_T)0 || line_attr != 0)
                    && (wp->w_p_rl
                        ? (col >= 0)
                        : (col - boguscols < wp->w_width))) {
@@ -3667,8 +3679,7 @@ win_line (
           did_line_attr++;
 
           // don't do search HL for the rest of the line
-          if ((line_attr_low_priority || line_attr)
-              && char_attr == search_attr && col > 0) {
+          if (line_attr != 0 && char_attr == search_attr && col > 0) {
             char_attr = line_attr;
           }
           if (diff_hlf == HLF_TXD) {
@@ -4036,9 +4047,6 @@ win_line (
         char_attr = hl_combine_attr(win_hl_attr(wp, HLF_MC), char_attr);
       }
     }
-
-    // Apply `line_attr_low_priority` now, so that everthing can override it.
-    char_attr = hl_combine_attr(line_attr_low_priority, char_attr);
 
     /*
      * Store character to be displayed.
