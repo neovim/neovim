@@ -238,7 +238,7 @@ Only sent if `ext_cmdline` option is set in |ui-options|
         content: List of [attrs, string]
 	         [[{}, "t"], [attrs, "est"], ...]
 
-	Triggered when the user types in the cmdline.
+	Triggered when the cmdline is displayed or changed.
 	The `content` is the full content that should be displayed in the
 	cmdline, and the `pos` is the position of the cursor that in the
 	cmdline. The content is divided into chunks with different highlight
@@ -266,7 +266,7 @@ Only sent if `ext_cmdline` option is set in |ui-options|
 	`shift` is true the text after the cursor should be shifted, otherwise
 	it should overwrite the char at the cursor.
 
-	Should be hidden at next cmdline_pos.
+	Should be hidden at next cmdline_show or cmdline_pos.
 
 ["cmdline_hide"]
 	Hide the cmdline.
@@ -293,9 +293,8 @@ Wildmenu Events							   *ui-wildmenu*
 Only sent if `ext_wildmenu` option is set in |ui-options|
 
 ["wildmenu_show", items]
-	When `ext_wildmenu` is set to true, nvim will not draw the
-	wildmenu on the grid, instead when the wildmenu is to be displayed
-	this update is sent. `items` is an array of the completion items.
+	Sent when wildmenu (command line completion) is activated.
+	`items` is an array with the completion items.
 
 ["wildmenu_select", selected]
 	An item in the currently displayed wildmenu is selected. `selected`
