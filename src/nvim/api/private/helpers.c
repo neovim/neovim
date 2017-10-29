@@ -667,6 +667,22 @@ tabpage_T *find_tab_by_handle(Tabpage tabpage, Error *err)
   return rv;
 }
 
+/// Allocates a String consisting of a single char. Does not support multibyte
+/// characters. The resulting string is also NUL-terminated, to facilitate
+/// interoperating with code using C strings.
+///
+/// @param char the char to convert
+/// @return the resulting String, if the input char was NUL, an
+///         empty String is returned
+String cchar_to_string(char c)
+{
+  char buf[] = { c, NUL };
+  return (String) {
+    .data = xmemdupz(buf, 1),
+    .size = (c != NUL) ? 1 : 0
+  };
+}
+
 /// Copies a C string into a String (binary safe string, characters + length).
 /// The resulting string is also NUL-terminated, to facilitate interoperating
 /// with code using C strings.
@@ -685,6 +701,23 @@ String cstr_to_string(const char *str)
         .data = xmemdupz(str, len),
         .size = len
     };
+}
+
+/// Copies buffer to an allocated String.
+/// The resulting string is also NUL-terminated, to facilitate interoperating
+/// with code using C strings.
+///
+/// @param buf the buffer to copy
+/// @param size length of the buffer
+/// @return the resulting String, if the input string was NULL, an
+///         empty String is returned
+String cbuf_to_string(const char *buf, size_t size)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return (String) {
+    .data = xmemdupz(buf, size),
+    .size = size
+  };
 }
 
 /// Creates a String using the given C string. Unlike
