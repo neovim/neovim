@@ -189,7 +189,7 @@ typedef enum {
   kExprNodeCall,  ///< Function call.
   /// Plain identifier: simple variable/function name
   ///
-  /// Looks like "string", "g:Foo", etc: consists from a single 
+  /// Looks like "string", "g:Foo", etc: consists from a single
   /// kExprLexPlainIdentifier token.
   kExprNodePlainIdentifier,
   /// Plain dictionary key, for use with kExprNodeConcatOrSubscript

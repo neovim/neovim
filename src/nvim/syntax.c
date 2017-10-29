@@ -5930,7 +5930,8 @@ static void syntime_report(void)
 // When making changes here, also change runtime/colors/default.vim!
 
 static const char *highlight_init_both[] = {
-  "Conceal      ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
+  "Conceal "
+      "ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
   "Cursor       guibg=fg guifg=bg",
   "lCursor      guibg=fg guifg=bg",
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
@@ -6211,11 +6212,9 @@ void syn_init_cmdline_highlight(bool reset, bool init)
 ///
 /// @param both include groups where 'bg' doesn't matter
 /// @param reset clear groups first
-void
-init_highlight(int both, int reset)
+void init_highlight(bool both, bool reset)
 {
-  int i;
-  static int had_both = FALSE;
+  static int had_both = false;
 
   // Try finding the color scheme file.  Used when a color file was loaded
   // and 'background' or 't_Co' is changed.
@@ -6235,9 +6234,9 @@ init_highlight(int both, int reset)
    * Didn't use a color file, use the compiled-in colors.
    */
   if (both) {
-    had_both = TRUE;
+    had_both = true;
     const char *const *const pp = highlight_init_both;
-    for (i = 0; pp[i] != NULL; i++) {
+    for (size_t i = 0; pp[i] != NULL; i++) {
       do_highlight(pp[i], reset, true);
     }
   } else if (!had_both) {
@@ -6250,7 +6249,7 @@ init_highlight(int both, int reset)
   const char *const *const pp = ((*p_bg == 'l')
                                  ? highlight_init_light
                                  : highlight_init_dark);
-  for (i = 0; pp[i] != NULL; i++) {
+  for (size_t i = 0; pp[i] != NULL; i++) {
     do_highlight(pp[i], reset, true);
   }
 
@@ -6266,8 +6265,9 @@ init_highlight(int both, int reset)
          : "Visual cterm=NONE ctermbg=DarkGrey"), false, true);
   } else {
     do_highlight("Visual cterm=reverse ctermbg=NONE", false, true);
-    if (*p_bg == 'l')
+    if (*p_bg == 'l') {
       do_highlight("Search ctermfg=black", false, true);
+    }
   }
 
   /*
@@ -6452,7 +6452,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       restore_cterm_colors();
 
       // Clear all default highlight groups and load the defaults.
-      for (int idx = 0; idx < highlight_ga.ga_len; ++idx) {
+      for (int idx = 0; idx < highlight_ga.ga_len; idx++) {
         highlight_clear(idx);
       }
       init_highlight(true, true);
@@ -6690,9 +6690,8 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               }
             }
             if (i < 0) {
-              emsgf(_(
-                      "E421: Color name or number not recognized: %s"),
-                  key_start);
+              emsgf(_("E421: Color name or number not recognized: %s"),
+                    key_start);
               error = true;
               break;
             }

@@ -25,21 +25,21 @@
  */
 
 static const struct modmasktable {
-  short mod_mask;  ///< Bit-mask for particular key modifier.
-  short mod_flag;  ///< Bit(s) for particular key modifier.
+  uint16_t mod_mask;  ///< Bit-mask for particular key modifier.
+  uint16_t mod_flag;  ///< Bit(s) for particular key modifier.
   char_u name;  ///< Single letter name of modifier.
 } mod_mask_table[] = {
-  {MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'M'},
-  {MOD_MASK_META,             MOD_MASK_META,          (char_u)'T'},
-  {MOD_MASK_CTRL,             MOD_MASK_CTRL,          (char_u)'C'},
-  {MOD_MASK_SHIFT,            MOD_MASK_SHIFT,         (char_u)'S'},
-  {MOD_MASK_MULTI_CLICK,      MOD_MASK_2CLICK,        (char_u)'2'},
-  {MOD_MASK_MULTI_CLICK,      MOD_MASK_3CLICK,        (char_u)'3'},
-  {MOD_MASK_MULTI_CLICK,      MOD_MASK_4CLICK,        (char_u)'4'},
-  {MOD_MASK_CMD,              MOD_MASK_CMD,           (char_u)'D'},
+  { MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'M' },
+  { MOD_MASK_META,             MOD_MASK_META,          (char_u)'T' },
+  { MOD_MASK_CTRL,             MOD_MASK_CTRL,          (char_u)'C' },
+  { MOD_MASK_SHIFT,            MOD_MASK_SHIFT,         (char_u)'S' },
+  { MOD_MASK_MULTI_CLICK,      MOD_MASK_2CLICK,        (char_u)'2' },
+  { MOD_MASK_MULTI_CLICK,      MOD_MASK_3CLICK,        (char_u)'3' },
+  { MOD_MASK_MULTI_CLICK,      MOD_MASK_4CLICK,        (char_u)'4' },
+  { MOD_MASK_CMD,              MOD_MASK_CMD,           (char_u)'D' },
   // 'A' must be the last one
-  {MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'A'},
-  {0, 0, NUL}
+  { MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'A' },
+  { 0, 0, NUL }
 };
 
 /*

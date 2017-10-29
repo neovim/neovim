@@ -6080,7 +6080,7 @@ char_u *add_char2buf(int c, char_u *s)
 {
   char_u temp[MB_MAXBYTES + 1];
   const int len = utf_char2bytes(c, temp);
-  for (int i = 0; i < len; ++i) {
+  for (int i = 0; i < len; i++) {
     c = temp[i];
     // Need to escape K_SPECIAL and CSI like in the typeahead buffer.
     if (c == K_SPECIAL) {

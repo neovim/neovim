@@ -1814,8 +1814,8 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
                 || ((*kv_Z(ast_stack, 1))->type != kExprNodeConcat
                     && ((*kv_Z(ast_stack, 1))->type
                         != kExprNodeConcatOrSubscript))))
-            ? kELFlagAllowFloat
-            : 0));
+           ? kELFlagAllowFloat
+           : 0));
     LexExprToken cur_token = viml_pexpr_next_token(
         pstate, want_node_to_lexer_flags[want_node] | lexer_additional_flags);
     if (cur_token.type == kExprLexEOC) {
@@ -1876,7 +1876,7 @@ viml_pexpr_parse_process_token:
     // time.
     //
     // Here example will always contain a concat with "a:2" sucking colon,
-    // making expression invalid both because there is no longer a spare colon 
+    // making expression invalid both because there is no longer a spare colon
     // for ternary and because concatenating dictionary with anything is not
     // valid. There are more cases when this will make a difference though.
     const bool node_is_key = (
@@ -2853,7 +2853,7 @@ viml_pexpr_parse_end:
   }
   kvi_destroy(ast_stack);
   return ast;
-}
+}  // NOLINT(readability/fn_size)
 
 #undef NEW_NODE
 #undef HL
