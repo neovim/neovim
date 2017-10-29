@@ -14,7 +14,6 @@ local ffi = helpers.ffi
 local eq = helpers.eq
 
 local conv_ccs = viml_helpers.conv_ccs
-local pline2lua = viml_helpers.pline2lua
 local new_pstate = viml_helpers.new_pstate
 local intchar2lua = viml_helpers.intchar2lua
 local conv_cmp_type = viml_helpers.conv_cmp_type
@@ -174,10 +173,7 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
       ffi.string(eastnode.data.env.ident, eastnode.data.env.ident_len))
   end
   ret_str = typ .. ':' .. ret_str
-  local can_simplify = true
-  for k, v in pairs(ret) do
-    can_simplify = false
-  end
+  local can_simplify = not ret.children
   if can_simplify then
     ret = ret_str
   else
@@ -218,12 +214,11 @@ local function phl2lua(pstate)
       pstate, chunk.start, chunk.end_col - chunk.start.col, {
         group = ffi.string(chunk.group),
       })
-    chunk_str = ('%s:%u:%u:%s'):format(
+    ret[i + 1] = ('%s:%u:%u:%s'):format(
       chunk_tbl.group,
       chunk_tbl.start.line,
       chunk_tbl.start.col,
       chunk_tbl.str)
-    ret[i + 1] = chunk_str
   end
   return ret
 end

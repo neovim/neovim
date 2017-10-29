@@ -10,7 +10,6 @@ local ffi = helpers.ffi
 local eq = helpers.eq
 
 local conv_ccs = viml_helpers.conv_ccs
-local pline2lua = viml_helpers.pline2lua
 local new_pstate = viml_helpers.new_pstate
 local intchar2lua = viml_helpers.intchar2lua
 local conv_cmp_type = viml_helpers.conv_cmp_type
@@ -183,7 +182,7 @@ describe('Expressions lexer', function()
   end
   local function simple_test(pstate_arg, exp_type, exp_len, exp)
     local pstate = new_pstate(pstate_arg)
-    local exp = shallowcopy(exp)
+    exp = shallowcopy(exp)
     exp.type = exp_type
     exp.len = exp_len or #(pstate_arg[0])
     exp.start = { col = 0, line = 0 }

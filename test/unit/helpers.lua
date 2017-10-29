@@ -791,7 +791,7 @@ local function kvi_new(ct)
   return kvi_init(ffi.new(ct))
 end
 
-local function make_enum_conv_tab(lib, values, skip_pref, set_cb)
+local function make_enum_conv_tab(m, values, skip_pref, set_cb)
   child_call_once(function()
     local ret = {}
     for _, v in ipairs(values) do
@@ -799,7 +799,7 @@ local function make_enum_conv_tab(lib, values, skip_pref, set_cb)
       if v:sub(1, #skip_pref) == skip_pref then
         str_v = v:sub(#skip_pref + 1)
       end
-      ret[tonumber(lib[v])] = str_v
+      ret[tonumber(m[v])] = str_v
     end
     set_cb(ret)
   end)
@@ -837,7 +837,7 @@ local module = {
   child_cleanup_once = child_cleanup_once,
   sc = sc,
   conv_enum = conv_enum,
-  array_size = array_sive,
+  array_size = array_size,
   kvi_destroy = kvi_destroy,
   kvi_size = kvi_size,
   kvi_init = kvi_init,

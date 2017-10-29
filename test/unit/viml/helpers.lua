@@ -5,7 +5,6 @@ local cimport = helpers.cimport
 local kvi_new = helpers.kvi_new
 local kvi_init = helpers.kvi_init
 local conv_enum = helpers.conv_enum
-local child_call_once = helpers.child_call_once
 local make_enum_conv_tab = helpers.make_enum_conv_tab
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
@@ -33,11 +32,6 @@ local function new_pstate(strings)
     ret_pline.size = size
     ret_pline.allocated = false
   end
-  local pline_init = {
-    data = nil,
-    size = 0,
-    allocated = false,
-  }
   local state = {
     reader = {
       get_line = get_line,

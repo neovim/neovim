@@ -898,4 +898,8 @@ describe('Expressions coloring support', function()
       ={NUM:1}^                                      |
     ]])
   end)
+  -- FIXME: Test expr coloring when using -u NORC and -u NONE.
+  -- FIXME: Test all highlight groups, using long expression.
+  -- FIXME: Test different ways of triggering expression highlighting (:<C-r>=,
+  --        i<C-r>=, :<C-\>e, "=).
 end)

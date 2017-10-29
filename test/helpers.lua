@@ -376,8 +376,8 @@ local function format_string(fmt, ...)
     return args[i]
   end
   local ret = fmt:gsub('%%[0-9*]*%.?[0-9*]*[cdEefgGiouXxqsr%%]', function(match)
-    local subfmt = match:gsub('%*', function(match)
-      return getarg()
+    local subfmt = match:gsub('%*', function()
+      return tostring(getarg())
     end)
     local arg = nil
     if subfmt:sub(-1) ~= '%' then
