@@ -162,13 +162,14 @@ process has not died, the cached selection is applied.
 ==============================================================================
 X11 selection mechanism			      *clipboard-x11* *x11-selection*
 
-The clipboard providers for X11 store text in what is known as "selections".
-Selections are "owned" by an application, so when the application is closed,
-the selection text is lost.
+The clipboard providers for X11 store text in "selections".
+Selections are "owned" by an application, so when the application gets closed,
+the selection text is not available anymore.  Clipboard managers can help to
+keep selections nonetheless.
 
-The contents of selections are held by the originating application (e.g., upon
-a copy), and only passed on to another application when that other application
-asks for them (e.g., upon a paste).
+Applications hold the contents of selections  (e.g., upon a copy), and pass
+them on to other application when that other application asks for them (e.g.,
+upon a paste).
 
 							      *quoteplus* *quote+*
 
