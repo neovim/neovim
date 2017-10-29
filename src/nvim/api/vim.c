@@ -886,6 +886,72 @@ theend:
   return rv;
 }
 
+/// Parse a VimL expression
+///
+/// @param[in]  expr  Expression to parse. Is always treated as a single line.
+/// @param[in]  flags  Flags: "m" if multiple expressions in a row are allowed
+///                    (only the first one will be parsed), "E" if EOC tokens
+///                    are not allowed (determines whether they will stop
+///                    parsing process or be recognized as an operator/space,
+///                    though also yielding an error).
+///
+///                    Use only "m" to parse like for "<C-r>=", only "E" to
+///                    parse like for ":echo", empty string for ":let".
+///
+/// @return AST: top-level dectionary holds keys
+///
+///         "error": Dictionary with error, present only if parser saw some
+///                  error. Contains the following keys:
+///
+///           "message": String, error message in printf format, translated.
+///                      Must contain exactly one "%.*s".
+///           "arg": String, error message argument.
+///
+///         "ast": actual AST, a dictionary with the following keys:
+///
+///           "type": node type, one of the value names from ExprASTNodeType
+///                   stringified without "kExprNode" prefix.
+///           "start": a pair [line, column] describing where node is “started”
+///                    where "line" is always 0 (will not be 0 if you will be
+///                    using nvim_parse_viml() on e.g. ":let", but that is not
+///                    present yet). Both elements are Integers.
+///           "len": “length” of the node. This and "start" are there for
+///                  debugging purposes primary (debugging parser and providing
+///                  debug information).
+///           "children": a list of nodes described in top/"ast". There always
+///                       is zero, one or two children, key will contain an
+///                       empty array if node can have children, but has no and
+///                       will not be present at all if node can’t have any
+///                       children. Maximum number of children may be found in
+///                       node_maxchildren array.
+///
+///           Local values (present only for certain nodes):
+///
+///           "scope": a single Integer, specifies scope for "Option" and
+///                    "PlainIdentifier" nodes. For "Option" it is one of
+///                    ExprOptScope values, for "PlainIdentifier" it is one of
+///                    ExprVarScope values.
+///           "ident": identifier (without scope, if any), present for "Option",
+///                    "PlainIdentifier", "PlainKey" and "Environment" nodes.
+///           "name": Integer, register name (one character) or -1. Only present
+///                   for "Register" nodes.
+///           "cmp_type": String, comparison type, one of the value names from
+///                       ExprComparisonType, stringified without "kExprCmp"
+///                       prefix. Only present for "Comparison" nodes.
+///           "ccs_strategy": String, case comparison strategy, one of the
+///                           value names from ExprCaseCompareStrategy,
+///                           stringified without "kCCStrategy" prefix. Only
+///                           present for "Comparison" nodes.
+///           "ivalue": Integer, integer value for "Integer" nodes.
+///           "fvalue": Float, floating-point value for "Float" nodes.
+///           "svalue": String, value for "SingleQuotedString" and
+///                     "DoubleQuotedString" nodes.
+Dictionary nvim_parse_expression(String expr, String flags, Error *err)
+  FUNC_API_SINCE(4)
+{
+  return (Dictionary)ARRAY_DICT_INIT;
+}
+
 
 /// Writes a message to vim output or error buffer. The string is split
 /// and flushed after each newline. Incomplete lines are kept for writing

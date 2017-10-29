@@ -338,6 +338,9 @@ typedef struct {
   ExprASTNode *root;
 } ExprAST;
 
+/// Array mapping ExprASTNodeType to maximum amount of children node may have
+extern const uint8_t node_maxchildren[];
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "viml/parser/expressions.h.generated.h"
 #endif

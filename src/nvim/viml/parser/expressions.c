@@ -849,8 +849,7 @@ static inline void viml_pexpr_debug_print_token(
     viml_pexpr_debug_print_token(pstate, tkn)
 #endif
 
-#ifndef NDEBUG
-static const uint8_t node_maxchildren[] = {
+const uint8_t node_maxchildren[] = {
   [kExprNodeMissing] = 0,
   [kExprNodeOpMissing] = 2,
   [kExprNodeTernary] = 2,
@@ -890,7 +889,6 @@ static const uint8_t node_maxchildren[] = {
   [kExprNodeOption] = 0,
   [kExprNodeEnvironment] = 0,
 };
-#endif
 
 /// Free memory occupied by AST
 ///
