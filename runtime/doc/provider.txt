@@ -133,8 +133,8 @@ registers. Nvim looks for these clipboard tools, in order of priority:
 
   - |g:clipboard|
   - pbcopy/pbpaste (macOS)
-  - xclip
-  - xsel (newer alternative to xclip)
+  - xsel (if $DISPLAY is set)
+  - xclip (if $DISPLAY is set)
   - lemonade (for SSH) https://github.com/pocke/lemonade
   - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
   - win32yank (Windows)
