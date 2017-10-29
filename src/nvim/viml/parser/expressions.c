@@ -993,107 +993,6 @@ void viml_pexpr_free_ast(ExprAST ast)
 //  >  >#  >?  <= <=# <=?
 //  <  <#  <?  >= >=# >=?
 // is is# is?  isnot isnot# isnot?
-//
-// Used highlighting groups and assumed linkage:
-//
-// NVimInternalError -> highlight as fg:red/bg:red
-//
-// NVimInvalid -> Error
-// NVimInvalidValue -> NVimInvalid
-// NVimInvalidOperator -> NVimInvalid
-// NVimInvalidDelimiter -> NVimInvalid
-//
-// NVimOperator -> Operator
-// NVimUnaryOperator -> NVimOperator
-// NVimBinaryOperator -> NVimOperator
-//
-// NVimComparisonOperator -> NVimBinaryOperator
-// NVimComparisonOperatorModifier -> NVimComparisonOperator
-//
-// NVimTernary -> NVimOperator
-// NVimTernaryColon -> NVimTernary
-//
-// NVimParenthesis -> Delimiter
-//
-// NVimColon -> Delimiter
-// NVimComma -> Delimiter
-// NVimArrow -> Delimiter
-//
-// NVimLambda -> Delimiter
-// NVimDict -> Delimiter
-// NVimCurly -> Delimiter
-//
-// NVimList -> Delimiter
-// NVimSubscript -> Delimiter
-// NVimSubscriptColon -> NVimSubscript
-//
-// NVimIdentifier -> Identifier
-// NVimIdentifierScope -> NVimIdentifier
-// NVimIdentifierScopeDelimiter -> NVimIdentifier
-//
-// NVimIdentifierKey -> Identifier
-//
-// NVimUnaryPlus -> NVimUnaryOperator
-// NVimBinaryPlus -> NVimBinaryOperator
-// NVimConcat -> NVimBinaryOperator
-// NVimConcatOrSubscript -> NVimConcat
-//
-// NVimRegister -> SpecialChar
-// NVimNumber -> Number
-// NVimNumberPrefix -> SpecialChar
-// NVimFloat -> NVimNumber
-//
-// NVimNestingParenthesis -> NVimParenthesis
-// NVimCallingParenthesis -> NVimParenthesis
-//
-// NVimString -> String
-// NVimStringSpecial -> SpecialChar
-// NVimSingleQuote -> NVimString
-// NVimSingleQuotedBody -> NVimString
-// NVimSingleQuotedQuote -> NVimStringSpecial
-// NVimDoubleQuote -> NVimString
-// NVimDoubleQuotedBody -> NVimString
-// NVimDoubleQuotedEscape -> NVimStringSpecial
-// NVimDoubleQuotedUnknownEscape -> NVimInvalid
-//
-// " Note: NVimDoubleQuotedUnknownEscape is not actually invalid
-//
-// NVimInvalidComma -> NVimInvalidDelimiter
-// NVimInvalidSpacing -> NVimInvalid
-// NVimInvalidTernary -> NVimInvalidOperator
-// NVimInvalidTernaryColon -> NVimInvalidTernary
-// NVimInvalidRegister -> NVimInvalidValue
-// NVimInvalidClosingBracket -> NVimInvalidDelimiter
-// NVimInvalidSpacing -> NVimInvalid
-// NVimInvalidArrow -> NVimInvalidDelimiter
-// NVimInvalidLambda -> NVimInvalidDelimiter
-// NVimInvalidDict -> NVimInvalidDelimiter
-// NVimInvalidCurly -> NVimInvalidDelimiter
-// NVimInvalidFigureBrace -> NVimInvalidDelimiter
-// NVimInvalidIdentifier -> NVimInvalidValue
-// NVimInvalidIdentifierScope -> NVimInvalidValue
-// NVimInvalidIdentifierScopeDelimiter -> NVimInvalidValue
-// NVimInvalidComparisonOperator -> NVimInvalidOperator
-// NVimInvalidComparisonOperatorModifier -> NVimInvalidComparisonOperator
-// NVimInvalidNumber -> NVimInvalidValue
-// NVimInvalidFloat -> NVimInvalidValue
-// NVimInvalidIdentifierKey -> NVimInvalidIdentifier
-// NVimInvalidList -> NVimInvalidDelimiter
-// NVimInvalidSubscript -> NVimInvalidDelimiter
-// NVimInvalidSubscriptColon -> NVimInvalidSubscript
-// NVimInvalidString -> NVimInvalidValue
-// NVimInvalidStringSpecial -> NVimInvalidString
-// NVimInvalidSingleQuote -> NVimInvalidString
-// NVimInvalidSingleQuotedBody -> NVimInvalidString
-// NVimInvalidSingleQuotedQuote -> NVimInvalidStringSpecial
-// NVimInvalidDoubleQuote -> NVimInvalidString
-// NVimInvalidDoubleQuotedBody -> NVimInvalidString
-// NVimInvalidDoubleQuotedEscape -> NVimInvalidStringSpecial
-// NVimInvalidDoubleQuotedUnknownEscape -> NVimInvalidDoubleQuotedEscape
-//
-// NVimFigureBrace -> NVimInternalError
-// NVimInvalidSingleQuotedUnknownEscape -> NVimInternalError
-// NVimSingleQuotedUnknownEscape -> NVimInternalError
 
 /// Allocate a new node and set some of the values
 ///
@@ -2183,12 +2082,12 @@ viml_pexpr_parse_process_token:
         ADD_OP_NODE(cur_node);
         if (cur_token.data.cmp.ccs != kCCStrategyUseOption) {
           viml_parser_highlight(pstate, cur_token.start, cur_token.len - 1,
-                                HL(ComparisonOperator));
+                                HL(Comparison));
           viml_parser_highlight(
               pstate, shifted_pos(cur_token.start, cur_token.len - 1), 1,
-              HL(ComparisonOperatorModifier));
+              HL(ComparisonModifier));
         } else {
-          HL_CUR_TOKEN(ComparisonOperator);
+          HL_CUR_TOKEN(Comparison);
         }
         want_node = kENodeValue;
         break;
@@ -2390,7 +2289,7 @@ viml_pexpr_parse_valid_colon:
               break;
             }
             case kExprNodeSubscript: {
-              HL_CUR_TOKEN(Subscript);
+              HL_CUR_TOKEN(SubscriptBracket);
               break;
             }
             default: {
@@ -2418,7 +2317,7 @@ viml_pexpr_parse_bracket_closing_error:
             }
             NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeSubscript);
             ADD_OP_NODE(cur_node);
-            HL_CUR_TOKEN(Subscript);
+            HL_CUR_TOKEN(SubscriptBracket);
           }
         }
         break;
@@ -2626,7 +2525,7 @@ viml_pexpr_parse_figure_brace_closing_error:
                                 cur_token.len - scope_shift,
                                 (node_is_key
                                  ? HL(IdentifierKey)
-                                 : HL(Identifier)));
+                                 : HL(IdentifierName)));
         } else {
           if (scope == kExprVarScopeMissing) {
             ADD_IDENT(
@@ -2637,7 +2536,7 @@ viml_pexpr_parse_figure_brace_closing_error:
                   cur_node->data.var.ident_len = cur_token.len;
                   want_node = kENodeOperator;
                 } while (0),
-                Identifier);
+                IdentifierName);
           } else {
             OP_MISSING;
           }

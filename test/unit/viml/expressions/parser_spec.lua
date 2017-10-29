@@ -1183,7 +1183,7 @@ describe('Expressions parser', function()
           'PlainIdentifier(scope=0,ident=var):0:0:var',
         },
     }, {
-      hl('Identifier', 'var'),
+      hl('IdentifierName', 'var'),
     })
     check_parsing('g:var', 0, {
         ast = {
@@ -1192,7 +1192,7 @@ describe('Expressions parser', function()
     }, {
       hl('IdentifierScope', 'g'),
       hl('IdentifierScopeDelimiter', ':'),
-      hl('Identifier', 'var'),
+      hl('IdentifierName', 'var'),
     })
     check_parsing('g:', 0, {
         ast = {
@@ -1214,7 +1214,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Curly', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Curly', '}'),
     })
     check_parsing('{a:b}', 0, {
@@ -1231,7 +1231,7 @@ describe('Expressions parser', function()
       hl('Curly', '{'),
       hl('IdentifierScope', 'a'),
       hl('IdentifierScopeDelimiter', ':'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Curly', '}'),
     })
     check_parsing('{a:@b}', 0, {
@@ -1347,7 +1347,7 @@ describe('Expressions parser', function()
       hl('Curly', '{'),
       hl('Register', '@a'),
       hl('Curly', '}'),
-      hl('Identifier', '_test'),
+      hl('IdentifierName', '_test'),
     })
     check_parsing('g:{@a}_test', 0, {
       --           01234567890
@@ -1377,7 +1377,7 @@ describe('Expressions parser', function()
       hl('Curly', '{'),
       hl('Register', '@a'),
       hl('Curly', '}'),
-      hl('Identifier', '_test'),
+      hl('IdentifierName', '_test'),
     })
     check_parsing('g:{@a}_test()', 0, {
       --           0123456789012
@@ -1412,7 +1412,7 @@ describe('Expressions parser', function()
       hl('Curly', '{'),
       hl('Register', '@a'),
       hl('Curly', '}'),
-      hl('Identifier', '_test'),
+      hl('IdentifierName', '_test'),
       hl('CallingParenthesis', '('),
       hl('CallingParenthesis', ')'),
     })
@@ -1563,7 +1563,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Arrow', '->'),
       hl('Register', '@a'),
       hl('Lambda', '}'),
@@ -1592,9 +1592,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Arrow', '->'),
       hl('Register', '@a'),
       hl('Lambda', '}'),
@@ -1629,11 +1629,11 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Comma', ','),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
       hl('Arrow', '->'),
       hl('Register', '@a'),
       hl('Lambda', '}'),
@@ -1674,13 +1674,13 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Comma', ','),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
       hl('Comma', ','),
-      hl('Identifier', 'd'),
+      hl('IdentifierName', 'd'),
       hl('Arrow', '->'),
       hl('Register', '@a'),
       hl('Lambda', '}'),
@@ -1726,13 +1726,13 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Comma', ','),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
       hl('Comma', ','),
-      hl('Identifier', 'd'),
+      hl('IdentifierName', 'd'),
       hl('Comma', ','),
       hl('Arrow', '->'),
       hl('Register', '@a'),
@@ -1797,19 +1797,19 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Arrow', '->'),
       hl('Lambda', '{'),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
       hl('Comma', ','),
-      hl('Identifier', 'd'),
+      hl('IdentifierName', 'd'),
       hl('Arrow', '->'),
       hl('Lambda', '{'),
-      hl('Identifier', 'e'),
+      hl('IdentifierName', 'e'),
       hl('Comma', ','),
-      hl('Identifier', 'f'),
+      hl('IdentifierName', 'f'),
       hl('Arrow', '->'),
       hl('Register', '@a'),
       hl('Lambda', '}'),
@@ -1850,13 +1850,13 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Arrow', '->'),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
       hl('InvalidComma', ','),
-      hl('Identifier', 'd'),
+      hl('IdentifierName', 'd'),
       hl('Lambda', '}'),
     })
     check_parsing('a,b,c,d', 0, {
@@ -1887,13 +1887,13 @@ describe('Expressions parser', function()
         msg = 'E15: Comma outside of call, lambda or literal: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('InvalidComma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('InvalidComma', ','),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
       hl('InvalidComma', ','),
-      hl('Identifier', 'd'),
+      hl('IdentifierName', 'd'),
     })
     check_parsing('a,b,c,d,', 0, {
       --           0123456789
@@ -1928,13 +1928,13 @@ describe('Expressions parser', function()
         msg = 'E15: Comma outside of call, lambda or literal: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('InvalidComma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('InvalidComma', ','),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
       hl('InvalidComma', ','),
-      hl('Identifier', 'd'),
+      hl('IdentifierName', 'd'),
       hl('InvalidComma', ','),
     })
     check_parsing(',', 0, {
@@ -1983,7 +1983,7 @@ describe('Expressions parser', function()
     }, {
       hl('Curly', '{'),
       hl('InvalidComma', ','),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('InvalidArrow', '->'),
       hl('Register', '@a'),
       hl('Curly', '}'),
@@ -2041,9 +2041,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('InvalidLambda', '}'),
     })
     check_parsing('{a,}', 0, {
@@ -2067,7 +2067,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
       hl('InvalidLambda', '}'),
     })
@@ -2343,9 +2343,9 @@ describe('Expressions parser', function()
       hl('Curly', '{'),
       hl('NestingParenthesis', '('),
       hl('Lambda', '{'),
-      hl('Identifier', 'f'),
+      hl('IdentifierName', 'f'),
       hl('Arrow', '->', 1),
-      hl('Identifier', 'g', 1),
+      hl('IdentifierName', 'g', 1),
       hl('Lambda', '}'),
       hl('NestingParenthesis', ')'),
       hl('CallingParenthesis', '('),
@@ -2387,11 +2387,11 @@ describe('Expressions parser', function()
       hl('IdentifierScope', 'a'),
       hl('IdentifierScopeDelimiter', ':'),
       hl('Curly', '{'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('CallingParenthesis', '('),
       hl('CallingParenthesis', ')'),
       hl('Curly', '}'),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
     })
     check_parsing('a:{{b, c -> @d + @e + ({f -> g})(@h)}(@i)}j', 0, {
       --           01234567890123456789012345678901234567890123456
@@ -2478,9 +2478,9 @@ describe('Expressions parser', function()
       hl('IdentifierScopeDelimiter', ':'),
       hl('Curly', '{'),
       hl('Lambda', '{'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Comma', ','),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('Arrow', '->', 1),
       hl('Register', '@d', 1),
       hl('BinaryPlus', '+', 1),
@@ -2488,9 +2488,9 @@ describe('Expressions parser', function()
       hl('BinaryPlus', '+', 1),
       hl('NestingParenthesis', '(', 1),
       hl('Lambda', '{'),
-      hl('Identifier', 'f'),
+      hl('IdentifierName', 'f'),
       hl('Arrow', '->', 1),
-      hl('Identifier', 'g', 1),
+      hl('IdentifierName', 'g', 1),
       hl('Lambda', '}'),
       hl('NestingParenthesis', ')'),
       hl('CallingParenthesis', '('),
@@ -2501,7 +2501,7 @@ describe('Expressions parser', function()
       hl('Register', '@i'),
       hl('CallingParenthesis', ')'),
       hl('Curly', '}'),
-      hl('Identifier', 'j'),
+      hl('IdentifierName', 'j'),
     })
     check_parsing('{@a + @b : @c + @d, @e + @f : @g + @i}', 0, {
       --           01234567890123456789012345678901234567
@@ -2635,13 +2635,13 @@ describe('Expressions parser', function()
         msg = 'E15: Arrow outside of lambda: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('InvalidArrow', '->', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('InvalidArrow', '->', 1),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('InvalidArrow', '->', 1),
-      hl('Identifier', 'd', 1),
+      hl('IdentifierName', 'd', 1),
     })
     check_parsing('{a -> b -> c}', 0, {
       --           0123456789012
@@ -2672,11 +2672,11 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Arrow', '->', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('InvalidArrow', '->', 1),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('Lambda', '}'),
     })
     check_parsing('{a: -> b}', 0, {
@@ -2704,7 +2704,7 @@ describe('Expressions parser', function()
       hl('IdentifierScope', 'a'),
       hl('IdentifierScopeDelimiter', ':'),
       hl('InvalidArrow', '->', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('Curly', '}'),
     })
 
@@ -2732,9 +2732,9 @@ describe('Expressions parser', function()
       hl('Curly', '{'),
       hl('IdentifierScope', 'a'),
       hl('IdentifierScopeDelimiter', ':'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('InvalidArrow', '->', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('Curly', '}'),
     })
 
@@ -2760,9 +2760,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Curly', '{'),
-      hl('Identifier', 'a#b'),
+      hl('IdentifierName', 'a#b'),
       hl('InvalidArrow', '->', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('Curly', '}'),
     })
     check_parsing('{a : b : c}', 0, {
@@ -2794,11 +2794,11 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Dict', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Colon', ':', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('InvalidColon', ':', 1),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('Dict', '}'),
     })
     check_parsing('{', 0, {
@@ -2829,7 +2829,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('FigureBrace', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
     })
     check_parsing('{a,b', 0, {
       --           0123
@@ -2853,9 +2853,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
     })
     check_parsing('{a,b->', 0, {
       --           012345
@@ -2880,9 +2880,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Arrow', '->'),
     })
     check_parsing('{a,b->c', 0, {
@@ -2913,11 +2913,11 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Lambda', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Arrow', '->'),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
     })
     check_parsing('{a : b', 0, {
       --           012345
@@ -2941,9 +2941,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Dict', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Colon', ':', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
     })
     check_parsing('{a : b,', 0, {
       --           0123456
@@ -2972,9 +2972,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Dict', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Colon', ':', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('Comma', ','),
     })
   end)
@@ -2997,11 +2997,11 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Ternary', '?', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('TernaryColon', ':', 1),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
     })
     check_parsing('@a?@b?@c:@d:@e', 0, {
       --           01234567890123
@@ -3271,9 +3271,9 @@ describe('Expressions parser', function()
         msg = 'E109: Missing \':\' after \'?\': %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Ternary', '?'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
     })
     check_parsing('a?b:', 0, {
       --           0123
@@ -3296,7 +3296,7 @@ describe('Expressions parser', function()
         msg = 'E109: Missing \':\' after \'?\': %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Ternary', '?'),
       hl('IdentifierScope', 'b'),
       hl('IdentifierScopeDelimiter', ':'),
@@ -3320,12 +3320,12 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Ternary', '?'),
       hl('IdentifierScope', 'b'),
       hl('IdentifierScopeDelimiter', ':'),
       hl('TernaryColon', ':'),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
     })
 
     check_parsing('a?b :', 0, {
@@ -3349,9 +3349,9 @@ describe('Expressions parser', function()
         msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Ternary', '?'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('TernaryColon', ':', 1),
     })
 
@@ -3615,15 +3615,15 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Ternary', '?'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Curly', '{'),
-      hl('Identifier', 'cdef'),
+      hl('IdentifierName', 'cdef'),
       hl('Curly', '}'),
-      hl('Identifier', 'g'),
+      hl('IdentifierName', 'g'),
       hl('TernaryColon', ':'),
-      hl('Identifier', 'h'),
+      hl('IdentifierName', 'h'),
     })
     check_parsing('a ? b : c : d', 0, {
       --           0123456789012
@@ -3654,13 +3654,13 @@ describe('Expressions parser', function()
         msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Ternary', '?', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('TernaryColon', ':', 1),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('InvalidColon', ':', 1),
-      hl('Identifier', 'd', 1),
+      hl('IdentifierName', 'd', 1),
     })
   end)
   itp('works with comparison operators', function()
@@ -3676,9 +3676,9 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '==', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '==', 1),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a ==? b', 0, {
@@ -3693,10 +3693,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '==', 1),
-      hl('ComparisonOperatorModifier', '?'),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '==', 1),
+      hl('ComparisonModifier', '?'),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a ==# b', 0, {
@@ -3711,10 +3711,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '==', 1),
-      hl('ComparisonOperatorModifier', '#'),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '==', 1),
+      hl('ComparisonModifier', '#'),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a !=# b', 0, {
@@ -3729,10 +3729,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '!=', 1),
-      hl('ComparisonOperatorModifier', '#'),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '!=', 1),
+      hl('ComparisonModifier', '#'),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a <=# b', 0, {
@@ -3747,10 +3747,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '<=', 1),
-      hl('ComparisonOperatorModifier', '#'),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '<=', 1),
+      hl('ComparisonModifier', '#'),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a >=# b', 0, {
@@ -3765,10 +3765,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '>=', 1),
-      hl('ComparisonOperatorModifier', '#'),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '>=', 1),
+      hl('ComparisonModifier', '#'),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a ># b', 0, {
@@ -3783,10 +3783,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '>', 1),
-      hl('ComparisonOperatorModifier', '#'),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '>', 1),
+      hl('ComparisonModifier', '#'),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a <# b', 0, {
@@ -3801,10 +3801,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '<', 1),
-      hl('ComparisonOperatorModifier', '#'),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '<', 1),
+      hl('ComparisonModifier', '#'),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a is#b', 0, {
@@ -3819,10 +3819,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', 'is', 1),
-      hl('ComparisonOperatorModifier', '#'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', 'is', 1),
+      hl('ComparisonModifier', '#'),
+      hl('IdentifierName', 'b'),
     })
 
     check_parsing('a is?b', 0, {
@@ -3837,10 +3837,10 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', 'is', 1),
-      hl('ComparisonOperatorModifier', '?'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', 'is', 1),
+      hl('ComparisonModifier', '?'),
+      hl('IdentifierName', 'b'),
     })
 
     check_parsing('a isnot b', 0, {
@@ -3855,9 +3855,9 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', 'isnot', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', 'isnot', 1),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a < b < c', 0, {
@@ -3882,12 +3882,43 @@ describe('Expressions parser', function()
         msg = 'E15: Operator is not associative: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('ComparisonOperator', '<', 1),
-      hl('Identifier', 'b', 1),
-      hl('InvalidComparisonOperator', '<', 1),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '<', 1),
+      hl('IdentifierName', 'b', 1),
+      hl('InvalidComparison', '<', 1),
+      hl('IdentifierName', 'c', 1),
     })
+
+    check_parsing('a < b <# c', 0, {
+      --           012345678
+      ast = {
+        {
+          'Comparison(type=GreaterOrEqual,inv=1,ccs=UseOption):0:1: <',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Comparison(type=GreaterOrEqual,inv=1,ccs=MatchCase):0:5: <#',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:3: b',
+                'PlainIdentifier(scope=0,ident=c):0:8: c',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ' <# c',
+        msg = 'E15: Operator is not associative: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('Comparison', '<', 1),
+      hl('IdentifierName', 'b', 1),
+      hl('InvalidComparison', '<', 1),
+      hl('InvalidComparisonModifier', '#'),
+      hl('IdentifierName', 'c', 1),
+    })
+
     check_parsing('a += b', 0, {
       --           012345
       ast = {
@@ -3910,10 +3941,10 @@ describe('Expressions parser', function()
         msg = 'E15: Expected == or =~: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('BinaryPlus', '+', 1),
-      hl('InvalidComparisonOperator', '='),
-      hl('Identifier', 'b', 1),
+      hl('InvalidComparison', '='),
+      hl('IdentifierName', 'b', 1),
     })
     check_parsing('a + b == c + d', 0, {
       --           01234567890123
@@ -3940,13 +3971,13 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('BinaryPlus', '+', 1),
-      hl('Identifier', 'b', 1),
-      hl('ComparisonOperator', '==', 1),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'b', 1),
+      hl('Comparison', '==', 1),
+      hl('IdentifierName', 'c', 1),
       hl('BinaryPlus', '+', 1),
-      hl('Identifier', 'd', 1),
+      hl('IdentifierName', 'd', 1),
     })
     check_parsing('+ a == + b', 0, {
       --           0123456789
@@ -3971,10 +4002,10 @@ describe('Expressions parser', function()
       },
     }, {
       hl('UnaryPlus', '+'),
-      hl('Identifier', 'a', 1),
-      hl('ComparisonOperator', '==', 1),
+      hl('IdentifierName', 'a', 1),
+      hl('Comparison', '==', 1),
       hl('UnaryPlus', '+', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
     })
   end)
   itp('works with concat/subscript', function()
@@ -4011,7 +4042,7 @@ describe('Expressions parser', function()
         msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('ConcatOrSubscript', '.'),
     })
 
@@ -4027,7 +4058,7 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('ConcatOrSubscript', '.'),
       hl('IdentifierKey', 'b'),
     })
@@ -4084,7 +4115,7 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Concat', '.', 1),
       hl('Number', '1', 1),
       hl('ConcatOrSubscript', '.'),
@@ -4116,7 +4147,7 @@ describe('Expressions parser', function()
       hl('BinaryPlus', '+', 1),
       hl('Float', '1.2', 1),
       hl('Concat', '.', 1),
-      hl('Identifier', 'a', 1),
+      hl('IdentifierName', 'a', 1),
     })
 
     check_parsing('1.3e-5 + a . 1.2', 0, {
@@ -4146,7 +4177,7 @@ describe('Expressions parser', function()
     }, {
       hl('Float', '1.3e-5'),
       hl('BinaryPlus', '+', 1),
-      hl('Identifier', 'a', 1),
+      hl('IdentifierName', 'a', 1),
       hl('Concat', '.', 1),
       hl('Number', '1', 1),
       hl('ConcatOrSubscript', '.'),
@@ -4196,7 +4227,7 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('ConcatOrSubscript', '.'),
       hl('IdentifierKey', '1'),
       hl('ConcatOrSubscript', '.'),
@@ -4221,7 +4252,7 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Concat', '.', 1),
       hl('Number', '1', 1),
       hl('ConcatOrSubscript', '.'),
@@ -4251,10 +4282,10 @@ describe('Expressions parser', function()
       },
     }, {
       hl('UnaryPlus', '+'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Concat', '.', 1),
       hl('UnaryPlus', '+', 1),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
     })
 
     check_parsing('a. b', 0, {
@@ -4269,9 +4300,9 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('ConcatOrSubscript', '.'),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
     })
 
     check_parsing('a. 1', 0, {
@@ -4286,7 +4317,7 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('ConcatOrSubscript', '.'),
       hl('Number', '1', 1),
     })
@@ -4324,9 +4355,9 @@ describe('Expressions parser', function()
         msg = 'E15: Expected value, got closing bracket: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('Subscript', '['),
-      hl('InvalidSubscript', ']'),
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('InvalidSubscriptBracket', ']'),
     })
     check_parsing('a[b:]', 0, {
       --           01234
@@ -4340,11 +4371,11 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('Subscript', '['),
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
       hl('IdentifierScope', 'b'),
       hl('IdentifierScopeDelimiter', ':'),
-      hl('Subscript', ']'),
+      hl('SubscriptBracket', ']'),
     })
 
     check_parsing('a[b:c]', 0, {
@@ -4359,12 +4390,12 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('Subscript', '['),
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
       hl('IdentifierScope', 'b'),
       hl('IdentifierScopeDelimiter', ':'),
-      hl('Identifier', 'c'),
-      hl('Subscript', ']'),
+      hl('IdentifierName', 'c'),
+      hl('SubscriptBracket', ']'),
     })
     check_parsing('a[b : c]', 0, {
       --           01234567
@@ -4384,12 +4415,12 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('Subscript', '['),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'b'),
       hl('SubscriptColon', ':', 1),
-      hl('Identifier', 'c', 1),
-      hl('Subscript', ']'),
+      hl('IdentifierName', 'c', 1),
+      hl('SubscriptBracket', ']'),
     })
 
     check_parsing('a[: b]', 0, {
@@ -4410,11 +4441,11 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('Subscript', '['),
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
       hl('SubscriptColon', ':'),
-      hl('Identifier', 'b', 1),
-      hl('Subscript', ']'),
+      hl('IdentifierName', 'b', 1),
+      hl('SubscriptBracket', ']'),
     })
 
     check_parsing('a[b :]', 0, {
@@ -4434,11 +4465,11 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('Subscript', '['),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'b'),
       hl('SubscriptColon', ':', 1),
-      hl('Subscript', ']'),
+      hl('SubscriptBracket', ']'),
     })
     check_parsing('a[b][c][d](e)(f)(g)', 0, {
       --           0123456789012345678
@@ -4483,24 +4514,24 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
-      hl('Subscript', '['),
-      hl('Identifier', 'b'),
-      hl('Subscript', ']'),
-      hl('Subscript', '['),
-      hl('Identifier', 'c'),
-      hl('Subscript', ']'),
-      hl('Subscript', '['),
-      hl('Identifier', 'd'),
-      hl('Subscript', ']'),
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'b'),
+      hl('SubscriptBracket', ']'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'c'),
+      hl('SubscriptBracket', ']'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'd'),
+      hl('SubscriptBracket', ']'),
       hl('CallingParenthesis', '('),
-      hl('Identifier', 'e'),
+      hl('IdentifierName', 'e'),
       hl('CallingParenthesis', ')'),
       hl('CallingParenthesis', '('),
-      hl('Identifier', 'f'),
+      hl('IdentifierName', 'f'),
       hl('CallingParenthesis', ')'),
       hl('CallingParenthesis', '('),
-      hl('Identifier', 'g'),
+      hl('IdentifierName', 'g'),
       hl('CallingParenthesis', ')'),
     })
     check_parsing('{a}{b}{c}[d][e][f]', 0, {
@@ -4556,23 +4587,23 @@ describe('Expressions parser', function()
       },
     }, {
       hl('Curly', '{'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Curly', '}'),
       hl('Curly', '{'),
-      hl('Identifier', 'b'),
+      hl('IdentifierName', 'b'),
       hl('Curly', '}'),
       hl('Curly', '{'),
-      hl('Identifier', 'c'),
+      hl('IdentifierName', 'c'),
       hl('Curly', '}'),
-      hl('Subscript', '['),
-      hl('Identifier', 'd'),
-      hl('Subscript', ']'),
-      hl('Subscript', '['),
-      hl('Identifier', 'e'),
-      hl('Subscript', ']'),
-      hl('Subscript', '['),
-      hl('Identifier', 'f'),
-      hl('Subscript', ']'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'd'),
+      hl('SubscriptBracket', ']'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'e'),
+      hl('SubscriptBracket', ']'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'f'),
+      hl('SubscriptBracket', ']'),
     })
   end)
   itp('supports list literals', function()
@@ -4598,7 +4629,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('List', '['),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('List', ']'),
     })
 
@@ -4620,9 +4651,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('List', '['),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('List', ']'),
     })
 
@@ -4650,11 +4681,11 @@ describe('Expressions parser', function()
       },
     }, {
       hl('List', '['),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('Comma', ','),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('List', ']'),
     })
 
@@ -4688,11 +4719,11 @@ describe('Expressions parser', function()
       },
     }, {
       hl('List', '['),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Comma', ','),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('Comma', ','),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('Comma', ','),
       hl('List', ']', 1),
     })
@@ -4732,13 +4763,13 @@ describe('Expressions parser', function()
       },
     }, {
       hl('List', '['),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('InvalidColon', ':', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('Comma', ','),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('InvalidColon', ':', 1),
-      hl('Identifier', 'd', 1),
+      hl('IdentifierName', 'd', 1),
       hl('List', ']'),
     })
 
@@ -4770,7 +4801,7 @@ describe('Expressions parser', function()
         msg = 'E15: Unexpected closing figure brace: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('InvalidList', ']'),
     })
 
@@ -4814,8 +4845,8 @@ describe('Expressions parser', function()
     }, {
       hl('List', '['),
       hl('List', ']'),
-      hl('Subscript', '['),
-      hl('InvalidSubscript', ']'),
+      hl('SubscriptBracket', '['),
+      hl('InvalidSubscriptBracket', ']'),
     })
 
     check_parsing('[', 0, {
@@ -6119,13 +6150,13 @@ describe('Expressions parser', function()
         },
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('And', '&&', 1),
-      hl('Identifier', 'b', 1),
+      hl('IdentifierName', 'b', 1),
       hl('Or', '||', 1),
-      hl('Identifier', 'c', 1),
+      hl('IdentifierName', 'c', 1),
       hl('And', '&&', 1),
-      hl('Identifier', 'd', 1),
+      hl('IdentifierName', 'd', 1),
     })
 
     check_parsing('&& a', 0, {
@@ -6145,7 +6176,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('InvalidAnd', '&&'),
-      hl('Identifier', 'a', 1),
+      hl('IdentifierName', 'a', 1),
     })
 
     check_parsing('|| a', 0, {
@@ -6165,7 +6196,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('InvalidOr', '||'),
-      hl('Identifier', 'a', 1),
+      hl('IdentifierName', 'a', 1),
     })
 
     check_parsing('a||', 0, {
@@ -6183,7 +6214,7 @@ describe('Expressions parser', function()
         msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Or', '||'),
     })
 
@@ -6202,7 +6233,7 @@ describe('Expressions parser', function()
         msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('And', '&&'),
     })
 
@@ -6280,7 +6311,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('NestingParenthesis', '('),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('Or', '||'),
       hl('InvalidNestingParenthesis', ')'),
     })
@@ -6307,7 +6338,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('NestingParenthesis', '('),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('And', '&&'),
       hl('InvalidNestingParenthesis', ')'),
     })
@@ -6335,7 +6366,7 @@ describe('Expressions parser', function()
     }, {
       hl('NestingParenthesis', '('),
       hl('InvalidAnd', '&&'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('NestingParenthesis', ')'),
     })
 
@@ -6362,7 +6393,7 @@ describe('Expressions parser', function()
     }, {
       hl('NestingParenthesis', '('),
       hl('InvalidOr', '||'),
-      hl('Identifier', 'a'),
+      hl('IdentifierName', 'a'),
       hl('NestingParenthesis', ')'),
     })
   end)
@@ -6433,7 +6464,7 @@ describe('Expressions parser', function()
       hl('OptionSigil', '&'),
       hl('Option', 's'),
       hl('InvalidColon', ':'),
-      hl('Identifier', 'opt'),
+      hl('IdentifierName', 'opt'),
     })
 
     check_parsing('& ', 0, {
@@ -6496,7 +6527,7 @@ describe('Expressions parser', function()
     }, {
       hl('OptionSigil', '&'),
       hl('Option', 'xxx'),
-      hl('InvalidIdentifier', '_yyy'),
+      hl('InvalidIdentifierName', '_yyy'),
     })
 
     check_parsing('(1+&)', 0, {
@@ -6588,7 +6619,7 @@ describe('Expressions parser', function()
       hl('EnvironmentSigil', '$'),
       hl('Environment', 'g'),
       hl('InvalidColon', ':'),
-      hl('Identifier', 'A'),
+      hl('IdentifierName', 'A'),
     })
 
     check_parsing('$A', 0, {
@@ -7092,7 +7123,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('InvalidOr', '|'),
-      hl('InvalidIdentifier', '\029'),
+      hl('InvalidIdentifierName', '\029'),
     })
     check_parsing('"\\<', 0, {
       --           012
@@ -7137,7 +7168,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('InvalidFigureBrace', '}'),
-      hl('InvalidIdentifier', 'l'),
+      hl('InvalidIdentifierName', 'l'),
     })
     check_parsing(':?\000\000\000\000\000\000\000', 0, {
       ast = {
@@ -7164,4 +7195,5 @@ describe('Expressions parser', function()
       hl('InvalidTernary', '?'),
     })
   end)
+  -- FIXME: check flag effects
 end)
