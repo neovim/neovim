@@ -2,6 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear = helpers.feed, helpers.clear
 local wait = helpers.wait
+local iswin = helpers.iswin
 
 describe('terminal window', function()
   local screen
@@ -34,6 +35,10 @@ describe('terminal window', function()
         {7:6 }                                                |
         {3:-- TERMINAL --}                                    |
       ]])
+
+      if iswin() then
+        return  -- win: :terminal resize is unreliable #7007
+      end
 
       -- numberwidth=9
       feed([[<C-\><C-N>]])
