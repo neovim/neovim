@@ -1039,9 +1039,14 @@ static void profile_reset(void)
         uf->uf_tm_total     = profile_zero();
         uf->uf_tm_self      = profile_zero();
         uf->uf_tm_children  = profile_zero();
+
+        xfree(uf->uf_tml_count);
+        xfree(uf->uf_tml_total);
+        xfree(uf->uf_tml_self);
         uf->uf_tml_count    = NULL;
         uf->uf_tml_total    = NULL;
         uf->uf_tml_self     = NULL;
+
         uf->uf_tml_start    = profile_zero();
         uf->uf_tml_children = profile_zero();
         uf->uf_tml_wait     = profile_zero();
@@ -3070,6 +3075,8 @@ char_u *get_scriptname(scid_T id)
 # if defined(EXITFREE)
 void free_scriptnames(void)
 {
+  profile_reset();
+
 # define FREE_SCRIPTNAME(item) xfree((item)->sn_name)
   GA_DEEP_CLEAR(&script_items, scriptitem_T, FREE_SCRIPTNAME);
 }
