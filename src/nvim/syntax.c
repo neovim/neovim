@@ -6029,6 +6029,8 @@ static const char *highlight_init_cmdline[] = {
 
   "default link NVimUnaryOperator NVimOperator",
   "default link NVimUnaryPlus NVimUnaryOperator",
+  "default link NVimUnaryMinus NVimUnaryOperator",
+  "default link NVimNot NVimUnaryOperator",
 
   "default link NVimBinaryOperator NVimOperator",
   "default link NVimComparison NVimBinaryOperator",
@@ -6036,6 +6038,11 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimBinaryPlus NVimBinaryOperator",
   "default link NVimConcat NVimBinaryOperator",
   "default link NVimConcatOrSubscript NVimConcat",
+  "default link NVimOr NVimBinaryOperator",
+  "default link NVimAnd NVimBinaryOperator",
+  "default link NVimMultiplication NVimBinaryOperator",
+  "default link NVimDivision NVimBinaryOperator",
+  "default link NVimMod NVimBinaryOperator",
 
   "default link NVimTernary NVimOperator",
   "default link NVimTernaryColon NVimTernary",
@@ -6068,7 +6075,15 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimRegister SpecialChar",
   "default link NVimNumber Number",
   "default link NVimFloat NVimNumber",
-  "default link NVimNumberPrefix SpecialChar",
+  "default link NVimNumberPrefix Type",
+
+  "default link NVimOptionSigil Type",
+  "default link NVimOptionName NVimIdentifier",
+  "default link NVimOptionScope NVimIdentifierScope",
+  "default link NVimOptionScopeDelimiter NVimIdentifierScopeDelimiter",
+
+  "default link NVimEnvironmentSigil NVimOptionSigil",
+  "default link NVimEnvironmentName NVimIdentifier",
 
   "default link NVimString String",
   "default link NVimStringBody NVimString",
@@ -6089,6 +6104,8 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimFigureBrace NVimInternalError",
   "default link NVimSingleQuotedUnknownEscape NVimInternalError",
 
+  "default link NVimSpacing Normal",
+
   // NVimInvalid groups:
 
   "default link NVimInvalidSingleQuotedUnknownEscape NVimInternalError",
@@ -6099,6 +6116,8 @@ static const char *highlight_init_cmdline[] = {
 
   "default link NVimInvalidUnaryOperator NVimInvalidOperator",
   "default link NVimInvalidUnaryPlus NVimInvalidUnaryOperator",
+  "default link NVimInvalidUnaryMinus NVimInvalidUnaryOperator",
+  "default link NVimInvalidNot NVimInvalidUnaryOperator",
 
   "default link NVimInvalidBinaryOperator NVimInvalidOperator",
   "default link NVimInvalidComparison NVimInvalidBinaryOperator",
@@ -6106,6 +6125,11 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimInvalidBinaryPlus NVimInvalidBinaryOperator",
   "default link NVimInvalidConcat NVimInvalidBinaryOperator",
   "default link NVimInvalidConcatOrSubscript NVimInvalidConcat",
+  "default link NVimInvalidOr NVimInvalidBinaryOperator",
+  "default link NVimInvalidAnd NVimInvalidBinaryOperator",
+  "default link NVimInvalidMultiplication NVimInvalidBinaryOperator",
+  "default link NVimInvalidDivision NVimInvalidBinaryOperator",
+  "default link NVimInvalidMod NVimInvalidBinaryOperator",
 
   "default link NVimInvalidTernary NVimInvalidOperator",
   "default link NVimInvalidTernaryColon NVimInvalidTernary",
@@ -6144,6 +6168,15 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimInvalidFloat NVimInvalidNumber",
   "default link NVimInvalidNumberPrefix NVimInvalidNumber",
 
+  "default link NVimInvalidOptionSigil NVimInvalidIdentifier",
+  "default link NVimInvalidOptionName NVimInvalidIdentifier",
+  "default link NVimInvalidOptionScope NVimInvalidIdentifierScope",
+  "default link NVimInvalidOptionScopeDelimiter "
+      "NVimInvalidIdentifierScopeDelimiter",
+
+  "default link NVimInvalidEnvironmentSigil NVimInvalidOptionSigil",
+  "default link NVimInvalidEnvironmentName NVimInvalidIdentifier",
+
   // Invalid string bodies and specials are still highlighted as valid ones to
   // minimize the red area.
   "default link NVimInvalidString NVimInvalidValue",
@@ -6160,7 +6193,9 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimInvalidDoubleQuotedEscape NVimInvalidStringSpecial",
   "default link NVimInvalidDoubleQuotedUnknownEscape NVimInvalidValue",
 
-  "default link NVimInvalidFigureBrace NVimInternalError",
+  "default link NVimInvalidFigureBrace NVimInvalidDelimiter",
+
+  "default link NVimInvalidSpacing ErrorMsg",
 };
 
 /// Create default links for NVim* highlight groups used for cmdline coloring

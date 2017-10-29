@@ -1472,7 +1472,7 @@ static void parse_quoted_string(ParserState *const pstate,
   kvec_withinit_t(StringShift, 16) shifts;
   kvi_init(shifts);
   if (!is_double) {
-    viml_parser_highlight(pstate, token.start, 1, HL(SingleQuotedString));
+    viml_parser_highlight(pstate, token.start, 1, HL(SingleQuote));
     while (p < e) {
       const char *const chunk_e = memchr(p, '\'', (size_t)(e - p));
       if (chunk_e == NULL) {
@@ -1509,7 +1509,7 @@ static void parse_quoted_string(ParserState *const pstate,
       }
     }
   } else {
-    viml_parser_highlight(pstate, token.start, 1, HL(DoubleQuotedString));
+    viml_parser_highlight(pstate, token.start, 1, HL(DoubleQuote));
     for (p = s + 1; p < e; p++) {
       if (*p == '\\' && p + 1 < e) {
         p++;
@@ -1741,10 +1741,10 @@ static void parse_quoted_string(ParserState *const pstate,
   if (token.data.str.closed) {
     if (is_double) {
       viml_parser_highlight(pstate, shifted_pos(token.start, token.len - 1),
-                            1, HL(DoubleQuotedString));
+                            1, HL(DoubleQuote));
     } else {
       viml_parser_highlight(pstate, shifted_pos(token.start, token.len - 1),
-                            1, HL(SingleQuotedString));
+                            1, HL(SingleQuote));
     }
   }
   kvi_destroy(shifts);
@@ -2035,7 +2035,7 @@ viml_pexpr_parse_process_token:
         }
         viml_parser_highlight(
             pstate, shifted_pos(cur_token.start, scope_shift + 1),
-            cur_token.len - (scope_shift + 1), HL(Option));
+            cur_token.len - (scope_shift + 1), HL(OptionName));
         break;
       }
       case kExprLexEnv: {
@@ -2053,7 +2053,7 @@ viml_pexpr_parse_process_token:
         want_node = kENodeOperator;
         viml_parser_highlight(pstate, cur_token.start, 1, HL(EnvironmentSigil));
         viml_parser_highlight(pstate, shifted_pos(cur_token.start, 1),
-                              cur_token.len - 1, HL(Environment));
+                              cur_token.len - 1, HL(EnvironmentName));
         break;
       }
       case kExprLexNot: {

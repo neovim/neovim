@@ -4888,9 +4888,9 @@ describe('Expressions parser', function()
         'SingleQuotedString(val="abc"):0:0:\'abc\'',
       },
     }, {
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
       hl('SingleQuotedBody', 'abc'),
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
     })
     check_parsing('"abc"', 0, {
       --           01234
@@ -4898,9 +4898,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="abc"):0:0:"abc"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedBody', 'abc'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('\'\'', 0, {
       --           01
@@ -4908,8 +4908,8 @@ describe('Expressions parser', function()
         'SingleQuotedString(val=NULL):0:0:\'\'',
       },
     }, {
-      hl('SingleQuotedString', '\''),
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
+      hl('SingleQuote', '\''),
     })
     check_parsing('""', 0, {
       --           01
@@ -4917,8 +4917,8 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val=NULL):0:0:""',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"', 0, {
       --           0
@@ -4930,7 +4930,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
     })
     check_parsing('\'', 0, {
       --           0
@@ -4942,7 +4942,7 @@ describe('Expressions parser', function()
         msg = 'E115: Missing single quote: %.*s',
       },
     }, {
-      hl('InvalidSingleQuotedString', '\''),
+      hl('InvalidSingleQuote', '\''),
     })
     check_parsing('"a', 0, {
       --           01
@@ -4954,7 +4954,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedBody', 'a'),
     })
     check_parsing('\'a', 0, {
@@ -4967,7 +4967,7 @@ describe('Expressions parser', function()
         msg = 'E115: Missing single quote: %.*s',
       },
     }, {
-      hl('InvalidSingleQuotedString', '\''),
+      hl('InvalidSingleQuote', '\''),
       hl('InvalidSingleQuotedBody', 'a'),
     })
     check_parsing('\'abc\'\'def\'', 0, {
@@ -4976,11 +4976,11 @@ describe('Expressions parser', function()
         'SingleQuotedString(val="abc\'def"):0:0:\'abc\'\'def\'',
       },
     }, {
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
       hl('SingleQuotedBody', 'abc'),
       hl('SingleQuotedQuote', '\'\''),
       hl('SingleQuotedBody', 'def'),
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
     })
     check_parsing('\'abc\'\'', 0, {
       --           012345
@@ -4992,7 +4992,7 @@ describe('Expressions parser', function()
         msg = 'E115: Missing single quote: %.*s',
       },
     }, {
-      hl('InvalidSingleQuotedString', '\''),
+      hl('InvalidSingleQuote', '\''),
       hl('InvalidSingleQuotedBody', 'abc'),
       hl('InvalidSingleQuotedQuote', '\'\''),
     })
@@ -5002,11 +5002,11 @@ describe('Expressions parser', function()
         'SingleQuotedString(val="\'\'\'"):0:0:\'\'\'\'\'\'\'\'',
       },
     }, {
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
       hl('SingleQuotedQuote', '\'\''),
       hl('SingleQuotedQuote', '\'\''),
       hl('SingleQuotedQuote', '\'\''),
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
     })
     check_parsing('\'\'\'a\'\'\'\'bc\'', 0, {
       --           01234567890
@@ -5015,13 +5015,13 @@ describe('Expressions parser', function()
         'SingleQuotedString(val="\'a\'\'bc"):0:0:\'\'\'a\'\'\'\'bc\'',
       },
     }, {
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
       hl('SingleQuotedQuote', '\'\''),
       hl('SingleQuotedBody', 'a'),
       hl('SingleQuotedQuote', '\'\''),
       hl('SingleQuotedQuote', '\'\''),
       hl('SingleQuotedBody', 'bc'),
-      hl('SingleQuotedString', '\''),
+      hl('SingleQuote', '\''),
     })
     check_parsing('"\\"\\"\\"\\""', 0, {
       --           0123456789
@@ -5029,12 +5029,12 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\"\\"\\"\\""):0:0:"\\"\\"\\"\\""',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\"'),
       hl('DoubleQuotedEscape', '\\"'),
       hl('DoubleQuotedEscape', '\\"'),
       hl('DoubleQuotedEscape', '\\"'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"abc\\"def\\"ghi\\"jkl\\"mno"', 0, {
       --           0123456789012345678901234
@@ -5043,7 +5043,7 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="abc\\"def\\"ghi\\"jkl\\"mno"):0:0:"abc\\"def\\"ghi\\"jkl\\"mno"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedBody', 'abc'),
       hl('DoubleQuotedEscape', '\\"'),
       hl('DoubleQuotedBody', 'def'),
@@ -5053,7 +5053,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedBody', 'jkl'),
       hl('DoubleQuotedEscape', '\\"'),
       hl('DoubleQuotedBody', 'mno'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"\\b\\e\\f\\r\\t\\\\"', 0, {
       --           0123456789012345
@@ -5062,14 +5062,14 @@ describe('Expressions parser', function()
         [[DoubleQuotedString(val="\8\27\12\13\9\\"):0:0:"\b\e\f\r\t\\"]],
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\b'),
       hl('DoubleQuotedEscape', '\\e'),
       hl('DoubleQuotedEscape', '\\f'),
       hl('DoubleQuotedEscape', '\\r'),
       hl('DoubleQuotedEscape', '\\t'),
       hl('DoubleQuotedEscape', '\\\\'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"\\n\n"', 0, {
       --           01234
@@ -5077,10 +5077,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\\n\\\n"):0:0:"\\n\n"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\n'),
       hl('DoubleQuotedBody', '\n'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"\\x00"', 0, {
       --           012345
@@ -5088,9 +5088,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0"):0:0:"\\x00"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\x00'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"\\xFF"', 0, {
       --           012345
@@ -5098,9 +5098,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\255"):0:0:"\\xFF"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\xFF'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"\\xF"', 0, {
       --           012345
@@ -5108,9 +5108,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\15"):0:0:"\\xF"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\xF'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"\\u00AB"', 0, {
       --           01234567
@@ -5118,9 +5118,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="«"):0:0:"\\u00AB"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\u00AB'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"\\U000000AB"', 0, {
       --           01234567
@@ -5128,9 +5128,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="«"):0:0:"\\U000000AB"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U000000AB'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('"\\x"', 0, {
       --           0123
@@ -5138,9 +5138,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="x"):0:0:"\\x"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\x'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\x', 0, {
@@ -5153,7 +5153,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\x'),
     })
 
@@ -5167,7 +5167,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedEscape', '\\xF'),
     })
 
@@ -5177,9 +5177,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="u"):0:0:"\\u"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\u'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\u', 0, {
@@ -5192,7 +5192,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\u'),
     })
 
@@ -5206,7 +5206,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
     })
 
@@ -5216,9 +5216,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="U"):0:0:"\\U"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\U'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\xFX"', 0, {
@@ -5227,10 +5227,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\15X"):0:0:"\\xFX"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\xF'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\XFX"', 0, {
@@ -5239,10 +5239,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\15X"):0:0:"\\XFX"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\XF'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\xX"', 0, {
@@ -5251,10 +5251,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="xX"):0:0:"\\xX"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\x'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\XX"', 0, {
@@ -5263,10 +5263,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="XX"):0:0:"\\XX"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\X'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\uX"', 0, {
@@ -5275,10 +5275,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="uX"):0:0:"\\uX"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\u'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\UX"', 0, {
@@ -5287,10 +5287,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="UX"):0:0:"\\UX"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\U'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\x0X"', 0, {
@@ -5299,10 +5299,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\x0X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\x0'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\X0X"', 0, {
@@ -5311,10 +5311,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\X0X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\X0'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\u0X"', 0, {
@@ -5323,10 +5323,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\u0X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\u0'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U0X"', 0, {
@@ -5335,10 +5335,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\U0X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U0'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\x00X"', 0, {
@@ -5347,10 +5347,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\x00X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\x00'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\X00X"', 0, {
@@ -5359,10 +5359,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\X00X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\X00'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\u00X"', 0, {
@@ -5371,10 +5371,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\u00X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\u00'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U00X"', 0, {
@@ -5383,10 +5383,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\U00X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U00'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\u000X"', 0, {
@@ -5395,10 +5395,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\u000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\u000'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U000X"', 0, {
@@ -5407,10 +5407,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\U000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U000'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\u0000X"', 0, {
@@ -5419,10 +5419,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\u0000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\u0000'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U0000X"', 0, {
@@ -5431,10 +5431,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\U0000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U0000'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U00000X"', 0, {
@@ -5443,10 +5443,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\U00000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U00000'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U000000X"', 0, {
@@ -5456,10 +5456,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\U000000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U000000'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U0000000X"', 0, {
@@ -5469,10 +5469,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\U0000000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U0000000'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U00000000X"', 0, {
@@ -5482,10 +5482,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0X"):0:0:"\\U00000000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U00000000'),
       hl('DoubleQuotedBody', 'X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\x000X"', 0, {
@@ -5494,10 +5494,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0000X"):0:0:"\\x000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\x00'),
       hl('DoubleQuotedBody', '0X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\X000X"', 0, {
@@ -5506,10 +5506,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0000X"):0:0:"\\X000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\X00'),
       hl('DoubleQuotedBody', '0X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\u00000X"', 0, {
@@ -5518,10 +5518,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0000X"):0:0:"\\u00000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\u0000'),
       hl('DoubleQuotedBody', '0X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\U000000000X"', 0, {
@@ -5531,10 +5531,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0000X"):0:0:"\\U000000000X"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\U00000000'),
       hl('DoubleQuotedBody', '0X'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\0"', 0, {
@@ -5543,9 +5543,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0"):0:0:"\\0"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\0'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\00"', 0, {
@@ -5554,9 +5554,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0"):0:0:"\\00"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\00'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\000"', 0, {
@@ -5565,9 +5565,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0"):0:0:"\\000"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\000'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\0000"', 0, {
@@ -5576,10 +5576,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0000"):0:0:"\\0000"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\000'),
       hl('DoubleQuotedBody', '0'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\8"', 0, {
@@ -5588,9 +5588,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="8"):0:0:"\\8"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\8'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\08"', 0, {
@@ -5599,10 +5599,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0008"):0:0:"\\08"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\0'),
       hl('DoubleQuotedBody', '8'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\008"', 0, {
@@ -5611,10 +5611,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0008"):0:0:"\\008"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\00'),
       hl('DoubleQuotedBody', '8'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\0008"', 0, {
@@ -5623,10 +5623,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\0008"):0:0:"\\0008"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\000'),
       hl('DoubleQuotedBody', '8'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\777"', 0, {
@@ -5635,9 +5635,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\255"):0:0:"\\777"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\777'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\050"', 0, {
@@ -5646,9 +5646,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\40"):0:0:"\\050"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\050'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\<C-u>"', 0, {
@@ -5657,9 +5657,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="\\21"):0:0:"\\<C-u>"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\<C-u>'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\<', 0, {
@@ -5672,7 +5672,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
     })
 
@@ -5682,9 +5682,9 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="<"):0:0:"\\<"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\<'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
 
     check_parsing('"\\<C-u"', 0, {
@@ -5693,10 +5693,10 @@ describe('Expressions parser', function()
         'DoubleQuotedString(val="<C-u"):0:0:"\\<C-u"',
       },
     }, {
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\<'),
       hl('DoubleQuotedBody', 'C-u'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
   end)
   itp('works with multiplication-like operators', function()
@@ -6418,7 +6418,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('OptionSigil', '&'),
-      hl('Option', 'opt'),
+      hl('OptionName', 'opt'),
     })
 
     check_parsing('&l:opt', 0, {
@@ -6430,7 +6430,7 @@ describe('Expressions parser', function()
       hl('OptionSigil', '&'),
       hl('OptionScope', 'l'),
       hl('OptionScopeDelimiter', ':'),
-      hl('Option', 'opt'),
+      hl('OptionName', 'opt'),
     })
 
     check_parsing('&g:opt', 0, {
@@ -6442,7 +6442,7 @@ describe('Expressions parser', function()
       hl('OptionSigil', '&'),
       hl('OptionScope', 'g'),
       hl('OptionScopeDelimiter', ':'),
-      hl('Option', 'opt'),
+      hl('OptionName', 'opt'),
     })
 
     check_parsing('&s:opt', 0, {
@@ -6462,7 +6462,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('OptionSigil', '&'),
-      hl('Option', 's'),
+      hl('OptionName', 's'),
       hl('InvalidColon', ':'),
       hl('IdentifierName', 'opt'),
     })
@@ -6506,7 +6506,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('OptionSigil', '&'),
-      hl('Option', 'A'),
+      hl('OptionName', 'A'),
     })
 
     check_parsing('&xxx_yyy', 0, {
@@ -6526,7 +6526,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('OptionSigil', '&'),
-      hl('Option', 'xxx'),
+      hl('OptionName', 'xxx'),
       hl('InvalidIdentifierName', '_yyy'),
     })
 
@@ -6617,7 +6617,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('EnvironmentSigil', '$'),
-      hl('Environment', 'g'),
+      hl('EnvironmentName', 'g'),
       hl('InvalidColon', ':'),
       hl('IdentifierName', 'A'),
     })
@@ -6629,7 +6629,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('EnvironmentSigil', '$'),
-      hl('Environment', 'A'),
+      hl('EnvironmentName', 'A'),
     })
 
     check_parsing('$ABC', 0, {
@@ -6639,7 +6639,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('EnvironmentSigil', '$'),
-      hl('Environment', 'ABC'),
+      hl('EnvironmentName', 'ABC'),
     })
 
     check_parsing('(1+$)', 0, {
@@ -6705,7 +6705,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('EnvironmentSigil', '$'),
-      hl('Environment', '_ABC'),
+      hl('EnvironmentName', '_ABC'),
     })
 
     check_parsing('$_', 0, {
@@ -6715,7 +6715,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('EnvironmentSigil', '$'),
-      hl('Environment', '_'),
+      hl('EnvironmentName', '_'),
     })
 
     check_parsing('$ABC_DEF', 0, {
@@ -6725,7 +6725,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('EnvironmentSigil', '$'),
-      hl('Environment', 'ABC_DEF'),
+      hl('EnvironmentName', 'ABC_DEF'),
     })
   end)
   itp('works with unary !', function()
@@ -7047,7 +7047,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
       hl('InvalidDoubleQuotedBody', '\\'),
     })
@@ -7061,7 +7061,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
     })
     check_parsing('|"\\U\\', 2, {
@@ -7081,7 +7081,7 @@ describe('Expressions parser', function()
       },
     }, {
       hl('InvalidOr', '|'),
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
       hl('InvalidDoubleQuotedBody', '\\'),
     })
@@ -7102,9 +7102,9 @@ describe('Expressions parser', function()
       },
     }, {
       hl('InvalidOr', '|'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
       hl('DoubleQuotedEscape', '\\e'),
-      hl('DoubleQuotedString', '"'),
+      hl('DoubleQuote', '"'),
     })
     check_parsing('|\029', 2, {
       --           01
@@ -7135,7 +7135,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
     })
     check_parsing('"\\1', 0, {
@@ -7148,7 +7148,7 @@ describe('Expressions parser', function()
         msg = 'E114: Missing double quote: %.*s',
       },
     }, {
-      hl('InvalidDoubleQuotedString', '"'),
+      hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedEscape', '\\1'),
     })
     check_parsing('}l', 0, {
