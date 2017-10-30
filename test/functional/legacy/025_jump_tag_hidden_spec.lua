@@ -6,7 +6,14 @@ local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('jump to a tag with hidden set', function()
-  setup(clear)
+  setup(function ()
+    clear()
+    helpers.rmdir('test25.dir')
+  end)
+
+  teardown(function ()
+    helpers.rmdir('test25.dir')
+  end)
 
   it('is working', function()
     insert([[
@@ -24,10 +31,8 @@ describe('jump to a tag with hidden set', function()
 
     -- Create a link from test25.dir to the current directory.
     if helpers.iswin() then
-      feed_command('!rd /q/s test25.dir')
       feed_command('!mklink /j test25.dir .')
     else
-      feed_command('!rm -f test25.dir')
       feed_command('!ln -s . test25.dir')
     end
 
@@ -44,11 +49,6 @@ describe('jump to a tag with hidden set', function()
     feed('G<C-]> x:yank a<cr>')
     feed_command("call delete('tags.test')")
     feed_command("call delete('Xxx')")
-    if helpers.iswin() then
-      feed_command('!rd /q test25.dir')
-    else
-      feed_command('!rm -f test25.dir')
-    end
 
     -- Put @a and remove empty line
     feed_command('%d')
