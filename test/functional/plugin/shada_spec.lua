@@ -2302,7 +2302,7 @@ describe('In plugin/shada.vim', function()
 
   describe('event FileWriteCmd', function()
     it('works', function()
-      nvim_command('%bwipeout!')
+      if helpers.pending_win32(pending) then return end
       nvim('set_var', 'shada#add_own_header', 0)
       curbuf('set_lines', 0, 1, true, {
         'Jump with timestamp ' .. epoch .. ':',
