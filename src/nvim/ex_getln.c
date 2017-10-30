@@ -2784,7 +2784,7 @@ void ui_ext_cmdline_block_append(int indent, const char *line)
 {
   char *buf = xmallocz(indent + strlen(line));
   memset(buf, ' ', indent);
-  memcpy(buf+indent, line, strlen(line));
+  memcpy(buf + indent, line, strlen(line));  // -V575
 
   Array item = ARRAY_DICT_INIT;
   ADD(item, DICTIONARY_OBJ((Dictionary)ARRAY_DICT_INIT));
