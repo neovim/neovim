@@ -2303,6 +2303,7 @@ describe('In plugin/shada.vim', function()
   describe('event FileWriteCmd', function()
     it('works', function()
       nvim('set_var', 'shada#add_own_header', 0)
+      nvim_command('bwipeout')
       curbuf('set_lines', 0, 1, true, {
         'Jump with timestamp ' .. epoch .. ':',
         '  % Key________  Description  Value',
@@ -2317,11 +2318,9 @@ describe('In plugin/shada.vim', function()
         '  + l            line number  2',
         '  + c            column       -200',
       })
-      local write_cmd = '1,3w'
-      if helpers.iswin() then write_cmd = write_cmd .. '!' end
-      nvim_command(write_cmd .. ' ' .. fname .. '.tst')
-      nvim_command(write_cmd .. ' ' .. fname)
-      nvim_command(write_cmd .. ' ' .. fname_tmp)
+      nvim_command('1,3w ' .. fname .. '.tst')
+      nvim_command('1,3w ' .. fname)
+      nvim_command('1,3w ' .. fname_tmp)
       eq('++opt not supported', exc_exec('1,3w! ++enc=latin1 ' .. fname))
       eq(table.concat({
         'Jump with timestamp ' .. epoch .. ':',
