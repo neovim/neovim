@@ -96,6 +96,9 @@ static int lastc_bytelen = 1;               /* >1 for multi-byte char */
 
 /* copy of spats[], for keeping the search patterns while executing autocmds */
 static struct spat saved_spats[2];
+// copy of spats[RE_SEARCH], for keeping the search patterns while incremental
+// searching
+static struct spat  saved_last_search_spat;
 static int saved_last_idx = 0;
 static int saved_no_hlsearch = 0;
 
@@ -304,6 +307,33 @@ void free_search_patterns(void)
 }
 
 #endif
+
+/// Save and restore the search pattern for incremental highlight search
+/// feature.
+///
+/// It's similar but different from save_search_patterns() and
+/// restore_search_patterns(), because the search pattern must be restored when
+/// cancelling incremental searching even if it's called inside user functions.
+    void
+save_last_search_pattern(void)
+{
+  saved_last_search_spat = spats[RE_SEARCH];
+  if (spats[RE_SEARCH].pat != NULL) {
+    saved_last_search_spat.pat = vim_strsave(spats[RE_SEARCH].pat);
+  }
+  saved_last_idx = last_idx;
+  saved_no_hlsearch = no_hlsearch;
+}
+
+    void
+restore_last_search_pattern(void)
+{
+  xfree(spats[RE_SEARCH].pat);
+  spats[RE_SEARCH] = saved_last_search_spat;
+  set_vv_searchforward();
+  last_idx = saved_last_idx;
+  SET_NO_HLSEARCH(saved_no_hlsearch);
+}
 
 /*
  * Return TRUE when case should be ignored for search pattern "pat".

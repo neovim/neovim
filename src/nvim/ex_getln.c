@@ -1019,12 +1019,17 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
   ui_flush();
 
   pos_T  t;
-  int search_flags = SEARCH_KEEP + SEARCH_NOOF + SEARCH_PEEK;
+  int search_flags = SEARCH_NOOF;
+  save_last_search_pattern();
+
   if (next_match) {
     t = s->match_end;
     search_flags += SEARCH_COL;
   } else {
     t = s->match_start;
+  }
+  if (!p_hls) {
+    search_flags += SEARCH_KEEP;
   }
   emsg_off++;
   s->i = searchit(curwin, curbuf, &t,
@@ -1066,6 +1071,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     s->old_topfill = curwin->w_topfill;
     s->old_botline = curwin->w_botline;
     update_screen(NOT_VALID);
+    restore_last_search_pattern();
     redrawcmdline();
   } else {
     vim_beep(BO_ERROR);
@@ -1773,20 +1779,26 @@ static int command_line_changed(CommandLineState *s)
     }
     s->incsearch_postponed = false;
     curwin->w_cursor = s->search_start;  // start at old position
+    save_last_search_pattern();
 
     // If there is no command line, don't do anything
     if (ccline.cmdlen == 0) {
       s->i = 0;
+      SET_NO_HLSEARCH(true);  // turn off previous highlight
     } else {
+      int search_flags = SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK;
       ui_busy_start();
       ui_flush();
       ++emsg_off;            // So it doesn't beep if bad expr
       // Set the time limit to half a second.
       tm = profile_setlimit(500L);
+      if (!p_hls) {
+        search_flags += SEARCH_KEEP;
+      }
       s->i = do_search(NULL, s->firstc, ccline.cmdbuff, s->count,
-          SEARCH_KEEP + SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK,
-          &tm);
-      --emsg_off;
+                       search_flags,
+                       &tm);
+      emsg_off--;
       // if interrupted while searching, behave like it failed
       if (got_int) {
         (void)vpeekc();               // remove <C-C> from input stream
@@ -1836,6 +1848,7 @@ static int command_line_changed(CommandLineState *s)
     save_cmdline(&s->save_ccline);
     update_screen(SOME_VALID);
     restore_cmdline(&s->save_ccline);
+    restore_last_search_pattern();
 
     // Leave it at the end to make CTRL-R CTRL-W work.
     if (s->i != 0) {

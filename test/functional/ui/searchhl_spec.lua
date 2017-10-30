@@ -99,7 +99,7 @@ describe('search highlighting', function()
     feed("gg/li")
     screen:expect([[
         the first {3:li}ne                        |
-        in a little file                      |
+        in a {2:li}ttle file                      |
                                               |
       {1:~                                       }|
       {1:~                                       }|
@@ -132,7 +132,7 @@ describe('search highlighting', function()
     feed("/fir")
     screen:expect([[
         the {3:fir}st line                        |
-        in a {2:lit}tle file                      |
+        in a little file                      |
                                               |
       {1:~                                       }|
       {1:~                                       }|
@@ -144,12 +144,24 @@ describe('search highlighting', function()
     feed("<esc>/ttle")
     screen:expect([[
         the first line                        |
-        in a {2:li}{3:ttle} file                      |
+        in a li{3:ttle} file                      |
                                               |
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|
       /ttle^                                   |
+    ]])
+
+    -- cancelling search resets to the old search term
+    feed('<esc>')
+    screen:expect([[
+        the first line                        |
+        in a {2:^lit}tle file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
     ]])
   end)
 
@@ -163,7 +175,7 @@ describe('search highlighting', function()
     feed("gg/mat/e")
     screen:expect([[
       not the {3:mat}ch you're looking for        |
-      the match is here                       |
+      the {2:mat}ch is here                       |
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|
@@ -174,7 +186,7 @@ describe('search highlighting', function()
     -- Search with count and /e offset fixed in Vim patch 7.4.532.
     feed("<esc>2/mat/e")
     screen:expect([[
-      not the match you're looking for        |
+      not the {2:mat}ch you're looking for        |
       the {3:mat}ch is here                       |
       {1:~                                       }|
       {1:~                                       }|
