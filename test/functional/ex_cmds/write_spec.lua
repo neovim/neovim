@@ -100,7 +100,7 @@ describe(':write', function()
     funcs.mkdir(fname_bak)
     meths.set_option('backupdir', '.')
     meths.set_option('backup', true)
-    eq(true, write_file(fname, 'content0'))
+    write_file(fname, 'content0')
     eq(0, exc_exec('edit ' .. fname))
     funcs.setline(1, 'TTY')
     eq('Vim(write):E510: Can\'t make backup file (add ! to override)',
@@ -116,7 +116,7 @@ describe(':write', function()
       eq(true, os.remove(fname))
       eq(true, os.remove(fname_bak))
     end
-    eq(true, write_file(fname_bak, 'TTYX'))
+    write_file(fname_bak, 'TTYX')
     -- FIXME: exc_exec('write!') outputs 0 in Windows
     if helpers.iswin() then return end
     lfs.link(fname_bak .. ('/xxxxx'):rep(20), fname, true)

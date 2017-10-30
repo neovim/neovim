@@ -319,7 +319,6 @@ end
 -- Dedent the given text and write it to the file name.
 local function write_file(name, text, dont_dedent)
   local file = io.open(name, 'w')
-  if file == nil then return false end
   if type(text) == 'table' then
     -- Byte blob
     local bytes = text
@@ -333,7 +332,6 @@ local function write_file(name, text, dont_dedent)
   file:write(text)
   file:flush()
   file:close()
-  return true
 end
 
 local function read_file(name)
