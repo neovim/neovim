@@ -185,7 +185,7 @@ describe('system()', function()
     end)
 
     it('`yes` and is interrupted with CTRL-C', function()
-      feed(':call system("yes")<cr>')
+      feed(':call system("cat -")<cr>')
       screen:expect([[
                                                              |
         ~                                                    |
@@ -200,7 +200,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        :call system("yes")                                  |
+        :call system("cat -")                                |
       ]])
       feed('<c-c>')
       screen:expect([[
