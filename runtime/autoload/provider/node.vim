@@ -3,16 +3,7 @@ if exists('g:loaded_node_provider')
 endif
 let g:loaded_node_provider = 1
 
-let s:stderr = {}
-let s:job_opts = {'rpc': v:true}
-
-function! s:job_opts.on_stderr(chan_id, data, event)
-  let stderr = get(s:stderr, a:chan_id, [''])
-  let last = remove(stderr, -1)
-  let a:data[0] = last.a:data[0]
-  call extend(stderr, a:data)
-  let s:stderr[a:chan_id] = stderr
-endfunction
+let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
 
 function! provider#node#Detect() abort
   return exepath('neovim-node-host')
@@ -44,9 +35,12 @@ function! provider#node#Require(host) abort
   catch
     echomsg v:throwpoint
     echomsg v:exception
-    for row in get(s:stderr, channel_id, [])
+    for row in provider#get_stderr(channel_id)
       echomsg row
     endfor
+  endtry
+  finally
+    call provider#clear_stderr(channel_id)
   endtry
   throw remote#host#LoadErrorForHost(a:host.orig_name, '$NVIM_NODE_LOG_FILE')
 endfunction
