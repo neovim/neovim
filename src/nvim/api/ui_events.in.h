@@ -141,4 +141,17 @@ void wildmenu_select(Integer selected)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void wildmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+
+void msg_show(String kind, Array content, Boolean replace_last)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void msg_clear(void)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void msg_showcmd(Array content)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void msg_showmode(Array content)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void msg_ruler(Array content)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+void msg_history_show(Array entries)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 #endif  // NVIM_API_UI_EVENTS_IN_H

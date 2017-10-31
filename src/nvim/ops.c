@@ -865,8 +865,12 @@ int do_record(int c)
      * needs to be removed again to put it in a register.  exec_reg then
      * adds the escaping back later.
      */
-    Recording = FALSE;
-    MSG("");
+    Recording = false;
+    if (ui_has(kUIMessages)) {
+      showmode();
+    } else {
+      MSG("");
+    }
     p = get_recorded();
     if (p == NULL)
       retval = FAIL;

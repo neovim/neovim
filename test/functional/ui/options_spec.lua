@@ -28,6 +28,7 @@ describe('ui receives option updates', function()
       ext_linegrid=false,
       ext_hlstate=false,
       ext_multigrid=false,
+      ext_messages=false,
       ext_termcolors=false,
     }
 

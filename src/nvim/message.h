@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#include "nvim/macros.h"
 #include "nvim/types.h"
 
 /*
@@ -77,6 +78,7 @@
 typedef struct msg_hist {
   struct msg_hist *next;  ///< Next message.
   char_u *msg;            ///< Message text.
+  const char *kind;     ///< Message kind (for msg_ext)
   int attr;               ///< Message highlighting.
   bool multiline;         ///< Multiline message.
 } MessageHistoryEntry;
@@ -85,6 +87,8 @@ typedef struct msg_hist {
 extern MessageHistoryEntry *first_msg_hist;
 /// Last message
 extern MessageHistoryEntry *last_msg_hist;
+
+EXTERN bool msg_ext_did_cmdline INIT(= false);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.h.generated.h"

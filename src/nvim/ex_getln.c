@@ -308,6 +308,9 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     gotocmdline(true);
     redrawcmdprompt();          // draw prompt or indent
     set_cmdspos();
+    if (!msg_scroll) {
+      msg_ext_clear(false);
+    }
   }
   s->xpc.xp_context = EXPAND_NOTHING;
   s->xpc.xp_backslash = XP_BS_NONE;
@@ -496,6 +499,12 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   if (ui_has(kUICmdline)) {
     ui_call_cmdline_hide(ccline.level);
+    if (msg_ext_is_visible()) {
+      msg_ext_did_cmdline = true;
+      if (must_redraw < VALID) {
+        must_redraw = VALID;
+      }
+    }
   }
 
   cmdline_level--;
@@ -3613,7 +3622,7 @@ nextwild (
     return FAIL;
   }
 
-  if (!ui_has(kUIWildmenu)) {
+  if (!(ui_has(kUICmdline) || ui_has(kUIWildmenu))) {
     MSG_PUTS("...");  // show that we are busy
     ui_flush();
   }
