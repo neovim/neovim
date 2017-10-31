@@ -28,6 +28,7 @@ a dictionary with these (optional) keys:
 	`ext_popupmenu`		Externalize the popupmenu. |ui-popupmenu|
 	`ext_tabline`		Externalize the tabline. |ui-tabline|
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
+	`ext_wildmenu`		Externalize the wildmenu. |ui-ext-wildmenu|
 
 Nvim will then send msgpack-rpc notifications, with the method name "redraw"
 and a single argument, an array of screen update events.
@@ -201,21 +202,21 @@ Popupmenu Events						 *ui-popupmenu*
 Only sent if `ext_popupmenu` option is set in |ui-options|
 
 ["popupmenu_show", items, selected, row, col]
-	`items` is an array of the items to show, the
-	items are themselves arrays of the form [word, kind, menu, info]
-	as defined at |complete-items|, except that `word` is replaced by
-	`abbr` if present.  `selected` is the initially selected item, either a
-	zero-based index into the array of items, or -1 if no item is
-	selected. `row` and `col` is the anchor position, where the first
-	character of the completed word will be.
+	Show |popupmenu-completion|. `items` is an array of completion items
+	to show; each item is an array of the form [word, kind, menu, info] as
+	defined at |complete-items|, except that `word` is replaced by `abbr`
+	if present.  `selected` is the initially-selected item, a zero-based
+	index into the array of items (-1 if no item is selected). `row` and
+	`col` give the anchor position, where the first character of the
+	completed word will be.
 
 ["popupmenu_select", selected]
-	An item in the currently displayed popupmenu is selected. `selected`
-	is either a zero-based index into the array of items from the last
-	`popupmenu_show` event, or -1 if no item is selected.
+	Select an item in the current popupmenu. `selected` is a zero-based
+	index into the array of items from the last popupmenu_show event, or
+	-1 if no item is selected.
 
 ["popupmenu_hide"]
-	The popupmenu is hidden.
+	Hide the popupmenu.
 
 ==============================================================================
 Tabline Events							   *ui-tabline*
@@ -237,7 +238,7 @@ Only sent if `ext_cmdline` option is set in |ui-options|
         content: List of [attrs, string]
 	         [[{}, "t"], [attrs, "est"], ...]
 
-	Triggered when the user types in the cmdline.
+	Triggered when the cmdline is displayed or changed.
 	The `content` is the full content that should be displayed in the
 	cmdline, and the `pos` is the position of the cursor that in the
 	cmdline. The content is divided into chunks with different highlight
@@ -265,7 +266,7 @@ Only sent if `ext_cmdline` option is set in |ui-options|
 	`shift` is true the text after the cursor should be shifted, otherwise
 	it should overwrite the char at the cursor.
 
-	Should be hidden at next cmdline_pos.
+	Should be hidden at next cmdline_show or cmdline_pos.
 
 ["cmdline_hide"]
 	Hide the cmdline.
@@ -285,6 +286,23 @@ Only sent if `ext_cmdline` option is set in |ui-options|
 
 ["cmdline_block_hide"]
 	Hide the block.
+
+==============================================================================
+Wildmenu Events							   *ui-wildmenu*
+
+Only sent if `ext_wildmenu` option is set in |ui-options|
+
+["wildmenu_show", items]
+	Activate the wildmenu (command-line completion). `items` is an array
+	with the completion items.
+
+["wildmenu_select", selected]
+	Select an item in the current wildmenu. `selected` is a zero-based
+	index into the array of items from the last wildmenu_show event, or -1
+	if no item is selected.
+
+["wildmenu_hide"]
+	Hide the wildmenu.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:
