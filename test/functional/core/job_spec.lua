@@ -57,7 +57,7 @@ describe('jobs', function()
   it('changes to given / directory', function()
     nvim('command', "let g:job_opts.cwd = '/'")
     if iswin() then
-      nvim('command', "let j = jobstart('pwd|%{$_.Path}', g:job_opts)")
+      nvim('command', "let j = jobstart('(Get-Location).Path', g:job_opts)")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
@@ -71,7 +71,7 @@ describe('jobs', function()
     mkdir(dir)
     nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
     if iswin() then
-      nvim('command', "let j = jobstart('pwd|%{$_.Path}', g:job_opts)")
+      nvim('command', "let j = jobstart('(Get-Location).Path', g:job_opts)")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
