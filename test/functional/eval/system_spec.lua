@@ -184,7 +184,7 @@ describe('system()', function()
       ]])
     end)
 
-    it('`yes` and is interrupted with CTRL-C', function()
+    it('`cat -` and is interrupted with CTRL-C', function()
       feed(':call system("cat -")<cr>')
       screen:expect([[
                                                              |
