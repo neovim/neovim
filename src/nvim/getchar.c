@@ -1539,6 +1539,7 @@ int vpeekc(void)
  * Trick: when no typeahead found, but there is something in the typeahead
  * buffer, it must be an ESC that is recognized as the start of a key code.
  */
+// TODO AF: Check if this function can be replaced with vpeekc.
 int vpeekc_any(void)
 {
   int c;
