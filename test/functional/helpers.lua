@@ -449,19 +449,7 @@ local function expect_any(contents)
   return ok(nil ~= string.find(curbuf_contents(), contents, 1, true))
 end
 
--- Escape a shell token for cmd.exe, not a batch file
-local function shellescape_cmd(token)
-  local escaped = '"' .. string.gsub(token, '(["\\])', '\\%1') .. '"'
-  return escaped:gsub('([%&|<>()@^!"])', '^%1')
-end
-
 local function do_rmdir(path)
-  if iswin() then
-    return os.execute('rd /q/s ' .. shellescape_cmd(path))
-  end
-  if lfs.symlinkattributes(path, 'mode') ~= 'link' then
-    return os.remove(path)
-  end
   if lfs.attributes(path, 'mode') ~= 'directory' then
     return  -- Don't complain.
   end
