@@ -539,7 +539,6 @@ function(get_test_target prefix sfile relative_path_var target_var)
 endfunction()
 
 set(NO_SINGLE_CHECK_HEADERS
-  os/win_defs.h
   os/pty_process_win.h
 )
 foreach(hfile ${NVIM_HEADERS})
