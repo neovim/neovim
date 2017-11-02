@@ -316,6 +316,18 @@ describe('server -> client', function()
       connect_test(server, 'tcp', address)
     end)
 
+    it('via ipv6 address', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverstart('::1:')
+      if #address == 0 then
+        pending('no ipv6 stack', function() end)
+        return
+      end
+      eq('::1:', string.sub(address,1,4))
+      connect_test(server, 'tcp', address)
+    end)
+
     it('via hostname', function()
       local server = spawn(nvim_argv)
       set_session(server)
