@@ -9,6 +9,7 @@ local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
 local retry = helpers.retry
+local iswin = helpers.iswin
 
 describe('startup', function()
   before_each(function()
@@ -40,6 +41,9 @@ describe('startup', function()
   it('in a TTY: has("ttyin")==1 has("ttyout")==1', function()
     local screen = Screen.new(25, 3)
     screen:attach()
+    if iswin() then
+      command([[set shellcmdflag=/s\ /c shellxquote=\"]])
+    end
     -- Running in :terminal
     command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
             ..nvim_set..[[\" ]]
@@ -54,6 +58,9 @@ describe('startup', function()
   it('output to pipe: has("ttyin")==1 has("ttyout")==0', function()
     local screen = Screen.new(25, 5)
     screen:attach()
+    if iswin() then
+      command([[set shellcmdflag=/s\ /c shellxquote=\"]])
+    end
     -- Running in :terminal
     command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
             ..nvim_set..[[\" ]]
