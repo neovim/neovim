@@ -57,7 +57,7 @@ describe('jobs', function()
   it('changes to given / directory', function()
     nvim('command', "let g:job_opts.cwd = '/'")
     if iswin() then
-      nvim('command', "let j = jobstart('pwd|%{$_.Path}', g:job_opts)")
+      nvim('command', "let j = jobstart('(Get-Location).Path', g:job_opts)")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
@@ -71,7 +71,7 @@ describe('jobs', function()
     mkdir(dir)
     nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
     if iswin() then
-      nvim('command', "let j = jobstart('pwd|%{$_.Path}', g:job_opts)")
+      nvim('command', "let j = jobstart('(Get-Location).Path', g:job_opts)")
     else
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
@@ -101,13 +101,13 @@ describe('jobs', function()
   end)
 
   it('returns -1 when target is not executable #5465', function()
-    if helpers.pending_win32(pending) then return end
     local function new_job()
       return eval([[jobstart('')]])
     end
     local executable_jobid = new_job()
-    local nonexecutable_jobid = eval(
-      "jobstart(['./test/functional/fixtures/non_executable.txt'])")
+    local nonexecutable_jobid = eval("jobstart(['"..(iswin()
+      and './test/functional/fixtures'
+      or  './test/functional/fixtures/non_executable.txt').."'])")
     eq(-1, nonexecutable_jobid)
     -- Should _not_ throw an error.
     eq("", eval("v:errmsg"))
@@ -116,9 +116,7 @@ describe('jobs', function()
   end)
 
   it('invokes callbacks when the job writes and exits', function()
-    -- TODO: hangs on Windows
-    if helpers.pending_win32(pending) then return end
-    nvim('command', "call jobstart('echo', g:job_opts)")
+    nvim('command', [[call jobstart('echo ""', g:job_opts)]])
     eq({'notification', 'stdout', {0, {'', ''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
@@ -229,7 +227,6 @@ describe('jobs', function()
   end)
 
   it('will not leak memory if we leave a job running', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "call jobstart(['cat', '-'], g:job_opts)")
   end)
 
@@ -274,11 +271,7 @@ describe('jobs', function()
   end)
 
   it('can omit options', function()
-    if helpers.pending_win32(pending) then return end
-    neq(0, nvim('eval', 'delete(".Xtestjob")'))
-    nvim('command', "call jobstart(['touch', '.Xtestjob'])")
-    nvim('command', "sleep 100m")
-    eq(0, nvim('eval', 'delete(".Xtestjob")'))
+    ok(eval([[jobstart('echo ""')]]) > 0)
   end)
 
   it('can omit data callbacks', function()
@@ -314,7 +307,6 @@ describe('jobs', function()
   end)
 
   it('can redefine callbacks being used by a job', function()
-    if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     local screen = Screen.new()
     screen:attach()
     screen:set_default_attr_ids({
@@ -329,7 +321,7 @@ describe('jobs', function()
       \ 'on_stderr': function('g:JobHandler'),
       \ 'on_exit': function('g:JobHandler')
       \ }
-      let job = jobstart('cat -', g:callbacks)
+      let job = jobstart(['cat', '-'], g:callbacks)
     ]])
     wait()
     source([[
@@ -667,22 +659,41 @@ describe("pty process teardown", function()
   end)
 
   it("does not prevent/delay exit. #4798 #4900", function()
-    if helpers.pending_win32(pending) then return end
+    if eval('has("win64")') then
+      pending('[Process exited -1073741819]')
+      return
+    end
     -- Use a nested nvim (in :term) to test without --headless.
-    feed_command(":terminal '"..helpers.nvim_prog
-      .."' -u NONE -i NONE --cmd '"..nvim_set.."' "
+    feed_command("call termopen(['"..helpers.nvim_prog
+      .."', '-u', 'NONE', '-i', 'NONE', '--cmd', '"..(iswin()
+        and nvim_set..[[ shellcmdflag=/s/c shellxquote=\"]]
+        or  nvim_set)
       -- Use :term again in the _nested_ nvim to get a PTY process.
       -- Use `sleep` to simulate a long-running child of the PTY.
-      .."+terminal +'!(sleep 300 &)' +qa")
-
+      .."', '-c', 'terminal', '-c', '"..(iswin()
+        and "!start /b cmd /s/c \"ping 127.0.0.1 -n 301 > nul\""
+        or  "!(sleep 300 &)")
+      .."', '-c', 'qa'])")
     -- Exiting should terminate all descendants (PTY, its children, ...).
-    screen:expect([[
-      ^                              |
-      [Process exited 0]            |
-                                    |
-                                    |
-                                    |
-                                    |
-    ]])
+    if iswin() then
+      feed('G')
+      screen:expect([[
+                                      |
+                                      |
+                                      |
+                                      |
+        ^[Process exited 0]            |
+                                      |
+      ]])
+    else
+      screen:expect([[
+        ^                              |
+        [Process exited 0]            |
+                                      |
+                                      |
+                                      |
+                                      |
+      ]])
+    end
   end)
 end)

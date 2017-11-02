@@ -4,8 +4,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local clear, command, eq = helpers.clear, helpers.command, helpers.eq
 local eval, exc_exec, neq = helpers.eval, helpers.exc_exec, helpers.neq
 
-if helpers.pending_win32(pending) then return end
-
 describe('argument list commands', function()
   before_each(clear)
 
