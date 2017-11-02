@@ -9,8 +9,6 @@ local function expected_empty()
   eq({}, nvim.get_vvar('errors'))
 end
 
-if helpers.pending_win32(pending) then return end
-
 describe('packadd', function()
   before_each(function()
     clear()
@@ -52,8 +50,10 @@ describe('packadd', function()
         call assert_equal(77, g:plugin_also_works)
         call assert_true(17, g:ftdetect_works)
         call assert_true(len(&rtp) > len(rtp))
-        call assert_true(&rtp =~ (s:plugdir . '\($\|,\)'))
-        call assert_true(&rtp =~ (s:plugdir . '/after$'))
+        if !has('win32')
+          call assert_true(&rtp =~ (s:plugdir . '\($\|,\)'))
+          call assert_true(&rtp =~ (s:plugdir . '/after$'))
+        endif
 
         " Check exception
         call assert_fails("packadd directorynotfound", 'E919:')
@@ -74,7 +74,9 @@ describe('packadd', function()
         packadd! mytest
 
         call assert_true(len(&rtp) > len(rtp))
-        call assert_true(&rtp =~ (s:plugdir . '\($\|,\)'))
+        if !has('win32')
+          call assert_true(&rtp =~ (s:plugdir . '\($\|,\)'))
+        endif
         call assert_equal(0, g:plugin_works)
 
         " check the path is not added twice
@@ -84,13 +86,14 @@ describe('packadd', function()
       endfunc
 
       func Test_packadd_symlink_dir()
-        if !has('unix')
-          return
-        endif
         let top2_dir = s:topdir . '/Xdir2'
         let real_dir = s:topdir . '/Xsym'
         call mkdir(real_dir, 'p')
-        exec "silent! !ln -s Xsym" top2_dir
+        if has('win32')
+          exec "silent! !mklink /j" top2_dir "Xsym"
+        else
+          exec "silent! !ln -s Xsym" top2_dir
+        endif
         let &rtp = top2_dir . ',' . top2_dir . '/after'
         let &packpath = &rtp
 
@@ -105,7 +108,9 @@ describe('packadd', function()
         packadd mytest
 
         " Must have been inserted in the middle, not at the end
-        call assert_true(&rtp =~ '/pack/mine/opt/mytest,')
+        if !has('win32')
+          call assert_true(&rtp =~ '/pack/mine/opt/mytest,')
+        endif
         call assert_equal(44, g:plugin_works)
 
         " No change when doing it again.
@@ -115,7 +120,7 @@ describe('packadd', function()
 
         set rtp&
         let rtp = &rtp
-        exec "silent !rm" top2_dir
+        exec "silent !" (has('win32') ? "rd /q/s" : "rm") top2_dir
       endfunc
 
       func Test_packloadall()

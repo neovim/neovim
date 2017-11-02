@@ -4,8 +4,6 @@ local helpers = require('test.functional.helpers')(after_each)
 local feed, command, clear = helpers.feed, helpers.command, helpers.clear
 local mkdir, write_file, rmdir = helpers.mkdir, helpers.write_file, helpers.rmdir
 
-if helpers.pending_win32(pending) then return end
-
 local Screen = require('test.functional.ui.screen')
 
 
@@ -28,23 +26,30 @@ describe('issues', function()
   end)
 
   it('#3269 Last line of shell output is not truncated', function()
-    command([[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
+    command(helpers.iswin()
+      and [[nnoremap <silent>\l :!dir /b bang_filter_spec<cr>]]
+      or  [[nnoremap <silent>\l :!ls bang_filter_spec<cr>]])
+    local result = (helpers.iswin()
+      and [[:!dir /b bang_filter_spec                            |]]
+      or  [[:!ls bang_filter_spec                                |]])
     feed([[\l]])
     screen:expect([[
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      ~                                                    |
-      :!ls bang_filter_spec                                |
-                                                           |
-      f1                                                   |
-      f2                                                   |
-      f3                                                   |
-      Press ENTER or type command to continue^              |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ~                                                    |
+    ]]
+    .. result .. [[
+
+                                                         |
+    f1                                                   |
+    f2                                                   |
+    f3                                                   |
+    Press ENTER or type command to continue^              |
     ]])
   end)
 

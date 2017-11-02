@@ -8,8 +8,6 @@ local eq = helpers.eq
 local wait = helpers.wait
 local exc_exec = helpers.exc_exec
 
-if helpers.pending_win32(pending) then return end
-
 describe(':highlight', function()
   setup(clear)
 

@@ -184,8 +184,8 @@ describe('system()', function()
       ]])
     end)
 
-    it('`yes` and is interrupted with CTRL-C', function()
-      feed(':call system("yes")<cr>')
+    it('`cat -` and is interrupted with CTRL-C', function()
+      feed(':call system("cat -")<cr>')
       screen:expect([[
                                                              |
         ~                                                    |
@@ -200,7 +200,7 @@ describe('system()', function()
         ~                                                    |
         ~                                                    |
         ~                                                    |
-        :call system("yes")                                  |
+        :call system("cat -")                                |
       ]])
       feed('<c-c>')
       screen:expect([[
@@ -442,11 +442,13 @@ describe('systemlist()', function()
   describe('with output containing NULs', function()
     local fname = 'Xtest'
 
-    before_each(create_file_with_nuls(fname))
+    before_each(function()
+      command('set ff=unix')
+      create_file_with_nuls(fname)()
+    end)
     after_each(delete_file(fname))
 
     it('replaces NULs by newline characters', function()
-      if helpers.pending_win32(pending) then return end
       eq({'part1\npart2\npart3'}, eval('systemlist("cat '..fname..'")'))
     end)
   end)
