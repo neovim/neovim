@@ -107,6 +107,29 @@ describe('search highlighting', function()
       /li^                                     |
     ]])
 
+    -- check that consecutive matches are caught by C-g/C-t
+    feed("<C-g>")
+    screen:expect([[
+        the first {2:li}ne                        |
+        in a {3:li}ttle file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      /li^                                     |
+    ]])
+
+    feed("<C-t>")
+    screen:expect([[
+        the first {3:li}ne                        |
+        in a {2:li}ttle file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      /li^                                     |
+    ]])
+
     feed("t")
     screen:expect([[
         the first line                        |
@@ -162,6 +185,63 @@ describe('search highlighting', function()
       {1:~                                       }|
       {1:~                                       }|
                                               |
+    ]])
+
+    -- cancelling inc search restores the hl state
+    feed(':noh<cr>')
+    screen:expect([[
+        the first line                        |
+        in a ^little file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      :noh                                    |
+    ]])
+
+    feed('/first')
+    screen:expect([[
+        the {3:first} line                        |
+        in a little file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      /first^                                  |
+    ]])
+    feed('<esc>')
+    screen:expect([[
+        the first line                        |
+        in a ^little file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]])
+
+    -- test that pressing C-g in an empty command line does not move the cursor
+    feed('/<C-g>')
+    screen:expect([[
+        the first line                        |
+        in a little file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      /^                                       |
+    ]])
+
+    -- same, for C-t
+    feed('<ESC>/<C-t>')
+    screen:expect([[
+        the first line                        |
+        in a little file                      |
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      /^                                       |
     ]])
   end)
 
