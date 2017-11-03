@@ -426,7 +426,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     curwin->w_botline = s->old_botline;
     highlight_match = false;
     validate_cursor();          // needed for TAB
-    redraw_later(SOME_VALID);
+    redraw_all_later(SOME_VALID);
   }
 
   if (ccline.cmdbuff != NULL) {
@@ -1024,6 +1024,11 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
 
   if (next_match) {
     t = s->match_end;
+    if (lt(s->match_start, s->match_end)) {
+      // start searching at the end of the match
+      // not at the beginning of the next column
+      (void)decl(&t);
+    }
     search_flags += SEARCH_COL;
   } else {
     t = s->match_start;
@@ -1662,7 +1667,9 @@ static int command_line_handle_key(CommandLineState *s)
       if (char_avail()) {
         return 1;
       }
-      command_line_next_incsearch(s, s->c == Ctrl_G);
+      if (ccline.cmdlen != 0) {
+        command_line_next_incsearch(s, s->c == Ctrl_G);
+      }
       return command_line_not_changed(s);
     }
     break;
@@ -1785,6 +1792,7 @@ static int command_line_changed(CommandLineState *s)
     if (ccline.cmdlen == 0) {
       s->i = 0;
       SET_NO_HLSEARCH(true);  // turn off previous highlight
+      redraw_all_later(SOME_VALID);
     } else {
       int search_flags = SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK;
       ui_busy_start();
