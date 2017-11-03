@@ -710,4 +710,9 @@ describe('api', function()
     ok(err:match(': Wrong type for argument 1, expecting String') ~= nil)
   end)
 
+  describe('nvim_parse_expression', function()
+    -- FIXME
+    -- FIXME Test error
+  end)
+
 end)

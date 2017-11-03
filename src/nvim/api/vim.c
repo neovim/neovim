@@ -33,6 +33,8 @@
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
+#include "nvim/viml/parser/expressions.h"
+#include "nvim/viml/parser/parser.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -897,6 +899,12 @@ theend:
 ///
 ///                    Use only "m" to parse like for "<C-r>=", only "E" to
 ///                    parse like for ":echo", empty string for ":let".
+/// @param[in]  highlight  If true, return value will also include "highlight"
+///                        key containing array of 4-tuples (arrays) (Integer,
+///                        Integer, Integer, String), where first three numbers
+///                        define the highlighted region and represent line,
+///                        starting column and ending column (latter exclusive:
+///                        one should highlight region [start_col, end_col)).
 ///
 /// @return AST: top-level dectionary holds keys
 ///
@@ -946,9 +954,105 @@ theend:
 ///           "fvalue": Float, floating-point value for "Float" nodes.
 ///           "svalue": String, value for "SingleQuotedString" and
 ///                     "DoubleQuotedString" nodes.
-Dictionary nvim_parse_expression(String expr, String flags, Error *err)
+Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
+                                 Error *err)
   FUNC_API_SINCE(4)
 {
+  int pflags = 0;
+  for (size_t i = 0 ; i < flags.size ; i++) {
+    switch (flags.data[i]) {
+      case 'm': { pflags |= kExprFlagsMulti; break; }
+      case 'E': { pflags |= kExprFlagsDisallowEOC; break; }
+      default: {
+        api_set_error(err, kErrorTypeValidation, "Invalid flag: '%c' (%u)",
+                      flags.data[i], (unsigned)flags.data[i]);
+        return (Dictionary)ARRAY_DICT_INIT;
+      }
+    }
+  }
+  ParserLine plines[] = {
+    {
+      .data = expr.data,
+      .size = expr.size,
+      .allocated = false,
+    },
+    { NULL, 0, false },
+  };
+  ParserLine *plines_p = plines;
+  ParserHighlight colors;
+  kvi_init(colors);
+  ParserHighlight *const colors_p = (highlight ? &colors : NULL);
+  ParserState pstate;
+  viml_parser_init(
+      &pstate, parser_simple_get_line, &plines_p, colors_p);
+  ExprAST east = viml_pexpr_parse(&pstate, pflags);
+
+  const size_t dict_size = (
+    1  // "ast"
+    + (size_t)(east.err.arg != NULL)  // "error"
+    + (size_t)highlight  // "highlight"
+  );
+  Dictionary ret = {
+    .items = xmalloc(dict_size * sizeof(ret.items[0])),
+    .size = 0,
+    .capacity = dict_size,
+  };
+  ret.items[ret.size++] = (KeyValuePair) {
+    .key = STATIC_CSTR_AS_STRING("ast"),
+    .value = NIL,
+  };
+  if (east.err.arg != NULL) {
+    Dictionary err_dict = {
+      .items = xmalloc(2 * sizeof(err_dict.items[0])),
+      .size = 2,
+      .capacity = 2,
+    };
+    err_dict.items[0] = (KeyValuePair) {
+      .key = STATIC_CSTR_AS_STRING("message"),
+      .value = STRING_OBJ(cstr_to_string(east.err.arg)),
+    };
+    err_dict.items[1] = (KeyValuePair) {
+      .key = STATIC_CSTR_AS_STRING("arg"),
+      .value = STRING_OBJ(((String) {
+        .data = xmemdup(east.err.arg, (size_t)east.err.arg_len),
+        .size = (size_t)east.err.arg_len,
+      })),
+    };
+    ret.items[ret.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_AS_STRING("error"),
+      .value = DICTIONARY_OBJ(err_dict),
+    };
+  }
+  if (highlight) {
+    Array hl = (Array) {
+      .items = xmalloc(kv_size(colors) * sizeof(hl.items[0])),
+      .capacity = kv_size(colors),
+      .size = kv_size(colors),
+    };
+    for (size_t i = 0 ; i < kv_size(colors) ; i++) {
+      const ParserHighlightChunk chunk = kv_A(colors, i);
+      Array chunk_arr = (Array) {
+        .items = xmalloc(4),
+        .capacity = 4,
+        .size = 4,
+      };
+      chunk_arr.items[0] = INTEGER_OBJ((Integer)chunk.start.line);
+      chunk_arr.items[1] = INTEGER_OBJ((Integer)chunk.start.col);
+      chunk_arr.items[2] = INTEGER_OBJ((Integer)chunk.end_col);
+      chunk_arr.items[3] = STRING_OBJ(cstr_to_string(chunk.group));
+      hl.items[i] = ARRAY_OBJ(chunk_arr);
+    }
+    ret.items[ret.size++] = (KeyValuePair) {
+      .key = STATIC_CSTR_AS_STRING("highlight"),
+      .value = ARRAY_OBJ(hl),
+    };
+  }
+
+  // FIXME: populate AST
+
+  assert(ret.size == ret.capacity);
+  viml_pexpr_free_ast(east);
+  viml_parser_destroy(&pstate);
   return (Dictionary)ARRAY_DICT_INIT;
 }
 
