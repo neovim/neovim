@@ -266,7 +266,7 @@ Only sent if `ext_cmdline` option is set in |ui-options|
 	`shift` is true the text after the cursor should be shifted, otherwise
 	it should overwrite the char at the cursor.
 
-	Should be hidden at next cmdline_show or cmdline_pos.
+	Should be hidden at next cmdline_show.
 
 ["cmdline_hide"]
 	Hide the cmdline.
