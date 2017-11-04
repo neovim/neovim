@@ -341,6 +341,15 @@ typedef struct {
 /// Array mapping ExprASTNodeType to maximum amount of children node may have
 extern const uint8_t node_maxchildren[];
 
+/// Array mapping ExprASTNodeType values to their stringified versions
+extern const char *const east_node_type_tab[];
+
+/// Array mapping ExprComparisonType values to their stringified versions
+extern const char *const eltkn_cmp_type_tab[];
+
+/// Array mapping ExprCaseCompareStrategy values to their stringified versions
+extern const char *const ccs_tab[];
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "viml/parser/expressions.h.generated.h"
 #endif

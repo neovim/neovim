@@ -616,7 +616,7 @@ static const char *const eltkn_type_tab[] = {
   [kExprLexArrow] = "Arrow",
 };
 
-static const char *const eltkn_cmp_type_tab[] = {
+const char *const eltkn_cmp_type_tab[] = {
   [kExprCmpEqual] = "Equal",
   [kExprCmpMatches] = "Matches",
   [kExprCmpGreater] = "Greater",
@@ -624,7 +624,7 @@ static const char *const eltkn_cmp_type_tab[] = {
   [kExprCmpIdentical] = "Identical",
 };
 
-static const char *const ccs_tab[] = {
+const char *const ccs_tab[] = {
   [kCCStrategyUseOption] = "UseOption",
   [kCCStrategyMatchCase] = "MatchCase",
   [kCCStrategyIgnoreCase] = "IgnoreCase",
@@ -725,8 +725,7 @@ viml_pexpr_repr_token_end:
   return ret;
 }
 
-#ifdef UNIT_TESTING
-static const char *const east_node_type_tab[] = {
+const char *const east_node_type_tab[] = {
   [kExprNodeMissing] = "Missing",
   [kExprNodeOpMissing] = "OpMissing",
   [kExprNodeTernary] = "Ternary",
@@ -766,7 +765,6 @@ static const char *const east_node_type_tab[] = {
   [kExprNodeOption] = "Option",
   [kExprNodeEnvironment] = "Environment",
 };
-#endif
 
 /// Represent `int` character as a string
 ///
@@ -2148,10 +2146,10 @@ viml_pexpr_parse_invalid_comma:
       }
 #define EXP_VAL_COLON "E15: Expected value, got colon: %.*s"
       case kExprLexColon: {
+        bool is_ternary = false;
         if (kv_size(ast_stack) < 2) {
           goto viml_pexpr_parse_invalid_colon;
         }
-        bool is_ternary = false;
         bool can_be_ternary = true;
         bool is_subscript = false;
         for (size_t i = 1; i < kv_size(ast_stack); i++) {

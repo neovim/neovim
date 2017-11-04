@@ -888,6 +888,13 @@ theend:
   return rv;
 }
 
+typedef struct {
+  ExprASTNode **node_p;
+  Object *ret_node_p;
+} ExprASTConvStackItem;
+
+typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
+
 /// Parse a VimL expression
 ///
 /// @param[in]  expr  Expression to parse. Is always treated as a single line.
@@ -915,7 +922,8 @@ theend:
 ///                      Must contain exactly one "%.*s".
 ///           "arg": String, error message argument.
 ///
-///         "ast": actual AST, a dictionary with the following keys:
+///         "ast": actual AST, either nil or a dictionary with the following 
+///                keys:
 ///
 ///           "type": node type, one of the value names from ExprASTNodeType
 ///                   stringified without "kExprNode" prefix.
@@ -927,11 +935,9 @@ theend:
 ///                  debugging purposes primary (debugging parser and providing
 ///                  debug information).
 ///           "children": a list of nodes described in top/"ast". There always
-///                       is zero, one or two children, key will contain an
-///                       empty array if node can have children, but has no and
-///                       will not be present at all if node can’t have any
-///                       children. Maximum number of children may be found in
-///                       node_maxchildren array.
+///                       is zero, one or two children, key will not be present
+///                       if node has no children. Maximum number of children
+///                       may be found in node_maxchildren array.
 ///
 ///           Local values (present only for certain nodes):
 ///
@@ -950,6 +956,8 @@ theend:
 ///                           value names from ExprCaseCompareStrategy,
 ///                           stringified without "kCCStrategy" prefix. Only
 ///                           present for "Comparison" nodes.
+///           "invert": Boolean, true if result of comparison needs to be
+///                     inverted. Only present for "Comparison" nodes.
 ///           "ivalue": Integer, integer value for "Integer" nodes.
 ///           "fvalue": Float, floating-point value for "Float" nodes.
 ///           "svalue": String, value for "SingleQuotedString" and
@@ -998,7 +1006,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
     .capacity = dict_size,
   };
   ret.items[ret.size++] = (KeyValuePair) {
-    .key = STATIC_CSTR_AS_STRING("ast"),
+    .key = STATIC_CSTR_TO_STRING("ast"),
     .value = NIL,
   };
   if (east.err.arg != NULL) {
@@ -1008,18 +1016,18 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
       .capacity = 2,
     };
     err_dict.items[0] = (KeyValuePair) {
-      .key = STATIC_CSTR_AS_STRING("message"),
+      .key = STATIC_CSTR_TO_STRING("message"),
       .value = STRING_OBJ(cstr_to_string(east.err.arg)),
     };
     err_dict.items[1] = (KeyValuePair) {
-      .key = STATIC_CSTR_AS_STRING("arg"),
+      .key = STATIC_CSTR_TO_STRING("arg"),
       .value = STRING_OBJ(((String) {
-        .data = xmemdup(east.err.arg, (size_t)east.err.arg_len),
+        .data = xmemdupz(east.err.arg, (size_t)east.err.arg_len),
         .size = (size_t)east.err.arg_len,
       })),
     };
     ret.items[ret.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_AS_STRING("error"),
+      .key = STATIC_CSTR_TO_STRING("error"),
       .value = DICTIONARY_OBJ(err_dict),
     };
   }
@@ -1032,7 +1040,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
     for (size_t i = 0 ; i < kv_size(colors) ; i++) {
       const ParserHighlightChunk chunk = kv_A(colors, i);
       Array chunk_arr = (Array) {
-        .items = xmalloc(4),
+        .items = xmalloc(4 * sizeof(chunk_arr.items[0])),
         .capacity = 4,
         .size = 4,
       };
@@ -1043,17 +1051,243 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
       hl.items[i] = ARRAY_OBJ(chunk_arr);
     }
     ret.items[ret.size++] = (KeyValuePair) {
-      .key = STATIC_CSTR_AS_STRING("highlight"),
+      .key = STATIC_CSTR_TO_STRING("highlight"),
       .value = ARRAY_OBJ(hl),
     };
   }
 
-  // FIXME: populate AST
+  // Walk over the AST, freeing nodes in process.
+  ExprASTConvStack ast_conv_stack;
+  kvi_init(ast_conv_stack);
+  kvi_push(ast_conv_stack, ((ExprASTConvStackItem) {
+    .node_p = &east.root,
+    .ret_node_p = &ret.items[0].value,
+  }));
+  while (kv_size(ast_conv_stack)) {
+    ExprASTConvStackItem cur_item = kv_last(ast_conv_stack);
+    if (*cur_item.node_p == NULL) {
+      assert(kv_size(ast_conv_stack) == 1);
+      kv_drop(ast_conv_stack, 1);
+    } else {
+      ExprASTNode *const node = *cur_item.node_p;
+      if (cur_item.ret_node_p->type == kObjectTypeNil) {
+        const size_t ret_node_items_size = (size_t)(
+            3  // "type", "start" and "len"
+            + (node->children != NULL)  // "children"
+            + (node->type == kExprNodeOption
+               || node->type == kExprNodePlainIdentifier)  // "scope"
+            + (node->type == kExprNodeOption
+               || node->type == kExprNodePlainIdentifier
+               || node->type == kExprNodePlainKey
+               || node->type == kExprNodeEnvironment)  // "ident"
+            + (node->type == kExprNodeRegister)  // "name"
+            + (3  // "cmp_type", "ccs_strategy", "invert"
+               * (node->type == kExprNodeComparison))
+            + (node->type == kExprNodeInteger)  // "ivalue"
+            + (node->type == kExprNodeFloat)  // "fvalue"
+            + (node->type == kExprNodeDoubleQuotedString
+               || node->type == kExprNodeSingleQuotedString)  // "svalue"
+            + 0);
+        Dictionary ret_node = {
+          .items = xmalloc(ret_node_items_size * sizeof(ret_node.items[0])),
+          .capacity = ret_node_items_size,
+          .size = 0,
+        };
+        *cur_item.ret_node_p = DICTIONARY_OBJ(ret_node);
+      }
+      Dictionary *ret_node = &cur_item.ret_node_p->data.dictionary;
+      if (node->children != NULL) {
+        const size_t num_children = 1 + (node->children->next != NULL);
+        Array children_array = {
+          .items = xmalloc(num_children * sizeof(children_array.items[0])),
+          .capacity = num_children,
+          .size = num_children,
+        };
+        for (size_t i = 0; i < num_children; i++) {
+          children_array.items[i] = NIL;
+        }
+        ret_node->items[ret_node->size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("children"),
+          .value = ARRAY_OBJ(children_array),
+        };
+        kvi_push(ast_conv_stack, ((ExprASTConvStackItem) {
+          .node_p = &node->children,
+          .ret_node_p = &children_array.items[0],
+        }));
+      } else if (node->next != NULL) {
+        kvi_push(ast_conv_stack, ((ExprASTConvStackItem) {
+          .node_p = &node->children,
+          .ret_node_p = cur_item.ret_node_p + 1,
+        }));
+      } else if (node != NULL) {
+        kv_drop(ast_conv_stack, 1);
+        ret_node->items[ret_node->size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("type"),
+          .value = STRING_OBJ(cstr_to_string(east_node_type_tab[node->type])),
+        };
+        Array start_array = {
+          .items = xmalloc(2 * sizeof(start_array.items[0])),
+          .capacity = 2,
+          .size = 2,
+        };
+        start_array.items[0] = INTEGER_OBJ((Integer)node->start.line);
+        start_array.items[1] = INTEGER_OBJ((Integer)node->start.col);
+        ret_node->items[ret_node->size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("start"),
+          .value = ARRAY_OBJ(start_array),
+        };
+        ret_node->items[ret_node->size++] = (KeyValuePair) {
+          .key = STATIC_CSTR_TO_STRING("len"),
+          .value = INTEGER_OBJ((Integer)node->len),
+        };
+        switch (node->type) {
+          case kExprNodeDoubleQuotedString:
+          case kExprNodeSingleQuotedString: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("svalue"),
+              .value = STRING_OBJ(cstr_as_string(node->data.str.value)),
+            };
+            break;
+          }
+          case kExprNodeOption: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("scope"),
+              .value = INTEGER_OBJ(node->data.opt.scope),
+            };
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ident"),
+              .value = STRING_OBJ(((String) {
+                .data = xmemdupz(node->data.opt.ident,
+                                 node->data.opt.ident_len),
+                .size = node->data.opt.ident_len,
+              })),
+            };
+            break;
+          }
+          case kExprNodePlainIdentifier: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("scope"),
+              .value = INTEGER_OBJ(node->data.var.scope),
+            };
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ident"),
+              .value = STRING_OBJ(((String) {
+                .data = xmemdupz(node->data.var.ident,
+                                 node->data.var.ident_len),
+                .size = node->data.var.ident_len,
+              })),
+            };
+            break;
+          }
+          case kExprNodePlainKey: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ident"),
+              .value = STRING_OBJ(((String) {
+                .data = xmemdupz(node->data.var.ident,
+                                 node->data.var.ident_len),
+                .size = node->data.var.ident_len,
+              })),
+            };
+            break;
+          }
+          case kExprNodeEnvironment: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ident"),
+              .value = STRING_OBJ(((String) {
+                .data = xmemdupz(node->data.env.ident,
+                                 node->data.env.ident_len),
+                .size = node->data.env.ident_len,
+              })),
+            };
+            break;
+          }
+          case kExprNodeRegister: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("name"),
+              .value = INTEGER_OBJ(node->data.reg.name),
+            };
+            break;
+          }
+          case kExprNodeComparison: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("cmp_type"),
+              .value = STRING_OBJ(cstr_to_string(
+                      eltkn_cmp_type_tab[node->data.cmp.type])),
+            };
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ccs_strategy"),
+              .value = STRING_OBJ(cstr_to_string(
+                      eltkn_cmp_type_tab[node->data.cmp.ccs])),
+            };
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("invert"),
+              .value = BOOLEAN_OBJ(node->data.cmp.inv),
+            };
+            break;
+          }
+          case kExprNodeFloat: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("fvalue"),
+              .value = FLOAT_OBJ(node->data.flt.value),
+            };
+            break;
+          }
+          case kExprNodeInteger: {
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("ivalue"),
+              .value = INTEGER_OBJ((Integer)(
+                      node->data.num.value > API_INTEGER_MAX
+                      ? API_INTEGER_MAX
+                      : (Integer)node->data.num.value)),
+            };
+            break;
+          }
+          case kExprNodeMissing:
+          case kExprNodeOpMissing:
+          case kExprNodeTernary:
+          case kExprNodeTernaryValue:
+          case kExprNodeSubscript:
+          case kExprNodeListLiteral:
+          case kExprNodeUnaryPlus:
+          case kExprNodeBinaryPlus:
+          case kExprNodeNested:
+          case kExprNodeCall:
+          case kExprNodeComplexIdentifier:
+          case kExprNodeUnknownFigure:
+          case kExprNodeLambda:
+          case kExprNodeDictLiteral:
+          case kExprNodeCurlyBracesIdentifier:
+          case kExprNodeComma:
+          case kExprNodeColon:
+          case kExprNodeArrow:
+          case kExprNodeConcat:
+          case kExprNodeConcatOrSubscript:
+          case kExprNodeOr:
+          case kExprNodeAnd:
+          case kExprNodeUnaryMinus:
+          case kExprNodeBinaryMinus:
+          case kExprNodeNot:
+          case kExprNodeMultiplication:
+          case kExprNodeDivision:
+          case kExprNodeMod: {
+            break;
+          }
+        }
+        assert(cur_item.ret_node_p->data.dictionary.size
+               == cur_item.ret_node_p->data.dictionary.capacity);
+        xfree(*cur_item.node_p);
+        *cur_item.node_p = NULL;
+      }
+    }
+  }
+  kvi_destroy(ast_conv_stack);
 
   assert(ret.size == ret.capacity);
+  // Should be a no-op actually, leaving it in case non-nodes will need to be
+  // freed later.
   viml_pexpr_free_ast(east);
   viml_parser_destroy(&pstate);
-  return (Dictionary)ARRAY_DICT_INIT;
+  return ret;
 }
 
 
