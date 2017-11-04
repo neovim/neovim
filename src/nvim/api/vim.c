@@ -995,21 +995,21 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
       &pstate, parser_simple_get_line, &plines_p, colors_p);
   ExprAST east = viml_pexpr_parse(&pstate, pflags);
 
-  const size_t dict_size = (
+  const size_t ret_size = (
     1  // "ast"
-    + (size_t)(east.err.arg != NULL)  // "error"
+    + (size_t)(east.err.msg != NULL)  // "error"
     + (size_t)highlight  // "highlight"
   );
   Dictionary ret = {
-    .items = xmalloc(dict_size * sizeof(ret.items[0])),
+    .items = xmalloc(ret_size * sizeof(ret.items[0])),
     .size = 0,
-    .capacity = dict_size,
+    .capacity = ret_size,
   };
   ret.items[ret.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("ast"),
     .value = NIL,
   };
-  if (east.err.arg != NULL) {
+  if (east.err.msg != NULL) {
     Dictionary err_dict = {
       .items = xmalloc(2 * sizeof(err_dict.items[0])),
       .size = 2,
@@ -1017,15 +1017,22 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
     };
     err_dict.items[0] = (KeyValuePair) {
       .key = STATIC_CSTR_TO_STRING("message"),
-      .value = STRING_OBJ(cstr_to_string(east.err.arg)),
+      .value = STRING_OBJ(cstr_to_string(east.err.msg)),
     };
-    err_dict.items[1] = (KeyValuePair) {
-      .key = STATIC_CSTR_TO_STRING("arg"),
-      .value = STRING_OBJ(((String) {
-        .data = xmemdupz(east.err.arg, (size_t)east.err.arg_len),
-        .size = (size_t)east.err.arg_len,
-      })),
-    };
+    if (east.err.arg == NULL) {
+      err_dict.items[1] = (KeyValuePair) {
+        .key = STATIC_CSTR_TO_STRING("arg"),
+        .value = STRING_OBJ(STRING_INIT),
+      };
+    } else {
+      err_dict.items[1] = (KeyValuePair) {
+        .key = STATIC_CSTR_TO_STRING("arg"),
+        .value = STRING_OBJ(((String) {
+          .data = xmemdupz(east.err.arg, (size_t)east.err.arg_len),
+          .size = (size_t)east.err.arg_len,
+        })),
+      };
+    }
     ret.items[ret.size++] = (KeyValuePair) {
       .key = STATIC_CSTR_TO_STRING("error"),
       .value = DICTIONARY_OBJ(err_dict),
@@ -1055,6 +1062,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
       .value = ARRAY_OBJ(hl),
     };
   }
+  kvi_destroy(colors);
 
   // Walk over the AST, freeing nodes in process.
   ExprASTConvStack ast_conv_stack;
@@ -1065,11 +1073,11 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
   }));
   while (kv_size(ast_conv_stack)) {
     ExprASTConvStackItem cur_item = kv_last(ast_conv_stack);
-    if (*cur_item.node_p == NULL) {
+    ExprASTNode *const node = *cur_item.node_p;
+    if (node == NULL) {
       assert(kv_size(ast_conv_stack) == 1);
       kv_drop(ast_conv_stack, 1);
     } else {
-      ExprASTNode *const node = *cur_item.node_p;
       if (cur_item.ret_node_p->type == kObjectTypeNil) {
         const size_t ret_node_items_size = (size_t)(
             3  // "type", "start" and "len"
@@ -1116,7 +1124,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
         }));
       } else if (node->next != NULL) {
         kvi_push(ast_conv_stack, ((ExprASTConvStackItem) {
-          .node_p = &node->children,
+          .node_p = &node->next,
           .ret_node_p = cur_item.ret_node_p + 1,
         }));
       } else if (node != NULL) {
@@ -1145,7 +1153,10 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
           case kExprNodeSingleQuotedString: {
             ret_node->items[ret_node->size++] = (KeyValuePair) {
               .key = STATIC_CSTR_TO_STRING("svalue"),
-              .value = STRING_OBJ(cstr_as_string(node->data.str.value)),
+              .value = STRING_OBJ(((String) {
+                .data = node->data.str.value,
+                .size = node->data.str.size,
+              })),
             };
             break;
           }
@@ -1217,7 +1228,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
             ret_node->items[ret_node->size++] = (KeyValuePair) {
               .key = STATIC_CSTR_TO_STRING("ccs_strategy"),
               .value = STRING_OBJ(cstr_to_string(
-                      eltkn_cmp_type_tab[node->data.cmp.ccs])),
+                      ccs_tab[node->data.cmp.ccs])),
             };
             ret_node->items[ret_node->size++] = (KeyValuePair) {
               .key = STATIC_CSTR_TO_STRING("invert"),

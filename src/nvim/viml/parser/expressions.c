@@ -1492,7 +1492,7 @@ static void parse_quoted_string(ParserState *const pstate,
       node->data.str.value = NULL;
     } else {
       char *v_p;
-      v_p = node->data.str.value = xmalloc(size);
+      v_p = node->data.str.value = xmallocz(size);
       p = s + 1;
       while (p < e) {
         const char *const chunk_e = memchr(p, '\'', (size_t)(e - p));

@@ -52,11 +52,6 @@ local function new_pstate(strings)
   return ret
 end
 
-local function intchar2lua(ch)
-  ch = tonumber(ch)
-  return (20 <= ch and ch < 127) and ('%c'):format(ch) or ch
-end
-
 local function pline2lua(pline)
   return ffi.string(pline.data, pline.size)
 end

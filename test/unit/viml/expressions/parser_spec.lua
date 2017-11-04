@@ -15,12 +15,12 @@ local eq = helpers.eq
 
 local conv_ccs = viml_helpers.conv_ccs
 local new_pstate = viml_helpers.new_pstate
-local intchar2lua = viml_helpers.intchar2lua
 local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
 
 local format_string = global_helpers.format_string
 local format_luav = global_helpers.format_luav
+local intchar2lua = global_helpers.intchar2lua
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 
@@ -260,7 +260,8 @@ describe('Expressions parser', function()
       alloc_log:check({})
     end)
     if not err then
-      msg = format_string('Error while processing test (%r, %u):\n%s', str, flags, msg)
+      msg = format_string('Error while processing test (%r, %u):\n%s',
+                          str, flags, msg)
       error(msg)
     end
   end

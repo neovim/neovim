@@ -394,6 +394,11 @@ local function format_string(fmt, ...)
   return ret
 end
 
+local function intchar2lua(ch)
+  ch = tonumber(ch)
+  return (20 <= ch and ch < 127) and ('%c'):format(ch) or ch
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -412,4 +417,5 @@ return {
   dedent = dedent,
   format_luav = format_luav,
   format_string = format_string,
+  intchar2lua = intchar2lua,
 }
