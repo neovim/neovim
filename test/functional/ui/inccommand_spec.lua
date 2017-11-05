@@ -1791,6 +1791,42 @@ describe("'inccommand' with 'gdefault'", function()
     expect("A\nA")
     eq({mode='n', blocking=false}, nvim("get_mode"))
   end)
+
+  it("does not crash on zero-width matches #7485", function()
+    common_setup(nil, "split", default_text)
+    command("set gdefault")
+    feed("gg")
+    feed("Vj")
+    feed(":s/\\%V")
+    eq({mode='c', blocking=false}, nvim("get_mode"))
+    feed("<Esc>")
+    eq({mode='n', blocking=false}, nvim("get_mode"))
+  end)
+
+  it("removes highlights after abort for a zero-width match", function()
+    local screen = Screen.new(30,5)
+    common_setup(screen, "nosplit", default_text)
+    command("set gdefault")
+
+    feed(":%s/\\%1c/a/")
+    screen:expect([[
+      {12:a}Inc substitution on          |
+      {12:a}two lines                    |
+      {12:a}                             |
+      {15:~                             }|
+      :%s/\%1c/a/^                   |
+    ]])
+
+    feed("<Esc>")
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+      ^                              |
+      {15:~                             }|
+                                    |
+    ]])
+  end)
+
 end)
 
 describe(":substitute", function()

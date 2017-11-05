@@ -3478,6 +3478,10 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout)
             else
               ++matchcol;
           }
+          // match will be pushed to preview_lines, bring it into a proper state
+          current_match.start.col = matchcol;
+          current_match.end.lnum = sub_firstlnum;
+          current_match.end.col = matchcol;
           goto skip;
         }
 
