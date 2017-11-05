@@ -922,6 +922,12 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                      Must contain exactly one "%.*s".
 ///           "arg": String, error message argument.
 ///
+///         "len": Amount of bytes successfully parsed. With flags equal to ""
+///                that should be equal to the length of expr string.
+///
+///                @note: “Sucessfully parsed” here means “participated in AST
+///                       creation”, not “till the first error”.
+///
 ///         "ast": actual AST, either nil or a dictionary with the following 
 ///                keys:
 ///
@@ -1000,9 +1006,8 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
       &pstate, parser_simple_get_line, &plines_p, colors_p);
   ExprAST east = viml_pexpr_parse(&pstate, pflags);
 
-  // FIXME add parse_length key
   const size_t ret_size = (
-    1  // "ast"
+    2  // "ast", "len"
     + (size_t)(east.err.msg != NULL)  // "error"
     + (size_t)highlight  // "highlight"
   );
@@ -1014,6 +1019,12 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
   ret.items[ret.size++] = (KeyValuePair) {
     .key = STATIC_CSTR_TO_STRING("ast"),
     .value = NIL,
+  };
+  ret.items[ret.size++] = (KeyValuePair) {
+    .key = STATIC_CSTR_TO_STRING("len"),
+    .value = INTEGER_OBJ((Integer)(pstate.pos.line == 1
+                                   ? plines[0].size
+                                   : pstate.pos.col)),
   };
   if (east.err.msg != NULL) {
     Dictionary err_dict = {

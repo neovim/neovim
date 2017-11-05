@@ -799,6 +799,9 @@ describe('api', function()
       if east_api.ast then
         east_api.ast = {simplify_east_api_node(line, east_api.ast)}
       end
+      if east_api.len == #line then
+        east_api.len = nil
+      end
       return east_api
     end
     local function simplify_east_hl(line, east_hl)
@@ -997,6 +1000,7 @@ describe('api', function()
       }, {
         [1] = {
           ast = {
+            len = 2,
             err = REMOVE_THIS,
             ast = {
               'Register(name=a):0:0:@a'
@@ -1028,6 +1032,7 @@ describe('api', function()
       }, {
         [1] = {
           ast = {
+            len = 6,
             err = REMOVE_THIS,
             ast = {
               'Register(name=a):0:0: @a'
@@ -1236,6 +1241,7 @@ describe('api', function()
       }, {
         [1] = {
           ast = {
+            len = 3,
             err = REMOVE_THIS,
             ast = {
               'Register(name=a):0:0:@a',
@@ -5456,6 +5462,7 @@ describe('api', function()
       }, {
         [1] = {
           ast = {
+            len = 3,
             err = REMOVE_THIS,
             ast = {
               'ListLiteral:0:0:[',
@@ -7135,6 +7142,7 @@ describe('api', function()
       }, {
         [1] = {
           ast = {
+            len = 4,
             err = REMOVE_THIS,
             ast = {
               'Option(scope=0,ident=xxx):0:0:&xxx',
@@ -7520,6 +7528,7 @@ describe('api', function()
       }, {
         [1] = {
           ast = {
+            len = 1,
             err = REMOVE_THIS,
             ast = {
               'Integer(val=1):0:0:1',
@@ -7652,6 +7661,7 @@ describe('api', function()
     end)
     it('respects highlight argument', function()
       eq({
+        len = 1,
         ast = {
           ivalue = 1,
           len = 1,
@@ -7660,6 +7670,7 @@ describe('api', function()
         },
       }, meths.parse_expression('1', '', false))
       eq({
+        len = 1,
         ast = {
           ivalue = 1,
           len = 1,
@@ -7674,6 +7685,7 @@ describe('api', function()
     it('works (KLEE tests)', function()
       check_parsing('\0002&A:\000', {
         ast = {},
+        len = 0,
         err = {
           arg = '\0002&A:\0',
           msg = 'E15: Expected value, got EOC: %.*s',
@@ -7682,6 +7694,7 @@ describe('api', function()
       }, {
         [2] = {
           ast = {
+            len = REMOVE_THIS,
             ast = {
               {
                 'Colon:0:4::',
@@ -7711,6 +7724,7 @@ describe('api', function()
         },
         [3] = {
           ast = {
+            len = 2,
             ast = {
               'Integer(val=2):0:1:2',
             },
@@ -7754,6 +7768,7 @@ describe('api', function()
       check_parsing('|"\\U\\', {
         --           01234
         ast = {},
+        len = 0,
         err = {
           arg = '|"\\U\\',
           msg = 'E15: Expected value, got EOC: %.*s',
@@ -7762,6 +7777,7 @@ describe('api', function()
       }, {
         [2] = {
           ast = {
+            len = REMOVE_THIS,
             ast = {
               {
                 'Or:0:0:|',
@@ -7786,6 +7802,7 @@ describe('api', function()
       check_parsing('|"\\e"', {
         --           01234
         ast = {},
+        len = 0,
         err = {
           arg = '|"\\e"',
           msg = 'E15: Expected value, got EOC: %.*s',
@@ -7794,6 +7811,7 @@ describe('api', function()
       }, {
         [2] = {
           ast = {
+            len = REMOVE_THIS,
             ast = {
               {
                 'Or:0:0:|',
@@ -7818,6 +7836,7 @@ describe('api', function()
       check_parsing('|\029', {
         --           01
         ast = {},
+        len = 0,
         err = {
           arg = '|\029',
           msg = 'E15: Expected value, got EOC: %.*s',
@@ -7826,6 +7845,7 @@ describe('api', function()
       }, {
         [2] = {
           ast = {
+            len = REMOVE_THIS,
             ast = {
               {
                 'Or:0:0:|',
@@ -7892,6 +7912,7 @@ describe('api', function()
       }, {
         [1] = {
           ast = {
+            len = 1,
             ast = {
               'UnknownFigure:0:0:',
             },
@@ -7917,6 +7938,7 @@ describe('api', function()
             },
           },
         },
+        len = 2,
         err = {
           arg = ':?\000\000\000\000\000\000\000',
           msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
@@ -7926,6 +7948,9 @@ describe('api', function()
         hl('InvalidTernary', '?'),
       }, {
         [2] = {
+          ast = {
+            len = REMOVE_THIS,
+          },
           hl_fs = {
             [3] = hl('InvalidSpacing', '\0'),
             [4] = hl('InvalidSpacing', '\0'),
