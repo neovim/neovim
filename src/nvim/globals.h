@@ -16,7 +16,6 @@
 
 #define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
 
-#define MAX_MCO        6                 // maximum value for 'maxcombine'
 
 # define MSG_BUF_LEN 480                 // length of buffer for small messages
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
@@ -126,12 +125,6 @@ typedef off_t off_T;
 #endif
 
 /*
- * The characters and attributes cached for the screen.
- */
-typedef char_u schar_T;
-typedef unsigned short sattr_T;
-
-/*
  * The characters that are currently on the screen are kept in ScreenLines[].
  * It is a single block of characters, the size of the screen plus one line.
  * The attributes for those characters are kept in ScreenAttrs[].
@@ -160,13 +153,13 @@ EXTERN u8char_T *ScreenLinesC[MAX_MCO];         /* composing characters */
 EXTERN int Screen_mco INIT(= 0);                /* value of p_mco used when
                                                    allocating ScreenLinesC[] */
 
-/* Only used for euc-jp: Second byte of a character that starts with 0x8e.
- * These are single-width. */
+/// Obsolete. Remove this when all enc_dbcs contitions are gone.
 EXTERN schar_T  *ScreenLines2 INIT(= NULL);
 
 EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
 EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
 
+EXTERN ScreenGrid default_grid INIT(= {0});
 /*
  * When vgetc() is called, it sets mod_mask to the set of modifiers that are
  * held down based on the MOD_MASK_* symbols that are read first.

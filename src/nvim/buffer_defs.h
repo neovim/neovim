@@ -1173,6 +1173,9 @@ struct window_S {
    * In a non-location list window, w_llist_ref is NULL.
    */
   qf_info_T   *w_llist_ref;
+
+  ScreenGrid grid; // own grid, only used for floats
+
 };
 
 static inline int win_hl_attr(win_T *wp, int hlf)

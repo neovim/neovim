@@ -154,6 +154,10 @@ static foldinfo_T win_foldinfo; /* info for 'foldcolumn' */
 static schar_T  *current_ScreenLine;
 
 StlClickDefinition *tab_page_click_defs = NULL;
+
+int grid_Rows = 0;
+int grid_Columns = 0;
+
 long tab_page_click_defs_size = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -6096,23 +6100,9 @@ int screen_valid(int doclear)
  */
 void screenalloc(bool doclear)
 {
-  int new_row, old_row;
-  int outofmem = FALSE;
-  int len;
-  schar_T         *new_ScreenLines;
-  u8char_T        *new_ScreenLinesUC = NULL;
-  u8char_T        *new_ScreenLinesC[MAX_MCO];
-  schar_T         *new_ScreenLines2 = NULL;
-  int i;
-  sattr_T         *new_ScreenAttrs;
-  unsigned        *new_LineOffset;
-  char_u          *new_LineWraps;
   StlClickDefinition *new_tab_page_click_defs;
   static bool entered = false;  // avoid recursiveness
-  static bool done_outofmem_msg = false;
   int retry_count = 0;
-  const bool l_enc_utf8 = enc_utf8;
-  const int l_enc_dbcs = enc_dbcs;
 
 retry:
   /*
@@ -6120,12 +6110,10 @@ retry:
    * when Rows and Columns have been set and we have started doing full
    * screen stuff.
    */
-  if ((ScreenLines != NULL
+  if ((default_grid.ScreenLines != NULL
        && Rows == screen_Rows
        && Columns == screen_Columns
-       && l_enc_utf8 == (ScreenLinesUC != NULL)
-       && (l_enc_dbcs == DBCS_JPNU) == (ScreenLines2 != NULL)
-       && p_mco == Screen_mco
+       && p_mco == default_grid.Screen_mco
        )
       || Rows == 0
       || Columns == 0
@@ -6168,20 +6156,7 @@ retry:
   if (aucmd_win != NULL)
     win_free_lsize(aucmd_win);
 
-  new_ScreenLines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
-  memset(new_ScreenLinesC, 0, sizeof(u8char_T *) * MAX_MCO);
-  if (l_enc_utf8) {
-    new_ScreenLinesUC = xmalloc(
-        (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
-    for (i = 0; i < p_mco; ++i)
-      new_ScreenLinesC[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
-  }
-  if (l_enc_dbcs == DBCS_JPNU)
-    new_ScreenLines2 = xmalloc(
-        (size_t)((Rows + 1) * Columns * sizeof(schar_T)));
-  new_ScreenAttrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
-  new_LineOffset = xmalloc((size_t)(Rows * sizeof(unsigned)));
-  new_LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
+  alloc_grid(&default_grid, Rows, Columns, !doclear);
   new_tab_page_click_defs = xcalloc(
       (size_t) Columns, sizeof(*new_tab_page_click_defs));
 
@@ -6192,121 +6167,11 @@ retry:
     win_alloc_lines(aucmd_win);
   }
 
-  for (i = 0; i < p_mco; ++i)
-    if (new_ScreenLinesC[i] == NULL)
-      break;
-  if (new_ScreenLines == NULL
-      || (new_ScreenLinesUC == NULL || i != p_mco)
-      || new_ScreenAttrs == NULL
-      || new_LineOffset == NULL
-      || new_LineWraps == NULL
-      || new_tab_page_click_defs == NULL
-      || outofmem) {
-    if (ScreenLines != NULL || !done_outofmem_msg) {
-      /* guess the size */
-      do_outofmem_msg((Rows + 1) * Columns);
+  clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
+  xfree(tab_page_click_defs);
 
-      /* Remember we did this to avoid getting outofmem messages over
-       * and over again. */
-      done_outofmem_msg = TRUE;
-    }
-    xfree(new_ScreenLines);
-    new_ScreenLines = NULL;
-    xfree(new_ScreenLinesUC);
-    new_ScreenLinesUC = NULL;
-    for (i = 0; i < p_mco; ++i) {
-      xfree(new_ScreenLinesC[i]);
-      new_ScreenLinesC[i] = NULL;
-    }
-    xfree(new_ScreenLines2);
-    new_ScreenLines2 = NULL;
-    xfree(new_ScreenAttrs);
-    new_ScreenAttrs = NULL;
-    xfree(new_LineOffset);
-    new_LineOffset = NULL;
-    xfree(new_LineWraps);
-    new_LineWraps = NULL;
-    xfree(new_tab_page_click_defs);
-    new_tab_page_click_defs = NULL;
-  } else {
-    done_outofmem_msg = FALSE;
+  set_screengrid(&default_grid);
 
-    for (new_row = 0; new_row < Rows; ++new_row) {
-      new_LineOffset[new_row] = new_row * Columns;
-      new_LineWraps[new_row] = FALSE;
-
-      /*
-       * If the screen is not going to be cleared, copy as much as
-       * possible from the old screen to the new one and clear the rest
-       * (used when resizing the window at the "--more--" prompt or when
-       * executing an external command, for the GUI).
-       */
-      if (!doclear) {
-        (void)memset(new_ScreenLines + new_row * Columns,
-            ' ', (size_t)Columns * sizeof(schar_T));
-        if (l_enc_utf8) {
-          (void)memset(new_ScreenLinesUC + new_row * Columns,
-              0, (size_t)Columns * sizeof(u8char_T));
-          for (i = 0; i < p_mco; ++i)
-            (void)memset(new_ScreenLinesC[i]
-                + new_row * Columns,
-                0, (size_t)Columns * sizeof(u8char_T));
-        }
-        if (l_enc_dbcs == DBCS_JPNU)
-          (void)memset(new_ScreenLines2 + new_row * Columns,
-              0, (size_t)Columns * sizeof(schar_T));
-        (void)memset(new_ScreenAttrs + new_row * Columns,
-            0, (size_t)Columns * sizeof(sattr_T));
-        old_row = new_row + (screen_Rows - Rows);
-        if (old_row >= 0 && ScreenLines != NULL) {
-          if (screen_Columns < Columns)
-            len = screen_Columns;
-          else
-            len = Columns;
-          /* When switching to utf-8 don't copy characters, they
-           * may be invalid now.  Also when p_mco changes. */
-          if (!(l_enc_utf8 && ScreenLinesUC == NULL)
-              && p_mco == Screen_mco)
-            memmove(new_ScreenLines + new_LineOffset[new_row],
-                ScreenLines + LineOffset[old_row],
-                (size_t)len * sizeof(schar_T));
-          if (l_enc_utf8 && ScreenLinesUC != NULL
-              && p_mco == Screen_mco) {
-            memmove(new_ScreenLinesUC + new_LineOffset[new_row],
-                ScreenLinesUC + LineOffset[old_row],
-                (size_t)len * sizeof(u8char_T));
-            for (i = 0; i < p_mco; ++i)
-              memmove(new_ScreenLinesC[i]
-                  + new_LineOffset[new_row],
-                  ScreenLinesC[i] + LineOffset[old_row],
-                  (size_t)len * sizeof(u8char_T));
-          }
-          if (ScreenLines2 != NULL) {
-            memmove(new_ScreenLines2 + new_LineOffset[new_row],
-                    ScreenLines2 + LineOffset[old_row],
-                    (size_t)len * sizeof(schar_T));
-          }
-          memmove(new_ScreenAttrs + new_LineOffset[new_row],
-                  ScreenAttrs + LineOffset[old_row],
-                  (size_t)len * sizeof(sattr_T));
-        }
-      }
-    }
-    /* Use the last line of the screen for the current line. */
-    current_ScreenLine = new_ScreenLines + Rows * Columns;
-  }
-
-  free_screenlines();
-
-  ScreenLines = new_ScreenLines;
-  ScreenLinesUC = new_ScreenLinesUC;
-  for (i = 0; i < p_mco; ++i)
-    ScreenLinesC[i] = new_ScreenLinesC[i];
-  Screen_mco = p_mco;
-  ScreenLines2 = new_ScreenLines2;
-  ScreenAttrs = new_ScreenAttrs;
-  LineOffset = new_LineOffset;
-  LineWraps = new_LineWraps;
   tab_page_click_defs = new_tab_page_click_defs;
   tab_page_click_defs_size = Columns;
 
@@ -6335,20 +6200,107 @@ retry:
   }
 }
 
-void free_screenlines(void)
+void alloc_grid(ScreenGrid *grid, int Rows, int Columns, bool copy)
+{
+  int len;
+  int i;
+  
+  int new_row, old_row;
+  ScreenGrid new = {0};
+
+  new.ScreenLines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
+  memset(new.ScreenLinesC, 0, sizeof(u8char_T *) * MAX_MCO);
+  new.ScreenLinesUC = xmalloc(
+        (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
+  for (i = 0; i < p_mco; ++i)
+    new.ScreenLinesC[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
+  new.Screen_mco = p_mco;
+  new.ScreenAttrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
+  new.LineOffset = xmalloc((size_t)(Rows * sizeof(unsigned)));
+  new.LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
+
+  new.Rows = Rows;
+  new.Columns = Columns;
+
+  for (new_row = 0; new_row < Rows; ++new_row) {
+    new.LineOffset[new_row] = new_row * Columns;
+    new.LineWraps[new_row] = false;
+    if (copy) {
+
+    /*
+     * If the screen is not going to be cleared, copy as much as
+     * possible from the old screen to the new one and clear the rest
+     * (used when resizing the window at the "--more--" prompt or when
+     * executing an external command, for the GUI).
+     */
+      (void)memset(new.ScreenLines + new_row * Columns,
+          ' ', (size_t)Columns * sizeof(schar_T));
+      (void)memset(new.ScreenLinesUC + new_row * Columns,
+          0, (size_t)Columns * sizeof(u8char_T));
+      for (i = 0; i < p_mco; ++i)
+        (void)memset(new.ScreenLinesC[i]
+            + new_row * Columns,
+            0, (size_t)Columns * sizeof(u8char_T));
+      (void)memset(new.ScreenAttrs + new_row * Columns,
+          0, (size_t)Columns * sizeof(sattr_T));
+      old_row = new_row + (screen_Rows - Rows);
+      if (old_row >= 0 && grid->ScreenLines != NULL) {
+        if (screen_Columns < Columns)
+          len = screen_Columns;
+        else
+          len = Columns;
+        /* When switching to utf-8 don't copy characters, they
+         * may be invalid now.  Also when p_mco changes. */
+        if (grid->ScreenLinesUC != NULL && p_mco == Screen_mco)
+          memmove(new.ScreenLines + new.LineOffset[new_row],
+              grid->ScreenLines + LineOffset[old_row],
+              (size_t)len * sizeof(schar_T));
+        if (grid->ScreenLinesUC != NULL && p_mco == Screen_mco) {
+          memmove(new.ScreenLinesUC + new.LineOffset[new_row],
+              grid->ScreenLinesUC + LineOffset[old_row],
+              (size_t)len * sizeof(u8char_T));
+          for (i = 0; i < p_mco; ++i)
+            memmove(new.ScreenLinesC[i]
+                + new.LineOffset[new_row],
+                grid->ScreenLinesC[i] + LineOffset[old_row],
+                (size_t)len * sizeof(u8char_T));
+        }
+        memmove(new.ScreenAttrs + new.LineOffset[new_row],
+            grid->ScreenAttrs + LineOffset[old_row],
+            (size_t)len * sizeof(sattr_T));
+      }
+    }
+  }
+  free_screengrid(grid);
+  *grid = new;
+}
+
+
+void free_screengrid(ScreenGrid *grid)
 {
   int i;
 
-  xfree(ScreenLinesUC);
+  xfree(grid->ScreenLinesUC);
   for (i = 0; i < Screen_mco; ++i)
-    xfree(ScreenLinesC[i]);
-  xfree(ScreenLines2);
-  xfree(ScreenLines);
-  xfree(ScreenAttrs);
-  xfree(LineOffset);
-  xfree(LineWraps);
-  clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
-  xfree(tab_page_click_defs);
+    xfree(grid->ScreenLinesC[i]);
+  xfree(grid->ScreenLines);
+  xfree(grid->ScreenAttrs);
+  xfree(grid->LineOffset);
+  xfree(grid->LineWraps);
+}
+
+void set_screengrid(ScreenGrid *grid)
+{
+  ScreenLines = grid->ScreenLines;
+  ScreenAttrs = grid->ScreenAttrs;
+  ScreenLinesUC = grid->ScreenLinesUC;
+  memcpy(ScreenLinesC,grid->ScreenLinesC,sizeof(ScreenLinesC));
+  LineOffset = grid->LineOffset;
+  LineWraps = grid->LineWraps;
+  grid_Rows = grid->Rows;
+  grid_Columns = grid->Columns;
+  current_ScreenLine = ScreenLines + grid_Rows * grid_Columns;
+  Screen_mco = grid->Screen_mco;
 }
 
 /// Clear tab_page_click_defs table
