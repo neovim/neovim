@@ -3,6 +3,44 @@
 
 /// VimL expression parser
 
+// Planned incompatibilities (to be included into vim_diff.txt when this parser
+// will be an actual part of VimL evaluation process):
+//
+// 1. Expressions are first fully parsed and only then executed.  This means
+//    that while ":echo [system('touch abc')" will create file "abc" in Vim and
+//    only then raise syntax error regarding missing comma in list in Neovim
+//    trying to execute that will immediately raise syntax error regarding
+//    missing list end without actually executing anything.
+// 2. Expressions are first fully parsed, without considering any runtime
+//    information.  This means things like that "d.a" does not change its
+//    meaning depending on type of "d" (or whether Vim is currently executing or
+//    skipping).  For compatibility reasons the dot thus may either be “concat
+//    or subscript” operator or just “concat” operator.
+// 3. Expressions parser is aware whether it is called for :echo or <C-r>=.
+//    This means that while "<C-r>=1 | 2<CR>" is equivalent to "<C-r>=1<CR>"
+//    because "| 2" part is left to be treated as a command separator and then
+//    ignored in Neovim it is an error.
+// 4. Expressions parser has generally better error reporting.  But for
+//    compatibility reasons most errors have error code E15 while error messages
+//    are significantly different from Vim’s E15.  Also some error codes were 
+//    retired because of being harder to emulate or because of them being
+//    a result of differences in parsing process: e.g. with ":echo {a, b}" Vim
+//    will attempt to parse expression as lambda, fail, check whether it is
+//    a curly-braces-name, fail again, and evaluate that as a dictionary, giving
+//    error regarding undefined variable "a" (or about missing colon).  Neovim
+//    will not try to evaluate anything here: comma right after an argument name
+//    means that expression may not be anything, but lambda, so the resulting
+//    error message will never be about missing variable or colon: it will be
+//    about missing arrow (or a continuation of argument list).
+// 5. Failing to parse expression always gives exactly one error message: no
+//    more stack of error messages like >
+//
+//        :echo [1,
+//        E697: Missing end of List ']':
+//        E15: Invalid expression: [1,
+//
+// <  , just exactly one E697 message.
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <assert.h>
