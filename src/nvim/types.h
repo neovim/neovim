@@ -15,4 +15,22 @@ typedef uint32_t u8char_T;
 
 typedef struct expand expand_T;
 
+#define MAX_MCO        6                 // maximum value for 'maxcombine'
+
+
+// The characters and attributes cached for the screen.
+typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
+typedef int16_t sattr_T;
+
+// TODO(bfredl): find me a good home
+typedef struct {
+  schar_T  *ScreenLines;
+  sattr_T  *ScreenAttrs;
+  unsigned *LineOffset;
+  char_u   *LineWraps;
+
+  int Rows;
+  int Columns;
+} ScreenGrid;
+
 #endif  // NVIM_TYPES_H

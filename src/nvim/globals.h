@@ -128,12 +128,6 @@ typedef off_t off_T;
 # endif
 #endif
 
-/*
- * The characters and attributes cached for the screen.
- */
-typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
-typedef int16_t sattr_T;
-
 /// ScreenLines[] contains a copy of the whole screen, as it currently is
 /// displayed. It is a single block of screen cells, the size of the screen
 /// plus one line. The extra line used as a buffer while redrawing a window
@@ -166,6 +160,8 @@ EXTERN char_u   *LineWraps INIT(= NULL);        /* line wraps to next line */
 
 EXTERN int screen_Rows INIT(= 0);           /* actual size of ScreenLines[] */
 EXTERN int screen_Columns INIT(= 0);        /* actual size of ScreenLines[] */
+
+EXTERN ScreenGrid default_grid INIT(= { 0 });
 
 /*
  * When vgetc() is called, it sets mod_mask to the set of modifiers that are

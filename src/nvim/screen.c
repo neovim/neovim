@@ -130,6 +130,10 @@ static foldinfo_T win_foldinfo; /* info for 'foldcolumn' */
 static schar_T  *current_ScreenLine;
 
 StlClickDefinition *tab_page_click_defs = NULL;
+
+int grid_Rows = 0;
+int grid_Columns = 0;
+
 long tab_page_click_defs_size = 0;
 
 // for line_putchar. Contains the state that needs to be remembered from
@@ -5883,8 +5887,6 @@ int screen_valid(int doclear)
  */
 void screenalloc(bool doclear)
 {
-  int new_row, old_row;
-  int len;
   static bool entered = false;  // avoid recursiveness
   int retry_count = 0;
 
@@ -5892,7 +5894,7 @@ retry:
   // Allocation of the screen buffers is done only when the size changes and
   // when Rows and Columns have been set and we have started doing full
   // screen stuff.
-  if ((ScreenLines != NULL
+  if ((default_grid.ScreenLines != NULL
        && Rows == screen_Rows
        && Columns == screen_Columns
        )
@@ -5938,13 +5940,7 @@ retry:
   if (aucmd_win != NULL)
     win_free_lsize(aucmd_win);
 
-  // Allocate space for an extra row as scratch space, so that a redrawn
-  // line can be compared with the previous screen line state.
-  size_t ncells = (size_t)((Rows+1) * Columns);
-  schar_T *new_ScreenLines = xmalloc(ncells * sizeof(*new_ScreenLines));
-  sattr_T *new_ScreenAttrs = xmalloc(ncells * sizeof(*new_ScreenAttrs));
-  unsigned *new_LineOffset = xmalloc((size_t)(Rows * sizeof(*new_LineOffset)));
-  char_u *new_LineWraps = xmalloc((size_t)(Rows * sizeof(*new_LineWraps)));
+  alloc_grid(&default_grid, Rows, Columns, !doclear);
   StlClickDefinition *new_tab_page_click_defs = xcalloc(
       (size_t)Columns, sizeof(*new_tab_page_click_defs));
 
@@ -5955,46 +5951,11 @@ retry:
     win_alloc_lines(aucmd_win);
   }
 
-  for (new_row = 0; new_row < Rows; new_row++) {
-    new_LineOffset[new_row] = new_row * Columns;
-    new_LineWraps[new_row] = false;
+  clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
+  xfree(tab_page_click_defs);
 
-    // If the screen is not going to be cleared, copy as much as
-    // possible from the old screen to the new one and clear the rest
-    // (used when resizing the window at the "--more--" prompt or when
-    // executing an external command, for the GUI).
-    if (!doclear) {
-      for (int col = 0; col < Columns; col++) {
-        schar_from_ascii(new_ScreenLines[new_row * Columns + col], ' ');
-      }
-      memset(new_ScreenAttrs + new_row * Columns,
-             0, (size_t)Columns * sizeof(*new_ScreenAttrs));
-      old_row = new_row + (screen_Rows - Rows);
-      if (old_row >= 0 && ScreenLines != NULL) {
-        if (screen_Columns < Columns) {
-          len = screen_Columns;
-        } else {
-          len = Columns;
-        }
+  set_screengrid(&default_grid);
 
-        memmove(new_ScreenLines + new_LineOffset[new_row],
-                ScreenLines + LineOffset[old_row],
-                (size_t)len * sizeof(schar_T));
-        memmove(new_ScreenAttrs + new_LineOffset[new_row],
-                ScreenAttrs + LineOffset[old_row],
-                (size_t)len * sizeof(new_ScreenAttrs[0]));
-      }
-    }
-  }
-  // Use the last line of the screen for the current line.
-  current_ScreenLine = new_ScreenLines + Rows * Columns;
-
-  free_screenlines();
-
-  ScreenLines = new_ScreenLines;
-  ScreenAttrs = new_ScreenAttrs;
-  LineOffset = new_LineOffset;
-  LineWraps = new_LineWraps;
   tab_page_click_defs = new_tab_page_click_defs;
   tab_page_click_defs_size = Columns;
 
@@ -6023,14 +5984,66 @@ retry:
   }
 }
 
-void free_screenlines(void)
+void alloc_grid(ScreenGrid *grid, int Rows, int Columns, bool copy)
 {
-  xfree(ScreenLines);
-  xfree(ScreenAttrs);
-  xfree(LineOffset);
-  xfree(LineWraps);
-  clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
-  xfree(tab_page_click_defs);
+  int new_row, old_row;
+  ScreenGrid new = { 0 };
+
+  size_t ncells = (size_t)((Rows+1) * Columns);
+  new.ScreenLines = xmalloc(ncells * sizeof(schar_T));
+  new.ScreenAttrs = xmalloc(ncells * sizeof(sattr_T));
+  new.LineOffset = xmalloc((size_t)(Rows * sizeof(unsigned)));
+  new.LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
+
+  new.Rows = Rows;
+  new.Columns = Columns;
+
+  for (new_row = 0; new_row < Rows; new_row++) {
+    new.LineOffset[new_row] = new_row * Columns;
+    new.LineWraps[new_row] = false;
+    if (copy) {
+      // If the screen is not going to be cleared, copy as much as
+      // possible from the old screen to the new one and clear the rest
+      // (used when resizing the window at the "--more--" prompt or when
+      // executing an external command, for the GUI).
+      memset(new.ScreenLines + new_row * Columns,
+             ' ', (size_t)Columns * sizeof(schar_T));
+      memset(new.ScreenAttrs + new_row * Columns,
+             0, (size_t)Columns * sizeof(sattr_T));
+      old_row = new_row + (grid->Rows - Rows);
+      if (old_row >= 0 && grid->ScreenLines != NULL) {
+        int len = MIN(grid->Columns, Columns);
+        memmove(new.ScreenLines + new.LineOffset[new_row],
+                grid->ScreenLines + grid->LineOffset[old_row],
+                (size_t)len * sizeof(schar_T));
+        memmove(new.ScreenAttrs + new.LineOffset[new_row],
+                grid->ScreenAttrs + grid->LineOffset[old_row],
+                (size_t)len * sizeof(sattr_T));
+      }
+    }
+  }
+  free_screengrid(grid);
+  *grid = new;
+}
+
+
+void free_screengrid(ScreenGrid *grid)
+{
+  xfree(grid->ScreenLines);
+  xfree(grid->ScreenAttrs);
+  xfree(grid->LineOffset);
+  xfree(grid->LineWraps);
+}
+
+void set_screengrid(ScreenGrid *grid)
+{
+  ScreenLines = grid->ScreenLines;
+  ScreenAttrs = grid->ScreenAttrs;
+  LineOffset = grid->LineOffset;
+  LineWraps = grid->LineWraps;
+  grid_Rows = grid->Rows;
+  grid_Columns = grid->Columns;
+  current_ScreenLine = ScreenLines + grid_Rows * grid_Columns;
 }
 
 /// Clear tab_page_click_defs table
