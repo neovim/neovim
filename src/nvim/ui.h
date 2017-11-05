@@ -13,8 +13,9 @@ typedef enum {
   kUIPopupmenu,
   kUITabline,
   kUIWildmenu,
+  kUIMultigrid,
 } UIWidget;
-#define UI_WIDGETS (kUIWildmenu + 1)
+#define UI_WIDGETS (kUIMultigrid + 1)
 
 typedef struct {
   bool bold, underline, undercurl, italic, reverse;

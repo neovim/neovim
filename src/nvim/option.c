@@ -4129,6 +4129,9 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   }
   /* (re)set tab page line */
   else if (pp == &p_stal) {
+    if (ui_is_external(kUIMultigrid)) {
+      p_stal=0;
+    }
     shell_new_rows();           /* recompute window positions and heights */
   }
   /* 'foldlevel' */

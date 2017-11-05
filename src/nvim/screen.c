@@ -155,9 +155,6 @@ static schar_T  *current_ScreenLine;
 
 StlClickDefinition *tab_page_click_defs = NULL;
 
-int grid_Rows = 0;
-int grid_Columns = 0;
-
 long tab_page_click_defs_size = 0;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -202,7 +199,8 @@ void redraw_later_clear(void)
  */
 void redraw_all_later(int type)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  //FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     redraw_win_later(wp, type);
   }
 }
@@ -217,7 +215,8 @@ void redraw_curbuf_later(int type)
 
 void redraw_buf_later(buf_T *buf, int type)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  //FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
       redraw_win_later(wp, type);
     }
@@ -261,6 +260,16 @@ void update_curbuf(int type)
 {
   redraw_curbuf_later(type);
   update_screen(type);
+}
+
+
+void set_tabpage_grid(tabpage_T* tp) {
+  ui_call_set_grid(tp->handle);
+  if (tp->grid.Columns == 0 || tp->grid.Rows == 0) {
+    alloc_screengrid(&tp->grid, Rows, Columns, false);
+    ui_call_resize(tp->grid.Columns, tp->grid.Rows);
+  }
+  set_screengrid(&tp->grid);
 }
 
 /*
@@ -400,7 +409,13 @@ void update_screen(int type)
    * Correct stored syntax highlighting info for changes in each displayed
    * buffer.  Each buffer must only be done once.
    */
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (ui_is_external(kUIMultigrid)) {
+    } else {
+      if (tp != curtab) {
+        continue;
+      }
+    }
     update_window_hl(wp, type >= NOT_VALID);
 
     if (wp->w_buffer->b_mod_set) {
@@ -424,18 +439,43 @@ void update_screen(int type)
    */
   did_one = FALSE;
   search_hl.rm.regprog = NULL;
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_redr_type != 0) {
-      if (!did_one) {
-        did_one = TRUE;
-        start_search_hl();
-      }
-      win_update(wp);
-    }
 
-    /* redraw status line after the window to minimize cursor movement */
-    if (wp->w_redr_status) {
-      win_redr_status(wp);
+  tabpage_T *save_curtab = curtab;
+
+  FOR_ALL_TABS(tp) {
+    if (!ui_is_external(kUIMultigrid)) {
+      if (tp != curtab) {
+        continue;
+      }
+    }
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      if (wp->w_redr_type != 0) {
+        if(ui_is_external(kUIMultigrid) && current_grid != &tp->grid) {
+          set_tabpage_grid(tp);
+          // curtab = tp // comeon let's pretend
+        }
+        if (!did_one) {
+          did_one = TRUE;
+          start_search_hl();
+        }
+        win_update(wp);
+      }
+
+      /* redraw status line after the window to minimize cursor movement */
+      if (wp->w_redr_status) {
+        if(ui_is_external(kUIMultigrid) && current_grid != &tp->grid) {
+          set_tabpage_grid(tp);
+          // curtab = tp // comeon let's pretent
+        }
+        win_redr_status(wp);
+      }
+    }
+  }
+
+  if (ui_is_external(kUIMultigrid)) {
+    curtab = save_curtab;
+    if (current_grid != &curtab->grid) {
+      set_tabpage_grid(curtab);
     }
   }
   end_search_hl();
@@ -446,7 +486,13 @@ void update_screen(int type)
 
   /* Reset b_mod_set flags.  Going through all windows is probably faster
    * than going through all buffers (there could be many buffers). */
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (ui_is_external(kUIMultigrid)) {
+    } else {
+      if (tp != curtab) {
+        continue;
+      }
+    }
     wp->w_buffer->b_mod_set = false;
   }
 
@@ -559,7 +605,9 @@ void update_debug_sign(buf_T *buf, linenr_T lnum)
     int  doit = FALSE;
     win_foldinfo.fi_level = 0;
 
+    // TODO(bfredl)
     /* update/delete a specific mark */
+    //FOR_ALL_TAB_WINDOWS(tp, wp) {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (buf != NULL && lnum > 0) {
         if (wp->w_buffer == buf && lnum >= wp->w_topline
@@ -589,6 +637,7 @@ void update_debug_sign(buf_T *buf, linenr_T lnum)
     /* update all windows that need updating */
     update_prepare();
 
+    //FOR_ALL_TAB_WINDOWS(tp, wp) {
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_redr_type != 0) {
         win_update(wp);
@@ -4595,7 +4644,8 @@ void rl_mirror(char_u *str)
 void status_redraw_all(void)
 {
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+  //FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_status_height) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
@@ -4608,7 +4658,8 @@ void status_redraw_all(void)
  */
 void status_redraw_curbuf(void)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+  //FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_status_height != 0 && wp->w_buffer == curbuf) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
@@ -4621,9 +4672,25 @@ void status_redraw_curbuf(void)
  */
 void redraw_statuslines(void)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (!ui_is_external(kUIMultigrid)) {
+      if (tp != curtab) {
+        continue;
+      }
+    }
+
     if (wp->w_redr_status) {
+        if(ui_is_external(kUIMultigrid) && current_grid != &tp->grid) {
+          set_tabpage_grid(tp);
+          // curtab = tp // comeon let's pretend
+        }
       win_redr_status(wp);
+    }
+  }
+  if (ui_is_external(kUIMultigrid)) {
+    if (current_grid != &curtab->grid) {
+      set_tabpage_grid(curtab);
     }
   }
   if (redraw_tabline)
@@ -6104,16 +6171,18 @@ void screenalloc(bool doclear)
   static bool entered = false;  // avoid recursiveness
   int retry_count = 0;
 
+  ScreenGrid *grid = current_grid;
+
 retry:
   /*
    * Allocation of the screen buffers is done only when the size changes and
    * when Rows and Columns have been set and we have started doing full
    * screen stuff.
    */
-  if ((default_grid.ScreenLines != NULL
+  if ((grid->ScreenLines != NULL
        && Rows == screen_Rows
        && Columns == screen_Columns
-       && p_mco == default_grid.Screen_mco
+       && p_mco == grid->Screen_mco
        )
       || Rows == 0
       || Columns == 0
@@ -6156,7 +6225,7 @@ retry:
   if (aucmd_win != NULL)
     win_free_lsize(aucmd_win);
 
-  alloc_grid(&default_grid, Rows, Columns, !doclear);
+  alloc_screengrid(grid, Rows, Columns, !doclear);
   new_tab_page_click_defs = xcalloc(
       (size_t) Columns, sizeof(*new_tab_page_click_defs));
 
@@ -6170,15 +6239,10 @@ retry:
   clear_tab_page_click_defs(tab_page_click_defs, tab_page_click_defs_size);
   xfree(tab_page_click_defs);
 
-  set_screengrid(&default_grid);
+  set_screengrid(grid);
 
   tab_page_click_defs = new_tab_page_click_defs;
   tab_page_click_defs_size = Columns;
-
-  /* It's important that screen_Rows and screen_Columns reflect the actual
-   * size of ScreenLines[].  Set them before calling anything. */
-  screen_Rows = Rows;
-  screen_Columns = Columns;
 
   must_redraw = CLEAR;          /* need to clear the screen later */
   if (doclear)
@@ -6200,7 +6264,7 @@ retry:
   }
 }
 
-void alloc_grid(ScreenGrid *grid, int Rows, int Columns, bool copy)
+void alloc_screengrid(ScreenGrid *grid, int Rows, int Columns, bool copy)
 {
   int len;
   int i;
@@ -6291,15 +6355,16 @@ void free_screengrid(ScreenGrid *grid)
 
 void set_screengrid(ScreenGrid *grid)
 {
+  current_grid = grid;
   ScreenLines = grid->ScreenLines;
   ScreenAttrs = grid->ScreenAttrs;
   ScreenLinesUC = grid->ScreenLinesUC;
   memcpy(ScreenLinesC,grid->ScreenLinesC,sizeof(ScreenLinesC));
   LineOffset = grid->LineOffset;
   LineWraps = grid->LineWraps;
-  grid_Rows = grid->Rows;
-  grid_Columns = grid->Columns;
-  current_ScreenLine = ScreenLines + grid_Rows * grid_Columns;
+  screen_Rows = Rows = grid->Rows;
+  screen_Columns = Columns = grid->Columns;
+  current_ScreenLine = ScreenLines + Rows * Columns;
   Screen_mco = grid->Screen_mco;
 }
 

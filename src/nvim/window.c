@@ -3256,6 +3256,11 @@ leave_tabpage (
  */
 static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_autocmds, int trigger_leave_autocmds)
 {
+
+  if (ui_is_external(kUIMultigrid)) {
+    set_tabpage_grid(tp);
+  }
+
   int old_off = tp->tp_firstwin->w_winrow;
   win_T       *next_prevwin = tp->tp_prevwin;
 
@@ -3368,6 +3373,7 @@ void goto_tabpage_tp(tabpage_T *tp, int trigger_enter_autocmds, int trigger_leav
 
   if (tp != curtab && leave_tabpage(tp->tp_curwin->w_buffer,
           trigger_leave_autocmds) == OK) {
+
     if (valid_tabpage(tp))
       enter_tabpage(tp, curbuf, trigger_enter_autocmds,
           trigger_leave_autocmds);

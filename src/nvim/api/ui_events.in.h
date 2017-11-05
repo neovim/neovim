@@ -91,4 +91,7 @@ void wildmenu_select(Integer selected)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void wildmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+
+void set_grid(Integer nr)
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 #endif  // NVIM_API_UI_EVENTS_IN_H
