@@ -18,9 +18,11 @@ local new_pstate = viml_helpers.new_pstate
 local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
 
+local mergedicts_copy = global_helpers.mergedicts_copy
 local format_string = global_helpers.format_string
 local format_luav = global_helpers.format_luav
 local intchar2lua = global_helpers.intchar2lua
+local REMOVE_THIS = global_helpers.REMOVE_THIS
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 
@@ -228,41 +230,58 @@ child_call_once(function()
 end)
 
 describe('Expressions parser', function()
-  local function check_parsing(str, flags, exp_ast, exp_highlighting_fs)
-    local err, msg = pcall(function()
-      flags = flags or 0
-
-      if os.getenv('NVIM_TEST_PARSER_SPEC_PRINT_TEST_CASE') == '1' then
-        print(str, flags)
-      end
-      alloc_log:check({})
-
-      local pstate = new_pstate({str})
-      local east = lib.viml_pexpr_parse(pstate, flags)
-      local ast = east2lua(pstate, east)
-      local hls = phl2lua(pstate)
-      if exp_ast == nil then
-        format_check(str, flags, ast, hls)
-      else
-        eq(exp_ast, ast)
-        if exp_highlighting_fs then
-          local exp_highlighting = {}
-          local next_col = 0
-          for i, h in ipairs(exp_highlighting_fs) do
-            exp_highlighting[i], next_col = h(next_col)
-          end
-          eq(exp_highlighting, hls)
+  local function check_parsing(str, exp_ast, exp_highlighting_fs, nz_flags_exps)
+    nz_flags_exps = nz_flags_exps or {}
+    for _, flags in ipairs({0, 1, 2, 3}) do
+      local err, msg = pcall(function()
+        if os.getenv('NVIM_TEST_PARSER_SPEC_PRINT_TEST_CASE') == '1' then
+          print(str, flags)
         end
+        alloc_log:check({})
+
+        local pstate = new_pstate({str})
+        local east = lib.viml_pexpr_parse(pstate, flags)
+        local ast = east2lua(pstate, east)
+        local hls = phl2lua(pstate)
+        local exps = {
+          ast = exp_ast,
+          hl_fs = exp_highlighting_fs,
+        }
+        local add_exps = nz_flags_exps[flags]
+        if not add_exps and flags == 3 then
+          add_exps = nz_flags_exps[1] or nz_flags_exps[2]
+        end
+        if add_exps then
+          if add_exps.ast then
+            exps.ast = mergedicts_copy(exps.ast, add_exps.ast)
+          end
+          if add_exps.hl_fs then
+            exps.hl_fs = mergedicts_copy(exps.hl_fs, add_exps.hl_fs)
+          end
+        end
+        if exp_ast == nil then
+          format_check(str, flags, ast, hls)
+        else
+          eq(exps.ast, ast)
+          if exp_highlighting_fs then
+            local exp_highlighting = {}
+            local next_col = 0
+            for i, h in ipairs(exps.hl_fs) do
+              exp_highlighting[i], next_col = h(next_col)
+            end
+            eq(exp_highlighting, hls)
+          end
+        end
+        lib.viml_pexpr_free_ast(east)
+        kvi_destroy(pstate.colors)
+        alloc_log:clear_tmp_allocs(true)
+        alloc_log:check({})
+      end)
+      if not err then
+        msg = format_string('Error while processing test (%r, %u):\n%s',
+                            str, flags, msg)
+        error(msg)
       end
-      lib.viml_pexpr_free_ast(east)
-      kvi_destroy(pstate.colors)
-      alloc_log:clear_tmp_allocs(true)
-      alloc_log:check({})
-    end)
-    if not err then
-      msg = format_string('Error while processing test (%r, %u):\n%s',
-                          str, flags, msg)
-      error(msg)
     end
   end
   local function hl(group, str, shift)
@@ -276,14 +295,14 @@ describe('Expressions parser', function()
     end
   end
   itp('works with + and @a', function()
-    check_parsing('@a', 0, {
+    check_parsing('@a', {
       ast = {
         'Register(name=a):0:0:@a',
       },
     }, {
       hl('Register', '@a'),
     })
-    check_parsing('+@a', 0, {
+    check_parsing('+@a', {
       ast = {
         {
           'UnaryPlus:0:0:+',
@@ -296,7 +315,7 @@ describe('Expressions parser', function()
       hl('UnaryPlus', '+'),
       hl('Register', '@a'),
     })
-    check_parsing('@a+@b', 0, {
+    check_parsing('@a+@b', {
       ast = {
         {
           'BinaryPlus:0:2:+',
@@ -311,7 +330,7 @@ describe('Expressions parser', function()
       hl('BinaryPlus', '+'),
       hl('Register', '@b'),
     })
-    check_parsing('@a+@b+@c', 0, {
+    check_parsing('@a+@b+@c', {
       ast = {
         {
           'BinaryPlus:0:5:+',
@@ -334,7 +353,7 @@ describe('Expressions parser', function()
       hl('BinaryPlus', '+'),
       hl('Register', '@c'),
     })
-    check_parsing('+@a+@b', 0, {
+    check_parsing('+@a+@b', {
       ast = {
         {
           'BinaryPlus:0:3:+',
@@ -355,7 +374,7 @@ describe('Expressions parser', function()
       hl('BinaryPlus', '+'),
       hl('Register', '@b'),
     })
-    check_parsing('+@a++@b', 0, {
+    check_parsing('+@a++@b', {
       ast = {
         {
           'BinaryPlus:0:3:+',
@@ -382,7 +401,7 @@ describe('Expressions parser', function()
       hl('UnaryPlus', '+'),
       hl('Register', '@b'),
     })
-    check_parsing('@a@b', 0, {
+    check_parsing('@a@b', {
       ast = {
         {
           'OpMissing:0:2:',
@@ -399,8 +418,20 @@ describe('Expressions parser', function()
     }, {
       hl('Register', '@a'),
       hl('InvalidRegister', '@b'),
+    }, {
+      [1] = {
+        ast = {
+          err = REMOVE_THIS,
+          ast = {
+            'Register(name=a):0:0:@a'
+          },
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+        },
+      },
     })
-    check_parsing(' @a \t @b', 0, {
+    check_parsing(' @a \t @b', {
       ast = {
         {
           'OpMissing:0:3:',
@@ -418,8 +449,21 @@ describe('Expressions parser', function()
       hl('Register', '@a', 1),
       hl('InvalidSpacing', ' \t '),
       hl('Register', '@b'),
+    }, {
+      [1] = {
+        ast = {
+          err = REMOVE_THIS,
+          ast = {
+            'Register(name=a):0:0: @a'
+          },
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+          [3] = REMOVE_THIS,
+        },
+      },
     })
-    check_parsing('+', 0, {
+    check_parsing('+', {
       ast = {
         'UnaryPlus:0:0:+',
       },
@@ -430,7 +474,7 @@ describe('Expressions parser', function()
     }, {
       hl('UnaryPlus', '+'),
     })
-    check_parsing(' +', 0, {
+    check_parsing(' +', {
       ast = {
         'UnaryPlus:0:0: +',
       },
@@ -441,7 +485,7 @@ describe('Expressions parser', function()
     }, {
       hl('UnaryPlus', '+', 1),
     })
-    check_parsing('@a+  ', 0, {
+    check_parsing('@a+  ', {
       ast = {
         {
           'BinaryPlus:0:2:+',
@@ -460,7 +504,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with @a, + and parenthesis', function()
-    check_parsing('(@a)', 0, {
+    check_parsing('(@a)', {
       ast = {
         {
           'Nested:0:0:(',
@@ -474,7 +518,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('NestingParenthesis', ')'),
     })
-    check_parsing('()', 0, {
+    check_parsing('()', {
       ast = {
         {
           'Nested:0:0:(',
@@ -491,7 +535,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', '('),
       hl('InvalidNestingParenthesis', ')'),
     })
-    check_parsing(')', 0, {
+    check_parsing(')', {
       ast = {
         {
           'Nested:0:0:',
@@ -507,7 +551,7 @@ describe('Expressions parser', function()
     }, {
       hl('InvalidNestingParenthesis', ')'),
     })
-    check_parsing('+)', 0, {
+    check_parsing('+)', {
       ast = {
         {
           'Nested:0:1:',
@@ -529,7 +573,7 @@ describe('Expressions parser', function()
       hl('UnaryPlus', '+'),
       hl('InvalidNestingParenthesis', ')'),
     })
-    check_parsing('+@a(@b)', 0, {
+    check_parsing('+@a(@b)', {
       ast = {
         {
           'UnaryPlus:0:0:+',
@@ -551,7 +595,7 @@ describe('Expressions parser', function()
       hl('Register', '@b'),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('@a+@b(@c)', 0, {
+    check_parsing('@a+@b(@c)', {
       ast = {
         {
           'BinaryPlus:0:2:+',
@@ -575,7 +619,7 @@ describe('Expressions parser', function()
       hl('Register', '@c'),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('@a()', 0, {
+    check_parsing('@a()', {
       ast = {
         {
           'Call:0:2:(',
@@ -589,7 +633,7 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', '('),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('@a ()', 0, {
+    check_parsing('@a ()', {
       ast = {
         {
           'OpMissing:0:2:',
@@ -613,91 +657,102 @@ describe('Expressions parser', function()
       hl('InvalidSpacing', ' '),
       hl('NestingParenthesis', '('),
       hl('InvalidNestingParenthesis', ')'),
+    }, {
+      [1] = {
+        ast = {
+          err = REMOVE_THIS,
+          ast = {
+            'Register(name=a):0:0:@a',
+          },
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+          [3] = REMOVE_THIS,
+          [4] = REMOVE_THIS,
+        },
+      },
     })
-    check_parsing(
-      '@a + (@b)', 0, {
-        ast = {
-          {
-            'BinaryPlus:0:2: +',
-            children = {
-              'Register(name=a):0:0:@a',
-              {
-                'Nested:0:4: (',
-                children = {
-                  'Register(name=b):0:6:@b',
-                },
+    check_parsing('@a + (@b)', {
+      ast = {
+        {
+          'BinaryPlus:0:2: +',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'Nested:0:4: (',
+              children = {
+                'Register(name=b):0:6:@b',
               },
             },
           },
         },
-      }, {
-        hl('Register', '@a'),
-        hl('BinaryPlus', '+', 1),
-        hl('NestingParenthesis', '(', 1),
-        hl('Register', '@b'),
-        hl('NestingParenthesis', ')'),
-      })
-    check_parsing(
-      '@a + (+@b)', 0, {
-        ast = {
-          {
-            'BinaryPlus:0:2: +',
-            children = {
-              'Register(name=a):0:0:@a',
-              {
-                'Nested:0:4: (',
-                children = {
-                  {
-                    'UnaryPlus:0:6:+',
-                    children = {
-                      'Register(name=b):0:7:@b',
-                    },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('BinaryPlus', '+', 1),
+      hl('NestingParenthesis', '(', 1),
+      hl('Register', '@b'),
+      hl('NestingParenthesis', ')'),
+    })
+    check_parsing('@a + (+@b)', {
+      ast = {
+        {
+          'BinaryPlus:0:2: +',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'Nested:0:4: (',
+              children = {
+                {
+                  'UnaryPlus:0:6:+',
+                  children = {
+                    'Register(name=b):0:7:@b',
                   },
                 },
               },
             },
           },
         },
-      }, {
-        hl('Register', '@a'),
-        hl('BinaryPlus', '+', 1),
-        hl('NestingParenthesis', '(', 1),
-        hl('UnaryPlus', '+'),
-        hl('Register', '@b'),
-        hl('NestingParenthesis', ')'),
-      })
-    check_parsing(
-      '@a + (@b + @c)', 0, {
-        ast = {
-          {
-            'BinaryPlus:0:2: +',
-            children = {
-              'Register(name=a):0:0:@a',
-              {
-                'Nested:0:4: (',
-                children = {
-                  {
-                    'BinaryPlus:0:8: +',
-                    children = {
-                      'Register(name=b):0:6:@b',
-                      'Register(name=c):0:10: @c',
-                    },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('BinaryPlus', '+', 1),
+      hl('NestingParenthesis', '(', 1),
+      hl('UnaryPlus', '+'),
+      hl('Register', '@b'),
+      hl('NestingParenthesis', ')'),
+    })
+    check_parsing('@a + (@b + @c)', {
+      ast = {
+        {
+          'BinaryPlus:0:2: +',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'Nested:0:4: (',
+              children = {
+                {
+                  'BinaryPlus:0:8: +',
+                  children = {
+                    'Register(name=b):0:6:@b',
+                    'Register(name=c):0:10: @c',
                   },
                 },
               },
             },
           },
         },
-      }, {
-        hl('Register', '@a'),
-        hl('BinaryPlus', '+', 1),
-        hl('NestingParenthesis', '(', 1),
-        hl('Register', '@b'),
-        hl('BinaryPlus', '+', 1),
-        hl('Register', '@c', 1),
-        hl('NestingParenthesis', ')'),
-      })
-    check_parsing('(@a)+@b', 0, {
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('BinaryPlus', '+', 1),
+      hl('NestingParenthesis', '(', 1),
+      hl('Register', '@b'),
+      hl('BinaryPlus', '+', 1),
+      hl('Register', '@c', 1),
+      hl('NestingParenthesis', ')'),
+    })
+    check_parsing('(@a)+@b', {
       ast = {
         {
           'BinaryPlus:0:4:+',
@@ -719,7 +774,7 @@ describe('Expressions parser', function()
       hl('BinaryPlus', '+'),
       hl('Register', '@b'),
     })
-    check_parsing('@a+(@b)(@c)', 0, {
+    check_parsing('@a+(@b)(@c)', {
       --           01234567890
       ast = {
         {
@@ -749,7 +804,7 @@ describe('Expressions parser', function()
       hl('Register', '@c'),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('@a+((@b))(@c)', 0, {
+    check_parsing('@a+((@b))(@c)', {
       --           01234567890123456890123456789
       --           0         1        2
       ast = {
@@ -787,7 +842,7 @@ describe('Expressions parser', function()
       hl('Register', '@c'),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('@a+((@b))+@c', 0, {
+    check_parsing('@a+((@b))+@c', {
       --           01234567890123456890123456789
       --           0         1        2
       ast = {
@@ -825,7 +880,7 @@ describe('Expressions parser', function()
       hl('Register', '@c'),
     })
     check_parsing(
-      '@a + (@b + @c) + @d(@e) + (+@f) + ((+@g(@h))(@j)(@k))(@l)', 0, {--[[
+      '@a + (@b + @c) + @d(@e) + (+@f) + ((+@g(@h))(@j)(@k))(@l)', {--[[
        | | | | | |   | |  ||  | | ||  | | ||| ||   ||  ||   ||
        000000000011111111112222222222333333333344444444445555555
        012345678901234567890123456789012345678901234567890123456
@@ -959,7 +1014,7 @@ describe('Expressions parser', function()
         hl('Register', '@l'),
         hl('CallingParenthesis', ')'),
       })
-    check_parsing('@a)', 0, {
+    check_parsing('@a)', {
       --           012
       ast = {
         {
@@ -977,7 +1032,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('InvalidNestingParenthesis', ')'),
     })
-    check_parsing('(@a', 0, {
+    check_parsing('(@a', {
       --           012
       ast = {
         {
@@ -995,7 +1050,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', '('),
       hl('Register', '@a'),
     })
-    check_parsing('@a(@b', 0, {
+    check_parsing('@a(@b', {
       --           01234
       ast = {
         {
@@ -1015,7 +1070,7 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', '('),
       hl('Register', '@b'),
     })
-    check_parsing('@a(@b, @c, @d, @e)', 0, {
+    check_parsing('@a(@b, @c, @d, @e)', {
       --           012345678901234567
       --           0         1
       ast = {
@@ -1057,7 +1112,7 @@ describe('Expressions parser', function()
       hl('Register', '@e', 1),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('@a(@b(@c))', 0, {
+    check_parsing('@a(@b(@c))', {
       --           01234567890123456789012345678901234567
       --           0         1         2         3
       ast = {
@@ -1084,7 +1139,7 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', ')'),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('@a(@b(@c(@d(@e), @f(@g(@h), @i(@j)))))', 0, {
+    check_parsing('@a(@b(@c(@d(@e), @f(@g(@h), @i(@j)))))', {
       --           01234567890123456789012345678901234567
       --           0         1         2         3
       ast = {
@@ -1174,14 +1229,14 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with variable names, including curly braces ones', function()
-    check_parsing('var', 0, {
+    check_parsing('var', {
         ast = {
           'PlainIdentifier(scope=0,ident=var):0:0:var',
         },
     }, {
       hl('IdentifierName', 'var'),
     })
-    check_parsing('g:var', 0, {
+    check_parsing('g:var', {
         ast = {
           'PlainIdentifier(scope=g,ident=var):0:0:g:var',
         },
@@ -1190,7 +1245,7 @@ describe('Expressions parser', function()
       hl('IdentifierScopeDelimiter', ':'),
       hl('IdentifierName', 'var'),
     })
-    check_parsing('g:', 0, {
+    check_parsing('g:', {
         ast = {
           'PlainIdentifier(scope=g,ident=):0:0:g:',
         },
@@ -1198,7 +1253,7 @@ describe('Expressions parser', function()
       hl('IdentifierScope', 'g'),
       hl('IdentifierScopeDelimiter', ':'),
     })
-    check_parsing('{a}', 0, {
+    check_parsing('{a}', {
       --           012
       ast = {
         {
@@ -1213,7 +1268,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'a'),
       hl('Curly', '}'),
     })
-    check_parsing('{a:b}', 0, {
+    check_parsing('{a:b}', {
       --           012
       ast = {
         {
@@ -1230,7 +1285,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b'),
       hl('Curly', '}'),
     })
-    check_parsing('{a:@b}', 0, {
+    check_parsing('{a:@b}', {
       --           012345
       ast = {
         {
@@ -1257,7 +1312,7 @@ describe('Expressions parser', function()
       hl('InvalidRegister', '@b'),
       hl('Curly', '}'),
     })
-    check_parsing('{@a}', 0, {
+    check_parsing('{@a}', {
       ast = {
         {
           'CurlyBracesIdentifier(-di):0:0:{',
@@ -1271,7 +1326,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Curly', '}'),
     })
-    check_parsing('{@a}{@b}', 0, {
+    check_parsing('{@a}{@b}', {
       --           01234567
       ast = {
         {
@@ -1300,7 +1355,7 @@ describe('Expressions parser', function()
       hl('Register', '@b'),
       hl('Curly', '}'),
     })
-    check_parsing('g:{@a}', 0, {
+    check_parsing('g:{@a}', {
       --           01234567
       ast = {
         {
@@ -1323,7 +1378,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Curly', '}'),
     })
-    check_parsing('{@a}_test', 0, {
+    check_parsing('{@a}_test', {
       --           012345678
       ast = {
         {
@@ -1345,7 +1400,7 @@ describe('Expressions parser', function()
       hl('Curly', '}'),
       hl('IdentifierName', '_test'),
     })
-    check_parsing('g:{@a}_test', 0, {
+    check_parsing('g:{@a}_test', {
       --           01234567890
       ast = {
         {
@@ -1375,7 +1430,7 @@ describe('Expressions parser', function()
       hl('Curly', '}'),
       hl('IdentifierName', '_test'),
     })
-    check_parsing('g:{@a}_test()', 0, {
+    check_parsing('g:{@a}_test()', {
       --           0123456789012
       ast = {
         {
@@ -1412,7 +1467,7 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', '('),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('{@a} ()', 0, {
+    check_parsing('{@a} ()', {
       --           0123456789012
       ast = {
         {
@@ -1434,7 +1489,7 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', '(', 1),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('g:{@a} ()', 0, {
+    check_parsing('g:{@a} ()', {
       --           0123456789012
       ast = {
         {
@@ -1464,7 +1519,7 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', '(', 1),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('{@a', 0, {
+    check_parsing('{@a', {
       --           012
       ast = {
         {
@@ -1484,7 +1539,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with lambdas and dictionaries', function()
-    check_parsing('{}', 0, {
+    check_parsing('{}', {
       ast = {
         'DictLiteral(-di):0:0:{',
       },
@@ -1492,7 +1547,7 @@ describe('Expressions parser', function()
       hl('Dict', '{'),
       hl('Dict', '}'),
     })
-    check_parsing('{->@a}', 0, {
+    check_parsing('{->@a}', {
       ast = {
         {
           'Lambda(\\di):0:0:{',
@@ -1512,7 +1567,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Lambda', '}'),
     })
-    check_parsing('{->@a+@b}', 0, {
+    check_parsing('{->@a+@b}', {
       --           012345678
       ast = {
         {
@@ -1541,7 +1596,7 @@ describe('Expressions parser', function()
       hl('Register', '@b'),
       hl('Lambda', '}'),
     })
-    check_parsing('{a->@a}', 0, {
+    check_parsing('{a->@a}', {
       --           012345678
       ast = {
         {
@@ -1564,7 +1619,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Lambda', '}'),
     })
-    check_parsing('{a,b->@a}', 0, {
+    check_parsing('{a,b->@a}', {
       --           012345678
       ast = {
         {
@@ -1595,7 +1650,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Lambda', '}'),
     })
-    check_parsing('{a,b,c->@a}', 0, {
+    check_parsing('{a,b,c->@a}', {
       --           01234567890
       ast = {
         {
@@ -1634,7 +1689,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Lambda', '}'),
     })
-    check_parsing('{a,b,c,d->@a}', 0, {
+    check_parsing('{a,b,c,d->@a}', {
       --           0123456789012
       ast = {
         {
@@ -1681,7 +1736,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Lambda', '}'),
     })
-    check_parsing('{a,b,c,d,->@a}', 0, {
+    check_parsing('{a,b,c,d,->@a}', {
       --           01234567890123
       ast = {
         {
@@ -1734,7 +1789,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Lambda', '}'),
     })
-    check_parsing('{a,b->{c,d->{e,f->@a}}}', 0, {
+    check_parsing('{a,b->{c,d->{e,f->@a}}}', {
       --           01234567890123456789012
       --           0         1         2
       ast = {
@@ -1812,7 +1867,7 @@ describe('Expressions parser', function()
       hl('Lambda', '}'),
       hl('Lambda', '}'),
     })
-    check_parsing('{a,b->c,d}', 0, {
+    check_parsing('{a,b->c,d}', {
       --           0123456789
       ast = {
         {
@@ -1855,7 +1910,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'd'),
       hl('Lambda', '}'),
     })
-    check_parsing('a,b,c,d', 0, {
+    check_parsing('a,b,c,d', {
       --           0123456789
       ast = {
         {
@@ -1891,7 +1946,7 @@ describe('Expressions parser', function()
       hl('InvalidComma', ','),
       hl('IdentifierName', 'd'),
     })
-    check_parsing('a,b,c,d,', 0, {
+    check_parsing('a,b,c,d,', {
       --           0123456789
       ast = {
         {
@@ -1933,7 +1988,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'd'),
       hl('InvalidComma', ','),
     })
-    check_parsing(',', 0, {
+    check_parsing(',', {
       --           0123456789
       ast = {
         {
@@ -1950,7 +2005,7 @@ describe('Expressions parser', function()
     }, {
       hl('InvalidComma', ','),
     })
-    check_parsing('{,a->@a}', 0, {
+    check_parsing('{,a->@a}', {
       --           0123456789
       ast = {
         {
@@ -1984,7 +2039,7 @@ describe('Expressions parser', function()
       hl('Register', '@a'),
       hl('Curly', '}'),
     })
-    check_parsing('}', 0, {
+    check_parsing('}', {
       --           0123456789
       ast = {
         'UnknownFigure(---):0:0:',
@@ -1996,7 +2051,7 @@ describe('Expressions parser', function()
     }, {
       hl('InvalidFigureBrace', '}'),
     })
-    check_parsing('{->}', 0, {
+    check_parsing('{->}', {
       --           0123456789
       ast = {
         {
@@ -2015,7 +2070,7 @@ describe('Expressions parser', function()
       hl('Arrow', '->'),
       hl('InvalidLambda', '}'),
     })
-    check_parsing('{a,b}', 0, {
+    check_parsing('{a,b}', {
       --           0123456789
       ast = {
         {
@@ -2042,7 +2097,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b'),
       hl('InvalidLambda', '}'),
     })
-    check_parsing('{a,}', 0, {
+    check_parsing('{a,}', {
       --           0123456789
       ast = {
         {
@@ -2067,7 +2122,7 @@ describe('Expressions parser', function()
       hl('Comma', ','),
       hl('InvalidLambda', '}'),
     })
-    check_parsing('{@a:@b}', 0, {
+    check_parsing('{@a:@b}', {
       --           0123456789
       ast = {
         {
@@ -2090,7 +2145,7 @@ describe('Expressions parser', function()
       hl('Register', '@b'),
       hl('Dict', '}'),
     })
-    check_parsing('{@a:@b,@c:@d}', 0, {
+    check_parsing('{@a:@b,@c:@d}', {
       --           0123456789012
       --           0         1
       ast = {
@@ -2130,7 +2185,7 @@ describe('Expressions parser', function()
       hl('Register', '@d'),
       hl('Dict', '}'),
     })
-    check_parsing('{@a:@b,@c:@d,@e:@f,}', 0, {
+    check_parsing('{@a:@b,@c:@d,@e:@f,}', {
       --           01234567890123456789
       --           0         1
       ast = {
@@ -2192,7 +2247,7 @@ describe('Expressions parser', function()
       hl('Comma', ','),
       hl('Dict', '}'),
     })
-    check_parsing('{@a:@b,@c:@d,@e:@f,@g:}', 0, {
+    check_parsing('{@a:@b,@c:@d,@e:@f,@g:}', {
       --           01234567890123456789012
       --           0         1         2
       ast = {
@@ -2266,7 +2321,7 @@ describe('Expressions parser', function()
       hl('Colon', ':'),
       hl('InvalidDict', '}'),
     })
-    check_parsing('{@a:@b,}', 0, {
+    check_parsing('{@a:@b,}', {
       --           01234567890123
       --           0         1
       ast = {
@@ -2296,7 +2351,7 @@ describe('Expressions parser', function()
       hl('Comma', ','),
       hl('Dict', '}'),
     })
-    check_parsing('{({f -> g})(@h)(@i)}', 0, {
+    check_parsing('{({f -> g})(@h)(@i)}', {
       --           01234567890123456789
       --           0         1
       ast = {
@@ -2352,7 +2407,7 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', ')'),
       hl('Curly', '}'),
     })
-    check_parsing('a:{b()}c', 0, {
+    check_parsing('a:{b()}c', {
       --           01234567
       ast = {
         {
@@ -2389,7 +2444,7 @@ describe('Expressions parser', function()
       hl('Curly', '}'),
       hl('IdentifierName', 'c'),
     })
-    check_parsing('a:{{b, c -> @d + @e + ({f -> g})(@h)}(@i)}j', 0, {
+    check_parsing('a:{{b, c -> @d + @e + ({f -> g})(@h)}(@i)}j', {
       --           01234567890123456789012345678901234567890123456
       --           0         1         2         3         4
       ast = {
@@ -2499,7 +2554,7 @@ describe('Expressions parser', function()
       hl('Curly', '}'),
       hl('IdentifierName', 'j'),
     })
-    check_parsing('{@a + @b : @c + @d, @e + @f : @g + @i}', 0, {
+    check_parsing('{@a + @b : @c + @d, @e + @f : @g + @i}', {
       --           01234567890123456789012345678901234567
       --           0         1         2         3
       ast = {
@@ -2571,7 +2626,7 @@ describe('Expressions parser', function()
       hl('Register', '@i', 1),
       hl('Dict', '}'),
     })
-    check_parsing('-> -> ->', 0, {
+    check_parsing('-> -> ->', {
       --           01234567
       ast = {
         {
@@ -2602,7 +2657,7 @@ describe('Expressions parser', function()
       hl('InvalidArrow', '->', 1),
       hl('InvalidArrow', '->', 1),
     })
-    check_parsing('a -> b -> c -> d', 0, {
+    check_parsing('a -> b -> c -> d', {
       --           0123456789012345
       --           0         1
       ast = {
@@ -2639,7 +2694,7 @@ describe('Expressions parser', function()
       hl('InvalidArrow', '->', 1),
       hl('IdentifierName', 'd', 1),
     })
-    check_parsing('{a -> b -> c}', 0, {
+    check_parsing('{a -> b -> c}', {
       --           0123456789012
       --           0         1
       ast = {
@@ -2675,7 +2730,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'c', 1),
       hl('Lambda', '}'),
     })
-    check_parsing('{a: -> b}', 0, {
+    check_parsing('{a: -> b}', {
       --           012345678
       ast = {
         {
@@ -2704,7 +2759,7 @@ describe('Expressions parser', function()
       hl('Curly', '}'),
     })
 
-    check_parsing('{a:b -> b}', 0, {
+    check_parsing('{a:b -> b}', {
       --           0123456789
       ast = {
         {
@@ -2734,7 +2789,7 @@ describe('Expressions parser', function()
       hl('Curly', '}'),
     })
 
-    check_parsing('{a#b -> b}', 0, {
+    check_parsing('{a#b -> b}', {
       --           0123456789
       ast = {
         {
@@ -2761,7 +2816,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
       hl('Curly', '}'),
     })
-    check_parsing('{a : b : c}', 0, {
+    check_parsing('{a : b : c}', {
       --           01234567890
       --           0         1
       ast = {
@@ -2797,7 +2852,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'c', 1),
       hl('Dict', '}'),
     })
-    check_parsing('{', 0, {
+    check_parsing('{', {
       --           0
       ast = {
         'UnknownFigure(\\di):0:0:{',
@@ -2809,7 +2864,7 @@ describe('Expressions parser', function()
     }, {
       hl('FigureBrace', '{'),
     })
-    check_parsing('{a', 0, {
+    check_parsing('{a', {
       --           01
       ast = {
         {
@@ -2827,7 +2882,7 @@ describe('Expressions parser', function()
       hl('FigureBrace', '{'),
       hl('IdentifierName', 'a'),
     })
-    check_parsing('{a,b', 0, {
+    check_parsing('{a,b', {
       --           0123
       ast = {
         {
@@ -2853,7 +2908,7 @@ describe('Expressions parser', function()
       hl('Comma', ','),
       hl('IdentifierName', 'b'),
     })
-    check_parsing('{a,b->', 0, {
+    check_parsing('{a,b->', {
       --           012345
       ast = {
         {
@@ -2881,7 +2936,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b'),
       hl('Arrow', '->'),
     })
-    check_parsing('{a,b->c', 0, {
+    check_parsing('{a,b->c', {
       --           0123456
       ast = {
         {
@@ -2915,7 +2970,7 @@ describe('Expressions parser', function()
       hl('Arrow', '->'),
       hl('IdentifierName', 'c'),
     })
-    check_parsing('{a : b', 0, {
+    check_parsing('{a : b', {
       --           012345
       ast = {
         {
@@ -2941,7 +2996,7 @@ describe('Expressions parser', function()
       hl('Colon', ':', 1),
       hl('IdentifierName', 'b', 1),
     })
-    check_parsing('{a : b,', 0, {
+    check_parsing('{a : b,', {
       --           0123456
       ast = {
         {
@@ -2975,7 +3030,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with ternary operator', function()
-    check_parsing('a ? b : c', 0, {
+    check_parsing('a ? b : c', {
       --           012345678
       ast = {
         {
@@ -2999,7 +3054,7 @@ describe('Expressions parser', function()
       hl('TernaryColon', ':', 1),
       hl('IdentifierName', 'c', 1),
     })
-    check_parsing('@a?@b?@c:@d:@e', 0, {
+    check_parsing('@a?@b?@c:@d:@e', {
       --           01234567890123
       --           0         1
       ast = {
@@ -3040,7 +3095,7 @@ describe('Expressions parser', function()
       hl('TernaryColon', ':'),
       hl('Register', '@e'),
     })
-    check_parsing('@a?@b:@c?@d:@e', 0, {
+    check_parsing('@a?@b:@c?@d:@e', {
       --           01234567890123
       --           0         1
       ast = {
@@ -3081,7 +3136,7 @@ describe('Expressions parser', function()
       hl('TernaryColon', ':'),
       hl('Register', '@e'),
     })
-    check_parsing('@a?@b?@c?@d:@e?@f:@g:@h?@i:@j:@k', 0, {
+    check_parsing('@a?@b?@c?@d:@e?@f:@g:@h?@i:@j:@k', {
       --           01234567890123456789012345678901
       --           0         1         2         3
       ast = {
@@ -3170,7 +3225,7 @@ describe('Expressions parser', function()
       hl('TernaryColon', ':'),
       hl('Register', '@k'),
     })
-    check_parsing('?', 0, {
+    check_parsing('?', {
       --           0
       ast = {
         {
@@ -3189,7 +3244,7 @@ describe('Expressions parser', function()
       hl('InvalidTernary', '?'),
     })
 
-    check_parsing('?:', 0, {
+    check_parsing('?:', {
       --           01
       ast = {
         {
@@ -3214,7 +3269,7 @@ describe('Expressions parser', function()
       hl('InvalidTernaryColon', ':'),
     })
 
-    check_parsing('?::', 0, {
+    check_parsing('?::', {
       --           012
       ast = {
         {
@@ -3246,7 +3301,7 @@ describe('Expressions parser', function()
       hl('InvalidColon', ':'),
     })
 
-    check_parsing('a?b', 0, {
+    check_parsing('a?b', {
       --           012
       ast = {
         {
@@ -3271,7 +3326,7 @@ describe('Expressions parser', function()
       hl('Ternary', '?'),
       hl('IdentifierName', 'b'),
     })
-    check_parsing('a?b:', 0, {
+    check_parsing('a?b:', {
       --           0123
       ast = {
         {
@@ -3298,7 +3353,7 @@ describe('Expressions parser', function()
       hl('IdentifierScopeDelimiter', ':'),
     })
 
-    check_parsing('a?b::c', 0, {
+    check_parsing('a?b::c', {
       --           012345
       ast = {
         {
@@ -3324,7 +3379,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'c'),
     })
 
-    check_parsing('a?b :', 0, {
+    check_parsing('a?b :', {
       --           01234
       ast = {
         {
@@ -3351,7 +3406,7 @@ describe('Expressions parser', function()
       hl('TernaryColon', ':', 1),
     })
 
-    check_parsing('(@a?@b:@c)?@d:@e', 0, {
+    check_parsing('(@a?@b:@c)?@d:@e', {
       --           0123456789012345
       --           0         1
       ast = {
@@ -3400,7 +3455,7 @@ describe('Expressions parser', function()
       hl('Register', '@e'),
     })
 
-    check_parsing('(@a?@b:@c)?(@d?@e:@f):(@g?@h:@i)', 0, {
+    check_parsing('(@a?@b:@c)?(@d?@e:@f):(@g?@h:@i)', {
       --           01234567890123456789012345678901
       --           0         1         2         3
       ast = {
@@ -3495,7 +3550,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', ')'),
     })
 
-    check_parsing('(@a?@b:@c)?@d?@e:@f:@g?@h:@i', 0, {
+    check_parsing('(@a?@b:@c)?@d?@e:@f:@g?@h:@i', {
       --           0123456789012345678901234567
       --           0         1         2
       ast = {
@@ -3575,7 +3630,7 @@ describe('Expressions parser', function()
       hl('TernaryColon', ':'),
       hl('Register', '@i'),
     })
-    check_parsing('a?b{cdef}g:h', 0, {
+    check_parsing('a?b{cdef}g:h', {
       --           012345678901
       --           0         1
       ast = {
@@ -3621,7 +3676,7 @@ describe('Expressions parser', function()
       hl('TernaryColon', ':'),
       hl('IdentifierName', 'h'),
     })
-    check_parsing('a ? b : c : d', 0, {
+    check_parsing('a ? b : c : d', {
       --           0123456789012
       --           0         1
       ast = {
@@ -3660,7 +3715,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with comparison operators', function()
-    check_parsing('a == b', 0, {
+    check_parsing('a == b', {
       --           012345
       ast = {
         {
@@ -3677,7 +3732,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a ==? b', 0, {
+    check_parsing('a ==? b', {
       --           0123456
       ast = {
         {
@@ -3695,7 +3750,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a ==# b', 0, {
+    check_parsing('a ==# b', {
       --           0123456
       ast = {
         {
@@ -3713,7 +3768,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a !=# b', 0, {
+    check_parsing('a !=# b', {
       --           0123456
       ast = {
         {
@@ -3731,7 +3786,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a <=# b', 0, {
+    check_parsing('a <=# b', {
       --           0123456
       ast = {
         {
@@ -3749,7 +3804,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a >=# b', 0, {
+    check_parsing('a >=# b', {
       --           0123456
       ast = {
         {
@@ -3767,7 +3822,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a ># b', 0, {
+    check_parsing('a ># b', {
       --           012345
       ast = {
         {
@@ -3785,7 +3840,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a <# b', 0, {
+    check_parsing('a <# b', {
       --           012345
       ast = {
         {
@@ -3803,7 +3858,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a is#b', 0, {
+    check_parsing('a is#b', {
       --           012345
       ast = {
         {
@@ -3821,7 +3876,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b'),
     })
 
-    check_parsing('a is?b', 0, {
+    check_parsing('a is?b', {
       --           012345
       ast = {
         {
@@ -3839,7 +3894,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b'),
     })
 
-    check_parsing('a isnot b', 0, {
+    check_parsing('a isnot b', {
       --           012345678
       ast = {
         {
@@ -3856,7 +3911,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a < b < c', 0, {
+    check_parsing('a < b < c', {
       --           012345678
       ast = {
         {
@@ -3885,7 +3940,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'c', 1),
     })
 
-    check_parsing('a < b <# c', 0, {
+    check_parsing('a < b <# c', {
       --           012345678
       ast = {
         {
@@ -3915,7 +3970,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'c', 1),
     })
 
-    check_parsing('a += b', 0, {
+    check_parsing('a += b', {
       --           012345
       ast = {
         {
@@ -3942,7 +3997,7 @@ describe('Expressions parser', function()
       hl('InvalidComparison', '='),
       hl('IdentifierName', 'b', 1),
     })
-    check_parsing('a + b == c + d', 0, {
+    check_parsing('a + b == c + d', {
       --           01234567890123
       --           0         1
       ast = {
@@ -3975,7 +4030,7 @@ describe('Expressions parser', function()
       hl('BinaryPlus', '+', 1),
       hl('IdentifierName', 'd', 1),
     })
-    check_parsing('+ a == + b', 0, {
+    check_parsing('+ a == + b', {
       --           0123456789
       ast = {
         {
@@ -4005,7 +4060,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with concat/subscript', function()
-    check_parsing('.', 0, {
+    check_parsing('.', {
       --           0
       ast = {
         {
@@ -4023,7 +4078,7 @@ describe('Expressions parser', function()
       hl('InvalidConcatOrSubscript', '.'),
     })
 
-    check_parsing('a.', 0, {
+    check_parsing('a.', {
       --           01
       ast = {
         {
@@ -4042,7 +4097,7 @@ describe('Expressions parser', function()
       hl('ConcatOrSubscript', '.'),
     })
 
-    check_parsing('a.b', 0, {
+    check_parsing('a.b', {
       --           012
       ast = {
         {
@@ -4059,7 +4114,7 @@ describe('Expressions parser', function()
       hl('IdentifierKey', 'b'),
     })
 
-    check_parsing('1.2', 0, {
+    check_parsing('1.2', {
       --           012
       ast = {
         'Float(val=1.200000e+00):0:0:1.2',
@@ -4068,7 +4123,7 @@ describe('Expressions parser', function()
       hl('Float', '1.2'),
     })
 
-    check_parsing('1.2 + 1.3e-5', 0, {
+    check_parsing('1.2 + 1.3e-5', {
       --           012345678901
       --           0         1
       ast = {
@@ -4086,7 +4141,7 @@ describe('Expressions parser', function()
       hl('Float', '1.3e-5', 1),
     })
 
-    check_parsing('a . 1.2 + 1.3e-5', 0, {
+    check_parsing('a . 1.2 + 1.3e-5', {
       --           0123456789012345
       --           0         1
       ast = {
@@ -4120,7 +4175,7 @@ describe('Expressions parser', function()
       hl('Float', '1.3e-5', 1),
     })
 
-    check_parsing('1.3e-5 + 1.2 . a', 0, {
+    check_parsing('1.3e-5 + 1.2 . a', {
       --           0123456789012345
       --           0         1
       ast = {
@@ -4146,7 +4201,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'a', 1),
     })
 
-    check_parsing('1.3e-5 + a . 1.2', 0, {
+    check_parsing('1.3e-5 + a . 1.2', {
       --           0123456789012345
       --           0         1
       ast = {
@@ -4180,7 +4235,7 @@ describe('Expressions parser', function()
       hl('IdentifierKey', '2'),
     })
 
-    check_parsing('1.2.3', 0, {
+    check_parsing('1.2.3', {
       --           01234
       ast = {
         {
@@ -4205,7 +4260,7 @@ describe('Expressions parser', function()
       hl('IdentifierKey', '3'),
     })
 
-    check_parsing('a.1.2', 0, {
+    check_parsing('a.1.2', {
       --           01234
       ast = {
         {
@@ -4230,7 +4285,7 @@ describe('Expressions parser', function()
       hl('IdentifierKey', '2'),
     })
 
-    check_parsing('a . 1.2', 0, {
+    check_parsing('a . 1.2', {
       --           0123456
       ast = {
         {
@@ -4255,7 +4310,7 @@ describe('Expressions parser', function()
       hl('IdentifierKey', '2'),
     })
 
-    check_parsing('+a . +b', 0, {
+    check_parsing('+a . +b', {
       --           0123456
       ast = {
         {
@@ -4284,7 +4339,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b'),
     })
 
-    check_parsing('a. b', 0, {
+    check_parsing('a. b', {
       --           0123
       ast = {
         {
@@ -4301,7 +4356,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'b', 1),
     })
 
-    check_parsing('a. 1', 0, {
+    check_parsing('a. 1', {
       --           0123
       ast = {
         {
@@ -4319,7 +4374,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with bracket subscripts', function()
-    check_parsing(':', 0, {
+    check_parsing(':', {
       --           0
       ast = {
         {
@@ -4336,7 +4391,7 @@ describe('Expressions parser', function()
     }, {
       hl('InvalidColon', ':'),
     })
-    check_parsing('a[]', 0, {
+    check_parsing('a[]', {
       --           012
       ast = {
         {
@@ -4355,7 +4410,7 @@ describe('Expressions parser', function()
       hl('SubscriptBracket', '['),
       hl('InvalidSubscriptBracket', ']'),
     })
-    check_parsing('a[b:]', 0, {
+    check_parsing('a[b:]', {
       --           01234
       ast = {
         {
@@ -4374,7 +4429,7 @@ describe('Expressions parser', function()
       hl('SubscriptBracket', ']'),
     })
 
-    check_parsing('a[b:c]', 0, {
+    check_parsing('a[b:c]', {
       --           012345
       ast = {
         {
@@ -4393,7 +4448,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'c'),
       hl('SubscriptBracket', ']'),
     })
-    check_parsing('a[b : c]', 0, {
+    check_parsing('a[b : c]', {
       --           01234567
       ast = {
         {
@@ -4419,7 +4474,7 @@ describe('Expressions parser', function()
       hl('SubscriptBracket', ']'),
     })
 
-    check_parsing('a[: b]', 0, {
+    check_parsing('a[: b]', {
       --           012345
       ast = {
         {
@@ -4444,7 +4499,7 @@ describe('Expressions parser', function()
       hl('SubscriptBracket', ']'),
     })
 
-    check_parsing('a[b :]', 0, {
+    check_parsing('a[b :]', {
       --           012345
       ast = {
         {
@@ -4467,7 +4522,7 @@ describe('Expressions parser', function()
       hl('SubscriptColon', ':', 1),
       hl('SubscriptBracket', ']'),
     })
-    check_parsing('a[b][c][d](e)(f)(g)', 0, {
+    check_parsing('a[b][c][d](e)(f)(g)', {
       --           0123456789012345678
       --           0         1
       ast = {
@@ -4530,7 +4585,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'g'),
       hl('CallingParenthesis', ')'),
     })
-    check_parsing('{a}{b}{c}[d][e][f]', 0, {
+    check_parsing('{a}{b}{c}[d][e][f]', {
       --           012345678901234567
       --           0         1
       ast = {
@@ -4603,7 +4658,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('supports list literals', function()
-    check_parsing('[]', 0, {
+    check_parsing('[]', {
       --           01
       ast = {
         'ListLiteral:0:0:[',
@@ -4613,7 +4668,7 @@ describe('Expressions parser', function()
       hl('List', ']'),
     })
 
-    check_parsing('[a]', 0, {
+    check_parsing('[a]', {
       --           012
       ast = {
         {
@@ -4629,7 +4684,7 @@ describe('Expressions parser', function()
       hl('List', ']'),
     })
 
-    check_parsing('[a, b]', 0, {
+    check_parsing('[a, b]', {
       --           012345
       ast = {
         {
@@ -4653,7 +4708,7 @@ describe('Expressions parser', function()
       hl('List', ']'),
     })
 
-    check_parsing('[a, b, c]', 0, {
+    check_parsing('[a, b, c]', {
       --           012345678
       ast = {
         {
@@ -4685,7 +4740,7 @@ describe('Expressions parser', function()
       hl('List', ']'),
     })
 
-    check_parsing('[a, b, c, ]', 0, {
+    check_parsing('[a, b, c, ]', {
       --           01234567890
       --           0         1
       ast = {
@@ -4724,7 +4779,7 @@ describe('Expressions parser', function()
       hl('List', ']', 1),
     })
 
-    check_parsing('[a : b, c : d]', 0, {
+    check_parsing('[a : b, c : d]', {
       --           01234567890123
       --           0         1
       ast = {
@@ -4769,7 +4824,7 @@ describe('Expressions parser', function()
       hl('List', ']'),
     })
 
-    check_parsing(']', 0, {
+    check_parsing(']', {
       --           0
       ast = {
         'ListLiteral:0:0:',
@@ -4782,7 +4837,7 @@ describe('Expressions parser', function()
       hl('InvalidList', ']'),
     })
 
-    check_parsing('a]', 0, {
+    check_parsing('a]', {
       --           01
       ast = {
         {
@@ -4801,7 +4856,7 @@ describe('Expressions parser', function()
       hl('InvalidList', ']'),
     })
 
-    check_parsing('[] []', 0, {
+    check_parsing('[] []', {
       --           01234
       ast = {
         {
@@ -4822,9 +4877,23 @@ describe('Expressions parser', function()
       hl('InvalidSpacing', ' '),
       hl('List', '['),
       hl('List', ']'),
+    }, {
+      [1] = {
+        ast = {
+          err = REMOVE_THIS,
+          ast = {
+            'ListLiteral:0:0:[',
+          },
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+          [4] = REMOVE_THIS,
+          [5] = REMOVE_THIS,
+        },
+      },
     })
 
-    check_parsing('[][]', 0, {
+    check_parsing('[][]', {
       --           0123
       ast = {
         {
@@ -4845,7 +4914,7 @@ describe('Expressions parser', function()
       hl('InvalidSubscriptBracket', ']'),
     })
 
-    check_parsing('[', 0, {
+    check_parsing('[', {
       --           0
       ast = {
         'ListLiteral:0:0:[',
@@ -4858,7 +4927,7 @@ describe('Expressions parser', function()
       hl('List', '['),
     })
 
-    check_parsing('[1', 0, {
+    check_parsing('[1', {
       --           01
       ast = {
         {
@@ -4878,7 +4947,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with strings', function()
-    check_parsing('\'abc\'', 0, {
+    check_parsing('\'abc\'', {
       --           01234
       ast = {
         'SingleQuotedString(val="abc"):0:0:\'abc\'',
@@ -4888,7 +4957,7 @@ describe('Expressions parser', function()
       hl('SingleQuotedBody', 'abc'),
       hl('SingleQuote', '\''),
     })
-    check_parsing('"abc"', 0, {
+    check_parsing('"abc"', {
       --           01234
       ast = {
         'DoubleQuotedString(val="abc"):0:0:"abc"',
@@ -4898,7 +4967,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedBody', 'abc'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('\'\'', 0, {
+    check_parsing('\'\'', {
       --           01
       ast = {
         'SingleQuotedString(val=NULL):0:0:\'\'',
@@ -4907,7 +4976,7 @@ describe('Expressions parser', function()
       hl('SingleQuote', '\''),
       hl('SingleQuote', '\''),
     })
-    check_parsing('""', 0, {
+    check_parsing('""', {
       --           01
       ast = {
         'DoubleQuotedString(val=NULL):0:0:""',
@@ -4916,7 +4985,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"', 0, {
+    check_parsing('"', {
       --           0
       ast = {
         'DoubleQuotedString(val=NULL):0:0:"',
@@ -4928,7 +4997,7 @@ describe('Expressions parser', function()
     }, {
       hl('InvalidDoubleQuote', '"'),
     })
-    check_parsing('\'', 0, {
+    check_parsing('\'', {
       --           0
       ast = {
         'SingleQuotedString(val=NULL):0:0:\'',
@@ -4940,7 +5009,7 @@ describe('Expressions parser', function()
     }, {
       hl('InvalidSingleQuote', '\''),
     })
-    check_parsing('"a', 0, {
+    check_parsing('"a', {
       --           01
       ast = {
         'DoubleQuotedString(val="a"):0:0:"a',
@@ -4953,7 +5022,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedBody', 'a'),
     })
-    check_parsing('\'a', 0, {
+    check_parsing('\'a', {
       --           01
       ast = {
         'SingleQuotedString(val="a"):0:0:\'a',
@@ -4966,7 +5035,7 @@ describe('Expressions parser', function()
       hl('InvalidSingleQuote', '\''),
       hl('InvalidSingleQuotedBody', 'a'),
     })
-    check_parsing('\'abc\'\'def\'', 0, {
+    check_parsing('\'abc\'\'def\'', {
       --           0123456789
       ast = {
         'SingleQuotedString(val="abc\'def"):0:0:\'abc\'\'def\'',
@@ -4978,7 +5047,7 @@ describe('Expressions parser', function()
       hl('SingleQuotedBody', 'def'),
       hl('SingleQuote', '\''),
     })
-    check_parsing('\'abc\'\'', 0, {
+    check_parsing('\'abc\'\'', {
       --           012345
       ast = {
         'SingleQuotedString(val="abc\'"):0:0:\'abc\'\'',
@@ -4992,7 +5061,7 @@ describe('Expressions parser', function()
       hl('InvalidSingleQuotedBody', 'abc'),
       hl('InvalidSingleQuotedQuote', '\'\''),
     })
-    check_parsing('\'\'\'\'\'\'\'\'', 0, {
+    check_parsing('\'\'\'\'\'\'\'\'', {
       --           01234567
       ast = {
         'SingleQuotedString(val="\'\'\'"):0:0:\'\'\'\'\'\'\'\'',
@@ -5004,7 +5073,7 @@ describe('Expressions parser', function()
       hl('SingleQuotedQuote', '\'\''),
       hl('SingleQuote', '\''),
     })
-    check_parsing('\'\'\'a\'\'\'\'bc\'', 0, {
+    check_parsing('\'\'\'a\'\'\'\'bc\'', {
       --           01234567890
       --           0         1
       ast = {
@@ -5019,7 +5088,7 @@ describe('Expressions parser', function()
       hl('SingleQuotedBody', 'bc'),
       hl('SingleQuote', '\''),
     })
-    check_parsing('"\\"\\"\\"\\""', 0, {
+    check_parsing('"\\"\\"\\"\\""', {
       --           0123456789
       ast = {
         'DoubleQuotedString(val="\\"\\"\\"\\""):0:0:"\\"\\"\\"\\""',
@@ -5032,7 +5101,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedEscape', '\\"'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"abc\\"def\\"ghi\\"jkl\\"mno"', 0, {
+    check_parsing('"abc\\"def\\"ghi\\"jkl\\"mno"', {
       --           0123456789012345678901234
       --           0         1         2
       ast = {
@@ -5051,7 +5120,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedBody', 'mno'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"\\b\\e\\f\\r\\t\\\\"', 0, {
+    check_parsing('"\\b\\e\\f\\r\\t\\\\"', {
       --           0123456789012345
       --           0         1
       ast = {
@@ -5067,7 +5136,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedEscape', '\\\\'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"\\n\n"', 0, {
+    check_parsing('"\\n\n"', {
       --           01234
       ast = {
         'DoubleQuotedString(val="\\\n\\\n"):0:0:"\\n\n"',
@@ -5078,7 +5147,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedBody', '\n'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"\\x00"', 0, {
+    check_parsing('"\\x00"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\0"):0:0:"\\x00"',
@@ -5088,7 +5157,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedEscape', '\\x00'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"\\xFF"', 0, {
+    check_parsing('"\\xFF"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\255"):0:0:"\\xFF"',
@@ -5098,7 +5167,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedEscape', '\\xFF'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"\\xF"', 0, {
+    check_parsing('"\\xF"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\15"):0:0:"\\xF"',
@@ -5108,7 +5177,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedEscape', '\\xF'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"\\u00AB"', 0, {
+    check_parsing('"\\u00AB"', {
       --           01234567
       ast = {
         'DoubleQuotedString(val="«"):0:0:"\\u00AB"',
@@ -5118,7 +5187,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedEscape', '\\u00AB'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"\\U000000AB"', 0, {
+    check_parsing('"\\U000000AB"', {
       --           01234567
       ast = {
         'DoubleQuotedString(val="«"):0:0:"\\U000000AB"',
@@ -5128,7 +5197,7 @@ describe('Expressions parser', function()
       hl('DoubleQuotedEscape', '\\U000000AB'),
       hl('DoubleQuote', '"'),
     })
-    check_parsing('"\\x"', 0, {
+    check_parsing('"\\x"', {
       --           0123
       ast = {
         'DoubleQuotedString(val="x"):0:0:"\\x"',
@@ -5139,7 +5208,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\x', 0, {
+    check_parsing('"\\x', {
       --           012
       ast = {
         'DoubleQuotedString(val="x"):0:0:"\\x',
@@ -5153,7 +5222,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuotedUnknownEscape', '\\x'),
     })
 
-    check_parsing('"\\xF', 0, {
+    check_parsing('"\\xF', {
       --           0123
       ast = {
         'DoubleQuotedString(val="\\15"):0:0:"\\xF',
@@ -5167,7 +5236,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuotedEscape', '\\xF'),
     })
 
-    check_parsing('"\\u"', 0, {
+    check_parsing('"\\u"', {
       --           0123
       ast = {
         'DoubleQuotedString(val="u"):0:0:"\\u"',
@@ -5178,7 +5247,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\u', 0, {
+    check_parsing('"\\u', {
       --           012
       ast = {
         'DoubleQuotedString(val="u"):0:0:"\\u',
@@ -5192,7 +5261,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuotedUnknownEscape', '\\u'),
     })
 
-    check_parsing('"\\U', 0, {
+    check_parsing('"\\U', {
       --           012
       ast = {
         'DoubleQuotedString(val="U"):0:0:"\\U',
@@ -5206,7 +5275,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
     })
 
-    check_parsing('"\\U"', 0, {
+    check_parsing('"\\U"', {
       --           0123
       ast = {
         'DoubleQuotedString(val="U"):0:0:"\\U"',
@@ -5217,7 +5286,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\xFX"', 0, {
+    check_parsing('"\\xFX"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\15X"):0:0:"\\xFX"',
@@ -5229,7 +5298,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\XFX"', 0, {
+    check_parsing('"\\XFX"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\15X"):0:0:"\\XFX"',
@@ -5241,7 +5310,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\xX"', 0, {
+    check_parsing('"\\xX"', {
       --           01234
       ast = {
         'DoubleQuotedString(val="xX"):0:0:"\\xX"',
@@ -5253,7 +5322,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\XX"', 0, {
+    check_parsing('"\\XX"', {
       --           01234
       ast = {
         'DoubleQuotedString(val="XX"):0:0:"\\XX"',
@@ -5265,7 +5334,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\uX"', 0, {
+    check_parsing('"\\uX"', {
       --           01234
       ast = {
         'DoubleQuotedString(val="uX"):0:0:"\\uX"',
@@ -5277,7 +5346,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\UX"', 0, {
+    check_parsing('"\\UX"', {
       --           01234
       ast = {
         'DoubleQuotedString(val="UX"):0:0:"\\UX"',
@@ -5289,7 +5358,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\x0X"', 0, {
+    check_parsing('"\\x0X"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\x0X"',
@@ -5301,7 +5370,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\X0X"', 0, {
+    check_parsing('"\\X0X"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\X0X"',
@@ -5313,7 +5382,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\u0X"', 0, {
+    check_parsing('"\\u0X"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\u0X"',
@@ -5325,7 +5394,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U0X"', 0, {
+    check_parsing('"\\U0X"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\U0X"',
@@ -5337,7 +5406,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\x00X"', 0, {
+    check_parsing('"\\x00X"', {
       --           0123456
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\x00X"',
@@ -5349,7 +5418,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\X00X"', 0, {
+    check_parsing('"\\X00X"', {
       --           0123456
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\X00X"',
@@ -5361,7 +5430,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\u00X"', 0, {
+    check_parsing('"\\u00X"', {
       --           0123456
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\u00X"',
@@ -5373,7 +5442,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U00X"', 0, {
+    check_parsing('"\\U00X"', {
       --           0123456
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\U00X"',
@@ -5385,7 +5454,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\u000X"', 0, {
+    check_parsing('"\\u000X"', {
       --           01234567
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\u000X"',
@@ -5397,7 +5466,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U000X"', 0, {
+    check_parsing('"\\U000X"', {
       --           01234567
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\U000X"',
@@ -5409,7 +5478,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\u0000X"', 0, {
+    check_parsing('"\\u0000X"', {
       --           012345678
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\u0000X"',
@@ -5421,7 +5490,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U0000X"', 0, {
+    check_parsing('"\\U0000X"', {
       --           012345678
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\U0000X"',
@@ -5433,7 +5502,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U00000X"', 0, {
+    check_parsing('"\\U00000X"', {
       --           0123456789
       ast = {
         'DoubleQuotedString(val="\\0X"):0:0:"\\U00000X"',
@@ -5445,7 +5514,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U000000X"', 0, {
+    check_parsing('"\\U000000X"', {
       --           01234567890
       --           0         1
       ast = {
@@ -5458,7 +5527,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U0000000X"', 0, {
+    check_parsing('"\\U0000000X"', {
       --           012345678901
       --           0         1
       ast = {
@@ -5471,7 +5540,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U00000000X"', 0, {
+    check_parsing('"\\U00000000X"', {
       --           0123456789012
       --           0         1
       ast = {
@@ -5484,7 +5553,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\x000X"', 0, {
+    check_parsing('"\\x000X"', {
       --           01234567
       ast = {
         'DoubleQuotedString(val="\\0000X"):0:0:"\\x000X"',
@@ -5496,7 +5565,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\X000X"', 0, {
+    check_parsing('"\\X000X"', {
       --           01234567
       ast = {
         'DoubleQuotedString(val="\\0000X"):0:0:"\\X000X"',
@@ -5508,7 +5577,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\u00000X"', 0, {
+    check_parsing('"\\u00000X"', {
       --           0123456789
       ast = {
         'DoubleQuotedString(val="\\0000X"):0:0:"\\u00000X"',
@@ -5520,7 +5589,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\U000000000X"', 0, {
+    check_parsing('"\\U000000000X"', {
       --           01234567890123
       --           0         1
       ast = {
@@ -5533,7 +5602,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\0"', 0, {
+    check_parsing('"\\0"', {
       --           0123
       ast = {
         'DoubleQuotedString(val="\\0"):0:0:"\\0"',
@@ -5544,7 +5613,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\00"', 0, {
+    check_parsing('"\\00"', {
       --           01234
       ast = {
         'DoubleQuotedString(val="\\0"):0:0:"\\00"',
@@ -5555,7 +5624,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\000"', 0, {
+    check_parsing('"\\000"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\0"):0:0:"\\000"',
@@ -5566,7 +5635,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\0000"', 0, {
+    check_parsing('"\\0000"', {
       --           0123456
       ast = {
         'DoubleQuotedString(val="\\0000"):0:0:"\\0000"',
@@ -5578,7 +5647,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\8"', 0, {
+    check_parsing('"\\8"', {
       --           0123
       ast = {
         'DoubleQuotedString(val="8"):0:0:"\\8"',
@@ -5589,7 +5658,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\08"', 0, {
+    check_parsing('"\\08"', {
       --           01234
       ast = {
         'DoubleQuotedString(val="\\0008"):0:0:"\\08"',
@@ -5601,7 +5670,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\008"', 0, {
+    check_parsing('"\\008"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\0008"):0:0:"\\008"',
@@ -5613,7 +5682,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\0008"', 0, {
+    check_parsing('"\\0008"', {
       --           0123456
       ast = {
         'DoubleQuotedString(val="\\0008"):0:0:"\\0008"',
@@ -5625,7 +5694,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\777"', 0, {
+    check_parsing('"\\777"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\255"):0:0:"\\777"',
@@ -5636,7 +5705,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\050"', 0, {
+    check_parsing('"\\050"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\40"):0:0:"\\050"',
@@ -5647,7 +5716,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\<C-u>"', 0, {
+    check_parsing('"\\<C-u>"', {
       --           012345
       ast = {
         'DoubleQuotedString(val="\\21"):0:0:"\\<C-u>"',
@@ -5658,7 +5727,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\<', 0, {
+    check_parsing('"\\<', {
       --           012
       ast = {
         'DoubleQuotedString(val="<"):0:0:"\\<',
@@ -5672,7 +5741,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
     })
 
-    check_parsing('"\\<"', 0, {
+    check_parsing('"\\<"', {
       --           0123
       ast = {
         'DoubleQuotedString(val="<"):0:0:"\\<"',
@@ -5683,7 +5752,7 @@ describe('Expressions parser', function()
       hl('DoubleQuote', '"'),
     })
 
-    check_parsing('"\\<C-u"', 0, {
+    check_parsing('"\\<C-u"', {
       --           0123456
       ast = {
         'DoubleQuotedString(val="<C-u"):0:0:"\\<C-u"',
@@ -5696,7 +5765,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with multiplication-like operators', function()
-    check_parsing('2+2*2', 0, {
+    check_parsing('2+2*2', {
       --           01234
       ast = {
         {
@@ -5721,7 +5790,7 @@ describe('Expressions parser', function()
       hl('Number', '2'),
     })
 
-    check_parsing('2+2*', 0, {
+    check_parsing('2+2*', {
       --           0123
       ast = {
         {
@@ -5748,7 +5817,7 @@ describe('Expressions parser', function()
       hl('Multiplication', '*'),
     })
 
-    check_parsing('2+*2', 0, {
+    check_parsing('2+*2', {
       --           0123
       ast = {
         {
@@ -5776,7 +5845,7 @@ describe('Expressions parser', function()
       hl('Number', '2'),
     })
 
-    check_parsing('2+2/2', 0, {
+    check_parsing('2+2/2', {
       --           01234
       ast = {
         {
@@ -5801,7 +5870,7 @@ describe('Expressions parser', function()
       hl('Number', '2'),
     })
 
-    check_parsing('2+2/', 0, {
+    check_parsing('2+2/', {
       --           0123
       ast = {
         {
@@ -5828,7 +5897,7 @@ describe('Expressions parser', function()
       hl('Division', '/'),
     })
 
-    check_parsing('2+/2', 0, {
+    check_parsing('2+/2', {
       --           0123
       ast = {
         {
@@ -5856,7 +5925,7 @@ describe('Expressions parser', function()
       hl('Number', '2'),
     })
 
-    check_parsing('2+2%2', 0, {
+    check_parsing('2+2%2', {
       --           01234
       ast = {
         {
@@ -5881,7 +5950,7 @@ describe('Expressions parser', function()
       hl('Number', '2'),
     })
 
-    check_parsing('2+2%', 0, {
+    check_parsing('2+2%', {
       --           0123
       ast = {
         {
@@ -5908,7 +5977,7 @@ describe('Expressions parser', function()
       hl('Mod', '%'),
     })
 
-    check_parsing('2+%2', 0, {
+    check_parsing('2+%2', {
       --           0123
       ast = {
         {
@@ -5937,14 +6006,14 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with -', function()
-    check_parsing('@a', 0, {
+    check_parsing('@a', {
       ast = {
         'Register(name=a):0:0:@a',
       },
     }, {
       hl('Register', '@a'),
     })
-    check_parsing('-@a', 0, {
+    check_parsing('-@a', {
       ast = {
         {
           'UnaryMinus:0:0:-',
@@ -5957,7 +6026,7 @@ describe('Expressions parser', function()
       hl('UnaryMinus', '-'),
       hl('Register', '@a'),
     })
-    check_parsing('@a-@b', 0, {
+    check_parsing('@a-@b', {
       ast = {
         {
           'BinaryMinus:0:2:-',
@@ -5972,7 +6041,7 @@ describe('Expressions parser', function()
       hl('BinaryMinus', '-'),
       hl('Register', '@b'),
     })
-    check_parsing('@a-@b-@c', 0, {
+    check_parsing('@a-@b-@c', {
       ast = {
         {
           'BinaryMinus:0:5:-',
@@ -5995,7 +6064,7 @@ describe('Expressions parser', function()
       hl('BinaryMinus', '-'),
       hl('Register', '@c'),
     })
-    check_parsing('-@a-@b', 0, {
+    check_parsing('-@a-@b', {
       ast = {
         {
           'BinaryMinus:0:3:-',
@@ -6016,7 +6085,7 @@ describe('Expressions parser', function()
       hl('BinaryMinus', '-'),
       hl('Register', '@b'),
     })
-    check_parsing('-@a--@b', 0, {
+    check_parsing('-@a--@b', {
       ast = {
         {
           'BinaryMinus:0:3:-',
@@ -6043,44 +6112,7 @@ describe('Expressions parser', function()
       hl('UnaryMinus', '-'),
       hl('Register', '@b'),
     })
-    check_parsing('@a@b', 0, {
-      ast = {
-        {
-          'OpMissing:0:2:',
-          children = {
-            'Register(name=a):0:0:@a',
-            'Register(name=b):0:2:@b',
-          },
-        },
-      },
-      err = {
-        arg = '@b',
-        msg = 'E15: Missing operator: %.*s',
-      },
-    }, {
-      hl('Register', '@a'),
-      hl('InvalidRegister', '@b'),
-    })
-    check_parsing(' @a \t @b', 0, {
-      ast = {
-        {
-          'OpMissing:0:3:',
-          children = {
-            'Register(name=a):0:0: @a',
-            'Register(name=b):0:3: \t @b',
-          },
-        },
-      },
-      err = {
-        arg = '@b',
-        msg = 'E15: Missing operator: %.*s',
-      },
-    }, {
-      hl('Register', '@a', 1),
-      hl('InvalidSpacing', ' \t '),
-      hl('Register', '@b'),
-    })
-    check_parsing('-', 0, {
+    check_parsing('-', {
       ast = {
         'UnaryMinus:0:0:-',
       },
@@ -6091,7 +6123,7 @@ describe('Expressions parser', function()
     }, {
       hl('UnaryMinus', '-'),
     })
-    check_parsing(' -', 0, {
+    check_parsing(' -', {
       ast = {
         'UnaryMinus:0:0: -',
       },
@@ -6102,7 +6134,7 @@ describe('Expressions parser', function()
     }, {
       hl('UnaryMinus', '-', 1),
     })
-    check_parsing('@a-  ', 0, {
+    check_parsing('@a-  ', {
       ast = {
         {
           'BinaryMinus:0:2:-',
@@ -6121,7 +6153,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with logical operators', function()
-    check_parsing('a && b || c && d', 0, {
+    check_parsing('a && b || c && d', {
       --           0123456789012345
       --           0         1
       ast = {
@@ -6155,7 +6187,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'd', 1),
     })
 
-    check_parsing('&& a', 0, {
+    check_parsing('&& a', {
       --           0123
       ast = {
         {
@@ -6175,7 +6207,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'a', 1),
     })
 
-    check_parsing('|| a', 0, {
+    check_parsing('|| a', {
       --           0123
       ast = {
         {
@@ -6195,7 +6227,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'a', 1),
     })
 
-    check_parsing('a||', 0, {
+    check_parsing('a||', {
       --           012
       ast = {
         {
@@ -6214,7 +6246,7 @@ describe('Expressions parser', function()
       hl('Or', '||'),
     })
 
-    check_parsing('a&&', 0, {
+    check_parsing('a&&', {
       --           012
       ast = {
         {
@@ -6233,7 +6265,7 @@ describe('Expressions parser', function()
       hl('And', '&&'),
     })
 
-    check_parsing('(&&)', 0, {
+    check_parsing('(&&)', {
       --           0123
       ast = {
         {
@@ -6259,7 +6291,7 @@ describe('Expressions parser', function()
       hl('InvalidNestingParenthesis', ')'),
     })
 
-    check_parsing('(||)', 0, {
+    check_parsing('(||)', {
       --           0123
       ast = {
         {
@@ -6285,7 +6317,7 @@ describe('Expressions parser', function()
       hl('InvalidNestingParenthesis', ')'),
     })
 
-    check_parsing('(a||)', 0, {
+    check_parsing('(a||)', {
       --           01234
       ast = {
         {
@@ -6312,7 +6344,7 @@ describe('Expressions parser', function()
       hl('InvalidNestingParenthesis', ')'),
     })
 
-    check_parsing('(a&&)', 0, {
+    check_parsing('(a&&)', {
       --           01234
       ast = {
         {
@@ -6339,7 +6371,7 @@ describe('Expressions parser', function()
       hl('InvalidNestingParenthesis', ')'),
     })
 
-    check_parsing('(&&a)', 0, {
+    check_parsing('(&&a)', {
       --           01234
       ast = {
         {
@@ -6366,7 +6398,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', ')'),
     })
 
-    check_parsing('(||a)', 0, {
+    check_parsing('(||a)', {
       --           01234
       ast = {
         {
@@ -6394,7 +6426,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with &opt', function()
-    check_parsing('&', 0, {
+    check_parsing('&', {
       --           0
       ast = {
         'Option(scope=0,ident=):0:0:&',
@@ -6407,7 +6439,7 @@ describe('Expressions parser', function()
       hl('InvalidOptionSigil', '&'),
     })
 
-    check_parsing('&opt', 0, {
+    check_parsing('&opt', {
       --           0123
       ast = {
         'Option(scope=0,ident=opt):0:0:&opt',
@@ -6417,7 +6449,7 @@ describe('Expressions parser', function()
       hl('OptionName', 'opt'),
     })
 
-    check_parsing('&l:opt', 0, {
+    check_parsing('&l:opt', {
       --           012345
       ast = {
         'Option(scope=l,ident=opt):0:0:&l:opt',
@@ -6429,7 +6461,7 @@ describe('Expressions parser', function()
       hl('OptionName', 'opt'),
     })
 
-    check_parsing('&g:opt', 0, {
+    check_parsing('&g:opt', {
       --           012345
       ast = {
         'Option(scope=g,ident=opt):0:0:&g:opt',
@@ -6441,7 +6473,7 @@ describe('Expressions parser', function()
       hl('OptionName', 'opt'),
     })
 
-    check_parsing('&s:opt', 0, {
+    check_parsing('&s:opt', {
       --           012345
       ast = {
         {
@@ -6463,7 +6495,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'opt'),
     })
 
-    check_parsing('& ', 0, {
+    check_parsing('& ', {
       --           01
       ast = {
         'Option(scope=0,ident=):0:0:&',
@@ -6476,7 +6508,7 @@ describe('Expressions parser', function()
       hl('InvalidOptionSigil', '&'),
     })
 
-    check_parsing('&-', 0, {
+    check_parsing('&-', {
       --           01
       ast = {
         {
@@ -6495,7 +6527,7 @@ describe('Expressions parser', function()
       hl('BinaryMinus', '-'),
     })
 
-    check_parsing('&A', 0, {
+    check_parsing('&A', {
       --           01
       ast = {
         'Option(scope=0,ident=A):0:0:&A',
@@ -6505,7 +6537,7 @@ describe('Expressions parser', function()
       hl('OptionName', 'A'),
     })
 
-    check_parsing('&xxx_yyy', 0, {
+    check_parsing('&xxx_yyy', {
       --           01234567
       ast = {
         {
@@ -6524,9 +6556,21 @@ describe('Expressions parser', function()
       hl('OptionSigil', '&'),
       hl('OptionName', 'xxx'),
       hl('InvalidIdentifierName', '_yyy'),
+    }, {
+      [1] = {
+        ast = {
+          err = REMOVE_THIS,
+          ast = {
+            'Option(scope=0,ident=xxx):0:0:&xxx',
+          },
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
     })
 
-    check_parsing('(1+&)', 0, {
+    check_parsing('(1+&)', {
       --           01234
       ast = {
         {
@@ -6554,7 +6598,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', ')'),
     })
 
-    check_parsing('(&+1)', 0, {
+    check_parsing('(&+1)', {
       --           01234
       ast = {
         {
@@ -6583,7 +6627,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with $ENV', function()
-    check_parsing('$', 0, {
+    check_parsing('$', {
       --           0
       ast = {
         'Environment(ident=):0:0:$',
@@ -6596,7 +6640,7 @@ describe('Expressions parser', function()
       hl('InvalidEnvironmentSigil', '$'),
     })
 
-    check_parsing('$g:A', 0, {
+    check_parsing('$g:A', {
       --           0123
       ast = {
         {
@@ -6618,7 +6662,7 @@ describe('Expressions parser', function()
       hl('IdentifierName', 'A'),
     })
 
-    check_parsing('$A', 0, {
+    check_parsing('$A', {
       --           01
       ast = {
         'Environment(ident=A):0:0:$A',
@@ -6628,7 +6672,7 @@ describe('Expressions parser', function()
       hl('EnvironmentName', 'A'),
     })
 
-    check_parsing('$ABC', 0, {
+    check_parsing('$ABC', {
       --           0123
       ast = {
         'Environment(ident=ABC):0:0:$ABC',
@@ -6638,7 +6682,7 @@ describe('Expressions parser', function()
       hl('EnvironmentName', 'ABC'),
     })
 
-    check_parsing('(1+$)', 0, {
+    check_parsing('(1+$)', {
       --           01234
       ast = {
         {
@@ -6666,7 +6710,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', ')'),
     })
 
-    check_parsing('($+1)', 0, {
+    check_parsing('($+1)', {
       --           01234
       ast = {
         {
@@ -6694,7 +6738,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', ')'),
     })
 
-    check_parsing('$_ABC', 0, {
+    check_parsing('$_ABC', {
       --           01234
       ast = {
         'Environment(ident=_ABC):0:0:$_ABC',
@@ -6704,7 +6748,7 @@ describe('Expressions parser', function()
       hl('EnvironmentName', '_ABC'),
     })
 
-    check_parsing('$_', 0, {
+    check_parsing('$_', {
       --           01
       ast = {
         'Environment(ident=_):0:0:$_',
@@ -6714,7 +6758,7 @@ describe('Expressions parser', function()
       hl('EnvironmentName', '_'),
     })
 
-    check_parsing('$ABC_DEF', 0, {
+    check_parsing('$ABC_DEF', {
       --           01234567
       ast = {
         'Environment(ident=ABC_DEF):0:0:$ABC_DEF',
@@ -6725,7 +6769,7 @@ describe('Expressions parser', function()
     })
   end)
   itp('works with unary !', function()
-    check_parsing('!', 0, {
+    check_parsing('!', {
       --           0
       ast = {
         'Not:0:0:!',
@@ -6738,7 +6782,7 @@ describe('Expressions parser', function()
       hl('Not', '!'),
     })
 
-    check_parsing('!!', 0, {
+    check_parsing('!!', {
       --           01
       ast = {
         {
@@ -6757,7 +6801,7 @@ describe('Expressions parser', function()
       hl('Not', '!'),
     })
 
-    check_parsing('!!1', 0, {
+    check_parsing('!!1', {
       --           012
       ast = {
         {
@@ -6778,7 +6822,7 @@ describe('Expressions parser', function()
       hl('Number', '1'),
     })
 
-    check_parsing('!1', 0, {
+    check_parsing('!1', {
       --           01
       ast = {
         {
@@ -6793,7 +6837,7 @@ describe('Expressions parser', function()
       hl('Number', '1'),
     })
 
-    check_parsing('(!1)', 0, {
+    check_parsing('(!1)', {
       --           0123
       ast = {
         {
@@ -6815,7 +6859,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', ')'),
     })
 
-    check_parsing('(!)', 0, {
+    check_parsing('(!)', {
       --           012
       ast = {
         {
@@ -6840,7 +6884,7 @@ describe('Expressions parser', function()
       hl('InvalidNestingParenthesis', ')'),
     })
 
-    check_parsing('(1!2)', 0, {
+    check_parsing('(1!2)', {
       --           01234
       ast = {
         {
@@ -6873,7 +6917,7 @@ describe('Expressions parser', function()
       hl('NestingParenthesis', ')'),
     })
 
-    check_parsing('1!2', 0, {
+    check_parsing('1!2', {
       --           012
       ast = {
         {
@@ -6897,10 +6941,23 @@ describe('Expressions parser', function()
       hl('Number', '1'),
       hl('InvalidNot', '!'),
       hl('Number', '2'),
+    }, {
+      [1] = {
+        ast = {
+          err = REMOVE_THIS,
+          ast = {
+            'Integer(val=1):0:0:1',
+          },
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+          [3] = REMOVE_THIS,
+        },
+      },
     })
   end)
   itp('highlights numbers with prefix', function()
-    check_parsing('0xABCDEF', 0, {
+    check_parsing('0xABCDEF', {
       --           01234567
       ast = {
         'Integer(val=11259375):0:0:0xABCDEF',
@@ -6910,7 +6967,7 @@ describe('Expressions parser', function()
       hl('Number', 'ABCDEF'),
     })
 
-    check_parsing('0Xabcdef', 0, {
+    check_parsing('0Xabcdef', {
       --           01234567
       ast = {
         'Integer(val=11259375):0:0:0Xabcdef',
@@ -6920,7 +6977,7 @@ describe('Expressions parser', function()
       hl('Number', 'abcdef'),
     })
 
-    check_parsing('0XABCDEF', 0, {
+    check_parsing('0XABCDEF', {
       --           01234567
       ast = {
         'Integer(val=11259375):0:0:0XABCDEF',
@@ -6930,7 +6987,7 @@ describe('Expressions parser', function()
       hl('Number', 'ABCDEF'),
     })
 
-    check_parsing('0xabcdef', 0, {
+    check_parsing('0xabcdef', {
       --           01234567
       ast = {
         'Integer(val=11259375):0:0:0xabcdef',
@@ -6940,7 +6997,7 @@ describe('Expressions parser', function()
       hl('Number', 'abcdef'),
     })
 
-    check_parsing('0b001', 0, {
+    check_parsing('0b001', {
       --           01234
       ast = {
         'Integer(val=1):0:0:0b001',
@@ -6950,7 +7007,7 @@ describe('Expressions parser', function()
       hl('Number', '001'),
     })
 
-    check_parsing('0B001', 0, {
+    check_parsing('0B001', {
       --           01234
       ast = {
         'Integer(val=1):0:0:0B001',
@@ -6960,7 +7017,7 @@ describe('Expressions parser', function()
       hl('Number', '001'),
     })
 
-    check_parsing('0B00', 0, {
+    check_parsing('0B00', {
       --           0123
       ast = {
         'Integer(val=0):0:0:0B00',
@@ -6970,7 +7027,7 @@ describe('Expressions parser', function()
       hl('Number', '00'),
     })
 
-    check_parsing('00', 0, {
+    check_parsing('00', {
       --           01
       ast = {
         'Integer(val=0):0:0:00',
@@ -6980,7 +7037,7 @@ describe('Expressions parser', function()
       hl('Number', '0'),
     })
 
-    check_parsing('001', 0, {
+    check_parsing('001', {
       --           012
       ast = {
         'Integer(val=1):0:0:001',
@@ -6990,7 +7047,7 @@ describe('Expressions parser', function()
       hl('Number', '01'),
     })
 
-    check_parsing('01', 0, {
+    check_parsing('01', {
       --           01
       ast = {
         'Integer(val=1):0:0:01',
@@ -7000,7 +7057,7 @@ describe('Expressions parser', function()
       hl('Number', '1'),
     })
 
-    check_parsing('1', 0, {
+    check_parsing('1', {
       --           0
       ast = {
         'Integer(val=1):0:0:1',
@@ -7010,22 +7067,66 @@ describe('Expressions parser', function()
     })
   end)
   itp('works (KLEE tests)', function()
-    check_parsing('\0002&A:\000', 0, {
+    check_parsing('\0002&A:\000', {
       ast = nil,
       err = {
         arg = '',
         msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
+    }, {
+      [2] = {
+        ast = {
+          ast = {
+            {
+              'Colon:0:4::',
+              children = {
+                {
+                  'OpMissing:0:2:',
+                  children = {
+                    'Integer(val=2):0:1:2',
+                    'Option(scope=0,ident=A):0:2:&A',
+                  },
+                },
+              },
+            },
+          },
+          err = {
+            msg = 'E15: Unexpected EOC character: %.*s',
+          },
+        },
+        hl_fs = {
+          hl('InvalidSpacing', '\0'),
+          hl('Number', '2'),
+          hl('InvalidOptionSigil', '&'),
+          hl('InvalidOptionName', 'A'),
+          hl('InvalidColon', ':'),
+          hl('InvalidSpacing', '\0'),
+        },
+      },
+      [3] = {
+        ast = {
+          ast = {
+            'Integer(val=2):0:1:2',
+          },
+          err = {
+            msg = 'E15: Unexpected EOC character: %.*s',
+          },
+        },
+        hl_fs = {
+          hl('InvalidSpacing', '\0'),
+          hl('Number', '2'),
+        },
+      },
     })
-    check_parsing({data='01', size=1}, 0, {
+    check_parsing({data='01', size=1}, {
       ast = {
         'Integer(val=0):0:0:0',
       },
     }, {
       hl('Number', '0'),
     })
-    check_parsing({data='001', size=2}, 0, {
+    check_parsing({data='001', size=2}, {
       ast = {
         'Integer(val=0):0:0:00',
       },
@@ -7033,7 +7134,7 @@ describe('Expressions parser', function()
       hl('NumberPrefix', '0'),
       hl('Number', '0'),
     })
-    check_parsing('"\\U\\', 0, {
+    check_parsing('"\\U\\', {
       --           0123
       ast = {
         [[DoubleQuotedString(val="U\\"):0:0:"\U\]],
@@ -7047,7 +7148,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
       hl('InvalidDoubleQuotedBody', '\\'),
     })
-    check_parsing('"\\U', 0, {
+    check_parsing('"\\U', {
       --           012
       ast = {
         'DoubleQuotedString(val="U"):0:0:"\\U',
@@ -7060,68 +7161,98 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
     })
-    check_parsing('|"\\U\\', 2, {
+    check_parsing('|"\\U\\', {
       --           01234
-      ast = {
-        {
-          'Or:0:0:|',
-          children = {
-            'Missing:0:0:',
-            'DoubleQuotedString(val="U\\\\"):0:1:"\\U\\',
-          },
-        },
-      },
       err = {
         arg = '|"\\U\\',
-        msg = 'E15: Unexpected EOC character: %.*s',
+        msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
-      hl('InvalidOr', '|'),
-      hl('InvalidDoubleQuote', '"'),
-      hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
-      hl('InvalidDoubleQuotedBody', '\\'),
-    })
-    check_parsing('|"\\e"', 2, {
-      --           01234
-      ast = {
-        {
-          'Or:0:0:|',
-          children = {
-            'Missing:0:0:',
-            'DoubleQuotedString(val="\\27"):0:1:"\\e"',
+    }, {
+      [2] = {
+        ast = {
+          ast = {
+            {
+              'Or:0:0:|',
+              children = {
+                'Missing:0:0:',
+                'DoubleQuotedString(val="U\\\\"):0:1:"\\U\\',
+              },
+            },
+          },
+          err = {
+            msg = 'E15: Unexpected EOC character: %.*s',
           },
         },
+        hl_fs = {
+          hl('InvalidOr', '|'),
+          hl('InvalidDoubleQuote', '"'),
+          hl('InvalidDoubleQuotedUnknownEscape', '\\U'),
+          hl('InvalidDoubleQuotedBody', '\\'),
+        },
       },
+    })
+    check_parsing('|"\\e"', {
+      --           01234
       err = {
         arg = '|"\\e"',
-        msg = 'E15: Unexpected EOC character: %.*s',
+        msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
-      hl('InvalidOr', '|'),
-      hl('DoubleQuote', '"'),
-      hl('DoubleQuotedEscape', '\\e'),
-      hl('DoubleQuote', '"'),
-    })
-    check_parsing('|\029', 2, {
-      --           01
-      ast = {
-        {
-          'Or:0:0:|',
-          children = {
-            'Missing:0:0:',
-            'PlainIdentifier(scope=0,ident=\029):0:1:\029',
+    }, {
+      [2] = {
+        ast = {
+          ast = {
+            {
+              'Or:0:0:|',
+              children = {
+                'Missing:0:0:',
+                'DoubleQuotedString(val="\\27"):0:1:"\\e"',
+              },
+            },
+          },
+          err = {
+            msg = 'E15: Unexpected EOC character: %.*s',
           },
         },
+        hl_fs = {
+          hl('InvalidOr', '|'),
+          hl('DoubleQuote', '"'),
+          hl('DoubleQuotedEscape', '\\e'),
+          hl('DoubleQuote', '"'),
+        },
       },
+    })
+    check_parsing('|\029', {
+      --           01
       err = {
         arg = '|\029',
-        msg = 'E15: Unexpected EOC character: %.*s',
+        msg = 'E15: Expected value, got EOC: %.*s',
       },
     }, {
-      hl('InvalidOr', '|'),
-      hl('InvalidIdentifierName', '\029'),
+    }, {
+      [2] = {
+        ast = {
+          ast = {
+            {
+              'Or:0:0:|',
+              children = {
+                'Missing:0:0:',
+                'PlainIdentifier(scope=0,ident=\029):0:1:\029',
+              },
+            },
+          },
+          err = {
+            msg = 'E15: Unexpected EOC character: %.*s',
+          },
+        },
+        hl_fs = {
+          hl('InvalidOr', '|'),
+          hl('InvalidIdentifierName', '\029'),
+        },
+      },
     })
-    check_parsing('"\\<', 0, {
+    check_parsing('"\\<', {
       --           012
       ast = {
         'DoubleQuotedString(val="<"):0:0:"\\<',
@@ -7134,7 +7265,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
     })
-    check_parsing('"\\1', 0, {
+    check_parsing('"\\1', {
       --           012
       ast = {
         'DoubleQuotedString(val="\\1"):0:0:"\\1',
@@ -7147,7 +7278,7 @@ describe('Expressions parser', function()
       hl('InvalidDoubleQuote', '"'),
       hl('InvalidDoubleQuotedEscape', '\\1'),
     })
-    check_parsing('}l', 0, {
+    check_parsing('}l', {
       --           01
       ast = {
         {
@@ -7165,8 +7296,19 @@ describe('Expressions parser', function()
     }, {
       hl('InvalidFigureBrace', '}'),
       hl('InvalidIdentifierName', 'l'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            'UnknownFigure(---):0:0:',
+          },
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+        },
+      },
     })
-    check_parsing(':?\000\000\000\000\000\000\000', 0, {
+    check_parsing(':?\000\000\000\000\000\000\000', {
       ast = {
         {
           'Colon:0:0::',
@@ -7189,7 +7331,18 @@ describe('Expressions parser', function()
     }, {
       hl('InvalidColon', ':'),
       hl('InvalidTernary', '?'),
+    }, {
+      [2] = {
+        hl_fs = {
+          [3] = hl('InvalidSpacing', '\0'),
+          [4] = hl('InvalidSpacing', '\0'),
+          [5] = hl('InvalidSpacing', '\0'),
+          [6] = hl('InvalidSpacing', '\0'),
+          [7] = hl('InvalidSpacing', '\0'),
+          [8] = hl('InvalidSpacing', '\0'),
+          [9] = hl('InvalidSpacing', '\0'),
+        },
+      },
     })
   end)
-  -- FIXME: check flag effects
 end)

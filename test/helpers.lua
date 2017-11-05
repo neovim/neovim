@@ -271,6 +271,45 @@ local function shallowcopy(orig)
   return copy
 end
 
+local deepcopy
+
+local function id(v)
+  return v
+end
+
+local deepcopy_funcs = {
+  table = function(orig)
+    local copy = {}
+    for k, v in pairs(orig) do
+      copy[deepcopy(k)] = deepcopy(v)
+    end
+  end,
+  number = id,
+  string = id,
+  ['nil'] = id,
+  boolean = id,
+}
+
+deepcopy = function(orig)
+  return deepcopy_funcs[type(orig)](orig)
+end
+
+local REMOVE_THIS = {}
+
+local function mergedicts_copy(d1, d2)
+  local ret = shallowcopy(d1)
+  for k, v in pairs(d2) do
+    if d2[k] == REMOVE_THIS then
+      ret[k] = nil
+    elseif type(d1[k]) == 'table' and type(d2[k]) == 'table' then
+      ret[k] = mergedicts_copy(d1[k], d2[k])
+    else
+      ret[k] = d2[k]
+    end
+  end
+  return ret
+end
+
 local function concat_tables(...)
   local ret = {}
   for i = 1, select('#', ...) do
@@ -413,6 +452,9 @@ return {
   hasenv = hasenv,
   which = which,
   shallowcopy = shallowcopy,
+  deepcopy = deepcopy,
+  mergedicts_copy = mergedicts_copy,
+  REMOVE_THIS = REMOVE_THIS,
   concat_tables = concat_tables,
   dedent = dedent,
   format_luav = format_luav,

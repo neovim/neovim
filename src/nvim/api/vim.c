@@ -971,6 +971,11 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
     switch (flags.data[i]) {
       case 'm': { pflags |= kExprFlagsMulti; break; }
       case 'E': { pflags |= kExprFlagsDisallowEOC; break; }
+      case NUL: {
+        api_set_error(err, kErrorTypeValidation, "Invalid flag: '\\0' (%u)",
+                      (unsigned)flags.data[i]);
+        return (Dictionary)ARRAY_DICT_INIT;
+      }
       default: {
         api_set_error(err, kErrorTypeValidation, "Invalid flag: '%c' (%u)",
                       flags.data[i], (unsigned)flags.data[i]);
@@ -995,6 +1000,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
       &pstate, parser_simple_get_line, &plines_p, colors_p);
   ExprAST east = viml_pexpr_parse(&pstate, pflags);
 
+  // FIXME add parse_length key
   const size_t ret_size = (
     1  // "ast"
     + (size_t)(east.err.msg != NULL)  // "error"
