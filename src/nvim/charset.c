@@ -1615,7 +1615,7 @@ bool vim_isblankline(char_u *lbuf)
 ///             hexadecimal, '0' = octal, 'b' or 'B' is binary. When using
 ///             STR2NR_FORCE is always zero.
 /// @param len Returns the detected length of number.
-/// @param what Recognizes what number passed.
+/// @param what Recognizes what number passed, @see ChStr2NrFlags.
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
