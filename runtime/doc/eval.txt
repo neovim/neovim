@@ -2201,12 +2201,13 @@ readfile({fname} [, {binary} [, {max}]])
 reltime([{start} [, {end}]])	List	get time value
 reltimefloat({time})		Float	turn the time value into a Float
 reltimestr({time})		String	turn time value into a String
-remote_expr({server}, {string} [, {idvar}])
+remote_expr({server}, {string} [, {idvar} [, {timeout}]])
 				String	send expression
 remote_foreground({server})	Number	bring Vim server to the foreground
 remote_peek({serverid} [, {retvar}])
 				Number	check for reply string
-remote_read({serverid})		String	read reply string
+remote_read({serverid} [, {timeout}])
+				String	read reply string
 remote_send({server}, {string} [, {idvar}])
 				String	send key sequence
 remove({list}, {idx} [, {end}])	any	remove items {idx}-{end} from {list}
