@@ -24,7 +24,7 @@ the existing `package.cpath` are used.  Example:
 
 1. Given that
    - 'runtimepath' contains `/foo/bar,/xxx;yyy/baz,/abc`;
-   - initial (defined at compile time or derived from 
+   - initial (defined at compile-time or derived from 
      `$LUA_CPATH`/`$LUA_INIT`) `package.cpath` contains 
      `./?.so;/def/ghi/a?d/j/g.elf;/def/?.so`.
 2. It finds `?`-containing suffixes `/?.so`, `/a?d/j/g.elf` and `/?.so`, in 
@@ -159,14 +159,17 @@ Examples:
 >
 	:lua vim.api.nvim_command('echo "Hello, Nvim!"')
 <
+To see the Lua version: >
+	:lua print(_VERSION)
+
+To see the LuaJIT version: >
+	:lua print(jit.version)
+<
 
 :[range]lua << {endmarker}
 {script}
 {endmarker}
 			Execute Lua script {script}.
-			Note: This command doesn't work when the Lua
-			feature wasn't compiled in.  To avoid errors, see
-			|script-here|.
 
 {endmarker} must NOT be preceded by any white space.  If {endmarker} is
 omitted from after the "<<", a dot '.' must be used after {script}, like
@@ -186,15 +189,8 @@ Example:
 	EOF
 	endfunction
 
-Note that the variables are prefixed with `local`: they will disappear when
-block finishes. This is not the case for globals.
-
-To see what version of Lua you have: >
-	:lua print(_VERSION)
-
-If you use LuaJIT you can also use this: >
-	:lua print(jit.version)
-<
+Note that the `local` variables will disappear when block finishes. This is
+not the case for globals.
 
 							*:luado*
 :[range]luado {body}	Execute Lua function "function (line, linenr) {body}

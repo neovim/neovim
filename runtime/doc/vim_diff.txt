@@ -60,14 +60,17 @@ a complete and centralized reference of those differences.
 
 MAJOR COMPONENTS ~
 
-Embedded terminal emulator	|terminal|
-RPC API				|RPC|
-Shared data			|shada|
-XDG base directories		|xdg|
+API				|API|
+Lua scripting			|lua|
 Job control			|job-control|
 Remote plugins			|remote-plugin|
-Python plugins			|provider-python|
-Clipboard integration		|provider-clipboard|
+Providers
+  Clipboard			|provider-clipboard|
+  Python plugins		|provider-python|
+  Ruby plugins			|provider-ruby|
+Shared data			|shada|
+Embedded terminal		|terminal|
+XDG base directories		|xdg|
 
 USER EXPERIENCE  ~
 
@@ -86,6 +89,16 @@ Working intuitively and consistently is a major goal of Nvim.
 
 - Vim's internal test functions (test_autochdir(), test_settime(), etc.) are
   not exposed (nor implemented); instead Nvim has a robust API.
+
+- Behaviors, options, documentation are removed if they cost users more time
+  than they save.
+
+Usability details have been improved where the benefit outweighs any
+backwards-compatibility cost. Some examples:
+
+- |K| in help documents can be used like |CTRL-]|.
+- Directories for 'directory' and 'undodir' are auto-created.
+- Terminal features such as 'guicursor' are enabled where possible.
 
 ARCHITECTURE ~
 
@@ -130,6 +143,7 @@ Commands:
   |:checkhealth|
   |:drop| is available on all platforms
   |:Man| is available by default, with many improvements such as completion
+  |:tchdir| tab-local |current-directory|
 
 Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified
