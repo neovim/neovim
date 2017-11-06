@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Mar 04
+" Last Change:	2017 Mar 13
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -1362,6 +1362,9 @@ endfunc
 " Not Quite C
 au BufNewFile,BufRead *.nqc			setf nqc
 
+" NSE - Nmap Script Engine - uses Lua syntax
+au BufNewFile,BufRead *.nse			setf lua
+
 " NSIS
 au BufNewFile,BufRead *.nsi,*.nsh		setf nsis
 
@@ -2277,7 +2280,7 @@ au BufNewFile,BufRead .tidyrc,tidyrc		setf tidy
 au BufNewFile,BufRead *.tf,.tfrc,tfrc		setf tf
 
 " tmux configuration
-au BufNewFile,BufRead tmux*.conf		setf tmux
+au BufNewFile,BufRead {.,}tmux*.conf		setf tmux
 
 " TPP - Text Presentation Program
 au BufNewFile,BufReadPost *.tpp			setf tpp

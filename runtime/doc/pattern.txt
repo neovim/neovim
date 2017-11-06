@@ -856,8 +856,8 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 	inside the Visual area put it at the start and just before the end of
 	the pattern, e.g.: >
 		/\%Vfoo.*ba\%Vr
-<	This works if "foo bar" (or more) was Visually selected. This: >
-		/\%Vfoo.*ba\%Vr
+<	This also works if only "foo bar" was Visually selected. This: >
+		/\%Vfoo.*bar\%V
 <	would match "foo bar" if the Visual selection continues after the "r".
 	Only works for the current buffer.
 

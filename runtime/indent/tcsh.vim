@@ -32,17 +32,17 @@ function TcshGetIndent()
     let ind = indent(lnum)
     let line = getline(lnum)
     if line =~ '\v^\s*%(while|foreach)>|^\s*%(case\s.*:|default:|else)\s*$|%(<then|\\)$'
-	let ind = ind + &sw
+	let ind = ind + shiftwidth()
     endif
 
     if line =~ '\v^\s*breaksw>'
-	let ind = ind - &sw
+	let ind = ind - shiftwidth()
     endif
 
     " Subtract indent if current line has on end, endif, case commands
     let line = getline(v:lnum)
     if line =~ '\v^\s*%(else|end|endif)\s*$'
-	let ind = ind - &sw
+	let ind = ind - shiftwidth()
     endif
 
     return ind

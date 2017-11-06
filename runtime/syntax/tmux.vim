@@ -4,18 +4,16 @@
 " Maintainer: Eric Pruitt <eric.pruitt@gmail.com>
 " License: 2-Clause BSD (http://opensource.org/licenses/BSD-2-Clause)
 
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+if exists("b:current_syntax")
     finish
-else
-    let b:current_syntax = "tmux"
 endif
 
-" this file uses line continuations
-let s:cpo_sav = &cpo
+" Explicitly change compatiblity options to Vim's defaults because this file
+" uses line continuations.
+let s:original_cpo = &cpo
 set cpo&vim
 
+let b:current_syntax = "tmux"
 setlocal iskeyword+=-
 syntax case match
 
@@ -62,7 +60,6 @@ for s:i in range(0, 255)
     exec "syn match tmuxColour" . s:i . " /\\<colour" . s:i . "\\>/ display"
 \     " | highlight tmuxColour" . s:i . " ctermfg=" . s:i . " ctermbg=" . s:bg
 endfor
-unlet s:bg s:i
 
 syn keyword tmuxOptions
 \ buffer-limit command-alias default-terminal escape-time exit-unattached
@@ -123,5 +120,5 @@ syn keyword tmuxCommands
 \ swapp swap-window swapw switch-client switchc unbind-key unbind wait-for
 \ wait
 
-let &cpo = s:cpo_sav
-unlet! s:cpo_sav
+let &cpo = s:original_cpo
+unlet! s:original_cpo s:bg s:i

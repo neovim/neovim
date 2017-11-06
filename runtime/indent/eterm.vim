@@ -25,11 +25,11 @@ function GetEtermIndent()
   let ind = indent(lnum)
 
   if getline(lnum) =~ '^\s*begin\>'
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   endif
 
   if getline(v:lnum) =~ '^\s*end\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   return ind
