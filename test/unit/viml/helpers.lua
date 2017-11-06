@@ -112,7 +112,6 @@ return {
   pline2lua = pline2lua,
   pstate_str = pstate_str,
   new_pstate = new_pstate,
-  intchar2lua = intchar2lua,
   conv_cmp_type = conv_cmp_type,
   pstate_set_str = pstate_set_str,
 }

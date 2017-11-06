@@ -930,7 +930,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                @note: “Sucessfully parsed” here means “participated in AST
 ///                       creation”, not “till the first error”.
 ///
-///         "ast": actual AST, either nil or a dictionary with the following 
+///         "ast": actual AST, either nil or a dictionary with the following
 ///                keys:
 ///
 ///           "type": node type, one of the value names from ExprASTNodeType
@@ -1009,10 +1009,10 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
   ExprAST east = viml_pexpr_parse(&pstate, pflags);
 
   const size_t ret_size = (
-    2  // "ast", "len"
-    + (size_t)(east.err.msg != NULL)  // "error"
-    + (size_t)highlight  // "highlight"
-  );
+      2  // "ast", "len"
+      + (size_t)(east.err.msg != NULL)  // "error"
+      + (size_t)highlight  // "highlight"
+      + 0);
   Dictionary ret = {
     .items = xmalloc(ret_size * sizeof(ret.items[0])),
     .size = 0,
@@ -1242,12 +1242,12 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
             ret_node->items[ret_node->size++] = (KeyValuePair) {
               .key = STATIC_CSTR_TO_STRING("cmp_type"),
               .value = STRING_OBJ(cstr_to_string(
-                      eltkn_cmp_type_tab[node->data.cmp.type])),
+                  eltkn_cmp_type_tab[node->data.cmp.type])),
             };
             ret_node->items[ret_node->size++] = (KeyValuePair) {
               .key = STATIC_CSTR_TO_STRING("ccs_strategy"),
               .value = STRING_OBJ(cstr_to_string(
-                      ccs_tab[node->data.cmp.ccs])),
+                  ccs_tab[node->data.cmp.ccs])),
             };
             ret_node->items[ret_node->size++] = (KeyValuePair) {
               .key = STATIC_CSTR_TO_STRING("invert"),
@@ -1266,9 +1266,9 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
             ret_node->items[ret_node->size++] = (KeyValuePair) {
               .key = STATIC_CSTR_TO_STRING("ivalue"),
               .value = INTEGER_OBJ((Integer)(
-                      node->data.num.value > API_INTEGER_MAX
-                      ? API_INTEGER_MAX
-                      : (Integer)node->data.num.value)),
+                  node->data.num.value > API_INTEGER_MAX
+                  ? API_INTEGER_MAX
+                  : (Integer)node->data.num.value)),
             };
             break;
           }

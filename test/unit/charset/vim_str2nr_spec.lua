@@ -5,7 +5,6 @@ local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
 local ffi = helpers.ffi
-local eq = helpers.eq
 
 local shallowcopy = global_helpers.shallowcopy
 local updated = global_helpers.updated

@@ -22,7 +22,7 @@
 //    ignored in Neovim it is an error.
 // 4. Expressions parser has generally better error reporting.  But for
 //    compatibility reasons most errors have error code E15 while error messages
-//    are significantly different from Vim’s E15.  Also some error codes were 
+//    are significantly different from Vim’s E15.  Also some error codes were
 //    retired because of being harder to emulate or because of them being
 //    a result of differences in parsing process: e.g. with ":echo {a, b}" Vim
 //    will attempt to parse expression as lambda, fail, check whether it is

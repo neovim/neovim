@@ -301,10 +301,10 @@ local function mergedicts_copy(d1, d2)
   for k, v in pairs(d2) do
     if d2[k] == REMOVE_THIS then
       ret[k] = nil
-    elseif type(d1[k]) == 'table' and type(d2[k]) == 'table' then
-      ret[k] = mergedicts_copy(d1[k], d2[k])
+    elseif type(d1[k]) == 'table' and type(v) == 'table' then
+      ret[k] = mergedicts_copy(d1[k], v)
     else
-      ret[k] = d2[k]
+      ret[k] = v
     end
   end
   return ret
