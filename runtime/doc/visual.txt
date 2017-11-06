@@ -25,8 +25,7 @@ Using Visual mode consists of three parts:
 3. Type an operator command.
    The highlighted characters will be operated upon.
 
-The 'highlight' option can be used to set the display mode to use for
-highlighting in Visual mode.
+The |hl-Visual| group determines the highlighting of the visual selection.
 The 'virtualedit' option can be used to allow positioning the cursor to
 positions where there is no actual character.
 

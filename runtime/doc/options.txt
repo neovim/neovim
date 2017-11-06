@@ -3094,11 +3094,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	WARNING: It's easy to forget that you have changes in hidden buffers.
 	Think twice when using ":q!" or ":qa!".
 
-						*'highlight'* *'hl'*
-'highlight' 'hl'	Removed. |vim-differences|
-			global
-	The builtin |highlight-groups| cannot be changed.
-
 						*'history'* *'hi'*
 'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
 			global
@@ -3127,10 +3122,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			{not available when compiled without the
 			|+extra_search| feature}
 	When there is a previous search pattern, highlight all its matches.
-	The type of highlighting used can be set with the 'l' occasion in the
-	'highlight' option.  This uses the "Search" highlight group by
-	default.  Note that only the matching text is highlighted, any offsets
-	are not applied.
+	The |hl-Search| highlight group determines the highlighting. Note that
+	only the matching text is highlighted, any offsets are not applied.
 	See also: 'incsearch' and |:match|.
 	When you get bored looking at the highlighted matches, you can turn it
 	off with |:nohlsearch|.  This does not change the option value, as
@@ -3298,7 +3291,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Vim only searches for about half a second.  With a complicated
 	pattern and/or a lot of text the match may not be found.  This is to
 	avoid that Vim hangs while you are typing the pattern.
-	The highlighting can be set with the 'i' flag in 'highlight'.
+	The |hl-IncSearch| highlight group determines the highlighting.
 	See also: 'hlsearch'.
 	CTRL-L can be used to add one character from after the current match
 	to the command line.  If 'ignorecase' and 'smartcase' are set and the
@@ -5346,8 +5339,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Only printable single-cell characters are allowed, excluding <Tab> and
 	comma (in a future version the comma might be used to separate the
 	part that is shown at the end and at the start of a line).
-	The characters are highlighted according to the '@' flag in
-	'highlight'.
+	The |hl-NonText| highlight group determines the highlighting.
 	Note that tabs after the showbreak will be displayed differently.
 	If you want the 'showbreak' to appear in between line numbers, add the
 	"n" flag to 'cpoptions'.
@@ -5402,10 +5394,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'showmode' 'smd'	boolean	(Vim default: on, Vi default: off)
 			global
 	If in Insert, Replace or Visual mode put a message on the last line.
-	Use the 'M' flag in 'highlight' to set the type of highlighting for
-	this message.
-	When |XIM| may be used the message will include "XIM".  But this
-	doesn't mean XIM is really active.
+	The |hl-ModeMsg| highlight group determines the highlighting.
 
 						*'showtabline'* *'stal'*
 'showtabline' 'stal'	number	(default 1)

@@ -361,7 +361,7 @@ These are the commands that can be used:
 							*c_CTRL-D*
 CTRL-D		List names that match the pattern in front of the cursor.
 		When showing file names, directories are highlighted (see
-		'highlight' option).  Names where 'suffixes' matches are moved
+		|highlight-groups|).  Names where 'suffixes' matches are moved
 		to the end.
 		The 'wildoptions' option can be set to "tagfile" to list the
 		file of matching tags.

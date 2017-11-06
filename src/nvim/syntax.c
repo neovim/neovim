@@ -79,7 +79,7 @@ struct hl_group {
 #define SG_LINK         8       // link has been set
 /// @}
 
-// highlight groups for 'highlight' option
+// builtin |highlight-groups|
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
 static inline struct hl_group * HL_TABLE(void)

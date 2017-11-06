@@ -4543,12 +4543,11 @@ is mostly used, because it looks better.
 ==============================================================================
 12. Highlight command			*:highlight* *:hi* *E28* *E411* *E415*
 
-There are three types of highlight groups:
+There are two types of highlight groups:
+- The built-in |highlight-groups|.
 - The ones used for specific languages.  For these the name starts with the
   name of the language.  Many of these don't have any attributes, but are
   linked to a group of the second type.
-- The ones used for all syntax languages.
-- The ones used for the 'highlight' option.
 							*hitest.vim*
 You can see all the groups currently active with this command: >
     :so $VIMRUNTIME/syntax/hitest.vim
@@ -5079,8 +5078,6 @@ defaults back: >
 
 It is a bit of a wrong name, since it does not reset any syntax items, it only
 affects the highlighting.
-
-This doesn't change the colors for the 'highlight' option.
 
 Note that the syntax colors that you set in your vimrc file will also be reset
 back to their Vim default.
