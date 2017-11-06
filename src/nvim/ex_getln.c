@@ -2501,7 +2501,6 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     can_free_cb = true;
   } else if (colored_ccline->cmdfirstc == '=') {
     color_expr_cmdline(colored_ccline, ccline_colors);
-    can_free_cb = false;
   }
   if (!tl_ret || !dgc_ret) {
     goto color_cmdline_error;

@@ -714,7 +714,7 @@ int find_special_key_in_table(int c)
 ///                   with "t_" the next two characters are interpreted as
 ///                   a termcap name.
 ///
-/// @return Key code or 0 if ton found.
+/// @return Key code or 0 if not found.
 int get_special_key_code(const char_u *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {

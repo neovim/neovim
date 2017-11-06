@@ -169,10 +169,10 @@ Usage:
 
     gendeclarations.lua definitions.c static.h non-static.h definitions.i
 
-Generates declarations for a C file defitions.c, putting declarations for
+Generates declarations for a C file definitions.c, putting declarations for
 static functions into static.h and declarations for non-static functions into
 non-static.h. File `definitions.i' should contain an already preprocessed
-version of defintions.c and it is the only one which is actually parsed,
+version of definitions.c and it is the only one which is actually parsed,
 definitions.c is needed only to determine functions from which file out of all
 functions found in definitions.i are needed.
 
@@ -181,7 +181,7 @@ Additionally uses the following environment variables:
     NVIM_GEN_DECLARATIONS_LINE_NUMBERS:
         If set to 1 then all generated declarations receive a comment with file
         name and line number after the declaration. This may be useful for
-        debugging gen_declarations script, but not much beyound that with 
+        debugging gen_declarations script, but not much beyond that with
         configured development environment (i.e. with ctags/cscope/finding
         definitions with clang/etc).
 
