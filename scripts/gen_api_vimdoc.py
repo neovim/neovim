@@ -73,7 +73,7 @@ text_width = 78
 script_path = os.path.abspath(__file__)
 base_dir = os.path.dirname(os.path.dirname(script_path))
 src_dir = os.path.join(base_dir, 'src/nvim/api')
-out_dir = os.path.join(base_dir, 'tmp/api_doc')
+out_dir = os.path.join(base_dir, 'tmp-api-doc')
 filter_cmd = '%s %s' % (sys.executable, script_path)
 seen_funcs = set()
 

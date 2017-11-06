@@ -439,6 +439,7 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 /// Gets a changed tick of a buffer
 ///
 /// @param[in]  buffer  Buffer handle.
+/// @param[out] err     Error details, if any
 ///
 /// @return `b:changedtick` value.
 Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
@@ -453,14 +454,14 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
   return buf->b_changedtick;
 }
 
-/// Get a list of dictionaries describing buffer-local mappings
-/// Note that the buffer key in the dictionary will represent the buffer
-/// handle where the mapping is present
+/// Gets a list of dictionaries describing buffer-local mappings.
+/// The "buffer" key in the returned dictionary reflects the buffer
+/// handle where the mapping is present.
 ///
-/// @param  mode  The abbreviation for the mode
-/// @param  buffer_id  Buffer handle
+/// @param  mode       Mode short-name ("n", "i", "v", ...)
+/// @param  buffer     Buffer handle
 /// @param[out]  err   Error details, if any
-/// @returns An array of maparg() like dictionaries describing mappings
+/// @returns Array of maparg()-like dictionaries describing mappings
 ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
     FUNC_API_SINCE(3)
 {
