@@ -175,7 +175,7 @@ contains information that makes this task easier (see also |rpc-types|):
     even more strongly-typed APIs.
   - Functions that are considered to be methods that operate on instances of
     Nvim special types (msgpack EXT) will have the `"method"` attribute set to
-    `true`. The reciever type is the type of the first argument. The method
+    `true`. The receiver type is the type of the first argument. The method
     names are prefixed with `nvim_` plus a shortened type name, e.g.
     `nvim_buf_get_lines` represents the `get_lines` method of a Buffer instance.
     - Global functions have `"method"` set to `false` and are prefixed with just

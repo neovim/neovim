@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         group(5) user group file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2012-08-05
+" Language:             group(5) user group file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2012-08-05
 
 if exists("b:current_syntax")
   finish

@@ -115,7 +115,7 @@ func Test_profile_file()
   call assert_match('^ Self time:\s\+\d\+\.\d\+$',                    lines[3])
   call assert_equal('',                                               lines[4])
   call assert_equal('count  total (s)   self (s)',                    lines[5])
-  call assert_equal('                            func! Foo()',        lines[6])
+  call assert_match('    2              0.\d\+ func! Foo()',          lines[6])
   call assert_equal('                            endfunc',            lines[7])
   " Loop iterates 10 times. Since script runs twice, body executes 20 times.
   " First line of loop executes one more time than body to detect end of loop.
@@ -127,6 +127,42 @@ func Test_profile_file()
   " if self and total are equal we only get one number
   call assert_match('^\s*2\s\+\(\d\+\.\d\+\s\+\)\=\d\+\.\d\+\s\+call Foo()$', lines[12])
   call assert_equal('',                                               lines[13])
+
+  call delete('Xprofile_file.vim')
+  call delete('Xprofile_file.log')
+endfunc
+
+func Test_profile_file_with_cont()
+  let lines = [
+    \ 'echo "hello',
+    \ '  \ world"',
+    \ 'echo "foo ',
+    \ '  \bar"',
+    \ ]
+
+  call writefile(lines, 'Xprofile_file.vim')
+  call system(v:progpath
+    \ . ' -es -u NONE -U NONE -i NONE --noplugin'
+    \ . ' -c "profile start Xprofile_file.log"'
+    \ . ' -c "profile file Xprofile_file.vim"'
+    \ . ' -c "so Xprofile_file.vim"'
+    \ . ' -c "qall!"')
+  call assert_equal(0, v:shell_error)
+
+  let lines = readfile('Xprofile_file.log')
+  call assert_equal(11, len(lines))
+
+  call assert_match('^SCRIPT .*Xprofile_file.vim$',                   lines[0])
+  call assert_equal('Sourced 1 time',                                lines[1])
+  call assert_match('^Total time:\s\+\d\+\.\d\+$',                    lines[2])
+  call assert_match('^ Self time:\s\+\d\+\.\d\+$',                    lines[3])
+  call assert_equal('',                                               lines[4])
+  call assert_equal('count  total (s)   self (s)',                    lines[5])
+  call assert_match('    1              0.\d\+ echo "hello',          lines[6])
+  call assert_equal('                              \ world"',         lines[7])
+  call assert_match('    1              0.\d\+ echo "foo ',           lines[8])
+  call assert_equal('                              \bar"',            lines[9])
+  call assert_equal('',                                               lines[10])
 
   call delete('Xprofile_file.vim')
   call delete('Xprofile_file.log')

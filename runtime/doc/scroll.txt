@@ -211,7 +211,7 @@ past its buffer's limits.
 However, if a 'scrollbind' window that has a relative offset that is past its
 buffer's limits is given the cursor focus, the other 'scrollbind' windows must
 jump to a location where the current window's relative offset is valid.  This
-behavior can be changed by clearing the 'jump' flag from the 'scrollopt'
+behavior can be changed by clearing the "jump" flag from the 'scrollopt'
 option.
 
 						*syncbind* *:syncbind* *:sync*

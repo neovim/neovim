@@ -993,10 +993,12 @@ tag		command	      action in Command-line editing mode	~
 |c_<CR>|	<CR>		execute entered command
 |c_CTRL-M|	CTRL-M		same as <CR>
 |c_CTRL-N|	CTRL-N		after using 'wildchar' with multiple matches:
-				go to next match, otherwise: same as <Down>
+				go to next match, otherwise: recall older
+				command-line from history.
 		CTRL-O		not used
 |c_CTRL-P|	CTRL-P		after using 'wildchar' with multiple matches:
-				go to previous match, otherwise: same as <Up>
+				go to previous match, otherwise: recall older
+				command-line from history.
 |c_CTRL-Q|	CTRL-Q		same as CTRL-V, unless it's used for terminal
 				control flow
 |c_CTRL-R|	CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}

@@ -959,8 +959,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	wildmode    More matches in |cmdline-completion| available
 		    (depends on the 'wildmode' setting).
 
-	This is most useful, to fine tune when in insert mode the bell should
-	be rung. For normal mode and ex commands, the bell is often rung to
+	This is most useful to fine tune when in Insert mode the bell should
+	be rung. For Normal mode and Ex commands, the bell is often rung to
 	indicate that an error occurred. It can be silenced by adding the
 	"error" keyword.
 
@@ -3099,6 +3099,28 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	The builtin |highlight-groups| cannot be changed.
 
+						*'history'* *'hi'*
+'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
+			global
+	A history of ":" commands, and a history of previous search patterns
+	is remembered.  This option decides how many entries may be stored in
+	each of these histories (see |cmdline-editing|).
+	The maximum value is 10000.
+
+					 *'hkmap'* *'hk'* *'nohkmap'* *'nohk'*
+'hkmap' 'hk'		boolean (default off)
+			global
+	When on, the keyboard is mapped for the Hebrew character set.
+	Normally you would set 'allowrevins' and use CTRL-_ in insert mode to
+	toggle this option.  See |rileft.txt|.
+
+				 *'hkmapp'* *'hkp'* *'nohkmapp'* *'nohkp'*
+'hkmapp' 'hkp'		boolean (default off)
+			global
+	When on, phonetic keyboard mapping is used.  'hkmap' must also be on.
+	This is useful if you have a non-Hebrew keyboard.
+	See |rileft.txt|.
+
 				 *'hlsearch'* *'hls'* *'nohlsearch'* *'nohls'*
 'hlsearch' 'hls'	boolean	(default on)
 			global
@@ -3121,28 +3143,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	drawn may not continue in a newly drawn line.
 	You can specify whether the highlight status is restored on startup
 	with the 'h' flag in 'shada' |shada-h|.
-
-						*'history'* *'hi'*
-'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
-			global
-	A history of ":" commands, and a history of previous search patterns
-	is remembered.  This option decides how many entries may be stored in
-	each of these histories (see |cmdline-editing|).
-	The maximum value is 10000.
-
-					 *'hkmap'* *'hk'* *'nohkmap'* *'nohk'*
-'hkmap' 'hk'		boolean (default off)
-			global
-	When on, the keyboard is mapped for the Hebrew character set.
-	Normally you would set 'allowrevins' and use CTRL-_ in insert mode to
-	toggle this option.  See |rileft.txt|.
-
-				 *'hkmapp'* *'hkp'* *'nohkmapp'* *'nohkp'*
-'hkmapp' 'hkp'		boolean (default off)
-			global
-	When on, phonetic keyboard mapping is used.  'hkmap' must also be on.
-	This is useful if you have a non-Hebrew keyboard.
-	See |rileft.txt|.
 
 						*'icon'* *'noicon'*
 'icon'			boolean	(default off, on when title can be restored)
@@ -5668,7 +5668,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			word.  The expression must evaluate to a List of
 			Lists, each with a suggestion and a score.
 			Example:
-				[['the', 33], ['that', 44]]
+				[['the', 33], ['that', 44]] ~
 			Set 'verbose' and use |z=| to see the scores that the
 			internal methods use.  A lower score is better.
 			This may invoke |spellsuggest()| if you temporarily
@@ -6759,7 +6759,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	
 	Highlights of vertical separators are determined by the window to the
 	left of the separator.  The highlight of a tabpage in |tabline| is
-	determine by the last-focused window of the tabpage.  Highlights of
+	determined by the last-focused window of the tabpage.  Highlights of
 	the popupmenu are determined by the current window.  Highlights in the
 	message area cannot be overridden.
 

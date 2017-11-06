@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         sysctl.conf(5) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2011-05-02
+" Language:             sysctl.conf(5) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2011-05-02
 
 if exists("b:current_syntax")
   finish

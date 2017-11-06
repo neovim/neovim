@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         XFree86 Configuration File
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-12-20
+" Language:             XFree86 Configuration File
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-12-20
 
 if exists("b:did_indent")
   finish
@@ -26,11 +26,11 @@ function GetXF86ConfIndent()
   let ind = indent(lnum)
 
   if getline(lnum) =~? '^\s*\(Sub\)\=Section\>'
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   endif
 
   if getline(v:lnum) =~? '^\s*End\(Sub\)\=Section\>'
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   return ind

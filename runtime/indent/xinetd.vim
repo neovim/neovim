@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         xinetd.conf(5) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-12-20
+" Language:             xinetd.conf(5) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-12-20
 
 if exists("b:did_indent")
   finish
@@ -47,8 +47,8 @@ function GetXinetdIndent()
     return 0
   endif
 
-  return indent(pnum) + s:count_braces(pnum, 1) * &sw
-        \ - s:count_braces(v:lnum, 0) * &sw
+  return indent(pnum) + s:count_braces(pnum, 1) * shiftwidth()
+        \ - s:count_braces(v:lnum, 0) * shiftwidth()
 endfunction
 
 let &cpo = s:keepcpo

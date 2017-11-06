@@ -604,11 +604,11 @@ an 50.150.430 &Syntax.WXYZ.Zimbu :cal SetSyn("zimbu")<CR>
 
 an 50.195 &Syntax.-SEP1-			<Nop>
 
-an <silent> 50.200 &Syntax.Set\ '&syntax'\ only :call <SID>Setsynonly()<CR>
+an <silent> 50.200 &Syntax.Set\ '&syntax'\ Only :call <SID>Setsynonly()<CR>
 fun! s:Setsynonly()
   let s:syntax_menu_synonly = 1
 endfun
-an <silent> 50.202 &Syntax.Set\ '&filetype'\ too :call <SID>Nosynonly()<CR>
+an <silent> 50.202 &Syntax.Set\ '&filetype'\ Too :call <SID>Nosynonly()<CR>
 fun! s:Nosynonly()
   if exists("s:syntax_menu_synonly")
     unlet s:syntax_menu_synonly

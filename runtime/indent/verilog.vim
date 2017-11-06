@@ -1,10 +1,12 @@
 " Language:     Verilog HDL
-" Maintainer:	Chih-Tsun Huang <cthuang@larc.ee.nthu.edu.tw>
-" Last Change:	2011 Dec 10 by Thilo Six
-" URL:		http://larc.ee.nthu.edu.tw/~cthuang/vim/indent/verilog.vim
+" Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw>
+" Last Change:	2017 Feb 24 by Chih-Tsun Huang
+" URL:		    http://www.cs.nthu.edu.tw/~cthuang/vim/indent/verilog.vim
 "
 " Credits:
 "   Suggestions for improvement, bug reports by
+"     Takuya Fujiwara <tyru.exe@gmail.com>
+"     Thilo Six <debian@Xk2c.de>
 "     Leo Butlero <lbutler@brocade.com>
 "
 " Buffer Variables:
@@ -38,7 +40,7 @@ function GetVerilogIndent()
   if exists('b:verilog_indent_width')
     let offset = b:verilog_indent_width
   else
-    let offset = &sw
+    let offset = shiftwidth()
   endif
   if exists('b:verilog_indent_modules')
     let indent_modules = offset

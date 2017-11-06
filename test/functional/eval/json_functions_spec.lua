@@ -776,4 +776,11 @@ describe('json_encode() function', function()
   it('can dump NULL dictionary', function()
     eq('{}', eval('json_encode(v:_null_dict)'))
   end)
+
+  it('fails to parse NULL strings and lists', function()
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode($XXX_UNEXISTENT_VAR_XXX)'))
+    eq('Vim(call):E474: Attempt to decode a blank string',
+       exc_exec('call json_decode(v:_null_list)'))
+  end)
 end)
