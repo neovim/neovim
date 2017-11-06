@@ -310,6 +310,13 @@ local function mergedicts_copy(d1, d2)
   return ret
 end
 
+local function updated(d, d2)
+  for k, v in pairs(d2) do
+    d[k] = v
+  end
+  return d
+end
+
 local function concat_tables(...)
   local ret = {}
   for i = 1, select('#', ...) do
@@ -460,4 +467,5 @@ return {
   format_luav = format_luav,
   format_string = format_string,
   intchar2lua = intchar2lua,
+  updated = updated,
 }
