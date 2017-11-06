@@ -1,8 +1,8 @@
 " Vim indent file
-" Language:         Autoconf configure.{ac,in} file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-12-20
-" TODO:             how about nested [()]'s in one line
+" Language:             Autoconf configure.{ac,in} file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-12-20
+" TODO:                 how about nested [()]'s in one line
 "                   what's wrong with '\\\@!'?
 
 " Only load this indent file when no other was loaded.

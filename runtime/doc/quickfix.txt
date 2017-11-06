@@ -32,10 +32,13 @@ The 'errorformat' option should be set to match the error messages from your
 compiler (see |errorformat| below).
 
 						*location-list* *E776*
-A location list is similar to a quickfix list and contains a list of positions
-in files.  A location list is associated with a window and each window can
-have a separate location list.  A location list can be associated with only
-one window.  The location list is independent of the quickfix list.
+A location list is a window-local quickfix list. You get one after commands
+like `:lvimgrep`, `:lgrep`, `:lhelpgrep`, `:lmake`, etc., which create a
+location list instead of a quickfix list as the corresponding `:vimgrep`,
+`:grep`, `:helpgrep`, `:make` do.
+A location list is associated with a window and each window can have a
+separate location list.  A location list can be associated with only one
+window.  The location list is independent of the quickfix list.
 
 When a window with a location list is split, the new window gets a copy of the
 location list.  When there are no longer any references to a location list,
@@ -1362,7 +1365,7 @@ prints information about entering a directory in the form "Making all in dir".
    Making all in dir2		  ./dir1/dir2
 
    This can be solved by printing absolute directories in the "enter directory"
-   message or by printing "leave directory" messages..
+   message or by printing "leave directory" messages.
 
 To avoid this problem, ensure to print absolute directory names and "leave
 directory" messages.

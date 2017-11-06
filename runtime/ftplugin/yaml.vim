@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         YAML (YAML Ain't Markup Language)
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             YAML (YAML Ain't Markup Language)
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

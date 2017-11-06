@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Feb 09
+" Last Change:	2017 Mar 04
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
 " in all modes and avoid side effects from mappings defined by the user.
@@ -70,7 +70,7 @@ endif
 " Help menu
 an 9999.10 &Help.&Overview<Tab><F1>	:help<CR>
 an 9999.20 &Help.&User\ Manual		:help usr_toc<CR>
-an 9999.30 &Help.&How-to\ links		:help how-to<CR>
+an 9999.30 &Help.&How-To\ Links		:help how-to<CR>
 an <silent> 9999.40 &Help.&Find\.\.\.	:call <SID>Helpfind()<CR>
 an 9999.45 &Help.-sep1-			<Nop>
 an 9999.50 &Help.&Credits		:help credits<CR>
@@ -112,7 +112,7 @@ an 10.350 &File.Save\ &As\.\.\.<Tab>:sav	:browse confirm saveas<CR>
 
 if has("diff")
   an 10.400 &File.-SEP2-			<Nop>
-  an 10.410 &File.Split\ &Diff\ with\.\.\.	:browse vert diffsplit<CR>
+  an 10.410 &File.Split\ &Diff\ With\.\.\.	:browse vert diffsplit<CR>
   an 10.420 &File.Split\ Patched\ &By\.\.\.	:browse vert diffpatch<CR>
 endif
 
@@ -212,25 +212,25 @@ endfun
 
 " Edit/Global Settings
 an 20.440.100 &Edit.&Global\ Settings.Toggle\ Pattern\ &Highlight<Tab>:set\ hls!	:set hls! hls?<CR>
-an 20.440.110 &Edit.&Global\ Settings.Toggle\ &Ignore-case<Tab>:set\ ic!	:set ic! ic?<CR>
-an 20.440.110 &Edit.&Global\ Settings.Toggle\ &Showmatch<Tab>:set\ sm!	:set sm! sm?<CR>
+an 20.440.110 &Edit.&Global\ Settings.Toggle\ &Ignoring\ Case<Tab>:set\ ic!	:set ic! ic?<CR>
+an 20.440.110 &Edit.&Global\ Settings.Toggle\ &Showing\ Matched\ Pairs<Tab>:set\ sm!	:set sm! sm?<CR>
 
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 1\  :set so=1<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 2\  :set so=2<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 3\  :set so=3<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 4\  :set so=4<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 5\  :set so=5<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 7\  :set so=7<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 10\  :set so=10<CR>
-an 20.440.120 &Edit.&Global\ Settings.&Context\ lines.\ 100\  :set so=100<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 1\  :set so=1<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 2\  :set so=2<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 3\  :set so=3<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 4\  :set so=4<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 5\  :set so=5<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 7\  :set so=7<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 10\  :set so=10<CR>
+an 20.440.120 &Edit.&Global\ Settings.&Context\ Lines.\ 100\  :set so=100<CR>
 
 an 20.440.130.40 &Edit.&Global\ Settings.&Virtual\ Edit.Never :set ve=<CR>
 an 20.440.130.50 &Edit.&Global\ Settings.&Virtual\ Edit.Block\ Selection :set ve=block<CR>
-an 20.440.130.60 &Edit.&Global\ Settings.&Virtual\ Edit.Insert\ mode :set ve=insert<CR>
+an 20.440.130.60 &Edit.&Global\ Settings.&Virtual\ Edit.Insert\ Mode :set ve=insert<CR>
 an 20.440.130.70 &Edit.&Global\ Settings.&Virtual\ Edit.Block\ and\ Insert :set ve=block,insert<CR>
 an 20.440.130.80 &Edit.&Global\ Settings.&Virtual\ Edit.Always :set ve=all<CR>
 an 20.440.140 &Edit.&Global\ Settings.Toggle\ Insert\ &Mode<Tab>:set\ im!	:set im!<CR>
-an 20.440.145 &Edit.&Global\ Settings.Toggle\ Vi\ C&ompatible<Tab>:set\ cp!	:set cp!<CR>
+an 20.440.145 &Edit.&Global\ Settings.Toggle\ Vi\ C&ompatibility<Tab>:set\ cp!	:set cp!<CR>
 an <silent> 20.440.150 &Edit.&Global\ Settings.Search\ &Path\.\.\.  :call <SID>SearchP()<CR>
 an <silent> 20.440.160 &Edit.&Global\ Settings.Ta&g\ Files\.\.\.  :call <SID>TagFiles()<CR>
 "
@@ -274,13 +274,13 @@ endfun
 
 " Boolean options
 an 20.440.100 &Edit.F&ile\ Settings.Toggle\ Line\ &Numbering<Tab>:set\ nu!	:set nu! nu?<CR>
-an 20.440.105 &Edit.F&ile\ Settings.Toggle\ relati&ve\ Line\ Numbering<Tab>:set\ rnu!	:set rnu! rnu?<CR>
+an 20.440.105 &Edit.F&ile\ Settings.Toggle\ Relati&ve\ Line\ Numbering<Tab>:set\ rnu!	:set rnu! rnu?<CR>
 an 20.440.110 &Edit.F&ile\ Settings.Toggle\ &List\ Mode<Tab>:set\ list!	:set list! list?<CR>
-an 20.440.120 &Edit.F&ile\ Settings.Toggle\ Line\ &Wrap<Tab>:set\ wrap!	:set wrap! wrap?<CR>
-an 20.440.130 &Edit.F&ile\ Settings.Toggle\ W&rap\ at\ word<Tab>:set\ lbr!	:set lbr! lbr?<CR>
-an 20.440.160 &Edit.F&ile\ Settings.Toggle\ &expand-tab<Tab>:set\ et!	:set et! et?<CR>
-an 20.440.170 &Edit.F&ile\ Settings.Toggle\ &auto-indent<Tab>:set\ ai!	:set ai! ai?<CR>
-an 20.440.180 &Edit.F&ile\ Settings.Toggle\ &C-indenting<Tab>:set\ cin!	:set cin! cin?<CR>
+an 20.440.120 &Edit.F&ile\ Settings.Toggle\ Line\ &Wrapping<Tab>:set\ wrap!	:set wrap! wrap?<CR>
+an 20.440.130 &Edit.F&ile\ Settings.Toggle\ W&rapping\ at\ Word<Tab>:set\ lbr!	:set lbr! lbr?<CR>
+an 20.440.160 &Edit.F&ile\ Settings.Toggle\ Tab\ &Expanding<Tab>:set\ et!	:set et! et?<CR>
+an 20.440.170 &Edit.F&ile\ Settings.Toggle\ &Auto\ Indenting<Tab>:set\ ai!	:set ai! ai?<CR>
+an 20.440.180 &Edit.F&ile\ Settings.Toggle\ &C-Style\ Indenting<Tab>:set\ cin!	:set cin! cin?<CR>
 
 " other options
 an 20.440.600 &Edit.F&ile\ Settings.-SEP2-		<Nop>
@@ -309,7 +309,7 @@ fun! s:TextWidth()
     " Remove leading zeros to avoid it being used as an octal number.
     " But keep a zero by itself.
     let tw = substitute(n, "^0*", "", "")
-    let &tw = tw == '' ? 0 : tw 
+    let &tw = tw == '' ? 0 : tw
   endif
 endfun
 
@@ -390,10 +390,10 @@ if !exists("g:ctags_command")
   let g:ctags_command = "ctags -R ."
 endif
 
-an 40.300 &Tools.&Jump\ to\ this\ tag<Tab>g^]	g<C-]>
-vunmenu &Tools.&Jump\ to\ this\ tag<Tab>g^]
-vnoremenu &Tools.&Jump\ to\ this\ tag<Tab>g^]	g<C-]>
-an 40.310 &Tools.Jump\ &back<Tab>^T		<C-T>
+an 40.300 &Tools.&Jump\ to\ This\ Tag<Tab>g^]	g<C-]>
+vunmenu &Tools.&Jump\ to\ This\ Tag<Tab>g^]
+vnoremenu &Tools.&Jump\ to\ This\ Tag<Tab>g^]	g<C-]>
+an 40.310 &Tools.Jump\ &Back<Tab>^T		<C-T>
 an 40.320 &Tools.Build\ &Tags\ File		:exe "!" . g:ctags_command<CR>
 
 if has("folding") || has("spell")
@@ -404,17 +404,17 @@ endif
 if has("spell")
   an 40.335.110 &Tools.&Spelling.&Spell\ Check\ On		:set spell<CR>
   an 40.335.120 &Tools.&Spelling.Spell\ Check\ &Off		:set nospell<CR>
-  an 40.335.130 &Tools.&Spelling.To\ &Next\ error<Tab>]s	]s
-  an 40.335.130 &Tools.&Spelling.To\ &Previous\ error<Tab>[s	[s
+  an 40.335.130 &Tools.&Spelling.To\ &Next\ Error<Tab>]s	]s
+  an 40.335.130 &Tools.&Spelling.To\ &Previous\ Error<Tab>[s	[s
   an 40.335.140 &Tools.&Spelling.Suggest\ &Corrections<Tab>z=	z=
-  an 40.335.150 &Tools.&Spelling.&Repeat\ correction<Tab>:spellrepall	:spellrepall<CR>
+  an 40.335.150 &Tools.&Spelling.&Repeat\ Correction<Tab>:spellrepall	:spellrepall<CR>
   an 40.335.200 &Tools.&Spelling.-SEP1-				<Nop>
-  an 40.335.210 &Tools.&Spelling.Set\ language\ to\ "en"	:set spl=en spell<CR>
-  an 40.335.220 &Tools.&Spelling.Set\ language\ to\ "en_au"	:set spl=en_au spell<CR>
-  an 40.335.230 &Tools.&Spelling.Set\ language\ to\ "en_ca"	:set spl=en_ca spell<CR>
-  an 40.335.240 &Tools.&Spelling.Set\ language\ to\ "en_gb"	:set spl=en_gb spell<CR>
-  an 40.335.250 &Tools.&Spelling.Set\ language\ to\ "en_nz"	:set spl=en_nz spell<CR>
-  an 40.335.260 &Tools.&Spelling.Set\ language\ to\ "en_us"	:set spl=en_us spell<CR>
+  an 40.335.210 &Tools.&Spelling.Set\ Language\ to\ "en"	:set spl=en spell<CR>
+  an 40.335.220 &Tools.&Spelling.Set\ Language\ to\ "en_au"	:set spl=en_au spell<CR>
+  an 40.335.230 &Tools.&Spelling.Set\ Language\ to\ "en_ca"	:set spl=en_ca spell<CR>
+  an 40.335.240 &Tools.&Spelling.Set\ Language\ to\ "en_gb"	:set spl=en_gb spell<CR>
+  an 40.335.250 &Tools.&Spelling.Set\ Language\ to\ "en_nz"	:set spl=en_nz spell<CR>
+  an 40.335.260 &Tools.&Spelling.Set\ Language\ to\ "en_us"	:set spl=en_us spell<CR>
   an <silent> 40.335.270 &Tools.&Spelling.&Find\ More\ Languages	:call <SID>SpellLang()<CR>
 
   let s:undo_spellang = ['aun &Tools.&Spelling.&Find\ More\ Languages']
@@ -431,7 +431,7 @@ if has("spell")
     endif
 
     if !exists("g:menutrans_set_lang_to")
-      let g:menutrans_set_lang_to = 'Set language to'
+      let g:menutrans_set_lang_to = 'Set Language to'
     endif
 
     let found = 0
@@ -468,13 +468,13 @@ endif
 " Tools.Fold Menu
 if has("folding")
   " open close folds
-  an 40.340.110 &Tools.&Folding.&Enable/Disable\ folds<Tab>zi		zi
+  an 40.340.110 &Tools.&Folding.&Enable/Disable\ Folds<Tab>zi		zi
   an 40.340.120 &Tools.&Folding.&View\ Cursor\ Line<Tab>zv		zv
-  an 40.340.120 &Tools.&Folding.Vie&w\ Cursor\ Line\ only<Tab>zMzx	zMzx
-  inoremenu 40.340.120 &Tools.&Folding.Vie&w\ Cursor\ Line\ only<Tab>zMzx  <C-O>zM<C-O>zx
-  an 40.340.130 &Tools.&Folding.C&lose\ more\ folds<Tab>zm		zm
-  an 40.340.140 &Tools.&Folding.&Close\ all\ folds<Tab>zM		zM
-  an 40.340.150 &Tools.&Folding.O&pen\ more\ folds<Tab>zr		zr
+  an 40.340.120 &Tools.&Folding.Vie&w\ Cursor\ Line\ Only<Tab>zMzx	zMzx
+  inoremenu 40.340.120 &Tools.&Folding.Vie&w\ Cursor\ Line\ Only<Tab>zMzx  <C-O>zM<C-O>zx
+  an 40.340.130 &Tools.&Folding.C&lose\ More\ Folds<Tab>zm		zm
+  an 40.340.140 &Tools.&Folding.&Close\ All\ Folds<Tab>zM		zM
+  an 40.340.150 &Tools.&Folding.O&pen\ More\ Folds<Tab>zr		zr
   an 40.340.160 &Tools.&Folding.&Open\ All\ Folds<Tab>zR		zR
   " fold method
   an 40.340.200 &Tools.&Folding.-SEP1-			<Nop>
@@ -490,14 +490,14 @@ if has("folding")
   an 40.340.240 &Tools.&Folding.Delete\ &All\ Folds<Tab>zD	zD
   " moving around in folds
   an 40.340.300 &Tools.&Folding.-SEP2-				<Nop>
-  an 40.340.310.10 &Tools.&Folding.Fold\ col&umn\ width.\ &0\ 	:set fdc=0<CR>
-  an 40.340.310.20 &Tools.&Folding.Fold\ col&umn\ width.\ &2\ 	:set fdc=2<CR>
-  an 40.340.310.30 &Tools.&Folding.Fold\ col&umn\ width.\ &3\ 	:set fdc=3<CR>
-  an 40.340.310.40 &Tools.&Folding.Fold\ col&umn\ width.\ &4\ 	:set fdc=4<CR>
-  an 40.340.310.50 &Tools.&Folding.Fold\ col&umn\ width.\ &5\ 	:set fdc=5<CR>
-  an 40.340.310.60 &Tools.&Folding.Fold\ col&umn\ width.\ &6\ 	:set fdc=6<CR>
-  an 40.340.310.70 &Tools.&Folding.Fold\ col&umn\ width.\ &7\ 	:set fdc=7<CR>
-  an 40.340.310.80 &Tools.&Folding.Fold\ col&umn\ width.\ &8\ 	:set fdc=8<CR>
+  an 40.340.310.10 &Tools.&Folding.Fold\ Col&umn\ Width.\ &0\ 	:set fdc=0<CR>
+  an 40.340.310.20 &Tools.&Folding.Fold\ Col&umn\ Width.\ &2\ 	:set fdc=2<CR>
+  an 40.340.310.30 &Tools.&Folding.Fold\ Col&umn\ Width.\ &3\ 	:set fdc=3<CR>
+  an 40.340.310.40 &Tools.&Folding.Fold\ Col&umn\ Width.\ &4\ 	:set fdc=4<CR>
+  an 40.340.310.50 &Tools.&Folding.Fold\ Col&umn\ Width.\ &5\ 	:set fdc=5<CR>
+  an 40.340.310.60 &Tools.&Folding.Fold\ Col&umn\ Width.\ &6\ 	:set fdc=6<CR>
+  an 40.340.310.70 &Tools.&Folding.Fold\ Col&umn\ Width.\ &7\ 	:set fdc=7<CR>
+  an 40.340.310.80 &Tools.&Folding.Fold\ Col&umn\ Width.\ &8\ 	:set fdc=8<CR>
 endif  " has folding
 
 if has("diff")
@@ -525,7 +525,7 @@ an 40.430.70 &Tools.Error\ &Window.&Close<Tab>:cclose	:cclose<CR>
 an 40.520 &Tools.-SEP3-					<Nop>
 an <silent> 40.530 &Tools.&Convert\ to\ HEX<Tab>:%!xxd
 	\ :call <SID>XxdConv()<CR>
-an <silent> 40.540 &Tools.Conve&rt\ back<Tab>:%!xxd\ -r
+an <silent> 40.540 &Tools.Conve&rt\ Back<Tab>:%!xxd\ -r
 	\ :call <SID>XxdBack()<CR>
 
 " Use a function to do the conversion, so that it also works with 'insertmode'
@@ -574,7 +574,7 @@ while strlen(s:n) > 0
   endif
   " Ignore case for Windows
   let s:name = substitute(s:name, '\c.*[/\\:\]]\([^/\\:]*\)\.vim', '\1', '')
-  exe "an 30.440." . s:idx . ' &Tools.Se&T\ Compiler.' . s:name . " :compiler " . s:name . "<CR>"
+  exe "an 30.440." . s:idx . ' &Tools.Se&t\ Compiler.' . s:name . " :compiler " . s:name . "<CR>"
   unlet s:name
   unlet s:i
   let s:idx = s:idx + 10
@@ -807,8 +807,8 @@ an 70.345 &Window.Close\ &Other(s)<Tab>^Wo		:confirm only<CR>
 an 70.350 &Window.-SEP2-				<Nop>
 an 70.355 &Window.Move\ &To.&Top<Tab>^WK		<C-W>K
 an 70.355 &Window.Move\ &To.&Bottom<Tab>^WJ		<C-W>J
-an 70.355 &Window.Move\ &To.&Left\ side<Tab>^WH		<C-W>H
-an 70.355 &Window.Move\ &To.&Right\ side<Tab>^WL	<C-W>L
+an 70.355 &Window.Move\ &To.&Left\ Side<Tab>^WH		<C-W>H
+an 70.355 &Window.Move\ &To.&Right\ Side<Tab>^WL	<C-W>L
 an 70.360 &Window.Rotate\ &Up<Tab>^WR			<C-W>R
 an 70.362 &Window.Rotate\ &Down<Tab>^Wr			<C-W>r
 an 70.365 &Window.-SEP3-				<Nop>
@@ -891,7 +891,7 @@ if has("spell")
 	let s:suglist = spellsuggest(w, 10)
       endif
       if len(s:suglist) > 0
-	let s:changeitem = 'change\ "' . escape(w, ' .'). '"\ to'
+	let s:changeitem = 'Change\ "' . escape(w, ' .'). '"\ to'
 	let s:fromword = w
 	let pri = 1
 	" set 'cpo' to include the <CR>
@@ -903,10 +903,10 @@ if has("spell")
 	  let pri += 1
 	endfor
 
-	let s:additem = 'add\ "' . escape(w, ' .') . '"\ to\ word\ list'
+	let s:additem = 'Add\ "' . escape(w, ' .') . '"\ to\ Word\ List'
 	exe 'anoremenu 1.6 PopUp.' . s:additem . ' :spellgood ' . w . '<CR>'
 
-	let s:ignoreitem = 'ignore\ "' . escape(w, ' .') . '"'
+	let s:ignoreitem = 'Ignore\ "' . escape(w, ' .') . '"'
 	exe 'anoremenu 1.7 PopUp.' . s:ignoreitem . ' :spellgood! ' . w . '<CR>'
 
 	anoremenu 1.8 PopUp.-SpellSep- :
@@ -1045,7 +1045,7 @@ endif " !exists("did_install_default_menus")
 if !exists("did_install_syntax_menu")
   an 50.212 &Syntax.&Manual		:syn manual<CR>
   an 50.214 &Syntax.A&utomatic		:syn on<CR>
-  an <silent> 50.216 &Syntax.on/off\ for\ &This\ file :call <SID>SynOnOff()<CR>
+  an <silent> 50.216 &Syntax.On/Off\ for\ &This\ File :call <SID>SynOnOff()<CR>
   if !exists("*s:SynOnOff")
     fun s:SynOnOff()
       if has("syntax_items")
@@ -1073,14 +1073,14 @@ if (exists("did_load_filetypes") || exists("syntax_on"))
 if exists("do_syntax_sel_menu")
   runtime! synmenu.vim
 else
-  an 50.10 &Syntax.&Show\ filetypes\ in\ menu	:let do_syntax_sel_menu = 1<Bar>runtime! synmenu.vim<Bar>aunmenu &Syntax.&Show\ filetypes\ in\ menu<CR>
+  an 50.10 &Syntax.&Show\ File\ Types\ in\ Menu	:let do_syntax_sel_menu = 1<Bar>runtime! synmenu.vim<Bar>aunmenu &Syntax.&Show\ File\ Types\ in\ Menu<CR>
   an 50.195 &Syntax.-SEP1-		<Nop>
 endif
 
 an 50.210 &Syntax.&Off			:syn off<CR>
 an 50.700 &Syntax.-SEP3-		<Nop>
-an 50.710 &Syntax.Co&lor\ test		:sp $VIMRUNTIME/syntax/colortest.vim<Bar>so %<CR>
-an 50.720 &Syntax.&Highlight\ test	:runtime syntax/hitest.vim<CR>
+an 50.710 &Syntax.Co&lor\ Test		:sp $VIMRUNTIME/syntax/colortest.vim<Bar>so %<CR>
+an 50.720 &Syntax.&Highlight\ Test	:runtime syntax/hitest.vim<CR>
 an 50.730 &Syntax.&Convert\ to\ HTML	:runtime syntax/2html.vim<CR>
 
 endif " !exists("did_install_syntax_menu")

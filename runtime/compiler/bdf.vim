@@ -1,7 +1,7 @@
 " Vim compiler file
-" Compiler:         BDF to PCF Conversion
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Compiler:             BDF to PCF Conversion
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("current_compiler")
   finish

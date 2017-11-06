@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         reStructuredText Documentation Format
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2011-08-03
+" Language:             reStructuredText Documentation Format
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2011-08-03
 
 if exists("b:did_indent")
   finish

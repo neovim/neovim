@@ -305,7 +305,7 @@ the applicable Vim version.  The last field specifies the last modification
 date of the file.  Each field is separated by a tab.
 
 At the bottom of the help file, place a Vim modeline to set the 'textwidth'
-and 'tabstop' options and the 'filetype' to 'help'.  Never set a global option
+and 'tabstop' options and the 'filetype' to "help".  Never set a global option
 in such a modeline, that can have consequences undesired by whoever reads that
 help.
 

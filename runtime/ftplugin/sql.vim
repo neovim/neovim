@@ -1,8 +1,8 @@
 " SQL filetype plugin file
 " Language:    SQL (Common for Oracle, Microsoft SQL Server, Sybase)
-" Version:     11.0
+" Version:     12.0
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
-" Last Change: 2013 May 13
+" Last Change: 2017 Mar 07
 " Download:    http://vim.sourceforge.net/script.php?script_id=454
 
 " For more details please use:
@@ -35,6 +35,14 @@
 "     :SQLGetType
 "
 " History
+"
+" Version 12.0 (April 2013)
+"
+" NF: Added support for "BEGIN TRY ... END TRY ... BEGIN CATCH ... END CATCH
+" BF: This plugin is designed to be used with other plugins to enable the 
+"     SQL completion with Perl, Python, Java, ...  The loading mechanism 
+"     was not checking if the SQL objects were created, which can lead to 
+"     the plugin not loading the SQL support.
 "
 " Version 11.0 (May 2013)
 "
@@ -80,15 +88,17 @@
 
 
 " Only do this when not done yet for this buffer
-if exists("b:did_ftplugin")
-  finish
+" This ftplugin can be used with other ftplugins.  So ensure loading
+" happens if all elements of this plugin have not yet loaded.
+if exists("b:did_ftplugin") && exists("b:current_ftplugin") && b:current_ftplugin == 'sql'
+    finish
 endif
 
 let s:save_cpo = &cpo
 set cpo&vim
 
 " Disable autowrapping for code, but enable for comments
-" t	Auto-wrap text using textwidth
+" t     Auto-wrap text using textwidth
 " c     Auto-wrap comments using textwidth, inserting the current comment
 "       leader automatically.
 setlocal formatoptions-=t
@@ -171,6 +181,9 @@ if !exists("*SQL_SetType")
         if exists("b:current_syntax")
             " echomsg 'SQLSetType - clearing syntax'
             syntax clear
+            if exists("b:current_syntax")
+                unlet b:current_syntax
+            endif
         endif
         if exists("b:did_indent")
             " echomsg 'SQLSetType - clearing indent'
@@ -187,7 +200,7 @@ if !exists("*SQL_SetType")
         " Do not specify a buffer local variable if it is
         " the default value
         if new_sql_type == 'sql'
-          let new_sql_type = 'sqloracle'
+            let new_sql_type = 'sqloracle'
         endif
         let b:sql_type_override = new_sql_type
 
@@ -234,25 +247,26 @@ if exists("b:sql_type_override")
     " echo 'sourcing buffer ftplugin/'.b:sql_type_override.'.vim'
     if globpath(&runtimepath, 'ftplugin/'.b:sql_type_override.'.vim') != ''
         exec 'runtime ftplugin/'.b:sql_type_override.'.vim'
-    " else
-    "     echomsg 'ftplugin/'.b:sql_type_override.' not exist, using default'
+        " else
+        "     echomsg 'ftplugin/'.b:sql_type_override.' not exist, using default'
     endif
 elseif exists("g:sql_type_default")
     " echo 'sourcing global ftplugin/'.g:sql_type_default.'.vim'
     if globpath(&runtimepath, 'ftplugin/'.g:sql_type_default.'.vim') != ''
         exec 'runtime ftplugin/'.g:sql_type_default.'.vim'
-    " else
-    "     echomsg 'ftplugin/'.g:sql_type_default.'.vim not exist, using default'
+        " else
+        "     echomsg 'ftplugin/'.g:sql_type_default.'.vim not exist, using default'
     endif
 endif
 
 " If the above runtime command succeeded, do not load the default settings
-if exists("b:did_ftplugin")
-  finish
+" as they should have already been loaded from a previous run.
+if exists("b:did_ftplugin") && exists("b:current_ftplugin") && b:current_ftplugin == 'sql'
+    finish
 endif
 
 let b:undo_ftplugin = "setl comments< formatoptions< define< omnifunc<" .
-		    \ " | unlet! b:browsefilter b:match_words"
+            \ " | unlet! b:browsefilter b:match_words"
 
 " Don't load another plugin for this buffer
 let b:did_ftplugin     = 1
@@ -261,7 +275,7 @@ let b:current_ftplugin = 'sql'
 " Win32 can filter files in the browse dialog
 if has("gui_win32") && !exists("b:browsefilter")
     let b:browsefilter = "SQL Files (*.sql)\t*.sql\n" .
-	  \ "All Files (*.*)\t*.*\n"
+                \ "All Files (*.*)\t*.*\n"
 endif
 
 " Some standard expressions for use with the matchit strings
@@ -312,14 +326,24 @@ if !exists("b:match_words")
     " WHEN column_not_found THEN
     " WHEN OTHERS THEN
     "
+    " begin try
+    " end try
+    " begin catch
+    " end catch
+    "
     " create[ or replace] procedure|function|event
-                " \ '^\s*\<\%(do\|for\|while\|loop\)\>.*:'.
+    " \ '^\s*\<\%(do\|for\|while\|loop\)\>.*:'.
 
     " For ColdFusion support
     setlocal matchpairs+=<:>
     let b:match_words = &matchpairs .
-		\ ',\<begin\>:\<end\>\W*$,'.
-		\
+                \ ',\%(\<begin\)\%(\s\+\%(try\|catch\)\>\)\@!:\<end\>\W*$,'.
+                \
+                \ '\<begin\s\+try\>:'.
+                \ '\<end\s\+try\>:'.
+                \ '\<begin\s\+catch\>:'.
+                \ '\<end\s\+catch\>,'.
+                \
                 \ s:notend . '\<if\>:'.
                 \ '\<elsif\>\|\<elseif\>\|\<else\>:'.
                 \ '\<end\s\+if\>,'.
@@ -339,14 +363,14 @@ if !exists("b:match_words")
                 \ '\%(\<create\s\+' . s:or_replace . '\)\?'.
                 \ '\%(function\|procedure\|event\):'.
                 \ '\<returns\?\>'
-                " \ '\<begin\>\|\<returns\?\>:'.
-                " \ '\<end\>\(;\)\?\s*$'
-                " \ '\<exception\>:'.s:when_no_matched_or_others.
-                " \ ':\<when\s\+others\>,'.
-		"
-                " \ '\%(\<exception\>\|\%('. s:notend . '\<case\>\)\):'.
-                " \ '\%(\<default\>\|'.s:when_no_matched_or_others.'\):'.
-                " \ '\%(\%(\<when\s\+others\>\)\|\<end\s\+case\>\),' .
+    " \ '\<begin\>\|\<returns\?\>:'.
+    " \ '\<end\>\(;\)\?\s*$'
+    " \ '\<exception\>:'.s:when_no_matched_or_others.
+    " \ ':\<when\s\+others\>,'.
+    "
+    " \ '\%(\<exception\>\|\%('. s:notend . '\<case\>\)\):'.
+    " \ '\%(\<default\>\|'.s:when_no_matched_or_others.'\):'.
+    " \ '\%(\%(\<when\s\+others\>\)\|\<end\s\+case\>\),' .
 endif
 
 " Define how to find the macro definition of a variable using the various

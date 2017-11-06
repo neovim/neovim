@@ -556,7 +556,8 @@ Upper and lowercase differences are ignored.
 
 							*map-comments*
 It is not possible to put a comment after these commands, because the '"'
-character is considered to be part of the {lhs} or {rhs}.
+character is considered to be part of the {lhs} or {rhs}. However, one can
+use |", since this starts a new, empty command with a comment.
 
 							*map_bar* *map-bar*
 Since the '|' character is used to separate a map command from the next

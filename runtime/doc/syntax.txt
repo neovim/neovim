@@ -2616,9 +2616,9 @@ later, and part earlier) adds.
 
 RESTRUCTURED TEXT			*rst.vim* *ft-rst-syntax*
 
-You may set what syntax definitions should be used for code blocks via
+You may set what syntax definitions should be used for code blocks via >
 	let rst_syntax_code_list = ['vim', 'lisp', ...]
-
+<
 
 REXX						*rexx.vim* *ft-rexx-syntax*
 

@@ -58,7 +58,7 @@ whichever is lower.  These are empty or white lines and lines starting
 with a character in 'foldignore'.  White space is skipped before checking for
 characters in 'foldignore'.  For C use "#" to ignore preprocessor lines.
 
-When you want to ignore lines in another way, use the 'expr' method.  The
+When you want to ignore lines in another way, use the "expr" method.  The
 |indent()| function can be used in 'foldexpr' to get the indent of a line.
 
 
@@ -133,7 +133,7 @@ fold level.  But note that foldlevel() may return -1 if the level is not known
 yet.  And it returns the level at the start of the line, while a fold might
 end in that line.
 
-It may happened that folds are not updated properly.  You can use |zx| or |zX|
+It may happen that folds are not updated properly.  You can use |zx| or |zX|
 to force updating folds.
 
 
