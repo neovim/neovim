@@ -217,7 +217,12 @@ def parse_para(parent, width=62):
                                       width=width) + '\n')
             elif child.nodeName == 'simplesect':
                 kind = child.getAttribute('kind')
-                if kind == 'return':
+                if kind == 'note':
+                    lines.append('Note:')
+                    lines.append(doc_wrap(parse_para(child),
+                                          prefix='    ',
+                                          width=width))
+                elif kind == 'return':
                     lines.append('%s:~' % kind.title())
                     lines.append(doc_wrap(parse_para(child),
                                           prefix='    ',
