@@ -38,6 +38,10 @@ import subprocess
 
 from xml.dom import minidom
 
+if sys.version_info[0] < 3:
+    print("use Python 3")
+    sys.exit(1)
+
 doc_filename = 'api.txt'
 # String used to find the start of the generated part of the doc.
 section_start_token = '*api-global*'
@@ -285,13 +289,18 @@ def parse_source_xml(filename):
             parts = return_type.strip('_').split('_')
             return_type = '%s(%s)' % (parts[0], ', '.join(parts[1:]))
 
+        name = get_text(get_child(member, 'name'))
+
         annotations = get_text(get_child(member, 'argsstring'))
         if annotations and ')' in annotations:
             annotations = annotations.rsplit(')', 1)[-1].strip()
+        # XXX: (doxygen 1.8.11) 'argsstring' only includes FUNC_ATTR_*
+        # attributes if the function signature is non-void.
+        # Force attributes here for such functions.
+        if name == 'nvim_get_mode' and len(annotations) == 0:
+            annotations += 'FUNC_API_ASYNC'
         annotations = filter(None, map(lambda x: annotation_map.get(x),
                                        annotations.split()))
-
-        name = get_text(get_child(member, 'name'))
 
         vimtag = '*%s()*' % name
         args = []
