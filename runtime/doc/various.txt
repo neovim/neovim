@@ -102,8 +102,7 @@ g8			Print the hex values of the bytes used in the
 							*:nu* *:number*
 :[range]nu[mber] [count] [flags]
 			Same as :print, but precede each line with its line
-			number.  (See also 'highlight' and 'numberwidth'
-			option).
+			number.  (See also |hl-LineNr| and 'numberwidth').
 			See |ex-flags| for [flags].
 
 							*:#*
