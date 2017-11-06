@@ -1785,7 +1785,7 @@ v:scrollstart	String describing the script or function that caused the
 
 					*v:servername* *servername-variable*
 					*$NVIM_LISTEN_ADDRESS*
-v:servername	Default {Nvim} server address. Equivalent to
+v:servername	Default Nvim server address. Equivalent to
 		|$NVIM_LISTEN_ADDRESS| on startup. |serverstop()|
 		Read-only.
 
@@ -4915,42 +4915,48 @@ items({dict})						*items()*
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
 
-jobclose({job}[, {stream}])				{Nvim} *jobclose()*
-		Close {job}'s {stream}, which can be one of "stdin", "stdout",
-		"stderr" or "rpc" (closes the rpc channel for a job started
-		with the "rpc" option.) If {stream} is omitted, all streams
-		are closed. If the job is a pty job, this will then close the
-		pty master, sending SIGHUP to the job process.
+jobclose({job}[, {stream}])				*jobclose()*
+		Close {stream} of |job-id| {job}, where {stream} is one of:
+		"stdin", "stdout", "stderr", "rpc" (RPC channel of a job
+		started with `"rpc":v:true`). If {stream} is omitted, all
+		streams are closed. If the job is a pty job, this will close
+		the pty master, sending SIGHUP to the job process.
 
-jobpid({job})						{Nvim} *jobpid()*
-		Return the pid (process id) of {job}.
+jobpid({job})						*jobpid()*
+		Return the PID (process id) of |job-id| {job}.
 
-jobresize({job}, {width}, {height})			{Nvim} *jobresize()*
-		Resize {job}'s pseudo terminal window to {width} and {height}.
-		This function will fail if used on jobs started without the
-		"pty" option.
+jobresize({job}, {width}, {height})			*jobresize()*
+		Resize the pseudo terminal window of |job-id| {job} to {width}
+		columns and {height} rows.
+		Fails if the job was not started with `"pty":v:true`.
 
-jobsend({job}, {data})					{Nvim} *jobsend()*
-		Send data to {job} by writing it to the stdin of the process.
+jobsend({job}, {data})					*jobsend()*
+		Writes to stdin of the process associated with |job-id| {job}.
 		Returns 1 if the write succeeded, 0 otherwise.
-		See |job-control| for more information.
+		See |job-control|.
 
 		{data} may be a string, string convertible, or a list.  If
-		{data} is a list, the items will be separated by newlines and
-		any newlines in an item will be sent as a NUL. A final newline
-		can be sent by adding a final empty string. For example: >
+		{data} is a list, the items will be joined by newlines; any
+		newlines in an item will be sent as NUL. To send a final
+		newline, include a final empty string. Example: >
 			:call jobsend(j, ["abc", "123\n456", ""])
 < 		will send "abc<NL>123<NUL>456<NL>".
 
-		If the job was started with the rpc option this function
-		cannot be used, instead use |rpcnotify()| and |rpcrequest()|
-		to communicate with the job.
+		jobsend() writes raw data, not RPC messages.  If the job was
+		created with `"rpc":v:true` then the channel expects RPC
+		messages, use |rpcnotify()| and |rpcrequest()| instead.
 
-jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
-		Spawns {cmd} as a job.  If {cmd} is a |List| it is run
-		directly.  If {cmd} is a |String| it is processed like this: >
+jobstart({cmd}[, {opts}])				*jobstart()*
+		Spawns {cmd} as a job.
+		If {cmd} is a List it runs directly (no 'shell').
+		If {cmd} is a String it runs in the 'shell', like this: >
 		  :call jobstart(split(&shell) + split(&shellcmdflag) + ['{cmd}'])
-<		(Only shows the idea; see |shell-unquoting| for full details.)
+<		(See |shell-unquoting| for details.)
+
+		Returns |job-id| on success, 0 on invalid arguments (or job
+		table is full), -1 if {cmd}[0] or 'shell' is not executable.
+
+		See |job-control| and |rpc|.
 
 		NOTE: on Windows if {cmd} is a List:
 		  - cmd[0] must be an executable (not a "built-in"). If it is
@@ -4962,6 +4968,7 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		    by CommandLineToArgvW https://msdn.microsoft.com/bb776391
 		    unless cmd[0] is some form of "cmd.exe".
 
+							*jobstart-options*
 		{opts} is a dictionary with these keys:
 		  |on_stdout|: stdout event handler (function name or |Funcref|)
 		  |on_stderr|: stderr event handler (function name or |Funcref|)
@@ -4972,9 +4979,9 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 			     with the job over stdin and stdout. "on_stdout" is
 			     then ignored, but "on_stderr" can still be used.
 		  pty      : If set, the job will be connected to a new pseudo
-			     terminal, and the job streams are connected to
-			     the master file descriptor. "on_stderr" is ignored
-			     as all output will be received on stdout.
+			     terminal and the job streams are connected to the
+			     master file descriptor. "on_stderr" is ignored,
+			     "on_stdout" receives all output.
 
 		  width    : (pty only) Width of the terminal screen
 		  height   : (pty only) Height of the terminal screen
@@ -4982,43 +4989,31 @@ jobstart({cmd}[, {opts}])				{Nvim} *jobstart()*
 		  detach   : (non-pty only) Detach the job process from the
 			     nvim process. The process will not get killed
 			     when nvim exits. If the process dies before
-			     nvim exits, on_exit will still be invoked.
+			     nvim exits, "on_exit" will still be invoked.
 
-		{opts} is passed as |self| to the callback; the caller may
-		pass arbitrary data by setting other keys.
-		Returns:
-		  - The job ID on success, which is used by |jobsend()| (or
-		    |rpcnotify()| and |rpcrequest()| if "rpc" option was used)
-		    and |jobstop()|
-		  - 0 on invalid arguments or if the job table is full
-		  - -1 if {cmd}[0] is not executable.
-		See |job-control| and |msgpack-rpc| for more information.
+		{opts} is passed as |self| dictionary to the callback; the
+		caller may set other keys to pass application-specific data.
 
-jobstop({job})						{Nvim} *jobstop()*
-		Stop a job created with |jobstart()| by sending a `SIGTERM`
-		to the corresponding process. If the process doesn't exit
-		cleanly soon, a `SIGKILL` will be sent. When the job is
-		finally closed, the exit handler provided to |jobstart()| or
-		|termopen()| will be run.
-		See |job-control| for more information.
+jobstop({job})						*jobstop()*
+		Stop |job-id| {job} by sending SIGTERM to the job process. If
+		the process does not terminate after a timeout then SIGKILL
+		will be sent. When the job terminates its |on_exit| handler
+		(if any) will be invoked.
+		See |job-control|.
 
-jobwait({ids}[, {timeout}])				{Nvim} *jobwait()*
+jobwait({ids}[, {timeout}])				*jobwait()*
 		Wait for a set of jobs to finish. The {ids} argument is a list
-		of ids for jobs that will be waited for. If passed, {timeout}
-		is the maximum number of milliseconds to wait. While this
-		function is executing, callbacks for jobs not in the {ids}
-		list can be executed. Also, the screen wont be updated unless
-		|:redraw| is invoked by one of the callbacks.
+		of |job-id|s to wait for. {timeout} is the maximum number of
+		milliseconds to wait. During jobwait(), callbacks for jobs not
+		in the {ids} list may be invoked. The screen will not redraw
+		unless |:redraw| is invoked by a callback.
 
-		Returns a list of integers with the same length as {ids}, with
-		each integer representing the wait result for the
-		corresponding job id. The possible values for the resulting
-		integers are:
-
-		* the job return code if the job exited
-		* -1 if the wait timed out for the job
-		* -2 if the job was interrupted
-		* -3 if the job id is invalid.
+		Returns a list of len({ids}) integers, where each integer is
+		the wait-result of the corresponding job. Each wait-result is:
+		    Job exit-code, if the job exited
+		    -1 if the wait timed out for the job
+		    -2 if the job was interrupted
+		    -3 if the |job-id| is invalid.
 
 join({list} [, {sep}])					*join()*
 		Join the items in {list} together into one String.
@@ -5652,7 +5647,7 @@ mode([expr])	Return a string that indicates the current mode.
 			i	Insert
 			R	Replace |R|
 			Rv	Virtual Replace |gR|
-			t	Terminal {Nvim}
+			t	Terminal
 			c	Command-line
 			cv	Vim Ex mode |gQ|
 			ce	Normal Ex mode |Q|
@@ -8201,9 +8196,9 @@ There are four types of features:
     Example: >
 	:if has("win32")
 <							*has-patch*
-3.  {Nvim} version. The "nvim-1.2.3" feature means that the Nvim version is
-    1.2.3 or later. Example: >
-	:if has("nvim-1.2.3")
+3.  Nvim version. The "nvim-0.2.1" feature means that the Nvim version is
+    0.2.1 or later. Example: >
+	:if has("nvim-0.2.1")
 <
 4.  Included patches.  The "patch123" feature means that patch 123 has been
     included.  Note that this form does not check the version of Vim, you need
