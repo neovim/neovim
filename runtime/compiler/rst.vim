@@ -1,7 +1,7 @@
 " Vim compiler file
-" Compiler:         reStructuredText Documentation Format
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Compiler:             reStructuredText Documentation Format
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("current_compiler")
   finish

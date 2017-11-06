@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Jan 06
+" Last Change:	2017 Mar 04
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -2275,6 +2275,9 @@ au BufNewFile,BufRead .tidyrc,tidyrc		setf tidy
 
 " TF mud client
 au BufNewFile,BufRead *.tf,.tfrc,tfrc		setf tf
+
+" tmux configuration
+au BufNewFile,BufRead tmux*.conf		setf tmux
 
 " TPP - Text Presentation Program
 au BufNewFile,BufReadPost *.tpp			setf tpp

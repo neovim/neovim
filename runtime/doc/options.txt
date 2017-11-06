@@ -5668,7 +5668,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			word.  The expression must evaluate to a List of
 			Lists, each with a suggestion and a score.
 			Example:
-				[['the', 33], ['that', 44]]
+				[['the', 33], ['that', 44]] ~
 			Set 'verbose' and use |z=| to see the scores that the
 			internal methods use.  A lower score is better.
 			This may invoke |spellsuggest()| if you temporarily

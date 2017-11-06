@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         Makefile
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-05-07
+" Language:             Makefile
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-05-07
 
 if exists("b:did_indent")
   finish

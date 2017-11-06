@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:         FrameScript
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-19
+" Language:             FrameScript
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-19
 
 if exists("b:did_indent")
   finish

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         reStructuredText documentation format
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             reStructuredText documentation format
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

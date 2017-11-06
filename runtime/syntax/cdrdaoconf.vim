@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         cdrdao(1) configuration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-09-02
+" Language:             cdrdao(1) configuration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-09-02
 
 if exists("b:current_syntax")
   finish

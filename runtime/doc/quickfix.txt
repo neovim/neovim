@@ -1362,7 +1362,7 @@ prints information about entering a directory in the form "Making all in dir".
    Making all in dir2		  ./dir1/dir2
 
    This can be solved by printing absolute directories in the "enter directory"
-   message or by printing "leave directory" messages..
+   message or by printing "leave directory" messages.
 
 To avoid this problem, ensure to print absolute directory names and "leave
 directory" messages.

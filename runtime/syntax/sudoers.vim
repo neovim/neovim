@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         sudoers(5) configuration files
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2011-02-24
+" Language:             sudoers(5) configuration files
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2011-02-24
 
 if exists("b:current_syntax")
   finish

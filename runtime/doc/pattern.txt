@@ -853,10 +853,13 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 \%V	Match inside the Visual area.  When Visual mode has already been
 	stopped match in the area that |gv| would reselect.
 	This is a |/zero-width| match.  To make sure the whole pattern is
-	inside the Visual area put it at the start and end of the pattern,
-	e.g.: >
-		/\%Vfoo.*bar\%V
-<	Only works for the current buffer.
+	inside the Visual area put it at the start and just before the end of
+	the pattern, e.g.: >
+		/\%Vfoo.*ba\%Vr
+<	This works if "foo bar" (or more) was Visually selected. This: >
+		/\%Vfoo.*ba\%Vr
+<	would match "foo bar" if the Visual selection continues after the "r".
+	Only works for the current buffer.
 
 						*/\%#* *cursor-position*
 \%#	Matches with the cursor position.  Only works when matching in a

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         RFC 2614 - An API for Service Location registration file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             RFC 2614 - An API for Service Location registration file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

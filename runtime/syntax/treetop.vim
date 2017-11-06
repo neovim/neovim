@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         Treetop
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2011-03-14
+" Language:             Treetop
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2011-03-14
 
 if exists("b:current_syntax")
   finish

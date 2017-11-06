@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:	    DTD (Document Type Definition for XML)
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2011-07-08
+" Language:    	    DTD (Document Type Definition for XML)
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2011-07-08
 
 let s:cpo_save = &cpo
 set cpo&vim

@@ -3197,7 +3197,7 @@ execute({command} [, {silent}])				*execute()*
 			""		no `:silent` used
 			"silent"	`:silent` used
 			"silent!"	`:silent!` used
-		The default is 'silent'.  Note that with "silent!", unlike
+		The default is "silent".  Note that with "silent!", unlike
 		`:redir`, error messages are dropped.
 
 		To get a list of lines use |split()| on the result: >
@@ -3775,10 +3775,10 @@ get({dict}, {key} [, {default}])
 get({func}, {what})
 		Get item {what} from Funcref {func}.  Possible values for
 		{what} are:
-			'name'	The function name
-			'func'	The function
-			'dict'	The dictionary
-			'args'	The list with arguments
+			"name"	The function name
+			"func"	The function
+			"dict"	The dictionary
+			"args"	The list with arguments
 
 							*getbufinfo()*
 getbufinfo([{expr}])
@@ -7657,7 +7657,7 @@ taglist({expr}[, {filename}])				*taglist()*
 		may appear, they give the name of the entity the tag is
 		contained in.
 
-		The ex-command 'cmd' can be either an ex search pattern, a
+		The ex-command "cmd" can be either an ex search pattern, a
 		line number or a line number followed by a byte number.
 
 		If there are no matching tags, then an empty list is returned.

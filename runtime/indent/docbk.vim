@@ -1,7 +1,7 @@
 " Vim indent file
-" Language:	    DocBook Documentation Format
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Language:    	    DocBook Documentation Format
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("b:did_indent")
   finish
