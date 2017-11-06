@@ -197,7 +197,7 @@ function! spellfile#WritableSpellDir()
   " Always use the $XDG_DATA_HOME/nvim/site directory
   if exists('$XDG_DATA_HOME')
     return $XDG_DATA_HOME . "/nvim/site/spell"
-  else
+  elseif !(has('win32') || has('win64'))
     return $HOME . "/.local/share/nvim/site/spell"
   endif
   for dir in split(&rtp, ',')
