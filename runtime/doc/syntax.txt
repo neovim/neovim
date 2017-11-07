@@ -2108,6 +2108,16 @@ set "msql_minlines" to the value you desire.  Example: >
 	:let msql_minlines = 200
 
 
+N1QL						*n1ql.vim* *ft-n1ql-syntax*
+
+N1QL is a SQL-like declarative language for manipulating JSON documents in
+Couchbase Server databases.
+
+Vim syntax highlights N1QL statements, keywords, operators, types, comments,
+and special values.  Vim ignores syntactical elements specific to SQL or its
+many dialects, like COLUMN or CHAR, that don't exist in N1QL.
+
+
 NCF						*ncf.vim* *ft-ncf-syntax*
 
 There is one option for NCF syntax highlighting.

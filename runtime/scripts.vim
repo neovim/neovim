@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2017 Mar 04
+" Last change:	2017 Aug 27
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -297,7 +297,7 @@ else
     set ft=virata
 
     " Strace
-  elseif s:line1 =~ '^\(\[pid \d\+\] \)\=[0-9:.]* *execve(' || s:line1 =~ '^__libc_start_main'
+  elseif s:line1 =~# '[0-9:.]* *execve(' || s:line1 =~# '^__libc_start_main'
     set ft=strace
 
     " VSE JCL

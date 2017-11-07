@@ -311,8 +311,9 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
                                                                 *:hide*
 :hid[e]
 :{count}hid[e]
-		Quit the current window, unless it is the last window on the
-		screen. For {count} see |:quit|.
+		Without {count}: Quit the current window, unless it is the
+		last window on the screen.
+		If {count} is given quit the {count} window.
 
 		The buffer becomes hidden (unless there is another window
 		editing it or 'bufhidden' is `unload`, `delete` or `wipe`).
@@ -994,6 +995,8 @@ list of buffers. |unlisted-buffer|
 			   displayed in a window |hidden-buffer|
 		   -	a buffer with 'modifiable' off
 		   =	a readonly buffer
+		   R	a terminal buffer with a running job
+		   F	a terminal buffer with a finished job
 		    +	a modified buffer
 		    x   a buffer with read errors
 

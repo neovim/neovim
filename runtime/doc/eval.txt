@@ -5660,7 +5660,6 @@ mode([expr])	Return a string that indicates the current mode.
 			i	Insert
 			R	Replace |R|
 			Rv	Virtual Replace |gR|
-			t	Terminal
 			c	Command-line
 			cv	Vim Ex mode |gQ|
 			ce	Normal Ex mode |Q|
@@ -5668,6 +5667,7 @@ mode([expr])	Return a string that indicates the current mode.
 			rm	The -- more -- prompt
 			r?	A |:confirm| query of some sort
 			!	Shell or external command is executing
+			t	Terminal mode: keys go to the job
 		This is useful in the 'statusline' option or when used
 		with |remote_expr()| In most other places it always returns
 		"c" or "n".
