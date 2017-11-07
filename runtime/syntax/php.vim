@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: php PHP 3/4/5/7
 " Maintainer: Jason Woofenden <jason@jasonwoof.com>
-" Last Change: Dec 11, 2016
+" Last Change: Apr 28, 2017
 " URL: https://jasonwoof.com/gitweb/?p=vim-syntax.git;a=blob;f=php.vim;hb=HEAD
 " Former Maintainers: Peter Hodge <toomuchphp-vim@yahoo.com>
 "         Debian VIM Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
@@ -11,32 +11,28 @@
 "       colourscheme, because elflord's colours will better highlight the break-points
 "       (Statements) in your code.
 "
-" Options:  php_sql_query = 1  for SQL syntax highlighting inside strings
-"           php_htmlInStrings = 1  for HTML syntax highlighting inside strings
-"           php_baselib = 1  for highlighting baselib functions
-"           php_asp_tags = 1  for highlighting ASP-style short tags
-"           php_parent_error_close = 1  for highlighting parent error ] or )
-"           php_parent_error_open = 1  for skipping an php end tag, if there exists an open ( or [ without a closing one
-"           php_oldStyle = 1  for using old colorstyle
-"           php_noShortTags = 1  don't sync <? ?> as php
-"           php_folding = 1  for folding classes and functions
-"           php_folding = 2  for folding all { } regions
-"           php_sync_method = x
-"                             x=-1 to sync by search ( default )
-"                             x>0 to sync at least x lines backwards
-"                             x=0 to sync from start
-"
-"       Added by Peter Hodge On June 9, 2006:
-"           php_special_functions = 1|0 to highlight functions with abnormal behaviour
-"           php_alt_comparisons = 1|0 to highlight comparison operators in an alternate colour
-"           php_alt_assignByReference = 1|0 to highlight '= &' in an alternate colour
-"
-"           Note: these all default to 1 (On), so you would set them to '0' to turn them off.
-"                 E.g., in your .vimrc or _vimrc file:
-"                   let php_special_functions = 0
-"                   let php_alt_comparisons = 0
-"                   let php_alt_assignByReference = 0
-"                 Unletting these variables will revert back to their default (On).
+" Options:
+"    Set to anything to enable:
+"       php_sql_query           SQL syntax highlighting inside strings
+"       php_htmlInStrings       HTML syntax highlighting inside strings
+"       php_baselib             highlighting baselib functions
+"       php_asp_tags            highlighting ASP-style short tags
+"       php_parent_error_close  highlighting parent error ] or )
+"       php_parent_error_open   skipping an php end tag, if there exists
+"                                 an open ( or [ without a closing one
+"       php_oldStyle            use old colorstyle
+"       php_noShortTags         don't sync <? ?> as php
+"    Set to a specific value:
+"       php_folding = 1         fold classes and functions
+"       php_folding = 2         fold all { } regions
+"       php_sync_method = x  where x is an integer:
+"                         -1  sync by search ( default )
+"                         >0  sync at least x lines backwards
+"                         0   sync from start
+"    Set to 0 to _disable_:      (Added by Peter Hodge On June 9, 2006)
+"       php_special_functions = 0      highlight functions with abnormal behaviour
+"       php_alt_comparisons = 0        comparison operators in an alternate colour
+"       php_alt_assignByReference = 0  '= &' in an alternate colour
 "
 "
 " Note:
