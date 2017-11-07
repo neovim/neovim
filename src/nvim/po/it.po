@@ -5382,26 +5382,9 @@ msgstr "E772: Il file ortografico è per versioni di Vim più recenti"
 msgid "E770: Unsupported section in spell file"
 msgstr "E770: Sezione non supportata nel file ortografico"
 
-#: ../spell.c:3762
-#, c-format
-msgid "E778: This does not look like a .sug file: %s"
-msgstr "E778: Questo non sembra un file .sug: %s"
-
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"
 msgstr "E779: File .sug obsoleto, è necessario aggiornarlo: %s"
-
-#, c-format
-msgid "E780: .sug file is for newer version of Vim: %s"
-msgstr "E780: Il file .sug è per versioni di Vim più recenti: %s"
-
-#, c-format
-msgid "E781: .sug file doesn't match .spl file: %s"
-msgstr "E781: Il file .sug non corrisponde al file .spl: %s"
-
-#, c-format
-msgid "E782: error while reading .sug file: %s"
-msgstr "E782: Errore leggendo il file .sug: %s"
 
 #: ../spell.c:4550
 #, c-format
@@ -5760,11 +5743,6 @@ msgstr "E753: Non trovato: %s"
 #, c-format
 msgid "E778: This does not look like a .sug file: %s"
 msgstr "E778: Questo non sembra un file .sug: %s"
-
-#: ../spell.c:9282
-#, c-format
-msgid "E779: Old .sug file, needs to be updated: %s"
-msgstr "E779: File .sug obsoleto, è necessario aggiornarlo: %s"
 
 #: ../spell.c:9286
 #, c-format

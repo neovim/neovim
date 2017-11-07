@@ -5280,27 +5280,6 @@ msgstr "E772: Spell 파일이 새 버젼의 Vim용입니다"
 msgid "E770: Unsupported section in spell file"
 msgstr "E770: spell 파일에 지원되지 않는 섹션"
 
-#: ../spell.c:3762
-#, c-format
-msgid "E778: This does not look like a .sug file: %s"
-msgstr "E778: .sug 파일이 아닌 것 같음: %s"
-
-#, c-format
-msgid "E779: Old .sug file, needs to be updated: %s"
-msgstr "E779: 오래된 .sug 파일, 갱신 필요: %s"
-
-#, c-format
-msgid "E780: .sug file is for newer version of Vim: %s"
-msgstr "E780: .sug 파일이 새 버젼의 Vim용임: %s"
-
-#, c-format
-msgid "E781: .sug file doesn't match .spl file: %s"
-msgstr "E781: .sug 파일이 .spl 파일과 맞지 않음: %s"
-
-#, c-format
-msgid "E782: error while reading .sug file: %s"
-msgstr "E782: .sug 파일 읽기 에러: %s"
-
 #: ../spell.c:4550
 #, c-format
 msgid "Reading affix file %s ..."
@@ -7526,9 +7505,6 @@ msgstr "E446: 커서 밑에 파일 이름이 없습니다"
 
 #~ msgid "Could not fix up function pointers to the DLL!"
 #~ msgstr "함수 포인터를 DLL로 바꿀 수 없습니다!"
-
-#~ msgid "shell returned %d"
-#~ msgstr "쉘이 %d을(를) 돌려주었습니다"
 
 #~ msgid "Vim: Caught %s event\n"
 #~ msgstr "빔: %s 이벤트를 잡았습니다\n"
