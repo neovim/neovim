@@ -1,6 +1,6 @@
 " Vim script to work like "less"
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2015 Nov 15
+" Last Change:	2017 Mar 31
 
 " Avoid loading this file twice, allow the user to define his own script.
 if exists("loaded_less")
@@ -81,6 +81,10 @@ fun! s:Help()
   echo "\n"
   echo "/pattern  Search for pattern        ?pattern  Search backward for pattern"
   echo "n         next pattern match        N         Previous pattern match"
+  if &foldmethod != "manual"
+  echo "\n"
+    echo "zR        open all folds            zm        increase fold level"
+  endif
   echo "\n"
   echo ":n<Enter> Next file                 :p<Enter> Previous file"
   echo "\n"
@@ -96,7 +100,11 @@ map <C-F> <Space>
 map <PageDown> <Space>
 map <kPageDown> <Space>
 map <S-Down> <Space>
-map z <Space>
+" If 'foldmethod' was changed keep the "z" commands, e.g. "zR" to open all
+" folds.
+if &foldmethod == "manual"
+  map z <Space>
+endif
 map <Esc><Space> <Space>
 fun! s:NextPage()
   if line(".") == line("$")
