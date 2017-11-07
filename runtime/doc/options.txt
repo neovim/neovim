@@ -6401,7 +6401,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Save the whole buffer for undo when reloading it.  This applies to the
 	":e!" command and reloading for when the buffer changed outside of
 	Vim. |FileChangedShell|
-	The save only happens when this options is negative or when the number
+	The save only happens when this option is negative or when the number
 	of lines is smaller than the value of this option.
 	Set this option to zero to disable undo for a reload.
 

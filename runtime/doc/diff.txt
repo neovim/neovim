@@ -13,7 +13,7 @@ The basics are explained in section |08.7| of the user manual.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Starting diff mode
+1. Starting diff mode					*start-vimdiff*
 
 To start editing in diff mode, run "nvim -d".  This starts Nvim as usual, and
 additionally sets up for viewing the differences between the arguments. >
