@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Jun 12
+" Last Change:	2017 Jul 11
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -627,7 +627,13 @@ au BufNewFile,BufRead dict.conf,.dictrc		setf dictconf
 au BufNewFile,BufRead dictd.conf		setf dictdconf
 
 " Diff files
-au BufNewFile,BufRead *.diff,*.rej,*.patch	setf diff
+au BufNewFile,BufRead *.diff,*.rej		setf diff
+au BufNewFile,BufRead *.patch
+	\ if getline(1) =~ '^From [0-9a-f]\{40\} Mon Sep 17 00:00:00 2001$' |
+	\   setf gitsendemail |
+	\ else |
+	\   setf diff |
+	\ endif
 
 " Dircolors
 au BufNewFile,BufRead .dir_colors,.dircolors,*/etc/DIR_COLORS	setf dircolors
@@ -796,6 +802,7 @@ if !empty($XDG_CONFIG_HOME)
   au BufNewFile,BufRead $XDG_CONFIG_HOME/git/config	setf gitconfig
 endif
 au BufNewFile,BufRead git-rebase-todo		setf gitrebase
+au BufRead,BufNewFile .gitsendemail.msg.??????	setf gitsendemail
 au BufNewFile,BufRead .msg.[0-9]*
       \ if getline(1) =~ '^From.*# This line is ignored.$' |
       \   setf gitsendemail |

@@ -1253,6 +1253,7 @@ Context-sensitive completion on the command-line:
 
 |:sfind|	:sf[ind] {file}		split window, find {file} in 'path'
 					   and edit it
+|:terminal|	:terminal {cmd}		open a terminal window
 |CTRL-W_]|	CTRL-W ]		split window and jump to tag under
 					   cursor
 |CTRL-W_f|	CTRL-W f		split window and edit file name under

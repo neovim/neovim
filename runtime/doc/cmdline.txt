@@ -420,6 +420,9 @@ matches exactly one character.
 
 The 'wildignorecase' option can be set to ignore case in filenames.
 
+The 'wildmenu' option can be set to show the matches just above the command
+line.
+
 If you like tcsh's autolist completion, you can use this mapping:
 	:cnoremap X <C-L><C-D>
 (Where X is the command key to use, <C-L> is CTRL-L and <C-D> is CTRL-D)

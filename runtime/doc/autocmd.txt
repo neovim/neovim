@@ -643,7 +643,8 @@ FileType			When the 'filetype' option has been set.  The
 				pattern is matched against the filetype.
 				<afile> can be used for the name of the file
 				where this option was set, and <amatch> for
-				the new value of 'filetype'.
+				the new value of 'filetype'.  Navigating to
+				another window or buffer is not allowed.
 				See |filetypes|.
 							*FileWriteCmd*
 FileWriteCmd			Before writing to a file, when not writing the

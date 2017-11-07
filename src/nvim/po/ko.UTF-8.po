@@ -1111,6 +1111,10 @@ msgstr "E137: Viminfo 파일의 쓰기 권한이 없습니다: %s"
 
 #: ../ex_cmds.c:1626
 #, c-format
+msgid "E929: Too many viminfo temp files, like %s!"
+msgstr "E929: 너무 많은 viminfo 임시 파일들, 가령 %s!"
+
+#, c-format
 msgid "E138: Can't write viminfo file %s!"
 msgstr "E138: Viminfo 파일 %s을(를) 쓸 수 없습니다!"
 
@@ -1118,6 +1122,10 @@ msgstr "E138: Viminfo 파일 %s을(를) 쓸 수 없습니다!"
 #, c-format
 msgid "Writing viminfo file \"%s\""
 msgstr "Viminfo 파일 \"%s\"을(를) 쓰는 중"
+
+#, c-format
+msgid "E886: Can't rename viminfo file to %s!"
+msgstr "E886: viminfo 파일명을 %s(으)로 변경할 수 없습니다!"
 
 #. Write the info:
 #: ../ex_cmds.c:1720
@@ -1300,8 +1308,8 @@ msgstr "미안합니다, 도움말 파일 \"%s\"을(를) 찾을 수 없습니다
 
 #: ../ex_cmds.c:5323
 #, c-format
-msgid "E150: Not a directory: %s"
-msgstr "E150: 디렉토리가 아님: %s"
+msgid "E151: No match: %s"
+msgstr "E151: 맞지 않음: %s"
 
 #: ../ex_cmds.c:5446
 #, c-format
@@ -1324,6 +1332,10 @@ msgid "E154: Duplicate tag \"%s\" in file %s/%s"
 msgstr "E154: \"%s\" 태그가 %s/%s 파일에서 중복되었습니다"
 
 #: ../ex_cmds.c:5687
+#, c-format
+msgid "E150: Not a directory: %s"
+msgstr "E150: 디렉토리가 아님: %s"
+
 #, c-format
 msgid "E160: Unknown sign command: %s"
 msgstr "E160: 모르는 sign 명령: %s"
@@ -1452,8 +1464,16 @@ msgstr "\"%s\"을(를) 찾는 중"
 
 #: ../ex_cmds2.c:2307
 #, c-format
-msgid "not found in 'runtimepath': \"%s\""
-msgstr "'runtimepath'에서 찾을 수 없음: \"%s\""
+msgid "not found in '%s': \"%s\""
+msgstr "'%s'에서 찾을 수 없음: \"%s\""
+
+#, c-format
+msgid "W20: Required python version 2.x not supported, ignoring file: %s"
+msgstr "W20: 요구되는 파이선 버젼 2.x는 지원되지 않음, 파일을 무시: %s"
+
+#, c-format
+msgid "W21: Required python version 3.x not supported, ignoring file: %s"
+msgstr "W21: 요구되는 파이선 버젼 3.x는 지원되지 않음, 파일을 무시: %s"
 
 #: ../ex_cmds2.c:2472
 #, c-format
@@ -1609,10 +1629,10 @@ msgstr "E174: 명령이 이미 존재합니다: 바꾸려면 !을 더하세요"
 #: ../ex_docmd.c:4432
 msgid ""
 "\n"
-"    Name        Args Range Complete  Definition"
+"    Name        Args       Address   Complete  Definition"
 msgstr ""
 "\n"
-"    이름        인자 범위  완성      정의"
+"    이름        인자       주소      완성      정의"
 
 #: ../ex_docmd.c:4516
 msgid "No user-defined commands found"
@@ -1661,6 +1681,10 @@ msgid "E184: No such user-defined command: %s"
 msgstr "E184: 그런 사용자 정의 명령 없음: %s"
 
 #: ../ex_docmd.c:5219
+#, c-format
+msgid "E180: Invalid address type value: %s"
+msgstr "E180: 잘못된 주소 형식 값: %s"
+
 #, c-format
 msgid "E180: Invalid complete value: %s"
 msgstr "E180: 잘못된 끝내기 값: %s"
@@ -1953,7 +1977,7 @@ msgstr ""
 
 #: ../ex_getln.c:5047
 msgid "Command Line"
-msgstr "명령 줄"
+msgstr "명령 행"
 
 #: ../ex_getln.c:5048
 msgid "Search String"
@@ -1965,7 +1989,10 @@ msgstr "표현"
 
 #: ../ex_getln.c:5050
 msgid "Input Line"
-msgstr "입력 줄"
+msgstr "입력 행"
+
+msgid "Debug Line"
+msgstr "디버그 행"
 
 #: ../ex_getln.c:5117
 msgid "E198: cmd_pchar beyond the command length"
@@ -3190,6 +3217,7 @@ msgstr "%-5s: %s%*s (사용법: %s)"
 #: ../if_cscope.c:1155
 msgid ""
 "\n"
+"       a: Find assignments to this symbol\n"
 "       c: Find functions calling this function\n"
 "       d: Find functions called by this function\n"
 "       e: Find this egrep pattern\n"
@@ -3200,13 +3228,14 @@ msgid ""
 "       t: Find this text string\n"
 msgstr ""
 "\n"
+"       a: 이 기호에 대한 할당 찾기\n"
 "       c: 이 함수를 부르는 함수들 찾기\n"
 "       d: 이 함수에 의해 불려지는 함수들 찾기\n"
 "       e: 이 egrep 패턴 찾기\n"
 "       f: 이 파일 찾기\n"
 "       g: 이 정의 찾기\n"
-"       i: 이 파일을 포함하는 파일들 찾기\n"
-"       s: 이 C 심볼 찾기\n"
+"       i: 이 파일을 #include하는 파일들 찾기\n"
+"       s: 이 C 기호 찾기\n"
 "       t: 이 문자열 찾기\n"
 
 #: ../if_cscope.c:1226
@@ -4740,6 +4769,10 @@ msgstr "E447: path에서 \"%s\" 파일을 찾을 수 없습니다"
 
 #: ../quickfix.c:359
 #, c-format
+msgid "shell returned %d"
+msgstr "쉘이 %d을(를) 돌려주었습니다"
+
+#, c-format
 msgid "E372: Too many %%%c in format string"
 msgstr "E372: 형식 문자열에 %%%c이(가) 너무 많습니다"
 
@@ -5249,8 +5282,24 @@ msgstr "E770: spell 파일에 지원되지 않는 섹션"
 
 #: ../spell.c:3762
 #, c-format
-msgid "Warning: region %s not supported"
-msgstr "경고: %s 영역은 지원되지 않습니다"
+msgid "E778: This does not look like a .sug file: %s"
+msgstr "E778: .sug 파일이 아닌 것 같음: %s"
+
+#, c-format
+msgid "E779: Old .sug file, needs to be updated: %s"
+msgstr "E779: 오래된 .sug 파일, 갱신 필요: %s"
+
+#, c-format
+msgid "E780: .sug file is for newer version of Vim: %s"
+msgstr "E780: .sug 파일이 새 버젼의 Vim용임: %s"
+
+#, c-format
+msgid "E781: .sug file doesn't match .spl file: %s"
+msgstr "E781: .sug 파일이 .spl 파일과 맞지 않음: %s"
+
+#, c-format
+msgid "E782: error while reading .sug file: %s"
+msgstr "E782: .sug 파일 읽기 에러: %s"
 
 #: ../spell.c:4550
 #, c-format
@@ -6312,7 +6361,7 @@ msgstr "by Bram Moolenaar et al."
 
 #: ../version.c:774
 msgid "Vim is open source and freely distributable"
-msgstr "빔은 소스가 열려 있고 공짜로 배포됩니다"
+msgstr "빔은 누구나 소스를 볼 수 있고 공짜로 배포됩니다"
 
 #: ../version.c:776
 msgid "Help poor children in Uganda!"

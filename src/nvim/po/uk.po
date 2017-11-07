@@ -1,6 +1,8 @@
 #
 # Ukrainian Vim translation [uk]
 #
+# Original translations
+#
 # Copyright (C) 2001 Bohdan Vlasyuk <bohdan@vstu.edu.ua>
 # Bohdan donated this work to be distributed with Vim under the Vim license.
 #
@@ -510,6 +512,9 @@ msgstr "Пошук у: %s"
 msgid "Scanning tags."
 msgstr "Пошук серед теґів."
 
+msgid "match in file"
+msgstr "збіг у файлі"
+
 msgid " Adding"
 msgstr " Додається"
 
@@ -641,6 +646,12 @@ msgstr "E107: Пропущено дужки: %s"
 #, c-format
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: Змінної немає: «%s»"
+
+#. For historic reasons this error is not given for a list or dict.
+#. * E.g., the b: dict could be locked/unlocked.
+#, c-format
+msgid "E940: Cannot lock or unlock variable %s"
+msgstr "E940: Неможливо заблокувати чи розблокувати змінну %s"
 
 msgid "E743: variable nested too deep for (un)lock"
 msgstr "E743: Змінна має забагато вкладень щоб бути за-/відкритою."
@@ -1392,8 +1403,9 @@ msgstr " в одному рядку"
 msgid " on %<PRId64> lines"
 msgstr " в %<PRId64> рядках"
 
-msgid "E147: Cannot do :global recursive"
-msgstr "E147: :global не можна вживати рекурсивно"
+#. will increment global_busy to break out of the loop
+msgid "E147: Cannot do :global recursive with a range"
+msgstr "E147: :global не можна вживати рекурсивно з діапазоном"
 
 msgid "E148: Regular expression missing from global"
 msgstr "E148: У global бракує зразка"
@@ -4130,6 +4142,12 @@ msgstr "E369: Некоректний елемент у %s%%[]"
 msgid "E769: Missing ] after %s["
 msgstr "E769: Бракує ] після %s["
 
+msgid "E944: Reverse range in character class"
+msgstr "E944: Зворотній діапазон у класі символів"
+
+msgid "E945: Range too large in character class"
+msgstr "E945: Завеликий діапазон у класі символів"
+
 #, c-format
 msgid "E53: Unmatched %s%%("
 msgstr "E53: Немає пари %s%%("
@@ -4888,9 +4906,30 @@ msgstr "E783: Повторено символ у елементі MAP"
 msgid "No Syntax items defined for this buffer"
 msgstr "Для буфера не визначено елементів синтаксису"
 
+msgid "syntax conceal on"
+msgstr "маскування синтаксису увімк"
+
+msgid "syntax conceal off"
+msgstr "маскування синтаксису вимк"
+
 #, c-format
 msgid "E390: Illegal argument: %s"
 msgstr "E390: Неправильний аргумент: %s"
+
+msgid "syntax case ignore"
+msgstr "синтаксис ігнорувати регістр"
+
+msgid "syntax case match"
+msgstr "синтаксис дотримуватися регістру"
+
+msgid "syntax spell toplevel"
+msgstr "синтаксис перевіряти всюди"
+
+msgid "syntax spell notoplevel"
+msgstr "синтаксис не перевіряти"
+
+msgid "syntax spell default"
+msgstr "синтаксис початково"
 
 msgid "syntax iskeyword "
 msgstr "синтаксис iskeyword "

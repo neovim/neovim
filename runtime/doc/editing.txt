@@ -1265,7 +1265,7 @@ Commands for changing the working directory can be suffixed with a bang "!"
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
-			windows or any tabs is not changed.
+			windows or tabs is not changed.
 
 							*:lch* *:lchdir*
 :lch[dir][!]		Same as |:lcd|.
