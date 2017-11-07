@@ -89,7 +89,9 @@ describe('system()', function()
     end)
 
     it('does NOT run in shell', function()
-      if not iswin() then
+      if iswin() then
+        eq("C:\\Windows\\System32\\cmd.exe\n", eval("system(['where', 'cmd'])"))
+      else
         eq("* $PATH %PATH%\n", eval("system(['echo', '*', '$PATH', '%PATH%'])"))
       end
     end)
