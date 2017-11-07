@@ -401,7 +401,7 @@ msgstr " Vorschlag der Rechtschreibprüfung (s^N^P)"
 
 #: ../edit.c:98
 msgid " Keyword Local completion (^N^P)"
-msgstr " Lokale Schlüsselwort-Ergänzung(^N^P)"
+msgstr " Lokale Stichwort-Ergänzung(^N^P)"
 
 #: ../edit.c:101
 msgid "Hit end of paragraph"
@@ -443,7 +443,7 @@ msgstr "Durchsuche: %s"
 
 #: ../edit.c:3513
 msgid "Scanning tags."
-msgstr "Durchsuchen von Tags."
+msgstr "Durchsuche Tags"
 
 #: ../edit.c:4418
 msgid " Adding"
@@ -6486,7 +6486,7 @@ msgid ""
 "\tLast set from "
 msgstr ""
 "\n"
-"\tZuletzt gesetzt von "
+"\tZuletzt gesetzt in "
 
 #: ../eval.c:18682
 msgid "No old files"
