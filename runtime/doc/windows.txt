@@ -1238,6 +1238,9 @@ help		Contains a help file.  Will only be created with the |:help|
 		and can't be changed.  The 'buflisted' option will be reset
 		for a help buffer.
 
+terminal	A terminal window buffer, see |terminal|. The contents cannot
+		be read or changed until the job ends.
+
 directory	Displays directory contents.  Can be used by a file explorer
 		plugin.  The buffer is created with these settings: >
 			:setlocal buftype=nowrite

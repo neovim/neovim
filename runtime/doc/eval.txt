@@ -2119,7 +2119,8 @@ index({list}, {expr} [, {start} [, {ic}]])
 				Number	index in {list} where {expr} appears
 input({prompt} [, {text} [, {completion}]])
 				String	get input from the user
-inputdialog({p} [, {t} [, {c}]]) String  like input() but in a GUI dialog
+inputdialog({prompt} [, {text} [, {completion}]])
+				String  like input() but in a GUI dialog
 inputlist({textlist})		Number	let the user pick from a choice list
 inputrestore()			Number	restore typeahead
 inputsave()			Number	save and clear typeahead
