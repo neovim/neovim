@@ -4757,10 +4757,11 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	Example: >
 		:highlight Normal ctermfg=grey ctermbg=darkblue
 <	When setting the "ctermbg" color for the Normal group, the
-	'background' option will be adjusted automatically.  This causes the
-	highlight groups that depend on 'background' to change!  This means
-	you should set the colors for Normal first, before setting other
-	colors.
+	'background' option will be adjusted automatically, under the
+	condition that the color is recognized and 'background' was not set
+	explicitly.  This causes the highlight groups that depend on
+	'background' to change!  This means you should set the colors for
+	Normal first, before setting other colors.
 	When a colorscheme is being used, changing 'background' causes it to
 	be reloaded, which may reset all colors (including Normal).  First
 	delete the "g:colors_name" variable when you don't want this.

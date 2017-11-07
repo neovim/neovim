@@ -175,7 +175,7 @@ that starts with ",".  Then you need to type another character for Vim to know
 whether to use the "," mapping or the longer one.  To avoid this add the
 <nowait> argument.  Then the mapping will be used when it matches, Vim does
 not wait for more characters to be typed.  However, if the characters were
-already type they are used.
+already typed they are used.
 
 						*:map-<silent>* *:map-silent*
 To define a mapping which will not be echoed on the command line, add
