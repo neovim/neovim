@@ -2,7 +2,7 @@
 " This file is normally sourced from menu.vim.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Aug 13
+" Last Change:	2017 Oct 28
 
 " Define the SetSyn function, used for the Syntax menu entries.
 " Set 'filetype' and also 'syntax' if it is manually selected.
@@ -351,12 +351,13 @@ an 50.70.510 &Syntax.M.Muttrc :cal SetSyn("muttrc")<CR>
 an 50.80.100 &Syntax.NO.Nanorc :cal SetSyn("nanorc")<CR>
 an 50.80.110 &Syntax.NO.Nastran\ input/DMAP :cal SetSyn("nastran")<CR>
 an 50.80.120 &Syntax.NO.Natural :cal SetSyn("natural")<CR>
-an 50.80.130 &Syntax.NO.Netrc :cal SetSyn("netrc")<CR>
-an 50.80.140 &Syntax.NO.Ninja :cal SetSyn("ninja")<CR>
-an 50.80.150 &Syntax.NO.Novell\ NCF\ batch :cal SetSyn("ncf")<CR>
-an 50.80.160 &Syntax.NO.Not\ Quite\ C\ (LEGO) :cal SetSyn("nqc")<CR>
-an 50.80.170 &Syntax.NO.Nroff :cal SetSyn("nroff")<CR>
-an 50.80.180 &Syntax.NO.NSIS\ script :cal SetSyn("nsis")<CR>
+an 50.80.130 &Syntax.NO.Neomuttrc :cal SetSyn("neomuttrc")<CR>
+an 50.80.140 &Syntax.NO.Netrc :cal SetSyn("netrc")<CR>
+an 50.80.150 &Syntax.NO.Ninja :cal SetSyn("ninja")<CR>
+an 50.80.160 &Syntax.NO.Novell\ NCF\ batch :cal SetSyn("ncf")<CR>
+an 50.80.170 &Syntax.NO.Not\ Quite\ C\ (LEGO) :cal SetSyn("nqc")<CR>
+an 50.80.180 &Syntax.NO.Nroff :cal SetSyn("nroff")<CR>
+an 50.80.190 &Syntax.NO.NSIS\ script :cal SetSyn("nsis")<CR>
 an 50.80.200 &Syntax.NO.Obj\ 3D\ wavefront :cal SetSyn("obj")<CR>
 an 50.80.210 &Syntax.NO.Objective\ C :cal SetSyn("objc")<CR>
 an 50.80.220 &Syntax.NO.Objective\ C++ :cal SetSyn("objcpp")<CR>

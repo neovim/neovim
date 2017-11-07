@@ -315,7 +315,7 @@ else
     set ft=sindacmp
 
     " DNS zone files
-  elseif s:line1.s:line2.s:line3.s:line4 =~ '^; <<>> DiG [0-9.]\+ <<>>\|BIND.*named\|$ORIGIN\|$TTL\|IN\s\+SOA'
+  elseif s:line1.s:line2.s:line3.s:line4 =~# '^; <<>> DiG [0-9.]\+.* <<>>\|$ORIGIN\|$TTL\|IN\s\+SOA'
     set ft=bindzone
 
     " BAAN

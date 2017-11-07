@@ -199,7 +199,7 @@ COMMANDS                                                       *rust-commands*
 		|g:rust_playpen_url| is the base URL to the playpen, by default
 		"https://play.rust-lang.org/".
 
-		|g:rust_shortener_url| is the base URL for the shorterner, by
+		|g:rust_shortener_url| is the base URL for the shortener, by
 		default "https://is.gd/"
 
 :RustFmt                                                       *:RustFmt*

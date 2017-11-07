@@ -733,7 +733,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'background' is not dark/light, 'background' will be set and the
 	screen is redrawn.  This may have side effects, make t_BG empty in
 	your .vimrc if you suspect this problem.  The response to |t_RB| can
-	be found in |v:termrgbresp|.
+	be found in |v:termrbgresp|.
 
 	When starting the GUI, the default value for 'background' will be
 	"light".  When the value is not set in the gvimrc, and Vim detects
@@ -2991,7 +2991,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		that this flag must be added in the vimrc file, before
 		switching on syntax or filetype recognition (when the |gvimrc|
 		file is sourced the system menu has already been loaded; the
-		":syntax on" and ":filetype on" commands load the menu too).
+		`:syntax on` and `:filetype on` commands load the menu too).
 								*'go-g'*
 	  'g'	Grey menu items: Make menu items that are not active grey.  If
 		'g' is not included inactive menu items are not shown at all.
@@ -3860,7 +3860,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:au FileType c,cpp,java set mps+==:;
 
 <	For a more advanced way of using "%", see the matchit.vim plugin in
-	the $VIMRUNTIME/macros directory. |add-local-help|
+	the $VIMRUNTIME/plugin directory. |add-local-help|
 
 						*'matchtime'* *'mat'*
 'matchtime' 'mat'	number	(default 5)

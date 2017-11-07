@@ -94,9 +94,8 @@ To test for a non-empty string, use empty(): >
 Function arguments often behave slightly different from |TRUE|: If the
 argument is present and it evaluates to a non-zero Number, |v:true| or a
 non-empty String, then the value is considered to be TRUE.
-Note that " " and "0" are also non-empty strings, thus cause the mode to be
-cleared.  A List, Dictionary or Float is not a Number or String, thus
-evaluates to FALSE.
+Note that " " and "0" are also non-empty strings, thus considered to be TRUE.
+A List, Dictionary or Float is not a Number or String, thus evaluate to FALSE.
 
 				*E745* *E728* *E703* *E729* *E730* *E731*
 List, Dictionary and Funcref types are not automatically converted.
@@ -782,14 +781,15 @@ Examples:
 "abc" == "Abc"	  evaluates to 1 if 'ignorecase' is set, 0 otherwise
 
 							*E691* *E692*
-A |List| can only be compared with a |List| and only "equal", "not equal" and
-"is" can be used.  This compares the values of the list, recursively.
-Ignoring case means case is ignored when comparing item values.
+A |List| can only be compared with a |List| and only "equal", "not equal",
+"is" and "isnot" can be used.  This compares the values of the list,
+recursively.  Ignoring case means case is ignored when comparing item values.
 
 							*E735* *E736*
 A |Dictionary| can only be compared with a |Dictionary| and only "equal", "not
-equal" and "is" can be used.  This compares the key/values of the |Dictionary|
-recursively.  Ignoring case means case is ignored when comparing item values.
+equal", "is" and "isnot" can be used.  This compares the key/values of the
+|Dictionary| recursively.  Ignoring case means case is ignored when comparing
+item values.
 
 							*E694*
 A |Funcref| can only be compared with a |Funcref| and only "equal", "not
@@ -6163,6 +6163,12 @@ remote_expr({server}, {string} [, {idvar}])
 		{only available when compiled with the |+clientserver| feature}
 		Note: Any errors will cause a local error message to be issued
 		and the result will be the empty string.
+
+		Variables will be evaluated in the global namespace,
+		independent of a function currently being activel.  Except
+		when in debug mode, then local function variables and
+		arguments can be evaluated.
+
 		Examples: >
 			:echo remote_expr("gvim", "2+2")
 			:echo remote_expr("gvim1", "b:current_syntax")
@@ -8416,13 +8422,16 @@ See |:verbose-cmd| for more information.
 
 						*E124* *E125* *E853* *E884*
 :fu[nction][!] {name}([arguments]) [range] [abort] [dict] [closure]
-			Define a new function by the name {name}.  The name
-			must be made of alphanumeric characters and '_', and
-			must start with a capital or "s:" (see above).  Note
-			that using "b:" or "g:" is not allowed. (since patch
-			7.4.260 E884 is given if the function name has a colon
-			in the name, e.g. for "foo:bar()".  Before that patch
-			no error was given).
+			Define a new function by the name {name}.  The body of
+			the function follows in the next lines, until the
+			matching |:endfunction|.
+			
+			The name must be made of alphanumeric characters and
+			'_', and must start with a capital or "s:" (see
+			above).  Note that using "b:" or "g:" is not allowed.
+			(since patch 7.4.260 E884 is given if the function
+			name has a colon in the name, e.g. for "foo:bar()".
+			Before that patch no error was given).
 
 			{name} can also be a |Dictionary| entry that is a
 			|Funcref|: >
@@ -8537,9 +8546,10 @@ to the number of named arguments.  When using "...", the number of arguments
 may be larger.
 
 It is also possible to define a function without any arguments.  You must
-still supply the () then.  The body of the function follows in the next lines,
-until the matching |:endfunction|.  It is allowed to define another function
-inside a function body.
+still supply the () then.
+
+It is allowed to define another function inside a function
+body.
 
 							*local-variables*
 Inside a function local variables can be used.  These will disappear when the

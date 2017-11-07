@@ -1,6 +1,6 @@
 # Finnish translation for Vim.
 # Copyright (C) 2003-2006 Free Software Foundation, Inc.
-# 2007-2016, Flammie Pirinen <flammie@iki.fi>
+# 2007-2018, Flammie Pirinen <flammie@iki.fi>
 #
 # Jargonia ei ole yritetty suotta kotoperäistää missä teknisempi lainasanasto
 # tulee paremmin kyseeseen.
@@ -277,6 +277,9 @@ msgstr "E83: Puskuria ei voitu varata, käytetään toista..."
 #~ msgid "E937: Attempt to delete a buffer that is in use"
 #~ msgstr "E934: Ei voida hypätä puskuriin jolla ei ole nimeä"
 
+msgid "E937: Attempt to delete a buffer that is in use"
+msgstr "E937: Ei voida poistaa puskuria joka on käytössä"
+
 msgid "E515: No buffers were unloaded"
 msgstr "E515: Puskureita ei vapautettu"
 
@@ -313,7 +316,6 @@ msgstr "E90: Ei voi vapauttaa viimeistä puskuria"
 msgid "E84: No modified buffer found"
 msgstr "E84: Ei muokattuja puskureita"
 
-#. back where we started, didn't find anything.
 msgid "E85: There is no listed buffer"
 msgstr "E85: Luetteloitua puskuria ei ole"
 
@@ -390,7 +392,6 @@ msgstr "1 rivi --%d %%--"
 msgid "[No Name]"
 msgstr "[Nimetön]"
 
-#. must be a help buffer
 msgid "help"
 msgstr "ohje"
 
@@ -410,6 +411,9 @@ msgstr "Loppu"
 
 msgid "Top"
 msgstr "Alku"
+
+msgid "E382: Cannot write, 'buftype' option is set"
+msgstr "E382: Ei voi kirjoittaa, buftype asetettu"
 
 msgid "[Scratch]"
 msgstr "[Raapust]"
@@ -495,7 +499,6 @@ msgstr "E791: Tyhjä keymap-kenttä"
 msgid " Keyword completion (^N^P)"
 msgstr " Avainsanatäydennys (^N^P)"
 
-#. ctrl_x_mode == 0, ^P/^N compl.
 msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
 msgstr " ^X-tila (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
 
@@ -567,13 +570,12 @@ msgstr "Luetaan: %s"
 msgid "Scanning tags."
 msgstr "Luetaan tägejä."
 
+msgid "match in file"
+msgstr "täsmäys tiedostossa"
+
 msgid " Adding"
 msgstr " Lisätään"
 
-#. showmode might reset the internal line pointers, so it must
-#. * be called before line = ml_get(), or when this address is no
-#. * longer needed.  -- Acevedo.
-#.
 msgid "-- Searching..."
 msgstr "-- Haetaan..."
 
@@ -1346,6 +1348,10 @@ msgstr "E737: Avain on jo olemassa: %s"
 #~ msgid "tv_clear() argument"
 #~ msgstr "filter()-argumentti"
 
+#, c-format
+msgid "E940: Cannot lock or unlock variable %s"
+msgstr "E940: Muuttujaa %s ei voi lukita tai avata"
+
 msgid "E743: variable nested too deep for (un)lock"
 msgstr "E743: muuttujassa liian monta tasoa lukituksen käsittelyyn"
 
@@ -1417,6 +1423,156 @@ msgstr "E907: Käytettiin erikoisarvoa Floattina"
 
 msgid "E808: Number or Float required"
 msgstr "E808: Number tai Float vaaditaan"
+
+msgid "Entering Debug mode.  Type \"cont\" to continue."
+msgstr "Siirrytään vianetsintätilaan, kirjoita cont jatkaaksesi."
+
+#, c-format
+msgid "line %ld: %s"
+msgstr "rivi %ld: %s"
+
+#, c-format
+msgid "cmd: %s"
+msgstr "kmnt: %s"
+
+msgid "frame is zero"
+msgstr "kehys on nolla"
+
+#, c-format
+msgid "frame at highest level: %d"
+msgstr "kehys ylimmällä tasolla: %d"
+
+#, c-format
+msgid "Breakpoint in \"%s%s\" line %ld"
+msgstr "Katkaisukohta %s%s rivillä %ld"
+
+#, c-format
+msgid "E161: Breakpoint not found: %s"
+msgstr "E161: Katkaisukohta puuttuu: %s"
+
+msgid "No breakpoints defined"
+msgstr "Ei katkaisukohtia"
+
+#, c-format
+msgid "%3d  %s %s  line %ld"
+msgstr "%3d  %s %s  rivi %ld"
+
+msgid "E750: First use \":profile start {fname}\""
+msgstr "E750: Aloita käskyllä :profile start {fname}"
+
+msgid "Save As"
+msgstr "Tallenna nimellä"
+
+#, c-format
+msgid "Save changes to \"%s\"?"
+msgstr "Tallennetaanko muutokset tiedostoon %s?"
+
+#, c-format
+msgid "E947: Job still running in buffer \"%s\""
+msgstr "E947: Komento on vielä käynnissä puskurissa \"%s\""
+
+#, c-format
+msgid "E162: No write since last change for buffer \"%s\""
+msgstr "E162: Muutoksia ei ole kirjoitettu puskurin %s viime muutoksen jälkeen"
+
+msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
+msgstr "Varoitus: Puskuri vaihtui odottamatta (tarkista autocommands)"
+
+msgid "E163: There is only one file to edit"
+msgstr "E163: Vain yksi tiedosto muokattavana"
+
+msgid "E164: Cannot go before first file"
+msgstr "E164: Ensimmäisen tiedoston ohi ei voi mennä"
+
+msgid "E165: Cannot go beyond last file"
+msgstr "E165: Viimeisen tiedoston ohi ei voi mennä"
+
+#, c-format
+msgid "E666: compiler not supported: %s"
+msgstr "E666: kääntäjää ei tueta: %s"
+
+#, c-format
+msgid "Searching for \"%s\" in \"%s\""
+msgstr "Etsitään ilmausta %s kohteesta %s"
+
+#, c-format
+msgid "Searching for \"%s\""
+msgstr "Etsitään ilmausta %s"
+
+#, c-format
+msgid "not found in '%s': \"%s\""
+msgstr "'%s' ei löydy kohteesta: %s"
+
+#, c-format
+msgid "W20: Required python version 2.x not supported, ignoring file: %s"
+msgstr "W20: Vaadittu python-versio 2.x ei ole tuettu. Ohitetaan: %s"
+
+#, c-format
+msgid "W21: Required python version 3.x not supported, ignoring file: %s"
+msgstr "W21: Vaadittu python-versio 3.x ei ole tuettu. Ohitetaan: %s"
+
+msgid "Source Vim script"
+msgstr "Lataa vim-skripti"
+
+#, c-format
+msgid "Cannot source a directory: \"%s\""
+msgstr "Hakemistoa ei voi ladata: %s"
+
+#, c-format
+msgid "could not source \"%s\""
+msgstr "ei voitu ladata %s"
+
+#, c-format
+msgid "line %ld: could not source \"%s\""
+msgstr "rivi %ld: ei voitu ladata %s"
+
+#, c-format
+msgid "sourcing \"%s\""
+msgstr "ladataan %s"
+
+#, c-format
+msgid "line %ld: sourcing \"%s\""
+msgstr "rivi %ld: ladataan %s"
+
+#, c-format
+msgid "finished sourcing %s"
+msgstr "ladattu %s"
+
+#, c-format
+msgid "continuing in %s"
+msgstr "jatkaa kohdassa %s"
+
+msgid "modeline"
+msgstr "mode-rivi"
+
+msgid "--cmd argument"
+msgstr "--cmd-argumentti"
+
+msgid "-c argument"
+msgstr "-c-argumentti"
+
+msgid "environment variable"
+msgstr "ympäristömuuttuja"
+
+msgid "error handler"
+msgstr "virhekäsittelin"
+
+msgid "W15: Warning: Wrong line separator, ^M may be missing"
+msgstr "W15: Varoitus: Väärä rivierotin, ^M saattaa puuttua"
+
+msgid "E167: :scriptencoding used outside of a sourced file"
+msgstr "E167: :scriptencoding ladatun tiedoston ulkopuolella"
+
+msgid "E168: :finish used outside of a sourced file"
+msgstr "E168: :finish ladatun tiedoston ulkopuolella"
+
+#, c-format
+msgid "Current %slanguage: \"%s\""
+msgstr "Käytössä oleva %skieli: %s"
+
+#, c-format
+msgid "E197: Cannot set language to \"%s\""
+msgstr "E197: Kieleksi ei voitu asettaa kieltä %s"
 
 # puhutaan merkin ulkoasusta snprintf(..., c, c, c, c)
 #, c-format
@@ -1545,7 +1701,7 @@ msgstr " 1 rivillä"
 #~ msgid " on %<PRId64> lines"
 #~ msgstr " %ld rivillä"
 
-msgid "E147: Cannot do :global recursive"
+msgid "E147: Cannot do :global recursive with a range"
 msgstr "E147: :globalia ei voi suorittaa rekursiivisesti"
 
 msgid "E148: Regular expression missing from global"
@@ -1573,6 +1729,10 @@ msgstr "E149: ei löydy ohjetta kohteelle %s"
 #, c-format
 msgid "Sorry, help file \"%s\" not found"
 msgstr "ohjetiedostoa %s ei löydy"
+
+#, c-format
+msgid "E151: No match: %s"
+msgstr "E151: Ei täsmää: %s"
 
 #, c-format
 msgid "E152: Cannot open %s for writing"
@@ -1926,7 +2086,6 @@ msgstr "E189: %s on jo olemassa (lisää komentoon ! ohittaaksesi)"
 msgid "E190: Cannot open \"%s\" for writing"
 msgstr "E190: Tiedostoa %s ei voitu avata kirjoittamista varten"
 
-#. set mark
 msgid "E191: Argument must be a letter or forward/backward quote"
 msgstr "E191: Argumentin eteen- tai taaksepäin lainaukseen pitää olla kirjain"
 
@@ -1979,7 +2138,6 @@ msgstr "Poikkeus poistettu: %s"
 #~ msgid "%s, line %<PRId64>"
 #~ msgstr "%s, rivi %ld"
 
-#. always scroll up, don't overwrite
 #, c-format
 msgid "Exception caught: %s"
 msgstr "Poikkeus otettu kiinni: %s"
@@ -2005,7 +2163,6 @@ msgstr "Virhe ja keskeytys"
 msgid "Error"
 msgstr "Virhe"
 
-#. if (pending & CSTP_INTERRUPT)
 msgid "Interrupt"
 msgstr "Keskeytys"
 
@@ -2048,15 +2205,12 @@ msgstr "E601: liian monta tasoa :try-komennossa"
 msgid "E603: :catch without :try"
 msgstr "E603: :catch ilman komentoa :try"
 
-#. Give up for a ":catch" after ":finally" and ignore it.
-#. * Just parse.
 msgid "E604: :catch after :finally"
 msgstr "E604: :catch ilman komentoa :finally"
 
 msgid "E606: :finally without :try"
 msgstr "E606: :finally ilman komentoa :try"
 
-#. Give up for a multiple ":finally" and ignore it.
 msgid "E607: multiple :finally"
 msgstr "E607: :finally monta kertaa"
 
@@ -2147,7 +2301,6 @@ msgstr ""
 msgid "E201: *ReadPre autocommands must not change current buffer"
 msgstr "E201: *ReadPre-autocommand-komennot eivät saa muuttaa puskuria"
 
-#. Re-opening the original file failed!
 msgid "E202: Conversion made file unreadable!"
 msgstr "E202: Muunnos teki tiedostosta lukukelvottoman."
 
@@ -2469,7 +2622,6 @@ msgstr "E216: Eventtiä ei ole: %s"
 msgid "E216: No such group or event: %s"
 msgstr "E216: Ryhmää tai eventtiä ei ole: %s"
 
-#. Highlight title
 msgid ""
 "\n"
 "--- Auto-Commands ---"
@@ -3113,7 +3265,6 @@ msgstr "E261: cscope-yhteys %s puuttuu"
 msgid "cscope connection %s closed"
 msgstr "cscope-yhteys %s on katkaistu"
 
-#. should not reach here
 msgid "E570: fatal error in cs_manage_matches"
 msgstr "E570: kriittinen virhe cs_manage_matches-funktiossa"
 
@@ -3176,7 +3327,6 @@ msgstr "Vim: Varoitus: Tuloste ei mene terminaalille\n"
 msgid "Vim: Warning: Input is not from a terminal\n"
 msgstr "Vim: Varoitus: Syöte ei tule terminaalilta\n"
 
-#. just in case..
 msgid "pre-vimrc command line"
 msgstr "esi-vimrc-komentorivi"
 
@@ -3394,7 +3544,6 @@ msgstr "Ei asetettuja merkkejä"
 msgid "E283: No marks matching \"%s\""
 msgstr "E283: Mikään merkki ei täsmää ilmaukseen \"%s\""
 
-#. Highlight title
 msgid ""
 "\n"
 "mark line  col file/text"
@@ -3402,7 +3551,6 @@ msgstr ""
 "\n"
 "merkki rivi sarake tiedosto/teksti"
 
-#. Highlight title
 msgid ""
 "\n"
 " jump line  col file/text"
@@ -3410,7 +3558,6 @@ msgstr ""
 "\n"
 "hyppy rivi sarake tiedosto/teksti"
 
-#. Highlight title
 msgid ""
 "\n"
 "change line  col text"
@@ -3445,7 +3592,6 @@ msgstr "E298: Lohko 1:tä ei saatu?"
 msgid "E298: Didn't get block nr 2?"
 msgstr "E298: Lohko 2:ta ei saatu?"
 
-#. could not (re)open the swap file, what can we do????
 msgid "E301: Oops, lost the swap file!!!"
 msgstr "E301: Hups, swap-tiedosto hävisi!"
 
@@ -3585,7 +3731,6 @@ msgstr ""
 "Voit poistaa .swp-tiedosto nyt.\n"
 "\n"
 
-#. use msg() to start the scrolling properly
 msgid "Swap files found:"
 msgstr "Swap-tiedostoja löytyi:"
 
@@ -3751,8 +3896,6 @@ msgstr "Avattaessa tiedostoa "
 msgid "      NEWER than swap file!\n"
 msgstr "   joka on UUDEMPI kuin swap-tiedosto!\n"
 
-#. Some of these messages are long to allow translation to
-#. * other languages.
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
@@ -3859,7 +4002,6 @@ msgstr "E328: Valikko on olemassa vain toisessa tilassa"
 msgid "E329: No menu \"%s\""
 msgstr "E329: Ei valikkoa %s"
 
-#. Only a mnemonic or accelerator is not valid.
 msgid "E792: Empty menu name"
 msgstr "E792: tyhjä valikkonimi"
 
@@ -3872,14 +4014,16 @@ msgstr "E331: Valikkokohtia ei saa lisätä suoraan valikkopalkkiin"
 msgid "E332: Separator cannot be part of a menu path"
 msgstr "E332: Erotin ei voi olla valikkopolun osa"
 
-#. Now we have found the matching menu, and we list the mappings
-#. Highlight title
 msgid ""
 "\n"
 "--- Menus ---"
 msgstr ""
 "\n"
 "--- Valikot ---"
+
+#, c-format
+msgid "E335: Menu not defined for %s mode"
+msgstr "E335: Valikkoa ei ole määritelty %s-tilassa"
 
 msgid "E333: Menu path must lead to a menu item"
 msgstr "E333: Valikkopolun on johdettava valikkokohtaan"
@@ -4223,6 +4367,9 @@ msgstr "E541: liikaa kohteita"
 msgid "E542: unbalanced groups"
 msgstr "E542: epätasapainoisia ryhmiä"
 
+msgid "E946: Cannot make a terminal with running job modifiable"
+msgstr "E946: Terminaalia jossa suoritetaan komentoa ei voi tehdä muokattavaksi"
+
 msgid "E590: A preview window already exists"
 msgstr "E590: Esikatseluikkuna on jo olemassa"
 
@@ -4354,7 +4501,6 @@ msgstr "E376: Virheellinen %%%c muotoilumerkkijonon alussa"
 msgid "E377: Invalid %%%c in format string"
 msgstr "E377: Virheellinen %%%c muotoilumerkkijonossa"
 
-#. nothing found
 msgid "E378: 'errorformat' contains no pattern"
 msgstr "E378: errorformatissa ei ole kuvioita"
 
@@ -4417,6 +4563,12 @@ msgstr "E369: virheellinen olio kohdassa %s%%[]"
 msgid "E769: Missing ] after %s["
 msgstr "E769: ] puuttuu merkinnän %s[ jäljestä"
 
+msgid "E944: Reverse range in character class"
+msgstr "E944: Merkiluokan arvoalua on takaperin"
+
+msgid "E945: Range too large in character class"
+msgstr "E945: Liian laaja valikoima merkkiluokassa"
+
 #, c-format
 msgid "E53: Unmatched %s%%("
 msgstr "E53: Pariton %s%%("
@@ -4442,6 +4594,9 @@ msgstr "E69: ] puuttuu merkinnän %s%%[ jäljestä"
 #, c-format
 msgid "E70: Empty %s%%[]"
 msgstr "E70: Tyhjä %s%%[]"
+
+msgid "E65: Illegal back reference"
+msgstr "E65: Virheellinen täsmäysviittaus"
 
 msgid "E339: Pattern too long"
 msgstr "E339: Liian pitkä kuvio"
@@ -4478,9 +4633,6 @@ msgstr "E63: väärinkäytetty \\_"
 #, c-format
 msgid "E64: %s%c follows nothing"
 msgstr "E64: %s%c jälkeen ei minkään"
-
-msgid "E65: Illegal back reference"
-msgstr "E65: Virheellinen täsmäysviittaus"
 
 msgid "E68: Invalid character after \\z"
 msgstr "E68: Virheellinen merkki ilmauksen \\z jälkeen"
@@ -4587,7 +4739,6 @@ msgstr "E386: ;:n jälkeen pitää olla ? tai /"
 msgid " (includes previously listed match)"
 msgstr " (sisältää viimeksi luetellun täsmäyksen)"
 
-#. cursor at status line
 msgid "--- Included files "
 msgstr "--- Sisällytetyt tiedostot "
 
@@ -4662,6 +4813,9 @@ msgstr " vanhaatiedostoa"
 
 msgid " FAILED"
 msgstr " EPÄONNISTUI"
+
+msgid "E797: SpellFileMissing autocommand deleted buffer"
+msgstr "E797: SpellFileMissing autocommand poisti puskurin"
 
 #, c-format
 #~ msgid "System error while opening ShaDa file %s for reading: %s"
@@ -4841,8 +4995,6 @@ msgstr "ei ehdotuksia"
 #~ msgid "Sorry, only %<PRId64> suggestions"
 #~ msgstr "vain %ld ehdotusta"
 
-#. for when 'cmdheight' > 1
-#. avoid more prompt
 #, c-format
 msgid "Change \"%.*s\" to:"
 msgstr "Muuta %.*s:"
@@ -5430,7 +5582,6 @@ msgstr "E428: Ei voida edetä viimeisen täsmäävän tägin ohi"
 msgid "File \"%s\" does not exist"
 msgstr "Tiedostoa %s ei ole"
 
-#. Give an indication of the number of matching tags
 #, c-format
 msgid "tag %d of %d%s"
 msgstr "tägi %d/%d%s"
@@ -5445,7 +5596,6 @@ msgstr "  Tägissä eri kirjaintaso"
 msgid "E429: File \"%s\" does not exist"
 msgstr "E429: Tiedostoa %s ei ole"
 
-#. Highlight title
 msgid ""
 "\n"
 "  # TO tag         FROM line  in file/text"
@@ -5472,7 +5622,6 @@ msgstr "E431: Muotovirh tägitiedostossa %s"
 msgid "E432: Tags file not sorted: %s"
 msgstr "E432: Tägitiedosto ei ole järjestetty: %s"
 
-#. never opened any tags file
 msgid "E433: No tags file"
 msgstr "E433: Ei tägitiedostoja"
 

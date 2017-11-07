@@ -3,8 +3,9 @@
 " Maintainer:           Jorge Maldonado Ventura <jorgesumle@freakspot.net>
 " Previous Maintainer:  Claudio Fleiner <claudio@fleiner.com>
 " Repository:           https://notabug.org/jorgesumle/vim-html-syntax
-" Last Change:          2017 Jan 21
-"                       included patch from Jorge Maldonado Ventura
+" Last Change:          2017 Sep 30
+" included patch from Christian Brabandt to make use of the strikethrough attributes
+"
 
 " Please check :help html.vim for some comments and a description of the options
 
@@ -45,13 +46,13 @@ syn keyword htmlTagName contained cite code dd dfn dir div dl dt font
 syn keyword htmlTagName contained form hr html img
 syn keyword htmlTagName contained input isindex kbd li link map menu
 syn keyword htmlTagName contained meta ol option param pre p samp span
-syn keyword htmlTagName contained select small strike sub sup
+syn keyword htmlTagName contained select small sub sup
 syn keyword htmlTagName contained table td textarea th tr tt ul var xmp
 syn match htmlTagName contained "\<\(b\|i\|u\|h[1-6]\|em\|strong\|head\|body\|title\)\>"
 
 " new html 4.0 tags
 syn keyword htmlTagName contained abbr acronym bdo button col label
-syn keyword htmlTagName contained colgroup del fieldset iframe ins legend
+syn keyword htmlTagName contained colgroup fieldset iframe ins legend
 syn keyword htmlTagName contained object optgroup q s tbody tfoot thead
 
 " new html 5 tags
@@ -134,6 +135,9 @@ syn match htmlPreProcAttrName contained "\(expr\|errmsg\|sizefmt\|timefmt\|var\|
 if !exists("html_no_rendering")
   " rendering
   syn cluster htmlTop contains=@Spell,htmlTag,htmlEndTag,htmlSpecialChar,htmlPreProc,htmlComment,htmlLink,javaScript,@htmlPreproc
+
+  syn region htmlStrike start="<del\>" end="</del>"me=e-6 contains=@htmlTop
+  syn region htmlStrike start="<strike\>" end="</strike>"me=e-9 contains=@htmlTop
 
   syn region htmlBold start="<b\>" end="</b>"me=e-4 contains=@htmlTop,htmlBoldUnderline,htmlBoldItalic
   syn region htmlBold start="<strong\>" end="</strong>"me=e-9 contains=@htmlTop,htmlBoldUnderline,htmlBoldItalic
@@ -268,6 +272,11 @@ if !exists("html_no_rendering")
     hi def htmlUnderline           term=underline cterm=underline gui=underline
     hi def htmlUnderlineItalic     term=italic,underline cterm=italic,underline gui=italic,underline
     hi def htmlItalic              term=italic cterm=italic gui=italic
+    if v:version > 800 || v:version == 800 && has("patch1038")
+        hi def htmlStrike              term=strikethrough cterm=strikethrough gui=strikethrough
+    else
+        hi def htmlStrike              term=underline cterm=underline gui=underline
+    endif
   endif
 endif
 

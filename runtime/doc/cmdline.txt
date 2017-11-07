@@ -789,7 +789,8 @@ Note: these are typed literally, they are not special keys!
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)
 	<afile>    When executing autocommands, is replaced with the file name
-		   for a file read or write.
+		   of the buffer being manipulated, or the file for a read or
+		   write.
 	<abuf>     When executing autocommands, is replaced with the currently
 		   effective buffer number (for ":r file" and ":so file" it is
 		   the current buffer, the file being read/sourced is not in a

@@ -625,6 +625,9 @@ starts.  It can be fixed in one of these ways:
 - Just write the file again the next day.  Or set your clock to the next day,
   write the file twice and set the clock back.
 
+If you get W11 all the time, you may need to disable "Acronis Active
+Protection" or register vim  as a trusted service/application.
+
 							*W12*  >
   Warning: File "{filename}" has changed and the buffer was changed in Vim as well
 

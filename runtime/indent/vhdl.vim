@@ -1,8 +1,8 @@
 " VHDL indent ('93 syntax)
 " Language:    VHDL
 " Maintainer:  Gerald Lai <laigera+vim?gmail.com>
-" Version:     1.60
-" Last Change: 2017 Jun 13
+" Version:     1.62
+" Last Change: 2017 Oct 17
 " URL:         http://www.vim.org/scripts/script.php?script_id=1450
 
 " only load this indent file when no other was loaded
@@ -412,11 +412,12 @@ function GetVHDLindent()
 
   " ****************************************************************************************
   " indent:   maintain indent of previous opening statement
-  " keywords: without "procedure", "generic", "map", "port" + ":" but not ":=" + eventually ;$
+  " keywords: without "procedure", "generic", "map", "port" + ":" but not ":=" + "in", "out", "inout", "buffer", "linkage", variable & ":="
   " where:    start of current line
-  if curs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=].*;.*$'
+  if curs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=]\@=\s*\%(\%(in\|out\|inout\|buffer\|linkage\)\>\|\w\+\s\+:=\)'
     return ind2
   endif
+
   " ****************************************************************************************
   " indent:     maintain indent of previous opening statement, corner case which
   "             does not end in ;, but is part of a mapping
@@ -424,10 +425,10 @@ function GetVHDLindent()
   "             prevline without "procedure", "generic", "map", "port" + ":" but not ":=" + eventually ;$
   " where:      start of current line
   if curs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=].*[^;].*$'
-      if prevs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=].*;.*$'
-         return ind2
-     endif
- endif
+    if prevs =~? '^\s*\%(\<\%(procedure\|generic\|map\|port\)\>.*\)\@<!\w\+\s*\w*\s*:[^=].*;.*$'
+      return ind2
+    endif
+  endif
 
   " return leftover filtered indent
   return ind

@@ -314,7 +314,7 @@ g:diff_translations to zero: >
 
     let g:diff_translations = 0
 <
-After setting this variable, Reload the syntax script: >
+After setting this variable, reload the syntax script: >
 
     set syntax=diff
 <
