@@ -89,7 +89,9 @@ describe('system()', function()
     end)
 
     it('does NOT run in shell', function()
-      if not iswin() then
+      if iswin() then
+        eq("%PATH%\n", eval("system(['powershell', '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'echo', '%PATH%'])"))
+      else
         eq("* $PATH %PATH%\n", eval("system(['echo', '*', '$PATH', '%PATH%'])"))
       end
     end)
