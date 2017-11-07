@@ -1,7 +1,7 @@
 *ft_rust.txt*      Filetype plugin for Rust
 
 ==============================================================================
-CONTENTS                                                      *rust* *ft-rust*
+CONTENTS                                                      *rust*
 
 1. Introduction                                                   |rust-intro|
 2. Settings                                                    |rust-settings|

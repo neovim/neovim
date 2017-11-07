@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Mar 13
+" Last Change:	2017 Mar 27
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -284,7 +284,8 @@ au BufNewFile,BufRead *.bib			setf bib
 au BufNewFile,BufRead *.bst			setf bst
 
 " BIND configuration
-au BufNewFile,BufRead named.conf,rndc.conf	setf named
+" sudoedit uses namedXXXX.conf
+au BufNewFile,BufRead named*.conf,rndc*.conf	setf named
 
 " BIND zone
 au BufNewFile,BufRead named.root		setf bindzone
