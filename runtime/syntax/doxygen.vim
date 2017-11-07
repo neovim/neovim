@@ -2,7 +2,8 @@
 " Language:     doxygen on top of c, cpp, idl, java, php
 " Maintainer:   Michael Geddes <vimmer@frog.wheelycreek.net>
 " Author:       Michael Geddes
-" Last Change:  Jan 2009 (\tparam by Domnique Pelle, Aug 2013)
+" Last Changes: Jan 2009 (\tparam by Domnique Pelle, Aug 2013)
+"               Nov 2017 (@throws by Domnique Pelle)
 " Version:      1.23
 "
 " Copyright 2004-2008 Michael Geddes
@@ -181,13 +182,13 @@ endif
   syn match doxygenParamDirection contained "\v\[(\s*in>((]\s*\[|\s*,\s*)out>)=|out>((]\s*\[|\s*,\s*)in>)=)\]" nextgroup=doxygenParamName skipwhite
   syn keyword doxygenParam contained param tparam nextgroup=doxygenParamName,doxygenParamDirection skipwhite
   syn match doxygenParamName contained +[A-Za-z0-9_:]\++ nextgroup=doxygenSpecialMultilineDesc skipwhite
-  syn keyword doxygenRetval contained retval throw exception nextgroup=doxygenParamName skipwhite
+  syn keyword doxygenRetval contained retval throw throws exception nextgroup=doxygenParamName skipwhite
 
   " Match one line identifiers.
   syn keyword doxygenOther contained addindex anchor
   \ dontinclude endhtmlonly endlatexonly showinitializer hideinitializer
   \ example htmlonly image include ingroup internal latexonly line
-  \ overload relates relatesalso sa skip skipline
+  \ overload related relates relatedalso relatesalso sa skip skipline
   \ until verbinclude version addtogroup htmlinclude copydoc dotfile
   \ xmlonly endxmlonly
   \ nextgroup=doxygenSpecialOnelineDesc
@@ -223,7 +224,7 @@ endif
   syn keyword doxygenOther contained par nextgroup=doxygenHeaderLine
   syn region doxygenHeaderLine start=+.+ end=+^+ contained skipwhite nextgroup=doxygenSpecialMultilineDesc
 
-  syn keyword doxygenOther contained arg author date deprecated li return returns see invariant note post pre remarks since test nextgroup=doxygenSpecialMultilineDesc
+  syn keyword doxygenOther contained arg author authors date deprecated li result return returns see invariant note post pre remark remarks since test nextgroup=doxygenSpecialMultilineDesc
   syn keyword doxygenOtherTODO contained todo attention nextgroup=doxygenSpecialMultilineDesc
   syn keyword doxygenOtherWARN contained warning nextgroup=doxygenSpecialMultilineDesc
   syn keyword doxygenOtherBUG contained bug nextgroup=doxygenSpecialMultilineDesc

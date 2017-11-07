@@ -277,9 +277,6 @@ msgstr "E83: Puskuria ei voitu varata, käytetään toista..."
 #~ msgid "E937: Attempt to delete a buffer that is in use"
 #~ msgstr "E934: Ei voida hypätä puskuriin jolla ei ole nimeä"
 
-msgid "E937: Attempt to delete a buffer that is in use"
-msgstr "E937: Ei voida poistaa puskuria joka on käytössä"
-
 msgid "E515: No buffers were unloaded"
 msgstr "E515: Puskureita ei vapautettu"
 
@@ -411,9 +408,6 @@ msgstr "Loppu"
 
 msgid "Top"
 msgstr "Alku"
-
-msgid "E382: Cannot write, 'buftype' option is set"
-msgstr "E382: Ei voi kirjoittaa, buftype asetettu"
 
 msgid "[Scratch]"
 msgstr "[Raapust]"
@@ -569,9 +563,6 @@ msgstr "Luetaan: %s"
 
 msgid "Scanning tags."
 msgstr "Luetaan tägejä."
-
-msgid "match in file"
-msgstr "täsmäys tiedostossa"
 
 msgid " Adding"
 msgstr " Lisätään"
@@ -1348,10 +1339,6 @@ msgstr "E737: Avain on jo olemassa: %s"
 #~ msgid "tv_clear() argument"
 #~ msgstr "filter()-argumentti"
 
-#, c-format
-msgid "E940: Cannot lock or unlock variable %s"
-msgstr "E940: Muuttujaa %s ei voi lukita tai avata"
-
 msgid "E743: variable nested too deep for (un)lock"
 msgstr "E743: muuttujassa liian monta tasoa lukituksen käsittelyyn"
 
@@ -1424,155 +1411,17 @@ msgstr "E907: Käytettiin erikoisarvoa Floattina"
 msgid "E808: Number or Float required"
 msgstr "E808: Number tai Float vaaditaan"
 
-msgid "Entering Debug mode.  Type \"cont\" to continue."
-msgstr "Siirrytään vianetsintätilaan, kirjoita cont jatkaaksesi."
-
 #, c-format
 msgid "line %ld: %s"
 msgstr "rivi %ld: %s"
-
-#, c-format
-msgid "cmd: %s"
-msgstr "kmnt: %s"
-
-msgid "frame is zero"
-msgstr "kehys on nolla"
-
-#, c-format
-msgid "frame at highest level: %d"
-msgstr "kehys ylimmällä tasolla: %d"
 
 #, c-format
 msgid "Breakpoint in \"%s%s\" line %ld"
 msgstr "Katkaisukohta %s%s rivillä %ld"
 
 #, c-format
-msgid "E161: Breakpoint not found: %s"
-msgstr "E161: Katkaisukohta puuttuu: %s"
-
-msgid "No breakpoints defined"
-msgstr "Ei katkaisukohtia"
-
-#, c-format
 msgid "%3d  %s %s  line %ld"
 msgstr "%3d  %s %s  rivi %ld"
-
-msgid "E750: First use \":profile start {fname}\""
-msgstr "E750: Aloita käskyllä :profile start {fname}"
-
-msgid "Save As"
-msgstr "Tallenna nimellä"
-
-#, c-format
-msgid "Save changes to \"%s\"?"
-msgstr "Tallennetaanko muutokset tiedostoon %s?"
-
-#, c-format
-msgid "E947: Job still running in buffer \"%s\""
-msgstr "E947: Komento on vielä käynnissä puskurissa \"%s\""
-
-#, c-format
-msgid "E162: No write since last change for buffer \"%s\""
-msgstr "E162: Muutoksia ei ole kirjoitettu puskurin %s viime muutoksen jälkeen"
-
-msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
-msgstr "Varoitus: Puskuri vaihtui odottamatta (tarkista autocommands)"
-
-msgid "E163: There is only one file to edit"
-msgstr "E163: Vain yksi tiedosto muokattavana"
-
-msgid "E164: Cannot go before first file"
-msgstr "E164: Ensimmäisen tiedoston ohi ei voi mennä"
-
-msgid "E165: Cannot go beyond last file"
-msgstr "E165: Viimeisen tiedoston ohi ei voi mennä"
-
-#, c-format
-msgid "E666: compiler not supported: %s"
-msgstr "E666: kääntäjää ei tueta: %s"
-
-#, c-format
-msgid "Searching for \"%s\" in \"%s\""
-msgstr "Etsitään ilmausta %s kohteesta %s"
-
-#, c-format
-msgid "Searching for \"%s\""
-msgstr "Etsitään ilmausta %s"
-
-#, c-format
-msgid "not found in '%s': \"%s\""
-msgstr "'%s' ei löydy kohteesta: %s"
-
-#, c-format
-msgid "W20: Required python version 2.x not supported, ignoring file: %s"
-msgstr "W20: Vaadittu python-versio 2.x ei ole tuettu. Ohitetaan: %s"
-
-#, c-format
-msgid "W21: Required python version 3.x not supported, ignoring file: %s"
-msgstr "W21: Vaadittu python-versio 3.x ei ole tuettu. Ohitetaan: %s"
-
-msgid "Source Vim script"
-msgstr "Lataa vim-skripti"
-
-#, c-format
-msgid "Cannot source a directory: \"%s\""
-msgstr "Hakemistoa ei voi ladata: %s"
-
-#, c-format
-msgid "could not source \"%s\""
-msgstr "ei voitu ladata %s"
-
-#, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "rivi %ld: ei voitu ladata %s"
-
-#, c-format
-msgid "sourcing \"%s\""
-msgstr "ladataan %s"
-
-#, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "rivi %ld: ladataan %s"
-
-#, c-format
-msgid "finished sourcing %s"
-msgstr "ladattu %s"
-
-#, c-format
-msgid "continuing in %s"
-msgstr "jatkaa kohdassa %s"
-
-msgid "modeline"
-msgstr "mode-rivi"
-
-msgid "--cmd argument"
-msgstr "--cmd-argumentti"
-
-msgid "-c argument"
-msgstr "-c-argumentti"
-
-msgid "environment variable"
-msgstr "ympäristömuuttuja"
-
-msgid "error handler"
-msgstr "virhekäsittelin"
-
-msgid "W15: Warning: Wrong line separator, ^M may be missing"
-msgstr "W15: Varoitus: Väärä rivierotin, ^M saattaa puuttua"
-
-msgid "E167: :scriptencoding used outside of a sourced file"
-msgstr "E167: :scriptencoding ladatun tiedoston ulkopuolella"
-
-msgid "E168: :finish used outside of a sourced file"
-msgstr "E168: :finish ladatun tiedoston ulkopuolella"
-
-#, c-format
-msgid "Current %slanguage: \"%s\""
-msgstr "Käytössä oleva %skieli: %s"
-
-#, c-format
-msgid "E197: Cannot set language to \"%s\""
-msgstr "E197: Kieleksi ei voitu asettaa kieltä %s"
 
 # puhutaan merkin ulkoasusta snprintf(..., c, c, c, c)
 #, c-format
@@ -4021,10 +3870,6 @@ msgstr ""
 "\n"
 "--- Valikot ---"
 
-#, c-format
-msgid "E335: Menu not defined for %s mode"
-msgstr "E335: Valikkoa ei ole määritelty %s-tilassa"
-
 msgid "E333: Menu path must lead to a menu item"
 msgstr "E333: Valikkopolun on johdettava valikkokohtaan"
 
@@ -4367,9 +4212,6 @@ msgstr "E541: liikaa kohteita"
 msgid "E542: unbalanced groups"
 msgstr "E542: epätasapainoisia ryhmiä"
 
-msgid "E946: Cannot make a terminal with running job modifiable"
-msgstr "E946: Terminaalia jossa suoritetaan komentoa ei voi tehdä muokattavaksi"
-
 msgid "E590: A preview window already exists"
 msgstr "E590: Esikatseluikkuna on jo olemassa"
 
@@ -4563,12 +4405,6 @@ msgstr "E369: virheellinen olio kohdassa %s%%[]"
 msgid "E769: Missing ] after %s["
 msgstr "E769: ] puuttuu merkinnän %s[ jäljestä"
 
-msgid "E944: Reverse range in character class"
-msgstr "E944: Merkiluokan arvoalua on takaperin"
-
-msgid "E945: Range too large in character class"
-msgstr "E945: Liian laaja valikoima merkkiluokassa"
-
 #, c-format
 msgid "E53: Unmatched %s%%("
 msgstr "E53: Pariton %s%%("
@@ -4594,9 +4430,6 @@ msgstr "E69: ] puuttuu merkinnän %s%%[ jäljestä"
 #, c-format
 msgid "E70: Empty %s%%[]"
 msgstr "E70: Tyhjä %s%%[]"
-
-msgid "E65: Illegal back reference"
-msgstr "E65: Virheellinen täsmäysviittaus"
 
 msgid "E339: Pattern too long"
 msgstr "E339: Liian pitkä kuvio"
@@ -4813,9 +4646,6 @@ msgstr " vanhaatiedostoa"
 
 msgid " FAILED"
 msgstr " EPÄONNISTUI"
-
-msgid "E797: SpellFileMissing autocommand deleted buffer"
-msgstr "E797: SpellFileMissing autocommand poisti puskurin"
 
 #, c-format
 #~ msgid "System error while opening ShaDa file %s for reading: %s"

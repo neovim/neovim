@@ -55,7 +55,14 @@ Note: The ":autocmd" command can only be followed by another command when the
 '|' appears before {cmd}.  This works: >
 	:augroup mine | au! BufRead | augroup END
 But this sees "augroup" as part of the defined command: >
+	:augroup mine | au! BufRead * | augroup END
 	:augroup mine | au BufRead * set tw=70 | augroup END
+Instead you can put the group name into the command: >
+	:au! mine BufRead *
+	:au mine BufRead * set tw=70
+Or use `:execute`: >
+	:augroup mine | exe "au! BufRead *" | augroup END
+	:augroup mine | exe "au BufRead * set tw=70" | augroup END
 
 Note that special characters (e.g., "%", "<cword>") in the ":autocmd"
 arguments are not expanded when the autocommand is defined.  These will be
