@@ -888,7 +888,7 @@ GUI:						*gui-functions*
 
 Vim server:					*server-functions*
 	serverlist()		return the list of server names
-	remote_startserve()	run a server
+	remote_startserver()	run a server
 	remote_send()		send command characters to a Vim server
 	remote_expr()		evaluate an expression in a Vim server
 	server2client()		send a reply to a client of a Vim server

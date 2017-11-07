@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Aug 01
+" Last Change:	2017 Oct 19
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -1279,6 +1279,12 @@ if has("syntax")
     hi link optwinName Identifier
     hi link optwinComment Comment
   endif
+endif
+if exists("&mzschemedll")
+  call append("$", "mzschemedll\tname of the Tcl dynamic library")
+  call <SID>OptionG("mzschemedll", &mzschemedll)
+  call append("$", "mzschemegcdll\tname of the Tcl GC dynamic library")
+  call <SID>OptionG("mzschemegcdll", &mzschemegcdll)
 endif
 
 " Install autocommands to enable mappings in option-window

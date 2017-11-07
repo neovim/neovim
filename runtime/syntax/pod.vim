@@ -4,7 +4,7 @@
 " Previously:    Scott Bigham <dsb@killerbunnies.org>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2013-07-21
+" Last Change:   2017-09-12
 
 " To add embedded POD documentation highlighting to your syntax file, add
 " the commands:
@@ -68,14 +68,13 @@ syn match  podEscape2	"\d\+>"me=e-1 contained contains=@NoSpell
 
 hi def link podCommand		Statement
 hi def link podCmdText		String
-hi def link podOverIndent		Number
+hi def link podOverIndent	Number
 hi def link podForKeywd		Identifier
 hi def link podFormat		Identifier
 hi def link podVerbatimLine	PreProc
 hi def link podSpecial		Identifier
 hi def link podEscape		String
 hi def link podEscape2		Number
-
 
 if exists("perl_pod_spellcheck_headings")
   " Spell-check headings

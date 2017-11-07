@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:             readline(3) configuration file
 " Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
-" Latest Revision:      2012-04-25
+" Latest Revision:      2017-06-25
 "   readline_has_bash - if defined add support for bash specific
 "                       settings/functions
 
@@ -119,6 +119,7 @@ syn keyword readlineVariable    contained
                               \ nextgroup=readlineBoolean
                               \ skipwhite
                               \ bind-tty-special-chars
+                              \ colored-stats
                               \ completion-ignore-case
                               \ completion-map-case
                               \ convert-meta
@@ -142,6 +143,7 @@ syn keyword readlineVariable    contained
                               \ revert-all-at-newline
                               \ show-all-if-ambiguous
                               \ show-all-if-unmodified
+                              \ show-mode-in-prompt
                               \ skip-completed-text
                               \ visible-stats
 
@@ -158,6 +160,7 @@ syn keyword readlineVariable    contained
                               \ completion-prefix-display-length
                               \ completion-query-items
                               \ history-size
+                              \ keyseq-timeout
 
 syn keyword readlineVariable    contained
                               \ nextgroup=readlineEditingMode

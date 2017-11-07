@@ -704,7 +704,7 @@ Additionally the following items are recognized:
     =		Case must match exactly.
     ?		Rare word.
     !		Bad (wrong) word.
-    digit	A region in which the word is valid.  If no regions are
+    1 to 9	A region in which the word is valid.  If no regions are
 		specified the word is valid in all regions.
 
 Example:

@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Jul 11
+" Last Change:	2017 Nov 02
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -285,14 +285,14 @@ au BufNewFile,BufRead *.bst			setf bst
 
 " BIND configuration
 " sudoedit uses namedXXXX.conf
-au BufNewFile,BufRead named*.conf,rndc*.conf	setf named
+au BufNewFile,BufRead named*.conf,rndc*.conf,rndc*.key	setf named
 
 " BIND zone
 au BufNewFile,BufRead named.root		setf bindzone
 au BufNewFile,BufRead *.db			call s:BindzoneCheck('')
 
 func! s:BindzoneCheck(default)
-  if getline(1).getline(2).getline(3).getline(4) =~ '^; <<>> DiG [0-9.]\+ <<>>\|BIND.*named\|$ORIGIN\|$TTL\|IN\s\+SOA'
+  if getline(1).getline(2).getline(3).getline(4) =~ '^; <<>> DiG [0-9.]\+.* <<>>\|$ORIGIN\|$TTL\|IN\s\+SOA'
     setf bindzone
   elseif a:default != ''
     exe 'setf ' . a:default
@@ -1147,8 +1147,8 @@ au BufNewFile,BufRead *.m4
 " MaGic Point
 au BufNewFile,BufRead *.mgp			setf mgp
 
-" Mail (for Elm, trn, mutt, muttng, rn, slrn)
-au BufNewFile,BufRead snd.\d\+,.letter,.letter.\d\+,.followup,.article,.article.\d\+,pico.\d\+,mutt{ng,}-*-\w\+,mutt[[:alnum:]_-]\\\{6\},ae\d\+.txt,/tmp/SLRN[0-9A-Z.]\+,*.eml setf mail
+" Mail (for Elm, trn, mutt, muttng, rn, slrn, neomutt)
+au BufNewFile,BufRead snd.\d\+,.letter,.letter.\d\+,.followup,.article,.article.\d\+,pico.\d\+,mutt{ng,}-*-\w\+,mutt[[:alnum:]_-]\\\{6\},neomutt-*-\w\+,neomutt[[:alnum:]_-]\\\{6\},ae\d\+.txt,/tmp/SLRN[0-9A-Z.]\+,*.eml setf mail
 
 " Mail aliases
 au BufNewFile,BufRead */etc/mail/aliases,*/etc/aliases	setf mailaliases
@@ -1324,6 +1324,9 @@ au BufNewFile,BufRead */etc/nanorc,*.nanorc  	setf nanorc
 " Natural
 au BufNewFile,BufRead *.NS[ACGLMNPS]		setf natural
 
+" Noemutt setup file
+au BufNewFile,BufRead Neomuttrc			setf neomuttrc
+
 " Netrc
 au BufNewFile,BufRead .netrc			setf netrc
 
@@ -1414,6 +1417,9 @@ au BufNewFile,BufRead *.dpr			setf pascal
 
 " PDF
 au BufNewFile,BufRead *.pdf			setf pdf
+
+" PCMK - HAE - crm configure edit 
+au BufNewFile,BufRead *.pcmk 			setf pcmk
 
 " Perl
 if has("fname_case")
@@ -2408,6 +2414,9 @@ au BufNewFile,BufRead *.wbt			setf winbatch
 " WSML
 au BufNewFile,BufRead *.wsml			setf wsml
 
+" WPL
+au BufNewFile,BufRead *.wpl			setf xml
+
 " WvDial
 au BufNewFile,BufRead wvdial.conf,.wvdialrc	setf wvdial
 
@@ -2683,7 +2692,7 @@ au BufNewFile,BufRead [mM]akefile*		call s:StarSetf('make')
 au BufNewFile,BufRead [rR]akefile*		call s:StarSetf('ruby')
 
 " Mail (also matches muttrc.vim, so this is below the other checks)
-au BufNewFile,BufRead mutt[[:alnum:]._-]\\\{6\}	setf mail
+au BufNewFile,BufRead {neo,}mutt[[:alnum:]._-]\\\{6\}	setf mail
 
 au BufNewFile,BufRead reportbug-*		call s:StarSetf('mail')
 
@@ -2697,6 +2706,10 @@ au BufNewFile,BufRead */etc/modprobe.*		call s:StarSetf('modconf')
 " Mutt setup file
 au BufNewFile,BufRead .mutt{ng,}rc*,*/.mutt{ng,}/mutt{ng,}rc*	call s:StarSetf('muttrc')
 au BufNewFile,BufRead mutt{ng,}rc*,Mutt{ng,}rc*		call s:StarSetf('muttrc')
+
+" Neomutt setup file
+au BufNewFile,BufRead .neomuttrc*,*/.neomutt/neomuttrc*	call s:StarSetf('neomuttrc')
+au BufNewFile,BufRead neomuttrc*,Neomuttrc*		call s:StarSetf('neomuttrc')
 
 " Nroff macros
 au BufNewFile,BufRead tmac.*			call s:StarSetf('nroff')

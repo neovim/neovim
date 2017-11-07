@@ -85,7 +85,7 @@ syn match   formComment		"\;\ *\*.*$" contains=formTodo
 syn region  formString		start=+"+  end=+"+ contains=formSpecial
 syn region  formString		start=+'+  end=+'+
 syn region  formNestedString	start=+`+  end=+'+ contains=formNestedString
-syn match   formPreProc		"^\=\#[a-zA-z][a-zA-Z0-9]*\>"
+syn match   formPreProc		"^\=\#[a-zA-Z][a-zA-Z0-9]*\>"
 syn match   formNumber		"\<\d\+\>"
 syn match   formNumber		"\<\d\+\.\d*\>"
 syn match   formNumber		"\.\d\+\>"
@@ -94,13 +94,13 @@ syn match   formNumber		"-\.\d" contains=Number
 syn match   formNumber		"i_\+\>"
 syn match   formNumber		"fac_\+\>"
 " pattern matching wildcards
-syn match   formNumber		"?[A-z0-9]*"
+syn match   formNumber		"?[a-zA-Z0-9]*"
 " dollar-variables (new in 3.x)
-syn match   formNumber		"\\$[A-z0-9]*"
+syn match   formNumber		"\\$[a-zA-Z0-9]*"
 " scalar products
-syn match   formNumber		"^\=[a-zA-z][a-zA-Z0-9]*\.[a-zA-z][a-zA-Z0-9]*\>"
+syn match   formNumber		"^\=[a-zA-Z][a-zA-Z0-9]*\.[a-zA-Z][a-zA-Z0-9]*\>"
 
-syn match   formDirective	"^\=\.[a-zA-z][a-zA-Z0-9]*\>"
+syn match   formDirective	"^\=\.[a-zA-Z][a-zA-Z0-9]*\>"
 
 " hi User Labels
 syn sync ccomment formComment minlines=10

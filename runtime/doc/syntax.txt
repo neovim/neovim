@@ -39,10 +39,12 @@ fine.  If it doesn't, try setting the VIM environment variable to the
 directory where the Vim stuff is located.  For example, if your syntax files
 are in the "/usr/vim/vim50/syntax" directory, set $VIMRUNTIME to
 "/usr/vim/vim50".  You must do this in the shell, before starting Vim.
+This command also sources the |menu.vim| script when the GUI is running or
+will start soon.  See |'go-M'| about avoiding that.
 
 							*:syn-on* *:syntax-on*
-The ":syntax enable" command will keep your current color settings.  This
-allows using ":highlight" commands to set your preferred colors before or
+The `:syntax enable` command will keep your current color settings.  This
+allows using `:highlight` commands to set your preferred colors before or
 after using this command.  If you want Vim to overrule your settings with the
 defaults, use: >
 	:syntax on
@@ -788,12 +790,9 @@ See |mysyntaxfile-add| for installing script languages permanently.
 
 APACHE						*apache.vim* *ft-apache-syntax*
 
-The apache syntax file provides syntax highlighting depending on Apache HTTP
-server version, by default for 1.3.x.  Set "apache_version" to Apache version
-(as a string) to get highlighting for another version.	Example: >
+The apache syntax file provides syntax highlighting for Apache HTTP server
+version 2.2.3.
 
-	:let apache_version = "2.0"
-<
 
 		*asm.vim* *asmh8300.vim* *nasm.vim* *masm.vim* *asm68k*
 ASSEMBLY	*ft-asm-syntax* *ft-asmh8300-syntax* *ft-nasm-syntax*

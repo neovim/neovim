@@ -6,8 +6,8 @@
 " Contributor:  Leonard Ehrenfried <leonard.ehrenfried@web.de>	
 " Contributor:  Karsten Hopp <karsten@redhat.com>
 " Originally:	2009-07-09
-" Last Change:	2016 Dec 28
-" SSH Version:	7.4p1
+" Last Change:	2017 Oct 25
+" SSH Version:	7.6p1
 "
 
 " Setup
@@ -224,7 +224,6 @@ syn keyword sshdconfigKeyword TrustedUserCAKeys
 syn keyword sshdconfigKeyword UseDNS
 syn keyword sshdconfigKeyword UseLogin
 syn keyword sshdconfigKeyword UsePAM
-syn keyword sshdconfigKeyword UsePrivilegeSeparation
 syn keyword sshdconfigKeyword VersionAddendum
 syn keyword sshdconfigKeyword X11DisplayOffset
 syn keyword sshdconfigKeyword X11Forwarding

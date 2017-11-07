@@ -136,7 +136,7 @@ syntax match   clojureRegexpBoundary            "[$^]" contained display
 syntax match   clojureRegexpQuantifier          "[?*+][?+]\=" contained display
 syntax match   clojureRegexpQuantifier          "\v\{\d+%(,|,\d+)?}\??" contained display
 syntax match   clojureRegexpOr                  "|" contained display
-syntax match   clojureRegexpBackRef             "\v\\%([1-9]\d*|k\<[a-zA-z]+\>)" contained display
+syntax match   clojureRegexpBackRef             "\v\\%([1-9]\d*|k\<[a-zA-Z]+\>)" contained display
 
 " Mode modifiers, mode-modified spans, lookaround, regular and atomic
 " grouping, and named-capturing.

@@ -10,6 +10,11 @@
 " Author: Bram Moolenaar
 " Copyright: Vim license applies
 
+" In case this gets loaded twice.
+if exists(':Termdebug')
+  finish
+endif
+
 command -nargs=* -complete=file Termdebug call s:StartDebug(<q-args>)
 
 if !exists('debugger')

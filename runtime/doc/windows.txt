@@ -587,7 +587,8 @@ The minimal height and width of a window is set with 'winminheight' and
 41. :buffers		list of buffers
 
 The meaning of [N] depends on the command:
- [N] is number of buffers to go forward/backward on ?2, ?3, and ?4
+ [N] is the number of buffers to go forward/backward on 2/12/22/32,
+     3/13/23/33, and 4/14/24/34
  [N] is an argument number, defaulting to current argument, for 1 and 21
  [N] is a buffer number, defaulting to current buffer, for 11 and 31
  [N] is a count for 19 and 39
@@ -997,6 +998,7 @@ list of buffers. |unlisted-buffer|
 		   =	a readonly buffer
 		   R	a terminal buffer with a running job
 		   F	a terminal buffer with a finished job
+		   ?    a terminal buffer without a job: `:terminal NONE`
 		    +	a modified buffer
 		    x   a buffer with read errors
 

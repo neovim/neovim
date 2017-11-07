@@ -1,8 +1,10 @@
 " Vim indent file
 " Language:	gitolite configuration
-" URL:		https://github.com/tmatilai/gitolite.vim
-" Maintainer:	Teemu Matilainen <teemu.matilainen@iki.fi>
-" Last Change:	2017 Jun 13
+" URL:		https://github.com/sitaramc/gitolite/blob/master/contrib/vim/indent/gitolite.vim
+"	(https://raw.githubusercontent.com/sitaramc/gitolite/master/contrib/vim/indent/gitolite.vim)
+" Maintainer:	Sitaram Chamarty <sitaramc@gmail.com>
+" (former Maintainer:	Teemu Matilainen <teemu.matilainen@iki.fi>)
+" Last Change:	2017 Oct 05
 
 if exists("b:did_indent")
   finish
@@ -29,6 +31,8 @@ function! GetGitoliteIndent()
   if cline =~ '^\s*\(C\|R\|RW\|RW+\|RWC\|RW+C\|RWD\|RW+D\|RWCD\|RW+CD\|-\)[ \t=]'
     return shiftwidth()
   elseif cline =~ '^\s*config\s'
+    return shiftwidth()
+  elseif cline =~ '^\s*option\s'
     return shiftwidth()
   elseif pline =~ '^\s*repo\s' && cline =~ '^\s*\(#.*\)\?$'
     return shiftwidth()

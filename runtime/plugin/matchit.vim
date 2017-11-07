@@ -1,5 +1,5 @@
 "  matchit.vim: (global plugin) Extended "%" matching
-"  Last Change: 2017 March 26
+"  Last Change: 2017 Sep 15
 "  Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
 "  Version:     1.13.3, for Vim 6.3+
 "		Fix from Tommy Allen included.

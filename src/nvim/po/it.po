@@ -1417,6 +1417,7 @@ msgstr "E904: l'ultimo argomento per espressione/chiamata dev'essere numerico"
 msgid "E904: third argument for call must be a list"
 msgstr "E904: il terzo argomento della chiamata dev'essere una Lista"
 
+#, c-format
 msgid "E905: received unknown command: %s"
 msgstr "E905: recevuto comando non conosciuto: %s"
 
@@ -1424,6 +1425,7 @@ msgstr "E905: recevuto comando non conosciuto: %s"
 msgid "E630: %s(): write while not connected"
 msgstr "E630: %s(): scrittura in mancanza di connessione"
 
+#, c-format
 msgid "E631: %s(): write failed"
 msgstr "E631: %s(): scrittura non riuscita"
 
@@ -4837,6 +4839,7 @@ msgstr ""
 "\n"
 "Non posso impostare il contesto di sicurezza per "
 
+#, c-format
 msgid "E151: No match: %s"
 msgstr "E151: Nessuna corrispondenza: %s"
 
@@ -5381,6 +5384,12 @@ msgstr "E772: Il file ortografico è per versioni di Vim più recenti"
 #: ../spell.c:2602
 msgid "E770: Unsupported section in spell file"
 msgstr "E770: Sezione non supportata nel file ortografico"
+
+msgid "E944: Reverse range in character class"
+msgstr "E944: Intervallo invertito nella classe di caratteri"
+
+msgid "E945: Range too large in character class"
+msgstr "E945: Intervallo troppo ampio nella classe di caratteri"
 
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"

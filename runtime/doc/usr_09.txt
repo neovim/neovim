@@ -21,7 +21,7 @@ Table of contents: |usr_toc.txt|
 ==============================================================================
 *09.1*	Parts of the GUI
 
-You might have an icon on your desktop that starts gVim.  Otherwise, one of
+You might have an icon on your desktop that starts gvim.  Otherwise, one of
 these commands should do it: >
 
 	gvim file.txt
@@ -180,12 +180,12 @@ currently highlighted.  In Vim this is the Visual area (this assumes you are
 using the default option settings).  You can paste this selection in another
 application without any further action.
    For example, in this text select a few words with the mouse.  Vim will
-switch to Visual mode and highlight the text.  Now start another gVim, without
+switch to Visual mode and highlight the text.  Now start another gvim, without
 a file name argument, so that it displays an empty window.  Click the middle
 mouse button.  The selected text will be inserted.
 
 The "current selection" will only remain valid until some other text is
-selected.  After doing the paste in the other gVim, now select some characters
+selected.  After doing the paste in the other gvim, now select some characters
 in that window.  You will notice that the words that were previously selected
 in the other gvim window are displayed differently.  This means that it no
 longer is the current selection.
@@ -200,10 +200,10 @@ Now for the other place with which text can be exchanged.  We call this the
 "real clipboard", to avoid confusion.  Often both the "current selection" and
 the "real clipboard" are called clipboard, you'll have to get used to that.
    To put text on the real clipboard, select a few different words in one of
-the gVims you have running.  Then use the Edit/Copy menu entry.  Now the text
+the gvims you have running.  Then use the Edit/Copy menu entry.  Now the text
 has been copied to the real clipboard.  You can't see this, unless you have
 some application that shows the clipboard contents (e.g., KDE's Klipper).
-   Now select the other gVim, position the cursor somewhere and use the
+   Now select the other gvim, position the cursor somewhere and use the
 Edit/Paste menu.  You will see the text from the real clipboard is inserted.
 
 
