@@ -1364,6 +1364,13 @@ If you want to automatically reload a file when it has been changed outside of
 Vim, set the 'autoread' option.  This doesn't work at the moment you write the
 file though, only when the file wasn't changed inside of Vim.
 
+If you do not want to be asked or automatically reload the file, you can use
+this: >
+	set buftype=nofile
+
+Or, when starting gvim from a shell: >
+	gvim file.log -c "set buftype=nofile"
+
 Note that if a FileChangedShell autocommand is defined you will not get a
 warning message or prompt.  The autocommand is expected to handle this.
 

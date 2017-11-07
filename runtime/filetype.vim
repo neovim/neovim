@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Mar 27
+" Last Change:	2017 Apr 20
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -2128,7 +2128,10 @@ au BufNewFile,BufRead ssh_config,*/.ssh/config	setf sshconfig
 au BufNewFile,BufRead sshd_config		setf sshdconfig
 
 " Stata
-au BufNewFile,BufRead *.ado,*.class,*.do,*.imata,*.mata   setf stata
+au BufNewFile,BufRead *.ado,*.do,*.imata,*.mata	setf stata
+" Also *.class, but not when it's a Java bytecode file
+au BufNewFile,BufRead *.class
+	\ if getline(1) !~ "^\xca\xfe\xba\xbe" | setf stata | endif
 
 " SMCL
 au BufNewFile,BufRead *.hlp,*.ihlp,*.smcl	setf smcl

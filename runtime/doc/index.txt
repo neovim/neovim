@@ -298,10 +298,10 @@ tag		char	      note action in Normal mode	~
 |B|		B		1  cursor N WORDS backward
 |C|		["x]C		2  change from the cursor position to the end
 				   of the line, and N-1 more lines [into
-				   buffer x]; synonym for "c$"
+				   register x]; synonym for "c$"
 |D|		["x]D		2  delete the characters under the cursor
 				   until the end of the line and N-1 more
-				   lines [into buffer x]; synonym for "d$"
+				   lines [into register x]; synonym for "d$"
 |E|		E		1  cursor forward to the end of WORD N
 |F|		F{char}		1  cursor to the Nth occurrence of {char} to
 				   the left
@@ -318,13 +318,13 @@ tag		char	      note action in Normal mode	~
 				   opposite direction
 |O|		O		2  begin a new line above the cursor and
 				   insert text, repeat N times
-|P|		["x]P		2  put the text [from buffer x] before the
+|P|		["x]P		2  put the text [from register x] before the
 				   cursor N times
 |Q|		Q		   switch to "Ex" mode
 |R|		R		2  enter replace mode: overtype existing
 				   characters, repeat the entered text N-1
 				   times
-|S|		["x]S		2  delete N lines [into buffer x] and start
+|S|		["x]S		2  delete N lines [into register x] and start
 				   insert; synonym for "cc".
 |T|		T{char}		1  cursor till after Nth occurrence of {char}
 				   to the left
@@ -332,8 +332,8 @@ tag		char	      note action in Normal mode	~
 |V|		V		   start linewise Visual mode
 |W|		W		1  cursor N WORDS forward
 |X|		["x]X		2  delete N characters before the cursor [into
-				   buffer x]
-|Y|		["x]Y		   yank N lines [into buffer x]; synonym for
+				   register x]
+|Y|		["x]Y		   yank N lines [into register x]; synonym for
 				   "yy"
 |ZZ|		ZZ		   store current file if modified, and exit
 |ZQ|		ZQ		   exit current file always
@@ -356,12 +356,12 @@ tag		char	      note action in Normal mode	~
 |`}|		`}		1  cursor to the end of the current paragraph
 |a|		a		2  append text after the cursor N times
 |b|		b		1  cursor N words backward
-|c|		["x]c{motion}	2  delete Nmove text [into buffer x] and start
+|c|		["x]c{motion}	2  delete Nmove text [into register x] and
+				   start insert
+|cc|		["x]cc		2  delete N lines [into register x] and start
 				   insert
-|cc|		["x]cc		2  delete N lines [into buffer x] and start
-				   insert
-|d|		["x]d{motion}	2  delete Nmove text [into buffer x]
-|dd|		["x]dd		2  delete N lines [into buffer x]
+|d|		["x]d{motion}	2  delete Nmove text [into register x]
+|dd|		["x]dd		2  delete N lines [into register x]
 |do|		do		2  same as ":diffget"
 |dp|		dp		2  same as ":diffput"
 |e|		e		1  cursor forward to the end of word N
@@ -387,16 +387,16 @@ tag		char	      note action in Normal mode	~
 |q?|		q?		   edit ? command-line in command-line window
 |r|		r{char}		2  replace N chars with {char}
 |s|		["x]s		2  (substitute) delete N characters [into
-				   buffer x] and start insert
+				   register x] and start insert
 |t|		t{char}		1  cursor till before Nth occurrence of {char}
 				   to the right
 |u|		u		2  undo changes
 |v|		v		   start characterwise Visual mode
 |w|		w		1  cursor N words forward
 |x|		["x]x		2  delete N characters under and after the
-				   cursor [into buffer x]
-|y|		["x]y{motion}	   yank Nmove text [into buffer x]
-|yy|		["x]yy		   yank N lines [into buffer x]
+				   cursor [into register x]
+|y|		["x]y{motion}	   yank Nmove text [into register x]
+|yy|		["x]yy		   yank N lines [into register x]
 |z|		z{char}		   commands starting with 'z', see |z| below
 |{|		{		1  cursor N paragraphs backward
 |bar|		|		1  cursor to column N

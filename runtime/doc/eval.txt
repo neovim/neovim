@@ -6843,7 +6843,7 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 
 		This function can be used to create a quickfix list
 		independent of the 'errorformat' setting.  Use a command like
-		":cc 1" to jump to the first position.
+		`:cc 1` to jump to the first position.
 
 
 							*setreg()*
@@ -10435,7 +10435,7 @@ as this example shows: >
 The "<CR>" here is a real CR character, type CTRL-V Enter to get it.
 
 When the |+eval| feature is available the ":" is remapped to add a double
-quote, which has the effect of commenging-out the command.  without the
+quote, which has the effect of commenting-out the command.  without the
 |+eval| feature the nnoremap command is skipped and the command is executed.
 
 ==============================================================================
