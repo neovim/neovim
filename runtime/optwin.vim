@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Aug 01
+" Last Change:	2017 Sep 10
 
 " If there already is an option window, jump to that one.
 if bufwinnr("option-window") > 0
@@ -1164,6 +1164,8 @@ endif
 call append("$", "iminsert\tin Insert mode: 1: use :lmap; 2: use IM; 0: neither")
 call append("$", "\t(local to window)")
 call <SID>OptionL("imi")
+call append("$", "imstyle\tinput method style, 0: on-the-spot, 1: over-the-spot")
+call <SID>OptionG("imst", &imst)
 call append("$", "imsearch\tentering a search pattern: 1: use :lmap; 2: use IM; 0: neither")
 call append("$", "\t(local to window)")
 call <SID>OptionL("ims")

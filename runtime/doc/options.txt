@@ -360,6 +360,16 @@ command, not when assigning a value to an option with ":let".
 							*$HOME-windows*
 On MS-Windows, if $HOME is not defined as an environment variable, then
 at runtime Vim will set it to the expansion of $HOMEDRIVE$HOMEPATH.
+If $HOMEDRIVE is not set then $USERPROFILE is used.
+
+This expanded value is not exported to the environment, this matters when
+running an external command: >
+	:echo system('set | findstr ^HOME=')
+and >
+	:echo luaeval('os.getenv("HOME")')
+should echo nothing (an empty string) despite exists('$HOME') being true.
+When setting $HOME to a non-empty string it will be exported to the
+subprocesses.
 
 
 Note the maximum length of an expanded option is limited.  How much depends on
@@ -718,11 +728,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Vim will guess the value.  In the GUI this should work correctly,
 	in other cases Vim might not be able to guess the right value.
 
-	When the t_BG option is set, Vim will use it to request the background
+	When the |t_RB| option is set, Vim will use it to request the background
 	color from the terminal.  If the returned RGB value is dark/light and
 	'background' is not dark/light, 'background' will be set and the
 	screen is redrawn.  This may have side effects, make t_BG empty in
-	your .vimrc if you suspect this problem.
+	your .vimrc if you suspect this problem.  The response to |t_RB| can
+	be found in |v:termrgbresp|.
 
 	When starting the GUI, the default value for 'background' will be
 	"light".  When the value is not set in the gvimrc, and Vim detects

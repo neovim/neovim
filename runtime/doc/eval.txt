@@ -4407,7 +4407,9 @@ getwininfo([{winid}])					*getwininfo()*
 
 		Each List item is a Dictionary with the following entries:
 			bufnr		number of buffer in the window
-			height		window height
+			height		window height (excluding winbar)
+			winbar		1 if the window has a toolbar, 0
+					otherwise
 			loclist		1 if showing a location list
 			quickfix	1 if quickfix or location list window
 			tabnr		tab page number
@@ -5277,6 +5279,7 @@ maparg({name}[, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 			"s"	Select
 			"x"	Visual
 			"l"	langmap |language-mapping|
+			"t"	Terminal
 			""	Normal, Visual and Operator-pending
 		When {mode} is omitted, the modes for "" are used.
 
@@ -8048,6 +8051,7 @@ winheight({nr})						*winheight()*
 		When {nr} is zero, the height of the current window is
 		returned.  When window {nr} doesn't exist, -1 is returned.
 		An existing window always has a height of zero or more.
+		This excludes any window toolbar line.
 		Examples: >
   :echo "The current window has " . winheight(0) . " lines."
 <

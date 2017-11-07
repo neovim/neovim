@@ -649,6 +649,8 @@ nr  Name		Normal action  ~
 In the Win32 GUI, starting a menu name with ']' excludes that menu from the
 main menu bar.  You must then use the |:popup| command to display it.
 
+When splitting the window the window toolbar is not copied to the new window.
+
 							*popup-menu*
 You can define the special menu "PopUp".  This is the menu that is displayed
 when the right mouse button is pressed, if 'mousemodel' is set to popup or
