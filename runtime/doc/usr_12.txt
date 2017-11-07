@@ -278,7 +278,7 @@ command: >
 The line range "%" is used, thus this works on the whole file.  The pattern
 that the ":substitute" command matches with is "\s\+$".  This finds white
 space characters (\s), 1 or more of them (\+), before the end-of-line ($).
-Later will be explained how you write patterns like this |usr_27.txt|.
+Later will be explained how you write patterns like this, see |usr_27.txt|.
    The "to" part of the substitute command is empty: "//".  Thus it replaces
 with nothing, effectively deleting the matched white space.
 
