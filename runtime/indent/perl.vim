@@ -3,7 +3,7 @@
 " Maintainer:    vim-perl <vim-perl@googlegroups.com>
 " Homepage:      http://github.com/vim-perl/vim-perl
 " Bugs/requests: http://github.com/vim-perl/vim-perl/issues
-" Last Change:   2013-07-24
+" Last Change:   2017 Jun 13
 
 " Suggestions and improvements by :
 "   Aaron J. Sherman (use syntax for hints)
@@ -138,9 +138,9 @@ function! GetPerlIndent()
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
                 let brace = strpart(line, bracepos, 1)
                 if brace == '(' || brace == '{' || brace == '['
-                    let ind = ind + &sw
+                    let ind = ind + shiftwidth()
                 else
-                    let ind = ind - &sw
+                    let ind = ind - shiftwidth()
                 endif
             endif
             let bracepos = match(line, braceclass, bracepos + 1)
@@ -152,25 +152,25 @@ function! GetPerlIndent()
                         \ || synid == "perlMatchStartEnd"
                         \ || synid == "perlBraces"
                         \ || synid =~ '^perl\(Sub\|Block\|Package\)Fold'
-                let ind = ind - &sw
+                let ind = ind - shiftwidth()
             endif
         endif
     else
         if line =~ '[{[(]\s*\(#[^])}]*\)\=$'
-            let ind = ind + &sw
+            let ind = ind + shiftwidth()
         endif
         if cline =~ '^\s*[])}]'
-            let ind = ind - &sw
+            let ind = ind - shiftwidth()
         endif
     endif
 
     " Indent lines that begin with 'or' or 'and'
     if cline =~ '^\s*\(or\|and\)\>'
         if line !~ '^\s*\(or\|and\)\>'
-            let ind = ind + &sw
+            let ind = ind + shiftwidth()
         endif
     elseif line =~ '^\s*\(or\|and\)\>'
-        let ind = ind - &sw
+        let ind = ind - shiftwidth()
     endif
 
     return ind

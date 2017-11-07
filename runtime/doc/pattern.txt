@@ -1058,12 +1058,16 @@ x	A single character, with no special meaning, matches itself
 	":s/[/x/" searches for "[/x" and replaces it with nothing.  It does
 	not search for "[" and replaces it with "x"!
 
+								*E944* *E945*
 	If the sequence begins with "^", it matches any single character NOT
 	in the collection: "[^xyz]" matches anything but 'x', 'y' and 'z'.
 	- If two characters in the sequence are separated by '-', this is
 	  shorthand for the full list of ASCII characters between them.  E.g.,
-	  "[0-9]" matches any decimal digit.  Non-ASCII characters can be
-	  used, but the character values must not be more than 256 apart.
+	  "[0-9]" matches any decimal digit. If the starting character exceeds
+	  the ending character, e.g. [c-a], E944 occurs. Non-ASCII characters
+	  can be used, but the character values must not be more than 256 apart
+	  in the old regexp engine. For example, searching by [\u3000-\u4000]
+	  after setting re=1 emits a E945 error. Prepending \%#=2 will fix it.
 	- A character class expression is evaluated to the set of characters
 	  belonging to that character class.  The following character classes
 	  are supported:

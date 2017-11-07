@@ -2,7 +2,7 @@
 " Language:    Hamster Script
 " Version:     2.0.6.0
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
-" Last Change: 2017 Mar 07
+" Last Change: 2017 Mar 18
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -14,7 +14,6 @@ let b:did_ftplugin = 1
 
 let s:cpo_save = &cpo
 set cpo&vim
-set cpo-=C
 
 let b:undo_ftplugin = "setl fo< com< tw< commentstring<"
 	\ . "| unlet! b:match_ignorecase b:match_words b:match_skip"

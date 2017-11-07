@@ -68,8 +68,8 @@ The Vim pages contain the most recent information about Vim.  They also
 contain links to the most recent version of Vim.  The FAQ is a list of
 Frequently Asked Questions.  Read this if you have problems.
 
-	VIM home page:	  http://www.vim.org/
-	VIM FAQ:	  http://vimdoc.sf.net/
+	Vim home page:	  http://www.vim.org/
+	Vim FAQ:	  http://vimdoc.sf.net/
 	Downloading:	  ftp://ftp.vim.org/pub/vim/MIRRORS
 
 

@@ -2,7 +2,7 @@
 " Language:	gitolite configuration
 " URL:		https://github.com/tmatilai/gitolite.vim
 " Maintainer:	Teemu Matilainen <teemu.matilainen@iki.fi>
-" Last Change:	2011-12-24
+" Last Change:	2017 Jun 13
 
 if exists("b:did_indent")
   finish
@@ -27,11 +27,11 @@ function! GetGitoliteIndent()
   let cline = getline(v:lnum)
 
   if cline =~ '^\s*\(C\|R\|RW\|RW+\|RWC\|RW+C\|RWD\|RW+D\|RWCD\|RW+CD\|-\)[ \t=]'
-    return &sw
+    return shiftwidth()
   elseif cline =~ '^\s*config\s'
-    return &sw
+    return shiftwidth()
   elseif pline =~ '^\s*repo\s' && cline =~ '^\s*\(#.*\)\?$'
-    return &sw
+    return shiftwidth()
   elseif cline =~ '^\s*#'
     return indent(prevln)
   elseif cline =~ '^\s*$'

@@ -47,11 +47,7 @@ set cpo&vim
 
 function! GetErubyIndent(...)
   " The value of a single shift-width
-  if exists('*shiftwidth')
-    let sw = shiftwidth()
-  else
-    let sw = &sw
-  endif
+  let sw = shiftwidth()
 
   if a:0 && a:1 == '.'
     let v:lnum = line('.')

@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Haml
 " Maintainer:	Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2016 Aug 29
+" Last Change:	2017 Jun 13
 
 if exists("b:did_indent")
   finish
@@ -37,7 +37,7 @@ function! GetHamlIndent()
   let line = substitute(line,'^\s\+','','')
   let indent = indent(lnum)
   let cindent = indent(v:lnum)
-  let sw = exists('*shiftwidth') ? shiftwidth() : &sw
+  let sw = shiftwidth()
   if cline =~# '\v^-\s*%(elsif|else|when)>'
     let indent = cindent < indent ? cindent : indent - sw
   endif

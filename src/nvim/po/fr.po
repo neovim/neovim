@@ -4,20 +4,17 @@
 # Do ":help uganda"  in Vim to read copying and usage conditions.
 # Do ":help credits" in Vim to see a list of people who contributed.
 #
-#  FIRST AUTHOR  DindinX         <David.Odin@bigfoot.com>     2000.
-# SECOND AUTHOR  Adrien Beau     <version.francaise@free.fr>  2002, 2003.
-#  THIRD AUTHOR  David Blanchet  <david.blanchet@free.fr>     2006, 2008.
-# FOURTH AUTHOR  Dominique Pellé <dominique.pelle@gmail.com>  2008, 2017.
-#
-# Latest translation available at:
-#   http://dominique.pelle.free.fr/vim-fr.php
+#  FIRST AUTHOR  DindinX         <David.Odin@bigfoot.com>    2000.
+# SECOND AUTHOR  Adrien Beau     <version.francaise@free.fr> 2002, 2003.
+#  THIRD AUTHOR  David Blanchet  <david.blanchet@free.fr>    2006, 2008.
+# FOURTH AUTHOR  Dominique Pellé <dominique.pelle@gmail.com> 2008, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Français)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-16 00:30+0100\n"
-"PO-Revision-Date: 2017-01-16 00:51+0100\n"
+"POT-Creation-Date: 2017-07-11 23:10+0200\n"
+"PO-Revision-Date: 2017-01-12 05:16+0200\n"
 "Last-Translator: Dominique Pellé <dominique.pelle@gmail.com>\n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -481,6 +478,9 @@ msgstr "Examen : %s"
 msgid "Scanning tags."
 msgstr "Examen des marqueurs."
 
+msgid "match in file"
+msgstr "correspondance dans le fichier"
+
 # AB - Cette chaîne de caractères est ajoutée en début de ligne lorsqu'une
 #      opération de complétion est répétée (typiquement avec CTRL-X CTRL-N).
 #      Que ce soit en anglais ou en français, il y a un problème de majuscules.
@@ -583,6 +583,12 @@ msgstr "E690: \"in\" manquant après :for"
 #, c-format
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: Variable inexistante : %s"
+
+#. For historic reasons this error is not given for a list or dict.
+#. * E.g., the b: dict could be locked/unlocked.
+#, c-format
+msgid "E940: Cannot lock or unlock variable %s"
+msgstr "E940: Impossible de (dé)verrouiler la variable %s"
 
 msgid "E743: variable nested too deep for (un)lock"
 msgstr "E743: variable trop imbriquée pour la (dé)verrouiller"
@@ -774,12 +780,6 @@ msgid "&Ok"
 msgstr "&Ok"
 
 #, c-format
-msgid "+-%s%3ld line: "
-msgid_plural "+-%s%3ld lines: "
-msgstr[0] "+-%s%3ld ligne : "
-msgstr[1] "+-%s%3ld lignes : "
-
-#, c-format
 msgid "E700: Unknown function: %s"
 msgstr "E700: Fonction inconnue : %s"
 
@@ -827,9 +827,7 @@ msgstr "E727: Début au-delà de la fin"
 msgid "<empty>"
 msgstr "<vide>"
 
-# AB - À mon avis, la version anglaise est erronée.
-# DB : Vérifier
-msgid "E240: No connection to Vim server"
+msgid "E240: No connection to the X server"
 msgstr "E240: Pas de connexion au serveur X"
 
 # AB - La version française est meilleure que la version anglaise.
@@ -839,6 +837,12 @@ msgstr "E241: L'envoi au serveur %s a échoué"
 
 msgid "E277: Unable to read a server reply"
 msgstr "E277: Impossible de lire la réponse du serveur"
+
+msgid "E941: already started a server"
+msgstr "E941: serveur déjà démarré"
+
+msgid "E942: +clientserver feature not available"
+msgstr "E942: La fonctionnalité +clientserver n'est pas disponible"
 
 msgid "remove() argument"
 msgstr "argument de remove()"
@@ -1137,8 +1141,9 @@ msgstr " sur %ld lignes"
 
 # AB - Il faut respecter l'esprit plus que la lettre.
 # AB - Ce message devrait contenir une référence à :vglobal.
-msgid "E147: Cannot do :global recursive"
-msgstr "E147: :global ne peut pas exécuter :global"
+#. will increment global_busy to break out of the loop
+msgid "E147: Cannot do :global recursive with a range"
+msgstr "E147: :global ne peut pas exécuter :global avec une plage"
 
 # AB - Ce message devrait contenir une référence à :vglobal.
 msgid "E148: Regular expression missing from global"
@@ -1357,6 +1362,14 @@ msgstr "Recherche de \"%s\""
 msgid "not found in '%s': \"%s\""
 msgstr "introuvable dans '%s' : \"%s\""
 
+#, c-format
+msgid "W20: Required python version 2.x not supported, ignoring file: %s"
+msgstr "W20: Python version 2.x non supporté, fichier %s ignoré"
+
+#, c-format
+msgid "W21: Required python version 3.x not supported, ignoring file: %s"
+msgstr "W21: Python 3.x non supporté, fichier %s ignoré"
+
 msgid "Source Vim script"
 msgstr "Sourcer un script - Vim"
 
@@ -1456,6 +1469,9 @@ msgstr "La plage spécifiée est inversée, OK pour l'inverser"
 
 msgid "E494: Use w or w>>"
 msgstr "E494: Utilisez w ou w>>"
+
+msgid "E943: Command table needs to be updated, run 'make cmdidxs'"
+msgstr "E943: La table des commandes doit être mise à jour, lancez 'make cmdidxs'"
 
 msgid "E319: Sorry, the command is not available in this version"
 msgstr "E319: Désolé, cette commande n'est pas disponible dans cette version"
@@ -2232,12 +2248,6 @@ msgstr "E350: Impossible de créer un repli avec la 'foldmethod'e actuelle"
 
 msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: Impossible de supprimer un repli avec la 'foldmethod'e actuelle"
-
-#, c-format
-msgid "+--%3ld line folded "
-msgid_plural "+--%3ld lines folded "
-msgstr[0] "+--%3ld ligne repliée "
-msgstr[1] "+--%3ld lignes repliées "
 
 msgid "E222: Add to read buffer"
 msgstr "E222: Ajout au tampon de lecture"
@@ -3281,8 +3291,7 @@ msgstr ""
 "--no-a-term\t\tAucun avertissement si l'entrée/sortie n'est pas un terminal"
 
 msgid "--ttyfail\t\tExit if input or output is not a terminal"
-msgstr ""
-"--ttyfail\t\tQuitte si l'entrée ou la sortie ne sont pas un terminal"
+msgstr "--ttyfail\t\tQuitte si l'entrée ou la sortie ne sont pas un terminal"
 
 msgid "-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"
 msgstr "-u <vimrc>\tUtiliser <vimrc> au lieu du vimrc habituel"
@@ -4338,8 +4347,8 @@ msgstr "E662: Au début de la liste des modifications"
 msgid "E663: At end of changelist"
 msgstr "E663: À la fin de la liste des modifications"
 
-msgid "Type  :quit<Enter>  to exit Vim"
-msgstr "tapez  :q<Entrée>  pour quitter Vim"
+msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Vim"
+msgstr "Tapez  :qa!  puis <Entrée> pour abandonner tous les changements et quitter Vim"
 
 #, c-format
 msgid "1 line %sed 1 time"
@@ -4968,6 +4977,12 @@ msgstr "E369: élément invalide dans %s%%[]"
 msgid "E769: Missing ] after %s["
 msgstr "E769: ']' manquant après %s["
 
+msgid "E944: Reverse range in character class"
+msgstr "E944: Classe de caractères inversée"
+
+msgid "E945: Range too large in character class"
+msgstr "E945: Plage de classe de caractères trop large"
+
 #, c-format
 msgid "E53: Unmatched %s%%("
 msgstr "E53: Pas de correspondance pour %s%%("
@@ -4993,6 +5008,9 @@ msgstr "E69: ']' manquant après %s%%["
 #, c-format
 msgid "E70: Empty %s%%[]"
 msgstr "E70: %s%%[] vide"
+
+msgid "E65: Illegal back reference"
+msgstr "E65: post-référence invalide"
 
 msgid "E339: Pattern too long"
 msgstr "E339: Motif trop long"
@@ -5029,9 +5047,6 @@ msgstr "E63: utilisation invalide de \\_"
 #, c-format
 msgid "E64: %s%c follows nothing"
 msgstr "E64: %s%c ne suit aucun atome"
-
-msgid "E65: Illegal back reference"
-msgstr "E65: post-référence invalide"
 
 msgid "E68: Invalid character after \\z"
 msgstr "E68: Caractère invalide après \\z"
@@ -5642,9 +5657,30 @@ msgstr "E783: caractère dupliqué dans l'entrée MAP"
 msgid "No Syntax items defined for this buffer"
 msgstr "Aucun élément de syntaxe défini pour ce tampon"
 
+msgid "syntax conceal on"
+msgstr "\"syntax conceal\" activée"
+
+msgid "syntax conceal off"
+msgstr "\"syntax conceal\" désactivée"
+
 #, c-format
 msgid "E390: Illegal argument: %s"
 msgstr "E390: Argument invalide : %s"
+
+msgid "syntax case ignore"
+msgstr "syntaxe ignore la casse"
+
+msgid "syntax case match"
+msgstr "syntaxe respecte la casse"
+
+msgid "syntax spell toplevel"
+msgstr "contrôle orthographique dans le texte sans groupe syntaxique"
+
+msgid "syntax spell notoplevel"
+msgstr "pas de contrôle orthographique dans le texte sans groupe syntaxique"
+
+msgid "syntax spell default"
+msgstr "contrôle orthographique dans le texte sans groupe syntaxique, sauf si @Spell/@NoSpell"
 
 msgid "syntax iskeyword "
 msgstr "syntaxe iskeyword "
@@ -6247,6 +6283,10 @@ msgstr ""
 
 msgid "E126: Missing :endfunction"
 msgstr "E126: Il manque :endfunction"
+
+#, c-format
+msgid "W22: Text found after :endfunction: %s"
+msgstr "W22: Texte trouvé après :endfunction: %s"
 
 #, c-format
 msgid "E707: Function name conflicts with variable: %s"
@@ -6997,8 +7037,8 @@ msgstr "E592: 'winwidth' ne peut pas être plus petit que 'winminwidth'"
 msgid "E80: Error while writing"
 msgstr "E80: Erreur lors de l'écriture"
 
-msgid "Zero count"
-msgstr "Le quantificateur est nul"
+msgid "E939: Positive count required"
+msgstr "E939: Quantificateur positif requis"
 
 msgid "E81: Using <SID> not in a script context"
 msgstr "E81: <SID> utilisé en dehors d'un script"

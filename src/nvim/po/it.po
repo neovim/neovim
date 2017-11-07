@@ -11,7 +11,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: vim 7.4\n"
+"Project-Id-Version: vim 8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-02-11 12:10+0100\n"
 "PO-Revision-Date:  2016-02-11 14:42+0200\n"
@@ -1401,6 +1401,31 @@ msgstr "com: %s"
 
 msgid "frame is zero"
 msgstr "al livello zero"
+
+msgid "E901: gethostbyname() in channel_open()"
+msgstr "E901: gethostbyname() in channel_open()"
+
+msgid "E898: socket() in channel_open()"
+msgstr "E898: socket() in channel_open()"
+
+msgid "E903: received command with non-string argument"
+msgstr "E903: il comando ricevuto non aveva come argomento una stringa"
+
+msgid "E904: last argument for expr/call must be a number"
+msgstr "E904: l'ultimo argomento per espressione/chiamata dev'essere numerico"
+
+msgid "E904: third argument for call must be a list"
+msgstr "E904: il terzo argomento della chiamata dev'essere una Lista"
+
+msgid "E905: received unknown command: %s"
+msgstr "E905: recevuto comando non conosciuto: %s"
+
+#, c-format
+msgid "E630: %s(): write while not connected"
+msgstr "E630: %s(): scrittura in mancanza di connessione"
+
+msgid "E631: %s(): write failed"
+msgstr "E631: %s(): scrittura non riuscita"
 
 #, c-format
 msgid "frame at highest level: %d"
@@ -4812,9 +4837,15 @@ msgstr ""
 "\n"
 "Non posso impostare il contesto di sicurezza per "
 
+msgid "E151: No match: %s"
+msgstr "E151: Nessuna corrispondenza: %s"
+
 #, c-format
 msgid "Could not set security context %s for %s"
 msgstr "Non posso impostare il contesto di sicurezza %s per %s"
+
+msgid "E934: Cannot jump to a buffer that does not have a name"
+msgstr "E934: Impossibile passare a un buffer che non ha un nome"
 
 #, c-format
 msgid "Could not get security context %s for %s. Removing it!"
@@ -5351,10 +5382,9 @@ msgstr "E772: Il file ortografico è per versioni di Vim più recenti"
 msgid "E770: Unsupported section in spell file"
 msgstr "E770: Sezione non supportata nel file ortografico"
 
-#: ../spell.c:3762
 #, c-format
-msgid "Warning: region %s not supported"
-msgstr "Avviso: regione %s non supportata"
+msgid "E779: Old .sug file, needs to be updated: %s"
+msgstr "E779: File .sug obsoleto, è necessario aggiornarlo: %s"
 
 #: ../spell.c:4550
 #, c-format
@@ -5713,11 +5743,6 @@ msgstr "E753: Non trovato: %s"
 #, c-format
 msgid "E778: This does not look like a .sug file: %s"
 msgstr "E778: Questo non sembra un file .sug: %s"
-
-#: ../spell.c:9282
-#, c-format
-msgid "E779: Old .sug file, needs to be updated: %s"
-msgstr "E779: File .sug obsoleto, è necessario aggiornarlo: %s"
 
 #: ../spell.c:9286
 #, c-format

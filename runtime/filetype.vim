@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Mar 13
+" Last Change:	2017 Jul 11
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -284,7 +284,8 @@ au BufNewFile,BufRead *.bib			setf bib
 au BufNewFile,BufRead *.bst			setf bst
 
 " BIND configuration
-au BufNewFile,BufRead named.conf,rndc.conf	setf named
+" sudoedit uses namedXXXX.conf
+au BufNewFile,BufRead named*.conf,rndc*.conf	setf named
 
 " BIND zone
 au BufNewFile,BufRead named.root		setf bindzone
@@ -626,7 +627,13 @@ au BufNewFile,BufRead dict.conf,.dictrc		setf dictconf
 au BufNewFile,BufRead dictd.conf		setf dictdconf
 
 " Diff files
-au BufNewFile,BufRead *.diff,*.rej,*.patch	setf diff
+au BufNewFile,BufRead *.diff,*.rej		setf diff
+au BufNewFile,BufRead *.patch
+	\ if getline(1) =~ '^From [0-9a-f]\{40\} Mon Sep 17 00:00:00 2001$' |
+	\   setf gitsendemail |
+	\ else |
+	\   setf diff |
+	\ endif
 
 " Dircolors
 au BufNewFile,BufRead .dir_colors,.dircolors,*/etc/DIR_COLORS	setf dircolors
@@ -795,6 +802,7 @@ if !empty($XDG_CONFIG_HOME)
   au BufNewFile,BufRead $XDG_CONFIG_HOME/git/config	setf gitconfig
 endif
 au BufNewFile,BufRead git-rebase-todo		setf gitrebase
+au BufRead,BufNewFile .gitsendemail.msg.??????	setf gitsendemail
 au BufNewFile,BufRead .msg.[0-9]*
       \ if getline(1) =~ '^From.*# This line is ignored.$' |
       \   setf gitsendemail |
@@ -975,7 +983,7 @@ au BufNewFile,BufRead */etc/initng/*/*.i,*.ii	setf initng
 
 " Innovation Data Processing
 au BufRead,BufNewFile upstream.dat\c,upstream.*.dat\c,*.upstream.dat\c 	setf upstreamdat
-au BufRead,BufNewFile upstream.log\c,upstream.*.log\c,*.upstream.log\c 	setf upstreamlog
+au BufRead,BufNewFile fdrupstream.log,upstream.log\c,upstream.*.log\c,*.upstream.log\c,UPSTREAM-*.log\c 	setf upstreamlog
 au BufRead,BufNewFile upstreaminstall.log\c,upstreaminstall.*.log\c,*.upstreaminstall.log\c setf upstreaminstalllog
 au BufRead,BufNewFile usserver.log\c,usserver.*.log\c,*.usserver.log\c 	setf usserverlog
 au BufRead,BufNewFile usw2kagt.log\c,usw2kagt.*.log\c,*.usw2kagt.log\c 	setf usw2kagtlog
@@ -1413,8 +1421,8 @@ if has("fname_case")
 else
   au BufNewFile,BufRead *.pl			call s:FTpl()
 endif
-au BufNewFile,BufRead *.plx,*.al		setf perl
-au BufNewFile,BufRead *.p6,*.pm6,*.pl6	setf perl6
+au BufNewFile,BufRead *.plx,*.al,*.psgi		setf perl
+au BufNewFile,BufRead *.p6,*.pm6,*.pl6		setf perl6
 
 func! s:FTpl()
   if exists("g:filetype_pl")
@@ -1801,6 +1809,9 @@ au BufNewFile,BufRead *.sa			setf sather
 " Scala
 au BufNewFile,BufRead *.scala			setf scala
 
+" SBT - Scala Build Tool
+au BufNewFile,BufRead *.sbt			setf sbt
+
 " Scilab
 au BufNewFile,BufRead *.sci,*.sce		setf scilab
 
@@ -2127,7 +2138,10 @@ au BufNewFile,BufRead ssh_config,*/.ssh/config	setf sshconfig
 au BufNewFile,BufRead sshd_config		setf sshdconfig
 
 " Stata
-au BufNewFile,BufRead *.ado,*.class,*.do,*.imata,*.mata   setf stata
+au BufNewFile,BufRead *.ado,*.do,*.imata,*.mata	setf stata
+" Also *.class, but not when it's a Java bytecode file
+au BufNewFile,BufRead *.class
+	\ if getline(1) !~ "^\xca\xfe\xba\xbe" | setf stata | endif
 
 " SMCL
 au BufNewFile,BufRead *.hlp,*.ihlp,*.smcl	setf smcl
@@ -2222,6 +2236,8 @@ func! s:FTtex()
     let format = tolower(matchstr(firstline, '\a\+'))
     let format = substitute(format, 'pdf', '', '')
     if format == 'tex'
+      let format = 'latex'
+    elseif format == 'plaintex'
       let format = 'plain'
     endif
   else

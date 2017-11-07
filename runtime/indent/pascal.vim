@@ -2,7 +2,7 @@
 " Language:    Pascal
 " Maintainer:  Neil Carter <n.carter@swansea.ac.uk>
 " Created:     2004 Jul 13
-" Last Change: 2011 Apr 01
+" Last Change: 2017 Jun 13
 "
 " This is version 2.0, a complete rewrite.
 "
@@ -102,12 +102,12 @@ function! GetPascalIndent( line_num )
 
 	" If the PREVIOUS LINE ended in these items, always indent
 	if prev_codeline =~ '\<\(type\|const\|var\)$'
-		return indnt + &shiftwidth
+		return indnt + shiftwidth()
 	endif
 
 	if prev_codeline =~ '\<repeat$'
 		if this_codeline !~ '^\s*until\>'
-			return indnt + &shiftwidth
+			return indnt + shiftwidth()
 		else
 			return indnt
 		endif
@@ -115,7 +115,7 @@ function! GetPascalIndent( line_num )
 
 	if prev_codeline =~ '\<\(begin\|record\)$'
 		if this_codeline !~ '^\s*end\>'
-			return indnt + &shiftwidth
+			return indnt + shiftwidth()
 		else
 			return indnt
 		endif
@@ -125,10 +125,10 @@ function! GetPascalIndent( line_num )
 	" followed by "begin"
 	if prev_codeline =~ '\<\(\|else\|then\|do\)$' || prev_codeline =~ ':$'
 		if this_codeline !~ '^\s*begin\>'
-			return indnt + &shiftwidth
+			return indnt + shiftwidth()
 		else
 			" If it does start with "begin" then keep the same indent
-			"return indnt + &shiftwidth
+			"return indnt + shiftwidth()
 			return indnt
 		endif
 	endif
@@ -137,7 +137,7 @@ function! GetPascalIndent( line_num )
 	" only the line before the current one. TODO: Get it working for
 	" parameter lists longer than two lines.
 	if prev_codeline =~ '([^)]\+$'
-		return indnt + &shiftwidth
+		return indnt + shiftwidth()
 	endif
 
 
@@ -146,7 +146,7 @@ function! GetPascalIndent( line_num )
 	" Lines starting with "else", but not following line ending with
 	" "end".
 	if this_codeline =~ '^\s*else\>' && prev_codeline !~ '\<end$'
-		return indnt - &shiftwidth
+		return indnt - shiftwidth()
 	endif
 
 	" Lines after a single-statement branch/loop.
@@ -160,16 +160,16 @@ function! GetPascalIndent( line_num )
 		" additional unindentation.
 		if this_codeline =~ '^\s*\(end;\|except\|finally\|\)$'
 			" Note that we don't return from here.
-			return indnt - &shiftwidth - &shiftwidth
+			return indnt - 2 * shiftwidth()
 		endif
-		return indnt - &shiftwidth
+		return indnt - shiftwidth()
 	endif
 
 	" Lines starting with "until" or "end". This rule must be overridden
 	" by the one for "end" after a single-statement branch/loop. In
 	" other words that rule should come before this one.
 	if this_codeline =~ '^\s*\(end\|until\)\>'
-		return indnt - &shiftwidth
+		return indnt - shiftwidth()
 	endif
 
 
@@ -201,7 +201,7 @@ function! GetPascalIndent( line_num )
 
 	" If the PREVIOUS LINE ended in these items, always indent.
 	if prev_codeline =~ '^\s*\(unit\|uses\|try\|except\|finally\|private\|protected\|public\|published\)$'
-		return indnt + &shiftwidth
+		return indnt + shiftwidth()
 	endif
 
 	" ???? Indent "procedure" and "functions" if they appear within an
@@ -212,11 +212,11 @@ function! GetPascalIndent( line_num )
 	" UNINDENT ONCE
 
 	if this_codeline =~ '^\s*\(except\|finally\)$'
-		return indnt - &shiftwidth
+		return indnt - shiftwidth()
 	endif
 
 	if this_codeline =~ '^\s*\(private\|protected\|public\|published\)$'
-		return indnt - &shiftwidth
+		return indnt - shiftwidth()
 	endif
 
 

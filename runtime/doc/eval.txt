@@ -2201,12 +2201,13 @@ readfile({fname} [, {binary} [, {max}]])
 reltime([{start} [, {end}]])	List	get time value
 reltimefloat({time})		Float	turn the time value into a Float
 reltimestr({time})		String	turn time value into a String
-remote_expr({server}, {string} [, {idvar}])
+remote_expr({server}, {string} [, {idvar} [, {timeout}]])
 				String	send expression
 remote_foreground({server})	Number	bring Vim server to the foreground
 remote_peek({serverid} [, {retvar}])
 				Number	check for reply string
-remote_read({serverid})		String	read reply string
+remote_read({serverid} [, {timeout}])
+				String	read reply string
 remote_send({server}, {string} [, {idvar}])
 				String	send key sequence
 remove({list}, {idx} [, {end}])	any	remove items {idx}-{end} from {list}
@@ -3108,6 +3109,7 @@ did_filetype()	Returns |TRUE| when autocommands are being executed and the
 		FileType event has been triggered at least once.  Can be used
 		to avoid triggering the FileType event again in the scripts
 		that detect the file type. |FileType|
+		Returns |FALSE| when `:setf FALLBACK` was used.
 		When editing another file, the counter is reset, thus this
 		really checks if the FileType event has been triggered for the
 		current buffer.  This allows an autocommand that starts
@@ -4077,13 +4079,16 @@ getcompletion({pat}, {type} [, {filtered}])		*getcompletion()*
 getcurpos()	Get the position of the cursor.  This is like getpos('.'), but
 		includes an extra item in the list:
 		    [bufnum, lnum, col, off, curswant] ~
-		The "curswant" number is the preferred column when moving the
-		cursor vertically.
-		This can be used to save and restore the cursor position: >
-			let save_cursor = getcurpos()
-			MoveTheCursorAround
-			call setpos('.', save_cursor)
-<
+ 		The "curswant" number is the preferred column when moving the
+		cursor vertically.  Also see |getpos()|.
+
+ 		This can be used to save and restore the cursor position: >
+ 			let save_cursor = getcurpos()
+ 			MoveTheCursorAround
+ 			call setpos('.', save_cursor)
+<		Note that this only works within the window.  See
+		|winrestview()| for restoring more state.
+
 getcwd([{winnr}[, {tabnr}]])				*getcwd()*
 		With no arguments the result is a String, which is the name of
 		the current effective working directory. With {winnr} or
@@ -4381,11 +4386,13 @@ gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 getwinposx()	The result is a Number, which is the X coordinate in pixels of
 		the left hand side of the GUI Vim window.  The result will be
 		-1 if the information is not available.
+		The value can be used with `:winpos`.
 
 							*getwinposy()*
 getwinposy()	The result is a Number, which is the Y coordinate in pixels of
 		the top of the GUI Vim window.	The result will be -1 if the
 		information is not available.
+		The value can be used with `:winpos`.
 
 getwininfo([{winid}])					*getwininfo()*
 		Returns information about windows as a List with Dictionaries.
@@ -5150,7 +5157,10 @@ line({expr})	The result is a Number, which is the line number of the file
 <							*last-position-jump*
 		This autocommand jumps to the last known position in a file
 		just after opening it, if the '" mark is set: >
-	:au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+     :au BufReadPost *
+         \ if line("'\"") > 1 && line("'\"") <= line("$") && &ft !~# 'commit' 
+         \ |   exe "normal! g`\""
+         \ | endif
 
 line2byte({lnum})					*line2byte()*
 		Return the byte count from the start of the buffer for line
@@ -6837,7 +6847,7 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 
 		This function can be used to create a quickfix list
 		independent of the 'errorformat' setting.  Use a command like
-		":cc 1" to jump to the first position.
+		`:cc 1` to jump to the first position.
 
 
 							*setreg()*
@@ -8270,7 +8280,7 @@ lispindent		Compiled with support for lisp indenting.
 listcmds		Compiled with commands for the buffer list |:files|
 			and the argument list |arglist|.
 localmap		Compiled with local mappings and abbr. |:map-local|
-mac			macOS version of Vim.
+mac			macOS version of Nvim.
 menu			Compiled with support for |:menu|.
 mksession		Compiled with support for |:mksession|.
 modify_fname		Compiled with file name modifiers. |filename-modifiers|
@@ -10415,6 +10425,22 @@ missing: >
 	:else
 	:  echo "You will _never_ see this message"
 	:endif
+
+To execute a command only when the |+eval| feature is disabled requires a trick,
+as this example shows: >
+	if 1
+	  nnoremap : :"
+	endif
+	normal :set history=111<CR>
+	if 1
+	  nunmap :
+	endif
+
+The "<CR>" here is a real CR character, type CTRL-V Enter to get it.
+
+When the |+eval| feature is available the ":" is remapped to add a double
+quote, which has the effect of commenting-out the command.  without the
+|+eval| feature the nnoremap command is skipped and the command is executed.
 
 ==============================================================================
 11. The sandbox					*eval-sandbox* *sandbox* *E48*

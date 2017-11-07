@@ -309,12 +309,12 @@ define yourself.  There are a few ways to avoid this:
    You need to define your own mapping before the plugin is loaded (before
    editing a file of that type).  The plugin will then skip installing the
    default mapping.
-
+						*no_mail_maps*
 3. Disable defining mappings for a specific filetype by setting a variable,
    which contains the name of the filetype.  For the "mail" filetype this
    would be: >
 	:let no_mail_maps = 1
-
+<						*no_plugin_maps*
 4. Disable defining mappings for all filetypes by setting a variable: >
 	:let no_plugin_maps = 1
 <
@@ -722,6 +722,12 @@ Format description:
    3. "  = {msgpack-value}": raw values.  |{msgpack-value}| in this case may 
       have absolutely any type.  Special array syntax for register entries is 
       not recognized here as well.
+
+
+RUST							*ft-rust*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |ft_rust.txt|.
 
 
 SQL							*ft-sql*
