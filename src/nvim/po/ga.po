@@ -3457,7 +3457,7 @@ msgid ""
 "Maybe no changes were made or Vim did not update the swap file."
 msgstr ""
 "\n"
-"B'fhéidir nach raibh aon athrú á dhéanamh, nó tá an comhad\n"
+"B'fhéidir nach raibh aon athrú á dhéanamh, nó tá an comhad "
 "babhtála as dáta."
 
 msgid " cannot be used with this version of Vim.\n"

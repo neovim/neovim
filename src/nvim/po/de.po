@@ -377,7 +377,7 @@ msgstr " Definitions-Ergänzung (^D^N^P)"
 
 #: ../edit.c:92
 msgid " Dictionary completion (^K^N^P)"
-msgstr " Wörterbuch-Ergänzung (^K^N^P) "
+msgstr " Dictionary-Ergänzung (^K^N^P) "
 
 #: ../edit.c:93
 msgid " Thesaurus completion (^T^N^P)"
@@ -633,6 +633,9 @@ msgstr ""
 
 #: ../ex_cmds.c:2433
 #, c-format
+msgid "Pattern not found: %s"
+msgstr "Muster nicht gefunden: %s"
+
 msgid ""
 "File permissions of \"%s\" are read-only.\n"
 "It may still be possible to write it.\n"
@@ -712,11 +715,6 @@ msgstr "E148: Regulärer Ausdruck fehlt in global"
 #, c-format
 msgid "Pattern found in every line: %s"
 msgstr "Muster in jeder Zeile gefunden: %s"
-
-#: ../ex_cmds.c:4504
-#, c-format
-msgid "Pattern not found: %s"
-msgstr "Muster nicht gefunden: %s"
 
 #: ../ex_cmds.c:4581
 msgid ""

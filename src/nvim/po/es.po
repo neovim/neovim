@@ -1197,7 +1197,7 @@ msgstr "E141: No existe un nombre de archivo para el búfer %<PRId64>"
 #: ../ex_cmds.c:2412
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr ""
-"E142: No se ha escrito el archivo: escritura desactivada por \n"
+"E142: No se ha escrito el archivo: escritura desactivada por "
 "la opción 'write'"
 
 #: ../ex_cmds.c:2434
@@ -2209,7 +2209,7 @@ msgstr "es de solo lectura (añada ! para sobreescribir)"
 #: ../fileio.c:2886
 msgid "E506: Can't write to backup file (add ! to override)"
 msgstr ""
-"E506: No se pudo escribir en el archivo de recuperación\n"
+"E506: No se pudo escribir en el archivo de recuperación "
 "(añada ! para forzar la orden)"
 
 #: ../fileio.c:2898
@@ -3136,7 +3136,7 @@ msgstr ""
 #: ../hardcopy.c:2254
 msgid "E675: No default font specified for multi-byte printing."
 msgstr ""
-"E675: No se ha definido un tipo de letra predeterminado para impresión\n"
+"E675: No se ha definido un tipo de letra predeterminado para impresión "
 "multi-byte"
 
 #: ../hardcopy.c:2426
@@ -3393,7 +3393,7 @@ msgstr "Basura después de la opción"
 #: ../main.c:152
 msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
 msgstr ""
-"Demasiados argumentos tales como: \"+orden\", \"-c orden\" \n"
+"Demasiados argumentos tales como: \"+orden\", \"-c orden\" "
 "o \"--cmd orden\""
 
 #: ../main.c:154
@@ -3797,7 +3797,7 @@ msgstr "E302: No pude cambiar el nombre del archivo de intercambio"
 #, c-format
 msgid "E303: Unable to open swap file for \"%s\", recovery impossible"
 msgstr ""
-"E303: Incapaz de abrir el archivo de intercambio para %s,\n"
+"E303: Incapaz de abrir el archivo de intercambio para %s, "
 "recuperación imposible"
 
 #: ../memline.c:666
@@ -3916,7 +3916,7 @@ msgstr "??? desde aquí hasta ???FIN las líneas pueden estar desordenadas"
 #: ../memline.c:1164
 msgid "??? from here until ???END lines may have been inserted/deleted"
 msgstr ""
-"??? desde aquí hasta ???FIN las líneas pueden haber sido\n"
+"??? desde aquí hasta ???FIN las líneas pueden haber sido "
 "insertadas/borradas"
 
 #: ../memline.c:1181
@@ -3931,7 +3931,7 @@ msgstr "E311: Recuperación interrumpida"
 msgid ""
 "E312: Errors detected while recovering; look for lines starting with ???"
 msgstr ""
-"E312: Se han detectado errores al recuperar; busque líneas que\n"
+"E312: Se han detectado errores al recuperar; busque líneas que "
 "empiecen con ???"
 
 #: ../memline.c:1245
@@ -5382,7 +5382,7 @@ msgstr "E756: La corrección ortográfica está desactivada"
 #, c-format
 msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
 msgstr ""
-"Advertencia: No se pudo hallar la lista de palabras \"%s.%s.spl\" \n"
+"Advertencia: No se pudo hallar la lista de palabras \"%s.%s.spl\" "
 "or \"%s.ascii.spl\""
 
 #: ../spell.c:2473
@@ -5443,8 +5443,7 @@ msgid ""
 "%d"
 msgstr ""
 "Definir COMPOUNDFORBIDFLAG después de un elemento PFX puede dar resultados "
-"erróneos\n"
-"en %s línea %d"
+"erróneos en %s línea %d"
 
 #: ../spell.c:4731
 #, c-format
@@ -5453,8 +5452,7 @@ msgid ""
 "%d"
 msgstr ""
 "Definir COMPOUNDPERMITFLAG después de un ítem PFX puede dar resultados "
-"erróneos\n"
-"en %s línea %d"
+"erróneos en %s línea %d"
 
 #: ../spell.c:4747
 #, c-format
@@ -5485,7 +5483,7 @@ msgstr "Valor equivocado de CHECKCOMPOUNDPATTERN en %s línea %d: %s"
 #, c-format
 msgid "Different combining flag in continued affix block in %s line %d: %s"
 msgstr ""
-"Marca de combinación diferente en el bloque de afijos continuo\n"
+"Marca de combinación diferente en el bloque de afijos continuo "
 "en %s línea %d: %s"
 
 #: ../spell.c:4850
@@ -5500,8 +5498,7 @@ msgid ""
 "line %d: %s"
 msgstr ""
 "Afijo usado también para BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST "
-"en\n"
-"%s línea %d: %s"
+"en %s línea %d: %s"
 
 #: ../spell.c:4893
 #, c-format
@@ -5942,7 +5939,7 @@ msgstr "E402: Basura después del patrón: %s"
 #: ../syntax.c:5120
 msgid "E403: syntax sync: line continuations pattern specified twice"
 msgstr ""
-"E403: Sincronización de sintaxis: Se especificó dos veces un\n"
+"E403: Sincronización de sintaxis: Se especificó dos veces un "
 "patrón de continuación de línea"
 
 #: ../syntax.c:5169
@@ -6569,7 +6566,7 @@ msgstr "E813: No se puede cerrar la ventana de autocmd"
 #: ../window.c:1814
 msgid "E814: Cannot close window, only autocmd window would remain"
 msgstr ""
-"E814: No se pudo cerrar la última ventana, solo quedará\n"
+"E814: No se pudo cerrar la última ventana, solo quedará "
 "la ventana de autocmd"
 
 #: ../window.c:2717
