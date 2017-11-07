@@ -60,7 +60,7 @@ THE WINDOW TITLE
 At the very top is the window title.  This is drawn by your window system.
 Vim will set the title to show the name of the current file.  First comes the
 name of the file.  Then some special characters and the directory of the file
-in parens.  These special character can be present:
+in parens.  These special characters can be present:
 
 	-	The file cannot be modified (e.g., a help file)
 	+	The file contains changes
@@ -202,7 +202,7 @@ the "real clipboard" are called clipboard, you'll have to get used to that.
    To put text on the real clipboard, select a few different words in one of
 the gVims you have running.  Then use the Edit/Copy menu entry.  Now the text
 has been copied to the real clipboard.  You can't see this, unless you have
-some application that shows the clipboard contents (e.g., KDE's klipper).
+some application that shows the clipboard contents (e.g., KDE's Klipper).
    Now select the other gVim, position the cursor somewhere and use the
 Edit/Paste menu.  You will see the text from the real clipboard is inserted.
 

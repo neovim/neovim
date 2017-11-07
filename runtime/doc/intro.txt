@@ -120,9 +120,14 @@ Report bugs on GitHub: https://github.com/neovim/neovim/issues
 
 Please be brief; all the time that is spent on answering mail is subtracted
 from the time that is spent on improving Vim!  Always give a reproducible
-example and try to find out which settings or other things influence the
-appearance of the bug.  Try different machines, if possible.  Send me patches
-if you can!
+example and try to find out which settings or other things trigger the bug.
+
+Preferably start Vim with: >
+	vim --clean -u reproduce.vim
+Where reproduce.vim is a script that reproduces the problem.  Try different
+machines, if relevant (is this an MS-Windows specific bug perhaps?).
+
+Send me patches if you can!
 
 It will help to include information about the version of Vim you are using and
 your setup.  You can get the information with this command: >
@@ -782,10 +787,12 @@ by Vim.
 ==============================================================================
 8. Definitions						*definitions*
 
+  buffer		Contains lines of text, usually read from a file.
   screen		The whole area that Vim uses to work in.  This can be
 			a terminal emulator window.  Also called "the Vim
 			window".
-  window		A view on a buffer.
+  window		A view on a buffer.  There can be multiple windows for
+			one buffer.
 
 A screen contains one or more windows, separated by status lines and with the
 command line at the bottom.

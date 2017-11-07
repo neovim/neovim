@@ -6341,8 +6341,8 @@ msgstr ""
 #: ../main.c:2213
 msgid "-S <session>\t\tSource file <session> after loading the first file"
 msgstr ""
-"-S <sessão>\t\tExecutar o arquivo <sessão> depois de carregar o\n"
-"\t\t\tprimeiro arquivo"
+"-S <sessão>\t\tExecutar o arquivo <sessão> depois de carregar o "
+"primeiro arquivo"
 
 #: ../main.c:2214
 msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"

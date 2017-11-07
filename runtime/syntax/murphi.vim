@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: Murphi model checking language
 " Maintainer: Matthew Fernandez <matthew.fernandez@gmail.com>
-" Last Change: 2017 May 3
+" Last Change: 2017 Aug 27
 " Version: 2
 " Remark: Originally authored by Diego Ongaro <ongaro@cs.stanford.edu> 
 
@@ -105,23 +105,23 @@ syn region murphiComment start="--" end="$" contains=murphiTodo
 syn region murphiComment start="/\*" end="\*/" contains=murphiTodo
 
 " Link the rules to some groups.
-highlight link murphiComment        Comment
-highlight link murphiString         String
-highlight link murphiNumber         Number
-highlight link murphiBoolean        Boolean
-highlight link murphiIdentifier     Identifier
-highlight link murphiFunction       Function
-highlight link murphiStatement      Statement
-highlight link murphiConditional    Conditional
-highlight link murphiRepeat         Repeat
-highlight link murphiLabel          Label
-highlight link murphiOperator       Operator
-highlight link murphiKeyword        Keyword
-highlight link murphiType           Type
-highlight link murphiStructure      Structure
-highlight link murphiSpecial        Special
-highlight link murphiDelimiter      Delimiter
-highlight link murphiError          Error
-highlight link murphiTodo           Todo
+hi def link murphiComment        Comment
+hi def link murphiString         String
+hi def link murphiNumber         Number
+hi def link murphiBoolean        Boolean
+hi def link murphiIdentifier     Identifier
+hi def link murphiFunction       Function
+hi def link murphiStatement      Statement
+hi def link murphiConditional    Conditional
+hi def link murphiRepeat         Repeat
+hi def link murphiLabel          Label
+hi def link murphiOperator       Operator
+hi def link murphiKeyword        Keyword
+hi def link murphiType           Type
+hi def link murphiStructure      Structure
+hi def link murphiSpecial        Special
+hi def link murphiDelimiter      Delimiter
+hi def link murphiError          Error
+hi def link murphiTodo           Todo
 
 let b:current_syntax = "murphi"

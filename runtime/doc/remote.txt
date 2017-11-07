@@ -87,7 +87,7 @@ Tell the remote server "BLA" to write all files and exit: >
     vim --servername BLA --remote-send '<C-\><C-N>:wqa<CR>'
 
 
-SERVER NAME
+SERVER NAME						*client-server-name*
 
 By default Vim will try to register the name under which it was invoked (gvim,
 egvim ...).  This can be overridden with the --servername argument.  If the

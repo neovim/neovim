@@ -311,8 +311,9 @@ CTRL-W CTRL-C						*CTRL-W_CTRL-C*
                                                                 *:hide*
 :hid[e]
 :{count}hid[e]
-		Quit the current window, unless it is the last window on the
-		screen. For {count} see |:quit|.
+		Without {count}: Quit the current window, unless it is the
+		last window on the screen.
+		If {count} is given quit the {count} window.
 
 		The buffer becomes hidden (unless there is another window
 		editing it or 'bufhidden' is `unload`, `delete` or `wipe`).
@@ -994,6 +995,8 @@ list of buffers. |unlisted-buffer|
 			   displayed in a window |hidden-buffer|
 		   -	a buffer with 'modifiable' off
 		   =	a readonly buffer
+		   R	a terminal buffer with a running job
+		   F	a terminal buffer with a finished job
 		    +	a modified buffer
 		    x   a buffer with read errors
 
@@ -1237,6 +1240,9 @@ help		Contains a help file.  Will only be created with the |:help|
 		command.  The flag that indicates a help buffer is internal
 		and can't be changed.  The 'buflisted' option will be reset
 		for a help buffer.
+
+terminal	A terminal window buffer, see |terminal|. The contents cannot
+		be read or changed until the job ends.
 
 directory	Displays directory contents.  Can be used by a file explorer
 		plugin.  The buffer is created with these settings: >
