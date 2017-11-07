@@ -3,7 +3,7 @@
 " Author:	John Wellesz <John.wellesz (AT) teaser (DOT) fr>
 " URL:		http://www.2072productions.com/vim/indent/php.vim
 " Home:		https://github.com/2072/PHP-Indenting-for-VIm
-" Last Change:	2017 March 12th
+" Last Change:	2017 Jun 13
 " Version:	1.62
 "
 "
@@ -50,25 +50,15 @@ let b:did_indent = 1
 
 let g:php_sync_method = 0
 
-if exists('*shiftwidth')
-  function! s:sw()
-    return shiftwidth()
-  endfunction
-else
-  function! s:sw()
-    return &shiftwidth
-  endfunction
-endif
-
 
 if exists("PHP_default_indenting")
-    let b:PHP_default_indenting = PHP_default_indenting * s:sw()
+    let b:PHP_default_indenting = PHP_default_indenting * shiftwidth()
 else
     let b:PHP_default_indenting = 0
 endif
 
 if exists("PHP_outdentSLComments")
-    let b:PHP_outdentSLComments = PHP_outdentSLComments * s:sw()
+    let b:PHP_outdentSLComments = PHP_outdentSLComments * shiftwidth()
 else
     let b:PHP_outdentSLComments = 0
 endif
@@ -357,7 +347,7 @@ function! FindTheSwitchIndent (lnum) " {{{
     let test = GetLastRealCodeLNum(a:lnum - 1)
 
     if test <= 1
-	return indent(1) - s:sw() * b:PHP_vintage_case_default_indent
+	return indent(1) - shiftwidth() * b:PHP_vintage_case_default_indent
     end
 
     while getline(test) =~ '^\s*}' && test > 1
@@ -371,7 +361,7 @@ function! FindTheSwitchIndent (lnum) " {{{
     if getline(test) =~# '^\s*switch\>'
 	return indent(test)
     elseif getline(test) =~# s:defaultORcase
-	return indent(test) - s:sw() * b:PHP_vintage_case_default_indent
+	return indent(test) - shiftwidth() * b:PHP_vintage_case_default_indent
     else
 	return FindTheSwitchIndent(test)
     endif
@@ -444,7 +434,7 @@ function! GetPhpIndent()
     endif
 
     if b:PHP_default_indenting
-	let b:PHP_default_indenting = g:PHP_default_indenting * s:sw()
+	let b:PHP_default_indenting = g:PHP_default_indenting * shiftwidth()
     endif
 
     let cline = getline(v:lnum)
@@ -701,7 +691,7 @@ function! GetPhpIndent()
 	let b:PHP_CurrentIndentLevel = b:PHP_default_indenting
 	return indent(FindTheIfOfAnElse(v:lnum, 1))
     elseif cline =~# s:defaultORcase
-	return FindTheSwitchIndent(v:lnum) + s:sw() * b:PHP_vintage_case_default_indent
+	return FindTheSwitchIndent(v:lnum) + shiftwidth() * b:PHP_vintage_case_default_indent
     elseif cline =~ '^\s*)\=\s*{'
 	let previous_line = last_line
 	let last_line_num = lnum
@@ -713,7 +703,7 @@ function! GetPhpIndent()
 		let ind = indent(last_line_num)
 
 		if  b:PHP_BracesAtCodeLevel
-		    let ind = ind + s:sw()
+		    let ind = ind + shiftwidth()
 		endif
 
 		return ind
@@ -724,7 +714,7 @@ function! GetPhpIndent()
 	endwhile
 
     elseif last_line =~# unstated && cline !~ '^\s*);\='.endline
-	let ind = ind + s:sw() " we indent one level further when the preceding line is not stated
+	let ind = ind + shiftwidth() " we indent one level further when the preceding line is not stated
 	return ind + addSpecial
 
     elseif (ind != b:PHP_default_indenting || last_line =~ '^[)\]]' ) && last_line =~ terminated
@@ -823,7 +813,7 @@ function! GetPhpIndent()
 	    endif
 
 	    if !dontIndent && (!b:PHP_BracesAtCodeLevel || last_line !~# '^\s*{')
-		let ind = ind + s:sw()
+		let ind = ind + shiftwidth()
 	    endif
 
 	    if b:PHP_BracesAtCodeLevel || b:PHP_vintage_case_default_indent == 1
@@ -841,17 +831,17 @@ function! GetPhpIndent()
 	    endif
 
 	elseif last_line =~ '^\s*'.s:blockstart
-	    let ind = ind + s:sw()
+	    let ind = ind + shiftwidth()
 
 
 	elseif AntepenultimateLine =~ '{'.endline && AntepenultimateLine !~? '^\s*use\>' || AntepenultimateLine =~ terminated || AntepenultimateLine =~# s:defaultORcase
-	    let ind = ind + s:sw()
+	    let ind = ind + shiftwidth()
 	endif
 
     endif
 
     if cline =~  '^\s*[)\]];\='
-	let ind = ind - s:sw()
+	let ind = ind - shiftwidth()
     endif
 
     let b:PHP_CurrentIndentLevel = ind

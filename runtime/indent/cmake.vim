@@ -68,19 +68,19 @@ fun! CMakeGetIndent(lnum)
     let ind = ind
   else
     if previous_line =~? cmake_indent_begin_regex
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
     endif
     if previous_line =~? cmake_indent_open_regex
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
     endif
   endif
 
   " Subtract
   if this_line =~? cmake_indent_end_regex
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
   if previous_line =~? cmake_indent_close_regex
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   endif
 
   return ind

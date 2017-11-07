@@ -404,11 +404,7 @@ function GetRubyIndent(...)
   " ----------
 
   " The value of a single shift-width
-  if exists('*shiftwidth')
-    let sw = shiftwidth()
-  else
-    let sw = &sw
-  endif
+  let sw = shiftwidth()
 
   " For the current line, use the first argument if given, else v:lnum
   let clnum = a:0 ? a:1 : v:lnum

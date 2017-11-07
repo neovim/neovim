@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:	Bazel (http://bazel.io)
 " Maintainer:	David Barnett (https://github.com/google/vim-ft-bzl)
-" Last Change:	2015 Aug 11
+" Last Change:	2017 Jun 13
 
 if exists('b:did_indent')
   finish
@@ -41,11 +41,8 @@ function GetBzlIndent(lnum) abort
     if exists('g:pyindent_open_paren')
       let l:pyindent_open_paren = g:pyindent_open_paren
     endif
-    " Vim 7.3.693 and later defines a shiftwidth() function to get the effective
-    " shiftwidth value. Fall back to &shiftwidth if the function doesn't exist.
-    let l:sw_expr = exists('*shiftwidth') ? 'shiftwidth()' : '&shiftwidth'
-    let g:pyindent_nested_paren = l:sw_expr . ' * 2'
-    let g:pyindent_open_paren = l:sw_expr . ' * 2'
+    let g:pyindent_nested_paren = 'shiftwidth() * 2'
+    let g:pyindent_open_paren = 'shiftwidth() * 2'
   endif
 
   let l:indent = -1

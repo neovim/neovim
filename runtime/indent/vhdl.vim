@@ -2,7 +2,7 @@
 " Language:    VHDL
 " Maintainer:  Gerald Lai <laigera+vim?gmail.com>
 " Version:     1.60
-" Last Change: 2016 Feb 26
+" Last Change: 2017 Jun 13
 " URL:         http://www.vim.org/scripts/script.php?script_id=1450
 
 " only load this indent file when no other was loaded
@@ -114,9 +114,9 @@ function GetVHDLindent()
       return ind2 + m
     else
       if g:vhdl_indent_genportmap
-        return ind2 + stridx(prevs_noi, '(') + &sw
+        return ind2 + stridx(prevs_noi, '(') + shiftwidth()
       else
-        return ind2 + &sw
+        return ind2 + shiftwidth()
       endif
     endif
   endif
@@ -128,7 +128,7 @@ function GetVHDLindent()
     if g:vhdl_indent_rhsassign
       return ind2 + matchend(prevs_noi, '<=\s*\ze.')
     else
-      return ind2 + &sw
+      return ind2 + shiftwidth()
     endif
   endif
 
@@ -218,12 +218,12 @@ function GetVHDLindent()
       let ps = getline(pn)
 
       if (ps =~? s:NC.'\<begin\>')
-        return indent(pn) - &sw
+        return indent(pn) - shiftwidth()
       endif
     endwhile
 
     if (pn == 0)
-      return ind - &sw
+      return ind - shiftwidth()
     else
       return indent(pn)
     endif
@@ -237,7 +237,7 @@ function GetVHDLindent()
     " keyword: "type"
     let s3 = s:NC.s:NE.'\<type\>'
     if curs !~? s3.'.*'.s:NC.'\<\%(record\|units\)\>.*'.s:ES && prevs =~? s3
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
     endif
     return ind
   endif
@@ -282,7 +282,7 @@ function GetVHDLindent()
   " removed:  "begin", "case", "elsif", "if", "loop", "record", "units", "while"
   " where:    anywhere in previous line
   if prevs =~? s:NC.s:NE.'\<\%(block\|process\)\>'
-    return ind + &sw
+    return ind + shiftwidth()
   endif
 
   " indent:   +sw
@@ -290,7 +290,7 @@ function GetVHDLindent()
   " removed:  "component", "for", "when", "with"
   " where:    start of previous line
   if prevs =~? '^\s*\%(architecture\|configuration\|entity\|package\)\>'
-    return ind + &sw
+    return ind + shiftwidth()
   endif
 
   " indent:   +sw
@@ -298,7 +298,7 @@ function GetVHDLindent()
   " removed:  "generate", "is", "=>"
   " where:    end of previous line
   if prevs =~? s:NC.'\<select'.s:ES
-    return ind + &sw
+    return ind + shiftwidth()
   endif
 
   " indent:   +sw
@@ -310,7 +310,7 @@ function GetVHDLindent()
   " where:    end of previous line
   " _note_:   indent allowed to leave this filter
   if prevs =~? s:NC.'\%(\<begin\>\|'.s:NE.'\<\%(loop\|record\|units\)\>\)' || prevs =~? '^\s*\%(component\|else\|for\)\>' || prevs =~? s:NC.'\%('.s:NE.'\<generate\|\<\%(is\|then\)\|=>\)'.s:ES
-    let ind = ind + &sw
+    let ind = ind + shiftwidth()
   endif
 
   " ****************************************************************************************
@@ -322,7 +322,7 @@ function GetVHDLindent()
     if prevs =~? s:NC.'\<is'.s:ES
       return ind
     elseif prevs !~? s4
-      return ind - &sw
+      return ind - shiftwidth()
     else
       return ind2
     endif
@@ -336,7 +336,7 @@ function GetVHDLindent()
     if prevs =~? '^\s*\%(elsif\|'.s5.'\)'
       return ind
     else
-      return ind - &sw
+      return ind - shiftwidth()
     endif
   endif
 
@@ -367,9 +367,9 @@ function GetVHDLindent()
         "where:    start of previous non-comment line
         if m == 1
           if ps =~? '^\s*end\s\+case\>'
-            return indent(pn) - 2 * &sw
+            return indent(pn) - 2 * shiftwidth()
           elseif ps =~? '^\s*when\>'
-            return indent(pn) - &sw
+            return indent(pn) - shiftwidth()
           elseif ps =~? '^\s*case\>'
             return indent(pn)
           endif
@@ -385,14 +385,14 @@ function GetVHDLindent()
       let pn = prevnonblank(pn - 1)
       let ps = getline(pn)
     endwhile
-    return ind - &sw
+    return ind - shiftwidth()
   endif
 
   " indent:   -sw
   " keyword:  ")"
   " where:    start of current line
   if curs =~ '^\s*)'
-    return ind - &sw
+    return ind - shiftwidth()
   endif
 
   " indent:   0
@@ -407,7 +407,7 @@ function GetVHDLindent()
   " where:    start of current line
   "if curs =~? '^\s*end\s\+\w\+\>'
   if curs =~? '^\s*end\%(\s\|;'.s:ES.'\)'
-    return ind - &sw
+    return ind - shiftwidth()
   endif
 
   " ****************************************************************************************

@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 May 27
+" Last Change:	2017 Jun 12
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -2229,6 +2229,8 @@ func! s:FTtex()
     let format = tolower(matchstr(firstline, '\a\+'))
     let format = substitute(format, 'pdf', '', '')
     if format == 'tex'
+      let format = 'latex'
+    elseif format == 'plaintex'
       let format = 'plain'
     endif
   else

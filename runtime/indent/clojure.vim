@@ -261,7 +261,7 @@ if exists("*searchpairpos")
 		call cursor(paren)
 
 		if s:is_method_special_case(paren)
-			return [paren[0], paren[1] + &shiftwidth - 1]
+			return [paren[0], paren[1] + shiftwidth() - 1]
 		endif
 
 		if s:is_reader_conditional_special_case(paren)
@@ -299,19 +299,19 @@ if exists("*searchpairpos")
 		let ww = s:strip_namespace_and_macro_chars(w)
 
 		if &lispwords =~# '\V\<' . ww . '\>'
-			return [paren[0], paren[1] + &shiftwidth - 1]
+			return [paren[0], paren[1] + shiftwidth() - 1]
 		endif
 
 		if g:clojure_fuzzy_indent
 			\ && !s:match_one(g:clojure_fuzzy_indent_blacklist, ww)
 			\ && s:match_one(g:clojure_fuzzy_indent_patterns, ww)
-			return [paren[0], paren[1] + &shiftwidth - 1]
+			return [paren[0], paren[1] + shiftwidth() - 1]
 		endif
 
 		call search('\v\_s', 'cW')
 		call search('\v\S', 'W')
 		if paren[0] < line(".")
-			return [paren[0], paren[1] + (g:clojure_align_subforms ? 0 : &shiftwidth - 1)]
+			return [paren[0], paren[1] + (g:clojure_align_subforms ? 0 : shiftwidth() - 1)]
 		endif
 
 		call search('\v\S', 'bW')

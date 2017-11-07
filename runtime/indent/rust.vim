@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:         Rust
 " Author:           Chris Morgan <me@chrismorgan.info>
-" Last Change:      2017 Mar 21
+" Last Change:      2017 Jun 13
 " For bugs, patches and license go to https://github.com/rust-lang/rust.vim
 
 " Only load this indent file when no other was loaded.
@@ -199,7 +199,7 @@ function GetRustIndent(lnum)
 					" It's the closing line, dedent it
 					return 0
 				else
-					return &shiftwidth
+					return shiftwidth()
 				endif
 			endif
 		endif

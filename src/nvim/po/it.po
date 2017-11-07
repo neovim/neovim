@@ -11,7 +11,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: vim 7.4\n"
+"Project-Id-Version: vim 8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-02-11 12:10+0100\n"
 "PO-Revision-Date:  2016-02-11 14:42+0200\n"
