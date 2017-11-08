@@ -372,10 +372,12 @@ Test functions:
 
 Other options:
   'antialias'
+  'clipboard' ("autoselect", "autoselectplus" and "autoselectml" flags
+               were removed)
   'cpoptions' (g j k H w < * - and all POSIX flags were removed)
   'encoding' ("utf-8" is always used)
   'esckeys'
-  'guioptions' "t" flag was removed
+  'guioptions' ("t" flag was removed)
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
   'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'imactivatefunc'* *'imaf'*
