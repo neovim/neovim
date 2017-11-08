@@ -1319,27 +1319,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			will additionally copy the text into register
 			'*'. See |clipboard|.
 
-						*clipboard-autoselect*
-	autoselect	Works like the 'a' flag in 'guioptions': If present,
-			then whenever Visual mode is started, or the Visual
-			area extended, Vim tries to become the owner of the
-			windowing system's global selection or put the
-			selected text on the clipboard used by the selection
-			register "*.  See |guioptions_a| and |quotestar| for
-			details.  When the GUI is active, the 'a' flag in
-			'guioptions' is used, when the GUI is not active, this
-			"autoselect" flag is used.
-			Also applies to the modeless selection.
-
-						*clipboard-autoselectplus*
-	autoselectplus  Like "autoselect" but using the + register instead of
-			the * register.  Compare to the 'P' flag in
-			'guioptions'.
-
-						*clipboard-autoselectml*
-	autoselectml	Like "autoselect", but for the modeless selection
-			only.  Compare to the 'A' flag in 'guioptions'.
-
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
 			global
