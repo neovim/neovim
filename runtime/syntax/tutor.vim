@@ -15,7 +15,7 @@ syn match tutorURL /\(https\?\|file\):\/\/[[:graph:]]\+\>\/\?/
 syn match tutorEmail /\<[[:graph:]]\+@[[:graph:]]\+\>/
 syn match tutorInternalAnchor /\*[[:alnum:]-]\+\*/ contained conceal containedin=tutorSection
 
-syn match tutorSection /^#\{1,6}\s.\+$/ fold
+syn match tutorSection /^#\{1,6}\s.\+$/ fold contains=tutorInlineNormal
 syn match tutorSectionBullet /#/ contained containedin=tutorSection
 
 syn match tutorTOC /\ctable of contents:/
@@ -44,7 +44,7 @@ syn region tutorInlineCommand matchgroup=Delimiter start=/\\\@<!`\(.*{vim}\)\@=/
 syn region tutorNormal matchgroup=Delimiter start=/^\~\{3} norm\(al\?\)\?\s*$/ end=/^\~\{3}/ contains=@VIMNORMAL
 syn region tutorInlineNormal matchgroup=Delimiter start=/\\\@<!`\(\S*{normal}\)\@=/ end=/\\\@<!`\({normal}\)\@=/ nextgroup=tutorInlineType contains=@VIMNORMAL
 
-syn match tutorInlineType /{\(normal\|vim\)}/ contained
+syn match tutorInlineType /{\(normal\|vim\)}/ contained conceal
 
 syn match tutorInlineOK /✓/
 syn match tutorInlineX /✗/
