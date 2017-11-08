@@ -10672,6 +10672,10 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = has_nvim_version(name + 5);
     } else if (STRICMP(name, "vim_starting") == 0) {
       n = (starting != 0);
+    } else if (STRICMP(name, "ttyin") == 0) {
+      n = stdin_isatty;
+    } else if (STRICMP(name, "ttyout") == 0) {
+      n = stdout_isatty;
     } else if (STRICMP(name, "multi_byte_encoding") == 0) {
       n = has_mbyte != 0;
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)

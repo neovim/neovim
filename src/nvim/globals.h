@@ -564,21 +564,22 @@ EXTERN int ru_col;              /* column for ruler */
 EXTERN int ru_wid;              /* 'rulerfmt' width of ruler when non-zero */
 EXTERN int sc_col;              /* column for shown command */
 
-/*
- * When starting or exiting some things are done differently (e.g. screen
- * updating).
- */
+//
+// When starting or exiting some things are done differently (e.g. screen
+// updating).
+//
+
+// First NO_SCREEN, then NO_BUFFERS, then 0 when startup finished.
 EXTERN int starting INIT(= NO_SCREEN);
-/* first NO_SCREEN, then NO_BUFFERS and then
- * set to 0 when starting up finished */
-EXTERN int exiting INIT(= FALSE);
-/* TRUE when planning to exit Vim.  Might
- * still keep on running if there is a changed
- * buffer. */
-// volatile because it is used in signal handler deathtrap().
+// true when planning to exit. Might keep running if there is a changed buffer.
+EXTERN int exiting INIT(= false);
+// is stdin a terminal?
+EXTERN int stdin_isatty INIT(= true);
+// is stdout a terminal?
+EXTERN int stdout_isatty INIT(= true);
+// true when doing full-screen output, otherwise only writing some messages.
+// volatile because it is used in a signal handler.
 EXTERN volatile int full_screen INIT(= false);
-// TRUE when doing full-screen output
-// otherwise only writing some messages
 
 EXTERN int restricted INIT(= FALSE);
 // TRUE when started in restricted mode (-Z)
