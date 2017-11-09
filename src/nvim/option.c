@@ -74,6 +74,7 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
 
@@ -248,6 +249,7 @@ typedef struct vimoption {
 
 #define P_RWINONLY     0x10000000U  ///< only redraw current window
 #define P_NDNAME       0x20000000U  ///< only normal dir name chars allowed
+#define P_UI_OPTION    0x40000000U  ///< send option to remote ui
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -1188,6 +1190,7 @@ do_set (
         set_options_default(OPT_FREE | opt_flags);
         didset_options();
         didset_options2();
+        ui_refresh_options();
         redraw_all_later(CLEAR);
       } else {
         showoptions(1, opt_flags);
@@ -1815,6 +1818,10 @@ do_set (
                              NULL, false, NULL);
               reset_v_option_vars();
               xfree(saved_origval);
+              if (options[opt_idx].flags & P_UI_OPTION) {
+                ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                                   STRING_OBJ(cstr_as_string(*(char **)varp)));
+              }
             }
           } else {
             // key code option(FIXME(tarruda): Show a warning or something
@@ -2417,6 +2424,10 @@ static char *set_string_option(const int opt_idx, const char *const value,
                    NULL, false, NULL);
     reset_v_option_vars();
     xfree(saved_oldval);
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         STRING_OBJ(cstr_as_string((char *)(*varp))));
+    }
   }
 
   return r;
@@ -4024,6 +4035,10 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
                    (char_u *) options[opt_idx].fullname,
                    NULL, false, NULL);
     reset_v_option_vars();
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         BOOLEAN_OBJ(value));
+    }
   }
 
   comp_col();                       /* in case 'ruler' or 'showcmd' changed */
@@ -4429,6 +4444,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
                    (char_u *) options[opt_idx].fullname,
                    NULL, false, NULL);
     reset_v_option_vars();
+    if (options[opt_idx].flags & P_UI_OPTION) {
+      ui_call_option_set(cstr_as_string(options[opt_idx].fullname),
+                         INTEGER_OBJ(value));
+    }
   }
 
   comp_col();                       /* in case 'columns' or 'ls' changed */
@@ -4997,6 +5016,29 @@ static int optval_default(vimoption_T *p, char_u *varp)
     return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
   /* P_STRING */
   return STRCMP(*(char_u **)varp, p->def_val[dvi]) == 0;
+}
+
+/// Send update to UIs with values of UI relevant options
+void ui_refresh_options(void)
+{
+  for (int opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
+    uint32_t flags = options[opt_idx].flags;
+    if (!(flags & P_UI_OPTION)) {
+      continue;
+    }
+    String name = cstr_as_string(options[opt_idx].fullname);
+    void *varp = options[opt_idx].var;
+    Object value = OBJECT_INIT;
+    if (flags & P_BOOL) {
+      value = BOOLEAN_OBJ(*(int *)varp);
+    } else if (flags & P_NUM) {
+      value = INTEGER_OBJ(*(long *)varp);
+    } else if (flags & P_STRING) {
+      // cstr_as_string handles NULL string
+      value = STRING_OBJ(cstr_as_string(*(char **)varp));
+    }
+    ui_call_option_set(name, value);
+  }
 }
 
 /*

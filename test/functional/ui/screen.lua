@@ -137,6 +137,7 @@ function Screen.new(width, height)
     visual_bell = false,
     suspended = false,
     mode = 'normal',
+    options = {},
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
     _mouse_enabled = true,
@@ -480,6 +481,10 @@ end
 
 function Screen:_handle_set_icon(icon)
   self.icon = icon
+end
+
+function Screen:_handle_option_set(name, value)
+  self.options[name] = value
 end
 
 function Screen:_clear_block(top, bot, left, right)
