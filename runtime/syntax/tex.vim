@@ -512,7 +512,7 @@ if !exists("g:tex_no_math")
   if &ambw == "double" || exists("g:tex_usedblwidth")
     let s:texMathDelimList= s:texMathDelimList + [
      \ ['\\langle'     , '〈'] ,
-     \ ['\\rangle'     , '〉'] ,
+     \ ['\\rangle'     , '〉']]
   else
     let s:texMathDelimList= s:texMathDelimList + [
      \ ['\\langle'     , '<'] ,
