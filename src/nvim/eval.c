@@ -8457,11 +8457,13 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
   int idx = 0;
 
   if (argvars[0].v_type == VAR_LIST) {
+    tv_copy(&argvars[0], rettv);
     if ((l = argvars[0].vval.v_list) == NULL
         || (!map && tv_check_lock(l->lv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;
     }
   } else if (argvars[0].v_type == VAR_DICT) {
+    tv_copy(&argvars[0], rettv);
     if ((d = argvars[0].vval.v_dict) == NULL
         || (!map && tv_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;
@@ -8542,8 +8544,6 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
 
     did_emsg |= save_did_emsg;
   }
-
-  tv_copy(&argvars[0], rettv);
 }
 
 static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
