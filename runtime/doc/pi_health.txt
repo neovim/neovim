@@ -23,11 +23,11 @@ Commands				*health-commands*
 					*:checkhealth* *:CheckHealth*
 :checkhealth          Run all healthchecks.
 					*E5009*
-                      Nvim depends on the |$VIMRUNTIME| environment variable
-                      to find the standard "runtime files" for syntax
-                      highlighting, filetype-specific behavior, and standard
-                      plugins such as :checkhealth.  If $VIMRUNTIME is invalid
-                      then those features will not work.
+                      Nvim depends on |$VIMRUNTIME| and 'runtimepath' to find
+                      the standard "runtime files" for syntax highlighting,
+                      filetype-specific behavior, and standard plugins
+                      (including :checkhealth).  If the runtime files cannot
+                      be found then those features will not work.
 
 :checkhealth {plugins}
                       Run healthcheck(s) for one or more plugins. E.g. to run

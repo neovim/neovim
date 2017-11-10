@@ -22883,11 +22883,15 @@ void ex_checkhealth(exarg_T *eap)
     const char *vimruntime_env = os_getenv("VIMRUNTIME");
     if (vimruntime_env == NULL) {
       EMSG(_("E5009: $VIMRUNTIME is empty or unset"));
-      return;
     } else {
-      EMSG2(_("E5009: Invalid $VIMRUNTIME: %s"), os_getenv("VIMRUNTIME"));
-      return;
+      bool rtp_ok = NULL != strstr((char *)p_rtp, vimruntime_env);
+      if (rtp_ok) {
+        EMSG2(_("E5009: Invalid $VIMRUNTIME: %s"), vimruntime_env);
+      } else {
+        EMSG(_("E5009: Invalid 'runtimepath'"));
+      }
     }
+    return;
   }
 
   size_t bufsize = STRLEN(eap->arg) + sizeof("call health#check('')");
