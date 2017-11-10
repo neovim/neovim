@@ -302,11 +302,11 @@ readfile (
   linenr_T skip_count = 0;
   linenr_T read_count = 0;
   int msg_save = msg_scroll;
-  linenr_T read_no_eol_lnum = 0;        /* non-zero lnum when last line of
-                                        * last read was missing the eol */
-  int try_mac = (vim_strchr(p_ffs, 'm') != NULL);
-  int try_dos = (vim_strchr(p_ffs, 'd') != NULL);
-  int try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+  linenr_T read_no_eol_lnum = 0;        // non-zero lnum when last line of
+                                        // last read was missing the eol
+  int try_mac;
+  int try_dos;
+  int try_unix;
   int file_rewind = FALSE;
   int can_retry;
   linenr_T conv_error = 0;              /* line nr with conversion error */
@@ -639,6 +639,10 @@ readfile (
   curbuf->b_op_start.lnum = ((from == 0) ? 1 : from);
   curbuf->b_op_start.col = 0;
 
+  try_mac = (vim_strchr(p_ffs, 'm') != NULL);
+  try_dos = (vim_strchr(p_ffs, 'd') != NULL);
+  try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+
   if (!read_buffer) {
     int m = msg_scroll;
     int n = msg_scrolled;
@@ -668,6 +672,12 @@ readfile (
     else
       apply_autocmds_exarg(EVENT_FILEREADPRE, sfname, sfname,
           FALSE, NULL, eap);
+
+  // autocommands may have changed it
+  try_mac = (vim_strchr(p_ffs, 'm') != NULL);
+  try_dos = (vim_strchr(p_ffs, 'd') != NULL);
+  try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+
     if (msg_scrolled == n)
       msg_scroll = m;
 
