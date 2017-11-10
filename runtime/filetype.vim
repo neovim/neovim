@@ -1537,7 +1537,6 @@ au BufNewFile,BufRead *.mib,*.my		setf mib
 au BufNewFile,BufRead *.hog,snort.conf,vision.conf	setf hog
 au BufNewFile,BufRead *.rules			call filetype#FTRules()
 
-let s:ft_rules_udev_rules_pattern = '^\s*\cudev_rules\s*=\s*"\([^"]\{-1,}\)/*".*'
 " Spec (Linux RPM)
 au BufNewFile,BufRead *.spec			setf spec
 

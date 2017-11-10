@@ -560,6 +560,7 @@ func filetype#CSH()
   endif
 endfunc
 
+let s:ft_rules_udev_rules_pattern = '^\s*\cudev_rules\s*=\s*"\([^"]\{-1,}\)/*".*'
 func filetype#FTRules()
   let path = expand('<amatch>:p')
   if path =~ '^/\(etc/udev/\%(rules\.d/\)\=.*\.rules\|lib/udev/\%(rules\.d/\)\=.*\.rules\)$'
