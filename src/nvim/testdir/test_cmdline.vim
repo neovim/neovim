@@ -268,3 +268,13 @@ func Test_illegal_address2()
   call delete('Xtest.vim')
 endfunc
 
+func Test_cmdline_complete_wildoptions()
+  help
+  call feedkeys(":tag /\<c-a>\<c-b>\"\<cr>", 'tx')
+  let a = join(sort(split(@:)),' ')
+  set wildoptions=tagfile
+  call feedkeys(":tag /\<c-a>\<c-b>\"\<cr>", 'tx')
+  let b = join(sort(split(@:)),' ')
+  call assert_equal(a, b)
+  bw!
+endfunc
