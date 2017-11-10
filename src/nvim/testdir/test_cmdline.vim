@@ -25,6 +25,34 @@ func Test_complete_wildmenu()
   set nowildmenu
 endfunc
 
+func Test_expr_completion()
+  if !(has('cmdline_compl') && has('eval'))
+    return
+  endif
+  for cmd in [
+	\ 'let a = ',
+	\ 'if',
+	\ 'elseif',
+	\ 'while',
+	\ 'for',
+	\ 'echo',
+	\ 'echon',
+	\ 'execute',
+	\ 'echomsg',
+	\ 'echoerr',
+	\ 'call',
+	\ 'return',
+	\ 'cexpr',
+	\ 'caddexpr',
+	\ 'cgetexpr',
+	\ 'lexpr',
+	\ 'laddexpr',
+	\ 'lgetexpr']
+    call feedkeys(":" . cmd . " getl\<Tab>\<Home>\"\<CR>", 'xt')
+    call assert_equal('"' . cmd . ' getline(', getreg(':'))
+  endfor
+endfunc
+
 func Test_getcompletion()
   if !has('cmdline_compl')
     return
