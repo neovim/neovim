@@ -1466,7 +1466,7 @@ void enter_buffer(buf_T *buf)
 
   if (buf->terminal) {
     terminal_resize(buf->terminal,
-                    (uint16_t)curwin->w_width,
+                    (uint16_t)(MAX(0, curwin->w_width - win_col_off(curwin))),
                     (uint16_t)curwin->w_height);
   }
 
@@ -5276,6 +5276,44 @@ int bufhl_add_hl(buf_T *buf,
     redraw_buf_later(buf, VALID);
   }
   return src_id;
+}
+
+/// Add highlighting to a buffer, bounded by two cursor positions,
+/// with an offset.
+///
+/// @param buf Buffer to add highlights to
+/// @param src_id src_id to use or 0 to use a new src_id group,
+///               or -1 for ungrouped highlight.
+/// @param hl_id Highlight group id
+/// @param pos_start Cursor position to start the hightlighting at
+/// @param pos_end Cursor position to end the highlighting at
+/// @param offset Move the whole highlighting this many columns to the right
+void bufhl_add_hl_pos_offset(buf_T *buf,
+                             int src_id,
+                             int hl_id,
+                             lpos_T pos_start,
+                             lpos_T pos_end,
+                             colnr_T offset)
+{
+  colnr_T hl_start = 0;
+  colnr_T hl_end = 0;
+
+  for (linenr_T lnum = pos_start.lnum; lnum <= pos_end.lnum; lnum ++) {
+    if (pos_start.lnum < lnum && lnum < pos_end.lnum) {
+      hl_start = offset;
+      hl_end = MAXCOL;
+    } else if (lnum == pos_start.lnum && lnum < pos_end.lnum) {
+      hl_start = pos_start.col + offset + 1;
+      hl_end = MAXCOL;
+    } else if (pos_start.lnum < lnum && lnum == pos_end.lnum) {
+      hl_start = offset;
+      hl_end = pos_end.col + offset;
+    } else if (pos_start.lnum == lnum && pos_end.lnum == lnum) {
+      hl_start = pos_start.col + offset + 1;
+      hl_end = pos_end.col + offset;
+    }
+    (void)bufhl_add_hl(buf, src_id, hl_id, lnum, hl_start, hl_end);
+  }
 }
 
 /// Clear bufhl highlights from a given source group and range of lines.

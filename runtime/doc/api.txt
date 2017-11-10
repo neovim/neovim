@@ -7,7 +7,7 @@
 Nvim API							   *API* *api*
 
 Nvim exposes a powerful API that can be used by plugins and external processes
-via |msgpack-rpc|, Lua and VimL (|eval-api|).
+via |RPC|, |Lua| and VimL (|eval-api|).
 
 Applications can also embed libnvim to work with the C API directly.
 
@@ -48,7 +48,7 @@ version.api_compatible	API is backwards-compatible with this level
 version.api_prerelease	Declares the current API level as unstable >
 			(version.api_prerelease && fn.since == version.api_level)
 functions		API function signatures
-ui_events		UI event signatures |rpc-remote-ui|
+ui_events		UI event signatures |ui|
 {fn}.since		API level where function {fn} was introduced
 {fn}.deprecated_since	API level where function {fn} was deprecated
 types			Custom handle types defined by Nvim
@@ -135,6 +135,26 @@ nvim_command({command})                                       *nvim_command()*
                 Parameters:~
                     {command}  Ex-command string
 
+nvim_get_hl_by_name({name}, {rgb})                     *nvim_get_hl_by_name()*
+                Gets a highlight definition by name.
+
+                Parameters:~
+                    {name}  Highlight group name
+                    {rgb}   Export RGB colors
+
+                Return:~
+                    Highlight definition map
+
+nvim_get_hl_by_id({hl_id}, {rgb})                        *nvim_get_hl_by_id()*
+                Gets a highlight definition by id. |hlID()|
+
+                Parameters:~
+                    {hl_id}  Highlight id as returned by |hlID()|
+                    {rgb}    Export RGB colors
+
+                Return:~
+                    Highlight definition map
+
 nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
                 Passes input keys to Nvim. On VimL error: Does not fail, but
                 updates v:errmsg.
@@ -151,7 +171,11 @@ nvim_input({keys})                                              *nvim_input()*
 
                 Unlike `nvim_feedkeys`, this uses a lower-level input buffer
                 and the call is not deferred. This is the most reliable way to
-                emulate real user input.
+                send real user input.
+
+                Note:
+                    |keycodes| like <CR> are translated, so "<" is special. To
+                    input a literal "<", send <LT>.
 
                 Attributes:~
                     {async}
@@ -204,14 +228,11 @@ nvim_call_function({fname}, {args})                     *nvim_call_function()*
                     Result of the function call
 
 nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
-                Execute lua code. Parameters might be passed, they are
-                available inside the chunk as `...`. The chunk can return a
-                value.
+                Execute lua code. Parameters (if any) are available as `...`
+                inside the chunk. The chunk can return a value.
 
-                To evaluate an expression, it must be prefixed with "return ".
-                For instance, to call a lua function with arguments sent in
-                and get its return value back, use the code "return
-                my_function(...)".
+                Only statements are executed. To evaluate an expression,
+                prefix it with `return`: return my_function(...)
 
                 Parameters:~
                     {code}  lua code to execute
@@ -220,7 +241,7 @@ nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
                 Return:~
                     Return value of lua code if present or NIL.
 
-nvim_strwidth({str})                                         *nvim_strwidth()*
+nvim_strwidth({text})                                        *nvim_strwidth()*
                 Calculates the number of display cells occupied by `text`.
                 <Tab> counts as one cell.
 
@@ -347,7 +368,7 @@ nvim_set_current_buf({buffer})                        *nvim_set_current_buf()*
                 Sets the current buffer
 
                 Parameters:~
-                    {id}  Buffer handle
+                    {buffer}  Buffer handle
 
 nvim_list_wins()                                            *nvim_list_wins()*
                 Gets the current list of window handles
@@ -365,7 +386,7 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
                 Sets the current window
 
                 Parameters:~
-                    {handle}  Window handle
+                    {window}  Window handle
 
 nvim_list_tabpages()                                    *nvim_list_tabpages()*
                 Gets the current list of tabpage handles
@@ -383,7 +404,7 @@ nvim_set_current_tabpage({tabpage})               *nvim_set_current_tabpage()*
                 Sets the current tabpage
 
                 Parameters:~
-                    {handle}  Tabpage handle
+                    {tabpage}  Tabpage handle
 
 nvim_subscribe({event})                                     *nvim_subscribe()*
                 Subscribes to event broadcasts
@@ -404,26 +425,25 @@ nvim_get_color_map()                                    *nvim_get_color_map()*
                 TODO: Documentation
 
 nvim_get_mode()                                              *nvim_get_mode()*
-                Gets the current mode.
-                mode:     Mode string. |mode()|
-                blocking: true if Nvim is waiting for input.
-
-                Attributes:~
-                    {async}
+                Gets the current mode. |mode()| "blocking" is true if Nvim is
+                waiting for input.
 
                 Return:~
                     Dictionary { "mode": String, "blocking": Boolean }
 
+                Attributes:~
+                    {async}
+
 nvim_get_keymap({mode})                                    *nvim_get_keymap()*
-                Get a list of dictionaries describing global (i.e. non-buffer)
-                mappings Note that the "buffer" key will be 0 to represent
-                false.
+                Gets a list of dictionaries describing global (non-buffer)
+                mappings. The "buffer" key in the returned dictionary is
+                always zero.
 
                 Parameters:~
-                    {mode}  The abbreviation for the mode
+                    {mode}  Mode short-name ("n", "i", "v", ...)
 
                 Return:~
-                    An array of maparg() like dictionaries describing mappings
+                    Array of maparg()-like dictionaries describing mappings
 
 nvim_get_api_info()                                      *nvim_get_api_info()*
                 TODO: Documentation
@@ -584,16 +604,16 @@ nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
                     b:changedtickvalue.
 
 nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
-                Get a list of dictionaries describing buffer-local mappings
-                Note that the buffer key in the dictionary will represent the
-                buffer handle where the mapping is present
+                Gets a list of dictionaries describing buffer-local mappings.
+                The "buffer" key in the returned dictionary reflects the
+                buffer handle where the mapping is present.
 
                 Parameters:~
-                    {mode}       The abbreviation for the mode
-                    {buffer_id}  Buffer handle
+                    {mode}    Mode short-name ("n", "i", "v", ...)
+                    {buffer}  Buffer handle
 
                 Return:~
-                    An array of maparg() like dictionaries describing mappings
+                    Array of maparg()-like dictionaries describing mappings
 
 nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable
@@ -670,24 +690,24 @@ nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
                        {col_start}, {col_end})
                 Adds a highlight to buffer.
 
-                This can be used for plugins which dynamically generate
-                highlights to a buffer (like a semantic highlighter or
-                linter). The function adds a single highlight to a buffer.
-                Unlike matchaddpos() highlights follow changes to line
-                numbering (as lines are inserted/removed above the highlighted
-                line), like signs and marks do.
+                Useful for plugins that dynamically generate highlights to a
+                buffer (like a semantic highlighter or linter). The function
+                adds a single highlight to a buffer. Unlike matchaddpos()
+                highlights follow changes to line numbering (as lines are
+                inserted/removed above the highlighted line), like signs and
+                marks do.
 
-                "src_id" is useful for batch deletion/updating of a set of
-                highlights. When called with src_id = 0, an unique source id
-                is generated and returned. Succesive calls can pass in it as
-                "src_id" to add new highlights to the same source group. All
-                highlights in the same group can then be cleared with
-                nvim_buf_clear_highlight. If the highlight never will be
-                manually deleted pass in -1 for "src_id".
+                `src_id` is useful for batch deletion/updating of a set of
+                highlights. When called with `src_id = 0`, an unique source id
+                is generated and returned. Successive calls can pass that
+                `src_id` to associate new highlights with the same source
+                group. All highlights in the same group can be cleared with
+                `nvim_buf_clear_highlight`. If the highlight never will be
+                manually deleted, pass `src_id = -1`.
 
-                If "hl_group" is the empty string no highlight is added, but a
-                new src_id is still returned. This is useful for an external
-                plugin to synchrounously request an unique src_id at
+                If `hl_group` is the empty string no highlight is added, but a
+                new `src_id` is still returned. This is useful for an external
+                plugin to synchrounously request an unique `src_id` at
                 initialization, and later asynchronously add and clear
                 highlights in response to buffer changes.
 
@@ -696,7 +716,7 @@ nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
                     {src_id}     Source group to use or 0 to use a new group,
                                  or -1 for ungrouped highlight
                     {hl_group}   Name of the highlight group to use
-                    {line}       Line to highlight
+                    {line}       Line to highlight (zero-indexed)
                     {col_start}  Start of range of columns to highlight
                     {col_end}    End of range of columns to highlight, or -1
                                  to highlight to end of line

@@ -13,18 +13,12 @@
 #   Komputeko:           http://komputeko.net/index_eo.php
 #   Komputada leksikono: http://bertilow.com/div/komputada_leksikono/
 #
-# Lasta versio:
-#   http://dominique.pelle.free.fr/vim-eo.php
-#
-# Ĉiu komento estas bonvenata...
-# Every remark is welcome...
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: Vim(Esperanto)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-16 00:30+0100\n"
-"PO-Revision-Date: 2017-01-16 01:14+0100\n"
+"POT-Creation-Date: 2017-10-02 22:42+0200\n"
+"PO-Revision-Date: 2017-10-02 22:57+0200\n"
 "Last-Translator: Dominique PELLÉ <dominique.pelle@gmail.com>\n"
 "Language-Team: \n"
 "Language: eo\n"
@@ -105,7 +99,6 @@ msgstr "E90: Ne eblas malŝargi la lastan bufron"
 msgid "E84: No modified buffer found"
 msgstr "E84: Neniu modifita bufro trovita"
 
-#. back where we started, didn't find anything.
 msgid "E85: There is no listed buffer"
 msgstr "E85: Estas neniu listigita bufro"
 
@@ -120,6 +113,18 @@ msgid "E89: No write since last change for buffer %ld (add ! to override)"
 msgstr ""
 "E89: Neniu skribo de post la lasta ŝanĝo de la bufro %ld (aldonu ! por "
 "transpasi)"
+
+msgid "E948: Job still running (add ! to end the job)"
+msgstr "E948: Tasko akoraŭ aktiva (aldonu ! por fini la taskon)"
+
+msgid "E37: No write since last change (add ! to override)"
+msgstr "E37: Neniu skribo de post lasta ŝanĝo (aldonu ! por transpasi)"
+
+msgid "E948: Job still running"
+msgstr "E948: Tasko ankoraŭ aktiva"
+
+msgid "E37: No write since last change"
+msgstr "E37: Neniu skribo de post lasta ŝanĝo"
 
 msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Averto: Listo de dosiernomoj troas"
@@ -176,7 +181,6 @@ msgstr "linio %ld de %ld --%d%%-- kol "
 msgid "[No Name]"
 msgstr "[Neniu nomo]"
 
-#. must be a help buffer
 msgid "help"
 msgstr "helpo"
 
@@ -201,6 +205,9 @@ msgid ""
 msgstr ""
 "\n"
 "# Listo de bufroj:\n"
+
+msgid "E382: Cannot write, 'buftype' option is set"
+msgstr "E382: Ne eblas skribi, opcio 'buftype' estas ŝaltita"
 
 msgid "[Scratch]"
 msgstr "[Malneto]"
@@ -369,7 +376,6 @@ msgstr "E791: Malplena rikordo en klavmapo"
 msgid " Keyword completion (^N^P)"
 msgstr " Kompletigo de ŝlosilvorto (^N^P)"
 
-#. ctrl_x_mode == 0, ^P/^N compl.
 msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
 msgstr " Reĝimo ^X (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
 
@@ -442,13 +448,12 @@ msgstr "Analizas: %s"
 msgid "Scanning tags."
 msgstr "Analizas etikedojn."
 
+msgid "match in file"
+msgstr "kongruo en dosiero"
+
 msgid " Adding"
 msgstr " Aldonanta"
 
-#. showmode might reset the internal line pointers, so it must
-#. * be called before line = ml_get(), or when this address is no
-#. * longer needed.  -- Acevedo.
-#.
 msgid "-- Searching..."
 msgstr "-- Serĉanta..."
 
@@ -469,7 +474,6 @@ msgstr "kongruo %d de %d"
 msgid "match %d"
 msgstr "kongruo %d"
 
-#. maximum nesting of lists and dicts
 msgid "E18: Unexpected characters in :let"
 msgstr "E18: Neatenditaj signoj en \":let\""
 
@@ -523,17 +527,21 @@ msgid "E711: List value has not enough items"
 msgstr "E711: Lista valoro ne havas sufiĉe da eroj"
 
 msgid "E690: Missing \"in\" after :for"
-msgstr "E690: \"in\" mankas post \":for\""
+msgstr "E690: \"in\" mankas malantaŭ \":for\""
 
 #, c-format
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: Ne estas tia variablo: \"%s\""
 
+#, c-format
+msgid "E940: Cannot lock or unlock variable %s"
+msgstr "E940: Ne eblas ŝlosi aŭ malŝlosi variablon %s"
+
 msgid "E743: variable nested too deep for (un)lock"
-msgstr "E743: variablo ingita tro profunde por malŝlosi"
+msgstr "E743: variablo ingita tro profunde por (mal)ŝlosi"
 
 msgid "E109: Missing ':' after '?'"
-msgstr "E109: Mankas ':' post '?'"
+msgstr "E109: Mankas ':' malantaŭ '?'"
 
 msgid "E691: Can only compare List with List"
 msgstr "E691: Eblas nur kompari Liston kun Listo"
@@ -697,19 +705,8 @@ msgstr "argumento de add()"
 msgid "E785: complete() can only be used in Insert mode"
 msgstr "E785: complete() uzeblas nur en Enmeta reĝimo"
 
-#.
-#. * Yes this is ugly, I don't particularly like it either.  But doing it
-#. * this way has the compelling advantage that translations need not to
-#. * be touched at all.  See below what 'ok' and 'ync' are used for.
-#.
 msgid "&Ok"
 msgstr "&Bone"
-
-#, c-format
-msgid "+-%s%3ld line: "
-msgid_plural "+-%s%3ld lines: "
-msgstr[0] "+-%s%3ld linio: "
-msgstr[1] "+-%s%3ld linioj: "
 
 #, c-format
 msgid "E700: Unknown function: %s"
@@ -756,8 +753,8 @@ msgstr "E727: Komenco preter fino"
 msgid "<empty>"
 msgstr "<malplena>"
 
-msgid "E240: No connection to Vim server"
-msgstr "E240: Neniu konekto al Vim-servilo"
+msgid "E240: No connection to the X server"
+msgstr "E240: Neniu konekto al X-servilo"
 
 #, c-format
 msgid "E241: Unable to send to %s"
@@ -765,6 +762,12 @@ msgstr "E241: Ne eblas sendi al %s"
 
 msgid "E277: Unable to read a server reply"
 msgstr "E277: Ne eblas legi respondon de servilo"
+
+msgid "E941: already started a server"
+msgstr "E941: servilo jam lanĉita"
+
+msgid "E942: +clientserver feature not available"
+msgstr "E942: la eblo +clientserver ne disponeblas"
 
 msgid "remove() argument"
 msgstr "argumento de remove()"
@@ -862,7 +865,6 @@ msgstr " malnovaj dosieroj"
 msgid " FAILED"
 msgstr " MALSUKCESIS"
 
-#. avoid a wait_return for this message, it's annoying
 #, c-format
 msgid "E137: Viminfo file is not writable: %s"
 msgstr "E137: Dosiero viminfo ne skribeblas: %s"
@@ -883,7 +885,6 @@ msgstr "Skribas dosieron viminfo \"%s\""
 msgid "E886: Can't rename viminfo file to %s!"
 msgstr "E886: Ne eblas renomi dosieron viminfo al %s!"
 
-#. Write the info:
 #, c-format
 msgid "# This viminfo file was generated by Vim %s.\n"
 msgstr "# Tiu dosiero viminfo estis kreita de Vim %s.\n"
@@ -1002,8 +1003,8 @@ msgstr " en 1 linio"
 msgid " on %ld lines"
 msgstr " en %ld linioj"
 
-msgid "E147: Cannot do :global recursive"
-msgstr "E147: Ne eblas fari \":global\" rekursie"
+msgid "E147: Cannot do :global recursive with a range"
+msgstr "E147: Ne eblas fari \":global\" rekursie kun amplekso"
 
 # DP: global estas por ":global" do mi ne tradukis ĝin
 msgid "E148: Regular expression missing from global"
@@ -1154,8 +1155,9 @@ msgstr "E750: Uzu unue \":profile start {dosiernomo}\""
 msgid "Save changes to \"%s\"?"
 msgstr "Ĉu konservi ŝanĝojn al \"%s\"?"
 
-msgid "Untitled"
-msgstr "Sen titolo"
+#, c-format
+msgid "E947: Job still running in buffer \"%s\""
+msgstr "E947: Tasko ankoraŭ aktiva en la bufro \"%s\""
 
 #, c-format
 msgid "E162: No write since last change for buffer \"%s\""
@@ -1188,6 +1190,14 @@ msgstr "Serĉado de \"%s\""
 #, c-format
 msgid "not found in '%s': \"%s\""
 msgstr "ne trovita en '%s: \"%s\""
+
+#, c-format
+msgid "W20: Required python version 2.x not supported, ignoring file: %s"
+msgstr "W20: Pitono versio 2.x bezonata sed nesubtenata, ignoro de dosiero: %s"
+
+#, c-format
+msgid "W21: Required python version 3.x not supported, ignoring file: %s"
+msgstr "W21: pitono versio 3.x bezonata sed nesubtenata, ignoro de dosiero: %s"
 
 msgid "Source Vim script"
 msgstr "Ruli Vim-skripton"
@@ -1285,6 +1295,9 @@ msgstr "Inversa amplekso donita, permuteblas"
 
 msgid "E494: Use w or w>>"
 msgstr "E494: Uzu w aŭ w>>"
+
+msgid "E943: Command table needs to be updated, run 'make cmdidxs'"
+msgstr "E943: Tabulo de komandoj estas ĝisdatigenda, lanĉu 'make cmdidx'"
 
 msgid "E319: Sorry, the command is not available in this version"
 msgstr "E319: Bedaŭrinde, tiu komando ne haveblas en tiu versio"
@@ -1451,7 +1464,6 @@ msgstr "E189: \"%s\" ekzistas (aldonu ! por transpasi)"
 msgid "E190: Cannot open \"%s\" for writing"
 msgstr "E190: Ne eblas malfermi \"%s\" por skribi"
 
-#. set mark
 msgid "E191: Argument must be a letter or forward/backward quote"
 msgstr "E191: Argumento devas esti litero, citilo aŭ retrocitilo"
 
@@ -1493,13 +1505,15 @@ msgstr "E500: Liveras malplenan ĉenon"
 msgid "E195: Cannot open viminfo file for reading"
 msgstr "E195: Ne eblas malfermi dosieron viminfo en lega reĝimo"
 
+msgid "Untitled"
+msgstr "Sen titolo"
+
 msgid "E196: No digraphs in this version"
 msgstr "E196: Neniu duliteraĵo en tiu versio"
 
 msgid "E608: Cannot :throw exceptions with 'Vim' prefix"
 msgstr "E608: Ne eblas lanĉi (:throw) escepton kun prefikso 'Vim'"
 
-#. always scroll up, don't overwrite
 #, c-format
 msgid "Exception thrown: %s"
 msgstr "Escepto lanĉita: %s"
@@ -1516,7 +1530,6 @@ msgstr "Escepto ne konservita: %s"
 msgid "%s, line %ld"
 msgstr "%s, linio %ld"
 
-#. always scroll up, don't overwrite
 #, c-format
 msgid "Exception caught: %s"
 msgstr "Kaptis escepton: %s"
@@ -1542,7 +1555,6 @@ msgstr "Eraro kaj interrompo"
 msgid "Error"
 msgstr "Eraro"
 
-#. if (pending & CSTP_INTERRUPT)
 msgid "Interrupt"
 msgstr "Interrompo"
 
@@ -1562,7 +1574,7 @@ msgid "E583: multiple :else"
 msgstr "E583: pluraj \":else\""
 
 msgid "E584: :elseif after :else"
-msgstr "E584: \":elseif\" post \":else\""
+msgstr "E584: \":elseif\" malantaŭ \":else\""
 
 msgid "E585: :while/:for nesting too deep"
 msgstr "E585: \":while/:for\" ingita tro profunde"
@@ -1585,15 +1597,12 @@ msgstr "E601: \":try\" ingita tro profunde"
 msgid "E603: :catch without :try"
 msgstr "E603: \":catch\" sen \":try\""
 
-#. Give up for a ":catch" after ":finally" and ignore it.
-#. * Just parse.
 msgid "E604: :catch after :finally"
-msgstr "E604: \":catch\" post \":finally\""
+msgstr "E604: \":catch\" malantaŭ \":finally\""
 
 msgid "E606: :finally without :try"
 msgstr "E606: \":finally\" sen \":try\""
 
-#. Give up for a multiple ":finally" and ignore it.
 msgid "E607: multiple :finally"
 msgstr "E607: pluraj \":finally\""
 
@@ -1686,7 +1695,6 @@ msgstr "Vim: Legado el stdin...\n"
 msgid "Reading from stdin..."
 msgstr "Legado el stdin..."
 
-#. Re-opening the original file failed!
 msgid "E202: Conversion made file unreadable!"
 msgstr "E202: Konverto igis la dosieron nelegebla!"
 
@@ -1892,9 +1900,6 @@ msgstr "[sen EOL]"
 msgid "[Incomplete last line]"
 msgstr "[Nekompleta lasta linio]"
 
-#. don't overwrite messages here
-#. must give this prompt
-#. don't use emsg() here, don't want to flush the buffers
 msgid "WARNING: The file has been changed since reading it!!!"
 msgstr "AVERTO: La dosiero estas ŝanĝita de post kiam ĝi estis legita!!!"
 
@@ -1973,7 +1978,6 @@ msgstr "--Forviŝita--"
 msgid "auto-removing autocommand: %s <buffer=%d>"
 msgstr "aŭto-forviŝas aŭtokomandon: %s <bufro=%d>"
 
-#. the group doesn't exist
 #, c-format
 msgid "E367: No such group: \"%s\""
 msgstr "E367: Ne ekzistas tia grupo: \"%s\""
@@ -1986,7 +1990,7 @@ msgstr "W19: Forviŝo de augroup kiu estas ankoraŭ uzata"
 
 #, c-format
 msgid "E215: Illegal character after *: %s"
-msgstr "E215: Nevalida signo post *: %s"
+msgstr "E215: Nevalida signo malantaŭ *: %s"
 
 #, c-format
 msgid "E216: No such event: %s"
@@ -1996,7 +2000,6 @@ msgstr "E216: Ne estas tia evento: %s"
 msgid "E216: No such group or event: %s"
 msgstr "E216: Ne ekzistas tia grupo aŭ evento: %s"
 
-#. Highlight title
 msgid ""
 "\n"
 "--- Auto-Commands ---"
@@ -2043,12 +2046,6 @@ msgstr "E350: Ne eblas krei faldon per la aktuala 'foldmethod'"
 
 msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: Ne eblas forviŝi faldon per la aktuala 'foldmethod'"
-
-#, c-format
-msgid "+--%3ld line folded "
-msgid_plural "+--%3ld lines folded "
-msgstr[0] "+--%3ld linio faldita "
-msgstr[1] "+--%3ld linioj falditaj "
 
 msgid "E222: Add to read buffer"
 msgstr "E222: Aldoni al lega bufro"
@@ -2186,18 +2183,15 @@ msgstr "Serĉi kion:"
 msgid "Replace with:"
 msgstr "Anstataŭigi per:"
 
-#. whole word only button
 msgid "Match whole word only"
 msgstr "Kongrui kun nur plena vorto"
 
-#. match case button
 msgid "Match case"
 msgstr "Uskleca kongruo"
 
 msgid "Direction"
 msgstr "Direkto"
 
-#. 'Up' and 'Down' buttons
 msgid "Up"
 msgstr "Supren"
 
@@ -2276,8 +2270,6 @@ msgstr "Trovi ĉenon (uzu '\\\\' por trovi '\\')"
 msgid "Find & Replace (use '\\\\' to find  a '\\')"
 msgstr "Trovi kaj anstataŭigi (uzu '\\\\' por trovi '\\')"
 
-#. We fake this: Use a filter that doesn't select anything and a default
-#. * file name that won't be used.
 msgid "Not Used"
 msgstr "Ne uzata"
 
@@ -2351,7 +2343,6 @@ msgstr "Vim - Elektilo de tiparo"
 msgid "Name:"
 msgstr "Nomo:"
 
-#. create toggle button
 msgid "Show size in Points"
 msgstr "Montri grandon en punktoj"
 
@@ -2597,7 +2588,6 @@ msgstr "E261: konekto cscope %s netrovita"
 msgid "cscope connection %s closed"
 msgstr "konekto cscope %s fermita"
 
-#. should not reach here
 msgid "E570: fatal error in cs_manage_matches"
 msgstr "E570: neriparebla eraro en cs_manage_matches"
 
@@ -2759,7 +2749,6 @@ msgstr "nevalida numero de bufro"
 msgid "not implemented yet"
 msgstr "ankoraŭ ne realigita"
 
-#. ???
 msgid "cannot set line(s)"
 msgstr "ne eblas meti la linio(j)n"
 
@@ -2800,7 +2789,6 @@ msgid ""
 msgstr ""
 "ne eblas registri postalvokan komandon: bufro/fenestro estas jam forviŝiĝanta"
 
-#. This should never happen.  Famous last word?
 msgid ""
 "E280: TCL FATAL ERROR: reflist corrupt!? Please report this to vim-dev@vim."
 "org"
@@ -2859,10 +2847,10 @@ msgid "Too many edit arguments"
 msgstr "Tro da argumentoj de redakto"
 
 msgid "Argument missing after"
-msgstr "Argumento mankas post"
+msgstr "Argumento mankas malantaŭ"
 
 msgid "Garbage after option argument"
-msgstr "Forĵetindaĵo post argumento de opcio"
+msgstr "Forĵetindaĵo malantaŭ argumento de opcio"
 
 msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
 msgstr "Tro da argumentoj \"+komando\", \"-c komando\" aŭ \"--cmd komando\""
@@ -2904,7 +2892,6 @@ msgstr "Vim: Averto: Eligo ne estas al terminalo\n"
 msgid "Vim: Warning: Input is not from a terminal\n"
 msgstr "Vim: Averto: Enigo ne estas el terminalo\n"
 
-#. just in case..
 msgid "pre-vimrc command line"
 msgstr "komanda linio pre-vimrc"
 
@@ -2968,7 +2955,7 @@ msgstr ""
 "Argumentoj:\n"
 
 msgid "--\t\t\tOnly file names after this"
-msgstr "--\t\t\tNur dosiernomoj post tio"
+msgstr "--\t\t\tNur dosiernomoj malantaŭ tio"
 
 msgid "--literal\t\tDon't expand wildcards"
 msgstr "--literal\t\tNe malvolvi ĵokerojn"
@@ -3069,8 +3056,7 @@ msgstr ""
 "--not-a-term\t\tPreterpasi averton por enigo/eligo, kiu ne estas terminalo"
 
 msgid "--ttyfail\t\tExit if input or output is not a terminal"
-msgstr ""
-"--ttyfail\t\tEliri se le eniro aŭ eliro ne estas terminalo"
+msgstr "--ttyfail\t\tEliri se la eniro aŭ eliro ne estas terminalo"
 
 msgid "-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"
 msgstr "-u <vimrc>\t\tUzi <vimrc> anstataŭ iun ajn .vimrc"
@@ -3170,6 +3156,9 @@ msgstr ""
 
 msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
 msgstr "-i <viminfo>\t\tUzi <viminfo> anstataŭ .viminfo"
+
+msgid "--clean\t\t'nocompatible', Vim defaults, no plugins, no viminfo"
+msgstr "--clean\t\t'nocompatible', defaŭltaj agordoj de Vim, neniu viminfo"
 
 msgid "-h  or  --help\tPrint Help (this message) and exit"
 msgstr "-h  aŭ  --help\tAfiŝi Helpon (tiun mesaĝon) kaj eliri"
@@ -3271,11 +3260,9 @@ msgstr "--windowid <HWND>\tMalfermi Vim en alia win32 fenestraĵo"
 msgid "No display"
 msgstr "Neniu ekrano"
 
-#. Failed to send, abort.
 msgid ": Send failed.\n"
 msgstr ": Sendo malsukcesis.\n"
 
-#. Let vim start normally.
 msgid ": Send failed. Trying to execute locally\n"
 msgstr ": Sendo malsukcesis. Provo de loka plenumo\n"
 
@@ -3296,7 +3283,6 @@ msgstr "Neniu marko"
 msgid "E283: No marks matching \"%s\""
 msgstr "E283: Neniu marko kongruas kun \"%s\""
 
-#. Highlight title
 msgid ""
 "\n"
 "mark line  col file/text"
@@ -3304,7 +3290,6 @@ msgstr ""
 "\n"
 "mark linio kol dosiero/teksto"
 
-#. Highlight title
 msgid ""
 "\n"
 " jump line  col file/text"
@@ -3312,7 +3297,6 @@ msgstr ""
 "\n"
 " salt linio kol dosiero/teksto"
 
-#. Highlight title
 msgid ""
 "\n"
 "change line  col text"
@@ -3327,7 +3311,6 @@ msgstr ""
 "\n"
 "# Markoj de dosiero:\n"
 
-#. Write the jumplist with -'
 msgid ""
 "\n"
 "# Jumplist (newest first):\n"
@@ -3397,7 +3380,6 @@ msgstr "E298: Ĉu ne akiris blokon n-ro 2?"
 msgid "E843: Error while updating swap file crypt"
 msgstr "E843: Eraro dum ĝisdatigo de ĉifrada permutodosiero .swp"
 
-#. could not (re)open the swap file, what can we do????
 msgid "E301: Oops, lost the swap file!!!"
 msgstr "E301: Ve, perdis la permutodosieron .swp!!!"
 
@@ -3581,7 +3563,6 @@ msgid "Using crypt key from swap file for the text file.\n"
 msgstr ""
 "Uzas ŝlosilon de ĉifrado el permuto dosiero .swp por la teksta dosiero.\n"
 
-#. use msg() to start the scrolling properly
 msgid "Swap files found:"
 msgstr "Permutodosiero .swp trovita:"
 
@@ -3751,8 +3732,6 @@ msgstr "Dum malfermo de dosiero \""
 msgid "      NEWER than swap file!\n"
 msgstr "      PLI NOVA ol permutodosiero .swp!\n"
 
-#. Some of these messages are long to allow translation to
-#. * other languages.
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
@@ -3842,7 +3821,6 @@ msgstr "E328: Menuo nur ekzistas en alia reĝimo"
 msgid "E329: No menu \"%s\""
 msgstr "E329: Neniu menuo \"%s\""
 
-#. Only a mnemonic or accelerator is not valid.
 msgid "E792: Empty menu name"
 msgstr "E792: Malplena nomo de menuo"
 
@@ -3855,8 +3833,6 @@ msgstr "E331: Aldono de menueroj direkte al menuzono estas malpermesita"
 msgid "E332: Separator cannot be part of a menu path"
 msgstr "E332: Disigilo ne rajtas esti ero de vojo de menuo"
 
-#. Now we have found the matching menu, and we list the mappings
-#. Highlight title
 msgid ""
 "\n"
 "--- Menus ---"
@@ -3867,16 +3843,16 @@ msgstr ""
 msgid "Tear off this menu"
 msgstr "Disigi tiun menuon"
 
+#, c-format
+msgid "E335: Menu not defined for %s mode"
+msgstr "E335: Menuo ne estas difinita por reĝimo %s"
+
 msgid "E333: Menu path must lead to a menu item"
 msgstr "E333: Vojo de menuo devas konduki al menuero"
 
 #, c-format
 msgid "E334: Menu not found: %s"
 msgstr "E334: Menuo netrovita: %s"
-
-#, c-format
-msgid "E335: Menu not defined for %s mode"
-msgstr "E335: Menuo ne estas difinita por reĝimo %s"
 
 msgid "E336: Menu path must lead to a sub-menu"
 msgstr "E336: Vojo de menuo devas konduki al sub-menuo"
@@ -3949,7 +3925,6 @@ msgstr "Dialogujo de dosiera konservo"
 msgid "Open File dialog"
 msgstr "Dialogujo de dosiera malfermo"
 
-#. TODO: non-GUI file selector here
 msgid "E338: Sorry, no file browser in console mode"
 msgstr "E338: Bedaŭrinde ne estas dosierfoliumilo en konzola reĝimo"
 
@@ -4116,8 +4091,10 @@ msgstr "E662: Ĉe komenco de ŝanĝlisto"
 msgid "E663: At end of changelist"
 msgstr "E663: Ĉe fino de ŝanĝlisto"
 
-msgid "Type  :quit<Enter>  to exit Vim"
-msgstr "Tajpu \":quit<Enenklavo>\" por eliri el Vim"
+msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Vim"
+msgstr ""
+"Tajpu  :qa!  kaj premu <Enenklavon> por forlasi ĉiujn ŝanĝojn kaj eliri el "
+"Vim"
 
 #, c-format
 msgid "1 line %sed 1 time"
@@ -4149,7 +4126,6 @@ msgstr "%ld linioj krommarĝenitaj "
 msgid "E748: No previously used register"
 msgstr "E748: Neniu reĝistro antaŭe uzata"
 
-#. must display the prompt
 msgid "cannot yank; delete anyway"
 msgstr "ne eblas kopii; tamen forviŝi"
 
@@ -4164,25 +4140,30 @@ msgstr "%ld linioj ŝanĝitaj"
 msgid "freeing %ld lines"
 msgstr "malokupas %ld liniojn"
 
-msgid "block of 1 line yanked"
-msgstr "bloko de 1 linio kopiita"
-
-msgid "1 line yanked"
-msgstr "1 linio kopiita"
+#, c-format
+msgid " into \"%c"
+msgstr " en \"%c"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "bloko de %ld linioj kopiita"
+msgid "block of 1 line yanked%s"
+msgstr "bloko de 1 linio kopiita%s"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld linioj kopiitaj"
+msgid "1 line yanked%s"
+msgstr "1 linio kopiita%s"
+
+#, c-format
+msgid "block of %ld lines yanked%s"
+msgstr "bloko de %ld linioj kopiita%s"
+
+#, c-format
+msgid "%ld lines yanked%s"
+msgstr "%ld linioj kopiitaj%s"
 
 #, c-format
 msgid "E353: Nothing in register %s"
 msgstr "E353: Nenio en reĝistro %s"
 
-#. Highlight title
 msgid ""
 "\n"
 "--- Registers ---"
@@ -4243,9 +4224,6 @@ msgstr ""
 msgid "(+%ld for BOM)"
 msgstr "(+%ld por BOM)"
 
-msgid "%<%f%h%m%=Page %N"
-msgstr "%<%f%h%m%=Folio %N"
-
 msgid "Thanks for flying Vim"
 msgstr "Dankon pro flugi per Vim"
 
@@ -4262,7 +4240,7 @@ msgid "E846: Key code not set"
 msgstr "E846: Klavkodo ne agordita"
 
 msgid "E521: Number required after ="
-msgstr "E521: Nombro bezonata post ="
+msgstr "E521: Nombro bezonata malantaŭ ="
 
 msgid "E522: Not found in termcap"
 msgstr "E522: Netrovita en termcap"
@@ -4304,7 +4282,7 @@ msgstr "E525: Ĉeno de nula longo"
 
 #, c-format
 msgid "E526: Missing number after <%s>"
-msgstr "E526: Mankas nombro post <%s>"
+msgstr "E526: Mankas nombro malantaŭ <%s>"
 
 msgid "E527: Missing comma"
 msgstr "E527: Mankas komo"
@@ -4332,7 +4310,7 @@ msgstr "E534: Nevalida larĝa tiparo"
 
 #, c-format
 msgid "E535: Illegal character after <%c>"
-msgstr "E535: Nevalida signo post <%c>"
+msgstr "E535: Nevalida signo malantaŭ <%c>"
 
 msgid "E536: comma required"
 msgstr "E536: komo bezonata"
@@ -4353,6 +4331,9 @@ msgstr "E541: tro da elementoj"
 msgid "E542: unbalanced groups"
 msgstr "E542: misekvilibraj grupoj"
 
+msgid "E946: Cannot make a terminal with running job modifiable"
+msgstr "E946: Ne eblas igi modifebla terminalon kun aktiva tasko"
+
 msgid "E590: A preview window already exists"
 msgstr "E590: Antaŭvida fenestro jam ekzistas"
 
@@ -4371,9 +4352,6 @@ msgstr "E594: Bezonas almenaŭ %d kolumnojn"
 msgid "E355: Unknown option: %s"
 msgstr "E355: Nekonata opcio: %s"
 
-#. There's another character after zeros or the string
-#. * is empty.  In both cases, we are trying to set a
-#. * num option using a string.
 #, c-format
 msgid "E521: Number required: &%s = '%s'"
 msgstr "E521: Nombro bezonata: &%s = '%s'"
@@ -4415,7 +4393,7 @@ msgstr "E357: 'langmap': Kongrua signo mankas por %s"
 
 #, c-format
 msgid "E358: 'langmap': Extra characters after semicolon: %s"
-msgstr "E358: 'langmap': Ekstraj signoj post punktokomo: %s"
+msgstr "E358: 'langmap': Ekstraj signoj malantaŭ punktokomo: %s"
 
 msgid "cannot open "
 msgstr "ne eblas malfermi "
@@ -4446,7 +4424,6 @@ msgstr "ne eblas ŝanĝi reĝimon de konzolo?!\n"
 msgid "mch_get_shellsize: not a console??\n"
 msgstr "mch_get_shellsize: ne estas konzolo??\n"
 
-#. if Vim opened a window: Executing a shell may cause crashes
 msgid "E360: Cannot execute shell with -f option"
 msgstr "E360: Ne eblas plenumi ŝelon kun opcio -f"
 
@@ -4672,7 +4649,6 @@ msgstr "E376: Nevalida %%%c en prefikso de formata ĉeno"
 msgid "E377: Invalid %%%c in format string"
 msgstr "E377: Nevalida %%%c en formata ĉeno"
 
-#. nothing found
 msgid "E378: 'errorformat' contains no pattern"
 msgstr "E378: 'errorformat' enhavas neniun ŝablonon"
 
@@ -4711,9 +4687,6 @@ msgstr "E381: Ĉe la supro de stako de rapidriparo"
 msgid "No entries"
 msgstr "Neniu ano"
 
-msgid "E382: Cannot write, 'buftype' option is set"
-msgstr "E382: Ne eblas skribi, opcio 'buftype' estas ŝaltita"
-
 msgid "Error file"
 msgstr "Erara Dosiero"
 
@@ -4736,7 +4709,13 @@ msgstr "E369: nevalida ano en %s%%[]"
 
 #, c-format
 msgid "E769: Missing ] after %s["
-msgstr "E769: Mankas ] post %s["
+msgstr "E769: Mankas ] malantaŭ %s["
+
+msgid "E944: Reverse range in character class"
+msgstr "E944: Inversa amplekso en klaso de signoj"
+
+msgid "E945: Range too large in character class"
+msgstr "E945: tro larga amplekso de klaso de signoj"
 
 #, c-format
 msgid "E53: Unmatched %s%%("
@@ -4759,11 +4738,14 @@ msgstr "E67: \\z1 kaj aliaj estas nepermeseblaj tie"
 
 #, c-format
 msgid "E69: Missing ] after %s%%["
-msgstr "E69: Mankas ] post %s%%["
+msgstr "E69: Mankas ] malantaŭ %s%%["
 
 #, c-format
 msgid "E70: Empty %s%%[]"
 msgstr "E70: Malplena %s%%[]"
+
+msgid "E65: Illegal back reference"
+msgstr "E65: Nevalida retro-referenco"
 
 msgid "E339: Pattern too long"
 msgstr "E339: Ŝablono tro longa"
@@ -4780,7 +4762,7 @@ msgstr "E52: Neekvilibra \\z("
 
 #, c-format
 msgid "E59: invalid character after %s@"
-msgstr "E59: nevalida signo post %s@"
+msgstr "E59: nevalida signo malantaŭ %s@"
 
 #, c-format
 msgid "E60: Too many complex %s{...}s"
@@ -4801,19 +4783,16 @@ msgstr "E63: nevalida uzo de \\_"
 msgid "E64: %s%c follows nothing"
 msgstr "E64: %s%c sekvas nenion"
 
-msgid "E65: Illegal back reference"
-msgstr "E65: Nevalida retro-referenco"
-
 msgid "E68: Invalid character after \\z"
-msgstr "E68: Nevalida signo post \\z"
+msgstr "E68: Nevalida signo malantaŭ \\z"
 
 #, c-format
 msgid "E678: Invalid character after %s%%[dxouU]"
-msgstr "E678: Nevalida signo post %s%%[dxouU]"
+msgstr "E678: Nevalida signo malantaŭ %s%%[dxouU]"
 
 #, c-format
 msgid "E71: Invalid character after %s%%"
-msgstr "E71: Nevalida signo post %s%%"
+msgstr "E71: Nevalida signo malantaŭ %s%%"
 
 #, c-format
 msgid "E554: Syntax error in %s{...}"
@@ -4845,7 +4824,7 @@ msgstr "E866: (NFA-regulesprimo) Mispoziciigita %c"
 
 #, c-format
 msgid "E877: (NFA regexp) Invalid character class: %ld"
-msgstr "E877: (NFA-regulesprimo) Nevalida klaso de signo: %ld"
+msgstr "E877: (NFA-regulesprimo) Nevalida klaso de signoj: %ld"
 
 #, c-format
 msgid "E867: (NFA) Unknown operator '\\z%c'"
@@ -4855,7 +4834,6 @@ msgstr "E867: (NFA) Nekonata operatoro '\\z%c'"
 msgid "E867: (NFA) Unknown operator '\\%%%c'"
 msgstr "E867: (NFA) Nekonata operatoro '\\%%%c'"
 
-#. should never happen
 msgid "E868: Error building NFA with equivalence class!"
 msgstr "E868: Eraro dum prekomputado de NFA kun ekvivalentoklaso!"
 
@@ -4866,13 +4844,11 @@ msgstr "E869: (NFA) Nekonata operatoro '\\@%c'"
 msgid "E870: (NFA regexp) Error reading repetition limits"
 msgstr "E870: (NFS-regulesprimo) Eraro dum legado de limoj de ripeto"
 
-#. Can't have a multi follow a multi.
 msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
 msgstr ""
 "E871: (NFA-regulesprimo) Ne povas havi mult-selekton tuj post alia mult-"
 "selekto!"
 
-#. Too many `('
 msgid "E872: (NFA regexp) Too many '('"
 msgstr "E872: (NFA-regulesprimo) tro da '('"
 
@@ -4893,7 +4869,7 @@ msgstr ""
 "statoj en la staplo"
 
 msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
-msgstr "E876: (NFA-regulesprimo) ne sufiĉa spaco por enmomorigi la tutan NFA "
+msgstr "E876: (NFA-regulesprimo) ne sufiĉa spaco por enmemorigi la tutan NFA "
 
 msgid "E878: (NFA) Could not allocate memory for branch traversal!"
 msgstr "E878: (NFA) Ne povis asigni memoron por traigi branĉojn!"
@@ -4975,12 +4951,11 @@ msgid "E385: search hit BOTTOM without match for: %s"
 msgstr "E385: serĉo atingis SUBON sen trovi: %s"
 
 msgid "E386: Expected '?' or '/'  after ';'"
-msgstr "E386: Atendis '?' aŭ '/' post ';'"
+msgstr "E386: Atendis '?' aŭ '/' malantaŭ ';'"
 
 msgid " (includes previously listed match)"
 msgstr " (enhavas antaŭe listigitajn kongruojn)"
 
-#. cursor at status line
 msgid "--- Included files "
 msgstr "--- Inkluzivitaj dosieroj "
 
@@ -5057,8 +5032,6 @@ msgstr "Bedaŭrinde ne estas sugestoj"
 msgid "Sorry, only %ld suggestions"
 msgstr "Bedaŭrinde estas nur %ld sugestoj"
 
-#. for when 'cmdheight' > 1
-#. avoid more prompt
 #, c-format
 msgid "Change \"%.*s\" to:"
 msgstr "Anstataŭigi \"%.*s\" per:"
@@ -5340,10 +5313,6 @@ msgstr "Densigis %d de %d nodoj; %d (%d%%) restantaj"
 msgid "Reading back spell file..."
 msgstr "Relegas la dosieron de literumo..."
 
-#.
-#. * Go through the trie of good words, soundfold each word and add it to
-#. * the soundfold trie.
-#.
 msgid "Performing soundfolding..."
 msgstr "Fonetika analizado..."
 
@@ -5398,17 +5367,37 @@ msgstr "Vorto '%.*s' aldonita al %s"
 msgid "E763: Word characters differ between spell files"
 msgstr "E763: Signoj de vorto malsamas tra literumaj dosieroj"
 
-#. This should have been checked when generating the .spl
-#. * file.
 msgid "E783: duplicate char in MAP entry"
 msgstr "E783: ripetita signo en rikordo MAP"
 
 msgid "No Syntax items defined for this buffer"
 msgstr "Neniu sintaksa elemento difinita por tiu bufro"
 
+msgid "syntax conceal on"
+msgstr "sintakso de conceal ŝaltata"
+
+msgid "syntax conceal off"
+msgstr "sintakso de conceal malŝaltita"
+
 #, c-format
 msgid "E390: Illegal argument: %s"
 msgstr "E390: Nevalida argumento: %s"
+
+msgid "syntax case ignore"
+msgstr "sintakso ignoras usklecon"
+
+msgid "syntax case match"
+msgstr "sintakso konsideras usklecon"
+
+msgid "syntax spell toplevel"
+msgstr "literumado en teksto sen sintaksa grupo"
+
+msgid "syntax spell notoplevel"
+msgstr "sen literumado en teksto sen sintaksa grupo"
+
+msgid "syntax spell default"
+msgstr ""
+"literumado en teksto sen sintaksa grupo, nur se ne estas @Spell aŭ @NoSpell"
 
 msgid "syntax iskeyword "
 msgstr "sintakso iskeyword "
@@ -5491,7 +5480,7 @@ msgstr "E789: Mankas ']': %s"
 
 #, c-format
 msgid "E890: trailing char after ']': %s]%s"
-msgstr "E890: vosta signo post ']': %s]%s"
+msgstr "E890: vosta signo malantaŭ ']': %s]%s"
 
 #, c-format
 msgid "E398: Missing '=': %s"
@@ -5513,7 +5502,7 @@ msgstr "E401: Disigilo de ŝablono netrovita: %s"
 
 #, c-format
 msgid "E402: Garbage after pattern: %s"
-msgstr "E402: Forĵetindaĵo post ŝablono: %s"
+msgstr "E402: Forĵetindaĵo malantaŭ ŝablono: %s"
 
 msgid "E403: syntax sync: line continuations pattern specified twice"
 msgstr "E403: sintaksa sinkronigo: ŝablono de linia daŭrigo specifita dufoje"
@@ -5645,7 +5634,6 @@ msgstr "E428: Ne eblas iri preter lastan kongruan etikedon"
 msgid "File \"%s\" does not exist"
 msgstr "La dosiero \"%s\" ne ekzistas"
 
-#. Give an indication of the number of matching tags
 #, c-format
 msgid "tag %d of %d%s"
 msgstr "etikedo %d de %d%s"
@@ -5660,7 +5648,6 @@ msgstr "  Uzo de etikedo kun malsama uskleco!"
 msgid "E429: File \"%s\" does not exist"
 msgstr "E429: Dosiero \"%s\" ne ekzistas"
 
-#. Highlight title
 msgid ""
 "\n"
 "  # TO tag         FROM line  in file/text"
@@ -5691,7 +5678,6 @@ msgstr "Antaŭ bajto %ld"
 msgid "E432: Tags file not sorted: %s"
 msgstr "E432: Etikeda dosiero ne estas ordigita: %s"
 
-#. never opened any tags file
 msgid "E433: No tags file"
 msgstr "E433: Neniu etikeda dosiero"
 
@@ -5727,7 +5713,6 @@ msgstr "E436: Neniu rikordo \"%s\" en termcap"
 msgid "E437: terminal capability \"cm\" required"
 msgstr "E437: kapablo de terminalo \"cm\" bezonata"
 
-#. Highlight title
 msgid ""
 "\n"
 "--- Terminal keys ---"
@@ -5738,6 +5723,21 @@ msgstr ""
 msgid "Cannot open $VIMRUNTIME/rgb.txt"
 msgstr "Ne povas malfermi $VIMRUNTIME/rgb.txt"
 
+msgid "Terminal"
+msgstr "Terminalo"
+
+msgid "Terminal-finished"
+msgstr "Terminalo-finiĝis"
+
+msgid "active"
+msgstr "aktiva"
+
+msgid "running"
+msgstr "ruliĝas"
+
+msgid "finished"
+msgstr "finiĝis"
+
 msgid "new shell started\n"
 msgstr "nova ŝelo lanĉita\n"
 
@@ -5747,12 +5747,9 @@ msgstr "Vim: Eraro dum legado de eniro, elironta...\n"
 msgid "Used CUT_BUFFER0 instead of empty selection"
 msgstr "Uzis CUT_BUFFER0 anstataŭ malplenan apartigon"
 
-#. This happens when the FileChangedRO autocommand changes the
-#. * file in a way it becomes shorter.
 msgid "E881: Line count changed unexpectedly"
 msgstr "E881: Nombro de linioj ŝanĝiĝis neatendite"
 
-#. must display the prompt
 msgid "No undo possible; continue anyway"
 msgstr "Malfaro neebla; tamen daŭrigi"
 
@@ -5985,6 +5982,10 @@ msgstr "E932: Fermo-funkcio devus esti je la plej alta nivelo: %s"
 
 msgid "E126: Missing :endfunction"
 msgstr "E126: Mankas \":endfunction\""
+
+#, c-format
+msgid "W22: Text found after :endfunction: %s"
+msgstr "W22: Teksto trovita malantaŭ :endfunction: %s"
 
 #, c-format
 msgid "E707: Function name conflicts with variable: %s"
@@ -6382,7 +6383,6 @@ msgstr "Kompari per Vim"
 msgid "Edit with &Vim"
 msgstr "Redakti per &Vim"
 
-#. Now concatenate
 msgid "Edit with existing Vim - "
 msgstr "Redakti per ekzistanta Vim - "
 
@@ -6401,10 +6401,6 @@ msgstr "Serĉvojo estas tro longa!"
 msgid "--No lines in buffer--"
 msgstr "--Neniu linio en bufro--"
 
-#.
-#. * The error messages that can be shared are included here.
-#. * Excluded are errors that are only used once and debugging messages.
-#.
 msgid "E470: Command aborted"
 msgstr "E470: komando ĉesigita"
 
@@ -6590,12 +6586,6 @@ msgstr "E484: Ne eblas malfermi dosieron %s"
 msgid "E485: Can't read file %s"
 msgstr "E485: Ne eblas legi dosieron %s"
 
-msgid "E37: No write since last change (add ! to override)"
-msgstr "E37: Neniu skribo de post lasta ŝanĝo (aldonu ! por transpasi)"
-
-msgid "E37: No write since last change"
-msgstr "E37: Neniu skribo de post lasta ŝanĝo"
-
 msgid "E38: Null argument"
 msgstr "E38: Nula argumento"
 
@@ -6730,8 +6720,8 @@ msgstr "E592: 'winwidth' ne rajtas esti malpli ol 'winminwidth'"
 msgid "E80: Error while writing"
 msgstr "E80: Eraro dum skribado"
 
-msgid "Zero count"
-msgstr "Nul kvantoro"
+msgid "E939: Positive count required"
+msgstr "E939: Pozitiva kvantoro bezonata"
 
 msgid "E81: Using <SID> not in a script context"
 msgstr "E81: Uzo de <SID> ekster kunteksto de skripto"
@@ -6875,7 +6865,6 @@ msgstr "konstruilo de listo ne akceptas ŝlosilvortajn argumentojn"
 msgid "list index out of range"
 msgstr "indekso de listo ekster limoj"
 
-#. No more suitable format specifications in python-2.3
 #, c-format
 msgid "internal error: failed to get vim list item %d"
 msgstr "interna eraro: obteno de vim-a listero %d malsukcesis"

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         services(5) - Internet network services list
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             services(5) - Internet network services list
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

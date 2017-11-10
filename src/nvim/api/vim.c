@@ -166,7 +166,10 @@ void nvim_feedkeys(String keys, String mode, Boolean escape_csi)
 /// On VimL error: Does not fail, but updates v:errmsg.
 ///
 /// Unlike `nvim_feedkeys`, this uses a lower-level input buffer and the call
-/// is not deferred. This is the most reliable way to emulate real user input.
+/// is not deferred. This is the most reliable way to send real user input.
+///
+/// @note |keycodes| like <CR> are translated, so "<" is special.
+///       To input a literal "<", send <LT>.
 ///
 /// @param keys to be typed
 /// @return Number of bytes actually written (can be fewer than
@@ -320,15 +323,15 @@ Object nvim_execute_lua(String code, Array args, Error *err)
 /// @param text       Some text
 /// @param[out] err   Error details, if any
 /// @return Number of cells
-Integer nvim_strwidth(String str, Error *err)
+Integer nvim_strwidth(String text, Error *err)
   FUNC_API_SINCE(1)
 {
-  if (str.size > INT_MAX) {
+  if (text.size > INT_MAX) {
     api_set_error(err, kErrorTypeValidation, "String length is too high");
     return 0;
   }
 
-  return (Integer) mb_string2cells((char_u *) str.data);
+  return (Integer)mb_string2cells((char_u *)text.data);
 }
 
 /// Gets the paths contained in 'runtimepath'.
@@ -578,7 +581,7 @@ Buffer nvim_get_current_buf(void)
 
 /// Sets the current buffer
 ///
-/// @param id       Buffer handle
+/// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
 void nvim_set_current_buf(Buffer buffer, Error *err)
   FUNC_API_SINCE(1)
@@ -632,7 +635,7 @@ Window nvim_get_current_win(void)
 
 /// Sets the current window
 ///
-/// @param handle Window handle
+/// @param window Window handle
 void nvim_set_current_win(Window window, Error *err)
   FUNC_API_SINCE(1)
 {
@@ -685,7 +688,7 @@ Tabpage nvim_get_current_tabpage(void)
 
 /// Sets the current tabpage
 ///
-/// @param handle   Tabpage handle
+/// @param tabpage  Tabpage handle
 /// @param[out] err Error details, if any
 void nvim_set_current_tabpage(Tabpage tabpage, Error *err)
   FUNC_API_SINCE(1)
@@ -755,9 +758,8 @@ Dictionary nvim_get_color_map(void)
 }
 
 
-/// Gets the current mode.
-/// mode:     Mode string. |mode()|
-/// blocking: true if Nvim is waiting for input.
+/// Gets the current mode. |mode()|
+/// "blocking" is true if Nvim is waiting for input.
 ///
 /// @returns Dictionary { "mode": String, "blocking": Boolean }
 Dictionary nvim_get_mode(void)
@@ -773,11 +775,11 @@ Dictionary nvim_get_mode(void)
   return rv;
 }
 
-/// Get a list of dictionaries describing global (i.e. non-buffer) mappings
-/// Note that the "buffer" key will be 0 to represent false.
+/// Gets a list of dictionaries describing global (non-buffer) mappings.
+/// The "buffer" key in the returned dictionary is always zero.
 ///
-/// @param  mode  The abbreviation for the mode
-/// @returns  An array of maparg() like dictionaries describing mappings
+/// @param  mode       Mode short-name ("n", "i", "v", ...)
+/// @returns Array of maparg()-like dictionaries describing mappings
 ArrayOf(Dictionary) nvim_get_keymap(String mode)
     FUNC_API_SINCE(3)
 {

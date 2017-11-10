@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         Sieve filtering language input file
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-10-25
+" Language:             Sieve filtering language input file
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2007-10-25
 
 if exists("b:current_syntax")
   finish

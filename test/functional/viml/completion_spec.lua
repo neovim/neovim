@@ -868,7 +868,7 @@ describe('completion', function()
   end)
 end)
 
-describe('ui/externalized/popupmenu', function()
+describe('ui/ext_popupmenu', function()
   local screen
   local items, selected, anchor
   before_each(function()

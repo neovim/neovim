@@ -1,10 +1,12 @@
 " Language:     Verilog HDL
-" Maintainer:	Chih-Tsun Huang <cthuang@larc.ee.nthu.edu.tw>
-" Last Change:	2011 Dec 10 by Thilo Six
-" URL:		http://larc.ee.nthu.edu.tw/~cthuang/vim/indent/verilog.vim
+" Maintainer:	Chih-Tsun Huang <cthuang@cs.nthu.edu.tw>
+" Last Change:	2017 Aug 25 by Chih-Tsun Huang
+" URL:		    http://www.cs.nthu.edu.tw/~cthuang/vim/indent/verilog.vim
 "
 " Credits:
 "   Suggestions for improvement, bug reports by
+"     Takuya Fujiwara <tyru.exe@gmail.com>
+"     Thilo Six <debian@Xk2c.de>
 "     Leo Butlero <lbutler@brocade.com>
 "
 " Buffer Variables:
@@ -23,7 +25,8 @@ let b:did_indent = 1
 setlocal indentexpr=GetVerilogIndent()
 setlocal indentkeys=!^F,o,O,0),=begin,=end,=join,=endcase
 setlocal indentkeys+==endmodule,=endfunction,=endtask,=endspecify
-setlocal indentkeys+==`else,=`endif
+setlocal indentkeys+==endconfig,=endgenerate,=endprimitive,=endtable
+setlocal indentkeys+==`else,=`elsif,=`endif
 
 " Only define the function once.
 if exists("*GetVerilogIndent")
@@ -38,7 +41,7 @@ function GetVerilogIndent()
   if exists('b:verilog_indent_width')
     let offset = b:verilog_indent_width
   else
-    let offset = &sw
+    let offset = shiftwidth()
   endif
   if exists('b:verilog_indent_modules')
     let indent_modules = offset
@@ -82,7 +85,9 @@ function GetVerilogIndent()
     endif
 
   " Indent after if/else/for/case/always/initial/specify/fork blocks
-  elseif last_line =~ '`\@<!\<\(if\|else\)\>' ||
+  " Note: We exclude '`if' or '`else' and consider 'end else' 
+  "       'end if' is redundant here
+  elseif last_line =~ '^\s*\(end\)\=\s*`\@<!\<\(if\|else\)\>' ||
     \ last_line =~ '^\s*\<\(for\|case\%[[zx]]\)\>' ||
     \ last_line =~ '^\s*\<\(always\|initial\)\>' ||
     \ last_line =~ '^\s*\<\(specify\|fork\)\>'
@@ -91,8 +96,8 @@ function GetVerilogIndent()
       let ind = ind + offset
       if vverb | echo vverb_str "Indent after a block statement." | endif
     endif
-  " Indent after function/task blocks
-  elseif last_line =~ '^\s*\<\(function\|task\)\>'
+  " Indent after function/task/config/generate/primitive/table blocks
+  elseif last_line =~ '^\s*\<\(function\|task\|config\|generate\|primitive\|table\)\>'
     if last_line !~ '\<end\>\s*' . vlog_comment . '*$' ||
       \ last_line =~ '\(//\|/\*\).*\(;\|\<end\>\)\s*' . vlog_comment . '*$'
       let ind = ind + offset
@@ -159,11 +164,11 @@ function GetVerilogIndent()
       let ind = ind - offset
       if vverb | echo vverb_str "De-indent after a close statement." | endif
 
-  " `ifdef and `else
-  elseif last_line =~ '^\s*`\<\(ifdef\|else\)\>'
+  " `ifdef or `ifndef or `elsif or `else
+  elseif last_line =~ '^\s*`\<\(ifn\?def\|elsif\|else\)\>'
     let ind = ind + offset
     if vverb
-      echo vverb_str "Indent after a `ifdef or `else statement."
+      echo vverb_str "Indent after a `ifdef or `ifndef or `elsif or `else statement."
     endif
 
   endif
@@ -173,7 +178,8 @@ function GetVerilogIndent()
   " De-indent on the end of the block
   " join/end/endcase/endfunction/endtask/endspecify
   if curr_line =~ '^\s*\<\(join\|end\|endcase\)\>' ||
-    \ curr_line =~ '^\s*\<\(endfunction\|endtask\|endspecify\)\>'
+    \ curr_line =~ '^\s*\<\(endfunction\|endtask\|endspecify\)\>' ||
+    \ curr_line =~ '^\s*\<\(endconfig\|endgenerate\|endprimitive\|endtable\)\>'
     let ind = ind - offset
     if vverb | echo vverb_str "De-indent the end of a block." | endif
   elseif curr_line =~ '^\s*\<endmodule\>'
@@ -184,7 +190,7 @@ function GetVerilogIndent()
 
   " De-indent on a stand-alone 'begin'
   elseif curr_line =~ '^\s*\<begin\>'
-    if last_line !~ '^\s*\<\(function\|task\|specify\|module\)\>' &&
+    if last_line !~ '^\s*\<\(function\|task\|specify\|module\|config\|generate\|primitive\|table\)\>' &&
       \ last_line !~ '^\s*\()*\s*;\|)\+\)\s*' . vlog_comment . '*$' &&
       \ ( last_line =~
 	\ '\<\(`\@<!if\|`\@<!else\|for\|case\%[[zx]]\|always\|initial\)\>' ||
@@ -206,10 +212,10 @@ function GetVerilogIndent()
       echo vverb_str "De-indent the end of a multiple statement."
     endif
 
-  " De-indent `else and `endif
-  elseif curr_line =~ '^\s*`\<\(else\|endif\)\>'
+  " De-indent `elsif or `else or `endif
+  elseif curr_line =~ '^\s*`\<\(elsif\|else\|endif\)\>'
     let ind = ind - offset
-    if vverb | echo vverb_str "De-indent `else and `endif statement." | endif
+    if vverb | echo vverb_str "De-indent `elsif or `else or `endif statement." | endif
 
   endif
 

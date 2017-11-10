@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:     Liquid
 " Maintainer:   Tim Pope <vimNOSPAM@tpope.org>
-" Last Change:	2016 Aug 29
+" Last Change:	2017 Jun 13
 
 if exists('b:did_indent')
   finish
@@ -54,7 +54,7 @@ function! GetLiquidIndent(...)
   let line  = substitute(line,'\C^\%(\s*{%\s*end\w*\s*%}\)\+','','')
   let line .= matchstr(cline,'\C^\%(\s*{%\s*end\w*\s*%}\)\+')
   let cline = substitute(cline,'\C^\%(\s*{%\s*end\w*\s*%}\)\+','','')
-  let sw = exists('*shiftwidth') ? shiftwidth() : &sw
+  let sw = shiftwidth()
   let ind += sw * s:count(line,'{%\s*\%(if\|elsif\|else\|unless\|ifchanged\|case\|when\|for\|empty\|tablerow\|capture\)\>')
   let ind -= sw * s:count(line,'{%\s*end\%(if\|unless\|ifchanged\|case\|for\|tablerow\|capture\)\>')
   let ind -= sw * s:count(cline,'{%\s*\%(elsif\|else\|when\|empty\)\>')

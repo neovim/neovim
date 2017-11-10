@@ -1,7 +1,7 @@
 " Vim filetype plugin file
-" Language:         X resources files like ~/.Xdefaults (xrdb)
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2008-07-09
+" Language:             X resources files like ~/.Xdefaults (xrdb)
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2008-07-09
 
 if exists("b:did_ftplugin")
   finish

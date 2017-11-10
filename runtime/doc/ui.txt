@@ -1,0 +1,308 @@
+*ui.txt*	Nvim
+
+
+			    NVIM REFERENCE MANUAL
+
+
+Nvim UI protocol							  *ui*
+
+                                      Type |gO| to see the table of contents.
+
+==============================================================================
+Introduction							     *ui-intro*
+
+GUIs can be implemented as external processes communicating with Nvim over the
+RPC API. The UI model consists of a terminal-like grid with a single,
+monospace font size. Some elements (UI "widgets") can be drawn separately from
+the grid ("externalized").
+
+								  *ui-options*
+After connecting to Nvim (usually a spawned, embedded instance) use the
+|nvim_ui_attach| API method to tell Nvim that your program wants to draw the
+Nvim screen grid with a size of width × height cells. `options` must be
+a dictionary with these (optional) keys:
+	`rgb`			Decides the color format.
+				Set true (default) for 24-bit RGB colors.
+				Set false for terminal colors (max of 256).
+							      *ui-ext-options*
+	`ext_popupmenu`		Externalize the popupmenu. |ui-popupmenu|
+	`ext_tabline`		Externalize the tabline. |ui-tabline|
+	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
+	`ext_wildmenu`		Externalize the wildmenu. |ui-ext-wildmenu|
+
+Nvim will then send msgpack-rpc notifications, with the method name "redraw"
+and a single argument, an array of screen update events.
+Update events are tuples whose first element is the event name and remaining
+elements the event parameters.
+
+Events must be handled in order. The user should only see the updated screen
+state after all events in the same "redraw" batch are processed (not any
+intermediate state after processing only part of the array).
+
+Nvim sends |ui-global| and |ui-grid| events unconditionally; these suffice to
+implement a terminal-like interface.
+
+Nvim optionally sends screen elements "semantically" as structured events
+instead of raw grid-lines. Then the UI must decide how to present those
+elements itself; Nvim will not draw those elements on the grid. This is
+controlled by the |ui-ext-options|.
+
+Future versions of Nvim may add new update kinds and may append new parameters
+to existing update kinds. Clients must be prepared to ignore such extensions
+to be forward-compatible. |api-contract|
+
+==============================================================================
+Global Events							    *ui-global*
+
+["set_title", title]
+["set_icon", icon]
+	Set the window title, and icon (minimized) window title, respectively.
+	In windowing systems not distinguishing between the two, "set_icon"
+	can be ignored.
+
+["mode_info_set", cursor_style_enabled, mode_info]
+	`cursor_style_enabled` is a boolean indicating if the UI should set
+	the cursor style. `mode_info` is a list of mode property maps. The
+	current mode is given by the `mode_idx` field of the `mode_change`
+	event.
+
+	Each mode property map may contain these keys:
+
+	KEY		DESCRIPTION ~
+	`cursor_shape`:	"block", "horizontal", "vertical"
+	`cell_percentage`: Cell % occupied by the cursor.
+	`blinkwait`, `blinkon`, `blinkoff`: See |cursor-blinking|.
+	`hl_id`:	Cursor highlight group.
+	`hl_lm`:	Cursor highlight group if 'langmap' is active.
+	`short_name`:	Mode code name, see 'guicursor'.
+	`name`:		Mode descriptive name.
+	`mouse_shape`:	(To be implemented.)
+
+	Some keys are missing in some modes.
+
+["mode_change", mode, mode_idx]
+	The mode changed.  The first parameter `mode` is a string representing
+	the current mode. `mode_idx` is an index into the array received in
+	the `mode_info_set` event. UIs should change the cursor style
+	according to the properties specified in the corresponding item. The
+	set of modes reported will change in new versions of Nvim, for
+	instance more submodes and temporary states might be represented as
+	separate modes.
+
+["mouse_on"]
+["mouse_off"]
+	Tells the client whether mouse support, as determined by |'mouse'|
+	option, is considered to be active in the current mode. This is mostly
+	useful for a terminal frontend, or other situations where nvim mouse
+	would conflict with other usages of the mouse. It is safe for a client
+	to ignore this and always send mouse events.
+
+["busy_on"]
+["busy_off"]
+	Nvim started or stopped being busy, and possibly not responsive to
+	user input. This could be indicated to the user by hiding the cursor.
+
+["suspend"]
+	|:suspend| command or |Ctrl-Z| mapping is used. A terminal client (or other
+	client where it makes sense) could suspend itself.  Other clients can
+	safely ignore it.
+
+["update_menu"]
+	The menu mappings changed.
+
+["bell"]
+["visual_bell"]
+	Notify the user with an audible or visual bell, respectively.
+
+==============================================================================
+Grid Events							      *ui-grid*
+
+["resize", width, height]
+	The grid is resized to `width` and `height` cells.
+
+["clear"]
+	Clear the grid.
+
+["eol_clear"]
+	Clear from the cursor position to the end of the current line.
+
+["cursor_goto", row, col]
+	Move the cursor to position (row, col). Currently, the same cursor is
+	used to define the position for text insertion and the visible cursor.
+	However, only the last cursor position, after processing the entire
+	array in the "redraw" event, is intended to be a visible cursor
+	position.
+
+["update_fg", color]
+["update_bg", color]
+["update_sp", color]
+	Set the default foreground, background and special colors
+	respectively.
+
+						      *ui-event-highlight_set*
+["highlight_set", attrs]
+	Set the attributes that the next text put on the grid will have.
+	`attrs` is a dict with the keys below. Any absent key is reset
+	to its default value. Color defaults are set by the `update_fg` etc
+	updates. All boolean keys default to false.
+
+	`foreground`:	foreground color.
+	`background`:	backround color.
+	`special`:	color to use for underline and undercurl, when present.
+	`reverse`:	reverse video. Foreground and background colors are
+			switched.
+	`italic`:	italic text.
+	`bold`:		bold text.
+	`underline`:	underlined text. The line has `special` color.
+	`undercurl`:	undercurled text. The curl has `special` color.
+
+["put", text]
+	The (utf-8 encoded) string `text` is put at the cursor position
+	(and the cursor is advanced), with the highlights as set by the
+	last `highlight_set` update.
+
+["set_scroll_region", top, bot, left, right]
+	Define the scroll region used by `scroll` below.
+
+["scroll", count]
+	Scroll the text in the scroll region. The diagrams below illustrate
+	what will happen, depending on the scroll direction. "=" is used to
+	represent the SR(scroll region) boundaries and "-" the moved rectangles.
+	Note that dst and src share a common region.
+
+	If count is bigger than 0, move a rectangle in the SR up, this can
+	happen while scrolling down.
+>
+		+-------------------------+
+		| (clipped above SR)      |            ^
+		|=========================| dst_top    |
+		| dst (still in SR)       |            |
+		+-------------------------+ src_top    |
+		| src (moved up) and dst  |            |
+		|-------------------------| dst_bot    |
+		| src (cleared)           |            |
+		+=========================+ src_bot
+<
+	If count is less than zero, move a rectangle in the SR down, this can
+	happen while scrolling up.
+>
+		+=========================+ src_top
+		| src (cleared)           |            |
+		|------------------------ | dst_top    |
+		| src (moved down) and dst|            |
+		+-------------------------+ src_bot    |
+		| dst (still in SR)       |            |
+		|=========================| dst_bot    |
+		| (clipped below SR)      |            v
+		+-------------------------+
+<
+==============================================================================
+Popupmenu Events						 *ui-popupmenu*
+
+Only sent if `ext_popupmenu` option is set in |ui-options|
+
+["popupmenu_show", items, selected, row, col]
+	Show |popupmenu-completion|. `items` is an array of completion items
+	to show; each item is an array of the form [word, kind, menu, info] as
+	defined at |complete-items|, except that `word` is replaced by `abbr`
+	if present.  `selected` is the initially-selected item, a zero-based
+	index into the array of items (-1 if no item is selected). `row` and
+	`col` give the anchor position, where the first character of the
+	completed word will be.
+
+["popupmenu_select", selected]
+	Select an item in the current popupmenu. `selected` is a zero-based
+	index into the array of items from the last popupmenu_show event, or
+	-1 if no item is selected.
+
+["popupmenu_hide"]
+	Hide the popupmenu.
+
+==============================================================================
+Tabline Events							   *ui-tabline*
+
+Only sent if `ext_tabline` option is set in |ui-options|
+
+["tabline_update", curtab, tabs]
+	Tabline was updated. UIs should present this data in a custom tabline
+	widget.
+	curtab:	  Current Tabpage
+	tabs:	  List of Dicts [{ "tab": Tabpage, "name": String }, ...]
+
+==============================================================================
+Cmdline Events							   *ui-cmdline*
+
+Only sent if `ext_cmdline` option is set in |ui-options|
+
+["cmdline_show", content, pos, firstc, prompt, indent, level]
+        content: List of [attrs, string]
+	         [[{}, "t"], [attrs, "est"], ...]
+
+	Triggered when the cmdline is displayed or changed.
+	The `content` is the full content that should be displayed in the
+	cmdline, and the `pos` is the position of the cursor that in the
+	cmdline. The content is divided into chunks with different highlight
+	attributes represented as a dict (see |ui-event-highlight_set|).
+
+	`firstc` and `prompt` are text, that if non-empty should be
+	displayed in front of the command line. `firstc` always indicates
+	built-in command lines such as `:` (ex command) and `/` `?` (search),
+	while `prompt` is an |input()| prompt. `indent` tells how many spaces
+	the content should be indented.
+
+	The Nvim command line can be invoked recursively, for instance by
+	typing `<c-r>=` at the command line prompt. The `level` field is used
+	to distinguish different command lines active at the same time. The
+	first invoked command line has level 1, the next recursively-invoked
+	prompt has level 2. A command line invoked from the |cmd-line-window|
+	has a higher level than than the edited command line.
+
+["cmdline_pos", pos, level]
+	Change the cursor position in the cmdline.
+
+["cmdline_special_char", c, shift, level]
+	Display a special char in the cmdline at the cursor position. This is
+	typically used to indicate a pending state, e.g. after |c_CTRL-V|. If
+	`shift` is true the text after the cursor should be shifted, otherwise
+	it should overwrite the char at the cursor.
+
+	Should be hidden at next cmdline_show.
+
+["cmdline_hide"]
+	Hide the cmdline.
+
+["cmdline_block_show", lines]
+	Show a block of context to the current command line. For example if
+	the user defines a |:function| interactively: >
+	    :function Foo()
+	    :  echo "foo"
+	    :
+<
+	`lines` is a list of lines of highlighted chunks, in the same form as
+	the "cmdline_show" `contents` parameter.
+
+["cmdline_block_append", line]
+	Append a line at the end of the currently shown block.
+
+["cmdline_block_hide"]
+	Hide the block.
+
+==============================================================================
+Wildmenu Events							   *ui-wildmenu*
+
+Only sent if `ext_wildmenu` option is set in |ui-options|
+
+["wildmenu_show", items]
+	Activate the wildmenu (command-line completion). `items` is an array
+	with the completion items.
+
+["wildmenu_select", selected]
+	Select an item in the current wildmenu. `selected` is a zero-based
+	index into the array of items from the last wildmenu_show event, or -1
+	if no item is selected.
+
+["wildmenu_hide"]
+	Hide the wildmenu.
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

@@ -1,7 +1,7 @@
 " Vim syntax file
-" Language:         services(5) - Internet network services list
-" Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2006-04-19
+" Language:             services(5) - Internet network services list
+" Previous Maintainer:  Nikolai Weibull <now@bitwi.se>
+" Latest Revision:      2006-04-19
 
 if exists("b:current_syntax")
   finish
