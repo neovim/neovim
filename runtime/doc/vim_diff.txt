@@ -159,6 +159,7 @@ Events:
   |TextYankPost|
 
 Highlight groups:
+  |hl-NormalNC| highlights non-current windows
   |hl-QuickFixLine|
   |hl-Substitute|
   |hl-TermCursor|

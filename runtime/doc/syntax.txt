@@ -4929,7 +4929,7 @@ NonText		'@' at the end of the window, characters from 'showbreak'
 							*hl-Normal*
 Normal		normal text
 							*hl-NormalNC*
-NormalNC	normal text in non-current window
+NormalNC	normal text in non-current windows
 							*hl-Pmenu*
 Pmenu		Popup menu: normal item.
 							*hl-PmenuSel*
