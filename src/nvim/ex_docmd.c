@@ -3272,6 +3272,12 @@ const char * set_one_cmd_context(
   case CMD_echoerr:
   case CMD_call:
   case CMD_return:
+  case CMD_cexpr:
+  case CMD_caddexpr:
+  case CMD_cgetexpr:
+  case CMD_lexpr:
+  case CMD_laddexpr:
+  case CMD_lgetexpr:
     set_context_for_expression(xp, (char_u *)arg, ea.cmdidx);
     break;
 
