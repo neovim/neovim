@@ -13,6 +13,7 @@ local conv_ccs = viml_helpers.conv_ccs
 local new_pstate = viml_helpers.new_pstate
 local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
+local conv_expr_asgn_type = viml_helpers.conv_expr_asgn_type
 
 local shallowcopy = global_helpers.shallowcopy
 local intchar2lua = global_helpers.intchar2lua
@@ -52,6 +53,8 @@ child_call_once(function()
     [tonumber(lib.kExprLexParenthesis)] = 'Parenthesis',
     [tonumber(lib.kExprLexComma)] = 'Comma',
     [tonumber(lib.kExprLexArrow)] = 'Arrow',
+
+    [tonumber(lib.kExprLexAssignment)] = 'Assignment',
   }
 
   eltkn_mul_type_tab = {
@@ -118,6 +121,8 @@ local function eltkn2lua(pstate, tkn)
     ret.data.val = tonumber(tkn.data.num.is_float
                             and tkn.data.num.val.floating
                             or tkn.data.num.val.integer)
+  elseif ret.type == 'Assignment' then
+    ret.data = { type = conv_expr_asgn_type(tkn.data.ass.type) }
   elseif ret.type == 'Invalid' then
     ret.data = { error = ffi.string(tkn.data.err.msg) }
   end
@@ -198,7 +203,9 @@ describe('Expressions lexer', function()
     singl_eltkn_test('Question', '?')
     singl_eltkn_test('Colon', ':')
     singl_eltkn_test('Dot', '.')
+    singl_eltkn_test('Assignment', '.=', {type='Concat'})
     singl_eltkn_test('Plus', '+')
+    singl_eltkn_test('Assignment', '+=', {type='Add'})
     singl_eltkn_test('Comma', ',')
     singl_eltkn_test('Multiplication', '*', {type='Mul'})
     singl_eltkn_test('Multiplication', '/', {type='Div'})
@@ -266,12 +273,13 @@ describe('Expressions lexer', function()
     singl_eltkn_test('DoubleQuotedString', '"x\\"', {closed=false})
     singl_eltkn_test('DoubleQuotedString', '"\\"x', {closed=false})
     singl_eltkn_test('Not', '!')
-    singl_eltkn_test('Invalid', '=', {error='E15: Expected == or =~: %.*s'})
+    singl_eltkn_test('Assignment', '=', {type='Plain'})
     comparison_test('==', '!=', 'Equal')
     comparison_test('=~', '!~', 'Matches')
     comparison_test('>', '<=', 'Greater')
     comparison_test('>=', '<', 'GreaterOrEqual')
     singl_eltkn_test('Minus', '-')
+    singl_eltkn_test('Assignment', '-=', {type='Subtract'})
     singl_eltkn_test('Arrow', '->')
     singl_eltkn_test('Invalid', '~', {error='E15: Unidentified character: %.*s'})
     simple_test({{data=nil, size=0}}, 'EOC', 0, {error='start.col >= #pstr'})

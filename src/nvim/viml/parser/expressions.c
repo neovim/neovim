@@ -84,6 +84,10 @@ typedef enum {
   /// Just like parsing function arguments, but it is valid to be ended with an
   /// arrow only.
   kEPTLambdaArguments,
+  /// Assignment: parsing for :let
+  kEPTAssignment,
+  /// Single assignment: used when lists are not allowed (i.e. when nesting)
+  kEPTSingleAssignment,
 } ExprASTParseType;
 
 typedef kvec_withinit_t(ExprASTParseType, 4) ExprASTParseTypeStack;
@@ -93,6 +97,7 @@ typedef enum {
   kEOpLvlInvalid = 0,
   kEOpLvlComplexIdentifier,
   kEOpLvlParens,
+  kEOpLvlAssignment,
   kEOpLvlArrow,
   kEOpLvlComma,
   kEOpLvlColon,
@@ -217,8 +222,6 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     }
     CHAR(kExprLexQuestion, '?')
     CHAR(kExprLexColon, ':')
-    CHAR(kExprLexDot, '.')
-    CHAR(kExprLexPlus, '+')
     CHAR(kExprLexComma, ',')
 #undef CHAR
 
@@ -532,12 +535,8 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     case '!':
     case '=': {
       if (pline.size == 1) {
-viml_pexpr_next_token_invalid_comparison:
-        ret.type = (schar == '!' ? kExprLexNot : kExprLexInvalid);
-        if (ret.type == kExprLexInvalid) {
-          ret.data.err.msg = _("E15: Expected == or =~: %.*s");
-          ret.data.err.type = kExprLexComparison;
-        }
+        ret.type = (schar == '!' ? kExprLexNot : kExprLexAssignment);
+        ret.data.ass.type = kExprAsgnPlain;
         break;
       }
       ret.type = kExprLexComparison;
@@ -548,8 +547,11 @@ viml_pexpr_next_token_invalid_comparison:
       } else if (pline.data[1] == '~') {
         ret.data.cmp.type = kExprCmpMatches;
         ret.len++;
+      } else if (schar == '!') {
+        ret.type = kExprLexNot;
       } else {
-        goto viml_pexpr_next_token_invalid_comparison;
+        ret.type = kExprLexAssignment;
+        ret.data.ass.type = kExprAsgnPlain;
       }
       GET_CCS(ret, pline);
       break;
@@ -571,16 +573,36 @@ viml_pexpr_next_token_invalid_comparison:
       break;
     }
 
-    // Minus sign or arrow from lambdas.
+    // Minus sign, arrow from lambdas or augmented assignment.
     case '-': {
       if (pline.size > 1 && pline.data[1] == '>') {
         ret.len++;
         ret.type = kExprLexArrow;
+      } else if (pline.size > 1 && pline.data[1] == '=') {
+        ret.len++;
+        ret.type = kExprLexAssignment;
+        ret.data.ass.type = kExprAsgnSubtract;
       } else {
         ret.type = kExprLexMinus;
       }
       break;
     }
+
+    // Sign or augmented assignment.
+#define CHAR_OR_ASSIGN(ch, ch_type, ass_type) \
+    case ch: { \
+      if (pline.size > 1 && pline.data[1] == '=') { \
+        ret.len++; \
+        ret.type = kExprLexAssignment; \
+        ret.data.ass.type = ass_type; \
+      } else { \
+        ret.type = ch_type; \
+      } \
+      break; \
+    }
+    CHAR_OR_ASSIGN('+', kExprLexPlus, kExprAsgnAdd)
+    CHAR_OR_ASSIGN('.', kExprLexDot, kExprAsgnConcat)
+#undef CHAR_OR_ASSIGN
 
     // Expression end because Ex command ended.
     case NUL:
@@ -661,6 +683,7 @@ static const char *const eltkn_type_tab[] = {
   [kExprLexParenthesis] = "Parenthesis",
   [kExprLexComma] = "Comma",
   [kExprLexArrow] = "Arrow",
+  [kExprLexAssignment] = "Assignment",
 };
 
 const char *const eltkn_cmp_type_tab[] = {
@@ -669,6 +692,13 @@ const char *const eltkn_cmp_type_tab[] = {
   [kExprCmpGreater] = "Greater",
   [kExprCmpGreaterOrEqual] = "GreaterOrEqual",
   [kExprCmpIdentical] = "Identical",
+};
+
+const char *const expr_asgn_type_tab[] = {
+  [kExprAsgnPlain] = "Plain",
+  [kExprAsgnAdd] = "Add",
+  [kExprAsgnSubtract] = "Subtract",
+  [kExprAsgnConcat] = "Concat",
 };
 
 const char *const ccs_tab[] = {
@@ -732,6 +762,8 @@ const char *viml_pexpr_repr_token(const ParserState *const pstate,
             (int)token.data.cmp.inv)
     TKNARGS(kExprLexMultiplication, "(type=%s)",
             eltkn_mul_type_tab[token.data.mul.type])
+    TKNARGS(kExprLexAssignment, "(type=%s)",
+            expr_asgn_type_tab[token.data.ass.type])
     TKNARGS(kExprLexRegister, "(name=%s)", intchar2str(token.data.reg.name))
     case kExprLexDoubleQuotedString:
     TKNARGS(kExprLexSingleQuotedString, "(closed=%i)",
@@ -811,6 +843,7 @@ const char *const east_node_type_tab[] = {
   [kExprNodeMod] = "Mod",
   [kExprNodeOption] = "Option",
   [kExprNodeEnvironment] = "Environment",
+  [kExprNodeAssignment] = "Assignment",
 };
 
 /// Represent `int` character as a string
@@ -933,6 +966,7 @@ const uint8_t node_maxchildren[] = {
   [kExprNodeMod] = 2,
   [kExprNodeOption] = 0,
   [kExprNodeEnvironment] = 0,
+  [kExprNodeAssignment] = 2,
 };
 
 /// Free memory occupied by AST
@@ -993,6 +1027,7 @@ void viml_pexpr_free_ast(ExprAST ast)
         case kExprNodeLambda:
         case kExprNodeDictLiteral:
         case kExprNodeCurlyBracesIdentifier:
+        case kExprNodeAssignment:
         case kExprNodeComma:
         case kExprNodeColon:
         case kExprNodeArrow:
@@ -1110,6 +1145,8 @@ static struct {
   [kExprNodeConcatOrSubscript] = { kEOpLvlSubscript, kEOpAssLeft },
 
   [kExprNodeCurlyBracesIdentifier] = { kEOpLvlComplexIdentifier, kEOpAssLeft },
+
+  [kExprNodeAssignment] = { kEOpLvlAssignment, kEOpAssLeft },
 
   [kExprNodeComplexIdentifier] = { kEOpLvlValue, kEOpAssLeft },
 
@@ -1478,6 +1515,17 @@ static inline void east_set_error(const ParserState *const pstate,
       } \
     } while (0)
 
+/// Determine whether given parse type is an assignment
+///
+/// @param[in]  pt  Checked parse type.
+///
+/// @return true if parsing an assignment, false otherwise.
+static inline bool pt_is_assignment(const ExprASTParseType pt)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (pt == kEPTAssignment || pt == kEPTSingleAssignment);
+}
+
 /// Structure used to define “string shifts” necessary to map string
 /// highlighting to actual strings.
 typedef struct {
@@ -1839,6 +1887,9 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
   ExprASTParseTypeStack pt_stack;
   kvi_init(pt_stack);
   kvi_push(pt_stack, kEPTExpr);
+  if (flags & kExprFlagsParseLet) {
+    kvi_push(pt_stack, kEPTAssignment);
+  }
   LexExprToken prev_token = { .type = kExprLexMissing };
   bool highlighted_prev_spacing = false;
   // Lambda node, valid when parsing lambda arguments only.
@@ -1938,33 +1989,83 @@ viml_pexpr_parse_process_token:
       // circumstances, and in any case runtime and not parse time errors.
       (*kv_Z(ast_stack, 1))->type = kExprNodeConcat;
     }
-    if (kv_last(pt_stack) == kEPTLambdaArguments
-        && ((want_node == kENodeOperator
+    // Pop some stack pt_stack items in case of misplaced nodes.
+    const bool is_single_assignment = kv_last(pt_stack) == kEPTSingleAssignment;
+    switch (kv_last(pt_stack)) {
+      case kEPTExpr: {
+        break;
+      }
+      case kEPTLambdaArguments: {
+        if ((want_node == kENodeOperator
              && tok_type != kExprLexComma
              && tok_type != kExprLexArrow)
             || (want_node == kENodeValue
                 && !(cur_token.type == kExprLexPlainIdentifier
                      && cur_token.data.var.scope == kExprVarScopeMissing
                      && !cur_token.data.var.autoload)
-                && tok_type != kExprLexArrow))) {
-      lambda_node->data.fig.type_guesses.allow_lambda = false;
-      if (lambda_node->children != NULL
-          && lambda_node->children->type == kExprNodeComma) {
-        // If lambda has comma child this means that parser has already seen at
-        // least "{arg1,", so node cannot possibly be anything, but lambda.
+                && tok_type != kExprLexArrow)) {
+          lambda_node->data.fig.type_guesses.allow_lambda = false;
+          if (lambda_node->children != NULL
+              && lambda_node->children->type == kExprNodeComma) {
+            // If lambda has comma child this means that parser has already seen at
+            // least "{arg1,", so node cannot possibly be anything, but lambda.
 
-        // Vim may give E121 or E720 in this case, but it does not look right to
-        // have either because both are results of reevaluation possibly-lambda
-        // node as a dictionary and here this is not going to happen.
-        ERROR_FROM_TOKEN_AND_MSG(
-            cur_token, _("E15: Expected lambda arguments list or arrow: %.*s"));
-      } else {
-        // Else it may appear that possibly-lambda node is actually a dictionary
-        // or curly-braces-name identifier.
-        lambda_node = NULL;
-        kv_drop(pt_stack, 1);
+            // Vim may give E121 or E720 in this case, but it does not look right to
+            // have either because both are results of reevaluation possibly-lambda
+            // node as a dictionary and here this is not going to happen.
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token, _("E15: Expected lambda arguments list or arrow: %.*s"));
+          } else {
+            // Else it may appear that possibly-lambda node is actually a dictionary
+            // or curly-braces-name identifier.
+            lambda_node = NULL;
+            kv_drop(pt_stack, 1);
+          }
+        }
+        break;
+      }
+      case kEPTSingleAssignment: {
+        if (tok_type == kExprLexBracket && !cur_token.data.brc.closing) {
+          ERROR_FROM_TOKEN_AND_MSG(
+              cur_token,
+              _("E475: Nested lists not allowed when assigning: %.*s"));
+          kv_drop(pt_stack, 2);
+          assert(kv_size(pt_stack));
+          assert(kv_last(pt_stack) == kEPTExpr);
+          break;
+        }
+        FALLTHROUGH;
+      }
+      case kEPTAssignment: {
+        if (want_node == kENodeValue
+            && tok_type != kExprLexBracket
+            && tok_type != kExprLexPlainIdentifier
+            && (tok_type != kExprLexFigureBrace || cur_token.data.brc.closing)
+            && !(node_is_key && tok_type == kExprLexNumber)
+            && tok_type != kExprLexEnv
+            && tok_type != kExprLexOption
+            && tok_type != kExprLexRegister) {
+          ERROR_FROM_TOKEN_AND_MSG(
+              cur_token,
+              _("E15: Expected value part of assignment lvalue: %.*s"));
+          kv_drop(pt_stack, 1);
+        } else if (want_node == kENodeOperator
+                   && tok_type != kExprLexBracket
+                   && (tok_type != kExprLexFigureBrace
+                       || cur_token.data.brc.closing)
+                   && tok_type != kExprLexDot
+                   && (tok_type != kExprLexComma || !is_single_assignment)
+                   && tok_type != kExprLexAssignment) {
+          ERROR_FROM_TOKEN_AND_MSG(
+              cur_token,
+              _("E15: Expected assignment operator or subscript: %.*s"));
+          kv_drop(pt_stack, 1);
+        }
+        assert(kv_size(pt_stack));
+        break;
       }
     }
+    assert(kv_size(pt_stack));
     const ExprASTParseType cur_pt = kv_last(pt_stack);
     assert(lambda_node == NULL || cur_pt == kEPTLambdaArguments);
     switch (tok_type) {
@@ -2339,21 +2440,41 @@ viml_pexpr_parse_bracket_closing_error:
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
+          if (cur_pt == kEPTSingleAssignment) {
+            kv_drop(pt_stack, 1);
+          } else if (cur_pt == kEPTAssignment) {
+            assert(ast.err.msg);
+          } else if (cur_pt == kEPTExpr
+                     && kv_size(pt_stack) > 1
+                     && pt_is_assignment(kv_Z(pt_stack, 1))) {
+            kv_drop(pt_stack, 1);
+          }
         } else {
           if (want_node == kENodeValue) {
-            // Value means list literal.
+            // Value means list literal or list assignment.
             HL_CUR_TOKEN(List);
             NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeListLiteral);
             *top_node_p = cur_node;
             kvi_push(ast_stack, &cur_node->children);
             want_node = kENodeValue;
+            if (cur_pt == kEPTAssignment) {
+              // Additional assignment parse type allows to easily forbid nested
+              // lists.
+              kvi_push(pt_stack, kEPTSingleAssignment);
+            }
           } else {
+            // Operator means subscript, also in assignment. But in assignment
+            // subscript may be pretty much any expression, so need to push
+            // kEPTExpr.
             if (prev_token.type == kExprLexSpacing) {
               OP_MISSING;
             }
             NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeSubscript);
             ADD_OP_NODE(cur_node);
             HL_CUR_TOKEN(SubscriptBracket);
+            if (pt_is_assignment(cur_pt)) {
+              kvi_push(pt_stack, kEPTExpr);
+            }
           }
         }
         break;
@@ -2458,15 +2579,31 @@ viml_pexpr_parse_figure_brace_closing_error:
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
+          if (cur_pt == kEPTExpr
+              && kv_size(pt_stack) > 1
+              && pt_is_assignment(kv_Z(pt_stack, 1))) {
+            kv_drop(pt_stack, 1);
+          }
         } else {
           if (want_node == kENodeValue) {
             HL_CUR_TOKEN(FigureBrace);
             // Value: may be any of lambda, dictionary literal and curly braces
             // name.
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnknownFigure);
-            cur_node->data.fig.type_guesses.allow_lambda = true;
-            cur_node->data.fig.type_guesses.allow_dict = true;
-            cur_node->data.fig.type_guesses.allow_ident = true;
+
+            // Though if we are in an assignment this may only be a curly braces
+            // name.
+            if (pt_is_assignment(cur_pt)) {
+              NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeCurlyBracesIdentifier);
+              cur_node->data.fig.type_guesses.allow_lambda = false;
+              cur_node->data.fig.type_guesses.allow_dict = false;
+              cur_node->data.fig.type_guesses.allow_ident = true;
+              kvi_push(pt_stack, kEPTExpr);
+            } else {
+              NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnknownFigure);
+              cur_node->data.fig.type_guesses.allow_lambda = true;
+              cur_node->data.fig.type_guesses.allow_dict = true;
+              cur_node->data.fig.type_guesses.allow_ident = true;
+            }
             if (pstate->colors) {
               cur_node->data.fig.opening_hl_idx = kv_size(*pstate->colors) - 1;
             }
@@ -2484,6 +2621,9 @@ viml_pexpr_parse_figure_brace_closing_error:
                   cur_node->data.fig.type_guesses.allow_dict = false;
                   cur_node->data.fig.type_guesses.allow_ident = true;
                   kvi_push(ast_stack, &cur_node->children);
+                  if (pt_is_assignment(cur_pt)) {
+                    kvi_push(pt_stack, kEPTExpr);
+                  }
                   want_node = kENodeValue;
                 } while (0),
                 Curly);
@@ -2746,6 +2886,36 @@ viml_pexpr_parse_no_paren_closing_error: {}
         want_node = kENodeOperator;
         break;
       }
+      case kExprLexAssignment: {
+        if (cur_pt == kEPTAssignment) {
+          kv_drop(pt_stack, 1);
+        } else if (cur_pt == kEPTSingleAssignment) {
+          kv_drop(pt_stack, 2);
+          ERROR_FROM_TOKEN_AND_MSG(
+              cur_token,
+              _("E475: Expected closing bracket to end list assignment "
+                "lvalue: %.*s"));
+        } else {
+          ERROR_FROM_TOKEN_AND_MSG(
+              cur_token, _("E15: Misplaced assignment: %.*s"));
+        }
+        assert(kv_size(pt_stack));
+        assert(kv_last(pt_stack) == kEPTExpr);
+        ADD_VALUE_IF_MISSING(_("E15: Unexpected assignment: %.*s"));
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeAssignment);
+        cur_node->data.ass.type = cur_token.data.ass.type;
+        switch (cur_token.data.ass.type) {
+#define HL_ASGN(asgn, hl) \
+          case kExprAsgn##asgn: { HL_CUR_TOKEN(hl); break; }
+          HL_ASGN(Plain, PlainAssignment)
+          HL_ASGN(Add, AssignmentWithAddition)
+          HL_ASGN(Subtract, AssignmentWithSubtraction)
+          HL_ASGN(Concat, AssignmentWithConcatenation)
+#undef HL_ASGN
+        }
+        ADD_OP_NODE(cur_node);
+        break;
+      }
     }
 viml_pexpr_parse_cycle_end:
     prev_token = cur_token;
@@ -2862,6 +3032,7 @@ viml_pexpr_parse_end:
           // FIXME: Investigate whether above are OK to be present in the stack.
           break;
         }
+        case kExprNodeAssignment:
         case kExprNodeMod:
         case kExprNodeDivision:
         case kExprNodeMultiplication:

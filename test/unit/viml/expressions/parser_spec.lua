@@ -18,6 +18,7 @@ local conv_ccs = viml_helpers.conv_ccs
 local new_pstate = viml_helpers.new_pstate
 local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
+local conv_expr_asgn_type = viml_helpers.conv_expr_asgn_type
 
 local mergedicts_copy = global_helpers.mergedicts_copy
 local format_string = global_helpers.format_string
@@ -109,6 +110,7 @@ make_enum_conv_tab(lib, {
   'kExprNodeMod',
   'kExprNodeOption',
   'kExprNodeEnvironment',
+  'kExprNodeAssignment',
 }, 'kExprNode', function(ret) east_node_type_tab = ret end)
 
 local function conv_east_node_type(typ)
@@ -174,6 +176,8 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
     typ = ('%s(ident=%s)'):format(
       typ,
       ffi.string(eastnode.data.env.ident, eastnode.data.env.ident_len))
+  elseif typ == 'Assignment' then
+    typ = ('%s(%s)'):format(typ, conv_expr_asgn_type(eastnode.data.ass.type))
   end
   ret_str = typ .. ':' .. ret_str
   local can_simplify = not ret.children
@@ -3976,27 +3980,20 @@ describe('Expressions parser', function()
       --           012345
       ast = {
         {
-          'Comparison(type=Equal,inv=0,ccs=UseOption):0:3:=',
+          'Assignment(Add):0:1: +=',
           children = {
-            {
-              'BinaryPlus:0:1: +',
-              children = {
-                'PlainIdentifier(scope=0,ident=a):0:0:a',
-                'Missing:0:3:',
-              },
-            },
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
             'PlainIdentifier(scope=0,ident=b):0:4: b',
           },
         },
       },
       err = {
-        arg = '= b',
-        msg = 'E15: Expected == or =~: %.*s',
+        arg = '+= b',
+        msg = 'E15: Misplaced assignment: %.*s',
       },
     }, {
       hl('IdentifierName', 'a'),
-      hl('BinaryPlus', '+', 1),
-      hl('InvalidComparison', '='),
+      hl('InvalidAssignmentWithAddition', '+=', 1),
       hl('IdentifierName', 'b', 1),
     })
     check_parsing('a + b == c + d', {
@@ -7347,4 +7344,6 @@ describe('Expressions parser', function()
       },
     })
   end)
+  -- FIXME: Test assignments thoroughly
+  -- FIXME: Test that parsing assignments can be used for `:for` pre-`in` part.
 end)

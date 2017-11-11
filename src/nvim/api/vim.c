@@ -900,14 +900,21 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 /// Parse a VimL expression
 ///
 /// @param[in]  expr  Expression to parse. Is always treated as a single line.
-/// @param[in]  flags  Flags: "m" if multiple expressions in a row are allowed
-///                    (only the first one will be parsed), "E" if EOC tokens
-///                    are not allowed (determines whether they will stop
-///                    parsing process or be recognized as an operator/space,
-///                    though also yielding an error).
+/// @param[in]  flags  Flags:
 ///
-///                    Use only "m" to parse like for "<C-r>=", only "E" to
-///                    parse like for ":echo", empty string for ":let".
+///                    - "m" if multiple expressions in a row are allowed (only
+///                      the first one will be parsed),
+///                    - "E" if EOC tokens are not allowed (determines whether
+///                      they will stop parsing process or be recognized as an
+///                      operator/space, though also yielding an error).
+///                    - "l" when needing to start parsing with lvalues for
+///                      ":let" or ":for".
+///
+///                    Common flag sets:
+///                    - "m" to parse like for ":echo".
+///                    - "E" to parse like for "<C-r>=".
+///                    - empty string for ":call".
+///                    - "lm" to parse for ":let".
 /// @param[in]  highlight  If true, return value will also include "highlight"
 ///                        key containing array of 4-tuples (arrays) (Integer,
 ///                        Integer, Integer, String), where first three numbers
@@ -964,6 +971,9 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                           value names from ExprCaseCompareStrategy,
 ///                           stringified without "kCCStrategy" prefix. Only
 ///                           present for "Comparison" nodes.
+///           "augmentation": String, augmentation type for "Assignment" nodes.
+///                           Is either an empty string, "Add", "Subtract" or
+///                           "Concat" for "=", "+=", "-=" or ".=" respectively.
 ///           "invert": Boolean, true if result of comparison needs to be
 ///                     inverted. Only present for "Comparison" nodes.
 ///           "ivalue": Integer, integer value for "Integer" nodes.
@@ -979,6 +989,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
     switch (flags.data[i]) {
       case 'm': { pflags |= kExprFlagsMulti; break; }
       case 'E': { pflags |= kExprFlagsDisallowEOC; break; }
+      case 'l': { pflags |= kExprFlagsParseLet; break; }
       case NUL: {
         api_set_error(err, kErrorTypeValidation, "Invalid flag: '\\0' (%u)",
                       (unsigned)flags.data[i]);
@@ -1114,6 +1125,7 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
             + (node->type == kExprNodeFloat)  // "fvalue"
             + (node->type == kExprNodeDoubleQuotedString
                || node->type == kExprNodeSingleQuotedString)  // "svalue"
+            + (node->type == kExprNodeAssignment)  // "augmentation"
             + 0);
         Dictionary ret_node = {
           .items = xmalloc(ret_node_items_size * sizeof(ret_node.items[0])),
@@ -1269,6 +1281,17 @@ Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
                   node->data.num.value > API_INTEGER_MAX
                   ? API_INTEGER_MAX
                   : (Integer)node->data.num.value)),
+            };
+            break;
+          }
+          case kExprNodeAssignment: {
+            const ExprAssignmentType asgn_type = node->data.ass.type;
+            ret_node->items[ret_node->size++] = (KeyValuePair) {
+              .key = STATIC_CSTR_TO_STRING("augmentation"),
+              .value = STRING_OBJ(
+                  asgn_type == kExprAsgnPlain
+                  ? (String)STRING_INIT
+                  : cstr_to_string(expr_asgn_type_tab[asgn_type])),
             };
             break;
           }

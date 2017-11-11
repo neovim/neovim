@@ -48,7 +48,8 @@ int main(const int argc, const char *const *const argv,
   klee_make_symbolic(&shift, sizeof(shift), "shift");
   klee_make_symbolic(&flags, sizeof(flags), "flags");
   klee_assume(shift < INPUT_SIZE);
-  klee_assume(flags <= (kExprFlagsMulti|kExprFlagsDisallowEOC));
+  klee_assume(
+      flags <= (kExprFlagsMulti|kExprFlagsDisallowEOC|kExprFlagsParseLet));
 #endif
 
   ParserLine plines[] = {

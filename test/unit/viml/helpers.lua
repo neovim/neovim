@@ -107,6 +107,18 @@ local function conv_ccs(ccs)
   return conv_enum(ccs_tab, ccs)
 end
 
+local expr_asgn_type_tab
+make_enum_conv_tab(lib, {
+  'kExprAsgnPlain',
+  'kExprAsgnAdd',
+  'kExprAsgnSubtract',
+  'kExprAsgnConcat',
+}, 'kExprAsgn', function(ret) expr_asgn_type_tab = ret end)
+
+local function conv_expr_asgn_type(expr_asgn_type)
+  return conv_enum(expr_asgn_type_tab, expr_asgn_type)
+end
+
 return {
   conv_ccs = conv_ccs,
   pline2lua = pline2lua,
@@ -114,4 +126,5 @@ return {
   new_pstate = new_pstate,
   conv_cmp_type = conv_cmp_type,
   pstate_set_str = pstate_set_str,
+  conv_expr_asgn_type = conv_expr_asgn_type,
 }

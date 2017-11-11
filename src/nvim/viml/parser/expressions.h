@@ -51,6 +51,9 @@ typedef enum {
   kExprLexParenthesis,  ///< Parenthesis, either opening or closing.
   kExprLexComma,  ///< Comma.
   kExprLexArrow,  ///< Arrow, like from lambda expressions.
+  kExprLexAssignment,  ///< Assignment: `=` or `{op}=`.
+  // XXX When modifying this enum you need to also modify eltkn_type_tab in
+  //     expressions.c and tests and, possibly, viml_pexpr_repr_token.
 } LexExprTokenType;
 
 typedef enum {
@@ -67,6 +70,14 @@ typedef enum {
   kExprOptScopeGlobal = 'g',
   kExprOptScopeLocal = 'l',
 } ExprOptScope;
+
+/// All possible assignment types: `=` and `{op}=`.
+typedef enum {
+  kExprAsgnPlain = 0,  ///< Plain assignment: `=`.
+  kExprAsgnAdd,  ///< Assignment augmented with addition: `+=`.
+  kExprAsgnSubtract,  ///< Assignment augmented with subtraction: `-=`.
+  kExprAsgnConcat,  ///< Assignment augmented with concatenation: `.=`.
+} ExprAssignmentType;
 
 #define EXPR_OPT_SCOPE_LIST \
     ((char[]){ kExprOptScopeGlobal, kExprOptScopeLocal })
@@ -147,6 +158,10 @@ typedef struct {
       uint8_t base;  ///< Base: 2, 8, 10 or 16.
       bool is_float;  ///< True if number is a floating-point.
     } num;  ///< For kExprLexNumber
+
+    struct {
+      ExprAssignmentType type;
+    } ass;  ///< For kExprLexAssignment
   } data;  ///< Additional data, if needed.
 } LexExprToken;
 
@@ -170,8 +185,8 @@ typedef enum {
   /// “EOC” is something like "|". It is fine with emitting EOC at the end of
   /// string still, with or without this flag set.
   kELFlagForbidEOC = (1 << 4),
-  // WARNING: whenever you add a new flag, alter klee_assume() statement in
-  // viml_expressions_lexer.c.
+  // XXX Whenever you add a new flag, alter klee_assume() statement in
+  //     viml_expressions_lexer.c.
 } LexExprFlags;
 
 /// Expression AST node type
@@ -233,6 +248,10 @@ typedef enum {
   kExprNodeMod,
   kExprNodeOption,
   kExprNodeEnvironment,
+  kExprNodeAssignment,
+  // XXX When modifying this list also modify east_node_type_tab both in parser
+  //     and in tests, and you most likely will also have to alter list of
+  //     highlight groups stored in highlight_init_cmdline variable.
 } ExprASTNodeType;
 
 typedef struct expr_ast_node ExprASTNode;
@@ -301,6 +320,9 @@ struct expr_ast_node {
       const char *ident;  ///< Environment variable name start.
       size_t ident_len;  ///< Environment variable name length.
     } env;  ///< For kExprNodeEnvironment.
+    struct {
+      ExprAssignmentType type;
+    } ass;  ///< For kExprNodeAssignment
   } data;
 };
 
@@ -314,8 +336,15 @@ enum {
   /// When parsing expressions input by user bar is assumed to be a binary
   /// operator and other two are spacings.
   kExprFlagsDisallowEOC = (1 << 1),
-  // WARNING: whenever you add a new flag, alter klee_assume() statement in
-  // viml_expressions_parser.c.
+  /// Parse :let argument
+  ///
+  /// That mean that top level node must be an assignment and first nodes
+  /// belong to lvalues.
+  kExprFlagsParseLet = (1 << 2),
+  // XXX whenever you add a new flag, alter klee_assume() statement in
+  //     viml_expressions_parser.c, nvim_parse_expression() flags parsing
+  //     alongside with its documentation and flag sets in check_parsing()
+  //     function in expressions parser functional and unit tests.
 } ExprParserFlags;
 
 /// AST error definition
@@ -349,6 +378,9 @@ extern const char *const eltkn_cmp_type_tab[];
 
 /// Array mapping ExprCaseCompareStrategy values to their stringified versions
 extern const char *const ccs_tab[];
+
+/// Array mapping ExprAssignmentType values to their stringified versions
+extern const char *const expr_asgn_type_tab[];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "viml/parser/expressions.h.generated.h"

@@ -6021,10 +6021,20 @@ static const char *highlight_init_dark[] = {
 };
 
 static const char *highlight_init_cmdline[] = {
+  // XXX When modifying a list modify it in both valid and invalid halfs.
+  // TODO(ZyX-I): merge valid and invalid groups via a macros.
+
   // NVimInternalError should appear only when highlighter has a bug.
   "NVimInternalError ctermfg=Red ctermbg=Red guifg=Red guibg=Red",
 
   // Highlight groups (links) used by parser:
+
+  "default link NVimAssignment Operator",
+  "default link NVimPlainAssignment NVimAssignment",
+  "default link NVimAugmentedAssignment NVimAssignment",
+  "default link NVimAssignmentWithAddition NVimAugmentedAssignment",
+  "default link NVimAssignmentWithSubtraction NVimAugmentedAssignment",
+  "default link NVimAssignmentWithConcatenation NVimAugmentedAssignment",
 
   "default link NVimOperator Operator",
 
@@ -6112,6 +6122,16 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimInvalidSingleQuotedUnknownEscape NVimInternalError",
 
   "default link NVimInvalid Error",
+
+  "default link NVimInvalidAssignment NVimInvalid",
+  "default link NVimInvalidPlainAssignment NVimInvalidAssignment",
+  "default link NVimInvalidAugmentedAssignment NVimInvalidAssignment",
+  "default link NVimInvalidAssignmentWithAddition "
+      "NVimInvalidAugmentedAssignment",
+  "default link NVimInvalidAssignmentWithSubtraction "
+      "NVimInvalidAugmentedAssignment",
+  "default link NVimInvalidAssignmentWithConcatenation "
+      "NVimInvalidAugmentedAssignment",
 
   "default link NVimInvalidOperator NVimInvalid",
 
