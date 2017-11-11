@@ -73,11 +73,20 @@ typedef enum {
   /// For unrestricted expressions as well, implies that top item in AST stack
   /// points to NULL.
   kENodeValue,
-  /// Argument: only allows simple argument names.
-  kENodeArgument,
-  /// Argument separator: only allows commas.
-  kENodeArgumentSeparator,
 } ExprASTWantedNode;
+
+/// Parse type: what is being parsed currently
+typedef enum {
+  /// Parsing regular VimL expression
+  kEPTExpr = 0,
+  /// Parsing lambda arguments
+  ///
+  /// Just like parsing function arguments, but it is valid to be ended with an
+  /// arrow only.
+  kEPTLambdaArguments,
+} ExprASTParseType;
+
+typedef kvec_withinit_t(ExprASTParseType, 4) ExprASTParseTypeStack;
 
 /// Operator priority level
 typedef enum {
@@ -1238,9 +1247,7 @@ static bool viml_pexpr_handle_bop(const ParserState *const pstate,
       ret = false;
     }
   }
-  *want_node_p = (*want_node_p == kENodeArgumentSeparator
-                  ? kENodeArgument
-                  : kENodeValue);
+  *want_node_p = kENodeValue;
   return ret;
 }
 
@@ -1790,8 +1797,6 @@ static void parse_quoted_string(ParserState *const pstate,
 static const int want_node_to_lexer_flags[] = {
   [kENodeValue] = kELFlagIsNotCmp,
   [kENodeOperator] = kELFlagForbidScope,
-  [kENodeArgument] = kELFlagIsNotCmp,
-  [kENodeArgumentSeparator] = kELFlagForbidScope,
 };
 
 /// Number of characters to highlight as NumberPrefix depending on the base
@@ -1827,12 +1832,13 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
   // (list start) last stack item contains NULL. Otherwise last stack item is
   // supposed to contain last “finished” value: e.g. "1" or "+(1, 1)" (node
   // representing "1+1").
-  //
-  // Both kENodeValue and kENodeArgument stand for “value” nodes.
   ExprASTStack ast_stack;
   kvi_init(ast_stack);
   kvi_push(ast_stack, &ast.root);
   ExprASTWantedNode want_node = kENodeValue;
+  ExprASTParseTypeStack pt_stack;
+  kvi_init(pt_stack);
+  kvi_push(pt_stack, kEPTExpr);
   LexExprToken prev_token = { .type = kExprLexMissing };
   bool highlighted_prev_spacing = false;
   // Lambda node, valid when parsing lambda arguments only.
@@ -1884,8 +1890,7 @@ viml_pexpr_parse_process_token:
     assert(kv_size(ast_stack) >= 1);
     ExprASTNode *cur_node = NULL;
 #ifndef NDEBUG
-    const bool want_value = (
-        want_node == kENodeValue || want_node == kENodeArgument);
+    const bool want_value = (want_node == kENodeValue);
     assert(want_value == (*top_node_p == NULL));
     assert(kv_A(ast_stack, 0) == &ast.root);
     // Check that stack item i + 1 points to stack items’ i *last* child.
@@ -1933,14 +1938,15 @@ viml_pexpr_parse_process_token:
       // circumstances, and in any case runtime and not parse time errors.
       (*kv_Z(ast_stack, 1))->type = kExprNodeConcat;
     }
-    if ((want_node == kENodeArgumentSeparator
-         && tok_type != kExprLexComma
-         && tok_type != kExprLexArrow)
-        || (want_node == kENodeArgument
-            && !(cur_token.type == kExprLexPlainIdentifier
-                 && cur_token.data.var.scope == kExprVarScopeMissing
-                 && !cur_token.data.var.autoload)
-            && tok_type != kExprLexArrow)) {
+    if (kv_last(pt_stack) == kEPTLambdaArguments
+        && ((want_node == kENodeOperator
+             && tok_type != kExprLexComma
+             && tok_type != kExprLexArrow)
+            || (want_node == kENodeValue
+                && !(cur_token.type == kExprLexPlainIdentifier
+                     && cur_token.data.var.scope == kExprVarScopeMissing
+                     && !cur_token.data.var.autoload)
+                && tok_type != kExprLexArrow))) {
       lambda_node->data.fig.type_guesses.allow_lambda = false;
       if (lambda_node->children != NULL
           && lambda_node->children->type == kExprNodeComma) {
@@ -1956,16 +1962,11 @@ viml_pexpr_parse_process_token:
         // Else it may appear that possibly-lambda node is actually a dictionary
         // or curly-braces-name identifier.
         lambda_node = NULL;
-        if (want_node == kENodeArgumentSeparator) {
-          want_node = kENodeOperator;
-        } else {
-          want_node = kENodeValue;
-        }
+        kv_drop(pt_stack, 1);
       }
     }
-    assert(lambda_node == NULL
-           || want_node == kENodeArgumentSeparator
-           || want_node == kENodeArgument);
+    const ExprASTParseType cur_pt = kv_last(pt_stack);
+    assert(lambda_node == NULL || cur_pt == kEPTLambdaArguments);
     switch (tok_type) {
       case kExprLexMissing:
       case kExprLexSpacing:
@@ -2129,7 +2130,7 @@ viml_pexpr_parse_process_token:
         break;
       }
       case kExprLexComma: {
-        assert(want_node != kENodeArgument);
+        assert(!(want_node == kENodeValue && cur_pt == kEPTLambdaArguments));
         if (want_node == kENodeValue) {
           // Value level: comma appearing here is not valid.
           // Note: in Vim string(,x) will give E116, this is not the case here.
@@ -2138,13 +2139,11 @@ viml_pexpr_parse_process_token:
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeMissing);
           cur_node->len = 0;
           *top_node_p = cur_node;
-          want_node = (want_node == kENodeArgument
-                       ? kENodeArgumentSeparator
-                       : kENodeOperator);
+          want_node = kENodeOperator;
         }
-        if (want_node == kENodeArgumentSeparator) {
-          assert(lambda_node->data.fig.type_guesses.allow_lambda);
+        if (cur_pt == kEPTLambdaArguments) {
           assert(lambda_node != NULL);
+          assert(lambda_node->data.fig.type_guesses.allow_lambda);
           SELECT_FIGURE_BRACE_TYPE(lambda_node, Lambda, Lambda);
         }
         if (kv_size(ast_stack) < 2) {
@@ -2156,7 +2155,8 @@ viml_pexpr_parse_process_token:
           const ExprASTNodeType eastnode_type = (*eastnode_p)->type;
           const ExprOpLvl eastnode_lvl = node_lvl(**eastnode_p);
           if (eastnode_type == kExprNodeLambda) {
-            assert(want_node == kENodeArgumentSeparator);
+            assert(cur_pt == kEPTLambdaArguments
+                   && want_node == kENodeOperator);
             break;
           } else if (eastnode_type == kExprNodeDictLiteral
                      || eastnode_type == kExprNodeListLiteral
@@ -2410,9 +2410,6 @@ viml_pexpr_parse_bracket_closing_error:
             case kExprNodeUnknownFigure: {
               if (new_top_node->children == NULL) {
                 // No children of curly braces node indicates empty dictionary.
-
-                // Should actually be kENodeArgument, but that was changed
-                // earlier.
                 assert(want_node == kENodeValue);
                 assert(new_top_node->data.fig.type_guesses.allow_dict);
                 SELECT_FIGURE_BRACE_TYPE(new_top_node, DictLiteral, Dict);
@@ -2475,7 +2472,7 @@ viml_pexpr_parse_figure_brace_closing_error:
             }
             *top_node_p = cur_node;
             kvi_push(ast_stack, &cur_node->children);
-            want_node = kENodeArgument;
+            kvi_push(pt_stack, kEPTLambdaArguments);
             lambda_node = cur_node;
           } else {
             ADD_IDENT(
@@ -2495,9 +2492,12 @@ viml_pexpr_parse_figure_brace_closing_error:
         break;
       }
       case kExprLexArrow: {
-        if (want_node == kENodeArgumentSeparator
-            || want_node == kENodeArgument) {
-          if (want_node == kENodeArgument) {
+        if (cur_pt == kEPTLambdaArguments) {
+          kv_drop(pt_stack, 1);
+          assert(kv_size(pt_stack));
+          if (want_node == kENodeValue) {
+            // Wanting value means trailing comma and NULL at the top of the
+            // stack.
             kv_drop(ast_stack, 1);
           }
           assert(kv_size(ast_stack) >= 1);
@@ -2509,7 +2509,7 @@ viml_pexpr_parse_figure_brace_closing_error:
           SELECT_FIGURE_BRACE_TYPE(lambda_node, Lambda, Lambda);
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeArrow);
           if (lambda_node->children == NULL) {
-            assert(want_node == kENodeArgument);
+            assert(want_node == kENodeValue);
             lambda_node->children = cur_node;
             kvi_push(ast_stack, &lambda_node->children);
           } else {
@@ -2535,10 +2535,8 @@ viml_pexpr_parse_figure_brace_closing_error:
         const ExprVarScope scope = (cur_token.type == kExprLexInvalid
                                     ? kExprVarScopeMissing
                                     : cur_token.data.var.scope);
-        if (want_node == kENodeValue || want_node == kENodeArgument) {
-          want_node = (want_node == kENodeArgument
-                       ? kENodeArgumentSeparator
-                       : kENodeOperator);
+        if (want_node == kENodeValue) {
+          want_node = kENodeOperator;
           NEW_NODE_WITH_CUR_POS(cur_node,
                                 (node_is_key
                                  ? kExprNodePlainKey
@@ -2755,7 +2753,12 @@ viml_pexpr_parse_cycle_end:
     viml_parser_advance(pstate, cur_token.len);
   } while (true);
 viml_pexpr_parse_end:
-  if (want_node == kENodeValue) {
+  assert(kv_size(pt_stack));
+  assert(kv_size(ast_stack));
+  if (want_node == kENodeValue
+      // Blacklist some parse type entries as their presence means better error
+      // message in the other branch.
+      && kv_last(pt_stack) != kEPTLambdaArguments) {
     east_set_error(pstate, &ast.err, _("E15: Expected value, got EOC: %.*s"),
                    pstate->pos);
   } else if (kv_size(ast_stack) != 1) {
