@@ -307,7 +307,7 @@ readfile (
   int try_mac;
   int try_dos;
   int try_unix;
-  int file_rewind = FALSE;
+  int file_rewind = false;
   int can_retry;
   linenr_T conv_error = 0;              /* line nr with conversion error */
   linenr_T illegal_byte = 0;            /* line nr with illegal byte */
@@ -647,39 +647,38 @@ readfile (
     int m = msg_scroll;
     int n = msg_scrolled;
 
-    /*
-     * The file must be closed again, the autocommands may want to change
-     * the file before reading it.
-     */
-    if (!read_stdin)
-      close(fd);                /* ignore errors */
+    // The file must be closed again, the autocommands may want to change
+    // the file before reading it.
+    if (!read_stdin) {
+      close(fd);                // ignore errors
+    }
 
-    /*
-     * The output from the autocommands should not overwrite anything and
-     * should not be overwritten: Set msg_scroll, restore its value if no
-     * output was done.
-     */
-    msg_scroll = TRUE;
-    if (filtering)
+    // The output from the autocommands should not overwrite anything and
+    // should not be overwritten: Set msg_scroll, restore its value if no
+    // output was done.
+    msg_scroll = true;
+    if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else if (read_stdin)
+                           false, curbuf, eap);
+    } else if (read_stdin) {
       apply_autocmds_exarg(EVENT_STDINREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else if (newfile)
+                           false, curbuf, eap);
+    } else if (newfile) {
       apply_autocmds_exarg(EVENT_BUFREADPRE, NULL, sfname,
-          FALSE, curbuf, eap);
-    else
+                           false, curbuf, eap);
+    } else {
       apply_autocmds_exarg(EVENT_FILEREADPRE, sfname, sfname,
-          FALSE, NULL, eap);
+                           false, NULL, eap);
+    }
 
-  // autocommands may have changed it
-  try_mac = (vim_strchr(p_ffs, 'm') != NULL);
-  try_dos = (vim_strchr(p_ffs, 'd') != NULL);
-  try_unix = (vim_strchr(p_ffs, 'x') != NULL);
+    // autocommands may have changed it
+    try_mac = (vim_strchr(p_ffs, 'm') != NULL);
+    try_dos = (vim_strchr(p_ffs, 'd') != NULL);
+    try_unix = (vim_strchr(p_ffs, 'x') != NULL);
 
-    if (msg_scrolled == n)
+    if (msg_scrolled == n) {
       msg_scroll = m;
+    }
 
     if (aborting()) {       /* autocmds may abort script processing */
       --no_wait_return;
