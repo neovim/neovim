@@ -8,6 +8,7 @@ local child_call_once = helpers.child_call_once
 local alloc_log_new = helpers.alloc_log_new
 local kvi_destroy = helpers.kvi_destroy
 local conv_enum = helpers.conv_enum
+local debug_log = helpers.debug_log
 local ptr2key = helpers.ptr2key
 local cimport = helpers.cimport
 local ffi = helpers.ffi
@@ -233,6 +234,7 @@ describe('Expressions parser', function()
   local function check_parsing(str, exp_ast, exp_highlighting_fs, nz_flags_exps)
     nz_flags_exps = nz_flags_exps or {}
     for _, flags in ipairs({0, 1, 2, 3}) do
+      debug_log(('Running test case (%s, %u)'):format(str, flags))
       local err, msg = pcall(function()
         if os.getenv('NVIM_TEST_PARSER_SPEC_PRINT_TEST_CASE') == '1' then
           print(str, flags)

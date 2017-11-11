@@ -529,9 +529,13 @@ local hook_numlen = 5
 local hook_msglen = 1 + 1 + 1 + (1 + hook_fnamelen) + (1 + hook_sfnamelen) + (1 + hook_numlen) + 1
 
 local tracehelp = dedent([[
+  Trace: either in the format described below or custom debug output starting
+  with `>`. Latter lines still have the same width in byte.
+
   ┌ Trace type: _r_eturn from function , function _c_all, _l_ine executed,
   │             _t_ail return, _C_ount (should not actually appear),
-  │             _s_aved from previous run for reference.
+  │             _s_aved from previous run for reference, _>_ for custom debug
+  │             output.
   │┏ Function type: _L_ua function, _C_ function, _m_ain part of chunk,
   │┃                function that did _t_ail call.
   │┃┌ Function name type: _g_lobal, _l_ocal, _m_ethod, _f_ield, _u_pvalue,
@@ -629,7 +633,17 @@ end
 
 local trace_end_msg = ('E%s\n'):format((' '):rep(hook_msglen - 2))
 
+local _debug_log
+
+local debug_log = only_separate(function(...)
+  return _debug_log(...)
+end)
+
 local function itp_child(wr, func)
+  _debug_log = function(s)
+    s = s:sub(1, hook_msglen - 2)
+    sc.write(wr, '>' .. s .. (' '):rep(hook_msglen - 2 - #s) .. '\n')
+  end
   init()
   collectgarbage('stop')
   child_sethook(wr)
@@ -845,6 +859,7 @@ local module = {
   make_enum_conv_tab = make_enum_conv_tab,
   ptr2addr = ptr2addr,
   ptr2key = ptr2key,
+  debug_log = debug_log,
 }
 return function()
   return module
