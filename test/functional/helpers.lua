@@ -641,7 +641,7 @@ local function redir_exec(cmd)
 end
 
 local function get_pathsep()
-  return funcs.fnamemodify('.', ':p'):sub(-1)
+  return iswin() and '\\' or '/'
 end
 
 local function pathroot()
