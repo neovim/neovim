@@ -199,3 +199,7 @@ call remote#host#Register('python3', '*',
 " Ruby
 call remote#host#Register('ruby', '*.rb',
       \ function('provider#ruby#Require'))
+
+" nodejs
+call remote#host#Register('node', '*',
+      \ function('provider#node#Require'))
