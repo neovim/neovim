@@ -56,6 +56,7 @@ typedef struct {
 typedef struct {
   uint64_t id;
   size_t refcount;
+  size_t pending_requests;
   PMap(cstr_t) *subscribed_events;
   bool closed;
   ChannelType type;
@@ -70,6 +71,7 @@ typedef struct {
   } data;
   uint64_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
+  kvec_t(WBuffer *) delayed_notifications;
   MultiQueue *events;
 } Channel;
 
@@ -203,7 +205,14 @@ bool channel_send_event(uint64_t id, const char *name, Array args)
   }
 
   if (channel) {
-    send_event(channel, name, args);
+    if (channel->pending_requests) {
+      // Pending request, queue the notification for later sending.
+      const String method = cstr_as_string((char *)name);
+      WBuffer *buffer = serialize_request(id, 0, method, args, &out_buffer, 1);
+      kv_push(channel->delayed_notifications, buffer);
+    } else {
+      send_event(channel, name, args);
+    }
   }  else {
     broadcast_event(name, args);
   }
@@ -239,8 +248,10 @@ Object channel_send_call(uint64_t id,
   // Push the frame
   ChannelCallFrame frame = { request_id, false, false, NIL };
   kv_push(channel->call_stack, &frame);
+  channel->pending_requests++;
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, channel->events, -1, frame.returned);
   (void)kv_pop(channel->call_stack);
+  channel->pending_requests--;
 
   if (frame.errored) {
     if (frame.result.type == kObjectTypeString) {
@@ -263,6 +274,10 @@ Object channel_send_call(uint64_t id,
     }
 
     api_free_object(frame.result);
+  }
+
+  if (!channel->pending_requests) {
+    send_delayed_notifications(channel);
   }
 
   decref(channel);
@@ -689,7 +704,11 @@ static void broadcast_event(const char *name, Array args)
 
   for (size_t i = 0; i < kv_size(subscribed); i++) {
     Channel *channel = kv_A(subscribed, i);
-    channel_write(channel, buffer);
+    if (channel->pending_requests) {
+      kv_push(channel->delayed_notifications, buffer);
+    } else {
+      channel_write(channel, buffer);
+    }
   }
 
 end:
@@ -767,6 +786,7 @@ static void free_channel(Channel *channel)
 
   pmap_free(cstr_t)(channel->subscribed_events);
   kv_destroy(channel->call_stack);
+  kv_destroy(channel->delayed_notifications);
   if (channel->type != kChannelTypeProc) {
     multiqueue_free(channel->events);
   }
@@ -791,9 +811,11 @@ static Channel *register_channel(ChannelType type, uint64_t id,
   rv->closed = false;
   rv->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rv->id = id > 0 ? id : next_chan_id++;
+  rv->pending_requests = 0;
   rv->subscribed_events = pmap_new(cstr_t)();
   rv->next_request_id = 1;
   kv_init(rv->call_stack);
+  kv_init(rv->delayed_notifications);
   pmap_put(uint64_t)(channels, rv->id, rv);
 
   ILOG("new channel %" PRIu64 " (%s): %s", rv->id,
@@ -888,6 +910,16 @@ static WBuffer *serialize_response(uint64_t channel_id,
   msgpack_sbuffer_clear(sbuffer);
   api_free_object(arg);
   return rv;
+}
+
+static void send_delayed_notifications(Channel* channel)
+{
+  for (size_t i = 0; i < kv_size(channel->delayed_notifications); i++) {
+    WBuffer *buffer = kv_A(channel->delayed_notifications, i);
+    channel_write(channel, buffer);
+  }
+
+  kv_size(channel->delayed_notifications) = 0;
 }
 
 static void incref(Channel *channel)
