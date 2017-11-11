@@ -137,6 +137,7 @@ endforeach()
 
 file(GLOB_RECURSE RUNTIME_FILES
   RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  rgb.txt
   *.vim *.dict *.py *.rb *.ps *.tutor)
 
 foreach(F ${RUNTIME_FILES})
