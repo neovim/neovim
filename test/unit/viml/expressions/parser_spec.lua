@@ -27,6 +27,7 @@ local format_string = global_helpers.format_string
 local format_luav = global_helpers.format_luav
 local intchar2lua = global_helpers.intchar2lua
 local REMOVE_THIS = global_helpers.REMOVE_THIS
+local dictdiff = global_helpers.dictdiff
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h',
                     './src/nvim/syntax.h')
@@ -180,9 +181,31 @@ child_call_once(function()
   end
 end)
 
-local function format_check(expr, flags, ast, hls)
+local function hls_to_hl_fs(hls)
+  local ret = {}
+  local next_col = 0
+  for i, v in ipairs(hls) do
+    local group, line, col, str = v:match('^NVim([a-zA-Z]+):(%d+):(%d+):(.*)$')
+    col = tonumber(col)
+    line = tonumber(line)
+    assert(line == 0)
+    local col_shift = col - next_col
+    assert(col_shift >= 0)
+    next_col = col + #str
+    ret[i] = format_string('hl(%r, %r%s)',
+                           group,
+                           str,
+                           (col_shift == 0
+                            and ''
+                            or (', %u'):format(col_shift)))
+  end
+  return ret
+end
+
+local function format_check(expr, format_check_data)
   -- That forces specific order.
-  print(  format_string('\ncheck_parsing(%r, %u, {', expr, flags))
+  local zdata = format_check_data[0]
+  print(format_string('\ncheck_parsing(%r, {', expr, flags))
   local digits = '  --           '
   local digits2 = '  --  '
   for i = 0, #expr - 1 do
@@ -195,27 +218,56 @@ local function format_check(expr, flags, ast, hls)
   if #expr > 10 then
     print(digits2)
   end
-  print('  ast = ' .. format_luav(ast.ast, '  ') .. ',')
-  if ast.err then
+  print('  ast = ' .. format_luav(zdata.ast.ast, '  ') .. ',')
+  if zdata.ast.err then
     print('  err = {')
-    print('    arg = ' .. format_luav(ast.err.arg) .. ',')
-    print('    msg = ' .. format_luav(ast.err.msg) .. ',')
+    print('    arg = ' .. format_luav(zdata.ast.err.arg) .. ',')
+    print('    msg = ' .. format_luav(zdata.ast.err.msg) .. ',')
     print('  },')
   end
   print('}, {')
-  local next_col = 0
-  for _, v in ipairs(hls) do
-    local group, line, col, str = v:match('NVim([a-zA-Z]+):(%d+):(%d+):(.*)')
-    col = tonumber(col)
-    line = tonumber(line)
-    assert(line == 0)
-    local col_shift = col - next_col
-    assert(col_shift >= 0)
-    next_col = col + #str
-    print(format_string('  hl(%r, %r%s),',
-                        group,
-                        str,
-                        (col_shift == 0 and '' or (', %u'):format(col_shift))))
+  for _, v in ipairs(zdata.hl_fs) do
+    print('  ' .. v .. ',')
+  end
+  local diffs = {}
+  local diffs_num = 0
+  for flags, v in pairs(format_check_data) do
+    if flags ~= 0 then
+      diffs[flags] = dictdiff(zdata, v)
+      if diffs[flags] then
+        if flags == 3 then
+          if (dictdiff(format_check_data[1], format_check_data[3]) == nil
+              or dictdiff(format_check_data[2], format_check_data[3]) == nil) then
+            diffs[flags] = nil
+          else
+            diffs_num = diffs_num + 1
+          end
+        else
+          diffs_num = diffs_num + 1
+        end
+      end
+    end
+  end
+  if diffs_num ~= 0 then
+    print('}, {')
+    local flags = 1
+    while diffs_num ~= 0 do
+      if diffs[flags] then
+        diffs_num = diffs_num - 1
+        local diff = diffs[flags]
+        print(('  [%u] = {'):format(flags))
+        if diff.ast then
+          print('    ast = ' .. format_luav(diff.ast, '    '))
+        end
+        if diff.hl_fs then
+          print('    hl_fs = ' .. format_luav(diff.hl_fs, '    ', {
+            literal_strings=true
+          }))
+        end
+        print('  },')
+      end
+      flags = flags + 1
+    end
   end
   print('})')
 end
@@ -387,8 +439,7 @@ end)
 describe('Expressions parser', function()
   local function check_parsing(str, exp_ast, exp_highlighting_fs, nz_flags_exps)
     nz_flags_exps = nz_flags_exps or {}
-    local format_check_data = function()
-    end
+    local format_check_data = {}
     for _, flags in ipairs({0, 1, 2, 3}) do
       debug_log(('Running test case (%s, %u)'):format(str, flags))
       local err, msg = pcall(function()
@@ -418,7 +469,7 @@ describe('Expressions parser', function()
           end
         end
         if exp_ast == nil then
-          format_check(str, ast, hls)
+          format_check_data[flags] = {ast=ast, hl_fs=hls_to_hl_fs(hls)}
         else
           eq(exps.ast, ast)
           if exp_highlighting_fs then
@@ -440,6 +491,9 @@ describe('Expressions parser', function()
                             str, flags, msg)
         error(msg)
       end
+    end
+    if exp_ast == nil then
+      format_check(str, format_check_data)
     end
   end
   local function hl(group, str, shift)

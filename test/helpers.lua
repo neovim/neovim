@@ -310,6 +310,43 @@ local function mergedicts_copy(d1, d2)
   return ret
 end
 
+-- dictdiff: find a diff so that mergedicts_copy(d1, diff) is equal to d2
+--
+-- Note: does not copy values from d2
+local function dictdiff(d1, d2)
+  local ret = {}
+  local hasdiff = false
+  for k, v in pairs(d1) do
+    if d2[k] == nil then
+      hasdiff = true
+      ret[k] = REMOVE_THIS
+    elseif type(v) == type(d2[k]) then
+      if type(v) == 'table' and type(d2[k]) == 'table' then
+        local subdiff = dictdiff(v, d2[k])
+        if subdiff ~= nil then
+          hasdiff = true
+          ret[k] = subdiff
+        end
+      elseif v ~= d2[k] then
+        ret[k] = d2[k]
+      end
+    else
+      ret[k] = d2[k]
+    end
+  end
+  for k, v in pairs(d2) do
+    if d1[k] == nil then
+      ret[k] = v
+      hasdiff = true
+    end
+  end
+  if hasdiff then
+    return ret
+  else
+    return nil
+  end
+end
+
 local function updated(d, d2)
   for k, v in pairs(d2) do
     d[k] = v
@@ -365,39 +402,52 @@ local SUBTBL = {
 
 local format_luav
 
-format_luav = function(v, indent)
+format_luav = function(v, indent, opts)
+  opts = opts or {}
   local linesep = '\n'
-  local next_indent = nil
+  local next_indent_arg = nil
   if indent == nil then
     indent = ''
     linesep = ''
   else
-    next_indent = indent .. '  '
+    next_indent_arg = indent .. '  '
   end
+  local next_indent = indent .. '  '
   local ret = ''
   if type(v) == 'string' then
-    ret = tostring(v):gsub('[\'\\]', '\\%0'):gsub('[%z\1-\31]', function(match)
-      return SUBTBL[match:byte() + 1]
-    end)
-    ret = '\'' .. ret .. '\''
+    if opts.literal_strings then
+      ret = v
+    else
+      ret = tostring(v):gsub('[\'\\]', '\\%0'):gsub(
+        '[%z\1-\31]', function(match)
+          return SUBTBL[match:byte() + 1]
+        end)
+      ret = '\'' .. ret .. '\''
+    end
   elseif type(v) == 'table' then
-    local processed_keys = {}
-    ret = '{' .. linesep
-    for i, subv in ipairs(v) do
-      ret = ret .. (next_indent or '') .. format_luav(subv, next_indent) .. ',\n'
-      processed_keys[i] = true
-    end
-    for k, subv in pairs(v) do
-      if not processed_keys[k] then
-        if type(k) == 'string' and k:match('^[a-zA-Z_][a-zA-Z0-9_]*$') then
-          ret = ret .. next_indent .. k .. ' = '
-        else
-          ret = ret .. next_indent .. '[' .. format_luav(k) .. '] = '
-        end
-        ret = ret .. format_luav(subv, next_indent) .. ',\n'
+    if v == REMOVE_THIS then
+      ret = 'REMOVE_THIS'
+    else
+      local processed_keys = {}
+      ret = '{' .. linesep
+      for i, subv in ipairs(v) do
+        ret = ('%s%s%s,\n'):format(ret, next_indent,
+                                   format_luav(subv, next_indent_arg, opts))
+        processed_keys[i] = true
       end
+      for k, subv in pairs(v) do
+        if not processed_keys[k] then
+          if type(k) == 'string' and k:match('^[a-zA-Z_][a-zA-Z0-9_]*$') then
+            ret = ret .. next_indent .. k .. ' = '
+          else
+            ret = ('%s%s[%s] = '):format(ret, next_indent,
+                                         format_luav(k, nil, opts))
+          end
+          ret = ret .. format_luav(subv, next_indent_arg, opts) .. ',\n'
+        end
+      end
+      ret = ret  .. indent .. '}'
     end
-    ret = ret  .. indent .. '}'
   elseif type(v) == 'number' then
     if v % 1 == 0 then
       ret = ('%d'):format(v)
@@ -461,6 +511,7 @@ return {
   shallowcopy = shallowcopy,
   deepcopy = deepcopy,
   mergedicts_copy = mergedicts_copy,
+  dictdiff = dictdiff,
   REMOVE_THIS = REMOVE_THIS,
   concat_tables = concat_tables,
   dedent = dedent,
