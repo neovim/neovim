@@ -326,15 +326,6 @@ static void process_close(Process *proc)
   proc->closed = true;
 
   if (proc->detach) {
-    if (proc->in) {
-      uv_unref((uv_handle_t *)&proc->in->uv.pipe);
-    }
-    if (proc->out) {
-      uv_unref((uv_handle_t *)&proc->out->uv.pipe);
-    }
-    if (proc->err) {
-      uv_unref((uv_handle_t *)&proc->err->uv.pipe);
-    }
     if (proc->type == kProcessTypeUv) {
       uv_unref((uv_handle_t *)&(((LibuvProcess *)proc)->uv));
     }
