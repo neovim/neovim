@@ -1233,6 +1233,132 @@ describe('Expressions parser', function()
       hl('CallingParenthesis', ')'),
       hl('CallingParenthesis', ')'),
     })
+    check_parsing('()()', {
+      --           0123
+      ast = {
+        {
+          'Call:0:2:(',
+          children = {
+            {
+              'Nested:0:0:(',
+              children = {
+                'Missing:0:1:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ')()',
+        msg = 'E15: Expected value, got parenthesis: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('InvalidNestingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('(@a)()', {
+      --           012345
+      ast = {
+        {
+          'Call:0:4:(',
+          children = {
+            {
+              'Nested:0:0:(',
+              children = {
+                'Register(name=a):0:1:@a',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Register', '@a'),
+      hl('NestingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('(@a)(@b)', {
+      --           01234567
+      ast = {
+        {
+          'Call:0:4:(',
+          children = {
+            {
+              'Nested:0:0:(',
+              children = {
+                'Register(name=a):0:1:@a',
+              },
+            },
+            'Register(name=b):0:5:@b',
+          },
+        },
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Register', '@a'),
+      hl('NestingParenthesis', ')'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('(@a) (@b)', {
+      --           012345678
+      ast = {
+        {
+          'OpMissing:0:4:',
+          children = {
+            {
+              'Nested:0:0:(',
+              children = {
+                'Register(name=a):0:1:@a',
+              },
+            },
+            {
+              'Nested:0:4: (',
+              children = {
+                'Register(name=b):0:6:@b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '(@b)',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Register', '@a'),
+      hl('NestingParenthesis', ')'),
+      hl('InvalidSpacing', ' '),
+      hl('NestingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('NestingParenthesis', ')'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'Nested:0:0:(',
+              children = {
+                'Register(name=a):0:1:@a',
+                REMOVE_THIS,
+              },
+            },
+          },
+          err = REMOVE_THIS,
+        },
+        hl_fs = {
+          [4] = REMOVE_THIS,
+          [5] = REMOVE_THIS,
+          [6] = REMOVE_THIS,
+          [7] = REMOVE_THIS,
+        },
+      },
+    })
   end)
   itp('works with variable names, including curly braces ones', function()
     check_parsing('var', {
@@ -1542,6 +1668,21 @@ describe('Expressions parser', function()
     }, {
       hl('FigureBrace', '{'),
       hl('Register', '@a'),
+    })
+    check_parsing('a ()', {
+      --           0123
+      ast = {
+        {
+          'Call:0:1: (',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('CallingParenthesis', '(', 1),
+      hl('CallingParenthesis', ')'),
     })
   end)
   itp('works with lambdas and dictionaries', function()
@@ -7346,4 +7487,6 @@ describe('Expressions parser', function()
   end)
   -- FIXME: Test assignments thoroughly
   -- FIXME: Test that parsing assignments can be used for `:for` pre-`in` part.
+  -- FIXME: Somehow make functional tests use the same code. Or, at least,
+  --        create an automated script which will do the import.
 end)

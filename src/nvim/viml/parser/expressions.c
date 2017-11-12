@@ -40,6 +40,13 @@
 //        E15: Invalid expression: [1,
 //
 // <  , just exactly one E697 message.
+// 6. Some expressions involving calling parenthesis which are treated
+//    separately by Vim even when not separated by spaces are treated as one
+//    expression by Neovim: e.g. ":echo (1)(1)" will yield runtime error after
+//    failing to call "1", while Vim will echo "1 1". Reasoning is the same:
+//    type of what is in the first expression is generally not known when
+//    parsing, so to have separate expressions like this separate them with
+//    spaces.
 
 #include <stdbool.h>
 #include <stddef.h>
