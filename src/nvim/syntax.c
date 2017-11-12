@@ -6020,7 +6020,7 @@ static const char *highlight_init_dark[] = {
   NULL
 };
 
-static const char *highlight_init_cmdline[] = {
+const char *const highlight_init_cmdline[] = {
   // XXX When modifying a list modify it in both valid and invalid halfs.
   // TODO(ZyX-I): merge valid and invalid groups via a macros.
 
@@ -6047,6 +6047,7 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimComparison NVimBinaryOperator",
   "default link NVimComparisonModifier NVimComparison",
   "default link NVimBinaryPlus NVimBinaryOperator",
+  "default link NVimBinaryMinus NVimBinaryOperator",
   "default link NVimConcat NVimBinaryOperator",
   "default link NVimConcatOrSubscript NVimConcat",
   "default link NVimOr NVimBinaryOperator",
@@ -6108,9 +6109,6 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimDoubleQuote NVimStringQuote",
   "default link NVimDoubleQuotedBody NVimStringBody",
   "default link NVimDoubleQuotedEscape NVimStringSpecial",
-  // Not actually invalid, but we highlight user that he is doing something
-  // wrong.
-  "default link NVimDoubleQuotedUnknownEscape NVimInvalidValue",
 
   "default link NVimFigureBrace NVimInternalError",
   "default link NVimSingleQuotedUnknownEscape NVimInternalError",
@@ -6144,6 +6142,7 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimInvalidComparison NVimInvalidBinaryOperator",
   "default link NVimInvalidComparisonModifier NVimInvalidComparison",
   "default link NVimInvalidBinaryPlus NVimInvalidBinaryOperator",
+  "default link NVimInvalidBinaryMinus NVimInvalidBinaryOperator",
   "default link NVimInvalidConcat NVimInvalidBinaryOperator",
   "default link NVimInvalidConcatOrSubscript NVimInvalidConcat",
   "default link NVimInvalidOr NVimInvalidBinaryOperator",
@@ -6217,12 +6216,17 @@ static const char *highlight_init_cmdline[] = {
   "default link NVimInvalidFigureBrace NVimInvalidDelimiter",
 
   "default link NVimInvalidSpacing ErrorMsg",
+
+  // Not actually invalid, but we highlight user that he is doing something
+  // wrong.
+  "default link NVimDoubleQuotedUnknownEscape NVimInvalidValue",
+  NULL,
 };
 
 /// Create default links for NVim* highlight groups used for cmdline coloring
 void syn_init_cmdline_highlight(bool reset, bool init)
 {
-  for (size_t i = 0 ; i < ARRAY_SIZE(highlight_init_cmdline) ; i++) {
+  for (size_t i = 0 ; highlight_init_cmdline[i] != NULL ; i++) {
     do_highlight(highlight_init_cmdline[i], reset, init);
   }
 }

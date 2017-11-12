@@ -7,11 +7,13 @@ local make_enum_conv_tab = helpers.make_enum_conv_tab
 local child_call_once = helpers.child_call_once
 local alloc_log_new = helpers.alloc_log_new
 local kvi_destroy = helpers.kvi_destroy
+local array_size = helpers.array_size
 local conv_enum = helpers.conv_enum
 local debug_log = helpers.debug_log
 local ptr2key = helpers.ptr2key
 local cimport = helpers.cimport
 local ffi = helpers.ffi
+local neq = helpers.neq
 local eq = helpers.eq
 
 local conv_ccs = viml_helpers.conv_ccs
@@ -26,9 +28,157 @@ local format_luav = global_helpers.format_luav
 local intchar2lua = global_helpers.intchar2lua
 local REMOVE_THIS = global_helpers.REMOVE_THIS
 
-local lib = cimport('./src/nvim/viml/parser/expressions.h')
+local lib = cimport('./src/nvim/viml/parser/expressions.h',
+                    './src/nvim/syntax.h')
 
 local alloc_log = alloc_log_new()
+
+local predefined_hl_defs = {
+  -- From highlight_init_both
+  Conceal=true,
+  Cursor=true,
+  lCursor=true,
+  DiffText=true,
+  ErrorMsg=true,
+  IncSearch=true,
+  ModeMsg=true,
+  NonText=true,
+  PmenuSbar=true,
+  StatusLine=true,
+  StatusLineNC=true,
+  TabLineFill=true,
+  TabLineSel=true,
+  TermCursor=true,
+  VertSplit=true,
+  WildMenu=true,
+  EndOfBuffer=true,
+  QuickFixLine=true,
+  Substitute=true,
+  Whitespace=true,
+
+  -- From highlight_init_(dark|light)
+  ColorColumn=true,
+  CursorColumn=true,
+  CursorLine=true,
+  CursorLineNr=true,
+  DiffAdd=true,
+  DiffChange=true,
+  DiffDelete=true,
+  Directory=true,
+  FoldColumn=true,
+  Folded=true,
+  LineNr=true,
+  MatchParen=true,
+  MoreMsg=true,
+  Pmenu=true,
+  PmenuSel=true,
+  PmenuThumb=true,
+  Question=true,
+  Search=true,
+  SignColumn=true,
+  SpecialKey=true,
+  SpellBad=true,
+  SpellCap=true,
+  SpellLocal=true,
+  SpellRare=true,
+  TabLine=true,
+  Title=true,
+  Visual=true,
+  WarningMsg=true,
+  Normal=true,
+
+  -- From syncolor.vim, if &background
+  Comment=true,
+  Constant=true,
+  Special=true,
+  Identifier=true,
+  Statement=true,
+  PreProc=true,
+  Type=true,
+  Underlined=true,
+  Ignore=true,
+
+  -- From syncolor.vim, below if &background
+  Error=true,
+  Todo=true,
+
+  -- From syncolor.vim, links at the bottom
+  String=true,
+  Character=true,
+  Number=true,
+  Boolean=true,
+  Float=true,
+  Function=true,
+  Conditional=true,
+  Repeat=true,
+  Label=true,
+  Operator=true,
+  Keyword=true,
+  Exception=true,
+  Include=true,
+  Define=true,
+  Macro=true,
+  PreCondit=true,
+  StorageClass=true,
+  Structure=true,
+  Typedef=true,
+  Tag=true,
+  SpecialChar=true,
+  Delimiter=true,
+  SpecialComment=true,
+  Debug=true,
+}
+
+local nvim_hl_defs = {}
+
+child_call_once(function()
+  local i = 0
+  while lib.highlight_init_cmdline[i] ~= nil do
+    local hl_args = lib.highlight_init_cmdline[i]
+    local s = ffi.string(hl_args)
+    local err, msg = pcall(function()
+      if s:sub(1, 13) == 'default link ' then
+        local new_grp, grp_link = s:match('^default link (%w+) (%w+)$')
+        neq(nil, new_grp)
+        -- Note: group to link to must be already defined at the time of
+        --       linking, otherwise it will be created as cleared. So existence
+        --       of the group is checked here and not in the next pass over
+        --       nvim_hl_defs.
+        eq(true, not not (nvim_hl_defs[grp_link]
+                          or predefined_hl_defs[grp_link]))
+        nvim_hl_defs[new_grp] = {'link', grp_link}
+      else
+        local new_grp, grp_args = s:match('^(%w+) (.*)')
+        neq(nil, new_grp)
+        eq(false, not not (nvim_hl_defs[grp_link]
+                           or predefined_hl_defs[grp_link]))
+        nvim_hl_defs[new_grp] = {'definition', grp_args}
+      end
+    end)
+    if not err then
+      msg = format_string(
+        'Error while processing string %s at position %u:\n%s', s, i, msg)
+      error(msg)
+    end
+    i = i + 1
+  end
+  for k, _ in ipairs(nvim_hl_defs) do
+    eq('NVim', k:sub(1, 4))
+    -- NVimInvalid
+    -- 12345678901
+    local err, msg = pcall(function()
+      if k:sub(5, 11) == 'Invalid' then
+        neq(nil, nvim_hl_defs['NVim' .. k:sub(12)])
+      else
+        neq(nil, nvim_hl_defs['NVimInvalid' .. k:sub(5)])
+      end
+    end)
+    if not err then
+      msg = format_string('Error while processing group %s:\n%s', k, msg)
+      error(msg)
+    end
+  end
+end)
 
 local function format_check(expr, flags, ast, hls)
   -- That forces specific order.
@@ -237,6 +387,8 @@ end)
 describe('Expressions parser', function()
   local function check_parsing(str, exp_ast, exp_highlighting_fs, nz_flags_exps)
     nz_flags_exps = nz_flags_exps or {}
+    local format_check_data = function()
+    end
     for _, flags in ipairs({0, 1, 2, 3}) do
       debug_log(('Running test case (%s, %u)'):format(str, flags))
       local err, msg = pcall(function()
@@ -266,7 +418,7 @@ describe('Expressions parser', function()
           end
         end
         if exp_ast == nil then
-          format_check(str, flags, ast, hls)
+          format_check(str, ast, hls)
         else
           eq(exps.ast, ast)
           if exp_highlighting_fs then
@@ -292,6 +444,9 @@ describe('Expressions parser', function()
   end
   local function hl(group, str, shift)
     return function(next_col)
+      if nvim_hl_defs['NVim' .. group] == nil then
+        error(('Unknown group: NVim%s'):format(group))
+      end
       local col = next_col + (shift or 0)
       return (('%s:%u:%u:%s'):format(
         'NVim' .. group,
