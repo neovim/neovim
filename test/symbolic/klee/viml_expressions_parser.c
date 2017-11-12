@@ -93,6 +93,20 @@ int main(const int argc, const char *const *const argv,
 
   const ExprAST ast = viml_pexpr_parse(&pstate, (int)flags);
   assert(ast.root != NULL || ast.err.msg);
+  if (flags & kExprFlagsParseLet) {
+    assert(ast.err.msg != NULL
+           || ast.root->type == kExprNodeAssignment
+           || (ast.root->type == kExprNodeListLiteral
+               && ast.root->children != NULL)
+           || ast.root->type == kExprNodeComplexIdentifier
+           || ast.root->type == kExprNodeCurlyBracesIdentifier
+           || ast.root->type == kExprNodePlainIdentifier
+           || ast.root->type == kExprNodeRegister
+           || ast.root->type == kExprNodeEnvironment
+           || ast.root->type == kExprNodeOption
+           || ast.root->type == kExprNodeSubscript
+           || ast.root->type == kExprNodeConcatOrSubscript);
+  }
   // Can’t possibly have more highlight tokens then there are bytes in string.
   assert(kv_size(colors) <= INPUT_SIZE - shift);
   kvi_destroy(colors);

@@ -264,6 +264,9 @@ local function which(exe)
 end
 
 local function shallowcopy(orig)
+  if type(orig) ~= 'table' then
+    return orig
+  end
   local copy = {}
   for orig_key, orig_value in pairs(orig) do
     copy[orig_key] = orig_value
@@ -312,7 +315,7 @@ end
 
 -- dictdiff: find a diff so that mergedicts_copy(d1, diff) is equal to d2
 --
--- Note: does not copy values from d2
+-- Note: does not do copies of d2 values used.
 local function dictdiff(d1, d2)
   local ret = {}
   local hasdiff = false
@@ -321,7 +324,7 @@ local function dictdiff(d1, d2)
       hasdiff = true
       ret[k] = REMOVE_THIS
     elseif type(v) == type(d2[k]) then
-      if type(v) == 'table' and type(d2[k]) == 'table' then
+      if type(v) == 'table' then
         local subdiff = dictdiff(v, d2[k])
         if subdiff ~= nil then
           hasdiff = true
@@ -329,14 +332,16 @@ local function dictdiff(d1, d2)
         end
       elseif v ~= d2[k] then
         ret[k] = d2[k]
+        hasdiff = true
       end
     else
       ret[k] = d2[k]
+      hasdiff = true
     end
   end
   for k, v in pairs(d2) do
     if d1[k] == nil then
-      ret[k] = v
+      ret[k] = shallowcopy(v)
       hasdiff = true
     end
   end
@@ -406,13 +411,18 @@ format_luav = function(v, indent, opts)
   opts = opts or {}
   local linesep = '\n'
   local next_indent_arg = nil
+  local indent_shift = opts.indent_shift or '  '
+  local next_indent
+  local nl = '\n'
   if indent == nil then
     indent = ''
     linesep = ''
+    next_indent = ''
+    nl = ' '
   else
-    next_indent_arg = indent .. '  '
+    next_indent_arg = indent .. indent_shift
+    next_indent = indent .. indent_shift
   end
-  local next_indent = indent .. '  '
   local ret = ''
   if type(v) == 'string' then
     if opts.literal_strings then
@@ -430,10 +440,12 @@ format_luav = function(v, indent, opts)
     else
       local processed_keys = {}
       ret = '{' .. linesep
+      local non_empty = false
       for i, subv in ipairs(v) do
-        ret = ('%s%s%s,\n'):format(ret, next_indent,
-                                   format_luav(subv, next_indent_arg, opts))
+        ret = ('%s%s%s,%s'):format(ret, next_indent,
+                                   format_luav(subv, next_indent_arg, opts), nl)
         processed_keys[i] = true
+        non_empty = true
       end
       for k, subv in pairs(v) do
         if not processed_keys[k] then
@@ -443,8 +455,12 @@ format_luav = function(v, indent, opts)
             ret = ('%s%s[%s] = '):format(ret, next_indent,
                                          format_luav(k, nil, opts))
           end
-          ret = ret .. format_luav(subv, next_indent_arg, opts) .. ',\n'
+          ret = ret .. format_luav(subv, next_indent_arg, opts) .. ',' .. nl
+          non_empty = true
         end
+      end
+      if nl == ' ' and non_empty then
+        ret = ret:sub(1, -3)
       end
       ret = ret  .. indent .. '}'
     end
@@ -495,6 +511,25 @@ local function intchar2lua(ch)
   return (20 <= ch and ch < 127) and ('%c'):format(ch) or ch
 end
 
+local fixtbl_metatable = {
+  __newindex = function()
+    assert(false)
+  end,
+}
+
+local function fixtbl(tbl)
+  return setmetatable(tbl, fixtbl_metatable)
+end
+
+local function fixtbl_rec(tbl)
+  for k, v in pairs(tbl) do
+    if type(v) == 'table' then
+      fixtbl_rec(v)
+    end
+  end
+  return fixtbl(tbl)
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -519,4 +554,6 @@ return {
   format_string = format_string,
   intchar2lua = intchar2lua,
   updated = updated,
+  fixtbl = fixtbl,
+  fixtbl_rec = fixtbl_rec,
 }

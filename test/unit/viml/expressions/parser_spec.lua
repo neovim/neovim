@@ -202,12 +202,20 @@ local function hls_to_hl_fs(hls)
   return ret
 end
 
-local function format_check(expr, format_check_data)
+local function format_check(expr, format_check_data, opts)
   -- That forces specific order.
-  local zdata = format_check_data[0]
-  print(format_string('\ncheck_parsing(%r, {', expr, flags))
-  local digits = '  --           '
-  local digits2 = '  --  '
+  local zflags = opts.flags[1]
+  local zdata = format_check_data[zflags]
+  local dig_len = 0
+  if opts.funcname then
+    print(format_string('\n%s(%r, {', opts.funcname, expr))
+    dig_len = #opts.funcname + 2
+  else
+    print(format_string('\n_check_parsing(%r, %r, {', opts, expr))
+    dig_len = #('_check_parsing(, \'') + #(format_string('%r', opts))
+  end
+  local digits = '  --' .. (' '):rep(dig_len - #('  --'))
+  local digits2 = digits:sub(1, -10)
   for i = 0, #expr - 1 do
     if i % 10 == 0 then
       digits2 = ('%s%10u'):format(digits2, i / 10)
@@ -232,12 +240,15 @@ local function format_check(expr, format_check_data)
   local diffs = {}
   local diffs_num = 0
   for flags, v in pairs(format_check_data) do
-    if flags ~= 0 then
+    if flags ~= zflags then
       diffs[flags] = dictdiff(zdata, v)
       if diffs[flags] then
-        if flags == 3 then
-          if (dictdiff(format_check_data[1], format_check_data[3]) == nil
-              or dictdiff(format_check_data[2], format_check_data[3]) == nil) then
+        if flags == 3 + zflags then
+          if (dictdiff(format_check_data[1 + zflags],
+                       format_check_data[3 + zflags]) == nil
+              or dictdiff(format_check_data[2 + zflags],
+                          format_check_data[3 + zflags]) == nil)
+          then
             diffs[flags] = nil
           else
             diffs_num = diffs_num + 1
@@ -437,10 +448,12 @@ child_call_once(function()
 end)
 
 describe('Expressions parser', function()
-  local function check_parsing(str, exp_ast, exp_highlighting_fs, nz_flags_exps)
+  local function _check_parsing(opts, str, exp_ast, exp_highlighting_fs,
+                                nz_flags_exps)
+    local zflags = opts.flags[1]
     nz_flags_exps = nz_flags_exps or {}
     local format_check_data = {}
-    for _, flags in ipairs({0, 1, 2, 3}) do
+    for _, flags in ipairs(opts.flags) do
       debug_log(('Running test case (%s, %u)'):format(str, flags))
       local err, msg = pcall(function()
         if os.getenv('NVIM_TEST_PARSER_SPEC_PRINT_TEST_CASE') == '1' then
@@ -452,25 +465,25 @@ describe('Expressions parser', function()
         local east = lib.viml_pexpr_parse(pstate, flags)
         local ast = east2lua(pstate, east)
         local hls = phl2lua(pstate)
-        local exps = {
-          ast = exp_ast,
-          hl_fs = exp_highlighting_fs,
-        }
-        local add_exps = nz_flags_exps[flags]
-        if not add_exps and flags == 3 then
-          add_exps = nz_flags_exps[1] or nz_flags_exps[2]
-        end
-        if add_exps then
-          if add_exps.ast then
-            exps.ast = mergedicts_copy(exps.ast, add_exps.ast)
-          end
-          if add_exps.hl_fs then
-            exps.hl_fs = mergedicts_copy(exps.hl_fs, add_exps.hl_fs)
-          end
-        end
         if exp_ast == nil then
           format_check_data[flags] = {ast=ast, hl_fs=hls_to_hl_fs(hls)}
         else
+          local exps = {
+            ast = exp_ast,
+            hl_fs = exp_highlighting_fs,
+          }
+          local add_exps = nz_flags_exps[flags]
+          if not add_exps and flags == 3 + zflags then
+            add_exps = nz_flags_exps[1 + zflags] or nz_flags_exps[2 + zflags]
+          end
+          if add_exps then
+            if add_exps.ast then
+              exps.ast = mergedicts_copy(exps.ast, add_exps.ast)
+            end
+            if add_exps.hl_fs then
+              exps.hl_fs = mergedicts_copy(exps.hl_fs, add_exps.hl_fs)
+            end
+          end
           eq(exps.ast, ast)
           if exp_highlighting_fs then
             local exp_highlighting = {}
@@ -493,8 +506,17 @@ describe('Expressions parser', function()
       end
     end
     if exp_ast == nil then
-      format_check(str, format_check_data)
+      format_check(str, format_check_data, opts)
     end
+  end
+  local function check_parsing(...)
+    return _check_parsing({flags={0, 1, 2, 3}, funcname='check_parsing'}, ...)
+  end
+  local function check_asgn_parsing(...)
+    return _check_parsing({
+      flags={4, 5, 6, 7},
+      funcname='check_asgn_parsing',
+    }, ...)
   end
   local function hl(group, str, shift)
     return function(next_col)
@@ -7693,6 +7715,208 @@ describe('Expressions parser', function()
         },
       },
     })
+  end)
+  itp('works with assignments', function()
+    check_asgn_parsing('a=b', {
+      --                012
+      ast = {
+        {
+          'Assignment(Plain):0:1:=',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:2:b',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('PlainAssignment', '='),
+      hl('IdentifierName', 'b'),
+    })
+
+    check_asgn_parsing('a+=b', {
+      --                0123
+      ast = {
+        {
+          'Assignment(Add):0:1:+=',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:3:b',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('AssignmentWithAddition', '+='),
+      hl('IdentifierName', 'b'),
+    })
+
+    check_asgn_parsing('a-=b', {
+      --                0123
+      ast = {
+        {
+          'Assignment(Subtract):0:1:-=',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:3:b',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('AssignmentWithSubtraction', '-='),
+      hl('IdentifierName', 'b'),
+    })
+
+    check_asgn_parsing('a.=b', {
+      --                0123
+      ast = {
+        {
+          'Assignment(Concat):0:1:.=',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:3:b',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('AssignmentWithConcatenation', '.='),
+      hl('IdentifierName', 'b'),
+    })
+
+    check_asgn_parsing('a', {
+      --                0
+      ast = {
+        'PlainIdentifier(scope=0,ident=a):0:0:a',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+    })
+
+    check_asgn_parsing('a b', {
+      --                012
+      ast = {
+        {
+          'OpMissing:0:1:',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            'PlainIdentifier(scope=0,ident=b):0:1: b',
+          },
+        },
+      },
+      err = {
+        arg = 'b',
+        msg = 'E15: Expected assignment operator or subscript: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('InvalidSpacing', ' '),
+      hl('IdentifierName', 'b'),
+    }, {
+      [5] = {
+        ast = {
+          ast = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+          },
+          err = REMOVE_THIS,
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+          [3] = REMOVE_THIS,
+        }
+      },
+    })
+
+    check_asgn_parsing('[a, b, c]', {
+      --                012345678
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                {
+                  'Comma:0:5:,',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:3: b',
+                    'PlainIdentifier(scope=0,ident=c):0:6: c',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('IdentifierName', 'a'),
+      hl('Comma', ','),
+      hl('IdentifierName', 'b', 1),
+      hl('Comma', ','),
+      hl('IdentifierName', 'c', 1),
+      hl('List', ']'),
+    })
+
+    check_asgn_parsing('[a, b]', {
+      --                012345
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Comma:0:2:,',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+                'PlainIdentifier(scope=0,ident=b):0:3: b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('IdentifierName', 'a'),
+      hl('Comma', ','),
+      hl('IdentifierName', 'b', 1),
+      hl('List', ']'),
+    })
+
+    check_asgn_parsing('[a]', {
+      --                012
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:1:a',
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('IdentifierName', 'a'),
+      hl('List', ']'),
+    })
+
+    check_asgn_parsing('[]', {
+      --                01
+      ast = {
+        'ListLiteral:0:0:[',
+      },
+      err = {
+        arg = ']',
+        msg = 'E475: Unable to assign to empty list: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('InvalidList', ']'),
+    })
+
+    -- check_asgn_parsing('a[1 + 2] += 3')
+    -- check_asgn_parsing('a[{-> {b{3}: 4}[5]}()] += 6')
+    -- check_asgn_parsing('a{1}.2[{-> {b{3}: 4}[5]}()]')
   end)
   -- FIXME: Test assignments thoroughly
   -- FIXME: Test that parsing assignments can be used for `:for` pre-`in` part.

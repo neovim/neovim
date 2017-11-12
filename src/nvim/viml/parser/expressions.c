@@ -1363,7 +1363,6 @@ static inline ParserPosition recol_pos(const ParserPosition pos,
       } \
     } while (0)
 
-// TODO(ZyX-I): actual condition
 /// Check whether it is possible to have next expression after current
 ///
 /// For :echo: `:echo @a @a` is a valid expression. `:echo (@a @a)` is not.
@@ -1901,6 +1900,7 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
   bool highlighted_prev_spacing = false;
   // Lambda node, valid when parsing lambda arguments only.
   ExprASTNode *lambda_node = NULL;
+  size_t asgn_level = 0;
   do {
     const bool is_concat_or_subscript = (
         want_node == kENodeValue
@@ -2063,6 +2063,9 @@ viml_pexpr_parse_process_token:
                    && tok_type != kExprLexDot
                    && (tok_type != kExprLexComma || !is_single_assignment)
                    && tok_type != kExprLexAssignment) {
+          if (flags & kExprFlagsMulti && MAY_HAVE_NEXT_EXPR) {
+            goto viml_pexpr_parse_end;
+          }
           ERROR_FROM_TOKEN_AND_MSG(
               cur_token,
               _("E15: Expected assignment operator or subscript: %.*s"));
@@ -2429,6 +2432,10 @@ viml_pexpr_parse_valid_colon:
           ExprASTNode *new_top_node = *new_top_node_p;
           switch (new_top_node->type) {
             case kExprNodeListLiteral: {
+              if (pt_is_assignment(cur_pt) && new_top_node->children == NULL) {
+                ERROR_FROM_TOKEN_AND_MSG(
+                    cur_token, _("E475: Unable to assign to empty list: %.*s"));
+              }
               HL_CUR_TOKEN(List);
               break;
             }
@@ -2447,14 +2454,18 @@ viml_pexpr_parse_bracket_closing_error:
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
-          if (cur_pt == kEPTSingleAssignment) {
-            kv_drop(pt_stack, 1);
-          } else if (cur_pt == kEPTAssignment) {
-            assert(ast.err.msg);
-          } else if (cur_pt == kEPTExpr
-                     && kv_size(pt_stack) > 1
-                     && pt_is_assignment(kv_Z(pt_stack, 1))) {
-            kv_drop(pt_stack, 1);
+          if (kv_size(ast_stack) <= asgn_level) {
+            assert(kv_size(ast_stack) == asgn_level);
+            asgn_level = 0;
+            if (cur_pt == kEPTSingleAssignment) {
+              kv_drop(pt_stack, 1);
+            } else if (cur_pt == kEPTAssignment) {
+              assert(ast.err.msg);
+            } else if (cur_pt == kEPTExpr
+                       && kv_size(pt_stack) > 1
+                       && pt_is_assignment(kv_Z(pt_stack, 1))) {
+              kv_drop(pt_stack, 1);
+            }
           }
         } else {
           if (want_node == kENodeValue) {
@@ -2480,6 +2491,7 @@ viml_pexpr_parse_bracket_closing_error:
             ADD_OP_NODE(cur_node);
             HL_CUR_TOKEN(SubscriptBracket);
             if (pt_is_assignment(cur_pt)) {
+              asgn_level = kv_size(ast_stack);
               kvi_push(pt_stack, kEPTExpr);
             }
           }
@@ -2586,10 +2598,14 @@ viml_pexpr_parse_figure_brace_closing_error:
           }
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
-          if (cur_pt == kEPTExpr
-              && kv_size(pt_stack) > 1
-              && pt_is_assignment(kv_Z(pt_stack, 1))) {
-            kv_drop(pt_stack, 1);
+          if (kv_size(ast_stack) <= asgn_level) {
+            assert(kv_size(ast_stack) == asgn_level);
+            if (cur_pt == kEPTExpr
+                && kv_size(pt_stack) > 1
+                && pt_is_assignment(kv_Z(pt_stack, 1))) {
+              kv_drop(pt_stack, 1);
+              asgn_level = 0;
+            }
           }
         } else {
           if (want_node == kENodeValue) {
@@ -2634,6 +2650,10 @@ viml_pexpr_parse_figure_brace_closing_error:
                   want_node = kENodeValue;
                 } while (0),
                 Curly);
+          }
+          if (pt_is_assignment(cur_pt)
+              && !pt_is_assignment(kv_last(pt_stack))) {
+            asgn_level = kv_size(ast_stack);
           }
         }
         break;
@@ -2755,6 +2775,10 @@ viml_pexpr_parse_figure_brace_closing_error:
       case kExprLexDot: {
         ADD_VALUE_IF_MISSING(_("E15: Unexpected dot: %.*s"));
         if (prev_token.type == kExprLexSpacing) {
+          if (cur_pt == kEPTAssignment) {
+            ERROR_FROM_TOKEN_AND_MSG(
+                cur_token, _("E15: Cannot concatenate in assignments: %.*s"));
+          }
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeConcat);
           HL_CUR_TOKEN(Concat);
         } else {
