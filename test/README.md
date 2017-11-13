@@ -93,7 +93,7 @@ To run only the tagged tests:
   method.
 * `TEST_FILE` is not a pattern string like `TEST_TAG` or `TEST_FILTER`. The
   given value to `TEST_FILE` must be a path to an existing file.
-* Both `TEST_TAG` and `TEST_FILTER` does filter tests by the strings from either
+* Both `TEST_TAG` and `TEST_FILTER` filter tests by the strings from either
   `it()` or `describe()` functions.
 
 ---
