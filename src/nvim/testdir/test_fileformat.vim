@@ -17,7 +17,7 @@ func Test_fileformat_after_bw()
 endfunc
 
 func Test_fileformat_autocommand()
-  let filecnt = ["\<CR>", "foobar\<CR>", "eins\<CR>", "\<CR>", "zwei\<CR>", "drei", "vier", "fünf", ""]
+  let filecnt = ["", "foobar\<CR>", "eins\<CR>", "\<CR>", "zwei\<CR>", "drei", "vier", "fünf", ""]
   let ffs = &ffs
   call writefile(filecnt, 'Xfile', 'b')
   au BufReadPre Xfile set ffs=dos ff=dos
