@@ -2381,8 +2381,15 @@ void get_winopts(buf_T *buf)
   clear_winopt(&curwin->w_onebuf_opt);
   clearFolding(curwin);
 
-  wip = find_wininfo(buf, TRUE);
-  if (wip != NULL && wip->wi_optset) {
+  wip = find_wininfo(buf, true);
+  if (wip != NULL && wip->wi_win != curwin && wip->wi_win != NULL
+      && wip->wi_win->w_buffer == buf) {
+    win_T *wp = wip->wi_win;
+    copy_winopt(&wp->w_onebuf_opt, &curwin->w_onebuf_opt);
+    curwin->w_fold_manual = wp->w_fold_manual;
+    curwin->w_foldinvalid = true;
+    cloneFoldGrowArray(&wp->w_folds, &curwin->w_folds);
+  } else if (wip != NULL && wip->wi_optset) {
     copy_winopt(&wip->wi_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wip->wi_fold_manual;
     curwin->w_foldinvalid = true;
