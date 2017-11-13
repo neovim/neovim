@@ -8256,7 +8256,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
   attrentry_T *aep = syn_cterm_attr2entry((int)attr_id);
   if (!aep) {
     api_set_error(err, kErrorTypeException,
-                  "Invalid attribute id: %d", attr_id);
+                  "Invalid attribute id: %" PRId64, attr_id);
     return dic;
   }
 

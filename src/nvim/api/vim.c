@@ -89,7 +89,8 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
 {
   Dictionary dic = ARRAY_DICT_INIT;
   if (syn_get_final_id((int)hl_id) == 0) {
-    api_set_error(err, kErrorTypeException, "Invalid highlight id: %d", hl_id);
+    api_set_error(err, kErrorTypeException,
+                  "Invalid highlight id: %" PRId64, hl_id);
     return dic;
   }
   int attrcode = syn_id2attr((int)hl_id);
