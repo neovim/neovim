@@ -172,7 +172,7 @@ int os_nodetype(const char *name)
                    | O_NONBLOCK
 #endif
                    , 0);
-  if (fd == -1) {
+  if (fd == UV_EINVAL) {
     return NODE_OTHER;  // open() failed.
   }
 
@@ -394,9 +394,11 @@ end:
 /// @param mode Permissions for the newly-created file (IGNORED if 'flags' is
 ///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
 /// @return file descriptor, or libuv error code on failure
-int os_open(const char* path, int flags, int mode)
-  FUNC_ATTR_NONNULL_ALL
+int os_open(const char *path, int flags, int mode)
 {
+  if (path == NULL) {  // uv_fs_open asserts on NULL. #7561
+    return UV_EINVAL;
+  }
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;
@@ -603,12 +605,12 @@ int os_fsync(int fd)
 
 /// Get stat information for a file.
 ///
-/// @return libuv return code.
+/// @return libuv return code, or -errno
 static int os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   if (!name) {
-    return UV_ENOENT;
+    return UV_EINVAL;
   }
   uv_fs_t request;
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
