@@ -4789,7 +4789,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	height with ":set scroll=0".
 
 						*'scrollback'* *'scbk'*
-'scrollback' 'scbk'	number	(default: 1000
+'scrollback' 'scbk'	number	(default: 10000
 				 in normal buffers: -1)
 			local to buffer
 	Maximum number of lines kept beyond the visible screen. Lines at the
