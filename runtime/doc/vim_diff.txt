@@ -302,7 +302,8 @@ Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
 
-The variable name "count" is no fallback for |v:count| anymore.
+VimL (Vim script) compatibility:
+  `count` does not alias to |v:count|
 
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
