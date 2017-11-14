@@ -462,10 +462,10 @@ describe("'scrollback' option", function()
     screen:detach()
   end)
 
-  it('defaults to 1000 in terminal buffers', function()
+  it('defaults to 10000 in terminal buffers', function()
     set_fake_shell()
     command('terminal')
-    eq(1000, curbufmeths.get_option('scrollback'))
+    eq(10000, curbufmeths.get_option('scrollback'))
   end)
 
   it('error if set to invalid value', function()
