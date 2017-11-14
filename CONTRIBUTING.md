@@ -92,7 +92,7 @@ and [AppVeyor].
 - CI builds are compiled with [`-Werror`][gcc-warnings], so compiler warnings
   will fail the build.
 - If any tests fail, the build will fail.
-  See [Building Neovim#running-tests][wiki-run-tests] to run tests locally.
+  See [test/README.md#running-tests][run-tests] to run tests locally.
   Passing locally doesn't guarantee passing the CI build, because of the
   different compilers and platforms tested against.
 - CI runs [ASan] and other analyzers.
@@ -168,7 +168,7 @@ as context, use the `-W` argument as well.
 [hygiene]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 [style-guide]: http://neovim.io/develop/style-guide.xml
 [ASan]: http://clang.llvm.org/docs/AddressSanitizer.html
-[wiki-run-tests]: https://github.com/neovim/neovim/wiki/Building-Neovim#running-tests
+[run-tests]: https://github.com/neovim/neovim/blob/master/test/README.md#running-tests
 [wiki-faq]: https://github.com/neovim/neovim/wiki/FAQ
 [review-checklist]: https://github.com/neovim/neovim/wiki/Code-review-checklist
 [3174]: https://github.com/neovim/neovim/issues/3174
