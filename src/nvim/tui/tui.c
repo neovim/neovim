@@ -1390,18 +1390,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // No bugs in the vanilla terminfo for our purposes.
   }
 
-// At this time (2017-07-12) it seems like all terminals that support 256
-// color codes can use semicolons in the terminal code and be fine.
-// However, this is not correct according to the spec. So to reward those
-// terminals that also support colons, we output the code that way on these
-// specific ones.
-
-// using colons like ISO 8613-6:1994/ITU T.416:1993 says.
-#define XTERM_SETAF_256_COLON \
-  "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38:5:%p1%d%;m"
-#define XTERM_SETAB_256_COLON \
-  "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48:5:%p1%d%;m"
-
 #define XTERM_SETAF_256 \
   "\x1b[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m"
 #define XTERM_SETAB_256 \
@@ -1416,11 +1404,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
     // See http://fedoraproject.org/wiki/Features/256_Color_Terminals for
     // more on this.
-    if (true_xterm || iterm || iterm_pretending_xterm) {
-      unibi_set_num(ut, unibi_max_colors, 256);
-      unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
-      unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256_COLON);
-    } else if (konsole || xterm || gnome || rxvt || st || putty
+    if (true_xterm || iterm || iterm_pretending_xterm
+               || konsole
+               || xterm
+               || gnome
+               || rxvt
+               || st
+               || putty
                || linuxvt  // Linux 4.8+ supports 256-colour SGR.
                || mate_pretending_xterm || gnome_pretending_xterm
                || tmux
@@ -1576,35 +1566,19 @@ static void augment_terminfo(TUIData *data, const char *term,
   // lack the correct definitions in terminfo, is an augmentation, not a
   // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
 
-  // At this time (2017-07-12) it seems like all terminals that support rgb
-  // color codes can use semicolons in the terminal code and be fine.
-  // However, this is not correct according to the spec. So to reward those
-  // terminals that also support colons, we output the code that way on these
-  // specific ones.
-
-  // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_colon_rgb = !tmux && !screen
-    && ((vte_version >= 3600)  // per GNOME bug #685759, #704449
-        || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
-        // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
-        || true_xterm);
+  // Black list for known terminals that do not support rbg codes
+  bool has_no_rgb = false || ((vte_version != 0) && (vte_version < 3600));
 
   data->unibi_ext.set_rgb_foreground = unibi_find_ext_str(ut, "setrgbf");
   if (-1 == data->unibi_ext.set_rgb_foreground) {
-    if (has_colon_rgb) {
-      data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
-          "\x1b[38:2:%p1%d:%p2%d:%p3%dm");
-    } else {
+    if (!has_no_rgb) {
       data->unibi_ext.set_rgb_foreground = (int)unibi_add_ext_str(ut, "setrgbf",
           "\x1b[38;2;%p1%d;%p2%d;%p3%dm");
     }
   }
   data->unibi_ext.set_rgb_background = unibi_find_ext_str(ut, "setrgbb");
   if (-1 == data->unibi_ext.set_rgb_background) {
-    if (has_colon_rgb) {
-      data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
-          "\x1b[48:2:%p1%d:%p2%d:%p3%dm");
-    } else {
+    if (!has_no_rgb) {
       data->unibi_ext.set_rgb_background = (int)unibi_add_ext_str(ut, "setrgbb",
           "\x1b[48;2;%p1%d;%p2%d;%p3%dm");
     }
