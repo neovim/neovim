@@ -1066,7 +1066,8 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
  * "lnum_amount" to the line number and add "col_amount" to the column
  * position.
  */
-void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount)
+void mark_col_adjust(linenr_T lnum, colnr_T mincol, 
+                     long lnum_amount, long col_amount)
 {
   int i;
   int fnum = curbuf->b_fnum;
