@@ -5811,7 +5811,7 @@ pathshorten({expr})					*pathshorten()*
 		components in the path are reduced to single letters.  Leading
 		'~' and '.' characters are kept.  Example: >
 			:echo pathshorten('~/.config/nvim/autoload/file1.vim')
-<			~/.v/a/file1.vim ~
+<			~/.c/n/a/file1.vim ~
 		It doesn't matter if the path exists or not.
 
 pow({x}, {y})						*pow()*
