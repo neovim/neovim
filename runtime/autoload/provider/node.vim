@@ -6,7 +6,7 @@ let g:loaded_node_provider = 1
 let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
 
 function! provider#node#Detect() abort
-  return exepath('neovim-node-host')
+  return has('win32') ? exepath('neovim-node-host.cmd') : exepath('neovim-node-host')
 endfunction
 
 function! provider#node#Prog()
@@ -19,13 +19,17 @@ function! provider#node#Require(host) abort
     return
   endif
 
-  let args = ['node']
+  if has('win32')
+    let args = provider#node#Prog()
+  else
+    let args = ['node']
 
-  if !empty($NVIM_NODE_HOST_DEBUG)
-    call add(args, '--inspect-brk')
+    if !empty($NVIM_NODE_HOST_DEBUG)
+      call add(args, '--inspect-brk')
+    endif
+
+    call add(args , provider#node#Prog())
   endif
-
-  call add(args , provider#node#Prog())
 
   try
     let channel_id = jobstart(args, s:job_opts)
