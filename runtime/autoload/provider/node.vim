@@ -19,13 +19,17 @@ function! provider#node#Require(host) abort
     return
   endif
 
-  let args = ['node']
+  if has('win32')
+    let args = ['node']
 
-  if !empty($NVIM_NODE_HOST_DEBUG)
-    call add(args, '--inspect-brk')
+    if !empty($NVIM_NODE_HOST_DEBUG)
+      call add(args, '--inspect-brk')
+    endif
+
+    call add(args , provider#node#Prog())
+  else
+    let args = provider#node#Prog()
   endif
-
-  call add(args , provider#node#Prog())
 
   try
     let channel_id = jobstart(args, s:job_opts)
