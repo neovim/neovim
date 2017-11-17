@@ -6,7 +6,7 @@ let g:loaded_node_provider = 1
 let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
 
 function! provider#node#Detect() abort
-  return exepath('neovim-node-host')
+  return has('win32') ? exepath('neovim-node-host.cmd') : exepath('neovim-node-host')
 endfunction
 
 function! provider#node#Prog()
