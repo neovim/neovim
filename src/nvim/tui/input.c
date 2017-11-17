@@ -14,8 +14,6 @@
 #include "nvim/event/rstream.h"
 
 #define PASTETOGGLE_KEY "<Paste>"
-#define FOCUSGAINED_KEY "<FocusGained>"
-#define FOCUSLOST_KEY   "<FocusLost>"
 #define KEY_BUFFER_SIZE 0xfff
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
