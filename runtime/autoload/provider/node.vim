@@ -20,6 +20,8 @@ function! provider#node#Require(host) abort
   endif
 
   if has('win32')
+    let args = provider#node#Prog()
+  else
     let args = ['node']
 
     if !empty($NVIM_NODE_HOST_DEBUG)
@@ -27,8 +29,6 @@ function! provider#node#Require(host) abort
     endif
 
     call add(args , provider#node#Prog())
-  else
-    let args = provider#node#Prog()
   endif
 
   try
