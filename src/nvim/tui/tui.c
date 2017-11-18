@@ -1568,10 +1568,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   }
 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
-  // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  So adding
-  // them to terminal types, that do actually have such control sequences but
-  // lack the correct definitions in terminfo, is an augmentation, not a
-  // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
+  // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding
+  // them here when terminfo lacks them is an augmentation, not a fixup.
+  // https://gist.github.com/XVilka/8346728
 
   // At this time (2017-07-12) it seems like all terminals that support rgb
   // color codes can use semicolons in the terminal code and be fine.
@@ -1581,8 +1580,8 @@ static void augment_terminfo(TUIData *data, const char *term,
 
   // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
   bool has_colon_rgb = !tmux && !screen
-    && ((vte_version >= 3600)  // per GNOME bug #685759, #704449
-        || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
+    && !vte_version  // VTE colon-support has a big memory leak. #7573
+    && (iterm || iterm_pretending_xterm  // per VT100Terminal.m
         // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
         || true_xterm);
 
