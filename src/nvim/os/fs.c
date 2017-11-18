@@ -133,22 +133,12 @@ bool os_isdir(const char_u *name)
 int os_nodetype(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
-#ifdef WIN32
-  // Edge case from Vim os_win32.c:
-  // We can't open a file with a name "\\.\con" or "\\.\prn", trying to read
-  // from it later will cause Vim to hang. Thus return NODE_WRITABLE here.
-  if (STRNCMP(name, "\\\\.\\", 4) == 0) {
-    return NODE_WRITABLE;
-  }
-#endif
-
+#ifndef WIN32  // Unix
   uv_stat_t statbuf;
   if (0 != os_stat(name, &statbuf)) {
     return NODE_NORMAL;  // File doesn't exist.
   }
-
-#ifndef WIN32
-  // libuv does not handle BLK and DIR in uv_handle_type.
+  // uv_handle_type does not distinguish BLK and DIR.
   //    Related: https://github.com/joyent/libuv/pull/1421
   if (S_ISREG(statbuf.st_mode) || S_ISDIR(statbuf.st_mode)) {
     return NODE_NORMAL;
@@ -156,48 +146,51 @@ int os_nodetype(const char *name)
   if (S_ISBLK(statbuf.st_mode)) {  // block device isn't writable
     return NODE_OTHER;
   }
-#endif
-
-  // Vim os_win32.c:mch_nodetype does this (since patch 7.4.015):
-  //    if (enc_codepage >= 0 && (int)GetACP() != enc_codepage) {
-  //      wn = enc_to_utf16(name, NULL);
-  //      hFile = CreatFile(wn, ...)
-  // to get a HANDLE. But libuv just calls win32's _get_osfhandle() on the fd we
-  // give it. uv_fs_open calls fs__capture_path which does a similar dance and
-  // saves us the hassle.
-
-  int nodetype = NODE_WRITABLE;
-  int fd = os_open(name, O_RDONLY
-#ifdef O_NONBLOCK
-                   | O_NONBLOCK
-#endif
-                   , 0);
-  if (fd == -1) {
-    return NODE_OTHER;  // open() failed.
+  // Everything else is writable?
+  // buf_write() expects NODE_WRITABLE for char device /dev/stderr.
+  return NODE_WRITABLE;
+#else  // Windows
+  // Edge case from Vim os_win32.c:
+  // We can't open a file with a name "\\.\con" or "\\.\prn", trying to read
+  // from it later will cause Vim to hang. Thus return NODE_WRITABLE here.
+  if (STRNCMP(name, "\\\\.\\", 4) == 0) {
+    return NODE_WRITABLE;
   }
 
-  switch (uv_guess_handle(fd)) {
-    case UV_TTY:         // FILE_TYPE_CHAR
-      nodetype = NODE_WRITABLE;
-      break;
-    case UV_FILE:        // FILE_TYPE_DISK
-      nodetype = NODE_NORMAL;
-      break;
-    case UV_NAMED_PIPE:  // not handled explicitly in Vim os_win32.c
-    case UV_UDP:         // unix only
-    case UV_TCP:         // unix only
+  // Vim os_win32.c:mch_nodetype does (since 7.4.015):
+  //    wn = enc_to_utf16(name, NULL);
+  //    hFile = CreatFile(wn, ...)
+  // to get a HANDLE. Whereas libuv just calls _get_osfhandle() on the fd we
+  // give it. But uv_fs_open later calls fs__capture_path which does a similar
+  // utf8-to-utf16 dance and saves us the hassle.
+
+  // macOS: os_open(/dev/stderr) would return UV_EACCES.
+  int fd = os_open(name, O_RDONLY
+# ifdef O_NONBLOCK
+                   | O_NONBLOCK
+# endif
+                   , 0);
+  if (fd < 0) {  // open() failed.
+    return NODE_NORMAL;
+  }
+  int guess = uv_guess_handle(fd);
+  if (close(fd) == -1) {
+    ELOG("close(%d) failed. name='%s'", fd, name);
+  }
+
+  switch (guess) {
+    case UV_TTY:          // FILE_TYPE_CHAR
+      return NODE_WRITABLE;
+    case UV_FILE:         // FILE_TYPE_DISK
+      return NODE_NORMAL;
+    case UV_NAMED_PIPE:   // not handled explicitly in Vim os_win32.c
+    case UV_UDP:          // unix only
+    case UV_TCP:          // unix only
     case UV_UNKNOWN_HANDLE:
     default:
-#ifdef WIN32
-      nodetype = NODE_NORMAL;
-#else
-      nodetype = NODE_WRITABLE;  // Everything else is writable?
-#endif
-      break;
+      return NODE_OTHER;  // Vim os_win32.c default
   }
-
-  close(fd);
-  return nodetype;
+#endif
 }
 
 /// Gets the absolute path of the currently running executable.
@@ -394,9 +387,11 @@ end:
 /// @param mode Permissions for the newly-created file (IGNORED if 'flags' is
 ///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
 /// @return file descriptor, or libuv error code on failure
-int os_open(const char* path, int flags, int mode)
-  FUNC_ATTR_NONNULL_ALL
+int os_open(const char *path, int flags, int mode)
 {
+  if (path == NULL) {  // uv_fs_open asserts on NULL. #7561
+    return UV_EINVAL;
+  }
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;
@@ -603,12 +598,12 @@ int os_fsync(int fd)
 
 /// Get stat information for a file.
 ///
-/// @return libuv return code.
+/// @return libuv return code, or -errno
 static int os_stat(const char *name, uv_stat_t *statbuf)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   if (!name) {
-    return UV_ENOENT;
+    return UV_EINVAL;
   }
   uv_fs_t request;
   int result = uv_fs_stat(&fs_loop, &request, name, NULL);
@@ -1078,7 +1073,8 @@ shortcut_end:
 
 #endif
 
-int os_translate_sys_error(int sys_errno) {
+int os_translate_sys_error(int sys_errno)
+{
 #ifdef HAVE_UV_TRANSLATE_SYS_ERROR
   return uv_translate_sys_error(sys_errno);
 #elif defined(WIN32)
