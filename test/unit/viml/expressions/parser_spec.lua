@@ -375,7 +375,7 @@ local function eastnode2lua(pstate, eastnode, checked_nodes)
   elseif typ == 'Integer' then
     typ = typ .. ('(val=%u)'):format(tonumber(eastnode.data.num.value))
   elseif typ == 'Float' then
-    typ = typ .. ('(val=%e)'):format(tonumber(eastnode.data.flt.value))
+    typ = typ .. format_string('(val=%e)', tonumber(eastnode.data.flt.value))
   elseif typ == 'SingleQuotedString' or typ == 'DoubleQuotedString' then
     if eastnode.data.str.value == nil then
       typ = typ .. '(val=NULL)'

@@ -395,6 +395,13 @@ local function dedent(str, leave_indent)
   return str
 end
 
+local function format_float(v)
+  -- On windows exponent appears to have three digits and not two
+  local ret = ('%.6e'):format(v)
+  local l, f, es, e = ret:match('^(%-?%d)%.(%d+)e([+%-])0*(%d%d+)$')
+  return l .. '.' .. f .. 'e' .. es .. e
+end
+
 local SUBTBL = {
   '\\000', '\\001', '\\002', '\\003', '\\004',
   '\\005', '\\006', '\\007', '\\008', '\\t',
@@ -468,7 +475,7 @@ format_luav = function(v, indent, opts)
     if v % 1 == 0 then
       ret = ('%d'):format(v)
     else
-      ret = ('%e'):format(v)
+      ret = format_float(v)
     end
   elseif type(v) == 'nil' then
     ret = 'nil'
@@ -501,7 +508,11 @@ local function format_string(fmt, ...)
       subfmt = subfmt:sub(1, -2) .. 's'
       arg = format_luav(arg)
     end
-    return subfmt:format(arg)
+    if subfmt == '%e' then
+      return format_float(arg)
+    else
+      return subfmt:format(arg)
+    end
   end)
   return ret
 end

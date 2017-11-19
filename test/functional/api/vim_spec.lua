@@ -750,7 +750,7 @@ describe('api', function()
         typ = typ .. ('(val=%u)'):format(east_api_node.ivalue)
         east_api_node.ivalue = nil
       elseif typ == 'Float' then
-        typ = typ .. ('(val=%e)'):format(east_api_node.fvalue)
+        typ = typ .. format_string('(val=%e)', east_api_node.fvalue)
         east_api_node.fvalue = nil
       elseif typ == 'SingleQuotedString' or typ == 'DoubleQuotedString' then
         typ = format_string('%s(val=%q)', typ, east_api_node.svalue)
