@@ -3,6 +3,7 @@ local global_helpers = require('test.helpers')
 
 local itp = helpers.gen_itp(it)
 
+local child_call_once = helpers.child_call_once
 local cimport = helpers.cimport
 local ffi = helpers.ffi
 
@@ -11,12 +12,16 @@ local updated = global_helpers.updated
 
 local lib = cimport('./src/nvim/charset.h')
 
-local ARGTYPES = {
-  num = ffi.typeof('varnumber_T[1]'),
-  unum = ffi.typeof('uvarnumber_T[1]'),
-  pre = ffi.typeof('int[1]'),
-  len = ffi.typeof('int[1]'),
-}
+local ARGTYPES
+
+child_call_once(function()
+  ARGTYPES = {
+    num = ffi.typeof('varnumber_T[1]'),
+    unum = ffi.typeof('uvarnumber_T[1]'),
+    pre = ffi.typeof('int[1]'),
+    len = ffi.typeof('int[1]'),
+  }
+end)
 
 local icnt = -42
 local ucnt = 4242
