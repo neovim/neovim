@@ -167,12 +167,13 @@ Highlight groups:
   |hl-Whitespace| highlights 'listchars' whitespace
 
 UI:
-		*E5408* *E5409* *g:Nvim_color_expr* *g:Nvim_color_cmdline*
-  Command-line coloring is supported. Only |input()| and |inputdialog()| may
-  be colored. For testing purposes expressions (e.g. |i_CTRL-R_=|) and regular
-  command-line (|:|) are colored by callbacks defined in `g:Nvim_color_expr`
-  and `g:Nvim_color_cmdline` respectively (these callbacks are for testing
-  only, and will be removed in a future version). 
+					*E5408* *E5409* *g:Nvim_color_cmdline*
+  Command-line coloring is supported.  Only |input()| and |inputdialog()| may 
+  be colored by user. For testing purposes regular command-line (|:|) is 
+  colored by callback defined in `g:Nvim_color_cmdline` (this callback is for 
+  testing only, and will be removed in a future version).  Additionally 
+  expression command-line is colored using built-in expressions parser (it is 
+  not yet used for actually parsing expressions though), see |expr-coloring|.
 
 ==============================================================================
 4. Changed features					 *nvim-features-changed*

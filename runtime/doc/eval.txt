@@ -10506,7 +10506,7 @@ option will still be marked as it was set in the sandbox.
 In a few situations it is not allowed to change the text in the buffer, jump
 to another window and some other things that might confuse or break what Vim
 is currently doing.  This mostly applies to things that happen when Vim is
-actually doing something else.	For example, evaluating the 'balloonexpr' may
+actually doing something else.  For example, evaluating the 'balloonexpr' may
 happen any moment the mouse cursor is resting at some position.
 
 This is not allowed when the textlock is active:
@@ -10516,5 +10516,124 @@ This is not allowed when the textlock is active:
 	- closing a window or quitting Vim
 	- etc.
 
+==============================================================================
+13. Command-line expressions coloring			*expr-coloring*
+
+Expressions entered by user in |i_CTRL-R_=|, |c_CTRL-\_e|, |quote=| are 
+colored by built-in expressions parser.  It uses highlight groups described in 
+the below table, which may be overriden by user colorschemes, all linked to 
+some other highlighting group.
+							*hl-NVimInvalid*
+In addition to highlighting groups prefixed with NVim described below there 
+are highlighting groups prefixed with NVimInvalid which have just the same 
+meaning, but used to indicate that relevant token contains an error or that 
+error had occurred just before it.  They have mostly the same hierarchy, 
+except that by default in place of any non-NVim-prefixed group NVimInvalid 
+linking to `Error` is used and some other intermediate groups are present.
+
+Group                              Default link            Colored expression ~
+*hl-NVimInternalError*               None, red/red           Parser bug
+
+*hl-NVimAssignment*                  Operator                Generic assignment
+*hl-NVimPlainAssignment*             NVimAssignment          `=` in |:let|
+*hl-NVimAugmentedAssignment*         NVimAssignment          Generic, `+=`/`-=`/`.=`
+*hl-NVimAssignmentWithAddition*      NVimAugmentedAssignment `+=` in |:let+=|
+*hl-NVimAssignmentWithSubtraction*   NVimAugmentedAssignment `-=` in |:let-=|
+*hl-NVimAssignmentWithConcatenation* NVimAugmentedAssignment `.=` in |:let.=|
+
+*hl-NVimOperator*                    Operator                Generic operator
+
+*hl-NVimUnaryOperator*               NVimOperator            Generic unary op
+*hl-NVimUnaryPlus*                   NVimUnaryOperator       |expr-unary-+|
+*hl-NVimUnaryMinus*                  NVimUnaryOperator       |expr-unary--|
+*hl-NVimNot*                         NVimUnaryOperator       |expr-!|
+
+*hl-NVimBinaryOperator*              NVimOperator            Generic binary op
+*hl-NVimComparison*                  NVimBinaryOperator      Any |expr4| operator
+*hl-NVimComparisonModifier*          NVimComparison          `#`/`?` near |expr4| op
+*hl-NVimBinaryPlus*                  NVimBinaryOperator      |expr-+|
+*hl-NVimBinaryMinus*                 NVimBinaryOperator      |expr--|
+*hl-NVimConcat*                      NVimBinaryOperator      |expr-.|
+*hl-NVimConcatOrSubscript*           NVimConcat              |expr-.| or |expr-entry|
+*hl-NVimOr*                          NVimBinaryOperator      |expr-barbar|
+*hl-NVimAnd*                         NVimBinaryOperator      |expr-&&|
+*hl-NVimMultiplication*              NVimBinaryOperator      |expr-star|
+*hl-NVimDivision*                    NVimBinaryOperator      |expr-/|
+*hl-NVimMod*                         NVimBinaryOperator      |expr-%|
+
+*hl-NVimTernary*                     NVimOperator            `?` in |expr1|
+*hl-NVimTernaryColon*                NVimTernary             `:` in |expr1|
+
+*hl-NVimParenthesis*                 Delimiter               Generic bracket
+*hl-NVimLambda*                      NVimParenthesis         `{`/`}` in |lambda|
+*hl-NVimNestingParenthesis*          NVimParenthesis         `(`/`)` in |expr-nesting|
+*hl-NVimCallingParenthesis*          NVimParenthesis         `(`/`)` in |expr-function|
+
+*hl-NVimSubscript*                   NVimParenthesis         Generic subscript
+*hl-NVimSubscriptBracket*            NVimSubscript           `[`/`]` in |expr-[]|
+*hl-NVimSubscriptColon*              NVimSubscript           `:` in |expr-[:]|
+*hl-NVimCurly*                       NVimSubscript           `{`/`}` in
+                                                           |curly-braces-names|
+
+*hl-NVimContainer*                   NVimParenthesis         Generic container
+*hl-NVimDict*                        NVimContainer           `{`/`}` in |dict| literal
+*hl-NVimList*                        NVimContainer           `[`/`]` in |list| literal
+
+*hl-NVimIdentifier*                  Identifier              Generic identifier
+*hl-NVimIdentifierScope*             NVimIdentifier          Namespace: letter 
+                                                           before `:` in 
+                                                           |internal-variables|
+*hl-NVimIdentifierScopeDelimiter*    NVimIdentifier          `:` after namespace
+                                                           letter
+*hl-NVimIdentifierName*              NVimIdentifier          Rest of the ident
+*hl-NVimIdentifierKey*               NVimIdentifier          Identifier after 
+                                                           |expr-entry|
+
+*hl-NVimColon*                       Delimiter               `:` in |dict| literal
+*hl-NVimComma*                       Delimiter               `,` in |dict|/|list| 
+                                                           literal or 
+                                                           |expr-function|
+*hl-NVimArrow*                       Delimiter               `->` in |lambda|
+
+*hl-NVimRegister*                    SpecialChar             |expr-register|
+*hl-NVimNumber*                      Number                  Non-prefix digits 
+                                                           in integer 
+                                                           |expr-number|
+*hl-NVimNumberPrefix*                Type                    `0` for |octal-number|
+                                                           `0x` for |hex-number|
+                                                           `0b` for |binary-number|
+*hl-NVimFloat*                       NVimNumber              Floating-point
+                                                           number
+
+*hl-NVimOptionSigil*                 Type                    `&` in |expr-option|
+*hl-NVimOptionScope*                 NVimIdentifierScope     Option scope if any
+*hl-NVimOptionScopeDelimiter*        NVimIdentifierScopeDelimiter
+                                                           `:` after option scope
+*hl-NVimOptionName*                  NVimIdentifier          Option name
+
+*hl-NVimEnvironmentSigil*            NVimOptionSigil         `$` in |expr-env|
+*hl-NVimEnvironmentName*             NVimIdentifier          Env variable name
+
+*hl-NVimString*                      String                  Generic string
+*hl-NVimStringBody*                  NVimString              Generic string 
+                                                           literal body
+*hl-NVimStringQuote*                 NVimString              Generic string quote
+*hl-NVimStringSpecial*               SpecialChar             Generic string 
+                                                           non-literal body
+
+*hl-NVimSingleQuote*                 NVimStringQuote         `'` in |expr-'|
+*hl-NVimSingleQuotedBody*            NVimStringBody          Literal part of 
+                                                           |expr-'| string body
+*hl-NVimSingleQuotedQuote*           NVimStringSpecial       `''` inside |expr-'| 
+                                                           string body
+
+*hl-NVimDoubleQuote*                 NVimStringQuote         `"` in |expr-quote|
+*hl-NVimDoubleQuotedBody*            NVimStringBody          Literal part of 
+                                                           |expr-quote| body
+*hl-NVimDoubleQuotedEscape*          NVimStringSpecial       Valid |expr-quote| 
+                                                           escape sequence
+*hl-NVimDoubleQuotedUnknownEscape*   NVimInvalidValue        Unrecognized 
+                                                           |expr-quote| escape 
+                                                           sequence
 
  vim:tw=78:ts=8:noet:ft=help:norl:
