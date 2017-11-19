@@ -6067,7 +6067,6 @@ const char *const highlight_init_cmdline[] = {
   "default link NVimSubscript NVimParenthesis",
   "default link NVimSubscriptBracket NVimSubscript",
   "default link NVimSubscriptColon NVimSubscript",
-  "default link NVimSubscriptColon NVimSubscript",
   "default link NVimCurly NVimSubscript",
 
   "default link NVimContainer NVimParenthesis",
@@ -6163,7 +6162,6 @@ const char *const highlight_init_cmdline[] = {
 
   "default link NVimInvalidSubscript NVimInvalidParenthesis",
   "default link NVimInvalidSubscriptBracket NVimInvalidSubscript",
-  "default link NVimInvalidSubscriptColon NVimInvalidSubscript",
   "default link NVimInvalidSubscriptColon NVimInvalidSubscript",
   "default link NVimInvalidCurly NVimInvalidSubscript",
 
