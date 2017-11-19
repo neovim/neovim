@@ -180,6 +180,7 @@ int server_start(const char *endpoint)
 void server_stop(char *endpoint)
 {
   SocketWatcher *watcher;
+  bool watcher_found = false;
   char addr[ADDRESS_MAX_SIZE];
 
   // Trim to `ADDRESS_MAX_SIZE`
@@ -189,11 +190,12 @@ void server_stop(char *endpoint)
   for (; i < watchers.ga_len; i++) {
     watcher = ((SocketWatcher **)watchers.ga_data)[i];
     if (strcmp(addr, watcher->addr) == 0) {
+      watcher_found = true;
       break;
     }
   }
 
-  if (i >= watchers.ga_len) {
+  if (!watcher_found) {
     ELOG("Not listening on %s", addr);
     return;
   }
