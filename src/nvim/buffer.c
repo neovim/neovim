@@ -64,7 +64,6 @@
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/terminal.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -1463,12 +1462,6 @@ void enter_buffer(buf_T *buf)
 
   /* mark cursor position as being invalid */
   curwin->w_valid = 0;
-
-  if (buf->terminal) {
-    terminal_resize(buf->terminal,
-                    (uint16_t)(MAX(0, curwin->w_width - win_col_off(curwin))),
-                    (uint16_t)curwin->w_height);
-  }
 
   /* Make sure the buffer is loaded. */
   if (curbuf->b_ml.ml_mfp == NULL) {    /* need to load the file */

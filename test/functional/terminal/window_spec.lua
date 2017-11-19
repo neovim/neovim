@@ -43,14 +43,23 @@ describe('terminal window', function()
       -- numberwidth=9
       feed([[<C-\><C-N>]])
       feed([[:set numberwidth=9 number<CR>i]])
+      screen:expect([[
+        {7:       1 }tty ready                                |
+        {7:       2 }rows: 6, cols: 48                        |
+        {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
+        {7:       4 }WXYZrows: 6, cols: 41                    |
+        {7:       5 }{1: }                                        |
+        {7:       6 }                                         |
+        {3:-- TERMINAL --}                                    |
+      ]])
       thelpers.feed_data({' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'})
       screen:expect([[
         {7:       1 }tty ready                                |
         {7:       2 }rows: 6, cols: 48                        |
         {7:       3 }abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNO|
-        {7:       4 }WXYZ abcdefghijklmnopqrstuvwxyzABCDEFGHIJ|
-        {7:       5 }KLMNOPQRSTUVWXYZrows: 6, cols: 41        |
-        {7:       6 }{1: }                                        |
+        {7:       4 }WXYZrows: 6, cols: 41                    |
+        {7:       5 } abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN|
+        {7:       6 }OPQRSTUVWXYZ{1: }                            |
         {3:-- TERMINAL --}                                    |
       ]])
     end)

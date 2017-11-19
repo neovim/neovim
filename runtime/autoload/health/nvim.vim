@@ -58,7 +58,7 @@ function! s:check_rplugin_manifest() abort
       let contents = join(readfile(script))
       if contents =~# '\<\%(from\|import\)\s\+neovim\>'
         if script =~# '[\/]__init__\.py$'
-          let script = fnamemodify(script, ':h')
+          let script = tr(fnamemodify(script, ':h'), '\', '/')
         endif
 
         if !has_key(existing_rplugins, script)

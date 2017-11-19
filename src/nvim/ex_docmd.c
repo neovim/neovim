@@ -9356,15 +9356,18 @@ put_view (
     }
   }
 
-  /*
-   * Local directory.
-   */
-  if (wp->w_localdir != NULL) {
+  //
+  // Local directory, if the current flag is not view options or the "curdir"
+  // option is included.
+  //
+  if (wp->w_localdir != NULL
+      && (flagp != &vop_flags || (*flagp & SSOP_CURDIR))) {
     if (fputs("lcd ", fd) < 0
         || ses_put_fname(fd, wp->w_localdir, flagp) == FAIL
-        || put_eol(fd) == FAIL)
+        || put_eol(fd) == FAIL) {
       return FAIL;
-    did_lcd = TRUE;
+    }
+    did_lcd = true;
   }
 
   return OK;

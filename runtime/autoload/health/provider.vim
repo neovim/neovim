@@ -496,7 +496,7 @@ function! s:check_node() abort
     return
   endif
 
-  if !executable('node') || !executable('npm') || !executable('yarn')
+  if !executable('node') || !executable('npm')
     call health#report_warn(
           \ '`node` and `npm` must be in $PATH.',
           \ ['Install Node.js and verify that `node` and `npm` commands work.'])
