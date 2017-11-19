@@ -93,6 +93,13 @@ typedef struct {
   CmdlineColors colors;  ///< Last colors.
 } ColoredCmdline;
 
+/// Keeps track how much state must be sent to external ui.
+typedef enum {
+  kCmdRedrawNone,
+  kCmdRedrawPos,
+  kCmdRedrawAll,
+} CmdRedraw;
+
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
  * These need to be saved when using CTRL-R |, that's why they are in a
@@ -122,6 +129,7 @@ struct cmdline_info {
   struct cmdline_info *prev_ccline;  ///< pointer to saved cmdline state
   char special_char;            ///< last putcmdline char (used for redraws)
   bool special_shift;           ///< shift of last putcmdline char
+  CmdRedraw redraw_state;       ///< needed redraw for external cmdline
 };
 /// Last value of prompt_id, incremented when doing new prompt
 static unsigned last_prompt_id = 0;
@@ -425,6 +433,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     ccline.cmdbuff = NULL;
 
     if (ui_is_external(kUICmdline)) {
+      ccline.redraw_state = kCmdRedrawNone;
       ui_call_cmdline_hide(ccline.level);
     }
     ccline.level--;
@@ -1818,7 +1827,8 @@ static int command_line_changed(CommandLineState *s)
     // right-left typing.  Not efficient, but it works.
     // Do it only when there are no characters left to read
     // to avoid useless intermediate redraws.
-    if (vpeekc() == NUL) {
+    // if cmdline is external the ui handles shaping, no redraw needed.
+    if (!ui_is_external(kUICmdline) && vpeekc() == NUL) {
       redrawcmd();
     }
   }
@@ -2667,7 +2677,7 @@ static void draw_cmdline(int start, int len)
 
   if (ui_is_external(kUICmdline)) {
     ccline.special_char = NUL;
-    ui_ext_cmdline_show(&ccline);
+    ccline.redraw_state = kCmdRedrawAll;
     return;
   }
 
@@ -2879,11 +2889,33 @@ void cmdline_screen_cleared(void)
     if (prev_ccline->level == prev_level) {
       // don't redraw a cmdline already shown in the cmdline window
       if (prev_level != cmdwin_level) {
-        ui_ext_cmdline_show(prev_ccline);
+        prev_ccline->redraw_state = kCmdRedrawAll;
       }
       prev_level--;
     }
     prev_ccline = prev_ccline->prev_ccline;
+  }
+}
+
+/// called by ui_flush, do what redraws neccessary to keep cmdline updated.
+void cmdline_ui_flush(void)
+{
+  if (!ui_is_external(kUICmdline)) {
+    return;
+  }
+  int level = ccline.level;
+  CmdlineInfo *line = &ccline;
+  while (level > 0 && line) {
+    if (line->level == level) {
+      if (line->redraw_state == kCmdRedrawAll) {
+        ui_ext_cmdline_show(line);
+      } else if (line->redraw_state == kCmdRedrawPos) {
+        ui_call_cmdline_pos(line->cmdpos, line->level);
+      }
+      line->redraw_state = kCmdRedrawNone;
+      level--;
+    }
+    line = line->prev_ccline;
   }
 }
 
@@ -2907,8 +2939,10 @@ void putcmdline(int c, int shift)
   } else {
     ccline.special_char = c;
     ccline.special_shift = shift;
-    ui_call_cmdline_special_char(cchar_to_string((char)(c)), shift,
-                                 ccline.level);
+    if (ccline.redraw_state != kCmdRedrawAll) {
+      ui_call_cmdline_special_char(cchar_to_string((char)(c)), shift,
+                                   ccline.level);
+    }
   }
   cursorcmd();
   ui_cursor_shape();
@@ -3249,7 +3283,7 @@ static void redrawcmdprompt(void)
   if (cmd_silent)
     return;
   if (ui_is_external(kUICmdline)) {
-    ui_ext_cmdline_show(&ccline);
+    ccline.redraw_state = kCmdRedrawAll;
     return;
   }
   if (ccline.cmdfirstc != NUL) {
@@ -3326,7 +3360,9 @@ static void cursorcmd(void)
     return;
 
   if (ui_is_external(kUICmdline)) {
-    ui_call_cmdline_pos(ccline.cmdpos, ccline.level);
+    if (ccline.redraw_state < kCmdRedrawPos) {
+      ccline.redraw_state = kCmdRedrawPos;
+    }
     return;
   }
 
@@ -4164,7 +4200,9 @@ addstar (
         || context == EXPAND_OWNSYNTAX
         || context == EXPAND_FILETYPE
         || context == EXPAND_PACKADD
-        || (context == EXPAND_TAGS && fname[0] == '/'))
+        || ((context == EXPAND_TAGS_LISTFILES
+             || context == EXPAND_TAGS)
+            && fname[0] == '/'))
       retval = vim_strnsave(fname, len);
     else {
       new_len = len + 2;                /* +2 for '^' at start, NUL at end */
@@ -5920,6 +5958,7 @@ static int ex_window(void)
   changed_line_abv_curs();
   invalidate_botline();
   if (ui_is_external(kUICmdline)) {
+    ccline.redraw_state = kCmdRedrawNone;
     ui_call_cmdline_hide(ccline.level);
   }
   redraw_later(SOME_VALID);

@@ -1240,8 +1240,10 @@ static void init_startuptime(mparm_T *paramp)
 
 static void check_and_set_isatty(mparm_T *paramp)
 {
-  paramp->input_isatty = os_isatty(fileno(stdin));
-  paramp->output_isatty = os_isatty(fileno(stdout));
+  stdin_isatty
+    = paramp->input_isatty = os_isatty(fileno(stdin));
+  stdout_isatty
+    = paramp->output_isatty = os_isatty(fileno(stdout));
   paramp->err_isatty = os_isatty(fileno(stderr));
   TIME_MSG("window checked");
 }

@@ -334,7 +334,7 @@ static struct vimvar {
   // VV_SEND_SERVER "servername"
   // VV_REG "register"
   // VV_OP "operator"
-  VV(VV_COUNT,          "count",            VAR_NUMBER, VV_COMPAT+VV_RO),
+  VV(VV_COUNT,          "count",            VAR_NUMBER, VV_RO),
   VV(VV_COUNT1,         "count1",           VAR_NUMBER, VV_RO),
   VV(VV_PREVCOUNT,      "prevcount",        VAR_NUMBER, VV_RO),
   VV(VV_ERRMSG,         "errmsg",           VAR_STRING, VV_COMPAT),
@@ -10672,6 +10672,10 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = has_nvim_version(name + 5);
     } else if (STRICMP(name, "vim_starting") == 0) {
       n = (starting != 0);
+    } else if (STRICMP(name, "ttyin") == 0) {
+      n = stdin_isatty;
+    } else if (STRICMP(name, "ttyout") == 0) {
+      n = stdout_isatty;
     } else if (STRICMP(name, "multi_byte_encoding") == 0) {
       n = has_mbyte != 0;
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
@@ -22879,11 +22883,15 @@ void ex_checkhealth(exarg_T *eap)
     const char *vimruntime_env = os_getenv("VIMRUNTIME");
     if (vimruntime_env == NULL) {
       EMSG(_("E5009: $VIMRUNTIME is empty or unset"));
-      return;
     } else {
-      EMSG2(_("E5009: Invalid $VIMRUNTIME: %s"), os_getenv("VIMRUNTIME"));
-      return;
+      bool rtp_ok = NULL != strstr((char *)p_rtp, vimruntime_env);
+      if (rtp_ok) {
+        EMSG2(_("E5009: Invalid $VIMRUNTIME: %s"), vimruntime_env);
+      } else {
+        EMSG(_("E5009: Invalid 'runtimepath'"));
+      }
     }
+    return;
   }
 
   size_t bufsize = STRLEN(eap->arg) + sizeof("call health#check('')");

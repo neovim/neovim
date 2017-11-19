@@ -3,7 +3,7 @@
 "		Based on Tera Term Version 4.92
 " Maintainer:	Ken Takata
 " URL:		https://github.com/k-takata/vim-teraterm
-" Last Change:	2016 Aug 17
+" Last Change:	2017 Jun 13
 " Filenames:	*.ttl
 " License:	VIM License
 
@@ -22,16 +22,6 @@ if exists("*GetTeraTermIndent")
   finish
 endif
 
-" The shiftwidth() function is relatively new.
-" Don't require it to exist.
-if exists('*shiftwidth')
-  let s:sw = function('shiftwidth')
-else
-  function s:sw() abort
-    return &shiftwidth
-  endfunction
-endif
-
 function! GetTeraTermIndent(lnum)
   let l:prevlnum = prevnonblank(a:lnum-1)
   if l:prevlnum == 0
@@ -48,15 +38,15 @@ function! GetTeraTermIndent(lnum)
 
   if l:prevl =~ '^\s*if\>.*\<then\>'
     " previous line opened a block
-    let l:ind += s:sw()
+    let l:ind += shiftwidth()
   endif
   if l:prevl =~ '^\s*\%(elseif\|else\|do\|until\|while\|for\)\>'
     " previous line opened a block
-    let l:ind += s:sw()
+    let l:ind += shiftwidth()
   endif
   if l:thisl =~ '^\s*\%(elseif\|else\|endif\|enduntil\|endwhile\|loop\|next\)\>'
     " this line closed a block
-    let l:ind -= s:sw()
+    let l:ind -= shiftwidth()
   endif
 
   return l:ind

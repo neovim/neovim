@@ -168,4 +168,11 @@ describe('Special values', function()
       'Expected True but got v:null',
     }, meths.get_vvar('errors'))
   end)
+
+  describe('compat', function()
+    it('v:count is distinct from count', function()
+      command('let count = []') -- v:count is readonly
+      eq(1, eval('count is# g:["count"]'))
+    end)
+  end)
 end)

@@ -19,7 +19,7 @@ function! provider#ruby#Detect() abort
   if exists("g:ruby_host_prog")
     return g:ruby_host_prog
   else
-    return exepath('neovim-ruby-host')
+    return has('win32') ? exepath('neovim-ruby-host.cmd') : exepath('neovim-ruby-host')
   end
 endfunction
 

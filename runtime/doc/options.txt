@@ -311,7 +311,7 @@ Note: In the future more global options can be made global-local.  Using
 
 Setting the filetype
 
-:setf[iletype] {filetype}			*:setf* *:setfiletype*
+:setf[iletype] [FALLBACK] {filetype}			*:setf* *:setfiletype*
 			Set the 'filetype' option to {filetype}, but only if
 			not done yet in a sequence of (nested) autocommands.
 			This is short for: >
@@ -321,6 +321,12 @@ Setting the filetype
 <			This command is used in a filetype.vim file to avoid
 			setting the 'filetype' option twice, causing different
 			settings and syntax files to be loaded.
+
+			When the optional FALLBACK argument is present, a
+			later :setfiletype command will override the
+			'filetype'.  This is to used for filetype detections
+			that are just a guess.  |did_filetype()| will return
+			false after this command.
 
 				*option-window* *optwin*
 :bro[wse] se[t]			*:set-browse* *:browse-set* *:opt* *:options*
@@ -348,11 +354,22 @@ On Unix systems the form "${HOME}" can be used too.  The name between {} can
 contain non-id characters then.  Note that if you want to use this for the
 "gf" command, you need to add the '{' and '}' characters to 'isfname'.
 
-On MS-Windows, if $HOME is not defined as an environment variable, then
-at runtime Vim will set it to the expansion of $HOMEDRIVE$HOMEPATH.
-
 NOTE: expanding environment variables and "~/" is only done with the ":set"
 command, not when assigning a value to an option with ":let".
+
+							*$HOME-windows*
+On MS-Windows, if $HOME is not defined as an environment variable, then
+at runtime Vim will set it to the expansion of $HOMEDRIVE$HOMEPATH.
+If $HOMEDRIVE is not set then $USERPROFILE is used.
+
+This expanded value is not exported to the environment, this matters when
+running an external command: >
+	:echo system('set | findstr ^HOME=')
+and >
+	:echo luaeval('os.getenv("HOME")')
+should echo nothing (an empty string) despite exists('$HOME') being true.
+When setting $HOME to a non-empty string it will be exported to the
+subprocesses.
 
 
 Note the maximum length of an expanded option is limited.  How much depends on
@@ -710,6 +727,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:set background&
 <	Vim will guess the value.  In the GUI this should work correctly,
 	in other cases Vim might not be able to guess the right value.
+
+	When the |t_RB| option is set, Vim will use it to request the background
+	color from the terminal.  If the returned RGB value is dark/light and
+	'background' is not dark/light, 'background' will be set and the
+	screen is redrawn.  This may have side effects, make t_BG empty in
+	your .vimrc if you suspect this problem.  The response to |t_RB| can
+	be found in |v:termrbgresp|.
 
 	When starting the GUI, the default value for 'background' will be
 	"light".  When the value is not set in the gvimrc, and Vim detects
@@ -1294,27 +1318,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			option, yank and delete operations (but not put)
 			will additionally copy the text into register
 			'*'. See |clipboard|.
-
-						*clipboard-autoselect*
-	autoselect	Works like the 'a' flag in 'guioptions': If present,
-			then whenever Visual mode is started, or the Visual
-			area extended, Vim tries to become the owner of the
-			windowing system's global selection or put the
-			selected text on the clipboard used by the selection
-			register "*.  See |guioptions_a| and |quotestar| for
-			details.  When the GUI is active, the 'a' flag in
-			'guioptions' is used, when the GUI is not active, this
-			"autoselect" flag is used.
-			Also applies to the modeless selection.
-
-						*clipboard-autoselectplus*
-	autoselectplus  Like "autoselect" but using the + register instead of
-			the * register.  Compare to the 'P' flag in
-			'guioptions'.
-
-						*clipboard-autoselectml*
-	autoselectml	Like "autoselect", but for the modeless selection
-			only.  Compare to the 'A' flag in 'guioptions'.
 
 						*'cmdheight'* *'ch'*
 'cmdheight' 'ch'	number	(default 1)
@@ -2967,7 +2970,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		that this flag must be added in the vimrc file, before
 		switching on syntax or filetype recognition (when the |gvimrc|
 		file is sourced the system menu has already been loaded; the
-		":syntax on" and ":filetype on" commands load the menu too).
+		`:syntax on` and `:filetype on` commands load the menu too).
 								*'go-g'*
 	  'g'	Grey menu items: Make menu items that are not active grey.  If
 		'g' is not included inactive menu items are not shown at all.
@@ -3094,11 +3097,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	WARNING: It's easy to forget that you have changes in hidden buffers.
 	Think twice when using ":q!" or ":qa!".
 
-						*'highlight'* *'hl'*
-'highlight' 'hl'	Removed. |vim-differences|
-			global
-	The builtin |highlight-groups| cannot be changed.
-
 						*'history'* *'hi'*
 'history' 'hi'		number	(Vim default: 10000, Vi default: 0)
 			global
@@ -3127,10 +3125,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			{not available when compiled without the
 			|+extra_search| feature}
 	When there is a previous search pattern, highlight all its matches.
-	The type of highlighting used can be set with the 'l' occasion in the
-	'highlight' option.  This uses the "Search" highlight group by
-	default.  Note that only the matching text is highlighted, any offsets
-	are not applied.
+	The |hl-Search| highlight group determines the highlighting. Note that
+	only the matching text is highlighted, any offsets are not applied.
 	See also: 'incsearch' and |:match|.
 	When you get bored looking at the highlighted matches, you can turn it
 	off with |:nohlsearch|.  This does not change the option value, as
@@ -3298,7 +3294,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Vim only searches for about half a second.  With a complicated
 	pattern and/or a lot of text the match may not be found.  This is to
 	avoid that Vim hangs while you are typing the pattern.
-	The highlighting can be set with the 'i' flag in 'highlight'.
+	The |hl-IncSearch| highlight group determines the highlighting.
 	See also: 'hlsearch'.
 	CTRL-L can be used to add one character from after the current match
 	to the command line.  If 'ignorecase' and 'smartcase' are set and the
@@ -3843,7 +3839,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:au FileType c,cpp,java set mps+==:;
 
 <	For a more advanced way of using "%", see the matchit.vim plugin in
-	the $VIMRUNTIME/macros directory. |add-local-help|
+	the $VIMRUNTIME/plugin directory. |add-local-help|
 
 						*'matchtime'* *'mat'*
 'matchtime' 'mat'	number	(default 5)
@@ -4793,7 +4789,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	height with ":set scroll=0".
 
 						*'scrollback'* *'scbk'*
-'scrollback' 'scbk'	number	(default: 1000
+'scrollback' 'scbk'	number	(default: 10000
 				 in normal buffers: -1)
 			local to buffer
 	Maximum number of lines kept beyond the visible screen. Lines at the
@@ -5346,8 +5342,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	Only printable single-cell characters are allowed, excluding <Tab> and
 	comma (in a future version the comma might be used to separate the
 	part that is shown at the end and at the start of a line).
-	The characters are highlighted according to the '@' flag in
-	'highlight'.
+	The |hl-NonText| highlight group determines the highlighting.
 	Note that tabs after the showbreak will be displayed differently.
 	If you want the 'showbreak' to appear in between line numbers, add the
 	"n" flag to 'cpoptions'.
@@ -5402,10 +5397,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 'showmode' 'smd'	boolean	(Vim default: on, Vi default: off)
 			global
 	If in Insert, Replace or Visual mode put a message on the last line.
-	Use the 'M' flag in 'highlight' to set the type of highlighting for
-	this message.
-	When |XIM| may be used the message will include "XIM".  But this
-	doesn't mean XIM is really active.
+	The |hl-ModeMsg| highlight group determines the highlighting.
 
 						*'showtabline'* *'stal'*
 'showtabline' 'stal'	number	(default 1)
@@ -6388,7 +6380,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Save the whole buffer for undo when reloading it.  This applies to the
 	":e!" command and reloading for when the buffer changed outside of
 	Vim. |FileChangedShell|
-	The save only happens when this options is negative or when the number
+	The save only happens when this option is negative or when the number
 	of lines is smaller than the value of this option.
 	Set this option to zero to disable undo for a reload.
 
@@ -6461,7 +6453,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'viewoptions'* *'vop'*
-'viewoptions' 'vop'	string	(default: "folds,options,cursor")
+'viewoptions' 'vop'	string	(default: "folds,options,cursor,curdir")
 			global
 			{not available when compiled without the |+mksession|
 			feature}
@@ -6469,6 +6461,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	list of words.  Each word enables saving and restoring something:
 	   word		save and restore ~
 	   cursor	cursor position in file and in window
+	   curdir	local current directory, if set with |:lcd|
 	   folds	manually created folds, opened/closed folds and local
 			fold options
 	   options	options and mappings local to a window or buffer (not

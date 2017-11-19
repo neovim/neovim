@@ -159,6 +159,7 @@ Events:
   |TextYankPost|
 
 Highlight groups:
+  |hl-NormalNC| highlights non-current windows
   |hl-QuickFixLine|
   |hl-Substitute|
   |hl-TermCursor|
@@ -298,6 +299,8 @@ Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
 
+The variable name "count" is no fallback for |v:count| anymore.
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
 
@@ -377,7 +380,7 @@ Other options:
   'esckeys'
   'guioptions' "t" flag was removed
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
-  'highlight' (the builtin |highlight-groups| cannot be changed)
+  'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*

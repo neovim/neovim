@@ -47,7 +47,7 @@ function GetHogIndent()
     " Continuation of a line that wasn't indented
     let prevline = getline(prevlnum)
     if prevline =~ '^\k\+.*\\\s*$'
-        return &sw 
+        return shiftwidth() 
     endif
 
     " Continuation of a line that was indented
@@ -58,13 +58,13 @@ function GetHogIndent()
     " Indent the next line if previous line contained a start of a block
     " definition ('{' or '(').
     if prevline =~ '^\k\+[^#]*{}\@!\s*$' " TODO || prevline =~ '^\k\+[^#]*()\@!\s*$'
-        return &sw
+        return shiftwidth()
     endif
 
     " Match inside of a block
     if s:IsInBlock(v:lnum)
         if prevline =~ "^\k\+.*$"
-            return &sw
+            return shiftwidth()
         else
             return indent(prevlnum)
         endif

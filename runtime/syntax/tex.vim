@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Jan 31, 2017
-" Version:	103
+" Last Change:	Oct 12, 2017
+" Version:	105
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -258,6 +258,7 @@ syn match texAccent		"\\[bcdvuH]$"
 syn match texAccent		+\\[=^.\~"`']+
 syn match texAccent		+\\['=t'.c^ud"vb~Hr]{\a}+
 syn match texLigature		"\\\([ijolL]\|ae\|oe\|ss\|AA\|AE\|OE\)$"
+
 
 " \begin{}/\end{} section markers: {{{1
 syn match  texBeginEnd		"\\begin\>\|\\end\>" nextgroup=texBeginEndName
@@ -588,12 +589,21 @@ else
  endif
 endif
 
+" %begin-include ... %end-include acts like a texDocZone for \include'd files.  Permits spell checking, for example, in such files.
+if !s:tex_nospell
+ TexFold syn region texDocZone			matchgroup=texSection start='^\s*%begin-include\>'	 end='^\s*%end-include\>'											contains=@texFoldGroup,@texDocGroup,@Spell
+else
+ TexFold syn region texDocZone			matchgroup=texSection start='^\s*%begin-include\>'	 end='^\s*%end-include\>'											contains=@texFoldGroup,@texDocGroup
+endif
+
 " Separate lines used for verb` and verb# so that the end conditions {{{1
 " will appropriately terminate.
 " If g:tex_verbspell exists, then verbatim texZones will permit spellchecking there.
 if s:tex_fast =~# 'v'
   if exists("g:tex_verbspell") && g:tex_verbspell
    syn region texZone		start="\\begin{[vV]erbatim}"		end="\\end{[vV]erbatim}\|%stopzone\>"	contains=@Spell
+   " listings package:
+   syn region texZone		start="\\begin{lstlisting}"		end="\\end{lstlisting}\|%stopzone\>"	contains=@Spell
    if b:tex_stylish
     syn region texZone		start="\\verb\*\=\z([^\ta-zA-Z@]\)"	end="\z1\|%stopzone\>"			contains=@Spell
    else
@@ -1183,11 +1193,13 @@ if has("conceal") && &enc == 'utf-8'
   delfun s:SuperSub
  endif
 
- " Accented characters: {{{2
+ " Accented characters and Ligatures: {{{2
  if s:tex_conceal =~# 'a'
   if b:tex_stylish
    syn match texAccent		"\\[bcdvuH][^a-zA-Z@]"me=e-1
-   syn match texLigature		"\\\([ijolL]\|ae\|oe\|ss\|AA\|AE\|OE\)[^a-zA-Z@]"me=e-1
+   syn match texLigature	"\\\([ijolL]\|ae\|oe\|ss\|AA\|AE\|OE\)[^a-zA-Z@]"me=e-1
+   syn match texLigature	'--'
+   syn match texLigature	'---'
   else
    fun! s:Accents(chr,...)
      let i= 1
@@ -1248,15 +1260,17 @@ if has("conceal") && &enc == 'utf-8'
    call s:Accents('\\i','ì','í','î','ï','ĩ','į',' ',' ',' ',' ',' ','ĭ',' ')
    "                    \`  \'  \^  \"  \~  \.  \=  \c  \H  \k  \r  \u  \v
    delfun s:Accents
-   syn match texAccent   '\\aa\>'	conceal cchar=å
-   syn match texAccent   '\\AA\>'	conceal cchar=Å
-   syn match texAccent	'\\o\>'		conceal cchar=ø
-   syn match texAccent	'\\O\>'		conceal cchar=Ø
+   syn match texAccent		'\\aa\>'	conceal cchar=å
+   syn match texAccent		'\\AA\>'	conceal cchar=Å
+   syn match texAccent		'\\o\>'		conceal cchar=ø
+   syn match texAccent		'\\O\>'		conceal cchar=Ø
    syn match texLigature	'\\AE\>'	conceal cchar=Æ
    syn match texLigature	'\\ae\>'	conceal cchar=æ
    syn match texLigature	'\\oe\>'	conceal cchar=œ
    syn match texLigature	'\\OE\>'	conceal cchar=Œ
    syn match texLigature	'\\ss\>'	conceal cchar=ß
+   syn match texLigature	'--'		conceal cchar=–
+   syn match texLigature	'---'		conceal cchar=—
   endif
  endif
 endif

@@ -487,9 +487,71 @@ function! s:check_ruby() abort
   endif
 endfunction
 
+function! s:check_node() abort
+  call health#report_start('Node provider (optional)')
+
+  let loaded_var = 'g:loaded_node_provider'
+  if exists(loaded_var) && !exists('*provider#node#Call')
+    call health#report_info('Disabled. '.loaded_var.'='.eval(loaded_var))
+    return
+  endif
+
+  if !executable('node') || !executable('npm')
+    call health#report_warn(
+          \ '`node` and `npm` must be in $PATH.',
+          \ ['Install Node.js and verify that `node` and `npm` commands work.'])
+    return
+  endif
+  call health#report_info('Node: '. s:system('node -v'))
+
+  let host = provider#node#Detect()
+  if empty(host)
+    call health#report_warn('Missing "neovim" npm package.',
+          \ ['Run in shell: npm install -g neovim',
+          \  'Is the npm bin directory in $PATH?'])
+    return
+  endif
+  call health#report_info('Host: '. host)
+
+  let latest_npm_cmd = has('win32') ? 'cmd /c npm info neovim --json' : 'npm info neovim --json'
+  let latest_npm = s:system(split(latest_npm_cmd))
+  if s:shell_error || empty(latest_npm)
+    call health#report_error('Failed to run: '. latest_npm_cmd,
+          \ ["Make sure you're connected to the internet.",
+          \  'Are you behind a firewall or proxy?'])
+    return
+  endif
+  if !empty(latest_npm)
+    try
+      let pkg_data = json_decode(latest_npm)
+    catch /E474/
+      return 'error: '.latest_npm
+    endtry
+    let latest_npm = get(get(pkg_data, 'dist-tags', {}), 'latest', 'unable to parse')
+  endif
+
+  let current_npm_cmd = host .' --version'
+  let current_npm = s:system(current_npm_cmd)
+  if s:shell_error
+    call health#report_error('Failed to run: '. current_npm_cmd,
+          \ ['Report this issue with the output of: ', current_npm_cmd])
+    return
+  endif
+
+  if s:version_cmp(current_npm, latest_npm) == -1
+    call health#report_warn(
+          \ printf('Package "neovim" is out-of-date. Installed: %s, latest: %s',
+          \ current_npm, latest_npm),
+          \ ['Run in shell: npm update neovim'])
+  else
+    call health#report_ok('Latest "neovim" npm is installed: '. current_npm)
+  endif
+endfunction
+
 function! health#provider#check() abort
   call s:check_clipboard()
   call s:check_python(2)
   call s:check_python(3)
   call s:check_ruby()
+  call s:check_node()
 endfunction

@@ -79,7 +79,7 @@ struct hl_group {
 #define SG_LINK         8       // link has been set
 /// @}
 
-// highlight groups for 'highlight' option
+// builtin |highlight-groups|
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
 static inline struct hl_group * HL_TABLE(void)
@@ -8462,7 +8462,7 @@ Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
   attrentry_T *aep = syn_cterm_attr2entry((int)attr_id);
   if (!aep) {
     api_set_error(err, kErrorTypeException,
-                  "Invalid attribute id: %d", attr_id);
+                  "Invalid attribute id: %" PRId64, attr_id);
     return dic;
   }
 

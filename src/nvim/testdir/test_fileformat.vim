@@ -15,3 +15,19 @@ func Test_fileformat_after_bw()
   call assert_equal(test_fileformats, &fileformat)
   set fileformats&
 endfunc
+
+func Test_fileformat_autocommand()
+  let filecnt = ["", "foobar\<CR>", "eins\<CR>", "\<CR>", "zwei\<CR>", "drei", "vier", "fünf", ""]
+  let ffs = &ffs
+  call writefile(filecnt, 'Xfile', 'b')
+  au BufReadPre Xfile set ffs=dos ff=dos
+  new Xfile
+  call assert_equal('dos', &l:ff)
+  call assert_equal('dos', &ffs)
+
+  " cleanup
+  call delete('Xfile')
+  let &ffs = ffs
+  au! BufReadPre Xfile
+  bw!
+endfunc

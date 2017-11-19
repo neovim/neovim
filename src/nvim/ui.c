@@ -14,6 +14,7 @@
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/ex_cmds2.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fold.h"
 #include "nvim/main.h"
 #include "nvim/ascii.h"
@@ -484,6 +485,7 @@ int ui_current_col(void)
 
 void ui_flush(void)
 {
+  cmdline_ui_flush();
   ui_call_flush();
 }
 

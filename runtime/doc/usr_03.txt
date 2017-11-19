@@ -353,7 +353,7 @@ The "?" command works like "/" but searches backwards: >
 	?word
 
 The "N" command repeats the last search the opposite direction.  Thus using
-"N" after a "/" command search backwards, using "N" after "?" searches
+"N" after a "/" command searches backwards, using "N" after "?" searches
 forward.
 
 
@@ -508,7 +508,7 @@ only if it is at the beginning of a line.
    The $ character matches the end of a line.  Therefore, "was$" matches the
 word was only if it is at the end of a line.
 
-Let's mark the places where "the" matches in this example line with "x"s:
+Let's mark the places where "/the" matches in this example line with "x"s:
 
 	the solder holding one of the chips melted and the ~
 	xxx			  xxx		       xxx

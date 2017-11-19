@@ -3,20 +3,20 @@ function! s:enhance_syntax() abort
 
   syntax keyword healthError ERROR[:]
         \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight link healthError Error
+  highlight default link healthError Error
 
   syntax keyword healthWarning WARNING[:]
         \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight link healthWarning WarningMsg
+  highlight default link healthWarning WarningMsg
 
   syntax keyword healthSuccess OK[:]
         \ containedin=markdownCodeBlock,mkdListItemLine
-  highlight healthSuccess guibg=#5fff00 guifg=#080808 ctermbg=82 ctermfg=232
+  highlight default healthSuccess guibg=#5fff00 guifg=#080808 ctermbg=82 ctermfg=232
 
   syntax match healthHelp "|.\{-}|" contains=healthBar
         \ containedin=markdownCodeBlock,mkdListItemLine
   syntax match healthBar  "|" contained conceal
-  highlight link healthHelp Identifier
+  highlight default link healthHelp Identifier
 
   " We do not care about markdown syntax errors in :checkhealth output.
   highlight! link markdownError Normal

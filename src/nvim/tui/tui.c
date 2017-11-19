@@ -1453,12 +1453,10 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
   }
   if (-1 == data->unibi_ext.set_cursor_style) {
-    // The DECSCUSR sequence to change the cursor shape is widely
-    // supported by several terminal types and should be in many
-    // teminfo entries.  See
-    // https://github.com/gnachman/iTerm2/pull/92 for more.
-    // xterm even has an extended version that has a vertical bar.
-    if (!konsole && (true_xterm    // per xterm ctlseqs doco (since version 282)
+    // The DECSCUSR sequence to change the cursor shape is widely supported by
+    // several terminal types.  https://github.com/gnachman/iTerm2/pull/92
+    // xterm extension: vertical bar
+    if (!konsole && ((xterm && !vte_version)  // anything claiming xterm compat
         // per MinTTY 0.4.3-1 release notes from 2009
         || putty
         // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
@@ -1470,9 +1468,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         // per analysis of VT100Terminal.m
         || iterm || iterm_pretending_xterm
         || teraterm    // per TeraTerm "Supported Control Functions" doco
-        // Allows forcing the use of DECSCUSR on linux type terminals, such as
-        // console-terminal-emulator from the nosh toolset, which does indeed
-        // implement the xterm extension:
+        // Some linux-type terminals (such as console-terminal-emulator
+        // from the nosh toolset) implement implement the xterm extension.
         || (linuxvt && (xterm_version || (vte_version > 0) || colorterm)))) {
       data->unibi_ext.set_cursor_style =
         (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");
@@ -1571,10 +1568,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   }
 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
-  // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  So adding
-  // them to terminal types, that do actually have such control sequences but
-  // lack the correct definitions in terminfo, is an augmentation, not a
-  // fixup.  See https://gist.github.com/XVilka/8346728 for more about this.
+  // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding
+  // them here when terminfo lacks them is an augmentation, not a fixup.
+  // https://gist.github.com/XVilka/8346728
 
   // At this time (2017-07-12) it seems like all terminals that support rgb
   // color codes can use semicolons in the terminal code and be fine.
@@ -1584,8 +1580,8 @@ static void augment_terminfo(TUIData *data, const char *term,
 
   // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
   bool has_colon_rgb = !tmux && !screen
-    && ((vte_version >= 3600)  // per GNOME bug #685759, #704449
-        || iterm || iterm_pretending_xterm  // per analysis of VT100Terminal.m
+    && !vte_version  // VTE colon-support has a big memory leak. #7573
+    && (iterm || iterm_pretending_xterm  // per VT100Terminal.m
         // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
         || true_xterm);
 

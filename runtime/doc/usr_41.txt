@@ -888,6 +888,7 @@ GUI:						*gui-functions*
 
 Vim server:					*server-functions*
 	serverlist()		return the list of server names
+	remote_startserver()	run a server
 	remote_send()		send command characters to a Vim server
 	remote_expr()		evaluate an expression in a Vim server
 	server2client()		send a reply to a client of a Vim server
@@ -2226,8 +2227,8 @@ plugin for the mail filetype: >
 	endif
 
 Two global variables are used:
-no_plugin_maps		disables mappings for all filetype plugins
-no_mail_maps		disables mappings for a specific filetype
+|no_plugin_maps|	disables mappings for all filetype plugins
+|no_mail_maps|		disables mappings for the "mail" filetype
 
 
 USER COMMANDS

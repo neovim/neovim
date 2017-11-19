@@ -2,7 +2,7 @@
 " Language:    SQL
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
 " Version:     16.0
-" Last Change: 2015 Dec 29
+" Last Change: 2017 Oct 15
 " Homepage:    http://www.vim.org/scripts/script.php?script_id=1572
 " Usage:       For detailed help
 "              ":help sql.txt"

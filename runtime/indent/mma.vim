@@ -49,7 +49,7 @@ function GetMmaIndent()
     " also, indent only if this line if this line isn't starting a new
     " block... TODO - fix this with indentkeys?
     if getline(v:lnum-1) =~ '\\\@<!\%(\[[^\]]*\|([^)]*\|{[^}]*\)$' && getline(v:lnum) !~ '\s\+[\[({]'
-        let ind = ind+&sw
+        let ind = ind+shiftwidth()
     endif
 
     " if this line had unmatched closing block,

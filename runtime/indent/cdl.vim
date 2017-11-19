@@ -47,7 +47,7 @@ fun! CdlGetIndent(lnum)
   let thisline = getline(a:lnum)
   if match(thisline, '^\s*\(\k\+\|\[[^]]*]\)\s*\(,\|;\s*$\)') >= 0
     " it's an attributes line
-    return &sw
+    return shiftwidth()
   elseif match(thisline, '^\c\s*\([{}]\|\/[*/]\|dimension\|schedule\|group\|hierarchy\|class\)') >= 0
     " it's a header or '{' or '}' or a comment
     return 0
@@ -71,13 +71,13 @@ fun! CdlGetIndent(lnum)
     let c = line[inicio-1]
     " ')' and '=' don't change indent and are useless to set 'f'
     if c == '{'
-      return &sw
+      return shiftwidth()
     elseif c != ')' && c != '='
       let f = 1 " all but 'elseif' are followed by a formula
       if c ==? 'n' || c ==? 'e' " 'then', 'else'
-	let ind = ind + &sw
+	let ind = ind + shiftwidth()
       elseif strpart(line, inicio-6, 6) ==? 'elseif' " elseif, set f to conditional
-	let ind = ind + &sw
+	let ind = ind + shiftwidth()
 	let f = 0
       end
     end
@@ -98,16 +98,16 @@ fun! CdlGetIndent(lnum)
       let ind = 0
       let f = 1
     elseif c == ')' || c== ';' || strpart(line, inicio-5, 5) ==? 'endif'
-      let ind = ind - &sw
+      let ind = ind - shiftwidth()
     elseif c == '(' || c ==? 'f' " '(' or 'if'
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
     else " c == '='
       " if it is an asignment increase indent
       if f == -1 " we don't know yet, find out
 	let f = CdlAsignment(lnum, strpart(line, 0, inicio))
       end
       if f == 1 " formula increase it
-	let ind = ind + &sw
+	let ind = ind + shiftwidth()
       end
     end
   endw
@@ -115,13 +115,13 @@ fun! CdlGetIndent(lnum)
   " CURRENT LINE, if it starts with a closing element, decrease indent
   " or if it starts with '=' (asignment), increase indent
   if match(thisline, '^\c\s*\(else\|then\|endif\|[);]\)') >= 0
-    let ind = ind - &sw
+    let ind = ind - shiftwidth()
   elseif match(thisline, '^\s*=') >= 0
     if f == -1 " we don't know yet if is an asignment, find out
       let f = CdlAsignment(lnum, "")
     end
     if f == 1 " formula increase it
-      let ind = ind + &sw
+      let ind = ind + shiftwidth()
     end
   end
 

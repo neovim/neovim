@@ -13,10 +13,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Vim 7.4\n"
+"Project-Id-Version: Vim 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-10 21:10+0900\n"
-"PO-Revision-Date: 2016-09-10 21:20+0900\n"
+"POT-Creation-Date: 2017-07-03 23:05+0900\n"
+"PO-Revision-Date: 2017-07-12 20:45+0900\n"
 "Last-Translator: MURAOKA Taro <koron.kaoriya@gmail.com>\n"
 "Language-Team: vim-jp (https://github.com/vim-jp/lang-ja)\n"
 "Language: Japanese\n"
@@ -245,7 +245,8 @@ msgid "E917: Cannot use a callback with %s()"
 msgstr "E917: %s() にコールバックは使えません"
 
 msgid "E912: cannot use ch_evalexpr()/ch_sendexpr() with a raw or nl channel"
-msgstr "E912: 生や nl チャンネルに ch_evalexpr()/ch_sendexpr は使えません"
+msgstr ""
+"E912: raw や nl モードのチャンネルに ch_evalexpr()/ch_sendexpr() は使えません"
 
 msgid "E906: not an open channel"
 msgstr "E906: 開いていないチャンネルです"
@@ -431,6 +432,9 @@ msgstr "スキャン中: %s"
 msgid "Scanning tags."
 msgstr "タグをスキャン中."
 
+msgid "match in file"
+msgstr "ファイル内のマッチ"
+
 msgid " Adding"
 msgstr " 追加中"
 
@@ -518,6 +522,12 @@ msgstr "E690: :for の後に \"in\" がありません"
 #, c-format
 msgid "E108: No such variable: \"%s\""
 msgstr "E108: その変数はありません: \"%s\""
+
+#. For historic reasons this error is not given for a list or dict.
+#. * E.g., the b: dict could be locked/unlocked.
+#, c-format
+msgid "E940: Cannot lock or unlock variable %s"
+msgstr "E940: 変数 %s はロックまたはアンロックできません"
 
 msgid "E743: variable nested too deep for (un)lock"
 msgstr "E743: (アン)ロックするには変数の入れ子が深過ぎます"
@@ -697,11 +707,6 @@ msgid "&Ok"
 msgstr "&Ok"
 
 #, c-format
-msgid "+-%s%3ld line: "
-msgid_plural "+-%s%3ld lines: "
-msgstr[0] "+-%s%3ld 行: "
-
-#, c-format
 msgid "E700: Unknown function: %s"
 msgstr "E700: 未知の関数です: %s"
 
@@ -746,8 +751,8 @@ msgstr "E727: 開始位置が終了位置を越えました"
 msgid "<empty>"
 msgstr "<空>"
 
-msgid "E240: No connection to Vim server"
-msgstr "E240: Vim サーバーへの接続がありません"
+msgid "E240: No connection to the X server"
+msgstr "E240: X サーバーへの接続がありません"
 
 #, c-format
 msgid "E241: Unable to send to %s"
@@ -755,6 +760,12 @@ msgstr "E241: %s へ送ることができません"
 
 msgid "E277: Unable to read a server reply"
 msgstr "E277: サーバーの応答がありません"
+
+msgid "E941: already started a server"
+msgstr "E941: サーバーはすでに開始しています"
+
+msgid "E942: +clientserver feature not available"
+msgstr "E942: +clientserver 機能が無効になっています"
 
 msgid "remove() argument"
 msgstr "remove() の引数"
@@ -993,8 +1004,9 @@ msgstr " (計 1 行内)"
 msgid " on %ld lines"
 msgstr " (計 %ld 行内)"
 
-msgid "E147: Cannot do :global recursive"
-msgstr "E147: :global を再帰的には使えません"
+#. will increment global_busy to break out of the loop
+msgid "E147: Cannot do :global recursive with a range"
+msgstr "E147: :global を範囲付きで再帰的には使えません"
 
 msgid "E148: Regular expression missing from global"
 msgstr "E148: globalコマンドに正規表現が指定されていません"
@@ -1180,6 +1192,14 @@ msgstr "\"%s\" を検索中"
 msgid "not found in '%s': \"%s\""
 msgstr "'%s' の中にはありません: \"%s\""
 
+#, c-format
+msgid "W20: Required python version 2.x not supported, ignoring file: %s"
+msgstr "W20: 要求されたpython 2.xは対応していません、ファイルを無視します: %s"
+
+#, c-format
+msgid "W21: Required python version 3.x not supported, ignoring file: %s"
+msgstr "W21: 要求されたpython 3.xは対応していません、ファイルを無視します: %s"
+
 msgid "Source Vim script"
 msgstr "Vimスクリプトの取込み"
 
@@ -1277,6 +1297,11 @@ msgstr "逆さまの範囲が指定されました, 入替えますか?"
 
 msgid "E494: Use w or w>>"
 msgstr "E494: w もしくは w>> を使用してください"
+
+msgid "E943: Command table needs to be updated, run 'make cmdidxs'"
+msgstr ""
+"E943: コマンドテーブルを更新する必要があります、'make cmdidxs' を実行してくだ"
+"さい"
 
 msgid "E319: Sorry, the command is not available in this version"
 msgstr "E319: このバージョンではこのコマンドは利用できません, ごめんなさい"
@@ -2029,11 +2054,6 @@ msgstr "E350: 現在の 'foldmethod' では折畳みを作成できません"
 
 msgid "E351: Cannot delete fold with current 'foldmethod'"
 msgstr "E351: 現在の 'foldmethod' では折畳みを削除できません"
-
-#, c-format
-msgid "+--%3ld line folded "
-msgid_plural "+--%3ld lines folded "
-msgstr[0] "+--%3ld 行が折畳まれました "
 
 msgid "E222: Add to read buffer"
 msgstr "E222: 読込バッファへ追加"
@@ -2819,6 +2839,10 @@ msgid "E251: VIM instance registry property is badly formed.  Deleted!"
 msgstr "E251: VIM 実体の登録プロパティが不正です. 消去しました!"
 
 #, c-format
+msgid "E938: Duplicate key in JSON: \"%s\""
+msgstr "E938: JSONに重複キーがあります: \"%s\""
+
+#, c-format
 msgid "E696: Missing comma in List: %s"
 msgstr "E696: リスト型にカンマがありません: %s"
 
@@ -2858,7 +2882,7 @@ msgid "This Vim was not compiled with the diff feature."
 msgstr "このVimにはdiff機能がありません(コンパイル時設定)."
 
 msgid "Attempt to open script file again: \""
-msgstr "スクリプトファイルを再び開いてみます: \""
+msgstr "スクリプトファイルを再び開こうとしました: \""
 
 msgid "Cannot open for reading: \""
 msgstr "読込用として開けません"
@@ -3038,6 +3062,9 @@ msgstr "-T <terminal>\t端末を <terminal> に設定する"
 
 msgid "--not-a-term\t\tSkip warning for input/output not being a terminal"
 msgstr "--not-a-term\t\t入出力が端末でないとの警告をスキップする"
+
+msgid "--ttyfail\t\tExit if input or output is not a terminal"
+msgstr "--ttyfail\t\t入出力が端末でなければ終了する"
 
 msgid "-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"
 msgstr "-u <vimrc>\t\t.vimrcの代わりに <vimrc> を使う"
@@ -3906,7 +3933,7 @@ msgid "E766: Insufficient arguments for printf()"
 msgstr "E766: printf() の引数が不十分です"
 
 msgid "E807: Expected Float argument for printf()"
-msgstr "E807: printf() の引数には浮動少数点数が期待されています"
+msgstr "E807: printf() の引数には浮動小数点数が期待されています"
 
 msgid "E767: Too many arguments to printf()"
 msgstr "E767: printf() の引数が多過ぎます"
@@ -4063,8 +4090,10 @@ msgstr "E662: 変更リストの先頭"
 msgid "E663: At end of changelist"
 msgstr "E663: 変更リストの末尾"
 
-msgid "Type  :quit<Enter>  to exit Vim"
-msgstr "Vimを終了するには :quit<Enter> と入力してください"
+msgid "Type  :qa!  and press <Enter> to abandon all changes and exit Vim"
+msgstr ""
+"すべての変更を破棄し、Vimを終了するには  :qa!  と入力し <Enter> を押してくだ"
+"さい"
 
 #, c-format
 msgid "1 line %sed 1 time"
@@ -4413,9 +4442,6 @@ msgstr "入出力エラー"
 msgid "Message"
 msgstr "メッセージ"
 
-msgid "'columns' is not 80, cannot execute external commands"
-msgstr "'columns' が 80 ではないため、外部コマンドを実行できません"
-
 msgid "E237: Printer selection failed"
 msgstr "E237: プリンタの選択に失敗しました"
 
@@ -4685,6 +4711,12 @@ msgstr "E369: 無効な項目です: %s%%[]"
 msgid "E769: Missing ] after %s["
 msgstr "E769: %s[ の後に ] がありません"
 
+msgid "E944: Reverse range in character class"
+msgstr "E944: 文字クラスの範囲が逆です"
+
+msgid "E945: Range too large in character class"
+msgstr "E945: 文字クラスの範囲が大きすぎます"
+
 #, c-format
 msgid "E53: Unmatched %s%%("
 msgstr "E53: %s%%( が釣り合っていません"
@@ -4713,6 +4745,10 @@ msgstr "E69: %s%%[ の後に ] がありません"
 #, c-format
 msgid "E70: Empty %s%%[]"
 msgstr "E70: %s%%[] が空です"
+
+#
+msgid "E65: Illegal back reference"
+msgstr "E65: 不正な後方参照です"
 
 msgid "E339: Pattern too long"
 msgstr "E339: パターンが長過ぎます"
@@ -4750,10 +4786,6 @@ msgstr "E63: \\_ の無効な使用方法です"
 #, c-format
 msgid "E64: %s%c follows nothing"
 msgstr "E64:%s%c の後になにもありません"
-
-#
-msgid "E65: Illegal back reference"
-msgstr "E65: 不正な後方参照です"
 
 #
 msgid "E68: Invalid character after \\z"
@@ -5363,12 +5395,33 @@ msgstr "E783: MAP エントリに重複文字が存在します"
 msgid "No Syntax items defined for this buffer"
 msgstr "このバッファに定義された構文要素はありません"
 
+msgid "syntax conceal on"
+msgstr "構文の conceal は現在 on です"
+
+msgid "syntax conceal off"
+msgstr "構文の conceal は現在 off です"
+
 #, c-format
 msgid "E390: Illegal argument: %s"
 msgstr "E390: 不正な引数です: %s"
 
+msgid "syntax case ignore"
+msgstr "構文の大文字小文字は現在 ignore です"
+
+msgid "syntax case match"
+msgstr "構文の大文字小文字は現在 match です"
+
+msgid "syntax spell toplevel"
+msgstr "構文の spell は現在 toplevel です"
+
+msgid "syntax spell notoplevel"
+msgstr "構文の spell は現在 notoplevel です"
+
+msgid "syntax spell default"
+msgstr "構文の spell は現在 default です"
+
 msgid "syntax iskeyword "
-msgstr "シンタックス用 iskeyword "
+msgstr "構文用 iskeyword "
 
 #, c-format
 msgid "E391: No such syntax cluster: %s"
@@ -5579,7 +5632,7 @@ msgid "E556: at top of tag stack"
 msgstr "E556: タグスタックの先頭です"
 
 msgid "E425: Cannot go before first matching tag"
-msgstr "E425: 最初の該当タグを超えて戻ることはできません"
+msgstr "E425: 最初の該当タグを越えて戻ることはできません"
 
 #, c-format
 msgid "E426: tag not found: %s"
@@ -5595,7 +5648,7 @@ msgid "E427: There is only one matching tag"
 msgstr "E427: 該当タグが1つだけしかありません"
 
 msgid "E428: Cannot go beyond last matching tag"
-msgstr "E428: 最後に該当するタグを超えて進むことはできません"
+msgstr "E428: 最後の該当タグを越えて進むことはできません"
 
 #, c-format
 msgid "File \"%s\" does not exist"
@@ -5943,6 +5996,10 @@ msgid "E126: Missing :endfunction"
 msgstr "E126: :endfunction がありません"
 
 #, c-format
+msgid "W22: Text found after :endfunction: %s"
+msgstr "W22: :endfunction の後に文字があります: %s"
+
+#, c-format
 msgid "E707: Function name conflicts with variable: %s"
 msgstr "E707: 関数名が変数名と衝突します: %s"
 
@@ -5964,14 +6021,6 @@ msgstr "E133: 関数外に :return がありました"
 #, c-format
 msgid "E107: Missing parentheses: %s"
 msgstr "E107: カッコ '(' がありません: %s"
-
-#. Only MS VC 4.1 and earlier can do Win32s
-msgid ""
-"\n"
-"MS-Windows 16/32-bit GUI version"
-msgstr ""
-"\n"
-"MS-Windows 16/32 ビット GUI 版"
 
 msgid ""
 "\n"
@@ -6256,12 +6305,6 @@ msgstr "詳細な情報は           :help register<Enter>  "
 msgid "menu  Help->Sponsor/Register  for information    "
 msgstr "詳細はメニューの ヘルプ->スポンサー/登録 を参照して下さい"
 
-msgid "WARNING: Windows 95/98/ME detected"
-msgstr "警告: Windows 95/98/ME を検出しました"
-
-msgid "type  :help windows95<Enter>  for info on this"
-msgstr "詳細な情報は            :help windows95<Enter>"
-
 msgid "Already only one window"
 msgstr "既にウィンドウは1つしかありません"
 
@@ -6414,6 +6457,10 @@ msgstr "E236: フォント \"%s\" は固定幅ではありません"
 
 msgid "E473: Internal error"
 msgstr "E473: 内部エラーです"
+
+#, c-format
+msgid "E685: Internal error: %s"
+msgstr "E685: 内部エラーです: %s"
 
 msgid "Interrupted"
 msgstr "割込まれました"
@@ -6680,8 +6727,8 @@ msgstr "E592: 'winwidth' は 'winminwidth' より小さくできません"
 msgid "E80: Error while writing"
 msgstr "E80: 書込み中のエラー"
 
-msgid "Zero count"
-msgstr "ゼロカウント"
+msgid "E939: Positive count required"
+msgstr "E939: 正のカウントが必要です"
 
 msgid "E81: Using <SID> not in a script context"
 msgstr "E81: スクリプト以外で<SID>が使われました"
@@ -6694,10 +6741,6 @@ msgstr "E463: 領域が保護されているので, 変更できません"
 
 msgid "E744: NetBeans does not allow changes in read-only files"
 msgstr "E744: NetBeans は読込専用ファイルを変更することを許しません"
-
-#, c-format
-msgid "E685: Internal error: %s"
-msgstr "E685: 内部エラーです: %s"
 
 msgid "E363: pattern uses more memory than 'maxmempattern'"
 msgstr "E363: パターンが 'maxmempattern' 以上のメモリを使用します"

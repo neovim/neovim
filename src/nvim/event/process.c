@@ -324,6 +324,13 @@ static void process_close(Process *proc)
   }
   assert(!proc->closed);
   proc->closed = true;
+
+  if (proc->detach) {
+    if (proc->type == kProcessTypeUv) {
+      uv_unref((uv_handle_t *)&(((LibuvProcess *)proc)->uv));
+    }
+  }
+
   switch (proc->type) {
     case kProcessTypeUv:
       libuv_process_close((LibuvProcess *)proc);

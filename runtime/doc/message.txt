@@ -625,6 +625,9 @@ starts.  It can be fixed in one of these ways:
 - Just write the file again the next day.  Or set your clock to the next day,
   write the file twice and set the clock back.
 
+If you get W11 all the time, you may need to disable "Acronis Active
+Protection" or register Vim as a trusted service/application.
+
 							*W12*  >
   Warning: File "{filename}" has changed and the buffer was changed in Vim as well
 
@@ -743,6 +746,13 @@ a user-defined command.
 
 You tried to set an option after startup that only allows changes during
 startup.
+
+							*E943*  >
+  Command table needs to be updated, run 'make cmdidxs'
+
+This can only happen when changing the source code, when adding a command in
+src/ex_cmds.h.  The lookup table then needs to be updated, by running: >
+	make cmdidxs
 
 ==============================================================================
 3. Messages						*messages*

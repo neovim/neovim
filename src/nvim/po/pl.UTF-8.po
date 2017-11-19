@@ -3550,7 +3550,7 @@ msgstr ""
 #: ../main.c:2240
 msgid "--startuptime <file>\tWrite startup timing messages to <file>"
 msgstr ""
-"--startuptime <plik>\n"
+"--startuptime <plik> "
 "Zapisz wiadomości o długości startu do <plik>"
 
 #: ../main.c:2242

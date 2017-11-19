@@ -1,6 +1,6 @@
 " Vim support file to help with paste mappings and menus
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2006 Jun 23
+" Last Change:	2017 Aug 30
 
 " Define the string to use for items that are present both in Edit, Popup and
 " Toolbar menu.  Also used in mswin.vim and macmap.vim.
@@ -12,7 +12,7 @@
 if has("virtualedit")
   let paste#paste_cmd = {'n': ":call paste#Paste()<CR>"}
   let paste#paste_cmd['v'] = '"-c<Esc>' . paste#paste_cmd['n']
-  let paste#paste_cmd['i'] = 'x<BS><Esc>' . paste#paste_cmd['n'] . 'gi'
+  let paste#paste_cmd['i'] = "\<c-\>\<c-o>\"+gP"
 
   func! paste#Paste()
     let ove = &ve

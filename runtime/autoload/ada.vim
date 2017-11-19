@@ -591,7 +591,7 @@ function ada#Map_Menu (Text, Keys, Command)
 	\" :" . a:Command
       execute
 	\ "inoremap <buffer>" .
-	\ " <Learder>a" . a:Keys .
+	\ " <Leader>a" . a:Keys .
 	\" <C-O>:" . a:Command
    endif
    return

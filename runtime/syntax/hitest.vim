@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	none; used to see highlighting
 " Maintainer:	Ronald Schild <rs@scutum.de>
-" Last Change:	2001 Sep 02
+" Last Change:	2017 Jul 28
 " Version:	5.4n.1
 
 " To see your current highlight settings, do
@@ -110,17 +110,6 @@ endif
 " remove 'hls' highlighting
 nohlsearch
 normal 0
-
-" add autocommands to remove temporary file from buffer list
-aug highlighttest
-   au!
-   au BufUnload Highlight\ test if expand("<afile>") == "Highlight test"
-   au BufUnload Highlight\ test    bdelete! Highlight\ test
-   au BufUnload Highlight\ test endif
-   au VimLeavePre * if bufexists("Highlight test")
-   au VimLeavePre *    bdelete! Highlight\ test
-   au VimLeavePre * endif
-aug END
 
 " we don't want to save this temporary file
 set nomodified
