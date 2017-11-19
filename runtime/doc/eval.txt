@@ -5660,9 +5660,13 @@ mode([expr])	Return a string that indicates the current mode.
 			S	Select by line
 			CTRL-S	Select blockwise
 			i	Insert
+			ic	Insert mode completion |compl-generic|
+			ix	Insert mode |i_CTRL-X| completion
 			R	Replace |R|
+			Rc	Replace mode completion |compl-generic|
 			Rv	Virtual Replace |gR|
-			c	Command-line
+			Rx	Replace mode |i_CTRL-X| completion
+			c	Command-line editing
 			cv	Vim Ex mode |gQ|
 			ce	Normal Ex mode |Q|
 			r	Hit-enter prompt
