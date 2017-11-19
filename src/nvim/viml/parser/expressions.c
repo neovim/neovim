@@ -2014,17 +2014,20 @@ viml_pexpr_parse_process_token:
           lambda_node->data.fig.type_guesses.allow_lambda = false;
           if (lambda_node->children != NULL
               && lambda_node->children->type == kExprNodeComma) {
-            // If lambda has comma child this means that parser has already seen at
-            // least "{arg1,", so node cannot possibly be anything, but lambda.
+            // If lambda has comma child this means that parser has already seen
+            // at least "{arg1,", so node cannot possibly be anything, but
+            // lambda.
 
-            // Vim may give E121 or E720 in this case, but it does not look right to
-            // have either because both are results of reevaluation possibly-lambda
-            // node as a dictionary and here this is not going to happen.
+            // Vim may give E121 or E720 in this case, but it does not look
+            // right to have either because both are results of reevaluation
+            // possibly-lambda node as a dictionary and here this is not going
+            // to happen.
             ERROR_FROM_TOKEN_AND_MSG(
-                cur_token, _("E15: Expected lambda arguments list or arrow: %.*s"));
+                cur_token,
+                _("E15: Expected lambda arguments list or arrow: %.*s"));
           } else {
-            // Else it may appear that possibly-lambda node is actually a dictionary
-            // or curly-braces-name identifier.
+            // Else it may appear that possibly-lambda node is actually
+            // a dictionary or curly-braces-name identifier.
             lambda_node = NULL;
             kv_drop(pt_stack, 1);
           }

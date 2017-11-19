@@ -522,7 +522,7 @@ local function fixtbl(tbl)
 end
 
 local function fixtbl_rec(tbl)
-  for k, v in pairs(tbl) do
+  for _, v in pairs(tbl) do
     if type(v) == 'table' then
       fixtbl_rec(v)
     end

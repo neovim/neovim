@@ -7,7 +7,6 @@ local make_enum_conv_tab = helpers.make_enum_conv_tab
 local child_call_once = helpers.child_call_once
 local alloc_log_new = helpers.alloc_log_new
 local kvi_destroy = helpers.kvi_destroy
-local array_size = helpers.array_size
 local conv_enum = helpers.conv_enum
 local debug_log = helpers.debug_log
 local ptr2key = helpers.ptr2key
@@ -26,7 +25,6 @@ local mergedicts_copy = global_helpers.mergedicts_copy
 local format_string = global_helpers.format_string
 local format_luav = global_helpers.format_luav
 local intchar2lua = global_helpers.intchar2lua
-local REMOVE_THIS = global_helpers.REMOVE_THIS
 local dictdiff = global_helpers.dictdiff
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h',
@@ -147,12 +145,14 @@ child_call_once(function()
         --       nvim_hl_defs.
         eq(true, not not (nvim_hl_defs[grp_link]
                           or predefined_hl_defs[grp_link]))
+        eq(false, not not (nvim_hl_defs[new_grp]
+                           or predefined_hl_defs[new_grp]))
         nvim_hl_defs[new_grp] = {'link', grp_link}
       else
         local new_grp, grp_args = s:match('^(%w+) (.*)')
         neq(nil, new_grp)
-        eq(false, not not (nvim_hl_defs[grp_link]
-                           or predefined_hl_defs[grp_link]))
+        eq(false, not not (nvim_hl_defs[new_grp]
+                           or predefined_hl_defs[new_grp]))
         nvim_hl_defs[new_grp] = {'definition', grp_args}
       end
     end)
@@ -206,7 +206,7 @@ local function format_check(expr, format_check_data, opts)
   -- That forces specific order.
   local zflags = opts.flags[1]
   local zdata = format_check_data[zflags]
-  local dig_len = 0
+  local dig_len
   if opts.funcname then
     print(format_string('\n%s(%r, {', opts.funcname, expr))
     dig_len = #opts.funcname + 2

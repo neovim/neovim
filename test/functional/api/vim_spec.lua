@@ -12,7 +12,6 @@ local request = helpers.request
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
 
-local REMOVE_THIS = global_helpers.REMOVE_THIS
 local intchar2lua = global_helpers.intchar2lua
 local format_string = global_helpers.format_string
 local mergedicts_copy = global_helpers.mergedicts_copy
