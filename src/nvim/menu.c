@@ -1417,7 +1417,8 @@ void ex_emenu(exarg_T *eap)
     idx = MENU_INDEX_NORMAL;
   }
 
-  if (idx != MENU_INDEX_INVALID && menu->strings[idx] != NULL) {
+  assert(idx != MENU_INDEX_INVALID);
+  if (menu->strings[idx] != NULL) {
     /* When executing a script or function execute the commands right now.
      * Otherwise put them in the typeahead buffer. */
     if (current_SID != 0)
