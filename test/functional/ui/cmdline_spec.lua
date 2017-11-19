@@ -226,7 +226,11 @@ describe('external cmdline', function()
         prompt = "",
         special = {'"', true},
       },{
-        content = { { {}, "1+2" } },
+        content = {
+          { {}, "1" },
+          { {}, "+" },
+          { {}, "2" },
+        },
         firstc = "=",
         indent = 0,
         pos = 3,
@@ -303,7 +307,7 @@ describe('external cmdline', function()
         pos = 0,
         prompt = "",
       }}, cmdline)
-      eq({{{{}, 'function Foo()'}}}, block)
+      eq({ { { {}, 'function Foo()'} } }, block)
     end)
 
     feed('line1<cr>')
@@ -314,8 +318,8 @@ describe('external cmdline', function()
       ~                        |
                                |
     ]], nil, nil, function()
-      eq({{{{}, 'function Foo()'}},
-          {{{}, '  line1'}}}, block)
+      eq({ { { {}, 'function Foo()'} },
+           { { {}, '  line1'} } }, block)
     end)
 
     block = {}
@@ -327,8 +331,8 @@ describe('external cmdline', function()
       ~                        |
       ^                         |
     ]], nil, nil, function()
-      eq({{{{}, 'function Foo()'}},
-          {{{}, '  line1'}}}, block)
+      eq({ { { {}, 'function Foo()'} },
+           { { {}, '  line1'} } }, block)
     end)
 
 
