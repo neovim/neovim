@@ -2419,6 +2419,7 @@ static void color_expr_cmdline(const CmdlineInfo *const colored_ccline,
       .attr = 0,
     }));
   }
+  kvi_destroy(colors);
 }
 
 /// Color command-line
