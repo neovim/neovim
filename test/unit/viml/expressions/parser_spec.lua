@@ -268,12 +268,12 @@ local function format_check(expr, format_check_data, opts)
         local diff = diffs[flags]
         print(('  [%u] = {'):format(flags))
         if diff.ast then
-          print('    ast = ' .. format_luav(diff.ast, '    '))
+          print('    ast = ' .. format_luav(diff.ast, '    ') .. ',')
         end
         if diff.hl_fs then
           print('    hl_fs = ' .. format_luav(diff.hl_fs, '    ', {
             literal_strings=true
-          }))
+          }) .. ',')
         end
         print('  },')
       end
@@ -7914,12 +7914,769 @@ describe('Expressions parser', function()
       hl('InvalidList', ']'),
     })
 
-    -- check_asgn_parsing('a[1 + 2] += 3')
-    -- check_asgn_parsing('a[{-> {b{3}: 4}[5]}()] += 6')
-    -- check_asgn_parsing('a{1}.2[{-> {b{3}: 4}[5]}()]')
+    check_asgn_parsing('a[1] += 3', {
+      --                012345678
+      ast = {
+        {
+          'Assignment(Add):0:4: +=',
+          children = {
+            {
+              'Subscript:0:1:[',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                'Integer(val=1):0:2:1',
+              },
+            },
+            'Integer(val=3):0:7: 3',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '1'),
+      hl('SubscriptBracket', ']'),
+      hl('AssignmentWithAddition', '+=', 1),
+      hl('Number', '3', 1),
+    })
+
+    check_asgn_parsing('a[1 + 2] += 3', {
+      --                0123456789012
+      --                0         1
+      ast = {
+        {
+          'Assignment(Add):0:8: +=',
+          children = {
+            {
+              'Subscript:0:1:[',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                {
+                  'BinaryPlus:0:3: +',
+                  children = {
+                    'Integer(val=1):0:2:1',
+                    'Integer(val=2):0:5: 2',
+                  },
+                },
+              },
+            },
+            'Integer(val=3):0:11: 3',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '1'),
+      hl('BinaryPlus', '+', 1),
+      hl('Number', '2', 1),
+      hl('SubscriptBracket', ']'),
+      hl('AssignmentWithAddition', '+=', 1),
+      hl('Number', '3', 1),
+    })
+
+    check_asgn_parsing('a[{-> {b{3}: 4}[5]}()] += 6', {
+      --                012345678901234567890123456
+      --                0         1         2
+      ast = {
+        {
+          'Assignment(Add):0:22: +=',
+          children = {
+            {
+              'Subscript:0:1:[',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                {
+                  'Call:0:19:(',
+                  children = {
+                    {
+                      'Lambda(\\di):0:2:{',
+                      children = {
+                        {
+                          'Arrow:0:3:->',
+                          children = {
+                            {
+                              'Subscript:0:15:[',
+                              children = {
+                                {
+                                  'DictLiteral(-di):0:5: {',
+                                  children = {
+                                    {
+                                      'Colon:0:11::',
+                                      children = {
+                                        {
+                                          'ComplexIdentifier:0:8:',
+                                          children = {
+                                            'PlainIdentifier(scope=0,ident=b):0:7:b',
+                                            {
+                                              'CurlyBracesIdentifier(--i):0:8:{',
+                                              children = {
+                                                'Integer(val=3):0:9:3',
+                                              },
+                                            },
+                                          },
+                                        },
+                                        'Integer(val=4):0:12: 4',
+                                      },
+                                    },
+                                  },
+                                },
+                                'Integer(val=5):0:16:5',
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            'Integer(val=6):0:25: 6',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('Lambda', '{'),
+      hl('Arrow', '->'),
+      hl('Dict', '{', 1),
+      hl('IdentifierName', 'b'),
+      hl('Curly', '{'),
+      hl('Number', '3'),
+      hl('Curly', '}'),
+      hl('Colon', ':'),
+      hl('Number', '4', 1),
+      hl('Dict', '}'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '5'),
+      hl('SubscriptBracket', ']'),
+      hl('Lambda', '}'),
+      hl('CallingParenthesis', '('),
+      hl('CallingParenthesis', ')'),
+      hl('SubscriptBracket', ']'),
+      hl('AssignmentWithAddition', '+=', 1),
+      hl('Number', '6', 1),
+    })
+
+    check_asgn_parsing('a{1}.2[{-> {b{3}: 4}[5]}()]', {
+      --                012345678901234567890123456
+      --                0         1         2
+      ast = {
+        {
+          'Subscript:0:6:[',
+          children = {
+            {
+              'ConcatOrSubscript:0:4:.',
+              children = {
+                {
+                  'ComplexIdentifier:0:1:',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=a):0:0:a',
+                    {
+                      'CurlyBracesIdentifier(--i):0:1:{',
+                      children = {
+                        'Integer(val=1):0:2:1',
+                      },
+                    },
+                  },
+                },
+                'PlainKey(key=2):0:5:2',
+              },
+            },
+            {
+              'Call:0:24:(',
+              children = {
+                {
+                  'Lambda(\\di):0:7:{',
+                  children = {
+                    {
+                      'Arrow:0:8:->',
+                      children = {
+                        {
+                          'Subscript:0:20:[',
+                          children = {
+                            {
+                              'DictLiteral(-di):0:10: {',
+                              children = {
+                                {
+                                  'Colon:0:16::',
+                                  children = {
+                                    {
+                                      'ComplexIdentifier:0:13:',
+                                      children = {
+                                        'PlainIdentifier(scope=0,ident=b):0:12:b',
+                                        {
+                                          'CurlyBracesIdentifier(--i):0:13:{',
+                                          children = {
+                                            'Integer(val=3):0:14:3',
+                                          },
+                                        },
+                                      },
+                                    },
+                                    'Integer(val=4):0:17: 4',
+                                  },
+                                },
+                              },
+                            },
+                            'Integer(val=5):0:21:5',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('Curly', '{'),
+      hl('Number', '1'),
+      hl('Curly', '}'),
+      hl('ConcatOrSubscript', '.'),
+      hl('IdentifierKey', '2'),
+      hl('SubscriptBracket', '['),
+      hl('Lambda', '{'),
+      hl('Arrow', '->'),
+      hl('Dict', '{', 1),
+      hl('IdentifierName', 'b'),
+      hl('Curly', '{'),
+      hl('Number', '3'),
+      hl('Curly', '}'),
+      hl('Colon', ':'),
+      hl('Number', '4', 1),
+      hl('Dict', '}'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '5'),
+      hl('SubscriptBracket', ']'),
+      hl('Lambda', '}'),
+      hl('CallingParenthesis', '('),
+      hl('CallingParenthesis', ')'),
+      hl('SubscriptBracket', ']'),
+    })
+
+    check_asgn_parsing('a', {
+      --                0
+      ast = {
+        'PlainIdentifier(scope=0,ident=a):0:0:a',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+    })
+
+    check_asgn_parsing('{a}', {
+      --                012
+      ast = {
+        {
+          'CurlyBracesIdentifier(--i):0:0:{',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:1:a',
+          },
+        },
+      },
+    }, {
+      hl('FigureBrace', '{'),
+      hl('IdentifierName', 'a'),
+      hl('Curly', '}'),
+    })
+
+    check_asgn_parsing('{a}b', {
+      --                0123
+      ast = {
+        {
+          'ComplexIdentifier:0:3:',
+          children = {
+            {
+              'CurlyBracesIdentifier(--i):0:0:{',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+              },
+            },
+            'PlainIdentifier(scope=0,ident=b):0:3:b',
+          },
+        },
+      },
+    }, {
+      hl('FigureBrace', '{'),
+      hl('IdentifierName', 'a'),
+      hl('Curly', '}'),
+      hl('IdentifierName', 'b'),
+    })
+
+    check_asgn_parsing('a{b}c', {
+      --                01234
+      ast = {
+        {
+          'ComplexIdentifier:0:1:',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'ComplexIdentifier:0:4:',
+              children = {
+                {
+                  'CurlyBracesIdentifier(--i):0:1:{',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=b):0:2:b',
+                  },
+                },
+                'PlainIdentifier(scope=0,ident=c):0:4:c',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('Curly', '{'),
+      hl('IdentifierName', 'b'),
+      hl('Curly', '}'),
+      hl('IdentifierName', 'c'),
+    })
+
+    check_asgn_parsing('a{b}c[0]', {
+      --                01234567
+      ast = {
+        {
+          'Subscript:0:5:[',
+          children = {
+            {
+              'ComplexIdentifier:0:1:',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                {
+                  'ComplexIdentifier:0:4:',
+                  children = {
+                    {
+                      'CurlyBracesIdentifier(--i):0:1:{',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=b):0:2:b',
+                      },
+                    },
+                    'PlainIdentifier(scope=0,ident=c):0:4:c',
+                  },
+                },
+              },
+            },
+            'Integer(val=0):0:6:0',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('Curly', '{'),
+      hl('IdentifierName', 'b'),
+      hl('Curly', '}'),
+      hl('IdentifierName', 'c'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '0'),
+      hl('SubscriptBracket', ']'),
+    })
+
+    check_asgn_parsing('a{b}c.0', {
+      --                0123456
+      ast = {
+        {
+          'ConcatOrSubscript:0:5:.',
+          children = {
+            {
+              'ComplexIdentifier:0:1:',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                {
+                  'ComplexIdentifier:0:4:',
+                  children = {
+                    {
+                      'CurlyBracesIdentifier(--i):0:1:{',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=b):0:2:b',
+                      },
+                    },
+                    'PlainIdentifier(scope=0,ident=c):0:4:c',
+                  },
+                },
+              },
+            },
+            'PlainKey(key=0):0:6:0',
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('Curly', '{'),
+      hl('IdentifierName', 'b'),
+      hl('Curly', '}'),
+      hl('IdentifierName', 'c'),
+      hl('ConcatOrSubscript', '.'),
+      hl('IdentifierKey', '0'),
+    })
+
+    check_asgn_parsing('[a{b}c[0].0]', {
+      --                012345678901
+      --                0         1
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'ConcatOrSubscript:0:9:.',
+              children = {
+                {
+                  'Subscript:0:6:[',
+                  children = {
+                    {
+                      'ComplexIdentifier:0:2:',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=a):0:1:a',
+                        {
+                          'ComplexIdentifier:0:5:',
+                          children = {
+                            {
+                              'CurlyBracesIdentifier(--i):0:2:{',
+                              children = {
+                                'PlainIdentifier(scope=0,ident=b):0:3:b',
+                              },
+                            },
+                            'PlainIdentifier(scope=0,ident=c):0:5:c',
+                          },
+                        },
+                      },
+                    },
+                    'Integer(val=0):0:7:0',
+                  },
+                },
+                'PlainKey(key=0):0:10:0',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('IdentifierName', 'a'),
+      hl('Curly', '{'),
+      hl('IdentifierName', 'b'),
+      hl('Curly', '}'),
+      hl('IdentifierName', 'c'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '0'),
+      hl('SubscriptBracket', ']'),
+      hl('ConcatOrSubscript', '.'),
+      hl('IdentifierKey', '0'),
+      hl('List', ']'),
+    })
+
+    check_asgn_parsing('{a}{b}', {
+      --                012345
+      ast = {
+        {
+          'ComplexIdentifier:0:3:',
+          children = {
+            {
+              'CurlyBracesIdentifier(--i):0:0:{',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+              },
+            },
+            {
+              'CurlyBracesIdentifier(--i):0:3:{',
+              children = {
+                'PlainIdentifier(scope=0,ident=b):0:4:b',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('FigureBrace', '{'),
+      hl('IdentifierName', 'a'),
+      hl('Curly', '}'),
+      hl('Curly', '{'),
+      hl('IdentifierName', 'b'),
+      hl('Curly', '}'),
+    })
+
+    check_asgn_parsing('a.b{c}{d}', {
+      --                012345678
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            {
+              'ConcatOrSubscript:0:1:.',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:0:a',
+                'PlainKey(key=b):0:2:b',
+              },
+            },
+            {
+              'ComplexIdentifier:0:6:',
+              children = {
+                {
+                  'CurlyBracesIdentifier(--i):0:3:{',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=c):0:4:c',
+                  },
+                },
+                {
+                  'CurlyBracesIdentifier(--i):0:6:{',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=d):0:7:d',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '{c}{d}',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('ConcatOrSubscript', '.'),
+      hl('IdentifierKey', 'b'),
+      hl('InvalidFigureBrace', '{'),
+      hl('IdentifierName', 'c'),
+      hl('Curly', '}'),
+      hl('Curly', '{'),
+      hl('IdentifierName', 'd'),
+      hl('Curly', '}'),
+    })
+
+    check_asgn_parsing('[a] = 1', {
+      --                0123456
+      ast = {
+        {
+          'Assignment(Plain):0:3: =',
+          children = {
+            {
+              'ListLiteral:0:0:[',
+              children = {
+                'PlainIdentifier(scope=0,ident=a):0:1:a',
+              },
+            },
+            'Integer(val=1):0:5: 1',
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('IdentifierName', 'a'),
+      hl('List', ']'),
+      hl('PlainAssignment', '=', 1),
+      hl('Number', '1', 1),
+    })
+
+    check_asgn_parsing('[a[b], [c, [d, [e]]]] = 1', {
+      --                0123456789012345678901234
+      --                0         1         2
+      ast = {
+        {
+          'Assignment(Plain):0:21: =',
+          children = {
+            {
+              'ListLiteral:0:0:[',
+              children = {
+                {
+                  'Comma:0:5:,',
+                  children = {
+                    {
+                      'Subscript:0:2:[',
+                      children = {
+                        'PlainIdentifier(scope=0,ident=a):0:1:a',
+                        'PlainIdentifier(scope=0,ident=b):0:3:b',
+                      },
+                    },
+                    {
+                      'ListLiteral:0:6: [',
+                      children = {
+                        {
+                          'Comma:0:9:,',
+                          children = {
+                            'PlainIdentifier(scope=0,ident=c):0:8:c',
+                            {
+                              'ListLiteral:0:10: [',
+                              children = {
+                                {
+                                  'Comma:0:13:,',
+                                  children = {
+                                    'PlainIdentifier(scope=0,ident=d):0:12:d',
+                                    {
+                                      'ListLiteral:0:14: [',
+                                      children = {
+                                        'PlainIdentifier(scope=0,ident=e):0:16:e',
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            'Integer(val=1):0:23: 1',
+          },
+        },
+      },
+      err = {
+        arg = '[c, [d, [e]]]] = 1',
+        msg = 'E475: Nested lists not allowed when assigning: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('IdentifierName', 'b'),
+      hl('SubscriptBracket', ']'),
+      hl('Comma', ','),
+      hl('InvalidList', '[', 1),
+      hl('IdentifierName', 'c'),
+      hl('Comma', ','),
+      hl('InvalidList', '[', 1),
+      hl('IdentifierName', 'd'),
+      hl('Comma', ','),
+      hl('InvalidList', '[', 1),
+      hl('IdentifierName', 'e'),
+      hl('List', ']'),
+      hl('List', ']'),
+      hl('List', ']'),
+      hl('List', ']'),
+      hl('PlainAssignment', '=', 1),
+      hl('Number', '1', 1),
+    })
+
+    check_asgn_parsing('$X += 1', {
+      --                0123456
+      ast = {
+        {
+          'Assignment(Add):0:2: +=',
+          children = {
+            'Environment(ident=X):0:0:$X',
+            'Integer(val=1):0:5: 1',
+          },
+        },
+      },
+    }, {
+      hl('EnvironmentSigil', '$'),
+      hl('EnvironmentName', 'X'),
+      hl('AssignmentWithAddition', '+=', 1),
+      hl('Number', '1', 1),
+    })
+
+    check_asgn_parsing('@a .= 1', {
+      --                0123456
+      ast = {
+        {
+          'Assignment(Concat):0:2: .=',
+          children = {
+            'Register(name=a):0:0:@a',
+            'Integer(val=1):0:5: 1',
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('AssignmentWithConcatenation', '.=', 1),
+      hl('Number', '1', 1),
+    })
+
+    check_asgn_parsing('&option -= 1', {
+      --                012345678901
+      --                0         1
+      ast = {
+        {
+          'Assignment(Subtract):0:7: -=',
+          children = {
+            'Option(scope=0,ident=option):0:0:&option',
+            'Integer(val=1):0:10: 1',
+          },
+        },
+      },
+    }, {
+      hl('OptionSigil', '&'),
+      hl('OptionName', 'option'),
+      hl('AssignmentWithSubtraction', '-=', 1),
+      hl('Number', '1', 1),
+    })
+
+    check_asgn_parsing('[$X, @a, &l:option] = [1, 2, 3]', {
+      --                0123456789012345678901234567890
+      --                0         1         2         3
+      ast = {
+        {
+          'Assignment(Plain):0:19: =',
+          children = {
+            {
+              'ListLiteral:0:0:[',
+              children = {
+                {
+                  'Comma:0:3:,',
+                  children = {
+                    'Environment(ident=X):0:1:$X',
+                    {
+                      'Comma:0:7:,',
+                      children = {
+                        'Register(name=a):0:4: @a',
+                        'Option(scope=l,ident=option):0:8: &l:option',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              'ListLiteral:0:21: [',
+              children = {
+                {
+                  'Comma:0:24:,',
+                  children = {
+                    'Integer(val=1):0:23:1',
+                    {
+                      'Comma:0:27:,',
+                      children = {
+                        'Integer(val=2):0:25: 2',
+                        'Integer(val=3):0:28: 3',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('List', '['),
+      hl('EnvironmentSigil', '$'),
+      hl('EnvironmentName', 'X'),
+      hl('Comma', ','),
+      hl('Register', '@a', 1),
+      hl('Comma', ','),
+      hl('OptionSigil', '&', 1),
+      hl('OptionScope', 'l'),
+      hl('OptionScopeDelimiter', ':'),
+      hl('OptionName', 'option'),
+      hl('List', ']'),
+      hl('PlainAssignment', '=', 1),
+      hl('List', '[', 1),
+      hl('Number', '1'),
+      hl('Comma', ','),
+      hl('Number', '2', 1),
+      hl('Comma', ','),
+      hl('Number', '3', 1),
+      hl('List', ']'),
+    })
   end)
-  -- FIXME: Test assignments thoroughly
-  -- FIXME: Test that parsing assignments can be used for `:for` pre-`in` part.
   -- FIXME: Somehow make functional tests use the same code. Or, at least,
   --        create an automated script which will do the import.
 end)

@@ -2031,18 +2031,7 @@ viml_pexpr_parse_process_token:
         }
         break;
       }
-      case kEPTSingleAssignment: {
-        if (tok_type == kExprLexBracket && !cur_token.data.brc.closing) {
-          ERROR_FROM_TOKEN_AND_MSG(
-              cur_token,
-              _("E475: Nested lists not allowed when assigning: %.*s"));
-          kv_drop(pt_stack, 2);
-          assert(kv_size(pt_stack));
-          assert(kv_last(pt_stack) == kEPTExpr);
-          break;
-        }
-        FALLTHROUGH;
-      }
+      case kEPTSingleAssignment:
       case kEPTAssignment: {
         if (want_node == kENodeValue
             && tok_type != kExprLexBracket
@@ -2062,7 +2051,13 @@ viml_pexpr_parse_process_token:
                        || cur_token.data.brc.closing)
                    && tok_type != kExprLexDot
                    && (tok_type != kExprLexComma || !is_single_assignment)
-                   && tok_type != kExprLexAssignment) {
+                   && tok_type != kExprLexAssignment
+                   // Curly brace identifiers: will contain plain identifier or
+                   // another curly brace in position where operator is wanted.
+                   && !((tok_type == kExprLexPlainIdentifier
+                         || (tok_type == kExprLexFigureBrace
+                             && !cur_token.data.brc.closing))
+                        && prev_token.type != kExprLexSpacing)) {
           if (flags & kExprFlagsMulti && MAY_HAVE_NEXT_EXPR) {
             goto viml_pexpr_parse_end;
           }
@@ -2457,9 +2452,7 @@ viml_pexpr_parse_bracket_closing_error:
           if (kv_size(ast_stack) <= asgn_level) {
             assert(kv_size(ast_stack) == asgn_level);
             asgn_level = 0;
-            if (cur_pt == kEPTSingleAssignment) {
-              kv_drop(pt_stack, 1);
-            } else if (cur_pt == kEPTAssignment) {
+            if (cur_pt == kEPTAssignment) {
               assert(ast.err.msg);
             } else if (cur_pt == kEPTExpr
                        && kv_size(pt_stack) > 1
@@ -2467,10 +2460,12 @@ viml_pexpr_parse_bracket_closing_error:
               kv_drop(pt_stack, 1);
             }
           }
+          if (cur_pt == kEPTSingleAssignment && kv_size(ast_stack) == 1) {
+            kv_drop(pt_stack, 1);
+          }
         } else {
           if (want_node == kENodeValue) {
             // Value means list literal or list assignment.
-            HL_CUR_TOKEN(List);
             NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeListLiteral);
             *top_node_p = cur_node;
             kvi_push(ast_stack, &cur_node->children);
@@ -2479,7 +2474,12 @@ viml_pexpr_parse_bracket_closing_error:
               // Additional assignment parse type allows to easily forbid nested
               // lists.
               kvi_push(pt_stack, kEPTSingleAssignment);
+            } else if (cur_pt == kEPTSingleAssignment) {
+              ERROR_FROM_TOKEN_AND_MSG(
+                  cur_token,
+                  _("E475: Nested lists not allowed when assigning: %.*s"));
             }
+            HL_CUR_TOKEN(List);
           } else {
             // Operator means subscript, also in assignment. But in assignment
             // subscript may be pretty much any expression, so need to push
@@ -2491,7 +2491,8 @@ viml_pexpr_parse_bracket_closing_error:
             ADD_OP_NODE(cur_node);
             HL_CUR_TOKEN(SubscriptBracket);
             if (pt_is_assignment(cur_pt)) {
-              asgn_level = kv_size(ast_stack);
+              assert(want_node == kENodeValue);  // Subtract 1 for NULL at top.
+              asgn_level = kv_size(ast_stack) - 1;
               kvi_push(pt_stack, kEPTExpr);
             }
           }
@@ -2653,7 +2654,8 @@ viml_pexpr_parse_figure_brace_closing_error:
           }
           if (pt_is_assignment(cur_pt)
               && !pt_is_assignment(kv_last(pt_stack))) {
-            asgn_level = kv_size(ast_stack);
+            assert(want_node == kENodeValue);  // Subtract 1 for NULL at top.
+            asgn_level = kv_size(ast_stack) - 1;
           }
         }
         break;

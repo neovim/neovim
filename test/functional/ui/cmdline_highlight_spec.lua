@@ -901,4 +901,5 @@ describe('Expressions coloring support', function()
   -- FIXME: Test expr coloring when using -u NORC and -u NONE.
   -- FIXME: Test different ways of triggering expression highlighting (:<C-r>=,
   --        i<C-r>=, :<C-\>e, "=).
+  -- FIXME: Test with various invalid unicode and multibyte characters.
 end)
