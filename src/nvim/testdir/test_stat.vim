@@ -1,24 +1,24 @@
 " Tests for stat functions and checktime
 
 func Test_existent_file()
-  let fname='Xtest.tmp'
+  let fname = 'Xtest.tmp'
 
-  let ts=localtime()
-  sleep 1
-  let fl=['Hello World!']
+  let ts = localtime()
+  let fl = ['Hello World!']
   call writefile(fl, fname)
-  let tf=getftime(fname)
-  sleep 1
-  let te=localtime()
+  let tf = getftime(fname)
+  let te = localtime()
 
   call assert_true(ts <= tf && tf <= te)
   call assert_equal(strlen(fl[0] . "\n"), getfsize(fname))
   call assert_equal('file', getftype(fname))
   call assert_equal('rw-', getfperm(fname)[0:2])
+
+  call delete(fname)
 endfunc
 
 func Test_existent_directory()
-  let dname='.'
+  let dname = '.'
 
   call assert_equal(0, getfsize(dname))
   call assert_equal('dir', getftype(dname))
@@ -26,22 +26,29 @@ func Test_existent_directory()
 endfunc
 
 func Test_checktime()
-  let fname='Xtest.tmp'
+  let fname = 'Xtest.tmp'
 
-  let fl=['Hello World!']
+  let fl = ['Hello World!']
   call writefile(fl, fname)
   set autoread
   exec 'e' fname
-  sleep 2
-  let fl=readfile(fname)
+  " FAT has a granularity of 2 seconds, otherwise it's usually 1 second
+  if has('win32')
+    sleep 2
+  else
+    sleep 1
+  endif
+  let fl = readfile(fname)
   let fl[0] .= ' - checktime'
   call writefile(fl, fname)
   checktime
   call assert_equal(fl[0], getline(1))
+
+  call delete(fname)
 endfunc
 
 func Test_nonexistent_file()
-  let fname='Xtest.tmp'
+  let fname = 'Xtest.tmp'
 
   call delete(fname)
   call assert_equal(-1, getftime(fname))
@@ -55,7 +62,7 @@ func Test_win32_symlink_dir()
   " So we use an existing symlink for this test.
   if has('win32')
     " Check if 'C:\Users\All Users' is a symlink to a directory.
-    let res=system('dir C:\Users /a')
+    let res = system('dir C:\Users /a')
     if match(res, '\C<SYMLINKD> *All Users') >= 0
       " Get the filetype of the symlink.
       call assert_equal('dir', getftype('C:\Users\All Users'))
