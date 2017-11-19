@@ -56,6 +56,12 @@ local function test_vim_str2nr(s, what, exp, maxlen)
   end
 end
 
+local _itp = itp
+itp = function(...)
+  collectgarbage('restart')
+  _itp(...)
+end
+
 describe('vim_str2nr()', function()
   itp('works fine when it has nothing to do', function()
     test_vim_str2nr('', 0, {len = 0, num = 0, unum = 0, pre = 0}, 0)
