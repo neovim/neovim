@@ -644,13 +644,15 @@ local function itp_child(wr, func)
     s = s:sub(1, hook_msglen - 2)
     sc.write(wr, '>' .. s .. (' '):rep(hook_msglen - 2 - #s) .. '\n')
   end
-  init()
-  collectgarbage('stop')
-  child_sethook(wr)
-  local err, emsg = pcall(func)
-  collectgarbage('restart')
-  collectgarbage()
-  debug.sethook()
+  local err, emsg = pcall(init)
+  if err then
+    collectgarbage('stop')
+    child_sethook(wr)
+    err, emsg = pcall(func)
+    collectgarbage('restart')
+    collectgarbage()
+    debug.sethook()
+  end
   emsg = tostring(emsg)
   sc.write(wr, trace_end_msg)
   if not err then
