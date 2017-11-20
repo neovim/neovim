@@ -4009,10 +4009,10 @@ get_syn_options (
 {
   char_u      *gname_start, *gname;
   int syn_id;
-  int len;
+  int len = 0;
   char        *p;
   int fidx;
-  static struct flag {
+  static const struct flag {
     char    *name;
     int argtype;
     int flags;
@@ -4035,7 +4035,7 @@ get_syn_options (
                   {"cCoOnNtTaAiInNsS",        1,      0},
                   {"cCoOnNtTaAiInNeEdDiInN",  2,      0},
                   {"nNeExXtTgGrRoOuUpP",      3,      0},};
-  static char *first_letters = "cCoOkKeEtTsSgGdDfFnN";
+  static const char *const first_letters = "cCoOkKeEtTsSgGdDfFnN";
 
   if (arg == NULL)              /* already detected error */
     return NULL;
@@ -4055,9 +4055,10 @@ get_syn_options (
     for (fidx = ARRAY_SIZE(flagtab); --fidx >= 0; ) {
       p = flagtab[fidx].name;
       int i;
-      for (i = 0, len = 0; p[i] != NUL; i += 2, ++len)
+      for (i = 0, len = 0; p[i] != NUL; i += 2, ++len) {
         if (arg[len] != p[i] && arg[len] != p[i + 1])
           break;
+      }
       if (p[i] == NUL && (ascii_iswhite(arg[len])
                           || (flagtab[fidx].argtype > 0
                               ? arg[len] == '='
