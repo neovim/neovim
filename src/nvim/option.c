@@ -2381,11 +2381,11 @@ static char *set_string_option(const int opt_idx, const char *const value,
 
   char *const s = xstrdup(value);
   char **const varp = (char **)get_varp_scope(
-      &(options[opt_idx]),
-      ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
+      &options[opt_idx],
+      (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
        ? (((int)options[opt_idx].indir & PV_BOTH)
           ? OPT_GLOBAL : OPT_LOCAL)
-       : opt_flags));
+       : opt_flags);
   char *const oldval = *varp;
   *varp = s;
 
