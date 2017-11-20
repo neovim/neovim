@@ -5292,7 +5292,6 @@ static void do_helptags(char_u *dirname, bool add_help_tags)
   if (!add_pathsep((char *)NameBuff)
       || STRLCAT(NameBuff, "**", sizeof(NameBuff)) >= MAXPATHL) {
     EMSG(_(e_fnametoolong));
-    xfree(dirname);
     return;
   }
 
@@ -5303,7 +5302,6 @@ static void do_helptags(char_u *dirname, bool add_help_tags)
                            EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {
     EMSG2(_("E151: No match: %s"), NameBuff);
-    xfree(dirname);
     return;
   }
 
