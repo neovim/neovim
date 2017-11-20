@@ -4009,7 +4009,7 @@ get_syn_options (
 {
   char_u      *gname_start, *gname;
   int syn_id;
-  int len;
+  int len = 0;
   char        *p;
   int fidx;
   static const struct flag {
@@ -4052,7 +4052,6 @@ get_syn_options (
     if (strchr(first_letters, *arg) == NULL)
       break;
 
-    len = 0;
     for (fidx = ARRAY_SIZE(flagtab); --fidx >= 0; ) {
       p = flagtab[fidx].name;
       int i;
