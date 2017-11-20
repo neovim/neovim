@@ -18,9 +18,7 @@ let b:undo_ftplugin = "setl com< cms< fo<"
 
 setlocal comments=:# commentstring=#\ %s formatoptions-=t formatoptions+=croql
 
-let b:match_words =
-      \   &matchpairs
-      \ . ',\<if\>:\<elif\>:\<else\>:\<fi\>'
+let b:match_words = ',\<if\>:\<elif\>:\<else\>:\<fi\>'
       \ . ',\<case\>:^\s*([^)]*):\<esac\>'
       \ . ',\<\%(select\|while\|until\|repeat\|for\%(each\)\=\)\>:\<done\>'
 let b:match_skip = 's:comment\|string\|heredoc\|subst'
