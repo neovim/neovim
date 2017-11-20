@@ -391,48 +391,10 @@ function! man#highlight_backspaced_text() abort
   let l:modifiable = &modifiable
   set modifiable
 
-  let l:lines = getline(1, line('$'))
-  call map(l:lines, function('s:highlight_backspaced_line'))
-  call setline(1, l:lines)
+  lua man = require("man")
+  luado return man.highlight_backspaced(line, linenr)
 
   let &modifiable = l:modifiable
-endfunction
-
-" This pattern is for "overstruck" text containing backspaces. It matches bold
-" text first, so a word beginning with "_^H_" is bold and text such as
-" "_^Hf_^Ho_^Ho_^H__^Hb_^Ha_^Hr" is entirely underlined.
-"
-" Bolded text can also be mixed with whitespace as a performance tweak, since
-" it's visually identical.
-let s:backspace_pattern = '\v%((.)\b\1\s*)+|%(_\b.)+'
-
-function! s:highlight_backspaced_line(index, val) abort
-  let l:line = a:val
-  let l:search_pos = 0
-
-  while 1
-    " Scanning for the next backspace without matching the entire pattern is
-    " slightly faster
-    let l:match_start = stridx(l:line, "\b", l:search_pos)
-    if l:match_start == -1
-      break
-    endif
-
-    let l:match = matchstrpos(l:line, s:backspace_pattern, l:match_start - 1)
-    if l:match[0] =~# '^_\b[^_]'
-      let l:hlgroup = 'manUnderline'
-    else
-      let l:hlgroup = 'manBold'
-    endif
-
-    let l:stripped = substitute(l:match[0], '.\b', '', 'g')
-    let l:search_pos = l:match[1] + len(l:stripped)
-    let l:line = strpart(l:line, 0, l:match[1]) . l:stripped . strpart(l:line, l:match[2])
-
-    call nvim_buf_add_highlight(0, -1, l:hlgroup, a:index, l:match[1], l:search_pos)
-  endwhile
-
-  return l:line
 endfunction
 
 call s:init()
