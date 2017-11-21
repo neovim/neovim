@@ -993,11 +993,11 @@ return {
       expand=true,
       varname='p_gp',
       defaults={
-        condition='UNIX',
+        condition='WIN32',
         -- Add an extra file name so that grep will always
         -- insert a file name in the match line. */
-        if_true={vi="grep -n $* /dev/null"},
-        if_false={vi="grep -n "},
+        if_true={vi="findstr /n $* nul"},
+        if_false={vi="grep -n $* /dev/null"}
       }
     },
     {
