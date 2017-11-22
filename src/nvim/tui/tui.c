@@ -1644,7 +1644,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
 {
   uv_write_t req;
   uv_buf_t bufs[3];
-  uv_buf_t *bufp = bufs;
+  uv_buf_t *bufp = &bufs[0];
   TUIData *data = ui->data;
 
   if (data->bufpos <= 0 && data->busy == data->is_invisible) {

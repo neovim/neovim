@@ -2206,10 +2206,6 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
       if (len == -1) {
         // "[key]": get key from "var1"
         key = (char_u *)tv_get_string(&var1);  // is number or string
-        if (key == NULL) {
-          tv_clear(&var1);
-          return NULL;
-        }
       }
       lp->ll_list = NULL;
       lp->ll_dict = lp->ll_tv->vval.v_dict;
@@ -5706,10 +5702,6 @@ static int get_function_args(char_u **argp, char_u endchar, garray_T *newargs,
         c = *p;
         *p = NUL;
         arg = vim_strsave(arg);
-        if (arg == NULL) {
-          *p = c;
-          goto err_ret;
-        }
 
         // Check for duplicate argument name.
         for (i = 0; i < newargs->ga_len; i++) {
@@ -5833,10 +5825,6 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
 
     fp = (ufunc_T *)xcalloc(1, sizeof(ufunc_T) + STRLEN(name));
     pt = (partial_T *)xcalloc(1, sizeof(partial_T));
-    if (pt == NULL) {
-      xfree(fp);
-      goto errret;
-    }
 
     ga_init(&newlines, (int)sizeof(char_u *), 1);
     ga_grow(&newlines, 1);
@@ -6222,13 +6210,9 @@ static char_u *fname_trans_sid(const char_u *const name,
       fname = fname_buf;
     } else {
       fname = xmalloc(i + STRLEN(name + llen) + 1);
-      if (fname == NULL) {
-        *error = ERROR_OTHER;
-      } else {
-        *tofree = fname;
-        memmove(fname, fname_buf, (size_t)i);
-        STRCPY(fname + i, name + llen);
-      }
+      *tofree = fname;
+      memmove(fname, fname_buf, (size_t)i);
+      STRCPY(fname + i, name + llen);
     }
   } else {
     fname = (char_u *)name;
@@ -6309,9 +6293,6 @@ call_func(
   // Make a copy of the name, if it comes from a funcref variable it could
   // be changed or deleted in the called function.
   name = vim_strnsave(funcname, len);
-  if (name == NULL) {
-    return ret;
-  }
 
   fname = fname_trans_sid(name, fname_buf, &tofree, &error);
 
@@ -7184,8 +7165,7 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       && argvars[1].v_type != VAR_UNKNOWN
       && tv_get_number_chk(&argvars[1], &error) != 0
       && !error
-      && (name = tv_get_string_chk(&argvars[0])) != NULL
-      && !error) {
+      && (name = tv_get_string_chk(&argvars[0])) != NULL) {
     buf = buflist_new((char_u *)name, NULL, 1, 0);
   }
 
@@ -7733,7 +7713,7 @@ static void f_delete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   const char *const name = tv_get_string(&argvars[0]);
-  if (name == NULL || *name == NUL) {
+  if (*name == NUL) {
     EMSG(_(e_invarg));
     return;
   }
@@ -8748,10 +8728,9 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   foldstart = (linenr_T)get_vim_var_nr(VV_FOLDSTART);
   foldend = (linenr_T)get_vim_var_nr(VV_FOLDEND);
   dashes = get_vim_var_str(VV_FOLDDASHES);
-  if (foldstart > 0 && foldend <= curbuf->b_ml.ml_line_count
-      && dashes != NULL) {
-    /* Find first non-empty line in the fold. */
-    for (lnum = foldstart; lnum < foldend; ++lnum) {
+  if (foldstart > 0 && foldend <= curbuf->b_ml.ml_line_count) {
+    // Find first non-empty line in the fold.
+    for (lnum = foldstart; lnum < foldend; lnum++) {
       if (!linewhite(lnum)) {
         break;
       }
@@ -8874,10 +8853,8 @@ static void common_function(typval_T *argvars, typval_T *rettv,
       snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
                (int64_t)current_SID);
       name = xmalloc(STRLEN(sid_buf) + STRLEN(s + off) + 1);
-      if (name != NULL) {
-        STRCPY(name, sid_buf);
-        STRCAT(name, s + off);
-      }
+      STRCPY(name, sid_buf);
+      STRCAT(name, s + off);
     } else {
       name = vim_strsave(s);
     }
@@ -8927,11 +8904,6 @@ static void common_function(typval_T *argvars, typval_T *rettv,
 
         pt->pt_argc = arg_len + lv_len;
         pt->pt_argv = xmalloc(sizeof(pt->pt_argv[0]) * pt->pt_argc);
-        if (pt->pt_argv == NULL) {
-          xfree(pt);
-          xfree(name);
-          goto theend;
-        }
         int i = 0;
         for (; i < arg_len; i++) {
           tv_copy(&arg_pt->pt_argv[i], &pt->pt_argv[i]);
@@ -9197,9 +9169,7 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     dict_T *const d = get_buffer_info(buf);
-    if (d != NULL) {
-      tv_list_append_dict(rettv->vval.v_list, d);
-    }
+    tv_list_append_dict(rettv->vval.v_list, d);
     if (argbuf != NULL) {
       return;
     }
@@ -9568,13 +9538,11 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 theend:
   pat = addstar(xpc.xp_pattern, xpc.xp_pattern_len, xpc.xp_context);
   tv_list_alloc_ret(rettv);
-  if (pat != NULL) {
-    ExpandOne(&xpc, pat, NULL, options, WILD_ALL_KEEP);
+  ExpandOne(&xpc, pat, NULL, options, WILD_ALL_KEEP);
 
-    for (int i = 0; i < xpc.xp_numfiles; i++) {
-      tv_list_append_string(rettv->vval.v_list, (const char *)xpc.xp_files[i],
-                            -1);
-    }
+  for (int i = 0; i < xpc.xp_numfiles; i++) {
+    tv_list_append_string(rettv->vval.v_list, (const char *)xpc.xp_files[i],
+                          -1);
   }
   xfree(pat);
   ExpandCleanup(&xpc);
@@ -10136,9 +10104,7 @@ static void f_gettabinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       continue;
     }
     dict_T *const d = get_tabpage_info(tp, tpnr);
-    if (d != NULL) {
-      tv_list_append_dict(rettv->vval.v_list, d);
-    }
+    tv_list_append_dict(rettv->vval.v_list, d);
     if (tparg != NULL) {
       return;
     }
@@ -10240,9 +10206,7 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
       winnr++;
       dict_T *const d = get_win_info(wp, tabnr, winnr);
-      if (d != NULL) {
-        tv_list_append_dict(rettv->vval.v_list, d);
-      }
+      tv_list_append_dict(rettv->vval.v_list, d);
       if (wparg != NULL) {
         // found information about a specific window
         return;
@@ -14803,9 +14767,6 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (di == NULL) {
         if (s == NULL) {
           s = tv_list_alloc();
-          if (s == NULL) {
-            return;
-          }
         }
 
         // match from matchaddpos()
@@ -18628,47 +18589,39 @@ void set_selfdict(typval_T *rettv, dict_T *selfdict)
   // Turn "dict.Func" into a partial for "Func" with "dict".
   if (fp != NULL && (fp->uf_flags & FC_DICT)) {
     partial_T *pt = (partial_T *)xcalloc(1, sizeof(partial_T));
+    pt->pt_refcount = 1;
+    pt->pt_dict = selfdict;
+    (selfdict->dv_refcount)++;
+    pt->pt_auto = true;
+    if (rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING) {
+      // Just a function: Take over the function name and use selfdict.
+      pt->pt_name = rettv->vval.v_string;
+    } else {
+      partial_T *ret_pt = rettv->vval.v_partial;
+      int i;
 
-    if (pt != NULL) {
-      pt->pt_refcount = 1;
-      pt->pt_dict = selfdict;
-      (selfdict->dv_refcount)++;
-      pt->pt_auto = true;
-      if (rettv->v_type == VAR_FUNC || rettv->v_type == VAR_STRING) {
-        // Just a function: Take over the function name and use selfdict.
-        pt->pt_name = rettv->vval.v_string;
+      // Partial: copy the function name, use selfdict and copy
+      // args. Can't take over name or args, the partial might
+      // be referenced elsewhere.
+      if (ret_pt->pt_name != NULL) {
+        pt->pt_name = vim_strsave(ret_pt->pt_name);
+        func_ref(pt->pt_name);
       } else {
-        partial_T *ret_pt = rettv->vval.v_partial;
-        int i;
-
-        // Partial: copy the function name, use selfdict and copy
-        // args. Can't take over name or args, the partial might
-        // be referenced elsewhere.
-        if (ret_pt->pt_name != NULL) {
-          pt->pt_name = vim_strsave(ret_pt->pt_name);
-          func_ref(pt->pt_name);
-        } else {
-          pt->pt_func = ret_pt->pt_func;
-          func_ptr_ref(pt->pt_func);
-        }
-        if (ret_pt->pt_argc > 0) {
-          size_t arg_size = sizeof(typval_T) * ret_pt->pt_argc;
-          pt->pt_argv = (typval_T *)xmalloc(arg_size);
-          if (pt->pt_argv == NULL) {
-            // out of memory: drop the arguments
-            pt->pt_argc = 0;
-          } else {
-            pt->pt_argc = ret_pt->pt_argc;
-            for (i = 0; i < pt->pt_argc; i++) {
-              tv_copy(&ret_pt->pt_argv[i], &pt->pt_argv[i]);
-            }
-          }
-        }
-        partial_unref(ret_pt);
+        pt->pt_func = ret_pt->pt_func;
+        func_ptr_ref(pt->pt_func);
       }
-      rettv->v_type = VAR_PARTIAL;
-      rettv->vval.v_partial = pt;
+      if (ret_pt->pt_argc > 0) {
+        size_t arg_size = sizeof(typval_T) * ret_pt->pt_argc;
+        pt->pt_argv = (typval_T *)xmalloc(arg_size);
+        pt->pt_argc = ret_pt->pt_argc;
+        for (i = 0; i < pt->pt_argc; i++) {
+          tv_copy(&ret_pt->pt_argv[i], &pt->pt_argv[i]);
+        }
+      }
+      partial_unref(ret_pt);
     }
+    rettv->v_type = VAR_PARTIAL;
+    rettv->vval.v_partial = pt;
   }
 }
 
