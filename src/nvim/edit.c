@@ -1,9 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * edit.c: functions for Insert mode
- */
+// edit.c: functions for Insert mode
 
 #include <assert.h>
 #include <string.h>
@@ -59,9 +57,9 @@
 #include "nvim/os/input.h"
 #include "nvim/os/time.h"
 
-/*
- * definitions used for CTRL-X submode
- */
+
+// definitions used for CTRL-X submode
+
 #define CTRL_X_WANT_IDENT       0x100
 
 #define CTRL_X_NOT_DEFINED_YET  1
@@ -78,7 +76,7 @@
 #define CTRL_X_FUNCTION         12
 #define CTRL_X_OMNI             13
 #define CTRL_X_SPELL            14
-#define CTRL_X_LOCAL_MSG        15      /* only used in "ctrl_x_msgs" */
+#define CTRL_X_LOCAL_MSG        15      // only used in "ctrl_x_msgs"
 #define CTRL_X_EVAL             16  ///< for builtin function complete()
 
 #define CTRL_X_MSG(i) ctrl_x_msgs[(i) & ~CTRL_X_WANT_IDENT]
@@ -86,7 +84,7 @@
 
 static char *ctrl_x_msgs[] =
 {
-  N_(" Keyword completion (^N^P)"),   /* ctrl_x_mode == 0, ^P/^N compl. */
+  N_(" Keyword completion (^N^P)"),   // ctrl_x_mode == 0, ^P/^N compl.
   N_(" ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"),
   NULL,
   N_(" Whole line completion (^L^N^P)"),
@@ -109,75 +107,75 @@ static char e_hitend[] = N_("Hit end of paragraph");
 static char e_complwin[] = N_("E839: Completion function changed window");
 static char e_compldel[] = N_("E840: Completion function deleted text");
 
-/*
- * Structure used to store one match for insert completion.
- */
+
+// Structure used to store one match for insert completion.
+
 typedef struct compl_S compl_T;
 struct compl_S {
   compl_T     *cp_next;
   compl_T     *cp_prev;
-  char_u      *cp_str;          /* matched text */
-  char cp_icase;                /* TRUE or FALSE: ignore case */
-  char_u      *(cp_text[CPT_COUNT]);    /* text for the menu */
-  char_u      *cp_fname;        /* file containing the match, allocated when
-                                 * cp_flags has FREE_FNAME */
-  int cp_flags;                 /* ORIGINAL_TEXT, CONT_S_IPOS or FREE_FNAME */
-  int cp_number;                /* sequence number */
+  char_u      *cp_str;          // matched text
+  char cp_icase;                // TRUE or FALSE: ignore case 
+  char_u      *(cp_text[CPT_COUNT]);    // text for the menu 
+  char_u      *cp_fname;        // file containing the match, allocated when
+                                // cp_flags has FREE_FNAME 
+  int cp_flags;                 // ORIGINAL_TEXT, CONT_S_IPOS or FREE_FNAME
+  int cp_number;                // sequence number
 };
 
-#define ORIGINAL_TEXT   (1)   /* the original text when the expansion begun */
+#define ORIGINAL_TEXT   (1)   // the original text when the expansion begun
 #define FREE_FNAME      (2)
 
-/*
- * All the current matches are stored in a list.
- * "compl_first_match" points to the start of the list.
- * "compl_curr_match" points to the currently selected entry.
- * "compl_shown_match" is different from compl_curr_match during
- * ins_compl_get_exp().
- */
+
+// All the current matches are stored in a list.
+// "compl_first_match" points to the start of the list.
+// "compl_curr_match" points to the currently selected entry.
+// "compl_shown_match" is different from compl_curr_match during
+// ins_compl_get_exp().
+ 
 static compl_T    *compl_first_match = NULL;
 static compl_T    *compl_curr_match = NULL;
 static compl_T    *compl_shown_match = NULL;
 
-/* After using a cursor key <Enter> selects a match in the popup menu,
- * otherwise it inserts a line break. */
+// After using a cursor key <Enter> selects a match in the popup menu,
+// otherwise it inserts a line break. */
 static int compl_enter_selects = FALSE;
 
-/* When "compl_leader" is not NULL only matches that start with this string
- * are used. */
+// When "compl_leader" is not NULL only matches that start with this string
+// are used.
 static char_u     *compl_leader = NULL;
 
-static int compl_get_longest = FALSE;           /* put longest common string
-                                                   in compl_leader */
+static int compl_get_longest = FALSE;           // put longest common string
+                                                // in compl_leader
 
-static int compl_no_insert = FALSE;             /* FALSE: select & insert
-                                                   TRUE: noinsert */
-static int compl_no_select = FALSE;             /* FALSE: select & insert
-                                                   TRUE: noselect */
+static int compl_no_insert = FALSE;             // FALSE: select & insert
+                                                // TRUE: noinsert 
+static int compl_no_select = FALSE;             // FALSE: select & insert
+                                                // TRUE: noselect 
 
-static int compl_used_match;            /* Selected one of the matches.  When
-                                           FALSE the match was edited or using
-                                           the longest common string. */
+static int compl_used_match;            // Selected one of the matches.  When
+                                        // FALSE the match was edited or using
+                                        // the longest common string. 
 
-static int compl_was_interrupted = FALSE;         /* didn't finish finding
-                                                     completions. */
+static int compl_was_interrupted = FALSE;         // didn't finish finding
+                                                  // completions. 
 
-static int compl_restarting = FALSE;            /* don't insert match */
+static int compl_restarting = FALSE;            // don't insert match 
 
-/* When the first completion is done "compl_started" is set.  When it's
- * FALSE the word to be completed must be located. */
+// When the first completion is done "compl_started" is set.  When it's
+// FALSE the word to be completed must be located. 
 static int compl_started = FALSE;
 
 static int compl_matches = 0;
 static char_u     *compl_pattern = NULL;
 static int compl_direction = FORWARD;
 static int compl_shows_dir = FORWARD;
-static int compl_pending = 0;               /* > 1 for postponed CTRL-N */
+static int compl_pending = 0;               // > 1 for postponed CTRL-N 
 static pos_T compl_startpos;
-static colnr_T compl_col = 0;               /* column where the text starts
-                                             * that is being completed */
-static char_u     *compl_orig_text = NULL;  /* text as it was before
-                                             * completion started */
+static colnr_T compl_col = 0;               // column where the text starts
+                                            // that is being completed
+static char_u     *compl_orig_text = NULL;  // text as it was before
+                                            // completion started
 static int compl_cont_mode = 0;
 static expand_T compl_xp;
 
@@ -214,33 +212,33 @@ typedef struct insert_state {
 #define BACKSPACE_WORD_NOT_SPACE    3
 #define BACKSPACE_LINE              4
 
-static size_t spell_bad_len = 0;   /* length of located bad word */
+static size_t spell_bad_len = 0;   // length of located bad word 
 
-static colnr_T Insstart_textlen;        /* length of line when insert started */
-static colnr_T Insstart_blank_vcol;     /* vcol for first inserted blank */
-static bool update_Insstart_orig = true; /* set Insstart_orig to Insstart */
+static colnr_T Insstart_textlen;        // length of line when insert started 
+static colnr_T Insstart_blank_vcol;     // vcol for first inserted blank 
+static bool update_Insstart_orig = true; // set Insstart_orig to Insstart
 
-static char_u   *last_insert = NULL;    /* the text of the previous insert,
-                                           K_SPECIAL and CSI are escaped */
-static int last_insert_skip;      /* nr of chars in front of previous insert */
-static int new_insert_skip;       /* nr of chars in front of current insert */
-static int did_restart_edit;            /* "restart_edit" when calling edit() */
+static char_u   *last_insert = NULL;    // the text of the previous insert,
+                                        // K_SPECIAL and CSI are escaped 
+static int last_insert_skip;      // nr of chars in front of previous insert
+static int new_insert_skip;       // nr of chars in front of current insert 
+static int did_restart_edit;            // "restart_edit" when calling edit() 
 
-static int can_cindent;                 /* may do cindenting on this line */
+static int can_cindent;                 // may do cindenting on this line
 
-static int old_indent = 0;              /* for ^^D command in insert mode */
+static int old_indent = 0;              // for ^^D command in insert mode
 
-static int revins_on;                   /* reverse insert mode on */
-static int revins_chars;                /* how much to skip after edit */
-static int revins_legal;                /* was the last char 'legal'? */
-static int revins_scol;                 /* start column of revins session */
+static int revins_on;                   // reverse insert mode on 
+static int revins_chars;                // how much to skip after edit
+static int revins_legal;                // was the last char 'legal'? 
+static int revins_scol;                 // start column of revins session 
 
-static int ins_need_undo;               /* call u_save() before inserting a
-                                           char.  Set when edit() is called.
-                                           after that arrow_used is used. */
+static int ins_need_undo;               // call u_save() before inserting a
+                                        // char.  Set when edit() is called.
+                                        // after that arrow_used is used. 
 
-static int did_add_space = FALSE;       /* auto_format() added an extra space
-                                           under the cursor */
+static int did_add_space = FALSE;       // auto_format() added an extra space
+                                        //   under the cursor 
 static int dont_sync_undo = false;      // CTRL-G U prevents syncing undo
                                         // for the next left/right cursor
 
@@ -439,8 +437,8 @@ static void insert_enter(InsertState *s)
     change_warning(s->i == 0 ? 0 : s->i + 1);
   }
 
-  ui_cursor_shape();            /* may show different cursor shape */
-  do_digraph(-1);               /* clear digraphs */
+  ui_cursor_shape();            // may show different cursor shape 
+  do_digraph(-1);               // clear digraphs
 
   // Get the current length of the redo buffer, those characters have to be
   // skipped if we want to get to the inserted characters.
@@ -1328,16 +1326,16 @@ bool edit(int cmdchar, bool startln, long count)
   return s->c == Ctrl_O;
 }
 
-/*
- * Redraw for Insert mode.
- * This is postponed until getting the next character to make '$' in the 'cpo'
- * option work correctly.
- * Only redraw when there are no characters available.  This speeds up
- * inserting sequences of characters (e.g., for CTRL-R).
- */
+
+// Redraw for Insert mode.
+// This is postponed until getting the next character to make '$' in the 'cpo'
+// option work correctly.
+// Only redraw when there are no characters available.  This speeds up
+// inserting sequences of characters (e.g., for CTRL-R).
+
 static void
 ins_redraw (
-    int ready                   /* not busy with something */
+    int ready                   // not busy with something
 )
 {
   linenr_T conceal_old_cursor_line = 0;
@@ -1387,7 +1385,7 @@ ins_redraw (
   if (must_redraw)
     update_screen(0);
   else if (clear_cmdline || redraw_cmdline)
-    showmode();                 /* clear cmdline and show mode */
+    showmode();                 // clear cmdline and show mode
   if ((conceal_update_lines
        && (conceal_old_cursor_line != conceal_new_cursor_line
            || conceal_cursor_line(curwin)))
@@ -1400,18 +1398,18 @@ ins_redraw (
   }
   showruler(FALSE);
   setcursor();
-  emsg_on_display = FALSE;      /* may remove error message now */
+  emsg_on_display = FALSE;      // may remove error message now
 }
 
-/*
- * Handle a CTRL-V or CTRL-Q typed in Insert mode.
- */
+
+// Handle a CTRL-V or CTRL-Q typed in Insert mode.
+
 static void ins_ctrl_v(void)
 {
   int c;
   int did_putchar = FALSE;
 
-  /* may need to redraw when no more chars available now */
+  // may need to redraw when no more chars available now 
   ins_redraw(FALSE);
 
   if (redrawing() && !char_avail()) {
@@ -1433,16 +1431,16 @@ static void ins_ctrl_v(void)
   revins_legal++;
 }
 
-/*
- * Put a character directly onto the screen.  It's not stored in a buffer.
- * Used while handling CTRL-K, CTRL-V, etc. in Insert mode.
- */
+
+// Put a character directly onto the screen.  It's not stored in a buffer.
+// Used while handling CTRL-K, CTRL-V, etc. in Insert mode.
+
 static int pc_status;
-#define PC_STATUS_UNSET 0       /* pc_bytes was not set */
-#define PC_STATUS_RIGHT 1       /* right halve of double-wide char */
-#define PC_STATUS_LEFT  2       /* left halve of double-wide char */
-#define PC_STATUS_SET   3       /* pc_bytes was filled */
-static char_u pc_bytes[MB_MAXBYTES + 1]; /* saved bytes */
+#define PC_STATUS_UNSET 0       // pc_bytes was not set
+#define PC_STATUS_RIGHT 1       // right halve of double-wide char
+#define PC_STATUS_LEFT  2       // left halve of double-wide char
+#define PC_STATUS_SET   3       // pc_bytes was filled
+static char_u pc_bytes[MB_MAXBYTES + 1]; // saved bytes 
 static int pc_attr;
 static int pc_row;
 static int pc_col;
