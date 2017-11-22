@@ -78,6 +78,7 @@ static char *features[] = {
 
 // clang-format off
 static const int included_patches[] = {
+  1206,
   // 1026,
   1025,
   1024,
