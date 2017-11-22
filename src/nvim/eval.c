@@ -18732,7 +18732,7 @@ static dictitem_T *find_var_in_ht(hashtab_T *const ht,
       case 'l': return (current_funccal == NULL
                         ? NULL : (dictitem_T *)&current_funccal->l_vars_var);
       case 'a': return (current_funccal == NULL
-                        ? NULL : (dictitem_T *)&current_funccal->l_avars_var);
+                        ? NULL : (dictitem_T *)&get_funccal()->l_avars_var);
     }
     return NULL;
   }

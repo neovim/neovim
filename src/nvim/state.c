@@ -14,6 +14,8 @@
 #include "nvim/option_defs.h"
 #include "nvim/ui.h"
 #include "nvim/os/input.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/edit.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "state.c.generated.h"
@@ -127,19 +129,25 @@ char *get_mode(void)
     if (State & VREPLACE_FLAG) {
       buf[0] = 'R';
       buf[1] = 'v';
-    } else if (State & REPLACE_FLAG) {
-      buf[0] = 'R';
     } else {
-      buf[0] = 'i';
+      if (State & REPLACE_FLAG) {
+        buf[0] = 'R';
+      } else {
+        buf[0] = 'i';
+      }
+      if (ins_compl_active()) {
+        buf[1] = 'c';
+      } else if (ctrl_x_mode == 1) {
+        buf[1] = 'x';
+      }
     }
-  } else if (State & CMDLINE) {
+  } else if ((State & CMDLINE) || exmode_active) {
     buf[0] = 'c';
-    if (exmode_active) {
+    if (exmode_active == EXMODE_VIM) {
       buf[1] = 'v';
+    } else if (exmode_active == EXMODE_NORMAL) {
+      buf[1] = 'e';
     }
-  } else if (exmode_active) {
-    buf[0] = 'c';
-    buf[1] = 'e';
   } else if (State & TERM_FOCUS) {
     buf[0] = 't';
   } else {
