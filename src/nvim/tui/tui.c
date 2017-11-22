@@ -61,20 +61,6 @@
 #define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
 #endif
 
-// Per the commentary in terminfo, only a minus sign is a true suffix
-// separator.
-bool terminfo_is_term_family(const char *term, const char *family)
-{
-  if (!term) {
-    return false;
-  }
-  size_t tlen = strlen(term);
-  size_t flen = strlen(family);
-  return tlen >= flen
-    && 0 == memcmp(term, family, flen) \
-    && ('\0' == term[flen] || '-' == term[flen]);
-}
-
 typedef struct {
   int top, bot, left, right;
 } Rect;
