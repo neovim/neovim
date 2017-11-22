@@ -36,7 +36,7 @@ func Test_checktime()
   if has('win32')
     sleep 2
   else
-    sleep 1
+    sleep 2
   endif
   let fl = readfile(fname)
   let fl[0] .= ' - checktime'
