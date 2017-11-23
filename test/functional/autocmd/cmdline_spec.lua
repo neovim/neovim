@@ -70,7 +70,7 @@ describe('cmdline autocommands', function()
       {1:~                                                                       }|
       {1:~                                                                       }|
       :                                                                       |
-      {2:E920: autocmd has thrown an exception: Vim(echoerr):FAIL}                |
+      {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
       :^                                                                       |
     ]])
     feed("put ='lorem ipsum'<cr>")
@@ -78,9 +78,9 @@ describe('cmdline autocommands', function()
       {1:~                                                                       }|
       {1:~                                                                       }|
       :                                                                       |
-      {2:E920: autocmd has thrown an exception: Vim(echoerr):FAIL}                |
+      {2:E5500: autocmd has thrown an exception: Vim(echoerr):FAIL}               |
       :put ='lorem ipsum'                                                     |
-      {2:E920: autocmd has thrown an exception: Vim(echoerr):very error}          |
+      {2:E5500: autocmd has thrown an exception: Vim(echoerr):very error}         |
                                                                               |
       {3:Press ENTER or type command to continue}^                                 |
     ]])

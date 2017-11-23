@@ -1168,7 +1168,7 @@ EXTERN char_u e_unsupportedoption[] INIT(= N_("E519: Option not supported"));
 EXTERN char_u e_fnametoolong[] INIT(= N_("E856: Filename too long"));
 EXTERN char_u e_float_as_string[] INIT(= N_("E806: using Float as a String"));
 EXTERN char_u e_autocmd_err[] INIT(=N_(
-    "E920: autocmd has thrown an exception: %s"));
+    "E5500: autocmd has thrown an exception: %s"));
 
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
