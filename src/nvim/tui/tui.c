@@ -194,7 +194,7 @@ static void terminfo_start(UI *ui)
   const char *term = os_getenv("TERM");
   data->ut = unibi_from_env();
   if (!data->ut) {
-    data->ut = load_builtin_terminfo(term);
+    data->ut = terminfo_from_builtin(term);
   }
   // None of the following work over SSH; see :help TERM .
   const char *colorterm = os_getenv("COLORTERM");
