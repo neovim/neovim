@@ -14,7 +14,7 @@ low-risk/isolated tasks:
 Developer guidelines
 --------------------
 
-- Nvim developers should read `:help dev-help`.
+- Nvim developers should read `:help dev`.
 - External UI developers should read `:help dev-ui`.
 
 Reporting problems
