@@ -7,6 +7,50 @@ local eval, exc_exec = helpers.eval, helpers.exc_exec
 local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
 local curbufmeths = helpers.curbufmeths
 
+describe('color', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new()
+    screen:attach()
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('name not recognize', function()
+    eq('Vim(highlight):E421: Color name or number not recognized: ctermfg=#181818',
+       exc_exec("highlight normal ctermfg=#181818"))
+    eq('Vim(highlight):E421: Color name or number not recognized: ctermbg=#181818',
+       exc_exec("highlight normal ctermbg=#181818"))
+  end)
+
+  it('"Normal" foreground with red', function()
+    eq('', eval('synIDattr(hlID("Normal"), "fg", "cterm")'))
+    command('highlight normal ctermfg=red')
+    eq('9', eval('synIDattr(hlID("Normal"), "fg", "cterm")'))
+  end)
+
+  it('"Normal" background with red', function()
+    eq('', eval('synIDattr(hlID("Normal"), "bg", "cterm")'))
+    command('highlight normal ctermbg=red')
+    eq('9', eval('synIDattr(hlID("Normal"), "bg", "cterm")'))
+  end)
+end)
+
+describe('highlight', function()
+  before_each(function()
+    clear()
+  end)
+
+  it('group not found', function()
+    eq('Vim(highlight):E411: highlight group not found: foo',
+       exc_exec("highlight foo"))
+  end)
+end)
+
 describe('colorscheme compatibility', function()
   before_each(function()
     clear()
