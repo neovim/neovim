@@ -4448,7 +4448,12 @@ bool vim_fgets(char_u *buf, int size, FILE *fp) FUNC_ATTR_NONNULL_ALL
   char tbuf[FGETS_SIZE];
 
   buf[size - 2] = NUL;
+retry:
+  errno = 0;
   eof = fgets((char *)buf, size, fp);
+  if (eof == NULL && errno == EINTR) {
+    goto retry;
+  }
   if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
     buf[size - 1] = NUL;            /* Truncate the line */
 

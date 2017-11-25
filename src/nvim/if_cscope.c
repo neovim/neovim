@@ -553,9 +553,15 @@ static int cs_cnt_matches(size_t idx)
 
   char *buf = xmalloc(CSREAD_BUFSIZE);
   for (;; ) {
+    errno = 0;
     if (!fgets(buf, CSREAD_BUFSIZE, csinfo[idx].fr_fp)) {
-      if (feof(csinfo[idx].fr_fp))
+      if (errno == EINTR) {
+        continue;
+      }
+
+      if (feof(csinfo[idx].fr_fp)) {
         errno = EIO;
+      }
 
       cs_reading_emsg(idx);
 
@@ -1381,9 +1387,16 @@ static char *cs_parse_results(size_t cnumber, char *buf, int bufsize,
   char *p;
   char *name;
 
+retry:
+  errno = 0;
   if (fgets(buf, bufsize, csinfo[cnumber].fr_fp) == NULL) {
-    if (feof(csinfo[cnumber].fr_fp))
+    if (errno == EINTR) {
+      goto retry;
+    }
+
+    if (feof(csinfo[cnumber].fr_fp)) {
       errno = EIO;
+    }
 
     cs_reading_emsg(cnumber);
 

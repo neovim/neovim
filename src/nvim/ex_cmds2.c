@@ -3199,8 +3199,14 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
     ga_grow(&ga, 120);
     buf = (char_u *)ga.ga_data;
 
+retry:
+    errno = 0;
     if (fgets((char *)buf + ga.ga_len, ga.ga_maxlen - ga.ga_len,
               sp->fp) == NULL) {
+      if (errno == EINTR) {
+        goto retry;
+      }
+
       break;
     }
     len = ga.ga_len + (int)STRLEN(buf + ga.ga_len);
