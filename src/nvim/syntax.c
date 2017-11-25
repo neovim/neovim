@@ -6648,7 +6648,7 @@ do_highlight(char_u *line, int forceit, int init) {
   if (error && idx == highlight_ga.ga_len) {
     syn_unadd_group();
   } else {
-    if (is_normal_group) {
+    if (!error && is_normal_group) {
       // Need to update all groups, because they might be using "bg" and/or
       // "fg", which have been changed now.
       highlight_attr_set_all();
