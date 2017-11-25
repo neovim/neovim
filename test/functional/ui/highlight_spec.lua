@@ -720,6 +720,7 @@ describe("'winhighlight' highlight", function()
 
   it('handles invalid values', function()
     command("set winhl=Normal:Background1")
+    feed(":<CR>")
     screen:expect([[
       {1:^                    }|
       {2:~                   }|
@@ -728,12 +729,13 @@ describe("'winhighlight' highlight", function()
       {2:~                   }|
       {2:~                   }|
       {2:~                   }|
-                          |
+      :                   |
     ]])
 
     eq('Vim(set):E474: Invalid argument: winhl=xxx:yyy',
        exc_exec("set winhl=xxx:yyy"))
     eq('Normal:Background1', eval('&winhl'))
+    feed(":<CR>")
     screen:expect([[
       {1:^                    }|
       {2:~                   }|
@@ -742,7 +744,7 @@ describe("'winhighlight' highlight", function()
       {2:~                   }|
       {2:~                   }|
       {2:~                   }|
-                          |
+      :                   |
     ]])
   end)
 
