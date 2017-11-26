@@ -354,9 +354,11 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   tui_terminal_start(ui);
   data->stop = false;
 
-  // allow the main thread to continue, we are ready to start handling UI
-  // callbacks
+  // Allow main thread to continue, we are ready to handle UI callbacks.
   CONTINUE(bridge);
+
+  loop_schedule_deferred(&main_loop,
+                         event_create(show_termcap_event, 1, data->ut));
 
   while (!data->stop) {
     loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
@@ -1059,6 +1061,21 @@ static void tui_flush(UI *ui)
   cursor_goto(ui, saved_row, saved_col);
 
   flush_buf(ui, true);
+}
+
+/// Dumps termcap info to the messages area, if 'verbose' >= 3.
+static void show_termcap_event(void **argv)
+{
+  if (p_verbose < 3) {
+    return;
+  }
+  const unibi_term *const ut = argv[0];
+  if (!ut) {
+    abort();
+  }
+  // XXX: (future) if unibi_term is modified (e.g. after a terminal
+  // query-response) this is a race condition.
+  terminfo_info_msg(ut);
 }
 
 #ifdef UNIX

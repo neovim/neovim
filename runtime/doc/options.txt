@@ -6424,6 +6424,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Currently, these messages are given:
 	>= 1	When the shada file is read or written.
 	>= 2	When a file is ":source"'ed.
+	>= 3	UI info, terminal capabilities
 	>= 5	Every searched tags file and include file.
 	>= 8	Files for which a group of autocommands is executed.
 	>= 9	Every executed autocommand.

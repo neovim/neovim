@@ -32,6 +32,39 @@ The source files use extensions to hint about their purpose.
 - `*.h.generated.h` - exported functions’ declarations.
 - `*.c.generated.h` - static functions’ declarations.
 
+TUI debugging
+-------------
+
+### TUI troubleshoot
+
+Nvim logs its internal terminfo state at 'verbose' level 3.  This makes it
+possible to see exactly what terminfo values Nvim is using on any system.
+
+    nvim -V3log
+
+### TUI trace
+
+The ancient `script` command is still the "state of the art" for tracing
+terminal behavior. The libvterm `vterm-dump` utility formats the result for
+human-readability.
+
+Record a Nvim terminal session and format it with `vterm-dump`:
+
+    script foo
+    ./build/bin/nvim -u NONE
+    # Exit the script session with CTRL-d
+
+    # Use `vterm-dump` utility to format the result.
+    ./.deps/usr/bin/vterm-dump foo > bar
+
+Then you can compare `bar` with another session, to debug TUI behavior.
+
+### Terminal reference
+
+- `man terminfo`
+- http://bazaar.launchpad.net/~libvterm/libvterm/trunk/view/head:/doc/seqs.txt
+- http://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+
 Nvim lifecycle
 --------------
 
@@ -39,7 +72,7 @@ Following describes how Nvim processes input.
 
 Consider a typical Vim-like editing session:
 
-01. Vim dispays the welcome screen
+01. Vim displays the welcome screen
 02. User types: `:`
 03. Vim enters command-line mode
 04. User types: `edit README.txt<CR>`
