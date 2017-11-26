@@ -1,12 +1,16 @@
 -- TUI acceptance tests.
 -- Uses :terminal as a way to send keys and assert screen state.
 local global_helpers = require('test.helpers')
+local uname = global_helpers.uname
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
 local feed_data = thelpers.feed_data
 local feed_command = helpers.feed_command
+local clear = helpers.clear
 local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
+local nvim_prog = helpers.nvim_prog
+local nvim_set = helpers.nvim_set
 
 if helpers.pending_win32(pending) then return end
 
@@ -14,7 +18,7 @@ describe('tui', function()
   local screen
 
   before_each(function()
-    helpers.clear()
+    clear()
     screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
     -- right now pasting can be really slow in the TUI, especially in ASAN.
@@ -372,7 +376,7 @@ end)
 -- does not initialize the TUI.
 describe("tui 't_Co' (terminal colors)", function()
   local screen
-  local is_freebsd = (string.lower(global_helpers.uname()) == 'freebsd')
+  local is_freebsd = (string.lower(uname()) == 'freebsd')
 
   local function assert_term_colors(term, colorterm, maxcolors)
     helpers.clear({env={TERM=term}, args={}})
@@ -384,7 +388,7 @@ describe("tui 't_Co' (terminal colors)", function()
       (colorterm ~= nil and "COLORTERM="..colorterm or ""),
       helpers.nvim_prog))
 
-    thelpers.feed_data(":echo &t_Co\n")
+    feed_data(":echo &t_Co\n")
     helpers.wait()
     local tline
     if maxcolors == 8 or maxcolors == 16 then
@@ -625,6 +629,45 @@ describe("tui 't_Co' (terminal colors)", function()
 
   it("TERM=iterm uses 256 colors", function()
     assert_term_colors("iterm", nil, 256)
+  end)
+
+end)
+
+-- These tests require `thelpers` because --headless/--embed
+-- does not initialize the TUI.
+describe("tui 'term' option", function()
+  local screen
+  local is_bsd = not not string.find(string.lower(uname()), 'bsd')
+
+  local function assert_term(term_envvar, term_expected)
+    clear()
+    -- This is ugly because :term/termopen() forces TERM=xterm-256color.
+    -- TODO: Revisit this after jobstart/termopen accept `env` dict.
+    local cmd = string.format(
+      [=[['sh', '-c', 'LANG=C TERM=%s %s -u NONE -i NONE --cmd "%s"']]=],
+      term_envvar or "",
+      nvim_prog,
+      nvim_set)
+    screen = thelpers.screen_setup(0, cmd)
+
+    local full_timeout = screen.timeout
+    screen.timeout = 250  -- We want screen:expect() to fail quickly.
+    retry(nil, 2 * full_timeout, function()  -- Wait for TUI thread to set 'term'.
+      feed_data(":echo 'term='.(&term)\n")
+      screen:expect('term='..term_expected, nil, nil, nil, true)
+    end)
+  end
+
+  it('gets builtin term if $TERM is invalid', function()
+    assert_term("foo", "builtin_ansi")
+  end)
+
+  it('gets system-provided term if $TERM is valid', function()
+    if is_bsd then  -- BSD lacks terminfo, we always use builtin there.
+      assert_term("xterm", "builtin_xterm")
+    else
+      assert_term("xterm", "xterm")
+    end
   end)
 
 end)

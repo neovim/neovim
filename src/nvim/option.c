@@ -105,6 +105,9 @@ typedef enum {
  */
 #define VAR_WIN ((char_u *)-1)
 
+static char *p_term = NULL;
+static char *p_ttytype = NULL;
+
 /*
  * These are the global values for options which are also local to a buffer.
  * Only to be used in option.c!
@@ -4530,13 +4533,17 @@ int findoption_len(const char *const arg, const size_t len)
 bool is_tty_option(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (name[0] == 't' && name[1] == '_') || strcmp(name, "term") == 0;
+  return (name[0] == 't' && name[1] == '_')
+    || strequal(name, "term")
+    || strequal(name, "ttytype");
 }
 
 #define TCO_BUFFER_SIZE 8
+/// @param name TUI-related option
+/// @param[out,allocated] value option string value
 bool get_tty_option(char *name, char **value)
 {
-  if (!strcmp(name, "t_Co")) {
+  if (strequal(name, "t_Co")) {
     if (value) {
       if (t_colors <= 1) {
         *value = xstrdup("");
@@ -4548,9 +4555,16 @@ bool get_tty_option(char *name, char **value)
     return true;
   }
 
-  if (!strcmp(name, "term") || !strcmp(name, "ttytype")) {
+  if (strequal(name, "term")) {
     if (value) {
-      *value = xstrdup("nvim");
+      *value = p_term ? xstrdup(p_term) : xstrdup("nvim");
+    }
+    return true;
+  }
+
+  if (strequal(name, "ttytype")) {
+    if (value) {
+      *value = p_ttytype ? xstrdup(p_ttytype) : xstrdup("nvim");
     }
     return true;
   }
@@ -4566,25 +4580,25 @@ bool get_tty_option(char *name, char **value)
   return false;
 }
 
-bool set_tty_option(const char *name, const char *value)
+bool set_tty_option(const char *name, char *value)
 {
-  if (!strcmp(name, "t_Co")) {
-    int colors = atoi(value);
-
-    // Only reinitialize colors if t_Co value has really changed to
-    // avoid expensive reload of colorscheme if t_Co is set to the
-    // same value multiple times
-    if (colors != t_colors) {
-      t_colors = colors;
-      // We now have a different color setup, initialize it again.
-      init_highlight(true, false);
+  if (strequal(name, "term")) {
+    if (p_term) {
+      xfree(p_term);
     }
-
+    p_term = value;
     return true;
   }
 
-  return (is_tty_option(name) || !strcmp(name, "term")
-          || !strcmp(name, "ttytype"));
+  if (strequal(name, "ttytype")) {
+    if (p_ttytype) {
+      xfree(p_ttytype);
+    }
+    p_ttytype = value;
+    return true;
+  }
+
+  return false;
 }
 
 /// Find index for an option
@@ -4597,18 +4611,15 @@ static int findoption(const char *const arg)
   return findoption_len(arg, strlen(arg));
 }
 
-/*
- * Get the value for an option.
- *
- * Returns:
- * Number or Toggle option: 1, *numval gets value.
- *	     String option: 0, *stringval gets allocated string.
- * Hidden Number or Toggle option: -1.
- *	     hidden String option: -2.
- *		   unknown option: -3.
- */
-int 
-get_option_value (
+/// Gets the value for an option.
+///
+/// @returns:
+/// Number or Toggle option: 1, *numval gets value.
+///           String option: 0, *stringval gets allocated string.
+/// Hidden Number or Toggle option: -1.
+///           hidden String option: -2.
+///                 unknown option: -3.
+int get_option_value (
     char_u *name,
     long *numval,
     char_u **stringval,            /* NULL when only checking existence */
@@ -4791,8 +4802,8 @@ char *set_option_value(const char *const name, const long number,
                        const char *const string, const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (set_tty_option(name, string)) {
-    return NULL;
+  if (is_tty_option(name)) {
+    return NULL;  // Fail silently; many old vimrcs set t_xx options.
   }
 
   int opt_idx;

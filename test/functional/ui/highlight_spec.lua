@@ -14,8 +14,6 @@ describe('colorscheme compatibility', function()
 
   it('t_Co is set to 256 by default', function()
     eq('256', eval('&t_Co'))
-    request('nvim_set_option', 't_Co', '88')
-    eq('88', eval('&t_Co'))
   end)
 end)
 
