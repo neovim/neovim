@@ -8182,4 +8182,92 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('List', ']'),
     })
   end)
+  itp('works with non-ASCII characters', function()
+    check_parsing('"«»"«»', {
+      --           013568
+      ast = {
+        {
+          'OpMissing:0:6:',
+          children = {
+            'DoubleQuotedString(val="«»"):0:0:"«»"',
+            {
+              'ComplexIdentifier:0:8:',
+              children = {
+                'PlainIdentifier(scope=0,ident=«):0:6:«',
+                'PlainIdentifier(scope=0,ident=»):0:8:»',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '«»',
+        msg = 'E15: Unidentified character: %.*s',
+      },
+    }, {
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuotedBody', '«»'),
+      hl('DoubleQuote', '"'),
+      hl('InvalidIdentifierName', '«'),
+      hl('InvalidIdentifierName', '»'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            'DoubleQuotedString(val="«»"):0:0:"«»"',
+          },
+          len = 6,
+        },
+        hl_fs = {
+          [5] = REMOVE_THIS,
+          [4] = REMOVE_THIS,
+        },
+      },
+    })
+    check_parsing('"\192"\192"foo"', {
+      --           01   23   45678
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            'DoubleQuotedString(val="\192"):0:0:"\192"',
+            {
+              'OpMissing:0:4:',
+              children = {
+                'PlainIdentifier(scope=0,ident=\192):0:3:\192',
+                'DoubleQuotedString(val="foo"):0:4:"foo"',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '\192"foo"',
+        msg = 'E15: Unidentified character: %.*s',
+      },
+    }, {
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuotedBody', '\192'),
+      hl('DoubleQuote', '"'),
+      hl('InvalidIdentifierName', '\192'),
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', 'foo'),
+      hl('InvalidDoubleQuote', '"'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            'DoubleQuotedString(val="\192"):0:0:"\192"',
+          },
+          len = 3,
+        },
+        hl_fs = {
+          [4] = REMOVE_THIS,
+          [5] = REMOVE_THIS,
+          [6] = REMOVE_THIS,
+          [7] = REMOVE_THIS,
+        },
+      },
+    })
+  end)
 end

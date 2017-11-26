@@ -6170,17 +6170,17 @@ const char *const highlight_init_cmdline[] = {
   "default link NVimInvalidDict NVimInvalidContainer",
   "default link NVimInvalidList NVimInvalidContainer",
 
-  "default link NVimInvalidIdentifier Identifier",
-  "default link NVimInvalidIdentifierScope NVimIdentifier",
-  "default link NVimInvalidIdentifierScopeDelimiter NVimIdentifier",
-  "default link NVimInvalidIdentifierName NVimIdentifier",
-  "default link NVimInvalidIdentifierKey NVimIdentifier",
+  "default link NVimInvalidValue NVimInvalid",
+
+  "default link NVimInvalidIdentifier NVimInvalidValue",
+  "default link NVimInvalidIdentifierScope NVimInvalidIdentifier",
+  "default link NVimInvalidIdentifierScopeDelimiter NVimInvalidIdentifier",
+  "default link NVimInvalidIdentifierName NVimInvalidIdentifier",
+  "default link NVimInvalidIdentifierKey NVimInvalidIdentifier",
 
   "default link NVimInvalidColon NVimInvalidDelimiter",
   "default link NVimInvalidComma NVimInvalidDelimiter",
   "default link NVimInvalidArrow NVimInvalidDelimiter",
-
-  "default link NVimInvalidValue NVimInvalid",
 
   "default link NVimInvalidRegister NVimInvalidValue",
   "default link NVimInvalidNumber NVimInvalidValue",
@@ -6199,7 +6199,7 @@ const char *const highlight_init_cmdline[] = {
   // Invalid string bodies and specials are still highlighted as valid ones to
   // minimize the red area.
   "default link NVimInvalidString NVimInvalidValue",
-  "default link NVimInvalidStringBody NVimString",
+  "default link NVimInvalidStringBody NVimStringBody",
   "default link NVimInvalidStringQuote NVimInvalidString",
   "default link NVimInvalidStringSpecial NVimStringSpecial",
 
