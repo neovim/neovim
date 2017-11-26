@@ -3065,12 +3065,9 @@ viml_pexpr_parse_end:
           // to be caught later.
           break;
         }
+        case kExprNodeSubscript:
         case kExprNodeConcatOrSubscript:
         case kExprNodeComplexIdentifier:
-        case kExprNodeSubscript: {
-          // FIXME: Investigate whether above are OK to be present in the stack.
-          break;
-        }
         case kExprNodeAssignment:
         case kExprNodeMod:
         case kExprNodeDivision:

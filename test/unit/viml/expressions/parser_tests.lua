@@ -4228,6 +4228,50 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('ConcatOrSubscript', '.'),
       hl('Number', '1', 1),
     })
+
+    check_parsing('a[1][2][3[4', {
+      --           01234567890
+      --           0         1
+      ast = {
+        {
+          'Subscript:0:7:[',
+          children = {
+            {
+              'Subscript:0:4:[',
+              children = {
+                {
+                  'Subscript:0:1:[',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=a):0:0:a',
+                    'Integer(val=1):0:2:1',
+                  },
+                },
+                'Integer(val=2):0:5:2',
+              },
+            },
+            {
+              'Subscript:0:9:[',
+              children = {
+                'Integer(val=3):0:8:3',
+                'Integer(val=4):0:10:4',
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '1'),
+      hl('SubscriptBracket', ']'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '2'),
+      hl('SubscriptBracket', ']'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '3'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '4'),
+    })
   end)
   itp('works with bracket subscripts', function()
     check_parsing(':', {
