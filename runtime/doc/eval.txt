@@ -10578,13 +10578,13 @@ This is not allowed when the textlock is active:
 
 Expressions entered by user in |i_CTRL-R_=|, |c_CTRL-\_e|, |quote=| are 
 colored by built-in expressions parser.  It uses highlight groups described in 
-the below table, which may be overriden by user colorschemes, all linked to 
+the table below, which may be overriden by user colorschemes, all linked to 
 some other highlighting group.
 							*hl-NVimInvalid*
 In addition to highlighting groups prefixed with NVim described below there 
 are highlighting groups prefixed with NVimInvalid which have just the same 
-meaning, but used to indicate that relevant token contains an error or that 
-error had occurred just before it.  They have mostly the same hierarchy, 
+meaning, but used to indicate that the relevant token contains an error or 
+that error had occurred just before it.  They have mostly the same hierarchy, 
 except that by default in place of any non-NVim-prefixed group NVimInvalid 
 linking to `Error` is used and some other intermediate groups are present.
 
