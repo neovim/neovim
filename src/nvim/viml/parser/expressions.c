@@ -47,6 +47,8 @@
 //    type of what is in the first expression is generally not known when
 //    parsing, so to have separate expressions like this separate them with
 //    spaces.
+// 7. 'isident' no longer applies to environment variables, they always include
+//    ASCII alphanumeric characters and underscore and nothing except this.
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -383,10 +385,14 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       break;
     }
 
+#define ISWORD_OR_AUTOLOAD(x) \
+      (ASCII_ISALNUM(x) || (x) == AUTOLOAD_CHAR || (x) == '_')
+#define ISWORD(x) \
+      (ASCII_ISALNUM(x) || (x) == '_')
+
     // Environment variable.
     case '$': {
-      // FIXME: Parser function can’t be thread-safe with vim_isIDc.
-      CHARREG(kExprLexEnv, vim_isIDc);
+      CHARREG(kExprLexEnv, ISWORD);
       break;
     }
 
@@ -400,10 +406,6 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
     case 'V': case 'W': case 'X': case 'Y': case 'Z':
     case '_': {
-#define ISWORD_OR_AUTOLOAD(x) \
-      (ASCII_ISALNUM(x) || (x) == AUTOLOAD_CHAR || (x) == '_')
-#define ISWORD(x) \
-      (ASCII_ISALNUM(x) || (x) == '_')
       ret.data.var.scope = 0;
       ret.data.var.autoload = false;
       CHARREG(kExprLexPlainIdentifier, ISWORD);
@@ -441,9 +443,10 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
         CHARREG(kExprLexPlainIdentifier, ISWORD_OR_AUTOLOAD);
       }
       break;
-#undef ISWORD_OR_AUTOLOAD
-#undef ISWORD
     }
+
+#undef ISWORD
+#undef ISWORD_OR_AUTOLOAD
 #undef CHARREG
 
     // Option.

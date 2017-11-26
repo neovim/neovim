@@ -717,6 +717,9 @@ describe('api', function()
   end)
 
   describe('nvim_parse_expression', function()
+    before_each(function()
+      meths.set_option('isident', '')
+    end)
     local function simplify_east_api_node(line, east_api_node)
       if east_api_node == NIL then
         return nil

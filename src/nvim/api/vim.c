@@ -983,7 +983,7 @@ typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
 ///                     "DoubleQuotedString" nodes.
 Dictionary nvim_parse_expression(String expr, String flags, Boolean highlight,
                                  Error *err)
-  FUNC_API_SINCE(4)
+  FUNC_API_SINCE(4) FUNC_API_ASYNC
 {
   int pflags = 0;
   for (size_t i = 0 ; i < flags.size ; i++) {
