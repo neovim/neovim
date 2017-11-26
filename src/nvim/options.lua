@@ -295,6 +295,14 @@ return {
       defaults={if_true={vi="", vim=macros('CTRL_F_STR')}}
     },
     {
+      full_name='channel',
+      type='number', scope={'buffer'},
+      no_mkrc=true,
+      nodefault=true,
+      varname='p_channel',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='charconvert', abbreviation='ccv',
       type='string', scope={'global'},
       secure=true,
@@ -993,11 +1001,11 @@ return {
       expand=true,
       varname='p_gp',
       defaults={
-        condition='UNIX',
+        condition='WIN32',
         -- Add an extra file name so that grep will always
         -- insert a file name in the match line. */
-        if_true={vi="grep -n $* /dev/null"},
-        if_false={vi="grep -n "},
+        if_true={vi="findstr /n $* nul"},
+        if_false={vi="grep -n $* /dev/null"}
       }
     },
     {

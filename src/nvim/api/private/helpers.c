@@ -12,6 +12,7 @@
 #include "nvim/api/private/handle.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -760,12 +761,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
     case kObjectTypeWindow:
     case kObjectTypeTabpage:
     case kObjectTypeInteger:
-      if (obj.data.integer > VARNUMBER_MAX
-          || obj.data.integer < VARNUMBER_MIN) {
-        api_set_error(err, kErrorTypeValidation, "Integer value outside range");
-        return false;
-      }
-
+      STATIC_ASSERT(sizeof(obj.data.integer) <= sizeof(varnumber_T),
+                    "Integer size must be <= VimL number size");
       tv->v_type = VAR_NUMBER;
       tv->vval.v_number = (varnumber_T)obj.data.integer;
       break;

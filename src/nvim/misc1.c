@@ -2622,7 +2622,10 @@ void preserve_exit(void)
 
   // Prevent repeated calls into this method.
   if (really_exiting) {
-    stream_set_blocking(input_global_fd(), true);  //normalize stream (#2598)
+    if (input_global_fd() >= 0) {
+      // normalize stream (#2598)
+      stream_set_blocking(input_global_fd(), true);
+    }
     exit(2);
   }
 

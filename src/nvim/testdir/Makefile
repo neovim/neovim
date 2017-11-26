@@ -42,6 +42,7 @@ NEW_TESTS ?= \
 	    test_filter_map.res \
 	    test_fnameescape.res \
 	    test_fold.res \
+	    test_ga.res \
 	    test_glob2regpat.res \
 	    test_gf.res \
 	    test_gn.res \

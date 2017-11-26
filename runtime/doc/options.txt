@@ -1213,6 +1213,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	|Nvi| also has this option, but it only uses the first character.
 	See |cmdwin|.
 
+						*'channel'*
+'channel'		number (default: 0)
+			local to buffer
+	|Channel| connected to the buffer. Currently only used by
+	|terminal-emulator|. Is 0 if no terminal is open. Cannot be changed.
+
 				*'charconvert'* *'ccv'* *E202* *E214* *E513*
 'charconvert' 'ccv'	string (default "")
 			global

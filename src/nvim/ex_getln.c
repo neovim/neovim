@@ -350,7 +350,56 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   got_int = false;
   s->state.check = command_line_check;
   s->state.execute = command_line_execute;
+
+  TryState tstate;
+  Error err = ERROR_INIT;
+  bool tl_ret = true;
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  char firstcbuf[2];
+  firstcbuf[0] = firstc > 0 ? firstc : '-';
+  firstcbuf[1] = 0;
+
+  if (has_event(EVENT_CMDLINEENTER)) {
+    // set v:event to a dictionary with information about the commandline
+    tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
+    tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
+    tv_dict_set_keys_readonly(dict);
+    try_enter(&tstate);
+
+    apply_autocmds(EVENT_CMDLINEENTER, (char_u *)firstcbuf, (char_u *)firstcbuf,
+                   false, curbuf);
+    tv_dict_clear(dict);
+
+
+    tl_ret = try_leave(&tstate, &err);
+    if (!tl_ret && ERROR_SET(&err)) {
+      msg_putchar('\n');
+      msg_printf_attr(hl_attr(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+      api_clear_error(&err);
+      redrawcmd();
+    }
+    tl_ret = true;
+  }
+
   state_enter(&s->state);
+
+  if (has_event(EVENT_CMDLINELEAVE)) {
+    tv_dict_add_str(dict, S_LEN("cmdtype"), firstcbuf);
+    tv_dict_add_nr(dict, S_LEN("cmdlevel"), ccline.level);
+    tv_dict_set_keys_readonly(dict);
+    // not readonly:
+    tv_dict_add_special(dict, S_LEN("abort"),
+                        s->gotesc ? kSpecialVarTrue : kSpecialVarFalse);
+    try_enter(&tstate);
+    apply_autocmds(EVENT_CMDLINELEAVE, (char_u *)firstcbuf, (char_u *)firstcbuf,
+                   false, curbuf);
+    // error printed below, to avoid redraw issues
+    tl_ret = try_leave(&tstate, &err);
+    if (tv_dict_get_number(dict, "abort") != 0) {
+      s->gotesc = 1;
+    }
+    tv_dict_clear(dict);
+  }
 
   cmdmsg_rl = false;
 
@@ -412,8 +461,14 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
   msg_scroll = s->save_msg_scroll;
   redir_off = false;
 
+  if (!tl_ret && ERROR_SET(&err)) {
+    msg_putchar('\n');
+    msg_printf_attr(hl_attr(HLF_E)|MSG_HIST, (char *)e_autocmd_err, err.msg);
+    api_clear_error(&err);
+  }
+
   // When the command line was typed, no need for a wait-return prompt.
-  if (s->some_key_typed) {
+  if (s->some_key_typed && tl_ret) {
     need_wait_return = false;
   }
 

@@ -105,20 +105,20 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 {
   Stream *stream = uvstream->data;
 
-  if (cnt > 0) {
-    stream->num_bytes += (size_t)cnt;
-  }
-
   if (cnt <= 0) {
-    if (cnt != UV_ENOBUFS
-        // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
-        // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
-        //
-        // We don't need to do anything with the RBuffer because the next call
-        // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
-        // won't be called)
-        && cnt != 0) {
-      DLOG("closing Stream: %p: %s (%s)", stream,
+    // cnt == 0 means libuv asked for a buffer and decided it wasn't needed:
+    // http://docs.libuv.org/en/latest/stream.html#c.uv_read_start.
+    //
+    // We don't need to do anything with the RBuffer because the next call
+    // to `alloc_cb` will return the same unused pointer(`rbuffer_produced`
+    // won't be called)
+    if (cnt == UV_ENOBUFS || cnt == 0) {
+      return;
+    } else if (cnt == UV_EOF && uvstream->type == UV_TTY) {
+      // The TTY driver might signal TTY without closing the stream
+      invoke_read_cb(stream, 0, true);
+    } else {
+      DLOG("Closing Stream (%p): %s (%s)", stream,
            uv_err_name((int)cnt), os_strerror((int)cnt));
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
@@ -130,6 +130,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 
   // at this point we're sure that cnt is positive, no error occurred
   size_t nread = (size_t)cnt;
+  stream->num_bytes += nread;
   // Data was already written, so all we need is to update 'wpos' to reflect
   // the space actually used in the buffer.
   rbuffer_produced(stream->buffer, nread);
@@ -187,6 +188,7 @@ static void read_event(void **argv)
   if (stream->read_cb) {
     size_t count = (uintptr_t)argv[1];
     bool eof = (uintptr_t)argv[2];
+    stream->did_eof = eof;
     stream->read_cb(stream, stream->buffer, count, stream->cb_data, eof);
   }
   stream->pending_reqs--;
