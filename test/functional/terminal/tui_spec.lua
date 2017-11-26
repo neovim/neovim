@@ -19,8 +19,8 @@ describe('tui', function()
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0, '["'..helpers.nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler undodir=. directory=. viewdir=. backupdir=."]')
     -- right now pasting can be really slow in the TUI, especially in ASAN.
     -- this will be fixed later but for now we require a high timeout.
     screen.timeout = 60000
@@ -383,10 +383,11 @@ describe("tui 't_Co' (terminal colors)", function()
     -- This is ugly because :term/termopen() forces TERM=xterm-256color.
     -- TODO: Revisit this after jobstart/termopen accept `env` dict.
     screen = thelpers.screen_setup(0, string.format(
-      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "silent set noswapfile noshowcmd noruler"']]=],
+      [=[['sh', '-c', 'LANG=C TERM=%s %s %s -u NONE -i NONE --cmd "%s"']]=],
       term or "",
       (colorterm ~= nil and "COLORTERM="..colorterm or ""),
-      helpers.nvim_prog))
+      nvim_prog,
+      nvim_set))
 
     feed_data(":echo &t_Co\n")
     helpers.wait()
@@ -401,10 +402,10 @@ describe("tui 't_Co' (terminal colors)", function()
       %s|
       %s|
       %s|
-      {5:[No Name]                                         }|
+      %s|
       %-3s                                               |
       {3:-- TERMINAL --}                                    |
-    ]], tline, tline, tline, tostring(maxcolors and maxcolors or "")))
+    ]], tline, tline, tline, tline, tostring(maxcolors and maxcolors or "")))
   end
 
   -- ansi and no terminal type at all:
