@@ -142,6 +142,9 @@ clint-full: build/.ran-cmake
 check-single-includes: build/.ran-cmake
 	+$(BUILD_CMD) -C build check-single-includes
 
+check-error-codes: build/.ran-cmake
+	+$(BUILD_CMD) -C build check-error-codes
+
 appimage:
 	bash scripts/genappimage.sh
 

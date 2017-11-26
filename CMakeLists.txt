@@ -467,7 +467,7 @@ if(NOT LUA_PRG_WORKS)
   message(FATAL_ERROR "A suitable Lua interpreter was not found.")
 endif()
 
-message(STATUS "Using the Lua interpreter ${LUA_PRG}.")
+message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 
 # Setup busted.
 find_program(BUSTED_PRG NAMES busted busted.bat)
@@ -659,6 +659,13 @@ if(LUACHECK_PRG)
     DEPENDS blobcodelint
   )
 endif()
+
+add_custom_target(
+  check-error-codes
+  COMMAND nvim -u NONE -i NONE --headless -c "set nomore noswapfile" -c "luafile scripts/check-error-codes.lua" -c q
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  DEPENDS ${LUA_PRG}
+)
 
 set(CPACK_PACKAGE_NAME "Neovim")
 set(CPACK_PACKAGE_VENDOR "neovim.io")
