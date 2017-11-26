@@ -778,7 +778,6 @@ err_closing:
     if (execl("/bin/sh", "sh", "-c", cmd, (char *)NULL) == -1)
       PERROR(_("cs_create_connection exec failed"));
 
-    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
     exit(127);
   /* NOTREACHED */
   default:      /* parent. */

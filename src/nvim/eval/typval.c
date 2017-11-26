@@ -374,7 +374,7 @@ void tv_list_append_dict(list_T *const list, dict_T *const dict)
 ///                  case string is considered to be usual zero-terminated
 ///                  string or NULL “empty” string.
 void tv_list_append_string(list_T *const l, const char *const str,
-                           const ptrdiff_t len)
+                           const ssize_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   if (str == NULL) {
@@ -824,7 +824,7 @@ void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
 /// @param[in]  cb2  Second callback to check.
 ///
 /// @return True if they are equal, false otherwise.
-bool tv_callback_equal(const Callback *const cb1, const Callback *const cb2)
+bool tv_callback_equal(const Callback *cb1, const Callback *cb2)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (cb1->type != cb2->type) {
@@ -843,8 +843,29 @@ bool tv_callback_equal(const Callback *const cb1, const Callback *const cb2)
       return true;
     }
   }
-  assert(false);
+  abort();
   return false;
+}
+
+/// Unref/free callback
+void callback_free(Callback *callback)
+  FUNC_ATTR_NONNULL_ALL
+{
+  switch (callback->type) {
+    case kCallbackFuncref: {
+      func_unref(callback->data.funcref);
+      xfree(callback->data.funcref);
+      break;
+    }
+    case kCallbackPartial: {
+      partial_unref(callback->data.partial);
+      break;
+    }
+    case kCallbackNone: {
+      break;
+    }
+  }
+  callback->type = kCallbackNone;
 }
 
 /// Remove watcher from a dictionary

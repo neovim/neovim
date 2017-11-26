@@ -252,7 +252,7 @@ static void remote_ui_flush(UI *ui)
 {
   UIData *data = ui->data;
   if (data->buffer.size > 0) {
-    channel_send_event(data->channel_id, "redraw", data->buffer);
+    rpc_send_event(data->channel_id, "redraw", data->buffer);
     data->buffer = (Array)ARRAY_DICT_INIT;
   }
 }

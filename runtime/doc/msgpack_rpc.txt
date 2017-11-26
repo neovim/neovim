@@ -1,4 +1,3 @@
-*msgpack_rpc.txt*	Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
@@ -61,24 +60,24 @@ To get a formatted dump of the API using python (requires the `pyyaml` and
 ==============================================================================
 3. Connecting						      *rpc-connecting*
 
-There are several ways to open a msgpack-rpc channel to an Nvim instance:
+See |channel-intro|, for various ways to open a channel. Most of the channel
+opening functions take an `rpc` key in the options dictionary, to enable rpc.
 
-  1. Through stdin/stdout when `nvim` is started with `--embed`. This is how
-     applications can embed Nvim.
+Additionally, rpc channels can be opened by other processes connecting to
+TCP/IP sockets or named pipes listened to by nvim.
 
-  2. Through stdin/stdout of some other process spawned by |jobstart()|.
-     Set the "rpc" key to |v:true| in the options dict to use the job's stdin
-     and stdout as a single msgpack channel that is processed directly by
-     Nvim.  Then it is not possible to process raw data to or from the
-     process's stdin and stdout. stderr can still be used, though.
+An rpc socket is automatically created with each instance. The socket
+ location is stored in |v:servername|. By default this is a named pipe
+with an automatically generated address. See |XXX|.
 
-  3. Through the socket automatically created with each instance. The socket
-     location is stored in |v:servername|.
-
-  4. Through a TCP/IP socket. To make Nvim listen on a TCP/IP socket, set the
-     |$NVIM_LISTEN_ADDRESS| environment variable before starting Nvim: >
+To make Nvim listen on a TCP/IP socket instead, set the
+   |$NVIM_LISTEN_ADDRESS| environment variable before starting Nvim: >
         NVIM_LISTEN_ADDRESS=127.0.0.1:6666 nvim
-<
+<Also, more sockets and named pipes can be listened on using |serverstart()|.
+
+Note that localhost TCP sockets are generally less secure than named pipes,
+and can lead to vunerabilities like remote code execution.
+
 Connecting to the socket is the easiest way a programmer can test the API,
 which can be done through any msgpack-rpc client library or full-featured
 |api-client|. Here's a Ruby script that prints 'hello world!' in the current

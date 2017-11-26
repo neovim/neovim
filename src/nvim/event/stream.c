@@ -92,6 +92,13 @@ void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
   }
 }
 
+void stream_may_close(Stream *stream)
+{
+  if (!stream->closed) {
+    stream_close(stream, NULL, NULL);
+  }
+}
+
 void stream_close_handle(Stream *stream)
   FUNC_ATTR_NONNULL_ALL
 {

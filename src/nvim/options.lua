@@ -295,6 +295,14 @@ return {
       defaults={if_true={vi="", vim=macros('CTRL_F_STR')}}
     },
     {
+      full_name='channel',
+      type='number', scope={'buffer'},
+      no_mkrc=true,
+      nodefault=true,
+      varname='p_channel',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='charconvert', abbreviation='ccv',
       type='string', scope={'global'},
       secure=true,

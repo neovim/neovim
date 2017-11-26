@@ -100,6 +100,22 @@ local function next_message()
   return session:next_message()
 end
 
+local function expect_twostreams(msgs1, msgs2)
+  local pos1, pos2 = 1, 1
+  while pos1 <= #msgs1 or pos2 <= #msgs2 do
+    local msg = next_message()
+    if pos1 <= #msgs1 and pcall(eq, msgs1[pos1], msg) then
+      pos1 = pos1 + 1
+    elseif pos2 <= #msgs2 then
+      eq(msgs2[pos2], msg)
+      pos2 = pos2 + 1
+    else
+      -- already failed, but show the right error message
+      eq(msgs1[pos1], msg)
+    end
+  end
+end
+
 local function call_and_stop_on_error(...)
   local status, result = copcall(...)  -- luacheck: ignore
   if not status then
@@ -618,6 +634,33 @@ local function alter_slashes(obj)
   end
 end
 
+local function hexdump(str)
+  local len = string.len( str )
+  local dump = ""
+  local hex = ""
+  local asc = ""
+
+  for i = 1, len do
+    if 1 == i % 8 then
+      dump = dump .. hex .. asc .. "\n"
+      hex = string.format( "%04x: ", i - 1 )
+      asc = ""
+    end
+
+    local ord = string.byte( str, i )
+    hex = hex .. string.format( "%02x ", ord )
+    if ord >= 32 and ord <= 126 then
+      asc = asc .. string.char( ord )
+    else
+      asc = asc .. "."
+    end
+  end
+
+  return dump .. hex
+  .. string.rep( "   ", 8 - len % 8 ) .. asc
+
+end
+
 local module = {
   prepend_argv = prepend_argv,
   clear = clear,
@@ -636,6 +679,7 @@ local module = {
   command = nvim_command,
   request = request,
   next_message = next_message,
+  expect_twostreams = expect_twostreams,
   run = run,
   stop = stop,
   eq = eq,
@@ -687,6 +731,7 @@ local module = {
   get_pathsep = get_pathsep,
   missing_provider = missing_provider,
   alter_slashes = alter_slashes,
+  hexdump = hexdump,
 }
 
 return function(after_each)
