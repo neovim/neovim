@@ -20,7 +20,7 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			|:nohlsearch| and updates diffs |:diffupdate|.
 			|default-mappings|
 
-							*:mod* *:mode*
+							*:mod* *:mode* *E359*
 :mod[e]			Clears and redraws the screen.
 			See also |nvim__redraw()|.
 

@@ -288,6 +288,11 @@ add_custom_target(lintcommit
   COMMAND $<TARGET_FILE:nvim_bin> --clean -l ${PROJECT_SOURCE_DIR}/scripts/lintcommit.lua main)
 add_dependencies(lintcommit nvim_bin)
 
+add_custom_target(linterrcodes
+  COMMAND $<TARGET_FILE:nvim_bin> --clean -l ${PROJECT_SOURCE_DIR}/scripts/linterrcodes.lua
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+add_dependencies(linterrcodes nvim_bin)
+
 add_custom_target(lint)
 add_dependencies(lint lintc lintlua lintsh lintquery)
 

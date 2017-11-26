@@ -6115,7 +6115,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			designated regions of the buffer are spellchecked in
 			this case.
 
-						*'spellsuggest'* *'sps'*
+					*'spellsuggest'* *'sps'* *E5700*
 'spellsuggest' 'sps'	string	(default "best")
 			global
 			Disallowed in |modeline|. |no-modeline-option|

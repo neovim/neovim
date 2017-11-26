@@ -1157,7 +1157,7 @@ running) you have additional options:
                         already set (registers, marks, |v:oldfiles|, etc.)
                         will be overwritten.
 
-                                                    *:wsh* *:wshada* *E137*
+                                                    *:wsh* *:wshada* *E137* *E138*
 :wsh[ada][!] [file]     Write to ShaDa file [file] (default: see above).
                         The information in the file is first read in to make
                         a merge between old and new info.  When [!] is used,
@@ -1341,7 +1341,7 @@ exactly four MessagePack objects:
    - `*` (Unknown)       Any other entry type is allowed for compatibility
                        reasons, see |shada-compatibility|.
 
-                                                                *E575* *E576*
+                                                        *E574* *E575* *E576*
 Errors in ShaDa file may have two types:
 1. E575 for “logical” errors.
 2. E576 for “critical” errors.

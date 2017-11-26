@@ -325,7 +325,7 @@ name or a part of a buffer name.  Examples:
 				diff mode (e.g., "file.c.v2")
 
 ==============================================================================
-5. Diff anchors						*diff-anchors*
+5. Diff anchors					*diff-anchors* *E1549*
 
 Diff anchors allow you to control where the diff algorithm aligns and
 synchronize text across files.  Each anchor matches each other in each file,

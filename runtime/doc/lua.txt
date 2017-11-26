@@ -359,7 +359,7 @@ numbers. To disambiguate these cases, we define:
 3. Table with string keys, at least one of which contains NUL byte, is also
    considered to be a dictionary, but this time it is converted to
    a |msgpack-special-map|.
-                                                             *lua-special-tbl*
+                                     *lua-special-tbl* *E5100* *E5101* *E5102*
 4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to

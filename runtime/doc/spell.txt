@@ -359,7 +359,7 @@ If there is a file with exactly the same name as the ".spl" file but ending in
 ".sug", that file will be used for giving better suggestions.  It isn't loaded
 before suggestions are made to reduce memory use.
 
-				    *E758* *E759* *E778* *E779* *E780* *E782*
+			    *E758* *E759* *E778* *E779* *E780* *E782* *E5042*
 When loading a spell file Vim checks that it is properly formatted.  If you
 get an error the file may be truncated, modified or intended for another Vim
 version.
