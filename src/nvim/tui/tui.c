@@ -23,6 +23,7 @@
 #include "nvim/map.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
+#include "nvim/option.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/loop.h"
@@ -166,6 +167,13 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
   return unibi_run(str, data->params, buf, len);
 }
 
+static void termname_set_event(void **argv)
+{
+  char *termname = argv[0];
+  set_tty_option("term", termname);
+  // Do not free termname, it is freed by set_tty_option.
+}
+
 static void terminfo_start(UI *ui)
 {
   TUIData *data = ui->data;
@@ -190,12 +198,20 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_style = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
-  // setup unibilium
+
+  // Set up unibilium/terminfo.
   const char *term = os_getenv("TERM");
   data->ut = unibi_from_env();
+  char *termname = NULL;
   if (!data->ut) {
-    data->ut = terminfo_from_builtin(term);
+    data->ut = terminfo_from_builtin(term, &termname);
+  } else {
+    termname = xstrdup(term);
   }
+  // Update 'term' option.
+  loop_schedule_deferred(&main_loop,
+                         event_create(termname_set_event, 1, termname));
+
   // None of the following work over SSH; see :help TERM .
   const char *colorterm = os_getenv("COLORTERM");
   const char *termprg = os_getenv("TERM_PROGRAM");
@@ -344,7 +360,7 @@ static void tui_scheduler(Event event, void *d)
 {
   UI *ui = d;
   TUIData *data = ui->data;
-  loop_schedule(data->loop, event);
+  loop_schedule(data->loop, event);  // `tui_loop` local to tui_main().
 }
 
 #ifdef UNIX

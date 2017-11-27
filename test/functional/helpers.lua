@@ -603,6 +603,15 @@ local function get_pathsep()
   return funcs.fnamemodify('.', ':p'):sub(-1)
 end
 
+-- Returns a valid, platform-independent $NVIM_LISTEN_ADDRESS.
+-- Useful for communicating with child instances.
+local function new_pipename()
+  -- HACK: Start a server temporarily, get the name, then stop it.
+  local pipename = nvim_eval('serverstart()')
+  funcs.serverstop(pipename)
+  return pipename
+end
+
 local function missing_provider(provider)
   if provider == 'ruby' then
     local prog = funcs['provider#' .. provider .. '#Detect']()
@@ -732,6 +741,7 @@ local module = {
   missing_provider = missing_provider,
   alter_slashes = alter_slashes,
   hexdump = hexdump,
+  new_pipename = new_pipename,
 }
 
 return function(after_each)
