@@ -4,7 +4,7 @@ local os = require('os')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command = helpers.command
 local eval, exc_exec = helpers.eval, helpers.exc_exec
-local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
+local feed_command, eq = helpers.feed_command, helpers.eq
 local curbufmeths = helpers.curbufmeths
 
 describe('colorscheme compatibility', function()
