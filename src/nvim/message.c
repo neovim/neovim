@@ -1307,7 +1307,7 @@ char *str2special_save(const char *const str, const bool replace_spaces,
   return (char *)ga.ga_data;
 }
 
-/// Convert character, replacing key one key code with printable representation
+/// Convert character, replacing key with printable representation.
 ///
 /// @param[in,out]  sp  String to convert. Is advanced to the next key code.
 /// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
@@ -1392,7 +1392,7 @@ void str2specialbuf(const char *sp, char *buf, size_t len)
   while (*sp) {
     const char *s = str2special(&sp, false, false);
     const size_t s_len = strlen(s);
-    if (s_len <= len) {
+    if (len <= s_len) {
       break;
     }
     memcpy(buf, s, s_len);
