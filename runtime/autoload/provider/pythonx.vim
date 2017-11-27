@@ -5,7 +5,7 @@ endif
 
 let s:loaded_pythonx_provider = 1
 
-let s:job_opts = {'rpc': v:true, 'stderr_buffered': v:true}
+let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
 
 function! provider#pythonx#Require(host) abort
   let ver = (a:host.orig_name ==# 'python') ? 2 : 3
@@ -21,17 +21,18 @@ function! provider#pythonx#Require(host) abort
   endfor
 
   try
-    let job = copy(s:job_opts)
-    let channel_id = jobstart(args, job)
+    let channel_id = jobstart(args, s:job_opts)
     if rpcrequest(channel_id, 'poll') ==# 'ok'
       return channel_id
     endif
   catch
     echomsg v:throwpoint
     echomsg v:exception
-    for row in job.stderr
+    for row in provider#get_stderr(channel_id)
       echomsg row
     endfor
+  finally
+    call provider#clear_stderr(channel_id)
   endtry
   throw remote#host#LoadErrorForHost(a:host.orig_name,
         \ '$NVIM_PYTHON_LOG_FILE')
