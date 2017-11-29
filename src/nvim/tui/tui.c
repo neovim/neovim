@@ -956,10 +956,9 @@ static void tui_scroll(UI *ui, Integer count)
     }
     cursor_goto(ui, saved_row, saved_col);
 
-    if (!scroll_clears_to_current_colour && grid->bg != -1) {
-      // Scrolling may leave wrong background in the cleared area on non-bge
-      // terminals. Update the cleared area of the terminal if its builtin
-      // scrolling facility was used and bg color is not the default.
+    if (!scroll_clears_to_current_colour) {
+      // Scrolling will leave wrong background in the cleared area on non-BCE
+      // terminals. Update the cleared area.
       clear_region(ui, clear_top, clear_bot, grid->left, grid->right);
     }
   } else {
