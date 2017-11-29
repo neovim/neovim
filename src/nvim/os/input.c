@@ -7,6 +7,10 @@
 
 #include <uv.h>
 
+#ifdef WIN32
+#include <Windows.h>
+#endif
+
 #include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
@@ -170,13 +174,78 @@ void input_disable_events(void)
   events_enabled--;
 }
 
+#ifdef WIN32
+// Hack to detect mintty, ported from vim
+// https://fossies.org/linux/vim/src/iscygpty.c
+// See https://github.com/BurntSushi/ripgrep/issues/94#issuecomment-261745480
+// for an explanation on why this works
+static bool msys_tty_on_handle(int fd)
+{
+  const int size = sizeof(FILE_NAME_INFO) + sizeof(WCHAR) * MAX_PATH;
+  WCHAR *p = NULL;
+
+  const HANDLE h = (HANDLE)_get_osfhandle(fd);
+  if (h == INVALID_HANDLE_VALUE) {
+    return false;
+  }
+  // Cygwin/msys's pty is a pipe.
+  if (GetFileType(h) != FILE_TYPE_PIPE) {
+    return false;
+  }
+  FILE_NAME_INFO *nameinfo = xmalloc(size);
+  if (nameinfo == NULL) {
+    return false;
+  }
+  // Check the name of the pipe:
+  // '\{cygwin,msys}-XXXXXXXXXXXXXXXX-ptyN-{from,to}-master'
+  if (GetFileInformationByHandleEx(h, FileNameInfo, nameinfo, size)) {
+    nameinfo->FileName[nameinfo->FileNameLength / sizeof(WCHAR)] = L'\0';
+    p = nameinfo->FileName;
+    if (wcsstr(p, L"\\cygwin-") == p) {
+      p += 8;
+    } else if (wcsstr(p, L"\\msys-") == p) {
+      p += 6;
+    } else {
+      p = NULL;
+    }
+    if (p != NULL) {
+      while (*p && isxdigit(*p)) {  // Skip 16-digit hexadecimal.
+        p++;
+      }
+      if (wcsstr(p, L"-pty") == p) {
+        p += 4;
+      } else {
+        p = NULL;
+      }
+    }
+    if (p != NULL) {
+      while (*p && isdigit(*p)) {  // Skip pty number.
+        p++;
+      }
+      if (wcsstr(p, L"-from-master") != p && wcsstr(p, L"-to-master") != p) {
+        p = NULL;
+      }
+    }
+  }
+  xfree(nameinfo);
+  return p != NULL;
+}
+#endif
+
 /// Test whether a file descriptor refers to a terminal.
 ///
 /// @param fd File descriptor.
 /// @return `true` if file descriptor refers to a terminal.
 bool os_isatty(int fd)
 {
-    return uv_guess_handle(fd) == UV_TTY;
+    if (uv_guess_handle(fd) == UV_TTY) {
+        return true;
+    }
+#ifdef WIN32
+    return msys_tty_on_handle(fd);
+#else
+    return false;
+#endif
 }
 
 size_t input_enqueue(String keys)
