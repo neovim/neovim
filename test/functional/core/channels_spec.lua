@@ -27,7 +27,7 @@ describe('channels', function()
     source(init)
   end)
 
-  it('can connect to socket', function()
+  pending('can connect to socket', function()
     local server = spawn(nvim_argv)
     set_session(server)
     local address = funcs.serverlist()[1]

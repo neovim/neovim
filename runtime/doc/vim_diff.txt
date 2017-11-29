@@ -334,9 +334,11 @@ terminal capabilities. Instead Nvim treats the terminal as any other UI. For
 example, 'guicursor' sets the terminal cursor style if possible.
 
 						  *'term'* *E529* *E530* *E531*
-The 'term' option has a fixed value, present only for script compatibility and
-intentionally not the same as any known terminal type name.  It should be a
-rare case in Nvim where one needs |term-dependent-settings|.
+'term' reflects the terminal type derived from |$TERM| and other environment
+checks.  For debugging only; not reliable during startup. >
+	:echo &term
+"builtin_x" means one of the |builtin-terms| was chosen, because the expected
+terminfo file was not found on the system.
 
 								*termcap*
 Nvim never uses the termcap database, only |terminfo| and |builtin-terms|.

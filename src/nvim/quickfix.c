@@ -570,7 +570,12 @@ static int qf_get_next_file_line(qfstate_T *state)
 {
   size_t growbuflen;
 
+retry:
+  errno = 0;
   if (fgets((char *)IObuff, IOSIZE, state->fd) == NULL) {
+    if (errno == EINTR) {
+        goto retry;
+    }
     return QF_END_OF_INPUT;
   }
 
@@ -590,8 +595,12 @@ static int qf_get_next_file_line(qfstate_T *state)
     growbuflen = state->linelen;
 
     for (;;) {
+      errno = 0;
       if (fgets((char *)state->growbuf + growbuflen,
                 (int)(state->growbufsiz - growbuflen), state->fd) == NULL) {
+        if (errno == EINTR) {
+          continue;
+        }
         break;
       }
       state->linelen = STRLEN(state->growbuf + growbuflen);
@@ -612,9 +621,14 @@ static int qf_get_next_file_line(qfstate_T *state)
     while (discard) {
       // The current line is longer than LINE_MAXLEN, continue reading but
       // discard everything until EOL or EOF is reached.
-      if (fgets((char *)IObuff, IOSIZE, state->fd) == NULL
-          || STRLEN(IObuff) < IOSIZE - 1
-          || IObuff[IOSIZE - 1] == '\n') {
+      errno = 0;
+      if (fgets((char *)IObuff, IOSIZE, state->fd) == NULL) {
+        if (errno == EINTR) {
+          continue;
+        }
+        break;
+      }
+      if (STRLEN(IObuff) < IOSIZE - 1 || IObuff[IOSIZE - 1] == '\n') {
         break;
       }
     }
