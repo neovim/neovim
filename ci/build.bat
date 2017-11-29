@@ -37,6 +37,9 @@ set PATH=C:\Ruby24\bin;%PATH%
 cmd /c gem.cmd install neovim || goto :error
 where.exe neovim-ruby-host.bat || goto :error
 
+cmd /c npm.cmd install -g neovim || goto :error
+where.exe neovim-node-host.cmd || goto :error
+
 mkdir .deps
 cd .deps
 cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..\third-party\ || goto :error
