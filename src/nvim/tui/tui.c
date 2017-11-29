@@ -23,6 +23,7 @@
 #include "nvim/map.h"
 #include "nvim/main.h"
 #include "nvim/memory.h"
+#include "nvim/option.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/event/loop.h"
@@ -60,20 +61,6 @@
 #else
 #define UNIBI_SET_NUM_VAR(var, num) (var).i = (num);
 #endif
-
-// Per the commentary in terminfo, only a minus sign is a true suffix
-// separator.
-bool terminfo_is_term_family(const char *term, const char *family)
-{
-  if (!term) {
-    return false;
-  }
-  size_t tlen = strlen(term);
-  size_t flen = strlen(family);
-  return tlen >= flen
-    && 0 == memcmp(term, family, flen) \
-    && ('\0' == term[flen] || '-' == term[flen]);
-}
 
 typedef struct {
   int top, bot, left, right;
@@ -180,6 +167,13 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
   return unibi_run(str, data->params, buf, len);
 }
 
+static void termname_set_event(void **argv)
+{
+  char *termname = argv[0];
+  set_tty_option("term", termname);
+  // Do not free termname, it is freed by set_tty_option.
+}
+
 static void terminfo_start(UI *ui)
 {
   TUIData *data = ui->data;
@@ -204,12 +198,20 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_style = -1;
   data->out_fd = 1;
   data->out_isatty = os_isatty(data->out_fd);
-  // setup unibilium
+
+  // Set up unibilium/terminfo.
   const char *term = os_getenv("TERM");
   data->ut = unibi_from_env();
+  char *termname = NULL;
   if (!data->ut) {
-    data->ut = load_builtin_terminfo(term);
+    data->ut = terminfo_from_builtin(term, &termname);
+  } else {
+    termname = xstrdup(term);
   }
+  // Update 'term' option.
+  loop_schedule_deferred(&main_loop,
+                         event_create(termname_set_event, 1, termname));
+
   // None of the following work over SSH; see :help TERM .
   const char *colorterm = os_getenv("COLORTERM");
   const char *termprg = os_getenv("TERM_PROGRAM");
@@ -358,7 +360,7 @@ static void tui_scheduler(Event event, void *d)
 {
   UI *ui = d;
   TUIData *data = ui->data;
-  loop_schedule(data->loop, event);
+  loop_schedule(data->loop, event);  // `tui_loop` local to tui_main().
 }
 
 #ifdef UNIX
@@ -954,9 +956,10 @@ static void tui_scroll(UI *ui, Integer count)
     }
     cursor_goto(ui, saved_row, saved_col);
 
-    if (!scroll_clears_to_current_colour) {
-      // This is required because scrolling will leave wrong background in the
-      // cleared area on non-bge terminals.
+    if (!scroll_clears_to_current_colour && grid->bg != -1) {
+      // Scrolling may leave wrong background in the cleared area on non-bge
+      // terminals. Update the cleared area of the terminal if its builtin
+      // scrolling facility was used and bg color is not the default.
       clear_region(ui, clear_top, clear_bot, grid->left, grid->right);
     }
   } else {
@@ -1248,11 +1251,9 @@ static int unibi_find_ext_str(unibi_term *ut, const char *name)
   return -1;
 }
 
-/// Several entries in terminfo are known to be deficient or outright wrong,
-/// unfortunately; and several terminal emulators falsely announce incorrect
-/// terminal types.  So patch the terminfo records after loading from an
-/// external or a built-in database.  In an ideal world, the real terminfo data
-/// would be correct and complete, and this function would be almost empty.
+/// Patches the terminfo records after loading from system or built-in db.
+/// Several entries in terminfo are known to be deficient or outright wrong;
+/// and several terminal emulators falsely announce incorrect terminal types.
 static void patch_terminfo_bugs(TUIData *data, const char *term,
                                 const char *colorterm, long vte_version,
                                 bool konsole, bool iterm_env)
@@ -1316,6 +1317,11 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       // set_cursor_style.
       fix_invisible[strlen(fix_invisible) - (sizeof LINUXSET1C - 1)] = 0;
     }
+  }
+
+  if (!true_xterm) {
+    // Cannot trust terminfo; safer to disable BCE. #7624
+    unibi_set_bool(ut, unibi_back_color_erase, false);
   }
 
   if (xterm) {
@@ -1411,11 +1417,9 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
 #define XTERM_SETAB_16 \
   "\x1b[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e39%;m"
 
-  // Terminals where there is actually 256-colour SGR support despite what
-  // the terminfo record may say.
+  // Terminals with 256-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 256) {
-    // See http://fedoraproject.org/wiki/Features/256_Color_Terminals for
-    // more on this.
+    // See http://fedoraproject.org/wiki/Features/256_Color_Terminals
     if (true_xterm || iterm || iterm_pretending_xterm) {
       unibi_set_num(ut, unibi_max_colors, 256);
       unibi_set_str(ut, unibi_set_a_foreground, XTERM_SETAF_256_COLON);
@@ -1431,8 +1435,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_str(ut, unibi_set_a_background, XTERM_SETAB_256);
     }
   }
-  // Terminals where there is actually 16-colour SGR support despite what
-  // the terminfo record may say.
+  // Terminals with 16-colour SGR support despite what terminfo says.
   if (unibi_get_num(ut, unibi_max_colors) < 16) {
     if (colorterm) {
       unibi_set_num(ut, unibi_max_colors, 16);
@@ -1441,9 +1444,8 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     }
   }
 
-  // Some terminals can not currently be trusted to report if they support
-  // DECSCUSR or not. So we need to have a blacklist for when we should not
-  // trust the reported features.
+  // Some terminals cannot be trusted to report DECSCUSR support. So we keep
+  // blacklist for when we should not trust the reported features.
   if (!((vte_version != 0 && vte_version < 3900) || konsole)) {
     // Dickey ncurses terminfo has included the Ss and Se capabilities,
     // pioneered by tmux, since 2011-07-14. So adding them to terminal types,
@@ -1644,7 +1646,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
 {
   uv_write_t req;
   uv_buf_t bufs[3];
-  uv_buf_t *bufp = bufs;
+  uv_buf_t *bufp = &bufs[0];
   TUIData *data = ui->data;
 
   if (data->bufpos <= 0 && data->busy == data->is_invisible) {

@@ -3,10 +3,14 @@
 
 // Built-in fallback terminfo entries.
 
+#include <stdbool.h>
+#include <string.h>
+
 #include <unibilium.h>
 
+#include "nvim/log.h"
+#include "nvim/memory.h"
 #include "nvim/tui/terminfo.h"
-#include "nvim/tui/tui.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/terminfo.c.generated.h"
@@ -75,49 +79,90 @@ static const signed char ansi_terminfo[] = {
   26,   1,  40,   0,  23,   0,  16,   0, 125,   1,  68,   2,  97, 110, 115, 105, 124,  97, 110, 115, 105,  47, 112,  99,  45, 116, 101, 114, 109,  32,  99, 111, 109, 112,  97, 116, 105,  98, 108, 101,  32, 119, 105, 116, 104,  32,  99, 111, 108, 111, 114,   0,   0,   1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   1,   1,   0,   0,   0,   0,   0,   0,   0,   1,   0,  80,   0,   8,   0,  24,   0,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,   8,   0,  64,   0,   3,   0,   0,   0,   4,   0,   6,   0,  -1,  -1,   8,   0,  13,   0,  20,   0,  24,   0,  28,   0,  -1,  -1,  39,   0,  56,   0,  60,   0,  -1,  -1,  64,   0,  -1,  -1,  -1,  -1,  68,   0,  -1,  -1,  72,   0,  -1,  -1,  76,   0,  80,   0,  -1,  -1,  -1,  -1,  84,   0,  90,   0,  95,   0,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1, 100,   0,  -1,  -1, 105,   0, 110,   0, 115,   0, 120,   0,-127,   0,-121,   0,  -1,  -1,  -1,  -1,  -1,  -1,-113,   0,-109,   0,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,-105,   0,  -1,  -1,-101,   0,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1, -99,   0,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1, -95,   0, -91,   0,  -1,  -1, -87,   0,  -1,  -1,  -1,  -1,  -1,  -1, -83,   0,  -1,  -1,  -1,  -1,  -1,  -1, -79,   0,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1, -75,   0,  -1,  -1, -70,   0, -61,   0, -52,   0, -43,   0, -34,   0, -25,   0, -16,   0,  -7,   0,   2,   1,  11,   1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  20,   1,  25,   1,  30,   1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  50,   1,  -1,  -1,  61,   1,  -1,  -1,  63,   1,-107,   1,  -1,  -1,-104,   1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,-100,   1,  -1,  -1, -37,   1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1, -33,   1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1, -28,   1, -17,   1, -12,   1,   7,   2,  11,   2,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  20,   2,  30,   2,  -1,  -1,  -1,  -1,  -1,  -1,  40,   2,  44,   2,  48,   2,  52,   2,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,  56,   2,  62,   2,  27,  91,  90,   0,   7,   0,  13,   0,  27,  91,  51, 103,   0,  27,  91,  72,  27,  91,  74,   0,  27,  91,  75,   0,  27,  91,  74,   0,  27,  91,  37, 105,  37, 112,  49,  37, 100,  71,   0,  27,  91,  37, 105,  37, 112,  49,  37, 100,  59,  37, 112,  50,  37, 100,  72,   0,  27,  91,  66,   0,  27,  91,  72,   0,  27,  91,  68,   0,  27,  91,  67,   0,  27,  91,  65,   0,  27,  91,  80,   0,  27,  91,  77,   0,  27,  91,  49,  49, 109,   0,  27,  91,  53, 109,   0,  27,  91,  49, 109,   0,  27,  91,  56, 109,   0,  27,  91,  55, 109,   0,  27,  91,  55, 109,   0,  27,  91,  52, 109,   0,  27,  91,  37, 112,  49,  37, 100,  88,   0,  27,  91,  49,  48, 109,   0,  27,  91,  48,  59,  49,  48, 109,   0,  27,  91, 109,   0,  27,  91, 109,   0,  27,  91,  76,   0,   8,   0,  27,  91,  66,   0,  27,  91,  72,   0,  27,  91,  76,   0,  27,  91,  68,   0,  27,  91,  67,   0,  27,  91,  65,   0,  13,  27,  91,  83,   0,  27,  91,  37, 112,  49,  37, 100,  80,   0,  27,  91,  37, 112,  49,  37, 100,  77,   0,  27,  91,  37, 112,  49,  37, 100,  66,   0,  27,  91,  37, 112,  49,  37, 100,  64,   0,  27,  91,  37, 112,  49,  37, 100,  83,   0,  27,  91,  37, 112,  49,  37, 100,  76,   0,  27,  91,  37, 112,  49,  37, 100,  68,   0,  27,  91,  37, 112,  49,  37, 100,  67,   0,  27,  91,  37, 112,  49,  37, 100,  84,   0,  27,  91,  37, 112,  49,  37, 100,  65,   0,  27,  91,  52, 105,   0,  27,  91,  53, 105,   0,  37, 112,  49,  37,  99,  27,  91,  37, 112,  50,  37, 123,  49, 125,  37,  45,  37, 100,  98,   0,  27,  91,  37, 105,  37, 112,  49,  37, 100, 100,   0,  10,   0,  27,  91,  48,  59,  49,  48,  37,  63,  37, 112,  49,  37, 116,  59,  55,  37,  59,  37,  63,  37, 112,  50,  37, 116,  59,  52,  37,  59,  37,  63,  37, 112,  51,  37, 116,  59,  55,  37,  59,  37,  63,  37, 112,  52,  37, 116,  59,  53,  37,  59,  37,  63,  37, 112,  54,  37, 116,  59,  49,  37,  59,  37,  63,  37, 112,  55,  37, 116,  59,  56,  37,  59,  37,  63,  37, 112,  57,  37, 116,  59,  49,  49,  37,  59, 109,   0,  27,  72,   0,  27,  91,  73,   0,  43,  16,  44,  17,  45,  24,  46,  25,  48, -37,  96,   4,  97, -79, 102,  -8, 103, -15, 104, -80, 106, -39, 107, -65, 108, -38, 109, -64, 110, -59, 111, 126, 112, -60, 113, -60, 114, -60, 115,  95, 116, -61, 117, -76, 118, -63, 119, -62, 120, -77, 121, -13, 122, -14, 123, -29, 124, -40, 125,-100, 126,  -2,   0,  27,  91,  90,   0,  27,  91,  49,  75,   0,  27,  91,  37, 105,  37, 100,  59,  37, 100,  82,   0,  27,  91,  54, 110,   0,  27,  91,  63,  37,  91,  59,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  93,  99,   0,  27,  91,  99,   0,  27,  91,  51,  57,  59,  52,  57, 109,   0,  27,  91,  51,  37, 112,  49,  37, 100, 109,   0,  27,  91,  52,  37, 112,  49,  37, 100, 109,   0,  27,  40,  66,   0,  27,  41,  66,   0,  27,  42,  66,   0,  27,  43,  66,   0,  27,  91,  49,  49, 109,   0,  27,  91,  49,  48, 109,   0
 };
 
-/// Load one of the built-in terminfo entries when unibilium has failed to
-/// load a terminfo record from an external database, as it does on termcap-
-/// -only systems.  We do not do any fancy recognition of xterm pretenders
-/// here.  An external terminfo database would not do that, and we want to
-/// behave as much like an external terminfo database as possible.
-unibi_term *load_builtin_terminfo(const char * term)
+bool terminfo_is_term_family(const char *term, const char *family)
+{
+  if (!term) {
+    return false;
+  }
+  size_t tlen = strlen(term);
+  size_t flen = strlen(family);
+  return tlen >= flen
+    && 0 == memcmp(term, family, flen) \
+    // Per the commentary in terminfo, minus sign is the suffix separator.
+    && ('\0' == term[flen] || '-' == term[flen]);
+}
+
+/// Loads a built-in terminfo db when we (unibilium) failed to load a terminfo
+/// record from the environment (termcap systems, unrecognized $TERM, …).
+/// We do not attempt to detect xterm pretenders here.
+///
+/// @param term $TERM value
+/// @param[out,allocated] termname decided builtin 'term' name
+/// @return [allocated] terminfo structure
+static unibi_term *terminfo_builtin(const char *term, char **termname)
 {
   if (terminfo_is_term_family(term, "xterm")) {
+    *termname = xstrdup("builtin_xterm");
     return unibi_from_mem((const char *)xterm_256colour_terminfo,
                           sizeof xterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "screen")) {
+    *termname = xstrdup("builtin_screen");
     return unibi_from_mem((const char *)screen_256colour_terminfo,
                           sizeof screen_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "tmux")) {
+    *termname = xstrdup("builtin_tmux");
     return unibi_from_mem((const char *)tmux_256colour_terminfo,
                           sizeof tmux_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "rxvt")) {
+    *termname = xstrdup("builtin_rxvt");
     return unibi_from_mem((const char *)rxvt_256colour_terminfo,
                           sizeof rxvt_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "putty")) {
+    *termname = xstrdup("builtin_putty");
     return unibi_from_mem((const char *)putty_256colour_terminfo,
                           sizeof putty_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "linux")) {
+    *termname = xstrdup("builtin_linux");
     return unibi_from_mem((const char *)linux_16colour_terminfo,
                           sizeof linux_16colour_terminfo);
   } else if (terminfo_is_term_family(term, "interix")) {
+    *termname = xstrdup("builtin_interix");
     return unibi_from_mem((const char *)interix_8colour_terminfo,
                           sizeof interix_8colour_terminfo);
   } else if (terminfo_is_term_family(term, "iterm")
              || terminfo_is_term_family(term, "iterm2")
              || terminfo_is_term_family(term, "iTerm.app")
              || terminfo_is_term_family(term, "iTerm2.app")) {
+    *termname = xstrdup("builtin_iterm");
     return unibi_from_mem((const char *)iterm_256colour_terminfo,
                           sizeof iterm_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "st")) {
+    *termname = xstrdup("builtin_st");
     return unibi_from_mem((const char *)st_256colour_terminfo,
                           sizeof st_256colour_terminfo);
   } else if (terminfo_is_term_family(term, "gnome")
              || terminfo_is_term_family(term, "vte")) {
+    *termname = xstrdup("builtin_vte");
     return unibi_from_mem((const char *)vte_256colour_terminfo,
                           sizeof vte_256colour_terminfo);
   } else {
+    *termname = xstrdup("builtin_ansi");
     return unibi_from_mem((const char *)ansi_terminfo,
                           sizeof ansi_terminfo);
   }
+}
+
+/// @param term $TERM value
+/// @param[out,allocated] termname decided builtin 'term' name
+/// @return [allocated] terminfo structure
+unibi_term *terminfo_from_builtin(const char *term, char **termname)
+{
+  unibi_term *ut = terminfo_builtin(term, termname);
+  if (*termname == NULL) {
+    *termname = xstrdup("builtin_?");
+  }
+  // Disable BCE by default (for built-in terminfos). #7624
+  // https://github.com/kovidgoyal/kitty/issues/160#issuecomment-346470545
+  unibi_set_bool(ut, unibi_back_color_erase, false);
+  return ut;
 }

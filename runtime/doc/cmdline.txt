@@ -1088,7 +1088,7 @@ Another example: >
 	:au CmdwinEnter [/?]  startinsert
 This will make Vim start in Insert mode in the command-line window.
 
-						*cmdwin-char*
+					*cmdline-char* *cmdwin-char*
 The character used for the pattern indicates the type of command-line:
 	:	normal Ex command
 	>	debug mode command |debug-mode|

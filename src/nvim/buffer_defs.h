@@ -603,6 +603,7 @@ struct file_buffer {
   char_u *b_p_bt;               ///< 'buftype'
   int b_has_qf_entry;           ///< quickfix exists for buffer
   int b_p_bl;                   ///< 'buflisted'
+  long b_p_channel;             ///< 'channel'
   int b_p_cin;                  ///< 'cindent'
   char_u *b_p_cino;             ///< 'cinoptions'
   char_u *b_p_cink;             ///< 'cinkeys'

@@ -4,7 +4,7 @@ local os = require('os')
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
 local command = helpers.command
 local eval, exc_exec = helpers.eval, helpers.exc_exec
-local feed_command, request, eq = helpers.feed_command, helpers.request, helpers.eq
+local feed_command, eq = helpers.feed_command, helpers.eq
 local curbufmeths = helpers.curbufmeths
 
 describe('colorscheme compatibility', function()
@@ -14,8 +14,6 @@ describe('colorscheme compatibility', function()
 
   it('t_Co is set to 256 by default', function()
     eq('256', eval('&t_Co'))
-    request('nvim_set_option', 't_Co', '88')
-    eq('88', eval('&t_Co'))
   end)
 end)
 

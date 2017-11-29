@@ -37,7 +37,7 @@ typedef enum {
 static Stream read_stream = {.closed = true};
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
-static int global_fd = 0;
+static int global_fd = -1;
 static int events_enabled = 0;
 static bool blocking = false;
 

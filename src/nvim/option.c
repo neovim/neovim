@@ -105,6 +105,9 @@ typedef enum {
  */
 #define VAR_WIN ((char_u *)-1)
 
+static char *p_term = NULL;
+static char *p_ttytype = NULL;
+
 /*
  * These are the global values for options which are also local to a buffer.
  * Only to be used in option.c!
@@ -115,6 +118,7 @@ static int p_bomb;
 static char_u   *p_bh;
 static char_u   *p_bt;
 static int p_bl;
+static long p_channel;
 static int p_ci;
 static int p_cin;
 static char_u   *p_cink;
@@ -4193,6 +4197,9 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
       curbuf->b_p_imsearch = B_IMODE_NONE;
     }
     p_imsearch = curbuf->b_p_imsearch;
+  } else if (pp == &p_channel || pp == &curbuf->b_p_channel) {
+    errmsg = e_invarg;
+    *pp = old_value;
   }
   /* if 'titlelen' has changed, redraw the title */
   else if (pp == &p_titlelen) {
@@ -4526,13 +4533,17 @@ int findoption_len(const char *const arg, const size_t len)
 bool is_tty_option(const char *name)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (name[0] == 't' && name[1] == '_') || strcmp(name, "term") == 0;
+  return (name[0] == 't' && name[1] == '_')
+    || strequal(name, "term")
+    || strequal(name, "ttytype");
 }
 
 #define TCO_BUFFER_SIZE 8
+/// @param name TUI-related option
+/// @param[out,allocated] value option string value
 bool get_tty_option(char *name, char **value)
 {
-  if (!strcmp(name, "t_Co")) {
+  if (strequal(name, "t_Co")) {
     if (value) {
       if (t_colors <= 1) {
         *value = xstrdup("");
@@ -4544,9 +4555,16 @@ bool get_tty_option(char *name, char **value)
     return true;
   }
 
-  if (!strcmp(name, "term") || !strcmp(name, "ttytype")) {
+  if (strequal(name, "term")) {
     if (value) {
-      *value = xstrdup("nvim");
+      *value = p_term ? xstrdup(p_term) : xstrdup("nvim");
+    }
+    return true;
+  }
+
+  if (strequal(name, "ttytype")) {
+    if (value) {
+      *value = p_ttytype ? xstrdup(p_ttytype) : xstrdup("nvim");
     }
     return true;
   }
@@ -4562,25 +4580,25 @@ bool get_tty_option(char *name, char **value)
   return false;
 }
 
-bool set_tty_option(const char *name, const char *value)
+bool set_tty_option(const char *name, char *value)
 {
-  if (!strcmp(name, "t_Co")) {
-    int colors = atoi(value);
-
-    // Only reinitialize colors if t_Co value has really changed to
-    // avoid expensive reload of colorscheme if t_Co is set to the
-    // same value multiple times
-    if (colors != t_colors) {
-      t_colors = colors;
-      // We now have a different color setup, initialize it again.
-      init_highlight(true, false);
+  if (strequal(name, "term")) {
+    if (p_term) {
+      xfree(p_term);
     }
-
+    p_term = value;
     return true;
   }
 
-  return (is_tty_option(name) || !strcmp(name, "term")
-          || !strcmp(name, "ttytype"));
+  if (strequal(name, "ttytype")) {
+    if (p_ttytype) {
+      xfree(p_ttytype);
+    }
+    p_ttytype = value;
+    return true;
+  }
+
+  return false;
 }
 
 /// Find index for an option
@@ -4593,21 +4611,18 @@ static int findoption(const char *const arg)
   return findoption_len(arg, strlen(arg));
 }
 
-/*
- * Get the value for an option.
- *
- * Returns:
- * Number or Toggle option: 1, *numval gets value.
- *	     String option: 0, *stringval gets allocated string.
- * Hidden Number or Toggle option: -1.
- *	     hidden String option: -2.
- *		   unknown option: -3.
- */
-int 
-get_option_value (
+/// Gets the value for an option.
+///
+/// @returns:
+/// Number or Toggle option: 1, *numval gets value.
+///           String option: 0, *stringval gets allocated string.
+/// Hidden Number or Toggle option: -1.
+///           hidden String option: -2.
+///                 unknown option: -3.
+int get_option_value(
     char_u *name,
     long *numval,
-    char_u **stringval,            /* NULL when only checking existence */
+    char_u **stringval,            ///< NULL when only checking existence
     int opt_flags
 )
 {
@@ -4615,32 +4630,31 @@ get_option_value (
     return 0;
   }
 
-  int opt_idx;
-  char_u      *varp;
-
-  opt_idx = findoption((const char *)name);
+  int opt_idx = findoption((const char *)name);
   if (opt_idx < 0) {  // Unknown option.
     return -3;
   }
 
-  varp = get_varp_scope(&(options[opt_idx]), opt_flags);
+  char_u *varp = get_varp_scope(&(options[opt_idx]), opt_flags);
 
   if (options[opt_idx].flags & P_STRING) {
-    if (varp == NULL)                       /* hidden option */
+    if (varp == NULL) {  // hidden option
       return -2;
+    }
     if (stringval != NULL) {
       *stringval = vim_strsave(*(char_u **)(varp));
     }
     return 0;
   }
 
-  if (varp == NULL)                 /* hidden option */
+  if (varp == NULL) {  // hidden option
     return -1;
-  if (options[opt_idx].flags & P_NUM)
+  }
+  if (options[opt_idx].flags & P_NUM) {
     *numval = *(long *)varp;
-  else {
-    /* Special case: 'modified' is b_changed, but we also want to consider
-     * it set when 'ff' or 'fenc' changed. */
+  } else {
+    // Special case: 'modified' is b_changed, but we also want to consider
+    // it set when 'ff' or 'fenc' changed.
     if ((int *)varp == &curbuf->b_changed) {
       *numval = curbufIsChanged();
     } else {
@@ -4787,8 +4801,8 @@ char *set_option_value(const char *const name, const long number,
                        const char *const string, const int opt_flags)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (set_tty_option(name, string)) {
-    return NULL;
+  if (is_tty_option(name)) {
+    return NULL;  // Fail silently; many old vimrcs set t_xx options.
   }
 
   int opt_idx;
@@ -5472,6 +5486,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_BH:     return (char_u *)&(curbuf->b_p_bh);
   case PV_BT:     return (char_u *)&(curbuf->b_p_bt);
   case PV_BL:     return (char_u *)&(curbuf->b_p_bl);
+  case PV_CHANNEL:return (char_u *)&(curbuf->b_p_channel);
   case PV_CI:     return (char_u *)&(curbuf->b_p_ci);
   case PV_CIN:    return (char_u *)&(curbuf->b_p_cin);
   case PV_CINK:   return (char_u *)&(curbuf->b_p_cink);
@@ -5773,6 +5788,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_nf = vim_strsave(p_nf);
       buf->b_p_mps = vim_strsave(p_mps);
       buf->b_p_si = p_si;
+      buf->b_p_channel = 0;
       buf->b_p_ci = p_ci;
       buf->b_p_cin = p_cin;
       buf->b_p_cink = vim_strsave(p_cink);

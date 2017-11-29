@@ -351,6 +351,8 @@ argument.
 
 							*--headless*
 --headless 	Do not start the built-in UI.
+                See |channel-stdio| for how to use stdio for other purposes
+                instead.
 		See also |silent-mode|, which does start a (limited) UI.
 
 ==============================================================================

@@ -721,7 +721,7 @@ void nvim_subscribe(uint64_t channel_id, String event)
   char e[METHOD_MAXLEN + 1];
   memcpy(e, event.data, length);
   e[length] = NUL;
-  channel_subscribe(channel_id, e);
+  rpc_subscribe(channel_id, e);
 }
 
 /// Unsubscribes to event broadcasts
@@ -737,7 +737,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
   char e[METHOD_MAXLEN + 1];
   memcpy(e, event.data, length);
   e[length] = NUL;
-  channel_unsubscribe(channel_id, e);
+  rpc_unsubscribe(channel_id, e);
 }
 
 Integer nvim_get_color_by_name(String name)

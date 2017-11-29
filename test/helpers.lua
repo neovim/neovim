@@ -225,21 +225,8 @@ local function check_cores(app, force)
     local esigns = ('='):rep(len / 2)
     out:write(('\n%s Core file %s %s\n'):format(esigns, core, esigns))
     out:flush()
-    local pipe = io.popen(
-        db_cmd:gsub('%$_NVIM_TEST_APP', app):gsub('%$_NVIM_TEST_CORE', core)
-        .. ' 2>&1', 'r')
-    if pipe then
-      local bt = pipe:read('*a')
-      if bt then
-        out:write(bt)
-        out:write('\n')
-      else
-        out:write('Failed to read from the pipe\n')
-      end
-    else
-      out:write('Failed to create pipe\n')
-    end
-    out:flush()
+    os.execute(db_cmd:gsub('%$_NVIM_TEST_APP', app):gsub('%$_NVIM_TEST_CORE', core) .. ' 2>&1')
+    out:write('\n')
     found_cores = found_cores + 1
     os.remove(core)
   end
