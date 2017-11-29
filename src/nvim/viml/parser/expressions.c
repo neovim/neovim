@@ -386,13 +386,11 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     }
 
 #define ISWORD_OR_AUTOLOAD(x) \
-      (ASCII_ISALNUM(x) || (x) == AUTOLOAD_CHAR || (x) == '_')
-#define ISWORD(x) \
-      (ASCII_ISALNUM(x) || (x) == '_')
+      (ascii_isident(x) || (x) == AUTOLOAD_CHAR)
 
     // Environment variable.
     case '$': {
-      CHARREG(kExprLexEnv, ISWORD);
+      CHARREG(kExprLexEnv, ascii_isident);
       break;
     }
 
@@ -408,7 +406,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     case '_': {
       ret.data.var.scope = 0;
       ret.data.var.autoload = false;
-      CHARREG(kExprLexPlainIdentifier, ISWORD);
+      CHARREG(kExprLexPlainIdentifier, ascii_isident);
       // "is" and "isnot" operators.
       if (!(flags & kELFlagIsNotCmp)
           && ((ret.len == 2 && memcmp(pline.data, "is", 2) == 0)
@@ -445,7 +443,6 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       break;
     }
 
-#undef ISWORD
 #undef ISWORD_OR_AUTOLOAD
 #undef CHARREG
 

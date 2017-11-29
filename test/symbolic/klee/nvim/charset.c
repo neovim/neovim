@@ -6,11 +6,6 @@
 #include "nvim/eval/typval.h"
 #include "nvim/vim.h"
 
-bool vim_isIDc(int c)
-{
-  return ASCII_ISALNUM(c);
-}
-
 int hex2nr(int c)
 {
   if ((c >= 'a') && (c <= 'f')) {

@@ -2,6 +2,7 @@
 
 #include "nvim/types.h"
 #include "nvim/keymap.h"
+#include "nvim/ascii.h"
 #include "nvim/eval/typval.h"
 
 #define MOD_KEYS_ENTRY_SIZE 5
@@ -294,12 +295,12 @@ int get_special_key_code(const char_u *name)
   for (int i = 0; key_names_table[i].name != NULL; i++) {
     const char *const table_name = key_names_table[i].name;
     int j;
-    for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++) {
+    for (j = 0; ascii_isident(name[j]) && table_name[j] != NUL; j++) {
       if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j])) {
         break;
       }
     }
-    if (!vim_isIDc(name[j]) && table_name[j] == NUL) {
+    if (!ascii_isident(name[j]) && table_name[j] == NUL) {
       return key_names_table[i].key;
     }
   }
@@ -386,7 +387,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
 
   // Find end of modifier list
   last_dash = src;
-  for (bp = src + 1; bp <= end && (*bp == '-' || vim_isIDc(*bp)); bp++) {
+  for (bp = src + 1; bp <= end && (*bp == '-' || ascii_isident(*bp)); bp++) {
     if (*bp == '-') {
       last_dash = bp;
       if (bp + 1 <= end) {

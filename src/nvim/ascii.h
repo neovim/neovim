@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include "nvim/macros.h"
 #include "nvim/func_attr.h"
 #include "nvim/os/os_defs.h"
 
@@ -98,6 +99,10 @@ static inline bool ascii_isxdigit(int)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
 
+static inline bool ascii_isident(int)
+  REAL_FATTR_CONST
+  REAL_FATTR_ALWAYS_INLINE;
+
 static inline bool ascii_isbdigit(int)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
@@ -136,6 +141,14 @@ static inline bool ascii_isxdigit(int c)
   return (c >= '0' && c <= '9')
          || (c >= 'a' && c <= 'f')
          || (c >= 'A' && c <= 'F');
+}
+
+/// Checks if `c` is an “identifier” character
+///
+/// That is, whether it is alphanumeric character or underscore.
+static inline bool ascii_isident(const int c)
+{
+  return ASCII_ISALNUM(c) || c == '_';
 }
 
 /// Checks if `c` is a binary digit, that is, 0-1.
