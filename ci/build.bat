@@ -33,6 +33,10 @@ set PATH=C:\Python35;C:\Python27;%PATH%
 python  -c "import neovim; print(str(neovim))" || goto :error
 python3 -c "import neovim; print(str(neovim))" || goto :error
 
+set PATH=C:\Ruby24\bin;%PATH%
+cmd /c gem.cmd install neovim || goto :error
+where.exe neovim-ruby-host.bat || goto :error
+
 mkdir .deps
 cd .deps
 cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo ..\third-party\ || goto :error
