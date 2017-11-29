@@ -1237,27 +1237,24 @@ void msg_make(char_u *arg)
   }
 }
 
-/*
- * Output the string 'str' upto a NUL character.
- * Return the number of characters it takes on the screen.
- *
- * If K_SPECIAL is encountered, then it is taken in conjunction with the
- * following character and shown as <F1>, <S-Up> etc.  Any other character
- * which is not printable shown in <> form.
- * If 'from' is TRUE (lhs of a mapping), a space is shown as <Space>.
- * If a character is displayed in one of these special ways, is also
- * highlighted (its highlight name is '8' in the p_hl variable).
- * Otherwise characters are not highlighted.
- * This function is used to show mappings, where we want to see how to type
- * the character/string -- webb
- */
-int
-msg_outtrans_special (
-    char_u *strstart,
-    int from               /* TRUE for lhs of a mapping */
+/// Output the string 'str' upto a NUL character.
+/// Return the number of characters it takes on the screen.
+///
+/// If K_SPECIAL is encountered, then it is taken in conjunction with the
+/// following character and shown as <F1>, <S-Up> etc.  Any other character
+/// which is not printable shown in <> form.
+/// If 'from' is TRUE (lhs of a mapping), a space is shown as <Space>.
+/// If a character is displayed in one of these special ways, is also
+/// highlighted (its highlight name is '8' in the p_hl variable).
+/// Otherwise characters are not highlighted.
+/// This function is used to show mappings, where we want to see how to type
+/// the character/string -- webb
+int msg_outtrans_special(
+    const char_u *strstart,
+    int from               ///< true for LHS of a mapping
 )
 {
-  char_u      *str = strstart;
+  const char_u *str = strstart;
   int retval = 0;
   int attr;
 
