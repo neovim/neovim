@@ -5,8 +5,32 @@ let g:loaded_node_provider = 1
 
 let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
 
+" Support for --inspect-brk requires node 6.12+ or 7.6+ or 8+
+" Return 1 if it is supported
+" Return 0 otherwise
+function! provider#node#can_inspect()
+  if !executable('node')
+    return 0
+  endif
+  let node_v = get(split(system(['node', '-v']), "\n"), 0, '')
+  if v:shell_error || node_v[0] !=# 'v'
+    return 0
+  endif
+  " [major, minor, patch]
+  let node_v = split(node_v[1:], '\.')
+  return len(node_v) == 3 && (
+  \ (node_v[0] > 7) ||
+  \ (node_v[0] == 7 && node_v[1] >= 6) ||
+  \ (node_v[0] == 6 && node_v[1] >= 12)
+  \ )
+endfunction
+
 function! provider#node#Detect() abort
-  return has('win32') ? exepath('neovim-node-host.cmd') : exepath('neovim-node-host')
+  let global_modules = get(split(system('npm root -g'), "\n"), 0, '')
+  if v:shell_error || !isdirectory(global_modules)
+    return ''
+  endif
+  return glob(global_modules . '/neovim/bin/cli.js')
 endfunction
 
 function! provider#node#Prog()
@@ -19,17 +43,13 @@ function! provider#node#Require(host) abort
     return
   endif
 
-  if has('win32')
-    let args = provider#node#Prog()
-  else
-    let args = ['node']
+  let args = ['node']
 
-    if !empty($NVIM_NODE_HOST_DEBUG)
-      call add(args, '--inspect-brk')
-    endif
-
-    call add(args , provider#node#Prog())
+  if !empty($NVIM_NODE_HOST_DEBUG) && provider#node#can_inspect()
+    call add(args, '--inspect-brk')
   endif
+
+  call add(args, provider#node#Prog())
 
   try
     let channel_id = jobstart(args, s:job_opts)

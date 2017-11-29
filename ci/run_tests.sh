@@ -23,6 +23,7 @@ if test "$CLANG_SANITIZER" != "TSAN" ; then
   # Additional threads are only created when the builtin UI starts, which
   # doesn't happen in the unit/functional tests
   run_test run_unittests
+  export NODE_PATH="$(npm root -g)"
   run_test run_functionaltests
 fi
 run_test run_oldtests
