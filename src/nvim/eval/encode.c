@@ -316,7 +316,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
-      switch (fpclassify(flt_)) { \
+      switch (fpclassify((double)flt_)) { \
         case FP_NAN: { \
           ga_concat(gap, (char_u *) "str2float('nan')"); \
           break; \
