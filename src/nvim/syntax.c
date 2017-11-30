@@ -6025,204 +6025,204 @@ const char *const highlight_init_cmdline[] = {
   // XXX When modifying a list modify it in both valid and invalid halfs.
   // TODO(ZyX-I): merge valid and invalid groups via a macros.
 
-  // NVimInternalError should appear only when highlighter has a bug.
-  "NVimInternalError ctermfg=Red ctermbg=Red guifg=Red guibg=Red",
+  // NvimInternalError should appear only when highlighter has a bug.
+  "NvimInternalError ctermfg=Red ctermbg=Red guifg=Red guibg=Red",
 
   // Highlight groups (links) used by parser:
 
-  "default link NVimAssignment Operator",
-  "default link NVimPlainAssignment NVimAssignment",
-  "default link NVimAugmentedAssignment NVimAssignment",
-  "default link NVimAssignmentWithAddition NVimAugmentedAssignment",
-  "default link NVimAssignmentWithSubtraction NVimAugmentedAssignment",
-  "default link NVimAssignmentWithConcatenation NVimAugmentedAssignment",
+  "default link NvimAssignment Operator",
+  "default link NvimPlainAssignment NvimAssignment",
+  "default link NvimAugmentedAssignment NvimAssignment",
+  "default link NvimAssignmentWithAddition NvimAugmentedAssignment",
+  "default link NvimAssignmentWithSubtraction NvimAugmentedAssignment",
+  "default link NvimAssignmentWithConcatenation NvimAugmentedAssignment",
 
-  "default link NVimOperator Operator",
+  "default link NvimOperator Operator",
 
-  "default link NVimUnaryOperator NVimOperator",
-  "default link NVimUnaryPlus NVimUnaryOperator",
-  "default link NVimUnaryMinus NVimUnaryOperator",
-  "default link NVimNot NVimUnaryOperator",
+  "default link NvimUnaryOperator NvimOperator",
+  "default link NvimUnaryPlus NvimUnaryOperator",
+  "default link NvimUnaryMinus NvimUnaryOperator",
+  "default link NvimNot NvimUnaryOperator",
 
-  "default link NVimBinaryOperator NVimOperator",
-  "default link NVimComparison NVimBinaryOperator",
-  "default link NVimComparisonModifier NVimComparison",
-  "default link NVimBinaryPlus NVimBinaryOperator",
-  "default link NVimBinaryMinus NVimBinaryOperator",
-  "default link NVimConcat NVimBinaryOperator",
-  "default link NVimConcatOrSubscript NVimConcat",
-  "default link NVimOr NVimBinaryOperator",
-  "default link NVimAnd NVimBinaryOperator",
-  "default link NVimMultiplication NVimBinaryOperator",
-  "default link NVimDivision NVimBinaryOperator",
-  "default link NVimMod NVimBinaryOperator",
+  "default link NvimBinaryOperator NvimOperator",
+  "default link NvimComparison NvimBinaryOperator",
+  "default link NvimComparisonModifier NvimComparison",
+  "default link NvimBinaryPlus NvimBinaryOperator",
+  "default link NvimBinaryMinus NvimBinaryOperator",
+  "default link NvimConcat NvimBinaryOperator",
+  "default link NvimConcatOrSubscript NvimConcat",
+  "default link NvimOr NvimBinaryOperator",
+  "default link NvimAnd NvimBinaryOperator",
+  "default link NvimMultiplication NvimBinaryOperator",
+  "default link NvimDivision NvimBinaryOperator",
+  "default link NvimMod NvimBinaryOperator",
 
-  "default link NVimTernary NVimOperator",
-  "default link NVimTernaryColon NVimTernary",
+  "default link NvimTernary NvimOperator",
+  "default link NvimTernaryColon NvimTernary",
 
-  "default link NVimParenthesis Delimiter",
-  "default link NVimLambda NVimParenthesis",
-  "default link NVimNestingParenthesis NVimParenthesis",
-  "default link NVimCallingParenthesis NVimParenthesis",
+  "default link NvimParenthesis Delimiter",
+  "default link NvimLambda NvimParenthesis",
+  "default link NvimNestingParenthesis NvimParenthesis",
+  "default link NvimCallingParenthesis NvimParenthesis",
 
-  "default link NVimSubscript NVimParenthesis",
-  "default link NVimSubscriptBracket NVimSubscript",
-  "default link NVimSubscriptColon NVimSubscript",
-  "default link NVimCurly NVimSubscript",
+  "default link NvimSubscript NvimParenthesis",
+  "default link NvimSubscriptBracket NvimSubscript",
+  "default link NvimSubscriptColon NvimSubscript",
+  "default link NvimCurly NvimSubscript",
 
-  "default link NVimContainer NVimParenthesis",
-  "default link NVimDict NVimContainer",
-  "default link NVimList NVimContainer",
+  "default link NvimContainer NvimParenthesis",
+  "default link NvimDict NvimContainer",
+  "default link NvimList NvimContainer",
 
-  "default link NVimIdentifier Identifier",
-  "default link NVimIdentifierScope NVimIdentifier",
-  "default link NVimIdentifierScopeDelimiter NVimIdentifier",
-  "default link NVimIdentifierName NVimIdentifier",
-  "default link NVimIdentifierKey NVimIdentifier",
+  "default link NvimIdentifier Identifier",
+  "default link NvimIdentifierScope NvimIdentifier",
+  "default link NvimIdentifierScopeDelimiter NvimIdentifier",
+  "default link NvimIdentifierName NvimIdentifier",
+  "default link NvimIdentifierKey NvimIdentifier",
 
-  "default link NVimColon Delimiter",
-  "default link NVimComma Delimiter",
-  "default link NVimArrow Delimiter",
+  "default link NvimColon Delimiter",
+  "default link NvimComma Delimiter",
+  "default link NvimArrow Delimiter",
 
-  "default link NVimRegister SpecialChar",
-  "default link NVimNumber Number",
-  "default link NVimFloat NVimNumber",
-  "default link NVimNumberPrefix Type",
+  "default link NvimRegister SpecialChar",
+  "default link NvimNumber Number",
+  "default link NvimFloat NvimNumber",
+  "default link NvimNumberPrefix Type",
 
-  "default link NVimOptionSigil Type",
-  "default link NVimOptionName NVimIdentifier",
-  "default link NVimOptionScope NVimIdentifierScope",
-  "default link NVimOptionScopeDelimiter NVimIdentifierScopeDelimiter",
+  "default link NvimOptionSigil Type",
+  "default link NvimOptionName NvimIdentifier",
+  "default link NvimOptionScope NvimIdentifierScope",
+  "default link NvimOptionScopeDelimiter NvimIdentifierScopeDelimiter",
 
-  "default link NVimEnvironmentSigil NVimOptionSigil",
-  "default link NVimEnvironmentName NVimIdentifier",
+  "default link NvimEnvironmentSigil NvimOptionSigil",
+  "default link NvimEnvironmentName NvimIdentifier",
 
-  "default link NVimString String",
-  "default link NVimStringBody NVimString",
-  "default link NVimStringQuote NVimString",
-  "default link NVimStringSpecial SpecialChar",
+  "default link NvimString String",
+  "default link NvimStringBody NvimString",
+  "default link NvimStringQuote NvimString",
+  "default link NvimStringSpecial SpecialChar",
 
-  "default link NVimSingleQuote NVimStringQuote",
-  "default link NVimSingleQuotedBody NVimStringBody",
-  "default link NVimSingleQuotedQuote NVimStringSpecial",
+  "default link NvimSingleQuote NvimStringQuote",
+  "default link NvimSingleQuotedBody NvimStringBody",
+  "default link NvimSingleQuotedQuote NvimStringSpecial",
 
-  "default link NVimDoubleQuote NVimStringQuote",
-  "default link NVimDoubleQuotedBody NVimStringBody",
-  "default link NVimDoubleQuotedEscape NVimStringSpecial",
+  "default link NvimDoubleQuote NvimStringQuote",
+  "default link NvimDoubleQuotedBody NvimStringBody",
+  "default link NvimDoubleQuotedEscape NvimStringSpecial",
 
-  "default link NVimFigureBrace NVimInternalError",
-  "default link NVimSingleQuotedUnknownEscape NVimInternalError",
+  "default link NvimFigureBrace NvimInternalError",
+  "default link NvimSingleQuotedUnknownEscape NvimInternalError",
 
-  "default link NVimSpacing Normal",
+  "default link NvimSpacing Normal",
 
-  // NVimInvalid groups:
+  // NvimInvalid groups:
 
-  "default link NVimInvalidSingleQuotedUnknownEscape NVimInternalError",
+  "default link NvimInvalidSingleQuotedUnknownEscape NvimInternalError",
 
-  "default link NVimInvalid Error",
+  "default link NvimInvalid Error",
 
-  "default link NVimInvalidAssignment NVimInvalid",
-  "default link NVimInvalidPlainAssignment NVimInvalidAssignment",
-  "default link NVimInvalidAugmentedAssignment NVimInvalidAssignment",
-  "default link NVimInvalidAssignmentWithAddition "
-      "NVimInvalidAugmentedAssignment",
-  "default link NVimInvalidAssignmentWithSubtraction "
-      "NVimInvalidAugmentedAssignment",
-  "default link NVimInvalidAssignmentWithConcatenation "
-      "NVimInvalidAugmentedAssignment",
+  "default link NvimInvalidAssignment NvimInvalid",
+  "default link NvimInvalidPlainAssignment NvimInvalidAssignment",
+  "default link NvimInvalidAugmentedAssignment NvimInvalidAssignment",
+  "default link NvimInvalidAssignmentWithAddition "
+      "NvimInvalidAugmentedAssignment",
+  "default link NvimInvalidAssignmentWithSubtraction "
+      "NvimInvalidAugmentedAssignment",
+  "default link NvimInvalidAssignmentWithConcatenation "
+      "NvimInvalidAugmentedAssignment",
 
-  "default link NVimInvalidOperator NVimInvalid",
+  "default link NvimInvalidOperator NvimInvalid",
 
-  "default link NVimInvalidUnaryOperator NVimInvalidOperator",
-  "default link NVimInvalidUnaryPlus NVimInvalidUnaryOperator",
-  "default link NVimInvalidUnaryMinus NVimInvalidUnaryOperator",
-  "default link NVimInvalidNot NVimInvalidUnaryOperator",
+  "default link NvimInvalidUnaryOperator NvimInvalidOperator",
+  "default link NvimInvalidUnaryPlus NvimInvalidUnaryOperator",
+  "default link NvimInvalidUnaryMinus NvimInvalidUnaryOperator",
+  "default link NvimInvalidNot NvimInvalidUnaryOperator",
 
-  "default link NVimInvalidBinaryOperator NVimInvalidOperator",
-  "default link NVimInvalidComparison NVimInvalidBinaryOperator",
-  "default link NVimInvalidComparisonModifier NVimInvalidComparison",
-  "default link NVimInvalidBinaryPlus NVimInvalidBinaryOperator",
-  "default link NVimInvalidBinaryMinus NVimInvalidBinaryOperator",
-  "default link NVimInvalidConcat NVimInvalidBinaryOperator",
-  "default link NVimInvalidConcatOrSubscript NVimInvalidConcat",
-  "default link NVimInvalidOr NVimInvalidBinaryOperator",
-  "default link NVimInvalidAnd NVimInvalidBinaryOperator",
-  "default link NVimInvalidMultiplication NVimInvalidBinaryOperator",
-  "default link NVimInvalidDivision NVimInvalidBinaryOperator",
-  "default link NVimInvalidMod NVimInvalidBinaryOperator",
+  "default link NvimInvalidBinaryOperator NvimInvalidOperator",
+  "default link NvimInvalidComparison NvimInvalidBinaryOperator",
+  "default link NvimInvalidComparisonModifier NvimInvalidComparison",
+  "default link NvimInvalidBinaryPlus NvimInvalidBinaryOperator",
+  "default link NvimInvalidBinaryMinus NvimInvalidBinaryOperator",
+  "default link NvimInvalidConcat NvimInvalidBinaryOperator",
+  "default link NvimInvalidConcatOrSubscript NvimInvalidConcat",
+  "default link NvimInvalidOr NvimInvalidBinaryOperator",
+  "default link NvimInvalidAnd NvimInvalidBinaryOperator",
+  "default link NvimInvalidMultiplication NvimInvalidBinaryOperator",
+  "default link NvimInvalidDivision NvimInvalidBinaryOperator",
+  "default link NvimInvalidMod NvimInvalidBinaryOperator",
 
-  "default link NVimInvalidTernary NVimInvalidOperator",
-  "default link NVimInvalidTernaryColon NVimInvalidTernary",
+  "default link NvimInvalidTernary NvimInvalidOperator",
+  "default link NvimInvalidTernaryColon NvimInvalidTernary",
 
-  "default link NVimInvalidDelimiter NVimInvalid",
+  "default link NvimInvalidDelimiter NvimInvalid",
 
-  "default link NVimInvalidParenthesis NVimInvalidDelimiter",
-  "default link NVimInvalidLambda NVimInvalidParenthesis",
-  "default link NVimInvalidNestingParenthesis NVimInvalidParenthesis",
-  "default link NVimInvalidCallingParenthesis NVimInvalidParenthesis",
+  "default link NvimInvalidParenthesis NvimInvalidDelimiter",
+  "default link NvimInvalidLambda NvimInvalidParenthesis",
+  "default link NvimInvalidNestingParenthesis NvimInvalidParenthesis",
+  "default link NvimInvalidCallingParenthesis NvimInvalidParenthesis",
 
-  "default link NVimInvalidSubscript NVimInvalidParenthesis",
-  "default link NVimInvalidSubscriptBracket NVimInvalidSubscript",
-  "default link NVimInvalidSubscriptColon NVimInvalidSubscript",
-  "default link NVimInvalidCurly NVimInvalidSubscript",
+  "default link NvimInvalidSubscript NvimInvalidParenthesis",
+  "default link NvimInvalidSubscriptBracket NvimInvalidSubscript",
+  "default link NvimInvalidSubscriptColon NvimInvalidSubscript",
+  "default link NvimInvalidCurly NvimInvalidSubscript",
 
-  "default link NVimInvalidContainer NVimInvalidParenthesis",
-  "default link NVimInvalidDict NVimInvalidContainer",
-  "default link NVimInvalidList NVimInvalidContainer",
+  "default link NvimInvalidContainer NvimInvalidParenthesis",
+  "default link NvimInvalidDict NvimInvalidContainer",
+  "default link NvimInvalidList NvimInvalidContainer",
 
-  "default link NVimInvalidValue NVimInvalid",
+  "default link NvimInvalidValue NvimInvalid",
 
-  "default link NVimInvalidIdentifier NVimInvalidValue",
-  "default link NVimInvalidIdentifierScope NVimInvalidIdentifier",
-  "default link NVimInvalidIdentifierScopeDelimiter NVimInvalidIdentifier",
-  "default link NVimInvalidIdentifierName NVimInvalidIdentifier",
-  "default link NVimInvalidIdentifierKey NVimInvalidIdentifier",
+  "default link NvimInvalidIdentifier NvimInvalidValue",
+  "default link NvimInvalidIdentifierScope NvimInvalidIdentifier",
+  "default link NvimInvalidIdentifierScopeDelimiter NvimInvalidIdentifier",
+  "default link NvimInvalidIdentifierName NvimInvalidIdentifier",
+  "default link NvimInvalidIdentifierKey NvimInvalidIdentifier",
 
-  "default link NVimInvalidColon NVimInvalidDelimiter",
-  "default link NVimInvalidComma NVimInvalidDelimiter",
-  "default link NVimInvalidArrow NVimInvalidDelimiter",
+  "default link NvimInvalidColon NvimInvalidDelimiter",
+  "default link NvimInvalidComma NvimInvalidDelimiter",
+  "default link NvimInvalidArrow NvimInvalidDelimiter",
 
-  "default link NVimInvalidRegister NVimInvalidValue",
-  "default link NVimInvalidNumber NVimInvalidValue",
-  "default link NVimInvalidFloat NVimInvalidNumber",
-  "default link NVimInvalidNumberPrefix NVimInvalidNumber",
+  "default link NvimInvalidRegister NvimInvalidValue",
+  "default link NvimInvalidNumber NvimInvalidValue",
+  "default link NvimInvalidFloat NvimInvalidNumber",
+  "default link NvimInvalidNumberPrefix NvimInvalidNumber",
 
-  "default link NVimInvalidOptionSigil NVimInvalidIdentifier",
-  "default link NVimInvalidOptionName NVimInvalidIdentifier",
-  "default link NVimInvalidOptionScope NVimInvalidIdentifierScope",
-  "default link NVimInvalidOptionScopeDelimiter "
-      "NVimInvalidIdentifierScopeDelimiter",
+  "default link NvimInvalidOptionSigil NvimInvalidIdentifier",
+  "default link NvimInvalidOptionName NvimInvalidIdentifier",
+  "default link NvimInvalidOptionScope NvimInvalidIdentifierScope",
+  "default link NvimInvalidOptionScopeDelimiter "
+      "NvimInvalidIdentifierScopeDelimiter",
 
-  "default link NVimInvalidEnvironmentSigil NVimInvalidOptionSigil",
-  "default link NVimInvalidEnvironmentName NVimInvalidIdentifier",
+  "default link NvimInvalidEnvironmentSigil NvimInvalidOptionSigil",
+  "default link NvimInvalidEnvironmentName NvimInvalidIdentifier",
 
   // Invalid string bodies and specials are still highlighted as valid ones to
   // minimize the red area.
-  "default link NVimInvalidString NVimInvalidValue",
-  "default link NVimInvalidStringBody NVimStringBody",
-  "default link NVimInvalidStringQuote NVimInvalidString",
-  "default link NVimInvalidStringSpecial NVimStringSpecial",
+  "default link NvimInvalidString NvimInvalidValue",
+  "default link NvimInvalidStringBody NvimStringBody",
+  "default link NvimInvalidStringQuote NvimInvalidString",
+  "default link NvimInvalidStringSpecial NvimStringSpecial",
 
-  "default link NVimInvalidSingleQuote NVimInvalidStringQuote",
-  "default link NVimInvalidSingleQuotedBody NVimInvalidStringBody",
-  "default link NVimInvalidSingleQuotedQuote NVimInvalidStringSpecial",
+  "default link NvimInvalidSingleQuote NvimInvalidStringQuote",
+  "default link NvimInvalidSingleQuotedBody NvimInvalidStringBody",
+  "default link NvimInvalidSingleQuotedQuote NvimInvalidStringSpecial",
 
-  "default link NVimInvalidDoubleQuote NVimInvalidStringQuote",
-  "default link NVimInvalidDoubleQuotedBody NVimInvalidStringBody",
-  "default link NVimInvalidDoubleQuotedEscape NVimInvalidStringSpecial",
-  "default link NVimInvalidDoubleQuotedUnknownEscape NVimInvalidValue",
+  "default link NvimInvalidDoubleQuote NvimInvalidStringQuote",
+  "default link NvimInvalidDoubleQuotedBody NvimInvalidStringBody",
+  "default link NvimInvalidDoubleQuotedEscape NvimInvalidStringSpecial",
+  "default link NvimInvalidDoubleQuotedUnknownEscape NvimInvalidValue",
 
-  "default link NVimInvalidFigureBrace NVimInvalidDelimiter",
+  "default link NvimInvalidFigureBrace NvimInvalidDelimiter",
 
-  "default link NVimInvalidSpacing ErrorMsg",
+  "default link NvimInvalidSpacing ErrorMsg",
 
   // Not actually invalid, but we highlight user that he is doing something
   // wrong.
-  "default link NVimDoubleQuotedUnknownEscape NVimInvalidValue",
+  "default link NvimDoubleQuotedUnknownEscape NvimInvalidValue",
   NULL,
 };
 
-/// Create default links for NVim* highlight groups used for cmdline coloring
+/// Create default links for Nvim* highlight groups used for cmdline coloring
 void syn_init_cmdline_highlight(bool reset, bool init)
 {
   for (size_t i = 0 ; highlight_init_cmdline[i] != NULL ; i++) {

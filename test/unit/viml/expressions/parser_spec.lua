@@ -164,14 +164,14 @@ child_call_once(function()
     i = i + 1
   end
   for k, _ in ipairs(nvim_hl_defs) do
-    eq('NVim', k:sub(1, 4))
-    -- NVimInvalid
+    eq('Nvim', k:sub(1, 4))
+    -- NvimInvalid
     -- 12345678901
     local err, msg = pcall(function()
       if k:sub(5, 11) == 'Invalid' then
-        neq(nil, nvim_hl_defs['NVim' .. k:sub(12)])
+        neq(nil, nvim_hl_defs['Nvim' .. k:sub(12)])
       else
-        neq(nil, nvim_hl_defs['NVimInvalid' .. k:sub(5)])
+        neq(nil, nvim_hl_defs['NvimInvalid' .. k:sub(5)])
       end
     end)
     if not err then
@@ -185,7 +185,7 @@ local function hls_to_hl_fs(hls)
   local ret = {}
   local next_col = 0
   for i, v in ipairs(hls) do
-    local group, line, col, str = v:match('^NVim([a-zA-Z]+):(%d+):(%d+):(.*)$')
+    local group, line, col, str = v:match('^Nvim([a-zA-Z]+):(%d+):(%d+):(.*)$')
     col = tonumber(col)
     line = tonumber(line)
     assert(line == 0)
@@ -521,12 +521,12 @@ describe('Expressions parser', function()
   end
   local function hl(group, str, shift)
     return function(next_col)
-      if nvim_hl_defs['NVim' .. group] == nil then
-        error(('Unknown group: NVim%s'):format(group))
+      if nvim_hl_defs['Nvim' .. group] == nil then
+        error(('Unknown group: Nvim%s'):format(group))
       end
       local col = next_col + (shift or 0)
       return (('%s:%u:%u:%s'):format(
-        'NVim' .. group,
+        'Nvim' .. group,
         0,
         col,
         str)), (col + #str)

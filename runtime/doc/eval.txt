@@ -10580,116 +10580,116 @@ Expressions entered by user in |i_CTRL-R_=|, |c_CTRL-\_e|, |quote=| are
 colored by built-in expressions parser.  It uses highlight groups described in 
 the table below, which may be overriden by user colorschemes, all linked to 
 some other highlighting group.
-							*hl-NVimInvalid*
-In addition to highlighting groups prefixed with NVim described below there 
-are highlighting groups prefixed with NVimInvalid which have just the same 
+							*hl-NvimInvalid*
+In addition to highlighting groups prefixed with Nvim described below there 
+are highlighting groups prefixed with NvimInvalid which have just the same 
 meaning, but used to indicate that the relevant token contains an error or 
 that error had occurred just before it.  They have mostly the same hierarchy, 
-except that by default in place of any non-NVim-prefixed group NVimInvalid 
+except that by default in place of any non-Nvim-prefixed group NvimInvalid 
 linking to `Error` is used and some other intermediate groups are present.
 
 Group                              Default link            Colored expression ~
-*hl-NVimInternalError*               None, red/red           Parser bug
+*hl-NvimInternalError*               None, red/red           Parser bug
 
-*hl-NVimAssignment*                  Operator                Generic assignment
-*hl-NVimPlainAssignment*             NVimAssignment          `=` in |:let|
-*hl-NVimAugmentedAssignment*         NVimAssignment          Generic, `+=`/`-=`/`.=`
-*hl-NVimAssignmentWithAddition*      NVimAugmentedAssignment `+=` in |:let+=|
-*hl-NVimAssignmentWithSubtraction*   NVimAugmentedAssignment `-=` in |:let-=|
-*hl-NVimAssignmentWithConcatenation* NVimAugmentedAssignment `.=` in |:let.=|
+*hl-NvimAssignment*                  Operator                Generic assignment
+*hl-NvimPlainAssignment*             NvimAssignment          `=` in |:let|
+*hl-NvimAugmentedAssignment*         NvimAssignment          Generic, `+=`/`-=`/`.=`
+*hl-NvimAssignmentWithAddition*      NvimAugmentedAssignment `+=` in |:let+=|
+*hl-NvimAssignmentWithSubtraction*   NvimAugmentedAssignment `-=` in |:let-=|
+*hl-NvimAssignmentWithConcatenation* NvimAugmentedAssignment `.=` in |:let.=|
 
-*hl-NVimOperator*                    Operator                Generic operator
+*hl-NvimOperator*                    Operator                Generic operator
 
-*hl-NVimUnaryOperator*               NVimOperator            Generic unary op
-*hl-NVimUnaryPlus*                   NVimUnaryOperator       |expr-unary-+|
-*hl-NVimUnaryMinus*                  NVimUnaryOperator       |expr-unary--|
-*hl-NVimNot*                         NVimUnaryOperator       |expr-!|
+*hl-NvimUnaryOperator*               NvimOperator            Generic unary op
+*hl-NvimUnaryPlus*                   NvimUnaryOperator       |expr-unary-+|
+*hl-NvimUnaryMinus*                  NvimUnaryOperator       |expr-unary--|
+*hl-NvimNot*                         NvimUnaryOperator       |expr-!|
 
-*hl-NVimBinaryOperator*              NVimOperator            Generic binary op
-*hl-NVimComparison*                  NVimBinaryOperator      Any |expr4| operator
-*hl-NVimComparisonModifier*          NVimComparison          `#`/`?` near |expr4| op
-*hl-NVimBinaryPlus*                  NVimBinaryOperator      |expr-+|
-*hl-NVimBinaryMinus*                 NVimBinaryOperator      |expr--|
-*hl-NVimConcat*                      NVimBinaryOperator      |expr-.|
-*hl-NVimConcatOrSubscript*           NVimConcat              |expr-.| or |expr-entry|
-*hl-NVimOr*                          NVimBinaryOperator      |expr-barbar|
-*hl-NVimAnd*                         NVimBinaryOperator      |expr-&&|
-*hl-NVimMultiplication*              NVimBinaryOperator      |expr-star|
-*hl-NVimDivision*                    NVimBinaryOperator      |expr-/|
-*hl-NVimMod*                         NVimBinaryOperator      |expr-%|
+*hl-NvimBinaryOperator*              NvimOperator            Generic binary op
+*hl-NvimComparison*                  NvimBinaryOperator      Any |expr4| operator
+*hl-NvimComparisonModifier*          NvimComparison          `#`/`?` near |expr4| op
+*hl-NvimBinaryPlus*                  NvimBinaryOperator      |expr-+|
+*hl-NvimBinaryMinus*                 NvimBinaryOperator      |expr--|
+*hl-NvimConcat*                      NvimBinaryOperator      |expr-.|
+*hl-NvimConcatOrSubscript*           NvimConcat              |expr-.| or |expr-entry|
+*hl-NvimOr*                          NvimBinaryOperator      |expr-barbar|
+*hl-NvimAnd*                         NvimBinaryOperator      |expr-&&|
+*hl-NvimMultiplication*              NvimBinaryOperator      |expr-star|
+*hl-NvimDivision*                    NvimBinaryOperator      |expr-/|
+*hl-NvimMod*                         NvimBinaryOperator      |expr-%|
 
-*hl-NVimTernary*                     NVimOperator            `?` in |expr1|
-*hl-NVimTernaryColon*                NVimTernary             `:` in |expr1|
+*hl-NvimTernary*                     NvimOperator            `?` in |expr1|
+*hl-NvimTernaryColon*                NvimTernary             `:` in |expr1|
 
-*hl-NVimParenthesis*                 Delimiter               Generic bracket
-*hl-NVimLambda*                      NVimParenthesis         `{`/`}` in |lambda|
-*hl-NVimNestingParenthesis*          NVimParenthesis         `(`/`)` in |expr-nesting|
-*hl-NVimCallingParenthesis*          NVimParenthesis         `(`/`)` in |expr-function|
+*hl-NvimParenthesis*                 Delimiter               Generic bracket
+*hl-NvimLambda*                      NvimParenthesis         `{`/`}` in |lambda|
+*hl-NvimNestingParenthesis*          NvimParenthesis         `(`/`)` in |expr-nesting|
+*hl-NvimCallingParenthesis*          NvimParenthesis         `(`/`)` in |expr-function|
 
-*hl-NVimSubscript*                   NVimParenthesis         Generic subscript
-*hl-NVimSubscriptBracket*            NVimSubscript           `[`/`]` in |expr-[]|
-*hl-NVimSubscriptColon*              NVimSubscript           `:` in |expr-[:]|
-*hl-NVimCurly*                       NVimSubscript           `{`/`}` in
+*hl-NvimSubscript*                   NvimParenthesis         Generic subscript
+*hl-NvimSubscriptBracket*            NvimSubscript           `[`/`]` in |expr-[]|
+*hl-NvimSubscriptColon*              NvimSubscript           `:` in |expr-[:]|
+*hl-NvimCurly*                       NvimSubscript           `{`/`}` in
                                                            |curly-braces-names|
 
-*hl-NVimContainer*                   NVimParenthesis         Generic container
-*hl-NVimDict*                        NVimContainer           `{`/`}` in |dict| literal
-*hl-NVimList*                        NVimContainer           `[`/`]` in |list| literal
+*hl-NvimContainer*                   NvimParenthesis         Generic container
+*hl-NvimDict*                        NvimContainer           `{`/`}` in |dict| literal
+*hl-NvimList*                        NvimContainer           `[`/`]` in |list| literal
 
-*hl-NVimIdentifier*                  Identifier              Generic identifier
-*hl-NVimIdentifierScope*             NVimIdentifier          Namespace: letter 
+*hl-NvimIdentifier*                  Identifier              Generic identifier
+*hl-NvimIdentifierScope*             NvimIdentifier          Namespace: letter 
                                                            before `:` in 
                                                            |internal-variables|
-*hl-NVimIdentifierScopeDelimiter*    NVimIdentifier          `:` after namespace
+*hl-NvimIdentifierScopeDelimiter*    NvimIdentifier          `:` after namespace
                                                            letter
-*hl-NVimIdentifierName*              NVimIdentifier          Rest of the ident
-*hl-NVimIdentifierKey*               NVimIdentifier          Identifier after 
+*hl-NvimIdentifierName*              NvimIdentifier          Rest of the ident
+*hl-NvimIdentifierKey*               NvimIdentifier          Identifier after 
                                                            |expr-entry|
 
-*hl-NVimColon*                       Delimiter               `:` in |dict| literal
-*hl-NVimComma*                       Delimiter               `,` in |dict|/|list| 
+*hl-NvimColon*                       Delimiter               `:` in |dict| literal
+*hl-NvimComma*                       Delimiter               `,` in |dict|/|list| 
                                                            literal or 
                                                            |expr-function|
-*hl-NVimArrow*                       Delimiter               `->` in |lambda|
+*hl-NvimArrow*                       Delimiter               `->` in |lambda|
 
-*hl-NVimRegister*                    SpecialChar             |expr-register|
-*hl-NVimNumber*                      Number                  Non-prefix digits 
+*hl-NvimRegister*                    SpecialChar             |expr-register|
+*hl-NvimNumber*                      Number                  Non-prefix digits 
                                                            in integer 
                                                            |expr-number|
-*hl-NVimNumberPrefix*                Type                    `0` for |octal-number|
+*hl-NvimNumberPrefix*                Type                    `0` for |octal-number|
                                                            `0x` for |hex-number|
                                                            `0b` for |binary-number|
-*hl-NVimFloat*                       NVimNumber              Floating-point
+*hl-NvimFloat*                       NvimNumber              Floating-point
                                                            number
 
-*hl-NVimOptionSigil*                 Type                    `&` in |expr-option|
-*hl-NVimOptionScope*                 NVimIdentifierScope     Option scope if any
-*hl-NVimOptionScopeDelimiter*        NVimIdentifierScopeDelimiter
+*hl-NvimOptionSigil*                 Type                    `&` in |expr-option|
+*hl-NvimOptionScope*                 NvimIdentifierScope     Option scope if any
+*hl-NvimOptionScopeDelimiter*        NvimIdentifierScopeDelimiter
                                                            `:` after option scope
-*hl-NVimOptionName*                  NVimIdentifier          Option name
+*hl-NvimOptionName*                  NvimIdentifier          Option name
 
-*hl-NVimEnvironmentSigil*            NVimOptionSigil         `$` in |expr-env|
-*hl-NVimEnvironmentName*             NVimIdentifier          Env variable name
+*hl-NvimEnvironmentSigil*            NvimOptionSigil         `$` in |expr-env|
+*hl-NvimEnvironmentName*             NvimIdentifier          Env variable name
 
-*hl-NVimString*                      String                  Generic string
-*hl-NVimStringBody*                  NVimString              Generic string 
+*hl-NvimString*                      String                  Generic string
+*hl-NvimStringBody*                  NvimString              Generic string 
                                                            literal body
-*hl-NVimStringQuote*                 NVimString              Generic string quote
-*hl-NVimStringSpecial*               SpecialChar             Generic string 
+*hl-NvimStringQuote*                 NvimString              Generic string quote
+*hl-NvimStringSpecial*               SpecialChar             Generic string 
                                                            non-literal body
 
-*hl-NVimSingleQuote*                 NVimStringQuote         `'` in |expr-'|
-*hl-NVimSingleQuotedBody*            NVimStringBody          Literal part of 
+*hl-NvimSingleQuote*                 NvimStringQuote         `'` in |expr-'|
+*hl-NvimSingleQuotedBody*            NvimStringBody          Literal part of 
                                                            |expr-'| string body
-*hl-NVimSingleQuotedQuote*           NVimStringSpecial       `''` inside |expr-'| 
+*hl-NvimSingleQuotedQuote*           NvimStringSpecial       `''` inside |expr-'| 
                                                            string body
 
-*hl-NVimDoubleQuote*                 NVimStringQuote         `"` in |expr-quote|
-*hl-NVimDoubleQuotedBody*            NVimStringBody          Literal part of 
+*hl-NvimDoubleQuote*                 NvimStringQuote         `"` in |expr-quote|
+*hl-NvimDoubleQuotedBody*            NvimStringBody          Literal part of 
                                                            |expr-quote| body
-*hl-NVimDoubleQuotedEscape*          NVimStringSpecial       Valid |expr-quote| 
+*hl-NvimDoubleQuotedEscape*          NvimStringSpecial       Valid |expr-quote| 
                                                            escape sequence
-*hl-NVimDoubleQuotedUnknownEscape*   NVimInvalidValue        Unrecognized 
+*hl-NvimDoubleQuotedUnknownEscape*   NvimInvalidValue        Unrecognized 
                                                            |expr-quote| escape 
                                                            sequence
 

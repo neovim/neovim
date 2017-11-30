@@ -1326,7 +1326,7 @@ static inline ParserPosition recol_pos(const ParserPosition pos,
 }
 
 /// Get highlight group name
-#define HL(g) (is_invalid ? "NVimInvalid" #g : "NVim" #g)
+#define HL(g) (is_invalid ? "NvimInvalid" #g : "Nvim" #g)
 
 /// Highlight current token with the given group
 #define HL_CUR_TOKEN(g) \
@@ -2570,7 +2570,7 @@ viml_pexpr_parse_bracket_closing_error:
                     new_top_node,
                     _("E15: Don't know what figure brace means: %.*s"));
                 if (pstate->colors) {
-                  // Will reset to NVimInvalidFigureBrace.
+                  // Will reset to NvimInvalidFigureBrace.
                   kv_A(*pstate->colors,
                        new_top_node->data.fig.opening_hl_idx).group = (
                            HL(FigureBrace));

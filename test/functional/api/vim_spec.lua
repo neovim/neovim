@@ -885,7 +885,7 @@ describe('api', function()
       return function(next_col)
         local col = next_col + (shift or 0)
         return (('%s:%u:%u:%s'):format(
-          'NVim' .. group,
+          'Nvim' .. group,
           0,
           col,
           str)), (col + #str)
