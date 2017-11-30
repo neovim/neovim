@@ -1,5 +1,6 @@
 local helpers = require("test.unit.helpers")(after_each)
 local global_helpers = require('test.helpers')
+local bit = require('bit')
 
 local itp = helpers.gen_itp(it)
 
@@ -36,15 +37,36 @@ local function arginit(arg)
   end
 end
 
+local function argreset(arg, args)
+  if arg == 'unum' then
+    ucnt = ucnt + 1
+    args[arg][0] = ucnt
+  else
+    icnt = icnt - 1
+    args[arg][0] = icnt
+  end
+end
+
 local function test_vim_str2nr(s, what, exp, maxlen)
-  local comb = {[''] = {}}
+  local comb = {[{}] = true}
+  local bits = {}
   for k, _ in pairs(exp) do
-    for ck, cv in pairs(comb) do
-      comb[ck .. ',' .. k] = updated(shallowcopy(cv), { [k] = arginit(k) })
-    end
+    bits[#bits + 1] = k
   end
   maxlen = maxlen or #s
-  for _, cv in pairs(comb) do
+  local args = {}
+  for k, _ in pairs(ARGTYPES) do
+    args[k] = arginit(k)
+  end
+  for case = 0, ((2 ^ (#bits)) - 1) do
+    local cv = {}
+    for b = 0, (#bits - 1) do
+      if bit.band(case, (2 ^ b)) == 0 then
+        local k = bits[b + 1]
+        argreset(k, args)
+        cv[k] = args[k]
+      end
+    end
     lib.vim_str2nr(s, cv.pre, cv.len, what, cv.num, cv.unum, maxlen)
     for cck, ccv in pairs(cv) do
       if exp[cck] ~= tonumber(ccv[0]) then

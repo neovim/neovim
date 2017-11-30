@@ -675,6 +675,7 @@ end
 local function check_child_err(rd)
   local trace = {}
   local did_traceline = false
+  local maxtrace = tonumber(os.getenv('NVIM_TEST_MAXTRACE')) or 1024
   while true do
     local traceline = sc.read(rd, hook_msglen)
     if #traceline ~= hook_msglen then
@@ -689,6 +690,7 @@ local function check_child_err(rd)
       break
     end
     trace[#trace + 1] = traceline
+    table.remove(trace, maxtrace + 1)
   end
   local res = sc.read(rd, 2)
   if #res ~= 2 then
