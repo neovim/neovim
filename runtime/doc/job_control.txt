@@ -30,7 +30,7 @@ To control jobs, use the "job…" family of functions: |jobstart()|,
 
 Example: >
 
-    function! s:JobHandler(job_id, data, event) dict
+    function! s:OnEvent(job_id, data, event) dict
       if a:event == 'stdout'
         let str = self.shell.' stdout: '.join(a:data)
       elseif a:event == 'stderr'
