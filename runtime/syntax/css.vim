@@ -180,8 +180,9 @@ syn match cssImportant contained "!\s*important\>"
 syn match cssColor contained "\<transparent\>"
 syn match cssColor contained "\<currentColor\>"
 syn match cssColor contained "\<white\>"
-syn match cssColor contained "#[0-9A-Fa-f]\{3\}\>" contains=cssUnitDecorators
-syn match cssColor contained "#[0-9A-Fa-f]\{6\}\>" contains=cssUnitDecorators
+syn match cssColor contained "#\x\{3,4\}\>" contains=cssUnitDecorators
+syn match cssColor contained "#\x\{6\}\>" contains=cssUnitDecorators
+syn match cssColor contained "#\x\{8\}\>" contains=cssUnitDecorators
 
 syn region cssURL contained matchgroup=cssFunctionName start="\<url\s*(" end=")" contains=cssStringQ,cssStringQQ oneline
 syn region cssFunction contained matchgroup=cssFunctionName start="\<\(rgb\|clip\|attr\|counter\|rect\|cubic-bezier\|steps\)\s*(" end=")" oneline  contains=cssValueInteger,cssValueNumber,cssValueLength,cssFunctionComma
