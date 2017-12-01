@@ -167,6 +167,18 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
   return unibi_run(str, data->params, buf, len);
 }
 
+/// Emits some termcodes after Nvim startup, which were observed to slowdown
+/// rendering during startup in tmux 2.3 (+focus-events). #7649
+static void terminfo_start_event(void **argv)
+{
+  UI *ui = argv[0];
+  TUIData *data = ui->data;
+  // Enable bracketed paste
+  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
+  // Enable focus reporting
+  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
+}
+
 static void termname_set_event(void **argv)
 {
   char *termname = argv[0];
@@ -244,10 +256,6 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
-  // Enable bracketed paste
-  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
-  // Enable focus reporting
-  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -296,6 +304,8 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
+  loop_schedule_deferred(data->loop,
+                         event_create(terminfo_start_event, 1, ui));
 }
 
 static void tui_terminal_stop(UI *ui)
