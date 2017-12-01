@@ -397,8 +397,12 @@ add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
+# fixing c error for cotire
+set_property(TARGET nvim PROPERTY C_STANDARD 11)
 set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+
+cotire(nvim)
 
 if(WIN32)
   # Copy DLLs and third-party tools to bin/ and install them along with nvim

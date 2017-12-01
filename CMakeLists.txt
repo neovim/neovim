@@ -8,6 +8,8 @@ endif()
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
+include(cotire)
+
 # We don't support building in-tree.
 include(PreventInTreeBuilds)
 
