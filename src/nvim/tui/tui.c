@@ -1620,9 +1620,8 @@ static void augment_terminfo(TUIData *data, const char *term,
         ut, NULL, "\033]12;#%p1%06x\007");
   }
 
-  /// Terminals generally ignore private modes that they do not recognize,
-  /// and there is no known ambiguity with these modes from terminal type to
-  /// terminal type, so we can afford to just set these unconditionally.
+  /// Terminals usually ignore unrecognized private modes, and there is no
+  /// known ambiguity with these. So we just set them unconditionally.
   data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?69h");
   data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
@@ -1632,9 +1631,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?2004l");
   data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
-      "\x1b[?1004h");
+      rxvt ? "\x1b]777;focus;on\x7" : "\x1b[?1004h");
   data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
-      "\x1b[?1004l");
+      rxvt ? "\x1b]777;focus;off\x7" : "\x1b[?1004l");
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
