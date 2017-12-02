@@ -3492,8 +3492,9 @@ char_u *skip_range(
         break;
       }
     } else if (*cmd == '\'') {
-      if (*++cmd == NUL && ctx != NULL)
+      if (*++cmd == NUL && ctx != NULL) {
         *ctx = EXPAND_NOTHING;
+      }
     } else if (*cmd == '/' || *cmd == '?') {
       delim = *cmd++;
       while (*cmd != NUL && *cmd != delim)
