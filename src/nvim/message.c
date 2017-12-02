@@ -1254,11 +1254,13 @@ int msg_outtrans_special(
     int from               ///< true for LHS of a mapping
 )
 {
+  if (strstart == NULL) {
+    return 0;  // Do nothing.
+  }
   const char_u *str = strstart;
   int retval = 0;
-  int attr;
+  int attr = hl_attr(HLF_8);
 
-  attr = hl_attr(HLF_8);
   while (*str != NUL) {
     const char *string;
     // Leading and trailing spaces need to be displayed in <> form.
