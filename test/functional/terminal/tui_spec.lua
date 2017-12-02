@@ -641,6 +641,7 @@ end)
 describe("tui 'term' option", function()
   local screen
   local is_bsd = not not string.find(string.lower(uname()), 'bsd')
+  local is_macos = not not string.find(string.lower(uname()), 'darwin')
 
   local function assert_term(term_envvar, term_expected)
     clear()
@@ -666,8 +667,13 @@ describe("tui 'term' option", function()
   end)
 
   it('gets system-provided term if $TERM is valid', function()
-    if is_bsd then  -- BSD lacks terminfo, we always use builtin there.
+    if is_bsd then  -- BSD lacks terminfo, builtin is always used.
       assert_term("xterm", "builtin_xterm")
+    elseif is_macos then
+      local status, _ = pcall(assert_term, "xterm", "xterm")
+      if not status then
+        pending("macOS: unibilium could not find terminfo", function() end)
+      end
     else
       assert_term("xterm", "xterm")
     end
