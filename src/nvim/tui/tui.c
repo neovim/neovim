@@ -167,6 +167,18 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
   return unibi_run(str, data->params, buf, len);
 }
 
+/// Emits some termcodes after Nvim startup, which were observed to slowdown
+/// rendering during startup in tmux 2.3 (+focus-events). #7649
+static void terminfo_start_event(void **argv)
+{
+  UI *ui = argv[0];
+  TUIData *data = ui->data;
+  // Enable bracketed paste
+  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
+  // Enable focus reporting
+  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
+}
+
 static void termname_set_event(void **argv)
 {
   char *termname = argv[0];
@@ -244,10 +256,6 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
-  // Enable bracketed paste
-  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
-  // Enable focus reporting
-  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -296,6 +304,8 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
+  loop_schedule_deferred(data->loop,
+                         event_create(terminfo_start_event, 1, ui));
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -956,10 +966,9 @@ static void tui_scroll(UI *ui, Integer count)
     }
     cursor_goto(ui, saved_row, saved_col);
 
-    if (!scroll_clears_to_current_colour && grid->bg != -1) {
-      // Scrolling may leave wrong background in the cleared area on non-bge
-      // terminals. Update the cleared area of the terminal if its builtin
-      // scrolling facility was used and bg color is not the default.
+    if (!scroll_clears_to_current_colour) {
+      // Scrolling will leave wrong background in the cleared area on non-BCE
+      // terminals. Update the cleared area.
       clear_region(ui, clear_top, clear_bot, grid->left, grid->right);
     }
   } else {
@@ -1621,9 +1630,8 @@ static void augment_terminfo(TUIData *data, const char *term,
         ut, NULL, "\033]12;#%p1%06x\007");
   }
 
-  /// Terminals generally ignore private modes that they do not recognize,
-  /// and there is no known ambiguity with these modes from terminal type to
-  /// terminal type, so we can afford to just set these unconditionally.
+  /// Terminals usually ignore unrecognized private modes, and there is no
+  /// known ambiguity with these. So we just set them unconditionally.
   data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?69h");
   data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
@@ -1633,9 +1641,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?2004l");
   data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
-      "\x1b[?1004h");
+      rxvt ? "\x1b]777;focus;on\x7" : "\x1b[?1004h");
   data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
-      "\x1b[?1004l");
+      rxvt ? "\x1b]777;focus;off\x7" : "\x1b[?1004l");
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
