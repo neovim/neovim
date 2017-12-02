@@ -21,9 +21,6 @@ describe('tui', function()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler undodir=. directory=. viewdir=. backupdir=."]')
-    -- right now pasting can be really slow in the TUI, especially in ASAN.
-    -- this will be fixed later but for now we require a high timeout.
-    screen.timeout = 60000
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -125,6 +122,9 @@ describe('tui', function()
   end)
 
   it('automatically sends <Paste> for bracketed paste sequences', function()
+    -- Pasting can be really slow in the TUI, specially in ASAN.
+    -- This will be fixed later but for now we require a high timeout.
+    screen.timeout = 60000
     feed_data('i\027[200~')
     screen:expect([[
       {1: }                                                 |
@@ -158,6 +158,8 @@ describe('tui', function()
   end)
 
   it('can handle arbitrarily long bursts of input', function()
+    -- Need extra time for this test, specially in ASAN.
+    screen.timeout = 60000
     feed_command('set ruler')
     local t = {}
     for i = 1, 3000 do
