@@ -280,7 +280,12 @@ int main(int argc, char **argv)
   setbuf(stdout, NULL);
 
   full_screen = true;
-  check_tty(&params);
+
+  // When starting in Ex mode and commands come from a file, set Silent mode.
+  // is active input a terminal?
+  if (!headless_mode && exmode_active && !params.input_isatty) {
+    silent_mode = true;
+  }
 
   /*
    * Set the default values for the options that use Rows and Columns.
@@ -1392,43 +1397,7 @@ static void handle_tag(char_u *tagname)
   }
 }
 
-// Print a warning if stdout is not a terminal.
-// When starting in Ex mode and commands come from a file, set Silent mode.
-static void check_tty(mparm_T *parmp)
-{
-  if (headless_mode) {
-    return;
-  }
-
-  // is active input a terminal?
-  if (exmode_active) {
-    if (!parmp->input_isatty) {
-      silent_mode = true;
-    }
-  } else if (parmp->want_full_screen && (!parmp->err_isatty
-        && (!parmp->output_isatty || !parmp->input_isatty))) {
-
-    if (!parmp->output_isatty) {
-      mch_errmsg(_("Vim: Warning: Output is not to a terminal\n"));
-    }
-
-    if (!parmp->input_isatty) {
-      mch_errmsg(_("Vim: Warning: Input is not from a terminal\n"));
-    }
-
-    ui_flush();
-
-    if (scriptin[0] == NULL) {
-      os_delay(2000L, true);
-    }
-
-    TIME_MSG("Warning delay");
-  }
-}
-
-/*
- * Read text from stdin.
- */
+/// Read text from stdin.
 static void read_stdin(void)
 {
   // When getting the ATTENTION prompt here, use a dialog.
