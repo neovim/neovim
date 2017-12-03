@@ -1,5 +1,4 @@
 local helpers = require("test.unit.helpers")(after_each)
-local global_helpers = require('test.helpers')
 local bit = require('bit')
 
 local itp = helpers.gen_itp(it)
@@ -7,9 +6,6 @@ local itp = helpers.gen_itp(it)
 local child_call_once = helpers.child_call_once
 local cimport = helpers.cimport
 local ffi = helpers.ffi
-
-local shallowcopy = global_helpers.shallowcopy
-local updated = global_helpers.updated
 
 local lib = cimport('./src/nvim/charset.h')
 
@@ -48,7 +44,6 @@ local function argreset(arg, args)
 end
 
 local function test_vim_str2nr(s, what, exp, maxlen)
-  local comb = {[{}] = true}
   local bits = {}
   for k, _ in pairs(exp) do
     bits[#bits + 1] = k

@@ -273,6 +273,7 @@ local deepcopy_funcs = {
     for k, v in pairs(orig) do
       copy[deepcopy(k)] = deepcopy(v)
     end
+    return copy
   end,
   number = id,
   string = id,
