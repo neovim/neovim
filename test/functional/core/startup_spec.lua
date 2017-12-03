@@ -9,11 +9,13 @@ local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
 local retry = helpers.retry
+local sleep = helpers.sleep
 local iswin = helpers.iswin
 
 describe('startup', function()
   before_each(function()
     clear()
+    os.remove('Xtest_startup_ttyout')
   end)
   after_each(function()
     os.remove('Xtest_startup_ttyout')
@@ -46,8 +48,8 @@ describe('startup', function()
     end
     -- Running in :terminal
     command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
-            ..nvim_set..[[\" ]]
-            ..[[-c \"echo has('ttyin') has('ttyout')\""]]
+            ..nvim_set..[[\"]]
+            ..[[ -c \"echo has('ttyin') has('ttyout')\""]]
             ..[[, shellescape(v:progpath))]])
     screen:expect([[
       ^                         |
@@ -56,25 +58,40 @@ describe('startup', function()
     ]])
   end)
   it('output to pipe: has("ttyin")==1 has("ttyout")==0', function()
-    local screen = Screen.new(25, 5)
-    screen:attach()
     if iswin() then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
     end
     -- Running in :terminal
     command([[exe printf("terminal %s -u NONE -i NONE --cmd \"]]
-            ..nvim_set..[[\" ]]
-            ..[[-c \"call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')\"]]
-            ..[[-c q | cat -v"]]  -- Output to a pipe.
+            ..nvim_set..[[\"]]
+            ..[[ -c \"call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')\"]]
+            ..[[ -c q | cat -v"]]  -- Output to a pipe.
             ..[[, shellescape(v:progpath))]])
     retry(nil, 3000, function()
-      screen:sleep(1)
+      sleep(1)
       eq('1\n0\n',  -- stdin is a TTY, stdout is a pipe
          read_file('Xtest_startup_ttyout'))
     end)
   end)
   it('input from pipe: has("ttyin")==0 has("ttyout")==1', function()
-    local screen = Screen.new(25, 5)
+    if iswin() then
+      command([[set shellcmdflag=/s\ /c shellxquote=\"]])
+    end
+    -- Running in :terminal
+    command([[exe printf("terminal echo foo | ]]  -- Input from a pipe.
+            ..[[%s -u NONE -i NONE --cmd \"]]
+            ..nvim_set..[[\"]]
+            ..[[ -c \"call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')\"]]
+            ..[[ -c q -- -"]]
+            ..[[, shellescape(v:progpath))]])
+    retry(nil, 3000, function()
+      sleep(1)
+      eq('0\n1\n',  -- stdin is a pipe, stdout is a TTY
+         read_file('Xtest_startup_ttyout'))
+    end)
+  end)
+  it('input from pipe (implicit) #7679', function()
+    local screen = Screen.new(25, 3)
     screen:attach()
     if iswin() then
       command([[set shellcmdflag=/s\ /c shellxquote=\"]])
@@ -82,15 +99,34 @@ describe('startup', function()
     -- Running in :terminal
     command([[exe printf("terminal echo foo | ]]  -- Input from a pipe.
             ..[[%s -u NONE -i NONE --cmd \"]]
-            ..nvim_set..[[\" ]]
-            ..[[-c \"call writefile([has('ttyin'), has('ttyout')], 'Xtest_startup_ttyout')\"]]
-            ..[[-c q -- -"]]
+            ..nvim_set..[[\"]]
+            ..[[ -c \"echo has('ttyin') has('ttyout')\""]]
             ..[[, shellescape(v:progpath))]])
-    retry(nil, 3000, function()
-      screen:sleep(1)
-      eq('0\n1\n',  -- stdin is a pipe, stdout is a TTY
-         read_file('Xtest_startup_ttyout'))
-    end)
+    screen:expect([[
+      ^foo                      |
+      0 1                      |
+                               |
+    ]])
+  end)
+  it('input from pipe (implicit) + file args #7679', function()
+    local screen = Screen.new(25, 3)
+    screen:attach()
+    if iswin() then
+      command([[set shellcmdflag=/s\ /c shellxquote=\"]])
+    end
+    command([[exe "terminal echo ohyeah | "]]  -- Input from a pipe.
+            ..[[.shellescape(v:progpath)." -u NONE -i NONE --cmd \"]]
+            ..nvim_set..[[\"]]
+            ..[[ --cmd \"set shortmess+=I\"]]
+            ..[[ -c \"echo has('ttyin') has('ttyout') 'bufs='.bufnr('$')\"]]
+            ..[[ -- test/functional/fixtures/shell-test.c]]
+            ..[[    test/functional/fixtures/tty-test.c]]
+            ..[["]])
+    screen:expect([[
+      ^ohyeah                   |
+      0 1 bufs=3               |
+                               |
+    ]])
   end)
 end)
 

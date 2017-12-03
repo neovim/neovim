@@ -281,12 +281,6 @@ int main(int argc, char **argv)
 
   full_screen = true;
 
-  // When starting in Ex mode and commands come from a file, set Silent mode.
-  // is active input a terminal?
-  if (!headless_mode && exmode_active && !params.input_isatty) {
-    silent_mode = true;
-  }
-
   /*
    * Set the default values for the options that use Rows and Columns.
    */
@@ -1097,7 +1091,7 @@ scripterror:
               mch_exit(2);
             }
             int error;
-            if (STRCMP(argv[0], "-") == 0) {
+            if (strequal(argv[0], "-")) {
               const int stdin_dup_fd = os_dup(STDIN_FILENO);
 #ifdef WIN32
               // On Windows, replace the original stdin with the
@@ -1212,6 +1206,21 @@ scripterror:
     set_vim_var_string(VV_SWAPCOMMAND, swcmd, -1);
     xfree(swcmd);
   }
+
+  // Handle "foo | nvim". #6299
+  if (!headless_mode
+      && !embedded_mode
+      && !parmp->input_isatty
+      && !exmode_active       // `-es` was not given.
+      && scriptin[0] == NULL  // `-s -` was not given.
+      ) {
+    if (parmp->edit_type == EDIT_NONE) {
+      parmp->edit_type = EDIT_STDIN;
+    } else if (parmp->edit_type != EDIT_STDIN) {
+      mainerr(err_too_many_args, "stdin");
+    }
+  }
+
   TIME_MSG("parsing arguments");
 }
 
@@ -1884,7 +1893,6 @@ static void usage(void)
 
   mch_msg(_("Usage:\n"));
   mch_msg(_("  nvim [options] [file ...]      Edit file(s)\n"));
-  mch_msg(_("  nvim [options] -               Read text from stdin\n"));
   mch_msg(_("  nvim [options] -t <tag>        Edit file where tag is defined\n"));
   mch_msg(_("  nvim [options] -q [errorfile]  Edit file with first error\n"));
   mch_msg(_("\nOptions:\n"));
@@ -1918,7 +1926,7 @@ static void usage(void)
   mch_msg(_("  --api-info            Write msgpack-encoded API metadata to stdout\n"));
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
-  mch_msg(_("  --listen <address>    Start RPC server at this address\n"));
+  mch_msg(_("  --listen <address>    Serve RPC API from this address\n"));
 #if !defined(UNIX)
   mch_msg(_("  --literal             Don't expand wildcards\n"));
 #endif
