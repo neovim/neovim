@@ -203,7 +203,6 @@ let s:flaky = [
       \ ]
 
 " Locate Test_ functions and execute them.
-set nomore
 redir @q
 silent function /^Test_
 redir END

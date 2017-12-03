@@ -19,12 +19,11 @@ typedef struct loop {
   MultiQueue *events;
   MultiQueue *thread_events;
   // Immediate events:
-  //    "Events that should be processed after exiting uv_run() (to avoid
-  //    recursion), but before returning from loop_poll_events()."
-  //    502aee690c980fcb3cfcb3f211dcfad06103db46
-  // Practical consequence: these events are processed by
+  //    "Processed after exiting uv_run() (to avoid recursion), but before
+  //    returning from loop_poll_events()." 502aee690c98
+  // Practical consequence (for main_loop): these events are processed by
   //    state_enter()..os_inchar()
-  // whereas "regular" (main_loop.events) events are processed by
+  // whereas "regular" events (main_loop.events) are processed by
   //    state_enter()..VimState.execute()
   // But state_enter()..os_inchar() can be "too early" if you want the event
   // to trigger UI updates and other user-activity-related side-effects.

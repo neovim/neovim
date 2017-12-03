@@ -167,6 +167,24 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
   return unibi_run(str, data->params, buf, len);
 }
 
+/// Emits some termcodes after Nvim startup, which were observed to slowdown
+/// rendering during startup in tmux 2.3 (+focus-events). #7649
+static void terminfo_after_startup_event(void **argv)
+{
+  UI *ui = argv[0];
+  bool defer = argv[1] != NULL;  // clever(?) boolean without malloc() dance.
+  TUIData *data = ui->data;
+  if (defer) {  // We're on the main-loop. Now forward to the TUI loop.
+    loop_schedule(data->loop,
+                  event_create(terminfo_after_startup_event, 2, ui, NULL));
+    return;
+  }
+  // Enable bracketed paste
+  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
+  // Enable focus reporting
+  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
+}
+
 static void termname_set_event(void **argv)
 {
   char *termname = argv[0];
@@ -244,10 +262,6 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
-  // Enable bracketed paste
-  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
-  // Enable focus reporting
-  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -260,6 +274,9 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
+
+  loop_schedule(&main_loop,
+                event_create(terminfo_after_startup_event, 2, ui, ui));
 }
 
 static void terminfo_stop(UI *ui)
@@ -342,7 +359,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   CONTINUE(bridge);
 
   while (!data->stop) {
-    loop_poll_events(&tui_loop, -1);
+    loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
   }
 
   ui_bridge_stopped(bridge);
@@ -1620,9 +1637,8 @@ static void augment_terminfo(TUIData *data, const char *term,
         ut, NULL, "\033]12;#%p1%06x\007");
   }
 
-  /// Terminals generally ignore private modes that they do not recognize,
-  /// and there is no known ambiguity with these modes from terminal type to
-  /// terminal type, so we can afford to just set these unconditionally.
+  /// Terminals usually ignore unrecognized private modes, and there is no
+  /// known ambiguity with these. So we just set them unconditionally.
   data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?69h");
   data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
@@ -1632,9 +1648,9 @@ static void augment_terminfo(TUIData *data, const char *term,
   data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?2004l");
   data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
-      "\x1b[?1004h");
+      rxvt ? "\x1b]777;focus;on\x7" : "\x1b[?1004h");
   data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
-      "\x1b[?1004l");
+      rxvt ? "\x1b]777;focus;off\x7" : "\x1b[?1004l");
   data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
       "\x1b[?1002h\x1b[?1006h");
   data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
