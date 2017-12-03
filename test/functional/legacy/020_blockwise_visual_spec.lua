@@ -1,11 +1,10 @@
--- vim: set foldmethod=marker foldmarker=[[,]] :
 -- Tests Blockwise Visual when there are TABs before the text.
 -- First test for undo working properly when executing commands from a register.
 -- Also test this in an empty buffer.
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('blockwise visual', function()
   setup(clear)
@@ -26,15 +25,15 @@ Ox jAy kdd]])
 
     feed(":let @a = 'Ox<C-v><Esc>jAy<C-v><Esc>kdd'<cr>")
     feed('G0k@au')
-    execute('new')
+    feed_command('new')
     feed('@auY')
-    execute('quit')
+    feed_command('quit')
     feed('GP')
-    execute('/start here')
+    feed_command('/start here')
     feed('"by$<C-v>jjlld')
-    execute('/456')
+    feed_command('/456')
     feed('<C-v>jj"bP')
-    execute('$-3,$d')
+    feed_command('$-3,$d')
 
     expect([[
 123start here56

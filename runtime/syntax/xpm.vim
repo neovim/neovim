@@ -1,14 +1,12 @@
 " Vim syntax file
 " Language:	X Pixmap
 " Maintainer:	Ronald Schild <rs@scutum.de>
-" Last Change:	2008 May 28
+" Last Change:	2017 Feb 01
 " Version:	5.4n.1
+"               Jemma Nelson added termguicolors support
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -18,7 +16,7 @@ syn keyword xpmTodo		TODO FIXME XXX  contained
 syn region  xpmComment		start="/\*"  end="\*/"  contains=xpmTodo
 syn region  xpmPixelString	start=+"+  skip=+\\\\\|\\"+  end=+"+  contains=@xpmColors
 
-if has("gui_running")
+if has("gui_running") || has("termguicolors") && &termguicolors
 
 let color  = ""
 let chars  = ""
@@ -123,27 +121,17 @@ endwhile
 
 unlet color chars colors cpp n i s
 
-endif		" has("gui_running")
+endif          " has("gui_running") || has("termguicolors") && &termguicolors
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_xpm_syntax_inits")
-  if version < 508
-    let did_xpm_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink xpmType		Type
-  HiLink xpmStorageClass	StorageClass
-  HiLink xpmTodo		Todo
-  HiLink xpmComment		Comment
-  HiLink xpmPixelString	String
+hi def link xpmType		Type
+hi def link xpmStorageClass	StorageClass
+hi def link xpmTodo		Todo
+hi def link xpmComment		Comment
+hi def link xpmPixelString	String
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "xpm"
 

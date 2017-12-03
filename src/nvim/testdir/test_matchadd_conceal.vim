@@ -260,3 +260,26 @@ function! Test_matchadd_repeat_conceal_with_syntax_off()
 
   quit!
 endfunction
+
+function! Test_matchadd_and_syn_conceal()
+  new
+  let cnt='Inductive bool : Type := | true : bool | false : bool.'
+  let expect = 'Inductive - : Type := | true : - | false : -.'
+  0put =cnt
+  " set filetype and :syntax on to change screenattr()
+  set cole=1 cocu=nv
+  hi link CheckedByCoq WarningMsg
+  syntax on
+  syntax keyword coqKwd bool conceal cchar=-
+  redraw!
+  call assert_equal(expect, s:screenline(1))
+  call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
+  call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
+  call assert_equal(screenattr(1, 11) , screenattr(1, 32))
+  call matchadd('CheckedByCoq', '\%<2l\%>9c\%<16c')
+  redraw!
+  call assert_equal(expect, s:screenline(1))
+  call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
+  call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
+  call assert_equal(screenattr(1, 11) , screenattr(1, 32))
+endfunction

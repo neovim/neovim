@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file popupmnu.c
 ///
 /// Popup menu (PUM)
@@ -38,9 +41,7 @@ static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
 
 static bool pum_is_visible = false;
-
 static bool pum_external = false;
-static bool pum_wants_external = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "popupmnu.c.generated.h"
@@ -77,7 +78,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
     // draw mode when the popup menu is not being displayed
-    pum_external = pum_wants_external;
+    pum_external = ui_is_external(kUIPopupmenu);
   }
 
 redo:
@@ -97,7 +98,6 @@ redo:
   }
 
   if (pum_external) {
-    Array args = ARRAY_DICT_INIT;
     if (array_changed) {
       Array arr = ARRAY_DICT_INIT;
       for (i = 0; i < size; i++) {
@@ -108,14 +108,9 @@ redo:
         ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_info)));
         ADD(arr, ARRAY_OBJ(item));
       }
-      ADD(args, ARRAY_OBJ(arr));
-      ADD(args, INTEGER_OBJ(selected));
-      ADD(args, INTEGER_OBJ(row));
-      ADD(args, INTEGER_OBJ(col));
-      ui_event("popupmenu_show", args);
+      ui_call_popupmenu_show(arr, selected, row, col);
     } else {
-      ADD(args, INTEGER_OBJ(selected));
-      ui_event("popupmenu_select", args);
+      ui_call_popupmenu_select(selected);
     }
     return;
   }
@@ -312,10 +307,10 @@ void pum_redraw(void)
 {
   int row = pum_row;
   int col;
-  int attr_norm = highlight_attr[HLF_PNI];
-  int attr_select = highlight_attr[HLF_PSI];
-  int attr_scroll = highlight_attr[HLF_PSB];
-  int attr_thumb = highlight_attr[HLF_PST];
+  int attr_norm = win_hl_attr(curwin, HLF_PNI);
+  int attr_select = win_hl_attr(curwin, HLF_PSI);
+  int attr_scroll = win_hl_attr(curwin, HLF_PSB);
+  int attr_thumb = win_hl_attr(curwin, HLF_PST);
   int attr;
   int i;
   int idx;
@@ -610,13 +605,10 @@ static int pum_set_selected(int n, int repeat)
           if (res == OK) {
             // Edit a new, empty buffer. Set options for a "wipeout"
             // buffer.
-            set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-            set_option_value((char_u *)"bt", 0L,
-                             (char_u *)"nofile", OPT_LOCAL);
-            set_option_value((char_u *)"bh", 0L,
-                             (char_u *)"wipe", OPT_LOCAL);
-            set_option_value((char_u *)"diff", 0L,
-                             NULL, OPT_LOCAL);
+            set_option_value("swf", 0L, NULL, OPT_LOCAL);
+            set_option_value("bt", 0L, "nofile", OPT_LOCAL);
+            set_option_value("bh", 0L, "wipe", OPT_LOCAL);
+            set_option_value("diff", 0L, NULL, OPT_LOCAL);
           }
         }
 
@@ -715,8 +707,7 @@ void pum_undisplay(void)
   pum_array = NULL;
 
   if (pum_external) {
-    Array args = ARRAY_DICT_INIT;
-    ui_event("popupmenu_hide", args);
+    ui_call_popupmenu_hide();
   } else {
     redraw_all_later(SOME_VALID);
     redraw_tabline = true;
@@ -750,9 +741,4 @@ bool pum_drawn(void)
 int pum_get_height(void)
 {
   return pum_height;
-}
-
-void pum_set_external(bool external)
-{
-  pum_wants_external = external;
 }

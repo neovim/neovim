@@ -2,14 +2,16 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
+-- luacheck: ignore 621 (Indentation)
 describe("'listchars'", function()
   before_each(function()
     clear()
-    execute('set listchars&vi')
+    feed_command('set listchars&vi')
   end)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it("works with 'list'", function()
     source([[
       function GetScreenCharsForLine(lnum)
@@ -26,14 +28,14 @@ describe("'listchars'", function()
       dd        ee  	
        ]])
 
-    execute('let g:lines = []')
+    feed_command('let g:lines = []')
 
     -- Set up 'listchars', switch on 'list', and use the "GG" mapping to record
     -- what the buffer lines look like.
-    execute('set listchars+=tab:>-,space:.,trail:<')
-    execute('set list')
-    execute('/^start:/')
-    execute('normal! jzt')
+    feed_command('set listchars+=tab:>-,space:.,trail:<')
+    feed_command('set list')
+    feed_command('/^start:/')
+    feed_command('normal! jzt')
     feed('GG<cr>')
     feed('GG<cr>')
     feed('GG<cr>')
@@ -41,7 +43,7 @@ describe("'listchars'", function()
     feed('GGH')
 
     -- Repeat without displaying "trail" spaces.
-    execute('set listchars-=trail:<')
+    feed_command('set listchars-=trail:<')
     feed('GG<cr>')
     feed('GG<cr>')
     feed('GG<cr>')
@@ -49,8 +51,8 @@ describe("'listchars'", function()
     feed('GG')
 
     -- Delete the buffer contents and :put the collected lines.
-    execute('%d')
-    execute('put =g:lines', '1d')
+    feed_command('%d')
+    feed_command('put =g:lines', '1d')
 
     -- Assert buffer contents.
     expect([[
@@ -76,21 +78,21 @@ describe("'listchars'", function()
 
     -- Set up 'listchars', switch 'list' *off* (:list must show the 'listchars'
     -- even when 'list' is off), then run :list and collect the output.
-    execute('set listchars+=tab:>-,space:.,trail:<')
-    execute('set nolist')
-    execute('/^start:/')
-    execute('redir! => g:lines')
-    execute('+1,$list')
-    execute('redir END')
+    feed_command('set listchars+=tab:>-,space:.,trail:<')
+    feed_command('set nolist')
+    feed_command('/^start:/')
+    feed_command('redir! => g:lines')
+    feed_command('+1,$list')
+    feed_command('redir END')
 
     -- Delete the buffer contents and :put the collected lines.
-    execute('%d')
-    execute('put =g:lines', '1d')
+    feed_command('%d')
+    feed_command('put =g:lines', '1d')
 
     -- Assert buffer contents.
     expect([[
-      
-      
+
+
       ..fff>--<<$
       >-------gg>-----$
       .....h>-$

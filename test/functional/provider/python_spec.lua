@@ -12,14 +12,14 @@ local command = helpers.command
 local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
 local curbufmeths = helpers.curbufmeths
+local missing_provider = helpers.missing_provider
 
 do
   clear()
-  command('let [g:interp, g:errors] = provider#pythonx#Detect(2)')
-  local errors = meths.get_var('errors')
-  if errors ~= '' then
+  local err = missing_provider('python')
+  if err then
     pending(
-      'Python 2 (or the Python 2 neovim module) is broken or missing:\n' .. errors,
+      'Python 2 (or the Python 2 neovim module) is broken or missing:\n' .. err,
       function() end)
     return
   end

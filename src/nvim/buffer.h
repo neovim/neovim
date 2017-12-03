@@ -1,12 +1,14 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
 
+#include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/pos.h"  // for linenr_T
 #include "nvim/ex_cmds_defs.h"  // for exarg_T
 #include "nvim/screen.h"  // for StlClickRecord
 #include "nvim/func_attr.h"
 #include "nvim/eval.h"
+#include "nvim/macros.h"
 
 // Values for buflist_getfile()
 enum getf_values {
@@ -81,18 +83,20 @@ static inline void restore_win_for_buf(win_T *save_curwin,
   }
 }
 
-static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
+static inline void buf_set_changedtick(buf_T *const buf,
+                                       const varnumber_T changedtick)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
 
 /// Set b_changedtick and corresponding variable
 ///
 /// @param[out]  buf  Buffer to set changedtick in.
 /// @param[in]  changedtick  New value.
-static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
+static inline void buf_set_changedtick(buf_T *const buf,
+                                       const varnumber_T changedtick)
 {
 #ifndef NDEBUG
-  dictitem_T *const changedtick_di = dict_find(
-      buf->b_vars, (char_u *)"changedtick", sizeof("changedtick") - 1);
+  dictitem_T *const changedtick_di = tv_dict_find(
+      buf->b_vars, S_LEN("changedtick"));
   assert(changedtick_di != NULL);
   assert(changedtick_di->di_tv.v_type == VAR_NUMBER);
   assert(changedtick_di->di_tv.v_lock == VAR_FIXED);
@@ -101,7 +105,8 @@ static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
   assert(changedtick_di->di_flags == (DI_FLAGS_RO|DI_FLAGS_FIX));
 # endif
   assert(changedtick_di == (dictitem_T *)&buf->changedtick_di);
-  assert(&buf->b_changedtick == &buf->changedtick_di.di_tv.vval.v_number);
+  assert(&buf->b_changedtick  // -V501
+         == &buf->changedtick_di.di_tv.vval.v_number);
 #endif
   buf->b_changedtick = changedtick;
 }
@@ -110,7 +115,7 @@ static inline void buf_set_changedtick(buf_T *const buf, const int changedtick)
   do { \
     win_T *save_curwin = NULL; \
     tabpage_T *save_curtab = NULL; \
-    bufref_T save_curbuf = { NULL, 0 }; \
+    bufref_T save_curbuf = { NULL, 0, 0 }; \
     switch_to_win_for_buf(b, &save_curwin, &save_curtab, &save_curbuf); \
     code; \
     restore_win_for_buf(save_curwin, save_curtab, &save_curbuf); \

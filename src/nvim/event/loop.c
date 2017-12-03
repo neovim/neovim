@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdarg.h>
 #include <stdint.h>
 
@@ -5,6 +8,7 @@
 
 #include "nvim/event/loop.h"
 #include "nvim/event/process.h"
+#include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "event/loop.c.generated.h"
@@ -41,8 +45,7 @@ void loop_poll_events(Loop *loop, int ms)
     // we do not block indefinitely for I/O.
     uv_timer_start(&loop->poll_timer, timer_cb, (uint64_t)ms, (uint64_t)ms);
   } else if (ms == 0) {
-    // For ms == 0, we need to do a non-blocking event poll by
-    // setting the run mode to UV_RUN_NOWAIT.
+    // For ms == 0, do a non-blocking event poll.
     mode = UV_RUN_NOWAIT;
   }
 
@@ -56,13 +59,38 @@ void loop_poll_events(Loop *loop, int ms)
   multiqueue_process_events(loop->fast_events);
 }
 
-// Schedule an event from another thread
+/// Schedules an event from another thread.
+///
+/// @note Event is queued into `fast_events`, which is processed outside of the
+///       primary `events` queue by loop_poll_events(). For `main_loop`, that
+///       means `fast_events` is NOT processed in an "editor mode"
+///       (VimState.execute), so redraw and other side-effects are likely to be
+///       skipped.
+/// @see loop_schedule_deferred
 void loop_schedule(Loop *loop, Event event)
 {
   uv_mutex_lock(&loop->mutex);
   multiqueue_put_event(loop->thread_events, event);
   uv_async_send(&loop->async);
   uv_mutex_unlock(&loop->mutex);
+}
+
+/// Schedules an event from another thread. Unlike loop_schedule(), the event
+/// is forwarded to `Loop.events`, instead of being processed immediately.
+///
+/// @see loop_schedule
+void loop_schedule_deferred(Loop *loop, Event event)
+{
+  Event *eventp = xmalloc(sizeof(*eventp));
+  *eventp = event;
+  loop_schedule(loop, event_create(loop_deferred_event, 2, loop, eventp));
+}
+static void loop_deferred_event(void **argv)
+{
+  Loop *loop = argv[0];
+  Event *eventp = argv[1];
+  multiqueue_put_event(loop->events, *eventp);
+  xfree(eventp);
 }
 
 void loop_on_put(MultiQueue *queue, void *data)
@@ -76,20 +104,34 @@ void loop_on_put(MultiQueue *queue, void *data)
   uv_stop(&loop->uv);
 }
 
-void loop_close(Loop *loop, bool wait)
+/// @returns false if the loop could not be closed gracefully
+bool loop_close(Loop *loop, bool wait)
 {
+  bool rv = true;
   uv_mutex_destroy(&loop->mutex);
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
   uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
   uv_close((uv_handle_t *)&loop->poll_timer, NULL);
   uv_close((uv_handle_t *)&loop->async, NULL);
-  do {
+  uint64_t start = wait ? os_hrtime() : 0;
+  while (true) {
     uv_run(&loop->uv, wait ? UV_RUN_DEFAULT : UV_RUN_NOWAIT);
-  } while (uv_loop_close(&loop->uv) && wait);
+    if (!uv_loop_close(&loop->uv) || !wait) {
+      break;
+    }
+    if (os_hrtime() - start >= 2 * 1000000000) {
+      // Some libuv resource was not correctly deref'd. Log and bail.
+      rv = false;
+      ELOG("uv_loop_close() hang?");
+      log_uv_handles(&loop->uv);
+      break;
+    }
+  }
   multiqueue_free(loop->fast_events);
   multiqueue_free(loop->thread_events);
   multiqueue_free(loop->events);
   kl_destroy(WatcherPtr, loop->children);
+  return rv;
 }
 
 void loop_purge(Loop *loop)

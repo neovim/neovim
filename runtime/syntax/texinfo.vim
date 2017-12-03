@@ -9,10 +9,8 @@
 " since @ can have special meanings, everything is 'match'-ed and 'region'-ed
 " (including @ in 'iskeyword' option has unexpected effects)
 
-" Remove any old syntax stuff hanging around, if needed
-if version < 600
-  syn clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -356,48 +354,37 @@ syn cluster texinfoReducedAll contains=texinfoSpecialChar,texinfoBrcPrmAtCmd
 "==============================================================================
 " highlighting
 
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_texinfo_syn_inits")
+" Only when an item doesn't have highlighting yet
 
-  if version < 508
-    let did_texinfo_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+hi def link texinfoSpecialChar	Special
+hi def link texinfoHFSpecialChar	Special
 
-  HiLink texinfoSpecialChar	Special
-  HiLink texinfoHFSpecialChar	Special
-
-  HiLink texinfoError		Error
-  HiLink texinfoIdent		Identifier
-  HiLink texinfoAssignment	Identifier
-  HiLink texinfoSinglePar	Identifier
-  HiLink texinfoIndexPar	Identifier
-  HiLink texinfoSIPar		Identifier
-  HiLink texinfoDIEPar		Identifier
-  HiLink texinfoTexCmd		PreProc
+hi def link texinfoError		Error
+hi def link texinfoIdent		Identifier
+hi def link texinfoAssignment	Identifier
+hi def link texinfoSinglePar	Identifier
+hi def link texinfoIndexPar	Identifier
+hi def link texinfoSIPar		Identifier
+hi def link texinfoDIEPar		Identifier
+hi def link texinfoTexCmd		PreProc
 
 
-  HiLink texinfoAtCmd		Statement	"@-command
-  HiLink texinfoPrmAtCmd	String		"@-command in one line with unknown nr. of parameters
-						"is String because is found as a region and is 'matchgroup'-ed
-						"to texinfoAtCmd
-  HiLink texinfoBrcPrmAtCmd	String		"@-command with parameter(s) in braces ({})
-						"is String because is found as a region and is 'matchgroup'-ed to texinfoAtCmd
-  HiLink texinfoMltlnAtCmdFLine  texinfoAtCmd	"repeated embedded First lines in @-commands
-  HiLink texinfoMltlnAtCmd	String		"@-command in multiple lines
-						"is String because is found as a region and is 'matchgroup'-ed to texinfoAtCmd
-  HiLink texinfoMltln2AtCmd	PreProc		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors)
-  HiLink texinfoMltlnDMAtCmd	PreProc		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors; used for @detailmenu, which can be included in @menu)
-  HiLink texinfoMltlnNAtCmd	Normal		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors)
-  HiLink texinfoThisAtCmd	Statement	"@-command used in headers and footers (@this... series)
+hi def link texinfoAtCmd		Statement	"@-command
+hi def link texinfoPrmAtCmd	String		"@-command in one line with unknown nr. of parameters
+					      "is String because is found as a region and is 'matchgroup'-ed
+					      "to texinfoAtCmd
+hi def link texinfoBrcPrmAtCmd	String		"@-command with parameter(s) in braces ({})
+					      "is String because is found as a region and is 'matchgroup'-ed to texinfoAtCmd
+hi def link texinfoMltlnAtCmdFLine  texinfoAtCmd	"repeated embedded First lines in @-commands
+hi def link texinfoMltlnAtCmd	String		"@-command in multiple lines
+					      "is String because is found as a region and is 'matchgroup'-ed to texinfoAtCmd
+hi def link texinfoMltln2AtCmd	PreProc		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors)
+hi def link texinfoMltlnDMAtCmd	PreProc		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors; used for @detailmenu, which can be included in @menu)
+hi def link texinfoMltlnNAtCmd	Normal		"@-command in multiple lines (same as texinfoMltlnAtCmd, just with other colors)
+hi def link texinfoThisAtCmd	Statement	"@-command used in headers and footers (@this... series)
 
-  HiLink texinfoComment	Comment
+hi def link texinfoComment	Comment
 
-  delcommand HiLink
-endif
 
 
 let b:current_syntax = "texinfo"

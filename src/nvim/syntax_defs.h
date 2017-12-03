@@ -1,15 +1,18 @@
 #ifndef NVIM_SYNTAX_DEFS_H
 #define NVIM_SYNTAX_DEFS_H
 
-#include "nvim/regexp_defs.h"
-
-typedef int32_t RgbValue;
+#include "nvim/highlight_defs.h"
 
 # define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
 # define SST_MAX_ENTRIES 1000   /* maximal size for state stack array */
 # define SST_FIX_STATES  7      /* size of sst_stack[]. */
 # define SST_DIST        16     /* normal distance between entries */
 # define SST_INVALID    (synstate_T *)-1        /* invalid syn_state pointer */
+
+typedef struct syn_state synstate_T;
+
+#include "nvim/buffer_defs.h"
+#include "nvim/regexp_defs.h"
 
 typedef unsigned short disptick_T;      /* display tick type */
 
@@ -49,8 +52,6 @@ typedef struct buf_state {
  * syn_state contains the syntax state stack for the start of one line.
  * Used by b_sst_array[].
  */
-typedef struct syn_state synstate_T;
-
 struct syn_state {
   synstate_T  *sst_next;        /* next entry in used or free list */
   linenr_T sst_lnum;            /* line number for this state */
@@ -73,5 +74,15 @@ typedef struct attr_entry {
   RgbValue rgb_fg_color, rgb_bg_color, rgb_sp_color;
   int cterm_fg_color, cterm_bg_color;
 } attrentry_T;
+
+#define ATTRENTRY_INIT { \
+  .rgb_ae_attr = 0, \
+  .cterm_ae_attr = 0, \
+  .rgb_fg_color = -1, \
+  .rgb_bg_color = -1, \
+  .rgb_sp_color = -1, \
+  .cterm_fg_color = 0, \
+  .cterm_bg_color = 0, \
+}
 
 #endif // NVIM_SYNTAX_DEFS_H

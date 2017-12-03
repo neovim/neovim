@@ -14,8 +14,8 @@
 
 local helpers= require('test.functional.helpers')(after_each)
 local lfs = require('lfs')
-local clear, execute, expect, eq, neq, dedent, write_file, feed =
-  helpers.clear, helpers.execute, helpers.expect, helpers.eq, helpers.neq,
+local clear, feed_command, expect, eq, neq, dedent, write_file, feed =
+  helpers.clear, helpers.feed_command, helpers.expect, helpers.eq, helpers.neq,
   helpers.dedent, helpers.write_file, helpers.feed
 
 if helpers.pending_win32(pending) then return end
@@ -66,26 +66,26 @@ describe('file reading, writing and bufnew and filter autocommands', function()
 
     it('FileReadPost (using gzip)', function()
       prepare_gz_file('Xtestfile', text1)
-      execute('let $GZIP = ""')
+      feed_command('let $GZIP = ""')
       --execute('au FileChangedShell * echo "caught FileChangedShell"')
-      execute('set bin')
-      execute("au FileReadPost    *.gz   '[,']!gzip -d")
+      feed_command('set bin')
+      feed_command("au FileReadPost    *.gz   '[,']!gzip -d")
       -- Read and decompress the testfile.
-      execute('$r Xtestfile.gz')
+      feed_command('$r Xtestfile.gz')
       expect('\n'..text1)
     end)
 
     it('BufReadPre, BufReadPost (using gzip)', function()
       prepare_gz_file('Xtestfile', text1)
       local gzip_data = io.open('Xtestfile.gz'):read('*all')
-      execute('let $GZIP = ""')
+      feed_command('let $GZIP = ""')
       -- Setup autocommands to decompress before reading and re-compress afterwards.
-      execute("au BufReadPre   *.gz  exe '!gzip -d ' . shellescape(expand('<afile>'))")
-      execute("au BufReadPre   *.gz  call rename(expand('<afile>:r'), expand('<afile>'))")
-      execute("au BufReadPost  *.gz  call rename(expand('<afile>'), expand('<afile>:r'))")
-      execute("au BufReadPost  *.gz  exe '!gzip ' . shellescape(expand('<afile>:r'))")
+      feed_command("au BufReadPre   *.gz  exe '!gzip -d ' . shellescape(expand('<afile>'))")
+      feed_command("au BufReadPre   *.gz  call rename(expand('<afile>:r'), expand('<afile>'))")
+      feed_command("au BufReadPost  *.gz  call rename(expand('<afile>'), expand('<afile>:r'))")
+      feed_command("au BufReadPost  *.gz  exe '!gzip ' . shellescape(expand('<afile>:r'))")
       -- Edit compressed file.
-      execute('e! Xtestfile.gz')
+      feed_command('e! Xtestfile.gz')
       -- Discard all prompts and messages.
       feed('<C-L>')
       -- Expect the decompressed file in the buffer.
@@ -94,13 +94,15 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       eq(gzip_data, io.open('Xtestfile.gz'):read('*all'))
     end)
 
+    -- luacheck: ignore 621 (Indentation)
+    -- luacheck: ignore 611 (Line contains only whitespaces)
     it('FileReadPre, FileReadPost', function()
       prepare_gz_file('Xtestfile', text1)
-      execute('au! FileReadPre    *.gz   exe "silent !gzip -d " . shellescape(expand("<afile>"))')
-      execute('au  FileReadPre    *.gz   call rename(expand("<afile>:r"), expand("<afile>"))')
-      execute("au! FileReadPost   *.gz   '[,']s/l/L/")
+      feed_command('au! FileReadPre    *.gz   exe "silent !gzip -d " . shellescape(expand("<afile>"))')
+      feed_command('au  FileReadPre    *.gz   call rename(expand("<afile>:r"), expand("<afile>"))')
+      feed_command("au! FileReadPost   *.gz   '[,']s/l/L/")
       -- Read compressed file.
-      execute('$r Xtestfile.gz')
+      feed_command('$r Xtestfile.gz')
       -- Discard all prompts and messages.
       feed('<C-L>')
       expect([[
@@ -121,17 +123,17 @@ describe('file reading, writing and bufnew and filter autocommands', function()
   end
 
   it('FileAppendPre, FileAppendPost', function()
-    execute('au BufNewFile      *.c    read Xtest.c')
+    feed_command('au BufNewFile      *.c    read Xtest.c')
     -- Will load Xtest.c.
-    execute('e! foo.c')
-    execute("au FileAppendPre   *.out  '[,']s/new/NEW/")
-    execute('au FileAppendPost  *.out  !cat Xtest.c >>test.out')
+    feed_command('e! foo.c')
+    feed_command("au FileAppendPre   *.out  '[,']s/new/NEW/")
+    feed_command('au FileAppendPost  *.out  !cat Xtest.c >>test.out')
     -- Append it to the output file.
-    execute('w>>test.out')
+    feed_command('w>>test.out')
     -- Discard all prompts and messages.
     feed('<C-L>')
     -- Expect the decompressed file in the buffer.
-    execute('e test.out')
+    feed_command('e test.out')
     expect([[
       
       /*
@@ -166,18 +168,18 @@ describe('file reading, writing and bufnew and filter autocommands', function()
        * Here is a new .c file
        */]]))
     -- Need temp files here.
-    execute('set shelltemp')
-    execute('au FilterReadPre   *.out  call rename(expand("<afile>"), expand("<afile>") . ".t")')
-    execute('au FilterReadPre   *.out  exe "silent !sed s/e/E/ " . shellescape(expand("<afile>")) . ".t >" . shellescape(expand("<afile>"))')
-    execute('au FilterReadPre   *.out  exe "silent !rm " . shellescape(expand("<afile>")) . ".t"')
-    execute("au FilterReadPost  *.out  '[,']s/x/X/g")
+    feed_command('set shelltemp')
+    feed_command('au FilterReadPre   *.out  call rename(expand("<afile>"), expand("<afile>") . ".t")')
+    feed_command('au FilterReadPre   *.out  exe "silent !sed s/e/E/ " . shellescape(expand("<afile>")) . ".t >" . shellescape(expand("<afile>"))')
+    feed_command('au FilterReadPre   *.out  exe "silent !rm " . shellescape(expand("<afile>")) . ".t"')
+    feed_command("au FilterReadPost  *.out  '[,']s/x/X/g")
     -- Edit the output file.
-    execute('e! test.out')
-    execute('23,$!cat')
+    feed_command('e! test.out')
+    feed_command('23,$!cat')
     -- Discard all prompts and messages.
     feed('<C-L>')
     -- Remove CR for when sed adds them.
-    execute([[23,$s/\r$//]])
+    feed_command([[23,$s/\r$//]])
     expect([[
       startstart
       start of testfile

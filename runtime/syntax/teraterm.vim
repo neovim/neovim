@@ -1,9 +1,9 @@
 " Vim syntax file
 " Language:	Tera Term Language (TTL)
-"		Based on Tera Term Version 4.86
+"		Based on Tera Term Version 4.92
 " Maintainer:	Ken Takata
 " URL:		https://github.com/k-takata/vim-teraterm
-" Last Change:	2015 Jun 24
+" Last Change:	2016 Aug 17
 " Filenames:	*.ttl
 " License:	VIM License
 
@@ -33,7 +33,7 @@ syn keyword ttlOperator	and or xor not
 
 syn match ttlVar	"\<groupmatchstr\d\>"
 syn match ttlVar	"\<param\d\>"
-syn keyword ttlVar	inputstr matchstr paramcnt result timeout mtimeout
+syn keyword ttlVar	inputstr matchstr paramcnt params result timeout mtimeout
 
 
 syn match ttlLine nextgroup=ttlStatement "^"

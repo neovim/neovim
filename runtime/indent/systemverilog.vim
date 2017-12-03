@@ -29,7 +29,7 @@ function SystemVerilogIndent()
   if exists('b:systemverilog_indent_width')
     let offset = b:systemverilog_indent_width
   else
-    let offset = &sw
+    let offset = shiftwidth()
   endif
   if exists('b:systemverilog_indent_modules')
     let indent_modules = offset

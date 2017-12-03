@@ -1,22 +1,27 @@
-*terminal_emulator.txt*    						{Nvim}
+*terminal_emulator.txt*   Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Terminal emulator					   *terminal-emulator*
+Terminal emulator				*terminal* *terminal-emulator*
 
 Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
 presented as a special buffer type, asynchronously updated from the virtual
 terminal as data is received from the program connected to it.
 
-Terminal buffers behave mostly like normal 'nomodifiable' buffers, except:
-- Plugins can set 'modifiable' to modify text, but lines cannot be deleted.
-- 'scrollback' controls how many off-screen lines are kept.
-- Terminal output is followed if the cursor is on the last line.
+Terminal buffers behave like normal buffers, except:
+- With 'modifiable', lines can be edited but not deleted.
+- 'scrollback' controls how many lines are kept.
+- Output is followed if the cursor is on the last line.
+- 'modified' is the default. You can set 'nomodified' to avoid a warning when
+  closing the terminal buffer.
+- 'bufhidden' defaults to "hide".
+
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
-Spawning					  *terminal-emulator-spawning*
+Start						*terminal-start*
 
 There are 3 ways to create a terminal buffer:
 
@@ -33,37 +38,42 @@ There are 3 ways to create a terminal buffer:
         autocmd VimEnter * nested split term://sh
 <    This is only mentioned for reference; use |:terminal| instead.
 
-When the terminal spawns the program, the buffer will start to mirror the
-terminal display and change its name to `term://{cwd}//{pid}:{cmd}`.
-The "term://..." scheme enables |:mksession| to "restore" a terminal buffer by
-restarting the {cmd} when the session is loaded.
+When the terminal starts, the buffer contents are updated and the buffer is
+named in the form of `term://{cwd}//{pid}:{cmd}`. This naming scheme is used
+by |:mksession| to restore a terminal buffer (by restarting the {cmd}).
 
 ==============================================================================
-Input						     *terminal-emulator-input*
+Input						*terminal-input*
 
-To send input, enter terminal mode using any command that would enter "insert
+To send input, enter |Terminal-mode| using any command that would enter "insert
 mode" in a normal buffer, such as |i| or |:startinsert|. In this mode all keys
 except <C-\><C-N> are sent to the underlying program. Use <C-\><C-N> to return
-to normal mode. |CTRL-\_CTRL-N|
+to normal-mode. |CTRL-\_CTRL-N|
 
-Terminal mode has its own |:tnoremap| namespace for mappings, this can be used
-to automate any terminal interaction. To map <Esc> to exit terminal mode: >
+Terminal-mode has its own |:tnoremap| namespace for mappings, this can be used
+to automate any terminal interaction.
+
+To map <Esc> to exit terminal-mode: >
     :tnoremap <Esc> <C-\><C-n>
-<
-Navigating to other windows is only possible in normal mode. For convenience,
-you could use these mappings: >
-    :tnoremap <A-h> <C-\><C-n><C-w>h
-    :tnoremap <A-j> <C-\><C-n><C-w>j
-    :tnoremap <A-k> <C-\><C-n><C-w>k
-    :tnoremap <A-l> <C-\><C-n><C-w>l
+
+To simulate |i_CTRL-R| in terminal-mode: >
+    :tnoremap <expr> <C-R> '<C-\><C-N>"'.nr2char(getchar()).'pi'
+
+To use `ALT+{h,j,k,l}` to navigate windows from any mode: >
+    :tnoremap <A-h> <C-\><C-N><C-w>h
+    :tnoremap <A-j> <C-\><C-N><C-w>j
+    :tnoremap <A-k> <C-\><C-N><C-w>k
+    :tnoremap <A-l> <C-\><C-N><C-w>l
+    :inoremap <A-h> <C-\><C-N><C-w>h
+    :inoremap <A-j> <C-\><C-N><C-w>j
+    :inoremap <A-k> <C-\><C-N><C-w>k
+    :inoremap <A-l> <C-\><C-N><C-w>l
     :nnoremap <A-h> <C-w>h
     :nnoremap <A-j> <C-w>j
     :nnoremap <A-k> <C-w>k
     :nnoremap <A-l> <C-w>l
-<
-Then you can use `Alt+{h,j,k,l}` to navigate between windows from any mode.
 
-Mouse input is supported, and has the following behavior:
+Mouse input has the following behavior:
 
 - If the program has enabled mouse events, the corresponding events will be
   forwarded to the program.
@@ -75,23 +85,31 @@ Mouse input is supported, and has the following behavior:
   the terminal wont lose focus and the hovered window will be scrolled.
 
 ==============================================================================
-Configuration				     *terminal-emulator-configuration*
+Configuration					*terminal-configuration*
 
-Options:		'scrollback'
+Options:		'modified', 'scrollback'
 Events:			|TermOpen|, |TermClose|
 Highlight groups:	|hl-TermCursor|, |hl-TermCursorNC|
 
-Terminal colors can be customized with these variables:
+Terminal sets local defaults for some options, which may differ from your
+global configuration.
 
-- `{g,b}:terminal_color_$NUM`: The terminal color palette, where `$NUM` is the
-  color index, between 0 and 255 inclusive. This setting only affects UIs with
-  RGB capabilities; for normal terminals the color index is simply forwarded.
+- 'list' is disabled
+- 'wrap' is disabled
+- 'relativenumber' is disabled in |Terminal-mode| (and cannot be enabled)
 
-The `{g,b}:terminal_color_$NUM` variables are processed only when the terminal
-starts (after |TermOpen|).
+You can change the defaults with a TermOpen autocommand: >
+	au TermOpen * setlocal list
+
+TERMINAL COLORS ~
+
+The `{g,b}:terminal_color_$NUM` variables control the terminal color palette,
+where `$NUM` is the color index between 0 and 255 inclusive. This setting only
+affects UIs with RGB capabilities; for normal terminals the color index is
+just forwarded. The variables are read only during |TermOpen|.
 
 ==============================================================================
-Status Variables				    *terminal-emulator-status*
+Status Variables				*terminal-status*
 
 Terminal buffers maintain some information about the terminal in buffer-local
 variables:
@@ -99,8 +117,8 @@ variables:
 - *b:term_title* The settable title of the terminal, typically displayed in
   the window title or tab title of a graphical terminal emulator. Programs
   running in the terminal can set this title via an escape sequence.
-- *b:terminal_job_id* The nvim job ID of the job running in the terminal. See
-  |job-control| for more information.
+- |'channel'| The nvim channel ID for the underlying PTY.
+  |chansend()| can be used to send input to the terminal.
 - *b:terminal_job_pid* The PID of the top-level process running in the
   terminal.
 

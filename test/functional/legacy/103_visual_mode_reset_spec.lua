@@ -32,7 +32,7 @@ describe('E315 error', function()
     -- :del the ex-way will require the colon operator which resets the
     -- visual mode thus preventing the problem:
     feed('GV:call TriggerTheProblem()<cr>')
-  
+
     source([[
       %del _
       call append(line('$'), g:msg)
@@ -41,7 +41,7 @@ describe('E315 error', function()
 
     -- Assert buffer contents.
     expect([[
-      
+
       Everything's fine.]])
   end)
 end)

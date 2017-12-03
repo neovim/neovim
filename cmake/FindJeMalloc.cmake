@@ -4,7 +4,7 @@
 #  JEMALLOC_INCLUDE_DIRS - The jemalloc include directories
 #  JEMALLOC_LIBRARIES - The libraries needed to use jemalloc
 
-if(NOT JEMALLOC_USE_BUNDLED)
+if(NOT USE_BUNDLED_JEMALLOC)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
     pkg_check_modules(PC_JEMALLOC QUIET jemalloc)
@@ -26,6 +26,9 @@ find_path(JEMALLOC_INCLUDE_DIR jemalloc/jemalloc.h
 # If we're asked to use static linkage, add libjemalloc.a as a preferred library name.
 if(JEMALLOC_USE_STATIC)
   list(APPEND JEMALLOC_NAMES
+    "${CMAKE_STATIC_LIBRARY_PREFIX}jemalloc${CMAKE_STATIC_LIBRARY_SUFFIX}")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+  list(INSERT JEMALLOC_NAMES 0
     "${CMAKE_STATIC_LIBRARY_PREFIX}jemalloc${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 

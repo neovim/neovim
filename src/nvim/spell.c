@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // spell.c: code for spell checking
 //
 // See spellfile.c for the Vim spell file format.
@@ -92,6 +95,7 @@
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -1429,12 +1433,10 @@ spell_move_to (
           // the cursor.
           if (dir == BACKWARD
               || lnum != wp->w_cursor.lnum
-              || (lnum == wp->w_cursor.lnum
-                  && (wrapped
-                      || ((colnr_T)(curline
-                                    ? p - buf + (ptrdiff_t)len
-                                    : p - buf)
-                          > wp->w_cursor.col)))) {
+              || wrapped
+              || ((colnr_T)(curline
+                            ? p - buf + (ptrdiff_t)len
+                            : p - buf) > wp->w_cursor.col)) {
             if (has_syntax) {
               col = (int)(p - buf);
               (void)syn_get_id(wp, lnum, (colnr_T)col,
@@ -2066,7 +2068,7 @@ char_u *did_set_spelllang(win_T *wp)
         // destroying the buffer we are using...
         if (!bufref_valid(&bufref)) {
           ret_msg =
-            (char_u *)"E797: SpellFileMissing autocommand deleted buffer";
+            (char_u *)N_("E797: SpellFileMissing autocommand deleted buffer");
           goto theend;
         }
       }
@@ -2309,10 +2311,11 @@ int captype(char_u *word, char_u *end)
   for (p = word; !spell_iswordp_nmw(p, curwin); mb_ptr_adv(p))
     if (end == NULL ? *p == NUL : p >= end)
       return 0;             // only non-word characters, illegal word
-  if (has_mbyte)
-    c = mb_ptr2char_adv(&p);
-  else
+  if (has_mbyte) {
+    c = mb_ptr2char_adv((const char_u **)&p);
+  } else {
     c = *p++;
+  }
   firstcap = allcap = SPELL_ISUPPER(c);
 
   // Need to check all letters to find a word with mixed upper/lower.
@@ -2525,8 +2528,7 @@ void clear_spell_chartab(spelltab_T *sp)
   }
 }
 
-// Init the chartab used for spelling.  Only depends on 'encoding'.
-// Called once while starting up and when 'encoding' changes.
+// Init the chartab used for spelling. Called once while starting up.
 // The default is to use isalpha(), but the spell file should define the word
 // characters to make it possible that 'encoding' differs from the current
 // locale.  For utf-8 we don't use isalpha() but our own functions.
@@ -2536,36 +2538,17 @@ void init_spell_chartab(void)
 
   did_set_spelltab = false;
   clear_spell_chartab(&spelltab);
-  if (enc_dbcs) {
-    // DBCS: assume double-wide characters are word characters.
-    for (i = 128; i <= 255; ++i)
-      if (MB_BYTE2LEN(i) == 2)
-        spelltab.st_isw[i] = true;
-  } else if (enc_utf8)   {
-    for (i = 128; i < 256; ++i) {
-      int f = utf_fold(i);
-      int u = utf_toupper(i);
+  for (i = 128; i < 256; i++) {
+    int f = utf_fold(i);
+    int u = mb_toupper(i);
 
-      spelltab.st_isu[i] = utf_isupper(i);
-      spelltab.st_isw[i] = spelltab.st_isu[i] || utf_islower(i);
-      // The folded/upper-cased value is different between latin1 and
-      // utf8 for 0xb5, causing E763 for no good reason.  Use the latin1
-      // value for utf-8 to avoid this.
-      spelltab.st_fold[i] = (f < 256) ? f : i;
-      spelltab.st_upper[i] = (u < 256) ? u : i;
-    }
-  } else {
-    // Rough guess: use locale-dependent library functions.
-    for (i = 128; i < 256; ++i) {
-      if (vim_isupper(i)) {
-        spelltab.st_isw[i] = true;
-        spelltab.st_isu[i] = true;
-        spelltab.st_fold[i] = vim_tolower(i);
-      } else if (vim_islower(i))   {
-        spelltab.st_isw[i] = true;
-        spelltab.st_upper[i] = vim_toupper(i);
-      }
-    }
+    spelltab.st_isu[i] = mb_isupper(i);
+    spelltab.st_isw[i] = spelltab.st_isu[i] || mb_islower(i);
+    // The folded/upper-cased value is different between latin1 and
+    // utf8 for 0xb5, causing E763 for no good reason.  Use the latin1
+    // value for utf-8 to avoid this.
+    spelltab.st_fold[i] = (f < 256) ? f : i;
+    spelltab.st_upper[i] = (u < 256) ? u : i;
   }
 }
 
@@ -2607,14 +2590,15 @@ static bool spell_iswordp(char_u *p, win_T *wp)
 
 // Returns true if "p" points to a word character.
 // Unlike spell_iswordp() this doesn't check for "midword" characters.
-bool spell_iswordp_nmw(char_u *p, win_T *wp)
+bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 {
   int c;
 
   if (has_mbyte) {
     c = mb_ptr2char(p);
-    if (c > 255)
+    if (c > 255) {
       return spell_mb_isword_class(mb_get_class(p), wp);
+    }
     return spelltab.st_isw[c];
   }
   return spelltab.st_isw[*p];
@@ -2623,7 +2607,7 @@ bool spell_iswordp_nmw(char_u *p, win_T *wp)
 // Returns true if word class indicates a word character.
 // Only for characters above 255.
 // Unicode subscript and superscript are not considered word characters.
-// See also dbcs_class() and utf_class() in mbyte.c.
+// See also utf_class() in mbyte.c.
 static bool spell_mb_isword_class(int cl, win_T *wp)
 {
   if (wp->w_s->b_cjk)
@@ -2646,12 +2630,7 @@ static bool spell_iswordp_w(int *p, win_T *wp)
     s = p;
 
   if (*s > 255) {
-    if (enc_utf8)
-      return spell_mb_isword_class(utf_class(*s), wp);
-    if (enc_dbcs)
-      return spell_mb_isword_class(
-          dbcs_class((unsigned)*s >> 8, *s & 0xff), wp);
-    return false;
+    return spell_mb_isword_class(utf_class(*s), wp);
   }
   return spelltab.st_isw[*s];
 }
@@ -2680,7 +2659,7 @@ int spell_casefold(char_u *str, int len, char_u *buf, int buflen)
         buf[outi] = NUL;
         return FAIL;
       }
-      c = mb_cptr2char_adv(&p);
+      c = mb_cptr2char_adv((const char_u **)&p);
       outi += mb_char2bytes(SPELL_TOFOLD(c), buf + outi);
     }
     buf[outi] = NUL;
@@ -2942,7 +2921,7 @@ void spell_suggest(int count)
 
     // For redo we use a change-word command.
     ResetRedobuff();
-    AppendToRedobuff((char_u *)"ciw");
+    AppendToRedobuff("ciw");
     AppendToRedobuffLit(p + c,
         stp->st_wordlen + sug.su_badlen - stp->st_orglen);
     AppendCharToRedobuff(ESC);
@@ -3237,7 +3216,7 @@ static void spell_suggest_expr(suginfo_T *su, char_u *expr)
   list_T      *list;
   listitem_T  *li;
   int score;
-  char_u      *p;
+  const char *p;
 
   // The work is split up in a few parts to avoid having to export
   // suginfo_T.
@@ -3249,11 +3228,12 @@ static void spell_suggest_expr(suginfo_T *su, char_u *expr)
       if (li->li_tv.v_type == VAR_LIST) {
         // Get the word and the score from the items.
         score = get_spellword(li->li_tv.vval.v_list, &p);
-        if (score >= 0 && score <= su->su_maxscore)
-          add_suggestion(su, &su->su_ga, p, su->su_badlen,
-              score, 0, true, su->su_sallang, false);
+        if (score >= 0 && score <= su->su_maxscore) {
+          add_suggestion(su, &su->su_ga, (const char_u *)p, su->su_badlen,
+                         score, 0, true, su->su_sallang, false);
+        }
       }
-    list_unref(list);
+    tv_list_unref(list);
   }
 
   // Remove bogus suggestions, sort and truncate at "maxcount".
@@ -3410,17 +3390,19 @@ void onecap_copy(char_u *word, char_u *wcopy, bool upper)
   int l;
 
   p = word;
-  if (has_mbyte)
-    c = mb_cptr2char_adv(&p);
-  else
+  if (has_mbyte) {
+    c = mb_cptr2char_adv((const char_u **)&p);
+  } else {
     c = *p++;
-  if (upper)
+  }
+  if (upper) {
     c = SPELL_TOUPPER(c);
-  else
+  } else {
     c = SPELL_TOFOLD(c);
-  if (has_mbyte)
+  }
+  if (has_mbyte) {
     l = mb_char2bytes(c, wcopy);
-  else {
+  } else {
     l = 1;
     wcopy[0] = c;
   }
@@ -3437,10 +3419,11 @@ static void allcap_copy(char_u *word, char_u *wcopy)
 
   d = wcopy;
   for (s = word; *s != NUL; ) {
-    if (has_mbyte)
-      c = mb_cptr2char_adv(&s);
-    else
+    if (has_mbyte) {
+      c = mb_cptr2char_adv((const char_u **)&s);
+    } else {
       c = *s++;
+    }
 
     if (c == 0xdf) {
       c = 'S';
@@ -3650,7 +3633,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
   // word).
   depth = 0;
   sp = &stack[0];
-  memset(sp, 0, sizeof(trystate_T));
+  memset(sp, 0, sizeof(trystate_T));  // -V512
   sp->ts_curi = 1;
 
   if (soundfold) {
@@ -5621,7 +5604,7 @@ static void
 add_suggestion (
     suginfo_T *su,
     garray_T *gap,              // either su_ga or su_sga
-    char_u *goodword,
+    const char_u *goodword,
     int badlenarg,              // len of bad word replaced with "goodword"
     int score,
     int altscore,
@@ -5635,13 +5618,11 @@ add_suggestion (
   int badlen;                   // len of bad word changed
   suggest_T   *stp;
   suggest_T new_sug;
-  int i;
-  char_u      *pgood, *pbad;
 
   // Minimize "badlen" for consistency.  Avoids that changing "the the" to
   // "thee the" is added next to changing the first "the" the "thee".
-  pgood = goodword + STRLEN(goodword);
-  pbad = su->su_badptr + badlenarg;
+  const char_u *pgood = goodword + STRLEN(goodword);
+  char_u *pbad = su->su_badptr + badlenarg;
   for (;; ) {
     goodlen = (int)(pgood - goodword);
     badlen = (int)(pbad - su->su_badptr);
@@ -5661,9 +5642,10 @@ add_suggestion (
     // the first "the" to itself.
     return;
 
-  if (GA_EMPTY(gap))
+  int i;
+  if (GA_EMPTY(gap)) {
     i = -1;
-  else {
+  } else {
     // Check if the word is already there.  Also check the length that is
     // being replaced "thes," -> "these" is a different suggestion from
     // "thes" -> "these".
@@ -5862,27 +5844,31 @@ cleanup_suggestions (
   return maxscore;
 }
 
-// Soundfold a string, for soundfold().
-// Result is in allocated memory, NULL for an error.
-char_u *eval_soundfold(char_u *word)
+/// Soundfold a string, for soundfold()
+///
+/// @param[in]  word  Word to soundfold.
+///
+/// @return [allocated] soundfolded string or NULL in case of error. May return
+///                     copy of the input string if soundfolding is not
+///                     supported by any of the languages in &spellang.
+char *eval_soundfold(const char *const word)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  langp_T     *lp;
-  char_u sound[MAXWLEN];
-
   if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     // Use the sound-folding of the first language that supports it.
-    for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
-      lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
+    for (int lpi = 0; lpi < curwin->w_s->b_langp.ga_len; lpi++) {
+      langp_T *const lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
       if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
         // soundfold the word
-        spell_soundfold(lp->lp_slang, word, false, sound);
-        return vim_strsave(sound);
+        char_u sound[MAXWLEN];
+        spell_soundfold(lp->lp_slang, (char_u *)word, false, sound);
+        return xstrdup((const char *)sound);
       }
     }
   }
 
   // No language with sound folding, return word as-is.
-  return vim_strsave(word);
+  return xstrdup(word);
 }
 
 /// Turn "inword" into its sound-a-like equivalent in "res[MAXWLEN]".
@@ -5939,12 +5925,12 @@ static void spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
     // The sl_sal_first[] table contains the translation for chars up to
     // 255, sl_sal the rest.
     for (s = inword; *s != NUL; ) {
-      c = mb_cptr2char_adv(&s);
-      if (enc_utf8 ? utf_class(c) == 0 : ascii_iswhite(c))
+      c = mb_cptr2char_adv((const char_u **)&s);
+      if (enc_utf8 ? utf_class(c) == 0 : ascii_iswhite(c)) {
         c = ' ';
-      else if (c < 256)
+      } else if (c < 256) {
         c = slang->sl_sal_first[c];
-      else {
+      } else {
         ip = ((int **)slang->sl_sal.ga_data)[c & 0xff];
         if (ip == NULL)                 // empty list, can't match
           c = NUL;
@@ -6229,9 +6215,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
   int word[MAXWLEN];
   int wres[MAXWLEN];
   int l;
-  char_u      *s;
   int         *ws;
-  char_u      *t;
   int         *pf;
   int i, j, z;
   int reslen;
@@ -6251,9 +6235,9 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
   // Remove accents, if wanted.  We actually remove all non-word characters.
   // But keep white space.
   wordlen = 0;
-  for (s = inword; *s != NUL; ) {
-    t = s;
-    c = mb_cptr2char_adv(&s);
+  for (const char_u *s = inword; *s != NUL; ) {
+    const char_u *t = s;
+    c = mb_cptr2char_adv((const char_u **)&s);
     if (slang->sl_rem_accents) {
       if (enc_utf8 ? utf_class(c) == 0 : ascii_iswhite(c)) {
         if (did_white)
@@ -6262,8 +6246,9 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
         did_white = true;
       } else {
         did_white = false;
-        if (!spell_iswordp_nmw(t, curwin))
+        if (!spell_iswordp_nmw(t, curwin)) {
           continue;
+        }
       }
     }
     word[wordlen++] = c;
@@ -6310,7 +6295,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
             continue;
           ++k;
         }
-        s = smp[n].sm_rules;
+        char_u *s = smp[n].sm_rules;
         pri = 5;            // default priority
 
         p0 = *s;
@@ -6709,25 +6694,30 @@ soundalike_score (
 // support multi-byte characters.
 static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
 {
-  int         *cnt;
-  int badlen, goodlen;                  // lengths including NUL
+  int *cnt;
   int j, i;
   int t;
   int bc, gc;
   int pbc, pgc;
-  char_u      *p;
   int wbadword[MAXWLEN];
   int wgoodword[MAXWLEN];
   const bool l_has_mbyte = has_mbyte;
 
+  // Lengths with NUL.
+  int badlen;
+  int goodlen;
   if (l_has_mbyte) {
     // Get the characters from the multi-byte strings and put them in an
     // int array for easy access.
-    for (p = badword, badlen = 0; *p != NUL; )
+    badlen = 0;
+    for (const char_u *p = badword; *p != NUL; ) {
       wbadword[badlen++] = mb_cptr2char_adv(&p);
+    }
     wbadword[badlen++] = 0;
-    for (p = goodword, goodlen = 0; *p != NUL; )
+    goodlen = 0;
+    for (const char_u *p = goodword; *p != NUL; ) {
       wgoodword[goodlen++] = mb_cptr2char_adv(&p);
+    }
     wgoodword[goodlen++] = 0;
   } else {
     badlen = (int)STRLEN(badword) + 1;
@@ -6961,19 +6951,20 @@ static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goo
   int score_off;
   int minscore;
   int round;
-  char_u          *p;
   int wbadword[MAXWLEN];
   int wgoodword[MAXWLEN];
 
   // Get the characters from the multi-byte strings and put them in an
   // int array for easy access.
   bi = 0;
-  for (p = badword; *p != NUL; )
+  for (const char_u *p = badword; *p != NUL; ) {
     wbadword[bi++] = mb_cptr2char_adv(&p);
+  }
   wbadword[bi++] = 0;
   gi = 0;
-  for (p = goodword; *p != NUL; )
+  for (const char_u *p = goodword; *p != NUL; ) {
     wgoodword[gi++] = mb_cptr2char_adv(&p);
+  }
   wgoodword[gi++] = 0;
 
   // The idea is to go from start to end over the words.  So long as
@@ -7139,16 +7130,17 @@ void ex_spelldump(exarg_T *eap)
   char_u  *spl;
   long dummy;
 
-  if (no_spell_checking(curwin))
+  if (no_spell_checking(curwin)) {
     return;
-  get_option_value((char_u*)"spl", &dummy, &spl, OPT_LOCAL);
+  }
+  get_option_value((char_u *)"spl", &dummy, &spl, OPT_LOCAL);
 
   // Create a new empty buffer in a new window.
   do_cmdline_cmd("new");
 
   // enable spelling locally in the new window
-  set_option_value((char_u*)"spell", true, (char_u*)"", OPT_LOCAL);
-  set_option_value((char_u*)"spl",  dummy, spl, OPT_LOCAL);
+  set_option_value("spell", true, "", OPT_LOCAL);
+  set_option_value("spl",  dummy, (char *)spl, OPT_LOCAL);
   xfree(spl);
 
   if (!bufempty()) {

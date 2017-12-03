@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
-local insert, execute = helpers.insert, helpers.execute
+local insert, command = helpers.insert, helpers.command
 
 
 describe('quickfix selection highlight', function()
@@ -28,8 +28,8 @@ describe('quickfix selection highlight', function()
     })
 
     meths.set_option('errorformat', '%m %l')
-    execute('syntax on')
-    execute('highlight Search guibg=Green')
+    command('syntax on')
+    command('highlight Search guibg=Green')
 
     insert([[
     Line 1
@@ -39,7 +39,7 @@ describe('quickfix selection highlight', function()
     Line 5
     ]])
 
-    execute('cad')
+    command('cad')
     feed('gg')
 
     screen:expect([[
@@ -52,12 +52,12 @@ describe('quickfix selection highlight', function()
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
-      :cad                     |
+                               |
     ]])
   end)
 
   it('using default Search highlight group', function()
-    execute('copen')
+    command('copen')
 
     screen:expect([[
       Line 1                   |
@@ -69,10 +69,10 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
 
-    execute('cnext')
+    command('cnext')
 
     screen:expect([[
       Line 1                   |
@@ -84,14 +84,14 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :cnext                   |
+                               |
     ]])
   end)
 
   it('using QuickFixLine highlight group', function()
-    execute('highlight QuickFixLine guibg=Red')
+    command('highlight QuickFixLine guibg=Red')
 
-    execute('copen')
+    command('copen')
 
     screen:expect([[
       Line 1                   |
@@ -103,10 +103,10 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
 
-    execute('cnext')
+    command('cnext')
 
     screen:expect([[
       Line 1                   |
@@ -118,16 +118,16 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :cnext                   |
+                               |
     ]])
   end)
 
   it('combines with CursorLine', function()
-    execute('set cursorline')
-    execute('highlight QuickFixLine guifg=Red')
-    execute('highlight CursorLine guibg=Fuchsia')
+    command('set cursorline')
+    command('highlight QuickFixLine guifg=Red')
+    command('highlight CursorLine guibg=Fuchsia')
 
-    execute('copen')
+    command('copen')
 
     screen:expect([[
       {9:Line 1                   }|
@@ -139,7 +139,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
 
     feed('j')
@@ -154,16 +154,16 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
   end)
 
   it('QuickFixLine background takes precedence over CursorLine', function()
-    execute('set cursorline')
-    execute('highlight QuickFixLine guibg=Red')
-    execute('highlight CursorLine guibg=Fuchsia')
+    command('set cursorline')
+    command('highlight QuickFixLine guibg=Red')
+    command('highlight CursorLine guibg=Fuchsia')
 
-    execute('copen')
+    command('copen')
 
     screen:expect([[
       {9:Line 1                   }|
@@ -175,7 +175,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
 
     feed('j')
@@ -190,7 +190,7 @@ describe('quickfix selection highlight', function()
       |{3:5}| Line                 |
       ||                       |
       {4:[Quickfix List]          }|
-      :copen                   |
+                               |
     ]])
   end)
 end)

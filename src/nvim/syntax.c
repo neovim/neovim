@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * syntax.c: code for syntax highlighting
  */
@@ -39,42 +42,50 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 static bool did_syntax_onoff = false;
 
-// Structure that stores information about a highlight group.
-// The ID of a highlight group is also called group ID.  It is the index in
-// the highlight_ga array PLUS ONE.
+/// Structure that stores information about a highlight group.
+/// The ID of a highlight group is also called group ID.  It is the index in
+/// the highlight_ga array PLUS ONE.
 struct hl_group {
-  char_u      *sg_name;         // highlight group name
-  char_u      *sg_name_u;       // uppercase of sg_name
-  int sg_attr;                  // Screen attr
-  int sg_link;                  // link to this highlight group ID
-  int sg_set;                   // combination of SG_* flags
-  scid_T sg_scriptID;           // script in which the group was last set
+  char_u      *sg_name;         ///< highlight group name
+  char_u      *sg_name_u;       ///< uppercase of sg_name
+  int sg_attr;                  ///< Screen attr @see ATTR_ENTRY
+  int sg_link;                  ///< link to this highlight group ID
+  int sg_set;                   ///< combination of flags in \ref SG_SET
+  scid_T sg_scriptID;           ///< script in which the group was last set
   // for terminal UIs
-  int sg_cterm;                 // "cterm=" highlighting attr
-  int sg_cterm_fg;              // terminal fg color number + 1
-  int sg_cterm_bg;              // terminal bg color number + 1
-  int sg_cterm_bold;            // bold attr was set for light color
+  int sg_cterm;                 ///< "cterm=" highlighting attr
+  int sg_cterm_fg;              ///< terminal fg color number + 1
+  int sg_cterm_bg;              ///< terminal bg color number + 1
+  int sg_cterm_bold;            ///< bold attr was set for light color
   // for RGB UIs
-  int sg_gui;                   // "gui=" highlighting attributes
-  RgbValue sg_rgb_fg;           // RGB foreground color
-  RgbValue sg_rgb_bg;           // RGB background color
-  RgbValue sg_rgb_sp;           // RGB special color
-  uint8_t *sg_rgb_fg_name;      // RGB foreground color name
-  uint8_t *sg_rgb_bg_name;      // RGB background color name
-  uint8_t *sg_rgb_sp_name;      // RGB special color name
+  int sg_gui;                   ///< "gui=" highlighting attributes
+                                ///< (combination of \ref HL_ATTRIBUTES)
+  RgbValue sg_rgb_fg;           ///< RGB foreground color
+  RgbValue sg_rgb_bg;           ///< RGB background color
+  RgbValue sg_rgb_sp;           ///< RGB special color
+  uint8_t *sg_rgb_fg_name;      ///< RGB foreground color name
+  uint8_t *sg_rgb_bg_name;      ///< RGB background color name
+  uint8_t *sg_rgb_sp_name;      ///< RGB special color name
 };
 
+/// \addtogroup SG_SET
+/// @{
 #define SG_CTERM        2       // cterm has been set
 #define SG_GUI          4       // gui has been set
 #define SG_LINK         8       // link has been set
+/// @}
 
-// highlight groups for 'highlight' option
+// builtin |highlight-groups|
 static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
-#define HL_TABLE() ((struct hl_group *)((highlight_ga.ga_data)))
+static inline struct hl_group * HL_TABLE(void)
+{
+  return ((struct hl_group *)((highlight_ga.ga_data)));
+}
 
 #define MAX_HL_ID       20000   /* maximum value for a highlight ID. */
 
@@ -93,10 +104,8 @@ static int include_none = 0;    /* when 1 include "nvim/None" */
 static int include_default = 0; /* when 1 include "nvim/default" */
 static int include_link = 0;    /* when 2 include "nvim/link" and "clear" */
 
-/*
- * The "term", "cterm" and "gui" arguments can be any combination of the
- * following names, separated by commas (but no spaces!).
- */
+/// The "term", "cterm" and "gui" arguments can be any combination of the
+/// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
 {"bold", "standout", "underline", "undercurl",
  "italic", "reverse", "inverse", "NONE"};
@@ -301,6 +310,8 @@ static keyentry_T dumkey;
 #define KE2HIKEY(kp)  ((kp)->keyword)
 #define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char_u *)&dumkey)))
 #define HI2KE(hi)      HIKEY2KE((hi)->hi_key)
+
+// -V:HI2KE:782
 
 /*
  * To reduce the time spent in keepend(), remember at which level in the state
@@ -1406,14 +1417,14 @@ static int syn_stack_equal(synstate_T *sp)
         /* If the pointer is different it can still be the
          * same text.  Compare the strings, ignore case when
          * the start item has the sp_ic flag set. */
-        if (bsx->matches[j] == NULL
-            || six->matches[j] == NULL)
+        if (bsx->matches[j] == NULL || six->matches[j] == NULL) {
           break;
-        if ((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic
-            ? mb_stricmp(bsx->matches[j],
-                six->matches[j]) != 0
-            : STRCMP(bsx->matches[j], six->matches[j]) != 0)
+        }
+        if (mb_strcmp_ic((SYN_ITEMS(syn_block)[CUR_STATE(i).si_idx]).sp_ic,
+                         (const char *)bsx->matches[j],
+                         (const char *)six->matches[j]) != 0) {
           break;
+        }
       }
     }
     if (j != NSUBEXP)
@@ -1657,8 +1668,9 @@ syn_current_attr (
      * If we found a match after the last column, use it.
      */
     if (next_match_idx >= 0 && next_match_col >= (int)current_col
-        && next_match_col != MAXCOL)
-      (void)push_next_match(NULL);
+        && next_match_col != MAXCOL) {
+      (void)push_next_match();
+    }
 
     current_finished = TRUE;
     current_state_stored = FALSE;
@@ -1765,8 +1777,9 @@ syn_current_attr (
                   cur_si->si_trans_id = CUR_STATE(
                       current_state.ga_len - 2).si_trans_id;
                 }
-              } else
+              } else {
                 cur_si->si_attr = syn_id2attr(syn_id);
+              }
               cur_si->si_cont_list = NULL;
               cur_si->si_next_list = next_list;
               check_keepend();
@@ -1976,9 +1989,10 @@ syn_current_attr (
              * endless loop). */
             GA_APPEND(int, &zero_width_next_ga, next_match_idx);
             next_match_idx = -1;
-          } else
-            cur_si = push_next_match(cur_si);
-          found_match = TRUE;
+          } else {
+            cur_si = push_next_match();
+          }
+          found_match = true;
         }
       }
     }
@@ -2158,9 +2172,10 @@ static int did_match_already(int idx, garray_T *gap)
 /*
  * Push the next match onto the stack.
  */
-static stateitem_T *push_next_match(stateitem_T *cur_si)
+static stateitem_T *push_next_match(void)
 {
-  synpat_T    *spp;
+  stateitem_T *cur_si;
+  synpat_T *spp;
   int save_flags;
 
   spp = &(SYN_ITEMS(syn_block)[next_match_idx]);
@@ -3259,9 +3274,10 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
       syntax_sync_clear();
     else {
       syntax_clear(curwin->w_s);
-      if (curwin->w_s == &curwin->w_buffer->b_s)
-        do_unlet((char_u *)"b:current_syntax", TRUE);
-      do_unlet((char_u *)"w:current_syntax", TRUE);
+      if (curwin->w_s == &curwin->w_buffer->b_s) {
+        do_unlet(S_LEN("b:current_syntax"), true);
+      }
+      do_unlet(S_LEN("w:current_syntax"), true);
     }
   } else {
     /*
@@ -3337,7 +3353,7 @@ static void syn_cmd_enable(exarg_T *eap, int syncing)
 {
   set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"enable");
   syn_cmd_onoff(eap, "syntax");
-  do_unlet((char_u *)"g:syntax_cmd", TRUE);
+  do_unlet(S_LEN("g:syntax_cmd"), true);
 }
 
 /*
@@ -3350,7 +3366,7 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
   if (!eap->skip) {
     set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"reset");
     do_cmdline_cmd("runtime! syntax/syncolor.vim");
-    do_unlet((char_u *)"g:syntax_cmd", TRUE);
+    do_unlet(S_LEN("g:syntax_cmd"), true);
   }
 }
 
@@ -3993,10 +4009,10 @@ get_syn_options (
 {
   char_u      *gname_start, *gname;
   int syn_id;
-  int len;
+  int len = 0;
   char        *p;
   int fidx;
-  static struct flag {
+  static const struct flag {
     char    *name;
     int argtype;
     int flags;
@@ -4019,7 +4035,7 @@ get_syn_options (
                   {"cCoOnNtTaAiInNsS",        1,      0},
                   {"cCoOnNtTaAiInNeEdDiInN",  2,      0},
                   {"nNeExXtTgGrRoOuUpP",      3,      0},};
-  static char *first_letters = "cCoOkKeEtTsSgGdDfFnN";
+  static const char *const first_letters = "cCoOkKeEtTsSgGdDfFnN";
 
   if (arg == NULL)              /* already detected error */
     return NULL;
@@ -4039,9 +4055,10 @@ get_syn_options (
     for (fidx = ARRAY_SIZE(flagtab); --fidx >= 0; ) {
       p = flagtab[fidx].name;
       int i;
-      for (i = 0, len = 0; p[i] != NUL; i += 2, ++len)
+      for (i = 0, len = 0; p[i] != NUL; i += 2, ++len) {
         if (arg[len] != p[i] && arg[len] != p[i + 1])
           break;
+      }
       if (p[i] == NUL && (ascii_iswhite(arg[len])
                           || (flagtab[fidx].argtype > 0
                               ? arg[len] == '='
@@ -4241,83 +4258,81 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
 
   if (rest != NULL) {
     syn_id = syn_check_group(arg, (int)(group_name_end - arg));
-    if (syn_id != 0)
-      /* allocate a buffer, for removing backslashes in the keyword */
+    if (syn_id != 0) {
+      // Allocate a buffer, for removing backslashes in the keyword.
       keyword_copy = xmalloc(STRLEN(rest) + 1);
-    syn_opt_arg.flags = 0;
-    syn_opt_arg.keyword = TRUE;
-    syn_opt_arg.sync_idx = NULL;
-    syn_opt_arg.has_cont_list = FALSE;
-    syn_opt_arg.cont_in_list = NULL;
-    syn_opt_arg.next_list = NULL;
-
-    /*
-     * The options given apply to ALL keywords, so all options must be
-     * found before keywords can be created.
-     * 1: collect the options and copy the keywords to keyword_copy.
-     */
-    cnt = 0;
-    p = keyword_copy;
-    for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
-      rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
-      if (rest == NULL || ends_excmd(*rest))
-        break;
-      /* Copy the keyword, removing backslashes, and add a NUL. */
-      while (*rest != NUL && !ascii_iswhite(*rest)) {
-        if (*rest == '\\' && rest[1] != NUL)
-          ++rest;
-        *p++ = *rest++;
-      }
-      *p++ = NUL;
-      ++cnt;
     }
+    if (keyword_copy != NULL) {
+      syn_opt_arg.flags = 0;
+      syn_opt_arg.keyword = true;
+      syn_opt_arg.sync_idx = NULL;
+      syn_opt_arg.has_cont_list = false;
+      syn_opt_arg.cont_in_list = NULL;
+      syn_opt_arg.next_list = NULL;
 
-    if (!eap->skip) {
-      /* Adjust flags for use of ":syn include". */
-      syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
-
-      /*
-       * 2: Add an entry for each keyword.
-       */
-      for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
-        for (p = vim_strchr(kw, '[');; ) {
-          if (p != NULL)
-            *p = NUL;
-          add_keyword(kw, syn_id, syn_opt_arg.flags,
-              syn_opt_arg.cont_in_list,
-              syn_opt_arg.next_list, conceal_char);
-          if (p == NULL)
-            break;
-          if (p[1] == NUL) {
-            EMSG2(_("E789: Missing ']': %s"), kw);
-            goto error;
+      // The options given apply to ALL keywords, so all options must be
+      // found before keywords can be created.
+      // 1: collect the options and copy the keywords to keyword_copy.
+      cnt = 0;
+      p = keyword_copy;
+      for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
+        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+        if (rest == NULL || ends_excmd(*rest)) {
+          break;
+        }
+        // Copy the keyword, removing backslashes, and add a NUL.
+        while (*rest != NUL && !ascii_iswhite(*rest)) {
+          if (*rest == '\\' && rest[1] != NUL) {
+            rest++;
           }
-          if (p[1] == ']') {
-            if (p[2] != NUL) {
-              EMSG3(_("E890: trailing char after ']': %s]%s"),
-                    kw, &p[2]);
+          *p++ = *rest++;
+        }
+        *p++ = NUL;
+        cnt++;
+      }
+
+      if (!eap->skip) {
+        // Adjust flags for use of ":syn include".
+        syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
+
+        // 2: Add an entry for each keyword.
+        for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
+          for (p = vim_strchr(kw, '[');; ) {
+            if (p != NULL) {
+              *p = NUL;
+            }
+            add_keyword(kw, syn_id, syn_opt_arg.flags,
+                        syn_opt_arg.cont_in_list,
+                        syn_opt_arg.next_list, conceal_char);
+            if (p == NULL) {
+              break;
+            }
+            if (p[1] == NUL) {
+              emsgf(_("E789: Missing ']': %s"), kw);
               goto error;
             }
-            kw = p + 1;
-            break;   // skip over the "]"
-          }
-          if (has_mbyte) {
-            int l = (*mb_ptr2len)(p + 1);
+            if (p[1] == ']') {
+              if (p[2] != NUL) {
+                emsgf(_("E890: trailing char after ']': %s]%s"),
+                      kw, &p[2]);
+                goto error;
+              }
+              kw = p + 1;
+              break;   // skip over the "]"
+            }
+            const int l = (*mb_ptr2len)(p + 1);
 
             memmove(p, p + 1, l);
             p += l;
-          } else {
-            p[0] = p[1];
-            ++p;
           }
         }
       }
-    }
 
 error:
-    xfree(keyword_copy);
-    xfree(syn_opt_arg.cont_in_list);
-    xfree(syn_opt_arg.next_list);
+      xfree(keyword_copy);
+      xfree(syn_opt_arg.cont_in_list);
+      xfree(syn_opt_arg.next_list);
+    }
   }
 
   if (rest != NULL)
@@ -5241,12 +5256,10 @@ get_id_list (
         /*
          * Handle full group name.
          */
-        if (vim_strpbrk(name + 1, (char_u *)"\\.*^$~[") == NULL)
+        if (vim_strpbrk(name + 1, (char_u *)"\\.*^$~[") == NULL) {
           id = syn_check_group(name + 1, (int)(end - p));
-        else {
-          /*
-           * Handle match of regexp with group names.
-           */
+        } else {
+          // Handle match of regexp with group names.
           *name = '^';
           STRCAT(name, "$");
           regmatch.regprog = vim_regcomp(name, RE_MAGIC);
@@ -5537,10 +5550,10 @@ void ex_ownsyntax(exarg_T *eap)
     set_internal_string_var((char_u *)"w:current_syntax", new_value);
   }
 
-  /* restore value of b:current_syntax */
-  if (old_value == NULL)
-    do_unlet((char_u *)"b:current_syntax", TRUE);
-  else {
+  // Restore value of b:current_syntax.
+  if (old_value == NULL) {
+    do_unlet(S_LEN("b:current_syntax"), true);
+  } else {
     set_internal_string_var((char_u *)"b:current_syntax", old_value);
     xfree(old_value);
   }
@@ -5556,8 +5569,10 @@ bool syntax_present(win_T *win)
 
 
 static enum {
-  EXP_SUBCMD,       /* expand ":syn" sub-commands */
-  EXP_CASE          /* expand ":syn case" arguments */
+  EXP_SUBCMD,       // expand ":syn" sub-commands
+  EXP_CASE,         // expand ":syn case" arguments
+  EXP_SPELL,        // expand ":syn spell" arguments
+  EXP_SYNC          // expand ":syn sync" arguments
 } expand_what;
 
 /*
@@ -5573,48 +5588,49 @@ void reset_expand_highlight(void)
  * Handle command line completion for :match and :echohl command: Add "None"
  * as highlight group.
  */
-void set_context_in_echohl_cmd(expand_T *xp, char_u *arg)
+void set_context_in_echohl_cmd(expand_T *xp, const char *arg)
 {
   xp->xp_context = EXPAND_HIGHLIGHT;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_none = 1;
 }
 
 /*
  * Handle command line completion for :syntax command.
  */
-void set_context_in_syntax_cmd(expand_T *xp, char_u *arg)
+void set_context_in_syntax_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *p;
-
-  /* Default: expand subcommands */
+  // Default: expand subcommands.
   xp->xp_context = EXPAND_SYNTAX;
   expand_what = EXP_SUBCMD;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_link = 0;
   include_default = 0;
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                /* past first word */
-      xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != NUL)
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past first word.
+      xp->xp_pattern = skipwhite((const char_u *)p);
+      if (*skiptowhite(xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-      else if (STRNICMP(arg, "case", p - arg) == 0)
+      } else if (STRNICMP(arg, "case", p - arg) == 0) {
         expand_what = EXP_CASE;
-      else if (  STRNICMP(arg, "keyword", p - arg) == 0
+      } else if (STRNICMP(arg, "spell", p - arg) == 0) {
+        expand_what = EXP_SPELL;
+      } else if (STRNICMP(arg, "sync", p - arg) == 0) {
+        expand_what = EXP_SYNC;
+      } else if (STRNICMP(arg, "keyword", p - arg) == 0
                  || STRNICMP(arg, "region", p - arg) == 0
                  || STRNICMP(arg, "match", p - arg) == 0
-                 || STRNICMP(arg, "list", p - arg) == 0)
+                 || STRNICMP(arg, "list", p - arg) == 0) {
         xp->xp_context = EXPAND_HIGHLIGHT;
-      else
+      } else {
         xp->xp_context = EXPAND_NOTHING;
+      }
     }
   }
 }
-
-static char *(case_args[]) = {"match", "ignore", NULL};
 
 /*
  * Function given to ExpandGeneric() to obtain the list syntax names for
@@ -5622,9 +5638,27 @@ static char *(case_args[]) = {"match", "ignore", NULL};
  */
 char_u *get_syntax_name(expand_T *xp, int idx)
 {
-  if (expand_what == EXP_SUBCMD)
-    return (char_u *)subcommands[idx].name;
-  return (char_u *)case_args[idx];
+  switch (expand_what) {
+    case EXP_SUBCMD:
+        return (char_u *)subcommands[idx].name;
+    case EXP_CASE: {
+        static char *case_args[] = { "match", "ignore", NULL };
+        return (char_u *)case_args[idx];
+    }
+    case EXP_SPELL: {
+        static char *spell_args[] =
+        { "toplevel", "notoplevel", "default", NULL };
+        return (char_u *)spell_args[idx];
+    }
+    case EXP_SYNC: {
+        static char *sync_args[] =
+        { "ccomment", "clear", "fromstart",
+         "linebreaks=", "linecont", "lines=", "match",
+         "maxlines=", "minlines=", "region", NULL };
+        return (char_u *)sync_args[idx];
+    }
+  }
+  return NULL;
 }
 
 
@@ -5835,9 +5869,12 @@ static void syntime_report(void)
     }
   }
 
-  /* sort on total time */
-  qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(time_entry_T),
-      syn_compare_syntime);
+  // Sort on total time. Skip if there are no items to avoid passing NULL
+  // pointer to qsort().
+  if (ga.ga_len > 1) {
+    qsort(ga.ga_data, (size_t)ga.ga_len, sizeof(time_entry_T),
+          syn_compare_syntime);
+  }
 
   MSG_PUTS_TITLE(_(
           "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"));
@@ -5896,6 +5933,8 @@ static void syntime_report(void)
 static char *highlight_init_both[] =
 {
   "Conceal      ctermbg=DarkGrey ctermfg=LightGrey guibg=DarkGrey guifg=LightGrey",
+  "Cursor       guibg=fg guifg=bg",
+  "lCursor      guibg=fg guifg=bg",
   "DiffText     cterm=bold ctermbg=Red gui=bold guibg=Red",
   "ErrorMsg     ctermbg=DarkRed ctermfg=White guibg=Red guifg=White",
   "IncSearch    cterm=reverse gui=reverse",
@@ -5912,6 +5951,7 @@ static char *highlight_init_both[] =
   "default link EndOfBuffer NonText",
   "default link QuickFixLine Search",
   "default link Substitute Search",
+  "default link Whitespace NonText",
   NULL
 };
 
@@ -5945,6 +5985,7 @@ static char *highlight_init_light[] =
   "Title        ctermfg=DarkMagenta gui=bold guifg=Magenta",
   "Visual       guibg=LightGrey",
   "WarningMsg   ctermfg=DarkRed guifg=Red",
+  "Normal       gui=NONE",
   NULL
 };
 
@@ -5978,23 +6019,25 @@ static char *highlight_init_dark[] =
   "Title        ctermfg=LightMagenta gui=bold guifg=Magenta",
   "Visual       guibg=DarkGrey",
   "WarningMsg   ctermfg=LightRed guifg=Red",
+  "Normal       gui=NONE",
   NULL
 };
 
-void 
-init_highlight (
-    int both,                   /* include groups where 'bg' doesn't matter */
-    int reset                  /* clear group first */
-)
+
+/// Load colors from a file if "g:colors_name" is set, otherwise load builtin
+/// colors
+///
+/// @param both include groups where 'bg' doesn't matter
+/// @param reset clear groups first
+void
+init_highlight(int both, int reset)
 {
   int i;
   char        **pp;
   static int had_both = FALSE;
 
-  /*
-   * Try finding the color scheme file.  Used when a color file was loaded
-   * and 'background' or 't_Co' is changed.
-   */
+  // Try finding the color scheme file.  Used when a color file was loaded
+  // and 'background' or 't_Co' is changed.
   char_u *p = get_var_value("g:colors_name");
   if (p != NULL) {
     // Value of g:colors_name could be freed in load_colors() and make
@@ -6013,33 +6056,34 @@ init_highlight (
   if (both) {
     had_both = TRUE;
     pp = highlight_init_both;
-    for (i = 0; pp[i] != NULL; ++i)
-      do_highlight((char_u *)pp[i], reset, TRUE);
-  } else if (!had_both)
-    /* Don't do anything before the call with both == TRUE from main().
-     * Not everything has been setup then, and that call will overrule
-     * everything anyway. */
+    for (i = 0; pp[i] != NULL; i++) {
+      do_highlight((char_u *)pp[i], reset, true);
+    }
+  } else if (!had_both) {
+    // Don't do anything before the call with both == TRUE from main().
+    // Not everything has been setup then, and that call will overrule
+    // everything anyway.
     return;
+  }
 
-  if (*p_bg == 'l')
-    pp = highlight_init_light;
-  else
-    pp = highlight_init_dark;
-  for (i = 0; pp[i] != NULL; ++i)
-    do_highlight((char_u *)pp[i], reset, TRUE);
+  pp = (*p_bg == 'l') ?  highlight_init_light : highlight_init_dark;
+
+  for (i = 0; pp[i] != NULL; i++) {
+    do_highlight((char_u *)pp[i], reset, true);
+  }
 
   /* Reverse looks ugly, but grey may not work for 8 colors.  Thus let it
    * depend on the number of colors available.
    * With 8 colors brown is equal to yellow, need to use black for Search fg
    * to avoid Statement highlighted text disappears.
    * Clear the attributes, needed when changing the t_Co value. */
-  if (t_colors > 8)
+  if (t_colors > 8) {
     do_highlight(
         (char_u *)(*p_bg == 'l'
                    ? "Visual cterm=NONE ctermbg=LightGrey"
-                   : "Visual cterm=NONE ctermbg=DarkGrey"), FALSE,
-        TRUE);
-  else {
+                   : "Visual cterm=NONE ctermbg=DarkGrey"), false,
+        true);
+  } else {
     do_highlight((char_u *)"Visual cterm=reverse ctermbg=NONE",
         FALSE, TRUE);
     if (*p_bg == 'l')
@@ -6093,18 +6137,13 @@ int load_colors(char_u *name)
   return retval;
 }
 
-/*
- * Handle the ":highlight .." command.
- * When using ":hi clear" this is called recursively for each group with
- * "forceit" and "init" both TRUE.
- */
-void 
-do_highlight (
-    char_u *line,
-    int forceit,
-    int init                   /* TRUE when called for initializing */
-)
-{
+
+/// Handle the ":highlight .." command.
+/// When using ":hi clear" this is called recursively for each group with
+/// "forceit" and "init" both TRUE.
+/// @param init TRUE when called for initializing
+void
+do_highlight(char_u *line, int forceit, int init) {
   char_u      *name_end;
   char_u      *linep;
   char_u      *key_start;
@@ -6121,15 +6160,16 @@ do_highlight (
   int dolink = FALSE;
   int error = FALSE;
   int color;
-  int is_normal_group = FALSE;                  /* "Normal" group */
+  bool is_normal_group = false;   // "Normal" group
 
   /*
    * If no argument, list current highlighting.
    */
   if (ends_excmd(*line)) {
-    for (int i = 1; i <= highlight_ga.ga_len && !got_int; ++i)
-      /* TODO: only call when the group has attributes set */
+    for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
+      // todo(vim): only call when the group has attributes set
       highlight_list_one(i);
+    }
     return;
   }
 
@@ -6231,7 +6271,7 @@ do_highlight (
      */
     line = linep;
     if (ends_excmd(*line)) {
-      do_unlet((char_u *)"colors_name", TRUE);
+      do_unlet(S_LEN("colors_name"), true);
       restore_cterm_colors();
 
       /*
@@ -6257,12 +6297,12 @@ do_highlight (
     return;
   idx = id - 1;                         /* index is ID minus one */
 
-  /* Return if "default" was used and the group already has settings. */
-  if (dodefault && hl_has_settings(idx, TRUE))
+  // Return if "default" was used and the group already has settings
+  if (dodefault && hl_has_settings(idx, true)) {
     return;
+  }
 
-  if (STRCMP(HL_TABLE()[idx].sg_name_u, "NORMAL") == 0)
-    is_normal_group = TRUE;
+  is_normal_group = (STRCMP(HL_TABLE()[idx].sg_name_u, "NORMAL") == 0);
 
   /* Clear the highlighting for ":hi clear {group}" and ":hi clear". */
   if (doclear || (forceit && init)) {
@@ -6271,7 +6311,7 @@ do_highlight (
       HL_TABLE()[idx].sg_set = 0;
   }
 
-  if (!doclear)
+  if (!doclear) {
     while (!ends_excmd(*linep)) {
       key_start = linep;
       if (*linep == '=') {
@@ -6377,12 +6417,12 @@ do_highlight (
           }
         }
       } else if (STRCMP(key, "FONT") == 0)   {
-        /* in non-GUI fonts are simply ignored */
-      } else if (STRCMP(key,
-                     "CTERMFG") == 0 || STRCMP(key, "CTERMBG") == 0)   {
+        // in non-GUI fonts are simply ignored
+      } else if (STRCMP(key, "CTERMFG") == 0 || STRCMP(key, "CTERMBG") == 0) {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_CTERM)) {
-          if (!init)
+          if (!init) {
             HL_TABLE()[idx].sg_set |= SG_CTERM;
+          }
 
           /* When setting the foreground color, and previously the "bold"
            * flag was set for a light color, reset it now */
@@ -6476,9 +6516,10 @@ do_highlight (
                    * colors (on some terminals, e.g. "linux") */
                   if (color & 8) {
                     HL_TABLE()[idx].sg_cterm |= HL_BOLD;
-                    HL_TABLE()[idx].sg_cterm_bold = TRUE;
-                  } else
+                    HL_TABLE()[idx].sg_cterm_bold = true;
+                  } else {
                     HL_TABLE()[idx].sg_cterm &= ~HL_BOLD;
+                  }
                 }
                 color &= 7;             // truncate to 8 colors
               } else if (t_colors == 16 || t_colors == 88 || t_colors >= 256) {
@@ -6510,16 +6551,16 @@ do_highlight (
               if (!ui_rgb_attached()) {
                 must_redraw = CLEAR;
                 if (color >= 0) {
-                  if (t_colors < 16)
+                  if (t_colors < 16) {
                     i = (color == 0 || color == 4);
-                  else
+                  } else {
                     i = (color < 7 || color == 8);
-                  /* Set the 'background' option if the value is
-                   * wrong. */
-                  if (i != (*p_bg == 'd'))
-                    set_option_value((char_u *)"bg", 0L,
-                        i ?  (char_u *)"dark"
-                        : (char_u *)"light", 0);
+                  }
+                  // Set the 'background' option if the value is
+                  // wrong.
+                  if (i != (*p_bg == 'd')) {
+                    set_option_value("bg", 0L, (i ? "dark" : "light"), 0);
+                  }
                 }
               }
             }
@@ -6590,38 +6631,40 @@ do_highlight (
       /*
        * When highlighting has been given for a group, don't link it.
        */
-      if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK))
+      if (!init || !(HL_TABLE()[idx].sg_set & SG_LINK)) {
         HL_TABLE()[idx].sg_link = 0;
+      }
 
       /*
        * Continue with next argument.
        */
       linep = skipwhite(linep);
     }
+  }
 
   /*
    * If there is an error, and it's a new entry, remove it from the table.
    */
-  if (error && idx == highlight_ga.ga_len)
+  if (error && idx == highlight_ga.ga_len) {
     syn_unadd_group();
-  else {
-    if (is_normal_group) {
-      HL_TABLE()[idx].sg_attr = 0;
+  } else {
+    if (!error && is_normal_group) {
       // Need to update all groups, because they might be using "bg" and/or
       // "fg", which have been changed now.
       highlight_attr_set_all();
       // If the normal group has changed, it is simpler to refresh every UI
       ui_refresh();
-    } else
+    } else {
       set_hl_attr(idx);
+    }
     HL_TABLE()[idx].sg_scriptID = current_SID;
     redraw_all_later(NOT_VALID);
   }
   xfree(key);
   xfree(arg);
 
-  /* Only call highlight_changed() once, after sourcing a syntax file */
-  need_highlight_changed = TRUE;
+  // Only call highlight_changed() once, after sourcing a syntax file
+  need_highlight_changed = true;
 }
 
 #if defined(EXITFREE)
@@ -6694,22 +6737,21 @@ static void highlight_clear(int idx)
 }
 
 
-/*
- * Table with the specifications for an attribute number.
- * Note that this table is used by ALL buffers.  This is required because the
- * GUI can redraw at any time for any buffer.
- */
+/// Table with the specifications for an attribute number.
+/// Note that this table is used by ALL buffers.  This is required because the
+/// GUI can redraw at any time for any buffer.
 static garray_T attr_table = GA_EMPTY_INIT_VALUE;
 
-#define ATTR_ENTRY(idx) ((attrentry_T *)attr_table.ga_data)[idx]
+static inline attrentry_T * ATTR_ENTRY(int idx)
+{
+  return &((attrentry_T *)attr_table.ga_data)[idx];
+}
 
 
-/*
- * Return the attr number for a set of colors and font.
- * Add a new entry to the term_attr_table, attr_table or gui_attr_table
- * if the combination is new.
- * Return 0 for error.
- */
+/// Return the attr number for a set of colors and font.
+/// Add a new entry to the term_attr_table, attr_table or gui_attr_table
+/// if the combination is new.
+/// @return 0 for error.
 int get_attr_entry(attrentry_T *aep)
 {
   garray_T *table = &attr_table;
@@ -6793,7 +6835,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
 {
   attrentry_T *char_aep = NULL;
   attrentry_T *spell_aep;
-  attrentry_T new_en;
+  attrentry_T new_en = ATTRENTRY_INIT;
 
   if (char_attr == 0) {
     return prim_attr;
@@ -6809,8 +6851,6 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_aep != NULL) {
     // Copy all attributes from char_aep to the new entry
     new_en = *char_aep;
-  } else {
-    memset(&new_en, 0, sizeof(new_en));
   }
 
   spell_aep = syn_cterm_attr2entry(prim_attr);
@@ -6841,17 +6881,25 @@ int hl_combine_attr(int char_attr, int prim_attr)
   return get_attr_entry(&new_en);
 }
 
+/// \note this function does not apply exclusively to cterm attr contrary
+/// to what its name implies
+/// \warn don't call it with attr 0 (i.e., the null attribute)
 attrentry_T *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
-  if (attr >= attr_table.ga_len)          /* did ":syntax clear" */
+  if (attr >= attr_table.ga_len) {
+    // did ":syntax clear"
     return NULL;
-  return &(ATTR_ENTRY(attr));
+  }
+  return ATTR_ENTRY(attr);
 }
 
+/// \addtogroup LIST_XXX
+/// @{
 #define LIST_ATTR   1
 #define LIST_STRING 2
 #define LIST_INT    3
+/// @}
 
 static void highlight_list_one(int id)
 {
@@ -6890,7 +6938,13 @@ static void highlight_list_one(int id)
     last_set_msg(sgp->sg_scriptID);
 }
 
-static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg, char *name)
+/// Outputs a highlight when doing ":hi MyHighlight"
+///
+/// @param type one of \ref LIST_XXX
+/// @param iarg integer argument used if \p type == LIST_INT
+/// @param sarg string used if \p type == LIST_STRING
+static int highlight_list_arg(int id, int didh, int type, int iarg,
+                              char_u *sarg, const char *name)
 {
   char_u buf[100];
   char_u      *ts;
@@ -6930,21 +6984,21 @@ static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg
   return didh;
 }
 
-/*
- * Return "1" if highlight group "id" has attribute "flag".
- * Return NULL otherwise.
- */
-char_u *
-highlight_has_attr (
-    int id,
-    int flag,
-    int modec              // 'g' for GUI, 'c' for cterm
-)
+/// Check whether highlight group has attribute
+///
+/// @param[in]  id  Highlight group to check.
+/// @param[in]  flag  Attribute to check.
+/// @param[in]  modec  'g' for GUI, 'c' for term.
+///
+/// @return "1" if highlight group has attribute, NULL otherwise.
+const char *highlight_has_attr(const int id, const int flag, const int modec)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE
 {
   int attr;
 
-  if (id <= 0 || id > highlight_ga.ga_len)
+  if (id <= 0 || id > highlight_ga.ga_len) {
     return NULL;
+  }
 
   if (modec == 'g') {
     attr = HL_TABLE()[id - 1].sg_gui;
@@ -6952,39 +7006,42 @@ highlight_has_attr (
     attr = HL_TABLE()[id - 1].sg_cterm;
   }
 
-  if (attr & flag)
-    return (char_u *)"1";
-  return NULL;
+  return (attr & flag) ? "1" : NULL;
 }
 
-/*
- * Return color name of highlight group "id".
- */
-char_u *
-highlight_color (
-    int id,
-    char_u *what,      /* "font", "fg", "bg", "sp", "fg#", "bg#" or "sp#" */
-    int modec              /* 'g' for GUI, 'c' for cterm, 't' for term */
-)
+/// Return color name of the given highlight group
+///
+/// @param[in]  id  Highlight group to work with.
+/// @param[in]  what  What to return: one of "font", "fg", "bg", "sp", "fg#",
+///                   "bg#" or "sp#".
+/// @param[in]  modec  'g' for GUI, 'c' for cterm and 't' for term.
+///
+/// @return color name, possibly in a static buffer. Buffer will be overwritten
+///         on next highlight_color() call. May return NULL.
+const char *highlight_color(const int id, const char *const what,
+                            const int modec)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  static char_u name[20];
+  static char name[20];
   int n;
-  int fg = FALSE;
-  int sp = FALSE;
-  int font = FALSE;
+  bool fg = false;
+  bool sp = false;
+  bool font = false;
 
-  if (id <= 0 || id > highlight_ga.ga_len)
+  if (id <= 0 || id > highlight_ga.ga_len) {
     return NULL;
+  }
 
-  if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'g')
-    fg = TRUE;
-  else if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'o'
-           && TOLOWER_ASC(what[2]) == 'n' && TOLOWER_ASC(what[3]) == 't')
-    font = TRUE;
-  else if (TOLOWER_ASC(what[0]) == 's' && TOLOWER_ASC(what[1]) == 'p')
-    sp = TRUE;
-  else if (!(TOLOWER_ASC(what[0]) == 'b' && TOLOWER_ASC(what[1]) == 'g'))
+  if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'g') {
+    fg = true;
+  } else if (TOLOWER_ASC(what[0]) == 'f' && TOLOWER_ASC(what[1]) == 'o'
+             && TOLOWER_ASC(what[2]) == 'n' && TOLOWER_ASC(what[3]) == 't') {
+    font = true;
+  } else if (TOLOWER_ASC(what[0]) == 's' && TOLOWER_ASC(what[1]) == 'p') {
+    sp = true;
+  } else if (!(TOLOWER_ASC(what[0]) == 'b' && TOLOWER_ASC(what[1]) == 'g')) {
     return NULL;
+  }
   if (modec == 'g') {
     if (what[2] == '#' && ui_rgb_attached()) {
       if (fg) {
@@ -6997,19 +7054,20 @@ highlight_color (
       if (n < 0 || n > 0xffffff) {
         return NULL;
       }
-      snprintf((char *)name, sizeof(name), "#%06x", n);
+      snprintf(name, sizeof(name), "#%06x", n);
       return name;
     }
     if (fg) {
-      return HL_TABLE()[id - 1].sg_rgb_fg_name;
+      return (const char *)HL_TABLE()[id - 1].sg_rgb_fg_name;
     }
     if (sp) {
-      return HL_TABLE()[id - 1].sg_rgb_sp_name;
+      return (const char *)HL_TABLE()[id - 1].sg_rgb_sp_name;
     }
-    return HL_TABLE()[id - 1].sg_rgb_bg_name;
+    return (const char *)HL_TABLE()[id - 1].sg_rgb_bg_name;
   }
-  if (font || sp)
+  if (font || sp) {
     return NULL;
+  }
   if (modec == 'c') {
     if (fg) {
       n = HL_TABLE()[id - 1].sg_cterm_fg - 1;
@@ -7019,31 +7077,30 @@ highlight_color (
     if (n < 0) {
       return NULL;
     }
-    snprintf((char *)name, sizeof(name), "%d", n);
+    snprintf(name, sizeof(name), "%d", n);
     return name;
   }
-  /* term doesn't have color */
+  // term doesn't have color.
   return NULL;
 }
 
-/*
- * Output the syntax list header.
- * Return TRUE when started a new line.
- */
-static int 
-syn_list_header (
-    int did_header,                 /* did header already */
-    int outlen,                     /* length of string that comes */
-    int id                         /* highlight group id */
-)
+/// Output the syntax list header.
+///
+/// @param did_header did header already
+/// @param outlen length of string that comes
+/// @param id highlight group id
+/// @return true when started a new line.
+static int
+syn_list_header(int did_header, int outlen, int id)
 {
   int endcol = 19;
   int newline = TRUE;
 
   if (!did_header) {
     msg_putchar('\n');
-    if (got_int)
-      return TRUE;
+    if (got_int) {
+      return true;
+    }
     msg_outtrans(HL_TABLE()[id - 1].sg_name);
     endcol = 15;
   } else if (msg_col + outlen + 1 >= Columns)   {
@@ -7071,21 +7128,14 @@ syn_list_header (
   return newline;
 }
 
-/*
- * Set the attribute numbers for a highlight group.
- * Called after one of the attributes has changed.
- */
-static void 
-set_hl_attr (
-    int idx                    /* index in array */
-)
+/// Set the attribute numbers for a highlight group.
+/// Called after one of the attributes has changed.
+/// @param idx corrected highlight index
+static void set_hl_attr(int idx)
 {
-  attrentry_T at_en;
+  attrentry_T at_en = ATTRENTRY_INIT;
   struct hl_group     *sgp = HL_TABLE() + idx;
 
-  /* The "Normal" group doesn't need an attribute number */
-  if (sgp->sg_name_u != NULL && STRCMP(sgp->sg_name_u, "NORMAL") == 0)
-    return;
 
   at_en.cterm_ae_attr = sgp->sg_cterm;
   at_en.cterm_fg_color = sgp->sg_cterm_fg;
@@ -7109,11 +7159,11 @@ set_hl_attr (
   }
 }
 
-/*
- * Lookup a highlight group name and return it's ID.
- * If it is not found, 0 is returned.
- */
-int syn_name2id(char_u *name)
+/// Lookup a highlight group name and return its ID.
+///
+/// @param highlight name e.g. 'Cursor', 'Normal'
+/// @return the highlight id, else 0 if \p name does not exist
+int syn_name2id(const char_u *name)
 {
   int i;
   char_u name_u[200];
@@ -7133,7 +7183,7 @@ int syn_name2id(char_u *name)
 /*
  * Return TRUE if highlight group "name" exists.
  */
-int highlight_exists(char_u *name)
+int highlight_exists(const char_u *name)
 {
   return syn_name2id(name) > 0;
 }
@@ -7161,12 +7211,13 @@ int syn_namen2id(char_u *linep, int len)
   return id;
 }
 
-/*
- * Find highlight group name in the table and return it's ID.
- * The argument is a pointer to the name and the length of the name.
- * If it doesn't exist yet, a new entry is created.
- * Return 0 for failure.
- */
+/// Find highlight group name in the table and return its ID.
+/// If it doesn't exist yet, a new entry is created.
+///
+/// @param pp Highlight group name
+/// @param len length of \p pp
+///
+/// @return 0 for failure else the id of the group
 int syn_check_group(char_u *pp, int len)
 {
   char_u  *name = vim_strnsave(pp, len);
@@ -7179,11 +7230,11 @@ int syn_check_group(char_u *pp, int len)
   return id;
 }
 
-/*
- * Add new highlight group and return it's ID.
- * "name" must be an allocated string, it will be consumed.
- * Return 0 for failure.
- */
+/// Add new highlight group and return it's ID.
+///
+/// @param name must be an allocated string, it will be consumed.
+/// @return 0 for failure, else the allocated group id
+/// @see syn_check_group syn_unadd_group
 static int syn_add_group(char_u *name)
 {
   char_u      *p;
@@ -7221,25 +7272,26 @@ static int syn_add_group(char_u *name)
   struct hl_group* hlgp = GA_APPEND_VIA_PTR(struct hl_group, &highlight_ga);
   memset(hlgp, 0, sizeof(*hlgp));
   hlgp->sg_name = name;
+  hlgp->sg_rgb_bg = -1;
+  hlgp->sg_rgb_fg = -1;
+  hlgp->sg_rgb_sp = -1;
   hlgp->sg_name_u = vim_strsave_up(name);
 
   return highlight_ga.ga_len;               /* ID is index plus one */
 }
 
-/*
- * When, just after calling syn_add_group(), an error is discovered, this
- * function deletes the new name.
- */
+/// When, just after calling syn_add_group(), an error is discovered, this
+/// function deletes the new name.
 static void syn_unadd_group(void)
 {
-  --highlight_ga.ga_len;
+  highlight_ga.ga_len--;
   xfree(HL_TABLE()[highlight_ga.ga_len].sg_name);
   xfree(HL_TABLE()[highlight_ga.ga_len].sg_name_u);
 }
 
-/*
- * Translate a group ID to highlight attributes.
- */
+
+/// Translate a group ID to highlight attributes.
+/// @see syn_cterm_attr2entry
 int syn_id2attr(int hl_id)
 {
   struct hl_group     *sgp;
@@ -7293,110 +7345,34 @@ static void highlight_attr_set_all(void)
   }
 }
 
-/*
- * Translate the 'highlight' option into attributes in highlight_attr[] and
- * set up the user highlights User1..9. A set of
- * corresponding highlights to use on top of HLF_SNC is computed.
- * Called only when the 'highlight' option has been changed and upon first
- * screen redraw after any :highlight command.
- * Return FAIL when an invalid flag is found in 'highlight'.  OK otherwise.
- */
-int highlight_changed(void)
+/// Tranlate highlight groups into attributes in highlight_attr[] and set up
+/// the user highlights User1..9. A set of corresponding highlights to use on
+/// top of HLF_SNC is computed.  Called only when nvim starts and upon first
+/// screen redraw after any :highlight command.
+void highlight_changed(void)
 {
-  int hlf;
-  int i;
-  char_u      *p;
   int attr;
-  char_u      *end;
   int id;
   char_u userhl[10];
   int id_SNC = -1;
   int id_S = -1;
   int hlcnt;
-  static int hl_flags[HLF_COUNT] = HL_FLAGS;
 
   need_highlight_changed = FALSE;
 
-  /*
-   * Clear all attributes.
-   */
-  for (hlf = 0; hlf < (int)HLF_COUNT; ++hlf)
-    highlight_attr[hlf] = 0;
-
-  /*
-   * First set all attributes to their default value.
-   * Then use the attributes from the 'highlight' option.
-   */
-  for (i = 0; i < 2; ++i) {
-    if (i)
-      p = p_hl;
-    else
-      p = get_highlight_default();
-    if (p == NULL)          /* just in case */
-      continue;
-
-    while (*p) {
-      for (hlf = 0; hlf < (int)HLF_COUNT; ++hlf)
-        if (hl_flags[hlf] == *p)
-          break;
-      ++p;
-      if (hlf == (int)HLF_COUNT || *p == NUL)
-        return FAIL;
-
-      /*
-       * Allow several hl_flags to be combined, like "bu" for
-       * bold-underlined.
-       */
-      attr = 0;
-      bool colon = false;
-      for (; *p && *p != ','; ++p) {  // parse upto comma
-        if (ascii_iswhite(*p)) {  // ignore white space
-          continue;
-        }
-
-        if (colon)          /* Combination with ':' is not allowed. */
-          return FAIL;
-
-        switch (*p) {
-        case 'b':   attr |= HL_BOLD;
-          break;
-        case 'i':   attr |= HL_ITALIC;
-          break;
-        case '-':
-        case 'n':                                   /* no highlighting */
-          break;
-        case 'r':   attr |= HL_INVERSE;
-          break;
-        case 's':   attr |= HL_STANDOUT;
-          break;
-        case 'u':   attr |= HL_UNDERLINE;
-          break;
-        case 'c':   attr |= HL_UNDERCURL;
-          break;
-        case ':':   ++p;                            /* highlight group name */
-          if (attr || *p == NUL)                         /* no combinations */
-            return FAIL;
-          colon = true;
-          end = vim_strchr(p, ',');
-          if (end == NULL)
-            end = p + STRLEN(p);
-          id = syn_check_group(p, (int)(end - p));
-          if (id == 0)
-            return FAIL;
-          attr = syn_id2attr(id);
-          p = end - 1;
-          if (hlf == (int)HLF_SNC)
-            id_SNC = syn_get_final_id(id);
-          else if (hlf == (int)HLF_S)
-            id_S = syn_get_final_id(id);
-          break;
-        default:    return FAIL;
-        }
-      }
-      highlight_attr[hlf] = attr;
-
-      p = skip_to_option_part(p);           /* skip comma and spaces */
+  /// Translate builtin highlight groups into attributes for quick lookup.
+  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+    id = syn_check_group((char_u *)hlf_names[hlf], STRLEN(hlf_names[hlf]));
+    if (id == 0) {
+      abort();
     }
+    attr = syn_id2attr(id);
+    if (hlf == (int)HLF_SNC) {
+      id_SNC = syn_get_final_id(id);
+    } else if (hlf == (int)HLF_S) {
+      id_S = syn_get_final_id(id);
+    }
+    highlight_attr[hlf] = attr;
   }
 
   /* Setup the user highlights
@@ -7461,49 +7437,47 @@ int highlight_changed(void)
     }
   }
   highlight_ga.ga_len = hlcnt;
-
-  return OK;
 }
 
 
 /*
  * Handle command line completion for :highlight command.
  */
-void set_context_in_highlight_cmd(expand_T *xp, char_u *arg)
+void set_context_in_highlight_cmd(expand_T *xp, const char *arg)
 {
-  char_u      *p;
-
-  /* Default: expand group names */
+  // Default: expand group names.
   xp->xp_context = EXPAND_HIGHLIGHT;
-  xp->xp_pattern = arg;
+  xp->xp_pattern = (char_u *)arg;
   include_link = 2;
   include_default = 1;
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                    /* past "default" or group name */
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past "default" or group name.
       include_default = 0;
-      if (STRNCMP("default", arg, p - arg) == 0) {
-        arg = skipwhite(p);
-        xp->xp_pattern = arg;
-        p = skiptowhite(arg);
+      if (strncmp("default", arg, p - arg) == 0) {
+        arg = (const char *)skipwhite((const char_u *)p);
+        xp->xp_pattern = (char_u *)arg;
+        p = (const char *)skiptowhite((const char_u *)arg);
       }
       if (*p != NUL) {                          /* past group name */
         include_link = 0;
-        if (arg[1] == 'i' && arg[0] == 'N')
+        if (arg[1] == 'i' && arg[0] == 'N') {
           highlight_list();
-        if (STRNCMP("link", arg, p - arg) == 0
-            || STRNCMP("clear", arg, p - arg) == 0) {
-          xp->xp_pattern = skipwhite(p);
-          p = skiptowhite(xp->xp_pattern);
-          if (*p != NUL) {                      /* past first group name */
-            xp->xp_pattern = skipwhite(p);
-            p = skiptowhite(xp->xp_pattern);
+        }
+        if (strncmp("link", arg, p - arg) == 0
+            || strncmp("clear", arg, p - arg) == 0) {
+          xp->xp_pattern = skipwhite((const char_u *)p);
+          p = (const char *)skiptowhite(xp->xp_pattern);
+          if (*p != NUL) {  // Past first group name.
+            xp->xp_pattern = skipwhite((const char_u *)p);
+            p = (const char *)skiptowhite(xp->xp_pattern);
           }
         }
-        if (*p != NUL)                          /* past group name(s) */
+        if (*p != NUL) {  // Past group name(s).
           xp->xp_context = EXPAND_NOTHING;
+        }
       }
     }
   }
@@ -8240,7 +8214,14 @@ color_name_table_T color_name_table[] = {
   { NULL, 0 },
 };
 
-RgbValue name_to_color(uint8_t *name)
+
+/// Translate to RgbValue if \p name is an hex value (e.g. #XXXXXX),
+/// else look into color_name_table to translate a color name to  its
+/// hex value
+///
+/// @param[in] name string value to convert to RGB
+/// return the hex value or -1 if could not find a correct value
+RgbValue name_to_color(const uint8_t *name)
 {
 
   if (name[0] == '#' && isxdigit(name[1]) && isxdigit(name[2])
@@ -8262,6 +8243,30 @@ RgbValue name_to_color(uint8_t *name)
 
   return -1;
 }
+
+/// Gets highlight description for id `attr_id` as a map.
+Dictionary hl_get_attr_by_id(Integer attr_id, Boolean rgb, Error *err)
+{
+  HlAttrs attrs = HLATTRS_INIT;
+  Dictionary dic = ARRAY_DICT_INIT;
+
+  if (attr_id == 0) {
+    goto end;
+  }
+
+  attrentry_T *aep = syn_cterm_attr2entry((int)attr_id);
+  if (!aep) {
+    api_set_error(err, kErrorTypeException,
+                  "Invalid attribute id: %" PRId64, attr_id);
+    return dic;
+  }
+
+  attrs = attrentry2hlattrs(aep, rgb);
+
+end:
+  return hlattrs2dict(attrs);
+}
+
 
 /**************************************
 *  End of Highlighting stuff	      *

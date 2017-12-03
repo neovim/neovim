@@ -4,7 +4,7 @@
 #  MSGPACK_INCLUDE_DIRS - The msgpack include directories
 #  MSGPACK_LIBRARIES - The libraries needed to use msgpack
 
-if(NOT MSGPACK_USE_BUNDLED)
+if(NOT USE_BUNDLED_MSGPACK)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
     pkg_search_module(PC_MSGPACK QUIET

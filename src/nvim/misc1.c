@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * misc1.c: functions that didn't seem to fit elsewhere
  */
@@ -748,7 +751,7 @@ open_line (
     // Skip mark_adjust when adding a line after the last one, there can't
     // be marks there.
     if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count) {
-      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
+      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
     }
     did_append = true;
   } else {
@@ -1270,8 +1273,8 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
    * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
    */
   width = wp->w_width - win_col_off(wp);
-  if (width <= 0) {
-    return 32000;  // bigger than the number of lines of the screen
+  if (width <= 0 || col > 32000) {
+    return 32000;  // bigger than the number of screen columns
   }
   if (col <= (unsigned int)width) {
     return 1;
@@ -1863,7 +1866,7 @@ void appended_lines_mark(linenr_T lnum, long count)
   // Skip mark_adjust when adding a line after the last one, there can't
   // be marks there.
   if (lnum + count < curbuf->b_ml.ml_line_count) {
-    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L);
+    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
   }
   changed_lines(lnum + 1, 0, lnum + 1, count);
 }
@@ -1885,7 +1888,7 @@ void deleted_lines(linenr_T lnum, long count)
  */
 void deleted_lines_mark(linenr_T lnum, long count)
 {
-  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count);
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false);
   changed_lines(lnum, 0, lnum + count, -count);
 }
 
@@ -2200,7 +2203,7 @@ change_warning (
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();
     (void)msg_end();
-    if (msg_silent == 0 && !silent_mode) {
+    if (msg_silent == 0 && !silent_mode && ui_active()) {
       ui_flush();
       os_delay(1000L, true);       /* give the user time to think about it */
     }
@@ -2211,44 +2214,47 @@ change_warning (
   }
 }
 
-/*
- * Ask for a reply from the user, a 'y' or a 'n'.
- * No other characters are accepted, the message is repeated until a valid
- * reply is entered or CTRL-C is hit.
- * If direct is TRUE, don't use vgetc() but ui_inchar(), don't get characters
- * from any buffers but directly from the user.
- *
- * return the 'y' or 'n'
- */
-int ask_yesno(const char *str, bool direct)
+/// Ask for a reply from the user, 'y' or 'n'
+///
+/// No other characters are accepted, the message is repeated until a valid
+/// reply is entered or <C-c> is hit.
+///
+/// @param[in]  str  Prompt: question to ask user. Is always followed by
+///                  " (y/n)?".
+/// @param[in]  direct  Determines what function to use to get user input. If
+///                     true then ui_inchar() will be used, otherwise vgetc().
+///                     I.e. when direct is true then characters are obtained
+///                     directly from the user without buffers involved.
+///
+/// @return 'y' or 'n'. Last is also what will be returned in case of interrupt.
+int ask_yesno(const char *const str, const bool direct)
 {
+  const int save_State = State;
+
+  no_wait_return++;
+  State = CONFIRM;  // Mouse behaves like with :confirm.
+  setmouse();  // Disable mouse in xterm.
+  no_mapping++;
+
   int r = ' ';
-  int save_State = State;
-
-  ++no_wait_return;
-  State = CONFIRM;              /* mouse behaves like with :confirm */
-  setmouse();                   /* disables mouse for xterm */
-  ++no_mapping;
-  ++allow_keys;                 /* no mapping here, but recognize keys */
-
   while (r != 'y' && r != 'n') {
-    /* same highlighting as for wait_return */
-    smsg_attr(hl_attr(HLF_R),
-              "%s (y/n)?", str);
-    if (direct)
+    // Same highlighting as for wait_return.
+    smsg_attr(hl_attr(HLF_R), "%s (y/n)?", str);
+    if (direct) {
       r = get_keystroke();
-    else
+    } else {
       r = plain_vgetc();
-    if (r == Ctrl_C || r == ESC)
+    }
+    if (r == Ctrl_C || r == ESC) {
       r = 'n';
-    msg_putchar(r);         /* show what you typed */
+    }
+    msg_putchar(r);  // Show what you typed.
     ui_flush();
   }
-  --no_wait_return;
+  no_wait_return--;
   State = save_State;
   setmouse();
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
 
   return r;
 }
@@ -2398,8 +2404,7 @@ get_number (
   if (msg_silent != 0)
     return 0;
 
-  ++no_mapping;
-  ++allow_keys;                 /* no mapping here, but recognize keys */
+  no_mapping++;
   for (;; ) {
     ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
@@ -2427,8 +2432,7 @@ get_number (
     } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC)
       break;
   }
-  --no_mapping;
-  --allow_keys;
+  no_mapping--;
   return n;
 }
 
@@ -2532,9 +2536,9 @@ void vim_beep(unsigned val)
   if (emsg_silent == 0) {
     if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
       if (p_vb) {
-        ui_visual_bell();
+        ui_call_visual_bell();
       } else {
-        ui_putc(BELL);
+        ui_call_bell();
       }
     }
 
@@ -2618,7 +2622,10 @@ void preserve_exit(void)
 
   // Prevent repeated calls into this method.
   if (really_exiting) {
-    stream_set_blocking(input_global_fd(), true);  //normalize stream (#2598)
+    if (input_global_fd() >= 0) {
+      // normalize stream (#2598)
+      stream_set_blocking(input_global_fd(), true);
+    }
     exit(2);
   }
 
@@ -2677,7 +2684,8 @@ void fast_breakcheck(void)
   }
 }
 
-// Call shell. Calls os_call_shell, with 'shellxquote' added.
+// os_call_shell wrapper. Handles 'verbose', :profile, and v:shell_error.
+// Invalidates cached tags.
 int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   int retval;
@@ -2685,9 +2693,8 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 
   if (p_verbose > 3) {
     verbose_enter();
-    smsg(_("Calling shell to execute: \"%s\""),
-         cmd == NULL ? p_sh : cmd);
-    ui_putc('\n');
+    smsg(_("Calling shell to execute: \"%s\""), cmd == NULL ? p_sh : cmd);
+    ui_linefeed();
     verbose_leave();
   }
 

@@ -1,26 +1,30 @@
-*nvim.txt*								{Nvim}
+*nvim.txt*	Nvim
 
 
 			    NVIM REFERENCE MANUAL
 
 
-Nvim						*nvim* *nvim-intro*
+Nvim							   *nvim* *nvim-intro*
 
-If you are new to Vim (and Nvim) see |help.txt| or type ":Tutor".
-If you already use Vim (but not Nvim) see |nvim-from-vim| for a quickstart.
+Nvim is based on Vim by Bram Moolenaar.
+
+If you are new to Vim see |help.txt|, or type ":Tutor".
+If you already use Vim see |nvim-from-vim| for a quickstart.
 
 Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim is
 maintained where possible. See |vim_diff.txt| for the complete reference of
 differences from Vim.
 
+				      Type |gO| to see the table of contents.
+
 ==============================================================================
 Transitioning from Vim				*nvim-from-vim*
 
-To start the transition, link your previous configuration so Nvim can use it:
+To start the transition, create ~/.config/nvim/init.vim with these contents:
 >
-    mkdir ~/.config
-    ln -s ~/.vim ~/.config/nvim
-    ln -s ~/.vimrc ~/.config/nvim/init.vim
+    set runtimepath^=~/.vim runtimepath+=~/.vim/after
+    let &packpath = &runtimepath
+    source ~/.vimrc
 <
 Note: If your system sets `$XDG_CONFIG_HOME`, use that instead of `~/.config`
 in the code above. Nvim follows the XDG |base-directories| convention.

@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local nvim, call = helpers.meths, helpers.call
 local clear, eq = helpers.clear, helpers.eq
-local source, execute = helpers.source, helpers.execute
+local source, command = helpers.source, helpers.command
 local exc_exec = helpers.exc_exec
 
 local function expected_errors(errors)
@@ -55,7 +55,7 @@ describe('assert function:', function()
 
     it('should change v:errors when expected is not equal to actual', function()
       -- Lua does not tell integer from float.
-      execute('call assert_equal(1, 1.0)')
+      command('call assert_equal(1, 1.0)')
       expected_errors({'Expected 1 but got 1.0'})
     end)
 
@@ -89,7 +89,7 @@ describe('assert function:', function()
 
     it('should change v:errors when expected is equal to actual', function()
       call('assert_notequal', 'foo', 'foo')
-      expected_errors({"Expected 'foo' differs from 'foo'"})
+      expected_errors({"Expected not equal to 'foo'"})
     end)
   end)
 
@@ -219,8 +219,8 @@ describe('assert function:', function()
   -- assert_fails({cmd}, [, {error}])
   describe('assert_fails', function()
     it('should change v:errors when error does not match v:errmsg', function()
-      execute([[call assert_fails('xxx', {})]])
-      execute([[call assert_match("Expected {} but got 'E731:", v:errors[0])]])
+      command([[call assert_fails('xxx', {})]])
+      command([[call assert_match("Expected {} but got 'E731:", v:errors[0])]])
       expected_errors({"Expected {} but got 'E731: using Dictionary as a String'"})
     end)
 
@@ -252,6 +252,21 @@ describe('assert function:', function()
         "Expected range 5 - 7, but got 4",
         "Expected range 5 - 7, but got 8",
       })
+    end)
+
+    it('assert_inrange(1, 1) returns E119', function()
+      eq('Vim(call):E119: Not enough arguments for function: assert_inrange',
+         exc_exec("call assert_inrange(1, 1)"))
+    end)
+  end)
+
+  -- assert_report({msg})
+  describe('assert_report()', function()
+    it('should add a message to v:errors', function()
+      command("call assert_report('something is wrong')")
+      command("call assert_match('something is wrong', v:errors[0])")
+      command('call remove(v:errors, 0)')
+      expected_empty()
     end)
   end)
 

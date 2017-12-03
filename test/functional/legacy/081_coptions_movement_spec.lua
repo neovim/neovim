@@ -2,11 +2,12 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local feed_command, expect = helpers.feed_command, helpers.expect
 
 describe('coptions', function()
   setup(clear)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('is working', function()
     insert([[
       aaa two three four
@@ -16,18 +17,18 @@ describe('coptions', function()
       ccc two three four
       ddd yee yoo four]])
 
-    execute('set cpo-=;')
+    feed_command('set cpo-=;')
 
     feed('gg0tt;D')
     feed('j0fz;D')
     feed('j$Fy;D')
     feed('j$Ty;D')
 
-    execute('set cpo+=;')
+    feed_command('set cpo+=;')
 
     feed('j0tt;;D')
     feed('j$Ty;;D')
-    
+
     expect([[
       aaa two
           z

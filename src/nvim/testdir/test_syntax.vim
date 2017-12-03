@@ -50,7 +50,7 @@ func Test_syn_iskeyword()
   setlocal isk-=_
   call assert_equal('DLTD_BY', GetSyntaxItem('DLTD'))
   /\<D\k\+\>/:norm! ygn
-  let b2=@0
+  let b2 = @0
   call assert_equal('DLTD', @0)
 
   syn iskeyword clear
@@ -75,4 +75,86 @@ func Test_syntax_after_reload()
   call assert_equal('hello', &filetype)
   call assert_true(exists('g:gotit'))
   call delete('Xsomefile')
+endfunc
+
+func Test_syntime()
+  if !has('profile')
+    return
+  endif
+
+  syntax on
+  syntime on
+  let a = execute('syntime report')
+  call assert_equal("\nNo Syntax items defined for this buffer", a)
+
+  view ../memfile_test.c
+  setfiletype cpp
+  redraw
+  let a = execute('syntime report')
+  call assert_match('^  TOTAL *COUNT *MATCH *SLOWEST *AVERAGE *NAME *PATTERN', a)
+  call assert_match(' \d*\.\d* \+[^0]\d* .* cppRawString ', a)
+  call assert_match(' \d*\.\d* \+[^0]\d* .* cppNumber ', a)
+
+  syntime off
+  syntime clear
+  let a = execute('syntime report')
+  call assert_match('^  TOTAL *COUNT *MATCH *SLOWEST *AVERAGE *NAME *PATTERN', a)
+  call assert_notmatch('.* cppRawString *', a)
+  call assert_notmatch('.* cppNumber*', a)
+  call assert_notmatch('[1-9]', a)
+
+  call assert_fails('syntime abc', 'E475')
+
+  syntax clear
+  let a = execute('syntime report')
+  call assert_equal("\nNo Syntax items defined for this buffer", a)
+
+  bd
+endfunc
+
+func Test_syntax_list()
+  syntax on
+  let a = execute('syntax list')
+  call assert_equal("\nNo Syntax items defined for this buffer", a)
+
+  view ../memfile_test.c
+  setfiletype c
+
+  let a = execute('syntax list')
+  call assert_match('cInclude*', a)
+  call assert_match('cDefine', a)
+
+  let a = execute('syntax list cDefine')
+  call assert_notmatch('cInclude*', a)
+  call assert_match('cDefine', a)
+  call assert_match(' links to Macro$', a)
+
+  call assert_fails('syntax list ABCD', 'E28:')
+  call assert_fails('syntax list @ABCD', 'E392:')
+
+  syntax clear
+  let a = execute('syntax list')
+  call assert_equal("\nNo Syntax items defined for this buffer", a)
+
+  bd
+endfunc
+
+func Test_syntax_completion()
+  call feedkeys(":syn \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syn case clear cluster conceal enable include iskeyword keyword list manual match off on region reset spell sync', @:)
+
+  call feedkeys(":syn case \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syn case ignore match', @:)
+
+  call feedkeys(":syn spell \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syn spell default notoplevel toplevel', @:)
+
+  call feedkeys(":syn sync \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syn sync ccomment clear fromstart linebreaks= linecont lines= match maxlines= minlines= region', @:)
+
+  call feedkeys(":syn list \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('^"syn list Boolean Character ', @:)
+
+  call feedkeys(":syn match \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_match('^"syn match Boolean Character ', @:)
 endfunc

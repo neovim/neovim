@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file fileio.c
 ///
 /// Buffered reading/writing to a file. Unlike fileio.c this is not dealing with
@@ -23,6 +26,7 @@
 #include "nvim/globals.h"
 #include "nvim/rbuffer.h"
 #include "nvim/macros.h"
+#include "nvim/message.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fileio.c.generated.h"
@@ -46,6 +50,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
 {
   int os_open_flags = 0;
   TriState wr = kNone;
+  // -V:FLAG:501
 #define FLAG(flags, flag, fcntl_flags, wrval, cond) \
   do { \
     if (flags & flag) { \
@@ -78,7 +83,7 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
   if (fd < 0) {
     return fd;
   }
-  return file_open_fd(ret_fp, fd, flags, mode);
+  return file_open_fd(ret_fp, fd, flags);
 }
 
 /// Wrap file descriptor with FileDescriptor structure
@@ -92,15 +97,14 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
 /// @param[in]  flags  Flags, @see FileOpenFlags. Currently reading from and
 ///                    writing to the file at once is not supported, so either
 ///                    FILE_WRITE_ONLY or FILE_READ_ONLY is required.
-/// @param[in]  mode  Permissions for the newly created file (ignored if flags
-///                   does not have FILE_CREATE\*).
 ///
 /// @return Error code (@see os_strerror()) or 0. Currently always returns 0.
 int file_open_fd(FileDescriptor *const ret_fp, const int fd,
-                 const int flags, const int mode)
+                 const int flags)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  ret_fp->wr = !!(flags & (kFileCreate|kFileCreateOnly
+  ret_fp->wr = !!(flags & (kFileCreate
+                           |kFileCreateOnly
                            |kFileTruncate
                            |kFileAppend
                            |kFileWriteOnly));
@@ -130,7 +134,7 @@ int file_open_fd(FileDescriptor *const ret_fp, const int fd,
 /// @return [allocated] Opened file or NULL in case of error.
 FileDescriptor *file_open_new(int *const error, const char *const fname,
                               const int flags, const int mode)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
   if ((*error = file_open(fp, fname, flags, mode)) != 0) {
@@ -151,11 +155,11 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 ///
 /// @return [allocated] Opened file or NULL in case of error.
 FileDescriptor *file_open_fd_new(int *const error, const int fd,
-                                 const int flags, const int mode)
+                                 const int flags)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
-  if ((*error = file_open_fd(fp, fd, flags, mode)) != 0) {
+  if ((*error = file_open_fd(fp, fd, flags)) != 0) {
     xfree(fp);
     return NULL;
   }
@@ -165,32 +169,53 @@ FileDescriptor *file_open_fd_new(int *const error, const int fd,
 /// Close file and free its buffer
 ///
 /// @param[in,out]  fp  File to close.
+/// @param[in]  do_fsync  If true, use fsync() to write changes to disk.
 ///
 /// @return 0 or error code.
-int file_close(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
+int file_close(FileDescriptor *const fp, const bool do_fsync)
+  FUNC_ATTR_NONNULL_ALL
 {
-  const int error = file_fsync(fp);
-  const int error2 = os_close(fp->fd);
+  const int flush_error = (do_fsync ? file_fsync(fp) : file_flush(fp));
+  const int close_error = os_close(fp->fd);
   rbuffer_free(fp->rv);
-  if (error2 != 0) {
-    return error2;
+  if (close_error != 0) {
+    return close_error;
   }
-  return error;
+  return flush_error;
 }
 
 /// Close and free file obtained using file_open_new()
 ///
 /// @param[in,out]  fp  File to close.
+/// @param[in]  do_fsync  If true, use fsync() to write changes to disk.
 ///
 /// @return 0 or error code.
-int file_free(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
+int file_free(FileDescriptor *const fp, const bool do_fsync)
+  FUNC_ATTR_NONNULL_ALL
 {
-  const int ret = file_close(fp);
+  const int ret = file_close(fp, do_fsync);
   xfree(fp);
   return ret;
 }
 
 /// Flush file modifications to disk
+///
+/// @param[in,out]  fp  File to work with.
+///
+/// @return 0 or error code.
+int file_flush(FileDescriptor *const fp)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (!fp->wr) {
+    return 0;
+  }
+  file_rb_write_full_cb(fp->rv, fp);
+  const int error = fp->_error;
+  fp->_error = 0;
+  return error;
+}
+
+/// Flush file modifications to disk and run fsync()
 ///
 /// @param[in,out]  fp  File to work with.
 ///
@@ -201,15 +226,13 @@ int file_fsync(FileDescriptor *const fp)
   if (!fp->wr) {
     return 0;
   }
-  file_rb_write_full_cb(fp->rv, fp);
-  if (fp->_error != 0) {
-    const int error = fp->_error;
-    fp->_error = 0;
-    return error;
+  const int flush_error = file_flush(fp);
+  if (flush_error != 0) {
+    return flush_error;
   }
-  const int error = os_fsync(fp->fd);
-  if (error != UV_EINVAL && error != UV_EROFS) {
-    return error;
+  const int fsync_error = os_fsync(fp->fd);
+  if (fsync_error != UV_EINVAL && fsync_error != UV_EROFS) {
+    return fsync_error;
   }
   return 0;
 }
@@ -379,4 +402,33 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
   } while (read_bytes < size && !file_eof(fp));
 
   return (ptrdiff_t)read_bytes;
+}
+
+/// Msgpack callback for writing to a file
+///
+/// @param  data  File to write to.
+/// @param[in]  buf  Data to write.
+/// @param[in]  len  Length of the data to write.
+///
+/// @return 0 in case of success, -1 in case of error.
+int msgpack_file_write(void *data, const char *buf, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  assert(len < PTRDIFF_MAX);
+  const ptrdiff_t written_bytes = file_write((FileDescriptor *)data, buf, len);
+  if (written_bytes < 0) {
+    return msgpack_file_write_error((int)written_bytes);
+  }
+  return 0;
+}
+
+/// Print error which occurs when failing to write msgpack data
+///
+/// @param[in]  error  Error code of the error to print.
+///
+/// @return -1 (error return for msgpack_packer callbacks).
+int msgpack_file_write_error(const int error)
+{
+  emsgf(_("E5420: Failed to write to file: %s"), os_strerror(error));
+  return -1;
 }

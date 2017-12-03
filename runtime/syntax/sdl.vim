@@ -3,11 +3,8 @@
 " Maintainer:	Michael Piefel <entwurf@piefel.de>
 " Last Change:	2 May 2001
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -129,38 +126,27 @@ syn keyword sdlType		STRING OBJECT IDENTIFIER NULL
 syn sync ccomment sdlComment
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_sdl_syn_inits")
-    if version < 508
-	let did_sdl_syn_inits = 1
-	command -nargs=+ HiLink hi link <args>
-	command -nargs=+ Hi     hi <args>
-    else
-	command -nargs=+ HiLink hi def link <args>
-	command -nargs=+ Hi     hi def <args>
-    endif
+" Only when an item doesn't have highlighting yet
+command -nargs=+ Hi     hi def <args>
 
-    HiLink  sdlException	Label
-    HiLink  sdlConditional	sdlStatement
-    HiLink  sdlVirtual		sdlStatement
-    HiLink  sdlExported		sdlFlag
-    HiLink  sdlCommentError	sdlError
-    HiLink  sdlOperator		Operator
-    HiLink  sdlStructure	sdlType
-    Hi	    sdlStatement	term=bold ctermfg=4 guifg=Blue
-    Hi	    sdlFlag		term=bold ctermfg=4 guifg=Blue gui=italic
-    Hi	    sdlNewState		term=italic ctermfg=2 guifg=Magenta gui=underline
-    Hi	    sdlInput		term=bold guifg=Red
-    HiLink  sdlType		Type
-    HiLink  sdlString		String
-    HiLink  sdlComment		Comment
-    HiLink  sdlSpecial		Special
-    HiLink  sdlError		Error
+hi def link sdlException	Label
+hi def link sdlConditional	sdlStatement
+hi def link sdlVirtual		sdlStatement
+hi def link sdlExported		sdlFlag
+hi def link sdlCommentError	sdlError
+hi def link sdlOperator		Operator
+hi def link sdlStructure	sdlType
+Hi	    sdlStatement	term=bold ctermfg=4 guifg=Blue
+Hi	    sdlFlag		term=bold ctermfg=4 guifg=Blue gui=italic
+Hi	    sdlNewState		term=italic ctermfg=2 guifg=Magenta gui=underline
+Hi	    sdlInput		term=bold guifg=Red
+hi def link sdlType		Type
+hi def link sdlString		String
+hi def link sdlComment		Comment
+hi def link sdlSpecial		Special
+hi def link sdlError		Error
 
-    delcommand HiLink
-    delcommand Hi
-endif
+delcommand Hi
 
 let b:current_syntax = "sdl"
 

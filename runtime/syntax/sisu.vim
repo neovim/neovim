@@ -1,16 +1,14 @@
 " SiSU Vim syntax file
 " SiSU Maintainer: Ralph Amissah <ralph.amissah@gmail.com>
 " SiSU Markup:     SiSU (sisu-5.6.7)
-" Last Change:     2014-09-14
+" Last Change:     2017 Jun 22
 " URL: <http://git.sisudoc.org/gitweb/?p=code/sisu.git;a=blob;f=data/sisu/conf/editor-syntax-etc/vim/syntax/sisu.vim;hb=HEAD>
 "      <http://git.sisudoc.org/gitweb/?p=code/sisu.git;a=blob_plain;f=data/sisu/conf/editor-syntax-etc/vim/syntax/sisu.vim;hb=HEAD>
 "(originally looked at Ruby Vim by Mirko Nasato)
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
-else
 endif
 let s:cpo_save = &cpo
 set cpo&vim
@@ -104,7 +102,7 @@ syn region sisu_content_alt contains=sisu_strikeout,sisu_number,sisu_bold,sisu_c
 syn region sisu_content_alt contains=sisu_strikeout,sisu_number,sisu_bold,sisu_control,sisu_identifier,sisu_error matchgroup=sisu_contain start="^```\s\+table" end="^```\(\s\|$\)"
 syn region sisu_content_alt contains=sisu_strikeout,sisu_number,sisu_bold,sisu_control,sisu_identifier,sisu_error matchgroup=sisu_contain start="^{\(t\|table\)\(\~h\)\?\(\sc[0-9]\+;\)\?[0-9; ]*}" end="\n$"
 " block, group, poem, alt
-syn region sisu_content_alt contains=sisu_mark_endnote,sisu_content_endnote,sisu_link,sisu_mark,sisu_strikeout,sisu_number,sisu_control,sisu_identifier,sisu_error matchgroup=sisu_contain start="^\(block\|group\|poem\|alt\){" end="^}\1"
+syn region sisu_content_alt contains=sisu_mark_endnote,sisu_content_endnote,sisu_link,sisu_mark,sisu_strikeout,sisu_number,sisu_control,sisu_identifier,sisu_error matchgroup=sisu_contain start="^\z(block\|group\|poem\|alt\){" end="^}\z1"
 syn region sisu_content_alt contains=sisu_mark_endnote,sisu_content_endnote,sisu_link,sisu_mark,sisu_strikeout,sisu_number,sisu_control,sisu_identifier,sisu_error matchgroup=sisu_contain start="^```\s\+\(block\|group\|poem\|alt\)" end="^```\(\s\|$\)"
 " box
 syn region sisu_content_alt contains=sisu_mark_endnote,sisu_content_endnote,sisu_link,sisu_mark,sisu_strikeout,sisu_number,sisu_control,sisu_identifier,sisu_error matchgroup=sisu_contain start="^box\(\.[a-z]\+\)\?{" end="^}box"

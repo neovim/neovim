@@ -2,9 +2,10 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local command, expect = helpers.command, helpers.expect
 local eq, eval = helpers.eq, helpers.eval
 local source = helpers.source
+local wait = helpers.wait
 
 describe('utf8', function()
   before_each(clear)
@@ -12,16 +13,17 @@ describe('utf8', function()
   it('is working', function()
     insert('start:')
 
-    execute('new')
-    execute('call setline(1, ["aaa", "あああ", "bbb"])')
+    command('new')
+    command('call setline(1, ["aaa", "あああ", "bbb"])')
 
     -- Visual block Insert adjusts for multi-byte char
     feed('gg0l<C-V>jjIx<Esc>')
+    wait()
 
-    execute('let r = getline(1, "$")')
-    execute('bwipeout!')
-    execute('$put=r')
-    execute('call garbagecollect(1)')
+    command('let r = getline(1, "$")')
+    command('bwipeout!')
+    command('$put=r')
+    command('call garbagecollect(1)')
 
     expect([[
       start:
@@ -52,6 +54,7 @@ describe('utf8', function()
     eq(1, eval('strchars("\\u20dd", 1)'))
   end)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('customlist completion', function()
     source([[
       function! CustomComplete1(lead, line, pos)
@@ -75,7 +78,7 @@ describe('utf8', function()
     feed(":Test3 <C-L>'<C-B>$put='<CR>")
 
     expect([[
-      
+
       Test1 
       Test2 あた
       Test3 N]])

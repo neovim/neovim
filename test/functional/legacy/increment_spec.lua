@@ -1,7 +1,7 @@
 -- Tests for using Ctrl-A/Ctrl-X on visual selections
 
 local helpers = require('test.functional.helpers')(after_each)
-local source, execute = helpers.source, helpers.execute
+local source, command = helpers.source, helpers.command
 local call, clear = helpers.call, helpers.clear
 local eq, nvim = helpers.eq, helpers.meths
 
@@ -685,7 +685,7 @@ describe('Ctrl-A/Ctrl-X on visual selections', function()
       " Text:
       "   1 23
       "   4 56
-      " 
+      "
       " Expected:
       "   1) f2 Ctrl-V jl <ctrl-a>, repeat twice afterwards with .
       "   1 26
@@ -742,14 +742,14 @@ describe('Ctrl-A/Ctrl-X on visual selections', function()
     local id = string.format('%02d', i)
 
     it('works on Test ' .. id, function()
-      execute('set nrformats&vi') -- &vi makes Vim compatible
+      command('set nrformats&vi') -- &vi makes Vim compatible
       call('Test_visual_increment_' .. id)
       eq({}, nvim.get_vvar('errors'))
     end)
   end
 
   it('does not drop leading zeroes', function()
-    execute('set nrformats&vi') -- &vi makes Vim compatible
+    command('set nrformats&vi') -- &vi makes Vim compatible
     call('Test_normal_increment_01')
     eq({}, nvim.get_vvar('errors'))
   end)

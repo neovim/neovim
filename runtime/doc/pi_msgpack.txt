@@ -1,4 +1,4 @@
-*pi_msgpack.txt*	For NeoVim version 0.1.
+*pi_msgpack.txt*	Nvim
 
 Author:  Nikolay Pavlov <kp-pav@yandex.ru>
 Copyright: (c) 2015 by Nikolay Pavlov

@@ -6,11 +6,8 @@
 " URL:          ftp://cedar-solutions.com/software/mysql.vim
 " Note:         The definitions below are taken from the mysql user manual as of April 2002, for version 3.23
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -273,29 +270,19 @@ syn region mysqlFunction         start="weekday(" end=")" contains=ALL
 syn region mysqlFunction         start="yearweek(" end=")" contains=ALL
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_mysql_syn_inits")
-  if version < 508
-    let did_mysql_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink mysqlKeyword            Statement
-  HiLink mysqlSpecial            Special
-  HiLink mysqlString             String
-  HiLink mysqlNumber             Number
-  HiLink mysqlVariable           Identifier
-  HiLink mysqlComment            Comment
-  HiLink mysqlType               Type
-  HiLink mysqlOperator           Statement
-  HiLink mysqlFlow               Statement
-  HiLink mysqlFunction           Function
+hi def link mysqlKeyword            Statement
+hi def link mysqlSpecial            Special
+hi def link mysqlString             String
+hi def link mysqlNumber             Number
+hi def link mysqlVariable           Identifier
+hi def link mysqlComment            Comment
+hi def link mysqlType               Type
+hi def link mysqlOperator           Statement
+hi def link mysqlFlow               Statement
+hi def link mysqlFunction           Function
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "mysql"
 

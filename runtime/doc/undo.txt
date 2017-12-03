@@ -1,4 +1,4 @@
-*undo.txt*      For Vim version 7.4.  Last change: 2014 May 24
+*undo.txt*      Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -8,12 +8,7 @@ Undo and redo						*undo-redo*
 
 The basics are explained in section |02.5| of the user manual.
 
-1. Undo and redo commands	|undo-commands|
-2. Two ways of undo		|undo-two-ways|
-3. Undo blocks			|undo-blocks|
-4. Undo branches		|undo-branches|
-5. Undo persistence		|undo-persistence|
-6. Remarks about undo		|undo-remarks|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Undo and redo commands				*undo-commands*

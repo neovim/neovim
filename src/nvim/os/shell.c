@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -47,7 +50,7 @@ typedef struct {
 /// @param extra_args Extra arguments to the shell, or NULL.
 /// @return Newly allocated argument vector. Must be freed with shell_free_argv.
 char **shell_build_argv(const char *cmd, const char *extra_args)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET
 {
   size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
@@ -124,11 +127,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   }
 
   size_t nread;
-
   int exitcode = do_os_system(shell_build_argv((char *)cmd, (char *)extra_args),
                               input.data, input.len, output_ptr, &nread,
                               emsg_silent, forward_output);
-
   xfree(input.data);
 
   if (output) {
@@ -206,16 +207,12 @@ static int do_os_system(char **argv,
   char prog[MAXPATHL];
   xstrlcpy(prog, argv[0], MAXPATHL);
 
-  Stream in, out, err;
   LibuvProcess uvproc = libuv_process_init(&main_loop, &buf);
   Process *proc = &uvproc.process;
   MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
-  proc->in = input != NULL ? &in : NULL;
-  proc->out = &out;
-  proc->err = &err;
-  int status = process_spawn(proc);
+  int status = process_spawn(proc, input != NULL, true, true);
   if (status) {
     loop_poll_events(&main_loop, 0);
     // Failed, probably 'shell' is not executable.
@@ -230,32 +227,29 @@ static int do_os_system(char **argv,
     return -1;
   }
 
-  // We want to deal with stream events as fast a possible while queueing
-  // process events, so reset everything to NULL. It prevents closing the
+  // Note: unlike process events, stream events are not queued, as we want to
+  // deal with stream events as fast a possible.  It prevents closing the
   // streams while there's still data in the OS buffer (due to the process
   // exiting before all data is read).
   if (input != NULL) {
-    proc->in->events = NULL;
-    wstream_init(proc->in, 0);
+    wstream_init(&proc->in, 0);
   }
-  proc->out->events = NULL;
-  rstream_init(proc->out, 0);
-  rstream_start(proc->out, data_cb, &buf);
-  proc->err->events = NULL;
-  rstream_init(proc->err, 0);
-  rstream_start(proc->err, data_cb, &buf);
+  rstream_init(&proc->out, 0);
+  rstream_start(&proc->out, data_cb, &buf);
+  rstream_init(&proc->err, 0);
+  rstream_start(&proc->err, data_cb, &buf);
 
   // write the input, if any
   if (input) {
     WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
 
-    if (!wstream_write(&in, input_buffer)) {
+    if (!wstream_write(&proc->in, input_buffer)) {
       // couldn't write, stop the process and tell the user about it
       process_stop(proc);
       return -1;
     }
     // close the input stream after everything is written
-    wstream_set_write_cb(&in, shell_write_cb, NULL);
+    wstream_set_write_cb(&proc->in, shell_write_cb, NULL);
   }
 
   // Invoke busy_start here so LOOP_PROCESS_EVENTS_UNTIL will not change the
@@ -446,7 +440,7 @@ static void out_data_append_to_screen(char *output, size_t remaining,
   size_t off = 0;
   int last_row = (int)Rows - 1;
 
-  while (off < remaining) {
+  while (output != NULL && off < remaining) {
     // Found end of line?
     if (output[off] == NL) {
       // Can we start a new line or do we need to continue the last one?
@@ -463,15 +457,16 @@ static void out_data_append_to_screen(char *output, size_t remaining,
       continue;
     }
 
-    // Translate NUL to SOH
-    if (output[off] == NUL) {
-      output[off] = 1;
+    // TODO(bfredl): using msg_puts would be better until
+    // terminal emulation is implemented.
+    if (output[off] < 0x20) {
+      output[off] = ' ';
     }
 
     off++;
   }
 
-  if (remaining) {
+  if (output != NULL && remaining) {
     if (last_col == 0) {
       screen_del_lines(0, 0, 1, (int)Rows, NULL);
     }
@@ -681,10 +676,6 @@ static void shell_write_cb(Stream *stream, void *data, int status)
     // backgrounded (:call system("cat - &", "foo")). #3529 #5241
     msg_schedule_emsgf(_("E5677: Error writing input to shell-command: %s"),
                        uv_err_name(status));
-  }
-  if (stream->closed) {  // Process may have exited before this write.
-    ELOG("stream was already closed");
-    return;
   }
   stream_close(stream, NULL, NULL);
 }

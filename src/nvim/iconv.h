@@ -10,9 +10,7 @@
 // USE_ICONV, or to put the USE_ICONV definition in config.h.in directly. As
 // it stands, globals.h needs to be included alongside iconv.h.
 
-#ifdef HAVE_CONFIG_H
-# include "auto/config.h"
-#endif
+#include "auto/config.h"
 
 // Use iconv() when it's available, either by linking to the library at
 // compile time or by loading it at runtime.

@@ -1,4 +1,4 @@
-*deprecated.txt*                                                        {Nvim}
+*deprecated.txt*       Nvim
 
 
                              NVIM REFERENCE MANUAL
@@ -26,9 +26,6 @@ Events ~
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
 *FileEncoding*		Never fired; equivalent to |EncodingChanged|.
 
-Highlight groups ~
-*hl-VisualNOS*		Obsolete. |vim-differences| {Nvim}
-
 Keycodes ~
 *<MouseDown>*		Use <ScrollWheelUp> instead.
 *<MouseUp>*		Use <ScrollWheelDown> instead.
@@ -40,11 +37,21 @@ Functions ~
 *file_readable()*	Obsolete name for |filereadable()|.
 *highlight_exists()*	Obsolete name for |hlexists()|.
 *highlightID()*		Obsolete name for |hlID()|.
+*jobclose()*	        Obsolete name for |chanclose()|
+*jobsend()*	        Obsolete name for |chansend()|
 *last_buffer_nr()*	Obsolete name for bufnr("$").
+
+Modifiers ~
+*:menu-<special>*
+*:menu-special*		<> notation is always enabled. |cpo-<|
+*:map-<special>*
+*:map-special*		<> notation is always enabled. |cpo-<|
 
 Options ~
 *'fe'*			'fenc'+'enc' before Vim 6.0; no longer used.
+*'highlight'* *'hl'* 	Names of builtin |highlight-groups| cannot be changed.
+*'langnoremap'*		Deprecated alias to 'nolangremap'.
 *'vi'*
 *'viminfo'*		Deprecated alias to 'shada' option.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:noet:tw=78:ts=8:ft=help:norl:

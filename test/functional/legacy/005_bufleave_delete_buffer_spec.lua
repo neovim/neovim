@@ -3,11 +3,13 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local command, expect = helpers.command, helpers.expect
+local wait = helpers.wait
 
 describe('test5', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start of test file Xxx
@@ -18,35 +20,37 @@ describe('test5', function()
       	this is a test
       end of test file Xxx]])
 
-    execute('w! Xxx0')
-    execute('au BufLeave Xxx bwipe')
-    execute('/start of')
+    command('w! Xxx0')
+    command('au BufLeave Xxx bwipe')
+    command('/start of')
 
     -- Write test file Xxx.
-    execute('.,/end of/w! Xxx')
+    command('.,/end of/w! Xxx')
 
     -- Split to Xxx.
-    execute('sp Xxx')
+    command('sp Xxx')
 
     -- Delete buffer Xxx, now we're back here.
-    execute('bwipe')
+    command('bwipe')
     feed('G?this is a<cr>')
     feed('othis is some more text<esc>')
+    wait()
 
     -- Append some text to this file.
 
     -- Write current file contents.
-    execute('?start?,$yank A')
+    command('?start?,$yank A')
 
     -- Delete current buffer, get an empty one.
-    execute('bwipe!')
+    command('bwipe!')
     -- Append an extra line to the output register.
     feed('ithis is another test line<esc>:yank A<cr>')
+    wait()
 
     -- Output results
-    execute('%d')
-    execute('0put a')
-    execute('$d')
+    command('%d')
+    command('0put a')
+    command('$d')
 
     -- Assert buffer contents.
     expect([[

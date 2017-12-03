@@ -16,9 +16,9 @@
 #define SOPT_UNSET 0x40    // Option does not have local value set
 
 // Option types for various functions in option.c
-#define SREQ_GLOBAL 0 // Request global option
-#define SREQ_WIN 1    // Request window-local option
-#define SREQ_BUF 2    // Request buffer-local option
+#define SREQ_GLOBAL 0  // Request global option value
+#define SREQ_WIN 1     // Request window-local option value
+#define SREQ_BUF 2     // Request buffer-local option value
 
 /*
  * Default values for 'errorformat'.
@@ -81,58 +81,56 @@
 #define DFLT_FO_VIM     "tcqj"
 #define FO_ALL          "tcroq2vlb1mMBn,awj"    /* for do_set() */
 
-/* characters for the p_cpo option: */
-#define CPO_ALTREAD     'a'     /* ":read" sets alternate file name */
-#define CPO_ALTWRITE    'A'     /* ":write" sets alternate file name */
-#define CPO_BAR         'b'     /* "\|" ends a mapping */
-#define CPO_BSLASH      'B'     /* backslash in mapping is not special */
+// characters for the p_cpo option:
+#define CPO_ALTREAD     'a'     // ":read" sets alternate file name
+#define CPO_ALTWRITE    'A'     // ":write" sets alternate file name
+#define CPO_BAR         'b'     // "\|" ends a mapping
+#define CPO_BSLASH      'B'     // backslash in mapping is not special
 #define CPO_SEARCH      'c'
-#define CPO_CONCAT      'C'     /* Don't concatenate sourced lines */
-#define CPO_DOTTAG      'd'     /* "./tags" in 'tags' is in current dir */
-#define CPO_DIGRAPH     'D'     /* No digraph after "r", "f", etc. */
+#define CPO_CONCAT      'C'     // Don't concatenate sourced lines
+#define CPO_DOTTAG      'd'     // "./tags" in 'tags' is in current dir
+#define CPO_DIGRAPH     'D'     // No digraph after "r", "f", etc.
 #define CPO_EXECBUF     'e'
-#define CPO_EMPTYREGION 'E'     /* operating on empty region is an error */
-#define CPO_FNAMER      'f'     /* set file name for ":r file" */
-#define CPO_FNAMEW      'F'     /* set file name for ":w file" */
-#define CPO_INTMOD      'i'     /* interrupt a read makes buffer modified */
-#define CPO_INDENT      'I'     /* remove auto-indent more often */
-#define CPO_ENDOFSENT   'J'     /* need two spaces to detect end of sentence */
-#define CPO_KEYCODE     'k'     /* don't recognize raw key code in mappings */
-#define CPO_KOFFSET     'K'     /* don't wait for key code in mappings */
-#define CPO_LITERAL     'l'     /* take char after backslash in [] literal */
-#define CPO_LISTWM      'L'     /* 'list' changes wrapmargin */
+#define CPO_EMPTYREGION 'E'     // operating on empty region is an error
+#define CPO_FNAMER      'f'     // set file name for ":r file"
+#define CPO_FNAMEW      'F'     // set file name for ":w file"
+#define CPO_INTMOD      'i'     // interrupt a read makes buffer modified
+#define CPO_INDENT      'I'     // remove auto-indent more often
+#define CPO_ENDOFSENT   'J'     // need two spaces to detect end of sentence
+#define CPO_KOFFSET     'K'     // don't wait for key code in mappings
+#define CPO_LITERAL     'l'     // take char after backslash in [] literal
+#define CPO_LISTWM      'L'     // 'list' changes wrapmargin
 #define CPO_SHOWMATCH   'm'
-#define CPO_MATCHBSL    'M'     /* "%" ignores use of backslashes */
-#define CPO_NUMCOL      'n'     /* 'number' column also used for text */
+#define CPO_MATCHBSL    'M'     // "%" ignores use of backslashes
+#define CPO_NUMCOL      'n'     // 'number' column also used for text
 #define CPO_LINEOFF     'o'
-#define CPO_OVERNEW     'O'     /* silently overwrite new file */
-#define CPO_LISP        'p'     /* 'lisp' indenting */
-#define CPO_FNAMEAPP    'P'     /* set file name for ":w >>file" */
-#define CPO_JOINCOL     'q'     /* with "3J" use column after first join */
+#define CPO_OVERNEW     'O'     // silently overwrite new file
+#define CPO_LISP        'p'     // 'lisp' indenting
+#define CPO_FNAMEAPP    'P'     // set file name for ":w >>file"
+#define CPO_JOINCOL     'q'     // with "3J" use column after first join
 #define CPO_REDO        'r'
-#define CPO_REMMARK     'R'     /* remove marks when filtering */
+#define CPO_REMMARK     'R'     // remove marks when filtering
 #define CPO_BUFOPT      's'
 #define CPO_BUFOPTGLOB  'S'
 #define CPO_TAGPAT      't'
-#define CPO_UNDO        'u'     /* "u" undoes itself */
-#define CPO_BACKSPACE   'v'     /* "v" keep deleted text */
-#define CPO_FWRITE      'W'     /* "w!" doesn't overwrite readonly files */
+#define CPO_UNDO        'u'     // "u" undoes itself
+#define CPO_BACKSPACE   'v'     // "v" keep deleted text
+#define CPO_FWRITE      'W'     // "w!" doesn't overwrite readonly files
 #define CPO_ESC         'x'
-#define CPO_REPLCNT     'X'     /* "R" with a count only deletes chars once */
+#define CPO_REPLCNT     'X'     // "R" with a count only deletes chars once
 #define CPO_YANK        'y'
-#define CPO_KEEPRO      'Z'     /* don't reset 'readonly' on ":w!" */
+#define CPO_KEEPRO      'Z'     // don't reset 'readonly' on ":w!"
 #define CPO_DOLLAR      '$'
 #define CPO_FILTER      '!'
 #define CPO_MATCH       '%'
-#define CPO_PLUS        '+'     /* ":write file" resets 'modified' */
-#define CPO_SPECI       '<'     /* don't recognize <> in mappings */
-#define CPO_REGAPPEND   '>'     /* insert NL when appending to a register */
-#define CPO_SCOLON      ';'     /* using "," and ";" will skip over char if
-                                 * cursor would not move */
+#define CPO_PLUS        '+'     // ":write file" resets 'modified'
+#define CPO_REGAPPEND   '>'     // insert NL when appending to a register
+#define CPO_SCOLON      ';'     // using "," and ";" will skip over char if
+                                // cursor would not move
 #define CPO_CHANGEW     '_'     // "cw" special-case
 // default values for Vim and Vi
 #define CPO_VIM         "aABceFs_"
-#define CPO_VI          "aAbBcCdDeEfFiIJkKlLmMnoOpPqrRsStuvWxXyZ$!%+<>;_"
+#define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+>;_"
 
 /* characters for p_ww option: */
 #define WW_ALL          "bshl<>[],~"
@@ -476,8 +474,9 @@ EXTERN char_u   *p_isp;         // 'isprint'
 EXTERN int p_js;                // 'joinspaces'
 EXTERN char_u   *p_kp;          // 'keywordprg'
 EXTERN char_u   *p_km;          // 'keymodel'
-EXTERN char_u   *p_langmap;     // 'langmap'*/
-EXTERN int p_lnr;               // 'langnoremap'*/
+EXTERN char_u   *p_langmap;     // 'langmap'
+EXTERN int p_lnr;               // 'langnoremap'
+EXTERN int p_lrm;               // 'langremap'
 EXTERN char_u   *p_lm;          // 'langmenu'
 EXTERN char_u   *p_lispwords;   // 'lispwords'
 EXTERN long p_ls;               // 'laststatus'
@@ -524,6 +523,7 @@ EXTERN int p_ru;                // 'ruler'
 EXTERN char_u   *p_ruf;         // 'rulerformat'
 EXTERN char_u   *p_pp;          // 'packpath'
 EXTERN char_u   *p_rtp;         // 'runtimepath'
+EXTERN long p_scbk;             // 'scrollback'
 EXTERN long p_sj;               // 'scrolljump'
 EXTERN long p_so;               // 'scrolloff'
 EXTERN char_u   *p_sbo;         // 'scrollopt'
@@ -539,7 +539,7 @@ static char *(p_ssop_values[]) = {"buffers", "winpos", "resize", "winsize",
                                   "localoptions", "options", "help", "blank",
                                   "globals", "slash", "unix",
                                   "sesdir", "curdir", "folds", "cursor",
-                                  "tabpages", NULL};
+                                  "tabpages", NULL };
 # endif
 # define SSOP_BUFFERS           0x001
 # define SSOP_WINPOS            0x002
@@ -557,16 +557,17 @@ static char *(p_ssop_values[]) = {"buffers", "winpos", "resize", "winsize",
 # define SSOP_FOLDS             0x2000
 # define SSOP_CURSOR            0x4000
 # define SSOP_TABPAGES          0x8000
-EXTERN char_u   *p_sh;          /* 'shell' */
-EXTERN char_u   *p_shcf;        /* 'shellcmdflag' */
-EXTERN char_u   *p_sp;          /* 'shellpipe' */
-EXTERN char_u   *p_shq;         /* 'shellquote' */
-EXTERN char_u   *p_sxq;         /* 'shellxquote' */
-EXTERN char_u   *p_sxe;         /* 'shellxescape' */
-EXTERN char_u   *p_srr;         /* 'shellredir' */
-EXTERN int p_stmp;              /* 'shelltemp' */
+
+EXTERN char_u   *p_sh;          // 'shell'
+EXTERN char_u   *p_shcf;        // 'shellcmdflag'
+EXTERN char_u   *p_sp;          // 'shellpipe'
+EXTERN char_u   *p_shq;         // 'shellquote'
+EXTERN char_u   *p_sxq;         // 'shellxquote'
+EXTERN char_u   *p_sxe;         // 'shellxescape'
+EXTERN char_u   *p_srr;         // 'shellredir'
+EXTERN int p_stmp;              // 'shelltemp'
 #ifdef BACKSLASH_IN_FILENAME
-EXTERN int p_ssl;               /* 'shellslash' */
+EXTERN int p_ssl;               // 'shellslash'
 #endif
 EXTERN char_u   *p_stl;         // 'statusline'
 EXTERN int p_sr;                // 'shiftround'
@@ -694,6 +695,7 @@ enum {
   , BV_BIN
   , BV_BL
   , BV_BOMB
+  , BV_CHANNEL
   , BV_CI
   , BV_CIN
   , BV_CINK
@@ -713,6 +715,7 @@ enum {
   , BV_EP
   , BV_ET
   , BV_FENC
+  , BV_FP
   , BV_BEXPR
   , BV_FEX
   , BV_FF
@@ -804,10 +807,13 @@ enum {
   , WV_WFW
   , WV_WRAP
   , WV_SCL
+  , WV_WINHL
   , WV_COUNT        // must be the last one
 };
 
 /* Value for b_p_ul indicating the global value must be used. */
 #define NO_LOCAL_UNDOLEVEL -123456
+
+#define SB_MAX 100000  // Maximum 'scrollback' value.
 
 #endif // NVIM_OPTION_DEFS_H

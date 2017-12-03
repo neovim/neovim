@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include "nvim/types.h"
+#include "nvim/pos.h"
 
 /// A block number.
 ///

@@ -69,7 +69,7 @@ function! GetBstIndent(lnum) abort
     endif
     let fakeline = substitute(line,'^}','','').matchstr(cline,'^}')
     let ind = indent(lnum)
-    let ind = ind + &sw * s:count(line,'{')
-    let ind = ind - &sw * s:count(fakeline,'}')
+    let ind = ind + shiftwidth() * s:count(line,'{')
+    let ind = ind - shiftwidth() * s:count(fakeline,'}')
     return ind
 endfunction

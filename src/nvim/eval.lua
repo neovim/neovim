@@ -2,10 +2,10 @@
 --
 -- Keys:
 --
--- args  Number of arguments, list with maximum and minimum number of arguments 
---       or list with a minimum number of arguments only. Defaults to zero 
+-- args  Number of arguments, list with maximum and minimum number of arguments
+--       or list with a minimum number of arguments only. Defaults to zero
 --       arguments.
--- func  Name of the C function which implements the VimL function. Defaults to 
+-- func  Name of the C function which implements the VimL function. Defaults to
 --       `f_{funcname}`.
 
 local varargs = function(nr)
@@ -29,10 +29,11 @@ return {
     assert_exception={args={1, 2}},
     assert_fails={args={1, 2}},
     assert_false={args={1, 2}},
-    assert_inrange={args={2, 3}},
+    assert_inrange={args={3, 4}},
     assert_match={args={2, 3}},
     assert_notequal={args={2, 3}},
     assert_notmatch={args={2, 3}},
+    assert_report={args=1},
     assert_true={args={1, 2}},
     atan={args=1, func="float_op_wrapper", data="&atan"},
     atan2={args=2},
@@ -54,6 +55,8 @@ return {
     call={args={2, 3}},
     ceil={args=1, func="float_op_wrapper", data="&ceil"},
     changenr={},
+    chanclose={args={1, 2}},
+    chansend={args=2},
     char2nr={args={1, 2}},
     cindent={args=1},
     clearmatches={},
@@ -172,10 +175,10 @@ return {
     islocked={args=1},
     id={args=1},
     items={args=1},
-    jobclose={args={1, 2}},
+    jobclose={args={1, 2}, func="f_chanclose"},
     jobpid={args=1},
     jobresize={args=3},
-    jobsend={args=2},
+    jobsend={args=2, func="f_chansend"},
     jobstart={args={1, 2}},
     jobstop={args=1},
     jobwait={args={1, 2}},
@@ -193,6 +196,7 @@ return {
     localtime={},
     log={args=1, func="float_op_wrapper", data="&log"},
     log10={args=1, func="float_op_wrapper", data="&log10"},
+    luaeval={args={1, 2}},
     map={args=2},
     maparg={args={1, 4}},
     mapcheck={args={1, 3}},
@@ -206,6 +210,7 @@ return {
     matchstr={args={2, 4}},
     matchstrpos={args={2,4}},
     max={args=1},
+    menu_get={args={1, 2}},
     min={args=1},
     mkdir={args={1, 3}},
     mode={args={0, 1}},
@@ -267,8 +272,10 @@ return {
     simplify={args=1},
     sin={args=1, func="float_op_wrapper", data="&sin"},
     sinh={args=1, func="float_op_wrapper", data="&sinh"},
+    sockconnect={args={2,3}},
     sort={args={1, 3}},
     soundfold={args=1},
+    stdioopen={args=1},
     spellbadword={args={0, 1}},
     spellsuggest={args={1, 3}},
     split={args={1, 3}},
@@ -300,14 +307,17 @@ return {
     tabpagenr={args={0, 1}},
     tabpagewinnr={args={1, 2}},
     tagfiles={},
-    taglist={args=1},
+    taglist={args={1, 2}},
     tan={args=1, func="float_op_wrapper", data="&tan"},
     tanh={args=1, func="float_op_wrapper", data="&tanh"},
     tempname={},
     termopen={args={1, 2}},
     test_garbagecollect_now={},
+    timer_info={args={0,1}},
+    timer_pause={args=2},
     timer_start={args={2,3}},
     timer_stop={args=1},
+    timer_stopall={args=0},
     tolower={args=1},
     toupper={args=1},
     tr={args=3},

@@ -3,7 +3,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, source = helpers.feed, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('case-insensitive string comparison in UTF-8', function()
   setup(clear)
@@ -106,18 +106,18 @@ describe('case-insensitive string comparison in UTF-8', function()
     ]])
 
     -- Test that g~ap changes one paragraph only.
-    execute('new')
+    feed_command('new')
     feed('iabcd<cr><cr>defg<esc>gg0g~ap')
-    execute('let lns = getline(1,3)')
-    execute('q!')
-    execute([[call append(line('$'), lns)]])
+    feed_command('let lns = getline(1,3)')
+    feed_command('q!')
+    feed_command([[call append(line('$'), lns)]])
 
     -- Assert buffer contents.
     expect([=[
       3732 checks passed
-      
+
       ABCD
-      
+
       defg]=])
   end)
 end)

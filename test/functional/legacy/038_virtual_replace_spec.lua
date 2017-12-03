@@ -2,31 +2,32 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed = helpers.feed
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('Virtual replace mode', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     -- Make sure that backspace works, no matter what termcap is used.
-    execute('set t_kD=x7f t_kb=x08')
+    feed_command('set t_kD=x7f t_kb=x08')
     -- Use vi default for 'smarttab'
-    execute('set nosmarttab')
+    feed_command('set nosmarttab')
     feed('ggdGa<cr>')
     feed('abcdefghi<cr>')
     feed('jk<tab>lmn<cr>')
     feed('<Space><Space><Space><Space>opq<tab>rst<cr>')
     feed('<C-d>uvwxyz<cr>')
     feed('<esc>gg')
-    execute('set ai')
-    execute('set bs=2')
+    feed_command('set ai')
+    feed_command('set bs=2')
     feed('gR0<C-d> 1<cr>')
     feed('A<cr>')
     feed('BCDEFGHIJ<cr>')
     feed('<tab>KL<cr>')
     feed('MNO<cr>')
     feed('PQR<esc>G')
-    execute('ka')
+    feed_command('ka')
     feed('o0<C-d><cr>')
     feed('abcdefghi<cr>')
     feed('jk<tab>lmn<cr>')

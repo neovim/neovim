@@ -1,4 +1,4 @@
-*usr_22.txt*	For Vim version 7.4.  Last change: 2012 Nov 15
+*usr_22.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -93,7 +93,7 @@ browser.  This is what you get: >
      	 o................Browsing with a Horizontal Split...........|netrw-o|
      	 p................Use Preview Window.........................|netrw-p|
      	 P................Edit in Previous Window....................|netrw-p|
-     	 q................Listing Bookmarks and History..............|netrw-q|
+     	 q................Listing Bookmarks and History..............|netrw-qb|
      	 r................Reversing Sorting Order....................|netrw-r|
 <    	(etc)
 

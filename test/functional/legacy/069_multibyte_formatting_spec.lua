@@ -4,8 +4,8 @@
 -- Also test byteidx() and byteidxcomp()
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, eq, eval, clear, execute, expect = helpers.feed,
-  helpers.insert, helpers.eq, helpers.eval, helpers.clear, helpers.execute,
+local feed, insert, eq, eval, clear, feed_command, expect = helpers.feed,
+  helpers.insert, helpers.eq, helpers.eval, helpers.clear, helpers.feed_command,
   helpers.expect
 
 describe('multibyte text', function()
@@ -17,8 +17,8 @@ describe('multibyte text', function()
       ＸＹＺ
       abc ＸＹＺ
       }]])
-    execute('/^{/+1')
-    execute('set tw=2 fo=t')
+    feed_command('/^{/+1')
+    feed_command('set tw=2 fo=t')
     feed('gqgqjgqgqo<cr>')
     feed('ＸＹＺ<cr>')
     feed('abc ＸＹＺ<esc><esc>')
@@ -27,7 +27,7 @@ describe('multibyte text', function()
       ＸＹＺ
       abc
       ＸＹＺ
-      
+
       ＸＹＺ
       abc
       ＸＹＺ
@@ -43,8 +43,8 @@ describe('multibyte text', function()
       ＸＹ
       Ｘ Ｙ
       }]])
-    execute('/^{/+1')
-    execute('set tw=1 fo=tm')
+    feed_command('/^{/+1')
+    feed_command('set tw=1 fo=tm')
     feed('gqgqjgqgqjgqgqjgqgqjgqgqo<cr>')
     feed('Ｘ<cr>')
     feed('Ｘa<cr>')
@@ -62,7 +62,7 @@ describe('multibyte text', function()
       Ｙ
       Ｘ
       Ｙ
-      
+
       Ｘ
       Ｘ
       a
@@ -89,8 +89,8 @@ describe('multibyte text', function()
       abＸ c
       abＸＹ
       }]])
-    execute('/^{/+1')
-    execute('set tw=2 fo=tm')
+    feed_command('/^{/+1')
+    feed_command('set tw=2 fo=tm')
     feed('gqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqo<cr>')
     feed('Ｘ<cr>')
     feed('Ｘa<cr>')
@@ -125,7 +125,7 @@ describe('multibyte text', function()
       ab
       Ｘ
       Ｙ
-      
+
       Ｘ
       Ｘ
       a
@@ -156,8 +156,8 @@ describe('multibyte text', function()
         Ｘ
         Ｘa
       }]])
-    execute('/^{/+1')
-    execute('set ai tw=2 fo=tm')
+    feed_command('/^{/+1')
+    feed_command('set ai tw=2 fo=tm')
     feed('gqgqjgqgqo<cr>')
     feed('Ｘ<cr>')
     feed('Ｘa<esc>')
@@ -166,7 +166,7 @@ describe('multibyte text', function()
         Ｘ
         Ｘ
         a
-      
+
         Ｘ
         Ｘ
         a
@@ -179,8 +179,8 @@ describe('multibyte text', function()
         Ｘ
         Ｘa
       }]])
-    execute('/^{/+1')
-    execute('set noai tw=2 fo=tm')
+    feed_command('/^{/+1')
+    feed_command('set noai tw=2 fo=tm')
     feed('gqgqjgqgqo<cr>')
     -- Literal spaces will be trimmed from the by feed().
     feed('<space><space>Ｘ<cr>')
@@ -190,7 +190,7 @@ describe('multibyte text', function()
         Ｘ
         Ｘ
       a
-      
+
         Ｘ
         Ｘ
       a
@@ -211,8 +211,8 @@ describe('multibyte text', function()
       ＸＸa
       ＸＸＹ
       }]])
-    execute('/^{/+1')
-    execute('set tw=2 fo=cqm comments=n:Ｘ')
+    feed_command('/^{/+1')
+    feed_command('set tw=2 fo=cqm comments=n:Ｘ')
     feed('gqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqjgqgqo<cr>')
     feed('Ｘ<cr>')
     feed('Ｘa<cr>')
@@ -239,7 +239,7 @@ describe('multibyte text', function()
       ＸＸ
       ＸＸa
       ＸＸＹ
-      
+
       Ｘ
       Ｘa
       Ｘa
@@ -259,10 +259,10 @@ describe('multibyte text', function()
   it('formatting in replace mode', function()
     insert([[
       {
-      
+
       }]])
-    execute('/^{/+1')
-    execute('set tw=2 fo=tm')
+    feed_command('/^{/+1')
+    feed_command('set tw=2 fo=tm')
     feed('RＸa<esc>')
     expect([[
       {
@@ -276,8 +276,8 @@ describe('multibyte text', function()
       {
       ‘ two three ’ four
       }]])
-    execute('/^{/+1')
-    execute('set mps+=‘:’')
+    feed_command('/^{/+1')
+    feed_command('set mps+=‘:’')
     feed('d%<cr>')
     expect([[
       {
@@ -299,8 +299,8 @@ describe('multibyte text', function()
     insert([[
       á
       x]])
-    execute('set whichwrap+=h')
-    execute('/^x')
+    feed_command('set whichwrap+=h')
+    feed_command('/^x')
     feed('dh')
     expect([[
       áx]])
@@ -308,9 +308,9 @@ describe('multibyte text', function()
 
   it('can be queried with byteidx() and byteidxcomp()', function()
     -- One char of two bytes.
-    execute("let a = '.é.'")
+    feed_command("let a = '.é.'")
     -- Normal e with composing char.
-    execute("let b = '.é.'")
+    feed_command("let b = '.é.'")
     eq(0, eval('byteidx(a, 0)'))
     eq(1, eval('byteidx(a, 1)'))
     eq(3, eval('byteidx(a, 2)'))

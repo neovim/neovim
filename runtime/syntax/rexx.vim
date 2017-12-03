@@ -6,11 +6,8 @@
 " Special Thanks to Dan Sharp <dwsharp@hotmail.com> and Rony G. Flatscher
 " <Rony.Flatscher@wu-wien.ac.at> for comments and additions
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -244,87 +241,77 @@ syn sync linecont "\(,\|-\ze-\@!\)\ze\s*\(--.*\|\/\*.*\)*$"
 exec "syn sync fromstart"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_rexx_syn_inits")
-  if version < 508
-    let did_rexx_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  " make binary and hex strings stand out
-  hi rexxStringConstant term=bold,underline ctermfg=5 cterm=bold guifg=darkMagenta gui=bold
+" make binary and hex strings stand out
+hi rexxStringConstant term=bold,underline ctermfg=5 cterm=bold guifg=darkMagenta gui=bold
 
-  HiLink rexxLabel2		Function
-  HiLink doLoopSelectLabelRegion	rexxKeyword
-  HiLink endIterateLeaveLabelRegion	rexxKeyword
-  HiLink rexxLoopKeywords	rexxKeyword " Todo
+hi def link rexxLabel2		Function
+hi def link doLoopSelectLabelRegion	rexxKeyword
+hi def link endIterateLeaveLabelRegion	rexxKeyword
+hi def link rexxLoopKeywords	rexxKeyword " Todo
 
-  HiLink rexxNumber		Normal "DiffChange
-"  HiLink rexxIdentifier		DiffChange
+hi def link rexxNumber		Normal "DiffChange
+"  hi def link rexxIdentifier		DiffChange
 
-  HiLink rexxRegularCallSignal	Statement
-  HiLink rexxExceptionHandling	Statement
+hi def link rexxRegularCallSignal	Statement
+hi def link rexxExceptionHandling	Statement
 
-  HiLink rexxLabel		Function
-  HiLink rexxCharacter		Character
-  HiLink rexxParenError		rexxError
-  HiLink rexxInParen		rexxError
-  HiLink rexxCommentError	rexxError
-  HiLink rexxError		Error
-  HiLink rexxKeyword		Statement
-  HiLink rexxKeywordStatements	Statement
+hi def link rexxLabel		Function
+hi def link rexxCharacter		Character
+hi def link rexxParenError		rexxError
+hi def link rexxInParen		rexxError
+hi def link rexxCommentError	rexxError
+hi def link rexxError		Error
+hi def link rexxKeyword		Statement
+hi def link rexxKeywordStatements	Statement
 
-  HiLink rexxFunction		Function
-  HiLink rexxString		String
-  HiLink rexxComment		Comment
-  HiLink rexxTodo		Todo
-  HiLink rexxSpecialVariable	Special
-  HiLink rexxConditional	rexxKeyword
+hi def link rexxFunction		Function
+hi def link rexxString		String
+hi def link rexxComment		Comment
+hi def link rexxTodo		Todo
+hi def link rexxSpecialVariable	Special
+hi def link rexxConditional	rexxKeyword
 
-  HiLink rexxOperator		Operator
-  HiLink rexxMessageOperator	rexxOperator
-  HiLink rexxLineComment	Comment
+hi def link rexxOperator		Operator
+hi def link rexxMessageOperator	rexxOperator
+hi def link rexxLineComment	Comment
 
-  HiLink rexxLineContinue	WildMenu
+hi def link rexxLineContinue	WildMenu
 
-  HiLink rexxDirective		rexxKeyword
-  HiLink rexxClassDirective	Type
-  HiLink rexxMethodDirective	rexxFunction
-  HiLink rexxAttributeDirective	rexxFunction
-  HiLink rexxRequiresDirective	Include
-  HiLink rexxRoutineDirective	rexxFunction
+hi def link rexxDirective		rexxKeyword
+hi def link rexxClassDirective	Type
+hi def link rexxMethodDirective	rexxFunction
+hi def link rexxAttributeDirective	rexxFunction
+hi def link rexxRequiresDirective	Include
+hi def link rexxRoutineDirective	rexxFunction
 
 " rgf, 2012-09-09
-  HiLink rexxOptionsDirective	rexxFunction
-  HiLink rexxOptionsDirective2  rexxOptionsDirective
-  HiLink rexxOptionsDirective3  Normal " rexxOptionsDirective
+hi def link rexxOptionsDirective	rexxFunction
+hi def link rexxOptionsDirective2  rexxOptionsDirective
+hi def link rexxOptionsDirective3  Normal " rexxOptionsDirective
 
-  HiLink rexxConstantDirective	rexxFunction
+hi def link rexxConstantDirective	rexxFunction
 
-  HiLink rexxConst		Constant
-  HiLink rexxTypeSpecifier	Type
-  HiLink rexxBuiltinClass	rexxTypeSpecifier
+hi def link rexxConst		Constant
+hi def link rexxTypeSpecifier	Type
+hi def link rexxBuiltinClass	rexxTypeSpecifier
 
-  HiLink rexxEnvironmentSymbol  rexxConst
-  HiLink rexxMessage		rexxFunction
+hi def link rexxEnvironmentSymbol  rexxConst
+hi def link rexxMessage		rexxFunction
 
-  HiLink rexxParse              rexxKeyword
-  HiLink rexxParse2             rexxParse
+hi def link rexxParse              rexxKeyword
+hi def link rexxParse2             rexxParse
 
-  HiLink rexxGuard              rexxKeyword
-  HiLink rexxTrace              rexxKeyword
+hi def link rexxGuard              rexxKeyword
+hi def link rexxTrace              rexxKeyword
 
-  HiLink rexxRaise              rexxKeyword
-  HiLink rexxRaise2             rexxRaise
+hi def link rexxRaise              rexxKeyword
+hi def link rexxRaise2             rexxRaise
 
-  HiLink rexxForward            rexxKeyword
-  HiLink rexxForward2           rexxForward
+hi def link rexxForward            rexxKeyword
+hi def link rexxForward2           rexxForward
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "rexx"
 

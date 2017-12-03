@@ -4,7 +4,7 @@ local clear, eq, neq = helpers.clear, helpers.eq, helpers.neq
 local curbuf, buf = helpers.curbuf, helpers.bufmeths
 local curwin = helpers.curwin
 local redir_exec = helpers.redir_exec
-local source, execute = helpers.source, helpers.execute
+local source, command = helpers.source, helpers.command
 
 local function declare_hook_function()
   source([[
@@ -23,9 +23,9 @@ local function declare_hook_function()
     endfu
   ]])
 end
-  
+
 local function set_hook(pattern)
-  execute(
+  command(
     'au OptionSet '
     .. pattern ..
     ' :call AutoCommand(expand("<amatch>"), bufnr("%"), winnr())'
@@ -33,7 +33,7 @@ local function set_hook(pattern)
 end
 
 local function init_var()
-  execute('let g:ret = []')
+  command('let g:ret = []')
 end
 
 local function get_result()
@@ -88,9 +88,9 @@ end
 
 local function make_buffer()
   local old_buf = curbuf()
-  execute('botright new')
+  command('botright new')
   local new_buf = curbuf()
-  execute('wincmd p') -- move previous window
+  command('wincmd p') -- move previous window
 
   neq(old_buf, new_buf)
   eq(old_buf, curbuf())
@@ -100,10 +100,10 @@ end
 
 local function get_new_window_number()
   local old_win = curwin()
-  execute('botright new')
+  command('botright new')
   local new_win = curwin()
   local new_winnr = redir_exec('echo winnr()')
-  execute('wincmd p') -- move previous window
+  command('wincmd p') -- move previous window
 
   neq(old_win, new_win)
   eq(old_win, curwin())
@@ -122,42 +122,42 @@ describe('au OptionSet', function()
     end)
 
     it('should be called in setting number option', function()
-      execute('set nu')
+      command('set nu')
       expected_combination({'number', 0, 1, 'global'})
 
-      execute('setlocal nonu')
+      command('setlocal nonu')
       expected_combination({'number', 1, 0, 'local'})
 
-      execute('setglobal nonu')
+      command('setglobal nonu')
       expected_combination({'number', 1, 0, 'global'})
     end)
 
     it('should be called in setting autoindent option',function()
-      execute('setlocal ai')
+      command('setlocal ai')
       expected_combination({'autoindent', 0, 1, 'local'})
 
-      execute('setglobal ai')
+      command('setglobal ai')
       expected_combination({'autoindent', 0, 1, 'global'})
 
-      execute('set noai')
+      command('set noai')
       expected_combination({'autoindent', 1, 0, 'global'})
     end)
 
     it('should be called in inverting global autoindent option',function()
-      execute('set ai!')
+      command('set ai!')
       expected_combination({'autoindent', 0, 1, 'global'})
     end)
 
     it('should be called in being unset local autoindent option',function()
-      execute('setlocal ai')
+      command('setlocal ai')
       expected_combination({'autoindent', 0, 1, 'local'})
 
-      execute('setlocal ai<')
+      command('setlocal ai<')
       expected_combination({'autoindent', 1, 0, 'local'})
     end)
 
     it('should be called in setting global list and number option at the same time',function()
-      execute('set list nu')
+      command('set list nu')
       expected_combination(
         {'list', 0, 1, 'global'},
         {'number', 0, 1, 'global'}
@@ -165,41 +165,41 @@ describe('au OptionSet', function()
     end)
 
     it('should not print anything, use :noa', function()
-      execute('noa set nolist nonu')
+      command('noa set nolist nonu')
       expected_empty()
     end)
 
     it('should be called in setting local acd', function()
-      execute('setlocal acd')
+      command('setlocal acd')
       expected_combination({'autochdir', 0, 1, 'local'})
     end)
 
     it('should be called in setting autoread', function()
-      execute('set noar')
+      command('set noar')
       expected_combination({'autoread', 1, 0, 'global'})
 
-      execute('setlocal ar')
+      command('setlocal ar')
       expected_combination({'autoread', 0, 1, 'local'})
     end)
 
     it('should be called in inverting global autoread', function()
-      execute('setglobal invar')
+      command('setglobal invar')
       expected_combination({'autoread', 1, 0, 'global'})
     end)
 
     it('should be called in setting backspace option through :let', function()
-      execute('let &bs=""')
+      command('let &bs=""')
       expected_combination({'backspace', 'indent,eol,start', '', 'global'})
     end)
 
     describe('being set by setbufvar()', function()
       it('should not trigger because option name is invalid', function()
-        execute('call setbufvar(1, "&l:bk", 1)')
+        command('silent! call setbufvar(1, "&l:bk", 1)')
         expected_empty()
       end)
 
       it('should trigger using correct option name', function()
-        execute('call setbufvar(1, "&backup", 1)')
+        command('call setbufvar(1, "&backup", 1)')
         expected_combination({'backup', 0, 1, 'local'})
       end)
 
@@ -207,7 +207,7 @@ describe('au OptionSet', function()
         local new_buffer = make_buffer()
         local new_bufnr = buf.get_number(new_buffer)
 
-        execute('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
+        command('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
         expected_combination({'buftype', '', 'nofile', 'local', {bufnr = new_bufnr}})
       end)
     end)
@@ -224,16 +224,16 @@ describe('au OptionSet', function()
     it('should be called iff setting readonly', function()
       set_hook('readonly')
 
-      execute('set nu')
+      command('set nu')
       expected_empty()
 
-      execute('setlocal ro')
+      command('setlocal ro')
       expected_combination({'readonly', 0, 1, 'local'})
 
-      execute('setglobal ro')
+      command('setglobal ro')
       expected_combination({'readonly', 0, 1, 'global'})
 
-      execute('set noro')
+      command('set noro')
       expected_combination({'readonly', 1, 0, 'global'})
     end)
 
@@ -241,14 +241,14 @@ describe('au OptionSet', function()
       it('should not trigger because option name does not match with backup', function()
         set_hook('backup')
 
-        execute('call setbufvar(1, "&l:bk", 1)')
+        command('silent! call setbufvar(1, "&l:bk", 1)')
         expected_empty()
       end)
 
       it('should trigger, use correct option name backup', function()
         set_hook('backup')
 
-        execute('call setbufvar(1, "&backup", 1)')
+        command('call setbufvar(1, "&backup", 1)')
         expected_combination({'backup', 0, 1, 'local'})
       end)
 
@@ -258,7 +258,7 @@ describe('au OptionSet', function()
         local new_buffer = make_buffer()
         local new_bufnr = buf.get_number(new_buffer)
 
-        execute('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
+        command('call setbufvar(' .. new_bufnr .. ', "&buftype", "nofile")')
         expected_combination({'buftype', '', 'nofile', 'local', {bufnr = new_bufnr}})
       end)
     end)
@@ -267,14 +267,14 @@ describe('au OptionSet', function()
       it('should not trigger because option name does not match with backup', function()
         set_hook('backup')
 
-        execute('call setwinvar(1, "&l:bk", 1)')
+        command('silent! call setwinvar(1, "&l:bk", 1)')
         expected_empty()
       end)
 
       it('should trigger, use correct option name backup', function()
         set_hook('backup')
 
-        execute('call setwinvar(1, "&backup", 1)')
+        command('call setwinvar(1, "&backup", 1)')
         expected_combination({'backup', 0, 1, 'local'})
       end)
 
@@ -283,7 +283,7 @@ describe('au OptionSet', function()
 
         local new_winnr = get_new_window_number()
 
-        execute('call setwinvar(' .. new_winnr .. ', "&cursorcolumn", 1)')
+        command('call setwinvar(' .. new_winnr .. ', "&cursorcolumn", 1)')
         -- expected_combination({'cursorcolumn', 0, 1, 'local', {winnr = new_winnr}})
         expected_empty()
       end)

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * os_unix.c -- code for all flavors of Unix (BSD, SYSV, SVR4, POSIX, ...)
  *
@@ -110,14 +113,14 @@ void mch_copy_sec(char_u *from_file, char_u *to_file)
 
 // Return a pointer to the ACL of file "fname" in allocated memory.
 // Return NULL if the ACL is not available for whatever reason.
-vim_acl_T mch_get_acl(char_u *fname)
+vim_acl_T mch_get_acl(const char_u *fname)
 {
   vim_acl_T ret = NULL;
   return ret;
 }
 
 // Set the ACL of file "fname" to "acl" (unless it's NULL).
-void mch_set_acl(char_u *fname, vim_acl_T aclent)
+void mch_set_acl(const char_u *fname, vim_acl_T aclent)
 {
   if (aclent == NULL)
     return;
@@ -130,7 +133,7 @@ void mch_free_acl(vim_acl_T aclent)
 }
 #endif
 
-void mch_exit(int r)
+void mch_exit(int r) FUNC_ATTR_NORETURN
 {
   exiting = true;
 
@@ -138,8 +141,12 @@ void mch_exit(int r)
   ui_flush();
   ml_close_all(true);           // remove all memfiles
 
-  event_teardown();
-  stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
+  if (!event_teardown() && r == 0) {
+    r = 1;  // Exit with error if main_loop did not teardown gracefully.
+  }
+  if (input_global_fd() >= 0) {
+    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
+  }
 
 #ifdef EXITFREE
   free_all_mem();
@@ -170,7 +177,7 @@ void mch_exit(int r)
 /// @returns             OK for success or FAIL for error.
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file, int flags) FUNC_ATTR_NONNULL_ARG(3)
-    FUNC_ATTR_NONNULL_ARG(4)
+  FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
   size_t len;

@@ -1,13 +1,19 @@
 version: '{build}'
+environment:
+  APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma -mx=9"
 configuration:
 - MINGW_64
 - MINGW_32
+- MINGW_64-gcov
+matrix:
+  allow_failures:
+    - configuration: MINGW_64-gcov
 install: []
 build_script:
-- call .ci\build.bat
+- call ci\build.bat
 cache:
-- C:\msys64\var\cache\pacman\pkg -> .ci\build.bat
-- .deps -> third-party/CMakeLists.txt
+- C:\msys64\var\cache\pacman\pkg -> ci\build.bat
+- .deps -> third-party\**
 artifacts:
 - path: build/Neovim.zip
 - path: build/bin/nvim.exe

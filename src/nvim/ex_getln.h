@@ -1,8 +1,11 @@
 #ifndef NVIM_EX_GETLN_H
 #define NVIM_EX_GETLN_H
 
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/ex_cmds_defs.h"
+#include "nvim/os/time.h"
+#include "nvim/regexp_defs.h"
 
 /* Values for nextwild() and ExpandOne().  See ExpandOne() for meaning. */
 #define WILD_FREE               1

@@ -1,4 +1,4 @@
-*scroll.txt*    For Vim version 7.4.  Last change: 2006 Aug 27
+*scroll.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -16,12 +16,7 @@ upwards in the buffer, the text in the window moves downwards on your screen.
 
 See section |03.7| of the user manual for an introduction.
 
-1. Scrolling downwards		|scroll-down|
-2. Scrolling upwards		|scroll-up|
-3. Scrolling relative to cursor	|scroll-cursor|
-4. Scrolling horizontally	|scroll-horizontal|
-5. Scrolling synchronously	|scroll-binding|
-6. Scrolling with a mouse wheel |scroll-mouse-wheel|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Scrolling downwards					*scroll-down*
@@ -108,7 +103,8 @@ z^			Without [count]: Redraw with the line just above the
 3. Scrolling relative to cursor				*scroll-cursor*
 
 The following commands reposition the edit window (the part of the buffer that
-you see) while keeping the cursor on the same line:
+you see) while keeping the cursor on the same line.  Note that the 'scrolloff'
+option may cause context lines to show above and below the cursor.
 
 							*z<CR>*
 z<CR>			Redraw, line [count] at top of window (default
@@ -215,7 +211,7 @@ past its buffer's limits.
 However, if a 'scrollbind' window that has a relative offset that is past its
 buffer's limits is given the cursor focus, the other 'scrollbind' windows must
 jump to a location where the current window's relative offset is valid.  This
-behavior can be changed by clearing the 'jump' flag from the 'scrollopt'
+behavior can be changed by clearing the "jump" flag from the 'scrollopt'
 option.
 
 						*syncbind* *:syncbind* *:sync*

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
@@ -118,7 +121,7 @@ char *rbuffer_read_ptr(RBuffer *buf, size_t *read_count) FUNC_ATTR_NONNULL_ALL
 {
   if (!buf->size) {
     *read_count = 0;
-    return NULL;
+    return buf->read_ptr;
   }
 
   if (buf->read_ptr < buf->write_ptr) {

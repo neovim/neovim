@@ -11,6 +11,7 @@ local posix = nil
 local syscall = nil
 
 local check_cores = global_helpers.check_cores
+local dedent = global_helpers.dedent
 local neq = global_helpers.neq
 local map = global_helpers.map
 local eq = global_helpers.eq
@@ -137,6 +138,7 @@ local function filter_complex_blocks(body)
   for line in body:gmatch("[^\r\n]+") do
     if not (string.find(line, "(^)", 1, true) ~= nil
             or string.find(line, "_ISwupper", 1, true)
+            or string.find(line, "_Float128")
             or string.find(line, "msgpack_zone_push_finalizer")
             or string.find(line, "msgpack_unpacker_reserve_buffer")
             or string.find(line, "UUID_NULL")  -- static const uuid_t UUID_NULL = {...}
@@ -314,6 +316,29 @@ local function alloc_log_new()
     eq(exp, self.log)
     self:clear()
   end
+  function log:clear_tmp_allocs()
+    local toremove = {}
+    local allocs = {}
+    for i, v in ipairs(self.log) do
+      if v.func == 'malloc' or v.func == 'calloc' then
+        allocs[tostring(v.ret)] = i
+      elseif v.func == 'realloc' or v.func == 'free' then
+        if allocs[tostring(v.args[1])] then
+          toremove[#toremove + 1] = allocs[tostring(v.args[1])]
+          if v.func == 'free' then
+            toremove[#toremove + 1] = i
+          end
+        end
+        if v.func == 'realloc' then
+          allocs[tostring(v.ret)] = i
+        end
+      end
+    end
+    table.sort(toremove)
+    for i = #toremove,1,-1 do
+      table.remove(self.log, toremove[i])
+    end
+  end
   function log:restore_original_functions()
     -- Do nothing: set mocks live in a separate process
     return
@@ -488,6 +513,212 @@ if os.getenv('NVIM_TEST_PRINT_SYSCALLS') == '1' then
   end
 end
 
+local function just_fail(_)
+  return false
+end
+say:set('assertion.just_fail.positive', '%s')
+say:set('assertion.just_fail.negative', '%s')
+assert:register('assertion', 'just_fail', just_fail,
+                'assertion.just_fail.positive',
+                'assertion.just_fail.negative')
+
+local hook_fnamelen = 30
+local hook_sfnamelen = 30
+local hook_numlen = 5
+local hook_msglen = 1 + 1 + 1 + (1 + hook_fnamelen) + (1 + hook_sfnamelen) + (1 + hook_numlen) + 1
+
+local tracehelp = dedent([[
+  ┌ Trace type: _r_eturn from function , function _c_all, _l_ine executed,
+  │             _t_ail return, _C_ount (should not actually appear),
+  │             _s_aved from previous run for reference.
+  │┏ Function type: _L_ua function, _C_ function, _m_ain part of chunk,
+  │┃                function that did _t_ail call.
+  │┃┌ Function name type: _g_lobal, _l_ocal, _m_ethod, _f_ield, _u_pvalue,
+  │┃│                     space for unknown.
+  │┃│ ┏ Source file name             ┌ Function name                ┏ Line
+  │┃│ ┃ (trunc to 30 bytes, no .lua) │ (truncated to last 30 bytes) ┃ number
+  CWN SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:LLLLL\n
+]])
+
+local function child_sethook(wr)
+  local trace_level = os.getenv('NVIM_TEST_TRACE_LEVEL')
+  if not trace_level or trace_level == '' then
+    trace_level = 1
+  else
+    trace_level = tonumber(trace_level)
+  end
+  if trace_level <= 0 then
+    return
+  end
+  local trace_only_c = trace_level <= 1
+  local prev_info, prev_reason, prev_lnum
+  local function hook(reason, lnum, use_prev)
+    local info = nil
+    if use_prev then
+      info = prev_info
+    elseif reason ~= 'tail return' then  -- tail return
+      info = debug.getinfo(2, 'nSl')
+    end
+
+    if trace_only_c and (not info or info.what ~= 'C') and not use_prev then
+      if info.source:sub(-9) == '_spec.lua' then
+        prev_info = info
+        prev_reason = 'saved'
+        prev_lnum = lnum
+      end
+      return
+    end
+    if trace_only_c and not use_prev and prev_reason then
+      hook(prev_reason, prev_lnum, true)
+      prev_reason = nil
+    end
+
+    local whatchar = ' '
+    local namewhatchar = ' '
+    local funcname = ''
+    local source = ''
+    local msgchar = reason:sub(1, 1)
+
+    if reason == 'count' then
+      msgchar = 'C'
+    end
+
+    if info then
+      funcname = (info.name or ''):sub(1, hook_fnamelen)
+      whatchar = info.what:sub(1, 1)
+      namewhatchar = info.namewhat:sub(1, 1)
+      if namewhatchar == '' then
+        namewhatchar = ' '
+      end
+      source = info.source
+      if source:sub(1, 1) == '@' then
+        if source:sub(-4, -1) == '.lua' then
+          source = source:sub(1, -5)
+        end
+        source = source:sub(-hook_sfnamelen, -1)
+      end
+      lnum = lnum or info.currentline
+    end
+
+    -- assert(-1 <= lnum and lnum <= 99999)
+    local lnum_s
+    if lnum == -1 then
+      lnum_s = 'nknwn'
+    else
+      lnum_s = ('%u'):format(lnum)
+    end
+    local msg = (  -- lua does not support %*
+      ''
+      .. msgchar
+      .. whatchar
+      .. namewhatchar
+      .. ' '
+      .. source .. (' '):rep(hook_sfnamelen - #source)
+      .. ':'
+      .. funcname .. (' '):rep(hook_fnamelen - #funcname)
+      .. ':'
+      .. ('0'):rep(hook_numlen - #lnum_s) .. lnum_s
+      .. '\n'
+    )
+    -- eq(hook_msglen, #msg)
+    sc.write(wr, msg)
+  end
+  debug.sethook(hook, 'crl')
+end
+
+local trace_end_msg = ('E%s\n'):format((' '):rep(hook_msglen - 2))
+
+local function itp_child(wr, func)
+  init()
+  collectgarbage('stop')
+  child_sethook(wr)
+  local err, emsg = pcall(func)
+  collectgarbage('restart')
+  collectgarbage()
+  debug.sethook()
+  emsg = tostring(emsg)
+  sc.write(wr, trace_end_msg)
+  if not err then
+    if #emsg > 99999 then
+      emsg = emsg:sub(1, 99999)
+    end
+    sc.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
+    deinit()
+    sc.close(wr)
+    sc.exit(1)
+  else
+    sc.write(wr, '+\n')
+    deinit()
+    sc.close(wr)
+    sc.exit(0)
+  end
+end
+
+local function check_child_err(rd)
+  local trace = {}
+  local did_traceline = false
+  while true do
+    local traceline = sc.read(rd, hook_msglen)
+    if #traceline ~= hook_msglen then
+      if #traceline == 0 then
+        break
+      else
+        trace[#trace + 1] = 'Partial read: <' .. trace .. '>\n'
+      end
+    end
+    if traceline == trace_end_msg then
+      did_traceline = true
+      break
+    end
+    trace[#trace + 1] = traceline
+  end
+  local res = sc.read(rd, 2)
+  if #res ~= 2 then
+    local error
+    if #trace == 0 then
+      error = '\nTest crashed, no trace available\n'
+    else
+      error = '\nTest crashed, trace:\n' .. tracehelp
+      for i = 1, #trace do
+        error = error .. trace[i]
+      end
+    end
+    if not did_traceline then
+      error = error .. '\nNo end of trace occurred'
+    end
+    local cc_err, cc_emsg = pcall(check_cores, Paths.test_luajit_prg, true)
+    if not cc_err then
+      error = error .. '\ncheck_cores failed: ' .. cc_emsg
+    end
+    assert.just_fail(error)
+  end
+  if res == '+\n' then
+    return
+  end
+  eq('-\n', res)
+  local len_s = sc.read(rd, 5)
+  local len = tonumber(len_s)
+  neq(0, len)
+  local err = sc.read(rd, len + 1)
+  assert.just_fail(err)
+end
+
+local function itp_parent(rd, pid, allow_failure)
+  local err, emsg = pcall(check_child_err, rd)
+  sc.wait(pid)
+  sc.close(rd)
+  if not err then
+    if allow_failure then
+      io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
+      os.execute([[
+        sh -c "source ci/common/test.sh
+        check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
+    else
+      error(emsg)
+    end
+  end
+end
+
 local function gen_itp(it)
   child_calls_mod = {}
   child_calls_mod_once = {}
@@ -495,14 +726,6 @@ local function gen_itp(it)
   preprocess_cache_mod = map(function(v) return v end, preprocess_cache_init)
   previous_defines_mod = previous_defines_init
   cdefs_mod = cdefs_init:copy()
-  local function just_fail(_)
-    return false
-  end
-  say:set('assertion.just_fail.positive', '%s')
-  say:set('assertion.just_fail.negative', '%s')
-  assert:register('assertion', 'just_fail', just_fail,
-                  'assertion.just_fail.positive',
-                  'assertion.just_fail.negative')
   local function itp(name, func, allow_failure)
     if allow_failure and os.getenv('NVIM_TEST_RUN_FAILING_TESTS') ~= '1' then
       -- FIXME Fix tests with this true
@@ -512,50 +735,13 @@ local function gen_itp(it)
       local rd, wr = sc.pipe()
       child_pid = sc.fork()
       if child_pid == 0 then
-        init()
         sc.close(rd)
-        collectgarbage('stop')
-        local err, emsg = pcall(func)
-        collectgarbage('restart')
-        emsg = tostring(emsg)
-        if not err then
-          sc.write(wr, ('-\n%05u\n%s'):format(#emsg, emsg))
-          deinit()
-          sc.close(wr)
-          sc.exit(1)
-        else
-          sc.write(wr, '+\n')
-          deinit()
-          sc.close(wr)
-          sc.exit(0)
-        end
+        itp_child(wr, func)
       else
         sc.close(wr)
-        sc.wait(child_pid)
+        local saved_child_pid = child_pid
         child_pid = nil
-        local function check()
-          local res = sc.read(rd, 2)
-          eq(2, #res)
-          if res == '+\n' then
-            return
-          end
-          eq('-\n', res)
-          local len_s = sc.read(rd, 5)
-          local len = tonumber(len_s)
-          neq(0, len)
-          local err = sc.read(rd, len + 1)
-          assert.just_fail(err)
-        end
-        local err, emsg = pcall(check)
-        sc.close(rd)
-        if not err then
-          if allow_failure then
-            io.stderr:write('Errorred out:\n' .. tostring(emsg) .. '\n')
-            os.execute([[sh -c "source .ci/common/test.sh ; check_core_dumps --delete \"]] .. Paths.test_luajit_prg .. [[\""]])
-          else
-            error(emsg)
-          end
-        end
+        itp_parent(rd, saved_child_pid, allow_failure)
       end
     end)
   end
@@ -563,7 +749,7 @@ local function gen_itp(it)
 end
 
 local function cppimport(path)
-  return cimport(Paths.test_include_path .. '/' .. path)
+  return cimport(Paths.test_source_path .. '/test/includes/pre/' .. path)
 end
 
 cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h')
@@ -587,12 +773,8 @@ local module = {
   only_separate = only_separate,
   child_call_once = child_call_once,
   child_cleanup_once = child_cleanup_once,
+  sc = sc,
 }
-return function(after_each)
-  if after_each then
-    after_each(function()
-      check_cores(Paths.test_luajit_prg)
-    end)
-  end
+return function()
   return module
 end

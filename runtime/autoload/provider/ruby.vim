@@ -16,7 +16,11 @@ function! s:job_opts.on_stderr(chan_id, data, event)
 endfunction
 
 function! provider#ruby#Detect() abort
-  return exepath('neovim-ruby-host')
+  if exists("g:ruby_host_prog")
+    return g:ruby_host_prog
+  else
+    return has('win32') ? exepath('neovim-ruby-host.bat') : exepath('neovim-ruby-host')
+  end
 endfunction
 
 function! provider#ruby#Prog()
@@ -24,15 +28,15 @@ function! provider#ruby#Prog()
 endfunction
 
 function! provider#ruby#Require(host) abort
-  let args = [provider#ruby#Prog()]
+  let prog = provider#ruby#Prog()
   let ruby_plugins = remote#host#PluginsForHost(a:host.name)
 
   for plugin in ruby_plugins
-    call add(args, plugin.path)
+    let prog .= " " . shellescape(plugin.path)
   endfor
 
   try
-    let channel_id = jobstart(args, s:job_opts)
+    let channel_id = jobstart(prog, s:job_opts)
     if rpcrequest(channel_id, 'poll') ==# 'ok'
       return channel_id
     endif
@@ -71,7 +75,7 @@ let s:prog = provider#ruby#Detect()
 let s:plugin_path = expand('<sfile>:p:h') . '/script_host.rb'
 
 if empty(s:prog)
-  let s:err = 'Cannot find the neovim RubyGem. Try :CheckHealth'
+  let s:err = 'Cannot find the neovim RubyGem. Try :checkhealth'
 endif
 
 call remote#host#RegisterClone('legacy-ruby-provider', 'ruby')

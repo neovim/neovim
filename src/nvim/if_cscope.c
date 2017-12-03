@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * CSCOPE support for Vim added by Andy Kahn <kahn@zk3.dec.com>
  * Ported to Win32 by Sergey Khorev <sergey.khorev@gmail.com>
@@ -140,44 +143,39 @@ char_u *get_cscope_name(expand_T *xp, int idx)
 /*
  * Handle command line completion for :cscope command.
  */
-void set_context_in_cscope_cmd(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
+void set_context_in_cscope_cmd(expand_T *xp, const char *arg, cmdidx_T cmdidx)
 {
-  char_u      *p;
-
-  /* Default: expand subcommands */
+  // Default: expand subcommands.
   xp->xp_context = EXPAND_CSCOPE;
-  xp->xp_pattern = arg;
-  expand_what = (cmdidx == CMD_scscope)
-                ? EXP_SCSCOPE_SUBCMD : EXP_CSCOPE_SUBCMD;
+  xp->xp_pattern = (char_u *)arg;
+  expand_what = ((cmdidx == CMD_scscope)
+                 ? EXP_SCSCOPE_SUBCMD : EXP_CSCOPE_SUBCMD);
 
   /* (part of) subcommand already typed */
   if (*arg != NUL) {
-    p = skiptowhite(arg);
-    if (*p != NUL) {                /* past first word */
-      xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != NUL)
+    const char *p = (const char *)skiptowhite((const char_u *)arg);
+    if (*p != NUL) {  // Past first word.
+      xp->xp_pattern = skipwhite((const char_u *)p);
+      if (*skiptowhite(xp->xp_pattern) != NUL) {
         xp->xp_context = EXPAND_NOTHING;
-      else if (STRNICMP(arg, "add", p - arg) == 0)
+      } else if (STRNICMP(arg, "add", p - arg) == 0) {
         xp->xp_context = EXPAND_FILES;
-      else if (STRNICMP(arg, "kill", p - arg) == 0)
+      } else if (STRNICMP(arg, "kill", p - arg) == 0) {
         expand_what = EXP_CSCOPE_KILL;
-      else if (STRNICMP(arg, "find", p - arg) == 0)
+      } else if (STRNICMP(arg, "find", p - arg) == 0) {
         expand_what = EXP_CSCOPE_FIND;
-      else
+      } else {
         xp->xp_context = EXPAND_NOTHING;
+      }
     }
   }
 }
 
 
-/*
- * PRIVATE: do_cscope_general
- *
- * Find the command, print help if invalid, and then call the corresponding
- * command function.
- */
-static void 
-do_cscope_general (
+/// Find the command, print help if invalid, and then call the corresponding
+/// command function.
+static void
+do_cscope_general(
     exarg_T *eap,
     int make_split             /* whether to split window */
 )
@@ -206,29 +204,20 @@ do_cscope_general (
   postponed_split_tab = 0;
 }
 
-/*
- * PUBLIC: do_cscope
- */
-void do_cscope(exarg_T *eap)
+/// Implementation of ":cscope" and ":lcscope"
+void ex_cscope(exarg_T *eap)
 {
   do_cscope_general(eap, FALSE);
 }
 
-/*
- * PUBLIC: do_scscope
- *
- * same as do_cscope, but splits window, too.
- */
-void do_scscope(exarg_T *eap)
+/// Implementation of ":scscope". Same as ex_cscope(), but splits window, too.
+void ex_scscope(exarg_T *eap)
 {
   do_cscope_general(eap, TRUE);
 }
 
-/*
- * PUBLIC: do_cstag
- *
- */
-void do_cstag(exarg_T *eap)
+/// Implementation of ":cstag"
+void ex_cstag(exarg_T *eap)
 {
   int ret = FALSE;
 
@@ -283,18 +272,13 @@ void do_cstag(exarg_T *eap)
     (void)EMSG(_("E257: cstag: tag not found"));
     g_do_tagpreview = 0;
   }
+}
 
-} /* do_cscope */
 
-
-/*
- * PUBLIC: cs_find
- *
- * this simulates a vim_fgets(), but for cscope, returns the next line
- * from the cscope output.  should only be called from find_tags()
- *
- * returns TRUE if eof, FALSE otherwise
- */
+/// This simulates a vim_fgets(), but for cscope, returns the next line
+/// from the cscope output.  should only be called from find_tags()
+///
+/// @return TRUE if eof, FALSE otherwise
 int cs_fgets(char_u *buf, int size)
 {
   char *p;
@@ -307,21 +291,13 @@ int cs_fgets(char_u *buf, int size)
 } /* cs_fgets */
 
 
-/*
- * PUBLIC: cs_free_tags
- *
- * called only from do_tag(), when popping the tag stack
- */
+/// Called only from do_tag(), when popping the tag stack.
 void cs_free_tags(void)
 {
   cs_manage_matches(NULL, NULL, 0, Free);
 }
 
-/*
- * PUBLIC: cs_print_tags
- *
- * called from do_tag()
- */
+/// Called from do_tag().
 void cs_print_tags(void)
 {
   cs_manage_matches(NULL, NULL, 0, Print);
@@ -402,14 +378,8 @@ int cs_connection(int num, char_u *dbpath, char_u *ppath)
  * PRIVATE functions
  ****************************************************************************/
 
-/*
- * PRIVATE: cs_add
- *
- * add cscope database or a directory name (to look for cscope.out)
- * to the cscope connection list
- *
- * MAXPATHL 256
- */
+/// Add cscope database or a directory name (to look for cscope.out)
+/// to the cscope connection list.
 static int cs_add(exarg_T *eap)
 {
   char *fname, *ppath, *flags = NULL;
@@ -435,17 +405,13 @@ static void cs_stat_emsg(char *fname)
 }
 
 
-/*
- * PRIVATE: cs_add_common
- *
- * the common routine to add a new cscope connection.  called by
- * cs_add() and cs_reset().  i really don't like to do this, but this
- * routine uses a number of goto statements.
- */
-static int 
-cs_add_common (
-    char *arg1,         /* filename - may contain environment variables */
-    char *arg2,         /* prepend path - may contain environment variables */
+/// The common routine to add a new cscope connection.  Called by
+/// cs_add() and cs_reset().  I really don't like to do this, but this
+/// routine uses a number of goto statements.
+static int
+cs_add_common(
+    char *arg1,         // filename - may contain environment variables
+    char *arg2,         // prepend path - may contain environment variables
     char *flags
 )
 {
@@ -559,11 +525,7 @@ static int cs_check_for_tags(void)
   return p_tags[0] != NUL && curbuf->b_p_tags != NULL;
 } /* cs_check_for_tags */
 
-/*
- * PRIVATE: cs_cnt_connections
- *
- * count the number of cscope connections
- */
+/// Count the number of cscope connections.
 static size_t cs_cnt_connections(void)
 {
   size_t cnt = 0;
@@ -583,11 +545,7 @@ static void cs_reading_emsg(
 }
 
 #define CSREAD_BUFSIZE  2048
-/*
- * PRIVATE: cs_cnt_matches
- *
- * count the number of matches for a given cscope connection.
- */
+/// Count the number of matches for a given cscope connection.
 static int cs_cnt_matches(size_t idx)
 {
   char *stok;
@@ -595,9 +553,15 @@ static int cs_cnt_matches(size_t idx)
 
   char *buf = xmalloc(CSREAD_BUFSIZE);
   for (;; ) {
+    errno = 0;
     if (!fgets(buf, CSREAD_BUFSIZE, csinfo[idx].fr_fp)) {
-      if (feof(csinfo[idx].fr_fp))
+      if (errno == EINTR) {
+        continue;
+      }
+
+      if (feof(csinfo[idx].fr_fp)) {
         errno = EIO;
+      }
 
       cs_reading_emsg(idx);
 
@@ -637,11 +601,7 @@ static int cs_cnt_matches(size_t idx)
 } /* cs_cnt_matches */
 
 
-/*
- * PRIVATE: cs_create_cmd
- *
- * Creates the actual cscope command query from what the user entered.
- */
+/// Creates the actual cscope command query from what the user entered.
 static char *cs_create_cmd(char *csoption, char *pattern)
 {
   char *cmd;
@@ -697,12 +657,8 @@ static char *cs_create_cmd(char *csoption, char *pattern)
 } /* cs_create_cmd */
 
 
-/*
- * PRIVATE: cs_create_connection
- *
- * This piece of code was taken/adapted from nvi.  do we need to add
- * the BSD license notice?
- */
+/// This piece of code was taken/adapted from nvi.  do we need to add
+/// the BSD license notice?
 static int cs_create_connection(size_t i)
 {
 #ifdef UNIX
@@ -828,7 +784,6 @@ err_closing:
     if (execl("/bin/sh", "sh", "-c", cmd, (char *)NULL) == -1)
       PERROR(_("cs_create_connection exec failed"));
 
-    stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
     exit(127);
   /* NOTREACHED */
   default:      /* parent. */
@@ -891,14 +846,10 @@ err_closing:
 } /* cs_create_connection */
 
 
-/*
- * PRIVATE: cs_find
- *
- * query cscope using command line interface.  parse the output and use tselect
- * to allow choices.  like Nvi, creates a pipe to send to/from query/cscope.
- *
- * returns TRUE if we jump to a tag or abort, FALSE if not.
- */
+/// Query cscope using command line interface.  Parse the output and use tselect
+/// to allow choices.  Like Nvi, creates a pipe to send to/from query/cscope.
+///
+/// @return TRUE if we jump to a tag or abort, FALSE if not.
 static int cs_find(exarg_T *eap)
 {
   char *opt, *pat;
@@ -932,11 +883,7 @@ static int cs_find(exarg_T *eap)
 } /* cs_find */
 
 
-/*
- * PRIVATE: cs_find_common
- *
- * common code for cscope find, shared by cs_find() and do_cstag()
- */
+/// Common code for cscope find, shared by cs_find() and ex_cstag().
 static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
                           int use_ll, char_u *cmdline)
 {
@@ -1109,11 +1056,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
 
 } /* cs_find_common */
 
-/*
- * PRIVATE: cs_help
- *
- * print help
- */
+/// Print help.
 static int cs_help(exarg_T *eap)
 {
   cscmd_T *cmdp = cs_cmds;
@@ -1161,11 +1104,7 @@ static void clear_csinfo(size_t i)
   csinfo[i].to_fp  = NULL;
 }
 
-/*
- * PRIVATE: cs_insert_filelist
- *
- * insert a new cscope database filename into the filelist
- */
+/// Insert a new cscope database filename into the filelist.
 static int cs_insert_filelist(char *fname, char *ppath, char *flags,
                               FileInfo *file_info)
 {
@@ -1225,11 +1164,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
 } /* cs_insert_filelist */
 
 
-/*
- * PRIVATE: cs_lookup_cmd
- *
- * find cscope command in command table
- */
+/// Find cscope command in command table.
 static cscmd_T * cs_lookup_cmd(exarg_T *eap)
 {
   cscmd_T *cmdp;
@@ -1254,11 +1189,7 @@ static cscmd_T * cs_lookup_cmd(exarg_T *eap)
 } /* cs_lookup_cmd */
 
 
-/*
- * PRIVATE: cs_kill
- *
- * nuke em
- */
+/// Nuke em.
 static int cs_kill(exarg_T *eap)
 {
   char *stok;
@@ -1315,11 +1246,7 @@ static int cs_kill(exarg_T *eap)
 } /* cs_kill */
 
 
-/*
- * PRIVATE: cs_kill_execute
- *
- * Actually kills a specific cscope connection.
- */
+/// Actually kills a specific cscope connection.
 static void cs_kill_execute(
     size_t i,              /* cscope table index */
     char *cname        /* cscope database name */
@@ -1334,26 +1261,22 @@ static void cs_kill_execute(
 }
 
 
-/*
- * PRIVATE: cs_make_vim_style_matches
- *
- * convert the cscope output into a ctags style entry (as might be found
- * in a ctags tags file).  there's one catch though: cscope doesn't tell you
- * the type of the tag you are looking for.  for example, in Darren Hiebert's
- * ctags (the one that comes with vim), #define's use a line number to find the
- * tag in a file while function definitions use a regexp search pattern.
- *
- * i'm going to always use the line number because cscope does something
- * quirky (and probably other things i don't know about):
- *
- *     if you have "#  define" in your source file, which is
- *     perfectly legal, cscope thinks you have "#define".  this
- *     will result in a failed regexp search. :(
- *
- * besides, even if this particular case didn't happen, the search pattern
- * would still have to be modified to escape all the special regular expression
- * characters to comply with ctags formatting.
- */
+/// Convert the cscope output into a ctags style entry (as might be found
+/// in a ctags tags file).  there's one catch though: cscope doesn't tell you
+/// the type of the tag you are looking for.  for example, in Darren Hiebert's
+/// ctags (the one that comes with vim), #define's use a line number to find the
+/// tag in a file while function definitions use a regexp search pattern.
+///
+/// I'm going to always use the line number because cscope does something
+/// quirky (and probably other things i don't know about):
+///
+///     if you have "#  define" in your source file, which is
+///     perfectly legal, cscope thinks you have "#define".  this
+///     will result in a failed regexp search. :(
+///
+/// Besides, even if this particular case didn't happen, the search pattern
+/// would still have to be modified to escape all the special regular expression
+/// characters to comply with ctags formatting.
 static char *cs_make_vim_style_matches(char *fname, char *slno, char *search,
                                        char *tagstr)
 {
@@ -1387,24 +1310,20 @@ static char *cs_make_vim_style_matches(char *fname, char *slno, char *search,
 } /* cs_make_vim_style_matches */
 
 
-/*
- * PRIVATE: cs_manage_matches
- *
- * this is kind of hokey, but i don't see an easy way round this..
- *
- * Store: keep a ptr to the (malloc'd) memory of matches originally
- * generated from cs_find().  the matches are originally lines directly
- * from cscope output, but transformed to look like something out of a
- * ctags.  see cs_make_vim_style_matches for more details.
- *
- * Get: used only from cs_fgets(), this simulates a vim_fgets() to return
- * the next line from the cscope output.  it basically keeps track of which
- * lines have been "used" and returns the next one.
- *
- * Free: frees up everything and resets
- *
- * Print: prints the tags
- */
+/// This is kind of hokey, but i don't see an easy way round this.
+///
+/// Store: keep a ptr to the (malloc'd) memory of matches originally
+/// generated from cs_find().  the matches are originally lines directly
+/// from cscope output, but transformed to look like something out of a
+/// ctags.  see cs_make_vim_style_matches for more details.
+///
+/// Get: used only from cs_fgets(), this simulates a vim_fgets() to return
+/// the next line from the cscope output.  it basically keeps track of which
+/// lines have been "used" and returns the next one.
+///
+/// Free: frees up everything and resets
+///
+/// Print: prints the tags
 static char *cs_manage_matches(char **matches, char **contexts,
                                size_t totmatches, mcmd_e cmd)
 {
@@ -1459,11 +1378,7 @@ static char *cs_manage_matches(char **matches, char **contexts,
 } /* cs_manage_matches */
 
 
-/*
- * PRIVATE: cs_parse_results
- *
- * parse cscope output
- */
+/// Parse cscope output.
 static char *cs_parse_results(size_t cnumber, char *buf, int bufsize,
                               char **context, char **linenumber, char **search)
 {
@@ -1471,9 +1386,16 @@ static char *cs_parse_results(size_t cnumber, char *buf, int bufsize,
   char *p;
   char *name;
 
+retry:
+  errno = 0;
   if (fgets(buf, bufsize, csinfo[cnumber].fr_fp) == NULL) {
-    if (feof(csinfo[cnumber].fr_fp))
+    if (errno == EINTR) {
+      goto retry;
+    }
+
+    if (feof(csinfo[cnumber].fr_fp)) {
       errno = EIO;
+    }
 
     cs_reading_emsg(cnumber);
 
@@ -1513,11 +1435,7 @@ static char *cs_parse_results(size_t cnumber, char *buf, int bufsize,
   return name;
 }
 
-/*
- * PRIVATE: cs_file_results
- *
- * write cscope find results to file
- */
+/// Write cscope find results to file.
 static void cs_file_results(FILE *f, int *nummatches_a)
 {
   char *search, *slno;
@@ -1558,13 +1476,9 @@ static void cs_file_results(FILE *f, int *nummatches_a)
   xfree(buf);
 }
 
-/*
- * PRIVATE: cs_fill_results
- *
- * get parsed cscope output and calls cs_make_vim_style_matches to convert
- * into ctags format
- * When there are no matches sets "*matches_p" to NULL.
- */
+/// Get parsed cscope output and calls cs_make_vim_style_matches to convert
+/// into ctags format.
+/// When there are no matches sets "*matches_p" to NULL.
 static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a,
                             char ***matches_p, char ***cntxts_p,
                             size_t *matched)
@@ -1756,11 +1670,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts,
   xfree(buf);
 }
 
-/*
- * PRIVATE: cs_read_prompt
- *
- * read a cscope prompt (basically, skip over the ">> ")
- */
+/// Read a cscope prompt (basically, skip over the ">> ").
 static int cs_read_prompt(size_t i)
 {
   int ch;
@@ -1845,12 +1755,8 @@ static void sig_handler(int s) {
 
 #endif
 
-/*
- * PRIVATE: cs_release_csp
- *
- * Does the actual free'ing for the cs ptr with an optional flag of whether
- * or not to free the filename.  Called by cs_kill and cs_reset.
- */
+/// Does the actual free'ing for the cs ptr with an optional flag of whether
+/// or not to free the filename.  Called by cs_kill and cs_reset.
 static void cs_release_csp(size_t i, int freefnpp)
 {
   // Trying to exit normally (not sure whether it is fit to Unix cscope)
@@ -1962,15 +1868,11 @@ static void cs_release_csp(size_t i, int freefnpp)
 } /* cs_release_csp */
 
 
-/*
- * PRIVATE: cs_reset
- *
- * calls cs_kill on all cscope connections then reinits
- */
+/// Calls cs_kill on all cscope connections then reinits.
 static int cs_reset(exarg_T *eap)
 {
   char        **dblist = NULL, **pplist = NULL, **fllist = NULL;
-  char buf[20];   /* for snprintf " (#%zu)" */
+  char buf[25];  // for snprintf " (#%zu)"
 
   if (csinfo_size == 0)
     return CSCOPE_SUCCESS;
@@ -2016,17 +1918,13 @@ static int cs_reset(exarg_T *eap)
 } /* cs_reset */
 
 
-/*
- * PRIVATE: cs_resolve_file
- *
- * Construct the full pathname to a file found in the cscope database.
- * (Prepends ppath, if there is one and if it's not already prepended,
- * otherwise just uses the name found.)
- *
- * We need to prepend the prefix because on some cscope's (e.g., the one that
- * ships with Solaris 2.6), the output never has the prefix prepended.
- * Contrast this with my development system (Digital Unix), which does.
- */
+/// Construct the full pathname to a file found in the cscope database.
+/// (Prepends ppath, if there is one and if it's not already prepended,
+/// otherwise just uses the name found.)
+///
+/// We need to prepend the prefix because on some cscope's (e.g., the one that
+/// ships with Solaris 2.6), the output never has the prefix prepended.
+/// Contrast this with my development system (Digital Unix), which does.
 static char *cs_resolve_file(size_t i, char *name)
 {
   char        *fullname;
@@ -2072,11 +1970,7 @@ static char *cs_resolve_file(size_t i, char *name)
 }
 
 
-/*
- * PRIVATE: cs_show
- *
- * show all cscope connections
- */
+/// Show all cscope connections.
 static int cs_show(exarg_T *eap)
 {
   if (cs_cnt_connections() == 0)
@@ -2104,11 +1998,7 @@ static int cs_show(exarg_T *eap)
 } /* cs_show */
 
 
-/*
- * PUBLIC: cs_end
- *
- * Only called when VIM exits to quit any cscope sessions.
- */
+/// Only called when VIM exits to quit any cscope sessions.
 void cs_end(void)
 {
   for (size_t i = 0; i < csinfo_size; i++)

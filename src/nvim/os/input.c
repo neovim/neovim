@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
@@ -20,6 +23,7 @@
 #include "nvim/main.h"
 #include "nvim/misc1.h"
 #include "nvim/state.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 #define READ_BUFFER_SIZE 0xfff
 #define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
@@ -33,8 +37,9 @@ typedef enum {
 static Stream read_stream = {.closed = true};
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
-static int global_fd = 0;
+static int global_fd = -1;
 static int events_enabled = 0;
+static bool blocking = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.c.generated.h"
@@ -182,7 +187,8 @@ size_t input_enqueue(String keys)
   while (rbuffer_space(input_buffer) >= 6 && ptr < end) {
     uint8_t buf[6] = { 0 };
     unsigned int new_size
-        = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true);
+        = trans_special((const uint8_t **)&ptr, (size_t)(end - ptr), buf, true,
+                        true);
 
     if (new_size) {
       new_size = handle_mouse_event(&ptr, buf, new_size);
@@ -323,13 +329,25 @@ static unsigned int handle_mouse_event(char **ptr, uint8_t *buf,
   return bufsize;
 }
 
+/// @return true if the main loop is blocked and waiting for input.
+bool input_blocking(void)
+{
+  return blocking;
+}
+
 static bool input_poll(int ms)
 {
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_enter();
   }
 
+  if ((ms == - 1 || ms > 0) && !events_enabled && !input_eof) {
+    // The pending input provoked a blocking wait. Do special events now. #6247
+    blocking = true;
+    multiqueue_process_events(ch_before_blocking_events);
+  }
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, input_ready() || input_eof);
+  blocking = false;
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();

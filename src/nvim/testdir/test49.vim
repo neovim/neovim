@@ -608,7 +608,7 @@ com! -nargs=1 -bar ExecAsScript call ExecAsScript(<f-args>)
 " END_OF_TEST_ENVIRONMENT - do not change or remove this line.
 
 
-" Tests 1 to 15 were moved to test_viml.vim
+" Tests 1 to 15 were moved to test_vimscript.vim
 let Xtest = 16
 
 "-------------------------------------------------------------------------------

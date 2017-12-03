@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, feed, execute = helpers.clear, helpers.feed, helpers.execute
+local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 
 if helpers.pending_win32(pending) then return end
 
@@ -25,11 +25,11 @@ describe('Signs', function()
   describe(':sign place', function()
     it('shadows previously placed signs', function()
       feed('ia<cr>b<cr>c<cr><esc>')
-      execute('sign define piet text=>> texthl=Search')
-      execute('sign define pietx text=>! texthl=Search')
-      execute('sign place 1 line=1 name=piet buffer=1')
-      execute('sign place 2 line=3 name=piet buffer=1')
-      execute('sign place 3 line=1 name=pietx buffer=1')
+      command('sign define piet text=>> texthl=Search')
+      command('sign define pietx text=>! texthl=Search')
+      command('sign place 1 line=1 name=piet buffer=1')
+      command('sign place 2 line=3 name=piet buffer=1')
+      command('sign place 3 line=1 name=pietx buffer=1')
       screen:expect([[
         {1:>!}a                                                  |
         {2:  }b                                                  |
@@ -44,7 +44,7 @@ describe('Signs', function()
         {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
         {2:  }{0:~                                                  }|
-        :sign place 3 line=1 name=pietx buffer=1             |
+                                                             |
       ]])
     end)
   end)

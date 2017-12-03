@@ -1,9 +1,10 @@
 -- Tests for :sort command.
 
 local helpers = require('test.functional.helpers')(after_each)
-local insert, execute, clear, expect, eq, eval, source = helpers.insert,
-  helpers.execute, helpers.clear, helpers.expect, helpers.eq, helpers.eval,
-  helpers.source
+
+local insert, command, clear, expect, eq, wait = helpers.insert,
+  helpers.command, helpers.clear, helpers.expect, helpers.eq, helpers.wait
+local exc_exec = helpers.exc_exec
 
 describe(':sort', function()
   local text = [[
@@ -26,9 +27,10 @@ describe(':sort', function()
 
   it('alphabetical', function()
     insert(text)
-    execute('sort')
+    wait()
+    command('sort')
     expect([[
-      
+
        123b
       a
       a122
@@ -65,12 +67,13 @@ describe(':sort', function()
       b321
       b321b
       ]])
-    execute('sort n')
+    wait()
+    command('sort n')
     expect([[
       abc
       ab
       a
-      
+
       -24
       x-22
       0
@@ -89,9 +92,10 @@ describe(':sort', function()
 
   it('hexadecimal', function()
     insert(text)
-    execute('sort x')
+    wait()
+    command('sort x')
     expect([[
-      
+
       a
       ab
       abc
@@ -110,9 +114,10 @@ describe(':sort', function()
 
   it('alphabetical, unique', function()
     insert(text)
-    execute('sort u')
+    wait()
+    command('sort u')
     expect([[
-      
+
        123b
       a
       a122
@@ -130,7 +135,8 @@ describe(':sort', function()
 
   it('alphabetical, reverse', function()
     insert(text)
-    execute('sort!')
+    wait()
+    command('sort!')
     expect([[
       c321d
       c123d
@@ -151,7 +157,8 @@ describe(':sort', function()
 
   it('numerical, reverse', function()
     insert(text)
-    execute('sort! n')
+    wait()
+    command('sort! n')
     expect([[
       b322b
       b321b
@@ -164,7 +171,7 @@ describe(':sort', function()
       b123
       a123
       a122
-      
+
       a
       ab
       abc]])
@@ -172,7 +179,8 @@ describe(':sort', function()
 
   it('unique, reverse', function()
     insert(text)
-    execute('sort! u')
+    wait()
+    command('sort! u')
     expect([[
       c321d
       c123d
@@ -192,12 +200,13 @@ describe(':sort', function()
 
   it('octal', function()
     insert(text)
-    execute('sort o')
+    wait()
+    command('sort o')
     expect([[
       abc
       ab
       a
-      
+
       a122
       a123
       b123
@@ -213,7 +222,8 @@ describe(':sort', function()
 
   it('reverse, hexadecimal', function()
     insert(text)
-    execute('sort! x')
+    wait()
+    command('sort! x')
     expect([[
       c321d
       c123d
@@ -234,10 +244,11 @@ describe(':sort', function()
 
   it('alphabetical, skip first character', function()
     insert(text)
-    execute('sort/./')
+    wait()
+    command('sort/./')
     expect([[
       a
-      
+
       a122
       a123
       b123
@@ -255,11 +266,12 @@ describe(':sort', function()
 
   it('alphabetical, skip first 2 characters', function()
     insert(text)
-    execute('sort/../')
+    wait()
+    command('sort/../')
     expect([[
       ab
       a
-      
+
       a321
       b321
       b321
@@ -276,11 +288,12 @@ describe(':sort', function()
 
   it('alphabetical, unique, skip first 2 characters', function()
     insert(text)
-    execute('sort/../u')
+    wait()
+    command('sort/../u')
     expect([[
       ab
       a
-      
+
       a321
       b321
       b321b
@@ -296,12 +309,13 @@ describe(':sort', function()
 
   it('numerical, skip first character', function()
     insert(text)
-    execute('sort/./n')
+    wait()
+    command('sort/./n')
     expect([[
       abc
       ab
       a
-      
+
       a122
       a123
       b123
@@ -317,9 +331,10 @@ describe(':sort', function()
 
   it('alphabetical, sort on first character', function()
     insert(text)
-    execute('sort/./r')
+    wait()
+    command('sort/./r')
     expect([[
-      
+
        123b
       abc
       ab
@@ -338,10 +353,11 @@ describe(':sort', function()
 
   it('alphabetical, sort on first 2 characters', function()
     insert(text)
-    execute('sort/../r')
+    wait()
+    command('sort/../r')
     expect([[
       a
-      
+
        123b
       a123
       a122
@@ -359,7 +375,8 @@ describe(':sort', function()
 
   it('numerical, sort on first character', function()
     insert(text)
-    execute('sort/./rn')
+    wait()
+    command('sort/./rn')
     expect([[
       abc
       ab
@@ -380,12 +397,13 @@ describe(':sort', function()
 
   it('alphabetical, skip past first digit', function()
     insert(text)
-    execute([[sort/\d/]])
+    wait()
+    command([[sort/\d/]])
     expect([[
       abc
       ab
       a
-      
+
       a321
       b321
       b321
@@ -401,12 +419,13 @@ describe(':sort', function()
 
   it('alphabetical, sort on first digit', function()
     insert(text)
-    execute([[sort/\d/r]])
+    wait()
+    command([[sort/\d/r]])
     expect([[
       abc
       ab
       a
-      
+
       a123
       a122
       b123
@@ -422,12 +441,13 @@ describe(':sort', function()
 
   it('numerical, skip past first digit', function()
     insert(text)
-    execute([[sort/\d/n]])
+    wait()
+    command([[sort/\d/n]])
     expect([[
       abc
       ab
       a
-      
+
       a321
       b321
       c321d
@@ -443,12 +463,13 @@ describe(':sort', function()
 
   it('numerical, sort on first digit', function()
     insert(text)
-    execute([[sort/\d/rn]])
+    wait()
+    command([[sort/\d/rn]])
     expect([[
       abc
       ab
       a
-      
+
       a123
       a122
       b123
@@ -464,12 +485,13 @@ describe(':sort', function()
 
   it('alphabetical, skip past first 2 digits', function()
     insert(text)
-    execute([[sort/\d\d/]])
+    wait()
+    command([[sort/\d\d/]])
     expect([[
       abc
       ab
       a
-      
+
       a321
       b321
       b321
@@ -485,12 +507,13 @@ describe(':sort', function()
 
   it('numerical, skip past first 2 digits', function()
     insert(text)
-    execute([[sort/\d\d/n]])
+    wait()
+    command([[sort/\d\d/n]])
     expect([[
       abc
       ab
       a
-      
+
       a321
       b321
       c321d
@@ -506,12 +529,13 @@ describe(':sort', function()
 
   it('hexadecimal, skip past first 2 digits', function()
     insert(text)
-    execute([[sort/\d\d/x]])
+    wait()
+    command([[sort/\d\d/x]])
     expect([[
       abc
       ab
       a
-      
+
       a321
       b321
       b321
@@ -527,12 +551,13 @@ describe(':sort', function()
 
   it('alpha, on first 2 digits', function()
     insert(text)
-    execute([[sort/\d\d/r]])
+    wait()
+    command([[sort/\d\d/r]])
     expect([[
       abc
       ab
       a
-      
+
       a123
       a122
       b123
@@ -548,12 +573,13 @@ describe(':sort', function()
 
   it('numeric, on first 2 digits', function()
     insert(text)
-    execute([[sort/\d\d/rn]])
+    wait()
+    command([[sort/\d\d/rn]])
     expect([[
       abc
       ab
       a
-      
+
       a123
       a122
       b123
@@ -569,12 +595,13 @@ describe(':sort', function()
 
   it('hexadecimal, on first 2 digits', function()
     insert(text)
-    execute([[sort/\d\d/rx]])
+    wait()
+    command([[sort/\d\d/rx]])
     expect([[
       abc
       ab
       a
-      
+
       a123
       a122
       b123
@@ -591,13 +618,7 @@ describe(':sort', function()
   it('fails with wrong arguments', function()
     insert(text)
     -- This should fail with "E474: Invalid argument".
-    source([[
-      try
-	sort no
-      catch
-	let tmpvar = v:exception
-      endtry]])
-    eq('Vim(sort):E474: Invalid argument', eval('tmpvar'))
+    eq('Vim(sort):E474: Invalid argument', exc_exec('sort no'))
     expect(text)
   end)
 
@@ -617,7 +638,8 @@ describe(':sort', function()
       0b100010
       0b100100
       0b100010]])
-    execute([[sort b]])
+    wait()
+    command([[sort b]])
     expect([[
       0b000000
       0b001000
@@ -651,7 +673,8 @@ describe(':sort', function()
       0b101010
       0b000000
       b0b111000]])
-    execute([[sort b]])
+    wait()
+    command([[sort b]])
     expect([[
       0b000000
       a0b001000
@@ -677,7 +700,8 @@ describe(':sort', function()
       1.15e-6
       -1.1e3
       -1.01e3]])
-    execute([[sort f]])
+    wait()
+    command([[sort f]])
     expect([[
       -1.1e3
       -1.01e3

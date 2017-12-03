@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -7,6 +10,7 @@
 #include "nvim/eval.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -467,7 +471,7 @@ int get_breakindent_win(win_T *wp, char_u *line) {
       || prev_tick != wp->w_buffer->b_changedtick) {
     prev_line = line;
     prev_ts = wp->w_buffer->b_p_ts;
-    prev_tick = wp->w_buffer->b_changedtick;
+    prev_tick = (int)wp->w_buffer->b_changedtick;
     prev_indent = get_indent_str(line,
             (int)wp->w_buffer->b_p_ts, wp->w_p_list);
   }
@@ -534,7 +538,7 @@ int get_expr_indent(void)
     sandbox++;
   }
   textlock++;
-  indent = eval_to_number(curbuf->b_p_inde);
+  indent = (int)eval_to_number(curbuf->b_p_inde);
 
   if (use_sandbox) {
     sandbox--;
@@ -598,7 +602,7 @@ int get_lisp_indent(void)
     paren = *pos;
     pos = findmatch(NULL, '[');
 
-    if ((pos == NULL) || ltp(pos, &paren)) {
+    if ((pos == NULL) || lt(*pos, paren)) {
       pos = &paren;
     }
   }

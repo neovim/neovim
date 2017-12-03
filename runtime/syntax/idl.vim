@@ -222,100 +222,98 @@ try
   if !exists("did_idl_syntax_inits")
     let did_idl_syntax_inits = 1
     " The default methods for highlighting.  Can be overridden later
-    command -nargs=+ HiLink hi def link <args>
 
-    HiLink idlInclude             Include
-    HiLink idlPreProc             PreProc
-    HiLink idlPreCondit           PreCondit
-    HiLink idlDefine              Macro
-    HiLink idlIncluded            String
-    HiLink idlString              String
-    HiLink idlComment             Comment
-    HiLink idlTodo                Todo
-    HiLink idlLiteral             Number
-    HiLink idlUuid                Number
-    HiLink idlType                Type
-    HiLink idlVariantType         idlType
+    hi def link idlInclude             Include
+    hi def link idlPreProc             PreProc
+    hi def link idlPreCondit           PreCondit
+    hi def link idlDefine              Macro
+    hi def link idlIncluded            String
+    hi def link idlString              String
+    hi def link idlComment             Comment
+    hi def link idlTodo                Todo
+    hi def link idlLiteral             Number
+    hi def link idlUuid                Number
+    hi def link idlType                Type
+    hi def link idlVariantType         idlType
 
-    HiLink idlModule              Keyword
-    HiLink idlInterface           Keyword
-    HiLink idlEnum                Keyword
-    HiLink idlStruct              Keyword
-    HiLink idlUnion               Keyword
-    HiLink idlTypedef             Keyword
-    HiLink idlException           Keyword
-    HiLink idlTypedefOtherTypeQualifier keyword
+    hi def link idlModule              Keyword
+    hi def link idlInterface           Keyword
+    hi def link idlEnum                Keyword
+    hi def link idlStruct              Keyword
+    hi def link idlUnion               Keyword
+    hi def link idlTypedef             Keyword
+    hi def link idlException           Keyword
+    hi def link idlTypedefOtherTypeQualifier keyword
 
-    HiLink idlModuleName          Typedef
-    HiLink idlInterfaceName       Typedef
-    HiLink idlEnumName            Typedef
-    HiLink idlStructName          Typedef
-    HiLink idlUnionName           Typedef
+    hi def link idlModuleName          Typedef
+    hi def link idlInterfaceName       Typedef
+    hi def link idlEnumName            Typedef
+    hi def link idlStructName          Typedef
+    hi def link idlUnionName           Typedef
 
-    HiLink idlBaseTypeInt         idlType
-    HiLink idlBaseType            idlType
-    HiLink idlSeqType             idlType
-    HiLink idlD1                  Paren
-    HiLink idlD2                  Paren
-    HiLink idlD3                  Paren
-    HiLink idlD4                  Paren
-    "HiLink idlArraySize          Paren
-    "HiLink idlArraySize1         Paren
-    HiLink idlModuleContent       Paren
-    HiLink idlUnionContent        Paren
-    HiLink idlStructContent       Paren
-    HiLink idlEnumContents        Paren
-    HiLink idlInterfaceContent    Paren
+    hi def link idlBaseTypeInt         idlType
+    hi def link idlBaseType            idlType
+    hi def link idlSeqType             idlType
+    hi def link idlD1                  Paren
+    hi def link idlD2                  Paren
+    hi def link idlD3                  Paren
+    hi def link idlD4                  Paren
+    "hi def link idlArraySize          Paren
+    "hi def link idlArraySize1         Paren
+    hi def link idlModuleContent       Paren
+    hi def link idlUnionContent        Paren
+    hi def link idlStructContent       Paren
+    hi def link idlEnumContents        Paren
+    hi def link idlInterfaceContent    Paren
 
-    HiLink idlSimpDecl            Identifier
-    HiLink idlROAttr              StorageClass
-    HiLink idlAttr                Keyword
-    HiLink idlConst               StorageClass
+    hi def link idlSimpDecl            Identifier
+    hi def link idlROAttr              StorageClass
+    hi def link idlAttr                Keyword
+    hi def link idlConst               StorageClass
 
-    HiLink idlOneWayOp            StorageClass
-    HiLink idlOp                  idlType
-    HiLink idlParmType            idlType
-    HiLink idlOpName              Function
-    HiLink idlOpParms             SpecialComment
-    HiLink idlParmName            Identifier
-    HiLink idlInheritFrom         Identifier
-    HiLink idlAttribute           SpecialComment
+    hi def link idlOneWayOp            StorageClass
+    hi def link idlOp                  idlType
+    hi def link idlParmType            idlType
+    hi def link idlOpName              Function
+    hi def link idlOpParms             SpecialComment
+    hi def link idlParmName            Identifier
+    hi def link idlInheritFrom         Identifier
+    hi def link idlAttribute           SpecialComment
 
-    HiLink idlId                  Constant
-    "HiLink idlCase               Keyword
-    HiLink idlCaseLabel           Constant
+    hi def link idlId                  Constant
+    "hi def link idlCase               Keyword
+    hi def link idlCaseLabel           Constant
 
-    HiLink idlErrorBracket        Error
-    HiLink idlErrorBrace          Error
-    HiLink idlErrorSquareBracket  Error
+    hi def link idlErrorBracket        Error
+    hi def link idlErrorBrace          Error
+    hi def link idlErrorSquareBracket  Error
 
-    HiLink idlImport              Keyword
-    HiLink idlImportString        idlString
-    HiLink idlCoclassAttribute    StorageClass
-    HiLink idlLibrary             Keyword
-    HiLink idlImportlib           Keyword
-    HiLink idlCoclass             Keyword
-    HiLink idlLibraryName         Typedef
-    HiLink idlCoclassName         Typedef
-    " hi idlLibraryContent guifg=red
-    HiLink idlTypedefDecl         Typedef
-    HiLink idlDefEnum             Keyword
-    HiLink idlDefv1Enum           Keyword
-    HiLink idlDefEnumName         Typedef
-    HiLink idlDefEnumContents     Paren
-    HiLink idlDefBaseTypeInt      idlType
-    HiLink idlDefBaseType         idlType
-    HiLink idlDefSeqType          idlType
-    HiLink idlInterfaceSections   Label
+    hi def link idlImport              Keyword
+    hi def link idlImportString        idlString
+    hi def link idlCoclassAttribute    StorageClass
+    hi def link idlLibrary             Keyword
+    hi def link idlImportlib           Keyword
+    hi def link idlCoclass             Keyword
+    hi def link idlLibraryName         Typedef
+    hi def link idlCoclassName         Typedef
+    " hi def link idlLibraryContent guifg=red
+    hi def link idlTypedefDecl         Typedef
+    hi def link idlDefEnum             Keyword
+    hi def link idlDefv1Enum           Keyword
+    hi def link idlDefEnumName         Typedef
+    hi def link idlDefEnumContents     Paren
+    hi def link idlDefBaseTypeInt      idlType
+    hi def link idlDefBaseType         idlType
+    hi def link idlDefSeqType          idlType
+    hi def link idlInterfaceSections   Label
 
     if exists("idlsyntax_showerror")
       if exists("idlsyntax_showerror_soft")
         hi default idlError guibg=#d0ffd0
       else
-        HiLink idlError Error
+        hi def link idlError Error
       endif
     endif
-    delcommand HiLink
   endif
 
   let b:current_syntax = "idl"

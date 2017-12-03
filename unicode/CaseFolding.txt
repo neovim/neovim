@@ -1,6 +1,6 @@
-# CaseFolding-9.0.0.txt
-# Date: 2016-03-02, 18:54:54 GMT
-# © 2016 Unicode®, Inc.
+# CaseFolding-10.0.0.txt
+# Date: 2017-04-14, 05:40:18 GMT
+# © 2017 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -24,7 +24,7 @@
 #
 # NOTE: case folding does not preserve normalization formats!
 #
-# For information on case folding, including how to have case folding 
+# For information on case folding, including how to have case folding
 # preserve normalization formats, see Section 3.13 Default Case Algorithms in
 # The Unicode Standard.
 #

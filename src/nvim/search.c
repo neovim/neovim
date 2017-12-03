@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * search.c: code for normal mode searching commands
  */
@@ -282,7 +285,7 @@ void restore_search_patterns(void)
 static inline void free_spat(struct spat *const spat)
 {
   xfree(spat->pat);
-  dict_unref(spat->additional_data);
+  tv_dict_unref(spat->additional_data);
 }
 
 #if defined(EXITFREE)
@@ -335,30 +338,34 @@ int pat_has_uppercase(char_u *pat)
   while (*p != NUL) {
     int l;
 
-    if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
-      if (enc_utf8 && utf_isupper(utf_ptr2char(p)))
-        return TRUE;
+    if ((l = mb_ptr2len(p)) > 1) {
+      if (mb_isupper(utf_ptr2char(p))) {
+        return true;
+      }
       p += l;
     } else if (*p == '\\') {
-      if (p[1] == '_' && p[2] != NUL)        /* skip "\_X" */
+      if (p[1] == '_' && p[2] != NUL) {  // skip "\_X"
         p += 3;
-      else if (p[1] == '%' && p[2] != NUL)        /* skip "\%X" */
+      } else if (p[1] == '%' && p[2] != NUL) {  // skip "\%X"
         p += 3;
-      else if (p[1] != NUL)        /* skip "\X" */
+      } else if (p[1] != NUL) {  // skip "\X"
         p += 2;
-      else
+      } else {
         p += 1;
-    } else if (vim_isupper(*p))
-      return TRUE;
-    else
-      ++p;
+      }
+    } else if (mb_isupper(*p)) {
+      return true;
+    } else {
+      p++;
+    }
   }
   return FALSE;
 }
 
-char_u *last_csearch(void)
+const char *last_csearch(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return lastc_bytes;
+  return (const char *)lastc_bytes;
 }
 
 int last_csearch_forward(void)
@@ -609,7 +616,7 @@ int searchit(
              * otherwise "/$" will get stuck on end of line.
              */
             while (matchpos.lnum == 0
-                   && ((options & SEARCH_END) && first_match
+                   && (((options & SEARCH_END) && first_match)
                        ?  (nmatched == 1
                            && (int)endpos.col - 1
                            < (int)start_pos.col + extra_col)
@@ -998,14 +1005,13 @@ int do_search(
     dircp = NULL;
     /* use previous pattern */
     if (pat == NULL || *pat == NUL || *pat == dirc) {
-      if (spats[RE_SEARCH].pat == NULL) {           /* no previous pattern */
-        pat = spats[RE_SUBST].pat;
-        if (pat == NULL) {
+      if (spats[RE_SEARCH].pat == NULL) {           // no previous pattern
+        searchstr = spats[RE_SUBST].pat;
+        if (searchstr == NULL) {
           EMSG(_(e_noprevre));
           retval = 0;
           goto end_do_search;
         }
-        searchstr = pat;
       } else {
         /* make search_regcomp() use spats[RE_SEARCH].pat */
         searchstr = (char_u *)"";
@@ -1290,10 +1296,11 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
      * ignored because we are interested in the next line -- Acevedo */
     if ((compl_cont_status & CONT_ADDING)
         && !(compl_cont_status & CONT_SOL)) {
-      if ((p_ic ? mb_stricmp(p, pat) : STRCMP(p, pat)) == 0)
+      if (mb_strcmp_ic((bool)p_ic, (const char *)p, (const char *)pat) == 0) {
         return OK;
-    } else if (*p != NUL) {   /* ignore empty lines */
-      /* expanding lines or words */
+      }
+    } else if (*p != NUL) {  // Ignore empty lines.
+      // Expanding lines or words.
       assert(compl_length >= 0);
       if ((p_ic ? mb_strnicmp(p, pat, (size_t)compl_length)
            : STRNCMP(p, pat, compl_length)) == 0)
@@ -2417,32 +2424,20 @@ static int cls(void)
   int c;
 
   c = gchar_cursor();
-  if (p_altkeymap && c == F_BLANK)
+  if (p_altkeymap && c == F_BLANK) {
     return 0;
-  if (c == ' ' || c == '\t' || c == NUL)
-    return 0;
-  if (enc_dbcs != 0 && c > 0xFF) {
-    /* If cls_bigword, report multi-byte chars as class 1. */
-    if (enc_dbcs == DBCS_KOR && cls_bigword)
-      return 1;
-
-    /* process code leading/trailing bytes */
-    return dbcs_class(((unsigned)c >> 8), (c & 0xFF));
   }
-  if (enc_utf8) {
-    c = utf_class(c);
-    if (c != 0 && cls_bigword)
-      return 1;
-    return c;
+  if (c == ' ' || c == '\t' || c == NUL) {
+    return 0;
   }
 
-  /* If cls_bigword is TRUE, report all non-blanks as class 1. */
-  if (cls_bigword)
+  c = utf_class(c);
+
+  // If cls_bigword is TRUE, report all non-blanks as class 1.
+  if (c != 0 && cls_bigword) {
     return 1;
-
-  if (vim_iswordc(c))
-    return 2;
-  return 1;
+  }
+  return c;
 }
 
 /*
@@ -3028,7 +3023,8 @@ extend:
       ++curwin->w_cursor.col;
     VIsual = start_pos;
     VIsual_mode = 'v';
-    redraw_curbuf_later(INVERTED);      /* update the inversion */
+    redraw_cmdline = true;    // show mode later
+    redraw_curbuf_later(INVERTED);      // update the inversion
   } else {
     /* include a newline after the sentence, if there is one */
     if (incl(&curwin->w_cursor) == -1)
@@ -3561,11 +3557,15 @@ extend:
       --start_lnum;
 
   if (VIsual_active) {
-    /* Problem: when doing "Vipipip" nothing happens in a single white
-     * line, we get stuck there.  Trap this here. */
-    if (VIsual_mode == 'V' && start_lnum == curwin->w_cursor.lnum)
+    // Problem: when doing "Vipipip" nothing happens in a single white
+    // line, we get stuck there.  Trap this here.
+    if (VIsual_mode == 'V' && start_lnum == curwin->w_cursor.lnum) {
       goto extend;
-    VIsual.lnum = start_lnum;
+    }
+    if (VIsual.lnum != start_lnum) {
+        VIsual.lnum = start_lnum;
+        VIsual.col = 0;
+    }
     VIsual_mode = 'V';
     redraw_curbuf_later(INVERTED);      /* update the inversion */
     showmode();

@@ -2,8 +2,9 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear, source, expect = helpers.clear, helpers.source, helpers.expect
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 
+-- luacheck: ignore 613 (Trailing whitespace in a string)
 describe('command_count', function()
   it('is working', function()
     -- It is relevant for the test to load a file initially.  If this is
@@ -87,35 +88,35 @@ describe('command_count', function()
       arga a b c d
       ]])
     -- This can not be in the source() call as it will produce errors.
-    execute([[let v:errmsg = '']])
-    execute('5argu')
-    execute([[call add(g:lines, '5argu ' . v:errmsg)]])
-    execute('$argu')
-    execute([[call add(g:lines, '4argu ' . expand('%:t'))]])
-    execute([[let v:errmsg = '']])
-    execute('1argu')
-    execute([[call add(g:lines, '1argu ' . expand('%:t'))]])
-    execute([[let v:errmsg = '']])
-    execute('100b')
-    execute([[call add(g:lines, '100b ' . v:errmsg)]])
-    execute('split')
-    execute('split')
-    execute('split')
-    execute('split')
-    execute([[let v:errmsg = '']])
-    execute('0close')
-    execute([[call add(g:lines, '0close ' . v:errmsg)]])
-    execute('$wincmd w')
-    execute('$close')
-    execute([[call add(g:lines, '$close ' . winnr())]])
-    execute([[let v:errmsg = '']])
-    execute('$+close')
-    execute([[call add(g:lines, '$+close ' . v:errmsg)]])
-    execute('$tabe')
-    execute([[call add(g:lines, '$tabe ' . tabpagenr())]])
-    execute([[let v:errmsg = '']])
-    execute('$+tabe')
-    execute([[call add(g:lines, '$+tabe ' . v:errmsg)]])
+    feed_command([[let v:errmsg = '']])
+    feed_command('5argu')
+    feed_command([[call add(g:lines, '5argu ' . v:errmsg)]])
+    feed_command('$argu')
+    feed_command([[call add(g:lines, '4argu ' . expand('%:t'))]])
+    feed_command([[let v:errmsg = '']])
+    feed_command('1argu')
+    feed_command([[call add(g:lines, '1argu ' . expand('%:t'))]])
+    feed_command([[let v:errmsg = '']])
+    feed_command('100b')
+    feed_command([[call add(g:lines, '100b ' . v:errmsg)]])
+    feed_command('split')
+    feed_command('split')
+    feed_command('split')
+    feed_command('split')
+    feed_command([[let v:errmsg = '']])
+    feed_command('0close')
+    feed_command([[call add(g:lines, '0close ' . v:errmsg)]])
+    feed_command('$wincmd w')
+    feed_command('$close')
+    feed_command([[call add(g:lines, '$close ' . winnr())]])
+    feed_command([[let v:errmsg = '']])
+    feed_command('$+close')
+    feed_command([[call add(g:lines, '$+close ' . v:errmsg)]])
+    feed_command('$tabe')
+    feed_command([[call add(g:lines, '$tabe ' . tabpagenr())]])
+    feed_command([[let v:errmsg = '']])
+    feed_command('$+tabe')
+    feed_command([[call add(g:lines, '$+tabe ' . v:errmsg)]])
     source([[
       only!
       e x
@@ -133,8 +134,8 @@ describe('command_count', function()
       let g:lines = []
       func BufStatus()
         call add(g:lines,
-	  \  'aaa: ' . buflisted(g:buf_aaa) . 
-	  \ ' bbb: ' . buflisted(g:buf_bbb) . 
+	  \  'aaa: ' . buflisted(g:buf_aaa) .
+	  \ ' bbb: ' . buflisted(g:buf_bbb) .
 	  \ ' ccc: ' . buflisted(g:buf_ccc))
       endfunc
       se nohidden
@@ -214,7 +215,7 @@ describe('command_count', function()
       RangeTabsAll 1 5
       RangeLines 2 5
       LocalRangeLines 2 5
-      
+
       5argu E16: Invalid range
       4argu d
       1argu a
@@ -225,7 +226,7 @@ describe('command_count', function()
       $tabe 2
       $+tabe E16: Invalid range
       0tabm x
-      
+
       aaa: 1 bbb: 1 ccc: 1
       aaa: 1 bbb: 0 ccc: 0
       aaa: 0 bbb: 0 ccc: 0

@@ -5,9 +5,8 @@
 " Credits:		Stephan Hegel <stephan.hegel@snc.siemens.com.cn>
 " Last Changed:		2016 Mar 05 by Daniel Kho
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -234,35 +233,25 @@ syn match	vhdlPreProc	"\(^\|\s\)--\s*synopsys\s\+translate_\(on\|off\)\s*"
 syn sync	minlines=600
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_vhdl_syntax_inits")
-    if version < 508
-	let did_vhdl_syntax_inits = 1
-	command -nargs=+ HiLink hi link <args>
-    else
-	command -nargs=+ HiLink hi def link <args>
-    endif
-    
-    HiLink	vhdlSpecial	Special
-    HiLink	vhdlStatement   Statement
-    HiLink	vhdlCharacter   Character
-    HiLink	vhdlString	String
-    HiLink	vhdlVector	Number
-    HiLink	vhdlBoolean	Number
-    HiLink	vhdlTodo	Todo
-    HiLink	vhdlFixme	Fixme
-    HiLink	vhdlComment	Comment
-    HiLink	vhdlNumber	Number
-    HiLink	vhdlTime	Number
-    HiLink	vhdlType	Type
-    HiLink	vhdlOperator    Operator
-    HiLink	vhdlError	Error
-    HiLink	vhdlAttribute   Special
-    HiLink	vhdlPreProc	PreProc
-    
-    delcommand HiLink
-endif
+" Only when an item doesn't have highlighting yet
+
+hi def link vhdlSpecial	Special
+hi def link vhdlStatement   Statement
+hi def link vhdlCharacter   Character
+hi def link vhdlString	String
+hi def link vhdlVector	Number
+hi def link vhdlBoolean	Number
+hi def link vhdlTodo	Todo
+hi def link vhdlFixme	Fixme
+hi def link vhdlComment	Comment
+hi def link vhdlNumber	Number
+hi def link vhdlTime	Number
+hi def link vhdlType	Type
+hi def link vhdlOperator    Operator
+hi def link vhdlError	Error
+hi def link vhdlAttribute   Special
+hi def link vhdlPreProc	PreProc
+
 
 let b:current_syntax = "vhdl"
 

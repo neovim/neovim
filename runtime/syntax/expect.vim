@@ -4,11 +4,8 @@
 " Last Change:	2012 Jun 01
 " 		(Dominique Pelle added @Spell)
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -81,35 +78,25 @@ syn match   expectComment	"#.*$" contains=@Spell,expectTodo
 syn match   expectSharpBang	"\%^#!.*"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_expect_syntax_inits")
-  if version < 508
-    let did_expect_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink expectSharpBang	PreProc
-  HiLink expectVariables	Special
-  HiLink expectCommand		Function
-  HiLink expectStatement	Statement
-  HiLink expectConditional	Conditional
-  HiLink expectRepeat		Repeat
-  HiLink expectExpectOpts	Keyword
-  HiLink expectOutVar		Special
-  HiLink expectSpecial		Special
-  HiLink expectNumber		Number
+hi def link expectSharpBang	PreProc
+hi def link expectVariables	Special
+hi def link expectCommand		Function
+hi def link expectStatement	Statement
+hi def link expectConditional	Conditional
+hi def link expectRepeat		Repeat
+hi def link expectExpectOpts	Keyword
+hi def link expectOutVar		Special
+hi def link expectSpecial		Special
+hi def link expectNumber		Number
 
-  HiLink expectString		String
+hi def link expectString		String
 
-  HiLink expectComment		Comment
-  HiLink expectTodo		Todo
-  "HiLink expectIdentifier	Identifier
+hi def link expectComment		Comment
+hi def link expectTodo		Todo
+"hi def link expectIdentifier	Identifier
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "expect"
 

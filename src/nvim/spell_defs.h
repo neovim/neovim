@@ -265,11 +265,11 @@ typedef struct trystate_S {
                          : (c) < \
                          256 ? (int)spelltab.st_fold[c] : (int)towlower(c))
 
-#define SPELL_TOUPPER(c) (enc_utf8 && (c) >= 128 ? utf_toupper(c) \
+#define SPELL_TOUPPER(c) (enc_utf8 && (c) >= 128 ? mb_toupper(c) \
                           : (c) < \
                           256 ? (int)spelltab.st_upper[c] : (int)towupper(c))
 
-#define SPELL_ISUPPER(c) (enc_utf8 && (c) >= 128 ? utf_isupper(c) \
+#define SPELL_ISUPPER(c) (enc_utf8 && (c) >= 128 ? mb_isupper(c) \
                           : (c) < 256 ? spelltab.st_isu[c] : iswupper(c))
 
 // First language that is loaded, start of the linked list of loaded

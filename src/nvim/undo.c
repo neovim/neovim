@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * undo.c: multi level undo facility
  *
@@ -76,12 +79,14 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 #include <fcntl.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/undo.h"
+#include "nvim/macros.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
@@ -317,7 +322,7 @@ static long get_undolevel(void)
 static inline void zero_fmark_additional_data(fmark_T *fmarks)
 {
   for (size_t i = 0; i < NMARKS; i++) {
-    dict_unref(fmarks[i].additional_data);
+    tv_dict_unref(fmarks[i].additional_data);
     fmarks[i].additional_data = NULL;
   }
 }
@@ -965,12 +970,12 @@ static u_entry_T *unserialize_uep(bufinfo_T * bi, bool *error,
   uep->ue_lcount = undo_read_4c(bi);
   uep->ue_size = undo_read_4c(bi);
 
-  char_u **array;
+  char_u **array = NULL;
   if (uep->ue_size > 0) {
-    array = xmalloc(sizeof(char_u *) * (size_t)uep->ue_size);
-    memset(array, 0, sizeof(char_u *) * (size_t)uep->ue_size);
-  } else {
-    array = NULL;
+    if ((size_t)uep->ue_size < SIZE_MAX / sizeof(char_u *)) {
+      array = xmalloc(sizeof(char_u *) * (size_t)uep->ue_size);
+      memset(array, 0, sizeof(char_u *) * (size_t)uep->ue_size);
+    }
   }
   uep->ue_array = array;
 
@@ -1080,7 +1085,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
    */
   perm = 0600;
   if (buf->b_ffname != NULL) {
-    perm = os_getperm(buf->b_ffname);
+    perm = os_getperm((const char *)buf->b_ffname);
     if (perm < 0) {
       perm = 0600;
     }
@@ -1139,7 +1144,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
     EMSG2(_(e_not_open), file_name);
     goto theend;
   }
-  (void)os_setperm((char_u *)file_name, perm);
+  (void)os_setperm(file_name, perm);
   if (p_verbose > 0) {
     verbose_enter();
     smsg(_("Writing undo file: %s"), file_name);
@@ -1164,7 +1169,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
       && os_fileinfo(file_name, &file_info_new)
       && file_info_old.stat.st_gid != file_info_new.stat.st_gid
       && os_fchown(fd, (uv_uid_t)-1, (uv_gid_t)file_info_old.stat.st_gid)) {
-    os_setperm((char_u *)file_name, (perm & 0707) | ((perm & 07) << 3));
+    os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
   }
 # ifdef HAVE_SELINUX
   if (buf->b_ffname != NULL)
@@ -1399,7 +1404,9 @@ void u_read_undo(char *name, char_u *hash, char_u *orig_name)
   // sequence numbers of the headers.
   // When there are no headers uhp_table is NULL.
   if (num_head > 0) {
-    uhp_table = xmalloc((size_t)num_head * sizeof(u_header_T *));
+    if ((size_t)num_head < SIZE_MAX / sizeof(*uhp_table)) {
+      uhp_table = xmalloc((size_t)num_head * sizeof(*uhp_table));
+    }
   }
 
   long num_read_uhps = 0;
@@ -1831,11 +1838,9 @@ void undo_time(long step, int sec, int file, int absolute)
     }
     closest = -1;
   } else {
-    /* When doing computations with time_t subtract starttime, because
-     * time_t converted to a long may result in a wrong number. */
-    if (dosec)
-      target = (long)(curbuf->b_u_time_cur - starttime) + step;
-    else if (dofile) {
+    if (dosec) {
+      target = (long)(curbuf->b_u_time_cur) + step;
+    } else if (dofile) {
       if (step < 0) {
         /* Going back to a previous write. If there were changes after
          * the last write, count that as moving one file-write, so
@@ -1873,14 +1878,16 @@ void undo_time(long step, int sec, int file, int absolute)
         target = 0;
       closest = -1;
     } else {
-      if (dosec)
-        closest = (long)(time(NULL) - starttime + 1);
-      else if (dofile)
+      if (dosec) {
+        closest = (long)(os_time() + 1);
+      } else if (dofile) {
         closest = curbuf->b_u_save_nr_last + 2;
-      else
+      } else {
         closest = curbuf->b_u_seq_last + 2;
-      if (target >= closest)
+      }
+      if (target >= closest) {
         target = closest - 1;
+      }
     }
   }
   closest_start = closest;
@@ -1909,12 +1916,13 @@ void undo_time(long step, int sec, int file, int absolute)
 
     while (uhp != NULL) {
       uhp->uh_walk = mark;
-      if (dosec)
-        val = (long)(uhp->uh_time - starttime);
-      else if (dofile)
+      if (dosec) {
+        val = (long)(uhp->uh_time);
+      } else if (dofile) {
         val = uhp->uh_save_nr;
-      else
+      } else {
         val = uhp->uh_seq;
+      }
 
       if (round == 1 && !(dofile && val == 0)) {
         /* Remember the header that is closest to the target.
@@ -2225,11 +2233,13 @@ static void u_undoredo(int undo)
     /* adjust marks */
     if (oldsize != newsize) {
       mark_adjust(top + 1, top + oldsize, (long)MAXLNUM,
-          (long)newsize - (long)oldsize);
-      if (curbuf->b_op_start.lnum > top + oldsize)
+                  (long)newsize - (long)oldsize, false);
+      if (curbuf->b_op_start.lnum > top + oldsize) {
         curbuf->b_op_start.lnum += newsize - oldsize;
-      if (curbuf->b_op_end.lnum > top + oldsize)
+      }
+      if (curbuf->b_op_end.lnum > top + oldsize) {
         curbuf->b_op_end.lnum += newsize - oldsize;
+      }
     }
 
     changed_lines(top + 1, 0, bot, newsize - oldsize);
@@ -2941,25 +2951,28 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
   dict_T      *dict;
 
   while (uhp != NULL) {
-    dict = dict_alloc();
-    dict_add_nr_str(dict, "seq", uhp->uh_seq, NULL);
-    dict_add_nr_str(dict, "time", (long)uhp->uh_time, NULL);
-    if (uhp == curbuf->b_u_newhead)
-      dict_add_nr_str(dict, "newhead", 1, NULL);
-    if (uhp == curbuf->b_u_curhead)
-      dict_add_nr_str(dict, "curhead", 1, NULL);
-    if (uhp->uh_save_nr > 0)
-      dict_add_nr_str(dict, "save", uhp->uh_save_nr, NULL);
-
-    if (uhp->uh_alt_next.ptr != NULL) {
-      list_T *alt_list = list_alloc();
-
-      /* Recursive call to add alternate undo tree. */
-      u_eval_tree(uhp->uh_alt_next.ptr, alt_list);
-      dict_add_list(dict, "alt", alt_list);
+    dict = tv_dict_alloc();
+    tv_dict_add_nr(dict, S_LEN("seq"), (varnumber_T)uhp->uh_seq);
+    tv_dict_add_nr(dict, S_LEN("time"), (varnumber_T)uhp->uh_time);
+    if (uhp == curbuf->b_u_newhead) {
+      tv_dict_add_nr(dict, S_LEN("newhead"), 1);
+    }
+    if (uhp == curbuf->b_u_curhead) {
+      tv_dict_add_nr(dict, S_LEN("curhead"), 1);
+    }
+    if (uhp->uh_save_nr > 0) {
+      tv_dict_add_nr(dict, S_LEN("save"), (varnumber_T)uhp->uh_save_nr);
     }
 
-    list_append_dict(list, dict);
+    if (uhp->uh_alt_next.ptr != NULL) {
+      list_T *alt_list = tv_list_alloc();
+
+      // Recursive call to add alternate undo tree.
+      u_eval_tree(uhp->uh_alt_next.ptr, alt_list);
+      tv_dict_add_list(dict, S_LEN("alt"), alt_list);
+    }
+
+    tv_list_append_dict(list, dict);
     uhp = uhp->uh_prev.ptr;
   }
 }

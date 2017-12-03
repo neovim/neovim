@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -5,6 +8,7 @@
 
 #include <uv.h>
 
+#include "nvim/log.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/wstream.h"
 #include "nvim/vim.h"

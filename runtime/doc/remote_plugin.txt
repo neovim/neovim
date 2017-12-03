@@ -1,4 +1,4 @@
-*remote_plugin.txt*    For Nvim.					 {Nvim}
+*remote_plugin.txt*    Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
@@ -6,10 +6,7 @@
 
 Nvim support for remote plugins 		  *remote-plugin*
 
-1. Introduction					|remote-plugin-intro|
-2. Plugin hosts					|remote-plugin-hosts|
-3. Example					|remote-plugin-example|
-4. Plugin manifest				|remote-plugin-manifest|
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction					    *remote-plugin-intro*

@@ -1,4 +1,4 @@
-*pattern.txt*   For Vim version 7.4.  Last change: 2016 Jun 08
+*pattern.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -9,16 +9,7 @@ Patterns and search commands				*pattern-searches*
 The very basics can be found in section |03.9| of the user manual.  A few more
 explanations are in chapter 27 |usr_27.txt|.
 
-1. Search commands		|search-commands|
-2. The definition of a pattern	|search-pattern|
-3. Magic			|/magic|
-4. Overview of pattern items	|pattern-overview|
-5. Multi items			|pattern-multi-items|
-6. Ordinary atoms		|pattern-atoms|
-7. Ignoring case in a pattern	|/ignorecase|
-8. Composing characters		|patterns-composing|
-9. Compare with Perl patterns	|perl-patterns|
-10. Highlighting matches	|match-highlight|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Search commands				*search-commands*
@@ -130,8 +121,7 @@ gD			Goto global Declaration.  When the cursor is on a
 			ends before the cursor position.
 
 							*CTRL-C*
-CTRL-C			Interrupt current (search) command.  Use CTRL-Break on
-			Windows |dos-CTRL-Break|.
+CTRL-C			Interrupt current (search) command.
 			In Normal mode, any pending command is aborted.
 
 							*:noh* *:nohlsearch*
@@ -354,8 +344,8 @@ For starters, read chapter 27 of the user manual |usr_27.txt|.
 				*/\%#=* *two-engines* *NFA*
 Vim includes two regexp engines:
 1. An old, backtracking engine that supports everything.
-2. A new, NFA engine that works much faster on some patterns, but does not
-   support everything.
+2. A new, NFA engine that works much faster on some patterns, possibly slower
+   on some patterns.
 
 Vim will automatically select the right engine for you.  However, if you run
 into a problem or want to specifically select one engine or the other, you can
@@ -863,10 +853,13 @@ $	At end of pattern or in front of "\|", "\)" or "\n" ('magic' on):
 \%V	Match inside the Visual area.  When Visual mode has already been
 	stopped match in the area that |gv| would reselect.
 	This is a |/zero-width| match.  To make sure the whole pattern is
-	inside the Visual area put it at the start and end of the pattern,
-	e.g.: >
+	inside the Visual area put it at the start and just before the end of
+	the pattern, e.g.: >
+		/\%Vfoo.*ba\%Vr
+<	This also works if only "foo bar" was Visually selected. This: >
 		/\%Vfoo.*bar\%V
-<	Only works for the current buffer.
+<	would match "foo bar" if the Visual selection continues after the "r".
+	Only works for the current buffer.
 
 						*/\%#* *cursor-position*
 \%#	Matches with the cursor position.  Only works when matching in a
@@ -1065,12 +1058,16 @@ x	A single character, with no special meaning, matches itself
 	":s/[/x/" searches for "[/x" and replaces it with nothing.  It does
 	not search for "[" and replaces it with "x"!
 
+								*E944* *E945*
 	If the sequence begins with "^", it matches any single character NOT
 	in the collection: "[^xyz]" matches anything but 'x', 'y' and 'z'.
 	- If two characters in the sequence are separated by '-', this is
 	  shorthand for the full list of ASCII characters between them.  E.g.,
-	  "[0-9]" matches any decimal digit.  Non-ASCII characters can be
-	  used, but the character values must not be more than 256 apart.
+	  "[0-9]" matches any decimal digit. If the starting character exceeds
+	  the ending character, e.g. [c-a], E944 occurs. Non-ASCII characters
+	  can be used, but the character values must not be more than 256 apart
+	  in the old regexp engine. For example, searching by [\u3000-\u4000]
+	  after setting re=1 emits a E945 error. Prepending \%#=2 will fix it.
 	- A character class expression is evaluated to the set of characters
 	  belonging to that character class.  The following character classes
 	  are supported:

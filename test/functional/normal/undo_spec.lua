@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
-local execute = helpers.execute
+local command = helpers.command
 local expect = helpers.expect
 local feed = helpers.feed
 local insert = helpers.insert
@@ -23,7 +23,7 @@ describe('u CTRL-R g- g+', function()
   end
 
   local function undo_and_redo(hist_pos, undo, redo, expect_str)
-    execute('enew!')
+    command('enew!')
     create_history(hist_pos)
     local cur_contents = helpers.curbuf_contents()
     feed(undo)

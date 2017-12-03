@@ -1,4 +1,4 @@
-*if_pyth.txt*   For Vim version 7.4.  Last change: 2014 Jul 23
+*if_pyth.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Paul Moore
@@ -6,17 +6,9 @@
 
 The Python Interface to Vim				*python* *Python*
 
-1. Commands					|python-commands|
-2. The vim module				|python-vim|
-3. Buffer objects				|python-buffer|
-4. Range objects				|python-range|
-5. Window objects				|python-window|
-6. Tab page objects				|python-tabpage|
-7. vim.bindeval objects				|python-bindeval-objects|
-8. pyeval(), py3eval() Vim functions		|python-pyeval|
-9. Python 3					|python3|
-
 See |provider-python| for more information. {Nvim}
+
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Commands						*python-commands*
@@ -48,7 +40,11 @@ Example: >
 			print 'EAT ME'
 	EOF
 	endfunction
-<
+
+To see what version of Python you have: >
+	:python import sys
+	:python print(sys.version)
+
 Note: Python is very sensitive to the indenting.  Make sure the "class" line
 and "EOF" do not have any indent.
 
@@ -180,11 +176,6 @@ vim.eval(str)						*python-eval*
 	    :py str = vim.eval("12+12")		# NB result is a string! Use
 						# string.atoi() to convert to
 						# a number.
-
-	    :py tagList = vim.eval('taglist("eval_expr")')
-<	The latter will return a python list of python dicts, for instance:
-	[{'cmd': '/^eval_expr(arg, nextcmd)$/', 'static': 0, 'name':
-	'eval_expr', 'kind': 'f', 'filename': './src/eval.c'}]
 
 vim.bindeval(str)					*python-bindeval*
 	Like |python-eval|, but returns special objects described in 
@@ -688,7 +679,7 @@ vim.Function object				*python-Function*
 8. pyeval() and py3eval() Vim functions			*python-pyeval*
 
 To facilitate bi-directional interface, you can use |pyeval()| and |py3eval()| 
-functions to evaluate Python expressions and pass their values to VimL.
+functions to evaluate Python expressions and pass their values to Vim script.
 
 ==============================================================================
 9. Python 3						*python3*
@@ -697,6 +688,10 @@ functions to evaluate Python expressions and pass their values to VimL.
 The `:py3` and `:python3` commands work similar to `:python`.  A simple check
 if the `:py3` command is working: >
 	:py3 print("Hello")
+
+To see what version of Python you have: >
+	:py3 import sys
+	:py3 print(sys.version)
 <							*:py3file*
 The `:py3file` command works similar to `:pyfile`.
 							*:py3do*

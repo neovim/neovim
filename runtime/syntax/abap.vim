@@ -5,11 +5,8 @@
 " Last Change: 2013 Jun 13
 "     Comment: Thanks to EPI-USE Labs for all your assistance. :)
 
-" For version  < 6.0: Clear all syntax items
-" For version >= 6.0: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -43,11 +40,7 @@ syn match   abapStringEscape contained "``"
 syn match   abapNumber  "\-\=\<\d\+\>"
 syn region  abapHex     matchgroup=abapHex start="X'" end="'"
 
-if version >= 600
-  setlocal iskeyword=48-57,_,A-Z,a-z,/
-else
-  set iskeyword=48-57,_,A-Z,a-z,/
-endif
+setlocal iskeyword=48-57,_,A-Z,a-z,/
 
 syn match   abapNamespace        "\</\w\+/"
 
@@ -175,38 +168,28 @@ syn keyword abapTodo     contained TODO NOTE
 syn match   abapTodo     "\#EC\W\+\w\+"
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_abap_syntax_inits")
-  if version < 508
-    let did_abap_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink abapError          Error
-  HiLink abapComment        Comment
-  HiLink abapInclude        Include
-  HiLink abapStatement      Statement
-  HiLink abapComplexStatement      Statement
-  HiLink abapSpecial        Special
-  HiLink abapNamespace      Special
-  HiLink abapSpecialTables  Special
-  HiLink abapSymbolOperator abapOperator
-  HiLink abapOperator       Operator
-  HiLink abapCharString     String
-  HiLink abapString         String
-  HiLink abapFloat          Float
-  HiLink abapTypes          Type
-  HiLink abapSymbol         Structure
-  HiLink abapStructure      Structure
-  HiLink abapField          Variable
-  HiLink abapNumber         Number
-  HiLink abapHex            Number
+hi def link abapError          Error
+hi def link abapComment        Comment
+hi def link abapInclude        Include
+hi def link abapStatement      Statement
+hi def link abapComplexStatement      Statement
+hi def link abapSpecial        Special
+hi def link abapNamespace      Special
+hi def link abapSpecialTables  Special
+hi def link abapSymbolOperator abapOperator
+hi def link abapOperator       Operator
+hi def link abapCharString     String
+hi def link abapString         String
+hi def link abapFloat          Float
+hi def link abapTypes          Type
+hi def link abapSymbol         Structure
+hi def link abapStructure      Structure
+hi def link abapField          Variable
+hi def link abapNumber         Number
+hi def link abapHex            Number
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "abap"
 

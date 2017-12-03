@@ -35,7 +35,6 @@ for i = 0, 255 do
 end
 local fcontents = s:rep(16)
 
-local buffer = ""
 local directory = nil
 local absolute_executable = nil
 local executable_name = nil
@@ -65,7 +64,11 @@ local function os_getperm(filename)
   return tonumber(perm)
 end
 
-describe('fs function', function()
+describe('fs.c', function()
+  local function os_isdir(name)
+    return fs.os_isdir(to_cstr(name))
+  end
+
   before_each(function()
     lfs.mkdir('unit-test-directory');
 
@@ -91,32 +94,37 @@ describe('fs function', function()
   end)
 
   describe('os_dirname', function()
-    local length
-
-    local function os_dirname(buf, len)
-      return fs.os_dirname(buf, len)
-    end
-
-    before_each(function()
-      length = (string.len(lfs.currentdir())) + 1
-      buffer = cstr(length, '')
+    itp('returns OK and writes current directory to the buffer', function()
+      local length = string.len(lfs.currentdir()) + 1
+      local buf = cstr(length, '')
+      eq(OK, fs.os_dirname(buf, length))
+      eq(lfs.currentdir(), ffi.string(buf))
     end)
 
-    itp('returns OK and writes current directory into the buffer if it is large\n    enough', function()
-      eq(OK, (os_dirname(buffer, length)))
-      eq(lfs.currentdir(), (ffi.string(buffer)))
-    end)
-
-    -- What kind of other failing cases are possible?
     itp('returns FAIL if the buffer is too small', function()
-      local buf = cstr((length - 1), '')
-      eq(FAIL, (os_dirname(buf, (length - 1))))
+      local length = string.len(lfs.currentdir()) + 1
+      local buf = cstr(length - 1, '')
+      eq(FAIL, fs.os_dirname(buf, length - 1))
     end)
   end)
 
-  local function os_isdir(name)
-    return fs.os_isdir((to_cstr(name)))
-  end
+  describe('os_chdir', function()
+    itp('fails with path="~"', function()
+      eq(false, os_isdir('~')) -- sanity check: no literal "~" directory.
+      local length = 4096
+      local expected_cwd = cstr(length, '')
+      local cwd = cstr(length, '')
+      eq(OK, fs.os_dirname(expected_cwd, length))
+
+      -- os_chdir returns 0 for success, not OK (1).
+      neq(0, fs.os_chdir('~'))    -- fail
+      neq(0, fs.os_chdir('~/'))   -- fail
+
+      eq(OK, fs.os_dirname(cwd, length))
+      -- CWD did not change.
+      eq(ffi.string(expected_cwd), ffi.string(cwd))
+    end)
+  end)
 
   describe('os_isdir', function()
     itp('returns false if an empty string is given', function()
@@ -870,6 +878,11 @@ describe('fs function', function()
     end
 
     describe('os_fileinfo', function()
+      itp('returns false if path=NULL', function()
+        local file_info = file_info_new()
+        assert.is_false((fs.os_fileinfo(nil, file_info)))
+      end)
+
       itp('returns false if given a non-existing file', function()
         local file_info = file_info_new()
         assert.is_false((fs.os_fileinfo('/non-existent', file_info)))

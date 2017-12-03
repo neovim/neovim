@@ -2,8 +2,8 @@
 -- tabulators.
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, clear, execute =
-  helpers.feed, helpers.insert, helpers.clear, helpers.execute
+local feed, insert, clear, feed_command =
+  helpers.feed, helpers.insert, helpers.clear, helpers.feed_command
 
 local expect_pos = function(row, col)
   return helpers.eq({row, col}, helpers.eval('[screenrow(), screencol()]'))
@@ -12,24 +12,25 @@ end
 describe('cursor and column position with conceal and tabulators', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('are working', function()
     insert([[
       start:
       .concealed.     text
       |concealed|	text
-      
+
       	.concealed.	text
       	|concealed|	text
-      
+
       .a.	.b.	.c.	.d.
       |a|	|b|	|c|	|d|]])
 
     -- Conceal settings.
-    execute('set conceallevel=2')
-    execute('set concealcursor=nc')
-    execute('syntax match test /|/ conceal')
+    feed_command('set conceallevel=2')
+    feed_command('set concealcursor=nc')
+    feed_command('syntax match test /|/ conceal')
     -- Start test.
-    execute('/^start:')
+    feed_command('/^start:')
     feed('ztj')
     expect_pos(2, 1)
     -- We should end up in the same column when running these commands on the
@@ -78,10 +79,10 @@ describe('cursor and column position with conceal and tabulators', function()
     expect_pos(9, 25)
     feed('$')
     expect_pos(9, 26)
-    execute('set lbr')
+    feed_command('set lbr')
     feed('$')
     expect_pos(9, 26)
-    execute('set list listchars=tab:>-')
+    feed_command('set list listchars=tab:>-')
     feed('0')
     expect_pos(9, 1)
     feed('W')

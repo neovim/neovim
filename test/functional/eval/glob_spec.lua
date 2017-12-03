@@ -1,13 +1,13 @@
 local lfs = require('lfs')
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, eval, eq = helpers.clear, helpers.execute, helpers.eval, helpers.eq
+local clear, command, eval, eq = helpers.clear, helpers.command, helpers.eval, helpers.eq
 
 before_each(function()
   clear()
   lfs.mkdir('test-glob')
 
   -- Long path might cause "Press ENTER" prompt; use :silent to avoid it.
-  execute('silent cd test-glob')
+  command('silent cd test-glob')
 end)
 
 after_each(function()

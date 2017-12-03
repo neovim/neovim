@@ -2,7 +2,7 @@
 " This file is normally sourced from menu.vim.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2014 Aug 13
+" Last Change:	2017 Oct 28
 
 " Define the SetSyn function, used for the Syntax menu entries.
 " Set 'filetype' and also 'syntax' if it is manually selected.
@@ -61,7 +61,6 @@ an 50.10.320 &Syntax.AB.Ascii\ Doc :cal SetSyn("asciidoc")<CR>
 an 50.10.330 &Syntax.AB.ASP\ with\ VBScript :cal SetSyn("aspvbs")<CR>
 an 50.10.340 &Syntax.AB.ASP\ with\ Perl :cal SetSyn("aspperl")<CR>
 an 50.10.350 &Syntax.AB.Assembly.680x0 :cal SetSyn("asm68k")<CR>
-an 50.10.355 &Syntax.AB.Assembly.AVR :cal SetSyn("avra")<CR>
 an 50.10.360 &Syntax.AB.Assembly.Flat :cal SetSyn("fasm")<CR>
 an 50.10.370 &Syntax.AB.Assembly.GNU :cal SetSyn("asm")<CR>
 an 50.10.380 &Syntax.AB.Assembly.GNU\ H-8300 :cal SetSyn("asmh8300")<CR>
@@ -162,31 +161,31 @@ an 50.30.290 &Syntax.DE.Doxygen.C\ with\ doxygen :cal SetSyn("c.doxygen")<CR>
 an 50.30.300 &Syntax.DE.Doxygen.C++\ with\ doxygen :cal SetSyn("cpp.doxygen")<CR>
 an 50.30.310 &Syntax.DE.Doxygen.IDL\ with\ doxygen :cal SetSyn("idl.doxygen")<CR>
 an 50.30.320 &Syntax.DE.Doxygen.Java\ with\ doxygen :cal SetSyn("java.doxygen")<CR>
-an 50.30.320 &Syntax.DE.Doxygen.DataScript\ with\ doxygen :cal SetSyn("datascript.doxygen")<CR>
-an 50.30.330 &Syntax.DE.Dracula :cal SetSyn("dracula")<CR>
-an 50.30.340 &Syntax.DE.DSSSL :cal SetSyn("dsl")<CR>
-an 50.30.350 &Syntax.DE.DTD :cal SetSyn("dtd")<CR>
-an 50.30.360 &Syntax.DE.DTML\ (Zope) :cal SetSyn("dtml")<CR>
-an 50.30.370 &Syntax.DE.DTrace :cal SetSyn("dtrace")<CR>
-an 50.30.380 &Syntax.DE.Dts/dtsi :cal SetSyn("dts")<CR>
-an 50.30.390 &Syntax.DE.Dylan.Dylan :cal SetSyn("dylan")<CR>
-an 50.30.400 &Syntax.DE.Dylan.Dylan\ interface :cal SetSyn("dylanintr")<CR>
-an 50.30.410 &Syntax.DE.Dylan.Dylan\ lid :cal SetSyn("dylanlid")<CR>
-an 50.30.430 &Syntax.DE.EDIF :cal SetSyn("edif")<CR>
-an 50.30.440 &Syntax.DE.Eiffel :cal SetSyn("eiffel")<CR>
-an 50.30.450 &Syntax.DE.Elinks\ config :cal SetSyn("elinks")<CR>
-an 50.30.460 &Syntax.DE.Elm\ filter\ rules :cal SetSyn("elmfilt")<CR>
-an 50.30.470 &Syntax.DE.Embedix\ Component\ Description :cal SetSyn("ecd")<CR>
-an 50.30.480 &Syntax.DE.ERicsson\ LANGuage :cal SetSyn("erlang")<CR>
-an 50.30.490 &Syntax.DE.ESMTP\ rc :cal SetSyn("esmtprc")<CR>
-an 50.30.500 &Syntax.DE.ESQL-C :cal SetSyn("esqlc")<CR>
-an 50.30.510 &Syntax.DE.Essbase\ script :cal SetSyn("csc")<CR>
-an 50.30.520 &Syntax.DE.Esterel :cal SetSyn("esterel")<CR>
-an 50.30.530 &Syntax.DE.Eterm\ config :cal SetSyn("eterm")<CR>
-an 50.30.540 &Syntax.DE.Eviews :cal SetSyn("eviews")<CR>
-an 50.30.550 &Syntax.DE.Exim\ conf :cal SetSyn("exim")<CR>
-an 50.30.560 &Syntax.DE.Expect :cal SetSyn("expect")<CR>
-an 50.30.570 &Syntax.DE.Exports :cal SetSyn("exports")<CR>
+an 50.30.330 &Syntax.DE.Doxygen.DataScript\ with\ doxygen :cal SetSyn("datascript.doxygen")<CR>
+an 50.30.340 &Syntax.DE.Dracula :cal SetSyn("dracula")<CR>
+an 50.30.350 &Syntax.DE.DSSSL :cal SetSyn("dsl")<CR>
+an 50.30.360 &Syntax.DE.DTD :cal SetSyn("dtd")<CR>
+an 50.30.370 &Syntax.DE.DTML\ (Zope) :cal SetSyn("dtml")<CR>
+an 50.30.380 &Syntax.DE.DTrace :cal SetSyn("dtrace")<CR>
+an 50.30.390 &Syntax.DE.Dts/dtsi :cal SetSyn("dts")<CR>
+an 50.30.400 &Syntax.DE.Dylan.Dylan :cal SetSyn("dylan")<CR>
+an 50.30.410 &Syntax.DE.Dylan.Dylan\ interface :cal SetSyn("dylanintr")<CR>
+an 50.30.420 &Syntax.DE.Dylan.Dylan\ lid :cal SetSyn("dylanlid")<CR>
+an 50.30.440 &Syntax.DE.EDIF :cal SetSyn("edif")<CR>
+an 50.30.450 &Syntax.DE.Eiffel :cal SetSyn("eiffel")<CR>
+an 50.30.460 &Syntax.DE.Elinks\ config :cal SetSyn("elinks")<CR>
+an 50.30.470 &Syntax.DE.Elm\ filter\ rules :cal SetSyn("elmfilt")<CR>
+an 50.30.480 &Syntax.DE.Embedix\ Component\ Description :cal SetSyn("ecd")<CR>
+an 50.30.490 &Syntax.DE.ERicsson\ LANGuage :cal SetSyn("erlang")<CR>
+an 50.30.500 &Syntax.DE.ESMTP\ rc :cal SetSyn("esmtprc")<CR>
+an 50.30.510 &Syntax.DE.ESQL-C :cal SetSyn("esqlc")<CR>
+an 50.30.520 &Syntax.DE.Essbase\ script :cal SetSyn("csc")<CR>
+an 50.30.530 &Syntax.DE.Esterel :cal SetSyn("esterel")<CR>
+an 50.30.540 &Syntax.DE.Eterm\ config :cal SetSyn("eterm")<CR>
+an 50.30.550 &Syntax.DE.Eviews :cal SetSyn("eviews")<CR>
+an 50.30.560 &Syntax.DE.Exim\ conf :cal SetSyn("exim")<CR>
+an 50.30.570 &Syntax.DE.Expect :cal SetSyn("expect")<CR>
+an 50.30.580 &Syntax.DE.Exports :cal SetSyn("exports")<CR>
 an 50.40.100 &Syntax.FG.Falcon :cal SetSyn("falcon")<CR>
 an 50.40.110 &Syntax.FG.Fantom :cal SetSyn("fan")<CR>
 an 50.40.120 &Syntax.FG.Fetchmail :cal SetSyn("fetchmail")<CR>
@@ -328,7 +327,6 @@ an 50.70.270 &Syntax.M.Messages\ (/var/log) :cal SetSyn("messages")<CR>
 an 50.70.280 &Syntax.M.Metafont :cal SetSyn("mf")<CR>
 an 50.70.290 &Syntax.M.MetaPost :cal SetSyn("mp")<CR>
 an 50.70.300 &Syntax.M.MGL :cal SetSyn("mgl")<CR>
-an 50.70.305 &Syntax.M.MIX :cal SetSyn("mix")<CR>
 an 50.70.310 &Syntax.M.MMIX :cal SetSyn("mmix")<CR>
 an 50.70.320 &Syntax.M.Modconf :cal SetSyn("modconf")<CR>
 an 50.70.330 &Syntax.M.Model :cal SetSyn("model")<CR>
@@ -353,12 +351,13 @@ an 50.70.510 &Syntax.M.Muttrc :cal SetSyn("muttrc")<CR>
 an 50.80.100 &Syntax.NO.Nanorc :cal SetSyn("nanorc")<CR>
 an 50.80.110 &Syntax.NO.Nastran\ input/DMAP :cal SetSyn("nastran")<CR>
 an 50.80.120 &Syntax.NO.Natural :cal SetSyn("natural")<CR>
-an 50.80.130 &Syntax.NO.Netrc :cal SetSyn("netrc")<CR>
-an 50.80.140 &Syntax.NO.Ninja :cal SetSyn("ninja")<CR>
-an 50.80.150 &Syntax.NO.Novell\ NCF\ batch :cal SetSyn("ncf")<CR>
-an 50.80.160 &Syntax.NO.Not\ Quite\ C\ (LEGO) :cal SetSyn("nqc")<CR>
-an 50.80.170 &Syntax.NO.Nroff :cal SetSyn("nroff")<CR>
-an 50.80.180 &Syntax.NO.NSIS\ script :cal SetSyn("nsis")<CR>
+an 50.80.130 &Syntax.NO.Neomuttrc :cal SetSyn("neomuttrc")<CR>
+an 50.80.140 &Syntax.NO.Netrc :cal SetSyn("netrc")<CR>
+an 50.80.150 &Syntax.NO.Ninja :cal SetSyn("ninja")<CR>
+an 50.80.160 &Syntax.NO.Novell\ NCF\ batch :cal SetSyn("ncf")<CR>
+an 50.80.170 &Syntax.NO.Not\ Quite\ C\ (LEGO) :cal SetSyn("nqc")<CR>
+an 50.80.180 &Syntax.NO.Nroff :cal SetSyn("nroff")<CR>
+an 50.80.190 &Syntax.NO.NSIS\ script :cal SetSyn("nsis")<CR>
 an 50.80.200 &Syntax.NO.Obj\ 3D\ wavefront :cal SetSyn("obj")<CR>
 an 50.80.210 &Syntax.NO.Objective\ C :cal SetSyn("objc")<CR>
 an 50.80.220 &Syntax.NO.Objective\ C++ :cal SetSyn("objcpp")<CR>
@@ -606,11 +605,11 @@ an 50.150.430 &Syntax.WXYZ.Zimbu :cal SetSyn("zimbu")<CR>
 
 an 50.195 &Syntax.-SEP1-			<Nop>
 
-an <silent> 50.200 &Syntax.Set\ '&syntax'\ only :call <SID>Setsynonly()<CR>
+an <silent> 50.200 &Syntax.Set\ '&syntax'\ Only :call <SID>Setsynonly()<CR>
 fun! s:Setsynonly()
   let s:syntax_menu_synonly = 1
 endfun
-an <silent> 50.202 &Syntax.Set\ '&filetype'\ too :call <SID>Nosynonly()<CR>
+an <silent> 50.202 &Syntax.Set\ '&filetype'\ Too :call <SID>Nosynonly()<CR>
 fun! s:Nosynonly()
   if exists("s:syntax_menu_synonly")
     unlet s:syntax_menu_synonly

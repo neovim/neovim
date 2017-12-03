@@ -1,14 +1,14 @@
 local helpers = require('test.functional.helpers')(after_each)
 local call = helpers.call
 local clear = helpers.clear
-local execute = helpers.execute
+local command = helpers.command
 local expect = helpers.expect
 local source = helpers.source
 
 describe('Text object', function()
   before_each(function()
     clear()
-    execute('set shada=')
+    command('set shada=')
     source([[
       function SelectionOut(data)
         new
@@ -27,7 +27,7 @@ describe('Text object', function()
   end)
 
   it('Test for vi) without cpo-M', function()
-    execute('set cpo-=M')
+    command('set cpo-=M')
     call('SelectionOut', '(red \\(blue) green)')
 
     expect([[
@@ -38,7 +38,7 @@ describe('Text object', function()
   end)
 
   it('Test for vi) with cpo-M #1', function()
-    execute('set cpo+=M')
+    command('set cpo+=M')
     call('SelectionOut', '(red \\(blue) green)')
 
     expect([[
@@ -49,7 +49,7 @@ describe('Text object', function()
   end)
 
   it('Test for vi) with cpo-M #2', function()
-    execute('set cpo+=M')
+    command('set cpo+=M')
     call('SelectionOut', '(red (blue\\) green)')
 
     expect([[

@@ -1,4 +1,4 @@
-*cmdline.txt*   For Vim version 7.4.  Last change: 2015 Dec 17
+*cmdline.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -13,13 +13,7 @@ Command-line mode is used to enter Ex commands (":"), search patterns
 Basic command line editing is explained in chapter 20 of the user manual
 |usr_20.txt|.
 
-1. Command-line editing		|cmdline-editing|
-2. Command-line completion	|cmdline-completion|
-3. Ex command-lines		|cmdline-lines|
-4. Ex command-line ranges	|cmdline-ranges|
-5. Ex command-line flags	|ex-flags|
-6. Ex special characters	|cmdline-special|
-7. Command-line window		|cmdline-window|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Command-line editing					*cmdline-editing*
@@ -219,9 +213,10 @@ CTRL-Y		When there is a modeless selection, copy the selection into
 		the clipboard. |modeless-selection|
 		If there is no selection CTRL-Y is inserted as a character.
 
-CTRL-J					*c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
+CTRL-M or CTRL-J		*c_CTRL-M* *c_CTRL-J* *c_<NL>* *c_<CR>* *c_CR*
 <CR> or <NL>	start entered command
-							*c_<Esc>* *c_Esc*
+
+CTRL-[						*c_CTRL-[* *c_<Esc>* *c_Esc*
 <Esc>		When typed and 'x' not present in 'cpoptions', quit
 		Command-line mode without executing.  In macros or when 'x'
 		present in 'cpoptions', start entered command.
@@ -332,8 +327,11 @@ terminals)
 		List entries 6 to 12 from the search history: >
 			:history / 6,12
 <
-		List the recent five entries from all histories: >
-			:history all -5,
+		List the penultimate entry from all histories: >
+			:history all -2
+<
+		List the most recent two entries from all histories: >
+			:history all -2,
 
 :keepp[atterns] {command}			*:keepp* *:keeppatterns*
 		Execute {command}, without adding anything to the search
@@ -363,7 +361,7 @@ These are the commands that can be used:
 							*c_CTRL-D*
 CTRL-D		List names that match the pattern in front of the cursor.
 		When showing file names, directories are highlighted (see
-		'highlight' option).  Names where 'suffixes' matches are moved
+		|highlight-groups|).  Names where 'suffixes' matches are moved
 		to the end.
 		The 'wildoptions' option can be set to "tagfile" to list the
 		file of matching tags.
@@ -394,12 +392,26 @@ CTRL-L		A match is done on the pattern in front of the cursor.  If
 		If there are multiple matches the longest common part is
 		inserted in place of the pattern.  If the result is shorter
 		than the pattern, no completion is done.
+							*/_CTRL-L*
 		When 'incsearch' is set, entering a search pattern for "/" or
 		"?" and the current match is displayed then CTRL-L will add
 		one character from the end of the current match.  If
 		'ignorecase' and 'smartcase' are set and the command line has
 		no uppercase characters, the added character is converted to
 		lowercase.
+	                                            *c_CTRL-G* */_CTRL-G*
+CTRL-G		When 'incsearch' is set, entering a search pattern for "/" or
+		"?" and the current match is displayed then CTRL-G will move
+		to the next match (does not take |search-offset| into account)
+		Use CTRL-T to move to the previous match.  Hint: on a regular
+		keyboard T is above G.
+	                                            *c_CTRL-T* */_CTRL-T*
+CTRL-T		When 'incsearch' is set, entering a search pattern for "/" or
+		"?" and the current match is displayed then CTRL-T will move
+		to the previous match (does not take |search-offset| into
+		account).
+		Use CTRL-G to move to the next match.  Hint: on a regular
+		keyboard T is above G.
 
 The 'wildchar' option defaults to <Tab> (CTRL-E when in Vi compatible mode; in
 a previous version <Esc> was used).  In the pattern standard wildcards '*' and
@@ -407,6 +419,9 @@ a previous version <Esc> was used).  In the pattern standard wildcards '*' and
 matches exactly one character.
 
 The 'wildignorecase' option can be set to ignore case in filenames.
+
+The 'wildmenu' option can be set to show the matches just above the command
+line.
 
 If you like tcsh's autolist completion, you can use this mapping:
 	:cnoremap X <C-L><C-D>
@@ -766,6 +781,7 @@ Also see |`=|.
 			       *:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
 			       *:<sfile>* *<sfile>* *:<afile>* *<afile>*
 			       *:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
+			       *:<cexpr>* *<cexpr>*
 			       *<slnum>* *E495* *E496* *E497* *E499* *E500*
 Note: these are typed literally, they are not special keys!
 	<cword>    is replaced with the word under the cursor (like |star|)
@@ -773,7 +789,8 @@ Note: these are typed literally, they are not special keys!
 	<cfile>    is replaced with the path name under the cursor (like what
 		   |gf| uses)
 	<afile>    When executing autocommands, is replaced with the file name
-		   for a file read or write.
+		   of the buffer being manipulated, or the file for a read or
+		   write.
 	<abuf>     When executing autocommands, is replaced with the currently
 		   effective buffer number (for ":r file" and ":so file" it is
 		   the current buffer, the file being read/sourced is not in a
@@ -999,10 +1016,10 @@ There are several ways to leave the command-line window:
 		Insert and in Normal mode.
 CTRL-C		Continue in Command-line mode.  The command-line under the
 		cursor is used as the command-line.  Works both in Insert and
-		in Normal mode.  ":close" also works.  There is no redraw,
-		thus the window will remain visible.
+		in Normal mode.  There is no redraw, thus the window will
+		remain visible.
 :quit		Discard the command line and go back to Normal mode.
-		":exit", ":xit" and CTRL-\ CTRL-N also work.
+		":close", ":exit", ":xit" and CTRL-\ CTRL-N also work.
 :qall		Quit Vim, unless there are changes in some buffer.
 :qall!		Quit Vim, discarding changes to any buffer.
 
@@ -1071,7 +1088,7 @@ Another example: >
 	:au CmdwinEnter [/?]  startinsert
 This will make Vim start in Insert mode in the command-line window.
 
-						*cmdwin-char*
+					*cmdline-char* *cmdwin-char*
 The character used for the pattern indicates the type of command-line:
 	:	normal Ex command
 	>	debug mode command |debug-mode|

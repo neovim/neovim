@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, source = helpers.clear, helpers.feed, helpers.source
-local execute = helpers.execute
+local command = helpers.command
 
 describe("CTRL-C (mapped)", function()
   before_each(function()
@@ -20,7 +20,7 @@ describe("CTRL-C (mapped)", function()
       nnoremap <C-C> <NOP>
     ]])
 
-    execute("silent edit! test/functional/fixtures/bigfile.txt")
+    command("silent edit! test/functional/fixtures/bigfile.txt")
     local screen = Screen.new(52, 6)
     screen:attach()
     screen:set_default_attr_ids({
@@ -41,13 +41,13 @@ describe("CTRL-C (mapped)", function()
 
     local function test_ctrl_c(ms)
       feed(":global/^/p<CR>")
-      helpers.sleep(ms)
+      screen:sleep(ms)
       feed("<C-C>")
       screen:expect([[Interrupt]], nil, nil, nil, true)
     end
 
     -- The test is time-sensitive. Try different sleep values.
-    local ms_values = {1, 10, 100}
+    local ms_values = {100, 1000, 10000}
     for i, ms in ipairs(ms_values) do
       if i < #ms_values then
         local status, _ = pcall(test_ctrl_c, ms)

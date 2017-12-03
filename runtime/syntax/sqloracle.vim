@@ -128,19 +128,17 @@ syn keyword sqlFunction	xmlparse xmlpatch xmlpi xmlquery xmlroot xmlsequence xml
 syn keyword sqlTodo TODO FIXME XXX DEBUG NOTE contained
 
 " Define the default highlighting.
-command -nargs=+ HiLink hi def link <args>
-HiLink Quote            Special
-HiLink sqlComment	Comment
-HiLink sqlFunction	Function
-HiLink sqlKeyword	sqlSpecial
-HiLink sqlNumber	Number
-HiLink sqlOperator	sqlStatement
-HiLink sqlSpecial	Special
-HiLink sqlStatement	Statement
-HiLink sqlString	String
-HiLink sqlType		Type
-HiLink sqlTodo		Todo
+hi def link Quote            Special
+hi def link sqlComment	Comment
+hi def link sqlFunction	Function
+hi def link sqlKeyword	sqlSpecial
+hi def link sqlNumber	Number
+hi def link sqlOperator	sqlStatement
+hi def link sqlSpecial	Special
+hi def link sqlStatement	Statement
+hi def link sqlString	String
+hi def link sqlType		Type
+hi def link sqlTodo		Todo
 
-delcommand HiLink
 let b:current_syntax = "sql"
 " vim: ts=8

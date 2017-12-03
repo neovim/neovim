@@ -3,7 +3,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, source = helpers.feed, helpers.source
-local clear, execute, expect, eq, eval = helpers.clear, helpers.execute, helpers.expect, helpers.eq, helpers.eval
+local clear, feed_command, expect, eq, eval = helpers.clear, helpers.feed_command, helpers.expect, helpers.eq, helpers.eval
 local write_file, wait, dedent = helpers.write_file, helpers.wait, helpers.dedent
 local io = require('io')
 
@@ -25,15 +25,15 @@ describe('autocommands that delete and unload buffers:', function()
   before_each(clear)
 
   it('BufWritePre, BufUnload', function()
-    execute('au BufWritePre Xxx1 bunload')
-    execute('au BufWritePre Xxx2 bwipe')
-    execute('e Xxx2')
+    feed_command('au BufWritePre Xxx1 bunload')
+    feed_command('au BufWritePre Xxx2 bwipe')
+    feed_command('e Xxx2')
     eq('Xxx2', eval('bufname("%")'))
-    execute('e Xxx1')
+    feed_command('e Xxx1')
     eq('Xxx1', eval('bufname("%")'))
     -- The legacy test file did not check the error message.
-    execute('let v:errmsg = "no error"')
-    execute('write')
+    feed_command('let v:errmsg = "no error"')
+    feed_command('write')
     -- Discard all "hit enter" prompts and messages.
     feed('<C-L>')
     eq('E203: Autocommands deleted or unloaded buffer to be written',
@@ -41,11 +41,11 @@ describe('autocommands that delete and unload buffers:', function()
     eq('Xxx2', eval('bufname("%")'))
     expect(text2)
     -- Start editing Xxx2.
-    execute('e! Xxx2')
+    feed_command('e! Xxx2')
     -- The legacy test file did not check the error message.
-    execute('let v:errmsg = "no error"')
+    feed_command('let v:errmsg = "no error"')
     -- Write Xxx2, will delete the buffer and give an error msg.
-    execute('w')
+    feed_command('w')
     -- Discard all "hit enter" prompts and messages.
     feed('<C-L>')
     eq('E203: Autocommands deleted or unloaded buffer to be written',
@@ -73,17 +73,17 @@ describe('autocommands that delete and unload buffers:', function()
       au BufUnload * call CloseAll()
       au VimLeave * call WriteToOut()
     ]])
-    execute('e Xxx2')
+    feed_command('e Xxx2')
     -- Discard all "hit enter" prompts and messages.
     feed('<C-L>')
-    execute('e Xxx1')
+    feed_command('e Xxx1')
     -- Discard all "hit enter" prompts and messages.
     feed('<C-L>')
-    execute('e Makefile') -- an existing file
+    feed_command('e Makefile') -- an existing file
     feed('<C-L>')
-    execute('sp new2')
+    feed_command('sp new2')
     feed('<C-L>')
-    execute('q')
+    feed_command('q')
     wait()
     eq('VimLeave done',
        string.match(io.open('test.out', 'r'):read('*all'), "^%s*(.-)%s*$"))

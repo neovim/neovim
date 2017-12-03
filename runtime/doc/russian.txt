@@ -1,4 +1,4 @@
-*russian.txt*   For Vim version 7.4.  Last change: 2006 Apr 24
+*russian.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Vassily Ragosin
@@ -6,10 +6,7 @@
 
 Russian language localization and support in Vim	   *russian* *Russian*
 
-1. Introduction				  |russian-intro|
-2. Russian keymaps			  |russian-keymap|
-3. Localization				  |russian-l18n|
-4. Known issues				  |russian-issues|
+                                      Type |gO| to see the table of contents.
 
 ===============================================================================
 1. Introduction							*russian-intro*

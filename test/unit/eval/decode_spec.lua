@@ -2,12 +2,11 @@ local helpers = require('test.unit.helpers')(after_each)
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
 local eq = helpers.eq
 local neq = helpers.neq
 local ffi = helpers.ffi
 
-local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval_defs.h',
+local decode = cimport('./src/nvim/eval/decode.h', './src/nvim/eval/typval.h',
                        './src/nvim/globals.h', './src/nvim/memory.h',
                        './src/nvim/message.h')
 
@@ -72,7 +71,7 @@ describe('json_decode_string()', function()
   end
 
   itp('does not overflow in error messages', function()
-    local saved_p_enc = decode.p_enc
+    collectgarbage('restart')
     check_failure(']test', 1, 'E474: No container to close: ]')
     check_failure('[}test', 2, 'E474: Closing list with curly bracket: }')
     check_failure('{]test', 2,
@@ -105,10 +104,6 @@ describe('json_decode_string()', function()
     check_failure('"\194"test', 3, 'E474: Only UTF-8 strings allowed: \194"')
     check_failure('"\252\144\128\128\128\128"test', 8, 'E474: Only UTF-8 code points up to U+10FFFF are allowed to appear unescaped: \252\144\128\128\128\128"')
     check_failure('"test', 1, 'E474: Expected string end: "')
-    decode.p_enc = to_cstr('latin1')
-    check_failure('"\\uABCD"test', 8,
-                  'E474: Failed to convert string "ꯍ" from UTF-8')
-    decode.p_enc = saved_p_enc
     check_failure('-test', 1, 'E474: Missing number after minus sign: -')
     check_failure('-1.test', 3, 'E474: Missing number after decimal dot: -1.')
     check_failure('-1.0etest', 5, 'E474: Missing exponent: -1.0e')

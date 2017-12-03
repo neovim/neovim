@@ -1,4 +1,4 @@
-*gui.txt*       For Vim version 7.4.  Last change: 2014 Mar 08
+*gui.txt*       Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,25 +6,10 @@
 
 Vim's Graphical User Interface				*gui* *GUI*
 
-1. Starting the GUI		|gui-start|
-2. Scrollbars			|gui-scrollbars|
-3. Mouse Control		|gui-mouse|
-4. Making GUI Selections	|gui-selections|
-5. Menus			|menus|
-6. Extras			|gui-extras|
-
-Other GUI documentation:
-|gui_w32.txt|	For specific items of the Win32 GUI.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Starting the GUI				*gui-start* *E229* *E233*
-
-First you must make sure you actually have a version of Vim with the GUI code
-included.
-
-How to start the GUI depends on the system used.  Mostly you can run the
-GUI version of Vim with:
-    gvim [options] [files...]
 
 				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
 The gvimrc file is where GUI-specific startup commands should be placed.  It
@@ -32,8 +17,6 @@ is always sourced after the |init.vim| file.  If you have one then the
 $MYGVIMRC environment variable has its name.
 
 When the GUI starts up initializations are carried out, in this order:
-- The 'term' option is set to "builtin_gui" and terminal options are reset to
-  their default value for the GUI |terminal-options|.
 - If the system menu file exists, it is sourced.  The name of this file is
   normally "$VIMRUNTIME/menu.vim".  You can check this with ":version".  Also
   see |$VIMRUNTIME|.  To skip loading the system menu include 'M' in
@@ -63,7 +46,8 @@ When the GUI starts up initializations are carried out, in this order:
   already set.
 
 NOTE: All but the first one are not carried out if Vim was started with
-"-u NONE" and no "-U" argument was given, or when started with "-U NONE".
+"-u NONE" or "-u DEFAULTS" and no "-U" argument was given, or when started
+with "-U NONE".
 
 All this happens AFTER the normal Vim initializations, like reading your
 vimrc file.  See |initialization|.
@@ -83,28 +67,6 @@ Recommended place for your personal GUI initializations:
 The personal initialization files are searched in the order specified above
 and only the first one that is found is read.
 
-There are a number of options which only have meaning in the GUI version of
-Vim.  These are 'guicursor', 'guifont', and 'guioptions'.  They are
-documented in |options.txt| with all the other options.
-
-Another way to set the colors for different occasions is with highlight
-groups.  The "Normal" group is used to set the background and foreground
-colors.  Example (which looks nice): >
-
-	:highlight Normal guibg=grey90
-
-The "guibg" and "guifg" settings override the normal background and
-foreground settings.  The other settings for the Normal highlight group are
-not used.  Use the 'guifont' option to set the font.
-
-Also check out the 'guicursor' option, to set the colors for the cursor in
-various modes.
-
-Vim tries to make the window fit on the screen when it starts up.  This avoids
-that you can't see part of it.  On the X Window System this requires a bit of
-guesswork.  You can change the height that is used for the window title and a
-task bar with the 'guiheadroom' option.
-
 						*:winp* *:winpos* *E188*
 :winp[os]
 		Display current position of the top left corner of the GUI vim
@@ -114,8 +76,7 @@ task bar with the 'guiheadroom' option.
 :winp[os] {X} {Y}							*E466*
 		Put the GUI vim window at the given {X} and {Y} coordinates.
 		The coordinates should specify the position in pixels of the
-		top left corner of the window.  Does not work in all versions.
-		Does work in an (new) xterm |xterm-color|.
+		top left corner of the window.
 		When the GUI window has not been opened yet, the values are
 		remembered until the window is opened.  The position is
 		adjusted to make the window fit on the screen (if possible).
@@ -124,21 +85,6 @@ task bar with the 'guiheadroom' option.
 :win[size] {width} {height}
 		Set the window height to {width} by {height} characters.
 		Obsolete, use ":set lines=11 columns=22".
-		If you get less lines than expected, check the 'guiheadroom'
-		option.
-
-If you are running the X Window System, you can get information about the
-window Vim is running in with these commands: >
-	:!xwininfo -id $WINDOWID
-	:!xprop -id $WINDOWID
-	:execute '!xwininfo -id ' . v:windowid
-	:execute '!xprop -id ' . v:windowid
-<
-							*gui-IME* *iBus*
-Input methods for international characters in X that rely on the XIM
-framework, most notably iBus, have been known to produce undesirable results
-in gVim. These may include an inability to enter spaces, or long delays
-between typing a character and it being recognized by the application.
 
 ==============================================================================
 2. Scrollbars						*gui-scrollbars*
@@ -437,6 +383,7 @@ menus and menu items.  They are most useful for things that you can't remember
 what the key sequence was.
 
 For creating menus in a different language, see |:menutrans|.
+If you don't want to use menus at all, see |'go-M'|.
 
 							*menu.vim*
 The default menus are read from the file "$VIMRUNTIME/menu.vim".  See
@@ -453,7 +400,11 @@ in the menu (which can take a bit of time to load).  If you want to have all
 filetypes already present at startup, add: >
 	:let do_syntax_sel_menu = 1
 
-<
+Note that the menu.vim is sourced when `:syntax on` or `:filetype on` is
+executed or after your .vimrc file is sourced.  This means that the 'encoding'
+option and the language of messages (`:language messages`) must be set before
+that (if you want to change them).
+
 							*console-menus*
 Although this documentation is in the GUI section, you can actually use menus
 in console mode too.  You will have to load |menu.vim| explicitly then, it is
@@ -545,9 +496,6 @@ expression register: >
 
    :amenu Insert.foobar   "='foobar'<CR>P
 
-Note that the '<' and 'k' flags in 'cpoptions' also apply here (when
-included they make the <> form and raw key codes not being recognized).
-
 Note that <Esc> in Cmdline mode executes the command, like in a mapping.  This
 is Vi compatible.  Use CTRL-C to quit Cmdline mode.
 
@@ -559,21 +507,13 @@ The ":set ic" will not be echoed when using this menu.  Messages from the
 executed command are still given though.  To shut them up too, add a ":silent"
 in the executed command: >
 	:menu <silent> Search.Header :exe ":silent normal /Header\r"<CR>
-"<silent>" may also appear just after "<special>" or "<script>".
-
-					*:menu-<special>* *:menu-special*
-Define a menu with <> notation for special keys, even though the "<" flag
-may appear in 'cpoptions'.  This is useful if the side effect of setting
-'cpoptions' is not desired.  Example: >
-	:menu <special> Search.Header /Header<CR>
-"<special>" must appear as the very first argument to the ":menu" command or
-just after "<silent>" or "<script>".
+"<silent>" may also appear just after "<script>".
 
 						*:menu-<script>* *:menu-script*
 The "to" part of the menu will be inspected for mappings.  If you don't want
 this, use the ":noremenu" command (or the similar one for a specific mode).
 If you do want to use script-local mappings, add "<script>" as the very first
-argument to the ":menu" command or just after "<silent>" or "<special>".
+argument to the ":menu" command or just after "<silent>".
 
 							*menu-priority*
 You can give a priority to a menu.  Menus with a higher priority go more to
@@ -713,6 +653,8 @@ nr  Name		Normal action  ~
 					*hidden-menus* *win32-hidden-menus*
 In the Win32 GUI, starting a menu name with ']' excludes that menu from the
 main menu bar.  You must then use the |:popup| command to display it.
+
+When splitting the window the window toolbar is not copied to the new window.
 
 							*popup-menu*
 You can define the special menu "PopUp".  This is the menu that is displayed
@@ -908,31 +850,5 @@ This section describes other features which are related to the GUI.
 
 - In the GUI, several normal keys may have modifiers in mappings etc, these
   are <Space>, <Tab>, <NL>, <CR>, <Esc>.
-
-- To check in a Vim script if the GUI is being used, you can use something
-  like this: >
-
-	if has("gui_running")
-	   echo "yes, we have a GUI"
-	else
-	   echo "Boring old console"
-	endif
-<							*setting-guifont*
-- When you use the same vimrc file on various systems, you can use something
-  like this to set options specifically for each type of GUI: >
-
-	if has("gui_running")
-	    if has("gui_gtk2")
-		:set guifont=Luxi\ Mono\ 12
-	    elseif has("x11")
-		" Also for GTK 1
-		:set guifont=*-lucidatypewriter-medium-r-normal-*-*-180-*-*-m-*-*
-	    elseif has("gui_win32")
-		:set guifont=Luxi_Mono:h12:cANSI
-	    endif
-	endif
-
-A recommended Japanese font is MS Mincho.  You can find info here:
-http://www.lexikan.com/mincho.htm
 
  vim:tw=78:sw=4:ts=8:ft=help:norl:

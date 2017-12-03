@@ -68,15 +68,22 @@ let $HOME = '/does/not/exist'
 " Prepare for calling garbagecollect_for_testing().
 let v:testing = 1
 
-" Align with vim defaults.
+" Align Nvim defaults to Vim.
 set directory^=.
-set nohidden
 set backspace=
+set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
+set listchars=eol:$
+" Prevent Nvim log from writing to stderr.
+let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 
-function RunTheTest(test)
+func RunTheTest(test)
   echo 'Executing ' . a:test
   if exists("*SetUp")
-    call SetUp()
+    try
+      call SetUp()
+    catch
+      call add(v:errors, 'Caught exception in SetUp() before ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
+    endtry
   endif
 
   call add(s:messages, 'Executing ' . a:test)
@@ -91,7 +98,11 @@ function RunTheTest(test)
   endtry
 
   if exists("*TearDown")
-    call TearDown()
+    try
+      call TearDown()
+    catch
+      call add(v:errors, 'Caught exception in TearDown() after ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
+    endtry
   endif
 
   " Close any extra windows and make the current one not modified.
@@ -110,6 +121,60 @@ function RunTheTest(test)
   set nomodified
 endfunc
 
+func AfterTheTest()
+  if len(v:errors) > 0
+    let s:fail += 1
+    call add(s:errors, 'Found errors in ' . s:test . ':')
+    call extend(s:errors, v:errors)
+    let v:errors = []
+  endif
+endfunc
+
+" This function can be called by a test if it wants to abort testing.
+func FinishTesting()
+  call AfterTheTest()
+
+  " Don't write viminfo on exit.
+  set viminfo=
+
+  if s:fail == 0
+    " Success, create the .res file so that make knows it's done.
+    exe 'split ' . fnamemodify(g:testname, ':r') . '.res'
+    write
+  endif
+
+  if len(s:errors) > 0
+    " Append errors to test.log
+    split test.log
+    call append(line('$'), '')
+    call append(line('$'), 'From ' . g:testname . ':')
+    call append(line('$'), s:errors)
+    write
+  endif
+
+  let message = 'Executed ' . s:done . (s:done > 1 ? ' tests' : ' test')
+  echo message
+  call add(s:messages, message)
+  if s:fail > 0
+    let message = s:fail . ' FAILED:'
+    echo message
+    call add(s:messages, message)
+    call extend(s:messages, s:errors)
+  endif
+
+  " Add SKIPPED messages
+  call extend(s:messages, s:skipped)
+
+  " Append messages to the file "messages"
+  split messages
+  call append(line('$'), '')
+  call append(line('$'), 'From ' . g:testname . ':')
+  call append(line('$'), s:messages)
+  write
+
+  qall!
+endfunc
+
 " Source the test script.  First grab the file name, in case the script
 " navigates away.  g:testname can be used by the tests.
 let g:testname = expand('%')
@@ -118,7 +183,7 @@ let s:fail = 0
 let s:errors = []
 let s:messages = []
 let s:skipped = []
-if expand('%') =~ 'test_viml.vim'
+if expand('%') =~ 'test_vimscript.vim'
   " this test has intentional s:errors, don't use try/catch.
   source %
 else
@@ -131,10 +196,13 @@ else
 endif
 
 " Names of flaky tests.
-let s:flaky = []
+let s:flaky = [
+      \ 'Test_with_partial_callback()',
+      \ 'Test_oneshot()',
+      \ 'Test_lambda_with_timer()',
+      \ ]
 
 " Locate Test_ functions and execute them.
-set nomore
 redir @q
 silent function /^Test_
 redir END
@@ -150,56 +218,14 @@ for s:test in sort(s:tests)
   call RunTheTest(s:test)
 
   if len(v:errors) > 0 && index(s:flaky, s:test) >= 0
-		call add(s:messages, 'Flaky test failed, running it again')
-		let v:errors = []
-		call RunTheTest(s:test)
-	endif
-
-  if len(v:errors) > 0
-    let s:fail += 1
-    call add(s:errors, 'Found errors in ' . s:test . ':')
-    call extend(s:errors, v:errors)
+    call add(s:messages, 'Flaky test failed, running it again')
     let v:errors = []
+    call RunTheTest(s:test)
   endif
 
+  call AfterTheTest()
 endfor
 
-" Don't write viminfo on exit.
-set viminfo=
+call FinishTesting()
 
-if s:fail == 0
-  " Success, create the .res file so that make knows it's done.
-  exe 'split ' . fnamemodify(g:testname, ':r') . '.res'
-  write
-endif
-
-if len(s:errors) > 0
-  " Append errors to test.log
-  split test.log
-  call append(line('$'), '')
-  call append(line('$'), 'From ' . g:testname . ':')
-  call append(line('$'), s:errors)
-  write
-endif
-
-let message = 'Executed ' . s:done . (s:done > 1 ? ' tests': ' test')
-echo message
-call add(s:messages, message)
-if s:fail > 0
-  let message = s:fail . ' FAILED'
-  echo message
-  call add(s:messages, message)
-  call extend(s:messages, s:errors)
-endif
-
-" Add SKIPPED messages
-call extend(s:messages, s:skipped)
-
-" Append messages to the file "messages"
-split messages
-call append(line('$'), '')
-call append(line('$'), 'From ' . g:testname . ':')
-call append(line('$'), s:messages)
-write
-
-qall!
+" vim: shiftwidth=2 sts=2 expandtab

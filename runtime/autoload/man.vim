@@ -1,16 +1,31 @@
 " Maintainer: Anmol Sethi <anmol@aubble.com>
 
-let s:man_find_arg = "-w"
+let s:find_arg = '-w'
+let s:localfile_arg = v:true  " Always use -l if possible. #6683
+let s:section_arg = '-s'
 
-" TODO(nhooyr) Completion may work on SunOS; I'm not sure if `man -l` displays
-" the list of searched directories.
-try
-  if !has('win32') && $OSTYPE !~? 'cygwin\|linux' && system('uname -s') =~? 'SunOS' && system('uname -r') =~# '^5'
-    let s:man_find_arg = '-l'
+function! s:init_section_flag()
+  call system(['env', 'MANPAGER=cat', 'man', s:section_arg, '1', 'man'])
+  if v:shell_error
+    let s:section_arg = '-S'
   endif
-catch /E145:/
-  " Ignore the error in restricted mode
-endtry
+endfunction
+
+function! s:init() abort
+  call s:init_section_flag()
+  " TODO(nhooyr): Does `man -l` on SunOS list searched directories?
+  try
+    if !has('win32') && $OSTYPE !~? 'cygwin\|linux' && system('uname -s') =~? 'SunOS' && system('uname -r') =~# '^5'
+      let s:find_arg = '-l'
+    endif
+    " Check for -l support.
+    call s:get_page(s:get_path('', 'man')[0:-2])
+  catch /E145:/
+    " Ignore the error in restricted mode
+  catch /command error .*/
+    let s:localfile_arg = v:false
+  endtry
+endfunction
 
 function! man#open_page(count, count1, mods, ...) abort
   if a:0 > 2
@@ -79,7 +94,7 @@ function! man#read_page(ref) abort
     let [sect, name, path] = s:verify_exists(sect, name)
     let page = s:get_page(path)
   catch
-    " call to s:error() is unnecessary
+    call s:error(v:exception)
     return
   endtry
   let b:man_sect = sect
@@ -88,10 +103,8 @@ endfunction
 
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
-  if a:event == 'stdout'
-    let self.stdout .= join(a:data, "\n")
-  elseif a:event == 'stderr'
-    let self.stderr .= join(a:data, "\n")
+  if a:event is# 'stdout' || a:event is# 'stderr'
+    let self[a:event] .= join(a:data, "\n")
   else
     let self.exit_code = a:data
   endif
@@ -118,7 +131,7 @@ function! s:system(cmd, ...) abort
     try
       call jobstop(jobid)
       throw printf('command timed out: %s', join(a:cmd))
-    catch /^Vim\%((\a\+)\)\=:E900/
+    catch /^Vim(call):E900:/
     endtry
   elseif res[0] == -2
     throw printf('command interrupted: %s', join(a:cmd))
@@ -135,7 +148,8 @@ function! s:get_page(path) abort
   let manwidth = empty($MANWIDTH) ? winwidth(0) : $MANWIDTH
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
-  return s:system(['env', 'MANPAGER=cat', 'MANWIDTH='.manwidth, 'man', a:path])
+  let cmd = ['env', 'MANPAGER=cat', 'MANWIDTH='.manwidth, 'man']
+  return s:system(cmd + (s:localfile_arg ? ['-l', a:path] : [a:path]))
 endfunction
 
 function! s:put_page(page) abort
@@ -149,6 +163,31 @@ function! s:put_page(page) abort
     silent keepjumps 1delete _
   endwhile
   setlocal filetype=man
+endfunction
+
+function! man#show_toc() abort
+  let bufname = bufname('%')
+  let info = getloclist(0, {'winid': 1})
+  if !empty(info) && getwinvar(info.winid, 'qf_toc') ==# bufname
+    lopen
+    return
+  endif
+
+  let toc = []
+  let lnum = 2
+  let last_line = line('$') - 1
+  while lnum && lnum < last_line
+    let text = getline(lnum)
+    if text =~# '^\%( \{3\}\)\=\S.*$'
+      call add(toc, {'bufnr': bufnr('%'), 'lnum': lnum, 'text': text})
+    endif
+    let lnum = nextnonblank(lnum + 1)
+  endwhile
+
+  call setloclist(0, toc, ' ')
+  call setloclist(0, [], 'a', {'title': 'Man TOC'})
+  lopen
+  let w:qf_toc = bufname
 endfunction
 
 " attempt to extract the name and sect out of 'name(sect)'
@@ -174,14 +213,14 @@ endfunction
 
 function! s:get_path(sect, name) abort
   if empty(a:sect)
-    return s:system(['man', s:man_find_arg, a:name])
+    return s:system(['man', s:find_arg, a:name])
   endif
   " '-s' flag handles:
   "   - tokens like 'printf(echo)'
   "   - sections starting with '-'
   "   - 3pcap section (found on macOS)
   "   - commas between sections (for section priority)
-  return s:system(['man', s:man_find_arg, '-s', a:sect, a:name])
+  return s:system(['man', s:find_arg, s:section_arg, a:sect, a:name])
 endfunction
 
 function! s:verify_exists(sect, name) abort
@@ -306,7 +345,7 @@ endfunction
 
 function! s:complete(sect, psect, name) abort
   try
-    let mandirs = join(split(s:system(['man', s:man_find_arg]), ':\|\n'), ',')
+    let mandirs = join(split(s:system(['man', s:find_arg]), ':\|\n'), ',')
   catch
     call s:error(v:exception)
     return
@@ -348,3 +387,5 @@ function! man#init_pager() abort
   endtry
   execute 'silent file man://'.fnameescape(ref)
 endfunction
+
+call s:init()

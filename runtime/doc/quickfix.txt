@@ -1,4 +1,4 @@
-*quickfix.txt*  For Vim version 7.4.  Last change: 2016 Jul 17
+*quickfix.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,15 +6,7 @@
 
 This subject is introduced in section |30.1| of the user manual.
 
-1. Using QuickFix commands		|quickfix|
-2. The error window			|quickfix-window|
-3. Using more than one list of errors	|quickfix-error-lists|
-4. Using :make				|:make_makeprg|
-5. Using :grep				|grep|
-6. Selecting a compiler			|compiler-select|
-7. The error format			|error-file-format|
-8. The directory stack			|quickfix-directory-stack|
-9. Specific error file formats		|errorformats|
+                                      Type |gO| to see the table of contents.
 
 =============================================================================
 1. Using QuickFix commands			*quickfix* *Quickfix* *E42*
@@ -39,11 +31,21 @@ From inside Vim an easy way to run a command and handle the output is with the
 The 'errorformat' option should be set to match the error messages from your
 compiler (see |errorformat| below).
 
+							*quickfix-ID*
+Each quickfix list has a unique identifier called the quickfix ID and this
+number will not change within a Vim session. The getqflist() function can be
+used to get the identifier assigned to a list. There is also a quickfix list
+number which may change whenever more than ten lists are added to a quickfix
+stack.
+
 						*location-list* *E776*
-A location list is similar to a quickfix list and contains a list of positions
-in files.  A location list is associated with a window and each window can
-have a separate location list.  A location list can be associated with only
-one window.  The location list is independent of the quickfix list.
+A location list is a window-local quickfix list. You get one after commands
+like `:lvimgrep`, `:lgrep`, `:lhelpgrep`, `:lmake`, etc., which create a
+location list instead of a quickfix list as the corresponding `:vimgrep`,
+`:grep`, `:helpgrep`, `:make` do.
+A location list is associated with a window and each window can have a
+separate location list.  A location list can be associated with only one
+window.  The location list is independent of the quickfix list.
 
 When a window with a location list is split, the new window gets a copy of the
 location list.  When there are no longer any references to a location list,
@@ -146,11 +148,15 @@ processing a quickfix or location list command, it will be aborted.
 			current window is used instead of the quickfix list.
 
 							*:cq* *:cquit*
-:cq[uit][!]		Quit Vim with an error code, so that the compiler
-			will not compile the same file again.
-			WARNING: All changes in files are lost!  Also when the
-			[!] is not used.  It works like ":qall!" |:qall|,
-			except that Vim returns a non-zero exit code.
+:[count]cq[uit]		Quit Nvim with an error code, or the code specified in
+			[count].  Useful when Nvim is called from another
+			program: e.g. `git commit` will abort the comitting
+			process, `fc` (built-in for shells like bash and zsh)
+			will not execute the command.
+
+			WARNING: All changes in files are lost.  It works like
+			":qall!" |:qall|, except that Nvim exits non-zero or
+			[count].
 
 							*:cf* *:cfile*
 :cf[ile][!] [errorfile]	Read the error file and jump to the first error.
@@ -872,7 +878,7 @@ need to write down a "todo" list.
 
 
 The Vim plugins in the "compiler" directory will set options to use the
-selected compiler.  For ":compiler" local options are set, for ":compiler!"
+selected compiler.  For `:compiler` local options are set, for `:compiler!`
 global options.
 							*current_compiler*
 To support older Vim versions, the plugins always use "current_compiler" and
@@ -1366,7 +1372,7 @@ prints information about entering a directory in the form "Making all in dir".
    Making all in dir2		  ./dir1/dir2
 
    This can be solved by printing absolute directories in the "enter directory"
-   message or by printing "leave directory" messages..
+   message or by printing "leave directory" messages.
 
 To avoid this problem, ensure to print absolute directory names and "leave
 directory" messages.
@@ -1542,4 +1548,4 @@ by Vim.
 
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:noet:tw=78:ts=8:ft=help:norl:

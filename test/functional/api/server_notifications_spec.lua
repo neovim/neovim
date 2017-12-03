@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local eq, clear, eval, execute, nvim, next_message =
-  helpers.eq, helpers.clear, helpers.eval, helpers.execute, helpers.nvim,
+local eq, clear, eval, command, nvim, next_message =
+  helpers.eq, helpers.clear, helpers.eval, helpers.command, helpers.nvim,
   helpers.next_message
 local meths = helpers.meths
 
@@ -16,8 +16,8 @@ describe('notify', function()
     it('sends the notification/args to the corresponding channel', function()
       eval('rpcnotify('..channel..', "test-event", 1, 2, 3)')
       eq({'notification', 'test-event', {1, 2, 3}}, next_message())
-      execute('au FileType lua call rpcnotify('..channel..', "lua!")')
-      execute('set filetype=lua')
+      command('au FileType lua call rpcnotify('..channel..', "lua!")')
+      command('set filetype=lua')
       eq({'notification', 'lua!', {}}, next_message())
     end)
   end)

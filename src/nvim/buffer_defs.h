@@ -12,17 +12,18 @@ typedef struct file_buffer buf_T; // Forward declaration
 // bufref_valid() only needs to check "buf" when the count differs.
 typedef struct {
   buf_T *br_buf;
+  int    br_fnum;
   int    br_buf_free_count;
 } bufref_T;
 
 // for garray_T
 #include "nvim/garray.h"
+// for HLF_COUNT
+#include "nvim/highlight_defs.h"
 // for pos_T, lpos_T and linenr_T
 #include "nvim/pos.h"
 // for the number window-local and buffer-local options
 #include "nvim/option_defs.h"
-// for optional iconv support
-#include "nvim/iconv.h"
 // for jump list and tag stack sizes in a buffer and mark types
 #include "nvim/mark_defs.h"
 // for u_header_T; needs buf_T.
@@ -30,7 +31,9 @@ typedef struct {
 // for hashtab_T
 #include "nvim/hashtab.h"
 // for dict_T
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
+// for proftime_T
+#include "nvim/profile.h"
 // for String
 #include "nvim/api/private/defs.h"
 // for Map(K, V)
@@ -102,8 +105,6 @@ typedef struct frame_S frame_T;
 #include "nvim/sign_defs.h"
 // for bufhl_*_T
 #include "nvim/bufhl_defs.h"
-
-typedef Map(linenr_T, bufhl_vec_T) bufhl_info_T;
 
 #include "nvim/os/fs_defs.h"    // for FileID
 #include "nvim/terminal.h"      // for Terminal
@@ -233,6 +234,8 @@ typedef struct {
 # define w_p_crb_save w_onebuf_opt.wo_crb_save
   char_u *wo_scl;
 # define w_p_scl w_onebuf_opt.wo_scl    // 'signcolumn'
+  char_u *wo_winhl;
+# define w_p_winhl w_onebuf_opt.wo_winhl    // 'winhighlight'
 
   int wo_scriptID[WV_COUNT];            /* SIDs for window-local options */
 # define w_p_scriptID w_onebuf_opt.wo_scriptID
@@ -317,25 +320,6 @@ typedef struct {
   buffheader_T save_readbuf2;
   String save_inputbuf;
 } tasave_T;
-
-/*
- * Used for conversion of terminal I/O and script files.
- */
-typedef struct {
-  int vc_type;                  /* zero or one of the CONV_ values */
-  int vc_factor;                /* max. expansion factor */
-# ifdef USE_ICONV
-  iconv_t vc_fd;                /* for CONV_ICONV */
-# endif
-  bool vc_fail;                 /* fail for invalid char, don't use '?' */
-} vimconv_T;
-
-#define CONV_NONE               0
-#define CONV_TO_UTF8            1
-#define CONV_9_TO_UTF8          2
-#define CONV_TO_LATIN1          3
-#define CONV_TO_LATIN9          4
-#define CONV_ICONV              5
 
 /*
  * Structure used for mappings and abbreviations.
@@ -447,9 +431,16 @@ typedef struct {
   char_u *b_syn_isk;            // iskeyword option
 } synblock_T;
 
+/// Type used for changedtick_di member in buf_T
+///
+/// Primary exists so that literals of relevant type can be made.
+typedef TV_DICTITEM_STRUCT(sizeof("changedtick")) ChangedtickDictItem;
 
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2
+
+// Maximum number of maphash blocks we will have
+#define MAX_MAPHASH 256
 
 /*
  * buffer: structure that holds information about one file
@@ -470,9 +461,9 @@ struct file_buffer {
 
   int b_nwindows;               /* nr of windows open on this buffer */
 
-  int b_flags;                  /* various BF_ flags */
-  bool b_closing;               /* buffer is being closed, don't let
-                                   autocommands close it too. */
+  int b_flags;                  // various BF_ flags
+  int b_locked;                 // Buffer is being closed or referenced, don't
+                                // let autocommands wipe it out.
 
   /*
    * b_ffname has the full path of the file (NULL for no name).
@@ -491,7 +482,7 @@ struct file_buffer {
                                 // file has been changed and not written out.
 /// Change identifier incremented for each change, including undo
 #define b_changedtick changedtick_di.di_tv.vval.v_number
-  dictitem16_T changedtick_di;  // b:changedtick dictionary item.
+  ChangedtickDictItem changedtick_di;  // b:changedtick dictionary item.
 
   bool b_saving;                /* Set to true if we are in the middle of
                                    saving the buffer. */
@@ -539,8 +530,8 @@ struct file_buffer {
    */
   uint64_t b_chartab[4];
 
-  /* Table used for mappings local to a buffer. */
-  mapblock_T  *(b_maphash[256]);
+  // Table used for mappings local to a buffer.
+  mapblock_T  *(b_maphash[MAX_MAPHASH]);
 
   /* First abbreviation local to a buffer. */
   mapblock_T  *b_first_abbr;
@@ -612,6 +603,7 @@ struct file_buffer {
   char_u *b_p_bt;               ///< 'buftype'
   int b_has_qf_entry;           ///< quickfix exists for buffer
   int b_p_bl;                   ///< 'buflisted'
+  long b_p_channel;             ///< 'channel'
   int b_p_cin;                  ///< 'cindent'
   char_u *b_p_cino;             ///< 'cinoptions'
   char_u *b_p_cink;             ///< 'cinkeys'
@@ -640,6 +632,7 @@ struct file_buffer {
   char_u *b_p_inde;             ///< 'indentexpr'
   uint32_t b_p_inde_flags;      ///< flags for 'indentexpr'
   char_u *b_p_indk;             ///< 'indentkeys'
+  char_u *b_p_fp;               ///< 'formatprg'
   char_u *b_p_fex;              ///< 'formatexpr'
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
   char_u *b_p_kp;               ///< 'keywordprg'
@@ -734,8 +727,8 @@ struct file_buffer {
   int b_bad_char;               /* "++bad=" argument when edit started or 0 */
   int b_start_bomb;             /* 'bomb' when it was read */
 
-  dictitem_T b_bufvar;          /* variable for "b:" Dictionary */
-  dict_T      *b_vars;          /* internal variables, local to buffer */
+  ScopeDictDictItem b_bufvar;  ///< Variable for "b:" Dictionary.
+  dict_T *b_vars;  ///< b: scope dictionary.
 
   /* When a buffer is created, it starts without a swap file.  b_may_swap is
    * then set to indicate that a swap file may be opened later.  It is reset
@@ -768,7 +761,9 @@ struct file_buffer {
 
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 
-  bufhl_info_T *b_bufhl_info;   // buffer stored highlights
+  BufhlInfo b_bufhl_info;       // buffer stored highlights
+
+  kvec_t(BufhlLine *) b_bufhl_move_space;  // temporary space for highlights
 };
 
 /*
@@ -823,9 +818,9 @@ struct tabpage_S {
   buf_T           *(tp_diffbuf[DB_COUNT]);
   int tp_diff_invalid;              ///< list of diffs is outdated
   frame_T         *(tp_snapshot[SNAP_COUNT]);    ///< window layout snapshots
-  dictitem_T tp_winvar;             ///< variable for "t:" Dictionary
-  dict_T          *tp_vars;         ///< internal variables, local to tab page
-  char_u          *tp_localdir;     ///< Absolute path of local CWD or NULL
+  ScopeDictDictItem tp_winvar;      ///< Variable for "t:" Dictionary.
+  dict_T          *tp_vars;         ///< Internal variables, local to tab page.
+  char_u          *tp_localdir;     ///< Absolute path of local cwd or NULL.
 };
 
 /*
@@ -943,6 +938,14 @@ struct window_S {
                                     ///< often, keep it the first item!)
 
   synblock_T  *w_s;                 /* for :ownsyntax */
+
+  int w_hl_id_normal;               ///< 'winhighlight' normal id
+  int w_hl_attr_normal;             ///< 'winhighlight' normal final attrs
+
+  int w_hl_ids[HLF_COUNT];          ///< 'winhighlight' id
+  int w_hl_attrs[HLF_COUNT];        ///< 'winhighlight' final attrs
+
+  int w_hl_needs_update;            ///< attrs need to be recalculated
 
   win_T       *w_prev;              /* link to previous window */
   win_T       *w_next;              /* link to next window */
@@ -1117,8 +1120,8 @@ struct window_S {
 
   long w_scbind_pos;
 
-  dictitem_T w_winvar;          /* variable for "w:" Dictionary */
-  dict_T      *w_vars;          /* internal variables, local to window */
+  ScopeDictDictItem w_winvar;  ///< Variable for "w:" dictionary.
+  dict_T *w_vars;  ///< Dictionary with w: variables.
 
   int w_farsi;                  /* for the window dependent Farsi functions */
 
@@ -1172,5 +1175,10 @@ struct window_S {
    */
   qf_info_T   *w_llist_ref;
 };
+
+static inline int win_hl_attr(win_T *wp, int hlf)
+{
+  return wp->w_hl_attrs[hlf];
+}
 
 #endif // NVIM_BUFFER_DEFS_H

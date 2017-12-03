@@ -49,18 +49,31 @@ local ok = function(res)
   return assert.is_true(res)
 end
 
+-- initial_path:  directory to recurse into
+-- re:            include pattern (string)
+-- exc_re:        exclude pattern(s) (string or table)
 local function glob(initial_path, re, exc_re)
+  exc_re = type(exc_re) == 'table' and exc_re or { exc_re }
   local paths_to_check = {initial_path}
   local ret = {}
   local checked_files = {}
+  local function is_excluded(path)
+    for _, pat in pairs(exc_re) do
+      if path:match(pat) then return true end
+    end
+    return false
+  end
+
+  if is_excluded(initial_path) then
+    return ret
+  end
   while #paths_to_check > 0 do
     local cur_path = paths_to_check[#paths_to_check]
     paths_to_check[#paths_to_check] = nil
     for e in lfs.dir(cur_path) do
       local full_path = cur_path .. '/' .. e
       local checked_path = full_path:sub(#initial_path + 1)
-      if ((not exc_re or not checked_path:match(exc_re))
-          and e:sub(1, 1) ~= '.') then
+      if (not is_excluded(checked_path)) and e:sub(1, 1) ~= '.' then
         local attrs = lfs.attributes(full_path)
         if attrs then
           local check_key = attrs.dev .. ':' .. tostring(attrs.ino)
@@ -138,20 +151,40 @@ local uname = (function()
   end)
 end)()
 
-local function tmpname()
-  local fname = os.tmpname()
-  if uname() == 'Windows' and fname:sub(1, 2) == '\\s' then
-    -- In Windows tmpname() returns a filename starting with
-    -- special sequence \s, prepend $TEMP path
-    local tmpdir = os.getenv('TEMP')
-    return tmpdir..fname
-  elseif fname:match('^/tmp') and uname() == 'Darwin' then
-    -- In OS X /tmp links to /private/tmp
-    return '/private'..fname
-  else
-    return fname
-  end
+local function tmpdir_get()
+  return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
 end
+
+-- Is temp directory `dir` defined local to the project workspace?
+local function tmpdir_is_local(dir)
+  return not not (dir and string.find(dir, 'Xtest'))
+end
+
+local tmpname = (function()
+  local seq = 0
+  local tmpdir = tmpdir_get()
+  return (function()
+    if tmpdir_is_local(tmpdir) then
+      -- Cannot control os.tmpname() dir, so hack our own tmpname() impl.
+      seq = seq + 1
+      local fname = tmpdir..'/nvim-test-lua-'..seq
+      io.open(fname, 'w'):close()
+      return fname
+    else
+      local fname = os.tmpname()
+      if uname() == 'Windows' and fname:sub(1, 2) == '\\s' then
+        -- In Windows tmpname() returns a filename starting with
+        -- special sequence \s, prepend $TEMP path
+        return tmpdir..fname
+      elseif fname:match('^/tmp') and uname() == 'Darwin' then
+        -- In OS X /tmp links to /private/tmp
+        return '/private'..fname
+      else
+        return fname
+      end
+    end
+  end)
+end)()
 
 local function map(func, tab)
   local rettab = {}
@@ -181,33 +214,38 @@ end
 
 local tests_skipped = 0
 
-local function check_cores(app)
+local function check_cores(app, force)
   app = app or 'build/bin/nvim'
   local initial_path, re, exc_re
   local gdb_db_cmd = 'gdb -n -batch -ex "thread apply all bt full" "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
   local lldb_db_cmd = 'lldb -Q -o "bt all" -f "$_NVIM_TEST_APP" -c "$_NVIM_TEST_CORE"'
   local random_skip = false
+  -- Workspace-local $TMPDIR, scrubbed and pattern-escaped.
+  -- "./Xtest-tmpdir/" => "Xtest%-tmpdir"
+  local local_tmpdir = (tmpdir_is_local(tmpdir_get())
+    and tmpdir_get():gsub('^[ ./]+',''):gsub('%/+$',''):gsub('([^%w])', '%%%1')
+    or nil)
   local db_cmd
   if hasenv('NVIM_TEST_CORE_GLOB_DIRECTORY') then
     initial_path = os.getenv('NVIM_TEST_CORE_GLOB_DIRECTORY')
     re = os.getenv('NVIM_TEST_CORE_GLOB_RE')
-    exc_re = os.getenv('NVIM_TEST_CORE_EXC_RE')
+    exc_re = { os.getenv('NVIM_TEST_CORE_EXC_RE'), local_tmpdir }
     db_cmd = os.getenv('NVIM_TEST_CORE_DB_CMD') or gdb_db_cmd
     random_skip = os.getenv('NVIM_TEST_CORE_RANDOM_SKIP')
   elseif os.getenv('TRAVIS_OS_NAME') == 'osx' then
     initial_path = '/cores'
     re = nil
-    exc_re = nil
+    exc_re = { local_tmpdir }
     db_cmd = lldb_db_cmd
   else
     initial_path = '.'
     re = '/core[^/]*$'
-    exc_re = '^/%.deps$'
+    exc_re = { '^/%.deps$', local_tmpdir }
     db_cmd = gdb_db_cmd
     random_skip = true
   end
   -- Finding cores takes too much time on linux
-  if random_skip and math.random() < 0.9 then
+  if not force and random_skip and math.random() < 0.9 then
     tests_skipped = tests_skipped + 1
     return
   end
@@ -219,21 +257,8 @@ local function check_cores(app)
     local esigns = ('='):rep(len / 2)
     out:write(('\n%s Core file %s %s\n'):format(esigns, core, esigns))
     out:flush()
-    local pipe = io.popen(
-        db_cmd:gsub('%$_NVIM_TEST_APP', app):gsub('%$_NVIM_TEST_CORE', core)
-        .. ' 2>&1', 'r')
-    if pipe then
-      local bt = pipe:read('*a')
-      if bt then
-        out:write(bt)
-        out:write('\n')
-      else
-        out:write('Failed to read from the pipe\n')
-      end
-    else
-      out:write('Failed to create pipe\n')
-    end
-    out:flush()
+    os.execute(db_cmd:gsub('%$_NVIM_TEST_APP', app):gsub('%$_NVIM_TEST_CORE', core) .. ' 2>&1')
+    out:write('\n')
     found_cores = found_cores + 1
     os.remove(core)
   end
@@ -270,6 +295,50 @@ local function repeated_read_cmd(...)
   return nil
 end
 
+local function shallowcopy(orig)
+  local copy = {}
+  for orig_key, orig_value in pairs(orig) do
+    copy[orig_key] = orig_value
+  end
+  return copy
+end
+
+local function concat_tables(...)
+  local ret = {}
+  for i = 1, select('#', ...) do
+    local tbl = select(i, ...)
+    if tbl then
+      for _, v in ipairs(tbl) do
+        ret[#ret + 1] = v
+      end
+    end
+  end
+  return ret
+end
+
+local function dedent(str, leave_indent)
+  -- find minimum common indent across lines
+  local indent = nil
+  for line in str:gmatch('[^\n]+') do
+    local line_indent = line:match('^%s+') or ''
+    if indent == nil or #line_indent < #indent then
+      indent = line_indent
+    end
+  end
+  if indent == nil or #indent == 0 then
+    -- no minimum common indent
+    return str
+  end
+  local left_indent = (' '):rep(leave_indent or 0)
+  -- create a pattern for the indent
+  indent = indent:gsub('%s', '[ \t]')
+  -- strip it from the first line
+  str = str:gsub('^'..indent, left_indent)
+  -- strip it from the remaining lines
+  str = str:gsub('[\n]'..indent, '\n' .. left_indent)
+  return str
+end
+
 return {
   eq = eq,
   neq = neq,
@@ -287,4 +356,7 @@ return {
   popen_r = popen_r,
   popen_w = popen_w,
   repeated_read_cmd = repeated_read_cmd,
+  shallowcopy = shallowcopy,
+  concat_tables = concat_tables,
+  dedent = dedent,
 }

@@ -371,27 +371,6 @@ See
 Used to set the 'shell' option, which determines the shell used by the
 .Ic :terminal
 command.
-.It Ev NVIM_TUI_ENABLE_CURSOR_SHAPE
-Set to 0 to prevent Nvim from changing the cursor shape.
-Set to 1 to enable non-blinking mode-sensitive cursor (this is the default).
-Set to 2 to enable blinking mode-sensitive cursor.
-Host terminal must support the DECSCUSR CSI escape sequence.
-.Pp
-Depending on the terminal emulator, using this option with
-.Nm
-under
-.Xr tmux 1
-might require adding the following to
-.Pa ~/.tmux.conf :
-.Bd -literal -offset indent
-set -ga terminal-overrides ',*:Ss=\eE[%p1%d q:Se=\eE[2 q'
-.Ed
-.Pp
-See
-.Ic terminal-overrides
-in the
-.Xr tmux 1
-manual page for more information.
 .El
 .Sh FILES
 .Bl -tag -width "~/.config/nvim/init.vim"

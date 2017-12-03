@@ -6,11 +6,8 @@
 " URL:		http://www.eandem.co.uk/mrw/vim
 "
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -18,11 +15,7 @@ endif
 syn case ignore
 
 " As per current users documentation
-if version < 600
-  set isk=@,48-57,?,!,.,',+,-,*,&,\|,=,_,~
-else
-  setlocal isk=@,48-57,?,!,.,',+,-,*,&,\|,=,_,~
-endif
+setlocal isk=@,48-57,?,!,.,',+,-,*,&,\|,=,_,~
 
 " Yer TODO highlighter
 syn keyword	rebolTodo	contained TODO
@@ -145,65 +138,55 @@ syn keyword     rebolConstant   none
 
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_rebol_syntax_inits")
-  if version < 508
-    let did_rebol_syntax_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting yet
 
-  HiLink rebolTodo     Todo
+hi def link rebolTodo     Todo
 
-  HiLink rebolStatement Statement
-  HiLink rebolLabel	Label
-  HiLink rebolConditional Conditional
-  HiLink rebolRepeat	Repeat
+hi def link rebolStatement Statement
+hi def link rebolLabel	Label
+hi def link rebolConditional Conditional
+hi def link rebolRepeat	Repeat
 
-  HiLink rebolOperator	Operator
-  HiLink rebolLogicOperator rebolOperator
-  HiLink rebolLogicFunction rebolLogicOperator
-  HiLink rebolMathOperator rebolOperator
-  HiLink rebolMathFunction rebolMathOperator
-  HiLink rebolBinaryOperator rebolOperator
-  HiLink rebolBinaryFunction rebolBinaryOperator
+hi def link rebolOperator	Operator
+hi def link rebolLogicOperator rebolOperator
+hi def link rebolLogicFunction rebolLogicOperator
+hi def link rebolMathOperator rebolOperator
+hi def link rebolMathFunction rebolMathOperator
+hi def link rebolBinaryOperator rebolOperator
+hi def link rebolBinaryFunction rebolBinaryOperator
 
-  HiLink rebolType     Type
-  HiLink rebolTypeFunction rebolOperator
+hi def link rebolType     Type
+hi def link rebolTypeFunction rebolOperator
 
-  HiLink rebolWord     Identifier
-  HiLink rebolWordPath rebolWord
-  HiLink rebolFunction	Function
+hi def link rebolWord     Identifier
+hi def link rebolWordPath rebolWord
+hi def link rebolFunction	Function
 
-  HiLink rebolCharacter Character
-  HiLink rebolSpecialCharacter SpecialChar
-  HiLink rebolString	String
+hi def link rebolCharacter Character
+hi def link rebolSpecialCharacter SpecialChar
+hi def link rebolString	String
 
-  HiLink rebolNumber   Number
-  HiLink rebolInteger  rebolNumber
-  HiLink rebolDecimal  rebolNumber
-  HiLink rebolTime     rebolNumber
-  HiLink rebolDate     rebolNumber
-  HiLink rebolMoney    rebolNumber
-  HiLink rebolBinary   rebolNumber
-  HiLink rebolEmail    rebolString
-  HiLink rebolFile     rebolString
-  HiLink rebolURL      rebolString
-  HiLink rebolIssue    rebolNumber
-  HiLink rebolTuple    rebolNumber
-  HiLink rebolFloat    Float
-  HiLink rebolBoolean  Boolean
+hi def link rebolNumber   Number
+hi def link rebolInteger  rebolNumber
+hi def link rebolDecimal  rebolNumber
+hi def link rebolTime     rebolNumber
+hi def link rebolDate     rebolNumber
+hi def link rebolMoney    rebolNumber
+hi def link rebolBinary   rebolNumber
+hi def link rebolEmail    rebolString
+hi def link rebolFile     rebolString
+hi def link rebolURL      rebolString
+hi def link rebolIssue    rebolNumber
+hi def link rebolTuple    rebolNumber
+hi def link rebolFloat    Float
+hi def link rebolBoolean  Boolean
 
-  HiLink rebolConstant Constant
+hi def link rebolConstant Constant
 
-  HiLink rebolComment	Comment
+hi def link rebolComment	Comment
 
-  HiLink rebolError	Error
+hi def link rebolError	Error
 
-  delcommand HiLink
-endif
 
 if exists("my_rebol_file")
   if file_readable(expand(my_rebol_file))

@@ -4,7 +4,6 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
-local execute = helpers.execute
 local request = helpers.request
 local source = helpers.source
 
@@ -28,7 +27,7 @@ describe('autocmd BufEnter', function()
         endtry
       endfunction
     ]])
-    execute("call Test()")
+    command("call Test()")
     eq(1, eval("exists('g:dir_bufenter')"))  -- Did BufEnter for the directory.
     eq(2, eval("bufnr('%')"))                -- Switched to the dir buffer.
   end)

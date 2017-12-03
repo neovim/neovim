@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local exc_exec = helpers.exc_exec
-local execute = helpers.execute
+local command = helpers.command
 local funcs = helpers.funcs
 local clear = helpers.clear
 local eval = helpers.eval
@@ -12,7 +12,7 @@ describe('Special values', function()
   before_each(clear)
 
   it('do not cause error when freed', function()
-    execute([[
+    command([[
       function Test()
         try
           return v:true
@@ -109,7 +109,7 @@ describe('Special values', function()
   it('does not work with +=/-=/.=', function()
     meths.set_var('true', true)
     meths.set_var('false', false)
-    execute('let null = v:null')
+    command('let null = v:null')
 
     eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let true  += 1'))
     eq('Vim(let):E734: Wrong variable type for +=', exc_exec('let false += 1'))
@@ -167,5 +167,12 @@ describe('Special values', function()
       'Expected True but got v:false',
       'Expected True but got v:null',
     }, meths.get_vvar('errors'))
+  end)
+
+  describe('compat', function()
+    it('v:count is distinct from count', function()
+      command('let count = []') -- v:count is readonly
+      eq(1, eval('count is# g:["count"]'))
+    end)
   end)
 end)

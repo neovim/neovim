@@ -1,7 +1,7 @@
 local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local nvim_dir = helpers.nvim_dir
-local execute, nvim = helpers.execute, helpers.nvim
+local feed_command, nvim = helpers.feed_command, helpers.nvim
 
 local function feed_data(data)
   nvim('set_var', 'term_data', data)
@@ -33,7 +33,6 @@ local function disable_mouse() feed_termcode('[?1002l') end
 
 local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 
-
 local function screen_setup(extra_rows, command, cols)
   extra_rows = extra_rows and extra_rows or 0
   command = command and command or default_command
@@ -58,15 +57,15 @@ local function screen_setup(extra_rows, command, cols)
 
   screen:attach({rgb=false})
 
-  execute('enew | call termopen('..command..')')
+  feed_command('enew | call termopen('..command..')')
   nvim('input', '<CR>')
   local vim_errmsg = nvim('eval', 'v:errmsg')
   if vim_errmsg and "" ~= vim_errmsg then
     error(vim_errmsg)
   end
 
-  execute('setlocal scrollback=10')
-  execute('startinsert')
+  feed_command('setlocal scrollback=10')
+  feed_command('startinsert')
 
   -- tty-test puts the terminal into raw mode and echoes input. Tests work by
   -- feeding termcodes to control the display and asserting by screen:expect.

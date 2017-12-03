@@ -4,11 +4,8 @@
 " URL:		ftp://ftp.halcyon.com/pub/users/wturner/icon.vim
 " Last Change:	2003 May 11
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -157,56 +154,46 @@ exec "syn sync ccomment iconComment minlines=" . icon_minlines
 
 " Define the default highlighting.
 
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting
-if version >= 508 || !exists("did_icon_syn_inits")
-  if version < 508
-    let did_icon_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
+" Only when an item doesn't have highlighting
 
-  " The default methods for highlighting.  Can be overridden later
+" The default methods for highlighting.  Can be overridden later
 
-  " HiLink iconSpecialCharacter	iconSpecial
+" hi def link iconSpecialCharacter	iconSpecial
 
-  HiLink iconOctalError		iconError
-  HiLink iconParenError		iconError
-  HiLink iconInParen		iconError
-  HiLink iconCommentError	iconError
-  HiLink iconSpaceError		iconError
-  HiLink iconCommentError	iconError
-  HiLink iconIncluded		iconString
-  HiLink iconCommentString	iconString
-  HiLink iconComment2String	iconString
-  HiLink iconCommentSkip	iconComment
+hi def link iconOctalError		iconError
+hi def link iconParenError		iconError
+hi def link iconInParen		iconError
+hi def link iconCommentError	iconError
+hi def link iconSpaceError		iconError
+hi def link iconCommentError	iconError
+hi def link iconIncluded		iconString
+hi def link iconCommentString	iconString
+hi def link iconComment2String	iconString
+hi def link iconCommentSkip	iconComment
 
-  HiLink iconUserLabel		Label
-  HiLink iconCharacter		Character
-  HiLink iconNumber			Number
-  HiLink iconRadix			Number
-  HiLink iconFloat			Float
-  HiLink iconInclude		Include
-  HiLink iconPreProc		PreProc
-  HiLink iconDefine			Macro
-  HiLink iconError			Error
-  HiLink iconStatement		Statement
-  HiLink iconPreCondit		PreCondit
-  HiLink iconString			String
-  HiLink iconCset			String
-  HiLink iconComment		Comment
-  HiLink iconSpecial		SpecialChar
-  HiLink iconTodo			Todo
-  HiLink iconStorageClass	StorageClass
-  HiLink iconFunction		Statement
-  HiLink iconReserved		Label
-  HiLink iconKeyword		Operator
+hi def link iconUserLabel		Label
+hi def link iconCharacter		Character
+hi def link iconNumber			Number
+hi def link iconRadix			Number
+hi def link iconFloat			Float
+hi def link iconInclude		Include
+hi def link iconPreProc		PreProc
+hi def link iconDefine			Macro
+hi def link iconError			Error
+hi def link iconStatement		Statement
+hi def link iconPreCondit		PreCondit
+hi def link iconString			String
+hi def link iconCset			String
+hi def link iconComment		Comment
+hi def link iconSpecial		SpecialChar
+hi def link iconTodo			Todo
+hi def link iconStorageClass	StorageClass
+hi def link iconFunction		Statement
+hi def link iconReserved		Label
+hi def link iconKeyword		Operator
 
-  "HiLink iconIdentifier	Identifier
+"hi def link iconIdentifier	Identifier
 
-  delcommand HiLink
-endif
 
 let b:current_syntax = "icon"
 

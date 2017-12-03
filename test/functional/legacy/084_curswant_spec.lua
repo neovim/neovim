@@ -7,6 +7,7 @@ local clear, expect = helpers.clear, helpers.expect
 describe('curswant', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start target options
@@ -25,7 +26,7 @@ describe('curswant', function()
         let curswant_after = winsaveview().curswant
         return [a:option_name, curswant_before, curswant_after]
       endfunction
-      
+
       new
       put =['1234567890', '12345']
       1 delete _
@@ -33,7 +34,7 @@ describe('curswant', function()
       for option_name in target_option_names
         call add(result, TestCurswant(option_name))
       endfor
-      
+
       new
       put =map(copy(result), 'join(v:val, '' '')')
       1 delete _

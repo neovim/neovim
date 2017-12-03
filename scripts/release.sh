@@ -18,6 +18,8 @@ set -e
 set -u
 set -o pipefail
 
+USE_CURRENT_COMMIT=${1:-no}
+
 __sed=$( [ "$(uname)" = Darwin ] && echo 'sed -E' || echo 'sed -r' )
 
 cd "$(git rev-parse --show-toplevel)"
@@ -51,15 +53,18 @@ echo "Release version: ${__VERSION}"
 $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) "-dev"/\1 ""/' CMakeLists.txt
 if grep '(NVIM_API_PRERELEASE true)' CMakeLists.txt > /dev/null; then
   $__sed -i.bk 's/(NVIM_API_PRERELEASE) true/\1 false/' CMakeLists.txt
-  cp build/funcs_data.mpack test/functional/fixtures/api_level_$__API_LEVEL.mpack
+  build/bin/nvim --api-info > test/functional/fixtures/api_level_$__API_LEVEL.mpack
   git add test/functional/fixtures/api_level_$__API_LEVEL.mpack
 fi
 
-echo "Building changelog since ${__LAST_TAG}..."
-__CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:\S')"
+if ! test "$USE_CURRENT_COMMIT" = 'use-current-commit' ; then
+  echo "Building changelog since ${__LAST_TAG}..."
+  __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:\S')"
 
-git add CMakeLists.txt
-git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
+  git add CMakeLists.txt
+  git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
+fi
+
 git tag --sign -a v"${__VERSION}" -m "NVIM v${__VERSION}"
 
 $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) ""/\1 "-dev"/' CMakeLists.txt
@@ -69,6 +74,8 @@ nvim +'/NVIM_VERSION' +10new +'exe "norm! iUpdate version numbers!!!\<CR>"' \
 
 git add CMakeLists.txt
 git commit -m "$__BUMP_MSG"
+
+rm CMakeLists.txt.bk || true
 
 echo "
 Next steps:

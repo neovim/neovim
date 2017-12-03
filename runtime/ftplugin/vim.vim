@@ -14,7 +14,7 @@ let b:did_ftplugin = 1
 let s:cpo_save = &cpo
 set cpo-=C
 
-let b:undo_ftplugin = "setl fo< isk< com< tw< commentstring<"
+let b:undo_ftplugin = "setl fo< isk< com< tw< commentstring< keywordprg<"
 	\ . "| unlet! b:match_ignorecase b:match_words b:match_skip"
 
 " Set 'formatoptions' to break comment lines but not other lines,
@@ -35,6 +35,9 @@ endif
 
 " Comments start with a double quote
 setlocal commentstring=\"%s
+
+" Prefer Vim help instead of manpages.
+setlocal keywordprg=:help
 
 " Move around functions.
 nnoremap <silent><buffer> [[ m':call search('^\s*fu\%[nction]\>', "bW")<CR>

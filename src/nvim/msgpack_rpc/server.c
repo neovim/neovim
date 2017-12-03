@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,39 +97,61 @@ char *server_address_new(void)
 #endif
 }
 
-/// Starts listening for API calls on the TCP address or pipe path `endpoint`.
-/// The socket type is determined by parsing `endpoint`: If it's a valid IPv4
-/// address in 'ip[:port]' format, then it will be TCP socket. The port is
-/// optional and if omitted defaults to NVIM_DEFAULT_TCP_PORT. Otherwise it
-/// will be a unix socket or named pipe.
+/// Check if this instance owns a pipe address.
+/// The argument must already be resolved to an absolute path!
+bool server_owns_pipe_address(const char *path)
+{
+  for (int i = 0; i < watchers.ga_len; i++) {
+    if (!strcmp(path, ((SocketWatcher **)watchers.ga_data)[i]->addr)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Starts listening for API calls.
 ///
-/// @param endpoint Address of the server. Either a 'ip[:port]' string or an
-///        arbitrary identifier (trimmed to 256 bytes) for the unix socket or
-///        named pipe.
+/// The socket type is determined by parsing `endpoint`: If it's a valid IPv4
+/// or IPv6 address in 'ip:[port]' format, then it will be a TCP socket.
+/// Otherwise it will be a Unix socket or named pipe (Windows).
+///
+/// If no port is given, a random one will be assigned.
+///
+/// @param endpoint Address of the server. Either a 'ip:[port]' string or an
+///                 arbitrary identifier (trimmed to 256 bytes) for the Unix
+///                 socket or named pipe.
 /// @returns 0 on success, 1 on a regular error, and negative errno
-///          on failure to bind or connect.
+///          on failure to bind or listen.
 int server_start(const char *endpoint)
 {
-  if (endpoint == NULL) {
-    ELOG("Attempting to start server on NULL endpoint");
+  if (endpoint == NULL || endpoint[0] == '\0') {
+    WLOG("Empty or NULL endpoint");
     return 1;
   }
 
   SocketWatcher *watcher = xmalloc(sizeof(SocketWatcher));
-  socket_watcher_init(&main_loop, watcher, endpoint, NULL);
+
+  int result = socket_watcher_init(&main_loop, watcher, endpoint);
+  if (result < 0) {
+    xfree(watcher);
+    return result;
+  }
 
   // Check if a watcher for the endpoint already exists
   for (int i = 0; i < watchers.ga_len; i++) {
     if (!strcmp(watcher->addr, ((SocketWatcher **)watchers.ga_data)[i]->addr)) {
       ELOG("Already listening on %s", watcher->addr);
+      if (watcher->stream->type == UV_TCP) {
+        uv_freeaddrinfo(watcher->uv.tcp.addrinfo);
+      }
       socket_watcher_close(watcher, free_server);
       return 1;
     }
   }
 
-  int result = socket_watcher_start(watcher, MAX_CONNECTIONS, connection_cb);
+  result = socket_watcher_start(watcher, MAX_CONNECTIONS, connection_cb);
   if (result < 0) {
-    ELOG("Failed to start server: %s", uv_strerror(result));
+    WLOG("Failed to start server: %s", uv_strerror(result));
     socket_watcher_close(watcher, free_server);
     return result;
   }
@@ -155,6 +180,7 @@ int server_start(const char *endpoint)
 void server_stop(char *endpoint)
 {
   SocketWatcher *watcher;
+  bool watcher_found = false;
   char addr[ADDRESS_MAX_SIZE];
 
   // Trim to `ADDRESS_MAX_SIZE`
@@ -164,11 +190,12 @@ void server_stop(char *endpoint)
   for (; i < watchers.ga_len; i++) {
     watcher = ((SocketWatcher **)watchers.ga_data)[i];
     if (strcmp(addr, watcher->addr) == 0) {
+      watcher_found = true;
       break;
     }
   }
 
-  if (i >= watchers.ga_len) {
+  if (!watcher_found) {
     ELOG("Not listening on %s", addr);
     return;
   }

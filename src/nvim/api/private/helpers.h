@@ -6,16 +6,8 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
+#include "nvim/ex_eval.h"
 #include "nvim/lib/kvec.h"
-
-#define api_set_error(err, errtype, ...) \
-  do { \
-    snprintf((err)->msg, \
-             sizeof((err)->msg), \
-             __VA_ARGS__); \
-    (err)->set = true; \
-    (err)->type = kErrorType##errtype; \
-  } while (0)
 
 #define OBJECT_OBJ(o) o
 
@@ -27,7 +19,7 @@
     .type = kObjectTypeInteger, \
     .data.integer = i })
 
-#define FLOATING_OBJ(f) ((Object) { \
+#define FLOAT_OBJ(f) ((Object) { \
     .type = kObjectTypeFloat, \
     .data.floating = f })
 
@@ -90,6 +82,21 @@
 #define api_free_buffer(value)
 #define api_free_window(value)
 #define api_free_tabpage(value)
+
+/// Structure used for saving state for :try
+///
+/// Used when caller is supposed to be operating when other VimL code is being
+/// processed and that “other VimL code” must not be affected.
+typedef struct {
+  except_T *current_exception;
+  struct msglist *private_msg_list;
+  const struct msglist *const *msg_list;
+  int trylevel;
+  int got_int;
+  int did_throw;
+  int need_rethrow;
+  int did_emsg;
+} TryState;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"

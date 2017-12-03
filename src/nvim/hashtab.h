@@ -70,6 +70,25 @@ typedef struct hashtable_S {
   hashitem_T ht_smallarray[HT_INIT_SIZE];      /// initial array
 } hashtab_T;
 
+/// Iterate over a hashtab
+///
+/// @param[in]  ht  Hashtab to iterate over.
+/// @param  hi  Name of the variable with current hashtab entry.
+/// @param  code  Cycle body.
+#define HASHTAB_ITER(ht, hi, code) \
+    do { \
+      hashtab_T *const hi##ht_ = (ht); \
+      size_t hi##todo_ = hi##ht_->ht_used; \
+      for (hashitem_T *hi = hi##ht_->ht_array; hi##todo_; hi++) { \
+        if (!HASHITEM_EMPTY(hi)) { \
+          { \
+            code \
+          } \
+          hi##todo_--; \
+        } \
+      } \
+    } while (0)
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "hashtab.h.generated.h"
 #endif

@@ -1,6 +1,10 @@
 #ifndef NVIM_OS_WIN_DEFS_H
 #define NVIM_OS_WIN_DEFS_H
 
+#ifndef WIN32
+# error Header must be included only when compiling for Windows.
+#endif
+
 // winsock2.h must be first to avoid incompatibilities
 // with winsock.h (included by windows.h)
 #include <winsock2.h>
@@ -15,7 +19,7 @@
 
 #define NAME_MAX _MAX_PATH
 
-#define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
+#define TEMP_DIR_NAMES { "$TMPDIR", "$TMP", "$TEMP", "$USERPROFILE", "" }
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 
 #define FNAME_ILLEGAL "\"*?><|"
@@ -26,8 +30,13 @@
 
 #define USE_CRNL
 
-// We have our own RGB macro in macros.h.
-#undef RGB
+// Windows defines a RGB macro that produces 0x00bbggrr color values for use
+// with GDI. Our macro is different, and we don't use GDI.
+#if defined(RGB)
+# undef RGB
+  // Duplicated from macros.h to avoid include-order sensitivity.
+# define RGB(r, g, b) ((r << 16) | (g << 8) | b)
+#endif
 
 #ifdef _MSC_VER
 # ifndef inline
@@ -89,6 +98,12 @@ typedef SSIZE_T ssize_t;
 
 #ifndef STDIN_FILENO
 # define STDIN_FILENO 0
+#endif
+#ifndef STDOUT_FILENO
+# define STDOUT_FILENO 1
+#endif
+#ifndef STDERR_FILENO
+# define STDERR_FILENO 2
 #endif
 
 #endif  // NVIM_OS_WIN_DEFS_H

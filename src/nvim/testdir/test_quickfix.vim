@@ -6,7 +6,7 @@ endif
 
 set encoding=utf-8
 
-function! s:setup_commands(cchar)
+func s:setup_commands(cchar)
   if a:cchar == 'c'
     command! -nargs=* -bang Xlist <mods>clist<bang> <args>
     command! -nargs=* Xgetexpr <mods>cgetexpr <args>
@@ -68,10 +68,10 @@ function! s:setup_commands(cchar)
     let g:Xgetlist = function('getloclist', [0])
     let g:Xsetlist = function('setloclist', [0])
   endif
-endfunction
+endfunc
 
 " Tests for the :clist and :llist commands
-function XlistTests(cchar)
+func XlistTests(cchar)
   call s:setup_commands(a:cchar)
 
   " With an empty list, command should return error
@@ -128,17 +128,17 @@ function XlistTests(cchar)
   let l = split(result, "\n")
   call assert_equal([' 2 Xtestfile1:1 col 3: Line1',
 		   \ ' 3: non-error 2', ' 4 Xtestfile2:2 col 2: Line2'], l)
-endfunction
+endfunc
 
-function Test_clist()
+func Test_clist()
   call XlistTests('c')
   call XlistTests('l')
-endfunction
+endfunc
 
 " Tests for the :colder, :cnewer, :lolder and :lnewer commands
 " Note that this test assumes that a quickfix/location list is
 " already set by the caller.
-function XageTests(cchar)
+func XageTests(cchar)
   call s:setup_commands(a:cchar)
 
   " Jumping to a non existent list should return error
@@ -171,20 +171,20 @@ function XageTests(cchar)
   Xnewer 2
   let l = g:Xgetlist()
   call assert_equal('Line3', l[0].text)
-endfunction
+endfunc
 
-function Test_cage()
+func Test_cage()
   let list = [{'bufnr': 1, 'lnum': 1}]
   call setqflist(list)
   call XageTests('c')
 
   call setloclist(0, list)
   call XageTests('l')
-endfunction
+endfunc
 
 " Tests for the :cwindow, :lwindow :cclose, :lclose, :copen and :lopen
 " commands
-function XwindowTests(cchar)
+func XwindowTests(cchar)
   call s:setup_commands(a:cchar)
 
   " Create a list with no valid entries
@@ -227,16 +227,16 @@ function XwindowTests(cchar)
   " Calling cwindow should close the quickfix window with no valid errors
   Xwindow
   call assert_true(winnr('$') == 1)
-endfunction
+endfunc
 
-function Test_cwindow()
+func Test_cwindow()
   call XwindowTests('c')
   call XwindowTests('l')
-endfunction
+endfunc
 
 " Tests for the :cfile, :lfile, :caddfile, :laddfile, :cgetfile and :lgetfile
 " commands.
-function XfileTests(cchar)
+func XfileTests(cchar)
   call s:setup_commands(a:cchar)
 
   call writefile(['Xtestfile1:700:10:Line 700',
@@ -275,16 +275,16 @@ function XfileTests(cchar)
 	\ l[1].lnum == 333 && l[1].col == 88 && l[1].text ==# 'Line 333')
 
   call delete('Xqftestfile1')
-endfunction
+endfunc
 
-function Test_cfile()
+func Test_cfile()
   call XfileTests('c')
   call XfileTests('l')
-endfunction
+endfunc
 
 " Tests for the :cbuffer, :lbuffer, :caddbuffer, :laddbuffer, :cgetbuffer and
 " :lgetbuffer commands.
-function XbufferTests(cchar)
+func XbufferTests(cchar)
   call s:setup_commands(a:cchar)
 
   enew!
@@ -316,26 +316,26 @@ function XbufferTests(cchar)
 	\ l[3].lnum == 750 && l[3].col == 25 && l[3].text ==# 'Line 750')
   enew!
 
-endfunction
+endfunc
 
-function Test_cbuffer()
+func Test_cbuffer()
   call XbufferTests('c')
   call XbufferTests('l')
-endfunction
+endfunc
 
-function XexprTests(cchar)
+func XexprTests(cchar)
   call s:setup_commands(a:cchar)
 
   call assert_fails('Xexpr 10', 'E777:')
-endfunction
+endfunc
 
-function Test_cexpr()
+func Test_cexpr()
   call XexprTests('c')
   call XexprTests('l')
-endfunction
+endfunc
 
 " Tests for :cnext, :cprev, :cfirst, :clast commands
-function Xtest_browse(cchar)
+func Xtest_browse(cchar)
   call s:setup_commands(a:cchar)
 
   call s:create_test_file('Xqftestfile1')
@@ -366,14 +366,14 @@ function Xtest_browse(cchar)
 
   call delete('Xqftestfile1')
   call delete('Xqftestfile2')
-endfunction
+endfunc
 
-function Test_browse()
+func Test_browse()
   call Xtest_browse('c')
   call Xtest_browse('l')
-endfunction
+endfunc
 
-function! s:test_xhelpgrep(cchar)
+func s:test_xhelpgrep(cchar)
   call s:setup_commands(a:cchar)
   Xhelpgrep quickfix
   Xopen
@@ -385,9 +385,9 @@ function! s:test_xhelpgrep(cchar)
   call assert_true(w:quickfix_title =~ title_text, w:quickfix_title)
   " This wipes out the buffer, make sure that doesn't cause trouble.
   Xclose
-endfunction
+endfunc
 
-function Test_helpgrep()
+func Test_helpgrep()
   call s:test_xhelpgrep('c')
   helpclose
   call s:test_xhelpgrep('l')
@@ -425,7 +425,7 @@ func Test_vimgreptitle()
   augroup! QfBufWinEnter
 endfunc
 
-function XqfTitleTests(cchar)
+func XqfTitleTests(cchar)
   call s:setup_commands(a:cchar)
 
   Xgetexpr ['file:1:1:message']
@@ -444,16 +444,16 @@ function XqfTitleTests(cchar)
   endif
   call assert_equal(title, w:quickfix_title)
   Xclose
-endfunction
+endfunc
 
 " Tests for quickfix window's title
-function Test_qf_title()
+func Test_qf_title()
   call XqfTitleTests('c')
   call XqfTitleTests('l')
-endfunction
+endfunc
 
 " Tests for 'errorformat'
-function Test_efm()
+func Test_efm()
   let save_efm = &efm
   set efm=%EEEE%m,%WWWW%m,%+CCCC%.%#,%-GGGG%.%#
   cgetexpr ['WWWW', 'EEEE', 'CCCC']
@@ -466,7 +466,7 @@ function Test_efm()
   let l = strtrans(string(map(getqflist(), '[v:val.text, v:val.valid]')))
   call assert_equal("[['W', 1], ['ZZZZ', 0], ['E^@CCCC', 1], ['YYYY', 0]]", l)
   let &efm = save_efm
-endfunction
+endfunc
 
 " This will test for problems in quickfix:
 " A. incorrectly copying location lists which caused the location list to show
@@ -477,7 +477,7 @@ endfunction
 "    window it belongs to.
 "
 " Set up the test environment:
-function! ReadTestProtocol(name)
+func ReadTestProtocol(name)
   let base = substitute(a:name, '\v^test://(.*)%(\.[^.]+)?', '\1', '')
   let word = substitute(base, '\v(.*)\..*', '\1', '')
 
@@ -496,9 +496,9 @@ function! ReadTestProtocol(name)
   setl nomodifiable
   setl readonly
   exe 'doautocmd BufRead ' . substitute(a:name, '\v^test://(.*)', '\1', '')
-endfunction
+endfunc
 
-function Test_locationlist()
+func Test_locationlist()
     enew
 
     augroup testgroup
@@ -578,15 +578,15 @@ function Test_locationlist()
     wincmd n | only
 
     augroup! testgroup
-endfunction
+  endfunc
 
-function Test_locationlist_curwin_was_closed()
+func Test_locationlist_curwin_was_closed()
     augroup testgroup
       au!
       autocmd BufReadCmd test_curwin.txt call R(expand("<amatch>"))
     augroup END
 
-    function! R(n)
+    func! R(n)
       quit
     endfunc
 
@@ -597,10 +597,26 @@ function Test_locationlist_curwin_was_closed()
     call assert_fails('lrewind', 'E924:')
 
     augroup! testgroup
-endfunction
+  endfunc
+
+func Test_locationlist_cross_tab_jump()
+  call writefile(['loclistfoo'], 'loclistfoo')
+  call writefile(['loclistbar'], 'loclistbar')
+  set switchbuf=usetab
+
+  edit loclistfoo
+  tabedit loclistbar
+  silent lgrep loclistfoo loclist*
+  call assert_equal(1, tabpagenr())
+
+  enew | only | tabonly
+  set switchbuf&vim
+  call delete('loclistfoo')
+  call delete('loclistbar')
+endfunc
 
 " More tests for 'errorformat'
-function! Test_efm1()
+func Test_efm1()
     if !has('unix')
 	" The 'errorformat' setting is different on non-Unix systems.
 	" This test works only on Unix-like systems.
@@ -718,10 +734,10 @@ function! Test_efm1()
     call delete('Xerrorfile1')
     call delete('Xerrorfile2')
     call delete('Xtestfile')
-endfunction
+  endfunc
 
 " Test for quickfix directory stack support
-function! s:dir_stack_tests(cchar)
+func s:dir_stack_tests(cchar)
   call s:setup_commands(a:cchar)
 
   let save_efm=&efm
@@ -763,10 +779,10 @@ function! s:dir_stack_tests(cchar)
   call assert_equal(5, qf[11].lnum)
 
   let &efm=save_efm
-endfunction
+endfunc
 
 " Tests for %D and %X errorformat options
-function! Test_efm_dirstack()
+func Test_efm_dirstack()
   " Create the directory stack and files
   call mkdir('dir1')
   call mkdir('dir1/a')
@@ -798,10 +814,33 @@ function! Test_efm_dirstack()
   call delete('dir1', 'rf')
   call delete('dir2', 'rf')
   call delete('habits1.txt')
-endfunction
+endfunc
+
+" Test for resync after continuing an ignored message
+func Xefm_ignore_continuations(cchar)
+  call s:setup_commands(a:cchar)
+
+  let save_efm = &efm
+
+  let &efm =
+	\ '%Eerror %m %l,' .
+	\ '%-Wignored %m %l,' .
+	\ '%+Cmore ignored %m %l,' .
+	\ '%Zignored end'
+  Xgetexpr ['ignored warning 1', 'more ignored continuation 2', 'ignored end', 'error resync 4']
+  let l = map(g:Xgetlist(), '[v:val.text, v:val.valid, v:val.lnum, v:val.type]')
+  call assert_equal([['resync', 1, 4, 'E']], l)
+
+  let &efm = save_efm
+endfunc
+
+func Test_efm_ignore_continuations()
+  call Xefm_ignore_continuations('c')
+  call Xefm_ignore_continuations('l')
+endfunc
 
 " Tests for invalid error format specifies
-function Xinvalid_efm_Tests(cchar)
+func Xinvalid_efm_Tests(cchar)
   call s:setup_commands(a:cchar)
 
   let save_efm = &efm
@@ -834,17 +873,17 @@ function Xinvalid_efm_Tests(cchar)
   call assert_fails('Xexpr ["Entering dir abc", "abc.txt:1:Hello world"]', 'E379:')
 
   let &efm = save_efm
-endfunction
+endfunc
 
-function Test_invalid_efm()
+func Test_invalid_efm()
   call Xinvalid_efm_Tests('c')
   call Xinvalid_efm_Tests('l')
-endfunction
+endfunc
 
 " TODO:
 " Add tests for the following formats in 'errorformat'
 "	%r  %O
-function! Test_efm2()
+func Test_efm2()
   let save_efm = &efm
 
   " Test for %s format in efm
@@ -930,19 +969,19 @@ function! Test_efm2()
   call assert_equal('unittests/dbfacadeTest.py', bufname(l[4].bufnr))
 
   let &efm = save_efm
-endfunction
+endfunc
 
-function XquickfixChangedByAutocmd(cchar)
+func XquickfixChangedByAutocmd(cchar)
   call s:setup_commands(a:cchar)
   if a:cchar == 'c'
     let ErrorNr = 'E925'
-    function! ReadFunc()
+    func! ReadFunc()
       colder
       cgetexpr []
     endfunc
   else
     let ErrorNr = 'E926'
-    function! ReadFunc()
+    func! ReadFunc()
       lolder
       lgetexpr []
     endfunc
@@ -965,10 +1004,10 @@ function XquickfixChangedByAutocmd(cchar)
   augroup! testgroup
 endfunc
 
-function Test_quickfix_was_changed_by_autocmd()
+func Test_quickfix_was_changed_by_autocmd()
   call XquickfixChangedByAutocmd('c')
   call XquickfixChangedByAutocmd('l')
-endfunction
+endfunc
 
 func Test_caddbuffer_to_empty()
   helpgr quickfix
@@ -990,7 +1029,7 @@ func Test_cgetexpr_works()
 endfunc
 
 " Tests for the setqflist() and setloclist() functions
-function SetXlistTests(cchar, bnum)
+func SetXlistTests(cchar, bnum)
   call s:setup_commands(a:cchar)
 
   call g:Xsetlist([{'bufnr': a:bnum, 'lnum': 1},
@@ -1025,9 +1064,9 @@ function SetXlistTests(cchar, bnum)
   call g:Xsetlist([])
   let l = g:Xgetlist()
   call assert_equal(0, len(l))
-endfunction
+endfunc
 
-function Test_setqflist()
+func Test_setqflist()
   new Xtestfile | only
   let bnum = bufnr('%')
   call setline(1, range(1,5))
@@ -1037,9 +1076,9 @@ function Test_setqflist()
 
   enew!
   call delete('Xtestfile')
-endfunction
+endfunc
 
-function Xlist_empty_middle(cchar)
+func Xlist_empty_middle(cchar)
   call s:setup_commands(a:cchar)
 
   " create three quickfix lists
@@ -1062,12 +1101,12 @@ function Xlist_empty_middle(cchar)
   call assert_equal(matchlen, len(g:Xgetlist()))
 endfunc
 
-function Test_setqflist_empty_middle()
+func Test_setqflist_empty_middle()
   call Xlist_empty_middle('c')
   call Xlist_empty_middle('l')
-endfunction
+endfunc
 
-function Xlist_empty_older(cchar)
+func Xlist_empty_older(cchar)
   call s:setup_commands(a:cchar)
 
   " create three quickfix lists
@@ -1088,14 +1127,14 @@ function Xlist_empty_older(cchar)
   call assert_equal(twolen, len(g:Xgetlist()))
   Xnewer
   call assert_equal(threelen, len(g:Xgetlist()))
-endfunction
+endfunc
 
-function Test_setqflist_empty_older()
+func Test_setqflist_empty_older()
   call Xlist_empty_older('c')
   call Xlist_empty_older('l')
-endfunction
+endfunc
 
-function! XquickfixSetListWithAct(cchar)
+func XquickfixSetListWithAct(cchar)
   call s:setup_commands(a:cchar)
 
   let list1 = [{'filename': 'fnameA', 'text': 'A'},
@@ -1169,12 +1208,12 @@ function! XquickfixSetListWithAct(cchar)
   call assert_fails("call g:Xsetlist(list1, 0)", 'E928:')
 endfunc
 
-function Test_quickfix_set_list_with_act()
+func Test_quickfix_set_list_with_act()
   call XquickfixSetListWithAct('c')
   call XquickfixSetListWithAct('l')
-endfunction
+endfunc
 
-function XLongLinesTests(cchar)
+func XLongLinesTests(cchar)
   let l = g:Xgetlist()
 
   call assert_equal(4, len(l))
@@ -1192,9 +1231,9 @@ function XLongLinesTests(cchar)
   call assert_equal(10, len(l[3].text))
 
   call g:Xsetlist([], 'r')
-endfunction
+endfunc
 
-function s:long_lines_tests(cchar)
+func s:long_lines_tests(cchar)
   call s:setup_commands(a:cchar)
 
   let testfile = 'samples/quickfix.txt'
@@ -1215,22 +1254,22 @@ function s:long_lines_tests(cchar)
   exe 'edit' testfile
   exe 'Xbuffer' bufnr('%')
   call XLongLinesTests(a:cchar)
-endfunction
+endfunc
 
-function Test_long_lines()
+func Test_long_lines()
   call s:long_lines_tests('c')
   call s:long_lines_tests('l')
-endfunction
+endfunc
 
-function! s:create_test_file(filename)
+func s:create_test_file(filename)
   let l = []
   for i in range(1, 20)
       call add(l, 'Line' . i)
   endfor
   call writefile(l, a:filename)
-endfunction
+endfunc
 
-function! Test_switchbuf()
+func Test_switchbuf()
   call s:create_test_file('Xqftestfile1')
   call s:create_test_file('Xqftestfile2')
   call s:create_test_file('Xqftestfile3')
@@ -1317,9 +1356,9 @@ function! Test_switchbuf()
   call delete('Xqftestfile1')
   call delete('Xqftestfile2')
   call delete('Xqftestfile3')
-endfunction
+endfunc
 
-function! Xadjust_qflnum(cchar)
+func Xadjust_qflnum(cchar)
   call s:setup_commands(a:cchar)
 
   enew | only
@@ -1344,17 +1383,17 @@ function! Xadjust_qflnum(cchar)
 
   enew!
   call delete(fname)
-endfunction
+endfunc
 
-function! Test_adjust_lnum()
+func Test_adjust_lnum()
   call setloclist(0, [])
   call Xadjust_qflnum('c')
   call setqflist([])
   call Xadjust_qflnum('l')
-endfunction
+endfunc
 
 " Tests for the :grep/:lgrep and :grepadd/:lgrepadd commands
-function! s:test_xgrep(cchar)
+func s:test_xgrep(cchar)
   call s:setup_commands(a:cchar)
 
   " The following lines are used for the grep test. Don't remove.
@@ -1373,9 +1412,9 @@ function! s:test_xgrep(cchar)
   set makeef=Temp_File_##
   silent Xgrepadd GrepAdd_Test_Text: test_quickfix.vim
   call assert_true(len(g:Xgetlist()) == 6)
-endfunction
+endfunc
 
-function! Test_grep()
+func Test_grep()
   if !has('unix')
     " The grepprg may not be set on non-Unix systems
     return
@@ -1383,9 +1422,9 @@ function! Test_grep()
 
   call s:test_xgrep('c')
   call s:test_xgrep('l')
-endfunction
+endfunc
 
-function! Test_two_windows()
+func Test_two_windows()
   " Use one 'errorformat' for two windows.  Add an expression to each of them,
   " make sure they each keep their own state.
   set efm=%DEntering\ dir\ '%f',%f:%l:%m,%XLeaving\ dir\ '%f'
@@ -1411,12 +1450,10 @@ function! Test_two_windows()
   laddexpr 'one.txt:3:one one one'
 
   let loc_one = getloclist(one_id)
-echo string(loc_one)
   call assert_equal('Xone/a/one.txt', bufname(loc_one[1].bufnr))
   call assert_equal(3, loc_one[1].lnum)
 
   let loc_two = getloclist(two_id)
-echo string(loc_two)
   call assert_equal('Xtwo/a/two.txt', bufname(loc_two[1].bufnr))
   call assert_equal(5, loc_two[1].lnum)
 
@@ -1428,7 +1465,7 @@ echo string(loc_two)
   call delete('Xtwo', 'rf')
 endfunc
 
-function XbottomTests(cchar)
+func XbottomTests(cchar)
   call s:setup_commands(a:cchar)
 
   call g:Xsetlist([{'filename': 'foo', 'lnum': 42}]) 
@@ -1444,12 +1481,12 @@ function XbottomTests(cchar)
 endfunc
 
 " Tests for the :cbottom and :lbottom commands
-function Test_cbottom()
+func Test_cbottom()
   call XbottomTests('c')
   call XbottomTests('l')
-endfunction
+endfunc
 
-function HistoryTest(cchar)
+func HistoryTest(cchar)
   call s:setup_commands(a:cchar)
 
   call assert_fails(a:cchar . 'older 99', 'E380:')
@@ -1489,7 +1526,7 @@ func Test_duplicate_buf()
 endfunc
 
 " Quickfix/Location list set/get properties tests
-function Xproperty_tests(cchar)
+func Xproperty_tests(cchar)
     call s:setup_commands(a:cchar)
 
     " Error cases
@@ -1516,6 +1553,11 @@ function Xproperty_tests(cchar)
     call assert_equal('N1', g:Xgetlist({'all':1}).title)
     call g:Xsetlist([], ' ', {'title' : 'N2'})
     call assert_equal(qfnr + 1, g:Xgetlist({'all':1}).nr)
+
+    let res = g:Xgetlist({'nr': 0})
+    call assert_equal(qfnr + 1, res.nr)
+    call assert_equal(['nr'], keys(res))
+
     call g:Xsetlist([], ' ', {'title' : 'N3'})
     call assert_equal('N2', g:Xgetlist({'nr':2, 'title':1}).title)
 
@@ -1528,21 +1570,21 @@ function Xproperty_tests(cchar)
     call assert_equal({}, g:Xgetlist({'abc':1}))
 
     if a:cchar == 'l'
-	call assert_equal({}, getloclist(99, ['title']))
+        call assert_equal({}, getloclist(99, {'title': 1}))
     endif
-endfunction
+  endfunc
 
-function Test_qf_property()
+func Test_qf_property()
     call Xproperty_tests('c')
     call Xproperty_tests('l')
-endfunction
+  endfunc
 
 " Tests for the QuickFixCmdPre/QuickFixCmdPost autocommands
-function QfAutoCmdHandler(loc, cmd)
+func QfAutoCmdHandler(loc, cmd)
   call add(g:acmds, a:loc . a:cmd)
-endfunction
+endfunc
 
-function Test_Autocmd()
+func Test_Autocmd()
   autocmd QuickFixCmdPre * call QfAutoCmdHandler('pre', expand('<amatch>'))
   autocmd QuickFixCmdPost * call QfAutoCmdHandler('post', expand('<amatch>'))
 
@@ -1570,9 +1612,9 @@ function Test_Autocmd()
       \ 'precaddbuffer',
       \ 'postcaddbuffer']
   call assert_equal(l, g:acmds)
-endfunction
+endfunc
 
-function! Test_Autocmd_Exception()
+func Test_Autocmd_Exception()
   set efm=%m
   lgetexpr '?'
 
@@ -1587,4 +1629,47 @@ function! Test_Autocmd_Exception()
   call assert_equal('1', getloclist(0)[0].text)
 
   set efm&vim
-endfunction
+endfunc
+
+func Test_caddbuffer_wrong()
+  " This used to cause a memory access in freed memory.
+  let save_efm = &efm
+  set efm=%EEEE%m,%WWWW,%+CCCC%>%#,%GGGG%.#
+  cgetexpr ['WWWW', 'EEEE', 'CCCC']
+  let &efm = save_efm
+  caddbuffer
+  bwipe!
+endfunc
+
+func Test_caddexpr_wrong()
+  " This used to cause a memory access in freed memory.
+  cbuffer
+  cbuffer
+  copen
+  let save_efm = &efm
+  set efm=%
+  call assert_fails('caddexpr ""', 'E376:')
+  let &efm = save_efm
+endfunc
+
+func Test_dirstack_cleanup()
+  " This used to cause a memory access in freed memory.
+  let save_efm = &efm
+  lexpr '0'
+  lopen
+  fun X(c)
+    let save_efm=&efm
+    set efm=%D%f
+    if a:c == 'c'
+      caddexpr '::'
+    else
+      laddexpr ':0:0'
+    endif
+    let &efm=save_efm
+  endfun
+  call X('c')
+  call X('l')
+  call setqflist([], 'r')
+  caddbuffer
+  let &efm = save_efm
+endfunc

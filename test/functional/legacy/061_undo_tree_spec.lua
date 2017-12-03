@@ -1,8 +1,8 @@
 -- Tests for undo tree and :earlier and :later.
 local helpers = require('test.functional.helpers')(after_each)
 
+local feed_command = helpers.feed_command
 local write_file = helpers.write_file
-local execute = helpers.execute
 local command = helpers.command
 local source = helpers.source
 local expect = helpers.expect
@@ -44,7 +44,7 @@ describe('undo tree:', function()
       -- function to allow multiple attempts.
       local function test_earlier_later()
         clear()
-        execute('e Xtest')
+        feed_command('e Xtest')
         -- Assert that no undo history is present.
         eq({}, eval('undotree().entries'))
         -- Delete three characters and undo.
@@ -88,13 +88,13 @@ describe('undo tree:', function()
         feed('Ab<esc>')
         feed('Ac<esc>')
         expect_line('123456abc')
-        execute('earlier 1s')
+        feed_command('earlier 1s')
         expect_line('123456')
-        execute('earlier 3s')
+        feed_command('earlier 3s')
         expect_line('123456789')
-        execute('later 1s')
+        feed_command('later 1s')
         expect_line('123456')
-        execute('later 1h')
+        feed_command('later 1h')
         expect_line('123456abc')
       end
 
@@ -103,28 +103,28 @@ describe('undo tree:', function()
 
     it('file-write specifications', function()
       feed('ione one one<esc>')
-      execute('w Xtest')
+      feed_command('w Xtest')
       feed('otwo<esc>')
       feed('otwo<esc>')
-      execute('w')
+      feed_command('w')
       feed('othree<esc>')
-      execute('earlier 1f')
+      feed_command('earlier 1f')
       expect([[
         one one one
         two
         two]])
-      execute('earlier 1f')
+      feed_command('earlier 1f')
       expect('one one one')
-      execute('earlier 1f')
+      feed_command('earlier 1f')
       expect_empty_buffer()
-      execute('later 1f')
+      feed_command('later 1f')
       expect('one one one')
-      execute('later 1f')
+      feed_command('later 1f')
       expect([[
         one one one
         two
         two]])
-      execute('later 1f')
+      feed_command('later 1f')
       expect([[
         one one one
         two
@@ -193,20 +193,20 @@ describe('undo tree:', function()
     feed('ob<esc>')
     feed([[o1<esc>a2<C-R>=setline('.','1234')<cr><esc>]])
     expect([[
-      
+
       a
       b
       12034]])
     feed('uu')
     expect([[
-      
+
       a
       b
       1]])
     feed('oc<esc>')
     feed([[o1<esc>a2<C-R>=setline('.','1234')<cr><esc>]])
     expect([[
-      
+
       a
       b
       1
@@ -214,16 +214,16 @@ describe('undo tree:', function()
       12034]])
     feed('u')
     expect([[
-      
+
       a
       b
       1
       c
       12]])
     feed('od<esc>')
-    execute('so! Xtest.source')
+    feed_command('so! Xtest.source')
     expect([[
-      
+
       a
       b
       1
@@ -233,7 +233,7 @@ describe('undo tree:', function()
       12123]])
     feed('u')
     expect([[
-      
+
       a
       b
       1
@@ -246,7 +246,7 @@ describe('undo tree:', function()
     -- interactive use (even in Vim; see ":help :undojoin"):
     feed(normal_commands)
     expect([[
-      
+
       a
       b
       1
@@ -256,7 +256,7 @@ describe('undo tree:', function()
       12123]])
     feed('u')
     expect([[
-      
+
       a
       b
       1

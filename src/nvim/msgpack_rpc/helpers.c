@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <inttypes.h>
@@ -21,12 +24,12 @@ static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
 #define HANDLE_TYPE_CONVERSION_IMPL(t, lt) \
-  bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
-                           Integer *const arg) \
-    FUNC_ATTR_NONNULL_ALL \
+  static bool msgpack_rpc_to_##lt(const msgpack_object *const obj, \
+                                  Integer *const arg) \
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
   { \
     if (obj->type != MSGPACK_OBJECT_EXT \
-        || obj->via.ext.type != kObjectType##t) { \
+        || obj->via.ext.type + EXT_OBJECT_TYPE_SHIFT != kObjectType##t) { \
       return false; \
     } \
     \
@@ -45,13 +48,14 @@ static msgpack_sbuffer sbuffer;
     return true; \
   } \
   \
-  void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
+  static void msgpack_rpc_from_##lt(Integer o, msgpack_packer *res) \
     FUNC_ATTR_NONNULL_ARG(2) \
   { \
     msgpack_packer pac; \
     msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write); \
     msgpack_pack_int64(&pac, (handle_T)o); \
-    msgpack_pack_ext(res, sbuffer.size, kObjectType##t); \
+    msgpack_pack_ext(res, sbuffer.size, \
+                     kObjectType##t - EXT_OBJECT_TYPE_SHIFT); \
     msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size); \
     msgpack_sbuffer_clear(&sbuffer); \
   }
@@ -73,7 +77,7 @@ typedef struct {
   size_t idx;
 } MPToAPIObjectStackItem;
 
-/// Convert type used by msgpack parser to Neovim own API type
+/// Convert type used by msgpack parser to Nvim API type.
 ///
 /// @param[in]  obj  Msgpack value to convert.
 /// @param[out]  arg  Location where result of conversion will be saved.
@@ -84,7 +88,12 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
 {
   bool ret = true;
   kvec_t(MPToAPIObjectStackItem) stack = KV_INITIAL_VALUE;
-  kv_push(stack, ((MPToAPIObjectStackItem) { obj, arg, false, 0 }));
+  kv_push(stack, ((MPToAPIObjectStackItem) {
+    .mobj = obj,
+    .aobj = arg,
+    .container = false,
+    .idx = 0,
+  }));
   while (ret && kv_size(stack)) {
     MPToAPIObjectStackItem cur = kv_last(stack);
     if (!cur.container) {
@@ -114,10 +123,16 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         }
         break;
       }
-      case MSGPACK_OBJECT_FLOAT: {
+#ifdef NVIM_MSGPACK_HAS_FLOAT32
+      case MSGPACK_OBJECT_FLOAT32:
+      case MSGPACK_OBJECT_FLOAT64:
+#else
+      case MSGPACK_OBJECT_FLOAT:
+#endif
+      {
         STATIC_ASSERT(sizeof(Float) == sizeof(cur.mobj->via.f64),
                       "Msgpack floating-point size does not match API integer");
-        *cur.aobj = FLOATING_OBJ(cur.mobj->via.f64);
+        *cur.aobj = FLOAT_OBJ(cur.mobj->via.f64);
         break;
       }
 #define STR_CASE(type, attr, obj, dest, conv) \
@@ -181,7 +196,12 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
               case MSGPACK_OBJECT_BOOLEAN:
               case MSGPACK_OBJECT_POSITIVE_INTEGER:
               case MSGPACK_OBJECT_NEGATIVE_INTEGER:
+#ifdef NVIM_MSGPACK_HAS_FLOAT32
+              case MSGPACK_OBJECT_FLOAT32:
+              case MSGPACK_OBJECT_FLOAT64:
+#else
               case MSGPACK_OBJECT_FLOAT:
+#endif
               case MSGPACK_OBJECT_EXT:
               case MSGPACK_OBJECT_MAP:
               case MSGPACK_OBJECT_ARRAY: {
@@ -211,7 +231,7 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
         break;
       }
       case MSGPACK_OBJECT_EXT: {
-        switch (cur.mobj->via.ext.type) {
+        switch ((ObjectType)(cur.mobj->via.ext.type + EXT_OBJECT_TYPE_SHIFT)) {
           case kObjectTypeBuffer: {
             cur.aobj->type = kObjectTypeBuffer;
             ret = msgpack_rpc_to_buffer(cur.mobj, &cur.aobj->data.integer);
@@ -225,6 +245,15 @@ bool msgpack_rpc_to_object(const msgpack_object *const obj, Object *const arg)
           case kObjectTypeTabpage: {
             cur.aobj->type = kObjectTypeTabpage;
             ret = msgpack_rpc_to_tabpage(cur.mobj, &cur.aobj->data.integer);
+            break;
+          }
+          case kObjectTypeNil:
+          case kObjectTypeBoolean:
+          case kObjectTypeInteger:
+          case kObjectTypeFloat:
+          case kObjectTypeString:
+          case kObjectTypeArray:
+          case kObjectTypeDictionary: {
             break;
           }
         }
@@ -322,7 +351,7 @@ void msgpack_rpc_from_float(Float result, msgpack_packer *res)
   msgpack_pack_double(res, result);
 }
 
-void msgpack_rpc_from_string(String result, msgpack_packer *res)
+void msgpack_rpc_from_string(const String result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_str(res, result.size);
@@ -337,7 +366,7 @@ typedef struct {
   size_t idx;
 } APIToMPObjectStackItem;
 
-/// Convert type used by Neovim API to msgpack
+/// Convert type used by Nvim API to msgpack type.
 ///
 /// @param[in]  result  Object to convert.
 /// @param[out]  res  Structure that defines where conversion results are saved.
@@ -350,6 +379,9 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
   kv_push(stack, ((APIToMPObjectStackItem) { &result, false, 0 }));
   while (kv_size(stack)) {
     APIToMPObjectStackItem cur = kv_last(stack);
+    STATIC_ASSERT(kObjectTypeWindow == kObjectTypeBuffer + 1
+                  && kObjectTypeTabpage == kObjectTypeWindow + 1,
+                  "Buffer, window and tabpage enum items are in order");
     switch (cur.aobj->type) {
       case kObjectTypeNil: {
         msgpack_pack_nil(res);
@@ -461,8 +493,7 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
                                          Array args,
                                          Error *error)
 {
-  snprintf(error->msg, sizeof(error->msg), "Invalid method name");
-  error->set = true;
+  api_set_error(error, kErrorTypeException, "Invalid method name");
   return NIL;
 }
 
@@ -471,14 +502,13 @@ Object msgpack_rpc_handle_invalid_arguments(uint64_t channel_id,
                                             Array args,
                                             Error *error)
 {
-  snprintf(error->msg, sizeof(error->msg), "Invalid method arguments");
-  error->set = true;
+  api_set_error(error, kErrorTypeException, "Invalid method arguments");
   return NIL;
 }
 
 /// Serializes a msgpack-rpc request or notification(id == 0)
 void msgpack_rpc_serialize_request(uint64_t request_id,
-                                   String method,
+                                   const String method,
                                    Array args,
                                    msgpack_packer *pac)
   FUNC_ATTR_NONNULL_ARG(4)
@@ -505,7 +535,7 @@ void msgpack_rpc_serialize_response(uint64_t response_id,
   msgpack_pack_int(pac, 1);
   msgpack_pack_uint64(pac, response_id);
 
-  if (err->set) {
+  if (ERROR_SET(err)) {
     // error represented by a [type, message] array
     msgpack_pack_array(pac, 2);
     msgpack_rpc_from_integer(err->type, pac);
@@ -558,49 +588,49 @@ void msgpack_rpc_validate(uint64_t *response_id,
   *response_id = NO_RESPONSE;
   // Validate the basic structure of the msgpack-rpc payload
   if (req->type != MSGPACK_OBJECT_ARRAY) {
-    api_set_error(err, Validation, _("Message is not an array"));
+    api_set_error(err, kErrorTypeValidation, "Message is not an array");
     return;
   }
 
   if (req->via.array.size == 0) {
-    api_set_error(err, Validation, _("Message is empty"));
+    api_set_error(err, kErrorTypeValidation, "Message is empty");
     return;
   }
 
   if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    api_set_error(err, Validation, _("Message type must be an integer"));
+    api_set_error(err, kErrorTypeValidation, "Message type must be an integer");
     return;
   }
 
   uint64_t type = req->via.array.ptr[0].via.u64;
   if (type != kMessageTypeRequest && type != kMessageTypeNotification) {
-    api_set_error(err, Validation, _("Unknown message type"));
+    api_set_error(err, kErrorTypeValidation, "Unknown message type");
     return;
   }
 
   if ((type == kMessageTypeRequest && req->via.array.size != 4)
       || (type == kMessageTypeNotification && req->via.array.size != 3)) {
-    api_set_error(err, Validation, _("Request array size should be 4 (request) "
-                                     "or 3 (notification)"));
+    api_set_error(err, kErrorTypeValidation,
+                  "Request array size must be 4 (request) or 3 (notification)");
     return;
   }
 
   if (type == kMessageTypeRequest) {
     msgpack_object *id_obj = msgpack_rpc_msg_id(req);
     if (!id_obj) {
-      api_set_error(err, Validation, _("ID must be a positive integer"));
+      api_set_error(err, kErrorTypeValidation, "ID must be a positive integer");
       return;
     }
     *response_id = id_obj->via.u64;
   }
 
   if (!msgpack_rpc_method(req)) {
-    api_set_error(err, Validation, _("Method must be a string"));
+    api_set_error(err, kErrorTypeValidation, "Method must be a string");
     return;
   }
 
   if (!msgpack_rpc_args(req)) {
-    api_set_error(err, Validation, _("Parameters must be an array"));
+    api_set_error(err, kErrorTypeValidation, "Parameters must be an array");
     return;
   }
 }

@@ -1,12 +1,16 @@
 -- Test server -> client RPC scenarios. Note: unlike `rpcnotify`, to evaluate
 -- `rpcrequest` calls we need the client event loop to be running.
 local helpers = require('test.functional.helpers')(after_each)
+local Paths = require('test.config.paths')
+
 local clear, nvim, eval = helpers.clear, helpers.nvim, helpers.eval
 local eq, neq, run, stop = helpers.eq, helpers.neq, helpers.run, helpers.stop
 local nvim_prog, command, funcs = helpers.nvim_prog, helpers.command, helpers.funcs
 local source, next_message = helpers.source, helpers.next_message
 local ok = helpers.ok
 local meths = helpers.meths
+local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
+local set_session = helpers.set_session
 
 describe('server -> client', function()
   local cid
@@ -14,6 +18,22 @@ describe('server -> client', function()
   before_each(function()
     clear()
     cid = nvim('get_api_info')[1]
+  end)
+
+  it('handles unexpected closed stream while preparing RPC response', function()
+    source([[
+      let g:_nvim_args = [v:progpath, '--embed', '-n', '-u', 'NONE', '-i', 'NONE', ]
+      let ch1 = jobstart(g:_nvim_args, {'rpc': v:true})
+      let child1_ch = rpcrequest(ch1, "nvim_get_api_info")[0]
+      call rpcnotify(ch1, 'nvim_eval', 'rpcrequest('.child1_ch.', "nvim_get_api_info")')
+
+      let ch2 = jobstart(g:_nvim_args, {'rpc': v:true})
+      let child2_ch = rpcrequest(ch2, "nvim_get_api_info")[0]
+      call rpcnotify(ch2, 'nvim_eval', 'rpcrequest('.child2_ch.', "nvim_get_api_info")')
+
+      call jobstop(ch1)
+    ]])
+    eq(2, eval("1+1"))  -- Still alive?
   end)
 
   describe('simple call', function()
@@ -89,7 +109,28 @@ describe('server -> client', function()
   end)
 
   describe('requests and notifications interleaved', function()
-    -- This tests that the following scenario won't happen:
+    it('does not delay notifications during pending request', function()
+      local received = false
+      local function on_setup()
+        eq("retval", funcs.rpcrequest(cid, "doit"))
+        stop()
+      end
+      local function on_request(method)
+        if method == "doit" then
+          funcs.rpcnotify(cid, "headsup")
+          eq(true,received)
+          return "retval"
+        end
+      end
+      local function on_notification(method)
+        if method == "headsup" then
+          received = true
+        end
+      end
+      run(on_request, on_notification, on_setup)
+    end)
+
+    -- This tests the following scenario:
     --
     -- server->client [request     ] (1)
     -- client->server [request     ] (2) triggered by (1)
@@ -104,40 +145,42 @@ describe('server -> client', function()
     -- only deals with one server->client request at a time. (In other words,
     -- the client cannot send a response to a request that is not at the top
     -- of nvim's request stack).
-    --
-    -- But above scenario shoudn't happen by the way notifications are dealt in
-    -- Nvim: they are only sent after there are no pending server->client
-    -- request(the request stack fully unwinds). So (3) is only sent after the
-    -- client returns (6).
-    it('works', function()
-      local expected = 300
-      local notified = 0
+    pending('will close connection if not properly synchronized', function()
       local function on_setup()
         eq('notified!', eval('rpcrequest('..cid..', "notify")'))
       end
 
       local function on_request(method)
-        eq('notify', method)
-        eq(1, eval('rpcnotify('..cid..', "notification")'))
-        return 'notified!'
+        if method == "notify" then
+          eq(1, eval('rpcnotify('..cid..', "notification")'))
+          return 'notified!'
+        elseif method == "nested" then
+          -- do some busywork, so the first request will return
+          -- before this one
+          for _ = 1, 5 do
+            eq(2, eval("1+1"))
+          end
+          eq(1, eval('rpcnotify('..cid..', "nested_done")'))
+          return 'done!'
+        end
       end
 
       local function on_notification(method)
-        eq('notification', method)
-        if notified == expected then
-          stop()
-          return
+        if method == "notification" then
+          eq('done!', eval('rpcrequest('..cid..', "nested")'))
+        elseif method == "nested_done" then
+          -- this should never have been sent
+          ok(false)
         end
-        notified = notified + 1
-        eq('notified!', eval('rpcrequest('..cid..', "notify")'))
       end
 
       run(on_request, on_notification, on_setup)
-      eq(expected, notified)
+      -- ignore disconnect failure, otherwise detected by after_each
+      clear()
     end)
   end)
 
-  describe('when the client is a recursive vim instance', function()
+  describe('recursive (child) nvim client', function()
     if os.getenv("TRAVIS") and helpers.os_name() == "osx" then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
       pending("[Hangs on Travis macOS. #5002]", function() end)
@@ -151,7 +194,7 @@ describe('server -> client', function()
 
     after_each(function() command('call rpcstop(vim)') end)
 
-    it('can send/recieve notifications and make requests', function()
+    it('can send/receive notifications and make requests', function()
       nvim('command', "call rpcnotify(vim, 'vim_set_current_line', 'SOME TEXT')")
 
       -- Wait for the notification to complete.
@@ -184,7 +227,7 @@ describe('server -> client', function()
     end)
   end)
 
-  describe('when using jobstart', function()
+  describe('jobstart()', function()
     local jobid
     before_each(function()
       local channel = nvim('get_api_info')[1]
@@ -200,7 +243,7 @@ describe('server -> client', function()
         \ 'rpc': v:true
         \ }
       ]])
-      local lua_prog = arg[-1]
+      local lua_prog = Paths.test_lua_prg
       meths.set_var("args", {lua_prog, 'test/functional/api/rpc_fixture.lua'})
       jobid = eval("jobstart(g:args, g:job_opts)")
       neq(0, 'jobid')
@@ -219,8 +262,101 @@ describe('server -> client', function()
       eq("done!",funcs.rpcrequest(jobid, "write_stderr", "fluff\n"))
       eq({'notification', 'stderr', {0, {'fluff', ''}}}, next_message())
       funcs.rpcrequest(jobid, "exit")
+      eq({'notification', 'stderr', {0, {''}}}, next_message())
       eq({'notification', 'exit', {0, 0}}, next_message())
     end)
   end)
 
+  describe('connecting to another (peer) nvim', function()
+    local function connect_test(server, mode, address)
+      local serverpid = funcs.getpid()
+      local client = spawn(nvim_argv)
+      set_session(client, true)
+      local clientpid = funcs.getpid()
+      neq(serverpid, clientpid)
+      local id = funcs.sockconnect(mode, address, {rpc=true})
+      ok(id > 0)
+
+      funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
+      local client_id = funcs.rpcrequest(id, 'nvim_get_api_info')[1]
+
+      set_session(server, true)
+      eq(serverpid, funcs.getpid())
+      eq('hello', meths.get_current_line())
+
+      -- method calls work both ways
+      funcs.rpcrequest(client_id, 'nvim_set_current_line', 'howdy!')
+      eq(id, funcs.rpcrequest(client_id, 'nvim_get_api_info')[1])
+
+      set_session(client, true)
+      eq(clientpid, funcs.getpid())
+      eq('howdy!', meths.get_current_line())
+
+      server:close()
+      client:close()
+    end
+
+    it('via named pipe', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverlist()[1]
+      local first = string.sub(address,1,1)
+      ok(first == '/' or first == '\\')
+      connect_test(server, 'pipe', address)
+    end)
+
+    it('via ipv4 address', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverstart("127.0.0.1:")
+      if #address == 0 then
+        pending('no ipv4 stack', function() end)
+        return
+      end
+      eq('127.0.0.1:', string.sub(address,1,10))
+      connect_test(server, 'tcp', address)
+    end)
+
+    it('via ipv6 address', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverstart('::1:')
+      if #address == 0 then
+        pending('no ipv6 stack', function() end)
+        return
+      end
+      eq('::1:', string.sub(address,1,4))
+      connect_test(server, 'tcp', address)
+    end)
+
+    it('via hostname', function()
+      local server = spawn(nvim_argv)
+      set_session(server)
+      local address = funcs.serverstart("localhost:")
+      eq('localhost:', string.sub(address,1,10))
+      connect_test(server, 'tcp', address)
+    end)
+  end)
+
+  describe('connecting to its own pipe address', function()
+    it('does not deadlock', function()
+      if not os.getenv("TRAVIS") and helpers.os_name() == "osx" then
+        -- It does, in fact, deadlock on QuickBuild. #6851
+        pending("deadlocks on QuickBuild", function() end)
+        return
+      end
+      local address = funcs.serverlist()[1]
+      local first = string.sub(address,1,1)
+      ok(first == '/' or first == '\\')
+      local serverpid = funcs.getpid()
+
+      local id = funcs.sockconnect('pipe', address, {rpc=true})
+
+      funcs.rpcrequest(id, 'nvim_set_current_line', 'hello')
+      eq('hello', meths.get_current_line())
+      eq(serverpid, funcs.rpcrequest(id, "nvim_eval", "getpid()"))
+
+      eq(id, funcs.rpcrequest(id, 'nvim_get_api_info')[1])
+    end)
+  end)
 end)

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // File searching functions for 'path', 'tags' and 'cdpath' options.
 //
 // External visible functions:
@@ -322,8 +325,11 @@ vim_findfile_init (
       drive[0] = path[0];
       drive[1] = ':';
       drive[2] = NUL;
-      if (vim_FullName(drive, ff_expand_buffer, MAXPATHL, TRUE) == FAIL)
+      if (vim_FullName((const char *)drive, (char *)ff_expand_buffer, MAXPATHL,
+                       true)
+          == FAIL) {
         goto error_return;
+      }
       path += 2;
     } else
 #endif
@@ -1054,7 +1060,7 @@ static bool ff_wc_equal(char_u *s1, char_u *s2)
     c1 = PTR2CHAR(s1 + i);
     c2 = PTR2CHAR(s2 + j);
 
-    if ((p_fic ? vim_tolower(c1) != vim_tolower(c2) : c1 != c2)
+    if ((p_fic ? mb_tolower(c1) != mb_tolower(c2) : c1 != c2)
         && (prev1 != '*' || prev2 != '*')) {
       return false;
     }
@@ -1549,14 +1555,14 @@ void do_autocmd_dirchanged(char *new_dir, CdScope scope)
     assert(false);
   }
 
-  dict_add_nr_str(dict, "scope", 0L, (char_u *)buf);
-  dict_add_nr_str(dict, "cwd",   0L, (char_u *)new_dir);
-  dict_set_keys_readonly(dict);
+  tv_dict_add_str(dict, S_LEN("scope"), buf);
+  tv_dict_add_str(dict, S_LEN("cwd"),   new_dir);
+  tv_dict_set_keys_readonly(dict);
 
   apply_autocmds(EVENT_DIRCHANGED, (char_u *)buf, (char_u *)new_dir, false,
                  NULL);
 
-  dict_clear(dict);
+  tv_dict_clear(dict);
 
   recursive = false;
 }

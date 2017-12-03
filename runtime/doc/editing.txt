@@ -1,4 +1,4 @@
-*editing.txt*   For Vim version 7.4.  Last change: 2016 Aug 06
+*editing.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,17 +6,7 @@
 
 Editing files						*edit-files*
 
-1.  Introduction		|edit-intro|
-2.  Editing a file		|edit-a-file|
-3.  The argument list		|argument-list|
-4.  Writing			|writing|
-5.  Writing and quitting	|write-quit|
-6.  Dialogs			|edit-dialogs|
-7.  The current directory	|current-directory|
-8.  Editing binary files	|edit-binary|
-9.  Encryption			|encryption|
-10. Timestamps			|timestamps|
-11. File Searching		|file-searching|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction						*edit-intro*
@@ -160,7 +150,8 @@ start editing another file, Vim will refuse this.  In order to overrule this
 protection, add a '!' to the command.  The changes will then be lost.  For
 example: ":q" will not work if the buffer was changed, but ":q!" will.  To see
 whether the buffer was changed use the "CTRL-G" command.  The message includes
-the string "[Modified]" if the buffer has been changed.
+the string "[Modified]" if the buffer has been changed, or "+" if the 'm' flag
+is in 'shortmess'.
 
 If you want to automatically save the changes without asking, switch on the
 'autowriteall' option.  'autowrite' is the associated Vi-compatible option
@@ -245,7 +236,7 @@ If you want to keep the changed buffer without saving it, switch on the
 
 							*:vie* *:view*
 :vie[w][!] [++opt] [+cmd] file
-			When used in Ex mode: Leave |Ex mode|, go back to
+			When used in Ex mode: Leave |Ex-mode|, go back to
 			Normal mode.  Otherwise same as |:edit|, but set
 			'readonly' option for this buffer.
 
@@ -910,11 +901,12 @@ WRITING WITH MULTIPLE BUFFERS				*buffer-write*
 
 							*:wa* *:wall*
 :wa[ll]			Write all changed buffers.  Buffers without a file
-			name or which are readonly are not written.
+			name cause an error message.  Buffers which are
+			readonly are not written.
 
 :wa[ll]!		Write all changed buffers, even the ones that are
 			readonly.  Buffers without a file name are not
-			written.
+			written and cause an error message.
 
 
 Vim will warn you if you try to overwrite a file that has been changed
@@ -1040,6 +1032,7 @@ The names can be in upper- or lowercase.
 			window in the current tab page the current tab page is
 			closed |tab-page|.
 			Triggers the |QuitPre| autocommand event.
+			See |CTRL-W_q| for quitting another window.
 
 :conf[irm] q[uit]	Quit, but give prompt when changes have been made, or
 			the last file in the argument list has not been
@@ -1273,14 +1266,14 @@ Commands for changing the working directory can be suffixed with a bang "!"
 							*:lc* *:lcd*
 :lc[d][!] {path}	Like |:cd|, but only set the current directory for the
 			current window.  The current directory for other
-			windows or any tabs is not changed.
+			windows or tabs is not changed.
 
 							*:lch* *:lchdir*
 :lch[dir][!]		Same as |:lcd|.
 
 							*:lcd-* 
 :lcd[!] -		Change to the previous current directory (before the
-			previous ":tcd {path}" command).
+			previous ":lcd {path}" command).
 
 							*:pw* *:pwd* *E187*
 :pw[d]			Print the current directory name.
@@ -1371,6 +1364,13 @@ focus.
 If you want to automatically reload a file when it has been changed outside of
 Vim, set the 'autoread' option.  This doesn't work at the moment you write the
 file though, only when the file wasn't changed inside of Vim.
+
+If you do not want to be asked or automatically reload the file, you can use
+this: >
+	set buftype=nofile
+
+Or, when starting gvim from a shell: >
+	gvim file.log -c "set buftype=nofile"
 
 Note that if a FileChangedShell autocommand is defined you will not get a
 warning message or prompt.  The autocommand is expected to handle this.
@@ -1542,7 +1542,7 @@ There are three different types of searching:
    This searches the same directories, but in a different order.
 
    Note that completion for ":find", ":sfind", and ":tabfind" commands do not
-   currently work with 'path' items that contain a url or use the double star
+   currently work with 'path' items that contain a URL or use the double star
    with depth limiter (/usr/**2) or upward search (;) notations.
 
  vim:tw=78:ts=8:ft=help:norl:

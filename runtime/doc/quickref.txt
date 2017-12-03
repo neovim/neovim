@@ -1,4 +1,4 @@
-*quickref.txt*  For Vim version 7.4.  Last change: 2016 Aug 12
+*quickref.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -571,8 +571,7 @@ In Insert or Command-line mode:
 *Q_op*		Options
 
 |:set|		:se[t]			  show all modified options
-|:set|		:se[t] all		  show all non-termcap options
-|:set|		:se[t] termcap		  show all termcap options
+|:set|		:se[t] all		  show all options
 |:set|		:se[t] {option}		  set boolean option (switch it on),
 					  show string or number option
 |:set|		:se[t] no{option}	  reset boolean option (switch it off)
@@ -715,7 +714,6 @@ Short explanation of each option:		*option-list*
 'guifont'	  'gfn'     GUI: Name(s) of font(s) to be used
 'guifontset'	  'gfs'     GUI: Names of multi-byte fonts to be used
 'guifontwide'	  'gfw'     list of font names for double-wide characters
-'guiheadroom'	  'ghr'     GUI: pixels room for window decorations
 'guioptions'	  'go'	    GUI: Which components and options are used
 'guitablabel'	  'gtl'     GUI: custom label for a tab page
 'guitabtooltip'   'gtt'     GUI: custom tooltip for a tab page
@@ -723,7 +721,6 @@ Short explanation of each option:		*option-list*
 'helpheight'	  'hh'	    minimum height of a new help window
 'helplang'	  'hlg'     preferred help languages
 'hidden'	  'hid'     don't unload buffer when it is |abandon|ed
-'highlight'	  'hl'	    sets highlighting mode for various occasions
 'hlsearch'	  'hls'     highlight matches with last search pattern
 'history'	  'hi'	    number of command-lines that are remembered
 'hkmap'		  'hk'	    Hebrew keyboard mapping
@@ -752,7 +749,7 @@ Short explanation of each option:		*option-list*
 'keywordprg'	  'kp'	    program to use for the "K" command
 'langmap'	  'lmap'    alphabetic characters for other language mode
 'langmenu'	  'lm'	    language to be used for the menus
-'langnoremap'	  'lnr'	    do not apply 'langmap' to mapped characters
+'langremap'	  'lrm'	    do apply 'langmap' to mapped characters
 'laststatus'	  'ls'	    tells when last window has status lines
 'lazyredraw'	  'lz'	    don't redraw while executing macros
 'linebreak'	  'lbr'     wrap long lines at a blank
@@ -989,7 +986,6 @@ Short explanation of each option:		*option-list*
 |g_CTRL-G|	   g CTRL-G	show cursor column, line, and character
 				   position
 |CTRL-C|	   CTRL-C	during searches: Interrupt the search
-|dos-CTRL-Break|   CTRL-Break	Windows: during searches: Interrupt the search
 |<Del>|		   <Del>	while entering a count: delete last character
 |:version|	:ve[rsion]	show version information
 |:normal|	:norm[al][!] {commands}
@@ -1028,6 +1024,8 @@ Short explanation of each option:		*option-list*
 |c_<Up>|	<Up>/<Down>	   recall older/newer command-line that starts
 				      with current command
 |c_<S-Up>|	<S-Up>/<S-Down>	   recall older/newer command-line from history
+|c_CTRL-G|	CTRL-G		   next match when 'incsearch' is active
+|c_CTRL-T|	CTRL-T		   previous match when 'incsearch' is active
 |:history|	:his[tory]	   show older command-lines
 
 Context-sensitive completion on the command-line:
@@ -1255,6 +1253,7 @@ Context-sensitive completion on the command-line:
 
 |:sfind|	:sf[ind] {file}		split window, find {file} in 'path'
 					   and edit it
+|:terminal|	:terminal {cmd}		open a terminal window
 |CTRL-W_]|	CTRL-W ]		split window and jump to tag under
 					   cursor
 |CTRL-W_f|	CTRL-W f		split window and edit file name under

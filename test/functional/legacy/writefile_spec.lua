@@ -1,23 +1,23 @@
 -- Tests for writefile()
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, command, expect = helpers.clear, helpers.command, helpers.expect
 
 describe('writefile', function()
   setup(clear)
 
   it('is working', function()
-    execute('%delete _')
-    execute('let f = tempname()')
-    execute('call writefile(["over","written"], f, "b")')
-    execute('call writefile(["hello","world"], f, "b")')
-    execute('call writefile(["!", "good"], f, "a")')
-    execute('call writefile(["morning"], f, "ab")')
-    execute('call writefile(["", "vimmers"], f, "ab")')
-    execute('bwipeout!')
-    execute('$put =readfile(f)')
-    execute('1 delete _')
-    execute('call delete(f)')
+    command('%delete _')
+    command('let f = tempname()')
+    command('call writefile(["over","written"], f, "b")')
+    command('call writefile(["hello","world"], f, "b")')
+    command('call writefile(["!", "good"], f, "a")')
+    command('call writefile(["morning"], f, "ab")')
+    command('call writefile(["", "vimmers"], f, "ab")')
+    command('bwipeout!')
+    command('$put =readfile(f)')
+    command('1 delete _')
+    command('call delete(f)')
 
     -- Assert buffer contents.
     expect([[

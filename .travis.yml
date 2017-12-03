@@ -10,7 +10,7 @@ env:
     # http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
     - MAKE_CMD="make -j2"
     # Update PATH for pip.
-    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:/usr/lib/llvm-symbolizer-3.8/bin:$PATH"
+    - PATH="$(python2.7 -c 'import site; print(site.getuserbase())')/bin:/usr/lib/llvm-symbolizer-4.0/bin:$PATH"
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
@@ -21,13 +21,15 @@ env:
     - INSTALL_PREFIX="$HOME/nvim-install"
     # Log directory for Clang sanitizers and Valgrind.
     - LOG_DIR="$BUILD_DIR/log"
+    # Nvim log file.
+    - NVIM_LOG_FILE="$BUILD_DIR/.nvimlog"
     # Default CMake flags.
     - CMAKE_FLAGS="-DTRAVIS_CI_BUILD=ON
                    -DCMAKE_BUILD_TYPE=Debug
                    -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_PREFIX
-                   -DBUSTED_OUTPUT_TYPE=gtest
+                   -DBUSTED_OUTPUT_TYPE=nvim
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
-                   -DMIN_LOG_LEVEL=2"
+                   -DMIN_LOG_LEVEL=3"
     - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
     # Additional CMake flags for 32-bit builds.
     - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
@@ -43,22 +45,20 @@ env:
     # If this file exists, we know that the cache contains compiled
     # dependencies and we can use it.
     - CACHE_MARKER="$HOME/.cache/nvim-deps/.travis_cache_marker"
-    # Test success marker. If this file exists, we know that all tests
-    # were successful. Required because we only want to update the cache
-    # if the tests were successful, but don't have this information
-    # available in before_cache (which is run before after_success).
-    - SUCCESS_MARKER="$BUILD_DIR/.tests_successful"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
+    - CI_TARGET=tests
 
-matrix:
+jobs:
   include:
-    - os: linux
-      env: CI_TARGET=lint
-    - os: linux
-      compiler: gcc-5
-      env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
-    - os: linux
+    - stage: sanitizers
+      os: linux
+      compiler: clang-4.0
+      env: >
+        CLANG_SANITIZER=ASAN_UBSAN
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+    - stage: normal builds
+      os: linux
       compiler: gcc-5
       env: FUNCTIONALTEST=functionaltest-lua
     - os: linux
@@ -67,40 +67,45 @@ matrix:
       # dependencies in a separate cache.
       compiler: gcc-5 -m32
       env: BUILD_32BIT=ON
-    - os: linux
-      compiler: clang-3.8
-      env: CLANG_SANITIZER=ASAN_UBSAN
-    - os: linux
-      compiler: clang-3.8
-      env: CLANG_SANITIZER=TSAN
     - os: osx
       compiler: clang
       osx_image: xcode7.3  # macOS 10.11
     - os: osx
       compiler: gcc-4.9
       osx_image: xcode7.3  # macOS 10.11
+    - stage: lint
+      os: linux
+      env: CI_TARGET=lint
+    - stage: Flaky builds
+      os: linux
+      compiler: gcc-5
+      env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - os: linux
+      compiler: clang-4.0
+      env: CLANG_SANITIZER=TSAN
   allow_failures:
     - env: GCOV=gcov-5 CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - env: CLANG_SANITIZER=TSAN
   fast_finish: true
 
-before_install: .ci/before_install.sh
-install:        .ci/install.sh
-before_script:  .ci/before_script.sh
-script:         .ci/script.sh
-before_cache:   .ci/before_cache.sh
-after_success:  .ci/after_success.sh
+before_install: ci/before_install.sh
+install:        ci/install.sh
+before_script:  ci/before_script.sh
+script:         ci/script.sh
+before_cache:   ci/before_cache.sh
+after_success:  ci/after_success.sh
 
 addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.8
+      - llvm-toolchain-trusty-4.0
     packages:
       - autoconf
       - automake
       - apport
       - build-essential
-      - clang-3.8
+      - clang-4.0
       - cmake
       - cscope
       - g++-5-multilib
@@ -108,9 +113,11 @@ addons:
       - gcc-5-multilib
       - gcc-multilib
       - gdb
+      - language-pack-tr
       - libc6-dev-i386
       - libtool
-      - llvm-3.8-dev
+      - llvm-4.0-dev
+      - locales
       - pkg-config
       - unzip
       - valgrind

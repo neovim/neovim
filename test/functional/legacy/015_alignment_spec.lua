@@ -4,11 +4,12 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('alignment', function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       	test for :left
@@ -19,7 +20,7 @@ describe('alignment', function()
       	  asdfa		a
       	        xasdfa		a
       asxxdfa		a
-      
+
       	test for :center
       	  a		a
       	    fa		afd asdf
@@ -28,7 +29,7 @@ describe('alignment', function()
       	  asdfa		a
       	        xasdfa		asdfasdfasdfasdfasdf
       asxxdfa		a
-      
+
       	test for :right
       	a		a
       	fa		a
@@ -111,34 +112,34 @@ describe('alignment', function()
       	asxxdfa		axxxoikey
       	asxa;ofa		axxxoikey
       	asdfaqwer		axxxoikey
-      
-      xxxxx xx xxxxxx 
+
+      xxxxx xx xxxxxx
       xxxxxxx xxxxxxxxx xxx xxxx xxxxx xxxxx xxx xx
       xxxxxxxxxxxxxxxxxx xxxxx xxxx, xxxx xxxx xxxx xxxx xxx xx xx
       xx xxxxxxx. xxxx xxxx.
-      
+
       > xx xx, xxxx xxxx xxx xxxx xxx xxxxx xxx xxx xxxxxxx xxx xxxxx
       > xxxxxx xxxxxxx: xxxx xxxxxxx, xx xxxxxx xxxx xxxxxxxxxx
-      
+
       aa aa aa aa
       bb bb bb bb
       cc cc cc cc]])
 
-    execute('set tw=65')
+    feed_command('set tw=65')
 
     feed([[:/^\s*test for :left/,/^\s*test for :center/ left<cr>]])
     feed([[:/^\s*test for :center/,/^\s*test for :right/ center<cr>]])
     feed([[:/^\s*test for :right/,/^xxx/-1 right<cr>]])
 
-    execute('set fo+=tcroql tw=72')
+    feed_command('set fo+=tcroql tw=72')
 
     feed('/xxxxxxxx$<cr>')
     feed('0gq6kk<cr>')
 
     -- Undo/redo here to make the next undo only work on the following changes.
     feed('u<cr>')
-    execute('map gg :.,.+2s/^/x/<CR>kk:set tw=3<CR>gqq')
-    execute('/^aa')
+    feed_command('map gg :.,.+2s/^/x/<CR>kk:set tw=3<CR>gqq')
+    feed_command('/^aa')
     feed('ggu<cr>')
 
     -- Assert buffer contents.
@@ -151,7 +152,7 @@ describe('alignment', function()
       asdfa		a
       xasdfa		a
       asxxdfa		a
-      
+
       			test for :center
       			 a		a
       		      fa		afd asdf
@@ -160,7 +161,7 @@ describe('alignment', function()
       			 asdfa		a
       	      xasdfa		asdfasdfasdfasdfasdf
       			asxxdfa		a
-      
+
       						  test for :right
       						      a		a
       						     fa		a
@@ -243,14 +244,14 @@ describe('alignment', function()
       					asxxdfa		axxxoikey
       				       asxa;ofa		axxxoikey
       				      asdfaqwer		axxxoikey
-      
+
       xxxxx xx xxxxxx xxxxxxx xxxxxxxxx xxx xxxx xxxxx xxxxx xxx xx
       xxxxxxxxxxxxxxxxxx xxxxx xxxx, xxxx xxxx xxxx xxxx xxx xx xx xx xxxxxxx.
       xxxx xxxx.
-      
+
       > xx xx, xxxx xxxx xxx xxxx xxx xxxxx xxx xxx xxxxxxx xxx xxxxx xxxxxx
       > xxxxxxx: xxxx xxxxxxx, xx xxxxxx xxxx xxxxxxxxxx
-      
+
       aa aa aa aa
       bb bb bb bb
       cc cc cc cc]])

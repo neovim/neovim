@@ -12,10 +12,8 @@
 " for news and mail, a build-in script language, the GUI allows translation to
 " other languages, it can be used in a network and that's not all features...
 "
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-    syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
     finish
 endif
 
@@ -358,24 +356,14 @@ syn cluster hamsterComment	contains=hamsterHashComment
 syn sync ccomment hamsterHashComment
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_hamster_syn_inits")
-    if version < 508
-        let did_hamster_syn_inits = 1
-        command -nargs=+ HiLink hi link <args>
-    else
-        command -nargs=+ HiLink hi def link <args>
-    endif
+" Only when an item doesn't have highlighting yet
 
-    HiLink hamsterHashComment	Comment
-    HiLink hamsterSpecial	Special
-    HiLink hamsterStatement	Statement
-    HiLink hamsterString	String
-    HiLink hamsterFunction	Function
+hi def link hamsterHashComment	Comment
+hi def link hamsterSpecial	Special
+hi def link hamsterStatement	Statement
+hi def link hamsterString	String
+hi def link hamsterFunction	Function
 
-    delcommand HiLink
-endif
 
 let b:current_syntax = "hamster"
 

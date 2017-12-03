@@ -1,13 +1,16 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, eval, exc_exec, execute, feed, insert, neq, next_msg, nvim,
+local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim,
   nvim_dir, ok, source, write_file, mkdir, rmdir = helpers.clear,
-  helpers.eq, helpers.eval, helpers.exc_exec, helpers.execute, helpers.feed,
+  helpers.eq, helpers.eval, helpers.exc_exec, helpers.feed_command, helpers.feed,
   helpers.insert, helpers.neq, helpers.next_message, helpers.nvim,
   helpers.nvim_dir, helpers.ok, helpers.source,
   helpers.write_file, helpers.mkdir, helpers.rmdir
 local command = helpers.command
 local wait = helpers.wait
 local iswin = helpers.iswin
+local get_pathsep = helpers.get_pathsep
+local nvim_set = helpers.nvim_set
+local expect_twostreams = helpers.expect_twostreams
 local Screen = require('test.functional.ui.screen')
 
 describe('jobs', function()
@@ -27,15 +30,14 @@ describe('jobs', function()
         \ ? map(a:data, 'substitute(v:val, "\r", "", "g")')
         \ : a:data
     endfunction
-    function! s:OnEvent(id, data, event) dict
+    function! OnEvent(id, data, event) dict
       let userdata = get(self, 'user')
       let data     = Normalize(a:data)
       call rpcnotify(g:channel, a:event, userdata, data)
     endfunction
     let g:job_opts = {
-    \ 'on_stdout': function('s:OnEvent'),
-    \ 'on_stderr': function('s:OnEvent'),
-    \ 'on_exit': function('s:OnEvent'),
+    \ 'on_stdout': function('OnEvent'),
+    \ 'on_exit': function('OnEvent'),
     \ 'user': 0
     \ }
     ]])
@@ -49,6 +51,7 @@ describe('jobs', function()
       nvim('command', "let j = jobstart('echo $VAR', g:job_opts)")
     end
     eq({'notification', 'stdout', {0, {'abc', ''}}}, next_msg())
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
@@ -61,11 +64,12 @@ describe('jobs', function()
     end
     eq({'notification', 'stdout',
       {0, {(iswin() and [[C:\]] or '/'), ''}}}, next_msg())
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
   it('changes to given `cwd` directory', function()
-    local dir = eval('resolve(tempname())')
+    local dir = eval("resolve(tempname())"):gsub("/", get_pathsep())
     mkdir(dir)
     nvim('command', "let g:job_opts.cwd = '" .. dir .. "'")
     if iswin() then
@@ -74,6 +78,7 @@ describe('jobs', function()
       nvim('command', "let j = jobstart('pwd', g:job_opts)")
     end
     eq({'notification', 'stdout', {0, {dir, ''}}}, next_msg())
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
     rmdir(dir)
   end)
@@ -93,7 +98,7 @@ describe('jobs', function()
 
   it('returns 0 when it fails to start', function()
     eq("", eval("v:errmsg"))
-    execute("let g:test_jobid = jobstart([])")
+    feed_command("let g:test_jobid = jobstart([])")
     eq(0, eval("g:test_jobid"))
     eq("E474:", string.match(eval("v:errmsg"), "E%d*:"))
   end)
@@ -116,8 +121,12 @@ describe('jobs', function()
   it('invokes callbacks when the job writes and exits', function()
     -- TODO: hangs on Windows
     if helpers.pending_win32(pending) then return end
+    nvim('command', "let g:job_opts.on_stderr  = function('OnEvent')")
     nvim('command', "call jobstart('echo', g:job_opts)")
-    eq({'notification', 'stdout', {0, {'', ''}}}, next_msg())
+    expect_twostreams({{'notification', 'stdout', {0, {'', ''}}},
+                       {'notification', 'stdout', {0, {''}}}},
+                      {{'notification', 'stderr', {0, {''}}}})
+
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
@@ -132,6 +141,7 @@ describe('jobs', function()
     nvim('command', 'call jobsend(j, [123, "xyz", ""])')
     eq({'notification', 'stdout', {0, {'123', 'xyz', ''}}}, next_msg())
     nvim('command', "call jobstop(j)")
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
@@ -143,6 +153,7 @@ describe('jobs', function()
 
     nvim('command', "let j = jobstart(['cat', '"..filename.."'], g:job_opts)")
     eq({'notification', 'stdout', {0, {'abc\ndef', ''}}}, next_msg())
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
     os.remove(filename)
 
@@ -166,6 +177,7 @@ describe('jobs', function()
     nvim('command', 'call jobsend(j, "abc\\nxyz")')
     eq({'notification', 'stdout', {0, {'abc', 'xyz'}}}, next_msg())
     nvim('command', "call jobstop(j)")
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
@@ -184,6 +196,7 @@ describe('jobs', function()
     eq({'notification', 'stdout', {0, {'\n123\n', 'abc\nxyz\n', ''}}},
       next_msg())
     nvim('command', "call jobstop(j)")
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
@@ -194,6 +207,7 @@ describe('jobs', function()
     eq({'notification', 'stdout', {0, {'some data', 'without\nfinal nl'}}},
       next_msg())
     nvim('command', "call jobstop(j)")
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
@@ -201,6 +215,7 @@ describe('jobs', function()
     if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     nvim('command', 'call jobclose(j, "stdin")')
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
   end)
 
@@ -237,6 +252,7 @@ describe('jobs', function()
     local pid = eval('jobpid(j)')
     eq(0,os.execute('ps -p '..pid..' > /dev/null'))
     nvim('command', 'call jobstop(j)')
+    eq({'notification', 'stdout', {0, {''}}}, next_msg())
     eq({'notification', 'exit', {0, 0}}, next_msg())
     neq(0,os.execute('ps -p '..pid..' > /dev/null'))
   end)
@@ -268,6 +284,7 @@ describe('jobs', function()
     nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
     local data = {n = 5, s = 'str', l = {1}}
     eq({'notification', 'stdout', {data, {'foo', ''}}}, next_msg())
+    eq({'notification', 'stdout', {data, {''}}}, next_msg())
     eq({'notification', 'exit', {data, 0}}, next_msg())
   end)
 
@@ -281,7 +298,6 @@ describe('jobs', function()
 
   it('can omit data callbacks', function()
     nvim('command', 'unlet g:job_opts.on_stdout')
-    nvim('command', 'unlet g:job_opts.on_stderr')
     nvim('command', 'let g:job_opts.user = 5')
     nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
     eq({'notification', 'exit', {5, 0}}, next_msg())
@@ -292,11 +308,13 @@ describe('jobs', function()
     nvim('command', 'let g:job_opts.user = 5')
     nvim('command', [[call jobstart('echo "foo"', g:job_opts)]])
     eq({'notification', 'stdout', {5, {'foo', ''}}}, next_msg())
+    eq({'notification', 'stdout', {5, {''}}}, next_msg())
   end)
 
   it('will pass return code with the exit event', function()
     nvim('command', 'let g:job_opts.user = 5')
     nvim('command', "call jobstart('exit 55', g:job_opts)")
+    eq({'notification', 'stdout', {5, {''}}}, next_msg())
     eq({'notification', 'exit', {5, 55}}, next_msg())
   end)
 
@@ -339,6 +357,14 @@ describe('jobs', function()
   end)
 
   it('requires funcrefs for script-local (s:) functions', function()
+    local screen = Screen.new(60, 5)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [3] = {bold = true, foreground = Screen.colors.SeaGreen4}
+    })
+
     -- Pass job callback names _without_ `function(...)`.
     source([[
       function! s:OnEvent(id, data, event) dict
@@ -348,14 +374,10 @@ describe('jobs', function()
         \ 'on_stdout': 's:OnEvent',
         \ 'on_stderr': 's:OnEvent',
         \ 'on_exit':   's:OnEvent',
-        \ 'user': 2349
         \ })
     ]])
 
-    -- The behavior is asynchronous, retry until a time limit.
-    helpers.retry(nil, 10000, function()
-      eq("E120:", string.match(eval("v:errmsg"), "E%d*:"))
-    end)
+    screen:expect("{2:E120: Using <SID> not in a script context: s:OnEvent}",nil,nil,nil,true)
   end)
 
   it('does not repeat output with slow output handlers', function()
@@ -374,7 +396,7 @@ describe('jobs', function()
       call jobwait([jobstart(cmd, d)])
       call rpcnotify(g:channel, 'data', d.data)
     ]])
-    eq({'notification', 'data', {{{'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}}}}, next_msg())
+    eq({'notification', 'data', {{{'1', ''}, {'2', ''}, {'3', ''}, {'4', ''}, {'5', ''}, {''}}}}, next_msg())
   end)
 
   it('jobstart() works with partial functions', function()
@@ -469,7 +491,7 @@ describe('jobs', function()
     end)
 
     it('will return -2 when interrupted', function()
-      execute('call rpcnotify(g:channel, "ready") | '..
+      feed_command('call rpcnotify(g:channel, "ready") | '..
               'call rpcnotify(g:channel, "wait", '..
               'jobwait([jobstart("sleep 10; exit 55")]))')
       eq({'notification', 'ready', {}}, next_msg())
@@ -495,7 +517,8 @@ describe('jobs', function()
         elseif self.state == 2
           let self.state = 3
           call jobsend(a:id, "line3\n")
-        else
+        elseif self.state == 3
+          let self.state = 4
           call rpcnotify(g:channel, 'w', printf('job %d closed', self.counter))
           call jobclose(a:id, 'stdin')
         endif
@@ -513,7 +536,7 @@ describe('jobs', function()
         \ ])
       endfunction
       ]])
-      execute('call Run()')
+      feed_command('call Run()')
       local r
       for i = 10, 1, -1 do
         r = next_msg()
@@ -550,6 +573,7 @@ describe('jobs', function()
 
   -- FIXME need to wait until jobsend succeeds before calling jobstop
   pending('will only emit the "exit" event after "stdout" and "stderr"', function()
+    nvim('command', "let g:job_opts.on_stderr  = function('s:OnEvent')")
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
     local jobid = nvim('eval', 'j')
     nvim('eval', 'jobsend(j, "abcdef")')
@@ -636,7 +660,7 @@ describe('jobs', function()
       -- there won't be any more messages, and the test would hang.
       helpers.sleep(100)
       local err = exc_exec('call jobpid(j)')
-      eq('Vim(call):E900: Invalid job id', err)
+      eq('Vim(call):E900: Invalid channel id', err)
 
       -- cleanup
       eq(other_pid, eval('jobpid(' .. other_jobid .. ')'))
@@ -667,19 +691,20 @@ describe("pty process teardown", function()
   it("does not prevent/delay exit. #4798 #4900", function()
     if helpers.pending_win32(pending) then return end
     -- Use a nested nvim (in :term) to test without --headless.
-    execute(":terminal '"..helpers.nvim_prog
+    feed_command(":terminal '"..helpers.nvim_prog
+      .."' -u NONE -i NONE --cmd '"..nvim_set.."' "
       -- Use :term again in the _nested_ nvim to get a PTY process.
       -- Use `sleep` to simulate a long-running child of the PTY.
-      .."' +terminal +'!(sleep 300 &)' +qa")
+      .."+terminal +'!(sleep 300 &)' +qa")
 
     -- Exiting should terminate all descendants (PTY, its children, ...).
     screen:expect([[
-                                    |
+      ^                              |
       [Process exited 0]            |
                                     |
                                     |
                                     |
-      -- TERMINAL --                |
+                                    |
     ]])
   end)
 end)

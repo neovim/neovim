@@ -2,7 +2,8 @@
 " Language: reStructuredText documentation format
 " Maintainer: Marshall Ward <marshall.ward@gmail.com>
 " Previous Maintainer: Nikolai Weibull <now@bitwi.se>
-" Latest Revision: 2016-06-17
+" Website: https://github.com/marshallward/vim-restructuredtext
+" Latest Revision: 2016-08-18
 
 if exists("b:current_syntax")
   finish
@@ -89,7 +90,7 @@ function! s:DefineOneInlineMarkup(name, start, middle, end, char_left, char_righ
         \ ' start=+' . a:char_left . '\zs' . a:start .
         \ '\ze[^[:space:]' . a:char_right . a:start[strlen(a:start) - 1] . ']+' .
         \ a:middle .
-        \ ' end=+\S' . a:end . '\ze\%($\|\s\|[''")\]}>/:.,;!?\\-]\)+'
+        \ ' end=+\S' . a:end . '\ze\%($\|\s\|[''"’)\]}>/:.,;!?\\-]\)+'
 endfunction
 
 function! s:DefineInlineMarkup(name, start, middle, end)
@@ -103,6 +104,8 @@ function! s:DefineInlineMarkup(name, start, middle, end)
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '\[', '\]')
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '{', '}')
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '<', '>')
+  call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '’', '’')
+  " TODO: Additional Unicode Pd, Po, Pi, Pf, Ps characters
 
   call s:DefineOneInlineMarkup(a:name, a:start, middle, a:end, '\%(^\|\s\|[/:]\)', '')
 
@@ -186,11 +189,8 @@ hi def link rstHyperlinkTarget              String
 hi def link rstExDirective                  String
 hi def link rstSubstitutionDefinition       rstDirective
 hi def link rstDelimiter                    Delimiter
-hi def link rstEmphasis                     Underlined
-hi def link rstStrongEmphasis               Special
-" TODO Append these atttributes somehow
-"hi def rstEmphasis term=italic cterm=italic gui=italic
-"hi def rstStrongEmphasis term=bold cterm=bold gui=bold
+hi def rstEmphasis ctermfg=13 term=italic cterm=italic gui=italic
+hi def rstStrongEmphasis ctermfg=1 term=bold cterm=bold gui=bold
 hi def link rstInterpretedTextOrHyperlinkReference  Identifier
 hi def link rstInlineLiteral                String
 hi def link rstSubstitutionReference        PreProc

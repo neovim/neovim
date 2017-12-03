@@ -1,4 +1,4 @@
-*tagsrch.txt*   For Vim version 7.4.  Last change: 2013 Oct 01
+*tagsrch.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -8,12 +8,7 @@ Tags and special searches				*tags-and-searches*
 
 See section |29.1| of the user manual for an introduction.
 
-1. Jump to a tag		|tag-commands|
-2. Tag stack			|tag-stack|
-3. Tag match list		|tag-matchlist|
-4. Tags details			|tag-details|
-5. Tags file format		|tags-file-format|
-6. Include file searches	|include-search|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Jump to a tag					*tag-commands*
@@ -90,7 +85,7 @@ The ignore-case matches are not found for a ":tag" command when:
 - 'tagcase' is "followscs" and 'smartcase' option is on and the pattern
   contains an upper case character.
 
-The gnore-case matches are found when:
+The ignore-case matches are found when:
 - a pattern is used (starting with a "/")
 - for ":tselect"
 - when 'tagcase' is "followic" and 'ignorecase' is off
@@ -194,6 +189,7 @@ the same entry.
 			information in the tags file(s).
 			When [ident] is not given, the last tag name from the
 			tag stack is used.
+			See |tag-!| for [!].
 			With a '>' in the first column is indicated which is
 			the current position in the list (if there is one).
 			[ident] can be a regexp pattern, see |tag-regexp|.
@@ -432,9 +428,9 @@ The next file in the list is not used when:
 This also depends on whether case is ignored.  Case is ignored when:
 - 'tagcase' is "followic" and 'ignorecase' is set
 - 'tagcase' is "ignore"
-- 'tagcase' is "smart" and and the pattern only contains lower case
+- 'tagcase' is "smart" and the pattern only contains lower case
   characters.
-- 'tagcase' is "followscs" and 'smartcase' is set and and the pattern only
+- 'tagcase' is "followscs" and 'smartcase' is set and the pattern only
   contains lower case characters.
 If case is not ignored, and the tags file only has a match without matching
 case, the next tags file is searched for a match with matching case.  If no
@@ -803,24 +799,24 @@ CTRL-W d		Open a new window, with the cursor on the first
 
 								*:search-args*
 Common arguments for the commands above:
-[!]   When included, find matches in lines that are recognized as comments.
-      When excluded, a match is ignored when the line is recognized as a
-      comment (according to 'comments'), or the match is in a C comment (after
-      "//" or inside /* */).  Note that a match may be missed if a line is
-      recognized as a comment, but the comment ends halfway through the line.
-      And  if the line is a comment, but it is not recognized (according to
-      'comments') a match may be found in it anyway.  Example: >
+[!]	When included, find matches in lines that are recognized as comments.
+	When excluded, a match is ignored when the line is recognized as a
+	comment (according to 'comments'), or the match is in a C comment
+	(after "//" or inside /* */).  Note that a match may be missed if a
+	line is recognized as a comment, but the comment ends halfway the line.
+	And if the line is a comment, but it is not recognized (according to
+	'comments') a match may be found in it anyway.  Example: >
 		/* comment
 		   foobar */
-<     A match for "foobar" is found, because this line is not recognized as a
-      comment (even though syntax highlighting does recognize it).
-      Note: Since a macro definition mostly doesn't look like a comment, the
-      [!] makes no difference for ":dlist", ":dsearch" and ":djump".
-[/]   A pattern can be surrounded by '/'.  Without '/' only whole words are
-      matched, using the pattern "\<pattern\>".  Only after the second '/' a
-      next command can be appended with '|'.  Example: >
+<	A match for "foobar" is found, because this line is not recognized as
+	a comment (even though syntax highlighting does recognize it).
+	Note: Since a macro definition mostly doesn't look like a comment, the
+	[!] makes no difference for ":dlist", ":dsearch" and ":djump".
+[/]	A pattern can be surrounded by '/'.  Without '/' only whole words are
+	matched, using the pattern "\<pattern\>".  Only after the second '/' a
+	next command can be appended with '|'.  Example: >
 	:isearch /string/ | echo "the last one"
-<     For a ":djump", ":dsplit", ":dlist" and ":dsearch" command the pattern
-      is used as a literal string, not as a search pattern.
+<	For a ":djump", ":dsplit", ":dlist" and ":dsearch" command the pattern
+	is used as a literal string, not as a search pattern.
 
  vim:tw=78:ts=8:ft=help:norl:

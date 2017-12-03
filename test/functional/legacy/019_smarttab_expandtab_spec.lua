@@ -3,11 +3,12 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe([[performing "r<Tab>" with 'smarttab' and 'expandtab' set/not set, and "dv_"]], function()
   setup(clear)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start text
@@ -19,24 +20,24 @@ describe([[performing "r<Tab>" with 'smarttab' and 'expandtab' set/not set, and 
       test text
         Second line beginning with whitespace]])
 
-    execute('set smarttab expandtab ts=8 sw=4')
+    feed_command('set smarttab expandtab ts=8 sw=4')
     -- Make sure that backspace works, no matter what termcap is used.
-    execute('set t_kD=x7f t_kb=x08')
+    feed_command('set t_kD=x7f t_kb=x08')
 
-    execute('/some')
+    feed_command('/some')
     feed('r	')
-    execute('set noexpandtab')
-    execute('/other')
+    feed_command('set noexpandtab')
+    feed_command('/other')
     feed('r	<cr>')
     -- Test replacing with Tabs and then backspacing to undo it.
     feed('0wR			<bs><bs><bs><esc><cr>')
     -- Test replacing with Tabs.
     feed('0wR			<esc><cr>')
     -- Test that copyindent works with expandtab set.
-    execute('set expandtab smartindent copyindent ts=8 sw=8 sts=8')
+    feed_command('set expandtab smartindent copyindent ts=8 sw=8 sts=8')
     feed('o{<cr>x<esc>')
-    execute('set nosol')
-    execute('/Second line/')
+    feed_command('set nosol')
+    feed_command('/Second line/')
     -- Test "dv_"
     feed('fwdv_')
 

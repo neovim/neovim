@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -13,8 +14,12 @@
 # include "nvim/os/unix_defs.h"
 #endif
 
-/// File descriptor number used for STDIN
-enum { OS_STDIN_FILENO = STDIN_FILENO };
+/// File descriptor number used for standard IO streams
+enum {
+  OS_STDIN_FILENO = STDIN_FILENO,
+  OS_STDOUT_FILENO = STDOUT_FILENO,
+  OS_STDERR_FILENO = STDERR_FILENO,
+};
 
 #define BASENAMELEN (NAME_MAX - 5)
 
@@ -30,11 +35,11 @@ enum { OS_STDIN_FILENO = STDIN_FILENO };
 
 // Use up to 5 Mbyte for a buffer.
 #ifndef DFLT_MAXMEM
-# define DFLT_MAXMEM (5*1024)
+# define DFLT_MAXMEM (5 * 1024)
 #endif
 // use up to 10 Mbyte for Vim.
 #ifndef DFLT_MAXMEMTOT
-# define DFLT_MAXMEMTOT (10*1024)
+# define DFLT_MAXMEMTOT (10 * 1024)
 #endif
 
 // Note: Some systems need both string.h and strings.h (Savage).  However,

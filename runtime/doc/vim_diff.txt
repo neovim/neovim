@@ -1,4 +1,4 @@
-*vim_diff.txt*    For Nvim.						{Nvim}
+*vim_diff.txt*    Nvim
 
 
 			    NVIM REFERENCE MANUAL
@@ -6,17 +6,10 @@
 
 Differences between Nvim and Vim			       *vim-differences*
 
-Throughout the help files, differences between Nvim and Vim are indicated via
-the "{Nvim}" tag.  This document is a complete and centralized list of all
-these differences.
+Nvim differs from Vim in many ways, big and small.  This document is
+a complete and centralized reference of those differences.
 
-1. Configuration		|nvim-configuration|
-2. Defaults			|nvim-defaults|
-3. New features			|nvim-features|
-4. Changed features		|nvim-features-changed|
-5. Missing legacy features	|nvim-features-missing|
-6. Removed features		|nvim-features-removed|
-
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Configuration					    *nvim-configuration*
@@ -45,7 +38,8 @@ these differences.
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
-- 'langnoremap' is set by default
+- 'langnoremap' is enabled by default
+- 'langremap' is disabled by default
 - 'laststatus' defaults to 2 (statusline is always shown)
 - 'listchars' defaults to "tab:> ,trail:-,nbsp:+"
 - 'nocompatible' is always set
@@ -64,42 +58,62 @@ these differences.
 ==============================================================================
 3. New Features						       *nvim-features*
 
-
 MAJOR COMPONENTS ~
 
-Embedded terminal emulator	|terminal-emulator|
-RPC API				|RPC|
-Shared data			|shada|
-XDG base directories		|xdg|
+API				|API|
+Lua scripting			|lua|
 Job control			|job-control|
 Remote plugins			|remote-plugin|
-Python plugins			|provider-python|
-Clipboard integration		|provider-clipboard|
-
+Providers
+  Clipboard			|provider-clipboard|
+  Python plugins		|provider-python|
+  Ruby plugins			|provider-ruby|
+Shared data			|shada|
+Embedded terminal		|terminal|
+XDG base directories		|xdg|
 
 USER EXPERIENCE  ~
 
-Working intuitively and consistently is a major goal of Nvim. Examples:
+Working intuitively and consistently is a major goal of Nvim.
 
-- Nvim does not have `-X`, a platform-specific option "sometimes" available in
-  Vim (with potential surprises: http://stackoverflow.com/q/14635295). Nvim
-  avoids features that cannot be provided on all platforms--instead that is
-  delegated to external plugins/extensions.
+							*feature-compile*
+- Nvim always includes ALL features, in contrast to Vim (which ships with
+  various combinations of 100+ optional features). Think of it as a leaner
+  version of Vim's "HUGE" build. This reduces surface area for bugs, and
+  removes a common source of confusion and friction for users.
 
-- Test-only globals and functions such as test_autochdir(), test_settime(),
-  etc., are not exposed (because they don't exist).
+- Nvim avoids features that cannot be provided on all platforms; instead that
+  is delegated to external plugins/extensions. E.g. the `-X` platform-specific
+  option is "sometimes" available in Vim (with potential surprises:
+  http://stackoverflow.com/q/14635295).
+
+- Vim's internal test functions (test_autochdir(), test_settime(), etc.) are
+  not exposed (nor implemented); instead Nvim has a robust API.
+
+- Behaviors, options, documentation are removed if they cost users more time
+  than they save.
+
+Usability details have been improved where the benefit outweighs any
+backwards-compatibility cost. Some examples:
+
+- |K| in help documents can be used like |CTRL-]|.
+- Directories for 'directory' and 'undodir' are auto-created.
+- Terminal features such as 'guicursor' are enabled where possible.
 
 ARCHITECTURE ~
 
 External plugins run in separate processes. |remote-plugin| This improves
-stability and allows those plugins to perform tasks without blocking the
-editor. Even "legacy" Python and Ruby plugins which use the old Vim interfaces
-(|if_py| and |if_ruby|) run out-of-process.
+stability and allows those plugins to work without blocking the editor. Even
+"legacy" Python and Ruby plugins which use the old Vim interfaces (|if_py| and
+|if_ruby|) run out-of-process.
 
+Platform and I/O facilities are built upon libuv. Nvim benefits from libuv
+features and bug fixes, and other projects benefit from improvements to libuv
+by Nvim developers.
 
 FEATURES ~
 
-|bracketed-paste-mode| is built-in and enabled by default.
+"Outline": Type |gO| in |:Man| and |:help| pages to see a document outline.
 
 |META| (ALT) chords are recognized, even in the terminal. Any |<M-| mapping
 will work. Some examples: <M-1>, <M-2>, <M-BS>, <M-Del>, <M-Ins>, <M-/>,
@@ -112,9 +126,12 @@ Some `CTRL-SHIFT-...` key chords are distinguished from `CTRL-...` variants
 
 Options:
   'cpoptions' flags: |cpo-_|
+  'guicursor' works in the terminal
   'inccommand' shows interactive results for |:substitute|-like commands
+  'scrollback'
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
+  'winhighlight' window-local highlights
 
 Variables:
   |v:event|
@@ -123,14 +140,15 @@ Variables:
   |v:windowid| is always available (for use by external UIs)
 
 Commands:
-  |:CheckHealth|
+  |:checkhealth|
   |:drop| is available on all platforms
   |:Man| is available by default, with many improvements such as completion
+  |:tchdir| tab-local |current-directory|
 
 Functions:
   |dictwatcheradd()| notifies a callback whenever a |Dict| is modified
   |dictwatcherdel()|
-  |execute()| works with |:redir|
+  |menu_get()|
   |msgpackdump()|, |msgpackparse()| provide msgpack de/serialization
 
 Events:
@@ -141,10 +159,20 @@ Events:
   |TextYankPost|
 
 Highlight groups:
+  |hl-NormalNC| highlights non-current windows
   |hl-QuickFixLine|
   |hl-Substitute|
   |hl-TermCursor|
   |hl-TermCursorNC|
+  |hl-Whitespace| highlights 'listchars' whitespace
+
+UI:
+		*E5408* *E5409* *g:Nvim_color_expr* *g:Nvim_color_cmdline*
+  Command-line coloring is supported. Only |input()| and |inputdialog()| may
+  be colored. For testing purposes expressions (e.g. |i_CTRL-R_=|) and regular
+  command-line (|:|) are colored by callbacks defined in `g:Nvim_color_expr`
+  and `g:Nvim_color_cmdline` respectively (these callbacks are for testing
+  only, and will be removed in a future version). 
 
 ==============================================================================
 4. Changed features					 *nvim-features-changed*
@@ -159,10 +187,21 @@ are always available and may be used simultaneously in separate plugins.  The
 `neovim` pip package must be installed to use Python plugins in Nvim (see
 |provider-python|).
 
+Because of general |256-color| usage whereever possible, Nvim will even use
+256-colour capability on Linux virtual terminals.  Vim uses only 8 colours
+plus bright foreground on Linux VTs.
+
+Vim combines what is in its |builtin-terms| with what it reads from termcap,
+and has a |ttybuiltin| setting to control how that combination works.  Nvim
+uses either one or the other of an external |terminfo| entry or the built-in
+one.  It does not attempt to mix data from the two.
+
 |:!| does not support "interactive" commands. Use |:terminal| instead.
 (GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
 
 |system()| does not support writing/reading "backgrounded" commands. |E5677|
+
+|:redir| nested in |execute()| works.
 
 Nvim may throttle (skip) messages from shell commands (|:!|, |:grep|, |:make|)
 if there is too much output. No data is lost, this only affects display and
@@ -219,22 +258,15 @@ Additional differences:
 
 - |shada-c| has no effect.
 - |shada-s| now limits size of every item and not just registers.
-- When reading ShaDa files items are merged according to the timestamp.
-  |shada-merging|
 - 'viminfo' option got renamed to 'shada'. Old option is kept as an alias for
   compatibility reasons.
 - |:wviminfo| was renamed to |:wshada|, |:rviminfo| to |:rshada|.  Old
   commands are still kept.
-- When writing (|:wshada| without bang or at exit) it merges much more data,
-  and does this according to the timestamp.  Vim merges only marks.
-  |shada-merging|
 - ShaDa file format was designed with forward and backward compatibility in
   mind. |shada-compatibility|
 - Some errors make ShaDa code keep temporary file in-place for user to decide
   what to do with it.  Vim deletes temporary file in these cases.
   |shada-error-handling|
-- Vim keeps no timestamps at all, neither in viminfo file nor in the instance
-  itself.
 - ShaDa file keeps search direction (|v:searchforward|), viminfo does not.
 
 |printf()| returns something meaningful when used with `%p` argument: in Vim 
@@ -245,23 +277,45 @@ coerced to strings. See |id()| for more details, currently it uses
 
 |c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.
 
+Lua interface (|if_lua.txt|):
+
+- `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim 
+  that prints `a` and `b` on separate lines, exactly like
+  `:lua print("a\nb")` .
+- `:lua error('TEST')` will print “TEST” as the error in Vim and “E5105: Error 
+  while calling lua chunk: [string "<VimL compiled string>"]:1: TEST” in 
+  Neovim.
+- Lua has direct access to Nvim |API| via `vim.api`.
+- Lua package.path and package.cpath are automatically updated according to
+  'runtimepath': |lua-require|.
+
+|input()| and |inputdialog()| support for each other’s features (return on
+cancel and completion respectively) via dictionary argument (replaces all
+other arguments if used).
+
+|input()| and |inputdialog()| support user-defined cmdline highlighting.
+
+Highlight groups:
+  |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
+  groups
+
+The variable name "count" is no fallback for |v:count| anymore.
+
 ==============================================================================
 5. Missing legacy features				 *nvim-features-missing*
-				     *if_lua* *if_perl* *if_mzscheme* *if_tcl*
 
-These legacy Vim features may be implemented in the future, but they are not
-planned for the current milestone.
+Some legacy Vim features are not implemented:
 
 - |if_py|: vim.bindeval() and vim.Function() are not supported
-- |if_lua|
-- |if_perl|
-- |if_mzscheme|
-- |if_tcl|
+- |if_lua|: the `vim` object is missing most legacy methods
+- *if_perl*
+- *if_mzscheme*
+- *if_tcl*
 
 ==============================================================================
 6. Removed features					 *nvim-features-removed*
 
-These features are in Vim, but have been intentionally removed from Nvim.
+These Vim features were intentionally removed from Nvim.
 
 			*'cp'* *'nocompatible'* *'nocp'* *'compatible'*
 Nvim is always "non-compatible" with Vi.
@@ -272,6 +326,29 @@ Nvim is always "non-compatible" with Vi.
 Ed-compatible mode:
   ":set noedcompatible" is ignored
   ":set edcompatible" is an error
+
+	*t_xx* *:set-termcap* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
+Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
+terminal capabilities. Instead Nvim treats the terminal as any other UI. For
+example, 'guicursor' sets the terminal cursor style if possible.
+
+						  *'term'* *E529* *E530* *E531*
+'term' reflects the terminal type derived from |$TERM| and other environment
+checks.  For debugging only; not reliable during startup. >
+	:echo &term
+"builtin_x" means one of the |builtin-terms| was chosen, because the expected
+terminfo file was not found on the system.
+
+								*termcap*
+Nvim never uses the termcap database, only |terminfo| and |builtin-terms|.
+
+						*xterm-8bit* *xterm-8-bit*
+Xterm can be run in a mode where it uses true 8-bit CSI.  Supporting this
+requires autodetection of whether the terminal is in UTF-8 mode or non-UTF-8
+mode, as the 8-bit CSI character has to be written differently in each case.
+Vim issues a "request version" sequence to the terminal at startup and looks
+at how the terminal is sending CSI.  Nvim does not issue such a sequence and
+always uses 7-bit control sequences.
 
 'ttyfast':
   ":set ttyfast" is ignored
@@ -284,9 +361,6 @@ Encryption support:
 MS-DOS support:
   'bioskey'
   'conskey'
-
-Highlight groups:
-  |hl-VisualNOS|
 
 Test functions:
   test_alloc_fail()
@@ -303,11 +377,12 @@ Test functions:
 
 Other options:
   'antialias'
-  'cpoptions' ("g", "w", "H", "*", "-", "j", and all POSIX flags were removed)
+  'cpoptions' (g j k H w < * - and all POSIX flags were removed)
   'encoding' ("utf-8" is always used)
   'esckeys'
   'guioptions' "t" flag was removed
   *'guipty'* (Nvim uses pipes and PTYs consistently on all platforms.)
+  'highlight' (Names of builtin |highlight-groups| cannot be changed.)
   *'imactivatefunc'* *'imaf'*
   *'imactivatekey'* *'imak'*
   *'imstatusfunc'* *'imsf'*
@@ -316,7 +391,6 @@ Other options:
   'shelltype'
   *'shortname'* *'sn'* *'noshortname'* *'nosn'*
   *'swapsync'* *'sws'*
-  *'term'* *E529* *E530* *E531*
   *'termencoding'* *'tenc'* (Vim 7.4.852 also removed this for Windows)
   'textauto'
   'textmode'

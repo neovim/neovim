@@ -8,7 +8,7 @@
 # Set the LIBUV_USE_STATIC variable to specify if static libraries should
 # be preferred to shared ones.
 
-if(NOT LIBUV_USE_BUNDLED)
+if(NOT USE_BUNDLED_LIBUV)
   find_package(PkgConfig)
   if (PKG_CONFIG_FOUND)
     pkg_check_modules(PC_LIBUV QUIET libuv)
@@ -65,7 +65,7 @@ if(HAVE_LIBKSTAT)
 endif()
 
 check_library_exists(kvm kvm_open "kvm.h" HAVE_LIBKVM)
-if(HAVE_LIBKVM)
+if(HAVE_LIBKVM AND NOT CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
   list(APPEND LIBUV_LIBRARIES kvm)
 endif()
 

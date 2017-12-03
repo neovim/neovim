@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert, source = helpers.feed, helpers.insert, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 local write_file, call = helpers.write_file, helpers.call
 
 if helpers.pending_win32(pending) then return end
@@ -15,44 +15,44 @@ end
 describe("spell checking with 'encoding' set to utf-8", function()
   setup(function()
     clear()
-    execute("syntax off")
+    feed_command("syntax off")
     write_latin1('Xtest1.aff',[[
       SET ISO8859-1
       TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
-      
+
       FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
+
       SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
       SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
-      
+
       MIDWORD	'-
-      
+
       KEP =
       RAR ?
       BAD !
-      
+
       PFX I N 1
       PFX I 0 in .
-      
+
       PFX O Y 1
       PFX O 0 out .
-      
+
       SFX S Y 2
       SFX S 0 s [^s]
       SFX S 0 es s
-      
+
       SFX N N 3
       SFX N 0 en [^n]
       SFX N 0 nen n
       SFX N 0 n .
-      
+
       REP 3
       REP g ch
       REP ch g
       REP svp s.v.p.
-      
+
       MAP 9
       MAP aàáâãäå
       MAP eèéêë
@@ -79,39 +79,39 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     write_latin1('Xtest2.aff', [[
       SET ISO8859-1
-      
+
       FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
+
       PFXPOSTPONE
-      
+
       MIDWORD	'-
-      
+
       KEP =
       RAR ?
       BAD !
-      
+
       PFX I N 1
       PFX I 0 in .
-      
+
       PFX O Y 1
       PFX O 0 out [a-z]
-      
+
       SFX S Y 2
       SFX S 0 s [^s]
       SFX S 0 es s
-      
+
       SFX N N 3
       SFX N 0 en [^n]
       SFX N 0 nen n
       SFX N 0 n .
-      
+
       REP 3
       REP g ch
       REP ch g
       REP svp s.v.p.
-      
+
       MAP 9
       MAP aàáâãäå
       MAP eèéêë
@@ -125,7 +125,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     write_latin1('Xtest3.aff', [[
       SET ISO8859-1
-      
+
       COMPOUNDMIN 3
       COMPOUNDRULE m*
       NEEDCOMPOUND x
@@ -139,21 +139,21 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     write_latin1('Xtest4.aff', [[
       SET ISO8859-1
-      
+
       FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
+
       COMPOUNDRULE m+
       COMPOUNDRULE sm*e
       COMPOUNDRULE sm+
       COMPOUNDMIN 3
       COMPOUNDWORDMAX 3
       COMPOUNDFORBIDFLAG t
-      
+
       COMPOUNDSYLMAX 5
       SYLLABLE aáeéiíoóöõuúüûy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui
-      
+
       MAP 9
       MAP aàáâãäå
       MAP eèéêë
@@ -164,23 +164,23 @@ describe("spell checking with 'encoding' set to utf-8", function()
       MAP cç
       MAP yÿý
       MAP sß
-      
+
       NEEDAFFIX x
-      
+
       PFXPOSTPONE
-      
+
       MIDWORD '-
-      
+
       SFX q N 1
       SFX q   0    -ok .
-      
+
       SFX a Y 2
       SFX a 0 s .
       SFX a 0 ize/t .
-      
+
       PFX p N 1
       PFX p 0 pre .
-      
+
       PFX P N 1
       PFX P 0 nou .
       ]])
@@ -196,28 +196,28 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     write_latin1('Xtest5.aff', [[
       SET ISO8859-1
-      
+
       FLAG long
-      
+
       NEEDAFFIX !!
-      
+
       COMPOUNDRULE ssmm*ee
-      
+
       NEEDCOMPOUND xx
       COMPOUNDPERMITFLAG pp
-      
+
       SFX 13 Y 1
       SFX 13 0 bork .
-      
+
       SFX a1 Y 1
       SFX a1 0 a1 .
-      
+
       SFX aé Y 1
       SFX aé 0 aé .
-      
+
       PFX zz Y 1
       PFX zz 0 pre/pp .
-      
+
       PFX yy Y 1
       PFX yy 0 nou .
       ]])
@@ -231,26 +231,26 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     write_latin1('Xtest6.aff', [[
       SET ISO8859-1
-      
+
       FLAG caplong
-      
+
       NEEDAFFIX A!
-      
+
       COMPOUNDRULE sMm*Ee
-      
+
       NEEDCOMPOUND Xx
-      
+
       COMPOUNDPERMITFLAG p
-      
+
       SFX N3 Y 1
       SFX N3 0 bork .
-      
+
       SFX A1 Y 1
       SFX A1 0 a1 .
-      
+
       SFX Aé Y 1
       SFX Aé 0 aé .
-      
+
       PFX Zz Y 1
       PFX Zz 0 pre/p .
       ]])
@@ -264,29 +264,29 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     write_latin1('Xtest7.aff', [[
       SET ISO8859-1
-      
+
       FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
+
       FLAG num
-      
+
       NEEDAFFIX 9999
-      
+
       COMPOUNDRULE 2,77*123
-      
+
       NEEDCOMPOUND 1
       COMPOUNDPERMITFLAG 432
-      
+
       SFX 61003 Y 1
       SFX 61003 0 meat .
-      
+
       SFX 391 Y 1
       SFX 391 0 a1 .
-      
+
       SFX 111 Y 1
       SFX 111 0 aé .
-      
+
       PFX 17 Y 1
       PFX 17 0 pre/432 .
       ]])
@@ -300,7 +300,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     write_latin1('Xtest8.aff', [[
       SET ISO8859-1
-      
+
       NOSPLITSUGS
       ]])
     write_latin1('Xtest8.dic', [[
@@ -319,37 +319,37 @@ describe("spell checking with 'encoding' set to utf-8", function()
     write_latin1('Xtest-sal.aff', [[
       SET ISO8859-1
       TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
-      
+
       FOL  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       LOW  àáâãäåæçèéêëìíîïðñòóôõöøùúûüýþßÿ
       UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßÿ
-      
+
       MIDWORD	'-
-      
+
       KEP =
       RAR ?
       BAD !
-      
+
       PFX I N 1
       PFX I 0 in .
-      
+
       PFX O Y 1
       PFX O 0 out .
-      
+
       SFX S Y 2
       SFX S 0 s [^s]
       SFX S 0 es s
-      
+
       SFX N N 3
       SFX N 0 en [^n]
       SFX N 0 nen n
       SFX N 0 n .
-      
+
       REP 3
       REP g ch
       REP ch g
       REP svp s.v.p.
-      
+
       MAP 9
       MAP aàáâãäå
       MAP eèéêë
@@ -360,7 +360,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       MAP cç
       MAP yÿý
       MAP sß
-      
+
       SAL AH(AEIOUY)-^         *H
       SAL AR(AEIOUY)-^         *R
       SAL A(HR)^               *
@@ -550,60 +550,60 @@ describe("spell checking with 'encoding' set to utf-8", function()
       1good: wrong OK puts. Test the end
       bad:  inputs comment ok Ok. test déôl end the
       badend
-      
+
       test2:
       elequint test elekwint test elekwent asdf
       ]])
     test_one(1, 1)
-    execute([[$put =soundfold('goobledygoook')]])
-    execute([[$put =soundfold('kóopërÿnôven')]])
-    execute([[$put =soundfold('oeverloos gezwets edale')]])
+    feed_command([[$put =soundfold('goobledygoook')]])
+    feed_command([[$put =soundfold('kóopërÿnôven')]])
+    feed_command([[$put =soundfold('oeverloos gezwets edale')]])
     -- And now with SAL instead of SOFO items; test automatic reloading.
     os.execute('cp -f Xtest-sal.aff Xtest.aff')
-    execute('mkspell! Xtest Xtest')
-    execute([[$put =soundfold('goobledygoook')]])
-    execute([[$put =soundfold('kóopërÿnôven')]])
-    execute([[$put =soundfold('oeverloos gezwets edale')]])
+    feed_command('mkspell! Xtest Xtest')
+    feed_command([[$put =soundfold('goobledygoook')]])
+    feed_command([[$put =soundfold('kóopërÿnôven')]])
+    feed_command([[$put =soundfold('oeverloos gezwets edale')]])
     -- Also use an addition file.
-    execute('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
-    execute('set spellfile=Xtest.utf-8.add')
-    execute('/^test2:')
+    feed_command('mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add')
+    feed_command('set spellfile=Xtest.utf-8.add')
+    feed_command('/^test2:')
     feed(']s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('set spl=Xtest_us.utf-8.spl')
-    execute('/^test2:')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
+    feed_command('set spl=Xtest_us.utf-8.spl')
+    feed_command('/^test2:')
     feed(']smm')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
     feed('`m]s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('set spl=Xtest_gb.utf-8.spl')
-    execute('/^test2:')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
+    feed_command('set spl=Xtest_gb.utf-8.spl')
+    feed_command('/^test2:')
     feed(']smm')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
     feed('`m]s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('set spl=Xtest_nz.utf-8.spl')
-    execute('/^test2:')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
+    feed_command('set spl=Xtest_nz.utf-8.spl')
+    feed_command('/^test2:')
     feed(']smm')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
     feed('`m]s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('set spl=Xtest_ca.utf-8.spl')
-    execute('/^test2:')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
+    feed_command('set spl=Xtest_ca.utf-8.spl')
+    feed_command('/^test2:')
     feed(']smm')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
     feed('`m]s')
-    execute('let [str, a] = spellbadword()')
-    execute('$put =str')
-    execute('1,/^test 1-1/-1d')
+    feed_command('let [str, a] = spellbadword()')
+    feed_command('$put =str')
+    feed_command('1,/^test 1-1/-1d')
     expect([[
       test 1-1
       # file: Xtest.utf-8.spl
@@ -667,7 +667,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       ]])
     -- Postponed prefixes.
     test_one(2, 1)
-    execute('1,/^test 2-1/-1d')
+    feed_command('1,/^test 2-1/-1d')
     expect([=[
       test 2-1
       # file: Xtest.utf-8.spl
@@ -711,13 +711,13 @@ describe("spell checking with 'encoding' set to utf-8", function()
   it('part 3-3', function()
     insert([[
       Test rules for compounding.
-      
+
       3good: foo mï foobar foofoobar barfoo barbarfoo
       bad: bar la foomï barmï mïfoo mïbar mïmï lala mïla lamï foola labar
       badend
       ]])
     test_one(3, 3)
-    execute('1,/^test 3-3/-1d')
+    feed_command('1,/^test 3-3/-1d')
     expect([=[
       test 3-3
       # file: Xtest.utf-8.spl
@@ -755,7 +755,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
   it('part 4-4', function()
     insert([[
       Tests for compounding.
-      
+
       4good: word util bork prebork start end wordutil wordutils pro-ok
         bork borkbork borkborkbork borkborkborkbork borkborkborkborkbork
         tomato tomatotomato startend startword startwordword startwordend
@@ -770,7 +770,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(4, 4)
-    execute('1,/^test 4-4/-1d')
+    feed_command('1,/^test 4-4/-1d')
     expect([=[
       test 4-4
       # file: Xtest.utf-8.spl
@@ -823,7 +823,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
   it('part 5-5', function()
     insert([[
       Test affix flags with two characters
-      
+
       5good: fooa1 fooaé bar prebar barbork prebarbork  startprebar
             start end startend  startmiddleend nouend
       bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
@@ -831,7 +831,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(5, 5)
-    execute('1,/^test 5-5/-1d')
+    feed_command('1,/^test 5-5/-1d')
     expect([=[
       test 5-5
       # file: Xtest.utf-8.spl
@@ -878,7 +878,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
       badend
       ]])
     test_one(6, 6)
-    execute('1,/^test 6-6/-1d')
+    feed_command('1,/^test 6-6/-1d')
     expect([=[
       test 6-6
       # file: Xtest.utf-8.spl
@@ -924,7 +924,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
     -- Compound words.
     test_one(7, 7)
     -- Assert buffer contents.
-    execute('1,/^test 7-7/-1d')
+    feed_command('1,/^test 7-7/-1d')
     expect([=[
       test 7-7
       # file: Xtest.utf-8.spl
@@ -968,7 +968,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
     -- NOSPLITSUGS
     test_one(8, 8)
     -- Assert buffer contents.
-    execute('1,/^test 8-8/-1d')
+    feed_command('1,/^test 8-8/-1d')
     expect([=[
       test 8-8
       # file: Xtest.utf-8.spl
@@ -992,7 +992,7 @@ describe("spell checking with 'encoding' set to utf-8", function()
     -- NOSPLITSUGS
     test_one(9, 9)
     -- Assert buffer contents.
-    execute('1,/^test 9-9/-1d')
+    feed_command('1,/^test 9-9/-1d')
     expect([=[
       test 9-9
       # file: Xtest.utf-8.spl

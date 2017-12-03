@@ -1,4 +1,4 @@
-*debug.txt*     For Vim version 7.4.  Last change: 2012 Feb 11
+*debug.txt*     Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -9,9 +9,7 @@ Debugging Vim						*debug-vim*
 This is for debugging Vim itself, when it doesn't work properly.
 For debugging Vim scripts, functions, etc. see |debug-scripts|
 
-1. Location of a crash, using gcc and gdb	|debug-gcc|
-2. Locating memory leaks			|debug-leaks|
-3. Windows Bug Reporting			|debug-win32|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 

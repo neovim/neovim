@@ -1,4 +1,4 @@
-*usr_03.txt*	For Vim version 7.4.  Last change: 2016 Jan 05
+*usr_03.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -182,7 +182,7 @@ the following:
 
 This tells you that you might want to fix something on line 33.  So how do you
 find line 33?  One way is to do "9999k" to go to the top of the file and "32j"
-to go down thirty two lines.  It is not a good way, but it works.  A much
+to go down thirty-two lines.  It is not a good way, but it works.  A much
 better way of doing things is to use the "G" command.  With a count, this
 command positions you at the given line number.  For example, "33G" puts you
 on line 33.  (For a better way of going through a compiler's error list, see
@@ -353,7 +353,7 @@ The "?" command works like "/" but searches backwards: >
 	?word
 
 The "N" command repeats the last search the opposite direction.  Thus using
-"N" after a "/" command search backwards, using "N" after "?" searches
+"N" after a "/" command searches backwards, using "N" after "?" searches
 forward.
 
 
@@ -508,7 +508,7 @@ only if it is at the beginning of a line.
    The $ character matches the end of a line.  Therefore, "was$" matches the
 word was only if it is at the end of a line.
 
-Let's mark the places where "the" matches in this example line with "x"s:
+Let's mark the places where "/the" matches in this example line with "x"s:
 
 	the solder holding one of the chips melted and the ~
 	xxx			  xxx		       xxx

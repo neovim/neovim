@@ -3,12 +3,19 @@
 -- - "./dir", in directory relative to file
 -- - "dir", in directory relative to current dir
 
-local helpers          = require('test.functional.helpers')(after_each)
-local lfs              = require('lfs')
-local insert, eq       = helpers.insert, helpers.eq
-local neq, eval        = helpers.neq, helpers.eval
-local clear, execute   = helpers.clear, helpers.execute
-local wait, write_file = helpers.wait, helpers.write_file
+local helpers = require('test.functional.helpers')(after_each)
+local lfs = require('lfs')
+
+local eq = helpers.eq
+local neq = helpers.neq
+local wait = helpers.wait
+local funcs = helpers.funcs
+local meths = helpers.meths
+local clear = helpers.clear
+local insert = helpers.insert
+local command = helpers.command
+local write_file = helpers.write_file
+local curbufmeths = helpers.curbufmeths
 
 local function ls_dir_sorted(dirname)
   local files = {}
@@ -36,7 +43,7 @@ describe("'directory' option", function()
     clear()
   end)
   teardown(function()
-    execute('qall!')
+    command('qall!')
     helpers.rmdir('Xtest.je')
     helpers.rmdir('Xtest2')
     os.remove('Xtest1')
@@ -49,21 +56,22 @@ describe("'directory' option", function()
       line 3 Abcdefghij
       end of testfile]])
 
-    execute('set swapfile')
-    execute('set dir=.,~')
+    meths.set_option('swapfile', true)
+    curbufmeths.set_option('swapfile', true)
+    meths.set_option('directory', '.')
 
     -- sanity check: files should not exist yet.
     eq(nil, lfs.attributes('.Xtest1.swp'))
 
-    execute('e! Xtest1')
+    command('edit! Xtest1')
     wait()
-    eq('Xtest1', eval('buffer_name("%")'))
+    eq('Xtest1', funcs.buffer_name('%'))
     -- Verify that the swapfile exists. In the legacy test this was done by
     -- reading the output from :!ls.
     neq(nil, lfs.attributes('.Xtest1.swp'))
 
-    execute('set dir=./Xtest2,.,~')
-    execute('e Xtest1')
+    meths.set_option('directory', './Xtest2,.')
+    command('edit Xtest1')
     wait()
 
     -- swapfile should no longer exist in CWD.
@@ -71,9 +79,9 @@ describe("'directory' option", function()
 
     eq({ "Xtest1.swp", "Xtest3" }, ls_dir_sorted("Xtest2"))
 
-    execute('set dir=Xtest.je,~')
-    execute('e Xtest2/Xtest3')
-    eq(1, eval('&swapfile'))
+    meths.set_option('directory', 'Xtest.je')
+    command('edit Xtest2/Xtest3')
+    eq(true, curbufmeths.get_option('swapfile'))
     wait()
 
     eq({ "Xtest3" }, ls_dir_sorted("Xtest2"))

@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /*
  * screen.c: code for displaying on the screen
  *
@@ -83,6 +86,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"
@@ -102,6 +106,7 @@
 #include "nvim/indent.h"
 #include "nvim/getchar.h"
 #include "nvim/main.h"
+#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -128,6 +133,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/time.h"
+#include "nvim/api/private/helpers.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -150,7 +156,6 @@ static schar_T  *current_ScreenLine;
 StlClickDefinition *tab_page_click_defs = NULL;
 long tab_page_click_defs_size = 0;
 
-# define SCREEN_LINE(r, o, e, c, rl)    screen_line((r), (o), (e), (c), (rl))
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
@@ -340,8 +345,9 @@ void update_screen(int type)
   if (need_highlight_changed)
     highlight_changed();
 
-  if (type == CLEAR) {          /* first clear screen */
-    screenclear();              /* will reset clear_cmdline */
+  if (type == CLEAR) {          // first clear screen
+    screenclear();              // will reset clear_cmdline
+    cmdline_screen_cleared();   // clear external cmdline state
     type = NOT_VALID;
   }
 
@@ -375,15 +381,24 @@ void update_screen(int type)
            ))
     curwin->w_redr_type = type;
 
-  /* Redraw the tab pages line if needed. */
-  if (redraw_tabline || type >= NOT_VALID)
+  // Redraw the tab pages line if needed.
+  if (redraw_tabline || type >= NOT_VALID) {
+    update_window_hl(curwin, type >= NOT_VALID);
+    FOR_ALL_TABS(tp) {
+      if (tp != curtab) {
+        update_window_hl(tp->tp_curwin, type >= NOT_VALID);
+      }
+    }
     draw_tabline();
+  }
 
   /*
    * Correct stored syntax highlighting info for changes in each displayed
    * buffer.  Each buffer must only be done once.
    */
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    update_window_hl(wp, type >= NOT_VALID);
+
     if (wp->w_buffer->b_mod_set) {
       win_T       *wwp;
 
@@ -678,12 +693,18 @@ static void win_update(win_T *wp)
   if (wp->w_nrwidth != i) {
     type = NOT_VALID;
     wp->w_nrwidth = i;
-  } else if (buf->b_mod_set && buf->b_mod_xlines != 0 && wp->w_redraw_top != 0) {
-    /*
-     * When there are both inserted/deleted lines and specific lines to be
-     * redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
-     * everything (only happens when redrawing is off for while).
-     */
+
+    if (buf->terminal) {
+      terminal_resize(buf->terminal,
+                      (uint16_t)(MAX(0, wp->w_width - win_col_off(wp))),
+                      (uint16_t)wp->w_height);
+    }
+  } else if (buf->b_mod_set
+             && buf->b_mod_xlines != 0
+             && wp->w_redraw_top != 0) {
+    // When there are both inserted/deleted lines and specific lines to be
+    // redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
+    // everything (only happens when redrawing is off for while).
     type = NOT_VALID;
   } else {
     /*
@@ -978,7 +999,7 @@ static void win_update(win_T *wp)
      * first. */
     if (mid_start == 0) {
       mid_end = wp->w_height;
-      if (lastwin == firstwin) {
+      if (ONE_WINDOW) {
         /* Clear the screen when it was not done by win_del_lines() or
          * win_ins_lines() above, "screen_cleared" is FALSE or MAYBE
          * then. */
@@ -1015,14 +1036,10 @@ static void win_update(win_T *wp)
     linenr_T from, to;
 
     if (VIsual_active) {
-      if (VIsual_active
-          && (VIsual_mode != wp->w_old_visual_mode
-              || type == INVERTED_ALL)) {
-        /*
-         * If the type of Visual selection changed, redraw the whole
-         * selection.  Also when the ownership of the X selection is
-         * gained or lost.
-         */
+      if (VIsual_mode != wp->w_old_visual_mode || type == INVERTED_ALL) {
+        // If the type of Visual selection changed, redraw the whole
+        // selection.  Also when the ownership of the X selection is
+        // gained or lost.
         if (curwin->w_cursor.lnum < VIsual.lnum) {
           from = curwin->w_cursor.lnum;
           to = VIsual.lnum;
@@ -1487,11 +1504,11 @@ static void win_update(win_T *wp)
 
       // Last line isn't finished: Display "@@@" in the last screen line.
       screen_puts_len((char_u *)"@@", 2, scr_row, wp->w_wincol,
-                      hl_attr(HLF_AT));
+                      win_hl_attr(wp, HLF_AT));
 
       screen_fill(scr_row, scr_row + 1,
                   (int)wp->w_wincol + 2, (int)W_ENDCOL(wp),
-                  '@', ' ', hl_attr(HLF_AT));
+                  '@', ' ', win_hl_attr(wp, HLF_AT));
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else if (dy_flags & DY_LASTLINE) {      // 'display' has "lastline"
@@ -1499,7 +1516,7 @@ static void win_update(win_T *wp)
       screen_fill(wp->w_winrow + wp->w_height - 1,
                   wp->w_winrow + wp->w_height,
                   W_ENDCOL(wp) - 3, W_ENDCOL(wp),
-                  '@', '@', hl_attr(HLF_AT));
+                  '@', '@', win_hl_attr(wp, HLF_AT));
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
@@ -1583,6 +1600,8 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
 # define FDC_OFF n
   int fdc = compute_foldcolumn(wp, 0);
 
+  int attr = win_hl_attr(wp, hl);
+
   if (wp->w_p_rl) {
     // No check for cmdline window: should never be right-left.
     n = fdc;
@@ -1593,7 +1612,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
         n = wp->w_width;
       screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                   W_ENDCOL(wp) - n, W_ENDCOL(wp),
-                  ' ', ' ', hl_attr(HLF_FC));
+                  ' ', ' ', win_hl_attr(wp, HLF_FC));
     }
 
     if (signcolumn_on(wp)) {
@@ -1605,16 +1624,16 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
         }
         screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                     W_ENDCOL(wp) - nn, W_ENDCOL(wp) - n,
-                    ' ', ' ', hl_attr(HLF_SC));
+                    ' ', ' ', win_hl_attr(wp, HLF_SC));
         n = nn;
     }
 
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                 wp->w_wincol, W_ENDCOL(wp) - 1 - FDC_OFF,
-                c2, c2, hl_attr(hl));
+                c2, c2, attr);
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                 W_ENDCOL(wp) - 1 - FDC_OFF, W_ENDCOL(wp) - FDC_OFF,
-                c1, c2, hl_attr(hl));
+                c1, c2, attr);
   } else {
     if (cmdwin_type != 0 && wp == curwin) {
       /* draw the cmdline character in the leftmost column */
@@ -1623,7 +1642,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
         n = wp->w_width;
       screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                   wp->w_wincol, wp->w_wincol + n,
-                  cmdwin_type, ' ', hl_attr(HLF_AT));
+                  cmdwin_type, ' ', win_hl_attr(wp, HLF_AT));
     }
     if (fdc > 0) {
       int nn = n + fdc;
@@ -1633,7 +1652,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
         nn = wp->w_width;
       screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                   wp->w_wincol + n, wp->w_wincol + nn,
-                  ' ', ' ', hl_attr(HLF_FC));
+                  ' ', ' ', win_hl_attr(wp, HLF_FC));
       n = nn;
     }
 
@@ -1646,13 +1665,13 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
         }
         screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                     wp->w_wincol + n, wp->w_wincol + nn,
-                    ' ', ' ', hl_attr(HLF_SC));
+                    ' ', ' ', win_hl_attr(wp, HLF_SC));
         n = nn;
     }
 
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
                 wp->w_wincol + FDC_OFF, W_ENDCOL(wp),
-                c1, c2, hl_attr(hl));
+                c1, c2, attr);
   }
   set_empty_rows(wp, row);
 }
@@ -1687,7 +1706,7 @@ static int compute_foldcolumn(win_T *wp, int col)
  */
 static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T lnum, int row)
 {
-  char_u buf[51];
+  char_u buf[FOLD_TEXT_LEN];
   pos_T       *top, *bot;
   linenr_T lnume = lnum + fold_count - 1;
   int len;
@@ -1714,10 +1733,9 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    */
   if (cmdwin_type != 0 && wp == curwin) {
     ScreenLines[off] = cmdwin_type;
-    ScreenAttrs[off] = hl_attr(HLF_AT);
-    if (enc_utf8)
-      ScreenLinesUC[off] = 0;
-    ++col;
+    ScreenAttrs[off] = win_hl_attr(wp, HLF_AT);
+    ScreenLinesUC[off] = 0;
+    col++;
   }
 
   // 2. Add the 'foldcolumn'
@@ -1729,12 +1747,14 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       int i;
 
       copy_text_attr(off + wp->w_width - fdc - col, buf, fdc,
-          hl_attr(HLF_FC));
-      /* reverse the fold column */
-      for (i = 0; i < fdc; ++i)
+                     win_hl_attr(wp, HLF_FC));
+      // reverse the fold column
+      for (i = 0; i < fdc; i++) {
         ScreenLines[off + wp->w_width - i - 1 - col] = buf[i];
-    } else
-      copy_text_attr(off + col, buf, fdc, hl_attr(HLF_FC));
+      }
+    } else {
+      copy_text_attr(off + col, buf, fdc, win_hl_attr(wp, HLF_FC));
+    }
     col += fdc;
   }
 
@@ -1747,7 +1767,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
   /* Set all attributes of the 'number' or 'relativenumber' column and the
    * text */
-  RL_MEMSET(col, hl_attr(HLF_FL), wp->w_width - col);
+  RL_MEMSET(col, win_hl_attr(wp, HLF_FL), wp->w_width - col);
 
   // If signs are being displayed, add two spaces.
   if (signcolumn_on(wp)) {
@@ -1756,7 +1776,8 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           if (len > 2) {
               len = 2;
           }
-          copy_text_attr(off + col, (char_u *)"  ", len, hl_attr(HLF_FL));
+          copy_text_attr(off + col, (char_u *)"  ", len,
+                         win_hl_attr(wp, HLF_FL));
           col += len;
       }
   }
@@ -1788,13 +1809,14 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
         }
       }
 
-      sprintf((char *)buf, fmt, w, num);
-      if (wp->w_p_rl)
-        /* the line number isn't reversed */
+      snprintf((char *)buf, FOLD_TEXT_LEN, fmt, w, num);
+      if (wp->w_p_rl) {
+        // the line number isn't reversed
         copy_text_attr(off + wp->w_width - len - col, buf, len,
-            hl_attr(HLF_FL));
-      else
-        copy_text_attr(off + col, buf, len, hl_attr(HLF_FL));
+                       win_hl_attr(wp, HLF_FL));
+      } else {
+        copy_text_attr(off + col, buf, len, win_hl_attr(wp, HLF_FL));
+      }
       col += len;
     }
   }
@@ -1909,10 +1931,15 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       if (fill_fold >= 0x80) {
         ScreenLinesUC[off + col] = fill_fold;
         ScreenLinesC[0][off + col] = 0;
-      } else
+        ScreenLines[off + col] = 0x80;  // avoid storing zero
+      } else {
         ScreenLinesUC[off + col] = 0;
+        ScreenLines[off + col] = fill_fold;
+      }
+      col++;
+    } else {
+      ScreenLines[off + col++] = fill_fold;
     }
-    ScreenLines[off + col++] = fill_fold;
   }
 
   if (text != buf)
@@ -1952,12 +1979,12 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
             len = wp->w_old_cursor_lcol;
           else
             len = wp->w_width - txtcol;
-          RL_MEMSET(wp->w_old_cursor_fcol + txtcol, hl_attr(HLF_V),
-              len - (int)wp->w_old_cursor_fcol);
+          RL_MEMSET(wp->w_old_cursor_fcol + txtcol, win_hl_attr(wp, HLF_V),
+                    len - (int)wp->w_old_cursor_fcol);
         }
       } else {
-        /* Set all attributes of the text */
-        RL_MEMSET(txtcol, hl_attr(HLF_V), wp->w_width - txtcol);
+        // Set all attributes of the text
+        RL_MEMSET(txtcol, win_hl_attr(wp, HLF_V), wp->w_width - txtcol);
       }
     }
   }
@@ -1977,7 +2004,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       }
       if (txtcol >= 0 && txtcol < wp->w_width) {
         ScreenAttrs[off + txtcol] =
-          hl_combine_attr(ScreenAttrs[off + txtcol], hl_attr(HLF_MC));
+          hl_combine_attr(ScreenAttrs[off + txtcol], win_hl_attr(wp, HLF_MC));
       }
       txtcol = old_txtcol;
       j = wp->w_p_cc_cols[++i];
@@ -1993,11 +2020,11 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       txtcol -= wp->w_leftcol;
     if (txtcol >= 0 && txtcol < wp->w_width)
       ScreenAttrs[off + txtcol] = hl_combine_attr(
-          ScreenAttrs[off + txtcol], hl_attr(HLF_CUC));
+          ScreenAttrs[off + txtcol], win_hl_attr(wp, HLF_CUC));
   }
 
-  SCREEN_LINE(row + wp->w_winrow, wp->w_wincol, wp->w_width,
-              wp->w_width, FALSE);
+  screen_line(row + wp->w_winrow, wp->w_wincol, wp->w_width,
+              wp->w_width, false, wp);
 
   /*
    * Update w_cline_height and w_cline_folded if the cursor line was
@@ -2097,16 +2124,16 @@ win_line (
     bool nochange                    /* not updating for changed text */
 )
 {
-  int col;                              /* visual column on screen */
-  unsigned off;                         /* offset in ScreenLines/ScreenAttrs */
-  int c = 0;                            /* init for GCC */
-  long vcol = 0;                        /* virtual column (for tabs) */
+  int col = 0;                          // visual column on screen
+  unsigned off;                         // offset in ScreenLines/ScreenAttrs
+  int c = 0;                            // init for GCC
+  long vcol = 0;                        // virtual column (for tabs)
   long vcol_sbr = -1;                   // virtual column after showbreak
-  long vcol_prev = -1;                  /* "vcol" of previous character */
-  char_u      *line;                    /* current line */
-  char_u      *ptr;                     /* current position in "line" */
-  int row;                              /* row in the window, excl w_winrow */
-  int screen_row;                       /* row on the screen, incl w_winrow */
+  long vcol_prev = -1;                  // "vcol" of previous character
+  char_u      *line;                    // current line
+  char_u      *ptr;                     // current position in "line"
+  int row;                              // row in the window, excl w_winrow
+  int screen_row;                       // row on the screen, incl w_winrow
 
   char_u extra[18];                     /* line number and 'fdc' must fit in here */
   int n_extra = 0;                      /* number of extra chars */
@@ -2180,22 +2207,23 @@ win_line (
   int change_start = MAXCOL;            /* first col of changed area */
   int change_end = -1;                  /* last col of changed area */
   colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
-  int need_showbreak = FALSE;
-  int line_attr = 0;                    /* attribute for the whole line */
-  matchitem_T *cur;                     /* points to the match list */
-  match_T     *shl;                     /* points to search_hl or a match */
-  int shl_flag;                         /* flag to indicate whether search_hl
-                                           has been processed or not */
-  int prevcol_hl_flag;                  /* flag to indicate whether prevcol
-                                           equals startcol of search_hl or one
-                                           of the matches */
-  int prev_c = 0;                       /* previous Arabic character */
-  int prev_c1 = 0;                      /* first composing char for prev_c */
+  int need_showbreak = false;           // overlong line, skip first x chars
+  int line_attr = 0;                    // attribute for the whole line
+  matchitem_T *cur;                     // points to the match list
+  match_T     *shl;                     // points to search_hl or a match
+  int shl_flag;                         // flag to indicate whether search_hl
+                                        // has been processed or not
+  int prevcol_hl_flag;                  // flag to indicate whether prevcol
+                                        // equals startcol of search_hl or one
+                                        // of the matches
+  int prev_c = 0;                       // previous Arabic character
+  int prev_c1 = 0;                      // first composing char for prev_c
   int did_line_attr = 0;
 
-  bool has_bufhl = false;                // this buffer has highlight matches
+  bool search_attr_from_match = false;  // if search_attr is from :match
+  bool has_bufhl = false;               // this buffer has highlight matches
   int bufhl_attr = 0;                   // attributes desired by bufhl
-  bufhl_lineinfo_T bufhl_info;          // bufhl data for this line
+  BufhlLineInfo bufhl_info;             // bufhl data for this line
 
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
@@ -2211,7 +2239,7 @@ win_line (
   int syntax_flags    = 0;
   int syntax_seqnr    = 0;
   int prev_syntax_id  = 0;
-  int conceal_attr    = hl_attr(HLF_CONCEAL);
+  int conceal_attr    = win_hl_attr(wp, HLF_CONCEAL);
   int is_concealing   = false;
   int boguscols       = 0;              ///< nonexistent columns added to
                                         ///< force wrapping
@@ -2359,8 +2387,8 @@ win_line (
 
     /* if inverting in this line set area_highlighting */
     if (fromcol >= 0) {
-      area_highlighting = TRUE;
-      attr = hl_attr(HLF_V);
+      area_highlighting = true;
+      attr = win_hl_attr(wp, HLF_V);
     }
   }
   /*
@@ -2384,8 +2412,8 @@ win_line (
     /* do at least one character; happens when past end of line */
     if (fromcol == tocol)
       tocol = fromcol + 1;
-    area_highlighting = TRUE;
-    attr = hl_attr(HLF_I);
+    area_highlighting = true;
+    attr = win_hl_attr(wp, HLF_I);
   }
 
   filler_lines = diff_check(wp, lnum);
@@ -2406,14 +2434,19 @@ win_line (
     filler_lines = wp->w_topfill;
   filler_todo = filler_lines;
 
-  /* If this line has a sign with line highlighting set line_attr. */
+  // If this line has a sign with line highlighting set line_attr.
   v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
-  if (v != 0)
-      line_attr = sign_get_attr((int)v, TRUE);
+  if (v != 0) {
+    line_attr = sign_get_attr((int)v, true);
+  }
 
   // Highlight the current line in the quickfix window.
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum) {
-    line_attr = hl_attr(HLF_QFL);
+    line_attr = win_hl_attr(wp, HLF_QFL);
+  }
+
+  if (wp->w_hl_attr_normal != 0) {
+    line_attr = hl_combine_attr(wp->w_hl_attr_normal, line_attr);
   }
 
   if (line_attr != 0) {
@@ -2447,7 +2480,7 @@ win_line (
       } else {
         /* Long line, use only the last SPWORDLEN bytes. */
         nextlinecol = v - SPWORDLEN;
-        memmove(nextline, line + nextlinecol, SPWORDLEN);
+        memmove(nextline, line + nextlinecol, SPWORDLEN);  // -V512
         nextline_idx = SPWORDLEN + 1;
       }
     }
@@ -2502,7 +2535,11 @@ win_line (
     if (vcol > v) {
       vcol -= c;
       ptr = prev_ptr;
-      n_skip = v - vcol;
+      // If the character fits on the screen, don't need to skip it.
+      // Except for a TAB.
+      if (((*mb_ptr2cells)(ptr) >= c || *ptr == TAB) && col == 0) {
+        n_skip = v - vcol;
+      }
     }
 
     /*
@@ -2579,13 +2616,14 @@ win_line (
    * Do this for both search_hl and the match list.
    */
   cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
+  shl_flag = false;
+  while (cur != NULL || !shl_flag) {
+    if (!shl_flag) {
       shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
+      shl_flag = true;
+    } else {
+      shl = &cur->hl;  // -V595
+    }
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
@@ -2625,6 +2663,7 @@ win_line (
       if ((long)shl->startcol < v) {   // match at leftcol
         shl->attr_cur = shl->attr;
         search_attr = shl->attr;
+        search_attr_from_match = shl != &search_hl;
       }
       area_highlighting = true;
     }
@@ -2632,16 +2671,16 @@ win_line (
       cur = cur->next;
   }
 
-  /* Cursor line highlighting for 'cursorline' in the current window.  Not
-   * when Visual mode is active, because it's not clear what is selected
-   * then. */
+  // Cursor line highlighting for 'cursorline' in the current window.  Not
+  // when Visual mode is active, because it's not clear what is selected
+  // then.
   if (wp->w_p_cul && lnum == wp->w_cursor.lnum
       && !(wp == curwin && VIsual_active)) {
     if (line_attr != 0 && !(State & INSERT) && bt_quickfix(wp->w_buffer)
         && qf_current_entry(wp) == lnum) {
-      line_attr = hl_combine_attr(hl_attr(HLF_CUL), line_attr);
+      line_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUL), line_attr);
     } else {
-      line_attr = hl_attr(HLF_CUL);
+      line_attr = win_hl_attr(wp, HLF_CUL);
     }
     area_highlighting = true;
   }
@@ -2674,7 +2713,7 @@ win_line (
           /* Draw the cmdline character. */
           n_extra = 1;
           c_extra = cmdwin_type;
-          char_attr = hl_attr(HLF_AT);
+          char_attr = win_hl_attr(wp, HLF_AT);
         }
       }
 
@@ -2683,13 +2722,16 @@ win_line (
 
         draw_state = WL_FOLD;
         if (fdc > 0) {
-          // Draw the 'foldcolumn'.
-          fill_foldcolumn(extra, wp, false, lnum);
+          // Draw the 'foldcolumn'.  Allocate a buffer, "extra" may
+          // already be in use.
+          xfree(p_extra_free);
+          p_extra_free = xmalloc(12 + 1);
+          fill_foldcolumn(p_extra_free, wp, false, lnum);
           n_extra = fdc;
-          p_extra = extra;
-          p_extra[n_extra] = NUL;
+          p_extra_free[n_extra] = NUL;
+          p_extra = p_extra_free;
           c_extra = NUL;
-          char_attr = hl_attr(HLF_FC);
+          char_attr = win_hl_attr(wp, HLF_FC);
         }
       }
 
@@ -2702,7 +2744,7 @@ win_line (
               int text_sign;
               /* Draw two cells with the sign value or blank. */
               c_extra = ' ';
-              char_attr = hl_attr(HLF_SC);
+              char_attr = win_hl_attr(wp, HLF_SC);
               n_extra = 2;
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
@@ -2759,14 +2801,15 @@ win_line (
           } else
             c_extra = ' ';
           n_extra = number_width(wp) + 1;
-          char_attr = hl_attr(HLF_N);
-          /* When 'cursorline' is set highlight the line number of
-           * the current line differently.
-           * TODO: Can we use CursorLine instead of CursorLineNr
-           * when CursorLineNr isn't set? */
+          char_attr = win_hl_attr(wp, HLF_N);
+          // When 'cursorline' is set highlight the line number of
+          // the current line differently.
+          // TODO(vim): Can we use CursorLine instead of CursorLineNr
+          // when CursorLineNr isn't set?
           if ((wp->w_p_cul || wp->w_p_rnu)
-              && lnum == wp->w_cursor.lnum)
-            char_attr = hl_attr(HLF_CLN);
+              && lnum == wp->w_cursor.lnum) {
+            char_attr = win_hl_attr(wp, HLF_CLN);
+          }
         }
       }
 
@@ -2782,13 +2825,15 @@ win_line (
       // draw 'breakindent': indent wrapped text accodringly
       if (draw_state == WL_BRI - 1 && n_extra == 0) {
         draw_state = WL_BRI;
-        if (wp->w_p_bri && n_extra == 0 && row != startrow && filler_lines == 0) {
-          char_attr = 0; // was: hl_attr(HLF_AT);
+        // if need_showbreak is set, breakindent also applies
+        if (wp->w_p_bri && (row != startrow || need_showbreak)
+            && filler_lines == 0) {
+          char_attr = wp->w_hl_attr_normal;
 
           if (diff_hlf != (hlf_T)0) {
-            char_attr = hl_attr(diff_hlf);
+            char_attr = win_hl_attr(wp, diff_hlf);
             if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-              char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
+              char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUL));
             }
           }
           p_extra = NULL;
@@ -2813,15 +2858,15 @@ win_line (
             n_extra = col + 1;
           else
             n_extra = wp->w_width - col;
-          char_attr = hl_attr(HLF_DED);
+          char_attr = win_hl_attr(wp, HLF_DED);
         }
         if (*p_sbr != NUL && need_showbreak) {
           /* Draw 'showbreak' at the start of each broken line. */
           p_extra = p_sbr;
           c_extra = NUL;
           n_extra = (int)STRLEN(p_sbr);
-          char_attr = hl_attr(HLF_AT);
-          need_showbreak = FALSE;
+          char_attr = win_hl_attr(wp, HLF_AT);
+          need_showbreak = false;
           vcol_sbr = vcol + MB_CHARLEN(p_sbr);
           /* Correct end of highlighted area for 'showbreak',
            * required when 'linebreak' is also set. */
@@ -2829,7 +2874,7 @@ win_line (
             tocol += n_extra;
           /* combine 'showbreak' with 'cursorline' */
           if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-            char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
+            char_attr = hl_combine_attr(char_attr, win_hl_attr(wp, HLF_CUL));
           }
         }
       }
@@ -2842,8 +2887,9 @@ win_line (
           c_extra = saved_c_extra;
           p_extra = saved_p_extra;
           char_attr = saved_char_attr;
-        } else
-          char_attr = 0;
+        } else {
+          char_attr = wp->w_hl_attr_normal;
+        }
       }
     }
 
@@ -2852,13 +2898,14 @@ win_line (
         && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
         && filler_todo <= 0
         ) {
-      SCREEN_LINE(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl);
-      /* Pretend we have finished updating the window.  Except when
-       * 'cursorcolumn' is set. */
-      if (wp->w_p_cuc)
+      screen_line(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl, wp);
+      // Pretend we have finished updating the window.  Except when
+      // 'cursorcolumn' is set.
+      if (wp->w_p_cuc) {
         row = wp->w_cline_row + wp->w_cline_height;
-      else
+      } else {
         row = wp->w_height;
+      }
       break;
     }
 
@@ -2922,7 +2969,6 @@ win_line (
               }
             } else if (v == (long)shl->endcol) {
               shl->attr_cur = 0;
-              prev_syntax_id = 0;
 
               next_search_hl(wp, shl, lnum, (colnr_T)v,
                              shl == &search_hl ? NULL : cur);
@@ -2963,6 +3009,7 @@ win_line (
 
         /* Use attributes from match with highest priority among
          * 'search_hl' and the match list. */
+        search_attr_from_match = false;
         search_attr = search_hl.attr_cur;
         cur = wp->w_match_head;
         shl_flag = FALSE;
@@ -2975,8 +3022,10 @@ win_line (
             shl_flag = TRUE;
           } else
             shl = &cur->hl;
-          if (shl->attr_cur != 0)
+          if (shl->attr_cur != 0) {
             search_attr = shl->attr_cur;
+            search_attr_from_match = shl != &search_hl;
+          }
           if (shl != &search_hl && cur != NULL)
             cur = cur->next;
         }
@@ -2984,14 +3033,16 @@ win_line (
 
       if (diff_hlf != (hlf_T)0) {
         if (diff_hlf == HLF_CHD && ptr - line >= change_start
-            && n_extra == 0)
-          diff_hlf = HLF_TXD;                   /* changed text */
+            && n_extra == 0) {
+          diff_hlf = HLF_TXD;                   // changed text
+        }
         if (diff_hlf == HLF_TXD && ptr - line > change_end
-            && n_extra == 0)
-          diff_hlf = HLF_CHD;                   /* changed line */
-        line_attr = hl_attr(diff_hlf);
+            && n_extra == 0) {
+          diff_hlf = HLF_CHD;                   // changed line
+        }
+        line_attr = win_hl_attr(wp, diff_hlf);
         if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-          line_attr = hl_combine_attr(line_attr, hl_attr(HLF_CUL));
+          line_attr = hl_combine_attr(line_attr, win_hl_attr(wp, HLF_CUL));
         }
       }
 
@@ -3007,14 +3058,15 @@ win_line (
       // (area_attr may be 0 when "noinvcur" is set).
       else if (line_attr != 0 && ((fromcol == -10 && tocol == MAXCOL)
                                   || vcol < fromcol || vcol_prev < fromcol_prev
-                                  || vcol >= tocol))
+                                  || vcol >= tocol)) {
         char_attr = line_attr;
-      else {
-        attr_pri = FALSE;
-        if (has_syntax)
+    } else {
+        attr_pri = false;
+        if (has_syntax) {
           char_attr = syntax_attr;
-        else
-          char_attr = 0;
+        } else {
+          char_attr = wp->w_hl_attr_normal;
+        }
       }
     }
 
@@ -3075,12 +3127,13 @@ win_line (
             c = '>';
             mb_c = c;
             mb_l = 1;
-            mb_utf8 = FALSE;
-            multi_attr = hl_attr(HLF_AT);
-            /* put the pointer back to output the double-width
-             * character at the start of the next line. */
-            ++n_extra;
-            --p_extra;
+            mb_utf8 = false;
+            multi_attr = win_hl_attr(wp, HLF_AT);
+
+            // put the pointer back to output the double-width
+            // character at the start of the next line.
+            n_extra++;
+            p_extra--;
           } else {
             n_extra -= mb_l - 1;
             p_extra += mb_l - 1;
@@ -3137,14 +3190,14 @@ win_line (
 
             p_extra = extra;
             c = *p_extra;
-            mb_c = mb_ptr2char_adv(&p_extra);
+            mb_c = mb_ptr2char_adv((const char_u **)&p_extra);
             mb_utf8 = (c >= 0x80);
             n_extra = (int)STRLEN(p_extra);
             c_extra = NUL;
             if (area_attr == 0 && search_attr == 0) {
               n_attr = n_extra + 1;
-              extra_attr = hl_attr(HLF_8);
-              saved_attr2 = char_attr;               /* save current attr */
+              extra_attr = win_hl_attr(wp, HLF_8);
+              saved_attr2 = char_attr;               // save current attr
             }
           } else if (mb_l == 0)          /* at the NUL at end-of-line */
             mb_l = 1;
@@ -3196,8 +3249,8 @@ win_line (
               c = *p_extra++;
               if (area_attr == 0 && search_attr == 0) {
                 n_attr = n_extra + 1;
-                extra_attr = hl_attr(HLF_8);
-                saved_attr2 = char_attr;                 /* save current attr */
+                extra_attr = win_hl_attr(wp, HLF_8);
+                saved_attr2 = char_attr;                 // save current attr
               }
               mb_c = c;
             }
@@ -3214,12 +3267,13 @@ win_line (
           mb_c = c;
           mb_utf8 = FALSE;
           mb_l = 1;
-          multi_attr = hl_attr(HLF_AT);
-          /* Put pointer back so that the character will be
-           * displayed at the start of the next line. */
-          --ptr;
-        } else if (*ptr != NUL)
+          multi_attr = win_hl_attr(wp, HLF_AT);
+          // Put pointer back so that the character will be
+          // displayed at the start of the next line.
+          ptr--;
+        } else if (*ptr != NUL) {
           ptr += mb_l - 1;
+        }
 
         /* If a double-width char doesn't fit at the left side display
          * a '<' in the first column.  Don't do this for unprintable
@@ -3230,8 +3284,8 @@ win_line (
           c = ' ';
           if (area_attr == 0 && search_attr == 0) {
             n_attr = n_extra + 1;
-            extra_attr = hl_attr(HLF_AT);
-            saved_attr2 = char_attr;             /* save current attr */
+            extra_attr = win_hl_attr(wp, HLF_AT);
+            saved_attr2 = char_attr;             // save current attr
           }
           mb_c = c;
           mb_utf8 = FALSE;
@@ -3279,7 +3333,7 @@ win_line (
           else
             syntax_flags = get_syntax_info(&syntax_seqnr);
         } else if (!attr_pri) {
-          char_attr = 0;
+          char_attr = wp->w_hl_attr_normal;
         }
 
         /* Check spelling (unless at the end of the line).
@@ -3405,7 +3459,7 @@ win_line (
                 || (c == ' ' && lcs_space && ptr - line <= trailcol))) {
           c = (c == ' ') ? lcs_space : lcs_nbsp;
           n_attr = 1;
-          extra_attr = hl_attr(HLF_8);
+          extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
@@ -3420,7 +3474,7 @@ win_line (
         if (trailcol != MAXCOL && ptr > line + trailcol && c == ' ') {
           c = lcs_trail;
           n_attr = 1;
-          extra_attr = hl_attr(HLF_8);
+          extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
@@ -3478,6 +3532,7 @@ win_line (
             p = xmalloc(len + 1);
             memset(p, ' ', len);
             p[len] = NUL;
+            xfree(p_extra_free);
             p_extra_free = p;
             for (i = 0; i < tab_len; i++) {
               mb_char2bytes(lcs_tab2, p);
@@ -3521,8 +3576,8 @@ win_line (
               c_extra = lcs_tab2;
             }
             n_attr = tab_len + 1;
-            extra_attr = hl_attr(HLF_8);
-            saved_attr2 = char_attr;             /* save current attr */
+            extra_attr = win_hl_attr(wp, HLF_0);
+            saved_attr2 = char_attr;  // save current attr
             mb_c = c;
             if (enc_utf8 && (*mb_char2len)(c) > 1) {
               mb_utf8 = TRUE;
@@ -3547,15 +3602,13 @@ win_line (
                    && lcs_eol_one > 0) {
           // Display a '$' after the line or highlight an extra
           // character if the line break is included.
-          // For a diff line the highlighting continues after the
-          // "$".
+          // For a diff line the highlighting continues after the "$".
           if (diff_hlf == (hlf_T)0 && line_attr == 0) {
-            /* In virtualedit, visual selections may extend
-             * beyond end of line. */
+            // In virtualedit, visual selections may extend beyond end of line.
             if (area_highlighting && virtual_active()
-                && tocol != MAXCOL && vcol < tocol)
+                && tocol != MAXCOL && vcol < tocol) {
               n_extra = 0;
-            else {
+            } else {
               p_extra = at_end_str;
               n_extra = 1;
               c_extra = NUL;
@@ -3568,7 +3621,7 @@ win_line (
           }
           lcs_eol_one = -1;
           ptr--;  // put it back at the NUL
-          extra_attr = hl_attr(HLF_AT);
+          extra_attr = win_hl_attr(wp, HLF_AT);
           n_attr = 1;
           mb_c = c;
           if (enc_utf8 && (*mb_char2len)(c) > 1) {
@@ -3593,13 +3646,14 @@ win_line (
             memset(p, ' ', n_extra);
             STRNCPY(p, p_extra + 1, STRLEN(p_extra) - 1);
             p[n_extra] = NUL;
+            xfree(p_extra_free);
             p_extra_free = p_extra = p;
           } else {
             n_extra = byte2cells(c) - 1;
             c = *p_extra++;
           }
           n_attr = n_extra + 1;
-          extra_attr = hl_attr(HLF_8);
+          extra_attr = win_hl_attr(wp, HLF_8);
           saved_attr2 = char_attr;  // save current attr
           mb_utf8 = false;   // don't draw as UTF-8
         } else if (VIsual_active
@@ -3631,9 +3685,10 @@ win_line (
           if (diff_hlf == HLF_TXD) {
             diff_hlf = HLF_CHD;
             if (attr == 0 || char_attr != attr) {
-              char_attr = hl_attr(diff_hlf);
+              char_attr = win_hl_attr(wp, diff_hlf);
               if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-                char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
+                char_attr = hl_combine_attr(char_attr,
+                                            win_hl_attr(wp, HLF_CUL));
               }
             }
           }
@@ -3712,7 +3767,7 @@ win_line (
     }
 
     // Don't override visual selection highlighting.
-    if (n_attr > 0 && draw_state == WL_LINE) {
+    if (n_attr > 0 && draw_state == WL_LINE && !search_attr_from_match) {
       char_attr = hl_combine_attr(char_attr, extra_attr);
     }
 
@@ -3735,7 +3790,7 @@ win_line (
         c_extra = MB_FILLER_CHAR;
         n_extra = 1;
         n_attr = 2;
-        extra_attr = hl_attr(HLF_AT);
+        extra_attr = win_hl_attr(wp, HLF_AT);
       }
       mb_c = c;
       if (enc_utf8 && (*mb_char2len)(c) > 1) {
@@ -3746,7 +3801,7 @@ win_line (
         mb_utf8 = false;  // don't draw as UTF-8
       }
       saved_attr3 = char_attr;  // save current attr
-      char_attr = hl_attr(HLF_AT);  // later copied to char_attr
+      char_attr = win_hl_attr(wp, HLF_AT);  // overwriting char_attr
       n_attr3 = 1;
     }
 
@@ -3830,6 +3885,10 @@ win_line (
             }
           }
         }
+
+        if (wp->w_hl_attr_normal != 0) {
+          char_attr = hl_combine_attr(wp->w_hl_attr_normal, char_attr);
+        }
         ScreenAttrs[off] = char_attr;
         if (wp->w_p_rl) {
           --col;
@@ -3891,6 +3950,9 @@ win_line (
             if (rightmost_vcol < color_cols[i])
               rightmost_vcol = color_cols[i];
 
+        int cuc_attr = win_hl_attr(wp, HLF_CUC);
+        int mc_attr = win_hl_attr(wp, HLF_MC);
+
         while (col < wp->w_width) {
           ScreenLines[off] = ' ';
           if (enc_utf8)
@@ -3900,12 +3962,13 @@ win_line (
             draw_color_col = advance_color_col(VCOL_HLC,
                 &color_cols);
 
-          if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol)
-            ScreenAttrs[off++] = hl_attr(HLF_CUC);
-          else if (draw_color_col && VCOL_HLC == *color_cols)
-            ScreenAttrs[off++] = hl_attr(HLF_MC);
-          else
-            ScreenAttrs[off++] = 0;
+          if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol) {
+            ScreenAttrs[off++] = cuc_attr;
+          } else if (draw_color_col && VCOL_HLC == *color_cols) {
+            ScreenAttrs[off++] = mc_attr;
+          } else {
+            ScreenAttrs[off++] = wp->w_hl_attr_normal;
+          }
 
           if (VCOL_HLC >= rightmost_vcol)
             break;
@@ -3914,6 +3977,7 @@ win_line (
         }
       }
 
+      // TODO(bfredl): integrate with the common beyond-the-end-loop
       if (wp->w_buffer->terminal) {
         // terminal buffers may need to highlight beyond the end of the
         // logical line
@@ -3926,7 +3990,7 @@ win_line (
           col++;
         }
       }
-      SCREEN_LINE(screen_row, wp->w_wincol, col, wp->w_width, wp->w_p_rl);
+      screen_line(screen_row, wp->w_wincol, col, wp->w_width, wp->w_p_rl, wp);
       row++;
 
       /*
@@ -3954,7 +4018,7 @@ win_line (
             || (wp->w_p_list && lcs_eol_one > 0)
             || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
       c = lcs_ext;
-      char_attr = hl_attr(HLF_AT);
+      char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
       if (enc_utf8 && (*mb_char2len)(c) > 1) {
         mb_utf8 = TRUE;
@@ -3977,10 +4041,10 @@ win_line (
       if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
           && lnum != wp->w_cursor.lnum) {
         vcol_save_attr = char_attr;
-        char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUC));
+        char_attr = hl_combine_attr(win_hl_attr(wp, HLF_CUC), char_attr);
       } else if (draw_color_col && VCOL_HLC == *color_cols) {
         vcol_save_attr = char_attr;
-        char_attr = hl_combine_attr(char_attr, hl_attr(HLF_MC));
+        char_attr = hl_combine_attr(win_hl_attr(wp, HLF_MC), char_attr);
       }
     }
 
@@ -4148,8 +4212,8 @@ win_line (
             || (wp->w_p_list && lcs_eol != NUL && p_extra != at_end_str)
             || (n_extra != 0 && (c_extra != NUL || *p_extra != NUL)))
         ) {
-      SCREEN_LINE(screen_row, wp->w_wincol, col - boguscols,
-                  wp->w_width, wp->w_p_rl);
+      screen_line(screen_row, wp->w_wincol, col - boguscols,
+                  wp->w_width, wp->w_p_rl, wp);
       boguscols = 0;
       ++row;
       ++screen_row;
@@ -4189,7 +4253,6 @@ win_line (
          * (regardless of the xn,am settings).
          * Only do this if the cursor is on the current line
          * (something has been written in it).
-         * Don't do this for the GUI.
          * Don't do this for double-width characters.
          * Don't do this for a window not at the right screen border.
          */
@@ -4257,6 +4320,7 @@ win_line (
     cap_col = 0;
   }
 
+  xfree(p_extra_free);
   return row;
 }
 
@@ -4317,7 +4381,8 @@ static int char_needs_redraw(int off_from, int off_to, int cols)
  *    When TRUE and "clear_width" > 0, clear columns 0 to "endcol"
  *    When FALSE and "clear_width" > 0, clear columns "endcol" to "clear_width"
  */
-static void screen_line(int row, int coloff, int endcol, int clear_width, int rlflag)
+static void screen_line(int row, int coloff, int endcol,
+                        int clear_width, int rlflag, win_T *wp)
 {
   unsigned off_from;
   unsigned off_to;
@@ -4479,11 +4544,11 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
   }
 
   if (clear_width > 0) {
-    /* For a window that's left of another, draw the separator char. */
-    if (col + coloff < Columns) {
+    // For a window that's left of another, draw the separator char.
+    if (col + coloff < Columns && wp->w_vsep_width > 0) {
       int c;
 
-      c = fillchar_vsep(&hl);
+      c = fillchar_vsep(wp, &hl);
       if (ScreenLines[off_to] != (schar_T)c
           || (enc_utf8 && (int)ScreenLinesUC[off_to]
               != (c >= 0x80 ? c : 0))
@@ -4588,8 +4653,8 @@ static void draw_vsep_win(win_T *wp, int row)
   int c;
 
   if (wp->w_vsep_width) {
-    /* draw the vertical separator right of this window */
-    c = fillchar_vsep(&hl);
+    // draw the vertical separator right of this window
+    c = fillchar_vsep(wp, &hl);
     screen_fill(wp->w_winrow + row, wp->w_winrow + wp->w_height,
         W_ENDCOL(wp), W_ENDCOL(wp) + 1,
         c, ' ', hl);
@@ -4719,7 +4784,7 @@ win_redr_status_matches (
       --first_match;
     }
 
-  fillchar = fillchar_status(&attr, TRUE);
+  fillchar = fillchar_status(&attr, curwin);
 
   if (first_match == 0) {
     *buf = NUL;
@@ -4833,11 +4898,14 @@ void win_redr_status(win_T *wp)
   int this_ru_col;
   static int busy = FALSE;
 
-  /* It's possible to get here recursively when 'statusline' (indirectly)
-   * invokes ":redrawstatus".  Simply ignore the call then. */
-  if (busy)
+  // May get here recursively when 'statusline' (indirectly)
+  // invokes ":redrawstatus".  Simply ignore the call then.
+  if (busy
+      // Also ignore if wildmenu is showing.
+      || (wild_menu_showing != 0 && !ui_is_external(kUIWildmenu))) {
     return;
-  busy = TRUE;
+  }
+  busy = true;
 
   wp->w_redr_status = FALSE;
   if (wp->w_status_height == 0) {
@@ -4851,7 +4919,7 @@ void win_redr_status(win_T *wp)
     /* redraw custom status line */
     redraw_custom_statusline(wp);
   } else {
-    fillchar = fillchar_status(&attr, wp == curwin);
+    fillchar = fillchar_status(&attr, wp);
 
     get_trans_bufname(wp->w_buffer);
     p = NameBuff;
@@ -4923,10 +4991,11 @@ void win_redr_status(win_T *wp)
    * May need to draw the character below the vertical separator.
    */
   if (wp->w_vsep_width != 0 && wp->w_status_height != 0 && redrawing()) {
-    if (stl_connected(wp))
-      fillchar = fillchar_status(&attr, wp == curwin);
-    else
-      fillchar = fillchar_vsep(&attr);
+    if (stl_connected(wp)) {
+      fillchar = fillchar_status(&attr, wp);
+    } else {
+      fillchar = fillchar_vsep(wp, &attr);
+    }
     screen_putchar(fillchar, wp->w_winrow + wp->w_height,
                    W_ENDCOL(wp), attr);
   }
@@ -5076,7 +5145,7 @@ win_redr_custom (
     use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
   } else {
     row = wp->w_winrow + wp->w_height;
-    fillchar = fillchar_status(&attr, wp == curwin);
+    fillchar = fillchar_status(&attr, wp);
     maxwidth = wp->w_width;
 
     if (draw_ruler) {
@@ -5326,43 +5395,39 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     c = *ptr;
     /* check if this is the first byte of a multibyte */
     if (l_has_mbyte) {
-      if (l_enc_utf8 && len > 0)
+      if (len > 0) {
         mbyte_blen = utfc_ptr2len_len(ptr, (int)((text + len) - ptr));
-      else
-        mbyte_blen = (*mb_ptr2len)(ptr);
-      if (l_enc_dbcs == DBCS_JPNU && c == 0x8e)
-        mbyte_cells = 1;
-      else if (l_enc_dbcs != 0)
-        mbyte_cells = mbyte_blen;
-      else {            /* enc_utf8 */
-        if (len >= 0)
-          u8c = utfc_ptr2char_len(ptr, u8cc,
-              (int)((text + len) - ptr));
-        else
-          u8c = utfc_ptr2char(ptr, u8cc);
-        mbyte_cells = utf_char2cells(u8c);
-        if (p_arshape && !p_tbidi && arabic_char(u8c)) {
-          /* Do Arabic shaping. */
-          if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
-            /* Past end of string to be displayed. */
-            nc = NUL;
-            nc1 = NUL;
-          } else {
-            nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
-                (int)((text + len) - ptr - mbyte_blen));
-            nc1 = pcc[0];
-          }
-          pc = prev_c;
-          prev_c = u8c;
-          u8c = arabic_shape(u8c, &c, &u8cc[0], nc, nc1, pc);
-        } else
-          prev_c = u8c;
-        if (col + mbyte_cells > screen_Columns) {
-          /* Only 1 cell left, but character requires 2 cells:
-           * display a '>' in the last column to avoid wrapping. */
-          c = '>';
-          mbyte_cells = 1;
+      } else {
+        mbyte_blen = utfc_ptr2len(ptr);
+      }
+      if (len >= 0) {
+        u8c = utfc_ptr2char_len(ptr, u8cc, (int)((text + len) - ptr));
+      } else {
+        u8c = utfc_ptr2char(ptr, u8cc);
+      }
+      mbyte_cells = utf_char2cells(u8c);
+      if (p_arshape && !p_tbidi && arabic_char(u8c)) {
+        // Do Arabic shaping.
+        if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
+          // Past end of string to be displayed.
+          nc = NUL;
+          nc1 = NUL;
+        } else {
+          nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
+                                 (int)((text + len) - ptr - mbyte_blen));
+          nc1 = pcc[0];
         }
+        pc = prev_c;
+        prev_c = u8c;
+        u8c = arabic_shape(u8c, &c, &u8cc[0], nc, nc1, pc);
+      } else {
+        prev_c = u8c;
+      }
+      if (col + mbyte_cells > screen_Columns) {
+        // Only 1 cell left, but character requires 2 cells:
+        // display a '>' in the last column to avoid wrapping. */
+        c = '>';
+        mbyte_cells = 1;
       }
     }
 
@@ -5370,16 +5435,11 @@ void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
     force_redraw_next = FALSE;
 
     need_redraw = ScreenLines[off] != c
-                  || (mbyte_cells == 2
-                      && ScreenLines[off + 1] != (l_enc_dbcs ? ptr[1] : 0))
-                  || (l_enc_dbcs == DBCS_JPNU
-                      && c == 0x8e
-                      && ScreenLines2[off] != ptr[1])
-                  || (l_enc_utf8
-                      && (ScreenLinesUC[off] !=
-                          (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
-                          || (ScreenLinesUC[off] != 0
-                              && screen_comp_differs(off, u8cc))))
+                  || (mbyte_cells == 2 && ScreenLines[off + 1] != 0)
+                  || (ScreenLinesUC[off] !=
+                      (u8char_T)(c < 0x80 && u8cc[0] == 0 ? 0 : u8c)
+                      || (ScreenLinesUC[off] != 0
+                          && screen_comp_differs(off, u8cc)))
                   || ScreenAttrs[off] != attr
                   || exmode_active;
 
@@ -5470,8 +5530,7 @@ static void start_search_hl(void)
 {
   if (p_hls && !no_hlsearch) {
     last_pat_prog(&search_hl.rm);
-    search_hl.attr = hl_attr(HLF_L);
-    /* Set the time limit to 'redrawtime'. */
+    // Set the time limit to 'redrawtime'.
     search_hl.tm = profile_setlimit(p_rdt);
   }
 }
@@ -5486,6 +5545,42 @@ static void end_search_hl(void)
     search_hl.rm.regprog = NULL;
   }
 }
+
+static void update_window_hl(win_T *wp, bool invalid)
+{
+  if (!wp->w_hl_needs_update && !invalid) {
+    return;
+  }
+  wp->w_hl_needs_update = false;
+
+  // determine window specific background set in 'winhighlight'
+  if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] > 0) {
+    wp->w_hl_attr_normal = syn_id2attr(wp->w_hl_ids[HLF_INACTIVE]);
+  } else if (wp->w_hl_id_normal > 0) {
+    wp->w_hl_attr_normal = syn_id2attr(wp->w_hl_id_normal);
+  } else {
+    wp->w_hl_attr_normal = 0;
+  }
+  if (wp != curwin) {
+    wp->w_hl_attr_normal = hl_combine_attr(hl_attr(HLF_INACTIVE),
+                                           wp->w_hl_attr_normal);
+  }
+
+  for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
+    int attr;
+    if (wp->w_hl_ids[hlf] > 0) {
+      attr = syn_id2attr(wp->w_hl_ids[hlf]);
+    } else {
+      attr = hl_attr(hlf);
+    }
+    if (wp->w_hl_attr_normal != 0) {
+      attr = hl_combine_attr(wp->w_hl_attr_normal, attr);
+    }
+    wp->w_hl_attrs[hlf] = attr;
+  }
+}
+
+
 
 /*
  * Init for calling prepare_search_hl().
@@ -5513,7 +5608,9 @@ static void init_search_hl(win_T *wp)
   search_hl.buf = wp->w_buffer;
   search_hl.lnum = 0;
   search_hl.first_lnum = 0;
-  /* time limit is set at the toplevel, for all windows */
+  search_hl.attr = win_hl_attr(wp, HLF_L);
+
+  // time limit is set at the toplevel, for all windows
 }
 
 /*
@@ -5533,13 +5630,14 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
    * Do this both for search_hl and the match list.
    */
   cur = wp->w_match_head;
-  shl_flag = FALSE;
-  while (cur != NULL || shl_flag == FALSE) {
-    if (shl_flag == FALSE) {
+  shl_flag = false;
+  while (cur != NULL || shl_flag == false) {
+    if (shl_flag == false) {
       shl = &search_hl;
-      shl_flag = TRUE;
-    } else
-      shl = &cur->hl;
+      shl_flag = true;
+    } else {
+      shl = &cur->hl;  // -V595
+    }
     if (shl->rm.regprog != NULL
         && shl->lnum == 0
         && re_multiline(shl->rm.regprog)) {
@@ -5755,7 +5853,7 @@ static void screen_start_highlight(int attr)
   ui_start_highlight(attr);
 }
 
-void screen_stop_highlight(void)
+static void screen_stop_highlight(void)
 {
   ui_stop_highlight();
   screen_attr = 0;
@@ -5774,12 +5872,12 @@ static void screen_char(unsigned off, int row, int col)
   if (row >= screen_Rows || col >= screen_Columns)
     return;
 
-  /* Outputting the last character on the screen may scrollup the screen.
-   * Don't to it!  Mark the character invalid (update it when scrolled up) */
+  // Outputting the last character on the screen may scrollup the screen.
+  // Don't to it!  Mark the character invalid (update it when scrolled up)
+  // FIXME: The premise here is not actually true (cf. deferred wrap).
   if (row == screen_Rows - 1 && col == screen_Columns - 1
-      /* account for first command-line character in rightleft mode */
-      && !cmdmsg_rl
-      ) {
+      // account for first command-line character in rightleft mode
+      && !cmdmsg_rl) {
     ScreenAttrs[off] = (sattr_T)-1;
     return;
   }
@@ -5905,7 +6003,7 @@ void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1,
         col = off - LineOffset[row];
         screen_stop_highlight();
         ui_cursor_goto(row, col);        // clear rest of this screen line
-        ui_eol_clear();
+        ui_call_eol_clear();
         col = end_col - col;
         while (col--) {                 /* clear chars in ScreenLines */
           ScreenLines[off] = ' ';
@@ -6098,8 +6196,7 @@ retry:
     if (new_ScreenLinesC[i] == NULL)
       break;
   if (new_ScreenLines == NULL
-      || (l_enc_utf8 && (new_ScreenLinesUC == NULL || i != p_mco))
-      || (l_enc_dbcs == DBCS_JPNU && new_ScreenLines2 == NULL)
+      || (new_ScreenLinesUC == NULL || i != p_mco)
       || new_ScreenAttrs == NULL
       || new_LineOffset == NULL
       || new_LineWraps == NULL
@@ -6184,13 +6281,14 @@ retry:
                   ScreenLinesC[i] + LineOffset[old_row],
                   (size_t)len * sizeof(u8char_T));
           }
-          if (l_enc_dbcs == DBCS_JPNU && ScreenLines2 != NULL)
+          if (ScreenLines2 != NULL) {
             memmove(new_ScreenLines2 + new_LineOffset[new_row],
-                ScreenLines2 + LineOffset[old_row],
-                (size_t)len * sizeof(schar_T));
+                    ScreenLines2 + LineOffset[old_row],
+                    (size_t)len * sizeof(schar_T));
+          }
           memmove(new_ScreenAttrs + new_LineOffset[new_row],
-              ScreenAttrs + LineOffset[old_row],
-              (size_t)len * sizeof(sattr_T));
+                  ScreenAttrs + LineOffset[old_row],
+                  (size_t)len * sizeof(sattr_T));
         }
       }
     }
@@ -6294,10 +6392,10 @@ static void screenclear2(void)
     LineWraps[i] = FALSE;
   }
 
-  ui_clear();  // clear the display
-  clear_cmdline = FALSE;
-  mode_displayed = FALSE;
-  screen_cleared = TRUE;        /* can use contents of ScreenLines now */
+  ui_call_clear();  // clear the display
+  clear_cmdline = false;
+  mode_displayed = false;
+  screen_cleared = true;  // can use contents of ScreenLines now
 
   win_rest_invalid(firstwin);
   redraw_cmdline = TRUE;
@@ -6370,13 +6468,11 @@ void setcursor(void)
   }
 }
 
-/*
- * insert 'line_count' lines at 'row' in window 'wp'
- * if 'invalid' is TRUE the wp->w_lines[].wl_lnum is invalidated.
- * if 'mayclear' is TRUE the screen will be cleared if it is faster than
- * scrolling.
- * Returns FAIL if the lines are not inserted, OK for success.
- */
+/// Insert 'line_count' lines at 'row' in window 'wp'.
+/// If 'invalid' is TRUE the wp->w_lines[].wl_lnum is invalidated.
+/// If 'mayclear' is TRUE the screen will be cleared if it is faster than
+/// scrolling.
+/// Returns FAIL if the lines are not inserted, OK for success.
 int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
   int did_delete;
@@ -6439,13 +6535,11 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   return OK;
 }
 
-/*
- * delete "line_count" window lines at "row" in window "wp"
- * If "invalid" is TRUE curwin->w_lines[] is invalidated.
- * If "mayclear" is TRUE the screen will be cleared if it is faster than
- * scrolling
- * Return OK for success, FAIL if the lines are not deleted.
- */
+/// Delete "line_count" window lines at "row" in window "wp".
+/// If "invalid" is TRUE curwin->w_lines[] is invalidated.
+/// If "mayclear" is TRUE the screen will be cleared if it is faster than
+/// scrolling
+/// Return OK for success, FAIL if the lines are not deleted.
 int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
   int retval;
@@ -6596,7 +6690,7 @@ int screen_ins_lines (
     }
   }
 
-  ui_append_lines(line_count);
+  ui_call_scroll(-line_count);
 
   return OK;
 }
@@ -6651,7 +6745,7 @@ int screen_del_lines (
     }
   }
 
-  ui_delete_lines(line_count);
+  ui_call_scroll(line_count);
 
   return OK;
 }
@@ -6724,7 +6818,7 @@ int showmode(void)
           if (edit_submode_extra != NULL) {
             MSG_PUTS_ATTR(" ", attr);  // Add a space in between.
             if ((int)edit_submode_highl < (int)HLF_COUNT) {
-              sub_attr = hl_attr(edit_submode_highl);
+              sub_attr = win_hl_attr(curwin, edit_submode_highl);
             } else {
               sub_attr = attr;
             }
@@ -6877,7 +6971,6 @@ static void draw_tabline(void)
   int modified;
   int c;
   int len;
-  int attr_sel = hl_attr(HLF_TPS);
   int attr_nosel = hl_attr(HLF_TP);
   int attr_fill = hl_attr(HLF_TPF);
   char_u      *p;
@@ -6885,8 +6978,15 @@ static void draw_tabline(void)
   int use_sep_chars = (t_colors < 8
                        );
 
-  redraw_tabline = FALSE;
+  if (ScreenLines == NULL) {
+    return;
+  }
+  redraw_tabline = false;
 
+  if (ui_is_external(kUITabline)) {
+    ui_ext_tabline_update();
+    return;
+  }
 
   if (tabline_height() < 1)
     return;
@@ -6932,16 +7032,6 @@ static void draw_tabline(void)
 
       scol = col;
 
-      if (tp->tp_topframe == topframe)
-        attr = attr_sel;
-      if (use_sep_chars && col > 0)
-        screen_putchar('|', 0, col++, attr);
-
-      if (tp->tp_topframe != topframe)
-        attr = attr_nosel;
-
-      screen_putchar(' ', 0, col++, attr);
-
       if (tp == curtab) {
         cwp = curwin;
         wp = firstwin;
@@ -6950,10 +7040,29 @@ static void draw_tabline(void)
         wp = tp->tp_firstwin;
       }
 
-      modified = FALSE;
-      for (wincount = 0; wp != NULL; wp = wp->w_next, ++wincount)
-        if (bufIsChanged(wp->w_buffer))
-          modified = TRUE;
+
+      if (tp->tp_topframe == topframe) {
+        attr = win_hl_attr(cwp, HLF_TPS);
+      }
+      if (use_sep_chars && col > 0) {
+        screen_putchar('|', 0, col++, attr);
+      }
+
+      if (tp->tp_topframe != topframe) {
+        attr = win_hl_attr(cwp, HLF_TP);
+      }
+
+      screen_putchar(' ', 0, col++, attr);
+
+      modified = false;
+
+      for (wincount = 0; wp != NULL; wp = wp->w_next, ++wincount) {
+        if (bufIsChanged(wp->w_buffer)) {
+          modified = true;
+        }
+      }
+
+
       if (modified || wincount > 1) {
         if (wincount > 1) {
           vim_snprintf((char *)NameBuff, MAXPATHL, "%d", wincount);
@@ -6961,7 +7070,7 @@ static void draw_tabline(void)
           if (col + len >= Columns - 3)
             break;
           screen_puts_len(NameBuff, len, 0, col,
-                          hl_combine_attr(attr, hl_attr(HLF_T)));
+                          hl_combine_attr(attr, win_hl_attr(cwp, HLF_T)));
           col += len;
         }
         if (modified)
@@ -7027,6 +7136,22 @@ static void draw_tabline(void)
   redraw_tabline = FALSE;
 }
 
+void ui_ext_tabline_update(void)
+{
+  Array tabs = ARRAY_DICT_INIT;
+  FOR_ALL_TABS(tp) {
+    Dictionary tab_info = ARRAY_DICT_INIT;
+    PUT(tab_info, "tab", TABPAGE_OBJ(tp->handle));
+
+    win_T *cwp = (tp == curtab) ? curwin : tp->tp_curwin;
+    get_trans_bufname(cwp->w_buffer);
+    PUT(tab_info, "name", STRING_OBJ(cstr_to_string((char *)NameBuff)));
+
+    ADD(tabs, DICTIONARY_OBJ(tab_info));
+  }
+  ui_call_tabline_update(curtab->handle, tabs);
+}
+
 /*
  * Get buffer name for "buf" into NameBuff[].
  * Takes care of special buffer names and translates special characters.
@@ -7043,25 +7168,28 @@ void get_trans_bufname(buf_T *buf)
 /*
  * Get the character to use in a status line.  Get its attributes in "*attr".
  */
-static int fillchar_status(int *attr, int is_curwin)
+static int fillchar_status(int *attr, win_T *wp)
 {
   int fill;
+  bool is_curwin = (wp == curwin);
   if (is_curwin) {
-    *attr = hl_attr(HLF_S);
+    *attr = win_hl_attr(wp, HLF_S);
     fill = fill_stl;
   } else {
-    *attr = hl_attr(HLF_SNC);
+    *attr = win_hl_attr(wp, HLF_SNC);
     fill = fill_stlnc;
   }
   /* Use fill when there is highlighting, and highlighting of current
    * window differs, or the fillchars differ, or this is not the
    * current window */
-  if (*attr != 0 && ((hl_attr(HLF_S) != hl_attr(HLF_SNC)
-                      || !is_curwin || firstwin == lastwin)
-                     || (fill_stl != fill_stlnc)))
+  if (*attr != 0 && ((win_hl_attr(wp, HLF_S) != win_hl_attr(wp, HLF_SNC)
+                      || !is_curwin || ONE_WINDOW)
+                     || (fill_stl != fill_stlnc))) {
     return fill;
-  if (is_curwin)
+  }
+  if (is_curwin) {
     return '^';
+  }
   return '=';
 }
 
@@ -7069,13 +7197,14 @@ static int fillchar_status(int *attr, int is_curwin)
  * Get the character to use in a separator between vertically split windows.
  * Get its attributes in "*attr".
  */
-static int fillchar_vsep(int *attr)
+static int fillchar_vsep(win_T *wp, int *attr)
 {
-  *attr = hl_attr(HLF_C);
-  if (*attr == 0 && fill_vert == ' ')
+  *attr = win_hl_attr(wp, HLF_C);
+  if (*attr == 0 && fill_vert == ' ') {
     return '|';
-  else
+  } else {
     return fill_vert;
+  }
 }
 
 /*
@@ -7190,7 +7319,7 @@ static void win_redr_ruler(win_T *wp, int always)
 
     if (wp->w_status_height) {
       row = wp->w_winrow + wp->w_height;
-      fillchar = fillchar_status(&attr, wp == curwin);
+      fillchar = fillchar_status(&attr, wp);
       off = wp->w_wincol;
       width = wp->w_width;
     } else {
@@ -7317,13 +7446,7 @@ int number_width(win_T *wp)
   return n;
 }
 
-/*
- * Set size of the Vim shell.
- * If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
- * window size (this is used for the :win command).
- * If 'mustset' is FALSE, we may try to get the real window size and if
- * it fails use 'width' and 'height'.
- */
+/// Set dimensions of the Nvim application "shell".
 void screen_resize(int width, int height)
 {
   static int busy = FALSE;
@@ -7408,8 +7531,8 @@ void screen_resize(int width, int height)
   --busy;
 }
 
-// Check if the new shell size is valid, correct it if it's too small or way
-// too big.
+/// Check if the new Nvim application "shell" dimensions are valid.
+/// Correct it if it's too small or way too big.
 void check_shellsize(void)
 {
   if (Rows < min_rows()) {

@@ -1,18 +1,15 @@
 " Vim syntax file
 " Language:	Yacc
 " Maintainer:	Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change:	Apr 02, 2015
-" Version:	13
-" URL:	http://mysite.verizon.net/astronaut/vim/index.html#vimlinks_syntax
+" Last Change:	Aug 31, 2016
+" Version:	15
+" URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_YACC
 "
 " Options: {{{1
 "   g:yacc_uses_cpp : if this variable exists, then C++ is loaded rather than C
 
 " ---------------------------------------------------------------------
 " this version of syntax/yacc.vim requires 6.0 or later
-if version < 600
- finish
-endif
 if exists("b:current_syntax")
  syntax clear
 endif
@@ -90,7 +87,7 @@ syn sync fromstart
 
 " ---------------------------------------------------------------------
 " Define the default highlighting. {{{1
-if !exists("did_yacc_syn_inits")
+if !exists("skip_yacc_syn_inits")
   hi def link yaccBrkt	yaccStmt
   hi def link yaccComment	Comment
   hi def link yaccCurly	Delimiter

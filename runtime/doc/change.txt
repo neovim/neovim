@@ -1,4 +1,4 @@
-*change.txt*    For Vim version 7.4.  Last change: 2016 Apr 12
+*change.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -9,19 +9,9 @@ changing text means deleting the text and replacing it with other text using
 one command.  You can undo all of these commands.  You can repeat the non-Ex
 commands with the "." command.
 
-1. Deleting text		|deleting|
-2. Delete and insert		|delete-insert|
-3. Simple changes		|simple-change|		*changing*
-4. Complex changes		|complex-change|
-   4.1 Filter commands		   |filter|
-   4.2 Substitute		   |:substitute|
-   4.3 Search and replace	   |search-replace|
-   4.4 Changing tabs		   |change-tabs|
-5. Copying and moving text	|copy-move|
-6. Formatting text		|formatting|
-7. Sorting text			|sorting|
-
 For inserting text see |insert.txt|.
+
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Deleting text					*deleting* *E470*
@@ -259,7 +249,7 @@ Or use "caw" (see |aw|).
 			command is executed.
 
 ==============================================================================
-3. Simple changes					*simple-change*
+3. Simple changes				*simple-change* *changing*
 
 							*r*
 r{char}			Replace the character under the cursor with {char}.
@@ -398,11 +388,6 @@ CTRL-X			Subtract [count] from the number or alphabetic
 {Visual}CTRL-X		Subtract [count] from the number or alphabetic
 			character in the highlighted text.  {not in Vi}
 
-			On MS-Windows, this is mapped to cut Visual text
-			|dos-standard-mappings|.  If you want to disable the
-			mapping, use this: >
-				silent! vunmap <C-X>
-<
 							*v_g_CTRL-X*
 {Visual}g CTRL-X	Subtract [count] from the number or alphabetic
 			character in the highlighted text. If several lines
@@ -601,8 +586,8 @@ all files in it are deleted.  When Vim has the setuid bit set this may cause
 problems, the temp file is owned by the setuid user but the filter command
 probably runs as the original user.
 Directory for temporary files is created in the first suitable directory of:
-For Unix: $TMPDIR, /tmp, current-dir, $HOME.
-For MS-Windows: $TMP, $TEMP, $USERPROFILE, current-dir.
+	Unix:    $TMPDIR, /tmp, current-dir, $HOME.
+	Windows: $TMPDIR, $TMP, $TEMP, $USERPROFILE, current-dir.
 
 
 
@@ -614,12 +599,14 @@ For MS-Windows: $TMP, $TEMP, $USERPROFILE, current-dir.
 			For the {pattern} see |pattern|.
 			{string} can be a literal string, or something
 			special; see |sub-replace-special|.
+							*E939*
 			When [range] and [count] are omitted, replace in the
-			current line only.
-			When [count] is given, replace in [count] lines,
-			starting with the last line in [range].  When [range]
-			is omitted start in the current line.
-			Also see |cmdline-ranges|.
+			current line only.  When [count] is given, replace in
+			[count] lines, starting with the last line in [range].
+			When [range] is omitted start in the current line.
+			[count] must be a positive number.  Also see
+			|cmdline-ranges|.
+
 			See |:s_flags| for [flags].
 
 :[range]s[ubstitute] [flags] [count]
@@ -661,6 +648,7 @@ g&			Synonym for `:%s//~/&` (repeat last substitute with
 							*:s_flags*
 The flags that you can use for the substitute commands:
 
+							*:&&*
 [&]	Must be the first one: Keep the flags from the previous substitute
 	command.  Examples: >
 		:&&
@@ -833,6 +821,7 @@ The numbering of "\1", "\2" etc. is done based on which "\(" comes first in
 the pattern (going left to right).  When a parentheses group matches several
 times, the last one will be used for "\1", "\2", etc.  Example: >
   :s/\(\(a[a-d] \)*\)/\2/      modifies "aa ab x" to "ab x"
+The "\2" is for "\(a[a-d] \)".  At first it matches "aa ", secondly "ab ".
 
 When using parentheses in combination with '|', like in \([ab]\)\|\([cd]\),
 either the first or second pattern in parentheses did not match, so either
@@ -873,8 +862,7 @@ Exceptions:
 Substitute with an expression			*sub-replace-expression*
 						*sub-replace-\=* *s/\=*
 When the substitute string starts with "\=" the remainder is interpreted as an
-expression.  This does not work recursively: a |substitute()| function inside
-the expression cannot use "\=" for the substitute string.
+expression.
 
 The special meaning for characters as mentioned at |sub-replace-special| does
 not apply except for "<CR>".  A <NL> character is used as a line break, you

@@ -5,7 +5,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, insert = helpers.feed, helpers.insert
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 if helpers.pending_win32(pending) then return end
 
@@ -17,6 +17,7 @@ describe('store cursor position in session file in Latin-1', function()
     os.remove('test.out')
   end)
 
+  -- luacheck: ignore 621 (Indentation)
   it('is working', function()
     insert([[
       start:
@@ -30,13 +31,13 @@ describe('store cursor position in session file in Latin-1', function()
       Aäöü  three mulTibyte characters]])
     -- Must write buffer to disk for :mksession. See the comments in
     -- "092_mksession_cursor_cols_utf8_spec.lua".
-    execute('write! test.in')
+    feed_command('write! test.in')
 
-    execute('set sessionoptions=buffers splitbelow fileencoding=latin1')
+    feed_command('set sessionoptions=buffers splitbelow fileencoding=latin1')
 
     -- Move the cursor through the buffer lines and position it with "|".
-    execute('/^start:')
-    execute('vsplit')
+    feed_command('/^start:')
+    feed_command('vsplit')
     feed('j16|:split<cr>')
     feed('j16|:split<cr>')
     feed('j16|:split<cr>')
@@ -48,9 +49,9 @@ describe('store cursor position in session file in Latin-1', function()
 
     -- Again move the cursor through the buffer and position it with "|". This
     -- time also perform a horizontal scroll at every step.
-    execute('wincmd l')
-    execute('/^start:')
-    execute('set nowrap')
+    feed_command('wincmd l')
+    feed_command('/^start:')
+    feed_command('set nowrap')
     feed('j16|3zl:split<cr>')
     feed('j016|3zl:split<cr>')
     feed('j016|3zl:split<cr>')
@@ -61,9 +62,9 @@ describe('store cursor position in session file in Latin-1', function()
     feed('j016|3zl:split<cr>')
 
     -- Create the session file, read it back in, and prepare for verification.
-    execute('mksession! test.out')
-    execute('new test.out')
-    execute([[v/\(^ *normal! 0\|^ *exe 'normal!\)/d]])
+    feed_command('mksession! test.out')
+    feed_command('new test.out')
+    feed_command([[v/\(^ *normal! 0\|^ *exe 'normal!\)/d]])
 
     -- Assert buffer contents.
     expect([[

@@ -5,14 +5,14 @@ local helpers = require('test.functional.helpers')(after_each)
 local nvim, eq = helpers.meths, helpers.eq
 local insert, feed = helpers.insert, helpers.feed
 local clear, expect = helpers.clear, helpers.expect
-local execute = helpers.execute
+local feed_command = helpers.feed_command
 
 describe('Visual block mode', function()
 
   before_each(function()
     clear()
 
-    execute('set ts&vi sw&vi sts&vi noet') -- Vim compatible
+    feed_command('set ts&vi sw&vi sts&vi noet') -- Vim compatible
   end)
 
   it('should shift, insert, replace and change a block', function()
@@ -43,6 +43,7 @@ describe('Visual block mode', function()
       abcdqqqqijklm]])
   end)
 
+  -- luacheck: ignore 611 (Line contains only whitespaces)
   it('should insert a block using cursor keys for movement', function()
     insert([[
       aaaaaa
@@ -55,9 +56,9 @@ describe('Visual block mode', function()
       cccc
       dddd]])
 
-    execute('/^aa')
+    feed_command('/^aa')
     feed('l<C-v>jjjlllI<Right><Right>  <ESC>')
-    execute('/xaaa$')
+    feed_command('/xaaa$')
     feed('<C-v>jjjI<lt>><Left>p<ESC>')
 
     expect([[
@@ -84,13 +85,13 @@ describe('Visual block mode', function()
       4567]])
 
     -- Test for Visual block was created with the last <C-v>$.
-    execute('/^A23$/')
+    feed_command('/^A23$/')
     feed('l<C-v>j$Aab<ESC>')
     -- Test for Visual block was created with the middle <C-v>$ (1).
-    execute('/^B23$/')
+    feed_command('/^B23$/')
     feed('l<C-v>j$hAab<ESC>')
     -- Test for Visual block was created with the middle <C-v>$ (2).
-    execute('/^C23$/')
+    feed_command('/^C23$/')
     feed('l<C-v>j$hhAab<ESC>')
 
     expect([[
@@ -104,6 +105,7 @@ describe('Visual block mode', function()
       456ab7]])
   end)
 
+  -- luacheck: ignore 621 (Indentation)
   it('should insert and append a block when virtualedit=all', function()
     insert([[
       		line1
@@ -112,8 +114,8 @@ describe('Visual block mode', function()
       ]])
 
     -- Test for Visual block insert when virtualedit=all and utf-8 encoding.
-    execute('set ve=all')
-    execute('/\t\tline')
+    feed_command('set ve=all')
+    feed_command('/\t\tline')
     feed('07l<C-v>jjIx<ESC>')
 
     expect([[
@@ -199,10 +201,10 @@ describe('Visual block mode', function()
       98765]])
 
     -- Test cursor position. When virtualedit=block and Visual block mode and $gj.
-    execute('set ve=block')
+    feed_command('set ve=block')
     feed('G2l')
     feed('2k<C-v>$gj<ESC>')
-    execute([[let cpos=getpos("'>")]])
+    feed_command([[let cpos=getpos("'>")]])
     local cpos = nvim.get_var('cpos')
     local expected = {
       col = 4,
@@ -223,7 +225,7 @@ describe('Visual block mode', function()
       #define BO_CRSR	    0x0004]])
 
     -- Block_insert when replacing spaces in front of the block with tabs.
-    execute('set ts=8 sts=4 sw=4')
+    feed_command('set ts=8 sts=4 sw=4')
     feed('ggf0<C-v>2jI<TAB><ESC>')
 
     expect([[

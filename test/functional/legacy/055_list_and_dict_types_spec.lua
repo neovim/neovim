@@ -2,7 +2,7 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local feed, source = helpers.feed, helpers.source
-local clear, execute, expect = helpers.clear, helpers.execute, helpers.expect
+local clear, feed_command, expect = helpers.clear, helpers.feed_command, helpers.expect
 
 describe('list and dictionary types', function()
   before_each(clear)
@@ -20,7 +20,7 @@ describe('list and dictionary types', function()
         $put =v:exception[:14]
       endtry]])
     expect([[
-      
+
       [1, 'as''d', [1, 2, function('strlen')], {'a': 1}]
       {'a': 1}
       1
@@ -38,7 +38,7 @@ describe('list and dictionary types', function()
       $put =string(l[0:8])
       $put =string(l[8:-1])]])
     expect([=[
-      
+
       [1, 'as''d', [1, 2, function('strlen')], {'a': 1}]
       ['as''d', [1, 2, function('strlen')], {'a': 1}]
       [1, 'as''d', [1, 2, function('strlen')]]
@@ -84,7 +84,7 @@ describe('list and dictionary types', function()
       call filter(d, 'v:key =~ ''[ac391]''')
       $put =string(d)]])
     expect([[
-      
+
       {'1': 'asd', 'b': [1, 2, function('strlen')], '-1': {'a': 1}}asd
       ['-1', '1', 'b']
       ['asd', [1, 2, function('strlen')], {'a': 1}]
@@ -134,7 +134,7 @@ describe('list and dictionary types', function()
       unlet d[-1]
       $put =string(d)]])
     expect([[
-      
+
       [1, 'as''d', {'a': 1}]
       [4]
       {'1': 99, '3': 33}]])
@@ -142,42 +142,42 @@ describe('list and dictionary types', function()
 
   it("removing items out of range: silently skip items that don't exist", function()
     -- We can not use source() here as we want to ignore all errors.
-    execute('lang C')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[2:1]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[2:2]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[2:3]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[2:4]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[2:5]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[-1:2]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[-2:2]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[-3:2]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[-4:2]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[-5:2]')
-    execute('$put =string(l)')
-    execute('let l = [0, 1, 2, 3]')
-    execute('unlet l[-6:2]')
-    execute('$put =string(l)')
+    feed_command('lang C')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[2:1]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[2:2]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[2:3]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[2:4]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[2:5]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[-1:2]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[-2:2]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[-3:2]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[-4:2]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[-5:2]')
+    feed_command('$put =string(l)')
+    feed_command('let l = [0, 1, 2, 3]')
+    feed_command('unlet l[-6:2]')
+    feed_command('$put =string(l)')
     expect([=[
-      
+
       [0, 1, 2, 3]
       [0, 1, 3]
       [0, 1]
@@ -191,6 +191,7 @@ describe('list and dictionary types', function()
       [3]]=])
   end)
 
+  -- luacheck: ignore 613 (Trailing whitespace in a string)
   it('assignment to a list', function()
     source([[
       let l = [0, 1, 2, 3]
@@ -208,7 +209,7 @@ describe('list and dictionary types', function()
 	      $put =v:exception[:14]
       endtry]])
     expect([[
-      
+
       2
       3
       Vim(let):E687: 
@@ -257,7 +258,7 @@ describe('list and dictionary types', function()
       " Must be almost empty now.
       $put =string(d)]])
     expect([[
-      
+
       3000 2900 2001 1600 1501
       Vim(let):E716: 1500
       NONE 2999
@@ -277,7 +278,7 @@ describe('list and dictionary types', function()
       let Fn = dict.func
       call Fn('xxx')]])
     expect([[
-      
+
       len: 3
       again: 3
       xxx3]])
@@ -324,7 +325,7 @@ describe('list and dictionary types', function()
       let l3 = deepcopy(l2)
       $put ='same list: ' . (l3[1] is l3[2])]])
     expect([[
-      
+
       Vim(let):E698: 
       same list: 1]])
   end)
@@ -394,7 +395,7 @@ describe('list and dictionary types', function()
 	      endfor
       endfor]=])
     expect([[
-      
+
       depth is 0
       0000-000
       ppppppp
@@ -499,7 +500,7 @@ describe('list and dictionary types', function()
         endfor
       endfor]=])
     expect([[
-      
+
       depth is 0
       0000-000
       ppppppp
@@ -647,7 +648,7 @@ describe('list and dictionary types', function()
       $put =string(l)]])
 
     expect([=[
-      
+
       Locks and commands or functions:
       No :unlet after lock on dict:
       Vim(unlet):E741: 
@@ -676,7 +677,7 @@ describe('list and dictionary types', function()
   end)
 
   it('locked variables (part 2)', function()
-    execute(
+    feed_command(
       'let l = [1, 2, 3, 4]',
       'lockvar! l',
       '$put =string(l)',
@@ -691,7 +692,7 @@ describe('list and dictionary types', function()
       'let l[1:2] = [0, 1]',
       '$put =string(l)')
     expect([=[
-      
+
       [1, 2, 3, 4]
       [1, 2, 3, 4]
       [1, 2, 3, 4]
@@ -708,7 +709,7 @@ describe('list and dictionary types', function()
       $put ='exists g:footest#x:'.exists('g:footest#x')
       $put ='g:footest#x: '.g:footest#x]])
     expect([[
-      
+
       locked g:footest#x:-1
       exists g:footest#x:0
       g:footest#x: 1]])
@@ -749,9 +750,9 @@ describe('list and dictionary types', function()
           $put ='caught ' . v:exception
         endtry
       endfunction]])
-    execute('call Test(1, 2, [3, 4], {5: 6})')
+    feed_command('call Test(1, 2, [3, 4], {5: 6})')
     expect([=[
-      
+
       caught a:000
       caught a:000[0]
       caught a:000[2]
@@ -779,7 +780,7 @@ describe('list and dictionary types', function()
       $put =string(sort(copy(l), 'i'))
       $put =string(sort(copy(l)))]=])
     expect([=[
-      
+
       ['-0', 'A11', 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5]
       [1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0']
       [1.5, [0, 1, 2], 'x8', [0, 1, 2], 'foo', 'foo6', 'foo', 4, 'xaaa', 2, 2, 'A11', '-0']
@@ -805,7 +806,7 @@ describe('list and dictionary types', function()
       $put =string(split('abc', '\zs'))
       $put =string(split('abc', '\zs', 1))]])
     expect([=[
-      
+
       ['aa', 'bb']
       ['aa', 'bb']
       ['', 'aa', 'bb', '']
@@ -827,7 +828,7 @@ describe('list and dictionary types', function()
       $put =(l != deepcopy(l))
       $put =(d != deepcopy(d))]])
     expect([[
-      
+
       1
       1
       0
@@ -845,7 +846,7 @@ describe('list and dictionary types', function()
       $put =(l == lcopy)
       $put =(dict4 == dict4copy)]])
     expect([[
-      
+
       1
       1]])
   end)
@@ -856,7 +857,7 @@ describe('list and dictionary types', function()
       call extend(l, l)
       $put =string(l)]])
     expect([=[
-      
+
       [1, 2, 3, 4, 5, 1, 2, 3, 4, 5]]=])
   end)
 
@@ -866,7 +867,7 @@ describe('list and dictionary types', function()
       call extend(d, d)
       $put =string(d)]])
     expect([[
-      
+
       {'a': {'b': 'B'}}]])
   end)
 
@@ -881,7 +882,7 @@ describe('list and dictionary types', function()
       endtry
       $put =string(d)]])
     expect([[
-      
+
       Vim(call):E737: a
       {'a': {'b': 'B'}}]])
   end)
@@ -892,29 +893,29 @@ describe('list and dictionary types', function()
       let l[:] = [1, 2]
       $put =string(l)]])
     expect([=[
-      
+
       [1, 2]]=])
   end)
 
   it('vim patch 7.3.637', function()
-    execute('let a = "No error caught"')
-    execute('try')
-    execute('  foldopen')
-    execute('catch')
-    execute("  let a = matchstr(v:exception,'^[^ ]*')")
-    execute('endtry')
+    feed_command('let a = "No error caught"')
+    feed_command('try')
+    feed_command('  foldopen')
+    feed_command('catch')
+    feed_command("  let a = matchstr(v:exception,'^[^ ]*')")
+    feed_command('endtry')
     feed('o<C-R>=a<CR><esc>')
-    execute('lang C')
-    execute('redir => a')
+    feed_command('lang C')
+    feed_command('redir => a')
     -- The test failes if this is not in one line.
-    execute("try|foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry")
-    execute('redir END')
+    feed_command("try|foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry")
+    feed_command('redir END')
     feed('o<C-R>=a<CR><esc>')
     expect([[
-      
+
       Vim(foldopen):E490:
-      
-      
+
+
       Error detected while processing :
       E492: Not an editor command: foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry
       ]])

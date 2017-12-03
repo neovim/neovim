@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
  // Various routines dealing with allocation and deallocation of memory.
 
 #include <assert.h>
@@ -342,10 +345,6 @@ char *xstpcpy(char *restrict dst, const char *restrict src)
 /// WARNING: xstpncpy will ALWAYS write maxlen bytes. If src is shorter than
 /// maxlen, zeroes will be written to the remaining bytes.
 ///
-/// TODO(aktau): I don't see a good reason to have this last behaviour, and
-/// it is potentially wasteful. Could we perhaps deviate from the standard
-/// and not zero the rest of the buffer?
-///
 /// @param dst
 /// @param src
 /// @param maxlen
@@ -430,6 +429,19 @@ char *xstrdup(const char *str)
   return xmemdupz(str, strlen(str));
 }
 
+/// strdup() wrapper
+///
+/// Unlike xstrdup() allocates a new empty string if it receives NULL.
+char *xstrdupnul(const char *const str)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+{
+  if (str == NULL) {
+    return xmallocz(0);
+  } else {
+    return xstrdup(str);
+  }
+}
+
 /// A version of memchr that starts the search at `src + len`.
 ///
 /// Based on glibc's memrchr.
@@ -480,6 +492,13 @@ bool strequal(const char *a, const char *b)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (a == NULL && b == NULL) || (a && b && strcmp(a, b) == 0);
+}
+
+/// Case-insensitive `strequal`.
+bool striequal(const char *a, const char *b)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (a == NULL && b == NULL) || (a && b && STRICMP(a, b) == 0);
 }
 
 /*
@@ -566,7 +585,7 @@ void free_all_mem(void)
   p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
-  if (firstwin != lastwin)
+  if (!ONE_WINDOW)
     do_cmdline_cmd("only!");
 
   /* Free all spell info. */

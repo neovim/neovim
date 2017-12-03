@@ -4,11 +4,8 @@
 " URL:		     http://spyce.sourceforge.net
 " Last Change: 2009 Nov 11
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
   finish
 endif
 
@@ -20,13 +17,9 @@ endif
 " Read the HTML syntax to start with
 let b:did_indent = 1	     " don't perform HTML indentation!
 let html_no_rendering = 1    " do not render <b>,<i>, etc...
-if version < 600
-  so <sfile>:p:h/html.vim
-else
-  runtime! syntax/html.vim
-  unlet b:current_syntax
-  syntax spell default  " added by Bram
-endif
+runtime! syntax/html.vim
+unlet b:current_syntax
+syntax spell default  " added by Bram
 
 " include python
 syn include @Python <sfile>:p:h/python.vim

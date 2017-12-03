@@ -428,8 +428,6 @@ enum key_extra {
 #define K_CMDWIN        TERMCAP2KEY(KS_EXTRA, KE_CMDWIN)
 
 #define K_DROP          TERMCAP2KEY(KS_EXTRA, KE_DROP)
-#define K_FOCUSGAINED   TERMCAP2KEY(KS_EXTRA, KE_FOCUSGAINED)
-#define K_FOCUSLOST     TERMCAP2KEY(KS_EXTRA, KE_FOCUSLOST)
 
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
 #define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
@@ -464,13 +462,9 @@ enum key_extra {
 #define MAX_KEY_CODE_LEN    6
 
 #define FLAG_CPO_BSLASH    0x01
-#define FLAG_CPO_SPECI     0x02
-#define CPO_TO_CPO_FLAGS   (((vim_strchr(p_cpo, CPO_BSLASH) == NULL) \
-                             ? 0 \
-                             : FLAG_CPO_BSLASH)| \
-                            (vim_strchr(p_cpo, CPO_SPECI) == NULL \
-                             ? 0 \
-                             : FLAG_CPO_SPECI))
+#define CPO_TO_CPO_FLAGS   ((vim_strchr(p_cpo, CPO_BSLASH) == NULL) \
+                            ? 0 \
+                            : FLAG_CPO_BSLASH)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "keymap.h.generated.h"

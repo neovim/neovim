@@ -1,4 +1,4 @@
-*remote.txt*    For Vim version 7.4.  Last change: 2015 Mar 01
+*remote.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,9 +6,7 @@
 
 Vim client-server communication				*client-server*
 
-1. Common functionality		|clientserver|
-2. X11 specific items		|x11-clientserver|
-3. MS-Windows specific items	|w32-clientserver|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Common functionality					*clientserver*
@@ -89,7 +87,7 @@ Tell the remote server "BLA" to write all files and exit: >
     vim --servername BLA --remote-send '<C-\><C-N>:wqa<CR>'
 
 
-SERVER NAME
+SERVER NAME						*client-server-name*
 
 By default Vim will try to register the name under which it was invoked (gvim,
 egvim ...).  This can be overridden with the --servername argument.  If the
@@ -139,6 +137,7 @@ the description in |eval.txt| or use CTRL-] on the function name to jump to
 the full explanation.
 
     synopsis				     explanation ~
+    remote_startserver( name)		     run a server
     remote_expr( server, string, idvar)      send expression
     remote_send( server, string, idvar)      send key sequence
     serverlist()			     get a list of available servers

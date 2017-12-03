@@ -1,21 +1,18 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, meths = helpers.clear, helpers.feed, helpers.meths
-local insert, execute = helpers.insert, helpers.execute
+local insert, feed_command = helpers.insert, helpers.feed_command
 local eq, funcs = helpers.eq, helpers.funcs
 
 if helpers.pending_win32(pending) then return end
 
-describe('Mouse input', function()
+describe('ui/mouse/input', function()
   local screen
 
   before_each(function()
     clear()
     meths.set_option('mouse', 'a')
     meths.set_option('listchars', 'eol:$')
-    -- set mousetime to very high value to ensure that even in valgrind/travis,
-    -- nvim will still pick multiple clicks
-    meths.set_option('mousetime', 5000)
     screen = Screen.new(25, 5)
     screen:attach()
     screen:set_default_attr_ids({
@@ -119,13 +116,12 @@ describe('Mouse input', function()
         sel  = { bold=true },
         fill = { reverse=true }
       })
-      screen.timeout = 15000
     end)
 
     it('in tabline on filler space moves tab to the end', function()
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -160,9 +156,9 @@ describe('Mouse input', function()
         return
       end
 
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -190,9 +186,9 @@ describe('Mouse input', function()
     end)
 
     it('in tabline to the right moves tab right', function()
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -220,9 +216,9 @@ describe('Mouse input', function()
     end)
 
     it('out of tabline under filler space moves tab to the end', function()
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -265,9 +261,9 @@ describe('Mouse input', function()
         return
       end
 
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -303,9 +299,9 @@ describe('Mouse input', function()
     end)
 
     it('out of tabline to the right moves tab right', function()
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -352,9 +348,9 @@ describe('Mouse input', function()
     end)
 
     it('left click in default tabline (position 4) switches to tab', function()
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -375,9 +371,9 @@ describe('Mouse input', function()
 
     it('left click in default tabline (position 24) closes tab', function()
       meths.set_option('hidden', true)
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -398,9 +394,9 @@ describe('Mouse input', function()
 
     it('double click in default tabline (position 4) opens new tab', function()
       meths.set_option('hidden', true)
-      execute('%delete')
+      feed_command('%delete')
       insert('this is foo')
-      execute('silent file foo | tabnew | file bar')
+      feed_command('silent file foo | tabnew | file bar')
       insert('this is bar')
       screen:expect([[
         {tab: + foo }{sel: + bar }{fill:          }{tab:X}|
@@ -421,13 +417,13 @@ describe('Mouse input', function()
 
     describe('%@ label', function()
       before_each(function()
-        execute([[
+        feed_command([[
           function Test(...)
             let g:reply = a:000
             return copy(a:000)  " Check for memory leaks: return should be freed
           endfunction
         ]])
-        execute([[
+        feed_command([[
           function Test2(...)
             return call('Test', a:000 + [2])
           endfunction
@@ -533,9 +529,9 @@ describe('Mouse input', function()
       fill = { reverse=true },
       vis  = { background=Screen.colors.LightGrey }
     })
-    execute('silent file foo | tabnew | file bar')
+    feed_command('silent file foo | tabnew | file bar')
     insert('this is bar')
-    execute('tabprevious')  -- go to first tab
+    feed_command('tabprevious')  -- go to first tab
     screen:expect([[
       {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
       mouse                    |
@@ -641,7 +637,7 @@ describe('Mouse input', function()
     mouse scrolling
     ]])
     screen:try_resize(53, 14)
-    execute('sp', 'vsp')
+    feed_command('sp', 'vsp')
     screen:expect([[
       lines                     {4:|}lines                     |
       to                        {4:|}to                        |
@@ -754,12 +750,12 @@ describe('Mouse input', function()
       })
       feed('ggdG')
 
-      execute('set concealcursor=n')
-      execute('set nowrap')
-      execute('syntax match NonText "\\<amet\\>" conceal')
-      execute('syntax match NonText "\\cs\\|g." conceal cchar=X')
-      execute('syntax match NonText "\\%(lo\\|cl\\)." conceal')
-      execute('syntax match NonText "Lo" conceal cchar=Y')
+      feed_command('set concealcursor=n')
+      feed_command('set nowrap')
+      feed_command('syntax match NonText "\\<amet\\>" conceal')
+      feed_command('syntax match NonText "\\cs\\|g." conceal cchar=X')
+      feed_command('syntax match NonText "\\%(lo\\|cl\\)." conceal')
+      feed_command('syntax match NonText "Lo" conceal cchar=Y')
 
       insert([[
       Lorem ipsum dolor sit amet, consetetur sadipscing elitr.
@@ -770,7 +766,7 @@ describe('Mouse input', function()
     end)
 
     it('(level 1) click on non-wrapped lines', function()
-      execute('let &conceallevel=1', 'echo')
+      feed_command('let &conceallevel=1', 'echo')
 
       feed('<esc><LeftMouse><0,0>')
       screen:expect([[
@@ -818,7 +814,7 @@ describe('Mouse input', function()
     end) -- level 1 - non wrapped
 
     it('(level 1) click on wrapped lines', function()
-      execute('let &conceallevel=1', 'let &wrap=1', 'echo')
+      feed_command('let &conceallevel=1', 'let &wrap=1', 'echo')
 
       feed('<esc><LeftMouse><0,0>')
       screen:expect([[
@@ -867,7 +863,7 @@ describe('Mouse input', function()
 
 
     it('(level 2) click on non-wrapped lines', function()
-      execute('let &conceallevel=2', 'echo')
+      feed_command('let &conceallevel=2', 'echo')
 
       feed('<esc><LeftMouse><0,0>')
       screen:expect([[
@@ -915,7 +911,7 @@ describe('Mouse input', function()
     end) -- level 2 - non wrapped
 
     it('(level 2) click on wrapped lines', function()
-      execute('let &conceallevel=2', 'let &wrap=1', 'echo')
+      feed_command('let &conceallevel=2', 'let &wrap=1', 'echo')
 
       feed('<esc><LeftMouse><0,0>')
       screen:expect([[
@@ -964,7 +960,7 @@ describe('Mouse input', function()
 
 
     it('(level 3) click on non-wrapped lines', function()
-      execute('let &conceallevel=3', 'echo')
+      feed_command('let &conceallevel=3', 'echo')
 
       feed('<esc><LeftMouse><0,0>')
       screen:expect([[
@@ -1012,7 +1008,7 @@ describe('Mouse input', function()
     end) -- level 3 - non wrapped
 
     it('(level 3) click on wrapped lines', function()
-      execute('let &conceallevel=3', 'let &wrap=1', 'echo')
+      feed_command('let &conceallevel=3', 'let &wrap=1', 'echo')
 
       feed('<esc><LeftMouse><0,0>')
       screen:expect([[

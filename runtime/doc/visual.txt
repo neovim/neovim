@@ -1,4 +1,4 @@
-*visual.txt*    For Vim version 7.4.  Last change: 2014 Mar 23
+*visual.txt*    Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -11,14 +11,7 @@ operator.  It is the only way to select a block of text.
 
 This is introduced in section |04.4| of the user manual.
 
-1. Using Visual mode			|visual-use|
-2. Starting and stopping Visual mode	|visual-start|
-3. Changing the Visual area		|visual-change|
-4. Operating on the Visual area		|visual-operators|
-5. Blockwise operators			|blockwise-operators|
-6. Repeating				|visual-repeat|
-7. Examples				|visual-examples|
-8. Select mode				|Select-mode|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Using Visual mode					*visual-use*
@@ -32,8 +25,7 @@ Using Visual mode consists of three parts:
 3. Type an operator command.
    The highlighted characters will be operated upon.
 
-The 'highlight' option can be used to set the display mode to use for
-highlighting in Visual mode.
+The |hl-Visual| group determines the highlighting of the visual selection.
 The 'virtualedit' option can be used to allow positioning the cursor to
 positions where there is no actual character.
 
@@ -278,7 +270,7 @@ mode.  For example, if you would like the "/" command not to extend the Visual
 area, but instead take the highlighted text and search for that: >
 	:vmap / y/<C-R>"<CR>
 (In the <> notation |<>|, when typing it you should type it literally; you
-need to remove the 'B' and '<' flags from 'cpoptions'.)
+need to remove the 'B' flag from 'cpoptions'.)
 
 If you want to give a register name using the """ command, do this just before
 typing the operator character: "v{move-around}"xd".
@@ -382,7 +374,7 @@ Here is an example, to replace the selected text with the output of "date": >
 	:vmap _a <Esc>`>a<CR><Esc>`<i<CR><Esc>!!date<CR>kJJ
 
 (In the <> notation |<>|, when typing it you should type it literally; you
-need to remove the 'B' and '<' flags from 'cpoptions')
+need to remove the 'B' flag from 'cpoptions')
 
 What this does is:
 <Esc>		stop Visual mode
@@ -399,7 +391,7 @@ selected text: >
 	:vmap X y/<C-R>"<CR>
 
 (In the <> notation |<>|, when typing it you should type it literally; you
-need to remove the 'B' and '<' flags from 'cpoptions')
+need to remove the 'B' flag from 'cpoptions')
 
 Note that special characters (like '.' and '*') will cause problems.
 

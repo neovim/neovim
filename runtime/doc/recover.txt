@@ -1,4 +1,4 @@
-*recover.txt*   For Vim version 7.4.  Last change: 2014 Mar 27
+*recover.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -15,8 +15,7 @@ You can recover most of your changes from the files that Vim uses to store
 the contents of the file.  Mostly you can recover your work with one command:
 	vim -r filename
 
-1. The swap file	|swap-file|
-2. Recovery		|recovery|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. The swap file					*swap-file*

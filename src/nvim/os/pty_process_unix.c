@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // Some of the code came from pangoterm and libuv
 #include <stdbool.h>
 #include <stdlib.h>
@@ -9,7 +12,7 @@
 #include <sys/ioctl.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined (__DragonFly__)
 # include <libutil.h>
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 # include <util.h>
@@ -33,23 +36,36 @@
 # include "os/pty_process_unix.c.generated.h"
 #endif
 
+/// termios saved at startup (for TUI) or initialized by pty_process_spawn().
+static struct termios termios_default;
+
+/// Saves the termios properties associated with `tty_fd`.
+///
+/// @param tty_fd   TTY file descriptor, or -1 if not in a terminal.
+void pty_process_save_termios(int tty_fd)
+{
+  if (tty_fd == -1 || tcgetattr(tty_fd, &termios_default) != 0) {
+    return;
+  }
+}
+
 /// @returns zero on success, or negative error code
 int pty_process_spawn(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  static struct termios termios;
-  if (!termios.c_cflag) {
-    init_termios(&termios);
+  if (!termios_default.c_cflag) {
+    // TODO(jkeyes): We could pass NULL to forkpty() instead ...
+    init_termios(&termios_default);
   }
 
   int status = 0;  // zero or negative error code (libuv convention)
   Process *proc = (Process *)ptyproc;
-  assert(!proc->err);
+  assert(proc->err.closed);
   uv_signal_start(&proc->loop->children_watcher, chld_handler, SIGCHLD);
   ptyproc->winsize = (struct winsize){ ptyproc->height, ptyproc->width, 0, 0 };
   uv_disable_stdio_inheritance();
   int master;
-  int pid = forkpty(&master, NULL, &termios, &ptyproc->winsize);
+  int pid = forkpty(&master, NULL, &termios_default, &ptyproc->winsize);
 
   if (pid < 0) {
     status = -errno;
@@ -80,12 +96,12 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto error;
   }
 
-  if (proc->in
-      && (status = set_duplicating_descriptor(master, &proc->in->uv.pipe))) {
+  if (!proc->in.closed
+      && (status = set_duplicating_descriptor(master, &proc->in.uv.pipe))) {
     goto error;
   }
-  if (proc->out
-      && (status = set_duplicating_descriptor(master, &proc->out->uv.pipe))) {
+  if (!proc->out.closed
+      && (status = set_duplicating_descriptor(master, &proc->out.uv.pipe))) {
     goto error;
   }
 

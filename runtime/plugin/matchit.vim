@@ -1,8 +1,10 @@
 "  matchit.vim: (global plugin) Extended "%" matching
-"  Last Change: Fri Jul 29 01:20 AM 2016 EST
+"  Last Change: 2017 Sep 15
 "  Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
-"  Version:     1.13.2, for Vim 6.3+
+"  Version:     1.13.3, for Vim 6.3+
 "		Fix from Tommy Allen included.
+"		Fix from Fernando Torres included.
+"		Improvement from Ken Takata included.
 "  URL:		http://www.vim.org/script.php?script_id=39
 
 " Documentation:
@@ -44,6 +46,7 @@ endif
 let loaded_matchit = 1
 let s:last_mps = ""
 let s:last_words = ":"
+let s:patBR = ""
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -87,12 +90,15 @@ let s:notslash = '\\\@<!\%(\\\\\)*'
 
 function! s:Match_wrapper(word, forward, mode) range
   " In s:CleanUp(), :execute "set" restore_options .
-  let restore_options = (&ic ? " " : " no") . "ignorecase"
-  if exists("b:match_ignorecase")
+  let restore_options = ""
+  if exists("b:match_ignorecase") && b:match_ignorecase != &ic
+    let restore_options .= (&ic ? " " : " no") . "ignorecase"
     let &ignorecase = b:match_ignorecase
   endif
-  let restore_options = " ve=" . &ve . restore_options
-  set ve=
+  if &ve != ''
+    let restore_options = " ve=" . &ve . restore_options
+    set ve=
+  endif
   " If this function was called from Visual mode, make sure that the cursor
   " is at the correct end of the Visual range:
   if a:mode == "v"
@@ -121,8 +127,8 @@ function! s:Match_wrapper(word, forward, mode) range
     execute "let match_words =" b:match_words
   endif
 " Thanks to Preben "Peppe" Guldberg and Bram Moolenaar for this suggestion!
-  if (match_words != s:last_words) || (&mps != s:last_mps) ||
-    \ exists("b:match_debug")
+  if (match_words != s:last_words) || (&mps != s:last_mps)
+      \ || exists("b:match_debug")
     let s:last_mps = &mps
     " The next several lines were here before
     " BF started messing with this script.
@@ -148,6 +154,10 @@ function! s:Match_wrapper(word, forward, mode) range
     if exists("b:match_debug")
       let b:match_pat = s:pat
     endif
+    " Reconstruct the version with unresolved backrefs.
+    let s:patBR = substitute(match_words.',',
+      \ s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
+    let s:patBR = substitute(s:patBR, s:notslash.'\zs:\{2,}', ':', 'g')
   endif
 
   " Second step:  set the following local variables:
@@ -192,14 +202,10 @@ function! s:Match_wrapper(word, forward, mode) range
   " group = colon-separated list of patterns, one of which matches
   "       = ini:mid:fin or ini:fin
   "
-  " Reconstruct the version with unresolved backrefs.
-  let patBR = substitute(match_words.',',
-    \ s:notslash.'\zs[,:]*,[,:]*', ',', 'g')
-  let patBR = substitute(patBR, s:notslash.'\zs:\{2,}', ':', 'g')
   " Now, set group and groupBR to the matching group: 'if:endif' or
   " 'while:endwhile' or whatever.  A bit of a kluge:  s:Choose() returns
   " group . "," . groupBR, and we pick it apart.
-  let group = s:Choose(s:pat, matchline, ",", ":", prefix, suffix, patBR)
+  let group = s:Choose(s:pat, matchline, ",", ":", prefix, suffix, s:patBR)
   let i = matchend(group, s:notslash . ",")
   let groupBR = strpart(group, i)
   let group = strpart(group, 0, i-1)
@@ -280,7 +286,9 @@ endfun
 " Restore options and do some special handling for Operator-pending mode.
 " The optional argument is the tail of the matching group.
 fun! s:CleanUp(options, mode, startline, startcol, ...)
-  execute "set" a:options
+  if strlen(a:options)
+    execute "set" a:options
+  endif
   " Open folds, if appropriate.
   if a:mode != "o"
     if &foldopen =~ "percent"
@@ -632,8 +640,9 @@ fun! s:MultiMatch(spflag, mode)
   if !exists("b:match_words") || b:match_words == ""
     return {}
   end
-  let restore_options = (&ic ? "" : "no") . "ignorecase"
-  if exists("b:match_ignorecase")
+  let restore_options = ""
+  if exists("b:match_ignorecase") && b:match_ignorecase != &ic
+    let restore_options .= (&ic ? " " : " no") . "ignorecase"
     let &ignorecase = b:match_ignorecase
   endif
   let startline = line(".")
@@ -656,6 +665,7 @@ fun! s:MultiMatch(spflag, mode)
     \ exists("b:match_debug")
     let s:last_words = match_words
     let s:last_mps = &mps
+    let match_words = match_words . (strlen(match_words) ? "," : "") . default
     if match_words !~ s:notslash . '\\\d'
       let s:do_BR = 0
       let s:pat = match_words
@@ -663,8 +673,8 @@ fun! s:MultiMatch(spflag, mode)
       let s:do_BR = 1
       let s:pat = s:ParseWords(match_words)
     endif
-    let s:all = '\%(' . substitute(s:pat . (strlen(s:pat)?",":"") . default,
-      \	'[,:]\+','\\|','g') . '\)'
+    let s:all = '\%(' . substitute(s:pat . (strlen(s:pat) ? "," : "") . default,
+	\ '[,:]\+', '\\|', 'g') . '\)'
     if exists("b:match_debug")
       let b:match_pat = s:pat
     endif

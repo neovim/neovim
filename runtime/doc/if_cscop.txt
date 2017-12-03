@@ -1,4 +1,4 @@
-*if_cscop.txt*  For Vim version 7.4.  Last change: 2011 Jun 12
+*if_cscop.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Andy Kahn
@@ -12,15 +12,7 @@ a cscope query is just like jumping to any tag; it is saved on the tag stack
 so that with the right keyboard mappings, you can jump back and forth between
 functions as you normally would with |tags|.
 
-1. Cscope introduction		|cscope-intro|
-2. Cscope related commands	|cscope-commands|
-3. Cscope options		|cscope-options|
-4. How to use cscope in Vim	|cscope-howtouse|
-5. Limitations			|cscope-limitations|
-6. Suggested usage		|cscope-suggestions|
-7. Availability & Information	|cscope-info|
-
-This is currently for Unix and Win32 only.
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Cscope introduction					*cscope-intro*
@@ -90,9 +82,10 @@ suggested use.)
 2. Cscope related commands				*cscope-commands*
 
 		*:cscope* *:cs* *:scs* *:scscope* *E259* *E262* *E561* *E560*
-All cscope commands are accessed through suboptions to the main cscope
-command ":cscope".  The shortest abbreviation is ":cs".  The ":scscope"
-command does the same and also splits the window (short: "scs").
+All cscope commands are accessed through suboptions to the cscope commands.
+	`:cscope` or `:cs` is the main command
+	`:scscope` or `:scs` does the same and splits the window
+	`:lcscope` or `:lcs` uses the location list, see |:lcscope|
 
 The available subcommands are:
 

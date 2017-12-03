@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 /// @file encode.c
 ///
 /// File containing functions for encoding and decoding VimL values.
@@ -11,9 +14,9 @@
 #include <math.h>
 
 #include "nvim/eval/encode.h"
-#include "nvim/buffer_defs.h"  // vimconv_T
+#include "nvim/buffer_defs.h"
 #include "nvim/eval.h"
-#include "nvim/eval_defs.h"
+#include "nvim/eval/typval.h"
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
 #include "nvim/message.h"
@@ -29,10 +32,6 @@
 #define utf_ptr2char(b) utf_ptr2char((char_u *)b)
 #define utf_ptr2len(b) ((size_t)utf_ptr2len((char_u *)b))
 #define utf_char2len(b) ((size_t)utf_char2len(b))
-#define string_convert(a, b, c) \
-      ((char *)string_convert((vimconv_T *)a, (char_u *)b, c))
-#define convert_setup(vcp, from, to) \
-    (convert_setup(vcp, (char_u *)from, (char_u *)to))
 
 const char *const encode_special_var_names[] = {
   [kSpecialVarNull] = "null",
@@ -45,7 +44,8 @@ const char *const encode_special_var_names[] = {
 #endif
 
 /// Msgpack callback for writing to readfile()-style list
-int encode_list_write(void *data, const char *buf, size_t len)
+int encode_list_write(void *const data, const char *const buf, const size_t len)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (len == 0) {
     return 0;
@@ -80,11 +80,11 @@ int encode_list_write(void *data, const char *buf, size_t len)
       str = xmemdupz(line_start, line_length);
       memchrsub(str, NUL, NL, line_length);
     }
-    list_append_allocated_string(list, str);
+    tv_list_append_allocated_string(list, str);
     line_end++;
   }
   if (line_end == end) {
-    list_append_allocated_string(list, NULL);
+    tv_list_append_allocated_string(list, NULL);
   }
   return 0;
 }
@@ -182,9 +182,9 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
       }
     }
   }
-  EMSG3(msg, objname, (kv_size(*mpstack) == 0
-                       ? _("itself")
-                       : (char *) msg_ga.ga_data));
+  emsgf(msg, _(objname), (kv_size(*mpstack) == 0
+                          ? _("itself")
+                          : (char *)msg_ga.ga_data));
   ga_clear(&msg_ga);
   return FAIL;
 }
@@ -253,9 +253,11 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
   char *const buf_end = buf + nbuf;
   char *p = buf;
   while (p < buf_end) {
+    assert(state->li_length == 0 || state->li->li_tv.vval.v_string != NULL);
     for (size_t i = state->offset; i < state->li_length && p < buf_end; i++) {
-      const char ch = (char) state->li->li_tv.vval.v_string[state->offset++];
-      *p++ = (char) ((char) ch == (char) NL ? (char) NUL : (char) ch);
+      assert(state->li->li_tv.vval.v_string != NULL);
+      const char ch = (char)state->li->li_tv.vval.v_string[state->offset++];
+      *p++ = (char)((char)ch == (char)NL ? (char)NUL : (char)ch);
     }
     if (p < buf_end) {
       state->li = state->li->li_next;
@@ -536,17 +538,6 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       } \
     } while (0)
 
-/// Last used p_enc value
-///
-/// Generic pointer: it is not used as a string, only pointer comparisons are
-/// performed. Must not be freed.
-static const void *last_p_enc = NULL;
-
-/// Conversion setup for converting from last_p_enc to UTF-8
-static vimconv_T p_enc_conv = {
-  .vc_type = CONV_NONE,
-};
-
 /// Escape sequences used in JSON
 static const char escapes[][3] = {
   [BS] = "\\b",
@@ -578,33 +569,15 @@ static inline int convert_to_json_string(garray_T *const gap,
   } else {
     size_t utf_len = len;
     char *tofree = NULL;
-    if (last_p_enc != (const void *) p_enc) {
-      p_enc_conv.vc_type = CONV_NONE;
-      convert_setup(&p_enc_conv, p_enc, "utf-8");
-      p_enc_conv.vc_fail = true;
-      last_p_enc = p_enc;
-    }
-    if (p_enc_conv.vc_type != CONV_NONE) {
-      tofree = string_convert(&p_enc_conv, buf, &utf_len);
-      if (tofree == NULL) {
-        emsgf(_("E474: Failed to convert string \"%.*s\" to UTF-8"),
-              utf_len, utf_buf);
-        return FAIL;
-      }
-      utf_buf = tofree;
-    }
     size_t str_len = 0;
-    // Encode character as \u0000 if
-    // 1. It is an ASCII control character (0x0 .. 0x1F, 0x7F).
-    // 2. &encoding is not UTF-8 and code point is above 0x7F.
-    // 3. &encoding is UTF-8 and code point is not printable according to
-    //    utf_printable().
-    // This is done to make it possible to :echo values when &encoding is not
-    // UTF-8.
-#define ENCODE_RAW(p_enc_conv, ch) \
-    (ch >= 0x20 && (p_enc_conv.vc_type == CONV_NONE \
-                    ? utf_printable(ch) \
-                    : ch < 0x7F))
+    // Encode character as \uNNNN if
+    // 1. It is an ASCII control character (0x0 .. 0x1F; 0x7F not
+    //    utf_printable and thus not checked specially).
+    // 2. Code point is not printable according to utf_printable().
+    // This is done to make resulting values displayable on screen also not from
+    // Neovim.
+#define ENCODE_RAW(ch) \
+    (ch >= 0x20 && utf_printable(ch))
     for (size_t i = 0; i < utf_len;) {
       const int ch = utf_ptr2char(utf_buf + i);
       const size_t shift = (ch == 0? 1: utf_ptr2len(utf_buf + i));
@@ -635,7 +608,7 @@ static inline int convert_to_json_string(garray_T *const gap,
                   utf_len - (i - shift), utf_buf + i - shift);
             xfree(tofree);
             return FAIL;
-          } else if (ENCODE_RAW(p_enc_conv, ch)) {
+          } else if (ENCODE_RAW(ch)) {
             str_len += shift;
           } else {
             str_len += ((sizeof("\\u1234") - 1)
@@ -665,7 +638,7 @@ static inline int convert_to_json_string(garray_T *const gap,
           break;
         }
         default: {
-          if (ENCODE_RAW(p_enc_conv, ch)) {
+          if (ENCODE_RAW(ch)) {
             ga_concat_len(gap, utf_buf + i, shift);
           } else if (ch < SURROGATE_FIRST_CHAR) {
             ga_concat_len(gap, ((const char[]) {
@@ -743,11 +716,11 @@ bool encode_check_json_key(const typval_T *const tv)
   }
   const dictitem_T *type_di;
   const dictitem_T *val_di;
-  if ((type_di = dict_find((dict_T *) spdict, (char_u *) "_TYPE", -1)) == NULL
+  if ((type_di = tv_dict_find(spdict, S_LEN("_TYPE"))) == NULL
       || type_di->di_tv.v_type != VAR_LIST
       || (type_di->di_tv.vval.v_list != eval_msgpack_type_lists[kMPString]
           && type_di->di_tv.vval.v_list != eval_msgpack_type_lists[kMPBinary])
-      || (val_di = dict_find((dict_T *) spdict, (char_u *) "_VAL", -1)) == NULL
+      || (val_di = tv_dict_find(spdict, S_LEN("_VAL"))) == NULL
       || val_di->di_tv.v_type != VAR_LIST) {
     return false;
   }
@@ -822,7 +795,7 @@ char *encode_tv2string(typval_T *tv, size_t *len)
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
   const int evs_ret = encode_vim_to_string(&ga, tv,
-                                           "encode_tv2string() argument");
+                                           N_("encode_tv2string() argument"));
   (void)evs_ret;
   assert(evs_ret == OK);
   did_echo_string_emsg = false;
@@ -850,7 +823,7 @@ char *encode_tv2echo(typval_T *tv, size_t *len)
       ga_concat(&ga, tv->vval.v_string);
     }
   } else {
-    const int eve_ret = encode_vim_to_echo(&ga, tv, ":echo argument");
+    const int eve_ret = encode_vim_to_echo(&ga, tv, N_(":echo argument"));
     (void)eve_ret;
     assert(eve_ret == OK);
   }
@@ -873,7 +846,8 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 {
   garray_T ga;
   ga_init(&ga, (int)sizeof(char), 80);
-  const int evj_ret = encode_vim_to_json(&ga, tv, "encode_tv2json() argument");
+  const int evj_ret = encode_vim_to_json(&ga, tv,
+                                         N_("encode_tv2json() argument"));
   if (!evj_ret) {
     ga_clear(&ga);
   }

@@ -10,19 +10,12 @@
 " Version:              6
 " Last Change:		Mar 06 2013
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-	syntax clear
-elseif exists("b:current_syntax")
+" quit when a syntax file was already loaded
+if exists("b:current_syntax")
 	finish
 endif
 
-if version >= 600
-	setlocal iskeyword=@,48-57,_,-
-else
-	set iskeyword=@,48-57,_,-
-endif
+setlocal iskeyword=@,48-57,_,-
 
 syn case ignore
 
@@ -75,40 +68,30 @@ syn keyword	clFunction	asc asize chr name random slen srandom day getarg getcgi 
 syn keyword	clStatement	clear clear_eol clear_eos close copy create unique with where empty define define ldefine delay_form delete escape exit_block exit_do exit_process field fork format get getfile getnext getprev goto head join maintain message no_join on_eop on_key on_exit on_delete openin openout openapp pause popenin popenout popenio print put range read redisplay refresh restart_block screen select sleep text unlock write and not or do
 
 " Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if	version >= 508 || !exists("did_cl_syntax_inits")
-	if	version < 508
-		let did_cl_syntax_inits = 1
-		command -nargs=+ HiLink hi link <args>
-	else
-		command -nargs=+ HiLink hi def link <args>
-	endif
+" Only when an item doesn't have highlighting yet
 
-	HiLink clifError	Error
-	HiLink clSpaceError	Error
-	HiLink clWhile		Repeat
-	HiLink clConditional	Conditional
-	HiLink clDebug		Debug
-	HiLink clNeedsWork	Todo
-	HiLink clTodo		Todo
-	HiLink clComment	Comment
-	HiLink clProcedure	Procedure
-	HiLink clBreak		Procedure
-	HiLink clInclude	Include
-	HiLink clSetOption	Statement
-	HiLink clSet		Identifier
-	HiLink clPreProc	PreProc
-	HiLink clOperator	Operator
-	HiLink clNumber		Number
-	HiLink clString		String
-	HiLink clQuote		Delimiter
-	HiLink clReserved	Identifier
-	HiLink clFunction	Function
-	HiLink clStatement	Statement
+hi def link clifError	Error
+hi def link clSpaceError	Error
+hi def link clWhile		Repeat
+hi def link clConditional	Conditional
+hi def link clDebug		Debug
+hi def link clNeedsWork	Todo
+hi def link clTodo		Todo
+hi def link clComment	Comment
+hi def link clProcedure	Procedure
+hi def link clBreak		Procedure
+hi def link clInclude	Include
+hi def link clSetOption	Statement
+hi def link clSet		Identifier
+hi def link clPreProc	PreProc
+hi def link clOperator	Operator
+hi def link clNumber		Number
+hi def link clString		String
+hi def link clQuote		Delimiter
+hi def link clReserved	Identifier
+hi def link clFunction	Function
+hi def link clStatement	Statement
 
-	delcommand HiLink
-endif
 
 let b:current_syntax = "cl"
 

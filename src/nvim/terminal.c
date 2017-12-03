@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // VT220/xterm-like terminal emulator.
 // Powered by libvterm http://www.leonerd.org.uk/code/libvterm
 //
@@ -40,6 +43,7 @@
 
 #include <vterm.h>
 
+#include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/terminal.h"
 #include "nvim/message.h"
@@ -84,8 +88,6 @@ typedef struct terminal_state {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "terminal.c.generated.h"
 #endif
-
-#define SB_MAX 100000  // Maximum 'scrollback' value.
 
 // Delay for refreshing the terminal buffer after receiving updates from
 // libvterm. Improves performance when receiving large bursts of data.
@@ -228,17 +230,15 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->invalid_start = 0;
   rv->invalid_end = opts.height;
   refresh_screen(rv, curbuf);
-  set_option_value((uint8_t *)"buftype", 0, (uint8_t *)"terminal", OPT_LOCAL);
+  set_option_value("buftype", 0, "terminal", OPT_LOCAL);  // -V666
 
   // Default settings for terminal buffers
-  curbuf->b_p_ma = false;   // 'nomodifiable'
-  curbuf->b_p_ul = -1;      // 'undolevels'
-  curbuf->b_p_scbk = 1000;  // 'scrollback'
-  curbuf->b_p_tw = 0;       // 'textwidth'
-  set_option_value((uint8_t *)"wrap", false, NULL, OPT_LOCAL);
-  set_option_value((uint8_t *)"number", false, NULL, OPT_LOCAL);
-  set_option_value((uint8_t *)"relativenumber", false, NULL, OPT_LOCAL);
-  set_option_value((uint8_t *)"list", false, NULL, OPT_LOCAL);
+  curbuf->b_p_ma = false;     // 'nomodifiable'
+  curbuf->b_p_ul = -1;        // 'undolevels'
+  curbuf->b_p_scbk = p_scbk;  // 'scrollback'
+  curbuf->b_p_tw = 0;         // 'textwidth'
+  set_option_value("wrap", false, NULL, OPT_LOCAL);
+  set_option_value("list", false, NULL, OPT_LOCAL);
   buf_set_term_title(curbuf, (char *)curbuf->b_ffname);
   RESET_BINDING(curwin);
   // Reset cursor in current window.
@@ -248,7 +248,8 @@ Terminal *terminal_open(TerminalOptions opts)
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
 
   // Configure the scrollback buffer.
-  rv->sb_size = curbuf->b_p_scbk < 0 ? SB_MAX : (size_t)curbuf->b_p_scbk;;
+  rv->sb_size = curbuf->b_p_scbk < 0
+                ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
@@ -300,8 +301,16 @@ void terminal_close(Terminal *term, char *msg)
   }
 
   term->forward_mouse = false;
-  term->closed = true;
+
+  // flush any pending changes to the buffer
+  if (!exiting) {
+    block_autocmds();
+    refresh_terminal(term);
+    unblock_autocmds();
+  }
+
   buf_T *buf = handle_get_buffer(term->buf_handle);
+  term->closed = true;
 
   if (!msg || exiting) {
     // If no msg was given, this was called by close_buffer(buffer.c).  Or if
@@ -423,14 +432,6 @@ static int terminal_execute(VimState *state, int key)
   TerminalState *s = (TerminalState *)state;
 
   switch (key) {
-    case K_FOCUSGAINED:  // nvim has been given focus
-      apply_autocmds(EVENT_FOCUSGAINED, NULL, NULL, false, curbuf);
-      break;
-
-    case K_FOCUSLOST:   // nvim has lost focus
-      apply_autocmds(EVENT_FOCUSLOST, NULL, NULL, false, curbuf);
-      break;
-
     // Temporary fix until paste events gets implemented
     case K_PASTE:
       break;
@@ -521,6 +522,12 @@ void terminal_send(Terminal *term, char *data, size_t size)
 void terminal_send_key(Terminal *term, int c)
 {
   VTermModifier mod = VTERM_MOD_NONE;
+
+  // Convert K_ZERO back to ASCII
+  if (c == K_ZERO) {
+    c = Ctrl_AT;
+  }
+
   VTermKey key = convert_key(c, &mod);
 
   if (key) {
@@ -545,7 +552,7 @@ void terminal_receive(Terminal *term, char *data, size_t len)
 }
 
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
-    int *term_attrs)
+                                  int *term_attrs)
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
@@ -593,8 +600,10 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 
     if (term->cursor.visible && term->cursor.row == row
         && term->cursor.col == col) {
-      attr_id = hl_combine_attr(attr_id, is_focused(term) && wp == curwin ?
-          hl_attr(HLF_TERM) : hl_attr(HLF_TERMNC));
+      attr_id = hl_combine_attr(attr_id,
+                                is_focused(term) && wp == curwin
+                                ? win_hl_attr(wp, HLF_TERM)
+                                : win_hl_attr(wp, HLF_TERMNC));
     }
 
     term_attrs[col] = attr_id;
@@ -629,15 +638,16 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
 }
 
 static void buf_set_term_title(buf_T *buf, char *title)
-    FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL
 {
-  Error err;
+  Error err = ERROR_INIT;
   dict_set_var(buf->b_vars,
                STATIC_CSTR_AS_STRING("term_title"),
                STRING_OBJ(cstr_as_string(title)),
                false,
                false,
                &err);
+  api_clear_error(&err);
 }
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
@@ -672,7 +682,7 @@ static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
 
 static int term_bell(void *data)
 {
-  ui_putc('\x07');
+  ui_call_bell();
   return 1;
 }
 
@@ -771,26 +781,60 @@ static int term_sb_pop(int cols, VTermScreenCell *cells, void *data)
 // }}}
 // input handling {{{
 
-static void convert_modifiers(VTermModifier *statep)
+static void convert_modifiers(int key, VTermModifier *statep)
 {
   if (mod_mask & MOD_MASK_SHIFT) { *statep |= VTERM_MOD_SHIFT; }
   if (mod_mask & MOD_MASK_CTRL)  { *statep |= VTERM_MOD_CTRL; }
   if (mod_mask & MOD_MASK_ALT)   { *statep |= VTERM_MOD_ALT; }
+
+  switch (key) {
+    case K_S_TAB:
+    case K_S_UP:
+    case K_S_DOWN:
+    case K_S_LEFT:
+    case K_S_RIGHT:
+    case K_S_F1:
+    case K_S_F2:
+    case K_S_F3:
+    case K_S_F4:
+    case K_S_F5:
+    case K_S_F6:
+    case K_S_F7:
+    case K_S_F8:
+    case K_S_F9:
+    case K_S_F10:
+    case K_S_F11:
+    case K_S_F12:
+      *statep |= VTERM_MOD_SHIFT;
+      break;
+
+    case K_C_LEFT:
+    case K_C_RIGHT:
+      *statep |= VTERM_MOD_CTRL;
+      break;
+  }
 }
 
 static VTermKey convert_key(int key, VTermModifier *statep)
 {
-  convert_modifiers(statep);
+  convert_modifiers(key, statep);
 
   switch (key) {
     case K_BS:        return VTERM_KEY_BACKSPACE;
+    case K_S_TAB:     // FALLTHROUGH
     case TAB:         return VTERM_KEY_TAB;
     case Ctrl_M:      return VTERM_KEY_ENTER;
     case ESC:         return VTERM_KEY_ESCAPE;
 
+    case K_S_UP:      // FALLTHROUGH
     case K_UP:        return VTERM_KEY_UP;
+    case K_S_DOWN:    // FALLTHROUGH
     case K_DOWN:      return VTERM_KEY_DOWN;
+    case K_S_LEFT:    // FALLTHROUGH
+    case K_C_LEFT:    // FALLTHROUGH
     case K_LEFT:      return VTERM_KEY_LEFT;
+    case K_S_RIGHT:   // FALLTHROUGH
+    case K_C_RIGHT:   // FALLTHROUGH
     case K_RIGHT:     return VTERM_KEY_RIGHT;
 
     case K_INS:       return VTERM_KEY_INS;
@@ -800,28 +844,79 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case K_PAGEUP:    return VTERM_KEY_PAGEUP;
     case K_PAGEDOWN:  return VTERM_KEY_PAGEDOWN;
 
-    case K_K0:
+    case K_K0:        // FALLTHROUGH
     case K_KINS:      return VTERM_KEY_KP_0;
-    case K_K1:
+    case K_K1:        // FALLTHROUGH
     case K_KEND:      return VTERM_KEY_KP_1;
     case K_K2:        return VTERM_KEY_KP_2;
-    case K_K3:
+    case K_K3:        // FALLTHROUGH
     case K_KPAGEDOWN: return VTERM_KEY_KP_3;
     case K_K4:        return VTERM_KEY_KP_4;
     case K_K5:        return VTERM_KEY_KP_5;
     case K_K6:        return VTERM_KEY_KP_6;
-    case K_K7:
+    case K_K7:        // FALLTHROUGH
     case K_KHOME:     return VTERM_KEY_KP_7;
     case K_K8:        return VTERM_KEY_KP_8;
-    case K_K9:
+    case K_K9:        // FALLTHROUGH
     case K_KPAGEUP:   return VTERM_KEY_KP_9;
-    case K_KDEL:
+    case K_KDEL:      // FALLTHROUGH
     case K_KPOINT:    return VTERM_KEY_KP_PERIOD;
     case K_KENTER:    return VTERM_KEY_KP_ENTER;
     case K_KPLUS:     return VTERM_KEY_KP_PLUS;
     case K_KMINUS:    return VTERM_KEY_KP_MINUS;
     case K_KMULTIPLY: return VTERM_KEY_KP_MULT;
     case K_KDIVIDE:   return VTERM_KEY_KP_DIVIDE;
+
+    case K_S_F1:      // FALLTHROUGH
+    case K_F1:        return VTERM_KEY_FUNCTION(1);
+    case K_S_F2:      // FALLTHROUGH
+    case K_F2:        return VTERM_KEY_FUNCTION(2);
+    case K_S_F3:      // FALLTHROUGH
+    case K_F3:        return VTERM_KEY_FUNCTION(3);
+    case K_S_F4:      // FALLTHROUGH
+    case K_F4:        return VTERM_KEY_FUNCTION(4);
+    case K_S_F5:      // FALLTHROUGH
+    case K_F5:        return VTERM_KEY_FUNCTION(5);
+    case K_S_F6:      // FALLTHROUGH
+    case K_F6:        return VTERM_KEY_FUNCTION(6);
+    case K_S_F7:      // FALLTHROUGH
+    case K_F7:        return VTERM_KEY_FUNCTION(7);
+    case K_S_F8:      // FALLTHROUGH
+    case K_F8:        return VTERM_KEY_FUNCTION(8);
+    case K_S_F9:      // FALLTHROUGH
+    case K_F9:        return VTERM_KEY_FUNCTION(9);
+    case K_S_F10:     // FALLTHROUGH
+    case K_F10:       return VTERM_KEY_FUNCTION(10);
+    case K_S_F11:     // FALLTHROUGH
+    case K_F11:       return VTERM_KEY_FUNCTION(11);
+    case K_S_F12:     // FALLTHROUGH
+    case K_F12:       return VTERM_KEY_FUNCTION(12);
+
+    case K_F13:       return VTERM_KEY_FUNCTION(13);
+    case K_F14:       return VTERM_KEY_FUNCTION(14);
+    case K_F15:       return VTERM_KEY_FUNCTION(15);
+    case K_F16:       return VTERM_KEY_FUNCTION(16);
+    case K_F17:       return VTERM_KEY_FUNCTION(17);
+    case K_F18:       return VTERM_KEY_FUNCTION(18);
+    case K_F19:       return VTERM_KEY_FUNCTION(19);
+    case K_F20:       return VTERM_KEY_FUNCTION(20);
+    case K_F21:       return VTERM_KEY_FUNCTION(21);
+    case K_F22:       return VTERM_KEY_FUNCTION(22);
+    case K_F23:       return VTERM_KEY_FUNCTION(23);
+    case K_F24:       return VTERM_KEY_FUNCTION(24);
+    case K_F25:       return VTERM_KEY_FUNCTION(25);
+    case K_F26:       return VTERM_KEY_FUNCTION(26);
+    case K_F27:       return VTERM_KEY_FUNCTION(27);
+    case K_F28:       return VTERM_KEY_FUNCTION(28);
+    case K_F29:       return VTERM_KEY_FUNCTION(29);
+    case K_F30:       return VTERM_KEY_FUNCTION(30);
+    case K_F31:       return VTERM_KEY_FUNCTION(31);
+    case K_F32:       return VTERM_KEY_FUNCTION(32);
+    case K_F33:       return VTERM_KEY_FUNCTION(33);
+    case K_F34:       return VTERM_KEY_FUNCTION(34);
+    case K_F35:       return VTERM_KEY_FUNCTION(35);
+    case K_F36:       return VTERM_KEY_FUNCTION(36);
+    case K_F37:       return VTERM_KEY_FUNCTION(37);
 
     default:          return VTERM_KEY_NONE;
   }
@@ -999,8 +1094,12 @@ static void refresh_terminal(Terminal *term)
 // Calls refresh_terminal() on all invalidated_terminals.
 static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
-  if (exiting) {  // Cannot redraw (requires event loop) during teardown/exit.
-    goto end;
+  refresh_pending = false;
+  if (exiting  // Cannot redraw (requires event loop) during teardown/exit.
+      // WM_LIST (^D) is not redrawn, unlike the normal wildmenu. So we must
+      // skip redraws to keep it visible.
+      || wild_menu_showing == WM_LIST) {
+    return;
   }
   Terminal *term;
   void *stub; (void)(stub);
@@ -1015,8 +1114,6 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   if (any_visible) {
     redraw(true);
   }
-end:
-  refresh_pending = false;
 }
 
 static void refresh_size(Terminal *term, buf_T *buf)
@@ -1156,10 +1253,13 @@ static void redraw(bool restore_cursor)
     save_col = ui_current_col();
   }
   block_autocmds();
-  validate_cursor();
 
   if (must_redraw) {
     update_screen(0);
+  }
+
+  if (need_maketitle) {  // Update title in terminal-mode. #7248
+    maketitle();
   }
 
   if (restore_cursor) {
@@ -1173,7 +1273,7 @@ static void redraw(bool restore_cursor)
     int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
     curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
     curwin->w_cursor.coladd = 0;
-    setcursor();
+    mb_check_adjust_col(curwin);
   }
 
   unblock_autocmds();
@@ -1197,6 +1297,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, long added)
         // Ensure valid cursor for each window displaying this terminal.
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
       }
+      mb_check_adjust_col(wp);
     }
   }
 }
@@ -1218,12 +1319,14 @@ static bool is_focused(Terminal *term)
 
 #define GET_CONFIG_VALUE(k, o) \
   do { \
-    Error err; \
+    Error err = ERROR_INIT; \
     /* Only called from terminal_open where curbuf->terminal is the */ \
     /* context  */ \
     o = dict_get_value(curbuf->b_vars, cstr_as_string(k), &err); \
+    api_clear_error(&err); \
     if (o.type == kObjectTypeNil) { \
       o = dict_get_value(&globvardict, cstr_as_string(k), &err); \
+      api_clear_error(&err); \
     } \
   } while (0)
 

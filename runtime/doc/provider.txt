@@ -1,4 +1,4 @@
-*provider.txt*								{Nvim}
+*provider.txt*		Nvim
 
 
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
@@ -7,6 +7,8 @@
 Providers	 						    *provider*
 
 Nvim delegates some features to dynamic "providers".
+
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 Python integration		    	      *provider-python*
@@ -18,7 +20,7 @@ Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
 PYTHON QUICKSTART ~
 
 If you used a package manager to install Nvim, you might already have the
-required `neovim` Python package. Run |:CheckHealth| to see if your system is
+required `neovim` Python package. Run |:checkhealth| to see if your system is
 up-to-date.
 
 Following are steps to install the package with Python's `pip` tool.
@@ -86,7 +88,7 @@ Ruby integration		    	      *provider-ruby*
 Nvim supports the Vim legacy |ruby-vim| interface via external Ruby
 interpreters connected via |RPC|.
 
-Run |:CheckHealth| to see if your system is up-to-date.
+Run |:checkhealth| to see if your system is up-to-date.
 
 RUBY QUICKSTART ~
 
@@ -97,44 +99,74 @@ RUBY PROVIDER CONFIGURATION ~
 						*g:loaded_ruby_provider*
 To disable Ruby support: >
     let g:loaded_ruby_provider = 1
+<
+						*g:ruby_host_prog*
+Command to start the Ruby host. By default this is `neovim-ruby-host`. For users
+who use per-project Ruby versions with tools like RVM or rbenv, setting this can
+prevent the need to install the `neovim` gem in every project.
+
+To use an absolute path (e.g. to an rbenv installation): >
+    let g:ruby_host_prog = '~/.rbenv/versions/2.4.1/bin/neovim-ruby-host'
+<
+
+To use the RVM "system" Ruby installation: >
+    let g:ruby_host_prog = 'rvm system do neovim-ruby-host'
+<
 
 ==============================================================================
 Clipboard integration 			      *provider-clipboard* *clipboard*
 
-Nvim has no direct connection to the system clipboard. Instead it is
-accessible through a |provider| which transparently uses shell commands for
-communicating with the clipboard.
+Nvim has no direct connection to the system clipboard. Instead it depends on
+a |provider| which transparently uses shell commands to communicate with the
+system clipboard or any other clipboard "backend".
 
-Clipboard access is implicitly enabled if any of the following clipboard tools
-are found in your `$PATH`.
+To ALWAYS use the clipboard for ALL operations (instead of interacting with
+the '+' and/or '*' registers explicitly): >
 
-  - xclip
-  - xsel (newer alternative to xclip)
-  - pbcopy/pbpaste (macOS)
-  - lemonade (for SSH) https://github.com/pocke/lemonade
-  - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
-
-The presence of a suitable clipboard tool implicitly enables the '+' and '*'
-registers.
-
-If you want to ALWAYS use the clipboard for ALL operations (as opposed
-to interacting with the '+' and/or '*' registers explicitly), set the
-following option:
->
     set clipboard+=unnamedplus
 <
-See 'clipboard' for details and more options.
+See 'clipboard' for details and options.
+
+							      *clipboard-tool*
+The presence of a working clipboard tool implicitly enables the '+' and '*'
+registers. Nvim looks for these clipboard tools, in order of priority:
+
+  - |g:clipboard|
+  - pbcopy/pbpaste (macOS)
+  - xsel (if $DISPLAY is set)
+  - xclip (if $DISPLAY is set)
+  - lemonade (for SSH) https://github.com/pocke/lemonade
+  - doitclient (for SSH) http://www.chiark.greenend.org.uk/~sgtatham/doit/
+  - win32yank (Windows)
+  - tmux (if $TMUX is set)
+
+								 *g:clipboard*
+To configure a custom clipboard tool, set `g:clipboard` to a dictionary: >
+    let g:clipboard = {
+          \   'name': 'myClipboard',
+          \   'copy': {
+          \      '+': 'tmux load-buffer -',
+          \      '*': 'tmux load-buffer -',
+          \    },
+          \   'paste': {
+          \      '+': 'tmux save-buffer -',
+          \      '*': 'tmux save-buffer -',
+          \   },
+          \   'cache_enabled': 1,
+          \ }
+
+If `cache_enabled` is |TRUE| then when a selection is copied, Nvim will cache
+the selection until the copy command process dies. When pasting, if the copy
+process has not died, the cached selection is applied.
 
 ==============================================================================
 X11 selection mechanism			      *clipboard-x11* *x11-selection*
 
-The clipboard providers for X11 store text in what is known as "selections".
-Selections are "owned" by an application, so when the application is closed,
-the selection text is lost.
-
+X11 clipboard providers store text in "selections". Selections are owned by an
+application, so when the application gets closed, the selection text is lost.
 The contents of selections are held by the originating application (e.g., upon
-a copy), and only passed on to another application when that other application
-asks for them (e.g., upon a paste).
+a copy), and only passed to another application when that other application
+requests them (e.g., upon a paste).
 
 							      *quoteplus* *quote+*
 

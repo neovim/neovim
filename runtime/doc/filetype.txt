@@ -1,4 +1,4 @@
-*filetype.txt*  For Vim version 7.4.  Last change: 2016 Jun 20
+*filetype.txt*  Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,11 +6,9 @@
 
 Filetypes						*filetype* *file-type*
 
-1. Filetypes					|filetypes|
-2. Filetype plugin				|filetype-plugins|
-3. Docs for the default filetype plugins.	|ftplugin-docs|
-
 Also see |autocmd.txt|.
+
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Filetypes					*filetypes* *file-types*
@@ -34,7 +32,7 @@ Detail: The ":filetype on" command will load one of these files:
 	BufNewFile and BufRead events.  If the file type is not found by the
 	name, the file $VIMRUNTIME/scripts.vim is used to detect it from the
 	contents of the file.
-	When the GUI is running or will start soon, the menu.vim script is
+	When the GUI is running or will start soon, the |menu.vim| script is
 	also sourced.  See |'go-M'| about avoiding that.
 
 To add your own file types, see |new-filetype| below.  To search for help on a
@@ -311,12 +309,12 @@ define yourself.  There are a few ways to avoid this:
    You need to define your own mapping before the plugin is loaded (before
    editing a file of that type).  The plugin will then skip installing the
    default mapping.
-
+						*no_mail_maps*
 3. Disable defining mappings for a specific filetype by setting a variable,
    which contains the name of the filetype.  For the "mail" filetype this
    would be: >
 	:let no_mail_maps = 1
-
+<						*no_plugin_maps*
 4. Disable defining mappings for all filetypes by setting a variable: >
 	:let no_plugin_maps = 1
 <
@@ -542,6 +540,7 @@ K or CTRL-]               Jump to the manpage for the <cWORD> under the
                           cursor. Takes a count for the section.
 CTRL-T                    Jump back to the location that the manpage was
                           opened from.
+gO                        Show the manpage outline. |gO|
 q                         :quit if invoked as $MANPAGER, otherwise :close.
 
 Variables:
@@ -564,6 +563,17 @@ the PDF.  The following are treated as tags:
 These maps can be disabled with >
 	:let g:no_pdf_maps = 1
 <
+
+PYTHON						*ft-python-plugin* *PEP8*
+
+By default the following options are set, in accordance with PEP8: >
+
+	setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
+
+To disable this behaviour, set the following variable in your vimrc: >
+	
+	let g:python_recommended_style = 0
+
 
 RPM SPEC						*ft-spec-plugin*
 
@@ -712,6 +722,12 @@ Format description:
    3. "  = {msgpack-value}": raw values.  |{msgpack-value}| in this case may 
       have absolutely any type.  Special array syntax for register entries is 
       not recognized here as well.
+
+
+RUST							*ft-rust*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |ft_rust.txt|.
 
 
 SQL							*ft-sql*

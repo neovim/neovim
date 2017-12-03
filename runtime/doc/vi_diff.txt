@@ -1,4 +1,4 @@
-*vi_diff.txt*   For Vim version 7.4.  Last change: 2016 Feb 12
+*vi_diff.txt*   Nvim
 
 
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
@@ -6,8 +6,7 @@
 
 Differences between Vim and Vi				*vi-differences*
 
-1. Limits				|limits|
-2. The most interesting additions	|vim-additions|
+                                      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Limits						*limits*
@@ -60,7 +59,7 @@ Support for different systems.
 	- Windows (XP SP 2 or greater)
 	- OS X
 
-Multi level undo.					|undo|
+Multi level persistent undo.					|undo|
 	'u' goes backward in time, 'CTRL-R' goes forward again.  Set option
 	'undolevels' to the number of changes to be remembered (default 1000).
 	Set 'undolevels' to 0 for a Vi-compatible one level undo.  Set it to
@@ -71,6 +70,9 @@ Multi level undo.					|undo|
 	create a branch in the undo tree.  This means you can go back to any
 	state of the text, there is no risk of a change causing text to be
 	lost forever. |undo-tree|
+	The undo information is stored in a file when the 'undofile' option is
+	set.  This means you can exit Vim, start Vim on a previously edited
+	file and undo changes that were made before exiting Vim.
 
 Graphical User Interface (GUI).				|gui|
 	Included support for GUI: menu's, mouse, scrollbars, etc.  You can
@@ -124,6 +126,13 @@ Plugins.						|add-plugin|
 	right directory.  That's an easy way to start using Vim scripts
 	written by others.  Plugins can be for all kind of files, or
 	specifically for a filetype.
+	Packages make this even easier. |packages|
+
+Asynchronous communication and timers.			|job-control| |timer|
+	Vim can exchange messages with other processes in the background.
+	Vim can start a job, communicate with it and stop it. |job-control|
+	Timers can fire once or repeatedly and invoke a function to do any
+	work. |timer|
 
 Repeat a series of commands.				|q|
 	"q{c}" starts recording typed characters into named register {c}.

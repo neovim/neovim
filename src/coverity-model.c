@@ -64,7 +64,7 @@ void *je_realloc(void *ptr, size_t size)
 // of the memory allocated for item.
 typedef struct {} dictitem_T;
 typedef struct {} dict_T;
-int dict_add(dict_T *d, dictitem_T *item)
+int tv_dict_add(dict_T *const d, dictitem_T *const item)
 {
   __coverity_escape__(item);
 }

@@ -80,6 +80,13 @@ describe('writefile()', function()
     eq('a\0\0\0b', read_file(fname))
   end)
 
+  it('writes with s and S', function()
+    eq(0, funcs.writefile({'\na\nb\n'}, fname, 'bs'))
+    eq('\0a\0b\0', read_file(fname))
+    eq(0, funcs.writefile({'a\n\n\nb'}, fname, 'bS'))
+    eq('a\0\0\0b', read_file(fname))
+  end)
+
   it('correctly overwrites file', function()
     eq(0, funcs.writefile({'\na\nb\n'}, fname, 'b'))
     eq('\0a\0b\0', read_file(fname))
@@ -115,6 +122,8 @@ describe('writefile()', function()
       eq('\nE729: using Funcref as a String',
          redir_exec(('call writefile(%s)'):format(args:format('function("tr")'))))
     end
+    eq('\nE5060: Unknown flag: «»',
+       redir_exec(('call writefile([], "%s", "bs«»")'):format(fname)))
     eq('TEST', read_file(fname))
   end)
 

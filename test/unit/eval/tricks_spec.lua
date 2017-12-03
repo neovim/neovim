@@ -1,19 +1,15 @@
 local helpers = require('test.unit.helpers')(after_each)
+local eval_helpers = require('test.unit.eval.helpers')
+
 local itp = helpers.gen_itp(it)
 
 local cimport = helpers.cimport
-local to_cstr = helpers.to_cstr
-local ffi = helpers.ffi
 local eq = helpers.eq
 
-local eval = cimport('./src/nvim/eval.h', './src/nvim/memory.h')
+local eval0 = eval_helpers.eval0
 
-local eval_expr = function(expr)
-  return ffi.gc(eval.eval_expr(to_cstr(expr), nil), function(tv)
-    eval.clear_tv(tv)
-    eval.xfree(tv)
-  end)
-end
+local eval = cimport('./src/nvim/eval.h', './src/nvim/eval/typval.h',
+                     './src/nvim/memory.h')
 
 describe('NULL typval_T', function()
   itp('is produced by $XXX_UNEXISTENT_VAR_XXX', function()
@@ -25,19 +21,19 @@ describe('NULL typval_T', function()
     while os.getenv(unexistent_env) ~= nil do
       unexistent_env = unexistent_env .. '_XXX'
     end
-    local rettv = eval_expr('$' .. unexistent_env)
+    local rettv = eval0('$' .. unexistent_env)
     eq(eval.VAR_STRING, rettv.v_type)
     eq(nil, rettv.vval.v_string)
   end)
 
   itp('is produced by v:_null_list', function()
-    local rettv = eval_expr('v:_null_list')
+    local rettv = eval0('v:_null_list')
     eq(eval.VAR_LIST, rettv.v_type)
     eq(nil, rettv.vval.v_list)
   end)
 
   itp('is produced by v:_null_dict', function()
-    local rettv = eval_expr('v:_null_dict')
+    local rettv = eval0('v:_null_dict')
     eq(eval.VAR_DICT, rettv.v_type)
     eq(nil, rettv.vval.v_dict)
   end)

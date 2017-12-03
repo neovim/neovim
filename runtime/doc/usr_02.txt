@@ -1,4 +1,4 @@
-*usr_02.txt*	For Vim version 7.4.  Last change: 2016 Jan 16
+*usr_02.txt*	Nvim
 
 		     VIM USER MANUAL - by Bram Moolenaar
 
@@ -543,7 +543,7 @@ Summary: 					*help-summary*  >
 8) Ex-commands always start with ":", so to go to the :s command help: >
 	:help :s
 
-9) Commands specifically for debugging start with ">".  To go to to the help
+9) Commands specifically for debugging start with ">".  To go to the help
    for the "cont" debug command: >
 	:help >cont
 
@@ -578,7 +578,7 @@ Summary: 					*help-summary*  >
     register: >
    	:help quote:
 
-13) Vim Script (VimL) is available at >
+13) Vim Script is available at >
 	:help eval.txt
 <   Certain aspects of the language are available at :h expr-X where "X" is a
    single letter. E.g.  >
@@ -588,10 +588,10 @@ Summary: 					*help-summary*  >
    Also important is >
    	:help function-list
 <   to find a short description of all functions available.  Help topics for
-   VimL functions always include the "()", so: >
+   Vim script functions always include the "()", so: >
    	:help append()
-<   talks about the append VimL function rather than how to append text in the
-   current buffer.
+<   talks about the append Vim script function rather than how to append text
+   in the current buffer.
 
 14) Mappings are talked about in the help page :h |map.txt|. Use >
     	:help mapmode-i
@@ -652,7 +652,7 @@ Summary: 					*help-summary*  >
 22) Autocommand events can be found by their name: >
      	:help BufWinLeave
 <    To see all possible events: >
-	:help autocommands-events
+	:help autocommand-events
 
 23) Command-line switches always start with "-".  So for the help of the -f
     command switch of Vim use: >

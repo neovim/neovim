@@ -1,4 +1,4 @@
-*pi_netrw.txt*  For Vim version 7.4.  Last change: 2016 Apr 20
+*pi_netrw.txt*  Nvim
 
 	    ------------------------------------------------
 	    NETRW REFERENCE MANUAL    by Charles E. Campbell
@@ -530,7 +530,7 @@ variable (ex. scp uses the variable g:netrw_scp_cmd, which is defaulted to
 	let g:netrw_sftp_cmd= '"c:\Program Files\PuTTY\psftp.exe"'
 <
 (note: it has been reported that windows 7 with putty v0.6's "-batch" option
-       doesn't work, so its best to leave it off for that system)
+       doesn't work, so it's best to leave it off for that system)
 
 See |netrw-p8| for more about putty, pscp, psftp, etc.
 
@@ -1204,7 +1204,7 @@ The :NetrwMB command is available outside of netrw buffers (once netrw has been
 invoked in the session).
 
 The file ".netrwbook" holds bookmarks when netrw (and vim) is not active.  By
-default, its stored on the first directory on the user's |'runtimepath'|.
+default, it's stored on the first directory on the user's |'runtimepath'|.
 
 Related Topics:
 	|netrw-gb| how to return (go) to a bookmark
@@ -1429,7 +1429,7 @@ be used in that count.
 						*.netrwhist*
 See |g:netrw_dirhistmax| for how to control the quantity of history stack
 slots.  The file ".netrwhist" holds history when netrw (and vim) is not
-active.  By default, its stored on the first directory on the user's
+active.  By default, it's stored on the first directory on the user's
 |'runtimepath'|.
 
 Related Topics:
@@ -3269,7 +3269,7 @@ The user function is passed one argument; it resembles >
 
 	fun! ExampleUserMapFunc(islocal)
 <
-where a:islocal is 1 if its a local-directory system call or 0 when
+where a:islocal is 1 if it's a local-directory system call or 0 when
 remote-directory system call.
 
 Use netrw#Expose("varname")          to access netrw-internal (script-local)
@@ -3593,7 +3593,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 
 								*netrw-p16*
 	P16. When editing remote files (ex. :e ftp://hostname/path/file),
-	     under Windows I get an |E303| message complaining that its unable
+	     under Windows I get an |E303| message complaining that it's unable
 	     to open a swap file.
 
 	     (romainl) It looks like you are starting Vim from a protected
@@ -3647,7 +3647,7 @@ Example: Clear netrw's marked file list via a mapping on gu >
 	P21. I've made a directory (or file) with an accented character, but
 		netrw isn't letting me enter that directory/read that file:
 
-		Its likely that the shell or o/s is using a different encoding
+		It's likely that the shell or o/s is using a different encoding
 		than you have vim (netrw) using.  A patch to vim supporting
 		"systemencoding" may address this issue in the future; for
 		now, just have netrw use the proper encoding.  For example: >

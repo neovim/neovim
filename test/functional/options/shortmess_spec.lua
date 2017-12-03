@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local clear, execute = helpers.clear, helpers.execute
+local clear, feed_command = helpers.clear, helpers.feed_command
 
 if helpers.pending_win32(pending) then return end
 
@@ -19,7 +19,7 @@ describe("'shortmess'", function()
 
   describe('"F" flag', function()
     it('hides messages about the files read', function()
-      execute('e test')
+      feed_command('e test')
       screen:expect([[
         ^                         |
         ~                        |
@@ -27,8 +27,8 @@ describe("'shortmess'", function()
         ~                        |
         "test" is a directory    |
       ]])
-      execute('set shortmess=F')
-      execute('e test')
+      feed_command('set shortmess=F')
+      feed_command('e test')
       screen:expect([[
         ^                         |
         ~                        |

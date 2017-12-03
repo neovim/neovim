@@ -2,10 +2,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
-local nvim_dir, execute = helpers.nvim_dir, helpers.execute
+local nvim_dir, command = helpers.nvim_dir, helpers.command
 local eq, eval = helpers.eq, helpers.eval
-
-if helpers.pending_win32(pending) then return end
 
 describe('terminal window highlighting', function()
   local screen
@@ -27,7 +25,8 @@ describe('terminal window highlighting', function()
       [11] = {background = 11},
     })
     screen:attach({rgb=false})
-    execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
+    command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
+    feed('i')
     screen:expect([[
       tty ready                                         |
       {10: }                                                 |
@@ -54,6 +53,7 @@ describe('terminal window highlighting', function()
       end)
 
       local function pass_attrs()
+        if helpers.pending_win32(pending) then return end
         screen:expect(sub([[
           tty ready                                         |
           {NUM:text}text{10: }                                         |
@@ -68,6 +68,7 @@ describe('terminal window highlighting', function()
       it('will pass the corresponding attributes', pass_attrs)
 
       it('will pass the corresponding attributes on scrollback', function()
+        if helpers.pending_win32(pending) then return end
         pass_attrs()
         local lines = {}
         for i = 1, 8 do
@@ -130,7 +131,8 @@ describe('terminal window highlighting with custom palette', function()
     })
     screen:attach({rgb=true})
     nvim('set_var', 'terminal_color_3', '#123456')
-    execute('enew | call termopen(["'..nvim_dir..'/tty-test"]) | startinsert')
+    command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
+    feed('i')
     screen:expect([[
       tty ready                                         |
       {7: }                                                 |
@@ -143,6 +145,7 @@ describe('terminal window highlighting with custom palette', function()
   end)
 
   it('will use the custom color', function()
+    if helpers.pending_win32(pending) then return end
     thelpers.set_fg(3)
     thelpers.feed_data('text')
     thelpers.clear_attrs()
@@ -164,9 +167,9 @@ describe('synIDattr()', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 7)
-    execute('highlight Normal ctermfg=252 guifg=#ff0000 guibg=Black')
+    command('highlight Normal ctermfg=252 guifg=#ff0000 guibg=Black')
     -- Salmon #fa8072 Maroon #800000
-    execute('highlight Keyword ctermfg=79 guifg=Salmon guisp=Maroon')
+    command('highlight Keyword ctermfg=79 guifg=Salmon guisp=Maroon')
   end)
 
   it('returns cterm-color if RGB-capable UI is _not_ attached', function()
@@ -213,8 +216,8 @@ describe('fg/bg special colors', function()
   before_each(function()
     clear()
     screen = Screen.new(50, 7)
-    execute('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
-    execute('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
+    command('highlight Normal ctermfg=145 ctermbg=16 guifg=#ff0000 guibg=Black')
+    command('highlight Visual ctermfg=bg ctermbg=fg guifg=bg guibg=fg guisp=bg')
   end)
 
   it('resolve to "Normal" values', function()
@@ -251,7 +254,7 @@ describe('fg/bg special colors', function()
     screen:attach({rgb=true})
     local new_guibg = '#282c34'
     local new_guifg = '#abb2bf'
-    execute('highlight Normal guifg='..new_guifg..' guibg='..new_guibg)
+    command('highlight Normal guifg='..new_guifg..' guibg='..new_guibg)
     eq(new_guibg, eval('synIDattr(hlID("Visual"), "fg#")'))
     eq(new_guifg, eval('synIDattr(hlID("Visual"), "bg#")'))
     eq(new_guibg, eval('synIDattr(hlID("Visual"), "sp#")'))

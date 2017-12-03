@@ -2,8 +2,8 @@
 local Screen = require('test.functional.ui.screen')
 
 local helpers = require('test.functional.helpers')(after_each)
-local feed, insert, execute, expect_any =
-  helpers.feed, helpers.insert, helpers.execute, helpers.expect_any
+local feed, insert, feed_command, expect_any =
+  helpers.feed, helpers.insert, helpers.feed_command, helpers.expect_any
 
 describe('folding', function()
   local screen
@@ -28,15 +28,15 @@ describe('folding', function()
 
     -- Basic test if a fold can be created, opened, moving to the end and
     -- closed.
-    execute('1')
+    feed_command('1')
     feed('zf2j')
-    execute('call append("$", "manual " . getline(foldclosed(".")))')
+    feed_command('call append("$", "manual " . getline(foldclosed(".")))')
     feed('zo')
-    execute('call append("$", foldclosed("."))')
+    feed_command('call append("$", foldclosed("."))')
     feed(']z')
-    execute('call append("$", getline("."))')
+    feed_command('call append("$", getline("."))')
     feed('zc')
-    execute('call append("$", getline(foldclosed(".")))')
+    feed_command('call append("$", getline(foldclosed(".")))')
 
     expect_any([[
       manual 1 aa
@@ -52,15 +52,15 @@ describe('folding', function()
       ee {{{ }}}
       ff }}}
     ]])
-    execute('set fdm=marker fdl=1')
-    execute('2')
-    execute('call append("$", "line 2 foldlevel=" . foldlevel("."))')
+    feed_command('set fdm=marker fdl=1')
+    feed_command('2')
+    feed_command('call append("$", "line 2 foldlevel=" . foldlevel("."))')
     feed('[z')
-    execute('call append("$", foldlevel("."))')
+    feed_command('call append("$", foldlevel("."))')
     feed('jo{{ <esc>r{jj') -- writes '{{{' and moves 2 lines bot
-    execute('call append("$", foldlevel("."))')
+    feed_command('call append("$", foldlevel("."))')
     feed('kYpj')
-    execute('call append("$", foldlevel("."))')
+    feed_command('call append("$", foldlevel("."))')
 
     helpers.wait()
     screen:expect([[
@@ -80,15 +80,15 @@ describe('folding', function()
 
   it("foldmethod=indent", function()
     screen:try_resize(20, 8)
-    execute('set fdm=indent sw=2')
+    feed_command('set fdm=indent sw=2')
     insert([[
     aa
       bb
         cc
     last
     ]])
-    execute('call append("$", "foldlevel line3=" . foldlevel(3))')
-    execute('call append("$", foldlevel(2))')
+    feed_command('call append("$", "foldlevel line3=" . foldlevel(3))')
+    feed_command('call append("$", foldlevel(2))')
     feed('zR')
 
     helpers.wait()
@@ -119,23 +119,23 @@ describe('folding', function()
       a jj
       b kk
       last]])
-    execute('set fdm=syntax fdl=0')
-    execute('syn region Hup start="dd" end="ii" fold contains=Fd1,Fd2,Fd3')
-    execute('syn region Fd1 start="ee" end="ff" fold contained')
-    execute('syn region Fd2 start="gg" end="hh" fold contained')
-    execute('syn region Fd3 start="commentstart" end="commentend" fold contained')
+    feed_command('set fdm=syntax fdl=0')
+    feed_command('syn region Hup start="dd" end="ii" fold contains=Fd1,Fd2,Fd3')
+    feed_command('syn region Fd1 start="ee" end="ff" fold contained')
+    feed_command('syn region Fd2 start="gg" end="hh" fold contained')
+    feed_command('syn region Fd3 start="commentstart" end="commentend" fold contained')
     feed('Gzk')
-    execute('call append("$", "folding " . getline("."))')
+    feed_command('call append("$", "folding " . getline("."))')
     feed('k')
-    execute('call append("$", getline("."))')
+    feed_command('call append("$", getline("."))')
     feed('jAcommentstart  <esc>Acommentend<esc>')
-    execute('set fdl=1')
+    feed_command('set fdl=1')
     feed('3j')
-    execute('call append("$", getline("."))')
-    execute('set fdl=0')
+    feed_command('call append("$", getline("."))')
+    feed_command('set fdl=0')
     feed('zO<C-L>j') -- <C-L> redraws screen
-    execute('call append("$", getline("."))')
-    execute('set fdl=0')
+    feed_command('call append("$", getline("."))')
+    feed_command('set fdl=0')
     expect_any([[
       folding 9 ii
       3 cc
@@ -158,7 +158,7 @@ describe('folding', function()
       b kk
       last ]])
 
-    execute([[
+    feed_command([[
     fun Flvl()
      let l = getline(v:lnum)
      if l =~ "bb$"
@@ -173,15 +173,15 @@ describe('folding', function()
      return "="
     endfun
     ]])
-    execute('set fdm=expr fde=Flvl()')
-    execute('/bb$')
-    execute('call append("$", "expr " . foldlevel("."))')
-    execute('/hh$')
-    execute('call append("$", foldlevel("."))')
-    execute('/ii$')
-    execute('call append("$", foldlevel("."))')
-    execute('/kk$')
-    execute('call append("$", foldlevel("."))')
+    feed_command('set fdm=expr fde=Flvl()')
+    feed_command('/bb$')
+    feed_command('call append("$", "expr " . foldlevel("."))')
+    feed_command('/hh$')
+    feed_command('call append("$", foldlevel("."))')
+    feed_command('/ii$')
+    feed_command('call append("$", foldlevel("."))')
+    feed_command('/kk$')
+    feed_command('call append("$", foldlevel("."))')
 
     expect_any([[
       expr 2
@@ -199,11 +199,11 @@ describe('folding', function()
       	Test fdm=indent START
       	line3
       	line4]])
-    execute('set noai nosta ')
-    execute('set fdm=indent')
-    execute('1m1')
+    feed_command('set noai nosta ')
+    feed_command('set fdm=indent')
+    feed_command('1m1')
     feed('2jzc')
-    execute('m0')
+    feed_command('m0')
     feed('zR')
 
     expect_any([[
