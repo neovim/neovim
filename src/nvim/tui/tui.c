@@ -169,10 +169,16 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
 
 /// Emits some termcodes after Nvim startup, which were observed to slowdown
 /// rendering during startup in tmux 2.3 (+focus-events). #7649
-static void terminfo_start_event(void **argv)
+static void terminfo_after_startup_event(void **argv)
 {
   UI *ui = argv[0];
+  bool defer = argv[1] != NULL;  // clever(?) boolean without malloc() dance.
   TUIData *data = ui->data;
+  if (defer) {  // We're on the main-loop. Now forward to the TUI loop.
+    loop_schedule(data->loop,
+                  event_create(terminfo_after_startup_event, 2, ui, NULL));
+    return;
+  }
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
   // Enable focus reporting
@@ -268,6 +274,9 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
+
+  loop_schedule(&main_loop,
+                event_create(terminfo_after_startup_event, 2, ui, ui));
 }
 
 static void terminfo_stop(UI *ui)
@@ -304,8 +313,6 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
-  loop_schedule_deferred(data->loop,
-                         event_create(terminfo_start_event, 1, ui));
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -352,7 +359,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   CONTINUE(bridge);
 
   while (!data->stop) {
-    loop_poll_events(&tui_loop, -1);
+    loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
   }
 
   ui_bridge_stopped(bridge);
