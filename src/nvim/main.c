@@ -421,20 +421,22 @@ int main(int argc, char **argv)
    * Clear screen now, so file message will not be cleared.
    */
   starting = NO_BUFFERS;
-  no_wait_return = FALSE;
-  if (!exmode_active)
-    msg_scroll = FALSE;
+  no_wait_return = false;
+  if (!exmode_active) {
+    msg_scroll = false;
+  }
 
-  /*
-   * If "-" argument given: Read file from stdin.
-   * Do this before starting Raw mode, because it may change things that the
-   * writing end of the pipe doesn't like, e.g., in case stdin and stderr
-   * are the same terminal: "cat | vim -".
-   * Using autocommands here may cause trouble...
-   */
-  if (params.edit_type == EDIT_STDIN && !recoverymode)
+  // Read file from stdin:
+  //   - If "-" argument was given as a file arg.
+  //   - If stdin is a pipe and "-es"/"-Es"/"-s -" were not given.
+  //
+  // Do this before starting Raw mode, because it may change things that the
+  // writing end of the pipe doesn't like, e.g., in case stdin and stderr
+  // are the same terminal: "cat | vim -".
+  // Using autocommands here may cause trouble...
+  if (params.edit_type == EDIT_STDIN && !recoverymode) {
     read_stdin();
-
+  }
 
   if (reading_input && (need_wait_return || msg_didany)) {
     // Since at this point there's no UI instance running yet, error messages
@@ -691,9 +693,7 @@ static int get_number_arg(const char *p, int *idx, int def)
 }
 
 #if defined(HAVE_LOCALE_H)
-/*
- * Setup to use the current locale (for ctype() and many other things).
- */
+/// Setup to use the current locale (for ctype() and many other things).
 static void init_locale(void)
 {
   setlocale(LC_ALL, "");
@@ -723,7 +723,6 @@ static void init_locale(void)
   TIME_MSG("locale set");
 }
 #endif
-
 
 /// Scan the command line arguments.
 static void command_line_scan(mparm_T *parmp)
@@ -1156,27 +1155,23 @@ scripterror:
 
         }
       }
-    }
-    /*
-     * File name argument.
-     */
-    else {
-      argv_idx = -1;                /* skip to next argument */
+    } else {  // File name argument.
+      argv_idx = -1;  // skip to next argument
 
-      /* Check for only one type of editing. */
-      if (parmp->edit_type != EDIT_NONE && parmp->edit_type != EDIT_FILE)
+      // Check for only one type of editing.
+      if (parmp->edit_type != EDIT_NONE && parmp->edit_type != EDIT_FILE) {
         mainerr(err_too_many_args, argv[0]);
+      }
       parmp->edit_type = EDIT_FILE;
 
-      /* Add the file to the global argument list. */
+      // Add the file to the global argument list.
       ga_grow(&global_alist.al_ga, 1);
       p = vim_strsave((char_u *)argv[0]);
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {
-        char_u      *r;
-
-        r = (char_u *)concat_fnames((char *)p, (char *)path_tail(alist_name(&GARGLIST[0])), TRUE);
+        char_u *r = (char_u *)concat_fnames((char *)p,
+            (char *)path_tail(alist_name(&GARGLIST[0])), true);
         xfree(p);
         p = r;
       }
@@ -1188,28 +1183,23 @@ scripterror:
 
       alist_add(&global_alist, p,
 #if !defined(UNIX)
-          parmp->literal ? 2 : 0                /* add buffer nr after exp. */
+                parmp->literal ? 2 : 0  // add buffer nr after exp.
 #else
-          2                     /* add buffer number now and use curbuf */
+                2                       // add buffer number now and use curbuf
 #endif
-          );
-
+                );
     }
 
-    /*
-     * If there are no more letters after the current "-", go to next
-     * argument.  argv_idx is set to -1 when the current argument is to be
-     * skipped.
-     */
+    // If there are no more letters after the current "-", go to next argument.
+    // argv_idx is set to -1 when the current argument is to be skipped.
     if (argv_idx <= 0 || argv[0][argv_idx] == NUL) {
-      --argc;
-      ++argv;
+      argc--;
+      argv++;
       argv_idx = 1;
     }
   }
 
-  /* If there is a "+123" or "-c" command, set v:swapcommand to the first
-   * one. */
+  // If there is a "+123" or "-c" command, set v:swapcommand to the first one.
   if (parmp->n_commands > 0) {
     const size_t swcmd_len = STRLEN(parmp->commands[0]) + 3;
     char *const swcmd = xmalloc(swcmd_len);
@@ -1441,16 +1431,14 @@ static void check_tty(mparm_T *parmp)
  */
 static void read_stdin(void)
 {
-  int i;
-
-  /* When getting the ATTENTION prompt here, use a dialog */
+  // When getting the ATTENTION prompt here, use a dialog.
   swap_exists_action = SEA_DIALOG;
-  no_wait_return = TRUE;
-  i = msg_didany;
-  set_buflisted(TRUE);
-  (void)open_buffer(TRUE, NULL, 0);     /* create memfile and read file */
-  no_wait_return = FALSE;
-  msg_didany = i;
+  no_wait_return = true;
+  int save_msg_didany = msg_didany;
+  set_buflisted(true);
+  (void)open_buffer(true, NULL, 0);  // create memfile and read file
+  no_wait_return = false;
+  msg_didany = save_msg_didany;
   TIME_MSG("reading stdin");
   check_swap_exists_action();
 }
