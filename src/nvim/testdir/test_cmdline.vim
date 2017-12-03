@@ -306,3 +306,28 @@ func Test_cmdline_complete_wildoptions()
   call assert_equal(a, b)
   bw!
 endfunc
+
+" using a leading backslash here
+set cpo+=C
+
+func Test_cmdline_search_range()
+  new
+  call setline(1, ['a', 'b', 'c', 'd'])
+  /d
+  1,\/s/b/B/
+  call assert_equal('B', getline(2))
+
+  /a
+  $
+  \?,4s/c/C/
+  call assert_equal('C', getline(3))
+
+  call setline(1, ['a', 'b', 'c', 'd'])
+  %s/c/c/
+  1,\&s/b/B/
+  call assert_equal('B', getline(2))
+
+  bwipe!
+endfunc
+
+set cpo&

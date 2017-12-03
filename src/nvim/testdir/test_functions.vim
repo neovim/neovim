@@ -207,38 +207,72 @@ func! Test_mode()
   normal! 3G
   exe "normal i\<F2>\<Esc>"
   call assert_equal('i-i', g:current_modes)
+  " i_CTRL-P: Multiple matches
   exe "normal i\<C-G>uBa\<C-P>\<F2>\<Esc>u"
   call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-P: Single match
   exe "normal iBro\<C-P>\<F2>\<Esc>u"
   call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X
   exe "normal iBa\<C-X>\<F2>\<Esc>u"
   call assert_equal('i-ix', g:current_modes)
+  " i_CTRL-X CTRL-P: Multiple matches
   exe "normal iBa\<C-X>\<C-P>\<F2>\<Esc>u"
   call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-P: Single match
   exe "normal iBro\<C-X>\<C-P>\<F2>\<Esc>u"
   call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-P + CTRL-P: Single match
   exe "normal iBro\<C-X>\<C-P>\<C-P>\<F2>\<Esc>u"
   call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-L: Multiple matches
+  exe "normal i\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-L: Single match
+  exe "normal iBlu\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-P: No match
   exe "normal iCom\<C-P>\<F2>\<Esc>u"
   call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-P: No match
   exe "normal iCom\<C-X>\<C-P>\<F2>\<Esc>u"
   call assert_equal('i-ic', g:current_modes)
+  " i_CTRL-X CTRL-L: No match
+  exe "normal iabc\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('i-ic', g:current_modes)
 
+  " R_CTRL-P: Multiple matches
   exe "normal RBa\<C-P>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-P: Single match
   exe "normal RBro\<C-P>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X
   exe "normal RBa\<C-X>\<F2>\<Esc>u"
   call assert_equal('R-Rx', g:current_modes)
+  " R_CTRL-X CTRL-P: Multiple matches
   exe "normal RBa\<C-X>\<C-P>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-P: Single match
   exe "normal RBro\<C-X>\<C-P>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-P + CTRL-P: Single match
   exe "normal RBro\<C-X>\<C-P>\<C-P>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-L: Multiple matches
+  exe "normal R\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-L: Single match
+  exe "normal RBlu\<C-X>\<C-L>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-P: No match
   exe "normal RCom\<C-P>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-P: No match
   exe "normal RCom\<C-X>\<C-P>\<F2>\<Esc>u"
+  call assert_equal('R-Rc', g:current_modes)
+  " R_CTRL-X CTRL-L: No match
+  exe "normal Rabc\<C-X>\<C-L>\<F2>\<Esc>u"
   call assert_equal('R-Rc', g:current_modes)
 
   call assert_equal('n', mode(0))
