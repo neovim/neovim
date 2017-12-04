@@ -261,6 +261,7 @@ local function retry(max, max_ms, fn)
     if status then
       return result
     end
+    luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
       if type(result) == "string" then
         result = "\nretry() attempts: "..tostring(tries).."\n"..result
