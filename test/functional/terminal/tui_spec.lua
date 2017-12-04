@@ -4,6 +4,7 @@ local global_helpers = require('test.helpers')
 local uname = global_helpers.uname
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
+local eq = helpers.eq
 local feed_data = thelpers.feed_data
 local feed_command = helpers.feed_command
 local clear = helpers.clear
@@ -11,6 +12,8 @@ local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
+local ok = helpers.ok
+local read_file = helpers.read_file
 
 if helpers.pending_win32(pending) then return end
 
@@ -677,6 +680,55 @@ describe("tui 'term' option", function()
     else
       assert_term("xterm", "xterm")
     end
+  end)
+
+end)
+
+-- These tests require `thelpers` because --headless/--embed
+-- does not initialize the TUI.
+describe("tui", function()
+  local screen
+  local logfile = 'Xtest_tui_verbose_log'
+  after_each(function()
+    os.remove(logfile)
+  end)
+
+  -- Runs (child) `nvim` in a TTY (:terminal), to start the builtin TUI.
+  local function nvim_tui(extra_args)
+    clear()
+    -- This is ugly because :term/termopen() forces TERM=xterm-256color.
+    -- TODO: Revisit this after jobstart/termopen accept `env` dict.
+    local cmd = string.format(
+      [=[['sh', '-c', 'LANG=C %s -u NONE -i NONE %s --cmd "%s"']]=],
+      nvim_prog,
+      extra_args or "",
+      nvim_set)
+    screen = thelpers.screen_setup(0, cmd)
+  end
+
+  it('-V3log logs terminfo values', function()
+    nvim_tui('-V3'..logfile)
+
+    -- Wait for TUI to start.
+    feed_data('Gitext')
+    screen:expect([[
+      text{1: }                                             |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    -- Vim flushes the log file on exit.
+    feed_data('\33:q\n')
+
+    retry(nil, 3000, function()  -- Wait for log file to be flushed.
+      local log = read_file('Xtest_tui_verbose_log') or ''
+      eq('--- Terminal info --- {{{\n', string.match(log, '--- Terminal.-\n'))
+      ok(#log > 50)
+    end)
   end)
 
 end)
