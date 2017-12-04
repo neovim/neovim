@@ -327,6 +327,11 @@ list_vim_patches() {
   local vim_commits
   vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD)"
 
+  # Find all "vim-patch:xxx" tokens in the Nvim git log.
+  local tokens
+  tokens="$(cd "${NVIM_SOURCE_DIR}" && git log -E --grep='vim-patch:[^ ]+' | grep 'vim-patch')"
+  tokens="$(for i in $tokens ; do echo "$i" | grep -E 'vim-patch:[^ ]{7}' | sed 's/.*\(vim-patch:[.0-9a-z]\+\).*/\1/' ; done)"
+
   local vim_commit
   for vim_commit in ${vim_commits}; do
     local is_missing
@@ -334,22 +339,21 @@ list_vim_patches() {
     # This fails for untagged commits (e.g., runtime file updates) so mask the return status
     vim_tag="$(cd "${VIM_SOURCE_DIR}" && git describe --tags --exact-match "${vim_commit}" 2>/dev/null)" || true
     if [[ -n "${vim_tag}" ]]; then
-      local patch_number="${vim_tag:5}" # Remove prefix like "v7.4."
-      patch_number="$(echo ${patch_number} | sed 's/^0*//g')" # Remove prefix "0"
-      # Tagged Vim patch, check version.c:
-      is_missing="$(sed -n '/static const int included_patches/,/}/p' "${NVIM_SOURCE_DIR}/src/nvim/version.c" |
-        grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
+      # Vim version number (not commit hash).
+      local patch_number="${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
+      is_missing="$(echo "$tokens" | >/dev/null 2>&1 grep "vim\-patch:${patch_number}" && echo false || echo true)"
       vim_commit="${vim_tag#v}"
-      if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
-        vim_commit="${vim_commit} (+runtime)"
+      if ! [ "$is_missing" = "false" ] ; then
+        if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
+          vim_commit="${vim_commit} (+runtime)"
+        fi
       fi
     else
-      # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
-      is_missing="$(cd "${NVIM_SOURCE_DIR}" &&
-        git log -1 --no-merges --grep="vim\-patch:${vim_commit:0:7}" --pretty=format:false)"
+      # Untagged Vim patch (e.g. runtime updates).
+      is_missing="$(echo "$tokens" | >/dev/null 2>&1 grep "vim\-patch:${vim_commit:0:7}" && echo false || echo true)"
     fi
 
-    if [[ ${is_missing} != "false" ]]; then
+    if ! [ "$is_missing" = "false" ]; then
       echo "  • ${vim_commit}"
     fi
   done
