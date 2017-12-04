@@ -220,8 +220,7 @@ g8			Print the hex values of the bytes used in the
 			made to the current buffer, unless 'hidden' is set.
 
 			To enter |Terminal-mode| automatically: >
-			      autocmd BufEnter term://* startinsert
-			      autocmd BufLeave term://* stopinsert
+			      autocmd TermOpen * startinsert
 <
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
