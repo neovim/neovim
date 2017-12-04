@@ -158,3 +158,39 @@ func Test_syntax_completion()
   call feedkeys(":syn match \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_match('^"syn match Boolean Character ', @:)
 endfunc
+
+func Test_conceal()
+  if !has('conceal')
+    return
+  endif
+
+  new
+  call setline(1, ['', '123456'])
+  syn match test23 "23" conceal cchar=X
+  syn match test45 "45" conceal
+
+  set conceallevel=0
+  call assert_equal('123456 ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, '', 0], [0, '', 0], [0, '', 0], [0, '', 0], [0, '', 0], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
+
+  set conceallevel=1
+  call assert_equal('1X 6   ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, '', 0], [1, 'X', 1], [1, 'X', 1], [1, ' ', 2], [1, ' ', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
+
+  set conceallevel=1
+  set listchars=conceal:Y
+  call assert_equal([[0, '', 0], [1, 'X', 1], [1, 'X', 1], [1, 'Y', 2], [1, 'Y', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
+  call assert_equal('1XY6   ', ScreenLines(2, 7)[0])
+
+  set conceallevel=2
+  call assert_match('1X6    ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, '', 0], [1, 'X', 1], [1, 'X', 1], [1, '', 2], [1, '', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
+
+  set conceallevel=3
+  call assert_match('16     ', ScreenLines(2, 7)[0])
+  call assert_equal([[0, '', 0], [1, '', 1], [1, '', 1], [1, '', 2], [1, '', 2], [0, '', 0]], map(range(1, 6), 'synconcealed(2, v:val)'))
+
+  syn clear
+  set conceallevel&
+  bw!
+endfunc
