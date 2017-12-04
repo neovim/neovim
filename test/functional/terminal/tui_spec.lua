@@ -721,9 +721,6 @@ describe("tui", function()
       {3:-- TERMINAL --}                                    |
     ]])
 
-    -- Vim flushes the log file on exit.
-    feed_data('\33:q\n')
-
     retry(nil, 3000, function()  -- Wait for log file to be flushed.
       local log = read_file('Xtest_tui_verbose_log') or ''
       eq('--- Terminal info --- {{{\n', string.match(log, '--- Terminal.-\n'))

@@ -1073,9 +1073,12 @@ static void show_termcap_event(void **argv)
   if (!ut) {
     abort();
   }
+  verbose_enter();
   // XXX: (future) if unibi_term is modified (e.g. after a terminal
   // query-response) this is a race condition.
   terminfo_info_msg(ut);
+  verbose_leave();
+  verbose_stop();  // flush now
 }
 
 #ifdef UNIX
