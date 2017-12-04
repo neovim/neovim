@@ -7610,12 +7610,21 @@ synconcealed({lnum}, {col})				*synconcealed()*
 		   is 1, the second item contains the text which will be
 		   displayed in place of the concealed text, depending on the
 		   current setting of 'conceallevel' and 'listchars'.
-		3. The third and final item in the list is a unique number
-		   representing the specific syntax region matched. This
-		   allows detection of the beginning of a new concealable
-		   region if there are two consecutive regions with the same
-		   replacement character.  For an example use see
-		   $VIMRUNTIME/syntax/2html.vim .
+		3. The third and final item in the list is a number
+		   representing the specific syntax region matched in the
+		   line. When the character is not concealed the value is
+		   zero. This allows detection of the beginning of a new
+		   concealable region if there are two consecutive regions
+		   with the same replacement character.  For an example, if
+		   the text is "123456" and both "23" and "45" are concealed
+		   and replace by the character "X", then:
+			call			returns ~
+		   	synconcealed(lnum, 1)   [0, '', 0]
+		   	synconcealed(lnum, 2)   [1, 'X', 1]
+		   	synconcealed(lnum, 3)   [1, 'X', 1]
+		   	synconcealed(lnum, 4)   [1, 'X', 2]
+		   	synconcealed(lnum, 5)   [1, 'X', 2]
+		   	synconcealed(lnum, 6)   [0, '', 0]
 
 
 synstack({lnum}, {col})					*synstack()*
