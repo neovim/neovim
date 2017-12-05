@@ -8889,11 +8889,6 @@ This does NOT work: >
 			value and the global value are changed.
 			Example: >
 				:let &path = &path . ',/usr/local/include'
-<			This also works for terminal codes in the form t_xx.
-			But only for alphanumerical names.  Example: >
-				:let &t_k1 = "\<Esc>[234;"
-<			When the code does not exist yet it will be created as
-			a terminal key code, there is no error.
 
 :let &{option-name} .= {expr1}
 			For a string option: Append {expr1} to the value.

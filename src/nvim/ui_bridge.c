@@ -82,6 +82,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
     abort();
   }
 
+  // Suspend the main thread until CONTINUE is called by the UI thread.
   while (!rv->ready) {
     uv_cond_wait(&rv->cond, &rv->mutex);
   }
@@ -149,7 +150,7 @@ static void ui_bridge_suspend(UI *b)
   uv_mutex_lock(&data->mutex);
   UI_BRIDGE_CALL(b, suspend, 1, b);
   data->ready = false;
-  // suspend the main thread until CONTINUE is called by the UI thread
+  // Suspend the main thread until CONTINUE is called by the UI thread.
   while (!data->ready) {
     uv_cond_wait(&data->cond, &data->mutex);
   }

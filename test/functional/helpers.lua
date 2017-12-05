@@ -261,6 +261,7 @@ local function retry(max, max_ms, fn)
     if status then
       return result
     end
+    luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
       if type(result) == "string" then
         result = "\nretry() attempts: "..tostring(tries).."\n"..result
@@ -333,8 +334,8 @@ local function feed_command(...)
 end
 
 -- Dedent the given text and write it to the file name.
-local function write_file(name, text, dont_dedent)
-  local file = io.open(name, 'w')
+local function write_file(name, text, no_dedent, append)
+  local file = io.open(name, (append and 'a' or 'w'))
   if type(text) == 'table' then
     -- Byte blob
     local bytes = text
@@ -342,7 +343,7 @@ local function write_file(name, text, dont_dedent)
     for _, char in ipairs(bytes) do
       text = ('%s%c'):format(text, char)
     end
-  elseif not dont_dedent then
+  elseif not no_dedent then
     text = dedent(text)
   end
   file:write(text)

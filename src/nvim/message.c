@@ -1237,31 +1237,30 @@ void msg_make(char_u *arg)
   }
 }
 
-/*
- * Output the string 'str' upto a NUL character.
- * Return the number of characters it takes on the screen.
- *
- * If K_SPECIAL is encountered, then it is taken in conjunction with the
- * following character and shown as <F1>, <S-Up> etc.  Any other character
- * which is not printable shown in <> form.
- * If 'from' is TRUE (lhs of a mapping), a space is shown as <Space>.
- * If a character is displayed in one of these special ways, is also
- * highlighted (its highlight name is '8' in the p_hl variable).
- * Otherwise characters are not highlighted.
- * This function is used to show mappings, where we want to see how to type
- * the character/string -- webb
- */
-int
-msg_outtrans_special (
-    char_u *strstart,
-    int from               /* TRUE for lhs of a mapping */
+/// Output the string 'str' upto a NUL character.
+/// Return the number of characters it takes on the screen.
+///
+/// If K_SPECIAL is encountered, then it is taken in conjunction with the
+/// following character and shown as <F1>, <S-Up> etc.  Any other character
+/// which is not printable shown in <> form.
+/// If 'from' is TRUE (lhs of a mapping), a space is shown as <Space>.
+/// If a character is displayed in one of these special ways, is also
+/// highlighted (its highlight name is '8' in the p_hl variable).
+/// Otherwise characters are not highlighted.
+/// This function is used to show mappings, where we want to see how to type
+/// the character/string -- webb
+int msg_outtrans_special(
+    const char_u *strstart,
+    int from               ///< true for LHS of a mapping
 )
 {
-  char_u      *str = strstart;
+  if (strstart == NULL) {
+    return 0;  // Do nothing.
+  }
+  const char_u *str = strstart;
   int retval = 0;
-  int attr;
+  int attr = hl_attr(HLF_8);
 
-  attr = hl_attr(HLF_8);
   while (*str != NUL) {
     const char *string;
     // Leading and trailing spaces need to be displayed in <> form.
@@ -1307,7 +1306,7 @@ char *str2special_save(const char *const str, const bool replace_spaces,
   return (char *)ga.ga_data;
 }
 
-/// Convert character, replacing key one key code with printable representation
+/// Convert character, replacing key with printable representation.
 ///
 /// @param[in,out]  sp  String to convert. Is advanced to the next key code.
 /// @param[in]  replace_spaces  Convert spaces into <Space>, normally used for
@@ -1392,7 +1391,7 @@ void str2specialbuf(const char *sp, char *buf, size_t len)
   while (*sp) {
     const char *s = str2special(&sp, false, false);
     const size_t s_len = strlen(s);
-    if (s_len <= len) {
+    if (len <= s_len) {
       break;
     }
     memcpy(buf, s, s_len);

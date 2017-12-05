@@ -4,6 +4,7 @@ local global_helpers = require('test.helpers')
 local uname = global_helpers.uname
 local helpers = require('test.functional.helpers')(after_each)
 local thelpers = require('test.functional.terminal.helpers')
+local eq = helpers.eq
 local feed_data = thelpers.feed_data
 local feed_command = helpers.feed_command
 local clear = helpers.clear
@@ -11,6 +12,8 @@ local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
 local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
+local ok = helpers.ok
+local read_file = helpers.read_file
 
 if helpers.pending_win32(pending) then return end
 
@@ -21,9 +24,6 @@ describe('tui', function()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler undodir=. directory=. viewdir=. backupdir=."]')
-    -- right now pasting can be really slow in the TUI, especially in ASAN.
-    -- this will be fixed later but for now we require a high timeout.
-    screen.timeout = 60000
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -125,6 +125,9 @@ describe('tui', function()
   end)
 
   it('automatically sends <Paste> for bracketed paste sequences', function()
+    -- Pasting can be really slow in the TUI, specially in ASAN.
+    -- This will be fixed later but for now we require a high timeout.
+    screen.timeout = 60000
     feed_data('i\027[200~')
     screen:expect([[
       {1: }                                                 |
@@ -158,6 +161,8 @@ describe('tui', function()
   end)
 
   it('can handle arbitrarily long bursts of input', function()
+    -- Need extra time for this test, specially in ASAN.
+    screen.timeout = 60000
     feed_command('set ruler')
     local t = {}
     for i = 1, 3000 do
@@ -639,6 +644,7 @@ end)
 describe("tui 'term' option", function()
   local screen
   local is_bsd = not not string.find(string.lower(uname()), 'bsd')
+  local is_macos = not not string.find(string.lower(uname()), 'darwin')
 
   local function assert_term(term_envvar, term_expected)
     clear()
@@ -664,11 +670,62 @@ describe("tui 'term' option", function()
   end)
 
   it('gets system-provided term if $TERM is valid', function()
-    if is_bsd then  -- BSD lacks terminfo, we always use builtin there.
+    if is_bsd then  -- BSD lacks terminfo, builtin is always used.
       assert_term("xterm", "builtin_xterm")
+    elseif is_macos then
+      local status, _ = pcall(assert_term, "xterm", "xterm")
+      if not status then
+        pending("macOS: unibilium could not find terminfo", function() end)
+      end
     else
       assert_term("xterm", "xterm")
     end
+  end)
+
+end)
+
+-- These tests require `thelpers` because --headless/--embed
+-- does not initialize the TUI.
+describe("tui", function()
+  local screen
+  local logfile = 'Xtest_tui_verbose_log'
+  after_each(function()
+    os.remove(logfile)
+  end)
+
+  -- Runs (child) `nvim` in a TTY (:terminal), to start the builtin TUI.
+  local function nvim_tui(extra_args)
+    clear()
+    -- This is ugly because :term/termopen() forces TERM=xterm-256color.
+    -- TODO: Revisit this after jobstart/termopen accept `env` dict.
+    local cmd = string.format(
+      [=[['sh', '-c', 'LANG=C %s -u NONE -i NONE %s --cmd "%s"']]=],
+      nvim_prog,
+      extra_args or "",
+      nvim_set)
+    screen = thelpers.screen_setup(0, cmd)
+  end
+
+  it('-V3log logs terminfo values', function()
+    nvim_tui('-V3'..logfile)
+
+    -- Wait for TUI to start.
+    feed_data('Gitext')
+    screen:expect([[
+      text{1: }                                             |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    retry(nil, 3000, function()  -- Wait for log file to be flushed.
+      local log = read_file('Xtest_tui_verbose_log') or ''
+      eq('--- Terminal info --- {{{\n', string.match(log, '--- Terminal.-\n'))
+      ok(#log > 50)
+    end)
   end)
 
 end)

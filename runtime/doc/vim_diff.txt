@@ -327,22 +327,26 @@ Ed-compatible mode:
   ":set noedcompatible" is ignored
   ":set edcompatible" is an error
 
-	*t_xx* *:set-termcap* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
+			*t_xx* *termcap-options* *t_AB* *t_Sb* *t_vb* *t_SI*
 Nvim does not have special `t_XX` options nor <t_XX> keycodes to configure
 terminal capabilities. Instead Nvim treats the terminal as any other UI. For
 example, 'guicursor' sets the terminal cursor style if possible.
 
-						  *'term'* *E529* *E530* *E531*
+			*:set-termcap*
+Start Nvim with 'verbose' level 3 to see the terminal capabilities. >
+	nvim -V3
+<
+			*'term'* *E529* *E530* *E531*
 'term' reflects the terminal type derived from |$TERM| and other environment
 checks.  For debugging only; not reliable during startup. >
 	:echo &term
 "builtin_x" means one of the |builtin-terms| was chosen, because the expected
 terminfo file was not found on the system.
 
-								*termcap*
+			*termcap*
 Nvim never uses the termcap database, only |terminfo| and |builtin-terms|.
 
-						*xterm-8bit* *xterm-8-bit*
+			*xterm-8bit* *xterm-8-bit*
 Xterm can be run in a mode where it uses true 8-bit CSI.  Supporting this
 requires autodetection of whether the terminal is in UTF-8 mode or non-UTF-8
 mode, as the 8-bit CSI character has to be written differently in each case.

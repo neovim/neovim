@@ -4906,15 +4906,14 @@ showoptions (
 
   vimoption_T **items = xmalloc(sizeof(vimoption_T *) * PARAM_COUNT);
 
-  /* Highlight title */
-  if (all == 2)
-    MSG_PUTS_TITLE(_("\n--- Terminal codes ---"));
-  else if (opt_flags & OPT_GLOBAL)
+  // Highlight title
+  if (opt_flags & OPT_GLOBAL) {
     MSG_PUTS_TITLE(_("\n--- Global option values ---"));
-  else if (opt_flags & OPT_LOCAL)
+  } else if (opt_flags & OPT_LOCAL) {
     MSG_PUTS_TITLE(_("\n--- Local option values ---"));
-  else
+  } else {
     MSG_PUTS_TITLE(_("\n--- Options ---"));
+  }
 
   /*
    * do the loop two times:

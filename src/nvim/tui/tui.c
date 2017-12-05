@@ -354,9 +354,11 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   tui_terminal_start(ui);
   data->stop = false;
 
-  // allow the main thread to continue, we are ready to start handling UI
-  // callbacks
+  // Allow main thread to continue, we are ready to handle UI callbacks.
   CONTINUE(bridge);
+
+  loop_schedule_deferred(&main_loop,
+                         event_create(show_termcap_event, 1, data->ut));
 
   while (!data->stop) {
     loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
@@ -1061,6 +1063,24 @@ static void tui_flush(UI *ui)
   flush_buf(ui, true);
 }
 
+/// Dumps termcap info to the messages area, if 'verbose' >= 3.
+static void show_termcap_event(void **argv)
+{
+  if (p_verbose < 3) {
+    return;
+  }
+  const unibi_term *const ut = argv[0];
+  if (!ut) {
+    abort();
+  }
+  verbose_enter();
+  // XXX: (future) if unibi_term is modified (e.g. after a terminal
+  // query-response) this is a race condition.
+  terminfo_info_msg(ut);
+  verbose_leave();
+  verbose_stop();  // flush now
+}
+
 #ifdef UNIX
 static void suspend_event(void **argv)
 {
@@ -1577,11 +1597,13 @@ static void augment_terminfo(TUIData *data, const char *term,
       || konsole     // per commentary in VT102Emulation.cpp
       || teraterm    // per TeraTerm "Supported Control Functions" doco
       || rxvt) {     // per command.C
-    data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut,
+      "ext.resize_screen",
       "\x1b[8;%p1%d;%p2%dt");
   }
   if (putty || xterm || rxvt) {
-    data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut,
+      "ext.reset_scroll_region",
       "\x1b[r");
   }
 
@@ -1639,21 +1661,29 @@ static void augment_terminfo(TUIData *data, const char *term,
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
-  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut,
+      "ext.enable_lr_margin",
       "\x1b[?69h");
-  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut,
+      "ext.disable_lr_margin",
       "\x1b[?69l");
-  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut,
+      "ext.enable_bpaste",
       "\x1b[?2004h");
-  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut,
+      "ext.disable_bpaste",
       "\x1b[?2004l");
-  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut,
+      "ext.enable_focus",
       rxvt ? "\x1b]777;focus;on\x7" : "\x1b[?1004h");
-  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut,
+      "ext.disable_focus",
       rxvt ? "\x1b]777;focus;off\x7" : "\x1b[?1004l");
-  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut,
+      "ext.enable_mouse",
       "\x1b[?1002h\x1b[?1006h");
-  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut,
+      "ext.disable_mouse",
       "\x1b[?1002l\x1b[?1006l");
 }
 
