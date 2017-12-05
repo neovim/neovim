@@ -3455,8 +3455,10 @@ nextwild (
     return FAIL;
   }
 
-  MSG_PUTS("...");          /* show that we are busy */
-  ui_flush();
+  if (!ui_is_external(kUIWildmenu)) {
+    MSG_PUTS("...");  // show that we are busy
+    ui_flush();
+  }
 
   i = (int)(xp->xp_pattern - ccline.cmdbuff);
   xp->xp_pattern_len = ccline.cmdpos - i;

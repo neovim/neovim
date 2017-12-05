@@ -10,6 +10,8 @@ describe('external cmdline', function()
   local last_level = 0
   local cmdline = {}
   local block = nil
+  local wild_items = nil
+  local wild_selected = nil
 
   before_each(function()
     clear()
@@ -43,6 +45,12 @@ describe('external cmdline', function()
         block[#block+1] = data[1]
       elseif name == "cmdline_block_hide" then
         block = nil
+      elseif name == "wildmenu_show" then
+        wild_items = data[1]
+      elseif name == "wildmenu_select" then
+        wild_selected = data[1]
+      elseif name == "wildmenu_hide" then
+        wild_items, wild_selected = nil, nil
       end
     end)
   end)
@@ -525,6 +533,116 @@ describe('external cmdline', function()
                                |
     ]], nil, nil, function()
       expect_cmdline(1, '{RBP1:(}a{RBP2:(}b{RBP2:)}a{RBP1:)}')
+    end)
+  end)
+
+  it('works together with ext_wildmenu', function()
+    local expected = {
+      'define',
+      'jump',
+      'list',
+      'place',
+      'undefine',
+      'unplace',
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    screen:set_option('ext_wildmenu', true)
+    feed(':sign <tab>')
+
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign define"} },
+        firstc = ":",
+        indent = 0,
+        pos = 11,
+        prompt = ""
+      }}, cmdline)
+      eq(expected, wild_items)
+      eq(0, wild_selected)
+    end)
+
+    feed('<tab>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign jump"} },
+        firstc = ":",
+        indent = 0,
+        pos = 9,
+        prompt = ""
+      }}, cmdline)
+      eq(expected, wild_items)
+      eq(1, wild_selected)
+    end)
+
+    feed('<left><left>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign "} },
+        firstc = ":",
+        indent = 0,
+        pos = 5,
+        prompt = ""
+      }}, cmdline)
+      eq(expected, wild_items)
+      eq(-1, wild_selected)
+    end)
+
+    feed('<right>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign define"} },
+        firstc = ":",
+        indent = 0,
+        pos = 11,
+        prompt = ""
+      }}, cmdline)
+      eq(expected, wild_items)
+      eq(0, wild_selected)
+    end)
+
+    feed('a')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign definea"} },
+        firstc = ":",
+        indent = 0,
+        pos = 12,
+        prompt = ""
+      }}, cmdline)
+      eq(nil, wild_items)
+      eq(nil, wild_selected)
     end)
   end)
 end)
