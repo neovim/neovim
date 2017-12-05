@@ -297,7 +297,7 @@ static void terminfo_stop(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out_ext(ui, data->unibi_ext.disable_focus_reporting);
-  flush_buf(ui, true);
+  flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
@@ -1061,7 +1061,7 @@ static void tui_flush(UI *ui)
 
   cursor_goto(ui, saved_row, saved_col);
 
-  flush_buf(ui, true);
+  flush_buf(ui);
 }
 
 #ifdef UNIX
@@ -1230,7 +1230,7 @@ retry: \
       unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL); \
       if (data->overflow) { \
         data->bufpos = orig_pos; \
-        flush_buf(ui, true); \
+        flush_buf(ui); \
         goto retry; \
       } \
       data->cork = false; \
@@ -1261,7 +1261,7 @@ static void out(void *ctx, const char *str, size_t len)
       data->overflow = true;
       return;
     } else {
-      flush_buf(ui, true);
+      flush_buf(ui);
     }
   }
 
@@ -1679,7 +1679,7 @@ static void augment_terminfo(TUIData *data, const char *term,
       "\x1b[?1002l\x1b[?1006l");
 }
 
-static void flush_buf(UI *ui, bool toggle_cursor)
+static void flush_buf(UI *ui)
 {
   uv_write_t req;
   uv_buf_t bufs[3];
@@ -1690,7 +1690,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
     return;
   }
 
-  if (toggle_cursor && !data->is_invisible) {
+  if (!data->is_invisible) {
     // cursor is visible. Write a "cursor invisible" command before writing the
     // buffer.
     bufp->base = data->invis;
@@ -1705,7 +1705,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
     bufp++;
   }
 
-  if (toggle_cursor && !data->busy && data->is_invisible) {
+  if (!data->busy && data->is_invisible) {
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
     bufp->base = data->norm;
