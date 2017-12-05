@@ -42,8 +42,6 @@ describe('NULL', function()
   describe('list', function()
     -- Incorrect behaviour
 
-    -- FIXME add() should not return 1 at all
-    null_expr_test('does not crash add()', 'add(L, 0)', 0, 1)
     null_expr_test('does not crash extend()', 'extend(L, [1])', 'E742: Cannot change value of extend() argument', 0)
     null_expr_test('does not crash extend() (second position)', 'extend([1], L)', 0, {1})
     -- FIXME should be accepted by inputlist()
@@ -88,6 +86,7 @@ describe('NULL', function()
     -- null_expr_test('does not crash systemlist()', 'systemlist("cat", L)', 0, {})
 
     -- Correct behaviour
+    null_expr_test('does not crash add()', 'add(L, 0)', 'E742: Cannot change value of add() argument', 1)
     null_expr_test('does not crash append()', 'append(1, L)', 0, 0, function()
       eq({''}, curbufmeths.get_lines(0, -1, false))
     end)
