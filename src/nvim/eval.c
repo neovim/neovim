@@ -14508,7 +14508,9 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *line = NULL;
   if (argvars[1].v_type == VAR_LIST) {
     l = argvars[1].vval.v_list;
-    li = l->lv_first;
+    if (l != NULL) {
+      li = l->lv_first;
+    }
   } else {
     line = tv_get_string_chk(&argvars[1]);
   }
