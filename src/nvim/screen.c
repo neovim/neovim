@@ -264,7 +264,7 @@ void update_curbuf(int type)
 
 
 void set_tabpage_grid(tabpage_T* tp) {
-  ui_call_set_grid(tp->handle);
+  ui_set_grid(tp->handle);
   if (tp->grid.Columns == 0 || tp->grid.Rows == 0) {
     alloc_screengrid(&tp->grid, Rows, Columns, false);
     ui_call_resize(tp->grid.Columns, tp->grid.Rows);

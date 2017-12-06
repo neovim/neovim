@@ -60,6 +60,7 @@ static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
 static int old_mode_idx = -1;
+static int grid = 1;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname, ...)
@@ -466,6 +467,14 @@ void ui_putc(uint8_t c)
   ui_puts(buf);
 }
 
+void ui_set_grid(int new_grid) {
+  if (new_grid != grid) {
+    grid = new_grid;
+    pending_cursor_update = true;
+  }
+}
+
+
 void ui_cursor_goto(int new_row, int new_col)
 {
   if (new_row == row && new_col == col) {
@@ -537,7 +546,11 @@ static void flush_cursor_update(void)
 {
   if (pending_cursor_update) {
     pending_cursor_update = false;
-    ui_call_cursor_goto(row, col);
+    if (ui_is_external(kUIMultigrid)) {
+      ui_call_grid_cursor_goto(grid, row, col);
+    } else {
+      ui_call_cursor_goto(row, col);
+    }
   }
 }
 
