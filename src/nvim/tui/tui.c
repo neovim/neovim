@@ -96,6 +96,7 @@ typedef struct {
   bool immediate_wrap_after_last_column;
   bool mouse_enabled;
   bool busy, is_invisible;
+  bool cork, overflow;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
   bool default_attr;
@@ -200,6 +201,8 @@ static void terminfo_start(UI *ui)
   data->default_attr = false;
   data->is_invisible = true;
   data->busy = false;
+  data->cork = false;
+  data->overflow = false;
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
@@ -294,7 +297,7 @@ static void terminfo_stop(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out_ext(ui, data->unibi_ext.disable_focus_reporting);
-  flush_buf(ui, true);
+  flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
@@ -1060,7 +1063,7 @@ static void tui_flush(UI *ui)
 
   cursor_goto(ui, saved_row, saved_col);
 
-  flush_buf(ui, true);
+  flush_buf(ui);
 }
 
 /// Dumps termcap info to the messages area, if 'verbose' >= 3.
@@ -1239,8 +1242,18 @@ static void unibi_goto(UI *ui, int row, int col)
     } \
     if (str) { \
       unibi_var_t vars[26 + 26]; \
+      size_t orig_pos = data->bufpos; \
+      \
       memset(&vars, 0, sizeof(vars)); \
+      data->cork = true; \
+retry: \
       unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL); \
+      if (data->overflow) { \
+        data->bufpos = orig_pos; \
+        flush_buf(ui); \
+        goto retry; \
+      } \
+      data->cork = false; \
     } \
   } while (0)
 static void unibi_out(UI *ui, int unibi_index)
@@ -1259,8 +1272,17 @@ static void out(void *ctx, const char *str, size_t len)
   TUIData *data = ui->data;
   size_t available = sizeof(data->buf) - data->bufpos;
 
+  if (data->cork && data->overflow) {
+    return;
+  }
+
   if (len > available) {
-    flush_buf(ui, false);
+    if (data->cork) {
+      data->overflow = true;
+      return;
+    } else {
+      flush_buf(ui);
+    }
   }
 
   memcpy(data->buf + data->bufpos, str, len);
@@ -1687,7 +1709,7 @@ static void augment_terminfo(TUIData *data, const char *term,
       "\x1b[?1002l\x1b[?1006l");
 }
 
-static void flush_buf(UI *ui, bool toggle_cursor)
+static void flush_buf(UI *ui)
 {
   uv_write_t req;
   uv_buf_t bufs[3];
@@ -1698,7 +1720,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
     return;
   }
 
-  if (toggle_cursor && !data->is_invisible) {
+  if (!data->is_invisible) {
     // cursor is visible. Write a "cursor invisible" command before writing the
     // buffer.
     bufp->base = data->invis;
@@ -1713,7 +1735,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
     bufp++;
   }
 
-  if (toggle_cursor && !data->busy && data->is_invisible) {
+  if (!data->busy && data->is_invisible) {
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
     bufp->base = data->norm;
@@ -1726,6 +1748,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
            bufs, (unsigned)(bufp - bufs), NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
+  data->overflow = false;
 }
 
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
