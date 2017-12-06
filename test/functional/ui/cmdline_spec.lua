@@ -10,12 +10,19 @@ describe('external cmdline', function()
   local last_level = 0
   local cmdline = {}
   local block = nil
+  local wild_items = nil
+  local wild_selected = nil
 
   before_each(function()
     clear()
     cmdline, block = {}, nil
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, ext_cmdline=true})
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {reverse = true},
+      [3] = {bold = true, reverse = true},
+    })
     screen:set_on_event_handler(function(name, data)
       if name == "cmdline_show" then
         local content, pos, firstc, prompt, indent, level = unpack(data)
@@ -38,6 +45,12 @@ describe('external cmdline', function()
         block[#block+1] = data[1]
       elseif name == "cmdline_block_hide" then
         block = nil
+      elseif name == "wildmenu_show" then
+        wild_items = data[1]
+      elseif name == "wildmenu_select" then
+        wild_selected = data[1]
+      elseif name == "wildmenu_hide" then
+        wild_items, wild_selected = nil, nil
       end
     end)
   end)
@@ -66,9 +79,9 @@ describe('external cmdline', function()
     feed(':')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq(1, last_level)
@@ -84,9 +97,9 @@ describe('external cmdline', function()
     feed('sign')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -101,9 +114,9 @@ describe('external cmdline', function()
     feed('<Left>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -118,9 +131,9 @@ describe('external cmdline', function()
     feed('<bs>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -135,9 +148,9 @@ describe('external cmdline', function()
     feed('<Esc>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({}, cmdline)
@@ -148,9 +161,9 @@ describe('external cmdline', function()
     feed(':call input("input", "default")<cr>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -164,9 +177,9 @@ describe('external cmdline', function()
     feed('<cr>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({}, cmdline)
@@ -178,9 +191,9 @@ describe('external cmdline', function()
     feed(':xx<c-r>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -196,9 +209,9 @@ describe('external cmdline', function()
     feed('=')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -234,9 +247,9 @@ describe('external cmdline', function()
       }}
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq(expectation, cmdline)
@@ -249,9 +262,9 @@ describe('external cmdline', function()
     -- focus is at external cmdline anyway.
     screen:expect([[
                                |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
       ^                         |
     ]], nil, nil, function()
       eq(expectation, cmdline)
@@ -261,9 +274,9 @@ describe('external cmdline', function()
     feed('<cr>')
     screen:expect([[
                                |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
       ^                         |
     ]], nil, nil, function()
       eq({{
@@ -278,9 +291,9 @@ describe('external cmdline', function()
     feed('<esc>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({}, cmdline)
@@ -291,9 +304,9 @@ describe('external cmdline', function()
     feed(':function Foo()<cr>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -309,9 +322,9 @@ describe('external cmdline', function()
     feed('line1<cr>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{{{}, 'function Foo()'}},
@@ -322,9 +335,9 @@ describe('external cmdline', function()
     command("redraw!")
     screen:expect([[
                                |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
       ^                         |
     ]], nil, nil, function()
       eq({{{{}, 'function Foo()'}},
@@ -335,9 +348,9 @@ describe('external cmdline', function()
     feed('endfunction<cr>')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq(nil, block)
@@ -348,9 +361,9 @@ describe('external cmdline', function()
     feed(':make')
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -365,9 +378,9 @@ describe('external cmdline', function()
     feed('<c-f>')
     screen:expect([[
                                |
-      [No Name]                |
-      :make^                    |
-      [Command Line]           |
+      {2:[No Name]                }|
+      {1::}make^                    |
+      {3:[Command Line]           }|
                                |
     ]], nil, nil, function()
       eq({}, cmdline)
@@ -377,9 +390,9 @@ describe('external cmdline', function()
     feed(':yank')
     screen:expect([[
                                |
-      [No Name]                |
-      :make^                    |
-      [Command Line]           |
+      {2:[No Name]                }|
+      {1::}make^                    |
+      {3:[Command Line]           }|
                                |
     ]], nil, nil, function()
       eq({nil, {
@@ -395,9 +408,9 @@ describe('external cmdline', function()
     command("redraw!")
     screen:expect([[
                                |
-      [No Name]                |
-      :make                    |
-      [Command Line]           |
+      {2:[No Name]                }|
+      {1::}make                    |
+      {3:[Command Line]           }|
       ^                         |
     ]], nil, nil, function()
       eq({nil, {
@@ -412,9 +425,9 @@ describe('external cmdline', function()
     feed("<c-c>")
     screen:expect([[
                                |
-      [No Name]                |
-      :make^                    |
-      [Command Line]           |
+      {2:[No Name]                }|
+      {1::}make^                    |
+      {3:[Command Line]           }|
                                |
     ]], nil, nil, function()
       eq({}, cmdline)
@@ -423,9 +436,9 @@ describe('external cmdline', function()
     feed("<c-c>")
     screen:expect([[
                                |
-      [No Name]                |
-      :make^                    |
-      [Command Line]           |
+      {2:[No Name]                }|
+      {1::}make^                    |
+      {3:[Command Line]           }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -441,9 +454,9 @@ describe('external cmdline', function()
     command("redraw!")
     screen:expect([[
                                |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
       ^                         |
     ]], nil, nil, function()
       eq({{
@@ -460,9 +473,9 @@ describe('external cmdline', function()
     feed(":call inputsecret('secret:')<cr>abc123")
     screen:expect([[
       ^                         |
-      ~                        |
-      ~                        |
-      ~                        |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
                                |
     ]], nil, nil, function()
       eq({{
@@ -476,50 +489,160 @@ describe('external cmdline', function()
   end)
 
   it('works with highlighted cmdline', function()
-      source([[
-        highlight RBP1 guibg=Red
-        highlight RBP2 guibg=Yellow
-        highlight RBP3 guibg=Green
-        highlight RBP4 guibg=Blue
-        let g:NUM_LVLS = 4
-        function RainBowParens(cmdline)
-          let ret = []
-          let i = 0
-          let lvl = 0
-          while i < len(a:cmdline)
-            if a:cmdline[i] is# '('
-              call add(ret, [i, i + 1, 'RBP' . ((lvl % g:NUM_LVLS) + 1)])
-              let lvl += 1
-            elseif a:cmdline[i] is# ')'
-              let lvl -= 1
-              call add(ret, [i, i + 1, 'RBP' . ((lvl % g:NUM_LVLS) + 1)])
-            endif
-            let i += 1
-          endwhile
-          return ret
-        endfunction
-        map <f5>  :let x = input({'prompt':'>','highlight':'RainBowParens'})<cr>
-        "map <f5>  :let x = input({'prompt':'>'})<cr>
-      ]])
-      screen:set_default_attr_ids({
-        RBP1={background = Screen.colors.Red},
-        RBP2={background = Screen.colors.Yellow},
-        RBP3={background = Screen.colors.Green},
-        RBP4={background = Screen.colors.Blue},
-        EOB={bold = true, foreground = Screen.colors.Blue1},
-        ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-        SK={foreground = Screen.colors.Blue},
-        PE={bold = true, foreground = Screen.colors.SeaGreen4}
-      })
-      feed('<f5>(a(b)a)')
-      screen:expect([[
-        ^                         |
-        {EOB:~                        }|
-        {EOB:~                        }|
-        {EOB:~                        }|
-                                 |
-      ]], nil, nil, function()
-        expect_cmdline(1, '{RBP1:(}a{RBP2:(}b{RBP2:)}a{RBP1:)}')
-      end)
+    source([[
+      highlight RBP1 guibg=Red
+      highlight RBP2 guibg=Yellow
+      highlight RBP3 guibg=Green
+      highlight RBP4 guibg=Blue
+      let g:NUM_LVLS = 4
+      function RainBowParens(cmdline)
+        let ret = []
+        let i = 0
+        let lvl = 0
+        while i < len(a:cmdline)
+          if a:cmdline[i] is# '('
+            call add(ret, [i, i + 1, 'RBP' . ((lvl % g:NUM_LVLS) + 1)])
+            let lvl += 1
+          elseif a:cmdline[i] is# ')'
+            let lvl -= 1
+            call add(ret, [i, i + 1, 'RBP' . ((lvl % g:NUM_LVLS) + 1)])
+          endif
+          let i += 1
+        endwhile
+        return ret
+      endfunction
+      map <f5>  :let x = input({'prompt':'>','highlight':'RainBowParens'})<cr>
+      "map <f5>  :let x = input({'prompt':'>'})<cr>
+    ]])
+    screen:set_default_attr_ids({
+      RBP1={background = Screen.colors.Red},
+      RBP2={background = Screen.colors.Yellow},
+      RBP3={background = Screen.colors.Green},
+      RBP4={background = Screen.colors.Blue},
+      EOB={bold = true, foreground = Screen.colors.Blue1},
+      ERR={foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      SK={foreground = Screen.colors.Blue},
+      PE={bold = true, foreground = Screen.colors.SeaGreen4}
+    })
+    feed('<f5>(a(b)a)')
+    screen:expect([[
+      ^                         |
+      {EOB:~                        }|
+      {EOB:~                        }|
+      {EOB:~                        }|
+                               |
+    ]], nil, nil, function()
+      expect_cmdline(1, '{RBP1:(}a{RBP2:(}b{RBP2:)}a{RBP1:)}')
+    end)
+  end)
+
+  it('works together with ext_wildmenu', function()
+    local expected = {
+      'define',
+      'jump',
+      'list',
+      'place',
+      'undefine',
+      'unplace',
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    screen:set_option('ext_wildmenu', true)
+    feed(':sign <tab>')
+
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign define"} },
+        firstc = ":",
+        indent = 0,
+        pos = 11,
+        prompt = ""
+      }}, cmdline)
+      eq(expected, wild_items)
+      eq(0, wild_selected)
+    end)
+
+    feed('<tab>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign jump"} },
+        firstc = ":",
+        indent = 0,
+        pos = 9,
+        prompt = ""
+      }}, cmdline)
+      eq(expected, wild_items)
+      eq(1, wild_selected)
+    end)
+
+    feed('<left><left>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign "} },
+        firstc = ":",
+        indent = 0,
+        pos = 5,
+        prompt = ""
+      }}, cmdline)
+      eq(expected, wild_items)
+      eq(-1, wild_selected)
+    end)
+
+    feed('<right>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign define"} },
+        firstc = ":",
+        indent = 0,
+        pos = 11,
+        prompt = ""
+      }}, cmdline)
+      eq(expected, wild_items)
+      eq(0, wild_selected)
+    end)
+
+    feed('a')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], nil, nil, function()
+      eq({{
+        content = { { {}, "sign definea"} },
+        firstc = ":",
+        indent = 0,
+        pos = 12,
+        prompt = ""
+      }}, cmdline)
+      eq(nil, wild_items)
+      eq(nil, wild_selected)
+    end)
   end)
 end)

@@ -176,6 +176,10 @@ function Screen:try_resize(columns, rows)
   self:sleep(0.1)
 end
 
+function Screen:set_option(option, value)
+  uimeths.set_option(option, value)
+end
+
 -- Asserts that `expected` eventually matches the screen state.
 --
 -- expected:    Expected screen state (string). Each line represents a screen
