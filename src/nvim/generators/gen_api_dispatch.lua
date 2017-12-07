@@ -4,43 +4,64 @@ mpack = require('mpack')
 if arg[1] == '--help' then
   print('Usage: genmsgpack.lua args')
   print('Args: 1: source directory')
-  print('      2: dispatch output file (dispatch_wrappers.generated.h)')
-  print('      3: functions metadata output file (funcs_metadata.generated.h)')
-  print('      4: API metadata output file (api_metadata.mpack)')
-  print('      5: lua C bindings output file (msgpack_lua_c_bindings.generated.c)')
+  print('      2: dispatch output file (dispatch_wrappers.generated.c)')
+  print('      3: dispatch table output file (dispatch_table.generated.h)')
+  print('      4: functions metadata output file (funcs_metadata.generated.h)')
+  print('      5: API metadata output file (api_metadata.mpack)')
+  print('      6: lua C bindings output file (msgpack_lua_c_bindings.generated.c)')
   print('      rest: C files where API functions are defined')
 end
-assert(#arg >= 4)
+assert(#arg >= 6)
 functions = {}
 
 local nvimdir = arg[1]
-package.path = nvimdir .. '/?.lua;' .. package.path
+package.path = nvimdir .. '/?/init.lua;' .. nvimdir .. '/?.lua;' .. package.path
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
 headers = {}
+-- Like `headers`, but without headers ending with .generated.h
+local written_headers = {}
 
--- output h file with generated dispatch functions
-dispatch_outputf = arg[2]
+-- output c file with generated dispatch functions
+local dispatch_outputf = arg[2]
+-- output h file with generated dispatch table
+local dispatch_table_outputf = arg[3]
 -- output h file with packed metadata
-funcs_metadata_outputf = arg[3]
+local funcs_metadata_outputf = arg[4]
 -- output metadata mpack file, for use by other build scripts
-mpack_outputf = arg[4]
-lua_c_bindings_outputf = arg[5]
+local mpack_outputf = arg[5]
+-- output c file with lua bindings
+local lua_c_bindings_outputf = arg[6]
 
 -- set of function names, used to detect duplicates
 function_names = {}
 
 c_grammar = require('generators.c_grammar')
+local lust = require('generators.lust')
+local gperf = require('generators.gperf')
+local nvim_helpers = require('lib.helpers')
 
--- read each input file, parse and append to the api metadata
-for i = 6, #arg do
-  local full_path = arg[i]
+local dedent = nvim_helpers.dedent
+local shallowcopy = nvim_helpers.shallowcopy
+
+local function path_split(full_path)
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
     parts[#parts + 1] = part
   end
-  headers[#headers + 1] = parts[#parts - 1]..'/'..parts[#parts]
+  return parts
+end
+
+-- read each input file, parse and append to the api metadata
+for i = 7, #arg do
+  local full_path = arg[i]
+  local parts = path_split(full_path)
+  local header = parts[#parts - 1]..'/'..parts[#parts]
+  headers[#headers + 1] = header
+  if header:sub(-12) ~= '.generated.h' then
+    written_headers[#written_headers + 1] = header
+  end
 
   local input = io.open(full_path, 'rb')
 
@@ -66,14 +87,6 @@ for i = 6, #arg do
     end
   end
   input:close()
-end
-
-local function shallowcopy(orig)
-  local copy = {}
-  for orig_key, orig_value in pairs(orig) do
-    copy[orig_key] = orig_value
-  end
-  return copy
 end
 
 local function startswith(String,Start)
@@ -148,7 +161,6 @@ for _,f in ipairs(functions) do
   end
 end
 
-
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
 funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
@@ -156,9 +168,6 @@ packed = mpack.pack(exported_functions)
 dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
-
--- start building the dispatch wrapper output
-output = io.open(dispatch_outputf, 'wb')
 
 local function real_type(type)
   local rv = type
@@ -180,279 +189,262 @@ local function attr_name(rt)
   end
 end
 
--- start the handler functions. Visit each function metadata to build the
--- handler function with code generated for validating arguments and calling to
--- the real API.
-for i = 1, #functions do
-  local fn = functions[i]
-  if fn.impl_name == nil then
-    local args = {}
-
-    output:write('Object handle_'..fn.name..'(uint64_t channel_id, Array args, Error *error)')
-    output:write('\n{')
-    output:write('\n  Object ret = NIL;')
-    -- Declare/initialize variables that will hold converted arguments
-    for j = 1, #fn.parameters do
-      local param = fn.parameters[j]
-      local converted = 'arg_'..j
-      output:write('\n  '..param[1]..' '..converted..';')
-    end
-    output:write('\n')
-    output:write('\n  if (args.size != '..#fn.parameters..') {')
-    output:write('\n    api_set_error(error, kErrorTypeException, "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
-    output:write('\n    goto cleanup;')
-    output:write('\n  }\n')
-
-    -- Validation/conversion for each argument
-    for j = 1, #fn.parameters do
-      local converted, convert_arg, param, arg
-      param = fn.parameters[j]
-      converted = 'arg_'..j
-      local rt = real_type(param[1])
-      if rt ~= 'Object' then
-        if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') then
-          -- Buffer, Window, and Tabpage have a specific type, but are stored in integer
-          output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..' && args.items['..(j - 1)..'].data.integer >= 0) {')
-          output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
-        else
-          output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
-          output:write('\n    '..converted..' = args.items['..(j - 1)..'].data.'..attr_name(rt)..';')
-        end
-        if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
-          -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
-          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
-          output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
-        end
-        output:write('\n  } else {')
-        output:write('\n    api_set_error(error, kErrorTypeException, "Wrong type for argument '..j..', expecting '..param[1]..'");')
-        output:write('\n    goto cleanup;')
-        output:write('\n  }\n')
-      else
-        output:write('\n  '..converted..' = args.items['..(j - 1)..'];\n')
-      end
-
-      args[#args + 1] = converted
-    end
-
-    -- function call
-    local call_args = table.concat(args, ', ')
-    output:write('\n  ')
-    if fn.return_type ~= 'void' then
-      -- has a return value, prefix the call with a declaration
-      output:write(fn.return_type..' rv = ')
-    end
-
-    -- write the function name and the opening parenthesis
-    output:write(fn.name..'(')
-
-    if fn.receives_channel_id then
-      -- if the function receives the channel id, pass it as first argument
-      if #args > 0 or fn.can_fail then
-        output:write('channel_id, '..call_args)
-      else
-        output:write('channel_id')
-      end
-    else
-      output:write(call_args)
-    end
-
-    if fn.can_fail then
-      -- if the function can fail, also pass a pointer to the local error object
-      if #args > 0 then
-        output:write(', error);\n')
-      else
-        output:write('error);\n')
-      end
-      -- and check for the error
-      output:write('\n  if (ERROR_SET(error)) {')
-      output:write('\n    goto cleanup;')
-      output:write('\n  }\n')
-    else
-      output:write(');\n')
-    end
-
-    if fn.return_type ~= 'void' then
-      output:write('\n  ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
-    end
-    output:write('\n\ncleanup:');
-
-    output:write('\n  return ret;\n}\n\n');
-  end
+local function nl(s)
+  local ret = s:gsub('\\n', '\n')
+  return ret
 end
 
--- Generate a function that initializes method names with handler functions
-output:write([[
-void msgpack_rpc_init_method_table(void)
-{
-  methods = map_new(String, MsgpackRpcRequestHandler)();
+handlers_template = lust({
+  nl(dedent([[
+    #include "nvim/func_attr.h"
+    #include "nvim/api/private/dispatch.h"
+    #include "nvim/api/private/helpers.h"
+    #include "nvim/api/private/defs.h"
 
-]])
+    @map{h = written_headers, _separator="\n"}:{{#include "nvim/$h"}}
 
-for i = 1, #functions do
-  local fn = functions[i]
-  output:write('  msgpack_rpc_add_method_handler('..
-               '(String) {.data = "'..fn.name..'", '..
-               '.size = sizeof("'..fn.name..'") - 1}, '..
-               '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-               ', .async = '..tostring(fn.async)..'});\n')
+    @map{fn = functions, _="\n\n"}:{{@if(not fn.impl_name)<handle_function>}}
+    ]])),
+  add_method_handler = dedent([[
+    msgpack_rpc_add_method_handler(
+      (String) { .data = "$fn.name", .size = sizeof("$fn.name") - 1 },
+      (MsgpackRpcRequestHandler) {
+        .fn = handle_@if(fn.impl_name)<{{$fn.impl_name}}>else<{{$fn.name}}>,
+        .async = $async,
+      });]]),
+  handle_function = nl(dedent([[
+    Object handle_$fn.name(uint64_t channel_id, Array args, Error *error)
+      FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    {
+      Object ret = NIL;
+      if (args.size != $#fn.parameters) {
+        api_set_error(
+          error, kErrorTypeException,
+          "Wrong number of arguments: expecting $#fn.parameters but got %zu",
+          args.size);
+        goto cleanup;
+      }
 
-end
+      @map{param = fn.parameters, _separator="\n\n"}:{{@process_arg}}
 
-output:write('\n}\n\n')
-output:close()
+      @fcallstart$fn.name(@fcallargs);
+      @if(fn.can_fail)<error_cleanup>
+      @if(fn.return_type ~= "void")<{{ret = @<fn_rt_upper>_OBJ(rv);}}>
+
+    cleanup:
+      return ret;
+    }]])),
+  error_cleanup = dedent([[
+    if (ERROR_SET(error)) {
+      goto cleanup;
+    }]]),
+  process_arg = dedent([[
+    $param.1 arg_$i0;
+    @if(rt == "Object")<assign_object>else<check_and_assign_arg>]]),
+  assign_object = 'arg_$i0 = args.items[$i0];',
+  check_and_assign_arg = dedent([[
+    if (@arg_cond) {
+      arg_$i0 = @arg_value;
+    } else {
+      api_set_error(error, kErrorTypeException,
+                    "Wrong type for argument $i1, expecting $param.1");
+      goto cleanup;
+    }]]),
+  arg_cond = (
+    '@if(rt_is_handle)<handle_cond>'
+    .. 'else<{{'
+      .. '@if(rt == "Boolean")<boolean_cond>'
+      .. 'else<{{args.items[$i0].type == kObjectType$rt}}>'
+    .. '}}>'
+  ),
+  arg_value = (
+    '@if(rt_is_handle)<{{'
+      .. '(handle_T)args.items[$i0].data.integer'
+    .. '}}>else<{{'
+      .. '@if(rt == "Boolean")<{{'
+        .. dedent([[
+          (
+                args.items[$i0].type == kObjectTypeInteger
+                ? args.items[$i0].data.integer
+                : args.items[$i0].data.$rt_attr)]])
+      .. '}}>else<{{'
+        .. 'args.items[$i0].data.$rt_attr'
+      .. '}}>'
+    .. '}}>'
+  ),
+  handle_cond = dedent([[
+
+    (args.items[$i0].type == kObjectType$rt
+     || args.items[$i0].type == kObjectTypeInteger)
+    && args.items[$i0].data.integer >= 0
+  ]]),
+  boolean_cond = dedent([[
+
+    args.items[$i0].type == kObjectTypeBoolean
+    || (args.items[$i0].type == kObjectTypeInteger
+        && args.items[$i0].data.integer >= 0)
+  ]]),
+  fcallstart = '@if(fn.return_type ~= "void")<{{$fn.return_type rv = }}>',
+  fcallargs = (
+    '@if(fn.receives_channel_id)<{{'
+      .. 'channel_id@if(#fn.parameters > "0" or fn.can_fail)<{{, }}>'
+    .. '}}>'
+    .. '@map{ param = fn.parameters, _separator=", "}:{{arg_$i0}}'
+    .. '@if(fn.can_fail)<{{'
+      .. '@if(#fn.parameters > "0")<{{, }}>error'
+    .. '}}>'
+  ),
+  fn_rt_upper = '$fn_rt_upper',
+})
+handlers_template:register('fn_rt_upper', function(env)
+  return { fn_rt_upper = real_type(env.fn.return_type):upper() }
+end)
+handlers_template:register('process_arg', function(env)
+  local ret = shallowcopy(env)
+  ret.rt = real_type(env.param[1])
+  ret.rt_attr = attr_name(ret.rt)
+  ret.rt_is_handle = (ret.rt == "Buffer"
+                      or ret.rt == "Window"
+                      or ret.rt == "Tabpage")
+  return ret
+end)
+local dispatch_table_input_parts = path_split(dispatch_table_outputf)
+local handlers = handlers_template:gen({
+  written_headers=written_headers,
+  functions=functions,
+}):gsub('\n%s*\n', '\n\n'):gsub('\n\n+', '\n\n')
+dispatch_output = io.open(dispatch_outputf, 'wb')
+dispatch_output:write(handlers)
+dispatch_output:close()
+
+gperf.generate({
+  outputf_base = dispatch_outputf,
+  struct_type = 'MsgpackRpcRequestHandlerMapItem',
+  initializer_suffix = ',{NULL,0}',
+  item_callback = function(self, _, fn)
+    return ('%s, {&handle_%s, %s}'):format(
+      fn.name, fn.impl_name or fn.name, fn.async and '1' or '0')
+  end,
+  data = functions,
+})
 
 mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.pack(functions))
 mpack_output:close()
 
-local function include_headers(output, headers)
-  for i = 1, #headers do
-    if headers[i]:sub(-12) ~= '.generated.h' then
-      output:write('\n#include "nvim/'..headers[i]..'"')
-    end
-  end
-end
-
-local function write_shifted_output(output, str)
-  str = str:gsub('\n  ', '\n')
-  str = str:gsub('^  ', '')
-  str = str:gsub(' +$', '')
-  output:write(str)
-end
-
 -- start building lua output
-output = io.open(lua_c_bindings_outputf, 'wb')
-
-output:write([[
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
-#include "nvim/func_attr.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/lua/converter.h"
-]])
-include_headers(output, headers)
-output:write('\n')
-
-lua_c_functions = {}
-
-local function process_function(fn)
-  lua_c_function_name = ('nlua_msgpack_%s'):format(fn.name)
-  write_shifted_output(output, string.format([[
-
-  static int %s(lua_State *lstate)
-  {
-    Error err = ERROR_INIT;
-    if (lua_gettop(lstate) != %i) {
-      api_set_error(&err, kErrorTypeValidation, "Expected %i argument%s");
-      goto exit_0;
-    }
-  ]], lua_c_function_name, #fn.parameters, #fn.parameters,
-      (#fn.parameters == 1) and '' or 's'))
-  lua_c_functions[#lua_c_functions + 1] = {
-    binding=lua_c_function_name,
-    api=fn.name
-  }
-  local cparams = ''
-  local free_code = {}
-  for j = #fn.parameters,1,-1 do
-    param = fn.parameters[j]
-    cparam = string.format('arg%u', j)
-    param_type = real_type(param[1])
-    lc_param_type = param_type:lower()
-    write_shifted_output(output, string.format([[
-    const %s %s = nlua_pop_%s(lstate, &err);
-
-    if (ERROR_SET(&err)) {
-      goto exit_%u;
-    }
-    ]], param[1], cparam, param_type, #fn.parameters - j))
-    free_code[#free_code + 1] = ('api_free_%s(%s);'):format(
-      lc_param_type, cparam)
-    cparams = cparam .. ', ' .. cparams
-  end
-  if fn.receives_channel_id then
-    cparams = 'LUA_INTERNAL_CALL, ' .. cparams
-  end
-  if fn.can_fail then
-    cparams = cparams .. '&err'
-  else
-    cparams = cparams:gsub(', $', '')
-  end
-  local free_at_exit_code = ''
-  for i = 1, #free_code do
-    local rev_i = #free_code - i + 1
-    local code = free_code[rev_i]
-    if i == 1 then
-      free_at_exit_code = free_at_exit_code .. ('\n    %s'):format(code)
-    else
-      free_at_exit_code = free_at_exit_code .. ('\n  exit_%u:\n    %s'):format(
-        rev_i, code)
-    end
-  end
-  local err_throw_code = [[
-
-  exit_0:
-    if (ERROR_SET(&err)) {
-      luaL_where(lstate, 1);
-      lua_pushstring(lstate, err.msg);
-      api_clear_error(&err);
-      lua_concat(lstate, 2);
-      return lua_error(lstate);
-    }
-  ]]
-  if fn.return_type ~= 'void' then
-    if fn.return_type:match('^ArrayOf') then
-      return_type = 'Array'
-    else
-      return_type = fn.return_type
-    end
-    write_shifted_output(output, string.format([[
-    const %s ret = %s(%s);
-    nlua_push_%s(lstate, ret);
-    api_free_%s(ret);
-  %s
-  %s
-    return 1;
-    ]], fn.return_type, fn.name, cparams, return_type, return_type:lower(),
-        free_at_exit_code, err_throw_code))
-  else
-    write_shifted_output(output, string.format([[
-    %s(%s);
-  %s
-  %s
-    return 0;
-    ]], fn.name, cparams, free_at_exit_code, err_throw_code))
-  end
-  write_shifted_output(output, [[
-  }
-  ]])
-end
-
+local lua_functions = {}
 for _, fn in ipairs(functions) do
-  if not fn.remote_only or fn.name:sub(1, 4) == '_vim' then
-    process_function(fn)
+  if not fn.remote_only then
+    lua_functions[#lua_functions + 1] = fn
   end
 end
+lua_bindings_template = lust({
+  nl(dedent([[
+    #include <lua.h>
+    #include <lualib.h>
+    #include <lauxlib.h>
 
-output:write(string.format([[
-void nlua_add_api_functions(lua_State *lstate)
-  FUNC_ATTR_NONNULL_ALL
-{
-  lua_createtable(lstate, 0, %u);
-]], #lua_c_functions))
-for _, func in ipairs(lua_c_functions) do
-  output:write(string.format([[
+    #include "nvim/func_attr.h"
+    #include "nvim/api/private/defs.h"
+    #include "nvim/api/private/helpers.h"
+    #include "nvim/lua/converter.h"
 
-  lua_pushcfunction(lstate, &%s);
-  lua_setfield(lstate, -2, "%s");]], func.binding, func.api))
-end
-output:write([[
+    @map{h = written_headers, _separator="\n"}:{{#include "nvim/$h"}}
 
-  lua_setfield(lstate, -2, "api");
-}
-]])
+    @map{fn = lua_functions, _separator="\n\n"}:binding_function
+    void nlua_add_api_functions(lua_State *lstate)
+      FUNC_ATTR_NONNULL_ALL
+    {
+      lua_createtable(lstate, 0, $#lua_functions);
 
-output:close()
+      @map{fn = lua_functions, _separator="\n\n"}:add_binding_function
+
+      lua_setfield(lstate, -2, "api");
+    }\n]])),
+  add_binding_function = dedent([[
+    lua_pushcfunction(lstate, &@lua_c_function_name);
+    lua_setfield(lstate, -2, "$fn.name");]]),
+  lua_c_function_name = 'nlua_msgpack_$fn.name',
+  binding_function = nl(dedent([[
+    static int @lua_c_function_name(lua_State *lstate)
+      FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    {
+      Error err = ERROR_INIT;
+      if (lua_gettop(lstate) != $#fn.parameters) {
+        api_set_error(&err, kErrorTypeValidation,
+                      "Expected $#fn.parameters argument@param_s");
+        goto exit_0;
+      }
+
+      @iter{fn.parameters, _separator="\n\n"}:process_arg
+
+      @fcallstart$fn.name(@fcallargs);
+
+      @if(fn.return_type ~= "void")<push_return>
+
+    @map{param = fn.parameters, _separator="\n"}:cleanup_arg
+
+    exit_0:
+      if (ERROR_SET(&err)) {
+        luaL_where(lstate, 1);
+        lua_pushstring(lstate, err.msg);
+        api_clear_error(&err);
+        lua_concat(lstate, 2);
+        return lua_error(lstate);
+      }
+
+      return @if(fn.return_type == "void")<{{0}}>else<{{1}}>;
+    }]])),
+  param_s = '@if(#fn.parameters ~= "1")<{{s}}>else<{{}}>',
+  process_arg = dedent([[
+    const $param.1 arg_$rev_i1 = nlua_pop_$rt(lstate, &err);
+    if (ERROR_SET(&err)) {
+      goto exit_$i0;
+    }]]),
+  cleanup_arg = dedent([[
+    @if(i0 ~= "0")<{{exit_$rev_i0:}}>
+      api_free_$rt_lower(arg_$i0);]]),
+  fcallstart = '@if(fn.return_type ~= "void")<{{const $fn.return_type rv = }}>',
+  fcallargs = (
+    '@if(fn.receives_channel_id)<{{'
+      .. 'LUA_INTERNAL_CALL@if(#fn.parameters > "0" or fn.can_fail)<{{, }}>'
+    .. '}}>'
+    .. '@map{ param = fn.parameters, _separator=", "}:{{arg_$i0}}'
+    .. '@if(fn.can_fail)<{{'
+      .. '@if(#fn.parameters > "0")<{{, }}>&err'
+    .. '}}>'
+  ),
+  push_return = dedent([[
+    nlua_push_$returntype(lstate, rv);
+    api_free_$returntype_lower(rv);]]),
+})
+lua_bindings_template:register('process_arg', function(env)
+  local ret = shallowcopy(env)
+  ret.rev_i1 = #env.fn.parameters - env.i1
+  ret.param = env.fn.parameters[ret.rev_i1 + 1]
+  ret.rt = real_type(ret.param[1])
+  ret.rt_lower = ret.rt:lower()
+  return ret
+end)
+lua_bindings_template:register('cleanup_arg', function(env)
+  local ret = shallowcopy(env)
+  ret.rev_i0 = #env.fn.parameters - env.i0
+  ret.rt = real_type(env.param[1])
+  ret.rt_lower = ret.rt:lower()
+  return ret
+end)
+lua_bindings_template:register('push_return', function(env)
+  local returntype = real_type(env.fn.return_type)
+  return {
+    returntype = returntype,
+    returntype_lower = returntype:lower()
+  }
+end)
+local lua_bindings_output = io.open(lua_c_bindings_outputf, 'wb')
+local handlers = lua_bindings_template:gen({
+  written_headers=written_headers,
+  lua_functions=lua_functions,
+}):gsub('\n%s*\n', '\n\n'):gsub('\n\n+', '\n\n')
+lua_bindings_output:write(handlers)
+lua_bindings_output:close()

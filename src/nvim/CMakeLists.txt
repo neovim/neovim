@@ -25,7 +25,8 @@ set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.generated.c)
 set(HEADER_GENERATOR ${GENERATOR_DIR}/gen_declarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
-set(GENERATED_API_DISPATCH ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.h)
+set(GENERATED_API_DISPATCH_WRAPPERS ${GENERATED_DIR}/api/private/dispatch_wrappers.generated.c)
+set(GENERATED_API_DISPATCH_TABLE ${GENERATED_DIR}/api/private/dispatch_table.generated.h)
 set(GENERATED_FUNCS_METADATA ${GENERATED_DIR}/api/private/funcs_metadata.generated.h)
 set(GENERATED_UI_EVENTS ${GENERATED_DIR}/ui_events.generated.h)
 set(GENERATED_UI_EVENTS_CALL ${GENERATED_DIR}/ui_events_call.generated.h)
@@ -142,7 +143,8 @@ set(CONV_SOURCES
   spellfile.c
   syntax.c
   tag.c
-  window.c)
+  window.c
+  api/private/dispatch.c)
 
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")
@@ -150,18 +152,37 @@ foreach(sfile ${CONV_SOURCES})
   endif()
 endforeach()
 
+if(NOT GPERF_PRG)
+  message(FATAL_ERROR "gperf was not found.")
+endif()
+
 if(NOT MSVC)
   set_source_files_properties(
     ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
-  # gperf generates ANSI-C with incorrect linkage, ignore it.
+endif()
+
+# gperf generates ANSI-C with incorrect linkage, ignore it.
+set(GPERF_SOURCES
+  eval.c
+  api/private/dispatch.c)
+
+if(NOT MSVC)
   check_c_compiler_flag(-Wno-static-in-inline HAS_WNO_STATIC_IN_INLINE_FLAG)
-  if(HAS_WNO_STATIC_IN_INLINE_FLAG)
-    set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
-  else()
-    set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
-  endif()
+  foreach(gperf_source ${GPERF_SOURCES})
+    if(HAS_WNO_STATIC_IN_INLINE_FLAG)
+      set_source_files_properties(
+        "${gperf_source}"
+        PROPERTIES
+          COMPILE_FLAGS
+            "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
+    else()
+      set_source_files_properties(
+        "${gperf_source}"
+        PROPERTIES
+          COMPILE_FLAGS
+            "${COMPILE_FLAGS} -Wno-conversion")
+    endif()
+  endforeach()
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
@@ -201,7 +222,7 @@ endfunction()
 # These lists must be mutually exclusive.
 foreach(sfile ${NVIM_SOURCES}
               "${CMAKE_CURRENT_LIST_DIR}/regexp_nfa.c"
-              ${GENERATED_API_DISPATCH}
+              "${GENERATED_API_DISPATCH_WRAPPERS}"
               "${GENERATED_UI_EVENTS_CALL}"
               "${GENERATED_UI_EVENTS_REMOTE}"
               "${GENERATED_UI_EVENTS_BRIDGE}"
@@ -246,13 +267,19 @@ add_custom_command(OUTPUT ${GENERATED_UNICODE_TABLES}
 )
 
 add_custom_command(
-  OUTPUT ${GENERATED_API_DISPATCH} ${GENERATED_FUNCS_METADATA}
-         ${API_METADATA} ${MSGPACK_LUA_C_BINDINGS}
+  OUTPUT ${GENERATED_API_DISPATCH_WRAPPERS}
+         ${GENERATED_API_DISPATCH_TABLE}
+         ${GENERATED_FUNCS_METADATA}
+         ${API_METADATA}
+         ${MSGPACK_LUA_C_BINDINGS}
   COMMAND ${LUA_PRG} ${API_DISPATCH_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
-                     ${GENERATED_API_DISPATCH}
+                     ${GENERATED_API_DISPATCH_WRAPPERS}
+                     ${GENERATED_API_DISPATCH_TABLE}
                      ${GENERATED_FUNCS_METADATA} ${API_METADATA}
                      ${MSGPACK_LUA_C_BINDINGS}
                      ${API_HEADERS}
+  COMMAND ${GPERF_PRG} ${GENERATED_API_DISPATCH_WRAPPERS}.gperf
+                       --output-file=${GENERATED_API_DISPATCH_TABLE}
   DEPENDS
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
@@ -262,8 +289,8 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${VIM_MODULE_FILE}
-  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${VIM_MODULE_SOURCE}
-                     ${VIM_MODULE_FILE} vim_module
+  COMMAND ${LUA_PRG} ${CHAR_BLOB_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}
+                     ${VIM_MODULE_SOURCE} ${VIM_MODULE_FILE} vim_module
   DEPENDS
     ${CHAR_BLOB_GENERATOR}
     ${VIM_MODULE_SOURCE}
@@ -297,7 +324,6 @@ list(APPEND NVIM_GENERATED_FOR_HEADERS
 )
 
 list(APPEND NVIM_GENERATED_FOR_SOURCES
-  "${GENERATED_API_DISPATCH}"
   "${GENERATED_EX_CMDS_DEFS}"
   "${GENERATED_EVENTS_NAMES_MAP}"
   "${GENERATED_OPTIONS}"
@@ -306,6 +332,7 @@ list(APPEND NVIM_GENERATED_FOR_SOURCES
 )
 
 list(APPEND NVIM_GENERATED_SOURCES
+  "${GENERATED_API_DISPATCH_WRAPPERS}"
   "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
 )
 
@@ -314,10 +341,6 @@ add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
       ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_INCLUDES_DIR} ${GENERATED_DIR}
   DEPENDS ${EX_CMDS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/ex_cmds.lua
 )
-
-if(NOT GPERF_PRG)
-  message(FATAL_ERROR "gperf was not found.")
-endif()
 add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
   COMMAND ${LUA_PRG} ${FUNCS_GENERATOR}
       ${CMAKE_CURRENT_LIST_DIR} ${GENERATED_DIR} ${API_METADATA} ${FUNCS_DATA}
@@ -326,7 +349,9 @@ add_custom_command(OUTPUT ${GENERATED_FUNCS} ${FUNCS_DATA}
   DEPENDS ${FUNCS_GENERATOR} ${CMAKE_CURRENT_LIST_DIR}/eval.lua ${API_METADATA}
 )
 list(APPEND NVIM_GENERATED_FOR_SOURCES
-  "${GENERATED_FUNCS}")
+  "${GENERATED_FUNCS}"
+  "${GENERATED_API_DISPATCH_TABLE}"
+)
 
 add_custom_command(OUTPUT ${GENERATED_EVENTS_ENUM} ${GENERATED_EVENTS_NAMES_MAP}
   COMMAND ${LUA_PRG} ${EVENTS_GENERATOR}

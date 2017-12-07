@@ -1,17 +1,17 @@
+MAX_NUM_BYTES = 15  -- 78 / 5: maximum number of bytes on one line
+
 local function dump_bin_array(output, name, data)
-  output:write([[
-  static const uint8_t ]]..name..[[[] = {
-]])
+  output:write(('static const uint8_t %s[] = {\n '):format(name))
 
   for i = 1, #data do
-    output:write(string.byte(data, i)..', ')
-    if i % 10 == 0 then
-      output:write('\n  ')
+    byte = data:byte(i)
+    output:write((' %3u,'):format(byte))
+    if i % MAX_NUM_BYTES == 0 and i ~= #data then
+      output:write('\n ')
     end
   end
-  output:write([[
-};
-]])
+
+  output:write('\n};\n')
 end
 
 return dump_bin_array
