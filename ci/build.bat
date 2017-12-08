@@ -53,6 +53,12 @@ bin\nvim --version || goto :error
 :: Functional tests
 mingw32-make functionaltest VERBOSE=1 || goto :error
 
+:: Old tests
+setlocal
+set PATH=%PATH%;C:\msys64\usr\bin
+mingw32-make -C "%~dp0\..\src\nvim\testdir" VERBOSE=1
+endlocal
+
 if defined USE_GCOV (
   C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) || echo 'codecov upload failed.'"
 )
