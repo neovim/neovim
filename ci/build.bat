@@ -55,7 +55,7 @@ mingw32-make functionaltest VERBOSE=1 || goto :error
 
 :: Unit tests
 setlocal
-set PATH=C:\msys64\usr\bin;%PATH%
+set PATH=%PATH%;C:\msys64\usr\bin
 mingw32-make -C "%~dp0\..\src\nvim\testdir" VERBOSE=1
 endlocal
 
