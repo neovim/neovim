@@ -14,41 +14,30 @@ export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
 export TMPDIR
 
-ifeq ($(OS),Windows_NT)
-  SCRIPTS ?= \
-	test13.out             \
-	test14.out             \
-	test24.out             \
-	test37.out             \
-	test40.out             \
-	test42.out             \
-	test48.out             \
-	test49.out             \
-	test52.out             \
-	test53.out             \
-	test64.out             \
-	test73.out             \
-	test79.out             \
 
-else
-  SCRIPTS ?= \
-	test13.out             \
-	test14.out             \
+SCRIPTS_DEFAULT = \
+		   test13.out             \
+		   test14.out             \
+		   test24.out             \
+		   test37.out             \
+		   test40.out             \
+		   test42.out             \
+		   test48.out             \
+		   test49.out             \
+		   test52.out             \
+		   test53.out             \
+		   test64.out             \
+		   test73.out             \
+		   test79.out             \
+
+ifneq ($(OS),Windows_NT)
+  SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
 	test17.out             \
-	test24.out             \
 	test32.out             \
-	test37.out             \
-	test40.out             \
-	test42.out             \
-	test48.out             \
-	test49.out             \
-	test52.out             \
-	test53.out             \
-	test64.out             \
-	test73.out             \
-	test79.out             \
 
 endif
+
+SCRIPTS ?= $(SCRIPTS_DEFAULT)
 
 # Tests using runtest.vim.
 # Keep test_alot*.res as the last one, sort the others.
