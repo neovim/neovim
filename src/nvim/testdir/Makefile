@@ -14,21 +14,20 @@ export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
 export TMPDIR
 
-
 SCRIPTS_DEFAULT = \
-		   test13.out             \
-		   test14.out             \
-		   test24.out             \
-		   test37.out             \
-		   test40.out             \
-		   test42.out             \
-		   test48.out             \
-		   test49.out             \
-		   test52.out             \
-		   test53.out             \
-		   test64.out             \
-		   test73.out             \
-		   test79.out             \
+           test13.out             \
+           test14.out             \
+           test24.out             \
+           test37.out             \
+           test40.out             \
+           test42.out             \
+           test48.out             \
+           test49.out             \
+           test52.out             \
+           test53.out             \
+           test64.out             \
+           test73.out             \
+           test79.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
