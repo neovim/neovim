@@ -2,6 +2,11 @@
 # Makefile to run all tests for Vim
 #
 
+ifeq ($(OS),Windows_NT)
+  NVIM_PRG ?= ../../../build/bin/nvim.exe
+else
+  NVIM_PRG ?= ../../../build/bin/nvim
+endif
 NVIM_PRG ?= ../../../build/bin/nvim
 TMPDIR ?= Xtest-tmpdir
 SCRIPTSOURCE := ../../../runtime
@@ -10,22 +15,41 @@ export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
 export TMPDIR
 
-SCRIPTS ?= \
-           test13.out             \
-           test14.out             \
-           test17.out             \
-           test24.out             \
-           test32.out             \
-           test37.out             \
-           test40.out             \
-           test42.out             \
-           test48.out             \
-           test49.out             \
-           test52.out             \
-           test53.out             \
-           test64.out             \
-           test73.out             \
-           test79.out             \
+ifeq ($(OS),Windows_NT)
+  SCRIPTS ?= \
+	test13.out             \
+	test14.out             \
+	test24.out             \
+	test37.out             \
+	test40.out             \
+	test42.out             \
+	test48.out             \
+	test49.out             \
+	test52.out             \
+	test53.out             \
+	test64.out             \
+	test73.out             \
+	test79.out             \
+
+else
+  SCRIPTS ?= \
+	test13.out             \
+	test14.out             \
+	test17.out             \
+	test24.out             \
+	test32.out             \
+	test37.out             \
+	test40.out             \
+	test42.out             \
+	test48.out             \
+	test49.out             \
+	test52.out             \
+	test53.out             \
+	test64.out             \
+	test73.out             \
+	test79.out             \
+
+endif
 
 # Tests using runtest.vim.
 # Keep test_alot*.res as the last one, sort the others.
