@@ -7,7 +7,6 @@ ifeq ($(OS),Windows_NT)
 else
   NVIM_PRG ?= ../../../build/bin/nvim
 endif
-NVIM_PRG ?= ../../../build/bin/nvim
 TMPDIR ?= Xtest-tmpdir
 SCRIPTSOURCE := ../../../runtime
 
