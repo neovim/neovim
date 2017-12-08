@@ -53,7 +53,7 @@ bin\nvim --version || goto :error
 :: Functional tests
 mingw32-make functionaltest VERBOSE=1 || goto :error
 
-:: Unit tests
+:: Old tests
 setlocal
 set PATH=%PATH%;C:\msys64\usr\bin
 mingw32-make -C "%~dp0\..\src\nvim\testdir" VERBOSE=1
