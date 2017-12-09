@@ -456,6 +456,35 @@ extern bool tv_in_free_unref_items;
 #define TV_LIST_ITER_CONST(l, li, code) \
     _TV_LIST_ITER_MOD(const, l, li, code)
 
+// Below macros are macros to avoid duplicating code for functionally identical
+// const and non-const function variants.
+
+/// Get typval_T out of list item
+///
+/// @param[in]  li  List item to get typval_T from, must not be NULL.
+///
+/// @return Pointer to typval_T.
+#define TV_LIST_ITEM_TV(li) (&(li)->li_tv)
+
+/// Get next list item given the current one
+///
+/// @param[in]  l  List to get item from.
+/// @param[in]  li  List item to get typval_T from.
+///
+/// @return Pointer to the next item or NULL.
+#define TV_LIST_ITEM_NEXT(l, li) ((li)->li_next)
+
+/// Get previous list item given the current one
+///
+/// @param[in]  l  List to get item from.
+/// @param[in]  li  List item to get typval_T from.
+///
+/// @return Pointer to the previous item or NULL.
+#define TV_LIST_ITEM_PREV(l, li) ((li)->li_prev)
+// List argument is not used currently, but it is a must for lists implemented
+// as a pair (size(in list), array) without terminator - basically for lists on
+// top of kvec.
+
 /// Iterate over a dictionary
 ///
 /// @param[in]  d  Dictionary to iterate over.
