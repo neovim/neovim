@@ -596,6 +596,85 @@ bool emsgf(const char *const fmt, ...)
   return emsg((const char_u *)errbuf);
 }
 
+/*
+ * Print an error message with one "%s" and one string argument.
+ */
+int emsg2(char_u *s, char_u *a1)
+{
+  return emsg3(s, a1, NULL);
+}
+
+/*
+ * Print an error message with one or two "%s" and one or two string arguments.
+ * This is not in message.c to avoid a warning for prototypes.
+ */
+int emsg3(char_u *s, char_u *a1, char_u *a2)
+{
+  if (emsg_not_now())
+    return TRUE;		/* no error messages at the moment */
+  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, a1, a2);
+  return emsg(IObuff);
+}
+
+/*
+ * Print an error message with one "%ld" and one long int argument.
+ * This is not in message.c to avoid a warning for prototypes.
+ */
+int emsgn(char_u *s, long n)
+{
+  if (emsg_not_now())
+    return TRUE;		/* no error messages at the moment */
+  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, n);
+  return emsg(IObuff);
+}
+
+/*
+ * Same as emsg(...), but abort on error when ABORT_ON_INTERNAL_ERROR is
+ * defined. It is used for internal errors only, so that they can be
+ * detected when fuzzing vim.
+ */
+void iemsg(char_u *s)
+{
+  msg(s);
+#ifdef ABORT_ON_INTERNAL_ERROR
+  abort();
+#endif
+}
+
+/*
+ * Same as emsg2(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
+ * defined. It is used for internal errors only, so that they can be
+ * detected when fuzzing vim.
+ */
+void iemsg2(char_u *s, char_u *a1)
+{
+  emsg2(s, a1);
+#ifdef ABORT_ON_INTERNAL_ERROR
+  abort();
+#endif
+}
+
+/*
+ * Same as emsgn(...) but abort on error when ABORT_ON_INTERNAL_ERROR is
+ * defined. It is used for internal errors only, so that they can be
+ * detected when fuzzing vim.
+ */
+void iemsgn(char_u *s, long n)
+{
+  emsgn(s, n);
+#ifdef ABORT_ON_INTERNAL_ERROR
+  abort();
+#endif
+}
+
+/*
+ * Give an "Internal error" message.
+ */
+void internal_error(char *where)
+{
+  IEMSG2(_(e_intern2), where);
+}
+
 static void msg_emsgf_event(void **argv)
 {
   char *s = argv[0];
@@ -637,6 +716,7 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
     return s;
   return NULL;
 }
+
 
 /*
  * Check if message "s" should be truncated at the start (for filenames).

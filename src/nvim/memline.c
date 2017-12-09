@@ -293,7 +293,7 @@ int ml_open(buf_T *buf)
    */
   hp = mf_new(mfp, false, 1);
   if (hp->bh_bnum != 0) {
-    EMSG(_("E298: Didn't get block nr 0?"));
+		IEMSG(_("E298: Didn't get block nr 0?"));
     goto error;
   }
   b0p = hp->bh_data;
@@ -335,7 +335,7 @@ int ml_open(buf_T *buf)
   if ((hp = ml_new_ptr(mfp)) == NULL)
     goto error;
   if (hp->bh_bnum != 1) {
-    EMSG(_("E298: Didn't get block nr 1?"));
+    IEMSG(_("E298: Didn't get block nr 1?"));
     goto error;
   }
   pp = hp->bh_data;
@@ -351,7 +351,7 @@ int ml_open(buf_T *buf)
    */
   hp = ml_new_data(mfp, FALSE, 1);
   if (hp->bh_bnum != 2) {
-    EMSG(_("E298: Didn't get block nr 2?"));
+    IEMSG(_("E298: Didn't get block nr 2?"));
     goto error;
   }
 
@@ -636,7 +636,7 @@ static void ml_upd_block0(buf_T *buf, upd_block0_T what)
     return;
   b0p = hp->bh_data;
   if (ml_check_b0_id(b0p) == FAIL)
-    EMSG(_("E304: ml_upd_block0(): Didn't get block 0??"));
+    IEMSG(_("E304: ml_upd_block0(): Didn't get block 0??"));
   else {
     if (what == UB_FNAME)
       set_b0_fname(b0p, buf);
@@ -1745,7 +1745,7 @@ ml_get_buf (
       /* Avoid giving this message for a recursive call, may happen when
        * the GUI redraws part of the text. */
       ++recursive;
-      EMSGN(_("E315: ml_get: invalid lnum: %" PRId64), lnum);
+      IEMSGN(_("E315: ml_get: invalid lnum: %" PRId64), lnum);
       --recursive;
     }
 errorret:
@@ -1777,7 +1777,7 @@ errorret:
         /* Avoid giving this message for a recursive call, may happen
          * when the GUI redraws part of the text. */
         ++recursive;
-        EMSGN(_("E316: ml_get: cannot find line %" PRId64), lnum);
+        IEMSGN(_("E316: ml_get: cannot find line %" PRId64), lnum);
         --recursive;
       }
       goto errorret;
@@ -2162,7 +2162,7 @@ ml_append_int (
         return FAIL;
       pp = hp->bh_data;         /* must be pointer block */
       if (pp->pb_id != PTR_ID) {
-        EMSG(_("E317: pointer block id wrong 3"));
+        IEMSG(_("E317: pointer block id wrong 3"));
         mf_put(mfp, hp, false, false);
         return FAIL;
       }
@@ -2295,7 +2295,7 @@ ml_append_int (
      * Safety check: fallen out of for loop?
      */
     if (stack_idx < 0) {
-      EMSG(_("E318: Updated too many blocks?"));
+      IEMSG(_("E318: Updated too many blocks?"));
       buf->b_ml.ml_stack_top = 0;       /* invalidate stack */
     }
   }
@@ -2435,7 +2435,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
         return FAIL;
       pp = hp->bh_data;         /* must be pointer block */
       if (pp->pb_id != PTR_ID) {
-        EMSG(_("E317: pointer block id wrong 4"));
+        IEMSG(_("E317: pointer block id wrong 4"));
         mf_put(mfp, hp, false, false);
         return FAIL;
       }
@@ -2631,7 +2631,7 @@ static void ml_flush_line(buf_T *buf)
 
     hp = ml_find_line(buf, lnum, ML_FIND);
     if (hp == NULL)
-      EMSGN(_("E320: Cannot find line %" PRId64), lnum);
+      IEMSGN(_("E320: Cannot find line %" PRId64), lnum);
     else {
       dp = hp->bh_data;
       idx = lnum - buf->b_ml.ml_locked_low;
@@ -2841,7 +2841,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
 
     pp = (PTR_BL *)(dp);                /* must be pointer block */
     if (pp->pb_id != PTR_ID) {
-      EMSG(_("E317: pointer block id wrong"));
+      IEMSG(_("E317: pointer block id wrong"));
       goto error_block;
     }
 
@@ -2880,11 +2880,11 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
     }
     if (idx >= (int)pp->pb_count) {         /* past the end: something wrong! */
       if (lnum > buf->b_ml.ml_line_count)
-        EMSGN(_("E322: line number out of range: %" PRId64 " past the end"),
+        IEMSGN(_("E322: line number out of range: %" PRId64 " past the end"),
             lnum - buf->b_ml.ml_line_count);
 
       else
-        EMSGN(_("E323: line count wrong in block %" PRId64), bnum);
+        IEMSGN(_("E323: line count wrong in block %" PRId64), bnum);
       goto error_block;
     }
     if (action == ML_DELETE) {
@@ -2960,7 +2960,7 @@ static void ml_lineadd(buf_T *buf, int count)
     pp = hp->bh_data;       /* must be pointer block */
     if (pp->pb_id != PTR_ID) {
       mf_put(mfp, hp, false, false);
-      EMSG(_("E317: pointer block id wrong 2"));
+      IEMSG(_("E317: pointer block id wrong 2"));
       break;
     }
     pp->pb_pointer[ip->ip_index].pe_line_count += count;

@@ -459,6 +459,7 @@ static int toggle_Magic(int x)
 /* Used for an error (down from) vim_regcomp(): give the error message, set
  * rc_did_emsg and return NULL */
 #define EMSG_RET_NULL(m) return (EMSG(m), rc_did_emsg = TRUE, (void *)NULL)
+#define IEMSG_RET_NULL(m) return (IEMSG(m), rc_did_emsg = TRUE, (void *)NULL)
 #define EMSG_RET_FAIL(m) return (EMSG(m), rc_did_emsg = TRUE, FAIL)
 #define EMSG2_RET_NULL(m, \
                        c) return (EMSG2((m), \
@@ -1891,7 +1892,7 @@ static char_u *regatom(int *flagp)
   case Magic(')'):
     if (one_exactly)
       EMSG_ONE_RET_NULL;
-    EMSG_RET_NULL(_(e_internal));       /* Supposed to be caught earlier. */
+    IEMSG_RET_NULL(_(e_internal));	/* Supposed to be caught earlier. */
   /* NOTREACHED */
 
   case Magic('='):
@@ -4534,7 +4535,7 @@ regmatch (
             brace_max[no] = OPERAND_MAX(scan);
             brace_count[no] = 0;
           } else {
-            EMSG(_(e_internal));                    /* Shouldn't happen */
+				    internal_error("BRACE_LIMITS");
             status = RA_FAIL;
           }
         }

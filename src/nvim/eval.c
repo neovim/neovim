@@ -1103,7 +1103,7 @@ static void restore_vimvar(int idx, typval_T *save_tv)
   if (vimvars[idx].vv_type == VAR_UNKNOWN) {
     hi = hash_find(&vimvarht, vimvars[idx].vv_di.di_key);
     if (HASHITEM_EMPTY(hi))
-      EMSG2(_(e_intern2), "restore_vimvar()");
+      internal_error("restore_vimvar()");
     else
       hash_remove(&vimvarht, hi);
   }
@@ -1567,7 +1567,7 @@ ex_let_vars (
       }
       break;
     } else if (*arg != ',' && *arg != ']') {
-      EMSG2(_(e_intern2), "ex_let_vars()");
+      internal_error("ex_let_vars()");
       return FAIL;
     }
   }
@@ -2960,7 +2960,7 @@ int do_unlet(const char *const name, const size_t name_len, const int forceit)
       d = di->di_tv.vval.v_dict;
     }
     if (d == NULL) {
-      EMSG2(_(e_intern2), "do_unlet()");
+  		internal_error("do_unlet()");
       return FAIL;
     }
     hashitem_T *hi = hash_find(ht, (const char_u *)varname);
@@ -7959,7 +7959,7 @@ static void f_empty(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     n = argvars[0].vval.v_special != kSpecialVarTrue;
     break;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "f_empty(UNKNOWN)");
+    internal_error("f_empty(UNKNOWN)");
     break;
   }
 
@@ -17151,7 +17151,7 @@ static void f_type(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "f_type(UNKNOWN)");
+      internal_error("f_type(UNKNOWN)");
       break;
     }
   }
@@ -19031,6 +19031,7 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
         return;
       } else if (v->di_tv.v_type != tv->v_type) {
         EMSG2(_(e_intern2), "set_var()");
+        internal_error("set_var()");
       }
     }
 
@@ -19297,7 +19298,7 @@ int var_item_copy(const vimconv_T *const conv,
     }
     break;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "var_item_copy(UNKNOWN)");
+    internal_error("var_item_copy(UNKNOWN)");
     ret = FAIL;
   }
   --recurse;

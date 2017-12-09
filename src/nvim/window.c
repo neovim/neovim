@@ -2106,10 +2106,10 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
       for (ptp = first_tabpage; ptp != NULL && ptp->tp_next != tp;
            ptp = ptp->tp_next)
         ;
-      if (ptp == NULL) {
-        EMSG2(_(e_intern2), "win_close_othertab()");
-        return;
-      }
+			if (ptp == NULL) {
+				internal_error("win_close_othertab()");
+				return;
+			}
       ptp->tp_next = tp->tp_next;
     }
     free_tp = TRUE;

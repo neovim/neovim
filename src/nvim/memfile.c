@@ -377,7 +377,7 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
   unsigned flags = hp->bh_flags;
 
   if ((flags & BH_LOCKED) == 0)
-    EMSG(_("E293: block was not locked"));
+		IEMSG(_("E293: block was not locked"));
   flags &= ~BH_LOCKED;
   if (dirty) {
     flags |= BH_DIRTY;
