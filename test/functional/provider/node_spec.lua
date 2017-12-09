@@ -1,6 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 local eq, clear = helpers.eq, helpers.clear
 local missing_provider = helpers.missing_provider
+local command = helpers.command
+local write_file = helpers.write_file
+local eval = helpers.eval
+local sleep = helpers.sleep
 
 do
   clear()
@@ -14,4 +18,23 @@ end
 
 before_each(function()
   clear()
+end)
+
+describe('node host', function()
+  it('works', function()
+    -- Assume that node host is installed globally
+    command('let $NODE_PATH = fnamemodify(exepath("neovim-node-host"), ":h") . "/node_modules"')
+    local fname = 'hello.js'
+    write_file(fname, [[
+      const socket = process.env.NVIM_LISTEN_ADDRESS;
+      const nvim = require('neovim');
+      const host = nvim.attach({socket: socket});
+      host.command('let g:job_out = "hello"');
+      host.command('call jobstop(g:job_id)');
+    ]])
+    command('let g:job_id = jobstart(["node", "hello.js"])')
+    sleep(5000)
+    eq('hello', eval('g:job_out'))
+    os.remove(fname)
+  end)
 end)
