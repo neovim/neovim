@@ -316,7 +316,7 @@ local function alloc_log_new()
     eq(exp, self.log)
     self:clear()
   end
-  function log:clear_tmp_allocs()
+  function log:clear_tmp_allocs(clear_null_frees)
     local toremove = {}
     local allocs = {}
     for i, v in ipairs(self.log) do
@@ -328,6 +328,8 @@ local function alloc_log_new()
           if v.func == 'free' then
             toremove[#toremove + 1] = i
           end
+        elseif clear_null_frees and v.args[1] == self.null then
+          toremove[#toremove + 1] = i
         end
         if v.func == 'realloc' then
           allocs[tostring(v.ret)] = i
@@ -528,9 +530,13 @@ local hook_numlen = 5
 local hook_msglen = 1 + 1 + 1 + (1 + hook_fnamelen) + (1 + hook_sfnamelen) + (1 + hook_numlen) + 1
 
 local tracehelp = dedent([[
+  Trace: either in the format described below or custom debug output starting
+  with `>`. Latter lines still have the same width in byte.
+
   ┌ Trace type: _r_eturn from function , function _c_all, _l_ine executed,
   │             _t_ail return, _C_ount (should not actually appear),
-  │             _s_aved from previous run for reference.
+  │             _s_aved from previous run for reference, _>_ for custom debug
+  │             output.
   │┏ Function type: _L_ua function, _C_ function, _m_ain part of chunk,
   │┃                function that did _t_ail call.
   │┃┌ Function name type: _g_lobal, _l_ocal, _m_ethod, _f_ield, _u_pvalue,
@@ -628,14 +634,26 @@ end
 
 local trace_end_msg = ('E%s\n'):format((' '):rep(hook_msglen - 2))
 
+local _debug_log
+
+local debug_log = only_separate(function(...)
+  return _debug_log(...)
+end)
+
 local function itp_child(wr, func)
-  init()
-  collectgarbage('stop')
-  child_sethook(wr)
-  local err, emsg = pcall(func)
-  collectgarbage('restart')
-  collectgarbage()
-  debug.sethook()
+  _debug_log = function(s)
+    s = s:sub(1, hook_msglen - 2)
+    sc.write(wr, '>' .. s .. (' '):rep(hook_msglen - 2 - #s) .. '\n')
+  end
+  local err, emsg = pcall(init)
+  if err then
+    collectgarbage('stop')
+    child_sethook(wr)
+    err, emsg = pcall(func)
+    collectgarbage('restart')
+    collectgarbage()
+    debug.sethook()
+  end
   emsg = tostring(emsg)
   sc.write(wr, trace_end_msg)
   if not err then
@@ -657,6 +675,7 @@ end
 local function check_child_err(rd)
   local trace = {}
   local did_traceline = false
+  local maxtrace = tonumber(os.getenv('NVIM_TEST_MAXTRACE')) or 1024
   while true do
     local traceline = sc.read(rd, hook_msglen)
     if #traceline ~= hook_msglen then
@@ -671,6 +690,7 @@ local function check_child_err(rd)
       break
     end
     trace[#trace + 1] = traceline
+    table.remove(trace, maxtrace + 1)
   end
   local res = sc.read(rd, 2)
   if #res ~= 2 then
@@ -699,7 +719,14 @@ local function check_child_err(rd)
   local len_s = sc.read(rd, 5)
   local len = tonumber(len_s)
   neq(0, len)
-  local err = sc.read(rd, len + 1)
+  local err = ''
+  if os.getenv('NVIM_TEST_TRACE_ON_ERROR') == '1' and #trace ~= 0 then
+    err = '\nTest failed, trace:\n' .. tracehelp
+    for _, traceline in ipairs(trace) do
+      err = err .. traceline
+    end
+  end
+  err = err .. sc.read(rd, len + 1)
   assert.just_fail(err)
 end
 
@@ -754,6 +781,60 @@ end
 
 cimport('./src/nvim/types.h', './src/nvim/main.h', './src/nvim/os/time.h')
 
+local function conv_enum(etab, eval)
+  local n = tonumber(eval)
+  return etab[n] or n
+end
+
+local function array_size(arr)
+  return ffi.sizeof(arr) / ffi.sizeof(arr[0])
+end
+
+local function kvi_size(kvi)
+  return array_size(kvi.init_array)
+end
+
+local function kvi_init(kvi)
+  kvi.capacity = kvi_size(kvi)
+  kvi.items = kvi.init_array
+  return kvi
+end
+
+local function kvi_destroy(kvi)
+  if kvi.items ~= kvi.init_array then
+    lib.xfree(kvi.items)
+  end
+end
+
+local function kvi_new(ct)
+  return kvi_init(ffi.new(ct))
+end
+
+local function make_enum_conv_tab(m, values, skip_pref, set_cb)
+  child_call_once(function()
+    local ret = {}
+    for _, v in ipairs(values) do
+      local str_v = v
+      if v:sub(1, #skip_pref) == skip_pref then
+        str_v = v:sub(#skip_pref + 1)
+      end
+      ret[tonumber(m[v])] = str_v
+    end
+    set_cb(ret)
+  end)
+end
+
+local function ptr2addr(ptr)
+  return tonumber(ffi.cast('intptr_t', ffi.cast('void *', ptr)))
+end
+
+local s = ffi.new('char[64]', {0})
+
+local function ptr2key(ptr)
+  ffi.C.snprintf(s, ffi.sizeof(s), '%p', ffi.cast('void *', ptr))
+  return ffi.string(s)
+end
+
 local module = {
   cimport = cimport,
   cppimport = cppimport,
@@ -774,6 +855,16 @@ local module = {
   child_call_once = child_call_once,
   child_cleanup_once = child_cleanup_once,
   sc = sc,
+  conv_enum = conv_enum,
+  array_size = array_size,
+  kvi_destroy = kvi_destroy,
+  kvi_size = kvi_size,
+  kvi_init = kvi_init,
+  kvi_new = kvi_new,
+  make_enum_conv_tab = make_enum_conv_tab,
+  ptr2addr = ptr2addr,
+  ptr2key = ptr2key,
+  debug_log = debug_log,
 }
 return function()
   return module

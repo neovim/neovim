@@ -86,6 +86,8 @@ foreach(subdir
         event
         eval
         lua
+        viml
+        viml/parser
        )
   if(${subdir} MATCHES "tui" AND NOT FEAT_TUI)
     continue()

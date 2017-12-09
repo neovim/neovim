@@ -165,14 +165,17 @@ Highlight groups:
   |hl-TermCursor|
   |hl-TermCursorNC|
   |hl-Whitespace| highlights 'listchars' whitespace
+  |expr-highlight| highlight groups (prefixed with "Nvim")
 
-UI:
-		*E5408* *E5409* *g:Nvim_color_expr* *g:Nvim_color_cmdline*
-  Command-line coloring is supported. Only |input()| and |inputdialog()| may
-  be colored. For testing purposes expressions (e.g. |i_CTRL-R_=|) and regular
-  command-line (|:|) are colored by callbacks defined in `g:Nvim_color_expr`
-  and `g:Nvim_color_cmdline` respectively (these callbacks are for testing
-  only, and will be removed in a future version). 
+Command-line highlighting:
+  The expression prompt (|@=|, |c_CTRL-R_=|, |i_CTRL-R_=|) is highlighted
+  using a built-in VimL expression parser. |expr-highlight|
+					*E5408* *E5409*
+  |input()|, |inputdialog()| support custom highlighting. |input()-highlight|
+					*g:Nvim_color_cmdline*
+  (Experimental) Command-line (|:|) is colored by callback defined in
+  `g:Nvim_color_cmdline` (this callback is for testing only, and will be
+  removed in the future).
 
 ==============================================================================
 4. Changed features					 *nvim-features-changed*

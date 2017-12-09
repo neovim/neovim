@@ -60,6 +60,12 @@ typedef enum {
   CONV_ICONV     = 5,
 } ConvFlags;
 
+#define MBYTE_NONE_CONV { \
+  .vc_type = CONV_NONE, \
+  .vc_factor = 1, \
+  .vc_fail = false, \
+}
+
 /// Structure used for string conversions
 typedef struct {
   int vc_type;  ///< Zero or more ConvFlags.
@@ -72,6 +78,8 @@ typedef struct {
 } vimconv_T;
 
 extern const uint8_t utf8len_tab_zero[256];
+
+extern const uint8_t utf8len_tab[256];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "mbyte.h.generated.h"

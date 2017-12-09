@@ -62,7 +62,16 @@
 #define kv_pop(v) ((v).items[--(v).size])
 #define kv_size(v) ((v).size)
 #define kv_max(v) ((v).capacity)
-#define kv_last(v) kv_A(v, kv_size(v) - 1)
+#define kv_Z(v, i) kv_A(v, kv_size(v) - (i) - 1)
+#define kv_last(v) kv_Z(v, 0)
+
+/// Drop last n items from kvec without resizing
+///
+/// Previously spelled as `(void)kv_pop(v)`, repeated n times.
+///
+/// @param[out]  v  Kvec to drop items from.
+/// @param[in]  n  Number of elements to drop.
+#define kv_drop(v, n) ((v).size -= (n))
 
 #define kv_resize(v, s) \
     ((v).capacity = (s), \

@@ -66,6 +66,8 @@
 #include "nvim/lib/kvec.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/viml/parser/parser.h"
+#include "nvim/viml/parser/expressions.h"
 
 /// Command-line colors: one chunk
 ///
@@ -2428,6 +2430,63 @@ void free_cmdline_buf(void)
 
 enum { MAX_CB_ERRORS = 1 };
 
+/// Color expression cmdline using built-in expressions parser
+///
+/// @param[in]  colored_ccline  Command-line to color.
+/// @param[out]  ret_ccline_colors  What should be colored.
+///
+/// Always colors the whole cmdline.
+static void color_expr_cmdline(const CmdlineInfo *const colored_ccline,
+                               ColoredCmdline *const ret_ccline_colors)
+  FUNC_ATTR_NONNULL_ALL
+{
+  ParserLine plines[] = {
+    {
+      .data = (const char *)colored_ccline->cmdbuff,
+      .size = STRLEN(colored_ccline->cmdbuff),
+      .allocated = false,
+    },
+    { NULL, 0, false },
+  };
+  ParserLine *plines_p = plines;
+  ParserHighlight colors;
+  kvi_init(colors);
+  ParserState pstate;
+  viml_parser_init(
+      &pstate, parser_simple_get_line, &plines_p, &colors);
+  ExprAST east = viml_pexpr_parse(&pstate, kExprFlagsDisallowEOC);
+  viml_pexpr_free_ast(east);
+  viml_parser_destroy(&pstate);
+  kv_resize(ret_ccline_colors->colors, kv_size(colors));
+  size_t prev_end = 0;
+  for (size_t i = 0 ; i < kv_size(colors) ; i++) {
+    const ParserHighlightChunk chunk = kv_A(colors, i);
+    if (chunk.start.col != prev_end) {
+      kv_push(ret_ccline_colors->colors, ((CmdlineColorChunk) {
+        .start = prev_end,
+        .end = chunk.start.col,
+        .attr = 0,
+      }));
+    }
+    const int id = syn_name2id((const char_u *)chunk.group);
+    const int attr = (id == 0 ? 0 : syn_id2attr(id));
+    kv_push(ret_ccline_colors->colors, ((CmdlineColorChunk) {
+        .start = chunk.start.col,
+        .end = chunk.end_col,
+        .attr = attr,
+    }));
+    prev_end = chunk.end_col;
+  }
+  if (prev_end < (size_t)colored_ccline->cmdlen) {
+    kv_push(ret_ccline_colors->colors, ((CmdlineColorChunk) {
+      .start = prev_end,
+      .end = (size_t)colored_ccline->cmdlen,
+      .attr = 0,
+    }));
+  }
+  kvi_destroy(colors);
+}
+
 /// Color command-line
 ///
 /// Should use built-in command parser or user-specified one. Currently only the
@@ -2510,13 +2569,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
     tl_ret = try_leave(&tstate, &err);
     can_free_cb = true;
   } else if (colored_ccline->cmdfirstc == '=') {
-    try_enter(&tstate);
-    err_errmsg = N_(
-        "E5409: Unable to get g:Nvim_color_expr callback: %s");
-    dgc_ret = tv_dict_get_callback(&globvardict, S_LEN("Nvim_color_expr"),
-                                   &color_cb);
-    tl_ret = try_leave(&tstate, &err);
-    can_free_cb = true;
+    color_expr_cmdline(colored_ccline, ccline_colors);
   }
   if (!tl_ret || !dgc_ret) {
     goto color_cmdline_error;

@@ -1559,10 +1559,10 @@ v:exception	The value of the exception most recently caught and not
 <		Output: "caught oops".
 
 					*v:false* *false-variable*
-v:false		Special value used to put "false" in JSON and msgpack.  See 
-		|json_encode()|.  This value is converted to "v:false" when used 
-		as a String (e.g. in |expr5| with string concatenation 
-		operator) and to zero when used as a Number (e.g. in |expr5| 
+v:false		Special value used to put "false" in JSON and msgpack.  See
+		|json_encode()|.  This value is converted to "v:false" when used
+		as a String (e.g. in |expr5| with string concatenation
+		operator) and to zero when used as a Number (e.g. in |expr5|
 		or |expr7| when used with numeric operators). Read-only.
 
 					*v:fcs_reason* *fcs_reason-variable*
@@ -1703,16 +1703,16 @@ v:mouse_col	Column number for a mouse click obtained with |getchar()|.
 		value is zero when there was no mouse button click.
 
 				*v:msgpack_types* *msgpack_types-variable*
-v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()| 
-		and |msgpackdump()|. All types inside dictionary are fixed 
-		(not editable) empty lists. To check whether some list is one 
+v:msgpack_types	Dictionary containing msgpack types used by |msgpackparse()|
+		and |msgpackdump()|. All types inside dictionary are fixed
+		(not editable) empty lists. To check whether some list is one
 		of msgpack types, use |is| operator.
 
 					*v:null* *null-variable*
-v:null		Special value used to put "null" in JSON and NIL in msgpack.  
-		See |json_encode()|.  This value is converted to "v:null" when 
-		used as a String (e.g. in |expr5| with string concatenation 
-		operator) and to zero when used as a Number (e.g. in |expr5| 
+v:null		Special value used to put "null" in JSON and NIL in msgpack. 
+		See |json_encode()|.  This value is converted to "v:null" when
+		used as a String (e.g. in |expr5| with string concatenation
+		operator) and to zero when used as a Number (e.g. in |expr5|
 		or |expr7| when used with numeric operators). Read-only.
 
 					*v:oldfiles* *oldfiles-variable*
@@ -1903,10 +1903,10 @@ v:throwpoint	The point where the exception most recently caught and not
 <		Output: "Exception from test.vim, line 2"
 
 					*v:true* *true-variable*
-v:true		Special value used to put "true" in JSON and msgpack.  See 
-		|json_encode()|.  This value is converted to "v:true" when used 
-		as a String (e.g. in |expr5| with string concatenation 
-		operator) and to one when used as a Number (e.g. in |expr5| or 
+v:true		Special value used to put "true" in JSON and msgpack.  See
+		|json_encode()|.  This value is converted to "v:true" when used
+		as a String (e.g. in |expr5| with string concatenation
+		operator) and to one when used as a Number (e.g. in |expr5| or
 		|expr7| when used with numeric operators). Read-only.
 
 						*v:val* *val-variable*
@@ -2492,7 +2492,7 @@ assert_fails({cmd} [, {error}])					*assert_fails()*
 assert_false({actual} [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to
 		|v:errors|, like with |assert_equal()|.
-		A value is false when it is zero or |v:false|. When "{actual}" 
+		A value is false when it is zero or |v:false|. When "{actual}"
 		is not a number or |v:false| the assert fails.
 		When {msg} is omitted an error in the form
 		"Expected False but got {actual}" is produced.
@@ -3182,7 +3182,7 @@ diff_hlID({lnum}, {col})				*diff_hlID()*
 empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
 		A |List| or |Dictionary| is empty when it does not have any
-		items.  A Number is empty when its value is zero.  Special 
+		items.  A Number is empty when its value is zero.  Special
 		variable is empty when it is |v:false| or |v:null|.
 
 escape({string}, {chars})				*escape()*
@@ -4749,7 +4749,7 @@ input({opts})
 		string, or a blank string (for no prompt).  A '\n' can be used
 		in the prompt to start a new line.
 
-		In the second form it accepts a single dictionary with the 
+		In the second form it accepts a single dictionary with the
 		following keys, any of which may be omitted:
 
 		Key           Default  Description ~
@@ -4757,7 +4757,7 @@ input({opts})
 		default       ""       Same as {text} in the first form.
 		completion    nothing  Same as {completion} in the first form.
 		cancelreturn  ""       Same as {cancelreturn} from
-		                       |inputdialog()|. Also works with 
+		                       |inputdialog()|. Also works with
 		                       input().
 		highlight     nothing  Highlight handler: |Funcref|.
 
@@ -4833,8 +4833,8 @@ input({opts})
 		modifier. If the function causes any errors, it will be
 		skipped for the duration of the current input() call.
 
-		Currently coloring is disabled when command-line contains
-		arabic characters.
+		Highlighting is disabled if command-line contains arabic
+		characters.
 
 		NOTE: This function must not be used in a startup file, for
 		the versions that only run in GUI mode (e.g., the Win32 GUI).
@@ -4948,19 +4948,19 @@ islocked({expr})					*islocked()* *E786*
 		message.  Use |exists()| to check for existence.
 
 id({expr})						*id()*
-		Returns a |String| which is a unique identifier of the 
-		container type (|List|, |Dict| and |Partial|). It is 
-		guaranteed that for the mentioned types `id(v1) ==# id(v2)` 
-		returns true iff `type(v1) == type(v2) && v1 is v2` (note: 
-		|v:_null_list| and |v:_null_dict| have the same `id()` with 
-		different types because they are internally represented as 
-		a NULL pointers). Currently `id()` returns a hexadecimal 
-		representanion of the pointers to the containers (i.e. like 
-		`0x994a40`), same as `printf("%p", {expr})`, but it is advised 
+		Returns a |String| which is a unique identifier of the
+		container type (|List|, |Dict| and |Partial|). It is
+		guaranteed that for the mentioned types `id(v1) ==# id(v2)`
+		returns true iff `type(v1) == type(v2) && v1 is v2` (note:
+		|v:_null_list| and |v:_null_dict| have the same `id()` with
+		different types because they are internally represented as
+		a NULL pointers). Currently `id()` returns a hexadecimal
+		representanion of the pointers to the containers (i.e. like
+		`0x994a40`), same as `printf("%p", {expr})`, but it is advised
 		against counting on exact format of return value.
 
-		It is not guaranteed that `id(no_longer_existing_container)` 
-		will not be equal to some other `id()`: new containers may 
+		It is not guaranteed that `id(no_longer_existing_container)`
+		will not be equal to some other `id()`: new containers may
 		reuse identifiers of the garbage-collected ones.
 
 items({dict})						*items()*
@@ -5071,14 +5071,14 @@ join({list} [, {sep}])					*join()*
 		The opposite function is |split()|.
 
 json_decode({expr})					*json_decode()*
-		Convert {expr} from JSON object.  Accepts |readfile()|-style 
-		list as the input, as well as regular string.  May output any 
+		Convert {expr} from JSON object.  Accepts |readfile()|-style
+		list as the input, as well as regular string.  May output any
 		Vim value. In the following cases it will output
 		|msgpack-special-dict|:
 		1. Dictionary contains duplicate key.
 		2. Dictionary contains empty key.
-		3. String contains NUL byte.  Two special dictionaries: for 
-		   dictionary and for string will be emitted in case string 
+		3. String contains NUL byte.  Two special dictionaries: for
+		   dictionary and for string will be emitted in case string
 		   with NUL byte was a dictionary key.
 
 		Note: function treats its input as UTF-8 always.  The JSON
@@ -5087,14 +5087,14 @@ json_decode({expr})					*json_decode()*
 		Non-UTF-8 characters are an error.
 
 json_encode({expr})					*json_encode()*
-		Convert {expr} into a JSON string.  Accepts 
-		|msgpack-special-dict| as the input.  Will not convert 
-		|Funcref|s, mappings with non-string keys (can be created as 
-		|msgpack-special-dict|), values with self-referencing 
-		containers, strings which contain non-UTF-8 characters, 
-		pseudo-UTF-8 strings which contain codepoints reserved for 
-		surrogate pairs (such strings are not valid UTF-8 strings).  
-		Non-printable characters are converted into "\u1234" escapes 
+		Convert {expr} into a JSON string.  Accepts
+		|msgpack-special-dict| as the input.  Will not convert
+		|Funcref|s, mappings with non-string keys (can be created as
+		|msgpack-special-dict|), values with self-referencing
+		containers, strings which contain non-UTF-8 characters,
+		pseudo-UTF-8 strings which contain codepoints reserved for
+		surrogate pairs (such strings are not valid UTF-8 strings). 
+		Non-printable characters are converted into "\u1234" escapes
 		or special escapes like "\t", other are dumped as-is.
 
 keys({dict})						*keys()*
@@ -5193,7 +5193,7 @@ line({expr})	The result is a Number, which is the line number of the file
 		This autocommand jumps to the last known position in a file
 		just after opening it, if the '" mark is set: >
      :au BufReadPost *
-         \ if line("'\"") > 1 && line("'\"") <= line("$") && &ft !~# 'commit' 
+         \ if line("'\"") > 1 && line("'\"") <= line("$") && &ft !~# 'commit'
          \ |   exe "normal! g`\""
          \ | endif
 
@@ -5244,7 +5244,7 @@ log10({expr})						*log10()*
 <			-2.0
 
 luaeval({expr}[, {expr}])
-		Evaluate Lua expression {expr} and return its result converted 
+		Evaluate Lua expression {expr} and return its result converted
 		to Vim data structures. See |lua-luaeval| for more details.
 
 map({expr1}, {expr2})					*map()*
@@ -5675,7 +5675,7 @@ mkdir({name} [, {path} [, {prot}]])
 			:call mkdir($HOME . "/tmp/foo/bar", "p", 0700)
 <		This function is not available in the |sandbox|.
 
-		If you try to create an existing directory with {path} set to 
+		If you try to create an existing directory with {path} set to
 		"p" mkdir() will silently exit.
 
 							*mode()*
@@ -5728,78 +5728,76 @@ msgpackdump({list})				   {Nvim} *msgpackdump()*
 		5. Points 3. and 4. do not apply to |msgpack-special-dict|s.
 
 msgpackparse({list})				   {Nvim} *msgpackparse()*
-		Convert a |readfile()|-style list to a list of VimL objects. 
+		Convert a |readfile()|-style list to a list of VimL objects.
 		Example: >
 			let fname = expand('~/.config/nvim/shada/main.shada')
 			let mpack = readfile(fname, 'b')
 			let shada_objects = msgpackparse(mpack)
-<		This will read ~/.config/nvim/shada/main.shada file to 
+<		This will read ~/.config/nvim/shada/main.shada file to
 		`shada_objects` list.
 
 		Limitations:
-		1. Mapping ordering is not preserved unless messagepack 
-		   mapping is dumped using generic  mapping 
+		1. Mapping ordering is not preserved unless messagepack
+		   mapping is dumped using generic  mapping
 		   (|msgpack-special-map|).
-		2. Since the parser aims to preserve all data untouched 
-		   (except for 1.) some strings are parsed to 
-		   |msgpack-special-dict| format which is not convenient to 
+		2. Since the parser aims to preserve all data untouched
+		   (except for 1.) some strings are parsed to
+		   |msgpack-special-dict| format which is not convenient to
 		   use.
 							*msgpack-special-dict*
-		Some messagepack strings may be parsed to special 
+		Some messagepack strings may be parsed to special
 		dictionaries. Special dictionaries are dictionaries which
 
 		1. Contain exactly two keys: `_TYPE` and `_VAL`.
-		2. `_TYPE` key is one of the types found in |v:msgpack_types| 
+		2. `_TYPE` key is one of the types found in |v:msgpack_types|
 		   variable.
-		3. Value for `_VAL` has the following format (Key column 
+		3. Value for `_VAL` has the following format (Key column
 		   contains name of the key from |v:msgpack_types|):
 
 		Key	Value ~
-		nil	Zero, ignored when dumping.  This value cannot 
-			possibly appear in |msgpackparse()| output in Neovim 
-			versions which have |v:null|.
-		boolean	One or zero.  When dumping it is only checked that 
-			value is a |Number|.  This value cannot possibly 
-			appear in |msgpackparse()| output in Neovim versions 
-			which have |v:true| and |v:false|.
-		integer	|List| with four numbers: sign (-1 or 1), highest two 
-			bits, number with bits from 62nd to 31st, lowest 31 
-			bits. I.e. to get actual number one will need to use 
+		nil	Zero, ignored when dumping.  Not returned by
+			|msgpackparse()| since |v:null| was introduced.
+		boolean	One or zero.  When dumping it is only checked that
+			value is a |Number|.  Not returned by |msgpackparse()|
+			since |v:true| and |v:false| were introduced.
+		integer	|List| with four numbers: sign (-1 or 1), highest two
+			bits, number with bits from 62nd to 31st, lowest 31
+			bits. I.e. to get actual number one will need to use
 			code like >
 				_VAL[0] * ((_VAL[1] << 62)
 				           & (_VAL[2] << 31)
 				           & _VAL[3])
-<			Special dictionary with this type will appear in 
-			|msgpackparse()| output under one of the following 
+<			Special dictionary with this type will appear in
+			|msgpackparse()| output under one of the following
 			circumstances:
-			1. |Number| is 32-bit and value is either above 
+			1. |Number| is 32-bit and value is either above
 			   INT32_MAX or below INT32_MIN.
-			2. |Number| is 64-bit and value is above INT64_MAX. It 
-			   cannot possibly be below INT64_MIN because msgpack 
+			2. |Number| is 64-bit and value is above INT64_MAX. It
+			   cannot possibly be below INT64_MIN because msgpack
 			   C parser does not support such values.
-		float	|Float|. This value cannot possibly appear in 
+		float	|Float|. This value cannot possibly appear in
 			|msgpackparse()| output.
-		string	|readfile()|-style list of strings. This value will 
-			appear in |msgpackparse()| output if string contains 
-			zero byte or if string is a mapping key and mapping is 
-			being represented as special dictionary for other 
+		string	|readfile()|-style list of strings. This value will
+			appear in |msgpackparse()| output if string contains
+			zero byte or if string is a mapping key and mapping is
+			being represented as special dictionary for other
 			reasons.
-		binary	|readfile()|-style list of strings. This value will 
-			appear in |msgpackparse()| output if binary string 
+		binary	|readfile()|-style list of strings. This value will
+			appear in |msgpackparse()| output if binary string
 			contains zero byte.
-		array	|List|. This value cannot appear in |msgpackparse()| 
+		array	|List|. This value cannot appear in |msgpackparse()|
 			output.
 							*msgpack-special-map*
-		map	|List| of |List|s with two items (key and value) each. 
-			This value will appear in |msgpackparse()| output if 
+		map	|List| of |List|s with two items (key and value) each.
+			This value will appear in |msgpackparse()| output if
 			parsed mapping contains one of the following keys:
-			1. Any key that is not a string (including keys which 
+			1. Any key that is not a string (including keys which
 			   are binary strings).
 			2. String with NUL byte inside.
 			3. Duplicate key.
 			4. Empty key.
-		ext	|List| with two values: first is a signed integer 
-			representing extension type. Second is 
+		ext	|List| with two values: first is a signed integer
+			representing extension type. Second is
 			|readfile()|-style list of strings.
 
 nextnonblank({lnum})					*nextnonblank()*
@@ -6073,11 +6071,11 @@ pumvisible()						*pumvisible()*
 py3eval({expr})						*py3eval()*
 		Evaluate Python expression {expr} and return its result
 		converted to Vim data structures.
-		Numbers and strings are returned as they are (strings are 
-		copied though, Unicode strings are additionally converted to 
+		Numbers and strings are returned as they are (strings are
+		copied though, Unicode strings are additionally converted to
 		UTF-8).
 		Lists are represented as Vim |List| type.
-		Dictionaries are represented as Vim |Dictionary| type with 
+		Dictionaries are represented as Vim |Dictionary| type with
 		keys converted to strings.
 		{only available when compiled with the |+python3| feature}
 
@@ -6145,7 +6143,7 @@ readfile({fname} [, {binary} [, {max}]])
 reltime([{start} [, {end}]])				*reltime()*
 		Return an item that represents a time value.  The format of
 		the item depends on the system.  It can be passed to
-		|reltimestr()| to convert it to a string or |reltimefloat()| 
+		|reltimestr()| to convert it to a string or |reltimefloat()|
 		to convert to a float.
 
 		Without an argument it returns the current "relative time", an
@@ -6929,9 +6927,9 @@ setreg({regname}, {value} [, {options}])
 			:call setreg('a', "1\n2\n3", 'b5')
 
 <		This example shows using the functions to save and restore a
-		register (note: you may not reliably restore register value 
-		without using the third argument to |getreg()| as without it 
-		newlines are represented as newlines AND Nul bytes are 
+		register (note: you may not reliably restore register value
+		without using the third argument to |getreg()| as without it
+		newlines are represented as newlines AND Nul bytes are
 		represented as newlines as well, see |NL-used-for-Nul|). >
 			:let var_a = getreg('a', 1, 1)
 			:let var_amode = getregtype('a')
@@ -7369,20 +7367,20 @@ string({expr})	Return {expr} converted to a String.  If {expr} is a Number,
 			{expr} type	result ~
 			String		'string'
 			Number		123
-			Float		123.123456 or 1.123456e8 or 
+			Float		123.123456 or 1.123456e8 or
 					`str2float('inf')`
 			Funcref		`function('name')`
 			List		[item, item]
 			Dictionary	{key: value, key: value}
 		Note that in String values the ' character is doubled.
 		Also see |strtrans()|.
-		Note 2: Output format is mostly compatible with YAML, except 
-		for infinite and NaN floating-point values representations 
-		which use |str2float()|.  Strings are also dumped literally, 
-		only single quote is escaped, which does not allow using YAML 
-		for parsing back binary strings.  |eval()| should always work for 
-		strings and floats though and this is the only official 
-		method, use |msgpackdump()| or |json_encode()| if you need to 
+		Note 2: Output format is mostly compatible with YAML, except
+		for infinite and NaN floating-point values representations
+		which use |str2float()|.  Strings are also dumped literally,
+		only single quote is escaped, which does not allow using YAML
+		for parsing back binary strings.  |eval()| should always work for
+		strings and floats though and this is the only official
+		method, use |msgpackdump()| or |json_encode()| if you need to
 		share data with other application.
 
 							*strlen()*
@@ -7630,10 +7628,10 @@ system({cmd} [, {input}])				*system()* *E677*
 		redirection syntax) before input can reach it. Use
 		|jobstart()| instead.
 
-		Note: Use |shellescape()| or |::S| with |expand()| or 
-		|fnamemodify()| to escape special characters in a command 
-		argument.  Newlines in {cmd} may cause the command to fail.  
-		The characters in 'shellquote' and 'shellxquote' may also 
+		Note: Use |shellescape()| or |::S| with |expand()| or
+		|fnamemodify()| to escape special characters in a command
+		argument.  Newlines in {cmd} may cause the command to fail. 
+		The characters in 'shellquote' and 'shellxquote' may also
 		cause trouble.
 
 		The result is a String.  Example: >
@@ -7660,9 +7658,9 @@ system({cmd} [, {input}])				*system()* *E677*
 
 
 systemlist({cmd} [, {input} [, {keepempty}]])		*systemlist()*
-		Same as |system()|, but returns a |List| with lines (parts of 
-		output separated by NL) with NULs transformed into NLs. Output 
-		is the same as |readfile()| will output with {binary} argument 
+		Same as |system()|, but returns a |List| with lines (parts of
+		output separated by NL) with NULs transformed into NLs. Output
+		is the same as |readfile()| will output with {binary} argument
 		set to "b", except that a final newline is not preserved,
 		unless {keepempty} is non-zero.
 		Note that on MS-Windows you may get trailing CR characters.
@@ -7926,7 +7924,7 @@ type({expr})							*type()*
 			:if type(myvar) == type({})
 			:if type(myvar) == type(0.0)
 			:if type(myvar) == type(v:true)
-<		In place of checking for |v:null| type it is better to check 
+<		In place of checking for |v:null| type it is better to check
 		for |v:null| directly as it is the only value of this type: >
 			:if myvar is v:null
 <               To check if the v:t_ variables exist use this: >
@@ -8243,10 +8241,10 @@ writefile({list}, {fname} [, {flags}])
 			:call writefile(["foo"], "event.log", "a")
 			:call writefile(["bar"], "event.log", "a")
 <
-		When {flags} contains "S" fsync() call is not used, with "s" 
-		it is used, 'fsync' option applies by default. No fsync() 
-		means that writefile() will finish faster, but writes may be 
-		left in OS buffers and not yet written to disk. Such changes 
+		When {flags} contains "S" fsync() call is not used, with "s"
+		it is used, 'fsync' option applies by default. No fsync()
+		means that writefile() will finish faster, but writes may be
+		left in OS buffers and not yet written to disk. Such changes
 		will disappear if system crashes before OS does writing.
 
 		All NL characters are replaced with a NUL character.
@@ -8728,7 +8726,7 @@ like this: >
 
 When such a function is called, and it is not defined yet, Vim will search the
 "autoload" directories in 'runtimepath' for a script file called
-"filename.vim".  For example "~/.config/nvim/autoload/filename.vim".  That 
+"filename.vim".  For example "~/.config/nvim/autoload/filename.vim".  That
 file should then define the function like this: >
 
 	function filename#funcname()
@@ -8999,8 +8997,8 @@ This does NOT work: >
 <							*E741* *E940*
 			If you try to change a locked variable you get an
 			error message: "E741: Value is locked: {name}".
-			If you try to lock or unlock a built-in variable you 
-			will get an error message "E940: Cannot lock or unlock 
+			If you try to lock or unlock a built-in variable you
+			will get an error message "E940: Cannot lock or unlock
 			variable {name}".
 
 			[depth] is relevant when locking a |List| or
@@ -9259,17 +9257,17 @@ This does NOT work: >
 			with the |:redraw| command.  Example: >
 		:new | redraw | echo "there is a new window"
 <							*:echo-self-refer*
-			When printing nested containers echo prints second 
-			occurrence of the self-referencing container using 
-			"[...@level]" (self-referencing |List|) or 
+			When printing nested containers echo prints second
+			occurrence of the self-referencing container using
+			"[...@level]" (self-referencing |List|) or
 			"{...@level}" (self-referencing |Dict|): >
 		:let l = []
 		:call add(l, l)
 		:let l2 = []
 		:call add(l2, [l2])
 		:echo l l2
-<			echoes "[[...@0]] [[[...@0]]]". Echoing "[l]" will 
-			echo "[[[...@1]]]" because l first occurs at second 
+<			echoes "[[...@0]] [[[...@0]]]". Echoing "[l]" will
+			echo "[[[...@1]]]" because l first occurs at second
 			level.
 
 							*:echon*
@@ -10558,7 +10556,7 @@ option will still be marked as it was set in the sandbox.
 In a few situations it is not allowed to change the text in the buffer, jump
 to another window and some other things that might confuse or break what Vim
 is currently doing.  This mostly applies to things that happen when Vim is
-actually doing something else.	For example, evaluating the 'balloonexpr' may
+actually doing something else.  For example, evaluating the 'balloonexpr' may
 happen any moment the mouse cursor is resting at some position.
 
 This is not allowed when the textlock is active:
@@ -10568,5 +10566,123 @@ This is not allowed when the textlock is active:
 	- closing a window or quitting Vim
 	- etc.
 
+==============================================================================
+13. Command-line expressions highlighting		*expr-highlight*
+
+Expressions entered by the user in |i_CTRL-R_=|, |c_CTRL-\_e|, |quote=| are
+highlighted by the built-in expressions parser.  It uses highlight groups
+described in the table below, which may be overriden by colorschemes.
+							*hl-NvimInvalid*
+Besides the "Nvim"-prefixed highlight groups described below, there are
+"NvimInvalid"-prefixed highlight groups which have the same meaning but
+indicate that the token contains an error or that an error occurred just
+before it.  They have mostly the same hierarchy, except that (by default) in
+place of any non-Nvim-prefixed group NvimInvalid linking to `Error` is used
+and some other intermediate groups are present.
+
+Group                              Default link            Colored expression ~
+*hl-NvimInternalError*               None, red/red           Parser bug
+
+*hl-NvimAssignment*                  Operator                Generic assignment
+*hl-NvimPlainAssignment*             NvimAssignment          `=` in |:let|
+*hl-NvimAugmentedAssignment*         NvimAssignment          Generic, `+=`/`-=`/`.=`
+*hl-NvimAssignmentWithAddition*      NvimAugmentedAssignment `+=` in |:let+=|
+*hl-NvimAssignmentWithSubtraction*   NvimAugmentedAssignment `-=` in |:let-=|
+*hl-NvimAssignmentWithConcatenation* NvimAugmentedAssignment `.=` in |:let.=|
+
+*hl-NvimOperator*                    Operator                Generic operator
+
+*hl-NvimUnaryOperator*               NvimOperator            Generic unary op
+*hl-NvimUnaryPlus*                   NvimUnaryOperator       |expr-unary-+|
+*hl-NvimUnaryMinus*                  NvimUnaryOperator       |expr-unary--|
+*hl-NvimNot*                         NvimUnaryOperator       |expr-!|
+
+*hl-NvimBinaryOperator*              NvimOperator            Generic binary op
+*hl-NvimComparison*                  NvimBinaryOperator      Any |expr4| operator
+*hl-NvimComparisonModifier*          NvimComparison          `#`/`?` near |expr4| op
+*hl-NvimBinaryPlus*                  NvimBinaryOperator      |expr-+|
+*hl-NvimBinaryMinus*                 NvimBinaryOperator      |expr--|
+*hl-NvimConcat*                      NvimBinaryOperator      |expr-.|
+*hl-NvimConcatOrSubscript*           NvimConcat              |expr-.| or |expr-entry|
+*hl-NvimOr*                          NvimBinaryOperator      |expr-barbar|
+*hl-NvimAnd*                         NvimBinaryOperator      |expr-&&|
+*hl-NvimMultiplication*              NvimBinaryOperator      |expr-star|
+*hl-NvimDivision*                    NvimBinaryOperator      |expr-/|
+*hl-NvimMod*                         NvimBinaryOperator      |expr-%|
+
+*hl-NvimTernary*                     NvimOperator            `?` in |expr1|
+*hl-NvimTernaryColon*                NvimTernary             `:` in |expr1|
+
+*hl-NvimParenthesis*                 Delimiter               Generic bracket
+*hl-NvimLambda*                      NvimParenthesis         `{`/`}` in |lambda|
+*hl-NvimNestingParenthesis*          NvimParenthesis         `(`/`)` in |expr-nesting|
+*hl-NvimCallingParenthesis*          NvimParenthesis         `(`/`)` in |expr-function|
+
+*hl-NvimSubscript*                   NvimParenthesis         Generic subscript
+*hl-NvimSubscriptBracket*            NvimSubscript           `[`/`]` in |expr-[]|
+*hl-NvimSubscriptColon*              NvimSubscript           `:` in |expr-[:]|
+*hl-NvimCurly*                       NvimSubscript           `{`/`}` in
+                                                           |curly-braces-names|
+
+*hl-NvimContainer*                   NvimParenthesis         Generic container
+*hl-NvimDict*                        NvimContainer           `{`/`}` in |dict| literal
+*hl-NvimList*                        NvimContainer           `[`/`]` in |list| literal
+
+*hl-NvimIdentifier*                  Identifier              Generic identifier
+*hl-NvimIdentifierScope*             NvimIdentifier          Namespace: letter
+                                                           before `:` in
+                                                           |internal-variables|
+*hl-NvimIdentifierScopeDelimiter*    NvimIdentifier          `:` after namespace
+                                                           letter
+*hl-NvimIdentifierName*              NvimIdentifier          Rest of the ident
+*hl-NvimIdentifierKey*               NvimIdentifier          Identifier after
+                                                           |expr-entry|
+
+*hl-NvimColon*                       Delimiter               `:` in |dict| literal
+*hl-NvimComma*                       Delimiter               `,` in |dict|/|list|
+                                                           literal or
+                                                           |expr-function|
+*hl-NvimArrow*                       Delimiter               `->` in |lambda|
+
+*hl-NvimRegister*                    SpecialChar             |expr-register|
+*hl-NvimNumber*                      Number                  Non-prefix digits
+                                                           in integer
+                                                           |expr-number|
+*hl-NvimNumberPrefix*                Type                    `0` for |octal-number|
+                                                           `0x` for |hex-number|
+                                                           `0b` for |binary-number|
+*hl-NvimFloat*                       NvimNumber              Floating-point
+                                                           number
+
+*hl-NvimOptionSigil*                 Type                    `&` in |expr-option|
+*hl-NvimOptionScope*                 NvimIdentifierScope     Option scope if any
+*hl-NvimOptionScopeDelimiter*        NvimIdentifierScopeDelimiter
+                                                           `:` after option scope
+*hl-NvimOptionName*                  NvimIdentifier          Option name
+
+*hl-NvimEnvironmentSigil*            NvimOptionSigil         `$` in |expr-env|
+*hl-NvimEnvironmentName*             NvimIdentifier          Env variable name
+
+*hl-NvimString*                      String                  Generic string
+*hl-NvimStringBody*                  NvimString              Generic string
+                                                           literal body
+*hl-NvimStringQuote*                 NvimString              Generic string quote
+*hl-NvimStringSpecial*               SpecialChar             Generic string
+                                                           non-literal body
+
+*hl-NvimSingleQuote*                 NvimStringQuote         `'` in |expr-'|
+*hl-NvimSingleQuotedBody*            NvimStringBody          Literal part of
+                                                           |expr-'| string body
+*hl-NvimSingleQuotedQuote*           NvimStringSpecial       `''` inside |expr-'|
+                                                           string body
+
+*hl-NvimDoubleQuote*                 NvimStringQuote         `"` in |expr-quote|
+*hl-NvimDoubleQuotedBody*            NvimStringBody          Literal part of
+                                                           |expr-quote| body
+*hl-NvimDoubleQuotedEscape*          NvimStringSpecial       Valid |expr-quote|
+                                                           escape sequence
+*hl-NvimDoubleQuotedUnknownEscape*   NvimInvalidValue        Unrecognized
+                                                           |expr-quote| escape
+                                                           sequence
 
  vim:tw=78:ts=8:noet:ft=help:norl:

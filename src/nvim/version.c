@@ -30,8 +30,8 @@
 // for ":version", ":intro", and "nvim --version"
 #ifndef NVIM_VERSION_MEDIUM
 #define NVIM_VERSION_MEDIUM "v" STR(NVIM_VERSION_MAJOR)\
-  "." STR(NVIM_VERSION_MINOR) "." STR(NVIM_VERSION_PATCH)\
-  NVIM_VERSION_PRERELEASE
+"." STR(NVIM_VERSION_MINOR) "." STR(NVIM_VERSION_PATCH)\
+NVIM_VERSION_PRERELEASE
 #endif
 #define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM
 
@@ -47,33 +47,33 @@ char *version_cflags = "Compilation: " NVIM_VERSION_CFLAGS;
 
 static char *features[] = {
 #ifdef HAVE_ACL
-  "+acl",
+"+acl",
 #else
-  "-acl",
+"-acl",
 #endif
 
 #if (defined(HAVE_ICONV_H) && defined(USE_ICONV)) || defined(DYNAMIC_ICONV)
 # ifdef DYNAMIC_ICONV
-  "+iconv/dyn",
+"+iconv/dyn",
 # else
-  "+iconv",
+"+iconv",
 # endif
 #else
-  "-iconv",
+"-iconv",
 #endif
 
 #ifdef HAVE_JEMALLOC
-  "+jemalloc",
+"+jemalloc",
 #else
-  "-jemalloc",
+"-jemalloc",
 #endif
 
 #ifdef FEAT_TUI
-  "+tui",
+"+tui",
 #else
-  "-tui",
+"-tui",
 #endif
-  NULL
+NULL
 };
 
 // clang-format off
@@ -205,8 +205,8 @@ static const int included_patches[] = {
   // 1233,
   // 1232,
   // 1231,
-  // 1230,
-  // 1229,
+  1230,
+  1229,
   // 1228,
   // 1227,
   // 1226,
