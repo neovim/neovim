@@ -75,9 +75,11 @@ local global_helpers = require('test.helpers')
 local deepcopy = global_helpers.deepcopy
 local shallowcopy = global_helpers.shallowcopy
 local helpers = require('test.functional.helpers')(nil)
-local request, run, uimeths = helpers.request, helpers.run, helpers.uimeths
+local request, run_session = helpers.request, helpers.run_session
 local eq = helpers.eq
 local dedent = helpers.dedent
+local get_session = helpers.get_session
+local create_callindex = helpers.create_callindex
 
 local inspect = require('inspect')
 
@@ -155,6 +157,7 @@ function Screen.new(width, height)
     cmdline_block = {},
     wildmenu_items = nil,
     wildmenu_selected = nil,
+    _session = nil,
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
     _mouse_enabled = true,
@@ -165,11 +168,19 @@ function Screen.new(width, height)
     _new_attrs = false,
     _width = width,
     _height = height,
+    _grids = {},
     _cursor = {
-      row = 1, col = 1
+      grid = 1, row = 1, col = 1
     },
-    _busy = false
+    _busy = false,
   }, Screen)
+  local function ui(method, ...)
+    local status, rv = self._session:request('nvim_ui_'..method, ...)
+    if not status then
+      error(rv[2])
+    end
+  end
+  self.uimeths = create_callindex(ui)
   return self
 end
 
@@ -189,34 +200,51 @@ function Screen:set_hlstate_cterm(val)
   self._hlstate_cterm = val
 end
 
-function Screen:attach(options)
+function Screen:attach(options, session)
+  if session == nil then
+    session = get_session()
+  end
   if options == nil then
     options = {}
   end
   if options.ext_linegrid == nil then
     options.ext_linegrid = true
   end
+
+  self._session = session
   self._options = options
   self._clear_attrs = (options.ext_linegrid and {{},{}}) or {}
   self:_handle_resize(self._width, self._height)
-  uimeths.attach(self._width, self._height, options)
+  self.uimeths.attach(self._width, self._height, options)
   if self._options.rgb == nil then
     -- nvim defaults to rgb=true internally,
     -- simplify test code by doing the same.
     self._options.rgb = true
   end
+  if self._options.ext_multigrid then
+    self._options.ext_linegrid = true
+  end
+  self._session = session
 end
 
 function Screen:detach()
-  uimeths.detach()
+  self.uimeths.detach()
+  self._session = nil
 end
 
 function Screen:try_resize(columns, rows)
-  uimeths.try_resize(columns, rows)
+  self._width = columns
+  self._height = rows
+  self.uimeths.try_resize(columns, rows)
+end
+
+function Screen:try_resize_grid(grid, columns, rows)
+  self._grid = self._grids[1]
+  self.uimeths.try_resize_grid(grid, columns, rows)
 end
 
 function Screen:set_option(option, value)
-  uimeths.set_option(option, value)
+  self.uimeths.set_option(option, value)
   self._options[option] = value
 end
 
@@ -341,19 +369,11 @@ function Screen:expect(expected, attr_ids, attr_ignore)
       end
     end
 
-    if grid ~= nil and self._height ~= #expected_rows then
-      return ("Expected screen state's row count(" .. #expected_rows
-              .. ') differs from configured height(' .. self._height .. ') of Screen.')
-    end
-
     if self._options.ext_hlstate and self._new_attrs then
       attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids or {})
     end
 
-    local actual_rows = {}
-    for i = 1, self._height do
-      actual_rows[i] = self:_row_repr(self._rows[i], attr_state)
-    end
+    local actual_rows = self:render(not expected.any, attr_state)
 
     if expected.any ~= nil then
       -- Search for `any` anywhere in the screen lines.
@@ -368,7 +388,11 @@ function Screen:expect(expected, attr_ids, attr_ignore)
 
     if grid ~= nil then
       -- `expected` must match the screen lines exactly.
-      for i = 1, self._height do
+      if #actual_rows ~= #expected_rows then
+        return "Expected screen state's row count(" .. #expected_rows
+        .. ') differs from configured height(' .. #actual_rows .. ') of Screen.'
+      end
+      for i = 1, #actual_rows do
         if expected_rows[i] ~= actual_rows[i] then
           local msg_expected_rows = {}
           for j = 1, #expected_rows do
@@ -465,7 +489,7 @@ function Screen:_wait(check, flags)
     if not err then
       success_seen = true
       if did_miminal_timeout then
-        helpers.stop()
+        self._session:stop()
       end
     elseif success_seen and #args > 0 then
       failure_after_success = true
@@ -474,7 +498,7 @@ function Screen:_wait(check, flags)
 
     return true
   end
-  run(nil, notification_cb, nil, minimal_timeout)
+  run_session(self._session, nil, notification_cb, nil, minimal_timeout)
   if not did_flush then
     err = "no flush received"
   elseif not checked then
@@ -487,7 +511,7 @@ function Screen:_wait(check, flags)
 
   if not success_seen then
     did_miminal_timeout = true
-    run(nil, notification_cb, nil, timeout-minimal_timeout)
+    run_session(self._session, nil, notification_cb, nil, timeout-minimal_timeout)
   end
 
   local did_warn = false
@@ -547,7 +571,7 @@ function Screen:sleep(ms)
     assert(method == 'redraw')
     self:_redraw(args)
   end
-  run(nil, notification_cb, nil, ms)
+  run_session(self._session, nil, notification_cb, nil, ms)
 end
 
 function Screen:_redraw(updates)
@@ -579,6 +603,22 @@ function Screen:set_on_event_handler(callback)
 end
 
 function Screen:_handle_resize(width, height)
+  self:_handle_grid_resize(1, width, height)
+  self._scroll_region = {
+    top = 1, bot = height, left = 1, right = width
+  }
+  self._grid = self._grids[1]
+end
+
+local function min(x,y)
+  if x < y then
+    return x
+  else
+    return y
+  end
+end
+
+function Screen:_handle_grid_resize(grid, width, height)
   local rows = {}
   for _ = 1, height do
     local cols = {}
@@ -587,22 +627,27 @@ function Screen:_handle_resize(width, height)
     end
     table.insert(rows, cols)
   end
-  self._cursor.row = 1
-  self._cursor.col = 1
-  self._rows = rows
-  self._width = width
-  self._height = height
-  self._scroll_region = {
-    top = 1, bot = height, left = 1, right = width
+  if grid > 1 and self._grids[grid] ~= nil then
+    local old = self._grids[grid]
+    for i = 1, min(height,old.height) do
+      for j = 1, min(width,old.width) do
+        rows[i][j] = old.rows[i][j]
+      end
+    end
+  end
+
+  if self._cursor.grid == grid then
+    self._cursor.row = 1
+    self._cursor.col = 1
+  end
+  self._grids[grid] = {
+    rows=rows,
+    width=width,
+    height=height,
   }
 end
 
 function Screen:_handle_flush()
-end
-
-function Screen:_handle_grid_resize(grid, width, height)
-  assert(grid == 1)
-  self:_handle_resize(width, height)
 end
 
 function Screen:_reset()
@@ -641,20 +686,27 @@ function Screen:_handle_clear()
   -- newer clients, to check we remain compatible with both kind of clients,
   -- ensure the scroll region is in a reset state.
   local expected_region = {
-    top = 1, bot = self._height, left = 1, right = self._width
+    top = 1, bot = self._grid.height, left = 1, right = self._grid.width
   }
   eq(expected_region, self._scroll_region)
-  self:_clear_block(1, self._height, 1, self._width)
+  self:_handle_grid_clear(1)
 end
 
 function Screen:_handle_grid_clear(grid)
-  assert(grid == 1)
-  self:_clear_block(1, self._height, 1, self._width)
+  self:_clear_block(self._grids[grid], 1, self._grids[grid].height, 1, self._grids[grid].width)
+end
+
+function Screen:_handle_grid_destroy(grid)
+  self._grids[grid] = nil
+  if self._multigrid then
+    assert(self.win_position[grid])
+    self.win_position[grid] = nil
+  end
 end
 
 function Screen:_handle_eol_clear()
   local row, col = self._cursor.row, self._cursor.col
-  self:_clear_block(row, row, col, self._scroll_region.right)
+  self:_clear_block(self._grid, row, row, col, self._grid.width)
 end
 
 function Screen:_handle_cursor_goto(row, col)
@@ -663,7 +715,7 @@ function Screen:_handle_cursor_goto(row, col)
 end
 
 function Screen:_handle_grid_cursor_goto(grid, row, col)
-  assert(grid == 1)
+  self._cursor.grid = grid
   self._cursor.row = row + 1
   self._cursor.col = col + 1
 end
@@ -704,11 +756,11 @@ function Screen:_handle_scroll(count)
   self:_handle_grid_scroll(1, top-1, bot, left-1, right, count, 0)
 end
 
-function Screen:_handle_grid_scroll(grid, top, bot, left, right, rows, cols)
+function Screen:_handle_grid_scroll(g, top, bot, left, right, rows, cols)
   top = top+1
   left = left+1
-  assert(grid == 1)
   assert(cols == 0)
+  local grid = self._grids[g]
   local start, stop, step
 
   if rows > 0 then
@@ -723,8 +775,8 @@ function Screen:_handle_grid_scroll(grid, top, bot, left, right, rows, cols)
 
   -- shift scroll region
   for i = start, stop, step do
-    local target = self._rows[i]
-    local source = self._rows[i + rows]
+    local target = grid.rows[i]
+    local source = grid.rows[i + rows]
     for j = left, right do
       target[j].text = source[j].text
       target[j].attrs = source[j].attrs
@@ -734,7 +786,7 @@ function Screen:_handle_grid_scroll(grid, top, bot, left, right, rows, cols)
 
   -- clear invalid rows
   for i = stop + step, stop + rows, step do
-    self:_clear_row_section(i, left, right)
+    self:_clear_row_section(grid, i, left, right)
   end
 end
 
@@ -744,13 +796,35 @@ function Screen:_handle_hl_attr_define(id, rgb_attrs, cterm_attrs, info)
   self._new_attrs = true
 end
 
+function Screen:_handle_win_position(win, grid, startrow, startcol, width, height)
+    if self.win_position == nil then
+        self.win_position = {}
+    end
+    self.win_position[grid] = {
+        win = win,
+        startrow = startrow,
+        startcol = startcol,
+        width = width,
+        height = height
+    }
+    -- TODO(utkarshme): Take apt action
+end
+
+function Screen:get_hl(val)
+  if self._options.ext_newgrid then
+    return self._attr_table[val][1]
+  else
+    return val
+  end
+end
+
 function Screen:_handle_highlight_set(attrs)
   self._attrs = attrs
 end
 
 function Screen:_handle_put(str)
   assert(not self._options.ext_linegrid)
-  local cell = self._rows[self._cursor.row][self._cursor.col]
+  local cell = self._grid.rows[self._cursor.row][self._cursor.col]
   cell.text = str
   cell.attrs = self._attrs
   cell.hl_id = -1
@@ -759,8 +833,7 @@ end
 
 function Screen:_handle_grid_line(grid, row, col, items)
   assert(self._options.ext_linegrid)
-  assert(grid == 1)
-  local line = self._rows[row+1]
+  local line = self._grids[grid].rows[row+1]
   local colpos = col+1
   local hl = self._clear_attrs
   local hl_id = 0
@@ -887,24 +960,24 @@ function Screen:_handle_wildmenu_hide()
   self.wildmenu_items, self.wildmenu_pos = nil, nil
 end
 
-function Screen:_clear_block(top, bot, left, right)
+function Screen:_clear_block(grid, top, bot, left, right)
   for i = top, bot do
-    self:_clear_row_section(i, left, right)
+    self:_clear_row_section(grid, i, left, right)
   end
 end
 
-function Screen:_clear_row_section(rownum, startcol, stopcol)
-  local row = self._rows[rownum]
+function Screen:_clear_row_section(grid, rownum, startcol, stopcol)
+  local row = grid.rows[rownum]
   for i = startcol, stopcol do
     row[i].text = ' '
     row[i].attrs = self._clear_attrs
   end
 end
 
-function Screen:_row_repr(row, attr_state)
+function Screen:_row_repr(row, attr_state, cursor)
   local rv = {}
   local current_attr_id
-  for i = 1, self._width do
+  for i = 1, #row do
     local attrs = row[i].attrs
     if self._options.ext_linegrid then
       attrs = attrs[(self._options.rgb and 1) or 2]
@@ -922,7 +995,7 @@ function Screen:_row_repr(row, attr_state)
       table.insert(rv, '{' .. attr_id .. ':')
       current_attr_id = attr_id
     end
-    if not self._busy and self._rows[self._cursor.row] == row and self._cursor.col == i then
+    if not self._busy and cursor and self._cursor.col == i then
       table.insert(rv, '^')
     end
     table.insert(rv, row[i].text)
@@ -997,7 +1070,23 @@ function Screen:redraw_debug(attrs, ignore, timeout)
   if timeout == nil then
     timeout = 250
   end
-  run(nil, notification_cb, nil, timeout)
+  run_session(self._session, nil, notification_cb, nil, timeout)
+end
+
+function Screen:render(headers, attr_state, preview)
+  headers = headers and self._options.ext_multigrid
+  local rv = {}
+  for igrid,grid in pairs(self._grids) do
+    if headers then
+      table.insert(rv, "## grid "..igrid)
+    end
+    for i = 1, grid.height do
+      local cursor = self._cursor.grid == igrid and self._cursor.row == i
+      local prefix = (headers or preview) and "  " or ""
+      table.insert(rv, prefix..self:_row_repr(grid.rows[i], attr_state, cursor).."|")
+    end
+  end
+  return rv
 end
 
 function Screen:print_snapshot(attrs, ignore)
@@ -1020,10 +1109,7 @@ function Screen:print_snapshot(attrs, ignore)
     attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids)
   end
 
-  local lines = {}
-  for i = 1, self._height do
-    table.insert(lines, "  "..self:_row_repr(self._rows[i], attr_state).."|")
-  end
+  local lines = self:render(true, attr_state, true)
 
   local ext_state = self:_extstate_repr(attr_state)
   local keys = false

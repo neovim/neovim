@@ -1261,6 +1261,7 @@ describe('API', function()
           ext_tabline = false,
           ext_wildmenu = false,
           ext_linegrid = screen._options.ext_linegrid or false,
+          ext_multigrid = false,
           ext_hlstate=false,
           height = 4,
           rgb = true,
