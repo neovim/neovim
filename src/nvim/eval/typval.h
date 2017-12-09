@@ -284,6 +284,54 @@ typedef struct list_stack_S {
 #define TV_DICT_HI2DI(hi) \
     ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
+static inline void tv_list_ref(list_T *const l)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Increase reference count for a given list
+///
+/// Does nothing for NULL lists.
+///
+/// @param[in]  l  List to modify.
+static inline void tv_list_ref(list_T *const l)
+{
+  if (l == NULL) {
+    return;
+  }
+  l->lv_refcount++;
+}
+
+static inline VarLockStatus tv_list_locked(const list_T *const l)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Get list lock status
+///
+/// Returns VAR_FIXED for NULL lists.
+///
+/// @param[in]  l  List to check.
+static inline VarLockStatus tv_list_locked(const list_T *const l)
+{
+  if (l == NULL) {
+    return VAR_FIXED;
+  }
+  return l->lv_lock;
+}
+
+/// Set list lock status
+///
+/// May only “set” VAR_FIXED for NULL lists.
+///
+/// @param[out]  l  List to modify.
+/// @param[in]  lock  New lock status.
+static inline void tv_list_set_lock(list_T *const l,
+                                    const VarLockStatus lock)
+{
+  if (l == NULL) {
+    assert(lock == VAR_FIXED);
+    return;
+  }
+  l->lv_lock = lock;
+}
+
 static inline long tv_list_len(const list_T *const l)
   REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
@@ -296,6 +344,22 @@ static inline long tv_list_len(const list_T *const l)
     return 0;
   }
   return l->lv_len;
+}
+
+static inline listitem_T *tv_list_first(const list_T *const l)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Get first list item
+///
+/// @param[in]  l  List to get item from.
+///
+/// @return List item or NULL in case of an empty list.
+static inline listitem_T *tv_list_first(const list_T *const l)
+{
+  if (l == NULL) {
+    return NULL;
+  }
+  return l->lv_first;
 }
 
 static inline long tv_dict_len(const dict_T *const d)
@@ -351,6 +415,46 @@ extern const char *const tv_empty_string;
 
 /// Specifies that free_unref_items() function has (not) been entered
 extern bool tv_in_free_unref_items;
+
+/// Iterate over a list
+///
+/// @param  modifier  Modifier: expected to be const or nothing, volatile should
+///                   also work if you have any uses for the volatile list.
+/// @param[in]  l  List to iterate over.
+/// @param  li  Name of the variable with current listitem_T entry.
+/// @param  code  Cycle body.
+#define _TV_LIST_ITER_MOD(modifier, l, li, code) \
+    do { \
+      modifier list_T *const l_ = (l); \
+      if (l_ != NULL) { \
+        for (modifier listitem_T *const li = l_->lv_first; \
+             li != NULL; li = li->li_next) { \
+          code \
+        } \
+      } \
+    } while (0)
+
+/// Iterate over a list
+///
+/// To be used when you need to modify list or values you iterate over, use
+/// #TV_LIST_ITER_CONST if you don’t.
+///
+/// @param[in]  l  List to iterate over.
+/// @param  li  Name of the variable with current listitem_T entry.
+/// @param  code  Cycle body.
+#define TV_LIST_ITER(l, li, code) \
+    _TV_LIST_ITER_MOD(, l, li, code)
+
+/// Iterate over a list
+///
+/// To be used when you don’t need to modify list or values you iterate over,
+/// use #TV_LIST_ITER if you do.
+///
+/// @param[in]  l  List to iterate over.
+/// @param  li  Name of the variable with current listitem_T entry.
+/// @param  code  Cycle body.
+#define TV_LIST_ITER_CONST(l, li, code) \
+    _TV_LIST_ITER_MOD(const, l, li, code)
 
 /// Iterate over a dictionary
 ///
