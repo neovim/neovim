@@ -1423,7 +1423,7 @@ void ex_catch(exarg_T *eap)
        * ":break", ":return", ":finish", error, interrupt, or another
        * exception. */
       if (cstack->cs_exception[cstack->cs_idx] != current_exception)
-    		internal_error("ex_catch()");
+        internal_error("ex_catch()");
     } else {
       /*
        * If there is a preceding catch clause and it caught the exception,
@@ -1547,7 +1547,7 @@ void ex_finally(exarg_T *eap)
          * exception will be discarded. */
         if (did_throw && cstack->cs_exception[cstack->cs_idx]
             != current_exception)
-			    internal_error("ex_finally()");
+          internal_error("ex_finally()");
       }
 
       /*

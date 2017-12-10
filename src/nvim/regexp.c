@@ -4535,7 +4535,7 @@ regmatch (
             brace_max[no] = OPERAND_MAX(scan);
             brace_count[no] = 0;
           } else {
-				    internal_error("BRACE_LIMITS");
+            internal_error("BRACE_LIMITS");
             status = RA_FAIL;
           }
         }

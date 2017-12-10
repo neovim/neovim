@@ -2960,7 +2960,7 @@ int do_unlet(const char *const name, const size_t name_len, const int forceit)
       d = di->di_tv.vval.v_dict;
     }
     if (d == NULL) {
-  		internal_error("do_unlet()");
+      internal_error("do_unlet()");
       return FAIL;
     }
     hashitem_T *hi = hash_find(ht, (const char_u *)varname);

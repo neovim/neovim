@@ -717,7 +717,6 @@ char_u *msg_trunc_attr(char_u *s, int force, int attr)
   return NULL;
 }
 
-
 /*
  * Check if message "s" should be truncated at the start (for filenames).
  * Return a pointer to where the truncated message starts.

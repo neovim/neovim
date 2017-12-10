@@ -5355,7 +5355,7 @@ add_sound_suggest (
   // Find the word nr in the soundfold tree.
   sfwordnr = soundfold_find(slang, goodword);
   if (sfwordnr < 0) {
-		internal_error("add_sound_suggest()");
+    internal_error("add_sound_suggest()");
     return;
   }
 

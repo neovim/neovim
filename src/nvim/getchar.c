@@ -3905,7 +3905,7 @@ makemap (
           c1 = 't';
           break;
         default:
-					IEMSG(_("E228: makemap: Illegal mode"));
+          IEMSG(_("E228: makemap: Illegal mode"));
           return FAIL;
         }
         do {            /* do this twice if c2 is set, 3 times with c3 */

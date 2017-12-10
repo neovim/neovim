@@ -2095,11 +2095,11 @@ void undo_time(long step, int sec, int file, int absolute)
         break;
 
       uhp = uhp->uh_prev.ptr;
-			if (uhp == NULL || uhp->uh_walk != mark) {
-				/* Need to redo more but can't find it... */
-				internal_error("undo_time()");
-				break;
-			}
+      if (uhp == NULL || uhp->uh_walk != mark) {
+        /* Need to redo more but can't find it... */
+        internal_error("undo_time()");
+        break;
+      }
     }
   }
   u_undo_end(did_undo, absolute, false);
@@ -2163,7 +2163,7 @@ static void u_undoredo(int undo)
     if (top > curbuf->b_ml.ml_line_count || top >= bot
         || bot > curbuf->b_ml.ml_line_count + 1) {
       unblock_autocmds();
-	    IEMSG(_("E438: u_undo: line numbers wrong"));
+      IEMSG(_("E438: u_undo: line numbers wrong"));
       changed();                /* don't want UNCHANGED now */
       return;
     }
