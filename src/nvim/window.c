@@ -1867,6 +1867,7 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
 int win_close(win_T *win, int free_buf)
 {
   win_T       *wp;
+  win_T       *tmpwp;
   int other_buffer = FALSE;
   int close_curwin = FALSE;
   int dir;
@@ -1990,6 +1991,14 @@ int win_close(win_T *win, int free_buf)
   /* Free the memory used for the window and get the window that received
    * the screen space. */
   wp = win_free_mem(win, &dir, NULL);
+
+  if (help_window) {
+    /* Closing the help window moves the cursor back to where it was when
+     * the help window was open */
+    tmpwp = get_snapshot_focus(SNAP_HELP_IDX);
+    if (tmpwp != NULL)
+      wp = tmpwp;
+  }
 
   /* Make sure curwin isn't invalid.  It can cause severe trouble when
    * printing an error message.  For win_equal() curbuf needs to be valid
@@ -5421,6 +5430,29 @@ static win_T *restore_snapshot_rec(frame_T *sn, frame_T *fr)
   return wp;
 }
 
+win_T *get_snapshot_focus_rec(frame_T *sn)
+{
+  /* This should be equivalent to the recursive algorithm found in
+   * restore_snapshot as far as traveling nodes go. */
+  while (sn->fr_child != NULL || sn->fr_next != NULL) {
+    while (sn->fr_child != NULL) {
+      sn = sn->fr_child;
+    }
+    if (sn->fr_next != NULL) {
+      sn = sn->fr_next;
+    }
+  }
+
+  return sn->fr_win;
+}
+
+/* Get the focused window (the one holding the cursor) of the snapshot */
+win_T *get_snapshot_focus(int idx)
+{
+  if (curtab->tp_snapshot[idx] == NULL)
+    return NULL;
+  return get_snapshot_focus_rec(curtab->tp_snapshot[idx]);
+}
 
 /*
  * Set "win" to be the curwin and "tp" to be the current tab page.
