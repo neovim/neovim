@@ -42,10 +42,6 @@ describe('NULL', function()
   describe('list', function()
     -- Incorrect behaviour
 
-    -- FIXME should be accepted by writefile(), return {0, {}}
-    null_expr_test('is accepted as an empty list by writefile()',
-                        ('[writefile(L, "%s"), readfile("%s")]'):format(tmpfname, tmpfname),
-                        'E484: Can\'t open file ' .. tmpfname, {0, {}})
     -- FIXME should return 0
     null_expr_test('is accepted by setqflist()', 'setqflist(L)', 0, -1)
     -- FIXME should return 0
@@ -104,6 +100,9 @@ describe('NULL', function()
     null_expr_test('makes filter() return v:_null_list', 'filter(L, "1") is# L', 0, 1)
     null_test('is treated by :let as empty list', ':let [l] = L', 'Vim(let):E688: More targets than List items')
     null_expr_test('is accepted as an empty list by inputlist()', '[feedkeys("\\n"), inputlist(L)]', 0, 0)
+    null_expr_test('is accepted as an empty list by writefile()',
+                   ('[writefile(L, "%s"), readfile("%s")]'):format(tmpfname, tmpfname),
+                   0, {0, {}})
     -- FIXME fix test results
     null_expr_test('does not crash add()', 'add(L, 0)', 0, 1)
     null_expr_test('makes insert() error out', 'insert(L, 1)', '', nil)

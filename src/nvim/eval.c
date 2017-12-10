@@ -17480,6 +17480,7 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// @return true in case of success, false otherwise.
 static bool write_list(FileDescriptor *const fp, const list_T *const list,
                        const bool binary)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   int error = 0;
   TV_LIST_ITER_CONST(list, li, {
@@ -17643,9 +17644,6 @@ static void f_writefile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "writefile()");
-    return;
-  }
-  if (argvars[0].vval.v_list == NULL) {
     return;
   }
 
