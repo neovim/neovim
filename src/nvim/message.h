@@ -49,7 +49,6 @@
 /// Like #EMSG, but for messages with one "%" PRIu64 inside
 #define EMSGU(s, n)                 emsgf((const char *) (s), (uint64_t)(n))
 
-
 /// Like #EMSG, but for internal messages
 #define IEMSG(s)		    iemsg((char_u *)(s))
 
