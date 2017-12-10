@@ -48,6 +48,7 @@ describe('Command-line option', function()
       eq(#('42\n'), attrs.size)
     end)
     it('does not expand $VAR', function()
+      if helpers.pending_win32(pending) then return end
       eq(nil, lfs.attributes(fname))
       eq(true, not not dollar_fname:find('%$%w+'))
       write_file(dollar_fname, ':call setline(1, "100500")\n:wqall!\n')
