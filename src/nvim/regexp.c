@@ -6477,10 +6477,6 @@ static regsubmatch_T rsm;  // can only be used when can_f_submatch is true
 /// vim_regsub_both().
 static int fill_submatch_list(int argc, typval_T *argv, int argcount)
 {
-  listitem_T *li;
-  int        i;
-  char_u     *s;
-
   if (argcount == 0) {
     // called function doesn't take an argument
     return 0;
@@ -6490,28 +6486,26 @@ static int fill_submatch_list(int argc, typval_T *argv, int argcount)
   init_static_list((staticList10_T *)(argv->vval.v_list));
 
   // There are always 10 list items in staticList10_T.
-  li = argv->vval.v_list->lv_first;
-  for (i = 0; i < 10; i++) {
-    s = rsm.sm_match->startp[i];
+  listitem_T *li = tv_list_first(argv->vval.v_list);
+  for (int i = 0; i < 10; i++) {
+    char_u *s = rsm.sm_match->startp[i];
     if (s == NULL || rsm.sm_match->endp[i] == NULL) {
       s = NULL;
     } else {
       s = vim_strnsave(s, (int)(rsm.sm_match->endp[i] - s));
     }
-    li->li_tv.v_type = VAR_STRING;
-    li->li_tv.vval.v_string = s;
-    li = li->li_next;
+    TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
+    TV_LIST_ITEM_TV(li)->vval.v_string = s;
+    li = TV_LIST_ITEM_NEXT(argv->vval.v_list, li);
   }
   return 1;
 }
 
 static void clear_submatch_list(staticList10_T *sl)
 {
-  int i;
-
-  for (i = 0; i < 10; i++) {
-    xfree(sl->sl_items[i].li_tv.vval.v_string);
-  }
+  TV_LIST_ITER(&sl->sl_list, li, {
+    xfree(TV_LIST_ITEM_TV(li)->vval.v_string);
+  });
 }
 
 /// vim_regsub() - perform substitutions after a vim_regexec() or
@@ -6651,6 +6645,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         rettv.vval.v_string = NULL;
         argv[0].v_type = VAR_LIST;
         argv[0].vval.v_list = &matchList.sl_list;
+        // FIXME: Abstract away
         matchList.sl_list.lv_len = 0;
         if (expr->v_type == VAR_FUNC) {
           s = expr->vval.v_string;

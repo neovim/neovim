@@ -1180,8 +1180,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
   list_T *oldfiles_list = get_vim_var_list(VV_OLDFILES);
   const bool force = flags & kShaDaForceit;
   const bool get_old_files = (flags & (kShaDaGetOldfiles | kShaDaForceit)
-                              && (force || oldfiles_list == NULL
-                                  || oldfiles_list->lv_len == 0));
+                              && (force || tv_list_len(oldfiles_list) == 0));
   const bool want_marks = flags & kShaDaWantMarks;
   const unsigned srni_flags = (unsigned) (
       (flags & kShaDaWantInfo
@@ -1599,13 +1598,13 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
 #define DUMP_ADDITIONAL_ELEMENTS(src, what) \
   do { \
     if ((src) != NULL) { \
-      for (listitem_T *li = (src)->lv_first; li != NULL; li = li->li_next) { \
-        if (encode_vim_to_msgpack(spacker, &li->li_tv, \
+      TV_LIST_ITER((src), li, { \
+        if (encode_vim_to_msgpack(spacker, TV_LIST_ITEM_TV(li), \
                                   _("additional elements of ShaDa " what)) \
             == FAIL) { \
           goto shada_pack_entry_error; \
         } \
-      } \
+      }); \
     } \
   } while (0)
 #define DUMP_ADDITIONAL_DATA(src, what) \
@@ -1648,9 +1647,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       const bool is_hist_search =
           entry.data.history_item.histtype == HIST_SEARCH;
       const size_t arr_size = 2 + (size_t) is_hist_search + (size_t) (
-          entry.data.history_item.additional_elements == NULL
-          ? 0
-          : entry.data.history_item.additional_elements->lv_len);
+          tv_list_len(entry.data.history_item.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       msgpack_pack_uint8(spacker, entry.data.history_item.histtype);
       PACK_BIN(cstr_as_string(entry.data.history_item.string));
@@ -1663,9 +1660,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
     }
     case kSDItemVariable: {
       const size_t arr_size = 2 + (size_t) (
-          entry.data.global_var.additional_elements == NULL
-          ? 0
-          : entry.data.global_var.additional_elements->lv_len);
+          tv_list_len(entry.data.global_var.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       const String varname = cstr_as_string(entry.data.global_var.name);
       PACK_BIN(varname);
@@ -1685,9 +1680,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
     }
     case kSDItemSubString: {
       const size_t arr_size = 1 + (size_t) (
-          entry.data.sub_string.additional_elements == NULL
-          ? 0
-          : entry.data.sub_string.additional_elements->lv_len);
+          tv_list_len(entry.data.sub_string.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       PACK_BIN(cstr_as_string(entry.data.sub_string.sub));
       DUMP_ADDITIONAL_ELEMENTS(entry.data.sub_string.additional_elements,

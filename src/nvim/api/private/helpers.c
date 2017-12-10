@@ -789,7 +789,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
         Object item = obj.data.array.items[i];
         listitem_T *li = tv_list_item_alloc();
 
-        if (!object_to_vim(item, &li->li_tv, err)) {
+        if (!object_to_vim(item, TV_LIST_ITEM_TV(li), err)) {
           // cleanup
           tv_list_item_free(li);
           tv_list_free(list);

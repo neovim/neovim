@@ -120,7 +120,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
     last_container = kv_last(*container_stack);
   }
   if (last_container.container.v_type == VAR_LIST) {
-    if (last_container.container.vval.v_list->lv_len != 0
+    if (tv_list_len(last_container.container.vval.v_list) != 0
         && !obj.didcomma) {
       EMSG2(_("E474: Expected comma before list item: %s"), val_location);
       tv_clear(&obj.val);
@@ -128,7 +128,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
     }
     assert(last_container.special_val == NULL);
     listitem_T *obj_li = tv_list_item_alloc();
-    obj_li->li_tv = obj.val;
+    *TV_LIST_ITEM_TV(obj_li) = obj.val;
     tv_list_append(last_container.container.vval.v_list, obj_li);
   } else if (last_container.stack_index == kv_size(*stack) - 2) {
     if (!obj.didcolon) {
@@ -155,10 +155,10 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       list_T *const kv_pair = tv_list_alloc();
       tv_list_append_list(last_container.special_val, kv_pair);
       listitem_T *const key_li = tv_list_item_alloc();
-      key_li->li_tv = key.val;
+      *TV_LIST_ITEM_TV(key_li) = key.val;
       tv_list_append(kv_pair, key_li);
       listitem_T *const val_li = tv_list_item_alloc();
-      val_li->li_tv = obj.val;
+      *TV_LIST_ITEM_TV(val_li) = obj.val;
       tv_list_append(kv_pair, val_li);
     }
   } else {
@@ -738,8 +738,9 @@ json_decode_string_cycle_start:
         } else if (last_container.special_val == NULL
                    ? (last_container.container.v_type == VAR_DICT
                       ? (DICT_LEN(last_container.container.vval.v_dict) == 0)
-                      : (last_container.container.vval.v_list->lv_len == 0))
-                   : (last_container.special_val->lv_len == 0)) {
+                      : (tv_list_len(last_container.container.vval.v_list)
+                         == 0))
+                   : (tv_list_len(last_container.special_val) == 0)) {
           emsgf(_("E474: Leading comma: %.*s"), LENP(p, e));
           goto json_decode_string_fail;
         }
@@ -1047,9 +1048,10 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
       };
       for (size_t i = 0; i < mobj.via.array.size; i++) {
         listitem_T *const li = tv_list_item_alloc();
-        li->li_tv.v_type = VAR_UNKNOWN;
+        TV_LIST_ITEM_TV(li)->v_type = VAR_UNKNOWN;
         tv_list_append(list, li);
-        if (msgpack_to_vim(mobj.via.array.ptr[i], &li->li_tv) == FAIL) {
+        if (msgpack_to_vim(mobj.via.array.ptr[i], TV_LIST_ITEM_TV(li))
+            == FAIL) {
           return FAIL;
         }
       }
@@ -1094,15 +1096,17 @@ msgpack_to_vim_generic_map: {}
         list_T *const kv_pair = tv_list_alloc();
         tv_list_append_list(list, kv_pair);
         listitem_T *const key_li = tv_list_item_alloc();
-        key_li->li_tv.v_type = VAR_UNKNOWN;
+        TV_LIST_ITEM_TV(key_li)->v_type = VAR_UNKNOWN;
         tv_list_append(kv_pair, key_li);
         listitem_T *const val_li = tv_list_item_alloc();
-        val_li->li_tv.v_type = VAR_UNKNOWN;
+        TV_LIST_ITEM_TV(val_li)->v_type = VAR_UNKNOWN;
         tv_list_append(kv_pair, val_li);
-        if (msgpack_to_vim(mobj.via.map.ptr[i].key, &key_li->li_tv) == FAIL) {
+        if (msgpack_to_vim(mobj.via.map.ptr[i].key, TV_LIST_ITEM_TV(key_li))
+            == FAIL) {
           return FAIL;
         }
-        if (msgpack_to_vim(mobj.via.map.ptr[i].val, &val_li->li_tv) == FAIL) {
+        if (msgpack_to_vim(mobj.via.map.ptr[i].val, TV_LIST_ITEM_TV(val_li))
+            == FAIL) {
           return FAIL;
         }
       }

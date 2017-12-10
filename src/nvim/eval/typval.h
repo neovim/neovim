@@ -383,6 +383,22 @@ static inline listitem_T *tv_list_first(const list_T *const l)
   return l->lv_first;
 }
 
+static inline listitem_T *tv_list_last(const list_T *const l)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Get last list item
+///
+/// @param[in]  l  List to get item from.
+///
+/// @return List item or NULL in case of an empty list.
+static inline listitem_T *tv_list_last(const list_T *const l)
+{
+  if (l == NULL) {
+    return NULL;
+  }
+  return l->lv_last;
+}
+
 static inline long tv_dict_len(const dict_T *const d)
   REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
