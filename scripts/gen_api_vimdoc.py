@@ -45,6 +45,8 @@ if sys.version_info[0] < 3:
 doc_filename = 'api.txt'
 # String used to find the start of the generated part of the doc.
 section_start_token = '*api-global*'
+# Required prefix for API function names.
+api_func_name_prefix = 'nvim_'
 
 # Section name overrides.
 section_name = {
@@ -260,11 +262,11 @@ def parse_parblock(parent, width=62):
 def parse_source_xml(filename):
     """Collects API functions.
 
-    This returns two strings:
-      1. The API functions
-      2. The deprecated API functions
+    Returns two strings:
+      1. API functions
+      2. Deprecated API functions
 
-    The caller decides what to do with the deprecated documentation.
+    Caller decides what to do with the deprecated documentation.
     """
     global xrefs
     xrefs = set()
@@ -294,9 +296,8 @@ def parse_source_xml(filename):
         annotations = get_text(get_child(member, 'argsstring'))
         if annotations and ')' in annotations:
             annotations = annotations.rsplit(')', 1)[-1].strip()
-        # XXX: (doxygen 1.8.11) 'argsstring' only includes FUNC_ATTR_*
-        # attributes if the function signature is non-void.
-        # Force attributes here for such functions.
+        # XXX: (doxygen 1.8.11) 'argsstring' only includes attributes of
+        # non-void functions.  Special-case void functions here.
         if name == 'nvim_get_mode' and len(annotations) == 0:
             annotations += 'FUNC_API_ASYNC'
         annotations = filter(None, map(lambda x: annotation_map.get(x),
@@ -379,7 +380,7 @@ def parse_source_xml(filename):
 
         if 'Deprecated' in xrefs:
             deprecated_functions.append(func_doc)
-        else:
+        elif name.startswith(api_func_name_prefix):
             functions.append(func_doc)
 
         xrefs.clear()
