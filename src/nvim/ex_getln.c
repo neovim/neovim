@@ -2680,6 +2680,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
       .end = end,
       .attr = attr,
     }));
+    i++;
   });
   if (prev_end < colored_ccline->cmdlen) {
     kv_push(ccline_colors->colors, ((CmdlineColorChunk) {

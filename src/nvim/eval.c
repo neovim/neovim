@@ -14545,12 +14545,14 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Default result is zero == OK.
   for (;; ) {
+    if (argvars[1].v_type == VAR_LIST) {
       // List argument, get next string.
-    if (li == NULL) {
-      break;
+      if (li == NULL) {
+        break;
+      }
+      line = tv_get_string_chk(TV_LIST_ITEM_TV(li));
+      li = TV_LIST_ITEM_NEXT(l, li);
     }
-    line = tv_get_string_chk(TV_LIST_ITEM_TV(li));
-    li = TV_LIST_ITEM_NEXT(l, li);
 
     rettv->vval.v_number = 1;  // FAIL
     if (line == NULL || lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1) {

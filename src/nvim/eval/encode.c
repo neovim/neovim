@@ -140,7 +140,9 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
                                       ? tv_list_last(v.data.l.list)
                                       : TV_LIST_ITEM_PREV(v.data.l.list,
                                                           v.data.l.li));
-        int idx = (int)tv_list_idx_of_item(v.data.l.list, li);
+        int idx = (li == NULL
+                   ? 0
+                   : (int)tv_list_idx_of_item(v.data.l.list, li));
         if (v.type == kMPConvList
             || li == NULL
             || (TV_LIST_ITEM_TV(li)->v_type != VAR_LIST
