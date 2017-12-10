@@ -21,7 +21,8 @@ usage() {
   echo
   echo "Options:"
   echo "    -h                 Show this message and exit."
-  echo "    -l                 Show list of Vim patches missing from Neovim."
+  echo "    -l                 Show list of missing Vim patches."
+  echo "    -L                 Print missing Vim patches in machine-readable form."
   echo "    -p {vim-revision}  Download and generate the specified Vim patch."
   echo "                       vim-revision can be a version number '8.0.xxx'"
   echo "                       or a valid Git ref (hash, tag, etc.)."
@@ -318,11 +319,8 @@ submit_pr() {
   done
 }
 
+# Prints a newline-delimited list of Vim commits, for use by scripts.
 list_vim_patches() {
-  get_vim_sources
-
-  printf "\nVim patches missing from Neovim:\n"
-
   # Get missing Vim commits
   local vim_commits
   vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD)"
@@ -343,18 +341,27 @@ list_vim_patches() {
       local patch_number="${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
       is_missing="$(echo "$tokens" | >/dev/null 2>&1 grep "vim\-patch:${patch_number}" && echo false || echo true)"
       vim_commit="${vim_tag#v}"
-      if ! [ "$is_missing" = "false" ] ; then
-        if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
-          vim_commit="${vim_commit} (+runtime)"
-        fi
-      fi
     else
       # Untagged Vim patch (e.g. runtime updates).
       is_missing="$(echo "$tokens" | >/dev/null 2>&1 grep "vim\-patch:${vim_commit:0:7}" && echo false || echo true)"
     fi
 
     if ! [ "$is_missing" = "false" ]; then
-      echo "  • ${vim_commit}"
+      echo "${vim_commit}"
+    fi
+  done
+}
+
+# Prints a human-formatted list of Vim commits, with instructional messages.
+show_vim_patches() {
+  get_vim_sources
+  printf "\nVim patches missing from Neovim:\n"
+
+  list_vim_patches | while read vim_commit; do
+    if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
+      printf "  • ${vim_commit} (+runtime)\n"
+    else
+      printf "  • ${vim_commit}\n"
     fi
   done
 
@@ -465,13 +472,17 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlp:P:g:r:s" opt; do
+while getopts "hlLp:P:g:r:s" opt; do
   case ${opt} in
     h)
       usage
       exit 0
       ;;
     l)
+      show_vim_patches
+      exit 0
+      ;;
+    L)
       list_vim_patches
       exit 0
       ;;
