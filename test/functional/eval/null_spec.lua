@@ -102,6 +102,8 @@ describe('NULL', function()
                    'E742: Cannot change value of reverse() argument', 0)
     null_expr_test('makes sort() error out', 'sort(L)',
                    'E742: Cannot change value of sort() argument', 0)
+    null_expr_test('makes uniq() error out', 'uniq(L)',
+                   'E742: Cannot change value of uniq() argument', 0)
     null_expr_test('does not crash extend()', 'extend(L, [1])', 'E742: Cannot change value of extend() argument', 0)
     null_expr_test('does not crash extend() (second position)', 'extend([1], L)', 0, {1})
     null_expr_test('makes join() return empty string', 'join(L, "")', 0, '')

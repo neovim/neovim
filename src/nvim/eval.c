@@ -15232,6 +15232,8 @@ item_compare_end:
   // When the result would be zero, compare the item indexes.  Makes the
   // sort stable.
   if (res == 0 && !keep_zero) {
+    // WARNING: When using uniq si1 and si2 are actually listitem_T **, no
+    // indexes are there.
     res = si1->idx > si2->idx ? 1 : -1;
   }
   return res;
@@ -15297,6 +15299,8 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
   // When the result would be zero, compare the pointers themselves.  Makes
   // the sort stable.
   if (res == 0 && !keep_zero) {
+    // WARNING: When using uniq si1 and si2 are actually listitem_T **, no
+    // indexes are there.
     res = si1->idx > si2->idx ? 1 : -1;
   }
 
@@ -15337,7 +15341,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
   } else {
     list_T *const l = argvars[0].vval.v_list;
     if (tv_check_lock(tv_list_locked(l), arg_errmsg, TV_TRANSLATE)) {
-        goto theend;
+      goto theend;
     }
     rettv->vval.v_list = l;
     rettv->v_type = VAR_LIST;
@@ -15462,7 +15466,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       listitem_T *prev_li = NULL;
       TV_LIST_ITER(l, li, {
         if (prev_li != NULL) {
-          if (item_compare_func_ptr(prev_li, li) == 0) {
+          if (item_compare_func_ptr(&prev_li, &li) == 0) {
             ptrs[i++].item = prev_li;
           }
           if (info.item_compare_func_err) {
