@@ -2568,7 +2568,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   for (size_t i = 0; i < reg->y_size; i++) {
     tv_list_append_string(list, (const char *)reg->y_array[i], -1);
   }
-  list->lv_lock = VAR_FIXED;
+  tv_list_set_lock(list, VAR_FIXED);
   tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   // the register type

@@ -61,7 +61,7 @@ static inline void create_special_dict(typval_T *const rettv,
   type_di->di_tv.v_type = VAR_LIST;
   type_di->di_tv.v_lock = VAR_UNLOCKED;
   type_di->di_tv.vval.v_list = (list_T *) eval_msgpack_type_lists[type];
-  type_di->di_tv.vval.v_list->lv_refcount++;
+  tv_list_ref(type_di->di_tv.vval.v_list);
   tv_dict_add(dict, type_di);
   dictitem_T *const val_di = tv_dict_item_alloc_len(S_LEN("_VAL"));
   val_di->di_tv = val;
@@ -234,7 +234,7 @@ list_T *decode_create_map_special_dict(typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
   list_T *const list = tv_list_alloc();
-  list->lv_refcount++;
+  tv_list_ref(list);
   create_special_dict(ret_tv, kMPMap, ((typval_T) {
     .v_type = VAR_LIST,
     .v_lock = VAR_UNLOCKED,
@@ -270,7 +270,7 @@ typval_T decode_string(const char *const s, const size_t len,
                               : (bool)hasnul);
   if (really_hasnul) {
     list_T *const list = tv_list_alloc();
-    list->lv_refcount++;
+    tv_list_ref(list);
     typval_T tv;
     create_special_dict(&tv, binary ? kMPBinary : kMPString, ((typval_T) {
       .v_type = VAR_LIST,
@@ -849,7 +849,7 @@ json_decode_string_cycle_start:
       }
       case '[': {
         list_T *list = tv_list_alloc();
-        list->lv_refcount++;
+        tv_list_ref(list);
         typval_T tv = {
           .v_type = VAR_LIST,
           .v_lock = VAR_UNLOCKED,
@@ -970,7 +970,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
         };
       } else {
         list_T *const list = tv_list_alloc();
-        list->lv_refcount++;
+        tv_list_ref(list);
         create_special_dict(rettv, kMPInteger, ((typval_T) {
           .v_type = VAR_LIST,
           .v_lock = VAR_UNLOCKED,
@@ -993,7 +993,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
         };
       } else {
         list_T *const list = tv_list_alloc();
-        list->lv_refcount++;
+        tv_list_ref(list);
         create_special_dict(rettv, kMPInteger, ((typval_T) {
           .v_type = VAR_LIST,
           .v_lock = VAR_UNLOCKED,
@@ -1039,7 +1039,7 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
     }
     case MSGPACK_OBJECT_ARRAY: {
       list_T *const list = tv_list_alloc();
-      list->lv_refcount++;
+      tv_list_ref(list);
       *rettv = (typval_T) {
         .v_type = VAR_LIST,
         .v_lock = VAR_UNLOCKED,
@@ -1110,7 +1110,7 @@ msgpack_to_vim_generic_map: {}
     }
     case MSGPACK_OBJECT_EXT: {
       list_T *const list = tv_list_alloc();
-      list->lv_refcount++;
+      tv_list_ref(list);
       tv_list_append_number(list, mobj.via.ext.type);
       list_T *const ext_val_list = tv_list_alloc();
       tv_list_append_list(list, ext_val_list);

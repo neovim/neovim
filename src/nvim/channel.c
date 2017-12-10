@@ -673,7 +673,7 @@ static void on_channel_event(void **args)
     argv[1].v_type = VAR_LIST;
     argv[1].v_lock = VAR_UNLOCKED;
     argv[1].vval.v_list = ev->received;
-    argv[1].vval.v_list->lv_refcount++;
+    tv_list_ref(argv[1].vval.v_list);
   } else {
     argv[1].v_type = VAR_NUMBER;
     argv[1].v_lock = VAR_UNLOCKED;

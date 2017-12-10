@@ -42,10 +42,6 @@ describe('NULL', function()
   describe('list', function()
     -- Incorrect behaviour
 
-    -- FIXME add() should not return 1 at all
-    null_expr_test('does not crash add()', 'add(L, 0)', 0, 1)
-    null_expr_test('does not crash extend()', 'extend(L, [1])', 'E742: Cannot change value of extend() argument', 0)
-    null_expr_test('does not crash extend() (second position)', 'extend([1], L)', 0, {1})
     -- FIXME should be accepted by inputlist()
     null_expr_test('is accepted as an empty list by inputlist()',
                         '[feedkeys("\\n"), inputlist(L)]', 'E686: Argument of inputlist() must be a List', {0, 0})
@@ -53,18 +49,12 @@ describe('NULL', function()
     null_expr_test('is accepted as an empty list by writefile()',
                         ('[writefile(L, "%s"), readfile("%s")]'):format(tmpfname, tmpfname),
                         'E484: Can\'t open file ' .. tmpfname, {0, {}})
-    -- FIXME should give error message
-    null_expr_test('does not crash remove()', 'remove(L, 0)', 0, 0)
     -- FIXME should return 0
     null_expr_test('is accepted by setqflist()', 'setqflist(L)', 0, -1)
     -- FIXME should return 0
     null_expr_test('is accepted by setloclist()', 'setloclist(1, L)', 0, -1)
     -- FIXME should return 0
     null_expr_test('is accepted by setmatches()', 'setmatches(L)', 0, -1)
-    -- FIXME should return empty list or error out
-    null_expr_test('is accepted by sort()', 'sort(L)', 0, 0)
-    -- FIXME Should return 1
-    null_expr_test('is accepted by sort()', 'sort(L) is L', 0, 0)
     -- FIXME should not error out
     null_test('is accepted by :cexpr', 'cexpr L', 'Vim(cexpr):E777: String or List expected')
     -- FIXME should not error out
@@ -79,13 +69,6 @@ describe('NULL', function()
     null_expr_test('is equal to empty list (reverse order)', '[] == L', 0, 0)
     -- FIXME Should return 1
     null_expr_test('is not locked', 'islocked("v:_null_list")', 0, 0)
-
-    -- Crashes
-
-    -- null_expr_test('does not crash setreg', 'setreg("x", L)', 0, 0)
-    -- null_expr_test('does not crash setline', 'setline(1, L)', 0, 0)
-    -- null_expr_test('does not crash system()', 'system("cat", L)', 0, '')
-    -- null_expr_test('does not crash systemlist()', 'systemlist("cat", L)', 0, {})
 
     -- Correct behaviour
     null_expr_test('does not crash append()', 'append(1, L)', 0, 0, function()
@@ -122,6 +105,22 @@ describe('NULL', function()
     null_expr_test('counts correctly', 'count([L], L)', 0, 1)
     null_expr_test('makes map() return v:_null_list', 'map(L, "v:val") is# L', 0, 1)
     null_expr_test('makes filter() return v:_null_list', 'filter(L, "1") is# L', 0, 1)
+    null_test('is treated by :let as empty list', ':let [l] = L', 'Vim(let):E688: More targets than List items')
+    -- FIXME fix test results
+    null_expr_test('does not crash add()', 'add(L, 0)', 0, 1)
+    null_expr_test('makes insert() error out', 'insert(L, 1)', '', nil)
+    null_expr_test('does not crash remove()', 'remove(L, 0)', 0, 0)
+    null_expr_test('makes reverse() error out', 'reverse(L)', '', nil)
+    null_expr_test('is accepted by sort()', 'sort(L)', 0, 0)
+    null_expr_test('makes sort() return itself', 'sort(L) is L', 0, 0)
+    null_expr_test('does not crash extend()', 'extend(L, [1])', 'E742: Cannot change value of extend() argument', 0)
+    null_expr_test('does not crash extend() (second position)', 'extend([1], L)', 0, {1})
+    null_expr_test('makes join() return empty string', 'join(L, "")', 0, '')
+    null_expr_test('makes msgpackdump() return empty list', 'msgpackdump(L)', 0, {})
+    null_expr_test('does not crash system()', 'system("cat", L)', 0, '')
+    null_expr_test('does not crash setreg', 'setreg("x", L)', 0, 0)
+    null_expr_test('does not crash systemlist()', 'systemlist("cat", L)', 0, {})
+    null_expr_test('does not crash setline', 'setline(1, L)', 0, 0)
   end)
   describe('dict', function()
     it('does not crash when indexing NULL dict', function()

@@ -798,7 +798,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
         tv_list_append(list, li);
       }
-      list->lv_refcount++;
+      tv_list_ref(list);
 
       tv->v_type = VAR_LIST;
       tv->vval.v_list = list;

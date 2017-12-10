@@ -306,7 +306,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           case kObjectTypeArray: {
             cur.tv->v_type = VAR_LIST;
             cur.tv->vval.v_list = tv_list_alloc();
-            cur.tv->vval.v_list->lv_refcount++;
+            tv_list_ref(cur.tv->vval.v_list);
             if (table_props.maxidx != 0) {
               cur.container = true;
               cur.idx = lua_gettop(lstate);

@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "nvim/types.h"
 #include "nvim/hashtab.h"
@@ -284,9 +285,6 @@ typedef struct list_stack_S {
 #define TV_DICT_HI2DI(hi) \
     ((dictitem_T *)((hi)->hi_key - offsetof(dictitem_T, di_key)))
 
-static inline void tv_list_ref(list_T *const l)
-  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
-
 /// Increase reference count for a given list
 ///
 /// Does nothing for NULL lists.
@@ -332,18 +330,41 @@ static inline void tv_list_set_lock(list_T *const l,
   l->lv_lock = lock;
 }
 
-static inline long tv_list_len(const list_T *const l)
+static inline int tv_list_len(const list_T *const l)
   REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
 /// Get the number of items in a list
 ///
 /// @param[in]  l  List to check.
-static inline long tv_list_len(const list_T *const l)
+static inline int tv_list_len(const list_T *const l)
 {
   if (l == NULL) {
     return 0;
   }
   return l->lv_len;
+}
+
+static inline int tv_list_uidx(const list_T *const l, int n)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Normalize index: that is, return either -1 or non-negative index
+///
+/// @param[in]  l  List to intex. Used to get length.
+/// @param[in]  n  List index, possibly negative.
+///
+/// @return -1 or list index in range [0, tv_list_len(l)).
+static inline int tv_list_uidx(const list_T *const l, int n)
+{
+  // Negative index is relative to the end.
+  if (n < 0) {
+    n += tv_list_len(l);
+  }
+
+  // Check for index out of range.
+  if (n < 0 || n >= tv_list_len(l)) {
+    return -1;
+  }
+  return n;
 }
 
 static inline listitem_T *tv_list_first(const list_T *const l)
@@ -427,7 +448,7 @@ extern bool tv_in_free_unref_items;
     do { \
       modifier list_T *const l_ = (l); \
       if (l_ != NULL) { \
-        for (modifier listitem_T *const li = l_->lv_first; \
+        for (modifier listitem_T *li = l_->lv_first; \
              li != NULL; li = li->li_next) { \
           code \
         } \
