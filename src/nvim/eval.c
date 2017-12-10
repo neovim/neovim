@@ -2875,9 +2875,12 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
       ret = FAIL;
     }
     *name_end = cc;
-  } else if (tv_check_lock(tv_list_locked(lp->ll_list),
-                           (const char *)lp->ll_name,
-                           lp->ll_name_len)
+  } else if ((lp->ll_list != NULL
+              // ll_list is not NULL when lvalue is not in a list, NULL lists
+              // yield E689.
+              && tv_check_lock(tv_list_locked(lp->ll_list),
+                               (const char *)lp->ll_name,
+                               lp->ll_name_len))
              || (lp->ll_dict != NULL
                  && tv_check_lock(lp->ll_dict->dv_lock,
                                   (const char *)lp->ll_name,
