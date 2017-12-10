@@ -789,6 +789,10 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
   return keymap_array(mode, NULL);
 }
 
+/// Returns a 2-tuple (Array), where item 0 is the current channel id and item
+/// 1 is the |api-metadata| map (Dictionary).
+///
+/// @returns 2-tuple [{channel-id}, {api-metadata}]
 Array nvim_get_api_info(uint64_t channel_id)
   FUNC_API_SINCE(1) FUNC_API_ASYNC FUNC_API_REMOTE_ONLY
 {
@@ -896,7 +900,9 @@ typedef struct {
   Object *ret_node_p;
 } ExprASTConvStackItem;
 
+///@cond DOXYGEN_NOT_A_FUNCTION
 typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
+///@endcond
 
 /// Parse a VimL expression
 ///
