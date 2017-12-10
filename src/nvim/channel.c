@@ -242,7 +242,7 @@ void channel_incref(Channel *channel)
 void channel_decref(Channel *channel)
 {
   if (!(--channel->refcount)) {
-    multiqueue_put(main_loop.fast_events, free_channel_event, 1, channel);
+    MULTIQUEUE_PUT(main_loop.fast_events, free_channel_event, 1, channel);
   }
 }
 
@@ -568,7 +568,7 @@ static inline void process_channel_event(Channel *chan, Callback *callback,
   event_data->callback = callback;
   event_data->type = type;
 
-  multiqueue_put(chan->events, on_channel_event, 1, event_data);
+  MULTIQUEUE_PUT(chan->events, on_channel_event, 1, event_data);
 }
 
 void on_job_stdout(Stream *stream, RBuffer *buf, size_t count,
@@ -622,7 +622,7 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
         } else {
             // can't display error message now, defer it.
             channel_incref(chan);
-            multiqueue_put(chan->events, on_buffered_error, 2, chan, type);
+            MULTIQUEUE_PUT(chan->events, on_buffered_error, 2, chan, type);
         }
       } else {
         abort();
@@ -749,7 +749,7 @@ static inline void term_delayed_free(void **argv)
 {
   Channel *chan = argv[0];
   if (chan->stream.proc.in.pending_reqs || chan->stream.proc.out.pending_reqs) {
-    multiqueue_put(chan->events, term_delayed_free, 1, chan);
+    MULTIQUEUE_PUT(chan->events, term_delayed_free, 1, chan);
     return;
   }
 
@@ -762,6 +762,6 @@ static void term_close(void *data)
 {
   Channel *chan = data;
   process_stop(&chan->stream.proc);
-  multiqueue_put(chan->events, term_delayed_free, 1, data);
+  MULTIQUEUE_PUT(chan->events, term_delayed_free, 1, data);
 }
 

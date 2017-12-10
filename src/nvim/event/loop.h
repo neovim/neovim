@@ -46,7 +46,7 @@ typedef struct loop {
 #define CREATE_EVENT(multiqueue, handler, argc, ...) \
   do { \
     if (multiqueue) { \
-      multiqueue_put((multiqueue), (handler), argc, __VA_ARGS__); \
+      MULTIQUEUE_PUT((multiqueue), (handler), argc, __VA_ARGS__); \
     } else { \
       void *argv[argc] = { __VA_ARGS__ }; \
       (handler)(argv); \
