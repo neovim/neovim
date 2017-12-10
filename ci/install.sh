@@ -26,5 +26,7 @@ gem install --no-document --version ">= 0.2.0" neovim
 
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
   echo "Install neovim npm package"
+  PREFIX=~/.node_modules
   npm install -g neovim
+  PREFIX=
 fi

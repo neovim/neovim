@@ -22,8 +22,6 @@ end)
 
 describe('nodejs host', function()
   it('works', function()
-    -- Assume that nodejs host is installed globally
-    command('let $NODE_PATH = fnamemodify(exepath("neovim-node-host"), ":h") . "/node_modules"')
     local fname = 'hello.js'
     write_file(fname, [[
       const socket = process.env.NVIM_LISTEN_ADDRESS;
