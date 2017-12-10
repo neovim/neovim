@@ -1799,8 +1799,9 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
       assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
       tv_dict_unref((dict_T *)dict); \
       *((dict_T **)&dict) = NULL; \
-      if (tv != NULL) { \
-        ((typval_T *)tv)->v_lock = VAR_UNLOCKED; \
+      typval_T *tv_ = tv;  /* Avoid -Wnonnull-compare warning. #6847 */ \
+      if (tv_ != NULL) { \
+        tv_->v_lock = VAR_UNLOCKED; \
       } \
     } while (0)
 
