@@ -4403,7 +4403,7 @@ void ex_cexpr(exarg_T *eap)
   typval_T tv;
   if (eval0(eap->arg, &tv, NULL, true) != FAIL) {
     if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
-        || (tv.v_type == VAR_LIST && tv.vval.v_list != NULL)) {
+        || tv.v_type == VAR_LIST) {
       if (qf_init_ext(qi, NULL, NULL, &tv, p_efm,
                       (eap->cmdidx != CMD_caddexpr
                        && eap->cmdidx != CMD_laddexpr),

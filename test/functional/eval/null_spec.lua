@@ -40,14 +40,6 @@ describe('NULL', function()
     end)
   end
   describe('list', function()
-    -- Incorrect behaviour
-
-    -- FIXME should not error out
-    null_test('is accepted by :cexpr', 'cexpr L', 'Vim(cexpr):E777: String or List expected')
-    -- FIXME should not error out
-    null_test('is accepted by :lexpr', 'lexpr L', 'Vim(lexpr):E777: String or List expected')
-    null_test('is accepted by :for', 'for x in L|throw x|endfor', 0)
-
     -- Subjectable behaviour
 
     -- FIXME Should return 1
@@ -58,6 +50,7 @@ describe('NULL', function()
     null_expr_test('is not locked', 'islocked("v:_null_list")', 0, 0)
 
     -- Correct behaviour
+    null_test('is accepted by :for', 'for x in L|throw x|endfor', 0)
     null_expr_test('does not crash append()', 'append(1, L)', 0, 0, function()
       eq({''}, curbufmeths.get_lines(0, -1, false))
     end)
@@ -126,6 +119,8 @@ describe('NULL', function()
     null_expr_test('is accepted by setmatches()', 'setmatches(L)', 0, 0)
     null_expr_test('is accepted by setqflist()', 'setqflist(L)', 0, 0)
     null_expr_test('is accepted by setloclist()', 'setloclist(1, L)', 0, 0)
+    null_test('is accepted by :cexpr', 'cexpr L', 0)
+    null_test('is accepted by :lexpr', 'lexpr L', 0)
   end)
   describe('dict', function()
     it('does not crash when indexing NULL dict', function()
