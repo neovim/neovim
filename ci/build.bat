@@ -37,11 +37,11 @@ set PATH=C:\Ruby24\bin;%PATH%
 cmd /c gem.cmd install neovim || goto :error
 where.exe neovim-ruby-host.bat || goto :error
 
-set PREFIX=%USERPROFILE%\.node_modules
 set NODE_PATH=%PREFIX%
 cmd /c npm.cmd install -g neovim || goto :error
-where.exe neovim-node-host.cmd || goto :error
-set PREFIX=
+for /f %%F in ('where.exe neovim-node-host.cmd') do (
+  set NODE_PATH=%%~dpF\node_modules
+)
 
 mkdir .deps
 cd .deps
