@@ -46,10 +46,9 @@ describe('NULL', function()
     null_expr_test('is equal to empty list', 'L == []', 0, 0)
     -- FIXME Should return 1
     null_expr_test('is equal to empty list (reverse order)', '[] == L', 0, 0)
-    -- FIXME Should return 1
-    null_expr_test('is not locked', 'islocked("v:_null_list")', 0, 0)
 
     -- Correct behaviour
+    null_expr_test('is not locked', 'islocked("v:_null_list")', 0, 0)
     null_test('is accepted by :for', 'for x in L|throw x|endfor', 0)
     null_expr_test('does not crash append()', 'append(1, L)', 0, 0, function()
       eq({''}, curbufmeths.get_lines(0, -1, false))
