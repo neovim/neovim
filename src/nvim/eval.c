@@ -11254,7 +11254,7 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int selected;
   int mouse_used;
 
-  if (argvars[0].v_type != VAR_LIST || argvars[0].vval.v_list == NULL) {
+  if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "inputlist()");
     return;
   }
