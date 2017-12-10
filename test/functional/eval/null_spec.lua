@@ -42,12 +42,6 @@ describe('NULL', function()
   describe('list', function()
     -- Incorrect behaviour
 
-    -- FIXME should return 0
-    null_expr_test('is accepted by setqflist()', 'setqflist(L)', 0, -1)
-    -- FIXME should return 0
-    null_expr_test('is accepted by setloclist()', 'setloclist(1, L)', 0, -1)
-    -- FIXME should return 0
-    null_expr_test('is accepted by setmatches()', 'setmatches(L)', 0, -1)
     -- FIXME should not error out
     null_test('is accepted by :cexpr', 'cexpr L', 'Vim(cexpr):E777: String or List expected')
     -- FIXME should not error out
@@ -129,6 +123,9 @@ describe('NULL', function()
                    '', '\n', function()
       eq({''}, curbufmeths.get_lines(0, -1, false))
     end)
+    null_expr_test('is accepted by setmatches()', 'setmatches(L)', 0, 0)
+    null_expr_test('is accepted by setqflist()', 'setqflist(L)', 0, 0)
+    null_expr_test('is accepted by setloclist()', 'setloclist(1, L)', 0, 0)
   end)
   describe('dict', function()
     it('does not crash when indexing NULL dict', function()
