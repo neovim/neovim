@@ -7496,7 +7496,7 @@ static void f_complete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!undo_allowed())
     return;
 
-  if (argvars[1].v_type != VAR_LIST || argvars[1].vval.v_list == NULL) {
+  if (argvars[1].v_type != VAR_LIST) {
     EMSG(_(e_invarg));
     return;
   }
@@ -14540,20 +14540,19 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     line = tv_get_string_chk(&argvars[1]);
   }
 
-  /* default result is zero == OK */
+  // Default result is zero == OK.
   for (;; ) {
-    if (l != NULL) {
       // List argument, get next string.
-      if (li == NULL) {
-        break;
-      }
-      line = tv_get_string_chk(TV_LIST_ITEM_TV(li));
-      li = TV_LIST_ITEM_NEXT(l, li);
-    }
-
-    rettv->vval.v_number = 1;           /* FAIL */
-    if (line == NULL || lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1)
+    if (li == NULL) {
       break;
+    }
+    line = tv_get_string_chk(TV_LIST_ITEM_TV(li));
+    li = TV_LIST_ITEM_NEXT(l, li);
+
+    rettv->vval.v_number = 1;  // FAIL
+    if (line == NULL || lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1) {
+      break;
+    }
 
     /* When coming here from Insert mode, sync undo, so that this can be
      * undone separately from what was previously inserted. */

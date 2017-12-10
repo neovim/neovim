@@ -67,6 +67,9 @@ describe('NULL', function()
     null_expr_test('does not crash append()', 'append(1, L)', 0, 0, function()
       eq({''}, curbufmeths.get_lines(0, -1, false))
     end)
+    null_expr_test('does not crash setline()', 'setline(1, L)', 0, 0, function()
+      eq({''}, curbufmeths.get_lines(0, -1, false))
+    end)
     null_expr_test('is identical to itself', 'L is L', 0, 1)
     null_expr_test('can be sliced', 'L[:]', 0, {})
     null_expr_test('can be copied', 'copy(L)', 0, {})
@@ -99,17 +102,20 @@ describe('NULL', function()
     null_expr_test('makes map() return v:_null_list', 'map(L, "v:val") is# L', 0, 1)
     null_expr_test('makes filter() return v:_null_list', 'filter(L, "1") is# L', 0, 1)
     null_test('is treated by :let as empty list', ':let [l] = L', 'Vim(let):E688: More targets than List items')
-    null_expr_test('is accepted as an empty list by inputlist()', '[feedkeys("\\n"), inputlist(L)]', 0, 0)
+    null_expr_test('is accepted as an empty list by inputlist()', '[feedkeys("\\n"), inputlist(L)]',
+                   'Type number and <Enter> or click with mouse (empty cancels): ', {0, 0})
     null_expr_test('is accepted as an empty list by writefile()',
                    ('[writefile(L, "%s"), readfile("%s")]'):format(tmpfname, tmpfname),
                    0, {0, {}})
-    -- FIXME fix test results
     null_expr_test('does not crash add()', 'add(L, 0)', 0, 1)
-    null_expr_test('makes insert() error out', 'insert(L, 1)', '', nil)
-    null_expr_test('does not crash remove()', 'remove(L, 0)', 0, 0)
-    null_expr_test('makes reverse() error out', 'reverse(L)', '', nil)
-    null_expr_test('is accepted by sort()', 'sort(L)', 0, 0)
-    null_expr_test('makes sort() return itself', 'sort(L) is L', 0, 0)
+    null_expr_test('makes insert() error out', 'insert(L, 1)',
+                   'E742: Cannot change value of insert() argument', 0)
+    null_expr_test('does not crash remove()', 'remove(L, 0)',
+                   'E742: Cannot change value of remove() argument', 0)
+    null_expr_test('makes reverse() error out', 'reverse(L)',
+                   'E742: Cannot change value of reverse() argument', 0)
+    null_expr_test('makes sort() error out', 'sort(L)',
+                   'E742: Cannot change value of sort() argument', 0)
     null_expr_test('does not crash extend()', 'extend(L, [1])', 'E742: Cannot change value of extend() argument', 0)
     null_expr_test('does not crash extend() (second position)', 'extend([1], L)', 0, {1})
     null_expr_test('makes join() return empty string', 'join(L, "")', 0, '')
@@ -117,9 +123,12 @@ describe('NULL', function()
     null_expr_test('does not crash system()', 'system("cat", L)', 0, '')
     null_expr_test('does not crash setreg', 'setreg("x", L)', 0, 0)
     null_expr_test('does not crash systemlist()', 'systemlist("cat", L)', 0, {})
-    null_expr_test('does not crash setline', 'setline(1, L)', 0, 0)
     null_test('does not make Neovim crash when v:oldfiles gets assigned to that', ':let v:oldfiles = L|oldfiles', 0)
-    -- FIXME Add test for complete(, L)
+    null_expr_test('does not make complete() crash or error out',
+                   'execute(":normal i\\<C-r>=complete(1, L)[-1]\\n")',
+                   '', '\n', function()
+      eq({''}, curbufmeths.get_lines(0, -1, false))
+    end)
   end)
   describe('dict', function()
     it('does not crash when indexing NULL dict', function()
