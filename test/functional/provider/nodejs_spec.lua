@@ -10,7 +10,7 @@ do
   clear()
   if missing_provider('node') then
     pending(
-      "Cannot find the neovim node host. Try :checkhealth",
+      "Cannot find the neovim nodejs host. Try :checkhealth",
       function() end)
     return
   end
@@ -20,9 +20,9 @@ before_each(function()
   clear()
 end)
 
-describe('node host', function()
+describe('nodejs host', function()
   it('works', function()
-    -- Assume that node host is installed globally
+    -- Assume that nodejs host is installed globally
     command('let $NODE_PATH = fnamemodify(exepath("neovim-node-host"), ":h") . "/node_modules"')
     local fname = 'hello.js'
     write_file(fname, [[
