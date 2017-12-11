@@ -126,6 +126,7 @@ UI *tui_start(void)
 {
   UI *ui = xcalloc(1, sizeof(UI));
   ui->stop = tui_stop;
+  ui->after_startup = tui_after_startup;
   ui->rgb = p_tgc;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
@@ -174,13 +175,7 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
 static void terminfo_after_startup_event(void **argv)
 {
   UI *ui = argv[0];
-  bool defer = argv[1] != NULL;  // clever(?) boolean without malloc() dance.
   TUIData *data = ui->data;
-  if (defer) {  // We're on the main-loop. Now forward to the TUI loop.
-    loop_schedule(data->loop,
-                  event_create(terminfo_after_startup_event, 2, ui, NULL));
-    return;
-  }
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
   // Enable focus reporting
@@ -278,9 +273,13 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
+}
 
-  loop_schedule(&main_loop,
-                event_create(terminfo_after_startup_event, 2, ui, ui));
+static void tui_after_startup(UI *ui)
+{
+  TUIData *data = ui->data;
+  loop_schedule(data->loop,
+                event_create(terminfo_after_startup_event, 1, ui));
 }
 
 static void terminfo_stop(UI *ui)

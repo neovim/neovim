@@ -42,6 +42,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->ui = ui;
   rv->bridge.rgb = ui->rgb;
   rv->bridge.stop = ui_bridge_stop;
+  rv->bridge.after_startup = ui_bridge_after_startup;
   rv->bridge.resize = ui_bridge_resize;
   rv->bridge.clear = ui_bridge_clear;
   rv->bridge.eol_clear = ui_bridge_eol_clear;
@@ -104,6 +105,16 @@ static void ui_thread_run(void *data)
 {
   UIBridgeData *bridge = data;
   bridge->ui_main(bridge, bridge->ui);
+}
+
+static void ui_bridge_after_startup(UI *b)
+{
+  UI_BRIDGE_CALL(b, after_startup, 1, b);
+}
+static void ui_bridge_after_startup_event(void **argv)
+{
+  UI *ui = UI(argv[0]);
+  ui->after_startup(ui);
 }
 
 static void ui_bridge_stop(UI *b)
