@@ -6531,6 +6531,7 @@ static void f_abs(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   list_T      *l;
+  const char *const arg_errmsg = N_("add() argument");
 
   rettv->vval.v_number = 1;   /* Default: Failed */
   if (argvars[0].v_type == VAR_LIST) {
@@ -6538,6 +6539,10 @@ static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         && !tv_check_lock(l->lv_lock, "add() argument", TV_TRANSLATE)) {
       tv_list_append_tv(l, &argvars[1]);
       tv_copy(&argvars[0], rettv);
+    } else {
+      const bool locked = tv_check_lock(VAR_FIXED, arg_errmsg, TV_TRANSLATE);
+      (void)locked;
+      assert(locked == true);
     }
   } else {
     EMSG(_(e_listreq));
@@ -14503,7 +14508,9 @@ static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *line = NULL;
   if (argvars[1].v_type == VAR_LIST) {
     l = argvars[1].vval.v_list;
-    li = l->lv_first;
+    if (l != NULL) {
+      li = l->lv_first;
+    }
   } else {
     line = tv_get_string_chk(&argvars[1]);
   }

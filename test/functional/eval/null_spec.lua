@@ -42,8 +42,6 @@ describe('NULL', function()
   describe('list', function()
     -- Incorrect behaviour
 
-    -- FIXME add() should not return 1 at all
-    null_expr_test('does not crash add()', 'add(L, 0)', 0, 1)
     null_expr_test('does not crash extend()', 'extend(L, [1])', 'E742: Cannot change value of extend() argument', 0)
     null_expr_test('does not crash extend() (second position)', 'extend([1], L)', 0, {1})
     -- FIXME should be accepted by inputlist()
@@ -83,11 +81,11 @@ describe('NULL', function()
     -- Crashes
 
     -- null_expr_test('does not crash setreg', 'setreg("x", L)', 0, 0)
-    -- null_expr_test('does not crash setline', 'setline(1, L)', 0, 0)
     -- null_expr_test('does not crash system()', 'system("cat", L)', 0, '')
     -- null_expr_test('does not crash systemlist()', 'systemlist("cat", L)', 0, {})
 
     -- Correct behaviour
+    null_expr_test('does not crash add()', 'add(L, 0)', 'E742: Cannot change value of add() argument', 1)
     null_expr_test('does not crash append()', 'append(1, L)', 0, 0, function()
       eq({''}, curbufmeths.get_lines(0, -1, false))
     end)
@@ -105,6 +103,7 @@ describe('NULL', function()
     null_expr_test('does not crash cursor()', 'cursor(L)', 'E474: Invalid argument', -1)
     null_expr_test('does not crash map()', 'map(L, "v:val")', 0, {})
     null_expr_test('does not crash filter()', 'filter(L, "1")', 0, {})
+    null_expr_test('does not crash setline', 'setline(1, L)', 0, 1)
     null_expr_test('is empty', 'empty(L)', 0, 1)
     null_expr_test('does not crash get()', 'get(L, 1, 10)', 0, 10)
     null_expr_test('has zero length', 'len(L)', 0, 0)
