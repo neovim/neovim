@@ -21,7 +21,8 @@ usage() {
   echo
   echo "Options:"
   echo "    -h                 Show this message and exit."
-  echo "    -l                 Show list of Vim patches missing from Neovim."
+  echo "    -l                 Show list of missing Vim patches."
+  echo "    -L                 Print missing Vim patches in machine-readable form."
   echo "    -p {vim-revision}  Download and generate the specified Vim patch."
   echo "                       vim-revision can be a version number '8.0.xxx'"
   echo "                       or a valid Git ref (hash, tag, etc.)."
@@ -146,6 +147,10 @@ preprocess_patch() {
   # Remove some testdir/Make_*.mak files
   local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms'
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('${na_src_testdir}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+
+  # Remove version.c #7555
+  local na_po='version.c'
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\<\%('${na_po}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove some *.po files. #5622
   local na_po='sjiscorr.c\|ja.sjis.po\|ko.po\|pl.cp1250.po\|pl.po\|ru.cp1251.po\|uk.cp1251.po\|zh_CN.cp936.po\|zh_CN.po\|zh_TW.po'
@@ -318,14 +323,16 @@ submit_pr() {
   done
 }
 
+# Prints a newline-delimited list of Vim commits, for use by scripts.
 list_vim_patches() {
-  get_vim_sources
-
-  printf "\nVim patches missing from Neovim:\n"
-
   # Get missing Vim commits
   local vim_commits
   vim_commits="$(cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD)"
+
+  # Find all "vim-patch:xxx" tokens in the Nvim git log.
+  local tokens
+  tokens="$(cd "${NVIM_SOURCE_DIR}" && git log -E --grep='vim-patch:[^ ]+' | grep 'vim-patch')"
+  tokens="$(for i in $tokens ; do echo "$i" | grep -E 'vim-patch:[^ ]{7}' | sed 's/.*\(vim-patch:[.0-9a-z]\+\).*/\1/' ; done)"
 
   local vim_commit
   for vim_commit in ${vim_commits}; do
@@ -334,23 +341,31 @@ list_vim_patches() {
     # This fails for untagged commits (e.g., runtime file updates) so mask the return status
     vim_tag="$(cd "${VIM_SOURCE_DIR}" && git describe --tags --exact-match "${vim_commit}" 2>/dev/null)" || true
     if [[ -n "${vim_tag}" ]]; then
-      local patch_number="${vim_tag:5}" # Remove prefix like "v7.4."
-      patch_number="$(echo ${patch_number} | sed 's/^0*//g')" # Remove prefix "0"
-      # Tagged Vim patch, check version.c:
-      is_missing="$(sed -n '/static const int included_patches/,/}/p' "${NVIM_SOURCE_DIR}/src/nvim/version.c" |
-        grep -x -e "[[:space:]]*//[[:space:]]${patch_number} NA.*" -e "[[:space:]]*${patch_number}," >/dev/null && echo "false" || echo "true")"
+      # Vim version number (not commit hash).
+      local patch_number="${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
+      is_missing="$(echo "$tokens" | >/dev/null 2>&1 grep "vim\-patch:${patch_number}" && echo false || echo true)"
       vim_commit="${vim_tag#v}"
-      if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
-        vim_commit="${vim_commit} (+runtime)"
-      fi
     else
-      # Untagged Vim patch (e.g. runtime updates), check the Neovim git log:
-      is_missing="$(cd "${NVIM_SOURCE_DIR}" &&
-        git log -1 --no-merges --grep="vim\-patch:${vim_commit:0:7}" --pretty=format:false)"
+      # Untagged Vim patch (e.g. runtime updates).
+      is_missing="$(echo "$tokens" | >/dev/null 2>&1 grep "vim\-patch:${vim_commit:0:7}" && echo false || echo true)"
     fi
 
-    if [[ ${is_missing} != "false" ]]; then
-      echo "  • ${vim_commit}"
+    if ! [ "$is_missing" = "false" ]; then
+      echo "${vim_commit}"
+    fi
+  done
+}
+
+# Prints a human-formatted list of Vim commits, with instructional messages.
+show_vim_patches() {
+  get_vim_sources
+  printf "\nVim patches missing from Neovim:\n"
+
+  list_vim_patches | while read vim_commit; do
+    if (cd "${VIM_SOURCE_DIR}" && git --no-pager  show --color=never --name-only "v${vim_commit}" 2>/dev/null) | grep -q ^runtime; then
+      printf "  • ${vim_commit} (+runtime)\n"
+    else
+      printf "  • ${vim_commit}\n"
     fi
   done
 
@@ -461,13 +476,17 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlp:P:g:r:s" opt; do
+while getopts "hlLp:P:g:r:s" opt; do
   case ${opt} in
     h)
       usage
       exit 0
       ;;
     l)
+      show_vim_patches
+      exit 0
+      ;;
+    L)
       list_vim_patches
       exit 0
       ;;

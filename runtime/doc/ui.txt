@@ -9,7 +9,7 @@ Nvim UI protocol							  *ui*
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-Introduction							     *ui-intro*
+UI Events							    *ui-events*
 
 GUIs can be implemented as external processes communicating with Nvim over the
 RPC API. The UI model consists of a terminal-like grid with a single,

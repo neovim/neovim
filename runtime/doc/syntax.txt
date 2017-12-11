@@ -4709,17 +4709,7 @@ ctermbg={color-nr}				*highlight-ctermbg*
 	"cterm".  For example, on some systems "cterm=bold ctermfg=3" gives
 	another color, on others you just get color 3.
 
-	For an xterm this depends on your resources, and is a bit
-	unpredictable.	See your xterm documentation for the defaults.	The
-	colors for a color-xterm can be changed from the .Xdefaults file.
-	Unfortunately this means that it's not possible to get the same colors
-	for each user.
-
-	The MSDOS standard colors are fixed (in a console window), so these
-	have been used for the names.  But the meaning of color names in X11
-	are fixed, so these color settings have been used, to make the
-	highlighting settings portable (complicated, isn't it?).  The
-	following names are recognized, with the color number used:
+	The following names are recognized, with the color number used:
 
 							*cterm-colors*
 	    NR-16   NR-8    COLOR NAME ~

@@ -75,6 +75,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
+#include "nvim/os/lang.h"
 
 /*
  * The options that are local to a window or buffer have "indir" set to one of
@@ -783,6 +784,8 @@ void set_init_1(void)
   }
 
   didset_options2();
+
+  lang_init();
 
   // enc_locale() will try to find the encoding of the current locale.
   // This will be used when 'default' is used as encoding specifier

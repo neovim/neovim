@@ -763,8 +763,8 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 ///                   or -1 for ungrouped highlight
 /// @param hl_group   Name of the highlight group to use
 /// @param line       Line to highlight (zero-indexed)
-/// @param col_start  Start of range of columns to highlight
-/// @param col_end    End of range of columns to highlight,
+/// @param col_start  Start of (byte-indexed) column range to highlight
+/// @param col_end    End of (byte-indexed) column range to highlight,
 ///                   or -1 to highlight to end of line
 /// @param[out] err   Error details, if any
 /// @return The src_id that was used

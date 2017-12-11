@@ -14,7 +14,7 @@
 [![PVS-studio Check](https://neovim.io/doc/reports/pvs/badge.svg)](https://neovim.io/doc/reports/pvs)
 
 [![Debian CI](https://badges.debian.net/badges/debian/testing/neovim/version.svg)](https://buildd.debian.org/neovim)
-[![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592000)](https://github.com/neovim/neovim/releases/)
+[![Downloads](https://img.shields.io/github/downloads/neovim/neovim/total.svg?maxAge=2592001)](https://github.com/neovim/neovim/releases/)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
