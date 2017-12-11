@@ -267,7 +267,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
       }
       *p++ = NL;
       if (TV_LIST_ITEM_TV(state->li)->v_type != VAR_STRING) {
-        *read_bytes = (size_t) (p - buf);
+        *read_bytes = (size_t)(p - buf);
         return FAIL;
       }
       state->offset = 0;

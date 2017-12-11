@@ -1646,20 +1646,20 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
     case kSDItemHistoryEntry: {
       const bool is_hist_search =
           entry.data.history_item.histtype == HIST_SEARCH;
-      const size_t arr_size = 2 + (size_t) is_hist_search + (size_t) (
+      const size_t arr_size = 2 + (size_t)is_hist_search + (size_t)(
           tv_list_len(entry.data.history_item.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       msgpack_pack_uint8(spacker, entry.data.history_item.histtype);
       PACK_BIN(cstr_as_string(entry.data.history_item.string));
       if (is_hist_search) {
-        msgpack_pack_uint8(spacker, (uint8_t) entry.data.history_item.sep);
+        msgpack_pack_uint8(spacker, (uint8_t)entry.data.history_item.sep);
       }
       DUMP_ADDITIONAL_ELEMENTS(entry.data.history_item.additional_elements,
                                "history entry item");
       break;
     }
     case kSDItemVariable: {
-      const size_t arr_size = 2 + (size_t) (
+      const size_t arr_size = 2 + (size_t)(
           tv_list_len(entry.data.global_var.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       const String varname = cstr_as_string(entry.data.global_var.name);
@@ -1679,7 +1679,7 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
       break;
     }
     case kSDItemSubString: {
-      const size_t arr_size = 1 + (size_t) (
+      const size_t arr_size = 1 + (size_t)(
           tv_list_len(entry.data.sub_string.additional_elements));
       msgpack_pack_array(spacker, arr_size);
       PACK_BIN(cstr_as_string(entry.data.sub_string.sub));

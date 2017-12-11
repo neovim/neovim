@@ -60,7 +60,7 @@ static inline void create_special_dict(typval_T *const rettv,
   dictitem_T *const type_di = tv_dict_item_alloc_len(S_LEN("_TYPE"));
   type_di->di_tv.v_type = VAR_LIST;
   type_di->di_tv.v_lock = VAR_UNLOCKED;
-  type_di->di_tv.vval.v_list = (list_T *) eval_msgpack_type_lists[type];
+  type_di->di_tv.vval.v_list = (list_T *)eval_msgpack_type_lists[type];
   tv_list_ref(type_di->di_tv.vval.v_list);
   tv_dict_add(dict, type_di);
   dictitem_T *const val_di = tv_dict_item_alloc_len(S_LEN("_VAL"));

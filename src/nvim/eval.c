@@ -1540,7 +1540,8 @@ ex_let_vars (
   listitem_T *item = tv_list_first(l);
   while (*arg != ']') {
     arg = skipwhite(arg + 1);
-    arg = ex_let_one(arg, TV_LIST_ITEM_TV(item), TRUE, (char_u *)",;]", nextchars);
+    arg = ex_let_one(arg, TV_LIST_ITEM_TV(item), true, (const char_u *)",;]",
+                     nextchars);
     item = TV_LIST_ITEM_NEXT(l, item);
     if (arg == NULL) {
       return FAIL;
@@ -2415,13 +2416,14 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       lp->ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
       lp->ll_n1++;
     }
-    if (ri != NULL)
+    if (ri != NULL) {
       EMSG(_("E710: List value has more items than target"));
-    else if (lp->ll_empty2
-             ? (lp->ll_li != NULL
-                && TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) != NULL)
-             : lp->ll_n1 != lp->ll_n2)
+    } else if (lp->ll_empty2
+               ? (lp->ll_li != NULL
+                  && TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) != NULL)
+               : lp->ll_n1 != lp->ll_n2) {
       EMSG(_("E711: List value has not enough items"));
+    }
   } else {
     typval_T oldtv = TV_INITIAL_VALUE;
     dict_T *dict = lp->ll_dict;
@@ -8561,8 +8563,9 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
         nli = TV_LIST_ITEM_NEXT(l, li);
         vimvars[VV_KEY].vv_nr = idx;
         if (filter_map_one(TV_LIST_ITEM_TV(li), expr, map, &rem) == FAIL
-            || did_emsg)
+            || did_emsg) {
           break;
+        }
         if (!map && rem) {
           tv_list_item_remove(l, li);
         }
@@ -19235,9 +19238,9 @@ int var_item_copy(const vimconv_T *const conv,
   case VAR_LIST:
     to->v_type = VAR_LIST;
     to->v_lock = 0;
-    if (from->vval.v_list == NULL)
+    if (from->vval.v_list == NULL) {
       to->vval.v_list = NULL;
-    else if (copyID != 0 && tv_list_copyid(from->vval.v_list) == copyID) {
+    } else if (copyID != 0 && tv_list_copyid(from->vval.v_list) == copyID) {
       // Use the copy made earlier.
       to->vval.v_list = tv_list_latest_copy(from->vval.v_list);
       tv_list_ref(to->vval.v_list);
@@ -22400,7 +22403,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
     {.v_type = VAR_LIST, .vval.v_list = arguments, .v_lock = 0},
     {.v_type = VAR_UNKNOWN}
   };
-  typval_T rettv = {.v_type = VAR_UNKNOWN, .v_lock = 0};
+  typval_T rettv = { .v_type = VAR_UNKNOWN, .v_lock = VAR_UNLOCKED };
   tv_list_ref(arguments);
 
   int dummy;

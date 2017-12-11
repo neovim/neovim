@@ -5577,8 +5577,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
   }
 
   // Set up position matches
-  if (pos_list != NULL)
-  {
+  if (pos_list != NULL) {
     linenr_T toplnum = 0;
     linenr_T botlnum = 0;
 

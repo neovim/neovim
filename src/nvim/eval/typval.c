@@ -696,8 +696,8 @@ bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic,
   listitem_T *item1 = tv_list_first(l1);
   listitem_T *item2 = tv_list_first(l2);
   for (; item1 != NULL && item2 != NULL
-       ; item1 = TV_LIST_ITEM_NEXT(l1, item1),
-         item2 = TV_LIST_ITEM_NEXT(n2, item2)) {
+       ; (item1 = TV_LIST_ITEM_NEXT(l1, item1),
+          item2 = TV_LIST_ITEM_NEXT(n2, item2))) {
     if (!tv_equal(TV_LIST_ITEM_TV(item1), TV_LIST_ITEM_TV(item2), ic,
                   recursive)) {
       return false;

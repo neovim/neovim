@@ -5616,7 +5616,7 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
       goto err;
     }
     char_u *regtype = TV_LIST_ITEM_TV(tv_list_last(res))->vval.v_string;
-    if (regtype == NULL || strlen((char*)regtype) > 1) {
+    if (regtype == NULL || strlen((char *)regtype) > 1) {
       goto err;
     }
     switch (regtype[0]) {

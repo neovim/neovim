@@ -586,9 +586,10 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             }
             size_t len;
             char *buf;
-            if (!encode_vim_list_to_buf(
-                TV_LIST_ITEM_TV(tv_list_last(val_list))->vval.v_list, &len,
-                                &buf)) {
+            if (!(
+                encode_vim_list_to_buf(
+                    TV_LIST_ITEM_TV(tv_list_last(val_list))->vval.v_list, &len,
+                    &buf))) {
               goto _convert_one_value_regular_dict;
             }
             TYPVAL_ENCODE_CONV_EXT_STRING(tv, buf, len, type);
@@ -721,7 +722,8 @@ typval_encode_stop_converting_one_item:
             TV_LIST_ITEM_TV(cur_mpsv->data.l.li)->vval.v_list);
         TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(
             encode_vim_to__error_ret, *TV_LIST_ITEM_TV(tv_list_first(kv_pair)));
-        if (_TYPVAL_ENCODE_CONVERT_ONE_VALUE(
+        if (
+            _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                 TYPVAL_ENCODE_FIRST_ARG_NAME, &mpstack, cur_mpsv,
                 TV_LIST_ITEM_TV(tv_list_first(kv_pair)), copyID, objname)
             == FAIL) {
