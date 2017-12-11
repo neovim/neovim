@@ -440,6 +440,21 @@ static inline int tv_list_uidx(const list_T *const l, int n)
   return n;
 }
 
+static inline bool tv_list_has_watchers(const list_T *const l)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
+
+/// Check whether list has watchers
+///
+/// E.g. is referenced by a :for loop.
+///
+/// @param[in]  l  List to check.
+///
+/// @return true if there are watchers, false otherwise.
+static inline bool tv_list_has_watchers(const list_T *const l)
+{
+  return l && l->lv_watch;
+}
+
 static inline listitem_T *tv_list_first(const list_T *const l)
   REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 

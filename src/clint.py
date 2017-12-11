@@ -201,6 +201,7 @@ _ERROR_CATEGORIES = [
     'runtime/printf',
     'runtime/printf_format',
     'runtime/threadsafe_fn',
+    'runtime/deprecated',
     'syntax/parenthesis',
     'whitespace/alignment',
     'whitespace/blank_line',
@@ -3200,6 +3201,14 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     if match:
         error(filename, linenum, 'runtime/printf', 4,
               'Use xstrlcat or snprintf instead of %s' % match.group(1))
+    if not Search(r'eval/typval\.[ch]$', filename):
+        match = Search(r'(?:\.|->)'
+                       r'(?:lv_(?:first|last|refcount|len|watch|idx(?:_item)?'
+                                r'|copylist|lock)'
+                          r'|li_(?:next|prev|tv))\b', line)
+        if match:
+            error(filename, linenum, 'runtime/deprecated', 4,
+                  'Accessing list_T internals directly is prohibited')
 
     # Check for suspicious usage of "if" like
     # } if (a == b) {

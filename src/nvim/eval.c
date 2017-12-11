@@ -5249,8 +5249,8 @@ static int free_unref_items(int copyID)
   // But don't free a list that has a watcher (used in a for loop), these
   // are not referenced anywhere.
   for (list_T *ll = gc_first_list; ll != NULL; ll = ll->lv_used_next) {
-    if ((ll->lv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
-        && ll->lv_watch == NULL) {
+    if ((tv_list_copyid(ll) & COPYID_MASK) != (copyID & COPYID_MASK)
+        && !tv_list_has_watchers(ll)) {
       // Free the List and ordinary items it contains, but don't recurse
       // into Lists and Dictionaries, they will be in the list of dicts
       // or list of lists.
@@ -5270,7 +5270,7 @@ static int free_unref_items(int copyID)
   for (ll = gc_first_list; ll != NULL; ll = ll_next) {
     ll_next = ll->lv_used_next;
     if ((ll->lv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
-        && ll->lv_watch == NULL) {
+        && !tv_list_has_watchers(ll)) {
       // Free the List and ordinary items it contains, but don't recurse
       // into Lists and Dictionaries, they will be in the list of dicts
       // or list of lists.
@@ -21009,6 +21009,22 @@ void func_ptr_ref(ufunc_T *fp)
   }
 }
 
+/// Check whether funccall is still referenced outside
+///
+/// It is supposed to be referenced if either it is referenced itself or if l:,
+/// a: or a:000 are referenced as all these are statically allocated within
+/// funccall structure.
+static inline bool fc_referenced(const funccall_T *const fc)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL
+{
+  return ((fc->l_varlist.lv_refcount  // NOLINT(runtime/deprecated)
+           != DO_NOT_FREE_CNT)
+          || fc->l_vars.dv_refcount != DO_NOT_FREE_CNT
+          || fc->l_avars.dv_refcount != DO_NOT_FREE_CNT
+          || fc->fc_refcount > 0);
+}
+
 /// Call a user function
 ///
 /// @param  fp  Function to call.
@@ -21357,10 +21373,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
 
   // If the a:000 list and the l: and a: dicts are not referenced and there
   // is no closure using it, we can free the funccall_T and what's in it.
-  if (fc->l_varlist.lv_refcount == DO_NOT_FREE_CNT
-      && fc->l_vars.dv_refcount == DO_NOT_FREE_CNT
-      && fc->l_avars.dv_refcount == DO_NOT_FREE_CNT
-      && fc->fc_refcount <= 0) {
+  if (!fc_referenced(fc)) {
     free_funccal(fc, false);
   } else {
     // "fc" is still in use.  This can happen when returning "a:000",
@@ -21404,10 +21417,8 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
     return;
   }
 
-  if (--fc->fc_refcount <= 0 && (force || (
-      fc->l_varlist.lv_refcount == DO_NOT_FREE_CNT
-      && fc->l_vars.dv_refcount == DO_NOT_FREE_CNT
-      && fc->l_avars.dv_refcount == DO_NOT_FREE_CNT))) {
+  fc->fc_refcount--;
+  if (force ? fc->fc_refcount <= 0 : !fc_referenced(fc)) {
     for (pfc = &previous_funccal; *pfc != NULL; pfc = &(*pfc)->caller) {
       if (fc == *pfc) {
         *pfc = fc->caller;
