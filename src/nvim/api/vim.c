@@ -900,9 +900,9 @@ typedef struct {
   Object *ret_node_p;
 } ExprASTConvStackItem;
 
-///@cond DOXYGEN_NOT_A_FUNCTION
+/// @cond DOXYGEN_NOT_A_FUNCTION
 typedef kvec_withinit_t(ExprASTConvStackItem, 16) ExprASTConvStack;
-///@endcond
+/// @endcond
 
 /// Parse a VimL expression
 ///

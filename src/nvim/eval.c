@@ -6543,12 +6543,10 @@ static void f_abs(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_add(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  list_T      *l;
-  rettv->vval.v_number = 1;   /* Default: Failed */
+  rettv->vval.v_number = 1;  // Default: failed.
   if (argvars[0].v_type == VAR_LIST) {
-    if (!tv_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
-                       N_("add() argument"),
-                       TV_TRANSLATE)) {
+    list_T *const l = argvars[0].vval.v_list;
+    if (!tv_check_lock(tv_list_locked(l), N_("add() argument"), TV_TRANSLATE)) {
       tv_list_append_tv(l, &argvars[1]);
       tv_copy(&argvars[0], rettv);
     }
