@@ -2505,11 +2505,10 @@ return {
       full_name='titleold',
       type='string', scope={'global'},
       secure=true,
-      gettext=true,
       no_mkrc=true,
       vi_def=true,
       varname='p_titleold',
-      defaults={if_true={vi=N_("")}}
+      defaults={if_true={vi=""}}
     },
     {
       full_name='titlestring',
