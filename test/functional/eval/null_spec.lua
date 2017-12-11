@@ -101,7 +101,8 @@ describe('NULL', function()
     null_expr_test('is accepted as an empty list by writefile()',
                    ('[writefile(L, "%s"), readfile("%s")]'):format(tmpfname, tmpfname),
                    0, {0, {}})
-    null_expr_test('does not crash add()', 'add(L, 0)', 0, 1)
+    null_expr_test('makes add() error out', 'add(L, 0)',
+                   'E742: Cannot change value of add() argument', 1)
     null_expr_test('makes insert() error out', 'insert(L, 1)',
                    'E742: Cannot change value of insert() argument', 0)
     null_expr_test('does not crash remove()', 'remove(L, 0)',
