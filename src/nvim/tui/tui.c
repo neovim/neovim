@@ -1529,7 +1529,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         || iterm || iterm_pretending_xterm
         || teraterm    // per TeraTerm "Supported Control Functions" doco
         // Some linux-type terminals (such as console-terminal-emulator
-        // from the nosh toolset) implement implement the xterm extension.
+        // from the nosh toolset) implement the xterm extension.
         || (linuxvt && (xterm_version || (vte_version > 0) || colorterm)))) {
       data->unibi_ext.set_cursor_style =
         (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");

@@ -259,13 +259,12 @@ Name			triggered by ~
 |BufNew|		just after creating a new buffer
 
 |SwapExists|		detected an existing swap file
-|TermOpen|		when a terminal buffer is starting
-|TermClose|		when a terminal buffer ends
+|TermOpen|		when a terminal job starts
+|TermClose|		when a terminal job ends
 
 	Options
 |FileType|		when the 'filetype' option has been set
 |Syntax|		when the 'syntax' option has been set
-|TermChanged|		after the value of 'term' has changed
 |OptionSet|		after setting any option
 
 	Startup and exit
@@ -933,26 +932,20 @@ TabEnter			Just after entering a tab page. |tab-page|
 TabLeave			Just before leaving a tab page. |tab-page|
 				A WinLeave event will have been triggered
 				first.
-						 {Nvim} *TabNew*
+							*TabNew*
 TabNew				When creating a new tab page. |tab-page|
 				After WinEnter and before TabEnter.
-						 {Nvim} *TabNewEntered*
+							*TabNewEntered*
 TabNewEntered			After entering a new tab page. |tab-page|
 				After BufEnter.
-						 {Nvim} *TabClosed*
+							*TabClosed*
 TabClosed			After closing a tab page. <afile> can be used
 				for the tab page number.
-							*TermChanged*
-TermChanged			After the value of 'term' has changed.  Useful
-				for re-loading the syntax file to update the
-				colors, fonts and other terminal-dependent
-				settings.  Executed for all loaded buffers.
-						 {Nvim} *TermClose*
-TermClose			When a terminal buffer ends.
-						 {Nvim} *TermOpen*
-TermOpen			When a terminal buffer is starting.  This can
-				be used to configure the terminal emulator by
-				setting buffer variables. |terminal|
+							*TermClose*
+TermClose			When a |terminal| job ends.
+							*TermOpen*
+TermOpen			When a |terminal| job is starting.  Can be
+				used to configure the terminal buffer.
 							*TermResponse*
 TermResponse			After the response to |t_RV| is received from
 				the terminal.  The value of |v:termresponse|
