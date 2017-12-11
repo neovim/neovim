@@ -422,7 +422,7 @@ static inline int tv_list_uidx(const list_T *const l, int n)
 
 /// Normalize index: that is, return either -1 or non-negative index
 ///
-/// @param[in]  l  List to intex. Used to get length.
+/// @param[in]  l  List to index. Used to get length.
 /// @param[in]  n  List index, possibly negative.
 ///
 /// @return -1 or list index in range [0, tv_list_len(l)).
