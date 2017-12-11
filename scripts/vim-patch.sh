@@ -32,9 +32,10 @@ usage() {
   echo "                       format '7.4.xxx' or a Git commit hash."
   echo "    -s                 Submit a vim-patch pull request to Neovim."
   echo "    -r {pr-number}     Review a vim-patch pull request to Neovim."
+  echo '    -V                 Clones the Vim source code to $VIM_SOURCE_DIR.'
   echo
-  echo "Set VIM_SOURCE_DIR to change where Vim's sources are stored."
-  echo "Default is '${VIM_SOURCE_DIR_DEFAULT}'."
+  echo '    $VIM_SOURCE_DIR controls where Vim sources are found'
+  echo "    (default: '${VIM_SOURCE_DIR_DEFAULT}')"
 }
 
 # Checks if a program is in the user's PATH, and is executable.
@@ -481,7 +482,7 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlLp:P:g:r:s" opt; do
+while getopts "hlLVp:P:g:r:s" opt; do
   case ${opt} in
     h)
       usage
@@ -513,6 +514,10 @@ while getopts "hlLp:P:g:r:s" opt; do
       ;;
     s)
       submit_pr
+      exit 0
+      ;;
+    V)
+      get_vim_sources
       exit 0
       ;;
     *)
