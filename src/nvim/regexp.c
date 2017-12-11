@@ -6483,7 +6483,7 @@ static int fill_submatch_list(int argc, typval_T *argv, int argcount)
   }
 
   // Relies on sl_list to be the first item in staticList10_T.
-  init_static_list((staticList10_T *)(argv->vval.v_list));
+  tv_list_init_static10((staticList10_T *)argv->vval.v_list);
 
   // There are always 10 list items in staticList10_T.
   listitem_T *li = tv_list_first(argv->vval.v_list);
@@ -6639,14 +6639,12 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
         typval_T argv[2];
         int dummy;
         typval_T rettv;
-        staticList10_T matchList;
+        staticList10_T matchList = TV_LIST_STATIC10_INIT;
 
         rettv.v_type = VAR_STRING;
         rettv.vval.v_string = NULL;
         argv[0].v_type = VAR_LIST;
         argv[0].vval.v_list = &matchList.sl_list;
-        // FIXME: Abstract away
-        matchList.sl_list.lv_len = 0;
         if (expr->v_type == VAR_FUNC) {
           s = expr->vval.v_string;
           call_func(s, (int)STRLEN(s), &rettv, 1, argv,
@@ -6660,7 +6658,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
                     fill_submatch_list, 0L, 0L, &dummy,
                     true, partial, NULL);
         }
-        if (matchList.sl_list.lv_len > 0) {
+        if (tv_list_len(&matchList.sl_list) > 0) {
           // fill_submatch_list() was called.
           clear_submatch_list(&matchList);
         }

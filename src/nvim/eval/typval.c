@@ -153,6 +153,45 @@ list_T *tv_list_alloc(void)
   return list;
 }
 
+/// Initialize a static list with 10 items
+///
+/// @param[out]  sl  Static list to initialize.
+void tv_list_init_static10(staticList10_T *const sl)
+  FUNC_ATTR_NONNULL_ALL
+{
+#define SL_SIZE ARRAY_SIZE(sl->sl_items)
+  list_T *const l = &sl->sl_list;
+
+  memset(sl, 0, sizeof(staticList10_T));
+  l->lv_first = &sl->sl_items[0];
+  l->lv_last = &sl->sl_items[SL_SIZE - 1];
+  l->lv_refcount = DO_NOT_FREE_CNT;
+  tv_list_set_lock(l, VAR_FIXED);
+  sl->sl_list.lv_len = 10;
+
+  sl->sl_items[0].li_prev = NULL;
+  sl->sl_items[0].li_next = &sl->sl_items[1];
+  sl->sl_items[SL_SIZE - 1].li_prev = &sl->sl_items[SL_SIZE - 2];
+  sl->sl_items[SL_SIZE - 1].li_next = NULL;
+
+  for (size_t i = 1; i < SL_SIZE - 1; i++) {
+    listitem_T *const li = &sl->sl_items[i];
+    li->li_prev = li - 1;
+    li->li_next = li + 1;
+  }
+#undef SL_SIZE
+}
+
+/// Initialize static list with undefined number of elements
+///
+/// @param[out]  l  List to initialize.
+void tv_list_init_static(list_T *const l)
+  FUNC_ATTR_NONNULL_ALL
+{
+  memset(l, 0, sizeof(*l));
+  l->lv_refcount = DO_NOT_FREE_CNT;
+}
+
 /// Free items contained in a list
 ///
 /// @param[in,out]  l  List to clear.
@@ -221,7 +260,7 @@ void tv_list_unref(list_T *const l)
 
 //{{{2 Add/remove
 
-/// Remove items "item" to "item2" from list "l".
+/// Remove items "item" to "item2" from list "l"
 ///
 /// @warning Does not free the listitem or the value!
 ///
@@ -249,6 +288,30 @@ void tv_list_remove_items(list_T *const l, listitem_T *const item,
     item->li_prev->li_next = item2->li_next;
   }
   l->lv_idx_item = NULL;
+}
+
+/// Move items "item" to "item2" from list "l" to the end of the list "tgt_l"
+///
+/// @param[out]  l  List to move from.
+/// @param[in]  item  First item to move.
+/// @param[in]  item2  Last item to move.
+/// @param[out]  tgt_l  List to move to.
+/// @param[in]  cnt  Number of items moved.
+void tv_list_move_items(list_T *const l, listitem_T *const item,
+                        listitem_T *const item2, list_T *const tgt_l,
+                        const int cnt)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tv_list_remove_items(l, item, item2);
+  item->li_prev = tgt_l->lv_last;
+  item2->li_next = NULL;
+  if (tgt_l->lv_last == NULL) {
+    tgt_l->lv_first = item;
+  } else {
+    tgt_l->lv_last->li_next = item;
+  }
+  tgt_l->lv_last = item2;
+  tgt_l->lv_len += cnt;
 }
 
 /// Insert list item
@@ -642,6 +705,31 @@ bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic,
   }
   assert(item1 == NULL && item2 == NULL);
   return true;
+}
+
+/// Reverse list in-place
+///
+/// @param[in,out]  l  List to reverse.
+void tv_list_reverse(list_T *const l)
+{
+  if (tv_list_len(l) <= 1) {
+    return;
+  }
+#define SWAP(a, b) \
+  do { \
+    tmp = a; \
+    a = b; \
+    b = tmp; \
+  } while (0)
+  listitem_T *tmp;
+
+  SWAP(l->lv_first, l->lv_last);
+  for (listitem_T *li = l->lv_first; li != NULL; li = li->li_next) {
+    SWAP(li->li_next, li->li_prev);
+  }
+#undef SWAP
+
+  l->lv_idx = l->lv_len - l->lv_idx - 1;
 }
 
 //{{{2 Indexing/searching

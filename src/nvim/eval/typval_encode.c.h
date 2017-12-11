@@ -359,7 +359,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
         TYPVAL_ENCODE_CONV_EMPTY_LIST(tv);
         break;
       }
-      const int saved_copyID = tv->vval.v_list->lv_copyID;
+      const int saved_copyID = tv_list_copyid(tv->vval.v_list);
       _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(tv->vval.v_list, lv_copyID, copyID,
                                              kMPConvList);
       TYPVAL_ENCODE_CONV_LIST_START(tv, tv_list_len(tv->vval.v_list));
@@ -515,7 +515,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
             if (val_di->di_tv.v_type != VAR_LIST) {
               goto _convert_one_value_regular_dict;
             }
-            const int saved_copyID = val_di->di_tv.vval.v_list->lv_copyID;
+            const int saved_copyID = tv_list_copyid(val_di->di_tv.vval.v_list);
             _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val_di->di_tv.vval.v_list,
                                                    lv_copyID, copyID,
                                                    kMPConvList);
@@ -550,7 +550,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
                 goto _convert_one_value_regular_dict;
               }
             });
-            const int saved_copyID = val_di->di_tv.vval.v_list->lv_copyID;
+            const int saved_copyID = tv_list_copyid(val_di->di_tv.vval.v_list);
             _TYPVAL_ENCODE_DO_CHECK_SELF_REFERENCE(val_list, lv_copyID, copyID,
                                                    kMPConvPairs);
             TYPVAL_ENCODE_CONV_DICT_START(tv, TYPVAL_ENCODE_NODICT_VAR,
@@ -694,7 +694,7 @@ typval_encode_stop_converting_one_item:
       case kMPConvList: {
         if (cur_mpsv->data.l.li == NULL) {
           (void)_mp_pop(mpstack);
-          cur_mpsv->data.l.list->lv_copyID = cur_mpsv->saved_copyID;
+          tv_list_set_copyid(cur_mpsv->data.l.list, cur_mpsv->saved_copyID);
           TYPVAL_ENCODE_CONV_LIST_END(cur_mpsv->tv);
           continue;
         } else if (cur_mpsv->data.l.li
@@ -709,7 +709,7 @@ typval_encode_stop_converting_one_item:
       case kMPConvPairs: {
         if (cur_mpsv->data.l.li == NULL) {
           (void)_mp_pop(mpstack);
-          cur_mpsv->data.l.list->lv_copyID = cur_mpsv->saved_copyID;
+          tv_list_set_copyid(cur_mpsv->data.l.list, cur_mpsv->saved_copyID);
           TYPVAL_ENCODE_CONV_DICT_END(cur_mpsv->tv, TYPVAL_ENCODE_NODICT_VAR);
           continue;
         } else if (cur_mpsv->data.l.li

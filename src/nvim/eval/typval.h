@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "nvim/types.h"
 #include "nvim/hashtab.h"
@@ -26,6 +27,9 @@ typedef uint64_t uvarnumber_T;
 
 /// Type used for VimL VAR_FLOAT values
 typedef double float_T;
+
+/// Refcount for dict or list that should not be freed
+enum { DO_NOT_FREE_CNT = (INT_MAX / 2) };
 
 /// Maximal possible value of varnumber_T variable
 #define VARNUMBER_MAX INT64_MAX
@@ -151,11 +155,25 @@ struct listvar_S {
   list_T *lv_used_prev;  ///< Previous list in used lists list.
 };
 
-// Static list with 10 items. Use init_static_list() to initialize.
+// Static list with 10 items. Use tv_list_init_static10() to initialize.
 typedef struct {
   list_T sl_list;  // must be first
   listitem_T sl_items[10];
 } staticList10_T;
+
+#define TV_LIST_STATIC10_INIT { \
+    .sl_list = { \
+      .lv_first = NULL, \
+      .lv_last = NULL, \
+      .lv_refcount = 0, \
+      .lv_len = 0, \
+      .lv_watch = NULL, \
+      .lv_idx_item = NULL, \
+      .lv_lock = VAR_FIXED, \
+      .lv_used_next = NULL, \
+      .lv_used_prev = NULL, \
+    }, \
+  }
 
 // Structure to hold an item of a Dictionary.
 // Also used for a variable.
@@ -330,6 +348,19 @@ static inline void tv_list_set_lock(list_T *const l,
   l->lv_lock = lock;
 }
 
+/// Set list copyID
+///
+/// Does not expect NULL list, be careful.
+///
+/// @param[out]  l  List to modify.
+/// @param[in]  copyid  New copyID.
+static inline void tv_list_set_copyid(list_T *const l,
+                                      const int copyid)
+  FUNC_ATTR_NONNULL_ALL
+{
+  l->lv_copyID = copyid;
+}
+
 static inline int tv_list_len(const list_T *const l)
   REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT;
 
@@ -342,6 +373,48 @@ static inline int tv_list_len(const list_T *const l)
     return 0;
   }
   return l->lv_len;
+}
+
+static inline int tv_list_copyid(const list_T *const l)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
+
+/// Get list copyID
+///
+/// Does not expect NULL list, be careful.
+///
+/// @param[in]  l  List to check.
+static inline int tv_list_copyid(const list_T *const l)
+{
+  return l->lv_copyID;
+}
+
+static inline list_T *tv_list_latest_copy(const list_T *const l)
+  REAL_FATTR_PURE REAL_FATTR_WARN_UNUSED_RESULT REAL_FATTR_NONNULL_ALL;
+
+/// Get latest list copy
+///
+/// Gets lv_copylist field assigned by tv_list_copy() earlier.
+///
+/// Does not expect NULL list, be careful.
+///
+/// @param[in]  l  List to check.
+static inline list_T *tv_list_latest_copy(const list_T *const l)
+{
+  return l->lv_copylist;
+}
+
+/// Clear the list without freeing anything at all
+///
+/// For use in sort() which saves items to a separate array and readds them back
+/// after sorting via a number of tv_list_append() calls.
+///
+/// @param[out]  l  List to clear.
+static inline void tv_list_clear(list_T *const l)
+{
+  l->lv_first    = NULL;
+  l->lv_last     = NULL;
+  l->lv_idx_item = NULL;
+  l->lv_len      = 0;
 }
 
 static inline int tv_list_uidx(const list_T *const l, int n)

@@ -110,9 +110,6 @@
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
-#define DO_NOT_FREE_CNT 99999   /* refcount for dict or list that should not
-                                   be freed. */
-
 #define AUTOLOAD_CHAR '#'       /* Character used as separator in autoload 
                                    function/variable names. */
 
@@ -5271,7 +5268,6 @@ static int free_unref_items(int copyID)
   for (ll = gc_first_list; ll != NULL; ll = ll_next) {
     ll_next = ll->lv_used_next;
     if ((ll->lv_copyID & COPYID_MASK) != (copyID & COPYID_MASK)
-        // FIXME: Abstract away lv_watch.
         && ll->lv_watch == NULL) {
       // Free the List and ordinary items it contains, but don't recurse
       // into Lists and Dictionaries, they will be in the list of dicts
@@ -13313,14 +13309,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           if (li == NULL) {  // Didn't find "item2" after "item".
             emsgf(_(e_invrange));
           } else {
-            tv_list_remove_items(l, item, item2);
-            // FIXME: Abstract the below away or move to eval/typval.
-            l = tv_list_alloc_ret(rettv);
-            l->lv_first = item;
-            l->lv_last = item2;
-            item->li_prev = NULL;
-            item2->li_next = NULL;
-            l->lv_len = cnt;
+            tv_list_move_items(l, item, item2, tv_list_alloc_ret(rettv), cnt);
           }
         }
       }
@@ -13558,19 +13547,10 @@ static void f_reverse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     EMSG2(_(e_listarg), "reverse()");
   } else if (!tv_check_lock(tv_list_locked((l = argvars[0].vval.v_list)),
                             N_("reverse() argument"), TV_TRANSLATE)) {
-    // FIXME: Abstract the below away or move to eval/typval.
-    listitem_T *li = l->lv_last;
-    l->lv_first = l->lv_last = NULL;
-    l->lv_len = 0;
-    while (li != NULL) {
-      listitem_T *const ni = li->li_prev;
-      tv_list_append(l, li);
-      li = ni;
-    }
+    tv_list_reverse(l);
     rettv->vval.v_list = l;
     rettv->v_type = VAR_LIST;
     tv_list_ref(l);
-    l->lv_idx = l->lv_len - l->lv_idx - 1;
   }
 }
 
@@ -15445,12 +15425,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
         if (!info.item_compare_func_err) {
           // Clear the list and append the items in the sorted order.
-          // FIXME: Somehow abstract away or move to eval/typval.
-          l->lv_first    = NULL;
-          l->lv_last     = NULL;
-          l->lv_idx_item = NULL;
-          l->lv_len      = 0;
-
+          tv_list_clear(l);
           for (i = 0; i < len; i++) {
             tv_list_append(l, ptrs[i].item);
           }
@@ -15468,34 +15443,20 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         item_compare_func_ptr = item_compare_keeping_zero;
       }
 
-      listitem_T *prev_li = NULL;
-      TV_LIST_ITER(l, li, {
-        if (prev_li != NULL) {
-          if (item_compare_func_ptr(&prev_li, &li) == 0) {
-            ptrs[i++].item = prev_li;
-          }
+      int idx = 0;
+      for (listitem_T *li = TV_LIST_ITEM_NEXT(l, tv_list_first(l))
+           ; li != NULL
+           ; li = TV_LIST_ITEM_NEXT(l, li)) {
+        listitem_T *const prev_li = TV_LIST_ITEM_PREV(l, li);
+        if (item_compare_func_ptr(&prev_li, &li) == 0) {
           if (info.item_compare_func_err) {
             EMSG(_("E882: Uniq compare function failed"));
             break;
           }
-        }
-        prev_li = li;
-      });
-
-      if (!info.item_compare_func_err) {
-        while (--i >= 0) {
-          // FIXME: Abstract away.
-          assert(ptrs[i].item->li_next);
-          listitem_T *const li = ptrs[i].item->li_next;
-          ptrs[i].item->li_next = li->li_next;
-          if (li->li_next != NULL) {
-            li->li_next->li_prev = ptrs[i].item;
-          } else {
-            l->lv_last = ptrs[i].item;
-          }
-          tv_list_watch_fix(l, li);
-          tv_list_item_free(li);
-          l->lv_len--;
+          tv_list_item_remove(l, li);
+          li = tv_list_find(l, idx);
+        } else {
+          idx++;
         }
       }
     }
@@ -17533,35 +17494,6 @@ write_list_error:
   return false;
 }
 
-/// Initializes a static list with 10 items.
-void init_static_list(staticList10_T *sl)
-{
-  // FIXME: Move to eval/typval.
-  list_T *l = &sl->sl_list;
-
-  memset(sl, 0, sizeof(staticList10_T));
-  l->lv_first = &sl->sl_items[0];
-  l->lv_last = &sl->sl_items[9];
-  l->lv_refcount = DO_NOT_FREE_CNT;
-  tv_list_set_lock(l, VAR_FIXED);
-  sl->sl_list.lv_len = 10;
-
-  for (int i = 0; i < 10; i++) {
-    listitem_T *li = &sl->sl_items[i];
-
-    if (i == 0) {
-      li->li_prev = NULL;
-    } else {
-      li->li_prev = li - 1;
-    }
-    if (i == 9) {
-      li->li_next = NULL;
-    } else {
-      li->li_next = li + 1;
-    }
-  }
-}
-
 /// Saves a typval_T as a string.
 ///
 /// For lists, replaces NLs with NUL and separates items with NLs.
@@ -19305,10 +19237,9 @@ int var_item_copy(const vimconv_T *const conv,
     to->v_lock = 0;
     if (from->vval.v_list == NULL)
       to->vval.v_list = NULL;
-    else if (copyID != 0 && from->vval.v_list->lv_copyID == copyID) {
-      // FIXME: Abstract away.
+    else if (copyID != 0 && tv_list_copyid(from->vval.v_list) == copyID) {
       // Use the copy made earlier.
-      to->vval.v_list = from->vval.v_list->lv_copylist;
+      to->vval.v_list = tv_list_latest_copy(from->vval.v_list);
       tv_list_ref(to->vval.v_list);
     } else {
       to->vval.v_list = tv_list_copy(conv, from->vval.v_list, deep, copyID);
@@ -21190,9 +21121,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   v->di_tv.v_type = VAR_LIST;
   v->di_tv.v_lock = VAR_FIXED;
   v->di_tv.vval.v_list = &fc->l_varlist;
-  // FIXME: Abstract away static list.
-  memset(&fc->l_varlist, 0, sizeof(list_T));
-  fc->l_varlist.lv_refcount = DO_NOT_FREE_CNT;
+  tv_list_init_static(&fc->l_varlist);
   tv_list_set_lock(&fc->l_varlist, VAR_FIXED);
 
   // Set a:firstline to "firstline" and a:lastline to "lastline".
@@ -21474,7 +21403,6 @@ static void funccal_unref(funccall_T *fc, ufunc_T *fp, bool force)
     return;
   }
 
-  // FIXME: Abstract away static list implementation details.
   if (--fc->fc_refcount <= 0 && (force || (
       fc->l_varlist.lv_refcount == DO_NOT_FREE_CNT
       && fc->l_vars.dv_refcount == DO_NOT_FREE_CNT
