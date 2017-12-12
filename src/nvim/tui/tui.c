@@ -151,6 +151,7 @@ UI *tui_start(void)
   ui->suspend = tui_suspend;
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
+  ui->option_set= tui_option_set;
   ui->event = tui_event;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
@@ -1134,6 +1135,14 @@ static void tui_set_title(UI *ui, String title)
 
 static void tui_set_icon(UI *ui, String icon)
 {
+}
+
+static void tui_option_set(UI *ui, String name, Object value)
+{
+  if (strequal(name.data, "termguicolors")) {
+    // NB: value for bridge is set in ui_bridge.c
+    ui->rgb = value.data.boolean;
+  }
 }
 
 // NB: if we start to use this, the ui_bridge must be updated

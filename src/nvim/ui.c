@@ -339,6 +339,7 @@ void ui_attach_impl(UI *ui)
   }
 
   uis[ui_count++] = ui;
+  ui_refresh_options();
   ui_refresh();
 }
 
