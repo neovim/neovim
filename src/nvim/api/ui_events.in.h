@@ -58,6 +58,8 @@ void set_title(String title)
   FUNC_API_SINCE(3);
 void set_icon(String icon)
   FUNC_API_SINCE(3);
+void grid_cursor_goto(Integer grid, Integer row, Integer col)
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY;
 
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
@@ -91,4 +93,5 @@ void wildmenu_select(Integer selected)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void wildmenu_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+
 #endif  // NVIM_API_UI_EVENTS_IN_H

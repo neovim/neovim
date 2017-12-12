@@ -199,6 +199,7 @@ static void ui_set_option(UI *ui, String name, Object value, Error *error)
   UI_EXT_OPTION(ext_popupmenu, kUIPopupmenu);
   UI_EXT_OPTION(ext_tabline, kUITabline);
   UI_EXT_OPTION(ext_wildmenu, kUIWildmenu);
+  UI_EXT_OPTION(ext_multigrid, kUIMultigrid);
 
   if (strequal(name.data, "popupmenu_external")) {
     // LEGACY: Deprecated option, use `ui_ext` instead.

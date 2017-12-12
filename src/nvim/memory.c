@@ -689,7 +689,7 @@ void free_all_mem(void)
   }
 
   /* screenlines (can't display anything now!) */
-  free_screenlines();
+  free_screengrid(&default_grid);
 
   clear_hl_tables();
 }

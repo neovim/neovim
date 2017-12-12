@@ -821,6 +821,9 @@ struct tabpage_S {
   ScopeDictDictItem tp_winvar;      ///< Variable for "t:" Dictionary.
   dict_T          *tp_vars;         ///< Internal variables, local to tab page.
   char_u          *tp_localdir;     ///< Absolute path of local cwd or NULL.
+
+
+  ScreenGrid grid; // own grid, only allocated when ext_multigrid
 };
 
 /*

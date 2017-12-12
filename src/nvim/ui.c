@@ -60,6 +60,7 @@ static bool pending_cursor_update = false;
 static int busy = 0;
 static int height, width;
 static int old_mode_idx = -1;
+static int grid = 1;
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 # define UI_LOG(funname, ...)
@@ -284,6 +285,17 @@ void ui_refresh(void)
   screen_resize(width, height);
   p_lz = save_p_lz;
 
+  // HACK: assume client connects when only one tabpage exists
+  if (ext_widgets[kUIMultigrid] && !ui_ext[kUIMultigrid]) {
+    memcpy(&curtab->grid,&default_grid,sizeof(default_grid));
+    memset(&default_grid,0,sizeof(default_grid));
+    current_grid = &curtab->grid;
+    p_stal = 0;
+    do_cmdline_cmd("redraw!"); // HAXX
+  } else if (!ext_widgets[kUIMultigrid] && ui_ext[kUIMultigrid]) {
+    abort(); // for now
+  }
+
   for (UIWidget i = 0; (int)i < UI_WIDGETS; i++) {
     ui_set_external(i, ext_widgets[i]);
   }
@@ -455,6 +467,14 @@ void ui_putc(uint8_t c)
   ui_puts(buf);
 }
 
+void ui_set_grid(int new_grid) {
+  if (new_grid != grid) {
+    grid = new_grid;
+    pending_cursor_update = true;
+  }
+}
+
+
 void ui_cursor_goto(int new_row, int new_col)
 {
   if (new_row == row && new_col == col) {
@@ -526,7 +546,11 @@ static void flush_cursor_update(void)
 {
   if (pending_cursor_update) {
     pending_cursor_update = false;
-    ui_call_cursor_goto(row, col);
+    if (ui_is_external(kUIMultigrid)) {
+      ui_call_grid_cursor_goto(grid, row, col);
+    } else {
+      ui_call_cursor_goto(row, col);
+    }
   }
 }
 
