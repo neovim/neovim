@@ -70,6 +70,7 @@ typedef struct {
   UIBridgeData *bridge;
   Loop *loop;
   bool stop;
+  uv_timer_t after_startup_timer;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
   size_t bufpos;
@@ -126,7 +127,6 @@ UI *tui_start(void)
 {
   UI *ui = xcalloc(1, sizeof(UI));
   ui->stop = tui_stop;
-  ui->after_startup = tui_after_startup;
   ui->rgb = p_tgc;
   ui->resize = tui_resize;
   ui->clear = tui_clear;
@@ -168,18 +168,6 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
     return 0U;
   }
   return unibi_run(str, data->params, buf, len);
-}
-
-/// Emits some termcodes after Nvim startup, which were observed to slowdown
-/// rendering during startup in tmux 2.3 (+focus-events). #7649
-static void terminfo_after_startup_event(void **argv)
-{
-  UI *ui = argv[0];
-  TUIData *data = ui->data;
-  // Enable bracketed paste
-  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
-  // Enable focus reporting
-  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
 }
 
 static void termname_set_event(void **argv)
@@ -261,6 +249,9 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
+  // Enable bracketed paste
+  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
+
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -273,13 +264,6 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
-}
-
-static void tui_after_startup(UI *ui)
-{
-  TUIData *data = ui->data;
-  loop_schedule(data->loop,
-                event_create(terminfo_after_startup_event, 1, ui));
 }
 
 static void terminfo_stop(UI *ui)
@@ -307,6 +291,18 @@ static void terminfo_stop(UI *ui)
   unibi_destroy(data->ut);
 }
 
+static void after_startup_timer_cb(uv_timer_t *handle)
+  FUNC_ATTR_NONNULL_ALL
+{
+  UI *ui = handle->data;
+  TUIData *data = ui->data;
+  uv_timer_stop(&data->after_startup_timer);
+
+  // Emit this after Nvim startup, not during.  This works around a tmux
+  // 2.3 bug(?) which caused slow drawing during startup.  #7649
+  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
+}
+
 static void tui_terminal_start(UI *ui)
 {
   TUIData *data = ui->data;
@@ -316,6 +312,8 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
+
+  uv_timer_start(&data->after_startup_timer, after_startup_timer_cb, 500, 0);
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -349,6 +347,8 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 #ifdef UNIX
   signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
 #endif
+  uv_timer_init(&data->loop->uv, &data->after_startup_timer);
+  data->after_startup_timer.data = ui;
 
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
@@ -367,6 +367,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
     loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
   }
 
+  uv_close((uv_handle_t *)&data->after_startup_timer, NULL);
   ui_bridge_stopped(bridge);
   term_input_destroy(&data->input);
   signal_watcher_stop(&data->cont_handle);

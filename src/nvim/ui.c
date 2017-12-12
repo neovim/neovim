@@ -138,14 +138,6 @@ void ui_builtin_start(void)
 #endif
 }
 
-/// Immediately after VimEnter event.
-void ui_builtin_after_startup(void)
-{
-#ifdef FEAT_TUI
-  UI_CALL(after_startup);
-#endif
-}
-
 void ui_builtin_stop(void)
 {
   UI_CALL(stop);

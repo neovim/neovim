@@ -563,9 +563,6 @@ int main(int argc, char **argv)
     (void)eval_has_provider("clipboard");
   }
 
-  if (!headless_mode) {
-    ui_builtin_after_startup();
-  }
   TIME_MSG("before starting main loop");
   ILOG("starting main loop");
 
