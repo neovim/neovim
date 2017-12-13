@@ -1794,14 +1794,20 @@ static inline void _nothing_conv_func_end(typval_T *const tv, const int copyID)
       tv->v_lock = VAR_UNLOCKED; \
     } while (0)
 
+static inline void _nothing_conv_empty_dict(typval_T *const tv,
+                                            dict_T **const dictp)
+  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_NONNULL_ARG(2)
+{
+  tv_dict_unref(*dictp);
+  *dictp = NULL;
+  if (tv != NULL) {
+    tv->v_lock = VAR_UNLOCKED;
+  }
+}
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
     do { \
       assert((void *)&dict != (void *)&TYPVAL_ENCODE_NODICT_VAR); \
-      tv_dict_unref((dict_T *)dict); \
-      *((dict_T **)&dict) = NULL; \
-      if (tv != NULL) { \
-        ((typval_T *)tv)->v_lock = VAR_UNLOCKED; \
-      } \
+      _nothing_conv_empty_dict(tv, ((dict_T **)&dict)); \
     } while (0)
 
 static inline int _nothing_conv_real_list_after_start(
