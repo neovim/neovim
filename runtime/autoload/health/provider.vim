@@ -510,7 +510,7 @@ function! s:check_node() abort
       call health#report_warn('node host does not support your node installation.')
     endif
   endif
-  if !provider#node#can_inspect()
+  if has('win32') || !provider#node#can_inspect()
     call health#report_warn('$NVIM_NODE_HOST_DEBUG is no-op.')
   endif
 
