@@ -8,7 +8,7 @@ let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collecto
 " Support for --inspect-brk requires node 6.12+ or 7.6+ or 8+
 " Return 1 if it is supported
 " Return 0 otherwise
-function! s:support_debug()
+function! provider#node#can_inspect()
   if !executable('node')
     return 0
   endif
@@ -44,7 +44,7 @@ function! provider#node#Require(host) abort
   else
     let args = ['node']
 
-    if s:support_debug() && !empty($NVIM_NODE_HOST_DEBUG)
+    if provider#node#can_inspect() && !empty($NVIM_NODE_HOST_DEBUG)
       call add(args, '--inspect-brk')
     endif
 

@@ -5,6 +5,7 @@ local command = helpers.command
 local write_file = helpers.write_file
 local eval = helpers.eval
 local sleep = helpers.sleep
+local funcs = helpers.funcs
 
 do
   clear()
@@ -18,6 +19,12 @@ end
 
 before_each(function()
   clear()
+end)
+
+describe('nodejs' function()
+  it('can inspect' function()
+    eq(1, funcs['provider#node#can_inspect']())
+  end)
 end)
 
 describe('nodejs host', function()
