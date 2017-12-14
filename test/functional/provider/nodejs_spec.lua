@@ -32,14 +32,37 @@ describe('nodejs host', function()
     local fname = 'hello.js'
     write_file(fname, [[
       const socket = process.env.NVIM_LISTEN_ADDRESS;
-      const nvim = require('neovim');
-      const host = nvim.attach({socket: socket});
-      host.command('let g:job_out = "hello"');
-      host.command('call jobstop(g:job_id)');
+      const neovim = require('neovim');
+      const nvim = neovim.attach({socket: socket});
+      nvim.command('let g:job_out = "hello"');
+      nvim.command('call jobstop(g:job_id)');
     ]])
-    command('let g:job_id = jobstart(["node", "hello.js"])')
+    command('let g:job_id = jobstart(["node", "'..fname..'"])')
     sleep(5000)
     eq('hello', eval('g:job_out'))
+    os.remove(fname)
+  end)
+  it('plugin works', function()
+    local fname = 'hello-plugin.js'
+    write_file(fname, [[
+      const socket = process.env.NVIM_LISTEN_ADDRESS;
+      const neovim = require('neovim');
+      const nvim = neovim.attach({socket: socket});
+
+      class TestPlugin {
+          hello() {
+              this.nvim.command('let g:job_out = "hello-plugin"')
+          }
+      }
+
+      const PluginClass = neovim.Plugin(TestPlugin);
+      const plugin = new PluginClass(nvim);
+      plugin.hello();
+      nvim.command('call jobstop(g:job_id)');
+    ]])
+    command('let g:job_id = jobstart(["node", "'..fname..'"])')
+    sleep(5000)
+    eq('hello-plugin', eval('g:job_out'))
     os.remove(fname)
   end)
 end)
