@@ -5,6 +5,26 @@ let g:loaded_node_provider = 1
 
 let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
 
+" Support for --inspect-brk requires node 6.12+ or 7.6+ or 8+
+" Return 1 if it is supported
+" Return 0 otherwise
+function! s:support_debug()
+  if !executable('node')
+    return 0
+  endif
+  let node_v = split(system(['node', '-v']), "\n")[0]
+  if v:shell_error || node_v[0] !=# 'v'
+    return 0
+  endif
+  " [major, minor, patch]
+  let node_v = split(node_v[1:], '\.')
+  return len(node_v) == 3 && (
+  \ (node_v[0] > 7) ||
+  \ (node_v[0] == 7 && node_v[1] >= 6) ||
+  \ (node_v[0] == 6 && node_v[1] >= 12)
+  \ )
+endfunction
+
 function! provider#node#Detect() abort
   return has('win32') ? exepath('neovim-node-host.cmd') : exepath('neovim-node-host')
 endfunction
@@ -24,7 +44,7 @@ function! provider#node#Require(host) abort
   else
     let args = ['node']
 
-    if !empty($NVIM_NODE_HOST_DEBUG)
+    if s:support_debug() && !empty($NVIM_NODE_HOST_DEBUG)
       call add(args, '--inspect-brk')
     endif
 
