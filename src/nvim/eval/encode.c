@@ -209,7 +209,7 @@ bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len,
       return false;
     }
     len++;
-    if (TV_LIST_ITEM_TV(li)->vval.v_string != 0) {
+    if (TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
       len += STRLEN(TV_LIST_ITEM_TV(li)->vval.v_string);
     }
   });

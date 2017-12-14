@@ -406,9 +406,7 @@ void tv_list_append_list(list_T *const list, list_T *const itemlist)
   TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
   TV_LIST_ITEM_TV(li)->vval.v_list = itemlist;
   tv_list_append(list, li);
-  if (itemlist != NULL) {
-    tv_list_ref(itemlist);
-  }
+  tv_list_ref(itemlist);
 }
 
 /// Append a dictionary to a list
@@ -510,6 +508,9 @@ list_T *tv_list_copy(const vimconv_T *const conv, list_T *const orig,
     orig->lv_copylist = copy;
   }
   TV_LIST_ITER(orig, item, {
+    if (got_int) {
+      break;
+    }
     listitem_T *const ni = tv_list_item_alloc();
     if (deep) {
       if (var_item_copy(conv, TV_LIST_ITEM_TV(item), TV_LIST_ITEM_TV(ni),
@@ -605,6 +606,9 @@ static int list_join_inner(garray_T *const gap, list_T *const l,
 
   // Stringify each item in the list.
   TV_LIST_ITER(l, item, {
+    if (got_int) {
+      break;
+    }
     char *s;
     size_t len;
     s = encode_tv2echo(TV_LIST_ITEM_TV(item), &len);
@@ -697,7 +701,7 @@ bool tv_list_equal(list_T *const l1, list_T *const l2, const bool ic,
   listitem_T *item2 = tv_list_first(l2);
   for (; item1 != NULL && item2 != NULL
        ; (item1 = TV_LIST_ITEM_NEXT(l1, item1),
-          item2 = TV_LIST_ITEM_NEXT(n2, item2))) {
+          item2 = TV_LIST_ITEM_NEXT(l2, item2))) {
     if (!tv_equal(TV_LIST_ITEM_TV(item1), TV_LIST_ITEM_TV(item2), ic,
                   recursive)) {
       return false;
@@ -2108,9 +2112,7 @@ void tv_copy(typval_T *const from, typval_T *const to)
       break;
     }
     case VAR_LIST: {
-      if (from->vval.v_list != NULL) {
-        tv_list_ref(to->vval.v_list);
-      }
+      tv_list_ref(to->vval.v_list);
       break;
     }
     case VAR_DICT: {
