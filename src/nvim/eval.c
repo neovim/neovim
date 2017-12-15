@@ -3918,7 +3918,7 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
   int op;
   varnumber_T n1, n2;
   bool use_float = false;
-  float_T f1 = 0, f2;
+  float_T f1 = 0, f2 = 0;
   bool error = false;
 
   /*
