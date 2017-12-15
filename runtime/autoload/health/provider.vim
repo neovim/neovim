@@ -502,16 +502,13 @@ function! s:check_node() abort
           \ ['Install Node.js and verify that `node` and `npm` commands work.'])
     return
   endif
-  let node_v = s:system('node -v')
+  let node_v = get(split(s:system('node -v'), "\n"), 0, '')
   call health#report_info('Node: '. node_v)
-  if !s:shell_error
-    let node_v = split(split(node_v, "\n")[0][1:], '\.')
-    if node_v[0] < 6
-      call health#report_warn('node host does not support your node installation.')
-    endif
+  if !s:shell_error && s:version_cmp(node_v[1:], '6.0.0') < 0
+    call health#report_warn('nodejs host does not support '.node_v)
   endif
   if has('win32') || !provider#node#can_inspect()
-    call health#report_warn('$NVIM_NODE_HOST_DEBUG is no-op.')
+    call health#report_warn('nodejs on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
   endif
 
   let host = provider#node#Detect()
