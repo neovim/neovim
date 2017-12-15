@@ -29,7 +29,7 @@ end)
 
 describe('nodejs host', function()
   it('works', function()
-    local fname = 'hello.js'
+    local fname = 'Xtest-nodejs-hello.js'
     write_file(fname, [[
       const socket = process.env.NVIM_LISTEN_ADDRESS;
       const neovim = require('neovim');
@@ -43,7 +43,7 @@ describe('nodejs host', function()
     os.remove(fname)
   end)
   it('plugin works', function()
-    local fname = 'hello-plugin.js'
+    local fname = 'Xtest-nodejs-hello-plugin.js'
     write_file(fname, [[
       const socket = process.env.NVIM_LISTEN_ADDRESS;
       const neovim = require('neovim');
