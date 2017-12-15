@@ -12440,56 +12440,56 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-    rettv->vval.v_number = -1;
+  rettv->vval.v_number = -1;
 
-    char buf[NUMBUFLEN];
-    const char *const group = tv_get_string_buf_chk(&argvars[0], buf);
-    if (group == NULL) {
-        return;
-    }
+  char buf[NUMBUFLEN];
+  const char *const group = tv_get_string_buf_chk(&argvars[0], buf);
+  if (group == NULL) {
+    return;
+  }
 
-    if (argvars[1].v_type != VAR_LIST) {
-        EMSG2(_(e_listarg), "matchaddpos()");
-        return;
-    }
+  if (argvars[1].v_type != VAR_LIST) {
+    EMSG2(_(e_listarg), "matchaddpos()");
+    return;
+  }
 
-    list_T *l;
-    l = argvars[1].vval.v_list;
-    if (l == NULL) {
-        return;
-    }
+  list_T *l;
+  l = argvars[1].vval.v_list;
+  if (l == NULL) {
+    return;
+  }
 
-    bool error = false;
-    int prio = 10;
-    int id = -1;
-    const char *conceal_char = NULL;
+  bool error = false;
+  int prio = 10;
+  int id = -1;
+  const char *conceal_char = NULL;
 
-    if (argvars[2].v_type != VAR_UNKNOWN) {
-      prio = tv_get_number_chk(&argvars[2], &error);
-      if (argvars[3].v_type != VAR_UNKNOWN) {
-        id = tv_get_number_chk(&argvars[3], &error);
-        if (argvars[4].v_type != VAR_UNKNOWN) {
-          if (argvars[4].v_type != VAR_DICT) {
-            EMSG(_(e_dictreq));
-            return;
-          }
-          dictitem_T *di;
-          if ((di = tv_dict_find(argvars[4].vval.v_dict, S_LEN("conceal")))
-              != NULL) {
-            conceal_char = tv_get_string(&di->di_tv);
-          }
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    prio = tv_get_number_chk(&argvars[2], &error);
+    if (argvars[3].v_type != VAR_UNKNOWN) {
+      id = tv_get_number_chk(&argvars[3], &error);
+      if (argvars[4].v_type != VAR_UNKNOWN) {
+        if (argvars[4].v_type != VAR_DICT) {
+          EMSG(_(e_dictreq));
+          return;
+        }
+        dictitem_T *di;
+        if ((di = tv_dict_find(argvars[4].vval.v_dict, S_LEN("conceal")))
+            != NULL) {
+          conceal_char = tv_get_string(&di->di_tv);
         }
       }
     }
-    if (error == true) {
-        return;
-    }
+  }
+  if (error == true) {
+    return;
+  }
 
-    // id == 3 is ok because matchaddpos() is supposed to substitute :3match 
-    if (id == 1 || id == 2) {
-        EMSGN(_("E798: ID is reserved for \"match\": %" PRId64), id);
-        return;
-    }
+  // id == 3 is ok because matchaddpos() is supposed to substitute :3match 
+  if (id == 1 || id == 2) {
+    EMSGN(_("E798: ID is reserved for \"match\": %" PRId64), id);
+    return;
+  }
 
   rettv->vval.v_number = match_add(curwin, group, NULL, prio, id, l,
                                    conceal_char);

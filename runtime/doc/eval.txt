@@ -5493,7 +5493,7 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 		sets buffer line boundaries to redraw screen. It is supposed
 		to be used when fast match additions and deletions are
 		required, for example to highlight matching parentheses.
-
+							*E5030* *E5031*
 		The list {pos} can contain one of these items:
 		- A number.  This whole line will be highlighted.  The first
 		  line has number 1.
@@ -5506,6 +5506,10 @@ matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 		  be highlighted.
 		- A list with three numbers, e.g., [23, 11, 3]. As above, but
 		  the third number gives the length of the highlight in bytes.
+
+		Entries with zero and negative line numbers are silently 
+		ignored, as well as entries with negative column numbers and 
+		lengths.
 
 		The maximum number of positions is 8.
 

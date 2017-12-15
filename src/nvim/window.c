@@ -5619,19 +5619,17 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
 
       if (TV_LIST_ITEM_TV(li)->v_type == VAR_LIST) {
         const list_T *const subl = TV_LIST_ITEM_TV(li)->vval.v_list;
-        if (subl == NULL) {
-          goto fail;
-        }
         const listitem_T *subli = tv_list_first(subl);
         if (subli == NULL) {
+          emsgf(_("E5030: Empty list at position %d"),
+                (int)tv_list_idx_of_item(pos_list, li));
           goto fail;
         }
         lnum = tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
         if (error) {
           goto fail;
         }
-        if (lnum == 0) {
-          --i;
+        if (lnum <= 0) {
           continue;
         }
         m->pos.pos[i].lnum = lnum;
@@ -5641,9 +5639,15 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
           if (error) {
             goto fail;
           }
+          if (col < 0) {
+            continue;
+          }
           subli = TV_LIST_ITEM_NEXT(subl, subli);
           if (subli != NULL) {
             len = tv_get_number_chk(TV_LIST_ITEM_TV(subli), &error);
+            if (len < 0) {
+              continue;
+            }
             if (error) {
               goto fail;
             }
@@ -5652,15 +5656,15 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
         m->pos.pos[i].col = col;
         m->pos.pos[i].len = len;
       } else if (TV_LIST_ITEM_TV(li)->v_type == VAR_NUMBER) {
-        if (TV_LIST_ITEM_TV(li)->vval.v_number == 0) {
-          i--;
+        if (TV_LIST_ITEM_TV(li)->vval.v_number <= 0) {
           continue;
         }
         m->pos.pos[i].lnum = TV_LIST_ITEM_TV(li)->vval.v_number;
         m->pos.pos[i].col = 0;
         m->pos.pos[i].len = 0;
       } else {
-        EMSG(_("List or number required"));
+        emsgf(_("E5031: List or number required at position %d"),
+              (int)tv_list_idx_of_item(pos_list, li));
         goto fail;
       }
       if (toplnum == 0 || lnum < toplnum) {
