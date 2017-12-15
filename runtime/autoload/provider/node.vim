@@ -12,7 +12,7 @@ function! provider#node#can_inspect()
   if !executable('node')
     return 0
   endif
-  let node_v = split(system(['node', '-v']), "\n")[0]
+  let node_v = get(split(system(['node', '-v']), "\n"), 0, '')
   if v:shell_error || node_v[0] !=# 'v'
     return 0
   endif
