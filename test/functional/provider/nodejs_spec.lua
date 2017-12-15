@@ -6,6 +6,7 @@ local write_file = helpers.write_file
 local eval = helpers.eval
 local sleep = helpers.sleep
 local funcs = helpers.funcs
+local retry = helpers.retry
 
 do
   clear()
@@ -28,6 +29,11 @@ describe('nodejs', function()
 end)
 
 describe('nodejs host', function()
+  teardown(function ()
+    os.remove('Xtest-nodejs-hello.js')
+    os.remove('Xtest-nodejs-hello-plugin.js')
+  end)
+
   it('works', function()
     local fname = 'Xtest-nodejs-hello.js'
     write_file(fname, [[
@@ -38,9 +44,8 @@ describe('nodejs host', function()
       nvim.command('call jobstop(g:job_id)');
     ]])
     command('let g:job_id = jobstart(["node", "'..fname..'"])')
-    sleep(5000)
-    eq('hello', eval('g:job_out'))
-    os.remove(fname)
+    sleep(500)
+    retry(nil, 4500, function() eq('hello', eval('g:job_out')) end)
   end)
   it('plugin works', function()
     local fname = 'Xtest-nodejs-hello-plugin.js'
@@ -61,8 +66,7 @@ describe('nodejs host', function()
       nvim.command('call jobstop(g:job_id)');
     ]])
     command('let g:job_id = jobstart(["node", "'..fname..'"])')
-    sleep(5000)
-    eq('hello-plugin', eval('g:job_out'))
-    os.remove(fname)
+    sleep(500)
+    retry(nil, 4500, function() eq('hello-plugin', eval('g:job_out')) end)
   end)
 end)
