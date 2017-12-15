@@ -44,8 +44,7 @@ describe('nodejs host', function()
       nvim.command('call jobstop(g:job_id)');
     ]])
     command('let g:job_id = jobstart(["node", "'..fname..'"])')
-    sleep(500)
-    retry(nil, 4500, function() eq('hello', eval('g:job_out')) end)
+    retry(nil, 1000, function() eq('hello', eval('g:job_out')) end)
   end)
   it('plugin works', function()
     local fname = 'Xtest-nodejs-hello-plugin.js'
@@ -66,7 +65,6 @@ describe('nodejs host', function()
       nvim.command('call jobstop(g:job_id)');
     ]])
     command('let g:job_id = jobstart(["node", "'..fname..'"])')
-    sleep(500)
-    retry(nil, 4500, function() eq('hello-plugin', eval('g:job_out')) end)
+    retry(nil, 1000, function() eq('hello-plugin', eval('g:job_out')) end)
   end)
 end)
