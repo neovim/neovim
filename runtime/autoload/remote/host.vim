@@ -115,9 +115,7 @@ function! s:RegistrationCommands(host) abort
   call remote#host#RegisterClone(host_id, a:host)
   let pattern = s:plugin_patterns[a:host]
   let paths = globpath(&rtp, 'rplugin/'.a:host.'/'.pattern, 0, 1)
-  if a:host !=# 'node'
-    let paths = map(paths, 'tr(resolve(v:val),"\\","/")') " Normalize slashes #4795
-  endif
+  let paths = map(paths, 'tr(resolve(v:val),"\\","/")') " Normalize slashes #4795
   let paths = uniq(sort(paths))
   if empty(paths)
     return []
