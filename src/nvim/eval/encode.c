@@ -136,13 +136,18 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
       }
       case kMPConvPairs:
       case kMPConvList: {
+        const int idx = (v.data.l.li == tv_list_first(v.data.l.list)
+                         ? 0
+                         : (v.data.l.li == NULL
+                            ? tv_list_len(v.data.l.list) - 1
+                            : (int)tv_list_idx_of_item(
+                                v.data.l.list,
+                                TV_LIST_ITEM_PREV(v.data.l.list,
+                                                  v.data.l.li))));
         const listitem_T *const li = (v.data.l.li == NULL
                                       ? tv_list_last(v.data.l.list)
                                       : TV_LIST_ITEM_PREV(v.data.l.list,
                                                           v.data.l.li));
-        int idx = (li == NULL
-                   ? 0
-                   : (int)tv_list_idx_of_item(v.data.l.list, li));
         if (v.type == kMPConvList
             || li == NULL
             || (TV_LIST_ITEM_TV(li)->v_type != VAR_LIST
