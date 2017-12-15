@@ -458,17 +458,13 @@ static int toggle_Magic(int x)
 
 /* Used for an error (down from) vim_regcomp(): give the error message, set
  * rc_did_emsg and return NULL */
-#define EMSG_RET_NULL(m) return (EMSG(m), rc_did_emsg = TRUE, (void *)NULL)
+#define EMSG_RET_NULL(m) return (EMSG(m), rc_did_emsg = true, (void *)NULL)
 #define IEMSG_RET_NULL(m) return (IEMSG(m), rc_did_emsg = true, (void *)NULL)
-#define EMSG_RET_FAIL(m) return (EMSG(m), rc_did_emsg = TRUE, FAIL)
-#define EMSG2_RET_NULL(m, \
-                       c) return (EMSG2((m), \
-                                      (c) ? "" : "\\"), rc_did_emsg = true, \
-                                  (void *)NULL)
-#define EMSG2_RET_FAIL(m, \
-                       c) return (EMSG2((m), \
-                                      (c) ? "" : "\\"), rc_did_emsg = true, \
-                                  FAIL)
+#define EMSG_RET_FAIL(m) return (EMSG(m), rc_did_emsg = true, FAIL)
+#define EMSG2_RET_NULL(m, c) \
+        return (EMSG2((m), (c) ? "" : "\\"), rc_did_emsg = true, (void *)NULL)
+#define EMSG2_RET_FAIL(m, c) \
+        return (EMSG2((m), (c) ? "" : "\\"), rc_did_emsg = true, FAIL)
 #define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_( \
         "E369: invalid item in %s%%[]"), reg_magic == MAGIC_ALL)
 

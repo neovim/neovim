@@ -1743,11 +1743,11 @@ ml_get_buf (
 
   if (lnum > buf->b_ml.ml_line_count) { /* invalid line number */
     if (recursive == 0) {
-      /* Avoid giving this message for a recursive call, may happen when
-       * the GUI redraws part of the text. */
-      ++recursive;
+      // Avoid giving this message for a recursive call, may happen when
+      // the GUI redraws part of the text.
+      recursive++;
       IEMSGN(_("E315: ml_get: invalid lnum: %" PRId64), lnum);
-      --recursive;
+      recursive--;
     }
 errorret:
     STRCPY(IObuff, "???");
@@ -1775,11 +1775,11 @@ errorret:
      */
     if ((hp = ml_find_line(buf, lnum, ML_FIND)) == NULL) {
       if (recursive == 0) {
-        /* Avoid giving this message for a recursive call, may happen
-         * when the GUI redraws part of the text. */
-        ++recursive;
+        // Avoid giving this message for a recursive call, may happen
+        // when the GUI redraws part of the text.
+        recursive++;
         IEMSGN(_("E316: ml_get: cannot find line %" PRId64), lnum);
-        --recursive;
+        recursive--;
       }
       goto errorret;
     }
@@ -2631,9 +2631,9 @@ static void ml_flush_line(buf_T *buf)
     new_line = buf->b_ml.ml_line_ptr;
 
     hp = ml_find_line(buf, lnum, ML_FIND);
-    if (hp == NULL)
+    if (hp == NULL) {
       IEMSGN(_("E320: Cannot find line %" PRId64), lnum);
-    else {
+    } else {
       dp = hp->bh_data;
       idx = lnum - buf->b_ml.ml_locked_low;
       start = ((dp->db_index[idx]) & DB_INDEX_MASK);
@@ -2879,13 +2879,14 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
         break;
       }
     }
-    if (idx >= (int)pp->pb_count) {         /* past the end: something wrong! */
-      if (lnum > buf->b_ml.ml_line_count)
+    if (idx >= (int)pp->pb_count) {         // past the end: something wrong!
+      if (lnum > buf->b_ml.ml_line_count) {
         IEMSGN(_("E322: line number out of range: %" PRId64 " past the end"),
-            lnum - buf->b_ml.ml_line_count);
+               lnum - buf->b_ml.ml_line_count);
 
-      else
+      } else {
         IEMSGN(_("E323: line count wrong in block %" PRId64), bnum);
+      }
       goto error_block;
     }
     if (action == ML_DELETE) {
