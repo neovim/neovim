@@ -26,7 +26,11 @@ function! provider#node#can_inspect()
 endfunction
 
 function! provider#node#Detect() abort
-  return has('win32') ? exepath('neovim-node-host.cmd') : exepath('neovim-node-host')
+  let global_modules = get(split(system('npm root -g'), "\n"), 0, '')
+  if v:shell_error || !isdirectory(global_modules)
+    return ''
+  endif
+  return glob(global_modules . '/neovim/bin/cli.js')
 endfunction
 
 function! provider#node#Prog()
@@ -39,17 +43,13 @@ function! provider#node#Require(host) abort
     return
   endif
 
-  if has('win32')
-    let args = provider#node#Prog()
-  else
-    let args = ['node']
+  let args = ['node']
 
-    if !empty($NVIM_NODE_HOST_DEBUG) && provider#node#can_inspect()
-      call add(args, '--inspect-brk')
-    endif
-
-    call add(args , provider#node#Prog())
+  if !empty($NVIM_NODE_HOST_DEBUG) && provider#node#can_inspect()
+    call add(args, '--inspect-brk')
   endif
+
+  call add(args , provider#node#Prog())
 
   try
     let channel_id = jobstart(args, s:job_opts)

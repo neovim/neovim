@@ -507,8 +507,8 @@ function! s:check_node() abort
   if !s:shell_error && s:version_cmp(node_v[1:], '6.0.0') < 0
     call health#report_warn('nodejs host does not support '.node_v)
   endif
-  if has('win32') || !provider#node#can_inspect()
-    call health#report_warn('nodejs on this system does not support --inspect-brk or this system is Windows so $NVIM_NODE_HOST_DEBUG is ignored.')
+  if !provider#node#can_inspect()
+    call health#report_warn('nodejs on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
   endif
 
   let host = provider#node#Detect()
