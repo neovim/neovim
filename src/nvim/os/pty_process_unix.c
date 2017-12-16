@@ -72,8 +72,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
     ELOG("forkpty failed: %s", strerror(errno));
     return status;
   } else if (pid == 0) {
-    init_child(ptyproc);
-    abort();
+    init_child(ptyproc);  // never returns
   }
 
   // make sure the master file descriptor is non blocking
@@ -163,14 +162,15 @@ static void init_child(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 
   Process *proc = (Process *)ptyproc;
   if (proc->cwd && os_chdir(proc->cwd) != 0) {
-    fprintf(stderr, "chdir failed: %s\n", strerror(errno));
+    ELOG("chdir failed: %s", strerror(errno));
     return;
   }
 
   char *prog = ptyproc->process.argv[0];
   setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
   execvp(prog, ptyproc->process.argv);
-  fprintf(stderr, "execvp failed: %s: %s\n", strerror(errno), prog);
+  ELOG("execvp failed: %s: %s", strerror(errno), prog);
+  _exit(122);  // 122 is EXEC_FAILED in the Vim source.
 }
 
 static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL

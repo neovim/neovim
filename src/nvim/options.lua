@@ -68,7 +68,8 @@ return {
       type='bool', scope={'global'},
       vi_def=true,
       vim=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
+
       varname='p_arshape',
       defaults={if_true={vi=true}}
     },
@@ -91,7 +92,7 @@ return {
       full_name='ambiwidth', abbreviation='ambw',
       type='string', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
       varname='p_ambw',
       defaults={if_true={vi="single"}}
     },
@@ -661,7 +662,7 @@ return {
       full_name='emoji', abbreviation='emo',
       type='bool', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
       varname='p_emoji',
       defaults={if_true={vi=true}}
     },
@@ -1021,23 +1022,26 @@ return {
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      varname='p_guifont',
+      redraw={'everything', 'ui_option'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guifontset', abbreviation='gfs',
       type='string', list='onecomma', scope={'global'},
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      varname='p_guifontset',
+      redraw={'everything', 'ui_option'},
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guifontwide', abbreviation='gfw',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
-      redraw={'everything'},
-      enable_if=false,
+      redraw={'everything', 'ui_option'},
+      varname='p_guifontwide',
+      defaults={if_true={vi=""}}
     },
     {
       full_name='guioptions', abbreviation='go',
@@ -2164,7 +2168,7 @@ return {
       full_name='showtabline', abbreviation='stal',
       type='number', scope={'global'},
       vi_def=true,
-      redraw={'all_windows'},
+      redraw={'all_windows', 'ui_option'},
       varname='p_stal',
       defaults={if_true={vi=1}}
     },
@@ -2435,7 +2439,7 @@ return {
       full_name='termguicolors', abbreviation='tgc',
       type='bool', scope={'global'},
       vi_def=false,
-      redraw={'everything'},
+      redraw={'everything', 'ui_option'},
       varname='p_tgc',
       defaults={if_true={vi=false}}
     },
@@ -2505,11 +2509,10 @@ return {
       full_name='titleold',
       type='string', scope={'global'},
       secure=true,
-      gettext=true,
       no_mkrc=true,
       vi_def=true,
       varname='p_titleold',
-      defaults={if_true={vi=N_("")}}
+      defaults={if_true={vi=""}}
     },
     {
       full_name='titlestring',

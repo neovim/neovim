@@ -37,7 +37,7 @@ function write_arglist(output, ev, need_copy)
   for j = 1, #ev.parameters do
     local param = ev.parameters[j]
     local kind = string.upper(param[1])
-    local do_copy = need_copy and (kind == "ARRAY" or kind == "DICTIONARY" or kind == "STRING")
+    local do_copy = need_copy and (kind == "ARRAY" or kind == "DICTIONARY" or kind == "STRING" or kind == "OBJECT")
     output:write('  ADD(args, ')
     if do_copy then
       output:write('copy_object(')
@@ -91,7 +91,7 @@ for i = 1, #events do
           recv_cleanup = recv_cleanup..'  api_free_string('..param[2]..');\n'
           argc = argc+2
         elseif param[1] == 'Array' then
-          send = send..'  Array copy_'..param[2]..' = copy_array('..param[2]..');\n'
+          send = send..'  Array '..copy..' = copy_array('..param[2]..');\n'
           argv = argv..', '..copy..'.items, INT2PTR('..copy..'.size)'
           recv = (recv..'  Array '..param[2]..
                           ' = (Array){.items = argv['..argc..'],'..
@@ -99,6 +99,15 @@ for i = 1, #events do
           recv_argv = recv_argv..', '..param[2]
           recv_cleanup = recv_cleanup..'  api_free_array('..param[2]..');\n'
           argc = argc+2
+        elseif param[1] == 'Object' then
+          send = send..'  Object *'..copy..' = xmalloc(sizeof(Object));\n'
+          send = send..'  *'..copy..' = copy_object('..param[2]..');\n'
+          argv = argv..', '..copy
+          recv = recv..'  Object '..param[2]..' = *(Object *)argv['..argc..'];\n'
+          recv_argv = recv_argv..', '..param[2]
+          recv_cleanup = (recv_cleanup..'  api_free_object('..param[2]..');\n'..
+                          '  xfree(argv['..argc..']);\n')
+          argc = argc+1
         elseif param[1] == 'Integer' or param[1] == 'Boolean' then
           argv = argv..', INT2PTR('..param[2]..')'
           recv_argv = recv_argv..', PTR2INT(argv['..argc..'])'
@@ -119,7 +128,7 @@ for i = 1, #events do
       write_signature(bridge_output, ev, 'UI *ui')
       bridge_output:write('\n{\n')
       bridge_output:write(send)
-      bridge_output:write('  UI_BRIDGE_CALL(ui, '..ev.name..', '..argc..', ui'..argv..');\n}\n')
+      bridge_output:write('  UI_BRIDGE_CALL(ui, '..ev.name..', '..argc..', ui'..argv..');\n}\n\n')
     end
   end
 

@@ -1927,7 +1927,7 @@ bool vim_is_ctrl_x_key(int c)
   case CTRL_X_EVAL:
     return (c == Ctrl_P || c == Ctrl_N);
   }
-  EMSG(_(e_internal));
+  internal_error("vim_is_ctrl_x_key()");
   return false;
 }
 
@@ -4681,7 +4681,7 @@ static int ins_complete(int c, bool enable_pum)
       line = ml_get(curwin->w_cursor.lnum);
       compl_pattern = vim_strnsave(line + compl_col, compl_length);
     } else {
-      EMSG2(_(e_intern2), "ins_complete()");
+      internal_error("ins_complete()");
       return FAIL;
     }
 

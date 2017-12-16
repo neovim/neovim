@@ -6192,7 +6192,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When on, uses |highlight-guifg| and |highlight-guibg| attributes in
 	the terminal (thus using 24-bit color). Requires a ISO-8613-3
 	compatible terminal.
-	Must be set at startup (in your |init.vim| or |--cmd|).
 
 						*'terse'* *'noterse'*
 'terse'			boolean	(default off)

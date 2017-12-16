@@ -58,6 +58,8 @@ void set_title(String title)
   FUNC_API_SINCE(3);
 void set_icon(String icon)
   FUNC_API_SINCE(3);
+void option_set(String name, Object value)
+  FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL;
 
 void popupmenu_show(Array items, Integer selected, Integer row, Integer col)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
