@@ -18,17 +18,8 @@ do
   end
 end
 
-local rplugin_clear_args = {
-  env = {NVIM_RPLUGIN_MANIFEST = './rplugin.vim'},
-  args = {'--cmd', 'set runtimepath+=test/functional/fixtures'}
-}
-
 before_each(function()
-  clear(rplugin_clear_args)
-end)
-
-after_each(function()
-  os.remove('rplugin.vim')
+  clear()
 end)
 
 describe('nodejs', function()
@@ -55,7 +46,6 @@ describe('nodejs host', function()
     command('let g:job_id = jobstart(["node", "'..fname..'"])')
     retry(nil, 1000, function() eq('hello', eval('g:job_out')) end)
   end)
-
   it('plugin works', function()
     local fname = 'Xtest-nodejs-hello-plugin.js'
     write_file(fname, [[
@@ -76,13 +66,5 @@ describe('nodejs host', function()
     ]])
     command('let g:job_id = jobstart(["node", "'..fname..'"])')
     retry(nil, 1000, function() eq('hello-plugin', eval('g:job_out')) end)
-  end)
-
-  it('rplugin works', function()
-    if helpers.pending_win32(pending) then return end
-    command('UpdateRemotePlugins')
-    clear(rplugin_clear_args)
-    command('SetFooBar')
-    retry(nil, 1000, function() eq('foobar', eval('g:foobar')) end)
   end)
 end)
