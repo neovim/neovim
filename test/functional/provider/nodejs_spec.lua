@@ -20,12 +20,7 @@ end
 
 before_each(function()
   clear()
-end)
-
-describe('nodejs', function()
-  it('can inspect', function()
-    eq(1, funcs['provider#node#can_inspect']())
-  end)
+  command([[let $NODE_PATH = get(split(system('npm root -g'), "\n"), 0, '')]])
 end)
 
 describe('nodejs host', function()
