@@ -12485,7 +12485,7 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  // id == 3 is ok because matchaddpos() is supposed to substitute :3match 
+  // id == 3 is ok because matchaddpos() is supposed to substitute :3match
   if (id == 1 || id == 2) {
     EMSGN(_("E798: ID is reserved for \"match\": %" PRId64), id);
     return;
