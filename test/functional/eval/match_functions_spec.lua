@@ -4,7 +4,6 @@ local Screen = require('test.functional.ui.screen')
 local eq = helpers.eq
 local clear = helpers.clear
 local funcs = helpers.funcs
-local meths = helpers.meths
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 
