@@ -4,9 +4,9 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Nvim's facilities for async io				  *channel*
+Nvim asynchronous IO					*channel*
 
-				      Type <M-]> to see the table of contents.
+				      Type |gO| to see the table of contents.
 
 ==============================================================================
 1. Introduction						    *channel-intro*

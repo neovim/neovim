@@ -478,7 +478,7 @@ def gen_docs(config):
             docs += '\n\n\n'
 
     docs = docs.rstrip() + '\n\n'
-    docs += ' vim:tw=78:ts=8:ft=help:norl:'
+    docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
 
     doc_file = os.path.join(base_dir, 'runtime/doc', doc_filename)
     delete_lines_below(doc_file, section_start_token)
