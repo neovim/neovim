@@ -9,6 +9,8 @@ matrix:
   allow_failures:
     - configuration: MINGW_64-gcov
 install: []
+before_build:
+- ps: Install-Product node 8
 build_script:
 - call ci\build.bat
 cache:
