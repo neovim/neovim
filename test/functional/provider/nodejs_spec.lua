@@ -4,8 +4,6 @@ local missing_provider = helpers.missing_provider
 local command = helpers.command
 local write_file = helpers.write_file
 local eval = helpers.eval
-local sleep = helpers.sleep
-local funcs = helpers.funcs
 local retry = helpers.retry
 
 do
