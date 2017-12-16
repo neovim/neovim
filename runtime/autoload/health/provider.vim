@@ -537,7 +537,7 @@ function! s:check_node() abort
     let latest_npm = get(get(pkg_data, 'dist-tags', {}), 'latest', 'unable to parse')
   endif
 
-  let current_npm_cmd = host .' --version'
+  let current_npm_cmd = ['node', host, '--version']
   let current_npm = s:system(current_npm_cmd)
   if s:shell_error
     call health#report_error('Failed to run: '. current_npm_cmd,
