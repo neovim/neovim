@@ -4,8 +4,6 @@ local missing_provider = helpers.missing_provider
 local command = helpers.command
 local write_file = helpers.write_file
 local eval = helpers.eval
-local sleep = helpers.sleep
-local funcs = helpers.funcs
 local retry = helpers.retry
 
 do
@@ -20,12 +18,7 @@ end
 
 before_each(function()
   clear()
-end)
-
-describe('nodejs', function()
-  it('can inspect', function()
-    eq(1, funcs['provider#node#can_inspect']())
-  end)
+  command([[let $NODE_PATH = get(split(system('npm root -g'), "\n"), 0, '')]])
 end)
 
 describe('nodejs host', function()
