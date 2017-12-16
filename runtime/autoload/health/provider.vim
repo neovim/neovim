@@ -488,7 +488,7 @@ function! s:check_ruby() abort
 endfunction
 
 function! s:check_node() abort
-  call health#report_start('Node provider (optional)')
+  call health#report_start('Node.js provider (optional)')
 
   let loaded_var = 'g:loaded_node_provider'
   if exists(loaded_var) && !exists('*provider#node#Call')
@@ -503,12 +503,12 @@ function! s:check_node() abort
     return
   endif
   let node_v = get(split(s:system('node -v'), "\n"), 0, '')
-  call health#report_info('Node: '. node_v)
+  call health#report_info('Node.js: '. node_v)
   if !s:shell_error && s:version_cmp(node_v[1:], '6.0.0') < 0
-    call health#report_warn('nodejs host does not support '.node_v)
+    call health#report_warn('Neovim node.js host does not support '.node_v)
   endif
   if !provider#node#can_inspect()
-    call health#report_warn('nodejs on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
+    call health#report_warn('node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
   endif
 
   let host = provider#node#Detect()
@@ -518,7 +518,7 @@ function! s:check_node() abort
           \  'Is the npm bin directory in $PATH?'])
     return
   endif
-  call health#report_info('Host: '. host)
+  call health#report_info('Neovim node.js host: '. host)
 
   let latest_npm_cmd = has('win32') ? 'cmd /c npm info neovim --json' : 'npm info neovim --json'
   let latest_npm = s:system(split(latest_npm_cmd))
