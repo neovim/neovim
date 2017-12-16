@@ -2258,7 +2258,7 @@ int was_set_insecurely(char_u *opt, int opt_flags)
     uint32_t *flagp = insecure_flag(idx, opt_flags);
     return (*flagp & P_INSECURE) != 0;
   }
-  EMSG2(_(e_intern2), "was_set_insecurely()");
+  internal_error("was_set_insecurely()");
   return -1;
 }
 
@@ -2317,8 +2317,8 @@ set_string_option_direct (
   if (idx == -1) {  // Use name.
     idx = findoption((const char *)name);
     if (idx < 0) {  // Not found (should not happen).
-      EMSG2(_(e_intern2), "set_string_option_direct()");
-      EMSG2(_("For option %s"), name);
+      internal_error("set_string_option_direct()");
+      IEMSG2(_("For option %s"), name);
       return;
     }
   }
@@ -5584,7 +5584,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
   case PV_SCL:    return (char_u *)&(curwin->w_p_scl);
   case PV_WINHL:  return (char_u *)&(curwin->w_p_winhl);
-  default:        EMSG(_("E356: get_varp ERROR"));
+  default:        IEMSG(_("E356: get_varp ERROR"));
   }
   /* always return a valid pointer to avoid a crash! */
   return (char_u *)&(curbuf->b_p_wm);

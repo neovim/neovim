@@ -1043,6 +1043,7 @@ EXTERN char_u e_for[] INIT(= N_("E588: :endfor without :for"));
 EXTERN char_u e_exists[] INIT(= N_("E13: File exists (add ! to override)"));
 EXTERN char_u e_failed[] INIT(= N_("E472: Command failed"));
 EXTERN char_u e_internal[] INIT(= N_("E473: Internal error"));
+EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_interr[] INIT(= N_("Interrupted"));
 EXTERN char_u e_invaddr[] INIT(= N_("E14: Invalid address"));
 EXTERN char_u e_invarg[] INIT(= N_("E474: Invalid argument"));
@@ -1134,7 +1135,6 @@ EXTERN char_u e_write[] INIT(= N_("E80: Error while writing"));
 EXTERN char_u e_zerocount[] INIT(= N_("E939: Positive count required"));
 EXTERN char_u e_usingsid[] INIT(= N_(
     "E81: Using <SID> not in a script context"));
-EXTERN char_u e_intern2[] INIT(= N_("E685: Internal error: %s"));
 EXTERN char_u e_maxmempat[] INIT(= N_(
         "E363: pattern uses more memory than 'maxmempattern'"));
 EXTERN char_u e_emptybuf[] INIT(= N_("E749: empty buffer"));

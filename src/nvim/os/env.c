@@ -887,7 +887,7 @@ bool os_setenv_append_path(const char *fname)
 # define MAX_ENVPATHLEN INT_MAX
 #endif
   if (!path_is_absolute_path((char_u *)fname)) {
-    EMSG2(_(e_intern2), "os_setenv_append_path()");
+    internal_error("os_setenv_append_path()");
     return false;
   }
   const char *tail = (char *)path_tail_with_sep((char_u *)fname);
