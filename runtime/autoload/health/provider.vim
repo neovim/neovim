@@ -254,11 +254,17 @@ function! s:check_python(version) abort
   if !empty(pyenv)
     if empty(pyenv_root)
       call health#report_warn(
-            \ 'pyenv was found, but $PYENV_ROOT is not set.',
-            \ ['Did you follow the final install instructions?',
-            \  'If you use a shell "framework" like Prezto or Oh My Zsh, try without.',
-            \  'Try a different shell (bash).']
+            \ 'pyenv was found, but $PYENV_ROOT is not set explicitly. '.
+            \ 'The default value of `pyenv root` will be used.',
+            \ ['If this does not work for you, '.
+            \  'try set $PYENV_ROOT explicitly.']
             \ )
+      let pyenv_root = s:trim(s:system([pyenv, 'root']))
+    endif
+
+    if !isdirectory(pyenv_root)
+      call health#report_error('`pyenv root` does not work as expect.'.
+            \ 'Please check your pyenv configuration.')
     else
       call health#report_ok(printf('pyenv found: "%s"', pyenv))
     endif
