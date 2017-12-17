@@ -194,20 +194,19 @@ typedef struct {
 static char_u *qf_last_bufname = NULL;
 static bufref_T  qf_last_bufref = { NULL, 0, 0 };
 
-/*
- * Read the errorfile "efile" into memory, line by line, building the error
- * list. Set the error list's title to qf_title.
- * Return -1 for error, number of errors for success.
- */
-int 
-qf_init (
-    win_T *wp,
-    char_u *efile,
-    char_u *errorformat,
-    int newlist,                            /* TRUE: start a new error list */
-    char_u *qf_title,
-    char_u *enc
-)
+/// Read the errorfile "efile" into memory, line by line, building the error
+/// list. Set the error list's title to qf_title.
+///
+/// @params  wp  If non-NULL, make a location list
+/// @params  efile  If non-NULL, errorfile to parse
+/// @params  errorformat  'errorformat' string used to parse the error lines
+/// @params  newlist  If true, create a new error list
+/// @params  qf_title  If non-NULL, title of the error list
+/// @params  enc  If non-NULL, encoding used to parse errors
+///
+/// @returns -1 for error, number of errors for success.
+int qf_init(win_T *wp, char_u *efile, char_u *errorformat, int newlist,
+            char_u *qf_title, char_u *enc)
 {
   qf_info_T       *qi = &ql_info;
 
@@ -994,9 +993,9 @@ qf_init_ext(
     buf_T *buf,
     typval_T *tv,
     char_u *errorformat,
-    int newlist,                            /* TRUE: start a new error list */
-    linenr_T lnumfirst,                     /* first line number to use */
-    linenr_T lnumlast,                      /* last line number to use */
+    int newlist,                            // TRUE: start a new error list
+    linenr_T lnumfirst,                     // first line number to use
+    linenr_T lnumlast,                      // last line number to use
     char_u *qf_title,
     char_u *enc
 )
@@ -3115,8 +3114,9 @@ void ex_make(exarg_T *eap)
                             && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm,
                 (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd),
                 *eap->cmdlinep, enc);
-  if (wp != NULL)
+  if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
+  }
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
         curbuf->b_fname, TRUE, curbuf);
@@ -3459,16 +3459,14 @@ void ex_cfile(exarg_T *eap)
     set_string_option_direct((char_u *)"ef", -1, eap->arg, OPT_FREE, 0);
 
   char_u *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
-  /*
-   * This function is used by the :cfile, :cgetfile and :caddfile
-   * commands.
-   * :cfile always creates a new quickfix list and jumps to the
-   * first error.
-   * :cgetfile creates a new quickfix list but doesn't jump to the
-   * first error.
-   * :caddfile adds to an existing quickfix list. If there is no
-   * quickfix list then a new list is created.
-   */
+  // This function is used by the :cfile, :cgetfile and :caddfile
+  // commands.
+  // :cfile always creates a new quickfix list and jumps to the
+  // first error.
+  // :cgetfile creates a new quickfix list but doesn't jump to the
+  // first error.
+  // :caddfile adds to an existing quickfix list. If there is no
+  // quickfix list then a new list is created.
   if (qf_init(wp, p_ef, p_efm, (eap->cmdidx != CMD_caddfile
                                 && eap->cmdidx != CMD_laddfile),
               *eap->cmdlinep, enc) > 0
