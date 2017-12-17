@@ -1457,6 +1457,13 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='makeencoding', abbreviation='menc',
+      type='string', scope={'global', 'buffer'},
+      vi_def=true,
+      varname='p_menc',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='makeprg', abbreviation='mp',
       type='string', scope={'global', 'buffer'},
       secure=true,
