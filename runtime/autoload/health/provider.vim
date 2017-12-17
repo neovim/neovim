@@ -488,7 +488,7 @@ function! s:check_ruby() abort
 endfunction
 
 function! s:check_node() abort
-  call health#report_start('Node provider (optional)')
+  call health#report_start('Node.js provider (optional)')
 
   let loaded_var = 'g:loaded_node_provider'
   if exists(loaded_var) && !exists('*provider#node#Call')
@@ -502,7 +502,16 @@ function! s:check_node() abort
           \ ['Install Node.js and verify that `node` and `npm` commands work.'])
     return
   endif
-  call health#report_info('Node: '. s:system('node -v'))
+  let node_v = get(split(s:system('node -v'), "\n"), 0, '')
+  call health#report_info('Node.js: '. node_v)
+  if !s:shell_error && s:version_cmp(node_v[1:], '6.0.0') < 0
+    call health#report_warn('Neovim node.js host does not support '.node_v)
+    " Skip further checks, they are nonsense if nodejs is too old.
+    return
+  endif
+  if !provider#node#can_inspect()
+    call health#report_warn('node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
+  endif
 
   let host = provider#node#Detect()
   if empty(host)
@@ -511,7 +520,7 @@ function! s:check_node() abort
           \  'Is the npm bin directory in $PATH?'])
     return
   endif
-  call health#report_info('Host: '. host)
+  call health#report_info('Neovim node.js host: '. host)
 
   let latest_npm_cmd = has('win32') ? 'cmd /c npm info neovim --json' : 'npm info neovim --json'
   let latest_npm = s:system(split(latest_npm_cmd))
@@ -530,11 +539,11 @@ function! s:check_node() abort
     let latest_npm = get(get(pkg_data, 'dist-tags', {}), 'latest', 'unable to parse')
   endif
 
-  let current_npm_cmd = host .' --version'
+  let current_npm_cmd = ['node', host, '--version']
   let current_npm = s:system(current_npm_cmd)
   if s:shell_error
-    call health#report_error('Failed to run: '. current_npm_cmd,
-          \ ['Report this issue with the output of: ', current_npm_cmd])
+    call health#report_error('Failed to run: '. string(current_npm_cmd),
+          \ ['Report this issue with the output of: ', string(current_npm_cmd)])
     return
   endif
 
@@ -544,7 +553,7 @@ function! s:check_node() abort
           \ current_npm, latest_npm),
           \ ['Run in shell: npm update neovim'])
   else
-    call health#report_ok('Latest "neovim" npm is installed: '. current_npm)
+    call health#report_ok('Latest "neovim" npm package is installed: '. current_npm)
   endif
 endfunction
 
