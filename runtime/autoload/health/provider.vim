@@ -506,6 +506,8 @@ function! s:check_node() abort
   call health#report_info('Node.js: '. node_v)
   if !s:shell_error && s:version_cmp(node_v[1:], '6.0.0') < 0
     call health#report_warn('Neovim node.js host does not support '.node_v)
+    " Skip further checks, they are nonsense if nodejs is too old.
+    return
   endif
   if !provider#node#can_inspect()
     call health#report_warn('node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
@@ -540,8 +542,8 @@ function! s:check_node() abort
   let current_npm_cmd = ['node', host, '--version']
   let current_npm = s:system(current_npm_cmd)
   if s:shell_error
-    call health#report_error('Failed to run: '. current_npm_cmd,
-          \ ['Report this issue with the output of: ', current_npm_cmd])
+    call health#report_error('Failed to run: '. string(current_npm_cmd),
+          \ ['Report this issue with the output of: ', string(current_npm_cmd)])
     return
   endif
 
@@ -551,7 +553,7 @@ function! s:check_node() abort
           \ current_npm, latest_npm),
           \ ['Run in shell: npm update neovim'])
   else
-    call health#report_ok('Latest "neovim" npm is installed: '. current_npm)
+    call health#report_ok('Latest "neovim" npm package is installed: '. current_npm)
   endif
 endfunction
 
