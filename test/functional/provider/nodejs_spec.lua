@@ -9,9 +9,7 @@ local retry = helpers.retry
 do
   clear()
   if missing_provider('node') then
-    pending(
-      "Cannot find the neovim nodejs host. Try :checkhealth",
-      function() end)
+    pending("Missing nodejs host, or nodejs version is too old.", function()end)
     return
   end
 end
