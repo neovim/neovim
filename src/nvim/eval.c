@@ -5336,18 +5336,16 @@ bool set_ref_in_list(list_T *l, int copyID, ht_stack_T **ht_stack)
 
   list_T *cur_l = l;
   for (;;) {
-    if (!abort) {
-      // Mark each item in the list.  If the item contains a hashtab
-      // it is added to ht_stack, if it contains a list it is added to
-      // list_stack.
-      TV_LIST_ITER(cur_l, li, {
-        abort = set_ref_in_item(TV_LIST_ITEM_TV(li), copyID, ht_stack,
-                                &list_stack);
-        if (abort) {
-          break;
-        }
-      });
-    }
+    // Mark each item in the list.  If the item contains a hashtab
+    // it is added to ht_stack, if it contains a list it is added to
+    // list_stack.
+    TV_LIST_ITER(cur_l, li, {
+      if (abort) {
+        break;
+      }
+      abort = set_ref_in_item(TV_LIST_ITEM_TV(li), copyID, ht_stack,
+                              &list_stack);
+    });
 
     if (list_stack == NULL) {
       break;
@@ -8968,7 +8966,7 @@ static void common_function(typval_T *argvars, typval_T *rettv,
           goto theend;
         }
         list = argvars[arg_idx].vval.v_list;
-        if (list == NULL || tv_list_len(list) == 0) {
+        if (tv_list_len(list) == 0) {
           arg_idx = 0;
         }
       }
@@ -11069,8 +11067,7 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (argvars[2].v_type != VAR_UNKNOWN) {
       bool error = false;
 
-      // Start at specified item.  Use the cached index that tv_list_find()
-      // sets, so that a negative number also works.
+      // Start at specified item.
       idx = tv_list_uidx(l, tv_get_number_chk(&argvars[2], &error));
       if (error || idx == -1) {
         item = NULL;
@@ -11080,6 +11077,9 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
       if (argvars[3].v_type != VAR_UNKNOWN) {
         ic = !!tv_get_number_chk(&argvars[3], &error);
+        if (error) {
+          item = NULL;
+        }
       }
     }
 
@@ -12248,10 +12248,10 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
     }
     if (l != NULL) {
       idx = tv_list_uidx(l, start);
-      li = tv_list_find(l, idx);
-      if (li == NULL) {
+      if (idx == -1) {
         goto theend;
       }
+      li = tv_list_find(l, idx);
     } else {
       if (start < 0)
         start = 0;
