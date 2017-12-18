@@ -14594,7 +14594,8 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
     return;
   }
   const char *const act = tv_get_string_chk(action_arg);
-  if ((*act == 'a' || *act == 'r' || *act == ' ') && act[1] == NUL) {
+  if ((*act == 'a' || *act == 'r' || *act == ' ' || *act == 'f')
+      && act[1] == NUL) {
     action = *act;
   } else {
     EMSG2(_(e_invact), act);

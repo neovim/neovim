@@ -4267,6 +4267,16 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
   return retval;
 }
 
+static void qf_free_stack(win_T *wp, qf_info_T *qi)
+{
+  qf_free_all(wp);
+  if (wp == NULL) {
+    // quickfix list
+    qi->qf_curlist = 0;
+    qi->qf_listcount = 0;
+  }
+}
+
 // Populate the quickfix list with the items supplied in the list
 // of dictionaries. "title" will be copied to w:quickfix_title
 // "action" is 'a' for add, 'r' for replace.  Otherwise create a new list.
@@ -4280,7 +4290,10 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
     qi = ll_get_or_alloc_list(wp);
   }
 
-  if (what != NULL) {
+  if (action == 'f') {
+    // Free the entire quickfix or location list stack
+    qf_free_stack(wp, qi);
+  } else if (what != NULL) {
     retval = qf_set_properties(qi, what, action);
   } else {
     retval = qf_add_entries(qi, list, title, action);

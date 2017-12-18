@@ -38,6 +38,7 @@ func s:setup_commands(cchar)
     command! -nargs=* Xhelpgrep helpgrep <args>
     let g:Xgetlist = function('getqflist')
     let g:Xsetlist = function('setqflist')
+    call setqflist([], 'f')
   else
     command! -nargs=* -bang Xlist <mods>llist<bang> <args>
     command! -nargs=* Xgetexpr <mods>lgetexpr <args>
@@ -69,6 +70,7 @@ func s:setup_commands(cchar)
     command! -nargs=* Xhelpgrep lhelpgrep <args>
     let g:Xgetlist = function('getloclist', [0])
     let g:Xsetlist = function('setloclist', [0])
+    call setloclist(0, [], 'f')
   endif
 endfunc
 
@@ -76,6 +78,9 @@ endfunc
 func XlistTests(cchar)
   call s:setup_commands(a:cchar)
 
+  if a:cchar == 'l'
+      call assert_fails('llist', 'E776:')
+  endif
   " With an empty list, command should return error
   Xgetexpr []
   silent! Xlist
@@ -146,6 +151,9 @@ endfunc
 func XageTests(cchar)
   call s:setup_commands(a:cchar)
 
+  let list = [{'bufnr': 1, 'lnum': 1}]
+  call g:Xsetlist(list)
+
   " Jumping to a non existent list should return error
   silent! Xolder 99
   call assert_true(v:errmsg ==# 'E380: At bottom of quickfix stack')
@@ -179,11 +187,7 @@ func XageTests(cchar)
 endfunc
 
 func Test_cage()
-  let list = [{'bufnr': 1, 'lnum': 1}]
-  call setqflist(list)
   call XageTests('c')
-
-  call setloclist(0, list)
   call XageTests('l')
 endfunc
 
@@ -191,6 +195,11 @@ endfunc
 " commands
 func XwindowTests(cchar)
   call s:setup_commands(a:cchar)
+
+  " Opening the location list window without any errors should fail
+  if a:cchar == 'l'
+      call assert_fails('lopen', 'E776:')
+  endif
 
   " Create a list with no valid entries
   Xgetexpr ['non-error 1', 'non-error 2', 'non-error 3']
@@ -232,6 +241,19 @@ func XwindowTests(cchar)
   " Calling cwindow should close the quickfix window with no valid errors
   Xwindow
   call assert_true(winnr('$') == 1)
+
+  if a:cchar == 'c'
+      " Opening the quickfix window in multiple tab pages should reuse the
+      " quickfix buffer
+      Xgetexpr ['Xtestfile1:1:3:Line1', 'Xtestfile2:2:2:Line2',
+		  \ 'Xtestfile3:3:1:Line3']
+      Xopen
+      let qfbufnum = bufnr('%')
+      tabnew
+      Xopen
+      call assert_equal(qfbufnum, bufnr('%'))
+      new | only | tabonly
+  endif
 endfunc
 
 func Test_cwindow()
@@ -359,6 +381,13 @@ endfunc
 " Tests for :cnext, :cprev, :cfirst, :clast commands
 func Xtest_browse(cchar)
   call s:setup_commands(a:cchar)
+
+  " Jumping to first or next location list entry without any error should
+  " result in failure
+  if a:cchar == 'l'
+      call assert_fails('lfirst', 'E776:')
+      call assert_fails('lnext', 'E776:')
+  endif
 
   call s:create_test_file('Xqftestfile1')
   call s:create_test_file('Xqftestfile2')
@@ -1532,6 +1561,11 @@ endfunc
 func XbottomTests(cchar)
   call s:setup_commands(a:cchar)
 
+  " Calling lbottom without any errors should fail
+  if a:cchar == 'l'
+      call assert_fails('lbottom', 'E776:')
+  endif
+
   call g:Xsetlist([{'filename': 'foo', 'lnum': 42}]) 
   Xopen
   let wid = win_getid()
@@ -1553,10 +1587,9 @@ endfunc
 func HistoryTest(cchar)
   call s:setup_commands(a:cchar)
 
-  call assert_fails(a:cchar . 'older 99', 'E380:')
   " clear all lists after the first one, then replace the first one.
   call g:Xsetlist([])
-  Xolder
+  call assert_fails('Xolder 99', 'E380:')
   let entry = {'filename': 'foo', 'lnum': 42}
   call g:Xsetlist([entry], 'r')
   call g:Xsetlist([entry, entry])
@@ -1599,6 +1632,7 @@ func Xproperty_tests(cchar)
     call assert_fails('call g:Xsetlist([], "a", [])', 'E715:')
 
     " Set and get the title
+    call g:Xsetlist([])
     Xopen
     wincmd p
     call g:Xsetlist([{'filename':'foo', 'lnum':27}])

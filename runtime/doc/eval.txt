@@ -6855,16 +6855,19 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		Note that the list is not exactly the same as what
 		|getqflist()| returns.
 
-							*E927*
-		If {action} is set to 'a', then the items from {list} are
-		added to the existing quickfix list. If there is no existing
-		list, then a new list is created.
+		{action} values:				*E927*
+		'a'	The items from {list} are added to the existing
+			quickfix list. If there is no existing list, then a
+			new list is created.
 		
-		If {action} is set to 'r', then the items from the current
-		quickfix list are replaced with the items from {list}.  This
-		can also be used to clear the list: >
-			:call setqflist([], 'r')
+		'r'	The items from the current quickfix list are replaced
+			with the items from {list}.  This can also be used to
+			clear the list: >
+				:call setqflist([], 'r')
 <	
+		'f'	All the quickfix lists in the quickfix stack are
+			freed.
+
 		If {action} is not present or is set to ' ', then a new list
 		is created.
 
