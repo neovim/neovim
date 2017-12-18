@@ -4267,13 +4267,57 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
   return retval;
 }
 
+// Find the non-location list window with the specified location list.
+static win_T * find_win_with_ll(qf_info_T *qi)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if ((wp->w_llist == qi) && !bt_quickfix(wp->w_buffer)) {
+      return wp;
+    }
+  }
+
+  return NULL;
+}
+
+// Free the entire quickfix/location list stack.
+// If the quickfix/location list window is open, then clear it.
 static void qf_free_stack(win_T *wp, qf_info_T *qi)
 {
+  win_T *qfwin = qf_find_win(qi);
+
+  if (qfwin != NULL) {
+    // If the quickfix/location list window is open, then clear it
+    if (qi->qf_curlist < qi->qf_listcount) {
+      qf_free(qi, qi->qf_curlist);
+    }
+    qf_update_buffer(qi, NULL);
+  }
+
+  win_T *llwin = NULL;
+  win_T *orig_wp = wp;
+  if (wp != NULL && IS_LL_WINDOW(wp)) {
+    // If in the location list window, then use the non-location list
+    // window with this location list (if present)
+    llwin = find_win_with_ll(qi);
+    if (llwin != NULL) {
+      wp = llwin;
+    }
+  }
+
   qf_free_all(wp);
   if (wp == NULL) {
     // quickfix list
     qi->qf_curlist = 0;
     qi->qf_listcount = 0;
+  } else if (IS_LL_WINDOW(orig_wp)) {
+    // If the location list window is open, then create a new empty location
+    // list
+    qf_info_T *new_ll = ll_new_list();
+    orig_wp->w_llist_ref = new_ll;
+    if (llwin != NULL) {
+      llwin->w_llist = new_ll;
+      new_ll->qf_refcount++;
+    }
   }
 }
 

@@ -1894,3 +1894,66 @@ func Test_vimgrep()
   call XvimgrepTests('c')
   call XvimgrepTests('l')
 endfunc
+
+func XfreeTests(cchar)
+  call s:setup_commands(a:cchar)
+
+  enew | only
+
+  " Deleting the quickfix stack should work even When the current list is
+  " somewhere in the middle of the stack
+  Xexpr ['Xfile1:10:10:Line 10', 'Xfile1:15:15:Line 15']
+  Xexpr ['Xfile2:20:20:Line 20', 'Xfile2:25:25:Line 25']
+  Xexpr ['Xfile3:30:30:Line 30', 'Xfile3:35:35:Line 35']
+  Xolder
+  call g:Xsetlist([], 'f')
+  call assert_equal(0, len(g:Xgetlist()))
+
+  " After deleting the stack, adding a new list should create a stack with a
+  " single list.
+  Xexpr ['Xfile1:10:10:Line 10', 'Xfile1:15:15:Line 15']
+  call assert_equal(1, g:Xgetlist({'all':1}).nr)
+
+  " Deleting the stack from a quickfix window should update/clear the
+  " quickfix/location list window.
+  Xexpr ['Xfile1:10:10:Line 10', 'Xfile1:15:15:Line 15']
+  Xexpr ['Xfile2:20:20:Line 20', 'Xfile2:25:25:Line 25']
+  Xexpr ['Xfile3:30:30:Line 30', 'Xfile3:35:35:Line 35']
+  Xolder
+  Xwindow
+  call g:Xsetlist([], 'f')
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, line('$'))
+  Xclose
+
+  " Deleting the stack from a non-quickfix window should update/clear the
+  " quickfix/location list window.
+  Xexpr ['Xfile1:10:10:Line 10', 'Xfile1:15:15:Line 15']
+  Xexpr ['Xfile2:20:20:Line 20', 'Xfile2:25:25:Line 25']
+  Xexpr ['Xfile3:30:30:Line 30', 'Xfile3:35:35:Line 35']
+  Xolder
+  Xwindow
+  wincmd p
+  call g:Xsetlist([], 'f')
+  call assert_equal(0, len(g:Xgetlist()))
+  wincmd p
+  call assert_equal(2, winnr('$'))
+  call assert_equal(1, line('$'))
+
+  " After deleting the location list stack, if the location list window is
+  " opened, then a new location list should be created. So opening the
+  " location list window again should not create a new window.
+  if a:cchar == 'l'
+      lexpr ['Xfile1:10:10:Line 10', 'Xfile1:15:15:Line 15']
+      wincmd p
+      lopen
+      call assert_equal(2, winnr('$'))
+  endif
+  Xclose
+endfunc
+
+" Tests for the quickifx free functionality
+func Test_qf_free()
+  call XfreeTests('c')
+  call XfreeTests('l')
+endfunc
