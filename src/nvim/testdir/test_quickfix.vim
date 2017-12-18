@@ -128,6 +128,14 @@ func XlistTests(cchar)
   let l = split(result, "\n")
   call assert_equal([' 2 Xtestfile1:1 col 3: Line1',
 		   \ ' 3: non-error 2', ' 4 Xtestfile2:2 col 2: Line2'], l)
+
+  " Test for '+'
+  redir => result
+  Xlist! +2
+  redir END
+  let l = split(result, "\n")
+  call assert_equal([' 2 Xtestfile1:1 col 3: Line1',
+		   \ ' 3: non-error 2', ' 4 Xtestfile2:2 col 2: Line2'], l)
 endfunc
 
 func Test_clist()
@@ -907,6 +915,11 @@ func Test_efm2()
 	      \ "(67,3)  warning: 's' already defined"
 	      \]
   set efm=%+P[%f],(%l\\,%c)%*[\ ]%t%*[^:]:\ %m,%-Q
+  " To exercise the push/pop file functionality in quickfix, the test files
+  " need to be created.
+  call writefile(['Line1'], 'Xtestfile1')
+  call writefile(['Line2'], 'Xtestfile2')
+  call writefile(['Line3'], 'Xtestfile3')
   cexpr ""
   for l in lines
       caddexpr l
@@ -917,6 +930,9 @@ func Test_efm2()
   call assert_equal(2, l[2].col)
   call assert_equal('w', l[2].type)
   call assert_equal('e', l[3].type)
+  call delete('Xtestfile1')
+  call delete('Xtestfile2')
+  call delete('Xtestfile3')
 
   " Tests for %E, %C and %Z format specifiers
   let lines = ["Error 275",
@@ -1351,11 +1367,25 @@ func Test_switchbuf()
   call assert_equal(2, winnr('$'))
   call assert_equal(1, bufwinnr('Xqftestfile3'))
 
+  " If only quickfix window is open in the current tabpage, jumping to an
+  " entry with 'switchubf' set to 'usetab' should search in other tabpages.
   enew | only
+  set switchbuf=usetab
+  tabedit Xqftestfile1
+  tabedit Xqftestfile2
+  tabedit Xqftestfile3
+  tabfirst
+  copen | only
+  clast
+  call assert_equal(4, tabpagenr())
+  tabfirst | tabonly | enew | only
 
   call delete('Xqftestfile1')
   call delete('Xqftestfile2')
   call delete('Xqftestfile3')
+  set switchbuf&vim
+
+  enew | only
 endfunc
 
 func Xadjust_qflnum(cchar)
@@ -1672,4 +1702,57 @@ func Test_dirstack_cleanup()
   call setqflist([], 'r')
   caddbuffer
   let &efm = save_efm
+endfunc
+
+" Tests for jumping to entries from the location list window and quickfix
+" window
+func Test_cwindow_jump()
+  set efm=%f%%%l%%%m
+  lgetexpr ["F1%10%Line 10", "F2%20%Line 20", "F3%30%Line 30"]
+  lopen | only
+  lfirst
+  call assert_true(winnr('$') == 2)
+  call assert_true(winnr() == 1)
+  " Location list for the new window should be set
+  call assert_true(getloclist(0)[2].text == 'Line 30')
+
+  " Open a scratch buffer
+  " Open a new window and create a location list
+  " Open the location list window and close the other window
+  " Jump to an entry.
+  " Should create a new window and jump to the entry. The scrtach buffer
+  " should not be used.
+  enew | only
+  set buftype=nofile
+  below new
+  lgetexpr ["F1%10%Line 10", "F2%20%Line 20", "F3%30%Line 30"]
+  lopen
+  2wincmd c
+  lnext
+  call assert_true(winnr('$') == 3)
+  call assert_true(winnr() == 2)
+
+  " Open two windows with two different location lists
+  " Open the location list window and close the previous window
+  " Jump to an entry in the location list window
+  " Should open the file in the first window and not set the location list.
+  enew | only
+  lgetexpr ["F1%5%Line 5"]
+  below new
+  lgetexpr ["F1%10%Line 10", "F2%20%Line 20", "F3%30%Line 30"]
+  lopen
+  2wincmd c
+  lnext
+  call assert_true(winnr() == 1)
+  call assert_true(getloclist(0)[0].text == 'Line 5')
+
+  enew | only
+  cgetexpr ["F1%10%Line 10", "F2%20%Line 20", "F3%30%Line 30"]
+  copen
+  cnext
+  call assert_true(winnr('$') == 2)
+  call assert_true(winnr() == 1)
+
+  enew | only
+  set efm&vim
 endfunc
