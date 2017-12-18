@@ -6,15 +6,18 @@ let g:loaded_node_provider = 1
 let s:job_opts = {'rpc': v:true, 'on_stderr': function('provider#stderr_collector')}
 
 function! s:is_minimum_version(version, min_major, min_minor) abort
-  let nodejs_version = a:version
-  if !a:version
+  if empty(a:version)
     let nodejs_version = get(split(system(['node', '-v']), "\n"), 0, '')
     if v:shell_error || nodejs_version[0] !=# 'v'
       return 0
     endif
+  else
+    let nodejs_version = a:version
   endif
+  " Remove surrounding junk.  Example: 'v4.12.0' => '4.12.0'
+  let nodejs_version = matchstr(nodejs_version, '\(\d\.\?\)\+')
   " [major, minor, patch]
-  let v_list = !!a:version ? a:version : split(nodejs_version[1:], '\.')
+  let v_list = split(nodejs_version, '\.')
   return len(v_list) == 3
     \ && ((str2nr(v_list[0]) > str2nr(a:min_major))
     \     || (str2nr(v_list[0]) == str2nr(a:min_major)
