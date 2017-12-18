@@ -165,6 +165,9 @@ processing a quickfix or location list command, it will be aborted.
 			keep Vim running while compiling.  If you give the
 			name of the errorfile, the 'errorfile' option will
 			be set to [errorfile].  See |:cc| for [!].
+			If the encoding of the error file differs from the
+			'encoding' option, you can use the 'makeencoding'
+			option to specify the encoding.
 
 							*:lf* *:lfile*
 :lf[ile][!] [errorfile]	Same as ":cfile", except the location list for the
@@ -176,6 +179,9 @@ processing a quickfix or location list command, it will be aborted.
 :cg[etfile] [errorfile]					*:cg* *:cgetfile*
 			Read the error file.  Just like ":cfile" but don't
 			jump to the first error.
+			If the encoding of the error file differs from the
+			'encoding' option, you can use the 'makeencoding'
+			option to specify the encoding.
 
 
 :lg[etfile] [errorfile]					*:lg* *:lgetfile*
@@ -186,6 +192,9 @@ processing a quickfix or location list command, it will be aborted.
 :caddf[ile] [errorfile]	Read the error file and add the errors from the
 			errorfile to the current quickfix list. If a quickfix
 			list is not present, then a new list is created.
+			If the encoding of the error file differs from the
+			'encoding' option, you can use the 'makeencoding'
+			option to specify the encoding.
 
 							*:laddf* *:laddfile*
 :laddf[ile] [errorfile]	Same as ":caddfile", except the location list for the
@@ -322,6 +331,7 @@ use this code: >
 	endfunction
 
 	au QuickfixCmdPost make call QfMakeConv()
+Another option is using 'makeencoding'.
 
 EXECUTE A COMMAND IN ALL THE BUFFERS IN QUICKFIX OR LOCATION LIST:
 							*:cdo*
@@ -586,6 +596,9 @@ lists, use ":cnewer 99" first.
 			   like |:cnext| and |:cprevious|, see above.
 			This command does not accept a comment, any "
 			characters are considered part of the arguments.
+			If the encoding of the program output differs from the
+			'encoding' option, you can use the 'makeencoding'
+			option to specify the encoding.
 
 							*:lmak* *:lmake*
 :lmak[e][!] [arguments]
@@ -645,6 +658,7 @@ read the error messages: >
 	au QuickfixCmdPost make call QfMakeConv()
 
 (Example by Faque Cheng)
+Another option is using 'makeencoding'.
 
 ==============================================================================
 5. Using :vimgrep and :grep				*grep* *lid*
@@ -759,6 +773,9 @@ id-utils) in a similar way to its compiler integration (see |:make| above).
 			When 'grepprg' is "internal" this works like
 			|:vimgrep|.  Note that the pattern needs to be
 			enclosed in separator characters then.
+			If the encoding of the program output differs from the
+			'encoding' option, you can use the 'makeencoding'
+			option to specify the encoding.
 
 							    *:lgr* *:lgrep*
 :lgr[ep][!] [arguments]	Same as ":grep", except the location list for the
@@ -783,6 +800,10 @@ id-utils) in a similar way to its compiler integration (see |:make| above).
 				  \ | catch /E480:/
 				  \ | endtry"
 <
+			If the encoding of the program output differs from the
+			'encoding' option, you can use the 'makeencoding'
+			option to specify the encoding.
+
 							*:lgrepa* *:lgrepadd*
 :lgrepa[dd][!] [arguments]
 			Same as ":grepadd", except the location list for the

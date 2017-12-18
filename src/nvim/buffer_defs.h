@@ -637,6 +637,7 @@ struct file_buffer {
   uint32_t b_p_fex_flags;       ///< flags for 'formatexpr'
   char_u *b_p_kp;               ///< 'keywordprg'
   int b_p_lisp;                 ///< 'lisp'
+  char_u *b_p_menc;             ///< 'makeencoding'
   char_u *b_p_mps;              ///< 'matchpairs'
   int b_p_ml;                   ///< 'modeline'
   int b_p_ml_nobin;             ///< b_p_ml saved for binary mode

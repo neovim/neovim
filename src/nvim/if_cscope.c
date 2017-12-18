@@ -1012,9 +1012,9 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
       fclose(f);
       if (use_ll)           /* Use location list */
         wp = curwin;
-      /* '-' starts a new error list */
+      // '-' starts a new error list
       if (qf_init(wp, tmp, (char_u *)"%f%*\\t%l%*\\t%m",
-              *qfpos == '-', cmdline) > 0) {
+                  *qfpos == '-', cmdline, NULL) > 0) {
         if (postponed_split != 0) {
           (void)win_split(postponed_split > 0 ? postponed_split : 0,
                           postponed_split_flags);

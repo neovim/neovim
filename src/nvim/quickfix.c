@@ -160,6 +160,7 @@ typedef struct {
   buf_T      *buf;
   linenr_T buflnum;
   linenr_T lnumlast;
+  vimconv_T vc;
 } qfstate_T;
 
 typedef struct {
@@ -193,19 +194,19 @@ typedef struct {
 static char_u *qf_last_bufname = NULL;
 static bufref_T  qf_last_bufref = { NULL, 0, 0 };
 
-/*
- * Read the errorfile "efile" into memory, line by line, building the error
- * list. Set the error list's title to qf_title.
- * Return -1 for error, number of errors for success.
- */
-int 
-qf_init (
-    win_T *wp,
-    char_u *efile,
-    char_u *errorformat,
-    int newlist,                            /* TRUE: start a new error list */
-    char_u *qf_title
-)
+/// Read the errorfile "efile" into memory, line by line, building the error
+/// list. Set the error list's title to qf_title.
+///
+/// @params  wp  If non-NULL, make a location list
+/// @params  efile  If non-NULL, errorfile to parse
+/// @params  errorformat  'errorformat' string used to parse the error lines
+/// @params  newlist  If true, create a new error list
+/// @params  qf_title  If non-NULL, title of the error list
+/// @params  enc  If non-NULL, encoding used to parse errors
+///
+/// @returns -1 for error, number of errors for success.
+int qf_init(win_T *wp, char_u *efile, char_u *errorformat, int newlist,
+            char_u *qf_title, char_u *enc)
 {
   qf_info_T       *qi = &ql_info;
 
@@ -214,8 +215,8 @@ qf_init (
   }
 
   return qf_init_ext(qi, efile, curbuf, NULL, errorformat, newlist,
-      (linenr_T)0, (linenr_T)0,
-      qf_title);
+                     (linenr_T)0, (linenr_T)0,
+                     qf_title, enc);
 }
 
 // Maximum number of bytes allowed per line while reading an errorfile.
@@ -638,6 +639,22 @@ retry:
   } else {
     state->linebuf = IObuff;
   }
+
+  // Convert a line if it contains a non-ASCII character
+  if (state->vc.vc_type != CONV_NONE && has_non_ascii(state->linebuf)) {
+    char_u *line = string_convert(&state->vc, state->linebuf, &state->linelen);
+    if (line != NULL) {
+      if (state->linelen < IOSIZE) {
+        STRLCPY(state->linebuf, line, state->linelen + 1);
+        xfree(line);
+      } else {
+        xfree(state->growbuf);
+        state->linebuf = state->growbuf = line;
+        state->growbufsiz = state->linelen < LINE_MAXLEN
+          ? state->linelen : LINE_MAXLEN;
+      }
+    }
+  }
   return QF_OK;
 }
 
@@ -976,15 +993,15 @@ qf_init_ext(
     buf_T *buf,
     typval_T *tv,
     char_u *errorformat,
-    int newlist,                            /* TRUE: start a new error list */
-    linenr_T lnumfirst,                     /* first line number to use */
-    linenr_T lnumlast,                      /* last line number to use */
-    char_u *qf_title
+    int newlist,                            // TRUE: start a new error list
+    linenr_T lnumfirst,                     // first line number to use
+    linenr_T lnumlast,                      // last line number to use
+    char_u *qf_title,
+    char_u *enc
 )
 {
-  qfstate_T state = { NULL, 0, NULL, 0, NULL, NULL, NULL, NULL,
-                      NULL, 0, 0 };
-  qffields_T fields = { NULL, NULL, 0, 0L, 0, false, NULL, 0, 0, 0 };
+  qfstate_T state;
+  qffields_T fields;
   qfline_T        *old_last = NULL;
   bool adding = false;
   static efm_T    *fmt_first = NULL;
@@ -996,6 +1013,13 @@ qf_init_ext(
   // Do not used the cached buffer, it may have been wiped out.
   xfree(qf_last_bufname);
   qf_last_bufname = NULL;
+
+  memset(&state, 0, sizeof(state));
+  memset(&fields, 0, sizeof(fields));
+  state.vc.vc_type = CONV_NONE;
+  if (enc != NULL && *enc != NUL) {
+    convert_setup(&state.vc, enc, p_enc);
+  }
 
   fields.namebuf = xmalloc(CMDBUFFSIZE + 1);
   fields.errmsglen = CMDBUFFSIZE + 1;
@@ -1146,6 +1170,10 @@ qf_init_end:
   xfree(state.growbuf);
 
   qf_update_buffer(qi, old_last);
+
+  if (state.vc.vc_type != CONV_NONE) {
+    convert_setup(&state.vc, NULL, NULL);
+  }
 
   return retval;
 }
@@ -3024,6 +3052,7 @@ void ex_make(exarg_T *eap)
   qf_info_T   *qi = &ql_info;
   int res;
   char_u      *au_name = NULL;
+  char_u *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
 
   /* Redirect ":grep" to ":vimgrep" if 'grepprg' is "internal". */
   if (grep_internal(eap->cmdidx)) {
@@ -3083,11 +3112,11 @@ void ex_make(exarg_T *eap)
 
   res = qf_init(wp, fname, (eap->cmdidx != CMD_make
                             && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm,
-      (eap->cmdidx != CMD_grepadd
-       && eap->cmdidx != CMD_lgrepadd),
-      *eap->cmdlinep);
-  if (wp != NULL)
+                (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd),
+                *eap->cmdlinep, enc);
+  if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
+  }
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
         curbuf->b_fname, TRUE, curbuf);
@@ -3429,19 +3458,18 @@ void ex_cfile(exarg_T *eap)
   if (*eap->arg != NUL)
     set_string_option_direct((char_u *)"ef", -1, eap->arg, OPT_FREE, 0);
 
-  /*
-   * This function is used by the :cfile, :cgetfile and :caddfile
-   * commands.
-   * :cfile always creates a new quickfix list and jumps to the
-   * first error.
-   * :cgetfile creates a new quickfix list but doesn't jump to the
-   * first error.
-   * :caddfile adds to an existing quickfix list. If there is no
-   * quickfix list then a new list is created.
-   */
+  char_u *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
+  // This function is used by the :cfile, :cgetfile and :caddfile
+  // commands.
+  // :cfile always creates a new quickfix list and jumps to the
+  // first error.
+  // :cgetfile creates a new quickfix list but doesn't jump to the
+  // first error.
+  // :caddfile adds to an existing quickfix list. If there is no
+  // quickfix list then a new list is created.
   if (qf_init(wp, p_ef, p_efm, (eap->cmdidx != CMD_caddfile
                                 && eap->cmdidx != CMD_laddfile),
-          *eap->cmdlinep) > 0
+              *eap->cmdlinep, enc) > 0
       && (eap->cmdidx == CMD_cfile
           || eap->cmdidx == CMD_lfile)) {
     if (au_name != NULL)
@@ -4338,7 +4366,7 @@ void ex_cbuffer(exarg_T *eap)
       if (qf_init_ext(qi, NULL, buf, NULL, p_efm,
                       (eap->cmdidx != CMD_caddbuffer
                        && eap->cmdidx != CMD_laddbuffer),
-                      eap->line1, eap->line2, qf_title) > 0) {
+                      eap->line1, eap->line2, qf_title, NULL) > 0) {
         if (au_name != NULL) {
           apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
                          curbuf->b_fname, true, curbuf);
@@ -4403,7 +4431,7 @@ void ex_cexpr(exarg_T *eap)
       if (qf_init_ext(qi, NULL, NULL, &tv, p_efm,
                       (eap->cmdidx != CMD_caddexpr
                        && eap->cmdidx != CMD_laddexpr),
-                      (linenr_T)0, (linenr_T)0, *eap->cmdlinep) > 0) {
+                      (linenr_T)0, (linenr_T)0, *eap->cmdlinep, NULL) > 0) {
         if (au_name != NULL) {
           apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
                          curbuf->b_fname, true, curbuf);
