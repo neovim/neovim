@@ -4502,6 +4502,9 @@ void ex_helpgrep(exarg_T *eap)
     }
   }
 
+  // Autocommands may change the list. Save it for later comparison
+  qf_info_T *save_qi = qi;
+
   regmatch.regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING);
   regmatch.rm_ic = FALSE;
   if (regmatch.regprog != NULL) {
@@ -4614,10 +4617,11 @@ void ex_helpgrep(exarg_T *eap)
 
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
-        curbuf->b_fname, TRUE, curbuf);
-    if (!new_qi && qi != &ql_info && qf_find_buf(qi) == NULL)
-      /* autocommands made "qi" invalid */
+                   curbuf->b_fname, true, curbuf);
+    if (!new_qi && qi != save_qi && qf_find_buf(qi) == NULL) {
+      // autocommands made "qi" invalid
       return;
+    }
   }
 
   /* Jump to first match. */
