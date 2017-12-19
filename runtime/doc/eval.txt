@@ -6841,6 +6841,7 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		    nr		error number
 		    text	description of the error
 		    type	single-character error type, 'E', 'W', etc.
+		    valid	recognized error message
 
 		The "col", "vcol", "nr", "type" and "text" entries are
 		optional.  Either "lnum" or "pattern" entry can be used to
@@ -6850,6 +6851,8 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		item will not be handled as an error line.
 		If both "pattern" and "lnum" are present then "pattern" will
 		be used.
+		If the "valid" entry is not supplied, then the valid flag is
+		set when "bufnr" is a valid buffer or "filename" exists.
 		If you supply an empty {list}, the quickfix list will be
 		cleared.
 		Note that the list is not exactly the same as what

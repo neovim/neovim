@@ -2411,11 +2411,18 @@ static void qf_free(qf_info_T *qi, int idx)
   qi->qf_lists[idx].qf_ptr = NULL;
   qi->qf_lists[idx].qf_title = NULL;
   qi->qf_lists[idx].qf_index = 0;
+  qi->qf_lists[idx].qf_start = NULL;
+  qi->qf_lists[idx].qf_last = NULL;
+  qi->qf_lists[idx].qf_ptr = NULL;
+  qi->qf_lists[idx].qf_nonevalid = true;
 
   qf_clean_dir_stack(&qi->qf_dir_stack);
   qi->qf_directory = NULL;
   qf_clean_dir_stack(&qi->qf_file_stack);
   qi->qf_currfile = NULL;
+  qi->qf_multiline = false;
+  qi->qf_multiignore = false;
+  qi->qf_multiscan = false;
 }
 
 /*
@@ -4180,6 +4187,11 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
       }
       valid = false;
       bufnum = 0;
+    }
+
+    // If the 'valid' field is present it overrules the detected value.
+    if (tv_dict_find(d, "valid", -1) != NULL) {
+      valid = (int)tv_dict_get_number(d, "valid");
     }
 
     int status = qf_add_entry(qi,
