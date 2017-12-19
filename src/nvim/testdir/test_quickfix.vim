@@ -1754,6 +1754,38 @@ func Xproperty_tests(cchar)
     if a:cchar == 'l'
 	call assert_equal({}, getloclist(99, {'title': 1}))
     endif
+
+    " Context related tests
+    call g:Xsetlist([], 'a', {'context':[1,2,3]})
+    call test_garbagecollect_now()
+    let d = g:Xgetlist({'context':1})
+    call assert_equal([1,2,3], d.context)
+    call g:Xsetlist([], 'a', {'context':{'color':'green'}})
+    let d = g:Xgetlist({'context':1})
+    call assert_equal({'color':'green'}, d.context)
+    call g:Xsetlist([], 'a', {'context':"Context info"})
+    let d = g:Xgetlist({'context':1})
+    call assert_equal("Context info", d.context)
+    call g:Xsetlist([], 'a', {'context':246})
+    let d = g:Xgetlist({'context':1})
+    call assert_equal(246, d.context)
+    if a:cchar == 'l'
+	" Test for copying context across two different location lists
+	new | only
+	let w1_id = win_getid()
+	let l = [1]
+	call setloclist(0, [], 'a', {'context':l})
+	new
+	let w2_id = win_getid()
+	call add(l, 2)
+	call assert_equal([1, 2], getloclist(w1_id, {'context':1}).context)
+	call assert_equal([1, 2], getloclist(w2_id, {'context':1}).context)
+	unlet! l
+	call assert_equal([1, 2], getloclist(w2_id, {'context':1}).context)
+	only
+	call setloclist(0, [], 'f')
+	call assert_equal({}, getloclist(0, {'context':1}))
+    endif
 endfunc
 
 func Test_qf_property()
