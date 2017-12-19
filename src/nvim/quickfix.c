@@ -2411,6 +2411,7 @@ static void qf_free(qf_info_T *qi, int idx)
   qi->qf_lists[idx].qf_ptr = NULL;
   qi->qf_lists[idx].qf_title = NULL;
   qi->qf_lists[idx].qf_index = 0;
+  qi->qf_lists[idx].qf_last = NULL;
 
   qf_clean_dir_stack(&qi->qf_dir_stack);
   qi->qf_directory = NULL;
