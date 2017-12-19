@@ -4278,7 +4278,10 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
   if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
-      qf_idx = (int)di->di_tv.vval.v_number - 1;
+      // for zero use the current list
+      if (di->di_tv.vval.v_number != 0) {
+        qf_idx = (int)di->di_tv.vval.v_number - 1;
+      }
       if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return FAIL;
       }
@@ -4306,11 +4309,11 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action)
   }
 
   if ((di = tv_dict_find(what, S_LEN("context"))) != NULL) {
-    tv_free(qi->qf_lists[qi->qf_curlist].qf_ctx);
+    tv_free(qi->qf_lists[qf_idx].qf_ctx);
 
     typval_T *ctx = xcalloc(1, sizeof(typval_T));
     tv_copy(&di->di_tv, ctx);
-    qi->qf_lists[qi->qf_curlist].qf_ctx = ctx;
+    qi->qf_lists[qf_idx].qf_ctx = ctx;
   }
 
   return retval;
