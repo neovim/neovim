@@ -801,7 +801,7 @@ restofline:
         fields->type = *regmatch.startp[i];
       }
       if (fmt_ptr->flags == '+' && !qi->qf_multiscan) {       // %+
-        if (linelen > fields->errmsglen) {
+        if (linelen >= fields->errmsglen) {
           // linelen + null terminator
           fields->errmsg = xrealloc(fields->errmsg, linelen + 1);
           fields->errmsglen = linelen + 1;
@@ -812,7 +812,7 @@ restofline:
           continue;
         }
         len = (size_t)(regmatch.endp[i] - regmatch.startp[i]);
-        if (len > fields->errmsglen) {
+        if (len >= fields->errmsglen) {
           // len + null terminator
           fields->errmsg = xrealloc(fields->errmsg, len + 1);
           fields->errmsglen = len + 1;
@@ -889,7 +889,7 @@ restofline:
     fields->namebuf[0] = NUL;                // no match found, remove file name
     fields->lnum = 0;                        // don't jump to this line
     fields->valid = false;
-    if (linelen > fields->errmsglen) {
+    if (linelen >= fields->errmsglen) {
       // linelen + null terminator
       fields->errmsg = xrealloc(fields->errmsg, linelen + 1);
       fields->errmsglen = linelen + 1;
