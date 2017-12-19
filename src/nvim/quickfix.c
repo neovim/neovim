@@ -4189,6 +4189,11 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
       bufnum = 0;
     }
 
+    // If the 'valid' field is present it overrules the detected value.
+    if (tv_dict_find(d, "valid", -1) != NULL) {
+      valid = (int)tv_dict_get_number(d, "valid");
+    }
+
     int status = qf_add_entry(qi,
                               NULL,      // dir
                               (char_u *)filename,
