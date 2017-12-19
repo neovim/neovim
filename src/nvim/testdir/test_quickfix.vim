@@ -2004,15 +2004,3 @@ func Test_qf_free()
   call XfreeTests('c')
   call XfreeTests('l')
 endfunc
-
-func Test_no_reuse_mem()
-  set efm=E,%W%m,
-  cgetexpr ['C']
-  set efm=%C%m
-  lexpr '0'
-  lopen
-  call setqflist([], 'r')
-  caddbuf
-
-  set efm&
-endfunc
