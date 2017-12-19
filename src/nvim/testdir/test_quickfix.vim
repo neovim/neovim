@@ -24,8 +24,8 @@ func s:setup_commands(cchar)
     command! -nargs=* Xgetbuffer <mods>cgetbuffer <args>
     command! -nargs=* Xaddbuffer <mods>caddbuffer <args>
     command! -nargs=* Xrewind <mods>crewind <args>
-    command! -nargs=* -bang Xnext <mods>cnext<bang> <args>
-    command! -nargs=* -bang Xprev <mods>cprev<bang> <args>
+    command! -count -nargs=* -bang Xnext <mods><count>cnext<bang> <args>
+    command! -count -nargs=* -bang Xprev <mods><count>cprev<bang> <args>
     command! -nargs=* -bang Xfirst <mods>cfirst<bang> <args>
     command! -nargs=* -bang Xlast <mods>clast<bang> <args>
     command! -nargs=* -bang Xnfile <mods>cnfile<bang> <args>
@@ -56,8 +56,8 @@ func s:setup_commands(cchar)
     command! -nargs=* Xgetbuffer <mods>lgetbuffer <args>
     command! -nargs=* Xaddbuffer <mods>laddbuffer <args>
     command! -nargs=* Xrewind <mods>lrewind <args>
-    command! -nargs=* -bang Xnext <mods>lnext<bang> <args>
-    command! -nargs=* -bang Xprev <mods>lprev<bang> <args>
+    command! -count -nargs=* -bang Xnext <mods><count>lnext<bang> <args>
+    command! -count -nargs=* -bang Xprev <mods><count>lprev<bang> <args>
     command! -nargs=* -bang Xfirst <mods>lfirst<bang> <args>
     command! -nargs=* -bang Xlast <mods>llast<bang> <args>
     command! -nargs=* -bang Xnfile <mods>lnfile<bang> <args>
@@ -395,7 +395,9 @@ func Xtest_browse(cchar)
   Xgetexpr ['Xqftestfile1:5:Line5',
 		\ 'Xqftestfile1:6:Line6',
 		\ 'Xqftestfile2:10:Line10',
-		\ 'Xqftestfile2:11:Line11']
+		\ 'Xqftestfile2:11:Line11',
+		\ 'RegularLine1',
+		\ 'RegularLine2']
 
   Xfirst
   call assert_fails('Xprev', 'E553')
@@ -407,11 +409,19 @@ func Xtest_browse(cchar)
   call assert_equal('Xqftestfile1', bufname('%'))
   call assert_equal(6, line('.'))
   Xlast
+  Xprev
   call assert_equal('Xqftestfile2', bufname('%'))
   call assert_equal(11, line('.'))
   call assert_fails('Xnext', 'E553')
   call assert_fails('Xnfile', 'E553')
   Xrewind
+  call assert_equal('Xqftestfile1', bufname('%'))
+  call assert_equal(5, line('.'))
+
+  10Xnext
+  call assert_equal('Xqftestfile2', bufname('%'))
+  call assert_equal(11, line('.'))
+  10Xprev
   call assert_equal('Xqftestfile1', bufname('%'))
   call assert_equal(5, line('.'))
 
@@ -437,8 +447,29 @@ func s:test_xhelpgrep(cchar)
     let title_text = ':lhelpgrep quickfix'
   endif
   call assert_true(w:quickfix_title =~ title_text, w:quickfix_title)
+
+  " Jumping to a help topic should open the help window
+  only
+  Xnext
+  call assert_true(&buftype == 'help')
+  call assert_true(winnr('$') == 2)
+  " Jumping to the next match should reuse the help window
+  Xnext
+  call assert_true(&buftype == 'help')
+  call assert_true(winnr() == 1)
+  call assert_true(winnr('$') == 2)
+  " Jumping to the next match from the quickfix window should reuse the help
+  " window
+  Xopen
+  Xnext
+  call assert_true(&buftype == 'help')
+  call assert_true(winnr() == 1)
+  call assert_true(winnr('$') == 2)
+
   " This wipes out the buffer, make sure that doesn't cause trouble.
   Xclose
+
+  new | only
 
   " Search for non existing help string
   call assert_fails('Xhelpgrep a1b2c3', 'E480:')
@@ -578,10 +609,7 @@ func Test_locationlist()
     lrewind
     enew
     lopen
-    lnext
-    lnext
-    lnext
-    lnext
+    4lnext
     vert split
     wincmd L
     lopen
@@ -1039,6 +1067,25 @@ func Test_efm2()
   call assert_equal(1, l[4].valid)
   call assert_equal('unittests/dbfacadeTest.py', bufname(l[4].bufnr))
 
+  " The following sequence of commands used to crash Vim
+  set efm=%W%m
+  cgetexpr ['msg1']
+  let l = getqflist()
+  call assert_equal(1, len(l), string(l))
+  call assert_equal('msg1', l[0].text)
+  set efm=%C%m
+  lexpr 'msg2'
+  let l = getloclist(0)
+  call assert_equal(1, len(l), string(l))
+  call assert_equal('msg2', l[0].text)
+  lopen
+  call setqflist([], 'r')
+  caddbuf
+  let l = getqflist()
+  call assert_equal(1, len(l), string(l))
+  call assert_equal('|| msg2', l[0].text)
+
+  new | only
   let &efm = save_efm
 endfunc
 
@@ -1369,18 +1416,18 @@ func Test_switchbuf()
   let winid = win_getid()
   cfirst | cnext
   call assert_equal(winid, win_getid())
-  cnext | cnext
+  2cnext
   call assert_equal(winid, win_getid())
-  cnext | cnext
+  2cnext
   call assert_equal(winid, win_getid())
   enew
 
   set switchbuf=useopen
   cfirst | cnext
   call assert_equal(file1_winid, win_getid())
-  cnext | cnext
+  2cnext
   call assert_equal(file2_winid, win_getid())
-  cnext | cnext
+  2cnext
   call assert_equal(file2_winid, win_getid())
 
   enew | only
@@ -1390,9 +1437,9 @@ func Test_switchbuf()
   tabfirst
   cfirst | cnext
   call assert_equal(2, tabpagenr())
-  cnext | cnext
+  2cnext
   call assert_equal(3, tabpagenr())
-  cnext | cnext
+  2cnext
   call assert_equal(3, tabpagenr())
   tabfirst | tabonly | enew
 
@@ -1956,4 +2003,16 @@ endfunc
 func Test_qf_free()
   call XfreeTests('c')
   call XfreeTests('l')
+endfunc
+
+func Test_no_reuse_mem()
+  set efm=E,%W%m,
+  cgetexpr ['C']
+  set efm=%C%m
+  lexpr '0'
+  lopen
+  call setqflist([], 'r')
+  caddbuf
+
+  set efm&
 endfunc
