@@ -4147,7 +4147,9 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
       di = tv_dict_item_alloc_len(S_LEN("context"));
       if (di != NULL) {
         tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
-        tv_dict_add(retdict, di);
+        if (tv_dict_add(retdict, di) == FAIL) {
+          tv_dict_item_free(di);
+        }
       }
     } else {
       status = tv_dict_add_str(retdict, S_LEN("context"), "");
