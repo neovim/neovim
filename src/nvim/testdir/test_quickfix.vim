@@ -1754,6 +1754,69 @@ func Xproperty_tests(cchar)
     if a:cchar == 'l'
 	call assert_equal({}, getloclist(99, {'title': 1}))
     endif
+
+    " Context related tests
+    call g:Xsetlist([], 'a', {'context':[1,2,3]})
+    call test_garbagecollect_now()
+    let d = g:Xgetlist({'context':1})
+    call assert_equal([1,2,3], d.context)
+    call g:Xsetlist([], 'a', {'context':{'color':'green'}})
+    let d = g:Xgetlist({'context':1})
+    call assert_equal({'color':'green'}, d.context)
+    call g:Xsetlist([], 'a', {'context':"Context info"})
+    let d = g:Xgetlist({'context':1})
+    call assert_equal("Context info", d.context)
+    call g:Xsetlist([], 'a', {'context':246})
+    let d = g:Xgetlist({'context':1})
+    call assert_equal(246, d.context)
+    if a:cchar == 'l'
+	" Test for copying context across two different location lists
+	new | only
+	let w1_id = win_getid()
+	let l = [1]
+	call setloclist(0, [], 'a', {'context':l})
+	new
+	let w2_id = win_getid()
+	call add(l, 2)
+	call assert_equal([1, 2], getloclist(w1_id, {'context':1}).context)
+	call assert_equal([1, 2], getloclist(w2_id, {'context':1}).context)
+	unlet! l
+	call assert_equal([1, 2], getloclist(w2_id, {'context':1}).context)
+	only
+	call setloclist(0, [], 'f')
+	call assert_equal({}, getloclist(0, {'context':1}))
+    endif
+
+    " Test for changing the context of previous quickfix lists
+    call g:Xsetlist([], 'f')
+    Xexpr "One"
+    Xexpr "Two"
+    Xexpr "Three"
+    call g:Xsetlist([], ' ', {'context' : [1], 'nr' : 1})
+    call g:Xsetlist([], ' ', {'context' : [2], 'nr' : 2})
+    " Also, check for setting the context using quickfix list number zero.
+    call g:Xsetlist([], ' ', {'context' : [3], 'nr' : 0})
+    call test_garbagecollect_now()
+    let l = g:Xgetlist({'nr' : 1, 'context' : 1})
+    call assert_equal([1], l.context)
+    let l = g:Xgetlist({'nr' : 2, 'context' : 1})
+    call assert_equal([2], l.context)
+    let l = g:Xgetlist({'nr' : 3, 'context' : 1})
+    call assert_equal([3], l.context)
+
+    " Test for changing the context through reference and for garbage
+    " collection of quickfix context
+    let l = ["red"]
+    call g:Xsetlist([], ' ', {'context' : l})
+    call add(l, "blue")
+    let x = g:Xgetlist({'context' : 1})
+    call add(x.context, "green")
+    call assert_equal(["red", "blue", "green"], l)
+    call assert_equal(["red", "blue", "green"], x.context)
+    unlet l
+    call test_garbagecollect_now()
+    let m = g:Xgetlist({'context' : 1})
+    call assert_equal(["red", "blue", "green"], m.context)
 endfunc
 
 func Test_qf_property()
@@ -2023,3 +2086,19 @@ func Test_qf_free()
   call XfreeTests('c')
   call XfreeTests('l')
 endfunc
+
+" Test for buffer overflow when parsing lines and adding new entries to
+" the quickfix list.
+func Test_bufoverflow()
+  set efm=%f:%l:%m
+  cgetexpr ['File1:100:' . repeat('x', 1025)]
+
+  set efm=%+GCompiler:\ %.%#,%f:%l:%m
+  cgetexpr ['Compiler: ' . repeat('a', 1015), 'File1:10:Hello World']
+
+  set efm=%DEntering\ directory\ %f,%f:%l:%m
+  cgetexpr ['Entering directory ' . repeat('a', 1006),
+	      \ 'File1:10:Hello World']
+  set efm&vim
+endfunc
+

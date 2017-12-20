@@ -5173,6 +5173,8 @@ bool garbage_collect(bool testing)
     ABORTING(set_ref_list)(sub.additional_elements, copyID);
   }
 
+  ABORTING(set_ref_in_quickfix)(copyID);
+
   bool did_free = false;
   if (!abort) {
     // 2. Free lists and dictionaries that are not referenced.
