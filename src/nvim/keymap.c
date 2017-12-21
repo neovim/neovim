@@ -24,23 +24,22 @@
  * Some useful tables.
  */
 
-static struct modmasktable {
-  short mod_mask;               /* Bit-mask for particular key modifier */
-  short mod_flag;               /* Bit(s) for particular key modifier */
-  char_u name;                  /* Single letter name of modifier */
-} mod_mask_table[] =
-{
-  {MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'M'},
-  {MOD_MASK_META,             MOD_MASK_META,          (char_u)'T'},
-  {MOD_MASK_CTRL,             MOD_MASK_CTRL,          (char_u)'C'},
-  {MOD_MASK_SHIFT,            MOD_MASK_SHIFT,         (char_u)'S'},
-  {MOD_MASK_MULTI_CLICK,      MOD_MASK_2CLICK,        (char_u)'2'},
-  {MOD_MASK_MULTI_CLICK,      MOD_MASK_3CLICK,        (char_u)'3'},
-  {MOD_MASK_MULTI_CLICK,      MOD_MASK_4CLICK,        (char_u)'4'},
-  {MOD_MASK_CMD,              MOD_MASK_CMD,           (char_u)'D'},
+static const struct modmasktable {
+  uint16_t mod_mask;  ///< Bit-mask for particular key modifier.
+  uint16_t mod_flag;  ///< Bit(s) for particular key modifier.
+  char_u name;  ///< Single letter name of modifier.
+} mod_mask_table[] = {
+  { MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'M' },
+  { MOD_MASK_META,             MOD_MASK_META,          (char_u)'T' },
+  { MOD_MASK_CTRL,             MOD_MASK_CTRL,          (char_u)'C' },
+  { MOD_MASK_SHIFT,            MOD_MASK_SHIFT,         (char_u)'S' },
+  { MOD_MASK_MULTI_CLICK,      MOD_MASK_2CLICK,        (char_u)'2' },
+  { MOD_MASK_MULTI_CLICK,      MOD_MASK_3CLICK,        (char_u)'3' },
+  { MOD_MASK_MULTI_CLICK,      MOD_MASK_4CLICK,        (char_u)'4' },
+  { MOD_MASK_CMD,              MOD_MASK_CMD,           (char_u)'D' },
   // 'A' must be the last one
-  {MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'A'},
-  {0, 0, NUL}
+  { MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'A' },
+  { 0, 0, NUL }
 };
 
 /*
@@ -139,11 +138,10 @@ static char_u modifier_keys_table[] =
   NUL
 };
 
-static struct key_name_entry {
+static const struct key_name_entry {
   int key;              // Special key code or ascii value
-  char *name;           // Name of key
-} key_names_table[] =
-{
+  const char *name;           // Name of key
+} key_names_table[] = {
   { ' ',               "Space" },
   { TAB,               "Tab" },
   { K_TAB,             "Tab" },
@@ -318,73 +316,73 @@ static struct mousetable {
   {0,                         0,              0,      0},
 };
 
-/*
- * Return the modifier mask bit (MOD_MASK_*) which corresponds to the given
- * modifier name ('S' for Shift, 'C' for Ctrl etc).
- */
+/// Return the modifier mask bit (#MOD_MASK_*) corresponding to mod name
+///
+/// E.g. 'S' for shift, 'C' for ctrl.
 int name_to_mod_mask(int c)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  int i;
-
   c = TOUPPER_ASC(c);
-  for (i = 0; mod_mask_table[i].mod_mask != 0; i++)
-    if (c == mod_mask_table[i].name)
+  for (size_t i = 0; mod_mask_table[i].mod_mask != 0; i++) {
+    if (c == mod_mask_table[i].name) {
       return mod_mask_table[i].mod_flag;
+    }
+  }
   return 0;
 }
 
-/*
- * Check if if there is a special key code for "key" that includes the
- * modifiers specified.
- */
-int simplify_key(int key, int *modifiers)
+/// Check if there is a special key code for "key" with specified modifiers
+///
+/// @param[in]  key  Initial key code.
+/// @param[in,out]  modifiers  Initial modifiers, is adjusted to have simplified
+///                            modifiers.
+///
+/// @return Simplified key code.
+int simplify_key(const int key, int *modifiers)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  int i;
-  int key0;
-  int key1;
-
   if (*modifiers & (MOD_MASK_SHIFT | MOD_MASK_CTRL | MOD_MASK_ALT)) {
-    /* TAB is a special case */
+    // TAB is a special case.
     if (key == TAB && (*modifiers & MOD_MASK_SHIFT)) {
       *modifiers &= ~MOD_MASK_SHIFT;
       return K_S_TAB;
     }
-    key0 = KEY2TERMCAP0(key);
-    key1 = KEY2TERMCAP1(key);
-    for (i = 0; modifier_keys_table[i] != NUL; i += MOD_KEYS_ENTRY_SIZE)
+    const int key0 = KEY2TERMCAP0(key);
+    const int key1 = KEY2TERMCAP1(key);
+    for (int i = 0; modifier_keys_table[i] != NUL; i += MOD_KEYS_ENTRY_SIZE) {
       if (key0 == modifier_keys_table[i + 3]
           && key1 == modifier_keys_table[i + 4]
           && (*modifiers & modifier_keys_table[i])) {
         *modifiers &= ~modifier_keys_table[i];
         return TERMCAP2KEY(modifier_keys_table[i + 1],
-            modifier_keys_table[i + 2]);
+                           modifier_keys_table[i + 2]);
       }
+    }
   }
   return key;
 }
 
-/*
- * Change <xHome> to <Home>, <xUp> to <Up>, etc.
- */
-int handle_x_keys(int key)
+/// Change <xKey> to <Key>
+int handle_x_keys(const int key)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   switch (key) {
-  case K_XUP:     return K_UP;
-  case K_XDOWN:   return K_DOWN;
-  case K_XLEFT:   return K_LEFT;
-  case K_XRIGHT:  return K_RIGHT;
-  case K_XHOME:   return K_HOME;
-  case K_ZHOME:   return K_HOME;
-  case K_XEND:    return K_END;
-  case K_ZEND:    return K_END;
-  case K_XF1:     return K_F1;
-  case K_XF2:     return K_F2;
-  case K_XF3:     return K_F3;
-  case K_XF4:     return K_F4;
-  case K_S_XF1:   return K_S_F1;
-  case K_S_XF2:   return K_S_F2;
-  case K_S_XF3:   return K_S_F3;
-  case K_S_XF4:   return K_S_F4;
+    case K_XUP:     return K_UP;
+    case K_XDOWN:   return K_DOWN;
+    case K_XLEFT:   return K_LEFT;
+    case K_XRIGHT:  return K_RIGHT;
+    case K_XHOME:   return K_HOME;
+    case K_ZHOME:   return K_HOME;
+    case K_XEND:    return K_END;
+    case K_ZEND:    return K_END;
+    case K_XF1:     return K_F1;
+    case K_XF2:     return K_F2;
+    case K_XF3:     return K_F3;
+    case K_XF4:     return K_F4;
+    case K_S_XF1:   return K_S_F1;
+    case K_S_XF2:   return K_S_F2;
+    case K_S_XF3:   return K_S_F3;
+    case K_S_XF4:   return K_S_F4;
   }
   return key;
 }
@@ -508,7 +506,7 @@ unsigned int trans_special(const char_u **srcp, const size_t src_len,
     return 0;
   }
 
-  /* Put the appropriate modifier in a string */
+  // Put the appropriate modifier in a string.
   if (modifiers != 0) {
     dst[dlen++] = K_SPECIAL;
     dst[dlen++] = KS_MODIFIER;
@@ -569,15 +567,11 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
 
   // Find end of modifier list
   last_dash = src;
-  for (bp = src + 1; bp <= end && (*bp == '-' || vim_isIDc(*bp)); bp++) {
+  for (bp = src + 1; bp <= end && (*bp == '-' || ascii_isident(*bp)); bp++) {
     if (*bp == '-') {
       last_dash = bp;
       if (bp + 1 <= end) {
-        if (has_mbyte) {
-          l = mb_ptr2len_len(bp + 1, (int) (end - bp) + 1);
-        } else {
-          l = 1;
-        }
+        l = utfc_ptr2len_len(bp + 1, (int)(end - bp) + 1);
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
@@ -702,33 +696,39 @@ int find_special_key_in_table(int c)
 {
   int i;
 
-  for (i = 0; key_names_table[i].name != NULL; i++)
-    if (c == key_names_table[i].key)
+  for (i = 0; key_names_table[i].name != NULL; i++) {
+    if (c == key_names_table[i].key) {
       break;
-  if (key_names_table[i].name == NULL)
+    }
+  }
+  if (key_names_table[i].name == NULL) {
     i = -1;
+  }
   return i;
 }
 
-/*
- * Find the special key with the given name (the given string does not have to
- * end with NUL, the name is assumed to end before the first non-idchar).
- * If the name starts with "t_" the next two characters are interpreted as a
- * termcap name.
- * Return the key code, or 0 if not found.
- */
+/// Find the special key with the given name
+///
+/// @param[in]  name  Name of the special. Does not have to end with NUL, it is
+///                   assumed to end before the first non-idchar. If name starts
+///                   with "t_" the next two characters are interpreted as
+///                   a termcap name.
+///
+/// @return Key code or 0 if not found.
 int get_special_key_code(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char *table_name;
-  int i, j;
-
-  for (i = 0; key_names_table[i].name != NULL; i++) {
-    table_name = key_names_table[i].name;
-    for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++)
-      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j]))
+  for (int i = 0; key_names_table[i].name != NULL; i++) {
+    const char *const table_name = key_names_table[i].name;
+    int j;
+    for (j = 0; ascii_isident(name[j]) && table_name[j] != NUL; j++) {
+      if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j])) {
         break;
-    if (!vim_isIDc(name[j]) && table_name[j] == NUL)
+      }
+    }
+    if (!ascii_isident(name[j]) && table_name[j] == NUL) {
       return key_names_table[i].key;
+    }
   }
 
   return 0;

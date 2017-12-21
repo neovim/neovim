@@ -96,6 +96,7 @@ typedef struct {
   bool immediate_wrap_after_last_column;
   bool mouse_enabled;
   bool busy, is_invisible;
+  bool cork, overflow;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs print_attrs;
   bool default_attr;
@@ -150,6 +151,7 @@ UI *tui_start(void)
   ui->suspend = tui_suspend;
   ui->set_title = tui_set_title;
   ui->set_icon = tui_set_icon;
+  ui->option_set= tui_option_set;
   ui->event = tui_event;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
@@ -167,24 +169,6 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
   return unibi_run(str, data->params, buf, len);
 }
 
-/// Emits some termcodes after Nvim startup, which were observed to slowdown
-/// rendering during startup in tmux 2.3 (+focus-events). #7649
-static void terminfo_after_startup_event(void **argv)
-{
-  UI *ui = argv[0];
-  bool defer = argv[1] != NULL;  // clever(?) boolean without malloc() dance.
-  TUIData *data = ui->data;
-  if (defer) {  // We're on the main-loop. Now forward to the TUI loop.
-    loop_schedule(data->loop,
-                  event_create(terminfo_after_startup_event, 2, ui, NULL));
-    return;
-  }
-  // Enable bracketed paste
-  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
-  // Enable focus reporting
-  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
-}
-
 static void termname_set_event(void **argv)
 {
   char *termname = argv[0];
@@ -200,6 +184,8 @@ static void terminfo_start(UI *ui)
   data->default_attr = false;
   data->is_invisible = true;
   data->busy = false;
+  data->cork = false;
+  data->overflow = false;
   data->showing_mode = SHAPE_IDX_N;
   data->unibi_ext.enable_mouse = -1;
   data->unibi_ext.disable_mouse = -1;
@@ -262,6 +248,9 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_enter_ca_mode);
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
+  // Enable bracketed paste
+  unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
+
   uv_loop_init(&data->write_loop);
   if (data->out_isatty) {
     uv_tty_init(&data->write_loop, &data->output_handle.tty, data->out_fd, 0);
@@ -274,9 +263,6 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
-
-  loop_schedule(&main_loop,
-                event_create(terminfo_after_startup_event, 2, ui, ui));
 }
 
 static void terminfo_stop(UI *ui)
@@ -294,7 +280,7 @@ static void terminfo_stop(UI *ui)
   unibi_out_ext(ui, data->unibi_ext.disable_bracketed_paste);
   // Disable focus reporting
   unibi_out_ext(ui, data->unibi_ext.disable_focus_reporting);
-  flush_buf(ui, true);
+  flush_buf(ui);
   uv_tty_reset_mode();
   uv_close((uv_handle_t *)&data->output_handle, NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
@@ -313,6 +299,16 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
+}
+
+static void tui_terminal_after_startup(UI *ui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  TUIData *data = ui->data;
+
+  // Emit this after Nvim startup, not during.  This works around a tmux
+  // 2.3 bug(?) which caused slow drawing during startup.  #7649
+  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -354,10 +350,23 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   tui_terminal_start(ui);
   data->stop = false;
 
-  // allow the main thread to continue, we are ready to start handling UI
-  // callbacks
+  // Allow main thread to continue, we are ready to handle UI callbacks.
   CONTINUE(bridge);
 
+  loop_schedule_deferred(&main_loop,
+                         event_create(show_termcap_event, 1, data->ut));
+
+  // "Active" loop: first ~100 ms of startup.
+  for (size_t ms = 0; ms < 100 && !data->stop;) {
+    ms += (loop_poll_events(&tui_loop, 20) ? 20 : 1);
+  }
+  if (!data->stop) {
+    tui_terminal_after_startup(ui);
+    // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
+    // terminal response may not get processed until user hits a key.
+    loop_schedule_deferred(&main_loop, event_create(tui_dummy_event, 0));
+  }
+  // "Passive" (I/O-driven) loop: TUI thread "main loop".
   while (!data->stop) {
     loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
   }
@@ -371,6 +380,10 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   kv_destroy(data->invalid_regions);
   xfree(data);
   xfree(ui);
+}
+
+static void tui_dummy_event(void **argv)
+{
 }
 
 static void tui_scheduler(Event event, void *d)
@@ -1058,7 +1071,25 @@ static void tui_flush(UI *ui)
 
   cursor_goto(ui, saved_row, saved_col);
 
-  flush_buf(ui, true);
+  flush_buf(ui);
+}
+
+/// Dumps termcap info to the messages area, if 'verbose' >= 3.
+static void show_termcap_event(void **argv)
+{
+  if (p_verbose < 3) {
+    return;
+  }
+  const unibi_term *const ut = argv[0];
+  if (!ut) {
+    abort();
+  }
+  verbose_enter();
+  // XXX: (future) if unibi_term is modified (e.g. after a terminal
+  // query-response) this is a race condition.
+  terminfo_info_msg(ut);
+  verbose_leave();
+  verbose_stop();  // flush now
 }
 
 #ifdef UNIX
@@ -1076,6 +1107,7 @@ static void suspend_event(void **argv)
     loop_poll_events(data->loop, -1);
   }
   tui_terminal_start(ui);
+  tui_terminal_after_startup(ui);
   if (enable_mouse) {
     tui_mouse_on(ui);
   }
@@ -1111,6 +1143,14 @@ static void tui_set_title(UI *ui, String title)
 
 static void tui_set_icon(UI *ui, String icon)
 {
+}
+
+static void tui_option_set(UI *ui, String name, Object value)
+{
+  if (strequal(name.data, "termguicolors")) {
+    // NB: value for bridge is set in ui_bridge.c
+    ui->rgb = value.data.boolean;
+  }
 }
 
 // NB: if we start to use this, the ui_bridge must be updated
@@ -1219,8 +1259,18 @@ static void unibi_goto(UI *ui, int row, int col)
     } \
     if (str) { \
       unibi_var_t vars[26 + 26]; \
+      size_t orig_pos = data->bufpos; \
+      \
       memset(&vars, 0, sizeof(vars)); \
+      data->cork = true; \
+retry: \
       unibi_format(vars, vars + 26, str, data->params, out, ui, NULL, NULL); \
+      if (data->overflow) { \
+        data->bufpos = orig_pos; \
+        flush_buf(ui); \
+        goto retry; \
+      } \
+      data->cork = false; \
     } \
   } while (0)
 static void unibi_out(UI *ui, int unibi_index)
@@ -1239,8 +1289,17 @@ static void out(void *ctx, const char *str, size_t len)
   TUIData *data = ui->data;
   size_t available = sizeof(data->buf) - data->bufpos;
 
+  if (data->cork && data->overflow) {
+    return;
+  }
+
   if (len > available) {
-    flush_buf(ui, false);
+    if (data->cork) {
+      data->overflow = true;
+      return;
+    } else {
+      flush_buf(ui);
+    }
   }
 
   memcpy(data->buf + data->bufpos, str, len);
@@ -1460,19 +1519,18 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     }
   }
 
-  // Some terminals cannot be trusted to report DECSCUSR support. So we keep
-  // blacklist for when we should not trust the reported features.
-  if (!((vte_version != 0 && vte_version < 3900) || konsole)) {
-    // Dickey ncurses terminfo has included the Ss and Se capabilities,
-    // pioneered by tmux, since 2011-07-14. So adding them to terminal types,
-    // that do actually have such control sequences but lack the correct
-    // definitions in terminfo, is a fixup, not an augmentation.
+  // Blacklist of terminals that cannot be trusted to report DECSCUSR support.
+  if (!(st || (vte_version != 0 && vte_version < 3900) || konsole)) {
     data->unibi_ext.reset_cursor_style = unibi_find_ext_str(ut, "Se");
     data->unibi_ext.set_cursor_style = unibi_find_ext_str(ut, "Ss");
   }
+
+  // Dickey ncurses terminfo includes Ss/Se capabilities since 2011-07-14. So
+  // adding them to terminal types, that have such control sequences but lack
+  // the correct terminfo entries, is a fixup, not an augmentation.
   if (-1 == data->unibi_ext.set_cursor_style) {
-    // The DECSCUSR sequence to change the cursor shape is widely supported by
-    // several terminal types.  https://github.com/gnachman/iTerm2/pull/92
+    // DECSCUSR (cursor shape) sequence is widely supported by several terminal
+    // types.  https://github.com/gnachman/iTerm2/pull/92
     // xterm extension: vertical bar
     if (!konsole && ((xterm && !vte_version)  // anything claiming xterm compat
         // per MinTTY 0.4.3-1 release notes from 2009
@@ -1482,12 +1540,13 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
         || tmux       // per tmux manual page
         // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
         || screen
+        || st         // #7641
         || rxvt       // per command.C
         // per analysis of VT100Terminal.m
         || iterm || iterm_pretending_xterm
         || teraterm    // per TeraTerm "Supported Control Functions" doco
         // Some linux-type terminals (such as console-terminal-emulator
-        // from the nosh toolset) implement implement the xterm extension.
+        // from the nosh toolset) implement the xterm extension.
         || (linuxvt && (xterm_version || (vte_version > 0) || colorterm)))) {
       data->unibi_ext.set_cursor_style =
         (int)unibi_add_ext_str(ut, "Ss", "\x1b[%p1%d q");
@@ -1577,11 +1636,13 @@ static void augment_terminfo(TUIData *data, const char *term,
       || konsole     // per commentary in VT102Emulation.cpp
       || teraterm    // per TeraTerm "Supported Control Functions" doco
       || rxvt) {     // per command.C
-    data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.resize_screen = (int)unibi_add_ext_str(ut,
+      "ext.resize_screen",
       "\x1b[8;%p1%d;%p2%dt");
   }
   if (putty || xterm || rxvt) {
-    data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut, NULL,
+    data->unibi_ext.reset_scroll_region = (int)unibi_add_ext_str(ut,
+      "ext.reset_scroll_region",
       "\x1b[r");
   }
 
@@ -1639,25 +1700,33 @@ static void augment_terminfo(TUIData *data, const char *term,
 
   /// Terminals usually ignore unrecognized private modes, and there is no
   /// known ambiguity with these. So we just set them unconditionally.
-  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_lr_margin = (int)unibi_add_ext_str(ut,
+      "ext.enable_lr_margin",
       "\x1b[?69h");
-  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_lr_margin = (int)unibi_add_ext_str(ut,
+      "ext.disable_lr_margin",
       "\x1b[?69l");
-  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_bracketed_paste = (int)unibi_add_ext_str(ut,
+      "ext.enable_bpaste",
       "\x1b[?2004h");
-  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_bracketed_paste = (int)unibi_add_ext_str(ut,
+      "ext.disable_bpaste",
       "\x1b[?2004l");
-  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_focus_reporting = (int)unibi_add_ext_str(ut,
+      "ext.enable_focus",
       rxvt ? "\x1b]777;focus;on\x7" : "\x1b[?1004h");
-  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_focus_reporting = (int)unibi_add_ext_str(ut,
+      "ext.disable_focus",
       rxvt ? "\x1b]777;focus;off\x7" : "\x1b[?1004l");
-  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.enable_mouse = (int)unibi_add_ext_str(ut,
+      "ext.enable_mouse",
       "\x1b[?1002h\x1b[?1006h");
-  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut, NULL,
+  data->unibi_ext.disable_mouse = (int)unibi_add_ext_str(ut,
+      "ext.disable_mouse",
       "\x1b[?1002l\x1b[?1006l");
 }
 
-static void flush_buf(UI *ui, bool toggle_cursor)
+static void flush_buf(UI *ui)
 {
   uv_write_t req;
   uv_buf_t bufs[3];
@@ -1668,7 +1737,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
     return;
   }
 
-  if (toggle_cursor && !data->is_invisible) {
+  if (!data->is_invisible) {
     // cursor is visible. Write a "cursor invisible" command before writing the
     // buffer.
     bufp->base = data->invis;
@@ -1683,7 +1752,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
     bufp++;
   }
 
-  if (toggle_cursor && !data->busy && data->is_invisible) {
+  if (!data->busy && data->is_invisible) {
     // not busy and the cursor is invisible. Write a "cursor normal" command
     // after writing the buffer.
     bufp->base = data->norm;
@@ -1696,6 +1765,7 @@ static void flush_buf(UI *ui, bool toggle_cursor)
            bufs, (unsigned)(bufp - bufs), NULL);
   uv_run(&data->write_loop, UV_RUN_DEFAULT);
   data->bufpos = 0;
+  data->overflow = false;
 }
 
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18

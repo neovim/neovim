@@ -30,19 +30,22 @@ void loop_init(Loop *loop, void *data)
   uv_signal_init(&loop->uv, &loop->children_watcher);
   uv_timer_init(&loop->uv, &loop->children_kill_timer);
   uv_timer_init(&loop->uv, &loop->poll_timer);
+  loop->poll_timer.data = xmalloc(sizeof(bool));  // "timeout expired" flag
 }
 
-void loop_poll_events(Loop *loop, int ms)
+/// @returns true if `ms` timeout was reached
+bool loop_poll_events(Loop *loop, int ms)
 {
   if (loop->recursive++) {
     abort();  // Should not re-enter uv_run
   }
 
   uv_run_mode mode = UV_RUN_ONCE;
+  bool timeout_expired = false;
 
   if (ms > 0) {
-    // Use a repeating timeout of ms milliseconds to make sure
-    // we do not block indefinitely for I/O.
+    *((bool *)loop->poll_timer.data) = false;  // reset "timeout expired" flag
+    // Dummy timer to ensure UV_RUN_ONCE does not block indefinitely for I/O.
     uv_timer_start(&loop->poll_timer, timer_cb, (uint64_t)ms, (uint64_t)ms);
   } else if (ms == 0) {
     // For ms == 0, do a non-blocking event poll.
@@ -52,11 +55,13 @@ void loop_poll_events(Loop *loop, int ms)
   uv_run(&loop->uv, mode);
 
   if (ms > 0) {
+    timeout_expired = *((bool *)loop->poll_timer.data);
     uv_timer_stop(&loop->poll_timer);
   }
 
   loop->recursive--;  // Can re-enter uv_run now
   multiqueue_process_events(loop->fast_events);
+  return timeout_expired;
 }
 
 /// Schedules an event from another thread.
@@ -111,7 +116,7 @@ bool loop_close(Loop *loop, bool wait)
   uv_mutex_destroy(&loop->mutex);
   uv_close((uv_handle_t *)&loop->children_watcher, NULL);
   uv_close((uv_handle_t *)&loop->children_kill_timer, NULL);
-  uv_close((uv_handle_t *)&loop->poll_timer, NULL);
+  uv_close((uv_handle_t *)&loop->poll_timer, timer_close_cb);
   uv_close((uv_handle_t *)&loop->async, NULL);
   uint64_t start = wait ? os_hrtime() : 0;
   while (true) {
@@ -163,5 +168,11 @@ static void async_cb(uv_async_t *handle)
 
 static void timer_cb(uv_timer_t *handle)
 {
+  bool *timeout_expired = handle->data;
+  *timeout_expired = true;
 }
 
+static void timer_close_cb(uv_handle_t *handle)
+{
+  xfree(handle->data);
+}

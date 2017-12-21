@@ -4,6 +4,7 @@
 #include "nvim/types.h"
 #include "nvim/pos.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/eval/typval.h"
 
 /// Return the folded-case equivalent of the given character
 ///
@@ -14,6 +15,21 @@
     utf_fold((sizeof(c) == sizeof(char)) \
              ?((int)(uint8_t)(c)) \
              :((int)(c)))
+
+/// Flags for vim_str2nr()
+typedef enum {
+  STR2NR_DEC = 0,
+  STR2NR_BIN = (1 << 0),  ///< Allow binary numbers.
+  STR2NR_OCT = (1 << 1),  ///< Allow octal numbers.
+  STR2NR_HEX = (1 << 2),  ///< Allow hexadecimal numbers.
+  /// Force one of the above variants.
+  ///
+  /// STR2NR_FORCE|STR2NR_DEC is actually not different from supplying zero
+  /// as flags, but still present for completeness.
+  STR2NR_FORCE = (1 << 3),
+  /// Recognize all formats vim_str2nr() can recognize.
+  STR2NR_ALL = STR2NR_BIN | STR2NR_OCT | STR2NR_HEX,
+} ChStr2NrFlags;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "charset.h.generated.h"

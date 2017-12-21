@@ -1,5 +1,6 @@
 local helpers = require('test.unit.helpers')(nil)
 
+local ptr2key = helpers.ptr2key
 local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local ffi = helpers.ffi
@@ -89,10 +90,6 @@ local function populate_partial(pt, lua_pt, processed)
   pt.pt_argv = argv
   pt.pt_dict = dict
   return pt
-end
-
-local ptr2key = function(ptr)
-  return tostring(ptr)
 end
 
 local lst2tbl

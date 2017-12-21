@@ -7,7 +7,7 @@ let g:loaded_ruby_provider = 1
 let s:stderr = {}
 let s:job_opts = {'rpc': v:true}
 
-function! s:job_opts.on_stderr(chan_id, data, event)
+function! s:job_opts.on_stderr(chan_id, data, event) abort
   let stderr = get(s:stderr, a:chan_id, [''])
   let last = remove(stderr, -1)
   let a:data[0] = last.a:data[0]
@@ -23,7 +23,7 @@ function! provider#ruby#Detect() abort
   end
 endfunction
 
-function! provider#ruby#Prog()
+function! provider#ruby#Prog() abort
   return s:prog
 endfunction
 
@@ -50,7 +50,7 @@ function! provider#ruby#Require(host) abort
   throw remote#host#LoadErrorForHost(a:host.orig_name, '$NVIM_RUBY_LOG_FILE')
 endfunction
 
-function! provider#ruby#Call(method, args)
+function! provider#ruby#Call(method, args) abort
   if s:err != ''
     echoerr s:err
     return

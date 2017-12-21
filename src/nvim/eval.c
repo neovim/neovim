@@ -1102,10 +1102,11 @@ static void restore_vimvar(int idx, typval_T *save_tv)
   vimvars[idx].vv_tv = *save_tv;
   if (vimvars[idx].vv_type == VAR_UNKNOWN) {
     hi = hash_find(&vimvarht, vimvars[idx].vv_di.di_key);
-    if (HASHITEM_EMPTY(hi))
-      EMSG2(_(e_intern2), "restore_vimvar()");
-    else
+    if (HASHITEM_EMPTY(hi)) {
+      internal_error("restore_vimvar()");
+    } else {
       hash_remove(&vimvarht, hi);
+    }
   }
 }
 
@@ -1567,7 +1568,7 @@ ex_let_vars (
       }
       break;
     } else if (*arg != ',' && *arg != ']') {
-      EMSG2(_(e_intern2), "ex_let_vars()");
+      internal_error("ex_let_vars()");
       return FAIL;
     }
   }
@@ -2960,7 +2961,7 @@ int do_unlet(const char *const name, const size_t name_len, const int forceit)
       d = di->di_tv.vval.v_dict;
     }
     if (d == NULL) {
-      EMSG2(_(e_intern2), "do_unlet()");
+      internal_error("do_unlet()");
       return FAIL;
     }
     hashitem_T *hi = hash_find(ht, (const char_u *)varname);
@@ -5171,6 +5172,8 @@ bool garbage_collect(bool testing)
     sub_get_replacement(&sub);
     ABORTING(set_ref_list)(sub.additional_elements, copyID);
   }
+
+  ABORTING(set_ref_in_quickfix)(copyID);
 
   bool did_free = false;
   if (!abort) {
@@ -7959,7 +7962,7 @@ static void f_empty(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     n = argvars[0].vval.v_special != kSpecialVarTrue;
     break;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "f_empty(UNKNOWN)");
+    internal_error("f_empty(UNKNOWN)");
     break;
   }
 
@@ -8457,11 +8460,13 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
   int idx = 0;
 
   if (argvars[0].v_type == VAR_LIST) {
+    tv_copy(&argvars[0], rettv);
     if ((l = argvars[0].vval.v_list) == NULL
         || (!map && tv_check_lock(l->lv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;
     }
   } else if (argvars[0].v_type == VAR_DICT) {
+    tv_copy(&argvars[0], rettv);
     if ((d = argvars[0].vval.v_dict) == NULL
         || (!map && tv_check_lock(d->dv_lock, arg_errmsg, TV_TRANSLATE))) {
       return;
@@ -8542,8 +8547,6 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
 
     did_emsg |= save_did_emsg;
   }
-
-  tv_copy(&argvars[0], rettv);
 }
 
 static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
@@ -14593,7 +14596,8 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
     return;
   }
   const char *const act = tv_get_string_chk(action_arg);
-  if ((*act == 'a' || *act == 'r' || *act == ' ') && act[1] == NUL) {
+  if ((*act == 'a' || *act == 'r' || *act == ' ' || *act == 'f')
+      && act[1] == NUL) {
     action = *act;
   } else {
     EMSG2(_(e_invact), act);
@@ -17151,7 +17155,7 @@ static void f_type(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       break;
     }
     case VAR_UNKNOWN: {
-      EMSG2(_(e_intern2), "f_type(UNKNOWN)");
+      internal_error("f_type(UNKNOWN)");
       break;
     }
   }
@@ -19030,7 +19034,7 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
         }
         return;
       } else if (v->di_tv.v_type != tv->v_type) {
-        EMSG2(_(e_intern2), "set_var()");
+        internal_error("set_var()");
       }
     }
 
@@ -19297,7 +19301,7 @@ int var_item_copy(const vimconv_T *const conv,
     }
     break;
   case VAR_UNKNOWN:
-    EMSG2(_(e_intern2), "var_item_copy(UNKNOWN)");
+    internal_error("var_item_copy(UNKNOWN)");
     ret = FAIL;
   }
   --recurse;
@@ -20985,11 +20989,11 @@ void func_unref(char_u *name)
   if (fp == NULL && isdigit(*name)) {
 #ifdef EXITFREE
     if (!entered_free_all_mem) {
-      EMSG2(_(e_intern2), "func_unref()");
+      internal_error("func_unref()");
       abort();
     }
 #else
-      EMSG2(_(e_intern2), "func_unref()");
+      internal_error("func_unref()");
       abort();
 #endif
   }
@@ -21028,7 +21032,7 @@ void func_ref(char_u *name)
   } else if (isdigit(*name)) {
     // Only give an error for a numbered function.
     // Fail silently, when named or lambda function isn't found.
-    EMSG2(_(e_intern2), "func_ref()");
+    internal_error("func_ref()");
   }
 }
 

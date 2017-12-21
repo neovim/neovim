@@ -60,8 +60,7 @@ External programs ("clients") can use the metadata to discover the |rpc-api|.
 API contract                                                     *api-contract*
 
 The API is made of functions and events. Clients call functions like those
-described at |api-global|, and may "attach" in order to receive rich events,
-described at |rpc-remote-ui|.
+described at |api-global|, and may "attach" to receive rich |ui-events|.
 
 As Nvim develops, its API may change only according the following "contract":
 
@@ -446,7 +445,11 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
                     Array of maparg()-like dictionaries describing mappings
 
 nvim_get_api_info()                                      *nvim_get_api_info()*
-                TODO: Documentation
+                Returns a 2-tuple (Array), where item 0 is the current channel
+                id and item 1 is the |api-metadata| map (Dictionary).
+
+                Return:~
+                    2-tuple [{channel-id}, {api-metadata}]
 
                 Attributes:~
                     {async}
@@ -476,6 +479,84 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                     in an error, the error type and the error message. If an
                     error ocurred, the values from all preceding calls will
                     still be returned.
+
+                                                     *nvim_parse_expression()*
+nvim_parse_expression({expr}, {flags}, {highlight})
+                Parse a VimL expression
+
+                Attributes:~
+                    {async}
+
+                Parameters:~
+                    {expr}       Expression to parse. Is always treated as a
+                                 single line.
+                    {flags}      Flags:  - "m" if multiple expressions in a
+                                 row are allowed (only the first one will be
+                                 parsed), - "E" if EOC tokens are not allowed
+                                 (determines whether they will stop parsing
+                                 process or be recognized as an
+                                 operator/space, though also yielding an
+                                 error). - "l" when needing to start parsing
+                                 with lvalues for ":let" or ":for". Common
+                                 flag sets: - "m" to parse like for ":echo". -
+                                 "E" to parse like for "<C-r>=". - empty
+                                 string for ":call". - "lm" to parse for
+                                 ":let".
+                    {highlight}  If true, return value will also include
+                                 "highlight" key containing array of 4-tuples
+                                 (arrays) (Integer, Integer, Integer, String),
+                                 where first three numbers define the
+                                 highlighted region and represent line,
+                                 starting column and ending column (latter
+                                 exclusive: one should highlight region
+                                 [start_col, end_col)).
+
+                Return:~
+                    AST: top-level dictionary holds keys "error": Dictionary
+                    with error, present only if parser saw some error.
+                    Contains the following keys: "message": String, error
+                    message in printf format, translated. Must contain exactly
+                    one "%.*s". "arg": String, error message argument. "len":
+                    Amount of bytes successfully parsed. With flags equal to
+                    "" that should be equal to the length of expr string.
+                    @note: “Sucessfully parsed” here means “participated in
+                    AST creation”, not “till the first error”. "ast": AST,
+                    either nil or a dictionary with these keys: "type": node
+                    type, one of the value names from ExprASTNodeType
+                    stringified without "kExprNode" prefix. "start": a pair
+                    [line, column] describing where node is “started” where
+                    "line" is always 0 (will not be 0 if you will be using
+                    nvim_parse_viml() on e.g. ":let", but that is not present
+                    yet). Both elements are Integers. "len": “length” of the
+                    node. This and "start" are there for debugging purposes
+                    primary (debugging parser and providing debug
+                    information). "children": a list of nodes described in
+                    top/"ast". There always is zero, one or two children, key
+                    will not be present if node has no children. Maximum
+                    number of children may be found in node_maxchildren array.
+                    Local values (present only for certain nodes): "scope": a
+                    single Integer, specifies scope for "Option" and
+                    "PlainIdentifier" nodes. For "Option" it is one of
+                    ExprOptScope values, for "PlainIdentifier" it is one of
+                    ExprVarScope values. "ident": identifier (without scope,
+                    if any), present for "Option", "PlainIdentifier",
+                    "PlainKey" and "Environment" nodes. "name": Integer,
+                    register name (one character) or -1. Only present for
+                    "Register" nodes. "cmp_type": String, comparison type, one
+                    of the value names from ExprComparisonType, stringified
+                    without "kExprCmp" prefix. Only present for "Comparison"
+                    nodes. "ccs_strategy": String, case comparison strategy,
+                    one of the value names from ExprCaseCompareStrategy,
+                    stringified without "kCCStrategy" prefix. Only present for
+                    "Comparison" nodes. "augmentation": String, augmentation
+                    type for "Assignment" nodes. Is either an empty string,
+                    "Add", "Subtract" or "Concat" for "=", "+=", "-=" or ".="
+                    respectively. "invert": Boolean, true if result of
+                    comparison needs to be inverted. Only present for
+                    "Comparison" nodes. "ivalue": Integer, integer value for
+                    "Integer" nodes. "fvalue": Float, floating-point value for
+                    "Float" nodes. "svalue": String, value for
+                    "SingleQuotedString" and "DoubleQuotedString" nodes.
 
 nvim__id({obj})                                                   *nvim__id()*
                 Returns object given as argument
@@ -717,9 +798,10 @@ nvim_buf_add_highlight({buffer}, {src_id}, {hl_group}, {line},
                                  or -1 for ungrouped highlight
                     {hl_group}   Name of the highlight group to use
                     {line}       Line to highlight (zero-indexed)
-                    {col_start}  Start of range of columns to highlight
-                    {col_end}    End of range of columns to highlight, or -1
-                                 to highlight to end of line
+                    {col_start}  Start of (byte-indexed) column range to
+                                 highlight
+                    {col_end}    End of (byte-indexed) column range to
+                                 highlight, or -1 to highlight to end of line
 
                 Return:~
                     The src_id that was used
@@ -952,9 +1034,6 @@ nvim_tabpage_is_valid({tabpage})                     *nvim_tabpage_is_valid()*
 
 ==============================================================================
 UI Functions                                                          *api-ui*
-
-remote_ui_disconnect()                                *remote_ui_disconnect()*
-                TODO: Documentation
 
 nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
                 TODO: Documentation

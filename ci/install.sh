@@ -23,3 +23,8 @@ CC=cc pip3 -q install --user --upgrade neovim || true
 
 echo "Install neovim RubyGem."
 gem install --no-document --version ">= 0.2.0" neovim
+
+if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
+  echo "Install neovim npm package"
+  npm install -g neovim
+fi
