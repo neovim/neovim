@@ -4,7 +4,6 @@ local get_callback_function = require('runtime.lua.lsp.callbacks').get_callback_
 local ClientObject = require ('runtime.lua.lsp.client')
 
 local log = require('runtime.lua.log')
-local util = require('runtime.lua.builtin_util')
 local lsp_util = require('runtime.lua.lsp.util')
 
 local plugin = {
@@ -57,14 +56,16 @@ plugin.client.start = function(cmd, args, filetype)
   cmd = plugin.helpers.get_command(cmd, filetype)
   args = plugin.helpers.get_arguments(args, filetype)
 
+  local name = plugin.client.get_configuration(filetype).name
+
   -- TODO(tjdevries): Debug guard
   vim.api.nvim_set_var('__langserver_command', cmd)
 
   -- Start the client
   log.debug('[LSP.plugin] Starting client...')
-  local client = ClientObject.new('TEST', filetype, cmd)
+  local client = ClientObject.new(name, filetype, cmd, args)
   if client == nil then
-    log.error('client was nil with arguments' .. cmd .. ' ' .. util.tostring(args))
+    log.error('client was nil with arguments: ', cmd, ' ', args)
     return nil
   end
   client:initialize()

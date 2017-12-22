@@ -3,10 +3,6 @@ local util = {}
 
 vim = vim or {}
 
-util.echom = function(message)
-  vim.api.nvim_command('echom "' .. tostring(message) .. '"')
-end
-
 util.split = function(s, sep, nMax, bRegexp)
   assert(sep ~= '')
   assert(nMax == nil or nMax >= 1)
@@ -32,13 +28,12 @@ util.split = function(s, sep, nMax, bRegexp)
 
   return aRecord
 end
-
 util.tostring = function(obj)
   local stringified = ''
   if type(obj) == 'table' then
     stringified = stringified .. '{'
     for k, v in pairs(obj) do
-      stringified = stringified .. tostring(k) .. '=' .. tostring(v) .. ','
+      stringified = stringified .. util.tostring(k) .. '=' .. util.tostring(v) .. ','
     end
     stringified = stringified .. '}'
   else
@@ -47,13 +42,9 @@ util.tostring = function(obj)
 
   return stringified
 end
-
-
 util.trim = function(s)
   return s:gsub("^%s+", ""):gsub("%s+$", "")
 end
-
-
 util.handle_uri = function(uri)
   local file_prefix = 'file://'
   if string.sub(uri, 1, #file_prefix) == file_prefix then
@@ -72,7 +63,7 @@ end
 util.is_array = function(table)
   local count = 0
 
-  for k, v in pairs(table) do
+  for k, _ in pairs(table) do
     if type(k) == "number" then
       count = count + 1
     else

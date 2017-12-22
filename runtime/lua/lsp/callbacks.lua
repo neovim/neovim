@@ -115,23 +115,39 @@ cb.textDocument.hover = function(success, data)
   end
 
   if data.range ~= nil then
-    -- TODO(tjdevries): Highlight the range
-    print('todo: hover highlight')
+    -- Doesn't handle multi-line highlights
+    local _ = vim.api.nvim_buf_add_highlight(0,
+      -1,
+      'Error',
+      data.range.start.line,
+      data.range.start.character,
+      data.range['end'].character
+    )
   end
 
+  -- TODO: Use floating windows when they become available
   if data.contents ~= nil then
     if util.is_array(data.contents) == true then
       local long_string = ''
-      for _, value in ipairs(data.contents) do
-        long_string = long_string .. tostring(value)
+      for _, item in ipairs(data.contents) do
+        local value
+        if type(item) == 'table' then
+          value = item.value
+        else
+          value = item
+        end
+
+        long_string = long_string .. value .. "\n"
       end
 
-      vim.api.nvim_out_write(long_string)
+      log.debug('Hover: ', long_string)
+      vim.api.nvim_command('echon "' .. long_string .. '"')
+      -- vim.api.nvim_out_write(long_string)
     else
       vim.api.nvim_out_write(data.contents.value)
     end
 
-    vim.api.nvim_out_write("\n")
+    -- vim.api.nvim_out_write("\n")
   end
 
 end
