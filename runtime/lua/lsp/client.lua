@@ -1,4 +1,4 @@
-local json = require('runtime.lua.json')
+local json = require('lsp.json')
 local util = require('runtime.lua.builtin_util')
 
 local protocol = require('runtime.lua.lsp.protocol')

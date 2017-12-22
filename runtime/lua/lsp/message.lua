@@ -1,7 +1,7 @@
 -- TODO:
 --  Do the decoding from the message class?
 
-local json = require('runtime.lua.json')
+local json = require('lsp.json')
 local util = require('runtime.lua.builtin_util')
 
 local log = require('runtime.lua.lsp.lsp').log
