@@ -93,21 +93,24 @@ cb.textDocument.references = function(success, data)
   for _, loc in ipairs(locations) do
     -- TODO: URL parsing here?
     local path = util.handle_uri(loc["uri"])
-    local start = loc["range"]["start"]
-    local line = start["line"] + 1
-    local character = start["character"] + 1
+    local start = loc.range.start
+    local line = start.line + 1
+    local character = start.character + 1
+
+    local text = util.get_file_line(path, line)
 
     table.insert(loclist, {
         filename = path,
         lnum = line,
         col = character,
-        text = vim.api.nvim_call_function('getline', {line}),
+        text = text,
     })
   end
 
-  return vim.api.nvim_call_function('setloclist', {0, loclist})
+  local result = vim.api.nvim_call_function('setloclist', {0, loclist})
+  vim.api.nvim_command('lopen')
+  return result
 end
-
 cb.textDocument.hover = function(success, data)
   if not success then
     -- TODO(tjdevries): Error Handling
@@ -151,7 +154,6 @@ cb.textDocument.hover = function(success, data)
   end
 
 end
-
 cb.textDocument.definition = function(success, data)
   if not success then
     -- TODO(tjdevries): Error Handling

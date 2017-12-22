@@ -303,7 +303,6 @@ client.on_message = function(self, json_message)
         err = err,
       }
     else
-      log.trace('__langserver_result', json_message.result)
       local result = cb(true, json_message.result)
       log.trace('__langserver_cb_result', result)
 

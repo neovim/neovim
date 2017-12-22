@@ -77,5 +77,19 @@ util.is_array = function(table)
     return nil
   end
 end
+util.get_file_line = function(file_name, line_number)
+  local f = assert(io.open(file_name, 'r'))
 
+  local count = 1
+  for line in f:lines() do
+    if count == line_number then
+      f:close()
+      return line
+    end
+
+    count = count + 1
+  end
+
+  return ''
+end
 return util
