@@ -35,16 +35,20 @@ log.write_file = function(level, message)
   if file_pointer ~= nil then
     local log_message = message .. "\n"
     file_pointer:write(log_message)
+    file_pointer:close()
   end
 
-  file_pointer:close()
 end
 
 -- TODO: Check github.com/rxi/log.lua
 
 for name in pairs(levels) do
   log[name] = function(...)
-    local message = tostring(...)
+    local message = ''
+    for _, arg in ipairs({...}) do
+      message = message .. require('runtime.lua.builtin_util').tostring(arg)
+    end
+
     local info = debug.getinfo(2, "Sl")
     local log_message = string.format("[%-6s%s] %s:%-4s: %s %s",
       name,
@@ -58,7 +62,7 @@ for name in pairs(levels) do
 
     -- TODO: Error here instead?
     -- Only log messages with applicable levels
-    if levels[name] > levels[log.file_level] then
+    if levels[name] > levels[log.console_level] then
 
       if vim ~= nil and vim.api ~= nil then
         -- vim.api.nvim_command([[echom ']] .. log_message .. [[']])

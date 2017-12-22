@@ -42,11 +42,16 @@ client.job_stdout = function(id, data)
   active_jobs[id]:on_stdout(data)
 end
 client.new = function(name, ft, cmd, args)
-  log.trace('Starting new client: ' .. name)
+  log.debug('Starting new client: ', name)
 
   -- TODO: I'm a little concerned about the milliseconds after starting up the job.
   -- Not sure if we'll register ourselves faster than we will get stdin or out that we want...
   local job_id = vim.api.nvim_call_function('lsp#job#start', {cmd, args})
+
+  assert(job_id)
+  assert(job_id > 0)
+
+  log.trace('Client id: ', job_id)
 
   local self = setmetatable({
     job_id = job_id,
@@ -117,8 +122,8 @@ client.request = function(self, method, params, cb)
   while (os.time() > later) or (self._results[request_id] ~= nil) do end
 
   if self._results[request_id] == nil then
-    vim.api.nvim_set_var('__current_results', self._results)
-    vim.api.nvim_set_var('__expected_request', request_id)
+    log.trace('__current_results: ', self._results)
+    log.trace('__expected_request: ', request_id)
     return nil
   end
 
@@ -147,15 +152,12 @@ client.request_async = function(self, method, params, cb)
     self._callbacks[req.id] = cb
   end
 
-  log.debug('Sending request: ' .. util.tostring(req:data()))
+  log.debug('Sending request: ',  req:data())
   lsp_doautocmd(method, 'pre')
 
   vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
-  vim.api.nvim_set_var('__request_params', req:data())
-
 
   lsp_doautocmd(method, 'post')
-
   return req.id
 end
 --- Send a notification to the server
@@ -255,9 +257,9 @@ client.on_stdout = function(self, data)
       local body = self._read_data:sub(1, self._read_length)
       self._read_data = self._read_data:sub(self._read_length + 1)
 
-      log.debug('Decoding (string): ' .. body)
+      log.debug('Decoding (string): ', body)
       local ok, json_message = pcall(json.decode, body)
-      log.debug('Result   (table) : ' .. util.tostring(json_message))
+      log.debug('Result   (table) : ', util.tostring(json_message))
 
       if not ok then
         log.info('Not a valid message. Calling self:on_error')
@@ -273,8 +275,7 @@ client.on_stdout = function(self, data)
 end
 
 client.on_message = function(self, json_message)
-  log.trace('on_message: ' .. util.tostring(json_message))
-  vim.api.nvim_set_var('__on_message', json_message)
+  log.trace('on_message: ', json_message)
   if not json_message.method and json_message.id then
     local cb = self._callbacks[json_message.id]
 
@@ -302,9 +303,9 @@ client.on_message = function(self, json_message)
         err = err,
       }
     else
-      vim.api.nvim_set_var('__langserver_result', json_message.result)
+      log.trace('__langserver_result', json_message.result)
       local result = cb(true, json_message.result)
-      vim.api.nvim_set_var('__langserver_cb_result', result)
+      log.trace('__langserver_cb_result', result)
 
       self._results[json_message.id] = {
         complete = true,
@@ -316,7 +317,7 @@ end
 
 client.on_error = function(self, level, err_message)
   if type(level) ~= 'number' then
-    util.echom('we seem to have a not number' .. util.tostring(level))
+    print('we seem to have a not number', level)
     self:reset_state()
     return
   end
