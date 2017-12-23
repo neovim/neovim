@@ -70,7 +70,6 @@ typedef struct {
   UIBridgeData *bridge;
   Loop *loop;
   bool stop;
-  uv_timer_t after_startup_timer;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
   size_t bufpos;
@@ -291,18 +290,6 @@ static void terminfo_stop(UI *ui)
   unibi_destroy(data->ut);
 }
 
-static void after_startup_timer_cb(uv_timer_t *handle)
-  FUNC_ATTR_NONNULL_ALL
-{
-  UI *ui = handle->data;
-  TUIData *data = ui->data;
-  uv_timer_stop(&data->after_startup_timer);
-
-  // Emit this after Nvim startup, not during.  This works around a tmux
-  // 2.3 bug(?) which caused slow drawing during startup.  #7649
-  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
-}
-
 static void tui_terminal_start(UI *ui)
 {
   TUIData *data = ui->data;
@@ -312,8 +299,16 @@ static void tui_terminal_start(UI *ui)
   update_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
   term_input_start(&data->input);
+}
 
-  uv_timer_start(&data->after_startup_timer, after_startup_timer_cb, 500, 0);
+static void tui_terminal_after_startup(UI *ui)
+  FUNC_ATTR_NONNULL_ALL
+{
+  TUIData *data = ui->data;
+
+  // Emit this after Nvim startup, not during.  This works around a tmux
+  // 2.3 bug(?) which caused slow drawing during startup.  #7649
+  unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -347,8 +342,6 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 #ifdef UNIX
   signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
 #endif
-  uv_timer_init(&data->loop->uv, &data->after_startup_timer);
-  data->after_startup_timer.data = ui;
 
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
@@ -363,11 +356,21 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   loop_schedule_deferred(&main_loop,
                          event_create(show_termcap_event, 1, data->ut));
 
+  // "Active" loop: first ~100 ms of startup.
+  for (size_t ms = 0; ms < 100 && !data->stop;) {
+    ms += (loop_poll_events(&tui_loop, 20) ? 20 : 1);
+  }
+  if (!data->stop) {
+    tui_terminal_after_startup(ui);
+    // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
+    // terminal response may not get processed until user hits a key.
+    loop_schedule_deferred(&main_loop, event_create(tui_dummy_event, 0));
+  }
+  // "Passive" (I/O-driven) loop: TUI thread "main loop".
   while (!data->stop) {
     loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
   }
 
-  uv_close((uv_handle_t *)&data->after_startup_timer, NULL);
   ui_bridge_stopped(bridge);
   term_input_destroy(&data->input);
   signal_watcher_stop(&data->cont_handle);
@@ -377,6 +380,10 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   kv_destroy(data->invalid_regions);
   xfree(data);
   xfree(ui);
+}
+
+static void tui_dummy_event(void **argv)
+{
 }
 
 static void tui_scheduler(Event event, void *d)
@@ -1100,6 +1107,7 @@ static void suspend_event(void **argv)
     loop_poll_events(data->loop, -1);
   }
   tui_terminal_start(ui);
+  tui_terminal_after_startup(ui);
   if (enable_mouse) {
     tui_mouse_on(ui);
   }

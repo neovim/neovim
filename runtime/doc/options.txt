@@ -3809,6 +3809,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+					*'makeencoding'* *'menc'*
+'makeencoding' 'menc'	string	(default "")
+			global or local to buffer |global-local|
+			{only available when compiled with the |+multi_byte|
+			feature}
+			{not in Vi}
+	Encoding used for reading the output of external commands.  When empty,
+	encoding is not converted.
+	This is used for `:make`, `:lmake`, `:grep`, `:lgrep`, `:grepadd`,
+	`:lgrepadd`, `:cfile`, `:cgetfile`, `:caddfile`, `:lfile`, `:lgetfile`,
+	and `:laddfile`.
+
+	This would be mostly useful when you use MS-Windows.  If |+iconv| is
+	enabled and GNU libiconv is used, setting 'makeencoding' to "char" has
+	the same effect as setting to the system locale encoding.  Example: >
+		:set makeencoding=char	" system locale is used
+<
 						*'makeprg'* *'mp'*
 'makeprg' 'mp'		string	(default "make")
 			global or local to buffer |global-local|

@@ -65,6 +65,7 @@ NEW_TESTS ?= \
 	    test_increment_dbcs.res \
 	    test_lambda.res \
 	    test_langmap.res \
+	    test_makeencoding.res \
 	    test_marks.res \
 	    test_match.res \
 	    test_matchadd_conceal.res \

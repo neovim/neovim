@@ -92,8 +92,11 @@ get_vim_sources() {
 }
 
 commit_message() {
-  printf 'vim-patch:%s\n\n%s\n\n%s' "${vim_version}" \
-    "${vim_message}" "${vim_commit_url}"
+  if [[ -n "$vim_tag" ]]; then
+    printf '%s\n\n%s' "${vim_message}" "${vim_commit_url}"
+  else
+    printf 'vim-patch:%s\n\n%s\n\n%s' "$vim_version" "$vim_message" "$vim_commit_url"
+  fi
 }
 
 find_git_remote() {
@@ -108,22 +111,23 @@ assign_commit_details() {
     vim_tag="v${1}"
     vim_commit=$(cd "${VIM_SOURCE_DIR}" \
       && git log -1 --format="%H" "${vim_tag}")
-    local strip_commit_line=true
+    local munge_commit_line=true
   else
     # Interpret parameter as commit hash.
     vim_version="${1:0:12}"
+    vim_tag=
     vim_commit=$(cd "${VIM_SOURCE_DIR}" \
       && git log -1 --format="%H" "${vim_version}")
-    local strip_commit_line=false
+    local munge_commit_line=false
   fi
 
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
   vim_message="$(cd "${VIM_SOURCE_DIR}" \
     && git log -1 --pretty='format:%B' "${vim_commit}" \
       | sed -e 's/\(#[0-9]*\)/vim\/vim\1/g')"
-  if [[ ${strip_commit_line} == "true" ]]; then
+  if [[ ${munge_commit_line} == "true" ]]; then
     # Remove first line of commit message.
-    vim_message="$(echo "${vim_message}" | sed -e '1d')"
+    vim_message="$(echo "${vim_message}" | sed -e '1s/^patch /vim-patch:/')"
   fi
   patch_file="vim-${vim_version}.patch"
 }
@@ -286,9 +290,10 @@ submit_pr() {
   local git_remote
   git_remote="$(find_git_remote)"
   local pr_body
-  pr_body="$(git log --reverse --format='#### %s%n%n%b%n' "${git_remote}"/master..HEAD)"
+  pr_body="$(git log --grep=vim-patch --reverse --format='#### %s%n%n%b%n' "${git_remote}"/master..HEAD)"
   local patches
-  patches=("$(git log --reverse --format='%s' "${git_remote}"/master..HEAD)")
+  # Extract just the "vim-patch:X.Y.ZZZZ" or "vim-patch:sha" portion of each log
+  patches=("$(git log --grep=vim-patch --reverse --format='%s' "${git_remote}"/master..HEAD | sed 's/: .*//')")
   patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
   local pr_title="${patches[*]}" # Create space-separated string from array.
   pr_title="${pr_title// /,}" # Replace spaces with commas.

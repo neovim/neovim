@@ -614,7 +614,7 @@ local function new_pipename()
 end
 
 local function missing_provider(provider)
-  if provider == 'ruby' then
+  if provider == 'ruby' or provider == 'node' then
     local prog = funcs['provider#' .. provider .. '#Detect']()
     return prog == '' and (provider .. ' not detected') or false
   elseif provider == 'python' or provider == 'python3' then

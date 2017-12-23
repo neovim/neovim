@@ -2217,6 +2217,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_tsr);
   check_string_option(&buf->b_p_lw);
   check_string_option(&buf->b_p_bkc);
+  check_string_option(&buf->b_p_menc);
 }
 
 /*
@@ -2635,8 +2636,8 @@ did_set_string_option (
   else if (varp == &p_ei) {
     if (check_ei() == FAIL)
       errmsg = e_invarg;
-  /* 'encoding' and 'fileencoding' */
-  } else if (varp == &p_enc || gvarp == &p_fenc) {
+  // 'encoding', 'fileencoding' and 'makeencoding'
+  } else if (varp == &p_enc || gvarp == &p_fenc || gvarp == &p_menc) {
     if (gvarp == &p_fenc) {
       if (!MODIFIABLE(curbuf) && opt_flags != OPT_GLOBAL) {
         errmsg = e_modifiable;
@@ -5400,6 +5401,9 @@ void unset_global_local_option(char *name, void *from)
     case PV_LW:
       clear_string_option(&buf->b_p_lw);
       break;
+    case PV_MENC:
+      clear_string_option(&buf->b_p_menc);
+      break;
   }
 }
 
@@ -5433,6 +5437,7 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
     case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
     case PV_BKC:  return (char_u *)&(curbuf->b_p_bkc);
+    case PV_MENC: return (char_u *)&(curbuf->b_p_menc);
     }
     return NULL;     /* "cannot happen" */
   }
@@ -5488,6 +5493,8 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curbuf->b_p_ul) : p->var;
   case PV_LW:   return *curbuf->b_p_lw != NUL
            ? (char_u *)&(curbuf->b_p_lw) : p->var;
+  case PV_MENC: return *curbuf->b_p_menc != NUL
+           ? (char_u *)&(curbuf->b_p_menc) : p->var;
 
   case PV_ARAB:   return (char_u *)&(curwin->w_p_arab);
   case PV_LIST:   return (char_u *)&(curwin->w_p_list);
@@ -5885,6 +5892,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_qe = vim_strsave(p_qe);
       buf->b_p_udf = p_udf;
       buf->b_p_lw = empty_option;
+      buf->b_p_menc = empty_option;
 
       /*
        * Don't copy the options set by ex_help(), use the saved values,

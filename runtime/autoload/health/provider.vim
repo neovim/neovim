@@ -253,14 +253,18 @@ function! s:check_python(version) abort
 
   if !empty(pyenv)
     if empty(pyenv_root)
-      call health#report_warn(
-            \ 'pyenv was found, but $PYENV_ROOT is not set.',
-            \ ['Did you follow the final install instructions?',
-            \  'If you use a shell "framework" like Prezto or Oh My Zsh, try without.',
-            \  'Try a different shell (bash).']
+      call health#report_info(
+            \ 'pyenv was found, but $PYENV_ROOT is not set. `pyenv root` will be used.'
+            \ .' If you run into problems, try setting $PYENV_ROOT explicitly.'
             \ )
+      let pyenv_root = s:trim(s:system([pyenv, 'root']))
+    endif
+
+    if !isdirectory(pyenv_root)
+      call health#report_error('Invalid pyenv root: '.pyenv_root)
     else
-      call health#report_ok(printf('pyenv found: "%s"', pyenv))
+      call health#report_info(printf('pyenv: %s', pyenv))
+      call health#report_info(printf('pyenv root: %s', pyenv_root))
     endif
   endif
 
@@ -451,10 +455,11 @@ function! s:check_ruby() abort
 
   let host = provider#ruby#Detect()
   if empty(host)
-    call health#report_warn('Missing "neovim" gem.',
-          \ ['Run in shell: gem install neovim',
-          \  'Is the gem bin directory in $PATH? Check `gem environment`.',
-          \  'If you are using rvm/rbenv/chruby, try "rehashing".'])
+    call health#report_warn("`neovim-ruby-host` not found.",
+          \ ['Run `gem install neovim` to ensure the neovim RubyGem is installed.',
+          \  'Run `gem environment` to ensure the gem bin directory is in $PATH.',
+          \  'If you are using rvm/rbenv/chruby, try "rehashing".',
+          \  'See :help g:ruby_host_prog for non-standard gem installations.'])
     return
   endif
   call health#report_info('Host: '. host)
@@ -488,7 +493,7 @@ function! s:check_ruby() abort
 endfunction
 
 function! s:check_node() abort
-  call health#report_start('Node provider (optional)')
+  call health#report_start('Node.js provider (optional)')
 
   let loaded_var = 'g:loaded_node_provider'
   if exists(loaded_var) && !exists('*provider#node#Call')
@@ -502,7 +507,16 @@ function! s:check_node() abort
           \ ['Install Node.js and verify that `node` and `npm` commands work.'])
     return
   endif
-  call health#report_info('Node: '. s:system('node -v'))
+  let node_v = get(split(s:system('node -v'), "\n"), 0, '')
+  call health#report_info('Node.js: '. node_v)
+  if !s:shell_error && s:version_cmp(node_v[1:], '6.0.0') < 0
+    call health#report_warn('Neovim node.js host does not support '.node_v)
+    " Skip further checks, they are nonsense if nodejs is too old.
+    return
+  endif
+  if !provider#node#can_inspect()
+    call health#report_warn('node.js on this system does not support --inspect-brk so $NVIM_NODE_HOST_DEBUG is ignored.')
+  endif
 
   let host = provider#node#Detect()
   if empty(host)
@@ -511,7 +525,7 @@ function! s:check_node() abort
           \  'Is the npm bin directory in $PATH?'])
     return
   endif
-  call health#report_info('Host: '. host)
+  call health#report_info('Neovim node.js host: '. host)
 
   let latest_npm_cmd = has('win32') ? 'cmd /c npm info neovim --json' : 'npm info neovim --json'
   let latest_npm = s:system(split(latest_npm_cmd))
@@ -530,11 +544,11 @@ function! s:check_node() abort
     let latest_npm = get(get(pkg_data, 'dist-tags', {}), 'latest', 'unable to parse')
   endif
 
-  let current_npm_cmd = host .' --version'
+  let current_npm_cmd = ['node', host, '--version']
   let current_npm = s:system(current_npm_cmd)
   if s:shell_error
-    call health#report_error('Failed to run: '. current_npm_cmd,
-          \ ['Report this issue with the output of: ', current_npm_cmd])
+    call health#report_error('Failed to run: '. string(current_npm_cmd),
+          \ ['Report this issue with the output of: ', string(current_npm_cmd)])
     return
   endif
 
@@ -544,7 +558,7 @@ function! s:check_node() abort
           \ current_npm, latest_npm),
           \ ['Run in shell: npm update neovim'])
   else
-    call health#report_ok('Latest "neovim" npm is installed: '. current_npm)
+    call health#report_ok('Latest "neovim" npm package is installed: '. current_npm)
   endif
 endfunction
 
