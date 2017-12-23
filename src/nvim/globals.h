@@ -1063,6 +1063,9 @@ EXTERN char_u e_stdiochan2[] INIT(= N_(
 EXTERN char_u e_invstream[] INIT(= N_("E906: invalid stream for channel"));
 EXTERN char_u e_invstreamrpc[] INIT(= N_(
     "E906: invalid stream for rpc channel, use 'rpc'"));
+EXTERN char_u e_streamkey[] INIT(= N_(
+    "E5210: dict key '%s' already set for buffered stream in channel %"
+    PRIu64));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
