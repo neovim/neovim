@@ -1305,6 +1305,13 @@ return {
       defaults={if_true={vi=true}}
     },
     {
+      full_name='jumporder',
+      type='bool', scope={'global'},
+      vi_def=true,
+      varname='p_jumpord',
+      defaults={if_true={vi=false}}
+    },
+    {
       full_name='keymap', abbreviation='kmp',
       type='string', scope={'buffer'},
       normal_fname_chars=true,

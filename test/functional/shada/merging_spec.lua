@@ -838,6 +838,28 @@ describe('ShaDa jumps support code', function()
        .. '>', redir_exec('jumps'))
   end)
 
+  it('merges jumps when reading with jumporder behaviour', function()
+    -- use case with jumporder: load - place jump in middle(shrink list) - load
+    wshada('\008\001\018\131\162mX\195\161f\196\006/a/b/c\161l\002'
+          .. '\008\002\018\131\162mX\195\161f\196\006/a/b/c\161l\003'
+          .. '\008\009\018\131\162mX\195\161f\196\006/a/b/z\161l\005')
+    eq(0, exc_exec(sdrcmd()))
+    wshada('\008\001\018\131\162mX\195\161f\196\006/a/b/c\161l\002'
+          .. '\008\002\018\131\162mX\195\161f\196\006/a/b/c\161l\003'
+          .. '\008\003\018\131\162mX\195\161f\196\006/a/b/d\161l\003'
+          .. '\008\004\018\131\162mX\195\161f\196\006/a/b/e\161l\002')
+    eq(0, exc_exec(sdrcmd()))
+    eq('\n'
+       .. ' jump line  col file/text\n'
+       .. '   6     2    0 /a/b/c\n'
+       .. '   5     3    0 /a/b/c\n'
+       .. '   4     3    0 /a/b/d\n'
+       .. '   3     2    0 /a/b/e\n'
+       .. '   2     5    0 /a/b/z\n'
+       .. '   1     1    0 \n'
+       .. '>', redir_exec('jumps'))
+  end)
+
   it('merges jumps when writing', function()
     wshada('\008\001\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'c\161l\002'
            .. '\008\004\018\131\162mX\195\161f\196\006' .. mock_file_path .. 'd\161l\002'
