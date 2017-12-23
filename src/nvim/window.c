@@ -3307,7 +3307,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
  */
 void goto_tabpage(int n)
 {
-  tabpage_T   *tp;
+  tabpage_T   *tp = NULL;
   tabpage_T   *ttp;
   int i;
 
