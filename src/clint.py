@@ -2124,8 +2124,10 @@ def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
                     + (level_starts[depth][2] == '{')):
                     if depth not in ignore_error_levels:
                         error(filename, linenum, 'whitespace/alignment', 2,
-                              'Inner expression should be aligned '
-                              'as opening brace + 1 (+ 2 in case of {)')
+                              ('Inner expression should be aligned '
+                               'as opening brace + 1 (+ 2 in case of {{). '
+                               'Relevant opening is on line {0!r}').format(
+                                   level_starts[depth][3]))
             prev_line_start = pos
         elif brace == 'e':
             pass
@@ -2142,7 +2144,8 @@ def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
                     ignore_error_levels.add(depth)
                 line_ended_with_opening = (
                     pos == len(line) - 2 * (line.endswith(' \\')) - 1)
-                level_starts[depth] = (pos, line_ended_with_opening, brace)
+                level_starts[depth] = (pos, line_ended_with_opening, brace,
+                                       linenum)
                 if line_ended_with_opening:
                     depth_line_starts[depth] = (prev_line_start, brace)
             else:
