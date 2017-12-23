@@ -2618,20 +2618,20 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
   }
   varnumber_T prev_end = 0;
   int i = 0;
-  for (const listitem_T *li = tv.vval.v_list->lv_first;
-       li != NULL; li = li->li_next, i++) {
-    if (li->li_tv.v_type != VAR_LIST) {
+  TV_LIST_ITER_CONST(tv.vval.v_list, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_LIST) {
       PRINT_ERRMSG(_("E5401: List item %i is not a List"), i);
       goto color_cmdline_error;
     }
-    const list_T *const l = li->li_tv.vval.v_list;
+    const list_T *const l = TV_LIST_ITEM_TV(li)->vval.v_list;
     if (tv_list_len(l) != 3) {
       PRINT_ERRMSG(_("E5402: List item %i has incorrect length: %li /= 3"),
                    i, tv_list_len(l));
       goto color_cmdline_error;
     }
     bool error = false;
-    const varnumber_T start = tv_get_number_chk(&l->lv_first->li_tv, &error);
+    const varnumber_T start = (
+        tv_get_number_chk(TV_LIST_ITEM_TV(tv_list_first(l)), &error));
     if (error) {
       goto color_cmdline_error;
     } else if (!(prev_end <= start && start < colored_ccline->cmdlen)) {
@@ -2651,8 +2651,8 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
         .attr = 0,
       }));
     }
-    const varnumber_T end = tv_get_number_chk(&l->lv_first->li_next->li_tv,
-                                              &error);
+    const varnumber_T end = tv_get_number_chk(
+        TV_LIST_ITEM_TV(TV_LIST_ITEM_NEXT(l, tv_list_first(l))), &error);
     if (error) {
       goto color_cmdline_error;
     } else if (!(start < end && end <= colored_ccline->cmdlen)) {
@@ -2668,7 +2668,8 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
       goto color_cmdline_error;
     }
     prev_end = end;
-    const char *const group = tv_get_string_chk(&l->lv_last->li_tv);
+    const char *const group = tv_get_string_chk(
+        TV_LIST_ITEM_TV(tv_list_last(l)));
     if (group == NULL) {
       goto color_cmdline_error;
     }
@@ -2679,7 +2680,8 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
       .end = end,
       .attr = attr,
     }));
-  }
+    i++;
+  });
   if (prev_end < colored_ccline->cmdlen) {
     kv_push(ccline_colors->colors, ((CmdlineColorChunk) {
       .start = prev_end,
@@ -5021,24 +5023,24 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
  */
 static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 {
-  list_T      *retlist;
-  listitem_T  *li;
-  garray_T ga;
-
-  retlist = call_user_expand_func((user_expand_func_T)call_func_retlist, xp,
-                                  num_file, file);
+  list_T *const retlist = call_user_expand_func(
+      (user_expand_func_T)call_func_retlist, xp, num_file, file);
   if (retlist == NULL) {
     return FAIL;
   }
 
+  garray_T ga;
   ga_init(&ga, (int)sizeof(char *), 3);
-  /* Loop over the items in the list. */
-  for (li = retlist->lv_first; li != NULL; li = li->li_next) {
-    if (li->li_tv.v_type != VAR_STRING || li->li_tv.vval.v_string == NULL)
-      continue;        /* Skip non-string items and empty strings */
+  // Loop over the items in the list.
+  TV_LIST_ITER_CONST(retlist, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING
+        || TV_LIST_ITEM_TV(li)->vval.v_string == NULL) {
+      continue;  // Skip non-string items and empty strings.
+    }
 
-    GA_APPEND(char_u *, &ga, vim_strsave(li->li_tv.vval.v_string));
-  }
+    GA_APPEND(char *, &ga, xstrdup(
+        (const char *)TV_LIST_ITEM_TV(li)->vval.v_string));
+  });
   tv_list_unref(retlist);
 
   *file = ga.ga_data;

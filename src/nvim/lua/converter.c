@@ -214,9 +214,9 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             list_T *const kv_pair = tv_list_alloc();
             tv_list_append_list(cur.tv->vval.v_list, kv_pair);
             listitem_T *const key = tv_list_item_alloc();
-            key->li_tv = decode_string(s, len, kTrue, false, false);
+            *TV_LIST_ITEM_TV(key) = decode_string(s, len, kTrue, false, false);
             tv_list_append(kv_pair, key);
-            if (key->li_tv.v_type == VAR_UNKNOWN) {
+            if (TV_LIST_ITEM_TV(key)->v_type == VAR_UNKNOWN) {
               ret = false;
               tv_list_unref(kv_pair);
               continue;
@@ -224,7 +224,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             listitem_T *const val = tv_list_item_alloc();
             tv_list_append(kv_pair, val);
             kv_push(stack, cur);
-            cur = (TVPopStackItem) { &val->li_tv, false, false, 0 };
+            cur = (TVPopStackItem) { TV_LIST_ITEM_TV(val), false, false, 0 };
           } else {
             dictitem_T *const di = tv_dict_item_alloc_len(s, len);
             if (tv_dict_add(cur.tv->vval.v_dict, di) == FAIL) {
@@ -239,7 +239,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         }
       } else {
         assert(cur.tv->v_type == VAR_LIST);
-        lua_rawgeti(lstate, -1, cur.tv->vval.v_list->lv_len + 1);
+        lua_rawgeti(lstate, -1, tv_list_len(cur.tv->vval.v_list) + 1);
         if (lua_isnil(lstate, -1)) {
           lua_pop(lstate, 2);
           continue;
@@ -247,7 +247,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
         listitem_T *const li = tv_list_item_alloc();
         tv_list_append(cur.tv->vval.v_list, li);
         kv_push(stack, cur);
-        cur = (TVPopStackItem) { &li->li_tv, false, false, 0 };
+        cur = (TVPopStackItem) { TV_LIST_ITEM_TV(li), false, false, 0 };
       }
     }
     assert(!cur.container);
@@ -306,7 +306,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           case kObjectTypeArray: {
             cur.tv->v_type = VAR_LIST;
             cur.tv->vval.v_list = tv_list_alloc();
-            cur.tv->vval.v_list->lv_refcount++;
+            tv_list_ref(cur.tv->vval.v_list);
             if (table_props.maxidx != 0) {
               cur.container = true;
               cur.idx = lua_gettop(lstate);

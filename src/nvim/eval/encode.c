@@ -53,17 +53,18 @@ int encode_list_write(void *const data, const char *const buf, const size_t len)
   list_T *const list = (list_T *) data;
   const char *const end = buf + len;
   const char *line_end = buf;
-  listitem_T *li = list->lv_last;
+  listitem_T *li = tv_list_last(list);
 
   // Continue the last list element
   if (li != NULL) {
     line_end = xmemscan(buf, NL, len);
     if (line_end != buf) {
       const size_t line_length = (size_t)(line_end - buf);
-      char *str = (char *)li->li_tv.vval.v_string;
+      char *str = (char *)TV_LIST_ITEM_TV(li)->vval.v_string;
       const size_t li_len = (str == NULL ? 0 : strlen(str));
-      li->li_tv.vval.v_string = xrealloc(str, li_len + line_length + 1);
-      str = (char *)li->li_tv.vval.v_string + li_len;
+      TV_LIST_ITEM_TV(li)->vval.v_string = xrealloc(
+          str, li_len + line_length + 1);
+      str = (char *)TV_LIST_ITEM_TV(li)->vval.v_string + li_len;
       memcpy(str, buf, line_length);
       str[line_length] = 0;
       memchrsub(str, NUL, NL, line_length);
@@ -135,21 +136,27 @@ static int conv_error(const char *const msg, const MPConvStack *const mpstack,
       }
       case kMPConvPairs:
       case kMPConvList: {
-        int idx = 0;
-        const listitem_T *li;
-        for (li = v.data.l.list->lv_first;
-             li != NULL && li->li_next != v.data.l.li;
-             li = li->li_next) {
-          idx++;
-        }
+        const int idx = (v.data.l.li == tv_list_first(v.data.l.list)
+                         ? 0
+                         : (v.data.l.li == NULL
+                            ? tv_list_len(v.data.l.list) - 1
+                            : (int)tv_list_idx_of_item(
+                                v.data.l.list,
+                                TV_LIST_ITEM_PREV(v.data.l.list,
+                                                  v.data.l.li))));
+        const listitem_T *const li = (v.data.l.li == NULL
+                                      ? tv_list_last(v.data.l.list)
+                                      : TV_LIST_ITEM_PREV(v.data.l.list,
+                                                          v.data.l.li));
         if (v.type == kMPConvList
             || li == NULL
-            || (li->li_tv.v_type != VAR_LIST
-                && li->li_tv.vval.v_list->lv_len <= 0)) {
-          vim_snprintf((char *) IObuff, IOSIZE, idx_msg, idx);
+            || (TV_LIST_ITEM_TV(li)->v_type != VAR_LIST
+                && tv_list_len(TV_LIST_ITEM_TV(li)->vval.v_list) <= 0)) {
+          vim_snprintf((char *)IObuff, IOSIZE, idx_msg, idx);
           ga_concat(&msg_ga, IObuff);
         } else {
-          typval_T key_tv = li->li_tv.vval.v_list->lv_first->li_tv;
+          typval_T key_tv = *TV_LIST_ITEM_TV(
+              tv_list_first(TV_LIST_ITEM_TV(li)->vval.v_list));
           char *const key = encode_tv2echo(&key_tv, NULL);
           vim_snprintf((char *) IObuff, IOSIZE, key_pair_msg, key, idx);
           xfree(key);
@@ -202,21 +209,17 @@ bool encode_vim_list_to_buf(const list_T *const list, size_t *const ret_len,
   FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t len = 0;
-  if (list != NULL) {
-    for (const listitem_T *li = list->lv_first;
-         li != NULL;
-         li = li->li_next) {
-      if (li->li_tv.v_type != VAR_STRING) {
-        return false;
-      }
-      len++;
-      if (li->li_tv.vval.v_string != 0) {
-        len += STRLEN(li->li_tv.vval.v_string);
-      }
+  TV_LIST_ITER_CONST(list, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
+      return false;
     }
-    if (len) {
-      len--;
+    len++;
+    if (TV_LIST_ITEM_TV(li)->vval.v_string != NULL) {
+      len += STRLEN(TV_LIST_ITEM_TV(li)->vval.v_string);
     }
+  });
+  if (len) {
+    len--;
   }
   *ret_len = len;
   if (len == 0) {
@@ -253,31 +256,34 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
   char *const buf_end = buf + nbuf;
   char *p = buf;
   while (p < buf_end) {
-    assert(state->li_length == 0 || state->li->li_tv.vval.v_string != NULL);
+    assert(state->li_length == 0
+           || TV_LIST_ITEM_TV(state->li)->vval.v_string != NULL);
     for (size_t i = state->offset; i < state->li_length && p < buf_end; i++) {
-      assert(state->li->li_tv.vval.v_string != NULL);
-      const char ch = (char)state->li->li_tv.vval.v_string[state->offset++];
+      assert(TV_LIST_ITEM_TV(state->li)->vval.v_string != NULL);
+      const char ch = (char)(
+          TV_LIST_ITEM_TV(state->li)->vval.v_string[state->offset++]);
       *p++ = (char)((char)ch == (char)NL ? (char)NUL : (char)ch);
     }
     if (p < buf_end) {
-      state->li = state->li->li_next;
+      state->li = TV_LIST_ITEM_NEXT(state->list, state->li);
       if (state->li == NULL) {
         *read_bytes = (size_t) (p - buf);
         return OK;
       }
       *p++ = NL;
-      if (state->li->li_tv.v_type != VAR_STRING) {
-        *read_bytes = (size_t) (p - buf);
+      if (TV_LIST_ITEM_TV(state->li)->v_type != VAR_STRING) {
+        *read_bytes = (size_t)(p - buf);
         return FAIL;
       }
       state->offset = 0;
-      state->li_length = (state->li->li_tv.vval.v_string == NULL
+      state->li_length = (TV_LIST_ITEM_TV(state->li)->vval.v_string == NULL
                           ? 0
-                          : STRLEN(state->li->li_tv.vval.v_string));
+                          : STRLEN(TV_LIST_ITEM_TV(state->li)->vval.v_string));
     }
   }
   *read_bytes = nbuf;
-  return (state->offset < state->li_length || state->li->li_next != NULL
+  return ((state->offset < state->li_length
+           || TV_LIST_ITEM_NEXT(state->list, state->li) != NULL)
           ? NOTDONE
           : OK);
 }
@@ -727,12 +733,11 @@ bool encode_check_json_key(const typval_T *const tv)
   if (val_di->di_tv.vval.v_list == NULL) {
     return true;
   }
-  for (const listitem_T *li = val_di->di_tv.vval.v_list->lv_first;
-       li != NULL; li = li->li_next) {
-    if (li->li_tv.v_type != VAR_STRING) {
+  TV_LIST_ITER_CONST(val_di->di_tv.vval.v_list, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
       return false;
     }
-  }
+  });
   return true;
 }
 

@@ -2568,7 +2568,7 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   for (size_t i = 0; i < reg->y_size; i++) {
     tv_list_append_string(list, (const char *)reg->y_array[i], -1);
   }
-  list->lv_lock = VAR_FIXED;
+  tv_list_set_lock(list, VAR_FIXED);
   tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
   // the register type
@@ -4854,9 +4854,8 @@ static void *get_reg_wrap_one_line(char_u *s, int flags)
   if (!(flags & kGRegList)) {
     return s;
   }
-  list_T *list = tv_list_alloc();
-  tv_list_append_string(list, NULL, 0);
-  list->lv_first->li_tv.vval.v_string = s;
+  list_T *const list = tv_list_alloc();
+  tv_list_append_allocated_string(list, (char *)s);
   return list;
 }
 
@@ -5610,13 +5609,14 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
 
   list_T *res = result.vval.v_list;
   list_T *lines = NULL;
-  if (res->lv_len == 2 && res->lv_first->li_tv.v_type == VAR_LIST) {
-    lines = res->lv_first->li_tv.vval.v_list;
-    if (res->lv_last->li_tv.v_type != VAR_STRING) {
+  if (tv_list_len(res) == 2
+      && TV_LIST_ITEM_TV(tv_list_first(res))->v_type == VAR_LIST) {
+    lines = TV_LIST_ITEM_TV(tv_list_first(res))->vval.v_list;
+    if (TV_LIST_ITEM_TV(tv_list_last(res))->v_type != VAR_STRING) {
       goto err;
     }
-    char_u *regtype = res->lv_last->li_tv.vval.v_string;
-    if (regtype == NULL || strlen((char*)regtype) > 1) {
+    char_u *regtype = TV_LIST_ITEM_TV(tv_list_last(res))->vval.v_string;
+    if (regtype == NULL || strlen((char *)regtype) > 1) {
       goto err;
     }
     switch (regtype[0]) {
@@ -5641,20 +5641,21 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
     reg->y_type = kMTUnknown;
   }
 
-  reg->y_array = xcalloc((size_t)lines->lv_len, sizeof(uint8_t *));
-  reg->y_size = (size_t)lines->lv_len;
+  reg->y_array = xcalloc((size_t)tv_list_len(lines), sizeof(char_u *));
+  reg->y_size = (size_t)tv_list_len(lines);
   reg->additional_data = NULL;
   reg->timestamp = 0;
   // Timestamp is not saved for clipboard registers because clipboard registers
   // are not saved in the ShaDa file.
 
   int i = 0;
-  for (listitem_T *li = lines->lv_first; li != NULL; li = li->li_next) {
-    if (li->li_tv.v_type != VAR_STRING) {
+  TV_LIST_ITER_CONST(lines, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
       goto err;
     }
-    reg->y_array[i++] = (char_u *)xstrdupnul((char *)li->li_tv.vval.v_string);
-  }
+    reg->y_array[i++] = (char_u *)xstrdupnul(
+        (const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
+  });
 
   if (reg->y_size > 0 && strlen((char*)reg->y_array[reg->y_size-1]) == 0) {
     // a known-to-be charwise yank might have a final linebreak

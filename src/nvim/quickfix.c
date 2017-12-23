@@ -157,6 +157,7 @@ typedef struct {
   FILE   *fd;
   typval_T   *tv;
   char_u     *p_str;
+  list_T     *p_list;
   listitem_T *p_li;
   buf_T      *buf;
   linenr_T buflnum;
@@ -518,17 +519,17 @@ static int qf_get_next_list_line(qfstate_T *state)
 
   // Get the next line from the supplied list
   while (p_li != NULL
-         && (p_li->li_tv.v_type != VAR_STRING
-             || p_li->li_tv.vval.v_string == NULL)) {
-    p_li = p_li->li_next;               // Skip non-string items
+         && (TV_LIST_ITEM_TV(p_li)->v_type != VAR_STRING
+             || TV_LIST_ITEM_TV(p_li)->vval.v_string == NULL)) {
+    p_li = TV_LIST_ITEM_NEXT(state->p_list, p_li);  // Skip non-string items.
   }
 
-  if (p_li == NULL) {                   // End of the list
+  if (p_li == NULL) {  // End of the list.
     state->p_li = NULL;
     return QF_END_OF_INPUT;
   }
 
-  len = STRLEN(p_li->li_tv.vval.v_string);
+  len = STRLEN(TV_LIST_ITEM_TV(p_li)->vval.v_string);
   if (len > IOSIZE - 2) {
     state->linebuf = qf_grow_linebuf(state, len);
   } else {
@@ -536,9 +537,10 @@ static int qf_get_next_list_line(qfstate_T *state)
     state->linelen = len;
   }
 
-  STRLCPY(state->linebuf, p_li->li_tv.vval.v_string, state->linelen + 1);
+  STRLCPY(state->linebuf, TV_LIST_ITEM_TV(p_li)->vval.v_string,
+          state->linelen + 1);
 
-  state->p_li = p_li->li_next;                 // next item
+  state->p_li = TV_LIST_ITEM_NEXT(state->p_list, p_li);
   return QF_OK;
 }
 
@@ -1089,7 +1091,8 @@ qf_init_ext(
     if (tv->v_type == VAR_STRING) {
       state.p_str = tv->vval.v_string;
     } else if (tv->v_type == VAR_LIST) {
-      state.p_li = tv->vval.v_list->lv_first;
+      state.p_list = tv->vval.v_list;
+      state.p_li = tv_list_first(tv->vval.v_list);
     }
     state.tv = tv;
   }
@@ -4164,7 +4167,6 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
 static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
                           int action)
 {
-  listitem_T *li;
   dict_T *d;
   qfline_T *old_last = NULL;
   int retval = OK;
@@ -4181,13 +4183,15 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
     qf_store_title(qi, title);
   }
 
-  for (li = list->lv_first; li != NULL; li = li->li_next) {
-    if (li->li_tv.v_type != VAR_DICT)
-      continue;       /* Skip non-dict items */
+  TV_LIST_ITER_CONST(list, li, {
+    if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT) {
+      continue;  // Skip non-dict items.
+    }
 
-    d = li->li_tv.vval.v_dict;
-    if (d == NULL)
+    d = TV_LIST_ITEM_TV(li)->vval.v_dict;
+    if (d == NULL) {
       continue;
+    }
 
     char *const filename = tv_dict_get_string(d, "filename", true);
     int bufnum = (int)tv_dict_get_number(d, "bufnr");
@@ -4244,7 +4248,7 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
       retval = FAIL;
       break;
     }
-  }
+  });
 
   if (qi->qf_lists[qi->qf_curlist].qf_index == 0) {
     // no valid entry
@@ -4576,7 +4580,7 @@ void ex_cexpr(exarg_T *eap)
   typval_T tv;
   if (eval0(eap->arg, &tv, NULL, true) != FAIL) {
     if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
-        || (tv.v_type == VAR_LIST && tv.vval.v_list != NULL)) {
+        || tv.v_type == VAR_LIST) {
       if (qf_init_ext(qi, NULL, NULL, &tv, p_efm,
                       (eap->cmdidx != CMD_caddexpr
                        && eap->cmdidx != CMD_laddexpr),
