@@ -4874,8 +4874,6 @@ void partial_unref(partial_T *pt)
 static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
   list_T      *l = NULL;
-  typval_T tv;
-  listitem_T  *item;
 
   if (evaluate) {
     l = tv_list_alloc();
@@ -4883,13 +4881,13 @@ static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   *arg = skipwhite(*arg + 1);
   while (**arg != ']' && **arg != NUL) {
-    if (eval1(arg, &tv, evaluate) == FAIL)      /* recursive! */
+    typval_T tv;
+    if (eval1(arg, &tv, evaluate) == FAIL) {  // Recursive!
       goto failret;
+    }
     if (evaluate) {
-      item = tv_list_item_alloc();
-      *TV_LIST_ITEM_TV(item) = tv;
-      TV_LIST_ITEM_TV(item)->v_lock = VAR_UNLOCKED;
-      tv_list_append(l, item);
+      tv.v_lock = VAR_UNLOCKED;
+      tv_list_append_owned_tv(l, tv);
     }
 
     if (**arg == ']') {
@@ -11441,40 +11439,38 @@ static void dict_list(typval_T *const tv, typval_T *const rettv,
   tv_list_alloc_ret(rettv);
 
   TV_DICT_ITER(tv->vval.v_dict, di, {
-    listitem_T *const li = tv_list_item_alloc();
-    tv_list_append(rettv->vval.v_list, li);
+    typval_T tv = { .v_lock = VAR_UNLOCKED };
 
     switch (what) {
       case kDictListKeys: {
-        TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-        TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-        TV_LIST_ITEM_TV(li)->vval.v_string = vim_strsave(di->di_key);
+        tv.v_type = VAR_STRING;
+        tv.vval.v_string = vim_strsave(di->di_key);
         break;
       }
       case kDictListValues: {
-        tv_copy(&di->di_tv, TV_LIST_ITEM_TV(li));
+        tv_copy(&di->di_tv, &tv);
         break;
       }
       case kDictListItems: {
         // items()
         list_T *const sub_l = tv_list_alloc();
-        TV_LIST_ITEM_TV(li)->v_type = VAR_LIST;
-        TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-        TV_LIST_ITEM_TV(li)->vval.v_list = sub_l;
+        tv.v_type = VAR_LIST;
+        tv.vval.v_list = sub_l;
         tv_list_ref(sub_l);
 
-        listitem_T *sub_li = tv_list_item_alloc();
-        tv_list_append(sub_l, sub_li);
-        TV_LIST_ITEM_TV(sub_li)->v_type = VAR_STRING;
-        TV_LIST_ITEM_TV(sub_li)->v_lock = VAR_UNLOCKED;
-        TV_LIST_ITEM_TV(sub_li)->vval.v_string = vim_strsave(di->di_key);
+        tv_list_append_owned_tv(sub_l, (typval_T) {
+          .v_type = VAR_STRING,
+          .v_lock = VAR_UNLOCKED,
+          .vval.v_string = (char_u *)xstrdup((const char *)di->di_key),
+        });
 
-        sub_li = tv_list_item_alloc();
-        tv_list_append(sub_l, sub_li);
-        tv_copy(&di->di_tv, TV_LIST_ITEM_TV(sub_li));
+        tv_list_append_tv(sub_l, &di->di_tv);
+
         break;
       }
     }
+
+    tv_list_append_owned_tv(rettv->vval.v_list, tv);
   });
 }
 
@@ -12762,13 +12758,12 @@ static void f_msgpackparse(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         goto f_msgpackparse_exit;
       }
       if (result == MSGPACK_UNPACK_SUCCESS) {
-        listitem_T *li = tv_list_item_alloc();
-        TV_LIST_ITEM_TV(li)->v_type = VAR_UNKNOWN;
-        tv_list_append(ret_list, li);
-        if (msgpack_to_vim(unpacked.data, TV_LIST_ITEM_TV(li)) == FAIL) {
+        typval_T tv = { .v_type = VAR_UNKNOWN };
+        if (msgpack_to_vim(unpacked.data, &tv) == FAIL) {
           EMSG2(_(e_invarg2), "Failed to convert msgpack string");
           goto f_msgpackparse_exit;
         }
+        tv_list_append_owned_tv(ret_list, tv);
       }
       if (result == MSGPACK_UNPACK_CONTINUE) {
         if (rlret == OK) {
@@ -13030,7 +13025,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
          p < buf + readlen || (readlen <= 0 && (prevlen > 0 || binary));
          ++p) {
       if (*p == '\n' || readlen <= 0) {
-        listitem_T  *li;
         char_u      *s  = NULL;
         size_t len = p - start;
 
@@ -13057,11 +13051,11 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           prevlen = prevsize = 0;
         }
 
-        li = tv_list_item_alloc();
-        TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-        TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-        TV_LIST_ITEM_TV(li)->vval.v_string = s;
-        tv_list_append(rettv->vval.v_list, li);
+        tv_list_append_owned_tv(rettv->vval.v_list, (typval_T) {
+          .v_type = VAR_STRING,
+          .v_lock = VAR_UNLOCKED,
+          .vval.v_string = s,
+        });
 
         start = p + 1;         /* step over newline */
         if ((++cnt >= maxline && maxline >= 0) || readlen <= 0)
@@ -14310,11 +14304,7 @@ static void f_serverlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Copy addrs into a linked list.
   list_T *l = tv_list_alloc_ret(rettv);
   for (size_t i = 0; i < n; i++) {
-    listitem_T *li = tv_list_item_alloc();
-    TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-    TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-    TV_LIST_ITEM_TV(li)->vval.v_string = (char_u *)addrs[i];
-    tv_list_append(l, li);
+    tv_list_append_allocated_string(l, addrs[i]);
   }
   xfree(addrs);
 }
@@ -15619,12 +15609,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     for (int i = 0; i < ga.ga_len; i++) {
       char *p = ((char **)ga.ga_data)[i];
-
-      listitem_T *const li = tv_list_item_alloc();
-      TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-      TV_LIST_ITEM_TV(li)->v_lock = VAR_LOCKED;
-      TV_LIST_ITEM_TV(li)->vval.v_string = (char_u *)p;
-      tv_list_append(rettv->vval.v_list, li);
+      tv_list_append_allocated_string(rettv->vval.v_list, p);
     }
     ga_clear(&ga);
   }

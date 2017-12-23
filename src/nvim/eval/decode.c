@@ -127,9 +127,7 @@ static inline int json_decoder_pop(ValuesStackItem obj,
       return FAIL;
     }
     assert(last_container.special_val == NULL);
-    listitem_T *obj_li = tv_list_item_alloc();
-    *TV_LIST_ITEM_TV(obj_li) = obj.val;
-    tv_list_append(last_container.container.vval.v_list, obj_li);
+    tv_list_append_owned_tv(last_container.container.vval.v_list, obj.val);
   } else if (last_container.stack_index == kv_size(*stack) - 2) {
     if (!obj.didcolon) {
       EMSG2(_("E474: Expected colon before dictionary value: %s"),
@@ -154,12 +152,8 @@ static inline int json_decoder_pop(ValuesStackItem obj,
     } else {
       list_T *const kv_pair = tv_list_alloc();
       tv_list_append_list(last_container.special_val, kv_pair);
-      listitem_T *const key_li = tv_list_item_alloc();
-      *TV_LIST_ITEM_TV(key_li) = key.val;
-      tv_list_append(kv_pair, key_li);
-      listitem_T *const val_li = tv_list_item_alloc();
-      *TV_LIST_ITEM_TV(val_li) = obj.val;
-      tv_list_append(kv_pair, val_li);
+      tv_list_append_owned_tv(kv_pair, key.val);
+      tv_list_append_owned_tv(kv_pair, obj.val);
     }
   } else {
     // Object with key only
@@ -1047,10 +1041,10 @@ int msgpack_to_vim(const msgpack_object mobj, typval_T *const rettv)
         .vval = { .v_list = list },
       };
       for (size_t i = 0; i < mobj.via.array.size; i++) {
-        listitem_T *const li = tv_list_item_alloc();
-        TV_LIST_ITEM_TV(li)->v_type = VAR_UNKNOWN;
-        tv_list_append(list, li);
-        if (msgpack_to_vim(mobj.via.array.ptr[i], TV_LIST_ITEM_TV(li))
+        // Not populated yet, need to create list item to push.
+        tv_list_append_owned_tv(list, (typval_T) { .v_type = VAR_UNKNOWN });
+        if (msgpack_to_vim(mobj.via.array.ptr[i],
+                           TV_LIST_ITEM_TV(tv_list_last(list)))
             == FAIL) {
           return FAIL;
         }
@@ -1095,20 +1089,20 @@ msgpack_to_vim_generic_map: {}
       for (size_t i = 0; i < mobj.via.map.size; i++) {
         list_T *const kv_pair = tv_list_alloc();
         tv_list_append_list(list, kv_pair);
-        listitem_T *const key_li = tv_list_item_alloc();
-        TV_LIST_ITEM_TV(key_li)->v_type = VAR_UNKNOWN;
-        tv_list_append(kv_pair, key_li);
-        listitem_T *const val_li = tv_list_item_alloc();
-        TV_LIST_ITEM_TV(val_li)->v_type = VAR_UNKNOWN;
-        tv_list_append(kv_pair, val_li);
-        if (msgpack_to_vim(mobj.via.map.ptr[i].key, TV_LIST_ITEM_TV(key_li))
-            == FAIL) {
+
+        typval_T key_tv = { .v_type = VAR_UNKNOWN };
+        if (msgpack_to_vim(mobj.via.map.ptr[i].key, &key_tv) == FAIL) {
+          tv_clear(&key_tv);
           return FAIL;
         }
-        if (msgpack_to_vim(mobj.via.map.ptr[i].val, TV_LIST_ITEM_TV(val_li))
-            == FAIL) {
+        tv_list_append_owned_tv(kv_pair, key_tv);
+
+        typval_T val_tv = { .v_type = VAR_UNKNOWN };
+        if (msgpack_to_vim(mobj.via.map.ptr[i].val, &val_tv) == FAIL) {
+          tv_clear(&val_tv);
           return FAIL;
         }
+        tv_list_append_owned_tv(kv_pair, val_tv);
       }
       break;
     }

@@ -393,19 +393,30 @@ void tv_list_append_tv(list_T *const l, typval_T *const tv)
   tv_list_append(l, li);
 }
 
+/// Like tv_list_append_tv(), but tv is moved to a list
+///
+/// This means that it is no longer valid to use contents of the typval_T after
+/// function exits.
+void tv_list_append_owned_tv(list_T *const l, typval_T tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+  listitem_T *const li = tv_list_item_alloc();
+  *TV_LIST_ITEM_TV(li) = tv;
+  tv_list_append(l, li);
+}
+
 /// Append a list to a list as one item
 ///
 /// @param[out]  l  List to append to.
 /// @param[in,out]  itemlist  List to append. Reference count is increased.
-void tv_list_append_list(list_T *const list, list_T *const itemlist)
+void tv_list_append_list(list_T *const l, list_T *const itemlist)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  TV_LIST_ITEM_TV(li)->v_type = VAR_LIST;
-  TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-  TV_LIST_ITEM_TV(li)->vval.v_list = itemlist;
-  tv_list_append(list, li);
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_LIST,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_list = itemlist,
+  });
   tv_list_ref(itemlist);
 }
 
@@ -413,15 +424,14 @@ void tv_list_append_list(list_T *const list, list_T *const itemlist)
 ///
 /// @param[out]  l  List to append to.
 /// @param[in,out]  dict  Dictionary to append. Reference count is increased.
-void tv_list_append_dict(list_T *const list, dict_T *const dict)
+void tv_list_append_dict(list_T *const l, dict_T *const dict)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  TV_LIST_ITEM_TV(li)->v_type = VAR_DICT;
-  TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-  TV_LIST_ITEM_TV(li)->vval.v_dict = dict;
-  tv_list_append(list, li);
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_DICT,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_dict = dict,
+  });
   if (dict != NULL) {
     dict->dv_refcount++;
   }
@@ -438,14 +448,15 @@ void tv_list_append_string(list_T *const l, const char *const str,
                            const ssize_t len)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  if (str == NULL) {
-    assert(len == 0 || len == -1);
-    tv_list_append_allocated_string(l, NULL);
-  } else {
-    tv_list_append_allocated_string(l, (len >= 0
-                                        ? xmemdupz(str, (size_t)len)
-                                        : xstrdup(str)));
-  }
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_STRING,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_string = (str == NULL
+                      ? NULL
+                      : (len >= 0
+                         ? xmemdupz(str, (size_t)len)
+                         : xstrdup(str))),
+  });
 }
 
 /// Append given string to the list
@@ -457,12 +468,11 @@ void tv_list_append_string(list_T *const l, const char *const str,
 void tv_list_append_allocated_string(list_T *const l, char *const str)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  listitem_T *const li = tv_list_item_alloc();
-
-  tv_list_append(l, li);
-  TV_LIST_ITEM_TV(li)->v_type = VAR_STRING;
-  TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-  TV_LIST_ITEM_TV(li)->vval.v_string = (char_u *)str;
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_STRING,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_string = (char_u *)str,
+  });
 }
 
 /// Append number to the list
@@ -472,11 +482,11 @@ void tv_list_append_allocated_string(list_T *const l, char *const str)
 ///                listitem_T.
 void tv_list_append_number(list_T *const l, const varnumber_T n)
 {
-  listitem_T *const li = tv_list_item_alloc();
-  TV_LIST_ITEM_TV(li)->v_type = VAR_NUMBER;
-  TV_LIST_ITEM_TV(li)->v_lock = VAR_UNLOCKED;
-  TV_LIST_ITEM_TV(li)->vval.v_number = n;
-  tv_list_append(l, li);
+  tv_list_append_owned_tv(l, (typval_T) {
+    .v_type = VAR_NUMBER,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_number = n,
+  });
 }
 
 //{{{2 Operations on the whole list

@@ -678,6 +678,66 @@ describe('typval.c', function()
           eq({int(-100500), int(100500)}, typvalt2lua(l_tv))
         end)
       end)
+      describe('tv()', function()
+        itp('works', function()
+          local l_tv = lua2typvalt(empty_list)
+          local l = l_tv.vval.v_list
+
+          local l_l_tv = lua2typvalt(empty_list)
+          alloc_log:clear()
+          local l_l = l_l_tv.vval.v_list
+          eq(1, l_l.lv_refcount)
+          lib.tv_list_append_tv(l, l_l_tv)
+          eq(2, l_l.lv_refcount)
+          eq(l_l, l.lv_first.li_tv.vval.v_list)
+          alloc_log:check({
+            a.li(l.lv_first),
+          })
+
+          local l_s_tv = lua2typvalt('test')
+          alloc_log:check({
+            a.str(l_s_tv.vval.v_string, 'test'),
+          })
+          lib.tv_list_append_tv(l, l_s_tv)
+          alloc_log:check({
+            a.li(l.lv_last),
+            a.str(l.lv_last.li_tv.vval.v_string, 'test'),
+          })
+
+          eq({empty_list, 'test'}, typvalt2lua(l_tv))
+        end)
+      end)
+      describe('owned tv()', function()
+        itp('works', function()
+          local l_tv = lua2typvalt(empty_list)
+          local l = l_tv.vval.v_list
+
+          local l_l_tv = lua2typvalt(empty_list)
+          alloc_log:clear()
+          local l_l = l_l_tv.vval.v_list
+          eq(1, l_l.lv_refcount)
+          lib.tv_list_append_owned_tv(l, l_l_tv)
+          eq(1, l_l.lv_refcount)
+          l_l.lv_refcount = l_l.lv_refcount + 1
+          eq(l_l, l.lv_first.li_tv.vval.v_list)
+          alloc_log:check({
+            a.li(l.lv_first),
+          })
+
+          local l_s_tv = ffi.gc(lua2typvalt('test'), nil)
+          alloc_log:check({
+            a.str(l_s_tv.vval.v_string, 'test'),
+          })
+          lib.tv_list_append_owned_tv(l, l_s_tv)
+          eq(l_s_tv.vval.v_string, l.lv_last.li_tv.vval.v_string)
+          l_s_tv.vval.v_string = nil
+          alloc_log:check({
+            a.li(l.lv_last),
+          })
+
+          eq({empty_list, 'test'}, typvalt2lua(l_tv))
+        end)
+      end)
     end)
     describe('copy()', function()
       local function tv_list_copy(...)
