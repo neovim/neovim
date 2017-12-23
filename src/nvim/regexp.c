@@ -232,17 +232,17 @@
 #define LAST_NL         NUPPER + ADD_NL
 #define WITH_NL(op)     ((op) >= FIRST_NL && (op) <= LAST_NL)
 
-#define MOPEN           80  /* -89	 Mark this point in input as start of
-                             *	 \( subexpr.  MOPEN + 0 marks start of
-                             *	 match. */
-#define MCLOSE          90  /* -99	 Analogous to MOPEN.  MCLOSE + 0 marks
-                             *	 end of match. */
-#define BACKREF         100 /* -109 node Match same string again \1-\9 */
+#define MOPEN           80   // -89 Mark this point in input as start of
+                             //     \( … \) subexpr.  MOPEN + 0 marks start of
+                             //     match.
+#define MCLOSE          90   // -99 Analogous to MOPEN.  MCLOSE + 0 marks
+                             //     end of match.
+#define BACKREF         100  // -109 node Match same string again \1-\9.
 
-# define ZOPEN          110 /* -119	 Mark this point in input as start of
-                             *	 \z( subexpr. */
-# define ZCLOSE         120 /* -129	 Analogous to ZOPEN. */
-# define ZREF           130 /* -139 node Match external submatch \z1-\z9 */
+# define ZOPEN          110  // -119 Mark this point in input as start of
+                             //  \z( … \) subexpr.
+# define ZCLOSE         120  // -129 Analogous to ZOPEN.
+# define ZREF           130  // -139 node Match external submatch \z1-\z9
 
 #define BRACE_COMPLEX   140 /* -149 node Match nodes between m & n times */
 
@@ -462,11 +462,11 @@ static int toggle_Magic(int x)
 #define IEMSG_RET_NULL(m) return (IEMSG(m), rc_did_emsg = true, (void *)NULL)
 #define EMSG_RET_FAIL(m) return (EMSG(m), rc_did_emsg = true, FAIL)
 #define EMSG2_RET_NULL(m, c) \
-        return (EMSG2((m), (c) ? "" : "\\"), rc_did_emsg = true, (void *)NULL)
+    return (EMSG2((m), (c) ? "" : "\\"), rc_did_emsg = true, (void *)NULL)
 #define EMSG2_RET_FAIL(m, c) \
-        return (EMSG2((m), (c) ? "" : "\\"), rc_did_emsg = true, FAIL)
+    return (EMSG2((m), (c) ? "" : "\\"), rc_did_emsg = true, FAIL)
 #define EMSG_ONE_RET_NULL EMSG2_RET_NULL(_( \
-        "E369: invalid item in %s%%[]"), reg_magic == MAGIC_ALL)
+    "E369: invalid item in %s%%[]"), reg_magic == MAGIC_ALL)
 
 #define MAX_LIMIT       (32767L << 16L)
 
