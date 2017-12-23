@@ -138,19 +138,19 @@ describe('typval.c', function()
             a.li(lis[7]),
           })
 
-          lib.tv_list_item_remove(l, lis[1])
+          eq(lis[2], lib.tv_list_item_remove(l, lis[1]))
           alloc_log:check({
             a.freed(table.remove(lis, 1)),
           })
           eq(lis, list_items(l))
 
-          lib.tv_list_item_remove(l, lis[6])
+          eq(lis[7], lib.tv_list_item_remove(l, lis[6]))
           alloc_log:check({
             a.freed(table.remove(lis)),
           })
           eq(lis, list_items(l))
 
-          lib.tv_list_item_remove(l, lis[3])
+          eq(lis[4], lib.tv_list_item_remove(l, lis[3]))
           alloc_log:check({
             a.freed(table.remove(lis, 3)),
           })
@@ -174,21 +174,21 @@ describe('typval.c', function()
           local strings = map(function(li) return li.li_tv.vval.v_string end,
                               lis)
 
-          lib.tv_list_item_remove(l, lis[1])
+          eq(lis[2], lib.tv_list_item_remove(l, lis[1]))
           alloc_log:check({
             a.freed(table.remove(strings, 1)),
             a.freed(table.remove(lis, 1)),
           })
           eq(lis, list_items(l))
 
-          lib.tv_list_item_remove(l, lis[2])
+          eq(lis[3], lib.tv_list_item_remove(l, lis[2]))
           alloc_log:check({
             a.freed(table.remove(strings, 2)),
             a.freed(table.remove(lis, 2)),
           })
           eq(lis, list_items(l))
 
-          lib.tv_list_item_remove(l, lis[2])
+          eq(nil, lib.tv_list_item_remove(l, lis[2]))
           alloc_log:check({
             a.freed(table.remove(strings, 2)),
             a.freed(table.remove(lis, 2)),
@@ -216,19 +216,19 @@ describe('typval.c', function()
             a.li(lis[7]),
           })
 
-          lib.tv_list_item_remove(l, lis[4])
+          eq(lis[5], lib.tv_list_item_remove(l, lis[4]))
           alloc_log:check({a.freed(lis[4])})
           eq({lis[1], lis[5], lis[7]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
-          lib.tv_list_item_remove(l, lis[2])
+          eq(lis[3], lib.tv_list_item_remove(l, lis[2]))
           alloc_log:check({a.freed(lis[2])})
           eq({lis[1], lis[5], lis[7]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
-          lib.tv_list_item_remove(l, lis[7])
+          eq(nil, lib.tv_list_item_remove(l, lis[7]))
           alloc_log:check({a.freed(lis[7])})
           eq({lis[1], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
-          lib.tv_list_item_remove(l, lis[1])
+          eq(lis[3], lib.tv_list_item_remove(l, lis[1]))
           alloc_log:check({a.freed(lis[1])})
           eq({lis[3], lis[5], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 

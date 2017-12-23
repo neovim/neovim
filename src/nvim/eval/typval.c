@@ -64,12 +64,17 @@ static listitem_T *tv_list_item_alloc(void)
 ///
 /// @param[out]  l  List to remove item from.
 /// @param[in,out]  item  Item to remove.
-void tv_list_item_remove(list_T *const l, listitem_T *const item)
+///
+/// @return Pointer to the list item just after removed one, NULL if removed
+///         item was the last one.
+listitem_T *tv_list_item_remove(list_T *const l, listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
+  listitem_T *const next_item = TV_LIST_ITEM_NEXT(l, item);
   tv_list_remove_items(l, item, item);
   tv_clear(TV_LIST_ITEM_TV(item));
   xfree(item);
+  return next_item;
 }
 
 //{{{2 List watchers

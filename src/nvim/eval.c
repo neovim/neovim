@@ -2904,9 +2904,7 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
 
     // Delete a range of List items.
     while (lp->ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= lp->ll_n1)) {
-      li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
-      tv_list_item_remove(lp->ll_list, lp->ll_li);
-      lp->ll_li = li;
+      lp->ll_li = tv_list_item_remove(lp->ll_list, lp->ll_li);
       lp->ll_n1++;
     }
   } else {
@@ -8467,7 +8465,6 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
 static void filter_map(typval_T *argvars, typval_T *rettv, int map)
 {
   typval_T    *expr;
-  listitem_T  *li, *nli;
   list_T      *l = NULL;
   dictitem_T  *di;
   hashtab_T   *ht;
@@ -8551,20 +8548,21 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
     } else {
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
-      for (li = tv_list_first(l); li != NULL; li = nli) {
+      for (listitem_T *li = tv_list_first(l); li != NULL;) {
         if (map
             && tv_check_lock(TV_LIST_ITEM_TV(li)->v_lock, arg_errmsg,
                              TV_TRANSLATE)) {
           break;
         }
-        nli = TV_LIST_ITEM_NEXT(l, li);
         vimvars[VV_KEY].vv_nr = idx;
         if (filter_map_one(TV_LIST_ITEM_TV(li), expr, map, &rem) == FAIL
             || did_emsg) {
           break;
         }
         if (!map && rem) {
-          tv_list_item_remove(l, li);
+          li = tv_list_item_remove(l, li);
+        } else {
+          li = TV_LIST_ITEM_NEXT(l, li);
         }
         idx++;
       }
@@ -15440,18 +15438,17 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       int idx = 0;
       for (listitem_T *li = TV_LIST_ITEM_NEXT(l, tv_list_first(l))
-           ; li != NULL
-           ; li = TV_LIST_ITEM_NEXT(l, li)) {
+           ; li != NULL;) {
         listitem_T *const prev_li = TV_LIST_ITEM_PREV(l, li);
         if (item_compare_func_ptr(&prev_li, &li) == 0) {
           if (info.item_compare_func_err) {
             EMSG(_("E882: Uniq compare function failed"));
             break;
           }
-          tv_list_item_remove(l, li);
-          li = tv_list_find(l, idx);
+          li = tv_list_item_remove(l, li);
         } else {
           idx++;
+          li = TV_LIST_ITEM_NEXT(l, li);
         }
       }
     }
