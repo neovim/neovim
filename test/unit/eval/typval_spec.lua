@@ -41,6 +41,7 @@ local tbl2callback = eval_helpers.tbl2callback
 local dict_watchers = eval_helpers.dict_watchers
 
 local concat_tables = global_helpers.concat_tables
+local map = global_helpers.map
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/mbyte.h', './src/nvim/garray.h',
@@ -121,87 +122,6 @@ end
 describe('typval.c', function()
   describe('list', function()
     describe('item', function()
-      describe('alloc()/free()', function()
-        itp('works', function()
-          local li = li_alloc(true)
-          neq(nil, li)
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.freed(li),
-          })
-        end)
-        itp('also frees the value', function()
-          local li
-          local s
-          local l
-          local tv
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_NUMBER
-          li.li_tv.vval.v_number = 10
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.freed(li),
-          })
-
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_FLOAT
-          li.li_tv.vval.v_float = 10.5
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.freed(li),
-          })
-
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_STRING
-          li.li_tv.vval.v_string = nil
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.freed(alloc_log.null),
-            a.freed(li),
-          })
-
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_STRING
-          s = to_cstr_nofree('test')
-          li.li_tv.vval.v_string = s
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.str(s, #('test')),
-            a.freed(s),
-            a.freed(li),
-          })
-
-          li = li_alloc(true)
-          li.li_tv.v_type = lib.VAR_LIST
-          l = ffi.gc(list(), nil)
-          l.lv_refcount = 2
-          li.li_tv.vval.v_list = l
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.list(l),
-            a.freed(li),
-          })
-          eq(1, l.lv_refcount)
-
-          li = li_alloc(true)
-          tv = lua2typvalt({})
-          tv.vval.v_dict.dv_refcount = 2
-          li.li_tv = tv
-          lib.tv_list_item_free(li)
-          alloc_log:check({
-            a.li(li),
-            a.dict(tv.vval.v_dict),
-            a.freed(li),
-          })
-          eq(1, tv.vval.v_dict.dv_refcount)
-        end)
-      end)
       describe('remove()', function()
         itp('works', function()
           local l = list(1, 2, 3, 4, 5, 6, 7)
@@ -233,6 +153,45 @@ describe('typval.c', function()
           lib.tv_list_item_remove(l, lis[3])
           alloc_log:check({
             a.freed(table.remove(lis, 3)),
+          })
+          eq(lis, list_items(l))
+        end)
+        itp('also frees the value', function()
+          local l = list('a', 'b', 'c', 'd')
+          neq(nil, l)
+          local lis = list_items(l)
+          alloc_log:check({
+            a.list(l),
+            a.str(lis[1].li_tv.vval.v_string, 1),
+            a.li(lis[1]),
+            a.str(lis[2].li_tv.vval.v_string, 1),
+            a.li(lis[2]),
+            a.str(lis[3].li_tv.vval.v_string, 1),
+            a.li(lis[3]),
+            a.str(lis[4].li_tv.vval.v_string, 1),
+            a.li(lis[4]),
+          })
+          local strings = map(function(li) return li.li_tv.vval.v_string end,
+                              lis)
+
+          lib.tv_list_item_remove(l, lis[1])
+          alloc_log:check({
+            a.freed(table.remove(strings, 1)),
+            a.freed(table.remove(lis, 1)),
+          })
+          eq(lis, list_items(l))
+
+          lib.tv_list_item_remove(l, lis[2])
+          alloc_log:check({
+            a.freed(table.remove(strings, 2)),
+            a.freed(table.remove(lis, 2)),
+          })
+          eq(lis, list_items(l))
+
+          lib.tv_list_item_remove(l, lis[2])
+          alloc_log:check({
+            a.freed(table.remove(strings, 2)),
+            a.freed(table.remove(lis, 2)),
           })
           eq(lis, list_items(l))
         end)

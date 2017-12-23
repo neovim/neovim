@@ -28,8 +28,13 @@ local function tv_list_item_alloc()
   return ffi.cast('listitem_T*', eval.xmalloc(ffi.sizeof('listitem_T')))
 end
 
+local function tv_list_item_free(li)
+  eval.tv_clear(li.li_tv)
+  eval.xfree(li)
+end
+
 local function li_alloc(nogc)
-  local gcfunc = eval.tv_list_item_free
+  local gcfunc = tv_list_item_free
   if nogc then gcfunc = nil end
   local li = ffi.gc(tv_list_item_alloc(), gcfunc)
   li.li_next = nil
@@ -537,6 +542,7 @@ return {
   typvalt=typvalt,
 
   li_alloc=li_alloc,
+  tv_list_item_free=tv_list_item_free,
 
   dict_iter=dict_iter,
   list_iter=list_iter,

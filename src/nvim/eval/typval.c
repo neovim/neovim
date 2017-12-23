@@ -58,18 +58,6 @@ static listitem_T *tv_list_item_alloc(void)
   return xmalloc(sizeof(listitem_T));
 }
 
-/// Free a list item
-///
-/// Also clears the value. Does not touch watchers.
-///
-/// @param[out]  item  Item to free.
-void tv_list_item_free(listitem_T *const item)
-  FUNC_ATTR_NONNULL_ALL
-{
-  tv_clear(TV_LIST_ITEM_TV(item));
-  xfree(item);
-}
-
 /// Remove a list item from a List and free it
 ///
 /// Also clears the value.
@@ -80,7 +68,8 @@ void tv_list_item_remove(list_T *const l, listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
   tv_list_remove_items(l, item, item);
-  tv_list_item_free(item);
+  tv_clear(TV_LIST_ITEM_TV(item));
+  xfree(item);
 }
 
 //{{{2 List watchers
