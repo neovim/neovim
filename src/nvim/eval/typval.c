@@ -52,7 +52,7 @@ const char *const tv_empty_string = "";
 ///          and specifically set lv_lock.
 ///
 /// @return [allocated] new list item.
-listitem_T *tv_list_item_alloc(void)
+static listitem_T *tv_list_item_alloc(void)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
 {
   return xmalloc(sizeof(listitem_T));
