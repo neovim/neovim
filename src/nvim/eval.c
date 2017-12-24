@@ -215,6 +215,15 @@ static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
 
 static int echo_attr = 0;   /* attributes used for ":echo" */
 
+/// Describe data to return from find_some_match()
+typedef enum {
+  kSomeMatch,  ///< Data for match().
+  kSomeMatchEnd,  ///< Data for matchend().
+  kSomeMatchList,  ///< Data for matchlist().
+  kSomeMatchStr,  ///< Data for matchstr().
+  kSomeMatchStrPos,  ///< Data for matchstrpos().
+} SomeMatchType;
+
 /// trans_function_name() flags
 typedef enum {
   TFN_INT = 1,  ///< May use internal function name
@@ -12183,7 +12192,8 @@ static void f_mapcheck(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 
-static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
+static void find_some_match(typval_T *const argvars, typval_T *const rettv,
+                            const SomeMatchType type)
 {
   char_u      *str = NULL;
   long        len = 0;
@@ -12204,24 +12214,36 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
   p_cpo = (char_u *)"";
 
   rettv->vval.v_number = -1;
-  if (type == 3 || type == 4) {
-    // type 3: return empty list when there are no matches.
-    // type 4: return ["", -1, -1, -1]
-    tv_list_alloc_ret(rettv);
-    if (type == 4) {
+  switch (type) {
+    // matchlist(): return empty list when there are no matches.
+    case kSomeMatchList: {
+      tv_list_alloc_ret(rettv);
+      FALLTHROUGH;
+    }
+    // matchstrpos(): return ["", -1, -1, -1]
+    case kSomeMatchStrPos: {
       tv_list_append_string(rettv->vval.v_list, "", 0);
       tv_list_append_number(rettv->vval.v_list, -1);
       tv_list_append_number(rettv->vval.v_list, -1);
       tv_list_append_number(rettv->vval.v_list, -1);
+      break;
     }
-  } else if (type == 2) {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = NULL;
+    case kSomeMatchStr: {
+      rettv->v_type = VAR_STRING;
+      rettv->vval.v_string = NULL;
+      break;
+    }
+    case kSomeMatch:
+    case kSomeMatchEnd: {
+      // Do nothing: zero is default.
+      break;
+    }
   }
 
   if (argvars[0].v_type == VAR_LIST) {
-    if ((l = argvars[0].vval.v_list) == NULL)
+    if ((l = argvars[0].vval.v_list) == NULL) {
       goto theend;
+    }
     li = tv_list_first(l);
   } else {
     expr = str = (char_u *)tv_get_string(&argvars[0]);
@@ -12311,63 +12333,72 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
     }
 
     if (match) {
-      if (type == 4) {
-        list_T *const ret_l = rettv->vval.v_list;
-        listitem_T *li1 = tv_list_first(ret_l);
-        listitem_T *li2 = TV_LIST_ITEM_NEXT(ret_l, li1);
-        listitem_T *li3 = TV_LIST_ITEM_NEXT(ret_l, li2);
-        listitem_T *li4 = TV_LIST_ITEM_NEXT(ret_l, li3);
-        xfree(TV_LIST_ITEM_TV(li1)->vval.v_string);
+      switch (type) {
+        case kSomeMatchStrPos: {
+          list_T *const ret_l = rettv->vval.v_list;
+          listitem_T *li1 = tv_list_first(ret_l);
+          listitem_T *li2 = TV_LIST_ITEM_NEXT(ret_l, li1);
+          listitem_T *li3 = TV_LIST_ITEM_NEXT(ret_l, li2);
+          listitem_T *li4 = TV_LIST_ITEM_NEXT(ret_l, li3);
+          xfree(TV_LIST_ITEM_TV(li1)->vval.v_string);
 
-        const size_t rd = (size_t)(regmatch.endp[0] - regmatch.startp[0]);
-        TV_LIST_ITEM_TV(li1)->vval.v_string = xmemdupz(
-            (const char *)regmatch.startp[0], rd);
-        TV_LIST_ITEM_TV(li3)->vval.v_number = (varnumber_T)(
-            regmatch.startp[0] - expr);
-        TV_LIST_ITEM_TV(li4)->vval.v_number = (varnumber_T)(
-            regmatch.endp[0] - expr);
-        if (l != NULL) {
-          TV_LIST_ITEM_TV(li2)->vval.v_number = (varnumber_T)idx;
+          const size_t rd = (size_t)(regmatch.endp[0] - regmatch.startp[0]);
+          TV_LIST_ITEM_TV(li1)->vval.v_string = xmemdupz(
+              (const char *)regmatch.startp[0], rd);
+          TV_LIST_ITEM_TV(li3)->vval.v_number = (varnumber_T)(
+              regmatch.startp[0] - expr);
+          TV_LIST_ITEM_TV(li4)->vval.v_number = (varnumber_T)(
+              regmatch.endp[0] - expr);
+          if (l != NULL) {
+            TV_LIST_ITEM_TV(li2)->vval.v_number = (varnumber_T)idx;
+          }
+          break;
         }
-      } else if (type == 3) {
-        int i;
-
-        /* return list with matched string and submatches */
-        for (i = 0; i < NSUBEXP; ++i) {
-          if (regmatch.endp[i] == NULL) {
-            tv_list_append_string(rettv->vval.v_list, NULL, 0);
+        case kSomeMatchList: {
+          // Return list with matched string and submatches.
+          for (int i = 0; i < NSUBEXP; ++i) {
+            if (regmatch.endp[i] == NULL) {
+              tv_list_append_string(rettv->vval.v_list, NULL, 0);
+            } else {
+              tv_list_append_string(rettv->vval.v_list,
+                                    (const char *)regmatch.startp[i],
+                                    (regmatch.endp[i] - regmatch.startp[i]));
+            }
+          }
+          break;
+        }
+        case kSomeMatchStr: {
+          // Return matched string.
+          if (l != NULL) {
+            tv_copy(TV_LIST_ITEM_TV(li), rettv);
           } else {
-            tv_list_append_string(rettv->vval.v_list,
-                                  (const char *)regmatch.startp[i],
-                                  (regmatch.endp[i] - regmatch.startp[i]));
+            rettv->vval.v_string = (char_u *)xmemdupz(
+                (const char *)regmatch.startp[0],
+                (size_t)(regmatch.endp[0] - regmatch.startp[0]));
+          }
+          break;
+        }
+        case kSomeMatch:
+        case kSomeMatchEnd: {
+          if (l != NULL) {
+            rettv->vval.v_number = idx;
+          } else {
+            if (type == kSomeMatchEnd) {
+              rettv->vval.v_number =
+                (varnumber_T)(regmatch.startp[0] - str);
+            } else {
+              rettv->vval.v_number =
+                (varnumber_T)(regmatch.endp[0] - str);
+            }
+            rettv->vval.v_number += (varnumber_T)(str - expr);
           }
         }
-      } else if (type == 2) {
-        // Return matched string.
-        if (l != NULL) {
-          tv_copy(TV_LIST_ITEM_TV(li), rettv);
-        } else {
-          rettv->vval.v_string = (char_u *)xmemdupz(
-              (const char *)regmatch.startp[0],
-              (size_t)(regmatch.endp[0] - regmatch.startp[0]));
-        }
-      } else if (l != NULL) {
-        rettv->vval.v_number = idx;
-      } else {
-        if (type != 0) {
-          rettv->vval.v_number =
-            (varnumber_T)(regmatch.startp[0] - str);
-        } else {
-          rettv->vval.v_number =
-            (varnumber_T)(regmatch.endp[0] - str);
-        }
-        rettv->vval.v_number += (varnumber_T)(str - expr);
       }
     }
     vim_regfree(regmatch.regprog);
   }
 
-  if (type == 4 && l == NULL) {
+  if (type == kSomeMatchStrPos && l == NULL) {
     // matchstrpos() without a list: drop the second item
     list_T *const ret_l = rettv->vval.v_list;
     tv_list_item_remove(ret_l, TV_LIST_ITEM_NEXT(ret_l, tv_list_first(ret_l)));
@@ -12383,7 +12414,7 @@ theend:
  */
 static void f_match(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 1);
+  find_some_match(argvars, rettv, kSomeMatch);
 }
 
 /*
@@ -12528,7 +12559,7 @@ static void f_matchdelete(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_matchend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 0);
+  find_some_match(argvars, rettv, kSomeMatchEnd);
 }
 
 /*
@@ -12536,7 +12567,7 @@ static void f_matchend(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_matchlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 3);
+  find_some_match(argvars, rettv, kSomeMatchList);
 }
 
 /*
@@ -12544,13 +12575,13 @@ static void f_matchlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_matchstr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 2);
+  find_some_match(argvars, rettv, kSomeMatchStr);
 }
 
 /// "matchstrpos()" function
 static void f_matchstrpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  find_some_match(argvars, rettv, 4);
+  find_some_match(argvars, rettv, kSomeMatchStrPos);
 }
 
 /// Get maximal/minimal number value in a list or dictionary
