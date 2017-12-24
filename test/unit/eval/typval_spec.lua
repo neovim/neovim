@@ -81,8 +81,6 @@ local function get_alloc_rets(exp_log, res)
   return exp_log
 end
 
-local to_cstr_nofree = function(v) return lib.xstrdup(v) end
-
 local alloc_log = alloc_log_new()
 
 before_each(function()

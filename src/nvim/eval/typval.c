@@ -290,7 +290,7 @@ void tv_list_remove_items(list_T *const l, listitem_T *const item,
   FUNC_ATTR_NONNULL_ALL
 {
   tv_list_drop_items(l, item, item2);
-  for(listitem_T *li = item;;) {
+  for (listitem_T *li = item;;) {
     tv_clear(TV_LIST_ITEM_TV(li));
     listitem_T *const nli = li->li_next;
     xfree(li);
