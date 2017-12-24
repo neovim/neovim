@@ -690,7 +690,9 @@ local function check_child_err(rd)
       break
     end
     trace[#trace + 1] = traceline
-    table.remove(trace, maxtrace + 1)
+    if #trace > maxtrace then
+      table.remove(trace, 1)
+    end
   end
   local res = sc.read(rd, 2)
   if #res ~= 2 then
