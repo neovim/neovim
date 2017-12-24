@@ -3,7 +3,7 @@ local plugin_helpers = require('test.functional.plugin.helpers')
 
 local Screen = require('test.functional.ui.screen')
 
-local buffer, command, eval = helpers.buffer, helpers.command, helpers.eval
+local command, eval, rawfeed = helpers.command, helpers.eval, helpers.rawfeed
 
 before_each(function()
   plugin_helpers.reset()
@@ -19,6 +19,17 @@ describe('In autoload/man.vim', function()
     before_each(function()
       command('syntax off') -- Ignore syntax groups
       screen = Screen.new(52, 5)
+      screen:set_default_attr_ids({
+        b = { bold = true },
+        i = { italic = true },
+        u = { underline = true },
+        bi = { bold = true, italic = true },
+        biu = { bold = true, italic = true, underline = true },
+      })
+      screen:set_default_attr_ignore({
+        { foreground = Screen.colors.Blue }, -- control chars
+        { bold = true, foreground = Screen.colors.Blue } -- empty line '~'s
+      })
       screen:attach()
     end)
 
@@ -26,84 +37,22 @@ describe('In autoload/man.vim', function()
       screen:detach()
     end)
 
-    local function expect(string)
-      screen:expect(string,
-      {
-        b = { bold = true },
-        i = { italic = true },
-        u = { underline = true },
-        bi = { bold = true, italic = true },
-        biu = { bold = true, italic = true, underline = true },
-      },
-      {{ bold = true, foreground = Screen.colors.Blue }})
-    end
+    it('clears backspaces from text and adds highlights', function()
+      rawfeed([[
+        ithis i<C-v><C-h>is<C-v><C-h>s a<C-v><C-h>a test
+        with _<C-v><C-h>o_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>c_<C-v><C-h>k text<ESC>]])
 
-    local function expect_without_highlights(string)
-      screen:expect(string, nil, true)
-    end
-
-    local function insert_lines(...)
-      buffer('set_lines', 0, 0, 1, false, { ... })
-    end
-
-    it('clears backspaces from text', function()
-      insert_lines(
-        "this i\bis\bs a\ba test",
-        "with _\bo_\bv_\be_\br_\bs_\bt_\br_\bu_\bc_\bk text"
-      )
-
-      expect_without_highlights([[
-      ^this i^His^Hs a^Ha test                             |
-      with _^Ho_^Hv_^He_^Hr_^Hs_^Ht_^Hr_^Hu_^Hc_^Hk text  |
+      screen:expect([[
+      this i^His^Hs a^Ha test                             |
+      with _^Ho_^Hv_^He_^Hr_^Hs_^Ht_^Hr_^Hu_^Hc_^Hk tex^t  |
       ~                                                   |
       ~                                                   |
                                                           |
       ]])
 
-      eval('man#highlight_formatted_text()')
+      eval('man#init_pager()')
 
-      expect_without_highlights([[
-      ^this is a test                                      |
-      with overstruck text                                |
-      ~                                                   |
-      ~                                                   |
-                                                          |
-      ]])
-    end)
-
-    it('clears escape sequences from text', function()
-      insert_lines(
-        "this \027[1mis \027[3ma \027[4mtest\027[0m",
-        "\027[4mwith\027[24m \027[4mescaped\027[24m \027[4mtext\027[24m"
-      )
-
-      expect_without_highlights([[
-      ^this ^[[1mis ^[[3ma ^[[4mtest^[[0m                  |
-      ^[[4mwith^[[24m ^[[4mescaped^[[24m ^[[4mtext^[[24m  |
-      ~                                                   |
-      ~                                                   |
-                                                          |
-      ]])
-
-      eval('man#highlight_formatted_text()')
-
-      expect_without_highlights([[
-      ^this is a test                                      |
-      with escaped text                                   |
-      ~                                                   |
-      ~                                                   |
-                                                          |
-      ]])
-    end)
-
-    it('highlights overstruck text', function()
-      insert_lines(
-        "this i\bis\bs a\ba test",
-        "with _\bo_\bv_\be_\br_\bs_\bt_\br_\bu_\bc_\bk text"
-      )
-      eval('man#highlight_formatted_text()')
-
-      expect([[
+      screen:expect([[
       ^this {b:is} {b:a} test                                      |
       with {u:overstruck} text                                |
       ~                                                   |
@@ -112,14 +61,22 @@ describe('In autoload/man.vim', function()
       ]])
     end)
 
-    it('highlights escape sequences in text', function()
-      insert_lines(
-        "this \027[1mis \027[3ma \027[4mtest\027[0m",
-        "\027[4mwith\027[24m \027[4mescaped\027[24m \027[4mtext\027[24m"
-      )
-      eval('man#highlight_formatted_text()')
+    it('clears escape sequences from text and adds highlights', function()
+      rawfeed([[
+        ithis <C-v><ESC>[1mis <C-v><ESC>[3ma <C-v><ESC>[4mtest<C-v><ESC>[0m
+        <C-v><ESC>[4mwith<C-v><ESC>[24m <C-v><ESC>[4mescaped<C-v><ESC>[24m <C-v><ESC>[4mtext<C-v><ESC>[24m<ESC>]])
 
-      expect([[
+      screen:expect([[
+      this ^[[1mis ^[[3ma ^[[4mtest^[[0m                  |
+      ^[[4mwith^[[24m ^[[4mescaped^[[24m ^[[4mtext^[[24^m  |
+      ~                                                   |
+      ~                                                   |
+                                                          |
+      ]])
+
+      eval('man#init_pager()')
+
+      screen:expect([[
       ^this {b:is }{bi:a }{biu:test}                                      |
       {u:with} {u:escaped} {u:text}                                   |
       ~                                                   |
@@ -129,15 +86,14 @@ describe('In autoload/man.vim', function()
     end)
 
     it('highlights multibyte text', function()
-      insert_lines(
-        "this i\bis\bs あ\bあ test",
-        "with _\bö_\bv_\be_\br_\bs_\bt_\br_\bu_\bc_\bk te\027[3mxt¶\027[0m"
-      )
-      eval('man#highlight_formatted_text()')
+      rawfeed([[
+        ithis i<C-v><C-h>is<C-v><C-h>s あ<C-v><C-h>あ test
+        with _<C-v><C-h>ö_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>̃_<C-v><C-h>c_<C-v><C-h>k te<C-v><ESC>[3mxt¶<C-v><ESC>[0m<ESC>]])
+      eval('man#init_pager()')
 
-      expect([[
+      screen:expect([[
       ^this {b:is} {b:あ} test                                     |
-      with {u:överstruck} te{i:xt¶}                               |
+      with {u:överstrũck} te{i:xt¶}                               |
       ~                                                   |
       ~                                                   |
                                                           |
@@ -145,14 +101,13 @@ describe('In autoload/man.vim', function()
     end)
 
     it('highlights underscores based on context', function()
-      insert_lines(
-        "_\b_b\bbe\beg\bgi\bin\bns\bs",
-        "m\bmi\bid\bd_\b_d\bdl\ble\be",
-        "_\bm_\bi_\bd_\b__\bd_\bl_\be"
-      )
-      eval('man#highlight_formatted_text()')
+      rawfeed([[
+        i_<C-v><C-h>_b<C-v><C-h>be<C-v><C-h>eg<C-v><C-h>gi<C-v><C-h>in<C-v><C-h>ns<C-v><C-h>s
+        m<C-v><C-h>mi<C-v><C-h>id<C-v><C-h>d_<C-v><C-h>_d<C-v><C-h>dl<C-v><C-h>le<C-v><C-h>e
+        _<C-v><C-h>m_<C-v><C-h>i_<C-v><C-h>d_<C-v><C-h>__<C-v><C-h>d_<C-v><C-h>l_<C-v><C-h>e<ESC>]])
+      eval('man#init_pager()')
 
-      expect([[
+      screen:expect([[
       {b:^_begins}                                             |
       {b:mid_dle}                                             |
       {u:mid_dle}                                             |
@@ -162,14 +117,13 @@ describe('In autoload/man.vim', function()
     end)
 
     it('highlights various bullet formats', function()
-      insert_lines(
-        "· ·\b·",
-        "+\bo",
-        "+\b+\bo\bo double"
-      )
-      eval('man#highlight_formatted_text()')
+      rawfeed([[
+        i· ·<C-v><C-h>·
+        +<C-v><C-h>o
+        +<C-v><C-h>+<C-v><C-h>o<C-v><C-h>o double<ESC>]])
+      eval('man#init_pager()')
 
-      expect([[
+      screen:expect([[
       ^· {b:·}                                                 |
       {b:·}                                                   |
       {b:·} double                                            |

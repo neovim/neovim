@@ -161,7 +161,7 @@ function! s:put_page(page) abort
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
-  call man#highlight_formatted_text()
+  lua require("man").highlight_man_page()
   setlocal filetype=man
 endfunction
 
@@ -375,7 +375,7 @@ function! man#init_pager() abort
   else
     keepjumps 1
   endif
-  call man#highlight_formatted_text()
+  lua require("man").highlight_man_page()
   " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
   " all caps it is impossible to tell what the original capitilization was.
   let ref = substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g')
@@ -385,16 +385,6 @@ function! man#init_pager() abort
     let b:man_sect = ''
   endtry
   execute 'silent file man://'.fnameescape(ref)
-endfunction
-
-function! man#highlight_formatted_text() abort
-  let l:modifiable = &modifiable
-  set modifiable
-
-  lua man = require("man")
-  luado return man.highlight_formatted(line, linenr)
-
-  let &modifiable = l:modifiable
 endfunction
 
 call s:init()
