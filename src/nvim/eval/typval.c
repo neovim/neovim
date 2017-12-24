@@ -284,6 +284,23 @@ void tv_list_drop_items(list_T *const l, listitem_T *const item,
   l->lv_idx_item = NULL;
 }
 
+/// Like tv_list_drop_items, but also frees all removed items
+void tv_list_remove_items(list_T *const l, listitem_T *const item,
+                          listitem_T *const item2)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tv_list_drop_items(l, item, item2);
+  for(listitem_T *li = item;;) {
+    tv_clear(TV_LIST_ITEM_TV(li));
+    listitem_T *const nli = li->li_next;
+    xfree(li);
+    if (li == item2) {
+      break;
+    }
+    li = nli;
+  }
+}
+
 /// Move items "item" to "item2" from list "l" to the end of the list "tgt_l"
 ///
 /// @param[out]  l  List to move from.

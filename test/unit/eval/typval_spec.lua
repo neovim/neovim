@@ -444,6 +444,77 @@ describe('typval.c', function()
         alloc_log:check({})
       end)
     end)
+    describe('remove_items()', function()
+      itp('works', function()
+        local l_tv = lua2typvalt({'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'})
+        local l = l_tv.vval.v_list
+        local lis = list_items(l)
+        local strings = map(function(li) return li.li_tv.vval.v_string end, lis)
+        -- Three watchers: pointing to first, middle and last elements.
+        local lws = {
+          list_watch(l, lis[1]),
+          list_watch(l, lis[7]),
+          list_watch(l, lis[13]),
+        }
+        alloc_log:clear()
+
+        lib.tv_list_remove_items(l, lis[1], lis[3])
+        eq({'4', '5', '6', '7', '8', '9', '10', '11', '12', '13'}, typvalt2lua(l_tv))
+        eq({lis[4], lis[7], lis[13]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
+        alloc_log:check({
+          a.freed(strings[1]),
+          a.freed(lis[1]),
+          a.freed(strings[2]),
+          a.freed(lis[2]),
+          a.freed(strings[3]),
+          a.freed(lis[3]),
+        })
+
+        lib.tv_list_remove_items(l, lis[11], lis[13])
+        eq({'4', '5', '6', '7', '8', '9', '10'}, typvalt2lua(l_tv))
+        eq({lis[4], lis[7], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
+        alloc_log:check({
+          a.freed(strings[11]),
+          a.freed(lis[11]),
+          a.freed(strings[12]),
+          a.freed(lis[12]),
+          a.freed(strings[13]),
+          a.freed(lis[13]),
+        })
+
+        lib.tv_list_remove_items(l, lis[6], lis[8])
+        eq({'4', '5', '9', '10'}, typvalt2lua(l_tv))
+        eq({lis[4], lis[9], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
+        alloc_log:check({
+          a.freed(strings[6]),
+          a.freed(lis[6]),
+          a.freed(strings[7]),
+          a.freed(lis[7]),
+          a.freed(strings[8]),
+          a.freed(lis[8]),
+        })
+
+        lib.tv_list_remove_items(l, lis[4], lis[10])
+        eq(empty_list, typvalt2lua(l_tv))
+        eq({true, true, true}, {lws[1].lw_item == nil, lws[2].lw_item == nil, lws[3].lw_item == nil})
+        alloc_log:check({
+          a.freed(strings[4]),
+          a.freed(lis[4]),
+          a.freed(strings[5]),
+          a.freed(lis[5]),
+          a.freed(strings[9]),
+          a.freed(lis[9]),
+          a.freed(strings[10]),
+          a.freed(lis[10]),
+        })
+
+        lib.tv_list_watch_remove(l, lws[1])
+        lib.tv_list_watch_remove(l, lws[2])
+        lib.tv_list_watch_remove(l, lws[3])
+
+        alloc_log:check({})
+      end)
+    end)
     describe('insert', function()
       describe('()', function()
         itp('works', function()

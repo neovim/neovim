@@ -2887,26 +2887,25 @@ static int do_unlet_var(lval_T *const lp, char_u *const name_end, int forceit)
                                   lp->ll_name_len))) {
     return FAIL;
   } else if (lp->ll_range) {
-    listitem_T    *li;
-    listitem_T *ll_li = lp->ll_li;
-    int ll_n1 = lp->ll_n1;
-
-    while (ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= ll_n1)) {
-      li = TV_LIST_ITEM_NEXT(lp->ll_list, ll_li);
-      if (tv_check_lock(TV_LIST_ITEM_TV(ll_li)->v_lock,
+    // Delete a range of List items.
+    listitem_T *const first_li = lp->ll_li;
+    listitem_T *last_li = first_li;
+    for (;;) {
+      listitem_T *const li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
+      if (tv_check_lock(TV_LIST_ITEM_TV(lp->ll_li)->v_lock,
                         (const char *)lp->ll_name,
                         lp->ll_name_len)) {
         return false;
       }
-      ll_li = li;
-      ll_n1++;
-    }
-
-    // Delete a range of List items.
-    while (lp->ll_li != NULL && (lp->ll_empty2 || lp->ll_n2 >= lp->ll_n1)) {
-      lp->ll_li = tv_list_item_remove(lp->ll_list, lp->ll_li);
+      lp->ll_li = li;
       lp->ll_n1++;
+      if (lp->ll_li == NULL || (!lp->ll_empty2 && lp->ll_n2 < lp->ll_n1)) {
+        break;
+      } else {
+        last_li = lp->ll_li;
+      }
     }
+    tv_list_remove_items(lp->ll_list, first_li, last_li);
   } else {
     if (lp->ll_list != NULL) {
       // unlet a List item.
@@ -13123,16 +13122,13 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }   /* while */
 
-  /*
-   * For a negative line count use only the lines at the end of the file,
-   * free the rest.
-   */
-  if (maxline < 0)
-    while (cnt > -maxline) {
-      tv_list_item_remove(rettv->vval.v_list,
-                          tv_list_first(rettv->vval.v_list));
-      cnt--;
-    }
+  // For a negative line count use only the lines at the end of the file,
+  // free the rest.
+  if (maxline < -tv_list_len(rettv->vval.v_list)) {
+    listitem_T *const first_li = tv_list_find(rettv->vval.v_list, maxline);
+    listitem_T *const last_li = tv_list_last(rettv->vval.v_list);
+    tv_list_remove_items(rettv->vval.v_list, first_li, last_li);
+  }
 
   xfree(prev);
   fclose(fd);
