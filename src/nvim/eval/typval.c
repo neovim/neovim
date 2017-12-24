@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -755,6 +756,47 @@ void tv_list_reverse(list_T *const l)
 #undef SWAP
 
   l->lv_idx = l->lv_len - l->lv_idx - 1;
+}
+
+// FIXME Add unit tests for tv_list_item_sort().
+
+/// Sort list using libc qsort
+///
+/// @param[in,out]  l  List to sort, will be sorted in-place.
+/// @param  ptrs  Preallocated array of items to sort, must have at least
+///               tv_list_len(l) entries. Should not be initialized.
+/// @param[in]  item_compare_func  Function used to compare list items.
+/// @param  errp  Location where information about whether error occurred is
+///               saved by item_compare_func. If boolean there appears to be
+///               true list will not be modified. Must be initialized to false
+///               by the caller.
+void tv_list_item_sort(list_T *const l, ListSortItem *const ptrs,
+                       const ListSorter item_compare_func,
+                       bool *errp)
+  FUNC_ATTR_NONNULL_ARG(3, 4)
+{
+  const int len = tv_list_len(l);
+  if (len <= 1) {
+    return;
+  }
+  int i = 0;
+  TV_LIST_ITER(l, li, {
+    ptrs[i].item = li;
+    ptrs[i].idx = i;
+    i++;
+  });
+  // Sort the array with item pointers.
+  qsort(ptrs, (size_t)len, sizeof(ListSortItem), item_compare_func);
+  if (!(*errp)) {
+    // Clear the list and append the items in the sorted order.
+    l->lv_first    = NULL;
+    l->lv_last     = NULL;
+    l->lv_idx_item = NULL;
+    l->lv_len      = 0;
+    for (i = 0; i < len; i++) {
+      tv_list_append(l, ptrs[i].item);
+    }
+  }
 }
 
 //{{{2 Indexing/searching

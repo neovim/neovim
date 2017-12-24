@@ -2421,9 +2421,11 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
       if (TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li) == NULL) {
         // Need to add an empty item.
         tv_list_append_number(lp->ll_list, 0);
-        assert(TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li));
+        // ll_li may have become invalid after append, don’t use it.
+        lp->ll_li = tv_list_last(lp->ll_list);  // Valid again.
+      } else {
+        lp->ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
       }
-      lp->ll_li = TV_LIST_ITEM_NEXT(lp->ll_list, lp->ll_li);
       lp->ll_n1++;
     }
     if (ri != NULL) {
@@ -4528,7 +4530,7 @@ eval_index (
           item = tv_list_find(rettv->vval.v_list, n1);
           while (n1++ <= n2) {
             tv_list_append_tv(l, TV_LIST_ITEM_TV(item));
-            item = TV_LIST_ITEM_NEXT(l, item);
+            item = TV_LIST_ITEM_NEXT(rettv->vval.v_list, item);
           }
           tv_clear(rettv);
           rettv->v_type = VAR_LIST;
@@ -12529,12 +12531,12 @@ static void f_matcharg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   tv_list_alloc_ret(rettv);
 
-  int id = tv_get_number(&argvars[0]);
+  const int id = tv_get_number(&argvars[0]);
 
   if (id >= 1 && id <= 3) {
-    matchitem_T *m;
+    matchitem_T *const m = (matchitem_T *)get_match(curwin, id);
 
-    if ((m = (matchitem_T *)get_match(curwin, id)) != NULL) {
+    if (m != NULL) {
       tv_list_append_string(rettv->vval.v_list,
                             (const char *)syn_id2name(m->hlg_id), -1);
       tv_list_append_string(rettv->vval.v_list, (const char *)m->pattern, -1);
@@ -15135,12 +15137,6 @@ static void f_sockconnect(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
 }
 
-/// struct used in the array that's given to qsort()
-typedef struct {
-  listitem_T *item;
-  int idx;
-} sortItem_T;
-
 /// struct storing information about current sort
 typedef struct {
   int item_compare_ic;
@@ -15161,8 +15157,8 @@ static sortinfo_T *sortinfo = NULL;
  */
 static int item_compare(const void *s1, const void *s2, bool keep_zero)
 {
-  sortItem_T *const si1 = (sortItem_T *)s1;
-  sortItem_T *const si2 = (sortItem_T *)s2;
+  ListSortItem *const si1 = (ListSortItem *)s1;
+  ListSortItem *const si2 = (ListSortItem *)s2;
 
   typval_T *const tv1 = TV_LIST_ITEM_TV(si1->item);
   typval_T *const tv2 = TV_LIST_ITEM_TV(si2->item);
@@ -15256,7 +15252,7 @@ static int item_compare_not_keeping_zero(const void *s1, const void *s2)
 
 static int item_compare2(const void *s1, const void *s2, bool keep_zero)
 {
-  sortItem_T  *si1, *si2;
+  ListSortItem *si1, *si2;
   int res;
   typval_T rettv;
   typval_T argv[3];
@@ -15269,8 +15265,8 @@ static int item_compare2(const void *s1, const void *s2, bool keep_zero)
     return 0;
   }
 
-  si1 = (sortItem_T *)s1;
-  si2 = (sortItem_T *)s2;
+  si1 = (ListSortItem *)s1;
+  si2 = (ListSortItem *)s2;
 
   if (partial == NULL) {
     func_name = sortinfo->item_compare_func;
@@ -15327,7 +15323,7 @@ static int item_compare2_not_keeping_zero(const void *s1, const void *s2)
  */
 static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 {
-  sortItem_T  *ptrs;
+  ListSortItem  *ptrs;
   long len;
   long i;
 
@@ -15417,42 +15413,21 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     }
 
     /* Make an array with each entry pointing to an item in the List. */
-    ptrs = xmalloc((size_t)(len * sizeof (sortItem_T)));
+    ptrs = xmalloc((size_t)(len * sizeof(ListSortItem)));
 
-    i = 0;
     if (sort) {
-      // sort(): ptrs will be the list to sort.
-      TV_LIST_ITER(l, li, {
-        ptrs[i].item = li;
-        ptrs[i].idx = i;
-        i++;
-      });
-
       info.item_compare_func_err = false;
-      // Test the compare function.
-      if ((info.item_compare_func != NULL
-           || info.item_compare_partial != NULL)
-          && item_compare2_not_keeping_zero(&ptrs[0], &ptrs[1])
-             == ITEM_COMPARE_FAIL) {
+      tv_list_item_sort(l, ptrs,
+                        ((info.item_compare_func == NULL
+                          && info.item_compare_partial == NULL)
+                         ? item_compare_not_keeping_zero
+                         : item_compare2_not_keeping_zero),
+                        &info.item_compare_func_err);
+      if (info.item_compare_func_err) {
         EMSG(_("E702: Sort compare function failed"));
-      } else {
-        // Sort the array with item pointers.
-        qsort(ptrs, (size_t)len, sizeof (sortItem_T),
-              (info.item_compare_func == NULL
-               && info.item_compare_partial == NULL ?
-               item_compare_not_keeping_zero :
-               item_compare2_not_keeping_zero));
-
-        if (!info.item_compare_func_err) {
-          // Clear the list and append the items in the sorted order.
-          tv_list_clear(l);
-          for (i = 0; i < len; i++) {
-            tv_list_append(l, ptrs[i].item);
-          }
-        }
       }
     } else {
-      int (*item_compare_func_ptr)(const void *, const void *);
+      ListSorter item_compare_func_ptr;
 
       // f_uniq(): ptrs will be a stack of items to remove.
       info.item_compare_func_err = false;
