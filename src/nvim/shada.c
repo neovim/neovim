@@ -2557,6 +2557,12 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     xfmark_T fm;
     jump_iter = mark_jumplist_iter(jump_iter, curwin, &fm);
 
+    if (fm.fmark.mark.lnum == 0) {
+      iemsgf("ShaDa: mark lnum zero (ji:%p, js:%p, len:%i)",
+             (void *)jump_iter, (void *)&curwin->w_jumplist[0],
+             curwin->w_jumplistlen);
+      continue;
+    }
     const buf_T *const buf = (fm.fmark.fnum == 0
                               ? NULL
                               : buflist_findnr(fm.fmark.fnum));
