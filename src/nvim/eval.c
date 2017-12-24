@@ -1534,8 +1534,8 @@ ex_let_vars (
     EMSG(_("E688: More targets than List items"));
     return FAIL;
   }
-  // l may actually be NULL, but it should fail with E688 or even earlier if you
-  // try to do ":let [] = v:_null_list".
+  // lt may actually be NULL, but it should fail with E688 or even earlier if
+  // you try to do ":let [] = v:_null_list".
   assert(l != NULL);
 
   listitem_T *item = tv_list_first(l);
@@ -1543,11 +1543,11 @@ ex_let_vars (
     arg = skipwhite(arg + 1);
     arg = ex_let_one(arg, TV_LIST_ITEM_TV(item), true, (const char_u *)",;]",
                      nextchars);
-    item = TV_LIST_ITEM_NEXT(l, item);
     if (arg == NULL) {
       return FAIL;
     }
 
+    item = TV_LIST_ITEM_NEXT(l, item);
     arg = skipwhite(arg);
     if (*arg == ';') {
       /* Put the rest of the list (may be empty) in the var after ';'.
@@ -1559,7 +1559,7 @@ ex_let_vars (
       }
 
       ltv.v_type = VAR_LIST;
-      ltv.v_lock = 0;
+      ltv.v_lock = VAR_UNLOCKED;
       ltv.vval.v_list = rest_list;
       tv_list_ref(rest_list);
 
@@ -13283,7 +13283,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     } else {
       if (argvars[2].v_type == VAR_UNKNOWN) {
         // Remove one item, return its value.
-        tv_list_remove_items(l, item, item);
+        tv_list_drop_items(l, item, item);
         *rettv = *TV_LIST_ITEM_TV(item);
         xfree(item);
       } else {

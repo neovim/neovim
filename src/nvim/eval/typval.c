@@ -71,7 +71,7 @@ listitem_T *tv_list_item_remove(list_T *const l, listitem_T *const item)
   FUNC_ATTR_NONNULL_ALL
 {
   listitem_T *const next_item = TV_LIST_ITEM_NEXT(l, item);
-  tv_list_remove_items(l, item, item);
+  tv_list_drop_items(l, item, item);
   tv_clear(TV_LIST_ITEM_TV(item));
   xfree(item);
   return next_item;
@@ -261,8 +261,8 @@ void tv_list_unref(list_T *const l)
 /// @param[out]  l  List to remove from.
 /// @param[in]  item  First item to remove.
 /// @param[in]  item2  Last item to remove.
-void tv_list_remove_items(list_T *const l, listitem_T *const item,
-                          listitem_T *const item2)
+void tv_list_drop_items(list_T *const l, listitem_T *const item,
+                        listitem_T *const item2)
   FUNC_ATTR_NONNULL_ALL
 {
   // Notify watchers.
@@ -296,7 +296,7 @@ void tv_list_move_items(list_T *const l, listitem_T *const item,
                         const int cnt)
   FUNC_ATTR_NONNULL_ALL
 {
-  tv_list_remove_items(l, item, item2);
+  tv_list_drop_items(l, item, item2);
   item->li_prev = tgt_l->lv_last;
   item2->li_next = NULL;
   if (tgt_l->lv_last == NULL) {

@@ -408,7 +408,7 @@ describe('typval.c', function()
         })
       end)
     end)
-    describe('remove_items()', function()
+    describe('drop_items()', function()
       itp('works', function()
         local l_tv = lua2typvalt({1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13})
         local l = l_tv.vval.v_list
@@ -421,19 +421,19 @@ describe('typval.c', function()
         }
         alloc_log:clear()
 
-        lib.tv_list_remove_items(l, lis[1], lis[3])
+        lib.tv_list_drop_items(l, lis[1], lis[3])
         eq({4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, typvalt2lua(l_tv))
         eq({lis[4], lis[7], lis[13]}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item})
 
-        lib.tv_list_remove_items(l, lis[11], lis[13])
+        lib.tv_list_drop_items(l, lis[11], lis[13])
         eq({4, 5, 6, 7, 8, 9, 10}, typvalt2lua(l_tv))
         eq({lis[4], lis[7], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
-        lib.tv_list_remove_items(l, lis[6], lis[8])
+        lib.tv_list_drop_items(l, lis[6], lis[8])
         eq({4, 5, 9, 10}, typvalt2lua(l_tv))
         eq({lis[4], lis[9], nil}, {lws[1].lw_item, lws[2].lw_item, lws[3].lw_item == nil and nil})
 
-        lib.tv_list_remove_items(l, lis[4], lis[10])
+        lib.tv_list_drop_items(l, lis[4], lis[10])
         eq(empty_list, typvalt2lua(l_tv))
         eq({true, true, true}, {lws[1].lw_item == nil, lws[2].lw_item == nil, lws[3].lw_item == nil})
 
