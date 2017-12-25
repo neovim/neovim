@@ -40,6 +40,7 @@ fi
 
 if [[ "${TRAVIS_OS_NAME}" == linux ]]; then
   echo "Install node (LTS)"
+  source ~/.nvm/nvm.sh
   nvm install --lts
   nvm use --lts
 fi
