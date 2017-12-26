@@ -14,25 +14,23 @@ readonly BRANCH_PREFIX="vim-"
 CREATED_FILES=()
 
 usage() {
-  echo "Helper script for porting Vim patches. For more information, see"
+  echo "Port Vim patches to Neovim"
   echo "https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim"
   echo
   echo "Usage:  ${BASENAME} [-h | -l | -p vim-revision | -r pr-number]"
   echo
   echo "Options:"
   echo "    -h                 Show this message and exit."
-  echo "    -l                 Show list of missing Vim patches."
-  echo "    -L                 Print missing Vim patches in machine-readable form."
-  echo "    -p {vim-revision}  Download and generate the specified Vim patch."
-  echo "                       vim-revision can be a version number '8.0.xxx'"
-  echo "                       or a valid Git ref (hash, tag, etc.)."
-  echo "    -P {vim-revision}  Download, generate and apply the Vim patch."
-  echo "    -g {vim-revision}  Download the Vim patch vim-revision."
-  echo "                       vim-revision can be a version number of the "
-  echo "                       format '7.4.xxx' or a Git commit hash."
-  echo "    -s                 Submit a vim-patch pull request to Neovim."
-  echo "    -r {pr-number}     Review a vim-patch pull request to Neovim."
-  echo '    -V                 Clones the Vim source code to $VIM_SOURCE_DIR.'
+  echo "    -l                 List missing Vim patches."
+  echo "    -L                 List missing Vim patches (for scripts)."
+  echo "    -M                 List all merged patch-numbers (at current v:version)."
+  echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
+  echo "                       can be a Vim version (8.0.xxx) or a Git hash."
+  echo "    -P {vim-revision}  Download, generate and apply a Vim patch."
+  echo "    -g {vim-revision}  Download a Vim patch."
+  echo "    -s                 Create a vim-patch pull request."
+  echo "    -r {pr-number}     Review a vim-patch pull request."
+  echo '    -V                 Clone the Vim source code to $VIM_SOURCE_DIR.'
   echo
   echo '    $VIM_SOURCE_DIR controls where Vim sources are found'
   echo "    (default: '${VIM_SOURCE_DIR_DEFAULT}')"
@@ -334,7 +332,7 @@ list_vim_commits() { (
   cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD
 ) }
 
-# Prints all "vim-patch:xxx" tokens found in the Nvim git log.
+# Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
 list_vimpatch_tokens() {
   local tokens
   # Find all "vim-patch:xxx" tokens in the Nvim git log.
@@ -343,6 +341,15 @@ list_vimpatch_tokens() {
     | sed 's/.*\(vim-patch:[.0-9a-z]\+\).*/\1/' \
     | sort \
     | uniq
+}
+
+# Prints all patch-numbers (for the current v:version) for which there is
+# a "vim-patch:xxx" token in the Nvim git log.
+list_vimpatch_numbers() {
+  # Transform "vim-patch:X.Y.ZZZZ" to "ZZZZ".
+  list_vimpatch_tokens | while read vimpatch_token; do
+    echo "$vimpatch_token" | grep '8\.0\.' | sed 's/.*vim-patch:8\.0\.\([0-9a-z]\+\).*/\1/'
+  done
 }
 
 # Prints a newline-delimited list of Vim commits, for use by scripts.
@@ -494,7 +501,7 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlLVp:P:g:r:s" opt; do
+while getopts "hlLMVp:P:g:r:s" opt; do
   case ${opt} in
     h)
       usage
@@ -506,6 +513,10 @@ while getopts "hlLVp:P:g:r:s" opt; do
       ;;
     L)
       list_missing_vimpatches
+      exit 0
+      ;;
+    M)
+      list_vimpatch_numbers
       exit 0
       ;;
     p)
