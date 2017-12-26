@@ -129,9 +129,9 @@ cb.textDocument.hover = function(success, data)
   end
 
   -- TODO: Use floating windows when they become available
+  local long_string = ''
   if data.contents ~= nil then
     if util.is_array(data.contents) == true then
-      local long_string = ''
       for _, item in ipairs(data.contents) do
         local value
         if type(item) == 'table' then
@@ -144,13 +144,13 @@ cb.textDocument.hover = function(success, data)
       end
 
       log.debug('Hover: ', long_string)
-      vim.api.nvim_command('echon "' .. long_string .. '"')
       -- vim.api.nvim_out_write(long_string)
     else
-      vim.api.nvim_out_write(data.contents.value)
+      long_string = long_string .. data.contents.value
     end
 
-    -- vim.api.nvim_out_write("\n")
+    vim.api.nvim_command('echon "' .. long_string .. '"')
+    return long_string
   end
 
 end

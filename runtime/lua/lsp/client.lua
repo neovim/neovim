@@ -105,40 +105,21 @@ end
 -- @param cb (optional): If sent, will call this when it's done
 --                          otherwise it'll wait til the client is done
 client.request = function(self, method, params, cb)
-  local timeout = 2
-
   if not method then
     return nil
   end
 
-  if cb == nil then
-    cb = get_callback_function(method)
-  elseif type(cb) == 'string' then
-    -- When we pass a string, that's a VimL function that we want to call
-    -- so we create a callback function to run it.
-    --
-    --      See: |lsp#request()|
-    cb = function(success, data)
-      return vim.api.nvim_call_function(cb, {success, data})
-    end
-  end
-
-  -- TODO: Wait for this to complete
   local request_id = self:request_async(method, params, cb)
 
-  local later = os.time() + timeout
-  while (os.time() > later) or (self._results[request_id] ~= nil) do end
+  -- TODO(tjdevries): Make this configurable to the user
+  local timeout = 5
+  local later = os.clock() + timeout
 
-  if self._results[request_id] == nil then
-    log.trace('__current_results: ', self._results)
-    log.trace('__expected_request: ', request_id)
-    return nil
+  while (os.clock() < later) and (self._results[request_id]  == nil) do
+    vim.api.nvim_command('sleep 10m')
   end
 
-  local result = self._results[request_id].result
-  self._results[request_id] = nil
-
-  return  result
+  return self._results[request_id].result
 end
 --- Sends an async request to the client.
 -- If a callback is passed,
@@ -153,9 +134,24 @@ end
 -- @param method (string|table) : The identifier for the type of message that is being requested
 -- @param params (table)        : Optional parameters to pass to override default parameters for a request
 -- @param cb     (function)     : An optional function pointer to call once the request has been completed
+--                                  If a string is passed, it will execute a VimL funciton of that name
+--                                  To disable handling the request, pass "false"
 client.request_async = function(self, method, params, cb)
   local req = message.RequestMessage:new(self, method, params)
 
+  if cb == nil then
+    cb = get_callback_function(method)
+  elseif type(cb) == 'string' then
+    -- When we pass a string, that's a VimL function that we want to call
+    -- so we create a callback function to run it.
+    --
+    --      See: |lsp#request()|
+    cb = function(success, data)
+      return vim.api.nvim_call_function(cb, {success, data})
+    end
+  end
+
+  -- After handling callback semantics, store it to call on reply.
   if cb then
     self._callbacks[req.id] = cb
   end
@@ -308,7 +304,8 @@ client.on_message = function(self, json_message)
 
       self._results[json_message.id] = {
         complete = true,
-        err = err,
+        was_error = true,
+        result = err,
       }
     else
       local result = cb(true, json_message.result)
@@ -316,6 +313,7 @@ client.on_message = function(self, json_message)
 
       self._results[json_message.id] = {
         complete = true,
+        was_error = false,
         result = result
       }
     end
