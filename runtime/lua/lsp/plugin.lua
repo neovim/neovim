@@ -1,19 +1,16 @@
 -- luacheck: globals vim
 
-local get_callback_function = require('runtime.lua.lsp.callbacks').get_callback_function
 local ClientObject = require ('runtime.lua.lsp.client')
 
 local log = require('neovim.log')
 local lsp_util = require('runtime.lua.lsp.util')
 
+local client_map = {}
+
 local plugin = {
   client = {},
   helpers = {},
 }
-
-
--- Helpers
-local client_map = {}
 
 plugin.helpers.get_command = function(cmd, filetype)
   if cmd ~= nil then
@@ -23,7 +20,6 @@ plugin.helpers.get_command = function(cmd, filetype)
   filetype = lsp_util.get_filetype(filetype)
   return plugin.client.get_configuration(filetype).command
 end
-
 plugin.helpers.get_arguments = function(args, filetype)
   filetype = lsp_util.get_filetype(filetype)
 
@@ -33,24 +29,18 @@ plugin.helpers.get_arguments = function(args, filetype)
 
   return plugin.client.get_configuration(filetype).arguments
 end
+plugin.client.get = function(filetype)
+  filetype = lsp_util.get_filetype(filetype)
 
-plugin.client.get_callback = function(name, cb)
-  -- If we actually have a callback, then pass it
-  if cb then
-    return cb
-  end
-
-  return get_callback_function(name)
+  -- TODO: Throw error if no client started?
+  return client_map[filetype]
 end
-
 plugin.client.add = function(ftype, configuration)
   vim.api.nvim_call_function('lsp#client#add', {ftype, configuration})
 end
-
 plugin.client.get_configuration = function(ftype)
   return vim.api.nvim_call_function('lsp#client#get_configuration', {ftype})
 end
-
 plugin.client.start = function(cmd, args, filetype)
   filetype = lsp_util.get_filetype(filetype)
   cmd = plugin.helpers.get_command(cmd, filetype)
@@ -75,34 +65,19 @@ plugin.client.start = function(cmd, args, filetype)
 
   return client
 end
-
--- TODO(tjdevries): Asyncify this, it seems to not read if I just send it
---          Wait until we can use job control to worry about that
-plugin.client.request = function(name, args, filetype, cb)
-  local result = plugin.client.get(filetype):request(name, args)
-
-  log.debug('getting callback')
-  local final_cb = plugin.client.get_callback(name, cb)
-
-  if final_cb then
-    log.debug('calling callback')
-    return final_cb(result)
-  else
-    return nil
-  end
+plugin.client.request = function(name, args, cb, filetype)
+  return plugin.client.get(filetype):request(name, args, cb)
 end
-
-plugin.client.get = function(filetype)
-  filetype = lsp_util.get_filetype(filetype)
-
-  -- TODO: Throw error if no client started?
-  return client_map[filetype]
+plugin.client.request_async = function(name, args, cb, filetype)
+  plugin.client.get(filetype):request_async(name, args, cb)
 end
-
+plugin.client.wait_request = function(request_id, filetype)
+  return plugin.client.get(filetype)._results[request_id]
+end
 -- Non-client commands
 -- Determines if a request is supported or not
 plugin.is_supported_request = function(request_name)
-  return get_callback_function(request_name) ~= nil
+  return require('lsp.callbacks').get_callback_function(request_name) ~= nil
 end
 
 return plugin
