@@ -7,8 +7,8 @@
 -- Also has a function to setup all the autocommands
 
 -- local requests = require('runtime.lua.lsp.request').requests
-local log = require('runtime.lua.log')
-local util = require('runtime.lua.builtin_util')
+local log = require('neovim.log')
+local util = require('neovim.util')
 
 
 local autocmd_table = {

@@ -3,7 +3,7 @@
 local get_callback_function = require('runtime.lua.lsp.callbacks').get_callback_function
 local ClientObject = require ('runtime.lua.lsp.client')
 
-local log = require('runtime.lua.log')
+local log = require('neovim.log')
 local lsp_util = require('runtime.lua.lsp.util')
 
 local plugin = {

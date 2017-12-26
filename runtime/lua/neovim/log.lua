@@ -46,7 +46,7 @@ for name in pairs(levels) do
   log[name] = function(...)
     local message = ''
     for _, arg in ipairs({...}) do
-      message = message .. require('runtime.lua.builtin_util').tostring(arg)
+      message = message .. require('neovim.util').tostring(arg)
     end
 
     local info = debug.getinfo(2, "Sl")
