@@ -26,8 +26,8 @@
 --
 --  TODO: documentLink/resolve
 
-local log = require('runtime.lua.log')
-local util = require('runtime.lua.builtin_util')
+local log = require('neovim.log')
+local util = require('neovim.util')
 local lsp_util = require('runtime.lua.lsp.util')
 
 local protocol = require('lsp.protocol')

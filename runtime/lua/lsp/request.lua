@@ -16,7 +16,7 @@
 --
 --          @returns (table): The resulting params for the request
 
-local nvim_util = require('runtime.lua.builtin_util')
+local nvim_util = require('neovim.util')
 local structures = require('runtime.lua.lsp.structures')
 
 local requests = {

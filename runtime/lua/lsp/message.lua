@@ -2,9 +2,9 @@
 --  Do the decoding from the message class?
 
 local json = require('lsp.json')
-local util = require('runtime.lua.builtin_util')
+local util = require('neovim.util')
 
-local log = require('runtime.lua.lsp.lsp').log
+local log = require('neovim.log')
 local get_request_function = require('runtime.lua.lsp.request').get_request_function
 
 local Message = {
@@ -37,6 +37,8 @@ local request_mt = { __index = RequestMessage }
 setmetatable(RequestMessage, { __index = Message })
 
 function RequestMessage:new(client, method, params)
+  assert(self)
+
   log.debug(
     string.format('Creating new request method with: %s, %s, (default) %s',
       util.tostring(client), util.tostring(method), util.tostring(params)
@@ -80,10 +82,17 @@ local response_mt = { __index = ResponseMessage }
 setmetatable(ResponseMessage, { __index = Message })
 
 function ResponseMessage:new(client, result, err)
+  assert(self)
+
   result = result or nil
   err = err or {}
 
-  local object = {id=get_id(client), result=result, error=err}
+  local object = {
+    id = get_id(client),
+    result = result,
+    ['error'] = err
+  }
+
   setmetatable(object, response_mt)
   return object
 end
@@ -93,6 +102,8 @@ local response_err_mt = { __index = ResponseError }
 setmetatable(ResponseError, response_err_mt)
 
 function ResponseError:new()
+  assert(self)
+
   return {}
 end
 
