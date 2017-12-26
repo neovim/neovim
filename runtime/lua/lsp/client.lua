@@ -113,6 +113,14 @@ client.request = function(self, method, params, cb)
 
   if cb == nil then
     cb = get_callback_function(method)
+  elseif type(cb) == 'string' then
+    -- When we pass a string, that's a VimL function that we want to call
+    -- so we create a callback function to run it.
+    --
+    --      See: |lsp#request()|
+    cb = function(success, data)
+      return vim.api.nvim_call_function(cb, {success, data})
+    end
   end
 
   -- TODO: Wait for this to complete

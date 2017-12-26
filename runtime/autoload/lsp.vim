@@ -34,3 +34,15 @@ function! lsp#request(request, ...) abort
 
   return result
 endfunction
+
+""
+" Give access to the default client callbacks to perform
+" LSP type actions, without a server
+function! lsp#handle(request, data) abort abort
+  " Gets the default callback,
+  " and then calls it with the provided data
+  return luaeval(s:client_string . '.get_callback(_A.name)(true, _A.data)', {
+        \ 'name': a:request,
+        \ 'data': a:data,
+        \ })
+endfunction

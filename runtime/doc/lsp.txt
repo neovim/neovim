@@ -73,15 +73,18 @@ lsp#request({request_name}, {arguments}, [optional_callback], [server])
             The callback must be a string with the name of the vimscript
             function to call. The signature must be:
 
-                `func_name(data, err)`
+                `func_name(success, data)`
 
-            where both {data} and {err} are dictionaries containing the
-            possible response data or error data as specified by the language
-            server protocol.
+            where {success} is a boolean where true means successful request
+            and false means the request failed.
+
+            The parameter {data} is a dictionary containing the possible
+            response data (or error) data as specified by the language server
+            protocol.
 
             The callback will be executed from lua running:
 
-                `vim.api.nvim_call_function('func_name', { data, err })`
+                `vim.api.nvim_call_function('func_name', { success, data })`
 
             [server]: The name of the server. This will default to the
             language server associated with the current |filetype| if nothing
@@ -127,5 +130,40 @@ lsp#client#add({ftype}, {configuration}):
             `command`     (string):   The command to start the server
             `arguments`   (list):     Any arguments to pass to the server
 
+================================================================================
+                                                            *lsp-handle-request*
+
+The callbacks used to handle the responses and requests of the language server
+protocol are exposed to users of Neovim to allow them to replicate these
+actions easily and idiomatically.
+
+For example, if a plugin author wants to replicate the hover functionality of
+"textDocument/hover" without wanting to maintain an implementation and cater
+to various users configuration preferences, the author of the plugin may use
+the Neovim's built-in LSP callbacks to perform the hovering action.
+
+To do so, the following APIs are provided:
+
+    In VimL, use:  >
+
+        call lsp#handle({request}, {data})
+<
+
+                                                                 *lsp#handle()*
+lsp#handle({request}, {data})
+    Used to provide API access to Neovim's language server protocol
+    implementation.
+
+    Parameters:~
+        {request}: The name of the request, i.e. 'textDocument/hover'
+
+        {data}: A dictionary containing the data that would normally be in the
+        response section for the particular {request}.
+
+    Example:~
+>
+        " Display "Hello", "World" on two lines
+        call lsp#handle('textDocument/hover', {'content': ['Hello', 'World']})
+<
 
  vim:tw=78:ts=8:ft=help:norl:
