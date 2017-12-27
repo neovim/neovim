@@ -70,6 +70,7 @@ Providers
   Ruby plugins			|provider-ruby|
 Shared data			|shada|
 Embedded terminal		|terminal|
+VimL parser			|nvim_parse_expression()|
 XDG base directories		|xdg|
 
 USER EXPERIENCE  ~
