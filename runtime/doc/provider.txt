@@ -20,31 +20,29 @@ Note: Only the Vim 7.3 API is supported; bindeval (Vim 7.4) is not.
 PYTHON QUICKSTART ~
 
 If you used a package manager to install Nvim, you might already have the
-required `neovim` Python package. Run |:checkhealth| to see if your system is
-up-to-date.
+required `neovim` Python package. Run |:checkhealth| to verify.
 
-Following are steps to install the package with Python's `pip` tool.
+Following are steps to install the package with Python `pip`.
 
-Note: Depending on your system, `pip` might refer to Python 2 or Python 3,
-      which is why the following instructions mention `pip2` or `pip3`
-      explicitly. If one of these is not available, try `pip`.
 
-To use Vim Python 2/3 plugins with Nvim:
 
-- For Python 2 plugins, make sure an interpreter for Python 2.6 or 2.7 is
-  available in your `$PATH`, then install the `neovim` Python package systemwide: >
+- For Python 2 plugins, make sure Python 2.7 is available in your `$PATH`,
+  then install the `neovim` Python package systemwide: >
     sudo pip2 install --upgrade neovim
 <
   or for the current user: >
     pip2 install --user --upgrade neovim
 <
-- For Python 3 plugins, make sure an interpreter for Python 3.3 or above is
-  available in your `$PATH`, then install the `neovim` Python package systemwide: >
+- For Python 3 plugins, make sure Python 3.4+ is available in your `$PATH`,
+  then install the `neovim` Python package systemwide: >
     sudo pip3 install --upgrade neovim
 <
   or for the current user: >
     pip3 install --user --upgrade neovim
 <
+Note: `pip` may refer to Python 2 or Python 3, so the instructions mention
+`pip2` or `pip3` explicitly. If one is missing, try `pip`.
+
 Note: The `--upgrade` flag ensures you have the latest version even if
 a previous version was already installed.
 

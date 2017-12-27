@@ -54,7 +54,7 @@ If
 is a function name, the file containing that function is opened
 with the cursor positioned at the start of the function.
 See
-.Ic :help tag-commands .
+.Ic ":help tag-commands" .
 .It Fl q Op Ar errorfile
 QuickFix mode.
 Display the first error in
@@ -67,7 +67,7 @@ Further errors can be jumped to with the
 .Ic :cnext
 command.
 See
-.Ic :help quickfix .
+.Ic ":help quickfix" .
 .It There are a number of other options:
 .It Fl -
 Interpret all further arguments as files.
@@ -76,21 +76,21 @@ Can be used to edit files starting with a hyphen
 .It Fl e
 Ex mode.  Reads stdin as Ex commands.
 See
-.Ic :help Ex-mode .
+.Ic ":help Ex-mode" .
 .It Fl E
 Ex mode, improved.  Reads stdin as text.
 See
 .Ic :help gQ .
 .It Fl es
 Silent (batch) mode.  Reads stdin as Ex commands.
-.It Fl Es
+.It Fl \&Es
 Silent (batch) mode.  Reads stdin as text.
 .It Fl d
 Diff mode.
 Show the difference between two to four files, similar to
 .Xr sdiff 1 .
 See
-.Ic :help diff .
+.Ic ":help diff" .
 .It Fl R
 Read-only mode.
 Sets the 'readonly' option.
@@ -101,7 +101,7 @@ associated with a file.
 To overwrite a file, add an exclamation mark to the relevant Ex command, such as
 .Ic :w! .
 See
-.Ic :help 'readonly' .
+.Ic ":help 'readonly'" .
 .It Fl Z
 Restricted mode.
 Disable commands that make use of an external shell.
@@ -114,7 +114,7 @@ modifications.
 .It Fl b
 Binary mode.
 See
-.Ic :help edit-binary .
+.Ic ":help edit-binary" .
 .It Fl l
 Lisp mode.
 Sets the 'lisp' and 'showmatch' options.
@@ -157,7 +157,7 @@ The swap file has the same name as the file it's associated with, but with
 .Sq .swp
 appended.
 See
-.Ic :help recovery .
+.Ic ":help recovery" .
 .It Fl L Op Ar file
 Alias for
 .Fl r .
@@ -178,7 +178,7 @@ is
 .Cm NONE ,
 loading plugins is also skipped.
 See
-.Ic :help initialization .
+.Ic ":help initialization" .
 .It Fl i Ar shada
 Use
 .Ar shada
@@ -190,7 +190,7 @@ is
 .Cm NONE ,
 do not read or write a ShaDa file.
 See
-.Ic :help shada .
+.Ic ":help shada" .
 .It Fl -noplugin
 Skip loading plugins.
 Implied by
@@ -244,7 +244,7 @@ and
 inside
 .Nm .
 See
-.Ic :help search-pattern .
+.Ic ":help search-pattern" .
 .It Fl c Ar command
 Execute
 .Ar command
@@ -281,12 +281,12 @@ is omitted then
 .Pa Session.vim
 is used, if found.
 See
-.Ic :help session-file .
+.Ic ":help session-file" .
 .It Fl s Ar scriptin
 Read normal mode commands from
 .Ar scriptin .
 The same can be done with the command
-.Ic :source! scriptin .
+.Ic ":source! scriptin" .
 If the end of the file is reached before
 .Nm
 exits, further characters are read from the keyboard.
@@ -353,7 +353,7 @@ quit immediately after starting, set
 to
 .Cm q .
 See
-.Ic :help VIMINIT .
+.Ic ":help VIMINIT" .
 .It Ev SHELL
 Used to initialize the 'shell' option, which decides the default shell used by
 features like
@@ -389,7 +389,7 @@ Most of Vim was written by
 .An -nosplit
 .An Bram Moolenaar .
 See
-.Ic :help credits .
+.Ic ":help credits" .
 Vim is based on Stevie, worked on by
 .An Tim Thompson ,
 .An Tony Andrews ,

@@ -126,10 +126,14 @@ all data has been processed:
 For additional examples with jobs, see |job-control|.
 
 							      *channel-pty*
-A special case is PTY channels opened by  `jobstart(..., {'pty': v:true})` .
-No preprocessing of ANSI escape sequences is done, these will be sent raw to
-the callback. However, change of PTY size can be signaled to the slave using
-|jobresize()|. See also |terminal-emulator|.
+Special case: PTY channels opened with `jobstart(..., {'pty': v:true})` do not
+preprocess ANSI escape sequences, these will be sent raw to the callback.
+However, change of PTY size can be signaled to the slave using |jobresize()|.
+See also |terminal-emulator|.
+
+Terminal characteristics (termios) for |:terminal| and PTY channels are copied
+from the host TTY, or if Nvim is |--headless| it uses default values: >
+    :echo system('nvim --headless +"te stty -a" +"sleep 1" +"1,/^$/print" +q')
 
 ==============================================================================
 3. Communicating using msgpack-rpc			      *channel-rpc*
@@ -140,37 +144,27 @@ rpc channels are implicitly trusted and the process at the other end can
 invoke any |api| function!
 
 ==============================================================================
-4. Using the stdio channel				    *channel-stdio*
+4. Standard IO channel					    *channel-stdio*
 
-When invoked normally, nvim will use stdin and stdout to interact with the
-user over the terminal interface (TUI). However when invoked with
-`--headless`, the TUI is not started and stdin and stdout can be used as a
-channel. To open the stdio channel |stdioopen()| must be called during
-|startup|, as there later will be no way of invoking a command.  As a
-convenience, the stdio channel will always have channel id 1.
+Nvim uses stdin/stdout to interact with the user over the terminal interface
+(TUI). If Nvim is |--headless| the TUI is not started and stdin/stdout can be
+used as a channel. See also |--embed|.
 
-Here is an example:
->
+Call |stdioopen()| during |startup| to open the stdio channel as channel-id 1.
+Nvim's stderr is always available as channel-id 2 (|v:stderr| to be explicit),
+a write-only bytes channel.
+
+Example: >
     func! OnEvent(id, data, event)
       if a:data == [""]
-	quit
+        quit
       end
       call chansend(a:id, map(a:data, {i,v -> toupper(v)}))
     endfunc
-
     call stdioopen({'on_stdin': 'OnEvent'})
 <
-Put this in `uppercase.vim` and invoke nvim with
->
+Put this in `uppercase.vim` and run:  >
     nvim --headless --cmd "source uppercase.vim"
-<
-								*--embed*
-An common use case is another program embedding nvim and communicating with it
-over rpc. Therefore, the option `--embed` exists as a shorthand for
-`nvim --headless --cmd "call stdioopen({'rpc': v:true})"`
-
-Nvim's stderr is implicitly open as a write-only bytes channel. It will
-always have channel id 2, however to be explicit |v:stderr| can be used.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

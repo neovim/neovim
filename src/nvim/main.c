@@ -236,7 +236,7 @@ int main(int argc, char **argv)
   char_u *fname = NULL;   // file name from command line
   mparm_T params;         // various parameters passed between
                           // main() and other functions.
-  char_u *cwd = NULL;     // current workding dir on startup
+  char_u *cwd = NULL;     // current working dir on startup
   time_init();
 
   // Many variables are in `params` so that we can pass them around easily.

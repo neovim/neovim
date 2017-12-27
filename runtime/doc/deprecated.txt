@@ -12,10 +12,6 @@ updated.
 
 ==============================================================================
 
-Normal commands ~
-*]f*
-*[f*			Same as "gf".
-
 Commands ~
 *:rv*
 *:rviminfo*		Deprecated alias to |:rshada| command.
@@ -51,6 +47,10 @@ Modifiers ~
 *:map-<special>*
 *:map-special*		<> notation is always enabled. |cpo-<|
 
+Normal commands ~
+*]f*
+*[f*			Same as "gf".
+
 Options ~
 *'cscopeverbose'*	Enabled by default. Use |:silent| instead.
 'gd'
@@ -60,5 +60,9 @@ Options ~
 *'langnoremap'*		Deprecated alias to 'nolangremap'.
 *'vi'*
 *'viminfo'*		Deprecated alias to 'shada' option.
+
+Variables~
+*b:terminal_job_pid*	PID of the top-level process in a |:terminal|.
+			Use `jobpid(&channel)` instead.
 
  vim:noet:tw=78:ts=8:ft=help:norl:

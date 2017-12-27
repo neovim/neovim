@@ -7265,10 +7265,8 @@ stdioopen({opts})			 *stdioopen()*
 
 
 stdpath({what})					*stdpath()* *E6100*
-		Returns the standard path(s) for {what}.
-
-		These directories are the default locations for various files
-		used by Neovim.
+		Returns |standard-path| locations of various default files and
+		directories.
 
 		{what}       Type    Description ~
 		cache        String  Cache directory. Useful for plugins
@@ -8609,18 +8607,36 @@ See |:verbose-cmd| for more information.
 			implies that the effect of |:nohlsearch| is undone
 			when the function returns.
 
-					*:endf* *:endfunction* *E126* *E193*
-:endf[unction]		The end of a function definition.  Must be on a line
-			by its own, without other commands.
+				*:endf* *:endfunction* *E126* *E193* *W22*
+:endf[unction] [argument]
+			The end of a function definition.  Best is to put it
+			on a line by its own, without [argument].
 
-				    *:delf* *:delfunction* *E130* *E131* *E933*
-:delf[unction] {name}	Delete function {name}.
+			[argument] can be:
+				| command	command to execute next
+				\n command	command to execute next
+				" comment	always ignored
+				anything else	ignored, warning given when
+						'verbose' is non-zero
+			The support for a following command was added in Vim
+			8.0.0654, before that any argument was silently
+			ignored.
+
+			To be able to define a function inside an `:execute`
+			command, use line breaks instead of |:bar|: >
+				:exe "func Foo()\necho 'foo'\nendfunc"
+<
+				*:delf* *:delfunction* *E130* *E131* *E933*
+:delf[unction][!] {name}
+			Delete function {name}.
 			{name} can also be a |Dictionary| entry that is a
 			|Funcref|: >
 				:delfunc dict.init
-<			This will remove the "init" entry from "dict".	The
+<			This will remove the "init" entry from "dict".  The
 			function is deleted if there are no more references to
 			it.
+			With the ! there is no error if the function does not
+			exist.
 							*:retu* *:return* *E133*
 :retu[rn] [expr]	Return from a function.  When "[expr]" is given, it is
 			evaluated and returned as the result of the function.

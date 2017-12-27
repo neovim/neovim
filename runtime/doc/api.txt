@@ -16,26 +16,23 @@ Applications can also embed libnvim to work with the C API directly.
 ==============================================================================
 API Types							   *api-types*
 
-Nvim's C API uses custom types for all functions. Some are just typedefs
-around C99 standard types, and some are Nvim-defined data structures.
+The Nvim C API defines custom types for all function parameters. Some are just
+typedefs around C99 standard types, others are Nvim-defined data structures.
 
-Boolean				  -> bool
-Integer (signed 64-bit integer)	  -> int64_t
-Float (IEEE 754 double precision) -> double
-String				  -> {char* data, size_t size} struct
-
-Additionally, the following data structures are defined:
-
-Array
-Dictionary
-Object
+  Boolean				-> bool
+  Integer (signed 64-bit integer)	-> int64_t
+  Float (IEEE 754 double precision)	-> double
+  String				-> {char* data, size_t size} struct
+  Array
+  Dictionary
+  Object
 
 The following handle types are defined as integer typedefs, but are
 discriminated as separate types in an Object:
 
-Buffer				  -> enum value kObjectTypeBuffer
-Window				  -> enum value kObjectTypeWindow
-Tabpage				  -> enum value kObjectTypeTabpage
+  Buffer				-> enum value kObjectTypeBuffer
+  Window				-> enum value kObjectTypeWindow
+  Tabpage				-> enum value kObjectTypeTabpage
 
 ==============================================================================
 API metadata							 *api-metadata*
@@ -60,10 +57,14 @@ External programs ("clients") can use the metadata to discover the |rpc-api|.
 ==============================================================================
 API contract                                                     *api-contract*
 
-The API is made of functions and events. Clients call functions like those
-described at |api-global|, and may "attach" to receive rich |ui-events|.
+The Nvim API is composed of functions and events.
 
-As Nvim develops, its API may change only according the following "contract":
+- Clients call functions like those described at |api-global|.
+- Clients can subscribe to |ui-events|, |api-buffer-updates|, etc.
+- API function names are prefixed with "nvim_".
+- API event names are prefixed with "nvim_" and suffixed with "_event".
+
+As Nvim evolves the API may change in compliance with this CONTRACT:
 
 - New functions and events may be added.
   - Any such extensions are OPTIONAL: old clients may ignore them.
