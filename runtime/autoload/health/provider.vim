@@ -370,10 +370,11 @@ function! s:check_python(version) abort
     let python_bin = ''
   endif
 
-  " Check if $VIRTUAL_ENV is active
-  let virtualenv_inactive = 0
 
+  " Check if $VIRTUAL_ENV is active.
   if exists('$VIRTUAL_ENV')
+    let virtualenv_inactive = 0
+
     if !empty(pyenv)
       let pyenv_prefix = resolve(s:trim(s:system([pyenv, 'prefix'])))
       if $VIRTUAL_ENV != pyenv_prefix
@@ -382,13 +383,13 @@ function! s:check_python(version) abort
     elseif !empty(pyname) && exepath(pyname) !~# '^'.$VIRTUAL_ENV.'/'
       let virtualenv_inactive = 1
     endif
-  endif
 
-  if virtualenv_inactive
-    call health#report_warn(
-      \ '$VIRTUAL_ENV exists but appears to be inactive. '
-      \ . 'This could lead to unexpected results.',
-      \ [ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654/5229' ])
+    if virtualenv_inactive
+      call health#report_warn(
+        \ '$VIRTUAL_ENV exists but appears to be inactive. '
+        \ . 'This could lead to unexpected results.',
+        \ [ 'If you are using Zsh, see: http://vi.stackexchange.com/a/7654' ])
+    endif
   endif
 
   " Diagnostic output

@@ -114,7 +114,7 @@ let s:err = ''
 let s:prog = provider#node#Detect()
 
 if empty(s:prog)
-  let s:err = 'Cannot find the "neovim" node package. Try :CheckHealth'
+  let s:err = 'Cannot find the "neovim" node package. Try :checkhealth'
 endif
 
 call remote#host#RegisterPlugin('node-provider', 'node', [])
