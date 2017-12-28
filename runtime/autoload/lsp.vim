@@ -1,20 +1,24 @@
 let s:client_string = "require('lsp.plugin').client"
 
-let s:filetypes_initialized = get(s:, 'filetypes_initialized', {})
-function! s:initialize_autocmds(ftype) abort
-  if has_key(s:filetypes_initialized, a:ftype)
+let s:autocmds_initialized = get(s:, 'autocmds_initialized ', v:false)
+function! s:initialize_autocmds() abort
+  if s:autocmds_initialized
     return
   endif
 
-  let s:filetypes_initialized[a:ftype] = 1
+  let s:autocmds_initialized = v:true
 
   augroup LanguageSeverProtocol
-    " autocmd BufWritePost
+    autocmd!
+    call luaeval('require("lsp.autocmds").export_autocmds()')
   augroup END
+
 endfunction
 
 " TODO(tjdevries): Add non-default arguments
 function! lsp#start() abort
+  call s:initialize_autocmds()
+
   return luaeval(s:client_string . ".start().name")
 endfunction
 
