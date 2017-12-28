@@ -5,7 +5,7 @@ local json = require('lsp.json')
 local util = require('neovim.util')
 
 local log = require('neovim.log')
-local get_request_function = require('runtime.lua.lsp.request').get_request_function
+local get_request_function = require('lsp.request').get_request_function
 
 local Message = {
   jsonrpc = "2.0"

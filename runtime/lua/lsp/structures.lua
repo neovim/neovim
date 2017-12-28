@@ -1,4 +1,4 @@
-local lsp_util = require('runtime.lua.lsp.util')
+local lsp_util = require('lsp.util')
 
 -- Helper functions
 local check_table = function (t)

@@ -1,10 +1,10 @@
 local json = require('lsp.json')
 local util = require('neovim.util')
 
-local protocol = require('runtime.lua.lsp.protocol')
-local message = require('runtime.lua.lsp.message')
-local lsp_doautocmd = require('runtime.lua.lsp.autocmds').lsp_doautocmd
-local get_callback_function = require('runtime.lua.lsp.callbacks').get_callback_function
+local protocol = require('lsp.protocol')
+local message = require('lsp.message')
+local lsp_doautocmd = require('lsp.autocmds').lsp_doautocmd
+local get_callback_function = require('lsp.callbacks').get_callback_function
 
 local log = require('neovim.log')
 

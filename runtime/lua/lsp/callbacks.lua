@@ -28,7 +28,7 @@
 
 local log = require('neovim.log')
 local util = require('neovim.util')
-local lsp_util = require('runtime.lua.lsp.util')
+local lsp_util = require('lsp.util')
 
 local protocol = require('lsp.protocol')
 local handle_completion = require('lsp.handle.completion')
