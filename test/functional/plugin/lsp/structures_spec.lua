@@ -159,13 +159,13 @@ describe('structures.lua', function()
       -- [bufnum, lnum, col, off, curswant]
       setpos(".", {0, 2, 1, 0})
 
-      check_1 = simple_structure_eval('Position')
+      local check_1 = simple_structure_eval('Position')
       eq(getpos('.'), {0, 2, 1, 0})
       eq({line=1, character=0}, check_1)
 
       command('normal! k^l')
 
-      check_2 = simple_structure_eval('Position')
+      local check_2 = simple_structure_eval('Position')
       eq(getpos('.'), {0, 1, 2, 0})
       eq({line=0, character=1}, check_2)
     end)

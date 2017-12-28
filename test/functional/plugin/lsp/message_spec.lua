@@ -1,72 +1,142 @@
--- luacheck: globals describe
--- luacheck: globals it
--- luacheck: globals before_each
--- luacheck: globals after_each
-
-local message = require('runtime.lua.lsp.message')
-local json = require('runtime.lua.json')
-
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local eq = helpers.eq
 local funcs = helpers.funcs
-local neq = helpers.neq
 -- local dedent = helpers.dedent
 -- local source = helpers.source
 
 before_each(clear)
 
-describe('Message', function()
-  local m = message.Message:new()
+local __require_message = function(message_name, argument_string, conf)
+  local require_string = string.format(
+    [[require('lsp.message').%s:new]],
+    message_name
+  )
 
+  if conf.attribute then
+    return funcs.luaeval(
+      string.format(
+        [[%s(%s).%s]],
+        require_string,
+        argument_string,
+        conf.attribute),
+      conf
+    )
+  end
+
+  if conf.property then
+    return funcs.luaeval(
+      string.format(
+        [[%s(%s):%s()]],
+        require_string,
+        argument_string,
+        conf.property
+        ),
+      conf
+    )
+  end
+
+  return funcs.luaeval(
+    string.format([[%s(%s)]], require_string, argument_string),
+    conf
+  )
+end
+
+local get_message = function(conf)
+  return __require_message('Message', '', conf)
+end
+describe('Message', function()
   it('should return attributes', function ()
-    eq(m.jsonrpc, "2.0")
+    local jsonrpc = get_message{
+      attribute = 'jsonrpc'
+    }
+    eq(jsonrpc, "2.0")
   end)
 end)
 
+local get_request = function(conf)
+  return __require_message('RequestMessage', '_A.name, _A.method, _A.params', conf)
+end
 describe('RequestMessage', function()
-  local req_string = "require('lsp.message').RequestMessage"
-  local r = message.RequestMessage:new('request_server', 'test', {param=1})
+  it('should return attributes: jsonrpc', function()
+    local r = get_request{
+      name = 'request_server',
+      method = 'test',
+      params = { param = 1 },
+      attribute = 'jsonrpc'
+    }
 
-  it('should return attributes', function()
-    eq(r.jsonrpc, "2.0")
-    eq(r.id, 0)
-    eq(r.method, 'test')
-    eq(r.params, {param=1})
-    -- TODO: More specific test
-    neq(r:json(), '')
+    eq(r, "2.0")
   end)
-
+  it('should return attributes: id', function()
+    local req_id = get_request{
+      name = 'request_server',
+      method = 'test',
+      params = { param = 1 },
+      attribute = 'id'
+    }
+    eq(req_id, 0)
+  end)
+  it('should return attributes: method', function ()
+    local method = get_request{
+      name = 'request_server',
+      method = 'test',
+      params = { param = 1 },
+      attribute = 'method'
+    }
+    eq(method, 'test')
+  end)
+  it('should return attributes: params', function ()
+    local params = get_request{
+      name = 'request_server',
+      method = 'test',
+      params = { param = 1 },
+      attribute = 'params',
+    }
+    eq(params, {param=1})
+  end)
   it('should give valid json', function()
-    eq('string', type(r:data()))
+    local data = get_request{
+      name = 'request_server',
+      method = 'test',
+      params = { param = 1 },
+      property = 'data',
+    }
+    eq('string', type(data))
   end)
-
   it('should handle auto populating values', function()
-    local json_value = funcs.luaeval(req_string .. ":new('request_server', 'textDocument/references'):json()")
-    local decoded = json.decode(json_value)
+    local json_value = get_request{
+      name = 'request_server',
+      method = 'textDocument/references',
+      property = 'json',
+    }
+
+    local decoded = funcs.json_decode(json_value)
     eq('textDocument/references', decoded.method)
     eq(true, decoded.params.context.includeDeclaration)
     eq({character = 0, line = 0}, decoded.params.position)
   end)
-
 end)
 
-describe('ResponseMessage', function()
-  local r_result = message.ResponseMessage:new('resp_server', true)
-  local r_error = message.ResponseMessage:new('resp_server', nil, message.ResponseError:new())
+-- local get_response = function(conf)
+--   return __require_message('ResponseMessage', '_A.name', )
+-- end
+-- describe('ResponseMessage', function()
+--   local r_result = message.ResponseMessage:new('resp_server', true)
+--   local r_error = message.ResponseMessage:new('resp_server', nil, message.ResponseError:new())
 
-  it('should return attributes', function()
-    eq("2.0", r_result.jsonrpc)
-    eq(0, r_result.id)
-    eq(true, r_result.result)
+--   it('should return attributes', function()
+--     eq("2.0", r_result.jsonrpc)
+--     eq(0, r_result.id)
+--     eq(true, r_result.result)
 
-    eq("2.0", r_error.jsonrpc)
-    eq(1, r_error.id)
-    eq(nil, r_error.result)
+--     eq("2.0", r_error.jsonrpc)
+--     eq(1, r_error.id)
+--     eq(nil, r_error.result)
 
-    -- TODO: Check the error
-    -- eq(r_error.err
-  end)
-end)
+--     -- TODO: Check the error
+--     -- eq(r_error.err
+--   end)
+-- end)
 
