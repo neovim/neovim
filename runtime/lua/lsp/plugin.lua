@@ -1,9 +1,9 @@
 -- luacheck: globals vim
 
-local ClientObject = require ('runtime.lua.lsp.client')
+local ClientObject = require ('lsp.client')
 
 local log = require('neovim.log')
-local lsp_util = require('runtime.lua.lsp.util')
+local lsp_util = require('lsp.util')
 
 local client_map = {}
 

@@ -17,7 +17,7 @@
 --          @returns (table): The resulting params for the request
 
 local nvim_util = require('neovim.util')
-local structures = require('runtime.lua.lsp.structures')
+local structures = require('lsp.structures')
 
 local requests = {
   textDocument = {},
