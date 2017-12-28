@@ -1,22 +1,36 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
-local eq = helpers.eq
-
-local plugin = require('runtime.lua.lsp.plugin')
-local callbacks = require('runtime.lua.lsp.callbacks').callbacks
+local source = helpers.source
+local dedent = helpers.dedent
 
 before_each(clear)
 
 describe('LSP plugin', function()
   describe('default callbacks', function()
     it('should return callbacks for things we have defined', function()
-      eq(callbacks.textDocument.references, plugin.client.get_callback('textDocument/references'))
+      source(dedent([[
+        lua << EOF
+          local plugin = require('lsp.plugin')
+          local callbacks = require('lsp.callbacks').callbacks
+          assert(
+            callbacks.textDocument.references == plugin.client.get_callback('textDocument/references')
+            )
+        EOF
+      ]]))
     end)
 
     it('should return the callback passed if given', function()
-      local testfunc = function() return 1 end
-      eq(testfunc, plugin.client.get_callback('textDocument/references', testfunc))
+      source(dedent([[
+        lua << EOF
+          local plugin = require('lsp.plugin')
+          local callbacks = require('lsp.callbacks').callbacks
+          local testfunc = function() return 1 end
+          assert(
+            testfunc == plugin.client.get_callback('textDocument/references', testfunc)
+          )
+        EOF
+      ]]))
     end)
   end)
 end)

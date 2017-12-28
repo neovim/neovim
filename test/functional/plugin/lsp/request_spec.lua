@@ -5,30 +5,48 @@
 
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
-local eq = helpers.eq
-
-local request = require('runtime.lua.lsp.request')
+local source = helpers.source
+local dedent = helpers.dedent
 
 before_each(clear)
-
 describe('get_request_function', function()
   it('should return valid functions for valid names', function()
-    local f = request.get_request_function('textDocument/references')
-    eq(request.requests.textDocument.references, f)
+    source(dedent([[
+      lua << EOF
+        local request = require('lsp.request')
+        local f = request.get_request_function('textDocument/references')
+        assert(request.requests.textDocument.references == f)
+      EOF
+    ]]))
   end)
 
   it('should return valid function for textDocument/hover', function()
-    local f = request.get_request_function('textDocument/hover')
-    eq(request.requests.textDocument.hover, f)
+    source(dedent([[
+      lua << EOF
+        local request = require('lsp.request')
+        local f = request.get_request_function('textDocument/hover')
+        assert(request.requests.textDocument.hover == f)
+      EOF
+    ]]))
   end)
 
   it('should return nil for non supported items', function()
-    local f = request.get_request_function('notSupported/nope')
-    eq(nil, f)
+    source(dedent([[
+      lua << EOF
+        local request = require('lsp.request')
+        local f = request.get_request_function('notSupported/nope')
+        assert(nil == f)
+      EOF
+    ]]))
   end)
 
   it('should also work if you pass in an already split string', function()
-    local f = request.get_request_function({'textDocument', 'references'})
-    eq(request.requests.textDocument.references, f)
+    source(dedent([[
+      lua << EOF
+        local request = require('lsp.request')
+        local f = request.get_request_function({'textDocument', 'references'})
+        assert(request.requests.textDocument.references == f)
+      EOF
+    ]]))
   end)
 end)

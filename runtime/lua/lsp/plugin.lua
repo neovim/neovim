@@ -74,10 +74,17 @@ end
 plugin.client.wait_request = function(request_id, filetype)
   return plugin.client.get(filetype)._results[request_id]
 end
+plugin.client.get_callback = function(request_name, cb)
+  if cb then
+    return cb
+  end
+
+  return require('lsp.callbacks').get_callback_function(request_name)
+end
 -- Non-client commands
 -- Determines if a request is supported or not
 plugin.is_supported_request = function(request_name)
-  return require('lsp.callbacks').get_callback_function(request_name) ~= nil
+  return plugin.client.get_callback(request_name) ~= nil
 end
 
 return plugin
