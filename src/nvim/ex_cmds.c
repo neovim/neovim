@@ -4619,7 +4619,8 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
                              "/\\(\\)", "/\\%(\\)",
                              "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
                              "/\\?", "/\\z(\\)", "\\=", ":s\\=",
-                             "[count]", "[quotex]", "[range]",
+                             "[count]", "[quotex]",
+                             "[range]", ":[range]",
                              "[pattern]", "\\|", "\\%$",
                              "s/\\~", "s/\\U", "s/\\L",
                              "s/\\1", "s/\\2", "s/\\3", "s/\\9"};
@@ -4628,7 +4629,8 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
                              "/\\\\(\\\\)", "/\\\\%(\\\\)",
                              "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
                              "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
-                             "\\[count]", "\\[quotex]", "\\[range]",
+                             "\\[count]", "\\[quotex]",
+                             "\\[range]", ":\\[range]",
                              "\\[pattern]", "\\\\bar", "/\\\\%\\$",
                              "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
                              "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"};
