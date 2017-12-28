@@ -82,6 +82,10 @@ client.initialize = function(self)
   local result = self:request_async('initialize', {
     -- Get neovim's process ID
     processId = vim.api.nvim_call_function('getpid', {}),
+
+    -- TODO(tjdevries): Give the user a way to specify this by filetype
+    rootUri = 'file:///tmp/',
+
     capabilities = {
       textDocument = {
         synchronization = {
@@ -116,9 +120,9 @@ client.initialize = function(self)
           },
 
           -- TODO(tjdevries): Handle different completion item kinds differently
-          completionItemKind = {
-            valueSet = nil
-          },
+          -- completionItemKind = {
+          --   valueSet = nil
+          -- },
 
           -- TODO(tjdevries): Implement this
           contextSupport = false,
@@ -145,14 +149,14 @@ client.initialize = function(self)
         },
 
         -- textDocument/references
-        references = {
-          dynamicRegistration = nil,
-        },
+        -- references = {
+        --   dynamicRegistration = nil,
+        -- },
 
         -- textDocument/highlight
-        documentHighlight = {
-          dynamicRegistration = nil,
-        },
+        -- documentHighlight = {
+        --   dynamicRegistration = nil,
+        -- },
 
         -- textDocument/symbol
         -- TODO(tjdevries): Implement
@@ -185,11 +189,16 @@ client.request = function(self, method, params, cb)
   local request_id = self:request_async(method, params, cb)
 
   -- TODO(tjdevries): Make this configurable to the user
-  local timeout = 5
-  local later = os.clock() + timeout
+  local timeout = 2
+  local later = os.time() + timeout
 
-  while (os.clock() < later) and (self._results[request_id]  == nil) do
+  while (os.time() < later) and (self._results[request_id]  == nil) do
+    -- vim.api.nvim_call_function('eval', {'1'})
     vim.api.nvim_command('sleep 10m')
+  end
+
+  if self._results[request_id] == nil then
+    return nil
   end
 
   return self._results[request_id].result
@@ -235,6 +244,7 @@ client.request_async = function(self, method, params, cb)
   vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
 
   lsp_doautocmd(method, 'post')
+  log.debug('Request sent successfully')
   return req.id
 end
 --- Send a notification to the server
