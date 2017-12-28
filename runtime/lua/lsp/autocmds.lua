@@ -43,10 +43,6 @@ local accepted_autocomand_postfixes = {
 }
 
 local doautocmd = function(autocmd)
-  if vim == nil or vim.api == nil then
-    return nil
-  end
-
   if type(autocmd) ~= 'string' then
     return nil
   end

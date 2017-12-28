@@ -17,7 +17,7 @@ endfunction
 
 " TODO(tjdevries): Add non-default arguments
 function! lsp#start() abort
-  call s:initialize_autocmds()
+  " call s:initialize_autocmds()
 
   return luaeval(s:client_string . ".start().name")
 endfunction

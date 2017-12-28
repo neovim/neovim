@@ -66,12 +66,24 @@ plugin.client.start = function(cmd, args, filetype)
   return client
 end
 plugin.client.request = function(name, args, cb, filetype)
+  if plugin.client.get(filetype) == nil then
+    return
+  end
+
   return plugin.client.get(filetype):request(name, args, cb)
 end
 plugin.client.request_async = function(name, args, cb, filetype)
+  if plugin.client.get(filetype) == nil then
+    return
+  end
+
   plugin.client.get(filetype):request_async(name, args, cb)
 end
 plugin.client.wait_request = function(request_id, filetype)
+  if plugin.client.get(filetype) == nil then
+    return
+  end
+
   return plugin.client.get(filetype)._results[request_id]
 end
 plugin.client.get_callback = function(request_name, cb)
