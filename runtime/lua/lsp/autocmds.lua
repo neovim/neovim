@@ -71,7 +71,7 @@ end
 
 local export_autocmds = function()
   local autocmd_string
-  for request_name, autocmd_list in ipairs(autocmd_table) do
+  for request_name, autocmd_list in pairs(autocmd_table) do
     for _, autocmd_item in ipairs(autocmd_list) do
       if type(autocmd_item) == 'string' then
         autocmd_string = autocmd_item .. ' *'

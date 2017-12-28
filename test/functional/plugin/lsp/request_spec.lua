@@ -1,8 +1,3 @@
--- luacheck: globals describe
--- luacheck: globals it
--- luacheck: globals before_each
--- luacheck: globals after_each
-
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local source = helpers.source
