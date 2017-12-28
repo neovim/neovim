@@ -82,11 +82,84 @@ client.initialize = function(self)
   local result = self:request_async('initialize', {
     -- Get neovim's process ID
     processId = vim.api.nvim_call_function('getpid', {}),
+    capabilities = {
+      textDocument = {
+        synchronization = {
+          -- TODO(tjdevries): What is this?
+          dynamicRegistration = nil,
 
-    -- TODO: Determine a good root path
-    rootPath = '/tmp/',
+          -- Send textDocument/willSave before saving (BufWritePre)
+          willSave = true,
 
-    -- capabilities = {},
+          -- TODO(tjdevries): Implement textDocument/willSaveWaitUntil
+          willSaveWaitUntil = false,
+
+          -- Send textDocument/didSave after saving (BufWritePost)
+          didSave = true,
+        },
+
+        -- Capabilities relating to textDocument/completion
+        completion = {
+          -- TODO(tjdevries): What is this?
+          dynamicRegistration = nil,
+
+          -- base/completionItem
+          completionItem = {
+            -- TODO(tjdevries): Is it possible to implement this in plain lua?
+            snippetSupport = false,
+
+            -- TODO(tjdevries): What is this?
+            commitCharactersSupport = nil,
+
+            -- TODO(tjdevries): What is this?
+            documentationFormat = nil,
+          },
+
+          -- TODO(tjdevries): Handle different completion item kinds differently
+          completionItemKind = {
+            valueSet = nil
+          },
+
+          -- TODO(tjdevries): Implement this
+          contextSupport = false,
+        },
+
+        -- textDocument/hover
+        hover = {
+          -- TODO(tjdevries): What is this?
+          dynamicRegistration = nil,
+
+          -- Currently only support plaintext
+          --    In the future, if we have floating windows or display in a preview window,
+          --    we could say markdown
+          contentFormat = {'plaintext'},
+        },
+
+        -- textDocument/signatureHelp
+        signatureHelp = {
+          dynamicRegistration = nil,
+
+          signatureInformation = {
+            documentationFormat = {'plaintext'}
+          },
+        },
+
+        -- textDocument/references
+        references = {
+          dynamicRegistration = nil,
+        },
+
+        -- textDocument/highlight
+        documentHighlight = {
+          dynamicRegistration = nil,
+        },
+
+        -- textDocument/symbol
+        -- TODO(tjdevries): Implement
+
+        -- TODO(tjdevries): Finish these...
+      },
+    },
   })
 
   return result

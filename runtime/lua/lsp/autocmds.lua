@@ -14,8 +14,12 @@ local util = require('neovim.util')
 local autocmd_table = {
   ['textDocument/didOpen'] = {
     -- After initialization, make sure to tell the LSP that we opened the file
-    {'User', 'LSP/initialize/post'},
+    {'User', 'initialize/post'},
     'BufReadPost',
+  },
+
+  ['textDocument/willSave'] = {
+    'BufWritePre',
   },
 
   ['textDocument/didSave'] = {
