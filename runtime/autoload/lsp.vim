@@ -38,15 +38,15 @@ function! lsp#request(request, ...) abort
 
   return request_id
 
-  while v:true
-    let result = luaeval(s:client_string . '.wait_request(_A.request_id)', {'request_id': request_id})
+  " while v:true
+  "   let result = luaeval(s:client_string . '.wait_request(_A.request_id)', {'request_id': request_id})
 
-    if type(result) != type(v:null)
-      return result
-    endif
+  "   if type(result) != type(v:null)
+  "     return result
+  "   endif
 
-    sleep 10m
-  endwhile
+  "   sleep 10m
+  " endwhile
 endfunction
 
 ""
