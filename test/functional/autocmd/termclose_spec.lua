@@ -41,7 +41,9 @@ describe('TermClose event', function()
     command('call jobstop(g:test_job)')
     retry(nil, nil, function() eq(1, eval('get(g:, "test_job_exited", 0)')) end)
     local duration = os.time() - start
-    eq(2, duration)
+    -- nvim starts sending SIGTERM after KILL_TIMEOUT_MS
+    helpers.ok(2 <= duration)
+    helpers.ok(duration <= 4)  -- <= 2 + delta because of slow CI
   end)
 
   it('kills pty job trapping SIGHUP and SIGTERM', function()
