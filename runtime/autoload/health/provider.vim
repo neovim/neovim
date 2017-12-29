@@ -370,21 +370,9 @@ function! s:check_python(version) abort
     let python_bin = ''
   endif
 
-
-  " Check if $VIRTUAL_ENV is active.
+  " Check if $VIRTUAL_ENV is valid.
   if exists('$VIRTUAL_ENV')
-    let virtualenv_inactive = 0
-
-    if !empty(pyenv)
-      let pyenv_prefix = resolve(s:trim(s:system([pyenv, 'prefix'])))
-      if $VIRTUAL_ENV != pyenv_prefix
-        let virtualenv_inactive = 1
-      endif
-    elseif !empty(pyname) && exepath(pyname) !~# '^'.$VIRTUAL_ENV.'/'
-      let virtualenv_inactive = 1
-    endif
-
-    if virtualenv_inactive
+    if !empty(pyname) && $VIRTUAL_ENV !=# matchstr(exepath(pyname), '^\V'.$VIRTUAL_ENV)
       call health#report_warn(
         \ '$VIRTUAL_ENV exists but appears to be inactive. '
         \ . 'This could lead to unexpected results.',
