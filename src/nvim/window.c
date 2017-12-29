@@ -2104,25 +2104,26 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
   if (tp->tp_firstwin == tp->tp_lastwin) {
     char_u prev_idx[NUMBUFLEN];
     if (has_event(EVENT_TABCLOSED)) {
-        vim_snprintf((char *)prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
+      vim_snprintf((char *)prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
     }
 
-    if (tp == first_tabpage)
+    if (tp == first_tabpage) {
       first_tabpage = tp->tp_next;
-    else {
+    } else {
       for (ptp = first_tabpage; ptp != NULL && ptp->tp_next != tp;
-           ptp = ptp->tp_next)
-        ;
+           ptp = ptp->tp_next) {
+        // loop
+      }
       if (ptp == NULL) {
         internal_error("win_close_othertab()");
         return;
       }
       ptp->tp_next = tp->tp_next;
     }
-    free_tp = TRUE;
+    free_tp = true;
 
     if (has_event(EVENT_TABCLOSED)) {
-        apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
+      apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
     }
   }
 
