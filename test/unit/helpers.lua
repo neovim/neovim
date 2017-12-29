@@ -407,6 +407,16 @@ elseif syscall ~= nil then
     wait = syscall.wait,
     exit = syscall.exit,
   }
+elseif ffi.os == "Windows" then
+  sc = {
+    fork = function() end,
+    pipe = function() end,
+    read = function(rd, len) end,
+    write = function(wr, s) end,
+    close = function(pid) end,
+    wait = function(pid) end,
+    exit = function(status) end,
+  }
 else
   cimport_immediate('./test/unit/fixtures/posix.h')
   sc = {
