@@ -42,7 +42,7 @@ endfunction()
 set(LUAROCKS_BINARY ${HOSTDEPS_BIN_DIR}/luarocks)
 
 # NOTE: Version must match version of LuaRocks in third-party/CMakeLists.txt
-set(LUAROCKS_VERSION 2.4.3)
+set(LUAROCKS_VERSION 2.4)
 
 # Arguments for calls to 'luarocks build'
 if(NOT MSVC)
