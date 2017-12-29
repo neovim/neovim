@@ -1741,6 +1741,11 @@ void close_windows(buf_T *buf, int keep_curwin)
     } else
       wp = wp->w_next;
   }
+  if (count != tabpage_index(NULL)) {
+    char_u prev_idx[NUMBUFLEN];
+    sprintf((char *)prev_idx, "%i", tabpage_index(curtab));
+    apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, curbuf);
+  }
 
   /* Also check windows in other tab pages. */
   for (tp = first_tabpage; tp != NULL; tp = nexttp) {
@@ -1757,14 +1762,15 @@ void close_windows(buf_T *buf, int keep_curwin)
           break;
         }
       }
+      if (count != tabpage_index(NULL)) {
+          char_u prev_idx[NUMBUFLEN];
+          sprintf((char *)prev_idx, "%i", tabpage_index(tp));
+          apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, curbuf);
+      }
     }
   }
 
   --RedrawingDisabled;
-
-  if (count != tabpage_index(NULL)) {
-    apply_autocmds(EVENT_TABCLOSED, NULL, NULL, false, curbuf);
-  }
 
   redraw_tabline = true;
   if (h != tabline_height()) {
