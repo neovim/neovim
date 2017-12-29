@@ -65,9 +65,9 @@ function! man#open_page(count, count1, mods, ...) abort
   try
     set eventignore+=BufReadCmd
     if a:mods !~# 'tab' && s:find_man()
-      execute 'silent edit' fnameescape(bufname)
+      execute 'silent keepalt edit' fnameescape(bufname)
     else
-      execute 'silent' a:mods 'split' fnameescape(bufname)
+      execute 'silent keepalt' a:mods 'split' fnameescape(bufname)
     endif
   finally
     set eventignore-=BufReadCmd
