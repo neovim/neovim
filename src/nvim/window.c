@@ -1724,7 +1724,6 @@ void close_windows(buf_T *buf, int keep_curwin)
 {
   tabpage_T   *tp, *nexttp;
   int h = tabline_height();
-  int count = tabpage_index(NULL);
 
   ++RedrawingDisabled;
 
@@ -1741,11 +1740,6 @@ void close_windows(buf_T *buf, int keep_curwin)
     } else
       wp = wp->w_next;
   }
-  if (count != tabpage_index(NULL)) {
-    char_u prev_idx[NUMBUFLEN];
-    sprintf((char *)prev_idx, "%i", tabpage_index(curtab));
-    apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, curbuf);
-  }
 
   /* Also check windows in other tab pages. */
   for (tp = first_tabpage; tp != NULL; tp = nexttp) {
@@ -1761,11 +1755,6 @@ void close_windows(buf_T *buf, int keep_curwin)
           nexttp = first_tabpage;
           break;
         }
-      }
-      if (count != tabpage_index(NULL)) {
-          char_u prev_idx[NUMBUFLEN];
-          sprintf((char *)prev_idx, "%i", tabpage_index(tp));
-          apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, curbuf);
       }
     }
   }
@@ -1854,7 +1843,6 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf,
 
   // Since goto_tabpage_tp above did not trigger *Enter autocommands, do
   // that now.
-  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, curbuf);
   apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
   apply_autocmds(EVENT_TABENTER, NULL, NULL, false, curbuf);
   if (old_curbuf != curbuf) {
@@ -2114,6 +2102,10 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   /* When closing the last window in a tab page remove the tab page. */
   if (tp->tp_firstwin == tp->tp_lastwin) {
+    // save index for tabclosed event
+    char_u prev_idx[NUMBUFLEN];
+    sprintf((char *)prev_idx, "%i", tabpage_index(tp));
+
     if (tp == first_tabpage)
       first_tabpage = tp->tp_next;
     else {
@@ -2127,6 +2119,8 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
       ptp->tp_next = tp->tp_next;
     }
     free_tp = TRUE;
+
+    apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
   }
 
   /* Free the memory used for the window. */

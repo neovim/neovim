@@ -6230,7 +6230,6 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
     if (!valid_tabpage(tp) || tp->tp_firstwin == wp)
       break;
   }
-  apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, FALSE, curbuf);
 
   redraw_tabline = TRUE;
   if (h != tabline_height())
