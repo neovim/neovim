@@ -2102,9 +2102,10 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 
   /* When closing the last window in a tab page remove the tab page. */
   if (tp->tp_firstwin == tp->tp_lastwin) {
-    // save index for tabclosed event
     char_u prev_idx[NUMBUFLEN];
-    sprintf((char *)prev_idx, "%i", tabpage_index(tp));
+    if (has_event(EVENT_TABCLOSED)) {
+        vim_snprintf((char *)prev_idx, NUMBUFLEN, "%i", tabpage_index(tp));
+    }
 
     if (tp == first_tabpage)
       first_tabpage = tp->tp_next;
@@ -2120,7 +2121,9 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     }
     free_tp = TRUE;
 
-    apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
+    if (has_event(EVENT_TABCLOSED)) {
+        apply_autocmds(EVENT_TABCLOSED, prev_idx, prev_idx, false, win->w_buffer);
+    }
   }
 
   /* Free the memory used for the window. */
