@@ -1121,6 +1121,7 @@ qf_init_ext(
     }
 
     if (qf_add_entry(qi,
+                     qi->qf_curlist,
                      qi->qf_directory,
                      (*fields.namebuf || qi->qf_directory)
                      ? fields.namebuf : ((qi->qf_currfile && fields.valid)
@@ -1182,13 +1183,14 @@ qf_init_end:
   return retval;
 }
 
-static void qf_store_title(qf_info_T *qi, char_u *title)
+static void qf_store_title(qf_info_T *qi, int qf_idx, char_u *title)
 {
   if (title != NULL) {
-    char_u *p = xmalloc(STRLEN(title) + 2);
+    size_t len = STRLEN(title) + 1;
+    char_u *p = xmallocz(len);
 
-    qi->qf_lists[qi->qf_curlist].qf_title = p;
-    sprintf((char *)p, ":%s", (char *)title);
+    qi->qf_lists[qf_idx].qf_title = p;
+    snprintf((char *)p, len + 1, ":%s", (char *)title);
   }
 }
 
@@ -1217,7 +1219,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
   } else
     qi->qf_curlist = qi->qf_listcount++;
   memset(&qi->qf_lists[qi->qf_curlist], 0, (size_t)(sizeof(qf_list_T)));
-  qf_store_title(qi, qf_title);
+  qf_store_title(qi, qi->qf_curlist, qf_title);
 }
 
 /*
@@ -1260,6 +1262,7 @@ void qf_free_all(win_T *wp)
 /// Add an entry to the end of the list of errors.
 ///
 /// @param  qi       quickfix list
+/// @param  qf_idx   list index
 /// @param  dir      optional directory name
 /// @param  fname    file name or NULL
 /// @param  bufnum   buffer number or zero
@@ -1273,9 +1276,10 @@ void qf_free_all(win_T *wp)
 /// @param  valid    valid entry
 ///
 /// @returns OK or FAIL.
-static int qf_add_entry(qf_info_T *qi, char_u *dir, char_u *fname, int bufnum,
-                        char_u *mesg, long lnum, int col, char_u vis_col,
-                        char_u *pattern, int nr, char_u type, char_u valid)
+static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
+                        int bufnum, char_u *mesg, long lnum, int col,
+                        char_u vis_col, char_u *pattern, int nr, char_u type,
+                        char_u valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
   qfline_T **lastp;  // pointer to qf_last or NULL
@@ -1306,12 +1310,12 @@ static int qf_add_entry(qf_info_T *qi, char_u *dir, char_u *fname, int bufnum,
   qfp->qf_type = (char_u)type;
   qfp->qf_valid = valid;
 
-  lastp = &qi->qf_lists[qi->qf_curlist].qf_last;
-  if (qi->qf_lists[qi->qf_curlist].qf_count == 0) {
-    /* first element in the list */
-    qi->qf_lists[qi->qf_curlist].qf_start = qfp;
-    qi->qf_lists[qi->qf_curlist].qf_ptr = qfp;
-    qi->qf_lists[qi->qf_curlist].qf_index = 0;
+  lastp = &qi->qf_lists[qf_idx].qf_last;
+  if (qi->qf_lists[qf_idx].qf_count == 0) {
+    // first element in the list
+    qi->qf_lists[qf_idx].qf_start = qfp;
+    qi->qf_lists[qf_idx].qf_ptr = qfp;
+    qi->qf_lists[qf_idx].qf_index = 0;
     qfp->qf_prev = NULL;
   } else {
     assert(*lastp);
@@ -1321,12 +1325,11 @@ static int qf_add_entry(qf_info_T *qi, char_u *dir, char_u *fname, int bufnum,
   qfp->qf_next = NULL;
   qfp->qf_cleared = false;
   *lastp = qfp;
-  qi->qf_lists[qi->qf_curlist].qf_count++;
-  if (qi->qf_lists[qi->qf_curlist].qf_index == 0 && qfp->qf_valid) {
-    /* first valid entry */
-    qi->qf_lists[qi->qf_curlist].qf_index =
-      qi->qf_lists[qi->qf_curlist].qf_count;
-    qi->qf_lists[qi->qf_curlist].qf_ptr = qfp;
+  qi->qf_lists[qf_idx].qf_count++;
+  if (qi->qf_lists[qf_idx].qf_index == 0 && qfp->qf_valid) {
+    // first valid entry
+    qi->qf_lists[qf_idx].qf_index = qi->qf_lists[qf_idx].qf_count;
+    qi->qf_lists[qf_idx].qf_ptr = qfp;
   }
 
   return OK;
@@ -1429,6 +1432,7 @@ void copy_loclist(win_T *from, win_T *to)
            i < from_qfl->qf_count && from_qfp != NULL;
            i++, from_qfp = from_qfp->qf_next) {
         if (qf_add_entry(to->w_llist,
+                         to->w_llist->qf_curlist,
                          NULL,
                          NULL,
                          0,
@@ -3704,6 +3708,7 @@ void ex_vimgrep(exarg_T *eap)
           // dummy buffer, unless duplicate_name is set, then the
           // buffer will be wiped out below.
           if (qf_add_entry(qi,
+                           qi->qf_curlist,
                            NULL,            // dir
                            fname,
                            duplicate_name ? 0 : buf->b_fnum,
@@ -4164,23 +4169,24 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
 
 /// Add list of entries to quickfix/location list. Each list entry is
 /// a dictionary with item information.
-static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
-                          int action)
+static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
+                          char_u *title, int action)
 {
   dict_T *d;
   qfline_T *old_last = NULL;
   int retval = OK;
   bool did_bufnr_emsg = false;
 
-  if (action == ' ' || qi->qf_curlist == qi->qf_listcount) {
+  if (action == ' ' || qf_idx == qi->qf_listcount) {
     // make place for a new list
     qf_new_list(qi, title);
-  } else if (action == 'a' && qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+    qf_idx = qi->qf_curlist;
+  } else if (action == 'a' && qi->qf_lists[qf_idx].qf_count > 0) {
     // Adding to existing list, use last entry.
-    old_last = qi->qf_lists[qi->qf_curlist].qf_last;
+    old_last = qi->qf_lists[qf_idx].qf_last;
   } else if (action == 'r') {
-    qf_free(qi, qi->qf_curlist);
-    qf_store_title(qi, title);
+    qf_free(qi, qf_idx);
+    qf_store_title(qi, qf_idx, title);
   }
 
   TV_LIST_ITER_CONST(list, li, {
@@ -4228,6 +4234,7 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
     }
 
     int status = qf_add_entry(qi,
+                              qf_idx,
                               NULL,      // dir
                               (char_u *)filename,
                               bufnum,
@@ -4250,16 +4257,16 @@ static int qf_add_entries(qf_info_T *qi, list_T *list, char_u *title,
     }
   });
 
-  if (qi->qf_lists[qi->qf_curlist].qf_index == 0) {
+  if (qi->qf_lists[qf_idx].qf_index == 0) {
     // no valid entry
-    qi->qf_lists[qi->qf_curlist].qf_nonevalid = true;
+    qi->qf_lists[qf_idx].qf_nonevalid = true;
   } else {
-    qi->qf_lists[qi->qf_curlist].qf_nonevalid = false;
+    qi->qf_lists[qf_idx].qf_nonevalid = false;
   }
   if (action != 'a') {
-    qi->qf_lists[qi->qf_curlist].qf_ptr = qi->qf_lists[qi->qf_curlist].qf_start;
-    if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
-      qi->qf_lists[qi->qf_curlist].qf_index = 1;
+    qi->qf_lists[qf_idx].qf_ptr = qi->qf_lists[qf_idx].qf_start;
+    if (qi->qf_lists[qf_idx].qf_count > 0) {
+      qi->qf_lists[qf_idx].qf_index = 1;
     }
   }
 
@@ -4400,7 +4407,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
   } else if (what != NULL) {
     retval = qf_set_properties(qi, what, action);
   } else {
-    retval = qf_add_entries(qi, list, title, action);
+    retval = qf_add_entries(qi, qi->qf_curlist, list, title, action);
   }
 
   return retval;
@@ -4718,6 +4725,7 @@ void ex_helpgrep(exarg_T *eap)
                   line[--l] = NUL;
 
                 if (qf_add_entry(qi,
+                                 qi->qf_curlist,
                                  NULL,                  // dir
                                  fnames[fi],
                                  0,
