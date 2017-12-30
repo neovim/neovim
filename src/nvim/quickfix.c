@@ -1186,10 +1186,11 @@ qf_init_end:
 static void qf_store_title(qf_info_T *qi, int qf_idx, char_u *title)
 {
   if (title != NULL) {
-    char_u *p = xmalloc(STRLEN(title) + 2);
+    size_t len = STRLEN(title) + 1;
+    char_u *p = xmallocz(len);
 
     qi->qf_lists[qf_idx].qf_title = p;
-    sprintf((char *)p, ":%s", (char *)title);
+    snprintf((char *)p, len + 1, ":%s", (char *)title);
   }
 }
 
@@ -1311,7 +1312,7 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
 
   lastp = &qi->qf_lists[qf_idx].qf_last;
   if (qi->qf_lists[qf_idx].qf_count == 0) {
-    /* first element in the list */
+    // first element in the list
     qi->qf_lists[qf_idx].qf_start = qfp;
     qi->qf_lists[qf_idx].qf_ptr = qfp;
     qi->qf_lists[qf_idx].qf_index = 0;
@@ -1326,7 +1327,7 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
   *lastp = qfp;
   qi->qf_lists[qf_idx].qf_count++;
   if (qi->qf_lists[qf_idx].qf_index == 0 && qfp->qf_valid) {
-    /* first valid entry */
+    // first valid entry
     qi->qf_lists[qf_idx].qf_index = qi->qf_lists[qf_idx].qf_count;
     qi->qf_lists[qf_idx].qf_ptr = qfp;
   }
