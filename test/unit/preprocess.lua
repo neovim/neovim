@@ -10,6 +10,10 @@ if env_cc then
   table.insert(ccs, {path = {"/usr/bin/env", env_cc}, type = "gcc"})
 end
 
+if ffi.os == "Windows" then
+  table.insert(ccs, {path = {"cl"}, type = "msvc"})
+end
+
 table.insert(ccs, {path = {"/usr/bin/env", "cc"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "gcc"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.9"}, type = "gcc"})
@@ -17,10 +21,6 @@ table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.8"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "gcc-4.7"}, type = "gcc"})
 table.insert(ccs, {path = {"/usr/bin/env", "clang"}, type = "clang"})
 table.insert(ccs, {path = {"/usr/bin/env", "icc"}, type = "gcc"})
-
-if ffi.os == "Windows" then
-  table.insert(ccs, {path = {"cl"}, type = "msvc"})
-end
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
 local function shell_quote(str)
