@@ -245,7 +245,12 @@ function Gcc:preprocess(previous_defines, ...)
 end
 
 local Clang = Gcc:new()
-local Msvc = Gcc:new()
+local Msvc = {
+  preprocessor_extra_flags = {},
+  get_defines_extra_flags = {},
+  get_declarations_extra_flags = {},
+  init_defines = function() end,
+}
 
 local type_to_class = {
   ["gcc"] = Gcc,
