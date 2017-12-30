@@ -213,7 +213,6 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           if (cur.special) {
             list_T *const kv_pair = tv_list_alloc();
 
-            tv_list_append_list(cur.tv->vval.v_list, kv_pair);
             typval_T s_tv = decode_string(s, len, kTrue, false, false);
             if (s_tv.v_type == VAR_UNKNOWN) {
               ret = false;
@@ -227,6 +226,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
               .v_type = VAR_UNKNOWN,
             });
             kv_push(stack, cur);
+            tv_list_append_list(cur.tv->vval.v_list, kv_pair);
             cur = (TVPopStackItem) {
               .tv = TV_LIST_ITEM_TV(tv_list_last(kv_pair)),
               .container = false,

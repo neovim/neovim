@@ -1515,7 +1515,6 @@ ex_let_vars (
 )
 {
   char_u *arg = arg_start;
-  int i;
   typval_T ltv;
 
   if (*arg != '[') {
@@ -1534,17 +1533,17 @@ ex_let_vars (
   }
   list_T *const l = tv->vval.v_list;
 
-  i = tv_list_len(l);
-  if (semicolon == 0 && var_count < i) {
+  const int len = tv_list_len(l);
+  if (semicolon == 0 && var_count < len) {
     EMSG(_("E687: Less targets than List items"));
     return FAIL;
   }
-  if (var_count - semicolon > i) {
+  if (var_count - semicolon > len) {
     EMSG(_("E688: More targets than List items"));
     return FAIL;
   }
-  // lt may actually be NULL, but it should fail with E688 or even earlier if
-  // you try to do ":let [] = v:_null_list".
+  // List l may actually be NULL, but it should fail with E688 or even earlier
+  // if you try to do ":let [] = v:_null_list".
   assert(l != NULL);
 
   listitem_T *item = tv_list_first(l);
@@ -12220,10 +12219,11 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
     // matchlist(): return empty list when there are no matches.
     case kSomeMatchList: {
       tv_list_alloc_ret(rettv);
-      FALLTHROUGH;
+      break;
     }
     // matchstrpos(): return ["", -1, -1, -1]
     case kSomeMatchStrPos: {
+      tv_list_alloc_ret(rettv);
       tv_list_append_string(rettv->vval.v_list, "", 0);
       tv_list_append_number(rettv->vval.v_list, -1);
       tv_list_append_number(rettv->vval.v_list, -1);
@@ -12385,7 +12385,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
           if (l != NULL) {
             rettv->vval.v_number = idx;
           } else {
-            if (type == kSomeMatchEnd) {
+            if (type == kSomeMatch) {
               rettv->vval.v_number =
                 (varnumber_T)(regmatch.startp[0] - str);
             } else {
@@ -12394,6 +12394,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
             }
             rettv->vval.v_number += (varnumber_T)(str - expr);
           }
+          break;
         }
       }
     }
@@ -13020,7 +13021,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   long prevlen  = 0;                    /* length of data in prev */
   long prevsize = 0;                    /* size of prev buffer */
   long maxline  = MAXLNUM;
-  long cnt      = 0;
   char_u      *p;                       /* position in buf */
   char_u      *start;                   /* start of current line */
 
@@ -13034,6 +13034,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   tv_list_alloc_ret(rettv);
+  list_T *const l = rettv->vval.v_list;
 
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
@@ -13043,7 +13044,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  while (cnt < maxline || maxline < 0) {
+  while (maxline < 0 || tv_list_len(l) < maxline) {
     readlen = (int)fread(buf, 1, io_size, fd);
 
     /* This for loop processes what was read, but is also entered at end
@@ -13081,22 +13082,32 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           prevlen = prevsize = 0;
         }
 
-        tv_list_append_owned_tv(rettv->vval.v_list, (typval_T) {
+        tv_list_append_owned_tv(l, (typval_T) {
           .v_type = VAR_STRING,
           .v_lock = VAR_UNLOCKED,
           .vval.v_string = s,
         });
 
-        start = p + 1;         /* step over newline */
-        if ((++cnt >= maxline && maxline >= 0) || readlen <= 0)
+        start = p + 1;  // Step over newline.
+        if (maxline < 0) {
+          if (tv_list_len(l) > -maxline) {
+            assert(tv_list_len(l) == 1 + (-maxline));
+            tv_list_item_remove(l, tv_list_first(l));
+          }
+        } else if (tv_list_len(l) >= maxline) {
+          assert(tv_list_len(l) == maxline);
           break;
-      } else if (*p == NUL)
+        }
+        if (readlen <= 0) {
+          break;
+        }
+      } else if (*p == NUL) {
         *p = '\n';
-      /* Check for utf8 "bom"; U+FEFF is encoded as EF BB BF.  Do this
-       * when finding the BF and check the previous two bytes. */
-      else if (*p == 0xbf && enc_utf8 && !binary) {
-        /* Find the two bytes before the 0xbf.	If p is at buf, or buf
-         * + 1, these may be in the "prev" string. */
+      // Check for utf8 "bom"; U+FEFF is encoded as EF BB BF.  Do this
+      // when finding the BF and check the previous two bytes.
+      } else if (*p == 0xbf && !binary) {
+        // Find the two bytes before the 0xbf.  If p is at buf, or buf + 1,
+        // these may be in the "prev" string.
         char_u back1 = p >= buf + 1 ? p[-1]
                        : prevlen >= 1 ? prev[prevlen - 1] : NUL;
         char_u back2 = p >= buf + 2 ? p[-2]
@@ -13130,8 +13141,9 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }     /* for */
 
-    if ((cnt >= maxline && maxline >= 0) || readlen <= 0)
+    if ((maxline >= 0 && tv_list_len(l) >= maxline) || readlen <= 0) {
       break;
+    }
     if (start < p) {
       /* There's part of a line in buf, store it in "prev". */
       if (p - start + prevlen >= prevsize) {
@@ -13154,14 +13166,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       prevlen += (long)(p - start);
     }
   }   /* while */
-
-  // For a negative line count use only the lines at the end of the file,
-  // free the rest.
-  if (maxline < -tv_list_len(rettv->vval.v_list)) {
-    listitem_T *const first_li = tv_list_find(rettv->vval.v_list, maxline);
-    listitem_T *const last_li = tv_list_last(rettv->vval.v_list);
-    tv_list_remove_items(rettv->vval.v_list, first_li, last_li);
-  }
 
   xfree(prev);
   fclose(fd);
