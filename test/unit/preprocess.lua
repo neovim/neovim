@@ -280,6 +280,11 @@ function Msvc:preprocess(previous_defines, ...)
 end
 
 function Msvc:add_to_include_path(...)
+  for i = 1, select('#', ...) do
+    local path = select(i, ...)
+    local ef = self.preprocessor_extra_flags
+    ef[#ef + 1] = '/I' .. path
+  end
 end
 
 local type_to_class = {
