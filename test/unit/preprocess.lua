@@ -251,10 +251,19 @@ local Msvc = {
   get_declarations_extra_flags = {},
 }
 
+-- Like Gcc:define but ignore args parameter
+-- cl.exe does not support function-like macros
 function Msvc:define(name, args, val)
+  local define = '/D' .. name
+  if val ~= nil then
+    define = define .. '=' .. val
+  end
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = define
 end
 
 function Msvc:undefine(name)
+  self.preprocessor_extra_flags[#self.preprocessor_extra_flags + 1] = (
+      '/U' .. name)
 end
 
 function Msvc:new(obj)
