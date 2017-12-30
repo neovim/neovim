@@ -249,8 +249,29 @@ local Msvc = {
   preprocessor_extra_flags = {},
   get_defines_extra_flags = {},
   get_declarations_extra_flags = {},
-  init_defines = function() end,
 }
+
+function Msvc:define(name, args, val)
+end
+
+function Msvc:undefine(name)
+end
+
+function Msvc:new(obj)
+  obj = obj or {}
+  setmetatable(obj, self)
+  self.__index = self
+  return obj
+end
+
+function Msvc:dependencies()
+end
+
+function Msvc:preprocess(previous_defines, ...)
+end
+
+function Msvc:add_to_include_path(...)
+end
 
 local type_to_class = {
   ["gcc"] = Gcc,
