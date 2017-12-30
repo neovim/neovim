@@ -12358,7 +12358,7 @@ static void find_some_match(typval_T *const argvars, typval_T *const rettv,
         }
         case kSomeMatchList: {
           // Return list with matched string and submatches.
-          for (int i = 0; i < NSUBEXP; ++i) {
+          for (int i = 0; i < NSUBEXP; i++) {
             if (regmatch.endp[i] == NULL) {
               tv_list_append_string(rettv->vval.v_list, NULL, 0);
             } else {
@@ -13021,8 +13021,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   long prevlen  = 0;                    /* length of data in prev */
   long prevsize = 0;                    /* size of prev buffer */
   long maxline  = MAXLNUM;
-  char_u      *p;                       /* position in buf */
-  char_u      *start;                   /* start of current line */
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     if (strcmp(tv_get_string(&argvars[1]), "b") == 0) {
@@ -13047,14 +13045,16 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   while (maxline < 0 || tv_list_len(l) < maxline) {
     readlen = (int)fread(buf, 1, io_size, fd);
 
-    /* This for loop processes what was read, but is also entered at end
-     * of file so that either:
-     * - an incomplete line gets written
-     * - a "binary" file gets an empty line at the end if it ends in a
-     *   newline.  */
+    // This for loop processes what was read, but is also entered at end
+    // of file so that either:
+    // - an incomplete line gets written
+    // - a "binary" file gets an empty line at the end if it ends in a
+    //   newline.
+    char_u *p;  // Position in buf.
+    char_u *start;  // Start of current line.
     for (p = buf, start = buf;
          p < buf + readlen || (readlen <= 0 && (prevlen > 0 || binary));
-         ++p) {
+         p++) {
       if (*p == '\n' || readlen <= 0) {
         char_u      *s  = NULL;
         size_t len = p - start;
@@ -15416,7 +15416,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       }
     }
 
-    /* Make an array with each entry pointing to an item in the List. */
+    // Make an array with each entry pointing to an item in the List.
     ptrs = xmalloc((size_t)(len * sizeof(ListSortItem)));
 
     if (sort) {
