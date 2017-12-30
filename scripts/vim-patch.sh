@@ -234,7 +234,7 @@ stage_patch() {
       printf "\n✘ 'patch' command not found\n"
     else
       printf "\nApplying patch...\n"
-      patch -p1 --posix < "${patch_file}"
+      patch -p1 --posix < "${patch_file}" || true
     fi
     printf "\nInstructions:\n  Proceed to port the patch.\n"
   else
