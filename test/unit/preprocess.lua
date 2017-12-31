@@ -246,9 +246,9 @@ end
 
 local Clang = Gcc:new()
 local Msvc = {
-  preprocessor_extra_flags = {},
-  get_defines_extra_flags = {},
-  get_declarations_extra_flags = {},
+  preprocessor_extra_flags = {'/nologo'},
+  get_defines_extra_flags = {'/nologo'},
+  get_declarations_extra_flags = {'/nologo'},
 }
 
 -- Like Gcc:define but ignore args parameter
